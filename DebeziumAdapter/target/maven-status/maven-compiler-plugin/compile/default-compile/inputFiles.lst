@@ -1,0 +1,3 @@
+/home/ubuntu/all_in_one/DebeziumAdapter/src/main/java/adapter/config/KafkaConfig.java
+/home/ubuntu/all_in_one/DebeziumAdapter/src/main/java/adapter/service/KafkaService.java
+/home/ubuntu/all_in_one/DebeziumAdapter/src/main/java/adapter/DebeziumAdapterService.java

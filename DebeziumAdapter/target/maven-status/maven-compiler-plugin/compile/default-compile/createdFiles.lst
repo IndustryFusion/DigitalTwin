@@ -1,0 +1,3 @@
+adapter/service/KafkaService.class
+adapter/config/KafkaConfig.class
+adapter/DebeziumAdapterService.class
