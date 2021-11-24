@@ -1,8 +1,0 @@
-spring:
-  kafka:
-    producer:
-      bootstrap-servers: kafka:9092
-    consumer:
-      topic: dbserver1.public.entity
-      bootstrap-servers: kafka:9092
-      group-id: scorpio-consumer
