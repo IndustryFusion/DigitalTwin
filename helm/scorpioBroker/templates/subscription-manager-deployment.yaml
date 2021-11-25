@@ -1,0 +1,89 @@
+{{- if .Values.SubscriptionManager.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    service: {{ .Values.SubscriptionManager.name }}
+  name: {{ .Values.SubscriptionManager.name }}
+  # namespace: {{.Values.namespace}}
+spec:
+  replicas: {{ .Values.SubscriptionManager.replicas }}
+  selector:
+    matchLabels:
+      service: {{ .Values.SubscriptionManager.name }}
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        service: {{ .Values.SubscriptionManager.name }}
+    spec:
+      containers:
+      - image: {{ .Values.SubscriptionManager.image.repository }}:{{ .Values.SubscriptionManager.image.tag }}
+        env:
+          - name: CLIENT_ID
+            value: {{ .Values.SubscriptionManager.name }}
+          - name: CLIENT_SECRET
+            # value: 9cc121e5-ad62-42a7-a161-ef7b58c9be36
+            valueFrom:
+              secretKeyRef:
+                name: keycloak-secrets
+                key: subscriptionManagerSecret
+        {{- range $key, $val := .Values.postgres_vars}}
+          - name: {{ $key }}
+            value: {{ $val | quote }}
+        {{- end }}
+        {{- range $key, $val := .Values.keycloak_vars}}
+          - name: {{ $key }}
+            value: {{ $val | quote }}
+        {{- end }}
+        {{- if .Values.SubscriptionManager.kafka_vars }}         
+        {{- range $key, $val := .Values.kafka_vars }}
+          - name: {{ $key }}
+            value: {{ $val | quote }}
+        {{- end }}
+        {{- end}}
+        {{- if .Values.springArgs.overrideSpringArgs }}
+        env:
+          - name: spring_args
+            value: {{ .Values.springArgs.value }}
+        {{- end}}
+        imagePullPolicy: {{ .Values.SubscriptionManager.image.pullPolicy }}
+        name: {{ .Values.SubscriptionManager.name }}
+        ports:
+        - containerPort: 2025
+          protocol: TCP
+        lifecycle:
+           preStop:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - curl -X PUT "http://eureka:8761/eureka/apps/SUBSCRIPTION-MANAGER/$HOSTNAME:subscription-manager:2025/status?value=OUT_OF_SERVICE"
+        {{- if .Values.SubscriptionManager.readinessProbe.enabled }}
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - curl --silent http://localhost:2025/actuator/health | grep --quiet -e
+              '^{\"status\"\:\"UP\".*}$'
+          failureThreshold: {{ .Values.SubscriptionManager.readinessProbe.failureThreshold }}
+          initialDelaySeconds: {{ .Values.SubscriptionManager.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.SubscriptionManager.readinessProbe.periodSeconds }}
+          {{- end}}
+        resources:
+{{ toYaml .Values.SubscriptionManager.resources | indent 10 }}
+      restartPolicy: {{ .Values.SubscriptionManager.restartPolicy }}
+      {{- if .Values.SubscriptionManager.serviceAccount.enabled }}
+      serviceAccountName: {{ .Values.SubscriptionManager.serviceAccount.name }}
+      {{- end}}
+      securityContext: {{ .Values.SubscriptionManager.securityContext | toYaml }}
+      terminationGracePeriodSeconds: {{ .Values.SubscriptionManager.terminationGracePeriodSeconds }}
+      imagePullSecrets:
+        - name: {{ .Values.imageCredentials.name }}
+status: {}
+{{- end }}
