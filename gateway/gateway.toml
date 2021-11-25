@@ -1,0 +1,9 @@
+broker = "localhost:9094"
+topic = 'topic'
+
+[messages]
+list_of_msgs = [
+    '{"aid":"aid","cid":"cid","dataType":"String","on":"1637825686000","systemOn":"1637825686000","value":"0.005"}',
+    '{"aid":"aid","cid":"cid","dataType":"String","on":"1637831788000","systemOn":"1637831788000","value":"0.01"}',
+    '{"aid":"aid","cid":"cid","dataType":"String","on":"1637831788000","systemOn":"1637831788000","value":"0.02"}',
+]
