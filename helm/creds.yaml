@@ -1,16 +1,16 @@
 imageCredentials:
-  username: fusionreadonly
-  password: IndustryFusion4.0!
+  username:
+  password:
 
 keycloakSecrets:
-  historyManagerSecret: 3e6437ed-891d-4129-86e7-c11b024b540d
-  entityManagerSecret: 9d93ef35-725a-4452-9c2e-cb280abe7fd1
-  queryManagerSecret: 1ffe8aaa-6681-44a4-9251-a7b9ca79ea2a
-  subscriptionManagerSecret: 9cc121e5-ad62-42a7-a161-ef7b58c9be36
-  registryManagerSecret: ffc62a51-7d09-47b1-b187-b0f0e69b5709
+  historyManagerSecret:
+  entityManagerSecret:
+  queryManagerSecret:
+  subscriptionManagerSecret:
+  registryManagerSecret:
 
 ## environment variables for keycloak, do not modify SSL_REQUIRED
 keycloak_vars:
-  KEYCLOAK_SERVER_URL: http://65.0.240.6:8080/auth
-  REALM: Org
+  KEYCLOAK_SERVER_URL:
+  REALM:
   SSL_REQUIRED: none
