@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 pancurses = "0.16.1"
 rand = "0.8.4"
-rdkafka = { version = "0.25", features = ["cmake-build"] }
+rdkafka = { version = "0.27", features = ["cmake-build"] }
 env_logger = "0.9.0"
 
 base64 = "0.13"
