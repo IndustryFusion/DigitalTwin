@@ -2,15 +2,9 @@ imageCredentials:
   username:
   password:
 
-keycloakSecrets:
+keycloakClientSecrets:
   historyManagerSecret:
   entityManagerSecret:
   queryManagerSecret:
   subscriptionManagerSecret:
   registryManagerSecret:
-
-## environment variables for keycloak, do not modify SSL_REQUIRED
-keycloak_vars:
-  KEYCLOAK_SERVER_URL:
-  REALM:
-  SSL_REQUIRED: none

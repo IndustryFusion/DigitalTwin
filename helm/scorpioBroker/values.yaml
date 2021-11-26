@@ -1,14 +1,14 @@
 ## namespace for deployment
 # namespace: scorpio-test
 
-## environment variables for keycloak
+## environment variables for keycloak, do not modify SSL_REQUIRED
 keycloak_vars:
   KEYCLOAK_SERVER_URL:
   REALM:
-  SSL_REQUIRED:
+  SSL_REQUIRED: none
 
 ## keycloak secrets:
-keycloakSecrets:
+keycloakClientSecrets:
   historyManagerSecret:
   entityManagerSecret:
   queryManagerSecret:
