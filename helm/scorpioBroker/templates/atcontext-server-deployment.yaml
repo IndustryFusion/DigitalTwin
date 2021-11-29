@@ -23,13 +23,11 @@ spec:
     spec:
       containers:
       - image: {{ .Values.AtContextServer.image.repository }}:{{ .Values.AtContextServer.image.tag }}
-        {{- if .Values.AtContextServer.kafka_vars }}
-        env:          
+        env:
         {{- range $key, $val := .Values.kafka_vars }}
           - name: {{ $key }}
             value: {{ $val | quote }}
         {{- end }}
-        {{- end}}
         {{- if .Values.springArgs.overrideSpringArgs }}
         env:
           - name: spring_args
