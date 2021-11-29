@@ -10,13 +10,13 @@ edition = "2018"
 pancurses = "0.16.1"
 rand = "0.8.4"
 rdkafka = { version = "0.25", features = ["cmake-build"] }
-env_logger = "0.9.0"
+env_logger = "0.8.4"
 
 base64 = "0.13"
 clap = "3.0.0-beta.5"
 tokio = { version = "1.0", features = ["macros", "rt-multi-thread", "time"] }
-futures = "0.3.18"
-libc = "0.2.108"
+futures = "0.3.0"
+libc = "0.2.0"
 log = "0.4.0"
 chrono = "0.4"
 slab = "0.4"
