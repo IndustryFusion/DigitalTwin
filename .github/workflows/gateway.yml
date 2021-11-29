@@ -1,0 +1,97 @@
+name: Build Gateway
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - gateway/**
+  pull_request:
+    branches: [ main ]
+    paths:
+      - gateway/**
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check:
+    name: Check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: gateway
+    steps:
+      - uses: actions/checkout@v2
+      # NOTE: using `marcopolo/cargo` fork to support the `working-directory` attribute
+      # See: https://github.com/actions-rs/cargo/pull/59
+      - uses: marcopolo/cargo@master # actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - uses: marcopolo/cargo@master  # actions-rs/cargo@v1
+        with:
+          command: check
+          working-directory: gateway
+
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      # NOTE: using `marcopolo/cargo` fork to support the `working-directory` attribute
+      # See: https://github.com/actions-rs/cargo/pull/59
+      - uses: marcopolo/cargo@master # actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      # NOTE: using `marcopolo/cargo` fork to support the `working-directory` attribute
+      # See: https://github.com/actions-rs/cargo/pull/59
+      - uses: marcopolo/cargo@master # actions-rs/toolchain@v1
+        with:
+          command: test
+          working-directory: gateway
+
+  fmt:
+    name: Rustfmt
+    runs-on: ubuntu-latest
+    steps:
+      # NOTE: using `marcopolo/cargo` fork to support the `working-directory` attribute
+      # See: https://github.com/actions-rs/cargo/pull/59
+      - uses: actions/checkout@v2
+      - uses: marcopolo/cargo@master # actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - run: rustup component add rustfmt
+       # NOTE: using `marcopolo/cargo` fork to support the `working-directory` attribute
+      # See: https://github.com/actions-rs/cargo/pull/59
+      - uses: marcopolo/cargo@master # actions-rs/toolchain@v1
+        with:
+          command: fmt
+          working-directory: gateway
+          args: --all -- --check
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      # NOTE: using `marcopolo/cargo` fork to support the `working-directory` attribute
+      # See: https://github.com/actions-rs/cargo/pull/59
+      - uses: marcopolo/cargo@master # actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - run: rustup component add clippy
+      # NOTE: using `marcopolo/cargo` fork to support the `working-directory` attribute
+      # See: https://github.com/actions-rs/cargo/pull/59
+      - uses: marcopolo/cargo@master # actions-rs/toolchain@v1
+        with:
+          command: clippy
+          working-directory: gateway
+          args: -- -D warnings
+

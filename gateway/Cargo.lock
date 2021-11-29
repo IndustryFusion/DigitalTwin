@@ -409,9 +409,9 @@ dependencies = [
 
 [[package]]
 name = "pancurses"
-version = "0.16.1"
+version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d3058bc37c433096b2ac7afef1c5cdfae49ede0a4ffec3dfc1df1df0959d0ff0"
+checksum = "0352975c36cbacb9ee99bfb709b9db818bed43af57751797f8633649759d13db"
 dependencies = [
  "libc",
  "log",
@@ -548,9 +548,9 @@ dependencies = [
 
 [[package]]
 name = "rdkafka"
-version = "0.25.0"
+version = "0.27.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a8acd8f5c5482fdf89e8878227bafa442d8c4409f6287391c85549ca83626c27"
+checksum = "8a22ce72c78b471baba6c75bda6e03511ef2ee1bae3729902d2bb38951db1048"
 dependencies = [
  "futures",
  "libc",
@@ -565,9 +565,9 @@ dependencies = [
 
 [[package]]
 name = "rdkafka-sys"
-version = "3.0.0+1.6.0"
+version = "4.1.0+1.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ca35e95c88e08cdc643b25744e38ccee7c93c7e90d1ac6850fe74cbaa40803c3"
+checksum = "e212ccf56a2d4e0b9f874a1cad295495769e0cdbabe60e02b4f654d369a2d6a1"
 dependencies = [
  "cmake",
  "libc",
@@ -703,9 +703,9 @@ dependencies = [
 
 [[package]]
 name = "tokio"
-version = "1.13.0"
+version = "1.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "588b2d10a336da58d877567cd8fb8a14b463e2104910f8132cd054b4b96e29ee"
+checksum = "70e992e41e0d2fb9f755b37446f20900f64446ef54874f40a60c78f021ac6144"
 dependencies = [
  "autocfg",
  "num_cpus",
@@ -715,9 +715,9 @@ dependencies = [
 
 [[package]]
 name = "tokio-macros"
-version = "1.5.1"
+version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "114383b041aa6212c579467afa0075fbbdd0718de036100bc0ba7961d8cb9095"
+checksum = "c9efc1aba077437943f7515666aa2b882dfabfbfdf89c819ea75a8d6e9eaba5e"
 dependencies = [
  "proc-macro2",
  "quote",
