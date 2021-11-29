@@ -15,6 +15,11 @@ keycloakClientSecrets:
   subscriptionManagerSecret:
   registryManagerSecret:
 
+## environment variables for adapter service
+adapter_vars:
+  scorpioEntityDbTopic: dbserver2.public.entity
+  consumerGroupId: scorpio-group
+
 postgres_vars:
   POSTGRES_SERVICE: postgres
   POSTGRES_PORT: 5432
@@ -32,7 +37,7 @@ kafka_vars:
 
 ## credentials for private docker repo
 imageCredentials:
-  name: ibn40-fusionreadonly
+  name: ibn40-dockerhub-creds
   registry: https://index.docker.io/v1/
   username:
   password:
@@ -41,6 +46,69 @@ imageCredentials:
 springArgs:
   overrideSpringArgs: false
   value: >
+
+################################### adapter service #######################################################################
+adapter:
+## Enable the adapter deployment & service
+  enabled: true 
+  name: adapter
+## Number of adapter instances to deploy
+##
+  replicas: 1
+## Scorpio Broker adapter image version
+## Please use only latest version of docker images as few older images might not work with kubernetes. 
+##
+  image:
+   repository: ibn40/digitaltwin
+   tag: debeziumadapter
+
+
+## Specify a imagePullPolicy
+## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+##
+   pullPolicy: Always
+
+## adapter containers' resource requests and limits
+## ref: http://kubernetes.io/docs/user-guide/compute-resources/
+##
+  resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to use HPA or specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits: 
+  #   cpu: 250m
+  #   memory: 1Gi
+  # requests: 
+  #   cpu: 250m
+  #   memory: 256Mi
+  
+ 
+## Pod Security Context
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+##
+  securityContext: {}
+  
+## Pod restart policy
+  restartPolicy: Always
+
+## Pod Service Account
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+  serviceAccount:
+   enabled: false
+  ## Name of an already existing service account. Setting this value disables the automatic service account creation.
+   name: ""
+
+  terminationGracePeriodSeconds: 30
+
+## Enable HPA for adapter
+## ref: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/
+##
+  hpa:
+   enabled: true
+   minReplicas: 1
+   maxReplicas: 5
+   targetCPUUtilizationPercentage: 80
 
 ################################### Eureka Server #######################################################################
 eureka:
