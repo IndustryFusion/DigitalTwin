@@ -4,7 +4,7 @@
 ## environment variables for keycloak, do not modify SSL_REQUIRED
 keycloak_vars:
   KEYCLOAK_SERVER_URL:
-  REALM:
+  REALM: org
   SSL_REQUIRED: none
 
 ## keycloak secrets:
@@ -15,12 +15,27 @@ keycloakClientSecrets:
   subscriptionManagerSecret:
   registryManagerSecret:
 
+postgres_vars:
+  POSTGRES_SERVICE: postgres
+  POSTGRES_PORT: 5432
+
+## environment variables for kafka
+kafka_vars:
+  KAFKA_ADVERTISED_HOST_NAME: my-cluster-kafka-brokers.kafka
+  KAFKA_BOOTSTRAP: my-cluster-kafka-bootstrap.kafka
+  KAFKA_BROKERS: my-cluster-kafka-brokers.kafka
+  KAFKA_ZOOKEEPER_CONNECT: my-cluster-zookeeper-client.kafka:2181
+  KAFKA_ADVERTISED_PORT: 9092
+  KAFKA_PORT: 9092
+  KAFKA_LOG_RETENTION_MS: 10000
+  KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS: 5000
+
 ## credentials for private docker repo
 imageCredentials:
   name: ibn40-fusionreadonly
   registry: https://index.docker.io/v1/
-  username: 
-  password: 
+  username:
+  password:
 
 ################################### SpringArgs #######################################################################
 springArgs:
@@ -30,18 +45,18 @@ springArgs:
 ################################### Eureka Server #######################################################################
 eureka:
 ## Enable the eureka deployment & service
-  enabled: true 
+  enabled: true
   name: eureka
 ## Number of eureka instances to deploy
 ##
   replicas: 1
 ## Scorpio Broker eureka image version
 ## ref: https://hub.docker.com/r/scorpiobroker/scorpio
-## Please use only latest version of docker images as few older images might not work with kubernetes. 
+## Please use only latest version of docker images as few older images might not work with kubernetes.
 ##
   image:
    repository: ibn40/digitaltwin
-   tag: eureka-server_2.0.0-v3
+   tag: eureka-server_2.0.0-SNAPSHOT
 ## Specify a imagePullPolicy
 ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
 ##
@@ -55,27 +70,27 @@ eureka:
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to use HPA or specify resources, uncomment the following
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits: 
+  # limits:
   #   cpu: 250m
   #   memory: 1Gi
-  # requests: 
+  # requests:
   #   cpu: 250m
   #   memory: 256Mi
-  
+
 ## eureka containers'  readiness probes. Evaluated as a template.
 ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes
 ##
-  readinessProbe: 
+  readinessProbe:
    enabled: true
    initialDelaySeconds: 40
    failureThreshold: 6
    periodSeconds: 10
- 
+
 ## Pod Security Context
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 ##
   securityContext: {}
-  
+
 ## Pod restart policy
   restartPolicy: Always
 
@@ -100,18 +115,18 @@ eureka:
 ################################### Gateway ##########################################################################
 gateway:
 ## Enable the gateway deployment & service
-  enabled: true 
+  enabled: true
   name: gateway
 ## Number of gateway instances to deploy
 ##
   replicas: 1
 ## Scorpio Broker gateway image version
 ## ref: https://hub.docker.com/r/scorpiobroker/scorpio
-## Please use only latest version of docker images as few older images might not work with kubernetes. 
+## Please use only latest version of docker images as few older images might not work with kubernetes.
 ##
   image:
    repository: ibn40/digitaltwin
-   tag: gateway_2.0.0-v3
+   tag: gateway_2.0.0-SNAPSHOT
 ## Specify a imagePullPolicy
 ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
 ##
@@ -125,13 +140,13 @@ gateway:
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to use HPA or specify resources, uncomment the following
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits: 
+  # limits:
   #   cpu: 250m
   #   memory: 1Gi
-  # requests: 
+  # requests:
   #   cpu: 250m
   #   memory: 256Mi
-  
+
 ## gateway containers'  readiness probes. Evaluated as a template.
 ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes
 ##
@@ -140,12 +155,12 @@ gateway:
    initialDelaySeconds: 40
    failureThreshold: 6
    periodSeconds: 10
- 
+
 ## Pod Security Context
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 ##
   securityContext: {}
-  
+
 ## Pod restart policy
   restartPolicy: Always
 
@@ -177,11 +192,11 @@ AtContextServer:
   replicas: 1
 ## Scorpio Broker AtContextServer image version
 ## ref: https://hub.docker.com/r/scorpiobroker/scorpio
-## Please use only latest version of docker images as few older images might not work with kubernetes. 
+## Please use only latest version of docker images as few older images might not work with kubernetes.
 ##
   image:
    repository: ibn40/digitaltwin
-   tag: AtContextServer_2.0.0-v3
+   tag: AtContextServer_2.0.0-SNAPSHOT
 ## Specify a imagePullPolicy
 ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
 ##
@@ -195,13 +210,13 @@ AtContextServer:
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to use HPA or specify resources, uncomment the following
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits: 
+  # limits:
   #   cpu: 250m
   #   memory: 1Gi
-  # requests: 
+  # requests:
   #   cpu: 250m
   #   memory: 256Mi
-  
+
 ## AtContextServer containers'  readiness probes. Evaluated as a template.
 ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes
 ##
@@ -210,12 +225,12 @@ AtContextServer:
    initialDelaySeconds: 40
    failureThreshold: 6
    periodSeconds: 10
- 
+
 ## Pod Security Context
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 ##
   securityContext: {}
-  
+
 ## Pod restart policy
   restartPolicy: Always
 
@@ -236,22 +251,22 @@ AtContextServer:
    minReplicas: 1
    maxReplicas: 5
    targetCPUUtilizationPercentage: 80
-   
+
 ################################### ConfigServer ##########################################################################
 ConfigServer:
 ## Enable the ConfigServer deployment & service
-  enabled: true 
+  enabled: true
   name: config-server
 ## Number of ConfigServer instances to deploy
 ##
   replicas: 1
 ## Scorpio Broker ConfigServer image version
 ## ref: https://hub.docker.com/r/scorpiobroker/scorpio
-## Please use only latest version of docker images as few older images might not work with kubernetes. 
+## Please use only latest version of docker images as few older images might not work with kubernetes.
 ##
   image:
    repository: ibn40/digitaltwin
-   tag: config-server_2.0.0-v3
+   tag: config-server_2.0.0-SNAPSHOT
 ## Specify a imagePullPolicy
 ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
 ##
@@ -265,13 +280,13 @@ ConfigServer:
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to use HPA or specify resources, uncomment the following
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits: 
+  # limits:
   #   cpu: 250m
   #   memory: 1Gi
-  # requests: 
+  # requests:
   #   cpu: 250m
   #   memory: 256Mi
-  
+
 ## ConfigServer containers'  readiness probes. Evaluated as a template.
 ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes
 ##
@@ -280,12 +295,12 @@ ConfigServer:
    initialDelaySeconds: 40
    failureThreshold: 6
    periodSeconds: 10
- 
+
 ## Pod Security Context
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 ##
   securityContext: {}
-  
+
 ## Pod restart policy
   restartPolicy: Always
 
@@ -306,22 +321,22 @@ ConfigServer:
    minReplicas: 1
    maxReplicas: 5
    targetCPUUtilizationPercentage: 80
-   
+
 ################################### EntityManager ##########################################################################
 EntityManager:
 ## Enable the EntityManager deployment & service
-  enabled: true 
+  enabled: true
   name: entity-manager
 ## Number of EntityManager instances to deploy
 ##
   replicas: 1
 ## Scorpio Broker EntityManager image version
 ## ref: https://hub.docker.com/r/scorpiobroker/scorpio
-## Please use only latest version of docker images as few older images might not work with kubernetes. 
+## Please use only latest version of docker images as few older images might not work with kubernetes.
 ##
   image:
    repository: ibn40/digitaltwin
-   tag: EntityManager_2.0.0-v3
+   tag: EntityManager_2.0.0-SNAPSHOT
 ## Specify a imagePullPolicy
 ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
 ##
@@ -335,13 +350,13 @@ EntityManager:
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to use HPA or specify resources, uncomment the following
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits: 
+  # limits:
   #   cpu: 250m
   #   memory: 1Gi
-  # requests: 
+  # requests:
   #   cpu: 250m
   #   memory: 256Mi
-  
+
 ## EntityManager containers'  readiness probes. Evaluated as a template.
 ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes
 ##
@@ -350,12 +365,12 @@ EntityManager:
    initialDelaySeconds: 40
    failureThreshold: 6
    periodSeconds: 10
- 
+
 ## Pod Security Context
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 ##
   securityContext: {}
-  
+
 ## Pod restart policy
   restartPolicy: Always
 
@@ -376,22 +391,22 @@ EntityManager:
    minReplicas: 1
    maxReplicas: 5
    targetCPUUtilizationPercentage: 80
-   
+
 ################################### HistoryManager ##########################################################################
 HistoryManager:
 ## Enable the HistoryManager deployment & service
-  enabled: true  
+  enabled: true
   name: history-manager
 ## Number of HistoryManager instances to deploy
 ##
   replicas: 1
 ## Scorpio Broker HistoryManager image version
 ## ref: https://hub.docker.com/r/scorpiobroker/scorpio
-## Please use only latest version of docker images as few older images might not work with kubernetes. 
+## Please use only latest version of docker images as few older images might not work with kubernetes.
 ##
   image:
    repository: ibn40/digitaltwin
-   tag: HistoryManager_2.0.0-v3
+   tag: HistoryManager_2.0.0-SNAPSHOT
 ## Specify a imagePullPolicy
 ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
 ##
@@ -405,13 +420,13 @@ HistoryManager:
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to use HPA or specify resources, uncomment the following
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits: 
+  # limits:
   #   cpu: 250m
   #   memory: 1Gi
-  # requests: 
+  # requests:
   #   cpu: 250m
   #   memory: 256Mi
-  
+
 ## HistoryManager containers'  readiness probes. Evaluated as a template.
 ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes
 ##
@@ -420,12 +435,12 @@ HistoryManager:
    initialDelaySeconds: 40
    failureThreshold: 6
    periodSeconds: 10
- 
+
 ## Pod Security Context
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 ##
   securityContext: {}
-  
+
 ## Pod restart policy
   restartPolicy: Always
 
@@ -450,18 +465,18 @@ HistoryManager:
 ################################### QueryManager ##########################################################################
 QueryManager:
 ## Enable the QueryManager deployment & service
-  enabled: true   
+  enabled: true
   name: query-manager
 ## Number of QueryManager instances to deploy
 ##
   replicas: 1
 ## Scorpio Broker QueryManager image version
 ## ref: https://hub.docker.com/r/scorpiobroker/scorpio
-## Please use only latest version of docker images as few older images might not work with kubernetes. 
+## Please use only latest version of docker images as few older images might not work with kubernetes.
 ##
   image:
    repository: ibn40/digitaltwin
-   tag: QueryManager_2.0.0-v3
+   tag: QueryManager_2.0.0-SNAPSHOT
 ## Specify a imagePullPolicy
 ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
 ##
@@ -475,13 +490,13 @@ QueryManager:
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to use HPA or specify resources, uncomment the following
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits: 
+  # limits:
   #   cpu: 250m
   #   memory: 1Gi
-  # requests: 
+  # requests:
   #   cpu: 250m
   #   memory: 256Mi
-  
+
 ## QueryManager containers'  readiness probes. Evaluated as a template.
 ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes
 ##
@@ -490,12 +505,12 @@ QueryManager:
    initialDelaySeconds: 40
    failureThreshold: 6
    periodSeconds: 10
- 
+
 ## Pod Security Context
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 ##
   securityContext: {}
-  
+
 ## Pod restart policy
   restartPolicy: Always
 
@@ -516,22 +531,22 @@ QueryManager:
    minReplicas: 1
    maxReplicas: 5
    targetCPUUtilizationPercentage: 80
-   
+
 ################################### RegistryManager ##########################################################################
 RegistryManager:
 ## Enable the RegistryManager deployment & service
-  enabled: true   
+  enabled: true
   name: registry-manager
 ## Number of RegistryManager instances to deploy
 ##
   replicas: 1
 ## Scorpio Broker RegistryManager image version
 ## ref: https://hub.docker.com/r/scorpiobroker/scorpio
-## Please use only latest version of docker images as few older images might not work with kubernetes. 
+## Please use only latest version of docker images as few older images might not work with kubernetes.
 ##
   image:
    repository: ibn40/digitaltwin
-   tag: RegistryManager_2.0.0-v3
+   tag: RegistryManager_2.0.0-SNAPSHOT
 ## Specify a imagePullPolicy
 ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
 ##
@@ -545,13 +560,13 @@ RegistryManager:
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to use HPA or specify resources, uncomment the following
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits: 
+  # limits:
   #   cpu: 250m
   #   memory: 1Gi
-  # requests: 
+  # requests:
   #   cpu: 250m
   #   memory: 256Mi
-  
+
 ## RegistryManager containers'  readiness probes. Evaluated as a template.
 ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes
 ##
@@ -560,12 +575,12 @@ RegistryManager:
    initialDelaySeconds: 40
    failureThreshold: 6
    periodSeconds: 10
- 
+
 ## Pod Security Context
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 ##
   securityContext: {}
-  
+
 ## Pod restart policy
   restartPolicy: Always
 
@@ -590,18 +605,18 @@ RegistryManager:
 ################################### StorageManager ##########################################################################
 StorageManager:
 ## Enable the StorageManager deployment & service
-  enabled: true  
+  enabled: true
   name: storage-manager
 ## Number of StorageManager instances to deploy
 ##
   replicas: 1
 ## Scorpio Broker StorageManager image version
 ## ref: https://hub.docker.com/r/scorpiobroker/scorpio
-## Please use only latest version of docker images as few older images might not work with kubernetes. 
+## Please use only latest version of docker images as few older images might not work with kubernetes.
 ##
   image:
    repository: ibn40/digitaltwin
-   tag: StorageManager_2.0.0-v3
+   tag: StorageManager_2.0.0-SNAPSHOT
 ## Specify a imagePullPolicy
 ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
 ##
@@ -615,13 +630,13 @@ StorageManager:
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to use HPA or specify resources, uncomment the following
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits: 
+  # limits:
   #   cpu: 250m
   #   memory: 1Gi
-  # requests: 
+  # requests:
   #   cpu: 250m
   #   memory: 256Mi
-  
+
 ## StorageManager containers'  readiness probes. Evaluated as a template.
 ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes
 ##
@@ -630,12 +645,12 @@ StorageManager:
    initialDelaySeconds: 40
    failureThreshold: 6
    periodSeconds: 10
- 
+
 ## Pod Security Context
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 ##
   securityContext: {}
-  
+
 ## Pod restart policy
   restartPolicy: Always
 
@@ -656,23 +671,23 @@ StorageManager:
    minReplicas: 1
    maxReplicas: 5
    targetCPUUtilizationPercentage: 80
-   
+
 
 ################################### SubscriptionManager ##########################################################################
 SubscriptionManager:
 ## Enable the SubscriptionManager deployment & service
-  enabled: true   
+  enabled: true
   name: subscription-manager
 ## Number of SubscriptionManager instances to deploy
 ##
   replicas: 1
 ## Scorpio Broker SubscriptionManager image version
 ## ref: https://hub.docker.com/r/scorpiobroker/scorpio
-## Please use only latest version of docker images as few older images might not work with kubernetes. 
+## Please use only latest version of docker images as few older images might not work with kubernetes.
 ##
   image:
    repository: ibn40/digitaltwin
-   tag: SubscriptionManager_2.0.0-v3
+   tag: SubscriptionManager_2.0.0-SNAPSHOT
 ## Specify a imagePullPolicy
 ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
 ##
@@ -686,13 +701,13 @@ SubscriptionManager:
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to use HPA or specify resources, uncomment the following
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits: 
+  # limits:
   #   cpu: 250m
   #   memory: 1Gi
-  # requests: 
+  # requests:
   #   cpu: 250m
   #   memory: 256Mi
-  
+
 ## SubscriptionManager containers'  readiness probes. Evaluated as a template.
 ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes
 ##
@@ -701,12 +716,12 @@ SubscriptionManager:
    initialDelaySeconds: 40
    failureThreshold: 6
    periodSeconds: 10
- 
+
 ## Pod Security Context
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 ##
   securityContext: {}
-  
+
 ## Pod restart policy
   restartPolicy: Always
 
