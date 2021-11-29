@@ -40,12 +40,10 @@ spec:
           - name: {{ $key }}
             value: {{ $val | quote }}
         {{- end }}
-        {{- if .Values.QueryManager.kafka_vars }}
         {{- range $key, $val := .Values.kafka_vars }}
           - name: {{ $key }}
             value: {{ $val | quote }}
         {{- end }}
-        {{- end}}
         {{- if .Values.springArgs.overrideSpringArgs }}
         env:
           - name: spring_args
