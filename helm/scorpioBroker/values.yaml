@@ -17,8 +17,8 @@ keycloakClientSecrets:
 
 ## environment variables for adapter service
 adapter_vars:
-  scorpioEntityDbTopic: dbserver2.public.entity
-  consumerGroupId: scorpio-group
+  SCORPIO_ENTITY_DB_TOPIC: dbserver2.public.entity
+  CONSUMER_GROUP_ID: scorpio-group
 
 postgres_vars:
   POSTGRES_SERVICE: postgres

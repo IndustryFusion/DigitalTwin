@@ -24,14 +24,14 @@ spec:
       containers:
       - image: {{ .Values.adapter.image.repository }}:{{ .Values.adapter.image.tag }}
         env:
-          - name: SCORPIO_ENTITY_DB_TOPIC
-            value: {{ .Values.adapter_vars.scorpioEntityDbTopic }}
-          - name: CONSUMER_GROUP_ID
-            value: {{ .Values.adapter_vars.consumerGroupId }}
-          - name: KAFKA_BROKERS
-            value: {{ .Values.kafka_vars.KAFKA_BROKERS }}
-          - name: KAFKA_PORT
-            value: {{ quote .Values.kafka_vars.KAFKA_PORT }}
+        {{- range $key, $val := .Values.adapter_vars }}
+          - name: {{ $key }}
+            value: {{ $val | quote }}
+        {{- end }}
+        {{- range $key, $val := .Values.kafka_vars }}
+          - name: {{ $key }}
+            value: {{ $val | quote }}
+        {{- end }}
         imagePullPolicy: {{ .Values.adapter.image.pullPolicy }}
         name: {{ .Values.adapter.name }}
         ports:

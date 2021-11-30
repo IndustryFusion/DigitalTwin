@@ -27,7 +27,6 @@ spec:
           - name: CLIENT_ID
             value: {{ .Values.QueryManager.name }}
           - name: CLIENT_SECRET
-            # value: 1ffe8aaa-6681-44a4-9251-a7b9ca79ea2a
             valueFrom:
               secretKeyRef:
                 name: keycloak-secrets

@@ -27,7 +27,6 @@ spec:
           - name: CLIENT_ID
             value: {{ .Values.EntityManager.name }}
           - name: CLIENT_SECRET
-            # value: 9d93ef35-725a-4452-9c2e-cb280abe7fd1
             valueFrom:
               secretKeyRef:
                 name: keycloak-secrets
