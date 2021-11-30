@@ -1,0 +1,8 @@
+spring:
+  kafka:
+    producer:
+      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVER}:9092
+    consumer:
+      topic: ${SCORPIO_ENTITY_DB_TOPIC}
+      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVER}:9092
+      group-id: ${CONSUMER_GROUP_ID}
