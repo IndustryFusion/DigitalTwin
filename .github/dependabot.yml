@@ -8,7 +8,7 @@ updates:
   - package-ecosystem: "cargo"
     directory: "gateway/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
     assignees:
       - "sysarcher"
       - "wagmarcel"
