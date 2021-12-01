@@ -1,0 +1,50 @@
+{{- if .Values.adapter.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    service: {{ .Values.adapter.name }}
+  name: {{ .Values.adapter.name }}
+  # namespace: {{.Values.namespace}}
+spec:
+  replicas: {{ .Values.adapter.replicas }}
+  selector:
+    matchLabels:
+      service: {{ .Values.adapter.name }}
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        service: {{ .Values.adapter.name }}
+    spec:
+      containers:
+      - image: {{ .Values.adapter.image.repository }}:{{ .Values.adapter.image.tag }}
+        env:
+        {{- range $key, $val := .Values.adapter_vars }}
+          - name: {{ $key }}
+            value: {{ $val | quote }}
+        {{- end }}
+        {{- range $key, $val := .Values.kafka_vars }}
+          - name: {{ $key }}
+            value: {{ $val | quote }}
+        {{- end }}
+        imagePullPolicy: {{ .Values.adapter.image.pullPolicy }}
+        name: {{ .Values.adapter.name }}
+        ports:
+        - containerPort: 5000
+        resources:
+{{ toYaml .Values.adapter.resources | indent 10 }}
+      restartPolicy: {{ .Values.adapter.restartPolicy }}
+      {{- if .Values.adapter.serviceAccount.enabled }}
+      serviceAccountName: {{ .Values.adapter.serviceAccount.name }}
+      {{- end}}
+      securityContext: {{ .Values.adapter.securityContext | toYaml }}
+      terminationGracePeriodSeconds: {{ .Values.adapter.terminationGracePeriodSeconds }}
+      imagePullSecrets:
+        - name: {{ .Values.imageCredentials.name }}
+status: {}
+{{- end }}

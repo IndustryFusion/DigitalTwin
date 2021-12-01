@@ -1,0 +1,10 @@
+imageCredentials:
+  username:
+  password:
+
+keycloakClientSecrets:
+  historyManagerSecret:
+  entityManagerSecret:
+  queryManagerSecret:
+  subscriptionManagerSecret:
+  registryManagerSecret:
