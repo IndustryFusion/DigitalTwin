@@ -1,4 +1,4 @@
-curl -X POST -H "Accept:application/json" -H "Content-Type:application/json" localhost:8083/connectors/ -d 
+curl -X POST -H "Accept:application/json" -H "Content-Type:application/json" localhost:8083/connectors/ -d \
 '{
  "name": "scorpio-connector",
  "config": {
@@ -10,7 +10,7 @@ curl -X POST -H "Accept:application/json" -H "Content-Type:application/json" loc
  "database.user": "ngb",
  "database.password": "ngb",
  "database.dbname" : "ngb",
- "database.server.name": "dbserver1",
+ "database.server.name": "pgserver",
  "key.converter": "org.apache.kafka.connect.json.JsonConverter",
  "value.converter": "org.apache.kafka.connect.json.JsonConverter",
  "key.converter.schemas.enable": "false",
