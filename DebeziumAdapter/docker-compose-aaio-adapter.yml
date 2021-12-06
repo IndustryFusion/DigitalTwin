@@ -48,17 +48,21 @@ services:
       - zookeeper
       - kafka
   scorpio:
-    image: scorpiobroker/scorpio:scorpio-aaio_1.0.0-SNAPSHOT
+    image: scorpiobroker/scorpio:scorpio-aaio_latest
     ports:
       - "9090:9090"
     depends_on:
       - kafka
       - postgres
-
-  Adapter:
-    image: debeziumbridge
+  adapter:
+    image: ibn40/digitaltwin:debeziumbridge
     ports:
       - "5000:5000"
+    environment:
+      - KAFKA_BROKERS=kafka
+      - KAFKA_PORT=9092
+      - CONSUMER_GROUP_ID=scorpio-group
+      - SCORPIO_ENTITY_DB_TOPIC=pgserver.public.entity
     depends_on:
       - kafka
       - postgres
