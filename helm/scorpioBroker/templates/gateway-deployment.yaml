@@ -58,7 +58,10 @@ spec:
       {{- if .Values.gateway.serviceAccount.enabled }}
       serviceAccountName: {{ .Values.gateway.serviceAccount.name }}
       {{- end}}
-      securityContext: {{ .Values.gateway.securityContext | toYaml }}
+      {{- if .Values.gateway.securityContext.enabled }}
+      securityContext:
+{{ toYaml .Values.gateway.securityContext.settings | indent 8 }}
+      {{- end}}
       terminationGracePeriodSeconds: {{ .Values.gateway.terminationGracePeriodSeconds }}
       imagePullSecrets:
         - name: {{ .Values.imageCredentials.name }}

@@ -63,7 +63,10 @@ spec:
       {{- if .Values.AtContextServer.serviceAccount.enabled }}
       serviceAccountName: {{ .Values.AtContextServer.serviceAccount.name }}
       {{- end}}
-      securityContext: {{ .Values.AtContextServer.securityContext | toYaml }}
+      {{- if .Values.AtContextServer.securityContext.enabled }}
+      securityContext:
+{{ toYaml .Values.AtContextServer.securityContext.settings | indent 8 }}
+      {{- end}}
       terminationGracePeriodSeconds: {{ .Values.AtContextServer.terminationGracePeriodSeconds }}
       imagePullSecrets:
         - name: {{ .Values.imageCredentials.name }}

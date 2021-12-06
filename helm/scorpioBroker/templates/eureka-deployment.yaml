@@ -51,7 +51,10 @@ spec:
       {{- if .Values.eureka.serviceAccount.enabled }}
       serviceAccountName: {{ .Values.eureka.serviceAccount.name }}
       {{- end}}
-      securityContext: {{ .Values.eureka.securityContext | toYaml }}
+      {{- if .Values.eureka.securityContext.enabled }}
+      securityContext:
+{{ toYaml .Values.eureka.securityContext.settings | indent 8 }}
+      {{- end}}
       terminationGracePeriodSeconds: {{ .Values.eureka.terminationGracePeriodSeconds }}
       imagePullSecrets:
         - name: {{ .Values.imageCredentials.name }}

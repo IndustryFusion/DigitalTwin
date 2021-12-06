@@ -78,7 +78,10 @@ spec:
       {{- if .Values.QueryManager.serviceAccount.enabled }}
       serviceAccountName: {{ .Values.QueryManager.serviceAccount.name }}
       {{- end}}
-      securityContext: {{ .Values.QueryManager.securityContext | toYaml }}
+      {{- if .Values.QueryManager.securityContext.enabled }}
+      securityContext:
+{{ toYaml .Values.QueryManager.securityContext.settings | indent 8 }}
+      {{- end}}
       terminationGracePeriodSeconds: {{ .Values.QueryManager.terminationGracePeriodSeconds }}
       imagePullSecrets:
         - name: {{ .Values.imageCredentials.name }}

@@ -67,7 +67,10 @@ spec:
       {{- if .Values.StorageManager.serviceAccount.enabled }}
       serviceAccountName: {{ .Values.StorageManager.serviceAccount.name }}
       {{- end}}
-      securityContext: {{ .Values.StorageManager.securityContext | toYaml }}
+      {{- if .Values.StorageManager.securityContext.enabled }}
+      securityContext:
+{{ toYaml .Values.StorageManager.securityContext.settings | indent 8 }}
+      {{- end}}
       terminationGracePeriodSeconds: {{ .Values.StorageManager.terminationGracePeriodSeconds }}
       imagePullSecrets:
         - name: {{ .Values.imageCredentials.name }}

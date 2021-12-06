@@ -78,7 +78,10 @@ spec:
       {{- if .Values.RegistryManager.serviceAccount.enabled }}
       serviceAccountName: {{ .Values.RegistryManager.serviceAccount.name }}
       {{- end}}
-      securityContext: {{ .Values.RegistryManager.securityContext | toYaml }}
+      {{- if .Values.RegistryManager.securityContext.enabled }}
+      securityContext:
+{{ toYaml .Values.RegistryManager.securityContext.settings | indent 8 }}
+      {{- end}}
       terminationGracePeriodSeconds: {{ .Values.RegistryManager.terminationGracePeriodSeconds }}
       imagePullSecrets:
         - name: {{ .Values.imageCredentials.name }}
