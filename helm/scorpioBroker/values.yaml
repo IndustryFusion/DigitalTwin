@@ -17,7 +17,7 @@ keycloakClientSecrets:
 
 ## environment variables for adapter service
 adapter_vars:
-  SCORPIO_ENTITY_DB_TOPIC: dbserver2.public.entity
+  SCORPIO_ENTITY_DB_TOPIC: pgserver.public.entity
   CONSUMER_GROUP_ID: scorpio-group
 
 postgres_vars:
@@ -817,7 +817,7 @@ SubscriptionManager:
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 ##
   securityContext:
-    enabled: true
+    enabled: false
     settings:
       runAsNonRoot: true
       runAsUser: 1001
