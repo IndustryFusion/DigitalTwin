@@ -9,7 +9,6 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import java.util.Iterator;
-import java.util.Set;
 import org.apache.kafka.common.KafkaException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -47,14 +46,18 @@ public class DebeziumProcessor {
             String output_topic = "entity_";
             if (entity.get("after") != null) {
                 output_topic += (String) ((JSONObject) entity.get("after")).get("type");
-            } else if (entity.get("before") != null)
+            } else if (entity.get("before") != null) {
                 output_topic += (String) ((JSONObject) entity.get("before")).get("type");
-            else
+            } else {
                 output_topic += "errors";
+            }
             send(entity, output_topic);
         }
     }
 
+    /*
+     * Method to get key value pair from debezium json
+     */
     public JSONObject processDebeziumData(JSONObject entity) {
         try {
             if (!entity.get("after").equals(null))
@@ -72,7 +75,7 @@ public class DebeziumProcessor {
     }
 
     /*
-     * Method to get key value pair from debezium json
+     * Method to get key value pair from a debezium json feild.
      */
     protected JSONObject processEntity(HashMap<String, Object> fieldjson) throws Exception {
         logger.debug("Payload processing started :: " + fieldjson.get("id"));
@@ -81,25 +84,26 @@ public class DebeziumProcessor {
         if (fieldjson.get("type") != null)
             requiredfield.put("type", resolve((String) fieldjson.get("type")));
         if (fieldjson.get("context") != null) {
-            String context = (String) fieldjson.get("context");
-            requiredfield.put("@context", parser.parse(context));
+            requiredfield.put("@context", parser.parse((String) fieldjson.get("context")));
         }
         if (fieldjson.get("kvdata") == null)
             return requiredfield;
         JSONObject kvjson = (JSONObject) parser.parse((String) fieldjson.get("kvdata"));
         kvjson.remove("@id");
         kvjson.remove("@type");
+        JSONArray newarray;
         for (Iterator keys = kvjson.keySet().iterator(); keys.hasNext();) {
             String key = (String) keys.next();
             logger.debug("Processing Payload key " + key);
             if (kvjson.get(key).getClass().getSimpleName().equals("String")) {
-                requiredfield.put(resolve(key), kvjson.get(key));
+                newarray = processString((String) kvjson.get(key));
+                requiredfield.put(resolve(key), ((newarray.size() == 1) ? newarray.get(0) : newarray));
             } else if (kvjson.get(key).getClass().getSimpleName().equals("JSONArray")) {
-                JSONArray newarray = processArray((JSONArray) kvjson.get(key));
-                if (newarray.size() == 1)
-                    requiredfield.put(resolve(key), newarray.get(0));
-                else
-                    requiredfield.put(resolve(key), newarray);
+                newarray = processArray((JSONArray) kvjson.get(key));
+                requiredfield.put(resolve(key), ((newarray.size() == 1) ? newarray.get(0) : newarray));
+            } else if (kvjson.get(key).getClass().getSimpleName().equals("JSONObject")) {
+                newarray = processObject((JSONObject) kvjson.get(key));
+                requiredfield.put(resolve(key), ((newarray.size() == 1) ? newarray.get(0) : newarray));
             } else {
                 requiredfield.put(resolve(key), kvjson.get(key));
             }
@@ -109,64 +113,88 @@ public class DebeziumProcessor {
     }
 
     /*
+     * Method to fetch the values from json string
+     */
+    private JSONArray processString(String objstr) {
+        logger.trace("inside processString()");
+        JSONArray result = new JSONArray();
+        try {
+            Object obj = parser.parse(objstr);
+            JSONArray newarray;
+            if (obj.getClass().getSimpleName().equals("JSONArray")) {
+                newarray = processArray((JSONArray) obj);
+                result.add(((newarray.size() == 1) ? newarray.get(0) : newarray));
+            }
+            if (obj.getClass().getSimpleName().equals("JSONObject")) {
+                newarray = processObject((JSONObject) obj);
+                result.add(((newarray.size() == 1) ? newarray.get(0) : newarray));
+            }
+        } catch (Exception e) {
+            result.add(objstr);
+        }
+        logger.trace("processString() completed");
+        return result;
+    }
+
+    /*
+     * Method to fetch the values from json object
+     */
+    private JSONArray processObject(JSONObject obj) {
+        logger.trace("inside processObject()");
+        JSONArray result = new JSONArray();
+        JSONArray newarray;
+        for (Iterator keys = obj.keySet().iterator(); keys.hasNext();) {
+            String key = (String) keys.next();
+            String resolvekey = resolve(key);
+            if (resolvekey.equals("type") || resolvekey.equals("createdAt") || resolvekey.equals("modifiedAt")) {
+                continue;
+            } else if (obj.get(key).getClass().getSimpleName().equals("String")) {
+                newarray = processString((String) obj.get(key));
+                result.add(((newarray.size() == 1) ? newarray.get(0) : newarray));
+            } else if (obj.get(key).getClass().getSimpleName().equals("JSONArray")) {
+                newarray = processArray((JSONArray) obj.get(key));
+                result.add(((newarray.size() == 1) ? newarray.get(0) : newarray));
+            } else if (obj.get(key).getClass().getSimpleName().equals("JSONObject")) {
+                newarray = processObject((JSONObject) obj.get(key));
+                result.add(((newarray.size() == 1) ? newarray.get(0) : newarray));
+            } else {
+                result.add(obj.get(key));
+            }
+        }
+        logger.trace("processObject() completed");
+        return result;
+    }
+
+    /*
      * Method to fetch the values from json array
      */
     private JSONArray processArray(JSONArray array) {
         logger.trace("inside processArray()");
-        JSONArray newarray = new JSONArray();
+        JSONArray result = new JSONArray();
+        JSONArray newarray;
         for (int i = 0; i < array.size(); i++) {
             if (array.get(i).getClass().getSimpleName().equals("String")) {
-                newarray.add(resolve((String) array.get(i)));
+                newarray = processString((String) array.get(i));
+                result.add(((newarray.size() == 1) ? newarray.get(0) : newarray));
+            } else if (array.get(i).getClass().getSimpleName().equals("JSONArray")) {
+                newarray = processArray((JSONArray) array.get(i));
+                result.add(((newarray.size() == 1) ? newarray.get(0) : newarray));
             } else if (array.get(i).getClass().getSimpleName().equals("JSONObject")) {
-                JSONObject tmp = (JSONObject) array.get(i);
-                tmp = resolveObject(tmp);
-                for (Iterator tmpkeys = tmp.keySet().iterator(); tmpkeys.hasNext();) {
-                    String itrkey = (String) tmpkeys.next();
-                    try {
-                        JSONObject obj1 = (JSONObject) parser.parse((String) tmp.get(itrkey));
-                        obj1 = resolveObject(obj1);
-                        int size = obj1.keySet().size();
-                        if (size == 1)
-                            newarray.add(obj1.values().iterator().next());
-                        else
-                            newarray.add(obj1.values());
-                    } catch (Exception e) {
-                        newarray.add(tmp.get(itrkey));
-                    }
-                }
+                newarray = processObject((JSONObject) array.get(i));
+                result.add(((newarray.size() == 1) ? newarray.get(0) : newarray));
             } else {
-                newarray.add(array.get(i));
+                result.add(array.get(i));
             }
         }
         logger.trace("processArray() completed");
-        return newarray;
-    }
-
-    /*
-     * Method to make JSONObject simple
-     */
-    private JSONObject resolveObject(JSONObject obj) {
-        Set objkeys = obj.keySet();
-        if (objkeys.contains("type"))
-            obj.remove("type");
-        if (objkeys.contains("@type"))
-            obj.remove("@type");
-        if (objkeys.contains("createdAt"))
-            obj.remove("createdAt");
-        if (objkeys.contains("@createdAt"))
-            obj.remove("@createdAt");
-        if (objkeys.contains("modifiedAt"))
-            obj.remove("modifiedAt");
-        if (objkeys.contains("@modifiedAt"))
-            obj.remove("@modifiedAt");
-        return obj;
+        return result;
     }
 
     /*
      * Method to fetch the type , relationship
      */
     private String resolve(String key) {
-        String key_list[] = key.split("(:)|(#)|(/)|(@)");
+        String key_list[] = key.split("(:)|(#)|(/)|(@)|(//)");
         String new_key = key_list[key_list.length - 1];
         return new_key;
     }
