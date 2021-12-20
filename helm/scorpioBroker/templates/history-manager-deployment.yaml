@@ -78,7 +78,10 @@ spec:
       {{- if .Values.HistoryManager.serviceAccount.enabled }}
       serviceAccountName: {{ .Values.HistoryManager.serviceAccount.name }}
       {{- end}}
-      securityContext: {{ .Values.HistoryManager.securityContext | toYaml }}
+      {{- if .Values.HistoryManager.securityContext.enabled }}
+      securityContext:
+{{ toYaml .Values.HistoryManager.securityContext.settings | indent 8 }}
+      {{- end}}
       terminationGracePeriodSeconds: {{ .Values.HistoryManager.terminationGracePeriodSeconds }}
       imagePullSecrets:
         - name: {{ .Values.imageCredentials.name }}

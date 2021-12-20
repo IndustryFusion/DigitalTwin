@@ -17,7 +17,7 @@ keycloakClientSecrets:
 
 ## environment variables for adapter service
 adapter_vars:
-  SCORPIO_ENTITY_DB_TOPIC: dbserver2.public.entity
+  SCORPIO_ENTITY_DB_TOPIC: pgserver.public.entity
   CONSUMER_GROUP_ID: scorpio-group
 
 postgres_vars:
@@ -68,6 +68,17 @@ adapter:
 ##
    pullPolicy: Always
 
+## Pod Security Context
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+##
+  securityContext:
+    enabled: true
+    settings:
+      runAsNonRoot: true
+      runAsUser: 1001
+      # runAsGroup: 1001
+
+
 ## adapter containers' resource requests and limits
 ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
 ##
@@ -83,11 +94,7 @@ adapter:
   #   cpu: 250m
   #   memory: 256Mi
   
- 
-## Pod Security Context
-## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-##
-  securityContext: {}
+
   
 ## Pod restart policy
   restartPolicy: Always
@@ -130,6 +137,16 @@ eureka:
 ##
    pullPolicy: Always
 
+## Pod Security Context
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+##
+  securityContext:
+    enabled: true
+    settings:
+      runAsNonRoot: true
+      runAsUser: 1001
+      # runAsGroup: 1001
+
 ## eureka containers' resource requests and limits
 ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
 ##
@@ -153,11 +170,6 @@ eureka:
    initialDelaySeconds: 40
    failureThreshold: 6
    periodSeconds: 10
-
-## Pod Security Context
-## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-##
-  securityContext: {}
 
 ## Pod restart policy
   restartPolicy: Always
@@ -200,6 +212,16 @@ gateway:
 ##
    pullPolicy: Always
 
+## Pod Security Context
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+##
+  securityContext:
+    enabled: true
+    settings:
+      runAsNonRoot: true
+      runAsUser: 1001
+      # runAsGroup: 1001
+
 ## gateway containers' resource requests and limits
 ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
 ##
@@ -223,11 +245,6 @@ gateway:
    initialDelaySeconds: 40
    failureThreshold: 6
    periodSeconds: 10
-
-## Pod Security Context
-## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-##
-  securityContext: {}
 
 ## Pod restart policy
   restartPolicy: Always
@@ -270,6 +287,16 @@ AtContextServer:
 ##
    pullPolicy: Always
 
+## Pod Security Context
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+##
+  securityContext:
+    enabled: true
+    settings:
+      runAsNonRoot: true
+      runAsUser: 1001
+      # runAsGroup: 1001
+
 ## AtContextServer containers' resource requests and limits
 ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
 ##
@@ -293,11 +320,6 @@ AtContextServer:
    initialDelaySeconds: 40
    failureThreshold: 6
    periodSeconds: 10
-
-## Pod Security Context
-## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-##
-  securityContext: {}
 
 ## Pod restart policy
   restartPolicy: Always
@@ -340,6 +362,16 @@ ConfigServer:
 ##
    pullPolicy: Always
 
+## Pod Security Context
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+##
+  securityContext:
+    enabled: true
+    settings:
+      runAsNonRoot: true
+      runAsUser: 1001
+      # runAsGroup: 1001
+
 ## ConfigServer containers' resource requests and limits
 ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
 ##
@@ -363,11 +395,6 @@ ConfigServer:
    initialDelaySeconds: 40
    failureThreshold: 6
    periodSeconds: 10
-
-## Pod Security Context
-## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-##
-  securityContext: {}
 
 ## Pod restart policy
   restartPolicy: Always
@@ -410,6 +437,16 @@ EntityManager:
 ##
    pullPolicy: Always
 
+## Pod Security Context
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+##
+  securityContext:
+    enabled: true
+    settings:
+      runAsNonRoot: true
+      runAsUser: 1001
+      # runAsGroup: 1001
+
 ## EntityManager containers' resource requests and limits
 ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
 ##
@@ -433,11 +470,6 @@ EntityManager:
    initialDelaySeconds: 40
    failureThreshold: 6
    periodSeconds: 10
-
-## Pod Security Context
-## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-##
-  securityContext: {}
 
 ## Pod restart policy
   restartPolicy: Always
@@ -480,6 +512,16 @@ HistoryManager:
 ##
    pullPolicy: Always
 
+## Pod Security Context
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+##
+  securityContext:
+    enabled: true
+    settings:
+      runAsNonRoot: true
+      runAsUser: 1001
+      # runAsGroup: 1001
+
 ## HistoryManager containers' resource requests and limits
 ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
 ##
@@ -503,11 +545,6 @@ HistoryManager:
    initialDelaySeconds: 40
    failureThreshold: 6
    periodSeconds: 10
-
-## Pod Security Context
-## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-##
-  securityContext: {}
 
 ## Pod restart policy
   restartPolicy: Always
@@ -550,6 +587,16 @@ QueryManager:
 ##
    pullPolicy: Always
 
+## Pod Security Context
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+##
+  securityContext:
+    enabled: true
+    settings:
+      runAsNonRoot: true
+      runAsUser: 1001
+      # runAsGroup: 1001
+
 ## QueryManager containers' resource requests and limits
 ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
 ##
@@ -573,11 +620,6 @@ QueryManager:
    initialDelaySeconds: 40
    failureThreshold: 6
    periodSeconds: 10
-
-## Pod Security Context
-## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-##
-  securityContext: {}
 
 ## Pod restart policy
   restartPolicy: Always
@@ -620,6 +662,16 @@ RegistryManager:
 ##
    pullPolicy: Always
 
+## Pod Security Context
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+##
+  securityContext:
+    enabled: true
+    settings:
+      runAsNonRoot: true
+      runAsUser: 1001
+      # runAsGroup: 1001
+
 ## RegistryManager containers' resource requests and limits
 ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
 ##
@@ -643,11 +695,6 @@ RegistryManager:
    initialDelaySeconds: 40
    failureThreshold: 6
    periodSeconds: 10
-
-## Pod Security Context
-## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-##
-  securityContext: {}
 
 ## Pod restart policy
   restartPolicy: Always
@@ -690,6 +737,16 @@ StorageManager:
 ##
    pullPolicy: Always
 
+## Pod Security Context
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+##
+  securityContext:
+    enabled: true
+    settings:
+      runAsNonRoot: true
+      runAsUser: 1001
+      # runAsGroup: 1001
+
 ## StorageManager containers' resource requests and limits
 ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
 ##
@@ -713,11 +770,6 @@ StorageManager:
    initialDelaySeconds: 40
    failureThreshold: 6
    periodSeconds: 10
-
-## Pod Security Context
-## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-##
-  securityContext: {}
 
 ## Pod restart policy
   restartPolicy: Always
@@ -761,6 +813,16 @@ SubscriptionManager:
 ##
    pullPolicy: Always
 
+## Pod Security Context
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+##
+  securityContext:
+    enabled: false
+    settings:
+      runAsNonRoot: true
+      runAsUser: 1001
+      # runAsGroup: 1001
+
 ## SubscriptionManager containers' resource requests and limits
 ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
 ##
@@ -784,11 +846,6 @@ SubscriptionManager:
    initialDelaySeconds: 40
    failureThreshold: 6
    periodSeconds: 10
-
-## Pod Security Context
-## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-##
-  securityContext: {}
 
 ## Pod restart policy
   restartPolicy: Always

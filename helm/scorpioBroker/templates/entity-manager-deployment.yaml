@@ -78,7 +78,10 @@ spec:
       {{- if .Values.EntityManager.serviceAccount.enabled }}
       serviceAccountName: {{ .Values.EntityManager.serviceAccount.name }}
       {{- end}}
-      securityContext: {{ .Values.EntityManager.securityContext | toYaml }}
+      {{- if .Values.EntityManager.securityContext.enabled }}
+      securityContext:
+{{ toYaml .Values.EntityManager.securityContext.settings | indent 8 }}
+      {{- end}}
       terminationGracePeriodSeconds: {{ .Values.EntityManager.terminationGracePeriodSeconds }}
       imagePullSecrets:
         - name: {{ .Values.imageCredentials.name }}

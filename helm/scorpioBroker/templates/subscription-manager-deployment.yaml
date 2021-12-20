@@ -78,7 +78,10 @@ spec:
       {{- if .Values.SubscriptionManager.serviceAccount.enabled }}
       serviceAccountName: {{ .Values.SubscriptionManager.serviceAccount.name }}
       {{- end}}
-      securityContext: {{ .Values.SubscriptionManager.securityContext | toYaml }}
+      {{- if .Values.SubscriptionManager.securityContext.enabled }}
+      securityContext:
+{{ toYaml .Values.SubscriptionManager.securityContext.settings | indent 8 }}
+      {{- end}}
       terminationGracePeriodSeconds: {{ .Values.SubscriptionManager.terminationGracePeriodSeconds }}
       imagePullSecrets:
         - name: {{ .Values.imageCredentials.name }}
