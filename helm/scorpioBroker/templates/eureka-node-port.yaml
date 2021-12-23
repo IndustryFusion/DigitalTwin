@@ -5,7 +5,7 @@ metadata:
   labels:
     service: {{ .Values.eureka.name }}
   name: {{ .Values.eureka.name }}-node-port
-  # namespace: {{.Values.namespace}}
+  namespace: {{ .Release.Namespace }}
 spec:
   type: NodePort
   ports:

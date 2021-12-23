@@ -5,7 +5,7 @@ metadata:
   labels:
     service: {{ .Values.ConfigServer.name }}
   name: {{ .Values.ConfigServer.name }}
-  # namespace: {{.Values.namespace}}
+  namespace: {{ .Release.Namespace }}
 spec:
   ports:
   - name: "8888"

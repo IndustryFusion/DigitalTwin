@@ -5,7 +5,7 @@ metadata:
   labels:
     service: {{ .Values.QueryManager.name }}
   name: {{ .Values.QueryManager.name }}
-  # namespace: {{.Values.namespace}}
+  namespace: {{ .Release.Namespace }}
 spec:
   ports:
   - name: "1026"

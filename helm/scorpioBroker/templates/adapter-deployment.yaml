@@ -5,7 +5,7 @@ metadata:
   labels:
     service: {{ .Values.adapter.name }}
   name: {{ .Values.adapter.name }}
-  # namespace: {{.Values.namespace}}
+  namespace: {{ .Release.Namespace }}
 spec:
   replicas: {{ .Values.adapter.replicas }}
   selector:
