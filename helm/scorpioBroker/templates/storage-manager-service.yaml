@@ -5,7 +5,7 @@ metadata:
   labels:
     service: {{ .Values.StorageManager.name }}
   name: {{ .Values.StorageManager.name }}
-  # namespace: {{.Values.namespace}}
+  namespace: {{ .Release.Namespace }}
 spec:
   ports:
   - name: "1029"

@@ -1,6 +1,3 @@
-## namespace for deployment
-# namespace: scorpio-test
-
 ## environment variables for keycloak, do not modify SSL_REQUIRED
 keycloak_vars:
   KEYCLOAK_SERVER_URL:
@@ -20,16 +17,19 @@ adapter_vars:
   SCORPIO_ENTITY_DB_TOPIC: pgserver.public.entity
   CONSUMER_GROUP_ID: scorpio-group
 
+## environment variables for postgres
 postgres_vars:
-  POSTGRES_SERVICE: postgres
+  # POSTGRES_SERVICE must be the same as clusterSvcName defined in Zalando
+  POSTGRES_SERVICE: acid-minimal-cluster
   POSTGRES_PORT: 5432
 
 ## environment variables for kafka
 kafka_vars:
-  KAFKA_ADVERTISED_HOST_NAME: my-cluster-kafka-brokers.kafka
-  KAFKA_BOOTSTRAP: my-cluster-kafka-bootstrap.kafka
-  KAFKA_BROKERS: my-cluster-kafka-brokers.kafka
-  KAFKA_ZOOKEEPER_CONNECT: my-cluster-zookeeper-client.kafka:2181
+  # specify namespace if kafka is deployed in a different namespace
+  KAFKA_ADVERTISED_HOST_NAME: my-cluster-kafka-brokers.kafka-helm
+  KAFKA_BOOTSTRAP: my-cluster-kafka-bootstrap.kafka-helm
+  KAFKA_BROKERS: my-cluster-kafka-brokers.kafka-helm
+  KAFKA_ZOOKEEPER_CONNECT: my-cluster-zookeeper-client.kafka-helm:2181
   KAFKA_ADVERTISED_PORT: 9092
   KAFKA_PORT: 9092
   KAFKA_LOG_RETENTION_MS: 10000
@@ -60,7 +60,7 @@ adapter:
 ##
   image:
    repository: ibn40/digitaltwin
-   tag: debeziumadapter
+   tag: debeziumbridge
 
 
 ## Specify a imagePullPolicy
@@ -431,7 +431,7 @@ EntityManager:
 ##
   image:
    repository: ibn40/digitaltwin
-   tag: EntityManager_2.0.0-SNAPSHOT
+   tag: EntityManager_2.0.0-SNAPSHOT_z
 ## Specify a imagePullPolicy
 ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
 ##
@@ -506,7 +506,7 @@ HistoryManager:
 ##
   image:
    repository: ibn40/digitaltwin
-   tag: HistoryManager_2.0.0-SNAPSHOT
+   tag: HistoryManager_2.0.0-SNAPSHOT_z
 ## Specify a imagePullPolicy
 ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
 ##
@@ -581,7 +581,7 @@ QueryManager:
 ##
   image:
    repository: ibn40/digitaltwin
-   tag: QueryManager_2.0.0-SNAPSHOT
+   tag: QueryManager_2.0.0-SNAPSHOT_z
 ## Specify a imagePullPolicy
 ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
 ##
@@ -656,7 +656,7 @@ RegistryManager:
 ##
   image:
    repository: ibn40/digitaltwin
-   tag: RegistryManager_2.0.0-SNAPSHOT
+   tag: RegistryManager_2.0.0-SNAPSHOT_z
 ## Specify a imagePullPolicy
 ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
 ##
@@ -731,7 +731,7 @@ StorageManager:
 ##
   image:
    repository: ibn40/digitaltwin
-   tag: StorageManager_2.0.0-SNAPSHOT
+   tag: StorageManager_2.0.0-SNAPSHOT_z
 ## Specify a imagePullPolicy
 ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
 ##
@@ -807,7 +807,7 @@ SubscriptionManager:
 ##
   image:
    repository: ibn40/digitaltwin
-   tag: SubscriptionManager_2.0.0-SNAPSHOT
+   tag: SubscriptionManager_2.0.0-SNAPSHOT_z
 ## Specify a imagePullPolicy
 ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
 ##

@@ -5,7 +5,7 @@ metadata:
   labels:
     service: {{ .Values.StorageManager.name }}
   name: {{ .Values.StorageManager.name }}
-  # namespace: {{.Values.namespace}}
+  namespace: {{ .Release.Namespace }}
 spec:
   replicas: {{ .Values.StorageManager.replicas }}
   selector:
@@ -28,6 +28,11 @@ spec:
           - name: {{ $key }}
             value: {{ $val | quote }}
         {{- end }}
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: ngb.{{ .Values.postgres_vars.POSTGRES_SERVICE }}.credentials.postgresql.acid.zalan.do
+                key: password
         {{- range $key, $val := .Values.kafka_vars }}
           - name: {{ $key }}
             value: {{ $val | quote }}
