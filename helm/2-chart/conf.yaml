@@ -1,0 +1,17 @@
+alerta:
+  alertaConfig:
+    DATABASE_URL = ""
+
+  alertaConfigSercrets:
+    OAUTH2_CLIENT_SECRET:
+
+scorpioBroker:
+  keycloakClientSecrets:
+    historyManagerSecret:
+    entityManagerSecret:
+    queryManagerSecret:
+    subscriptionManagerSecret:
+    registryManagerSecret:
+
+  keycloak_vars:
+    KEYCLOAK_SERVER_URL: keycloak:8443

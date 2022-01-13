@@ -1,0 +1,5 @@
+# Passwords for keycloakOperator, postgresOperator, and strimzi must be same since we are using a single DB user
+
+teamId:
+clusterSvcName:   # must begin with "<teamId>-"
+dbPassword:

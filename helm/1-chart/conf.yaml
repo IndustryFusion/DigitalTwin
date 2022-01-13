@@ -1,0 +1,26 @@
+# Passwords for keycloakOperator, postgresOperator, and strimzi must be same since we are using a single DB user
+keycloakOperator:
+  keycloak_db:
+    stringData:
+      # POSTGRES_EXTERNAL_ADDRESS: db-service-name.db-service-namespace.svc.cluster.local
+      POSTGRES_EXTERNAL_ADDRESS:
+      POSTGRES_PASSWORD:
+
+  custom_resource:
+    credentials:
+      ADMIN_PASSWORD:
+      ADMIN_USERNAME:
+
+postgresOperator:
+  teamId:
+  # clusterSvcName: name must begin with "<teamId>-"
+  clusterSvcName:
+  dbPassword:
+
+strimzi:
+  kafkaConnector:
+    password:
+
+  imageCredentials:
+    username:
+    password:

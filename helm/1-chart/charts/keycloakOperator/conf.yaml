@@ -1,0 +1,11 @@
+# Passwords for keycloakOperator, postgresOperator, and strimzi must be same since we are using a single DB user
+
+keycloak_db:
+  stringData: 
+    POSTGRES_EXTERNAL_ADDRESS:
+    POSTGRES_PASSWORD:
+
+custom_resource:
+  credentials:
+    ADMIN_PASSWORD:
+    ADMIN_USERNAME:

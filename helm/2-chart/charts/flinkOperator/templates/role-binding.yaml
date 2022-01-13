@@ -1,0 +1,14 @@
+# Create a binding from Role -> ServiceAccount
+kind: ClusterRoleBinding
+apiVersion: {{ .Values.rolebinding.apiVersion }}
+metadata:
+  name: {{ .Values.rolebinding.name }}
+roleRef:
+  apiGroup: {{ .Values.rolebinding.apiGroup }}
+  kind: ClusterRole
+  name: {{ .Values.rolebinding.name }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ .Values.rolebinding.name }}
+    namespace: {{ .Release.Namespace }}
+  
