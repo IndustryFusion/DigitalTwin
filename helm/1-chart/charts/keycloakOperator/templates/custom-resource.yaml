@@ -1,0 +1,17 @@
+{{- if .Values.custom_resource.enabled }}
+apiVersion: {{ .Values.custom_resource.apiVersion}}
+kind: Keycloak
+metadata:
+  name: {{ .Values.custom_resource.name }}
+  annotations:
+    "helm.sh/hook": "post-install"
+  namespace: {{ .Release.Namespace }}
+  labels:
+   app: {{ .Values.custom_resource.name }}
+spec:
+  instances: {{ .Values.custom_resource.instances }}
+  externalAccess:
+    enabled: {{ .Values.custom_resource.externalAccess.enabled }}
+  externalDatabase:
+    enabled: {{ .Values.custom_resource.externalDatabase.enabled }}
+{{ end }}

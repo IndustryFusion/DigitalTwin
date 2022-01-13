@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-pod-config
+  namespace: {{ .Release.Namespace }}
+data:
+  ALLOW_NOSSL: "true"

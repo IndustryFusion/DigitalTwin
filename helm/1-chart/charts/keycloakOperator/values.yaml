@@ -1,0 +1,155 @@
+## environment variables for keycloak
+keycloak_crd:
+  apiVersion: apiextensions.k8s.io/v1
+  group: keycloak.org
+
+keycloak_roles:
+  apiVersion: rbac.authorization.k8s.io/v1
+  apiGroup: rbac.authorization.k8s.io
+
+
+
+  ################################### keycloakbackups_crd deployment #######################################################################
+keycloakbackups_crd:
+## Enable the keycloakbackups_crd deployment
+  enabled: true 
+  name: keycloakbackups.keycloak.org
+  versions: v1alpha1
+  scope: Namespaced
+  storage: true
+  served: true
+
+  ################################### keycloakclients_crd deployment #######################################################################
+keycloakclients_crd:
+## Enable the keycloakclients_crd deployment
+  enabled: true 
+  name: keycloakclients.keycloak.org
+  versions: v1alpha1
+  scope: Namespaced
+  storage: true
+  served: true
+
+  ################################### keycloakrealms_crd deployment #######################################################################
+keycloakrealms_crd:
+## Enable the keycloakrealms_crd deployment
+  enabled: true 
+  name: keycloakrealms.keycloak.org
+  versions: v1alpha1
+  scope: Namespaced
+  storage: true
+  served: true
+
+  ################################### keycloaks_crd deployment #######################################################################
+keycloaks_crd:
+## Enable the keycloaks_crd deployment
+  enabled: true 
+  name: keycloaks.keycloak.org
+  versions: v1alpha1
+  scope: Namespaced
+  storage: true
+  served: true
+
+  ################################### keycloakusers_crd deployment #######################################################################
+keycloakusers_crd:
+## Enable the keycloakusers_crd deployment
+  enabled: true 
+  name: keycloakusers.keycloak.org
+  versions: v1alpha1
+  scope: Namespaced
+  storage: true
+  served: true
+
+    ################################### role_binding deployment #######################################################################
+role_binding:
+## Enable the role_binding deployment
+  enabled: true 
+  name: keycloak-operator
+  Subjects:
+    name: keycloak-operator
+  roleRef:
+    name: keycloak-operator
+
+    ################################### role deployment #######################################################################
+role:
+## Enable the role deployment
+  enabled: true 
+  name: keycloak-operator
+
+    ################################### service_account deployment #######################################################################
+service_account:
+## Enable the service_account deployment
+  enabled: true 
+  apiVersion: v1
+  name: keycloak-operator
+
+    ################################### operator service #######################################################################
+operator:
+## Enable the role deployment & service
+  enabled: true 
+  apiVersion: apps/v1
+  name: keycloak-operator
+  serviceAccountName: keycloak-operator
+  command: keycloak-operator
+  replicas: 1
+  
+  image:
+    repository: quay.io/keycloak/keycloak-operator
+    tag: main
+    PullPolicy: Always
+
+  Env:
+    OPERATOR_NAME: "keycloak-operator"
+
+    ################################### custom_resource service #######################################################################
+custom_resource:
+## Enable the custom_resource deployment & service
+  enabled: true
+  apiVersion: keycloak.org/v1alpha1
+  name: example-keycloak
+  instances: 1
+  externalAccess:
+    enabled: false
+  externalDatabase:
+    enabled: true
+  credentials:
+    ADMIN_PASSWORD:
+    ADMIN_USERNAME:
+
+    ################################### ingress service #######################################################################
+ingress:
+## Enable the ingress service
+  enabled: true
+  apiVersion: networking.k8s.io/v1
+  name: example-keycloak
+  hostname: keycloak.local
+  serviceName: keycloak
+  portName: 8443
+
+  tls_secret:
+    apiVersion: v1
+    name: keycloak-tls-secret
+    tlsCrt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUVCVENDQXUyZ0F3SUJBZ0lVSjBZVHFvbjcxOThiQnNzVG1LQUFvQVFmb2NRd0RRWUpLb1pJaHZjTkFRRUwKQlFBd2daRXhDekFKQmdOVkJBWVRBa2xPTVJZd0ZBWURWUVFJREExTllXUm9lV0ZRY21Ga1pYTm9NUTh3RFFZRApWUVFIREFaSmJtUnZjbVV4RVRBUEJnTlZCQW9NQ0d0bGVXTnNiMkZyTVJFd0R3WURWUVFMREFoclpYbGpiRzloCmF6RVJNQThHQTFVRUF3d0lhMlY1WTJ4dllXc3hJREFlQmdrcWhraUc5dzBCQ1FFV0VXdGxlV05zYjJGclFHMWgKYVd3dVkyOXRNQjRYRFRJeE1USXlNakEwTkRJek0xb1hEVEl5TVRJeU1qQTBOREl6TTFvd2daRXhDekFKQmdOVgpCQVlUQWtsT01SWXdGQVlEVlFRSURBMU5ZV1JvZVdGUWNtRmtaWE5vTVE4d0RRWURWUVFIREFaSmJtUnZjbVV4CkVUQVBCZ05WQkFvTUNHdGxlV05zYjJGck1SRXdEd1lEVlFRTERBaHJaWGxqYkc5aGF6RVJNQThHQTFVRUF3d0kKYTJWNVkyeHZZV3N4SURBZUJna3Foa2lHOXcwQkNRRVdFV3RsZVdOc2IyRnJRRzFoYVd3dVkyOXRNSUlCSWpBTgpCZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUF5WXZZa29pSUtmeTcxNFFWVGwxUFgrb2VWVXhZClhqWnVRUE9QWUw4WXBjOHpCVEt5OWhKU05yOWlFSDZFK2NLMTU2cTZLV29HanBNS2xKZGlENElMTmdYUGs5UUYKSUZlMVVjQTNjM1pBRmd4WVkzT1RlTS9lMVhwUlVyWVFBUE4xZzNrMVljSmpnajdWa1Y0WER1UjR0SUovTDRvbQowbUlIQjdDcVpoVXI3bTFkZkV6dCtCNUYyTngybTJFTHVDVURkd2RwWVdyOHN0aHIxZ0duZHZsUHg0MXVwRFdTCmpXOGNPSDZrdG1ZejJMUXI3d2tENFFZTzJOVEVkeElWYlRBL2hrTVJkUjJKcEl6a0pTOHhrelpvSUtCWnVSWmkKbHhPWGZpQ0JpWENGSG43ZUx2clFYb1ZLUkd3R0VZZUg3dG1abXVwT1JWSkkyTkJDSEVsUXptS1ord0lEQVFBQgpvMU13VVRBZEJnTlZIUTRFRmdRVUtUKzBha3JxTEhMemVHc1RxVG9VWDhqYmFrY3dId1lEVlIwakJCZ3dGb0FVCktUKzBha3JxTEhMemVHc1RxVG9VWDhqYmFrY3dEd1lEVlIwVEFRSC9CQVV3QXdFQi96QU5CZ2txaGtpRzl3MEIKQVFzRkFBT0NBUUVBRkErNHd4N1VIU0RsSERQZ3AxSUNnWUhtYnF4T0ZWaDNqOWZGM0lvVHVqM0Yxb3VNWEFNdApPQ0NQdHNCSFZGc05iT3lyZGNLbFZSVXNGeEtHRnp0bCtKRDdmOXhEVUtpWElsM0pJNDVwQ0QyL1V5UHptQXIvCkZsaWhZdmUrQUJXVUQwM25ZbkhWdTl2S2NpOWpMOUpGRmtHYkpUVEJHYVJSVEpGRXpiRjlGbXd2S3lyUGN0MS8KVGVsT1RxUzRKb1lRdldIaGUxMStUNG9UZWs0MVVNYmJMODFmdzRzN3crVVBmMUFlNmt3SzBDcFJNWFJUU3N3OApVR3FMTlBmeU9HNlNmKzdNWHp5OEU2bUpLcjJOWkJoSTkvZko2em84Q0h0eE5QODFzYVNSeTlQeU52SCtScWhKCnJoZU90anJRQWl1cHhNN3d0cHpLK29xb3JLVUxTVS9pUEE9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+    tlsKey: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUV2UUlCQURBTkJna3Foa2lHOXcwQkFRRUZBQVNDQktjd2dnU2pBZ0VBQW9JQkFRREppOWlTaUlncC9MdlgKaEJWT1hVOWY2aDVWVEZoZU5tNUE4NDlndnhpbHp6TUZNckwyRWxJMnYySVFmb1Q1d3JYbnFyb3BhZ2FPa3dxVQpsMklQZ2dzMkJjK1QxQVVnVjdWUndEZHpka0FXREZoamM1TjR6OTdWZWxGU3RoQUE4M1dEZVRWaHdtT0NQdFdSClhoY081SGkwZ244dmlpYlNZZ2NIc0twbUZTdnViVjE4VE8zNEhrWFkzSGFiWVF1NEpRTjNCMmxoYXZ5eTJHdlcKQWFkMitVL0hqVzZrTlpLTmJ4dzRmcVMyWmpQWXRDdnZDUVBoQmc3WTFNUjNFaFZ0TUQrR1F4RjFIWW1rak9RbApMekdUTm1nZ29GbTVGbUtYRTVkK0lJR0pjSVVlZnQ0dSt0QmVoVXBFYkFZUmg0ZnUyWm1hNms1RlVralkwRUljClNWRE9ZcG43QWdNQkFBRUNnZ0VBYi9RU2xUTHFFQWluZnd1TG1rQVN1MENkSU55THFhbXFqTUcrUHd0bmNaTXEKMEJSZGZIcW8yR2h1M0tLcTB1SHBrWW93WnBqU2s1ZnlKS0FDaElMRUgzb1MyQmJKMGpGbU1zY0hCa2dGU1RvSwpUeFFBTXZlazNBaFo3QXZkeitsc3VWODIyOXJTMDZKN2w0Z2dYdEZpaTBLQnk3Sjk1aGMxdUh2VjYyYVBSSnpXCjBObGVnQjlyc2V4WWNxWWJkZDFwdHJ2a3NvQWxoenEzVTBsRndaVjIyQ0hnZ0c3VFBpTWxmazljTk5TQnYxTzEKbk9NVHZIS1NBL1l1ZEJNUzR1anF4MjNrWnpFZFdYSEovUVkxelF0UURsR3h3aGZ5ZzRuR1hDZkVzRHQvTmJUagpIS0xzUDFMWkR4enhVODR0UzRDaHBuN0lHWlN2dGxocUhYREhlNjVyNFFLQmdRRHVTNnlBc0EveTZxMDhjditECk1lWkQyR3Rkc21JaTg5N1daM085U0lUZGhURWJVTEEwL3BrNzl1K0ExZGljVVRiWEN2L21oc040SE9DbkpNdkQKMkNzaDdBQWs1YWxEdXdhUGVUMDlZWmJCZ1BvWWtHR3dLMTl6T1duM2YwZ3lHUjRmR2xWa1lzT3crWEdORTEvcQpkUlZ1czI4K2tsQ21SR2xIZVVIVkFLQ1pyd0tCZ1FEWWhUVm14Zkprc3NhMlRBNzE0NmVXWWJwQ2k4KzRoOEdsClQzNzRsMmlvU0lzOVpjODByaGtNMUhoQTlnS2xVRU0yQUV6WUtMeThHWHI1bkMrMTRCalpwQm9OMjNLTnJja0gKTDJycWQyNXlKdWlOc3VzdG1hb0FnTThza1ZmV2RWUnJsVzc4aFhzcFlnQjJBWUZzTHFZZU1qZEFzbkF6UUxmZgp5ZmVjeTZtemRRS0JnUUNRZGN2RHovZzdPVTJBSWU4SVo4M0NQNGNITEVjV0RXVi84UU5YTW9scGlYODFvZnJRCmhhLzdqRDJ4aXZKZ0FWUVBsWm1BOVIyMnlUcmYyUXkyVTJ3Q2lvR2ozSjU2Y3YwTktXQ1l2M3FYSUV0OWJMbnMKQkw4K3FRVzJockVMdmZKbXhKNFQxMVB2QzZsczd0dnMxTUlEZEQveVhOMExqdG1ML05TTi9tMWQvUUtCZ0NuYwp2M0ZxYmk0WC9xRjZYUjRmY09SN2FxYTVIMlUvSWlxVER5cURJNkg5dktZWFRCT1VZWldBY3V1a1pPaVBkeDgyCnVhVEZZNUErb084bnluV3dxVDFUSkJKdnpsc2tNWXpwRnhQVUdZK0toRVg1Uk0waE82UXpRMXNMa3Q4TStsQisKcU9HNzhROFVPcUNXTSs2MXFqcUdYUFp1U1pFdlB4M09qOGhKL0RxTkFvR0FkZGRvaTJ5Z0xsSHJuWC9ZZ3B4SApBVlk5SjZmb0ljWGh0bWNSdEhLaDdGYzlwdFNRMnhWTmZONCtpd283Zm45V3JpTkdUb1l1TzFPdFVVQWVoR2ZOCjhzeXc1WWZKbkxlOXFYN094N2hDWElPVnBPdC9vQnFZb1lNMVhrZEEzSXQrc0pmVFRoVXBOMFp3aTRFNkZDSC8KVEdXem83WXc0b1FyaFlJS3lIUTA1TWM9Ci0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0K
+
+    ################################### keycloak-db-secret #######################################################################
+keycloak_db:
+## Enable the ingress service
+  enabled: true
+  apiVersion: v1
+  name: keycloak-db-secret
+
+  stringData:
+    POSTGRES_DATABASE: keycloakdb
+    POSTGRES_EXTERNAL_ADDRESS: db-service.db-service-namespace.svc.cluster.local
+    POSTGRES_EXTERNAL_PORT: "5432"
+    POSTGRES_PASSWORD: 
+    # Required for AWS Backup functionality
+    POSTGRES_SUPERUSER: "true"
+    POSTGRES_USERNAME: "ngb"
+    SSLMODE: "disable"  #verify-ca #disable
+
+  ssl_cert:
+    enabled: false
+    apiVersion: v1
+    name: keycloak-db-ssl-cert-secret
+    rootCrt: 
