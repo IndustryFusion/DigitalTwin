@@ -1,0 +1,48 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: realm-installer
+  annotations:
+    helm.sh/hook: post-install
+    helm.sh/hook-weight: "-5"
+spec:
+  template:
+    spec:
+      containers:
+      - name: curlimage
+        image: curlimages/curl
+        volumeMounts:
+        - name: keycloak-realms-volume
+          mountPath: /tmp/org-realm-export.json
+          subPath:  org-realm-export.json
+        - name: keycloak-realms-volume
+          mountPath: /tmp/alerta-realm-export.json
+          subPath:  alerta-realm-export.json
+        imagePullPolicy: IfNotPresent
+        command:
+        - sh
+        - -c
+        args: 
+          - |
+            set -e;
+            access_token=$(curl -X POST ${KEYCLOAK_AUTH_SERVER}/realms/master/protocol/openid-connect/token \
+            -d "grant_type=password&client_id=admin-cli&username=${ADMIN_USERNAME}&password=${ADMIN_PASSWORD}" | \
+            sed 's/.*"access_token":"\([^"]*\)".*/\1/')
+            for realm in $(ls /tmp/*-realm-export.json); do 
+            echo uploading $realm;
+            curl -vv -X POST ${KEYCLOAK_AUTH_SERVER}/admin/realms -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $access_token " --data-binary  "@./$realm"
+            done
+        env:
+        - name: ADMIN_PASSWORD
+          value: {{ .Values.custom_resource.credentials.ADMIN_PASSWORD }}
+        - name: ADMIN_USERNAME
+          value: {{ .Values.custom_resource.credentials.ADMIN_USERNAME }}
+        - name: KEYCLOAK_AUTH_SERVER
+          value: {{ .Values.keycloakAuthServer }}
+      restartPolicy: OnFailure
+      volumes:
+      - name: keycloak-realms-volume
+        configMap:
+          name: keycloak-realms
+  backoffLimit: 10

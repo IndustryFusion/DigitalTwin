@@ -21,6 +21,10 @@ spec:
       labels:
         service: {{ .Values.gateway.name }}
     spec:
+      initContainers:
+      - name: init-myservice
+        image: busybox:1.28
+        command: ['sh', '-c', "until wget -qO - http://eureka:8761/actuator/health| grep UP; do echo waiting for eureka service; sleep 1; done"]
       containers:
       - image: {{ .Values.gateway.image.repository }}:{{ .Values.gateway.image.tag }}
         {{- if .Values.springArgs.overrideSpringArgs }}

@@ -1,26 +1,23 @@
-# Passwords for keycloakOperator, postgresOperator, and strimzi must be same since we are using a single DB user
 keycloakOperator:
   keycloak_db:
-    stringData:
-      # POSTGRES_EXTERNAL_ADDRESS: db-service-name.db-service-namespace.svc.cluster.local
-      POSTGRES_EXTERNAL_ADDRESS:
-      POSTGRES_PASSWORD:
-
+   stringData:
+    POSTGRES_EXTERNAL_ADDRESS: acid-minimal-cluster.digital-twin.svc.cluster.local
+    POSTGRES_PASSWORD: postgres
   custom_resource:
-    credentials:
-      ADMIN_PASSWORD:
-      ADMIN_USERNAME:
+   credentials:
+    ADMIN_PASSWORD: admin
+    ADMIN_USERNAME: admin
+  keycloakAuthServer: http://keycloak-discovery:8080/auth
 
 postgresOperator:
-  teamId:
+  teamId: acid
   # clusterSvcName: name must begin with "<teamId>-"
-  clusterSvcName:
-  dbPassword:
+  clusterSvcName: acid-minimal-cluster
+  dbPassword: postgres
 
 strimzi:
   kafkaConnector:
-    password:
-
+    password: postgres
   imageCredentials:
     username:
     password:

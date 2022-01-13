@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-realms
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.custom_resource.name }}
+data:
+  org-realm-export.json: |-
+    {{ $.Files.Get "org-realm-export.json" | nindent 6 }}
+
+
+  alerta-realm-export.json: |
+    {{ $.Files.Get "alerta-realm-export.json" | nindent 6 }}

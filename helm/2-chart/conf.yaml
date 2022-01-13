@@ -1,17 +1,16 @@
+scorpioBroker:
+  keycloak_vars:
+    KEYCLOAK_SERVER_URL: http://keycloak:8443/auth
+
 alerta:
   alertaConfig:
-    DATABASE_URL = ""
-
-  alertaConfigSercrets:
-    OAUTH2_CLIENT_SECRET:
-
-scorpioBroker:
-  keycloakClientSecrets:
-    historyManagerSecret:
-    entityManagerSecret:
-    queryManagerSecret:
-    subscriptionManagerSecret:
-    registryManagerSecret:
-
-  keycloak_vars:
-    KEYCLOAK_SERVER_URL: keycloak:8443
+    DATABASE_URL = "postgresql://ngb:postgres@acid-minimal-cluster.digital-twin.svc.cluster.local:5432/monitoring"
+  alertaConfigSecrets:
+    OAUTH2_CLIENT_SECRET: hN12DT7LdfmFpwktGyDYn7m4IAIFhyzH
+    OAUTH2_CLIENT_ID: "alerta-ui"
+    KEYCLOAK_URL: http://keycloak:8443
+    KEYCLOAK_REALM: alerta
+    AUTH_PROVIDER: 'keycloak'
+    ALLOWED_KEYCLOAK_ROLES: ["admin", "user"]
+    AUTH_REQUIRED: "True"
+    SIGNUP_ENABLED: "False"
