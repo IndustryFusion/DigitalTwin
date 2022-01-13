@@ -13,8 +13,10 @@ ScoprioBroker components are pulled from `ibn40/digitaltwin` repository in Docke
 Please ensure your `kubectl` is configured to use the credentials to your Kubernetes cluster by default. Generally this would mean adding your credentials to `~/.kube/config` file.
 
 Please ensure the namespace exists before executing this command. You can create a new namespace using `kubectl create ns <namespace>`. It is recommended to use `kubens` to prevent specifying the namespace manually on every command.
+
+Since the export JSON for the charts contain more fields than are defined in the `KeycloakRealm` CRD, we need to disable manifest validation when running the install command.
 ```
-helm install <release-name> . -f conf.yaml -n <namespace>
+helm install <release-name> . -f conf.yaml -n <namespace> --disable-openapi-validation
 ```
 
 

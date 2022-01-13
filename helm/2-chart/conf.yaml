@@ -3,7 +3,7 @@ alerta:
     DATABASE_URL = ""
 
   alertaConfigSercrets:
-    OAUTH2_CLIENT_SECRET:
+    OAUTH2_CLIENT_SECRET: 95daabc0-7041-427c-95c1-40b0bc2c1e50
 
 scorpioBroker:
   keycloakClientSecrets:

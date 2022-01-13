@@ -1,0 +1,15 @@
+apiVersion: keycloak.org/v1alpha1
+kind: KeycloakRealm
+metadata:
+  name: alerta-keycloakrealm
+  annotations: 
+    "helm.sh/hook": "post-install"
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.custom_resource.name }}
+spec:
+  instanceSelector:
+    matchLabels:
+      app: {{ .Values.custom_resource.name }}
+  realm:
+    {{- .Files.Get "alerta-realm-export.json" | fromJson | toYaml | nindent 4}}

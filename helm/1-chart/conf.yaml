@@ -19,6 +19,7 @@ postgresOperator:
 
 strimzi:
   kafkaConnector:
+    hostname:
     password:
 
   imageCredentials:
