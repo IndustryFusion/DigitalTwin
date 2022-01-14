@@ -23,7 +23,7 @@ scorpioBroker:
   keycloak_vars:
     KEYCLOAK_SERVER_URL: keycloak:8443
 ```
-- `alerta.alertaConfig.DATABASE_URL` is the [Postgres connection string](https://www.postgresql.org/docs/9.6/libpq-connect.html) to your Postgres database. You need to provide the `username`, `password`, `database service name`, and `database namepsace` as shown. This will be determined by how your specifications while deploying [1-chart](../1-chart/README.md#filling-in-configuration-details)
+- `alerta.alertaConfig.DATABASE_URL` is the [Postgres connection string](https://www.postgresql.org/docs/9.6/libpq-connect.html) to your Postgres database. You need to provide the `username`, `password`, `database service name`, and `database namepsace` as shown. This will be determined by how your specifications while deploying [1-chart](../1-chart/README.md#filling-in-the-configuration-details)
 - `scorpioBroker.keycloakClientSecrets` should be configured with the client secrets for each ScorpioBroker microservices. This can be retrieved from the Keycloak Console.
 - `alertaConfigSecrets.OAUTH2_CLIENT_SECRET` and `scorpioBroker.keycloak_vars.KEYCLOAK_SERVER_URL` can be left unchanged.
 
