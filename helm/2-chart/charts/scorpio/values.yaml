@@ -4,14 +4,6 @@ keycloak_vars:
   REALM: org
   SSL_REQUIRED: none
 
-## keycloak secrets:
-keycloakClientSecrets:
-  historyManagerSecret:
-  entityManagerSecret:
-  queryManagerSecret:
-  subscriptionManagerSecret:
-  registryManagerSecret:
-
 ## environment variables for adapter service
 adapter_vars:
   SCORPIO_ENTITY_DB_TOPIC: pgserver.public.entity

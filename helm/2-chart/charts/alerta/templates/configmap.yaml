@@ -5,8 +5,8 @@ data:
 {{ .Values.alertaConfig | indent 4 }}
 {{- end }}
 
-{{- if .Values.alertaConfigSercrets }}
-  {{ range $key, $value := .Values.alertaConfigSercrets }}
+{{- if .Values.alertaConfigSecrets }}
+  {{ range $key, $value := .Values.alertaConfigSecrets }}
     {{ $key }} = {{ quote $value }}
   {{- end }}
 {{- end }}
