@@ -26,11 +26,6 @@ spec:
         env:
           - name: CLIENT_ID
             value: {{ .Values.EntityManager.name }}
-          - name: CLIENT_SECRET
-            valueFrom:
-              secretKeyRef:
-                name: keycloak-secrets
-                key: entityManagerSecret
         {{- range $key, $val := .Values.postgres_vars}}
           - name: {{ $key }}
             value: {{ $val | quote }}

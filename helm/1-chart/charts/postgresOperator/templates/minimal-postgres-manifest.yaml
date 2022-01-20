@@ -13,4 +13,4 @@ spec:
   databases:
 {{ toYaml .Values.databases | indent 4 }}
   postgresql:
-    version: "14"
+    version: "12"
