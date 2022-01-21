@@ -1,0 +1,73 @@
+{{- if .Values.gateway.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    service: {{ .Values.gateway.name }}
+  name: {{ .Values.gateway.name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.gateway.replicas }}
+  selector:
+    matchLabels:
+      service: {{ .Values.gateway.name }}
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        service: {{ .Values.gateway.name }}
+    spec:
+      initContainers:
+      - name: init-myservice
+        image: busybox:1.28
+        command: ['sh', '-c', "until wget -qO - http://eureka:8761/actuator/health| grep UP; do echo waiting for eureka service; sleep 1; done"]
+      containers:
+      - image: {{ .Values.gateway.image.repository }}:{{ .Values.gateway.image.tag }}
+        env:
+        {{- if .Values.springArgs.overrideSpringArgs }}
+          - name: spring_args
+            value: {{ .Values.springArgs.value }}
+        {{- end}}
+        imagePullPolicy: {{ .Values.gateway.image.pullPolicy }}
+        name: {{ .Values.gateway.name }}
+        ports:
+        - containerPort: 9090
+          protocol: TCP
+        lifecycle:
+           preStop:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - curl -X PUT "http://eureka:8761/eureka/apps/GATEWAY/$HOSTNAME:gateway:9090/status?value=OUT_OF_SERVICE"
+        {{- if .Values.gateway.readinessProbe.enabled }}
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - curl --silent http://localhost:9090/actuator/health | grep --quiet -e
+              '^{\"status\"\:\"UP\".*}$'
+          failureThreshold: {{ .Values.gateway.readinessProbe.failureThreshold }}
+          initialDelaySeconds: {{ .Values.gateway.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.gateway.readinessProbe.periodSeconds }}
+          {{- end}}
+        resources:
+{{ toYaml .Values.gateway.resources | indent 10 }}
+      restartPolicy: {{ .Values.gateway.restartPolicy }}
+      {{- if .Values.gateway.serviceAccount.enabled }}
+      serviceAccountName: {{ .Values.gateway.serviceAccount.name }}
+      {{- end}}
+      {{- if .Values.gateway.securityContext.enabled }}
+      securityContext:
+{{ toYaml .Values.gateway.securityContext.settings | indent 8 }}
+      {{- end}}
+      terminationGracePeriodSeconds: {{ .Values.gateway.terminationGracePeriodSeconds }}
+      imagePullSecrets:
+        - name: {{ .Values.imageCredentials.name }}
+status: {}
+{{- end }}

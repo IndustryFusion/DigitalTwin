@@ -1,0 +1,16 @@
+apiVersion: "acid.zalan.do/v1"
+kind: postgresql
+metadata:
+  name: {{ .Values.clusterSvcName }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  teamId: {{ .Values.db.teamId }}
+  volume:
+    size: {{ .Values.db.pvSize }}
+  numberOfInstances: {{ .Values.db.podInstances }}
+  users:
+{{ toYaml .Values.dbUsers | indent 4 }}
+  databases:
+{{ toYaml .Values.databases | indent 4 }}
+  postgresql:
+    version: "12"

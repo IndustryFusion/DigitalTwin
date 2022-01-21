@@ -10,7 +10,7 @@ spin() {
   done
 }
 
-NAMESPACE=digital-twin
+NAMESPACE=iff
 
 printf "\n"
 printf "\033[1mUninstalling operator subscriptions\n"
@@ -34,10 +34,10 @@ kubectl delete -f https://github.com/operator-framework/operator-lifecycle-manag
 kill $spinpid
 
 printf "\n\n"
-printf "\033[1mDeleting Namespace ${NAMESPACE}\n"
-printf -- "------------------------\033[0m "
-spin & spinpid=$!
-kubectl delete ns/${NAMESPACE}
-kill $spinpid
+printf "\033[1mNot Deleting Namespace ${NAMESPACE}. Please do it on your own with kubectl delete ns/${NAMESPACE}.\n"
+#printf -- "------------------------\033[0m "
+#spin & spinpid=$!
+#kubectl delete ns/${NAMESPACE}
+#kill $spinpid
 
 printf -- "\n\033[1mOperators uninstalled successfully.\033[0m\n"

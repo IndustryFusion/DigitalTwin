@@ -1,0 +1,147 @@
+# Default values for alerta.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: alerta/alerta-web
+  tag: 8.1.0
+  pullPolicy: Always
+
+nameOverride: ""
+fullnameOverride: ""
+
+service:
+  type: ClusterIP
+  port: 8080
+
+resources:
+  {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #  cpu: 1
+  #  memory: 128Mi
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+extraSecretMounts:
+  []
+  # - name: secret-files
+  #   mountPath: /etc/secrets
+  #   subPath: ""
+  #   secretName: alertmanager-secret-files
+  #   readOnly: true
+
+alertaAdminPassword: "admin" # if not provided will be randomly generated
+alertaAdminUsers: # list of email addresses
+  - "admin"
+#   - "admin@alerta.io"
+# alertaAdminKey: "<your_api_key_here>"
+# alertaApiKey: "<your_api_key_here>" # you probably want to set this to the same value as 'alertaAdminKey'
+
+# Alerta plugins to install
+# alertaInstallPlugins:
+#   - normalise
+#   - enhance
+
+# ref: http://docs.alerta.io/en/latest/configuration.html
+alertaConfig: |
+  AUTH_REQUIRED = "True"
+
+  SEVERITY_MAP = {
+  'fatal': 0,
+  'critical': 1,
+  'warning': 4,
+  'indeterminate': 5,
+  'ok': 5,
+  'page':5,
+  'normal':5,
+  'unknown': 9,
+  'up': 5,
+  'down': 0
+  }
+
+  COLOR_MAP = {
+  'severity': {
+  'fatal': 'orange',
+  'critical': 'red',
+  'warning': '#1E90FF',
+  'indeterminate': 'lightblue',
+  'ok': '#00CC00',
+  'ok': '#00CC00',
+  'unknown': 'silver',
+  'page': ' #f8e900',
+  'up' : '#00CC00',
+  'down' : 'red'
+  }
+  }
+
+  DEFAULT_NORMAL_SEVERITY = 'ok'
+  COLUMNS = ['severity', 'status', 'lastReceiveTime', 'duplicateCount', 'customer', 'environment', 'service', 'resource', 'event', 'value', 'text']
+  PLUGINS=['reject']
+  ALLOWED_ENVIRONMENTS=['Production', 'Development', 'Code']
+
+  AUTH_PROVIDER = 'keycloak'
+
+  REQUESTS_CA_BUNDLE=True
+  ADMIN_USERS = ['admin']
+  USER_DEFAULT_SCOPES = ['read','write:alerts']
+
+alertaConfigSecrets:
+
+# ref: http://docs.alerta.io/en/latest/webui.html
+alertaWebUIConfig: |
+  {"endpoint": "/api"}
+#   // contents of config.js
+#   'use strict';
+#   angular.module('config', [])
+#     .constant('config', {
+#       'endpoint'    : "/api",
+#       'provider'    : "basic"
+#     })
+#     .constant('colors', {});
+
+postgresql:
+  enabled: false
+  postgresqlUsername: alerta
+  postgresqlDatabase: monitoring
+  postgresqlPassword: "changeme" # provide a password here, otherwise it will be randomly generated inside postgresql helm chart and will not be available as a variable in the alerta helm chart
+  persistence:
+    enabled: true
+    size: 10Gi
+
+  # If deploying on OpenShift
+  # volumePermissions:
+  #   securityContext:
+  #     runAsUser: "auto"
+  # securityContext:
+  #  enabled: false
+  # containerSecurityContext:
+  #  enabled: false,
+  # shmVolume:
+  #  chmod:
+  #    enabled: false
+
+  ################################### ingress service #######################################################################
+ingress:
+  ## Enable the ingress service
+  enabled: true
+  apiVersion: networking.k8s.io/v1
+  name: alerta-ingress
+  hostname: alerta.local
+  serviceName: alerta
+
+certmanager:
+  secret: selfsigned-cert-tls
+  issuer: letsencrypt-self

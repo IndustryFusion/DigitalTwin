@@ -1,0 +1,27 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: {{ .Values.ingress.apiVersion}}
+kind: Ingress
+metadata:
+  name: {{ .Values.ingress.name }}
+  annotations:
+    kubernetes.io/ingress.class: {{ .Values.ingressType | quote }}
+    #ingress.kubernetes.io/force-ssl-redirect: "true"
+    #ingress.kubernetes.io/ssl-redirect: "true"
+  namespace: {{ .Release.Namespace }}
+spec:
+  tls:
+  - hosts:
+    - {{ .Values.ingress.hostname }}
+    secretName: {{ .Values.certmanager.secret }}
+  rules:
+  - host: {{ .Values.ingress.hostname }}
+    http:
+      paths:
+      - backend:
+          service:
+            name: {{ .Values.ingress.serviceName }}
+            port:
+              number: {{ .Values.service.port }}
+        path: /
+        pathType: ImplementationSpecific
+{{ end }}

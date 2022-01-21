@@ -1,0 +1,22 @@
+{{- if .Values.custom_resource.enabled }}
+apiVersion: keycloak.org/v1alpha1
+kind: Keycloak
+metadata:
+  name: keycloak
+  annotations:
+  namespace: {{ .Release.Namespace }}
+  labels:
+   app: {{ .Values.custom_resource.name }}
+spec:
+  instances: {{ .Values.custom_resource.instances }}
+  externalAccess:
+    enabled: {{ .Values.custom_resource.externalAccess.enabled }}
+    tlsTermination: "reencryp"
+  externalDatabase:
+    enabled: {{ .Values.custom_resource.externalDatabase.enabled }}
+  keycloakDeploymentSpec:
+    experimental:
+      env:
+      - name: DB_ADDRRR
+        value: {{ .Values.keycloak_db.stringData.POSTGRES_EXTERNAL_ADDRESS}}
+{{ end }}

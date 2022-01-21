@@ -11,8 +11,7 @@ spin() {
 }
 
 
-NAMESPACE=digital-twin
-CM_NAMESPACE=cert-manager
+NAMESPACE=iff
 
 printf "\n"
 printf "\033[1mInstalling OLM\n"
@@ -25,7 +24,6 @@ printf -- "------------------------\033[0m "
 spin & spinpid=$!
 
 kubectl create ns ${NAMESPACE}
-kubectl create ns ${CM_NAMESPACE}
 
 cat << EOF  | kubectl apply -f -
 apiVersion: operators.coreos.com/v1alpha1

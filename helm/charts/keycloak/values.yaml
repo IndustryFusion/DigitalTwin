@@ -1,0 +1,146 @@
+## environment variables for keycloak
+keycloak_crd:
+  apiVersion: apiextensions.k8s.io/v1
+  group: keycloak.org
+
+keycloak_roles:
+  apiVersion: rbac.authorization.k8s.io/v1
+  apiGroup: rbac.authorization.k8s.io
+
+
+
+  ################################### keycloakbackups_crd deployment #######################################################################
+keycloakbackups_crd:
+## Enable the keycloakbackups_crd deployment
+  enabled: true 
+  name: keycloakbackups.keycloak.org
+  versions: v1alpha1
+  scope: Namespaced
+  storage: true
+  served: true
+
+  ################################### keycloakclients_crd deployment #######################################################################
+keycloakclients_crd:
+## Enable the keycloakclients_crd deployment
+  enabled: true 
+  name: keycloakclients.keycloak.org
+  versions: v1alpha1
+  scope: Namespaced
+  storage: true
+  served: true
+
+  ################################### keycloakrealms_crd deployment #######################################################################
+keycloakrealms_crd:
+## Enable the keycloakrealms_crd deployment
+  enabled: true 
+  name: keycloakrealms.keycloak.org
+  versions: v1alpha1
+  scope: Namespaced
+  storage: true
+  served: true
+
+  ################################### keycloaks_crd deployment #######################################################################
+keycloaks_crd:
+## Enable the keycloaks_crd deployment
+  enabled: true 
+  name: keycloaks.keycloak.org
+  versions: v1alpha1
+  scope: Namespaced
+  storage: true
+  served: true
+
+  ################################### keycloakusers_crd deployment #######################################################################
+keycloakusers_crd:
+## Enable the keycloakusers_crd deployment
+  enabled: true 
+  name: keycloakusers.keycloak.org
+  versions: v1alpha1
+  scope: Namespaced
+  storage: true
+  served: true
+
+    ################################### role_binding deployment #######################################################################
+role_binding:
+## Enable the role_binding deployment
+  enabled: true 
+  name: keycloak-operator
+  Subjects:
+    name: keycloak-operator
+  roleRef:
+    name: keycloak-operator
+
+    ################################### role deployment #######################################################################
+role:
+## Enable the role deployment
+  enabled: true 
+  name: keycloak-operator
+
+    ################################### service_account deployment #######################################################################
+service_account:
+## Enable the service_account deployment
+  enabled: true 
+  apiVersion: v1
+  name: keycloak-operator
+
+    ################################### operator service #######################################################################
+operator:
+## Enable the role deployment & service
+  enabled: true 
+  apiVersion: apps/v1
+  name: keycloak-operator
+  serviceAccountName: keycloak-operator
+  command: keycloak-operator
+  replicas: 1
+  
+  image:
+    repository: quay.io/keycloak/keycloak-operator
+    tag: main
+    PullPolicy: Always
+
+  Env:
+    OPERATOR_NAME: "keycloak-operator"
+
+    ################################### custom_resource service #######################################################################
+custom_resource:
+## Enable the custom_resource deployment & service
+  enabled: true
+  apiVersion: keycloak.org/v1alpha1
+  name: keycloak
+  instances: 1
+  externalAccess:
+    enabled: false
+  externalDatabase:
+    enabled: true
+  credentials:
+    ADMIN_PASSWORD:
+    ADMIN_USERNAME:
+
+keycloakAuthServer:
+
+    ################################### ingress service #######################################################################
+ingress:
+## Enable the ingress service
+  enabled: true
+  apiVersion: networking.k8s.io/v1
+  name: keycloak-ingress
+  hostname: keycloak.local
+  serviceName: keycloak
+  portName: 8443
+
+    ################################### keycloak-db-secret #######################################################################
+keycloak_db:
+## Enable the ingress service
+  enabled: true
+
+  stringData:
+    POSTGRES_DATABASE: keycloakdb
+    POSTGRES_EXTERNAL_ADDRESS:
+    POSTGRES_EXTERNAL_PORT: "5432"
+    POSTGRES_PASSWORD:
+    # Required for AWS Backup functionality
+    POSTGRES_SUPERUSER: "true"
+    POSTGRES_USERNAME: "ngb"
+    SSLMODE: "disable"  #verify-ca #disable
+
+certmanager:
+  secret: selfsigned-cert-tls
