@@ -1,16 +1,3 @@
-spin() {
-  local i=0
-  local sp='/-\|'
-  local n=${#sp}
-  printf ' '
-  sleep 0.1
-  while true; do
-    printf '\b%s' "${sp:i++%n:1}"
-    sleep 0.1
-  done
-}
-
-
 NAMESPACE=iff
 
 printf "\n"
@@ -21,7 +8,6 @@ curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releas
 printf "\n"
 printf "\033[1mInstalling Subscriptions for Keycloak operator, Strimzi, Postgres-operator \n"
 printf -- "------------------------\033[0m "
-spin & spinpid=$!
 
 kubectl create ns ${NAMESPACE}
 
@@ -91,8 +77,28 @@ spec:
   sourceNamespace: olm
 EOF
 #kubectl create -f https://operatorhub.io/install/alpha/keycloak-operator.yaml   
-kill $spinpid
 printf "\n\n"
 printf "\033[1mSubscriptions installed successfully.\033[0m\n"
+
+printf "\n"
+printf "\033[1mInstalling KREW\n"
+printf -- "------------------------\033[0m\n"
+(
+  set -x; cd "$(mktemp -d)" &&
+  OS="$(uname | tr '[:upper:]' '[:lower:]')" &&
+  ARCH="$(uname -m | sed -e 's/x86_64/amd64/' -e 's/\(arm\)\(64\)\?.*/\1\2/' -e 's/aarch64$/arm64/')" &&
+  KREW="krew-${OS}_${ARCH}" &&
+  curl -fsSLO "https://github.com/kubernetes-sigs/krew/releases/latest/download/${KREW}.tar.gz" &&
+  tar zxvf "${KREW}.tar.gz" &&
+  ./"${KREW}" install krew
+)
+printf "\n"
+printf "\033[1mInstalling MINIO operator via krew\n"
+printf -- "------------------------\033[0m\n"
+export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+kubectl krew update
+kubectl krew install minio
+kubectl minio init
+
 
 printf -- "\033[1mOperators installed successfully.\033[0m\n"

@@ -1,0 +1,32 @@
+apiVersion: minio.min.io/v2
+kind: Tenant
+metadata:
+  name: iff-minio-tenant
+  namespace: {{ .Release.Namespace }}
+spec:
+  env:
+  - name: "MINIO_ROOT_USER"
+    value: "minio"
+  - name: "MINIO_ROOT_PASSWORD"
+    value: {{ .Values.minioSecretKey }}
+  - name: "MINIO_STORAGE_CLASS_STANDARD"
+    value: "EC:2"
+  - name: "MINIO_BROWSER"
+    value: "on"
+  requestAutoCert: false
+  credsSecret:
+    name: iff-creds-secret
+  users:
+    - name: minio-user
+  pools:
+    - servers: 1
+      volumesPerServer: 4
+      volumeClaimTemplate:
+        metadata:
+          name: data
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: {{ .Values.minio.storageSize }}

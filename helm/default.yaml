@@ -1,5 +1,9 @@
+mainVersion: 0.1
+mainRepo: ibn40
 namespace: iff
+pullSecretCredentials: regcred
 ingressType: traefik # or nginx
+
 keycloak:
   adminName: admin
   externalAuthService:   # put here the *external* keycloak name, i.e. through ingress 
@@ -13,6 +17,7 @@ keycloak:
   alertaRealm: alerta
   alertaClient: alerta-ui
   alertaClientSecret: x8M59QRO8dgG3PYJ4UR03qh5CBBzfLUa
+
 db:
   teamId: acid
   clusterSvcPostfix: cluster
@@ -21,12 +26,34 @@ db:
   alertaDb: monitoring
   dbUser: ngb
   secretPostfix: credentials.postgresql.acid.zalan.do
+
 ingress:
   scorpio: ngsild.local
+
 scorpio:
   gatewaySvc: 
     name: gateway
     port: 9090
+
 certmanager:
   secret: selfsigned-cert-tls
   issuer: letsencrypt-self
+
+flink:
+  imageTag: 1.14.3
+  clusterId: iff
+  taskmanagers: 1
+  jobmanager: 1
+  sqlClientPort: 9000
+  bucket: flink
+  haDir: recovery
+  checkpointDir: checkpoints
+  savepointDir: savepoints
+  defaultParalellism: 1
+
+minio:
+  url: http://minio
+  adminAccessKey: console
+  userAccessKey: minio
+  storageSize: 10G
+  healthPath: /minio/health/live
