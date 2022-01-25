@@ -1,0 +1,33 @@
+{
+  "name": "simple-flink-sql-gateway",
+  "version": "0.1.0",
+  "description": "Simple SQL gateway to submit SQL instructions to Flink as sidecar",
+  "main": "gateway.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "dependencies": {
+    "child-process": "^1.0.2",
+    "express": "^4.17.1",
+    "uuid": "^8.3.2",
+    "winston": "^3.3.3"
+  },
+  "devDependencies": {
+    "chai": "^4.3.6",
+    "eslint": "^7.32.0",
+    "eslint-config-standard": "^16.0.3",
+    "eslint-plugin-import": "^2.25.4",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^5.2.0",
+    "install": "^0.13.0",
+    "mocha": "^9.2.0",
+    "nyc": "^15.1.0",
+    "rewire": "^6.0.0"
+  },
+  "scripts": {
+    "test": "./node_modules/.bin/nyc --check-coverage ./node_modules/.bin/mocha --lines 80",
+    "lint": "./node_modules/.bin/eslint *.js ./lib/*.js ./test/*.js"
+  },
+  "author": "Marcel Wagner",
+  "license": "Apache-2.0"
+}

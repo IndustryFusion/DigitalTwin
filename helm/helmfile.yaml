@@ -50,3 +50,19 @@ releases:
   needs:
   - postgres
   - keycloak
+- name: flink
+  chart: ./charts/flink
+  namespace: {{ .Values.namespace }}
+  values:
+  - minioUserSecretKey: {{ .Values.minioUserSecretKey }}
+  - default.yaml
+  needs:
+  - kafka
+  - minio
+- name: minio
+  chart: ./charts/minio
+  namespace: {{ .Values.namespace }}
+  values:
+  - minioAdminSecretKey: {{ .Values.minioAdminSecretKey }}
+  - minioUserSecretKey: {{ .Values.minioUserSecretKey }}
+  - default.yaml
