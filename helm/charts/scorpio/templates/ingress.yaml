@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: scorpio-ingress
+  annotations:
+    kubernetes.io/ingress.class: {{ .Values.ingressType | quote }}
+    #ingress.kubernetes.io/force-ssl-redirect: "true"
+    #ingress.kubernetes.io/ssl-redirect: "true"
+  namespace: {{ .Release.Namespace }}
+spec:
+  tls:
+  - hosts:
+    - {{ .Values.ingress.scorpio }}
+    secretName: {{ .Values.certmanager.secret }}
+  rules:
+  - host: {{ .Values.ingress.scorpio }}
+    http:
+      paths:
+      - backend:
+          service:
+            name: {{ .Values.scorpio.gatewaySvc.name }}
+            port:
+              number: {{ .Values.scorpio.gatewaySvc.port }}
+        path: /
+        pathType: ImplementationSpecific
