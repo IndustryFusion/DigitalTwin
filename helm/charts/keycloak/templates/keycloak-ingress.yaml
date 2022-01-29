@@ -1,0 +1,32 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: {{ .Values.ingress.apiVersion}}
+kind: Ingress
+metadata:
+  name: {{ .Values.ingress.name }}
+  annotations:
+    kubernetes.io/ingress.class: {{ .Values.ingressType | quote }}
+#    ingress.kubernetes.io/force-ssl-redirect: "true"
+#    ingress.kubernetes.io/ssl-redirect: "true"
+#    {{ if eq .Values.ingressType "traefik" }}
+#    traefik.ingress.kubernetes.io/service.serversscheme: https
+#    {{- else }}
+#    nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+#    {{ end }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  tls:
+  - hosts:
+    - {{ .Values.ingress.hostname }}
+    secretName: {{ .Values.certmanager.secret }}
+  rules:
+  - host: {{ .Values.keycloak.externalAuthService.domainname }}
+    http:
+      paths:
+      - backend:
+          service:
+            name: {{ .Values.keycloak.internalAuthService.name }}
+            port:
+              number: {{ .Values.keycloak.internalAuthService.port }}
+        path: /
+        pathType: ImplementationSpecific
+{{ end }}

@@ -1,0 +1,52 @@
+environments:
+  default:
+    values:
+    - default.yaml
+    - templates.yaml.gotmpl
+
+releases:
+- name: postgres
+  chart: ./charts/postgres
+  namespace: {{ .Values.namespace }}
+  values:
+  - dbpassword: {{ .Values.dbpassword }}
+  - clusterSvcName: {{ .Values.db.teamId -}}-{{- .Values.db.clusterSvcPostfix }}
+  - default.yaml
+- name: kafka
+  chart: ./charts/kafka
+  namespace: {{ .Values.namespace }}
+- name: cert-manager
+  chart: ./charts/cert-manager
+  namespace: {{ .Values.namespace }}
+  values:
+  - default.yaml
+- name: keycloak
+  chart: ./charts/keycloak
+  namespace: {{ .Values.namespace }}
+  values:
+  - dbpassword: {{ .Values.dbpassword }}
+  - keycloakpassword: {{ .Values.keycloakpassword }}
+  - clusterSvcName: {{ .Values.db.teamId -}}-{{- .Values.db.clusterSvcPostfix }}
+  - default.yaml
+  - postgresAddress: {{ .Values.db.teamId -}}-{{- .Values.db.clusterSvcPostfix -}}.{{- .Values.namespace -}}.svc.cluster.local
+  needs:
+  - postgres
+- name: alerta
+  chart: ./charts/alerta
+  namespace: {{ .Values.namespace }}
+  values:
+  - dbpassword: {{ .Values.dbpassword }}
+  - clusterSvcName: {{ .Values.db.teamId -}}-{{- .Values.db.clusterSvcPostfix }}
+  - default.yaml
+  needs:
+  - postgres
+  - keycloak
+- name: scorpio
+  chart: ./charts/scorpio
+  namespace: {{ .Values.namespace }}
+  values:
+  - clusterSvcName: {{ .Values.db.teamId -}}-{{- .Values.db.clusterSvcPostfix }}
+  - default.yaml
+  needs:
+  - postgres
+  - keycloak

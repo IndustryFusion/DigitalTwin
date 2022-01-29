@@ -1,0 +1,2 @@
+keycloak_vars:
+  KEYCLOAK_SERVER_URL:

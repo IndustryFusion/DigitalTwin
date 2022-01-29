@@ -1,0 +1,27 @@
+apiVersion: v1
+data:
+{{- if .Values.alertaConfig }}
+  alertad.conf: |
+{{ .Values.alertaConfig | indent 4 }}
+{{- end }}
+
+{{- if .Values.alertaConfigSecrets }}
+  {{ range $key, $value := .Values.alertaConfigSecrets }}
+    {{ $key }} = {{ quote $value }}
+  {{- end }}
+{{- end }}
+
+
+{{- if .Values.alertaWebUIConfig }}
+  config.js: |
+{{ .Values.alertaWebUIConfig | indent 4 }}
+{{- end }}
+kind: ConfigMap
+metadata:
+  name: {{ include "alerta.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "alerta.name" . }}
+    chart: {{ include "alerta.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}

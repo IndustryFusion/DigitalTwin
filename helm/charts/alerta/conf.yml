@@ -1,0 +1,5 @@
+alertaConfig:
+  DATABASE_URL =
+
+alertaConfigSecrets:
+  OAUTH2_CLIENT_SECRET:

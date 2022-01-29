@@ -1,8 +1,0 @@
-# Passwords for keycloakOperator, postgresOperator, and strimzi must be same since we are using a single DB user
-
-kafkaConnector:
-  password:
-
-imageCredentials:
-  username:
-  password:

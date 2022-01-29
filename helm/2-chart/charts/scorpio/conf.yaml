@@ -1,9 +1,0 @@
-keycloakClientSecrets:
-  historyManagerSecret:
-  entityManagerSecret:
-  queryManagerSecret:
-  subscriptionManagerSecret:
-  registryManagerSecret:
-
-keycloak_vars:
-  KEYCLOAK_SERVER_URL:
