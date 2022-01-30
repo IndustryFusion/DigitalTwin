@@ -60,12 +60,11 @@ alertaConfig: |
   AUTH_REQUIRED = "True"
 
   SEVERITY_MAP = {
-  'fatal': 0,
-  'critical': 1,
+  'critical': 0,
+  'major': 1,
   'warning': 4,
   'indeterminate': 5,
   'ok': 5,
-  'page':5,
   'normal':5,
   'unknown': 9,
   'up': 5,
@@ -74,14 +73,12 @@ alertaConfig: |
 
   COLOR_MAP = {
   'severity': {
-  'fatal': 'orange',
   'critical': 'red',
+  'major': 'red',
   'warning': '#1E90FF',
   'indeterminate': 'lightblue',
   'ok': '#00CC00',
-  'ok': '#00CC00',
   'unknown': 'silver',
-  'page': ' #f8e900',
   'up' : '#00CC00',
   'down' : 'red'
   }
