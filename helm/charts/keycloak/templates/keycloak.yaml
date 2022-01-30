@@ -1,4 +1,3 @@
-{{- if .Values.custom_resource.enabled }}
 apiVersion: keycloak.org/v1alpha1
 kind: Keycloak
 metadata:
@@ -19,4 +18,3 @@ spec:
       env:
       - name: DB_ADDRRR
         value: {{ .Values.keycloak_db.stringData.POSTGRES_EXTERNAL_ADDRESS}}
-{{ end }}
