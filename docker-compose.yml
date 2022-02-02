@@ -20,3 +20,7 @@ services:
     image: ${DOCKER_PREFIX:-ibn40}/flink-sql-gateway:${DOCKER_TAG}
     build:
       context: ./FlinkSqlGateway
+  flink-services-operator:
+    image: ${DOCKER_PREFIX:-ibn40}/flink-services-operator:${DOCKER_TAG}
+    build:
+      context: ./FlinkSqlServicesOperator

@@ -1,0 +1,29 @@
+
+apiVersion: industry-fusion.com/v1
+kind: BeamService
+metadata:
+  name: rule-engine
+spec:
+  entryClass: "org.oisp.RuleEngineBuild"
+  tokens:   
+  - user: "rule_engine@intel.com" # {{ .Values.ruleEngine.username }}
+    password: "oChLqExmi6RanAZlSFNn4QZNrjxYlr6u7jC6mgBVwv2GuCV6Y3mJH5rSPYdtUOCM" #{{ .Values.ruleEngine.password }}  
+  args:
+    runner: FlinkRunner
+    streaming: "true"
+    JSONConfig:
+      format: |
+        {{"application_name": "rule_engine_dashboard",
+        "dashboard_strict_ssl": false,
+        "dashboard_url": "http://{config[ruleEngineConfig][frontendUri]}",
+        "kafka_servers": "{config[kafkaConfig][uri]}",
+        "kafka_zookeeper_quorum": "{config[zookeeperConfig][zkCluster]}" ,
+        "kafka_observations_topic": "{config[kafkaConfig][topicsObservations]}",
+        "kafka_rule_engine_topic": "{config[kafkaConfig][topicsRuleEngine]}",
+        "kafka_heartbeat_topic": "{config[kafkaConfig][topicsHeartbeatName]}",
+        "kafka_heartbeat_interval": "{config[kafkaConfig][topicsHeartbeatInterval]}",
+        "zookeeper_hbase_quorum": "not used",
+        "token": "{tokens[rule_engine@intel.com]}"
+        }}
+      encode: base64
+  url: "https://arkocal.rocks/re.jar"

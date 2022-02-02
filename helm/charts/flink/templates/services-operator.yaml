@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: beamservices-operator
+spec:
+  selector:
+    matchLabels:
+      app: beamservices-operator
+  template:
+    metadata:
+      labels:
+        app: beamservices-operator
+    spec:
+      serviceAccountName: beamservices-operator
+      containers:
+      - image: {{ .Values.mainRepo }}/flink-services-operator:{{ .Values.mainVersion }}
+        name: beamservices-operator
+        command: ["kopf"]
+        args: ["run", "--log-format", "plain", "--standalone", "-A", "/opt/beamsqlstatementsetoperator.py"]
+        resources:
+          requests:
+            cpu: 50m
+          limits:
+            cpu: 50m
+      imagePullSecrets:
+        - name: regcred
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: beamservices-operator
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: beamservices-operator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: beamservices-operator
+    namespace: {{.Release.Namespace}}

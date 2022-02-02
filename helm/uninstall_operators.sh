@@ -35,9 +35,10 @@ kill $spinpid
 
 printf "\n\n"
 printf "\033[1mNot Deleting Namespace ${NAMESPACE}. Please do it on your own with kubectl delete ns/${NAMESPACE}.\n"
-#printf -- "------------------------\033[0m "
-#spin & spinpid=$!
-#kubectl delete ns/${NAMESPACE}
-#kill $spinpid
+
+printf "\n"
+printf "\033[1mUninstalling Flink SQL Operator CRD\n"
+printf -- "------------------------\033[0m\n"
+kubectl -n ${NAMESPACE} delete -f ../FlinkSqlServicesOperator/kubernetes/crd.yml
 
 printf -- "\n\033[1mOperators uninstalled successfully.\033[0m\n"
