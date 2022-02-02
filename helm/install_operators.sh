@@ -100,5 +100,9 @@ kubectl krew update
 kubectl krew install minio
 kubectl minio init
 
+printf "\n"
+printf "\033[1mInstalling Flink SQL Operator CRD\n"
+printf -- "------------------------\033[0m\n"
+kubectl -n ${NAMESPACE} apply -f ../FlinkSqlServicesOperator/kubernetes/crd.yml
 
 printf -- "\033[1mOperators installed successfully.\033[0m\n"

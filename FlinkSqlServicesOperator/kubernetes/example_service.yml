@@ -1,0 +1,11 @@
+apiVersion: industry-fusion.com/v1
+kind: BeamService
+metadata:
+  name: beam-service
+spec:
+  entryClass: "org.oisp.services.ComponentSplitter"
+  args:
+    runner: FlinkRunner
+    streaming: "true"
+  package:
+    url: "https://arkocal.rocks/csb.jar"

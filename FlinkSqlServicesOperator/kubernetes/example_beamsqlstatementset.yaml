@@ -1,0 +1,11 @@
+apiVersion: industry-fusion.com/v1alpha1
+kind: BeamSqlStatementSet
+metadata:
+  name: beamsqlstatementset-example
+spec:
+  sqlstatements:
+    - insert into `metrics-copy` select `aid`, `cid`, `dataType`, `on`, `systemon`, `value` FROM `metrics`;
+  tables:
+    - metrics
+    - metrics-copy
+

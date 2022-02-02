@@ -1,0 +1,51 @@
+apiVersion: industry-fusion.com/v1alpha1
+kind: BeamSqlTable
+metadata:
+  name: metrics
+spec:
+  connector: kafka
+  fields:
+    'aid': STRING
+    'value': STRING
+    'dvalue': AS CAST(`value` AS DOUBLE)
+    'on': BIGINT
+    'ts': AS epoch2SQL(`on`, 'Europe/Berlin')
+    'cid': STRING
+    'systemon': BIGINT
+    'dataType': String
+    'watermark': FOR `ts` AS `ts` - INTERVAL '5' SECOND
+  kafka:
+    topic: metrics
+    properties:
+      bootstrap.servers: oisp-kafka-headless:9092
+    scan.startup.mode: latest-offset
+  value:
+    format: json
+    json.fail-on-missing-field: false
+    json.ignore-parse-errors: true
+---
+apiVersion: industry-fusion.com/v1alpha1
+kind: BeamSqlTable
+metadata:
+  name: metrics-copy
+spec:
+  connector: kafka
+  fields:
+    'aid': STRING
+    'value': STRING
+    'dvalue': AS CAST(`value` AS DOUBLE)
+    'on': BIGINT
+    'ts': AS epoch2SQL(`on`, 'Europe/Berlin')
+    'cid': STRING
+    'systemon': BIGINT
+    'dataType': String
+    'watermark': FOR `ts` AS `ts` - INTERVAL '5' SECOND
+  kafka:
+    topic: metrics-copy
+    properties:
+      bootstrap.servers: oisp-kafka-headless:9092
+    scan.startup.mode: latest-offset
+  value:
+    format: json
+    json.fail-on-missing-field: false
+    json.ignore-parse-errors: true
