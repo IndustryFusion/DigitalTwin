@@ -1,0 +1,104 @@
+apiVersion: keycloak.org/v1alpha1
+kind: KeycloakRealm
+metadata:
+  name: iff-realm
+  labels:
+    app: keycloak
+spec:
+  realm:
+    id: {{ .Values.keycloak.alerta.realm | quote }}
+    realm: {{ .Values.keycloak.alerta.realm | quote }}
+    enabled: True
+    displayName: "Basic Realm for Alerta and Scorpio"
+  instanceSelector:
+    matchLabels:
+      app: keycloak
+---
+{{- $pgsecret := (lookup "v1" "Secret" .Release.Namespace "keycloak-client-secret-alerta-ui") -}}
+apiVersion: keycloak.org/v1alpha1
+kind: KeycloakClient
+metadata:
+  name: alerta-ui
+  labels:
+    app: keycloak
+spec:
+  realmSelector:
+     matchLabels:
+      app: keycloak
+  client:
+    clientId: alerta-ui
+    publicClient: False
+    standardFlowEnabled: True
+    redirectUris: 
+    {{- range .Values.keycloak.alerta.redirectUris}}
+    - {{.}}
+    {{- end }}
+    defaultClientScopes:
+    {{- range .Values.keycloak.alerta.defaultClientScopes}}
+    - {{.}}
+    {{- end }}
+    {{ if $pgsecret }}
+    secret: {{ $pgsecret.data.CLIENT_SECRET | b64dec }}
+    {{ else }}
+    secret: {{ .Values.alertaClientSecret }}
+    {{ end }}
+---
+apiVersion: keycloak.org/v1alpha1
+kind: KeycloakClient
+metadata:
+  name: scorpio
+  labels:
+    app: keycloak
+spec:
+  realmSelector:
+     matchLabels:
+      app: keycloak
+  roles:
+    - name: "Factory-Admin"
+      clientRole: true  
+    - name: "Factory-Writer"
+      clientRole: true
+    - name: Factory-Reader
+      clientRole: true
+  client:
+    clientId: {{ .Values.keycloak.scorpio.client }}
+    publicClient: True
+    directAccessGrantsEnabled: True
+    standardFlowEnabled: True
+    defaultClientScopes:
+    {{- range .Values.keycloak.alerta.defaultClientScopes}}
+    - {{.}}
+    {{- end }}
+ 
+---
+{{- $pgsecret := (lookup "v1" "Secret" .Release.Namespace "credential-iff-realm-user-iff") -}}
+apiVersion: keycloak.org/v1alpha1
+kind: KeycloakUser
+metadata:
+  name: testuser
+spec:
+  user:
+    username: "realm_user"
+    firstName: "John"
+    lastName: "Doe"
+    email: "user@example.com"
+    enabled: True
+    emailVerified: False
+    credentials:
+      - type: "password"
+        {{ if $pgsecret }}
+        {{ else }}
+        value: {{ randAlphaNum 32 }}
+        {{ end }}
+    realmRoles:
+      - "offline_access"
+    clientRoles:
+      account:
+        - "manage-account"
+      realm-management:
+        - "manage-users"
+      {{ .Values.keycloak.scorpio.client }}:
+        - Factory-Admin
+  realmSelector:
+    matchLabels:
+      app: keycloak

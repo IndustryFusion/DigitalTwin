@@ -14,17 +14,31 @@ keycloak:
     name: keycloak-discovery
     port: 8080
     path: /auth
-  alertaRealm: alerta
-  alertaClient: alerta-ui
-  alertaClientSecret: x8M59QRO8dgG3PYJ4UR03qh5CBBzfLUa
+  alerta:
+    clientSecret: keycloak-client-secret-alerta-ui
+    realm: iff
+    client: alerta-ui
+    redirectUris:
+    - http://alerta.local/*
+    - https://alerta.local/*
+    defaultClientScopes:
+    - openid
+    - profile
+    - email
+    - roles
+  scorpio:
+    realm: iff
+    client: scorpio
 
 db:
   teamId: acid
   clusterSvcPostfix: cluster
+  svcPort: 5432
   pvSize: 1Gi
   podInstances: 2
   alertaDb: monitoring
   dbUser: ngb
+  scorpioDb: ngb
   secretPostfix: credentials.postgresql.acid.zalan.do
 
 ingress:
@@ -53,7 +67,27 @@ flink:
 
 minio:
   url: http://minio
+  endpoint: minio
   adminAccessKey: console
   userAccessKey: minio
   storageSize: 10G
   healthPath: /minio/health/live
+  mcImage: minio/mc:RELEASE.2022-02-07T09-25-34Z
+
+alerta:
+  alertaAdminUser: admin
+
+
+kafka:
+  name: my-cluster
+  bootstrapServer: my-cluster-kafka-bootstrap:9092
+  storage:
+    type: persistent-claim
+    size: 5Gi
+  zookeeper:
+    replicas: 1
+    storage:
+      type: persistent-claim
+      size: 1Gi
+  connect:
+    debeziumTopic: ngsild

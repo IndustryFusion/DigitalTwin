@@ -25,7 +25,9 @@ spec:
       - image: {{ .Values.HistoryManager.image.repository }}:{{ .Values.HistoryManager.image.tag }}
         env:
           - name: CLIENT_ID
-            value: {{ .Values.HistoryManager.name }}
+            value: {{ .Values.keycloak.scorpio.client }}
+          - name: REALM
+            value: {{ .Values.keycloak.scorpio.realm }}
         {{- range $key, $val := .Values.postgres_vars}}
           - name: {{ $key }}
             value: {{ $val | quote }}

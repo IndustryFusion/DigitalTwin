@@ -1,7 +1,6 @@
 ## environment variables for keycloak, do not modify SSL_REQUIRED
 keycloak_vars:
 #  KEYCLOAK_SERVER_URL: http://keycloak.local #https://85.215.213.132:8443/auth
-  REALM: org
   SSL_REQUIRED: none
 
 ## environment variables for adapter service
@@ -215,7 +214,6 @@ gateway:
     settings:
       runAsNonRoot: true
       runAsUser: 1000
-      # runAsGroup: 1000
 
 ## gateway containers' resource requests and limits
 ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
@@ -290,7 +288,6 @@ AtContextServer:
     settings:
       runAsNonRoot: true
       runAsUser: 1000
-      # runAsGroup: 1000
 
 ## AtContextServer containers' resource requests and limits
 ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
@@ -365,7 +362,6 @@ ConfigServer:
     settings:
       runAsNonRoot: true
       runAsUser: 1000
-      # runAsGroup: 1000
 
 ## ConfigServer containers' resource requests and limits
 ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
@@ -440,7 +436,6 @@ EntityManager:
     settings:
       runAsNonRoot: true
       runAsUser: 1000
-      # runAsGroup: 1000
 
 ## EntityManager containers' resource requests and limits
 ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
@@ -515,7 +510,6 @@ HistoryManager:
     settings:
       runAsNonRoot: true
       runAsUser: 1000
-      # runAsGroup: 1000
 
 ## HistoryManager containers' resource requests and limits
 ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
@@ -590,7 +584,6 @@ QueryManager:
     settings:
       runAsNonRoot: true
       runAsUser: 1000
-      # runAsGroup: 1000
 
 ## QueryManager containers' resource requests and limits
 ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
@@ -665,7 +658,6 @@ RegistryManager:
     settings:
       runAsNonRoot: true
       runAsUser: 1000
-      # runAsGroup: 1000
 
 ## RegistryManager containers' resource requests and limits
 ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
@@ -740,7 +732,6 @@ StorageManager:
     settings:
       runAsNonRoot: true
       runAsUser: 1000
-      # runAsGroup: 1000
 
 ## StorageManager containers' resource requests and limits
 ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
@@ -816,7 +807,6 @@ SubscriptionManager:
     settings:
       runAsNonRoot: true
       runAsUser: 1000
-      # runAsGroup: 1000
 
 ## SubscriptionManager containers' resource requests and limits
 ## ref: http://kubernetes.io/docs/user-guide/compute-resources/

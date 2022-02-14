@@ -37,6 +37,10 @@ releases:
   values:
   - dbpassword: {{ .Values.dbpassword }}
   - clusterSvcName: {{ .Values.db.teamId -}}-{{- .Values.db.clusterSvcPostfix }}
+  - alertaApiKey: {{ .Values.alertaApiKey }}
+  - alertaAdminPassword: {{ .Values.alertaAdminPassword }}
+  - alertaAdminKey: {{ .Values.alertaAdminKey }}
+  - alertaAdminUsers: [ {{ .Values.alerta.alertaAdminUser }} ]
   - default.yaml
   needs:
   - postgres

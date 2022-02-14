@@ -29,9 +29,12 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
             - name: OAUTH2_CLIENT_SECRET
-              value: {{ .Values.keycloak.alertaClientSecret }} 
+              valueFrom: 
+                secretKeyRef:
+                  name: {{ .Values.keycloak.alerta.clientSecret }}
+                  key: CLIENT_SECRET
             - name: OAUTH2_CLIENT_ID
-              value: {{ .Values.keycloak.alertaClient }}
+              value: {{ .Values.keycloak.alerta.client }}
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
@@ -40,29 +43,24 @@ spec:
             - name: KEYCLOAK_URL
               value: {{ .Values.keycloak.externalAuthService.protocol }}://{{ .Values.keycloak.externalAuthService.domainname }}
             - name: KEYCLOAK_REALM
-              value: {{ .Values.keycloak.alertaRealm }}
-            {{- if .Values.alertaAdminUsers }}
+              value: {{ .Values.keycloak.alerta.realm }}
             - name: ADMIN_USERS
               value: {{ .Values.alertaAdminUsers | join "," }}
-            {{- end }}
             - name: ADMIN_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ template "alerta.fullname" . }}
+                  name: alerta
                   key: alerta-admin-password
-              {{- if .Values.alertaAdminKey }}
-            
             - name: ADMIN_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ template "alerta.fullname" . }}
+                  name: alerta
                   key: alerta-admin-key
             - name: ALERTA_API_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ template "alerta.fullname" . }}
-                  key: alerta-api-key
-              {{- end }}
+                  name: alerta
+                  key: alerta-admin-key
               {{- if .Values.alertaInstallPlugins }}
             - name: INSTALL_PLUGINS
               value: {{ .Values.alertaInstallPlugins | join "," }}
