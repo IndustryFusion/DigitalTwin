@@ -15,6 +15,12 @@ releases:
 - name: kafka
   chart: ./charts/kafka
   namespace: {{ .Values.namespace }}
+  values:
+  - mainVersion: {{ .Values.mainVersion }}
+  - clusterSvcName: {{ .Values.db.teamId -}}-{{- .Values.db.clusterSvcPostfix }}
+  - default.yaml
+  needs:
+  - postgres
 - name: cert-manager
   chart: ./charts/cert-manager
   namespace: {{ .Values.namespace }}

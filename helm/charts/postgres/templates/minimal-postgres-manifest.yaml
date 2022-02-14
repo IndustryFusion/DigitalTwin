@@ -14,3 +14,5 @@ spec:
 {{ toYaml .Values.databases | indent 4 }}
   postgresql:
     version: "12"
+    parameters:
+      wal_level: logical

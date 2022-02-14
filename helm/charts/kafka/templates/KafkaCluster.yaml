@@ -1,7 +1,7 @@
 apiVersion: kafka.strimzi.io/v1beta2
 kind: Kafka
 metadata:
-  name: {{ .Values.kafkaCluster.name }}
+  name: {{ .Values.kafka.name }}
 spec:
   kafka:
     version: 3.0.0
@@ -25,14 +25,14 @@ spec:
       type: jbod
       volumes:
       - id: 0
-        type: {{ .Values.kafkaCluster.storage.type }}
-        size: {{ .Values.kafkaCluster.storage.size }}
+        type: {{ .Values.kafka.storage.type }}
+        size: {{ .Values.kafka.storage.size }}
         deleteClaim: false
   zookeeper:
-    replicas: {{ .Values.kafkaCluster.zookeeper.replicas }}
+    replicas: {{ .Values.kafka.zookeeper.replicas }}
     storage:
-      type: {{ .Values.kafkaCluster.zookeeper.storage.type }}
-      size: {{ .Values.kafkaCluster.zookeeper.storage.size }}
+      type: {{ .Values.kafka.zookeeper.storage.type }}
+      size: {{ .Values.kafka.zookeeper.storage.size }}
       deleteClaim: false
   entityOperator:
     topicOperator: {}
