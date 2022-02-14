@@ -1,3 +1,5 @@
+{{- $name := printf "%s.%s.%s" .Values.db.dbUser .Values.clusterSvcName .Values.db.secretPostfix -}}
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace $name) -}}
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaConnector
 metadata:
@@ -8,14 +10,17 @@ spec:
   class: io.debezium.connector.postgresql.PostgresConnector
   tasksMax: 1
   config:
-    database.hostname: "{{ .Values.kafkaConnector.hostname }}"
-    database.port: "{{ .Values.kafkaConnector.port }}"
-    database.user: "{{ .Values.kafkaConnector.username }}"
-    database.password: "{{ .Values.kafkaConnector.password }}"
-    database.dbname: "{{ .Values.kafkaConnector.dbname }}"
-    database.server.name: "{{ .Values.kafkaConnector.server_name }}"
-    database.history.kafka.bootstrap.servers: "{{ .Values.kafkaConnectConfig.bootstrapServer }}"
-    database.history.kafka.topic: "schema-changes.entity"
+    database.hostname: {{ .Values.clusterSvcName | quote }}
+    database.port: {{ .Values.db.svcPort | quote }}
+    database.user: {{ .Values.db.dbUser | quote }}
+    {{ if $secret }}
+    database.password: {{ $secret.data.password | b64dec | quote }}
+    {{ else }}
+    database.password: "password not found in secrets"
+    {{ end }}
+    database.dbname: {{ .Values.db.scorpioDb | quote}}
+    database.server.name: {{ .Values.kafka.connect.debeziumTopicPrefix | quote }}
+    table.include.list: {{ .Values.kafka.connect.tableIncludeList | quote }}
     key.converter: "org.apache.kafka.connect.json.JsonConverter"
     value.converter: "org.apache.kafka.connect.json.JsonConverter"
     key.converter.schemas.enable: "false"

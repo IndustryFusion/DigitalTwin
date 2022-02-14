@@ -1,7 +1,7 @@
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaConnect
 metadata:
-  name: {{ .Values.kafkaConnectConfig.name }}
+  name: kafka-connect
   annotations:
     strimzi.io/use-connector-resources: "true"
   labels:
@@ -12,12 +12,8 @@ metadata:
     heritage: {{ .Release.Service }}
 spec:
   replicas: 1
-  image: {{ .Values.kafkaConnectConfig.image }}:{{ .Values.kafkaConnectConfig.tag }}
-  bootstrapServers: {{ .Values.kafkaConnectConfig.bootstrapServer }}
-  tls:
-    trustedCertificates:
-      - secretName: my-cluster-cluster-ca-cert
-        certificate: ca.crt  
+  image: {{ .Values.kafkaConnectConfig.image }}:{{ .Values.mainVersion }}
+  bootstrapServers: {{ .Values.kafka.bootstrapServer }}
   config:
     config.storage.replication.factor: 1
     offset.storage.replication.factor: 1
@@ -27,4 +23,4 @@ spec:
   template:
     pod:
       imagePullSecrets:
-        - name: {{ .Values.kafkaConnectConfig.imagePullSecrets }}
+        - name: {{ .Values.pullSecretCredentials }}

@@ -24,3 +24,7 @@ services:
     image: ${DOCKER_PREFIX:-ibn40}/flink-services-operator:${DOCKER_TAG}
     build:
       context: ./FlinkSqlServicesOperator
+  debezium-postgresql-connector:
+    image: ${DOCKER_PREFIX:-ibn40}/debezium-postgresql-connector:${DOCKER_TAG}
+    build:
+      context: ./DebeziumPostgresConnector

@@ -16,23 +16,21 @@ imageCredentials:
   password:
 
 #################################### kafkaCluster #########################
-kafkaCluster:
-  name: my-cluster
-  storage:
-    type: persistent-claim
-    size: 1Gi
-  zookeeper:
-    replicas: 1
-    storage:
-      type: persistent-claim
-      size: 1Gi
+#kafkaCluster:
+#  name: my-cluster
+#  storage:
+#    type: persistent-claim
+#    size: 1Gi
+#  zookeeper:
+#    replicas: 1
+#    storage:
+#      type: persistent-claim
+#      size: 1Gi
 
 #################################### kafkaConnect #########################
 kafkaConnectConfig:
   name: kafka-connect
-  image: ibn40/digitaltwin
-  tag: connect_tgz
-  bootstrapServer: my-cluster-kafka-bootstrap:9093
+  image: ibn40/debezium-postgresql-connector
   imagePullSecrets: regcred
 
 #################################### kafkaConnector #########################

@@ -90,4 +90,5 @@ kafka:
       type: persistent-claim
       size: 1Gi
   connect:
-    debeziumTopic: ngsild
+    debeziumTopicPrefix: iff.ngsild
+    tableIncludeList: public.entity$
