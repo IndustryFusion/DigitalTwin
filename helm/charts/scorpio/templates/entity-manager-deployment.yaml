@@ -25,7 +25,9 @@ spec:
       - image: {{ .Values.EntityManager.image.repository }}:{{ .Values.EntityManager.image.tag }}
         env:
           - name: CLIENT_ID
-            value: {{ .Values.EntityManager.name }}
+            value: {{ .Values.keycloak.scorpio.client }}
+          - name: REALM
+            value: {{ .Values.keycloak.scorpio.realm }}
         {{- range $key, $val := .Values.postgres_vars}}
           - name: {{ $key }}
             value: {{ $val | quote }}

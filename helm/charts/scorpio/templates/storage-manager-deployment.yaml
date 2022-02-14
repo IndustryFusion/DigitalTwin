@@ -24,6 +24,10 @@ spec:
       containers:
       - image: {{ .Values.StorageManager.image.repository }}:{{ .Values.StorageManager.image.tag }}
         env:
+          - name: CLIENT_ID
+            value: {{ .Values.keycloak.scorpio.client }}
+          - name: REALM
+            value: {{ .Values.keycloak.scorpio.realm }}
         {{- range $key, $val := .Values.postgres_vars}}
           - name: {{ $key }}
             value: {{ $val | quote }}

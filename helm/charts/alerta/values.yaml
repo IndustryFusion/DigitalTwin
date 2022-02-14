@@ -43,7 +43,7 @@ extraSecretMounts:
   #   secretName: alertmanager-secret-files
   #   readOnly: true
 
-alertaAdminPassword: "admin" # if not provided will be randomly generated
+# alertaAdminPassword: "admin" # if not provided will be randomly generated
 alertaAdminUsers: # list of email addresses
   - "admin"
 #   - "admin@alerta.io"
