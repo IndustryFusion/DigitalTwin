@@ -22,7 +22,7 @@ spec:
         service: {{ .Values.RegistryManager.name }}
     spec:
       containers:
-      - image: {{ .Values.RegistryManager.image.repository }}:{{ .Values.RegistryManager.image.tag }}
+      - image: {{ .Values.mainRepo }}/digitaltwin:RegistryManager_{{ .Values.scorpio.tag }}
         env:
           - name: CLIENT_ID
             value: {{ .Values.keycloak.scorpio.client }}

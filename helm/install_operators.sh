@@ -6,7 +6,7 @@ printf -- "------------------------\033[0m\n"
 curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.20.0/install.sh | bash -s v0.20.0
 
 printf "\n"
-printf "\033[1mInstalling Subscriptions for Keycloak operator, Strimzi, Postgres-operator \n"
+printf "\033[1mInstalling Subscriptions for Keycloak operator, Strimzi \n"
 printf -- "------------------------\033[0m "
 
 kubectl create ns ${NAMESPACE}
@@ -40,17 +40,6 @@ metadata:
 spec:
   name: keycloak-operator
   channel: alpha
-  source: operatorhubio-catalog
-  sourceNamespace: olm
----
-apiVersion: operators.coreos.com/v1alpha1
-kind: Subscription
-metadata:
-  name: postgres-operator
-  namespace: ${NAMESPACE}
-spec:
-  name: postgres-operator
-  channel: stable
   source: operatorhubio-catalog
   sourceNamespace: olm
 ---
@@ -100,9 +89,20 @@ kubectl krew update
 kubectl krew install minio
 kubectl minio init
 
+
+
 printf "\n"
 printf "\033[1mInstalling Flink SQL Operator CRD\n"
 printf -- "------------------------\033[0m\n"
 kubectl -n ${NAMESPACE} apply -f ../FlinkSqlServicesOperator/kubernetes/crd.yml
+
+printf "\n"
+printf "\033[1mInstalling Postgres-operator v1.7.1\n"
+printf -- "------------------------\033[0m\n"
+git clone https://github.com/zalando/postgres-operator.git
+cd postgres-operator
+git checkout v1.7.1
+helm -n iff install postgres-operator ./charts/postgres-operator
+
 
 printf -- "\033[1mOperators installed successfully.\033[0m\n"

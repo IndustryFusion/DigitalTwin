@@ -22,7 +22,7 @@ spec:
         service: {{ .Values.HistoryManager.name }}
     spec:
       containers:
-      - image: {{ .Values.HistoryManager.image.repository }}:{{ .Values.HistoryManager.image.tag }}
+      - image: {{ .Values.mainRepo }}/digitaltwin:HistoryManager_{{ .Values.scorpio.tag }}
         env:
           - name: CLIENT_ID
             value: {{ .Values.keycloak.scorpio.client }}

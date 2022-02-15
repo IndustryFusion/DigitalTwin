@@ -15,12 +15,12 @@ releases:
 - name: kafka
   chart: ./charts/kafka
   namespace: {{ .Values.namespace }}
+  needs:
+  - postgres
   values:
   - mainVersion: {{ .Values.mainVersion }}
   - clusterSvcName: {{ .Values.db.teamId -}}-{{- .Values.db.clusterSvcPostfix }}
   - default.yaml
-  needs:
-  - postgres
 - name: cert-manager
   chart: ./charts/cert-manager
   namespace: {{ .Values.namespace }}
@@ -29,14 +29,14 @@ releases:
 - name: keycloak
   chart: ./charts/keycloak
   namespace: {{ .Values.namespace }}
+  needs:
+  - postgres
   values:
   - dbpassword: {{ .Values.dbpassword }}
   - keycloakpassword: {{ .Values.keycloakpassword }}
   - clusterSvcName: {{ .Values.db.teamId -}}-{{- .Values.db.clusterSvcPostfix }}
   - default.yaml
   - postgresAddress: {{ .Values.db.teamId -}}-{{- .Values.db.clusterSvcPostfix -}}.{{- .Values.namespace -}}.svc.cluster.local
-  needs:
-  - postgres
 - name: alerta
   chart: ./charts/alerta
   namespace: {{ .Values.namespace }}
@@ -60,6 +60,7 @@ releases:
   needs:
   - postgres
   - keycloak
+  - kafka
 - name: flink
   chart: ./charts/flink
   namespace: {{ .Values.namespace }}
