@@ -22,7 +22,7 @@ spec:
         service: {{ .Values.AtContextServer.name }}
     spec:
       containers:
-      - image: {{ .Values.AtContextServer.image.repository }}:{{ .Values.AtContextServer.image.tag }}
+      - image: {{ .Values.mainRepo }}/digitaltwin:AtContextServer_{{ .Values.scorpio.tag }}
         env:
         {{- range $key, $val := .Values.kafka_vars }}
           - name: {{ $key }}

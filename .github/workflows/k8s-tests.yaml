@@ -1,0 +1,62 @@
+name: K8s tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Prepare K3d cluster
+      run: |
+        ( cd ./test && bash ./prepare-platform.sh )
+    - name: Prepare Bats framework
+      run: |
+        cd ./test/bats
+        bash ./prepare-test.sh
+        bats linting.bats
+    - name: Build DT containers and push to local registry
+      run: |
+        DOCKER_PREFIX=k3d-iff.localhost:12345 docker-compose build
+        DOCKER_PREFIX=k3d-iff.localhost:12345 docker-compose push
+    - name: Build Scorpio containers
+      run: |
+        git clone https://github.com/IndustryFusion/ScorpioBroker.git
+        cd ScorpioBroker
+        mvn clean package -DskipTests -Pdocker
+        docker images | tail -n +2 | awk '{print $1":"$2}'| grep ibn40 |
+          {
+            while read i; do
+            j=$(echo $i | sed 's/ibn40/k3d-iff.localhost:12345/g');
+            docker tag $i $j;
+            docker push $j;
+            done
+          }
+    - name: Install operators
+      run: ( cd ./helm && bash ./install_operators.sh )
+    - name: Test whether operators are coming up
+      run: |
+        cd ./test/bats
+        bats operators-*.bats
+    - name: Install the horizontal platform
+      run: |
+        cd ./helm
+        ./helmfile_linux_amd64 apply --set "mainRepo=k3d-iff.localhost:12345"
+    - name: Wait some time to give K8s time to settle and setup Ingress with localhost
+      run: |
+        sleep 600
+        cd ./test && bash ./setup-local-ingress.sh
+    - name: Test whether horizontal platform is coming up
+      run: |
+        cd ./test/bats
+        bats horizontal-platform-up-and-running.bats
+    - name: Setup tmate session
+      if: failure()
+      uses: mxschmitt/action-tmate@v3
+

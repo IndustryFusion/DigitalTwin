@@ -12,7 +12,7 @@ metadata:
     heritage: {{ .Release.Service }}
 spec:
   replicas: 1
-  image: {{ .Values.kafkaConnectConfig.image }}:{{ .Values.mainVersion }}
+  image: {{ .Values.mainRepo }}/{{ .Values.kafka.connect.image }}:{{ .Values.mainVersion }}
   bootstrapServers: {{ .Values.kafka.bootstrapServer }}
   config:
     config.storage.replication.factor: 1

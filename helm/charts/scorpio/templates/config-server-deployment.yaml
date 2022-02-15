@@ -22,7 +22,7 @@ spec:
         service: {{ .Values.ConfigServer.name }}
     spec:
       containers:
-      - image: {{ .Values.ConfigServer.image.repository }}:{{ .Values.ConfigServer.image.tag }}
+      - image: {{ .Values.mainRepo }}/digitaltwin:config-server_{{ .Values.scorpio.tag }}
         {{- if .Values.springArgs.overrideSpringArgs }}
         env:
           - name: spring_args

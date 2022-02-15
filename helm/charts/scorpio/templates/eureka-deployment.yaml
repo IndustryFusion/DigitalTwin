@@ -22,7 +22,7 @@ spec:
         service: {{ .Values.eureka.name }}
     spec:
       containers:
-      - image: {{ .Values.eureka.image.repository }}:{{ .Values.eureka.image.tag }}
+      - image: {{ .Values.mainRepo }}/digitaltwin:eureka-server_{{ .Values.scorpio.tag }}
         {{- if .Values.springArgs.overrideSpringArgs }}
         env:
           - name: spring_args

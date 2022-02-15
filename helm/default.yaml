@@ -48,6 +48,7 @@ scorpio:
   gatewaySvc: 
     name: gateway
     port: 9090
+  tag: 3.0.0-SNAPSHOT
 
 certmanager:
   secret: selfsigned-cert-tls
@@ -92,3 +93,4 @@ kafka:
   connect:
     debeziumTopicPrefix: iff.ngsild
     tableIncludeList: public.entity$
+    image: debezium-postgresql-connector

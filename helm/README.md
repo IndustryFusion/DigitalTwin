@@ -74,7 +74,9 @@ Removal instructions for helm charts are provided in the *Uninstallation* sectio
 
 # Configure Keycloak.local dns
 
-Edit the coredns configmap of kubesystem:
+First, find out which node in k3s is used as ingress ip by using `kubectl -n iff get ingress/keycloak-ingress -o jsonpath={".status.loadBalancer.ingress[0].ip"}`
+
+Say the determined IP-addres is `172.27.0.2`. Then k8s internal, the keycloak.local has to be mapped to this IP. To do that, edit the coredns configmap of kubesystem:
 `kubectl -n kube-system edit cm/coredns`
 
 ```
