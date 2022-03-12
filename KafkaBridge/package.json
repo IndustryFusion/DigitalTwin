@@ -1,0 +1,32 @@
+{
+  "name": "mylib",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "./node_modules/.bin/nyc --check-coverage ./node_modules/.bin/mocha --lines 80",
+    "lint": "./node_modules/.bin/eslint */app.js ./lib/*.js ./test/*.js"
+  },
+  "author": "Marcel Wagner",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@comunica/actor-init-sparql-file": "1.22.3",
+    "kafkajs": "^1.16.0",
+    "keycloak-connect": "^17.0.0",
+    "openid-client": "^5.1.2",
+    "underscore": "^1.13.1",
+    "winston": "^3.3.3"
+  },
+  "devDependencies": {
+    "chai": "^4.3.6",
+    "eslint": "^7.32.0",
+    "eslint-config-standard": "^16.0.3",
+    "eslint-plugin-import": "^2.25.4",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^5.2.0",
+    "mocha": "^9.2.1",
+    "nyc": "^15.1.0",
+    "rewire": "^6.0.0",
+    "sinon": "^13.0.1"
+  }
+}

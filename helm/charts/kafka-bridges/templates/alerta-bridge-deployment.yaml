@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alerta-bridge
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: alerta-bridge
+spec:
+  replicas: {{ .Values.kafkaBridge.alerta.replicaCount }}
+  selector:
+    matchLabels:
+      app: alerta-bridge
+  template:
+    metadata:
+      labels:
+        app: alerta-bridge
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/bridge-configmap.yaml") . | sha256sum }}
+    spec:
+      containers:
+        - name: alerta-bridge
+          image: {{ .Values.mainRepo }}/kafka-bridge:{{ .Values.mainVersion }}
+          command: ["node"]
+          args: ["/opt/alerta/app.js"]
+          #command: ["sleep"]
+          #args: ["1000"]
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: ALERTA_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: alerta
+                  key: alerta-admin-key
+          livenessProbe:
+            exec:
+              command:
+              - cat
+              - /tmp/healthy
+            initialDelaySeconds: 300
+          readinessProbe:
+            exec:
+              command:
+              - cat
+              - /tmp/ready
+            initialDelaySeconds: 5
+          volumeMounts:
+            - name: config
+              mountPath: /opt/config
+              readOnly: true
+          resources:
+      volumes:
+      - name: config
+        configMap:
+          # Provide the name of the ConfigMap you want to mount.
+          name: bridge-configmap
+          # An array of keys from the ConfigMap to create as files
+          items:
+          - key: "config.json"
+            path: "config.json"
+          - key: "knowledge.ttl"
+            path: "knowledge.ttl"

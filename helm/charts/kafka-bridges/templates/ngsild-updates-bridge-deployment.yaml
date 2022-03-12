@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ngsild-updates-bridge
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: ngsild-updates-bridge
+spec:
+  replicas: {{ .Values.kafkaBridge.ngsildUpdates.replicaCount }}
+  selector:
+    matchLabels:
+      app: ngsild-updates-bridge
+  template:
+    metadata:
+      labels:
+        app: ngsild-updates-bridge
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/bridge-configmap.yaml") . | sha256sum }}
+    spec:
+      containers:
+        - name: ngsild-updates-bridge
+          image: {{ .Values.mainRepo }}/kafka-bridge:{{ .Values.mainVersion }}
+          command: ["node"]
+          args: ["/opt/ngsildUpdates/app.js"]
+          #command: ["sleep"]
+          #args: ["10000"]
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: NGSILD_UPDATES_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-client-secret-ngsild-updates
+                  key: CLIENT_SECRET
+          livenessProbe:
+            exec:
+              command:
+              - cat
+              - /tmp/healthy
+            initialDelaySeconds: 300
+          readinessProbe:
+            exec:
+              command:
+              - cat
+              - /tmp/ready
+            initialDelaySeconds: 5
+          volumeMounts:
+            - name: config
+              mountPath: /opt/config
+              readOnly: true
+          resources:
+      volumes:
+      - name: config
+        configMap:
+          # Provide the name of the ConfigMap you want to mount.
+          name: bridge-configmap
+          # An array of keys from the ConfigMap to create as files
+          items:
+          - key: "config.json"
+            path: "config.json"
+          - key: "knowledge.ttl"
+            path: "knowledge.ttl"
