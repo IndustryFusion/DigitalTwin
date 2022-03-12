@@ -6,21 +6,28 @@ on:
   pull_request:
     branches: [ main ]
 
-jobs:
+env:
+  SELF_HOSTED_RUNNER: true
 
+jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: private
 
     steps:
     - uses: actions/checkout@v2
     - name: Prepare K3d cluster
       run: |
-        ( cd ./test && bash ./prepare-platform.sh )
+        if [ -z "${SELF_HOSTED_RUNNER}" ]; then
+          ( cd ./test && bash ./prepare-platform.sh )
+        else
+          ( cd ./test && bash ./prepare-platform-for-self-hosted-runner.sh )
+        fi
     - name: Prepare Bats framework
       run: |
         cd ./test/bats
         bash ./prepare-test.sh
         bats linting.bats
+        shellcheck *.sh *.bats test-*/*.bats
     - name: Build DT containers and push to local registry
       run: |
         DOCKER_PREFIX=k3d-iff.localhost:12345 docker-compose build
@@ -43,20 +50,30 @@ jobs:
     - name: Test whether operators are coming up
       run: |
         cd ./test/bats
-        bats operators-*.bats
-    - name: Install the horizontal platform
+        bats test-operators/*.bats
+    - name: Install first two parts of horizontal platform
       run: |
         cd ./helm
-        ./helmfile_linux_amd64 apply --set "mainRepo=k3d-iff.localhost:12345"
-    - name: Wait some time to give K8s time to settle and setup Ingress with localhost
+        echo Install first part
+        ./helmfile_linux_amd64 -l order=first apply --set "mainRepo=k3d-iff.localhost:12345"
+        (cd ../test/bats; bats test-horizontal-platform/horizontal-platform-up-and-running-first.bats)
+        echo Install second part
+        ./helmfile_linux_amd64 -l order=second apply --set "mainRepo=k3d-iff.localhost:12345"
+        (cd ../test/bats; bats test-horizontal-platform/horizontal-platform-up-and-running-second.bats)
+
+    - name: Setup Ingress for localhost and install rest of platform
       run: |
-        sleep 600
-        cd ./test && bash ./setup-local-ingress.sh
-    - name: Test whether horizontal platform is coming up
+        (cd ./test && bash ./setup-local-ingress.sh)
+        echo Install the rest
+        (cd ./helm && ./helmfile_linux_amd64 apply --set "mainRepo=k3d-iff.localhost:12345")
+        (cd ./test/bats; bats test-horizontal-platform/horizontal-platform-up-and-running-rest.bats)
+        echo Test all together
+        (cd ./test/bats; bats *.bats)
+    - name: Run e2e tests is coming up
       run: |
         cd ./test/bats
-        bats horizontal-platform-up-and-running.bats
-    - name: Setup tmate session
-      if: failure()
-      uses: mxschmitt/action-tmate@v3
+        bats test-bridges/*.bats
+  #  - name: Setup tmate session
+  #    if: failure()
+  #    uses: mxschmitt/action-tmate@v3
 
