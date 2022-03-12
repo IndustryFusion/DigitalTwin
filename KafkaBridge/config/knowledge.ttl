@@ -1,0 +1,24 @@
+PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX iff: <https://industry-fusion.com/types/v0.9/>
+
+iff:filter rdfs:subClassOf iff:device .
+iff:plasmacutter rdfs:subClassOf iff:cutter .
+iff:lasercutter rdfs:subClassOf iff:cutter .
+iff:cutter rdfs:subClassOf iff:device .
+iff:state a rdfs:class .
+iff:state_ON a iff:state .
+iff:state_OFF a iff:state  .
+iff:state_ON rdfs:label "ON" .
+iff:state_OFF rdfs:label "OFF" .
+iff:WC0 rdfs:subClassOf iff:wasteClass .
+iff:WC1 rdfs:subClassOff iff:wasteClass .
+iff:WC2 rdfs:subClassOff iff:wasteClass .
+iff:WC3 rdfs:subClassOff iff:wasteClass .
+iff:WC3 iff:moreExpensiveThan iff:WC2 .
+iff:WC2 iff:moreExpensiveThan iff:WC1 .
+iff:WC1 iff:moreExpensiveThan iff:WC0 .
+iff:WC1 a rdf:Bag .
+iff:WC1 rdf:_n "1.4301"^^iff:steelGrade, "1.4302"^^iff:steelGrade, "1.4303"^^iff:steelGrade, "1.4304"^^iff:steelGrade, "1.4305"^^iff:steelGrade .
+iff:WC2 rdf:_n "1.3301"^^iff:steelGrade, "1.3302"^^iff:steelGrade, "1.3303"^^iff:steelGrade, "1.3304"^^iff:steelGrade, "1.3305"^^iff:steelGrade .
+iff:WC3 rdf:_n "1.5301"^^iff:steelGrade, "1.5302"^^iff:steelGrade, "1.5303"^^iff:steelGrade, "1.5304"^^iff:steelGrade, "1.5305"^^iff:steelGrade .

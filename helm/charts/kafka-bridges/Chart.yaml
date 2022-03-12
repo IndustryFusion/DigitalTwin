@@ -1,0 +1,5 @@
+apiVersion: v2
+appVersion: 0.1
+description: 'Kafka bridges'
+name: kafka-bridges
+version: 0.1
