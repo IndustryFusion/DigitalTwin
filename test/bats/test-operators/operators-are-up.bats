@@ -14,12 +14,14 @@
 # limitations under the License.
 #
 
-load "lib/utils"
-load "lib/detik"
+load "../lib/utils"
+load "../lib/detik"
 
+# shellcheck disable=SC2034 # needed by detik library
 DETIK_CLIENT_NAME="kubectl"
+# shellcheck disable=SC2034
 DETIK_CLIENT_NAMESPACE="iff"
-
+# shellcheck disable=SC2034
 DETIK_DEBUG="true"
 
 @test "verify postgres operator is up and running" {
