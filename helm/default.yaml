@@ -7,7 +7,7 @@ ingressType: traefik # or nginx
 keycloak:
   adminName: admin
   externalAuthService:   # put here the *external* keycloak name, i.e. through ingress 
-    protocol: http
+    protocol: "http:"
     domainname: keycloak.local
     path: /auth
   internalAuthService: 
@@ -29,6 +29,10 @@ keycloak:
   scorpio:
     realm: iff
     client: scorpio
+  ngsildUpdates:
+    realm: iff
+    client: ngsild-updates
+    serviceRole: scorpio.Factory-Admin
 
 db:
   teamId: acid
@@ -41,14 +45,14 @@ db:
   scorpioDb: ngb
   secretPostfix: credentials.postgresql.acid.zalan.do
 
-ingress:
-  scorpio: ngsild.local
-
 scorpio:
-  gatewaySvc: 
-    name: gateway
-    port: 9090
   tag: 3.0.0-SNAPSHOT
+  externalHostname: ngsild.local
+  externalProtocol: "http:"
+  internalHostname: gateway
+  internalPort: 9090
+  internalProtocol: "http:"
+
 
 certmanager:
   secret: selfsigned-cert-tls
@@ -77,7 +81,9 @@ minio:
 
 alerta:
   alertaAdminUser: admin
-
+  internalService: alerta
+  internalPort: 8080
+  internalProtocol: "http:"
 
 kafka:
   name: my-cluster
@@ -94,3 +100,17 @@ kafka:
     debeziumTopicPrefix: iff.ngsild
     tableIncludeList: public.entity$
     image: debezium-postgresql-connector
+
+kafkaBridge:
+  debezium:
+    replicaCount: 1
+    listenTopic: "iff.ngsild.public.entity"
+    entityTopicPrefix: "iff.ngsild.entities"
+    attributesTopic: "iff.ngsild.attributes"
+  alerta:
+    replicaCount: 1
+    listenTopic: "iff.alerts"
+  ngsildUpdates:
+    replicaCount: 1
+    tokenRefreshInterval: 200
+    listenTopic: "iff.ngsildUpdates"

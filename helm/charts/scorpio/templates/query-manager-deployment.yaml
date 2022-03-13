@@ -33,7 +33,7 @@ spec:
             value: {{ $val | quote }}
         {{- end }}
           - name: KEYCLOAK_SERVER_URL
-            value: {{ .Values.keycloak.externalAuthService.protocol }}://{{ .Values.keycloak.externalAuthService.domainname }}{{.Values.keycloak.externalAuthService.path }}
+            value: {{ .Values.keycloak.externalAuthService.protocol }}//{{ .Values.keycloak.externalAuthService.domainname }}{{.Values.keycloak.externalAuthService.path }}
           - name: POSTGRES_SERVICE
             value: {{ .Values.clusterSvcName }}
           - name: POSTGRES_PASSWORD
