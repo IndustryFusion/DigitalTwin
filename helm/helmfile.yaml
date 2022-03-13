@@ -6,6 +6,8 @@ environments:
 
 releases:
 - name: postgres
+  labels:
+    order: first
   chart: ./charts/postgres
   namespace: {{ .Values.namespace }}
   values:
@@ -13,6 +15,8 @@ releases:
   - clusterSvcName: {{ .Values.db.teamId -}}-{{- .Values.db.clusterSvcPostfix }}
   - default.yaml
 - name: kafka
+  labels:
+    order: second
   chart: ./charts/kafka
   namespace: {{ .Values.namespace }}
   needs:
@@ -22,11 +26,15 @@ releases:
   - clusterSvcName: {{ .Values.db.teamId -}}-{{- .Values.db.clusterSvcPostfix }}
   - default.yaml
 - name: cert-manager
+  labels:
+    order: first
   chart: ./charts/cert-manager
   namespace: {{ .Values.namespace }}
   values:
   - default.yaml
 - name: keycloak
+  labels:
+    order: first
   chart: ./charts/keycloak
   namespace: {{ .Values.namespace }}
   needs:
@@ -38,6 +46,8 @@ releases:
   - default.yaml
   - postgresAddress: {{ .Values.db.teamId -}}-{{- .Values.db.clusterSvcPostfix -}}.{{- .Values.namespace -}}.svc.cluster.local
 - name: alerta
+  labels:
+    order: second
   chart: ./charts/alerta
   namespace: {{ .Values.namespace }}
   values:
@@ -52,6 +62,8 @@ releases:
   - postgres
   - keycloak
 - name: scorpio
+  labels:
+    order: second
   chart: ./charts/scorpio
   namespace: {{ .Values.namespace }}
   values:
@@ -71,9 +83,20 @@ releases:
   - kafka
   - minio
 - name: minio
+  labels:
+    order: first
   chart: ./charts/minio
   namespace: {{ .Values.namespace }}
   values:
   - minioAdminSecretKey: {{ .Values.minioAdminSecretKey }}
   - minioUserSecretKey: {{ .Values.minioUserSecretKey }}
   - default.yaml
+- name: kafka-bridges
+  chart: ./charts/kafka-bridges
+  namespace: {{ .Values.namespace }}
+  values:
+  - default.yaml
+  needs:
+  - kafka
+  - keycloak
+  - alerta
