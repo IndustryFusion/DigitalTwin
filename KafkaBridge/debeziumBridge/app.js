@@ -47,7 +47,7 @@ const startListener = async function () {
       try {
         const body = JSON.parse(message.value);
         const result = await debeziumBridge.parse(body);
-        sendUpdates({ entity: result.entity, updatedAttrs: result.updatedAttrs, deletedAttrs: result.deletedAttrs });
+        sendUpdates({ entity: result.entity, deletedEntity: result.deletedEntity, updatedAttrs: result.updatedAttrs, deletedAttrs: result.deletedAttrs });
       } catch (e) {
         logger.error('could not process message: ' + e.stack);
       }
@@ -123,7 +123,13 @@ const getTopic = function (topic) {
  * @param deleteAttrs {object} - contains the list of attributes of the entity which have to be deleted
  * @returns
  */
-const sendUpdates = async function ({ entity, updatedAttrs, deletedAttrs }) {
+const sendUpdates = async function ({ entity, deletedEntity, updatedAttrs, deletedAttrs }) {
+  let removeType = false;
+
+  if (deletedEntity !== undefined && deletedEntity !== null) {
+    entity = deletedEntity;
+    removeType = true;
+  }
   if (entity === null || entity.id === undefined || entity.id === null || entity.type === undefined || entity.type === null) {
     return;
   }
@@ -133,6 +139,11 @@ const sendUpdates = async function ({ entity, updatedAttrs, deletedAttrs }) {
     subClasses = [entity.type];
   }
   const topicMessages = [];
+
+  if (removeType) {
+    // delete of entities is done by set everything to NULL
+    delete entity.type;
+  }
 
   subClasses.forEach((element) => {
     const obj = {};
@@ -146,14 +157,24 @@ const sendUpdates = async function ({ entity, updatedAttrs, deletedAttrs }) {
   });
 
   if (deletedAttrs !== null && deletedAttrs !== undefined && Object.keys(deletedAttrs).length > 0) {
-    const deleteMessages = Object.entries(deletedAttrs).map(([key, value]) => { return { key: genKey, value: JSON.stringify(value) }; });
+    // Flatmap the array, i.e. {key: k, value: [m1, m2]} => [{key: k, value: m1}, {key: k, value: m2}]
+    const deleteMessages = Object.entries(deletedAttrs).flatMap(([key, value]) =>
+      value.map(val => {
+        return { key: genKey, value: JSON.stringify(val) };
+      })
+    );
     topicMessages.push({
       topic: config.debeziumBridge.attributesTopic,
       messages: deleteMessages
     });
   }
   if (updatedAttrs !== null && updatedAttrs !== undefined && Object.keys(updatedAttrs).length > 0) {
-    const updateMessages = Object.entries(updatedAttrs).map(([key, value]) => { return { key: genKey, value: JSON.stringify(value) }; });
+    // Flatmap the array, i.e. {key: k, value: [m1, m2]} => [{key: k, value: m1}, {key: k, value: m2}]
+    const updateMessages = Object.entries(updatedAttrs).flatMap(([key, value]) =>
+      value.map(val => {
+        return { key: genKey, value: JSON.stringify(val) };
+      })
+    );
     topicMessages.push({
       topic: config.debeziumBridge.attributesTopic,
       messages: updateMessages
