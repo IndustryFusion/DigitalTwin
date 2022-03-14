@@ -102,10 +102,55 @@ describe('Test sendUpdates', function () {
       type: 'http://example/type'
     };
     const updatedAttrs = {
-      updateKey: { updateValueKey: 'updateValueValue' }
+      updateKey: [{ updateValueKey: 'updateValueValue' }]
     };
     const deletedAttrs = {
-      deleteKey: { deleteValueKey: 'deleteValueValue' }
+      deleteKey: [{ deleteValueKey: 'deleteValueValue' }]
+    };
+    const getSubClasses = function () {
+      return ['klass', 'subklass'];
+    };
+    const revert = toTest.__set__('producer', producer);
+    toTest.__set__('config', config);
+    toTest.__set__('getSubClasses', getSubClasses);
+    await sendUpdates({ entity, updatedAttrs, deletedAttrs });
+    revert();
+  });
+  it('Should flatten input arrays of attributes', async function () {
+    const messages = [
+      { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
+      { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
+      [{ key: 'id', value: '{"deleteValueKey":"deleteValueValue"}' }, { key: 'id', value: '{"deleteValueKey":"deleteValueValue2"}' }],
+      [{ key: 'id', value: '{"updateValueKey":"updateValueValue"}' }, { key: 'id', value: '{"updateValueKey":"updateValueValue2"}' }]
+    ];
+    const sendUpdates = toTest.__get__('sendUpdates');
+    const config = {
+      debeziumBridge: {
+        attributesTopic: 'attributesTopic',
+        entityTopicPrefix: 'topicPrefix'
+      }
+    };
+    const producer = {
+      sendBatch: function ({ topicMessages }) {
+        topicMessages[0].topic.should.equal('topicPrefix.klass');
+        assert.deepEqual(topicMessages[0].messages[0], messages[0]);
+        topicMessages[1].topic.should.equal('topicPrefix.subklass');
+        assert.deepEqual(topicMessages[1].messages[0], messages[1]);
+        topicMessages[2].topic.should.equal('attributesTopic');
+        assert.deepEqual(topicMessages[2].messages, messages[2]);
+        topicMessages[3].topic.should.equal('attributesTopic');
+        assert.deepEqual(topicMessages[3].messages, messages[3]);
+      }
+    };
+    const entity = {
+      id: 'id',
+      type: 'http://example/type'
+    };
+    const updatedAttrs = {
+      updateKey: [{ updateValueKey: 'updateValueValue' }, { updateValueKey: 'updateValueValue2' }]
+    };
+    const deletedAttrs = {
+      deleteKey: [{ deleteValueKey: 'deleteValueValue' }, { deleteValueKey: 'deleteValueValue2' }]
     };
     const getSubClasses = function () {
       return ['klass', 'subklass'];
@@ -144,10 +189,10 @@ describe('Test sendUpdates', function () {
       type: 'http://example/type'
     };
     const updatedAttrs = {
-      updateKey: { updateValueKey: 'updateValueValue' }
+      updateKey: [{ updateValueKey: 'updateValueValue' }]
     };
     const deletedAttrs = {
-      deleteKey: { deleteValueKey: 'deleteValueValue' }
+      deleteKey: [{ deleteValueKey: 'deleteValueValue' }]
     };
     const getSubClasses = function () {
       return [];

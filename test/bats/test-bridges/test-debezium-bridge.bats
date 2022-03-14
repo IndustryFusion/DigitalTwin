@@ -41,33 +41,33 @@ EOF
 
 compare_create_attributes() {
     cat << EOF | diff "$1" - >&3
-[{"id":"urn:plasmacutter:1\\\https://industry-fusion.com/types/v0.9/state",\
+{"id":"urn:plasmacutter:1\\\https://industry-fusion.com/types/v0.9/state",\
 "entityId":"urn:plasmacutter:1",\
 "synchronized":true,\
 "name":"https://industry-fusion.com/types/v0.9/state",\
 "type":"https://uri.etsi.org/ngsi-ld/Property",\
-"https://uri.etsi.org/ngsi-ld/hasValue":"OFF","index":0}]
-[{"id":"urn:plasmacutter:1\\\https://industry-fusion.com/types/v0.9/hasFilter",\
+"https://uri.etsi.org/ngsi-ld/hasValue":"OFF","index":0}
+{"id":"urn:plasmacutter:1\\\https://industry-fusion.com/types/v0.9/hasFilter",\
 "entityId":"urn:plasmacutter:1",\
 "synchronized":true,\
 "name":"https://industry-fusion.com/types/v0.9/hasFilter",\
 "type":"https://uri.etsi.org/ngsi-ld/Relationship",\
-"https://uri.etsi.org/ngsi-ld/hasObject":"urn:filter:1","index":0}]
-[{"id":"urn:plasmacutter:1\\\https://industry-fusion.com/types/v0.9/hasWorkpiece",\
+"https://uri.etsi.org/ngsi-ld/hasObject":"urn:filter:1","index":0}
+{"id":"urn:plasmacutter:1\\\https://industry-fusion.com/types/v0.9/hasWorkpiece",\
 "entityId":"urn:plasmacutter:1",\
 "synchronized":true,\
 "name":"https://industry-fusion.com/types/v0.9/hasWorkpiece",\
 "type":"https://uri.etsi.org/ngsi-ld/Relationship",\
 "https://uri.etsi.org/ngsi-ld/hasObject":"urn:workpiece:1",\
-"index":0}]
+"index":0}
 EOF
 }
 
 compare_delete_attributes() {
     cat << EOF | diff "$1" - >&3
-[{"id":"urn:plasmacutter:1\\\https://industry-fusion.com/types/v0.9/state","index":0}]
-[{"id":"urn:plasmacutter:1\\\https://industry-fusion.com/types/v0.9/hasFilter","index":0}]
-[{"id":"urn:plasmacutter:1\\\https://industry-fusion.com/types/v0.9/hasWorkpiece","index":0}]
+{"id":"urn:plasmacutter:1\\\https://industry-fusion.com/types/v0.9/state","index":0}
+{"id":"urn:plasmacutter:1\\\https://industry-fusion.com/types/v0.9/hasFilter","index":0}
+{"id":"urn:plasmacutter:1\\\https://industry-fusion.com/types/v0.9/hasWorkpiece","index":0}
 EOF
 }
 
@@ -82,7 +82,7 @@ EOF
 
 compare_delete_cutter() {
     cat << EOF | diff "$1" - >&3
-{"id":"urn:plasmacutter:1","type":"https://industry-fusion.com/types/v0.9/plasmacutter"}
+{"id":"urn:plasmacutter:1"}
 EOF
 }
 
@@ -97,7 +97,7 @@ EOF
 
 compare_delete_plasmacutter() {
     cat << EOF | diff "$1" - >&3
-{"id":"urn:plasmacutter:1","type":"https://industry-fusion.com/types/v0.9/plasmacutter"}
+{"id":"urn:plasmacutter:1"}
 EOF
 }
 

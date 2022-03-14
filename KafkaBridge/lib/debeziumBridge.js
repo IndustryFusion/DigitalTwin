@@ -49,13 +49,16 @@ module.exports = function DebeziumBridge (conf) {
     const isEntityUpdated = this.diffEntity(beforeEntity, afterEntity);
     const { updatedAttrs, deletedAttrs } = this.diffAttributes(beforeAttrs, afterAttrs);
     const isChanged = isEntityUpdated || Object.keys(updatedAttrs).length > 0 || Object.keys(deletedAttrs).length > 0;
+    var deletedEntity;
     if (isChanged && Object.keys(afterEntity).length === 0) {
-      afterEntity.id = beforeEntity.id;
-      afterEntity.type = beforeEntity.type;
+      deletedEntity = {};
+      deletedEntity.id = beforeEntity.id;
+      deletedEntity.type = beforeEntity.type;
     }
     result = {
       entity: isChanged ? afterEntity : null,
-      updatedAttrs: isChanged ? afterAttrs : null,
+      deletedEntity: deletedEntity,
+      updatedAttrs: isChanged ? updatedAttrs : null,
       deletedAttrs: isChanged ? deletedAttrs : null
     };
     return result;
