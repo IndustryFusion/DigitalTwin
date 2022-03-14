@@ -41,7 +41,7 @@ const startListener = async function () {
     eachMessage: async ({ topic, partition, message }) => {
       try {
         const body = JSON.parse(message.value);
-        await state.ngsildUpdates(body);
+        await state.ngsildUpdates(body, message.timestamp);
       } catch (e) {
         logger.error('could not process message: ' + e);
       }

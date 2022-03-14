@@ -26,6 +26,19 @@ const getFlag = function (value) {
   return false;
 };
 
+/**
+ * Adds to every NGSILD entity the kafkaSyncOn attribute
+ * entities: NGSILD entities to update
+ */
+const addSyncOnAttribute = function (entities, syncOnAttribute, timestamp) {
+  entities.forEach(entity => {
+    entity[syncOnAttribute] = {
+      type: 'Property',
+      value: String(timestamp)
+    };
+  });
+};
+
 module.exports = function NgsildUpdates (conf) {
   const config = conf;
   const ngsild = new NgsiLd(config);
@@ -36,12 +49,13 @@ module.exports = function NgsildUpdates (conf) {
   let token;
   let headers = {};
   const refreshIntervalInMs = config.ngsildUpdates.refreshIntervalInSeconds * 1000;
+  const syncOnAttribute = config.bridgeCommon.kafkaSyncOnAttribute;
 
   this.updateToken = async function () {
     token = await keycloakAdapter.grantManager
       .obtainFromClientCredentials();
     logger.debug('Service token refreshed!');
-    return token;
+    // return token;
   };
   if (refreshIntervalInMs !== undefined && refreshIntervalInMs !== null) {
     setInterval(this.updateToken, refreshIntervalInMs);
@@ -53,13 +67,11 @@ module.exports = function NgsildUpdates (conf) {
    * @param {object} body - object from ngsildUpdate channel
    *
    * body should contain:
-   *  parentId: NGSI-LD id of parent of object - must be defined and !== null
-   *  parentRel: parent relationship name which relates to childId (in NGIS-LD terminology)
-   *  childObj: NGSI-LD object - either childObj or childId must be defined and !== null.
+   *  op, entities, overwriteOrReplace
    */
-  this.ngsildUpdates = async function (body) {
+  this.ngsildUpdates = async function (body, timestamp) {
     if (token === undefined) {
-      token = await this.updateToken();
+      await this.updateToken();
     }
 
     headers = {};
@@ -71,9 +83,19 @@ module.exports = function NgsildUpdates (conf) {
     }
 
     const op = body.op;
-    const entities = body.entities;
+    let entities;
+    if (typeof body.entities === 'string') {
+      try {
+        entities = JSON.parse(body.entities);
+      } catch (e) {
+        logger.error('Could not parse entities field. Ignoring record.' + body.entities);
+      }
+    } else {
+      entities = body.entities;
+    }
     const overwriteOrReplace = getFlag(body.overwriteOrReplace);
     let result;
+    addSyncOnAttribute(entities, syncOnAttribute, timestamp);
 
     try {
       // update the entity - do not create it
@@ -82,10 +104,15 @@ module.exports = function NgsildUpdates (conf) {
         // the batch processing will be done sequentially - until this is fixed in Scorpio
         const promises = [];
         entities.forEach(entity => {
+          // basic health check of entity
+          if (entity.id === undefined || entity.id == null) {
+            logger.error('Unhealthy entity - ignoring it:' + JSON.stringify(entity));
+            return; // not healthy entity, ignore it
+          }
           promises.push(ngsild.updateProperties({ id: entity.id, body: entity, isOverwrite: overwriteOrReplace }, { headers })
             .then(result => {
               if (result.statusCode !== 204 && result.statusCode !== 207) {
-                throw new Error('Entity cannot update entity:' + JSON.stringify(result.body));
+                logger.error('Entity cannot update entity:' + JSON.stringify(result.body)); // throw no error, log it and ignore it, repeating would probably not solve it
               }
             })
           );
@@ -95,7 +122,7 @@ module.exports = function NgsildUpdates (conf) {
         // in this case, entity will be created if not existing
         result = await ngsild.replaceEntities(entities, overwriteOrReplace, { headers });
         if (result.statusCode !== 204) {
-          throw new Error('Cannot upsert entity:' + JSON.stringify(result.body));
+          logger.error('Cannot upsert entity:' + JSON.stringify(result.body)); // throw no error, log it and igonore it, repeating would probalby not solve it
         }
       }
     } catch (e) {

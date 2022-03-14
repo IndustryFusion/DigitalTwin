@@ -1,0 +1,95 @@
+apiVersion: industry-fusion.com/v1alpha2
+kind: BeamSqlStatementSet
+metadata:
+  name: demo-shacle-validation
+spec:
+  sqlstatements:
+    - INSERT INTO alerts_bulk
+      SELECT this AS resource, 
+          'Data validation' AS event,
+          'Development' AS environment,
+          ARRAY ['SHACL Validator'] AS service,
+          CASE WHEN (cnt > 1 OR cnt <> cnt2) AND typ IS NOT NULL THEN 'warning'
+              ELSE 'ok' END AS severity,
+          'customer'  customer,
+          CASE WHEN cnt <> cnt2 AND typ IS NOT NULL THEN 'Model validation for relationship https://industry-fusion.com/types/v0.9/hasFilter failed for '|| this || '. Not all relationships are linked to existing entities.'
+              WHEN cnt > 1 AND typ IS NOT NULL THEN 'Model validation for relationship https://industry-fusion.com/types/v0.9/hasFilter failed for ' || this || ' . Found ' || CAST(cnt AS STRING) || ' relationships instead of [0,1]!'
+              ELSE 'All ok' END as `text`
+          FROM
+          (
+              SELECT A.id AS this, count(C.`type`) AS cnt, count(B.`type`) AS cnt2, A.`type` AS typ
+              FROM cutter_view AS A
+              LEFT JOIN attributes_view AS B ON A.`https://industry-fusion.com/types/v0.9/hasFilter` = B.id
+              LEFT JOIN filter_view AS C ON B.`https://uri.etsi.org/ngsi-ld/hasObject` = C.id
+              WHERE
+                  A.`type` IS NULL OR
+                  (
+                      A.`type` IS NOT NULL
+                      AND (B.`type` = 'https://uri.etsi.org/ngsi-ld/Relationship' OR B.`type` IS NULL)
+                      AND (B.entityId = A.id OR B.entityId IS NULL)
+                      AND (B.name = 'https://industry-fusion.com/types/v0.9/hasFilter' OR B.name IS NULL)
+                  )
+              GROUP BY A.id, A.`type`
+          );
+    - INSERT INTO alerts_bulk
+      SELECT this AS resource, 
+          'Data validation' AS event,
+          'Development' AS environment,
+          ARRAY ['SHACL Validator'] AS service,
+          CASE WHEN (cnt > 1 OR cnt <> cnt2) AND typ IS NOT NULL THEN 'warning'
+              ELSE 'ok' END AS severity,
+          'customer'  customer,
+          CASE WHEN cnt <> cnt2 AND typ IS NOT NULL THEN 'Model validation for relationship https://industry-fusion.com/types/v0.9/hasWorkpiece failed for '|| this || '. Not all relationships are linked to existing entities.'
+              WHEN cnt > 1 AND typ IS NOT NULL THEN 'Model validation for relationship https://industry-fusion.com/types/v0.9/hasWorkpiece failed for ' || this || ' . Found ' || CAST(cnt AS STRING) || ' relationships instead of [0,1]!'
+              ELSE 'All ok' END as `text`
+          FROM
+          (
+              SELECT A.id AS this, count(C.`type`) AS cnt, count(B.`type`) AS cnt2, A.`type` AS typ
+              FROM cutter_view AS A
+              LEFT JOIN attributes_view AS B ON A.`https://industry-fusion.com/types/v0.9/hasWorkpiece` = B.id
+              LEFT JOIN workpiece_view AS C ON B.`https://uri.etsi.org/ngsi-ld/hasObject` = C.id
+              WHERE
+                  A.`type` IS NULL OR
+                  (
+                      A.`type` IS NOT NULL
+                      AND (B.`type` = 'https://uri.etsi.org/ngsi-ld/Relationship' OR B.`type` IS NULL)
+                      AND (B.entityId = A.id OR B.entityId IS NULL)
+                      AND (B.name = 'https://industry-fusion.com/types/v0.9/hasWorkpiece' OR B.name IS NULL)
+                  )
+              GROUP BY A.id, A.`type`
+          );
+    - INSERT INTO alerts_bulk
+      SELECT id AS resource, 
+          'Data validation' AS event,
+          'Development' AS environment,
+          ARRAY ['SHACL Validator'] AS service,
+          CASE WHEN val <> 'ON' AND val <> 'OFF' THEN 'warning'
+              ELSE 'ok' END AS severity,
+          'customer'  customer,
+          CASE WHEN val <> 'ON' AND val <> 'OFF' THEN 'Model validation for relationship https://industry-fusion.com/types/v0.9/state failed for ' || id || '. Invalid value ' || val
+              ELSE 'All ok' END as `text`
+      FROM (
+          SELECT A.id as id, B.`https://uri.etsi.org/ngsi-ld/hasValue` as val FROM cutter_view AS A JOIN attributes_view AS B ON A.`https://industry-fusion.com/types/v0.9/state` = B.id
+      );
+    - INSERT INTO alerts_bulk
+      SELECT id AS resource, 
+          'Data validation' AS event,
+          'Development' AS environment,
+          ARRAY ['SHACL Validator'] AS service,
+          CASE WHEN val <> 'ON' AND val <> 'OFF' THEN 'warning'
+              ELSE 'ok' END AS severity,
+          'customer'  customer,
+          CASE WHEN val <> 'ON' AND val <> 'OFF' THEN 'Model validation for relationship https://industry-fusion.com/types/v0.9/state failed for '|| id || '. Invalid value ' || val
+              ELSE 'All ok' END as `text`
+      FROM (
+          SELECT A.id as id, B.`https://uri.etsi.org/ngsi-ld/hasValue` as val FROM filter_view AS A JOIN attributes_view AS B ON A.`https://industry-fusion.com/types/v0.9/state` = B.id
+      );
+  tables:
+    - alerts-bulk
+    - cutter
+    - filter
+    - attributes
+  views:
+    - cutter-view
+    - filter-view
+    - attributes-view
