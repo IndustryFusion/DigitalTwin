@@ -48,6 +48,9 @@ data:
               "entityTopicPrefix": "iff.ngsild.entities",
               "attributesTopic": "iff.ngsild.attributes",
               "rdfSources": ["/opt/config/knowledge.ttl"]
+      },
+      "bridgeCommon": {
+              "kafkaSyncOnAttribute": "https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn"
       }
     }
   knowledge.ttl: |

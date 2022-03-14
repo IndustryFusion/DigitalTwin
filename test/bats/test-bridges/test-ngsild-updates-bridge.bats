@@ -501,7 +501,7 @@ teardown(){
     sleep 2
     password=$(get_password)
     token=$(get_token)
-    get_ngsild "${token}" ${FILTER_ID} | jq >${RECEIVED_ENTITY}
+    get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )' >${RECEIVED_ENTITY}
     delete_ngsild "${token}" ${FILTER_ID}
     run compare_inserted_entity ${RECEIVED_ENTITY}
     [ "$status" -eq 0 ]
@@ -513,12 +513,12 @@ teardown(){
     sleep 2
     password=$(get_password)
     token=$(get_token)
-    get_ngsild "${token}" ${FILTER_ID} | jq >${RECEIVED_ENTITY}
+    get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )' >${RECEIVED_ENTITY}
     run compare_inserted_entity ${RECEIVED_ENTITY}
     [ "$status" -eq 0 ]
     kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPSERT_FILTER_OVERWRITE}
     sleep 2
-    get_ngsild "${token}" ${FILTER_ID} | jq >${RECEIVED_ENTITY}
+    get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )' >${RECEIVED_ENTITY}
     run compare_upserted_overwritten_entity ${RECEIVED_ENTITY}
     [ "$status" -eq 0 ]
     delete_ngsild "${token}" ${FILTER_ID}
@@ -532,12 +532,12 @@ teardown(){
     sleep 2
     password=$(get_password)
     token=$(get_token)
-    get_ngsild "${token}" ${FILTER_ID} | jq >${RECEIVED_ENTITY}
+    get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )' >${RECEIVED_ENTITY}
     run compare_inserted_entity ${RECEIVED_ENTITY}
     [ "$status" -eq 0 ]
     kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPSERT_FILTER_NON_OVERWRITE}
     sleep 2
-    get_ngsild "${token}" ${FILTER_ID} | jq >${RECEIVED_ENTITY}
+    get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )' >${RECEIVED_ENTITY}
     run compare_upserted_non_overwritten_entity ${RECEIVED_ENTITY}
     [ "$status" -eq 0 ]
     delete_ngsild "${token}" ${FILTER_ID}
@@ -553,7 +553,7 @@ teardown(){
     kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPDATE_FILTER}
     echo "# Sent update object to ngsi-ld-updates-bridge, wait some time to let it settle"
     sleep 2
-    get_ngsild "${token}" ${FILTER_ID} | jq >${RECEIVED_ENTITY}
+    get_ngsild "${token}" ${FILTER_ID} | jq  'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )' >${RECEIVED_ENTITY}
     delete_ngsild "${token}" ${FILTER_ID}
     run compare_updated_entity ${RECEIVED_ENTITY}
     [ "$status" -eq 0 ]
@@ -568,7 +568,7 @@ teardown(){
     kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPDATE_FILTER_NO_OVERWRITE} 
     echo "# Sent update object to ngsi-ld-updates-bridge, wait some time to let it settle"
     sleep 2
-    get_ngsild "${token}" ${FILTER_ID} | jq >${RECEIVED_ENTITY}
+    get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )' >${RECEIVED_ENTITY}
     delete_ngsild "${token}" ${FILTER_ID}
     run compare_updated_no_overwrite_entity ${RECEIVED_ENTITY}
     [ "$status" -eq 0 ]
@@ -580,11 +580,11 @@ teardown(){
     sleep 2
     password=$(get_password)
     token=$(get_token)
-    get_ngsild "${token}" ${FILTER_ID} | jq >${RECEIVED_ENTITY}
+    get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )' >${RECEIVED_ENTITY}
     delete_ngsild "${token}" ${FILTER_ID}
     run compare_inserted_entity ${RECEIVED_ENTITY}
     [ "$status" -eq 0 ]
-    get_ngsild "${token}" ${CUTTER_ID} | jq >${RECEIVED_ENTITY}
+    get_ngsild "${token}" ${CUTTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )' >${RECEIVED_ENTITY}
     delete_ngsild "${token}" ${CUTTER_ID}
     run compare_cutter_entity ${RECEIVED_ENTITY}
     [ "$status" -eq 0 ]
@@ -597,11 +597,11 @@ teardown(){
     sleep 2
     password=$(get_password)
     token=$(get_token)
-    get_ngsild "${token}" ${FILTER_ID} | jq >${RECEIVED_ENTITY}
+    get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )' >${RECEIVED_ENTITY}
     delete_ngsild "${token}" ${FILTER_ID}
     run compare_updated_filter_entity ${RECEIVED_ENTITY}
     [ "$status" -eq 0 ]
-    get_ngsild "${token}" ${CUTTER_ID} | jq >${RECEIVED_ENTITY}
+    get_ngsild "${token}" ${CUTTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )' >${RECEIVED_ENTITY}
     delete_ngsild "${token}" ${CUTTER_ID}
     run compare_update_cutter_entity ${RECEIVED_ENTITY}
     [ "$status" -eq 0 ]

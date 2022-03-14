@@ -29,6 +29,21 @@ get_alerta_api_key() {
     kubectl -n ${NAMESPACE} get ${ALERTA_SECRET} -o jsonpath='{.data.'${ALERTA_SECRET_KEY}'}'| base64 -d
 }
 
+# iterate through all test alerts and delete them
+# $1 api key
+delete_all_test_alerts() {
+    key=$1
+    arraylength=1
+    while [ "$arraylength" -gt 0 ]; do
+        alerts=$(get_alerts "$key")
+        arraylength=$(echo "$alerts" | jq ".alerts | length ")
+        if [ "$arraylength" -gt 0 ]; then
+             id=$(echo "$alerts" | jq ".alerts[0].id"| tr -d '"')
+             delete_alert "$key" "$id"
+        fi
+    done
+}
+
 # send data to kafka bridge
 # $1: file to send
 # $2: kafka topic
@@ -39,7 +54,7 @@ send_to_kafka_bridge() {
 # receive alert
 # $1: api key
 get_alerts() {
-    curl -vv -X GET -H "Authorization: Key $1" ${ALERTA_URL}${ALERTA_PATH_ALERTS}
+    curl -vv -X GET -H "Authorization: Key $1" ${ALERTA_URL}${ALERTA_PATH_ALERTS}?event=test
 }
 
 # receive alert
@@ -83,8 +98,8 @@ teardown(){
 }
 
 @test "verify alerta receives alerts over alerta bridge" {
-
     key=$(get_alerta_api_key)
+    delete_all_test_alerts "$key"
     echo "# Alerta key: $key"
     send_to_kafka_bridge ${ALERTA_MSG} ${ALERTA_TOPIC}
     sleep 2
