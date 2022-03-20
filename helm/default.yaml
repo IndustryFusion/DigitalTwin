@@ -110,6 +110,7 @@ kafkaBridge:
   alerta:
     replicaCount: 1
     listenTopic: "iff.alerts"
+    bulkTopic: "iff.alerts.bulk"
   ngsildUpdates:
     replicaCount: 1
     tokenRefreshInterval: 200
