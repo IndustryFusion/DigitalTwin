@@ -1,0 +1,81 @@
+---
+apiVersion: industry-fusion.com/v1alpha2
+kind: BeamSqlTable
+metadata:
+  name: alerts
+spec:
+  name: alerts
+  connector: upsert-kafka
+  fields:
+    - 'resource': STRING
+    - 'event': STRING
+    - 'environment': STRING
+    - 'service': ARRAY<STRING>
+    - 'severity': STRING
+    - 'customer': STRING
+    - 'text': STRING
+  kafka:
+    topic: {{.Values.kafkaBridge.alerta.listenTopic}}
+    properties:
+      bootstrap.servers: {{.Values.kafka.bootstrapServer}}
+    key.format: json
+  value:
+    format: json
+    json.fail-on-missing-field: false
+    json.ignore-parse-errors: true
+  primaryKey: [resource, event]
+---
+apiVersion: industry-fusion.com/v1alpha2
+kind: BeamSqlTable
+metadata:
+  name: alerts-bulk
+spec:
+  name: alerts_bulk
+  connector: upsert-kafka
+  fields:
+    - 'resource': STRING
+    - 'event': STRING
+    - 'environment': STRING
+    - 'service': ARRAY<STRING>
+    - 'severity': STRING
+    - 'customer': STRING
+    - 'text': STRING
+    - 'watermark': FOR `timestamp` AS `timestamp`
+    - 'timestamp': TIMESTAMP(3) METADATA VIRTUAL
+  kafka:
+    topic: {{.Values.kafkaBridge.alerta.bulkTopic}}
+    properties:
+      bootstrap.servers: {{.Values.kafka.bootstrapServer}}
+    key.format: json
+  value:
+    format: json
+    json.fail-on-missing-field: false
+    json.ignore-parse-errors: true
+  primaryKey: [resource, event]
+---
+apiVersion: industry-fusion.com/v1alpha2
+kind: BeamSqlTable
+metadata:
+  name: alerts-filter
+spec:
+  name: alerts_filter
+  connector: kafka
+  fields:
+    - 'resource': STRING
+    - 'event': STRING
+    - 'environment': STRING
+    - 'service': ARRAY<STRING>
+    - 'severity': STRING
+    - 'customer': STRING
+    - 'text': STRING
+    - 'watermark': FOR ts AS ts
+    - 'ts': TIMESTAMP(3) METADATA FROM 'timestamp'
+  kafka:
+    topic: {{.Values.kafkaBridge.alerta.bulkTopic}}
+    properties:
+      bootstrap.servers: {{.Values.kafka.bootstrapServer}}
+    scan.startup.mode: latest-offset
+  value:
+    format: json
+    json.fail-on-missing-field: false
+    json.ignore-parse-errors: true

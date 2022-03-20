@@ -100,3 +100,14 @@ releases:
   - kafka
   - keycloak
   - alerta
+- name: sql-rules
+  chart: ./charts/sql-rules
+  namespace: {{ .Values.namespace }}
+  values:
+  - default.yaml
+  needs:
+  - kafka
+  - flink
+  - alerta
+  - scorpio
+  - kafka-bridges

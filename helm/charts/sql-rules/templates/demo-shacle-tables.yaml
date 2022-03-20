@@ -1,3 +1,4 @@
+---
 apiVersion: industry-fusion.com/v1alpha2
 kind: BeamSqlTable
 metadata:
@@ -6,17 +7,17 @@ spec:
   name: cutter
   connector: kafka
   fields:
-  - 'id': STRING
-  - 'type':  STRING
-  - 'https://industry-fusion.com/types/v0.9/hasWorkpiece': STRING
-  - 'https://industry-fusion.com/types/v0.9/hasFilter': STRING
-  - 'https://industry-fusion.com/types/v0.9/state': STRING
-  - 'ts': TIMESTAMP(3) METADATA FROM 'timestamp'
-  - 'watermark': FOR ts AS ts - INTERVAL '0.001' SECOND
+    - 'id': STRING
+    - 'type': STRING
+    - 'https://industry-fusion.com/types/v0.9/hasWorkpiece': STRING
+    - 'https://industry-fusion.com/types/v0.9/hasFilter': STRING
+    - 'https://industry-fusion.com/types/v0.9/state': STRING
+    - 'ts': TIMESTAMP(3) METADATA FROM 'timestamp'
+    - 'watermark': FOR ts AS ts - INTERVAL '0.001' SECOND
   kafka:
-    topic: {{ .Values.kafkaBridge.debezium.entityTopicPrefix }}.cutter
+    topic: '{{.Values.kafkaBridge.debezium.entityTopicPrefix}}.cutter'
     properties:
-      bootstrap.servers: {{ .Values.kafka.bootstrapServer }}
+      bootstrap.servers: {{.Values.kafka.bootstrapServer}}
     scan.startup.mode: earliest-offset
   value:
     format: json
@@ -49,17 +50,17 @@ spec:
   name: filter
   connector: kafka
   fields:
-  - 'id': STRING
-  - 'type':  STRING
-  - 'https://industry-fusion.com/types/v0.9/strength': STRING
-  - 'https://industry-fusion.com/types/v0.9/hasCartridge': STRING
-  - 'https://industry-fusion.com/types/v0.9/state': STRING
-  - 'ts': TIMESTAMP(3) METADATA FROM 'timestamp'
-  - 'watermark': FOR ts AS ts - INTERVAL '0.001' SECOND
+    - 'id': STRING
+    - 'type': STRING
+    - 'https://industry-fusion.com/types/v0.9/strength': STRING
+    - 'https://industry-fusion.com/types/v0.9/hasCartridge': STRING
+    - 'https://industry-fusion.com/types/v0.9/state': STRING
+    - 'ts': TIMESTAMP(3) METADATA FROM 'timestamp'
+    - 'watermark': FOR ts AS ts - INTERVAL '0.001' SECOND
   kafka:
-    topic: {{ .Values.kafkaBridge.debezium.entityTopicPrefix }}.filter
+    topic: '{{.Values.kafkaBridge.debezium.entityTopicPrefix}}.filter'
     properties:
-      bootstrap.servers: {{ .Values.kafka.bootstrapServer }}
+      bootstrap.servers: {{.Values.kafka.bootstrapServer}}
     scan.startup.mode: earliest-offset
   value:
     format: json
@@ -92,16 +93,16 @@ spec:
   name: workpiece
   connector: kafka
   fields:
-  - 'id': STRING
-  - 'type':  STRING
-  - 'https://industry-fusion.com/types/v0.9/material': STRING
-  - 'https://schema.org/depth': STRING
-  - 'ts': TIMESTAMP(3) METADATA FROM 'timestamp'
-  - 'watermark': FOR ts AS ts - INTERVAL '0.001' SECOND
+    - 'id': STRING
+    - 'type': STRING
+    - 'https://industry-fusion.com/types/v0.9/material': STRING
+    - 'https://schema.org/depth': STRING
+    - 'ts': TIMESTAMP(3) METADATA FROM 'timestamp'
+    - 'watermark': FOR ts AS ts - INTERVAL '0.001' SECOND
   kafka:
-    topic: {{ .Values.kafkaBridge.debezium.entityTopicPrefix }}.workpiece
+    topic: '{{.Values.kafkaBridge.debezium.entityTopicPrefix}}.workpiece'
     properties:
-      bootstrap.servers: {{ .Values.kafka.bootstrapServer }}
+      bootstrap.servers: {{.Values.kafka.bootstrapServer}}
     scan.startup.mode: earliest-offset
   value:
     format: json
@@ -133,17 +134,17 @@ spec:
   name: filter_cartridge
   connector: kafka
   fields:
-  - 'id': STRING
-  - 'type':  STRING
-  - 'https://industry-fusion.com/types/v0.9/wasteClass': STRING
-  - 'https://industry-fusion.com/types/v0.9/usedFrom': STRING
-  - 'https://industry-fusion.com/types/v0.9/usedUntil': STRING
-  - 'ts': TIMESTAMP(3) METADATA FROM 'timestamp'
-  - 'watermark': FOR ts AS ts - INTERVAL '0.001' SECOND
+    - 'id': STRING
+    - 'type': STRING
+    - 'https://industry-fusion.com/types/v0.9/wasteClass': STRING
+    - 'https://industry-fusion.com/types/v0.9/usedFrom': STRING
+    - 'https://industry-fusion.com/types/v0.9/usedUntil': STRING
+    - 'ts': TIMESTAMP(3) METADATA FROM 'timestamp'
+    - 'watermark': FOR ts AS ts - INTERVAL '0.001' SECOND
   kafka:
-    topic: {{ .Values.kafkaBridge.debezium.entityTopicPrefix }}.filterCartridge
+    topic: '{{.Values.kafkaBridge.debezium.entityTopicPrefix}}.filterCartridge'
     properties:
-      bootstrap.servers: {{ .Values.kafka.bootstrapServer }}
+      bootstrap.servers: {{.Values.kafka.bootstrapServer}}
     scan.startup.mode: earliest-offset
   value:
     format: json
@@ -165,7 +166,7 @@ spec:
       SELECT *,
       ROW_NUMBER() OVER (PARTITION BY `id`
          ORDER BY ts DESC) AS rownum
-      FROM `filter-cartridge` )
+      FROM `filter_cartridge`)
       WHERE rownum = 1;
 ---
 apiVersion: industry-fusion.com/v1alpha2
@@ -176,21 +177,21 @@ spec:
   name: attributes
   connector: kafka
   fields:
-  - 'id': STRING
-  - 'entityId': STRING
-  - 'name': STRING
-  - 'synchronized': BOOLEAN
-  - 'index': INTEGER
-  - 'type':  STRING
-  - 'type': STRING
-  - 'https://uri.etsi.org/ngsi-ld/hasValue': STRING
-  - 'https://uri.etsi.org/ngsi-ld/hasObject': STRING
-  - 'ts': TIMESTAMP(3) METADATA FROM 'timestamp'
-  - 'watermark': FOR ts AS ts - INTERVAL '0.001' SECOND
+    - 'id': STRING
+    - 'entityId': STRING
+    - 'name': STRING
+    - 'synchronized': BOOLEAN
+    - 'index': INTEGER
+    - 'type': STRING
+    - 'type': STRING
+    - 'https://uri.etsi.org/ngsi-ld/hasValue': STRING
+    - 'https://uri.etsi.org/ngsi-ld/hasObject': STRING
+    - 'ts': TIMESTAMP(3) METADATA FROM 'timestamp'
+    - 'watermark': FOR ts AS ts - INTERVAL '0.001' SECOND
   kafka:
-    topic: {{ .Values.kafkaBridge.debezium.attributesTopic }}
+    topic: {{.Values.kafkaBridge.debezium.attributesTopic}}
     properties:
-      bootstrap.servers: {{ .Values.kafka.bootstrapServer }}
+      bootstrap.servers: {{.Values.kafka.bootstrapServer}}
     scan.startup.mode: earliest-offset
   value:
     format: json
@@ -204,12 +205,12 @@ metadata:
 spec:
   name: attributes_view
   sqlstatement: |
-    SELECT id, entityId, name, synchronized, index, `type`, 
-           `https://uri.etsi.org/ngsi-ld/hasValue`, 
+    SELECT id, entityId, name, synchronized, index, `type`,
+           `https://uri.etsi.org/ngsi-ld/hasValue`,
            `https://uri.etsi.org/ngsi-ld/hasObject`
     FROM (
       SELECT *,
       ROW_NUMBER() OVER (PARTITION BY `id`
          ORDER BY ts DESC) AS rownum
-      FROM `attributes` )
+      FROM `attributes`)
       WHERE rownum = 1;

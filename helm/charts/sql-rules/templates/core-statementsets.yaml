@@ -1,0 +1,52 @@
+---
+# yamllint disable rule:line-length
+apiVersion: industry-fusion.com/v1alpha1
+kind: BeamSqlStatementSet
+metadata:
+  name: core-services
+spec:
+  sqlstatements:
+    - insert into alerts
+      select resource, event, environment, service, severity, customer, `text` from
+      (
+        select resource, event,
+          last_value(environment) as environment,
+          service,
+          last_value(A.customer) as customer,
+          last_value(`text`) as `text`,
+          LAG(A.severity) as last_severity,
+          last_value(A.severity) as severity,
+          LAG(A.customer) as last_customer,
+          LAG(A.environment) as last_environment
+        from
+          alerts_filter as A
+          GROUP BY A.resource, A.event, A.service
+          WINDOW w as (
+          PARTITION BY resource, event
+          ORDER BY `ts` ASC
+          ROWS BETWEEN 2 PRECEDING AND CURRENT ROW)
+      )
+      WHERE last_severity <> severity OR
+        last_severity IS NULL OR
+        last_environment <> environment OR
+        last_customer <> customer;
+    - >-
+      insert into ngsild_updates
+      select 'update', true, '[{"id": "' || id || '",' || LISTAGG(testagg) || '}]' from (
+      select  window_start, window_end
+      , A.entityId as id, A.name as name,
+          '"' || A.name
+                      || '":{"type": "'
+                      || LAST_VALUE(A.`type`)
+                      || IF(LAST_VALUE(A.`type`) =  'https://uri.etsi.org/ngsi-ld/Relationship',' ", "object": "', '", "value": "')
+                      || IF(LAST_VALUE(A.`type`) =  'https://uri.etsi.org/ngsi-ld/Relationship', LAST_VALUE(A.`https://uri.etsi.org/ngsi-ld/hasObject`), LAST_VALUE(A.`https://uri.etsi.org/ngsi-ld/hasValue`))
+                      || '"}'  as testagg
+      FROM TABLE( TUMBLE(TABLE attributes, DESCRIPTOR(ts), INTERVAL '2' second)) as A
+      where A.entityId is NOT NULL
+      group by A.entityId, A.name, window_start, window_end
+      ) group by window_start, window_end, id;
+  tables:
+    - alerts
+    - alerts-filter
+    - attributes
+    - ngsild-updates

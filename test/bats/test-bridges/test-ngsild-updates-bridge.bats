@@ -18,8 +18,8 @@ UPDATE_FILTER_NO_OVERWRITE=/tmp/UPDATE_FILTER_NO_OVERWRITE
 UPDATE_2_ENTITIES=/tmp/UPDATE_2_ENTITIES
 KAFKA_BOOTSTRAP=my-cluster-kafka-bootstrap:9092
 KAFKACAT_NGSILD_UPDATES_TOPIC=iff.ngsildUpdates
-FILTER_ID=urn:filter:1
-CUTTER_ID=urn:plasmacutter:1
+FILTER_ID=urn:filter-test:12345
+CUTTER_ID=urn:plasmacutter-test:12345
 RECEIVED_ENTITY=/tmp/RECEIVED_ENTITY
 
 cat << EOF | tr -d '\n' > ${UPSERT_FILTER}
@@ -41,7 +41,7 @@ cat << EOF | tr -d '\n' > ${UPSERT_FILTER}
         },
         "https://industry-fusion.com/types/v0.9/hasCartridge": {
           "type": "Relationship",
-          "object": "urn:filterCartridge:1"
+          "object": "urn:filterCartridge-test:12345"
         }
       }
     ]
@@ -71,7 +71,7 @@ cat << EOF | tr -d '\n' > ${UPSERT_FILTER_OVERWRITE}
         },
         "https://industry-fusion.com/types/v0.9/hasCartridge": {
           "type": "Relationship",
-          "object": "urn:filterCartridge:2"
+          "object": "urn:filterCartridge-test:22345"
         }
       }
     ]
@@ -101,7 +101,7 @@ cat << EOF | tr -d '\n' > ${UPSERT_FILTER_NON_OVERWRITE}
         },
         "https://industry-fusion.com/types/v0.9/hasCartridge": {
           "type": "Relationship",
-          "object": "urn:filterCartridge:2"
+          "object": "urn:filterCartridge-test:22345"
         }
       }
     ]
@@ -127,7 +127,7 @@ cat << EOF | tr -d '\n' > ${UPDATE_FILTER}
         },
         "https://industry-fusion.com/types/v0.9/hasCartridge": {
           "type": "Relationship",
-          "object": "urn:filterCartridge:2"
+          "object": "urn:filterCartridge-test:22345"
         }
       }
     ]
@@ -157,7 +157,7 @@ cat << EOF | tr -d '\n' > ${UPDATE_FILTER_NO_OVERWRITE}
         },
         "https://industry-fusion.com/types/v0.9/hasCartridge": {
           "type": "Relationship",
-          "object": "urn:filterCartridge:7"
+          "object": "urn:filterCartridge-test:72345"
         }
       }
     ]
@@ -183,7 +183,7 @@ cat << EOF | tr -d '\n' > ${UPSERT_2_ENTITIES}
         },
         "https://industry-fusion.com/types/v0.9/hasCartridge": {
           "type": "Relationship",
-          "object": "urn:filterCartridge:1"
+          "object": "urn:filterCartridge-test:12345"
         }
       },
       {
@@ -196,11 +196,11 @@ cat << EOF | tr -d '\n' > ${UPSERT_2_ENTITIES}
         },
         "https://industry-fusion.com/types/v0.9/hasWorkpiece": {
         "type": "Relationship",
-        "object": "urn:workpiece:1"
+        "object": "urn:workpiece-test:12345"
         },
         "https://industry-fusion.com/types/v0.9/hasFilter": {
         "type": "Relationship",
-        "object": "urn:filter:1"
+        "object": "urn:filter-test:12345"
         }
       }
     ]
@@ -226,7 +226,7 @@ cat << EOF | tr -d '\n' > ${UPDATE_2_ENTITIES}
         },
         "https://industry-fusion.com/types/v0.9/hasCartridge": {
           "type": "Relationship",
-          "object": "urn:filterCartridge:2"
+          "object": "urn:filterCartridge-test:22345"
         }
       },
       {
@@ -239,11 +239,11 @@ cat << EOF | tr -d '\n' > ${UPDATE_2_ENTITIES}
         },
         "https://industry-fusion.com/types/v0.9/hasWorkpiece": {
         "type": "Relationship",
-        "object": "urn:workpiece:2"
+        "object": "urn:workpiece-test:22345"
         },
         "https://industry-fusion.com/types/v0.9/hasFilter": {
         "type": "Relationship",
-        "object": "urn:filter:2"
+        "object": "urn:filter-test:22345"
         }
       }
     ]
@@ -256,11 +256,11 @@ EOF
 compare_inserted_entity() {
     cat << EOF | jq | diff "$1" - >&3
 {
-  "id" : "urn:filter:1",
+  "id" : "${FILTER_ID}",
   "type" : "https://industry-fusion.com/types/v0.9/filter",
   "https://industry-fusion.com/types/v0.9/hasCartridge" : {
     "type" : "Relationship",
-    "object" : "urn:filterCartridge:1"
+    "object" : "urn:filterCartridge-test:12345"
   },
   "https://industry-fusion.com/types/v0.9/state" : {
     "type" : "Property",
@@ -280,11 +280,11 @@ EOF
 compare_upserted_overwritten_entity() {
     cat << EOF | jq | diff "$1" - >&3
 {
-  "id" : "urn:filter:1",
+  "id" : "${FILTER_ID}",
   "type" : "https://industry-fusion.com/types/v0.9/filter",
   "https://industry-fusion.com/types/v0.9/hasCartridge" : {
     "type" : "Relationship",
-    "object" : "urn:filterCartridge:2"
+    "object" : "urn:filterCartridge-test:22345"
   },
   "https://industry-fusion.com/types/v0.9/state" : {
     "type" : "Property",
@@ -308,11 +308,11 @@ EOF
 compare_upserted_non_overwritten_entity() {
     cat << EOF | jq | diff "$1" - >&3
 {
-  "id" : "urn:filter:1",
+  "id" : "${FILTER_ID}",
   "type" : "https://industry-fusion.com/types/v0.9/filter",
   "https://industry-fusion.com/types/v0.9/hasCartridge" : {
     "type" : "Relationship",
-    "object" : "urn:filterCartridge:2"
+    "object" : "urn:filterCartridge-test:22345"
   },
   "https://industry-fusion.com/types/v0.9/state" : {
     "type" : "Property",
@@ -336,11 +336,11 @@ EOF
 compare_updated_entity() {
     cat << EOF | jq | diff "$1" - >&3
 {
-  "id" : "urn:filter:1",
+  "id" : "${FILTER_ID}",
   "type" : "https://industry-fusion.com/types/v0.9/filter",
   "https://industry-fusion.com/types/v0.9/hasCartridge" : {
     "type" : "Relationship",
-    "object" : "urn:filterCartridge:2"
+    "object" : "urn:filterCartridge-test:22345"
   },
   "https://industry-fusion.com/types/v0.9/state" : {
     "type" : "Property",
@@ -361,11 +361,11 @@ EOF
 compare_updated_no_overwrite_entity() {
     cat << EOF | jq | diff "$1" - >&3
 {
-  "id" : "urn:filter:1",
+  "id" : "${FILTER_ID}",
   "type" : "https://industry-fusion.com/types/v0.9/filter",
   "https://industry-fusion.com/types/v0.9/hasCartridge" : {
     "type" : "Relationship",
-    "object" : "urn:filterCartridge:1"
+    "object" : "urn:filterCartridge-test:12345"
   },
   "https://industry-fusion.com/types/v0.9/state" : {
     "type" : "Property",
@@ -389,15 +389,15 @@ EOF
 compare_cutter_entity() {
     cat << EOF | jq | diff "$1" - >&3
 {
-  "id": "urn:plasmacutter:1",
+  "id": "${CUTTER_ID}",
   "type": "https://industry-fusion.com/types/v0.9/plasmacutter",
   "https://industry-fusion.com/types/v0.9/hasFilter": {
     "type": "Relationship",
-    "object": "urn:filter:1"
+    "object": "urn:filter-test:12345"
   },
   "https://industry-fusion.com/types/v0.9/hasWorkpiece": {
     "type": "Relationship",
-    "object": "urn:workpiece:1"
+    "object": "urn:workpiece-test:12345"
   },
   "https://industry-fusion.com/types/v0.9/state": {
     "type": "Property",
@@ -415,15 +415,15 @@ EOF
 compare_update_cutter_entity() {
     cat << EOF | jq | diff "$1" - >&3
 {
-  "id": "urn:plasmacutter:1",
+  "id": "${CUTTER_ID}",
   "type": "https://industry-fusion.com/types/v0.9/plasmacutter",
   "https://industry-fusion.com/types/v0.9/hasFilter": {
     "type": "Relationship",
-    "object": "urn:filter:2"
+    "object": "urn:filter-test:22345"
   },
   "https://industry-fusion.com/types/v0.9/hasWorkpiece": {
     "type": "Relationship",
-    "object": "urn:workpiece:2"
+    "object": "urn:workpiece-test:22345"
   },
   "https://industry-fusion.com/types/v0.9/state": {
     "type": "Property",
@@ -441,11 +441,11 @@ EOF
 compare_updated_filter_entity() {
     cat << EOF | jq | diff "$1" - >&3
 {
-  "id" : "urn:filter:1",
+  "id" : "${FILTER_ID}",
   "type" : "https://industry-fusion.com/types/v0.9/filter",
   "https://industry-fusion.com/types/v0.9/hasCartridge" : {
     "type" : "Relationship",
-    "object" : "urn:filterCartridge:2"
+    "object" : "urn:filterCartridge-test:22345"
   },
   "https://industry-fusion.com/types/v0.9/state" : {
     "type" : "Property",
