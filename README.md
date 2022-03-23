@@ -3,6 +3,7 @@
 ---
 
 [![Docker Image CI](https://github.com/IndustryFusion/DigitalTwin/actions/workflows/docker-build.yml/badge.svg)](https://github.com/IndustryFusion/DigitalTwin/actions/workflows/docker-build.yml) [![Coverity Scan](https://scan.coverity.com/projects/24133/badge.svg)](https://scan.coverity.com/projects/industryfusion-digitaltwin)
+[![K8s tests](https://github.com/IndustryFusion/DigitalTwin/actions/workflows/k8s-tests.yaml/badge.svg)](https://github.com/IndustryFusion/DigitalTwin/actions/workflows/k8s-tests.yaml)
 
 This repository contains the ingredients for the Ditigal Twin Concept of Industry Fusion. The Digital Twin allows to manage NGSI-LD based entities and allow StreamingSQL and SHACL based descriptions of the processes.
 
