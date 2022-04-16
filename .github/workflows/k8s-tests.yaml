@@ -72,8 +72,5 @@ jobs:
     - name: Run e2e tests is coming up
       run: |
         cd ./test/bats
-        bats test-bridges/*.bats
-  #  - name: Setup tmate session
-  #    if: failure()
-  #    uses: mxschmitt/action-tmate@v3
+        bats */*.bats
 
