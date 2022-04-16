@@ -2,6 +2,82 @@
 apiVersion: industry-fusion.com/v1alpha2
 kind: BeamSqlTable
 metadata:
+  name: entity
+spec:
+  name: entity
+  connector: kafka
+  fields:
+    - 'id': STRING
+    - 'type': STRING
+    - 'ts': TIMESTAMP(3) METADATA FROM 'timestamp'
+    - 'watermark': FOR ts AS ts - INTERVAL '0.001' SECOND
+  kafka:
+    topic: '{{.Values.kafkaBridge.debezium.entityTopicPrefix}}.entity'
+    properties:
+      bootstrap.servers: {{.Values.kafka.bootstrapServer}}
+    scan.startup.mode: earliest-offset
+  value:
+    format: json
+    json.fail-on-missing-field: false
+    json.ignore-parse-errors: true
+---
+apiVersion: industry-fusion.com/v1alpha1
+kind: BeamSqlView
+metadata:
+  name: entity-view
+spec:
+  name: entity_view
+  sqlstatement: |
+    SELECT id, `type`
+    FROM (
+      SELECT *,
+      ROW_NUMBER() OVER (PARTITION BY `id`
+         ORDER BY ts DESC) AS rownum
+      FROM `entity` )
+      WHERE rownum = 1;
+---
+apiVersion: industry-fusion.com/v1alpha2
+kind: BeamSqlTable
+metadata:
+  name: machine
+spec:
+  name: machine
+  connector: kafka
+  fields:
+    - 'id': STRING
+    - 'type': STRING
+    - 'https://industry-fusion.com/types/v0.9/state': STRING
+    - 'ts': TIMESTAMP(3) METADATA FROM 'timestamp'
+    - 'watermark': FOR ts AS ts - INTERVAL '0.001' SECOND
+  kafka:
+    topic: '{{.Values.kafkaBridge.debezium.entityTopicPrefix}}.machine'
+    properties:
+      bootstrap.servers: {{.Values.kafka.bootstrapServer}}
+    scan.startup.mode: earliest-offset
+  value:
+    format: json
+    json.fail-on-missing-field: false
+    json.ignore-parse-errors: true
+---
+apiVersion: industry-fusion.com/v1alpha1
+kind: BeamSqlView
+metadata:
+  name: machine-view
+spec:
+  name: machine_view
+  sqlstatement: |
+    SELECT id, `type`,
+           `https://industry-fusion.com/types/v0.9/state`
+    FROM (
+      SELECT *,
+      ROW_NUMBER() OVER (PARTITION BY `id`
+         ORDER BY ts DESC) AS rownum
+      FROM `machine` )
+      WHERE rownum = 1;
+---
+apiVersion: industry-fusion.com/v1alpha2
+kind: BeamSqlTable
+metadata:
   name: cutter
 spec:
   name: cutter
@@ -167,50 +243,4 @@ spec:
       ROW_NUMBER() OVER (PARTITION BY `id`
          ORDER BY ts DESC) AS rownum
       FROM `filter_cartridge`)
-      WHERE rownum = 1;
----
-apiVersion: industry-fusion.com/v1alpha2
-kind: BeamSqlTable
-metadata:
-  name: attributes
-spec:
-  name: attributes
-  connector: kafka
-  fields:
-    - 'id': STRING
-    - 'entityId': STRING
-    - 'name': STRING
-    - 'synchronized': BOOLEAN
-    - 'index': INTEGER
-    - 'type': STRING
-    - 'type': STRING
-    - 'https://uri.etsi.org/ngsi-ld/hasValue': STRING
-    - 'https://uri.etsi.org/ngsi-ld/hasObject': STRING
-    - 'ts': TIMESTAMP(3) METADATA FROM 'timestamp'
-    - 'watermark': FOR ts AS ts - INTERVAL '0.001' SECOND
-  kafka:
-    topic: {{.Values.kafkaBridge.debezium.attributesTopic}}
-    properties:
-      bootstrap.servers: {{.Values.kafka.bootstrapServer}}
-    scan.startup.mode: earliest-offset
-  value:
-    format: json
-    json.fail-on-missing-field: false
-    json.ignore-parse-errors: true
----
-apiVersion: industry-fusion.com/v1alpha1
-kind: BeamSqlView
-metadata:
-  name: attributes-view
-spec:
-  name: attributes_view
-  sqlstatement: |
-    SELECT id, entityId, name, synchronized, index, `type`,
-           `https://uri.etsi.org/ngsi-ld/hasValue`,
-           `https://uri.etsi.org/ngsi-ld/hasObject`
-    FROM (
-      SELECT *,
-      ROW_NUMBER() OVER (PARTITION BY `id`
-         ORDER BY ts DESC) AS rownum
-      FROM `attributes`)
       WHERE rownum = 1;

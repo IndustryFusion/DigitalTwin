@@ -1,0 +1,84 @@
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: {{.Values.kafkaBridge.debezium.entityTopicPrefix}}.machine
+  labels:
+    strimzi.io/cluster: my-cluster
+spec:
+  partitions: 1
+  replicas: 1
+  config:
+    retention.ms: {{.Values.kafkaBridge.debezium.entityTopicRetention}}
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: {{.Values.kafkaBridge.debezium.entityTopicPrefix}}.cutter
+  labels:
+    strimzi.io/cluster: my-cluster
+spec:
+  partitions: 1
+  replicas: 1
+  config:
+    retention.ms: {{.Values.kafkaBridge.debezium.entityTopicRetention}}
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: {{.Values.kafkaBridge.debezium.entityTopicPrefix}}.plasmacutter
+  labels:
+    strimzi.io/cluster: my-cluster
+spec:
+  partitions: 1
+  replicas: 1
+  config:
+    retention.ms: {{.Values.kafkaBridge.debezium.entityTopicRetention}}
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: {{.Values.kafkaBridge.debezium.entityTopicPrefix}}.filter
+  labels:
+    strimzi.io/cluster: my-cluster
+spec:
+  partitions: 1
+  replicas: 1
+  config:
+    retention.ms: {{.Values.kafkaBridge.debezium.entityTopicRetention}}
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: {{.Values.kafkaBridge.debezium.entityTopicPrefix}}.filter-cartridge
+  labels:
+    strimzi.io/cluster: my-cluster
+spec:
+  partitions: 1
+  replicas: 1
+  config:
+    retention.ms: {{.Values.kafkaBridge.debezium.entityTopicRetention}}
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: {{.Values.kafkaBridge.debezium.entityTopicPrefix}}.workpiece
+  labels:
+    strimzi.io/cluster: my-cluster
+spec:
+  partitions: 1
+  replicas: 1
+  config:
+    retention.ms: {{.Values.kafkaBridge.debezium.entityTopicRetention}}
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: {{.Values.kafkaBridge.debezium.entityTopicPrefix}}.entity
+  labels:
+    strimzi.io/cluster: my-cluster
+spec:
+  partitions: 1
+  replicas: 1
+  config:
+    retention.ms: {{.Values.kafkaBridge.debezium.entityTopicRetention}}

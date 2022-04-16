@@ -1,0 +1,48 @@
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: {{.Values.kafkaBridge.alerta.bulkTopic}}
+  labels:
+    strimzi.io/cluster: my-cluster
+spec:
+  partitions: 1
+  replicas: 1
+  config:
+    retention.ms: {{.Values.kafkaBridge.alerta.bulkTopicRetention}}
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: {{.Values.kafkaBridge.alerta.listenTopic}}
+  labels:
+    strimzi.io/cluster: my-cluster
+spec:
+  partitions: 1
+  replicas: 1
+  config:
+    retention.ms: {{.Values.kafkaBridge.alerta.listenTopicRetention}}
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: {{.Values.kafkaBridge.ngsildUpdates.listenTopic}}
+  labels:
+    strimzi.io/cluster: my-cluster
+spec:
+  partitions: 1
+  replicas: 1
+  config:
+    retention.ms: {{.Values.kafkaBridge.ngsildUpdates.listenTopicRetention}}
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: {{.Values.kafkaBridge.debezium.attributesTopic}}
+  labels:
+    strimzi.io/cluster: my-cluster
+spec:
+  partitions: 1
+  replicas: 1
+  config:
+    retention.ms: {{.Values.kafkaBridge.debezium.attributesTopicRetention}}
