@@ -279,7 +279,7 @@ describe('Test parseBeforeAfterEntity', function () {
       'https://example/hasRel': [{
         id: 'id\\https://example/hasRel',
         entityId: 'id',
-        synchronized: true,
+        nodeType: '@id',
         name: 'https://example/hasRel',
         type: 'https://uri.etsi.org/ngsi-ld/Relationship',
         'https://uri.etsi.org/ngsi-ld/hasObject': 'urn:object:1',
@@ -288,7 +288,7 @@ describe('Test parseBeforeAfterEntity', function () {
       'https://example/prop': [{
         id: 'id\\https://example/prop',
         entityId: 'id',
-        synchronized: true,
+        nodeType: '@value',
         name: 'https://example/prop',
         type: 'https://uri.etsi.org/ngsi-ld/Property',
         'https://uri.etsi.org/ngsi-ld/hasValue': 'value',
@@ -340,11 +340,11 @@ describe('Test parseBeforeAfterEntity', function () {
       'https://example/prop': [{
         id: 'id\\https://example/prop',
         entityId: 'id',
-        synchronized: true,
+        nodeType: '@value',
         name: 'https://example/prop',
         type: 'https://uri.etsi.org/ngsi-ld/Property',
         'https://uri.etsi.org/ngsi-ld/hasValue': 'value',
-        valuetype: 'https://example/type',
+        valueType: 'https://example/type',
         index: 0
       }]
     });

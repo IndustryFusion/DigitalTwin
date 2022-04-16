@@ -119,25 +119,31 @@ module.exports = function DebeziumBridge (conf) {
           const obj = {};
           obj.id = refId;
           obj.entityId = id;
-          obj.synchronized = true;
           obj.name = key;
           if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'] !== undefined) {
             obj.type = 'https://uri.etsi.org/ngsi-ld/Property';
             // every Property is array with one element, hence [0] is no restriction
-            // Property can be Literal => @value or IRI => @id
+            // Property can be Literal => @value,@json or IRI => @id
             if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@value'] !== undefined) {
               obj['https://uri.etsi.org/ngsi-ld/hasValue'] = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@value'];
+              obj.nodeType = '@value';
             } else if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@id'] !== undefined) { // Property can be IRI => @id
-              obj['https://uri.etsi.org/ngsi-ld/hasValue'] = '{"@id": "' + refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@id'] + '"}';
+              obj['https://uri.etsi.org/ngsi-ld/hasValue'] = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@id'];
+              obj.nodeType = '@id';
+            } else if (typeof refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0] === 'object') { // no @id, no @value, must be a @json type
+              obj['https://uri.etsi.org/ngsi-ld/hasValue'] = JSON.stringify(refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]);
+              obj.nodeType = '@json';
             }
+
             if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'] !== undefined) {
               // every Property is array with one element, hence [0] is no restriction
-              obj.valuetype = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'];
+              obj.valueType = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'];
             }
           } else if (refObj['https://uri.etsi.org/ngsi-ld/hasObject'] !== undefined) {
             obj.type = 'https://uri.etsi.org/ngsi-ld/Relationship';
             // every Relationship is array with one element, hence [0] is no restriction
             obj['https://uri.etsi.org/ngsi-ld/hasObject'] = refObj['https://uri.etsi.org/ngsi-ld/hasObject'][0]['@id'];
+            obj.nodeType = '@id';
           } else {
             return;
           }

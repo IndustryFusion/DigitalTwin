@@ -14,8 +14,10 @@ KAFKA_BOOTSTRAP=my-cluster-kafka-bootstrap:9092
 KAFKACAT_ATTRIBUTES=/tmp/KAFKACAT_ATTRIBUTES
 KAFKACAT_ATTRIBUTES_TOPIC=iff.ngsild.attributes
 KAFKACAT_ENTITY_CUTTER=/tmp/KAFKACAT_ENTITY_CUTTER
+KAFKACAT_ENTITY_CUTTER_SORTED=/tmp/KAFKACAT_ENTITY_CUTTER_SORTED
 KAFKACAT_ENTITY_CUTTER_TOPIC=iff.ngsild.entities.cutter
 KAFKACAT_ENTITY_PLASMACUTTER=/tmp/KAFKACAT_ENTITY_PLASMACUTTER
+KAFKACAT_ENTITY_PLASMACUTTER_SORTED=/tmp/KAFKACAT_ENTITY_PLASMACUTTER_SORTED
 KAFKACAT_ENTITY_PLASMACUTTER_TOPIC=iff.ngsild.entities.plasmacutter
 PLASMACUTTER_ID=urn:plasmacutter-test:12345
 cat << EOF > ${CUTTER}
@@ -27,53 +29,133 @@ cat << EOF > ${CUTTER}
       "type": "Property",
       "value": "OFF"
     },
-    "https://industry-fusion.com/types/v0.9/hasWorkpiece": {
-      "type": "Relationship",
-      "object": "urn:workpiece-test:12345"
-    },
+    "https://industry-fusion.com/types/v0.9/hasWorkpiece": [
+        {
+            "type": "Relationship",
+            "object": "urn:workpiece-test:12345"
+        },
+        {
+            "type": "Relationship",
+            "object": "urn:workpiece-test:23456"
+        }
+    ],
     "https://industry-fusion.com/types/v0.9/hasFilter": {
       "type": "Relationship",
       "object": "urn:filter-test:12345"
-    }
+    },
+    "https://industry-fusion.com/types/v0.9/jsonValue": {
+        "type": "Property",
+        "value": {
+            "type": "https://industry-fusion.com/types/v0.9/myJsonType",
+            "https://industry-fusion.com/types/v0.9/my": "json"
+        }
+    },
+    "https://industry-fusion.com/types/v0.9/jsonValueArray": [
+        {
+            "type": "Property",
+            "value": {
+                "https://industry-fusion.com/types/v0.9/my": "json1"
+            }
+        },
+        {
+            "type": "Property",
+            "value": {
+                "type": "https://industry-fusion.com/types/v0.9/myJsonType",
+                "https://industry-fusion.com/types/v0.9/my": "json2"
+            }
+        }
+    ],
+    "https://industry-fusion.com/types/v0.9/multiState": [
+        {
+            "type": "Property",
+            "value": "OFF"
+        },
+        {
+            "type": "Property",
+            "value": {
+                "@value": "ON",
+                "type": "https://industry-fusion.com/types/v0.9/multiStateType"
+            }
+        }
+    ]
 }
 EOF
 
 
 compare_create_attributes() {
     cat << EOF | diff "$1" - >&3
-{"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/state",\
-"entityId":"${PLASMACUTTER_ID}",\
-"synchronized":true,\
-"name":"https://industry-fusion.com/types/v0.9/state",\
-"type":"https://uri.etsi.org/ngsi-ld/Property",\
-"https://uri.etsi.org/ngsi-ld/hasValue":"OFF","index":0}
 {"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/hasFilter",\
 "entityId":"${PLASMACUTTER_ID}",\
-"synchronized":true,\
 "name":"https://industry-fusion.com/types/v0.9/hasFilter",\
 "type":"https://uri.etsi.org/ngsi-ld/Relationship",\
-"https://uri.etsi.org/ngsi-ld/hasObject":"urn:filter-test:12345","index":0}
+"https://uri.etsi.org/ngsi-ld/hasObject":"urn:filter-test:12345","nodeType":"@id","index":0}
 {"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/hasWorkpiece",\
 "entityId":"${PLASMACUTTER_ID}",\
-"synchronized":true,\
 "name":"https://industry-fusion.com/types/v0.9/hasWorkpiece",\
 "type":"https://uri.etsi.org/ngsi-ld/Relationship",\
 "https://uri.etsi.org/ngsi-ld/hasObject":"urn:workpiece-test:12345",\
-"index":0}
+"nodeType":"@id","index":0}
+{"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/hasWorkpiece",\
+"entityId":"${PLASMACUTTER_ID}",\
+"name":"https://industry-fusion.com/types/v0.9/hasWorkpiece",\
+"type":"https://uri.etsi.org/ngsi-ld/Relationship",\
+"https://uri.etsi.org/ngsi-ld/hasObject":"urn:workpiece-test:23456",\
+"nodeType":"@id","index":1}
+{"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/jsonValueArray",\
+"entityId":"${PLASMACUTTER_ID}",\
+"name":"https://industry-fusion.com/types/v0.9/jsonValueArray",\
+"type":"https://uri.etsi.org/ngsi-ld/Property",\
+"https://uri.etsi.org/ngsi-ld/hasValue":"{\"https://industry-fusion.com/types/v0.9/my\":[{\"@value\":\"json1\"}]}",\
+"nodeType":"@json","index":0}
+{"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/jsonValueArray",\
+"entityId":"${PLASMACUTTER_ID}",\
+"name":"https://industry-fusion.com/types/v0.9/jsonValueArray",\
+"type":"https://uri.etsi.org/ngsi-ld/Property",\
+"https://uri.etsi.org/ngsi-ld/hasValue":"{\"@type\":[\"https://industry-fusion.com/types/v0.9/myJsonType\"],\"https://industry-fusion.com/types/v0.9/my\":[{\"@value\":\"json2\"}]}",\
+"nodeType":"@json","valueType":["https://industry-fusion.com/types/v0.9/myJsonType"],"index":1}
+{"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/jsonValue",\
+"entityId":"${PLASMACUTTER_ID}",\
+"name":"https://industry-fusion.com/types/v0.9/jsonValue",\
+"type":"https://uri.etsi.org/ngsi-ld/Property",\
+"https://uri.etsi.org/ngsi-ld/hasValue":"{\"@type\":[\"https://industry-fusion.com/types/v0.9/myJsonType\"],\"https://industry-fusion.com/types/v0.9/my\":[{\"@value\":\"json\"}]}",\
+"nodeType":"@json","valueType":["https://industry-fusion.com/types/v0.9/myJsonType"],"index":0}
+{"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/multiState",\
+"entityId":"${PLASMACUTTER_ID}",\
+"name":"https://industry-fusion.com/types/v0.9/multiState","type":"https://uri.etsi.org/ngsi-ld/Property",\
+"https://uri.etsi.org/ngsi-ld/hasValue":"OFF","nodeType":"@value","index":0}
+{"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/multiState",\
+"entityId":"${PLASMACUTTER_ID}",\
+"name":"https://industry-fusion.com/types/v0.9/multiState",\
+"type":"https://uri.etsi.org/ngsi-ld/Property","https://uri.etsi.org/ngsi-ld/hasValue":"ON",\
+"nodeType":"@value","valueType":"https://industry-fusion.com/types/v0.9/multiStateType","index":1}
+{"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/state",\
+"entityId":"${PLASMACUTTER_ID}",\
+"name":"https://industry-fusion.com/types/v0.9/state",\
+"type":"https://uri.etsi.org/ngsi-ld/Property",\
+"https://uri.etsi.org/ngsi-ld/hasValue":"OFF","nodeType":"@value","index":0}
 EOF
 }
 
 compare_delete_attributes() {
     cat << EOF | diff "$1" - >&3
-{"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/state","index":0}
 {"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/hasFilter","index":0}
 {"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/hasWorkpiece","index":0}
+{"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/hasWorkpiece","index":1}
+{"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/jsonValueArray","index":0}
+{"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/jsonValueArray","index":1}
+{"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/jsonValue","index":0}
+{"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/multiState","index":0}
+{"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/multiState","index":1}
+{"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/state","index":0}
 EOF
 }
 
 compare_create_cutter() {
-    cat << EOF | diff "$1" - >&3
+    cat << EOF | jq -S | diff "$1" - >&3
 {"https://industry-fusion.com/types/v0.9/state":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/state",\
+"https://industry-fusion.com/types/v0.9/jsonValue":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/jsonValue",\
+"https://industry-fusion.com/types/v0.9/jsonValueArray":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/jsonValueArray",\
+"https://industry-fusion.com/types/v0.9/multiState": "${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/multiState",\
 "https://industry-fusion.com/types/v0.9/hasFilter":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/hasFilter",\
 "https://industry-fusion.com/types/v0.9/hasWorkpiece":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/hasWorkpiece",\
 "id":"${PLASMACUTTER_ID}","type":"https://industry-fusion.com/types/v0.9/plasmacutter"}
@@ -87,8 +169,11 @@ EOF
 }
 
 compare_create_plasmacutter() {
-    cat << EOF | diff "$1" - >&3
+    cat << EOF | jq -S | diff "$1" - >&3
 {"https://industry-fusion.com/types/v0.9/state":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/state",\
+"https://industry-fusion.com/types/v0.9/jsonValue":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/jsonValue",\
+"https://industry-fusion.com/types/v0.9/jsonValueArray":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/jsonValueArray",\
+"https://industry-fusion.com/types/v0.9/multiState": "${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/multiState",\
 "https://industry-fusion.com/types/v0.9/hasFilter":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/hasFilter",\
 "https://industry-fusion.com/types/v0.9/hasWorkpiece":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/hasWorkpiece",\
 "id":"${PLASMACUTTER_ID}","type":"https://industry-fusion.com/types/v0.9/plasmacutter"}
@@ -155,17 +240,24 @@ teardown(){
     sleep 2
     echo "# now killing kafkacat and evaluate result"
     killall kafkacat
+    sort -o ${KAFKACAT_ATTRIBUTES} ${KAFKACAT_ATTRIBUTES}
+    jq -S < ${KAFKACAT_ENTITY_CUTTER} > ${KAFKACAT_ENTITY_CUTTER_SORTED}
+    jq -S < ${KAFKACAT_ENTITY_PLASMACUTTER} > ${KAFKACAT_ENTITY_PLASMACUTTER_SORTED}
+    echo "# Compare ATTRIBUTES"
     run compare_create_attributes ${KAFKACAT_ATTRIBUTES}
     [ "$status" -eq 0 ]
 
-    run compare_create_cutter ${KAFKACAT_ENTITY_CUTTER}
+    echo "# Compare CUTTER Entity"
+    run compare_create_cutter ${KAFKACAT_ENTITY_CUTTER_SORTED}
     [ "$status" -eq 0 ]
 
-    run compare_create_plasmacutter ${KAFKACAT_ENTITY_PLASMACUTTER}
+    echo "# Compare PLASMACUTTER Entity"
+    run compare_create_plasmacutter ${KAFKACAT_ENTITY_PLASMACUTTER_SORTED}
     [ "$status" -eq 0 ]
 }
 
 @test "verify debezium bridge sends updates to attributes and entity topics when entity is deleted" {
+
     (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ATTRIBUTES}) &
     (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_ENTITY_CUTTER_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ENTITY_CUTTER}) &
     (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_ENTITY_PLASMACUTTER_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ENTITY_PLASMACUTTER}) &
@@ -178,6 +270,10 @@ teardown(){
     sleep 2
     echo "# now killing kafkacat and evaluate result"
     killall kafkacat
+    sleep 2
+    sort -o ${KAFKACAT_ATTRIBUTES} ${KAFKACAT_ATTRIBUTES}
+    jq -S < ${KAFKACAT_ENTITY_CUTTER} > ${KAFKACAT_ENTITY_CUTTER_SORTED}
+    jq -S < ${KAFKACAT_ENTITY_PLASMACUTTER} > ${KAFKACAT_ENTITY_PLASMACUTTER_SORTED}
     run compare_delete_attributes ${KAFKACAT_ATTRIBUTES}
     [ "$status" -eq 0 ]
 

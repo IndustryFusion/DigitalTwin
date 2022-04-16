@@ -1,3 +1,6 @@
+---
+# yamllint disable rule:line-length
+# yamllint disable rule:braces
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -19,14 +22,11 @@ spec:
     spec:
       containers:
         - name: debezium-bridge
-          image: {{ .Values.mainRepo }}/kafka-bridge:{{ .Values.mainVersion }}
+          image: '{{ .Values.mainRepo }}/kafka-bridge:{{ .Values.mainVersion }}'
           command: ["node"]
           args: ["/opt/debeziumBridge/app.js"]
-          #command: ["sleep"]
-          #args: ["1000"]
           imagePullPolicy: IfNotPresent
           env:
-            
           ports:
             - name: http
               containerPort: 8080
@@ -34,14 +34,14 @@ spec:
           livenessProbe:
             exec:
               command:
-              - cat
-              - /tmp/healthy
+                - cat
+                - /tmp/healthy
             initialDelaySeconds: 300
           readinessProbe:
             exec:
               command:
-              - cat
-              - /tmp/ready
+                - cat
+                - /tmp/ready
             initialDelaySeconds: 5
           volumeMounts:
             - name: config
@@ -49,13 +49,13 @@ spec:
               readOnly: true
           resources:
       volumes:
-      - name: config
-        configMap:
-          # Provide the name of the ConfigMap you want to mount.
-          name: bridge-configmap
-          # An array of keys from the ConfigMap to create as files
-          items:
-          - key: "config.json"
-            path: "config.json"
-          - key: "knowledge.ttl"
-            path: "knowledge.ttl"
+        - name: config
+          configMap:
+            # Provide the name of the ConfigMap you want to mount.
+            name: bridge-configmap
+            # An array of keys from the ConfigMap to create as files
+            items:
+              - key: "config.json"
+                path: "config.json"
+              - key: "knowledge.ttl"
+                path: "knowledge.ttl"
