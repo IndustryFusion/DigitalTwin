@@ -1,0 +1,213 @@
+---
+# yamllint disable rule:line-length
+apiVersion: industry-fusion.com/v1alpha2
+kind: BeamSqlStatementSet
+metadata:
+    name: demo-shacle-validation
+    annotations:
+        checksum/config: >-
+            {{ include (print $.Template.BasePath "/demo-shacl-tables.yaml") . | sha256sum }}
+            {{ include (print $.Template.BasePath "/demo-shacl-kafka-topics.yaml") . | sha256sum }}
+spec:
+    sqlstatements:
+        - |-
+            /* validate relationship hasWorkpiece of plasmacutter object
+            link count: [0,1]
+            part of shacl-validator */
+            INSERT INTO alerts_bulk
+            SELECT this AS resource,
+                'Data validation of hasWorkpiece' AS event,
+                'Development' AS environment,
+                ARRAY ['SHACL Validator'] AS service,
+                CASE WHEN (linkcount > 1 OR linkcount <> entitycount) AND typ IS NOT NULL THEN 'warning'
+                    ELSE 'ok' END AS severity,
+                'customer'  customer,
+                CASE WHEN linkcount > 1 AND typ IS NOT NULL THEN 'Model validation for relationship https://industry-fusion.com/types/v0.9/hasWorkpiece failed for ' || this || ' . Found ' || CAST(linkcount AS STRING) || ' relationships instead of [0,1]!'
+                    WHEN linkcount <> entitycount AND typ IS NOT NULL THEN 'Model validation for relationship https://industry-fusion.com/types/v0.9/hasWorkpiece failed for '|| this || '. Not all relationships are linked to existing entities.'
+                    ELSE 'All ok' END as `text`
+                FROM
+                (
+                    SELECT A.id AS this, A.`type` as typ, count(C.`type`) AS entitycount, count(B.`type`) AS linkcount
+                    FROM cutter_view AS A
+                    LEFT JOIN attributes_view AS B ON A.`https://industry-fusion.com/types/v0.9/hasWorkpiece` = B.id
+                    LEFT JOIN workpiece_view AS C ON B.`https://uri.etsi.org/ngsi-ld/hasObject` = C.id
+                    WHERE
+                        (B.`type` = 'https://uri.etsi.org/ngsi-ld/Relationship' OR B.`type` IS NULL)
+                        AND (B.entityId = A.id OR B.entityId IS NULL)
+                        AND (B.name = 'https://industry-fusion.com/types/v0.9/hasWorkpiece' OR B.name IS NULL)
+                    GROUP BY A.id, A.`type`
+            );
+        - |-
+            /* validate relationship hasFilter of plasmacutter object
+            link count: 1
+            part of shacle-validator */
+            INSERT INTO alerts_bulk
+            SELECT this AS resource,
+                'Data validation of hasFilter' AS event,
+                'Development' AS environment,
+                ARRAY ['SHACL Validator'] AS service,
+                CASE WHEN (linkcount <> 1 OR linkcount <> entitycount) AND typ IS NOT NULL THEN 'warning'
+                    ELSE 'ok' END AS severity,
+                'customer'  customer,
+                CASE WHEN linkcount <> 1 AND typ IS NOT NULL THEN 'Model validation for relationship https://industry-fusion.com/types/v0.9/hasFilter failed for ' || this || ' . Found ' || CAST(linkcount AS STRING) || ' relationships instead of 1!'
+                    WHEN linkcount <> entitycount AND typ IS NOT NULL THEN 'Model validation for relationship https://industry-fusion.com/types/v0.9/hasFilter failed for '|| this || '. Not all relationships are linked to existing entities.'
+                    ELSE 'All ok' END as `text`
+                FROM
+                (
+                    SELECT A.id AS this, A.`type` as typ, count(C.`type`) AS entitycount, count(B.`type`) AS linkcount
+                    FROM cutter_view AS A
+                    LEFT JOIN attributes_view AS B ON A.`https://industry-fusion.com/types/v0.9/hasFilter` = B.id
+                    LEFT JOIN filter_view AS C ON B.`https://uri.etsi.org/ngsi-ld/hasObject` = C.id
+                    WHERE
+                        (B.`type` = 'https://uri.etsi.org/ngsi-ld/Relationship' OR B.`type` IS NULL)
+                        AND (B.entityId = A.id OR B.entityId IS NULL)
+                        AND (B.name = 'https://industry-fusion.com/types/v0.9/hasFilter' OR B.name IS NULL)
+                    GROUP BY A.id, A.`type`
+            );
+        - |-
+            /* validate property state of all machine entities
+            part of shacle-validator demo */
+            INSERT INTO alerts_bulk
+            SELECT this AS resource,
+                'Data validation of state' AS event,
+                'Development' AS environment,
+                ARRAY ['SHACL Validator'] AS service,
+                CASE WHEN typ IS NOT NULL AND (nodeType <> '@id'
+                    OR (val <> 'https://industry-fusion.com/types/v0.9/state_OFF'
+                    AND val <> 'https://industry-fusion.com/types/v0.9/state_ON')) THEN 'warning'
+                    ELSE 'ok' END AS severity,
+                'customer'  customer,
+                CASE WHEN typ IS NOT NULL AND (nodeType <> '@id'
+                    OR (val <> 'https://industry-fusion.com/types/v0.9/state_OFF'
+                    AND val <> 'https://industry-fusion.com/types/v0.9/state_ON'))
+                    THEN 'Model validation for relationship https://industry-fusion.com/types/v0.9/state failed for '|| this || ': Invalid value ' || val
+                    ELSE 'State ok' END as `text`
+            FROM (
+                SELECT A.id as this,
+                    A.`type` as typ,
+                    B.`https://uri.etsi.org/ngsi-ld/hasValue` as val,
+                    B.nodeType as nodeType
+                FROM machine_view AS A
+                LEFT JOIN attributes_view AS B ON A.`https://industry-fusion.com/types/v0.9/state` = B.id
+            );
+        - |-
+            /* validate relationship hasCartridge of filter object
+            link count: [0,1]
+            part of shacle validator */
+            INSERT INTO alerts_bulk
+            SELECT this AS resource,
+                'Data validation of hasCartridge' AS event,
+                'Development' AS environment,
+                ARRAY ['SHACL Validator'] AS service,
+                CASE WHEN (linkcount > 1 OR linkcount <> entitycount) AND typ IS NOT NULL THEN 'warning'
+                    ELSE 'ok' END AS severity,
+                'customer'  customer,
+                CASE WHEN linkcount > 1 AND typ IS NOT NULL THEN 'Model validation for relationship https://industry-fusion.com/types/v0.9/hasCartridge failed for ' || this || ' . Found ' || CAST(linkcount AS STRING) || ' relationships instead of [0,1]!'
+                    WHEN linkcount <> entitycount AND typ IS NOT NULL THEN 'Model validation for relationship https://industry-fusion.com/types/v0.9/hasCartridge failed for '|| this || '. Not all relationships are linked to existing entities.'
+                    ELSE 'All ok' END as `text`
+                FROM
+                (
+                    SELECT A.id AS this, A.`type` as typ, count(C.`type`) AS entitycount, count(B.`type`) AS linkcount
+                    FROM filter_view AS A
+                    LEFT JOIN attributes_view AS B ON A.`https://industry-fusion.com/types/v0.9/hasCartridge` = B.id
+                    LEFT JOIN filter_cartridge_view AS C ON B.`https://uri.etsi.org/ngsi-ld/hasObject` = C.id
+                    WHERE
+                        (B.`type` = 'https://uri.etsi.org/ngsi-ld/Relationship' OR B.`type` IS NULL)
+                        AND (B.entityId = A.id OR B.entityId IS NULL)
+                        AND (B.name = 'https://industry-fusion.com/types/v0.9/hasCartridge' OR B.name IS NULL)
+                    GROUP BY A.id, A.`type`
+            );
+        - |-
+            /* validate property wasteClass of filter-cartridge object
+            part of shacl validator */
+            INSERT INTO alerts_bulk
+            SELECT idx AS resource,
+                'Data validation of wasteClass' AS event,
+                'Development' AS environment,
+                ARRAY ['SHACL Validator'] AS service,
+                CASE WHEN typ IS NOT NULL AND (val is NULL OR nodeType <> '@id'
+                    OR (val <> 'https://industry-fusion.com/types/v0.9/WC0' AND
+                        val <> 'https://industry-fusion.com/types/v0.9/WC1' AND
+                        val <> 'https://industry-fusion.com/types/v0.9/WC2'))
+                    THEN 'warning'
+                    ELSE 'ok' END AS severity,
+                'customer'  customer,
+                CASE WHEN typ IS NOT NULL AND (val is NULL OR nodeType <> '@id'
+                    OR (val <> 'https://industry-fusion.com/types/v0.9/WC0' AND
+                        val <> 'https://industry-fusion.com/types/v0.9/WC1' AND
+                        val <> 'https://industry-fusion.com/types/v0.9/WC2'))
+                    THEN 'Model validation for relationship https://industry-fusion.com/types/v0.9/state failed for ' || idx || '. Invalid value ' || IFNULL(val, 'NULL')
+                    ELSE 'All ok' END as `text`
+            FROM (
+                SELECT A.id as idx, A.`type` as typ, B.`https://uri.etsi.org/ngsi-ld/hasValue` as val, B.nodeType as nodeType FROM filter_cartridge_view AS A
+                    LEFT JOIN attributes_view AS B ON A.`https://industry-fusion.com/types/v0.9/wasteClass` = B.id
+            );
+        - |-
+            /* Digital Twin service: check joint cutter and filter states
+            No need for left joins: If Filter relation does not exist, the validator will tell */
+            INSERT INTO alerts_bulk
+            SELECT cutterId AS resource,
+                'Cutter and Filter relationship check' AS event,
+                'Development' AS environment,
+                ARRAY ['Digital Twin'] AS service,
+                CASE WHEN cutter_state = 'https://industry-fusion.com/types/v0.9/state_ON'
+                        AND filter_state <> 'https://industry-fusion.com/types/v0.9/state_ON'
+                        AND filter_state IS NOT NULL
+                        THEN 'critical'
+                        WHEN filter_state = 'https://industry-fusion.com/types/v0.9/state_ON' AND cutter_state <> 'https://industry-fusion.com/types/v0.9/state_ON' THEN 'warning'
+                        ELSE 'ok'
+                END as severity,
+                'customer' as customer,
+                CASE WHEN cutter_state = 'https://industry-fusion.com/types/v0.9/state_ON' AND filter_state <> 'https://industry-fusion.com/types/v0.9/state_ON' AND filter_state IS NOT NULL THEN 'Cutter ' || cutterId || ' is running without running filter.'
+                        WHEN filter_state = 'https://industry-fusion.com/types/v0.9/state_ON' AND cutter_state <> 'https://industry-fusion.com/types/v0.9/state_ON' THEN 'Filter connected to ' || cutterId || ' is running but cutter is off'
+                        ELSE 'OK'
+                END as `text`
+            FROM (
+                SELECT A.id AS cutterId,
+                    D.`https://uri.etsi.org/ngsi-ld/hasValue` as filter_state,
+                    E.`https://uri.etsi.org/ngsi-ld/hasValue` as cutter_state FROM cutter_view AS A
+                LEFT JOIN attributes_view AS B ON A.`https://industry-fusion.com/types/v0.9/hasFilter` = B.id
+                LEFT JOIN filter_view AS C ON B.`https://uri.etsi.org/ngsi-ld/hasObject` = C.id
+                LEFT JOIN attributes_view AS D ON C.`https://industry-fusion.com/types/v0.9/state` = D.id
+                LEFT JOIN attributes_view AS E ON A.`https://industry-fusion.com/types/v0.9/state` = E.id
+            );
+        - |-
+            /* validate relationship hasFilter of plasmacutter object for DIGITAL-TWIN SERVICE */
+            INSERT INTO alerts_bulk
+            SELECT this AS resource,
+                'Cutter has assigned filter check' AS event,
+                'Development' AS environment,
+                ARRAY ['Digital Twin'] AS service,
+                CASE WHEN cnt < 1 AND typ IS NOT NULL THEN 'warning'
+                    ELSE 'ok' END AS severity,
+                'customer'  customer,
+                CASE WHEN cnt < 1 AND typ IS NOT NULL THEN 'Cutter ' || this || ' has no assigned filter(s).'
+                    ELSE 'OK' END as `text`
+                FROM
+                (
+                    SELECT A.id AS this, count(C.`type`) AS cnt, A.`type` AS typ
+                    FROM cutter_view AS A
+                    LEFT JOIN attributes_view AS B ON A.`https://industry-fusion.com/types/v0.9/hasFilter` = B.id
+                    LEFT JOIN filter_view AS C ON B.`https://uri.etsi.org/ngsi-ld/hasObject` = C.id
+                    WHERE
+                        --A.`type` IS NOT NULL
+                        (B.`type` = 'https://uri.etsi.org/ngsi-ld/Relationship' OR B.`type` IS NULL)
+                        AND (B.entityId = A.id OR B.entityId IS NULL)
+                        AND (B.name = 'https://industry-fusion.com/types/v0.9/hasFilter' OR B.name IS NULL)
+                GROUP BY A.id, A.`type`
+                );
+    tables:
+        - alerts-bulk
+        - machine
+        - cutter
+        - filter
+        - workpiece
+        - attributes
+        - filter-cartridge
+    views:
+        - machine-view
+        - cutter-view
+        - filter-view
+        - workpiece-view
+        - attributes-view
+        - filter-cartridge-view
