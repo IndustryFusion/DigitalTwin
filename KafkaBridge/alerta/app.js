@@ -31,7 +31,7 @@ const kafka = new Kafka({
   brokers: config.kafka.brokers
 });
 
-const consumer = kafka.consumer({ groupId: GROUPID });
+const consumer = kafka.consumer({ groupId: GROUPID, allowAutoTopicCreation: false });
 console.log(JSON.stringify(config));
 
 const startListener = async function () {
