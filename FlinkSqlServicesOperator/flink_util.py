@@ -32,6 +32,8 @@ def get_job_status(logger, job_id):
     logger.debug(f"Requestion status for {job_id} from flink job-manager")
     job_response = requests.get(
         f"{FLINK_URL}/jobs/{job_id}")
+    if job_response.status_code == 404:
+        return None
     job_response.raise_for_status()
     job_response = job_response.json()
     return job_response

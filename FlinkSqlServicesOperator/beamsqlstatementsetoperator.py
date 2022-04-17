@@ -251,7 +251,7 @@ def update(body, spec, patch, logger, retries=20, **kwargs):
 @kopf.timer("industry-fusion.com", "v1alpha2", "beamsqlstatementsets",
             interval=timer_interval_seconds, backoff=timer_backoff_seconds)
 # pylint: disable=too-many-arguments unused-argument redefined-outer-name
-# pylint: disable=too-many-locals
+# pylint: disable=too-many-locals too-many-statements
 # Kopf decorated functions match their expectations
 def monitor(beamsqltables: kopf.Index, beamsqlviews: kopf.Index, patch, logger,
             body, spec, status, **kwargs):
@@ -368,7 +368,12 @@ def monitor(beamsqltables: kopf.Index, beamsqlviews: kopf.Index, patch, logger,
                         " old job and creating new one",
                         "message")
             create(body, spec, patch, logger, **kwargs)
-
+        if job_state == States.UNKNOWN.name:
+            add_message(logger, body, patch,
+                        "Updating unsuccessful: Cancelled/Finished"
+                        " job not found but creating a new one.",
+                        "message")
+            create(body, spec, patch, logger, **kwargs)
     # If state is not INITIALIZED, DEPLOYMENT_FAILURE nor CANCELED,
     # the state is monitored
     if state not in [States.CANCELED.name,
@@ -515,7 +520,10 @@ def get_job_state(logger, body):
     """
     job_id = body['status'].get(JOB_ID)
     job_info = flink_util.get_job_status(logger, job_id)
-    job_state = job_info.get("state")
+    if job_info is None:
+        job_state = States.UNKNOWN.name
+    else:
+        job_state = job_info.get("state")
     logger.debug(f"job state is {job_state}")
     return job_state
 
