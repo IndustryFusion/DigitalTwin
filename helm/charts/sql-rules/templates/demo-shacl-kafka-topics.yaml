@@ -54,6 +54,7 @@ metadata:
   labels:
     strimzi.io/cluster: my-cluster
 spec:
+  topicName: {{.Values.kafkaBridge.debezium.entityTopicPrefix}}.filterCartridge
   partitions: 1
   replicas: 1
   config:
@@ -74,10 +75,37 @@ spec:
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
 metadata:
-  name: {{.Values.kafkaBridge.debezium.entityTopicPrefix}}.entity
+  name: {{.Values.kafkaBridge.debezium.entityTopicPrefix}}.linked-entity
   labels:
     strimzi.io/cluster: my-cluster
 spec:
+  topicName: {{.Values.kafkaBridge.debezium.entityTopicPrefix}}.linkedEntity
+  partitions: 1
+  replicas: 1
+  config:
+    retention.ms: {{.Values.kafkaBridge.debezium.entityTopicRetention}}
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: {{.Values.kafkaBridge.debezium.entityTopicPrefix}}.operation-schedule
+  labels:
+    strimzi.io/cluster: my-cluster
+spec:
+  topicName: {{.Values.kafkaBridge.debezium.entityTopicPrefix}}.operationSchedule
+  partitions: 1
+  replicas: 1
+  config:
+    retention.ms: {{.Values.kafkaBridge.debezium.entityTopicRetention}}
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: {{.Values.kafkaBridge.debezium.entityTopicPrefix}}.maintenance-interval
+  labels:
+    strimzi.io/cluster: my-cluster
+spec:
+  topicName: {{.Values.kafkaBridge.debezium.entityTopicPrefix}}.maintenanceInterval
   partitions: 1
   replicas: 1
   config:

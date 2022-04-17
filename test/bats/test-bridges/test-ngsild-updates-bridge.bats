@@ -3,7 +3,8 @@
 if [ -z "${SELF_HOSTED_RUNNER}" ]; then
     SUDO="sudo -E"
 fi
-
+DEBUG=${DEBUG:-false} # set this to true to disable starting and stopping of kubefwd
+SKIP= # set =skip to skip all test (and only comment out $SKIP from the test you are interested in)
 NAMESPACE=iff
 USERSECRET=secret/credential-iff-realm-user-iff
 USER=realm_user
@@ -13,9 +14,11 @@ UPSERT_FILTER=/tmp/UPSERT_FILTER
 UPSERT_FILTER_OVERWRITE=/tmp/UPSERT_FILTER_OVERWRITE
 UPSERT_FILTER_NON_OVERWRITE=/tmp/UPSERT_FILTER_NON_OVERWRITE
 UPSERT_2_ENTITIES=/tmp/UPSERT_2_ENTITIES
+UPSERT_2_ENTITIES2=/tmp/UPSERT_2_ENTITIES2
 UPDATE_FILTER=/tmp/UPDATE_FILTER
 UPDATE_FILTER_NO_OVERWRITE=/tmp/UPDATE_FILTER_NO_OVERWRITE
 UPDATE_2_ENTITIES=/tmp/UPDATE_2_ENTITIES
+UPDATE_2_ENTITIES2=/tmp/UPDATE_2_ENTITIES2
 KAFKA_BOOTSTRAP=my-cluster-kafka-bootstrap:9092
 KAFKACAT_NGSILD_UPDATES_TOPIC=iff.ngsild-updates
 FILTER_ID=urn:filter-test:12345
@@ -207,6 +210,49 @@ cat << EOF | tr -d '\n' > ${UPSERT_2_ENTITIES}
 }
 EOF
 
+cat << EOF | tr -d '\n' > ${UPSERT_2_ENTITIES2}
+{
+    "op": "upsert",
+    "overwriteOrReplace": "false",
+    "entities": [
+        {
+        "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+        "id": "${FILTER_ID}",
+        "type": "https://industry-fusion.com/types/v0.9/filter",
+        "https://industry-fusion.com/types/v0.9/state": {
+          "type": "Property",
+          "value": "O"
+        },
+        "https://industry-fusion.com/types/v0.9/strength": {
+          "type": "Property",
+          "value": "0.422"
+        },
+        "https://industry-fusion.com/types/v0.9/hasCartridge": {
+          "type": "Relationship",
+          "object": "urn:filterCartridge-test:02345"
+        }
+      },
+      {
+        "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+        "id": "${CUTTER_ID}",
+        "type": "https://industry-fusion.com/types/v0.9/plasmacutter",
+        "https://industry-fusion.com/types/v0.9/state": {
+        "type": "Property",
+        "value": "OFFON"
+        },
+        "https://industry-fusion.com/types/v0.9/hasWorkpiece": {
+        "type": "Relationship",
+        "object": "urn:workpiece-test:02345"
+        },
+        "https://industry-fusion.com/types/v0.9/hasFilter": {
+        "type": "Relationship",
+        "object": "urn:filter-test:02345"
+        }
+      }
+    ]
+}
+EOF
+
 cat << EOF | tr -d '\n' > ${UPDATE_2_ENTITIES}
 {
     "op": "update",
@@ -250,6 +296,48 @@ cat << EOF | tr -d '\n' > ${UPDATE_2_ENTITIES}
 }
 EOF
 
+cat << EOF | tr -d '\n' > ${UPDATE_2_ENTITIES2}
+{
+    "op": "update",
+    "overwriteOrReplace": "true",
+    "entities": [
+        {
+        "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+        "id": "${FILTER_ID}",
+        "type": "https://industry-fusion.com/types/v0.9/filter",
+        "https://industry-fusion.com/types/v0.9/state": {
+          "type": "Property",
+          "value": "OF"
+        },
+        "https://industry-fusion.com/types/v0.9/strength": {
+          "type": "Property",
+          "value": "1.0"
+        },
+        "https://industry-fusion.com/types/v0.9/hasCartridge": {
+          "type": "Relationship",
+          "object": "urn:filterCartridge-test:32345"
+        }
+      },
+      {
+        "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+        "id": "${CUTTER_ID}",
+        "type": "https://industry-fusion.com/types/v0.9/plasmacutter",
+        "https://industry-fusion.com/types/v0.9/state": {
+        "type": "Property",
+        "value": "ONN"
+        },
+        "https://industry-fusion.com/types/v0.9/hasWorkpiece": {
+        "type": "Relationship",
+        "object": "urn:workpiece-test:32345"
+        },
+        "https://industry-fusion.com/types/v0.9/hasFilter": {
+        "type": "Relationship",
+        "object": "urn:filter-test:22345"
+        }
+      }
+    ]
+}
+EOF
 
 # compare entity with reference
 # $1: file to compare with
@@ -483,19 +571,19 @@ delete_ngsild() {
 
 setup() {
     # shellcheck disable=SC2086
-    (exec ${SUDO} kubefwd -n iff -l app.kubernetes.io/name=kafka svc  >/dev/null 2>&1) &
+    [ $DEBUG = "true" ] || (exec ${SUDO} kubefwd -n iff -l app.kubernetes.io/name=kafka svc  >/dev/null 2>&1) &
     echo "# launched kubefwd for kafka, wait some seconds to give kubefwd to launch the services"
     sleep 2
 }
 teardown(){
     echo "# now killing kubefwd"
     # shellcheck disable=SC2086
-    ${SUDO} killall kubefwd
+    [ $DEBUG = "true" ] || ${SUDO} killall kubefwd
 }
 
 
 @test "verify ngsild-update bridge is inserting ngsi-ld entitiy" {
-
+    $SKIP
     kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPSERT_FILTER}
     echo "# Sent upsert object to ngsi-ld-updates-bridge, wait some time to let it settle"
     sleep 2
@@ -508,6 +596,7 @@ teardown(){
 }
 
 @test "verify ngsild-update bridge is upserting and overwriting ngsi-ld entitiy" {
+    $SKIP
     kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPSERT_FILTER}
     echo "# Sent upsert object to ngsi-ld-updates-bridge, wait some time to let it settle"
     sleep 2
@@ -525,6 +614,7 @@ teardown(){
 }
 
 @test "verify ngsild-update bridge is upserting and non-overwriting ngsi-ld entitiy" {
+    $SKIP
     # This test is not working properlty the entityOperations/upsert?options=update should only update existing
     # property not create new ones
     kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPSERT_FILTER}
@@ -544,7 +634,7 @@ teardown(){
 }
 
 @test "verify ngsild-update bridge is updating ngsi-ld entitiy" {
-
+    $SKIP
     kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPSERT_FILTER}
     echo "# Sent upsert object to ngsi-ld-updates-bridge, wait some time to let it settle"
     sleep 2
@@ -560,6 +650,7 @@ teardown(){
 }
 
 @test "verify ngsild-update bridge is updating with noOverwrite option ngsi-ld entitiy" {
+    $SKIP
     kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPSERT_FILTER}
     echo "# Sent upsert object to ngsi-ld-updates-bridge, wait some time to let it settle"
     sleep 2
@@ -575,6 +666,7 @@ teardown(){
 }
 
 @test "verify ngsild-update bridge is upserting 2 entities" {
+    $SKIP
     kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPSERT_2_ENTITIES}
     echo "# Sent upsert object to ngsi-ld-updates-bridge, wait some time to let it settle"
     sleep 2
@@ -591,7 +683,29 @@ teardown(){
 }
 
 @test "verify ngsild-update bridge is updating 2 entities" {
-    kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPSERT_2_ENTITIES} 
+    $SKIP
+    kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPSERT_2_ENTITIES}
+    kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPDATE_2_ENTITIES}
+    echo "# Sent upsert object to ngsi-ld-updates-bridge, wait some time to let it settle"
+    sleep 2
+    password=$(get_password)
+    token=$(get_token)
+    get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )' >${RECEIVED_ENTITY}
+    delete_ngsild "${token}" ${FILTER_ID}
+    run compare_updated_filter_entity ${RECEIVED_ENTITY}
+    [ "$status" -eq 0 ]
+    get_ngsild "${token}" ${CUTTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )' >${RECEIVED_ENTITY}
+    delete_ngsild "${token}" ${CUTTER_ID}
+    run compare_update_cutter_entity ${RECEIVED_ENTITY}
+    [ "$status" -eq 0 ]
+}
+
+@test "verify ngsild-update bridge is updating many entities in order" {
+    $SKIP
+    kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPSERT_2_ENTITIES}
+    kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPDATE_2_ENTITIES}
+    kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPSERT_2_ENTITIES2}
+    kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPDATE_2_ENTITIES2}
     kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPDATE_2_ENTITIES}
     echo "# Sent upsert object to ngsi-ld-updates-bridge, wait some time to let it settle"
     sleep 2

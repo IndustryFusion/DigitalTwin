@@ -9,8 +9,8 @@ iff:lasercutter rdfs:subClassOf iff:cutter .
 iff:cutter rdfs:subClassOf iff:machine .
 iff:workpiece rdfs:subClassOf iff:entity .
 iff:filterCartridge rdfs:subClassOf iff:entity .
-iff:operationSchedule rdf:subClassOf iff:entity .
-iff:maintenanceInterval rdf:subClassOf iff:entity .
+iff:operationSchedule rdfs:subClassOf iff:linkedEntity .
+iff:maintenanceInterval rdfs:subClassOf iff:linkedEntity .
 iff:state a rdfs:class .
 iff:state_OFF a iff:state .
 iff:state_ON a iff:state  .

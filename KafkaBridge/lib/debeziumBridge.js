@@ -31,11 +31,7 @@ module.exports = function DebeziumBridge (conf) {
    *  after: entity after
    */
   this.parse = function (body) {
-    let result = {
-      entity: null,
-      updatedAttrs: null,
-      deletedAttrs: null
-    };
+    let result = null;
     if (body === null || body === undefined) {
       return result;
     }
@@ -46,28 +42,37 @@ module.exports = function DebeziumBridge (conf) {
     const afterEntity = after.entity;
     const afterAttrs = after.attributes;
     const isEntityUpdated = this.diffEntity(beforeEntity, afterEntity);
-    const { updatedAttrs, deletedAttrs } = this.diffAttributes(beforeAttrs, afterAttrs);
-    const isKafkaUpdate = updatedAttrs[syncOnAttribute] !== undefined; // when syncOnAttribute is used, it means that update
+    const { insertedAttrs, updatedAttrs, deletedAttrs } = this.diffAttributes(beforeAttrs, afterAttrs);
+    const isKafkaUpdate = updatedAttrs[syncOnAttribute] !== undefined || insertedAttrs[syncOnAttribute] !== undefined;
+    // when syncOnAttribute is used, it means that update
     // did not come through API but through Kafka channel
     // so do not forward to avoid 'infinity' loop
     delete deletedAttrs[syncOnAttribute]; // this attribute is only used to detect API vs Kafka inputs
     delete updatedAttrs[syncOnAttribute]; // remove it before detecting changes
+    delete insertedAttrs[syncOnAttribute]; // remove it before detecting changes
     delete afterEntity[syncOnAttribute];
-    const isChanged = isEntityUpdated || Object.keys(updatedAttrs).length > 0 || Object.keys(deletedAttrs).length > 0;
-
-    let deletedEntity;
-    if (isChanged && Object.keys(afterEntity).length === 0) {
+    // isAttributesChanged: When there are changes in any of the attrs (not coming over Kafka)
+    const isAttributesChanged = !isKafkaUpdate && (Object.keys(updatedAttrs).length > 0 ||
+                      Object.keys(deletedAttrs).length > 0 || Object.keys(insertedAttrs).length > 0);
+    // deletedEntity needs to remember type so that it can be deleted for
+    // all subtypes. However, type must be removed lated since it is not part of
+    // primary key. Deletion means to set everythin, which is not primary key to null
+    let deletedEntity = null;
+    if (isEntityUpdated && Object.keys(afterEntity).length === 0) {
       deletedEntity = {
         id: beforeEntity.id,
         type: beforeEntity.type
       };
     }
-    result = {
-      entity: isChanged ? afterEntity : null,
-      deletedEntity: deletedEntity,
-      updatedAttrs: !isKafkaUpdate && isChanged ? updatedAttrs : null,
-      deletedAttrs: !isKafkaUpdate && isChanged ? deletedAttrs : null
-    };
+    if (isEntityUpdated || isAttributesChanged) {
+      result = {
+        entity: isEntityUpdated || isAttributesChanged ? afterEntity : null,
+        deletedEntity: deletedEntity,
+        updatedAttrs: isAttributesChanged ? updatedAttrs : null,
+        deletedAttrs: isAttributesChanged ? deletedAttrs : null,
+        insertedAttrs: isAttributesChanged ? insertedAttrs : null
+      };
+    }
     return result;
   };
 
@@ -104,6 +109,7 @@ module.exports = function DebeziumBridge (conf) {
       });
     resEntity.id = baEntity.id;
     resEntity.type = baEntity.type;
+    delete resEntity[syncOnAttribute]; // this attribute should not change the diff calculation, but should be in attributes to detect changes from Kafka
 
     // create attribute table
     id = baEntity.id;
@@ -168,11 +174,12 @@ module.exports = function DebeziumBridge (conf) {
    *
    * @param {object} beforeAttrs - object with atrributes
    * @param {object} afterAttrs - object with attributes
-   * @returns list with updated and deleted atributes {updatedAttrs, deletedAttrs}
+   * @returns list with inserted, updated and deleted atributes {insertedAttrs, updatedAttrs, deletedAttrs}
    */
   this.diffAttributes = function (beforeAttrs, afterAttrs) {
-    const updatedAttrs = {};
-    const deletedAttrs = {};
+    const insertedAttrs = {}; // contains all attributes which are found in afterAttrs but not in beforeAttrs
+    const updatedAttrs = {}; // contains all attribures which are found in afterAttrs and in beforeAttrs
+    const deletedAttrs = {}; // contains all attributes which are not found in afterAttrs but in beforeAttrs
 
     // Determine all attributes which are found in beforeAttrs but not in afterAttrs
     // These attributes are added to deleteAttrs
@@ -189,13 +196,23 @@ module.exports = function DebeziumBridge (conf) {
       }
     });
 
+    // Determine all attributes which are found in afterAttrs but not in beforeAttrs
+    // These attributes are added to insertedAttrs
+    Object.keys(afterAttrs).forEach(key => {
+      if (beforeAttrs[key] === undefined || beforeAttrs[key] === null || !Array.isArray(beforeAttrs[key]) || beforeAttrs[key].length === 0) {
+        insertedAttrs[key] = afterAttrs[key];
+      }
+    });
+
     // Determine all attributes which are changed and add them to updatedAttrs
     // Detect wheter before had higher index and add these to deleteAttrs
     Object.keys(afterAttrs).forEach(key => {
+      // if the attributes are not existing in
       // if the attributes are unequal
       // add every different attribute per index to the updatedAttrs
       // add every attribute which have indexes in before but not mentioned in after to deletedAttrs
-      if (!_.isEqual(afterAttrs[key], beforeAttrs[key])) {
+      if (beforeAttrs[key] !== undefined && beforeAttrs[key] !== null &&
+        !_.isEqual(afterAttrs[key], beforeAttrs[key])) {
         // delete all old elements with higher indexes
         // the attribute lists are sorted so length diff reveals what has to be deleted
         const delementArray = [];
@@ -212,6 +229,6 @@ module.exports = function DebeziumBridge (conf) {
         updatedAttrs[key] = afterAttrs[key];
       }
     });
-    return { updatedAttrs, deletedAttrs };
+    return { insertedAttrs, updatedAttrs, deletedAttrs };
   };
 };

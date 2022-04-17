@@ -3,7 +3,8 @@
 if [ -z "${SELF_HOSTED_RUNNER}" ]; then
     SUDO="sudo -E"
 fi
-
+DEBUG=${DEBUG:-false} # set this to true to disable starting and stopping of kubefwd
+SKIP= # set =skip to skip all test (and only remove $SKIP from the test you are interested in)
 NAMESPACE=iff
 ALERTA_SECRET=secret/alerta
 ALERTA_SECRET_KEY=alerta-admin-key
@@ -87,17 +88,18 @@ check_alert() {
 
 setup() {
     # shellcheck disable=SC2086
-    (exec ${SUDO} kubefwd -n iff -l app.kubernetes.io/name=kafka svc) &
+    [ $DEBUG = "true" ] || (exec ${SUDO} kubefwd -n iff -l app.kubernetes.io/name=kafka svc) &
     echo "# launched kubefwd for kafka, wait some seconds to give kubefwd to launch the services"
     sleep 3
 }
 teardown(){
     echo "# now killing kubefwd"
     # shellcheck disable=SC2086
-    ${SUDO} killall kubefwd
+    [ $DEBUG = "true" ] || ${SUDO} killall kubefwd
 }
 
 @test "verify alerta receives alerts over alerta bridge" {
+    $SKIP
     key=$(get_alerta_api_key)
     delete_all_test_alerts "$key"
     echo "# Alerta key: $key"

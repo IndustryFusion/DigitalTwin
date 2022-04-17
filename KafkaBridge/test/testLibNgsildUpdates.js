@@ -310,7 +310,7 @@ describe('Test addSyncOnAttribute', function () {
         type: 'type',
         synchOnAttribute: {
           type: 'Property',
-          value: '1'
+          value: '1.4fzzz'
         }
       },
       {
@@ -318,11 +318,19 @@ describe('Test addSyncOnAttribute', function () {
         type: 'type',
         synchOnAttribute: {
           type: 'Property',
-          value: '1'
+          value: '1.4fzzz'
         }
       }
     ];
+
+    const Math = {
+      random: function () {
+        return 0.123456789;
+      }
+    };
+    const revert = ToTest.__set__('Math', Math);
     addSyncOnAttribute(entities, 'synchOnAttribute', 1);
     assert.deepEqual(entities, expectedResult);
+    revert();
   });
 });

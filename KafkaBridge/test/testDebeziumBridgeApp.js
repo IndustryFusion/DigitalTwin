@@ -203,6 +203,46 @@ describe('Test sendUpdates', function () {
     await sendUpdates({ entity, updatedAttrs, deletedAttrs });
     revert();
   });
+  it('Should insert attributes', async function () {
+    const messages = [
+      { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
+      { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
+      { key: 'id', value: '{"insertValueKey":"insertValueValue"}' }
+    ];
+    const sendUpdates = toTest.__get__('sendUpdates');
+    const config = {
+      debeziumBridge: {
+        attributesTopic: 'attributesTopic',
+        entityTopicPrefix: 'topicPrefix'
+      }
+    };
+    const producer = {
+      sendBatch: function ({ topicMessages }) {
+        topicMessages[0].topic.should.equal('topicPrefix.klass');
+        assert.deepEqual(topicMessages[0].messages[0], messages[0]);
+        topicMessages[1].topic.should.equal('topicPrefix.subklass');
+        assert.deepEqual(topicMessages[1].messages[0], messages[1]);
+        topicMessages[2].topic.should.equal('attributesTopic');
+        assert.deepEqual(topicMessages[2].messages[0], messages[2]);
+      }
+    };
+    const entity = {
+      id: 'id',
+      type: 'http://example/type'
+    };
+    const insertedAttrs = {
+      insertKey: [{ insertValueKey: 'insertValueValue' }]
+    };
+
+    const getSubClasses = function () {
+      return ['klass', 'subklass'];
+    };
+    const revert = toTest.__set__('producer', producer);
+    toTest.__set__('config', config);
+    toTest.__set__('getSubClasses', getSubClasses);
+    await sendUpdates({ entity, insertedAttrs });
+    revert();
+  });
 });
 describe('Test startListener', function () {
   it('Setup Kafka listener, readiness and health status', async function () {

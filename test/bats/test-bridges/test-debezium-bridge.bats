@@ -3,7 +3,7 @@
 if [ -z "${SELF_HOSTED_RUNNER}" ]; then
     SUDO="sudo -E"
 fi
-
+DEBUG=${DEBUG:-false} # set this to true to disable starting and stopping of kubefwd
 NAMESPACE=iff
 USERSECRET=secret/credential-iff-realm-user-iff
 USER=realm_user
@@ -210,7 +210,7 @@ delete_ngsild() {
 
 setup() {
     # shellcheck disable=SC2086
-    (exec ${SUDO} kubefwd -n iff -l app.kubernetes.io/name=kafka svc) &
+    [ $DEBUG = "true" ] || (exec ${SUDO} kubefwd -n iff -l app.kubernetes.io/name=kafka svc) &
     echo "# launched kubefwd for kafka, wait some seconds to give kubefwd to launch the services"
     sleep 3
     echo "# create needed kafka topics to make sure that consumers will not fail first time"
@@ -221,7 +221,7 @@ setup() {
 teardown(){
     echo "# now killing kubefwd"
     # shellcheck disable=SC2086
-    ${SUDO} killall kubefwd
+    [ $DEBUG = "true" ] || ${SUDO} killall kubefwd
 }
 
 

@@ -47,7 +47,15 @@ const startListener = async function () {
       try {
         const body = JSON.parse(message.value);
         const result = await debeziumBridge.parse(body);
-        sendUpdates({ entity: result.entity, deletedEntity: result.deletedEntity, updatedAttrs: result.updatedAttrs, deletedAttrs: result.deletedAttrs });
+        if (result !== null) {
+          await sendUpdates({
+            entity: result.entity,
+            deletedEntity: result.deletedEntity,
+            updatedAttrs: result.updatedAttrs,
+            deletedAttrs: result.deletedAttrs,
+            insertedAttrs: result.insertedAttrs
+          });
+        }
       } catch (e) {
         logger.error('could not process message: ' + e.stack);
       }
@@ -123,38 +131,54 @@ const getTopic = function (topic) {
  * @param deleteAttrs {object} - contains the list of attributes of the entity which have to be deleted
  * @returns
  */
-const sendUpdates = async function ({ entity, deletedEntity, updatedAttrs, deletedAttrs }) {
+const sendUpdates = async function ({ entity, deletedEntity, updatedAttrs, deletedAttrs, insertedAttrs }) {
   let removeType = false;
+  let updateOnly = false;
 
+  // Remember deletion after subclasses have been determined.
+  // Then remove type later
   if (deletedEntity !== undefined && deletedEntity !== null) {
     entity = deletedEntity;
     removeType = true;
   }
+  // if attributes are updated ONLY - no entity is needed
+  if (updatedAttrs !== undefined && updatedAttrs !== null && Object.keys(updatedAttrs).length > 0 &&
+      (insertedAttrs === undefined || insertedAttrs === null || Object.keys(insertedAttrs).length === 0) &&
+      (deletedAttrs === undefined || deletedAttrs === null || Object.keys(deletedAttrs).length === 0)) {
+    updateOnly = true;
+  }
+
   if (entity === null || entity.id === undefined || entity.id === null || entity.type === undefined || entity.type === null) {
+    logger.warn('No entity definition given. Will not forward updates.');
     return;
   }
+
   const genKey = entity.id;
-  let subClasses = await getSubClasses(entity.type);
-  if (subClasses.length === 0) {
-    subClasses = [entity.type];
-  }
+
   const topicMessages = [];
+  // if only updates are detected, no update of entity is needed
+  if (!updateOnly) {
+    let subClasses = await getSubClasses(entity.type);
+    if (subClasses.length === 0) {
+      subClasses = [entity.type];
+    }
+    // Now remove type. This has been determined earlier.
+    if (removeType) {
+      // delete of entities is done by set everything to NULL
+      delete entity.type;
+    }
 
-  if (removeType) {
-    // delete of entities is done by set everything to NULL
-    delete entity.type;
+    subClasses.forEach((element) => {
+      const obj = {};
+      const entityTopic = config.debeziumBridge.entityTopicPrefix + '.' + getTopic(element);
+      obj.topic = entityTopic;
+      obj.messages = [{
+        key: genKey,
+        value: JSON.stringify(entity)
+      }];
+      topicMessages.push(obj);
+    });
   }
-
-  subClasses.forEach((element) => {
-    const obj = {};
-    const entityTopic = config.debeziumBridge.entityTopicPrefix + '.' + getTopic(element);
-    obj.topic = entityTopic;
-    obj.messages = [{
-      key: genKey,
-      value: JSON.stringify(entity)
-    }];
-    topicMessages.push(obj);
-  });
 
   if (deletedAttrs !== null && deletedAttrs !== undefined && Object.keys(deletedAttrs).length > 0) {
     // Flatmap the array, i.e. {key: k, value: [m1, m2]} => [{key: k, value: m1}, {key: k, value: m2}]
@@ -180,7 +204,18 @@ const sendUpdates = async function ({ entity, deletedEntity, updatedAttrs, delet
       messages: updateMessages
     });
   }
-
+  if (insertedAttrs !== null && insertedAttrs !== undefined && Object.keys(insertedAttrs).length > 0) {
+    // Flatmap the array, i.e. {key: k, value: [m1, m2]} => [{key: k, value: m1}, {key: k, value: m2}]
+    const insertMessages = Object.entries(insertedAttrs).flatMap(([key, value]) =>
+      value.map(val => {
+        return { key: genKey, value: JSON.stringify(val) };
+      })
+    );
+    topicMessages.push({
+      topic: config.debeziumBridge.attributesTopic,
+      messages: insertMessages
+    });
+  }
   await producer.sendBatch({ topicMessages });
 };
 if (runningAsMain) {
