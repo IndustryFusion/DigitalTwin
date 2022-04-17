@@ -26,7 +26,7 @@
 		}
 	},
 	"ngsildUpdates": {
-		"topic": "iff.ngsildUpdates",
+		"topic": "iff.ngsild-updates",
 		"refreshIntervalInSeconds": 200,
 		"clientSecretVariable": "NGSILD_UPDATES_CLIENT_SECRET"
 	},        

@@ -150,16 +150,14 @@ spec:
                 'Cutter and Filter relationship check' AS event,
                 'Development' AS environment,
                 ARRAY ['Digital Twin'] AS service,
-                CASE WHEN cutter_state = 'https://industry-fusion.com/types/v0.9/state_ON'
-                        AND filter_state <> 'https://industry-fusion.com/types/v0.9/state_ON'
+                CASE WHEN cutter_state = 'https://industry-fusion.com/types/v0.9/state_ON' 
+                        AND filter_state <> 'https://industry-fusion.com/types/v0.9/state_ON' 
                         AND filter_state IS NOT NULL
                         THEN 'critical'
-                        WHEN filter_state = 'https://industry-fusion.com/types/v0.9/state_ON' AND cutter_state <> 'https://industry-fusion.com/types/v0.9/state_ON' THEN 'warning'
                         ELSE 'ok'
                 END as severity,
                 'customer' as customer,
                 CASE WHEN cutter_state = 'https://industry-fusion.com/types/v0.9/state_ON' AND filter_state <> 'https://industry-fusion.com/types/v0.9/state_ON' AND filter_state IS NOT NULL THEN 'Cutter ' || cutterId || ' is running without running filter.'
-                        WHEN filter_state = 'https://industry-fusion.com/types/v0.9/state_ON' AND cutter_state <> 'https://industry-fusion.com/types/v0.9/state_ON' THEN 'Filter connected to ' || cutterId || ' is running but cutter is off'
                         ELSE 'OK'
                 END as `text`
             FROM (
@@ -170,6 +168,34 @@ spec:
                 LEFT JOIN filter_view AS C ON B.`https://uri.etsi.org/ngsi-ld/hasObject` = C.id
                 LEFT JOIN attributes_view AS D ON C.`https://industry-fusion.com/types/v0.9/state` = D.id
                 LEFT JOIN attributes_view AS E ON A.`https://industry-fusion.com/types/v0.9/state` = E.id
+                where A.`type` is NOT NULL
+            );
+        - |-
+            /* Digital Twin service: check joint cutter and filter states from filter POV
+            No need for left joins: If Filter relation does not exist, the validator will tell */
+            INSERT INTO alerts_bulk
+            SELECT filterId AS resource,
+                'Filter and Cutter relationship check' AS event,
+                'Development' AS environment,
+                ARRAY ['Digital Twin'] AS service,
+                CASE WHEN filter_state = 'https://industry-fusion.com/types/v0.9/state_ON'
+                        AND cutter_state <> 'https://industry-fusion.com/types/v0.9/state_ON'
+                        THEN 'warning'
+                        ELSE 'ok'
+                END as severity,
+                'customer' as customer,
+                CASE WHEN filter_state = 'https://industry-fusion.com/types/v0.9/state_ON' AND cutter_state <> 'https://industry-fusion.com/types/v0.9/state_ON' THEN 'Fitter ' || filterId || ' is running without running cutter.'
+                        ELSE 'OK'
+                END as `text`
+            FROM (
+                SELECT A.id AS filterId,
+                    D.`https://uri.etsi.org/ngsi-ld/hasValue` as filter_state,
+                    E.`https://uri.etsi.org/ngsi-ld/hasValue` as cutter_state FROM filter_view AS A
+                LEFT JOIN attributes_view AS B ON B.`https://uri.etsi.org/ngsi-ld/hasObject` = A.id and B.name = 'https://industry-fusion.com/types/v0.9/hasFilter'
+                LEFT JOIN cutter_view AS C ON B.id = C.`https://industry-fusion.com/types/v0.9/hasFilter`
+                LEFT JOIN attributes_view AS D ON A.`https://industry-fusion.com/types/v0.9/state` = D.id
+                LEFT JOIN attributes_view AS E ON C.`https://industry-fusion.com/types/v0.9/state` = E.id
+                where A.`type` is NOT NULL
             );
         - |-
             /* validate relationship hasFilter of plasmacutter object for DIGITAL-TWIN SERVICE */
