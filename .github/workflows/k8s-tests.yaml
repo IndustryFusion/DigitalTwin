@@ -69,8 +69,9 @@ jobs:
         (cd ./test/bats; bats test-horizontal-platform/horizontal-platform-up-and-running-rest.bats)
         echo Test all together
         (cd ./test/bats; bats *.bats)
-    - name: Run e2e tests is coming up
+    - name: Run all e2e tests
       run: |
         cd ./test/bats
         bats */*.bats
+
 
