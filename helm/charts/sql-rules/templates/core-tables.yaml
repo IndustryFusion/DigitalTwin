@@ -90,6 +90,7 @@ spec:
   fields:
     - 'op': STRING
     - 'overwriteOrReplace': Boolean
+    - 'noForward': Boolean
     - 'entities': STRING
   kafka:
     topic: {{.Values.kafkaBridge.ngsildUpdates.listenTopic}}
@@ -119,7 +120,7 @@ spec:
     - 'https://uri.etsi.org/ngsi-ld/hasValue': STRING
     - 'https://uri.etsi.org/ngsi-ld/hasObject': STRING
     - 'ts': TIMESTAMP(3) METADATA FROM 'timestamp'
-    - 'watermark': FOR ts AS ts - INTERVAL '0.001' SECOND
+    - 'watermark': FOR ts AS ts
   kafka:
     topic: {{.Values.kafkaBridge.debezium.attributesTopic}}
     properties:

@@ -10,7 +10,7 @@ spec:
     - 'id': STRING
     - 'type': STRING
     - 'ts': TIMESTAMP(3) METADATA FROM 'timestamp'
-    - 'watermark': FOR ts AS ts - INTERVAL '0.001' SECOND
+    - 'watermark': FOR ts AS ts
   kafka:
     topic: '{{.Values.kafkaBridge.debezium.entityTopicPrefix}}.entity'
     properties:
@@ -48,7 +48,7 @@ spec:
     - 'type': STRING
     - 'https://industry-fusion.com/types/v0.9/state': STRING
     - 'ts': TIMESTAMP(3) METADATA FROM 'timestamp'
-    - 'watermark': FOR ts AS ts - INTERVAL '0.001' SECOND
+    - 'watermark': FOR ts AS ts
   kafka:
     topic: '{{.Values.kafkaBridge.debezium.entityTopicPrefix}}.machine'
     properties:
@@ -89,7 +89,7 @@ spec:
     - 'https://industry-fusion.com/types/v0.9/hasFilter': STRING
     - 'https://industry-fusion.com/types/v0.9/state': STRING
     - 'ts': TIMESTAMP(3) METADATA FROM 'timestamp'
-    - 'watermark': FOR ts AS ts - INTERVAL '0.001' SECOND
+    - 'watermark': FOR ts AS ts
   kafka:
     topic: '{{.Values.kafkaBridge.debezium.entityTopicPrefix}}.cutter'
     properties:
@@ -132,7 +132,7 @@ spec:
     - 'https://industry-fusion.com/types/v0.9/hasCartridge': STRING
     - 'https://industry-fusion.com/types/v0.9/state': STRING
     - 'ts': TIMESTAMP(3) METADATA FROM 'timestamp'
-    - 'watermark': FOR ts AS ts - INTERVAL '0.001' SECOND
+    - 'watermark': FOR ts AS ts
   kafka:
     topic: '{{.Values.kafkaBridge.debezium.entityTopicPrefix}}.filter'
     properties:
@@ -174,7 +174,7 @@ spec:
     - 'https://industry-fusion.com/types/v0.9/material': STRING
     - 'https://schema.org/depth': STRING
     - 'ts': TIMESTAMP(3) METADATA FROM 'timestamp'
-    - 'watermark': FOR ts AS ts - INTERVAL '0.001' SECOND
+    - 'watermark': FOR ts AS ts
   kafka:
     topic: '{{.Values.kafkaBridge.debezium.entityTopicPrefix}}.workpiece'
     properties:
@@ -216,7 +216,7 @@ spec:
     - 'https://industry-fusion.com/types/v0.9/usedFrom': STRING
     - 'https://industry-fusion.com/types/v0.9/usedUntil': STRING
     - 'ts': TIMESTAMP(3) METADATA FROM 'timestamp'
-    - 'watermark': FOR ts AS ts - INTERVAL '0.001' SECOND
+    - 'watermark': FOR ts AS ts
   kafka:
     topic: '{{.Values.kafkaBridge.debezium.entityTopicPrefix}}.filterCartridge'
     properties:

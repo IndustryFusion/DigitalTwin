@@ -150,8 +150,8 @@ spec:
                 'Cutter and Filter relationship check' AS event,
                 'Development' AS environment,
                 ARRAY ['Digital Twin'] AS service,
-                CASE WHEN cutter_state = 'https://industry-fusion.com/types/v0.9/state_ON' 
-                        AND filter_state <> 'https://industry-fusion.com/types/v0.9/state_ON' 
+                CASE WHEN cutter_state = 'https://industry-fusion.com/types/v0.9/state_ON'
+                        AND filter_state <> 'https://industry-fusion.com/types/v0.9/state_ON'
                         AND filter_state IS NOT NULL
                         THEN 'critical'
                         ELSE 'ok'

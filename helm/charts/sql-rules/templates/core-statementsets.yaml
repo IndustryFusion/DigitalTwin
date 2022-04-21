@@ -10,35 +10,43 @@ metadata:
             {{ include (print $.Template.BasePath "/core-kafka-topics.yaml") . | sha256sum }}
 spec:
     sqlstatements:
-        - insert into alerts
-          select resource, event, environment, service, severity, customer, `text` from
-          (
-            select resource, event,
-              last_value(environment) as environment,
-              service,
-              last_value(A.customer) as customer,
-              last_value(`text`) as `text`,
-              LAG(A.severity) as last_severity,
-              last_value(A.severity) as severity,
-              LAG(A.customer) as last_customer,
-              LAG(A.environment) as last_environment
-            from
-              alerts_filter as A
-              GROUP BY A.resource, A.event, A.service
-              WINDOW w as (
-              PARTITION BY resource, event
-              ORDER BY `ts` ASC
-              ROWS BETWEEN 2 PRECEDING AND CURRENT ROW)
-          )
-          WHERE last_severity <> severity OR
-            last_severity IS NULL OR
-            last_environment <> environment OR
-            last_customer <> customer;
+        - |-
+            /* validates changes in alerts_bulk and only forward if there are specific changes
+            This is part of the core service */
+            insert into alerts
+            select  resource, event, environment, service, severity, customer, `text` from
+            (
+                select resource, event,
+                    last_value(environment) as environment,
+                    service,
+                    rand() as rnd,
+                    last_value(A.customer) as customer,
+                    last_value(`text`) as `text`,
+                    LAG(A.severity) as last_severity,
+                    last_value(A.severity) as severity,
+                    LAG(A.customer) as last_customer,
+                    LAG(A.environment) as last_environment
+                from (
+                        select window_time as ts, customer, environment, service, resource, event,  window_start, window_end, last_value(severity) as severity, last_value(`text`) as `text`
+                        from TABLE(
+                        TUMBLE(TABLE alerts_filter, DESCRIPTOR(`ts`), INTERVAL {{.Values.flink.alertWindow|squote}} SECOND))
+                        GROUP BY window_time, window_start, window_end, resource, event, service, customer, environment
+                    ) as A
+                    GROUP BY A.resource, A.event, A.service, A.customer, A.environment
+                    WINDOW w as (
+                        PARTITION BY resource, event
+                        ORDER BY A.ts ASC
+                        ROWS BETWEEN 1 PRECEDING AND CURRENT ROW)
+            )
+            WHERE last_severity <> severity OR
+                  last_severity IS NULL OR
+                  last_environment <> environment OR
+                  last_customer <> customer;
         - |-
           /* aggregates entities from attributes topic and insert it every 2 seconds in update channel
             part of CORE SERVICES */
           insert into ngsild_updates
-          select 'update', true, '[{"id": "' || id || '",' || LISTAGG(attributeagg) || '}]'
+          select 'update', true, true, '[{"id": "' || id || '",' || LISTAGG(attributeagg) || '}]'
           from (
               select  window_start, window_end, B.entityId as id, '"' || B.name || '":[' || LISTAGG(B.indexagg) || ']' as attributeagg
               from(
@@ -56,7 +64,7 @@ spec:
                                           IF(LAST_VALUE(A.nodeType) = '@json', LAST_VALUE(A.`https://uri.etsi.org/ngsi-ld/hasValue`), 'null' /*should not happen */)))
                           )
                           || '}' as indexagg
-                  FROM TABLE( TUMBLE(TABLE attributes, DESCRIPTOR(ts), INTERVAL '2' second)) as A
+                  FROM TABLE( TUMBLE(TABLE attributes, DESCRIPTOR(ts), INTERVAL {{.Values.flink.ngsildUpdateWindow|squote}} second)) as A
                   WHERE A.entityId IS NOT NULL
                   GROUP BY A.entityId, A.index, A.name, window_start, window_end) as B
               GROUP BY window_start, window_end, entityId, name
