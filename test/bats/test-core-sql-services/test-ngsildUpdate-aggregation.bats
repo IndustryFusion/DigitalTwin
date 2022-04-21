@@ -3,7 +3,8 @@
 if [ -z "${SELF_HOSTED_RUNNER}" ]; then
     SUDO="sudo -E"
 fi
-
+DEBUG=${DEBUG:-false} # set this to true to disable starting and stopping of kubefwd
+SKIP= # set =skip to skip all test (and only comment out $SKIP from the test you are interested in)
 ATTRIBUTE1=/tmp/ATTRIBUTE1
 ATTRIBUTE2=/tmp/ATTRIBUTE2
 ATTRIBUTE3=/tmp/ATTRIBUTE3
@@ -19,7 +20,7 @@ KAFKACAT_ATTRIBUTES_FROMJSON=/tmp/KAFKACAT_ATTRIBUTES_FROMJSON
 KAFKA_BOOTSTRAP=my-cluster-kafka-bootstrap:9092
 KAFKACAT_NGSILD_UPDATES_TOPIC=iff.ngsild-updates
 CUTTER_ID=urn:plasmacutter-test:12345
-COMPARE_ATTRIBUTE7='{"op":"update","overwriteOrReplace":true,"entities":"[{\"id\": \"urn:plasmacutter-test:12345\",\"https://industry-fusion.com/types/v0.9/state\":[{\"type\": \"https://uri.etsi.org/ngsi-ld/Property\", \"value\": \"ON\"},{\"type\": \"https://uri.etsi.org/ngsi-ld/Property\", \"value\": \"OFF\"}]}]"}'
+COMPARE_ATTRIBUTE7='{"op":"update","overwriteOrReplace":true,"noForward":true,"entities":"[{\"id\": \"urn:plasmacutter-test:12345\",\"https://industry-fusion.com/types/v0.9/state\":[{\"type\": \"https://uri.etsi.org/ngsi-ld/Property\", \"value\": \"ON\"},{\"type\": \"https://uri.etsi.org/ngsi-ld/Property\", \"value\": \"OFF\"}]}]"}'
 
 cat << EOF | tr -d '\n' > ${ATTRIBUTE1}
 {
@@ -31,6 +32,8 @@ cat << EOF | tr -d '\n' > ${ATTRIBUTE1}
     "index": 0
 }
 EOF
+
+printf '\n' >> ${ATTRIBUTE1}
 cat << EOF | tr -d '\n' > ${ATTRIBUTE2}
 {
     "id": "${CUTTER_ID}\\\https://industry-fusion.com/types/v0.9/state",
@@ -61,6 +64,7 @@ cat << EOF | tr -d '\n' > ${ATTRIBUTE3}
     "index": 0
 }
 EOF
+printf '\n' >> ${ATTRIBUTE3}
 cat << EOF | tr -d '\n' > ${ATTRIBUTE4}
 {
     "id": "${CUTTER_ID}\\\https://industry-fusion.com/types/v0.9/hasWorkpiece",
@@ -110,17 +114,18 @@ EOF
 
 compare_attributes1() {
     cat << EOF | diff "$1" - >&3
-{"op":"update","overwriteOrReplace":true,"entities":"[{\"id\": \"${CUTTER_ID}\",\"https://industry-fusion.com/types/v0.9/state\":[{\"type\": \"https://uri.etsi.org/ngsi-ld/Property\", \"value\": \"ON\"}]}]"}
+{"op":"update","overwriteOrReplace":true,"noForward":true,"entities":"[{\"id\": \"${CUTTER_ID}\",\"https://industry-fusion.com/types/v0.9/state\":[{\"type\": \"https://uri.etsi.org/ngsi-ld/Property\", \"value\": \"ON\"}]}]"}
 EOF
 }
 compare_attributes2() {
     cat << EOF | diff "$1" - >&3
-{"op":"update","overwriteOrReplace":true,"entities":"[{\"id\": \"${CUTTER_ID}\",\"https://industry-fusion.com/types/v0.9/state\":[{\"type\": \"https://uri.etsi.org/ngsi-ld/Property\", \"value\": \"OFF\"}]}]"}
+{"op":"update","overwriteOrReplace":true,"noForward":true,"entities":"[{\"id\": \"${CUTTER_ID}\",\"https://industry-fusion.com/types/v0.9/state\":[{\"type\": \"https://uri.etsi.org/ngsi-ld/Property\", \"value\": \"OFF\"}]}]"}
 EOF
 }
 compare_attributes3() {
     cat << EOF | diff "$1" - >&3
 {
+  "noForward": true,
   "op": "update",
   "overwriteOrReplace": true
 }
@@ -144,19 +149,19 @@ EOF
 
 compare_attributes4() {
     cat << EOF | diff "$1" - >&3
-{"op":"update","overwriteOrReplace":true,"entities":"[{\"id\": \"${CUTTER_ID}\",\"https://industry-fusion.com/types/v0.9/hasWorkpiece\":[{\"type\": \"https://uri.etsi.org/ngsi-ld/Relationship\", \"object\": \"urn:workpiece:1\"}]}]"}
+{"op":"update","overwriteOrReplace":true,"noForward":true,"entities":"[{\"id\": \"${CUTTER_ID}\",\"https://industry-fusion.com/types/v0.9/hasWorkpiece\":[{\"type\": \"https://uri.etsi.org/ngsi-ld/Relationship\", \"object\": \"urn:workpiece:1\"}]}]"}
 EOF
 }
 
 compare_attributes5() {
     cat << EOF | diff "$1" - >&3
-{"op":"update","overwriteOrReplace":true,"entities":"[{\"id\": \"${CUTTER_ID}\",\"https://industry-fusion.com/types/v0.9/refState\":[{\"type\": \"https://uri.etsi.org/ngsi-ld/Property\", \"value\": {\"@id\": \"https://industry-fusion.com/v0.9/refStateIRI\"}}]}]"}
+{"op":"update","overwriteOrReplace":true,"noForward":true,"entities":"[{\"id\": \"${CUTTER_ID}\",\"https://industry-fusion.com/types/v0.9/refState\":[{\"type\": \"https://uri.etsi.org/ngsi-ld/Property\", \"value\": {\"@id\": \"https://industry-fusion.com/v0.9/refStateIRI\"}}]}]"}
 EOF
 }
 
 compare_attributes6() {
     cat << EOF | diff "$1" - >&3
-{"op":"update","overwriteOrReplace":true,"entities":"[{\"id\": \"${CUTTER_ID}\",\"https://industry-fusion.com/types/v0.9/jsonValue\":[{\"type\": \"https://uri.etsi.org/ngsi-ld/Property\", \"value\": {\"type\":\"https://industry-fusion.com/v0.9/refStateIRI\",\"key\":\"value\"}}]}]"}
+{"op":"update","overwriteOrReplace":true,"noForward":true,"entities":"[{\"id\": \"${CUTTER_ID}\",\"https://industry-fusion.com/types/v0.9/jsonValue\":[{\"type\": \"https://uri.etsi.org/ngsi-ld/Property\", \"value\": {\"type\":\"https://industry-fusion.com/v0.9/refStateIRI\",\"key\":\"value\"}}]}]"}
 EOF
 }
 
@@ -172,19 +177,19 @@ EOF
 
 setup() {
     # shellcheck disable=SC2086
-    (exec ${SUDO} kubefwd -n iff -l app.kubernetes.io/name=kafka svc  >/dev/null 2>&1) &
+    [ $DEBUG = "true" ] || (exec ${SUDO} kubefwd -n iff -l app.kubernetes.io/name=kafka svc  >/dev/null 2>&1) &
     echo "# launched kubefwd for kafka, wait some seconds to give kubefwd to launch the services"
     sleep 2
 }
 teardown(){
     echo "# now killing kubefwd"
     # shellcheck disable=SC2086
-    ${SUDO} killall kubefwd
+    [ $DEBUG = "true" ] || ${SUDO} killall kubefwd
 }
 
 
 @test "verify attribute is forwarded to ngsild-update bridge" {
-
+    $SKIP
     (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ATTRIBUTES}) &
     sleep 2 # wait for next aggregation window
     kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${ATTRIBUTE1}
@@ -198,11 +203,10 @@ teardown(){
     [ "$status" -eq 0 ]
 }
 @test "verify last of 2 same attributes is forwarded to ngsild-update bridge" {
-
+    $SKIP
     (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ATTRIBUTES}) &
     sleep 2 # wait for next aggregation window
-    kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${ATTRIBUTE1}
-    kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${ATTRIBUTE2}
+    cat ${ATTRIBUTE1} ${ATTRIBUTE2} | kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP}
     echo "# Sent attribute to attribute topic, wait some time for aggregation"
     sleep 2 # wait until current window is over and send trigger
     kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${FLUSH_ATTRIBUTE}
@@ -213,12 +217,12 @@ teardown(){
     [ "$status" -eq 0 ]
 }
 @test "verify last of 2 same attributes and 1 other attribute are jointly forwarded to ngsild-update bridge" {
-
+    $SKIP
     (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ATTRIBUTES}) &
     sleep 2 # wait for next aggregation window
-    kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${ATTRIBUTE1}
-    kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${ATTRIBUTE3}
-    kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${ATTRIBUTE2}
+    cat ${ATTRIBUTE1} ${ATTRIBUTE3} ${ATTRIBUTE2} | kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP}
+    #kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${ATTRIBUTE3}
+    #kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${ATTRIBUTE2}
     echo "# Sent attribute to attribute topic, wait some time for aggregation"
     sleep 2 # wait until current window is over and send trigger
     kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${FLUSH_ATTRIBUTE}
@@ -230,7 +234,7 @@ teardown(){
     [ "$status" -eq 0 ]
 }
 @test "verify attribute is forwarded to ngsild-update bridge as relationship" {
-
+    $SKIP
     (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ATTRIBUTES}) &
     sleep 2 # wait for next aggregation window
     kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${ATTRIBUTE4}
@@ -244,7 +248,7 @@ teardown(){
     [ "$status" -eq 0 ]
 }
 @test "verify attribute is forwarded to ngsild-update bridge as iri" {
-
+    $SKIP
     (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ATTRIBUTES}) &
     sleep 2 # wait for next aggregation window
     kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${ATTRIBUTE5}
@@ -258,7 +262,7 @@ teardown(){
     [ "$status" -eq 0 ]
 }
 @test "verify attribute is forwarded to ngsild-update bridge as json" {
-
+    $SKIP
     (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ATTRIBUTES}) &
     sleep 2 # wait for next aggregation window
     kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${ATTRIBUTE6}
@@ -272,10 +276,11 @@ teardown(){
     [ "$status" -eq 0 ]
 }
 @test "verify attribute is forwarded array to ngsild-update bridge" {
+    $SKIP
     (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ATTRIBUTES}) &
     sleep 2 # wait for next aggregation window
-    kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${ATTRIBUTE1}
-    kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${ATTRIBUTE7}
+    cat ${ATTRIBUTE1} ${ATTRIBUTE7} | kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP}
+    #kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${ATTRIBUTE7}
     echo "# Sent attribute to attribute topic, wait some time for aggregation"
     sleep 2 # wait until current window is over and send trigger
     kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${FLUSH_ATTRIBUTE}

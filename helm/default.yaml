@@ -69,6 +69,8 @@ flink:
   checkpointDir: checkpoints
   savepointDir: savepoints
   defaultParalellism: 1
+  alertWindow: '0.001'
+  ngsildUpdateWindow: '0.001'
 
 minio:
   url: http://minio
