@@ -16,7 +16,7 @@ base64 = "0.13"
 clap = { version = "3.1.9", features = ["derive"] }
 tokio = { version = "1.17", features = ["macros", "rt-multi-thread", "time"] }
 futures = "0.3.21"
-libc = "0.2.123"
+libc = "0.2.124"
 log = "0.4.16"
 chrono = "0.4"
 slab = "0.4"
