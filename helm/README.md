@@ -1,19 +1,27 @@
-```
-This repo contains Helm charts for deploying the IFF Platform Services
-```
+# Build and Deployment of Digital Twin Platform
+This repo contains Helm charts for deploying the IFF Platform Services.
 
 The Services consist of
 
 * Zalando Postgres Operator
 * Strimzi Kafka Operator
+* Minio Operator
 * Keycloak Operator
 * Scorpio NGSI-LD Context broker with Keycloak integration
 * Alerta with Keycloak integration
 * Cert-Manager
+* Apache Flink Streaming SQL
+* SQL scripts for IFF example scenario 
 
-An installation script `install_operators.sh` is provided to deploy the operators. The concrete instances are defined in a joint Helm chart, consisting of sub charts for the respective components. The installation is done with the helmfile tool.
+There are two installation instructions below. The first [`section`](#installation-of-platform-with-dockerhub-access) describes how to deploy the platform with access to private dockerhub of IFF. The second [`section`](#building-and-installation-platform-locally) describes how to build everything from scratch with a local registry.
 
-## Installation Procedure Overview
+# Installation of Platform with DockerHub Access
+
+---
+
+> **_NOTE_**: Make sure you have access to IFF DockerHub repository. Otherwise follow the [local](#building-and-installation-of-whole-platform-locally) installation procedure below
+
+---
 
 1. Activate your Kubernetes cluster and install `kubectl` (`kubens` is also recommended) on your local machine.
 
@@ -53,26 +61,7 @@ An installation script `install_operators.sh` is provided to deploy the operator
 10. Get token through http://keycloak.local/auth
 11. Use ngsi-ld api via `ngsild.local`
 
-## Troubleshooting
-
-1. Keycloak instance not ready
-2. Alerta not coming up
-   * Error msg in the logs: `alerta.exceptions.ApiError: Could not get OpenID configuration from well known URL: HTTPConnectionPool(host='keycloak.local', port=80): Max retries exceeded with url: /auth/realms/iff/.well-known/openid-configuration`
-     * `keycloak.local` url cannot be resolved from within kubernetes, make sure that it is known by the kubernetes dns. For K3s please see #configure-keycloak.local-dns
-3. Alerta and/or Scorpio do not resolve keycloak.local
-
-## Uninstallation Procedure
-
-Test systems can uninstall all helm charts by:
-
-```
-./helmfile_linux_amd64 destroy
-bash ./uninstall_operators.sh
-```
-
-Removal instructions for helm charts are provided in the *Uninstallation* sections in the `README` files for [1-chart](1-chart/README.md#uninstallation) and [2-chart](2-chart/README.md#uninstallation). Once charts have been removed, the Operators can be uninstalled using `uninstall_operators.sh`.
-
-# Configure Keycloak.local dns
+## Configure Keycloak.local dns
 
 First, find out which node in k3s is used as ingress ip by using `kubectl -n iff get ingress/keycloak-ingress -o jsonpath={".status.loadBalancer.ingress[0].ip"}`
 
@@ -98,3 +87,56 @@ PING keycloak.local (172.27.0.2): 56 data bytes
 64 bytes from 172.27.0.2: seq=2 ttl=64 time=0.032 ms
 
 ```
+
+# Building and Installation of Platform Locally
+
+The following setup procedure is executed in the Kubernetes end to end [`test`](../.github/workflows/k8s-tests.yaml) as part of the Continous Integration procedure. It is tested and regularly executed on `Ubuntu 20.04`.
+
+---
+
+> **_NOTE_**: All following instructions have to be executed with an account with SUDO permission (i.e. Ubuntu admin user) 
+
+---
+
+The platform has to be prepared only once with the prepare script:
+```
+(cd test && bash ./prepare-platform.sh)
+```
+
+After that, the following steps have to be executed (note the round brackets):
+
+```
+(cd ./test/bats && bash ./prepare-test.sh)
+(cd ./test && bash build-local-platform.sh)
+(cd ./test && bash install-local-platform.sh)
+```
+
+---
+
+> **_NOTE_**: This all can take some time when executed the first time because all the containers have to be downloaded to the local system. Be aware that DockerHub is restricting downloads of anonymous participants.
+
+---
+
+Finally, an otional (but recommended) end-to-end test can be excecuted to validate that all is up and running.
+```
+(cd ./test/bats && bats */*.bats)
+```
+
+# Troubleshooting
+
+1. Keycloak instance not ready
+2. Alerta not coming up
+   * Error msg in the logs: `alerta.exceptions.ApiError: Could not get OpenID configuration from well known URL: HTTPConnectionPool(host='keycloak.local', port=80): Max retries exceeded with url: /auth/realms/iff/.well-known/openid-configuration`
+     * `keycloak.local` url cannot be resolved from within kubernetes, make sure that it is known by the kubernetes dns. For K3s please see #configure-keycloak.local-dns
+3. Alerta and/or Scorpio do not resolve keycloak.local
+
+# Uninstallation Procedure
+
+Test systems can uninstall all helm charts by:
+
+```
+./helmfile_linux_amd64 destroy
+bash ./uninstall_operators.sh
+```
+
+
