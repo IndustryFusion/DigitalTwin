@@ -5,10 +5,6 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   env:
-  - name: "MINIO_ROOT_USER"
-    value: "minio"
-  - name: "MINIO_ROOT_PASSWORD"
-    value: {{ .Values.minioSecretKey }}
   - name: "MINIO_STORAGE_CLASS_STANDARD"
     value: "EC:2"
   - name: "MINIO_BROWSER"
