@@ -59,7 +59,7 @@ certmanager:
   issuer: letsencrypt-self
 
 flink:
-  imageTag: 1.14.3
+  imageTag: 1.15.0
   clusterId: iff
   taskmanagers: 1
   jobmanager: 1

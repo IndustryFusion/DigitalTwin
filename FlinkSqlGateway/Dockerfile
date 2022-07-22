@@ -7,7 +7,7 @@ ADD .eslintrc.json .eslintrc.json
 WORKDIR /
 RUN npm install && npm run lint && npm run test
 
-FROM flink:1.14.3
+FROM flink:1.15.0
 
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
 ENV NVM_DIR="$HOME/.nvm"
@@ -22,7 +22,7 @@ WORKDIR /opt/gateway
 ADD gateway.js gateway.js
 ADD package.json package.json
 ADD lib/ lib
-RUN mkdir jars && cd jars && wget https://repo1.maven.org/maven2/org/apache/flink/flink-sql-connector-kafka_2.11/1.14.3/flink-sql-connector-kafka_2.11-1.14.3.jar
+RUN mkdir jars && cd jars && wget https://repo1.maven.org/maven2/org/apache/flink/flink-sql-connector-kafka/1.15.0/flink-sql-connector-kafka-1.15.0.jar
 RUN . $HOME/.nvm/nvm.sh && npm install --production
 ADD sql-client-defaults.yaml /opt/flink/conf/
 USER 9999
