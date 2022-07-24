@@ -142,6 +142,36 @@ class TestMonitoring(TestCase):
     @patch('beamsqlstatementsetoperator.tables_and_views.create_ddl_from_beamsqltables',
            create_ddl_from_beamsqltables)
     @patch('beamsqlstatementsetoperator.deploy_statementset',
+           submit_statementset_successful)
+    def test_monitor_finished(self):
+        """test monitor finished"""
+        body = {
+            "metadata": {
+                "name": "name",
+                "namespace": "namespace"
+            },
+            "spec": {
+                "sqlstatements": ["select;"],
+                "tables": ["table"]
+            },
+            "status": {
+                "state": "FINISHED",
+                "job_id": None
+            }
+        }
+
+        patchx = Bunch()
+        patchx.status = {}
+
+        beamsqltables = {("namespace", "table"): ({}, {})}
+        target.monitor(beamsqltables, None, patchx,  Logger(),
+                       body, body["spec"], body["status"])
+        self.assertNotIn('state', patchx.status)
+        self.assertNotIn('job_id', patchx.status)
+
+    @patch('beamsqlstatementsetoperator.tables_and_views.create_ddl_from_beamsqltables',
+           create_ddl_from_beamsqltables)
+    @patch('beamsqlstatementsetoperator.deploy_statementset',
            submit_statementset_failed)
     def test_update_submission_failure(self):
         """test update with submission failure"""
@@ -314,6 +344,29 @@ class TestDeletion(TestCase):
             },
             "status": {
                 "state": "CANCELED",
+                "job_id": "job_id"
+            }
+        }
+        patchx = Bunch()
+        patchx.status = {}
+
+        target.delete(body, body["spec"], patchx, Logger())
+        self.assertEqual(patchx.status, {})
+
+    @patch('kopf.info', kopf_info)
+    def test_delete_finished(self):
+        """test delete job with FINISHED job"""
+        body = {
+            "metadata": {
+                "name": "name",
+                "namespace": "namespace"
+            },
+            "spec": {
+                "sqlstatements": ["select;"],
+                "tables": ["table"]
+            },
+            "status": {
+                "state": "FINISHED",
                 "job_id": "job_id"
             }
         }

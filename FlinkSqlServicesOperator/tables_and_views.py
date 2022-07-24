@@ -71,7 +71,7 @@ def create_kafka_ddl(beamsqltable, logger):
         logger.warning(message)
         name = metadata_name
     ddl = f"CREATE TABLE `{name}` ("
-    ddl += ",".join(f"{k} {v}" if k == "watermark" else f"`{k}` {v}"
+    ddl += ",".join(f"{k} {v}" if k.lower() == "watermark" else f"`{k}` {v}"
                     for k, v in {k: v for x in beamsqltable.spec.get("fields")
                                  for k, v in x.items()}.items())
     ddl += ") WITH ("
@@ -138,7 +138,7 @@ def create_upsert_kafka_ddl(beamsqltable, logger):
         logger.warning(message)
         name = metadata_name
     ddl = f"CREATE TABLE `{name}` ("
-    ddl += ",".join(f"{k} {v}" if k == "watermark" else f"`{k}` {v}"
+    ddl += ",".join(f"{k} {v}" if k.lower() == "watermark" else f"`{k}` {v}"
                     for k, v in {k: v for x in beamsqltable.spec.get("fields")
                                  for k, v in x.items()}.items())
     primary_key = beamsqltable.spec.get("primaryKey")
