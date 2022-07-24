@@ -118,6 +118,9 @@ def delete(body, spec, patch, logger, **kwargs):
     namespace = body["metadata"].get("namespace")
 
     state = body['status'].get(STATE)
+    if state == States.FINISHED.name:
+        # DELETE finished jobs right away
+        return
     job_id = body['status'].get(JOB_ID)
     if job_id and state not in [States.CANCELED.name, States.CANCELING.name]:
         try:
@@ -292,7 +295,9 @@ def monitor(beamsqltables: kopf.Index, beamsqlviews: kopf.Index, patch, logger,
     except (KeyError, TypeError):
         create(body, spec, patch, logger, **kwargs)
         return
-
+    if state == States.FINISHED.name:
+        # Don't worry about FINISHED jobs
+        return
     logger.debug(
         f"Triggered monitor for {namespace}/{metadata_name}"
         f" with state {state}")
