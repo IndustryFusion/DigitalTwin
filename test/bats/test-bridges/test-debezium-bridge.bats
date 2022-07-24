@@ -163,8 +163,14 @@ EOF
 }
 
 compare_delete_cutter() {
-    cat << EOF | diff "$1" - >&3
-{"id":"${PLASMACUTTER_ID}"}
+    cat << EOF | jq -S | diff "$1" - >&3
+{"https://industry-fusion.com/types/v0.9/state":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/state",\
+"https://industry-fusion.com/types/v0.9/jsonValue":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/jsonValue",\
+"https://industry-fusion.com/types/v0.9/jsonValueArray":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/jsonValueArray",\
+"https://industry-fusion.com/types/v0.9/multiState": "${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/multiState",\
+"https://industry-fusion.com/types/v0.9/hasFilter":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/hasFilter",\
+"https://industry-fusion.com/types/v0.9/hasWorkpiece":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/hasWorkpiece",\
+"id":"${PLASMACUTTER_ID}"}
 EOF
 }
 
@@ -181,8 +187,14 @@ EOF
 }
 
 compare_delete_plasmacutter() {
-    cat << EOF | diff "$1" - >&3
-{"id":"${PLASMACUTTER_ID}"}
+    cat << EOF | jq -S | diff "$1" - >&3
+{"https://industry-fusion.com/types/v0.9/state":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/state",\
+"https://industry-fusion.com/types/v0.9/jsonValue":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/jsonValue",\
+"https://industry-fusion.com/types/v0.9/jsonValueArray":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/jsonValueArray",\
+"https://industry-fusion.com/types/v0.9/multiState": "${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/multiState",\
+"https://industry-fusion.com/types/v0.9/hasFilter":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/hasFilter",\
+"https://industry-fusion.com/types/v0.9/hasWorkpiece":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/hasWorkpiece",\
+"id":"${PLASMACUTTER_ID}"}
 EOF
 }
 
@@ -277,9 +289,9 @@ teardown(){
     run compare_delete_attributes ${KAFKACAT_ATTRIBUTES}
     [ "$status" -eq 0 ]
 
-    run compare_delete_cutter ${KAFKACAT_ENTITY_CUTTER}
+    run compare_delete_cutter ${KAFKACAT_ENTITY_CUTTER_SORTED}
     [ "$status" -eq 0 ]
 
-    run compare_delete_plasmacutter ${KAFKACAT_ENTITY_PLASMACUTTER}
+    run compare_delete_plasmacutter ${KAFKACAT_ENTITY_PLASMACUTTER_SORTED}
     [ "$status" -eq 0 ]
 }

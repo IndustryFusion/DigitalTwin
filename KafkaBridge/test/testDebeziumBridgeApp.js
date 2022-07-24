@@ -116,6 +116,40 @@ describe('Test sendUpdates', function () {
     await sendUpdates({ entity, updatedAttrs, deletedAttrs });
     revert();
   });
+  it('Should delete entity', async function () {
+    const messages = [
+      { key: 'id', value: '{"id":"id"}' },
+      { key: 'id', value: '{"id":"id"}' }
+    ];
+    const sendUpdates = toTest.__get__('sendUpdates');
+    const config = {
+      debeziumBridge: {
+        attributesTopic: 'attributesTopic',
+        entityTopicPrefix: 'topicPrefix'
+      }
+    };
+    const producer = {
+      sendBatch: function ({ topicMessages }) {
+        topicMessages[0].topic.should.equal('topicPrefix.klass');
+        assert.deepEqual(topicMessages[0].messages[0], messages[0]);
+        topicMessages[1].topic.should.equal('topicPrefix.subklass');
+        assert.deepEqual(topicMessages[1].messages[0], messages[1]);
+      }
+    };
+
+    const deletedEntity = {
+      id: 'id',
+      type: 'http://example/type'
+    };
+    const getSubClasses = function () {
+      return ['klass', 'subklass'];
+    };
+    const revert = toTest.__set__('producer', producer);
+    toTest.__set__('config', config);
+    toTest.__set__('getSubClasses', getSubClasses);
+    await sendUpdates({ deletedEntity });
+    revert();
+  });
   it('Should flatten input arrays of attributes', async function () {
     const messages = [
       { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
