@@ -56,13 +56,11 @@ module.exports = function DebeziumBridge (conf) {
                       Object.keys(deletedAttrs).length > 0 || Object.keys(insertedAttrs).length > 0);
     // deletedEntity needs to remember type so that it can be deleted for
     // all subtypes. However, type must be removed lated since it is not part of
-    // primary key. Deletion means to set everythin, which is not primary key to null
+    // primary key. Deletion means to set type to null
     let deletedEntity = null;
     if (isEntityUpdated && Object.keys(afterEntity).length === 0) {
-      deletedEntity = {
-        id: beforeEntity.id,
-        type: beforeEntity.type
-      };
+      deletedEntity = beforeEntity;
+      // Type will be removed later to signal deletion
     }
     if (isEntityUpdated || isAttributesChanged) {
       result = {
