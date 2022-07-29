@@ -17,6 +17,7 @@ jobs:
     - uses: actions/checkout@v2
     - name: Prepare K3d cluster
       run: |
+        echo "Dummy PR to see current status of repository"
         if [ -z "${SELF_HOSTED_RUNNER}" ]; then
           ( cd ./test && bash ./prepare-platform.sh )
         else
@@ -37,5 +38,3 @@ jobs:
       run: |
         cd ./test/bats
         bats */*.bats
-
-
