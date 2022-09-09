@@ -87,7 +87,7 @@ def get_json_request_id():
     requestid['request-id'] = 'request-id'
     return requestid
 
-def request_get_successful(url):
+def request_get_successful(url, timeout=0):
     """
     get response from get request
     """
@@ -97,7 +97,7 @@ def request_get_successful(url):
     response.status_code = 200
     return response
 
-def request_get_failed(url):
+def request_get_failed(url, timeout=0):
     """
     get request failed
     """
@@ -107,7 +107,7 @@ def request_get_failed(url):
     response.status_code = 404
     return response
 
-def request_get_successful_job_status(url):
+def request_get_successful_job_status(url, timeout=0):
     """
     get job status
     """
@@ -117,7 +117,7 @@ def request_get_successful_job_status(url):
     response.status_code = 200
     return response
 
-def request_post_successful(url, json):
+def request_post_successful(url, json, timeout=0):
     """
     post request
     """
@@ -127,7 +127,7 @@ def request_post_successful(url, json):
     response.status_code = 202
     return response
 
-def request_patch_successful(url):
+def request_patch_successful(url, timeout=0):
     """
     send patch request
     """

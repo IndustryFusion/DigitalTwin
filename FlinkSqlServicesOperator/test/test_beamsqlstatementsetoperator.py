@@ -683,7 +683,7 @@ class TestUpdate(TestCase):
 class TestHelpers(TestCase):
     """unit test class for helpers"""
     # pylint: disable=no-self-use, no-self-argument
-    def send_successful(test, json):
+    def send_successful(test, json, timeout=0):
         """mock send job successful"""
         def jsonp():
             jsonres = Bunch()
@@ -695,7 +695,7 @@ class TestHelpers(TestCase):
         return response
 
     # pylint: disable=no-self-use, no-self-argument
-    def send_unsuccessful(test, json):
+    def send_unsuccessful(test, json, timeout=0):
         """mock send job unsuccessful"""
         def jsonp():
             jsonres = Bunch()
@@ -718,7 +718,7 @@ class TestHelpers(TestCase):
         return None
 
     # pylint: disable=no-self-use, no-self-argument
-    def send_exception(test, json):
+    def send_exception(test, json, timeout=0):
         """mock send_exception"""
         raise requests.RequestException("Error")
 
