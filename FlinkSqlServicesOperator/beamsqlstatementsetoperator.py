@@ -43,6 +43,7 @@ timer_interval_seconds = int(os.getenv("TIMER_INTERVAL", default="10"))
 timer_backoff_seconds = int(os.getenv("TIMER_BACKOFF_INTERVAL", default="10"))
 timer_backoff_temp_failure_seconds = int(
     os.getenv("TIMER_BACKOFF_TEMPORARY_FAILURE_INTERVAL", default="30"))
+DEFAULT_TIMEOUT = 60
 
 
 class States(Enum):
@@ -221,7 +222,8 @@ def update(body, spec, patch, logger, retries=20, **kwargs):
                 logger, job_id, savepoint_id)
             logger.debug(f"savepoint state {savepoint_state}")
             if savepoint_state.get(SAVEPOINT_STATUS) in [
-              SavepointStates.FAILED.name, SavepointStates.NOT_FOUND.name]:
+                    SavepointStates.FAILED.name,
+                    SavepointStates.NOT_FOUND.name]:
                 # Savepointing not possible
                 add_message(logger, body, patch,
                             "Savepointing failed! "
@@ -231,7 +233,7 @@ def update(body, spec, patch, logger, retries=20, **kwargs):
                 patch.status[SAVEPOINT_ID] = None
                 patch.status[SAVEPOINT_LOCATION] = None
             elif savepoint_state.get(SAVEPOINT_STATUS) in [
-              SavepointStates.IN_PROGRESS.name]:
+                    SavepointStates.IN_PROGRESS.name]:
                 logger.debug("Savepointing still in progress"
                              "try come back later")
                 raise kopf.TemporaryError("Savepointing still in progress"
@@ -322,7 +324,7 @@ def monitor(beamsqltables: kopf.Index, beamsqlviews: kopf.Index, patch, logger,
             if spec.get("views") is not None:
                 ddls += "\n".join(tables_and_views.create_view(
                     list(beamsqlviews[(namespace, view_name)])[0]
-                    ) for view_name in spec.get("views")) + "\n"
+                ) for view_name in spec.get("views")) + "\n"
 
         except (KeyError, TypeError) as exc:
             logger.error("Views could not be created for "
@@ -377,7 +379,9 @@ def monitor(beamsqltables: kopf.Index, beamsqlviews: kopf.Index, patch, logger,
     # If state is not INITIALIZED, DEPLOYMENT_FAILURE nor CANCELED,
     # the state is monitored
     if state not in [States.CANCELED.name,
-       States.CANCELING.name, States.SAVEPOINTING.name, States.UPDATING.name]:
+                     States.CANCELING.name,
+                     States.SAVEPOINTING.name,
+                     States.UPDATING.name]:
         refresh_state(body, patch, logger)
         if patch.status[STATE] == States.NOT_FOUND.name:
             logger.info("Job seems to be lost. Will re-initialize")
@@ -487,7 +491,8 @@ def deploy_statementset(statementset, logger):
     logger.debug(f"Deployment request to SQL Gateway {request}")
     try:
         response = requests.post(request,
-                                 json={"statement": statementset})
+                                 json={"statement": statementset},
+                                 timeout=DEFAULT_TIMEOUT)
     except requests.RequestException as err:
         raise DeploymentFailedException(
             f"Could not deploy job to {request}, server unreachable ({err})")\
@@ -536,5 +541,5 @@ def add_message(logger, body, patch, reason, mtype):
     if messages is None:
         messages = []
     messages.append({"timestamp": f"{datetime.datetime.now()}",
-                    "type": mtype, "message": reason})
+                     "type": mtype, "message": reason})
     patch.status[MESSAGES] = messages
