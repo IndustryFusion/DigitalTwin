@@ -34,6 +34,7 @@ JOB_STATUS_UNKNOWN = "UNKNOWN"
 JOB_STATUS_FAILED = "FAILED"
 JOB_STATUS_CANCELED = "CANCELED"
 JOB_STATUS_FIXING = "OPERATOR TRIES TO FIX"
+DEFAULT_TIMEOUT = 60
 
 
 @kopf.on.create("industry-fusion.com", "v1", "beamservices")
@@ -84,7 +85,8 @@ async def updates(stopped, patch, logger, body, spec, status, **kwargs):
     # Assumption: lowercased entry class name
     try:
         jobs = requests.get(
-            f"{FLINK_URL}/jobs").json().get("jobs", [])
+            f"{FLINK_URL}/jobs",
+            timeout=DEFAULT_TIMEOUT).json().get("jobs", [])
         # check whether job is in the list
         job_id = update_status.get("jobId")
         # if we have a job_id, check wether it is running
@@ -104,7 +106,8 @@ async def updates(stopped, patch, logger, body, spec, status, **kwargs):
             # but not handled by us any longer
             # First get detail of the job
             job_name = requests.get(
-                f"{FLINK_URL}/jobs/{element['id']}").json().get("name")
+                f"{FLINK_URL}/jobs/{element['id']}",
+                timeout=DEFAULT_TIMEOUT).json().get("name")
             # cancel if it has the resource prefix
             name = get_jobname_prefix(body, spec)
             if name is not None and job_name.startswith(name):
@@ -139,7 +142,7 @@ def delete(body, **kwargs):
 
 def download_file_via_http(url):
     """Download the file and return the saved path."""
-    response = requests.get(url)
+    response = requests.get(url, timeout=DEFAULT_TIMEOUT)
     path = "/tmp/" + str(uuid.uuid4()) + ".jar"
     with open(path, "wb") as download_file:
         download_file.write(response.content)
@@ -178,6 +181,7 @@ def deploy(body, spec, patch):
         with open(jarfile_path, "rb") as jarfile:
             response = requests.post(
                 f"{FLINK_URL}/jars/upload",
+                timeout=DEFAULT_TIMEOUT,
                 files={"jarfile": jarfile})
             if response.status_code != 200:
                 delete_jar(body, jarfile_path)
@@ -220,6 +224,7 @@ def create_job(body, spec, jar_id):
     kopf.info(body, reason="Args Parsed",
               message=args)
     response = requests.post(f"{FLINK_URL}/jars/{jar_id}/run",
+                             timeout=DEFAULT_TIMEOUT,
                              json={"entryClass": entry_class,
                                    "programArgs": args})
     if response.status_code != 200:
@@ -248,7 +253,8 @@ def delete_jar(body, jar_path):
 def check_readiness(body):
     """Return number of free slots."""
     try:
-        response = requests.get(f"{FLINK_URL}/overview")
+        response = requests.get(f"{FLINK_URL}/overview",
+                                timeout=DEFAULT_TIMEOUT)
         if response.status_code == 200:
             free_slots = response.json()["slots-total"]
             return free_slots
@@ -262,7 +268,8 @@ def check_readiness(body):
 def cancel_job(job_id):
     """Cancel job with the given job_id."""
     try:
-        response = requests.patch(f"{FLINK_URL}/jobs/{job_id}")
+        response = requests.patch(f"{FLINK_URL}/jobs/{job_id}",
+                                  timeout=DEFAULT_TIMEOUT)
         if response.status_code != 202:
             raise kopf.TemporaryError(
                 "Could not cancel job from cluster", delay=5)
