@@ -58,7 +58,7 @@ spec:
           periodSeconds: {{ .Values.AtContextServer.readinessProbe.periodSeconds }}
           {{- end}}
         resources:
-{{ toYaml .Values.AtContextServer.resources | indent 10 }}
+{{ toYaml .Values.scorpio.resources_min | indent 10 }}
       restartPolicy: {{ .Values.AtContextServer.restartPolicy }}
       {{- if .Values.AtContextServer.serviceAccount.enabled }}
       serviceAccountName: {{ .Values.AtContextServer.serviceAccount.name }}

@@ -52,7 +52,22 @@ scorpio:
   internalHostname: gateway
   internalPort: 9090
   internalProtocol: "http:"
-
+  hpa:
+    enabled: false
+  resources_min:
+    limits:
+      cpu: 200m
+      memory: 200Mi
+    requests:
+      cpu: 100m
+      memory: 150Mi
+  resources_main:
+    limits:
+      cpu: 200m
+      memory: 200Mi
+    requests:
+      cpu: 100m
+      memory: 150Mi
 
 certmanager:
   secret: selfsigned-cert-tls

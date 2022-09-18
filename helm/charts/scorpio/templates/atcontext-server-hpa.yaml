@@ -1,4 +1,4 @@
-{{- if and .Values.AtContextServer.enabled .Values.AtContextServer.hpa.enabled }}
+{{- if and .Values.AtContextServer.enabled .Values.AtContextServer.hpa.enabled .Values.scorpio.hpa.enabled }}
 apiVersion: autoscaling/v1
 kind: HorizontalPodAutoscaler
 metadata:

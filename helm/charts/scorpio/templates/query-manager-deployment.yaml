@@ -79,7 +79,7 @@ spec:
           periodSeconds: {{ .Values.QueryManager.readinessProbe.periodSeconds }}
           {{- end}}
         resources:
-{{ toYaml .Values.QueryManager.resources | indent 10 }}
+{{ toYaml .Values.scorpio.resources_min | indent 10 }}
       restartPolicy: {{ .Values.QueryManager.restartPolicy }}
       {{- if .Values.QueryManager.serviceAccount.enabled }}
       serviceAccountName: {{ .Values.QueryManager.serviceAccount.name }}

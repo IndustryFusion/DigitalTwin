@@ -79,7 +79,7 @@ spec:
           periodSeconds: {{ .Values.EntityManager.readinessProbe.periodSeconds }}
           {{- end}}
         resources:
-{{ toYaml .Values.EntityManager.resources | indent 10 }}
+{{ toYaml .Values.scorpio.resources_main | indent 10 }}
       restartPolicy: {{ .Values.EntityManager.restartPolicy }}
       {{- if .Values.EntityManager.serviceAccount.enabled }}
       serviceAccountName: {{ .Values.EntityManager.serviceAccount.name }}

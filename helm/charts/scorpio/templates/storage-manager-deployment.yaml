@@ -75,7 +75,7 @@ spec:
           periodSeconds: {{ .Values.StorageManager.readinessProbe.periodSeconds }}
           {{- end}}
         resources:
-{{ toYaml .Values.StorageManager.resources | indent 10 }}
+{{ toYaml .Values.scorpio.resources_main | indent 10 }}
       restartPolicy: {{ .Values.StorageManager.restartPolicy }}
       {{- if .Values.StorageManager.serviceAccount.enabled }}
       serviceAccountName: {{ .Values.StorageManager.serviceAccount.name }}

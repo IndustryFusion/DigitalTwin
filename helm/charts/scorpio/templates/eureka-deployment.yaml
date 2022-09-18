@@ -46,7 +46,7 @@ spec:
           periodSeconds: {{ .Values.eureka.readinessProbe.periodSeconds }}
           {{- end}}
         resources:
-{{ toYaml .Values.eureka.resources | indent 10 }}
+{{ toYaml .Values.scorpio.resources_min | indent 10 }}
       restartPolicy: {{ .Values.eureka.restartPolicy }}
       {{- if .Values.eureka.serviceAccount.enabled }}
       serviceAccountName: {{ .Values.eureka.serviceAccount.name }}

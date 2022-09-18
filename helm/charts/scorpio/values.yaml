@@ -485,7 +485,7 @@ EntityManager:
 ################################### HistoryManager ##########################################################################
 HistoryManager:
 ## Enable the HistoryManager deployment & service
-  enabled: true
+  enabled: false
   name: history-manager
 ## Number of HistoryManager instances to deploy
 ##
@@ -633,7 +633,7 @@ QueryManager:
 ################################### RegistryManager ##########################################################################
 RegistryManager:
 ## Enable the RegistryManager deployment & service
-  enabled: true
+  enabled: false
   name: registry-manager
 ## Number of RegistryManager instances to deploy
 ##
@@ -782,7 +782,7 @@ StorageManager:
 ################################### SubscriptionManager ##########################################################################
 SubscriptionManager:
 ## Enable the SubscriptionManager deployment & service
-  enabled: true
+  enabled: false
   name: subscription-manager
 ## Number of SubscriptionManager instances to deploy
 ##
