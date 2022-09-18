@@ -1,4 +1,4 @@
-{{- if and .Values.EntityManager.enabled .Values.EntityManager.hpa.enabled }}
+{{- if and .Values.EntityManager.enabled .Values.EntityManager.hpa.enabled .Values.scorpio.hpa.enabled }}
 apiVersion: autoscaling/v1
 kind: HorizontalPodAutoscaler
 metadata:

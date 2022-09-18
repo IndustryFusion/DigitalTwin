@@ -23,6 +23,8 @@ spec:
     spec:
       containers:
       - image: {{ .Values.mainRepo }}/digitaltwin:EntityManager_{{ .Values.scorpio.tag }}
+        command: ["java"]
+        args: ["-XshowSettings:vm", {{ .Values.scorpio.heap_main.Xms | quote }}, {{ .Values.scorpio.heap_main.Xmx | quote }}, "-jar", "EntityManager.jar"]
         env:
           - name: CLIENT_ID
             value: {{ .Values.keycloak.scorpio.client }}
@@ -50,7 +52,6 @@ spec:
             value: {{ $val | quote }}
         {{- end }}
         {{- if .Values.springArgs.overrideSpringArgs }}
-        env:
           - name: spring_args
             value: {{ .Values.springArgs.value }}
         {{- end}}
@@ -79,7 +80,7 @@ spec:
           periodSeconds: {{ .Values.EntityManager.readinessProbe.periodSeconds }}
           {{- end}}
         resources:
-{{ toYaml .Values.EntityManager.resources | indent 10 }}
+{{ toYaml .Values.scorpio.resources_main | indent 10 }}
       restartPolicy: {{ .Values.EntityManager.restartPolicy }}
       {{- if .Values.EntityManager.serviceAccount.enabled }}
       serviceAccountName: {{ .Values.EntityManager.serviceAccount.name }}

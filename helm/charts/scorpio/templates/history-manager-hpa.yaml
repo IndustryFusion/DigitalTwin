@@ -1,4 +1,4 @@
-{{- if and .Values.HistoryManager.enabled .Values.HistoryManager.hpa.enabled }}
+{{- if and .Values.HistoryManager.enabled .Values.HistoryManager.hpa.enabled .Values.scorpio.hpa.enabled }}
 apiVersion: autoscaling/v1
 kind: HorizontalPodAutoscaler
 metadata:

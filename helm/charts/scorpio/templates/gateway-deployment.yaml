@@ -27,11 +27,15 @@ spec:
         command: ['sh', '-c', "until wget -qO - http://eureka:8761/actuator/health| grep UP; do echo waiting for eureka service; sleep 1; done"]
       containers:
       - image: {{ .Values.mainRepo }}/digitaltwin:gateway_{{ .Values.scorpio.tag }}
+        command: ["java"]
+        args: ["-XshowSettings:vm", {{ .Values.scorpio.heap_main.Xms | quote }}, {{ .Values.scorpio.heap_main.Xmx | quote }}, "-jar", "gateway.jar"]
         env:
         {{- if .Values.springArgs.overrideSpringArgs }}
           - name: spring_args
             value: {{ .Values.springArgs.value }}
         {{- end}}
+          - name: JAVA_OPTS
+            value: {{ .Values.scorpio.java_opts_main }}
         imagePullPolicy: {{ .Values.gateway.image.pullPolicy }}
         name: {{ .Values.gateway.name }}
         ports:
@@ -57,7 +61,7 @@ spec:
           periodSeconds: {{ .Values.gateway.readinessProbe.periodSeconds }}
           {{- end}}
         resources:
-{{ toYaml .Values.gateway.resources | indent 10 }}
+{{ toYaml .Values.scorpio.resources_main | indent 10 }}
       restartPolicy: {{ .Values.gateway.restartPolicy }}
       {{- if .Values.gateway.serviceAccount.enabled }}
       serviceAccountName: {{ .Values.gateway.serviceAccount.name }}
