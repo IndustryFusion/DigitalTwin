@@ -23,8 +23,10 @@ spec:
     spec:
       containers:
       - image: {{ .Values.mainRepo }}/digitaltwin:eureka-server_{{ .Values.scorpio.tag }}
-        {{- if .Values.springArgs.overrideSpringArgs }}
+        command: ["java"]
+        args: ["-XshowSettings:vm", {{ .Values.scorpio.heap_min.Xms | quote }}, {{ .Values.scorpio.heap_min.Xmx | quote }}, "-jar", "eureka-server.jar"]
         env:
+        {{- if .Values.springArgs.overrideSpringArgs }}
           - name: spring_args
             value: {{ .Values.springArgs.value }}
         {{- end}}
@@ -46,7 +48,7 @@ spec:
           periodSeconds: {{ .Values.eureka.readinessProbe.periodSeconds }}
           {{- end}}
         resources:
-{{ toYaml .Values.eureka.resources | indent 10 }}
+{{ toYaml .Values.scorpio.resources_min | indent 10 }}
       restartPolicy: {{ .Values.eureka.restartPolicy }}
       {{- if .Values.eureka.serviceAccount.enabled }}
       serviceAccountName: {{ .Values.eureka.serviceAccount.name }}

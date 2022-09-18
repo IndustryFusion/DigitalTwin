@@ -23,6 +23,8 @@ spec:
     spec:
       containers:
       - image: {{ .Values.mainRepo }}/digitaltwin:StorageManager_{{ .Values.scorpio.tag }}
+        command: ["java"]
+        args: ["-XshowSettings:vm", {{ .Values.scorpio.heap_main.Xms | quote }}, {{ .Values.scorpio.heap_main.Xmx | quote }}, "-Xms50M","-Xmx64M", "-jar", "StorageManager.jar"]
         env:
           - name: CLIENT_ID
             value: {{ .Values.keycloak.scorpio.client }}
@@ -46,7 +48,6 @@ spec:
             value: {{ $val | quote }}
         {{- end }}
         {{- if .Values.springArgs.overrideSpringArgs }}
-        env:
           - name: spring_args
             value: {{ .Values.springArgs.value }}
         {{- end}}
@@ -75,7 +76,7 @@ spec:
           periodSeconds: {{ .Values.StorageManager.readinessProbe.periodSeconds }}
           {{- end}}
         resources:
-{{ toYaml .Values.StorageManager.resources | indent 10 }}
+{{ toYaml .Values.scorpio.resources_main | indent 10 }}
       restartPolicy: {{ .Values.StorageManager.restartPolicy }}
       {{- if .Values.StorageManager.serviceAccount.enabled }}
       serviceAccountName: {{ .Values.StorageManager.serviceAccount.name }}

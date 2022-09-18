@@ -1,4 +1,4 @@
-{{- if and .Values.SubscriptionManager.enabled .Values.SubscriptionManager.hpa.enabled }}
+{{- if and .Values.SubscriptionManager.enabled .Values.SubscriptionManager.hpa.enabled .Values.scorpio.hpa.enabled }}
 apiVersion: autoscaling/v1
 kind: HorizontalPodAutoscaler
 metadata:

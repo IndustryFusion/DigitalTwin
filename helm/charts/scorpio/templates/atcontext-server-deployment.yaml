@@ -23,13 +23,14 @@ spec:
     spec:
       containers:
       - image: {{ .Values.mainRepo }}/digitaltwin:AtContextServer_{{ .Values.scorpio.tag }}
+        command: ["java"]
+        args: ["-XshowSettings:vm", {{ .Values.scorpio.heap_min.Xms | quote }}, {{ .Values.scorpio.heap_min.Xmx | quote }}, "-jar", "AtContextServer.jar"]
         env:
         {{- range $key, $val := .Values.kafka_vars }}
           - name: {{ $key }}
             value: {{ $val | quote }}
         {{- end }}
         {{- if .Values.springArgs.overrideSpringArgs }}
-        env:
           - name: spring_args
             value: {{ .Values.springArgs.value }}
         {{- end}}
@@ -58,7 +59,7 @@ spec:
           periodSeconds: {{ .Values.AtContextServer.readinessProbe.periodSeconds }}
           {{- end}}
         resources:
-{{ toYaml .Values.AtContextServer.resources | indent 10 }}
+{{ toYaml .Values.scorpio.resources_min | indent 10 }}
       restartPolicy: {{ .Values.AtContextServer.restartPolicy }}
       {{- if .Values.AtContextServer.serviceAccount.enabled }}
       serviceAccountName: {{ .Values.AtContextServer.serviceAccount.name }}

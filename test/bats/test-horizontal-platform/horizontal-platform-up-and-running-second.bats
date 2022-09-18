@@ -46,19 +46,10 @@ DETIK_DEBUG="true"
     run try "at most 30 times every 30s to find 1 pod named 'gateway' with 'status.containerStatuses[0].ready' being 'true'"
     [ "$status" -eq 0 ]
 
-    run try "at most 30 times every 30s to find 1 pod named 'history-manager' with 'status.containerStatuses[0].ready' being 'true'"
-    [ "$status" -eq 0 ]
-
     run try "at most 30 times every 30s to find 1 pod named 'entity-manager' with 'status.containerStatuses[0].ready' being 'true'"
     [ "$status" -eq 0 ]
 
-    run try "at most 30 times every 30s to find 1 pod named 'subscription-manager' with 'status.containerStatuses[0].ready' being 'true'"
-    [ "$status" -eq 0 ]
-
     run try "at most 30 times every 30s to find 1 pod named 'query-manager' with 'status.containerStatuses[0].ready' being 'true'"
-    [ "$status" -eq 0 ]
-
-    run try "at most 30 times every 30s to find 1 pod named 'registry-manager' with 'status.containerStatuses[0].ready' being 'true'"
     [ "$status" -eq 0 ]
 
     run try "at most 30 times every 30s to find 1 pod named 'storage-manager' with 'status.containerStatuses[0].ready' being 'true'"

@@ -13,7 +13,15 @@ metadata:
 spec:
   replicas: 1
   image: {{ .Values.mainRepo }}/{{ .Values.kafka.connect.image }}:{{ .Values.mainVersion }}
+  jvmOptions:
+    "-Xms": "128M"
+    "-Xmx": "128M"
   bootstrapServers: {{ .Values.kafka.bootstrapServer }}
+  resources:
+    requests:
+      memory: 256Mi
+    limits:
+      memory: 512Mi
   config:
     config.storage.replication.factor: 1
     offset.storage.replication.factor: 1
