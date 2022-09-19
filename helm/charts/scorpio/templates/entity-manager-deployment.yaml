@@ -24,7 +24,7 @@ spec:
       containers:
       - image: {{ .Values.mainRepo }}/digitaltwin:EntityManager_{{ .Values.scorpio.tag }}
         command: ["java"]
-        args: ["-XshowSettings:vm", "-XX:MaxRAMPercentage=50", "-jar", "EntityManager.jar"]      
+        args: ["-XshowSettings:vm", "-XX:MaxRAMPercentage=50",  "-Xms50M","-Xmx64M", "-jar", "EntityManager.jar"]      
         env:
           - name: CLIENT_ID
             value: {{ .Values.keycloak.scorpio.client }}

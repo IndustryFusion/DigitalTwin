@@ -24,7 +24,7 @@ spec:
       containers:
       - image: {{ .Values.mainRepo }}/digitaltwin:AtContextServer_{{ .Values.scorpio.tag }}
         command: ["java"]
-        args: ["-XshowSettings:vm", "-XX:MaxRAMPercentage=50", "-jar", "AtContextServer.jar"]
+        args: ["-XshowSettings:vm", "-XX:MaxRAMPercentage=50", "-Xms50M","-Xmx64M", "-jar", "AtContextServer.jar"]
         env:
         {{- range $key, $val := .Values.kafka_vars }}
           - name: {{ $key }}
