@@ -23,11 +23,13 @@ spec:
     spec:
       containers:
       - image: {{ .Values.mainRepo }}/digitaltwin:config-server_{{ .Values.scorpio.tag }}
-        {{- if .Values.springArgs.overrideSpringArgs }}
         env:
+        {{- if .Values.springArgs.overrideSpringArgs }}
           - name: spring_args
             value: {{ .Values.springArgs.value }}
         {{- end}}
+          - name: JAVA_OPTS
+            value: {{ .Values.scorpio.java_opts_min }}
         imagePullPolicy: {{ .Values.ConfigServer.image.pullPolicy }}
         name: {{ .Values.ConfigServer.name }}
         ports:

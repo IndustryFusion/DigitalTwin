@@ -29,10 +29,11 @@ spec:
             value: {{ $val | quote }}
         {{- end }}
         {{- if .Values.springArgs.overrideSpringArgs }}
-        env:
           - name: spring_args
             value: {{ .Values.springArgs.value }}
         {{- end}}
+          - name: JAVA_OPTS
+            value: {{ .Values.scorpio.jav_opts_min }}
         imagePullPolicy: {{ .Values.AtContextServer.image.pullPolicy }}
         name: {{ .Values.AtContextServer.name }}
         ports:

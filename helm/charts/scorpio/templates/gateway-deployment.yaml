@@ -32,6 +32,8 @@ spec:
           - name: spring_args
             value: {{ .Values.springArgs.value }}
         {{- end}}
+          - name: JAVA_OPTS
+            value: {{ .Values.scorpio.java_opts_main }}
         imagePullPolicy: {{ .Values.gateway.image.pullPolicy }}
         name: {{ .Values.gateway.name }}
         ports:
@@ -57,7 +59,7 @@ spec:
           periodSeconds: {{ .Values.gateway.readinessProbe.periodSeconds }}
           {{- end}}
         resources:
-{{ toYaml .Values.gateway.resources | indent 10 }}
+{{ toYaml .Values.scorpio.resources_main | indent 10 }}
       restartPolicy: {{ .Values.gateway.restartPolicy }}
       {{- if .Values.gateway.serviceAccount.enabled }}
       serviceAccountName: {{ .Values.gateway.serviceAccount.name }}
