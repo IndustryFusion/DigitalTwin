@@ -57,14 +57,14 @@ scorpio:
   resources_min:
     limits:
       cpu: 100m
-      memory: 256Mi
+      memory: 512Mi
     requests:
       cpu: 100m
       memory: 256Mi
   resources_main:
     limits:
       cpu: 200m
-      memory: 256Mi
+      memory: 512Mi
     requests:
       cpu: 200m
       memory: 256Mi
