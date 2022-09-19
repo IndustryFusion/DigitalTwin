@@ -27,6 +27,8 @@ spec:
         command: ['sh', '-c', "until wget -qO - http://eureka:8761/actuator/health| grep UP; do echo waiting for eureka service; sleep 1; done"]
       containers:
       - image: {{ .Values.mainRepo }}/digitaltwin:gateway_{{ .Values.scorpio.tag }}
+        command: ["java"]
+        args: ["-XshowSettings:vm", "-XX:MaxRAMPercentage=75", "-jar", "gateway.jar"]
         env:
         {{- if .Values.springArgs.overrideSpringArgs }}
           - name: spring_args
