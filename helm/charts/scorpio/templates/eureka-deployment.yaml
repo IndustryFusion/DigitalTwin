@@ -23,13 +23,13 @@ spec:
     spec:
       containers:
       - image: {{ .Values.mainRepo }}/digitaltwin:eureka-server_{{ .Values.scorpio.tag }}
+        command: ["java"]
+        args: ["-XshowSettings:vm", "-XX:MaxRAMPercentage=75", "-jar", "eureka-server.jar"]
         env:
         {{- if .Values.springArgs.overrideSpringArgs }}
           - name: spring_args
             value: {{ .Values.springArgs.value }}
         {{- end}}
-          - name: JAVA_OPTS
-            value: {{ .Values.scorpio.java_opts_min }}
         imagePullPolicy: {{ .Values.eureka.image.pullPolicy }}
         name: {{ .Values.eureka.name }}
         ports:

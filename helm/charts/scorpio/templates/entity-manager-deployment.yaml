@@ -23,6 +23,8 @@ spec:
     spec:
       containers:
       - image: {{ .Values.mainRepo }}/digitaltwin:EntityManager_{{ .Values.scorpio.tag }}
+        command: ["java"]
+        args: ["-XshowSettings:vm", "-XX:MaxRAMPercentage=75", "-jar", "EntityManager.jar"]      
         env:
           - name: CLIENT_ID
             value: {{ .Values.keycloak.scorpio.client }}
@@ -53,8 +55,6 @@ spec:
           - name: spring_args
             value: {{ .Values.springArgs.value }}
         {{- end}}
-          - name: JAVA_OPTS
-            value: {{ .Values.scorpio.java_opts_main }}
         imagePullPolicy: {{ .Values.EntityManager.image.pullPolicy }}
         name: {{ .Values.EntityManager.name }}
         ports:

@@ -54,22 +54,20 @@ scorpio:
   internalProtocol: "http:"
   hpa:
     enabled: false
-  java_opts_min: "-Xms100m -Xmx100m"
   resources_min:
     limits:
-      cpu: 200m
-      memory: 200Mi
+      cpu: 100m
+      memory: 100Mi
     requests:
       cpu: 100m
-      memory: 200Mi
-  java_opts_main: "-Xms100m -Xmx100m"
+      memory: 100Mi
   resources_main:
     limits:
       cpu: 200m
       memory: 200Mi
     requests:
-      cpu: 100m
-      memory: 200Mi
+      cpu: 200m
+      memory: 100Mi
 
 certmanager:
   secret: selfsigned-cert-tls
