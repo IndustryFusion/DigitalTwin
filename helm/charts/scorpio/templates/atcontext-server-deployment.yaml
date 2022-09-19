@@ -24,7 +24,7 @@ spec:
       containers:
       - image: {{ .Values.mainRepo }}/digitaltwin:AtContextServer_{{ .Values.scorpio.tag }}
         command: ["java"]
-        args: ["-XshowSettings:vm", "-XX:MaxRAMPercentage=75", "-jar", "AtContextServer.jar"]
+        args: ["-XshowSettings:vm", "-XX:MaxRAMPercentage=50", "-jar", "AtContextServer.jar"]
         env:
         {{- range $key, $val := .Values.kafka_vars }}
           - name: {{ $key }}
@@ -34,8 +34,6 @@ spec:
           - name: spring_args
             value: {{ .Values.springArgs.value }}
         {{- end}}
-          - name: JAVA_OPTS
-            value: {{ .Values.scorpio.jav_opts_min }}
         imagePullPolicy: {{ .Values.AtContextServer.image.pullPolicy }}
         name: {{ .Values.AtContextServer.name }}
         ports:
