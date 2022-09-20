@@ -10,7 +10,7 @@
   "author": "Marcel Wagner",
   "license": "Apache-2.0",
   "dependencies": {
-    "@comunica/actor-init-sparql-file": "1.22.3",
+    "@comunica/actor-init-sparql-file": "2.0.1",
     "kafkajs": "^1.16.0",
     "keycloak-connect": "^17.0.0",
     "openid-client": "^5.1.2",
