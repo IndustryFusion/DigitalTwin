@@ -20,10 +20,8 @@ spec:
   resources:
     requests:
       memory: 256Mi
-      cpu: 100m
     limits:
-      memory: 256Mi
-      cpu: 100m
+      memory: 512Mi
   config:
     config.storage.replication.factor: 1
     offset.storage.replication.factor: 1
