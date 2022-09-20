@@ -52,6 +52,12 @@ scorpio:
   internalHostname: gateway
   internalPort: 9090
   internalProtocol: "http:"
+  heap_min:
+    Xms: "-Xms64M"
+    Xmx: "-Xmx64M"
+  heap_main:
+    Xms: "-Xms64M"
+    Xmx: "-Xmx64M"
   hpa:
     enabled: false
   resources_min:
@@ -63,7 +69,6 @@ scorpio:
       memory: 256Mi
   resources_main:
     limits:
-      cpu: 200m
       memory: 512Mi
     requests:
       cpu: 200m

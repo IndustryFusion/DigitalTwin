@@ -24,7 +24,7 @@ spec:
       containers:
       - image: {{ .Values.mainRepo }}/digitaltwin:StorageManager_{{ .Values.scorpio.tag }}
         command: ["java"]
-        args: ["-XshowSettings:vm", "-XX:MaxRAMPercentage=50",  "-Xms50M","-Xmx64M", "-jar", "StorageManager.jar"]
+        args: ["-XshowSettings:vm", {{ .Values.scorpio.heap_main.Xms | quote }}, {{ .Values.scorpio.heap_main.Xmx | quote }}, "-Xms50M","-Xmx64M", "-jar", "StorageManager.jar"]
         env:
           - name: CLIENT_ID
             value: {{ .Values.keycloak.scorpio.client }}

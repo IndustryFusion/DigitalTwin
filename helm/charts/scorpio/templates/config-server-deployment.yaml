@@ -24,7 +24,7 @@ spec:
       containers:
       - image: {{ .Values.mainRepo }}/digitaltwin:config-server_{{ .Values.scorpio.tag }}
         command: ["java"]
-        args: ["-XshowSettings:vm", "-XX:MaxRAMPercentage=75", "-jar", "config-server.jar"]
+        args: ["-XshowSettings:vm", {{ .Values.scorpio.heap_min.Xms | quote }}, {{ .Values.scorpio.heap_min.Xmx | quote }}, "-jar", "config-server.jar"]
         env:
         {{- if .Values.springArgs.overrideSpringArgs }}
           - name: spring_args

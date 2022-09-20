@@ -28,7 +28,7 @@ spec:
       containers:
       - image: {{ .Values.mainRepo }}/digitaltwin:gateway_{{ .Values.scorpio.tag }}
         command: ["java"]
-        args: ["-XshowSettings:vm", "-XX:MaxRAMPercentage=75", "-jar", "gateway.jar"]
+        args: ["-XshowSettings:vm", {{ .Values.scorpio.heap_main.Xms | quote }}, {{ .Values.scorpio.heap_main.Xmx | quote }}, "-jar", "gateway.jar"]
         env:
         {{- if .Values.springArgs.overrideSpringArgs }}
           - name: spring_args
