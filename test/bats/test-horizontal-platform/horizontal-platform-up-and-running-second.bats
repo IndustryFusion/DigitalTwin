@@ -32,6 +32,8 @@ DETIK_DEBUG="true"
     run try "at most 10 times every 30s to find 1 pod named 'zookeeper-0' with 'status.containerStatuses[0].ready' being 'true'"
     [ "$status" -eq 0 ]
 
+    run try "at most 10 times every 30s to find 1 pod named 'kafka-connect' with 'status.containerStatuses[0].ready' being 'true'"
+    [ "$status" -eq 0 ]
 }
 @test "verify that scorpio is up and running" {
     run try "at most 30 times every 60s to find 1 pod named 'config-server' with 'status.containerStatuses[0].ready' being 'true'"
