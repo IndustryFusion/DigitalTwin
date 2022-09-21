@@ -1,0 +1,93 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: digitaltwinplatform-local
+  labels:
+    crossplane.io/xrd: xdigitaltwinplatform.crossplane.industry-fusion.com
+    provider: local
+spec:
+  compositeTypeRef:
+    apiVersion: crossplane.industry-fusion.com/v1alpha1
+    kind: XDigitalTwinPlatform
+  writeConnectionSecretsToNamespace: crossplane-system
+  resources:
+    - name: helmProviderConfig
+      base:
+        apiVersion: helm.crossplane.io/v1beta1
+        kind: ProviderConfig
+        spec:
+          credentials:
+            source: InjectedIdentity
+      patches:
+        - fromFieldPath: metadata.name
+          toFieldPath: metadata.name
+      readinessChecks:
+        - type: None
+    - name: strimziKafkaOperator
+      base:
+        apiVersion: helm.crossplane.io/v1beta1
+        kind: Release
+        spec:
+          forProvider:
+            chart:
+              url: https://github.com/strimzi/strimzi-kafka-operator/releases/download/0.29.0/strimzi-kafka-operator-helm-3-chart-0.29.0.tgz
+            namespace: digitaltwinplatform
+          providerConfigRef:
+            name: digitaltwin
+      patches:
+        - fromFieldPath: metadata.name
+          toFieldPath: metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-kafka"
+        - fromFieldPath: spec.parameters.services.kafka.version
+          toFieldPath: spec.forProvider.chart.url
+          transforms:
+            - type: string
+              string:
+                fmt: "https://github.com/strimzi/strimzi-kafka-operator/releases/download/%[1]s/strimzi-kafka-operator-helm-3-chart-%[1]s.tgz"
+    - name: zalandoPostgresOperator
+      base:
+        apiVersion: helm.crossplane.io/v1beta1
+        kind: Release
+        spec:
+          forProvider:
+            chart:
+              name: postgres-operator
+              repository: https://opensource.zalando.com/postgres-operator/charts/postgres-operator
+              version: 1.8.2
+            namespace: postgres
+          providerConfigRef:
+            name: digitaltwin
+      patches:
+        - fromFieldPath: metadata.name
+          toFieldPath: metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-postgres"
+        - fromFieldPath: spec.parameters.services.postgres.version
+          toFieldPath: spec.forProvider.chart.version
+    - name: minioOperator
+      base:
+        apiVersion: helm.crossplane.io/v1beta1
+        kind: Release
+        spec:
+          forProvider:
+            chart:
+              name: operator
+              repository: https://operator.min.io/
+              version: 4.5.2
+            namespace: minio
+          providerConfigRef:
+            name: digitaltwin
+      patches:
+        - fromFieldPath: metadata.name
+          toFieldPath: metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-minio"
+        - fromFieldPath: spec.parameters.services.minio.version
+          toFieldPath: spec.forProvider.chart.version

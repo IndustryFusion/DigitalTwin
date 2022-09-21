@@ -1,0 +1,17 @@
+apiVersion: crossplane.industry-fusion.com/v1alpha1
+kind: DigitalTwinPlatform
+metadata:
+  name: local-example
+  namespace: digitaltwin
+spec:
+  parameters:
+    services:
+      kafka:
+        version: 0.29.0
+      postgres:
+        version: 1.7.1
+      minio:
+        version: 4.5.2
+  compositionSelector:
+    matchLabels:
+      provider: local
