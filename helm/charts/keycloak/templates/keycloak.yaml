@@ -13,8 +13,12 @@ spec:
     tlsTermination: "reencryp"
   externalDatabase:
     enabled: {{ .Values.custom_resource.externalDatabase.enabled }}
+  extensions:
+  - http://keycloak-extensions-server/deployments/fusion.jar
+  - http://keycloak-extensions-server/deployments/oisp-event-listener.jar
+  - http://keycloak-extensions-server/deployments/oisp-js-policies.jar
   keycloakDeploymentSpec:
     experimental:
       env:
       - name: DB_ADDRRR
-        value: {{ .Values.keycloak_db.stringData.POSTGRES_EXTERNAL_ADDRESS}}
+        value: {{ .Values.keycloak_db.stringData.POSTGRES_EXTERNAL_ADDRESS }}

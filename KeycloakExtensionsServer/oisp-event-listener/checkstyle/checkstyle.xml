@@ -1,0 +1,94 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+        "-//Puppy Crawl//DTD Check Configuration 1.3//EN"
+        "http://www.puppycrawl.com/dtds/configuration_1_3.dtd">
+<module name="Checker">
+    <module name="SuppressWarningsFilter" />
+    <module name="TreeWalker">
+        <property name="fileExtensions" value="java"/>
+
+        <module name="SuppressWarningsHolder" />
+        <module name="AnnotationLocation"/>
+        <module name="AnonInnerLength"/>
+        <module name="BooleanExpressionComplexity"/>
+        <module name="ThrowsCount">
+            <property name="max" value="3"/>
+        </module>
+        <module name="StringLiteralEquality"/>
+        <module name="ParameterAssignment"/>
+        <module name="NoClone"/>
+        <module name="NoFinalizer"/>
+        <module name="MultipleVariableDeclarations"/>
+        <module name="MultipleStringLiterals"/>
+        <module name="ModifiedControlVariable"/>
+        <module name="MissingOverride"/>
+        <module name="MethodTypeParameterName"/>
+        <module name="InnerTypeLast"/>
+        <module name="Indentation"/>
+        <module name="IllegalThrows"/>
+        <module name="IllegalType"/>
+        <module name="EqualsAvoidNull"/>
+        <module name="DefaultComesLast"/>
+        <module name="CyclomaticComplexity"/>
+        <module name="CovariantEquals"/>
+        <module name="NestedIfDepth">
+            <property name="max" value="2"/>
+        </module>
+        <module name="NestedTryDepth">
+            <property name="max" value="2"/>
+        </module>
+        <module name="NestedForDepth">
+            <property name="max" value="2"/>
+        </module>
+        <module name="LocalFinalVariableName"/>
+        <module name="LocalVariableName"/>
+        <module name="MemberName"/>
+        <module name="MethodName"/>
+        <module name="PackageName"/>
+        <module name="ParameterName"/>
+        <module name="StaticVariableName"/>
+        <module name="TypeName"/>
+        <module name="AvoidStarImport">
+            <property name="excludes" value="java.util,org.apache.hadoop.hbase.client,org.springframework.web.bind.annotation"/>
+        </module>
+        <module name="IllegalImport"/>
+        <module name="RedundantImport"/>
+        <module name="UnusedImports"/>
+        <module name="MethodLength"/>
+        <module name="ParameterNumber">
+            <property name="max" value="9"/>
+        </module>
+        <module name="EmptyForIteratorPad"/>
+        <module name="GenericWhitespace"/>
+        <module name="MethodParamPad"/>
+        <module name="NoWhitespaceAfter"/>
+        <module name="NoWhitespaceBefore"/>
+        <module name="OperatorWrap"/>
+        <module name="ParenPad"/>
+        <module name="TypecastParenPad"/>
+        <module name="WhitespaceAfter"/>
+        <module name="WhitespaceAround"/>
+        <module name="ModifierOrder"/>
+        <module name="RedundantModifier"/>
+        <module name="AvoidNestedBlocks"/>
+        <module name="EmptyBlock"/>
+        <module name="LeftCurly"/>
+        <module name="NeedBraces"/>
+        <module name="RightCurly"/>
+        <module name="EmptyStatement"/>
+        <module name="EqualsHashCode"/>
+        <module name="IllegalInstantiation"/>
+        <module name="InnerAssignment"/>
+        <module name="MagicNumber"/>
+        <module name="MissingSwitchDefault"/>
+        <module name="SimplifyBooleanExpression"/>
+        <module name="SimplifyBooleanReturn"/>
+        <module name="FinalClass"/>
+        <module name="HideUtilityClassConstructor"/>
+        <module name="InterfaceIsType"/>
+        <module name="VisibilityModifier"/>
+        <module name="ArrayTypeStyle"/>
+        <module name="TodoComment"/>
+        <module name="UpperEll"/>
+    </module>
+</module>

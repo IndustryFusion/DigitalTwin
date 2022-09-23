@@ -1,0 +1,11 @@
+{
+  "name": "oisp-example-sso-client",
+  "version": "1.0.0",
+  "date": "2020-10-20T10:38:38.773Z",
+  "description": "Fusion Login Theme Resources",
+  "author": "Intel Corporation",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "patternfly": "^3.59.5"
+  }
+}

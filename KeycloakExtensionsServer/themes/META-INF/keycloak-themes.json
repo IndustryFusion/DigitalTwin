@@ -1,0 +1,6 @@
+{
+    "themes": [{
+        "name" : "fusion",
+        "types": [ "account", "login" ]
+    }]
+}

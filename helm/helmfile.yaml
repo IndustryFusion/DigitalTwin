@@ -32,12 +32,20 @@ releases:
   namespace: {{ .Values.namespace }}
   values:
   - default.yaml
+- name: keycloak-extensions-server
+  labels:
+    order: first
+  chart: ./charts/keycloak-extensions-server
+  namespace: {{ .Values.namespace }}
+  values:
+  - mainVersion: {{ .Values.mainVersion }}
 - name: keycloak
   labels:
     order: first
   chart: ./charts/keycloak
   namespace: {{ .Values.namespace }}
   needs:
+  - keycloak-extensions-server
   - postgres
   values:
   - dbpassword: {{ .Values.dbpassword }}
