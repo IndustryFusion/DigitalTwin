@@ -4,6 +4,7 @@
 
 [![Docker Image CI](https://github.com/IndustryFusion/DigitalTwin/actions/workflows/docker-build.yml/badge.svg)](https://github.com/IndustryFusion/DigitalTwin/actions/workflows/docker-build.yml) [![Coverity Scan](https://scan.coverity.com/projects/24133/badge.svg)](https://scan.coverity.com/projects/industryfusion-digitaltwin)
 [![K8s tests](https://github.com/IndustryFusion/DigitalTwin/actions/workflows/k8s-tests.yaml/badge.svg)](https://github.com/IndustryFusion/DigitalTwin/actions/workflows/k8s-tests.yaml)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FIndustryFusion%2FDigitalTwin.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FIndustryFusion%2FDigitalTwin?ref=badge_shield)
 
 This repository contains the ingredients for the Ditigal Twin Concept of Industry Fusion. The Digital Twin allows to manage NGSI-LD based entities and allow StreamingSQL and SHACL based descriptions of the processes.
 
@@ -56,3 +57,7 @@ This repository contains the ingredients for the Ditigal Twin Concept of Industr
 * [E2E tests](test/README.md)
 * [Kafka Bridges](KafkaBridge/README.md)
 * [Helm Deployment](helm/README.md)
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FIndustryFusion%2FDigitalTwin.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FIndustryFusion%2FDigitalTwin?ref=badge_large)
