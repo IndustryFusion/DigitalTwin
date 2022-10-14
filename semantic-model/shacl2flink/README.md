@@ -4,7 +4,6 @@
 
 - You need to have Python > 3.8
 - Virtualenv needs to be installed
-- Proxy needs to be setup if you are in Intel network
 - `sqlite3` and `sqlite3-pcre` need to be installed
 
   ```bash
