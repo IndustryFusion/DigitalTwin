@@ -45,7 +45,7 @@ spec:
             - name: KEYCLOAK_REALM
               value: {{ .Values.keycloak.alerta.realm }}
             - name: ADMIN_USERS
-              value: {{ .Values.alertaAdminUsers | join "," }}
+              value: {{ list .Values.alerta.adminUser | join "," }}
             - name: ADMIN_PASSWORD
               valueFrom:
                 secretKeyRef:

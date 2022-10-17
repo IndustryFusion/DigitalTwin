@@ -23,7 +23,7 @@ data:
     {{ if $secret }}
     s3.secret-key: {{ $secret.data.CONSOLE_SECRET_KEY | b64dec }}
     {{ else }}
-    s3.secret-key: {{ .Values.minioUserSecretKey }}
+    s3.secret-key: {{ .Values.minio.userSecretKey }}
     {{ end }}
     state.checkpoints.dir: s3://{{ .Values.flink.bucket }}/{{ .Values.flink.checkpointDir }}
     state.savepoints.dir: s3://{{ .Values.flink.bucket }}/{{ .Values.flink.savepointDir }}

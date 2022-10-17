@@ -1,0 +1,80 @@
+ingressType: nginx # traefik or nginx
+
+alerta:
+  externalPath: / # note: must end with /
+  externalHostname: alerta.test.streammyiot.com
+keycloak:
+  adminName: admin
+  externalAuthService:   # put here the *external* keycloak name, i.e. through ingress 
+    protocol: "https:"
+    domainname: auth.test.streammyiot.com
+    path: /auth/ # keycloak internal do not change
+    # pathPrefix: /keycloak-iff/ # for ingress, must end with /
+
+db:
+  pvSize: 1Gi
+  podInstances: 2
+
+scorpio:
+  externalHostname: scorpio.test.streammyiot.com
+  externalProtocol: "http:"
+  externalPath: /
+  heap_min:
+    Xms: "-Xms64M"
+    Xmx: "-Xmx64M"
+  heap_main:
+    Xms: "-Xms64M"
+    Xmx: "-Xmx64M"
+  hpa:
+    enabled: false
+  resources_min:
+    limits:
+      cpu: 100m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+  resources_main:
+    limits:
+      memory: 512Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+
+certmanager:
+  secret: prod-cert-tls
+  issuer: letsencrypt-prod
+
+flink:
+  taskmanagers: 1
+  jobmanager: 1
+  defaultParalellism: 1
+
+minio:
+  storageSize: 10G
+
+
+kafka:
+  storage:
+    type: persistent-claim
+    size: 5Gi
+  zookeeper:
+    replicas: 1
+    storage:
+      type: persistent-claim
+      size: 1Gi
+
+kafkaBridge:
+  debezium:
+    replicaCount: 1
+    listenTopicRetention: 86400000
+    entityTopicRetention: 604800000
+    attributesTopicRetention: 86400000
+  alerta:
+    replicaCount: 1
+    bulkTopicRetention: 300000
+    listenTopicRetention: 86400000
+  ngsildUpdates:
+    replicaCount: 1
+    tokenRefreshInterval: 200
+    listenTopicRetention: 86400000
