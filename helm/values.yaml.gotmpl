@@ -1,0 +1,169 @@
+mainVersion: {{ .StateValues.mainVersion }}
+mainRepo: {{ .StateValues.mainRepo }}
+namespace: {{ .StateValues.namespace }}
+pullSecretCredentials: {{ .StateValues.pullSecretCredentials }}
+
+ingressType: {{ .StateValues.ingressType }}
+dbpassword: {{ .StateValues.dbpassword }}
+clusterSvcName: {{ .StateValues.db.teamId -}}-{{- .StateValues.db.clusterSvcPostfix }}
+clusterExternalSvcName: {{ .StateValues.db.teamId -}}-{{- .StateValues.db.clusterSvcPostfix }}.{{ .StateValues.namespace }}.svc.cluster.local
+minioAdminSecretKey: {{ .StateValues.minioAdminSecretKey }}
+minioUserSecretKey: {{ .StateValues.minioUserSecretKey }}
+alertaClientSecret: {{ .StateValues.alertaClientSecret }}
+
+
+db:
+  teamId: {{ .StateValues.db.teamId }}
+  clusterSvcPostfix: {{ .StateValues.db.clusterSvcPostfix }}
+  svcPort: {{ .StateValues.db.svcPort }}
+  pvSize: {{ .StateValues.db.pvSize }}
+  podInstances: {{ .StateValues.db.podInstances }}
+  alertaDb: monitoring
+  dbUser: {{ .StateValues.db.dbUser }}
+  scorpioDb: ngb
+  secretPostfix: credentials.postgresql.acid.zalan.do
+
+scorpio:
+  tag: 3.0.0-SNAPSHOT
+  externalHostname: {{ .StateValues.scorpio.externalHostname }}
+  externalProtocol: {{ .StateValues.scorpio.externalProtocol | quote }}
+  externalPath: {{ .StateValues.scorpio.externalPath }}
+  internalHostname: gateway
+  internalPort: 9090
+  internalProtocol: "http:"
+  heap_min:
+    Xms: "-Xms64M"
+    Xmx: "-Xmx64M"
+  heap_main:
+    Xms: "-Xms64M"
+    Xmx: "-Xmx64M"
+  hpa:
+    enabled: false
+  resources_min:
+    limits:
+      cpu: 100m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+  resources_main:
+    limits:
+      memory: 512Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+
+certmanager:
+  secret: {{ .StateValues.certmanager.secret }}
+  issuer: {{ .StateValues.certmanager.issuer }}
+
+flink:
+  imageTag: 1.14.3
+  clusterId: iff
+  taskmanagers: 1
+  jobmanager: 1
+  sqlClientPort: 9000
+  bucket: flink
+  haDir: recovery
+  checkpointDir: checkpoints
+  savepointDir: savepoints
+  defaultParalellism: 1
+  alertWindow: '0.001'
+  ngsildUpdateWindow: '0.001'
+
+minio:
+  url: http://minio
+  endpoint: minio
+  adminAccessKey: console
+  userAccessKey: minio
+  userSecretKey: {{ .StateValues.minioUserSecretKey }}
+  storageSize: 10G
+  healthPath: /minio/health/live
+  mcImage: minio/mc:RELEASE.2022-02-07T09-25-34Z
+
+alerta:
+  externalHostname: {{ .StateValues.alerta.externalHostname }}
+  externalPath: {{ .StateValues.alerta.externalPath }}
+  adminUser: admin
+  internalService: alerta
+  internalPort: 8080
+  internalProtocol: "http:"
+  # apiKey: {{ .StateValues.alertaApiKey }}
+  adminPassword: {{ .StateValues.alertaAdminPassword }}
+  adminKey: {{ .StateValues.alertaAdminKey }}
+
+kafka:
+  name: my-cluster
+  bootstrapServer: my-cluster-kafka-bootstrap:9092
+  storage:
+    type: persistent-claim
+    size: 5Gi
+  zookeeper:
+    replicas: 1
+    storage:
+      type: persistent-claim
+      size: 1Gi
+  connect:
+    debeziumTopicPrefix: iff.ngsild
+    tableIncludeList: public.entity$
+    image: debezium-postgresql-connector
+
+kafkaBridge:
+  debezium:
+    replicaCount: 1
+    listenTopic: "iff.ngsild.public.entity"
+    listenTopicRetention: 86400000
+    entityTopicPrefix: "iff.ngsild.entities"
+    attributesTopic: "iff.ngsild.attributes"
+    entityTopicRetention: 604800000
+    attributesTopicRetention: 86400000
+  alerta:
+    replicaCount: 1
+    listenTopic: "iff.alerts"
+    bulkTopic: "iff.alerts.bulk"
+    bulkTopicRetention: 300000
+    listenTopicRetention: 86400000
+  ngsildUpdates:
+    replicaCount: 1
+    tokenRefreshInterval: 200
+    listenTopic: "iff.ngsild-updates"
+    listenTopicRetention: 86400000
+
+keycloak:
+  adminName: admin
+  adminPassword: {{ .StateValues.keycloakpassword }}
+  externalAuthService: # put here the *external* keycloak name, i.e. through ingress
+     protocol: {{ .StateValues.keycloak.externalAuthService.protocol | quote }}
+     domainname: {{ .StateValues.keycloak.externalAuthService.domainname | quote }}
+     path: {{ .StateValues.keycloak.externalAuthService.path | quote }}
+  internalAuthService: 
+    name: keycloak-discovery
+    port: 8080
+    path: /auth
+  alerta:
+    clientSecret: keycloak-client-secret-alerta-ui
+    realm: iff
+    client: alerta-ui
+    redirectUris:
+    - http://{{ .StateValues.alerta.externalHostname }}{{ .StateValues.alerta.externalPath }}*
+    - https://{{ .StateValues.alerta.externalHostname }}{{ .StateValues.alerta.externalPath }}*
+    defaultClientScopes:
+    - openid
+    - profile
+    - email
+    - roles
+  scorpio:
+    realm: iff
+    client: scorpio
+  ngsildUpdates:
+    realm: iff
+    client: ngsild-updates
+    serviceRole: scorpio.Factory-Admin
+keycloak_db:
+  stringData:
+    POSTGRES_DATABASE: keycloakdb
+    POSTGRES_EXTERNAL_ADDRESS: {{ .StateValues.db.teamId -}}-{{- .StateValues.db.clusterSvcPostfix }}
+    POSTGRES_ADDR: {{ .StateValues.db.teamId -}}-{{- .StateValues.db.clusterSvcPostfix }}
+    POSTGRES_EXTERNAL_PORT: {{ .StateValues.db.svcPort | quote }}
+    POSTGRES_SUPERUSER: "true"
+    POSTGRES_USERNAME: {{ .StateValues.db.dbUser }}

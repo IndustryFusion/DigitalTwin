@@ -9,8 +9,6 @@ metadata:
 spec:
   instances: {{ .Values.custom_resource.instances }}
   externalAccess:
-    enabled: {{ .Values.custom_resource.externalAccess.enabled }}
-    tlsTermination: "reencryp"
   externalDatabase:
     enabled: {{ .Values.custom_resource.externalDatabase.enabled }}
   extensions:
@@ -20,5 +18,5 @@ spec:
   keycloakDeploymentSpec:
     experimental:
       env:
-      - name: DB_ADDRRR
-        value: {{ .Values.keycloak_db.stringData.POSTGRES_EXTERNAL_ADDRESS }}
+      #- name: DB_ADDRRR
+      #  value: {{ .Values.keycloak_db.stringData.POSTGRES_EXTERNAL_ADDRESS }}

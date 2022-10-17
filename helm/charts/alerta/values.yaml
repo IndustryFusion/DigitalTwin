@@ -44,8 +44,8 @@ extraSecretMounts:
   #   readOnly: true
 
 # alertaAdminPassword: "admin" # if not provided will be randomly generated
-alertaAdminUsers: # list of email addresses
-  - "admin"
+#alertaAdminUsers: # list of email addresses
+ # - {{ .Values.alerta.adminUser }}
 #   - "admin@alerta.io"
 # alertaAdminKey: "<your_api_key_here>"
 # alertaApiKey: "<your_api_key_here>" # you probably want to set this to the same value as 'alertaAdminKey'
@@ -136,7 +136,6 @@ ingress:
   enabled: true
   apiVersion: networking.k8s.io/v1
   name: alerta-ingress
-  hostname: alerta.local
   serviceName: alerta
 
 certmanager:

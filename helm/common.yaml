@@ -1,0 +1,10 @@
+mainVersion: 0.1
+mainRepo: ibn40
+namespace: iff
+pullSecretCredentials: regcred
+
+db:
+  teamId: acid
+  clusterSvcPostfix: cluster
+  svcPort: "5432"
+  dbUser: "ngb"

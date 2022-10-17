@@ -1,17 +1,29 @@
+---
+{{- if and (ne .Values.ingressType "traefik") (ne .Values.ingressType "nginx") }}
+{{- fail "ingressType must either be \"traefik\" or \"nginx\"" }}
+{{- end }}
+{{- if not (regexMatch "/$" .Values.scorpio.externalPath) }}
+{{- fail "scorpio.externalPath does not end with /" }}
+{{- end}}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: scorpio-ingress
   annotations:
     kubernetes.io/ingress.class: {{ .Values.ingressType | quote }}
-    #ingress.kubernetes.io/force-ssl-redirect: "true"
-    #ingress.kubernetes.io/ssl-redirect: "true"
+    {{- if and (ne .Values.scorpio.externalPath "/") (eq .Values.ingressType "traefik") }}
+    traefik.ingress.kubernetes.io/router.middlewares: iff-remove-path-scorpio@kubernetescrd
+    {{- else }}
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    {{- end }}
+    cert-manager.io/cluster-issuer: {{ .Values.certmanager.issuer }}
+
   namespace: {{ .Release.Namespace }}
 spec:
   tls:
   - hosts:
     - {{ .Values.scorpio.externalHostname }}
-    secretName: {{ .Values.certmanager.secret }}
+    secretName: {{ .Values.certmanager.secret }}-scorpio
   rules:
   - host: {{ .Values.scorpio.externalHostname }}
     http:
@@ -21,5 +33,20 @@ spec:
             name: {{ .Values.scorpio.internalHostname }}
             port:
               number: {{ .Values.scorpio.internalPort }}
-        path: /
+        {{- if (eq .Values.ingressType "nginx") }}
+        path: {{ .Values.scorpio.externalPath }}(.*)
+        {{- else }}
+        path: {{ .Values.scorpio.externalPath }}
+        {{- end }}
         pathType: ImplementationSpecific
+---
+{{- if and (ne .Values.scorpio.externalPath "/") (eq .Values.ingressType "traefik") }}
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: remove-path-scorpio
+spec:
+  replacePathRegex:
+    regex: ^{{ .Values.scorpio.externalPath }}(.*)
+    replacement: /$1
+{{- end }}

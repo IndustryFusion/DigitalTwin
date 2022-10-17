@@ -1,118 +1,120 @@
 environments:
   default:
     values:
-    - default.yaml
-    - templates.yaml.gotmpl
+    - environment/default.yaml
+    - common.gotmpl
+    - common.yaml
+  production:
+    values:
+    - environment/production.yaml
+    - common.gotmpl
+    - common.yaml
 
 releases:
 - name: postgres
   labels:
     order: first
+    app: postgres
   chart: ./charts/postgres
   namespace: {{ .Values.namespace }}
   values:
-  - dbpassword: {{ .Values.dbpassword }}
-  - clusterSvcName: {{ .Values.db.teamId -}}-{{- .Values.db.clusterSvcPostfix }}
-  - default.yaml
+  - values.yaml.gotmpl
 - name: kafka
   labels:
     order: second
+    app: kafka
   chart: ./charts/kafka
   namespace: {{ .Values.namespace }}
   needs:
   - postgres
   values:
-  - mainVersion: {{ .Values.mainVersion }}
-  - clusterSvcName: {{ .Values.db.teamId -}}-{{- .Values.db.clusterSvcPostfix }}
-  - default.yaml
+  - values.yaml.gotmpl
 - name: cert-manager
   labels:
     order: first
+    app: cert-manager
   chart: ./charts/cert-manager
   namespace: {{ .Values.namespace }}
   values:
-  - default.yaml
+  - values.yaml.gotmpl
 - name: keycloak-extensions-server
   labels:
     order: first
+    app: keycloak-extensions-server
   chart: ./charts/keycloak-extensions-server
   namespace: {{ .Values.namespace }}
   values:
-  - mainVersion: {{ .Values.mainVersion }}
+  - values.yaml.gotmpl
 - name: keycloak
   labels:
     order: first
+    app: keycloak
   chart: ./charts/keycloak
   namespace: {{ .Values.namespace }}
   needs:
   - keycloak-extensions-server
   - postgres
   values:
-  - dbpassword: {{ .Values.dbpassword }}
-  - keycloakpassword: {{ .Values.keycloakpassword }}
-  - clusterSvcName: {{ .Values.db.teamId -}}-{{- .Values.db.clusterSvcPostfix }}
-  - default.yaml
-  - postgresAddress: {{ .Values.db.teamId -}}-{{- .Values.db.clusterSvcPostfix -}}.{{- .Values.namespace -}}.svc.cluster.local
+  - values.yaml.gotmpl
 - name: alerta
   labels:
     order: second
+    app: alerta
   chart: ./charts/alerta
   namespace: {{ .Values.namespace }}
   values:
-  - dbpassword: {{ .Values.dbpassword }}
-  - clusterSvcName: {{ .Values.db.teamId -}}-{{- .Values.db.clusterSvcPostfix }}
-  - alertaApiKey: {{ .Values.alertaApiKey }}
-  - alertaAdminPassword: {{ .Values.alertaAdminPassword }}
-  - alertaAdminKey: {{ .Values.alertaAdminKey }}
-  - alertaAdminUsers: [ {{ .Values.alerta.alertaAdminUser }} ]
-  - default.yaml
+  - values.yaml.gotmpl
   needs:
   - postgres
   - keycloak
 - name: scorpio
   labels:
     order: second
+    app: scorpio
   chart: ./charts/scorpio
   namespace: {{ .Values.namespace }}
   values:
-  - clusterSvcName: {{ .Values.db.teamId -}}-{{- .Values.db.clusterSvcPostfix }}
-  - default.yaml
+  - values.yaml.gotmpl
   needs:
   - postgres
   - keycloak
   - kafka
 - name: flink
+  labels:
+    app: flink
   chart: ./charts/flink
   namespace: {{ .Values.namespace }}
   values:
-  - minioUserSecretKey: {{ .Values.minioUserSecretKey }}
-  - default.yaml
+  - values.yaml.gotmpl
   needs:
   - kafka
   - minio
 - name: minio
   labels:
     order: first
+    app: minio
   chart: ./charts/minio
   namespace: {{ .Values.namespace }}
   values:
-  - minioAdminSecretKey: {{ .Values.minioAdminSecretKey }}
-  - minioUserSecretKey: {{ .Values.minioUserSecretKey }}
-  - default.yaml
+  - values.yaml.gotmpl
 - name: kafka-bridges
+  labels:
+    app: kafka-bridges
   chart: ./charts/kafka-bridges
   namespace: {{ .Values.namespace }}
   values:
-  - default.yaml
+  - values.yaml.gotmpl
   needs:
   - kafka
   - keycloak
   - alerta
 - name: sql-rules
+  labels:
+    app: sql-rules
   chart: ./charts/sql-rules
   namespace: {{ .Values.namespace }}
   values:
-  - default.yaml
+  - values.yaml.gotmpl
   needs:
   - kafka
   - flink

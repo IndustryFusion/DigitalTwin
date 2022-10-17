@@ -1,20 +1,32 @@
+---
 {{- if .Values.ingress.enabled }}
+{{- if and (ne .Values.ingressType "traefik") (ne .Values.ingressType "nginx") }}
+{{- fail "ingressType must either be \"traefik\" or \"nginx\"" }}
+{{- end }}
+{{- if not (regexMatch "/$" .Values.alerta.externalPath) }}
+{{- fail "alerta.externalPath does not end with /" }}
+{{- end}}
 apiVersion: {{ .Values.ingress.apiVersion}}
 kind: Ingress
 metadata:
   name: {{ .Values.ingress.name }}
   annotations:
     kubernetes.io/ingress.class: {{ .Values.ingressType | quote }}
-    #ingress.kubernetes.io/force-ssl-redirect: "true"
-    #ingress.kubernetes.io/ssl-redirect: "true"
+    {{- if and (ne .Values.scorpio.externalPath "/") (eq .Values.ingressType "traefik") }}
+    traefik.ingress.kubernetes.io/router.middlewares: iff-remove-path-alerta@kubernetescrd
+    {{- else }}
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    {{- end }}
+    cert-manager.io/cluster-issuer: {{ .Values.certmanager.issuer }}
+
   namespace: {{ .Release.Namespace }}
 spec:
   tls:
   - hosts:
-    - {{ .Values.ingress.hostname }}
-    secretName: {{ .Values.certmanager.secret }}
+    - {{ .Values.alerta.externalHostname }}
+    secretName: {{ .Values.certmanager.secret }}-alerta
   rules:
-  - host: {{ .Values.ingress.hostname }}
+  - host: {{ .Values.alerta.externalHostname }}
     http:
       paths:
       - backend:
@@ -22,6 +34,21 @@ spec:
             name: {{ .Values.ingress.serviceName }}
             port:
               number: {{ .Values.service.port }}
-        path: /
+        {{- if (eq .Values.ingressType "nginx") }}
+        path: {{ .Values.alerta.externalPath}}(.*)
+        {{- else }}
+        path: {{ .Values.alerta.externalPath}}
+        {{- end }}
         pathType: ImplementationSpecific
 {{ end }}
+---
+{{- if and (ne .Values.alerta.externalPath "/") (eq .Values.ingressType "traefik") }}
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: remove-path-alerta
+spec:
+  replacePathRegex:
+    regex: ^{{ .Values.alerta.externalPath }}(.*)
+    replacement: /$1
+{{- end }}
