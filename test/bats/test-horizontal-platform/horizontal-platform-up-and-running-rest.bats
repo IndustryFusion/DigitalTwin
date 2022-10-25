@@ -55,4 +55,6 @@ DETIK_DEBUG="true"
 
 @test "verify that the core services are up" {
     run try "at most 30 times every 60s to find 1 bsqls named 'core-services' with 'status.state' being 'RUNNING'"
+    [ "$status" -eq 0 ]
+
 }
