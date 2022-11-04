@@ -50,22 +50,20 @@ metadata:
   namespace: ${NAMESPACE}
 spec:
   name: strimzi-kafka-operator
-  channel: stable
+  channel: strimzi-0.31.x
   source: operatorhubio-catalog
-  sourceNamespace: olm
----
-apiVersion: operators.coreos.com/v1alpha1
-kind: Subscription
-metadata:
-  name: cert-manager
-  namespace: operators
-spec:
-  name: cert-manager
-  channel: stable
-  source: operatorhubio-catalog
+  installPlanApproval: Automatic
+  startingCSV: strimzi-cluster-operator.v0.31.1
   sourceNamespace: olm
 EOF
-#kubectl create -f https://operatorhub.io/install/alpha/keycloak-operator.yaml   
+
+
+printf "\n"
+printf "\033[1mInstalling Cert-Manager CRD\n"
+printf -- "------------------------\033[0m\n"
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.9.1/cert-manager.yaml
+
+
 printf "\n\n"
 printf "\033[1mSubscriptions installed successfully.\033[0m\n"
 
@@ -103,6 +101,5 @@ git clone https://github.com/zalando/postgres-operator.git
 cd postgres-operator
 git checkout v1.7.1
 helm -n iff install postgres-operator ./charts/postgres-operator
-
 
 printf -- "\033[1mOperators installed successfully.\033[0m\n"

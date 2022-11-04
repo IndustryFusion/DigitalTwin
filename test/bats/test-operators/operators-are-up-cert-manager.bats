@@ -6,7 +6,7 @@ load "../lib/detik"
 # shellcheck disable=SC2034 # needed by detik libraries
 DETIK_CLIENT_NAME="kubectl"
 # shellcheck disable=SC2034
-DETIK_CLIENT_NAMESPACE="operators"
+DETIK_CLIENT_NAMESPACE="cert-manager"
 
 @test "verify that cert-manager is up and running" {
 
