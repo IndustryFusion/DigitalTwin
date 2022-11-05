@@ -34,4 +34,10 @@ cd postgres-operator
 git checkout v1.7.1
 helm -n iff delete postgres-operator ./charts/postgres-operator
 
+
+printf "\n"
+printf "\033[1mUninstalling Cert-Manager CRD\n"
+printf -- "------------------------\033[0m\n"
+kubectl delete -f https://github.com/cert-manager/cert-manager/releases/download/v1.9.1/cert-manager.yaml
+
 printf -- "\n\033[1mOperators uninstalled successfully.\033[0m\n"

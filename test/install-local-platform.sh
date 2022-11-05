@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+set -e
 
 echo Install operators
 ( cd ../helm && bash ./install_operators.sh )
