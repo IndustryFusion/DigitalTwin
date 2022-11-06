@@ -5,7 +5,7 @@ data:
   {{- if $secret }}
   CONSOLE_SECRET_KEY: {{ $secret.data.CONSOLE_SECRET_KEY }}
   {{- else }}
-  CONSOLE_SECRET_KEY: {{ .Values.minioUserSecretKey | toString | b64enc }}
+  CONSOLE_SECRET_KEY: {{ .Values.minio.userSecretKey | toString | b64enc }}
   {{- end }}
 kind: Secret
 metadata:

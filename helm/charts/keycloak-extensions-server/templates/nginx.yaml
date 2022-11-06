@@ -36,3 +36,5 @@ spec:
         ports:
         - containerPort: 80
           protocol: TCP
+      imagePullSecrets:
+      - name: {{ .Values.pullSecretCredentials }}

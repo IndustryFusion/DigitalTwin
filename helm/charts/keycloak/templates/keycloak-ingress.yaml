@@ -1,23 +1,20 @@
-{{- if .Values.ingress.enabled }}
-apiVersion: {{ .Values.ingress.apiVersion}}
+---
+{{- if and (ne .Values.ingressType "traefik") (ne .Values.ingressType "nginx") }}
+{{- fail "ingressType must either be \"traefik\" or \"nginx\"" }}
+{{- end }}
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ .Values.ingress.name }}
+  name: keycloak-ingress
   annotations:
     kubernetes.io/ingress.class: {{ .Values.ingressType | quote }}
-#    ingress.kubernetes.io/force-ssl-redirect: "true"
-#    ingress.kubernetes.io/ssl-redirect: "true"
-#    {{ if eq .Values.ingressType "traefik" }}
-#    traefik.ingress.kubernetes.io/service.serversscheme: https
-#    {{- else }}
-#    nginx.ingress.kubernetes.io/backend-protocol: HTTPS
-#    {{ end }}
+    cert-manager.io/cluster-issuer: {{ .Values.certmanager.issuer }}
   namespace: {{ .Release.Namespace }}
 spec:
   tls:
   - hosts:
-    - {{ .Values.ingress.hostname }}
-    secretName: {{ .Values.certmanager.secret }}
+    - {{ .Values.keycloak.externalAuthService.domainname }}
+    secretName: {{ .Values.certmanager.secret }}-keycloak
   rules:
   - host: {{ .Values.keycloak.externalAuthService.domainname }}
     http:
@@ -29,4 +26,4 @@ spec:
               number: {{ .Values.keycloak.internalAuthService.port }}
         path: /
         pathType: ImplementationSpecific
-{{ end }}
+---

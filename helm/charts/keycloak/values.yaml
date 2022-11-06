@@ -120,27 +120,27 @@ keycloakAuthServer:
     ################################### ingress service #######################################################################
 ingress:
 ## Enable the ingress service
-  enabled: true
-  apiVersion: networking.k8s.io/v1
-  name: keycloak-ingress
-  hostname: keycloak.local
-  serviceName: keycloak
-  portName: 8443
+#  enabled: true
+#  apiVersion: networking.k8s.io/v1
+#  name: keycloak-ingress
+#  hostname: keycloak.local
+#  serviceName: keycloak
+#  portName: 8443
 
     ################################### keycloak-db-secret #######################################################################
 keycloak_db:
 ## Enable the ingress service
   enabled: true
 
-  stringData:
-    POSTGRES_DATABASE: keycloakdb
-    POSTGRES_EXTERNAL_ADDRESS:
-    POSTGRES_EXTERNAL_PORT: "5432"
-    POSTGRES_PASSWORD:
+#  stringData:
+#    POSTGRES_DATABASE: keycloakdb
+#    POSTGRES_EXTERNAL_ADDRESS:
+#    POSTGRES_EXTERNAL_PORT: "5432"
+#    POSTGRES_PASSWORD:
     # Required for AWS Backup functionality
-    POSTGRES_SUPERUSER: "true"
-    POSTGRES_USERNAME: "ngb"
-    SSLMODE: "disable"  #verify-ca #disable
+#    POSTGRES_SUPERUSER: "true"
+#    POSTGRES_USERNAME: "ngb"
+#    SSLMODE: "disable"  #verify-ca #disable
 
-certmanager:
-  secret: selfsigned-cert-tls
+#certmanager:
+#  secret: selfsigned-cert-tls
