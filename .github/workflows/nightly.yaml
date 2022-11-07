@@ -1,0 +1,9 @@
+name: Nigthly
+on:
+  schedule:
+    - cron: '0 0 * * *'
+jobs:
+  build:
+    uses: IndustryFusion/DigitalTwin/.github/workflows/build.yaml@main
+  test:
+    uses: IndustryFusion/DigitalTwin/.github/workflows/k8s-tests.yaml@main
