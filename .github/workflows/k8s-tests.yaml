@@ -5,6 +5,7 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_call:
 
 env:
   SELF_HOSTED_RUNNER: true
@@ -12,7 +13,6 @@ env:
 jobs:
   build:
     runs-on: private
-
     steps:
     - uses: actions/checkout@v2
     - name: Prepare K3d cluster
