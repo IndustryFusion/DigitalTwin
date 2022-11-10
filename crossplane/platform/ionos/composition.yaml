@@ -5860,3 +5860,316 @@ spec:
             - type: string
               string:
                 fmt: "%s-keycloak-operator"
+    - name: beamServiceCRD
+      base:
+        apiVersion: kubernetes.crossplane.io/v1alpha1
+        kind: Object
+        spec:
+          forProvider:
+            manifest:
+              apiVersion: apiextensions.k8s.io/v1
+              kind: CustomResourceDefinition
+              metadata:
+                name: beamservices.industry-fusion.com
+              spec:
+                scope: Namespaced
+                group: industry-fusion.com
+                versions:
+                  - name: v1
+                    served: true
+                    storage: true
+                    schema:
+                      openAPIV3Schema:
+                        type: object
+                        properties:
+                          spec:
+                            type: object
+                            x-kubernetes-preserve-unknown-fields: true
+                            required:
+                              - entryClass
+                              - args
+                            properties:
+                              entryClass:
+                                type: string
+                              args:
+                                type: object
+                                x-kubernetes-preserve-unknown-fields: true
+                              package:
+                                type: object
+                                x-kubernetes-preserve-unknown-fields: true
+                              tokens:
+                                type: array
+                                items:
+                                  type: object
+                                  x-kubernetes-preserve-unknown-fields: true
+                          status:
+                            type: object
+                            x-kubernetes-preserve-unknown-fields: true
+                names:
+                  kind: BeamService
+                  plural: beamservices
+                  singular: beamservice
+                  shortNames:
+                    - bs
+      patches:
+        - fromFieldPath: metadata.name
+          toFieldPath: spec.providerConfigRef.name
+        - fromFieldPath: metadata.name
+          toFieldPath: metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-beamservice-crd"
+    - name: beamSqlStatementSetCRD
+      base:
+        apiVersion: kubernetes.crossplane.io/v1alpha1
+        kind: Object
+        spec:
+          forProvider:
+            manifest:
+              apiVersion: apiextensions.k8s.io/v1
+              kind: CustomResourceDefinition
+              metadata:
+                name: beamsqlstatementsets.industry-fusion.com
+              spec:
+                scope: Namespaced
+                group: industry-fusion.com
+                versions:
+                  - name: v1alpha1
+                    served: true
+                    storage: false
+                    schema:
+                      openAPIV3Schema:
+                        type: object
+                        properties:
+                          spec:
+                            type: object
+                            required:
+                              - sqlstatements
+                              - tables
+                            properties:
+                              sqlstatements:
+                                type: array
+                                items:
+                                  type: string
+                              tables:
+                                type: array
+                                items:
+                                  type: string
+                          status:
+                            type: object
+                            x-kubernetes-preserve-unknown-fields: true
+                            properties:
+                              state:
+                                type: string
+                              job_id:
+                                type: string
+                  - name: v1alpha2
+                    served: true
+                    storage: true
+                    schema:
+                      openAPIV3Schema:
+                        type: object
+                        properties:
+                          spec:
+                            type: object
+                            required:
+                              - sqlstatements
+                              - tables
+                            properties:
+                              sqlstatements:
+                                type: array
+                                items:
+                                  type: string
+                              tables:
+                                type: array
+                                items:
+                                  type: string
+                              views:
+                                type: array
+                                items:
+                                  type: string
+                              sqlsettings:
+                                type: array
+                                items:
+                                  type: object
+                                  x-kubernetes-preserve-unknown-fields: true
+                              updateStrategy:
+                                type: string
+                                enum: [
+                                  "none",
+                                  "savepoint"
+                                ]
+                          status:
+                            type: object
+                            x-kubernetes-preserve-unknown-fields: true
+                            properties:
+                              state:
+                                type: string
+                              job_id:
+                                type: string
+                names:
+                  kind: BeamSqlStatementSet
+                  plural: beamsqlstatementsets
+                  singular: beamsqlstatementset
+                  shortNames:
+                    - bsqls
+      patches:
+        - fromFieldPath: metadata.name
+          toFieldPath: spec.providerConfigRef.name
+        - fromFieldPath: metadata.name
+          toFieldPath: metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-beamsqlstatementset-crd"
+    - name: beamSqlTableCRD
+      base:
+        apiVersion: kubernetes.crossplane.io/v1alpha1
+        kind: Object
+        spec:
+          forProvider:
+            manifest:
+              apiVersion: apiextensions.k8s.io/v1
+              kind: CustomResourceDefinition
+              metadata:
+                name: beamsqltables.industry-fusion.com
+              spec:
+                scope: Namespaced
+                group: industry-fusion.com
+                versions:
+                  - name: v1alpha1
+                    served: true
+                    storage: false
+                    schema:
+                      openAPIV3Schema:
+                        type: object
+                        properties:
+                          spec:
+                            type: object
+                            required:
+                              - connector
+                              - fields
+                              - kafka
+                              - value
+                            properties:
+                              connector:
+                                type: string
+                                enum: [
+                                  "kafka",
+                                  "upsert-kafka"
+                                ]
+                              fields:
+                                type: object
+                                x-kubernetes-preserve-unknown-fields: true
+                              kafka:
+                                type: object
+                                x-kubernetes-preserve-unknown-fields: true
+                              value:
+                                type: object
+                                x-kubernetes-preserve-unknown-fields: true
+                              primaryKey:
+                                type: array
+                                items:
+                                  type: string
+                  - name: v1alpha2
+                    served: true
+                    storage: true
+                    schema:
+                      openAPIV3Schema:
+                        type: object
+                        properties:
+                          spec:
+                            type: object
+                            required:
+                              - name
+                              - connector
+                              - fields
+                              - kafka
+                              - value
+                            properties:
+                              connector:
+                                type: string
+                                enum: [
+                                  "kafka",
+                                  "upsert-kafka"
+                                ]
+                              fields:
+                                type: array
+                                items:
+                                  type: object
+                                  x-kubernetes-preserve-unknown-fields: true
+                              kafka:
+                                type: object
+                                x-kubernetes-preserve-unknown-fields: true
+                              value:
+                                type: object
+                                x-kubernetes-preserve-unknown-fields: true
+                              primaryKey:
+                                type: array
+                                items:
+                                  type: string
+                              name:
+                                type: string
+                names:
+                  kind: BeamSqlTable
+                  plural: beamsqltables
+                  singular: beamsqltable
+                  shortNames:
+                    - bsqlt
+      patches:
+        - fromFieldPath: metadata.name
+          toFieldPath: spec.providerConfigRef.name
+        - fromFieldPath: metadata.name
+          toFieldPath: metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-beamsqltable-crd"
+    - name: beamSqlViewCRD
+      base:
+        apiVersion: kubernetes.crossplane.io/v1alpha1
+        kind: Object
+        spec:
+          forProvider:
+            manifest:
+              apiVersion: apiextensions.k8s.io/v1
+              kind: CustomResourceDefinition
+              metadata:
+                name: beamsqlviews.industry-fusion.com
+              spec:
+                scope: Namespaced
+                group: industry-fusion.com
+                versions:
+                  - name: v1alpha1
+                    served: true
+                    storage: true
+                    schema:
+                      openAPIV3Schema:
+                        type: object
+                        properties:
+                          spec:
+                            type: object
+                            required:
+                              - name
+                              - sqlstatement
+                            properties:
+                              sqlstatement:
+                                type: string
+                              name:
+                                type: string
+                names:
+                  kind: BeamSqlView
+                  plural: beamsqlviews
+                  singular: beamsqlview
+                  shortNames:
+                    - bsqlv
+      patches:
+        - fromFieldPath: metadata.name
+          toFieldPath: spec.providerConfigRef.name
+        - fromFieldPath: metadata.name
+          toFieldPath: metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-beamsqlview-crd"
