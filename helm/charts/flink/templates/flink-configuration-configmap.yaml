@@ -17,13 +17,13 @@ data:
     jobmanager.memory.process.size: 1600m
     taskmanager.memory.process.size: 1728m
     parallelism.default: {{ .Values.flink.defaultParalellism }}
-    s3.endpoint: {{ .Values.minio.url }}
+    s3.endpoint: {{ .Values.s3.url }}
     s3.path.style.access: true
-    s3.access-key: {{ .Values.minio.userAccessKey }}
+    s3.access-key: {{ .Values.s3.userAccessKey }}
     {{ if $secret }}
     s3.secret-key: {{ $secret.data.CONSOLE_SECRET_KEY | b64dec }}
     {{ else }}
-    s3.secret-key: {{ .Values.minio.userSecretKey }}
+    s3.secret-key: {{ .Values.s3.userSecretKey }}
     {{ end }}
     state.checkpoints.dir: s3://{{ .Values.flink.bucket }}/{{ .Values.flink.checkpointDir }}
     state.savepoints.dir: s3://{{ .Values.flink.bucket }}/{{ .Values.flink.savepointDir }}

@@ -18,7 +18,7 @@ spec:
       initContainers:
       - name: wait-for-minio
         image: busybox:1.28
-        command: ['sh', '-c', "until wget -S {{ .Values.minio.url }}{{ .Values.minio.healthPath }} 2>&1 | awk '/^  HTTP/{print $2}' | grep 200; do echo waiting for minio; sleep 1; done"]
+        command: ['sh', '-c', "until wget -S {{ .Values.s3.url }}{{ .Values.minio.healthPath }} 2>&1 | awk '/^  HTTP/{print $2}' | grep 200; do echo waiting for minio; sleep 1; done"]
       containers:
       - name: taskmanager
         image: apache/flink:{{ .Values.flink.imageTag }}

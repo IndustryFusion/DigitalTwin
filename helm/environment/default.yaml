@@ -13,6 +13,7 @@ keycloak:
 db:
   pvSize: 1Gi
   podInstances: 2
+  backupBucket: db-backup
 
 scorpio:
   externalHostname: ngsild.local
@@ -50,8 +51,8 @@ flink:
   defaultParalellism: 1
 
 minio:
+  enabled: true
   storageSize: 10G
-
 
 kafka:
   storage:
