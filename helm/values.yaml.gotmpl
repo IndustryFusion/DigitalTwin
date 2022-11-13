@@ -22,6 +22,12 @@ db:
   dbUser: {{ .StateValues.db.dbUser }}
   scorpioDb: ngb
   secretPostfix: credentials.postgresql.acid.zalan.do
+  backupBucket: {{ .StateValues.db.backupBucket }}
+  backupNum: {{ .StateValues.db.backupNum }}
+  backupSchedule: {{- if hasKey .Values.db "backupSchedule" }}{{ .Values.db.backupSchedule }}{{- else }} '00 00 * * *' {{- end }}
+  cloneEnabled: {{- if hasKey .Values.db "cloneEnabled" }} {{ .Values.db.cloneEnabled }} {{- else }} false {{- end }}
+  cloneTimeStamp: {{- if hasKey .Values.db "timeStamp" }}{{ .Values.db.timeStamp }}{{- else }} '{{ now | date "2006-01-02T15:04:05+00:00" }}' {{ end }}
+
 
 scorpio:
   tag: 3.0.0-SNAPSHOT
@@ -72,14 +78,20 @@ flink:
   ngsildUpdateWindow: '0.001'
 
 minio:
-  url: http://minio
-  endpoint: minio
-  adminAccessKey: console
-  userAccessKey: minio
-  userSecretKey: {{ .StateValues.minioUserSecretKey }}
-  storageSize: 10G
+  enabled: {{ .StateValues.minio.enabled }}
+  storageSize: {{ .StateValues.minio.storageSize }}
   healthPath: /minio/health/live
+  adminAccessKey: console
   mcImage: minio/mc:RELEASE.2022-02-07T09-25-34Z
+
+s3:
+  {{- $s3 := dict "" }}
+  {{- $protocol := "http" }}
+  {{- if (hasKey .StateValues "s3") }}{{- $s3 := .StateValues.s3 }}{{- end }}
+  protocol: {{- if (hasKey $s3 "protocol") -}}{{- quote $s3.protocol }}{{- else }} http {{- end }}
+  endpoint: {{ if (hasKey $s3 "endpoint") }}{{- quote $s3.endpoint }}{{- else }} minio {{- end }}
+  userAccessKey: {{- if (hasKey $s3 "userAccessKey") }}{{- quote $s3.userAccessKey }}{{- else }} minio {{- end }}
+  userSecretKey: {{- if (hasKey $s3 "userSecretKey") }}{{- quote $s3.userSecretKey }}{{- else }} "{{ .StateValues.minioUserSecretKey }}" {{- end }}
 
 alerta:
   externalHostname: {{ .StateValues.alerta.externalHostname }}

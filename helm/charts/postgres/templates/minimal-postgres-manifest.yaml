@@ -1,9 +1,36 @@
+---
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace "minio-user") -}}
 apiVersion: "acid.zalan.do/v1"
 kind: postgresql
 metadata:
   name: {{ .Values.clusterSvcName }}
   namespace: {{ .Release.Namespace }}
 spec:
+  env:
+  - name: AWS_ACCESS_KEY_ID
+    value: {{ .Values.s3.userAccessKey }}
+  - name: AWS_ENDPOINT
+    value: {{ printf "%s://%s" .Values.s3.protocol .Values.s3.endpoint }}
+  - name: AWS_SECRET_ACCESS_KEY
+    {{- if $secret }}
+    value: {{ $secret.data.CONSOLE_SECRET_KEY | b64dec }}
+    {{- else }}
+    value: {{ .Values.s3.userSecretKey }}
+    {{- end }}
+  - name: USE_WALG_BACKUP
+    value: "true"
+  - name: USE_WALG_RESTORE
+    value: "ture"
+  - name: WALG_S3_PREFIX
+    value: s3://{{ .Values.db.backupBucket }}
+  - name: BACKUP_NUM_RETAIN
+    value: {{ .Values.db.backupNum | quote }}
+  - name: BACKUP_SCHEDULE
+    value: {{ .Values.db.backupSchedule | quote }}
+  {{- if .Values.minio.enabled }}
+  - name: AWS_S3_FORCE_PATH_STYLE
+    value: "true"
+  {{- end }}
   teamId: {{ .Values.db.teamId }}
   volume:
     size: {{ .Values.db.pvSize }}
@@ -16,3 +43,32 @@ spec:
     version: "12"
     parameters:
       wal_level: logical
+  {{- if .Values.db.cloneEnabled }}
+  clone:
+    cluster: {{ .Values.clusterSvcName | quote }}
+    timestamp: {{ .Values.db.cloneTimeStamp }}
+    s3_wal_path: s3://{{ .Values.db.backupBucket }}
+    s3_endpoint: {{ printf "%s://%s" .Values.s3.protocol .Values.s3.endpoint }}
+    {{- if $secret }}
+    s3_secret_access_key: {{ $secret.data.CONSOLE_SECRET_KEY | b64dec }}
+    {{- else }}
+    s3_secret_access_key: {{ .Values.s3.userSecretKey }}
+    {{- end }}
+    s3_access_key_id: {{ .Values.s3.userAccessKey }}
+  {{- end }}
+  {{- if .Values.minio.enabled }}
+  initContainers:
+      - name: wait-for-minio
+        image: busybox:1.28
+        command: ['sh', '-c', "until wget -S {{ printf "%s://%s" .Values.s3.protocol .Values.s3.endpoint }}{{ .Values.minio.healthPath }} 2>&1 | awk '/^  HTTP/{print $2}' | grep 200; do echo waiting for minio; sleep 1; done"]
+      - name: test-bucket
+        image: {{ .Values.minio.mcImage }}
+        env:
+        - name: MC_HOST_iff
+          {{- if $secret }}
+          value: {{ printf "%s://%s:%s@%s" .Values.s3.protocol .Values.s3.userAccessKey ($secret.data.CONSOLE_SECRET_KEY | b64dec) .Values.s3.endpoint }}
+          {{- else }}
+          value: {{ printf "%s://%s:%s@%s" .Values.s3.protocol .Values.s3.userAccessKey .Values.s3.userSecretKey .Values.s3.endpoint }}
+          {{- end }}
+        command: ["/bin/bash", "-c", "echo test; until mc ls iff/{{ .Values.db.backupBucket }}; do sleep 1; done"]
+    {{- end }}
