@@ -17,6 +17,8 @@ releases:
     app: postgres
   chart: ./charts/postgres
   namespace: {{ .Values.namespace }}
+  needs:
+  - minio
   values:
   - values.yaml.gotmpl
 - name: kafka

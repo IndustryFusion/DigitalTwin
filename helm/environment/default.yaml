@@ -14,6 +14,7 @@ db:
   pvSize: 1Gi
   podInstances: 2
   backupBucket: db-backup
+  backupNum: "5"
 
 scorpio:
   externalHostname: ngsild.local
