@@ -47,10 +47,22 @@ spec:
                           properties:
                             version:
                               type: string
+                        nginx:
+                          type: object
+                          properties:
+                            version:
+                              type: string
+                        certmanager:
+                          type: object
+                          properties:
+                            version:
+                              type: string
                       required:
                         - kafka
                         - postgres
                         - minio
+                        - nginx
+                        - certmanager
                   required:
                     - services
               required:

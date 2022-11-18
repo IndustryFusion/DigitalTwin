@@ -155,6 +155,8 @@ spec:
             - type: string
               string:
                 fmt: "%s-nginx"
+        - fromFieldPath: spec.parameters.services.nginx.version
+          toFieldPath: spec.forProvider.chart.version
     - name: strimziKafkaOperator
       base:
         apiVersion: helm.crossplane.io/v1beta1
@@ -246,6 +248,8 @@ spec:
             - type: string
               string:
                 fmt: "%s-certmanager"
+        - fromFieldPath: spec.parameters.services.certmanager.version
+          toFieldPath: spec.forProvider.chart.version
     - name: kubernetesProviderConfig
       base:
         apiVersion: kubernetes.crossplane.io/v1alpha1
