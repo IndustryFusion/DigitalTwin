@@ -17,7 +17,7 @@ data:
     jobmanager.memory.process.size: 1600m
     taskmanager.memory.process.size: 1728m
     parallelism.default: {{ .Values.flink.defaultParalellism }}
-    s3.endpoint: {{ .Values.s3.url }}
+    s3.endpoint: {{ printf "%s://%s" .Values.s3.protocol .Values.s3.endpoint }}
     s3.path.style.access: true
     s3.access-key: {{ .Values.s3.userAccessKey }}
     {{ if $secret }}

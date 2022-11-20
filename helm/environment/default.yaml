@@ -12,7 +12,7 @@ keycloak:
 
 db:
   pvSize: 1Gi
-  podInstances: 2
+  podInstances: 1
   backupBucket: db-backup
   backupNum: "5"
 
