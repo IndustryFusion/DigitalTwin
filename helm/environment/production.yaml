@@ -16,6 +16,7 @@ db:
   podInstances: 2
   backupBucket: db-backup
   backupNum: "5"
+  cloneEnabled: false
 
 scorpio:
   externalHostname: scorpio.test.streammyiot.com

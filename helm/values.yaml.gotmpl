@@ -24,6 +24,10 @@ db:
   secretPostfix: credentials.postgresql.acid.zalan.do
   backupBucket: {{ .StateValues.db.backupBucket }}
   backupNum: {{ .StateValues.db.backupNum }}
+  backupSchedule: {{- if hasKey .Values.db "backupSchedule" }}{{ .Values.db.backupSchedule }}{{- else }} '00 00 * * *' {{- end }}
+  cloneEnabled: {{- if hasKey .Values.db "cloneEnabled" }} {{ .Values.db.cloneEnabled }} {{- else }} false {{- end }}
+  cloneTimeStamp: {{- if hasKey .Values.db "timeStamp" }}{{ .Values.db.timeStamp }}{{- else }} '{{ now | date "2006-01-02T15:04:05+00:00" }}' {{ end }}
+
 
 scorpio:
   tag: 3.0.0-SNAPSHOT

@@ -15,6 +15,7 @@ db:
   podInstances: 1
   backupBucket: db-backup
   backupNum: "5"
+  cloneEnabled: false
 
 scorpio:
   externalHostname: ngsild.local
