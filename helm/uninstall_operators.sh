@@ -3,10 +3,6 @@ NAMESPACE=iff
 
 printf "\n"
 printf "\033[1mUninstalling operator subscriptions\n"
-
-printf "\n"
-printf "\033[1mUninstalling Zalando postgres-operator\n"
-printf -- "------------------------\033[0m "
 kubectl -n {NAMESPACE} delete subscription/keycloak-operator subscription/strimzi-operator operatorgroup/mygroup catalogsource/olm
 kubectl -n operators delete subscription/cert-manager
 
@@ -31,7 +27,7 @@ printf "\033[1mUninstalling Postgres-operator\n"
 printf -- "------------------------\033[0m\n"
 git clone https://github.com/zalando/postgres-operator.git
 cd postgres-operator
-git checkout v1.7.1
+git checkout v1.8.2
 helm -n iff delete postgres-operator ./charts/postgres-operator
 
 
