@@ -1,10 +1,14 @@
-apiVersion: keycloak.org/v1alpha1
-kind: KeycloakRealm
+{{- $alertasecret := (lookup "v1" "Secret" .Release.Namespace "keycloak-client-secret-alerta-ui") -}}
+{{- $ngsildupdatessecret := (lookup "v1" "Secret" .Release.Namespace "keycloak-client-secret-ngsild-updates") -}}
+{{- $realmusersecret := (lookup "v1" "Secret" .Release.Namespace "credential-iff-realm-user-iff") -}}
+apiVersion: k8s.keycloak.org/v2alpha1
+kind: KeycloakRealmImport
 metadata:
-  name: iff-realm
+  name: iff-keycloak-realm-import
   labels:
-    app: keycloak
+    app: sso
 spec:
+  keycloakCRName: keycloak
   realm:
     id: {{ .Values.keycloak.alerta.realm | quote }}
     realm: {{ .Values.keycloak.alerta.realm | quote }}
@@ -271,118 +275,79 @@ spec:
               access.token.claim: "true"
               claim.name: email
               jsonType.label: String
-  instanceSelector:
-    matchLabels:
-      app: keycloak
----
-{{- $pgsecret := (lookup "v1" "Secret" .Release.Namespace "keycloak-client-secret-alerta-ui") -}}
-apiVersion: keycloak.org/v1alpha1
-kind: KeycloakClient
-metadata:
-  name: alerta-ui
-  labels:
-    app: keycloak
-spec:
-  realmSelector:
-     matchLabels:
-      app: keycloak
-  client:
-    clientId: alerta-ui
-    publicClient: False
-    standardFlowEnabled: True
-    redirectUris: 
-    {{- range .Values.keycloak.alerta.redirectUris}}
-    - {{.}}
-    {{- end }}
-    defaultClientScopes:
-    {{- range .Values.keycloak.alerta.defaultClientScopes}}
-    - {{.}}
-    {{- end }}
-    {{ if $pgsecret }}
-    secret: {{ $pgsecret.data.CLIENT_SECRET | b64dec }}
-    {{ else }}
-    secret: {{ .Values.alertaClientSecret }}
-    {{ end }}
----
-apiVersion: keycloak.org/v1alpha1
-kind: KeycloakClient
-metadata:
-  name: scorpio
-  labels:
-    app: keycloak
-spec:
-  realmSelector:
-     matchLabels:
-      app: keycloak
-  roles:
-    - name: "Factory-Admin"
-      clientRole: true  
-    - name: "Factory-Writer"
-      clientRole: true
-    - name: Factory-Reader
-      clientRole: true
-  client:
-    clientId: {{ .Values.keycloak.scorpio.client }}
-    publicClient: True
-    directAccessGrantsEnabled: True
-    standardFlowEnabled: True
-    defaultClientScopes:
-    {{- range .Values.keycloak.alerta.defaultClientScopes}}
-    - {{.}}
-    {{- end }}
----
-{{- $pgsecret := (lookup "v1" "Secret" .Release.Namespace "keycloak-client-secret-alerta-ui") -}}
-apiVersion: keycloak.org/v1alpha1
-kind: KeycloakClient
-metadata:
-  name: ngsild-updates
-  labels:
-    app: keycloak
-spec:
-  realmSelector:
-     matchLabels:
-      app: keycloak
-  client:
-    clientId:  {{ .Values.keycloak.ngsildUpdates.client }}
-    publicClient: False
-    serviceAccountsEnabled: True
-    defaultClientScopes:
-    - roles
-    - factory-admin
-    {{ if $pgsecret }}
-    secret: {{ $pgsecret.data.CLIENT_SECRET | b64dec }}
-    {{ else }}
-    secret: {{ .Values.ngsildUpdatesClientSecret }}
-    {{ end }}
----
-{{- $pgsecret := (lookup "v1" "Secret" .Release.Namespace "credential-iff-realm-user-iff") -}}
-apiVersion: keycloak.org/v1alpha1
-kind: KeycloakUser
-metadata:
-  name: testuser
-spec:
-  user:
-    username: "realm_user"
-    firstName: "John"
-    lastName: "Doe"
-    email: "user@example.com"
-    enabled: True
-    emailVerified: False
-    credentials:
-      - type: "password"
-        {{ if $pgsecret }}
+    clients:
+      - id: 31c8cc5a-9df2-4606-927a-4aeda07c1e56
+        clientId: {{ .Values.keycloak.alerta.client }}
+        publicClient: False
+        standardFlowEnabled: True
+        redirectUris: 
+        {{- range .Values.keycloak.alerta.redirectUris}}
+        - {{.}}
+        {{- end }}
+        defaultClientScopes:
+        {{- range .Values.keycloak.alerta.defaultClientScopes}}
+        - {{.}}
+        {{- end }}
+        {{ if $alertasecret }}
+        secret: {{ $alertasecret.data.CLIENT_SECRET | b64dec }}
         {{ else }}
-        value: {{ randAlphaNum 32 }}
+        secret: {{ .Values.alertaClientSecret }}
         {{ end }}
-    realmRoles:
-      - "offline_access"
-    clientRoles:
-      account:
-        - "manage-account"
-      realm-management:
-        - "manage-users"
-      {{ .Values.keycloak.scorpio.client }}:
-        - Factory-Admin
-  realmSelector:
-    matchLabels:
-      app: keycloak
+      - id: c77ee348-a359-4198-8c18-d0110577c00a
+        clientId: {{ .Values.keycloak.scorpio.client }}
+        publicClient: True
+        directAccessGrantsEnabled: True
+        standardFlowEnabled: True
+        defaultClientScopes:
+        {{- range .Values.keycloak.alerta.defaultClientScopes}}
+        - {{.}}
+        {{- end }}
+      - id: 2057e003-9e81-44fb-929d-4511ce2c7e33
+        clientId: {{ .Values.keycloak.ngsildUpdates.client }}
+        publicClient: False
+        serviceAccountsEnabled: True
+        defaultClientScopes:
+        - roles
+        - factory-admin
+        {{ if $ngsildupdatessecret }}
+        secret: {{ $ngsildupdatessecret.data.CLIENT_SECRET | b64dec }}
+        {{ else }}
+        secret: {{ .Values.keycloak.ngsildUpdates.clientSecret }}
+        {{ end }}
+    roles:
+      client:
+        {{ .Values.keycloak.scorpio.client }}: 
+          - id: 57adefda-7cd3-4519-80d2-8336b82c5488
+            name: "Factory-Admin"
+            clientRole: true
+          - id: 5bf75888-79d1-4b25-8b88-acdbe197bf3e
+            name: "Factory-Writer"
+            clientRole: true
+          - id: 72162ebf-2816-43a1-8df0-2d2e9380a7d6
+            name: "Factory-Reader"
+            clientRole: true
+    users:
+      - id: 542f92bb-6f7c-485c-bb21-8e3da1eb1d87
+        username: {{ .Values.keycloak.realmTestUser.username }}
+        firstName: "John"
+        lastName: "Doe"
+        email: "user@example.com"
+        enabled: True
+        emailVerified: False
+        credentials:
+          - type: "password"
+            {{ if $realmusersecret }}
+            value: {{ $realmusersecret.data.password | b64dec }}
+            {{ else }}
+            value: {{ .Values.keycloak.realmTestUser.password }}
+            {{ end }}
+        realmRoles:
+          - "offline_access"
+        clientRoles:
+          account:
+            - "manage-account"
+          realm-management:
+            - "manage-users"
+          {{ .Values.keycloak.scorpio.client }}:
+            - Factory-Admin
+

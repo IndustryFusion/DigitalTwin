@@ -39,7 +39,7 @@ metadata:
   namespace: ${NAMESPACE}
 spec:
   name: keycloak-operator
-  channel: alpha
+  channel: fast
   source: operatorhubio-catalog
   sourceNamespace: olm
 ---

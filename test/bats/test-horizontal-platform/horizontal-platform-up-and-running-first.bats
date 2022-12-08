@@ -42,7 +42,7 @@ DETIK_DEBUG="true"
     run try "at most 30 times every 60s to find 1 pod named 'keycloak-0' with 'status.containerStatuses[0].ready' being 'true'"
     [ "$status" -eq 0 ]
 
-    run verify "'spec.externalName' is 'acid-cluster.iff.svc.cluster.local' for svc named 'keycloak-postgresql'"
+    run verify "'spec.db.host' is 'acid-cluster.iff.svc.cluster.local' for keycloaks named 'keycloak'"
     [ "$status" -eq 0 ]
 
     run verify "there is 1 pod named 'keycloak-0'"
@@ -54,9 +54,9 @@ DETIK_DEBUG="true"
     run try "at most 10 times every 60s to get secret named 'credential-iff-realm-user-iff' and verify that 'metadata.name' is 'credential-iff-realm-user-iff'"
     [ "$status" -eq 0 ]
 
-    run verify "there is 1 secret named 'credential-keycloak'"
+    run verify "there is 1 secret named 'keycloak-initial-admin'"
     [ "$status" -eq 0 ]
 
-    run verify "there is 1 ingress named 'keycloak-ingress'"
+    run verify "there is 1 ingress named 'keycloak-iff-ingress'"
     [ "$status" -eq 0 ]
 }

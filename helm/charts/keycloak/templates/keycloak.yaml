@@ -1,4 +1,4 @@
-apiVersion: keycloak.org/v1alpha1
+apiVersion: k8s.keycloak.org/v2alpha1
 kind: Keycloak
 metadata:
   name: keycloak
@@ -8,15 +8,27 @@ metadata:
    app: {{ .Values.custom_resource.name }}
 spec:
   instances: {{ .Values.custom_resource.instances }}
-  externalAccess:
-  externalDatabase:
-    enabled: {{ .Values.custom_resource.externalDatabase.enabled }}
-  extensions:
-  - http://keycloak-extensions-server/deployments/fusion.jar
-  - http://keycloak-extensions-server/deployments/oisp-event-listener.jar
-  - http://keycloak-extensions-server/deployments/oisp-js-policies.jar
-  keycloakDeploymentSpec:
-    experimental:
-      env:
-      #- name: DB_ADDRRR
-      #  value: {{ .Values.keycloak_db.stringData.POSTGRES_EXTERNAL_ADDRESS }}
+  hostname:
+    hostname: {{ .Values.keycloak.externalAuthService.domainname }}
+  http:
+    httpEnabled: true
+  db:
+    vendor: postgres
+    usernameSecret:
+      name: keycloak-db-secret
+      key: POSTGRES_USERNAME
+    passwordSecret:
+      name: keycloak-db-secret
+      key: POSTGRES_PASSWORD
+    database: {{ quote .Values.keycloak_db.stringData.POSTGRES_DATABASE  }}
+    host: {{ quote .Values.clusterExternalSvcName }}
+    port: {{ .Values.keycloak_db.stringData.POSTGRES_EXTERNAL_PORT }}
+  ingress:
+    enabled: false
+  additionalOptions:
+    - name: http-relative-path
+      value: /auth
+    - name: hostname-strict-https
+      value: "false"
+    - name: proxy
+      value: edge

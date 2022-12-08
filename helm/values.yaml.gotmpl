@@ -145,15 +145,15 @@ keycloak:
   adminName: admin
   adminPassword: {{ .StateValues.keycloakpassword }}
   externalAuthService: # put here the *external* keycloak name, i.e. through ingress
-     protocol: {{ .StateValues.keycloak.externalAuthService.protocol | quote }}
-     domainname: {{ .StateValues.keycloak.externalAuthService.domainname | quote }}
-     path: {{ .StateValues.keycloak.externalAuthService.path | quote }}
+    protocol: {{ .StateValues.keycloak.externalAuthService.protocol | quote }}
+    domainname: {{ .StateValues.keycloak.externalAuthService.domainname | quote }}
+    path: {{ .StateValues.keycloak.externalAuthService.path | quote }}
   internalAuthService: 
-    name: keycloak-discovery
+    name: keycloak-service
     port: 8080
     path: /auth
   alerta:
-    clientSecret: keycloak-client-secret-alerta-ui
+    clientSecret: {{ .StateValues.alertaClientSecret }}
     realm: iff
     client: alerta-ui
     redirectUris:
@@ -168,9 +168,13 @@ keycloak:
     realm: iff
     client: scorpio
   ngsildUpdates:
+    clientSecret: {{ .StateValues.ngsildUpdatesClientSecret }}
     realm: iff
     client: ngsild-updates
     serviceRole: scorpio.Factory-Admin
+  realmTestUser:
+    username: "realm_user"
+    password: {{ .StateValues.keycloakRealmTestUser }}
 keycloak_db:
   stringData:
     POSTGRES_DATABASE: keycloakdb

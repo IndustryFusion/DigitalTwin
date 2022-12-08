@@ -15,14 +15,14 @@
 	},
 	"keycloak": {
 		"ngsildUpdatesAuthService": {
-			"auth-server-url":  "http://keycloak.local/auth",
+			"auth-server-url":  "http://keycloak.local/auth/",
 			"realm": "iff",
 			"clientId": "ngsild-updates",
 			"resource": "ngsild-updates",
 			"secret": "secret",
 			"bearer-only": true,
 			"verify-token-audience": false,
-			"ssl-required": false
+			"ssl-required": "external"
 		}
 	},
 	"ngsildUpdates": {
