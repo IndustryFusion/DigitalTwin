@@ -14,7 +14,7 @@
     "kafkajs": "^1.16.0",
     "keycloak-connect": "^17.0.0",
     "openid-client": "^5.1.2",
-    "underscore": "^1.13.1",
+    "underscore": "^1.13.6",
     "winston": "^3.3.3"
   },
   "devDependencies": {
