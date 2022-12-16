@@ -29,6 +29,6 @@ COPY --from=keycloak-themes-builder --chown=1000 /themes /themes
 WORKDIR /themes
 RUN jar cf fusion.jar theme META-INF && cp fusion.jar /deployments/fusion.jar
 
-FROM nginx:1.23.1-alpine
+FROM nginx:1.23.2-alpine
 
 COPY --from=keycloak-modules-builder --chown=1000 /deployments /usr/share/nginx/html/deployments
