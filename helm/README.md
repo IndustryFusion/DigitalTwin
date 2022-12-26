@@ -53,7 +53,7 @@ There are two installation instructions below. The first [`section`](#installati
 6. Verify all pods are running using `kubectl -n iff get pods`
 7. Login to keycloak with browser using `http://keycloak.local/auth`
 
-   * The username is `admin`, the password can be found by `kubectl -n iff get secret/credential-keycloak -o=jsonpath='{.data.ADMIN_PASSWORD}' | base64 -d`
+   * The username is `admin`, the password can be found by `kubectl -n iff get secret/keycloak-initial-admin -o=jsonpath='{.data.password}' | base64 -d`
 8. Verify that there are 2 realms `master`, `iff`
 9. Verify that there is a user in realm `iff`, named: `realm_user`
 
