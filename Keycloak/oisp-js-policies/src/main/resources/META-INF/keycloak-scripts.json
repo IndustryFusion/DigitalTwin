@@ -1,0 +1,22 @@
+{
+    "authenticators": [],
+    "policies": [],
+    "mappers": [
+        {
+            "name": "Accounts Mapper",
+            "fileName": "accounts-mapper.js",
+            "description": "accounts that user has acces"
+        },
+        {
+            "name": "Access Type Mapper",
+            "fileName": "type-mapper.js",
+            "description": "token type - user or device"
+        },
+        {
+            "name": "Gateway ID Mapper",
+            "fileName": "gateway-mapper.js",
+            "description": "gatewayId - only valid if access type is device"
+        }
+    ],
+    "saml-mappers": []
+}

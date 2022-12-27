@@ -24,6 +24,11 @@ echo Test whether operators are coming up
 echo Install first two parts of horizontal platform
 ( cd ../helm && echo Install first part &&
 ./helmfile_linux_amd64 -l order=first apply --set "mainRepo=k3d-iff.localhost:12345" )
+( cd ./bats && bats test-jobs/keycloak-realm-import-job-is-up.bats )
+# Increase backoff limit for realm import job, unfortunately, right now,
+# keycloak operator does not reset the job if backoff limit is exceeded,
+# this behavior will probably be fixed in the future
+kubectl -n iff patch job iff-keycloak-realm-import -p '{"spec":{"backoffLimit":60}}'
 ( cd ./bats && bats test-horizontal-platform/horizontal-platform-up-and-running-first.bats )
         
 echo Install second part

@@ -39,14 +39,6 @@ releases:
   namespace: {{ .Values.namespace }}
   values:
   - values.yaml.gotmpl
-- name: keycloak-extensions-server
-  labels:
-    order: first
-    app: keycloak-extensions-server
-  chart: ./charts/keycloak-extensions-server
-  namespace: {{ .Values.namespace }}
-  values:
-  - values.yaml.gotmpl
 - name: keycloak
   labels:
     order: first
@@ -54,7 +46,6 @@ releases:
   chart: ./charts/keycloak
   namespace: {{ .Values.namespace }}
   needs:
-  - keycloak-extensions-server
   - postgres
   values:
   - values.yaml.gotmpl
