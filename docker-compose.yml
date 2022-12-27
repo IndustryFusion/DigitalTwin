@@ -32,7 +32,7 @@ services:
     image: ${DOCKER_PREFIX:-ibn40}/kafka-bridge:${DOCKER_TAG}
     build:
       context: ./KafkaBridge
-  keycloak-extensions-server:
-    image: ${DOCKER_PREFIX:-ibn40}/keycloak-extensions-server:${DOCKER_TAG}
+  keycloak:
+    image: ${DOCKER_PREFIX:-ibn40}/keycloak:${DOCKER_TAG}
     build:
-      context: ./KeycloakExtensionsServer
+      context: ./Keycloak

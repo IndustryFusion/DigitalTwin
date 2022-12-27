@@ -8,6 +8,7 @@ metadata:
    app: {{ .Values.custom_resource.name }}
 spec:
   instances: {{ .Values.custom_resource.instances }}
+  image: '{{ .Values.mainRepo }}/keycloak:{{ .Values.mainVersion }}'
   hostname:
     hostname: {{ .Values.keycloak.externalAuthService.domainname }}
   http:
@@ -32,3 +33,25 @@ spec:
       value: "false"
     - name: proxy
       value: edge
+  features:
+    enabled:
+      - admin-fine-grained-authz
+      - token-exchange
+      - scripts
+  unsupported:
+    podTemplate:
+      spec:
+        containers:
+          - args: ['start']
+            env:
+              - name: OISP_FRONTEND_USER_ACCOUNT_ENDPOINT
+                value: {{ .Values.keycloak.oisp.frontendUrl }}/keycloak/users/:userId/accounts
+              - name: OISP_FRONTEND_DEVICE_ACCOUNT_ENDPOINT
+                value: {{ .Values.keycloak.oisp.frontendUrl }}/keycloak/activationcode/:activationCode/devices/:deviceUID/account
+              - name: OISP_FRONTEND_USER_DELETE_ENDPOINT
+                value: {{ .Values.keycloak.oisp.frontendUrl }}/keycloak/users/:userId
+              - name: OISP_FRONTEND_SECRET
+                valueFrom:
+                  secretKeyRef:
+                    name: keycloak-client-secret-oisp-frontend
+                    key: CLIENT_SECRET

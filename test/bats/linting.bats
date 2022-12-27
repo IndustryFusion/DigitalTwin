@@ -19,4 +19,7 @@ load "lib/linter"
 	run lint "test-operators/operators-are-up-minio.bats"
 	[ "$status" -eq 0 ]
 
+	run lint "test-jobs/keycloak-realm-import-job-is-up.bats"
+	[ "$status" -eq 0 ]
+
 }

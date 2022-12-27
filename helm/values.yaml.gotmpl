@@ -152,6 +152,19 @@ keycloak:
     name: keycloak-service
     port: 8080
     path: /auth
+  oisp:
+    frontendUrl: http://frontend.oisp.svc.cluster.local:4004
+    frontend:
+      client: oisp-frontend
+      clientSecret: {{ .StateValues.oispFrontendClientSecret }}
+    mqttBroker:
+      client: mqtt-broker
+      clientSecret: {{ .StateValues.mqttBrokerClientSecret }}
+    fusionBackend:
+      client: fusion-backend
+      clientSecret: {{ .StateValues.fusionBackendClientSecret }}
+    fusionFrontend:
+      client: fusion-frontend
   alerta:
     clientSecret: {{ .StateValues.alertaClientSecret }}
     realm: iff
