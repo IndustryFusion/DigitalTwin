@@ -97,7 +97,10 @@ async fn main() {
                 FutureRecord::to(topic)
                     .payload(sjson.to_string().as_bytes())
                     .key(&format!("Key {}", 1))
-                    .headers(OwnedHeaders::new().add("header_key", "header_value")),
+                    .headers(OwnedHeaders::new().insert(rdkafka::message::Header {
+                        key: "header_key",
+                        value: Some("header_value"),
+                    })),
                 Duration::from_secs(0),
             )
             .await;
