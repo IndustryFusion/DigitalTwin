@@ -90,8 +90,8 @@ def test_lib_shacl_prroperties_to_sql(mock_utils, mock_configs, mock_yaml,
                      'attributeclass-view']
     assert len(statementsets) == 2
     lower_sqlite = sqlite.lower()
-    assert lower_sqlite.count('select') == 10
-    assert lower_sqlite.count(' < 4') == 2
+    assert lower_sqlite.count('select') == 11
+    assert lower_sqlite.count(' < 4') == 4
     assert lower_sqlite.count(' < 3') == 3
     assert lower_sqlite.count(' <= 2') == 3
     assert lower_sqlite.count(' > 0') == 3
@@ -152,6 +152,6 @@ def test_lib_shacl_prroperties_to_sql(mock_utils, mock_configs, mock_yaml,
                      'attributeclass-view']
     assert len(statementsets) == 2
     lower_sqlite = sqlite.lower()
-    assert lower_sqlite.count('select') == 8
+    assert lower_sqlite.count('select') == 9
     assert lower_sqlite.count('> 10') == 3
     assert lower_sqlite.count('< 3') == 3

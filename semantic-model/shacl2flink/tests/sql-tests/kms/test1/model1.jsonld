@@ -1,0 +1,13 @@
+[
+    {
+      "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+      "id": "urn:plasmacutter:1",
+      "type": "https://industry-fusion.com/types/v0.9/plasmacutter",
+      "https://industry-fusion.com/types/v0.9/state": {
+        "type": "Property",
+        "value": {
+          "@id": "https://industry-fusion.com/types/v0.9/state_OFFF"
+        }
+      }
+    }
+]

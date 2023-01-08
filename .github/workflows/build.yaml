@@ -17,4 +17,4 @@ jobs:
     - name: Build shacl2flink
       run: |
         sudo  apt install sqlite3 sqlite3-pcre
-        cd semantic-model/shacl2flink && make setup && make lint test build test-sqlite
+        cd semantic-model/shacl2flink && make setup && make lint test build test-kms

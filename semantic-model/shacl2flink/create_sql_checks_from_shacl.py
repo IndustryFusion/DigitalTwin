@@ -18,6 +18,7 @@ import os
 import sys
 import lib.utils as utils
 from lib.shacl_properties_to_sql import translate as translate_properties
+from lib.shacl_sparql_to_sql import translate as translate_sparql
 import ruamel.yaml
 import argparse
 
@@ -40,15 +41,17 @@ def main(shaclfile, knowledgefile, output_folder='output'):
     sqlite, (statementsets, tables, views) = \
         translate_properties(shaclfile, knowledgefile)
 
-    tables = list(set(tables))
-    views = list(set(views))
+    sqlite2, (statementsets2, tables2, views2) = \
+        translate_sparql(shaclfile, knowledgefile)
+    tables = list(set(tables2).union(set(tables)))  # deduplication
+    views = list(set(views2).union(set(views)))  # deduplication
 
     with open(os.path.join(output_folder, "shacl-validation.yaml"), "w") as f:
         yaml.dump(utils.create_statementset('shacl-validation', tables, views,
-                                            statementsets), f)
+                                            statementsets + statementsets2), f)
     with open(os.path.join(output_folder, "shacl-validation.sqlite"), "w") \
             as sqlitef:
-        print(sqlite, file=sqlitef)
+        print(sqlite + sqlite2, file=sqlitef)
 
 
 if __name__ == '__main__':
