@@ -110,10 +110,10 @@ releases:
   - kafka
   - keycloak
   - alerta
-- name: sql-rules
+- name: sql-core
   labels:
-    app: sql-rules
-  chart: ./charts/sql-rules
+    app: sql-core
+  chart: ./charts/sql-core
   namespace: {{ .Values.namespace }}
   values:
   - values.yaml.gotmpl

@@ -1,0 +1,21 @@
+environments:
+  default:
+    values:
+    - environment/default.yaml
+    - common.gotmpl
+    - common.yaml
+  production:
+    values:
+    - environment/production.yaml
+    - common.gotmpl
+    - common.yaml
+
+releases:
+- name: shacl
+  labels:
+    app: shacl
+  chart: ./charts/shacl
+  namespace: {{ .Values.namespace }}
+  values:
+  - values.yaml.gotmpl
+

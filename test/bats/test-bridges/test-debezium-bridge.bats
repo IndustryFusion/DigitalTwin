@@ -15,16 +15,18 @@ KAFKACAT_ATTRIBUTES=/tmp/KAFKACAT_ATTRIBUTES
 KAFKACAT_ATTRIBUTES_TOPIC=iff.ngsild.attributes
 KAFKACAT_ENTITY_CUTTER=/tmp/KAFKACAT_ENTITY_CUTTER
 KAFKACAT_ENTITY_CUTTER_SORTED=/tmp/KAFKACAT_ENTITY_CUTTER_SORTED
-KAFKACAT_ENTITY_CUTTER_TOPIC=iff.ngsild.entities.cutter
+KAFKACAT_ENTITY_CUTTER_NAME=cutter_test
+KAFKACAT_ENTITY_CUTTER_TOPIC=iff.ngsild.entities.${KAFKACAT_ENTITY_CUTTER_NAME}
 KAFKACAT_ENTITY_PLASMACUTTER=/tmp/KAFKACAT_ENTITY_PLASMACUTTER
 KAFKACAT_ENTITY_PLASMACUTTER_SORTED=/tmp/KAFKACAT_ENTITY_PLASMACUTTER_SORTED
-KAFKACAT_ENTITY_PLASMACUTTER_TOPIC=iff.ngsild.entities.plasmacutter
+KAFKACAT_ENTITY_PLASMACUTTER_NAME=plasmacutter_test
+KAFKACAT_ENTITY_PLASMACUTTER_TOPIC=iff.ngsild.entities.${KAFKACAT_ENTITY_PLASMACUTTER_NAME}
 PLASMACUTTER_ID=urn:plasmacutter-test:12345
 cat << EOF > ${CUTTER}
 {
     "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
     "id": "${PLASMACUTTER_ID}",
-    "type": "https://industry-fusion.com/types/v0.9/plasmacutter",
+    "type": "https://industry-fusion.com/types/v0.9/${KAFKACAT_ENTITY_PLASMACUTTER_NAME}",
     "https://industry-fusion.com/types/v0.9/state": {
       "type": "Property",
       "value": "OFF"
@@ -158,7 +160,7 @@ compare_create_cutter() {
 "https://industry-fusion.com/types/v0.9/multiState": "${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/multiState",\
 "https://industry-fusion.com/types/v0.9/hasFilter":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/hasFilter",\
 "https://industry-fusion.com/types/v0.9/hasWorkpiece":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/hasWorkpiece",\
-"id":"${PLASMACUTTER_ID}","type":"https://industry-fusion.com/types/v0.9/plasmacutter"}
+"id":"${PLASMACUTTER_ID}","type":"https://industry-fusion.com/types/v0.9/${KAFKACAT_ENTITY_PLASMACUTTER_NAME}"}
 EOF
 }
 
@@ -182,7 +184,7 @@ compare_create_plasmacutter() {
 "https://industry-fusion.com/types/v0.9/multiState": "${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/multiState",\
 "https://industry-fusion.com/types/v0.9/hasFilter":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/hasFilter",\
 "https://industry-fusion.com/types/v0.9/hasWorkpiece":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/hasWorkpiece",\
-"id":"${PLASMACUTTER_ID}","type":"https://industry-fusion.com/types/v0.9/plasmacutter"}
+"id":"${PLASMACUTTER_ID}","type":"https://industry-fusion.com/types/v0.9/${KAFKACAT_ENTITY_PLASMACUTTER_NAME}"}
 EOF
 }
 
