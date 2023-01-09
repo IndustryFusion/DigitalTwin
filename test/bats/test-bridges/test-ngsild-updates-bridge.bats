@@ -24,7 +24,8 @@ KAFKACAT_NGSILD_UPDATES_TOPIC=iff.ngsild-updates
 FILTER_ID=urn:filter-test:12345
 CUTTER_ID=urn:plasmacutter-test:12345
 RECEIVED_ENTITY=/tmp/RECEIVED_ENTITY
-
+FILTER_TYPE=https://industry-fusion.com/types/v0.9/filter_test
+PLASMACUTTER_TYPE=https://industry-fusion.com/types/v0.9/plasmacutter_test
 cat << EOF | tr -d '\n' > ${UPSERT_FILTER}
 {
     "op": "upsert",
@@ -33,7 +34,7 @@ cat << EOF | tr -d '\n' > ${UPSERT_FILTER}
         {
         "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
         "id": "${FILTER_ID}",
-        "type": "https://industry-fusion.com/types/v0.9/filter",
+        "type": "${FILTER_TYPE}",
         "https://industry-fusion.com/types/v0.9/state": {
           "type": "Property",
           "value": "OFFF"
@@ -59,7 +60,7 @@ cat << EOF | tr -d '\n' > ${UPSERT_FILTER_OVERWRITE}
         {
         "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
         "id": "${FILTER_ID}",
-        "type": "https://industry-fusion.com/types/v0.9/filter",
+        "type": "${FILTER_TYPE}",
         "https://industry-fusion.com/types/v0.9/state": {
           "type": "Property",
           "value": "OFF"
@@ -89,7 +90,7 @@ cat << EOF | tr -d '\n' > ${UPSERT_FILTER_NON_OVERWRITE}
         {
         "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
         "id": "${FILTER_ID}",
-        "type": "https://industry-fusion.com/types/v0.9/filter",
+        "type": "${FILTER_TYPE}",
         "https://industry-fusion.com/types/v0.9/state": {
           "type": "Property",
           "value": "OFF"
@@ -119,7 +120,7 @@ cat << EOF | tr -d '\n' > ${UPDATE_FILTER}
         {
         "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
         "id": "${FILTER_ID}",
-        "type": "https://industry-fusion.com/types/v0.9/filter",
+        "type": "${FILTER_TYPE}",
         "https://industry-fusion.com/types/v0.9/state": {
           "type": "Property",
           "value": "OFF"
@@ -145,7 +146,7 @@ cat << EOF | tr -d '\n' > ${UPDATE_FILTER_NO_OVERWRITE}
         {
         "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
         "id": "${FILTER_ID}",
-        "type": "https://industry-fusion.com/types/v0.9/filter",
+        "type": "${FILTER_TYPE}",
         "https://industry-fusion.com/types/v0.9/state": {
           "type": "Property",
           "value": "ON"
@@ -175,7 +176,7 @@ cat << EOF | tr -d '\n' > ${UPSERT_2_ENTITIES}
         {
         "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
         "id": "${FILTER_ID}",
-        "type": "https://industry-fusion.com/types/v0.9/filter",
+        "type": "${FILTER_TYPE}",
         "https://industry-fusion.com/types/v0.9/state": {
           "type": "Property",
           "value": "OFFF"
@@ -192,7 +193,7 @@ cat << EOF | tr -d '\n' > ${UPSERT_2_ENTITIES}
       {
         "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
         "id": "${CUTTER_ID}",
-        "type": "https://industry-fusion.com/types/v0.9/plasmacutter",
+        "type": "${PLASMACUTTER_TYPE}",
         "https://industry-fusion.com/types/v0.9/state": {
         "type": "Property",
         "value": "OFF"
@@ -235,7 +236,7 @@ cat << EOF | tr -d '\n' > ${UPSERT_2_ENTITIES2}
       {
         "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
         "id": "${CUTTER_ID}",
-        "type": "https://industry-fusion.com/types/v0.9/plasmacutter",
+        "type": "${PLASMACUTTER_TYPE}",
         "https://industry-fusion.com/types/v0.9/state": {
         "type": "Property",
         "value": "OFFON"
@@ -261,7 +262,7 @@ cat << EOF | tr -d '\n' > ${UPDATE_2_ENTITIES}
         {
         "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
         "id": "${FILTER_ID}",
-        "type": "https://industry-fusion.com/types/v0.9/filter",
+        "type": "${FILTER_TYPE}",
         "https://industry-fusion.com/types/v0.9/state": {
           "type": "Property",
           "value": "OFF"
@@ -278,7 +279,7 @@ cat << EOF | tr -d '\n' > ${UPDATE_2_ENTITIES}
       {
         "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
         "id": "${CUTTER_ID}",
-        "type": "https://industry-fusion.com/types/v0.9/plasmacutter",
+        "type": "${PLASMACUTTER_TYPE}",
         "https://industry-fusion.com/types/v0.9/state": {
         "type": "Property",
         "value": "ON"
@@ -304,7 +305,7 @@ cat << EOF | tr -d '\n' > ${UPDATE_2_ENTITIES2}
         {
         "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
         "id": "${FILTER_ID}",
-        "type": "https://industry-fusion.com/types/v0.9/filter",
+        "type": "${FILTER_TYPE}",
         "https://industry-fusion.com/types/v0.9/state": {
           "type": "Property",
           "value": "OF"
@@ -321,7 +322,7 @@ cat << EOF | tr -d '\n' > ${UPDATE_2_ENTITIES2}
       {
         "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
         "id": "${CUTTER_ID}",
-        "type": "https://industry-fusion.com/types/v0.9/plasmacutter",
+        "type": "${PLASMACUTTER_TYPE}",
         "https://industry-fusion.com/types/v0.9/state": {
         "type": "Property",
         "value": "ONN"
@@ -345,7 +346,7 @@ compare_inserted_entity() {
     cat << EOF | jq | diff "$1" - >&3
 {
   "id" : "${FILTER_ID}",
-  "type" : "https://industry-fusion.com/types/v0.9/filter",
+  "type" : "${FILTER_TYPE}",
   "https://industry-fusion.com/types/v0.9/hasCartridge" : {
     "type" : "Relationship",
     "object" : "urn:filterCartridge-test:12345"
@@ -369,7 +370,7 @@ compare_upserted_overwritten_entity() {
     cat << EOF | jq | diff "$1" - >&3
 {
   "id" : "${FILTER_ID}",
-  "type" : "https://industry-fusion.com/types/v0.9/filter",
+  "type" : "${FILTER_TYPE}",
   "https://industry-fusion.com/types/v0.9/hasCartridge" : {
     "type" : "Relationship",
     "object" : "urn:filterCartridge-test:22345"
@@ -397,7 +398,7 @@ compare_upserted_non_overwritten_entity() {
     cat << EOF | jq | diff "$1" - >&3
 {
   "id" : "${FILTER_ID}",
-  "type" : "https://industry-fusion.com/types/v0.9/filter",
+  "type" : "${FILTER_TYPE}",
   "https://industry-fusion.com/types/v0.9/hasCartridge" : {
     "type" : "Relationship",
     "object" : "urn:filterCartridge-test:22345"
@@ -425,7 +426,7 @@ compare_updated_entity() {
     cat << EOF | jq | diff "$1" - >&3
 {
   "id" : "${FILTER_ID}",
-  "type" : "https://industry-fusion.com/types/v0.9/filter",
+  "type" : "${FILTER_TYPE}",
   "https://industry-fusion.com/types/v0.9/hasCartridge" : {
     "type" : "Relationship",
     "object" : "urn:filterCartridge-test:22345"
@@ -450,7 +451,7 @@ compare_updated_no_overwrite_entity() {
     cat << EOF | jq | diff "$1" - >&3
 {
   "id" : "${FILTER_ID}",
-  "type" : "https://industry-fusion.com/types/v0.9/filter",
+  "type" : "${FILTER_TYPE}",
   "https://industry-fusion.com/types/v0.9/hasCartridge" : {
     "type" : "Relationship",
     "object" : "urn:filterCartridge-test:12345"
@@ -478,7 +479,7 @@ compare_cutter_entity() {
     cat << EOF | jq | diff "$1" - >&3
 {
   "id": "${CUTTER_ID}",
-  "type": "https://industry-fusion.com/types/v0.9/plasmacutter",
+  "type": "${PLASMACUTTER_TYPE}",
   "https://industry-fusion.com/types/v0.9/hasFilter": {
     "type": "Relationship",
     "object": "urn:filter-test:12345"
@@ -504,7 +505,7 @@ compare_update_cutter_entity() {
     cat << EOF | jq | diff "$1" - >&3
 {
   "id": "${CUTTER_ID}",
-  "type": "https://industry-fusion.com/types/v0.9/plasmacutter",
+  "type": "${PLASMACUTTER_TYPE}",
   "https://industry-fusion.com/types/v0.9/hasFilter": {
     "type": "Relationship",
     "object": "urn:filter-test:22345"
@@ -530,7 +531,7 @@ compare_updated_filter_entity() {
     cat << EOF | jq | diff "$1" - >&3
 {
   "id" : "${FILTER_ID}",
-  "type" : "https://industry-fusion.com/types/v0.9/filter",
+  "type" : "${FILTER_TYPE}",
   "https://industry-fusion.com/types/v0.9/hasCartridge" : {
     "type" : "Relationship",
     "object" : "urn:filterCartridge-test:22345"

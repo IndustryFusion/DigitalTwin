@@ -49,12 +49,12 @@ def test_create_yaml_table(mock_check, mock_class):
                       'kind': 'BeamSqlTable',
                       'metadata': {'name': 'object'},
                       'spec': {
-                        'name': 'name',
-                        'connector': 'connector',
-                        'fields': ['table'],
-                        'kafka': 'kafka',
-                        'value': 'value',
-                        'primaryKey': 'primary_key'
+                          'name': 'name',
+                          'connector': 'connector',
+                          'fields': ['table'],
+                          'kafka': 'kafka',
+                          'value': 'value',
+                          'primaryKey': 'primary_key'
                       }}
     result = utils.create_yaml_table('name', 'connector', ['table'], None,
                                      'kafka', 'value')
@@ -62,11 +62,11 @@ def test_create_yaml_table(mock_check, mock_class):
                       'kind': 'BeamSqlTable',
                       'metadata': {'name': 'object'},
                       'spec': {
-                        'name': 'name',
-                        'connector': 'connector',
-                        'fields': ['table'],
-                        'kafka': 'kafka',
-                        'value': 'value'
+                          'name': 'name',
+                          'connector': 'connector',
+                          'fields': ['table'],
+                          'kafka': 'kafka',
+                          'value': 'value'
                       }}
 
 
@@ -113,8 +113,8 @@ def test_create_yaml_view(mock_check, mock_class):
                       'kind': 'BeamSqlView',
                       'metadata': {'name': 'object-view'},
                       'spec': {
-                        'name': 'name_view',
-                        'sqlstatement': 'SELECT `id`, `type`,\n `fieldname` \
+                          'name': 'name_view',
+                          'sqlstatement': 'SELECT `id`, `type`,\n `fieldname` \
 FROM (\n  SELECT *,\nROW_NUMBER() OVER (PARTITION BY `id`\nORDER BY ts DESC)\
  AS rownum\nFROM `name` )\nWHERE rownum = 1'
                       }}
@@ -123,8 +123,8 @@ FROM (\n  SELECT *,\nROW_NUMBER() OVER (PARTITION BY `id`\nORDER BY ts DESC)\
                       'kind': 'BeamSqlView',
                       'metadata': {'name': 'object-view'},
                       'spec': {
-                        'name': 'name_view',
-                        'sqlstatement': 'SELECT `id`, `type`,\n `fieldname` \
+                          'name': 'name_view',
+                          'sqlstatement': 'SELECT `id`, `type`,\n `fieldname` \
 FROM (\n  SELECT *,\nROW_NUMBER() OVER (PARTITION BY `id`\nORDER BY ts DESC)\
  AS rownum\nFROM `name` )\nWHERE rownum = 1'
                       }}
@@ -147,33 +147,39 @@ FROM (\n  SELECT *,\nROW_NUMBER() OVER (PARTITION BY `id`\nORDER BY ts DESC)\
 def test_create_statementset():
     result = utils.create_statementset('object', 'table_object', 'view',
                                        'statementset')
-    assert result == {'apiVersion': 'industry-fusion.com/v1alpha2',
-                      'kind': 'BeamSqlStatementSet',
-                      'metadata': {'name': 'object'},
-                      'spec': {
-                        'tables': 'table_object',
-                        'views': 'view',
-                        'sqlstatements': 'statementset'
-                        }
-                      }
+    assert result == {
+        'apiVersion': 'industry-fusion.com/v1alpha2',
+        'kind': 'BeamSqlStatementSet',
+        'metadata': {
+            'name': 'object'
+        },
+        'spec': {
+            'tables': 'table_object',
+            'views': 'view',
+            'sqlstatements': 'statementset'
+        }
+    }
 
 
 def test_create_kafka_topic():
-    result = utils.create_kafka_topic('name', ['kafka_topic_object_label',
+    result = utils.create_kafka_topic('name', 'topic_name', ['kafka_topic_object_label',
                                       'label'], 'config')
-    assert result == {'apiVersion': 'kafka.strimzi.io/v1beta2',
-                      'kind': 'KafkaTopic',
-                      'metadata': {
-                        'name': 'name',
-                        'labels': {
-                            'kafka_topic_object_label': 'label'
-                        }},
-                      'spec': {
-                        'partitions': 1,
-                        'replicas': 1,
-                        'config': 'config'
-                        }
-                      }
+    assert result == {
+        'apiVersion': 'kafka.strimzi.io/v1beta2',
+        'kind': 'KafkaTopic',
+        'metadata': {
+            'name': 'name',
+            'labels': {
+                'kafka_topic_object_label': 'label'
+            }
+        },
+        'spec': {
+            'partitions': 1,
+            'replicas': 1,
+            'config': 'config',
+            'topicName': 'topic_name'
+        }
+    }
 
 
 def test_strip_class():

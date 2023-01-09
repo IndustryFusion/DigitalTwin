@@ -1,7 +1,6 @@
 from rdflib import Graph, Namespace
 import os
 import sys
-import owlrl
 import ruamel.yaml
 from jinja2 import Template
 
@@ -103,18 +102,18 @@ sql_check_relationship_base = """
 
 sql_check_relationship_property_class = """
             SELECT this AS resource,
-                'PropertyClassCheck({{property_path}}[' || CAST( `index` AS STRING) || '])' AS event,
+                'ClassConstraintComponent({{property_path}}[' || CAST( `index` AS STRING) || '])' AS event,
                 'Development' AS environment,
                 {% if sqlite %}
                 '[SHACL Validator]' AS service,
                 {% else %}
                 ARRAY ['SHACL Validator'] AS service,
                 {% endif %}
-                CASE WHEN typ is NOT NULL AND entity is NULL THEN '{{severity}}'
+                CASE WHEN typ IS NOT NULL AND link IS NOT NULL AND entity IS NULL THEN '{{severity}}'
                     ELSE 'ok' END AS severity,
                 'customer'  customer,
 
-                CASE WHEN typ is NOT NULL AND entity is NULL
+                CASE WHEN typ IS NOT NULL AND link IS NOT NULL AND entity IS NULL
                         THEN 'Model validation for relationship {{property_path}} failed for '|| this || '. Relationship not linked to existing entity of type {{property_class}}.'
                     ELSE 'All ok' END as `text`
                 {%- if sqlite %}
@@ -125,7 +124,7 @@ sql_check_relationship_property_class = """
 
 sql_check_relationship_property_count = """
             SELECT this AS resource,
-                'PropertyCountCheck({{property_path}})' AS event,
+                'CountConstraintComponent({{property_path}})' AS event,
                 'Development' AS environment,
                 {% if sqlite %}
                 '[SHACL Validator]' AS service,
@@ -166,9 +165,33 @@ WITH A1 AS (SELECT A.id as this,
             {%- endif %}
             )
 """  # noqa: E501
+
+sql_check_property_count = """
+SELECT this AS resource,
+    'CountConstraintComponent({{property_path}})' AS event,
+    'Development' AS environment,
+    {%- if sqlite %}
+    '[SHACL Validator]' AS service,
+    {%- else %}
+    ARRAY ['SHACL Validator'] AS service,
+    {%- endif %}
+    CASE WHEN typ IS NOT NULL AND ({%- if maxcount %} count(attr_typ) > {{maxcount}} {%- endif %} {%- if mincount and maxcount %} OR {%- endif %} {%- if mincount %} count(attr_typ) < {{mincount}} {%- endif %})
+        THEN '{{severity}}'
+        ELSE 'ok' END AS severity,
+    'customer'  customer,
+    CASE WHEN typ IS NOT NULL AND ({%- if maxcount %} count(attr_typ) > {{maxcount}} {%- endif %} {%- if mincount and maxcount %} OR {%- endif %} {%- if mincount %} count(attr_typ) < {{mincount}} {%- endif %})
+        THEN 'Model validation for Property {{property_path}} failed for ' || this || '.  Found ' || CAST(count(attr_typ) AS STRING) || ' relationships instead of
+                            [{%- if mincount %}{{mincount}}{%- else %} 0 {%- endif %},{%if maxcount %}{{maxcount}}]{%- else %}[ {%- endif %}!'
+        ELSE 'All ok' END as `text`
+        {% if sqlite %}
+        ,CURRENT_TIMESTAMP
+        {% endif %}
+FROM A1 group by this, typ
+"""  # noqa: E501
+
 sql_check_property_iri_class = """
 SELECT this AS resource,
-    'DataTypeValidation({{property_path}}[' || CAST( `index` AS STRING) || '])' AS event,
+    'DatatypeConstraintComponent({{property_path}}[' || CAST( `index` AS STRING) || '])' AS event,
     'Development' AS environment,
     {%- if sqlite %}
     '[SHACL Validator]' AS service,
@@ -187,9 +210,10 @@ SELECT this AS resource,
         {% endif %}
 FROM A1
 """  # noqa: E501
+
 sql_check_property_nodeType = """
 SELECT this AS resource,
- 'NodeTypeValidation({{property_path}}[' || CAST( `index` AS STRING) || '])' AS event,
+ 'NodeKindConstraintComponent({{property_path}}[' || CAST( `index` AS STRING) || '])' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,
@@ -211,7 +235,7 @@ FROM A1
 
 sql_check_property_minmax = """
 SELECT this AS resource,
- '{{minmaxname}}Validation({{property_path}}[' || CAST( `index` AS STRING) || '])' AS event,
+ '{{minmaxname}}ConstraintComponent({{property_path}}[' || CAST( `index` AS STRING) || '])' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,
@@ -235,7 +259,7 @@ FROM A1
 
 sql_check_string_length = """
 SELECT this AS resource,
- '{{minmaxname}}Validation({{property_path}}[' || CAST( `index` AS STRING) || '])' AS event,
+ '{{minmaxname}}ConstraintComponent({{property_path}}[' || CAST( `index` AS STRING) || '])' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,
@@ -257,7 +281,7 @@ FROM A1
 
 sql_check_literal_pattern = """
 SELECT this AS resource,
- '{{validationname}}Validation({{property_path}}[' || CAST( `index` AS STRING) || '])' AS event,
+ '{{validationname}}ConstraintComponent({{property_path}}[' || CAST( `index` AS STRING) || '])' AS event,
     'Development' AS environment,
      {%- if sqlite -%}
     '[SHACL Validator]' AS service,
@@ -295,8 +319,6 @@ def translate(shaclefile, knowledgefile):
     g.parse(shaclefile)
     h.parse(knowledgefile)
     g += h
-    owlrl.RDFSClosure.RDFS_Semantics(g, axioms=False, daxioms=False,
-                                     rdfs=False).closure()
     sh = Namespace("http://www.w3.org/ns/shacl#")
     tables = [alerts_bulk_table_object, configs.attributes_table_obj_name,
               configs.rdf_table_obj_name]
@@ -317,13 +339,13 @@ def translate(shaclefile, knowledgefile):
         severitycode = row.severitycode.toPython() if row.severitycode \
             else 'warning'
         sql_command_yaml = Template(sql_check_relationship_base).render(
-                alerts_bulk_table=alerts_bulk_table,
-                target_class=target_class,
-                property_path=property_path,
-                property_class=utils.strip_class(property_class),
-                mincount=mincount,
-                maxcount=maxcount,
-                sqlite=False)
+            alerts_bulk_table=alerts_bulk_table,
+            target_class=target_class,
+            property_path=property_path,
+            property_class=utils.strip_class(property_class),
+            mincount=mincount,
+            maxcount=maxcount,
+            sqlite=False)
         sql_command_sqlite = Template(sql_check_relationship_base).render(
             alerts_bulk_table=alerts_bulk_table,
             target_class=target_class,
@@ -337,20 +359,20 @@ def translate(shaclefile, knowledgefile):
             add_union = True
             sql_command_yaml += \
                 Template(sql_check_relationship_property_class).render(
-                         alerts_bulk_table=alerts_bulk_table,
-                         target_class=target_class,
-                         property_path=property_path,
-                         property_class=property_class,
-                         severity=severitycode,
-                         sqlite=False)
+                    alerts_bulk_table=alerts_bulk_table,
+                    target_class=target_class,
+                    property_path=property_path,
+                    property_class=property_class,
+                    severity=severitycode,
+                    sqlite=False)
             sql_command_sqlite += \
                 Template(sql_check_relationship_property_class).render(
-                         alerts_bulk_table=alerts_bulk_table,
-                         target_class=target_class,
-                         property_path=property_path,
-                         property_class=property_class,
-                         severity=severitycode,
-                         sqlite=True)
+                    alerts_bulk_table=alerts_bulk_table,
+                    target_class=target_class,
+                    property_path=property_path,
+                    property_class=property_class,
+                    severity=severitycode,
+                    sqlite=True)
         if mincount > 0 or maxcount:
             if add_union:
                 sql_command_yaml += "\nUNION ALL"
@@ -358,22 +380,22 @@ def translate(shaclefile, knowledgefile):
             add_union = True
             sql_command_yaml += \
                 Template(sql_check_relationship_property_count).render(
-                         alerts_bulk_table=alerts_bulk_table,
-                         target_class=target_class,
-                         property_path=property_path,
-                         mincount=mincount,
-                         maxcount=maxcount,
-                         severity=severitycode,
-                         sqlite=False)
+                    alerts_bulk_table=alerts_bulk_table,
+                    target_class=target_class,
+                    property_path=property_path,
+                    mincount=mincount,
+                    maxcount=maxcount,
+                    severity=severitycode,
+                    sqlite=False)
             sql_command_sqlite += \
                 Template(sql_check_relationship_property_count).render(
-                         alerts_bulk_table=alerts_bulk_table,
-                         target_class=target_class,
-                         property_path=property_path,
-                         mincount=mincount,
-                         maxcount=maxcount,
-                         severity=severitycode,
-                         sqlite=True)
+                    alerts_bulk_table=alerts_bulk_table,
+                    target_class=target_class,
+                    property_path=property_path,
+                    mincount=mincount,
+                    maxcount=maxcount,
+                    severity=severitycode,
+                    sqlite=True)
         sql_command_sqlite += ";"
         sql_command_yaml += ";"
         statementsets.append(sql_command_yaml)
@@ -456,20 +478,20 @@ def translate(shaclefile, knowledgefile):
                 sql_command_sqlite += "\nUNION ALL"
                 sql_command_yaml += \
                     Template(sql_check_property_iri_class).render(
-                             alerts_bulk_table=alerts_bulk_table,
-                             target_class=target_class,
-                             property_path=property_path,
-                             property_class=property_class,
-                             severity=severitycode,
-                             sqlite=False)
+                        alerts_bulk_table=alerts_bulk_table,
+                        target_class=target_class,
+                        property_path=property_path,
+                        property_class=property_class,
+                        severity=severitycode,
+                        sqlite=False)
                 sql_command_sqlite += \
                     Template(sql_check_property_iri_class).render(
-                             alerts_bulk_table=alerts_bulk_table,
-                             target_class=target_class,
-                             property_path=property_path,
-                             property_class=property_class,
-                             severity=severitycode,
-                             sqlite=True)
+                        alerts_bulk_table=alerts_bulk_table,
+                        target_class=target_class,
+                        property_path=property_path,
+                        property_class=property_class,
+                        severity=severitycode,
+                        sqlite=True)
 
         elif (nodekind == sh.Literal):
             sql_command_yaml = Template(sql_check_property_iri_base).render(
@@ -522,13 +544,13 @@ def translate(shaclefile, knowledgefile):
                 )
                 sql_command_sqlite += \
                     Template(sql_check_property_minmax).render(
-                             target_class=target_class,
-                             property_path=property_path,
-                             operator='>',
-                             comparison_value=min_exclusive,
-                             severity=severitycode,
-                             minmaxname="MinExclusive",
-                             sqlite=True)
+                        target_class=target_class,
+                        property_path=property_path,
+                        operator='>',
+                        comparison_value=min_exclusive,
+                        severity=severitycode,
+                        minmaxname="MinExclusive",
+                        sqlite=True)
             if max_exclusive is not None:
                 sql_command_yaml += "\nUNION ALL"
                 sql_command_sqlite += "\nUNION ALL"
@@ -543,13 +565,13 @@ def translate(shaclefile, knowledgefile):
                 )
                 sql_command_sqlite += \
                     Template(sql_check_property_minmax).render(
-                             target_class=target_class,
-                             property_path=property_path,
-                             operator='<',
-                             comparison_value=max_exclusive,
-                             severity=severitycode,
-                             minmaxname="MaxExclusive",
-                             sqlite=True)
+                        target_class=target_class,
+                        property_path=property_path,
+                        operator='<',
+                        comparison_value=max_exclusive,
+                        severity=severitycode,
+                        minmaxname="MaxExclusive",
+                        sqlite=True)
             if max_inclusive is not None:
                 sql_command_yaml += "\nUNION ALL"
                 sql_command_sqlite += "\nUNION ALL"
@@ -564,13 +586,13 @@ def translate(shaclefile, knowledgefile):
                 )
                 sql_command_sqlite += \
                     Template(sql_check_property_minmax).render(
-                             target_class=target_class,
-                             property_path=property_path,
-                             operator='<=',
-                             comparison_value=max_inclusive,
-                             severity=severitycode,
-                             minmaxname="MaxInclusive",
-                             sqlite=True)
+                        target_class=target_class,
+                        property_path=property_path,
+                        operator='<=',
+                        comparison_value=max_inclusive,
+                        severity=severitycode,
+                        minmaxname="MaxInclusive",
+                        sqlite=True)
             if min_inclusive is not None:
                 sql_command_yaml += "\nUNION ALL"
                 sql_command_sqlite += "\nUNION ALL"
@@ -585,13 +607,13 @@ def translate(shaclefile, knowledgefile):
                 )
                 sql_command_sqlite += \
                     Template(sql_check_property_minmax).render(
-                             target_class=target_class,
-                             property_path=property_path,
-                             operator='>=',
-                             comparison_value=min_inclusive,
-                             severity=severitycode,
-                             minmaxname="MinInclusive",
-                             sqlite=True)
+                        target_class=target_class,
+                        property_path=property_path,
+                        operator='>=',
+                        comparison_value=min_inclusive,
+                        severity=severitycode,
+                        minmaxname="MinInclusive",
+                        sqlite=True)
             if pattern is not None:
                 sql_command_yaml += "\nUNION ALL"
                 sql_command_sqlite += "\nUNION ALL"
@@ -604,16 +626,35 @@ def translate(shaclefile, knowledgefile):
                 )
                 sql_command_sqlite += \
                     Template(sql_check_literal_pattern).render(
-                             property_path=property_path,
-                             pattern=pattern,
-                             severity=severitycode,
-                             validationname="Pattern",
-                             sqlite=True)
+                        property_path=property_path,
+                        pattern=pattern,
+                        severity=severitycode,
+                        validationname="Pattern",
+                        sqlite=True)
 
         else:
             print(f'WARNING: Property path {property_path} of Nodeshape \
                   {nodeshape} is neither IRI nor Literal')
             continue
+        if mincount > 0 or maxcount:
+            sql_command_yaml += "\nUNION ALL"
+            sql_command_sqlite += "\nUNION ALL"
+            sql_command_yaml += Template(sql_check_property_count).render(
+                target_class=target_class,
+                property_path=property_path,
+                mincount=mincount,
+                maxcount=maxcount,
+                severity=severitycode,
+                sqlite=False
+            )
+            sql_command_sqlite += \
+                Template(sql_check_property_count).render(
+                    target_class=target_class,
+                    property_path=property_path,
+                    mincount=mincount,
+                    maxcount=maxcount,
+                    severity=severitycode,
+                    sqlite=True)
         if min_length is not None:
             sql_command_yaml += "\nUNION ALL"
             sql_command_sqlite += "\nUNION ALL"
@@ -626,12 +667,12 @@ def translate(shaclefile, knowledgefile):
                 sqlite=False
             )
             sql_command_sqlite += Template(sql_check_string_length).render(
-                    property_path=property_path,
-                    operator='<',
-                    comparison_value=min_length,
-                    minmaxname="MinLength",
-                    severity=severitycode,
-                    sqlite=True
+                property_path=property_path,
+                operator='<',
+                comparison_value=min_length,
+                minmaxname="MinLength",
+                severity=severitycode,
+                sqlite=True
             )
         if max_length is not None:
             sql_command_yaml += "\nUNION ALL"
@@ -645,12 +686,12 @@ def translate(shaclefile, knowledgefile):
                 sqlite=False
             )
             sql_command_sqlite += Template(sql_check_string_length).render(
-                    property_path=property_path,
-                    operator='>',
-                    comparison_value=max_length,
-                    minmaxname="MaxLength",
-                    severity=severitycode,
-                    sqlite=True
+                property_path=property_path,
+                operator='>',
+                comparison_value=max_length,
+                minmaxname="MaxLength",
+                severity=severitycode,
+                sqlite=True
             )
         sql_command_sqlite += ";"
         sql_command_yaml += ";"

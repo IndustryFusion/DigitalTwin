@@ -8,6 +8,30 @@
 PREFIX ex: <http://example.com/ns#>
 
 
+iff:MachineShape
+    a sh:NodeShape ;
+    sh:targetClass iff:machine ;
+    sh:property [
+        sh:path <https://industry-fusion.com/types/v0.9/state> ;
+        sh:order 1 ;
+        sh:nodeKind sh:BlankNode;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:property [
+            sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
+            sh:nodeKind sh:IRI;
+            sh:class iff:machineState;
+            sh:minCount 1 ;
+            sh:maxCount 1 ;
+        ] ;
+        sh:property [
+            sh:path rdf:type ;
+            sh:hasValue <https://uri.etsi.org/ngsi-ld/Property> ;
+            sh:minCount 1 ;
+        ] ;
+    ] ;
+    .
+
 iff:CutterShape
     a sh:NodeShape ;
     sh:targetClass iff:cutter ;
@@ -144,6 +168,8 @@ iff:FilterShape
             sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
             sh:nodeKind sh:Literal;
             sh:datatype xsd:decimal ;
+            sh:minInclusive 0.0 ;
+            sh:maxInclusive 1.0 ;
             sh:minCount 1 ;
             sh:maxCount 1 ;
         ] ;
@@ -232,6 +258,39 @@ iff:FilterCartridgeShape
     .
 
 
+iff:FilterStrength
+    a sh:NodeShape ;
+    sh:targetClass iff:filter ;
+    sh:sparql [
+        a sh:SPARQLConstraints ;
+        sh:message "Check Filter strength as function of workpiece" ;
+        sh:select """
+PREFIX iff: <https://industry-fusion.com/types/v0.9/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <https://schema.org/>
+
+SELECT ?this ?value
+    where {
+        $this  iff:strength [ <https://uri.etsi.org/ngsi-ld/hasValue> ?strength ] .
+        ?pc  a iff:cutter .
+        ?pc iff:hasFilter [ <https://uri.etsi.org/ngsi-ld/hasObject> $this ] .
+        ?pc  iff:hasWorkpiece [ <https://uri.etsi.org/ngsi-ld/hasObject> ?wp ] .
+        ?wp schema:depth [ <https://uri.etsi.org/ngsi-ld/hasValue> ?depth ] .
+        ?pc iff:state [<https://uri.etsi.org/ngsi-ld/hasValue> ?pcstate ] .
+        $this iff:state [<https://uri.etsi.org/ngsi-ld/hasValue> ?filterstate ] .
+        BIND(
+            IF(xsd:integer(?depth) > 500 && xsd:float(?strength) < 1.0, \"Filter strength too low, should be 1.0\", 
+                IF(xsd:integer(?depth) > 250 && xsd:float(?strength) < 0.75, \"Filter strength too low, should be at least 0.75\",
+                    IF(xsd:float(?strength) < 0.5, \"Filter strength too low, should be at least 0.5\", \"ok\")
+                )
+            ) as ?value) .
+        FILTER(?pcstate = \"https://industry-fusion.com/types/v0.9/state_ON\" && ?filterstate = \"https://industry-fusion.com/types/v0.9/state_ON\" && ?value != \"ok\") .
+    }
+        """ ;
+    ] .
+
+
 iff:StateValueShape
     a sh:NodeShape ;
     sh:targetClass iff:machine ;
@@ -250,7 +309,6 @@ iff:StateValueShape
             OPTIONAL{?this a ?basetype .} 
             ?x iff:stateValidFor ?basetype .
             FILTER( ?type != <http://www.w3.org/2000/01/rdf-schema#Resource> )
-
             FILTER NOT EXISTS {
 
                 ?value iff:stateValidFor ?basetype .
@@ -275,7 +333,7 @@ SELECT $this ?v1 ?f ?v2
         $this  iff:state [<https://uri.etsi.org/ngsi-ld/hasValue> ?v1 ] .
         $this  iff:hasFilter [ <https://uri.etsi.org/ngsi-ld/hasObject> ?f ] .
         ?f  iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?v2 ] .
-        FILTER(?v1 = \"iff:state_PROCESSING\" && ?v2 != \"iff:state_ON\")
+        FILTER(?v1 = \"https://industry-fusion.com/types/v0.9/state_ON\" && ?v2 != \"https://industry-fusion.com/types/v0.9/state_ON\")
         
     }
         """ ;
@@ -298,7 +356,7 @@ SELECT $this ?v1 ?pc ?v2
         ?pc  rdf:type iff:cutter .
         ?pc iff:hasFilter [ <https://uri.etsi.org/ngsi-ld/hasObject> $this ] .
         ?pc  iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?v2 ] .
-        FILTER(?v1 = \"iff:state_ON\" && ?v2 != \"iff:state_ON\")
+        FILTER(?v1 = \"https://industry-fusion.com/types/v0.9/state_ON\" && ?v2 != \"https://industry-fusion.com/types/v0.9/state_ON\")
     }
         """ ;
     ] .
@@ -325,37 +383,7 @@ iff:multiply # seems not to work - check future development
 		""" .
 
 
-iff:FilterStrength
-    a sh:NodeShapes ;
-    sh:targetClass iff:filter ;
-    sh:sparql [
-        a sh:SPARQLConstraints ;
-        sh:message "Check Filter strength as function of workpiece" ;
-        sh:select """
-PREFIX iff: <https://industry-fusion.com/types/v0.9/>
-PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX schema: <https://schema.org/>
 
-SELECT ?this ?value
-    where {
-        $this  iff:strength [ <https://uri.etsi.org/ngsi-ld/hasValue> ?strength ] .
-        ?pc  a iff:plasmacutter .
-        ?pc iff:hasFilter [ <https://uri.etsi.org/ngsi-ld/hasObject> $this ] .
-        ?pc  iff:hasWorkpiece [ <https://uri.etsi.org/ngsi-ld/hasObject> ?wp ] .
-        ?wp schema:depth [ <https://uri.etsi.org/ngsi-ld/hasValue> ?depth ] .
-        ?pc iff:state [<https://uri.etsi.org/ngsi-ld/hasValue> ?pcstate ] .
-        $this iff:state [<https://uri.etsi.org/ngsi-ld/hasValue> ?filterstate ] .
-        BIND(
-            IF(xsd:integer(?depth) > 500 && xsd:float(?strength) < 1.0, \"Filter strength too low, should be 1.0\", 
-                IF(xsd:integer(?depth) > 250 && xsd:float(?strength) < 0.75, \"Filter strength too low, should be at least 0.75\",
-                    IF(xsd:float(?strength) < 0.5, \"Filter strength too low, should be at least 0.5\", \"ok\")
-                )
-            ) as ?value) .
-        FILTER(?pcstate = \"ON\" && ?filterstate = \"ON\" && ?value != \"ok\") .
-    }
-        """ ;
-    ] .
 
 #iff:WasteClassIncrease
 #    a sh:NodeShapes ;

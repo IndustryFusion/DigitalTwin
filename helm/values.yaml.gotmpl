@@ -124,22 +124,22 @@ kafkaBridge:
   debezium:
     replicaCount: 1
     listenTopic: "iff.ngsild.public.entity"
-    listenTopicRetention: 86400000
+    listenTopicRetention: "86400000"
     entityTopicPrefix: "iff.ngsild.entities"
     attributesTopic: "iff.ngsild.attributes"
-    entityTopicRetention: 604800000
-    attributesTopicRetention: 86400000
+    entityTopicRetention: "604800000"
+    attributesTopicRetention: "86400000"
   alerta:
     replicaCount: 1
     listenTopic: "iff.alerts"
     bulkTopic: "iff.alerts.bulk"
-    bulkTopicRetention: 300000
+    bulkTopicRetention: "300000"
     listenTopicRetention: 86400000
   ngsildUpdates:
     replicaCount: 1
     tokenRefreshInterval: 200
     listenTopic: "iff.ngsild-updates"
-    listenTopicRetention: 86400000
+    listenTopicRetention: "86400000"
 
 keycloak:
   adminName: admin

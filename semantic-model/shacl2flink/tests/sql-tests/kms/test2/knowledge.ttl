@@ -1,0 +1,59 @@
+PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX iff: <https://industry-fusion.com/types/v0.9/>
+
+iff:entity a iff:class ;
+    a rdfs:class .
+iff:machine a iff:class ; 
+    a rdfs:class .
+iff:filter rdfs:subClassOf iff:machine ;
+    a iff:class .
+iff:plasmacutter rdfs:subClassOf iff:cutter ;
+    a iff:class .
+iff:lasercutter rdfs:subClassOf iff:cutter;
+    a iff:class .
+iff:cutter rdfs:subClassOf iff:machine ;
+    a iff:class .
+iff:workpiece rdfs:subClassOf iff:entity ;
+    a iff:class .
+iff:filterCartridge rdfs:subClassOf iff:entity ;
+    a iff:class .
+iff:operationSchedule rdfs:subClassOf iff:linkedEntity ;
+    a iff:class .
+iff:maintenanceInterval rdfs:subClassOf iff:linkedEntity ;
+    a iff:class .
+iff:machineState a rdfs:class .
+iff:state_OFF a iff:machineState .
+iff:state_OFF iff:stateValidFor iff:filter, iff:cutter .
+iff:state_ON a iff:machineState  .
+iff:state_ON iff:stateValidFor iff:filter, iff:cutter .
+iff:state_PREPARING a iff:machineState  .
+iff:state_PREPARING iff:stateValidFor iff:cutter .
+iff:state_PROCESSING a iff:machineState  .
+iff:state_PROCESSING iff:stateValidFor iff:cutter .
+iff:state_CLEARING a iff:machineState .
+iff:state_CLEARING iff:stateValidFor iff:cutter .
+
+iff:state_ON rdfs:label "ON" .
+iff:state_OFF rdfs:label "OFF" .
+iff:state_PREPARING rdfs:label "PREPARING" .
+iff:state_PROCESSING rdfs:label "PROCESSING" .
+iff:state_CLEARING rdfs:label "ON" .
+iff:WC0 a iff:WC .
+iff:WC1 a iff:WC .
+iff:WC2 a iff:WC .
+iff:WC3 a iff:WC .
+iff:WC3 iff:moreExpensiveThan iff:WC2 .
+iff:WC2 iff:moreExpensiveThan iff:WC1 .
+iff:WC1 iff:moreExpensiveThan iff:WC0 .
+#iff:WC1 a rdf:Bag .
+iff:WC1 rdf:_n ("1.4301" "1.4302" "1.4303" "1.4304" "1.4305") .
+iff:WC2 rdf:_n ("1.3301" "1.3302" "1.3303" "1.3304" "1.3305") .
+iff:WC3 rdf:_n ("1.5301" "1.5302" "1.5303" "1.5304" "1.5305") .
+iff:Severity a rdfs:class .
+iff:severityWarning a iff:Severity .
+iff:severityWarning iff:severityCode 'warning' .
+iff:severityMajor a iff:Severity .
+iff:severityMajor iff:severityCode 'major' .
+iff:severityCritical a iff:Severity .
+iff:severityCritical iff:severityCode 'critical' .

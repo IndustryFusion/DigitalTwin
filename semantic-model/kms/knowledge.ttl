@@ -2,13 +2,18 @@ PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX iff: <https://industry-fusion.com/types/v0.9/>
 
+### Test classes
+iff:cutter_test rdfs:subClassOf iff:machine_test ;
+    a iff:class .
+iff:plasmacutter_test rdfs:subClassOf iff:cutter_test ;
+    a iff:class .
+### End of Test Content
+
 iff:entity a iff:class ;
     a rdfs:class .
 iff:machine a iff:class ; 
     a rdfs:class .
 iff:filter rdfs:subClassOf iff:machine ;
-    a iff:class .
-iff:filterCartridge rdfs:subClassOf iff:machine ;
     a iff:class .
 iff:plasmacutter rdfs:subClassOf iff:cutter ;
     a iff:class .
@@ -35,6 +40,8 @@ iff:state_PROCESSING a iff:machineState  .
 iff:state_PROCESSING iff:stateValidFor iff:cutter .
 iff:state_CLEARING a iff:machineState .
 iff:state_CLEARING iff:stateValidFor iff:cutter .
+iff:state_CLEANING a iff:machineState .
+iff:state_CLEANING iff:stateValidFor iff:filter .
 
 iff:state_ON rdfs:label "ON" .
 iff:state_OFF rdfs:label "OFF" .

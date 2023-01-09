@@ -50,15 +50,16 @@ def main():
                     {'customer': 'STRING'},
                     {'text': 'STRING'}]
     primary_key = ['resource', 'event']
-    kafka = {'topic': kafka_topic_listen_alerts,
-             'properties': {'bootstrap.servers': kafka_bootstrap},
-             'key.format': 'json'
-             }
+    kafka = {
+        'topic': kafka_topic_listen_alerts,
+        'properties': {'bootstrap.servers': kafka_bootstrap},
+        'key.format': 'json'
+    }
     value = {
-                'format': 'json',
-                'json.fail-on-missing-field': False,
-                'json.ignore-parse-errors': True
-            }
+        'format': 'json',
+        'json.fail-on-missing-field': False,
+        'json.ignore-parse-errors': True
+    }
 
     print('---', file=f)
     yaml.dump(utils.create_yaml_table(table_name, connector, table,
@@ -94,10 +95,10 @@ def main():
              'key.format': 'json'
              }
     value = {
-             'format': 'json',
-             'json.fail-on-missing-field': False,
-             'json.ignore-parse-errors': True
-            }
+        'format': 'json',
+        'json.fail-on-missing-field': False,
+        'json.ignore-parse-errors': True
+    }
 
     print('---', file=f)
     yaml.dump(utils.create_yaml_table(spec_name, connector, table,
@@ -117,15 +118,16 @@ def main():
              {'noForward': 'BOOLEAN'},
              {'entities': 'STRING'}]
     primary_key = None
-    kafka = {'topic': kafka_topic_ngsild_updates,
-             'properties': {'bootstrap.servers': kafka_bootstrap},
-             'scan.startup.mode': 'latest-offset'
-             }
+    kafka = {
+        'topic': kafka_topic_ngsild_updates,
+        'properties': {'bootstrap.servers': kafka_bootstrap},
+        'scan.startup.mode': 'latest-offset'
+    }
     value = {
-             'format': 'json',
-             'json.fail-on-missing-field': False,
-             'json.ignore-parse-errors': True
-            }
+        'format': 'json',
+        'json.fail-on-missing-field': False,
+        'json.ignore-parse-errors': True
+    }
 
     print('---', file=f)
     yaml.dump(utils.create_yaml_table(spec_name, connector, table,
@@ -149,15 +151,16 @@ def main():
              {'watermark': 'FOR `ts` AS `ts`'},
              {'ts': "TIMESTAMP(3) METADATA FROM 'timestamp'"}]
     primary_key = None
-    kafka = {'topic': kafka_topic_attributes,
-             'properties': {'bootstrap.servers': kafka_bootstrap},
-             'scan.startup.mode': 'earliest-offset'
-             }
+    kafka = {
+        'topic': kafka_topic_attributes,
+        'properties': {'bootstrap.servers': kafka_bootstrap},
+        'scan.startup.mode': 'earliest-offset'
+    }
     value = {
-             'format': 'json',
-             'json.fail-on-missing-field': False,
-             'json.ignore-parse-errors': True
-            }
+        'format': 'json',
+        'json.fail-on-missing-field': False,
+        'json.ignore-parse-errors': True
+    }
 
     print('---', file=f)
     yaml.dump(utils.create_yaml_table(table_name, connector, table,

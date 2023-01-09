@@ -61,6 +61,9 @@ def main(shaclfile, output_folder='output'):
             table.append({sq("ts"): "TIMESTAMP(3) METADATA FROM 'timestamp'"})
             table.append({sq("WATERMARK"): "FOR `ts` AS `ts`"})
 
+    # Kafka topic object for RDF
+    config = {}
+    config['retention.ms'] = configs.kafka_topic_ngsi_retention
     with open(os.path.join(output_folder, "ngsild.yaml"), "w") as f,\
             open(os.path.join(output_folder, "ngsild.sqlite"), "w") as sqlitef:
         for table_name, table in tables.items():
@@ -73,10 +76,10 @@ def main(shaclfile, output_folder='output'):
                      'scan.startup.mode': 'earliest-offset'
                      }
             value = {
-                        'format': 'json',
-                        'json.fail-on-missing-field': False,
-                        'json.ignore-parse-errors': True
-                    }
+                'format': 'json',
+                'json.fail-on-missing-field': False,
+                'json.ignore-parse-errors': True
+            }
             print('---', file=f)
             yaml.dump(utils.create_yaml_table(table_name, connector, table,
                                               primary_key, kafka, value), f)
@@ -86,6 +89,12 @@ def main(shaclfile, output_folder='output'):
             print('---', file=f)
             yaml.dump(utils.create_yaml_view(table_name, table), f)
             print(utils.create_sql_view(table_name, table), file=sqlitef)
+            print('---', file=f)
+            yaml.dump(utils.create_kafka_topic(f'{configs.kafka_topic_ngsi_prefix}.\
+{utils.class_to_obj_name(table_name)}',
+                                               f'{configs.kafka_topic_ngsi_prefix}.\
+{table_name}', configs.kafka_topic_object_label,
+                                               config), f)
 
 
 if __name__ == '__main__':

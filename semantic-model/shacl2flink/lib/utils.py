@@ -194,14 +194,14 @@ def create_statementset(object_name, table_object_names,
     return yaml_bsqls
 
 
-def create_kafka_topic(name, kafka_topic_object_label,
+def create_kafka_topic(object_name, topic_name, kafka_topic_object_label,
                        config, partitions=1, replicas=1):
     yaml_kafka_topics = {}
     yaml_kafka_topics['apiVersion'] = 'kafka.strimzi.io/v1beta2'
     yaml_kafka_topics['kind'] = 'KafkaTopic'
 
     metadata = {}
-    metadata['name'] = name
+    metadata['name'] = object_name
     labels = {}
     metadata['labels'] = labels
     labels[kafka_topic_object_label[0]] = kafka_topic_object_label[1]
@@ -211,6 +211,7 @@ def create_kafka_topic(name, kafka_topic_object_label,
     spec['partitions'] = partitions
     spec['replicas'] = replicas
     spec['config'] = config
+    spec['topicName'] = topic_name
     return yaml_kafka_topics
 
 
