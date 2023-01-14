@@ -147,3 +147,62 @@ spec:
          ORDER BY ts DESC) AS rownum
       FROM `attributes`)
       WHERE rownum = 1 and entityId is NOT NULL;
+---
+apiVersion: industry-fusion.com/v1alpha2
+kind: BeamSqlTable
+metadata:
+  name: attributes-insert
+spec:
+  name: attributes_insert
+  connector: upsert-kafka
+  fields:
+  - id: STRING
+  - entityId: STRING
+  - name: STRING
+  - nodeType: STRING
+  - valueType: STRING
+  - index: INTEGER
+  - type: STRING
+  - https://uri.etsi.org/ngsi-ld/hasValue: STRING
+  - https://uri.etsi.org/ngsi-ld/hasObject: STRING
+  kafka:
+    topic: iff.ngsild.attributes_insert
+    properties:
+      bootstrap.servers: my-cluster-kafka-bootstrap:9092
+    key.format: json
+  value:
+    format: json
+    json.fail-on-missing-field: false
+    json.ignore-parse-errors: true
+  primaryKey:
+  - id
+  - index
+---
+apiVersion: industry-fusion.com/v1alpha2
+kind: BeamSqlTable
+metadata:
+  name: attributes-insert-filter
+spec:
+  name: attributes_insert_filter
+  connector: kafka
+  fields:
+  - id: STRING
+  - entityId: STRING
+  - name: STRING
+  - nodeType: STRING
+  - valueType: STRING
+  - index: INTEGER
+  - type: STRING
+  - https://uri.etsi.org/ngsi-ld/hasValue: STRING
+  - https://uri.etsi.org/ngsi-ld/hasObject: STRING
+  - ts: TIMESTAMP(3) METADATA FROM 'timestamp'
+  - watermark: FOR `ts` AS `ts`
+  kafka:
+    topic: iff.ngsild.attributes_insert
+    properties:
+      bootstrap.servers: my-cluster-kafka-bootstrap:9092
+    scan.startup.mode: latest-offset
+  value:
+    format: json
+    json.fail-on-missing-field: false
+    json.ignore-parse-errors: true

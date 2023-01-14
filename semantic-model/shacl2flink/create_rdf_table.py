@@ -17,6 +17,7 @@
 import argparse
 import os.path
 import sys
+import math
 import hashlib
 import owlrl
 import ruamel.yaml
@@ -45,25 +46,33 @@ def create_table():
 def create_statementset(graph):
     """
     """
-    statementset = ''
-    first = True
+    statementsets = []
+    max_per_set = configs.rdf_max_per_set
+    num_sets = math.ceil(len(graph) / max_per_set)
+    for num in range(num_sets):
+        statementsets.append('')
     hash_counter = {}
+    num = 0
     for s, p, o in graph.triples((None, None, None)):
+        if isinstance(s, rdflib.Literal):
+            continue
+        index = math.floor(num / max_per_set)
         hash_object = hashlib.sha256(f'{s}{p}'.encode('utf-8'))
         hex_dig = hash_object.hexdigest()
         if hex_dig not in hash_counter:
             hash_counter[hex_dig] = 0
         else:
             hash_counter[hex_dig] += 1
-        if not first:
-            statementset += ",\n"
+        if not (num / max_per_set).is_integer():
+            statementsets[index] += ",\n"
         else:
-            first = False
-        statementset += "(" + "'" + s.toPython() + "', '" + p.toPython() + \
-                        "', '" + o.toPython() + "', " + \
-                        str(hash_counter[hex_dig]) + ")"
-    statementset += ";"
-    return statementset
+            pass
+        statementsets[index] += "(" + utils.format_node_type(s) + ", " + utils.format_node_type(p) + \
+                                ", " + utils.format_node_type(o) + ", " + str(hash_counter[hex_dig]) + ")"
+        num += 1
+    for num in range(num_sets):
+        statementsets[num] += ";"
+    return statementsets
 
 
 def main(knowledgefile, output_folder='output'):
@@ -89,18 +98,17 @@ def main(knowledgefile, output_folder='output'):
     primary_key = ['subject', 'predicate', 'index']
 
     # Create RDF statements to insert data
-    statementsets = []
     g = rdflib.Graph()
     g.parse(knowledgefile)
-    owlrl.RDFSClosure.RDFS_Semantics(g, axioms=True, daxioms=False,
-                                     rdfs=False).closure()
+    owlrl.OWLRLExtras.OWLRL_Extension(g, axioms=True, daxioms=True, rdfs=True).closure()
 
-    statementset = create_statementset(g)
-    sqlstatements = f'INSERT OR REPLACE INTO `{spec_name}` VALUES\n' + \
-                    statementset
-    statementset = f'INSERT INTO `{spec_name}` VALUES\n' + \
-                   statementset
-    statementsets.append(statementset)
+    statementsets = create_statementset(g)
+    sqlstatements = ''
+    for statementset in statementsets:
+        sqlstatements += f'INSERT OR REPLACE INTO `{spec_name}` VALUES\n' + \
+                         statementset
+    statementsets = list(map(lambda statementset: f'INSERT INTO `{spec_name}` VALUES\n' +
+                             statementset, statementsets))
 
     # Kafka topic object for RDF
     config = {}
@@ -116,9 +124,12 @@ def main(knowledgefile, output_folder='output'):
         fp.write('---\n')
         yaml.dump(utils.create_yaml_table(table_name, connector, table,
                   primary_key, kafka, value), fp)
-        fp.write("---\n")
-        yaml.dump(utils.create_statementset('rdf-statements', [table_name],
-                  [], statementsets), fp)
+        num = 0
+        for statementset in statementsets:
+            num += 1
+            fp.write("---\n")
+            yaml.dump(utils.create_statementset('rdf-statements' + str(num), [table_name],
+                                                [], [statementset]), fp)
         fp.write("---\n")
         yaml.dump(utils.create_kafka_topic(utils.class_to_obj_name(
                                            configs.rdf_topic),

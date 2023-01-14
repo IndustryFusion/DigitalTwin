@@ -36,7 +36,11 @@ def test_create_table():
 
 
 @patch('create_rdf_table.hashlib')
-def test_create_statementset(mock_hashlib):
+@patch('create_rdf_table.configs')
+@patch('create_rdf_table.utils')
+def test_create_statementset(mock_utils, mock_configs, mock_hashlib):
+    def format_node_type(x):
+        return x.toPython()
     graph = MagicMock()
     s = MagicMock()
     p = MagicMock()
@@ -46,12 +50,17 @@ def test_create_statementset(mock_hashlib):
     o.toPython.return_value = 'o'
     hash_object = mock_hashlib.sha256.return_value
     hash_object.hex_dig.return_value = 'ABCDEF'
+    max_per_set = 1
+    mock_configs.rdf_max_per_set = max_per_set
+    mock_utils.format_node_type = format_node_type
     graph.triples.return_value = [(s, p, o)]
+    graph.__len__.return_value = max_per_set
     statementset = create_rdf_table.create_statementset(graph)
-    assert statementset == "('s', 'p', 'o', 0);"
+    assert statementset == ['(s, p, o, 0);']
+    graph.__len__.return_value = max_per_set + 1
     graph.triples.return_value = [(s, p, o), (s, p, o)]
     statementset = create_rdf_table.create_statementset(graph)
-    assert statementset == "('s', 'p', 'o', 0),\n('s', 'p', 'o', 1);"
+    assert statementset == ['(s, p, o, 0);', '(s, p, o, 1);']
 
 
 @patch('create_rdf_table.ruamel.yaml')

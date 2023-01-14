@@ -6,7 +6,7 @@
     "https://industry-fusion.com/types/v0.9/state": {
       "type": "Property",
       "value": {
-        "@id": "https://industry-fusion.com/types/v0.9/state_ON"
+        "@id": "https://industry-fusion.com/types/v0.9/state_PROCESSING"
       }
     },
     "https://industry-fusion.com/types/v0.9/hasWorkpiece": {
@@ -119,18 +119,10 @@
     "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
     "id": "urn:filterCartridge:1",
     "type": "https://industry-fusion.com/types/v0.9/filterCartridge",
-    "https://industry-fusion.com/types/v0.9/inUseFrom": {
-      "type": "Property",
-      "value": "2021-10-25 13:51:51.0"
-    },
-    "https://industry-fusion.com/types/v0.9/inUseUntil": {
-      "type": "Property",
-      "value": "2021-10-25 13:54:55.4"
-    },
     "https://industry-fusion.com/types/v0.9/wasteClass": {
       "type": "Property",
       "value": {
-        "@id": "https://industry-fusion.com/types/v0.9/WC0"
+        "@id": "https://industry-fusion.com/types/v0.9/WC2"
       }
     }
   },
