@@ -1,4 +1,5 @@
 ---
+{{- if .Values.minio.enabled }}
 {{- $secret := (lookup "v1" "Secret" .Release.Namespace "minio-user") -}}
 apiVersion: batch/v1
 kind: Job
@@ -24,3 +25,4 @@ spec:
         command: ["/bin/bash", "-c", "echo $MC_HOST_IFF; mc mb -p iff/{{ .Values.db.backupBucket }}"]
       restartPolicy: Never
   backoffLimit: 4
+{{- end }}

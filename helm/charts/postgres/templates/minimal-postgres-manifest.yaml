@@ -1,5 +1,8 @@
 ---
-{{- $secret := (lookup "v1" "Secret" .Release.Namespace "minio-user") -}}
+{{- $secret := dict "" }}
+{{- if .Values.minio.enabled }}
+  {{- $secret = (lookup "v1" "Secret" .Release.Namespace "minio-user") -}}
+{{- end }}
 apiVersion: "acid.zalan.do/v1"
 kind: postgresql
 metadata:
@@ -7,20 +10,21 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   env:
-  - name: AWS_ACCESS_KEY_ID
-    value: {{ .Values.s3.userAccessKey }}
-  - name: AWS_ENDPOINT
-    value: {{ printf "%s://%s" .Values.s3.protocol .Values.s3.endpoint }}
   - name: AWS_SECRET_ACCESS_KEY
-    {{- if $secret }}
+# NOTE: This env value must be index 0 - see above the lookup
+    {{- if and .Values.minio.enabled (hasKey $secret "data") }}
     value: {{ $secret.data.CONSOLE_SECRET_KEY | b64dec }}
     {{- else }}
     value: {{ .Values.s3.userSecretKey }}
     {{- end }}
+  - name: AWS_ACCESS_KEY_ID
+    value: {{ .Values.s3.userAccessKey }}
+  - name: AWS_ENDPOINT
+    value: {{ printf "%s://%s" .Values.s3.protocol .Values.s3.endpoint }}
   - name: USE_WALG_BACKUP
     value: "true"
   - name: USE_WALG_RESTORE
-    value: "ture"
+    value: "true"
   - name: WALG_S3_PREFIX
     value: s3://{{ .Values.db.backupBucket }}
   - name: BACKUP_NUM_RETAIN
@@ -49,7 +53,7 @@ spec:
     timestamp: {{ .Values.db.cloneTimeStamp }}
     s3_wal_path: s3://{{ .Values.db.backupBucket }}
     s3_endpoint: {{ printf "%s://%s" .Values.s3.protocol .Values.s3.endpoint }}
-    {{- if $secret }}
+    {{- if and .Values.minio.enabled (hasKey $secret "data") }}
     s3_secret_access_key: {{ $secret.data.CONSOLE_SECRET_KEY | b64dec }}
     {{- else }}
     s3_secret_access_key: {{ .Values.s3.userSecretKey }}
