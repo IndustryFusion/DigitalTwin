@@ -48,6 +48,12 @@ dbUsers:
   - createdb
   - replication
   - bypassrls
+  oisp:
+  - superuser
+  - createrole
+  - createdb
+  - replication
+  - bypassrls
 
 ## Databases; corresponding DB owner must be specified above
 ##
