@@ -80,7 +80,7 @@ async fn main() {
             }
             Some(Input::KeyDC) => break,
             Some(input) => {
-                window.addstr(&format!("{:?}", input));
+                window.addstr(format!("{:?}", input));
             }
             None => (),
         }
