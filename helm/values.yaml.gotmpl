@@ -5,6 +5,7 @@ pullSecretCredentials: {{ .StateValues.pullSecretCredentials }}
 
 ingressType: {{ .StateValues.ingressType }}
 dbpassword: {{ .StateValues.dbpassword }}
+oispdbPassword: {{ .StateValues.oispdbPassword }}
 clusterSvcName: {{ .StateValues.db.teamId -}}-{{- .StateValues.db.clusterSvcPostfix }}
 clusterExternalSvcName: {{ .StateValues.db.teamId -}}-{{- .StateValues.db.clusterSvcPostfix }}.{{ .StateValues.namespace }}.svc.cluster.local
 minioAdminSecretKey: {{ .StateValues.minioAdminSecretKey }}
@@ -20,6 +21,7 @@ db:
   podInstances: {{ .StateValues.db.podInstances }}
   alertaDb: monitoring
   dbUser: {{ .StateValues.db.dbUser }}
+  oispdbUser: {{ .StateValues.db.oispdbUser }}
   scorpioDb: ngb
   secretPostfix: credentials.postgresql.acid.zalan.do
   backupBucket: {{ .StateValues.db.backupBucket }}

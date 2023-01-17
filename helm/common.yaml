@@ -8,3 +8,4 @@ db:
   clusterSvcPostfix: cluster
   svcPort: "5432"
   dbUser: "ngb"
+  oispdbUser: "oisp"
