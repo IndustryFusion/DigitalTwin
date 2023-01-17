@@ -425,7 +425,7 @@ spec:
         {{ if $alertasecret }}
         secret: {{ $alertasecret.data.CLIENT_SECRET | b64dec }}
         {{ else }}
-        secret: {{ .Values.alertaClientSecret }}
+        secret: {{ .Values.keycloak.alerta.clientSecret }}
         {{ end }}
       - id: c77ee348-a359-4198-8c18-d0110577c00a
         clientId: {{ .Values.keycloak.scorpio.client }}
@@ -470,7 +470,7 @@ spec:
         {{ if $oispfrontendsecret }}
         secret: {{ $oispfrontendsecret.data.CLIENT_SECRET | b64dec }}
         {{ else }}
-        secret: {{ .Values.oispFrontendClientSecret }}
+        secret: {{ .Values.keycloak.oisp.frontend.clientSecret }}
         {{ end }}
       - id: 56707dab-c91b-4c6e-99b8-718b29d7506d
         clientId: {{ .Values.keycloak.oisp.mqttBroker.client }}
@@ -488,7 +488,7 @@ spec:
         {{ if $mqttbrokersecret }}
         secret: {{ $mqttbrokersecret.data.CLIENT_SECRET | b64dec }}
         {{ else }}
-        secret: {{ .Values.mqttBrokerClientSecret }}
+        secret: {{ .Values.keycloak.oisp.mqttBroker.clientSecret }}
         {{ end }}
       - id: e306ad59-af6f-4047-a62b-6f014129eb02
         clientId: {{ .Values.keycloak.oisp.fusionBackend.client }}
@@ -506,7 +506,7 @@ spec:
         {{ if $fusionbackendsecret }}
         secret: {{ $fusionbackendsecret.data.CLIENT_SECRET | b64dec }}
         {{ else }}
-        secret:  {{ .Values.fusionBackendClientSecret }}
+        secret:  {{ .Values.keycloak.oisp.fusionBackend.clientSecret }}
         {{ end }}
       - id: 9bc22f4d-c6d6-4dec-9620-a02a33dc19af
         clientId: {{ .Values.keycloak.oisp.fusionFrontend.client }}
@@ -590,6 +590,9 @@ spec:
           - id: 617d3f63-7067-4da6-b8aa-8cfe8a9a926f
             name: uma_protection
             clientRole: true
+    defaultRoles:
+      - uma_authorization
+      - offline_access
     users:
       - id: 542f92bb-6f7c-485c-bb21-8e3da1eb1d87
         username: {{ .Values.keycloak.realmTestUser.username }}
