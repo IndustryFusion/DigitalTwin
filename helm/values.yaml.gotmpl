@@ -89,11 +89,11 @@ minio:
 s3:
   {{- $s3 := dict "" }}
   {{- $protocol := "http" }}
-  {{- if (hasKey .StateValues "s3") }}{{- $s3 := .StateValues.s3 }}{{- end }}
-  protocol: {{- if (hasKey $s3 "protocol") -}}{{- quote $s3.protocol }}{{- else }} http {{- end }}
-  endpoint: {{ if (hasKey $s3 "endpoint") }}{{- quote $s3.endpoint }}{{- else }} minio {{- end }}
-  userAccessKey: {{- if (hasKey $s3 "userAccessKey") }}{{- quote $s3.userAccessKey }}{{- else }} minio {{- end }}
-  userSecretKey: {{- if (hasKey $s3 "userSecretKey") }}{{- quote $s3.userSecretKey }}{{- else }} "{{ .StateValues.minioUserSecretKey }}" {{- end }}
+  {{- if (hasKey .StateValues "s3") }}{{- $s3 = .StateValues.s3 }}{{- end }}
+  protocol: {{- if (hasKey $s3 "protocol") }} {{ quote $s3.protocol }} {{- else }} http {{- end }}
+  endpoint: {{ if (hasKey $s3 "endpoint") }}{{ quote $s3.endpoint }}{{- else }} minio {{- end }}
+  userAccessKey: {{ if (hasKey $s3 "userAccessKey") }}{{ quote $s3.userAccessKey }}{{- else }} minio {{- end }}
+  userSecretKey: {{ if (hasKey $s3 "userSecretKey") }}{{ quote $s3.userSecretKey }}{{- else }} "{{ .StateValues.minioUserSecretKey }}" {{- end }}
 
 alerta:
   externalHostname: {{ .StateValues.alerta.externalHostname }}

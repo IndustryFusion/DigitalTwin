@@ -1,4 +1,7 @@
-{{- $secret := (lookup "v1" "Secret" .Release.Namespace "minio-user") -}}
+{{- $secret := "" }}
+{{- if .Values.minio.enabled }}
+  {{- $secret = (lookup "v1" "Secret" .Release.Namespace "minio-user") -}}
+{{- end }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
