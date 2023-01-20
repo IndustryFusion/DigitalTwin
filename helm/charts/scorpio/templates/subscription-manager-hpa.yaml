@@ -1,3 +1,4 @@
+{{- if not .Values.aaio.enabled }}
 {{- if and .Values.SubscriptionManager.enabled .Values.SubscriptionManager.hpa.enabled .Values.scorpio.hpa.enabled }}
 apiVersion: autoscaling/v1
 kind: HorizontalPodAutoscaler
@@ -12,4 +13,5 @@ spec:
  minReplicas: {{ .Values.SubscriptionManager.hpa.minReplicas }}
  maxReplicas: {{ .Values.SubscriptionManager.hpa.maxReplicas }}
  targetCPUUtilizationPercentage: {{ .Values.SubscriptionManager.hpa.targetCPUUtilizationPercentage }}
+{{- end }}
 {{- end }}

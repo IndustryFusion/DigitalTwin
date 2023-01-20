@@ -16,10 +16,39 @@
 
 # use specific k3s image to avoid surprises with k8s api changes
 K3S_IMAGE=rancher/k3s:v1.22.6-k3s1-amd64
+CURR_DIR=$(pwd)
+SCRIPT_PATH=$(realpath $0)
 
+printf "\033[1mInstalling docker\n"
+printf -- "-----------------\033[0m\n"
+sudo apt -qq update
+sudo apt-get -qq install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+sudo apt -qq update
+sudo apt-get install -y docker-ce=5:19.03.15~3-0~ubuntu-$(lsb_release -cs) docker-ce-cli=5:19.03.15~3-0~ubuntu-$(lsb_release -cs) containerd.io
+printf "\033[1mSuccessfully installed %s\033[0m\n" "$(docker --version)"
+printf "\n"
+
+if [[ -z $(groups | grep docker) ]];
+then
+    sudo usermod -a -G docker $USER;
+    echo "$USER has been added to the docker group.";
+    echo "Script is being restarted for changes to take effect.";
+    sudo -u $USER /bin/bash $SCRIPT_PATH;
+    exit;
+fi;
+
+printf "\033[1mInstalling docker-compose\n"
+printf -- "-----------------\033[0m\n"
+sudo curl -L "https://github.com/docker/compose/releases/download/1.26.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/bin/docker-compose
+sudo chmod +x /usr/bin/docker-compose
+printf "\033[1mSuccessfully installed docker-compose %s\033[0m\n"
+printf "\n"
 
 echo Installing kubectl
 echo ----------------------
+sudo apt -qq install snapd
 sudo snap install kubectl --classic
 
 echo Installing K3d cluster
@@ -47,10 +76,26 @@ cd ../helm || exit 1
 wget https://github.com/roboll/helmfile/releases/download/v0.143.0/helmfile_linux_amd64
 chmod u+x helmfile_linux_amd64
 
-echo Install Java 11
+echo Install Java 17
 echo ---------------
 sudo apt update
-sudo apt install -yq default-jre maven
+sudo apt install openjdk-17-jdk openjdk-17-jre
+
+echo Installing maven
+echo ----------------------
+wget https://dlcdn.apache.org/maven/maven-3/3.8.7/binaries/apache-maven-3.8.7-bin.tar.gz
+tar -xzf apache-maven-3.8.7-bin.tar.gz
+sudo mv apache-maven-3.8.7 /opt/
+rm apache-maven-3.8.7-bin.tar.gz
+touch maven.sh
+sudo chmod 775 /etc/profile.d/maven.sh
+echo 'M2_HOME='/opt/apache-maven-3.8.7'
+PATH="$M2_HOME/bin:$PATH"
+export PATH' >> maven.sh
+sudo mv maven.sh /etc/profile.d/
+source /etc/profile.d/maven.sh
+mvn --version
+
 
 echo Install shellcheck
 echo ------------------

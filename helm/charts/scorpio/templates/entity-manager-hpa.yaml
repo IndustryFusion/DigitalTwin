@@ -1,3 +1,4 @@
+{{- if not .Values.aaio.enabled }}
 {{- if and .Values.EntityManager.enabled .Values.EntityManager.hpa.enabled .Values.scorpio.hpa.enabled }}
 apiVersion: autoscaling/v1
 kind: HorizontalPodAutoscaler
@@ -12,4 +13,5 @@ spec:
  minReplicas: {{ .Values.EntityManager.hpa.minReplicas }}
  maxReplicas: {{ .Values.EntityManager.hpa.maxReplicas }}
  targetCPUUtilizationPercentage: {{ .Values.EntityManager.hpa.targetCPUUtilizationPercentage }}
+{{- end }}
 {{- end }}

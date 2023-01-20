@@ -36,6 +36,19 @@ kafka_vars:
 imageCredentials:
   name: regcred
 
+## AAIO
+aaio:
+  enabled: true
+  name: scorpio-aaio
+
+  replicas: 1
+
+  image:
+    repository: ibn40/digitaltwin
+    pullPolicy: Always
+    tag: scorpio-all-in-one-runner_3.0.0-SNAPSHOT
+  resources: {}
+
 ################################### SpringArgs #######################################################################
 springArgs:
   overrideSpringArgs: false

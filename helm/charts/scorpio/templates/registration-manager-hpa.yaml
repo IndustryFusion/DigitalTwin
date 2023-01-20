@@ -1,3 +1,4 @@
+{{- if not .Values.aaio.enabled }}
 {{- if and .Values.RegistryManager.enabled .Values.RegistryManager.hpa.enabled .Values.scorpio.hpa.enabled }}
 apiVersion: autoscaling/v1
 kind: HorizontalPodAutoscaler
@@ -12,4 +13,5 @@ spec:
  minReplicas: {{ .Values.RegistryManager.hpa.minReplicas }}
  maxReplicas: {{ .Values.RegistryManager.hpa.maxReplicas }}
  targetCPUUtilizationPercentage: {{ .Values.RegistryManager.hpa.targetCPUUtilizationPercentage }}
+{{- end }}
 {{- end }}

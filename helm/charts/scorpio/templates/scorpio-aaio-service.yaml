@@ -1,0 +1,17 @@
+{{- if .Values.aaio.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    service: {{ .Values.aaio.name }}
+  name: {{ .Values.aaio.name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  ports:
+  - name: "9090"
+    port: 9090
+    targetPort: 9090
+  selector:
+    service: {{ .Values.aaio.name }}
+status: {}
+{{- end }}

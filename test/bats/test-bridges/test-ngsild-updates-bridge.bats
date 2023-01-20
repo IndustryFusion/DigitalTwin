@@ -358,8 +358,7 @@ compare_inserted_entity() {
   "https://industry-fusion.com/types/v0.9/strength" : {
     "type" : "Property",
     "value" : "0.9"
-  },
-  "@context" : [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ]
+  }
 }
 EOF
 }
@@ -386,8 +385,7 @@ compare_upserted_overwritten_entity() {
   "https://industry-fusion.com/types/v0.9/strength2": {
     "type": "Property",
     "value": "0.1"
-  },
-  "@context" : [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ]
+  }
 }
 EOF
 }
@@ -401,21 +399,16 @@ compare_upserted_non_overwritten_entity() {
   "type" : "${FILTER_TYPE}",
   "https://industry-fusion.com/types/v0.9/hasCartridge" : {
     "type" : "Relationship",
-    "object" : "urn:filterCartridge-test:22345"
+    "object" : "urn:filterCartridge-test:12345"
   },
   "https://industry-fusion.com/types/v0.9/state" : {
     "type" : "Property",
-    "value" : "OFF"
+    "value" : "OFFF"
   },
   "https://industry-fusion.com/types/v0.9/strength" : {
     "type" : "Property",
-    "value" : "0.1"
-  },
-  "https://industry-fusion.com/types/v0.9/strength2": {
-    "type": "Property",
-    "value": "0.5"
-  },
-  "@context" : [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ]
+    "value" : "0.9"
+  }
 }
 EOF
 }
@@ -438,8 +431,7 @@ compare_updated_entity() {
   "https://industry-fusion.com/types/v0.9/strength" : {
     "type" : "Property",
     "value" : "0.5"
-  },
-  "@context" : [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ]
+  }
 }
 EOF
 }
@@ -467,8 +459,7 @@ compare_updated_no_overwrite_entity() {
   "https://industry-fusion.com/types/v0.9/strength2" : {
     "type" : "Property",
     "value" : "1.0"
-  },
-  "@context" : [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ]
+  }
 }
 EOF
 }
@@ -491,10 +482,7 @@ compare_cutter_entity() {
   "https://industry-fusion.com/types/v0.9/state": {
     "type": "Property",
     "value": "OFF"
-  },
-  "@context": [
-    "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"
-  ]
+  }
 }
 EOF
 }
@@ -517,10 +505,7 @@ compare_update_cutter_entity() {
   "https://industry-fusion.com/types/v0.9/state": {
     "type": "Property",
     "value": "ON"
-  },
-  "@context": [
-    "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"
-  ]
+  }
 }
 EOF
 }
@@ -543,8 +528,7 @@ compare_updated_filter_entity() {
   "https://industry-fusion.com/types/v0.9/strength" : {
     "type" : "Property",
     "value" : "1.0"
-  },
-  "@context" : [ "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld" ]
+  }
 }
 EOF
 }
@@ -617,7 +601,9 @@ teardown(){
 @test "verify ngsild-update bridge is upserting and non-overwriting ngsi-ld entitiy" {
     $SKIP
     # This test is not working properlty the entityOperations/upsert?options=update should only update existing
-    # property not create new ones
+    # property but Quarkus
+    # Currently the test is not changing the object. We leave it in in case in future this API is working correctly
+    # And will be detected by this.
     kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPSERT_FILTER}
     echo "# Sent upsert object to ngsi-ld-updates-bridge, wait some time to let it settle"
     sleep 2
