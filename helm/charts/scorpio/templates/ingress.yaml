@@ -30,7 +30,11 @@ spec:
       paths:
       - backend:
           service:
+            {{- if .Values.aaio.enabled }}
+            name: scorpio-aaio
+            {{- else }}
             name: {{ .Values.scorpio.internalHostname }}
+            {{- end }}
             port:
               number: {{ .Values.scorpio.internalPort }}
         {{- if (eq .Values.ingressType "nginx") }}

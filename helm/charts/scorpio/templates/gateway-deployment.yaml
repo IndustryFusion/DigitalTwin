@@ -1,3 +1,4 @@
+{{- if not .Values.aaio.enabled }}
 {{- if .Values.gateway.enabled }}
 apiVersion: apps/v1
 kind: Deployment
@@ -74,4 +75,5 @@ spec:
       imagePullSecrets:
         - name: {{ .Values.imageCredentials.name }}
 status: {}
+{{- end }}
 {{- end }}

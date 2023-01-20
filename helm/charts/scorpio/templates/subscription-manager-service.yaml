@@ -1,3 +1,4 @@
+{{- if not .Values.aaio.enabled }}
 {{- if .Values.SubscriptionManager.enabled }}
 apiVersion: v1
 kind: Service
@@ -14,4 +15,5 @@ spec:
   selector:
     service: {{ .Values.SubscriptionManager.name }}
 status: {}
+{{- end }}
 {{- end }}

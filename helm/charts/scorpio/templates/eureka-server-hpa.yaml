@@ -1,3 +1,4 @@
+{{- if not .Values.aaio.enabled }}
 {{- if and .Values.eureka.enabled .Values.eureka.hpa.enabled .Values.scorpio.hpa.enabled }}
 apiVersion: autoscaling/v1
 kind: HorizontalPodAutoscaler
@@ -12,4 +13,5 @@ spec:
  minReplicas: {{ .Values.eureka.hpa.minReplicas }}
  maxReplicas: {{ .Values.eureka.hpa.maxReplicas }}
  targetCPUUtilizationPercentage: {{ .Values.eureka.hpa.targetCPUUtilizationPercentage }}
+{{- end }}
 {{- end }}

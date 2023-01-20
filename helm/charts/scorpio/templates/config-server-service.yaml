@@ -1,3 +1,4 @@
+{{- if not .Values.aaio.enabled }}
 {{- if .Values.ConfigServer.enabled }}
 apiVersion: v1
 kind: Service
@@ -15,4 +16,4 @@ spec:
     service: {{ .Values.ConfigServer.name }}
 status: {}
 {{- end }}
-
+{{- end }}
