@@ -175,9 +175,12 @@ keycloak:
     - http://{{ .StateValues.alerta.externalHostname }}{{ .StateValues.alerta.externalPath }}*
     - https://{{ .StateValues.alerta.externalHostname }}{{ .StateValues.alerta.externalPath }}*
     defaultClientScopes:
+    - oisp-frontend
+    - offline_access
     - openid
     - profile
     - email
+    - type
     - roles
   scorpio:
     realm: iff
