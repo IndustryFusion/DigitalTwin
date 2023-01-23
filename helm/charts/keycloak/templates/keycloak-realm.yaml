@@ -443,6 +443,9 @@ spec:
         defaultClientScopes:
         - roles
         - factory-admin
+        - oisp-frontend
+        - type
+        - offline_access
         {{ if $ngsildupdatessecret }}
         secret: {{ $ngsildupdatessecret.data.CLIENT_SECRET | b64dec }}
         {{ else }}
@@ -477,6 +480,7 @@ spec:
         publicClient: false
         directAccessGrantsEnabled: true
         defaultClientScopes:
+          - oisp-frontend
           - role_list
           - profile
           - roles
@@ -496,6 +500,8 @@ spec:
         serviceAccountsEnabled: true
         authorizationServicesEnabled: true
         defaultClientScopes:
+          - oisp-frontend
+          - offline_access
           - profile
           - role_list
           - roles
@@ -531,6 +537,8 @@ spec:
               claim.name: IF_COMPANY
               jsonType.label: long
         defaultClientScopes:
+          - oisp-frontend
+          - offline_access
           - role_list
           - profile
           - roles
