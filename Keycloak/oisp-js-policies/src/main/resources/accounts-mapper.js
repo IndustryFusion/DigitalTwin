@@ -23,7 +23,12 @@
  * keycloakSession - the current keycloakSession
  */
 
-// nashorn http client taken from: https://gist.github.com/billybong/a462152889b6616deb02
+var HttpGet = Java.type("org.apache.http.client.methods.HttpGet");
+var HttpClientBuilder = Java.type("org.apache.http.impl.client.HttpClientBuilder");
+var RequestConfig = Java.type("org.apache.http.client.config.RequestConfig");
+var EntityUtils = Java.type("org.apache.http.util.EntityUtils");
+
+var TIMEOUT = 5 * 1000;
 var LEGACY_UID = "legacy_app_uid";
 var USER = "user";
 var DEVICE = "device";
@@ -33,29 +38,34 @@ var SECRET = java.lang.System.getenv("OISP_FRONTEND_SECRET");
 var placeholder = "placeholder@placeholder.org";
 var placeholderActivationCode = 'placeholder';
 
-function read(inputStream) {
-    var inReader = new java.io.BufferedReader(new java.io.InputStreamReader(inputStream));
-    var inputLine;
-    var response = new java.lang.StringBuffer();
-
-    while ((inputLine = inReader.readLine()) !== null) {
-        response.append(inputLine);
-        inReader.close();
-        return response.toString();
+function httpGet(url) {
+    var ret = { data: "[]", statusCode: 500 };
+    var config = RequestConfig.custom()
+        .setConnectTimeout(TIMEOUT)
+        .setConnectionRequestTimeout(TIMEOUT)
+        .setSocketTimeout(TIMEOUT)
+        .build();
+    var httpClient = HttpClientBuilder.create().setDefaultRequestConfig(config).build();
+    try {
+        var request = new HttpGet(url);
+        request.addHeader("Authorization", "Basic " + SECRET);
+        var response = httpClient.execute(request);
+        try {
+            var responseCode = response.getStatusLine().getStatusCode();
+            var entity = response.getEntity();
+            if (entity) {
+                var result = EntityUtils.toString(entity);
+                ret = { data: result, statusCode: responseCode };
+            }
+         } catch(err) {
+            print("Error Response: Can't get accounts - ", err);
+        }
+        response.close();
+    } catch(err) {
+        print("Error Http Client: Can't get accounts - ", err);
     }
-}
-
-function asResponse(con) {
-    var d = read(con.inputStream);
-
-    return {data : d, statusCode : con.responseCode};
-}
-
-function httpGet(theUrl){
-    var con = new java.net.URL(theUrl).openConnection();
-    con.requestMethod = "GET";
-    con.setRequestProperty("Authorization", "Basic " + SECRET);
-    return asResponse(con);
+    httpClient.close();
+    return ret;
 }
 
 var accessType = keycloakSession.getContext().getRequestHeaders()
@@ -91,4 +101,5 @@ if (accessType && accessType === DEVICE) {
 }
 
 var res = httpGet(path);
+print("Accounts for: ", path, " - ", JSON.stringify(res));
 exports = res.data;

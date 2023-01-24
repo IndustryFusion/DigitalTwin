@@ -25,7 +25,7 @@ RUN cp /modules/oisp-event-listener/target/oisp-event-listener.jar /deployments/
 
 WORKDIR /modules/oisp-js-policies
 RUN mvn clean package
-RUN cp ./target/oisp-js-policies.jar ./target/nashorn-core-15.3.jar ./target/asm-7.3.1.jar ./target/asm-util-7.3.1.jar ./target/asm-commons-7.3.1.jar /deployments
+RUN cp ./target/oisp-js-policies.jar ./target/nashorn-core-15.3.jar ./target/asm-7.3.1.jar ./target/asm-util-7.3.1.jar ./target/asm-commons-7.3.1.jar ./target/httpclient-4.5.11.jar /deployments
 
 COPY --from=keycloak-themes-builder --chown=1000 /themes /themes
 WORKDIR /themes
@@ -41,6 +41,7 @@ COPY --from=keycloak-modules-builder --chown=1000 /deployments/nashorn-core-15.3
 COPY --from=keycloak-modules-builder --chown=1000 /deployments/asm-7.3.1.jar /opt/keycloak/providers/asm-7.3.1.jar
 COPY --from=keycloak-modules-builder --chown=1000 /deployments/asm-util-7.3.1.jar /opt/keycloak/providers/asm-util-7.3.1.jar
 COPY --from=keycloak-modules-builder --chown=1000 /deployments/asm-commons-7.3.1.jar /opt/keycloak/providers/asm-commons-7.3.1.jar
+COPY --from=keycloak-modules-builder --chown=1000 /deployments/httpclient-4.5.11.jar /opt/keycloak/providers/httpclient-4.5.11.jar
 COPY --from=keycloak-modules-builder --chown=1000 /deployments/oisp-js-policies.jar /opt/keycloak/providers/oisp-js-policies.jar
 
 RUN /opt/keycloak/bin/kc.sh build --db=postgres

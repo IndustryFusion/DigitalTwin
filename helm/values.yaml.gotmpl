@@ -176,6 +176,7 @@ keycloak:
     - https://{{ .StateValues.alerta.externalHostname }}{{ .StateValues.alerta.externalPath }}*
     defaultClientScopes:
     - oisp-frontend
+    - accounts
     - offline_access
     - openid
     - profile
