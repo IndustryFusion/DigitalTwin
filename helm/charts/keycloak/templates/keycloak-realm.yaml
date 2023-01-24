@@ -441,11 +441,12 @@ spec:
         publicClient: False
         serviceAccountsEnabled: True
         defaultClientScopes:
-        - roles
-        - factory-admin
-        - oisp-frontend
-        - type
-        - offline_access
+          - roles
+          - factory-admin
+          - oisp-frontend
+          - accounts
+          - type
+          - offline_access
         {{ if $ngsildupdatessecret }}
         secret: {{ $ngsildupdatessecret.data.CLIENT_SECRET | b64dec }}
         {{ else }}
@@ -625,6 +626,8 @@ spec:
             - "manage-users"
           {{ .Values.keycloak.scorpio.client }}:
             - Factory-Admin
+          {{ .Values.keycloak.oisp.frontend.client }}:
+            - "user"
       - id: 8a561605-7b80-44b8-aa65-4368e292a60f
         username: service-account-fusion-backend
         createdTimestamp: 1614222112374
