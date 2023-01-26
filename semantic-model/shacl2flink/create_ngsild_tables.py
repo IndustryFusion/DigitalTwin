@@ -45,8 +45,7 @@ def main(shaclfile, output_folder='output'):
         for _, _, target_class in g.triples((s, sh.targetClass, None)):
             if (s, sh.property, None) not in g:
                 break
-            a = urlparse(target_class)
-            stripped_class = os.path.basename(a.path)
+            stripped_class = utils.strip_class(target_class.toPython())
             if stripped_class not in tables:
                 table = []
                 tables[stripped_class] = table

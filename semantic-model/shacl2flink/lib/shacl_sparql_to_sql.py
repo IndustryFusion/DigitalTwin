@@ -114,8 +114,7 @@ def translate(shaclfile, knowledgefile):
     h.parse(knowledgefile)
     g += h
     owlrl.RDFSClosure.RDFS_Semantics(g, axioms=False, daxioms=False, rdfs=False).closure()
-    tables = [alerts_bulk_table_object, configs.attributes_table_obj_name, configs.rdf_table_obj_name]
-    views = [configs.attributes_view_obj_name]
+    tables = []
     statementsets = []
     sqlite = ''
     # Get all NGSI-LD Relationship
@@ -151,10 +150,12 @@ def translate(shaclfile, knowledgefile):
         sql_command_yaml += ";"
         sqlite += sql_command_sqlite
         statementsets.append(sql_command_yaml)
+
     views = []
     tables = list(set(tables))
     for table in tables:
-        views.append(f'{table}-view')
+        if table != configs.rdf_table_obj_name:
+            views.append(f'{table}-view')
     tables.append(alerts_bulk_table_object)
     tables.append(configs.rdf_table_name)
     return sqlite, (statementsets, tables, views)

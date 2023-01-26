@@ -216,8 +216,22 @@ def create_kafka_topic(object_name, topic_name, kafka_topic_object_label,
 
 
 def strip_class(klass):
-    a = urlparse(klass)
-    return os.path.basename(a.path)
+    """strip off baseclass
+    e.g. http://addr/klass => klass
+         http://addr/path#klass => klass
+
+    Args:
+        klass (string): url to strip off the baseclass
+
+    Returns:
+        string: stripped url
+    """
+    parsed = urlparse(klass)
+    result =  os.path.basename(parsed.path)
+    if parsed.fragment is not None and parsed.fragment != '':
+        result = parsed.fragment
+
+    return result
 
 
 def create_output_folder(path='output'):
