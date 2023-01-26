@@ -24,10 +24,15 @@ const rewire = require('rewire');
 const toTest = rewire('../debeziumBridge/app.js');
 
 describe('Test GetTopic', function () {
-  it('Should return last part of url', async function () {
+  it('Should return last part of url path', async function () {
     const getTopic = toTest.__get__('getTopic');
     const result = getTopic('http://example/Device');
     result.should.equal('Device');
+  });
+  it('Should return reference part of url', async function () {
+    const getTopic = toTest.__get__('getTopic');
+    const result = getTopic('http://example/Device#realDevice');
+    result.should.equal('realDevice');
   });
 });
 

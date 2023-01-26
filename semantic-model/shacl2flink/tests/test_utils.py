@@ -185,6 +185,8 @@ def test_create_kafka_topic():
 def test_strip_class():
     result = utils.strip_class('https://testurl.com/path')
     assert result == 'path'
+    result = utils.strip_class('https://testurl.com/path#realPath')
+    assert result == 'realPath'
 
 
 def test_create_output_folder(tmp_path):

@@ -121,7 +121,7 @@ const getSubClasses = async function (klass) {
  * @returns
  */
 const getTopic = function (topic) {
-  return topic.match(/([^/]*)$/)[0];
+  return topic.match(/([^/#]*)$/)[0];
 };
 
 /**
