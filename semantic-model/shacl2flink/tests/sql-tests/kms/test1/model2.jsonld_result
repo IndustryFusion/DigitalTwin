@@ -4,4 +4,6 @@
 'urn:plasmacutter:1','CountConstraintComponent(https://industry-fusion.com/types/v0.9/hasWorkpiece)','ok'
 'urn:plasmacutter:1','CountConstraintComponent(https://industry-fusion.com/types/v0.9/state)','ok'
 'urn:plasmacutter:1','DatatypeConstraintComponent(https://industry-fusion.com/types/v0.9/state[0])','ok'
+'urn:plasmacutter:1','NodeKindConstraintComponent(https://industry-fusion.com/types/v0.9/hasFilter)','ok'
+'urn:plasmacutter:1','NodeKindConstraintComponent(https://industry-fusion.com/types/v0.9/hasWorkpiece)','ok'
 'urn:plasmacutter:1','NodeKindConstraintComponent(https://industry-fusion.com/types/v0.9/state[0])','ok'

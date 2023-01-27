@@ -227,7 +227,7 @@ def strip_class(klass):
         string: stripped url
     """
     parsed = urlparse(klass)
-    result =  os.path.basename(parsed.path)
+    result = os.path.basename(parsed.path)
     if parsed.fragment is not None and parsed.fragment != '':
         result = parsed.fragment
 
