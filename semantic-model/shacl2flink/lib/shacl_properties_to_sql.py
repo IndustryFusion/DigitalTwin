@@ -87,14 +87,14 @@ sql_check_relationship_base = """
                            C.`type` AS entity,
                            {%- endif %}
                            B.`type` AS link,
+                           B.`nodeType` as nodeType,
                     IFNULL(B.`index`, 0) as `index` FROM {{target_class}}_view AS A
                     LEFT JOIN attributes_view AS B ON B.id = A.`{{property_path}}`
                     {%- if property_class %}
                     LEFT JOIN {{property_class}}_view AS C ON B.`https://uri.etsi.org/ngsi-ld/hasObject` = C.id
                     {%- endif %}
                     WHERE
-                        (B.`type` = 'https://uri.etsi.org/ngsi-ld/Relationship' OR B.`type` IS NULL)
-                        AND (B.entityId = A.id OR B.entityId IS NULL)
+                        (B.entityId = A.id OR B.entityId IS NULL)
                         AND (B.name = '{{property_path}}' OR B.name IS NULL)
 
             )
@@ -139,6 +139,30 @@ sql_check_relationship_property_count = """
                     THEN
                         'Model validation for relationship {{property_path}} failed for ' || this || ' . Found ' || CAST(count(link) AS STRING) || ' relationships instead of
                             [{%- if mincount %}{{mincount}}{%- else %} 0 {%- endif %},{%if maxcount %}{{maxcount}}]{%- else %}[ {%- endif %}!'
+                    ELSE 'All ok' END as `text`
+                {%- if sqlite %}
+                ,CURRENT_TIMESTAMP
+                {%- endif %}
+            FROM A1
+            group by this, typ
+"""  # noqa: E501
+
+sql_check_relationship_nodeType = """
+            SELECT this AS resource,
+                'NodeKindConstraintComponent({{property_path}})' AS event,
+                'Development' AS environment,
+                {% if sqlite %}
+                '[SHACL Validator]' AS service,
+                {% else %}
+                ARRAY ['SHACL Validator'] AS service,
+                {% endif %}
+                CASE WHEN typ IS NOT NULL AND link IS NOT NULL AND (nodeType is NULL OR nodeType <> '{{ property_nodetype }}')
+                    THEN '{{severity}}'
+                    ELSE 'ok' END AS severity,
+                'customer'  customer,
+                CASE WHEN typ IS NOT NULL AND  link IS NOT NULL AND (nodeType is NULL OR nodeType <> '{{ property_nodetype }}')
+                    THEN
+                        'Model validation for relationship {{property_path}} failed for ' || this || ' . NodeType is '|| nodeType || ' but must be an IRI.'
                     ELSE 'All ok' END as `text`
                 {%- if sqlite %}
                 ,CURRENT_TIMESTAMP
@@ -396,6 +420,27 @@ def translate(shaclefile, knowledgefile):
                     maxcount=maxcount,
                     severity=severitycode,
                     sqlite=True)
+        if add_union:
+            sql_command_yaml += "\nUNION ALL"
+            sql_command_sqlite += "\nUNION ALL"
+        sql_command_yaml += Template(sql_check_relationship_nodeType).render(
+            alerts_bulk_table=alerts_bulk_table,
+            target_class=target_class,
+            property_path=property_path,
+            severity=severitycode,
+            property_nodetype='@id',
+            property_nodetype_description='an IRI',
+            sqlite=False
+        )
+        sql_command_sqlite += Template(sql_check_relationship_nodeType).render(
+            alerts_bulk_table=alerts_bulk_table,
+            target_class=target_class,
+            property_path=property_path,
+            severity=severitycode,
+            property_nodetype='@id',
+            property_nodetype_description='an IRI',
+            sqlite=True
+        )
         sql_command_sqlite += ";"
         sql_command_yaml += ";"
         statementsets.append(sql_command_yaml)

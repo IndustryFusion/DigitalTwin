@@ -19,7 +19,6 @@ from rdflib.namespace import RDF
 import os
 import sys
 import argparse
-from urllib.parse import urlparse
 import ruamel.yaml
 import lib.utils as utils
 import lib.configs as configs

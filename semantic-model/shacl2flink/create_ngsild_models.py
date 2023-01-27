@@ -38,7 +38,7 @@ attributes_query = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
-SELECT (?a as ?entityId) (?b as ?name) (?e as ?type) (?d as ?nodeType)
+SELECT (?a as ?entityId) (?b as ?name) (?e as ?type) (IF(bound(?g), IF(isIRI(?g), '@id', '@value'), IF(isIRI(?f), '@id', '@value')) as ?nodeType)
 (datatype(?g) as ?valueType) (?f as ?hasValue) (?g as ?hasObject)
 where {
     ?nodeshape a sh:NodeShape .
@@ -52,8 +52,7 @@ where {
         ?subnodeshape sh:property [ sh:path ?b ] .
     } .
     {?a ?b [ ngsild:hasObject ?g ] .
-    VALUES ?d { '@id'} .
-    VALUES ?e {ngsild:Relationship}
+    VALUES ?e {ngsild:Relationship} .
     }
     UNION
     { ?a ?b [ ngsild:hasValue ?f ] .
@@ -69,7 +68,7 @@ where {
     FILTER(isIRI(?f))
     }
 }
-"""
+"""  # noqa: E501
 
 ngsild_tables_query_noinference = """
 PREFIX iff: <https://industry-fusion.com/types/v0.9/>
