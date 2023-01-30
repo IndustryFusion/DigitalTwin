@@ -168,7 +168,6 @@ sql_check_relationship_nodeType = """
                 ,CURRENT_TIMESTAMP
                 {%- endif %}
             FROM A1
-            group by this, typ
 """  # noqa: E501
 
 sql_check_property_iri_base = """
@@ -352,7 +351,7 @@ def translate(shaclefile, knowledgefile):
     # Get all NGSI-LD Relationship
     qres = g.query(sparql_get_all_relationships)
     for row in qres:
-        target_class = utils.strip_class(row.targetclass.toPython()) \
+        target_class = utils.camelcase_to_snake_case(utils.strip_class(row.targetclass.toPython())) \
             if row.targetclass else None
         property_path = row.propertypath.toPython() if row.propertypath \
             else None
@@ -366,7 +365,7 @@ def translate(shaclefile, knowledgefile):
             alerts_bulk_table=alerts_bulk_table,
             target_class=target_class,
             property_path=property_path,
-            property_class=utils.strip_class(property_class),
+            property_class=utils.camelcase_to_snake_case(utils.strip_class(property_class)),
             mincount=mincount,
             maxcount=maxcount,
             sqlite=False)
@@ -374,7 +373,7 @@ def translate(shaclefile, knowledgefile):
             alerts_bulk_table=alerts_bulk_table,
             target_class=target_class,
             property_path=property_path,
-            property_class=utils.strip_class(property_class),
+            property_class=utils.camelcase_to_snake_case(utils.strip_class(property_class)),
             mincount=mincount,
             maxcount=maxcount,
             sqlite=True)
@@ -460,7 +459,7 @@ def translate(shaclefile, knowledgefile):
     qres = g.query(sparql_get_all_properties)
     for row in qres:
         nodeshape = row.nodeshape.toPython()
-        target_class = utils.strip_class(row.targetclass.toPython()) \
+        target_class = utils.camelcase_to_snake_case(utils.strip_class(row.targetclass.toPython())) \
             if row.targetclass else None
         property_path = row.propertypath.toPython() if row.propertypath \
             else None

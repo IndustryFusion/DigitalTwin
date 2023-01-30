@@ -116,12 +116,22 @@ const getSubClasses = async function (klass) {
 };
 
 /**
+ * Converts PascalCase/camelCase to snake_case
+ * e.g. PascalCase => pascal_case
+ *      camelCase => camel_case
+ * @param {*} str string in Pascal/camelCase
+ */
+const pascalCaseToSnakeCase = function (str) {
+  return str.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase();
+};
+
+/**
  * returns type-part of uri, e.g. https://test/Device => Device
  * @param topic {string}
  * @returns
  */
 const getTopic = function (topic) {
-  return topic.match(/([^/#]*)$/)[0];
+  return pascalCaseToSnakeCase(topic.match(/([^/#]*)$/)[0]);
 };
 
 /**
