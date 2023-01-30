@@ -145,7 +145,7 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
 
         # Now create the entity tables
         for id, type, field, ord, tabletype in qres:
-            key = utils.strip_class(tabletype.toPython())
+            key = utils.camelcase_to_snake_case(utils.strip_class(tabletype.toPython()))
             if key not in tables:
                 table = {}
 

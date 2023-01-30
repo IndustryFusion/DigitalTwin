@@ -27,12 +27,22 @@ describe('Test GetTopic', function () {
   it('Should return last part of url path', async function () {
     const getTopic = toTest.__get__('getTopic');
     const result = getTopic('http://example/Device');
-    result.should.equal('Device');
+    result.should.equal('device');
+  });
+  it('Should return last part in snake_case', async function () {
+    const getTopic = toTest.__get__('getTopic');
+    const result = getTopic('http://example/Device_Test');
+    result.should.equal('device_test');
   });
   it('Should return reference part of url', async function () {
     const getTopic = toTest.__get__('getTopic');
     const result = getTopic('http://example/Device#realDevice');
-    result.should.equal('realDevice');
+    result.should.equal('real_device');
+  });
+  it('Should return snake_case', async function () {
+    const getTopic = toTest.__get__('getTopic');
+    const result = getTopic('http://example/Device#RealDevice');
+    result.should.equal('real_device');
   });
 });
 
