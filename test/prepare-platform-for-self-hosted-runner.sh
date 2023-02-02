@@ -15,7 +15,7 @@
 #
 
 # use specific k3s image to avoid surprises with k8s api changes
-K3S_IMAGE=rancher/k3s:v1.22.6-k3s1-amd64
+K3S_IMAGE=rancher/k3s:v1.22.17-k3s1-amd64
 
 
 echo Installing K3d cluster
