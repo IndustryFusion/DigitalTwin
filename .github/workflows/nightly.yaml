@@ -33,7 +33,7 @@ jobs:
             docker push ${newimage};
           done
           # Rename and push passed "k3d-iff.localhost:12345" scorpio related images
-          images=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep "k3d-iff.localhost:12345" | grep -v :0.1)
+          images=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep "k3d-iff.localhost:12345/digitaltwin" | grep -v :0.1 | grep -v "<none>")
           for image in ${images}; do
             newimage=$(echo ${image} | sed -r "s/k3d-iff.localhost:12345/${DOCKER_PREFIX}/g");
             docker tag ${image} ${newimage};
