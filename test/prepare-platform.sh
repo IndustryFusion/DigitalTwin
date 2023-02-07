@@ -26,7 +26,7 @@ sudo apt-get -qq install apt-transport-https ca-certificates curl gnupg-agent so
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 sudo apt -qq update
-sudo apt-get install -y docker-ce=5:19.03.15~3-0~ubuntu-$(lsb_release -cs) docker-ce-cli=5:19.03.15~3-0~ubuntu-$(lsb_release -cs) containerd.io
+sudo apt-get install -y docker-ce=5:23.0.0-1~ubuntu.20.04~$(lsb_release -cs) docker-ce-cli=5:23.0.0-1~ubuntu.20.04~$(lsb_release -cs) containerd.io
 printf "\033[1mSuccessfully installed %s\033[0m\n" "$(docker --version)"
 printf "\n"
 
@@ -41,7 +41,7 @@ fi;
 
 printf "\033[1mInstalling docker-compose\n"
 printf -- "-----------------\033[0m\n"
-sudo curl -L "https://github.com/docker/compose/releases/download/1.26.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/bin/docker-compose
+sudo curl -L "https://github.com/docker/compose/releases/download/v2.15.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/bin/docker-compose
 sudo chmod +x /usr/bin/docker-compose
 printf "\033[1mSuccessfully installed docker-compose %s\033[0m\n"
 printf "\n"
