@@ -29,27 +29,28 @@ There are two installation instructions below. The first [`section`](#installati
    * Edit you /etc/hosts file to make sure that `keycloak.local`, `alerta.local` and `ngsild.local` point to the ingress IP of your kubernetes cluster.
    * Make sure that the Pods within your Kubernetes cluster can resolve keycloak.local
 2. Install operators using `bash install_operators.sh`
-3. Install helm with diff plugin and helmfile 0.143.0:
+3. Install helm with diff plugin and helmfile 0.149.0:
 
    ```
-   # helm v3.7.2
-   wget https://get.helm.sh/helm-v3.7.2-linux-amd64.tar.gz
-   tar -zxvf helm-v3.7.2-linux-amd64.tar.gz
+   # helm v3.10.3
+   wget https://get.helm.sh/helm-v3.10.3-linux-amd64.tar.gz
+   tar -zxvf helm-v3.10.3-linux-amd64.tar.gz
    sudo mv linux-amd64/helm /usr/bin/helm
 
    # helm-diff plugin
    helm plugin install https://github.com/databus23/helm-diff
 
-   # helmfile v0.143.0
-   wget https://github.com/roboll/helmfile/releases/download/v0.143.0/helmfile_linux_amd64
-   chmod u+x helmfile_linux_amd64
+   # helmfile v0.149.0
+   wget https://github.com/helmfile/helmfile/releases/download/v0.149.0/helmfile_0.149.0_linux_amd64.tar.gz
+   tar -zxvf helmfile_0.149.0_linux_amd64.tar.gz
+   chmod u+x helmfile
    ```
 4. Deploy secrets for industry fusion registry
 
    ```
    kubectl -n iff create secret docker-registry regcred --docker-password=<password> --docker-username=<username> --docker-server=https://index.docker.io/v1/
    ```
-5. Install the charts by using helmfile: `./helmfile_linux_amd64 apply`
+5. Install the charts by using helmfile: `./helmfile apply`
 6. Verify all pods are running using `kubectl -n iff get pods`
 7. Login to keycloak with browser using `http://keycloak.local/auth`
 
@@ -135,7 +136,7 @@ Finally, an otional (but recommended) end-to-end test can be excecuted to valida
 Test systems can uninstall all helm charts by:
 
 ```
-./helmfile_linux_amd64 destroy
+./helmfile destroy
 bash ./uninstall_operators.sh
 ```
 
