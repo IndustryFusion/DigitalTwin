@@ -23,7 +23,7 @@ echo Test whether operators are coming up
 
 echo Install first two parts of horizontal platform
 ( cd ../helm && echo Install first part &&
-./helmfile_linux_amd64 -l order=first apply --set "mainRepo=k3d-iff.localhost:12345" )
+./helmfile -l order=first apply --set "mainRepo=k3d-iff.localhost:12345" )
 ( cd ./bats && bats test-jobs/keycloak-realm-import-job-is-up.bats )
 # Increase backoff limit for realm import job, unfortunately, right now,
 # keycloak operator does not reset the job if backoff limit is exceeded,
@@ -32,14 +32,14 @@ kubectl -n iff patch job iff-keycloak-realm-import -p '{"spec":{"backoffLimit":6
 ( cd ./bats && bats test-horizontal-platform/horizontal-platform-up-and-running-first.bats )
         
 echo Install second part
-( cd ../helm && ./helmfile_linux_amd64 -l order=second apply --set "mainRepo=k3d-iff.localhost:12345" )
+( cd ../helm && ./helmfile -l order=second apply --set "mainRepo=k3d-iff.localhost:12345" )
 ( cd ./bats && bats test-horizontal-platform/horizontal-platform-up-and-running-second.bats )
 
 echo Setup Ingress for localhost and install rest of platform
 bash ./setup-local-ingress.sh
 
 echo Install the rest
-( cd ../helm && ./helmfile_linux_amd64 apply --set "mainRepo=k3d-iff.localhost:12345" )
+( cd ../helm && ./helmfile apply --set "mainRepo=k3d-iff.localhost:12345" )
 ( cd ./bats && bats test-horizontal-platform/horizontal-platform-up-and-running-rest.bats )
 
 echo Test all together
