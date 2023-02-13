@@ -80,7 +80,7 @@ async fn main() {
             }
             Some(Input::KeyDC) => break,
             Some(input) => {
-                window.addstr(format!("{:?}", input));
+                window.addstr(format!("{input:?}"));
             }
             None => (),
         }
@@ -131,7 +131,7 @@ fn escape(src: &str) -> String {
             c => {
                 let encoded = c.encode_utf16(&mut utf16_buf);
                 for utf16 in encoded {
-                    write!(&mut escaped, "\\u{:04X}", utf16).unwrap();
+                    write!(&mut escaped, "\\u{utf16:04X}").unwrap();
                 }
             }
         }
