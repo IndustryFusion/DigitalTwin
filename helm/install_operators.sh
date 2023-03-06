@@ -57,7 +57,6 @@ spec:
   sourceNamespace: olm
 EOF
 
-
 printf "\n"
 printf "\033[1mInstalling Cert-Manager CRD\n"
 printf -- "------------------------\033[0m\n"
@@ -67,27 +66,17 @@ kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/
 printf "\n\n"
 printf "\033[1mSubscriptions installed successfully.\033[0m\n"
 
+
 printf "\n"
-printf "\033[1mInstalling KREW\n"
-printf -- "------------------------\033[0m\n"
-(
-  set -x; cd "$(mktemp -d)" &&
-  OS="$(uname | tr '[:upper:]' '[:lower:]')" &&
-  ARCH="$(uname -m | sed -e 's/x86_64/amd64/' -e 's/\(arm\)\(64\)\?.*/\1\2/' -e 's/aarch64$/arm64/')" &&
-  KREW="krew-${OS}_${ARCH}" &&
-  curl -fsSLO "https://github.com/kubernetes-sigs/krew/releases/latest/download/${KREW}.tar.gz" &&
-  tar zxvf "${KREW}.tar.gz" &&
-  ./"${KREW}" install krew
-)
-printf "\n"
-printf "\033[1mInstalling MINIO operator via krew\n"
-printf -- "------------------------\033[0m\n"
-export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
-kubectl krew update
-kubectl krew install minio
+printf "\033[1mInititating MinIO Operator v4.5.8\n"
+echo ------------------
+wget https://github.com/minio/operator/releases/download/v4.5.8/kubectl-minio_4.5.8_linux_amd64
+mv kubectl-minio_4.5.8_linux_amd64 kubectl-minio
+chmod +x kubectl-minio
+export PATH="$(pwd):$PATH"
+kubectl minio version
 kubectl minio init
-
-
+printf -- "------------------------\033[0m\n"
 
 printf "\n"
 printf "\033[1mInstalling Flink SQL Operator CRD\n"
