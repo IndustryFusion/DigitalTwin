@@ -31,6 +31,7 @@ def test_main(mock_utils, mock_configs, mock_yaml):
     mock_utils.create_yaml_table.return_value = "yamltable"
     mock_utils.create_sql_view.return_value = "sqlview"
     mock_utils.create_yaml_view.return_value = "yamlview"
+    mock_utils.create_kafka_topic.return_value = "kafkatopic"
     mock_yaml.dump.return_value = "dump"
 
     with patch('builtins.open') as mocked_open:

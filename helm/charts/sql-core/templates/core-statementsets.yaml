@@ -69,8 +69,16 @@ spec:
                   GROUP BY A.entityId, A.index, A.name, window_start, window_end) as B
               GROUP BY window_start, window_end, entityId, name
           ) GROUP BY window_start, window_end, id;
+        - |-
+          /* copy changes from attributes-inserts back to attributes */
+          insert into attributes
+          SELECT id, last_value(entityId), last_value(name), last_value(nodeType), last_value(valueType), index, last_value(`type`), last_value(`https://uri.etsi.org/ngsi-ld/hasValue`), last_value(`https://uri.etsi.org/ngsi-ld/hasObject`), window_start
+            FROM TABLE(
+              TUMBLE(TABLE attributes_insert_filter, DESCRIPTOR(`ts`), INTERVAL {{.Values.flink.attributeInsertWindow|squote}} SECOND))
+            GROUP BY window_start, window_end, id, index;
     tables:
         - alerts
         - alerts-filter
         - attributes
+        - attributes-insert-filter
         - ngsild-updates

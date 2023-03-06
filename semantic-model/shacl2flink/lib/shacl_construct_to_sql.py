@@ -2,9 +2,9 @@ from rdflib import Graph
 import owlrl
 import os
 import sys
+from urllib.parse import urlparse
 import re
 import ruamel.yaml
-from jinja2 import Template
 
 
 file_dir = os.path.dirname(__file__)
@@ -16,27 +16,19 @@ from sparql_to_sql import translate_sparql  # noqa: E402
 yaml = ruamel.yaml.YAML()
 alerts_bulk_table = configs.alerts_bulk_table_name
 alerts_bulk_table_object = configs.alerts_bulk_table_object_name
-
-sparql_get_all_sparql_nodes = """
+attributes_insert_table_obj_name = configs.attributes_insert_table_obj_name
+sparql_get_all_rule_nodes = """
 PREFIX iff: <https://industry-fusion.com/types/v0.9/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
-SELECT ?nodeshape ?targetclass ?message ?select ?severitylabel
+SELECT ?nodeshape ?targetclass ?construct
 where {
     ?nodeshape a sh:NodeShape .
     ?nodeshape sh:targetClass ?targetclass .
-    ?nodeshape sh:sparql [
-            sh:message ?message ;
-            sh:select ?select ;
+    ?nodeshape sh:rule [
+            sh:construct ?construct ;
             ] ;
-
-    OPTIONAL {
-        ?nodeshape sh:sparql [
-            sh:severity ?severity ;
-        ] .
-        ?severity iff:severityCode ?severitylabel .
-    }
 }
 
 """
@@ -65,6 +57,20 @@ sql_check_sparql_base = """
 
             FROM (SELECT A.this as this_left, B.this as this, * FROM (SELECT id as this from {{targetclass}}_view) as A LEFT JOIN ({{sql_expression}}) as B ON A.this = B.this)
 """  # noqa E501
+
+
+def strip_class(klass):
+    """Get class postfix of IRI
+
+    For instance: "http://example.com/class" => "class"
+    Args:
+        klass (String): IRI
+
+    Returns:
+        string: class
+    """
+    a = urlparse(klass)
+    return os.path.basename(a.path)
 
 
 def add_variables_to_message(message):
@@ -100,42 +106,23 @@ def translate(shaclfile, knowledgefile):
     g += h
     owlrl.RDFSClosure.RDFS_Semantics(g, axioms=True, daxioms=False, rdfs=True).closure()
     tables_all = []
+    views = []
     statementsets = []
     sqlite = ''
     # Get all NGSI-LD Relationship
-    qres = g.query(sparql_get_all_sparql_nodes)
+    qres = g.query(sparql_get_all_rule_nodes)
+
     for row in qres:
         target_class = row.targetclass
-        message = row.message.toPython() if row.message else None
-        select = row.select.toPython() if row.select else None
-        nodeshape = utils.strip_class(row.nodeshape.toPython()) if row.nodeshape else None
-        targetclass = utils.class_to_obj_name(utils.strip_class(row.targetclass.toPython())) \
-            if row.targetclass else None
-        severitylabel = row.severitylabel.toPython() if row.severitylabel is not None else 'warning'
-        sql_expression, tables = translate_sparql(shaclfile, knowledgefile, select, target_class, g)
-        sql_expression_yaml = utils.process_sql_dialect(sql_expression, False)
-        sql_expression_sqlite = utils.process_sql_dialect(sql_expression, True)
-        sql_command_yaml = Template(sql_check_sparql_base).render(
-            alerts_bulk_table=alerts_bulk_table,
-            sql_expression=sql_expression_yaml,
-            targetclass=targetclass,
-            message=add_variables_to_message(message),
-            nodeshape=nodeshape,
-            severity=severitylabel,
-            sqlite=False
-        )
-        sql_command_sqlite = Template(sql_check_sparql_base).render(
-            alerts_bulk_table=alerts_bulk_table,
-            sql_expression=sql_expression_sqlite,
-            targetclass=targetclass,
-            message=add_variables_to_message(message),
-            nodeshape=nodeshape,
-            severity=severitylabel,
-            sqlite=True
-        )
+        construct = row.construct.toPython() if row.construct else None
+        sql_expression, tables = translate_sparql(shaclfile, knowledgefile, construct, target_class, g)
+
+        sql_command_yaml = utils.process_sql_dialect(sql_expression, False)
+        sql_command_sqlite = utils.process_sql_dialect(sql_expression, True)
 
         sql_command_sqlite += ";"
         sql_command_yaml += ";"
+        sql_command_sqlite = '\n' + sql_command_sqlite
         sqlite += sql_command_sqlite
         statementsets.append(sql_command_yaml)
         tables_all += map(utils.snake_case_to_kebab_case, tables)
@@ -147,4 +134,6 @@ def translate(shaclfile, knowledgefile):
             views.append(f'{table}-view')
     tables.append(alerts_bulk_table_object)
     tables.append(configs.rdf_table_name)
+    tables.append(configs.attributes_table_obj_name)
+    tables.append(attributes_insert_table_obj_name)
     return sqlite, (statementsets, tables, views)

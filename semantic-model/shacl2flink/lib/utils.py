@@ -16,8 +16,17 @@
 
 import os
 import re
+import rdflib
 from urllib.parse import urlparse
 from enum import Enum
+
+
+class WrongSparqlStructure(Exception):
+    pass
+
+
+class SparqlValidationFailed(Exception):
+    pass
 
 
 class SQL_DIALECT(Enum):
@@ -31,6 +40,14 @@ class DnsNameNotCompliant(Exception):
     """
 
 
+def create_varname(variable):
+    """
+    creates a plain varname from RDF varialbe
+    e.g. ?var => var
+    """
+    return variable.toPython()[1:]
+
+
 def check_dns_name(name):
     regex = re.compile('^(?![0-9]+$)(?!-)[a-zA-Z0-9-]{,63}(?<!-)$')
     return regex.match(name) is not None
@@ -38,6 +55,11 @@ def check_dns_name(name):
 
 def camelcase_to_snake_case(name):
     name = re.sub(r'(?<!^)(?=[A-Z])', '_', name).lower()
+    return name
+
+
+def snake_case_to_kebab_case(name):
+    name = name.replace('_', '-')
     return name
 
 
@@ -241,3 +263,77 @@ def create_output_folder(path='output'):
         os.mkdir(path)
     except FileExistsError:
         pass
+
+
+def format_node_type(node):
+    """
+    formats node dependent on node-type
+    IRI: iri => '<iri>'
+    Literal: literal => '"literal"'
+    BNodde: id => '_:id'
+    """
+    if isinstance(node, rdflib.URIRef):
+        return f"\'<{node.toPython()}>\'"
+    elif isinstance(node, rdflib.Literal):
+        if node.datatype == rdflib.XSD.decimal or node.datatype == rdflib.XSD.double or\
+                node.datatype == rdflib.XSD.float or node.datatype == rdflib.XSD.integer:
+            return node.toPython()
+        else:
+            return f'\'"{node.toPython()}"\''
+    elif isinstance(node, rdflib.BNode):
+        return f'\'_:{node.toPython()}\''
+    else:
+        raise ValueError('Node is not IRI, Literal, BNode')
+
+
+def process_sql_dialect(expression, isSqlite):
+    result_expression = expression
+    if isSqlite:
+        result_expression = re.sub(r'SQL_DIALECT_STRIP_IRI\(([^\(\)]*)\)',
+                                   r"ltrim(rtrim(\1, '>'), '<')", result_expression)
+        result_expression = re.sub(r'SQL_DIALECT_STRIP_LITERAL\(([^\(\)]*)\)', r"trim(\1, '\"')",
+                                   result_expression)
+        result_expression = result_expression.replace('SQL_DIALECT_CURRENT_TIMESTAMP', 'datetime()')
+        result_expression = result_expression.replace('SQL_DIALECT_INSERT_ATTRIBUTES',
+                                                      'INSERT OR REPLACE INTO attributes_insert_filter')
+        result_expression = result_expression.replace('SQL_DIALECT_SQLITE_TIMESTAMP', 'CURRENT_TIMESTAMP')
+    else:
+        result_expression = re.sub(r'SQL_DIALECT_STRIP_IRI\(([^\(\)]*)\)',
+                                   r"REGEXP_REPLACE(CAST(\1 as STRING), '>|<', '')", result_expression)
+        result_expression = re.sub(r'SQL_DIALECT_STRIP_LITERAL\(([^\(\)]*)\)',
+                                   r"REGEXP_REPLACE(CAST(\1 as STRING), '\"', '')", result_expression)
+        result_expression = result_expression.replace('SQL_DIALECT_CURRENT_TIMESTAMP', 'CURRENT_TIMESTAMP')
+        result_expression = result_expression.replace('SQL_DIALECT_INSERT_ATTRIBUTES', 'INSERT into attributes_insert')
+        result_expression = result_expression.replace(',SQL_DIALECT_SQLITE_TIMESTAMP', '')
+    return result_expression
+
+
+def wrap_ngsild_variable(ctx, var):
+    """
+    Wrap NGSI_LD variables into RDF
+    e.g. if var is literal => '"' || bounds[var] || '"'
+    if var is IRI => '<' || bounds[var] || '>'
+
+    ctx: context containing property_variables, entity_variables, bounds
+    var: variable
+    """
+    if not isinstance(var, rdflib.Variable):
+        raise TypeError("NGSI-LD Wrapping of non-variables is not allowed.")
+    bounds = ctx['bounds']
+    property_variables = ctx['property_variables']
+    entity_variables = ctx['entity_variables']
+    varname = create_varname(var)
+    if var in property_variables:
+        if varname in bounds:
+            if property_variables[var]:
+                return "'<' || " + bounds[varname] + " || '>'"
+            else:
+                return "'\"' || " + bounds[varname] + " || '\"'"
+        else:
+            raise SparqlValidationFailed(f'Could not resolve variable \
+?{varname}.')
+    elif var in entity_variables:
+        raise SparqlValidationFailed(f'Cannot bind enttiy variable {varname} to \
+plain RDF context')
+    elif varname in bounds:  # plain RDF variable
+        return bounds[varname]

@@ -23,12 +23,20 @@ from bunch import Bunch
 @patch('lib.shacl_sparql_to_sql.owlrl')
 @patch('lib.shacl_sparql_to_sql.translate_sparql')
 @patch('lib.shacl_sparql_to_sql.add_variables_to_message')
-def test_translate(mock_add_variables_to_message, mock_translate_sparql, mock_owlrl, mock_graph, monkeypatch):
+@patch('lib.shacl_sparql_to_sql.utils')
+def test_translate(mock_utils, mock_add_variables_to_message, mock_translate_sparql,
+                   mock_owlrl, mock_graph, monkeypatch):
     def mock_add_variables_to_message(message):
         return message
     g = mock_graph.return_value
 
+    def mock_strip_class(klass):
+        return klass
+
     monkeypatch.setattr(lib.shacl_sparql_to_sql, "add_variables_to_message", mock_add_variables_to_message)
+    monkeypatch.setattr(mock_utils, "strip_class", mock_strip_class)
+    monkeypatch.setattr(mock_utils, "class_to_obj_name", mock_strip_class)
+
     message = MagicMock()
     message.toPython.return_value = 'message'
     select = MagicMock()
@@ -46,6 +54,7 @@ def test_translate(mock_add_variables_to_message, mock_translate_sparql, mock_ow
     g.__iadd__.return_value.query.return_value[0].nodeshape = nodeshape
     g.__iadd__.return_value.query.return_value[0].targetclass = targetclass
     g.__iadd__.return_value.query.return_value[0].severitylabel = severitylabel
+    mock_utils.process_sql_dialect.return_value = 'adapted_sql_dialect'
     sqlite, (statementsets, tables, views) = \
         lib.shacl_sparql_to_sql.translate('kms/shacl.ttl',
                                           'kms/knowledge.ttl')

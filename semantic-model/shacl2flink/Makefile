@@ -46,6 +46,13 @@ test-sqlite:
 	cat $(sqlite_files) | $(SQLITE3) $(SQLITEDB)
 	echo 'select * from alerts_bulk;'| sqlite3 ${SQLITEDB}
 
+test-sqlite-update:
+	@echo Update model
+	$(PYTHON) create_ngsild_models.py $(SHACL) $(KNOWLEDGE) $(MODEL)
+	cat $(OUTPUTDIR)/ngsild-models.sqlite | $(SQLITE3) $(SQLITEDB)
+	sleep 1
+	cat $(OUTPUTDIR)/shacl-validation.sqlite | $(SQLITE3) $(SQLITEDB)
+
 test-kms:
 	@echo Test different kms setups
 	cd tests/sql-tests && bash tests.sh

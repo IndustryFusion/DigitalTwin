@@ -29,9 +29,11 @@ listenTopic}}" if helm else "ff.ngsild-updates"
 kafka_topic_attributes = "{{.Values.kafkaBridge.debezium.\
 attributesTopic}}" if helm else \
                          "iff.ngsild.attributes"
+kafka_topic_attributes_insert = "{{.Values.kafkaBridge.debezium.\
+attributesTopic}}_insert" if helm else "iff.ngsild.attributes_insert"
+
 kafka_topic_ngsi_prefix = "{{.Values.kafkaBridge.debezium.\
-entityTopicPrefix}}" if helm else \
-                          "iff.ngsild.entities"
+entityTopicPrefix}}" if helm else "iff.ngsild.entities"
 kafka_topic_ngsi_retention = "{{.Values.kafkaBridge.debezium.\
 entityTopicRetention}}"
 kafka_bootstrap = "{{.Values.kafka.bootstrapServer}}" if helm \
@@ -48,3 +50,5 @@ rdf_table_obj_name = 'rdf'
 rdf_table_name = 'rdf'
 alerts_bulk_table_name = 'alerts_bulk'
 alerts_bulk_table_object_name = 'alerts-bulk'
+attributes_insert_table_obj_name = 'attributes-insert'
+rdf_max_per_set = 1500

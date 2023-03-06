@@ -17,6 +17,7 @@
 import os.path
 from unittest.mock import patch
 import lib.utils as utils
+import rdflib
 
 
 def test_check_dns_name():
@@ -198,3 +199,23 @@ def test_create_output_folder(tmp_path):
         assert True
     except FileExistsError:
         assert False
+
+
+def test_wrap_ngsild_variable():
+    ctx = {
+        'bounds': {'var': 'TABLE.`id`'},
+        'entity_variables': {},
+        'property_variables': {rdflib.Variable('var'): True}
+    }
+    var = rdflib.Variable('var')
+    bounds = utils.wrap_ngsild_variable(ctx, var)
+    assert bounds == "'<' || TABLE.`id` || '>'"
+
+    ctx = {
+        'bounds': {'var': 'TABLE.`id`'},
+        'entity_variables': {},
+        'property_variables': {rdflib.Variable('var'): False}
+    }
+    var = rdflib.Variable('var')
+    bounds = utils.wrap_ngsild_variable(ctx, var)
+    assert bounds == '\'"\' || TABLE.`id` || \'"\''
