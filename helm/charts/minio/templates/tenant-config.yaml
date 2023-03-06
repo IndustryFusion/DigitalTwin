@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: iff-minio-tenant-configuration
+  namespace: {{ .Release.Namespace }}
+type: Opaque
+stringData:
+  config.env: |-
+    export MINIO_ROOT_USER={{ .Values.minio.adminAccessKey | quote }}
+    export MINIO_ROOT_PASSWORD={{ .Values.minioAdminSecretKey | quote }}

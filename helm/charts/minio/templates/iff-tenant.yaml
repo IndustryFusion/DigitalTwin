@@ -10,8 +10,8 @@ spec:
   - name: "MINIO_BROWSER"
     value: "on"
   requestAutoCert: false
-  credsSecret:
-    name: iff-creds-secret
+  configuration:
+    name: iff-minio-tenant-configuration
   users:
     - name: minio-user
   pools:

@@ -24,7 +24,7 @@ printf -- "-----------------\033[0m\n"
 sudo apt -qq update
 sudo apt-get -qq install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+sudo add-apt-repository -y "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 sudo apt -qq update
 sudo apt-get install -y docker-ce=5:23.0.1-1~ubuntu.$(lsb_release -sr)~$(lsb_release -cs) docker-ce-cli=5:23.0.1-1~ubuntu.$(lsb_release -sr)~$(lsb_release -cs) containerd.io
 printf "\033[1mSuccessfully installed %s\033[0m\n" "$(docker --version)"
@@ -123,6 +123,13 @@ wget https://github.com/txn2/kubefwd/releases/download/1.22.0/kubefwd_Linux_x86_
 tar xvzf kubefwd_Linux_x86_64.tar.gz
 sudo mv kubefwd /usr/local/bin
 rm kubefwd_Linux_x86_64.tar.gz
+
+echo Install bats version 1.9.0
+echo ------------------
+wget https://github.com/bats-core/bats-core/archive/refs/tags/v1.9.0.tar.gz
+tar -zxvf v1.9.0.tar.gz
+sudo ./bats-core-1.9.0/install.sh /usr/local
+rm -rf v1.9.0.tar.gz
 
 echo Install sqlite and pcre component
 echo ---------------------------------
