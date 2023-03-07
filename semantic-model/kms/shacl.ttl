@@ -128,7 +128,7 @@ iff:WorkpieceShape
         sh:property [
             sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
             sh:nodeKind sh:Literal ;
-            sh:maxInclusive 100.0 ;
+            sh:maxInclusive 600.0 ;
             sh:minExclusive 0.0 ;
             sh:minCount 1 ;
             sh:maxCount 1 ;
@@ -264,7 +264,7 @@ iff:FilterCartridgeShape
     sh:targetClass iff:filter ;
     sh:sparql [
         a sh:SPARQLConstraints ;
-        sh:message "Check Filter strength as function of workpiece" ;
+        sh:message "Check Filter strength as function of workpiece: {?value}" ;
         sh:select """
 PREFIX iff: <https://industry-fusion.com/types/v0.9/>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
@@ -286,7 +286,7 @@ SELECT ?this ?value
                     IF(xsd:float(?strength) < 0.5, \"Filter strength too low, should be at least 0.5\", \"ok\")
                 )
             ) as ?value) .
-        FILTER(?pcstate = <https://industry-fusion.com/types/v0.9/state_ON> && ?filterstate = <https://industry-fusion.com/types/v0.9/state_ON> && ?value != \"ok\") .
+        FILTER(?pcstate = <https://industry-fusion.com/types/v0.9/state_PROCESSING> && ?filterstate = <https://industry-fusion.com/types/v0.9/state_ON> && ?value != \"ok\") .
     }
         """ ;
     ] .
@@ -307,7 +307,7 @@ SELECT $this ?v1 ?f ?v2
         $this  iff:state [<https://uri.etsi.org/ngsi-ld/hasValue> ?v1 ] .
         $this  iff:hasFilter [ <https://uri.etsi.org/ngsi-ld/hasObject> ?f ] .
         ?f  iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?v2 ] .
-        FILTER(?v1 = <https://industry-fusion.com/types/v0.9/state_ON> && ?v2 != <https://industry-fusion.com/types/v0.9/state_ON>)
+        FILTER(?v1 = <https://industry-fusion.com/types/v0.9/state_PROCESSING> && ?v2 != <https://industry-fusion.com/types/v0.9/state_ON>)
     }
         """ ;
     ] .
@@ -330,7 +330,7 @@ SELECT $this ?v1 ?pc ?v2
         ?pc rdf:type iff:plasmacutter .
         ?pc iff:hasFilter [ <https://uri.etsi.org/ngsi-ld/hasObject> $this ] .
         ?pc  iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?v2 ] .
-        FILTER(?v1 = <https://industry-fusion.com/types/v0.9/state_ON> && ?v2 != <https://industry-fusion.com/types/v0.9/state_ON>)
+        FILTER(?v1 = <https://industry-fusion.com/types/v0.9/state_ON> && ?v2 != <https://industry-fusion.com/types/v0.9/state_PROCESSING>)
     }
         """ ;
     ] .
