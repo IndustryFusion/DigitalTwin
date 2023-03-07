@@ -341,6 +341,8 @@ not yet implemented!')
         raise utils.WrongSparqlStructure('No attribute constructed in construct query!')
     attribute_type = bgp_translation_utils.ngsild['Property'] if value_var in ctx['property_variables'] else \
         bgp_translation_utils.ngsild['Relationship']
+    if value_var in ctx['property_variables'] and ctx['property_variables'][value_var]:
+        nodetype = '@id'
     return (entityId_var, name.toPython(), attribute_type.toPython(), value_var, nodetype)
 
 

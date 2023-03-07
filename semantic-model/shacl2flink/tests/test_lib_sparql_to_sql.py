@@ -299,7 +299,7 @@ def test_translate_filter(mock_translate):
     assert filter['where'] == 'wherex and where'
 
 
-def test_get_attribute_column(monkeypatch):
+def test_get_attribute_column_value(monkeypatch):
     relationships = {
         "https://industry-fusion.com/types/v0.9/hasFilter": True
     }
@@ -311,7 +311,7 @@ def test_get_attribute_column(monkeypatch):
     ctx = {
         'bounds': {'var': 'TABLE.`id`'},
         'PV': ['var'],
-        'property_variables': {term.Variable('y')},
+        'property_variables': {term.Variable('y'): False},
         'tables': {}
     }
     node = {
@@ -326,6 +326,35 @@ def test_get_attribute_column(monkeypatch):
     assert attribute_type == 'https://uri.etsi.org/ngsi-ld/Property'
     assert value_var == term.Variable('y')
     assert nodetype == '@value'
+
+
+def test_get_attribute_column_iri(monkeypatch):
+    relationships = {
+        "https://industry-fusion.com/types/v0.9/hasFilter": True
+    }
+    properties = {
+        "https://industry-fusion.com/types/v0.9/state": True
+    }
+    monkeypatch.setattr(lib.sparql_to_sql, "properties", properties)
+    monkeypatch.setattr(lib.sparql_to_sql, "relationships", relationships)
+    ctx = {
+        'bounds': {'var': 'TABLE.`id`'},
+        'PV': ['var'],
+        'property_variables': {term.Variable('y'): True},
+        'tables': {}
+    }
+    node = {
+        'template': [
+            (term.Variable("var"), term.URIRef("https://industry-fusion.com/types/v0.9/state"), term.BNode("x")),
+            (term.BNode("x"), term.URIRef("https://uri.etsi.org/ngsi-ld/hasValue"), term.Variable("y"))
+        ]
+    }
+    (entityid_var, name, attribute_type, value_var, nodetype) = lib.sparql_to_sql.get_attribute_column(ctx, node)
+    assert entityid_var == term.Variable('var')
+    assert name == 'https://industry-fusion.com/types/v0.9/state'
+    assert attribute_type == 'https://uri.etsi.org/ngsi-ld/Property'
+    assert value_var == term.Variable('y')
+    assert nodetype == '@id'
 
 
 @patch('lib.sparql_to_sql.get_bound_trim_string')
