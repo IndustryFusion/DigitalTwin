@@ -36,6 +36,7 @@ data:
     kubernetes.namespace: {{ .Release.Namespace }}
     restart-strategy: fixed-delay
     restart-strategy.fixed-delay.attempts: 10
+    execution.checkpointing.interval: {{ .Values.flink.checkpointInterval }}
   log4j-console.properties: |+
     # This affects logging for both user code and Flink
     rootLogger.level = INFO

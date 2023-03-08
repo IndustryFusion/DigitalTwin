@@ -74,6 +74,7 @@ flink:
   bucket: flink
   haDir: recovery
   checkpointDir: checkpoints
+  checkpointInterval: 1 min
   savepointDir: savepoints
   defaultParalellism: 1
   alertWindow: '0.001'
@@ -122,6 +123,7 @@ kafka:
     debeziumTopicPrefix: iff.ngsild
     tableIncludeList: public.entity$
     image: debezium-postgresql-connector
+    snapshotMode: always
 
 kafkaBridge:
   debezium:

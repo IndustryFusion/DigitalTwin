@@ -2,12 +2,13 @@ SHACL:= ../kms/shacl.ttl
 KNOWLEDGE := ../kms/knowledge.ttl
 MODEL := ../kms/model-example.jsonld
 PYTHON := python3
-LINTER := flake8
+LINTER := $(HOME)/.local/bin/flake8
 PIP := pip
 OUTPUTDIR := output
 SQLITEDB := $(OUTPUTDIR)/database.db
 SQLITE3 := sqlite3
 HELM_DIR := ../../helm/charts/shacl
+NAMESPACE := iff
 
 
 sqlite_files = $(OUTPUTDIR)/core.sqlite $(OUTPUTDIR)/ngsild.sqlite $(OUTPUTDIR)/rdf.sqlite $(OUTPUTDIR)/ngsild-models.sqlite $(OUTPUTDIR)/shacl-validation.sqlite
@@ -28,7 +29,6 @@ helm: build
 	rm -f ${HELM_DIR}/templates/*.sqlite ${HELM_DIR}/templates/core.yaml
 	cp Chart.yaml ${HELM_DIR}
 
-
 test: requirements-dev.txt
 	$(PYTHON) -m pytest --cov . --cov-fail-under=80
 
@@ -37,6 +37,11 @@ lint: requirements-dev.txt
 
 setup: requirements.txt setup-dev
 	$(PIP) install -r requirements.txt
+	echo ".headers on" > ~/.sqliterc
+	echo ".mode column" >> ~/.sqliterc
+	echo ".load /usr/lib/sqlite3/pcre.so" >> ~/.sqliterc
+
+
 
 setup-dev: requirements-dev.txt
 	$(PIP) install -r requirements-dev.txt
@@ -57,5 +62,38 @@ test-kms:
 	@echo Test different kms setups
 	cd tests/sql-tests && bash tests.sh
 
+flink-deploy:
+	@echo deploy helm package
+	make helm
+	cd ../../helm && ./helmfile_linux_amd64 -f helmfile-shacl.yaml apply
+	kubectl -n $(NAMESPACE) -l "app.kubernetes.io/instance"="kafka-connect" delete pod
+	make test-flink-is-deployed
+
+flink-undeploy:
+	@echo undeploy helm package
+	cd ../../helm && ./helmfile -f helmfile-shacl.yaml destroy
+	make test-flink-is-undeployed
+	cd ../../helm && ./helmfile -f helmfile-shacl.yaml destroy # undeploy a scnd time to make sure that there are no kafkatopics left
+
+
+test-flink-is-deployed:
+	ln -fs ../../../../test/bats/lib tests/bats/lib || echo 'Bats framework not installed'
+	cd tests/bats && bats test-shacl-flink-deployment
+	rm tests/bats/lib
+
+test-full-flink-deployment:
+	@echo test deployment of helm package
+	make helm
+	make flink-deploy
+	make flink-undeploy
+
+test-flink-is-undeployed:
+	@echo test undeployment of helm package
+	ln -fs ../../../../test/bats/lib tests/bats/lib || echo 'Bats framework not installed'
+	cd tests/bats && bats test-shacl-flink-undeploy
+	rm tests/bats/lib
+
 clean:
 	@rm -rf $(OUTPUTDIR)
+
+.PHONY: clean

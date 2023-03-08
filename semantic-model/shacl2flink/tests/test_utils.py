@@ -157,7 +157,8 @@ def test_create_statementset():
         'spec': {
             'tables': 'table_object',
             'views': 'view',
-            'sqlstatements': 'statementset'
+            'sqlstatements': 'statementset',
+            'updateStrategy': 'savepoint'
         }
     }
 
