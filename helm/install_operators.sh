@@ -50,10 +50,10 @@ metadata:
   namespace: ${NAMESPACE}
 spec:
   name: strimzi-kafka-operator
-  channel: strimzi-0.31.x
+  channel: strimzi-0.32.x
   source: operatorhubio-catalog
   installPlanApproval: Automatic
-  startingCSV: strimzi-cluster-operator.v0.31.1
+  startingCSV: strimzi-cluster-operator.v0.32.0
   sourceNamespace: olm
 EOF
 
