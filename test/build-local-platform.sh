@@ -24,7 +24,7 @@ echo Build Scorpio containers
 
 if [[ $TEST -eq "true" ]]; then
     ( cd ../.. && git clone https://github.com/IndustryFusion/ScorpioBroker.git)
-    ( cd ../../ScorpioBroker && git checkout ScorpioDigitalTwin )
+    ( cd ../../ScorpioBroker && git checkout 04376bd ) # Checking out specific commit for CI purposes
     ( cd ../../ScorpioBroker && source /etc/profile.d/maven.sh && mvn clean package -DskipTests -Ddocker -Din-memory -Pin-memory -Dquarkus.profile=in-memory -Dos=java)
 else
     ( cd ../.. && git clone https://github.com/IndustryFusion/ScorpioBroker.git )
