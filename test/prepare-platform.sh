@@ -129,7 +129,7 @@ echo ------------------
 wget https://github.com/bats-core/bats-core/archive/refs/tags/v1.9.0.tar.gz
 tar -zxvf v1.9.0.tar.gz
 sudo ./bats-core-1.9.0/install.sh /usr/local
-rm -rf v1.9.0.tar.gz
+rm -rf v1.9.0.tar.gz bats-core-1.9.0
 
 echo Install sqlite and pcre component
 echo ---------------------------------
