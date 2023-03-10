@@ -65,7 +65,7 @@ test-kms:
 flink-deploy:
 	@echo deploy helm package
 	make helm
-	cd ../../helm && ./helmfile_linux_amd64 -f helmfile-shacl.yaml apply
+	cd ../../helm && ./helmfile -f helmfile-shacl.yaml apply
 	kubectl -n $(NAMESPACE) -l "app.kubernetes.io/instance"="kafka-connect" delete pod
 	make test-flink-is-deployed
 

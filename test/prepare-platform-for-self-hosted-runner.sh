@@ -21,7 +21,6 @@ K3S_IMAGE=rancher/k3s:v1.24.10-k3s1-amd64
 echo Installing K3d cluster
 echo ----------------------
 ## k3d cluster with 2 nodes
-curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | TAG=v5.4.7 bash
 k3d registry create iff.localhost -p 12345
 k3d cluster list | grep iff-cluster > /dev/null && k3d cluster delete iff-cluster
 k3d cluster create --image ${K3S_IMAGE} -a 2 --registry-use iff.localhost:12345 iff-cluster
