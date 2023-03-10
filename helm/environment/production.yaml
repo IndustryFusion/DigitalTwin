@@ -1,13 +1,13 @@
 ingressType: nginx # traefik or nginx
 
 alerta:
-  externalPath: / # note: must end with /
-  externalHostname: alerta.test.streammyiot.com
+  externalPath: /alerta/ # note: must end with /
+  externalHostname: testing.industry-fusion.com
 keycloak:
   adminName: admin
   externalAuthService:   # put here the *external* keycloak name, i.e. through ingress 
     protocol: "https:"
-    domainname: auth.test.streammyiot.com
+    domainname: testing.industry-fusion.com
     path: /auth/ # keycloak internal do not change
     # pathPrefix: /keycloak-iff/ # for ingress, must end with /
 
@@ -19,9 +19,9 @@ db:
   cloneEnabled: false
 
 scorpio:
-  externalHostname: scorpio.test.streammyiot.com
+  externalHostname: testing.industry-fusion.com
   externalProtocol: "http:"
-  externalPath: /
+  externalPath: /scorpio/
   heap_min:
     Xms: "-Xms64M"
     Xmx: "-Xmx64M"
@@ -54,6 +54,7 @@ flink:
   defaultParalellism: 1
 
 minio:
+  enabled: true
   storageSize: 10G
 
 
