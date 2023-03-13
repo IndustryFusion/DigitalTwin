@@ -37,5 +37,8 @@ jobs:
       run: |
         cd ./test/bats
         bats */*.bats
-
+    - name: Build and test shacl2flink
+      run: |
+        ( cd semantic-model/shacl2flink && make setup && make lint test test-kms )
+        ( cd semantic-model/shacl2flink && make test-full-flink-deployment )
 

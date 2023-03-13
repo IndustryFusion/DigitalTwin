@@ -58,7 +58,7 @@ def main(shaclfile, output_folder='output'):
                 target_path = g.value(target_property, sh.path)
                 table.append({sq(f'{target_path}'): "STRING"})
             table.append({sq("ts"): "TIMESTAMP(3) METADATA FROM 'timestamp'"})
-            table.append({sq("WATERMARK"): "FOR `ts` AS `ts`"})
+            table.append({"watermark": "FOR `ts` AS `ts`"})
 
     # Kafka topic object for RDF
     config = {}

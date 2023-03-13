@@ -83,3 +83,8 @@ iff:WC3 iff:containsMaterialNumber [
     rdf:_5 "1.5305" ;
  ] .
 
+# Severity
+iff:severityCritical a iff:severityClass .
+iff:SeverityWarning a iff:severityClass .
+iff:severityCritical iff:severityCode "critical" .
+iff:severityWarning iff:severityCode "warning" .

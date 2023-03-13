@@ -124,6 +124,14 @@ tar xvzf kubefwd_Linux_x86_64.tar.gz
 sudo mv kubefwd /usr/local/bin
 rm kubefwd_Linux_x86_64.tar.gz
 
+echo Install sqlite and pcre component
+echo ---------------------------------
+sudo  apt install -yq sqlite3 sqlite3-pcre
+
+echo Install python3-pip
+echo -------------------
+sudo apt install -yq python3-pip python3-venv
+
 sudo apt install -yq bats
 
 if [ -n "${SELF_HOSTED_RUNNER}" ]; then

@@ -213,6 +213,7 @@ def create_statementset(object_name, table_object_names,
     spec['tables'] = table_object_names
     spec['views'] = view_object_names
     spec['sqlstatements'] = statementsets
+    spec['updateStrategy'] = "savepoint"
     return yaml_bsqls
 
 
