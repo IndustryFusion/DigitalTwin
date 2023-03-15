@@ -1,4 +1,5 @@
 ---
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace "keycloak-client-secret-ngsild-updates") -}}
 # yamllint disable rule:line-length
 # yamllint disable rule:braces
 apiVersion: apps/v1
@@ -19,6 +20,9 @@ spec:
         app: ngsild-updates-bridge
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/bridge-configmap.yaml") . | sha256sum }}
+        {{- if $secret }}
+        checksum/credentials: {{ printf "%s" $secret | toString | sha256sum }}
+        {{- end }}
     spec:
       containers:
         - name: ngsild-updates-bridge

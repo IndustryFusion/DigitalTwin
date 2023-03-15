@@ -1,4 +1,6 @@
 {{- if .Values.aaio.enabled }}
+{{- $name := printf "%s.%s.%s" .Values.db.dbUser .Values.clusterSvcName .Values.db.secretPostfix }}
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace $name) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -15,6 +17,10 @@ spec:
     metadata:
       labels:
         service: {{ .Values.aaio.name }}
+      annotations:
+        {{- if $secret }}
+        checksum/credentials: {{ printf "%s" $secret | toString | sha256sum }}
+        {{- end }}
     spec:
       containers:
         - name: {{ .Values.aaio.name }}

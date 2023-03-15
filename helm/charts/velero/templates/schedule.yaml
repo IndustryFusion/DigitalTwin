@@ -1,0 +1,17 @@
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: secrets-backup
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+spec:
+  # backup once per day at 0:00
+  schedule: "0 0 * * *"
+  template:
+    labelSelector:
+      matchExpressions:
+      - {key: velero-backup, operator: In, values: ['true']}
+    excludedNamespaces: []
+    includedResources:
+    - '*'
+    storageLocation: minio

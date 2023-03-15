@@ -75,6 +75,7 @@ releases:
 - name: flink
   labels:
     app: flink
+    order: third
   chart: ./charts/flink
   namespace: {{ .Values.namespace }}
   values:
@@ -93,6 +94,7 @@ releases:
 - name: kafka-bridges
   labels:
     app: kafka-bridges
+    order: third
   chart: ./charts/kafka-bridges
   namespace: {{ .Values.namespace }}
   values:
@@ -104,6 +106,7 @@ releases:
 - name: sql-core
   labels:
     app: sql-core
+    order: third
   chart: ./charts/sql-core
   namespace: {{ .Values.namespace }}
   values:
@@ -114,3 +117,12 @@ releases:
   - alerta
   - scorpio
   - kafka-bridges
+- name: velero
+  labels:
+    app: velero
+  chart: ./charts/velero
+  namespace: velero
+  values:
+  - values.yaml.gotmpl
+  needs:
+  - {{ .Values.namespace }}/minio

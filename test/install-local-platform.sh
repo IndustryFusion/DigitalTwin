@@ -35,12 +35,16 @@ echo Install second part
 ( cd ../helm && ./helmfile -l order=second apply --set "mainRepo=k3d-iff.localhost:12345" )
 ( cd ./bats && bats test-horizontal-platform/horizontal-platform-up-and-running-second.bats )
 
-echo Setup Ingress for localhost and install rest of platform
+echo Setup Ingress for localhost
 bash ./setup-local-ingress.sh
+
+echo Install third part
+( cd ../helm && ./helmfile -l order=third apply --set "mainRepo=k3d-iff.localhost:12345" )
+( cd ./bats && bats test-horizontal-platform/horizontal-platform-up-and-running-third.bats )
 
 echo Install the rest
 ( cd ../helm && ./helmfile apply --set "mainRepo=k3d-iff.localhost:12345" )
-( cd ./bats && bats test-horizontal-platform/horizontal-platform-up-and-running-rest.bats )
+( cd ./bats && bats test-horizontal-platform/horizontal-platform-up-and-running-velero.bats )
 
 echo Test all together
 ( cd ./bats && bats ./*.bats )
