@@ -54,11 +54,11 @@ There are two installation instructions below. The first [`section`](#installati
 6. Verify all pods are running using `kubectl -n iff get pods`
 7. Login to keycloak with browser using `http://keycloak.local/auth`
 
-   * The username is `admin`, the password can be found by `kubectl -n iff get secret/keycloak-initial-admin -o=jsonpath='{.data.password}' | base64 -d`
+   * The username is `admin`, the password can be found by `kubectl -n iff get secret/keycloak-initial-admin -o=jsonpath='{.data.password}' | base64 -d | xargs echo`
 8. Verify that there are 2 realms `master`, `iff`
 9. Verify that there is a user in realm `iff`, named: `realm_user`
 
-   * The password for `realm_user` can be found by  `		kubectl -n iff get secret/credential-iff-realm-user-iff -o jsonpath='{.data.password}'| base64 -d`
+   * The password for `realm_user` can be found by  `kubectl -n iff get secret/credential-iff-realm-user-iff -o jsonpath='{.data.password}'| base64 -d | xargs echo`
 10. Get token through http://keycloak.local/auth
 11. Use ngsi-ld api via `ngsild.local`
 
@@ -131,6 +131,53 @@ Finally, an otional (but recommended) end-to-end test can be excecuted to valida
      * `keycloak.local` url cannot be resolved from within kubernetes, make sure that it is known by the kubernetes dns. For K3s please see #configure-keycloak.local-dns
 3. Alerta and/or Scorpio do not resolve keycloak.local
 
+# S3 Backups and (Database) Recovery
+
+By default, the database backups once per day to the internal Minio S3 storage. It can be configured to backup to another S3 by configuring the s3 object in the `environment/default.yaml` or `environment/production.yaml` profiles like so:
+
+```
+s3:
+   protocol: 'https' # or 'http'
+   endpoint: <S3 Endpoint>
+   userAccessKey: <access key>
+   userSecretKey: <secret key>
+```
+
+The selection of the environment files is depenend to the selected helmfile profile, if no profile is set, the `environment/default.yaml` file is used. In addition, when external S3 storage is used, Minio should be disabled in the profile:
+
+```
+minio:
+   enabled: false
+```
+
+Some Kubernetes Resources which are not easy recoverable are backuped once per day by `velero`.
+
+In case of a database corruption, the database can be recoverd from S3 with the following steps:
+1. Remove postgres chart: `helmfile -l app=postgres destroy`
+2. Switch on database cloning mode in the profile:
+
+   ```
+   db:
+   ...
+      cloneEnabled: true
+   ```
+
+3. Clone the database: `helmfile -l app=postgres apply # --set "mainRepo=k3d-iff.localhost:12345" in case you pull images from local`
+4. Wait until the postgres pods are up and running
+5. Update all other charts: `helmfile apply # --set "mainRepo=k3d-iff.localhost:12345" in case you pull images from local`
+6. Recover missing secrets with `velero` by first [installing](https://velero.io/docs/v1.8/basic-install/) it.
+7. Listing the `velero` backups and selecting the most recent one:
+   
+   ```
+   velero backup get
+   ```
+8. Restore backup:
+   ```
+   velero restore create --from-backup <backup-name> --existing-resource-policy update
+   ```
+9. Update all charts again `helmfile apply # --set "mainRepo=k3d-iff.localhost:12345" in case you pull images from local`
+
+After that procedure, the database is running and all dependent pods should have been restarted and working with the new password credentials
 # Uninstallation Procedure
 
 Test systems can uninstall all helm charts by:

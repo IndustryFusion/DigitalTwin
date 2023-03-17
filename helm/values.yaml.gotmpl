@@ -93,7 +93,7 @@ s3:
   {{- $protocol := "http" }}
   {{- if (hasKey .StateValues "s3") }}{{- $s3 = .StateValues.s3 }}{{- end }}
   protocol: {{- if (hasKey $s3 "protocol") }} {{ quote $s3.protocol }} {{- else }} http {{- end }}
-  endpoint: {{ if (hasKey $s3 "endpoint") }}{{ quote $s3.endpoint }}{{- else }} minio {{- end }}
+  endpoint: {{ if (hasKey $s3 "endpoint") }}{{ quote $s3.endpoint }}{{- else }} minio.{{ .StateValues.namespace}}.svc.cluster.local {{- end }}
   userAccessKey: {{ if (hasKey $s3 "userAccessKey") }}{{ quote $s3.userAccessKey }}{{- else }} minio {{- end }}
   userSecretKey: {{ if (hasKey $s3 "userSecretKey") }}{{ quote $s3.userSecretKey }}{{- else }} "{{ .StateValues.minioUserSecretKey }}" {{- end }}
 
@@ -205,3 +205,54 @@ keycloak_db:
     POSTGRES_EXTERNAL_PORT: {{ .StateValues.db.svcPort | quote }}
     POSTGRES_SUPERUSER: "true"
     POSTGRES_USERNAME: {{ .StateValues.db.dbUser }}
+
+velero:
+  image:
+    repository: velero/velero
+    tag: v1.10.0
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: 200m
+      memory: 512Mi
+  initContainers:
+    - name: velero-plugin-for-aws
+      image: velero/velero-plugin-for-aws:v1.5.0
+      imagePullPolicy: IfNotPresent
+      volumeMounts:
+        - mountPath: /target
+          name: plugins
+  configuration:
+    provider: aws
+    backupStorageLocation:
+      name: minio
+      bucket: {{ .StateValues.velero.backupBucket }}
+      default: true
+      accessMode: ReadWrite
+      config:
+        region: de
+        s3Url: {{- if (hasKey $s3 "protocol") }} {{ quote $s3.protocol }} {{- else }} http{{- end }}://{{ if (hasKey $s3 "endpoint") }}{{ quote $s3.endpoint }}{{- else }}minio.{{ .StateValues.namespace }}.svc.cluster.local{{- end }}
+        s3ForcePathStyle: {{- if .StateValues.minio.enabled }} true {{- else }} false {{- end }}
+      defaultVolumesToRestic: true
+  credentials:
+    useSecret: true
+    existingSecret: "velero-s3-credentials"
+  # deployNodeAgent: true
+  snapshotsEnabled: false
+  nodeAgent:
+    #podVolumePath: /var/lib/kubelet/pods
+    #privileged: false
+    # Pod priority class name to use for the node-agent daemonset. Optional.
+    #priorityClassName: ""
+    # Resource requests/limits to specify for the node-agent daemonset deployment. Optional.
+    # https://velero.io/docs/v1.6/customize-installation/#customize-resource-requests-and-limits
+    #resources:
+    #  requests:
+    #    cpu: 500m
+    #    memory: 512Mi
+    #  limits:
+    #    cpu: 1000m
+    #    memory: 1024Mi
