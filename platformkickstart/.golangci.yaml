@@ -1,0 +1,27 @@
+run:
+  timeout: 5m
+  skip-dirs:
+    - pkg/crd
+  linters-settings:
+    govet:
+      enable-all: true
+    gofmt:
+      simplify: true
+    goimports:
+      local-prefixes: github.com/IndustryFusion/DigitalTwin/platformkickstart
+linters:
+  disable-all: true
+  enable:
+    - govet
+    - errcheck
+    - staticcheck
+    - unused
+    - gosimple
+    - ineffassign
+    - typecheck
+    - gofmt
+    - goimports
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  exclude-case-sensitive: true

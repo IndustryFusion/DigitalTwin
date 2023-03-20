@@ -1,0 +1,9 @@
+apiVersion: crossplane.industry-fusion.com/v1alpha1
+kind: DigitalTwinPlatform
+metadata:
+  name: private-example
+  namespace: default
+spec:
+  compositionSelector:
+    matchLabels:
+      provider: private
