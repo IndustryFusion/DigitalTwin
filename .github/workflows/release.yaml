@@ -1,0 +1,40 @@
+name: Tag Image with Release Version
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  call-build:
+    uses: IndustryFusion/DigitalTwin/.github/workflows/build.yaml@main
+  call-test:
+    uses: IndustryFusion/DigitalTwin/.github/workflows/k8s-tests.yaml@main
+  push-release-images:
+    needs: call-test
+    runs-on: private
+    env: 
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      DOCKER_PREFIX: ${{ secrets.DOCKER_PREFIX }}
+      SELF_HOSTED_RUNNER: true
+    steps:
+      - name: Push release images
+        shell: bash
+        run: |
+          set +o pipefail
+          docker login -u "${DOCKER_USERNAME}" -p "${DOCKER_PASSWORD}"
+          TARGET_DOCKER_TAG=`git describe --tags --exact-match` || exit 1
+          # Tag and push passed "k3d-iff.localhost:12345" with release tag
+          images=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep ":0.1")
+          for image in $images; do
+            newimage=$(echo $image | sed -r "s/:0.1/:${TARGET_DOCKER_TAG}/g" | sed -r "s/k3d-iff.localhost:12345/${DOCKER_PREFIX}/g");
+            docker tag ${image} ${newimage};
+            docker push ${newimage};
+          done
+          # Tag and push scorpio-aio image
+          image=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep "k3d-iff.localhost:12345/digitaltwin/scorpio-all-in-one")
+          newimage="${DOCKER_PREFIX}/digitaltwin:${TARGET_DOCKER_TAG}"
+          docker tag ${image} ${newimage}
+          docker push ${newimage}
+
