@@ -91,7 +91,7 @@ PING keycloak.local (172.27.0.2): 56 data bytes
 
 # Building and Installation of Platform Locally
 
-The following setup procedure is executed in the Kubernetes end to end [`test`](../.github/workflows/k8s-tests.yaml) as part of the Continous Integration procedure. It is tested and regularly executed on `Ubuntu 20.04`.
+The following setup procedure is executed in the Kubernetes end to end [`test`](../.github/workflows/k8s-tests.yaml) as part of the Continous Integration procedure. It is tested and regularly executed on `Ubuntu 20.04` and `Ubuntu 22.04`.
 
 ---
 
