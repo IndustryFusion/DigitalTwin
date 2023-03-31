@@ -37,6 +37,7 @@ var expire = keycloakSession.getContext().getRequestHeaders()
     .getRequestHeader("X-Token-Expire");
 var accessType = keycloakSession.getContext().getRequestHeaders()
     .getRequestHeader("X-Access-Type");
+
 if (accessType.length > 0) {
     accessType = accessType[0];
 } else {
@@ -46,12 +47,8 @@ if (accessType.length > 0) {
 if (expire.length > 0) {
     expire = parseInt(expire[0]);
     token.expiration(currentTimeInSeconds + expire);
-} else {
-    if (accessType === USER) {
-        token.expiration(currentTimeInSeconds + USER_EXPIRE * 60);
-    } else {
-        token.expiration(currentTimeInSeconds + DEFAULT_EXPIRE * 60)
-    }
+} else if (accessType === DEVICE) {
+    token.expiration(currentTimeInSeconds + DEFAULT_EXPIRE * 60);
 }
 
 // Set type and subject id
@@ -66,7 +63,6 @@ if (accessType === DEVICE) {
 } else {
     // legacy uid comes from imported existing users
     var legacyUID = user.getFirstAttribute(LEGACY_UID);
-
     if (legacyUID) {
         token.setSubject(legacyUID);
     } else {
