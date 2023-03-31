@@ -80,6 +80,24 @@ spec:
               claim.name: type
               jsonType.label: String
               userinfo.token.claim: 'true'
+      - id: 36d973cc-4c8c-4dad-b6b7-a56eb9c75e57
+        name: if-company
+        protocol: openid-connect
+        attributes:
+          include.in.token.scope: 'true'
+          display.on.consent.screen: 'false'
+        protocolMappers:
+          - id: 8db9ff17-ec38-4883-8a63-602c672d7e76
+            name: IF Company ID Mapper
+            protocol: openid-connect
+            protocolMapper: oidc-usermodel-attribute-mapper
+            consentRequired: false
+            config:
+              id.token.claim: 'true'
+              access.token.claim: 'true'
+              userinfo.token.claim: 'true'
+              claim.name: IF_COMPANY
+              jsonType.label: long
       - id: aff3473b-2ffd-4e3c-8696-4e3f5aa9cdde
         name: oisp-frontend
         protocol: openid-connect
@@ -507,6 +525,7 @@ spec:
           - role_list
           - roles
           - accounts
+          - if-company
           - type
           - email
           - web-origins
@@ -545,6 +564,7 @@ spec:
           - roles
           - accounts
           - type
+          - if-company
           - email
           - web-origins
           - offline_access
