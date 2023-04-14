@@ -43,6 +43,7 @@ echo Install third part
 ( cd ./bats && bats test-horizontal-platform/horizontal-platform-up-and-running-third.bats )
 
 echo Install the rest
+( cd ../helm && helm repo add vmware-tanzu https://vmware-tanzu.github.io/helm-charts )
 ( cd ../helm && ./helmfile apply --set "mainRepo=k3d-iff.localhost:12345" )
 ( cd ./bats && bats test-horizontal-platform/horizontal-platform-up-and-running-velero.bats )
 

@@ -25,4 +25,4 @@ appVersion: "0.1.0"
 dependencies:
 - name: velero
   version: "3.1.4"
-  repository: "https://vmware-tanzu.github.io/helm-charts"
+  repository: "@vmware-tanzu"
