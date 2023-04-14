@@ -36,7 +36,7 @@ DETIK_DEBUG="true"
     [ "$status" -eq 0 ]
 }
 @test "verify that scorpio is up and running" {
-    run try "at most 30 times every 60s to find 1 pod named 'scorpio-aaio' with 'status.containerStatuses[0].ready' being 'true'"
+    run try "at most 30 times every 60s to find 1 pod named 'scorpio-all-in-one-runner' with 'status.containerStatuses[0].ready' being 'true'"
     [ "$status" -eq 0 ]
 
     run verify "there is 1 ingress named 'scorpio-ingress'"

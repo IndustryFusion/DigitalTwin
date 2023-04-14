@@ -39,14 +39,14 @@ imageCredentials:
 ## AAIO
 aaio:
   enabled: true
-  name: scorpio-aaio
+  name: scorpio-all-in-one-runner
 
   replicas: 1
 
   image:
-    repository: ibn40/digitaltwin
+    repository: ibn/scorpio-all-in-one-runner
     pullPolicy: Always
-    tag: scorpio-all-in-one-runner_3.0.0-SNAPSHOT
+    tag: 0.1
   resources: {}
 
 ################################### SpringArgs #######################################################################

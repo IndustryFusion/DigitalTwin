@@ -31,7 +31,7 @@ spec:
       - backend:
           service:
             {{- if .Values.aaio.enabled }}
-            name: scorpio-aaio
+            name: {{ .Values.aaio.name }}
             {{- else }}
             name: {{ .Values.scorpio.internalHostname }}
             {{- end }}
