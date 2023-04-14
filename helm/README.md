@@ -13,7 +13,7 @@ The Services consist of
 * Apache Flink Streaming SQL
 * SQL scripts for IFF example scenario 
 
-There are two installation instructions below. The first [`section`](#installation-of-platform-with-dockerhub-access) describes how to deploy the platform with access to private dockerhub of IFF. The second [`section`](#building-and-installation-platform-locally) describes how to build everything from scratch with a local registry.
+There are two installation instructions below. The first [`section`](#installation-of-platform-with-dockerhub-access) describes how to deploy the platform using public Dockerhub IFF registry. The second [`section`](#building-and-installation-platform-locally) describes how to build everything from scratch with a local registry.
 
 # Installation of Platform with DockerHub Access
 
@@ -45,13 +45,13 @@ There are two installation instructions below. The first [`section`](#installati
    tar -zxvf helmfile_0.149.0_linux_amd64.tar.gz
    chmod u+x helmfile
    ```
-4. Deploy secrets for industry fusion registry
+4. (OPTIONAL) Deploy secrets for industry fusion registry if you are going to use a private docker registry
 
    ```
    kubectl -n iff create secret docker-registry regcred --docker-password=<password> --docker-username=<username> --docker-server=https://index.docker.io/v1/
    ```
-5. Install the charts by using helmfile: `./helmfile apply`
-6. Verify all pods are running using `kubectl -n iff get pods`
+5. Install the charts by using helmfile, don't forget to specify the docker registry and version tag (use 'latest' tag for the current development version, it is updated nightly): `./helmfile apply --set "mainRepo=ibn40" --set "mainVersion=<RELEASE_VERSION>"`
+6. Verify all pods are running using `kubectl -n iff get pods`, in some slow systems keycloak realm import job might fail and needs to be restarted, this is due to postgres database not being ready on time. 
 7. Login to keycloak with browser using `http://keycloak.local/auth`
 
    * The username is `admin`, the password can be found by `kubectl -n iff get secret/keycloak-initial-admin -o=jsonpath='{.data.password}' | base64 -d | xargs echo`
@@ -118,14 +118,14 @@ After that, the following steps have to be executed (note the round brackets):
 
 ---
 
-Finally, an otional (but recommended) end-to-end test can be excecuted to validate that all is up and running.
+Finally, an optional (but recommended) end-to-end test can be executed to validate that all is up and running.
 ```
 (cd ./test/bats && bats */*.bats)
 ```
 
 # Troubleshooting
 
-1. Keycloak instance not ready
+1. Keycloak instance not ready or there is no 'iff' realm. Check the keycloak realm import job, it can timeout if the postgres database does not come up on time. You can delete the job and the keycloak operator will automatically create a new one. Afterwards keycloak should come up.
 2. Alerta not coming up
    * Error msg in the logs: `alerta.exceptions.ApiError: Could not get OpenID configuration from well known URL: HTTPConnectionPool(host='keycloak.local', port=80): Max retries exceeded with url: /auth/realms/iff/.well-known/openid-configuration`
      * `keycloak.local` url cannot be resolved from within kubernetes, make sure that it is known by the kubernetes dns. For K3s please see #configure-keycloak.local-dns
@@ -150,7 +150,7 @@ minio:
    enabled: false
 ```
 
-Some Kubernetes Resources which are not easy recoverable are backuped once per day by `velero`.
+Some Kubernetes Resources which are not easy recoverable are backed up once per day by `velero`.
 
 In case of a database corruption, the database can be recoverd from S3 with the following steps:
 1. Remove postgres chart: `helmfile -l app=postgres destroy`
@@ -164,7 +164,7 @@ In case of a database corruption, the database can be recoverd from S3 with the 
 
 3. Clone the database: `helmfile -l app=postgres apply # --set "mainRepo=k3d-iff.localhost:12345" in case you pull images from local`
 4. Wait until the postgres pods are up and running
-5. Update all other charts: `helmfile apply # --set "mainRepo=k3d-iff.localhost:12345" in case you pull images from local`
+5. Update all other charts: `helmfile apply # --set "mainRepo=k3d-iff.localhost:12345" --set "mainVersion=0.1" in case you pull images from local, adapt accordingly if you are pulling from dockerhub`
 6. Recover missing secrets with `velero` by first [installing](https://velero.io/docs/v1.8/basic-install/) it.
 7. Listing the `velero` backups and selecting the most recent one:
    
@@ -175,7 +175,7 @@ In case of a database corruption, the database can be recoverd from S3 with the 
    ```
    velero restore create --from-backup <backup-name> --existing-resource-policy update
    ```
-9. Update all charts again `helmfile apply # --set "mainRepo=k3d-iff.localhost:12345" in case you pull images from local`
+9. Update all charts again `helmfile apply # --set "mainRepo=k3d-iff.localhost:12345" --set "mainVersion=0.1" in case you pull images from local, adapt accordingly if you are pulling from dockerhub`
 
 After that procedure, the database is running and all dependent pods should have been restarted and working with the new password credentials
 # Uninstallation Procedure
