@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 TEST="true"
+VERSION="0.1"
 
 echo Build DT containers and push to local registry
 (cd .. && DOCKER_PREFIX=k3d-iff.localhost:12345 docker-compose build)
@@ -24,8 +25,8 @@ echo Build Scorpio containers
 
 if [[ $TEST -eq "true" ]]; then
     ( cd ../.. && git clone https://github.com/IndustryFusion/ScorpioBroker.git)
-    ( cd ../../ScorpioBroker && git checkout 04376bd ) # Checking out specific commit for CI purposes
-    ( cd ../../ScorpioBroker && source /etc/profile.d/maven.sh && mvn clean package -DskipTests -Ddocker -Din-memory -Pin-memory -Dquarkus.profile=in-memory -Dos=java)
+    ( cd ../../ScorpioBroker && git checkout 78409dd ) # Checking out specific commit for CI purposes
+    ( cd ../../ScorpioBroker && source /etc/profile.d/maven.sh && mvn clean package -DskipTests -Ddocker -Ddocker-tag=$VERSION -Din-memory -Pin-memory -Dquarkus.profile=in-memory -Dos=java)
 else
     ( cd ../.. && git clone https://github.com/IndustryFusion/ScorpioBroker.git )
     ( cd ../../ScorpioBroker && mvn clean package -DskipTests -Pdocker )
