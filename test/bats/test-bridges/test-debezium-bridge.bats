@@ -254,7 +254,7 @@ teardown(){
     sleep 2
     echo "# now killing kafkacat and evaluate result"
     killall kafkacat
-    sort -o ${KAFKACAT_ATTRIBUTES} ${KAFKACAT_ATTRIBUTES}
+    LC_ALL="en_US.UTF-8" sort -o ${KAFKACAT_ATTRIBUTES} ${KAFKACAT_ATTRIBUTES}
     jq -S < ${KAFKACAT_ENTITY_CUTTER} > ${KAFKACAT_ENTITY_CUTTER_SORTED}
     jq -S < ${KAFKACAT_ENTITY_PLASMACUTTER} > ${KAFKACAT_ENTITY_PLASMACUTTER_SORTED}
     echo "# Compare ATTRIBUTES"
@@ -285,7 +285,7 @@ teardown(){
     echo "# now killing kafkacat and evaluate result"
     killall kafkacat
     sleep 2
-    sort -o ${KAFKACAT_ATTRIBUTES} ${KAFKACAT_ATTRIBUTES}
+    LC_ALL="en_US.UTF-8" sort -o ${KAFKACAT_ATTRIBUTES} ${KAFKACAT_ATTRIBUTES}
     jq -S < ${KAFKACAT_ENTITY_CUTTER} > ${KAFKACAT_ENTITY_CUTTER_SORTED}
     jq -S < ${KAFKACAT_ENTITY_PLASMACUTTER} > ${KAFKACAT_ENTITY_PLASMACUTTER_SORTED}
     run compare_delete_attributes ${KAFKACAT_ATTRIBUTES}

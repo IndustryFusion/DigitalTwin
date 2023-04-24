@@ -67,7 +67,7 @@ for testdir in ${testdirs_rules}; do
         sqlite3 ${DATABASE} < $OUTPUTDIR/ngsild.sqlite
         sqlite3 ${DATABASE} < $OUTPUTDIR/ngsild-models.sqlite
         sqlite3 ${DATABASE} < $OUTPUTDIR/shacl-validation.sqlite
-        echo "select id, entityId, name, nodeType, valueType, \`index\`, \`type\`, \`https://uri.etsi.org/ngsi-ld/hasValue\`, \`https://uri.etsi.org/ngsi-ld/hasObject\` from attributes_insert_filter;" | sqlite3 -quote  -noheader ${DATABASE}| sort > ${OUTPUTDIR}/${MODEL}_${TESTOUT}
+        echo "select id, entityId, name, nodeType, valueType, \`index\`, \`type\`, \`https://uri.etsi.org/ngsi-ld/hasValue\`, \`https://uri.etsi.org/ngsi-ld/hasObject\` from attributes_insert_filter;" | sqlite3 -quote  -noheader ${DATABASE} | LC_ALL="en_US.UTF-8" sort > ${OUTPUTDIR}/${MODEL}_${TESTOUT}
         diff ${OUTPUTDIR}/${MODEL}_${TESTOUT} ${MODEL}_${RESULT} || { echo "failed"; exit 1; }
         echo " ok"
     done;
