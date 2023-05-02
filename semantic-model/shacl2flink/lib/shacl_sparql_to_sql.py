@@ -109,7 +109,7 @@ def translate(shaclfile, knowledgefile):
         message = row.message.toPython() if row.message else None
         select = row.select.toPython() if row.select else None
         nodeshape = utils.strip_class(row.nodeshape.toPython()) if row.nodeshape else None
-        targetclass = utils.class_to_obj_name(utils.strip_class(row.targetclass.toPython())) \
+        targetclass = utils.camelcase_to_snake_case(utils.strip_class(row.targetclass.toPython())) \
             if row.targetclass else None
         severitylabel = row.severitylabel.toPython() if row.severitylabel is not None else 'warning'
         sql_expression, tables = translate_sparql(shaclfile, knowledgefile, select, target_class, g)

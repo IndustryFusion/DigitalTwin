@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
         - name: {{ .Values.aaio.name }}
-          image: {{ .Values.mainRepo }}/{{ .Values.aaio.name }}:{{ .Values.aaio.image.tag }}
+          image: {{ .Values.mainRepo }}/{{ .Values.aaio.name }}:{{ .Values.mainVersion }}
           imagePullPolicy: {{ .Values.aaio.image.pullPolicy }}
           env:
             - name: CLIENT_ID

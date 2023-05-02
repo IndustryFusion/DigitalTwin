@@ -1,0 +1,4 @@
+'urn:lasercutter:1\https://industry-fusion.com/oee/v0.9/availabilityState','urn:lasercutter:1','https://industry-fusion.com/oee/v0.9/availabilityState','@value',NULL,0,'https://uri.etsi.org/ngsi-ld/Property',0,NULL
+'urn:oee:1\https://industry-fusion.com/oee/v0.9/goodCount','urn:oee:1','https://industry-fusion.com/oee/v0.9/goodCount','@value',NULL,0,'https://uri.etsi.org/ngsi-ld/Property',1,NULL
+'urn:oee:1\https://industry-fusion.com/oee/v0.9/totalCount','urn:oee:1','https://industry-fusion.com/oee/v0.9/totalCount','@value',NULL,0,'https://uri.etsi.org/ngsi-ld/Property',1,NULL
+'urn:plasmacutter:1\https://industry-fusion.com/oee/v0.9/availabilityState','urn:plasmacutter:1','https://industry-fusion.com/oee/v0.9/availabilityState','@value',NULL,0,'https://uri.etsi.org/ngsi-ld/Property',1,NULL

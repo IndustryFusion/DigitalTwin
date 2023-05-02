@@ -57,5 +57,5 @@ spec:
   partitions: 1
   replicas: 1
   config:
-    retention.ms: '{{.Values.kafkaBridge.debezium.entityTopicRetention}}'
+    retention.ms: '{{.Values.kafkaBridge.alerta.bulkTopicRetention}}'
   topicName: {{.Values.kafkaBridge.debezium.attributesTopic}}_insert

@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from rdflib import Graph
+from rdflib import Graph, URIRef
 import os
 import sys
 import argparse
@@ -38,8 +38,8 @@ attributes_query = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
-SELECT (?a as ?entityId) (?b as ?name) (?e as ?type) (IF(bound(?g), IF(isIRI(?g), '@id', '@value'), IF(isIRI(?f), '@id', '@value')) as ?nodeType)
-(datatype(?g) as ?valueType) (?f as ?hasValue) (?g as ?hasObject)
+SELECT DISTINCT (?a as ?entityId) (?b as ?name) (?e as ?type) (IF(bound(?g), IF(isIRI(?g), '@id', '@value'), IF(isIRI(?f), '@id', '@value')) as ?nodeType)
+(datatype(?g) as ?valueType) (?f as ?hasValue) (?g as ?hasObject) ?observedAt ?index
 where {
     ?nodeshape a sh:NodeShape .
     ?nodeshape sh:targetClass ?class .
@@ -53,6 +53,8 @@ where {
     } .
     {?a ?b [ ngsild:hasObject ?g ] .
     VALUES ?e {ngsild:Relationship} .
+    OPTIONAl{?a ?b [ ngsild:observedAt ?observedAt; ngsild:hasObject ?g  ] .} .
+    OPTIONAl{?a ?b [ ngsild:datasetId ?index; ngsild:hasObject ?g  ] .} .
     }
     UNION
     { ?a ?b [ ngsild:hasValue ?f ] .
@@ -60,12 +62,16 @@ where {
     VALUES ?e {ngsild:Property}
     FILTER(!isIRI(?f))
     ?nodeshape sh:property [ sh:path ?b ] .
+    OPTIONAl{?a ?b [ ngsild:observedAt ?observedAt; ngsild:hasValue ?f ] .} .
+    OPTIONAl{?a ?b [ ngsild:datasetId ?index; ngsild:hasValue ?f ] .} .
     }
     UNION
     { ?a ?b [ ngsild:hasValue ?f ] .
     VALUES ?d {'@id'} .
     VALUES ?e {ngsild:Property}
     FILTER(isIRI(?f))
+    OPTIONAl{?a ?b [ ngsild:observedAt ?observedAt;ngsild:hasValue ?f  ] .} .
+    OPTIONAl{?a ?b [ ngsild:datasetId ?index;ngsild:hasValue ?f  ] .} .
     }
 }
 """  # noqa: E501
@@ -114,13 +120,22 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
         print(f'INSERT INTO `{configs.attributes_table_name}` VALUES',
               file=sqlitef)
         for entityId, name, type, nodeType, valueType, hasValue,\
-                hasObject in qres:
+                hasObject, observedAt, index in qres:
             id = entityId.toPython() + "\\\\" + name.toPython()
-            if id not in entity_count:
-                entity_count[id] = 0
+            current_index = None
+            if index is None:
+                if id not in entity_count:
+                    entity_count[id] = 0
+                else:
+                    entity_count[id] += 1
+                current_index = entity_count[id]
             else:
-                entity_count[id] += 1
-
+                current_index = index
+                if isinstance(index, URIRef):
+                    try:
+                        current_index = int(utils.strip_class(current_index.toPython()))
+                    except:
+                        current_index = 0
             valueType = nullify(valueType)
             hasValue = nullify(hasValue)
             hasObject = nullify(hasObject)
@@ -130,12 +145,15 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
                 first = False
             else:
                 print(',', file=sqlitef)
+            current_timestamp = "CURRENT_TIMESTAMP"
+            if observedAt is not None:
+                current_timestamp = f"'{str(observedAt)}'"
             print("('" + id + "', '" + entityId.toPython() + "', '" +
                   name.toPython() +
                   "', '" + nodeType + "', " + valueType + ", " +
-                  str(entity_count[id]) +
+                  str(current_index) +
                   ", '" + type.toPython() + "'," + hasValue + ", " +
-                  hasObject + ", " + 'CURRENT_TIMESTAMP' + ")", end='',
+                  hasObject + ", " + current_timestamp + ")", end='',
                   file=sqlitef)
         print(";", file=sqlitef)
 
