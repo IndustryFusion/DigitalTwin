@@ -17,10 +17,10 @@ spec:
         tls: true
     resources:
       requests:
-        memory: 500Mi
+        memory: 800Mi
         cpu: 300m
       limits:
-        memory: 500Mi
+        memory: 800Mi
         cpu: 500m
     jvmOptions:
       "-Xmx": "400m"
