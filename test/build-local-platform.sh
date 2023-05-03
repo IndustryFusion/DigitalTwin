@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 TEST="true"
-VERSION="0.1"
+VERSION="v0.5.0-alpha.2"
 
 echo Build DT containers and push to local registry
 (cd .. && DOCKER_PREFIX=k3d-iff.localhost:12345 docker-compose build)
