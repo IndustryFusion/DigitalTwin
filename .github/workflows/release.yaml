@@ -32,9 +32,4 @@ jobs:
             docker tag ${image} ${newimage};
             docker push ${newimage};
           done
-          # Tag and push scorpio-aio image
-          image=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep "k3d-iff.localhost:12345/digitaltwin:scorpio-all-in-one")
-          newimage="${DOCKER_PREFIX}/digitaltwin:${TARGET_DOCKER_TAG}"
-          docker tag ${image} ${newimage}
-          docker push ${newimage}
 
