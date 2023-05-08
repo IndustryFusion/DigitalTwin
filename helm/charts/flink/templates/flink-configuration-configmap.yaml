@@ -21,7 +21,9 @@ data:
     taskmanager.memory.process.size: 1728m
     parallelism.default: {{ .Values.flink.defaultParalellism }}
     s3.endpoint: {{ printf "%s://%s" .Values.s3.protocol .Values.s3.endpoint }}
+    {{- if .Values.minio.enabled }}
     s3.path.style.access: true
+    {{- end }}
     s3.access-key: {{ .Values.s3.userAccessKey }}
     {{ if $secret }}
     s3.secret-key: {{ $secret.data.CONSOLE_SECRET_KEY | b64dec }}
