@@ -1,0 +1,70 @@
+---
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace "keycloak-client-secret-timescaledb") -}}
+# yamllint disable rule:line-length
+# yamllint disable rule:braces
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: timescaledb-bridge
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: timescaledb-bridge
+spec:
+  replicas: {{ .Values.kafkaBridge.timescaledb.replicaCount }}
+  selector:
+    matchLabels:
+      app: timescaledb-bridge
+  template:
+    metadata:
+      labels:
+        app: timescaledb-bridge
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/bridge-configmap.yaml") . | sha256sum }}
+        {{- if $secret }}
+        checksum/credentials: {{ printf "%s" $secret | toString | sha256sum }}
+        {{- end }}
+    spec:
+      containers:
+        - name: timescaledb-bridge
+          image: '{{ .Values.mainRepo }}/kafka-bridge:{{ .Values.mainVersion }}'
+          command: ["node"]
+          args: ["/opt/timescaledb/app.js"]
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.db.dbUser -}}.{{- .Values.clusterSvcName -}}.{{- .Values.db.secretPostfix }}
+                  key: password
+            - name: POSTGRES_SERVICE
+              value: {{ .Values.clusterSvcName }}
+          livenessProbe:
+            exec:
+              command:
+                - cat
+                - /tmp/healthy
+            initialDelaySeconds: 300
+          readinessProbe:
+            exec:
+              command:
+                - cat
+                - /tmp/ready
+            initialDelaySeconds: 5
+          volumeMounts:
+            - name: config
+              mountPath: /opt/config
+              readOnly: true
+          resources:
+      volumes:
+        - name: config
+          configMap:
+            # Provide the name of the ConfigMap you want to mount.
+            name: bridge-configmap
+            # An array of keys from the ConfigMap to create as files
+            items:
+              - key: "config.json"
+                path: "config.json"
+              - key: "knowledge.ttl"
+                path: "knowledge.ttl"
+      imagePullSecrets:
+        - name: {{ .Values.pullSecretCredentials }}

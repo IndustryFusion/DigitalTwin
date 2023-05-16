@@ -54,6 +54,15 @@ data:
       },
       "bridgeCommon": {
               "kafkaSyncOnAttribute": "https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn"
+      },
+      "timescaledb": {
+              "topic": "iff.ngsild.attributes",
+              "PGSSLMODE": "require",
+              "dbname": "tsdb",
+              "hostname": "acid-cluster",
+              "port": "5432",
+              "username": "ngb",
+              "password": "POSTGRES_PASSWORD"
       }
     }
   knowledge.ttl: |
