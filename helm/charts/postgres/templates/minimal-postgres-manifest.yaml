@@ -43,6 +43,13 @@ spec:
 {{ toYaml .Values.dbUsers | indent 4 }}
   databases:
 {{ toYaml .Values.databases | indent 4 }}
+  preparedDatabases:
+{{ toYaml .Values.preparedDatabases | indent 4 }}:
+      extensions:
+        timescaledb: public
+      schemas:
+        public:
+          defaultRoles: false
   postgresql:
     version: "14"
     parameters:

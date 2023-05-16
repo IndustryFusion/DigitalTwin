@@ -101,7 +101,16 @@ data:
         "cache": {
                 "host": {{ .Values.mqtt.cache.host | quote }},
                 "port": {{ .Values.mqtt.cache.port }}
-                }
-        }
+        },
+      "timescaledb": {
+              "topic": "iff.ngsild.attributes",
+              "PGSSLMODE": "require",
+              "dbname": "tsdb",
+              "hostname": "acid-cluster",
+              "port": "5432",
+              "username": "ngb",
+              "password": "POSTGRES_PASSWORD"
+      }
+    }
   knowledge.ttl: |
 {{ .Files.Get "kms/knowledge.ttl" | indent 4 }}

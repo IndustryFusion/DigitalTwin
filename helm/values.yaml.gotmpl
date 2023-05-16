@@ -175,6 +175,14 @@ kafkaBridge:
   mqtt:
     replicaCount: 1
     attributesTopic: "iff.ngsild.attributes"
+    
+  timescaledb:
+    replicaCount: 1
+    tokenRefreshInterval: 200
+    listenTopic: "iff.ngsild.attributes"
+    listenTopicRetention: {{- if hasKey .StateValues.kafkaBridge.timescaledb "listenTopicRetention" }} {{ .StateValues.kafkaBridge.ngsildUpdates.listenTopicRetention | quote}}
+                          {{- else }} "3600000"
+                          {{- end }}
 
 keycloak:
   adminName: admin

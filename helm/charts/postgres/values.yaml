@@ -54,6 +54,11 @@ dbUsers:
   - createdb
   - replication
   - bypassrls
+  pgrest:
+  - nosuperuser
+  - noreplication
+  - nocreaterole
+  - nocreatedb
 
 ## Databases; corresponding DB owner must be specified above
 ##
@@ -61,3 +66,6 @@ databases:
   ngb: ngb # dbname: dbowner
   keycloakdb: ngb # keycloak
   monitoring: ngb # alerta
+  tsdb: ngb # timescaledb ngsild timeseries data
+
+preparedDatabases: tsdb

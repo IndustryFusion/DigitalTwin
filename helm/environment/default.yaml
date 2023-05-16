@@ -91,6 +91,10 @@ kafkaBridge:
     replicaCount: 1
     tokenRefreshInterval: 200
     listenTopicRetention: 3600000
+  timescaledb:
+    replicaCount: 1
+    tokenRefreshInterval: 200
+    listenTopicRetention: 3600000
 
 velero:
   backupBucket: velero-backup
