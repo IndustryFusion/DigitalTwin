@@ -90,6 +90,14 @@
 	"cache": {
 		"host": "redis",
 		"port": 6379
+	},
+	"timescaledb": {
+		"topic": "iff.ngsild.attributes",
+		"PGSSLMODE": "require",
+		"dbname": "tsdb",
+		"hostname": "acid-cluster.iff.svc.cluster.local",
+		"port": "5432",
+		"username": "ngb",
+		"password": "POSTGRES_PASSWORD"
 	}
-
 }

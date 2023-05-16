@@ -51,6 +51,9 @@ DETIK_DEBUG="true"
 
     run try "at most 30 times every 60s to find 1 pod named 'ngsild-updates-bridge' with 'status.containerStatuses[0].ready' being 'true'"
     [ "$status" -eq 0 ]
+
+    run try "at most 30 times every 60s to find 1 pod named 'timescaledb-bridge' with 'status.containerStatuses[0].ready' being 'true'"
+    [ "$status" -eq 0 ]
 }
 
 @test "verify that the core services are up" {

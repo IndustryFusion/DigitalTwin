@@ -3,6 +3,7 @@
 1. Alerta bridge, a service which listens at a specific Kafka topic and forwards the data to Alerta.
 2. NgsildUpdates bride, a service which listens at a specific Kafka topic and forwards data to the scorpio/Ngsild broker.
 3. DebeziumBridge, a service which listens to debezium updates on ngsild entities and forward them to specific topics.
+4. Timescaledb Bridge, a service which listens at specific Kafka topic and forwards data to timescaledb(tsdb) running in postgres database
 
 ## Alerta Bridge
 
@@ -75,3 +76,21 @@ cat ngsildUpdates.json | tr -d '\n' | kafkacat -P -t iff.alerts -b my-cluster-ka
 
 The debezium bridge maps the updates from the NGSILD entity tabe to StreamingSQL tables.
 Concept TBD.
+
+## TimescaledDB Bridge
+
+This service which listens at specific Kafka topic (iff.ngsild.attributes) and forwards NGSI-LD data to timescaledb(tsdb) running in postgres database.
+- Currently it is disabled by default. To enable please remove timescaledb deployment file link from .helmignore of kafkabridge charts
+
+* entities: Array of valid [NGSI-LD](https://www.etsi.org/deliver/etsi_gs/CIM/001_099/009/01.05.01_60/gs_CIM009v010501p.pdf) entities
+
+Data stored in the hypertable "entityhistories" of timescaledb database "tsdb" in below format:
+
+```
+tsdb=# select * from entityhistories;
+         observedAt         |         modifiedAt         |      entityId      |                    attributeId                    |               attributeType                |                              datasetId                              | nodeType |                      value                       | index 
+----------------------------+----------------------------+--------------------+--------------------------------------------------+-------------------------------------------+---------------------------------------------------------------------+----------+--------------------------------------------------+-------
+ 2023-07-18 09:40:24.22+00  | 2023-07-18 09:40:24.22+00  | urn:plasmacutter:1 | https://industry-fusion.com/types/v0.9/state     | https://uri.etsi.org/ngsi-ld/Property     | urn:plasmacutter:1\https://industry-fusion.com/types/v0.9/state     | @value   |  https://industry-fusion.com/types/v0.9/state_OFF                                         |     0
+ 2023-07-18 09:38:15.559+00 | 2023-07-18 09:38:15.559+00 | urn:plasmacutter:1 | https://industry-fusion.com/types/v0.9/hasFilter | https://uri.etsi.org/ngsi-ld/Relationship | urn:plasmacutter:1\https://industry-fusion.com/types/v0.9/hasFilter | @id      | urn:filter:1                                     |     0
+   
+```
