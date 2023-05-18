@@ -113,24 +113,24 @@ cat << EOF | tr -d '\n' > ${ATTRIBUTE7}
 EOF
 
 compare_attributes1() {
-    cat << EOF | diff "$1" - >&3
+    cat << EOF | diff -b "$1" - >&3
 {"op":"update","overwriteOrReplace":true,"noForward":true,"entities":"[{\"id\": \"${CUTTER_ID}\",\"https://industry-fusion.com/types/v0.9/state\":[{\"type\": \"https://uri.etsi.org/ngsi-ld/Property\", \"value\": \"ON\"}]}]"}
 EOF
 }
 compare_attributes2() {
-    cat << EOF | diff "$1" - >&3
+    cat << EOF | diff -b "$1" - >&3
 {"op":"update","overwriteOrReplace":true,"noForward":true,"entities":"[{\"id\": \"${CUTTER_ID}\",\"https://industry-fusion.com/types/v0.9/state\":[{\"type\": \"https://uri.etsi.org/ngsi-ld/Property\", \"value\": \"OFF\"}]}]"}
 EOF
 }
 compare_attributes3() {
-    cat << EOF | diff "$1" - >&3
+    cat << EOF | diff -b "$1" - >&3
 {
   "noForward": true,
   "op": "update",
   "overwriteOrReplace": true
 }
 EOF
-    cat << EOF | jq -S | diff "$2" - >&3
+    cat << EOF | jq -S | diff -b "$2" - >&3
 [
   {
     "id": "urn:plasmacutter-test:12345",
@@ -148,19 +148,19 @@ EOF
 }
 
 compare_attributes4() {
-    cat << EOF | diff "$1" - >&3
+    cat << EOF | diff -b "$1" - >&3
 {"op":"update","overwriteOrReplace":true,"noForward":true,"entities":"[{\"id\": \"${CUTTER_ID}\",\"https://industry-fusion.com/types/v0.9/hasWorkpiece\":[{\"type\": \"https://uri.etsi.org/ngsi-ld/Relationship\", \"object\": \"urn:workpiece:1\"}]}]"}
 EOF
 }
 
 compare_attributes5() {
-    cat << EOF | diff "$1" - >&3
+    cat << EOF | diff -b "$1" - >&3
 {"op":"update","overwriteOrReplace":true,"noForward":true,"entities":"[{\"id\": \"${CUTTER_ID}\",\"https://industry-fusion.com/types/v0.9/refState\":[{\"type\": \"https://uri.etsi.org/ngsi-ld/Property\", \"value\": {\"@id\": \"https://industry-fusion.com/v0.9/refStateIRI\"}}]}]"}
 EOF
 }
 
 compare_attributes6() {
-    cat << EOF | diff "$1" - >&3
+    cat << EOF | diff -b "$1" - >&3
 {"op":"update","overwriteOrReplace":true,"noForward":true,"entities":"[{\"id\": \"${CUTTER_ID}\",\"https://industry-fusion.com/types/v0.9/jsonValue\":[{\"type\": \"https://uri.etsi.org/ngsi-ld/Property\", \"value\": {\"type\":\"https://industry-fusion.com/v0.9/refStateIRI\",\"key\":\"value\"}}]}]"}
 EOF
 }
@@ -170,7 +170,7 @@ compare_attributes7() {
     if [ "$res" -ne 0 ];
         then echo "# Result term not a valid JSON - check COMPARE_ATTRIBUTE data" >&3; return 1;
     fi
-    cat << EOF | diff "$1" - >&3
+    cat << EOF | diff -b "$1" - >&3
 ${COMPARE_ATTRIBUTE7}
 EOF
 }
