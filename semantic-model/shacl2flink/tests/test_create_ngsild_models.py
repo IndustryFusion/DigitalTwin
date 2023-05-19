@@ -59,8 +59,14 @@ def test_main(mock_utils, mock_configs, mock_graph, mock_nullify, tmp_path):
     hasValue.toPython.return_value = 'hasValue'
     hasObject = MagicMock()
     hasObject.toPython.return_value = 'hasObject'
+    observedAt = MagicMock()
+    observedAt.toPython.return_value = 'Timestamp'
+    index = MagicMock()
+    index.toPython.return_value = 'index'
     g.query = MagicMock(side_effect=[
-        [(entityId, name, type, nodeType, valueType, hasValue, hasObject)],
+        [(entityId, name, type, nodeType, valueType, hasValue, hasObject, observedAt, index),
+         (entityId, name, type, nodeType, valueType, hasValue, hasObject, observedAt, None),
+         (entityId, name, type, nodeType, valueType, hasValue, hasObject, observedAt, None)],
         [(entityId, type, name, 1, type)]
     ])
 
@@ -68,3 +74,10 @@ def test_main(mock_utils, mock_configs, mock_graph, mock_nullify, tmp_path):
                               'kms/model.jsonld', tmp_path)
     assert os.path.exists(os.path.join(tmp_path, 'ngsild-models.sqlite'))\
         is True
+
+
+def test_parser():
+    args = create_ngsild_models.parse_args(['shaclfile.ttl', 'knowledge.ttl', 'model.jsonld'])
+    assert args.shaclfile == 'shaclfile.ttl'
+    assert args.knowledgefile == 'knowledge.ttl'
+    assert args.modelfile == 'model.jsonld'

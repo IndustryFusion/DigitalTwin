@@ -36,6 +36,7 @@ def test_translate(mock_utils, mock_add_variables_to_message, mock_translate_spa
     monkeypatch.setattr(lib.shacl_sparql_to_sql, "add_variables_to_message", mock_add_variables_to_message)
     monkeypatch.setattr(mock_utils, "strip_class", mock_strip_class)
     monkeypatch.setattr(mock_utils, "class_to_obj_name", mock_strip_class)
+    monkeypatch.setattr(mock_utils, "camelcase_to_snake_case", mock_strip_class)
 
     message = MagicMock()
     message.toPython.return_value = 'message'

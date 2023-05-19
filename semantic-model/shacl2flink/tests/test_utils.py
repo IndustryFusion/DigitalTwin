@@ -146,7 +146,7 @@ FROM (\n  SELECT *,\nROW_NUMBER() OVER (PARTITION BY `id`\nORDER BY ts DESC)\
 
 
 def test_create_statementset():
-    result = utils.create_statementset('object', 'table_object', 'view',
+    result = utils.create_statementset('object', 'table_object', 'view', None,
                                        'statementset')
     assert result == {
         'apiVersion': 'industry-fusion.com/v1alpha2',
@@ -206,6 +206,7 @@ def test_wrap_ngsild_variable():
     ctx = {
         'bounds': {'var': 'TABLE.`id`'},
         'entity_variables': {},
+        'time_variables': {},
         'property_variables': {rdflib.Variable('var'): True}
     }
     var = rdflib.Variable('var')
@@ -215,8 +216,49 @@ def test_wrap_ngsild_variable():
     ctx = {
         'bounds': {'var': 'TABLE.`id`'},
         'entity_variables': {},
+        'time_variables': {},
         'property_variables': {rdflib.Variable('var'): False}
     }
     var = rdflib.Variable('var')
     bounds = utils.wrap_ngsild_variable(ctx, var)
     assert bounds == '\'"\' || TABLE.`id` || \'"\''
+
+
+def test_process_sql_dialect():
+    expression = "SQL_DIALECT_STRIP_IRI{stripme}xxSQL_DIALECT_STRIP_LITERAL{literal}\
+yySQL_DIALECT_TIME_TO_MILLISECONDS{time}\
+zzSQL_DIALECT_CURRENT_TIMESTAMP, SQL_DIALECT_INSERT_ATTRIBUTES,SQL_DIALECT_SQLITE_TIMESTAMP, SQL_DIALECT_CAST"
+    isSqlite = False
+    result_expression = utils.process_sql_dialect(expression, isSqlite)
+    assert result_expression == "REGEXP_REPLACE(CAST(stripme as STRING), '>|<', '')\
+xxREGEXP_REPLACE(CAST(literal as STRING), '\\\"', '')\
+yy1000 * UNIX_TIMESTAMP(TRY_CAST(time AS STRING)) + EXTRACT(MILLISECOND FROM TRY_CAST(time as TIMESTAMP))\
+zzCURRENT_TIMESTAMP, INSERT into attributes_insert, TRY_CAST"
+
+    isSqlite = True
+    result_expression = utils.process_sql_dialect(expression, isSqlite)
+    assert result_expression == 'ltrim(rtrim(stripme, \'>\'), \'<\')xxtrim(literal, \'\\"\')yyCAST(julianday(time) \
+* 86400000 as INTEGER)zzdatetime(), INSERT OR REPLACE INTO attributes_insert_filter,CURRENT_TIMESTAMP, CAST'
+
+    # Check recursive strutures
+
+    isSqlite = False
+    expression = "SQL_DIALECT_STRIP_IRI{SQL_DIALECT_STRIP_IRI{SQL_DIALECT_STRIP_IRI{stripme}}}"
+    result_expression = utils.process_sql_dialect(expression, isSqlite)
+    assert result_expression == "REGEXP_REPLACE(CAST(REGEXP_REPLACE(CAST(REGEXP_REPLACE(CAST(stripme as STRING), \
+'>|<', '') as STRING), '>|<', '') as STRING), '>|<', '')"
+
+    isSqlite = True
+    result_expression = utils.process_sql_dialect(expression, isSqlite)
+    assert result_expression == "ltrim(rtrim(ltrim(rtrim(ltrim(rtrim(stripme, '>'), '<'), '>'), '<'), '>'), '<')"
+
+    isSqlite = False
+    expression = "SQL_DIALECT_STRIP_LITERAL{SQL_DIALECT_TIME_TO_MILLISECONDS{SQL_DIALECT_STRIP_IRI{test}}}"
+    result_expression = utils.process_sql_dialect(expression, isSqlite)
+    assert result_expression == 'REGEXP_REPLACE(CAST(1000 * UNIX_TIMESTAMP(TRY_CAST(REGEXP_REPLACE(CAST(test \
+as STRING), \'>|<\', \'\') AS STRING)) + EXTRACT(MILLISECOND FROM TRY_CAST(REGEXP_REPLACE(CAST(test as STRING), \
+\'>|<\', \'\') as TIMESTAMP)) as STRING), \'\\"\', \'\')'
+
+    isSqlite = True
+    result_expression = utils.process_sql_dialect(expression, isSqlite)
+    assert result_expression == 'trim(CAST(julianday(ltrim(rtrim(test, \'>\'), \'<\')) * 86400000 as INTEGER), \'\\"\')'

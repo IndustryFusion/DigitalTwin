@@ -13,7 +13,7 @@ iff:plasmacutter_test rdfs:subClassOf iff:cutter_test ;
 
 iff:entity a iff:class ;
     a rdfs:class .
-iff:machine a iff:class ; 
+iff:machine a iff:class ;
     a rdfs:class .
 iff:filter rdfs:subClassOf iff:machine ;
     a iff:class .

@@ -72,7 +72,7 @@ def main(shaclfile, output_folder='output'):
                      f'{configs.kafka_topic_ngsi_prefix}.{table_name}',
                      'properties': {'bootstrap.servers':
                                     configs.kafka_bootstrap},
-                     'scan.startup.mode': 'earliest-offset'
+                     'scan.startup.mode': 'latest-offset'
                      }
             value = {
                 'format': 'json',

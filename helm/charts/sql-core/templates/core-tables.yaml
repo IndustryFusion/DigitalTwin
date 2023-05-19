@@ -119,17 +119,47 @@ spec:
     - 'type': STRING
     - 'https://uri.etsi.org/ngsi-ld/hasValue': STRING
     - 'https://uri.etsi.org/ngsi-ld/hasObject': STRING
-    - 'ts': TIMESTAMP(3) METADATA FROM 'timestamp'
+    - 'ts': TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL
     - 'watermark': FOR ts AS ts
   kafka:
     topic: {{.Values.kafkaBridge.debezium.attributesTopic}}
     properties:
       bootstrap.servers: {{.Values.kafka.bootstrapServer}}
-    scan.startup.mode: earliest-offset
+    scan.startup.mode: latest-offset
   value:
     format: json
     json.fail-on-missing-field: false
     json.ignore-parse-errors: true
+---
+apiVersion: industry-fusion.com/v1alpha2
+kind: BeamSqlTable
+metadata:
+  name: attributes-writeback
+spec:
+  name: attributes_writeback
+  connector: upsert-kafka
+  fields:
+  - id: STRING
+  - entityId: STRING
+  - name: STRING
+  - nodeType: STRING
+  - valueType: STRING
+  - index: INTEGER
+  - type: STRING
+  - https://uri.etsi.org/ngsi-ld/hasValue: STRING
+  - https://uri.etsi.org/ngsi-ld/hasObject: STRING
+  kafka:
+    topic: iff.ngsild.attributes
+    properties:
+      bootstrap.servers: my-cluster-kafka-bootstrap:9092
+    key.format: json
+  value:
+    format: json
+    json.fail-on-missing-field: false
+    json.ignore-parse-errors: true
+  primaryKey:
+  - id
+  - index
 ---
 apiVersion: industry-fusion.com/v1alpha1
 kind: BeamSqlView
@@ -140,7 +170,8 @@ spec:
   sqlstatement: |
     SELECT id, entityId, name, nodeType, valueType, index, `type`,
            `https://uri.etsi.org/ngsi-ld/hasValue`,
-           `https://uri.etsi.org/ngsi-ld/hasObject`
+           `https://uri.etsi.org/ngsi-ld/hasObject`,
+           `ts`
     FROM (
       SELECT *,
       ROW_NUMBER() OVER (PARTITION BY `id`
@@ -165,6 +196,8 @@ spec:
   - type: STRING
   - https://uri.etsi.org/ngsi-ld/hasValue: STRING
   - https://uri.etsi.org/ngsi-ld/hasObject: STRING
+  - ts: TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL
+  - watermark: FOR `ts` AS `ts`
   kafka:
     topic: iff.ngsild.attributes_insert
     properties:
@@ -206,3 +239,21 @@ spec:
     format: json
     json.fail-on-missing-field: false
     json.ignore-parse-errors: true
+---
+apiVersion: industry-fusion.com/v1alpha1
+kind: BeamSqlView
+metadata:
+  name: attributes-insert-view
+spec:
+  name: attributes_insert_view
+  sqlstatement: |
+    SELECT id, entityId, name, nodeType, valueType, index, `type`,
+           `https://uri.etsi.org/ngsi-ld/hasValue`,
+           `https://uri.etsi.org/ngsi-ld/hasObject`,
+           `ts`
+    FROM (
+      SELECT *,
+      ROW_NUMBER() OVER (PARTITION BY `id`
+         ORDER BY ts DESC) AS rownum
+      FROM `attributes_insert_filter`)
+      WHERE rownum = 1 and entityId is NOT NULL;

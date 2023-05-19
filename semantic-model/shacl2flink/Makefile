@@ -49,7 +49,12 @@ setup-dev: requirements-dev.txt
 test-sqlite:
 	@echo Test with sqlite
 	cat $(sqlite_files) | $(SQLITE3) $(SQLITEDB)
+	echo "Alerts"
+	echo ------------------------------------------------
 	echo 'select * from alerts_bulk;'| sqlite3 ${SQLITEDB}
+	echo "Inserts"
+	echo ------------------------------------------------
+	echo "select * from attributes_insert_filter;"| sqlite3 ${SQLITEDB}
 
 test-sqlite-update:
 	@echo Update model
@@ -62,12 +67,13 @@ test-kms:
 	@echo Test different kms setups
 	cd tests/sql-tests && bash tests.sh
 
-flink-deploy:
+flink-deploy: clean
 	@echo deploy helm package
 	make helm
 	cd ../../helm && ./helmfile -f helmfile-shacl.yaml apply
-	kubectl -n $(NAMESPACE) -l "app.kubernetes.io/instance"="kafka-connect" delete pod
 	make test-flink-is-deployed
+	sleep 2
+	kubectl -n $(NAMESPACE) -l "app.kubernetes.io/instance"="kafka-connect" delete pod
 
 flink-undeploy:
 	@echo undeploy helm package

@@ -159,7 +159,7 @@ def main():
     kafka = {
         'topic': kafka_topic_attributes,
         'properties': {'bootstrap.servers': kafka_bootstrap},
-        'scan.startup.mode': 'earliest-offset'
+        'scan.startup.mode': 'latest-offset'
     }
     value = {
         'format': 'json',

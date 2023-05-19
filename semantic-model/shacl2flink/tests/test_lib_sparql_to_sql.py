@@ -38,7 +38,7 @@ def test_translate_query(mock_translate):
     query.algebra = algebra
     algebra['target_sql'] = 'target_sql'
     target_class = 'class'
-    result = lib.sparql_to_sql.translate_query(query, target_class)
+    result = lib.sparql_to_sql.translate_query(query, target_class, 'query')
     assert result['classes'] == {'this': target_class}
     assert mock_translate.called
 
@@ -62,7 +62,10 @@ def test_translate_function(monkeypatch):
     hash = {
         'bounds': {
             'var': 'vartest'
-        }
+        },
+        'entity_variables': {},
+        'property_variables': {},
+        'time_variables': {}
     }
     monkeypatch.setattr(lib.sparql_to_sql.utils, "create_varname", create_varname)
 
@@ -72,18 +75,16 @@ def test_translate_function(monkeypatch):
     function.iri = term.URIRef('http://www.w3.org/2001/XMLSchema#float')
     function.expr = [term.Variable('var')]
     result = lib.sparql_to_sql.translate_function(ctx, function)
-    assert result == 'CAST(vartest as FLOAT)'
+    assert result == 'SQL_DIALECT_CAST(SQL_DIALECT_STRIP_LITERAL{vartest} as FLOAT)'
 
 
 @patch('lib.sparql_to_sql.translate')
 def test_translate_builtin_if(mock_translate, monkeypatch):
     ctx = MagicMock()
-    mock_translate.return_value = 'condition'
+    mock_translate.side_effect = ["condition", "<arg2>", "<arg3>"]
     builtin_if = MagicMock()
-    builtin_if.arg2 = term.URIRef('arg2')
-    builtin_if.arg3 = term.URIRef('arg3')
     result = lib.sparql_to_sql.translate_builtin_if(ctx, builtin_if)
-    assert result == "CASE WHEN condition THEN '<arg2>' ELSE '<arg3>' END"
+    assert result == "CASE WHEN condition THEN <arg2> ELSE <arg3> END"
     assert mock_translate.called
 
 
@@ -98,7 +99,10 @@ def test_translate_BGP(mock_create_ngsild_mappings, mock_sort_triples, mock_proc
     hash = {
         'add_triples': [],
         'bounds': {},
-        'tables': ['tables']
+        'tables': {'tables': 'tables'},
+        'entity_variables': {},
+        'property_variables': {},
+        'time_variables': {}
     }
     bgp.triples = []
     ctx.__getitem__.side_effect = hash.__getitem__
@@ -106,7 +110,7 @@ def test_translate_BGP(mock_create_ngsild_mappings, mock_sort_triples, mock_proc
     lib.sparql_to_sql.translate_BGP(ctx, bgp)
     assert not mock_create_ngsild_mappings.called
 
-    mock_create_ngsild_mappings.return_value = ({}, {}, {})
+    mock_create_ngsild_mappings.return_value = ({}, {}, {}, {})
     bgp.triples = [(term.Variable('this'), term.URIRef('hasValue'), term.Literal('test'))]
     mock_sort_triples.return_value = bgp.triples
     lib.sparql_to_sql.translate_BGP(ctx, bgp)
@@ -123,7 +127,10 @@ def test_translate_relational_expression(monkeypatch):
     hash = {
         'bounds': {
             'var': 'vartest'
-        }
+        },
+        'entity_variables': {},
+        'property_variables': {},
+        'time_variables': {}
     }
     monkeypatch.setattr(lib.sparql_to_sql.utils, "create_varname", create_varname)
 
@@ -300,19 +307,17 @@ def test_translate_filter(mock_translate):
 
 
 def test_get_attribute_column_value(monkeypatch):
-    relationships = {
-        "https://industry-fusion.com/types/v0.9/hasFilter": True
-    }
-    properties = {
-        "https://industry-fusion.com/types/v0.9/state": True
-    }
-    monkeypatch.setattr(lib.sparql_to_sql, "properties", properties)
-    monkeypatch.setattr(lib.sparql_to_sql, "relationships", relationships)
     ctx = {
         'bounds': {'var': 'TABLE.`id`'},
         'PV': ['var'],
         'property_variables': {term.Variable('y'): False},
-        'tables': {}
+        'tables': {},
+        'properties': {
+            "https://industry-fusion.com/types/v0.9/state": True
+        },
+        'relationships': {
+            "https://industry-fusion.com/types/v0.9/hasFilter": True
+        }
     }
     node = {
         'template': [
@@ -320,28 +325,26 @@ def test_get_attribute_column_value(monkeypatch):
             (term.BNode("x"), term.URIRef("https://uri.etsi.org/ngsi-ld/hasValue"), term.Variable("y"))
         ]
     }
-    (entityid_var, name, attribute_type, value_var, nodetype) = lib.sparql_to_sql.get_attribute_column(ctx, node)
-    assert entityid_var == term.Variable('var')
-    assert name == 'https://industry-fusion.com/types/v0.9/state'
-    assert attribute_type == 'https://uri.etsi.org/ngsi-ld/Property'
-    assert value_var == term.Variable('y')
-    assert nodetype == '@value'
+    result = lib.sparql_to_sql.get_attribute_columns(ctx, node)
+    assert result[0][0] == term.Variable('var')
+    assert result[0][1] == 'https://industry-fusion.com/types/v0.9/state'
+    assert result[0][2] == 'https://uri.etsi.org/ngsi-ld/Property'
+    assert result[0][3] == term.Variable('y')
+    assert result[0][4] == '@value'
 
 
 def test_get_attribute_column_iri(monkeypatch):
-    relationships = {
-        "https://industry-fusion.com/types/v0.9/hasFilter": True
-    }
-    properties = {
-        "https://industry-fusion.com/types/v0.9/state": True
-    }
-    monkeypatch.setattr(lib.sparql_to_sql, "properties", properties)
-    monkeypatch.setattr(lib.sparql_to_sql, "relationships", relationships)
     ctx = {
         'bounds': {'var': 'TABLE.`id`'},
         'PV': ['var'],
         'property_variables': {term.Variable('y'): True},
-        'tables': {}
+        'tables': {},
+        'properties': {
+            "https://industry-fusion.com/types/v0.9/state": True
+        },
+        'relationships': {
+            "https://industry-fusion.com/types/v0.9/hasFilter": True
+        }
     }
     node = {
         'template': [
@@ -349,18 +352,18 @@ def test_get_attribute_column_iri(monkeypatch):
             (term.BNode("x"), term.URIRef("https://uri.etsi.org/ngsi-ld/hasValue"), term.Variable("y"))
         ]
     }
-    (entityid_var, name, attribute_type, value_var, nodetype) = lib.sparql_to_sql.get_attribute_column(ctx, node)
-    assert entityid_var == term.Variable('var')
-    assert name == 'https://industry-fusion.com/types/v0.9/state'
-    assert attribute_type == 'https://uri.etsi.org/ngsi-ld/Property'
-    assert value_var == term.Variable('y')
-    assert nodetype == '@id'
+    result = lib.sparql_to_sql.get_attribute_columns(ctx, node)
+    assert result[0][0] == term.Variable('var')
+    assert result[0][1] == 'https://industry-fusion.com/types/v0.9/state'
+    assert result[0][2] == 'https://uri.etsi.org/ngsi-ld/Property'
+    assert result[0][3] == term.Variable('y')
+    assert result[0][4] == '@id'
 
 
 @patch('lib.sparql_to_sql.get_bound_trim_string')
-@patch('lib.sparql_to_sql.get_attribute_column')
+@patch('lib.sparql_to_sql.get_attribute_columns')
 def test_wrap_sql_construct(attribute_column_mock, get_bound_trim_string_mock):
-    attribute_column_mock.return_value = (term.Variable("var"), 'name', 'type', 'value', 'nodetype')
+    attribute_column_mock.return_value = [(term.Variable("var"), 'name', 'type', 'value', 'nodetype')]
     get_bound_trim_string_mock.return_value = 'bound_trim_string'
     ctx = {
         'bounds': {'var': 'TABLE.`id`'},
@@ -373,15 +376,15 @@ def test_wrap_sql_construct(attribute_column_mock, get_bound_trim_string_mock):
         'where': 'where'
     }
     lib.sparql_to_sql.wrap_sql_construct(ctx, node)
-    assert node['target_sql'] == "SQL_DIALECT_INSERT_ATTRIBUTES\nSELECT TABLE.`id` || '\\' || 'name',\
-\nTABLE.`id`,\
-\n'name',\
-\n'nodetype',\
-\nCAST(NULL as STRING),\
-\n0,\
-\n'type',\
-\nbound_trim_string,\
-\nCAST(NULL as STRING)\n,\
+    assert node['target_sql'] == "SQL_DIALECT_INSERT_ATTRIBUTES\nSELECT DISTINCT TABLE.`id` || '\\' || 'name' as id,\
+\nTABLE.`id` as entityId,\
+\n'name' as name,\
+\n'nodetype' as nodeType,\
+\nCAST(NULL as STRING) as valueType,\
+\n0 as `index`,\
+\n'type' as `type`,\
+\nbound_trim_string as `value`,\
+\nCAST(NULL as STRING) as `object`\n,\
 SQL_DIALECT_SQLITE_TIMESTAMP\nFROM target_sql WHERE where"
 
 
@@ -399,7 +402,7 @@ def test_translate_construct_query(create_ngsild_mappings_mock, merge_vartypes_m
     }
     d = {}
     query.__setitem__.side_effect = d.__setitem__
-    create_ngsild_mappings_mock.return_value = ({}, {}, {})
+    create_ngsild_mappings_mock.return_value = ({}, {}, {}, {})
     lib.sparql_to_sql.translate_construct_query(ctx, query)
     assert d['where'] == 'where'
     assert d['target_sql'] == 'target_sql'

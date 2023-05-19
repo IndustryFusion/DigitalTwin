@@ -21,6 +21,7 @@ from rdflib import Graph, Namespace, URIRef, Variable, BNode, Literal
 from rdflib.namespace import RDF, XSD
 from rdflib.plugins.sparql.parser import parseQuery
 from rdflib.plugins.sparql.algebra import translateQuery
+from functools import reduce
 import copy
 
 file_dir = os.path.dirname(__file__)
@@ -120,13 +121,16 @@ def translate_sparql(shaclfile, knowledgefile, sparql_query, target_class, lg):
     for row in qres:
         if row.relationship is not None:
             relationships[row.relationship.toPython()] = True
-
-    parsed_query = translateQuery(parseQuery(sparql_query))
-    ctx = translate_query(parsed_query, target_class)
+    parsed_query = None
+    try:
+        parsed_query = translateQuery(parseQuery(sparql_query))
+    except:
+        raise utils.SparqlValidationFailed('Failed to parse: ' + sparql_query)
+    ctx = translate_query(parsed_query, target_class, sparql_query)
     return ctx['target_sql'], ctx['sql_tables']
 
 
-def translate_query(query, target_class):
+def translate_query(query, target_class, orig_query):
     """
     Decomposes parsed SparQL object
     query: parsed sparql object
@@ -141,10 +145,12 @@ def translate_query(query, target_class):
         'classes': {'this': target_class},
         'sql_tables': ['attributes'],
         'bounds': {},
+        'tables': {},
         'target_sql': '',
         'target_where': '',
         'target_modifiers': [],
-        'add_triples': [(Variable('this'), RDF['type'], target_class)]
+        'add_triples': [(Variable('this'), RDF['type'], target_class)],
+        'query': orig_query
     }
     if algebra.name == 'SelectQuery' or algebra.name == 'ConstructQuery':
         translate(ctx, algebra)
@@ -159,6 +165,14 @@ def translate(ctx, elem):
     """
     Translate all objects
     """
+    if isinstance(elem, URIRef) or isinstance(elem, Literal):
+        return utils.format_node_type(elem)
+    elif isinstance(elem, Variable):
+        try:
+            return utils.unwrap_variables(ctx, elem)
+        except Exception as e:
+            raise utils.SparqlValidationFailed(f"Error while unwrapping variables: {str(e)} \
+while processing {ctx['query']}")
     if elem.name == 'SelectQuery':
         return translate_select_query(ctx, elem)
     elif elem.name == 'ConstructQuery':
@@ -172,6 +186,9 @@ def translate(ctx, elem):
         translate_BGP(ctx, elem)
     elif elem.name == 'ConditionalAndExpression':
         result = translate_and_expression(ctx, elem)
+        return result
+    elif elem.name == 'ConditionalOrExpression':
+        result = translate_or_expression(ctx, elem)
         return result
     elif elem.name == 'RelationalExpression':
         result = translate_relational_expression(ctx, elem)
@@ -193,26 +210,139 @@ def translate(ctx, elem):
         return translate_builtin_now(ctx, elem)
     elif elem.name == 'Function':
         return translate_function(ctx, elem)
+    elif elem.name == 'AdditiveExpression':
+        return translate_additive_expression(ctx, elem)
+    elif elem.name == 'Builtin_BOUND':
+        return translate_builtin_bound(ctx, elem)
+    elif elem.name == 'AggregateJoin':
+        translate_aggregate_join(ctx, elem)
+    elif elem.name == 'Group':
+        translate_group(ctx, elem)
+    elif elem.name == 'Aggregate_Count':
+        return translate_aggregate_count(ctx, elem)
+    elif elem.name == 'Aggregate_Sum':
+        return translate_aggregate_sum(ctx, elem)
+    elif elem.name == 'UnaryNot':
+        return translate_unary_not(ctx, elem)
+    elif elem.name == 'MultiplicativeExpression':
+        return translate_multiplicative_expression(ctx, elem)
     else:
         raise utils.WrongSparqlStructure(f'SparQL structure {elem.name} not \
 supported!')
 
 
-def translate_function(ctx, function):
+def translate_unary_not(ctx, elem):
+    expression = translate(ctx, elem.expr)
+    return f" NOT ({expression}) "
+
+
+def process_aggregate(ctx, elem):
+    distinct = elem.distinct
+    utils.set_aggregate_var(ctx, True)
+    expression = translate(ctx, elem.vars)
+    utils.set_aggregate_var(ctx, False)
+    distinct_string = 'DISTINCT'
+    if distinct != 'DISTINCT':
+        distinct_string = ''
+    return expression, distinct_string
+
+
+def translate_aggregate_sum(ctx, elem):
+    expression, distinct = process_aggregate(ctx, elem)
+    return f"SUM({distinct} {expression})"
+
+
+def translate_aggregate_count(ctx, elem):
+    expression, distinct = process_aggregate(ctx, elem)
+    return f"COUNT({distinct} {expression})"
+
+
+def translate_group(ctx, elem):
+    ctx['group_by_vars'] = elem.expr
+    if Variable('this') not in ctx['group_by_vars']:
+        ctx['group_by_vars'].append(Variable('this'))
+    translate(ctx, elem.p)
+    elem['target_sql'] = elem.p['target_sql']
+    elem['where'] = elem.p['where']
+
+
+def translate_aggregate_join(ctx, elem):
+    translate(ctx, elem.p)
+    vars = utils.get_aggregate_vars(ctx)
+    try:
+        elem['target_sql'] = bgp_translation_utils.replace_attributes_table_expression(elem.p['target_sql'], vars)
+    except:
+        raise utils.SparqlValidationFailed('Group by aggregation defined but no aggregated variables found.')
+    elem['where'] = elem.p['where']
+
+
+def translate_builtin_bound(ctx, elem):
     bounds = ctx['bounds']
+    varname = utils.create_varname(elem.arg)
+    return f"{bounds[varname]} IS NOT NULL "
+
+
+def translate_additive_expression(ctx, elem):
+    if isinstance(elem.expr, Variable):
+        expr = utils.unwrap_variables(ctx, elem.expr)
+    elif isinstance(elem.expr, Literal) or isinstance(elem.expr, URIRef):
+        expr = utils.unwrap_variables(elem.expr)
+    else:  # Neither Variable, nor Literal, nor IRI - hope it is further translatable
+        expr = translate(ctx, elem.expr)
+
+    for op, other in zip(elem.op, elem.other):
+        if isinstance(other, Variable):
+            other_val = utils.unwrap_variables(ctx, other)
+        elif isinstance(other, Literal) or isinstance(other, URIRef):
+            other_val = utils.unwrap_variables(other)
+        else:
+            other_val = translate(ctx, other)
+        expr += f" {op} {other_val} "
+
+    return expr
+
+
+def translate_multiplicative_expression(ctx, elem):
+    expr = translate(ctx, elem.expr)
+
+    for op, other in zip(elem.op, elem.other):
+
+        other_val = translate(ctx, other)
+        expr += f" {op} {other_val} "
+
+    return expr
+
+
+def translate_function(ctx, function):
     iri = function.iri
     expr = function.expr
-    result = ''
+    if len(expr) != 1:
+        raise utils.WrongSparqlStructure('Only functions with one parameter implemented.')
+    # This is only supporting single parameter functions
+    # TODO: Generalize the functin translation for arbitrary parameters
+    expression = translate(ctx, expr[0])
     if iri in XSD:  # CAST
-        if len(expr) != 1:
-            raise utils.WrongSparqlStructure('XSD function with too many parameters')
+
         cast = 'notfound'
-        var = bounds[utils.create_varname(expr[0])]
-        if iri == iri == XSD['integer']:
-            cast = 'INTEGER'
-        elif iri == iri == XSD['float']:
-            cast = 'FLOAT'
-        result = f'CAST({var} as {cast})'
+        stringcast = False
+        if iri != XSD['dateTime']:
+            if iri == XSD['integer']:
+                cast = 'INTEGER'
+            elif iri == XSD['float']:
+                cast = 'FLOAT'
+            elif iri == XSD['string']:
+                cast = 'STRING'
+                stringcast = True
+            if cast == 'notfound':
+                raise utils.WrongSparqlStructure('XSD type cast not supported')
+            if not stringcast:
+                result = f'SQL_DIALECT_CAST(SQL_DIALECT_STRIP_LITERAL{{{expression}}} as {cast})'
+            else:
+                result = f'SQL_DIALECT_CAST(SQL_DIALECT_STRIP_IRI{{{expression}}} as {cast})'
+        else:
+            result = f'SQL_DIALECT_TIME_TO_MILLISECONDS{{{expression}}}'
+    else:
+        raise utils.WrongSparqlStructure(f'Function {iri.toPython()} not supported!')
     return result
 
 
@@ -222,24 +352,18 @@ def translate_builtin_now(ctx, builtin_now):
 
 def translate_builtin_if(ctx, builtin_if):
     condition = translate(ctx, builtin_if.arg1)
-    if isinstance(builtin_if.arg2, URIRef) or isinstance(builtin_if.arg2, Literal):
-        ifyes = utils.format_node_type(builtin_if.arg2)
-    else:
-        ifyes = translate(ctx, builtin_if.arg2)
-    if isinstance(builtin_if.arg3, URIRef) or isinstance(builtin_if.arg3, Literal):
-        ifnot = utils.format_node_type(builtin_if.arg3)
-    else:
-        ifnot = translate(ctx, builtin_if.arg3)
+    ifyes = translate(ctx, builtin_if.arg2)
+    ifnot = translate(ctx, builtin_if.arg3)
+
     expression = f'CASE WHEN {condition} THEN {ifyes} ELSE {ifnot} END'
     return expression
 
 
 def translate_extend(ctx, extend):
     translate(ctx, extend.p)
-    if isinstance(extend.expr, Literal) or isinstance(extend.expr, URIRef):
-        expression = utils.format_node_type(extend.expr)
-    else:
-        expression = translate(ctx, extend.expr)
+
+    expression = translate(ctx, extend.expr)
+
     ctx['bounds'][utils.create_varname(extend.var)] = expression
     extend['target_sql'] = extend.p['target_sql']
     extend['where'] = extend.p['where']
@@ -261,11 +385,12 @@ def translate_construct_query(ctx, query):
     h = Graph()
     for s, p, o in query.template:
         h.add((s, p, o))
-    property_variables, entity_variables, _ = bgp_translation_utils.create_ngsild_mappings(ctx, h)
+    property_variables, entity_variables, time_variables, _ = bgp_translation_utils.create_ngsild_mappings(ctx, h)
+
     translate(ctx, query.p)
     query['target_sql'] = query.p['target_sql']
     query['where'] = query.p['where']
-    bgp_translation_utils.merge_vartypes(ctx, property_variables, entity_variables)
+    bgp_translation_utils.merge_vartypes(ctx, property_variables, entity_variables, time_variables)
     wrap_sql_construct(ctx, query)
     return
 
@@ -284,24 +409,38 @@ def translate_project(ctx, project):
 
 def wrap_sql_construct(ctx, node):
     # For the time being, only wrap properties, no relationships
-    (entityId_var, name, attribute_type, value_var, node_type) = get_attribute_column(ctx, node)
-    entityId_varname = entityId_var.toPython()[1:]
-
-    bounds = ctx['bounds']
+    columns = get_attribute_columns(ctx, node)
+    first = True
     construct_query = "SQL_DIALECT_INSERT_ATTRIBUTES\n"
-    construct_query += "SELECT "
-    construct_query += f'{bounds[entityId_varname]} || \'\\\' || \'{name}\',\n'  # id
-    construct_query += f'{bounds[entityId_varname]},\n'  # entityId
-    construct_query += f'\'{name}\',\n'  # name
-    construct_query += f'\'{node_type}\',\n'  # nodeType
-    construct_query += 'CAST(NULL as STRING),\n'  # valueType
-    construct_query += '0,\n'  # index
-    construct_query += f'\'{attribute_type}\',\n'
-    construct_query += f"{get_bound_trim_string(ctx, value_var)},\n"  # value
-    construct_query += 'CAST(NULL as STRING)\n'  # object
-    construct_query += ',SQL_DIALECT_SQLITE_TIMESTAMP\n'  # ts
-    construct_query += 'FROM ' + node['target_sql']
-    construct_query += ' WHERE ' + node['where']
+    bounds = ctx['bounds']
+
+    for (entityId_var, name, attribute_type, value_var, node_type) in columns:
+        if first:
+            first = False
+        else:
+            construct_query += "\nUNION ALL\n"
+        entityId_varname = entityId_var.toPython()[1:]
+        construct_query += "SELECT DISTINCT "
+        construct_query += f'{bounds[entityId_varname]} || \'\\\' || \'{name}\' as id,\n'  # id
+        construct_query += f'{bounds[entityId_varname]} as entityId,\n'  # entityId
+        construct_query += f'\'{name}\' as name,\n'  # name
+        construct_query += f'\'{node_type}\' as nodeType,\n'  # nodeType
+        construct_query += 'CAST(NULL as STRING) as valueType,\n'  # valueType
+        construct_query += '0 as `index`,\n'  # index
+        construct_query += f'\'{attribute_type}\' as `type`,\n'
+        construct_query += f"{get_bound_trim_string(ctx, value_var)} as `value`,\n"  # value
+        construct_query += 'CAST(NULL as STRING) as `object`\n'  # object
+        construct_query += ',SQL_DIALECT_SQLITE_TIMESTAMP\n'  # ts
+
+        construct_query += 'FROM ' + node['target_sql']
+        if node['where'] != '':
+            construct_query += ' WHERE ' + node['where']
+        group_by = None
+        if 'group_by_vars' in ctx:
+            group_by = reduce(lambda x, y: f'{x}, {y}', map(lambda x: bounds[utils.create_varname(x)],
+                                                            ctx['group_by_vars']))
+        if group_by is not None:
+            construct_query += f' GROUP BY {group_by}'
     node['target_sql'] = construct_query
 
 
@@ -310,40 +449,40 @@ def get_bound_trim_string(ctx, boundsvar):
     boundsvarname = boundsvar.toPython()[1:]
     if boundsvarname in bounds and boundsvar in ctx['property_variables']:
         if ctx['property_variables'][boundsvar]:
-            return f"SQL_DIALECT_STRIP_IRI({bounds[boundsvarname]})"
+            return f"SQL_DIALECT_STRIP_IRI{{{bounds[boundsvarname]}}}"
         else:
-            return f"SQL_DIALECT_STRIP_LITERAL({bounds[boundsvarname]})"
+            return f"SQL_DIALECT_STRIP_LITERAL{{{bounds[boundsvarname]}}}"
+    elif boundsvarname in bounds and boundsvar in ctx['time_variables']:
+        return f"SQL_DIALECT_STRIP_LITERAL{{{bounds[boundsvarname]}}}"
     else:
-        raise utils.WrongSparqlStructure('Trying to trim non-bound variable')
+        raise utils.WrongSparqlStructure(f"Trying to trim non-bound variable ?{boundsvarname} in expression \
+{ctx['query']}")
 
 
-def get_attribute_column(ctx, node):
+def get_attribute_columns(ctx, node):
     entityId_var = None
     name = None
-
+    properties = ctx['properties']
     value_var = None
     nodetype = '@value'
-    bnode = None
+    predicates = {}
+    result = []
     for (s, p, o) in node['template']:
         if p.toPython() in properties:
-            if entityId_var is not None:
-                raise utils.WrongSparqlStructure('Construction of more than one attributes \
-not yet implemented!')
-            entityId_var = s
-            name = p
-            bnode = o
-        if p.toPython() in relationships:
+            predicates[o.toPython()] = (s, p)
+        elif p.toPython() in relationships:
             raise utils.WrongSparqlStructure('Construction of relationship not yet implemented')
     for (s, p, o) in node['template']:
-        if s == bnode:
-            value_var = o
-    if entityId_var is None or name is None or value_var is None:
-        raise utils.WrongSparqlStructure('No attribute constructed in construct query!')
-    attribute_type = bgp_translation_utils.ngsild['Property'] if value_var in ctx['property_variables'] else \
-        bgp_translation_utils.ngsild['Relationship']
-    if value_var in ctx['property_variables'] and ctx['property_variables'][value_var]:
-        nodetype = '@id'
-    return (entityId_var, name.toPython(), attribute_type.toPython(), value_var, nodetype)
+        if s.toPython() not in predicates:
+            continue
+        value_var = o
+        entityId_var, name = predicates[s.toPython()]
+        attribute_type = bgp_translation_utils.ngsild['Property'] if value_var in ctx['property_variables'] else \
+            bgp_translation_utils.ngsild['Relationship']
+        if value_var in ctx['property_variables'] and ctx['property_variables'][value_var]:
+            nodetype = '@id'
+        result.append((entityId_var, name.toPython(), attribute_type.toPython(), value_var, nodetype))
+    return result
 
 
 def wrap_sql_projection(ctx, node):
@@ -370,9 +509,18 @@ def wrap_sql_projection(ctx, node):
 
     target_sql = node['target_sql']
     target_where = node['where']
+    group_by = None
+    if 'group_by_vars' in ctx:
+        group_by = reduce(lambda x, y: f'{x}, {y}', map(lambda x: bounds[utils.create_varname(x)],
+                                                        ctx['group_by_vars']))
+        group_by_term = f' GROUP BY {group_by}'
+    else:
+        group_by_term = ''
     node['target_sql'] = f'{expression} FROM {target_sql}'
     node['target_sql'] = node['target_sql'] + f' WHERE {target_where}' if \
         target_where != '' else node['target_sql']
+    node['target_sql'] = node['target_sql'] + f' {group_by_term}' if \
+        group_by_term != '' else node['target_sql']
 
 
 def translate_filter(ctx, filter):
@@ -478,27 +626,43 @@ def translate_left_join(ctx, join):
     expr2 = join.p2['target_sql']
     where1 = join.p1['where']
     where2 = join.p2['where']
-    if expr1 == '':
-        raise utils.WrongSparqlStructure('Could not left join. Empty join.p1 expression is not \
+    if expr1 == '' and expr2 == '':
+        raise utils.WrongSparqlStructure('Could not left join. Empty join.p1 and join.p2 expression is not \
 allowed. Consider rearranging BGPs.')
-    if where2 == '':
+    if expr2 == '' and where2 == '':
+        # Nothing to join. Can e.g. happen when time attributes are joined OPTIONAL and the attribute
+        # value has been referenced earlier
+        join['target_sql'] = expr1
+        join['where'] = where1
+        return
+
+    if where2 == '' and expr1 != '' and expr2 != '':
         raise utils.WrongSparqlStructure('Could not left join. Emtpy join condition not allowed \
 for left joins.')
     # There might be a case that there is no sql expression. Example:
     # The BGP {?var1 <p> ?var2} creates only a condition but not table
     # if ?var1 and ?vars are already bound.
-    # case 1: with expr2 and where2
-    # case 2: without expression but where2
-    if expr2 != '':  # case 1
+    # case 1: with expr1,expr2 and where2
+    # case 2: without expr2 but where2
+    # case 3: with expr2 but without expr1
+    if expr2 != '' and expr1 != '':  # case 1
         join['target_sql'] = f' {expr1} LEFT JOIN {expr2}'
         join['where'] = where1
         join['target_sql'] = join['target_sql'] + f' ON {where2}'
-    else:  # case 2
+    elif expr2 == '' and expr1 != '':  # case 2
         join['target_sql'] = expr1
         if where1:
             join['where'] = f'(({where1} and {where2}) or {where1})'
         else:
             join['where'] = where2
+    else:
+        join['target_sql'] = expr2
+        if where1 == '':
+            join['where'] = where2
+        elif where2 == '':
+            join['where'] = where1
+        else:
+            join['where'] = f'(({where1} and {where2}) or {where1})'
     return
 
 
@@ -528,11 +692,22 @@ def translate_and_expression(ctx, expr):
     """
     Translates AND expression to SQL
     """
-    result = translate(ctx, expr.expr)
+    result = '(' + translate(ctx, expr.expr)
     for otherexpr in expr.other:
         result += ' and '
         result += translate(ctx, otherexpr)
-    return result
+    return result + ')'
+
+
+def translate_or_expression(ctx, expr):
+    """
+    Translates OR expression to SQL
+    """
+    result = '(' + translate(ctx, expr.expr)
+    for otherexpr in expr.other:
+        result += ' or '
+        result += translate(ctx, otherexpr)
+    return result + ')'
 
 
 def translate_relational_expression(ctx, elem):
@@ -552,7 +727,7 @@ def translate_relational_expression(ctx, elem):
     elif isinstance(elem.other, Literal) or isinstance(elem.other, URIRef):
         other = utils.format_node_type(elem.other)
     else:
-        raise utils.WrongSparqlStructure(f'Expression {elem.other} not supported!')
+        other = translate(ctx, elem.other)
 
     op = elem.op
     if elem.op == '!=':
@@ -598,12 +773,12 @@ def translate_BGP(ctx, bgp):
     for s, p, o in bgp.triples:
         h.add((s, p, o))
 
-    property_variables, entity_variables, row = bgp_translation_utils.create_ngsild_mappings(ctx, h)
+    property_variables, entity_variables, time_variables, row = bgp_translation_utils.create_ngsild_mappings(ctx, h)
 
     # before translating, sort the bgp order to allow easier binds
     bgp.triples = bgp_translation_utils.sort_triples(ctx, ctx['bounds'], bgp.triples, h)
 
-    bgp_translation_utils.merge_vartypes(ctx, property_variables, entity_variables)
+    bgp_translation_utils.merge_vartypes(ctx, property_variables, entity_variables, time_variables)
     local_ctx = {}
     local_ctx['bounds'] = ctx["bounds"]
     local_ctx['where'] = ''
@@ -617,7 +792,9 @@ def translate_BGP(ctx, bgp):
         if (p.toPython() in properties or p.toPython() in relationships) and isinstance(o, BNode):
             if isinstance(s, Variable):
                 bgp_translation_utils.process_ngsild_spo(ctx, local_ctx, s, p, o)
-        elif p != bgp_translation_utils.ngsild['hasValue'] and p != bgp_translation_utils.ngsild['hasObject']:
+        elif p != bgp_translation_utils.ngsild['hasValue'] and p != \
+                bgp_translation_utils.ngsild['hasObject'] and p != \
+                bgp_translation_utils.ngsild['observedAt']:
             # must be  RDF query
             bgp_translation_utils.process_rdf_spo(ctx, local_ctx, s, p, o)
 
@@ -635,3 +812,5 @@ def translate_BGP(ctx, bgp):
     else:
         bgp['target_sql'] = ''
         bgp['where'] = local_ctx['where']
+
+    ctx['tables'] = {**(ctx['tables']), **local_ctx['bgp_tables']}

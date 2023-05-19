@@ -38,7 +38,7 @@ iff:CutterShape
     sh:targetClass iff:cutter ;
     sh:property [
         sh:path <https://industry-fusion.com/types/v0.9/state> ;
-        sh:order 10 ;
+        sh:order 1 ;
         sh:nodeKind sh:BlankNode;
         sh:minCount 1 ;
         sh:maxCount 1 ;
@@ -57,7 +57,7 @@ iff:CutterShape
     ] ;
     sh:property [
         sh:path <https://industry-fusion.com/types/v0.9/hasFilter> ;
-        sh:order 20 ;
+        sh:order 2 ;
         sh:nodeKind sh:BlankNode;
         sh:minCount 1 ;
         sh:maxCount 1 ;
@@ -75,7 +75,7 @@ iff:CutterShape
     ] ;
     sh:property [
         sh:path <https://industry-fusion.com/types/v0.9/hasInWorkpiece> ;
-        sh:order 30 ;
+        sh:order 3 ;
         sh:nodeKind sh:BlankNode;
         sh:minCount 0 ;
         sh:maxCount 1 ;
@@ -93,7 +93,7 @@ iff:CutterShape
     ] ;
     sh:property [
         sh:path <https://industry-fusion.com/types/v0.9/hasOutWorkpiece> ;
-        sh:order 40 ;
+        sh:order 3 ;
         sh:nodeKind sh:BlankNode;
         sh:minCount 0 ;
         sh:maxCount 1 ;
@@ -107,24 +107,6 @@ iff:CutterShape
             sh:path rdf:type ;
             sh:hasValue <https://uri.etsi.org/ngsi-ld/Relationship> ;
             sh:minCount 1 ;
-        ] ;
-    ] ;
-    sh:property [
-        sh:path <https://industry-fusion.com/oee/v0.9/availabilityState> ;
-        sh:order 50 ;
-        sh:nodeKind sh:BlankNode;
-        sh:minCount 0 ;
-        sh:maxCount 1 ;
-        sh:property [
-
-            sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
-            sh:nodeKind sh:Literal;
-            sh:minCount 1 ;
-            sh:maxCount 1 ;
-        ] ;
-        sh:property [
-            sh:path rdf:type ;
-            sh:hasValue <https://uri.etsi.org/ngsi-ld/Property> ;
         ] ;
     ] ;
     .
@@ -179,13 +161,13 @@ iff:WorkpieceShape
         sh:path <https://industry-fusion.com/types/v0.9/qualityCheck> ;
         sh:order 3 ;
         sh:nodeKind sh:BlankNode;
-        sh:minCount 0 ;
+        sh:minCount 1 ;
         sh:maxCount 1 ;
         sh:property [
             sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
             sh:nodeKind sh:Literal ;
             sh:maxInclusive 1 ;
-            sh:minInclusive 0 ;
+            sh:minExclusive 0 ;
             sh:minCount 1 ;
             sh:maxCount 1 ;
         ] ;
@@ -295,7 +277,6 @@ iff:FilterCartridgeShape
             sh:hasValue <https://uri.etsi.org/ngsi-ld/Property> ;
         ] ;
     ] ;
-
     sh:property [
         sh:path <https://industry-fusion.com/types/v0.9/inUseUntil> ;
         sh:order 3 ;
@@ -355,6 +336,26 @@ iff:ScheduleEntityShape
             sh:hasValue <https://uri.etsi.org/ngsi-ld/Property> ;
         ] ;
     ] ;
+    sh:property [
+        sh:path <https://industry-fusion.com/types/v0.9/activeState> ;
+        sh:order 13 ;
+        sh:nodeKind sh:BlankNode;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:property [
+
+            sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
+            sh:nodeKind sh:Literal;
+            sh:minInclusive 0 ;
+            sh:maxInclusive 1 ;
+            sh:minCount 1 ;
+            sh:maxCount 1 ;
+        ] ;
+        sh:property [
+            sh:path rdf:type ;
+            sh:hasValue <https://uri.etsi.org/ngsi-ld/Property> ;
+        ] ;
+    ];
 .
 
 
@@ -396,7 +397,24 @@ iff:OeeTemplateShape
             sh:hasValue <https://uri.etsi.org/ngsi-ld/Property> ;
         ] ;
     ] ;
+    sh:property [
+        sh:path <https://industry-fusion.com/oee/v0.9/availabilityState> ;
+        sh:order 5 ;
+        sh:nodeKind sh:BlankNode;
+        sh:minCount 0 ;
+        sh:maxCount 1 ;
+        sh:property [
 
+            sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
+            sh:nodeKind sh:Literal;
+            sh:minCount 1 ;
+            sh:maxCount 1 ;
+        ] ;
+        sh:property [
+            sh:path rdf:type ;
+            sh:hasValue <https://uri.etsi.org/ngsi-ld/Property> ;
+        ] ;
+    ] ;
     sh:property [
         sh:path <https://industry-fusion.com/oee/v0.9/availabilityTimeAgg> ;
         sh:order 6 ;
@@ -489,7 +507,7 @@ iff:OeeTemplateShape
         ] ;
     ] ;
     sh:property [
-        sh:path <https://industry-fusion.com/oee/v0.9/hasReferenceMachine> ;
+        sh:path <https://industry-fusion.com/oee/v0.9/referenceMachine> ;
         sh:order 12 ;
         sh:nodeKind sh:BlankNode;
         sh:minCount 1 ;
@@ -505,6 +523,26 @@ iff:OeeTemplateShape
         sh:property [
             sh:path rdf:type ;
             sh:hasValue <https://uri.etsi.org/ngsi-ld/Relationship> ;
+        ] ;
+    ];
+    sh:property [
+        sh:path <https://industry-fusion.com/types/v0.9/activeState> ;
+        sh:order 13 ;
+        sh:nodeKind sh:BlankNode;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:property [
+
+            sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
+            sh:nodeKind sh:Literal;
+            sh:minInclusive 0 ;
+            sh:maxInclusive 1 ;
+            sh:minCount 1 ;
+            sh:maxCount 1 ;
+        ] ;
+        sh:property [
+            sh:path rdf:type ;
+            sh:hasValue <https://uri.etsi.org/ngsi-ld/Property> ;
         ] ;
     ];
     sh:property [
@@ -530,68 +568,7 @@ iff:OeeTemplateShape
     .
 
 
-    iff:AggregateWorkpiecesShape
-    a sh:NodeShape ;
-    sh:targetClass iff:oeeTemplate ;
-    rdfs:comment "Aggregate the Workpieces to OEE object" ;
-    sh:rule [
-		a sh:SPARQLRule ;
-		sh:construct """
-            PREFIX iff: <https://industry-fusion.com/types/v0.9/>
-            PREFIX oee: <https://industry-fusion.com/oee/v0.9/>
-            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-            PREFIX rdf:	<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-			CONSTRUCT {
-				$this oee:totalCount [ <https://uri.etsi.org/ngsi-ld/hasValue> ?workpieces ] .
-			}
-			WHERE {
-                    $this oee:hasReferenceMachine [ <https://uri.etsi.org/ngsi-ld/hasObject> ?machinex ] .
-                    $this iff:startTime [ <https://uri.etsi.org/ngsi-ld/hasValue> ?startTime ] .
-                    $this iff:endTime [ <https://uri.etsi.org/ngsi-ld/hasValue> ?endTime ] .
-                    ?machinex iff:hasOutWorkpiece [ <https://uri.etsi.org/ngsi-ld/hasObject> ?workpiece ] .
-                    ?machinex iff:hasOutWorkpiece [ <https://uri.etsi.org/ngsi-ld/observedAt> ?workpieceTs ] .
-                    bind(COUNT(DISTINCT ?workpiece) as ?workpieces)
-                    FILTER( ?workpieceTs > xsd:dateTime(?startTime) && ?workpieceTs < xsd:dateTime(?endTime) )
-			}
-            GROUP BY ?machinex
-			""" ;
-	] ;
-.
-
-
-    iff:AggregateWorkpiecesShape
-    a sh:NodeShape ;
-    sh:targetClass iff:oeeTemplate ;
-    rdfs:comment "Aggregate the good Workpieces" ;
-    sh:rule [
-		a sh:SPARQLRule ;
-		sh:construct """
-            PREFIX iff: <https://industry-fusion.com/types/v0.9/>
-            PREFIX oee: <https://industry-fusion.com/oee/v0.9/>
-            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-            PREFIX rdf:	<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-			CONSTRUCT {
-                $this oee:goodCount [ <https://uri.etsi.org/ngsi-ld/hasValue> ?qualityCount ] .
-			}
-			WHERE {
-                    $this oee:hasReferenceMachine [ <https://uri.etsi.org/ngsi-ld/hasObject> ?machinex ] .
-                    $this iff:startTime [ <https://uri.etsi.org/ngsi-ld/hasValue> ?startTime ] .
-                    $this iff:endTime [ <https://uri.etsi.org/ngsi-ld/hasValue> ?endTime ] .
-                    ?machinex iff:hasOutWorkpiece [ <https://uri.etsi.org/ngsi-ld/hasObject> ?workpiece ] .
-                    ?machinex iff:hasOutWorkpiece [ <https://uri.etsi.org/ngsi-ld/observedAt> ?workpieceTs ] .
-                    OPTIONAL{?workpiece  iff:qualityCheck [ <https://uri.etsi.org/ngsi-ld/hasValue> ?qualityCheck ] .} .
-                    bind(COUNT(DISTINCT ?workpiece) as ?workpieces)
-                    bind(IF(?qualityCheck = "1" || (!bound(?qualityCheck) && bound(?workpiece)), ?workpiece, "NULL" ) as ?qc)
-                    bind(COUNT(DISTINCT ?qc ) as ?qualityCount)
-                    FILTER( (?qualityCheck = "1" || (!bound(?qualityCheck) && bound(?workpiece))) && ?workpieceTs > xsd:dateTime(?startTime) && ?workpieceTs < xsd:dateTime(?endTime) )
-			}
-            GROUP BY ?machinex
-			""" ;
-	] ;
-.
-
-
-    iff:ScheduleTimeValidationShape
+    iff:ScheduleTimeValidation
     a sh:NodeShape ;
     rdfs:comment "Check if a schedule is valid" ;
     sh:targetClass iff:scheduleEntity ;
@@ -612,254 +589,3 @@ iff:OeeTemplateShape
             }
         """ ;
     ] .
-
-
-
-    iff:OEEAvailabilityStateShape
-    a sh:NodeShape ;
-    rdfs:comment "Create AvailailityState" ;
-    sh:targetClass iff:cutter ;
-    sh:rule [
-		a sh:SPARQLRule ;
-		sh:construct """
-            PREFIX iff: <https://industry-fusion.com/types/v0.9/>
-            PREFIX oee: <https://industry-fusion.com/oee/v0.9/>
-            PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-            PREFIX rdf:	<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-			CONSTRUCT {
-				$this <https://industry-fusion.com/oee/v0.9/availabilityState>  [ <https://uri.etsi.org/ngsi-ld/hasValue> ?availabilityState ] .
-			}
-			WHERE {
-                    $this iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?state ] .
-                    OPTIONAL{?state oee:availability ?availabilityVal .} .
-                    bind(IF(bound(?availabilityVal), ?availabilityVal, "0") as ?availabilityState)
-			}
-			""" ;
-	] ;
-.
-
-
-    iff:OEEUpdateAvailabilityTimeAggShape
-    a sh:NodeShape ;
-    rdfs:comment "Update availabilityTimeAgg" ;
-    sh:targetClass iff:oeeTemplate ;
-	sh:rule [
-		a sh:SPARQLRule ;
-		sh:construct """
-            PREFIX iff: <https://industry-fusion.com/types/v0.9/>
-            PREFIX oee: <https://industry-fusion.com/oee/v0.9/>
-            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-            PREFIX rdf:	<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-			CONSTRUCT {
-                $this oee:availabilityTimeAgg [ <https://uri.etsi.org/ngsi-ld/hasValue> ?availabilityStateAgg ] .
-			}
-			WHERE {
-                    $this iff:startTime [ <https://uri.etsi.org/ngsi-ld/hasValue> ?startTime ] .
-                    $this iff:endTime [ <https://uri.etsi.org/ngsi-ld/hasValue> ?endTime ] .
-                    $this oee:hasReferenceMachine [ <https://uri.etsi.org/ngsi-ld/hasObject> ?machine ] .
-                    ?machine oee:availabilityState [ <https://uri.etsi.org/ngsi-ld/hasValue> ?state ] .
-                    ?machine oee:availabilityState [ <https://uri.etsi.org/ngsi-ld/observedAt> ?stateTs ] .
-                    bind(SUM(xsd:integer(?state))*5 as ?availabilityStateAgg) .
-                    FILTER(?stateTs > xsd:dateTime(?startTime) && ?stateTs < xsd:dateTime(?endTime))
-			}
-            GROUP BY $this ?machine
-			""" ;
-	] ;
-.
-
-
-    iff:FilterStrengthShape
-    a sh:NodeShape ;
-    sh:targetClass iff:filter ;
-    sh:sparql [
-        a sh:SPARQLConstraints ;
-        sh:message "Check Filter strength as function of workpiece: {?value}" ;
-        sh:select """
-PREFIX iff: <https://industry-fusion.com/types/v0.9/>
-PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX schema: <https://schema.org/>
-
-SELECT ?this ?value
-    where {
-        $this  iff:strength [ <https://uri.etsi.org/ngsi-ld/hasValue> ?strength ] .
-        ?pc  a iff:cutter .
-        ?pc iff:hasFilter [ <https://uri.etsi.org/ngsi-ld/hasObject> $this ] .
-        ?pc  iff:hasInWorkpiece [ <https://uri.etsi.org/ngsi-ld/hasObject> ?wp ] .
-        ?wp schema:depth [ <https://uri.etsi.org/ngsi-ld/hasValue> ?depth ] .
-        ?pc iff:state [<https://uri.etsi.org/ngsi-ld/hasValue> ?pcstate ] .
-        $this iff:state [<https://uri.etsi.org/ngsi-ld/hasValue> ?filterstate ] .
-        BIND(
-            IF(xsd:integer(?depth) > 500 && xsd:float(?strength) < 1.0, \"Filter strength too low, should be 1.0\", 
-                IF(xsd:integer(?depth) > 250 && xsd:float(?strength) < 0.75, \"Filter strength too low, should be at least 0.75\",
-                    IF(xsd:float(?strength) < 0.5, \"Filter strength too low, should be at least 0.5\", \"ok\")
-                )
-            ) as ?value) .
-        FILTER(?pcstate = <https://industry-fusion.com/types/v0.9/state_PROCESSING> && ?filterstate = <https://industry-fusion.com/types/v0.9/state_ON> && ?value != \"ok\") .
-    }
-        """ ;
-    ] .
-
-
-iff:StateOnCutterShape
-    a sh:NodeShape ;
-    sh:targetClass iff:cutter ;
-    sh:sparql [
-        a sh:SPARQLConstraints;
-        sh:severity iff:severityCritical ; 
-        sh:message "Cutter running without running filter" ;
-        sh:select """
-PREFIX iff: <https://industry-fusion.com/types/v0.9/>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-SELECT $this ?v1 ?f ?v2
-    where {
-        $this  iff:state [<https://uri.etsi.org/ngsi-ld/hasValue> ?v1 ] .
-        $this  iff:hasFilter [ <https://uri.etsi.org/ngsi-ld/hasObject> ?f ] .
-        ?f  iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?v2 ] .
-        FILTER(?v1 = <https://industry-fusion.com/types/v0.9/state_PROCESSING> && ?v2 != <https://industry-fusion.com/types/v0.9/state_ON>)
-    }
-        """ ;
-    ] .
-
-
-iff:StateOnFilterShape
-    a sh:NodeShape ;
-    sh:targetClass iff:filter ;
-    sh:sparql [
-        a sh:SPARQLConstraints;
-        sh:severity iff:severityWarning ;
-        sh:message "Filter running without running assigned machine" ;
-        sh:select """
-PREFIX iff: <https://industry-fusion.com/types/v0.9/>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX rdf:	<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-SELECT $this ?v1 ?pc ?v2
-    where {
-        $this  iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?v1 ] .
-        ?pc rdf:type iff:plasmacutter .
-        ?pc iff:hasFilter [ <https://uri.etsi.org/ngsi-ld/hasObject> $this ] .
-        ?pc  iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?v2 ] .
-        FILTER(?v1 = <https://industry-fusion.com/types/v0.9/state_ON> && ?v2 != <https://industry-fusion.com/types/v0.9/state_PROCESSING>)
-    }
-        """ ;
-    ] .
-
-iff:StateValueShape
-    a sh:NodeShape ;
-    sh:targetClass iff:machine ;
-    sh:sparql [
-        
-        sh:message "State value {?value} are not a valid machineState for machine {$this} of type {?type}" ;
-        sh:select """
-        PREFIX iff: <https://industry-fusion.com/types/v0.9/>
-        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-        SELECT $this ?value ?type
-        where {
-            ?this a iff:machine .
-            ?this  iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?value ] .
-            ?this a ?type .
-            OPTIONAL{?type rdfs:subClassOf ?basetype .}
-            ?x iff:stateValidFor ?basetype .
-            FILTER( ?type != <http://www.w3.org/2000/01/rdf-schema#Resource> )
-            FILTER NOT EXISTS {
-
-                ?value iff:stateValidFor ?basetype .
-
-            }
-        }
-        """ ;
-    ] .
-
-iff:ChangeWasteClassRulesShape
-	a sh:NodeShape ;
-	sh:targetClass iff:filterCartridge ;
-	sh:rule [
-		a sh:SPARQLRule ;
-		sh:construct """
-            PREFIX iff: <https://industry-fusion.com/types/v0.9/>
-            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-            PREFIX rdf:	<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-			CONSTRUCT {
-				$this iff:wasteClass [ <https://uri.etsi.org/ngsi-ld/hasValue> ?wc ] .
-			}
-			WHERE {
-		?filter iff:hasCartridge [ <https://uri.etsi.org/ngsi-ld/hasObject> $this ] .
-                ?cutter iff:hasFilter [ <https://uri.etsi.org/ngsi-ld/hasObject> ?filter ] .
-                ?cutter iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?cutter_state ] .
-                ?filter iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?filter_state ] .
-                ?cutter iff:hasInWorkpiece [ <https://uri.etsi.org/ngsi-ld/hasObject> ?workpiece ] .
-                ?workpiece iff:material [ <https://uri.etsi.org/ngsi-ld/hasValue> ?materialnr ] .
-                $this iff:wasteClass [ <https://uri.etsi.org/ngsi-ld/hasValue> ?cur_wasteclass ] .
-                ?wc iff:containsMaterialNumber [ rdfs:member ?materialnr ] .
-                FILTER(?filter_state = iff:state_ON && ?cutter_state = iff:state_PROCESSING && ?cur_wasteclass != ?wc)
-                FILTER NOT EXISTS {
-                        ?cur_wasteclass iff:higherHazardLevel ?wc .
-                }
-
-			}
-			""" ;
-	] .
-
-
-
-iff:TimestampCartridgeFromRulesShape
-	a sh:NodeShape ;
-	sh:targetClass iff:filterCartridge ;
-	sh:rule [
-		a sh:SPARQLRule ;
-		sh:construct """
-                PREFIX iff: <https://industry-fusion.com/types/v0.9/>
-                PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-                PREFIX rdf:	<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-			CONSTRUCT {
-				$this iff:inUseFrom [ <https://uri.etsi.org/ngsi-ld/hasValue> ?ts ] .
-                $this iff:inUseUntil [ <https://uri.etsi.org/ngsi-ld/hasValue> ?ts ] .
-			}
-			WHERE {
-				
-                                ?filter iff:hasCartridge [ <https://uri.etsi.org/ngsi-ld/hasObject> $this ] .
-                                ?cutter iff:hasFilter [ <https://uri.etsi.org/ngsi-ld/hasObject> ?filter ] .
-                                ?cutter iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?cstate ] .
-                                ?cutter iff:state [ <https://uri.etsi.org/ngsi-ld/observedAt> ?cstateTs ] .
-                                ?filter iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?fstate ] .
-                                #OPTIONAL{$this  iff:inUseFrom [ <https://uri.etsi.org/ngsi-ld/observedAt> ?olderTs ]} .
-                                bind(?cstateTs as ?ts)
-                                #FILTER(!bound(?olderTs))
-                                #FILTER(?cstate = iff:state_PROCESSING && ?fstate = iff:state_ON)
-                                FILTER NOT EXISTS {
-				                    $this  iff:inUseFrom [ <https://uri.etsi.org/ngsi-ld/hasValue> ?oldertimestamp ] .
-				                }
-			}
-			""" ;
-	] ;
-.
-
-
-
-iff:TimestampCartridgeUntilRulesShape
-	a sh:NodeShape ;
-	sh:targetClass iff:filterCartridge ;
-	sh:rule [
-		a sh:SPARQLRule ;
-		sh:construct """
-                PREFIX iff: <https://industry-fusion.com/types/v0.9/>
-                PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-                PREFIX rdf:	<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-			CONSTRUCT {
-				$this iff:inUseUntil [ <https://uri.etsi.org/ngsi-ld/hasValue> ?ts ] .
-			}
-			WHERE {
-				
-                                #$this iff:wasteClass [ <https://uri.etsi.org/ngsi-ld/hasValue> ?wc ] .
-                                ?filter iff:hasCartridge [ <https://uri.etsi.org/ngsi-ld/hasObject> $this ] .
-                                ?cutter iff:hasFilter [ <https://uri.etsi.org/ngsi-ld/hasObject> ?filter ] .
-                                ?cutter iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?cstate ] .
-                                ?filter iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?fstate ] .
-                                #?this iff:inUseUntil [ <https://uri.etsi.org/ngsi-ld/hasValue> ?old ] .
-                                bind(xsd:dateTime(now()) as ?ts)
-                                FILTER(?cstate = iff:state_PROCESSING && ?fstate = iff:state_ON)
-			}
-			""" ;
-	] ;
-.

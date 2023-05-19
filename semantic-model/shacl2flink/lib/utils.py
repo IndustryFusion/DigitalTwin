@@ -40,6 +40,25 @@ class DnsNameNotCompliant(Exception):
     """
 
 
+def set_aggregate_var(ctx, state):
+    ctx['is_aggregate_var'] = state
+
+
+def get_aggregate_vars(ctx):
+    vars = None
+    if 'aggregate_vars' in ctx:
+        vars = ctx['aggregate_vars']
+    return vars
+
+
+def add_aggregate_var_to_context(ctx, var):
+    if 'is_aggregate_var' not in ctx or not ctx['is_aggregate_var']:
+        return
+    if 'aggregate_vars' not in ctx:
+        ctx['aggregate_vars'] = []
+    ctx['aggregate_vars'].append(var)
+
+
 def create_varname(variable):
     """
     creates a plain varname from RDF varialbe
@@ -140,7 +159,6 @@ def create_yaml_view(name, table, primary_key=['id']):
     for field in table:
         for field_name, field_type in field.items():
             if ('metadata' not in field_name.lower() and
-                    field_name.lower() != "ts" and
                     field_name.lower() != "id" and
                     field_name.lower() != "watermark" and
                     field_name.lower() != "type"):
@@ -177,7 +195,6 @@ def create_sql_view(table_name, table, primary_key=['id'],
     for field in table:
         for field_name, field_type in field.items():
             if ('metadata' not in field_name.lower() and
-                    field_name.lower() != "ts" and
                     field_name.lower() != "id" and
                     field_name.lower() != "watermark" and
                     field_name.lower() != "type"):
@@ -200,7 +217,7 @@ def create_sql_view(table_name, table, primary_key=['id'],
 
 
 def create_statementset(object_name, table_object_names,
-                        view_object_names, statementsets):
+                        view_object_names, ttl, statementsets):
     yaml_bsqls = {}
     yaml_bsqls['apiVersion'] = 'industry-fusion.com/v1alpha2'
     yaml_bsqls['kind'] = 'BeamSqlStatementSet'
@@ -212,6 +229,8 @@ def create_statementset(object_name, table_object_names,
     yaml_bsqls['spec'] = spec
     spec['tables'] = table_object_names
     spec['views'] = view_object_names
+    if ttl is not None:
+        spec['sqlsettings'] = [{"table.exec.state.ttl": f"{ttl}", "execution.savepoint.ignore-unclaimed-state": "true"}]
     spec['sqlstatements'] = statementsets
     spec['updateStrategy'] = "savepoint"
     return yaml_bsqls
@@ -289,24 +308,63 @@ def format_node_type(node):
 
 def process_sql_dialect(expression, isSqlite):
     result_expression = expression
-    if isSqlite:
-        result_expression = re.sub(r'SQL_DIALECT_STRIP_IRI\(([^\(\)]*)\)',
-                                   r"ltrim(rtrim(\1, '>'), '<')", result_expression)
-        result_expression = re.sub(r'SQL_DIALECT_STRIP_LITERAL\(([^\(\)]*)\)', r"trim(\1, '\"')",
-                                   result_expression)
-        result_expression = result_expression.replace('SQL_DIALECT_CURRENT_TIMESTAMP', 'datetime()')
-        result_expression = result_expression.replace('SQL_DIALECT_INSERT_ATTRIBUTES',
-                                                      'INSERT OR REPLACE INTO attributes_insert_filter')
-        result_expression = result_expression.replace('SQL_DIALECT_SQLITE_TIMESTAMP', 'CURRENT_TIMESTAMP')
-    else:
-        result_expression = re.sub(r'SQL_DIALECT_STRIP_IRI\(([^\(\)]*)\)',
-                                   r"REGEXP_REPLACE(CAST(\1 as STRING), '>|<', '')", result_expression)
-        result_expression = re.sub(r'SQL_DIALECT_STRIP_LITERAL\(([^\(\)]*)\)',
-                                   r"REGEXP_REPLACE(CAST(\1 as STRING), '\"', '')", result_expression)
-        result_expression = result_expression.replace('SQL_DIALECT_CURRENT_TIMESTAMP', 'CURRENT_TIMESTAMP')
-        result_expression = result_expression.replace('SQL_DIALECT_INSERT_ATTRIBUTES', 'INSERT into attributes_insert')
-        result_expression = result_expression.replace(',SQL_DIALECT_SQLITE_TIMESTAMP', '')
+    max_recursion = 10
+    while "SQL_DIALECT_STRIP" in result_expression:
+        max_recursion = max_recursion - 1
+        if max_recursion == 0:
+            raise WrongSparqlStructure("Unexpected problem with SQL_DIALECT macros.")
+        if isSqlite:
+
+            result_expression = re.sub(r'SQL_DIALECT_STRIP_IRI{([^{}]*)}',
+                                       r"ltrim(rtrim(\1, '>'), '<')",
+                                       result_expression)
+            result_expression = re.sub(r'SQL_DIALECT_STRIP_LITERAL{([^{}]*)}', r"trim(\1, '\"')",
+                                       result_expression)
+            result_expression = re.sub(r'SQL_DIALECT_TIME_TO_MILLISECONDS{([^{}]*)}',
+                                       r"CAST(julianday(\1) * 86400000 as INTEGER)",
+                                       result_expression)
+            result_expression = result_expression.replace('SQL_DIALECT_CURRENT_TIMESTAMP', 'datetime()')
+            result_expression = result_expression.replace('SQL_DIALECT_INSERT_ATTRIBUTES',
+                                                          'INSERT OR REPLACE INTO attributes_insert_filter')
+            result_expression = result_expression.replace('SQL_DIALECT_SQLITE_TIMESTAMP', 'CURRENT_TIMESTAMP')
+            result_expression = result_expression.replace('SQL_DIALECT_CAST', 'CAST')
+        else:
+            result_expression = re.sub(r'SQL_DIALECT_STRIP_IRI{([^{}]*)}',
+                                       r"REGEXP_REPLACE(CAST(\1 as STRING), '>|<', '')",
+                                       result_expression)
+            result_expression = re.sub(r'SQL_DIALECT_STRIP_LITERAL{([^{}]*)}',
+                                       r"REGEXP_REPLACE(CAST(\1 as STRING), '\"', '')",
+                                       result_expression)
+            result_expression = re.sub(r'SQL_DIALECT_TIME_TO_MILLISECONDS{([^{}]*)}',
+                                       r"1000 * UNIX_TIMESTAMP(TRY_CAST(\1 AS STRING)) + " +
+                                       r"EXTRACT(MILLISECOND FROM TRY_CAST(\1 as TIMESTAMP))",
+                                       result_expression)
+            result_expression = result_expression.replace('SQL_DIALECT_CURRENT_TIMESTAMP',
+                                                          'CURRENT_TIMESTAMP')
+            result_expression = result_expression.replace('SQL_DIALECT_INSERT_ATTRIBUTES',
+                                                          'INSERT into attributes_insert')
+            result_expression = result_expression.replace(',SQL_DIALECT_SQLITE_TIMESTAMP', '')
+            result_expression = result_expression.replace('SQL_DIALECT_CAST', 'TRY_CAST')
     return result_expression
+
+
+def unwrap_variables(ctx, var):
+    """unwrap variables for arithmetic operations
+       ngsild variables are not touched except times variables
+       rdf variables are assumed to be Simple Literals and are treatet
+       as strings when not casted
+    Args:
+        ctx (hash): context
+        var (Variable): RDFLib variable
+    """
+    bounds = ctx['bounds']
+    time_variables = ctx['time_variables']
+    varname = create_varname(var)
+    add_aggregate_var_to_context(ctx, varname)
+
+    if var in time_variables:
+        return f"SQL_DIALECT_TIME_TO_MILLISECONDS{{{bounds[varname]}}}"
+    return bounds[varname]
 
 
 def wrap_ngsild_variable(ctx, var):
@@ -323,18 +381,22 @@ def wrap_ngsild_variable(ctx, var):
     bounds = ctx['bounds']
     property_variables = ctx['property_variables']
     entity_variables = ctx['entity_variables']
+    time_variables = ctx['time_variables']
     varname = create_varname(var)
+    add_aggregate_var_to_context(ctx, varname)
+    if varname not in bounds:
+        raise SparqlValidationFailed(f'Could not resolve variable \
+?{varname} in expression {ctx["query"]}.')
     if var in property_variables:
-        if varname in bounds:
-            if property_variables[var]:
-                return "'<' || " + bounds[varname] + " || '>'"
-            else:
-                return "'\"' || " + bounds[varname] + " || '\"'"
+        if property_variables[var]:
+            return "'<' || " + bounds[varname] + " || '>'"
         else:
-            raise SparqlValidationFailed(f'Could not resolve variable \
-?{varname}.')
+            return "'\"' || " + bounds[varname] + " || '\"'"
     elif var in entity_variables:
         raise SparqlValidationFailed(f'Cannot bind enttiy variable {varname} to \
 plain RDF context')
-    elif varname in bounds:  # plain RDF variable
+    elif var in time_variables:
+        if varname in bounds:
+            return f"SQL_DIALECT_TIME_TO_MILLISECONDS{{{bounds[varname]}}}"
+    else:  # plain RDF variable
         return bounds[varname]

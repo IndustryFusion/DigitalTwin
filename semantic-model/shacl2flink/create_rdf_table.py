@@ -129,7 +129,7 @@ def main(knowledgefile, output_folder='output'):
             num += 1
             fp.write("---\n")
             yaml.dump(utils.create_statementset('rdf-statements' + str(num), [table_name],
-                                                [], [statementset]), fp)
+                                                [], None, [statementset]), fp)
         fp.write("---\n")
         yaml.dump(utils.create_kafka_topic(utils.class_to_obj_name(
                                            configs.rdf_topic),
