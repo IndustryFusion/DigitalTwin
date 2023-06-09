@@ -58,5 +58,5 @@ spec:
             - containerPort: 9090
               protocol: TCP
           resources:
-            {{- toYaml .Values.aaio.resources | nindent 12 }}
+{{ toYaml .Values.scorpio.resources_main | indent 12 }}
 {{- end }}
