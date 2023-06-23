@@ -38,10 +38,11 @@ scorpio:
       memory: 256Mi
   resources_main:
     limits:
-      memory: 512Mi
+      cpu: 1
+      memory: 1024Mi
     requests:
-      cpu: 200m
-      memory: 256Mi
+      cpu: 500m
+      memory: 512Mi
 
 certmanager:
   secret: selfsigned-cert-tls
