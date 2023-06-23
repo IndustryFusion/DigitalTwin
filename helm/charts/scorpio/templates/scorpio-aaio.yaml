@@ -44,7 +44,13 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.db.dbUser -}}.{{- .Values.clusterSvcName -}}.{{- .Values.db.secretPostfix }}
                   key: password
-          {{- range $key, $val := .Values.keycloak_vars}}
+            - name: POSTGRES_DBNAME
+              value: {{ .Values.db.scorpioDb }}
+          {{- range $key, $val := .Values.keycloak_vars }}
+            - name: {{ $key }}
+              value: {{ $val | quote }}
+          {{- end }}
+          {{- range $key, $val := .Values.kafka_vars }}
             - name: {{ $key }}
               value: {{ $val | quote }}
           {{- end }}

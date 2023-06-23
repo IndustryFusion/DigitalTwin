@@ -399,15 +399,19 @@ compare_upserted_non_overwritten_entity() {
   "type" : "${FILTER_TYPE}",
   "https://industry-fusion.com/types/v0.9/hasCartridge" : {
     "type" : "Relationship",
-    "object" : "urn:filterCartridge-test:12345"
+    "object" : "urn:filterCartridge-test:22345"
   },
   "https://industry-fusion.com/types/v0.9/state" : {
     "type" : "Property",
-    "value" : "OFFF"
+    "value" : "OFF"
   },
   "https://industry-fusion.com/types/v0.9/strength" : {
     "type" : "Property",
-    "value" : "0.9"
+    "value" : "0.1"
+  },
+  "https://industry-fusion.com/types/v0.9/strength2": {
+    "type": "Property",
+    "value": "0.5"
   }
 }
 EOF
@@ -593,9 +597,9 @@ teardown(){
     kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPSERT_FILTER_OVERWRITE}
     sleep 2
     get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )' >${RECEIVED_ENTITY}
+    delete_ngsild "${token}" ${FILTER_ID}
     run compare_upserted_overwritten_entity ${RECEIVED_ENTITY}
     [ "$status" -eq 0 ]
-    delete_ngsild "${token}" ${FILTER_ID}
 }
 
 @test "verify ngsild-update bridge is upserting and non-overwriting ngsi-ld entitiy" {
@@ -604,6 +608,9 @@ teardown(){
     # property but Quarkus
     # Currently the test is not changing the object. We leave it in in case in future this API is working correctly
     # And will be detected by this.
+    # Update: In Scorpio Version 3.0.11 the program behaviour changed again but it is still not quite aligned
+    # with the NGSI-LD documentations, therefore we tweaked the test case to work with the current behaviour.
+    # When this test fails in the future, we will know that the behaviour has changed again.
     kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPSERT_FILTER}
     echo "# Sent upsert object to ngsi-ld-updates-bridge, wait some time to let it settle"
     sleep 2
@@ -615,9 +622,9 @@ teardown(){
     kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPSERT_FILTER_NON_OVERWRITE}
     sleep 2
     get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )' >${RECEIVED_ENTITY}
+    delete_ngsild "${token}" ${FILTER_ID}
     run compare_upserted_non_overwritten_entity ${RECEIVED_ENTITY}
     [ "$status" -eq 0 ]
-    delete_ngsild "${token}" ${FILTER_ID}
 }
 
 @test "verify ngsild-update bridge is updating ngsi-ld entitiy" {
@@ -630,7 +637,7 @@ teardown(){
     kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPDATE_FILTER}
     echo "# Sent update object to ngsi-ld-updates-bridge, wait some time to let it settle"
     sleep 2
-    get_ngsild "${token}" ${FILTER_ID} | jq  'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )' >${RECEIVED_ENTITY}
+    get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )' >${RECEIVED_ENTITY}
     delete_ngsild "${token}" ${FILTER_ID}
     run compare_updated_entity ${RECEIVED_ENTITY}
     [ "$status" -eq 0 ]

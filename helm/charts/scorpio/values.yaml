@@ -46,7 +46,6 @@ aaio:
   image:
     repository: ibn/scorpio-all-in-one-runner
     pullPolicy: Always
-    tag: 0.1
   resources: {}
 
 ################################### SpringArgs #######################################################################
