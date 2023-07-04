@@ -57,4 +57,4 @@ data:
       }
     }
   knowledge.ttl: |
-{{ .Files.Get "semantic-model/knowledge.ttl" | indent 4 }}
+{{ .Files.Get "kms/knowledge.ttl" | indent 4 }}
