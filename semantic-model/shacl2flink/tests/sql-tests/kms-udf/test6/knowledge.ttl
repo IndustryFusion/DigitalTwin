@@ -1,0 +1,102 @@
+PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX iff: <https://industry-fusion.com/types/v0.9/>
+PREFIX oee: <https://industry-fusion.com/oee/v0.9/>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+
+### Test classes
+iff:cutter_test rdfs:subClassOf iff:machine_test ;
+    a iff:class .
+iff:plasmacutter_test rdfs:subClassOf iff:cutter_test ;
+    a iff:class .
+### End of Test Content
+
+iff:entity a iff:class ;
+    a rdfs:class .
+iff:machine a iff:class ;
+    a rdfs:class .
+iff:filter rdfs:subClassOf iff:machine ;
+    a iff:class .
+iff:plasmacutter rdfs:subClassOf iff:cutter ;
+    a iff:class .
+iff:lasercutter rdfs:subClassOf iff:cutter;
+    a iff:class .
+iff:cutter rdfs:subClassOf iff:machine ;
+    a iff:class .
+iff:workpiece rdfs:subClassOf iff:entity ;
+    a iff:class .
+iff:filterCartridge rdfs:subClassOf iff:entity ;
+    a iff:class .
+
+
+iff:scheduleEntity a iff:class .
+iff:oeeTemplate rdfs:subClassOf iff:scheduleEntity .
+
+### Machine states
+iff:machineState a rdfs:class .
+iff:state_OFF a iff:machineState .
+iff:state_OFF iff:stateValidFor iff:filter, iff:cutter .
+iff:state_ON a iff:machineState  .
+iff:state_ON iff:stateValidFor iff:filter, iff:cutter .
+iff:state_PREPARING a iff:machineState  .
+iff:state_PREPARING iff:stateValidFor iff:cutter .
+iff:state_PROCESSING a iff:machineState  .
+iff:state_PROCESSING iff:stateValidFor iff:cutter .
+iff:state_CLEARING a iff:machineState .
+iff:state_CLEARING iff:stateValidFor iff:cutter .
+iff:state_CLEANING a iff:machineState .
+iff:state_CLEANING iff:stateValidFor iff:filter .
+iff:state_ERROR a iff:machineState .
+iff:state_ERROR iff:stateValidFor iff:filter, iff:cutter .
+
+### OEE definitions: What state defines availability
+iff:state_PROCESSING oee:availability "1" .
+iff:state_PREPARING oee:availability "0" .
+
+# labels for states
+iff:state_ON rdfs:label "ON" .
+iff:state_OFF rdfs:label "OFF" .
+iff:state_PREPARING rdfs:label "PREPARING" .
+iff:state_PROCESSING rdfs:label "PROCESSING" .
+iff:state_CLEARING rdfs:label "ON" .
+iff:state_ERROR rdfs:label "ERROR" .
+
+iff:WC0 a iff:WC .
+iff:WC1 a iff:WC .
+iff:WC2 a iff:WC .
+iff:WC3 a iff:WC .
+iff:higherHazardLevel a owl:TransitiveProperty .
+iff:WC3 iff:higherHazardLevel iff:WC2 .
+iff:WC2 iff:higherHazardLevel iff:WC1 .
+iff:WC1 iff:higherHazardLevel iff:WC0 .
+#iff:WC1 a rdf:Bag .
+iff:WC1 iff:containsMaterialNumber [
+    a rdf:Bag ;
+    rdf:_1 "1.4301" ;
+    rdf:_2 "1.4302" ;
+    rdf:_3 "1.4303" ;
+    rdf:_4 "1.4304" ;
+    rdf:_5 "1.4305" ;
+] .
+iff:WC2 iff:containsMaterialNumber [
+    a rdf:Bag ;
+    rdf:_1 "1.3301" ;
+    rdf:_2 "1.3302" ;
+    rdf:_3 "1.3303" ;
+    rdf:_4 "1.3304" ;
+    rdf:_5 "1.3305" ;
+ ] .
+iff:WC3 iff:containsMaterialNumber [
+    a rdf:Bag ;
+    rdf:_1 "1.5301" ;
+    rdf:_2 "1.5302" ;
+    rdf:_3 "1.5303" ;
+    rdf:_4 "1.5304" ;
+    rdf:_5 "1.5305" ;
+ ] .
+
+# Severity
+iff:severityCritical a iff:severityClass .
+iff:SeverityWarning a iff:severityClass .
+iff:severityCritical iff:severityCode "critical" .
+iff:severityWarning iff:severityCode "warning" .

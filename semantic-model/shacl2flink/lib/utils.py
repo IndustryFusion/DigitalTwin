@@ -40,8 +40,59 @@ class DnsNameNotCompliant(Exception):
     """
 
 
-def set_aggregate_var(ctx, state):
+def get_timevars(ctx, vars):
+    """calculate time-attribute of variables
+
+    Args:
+        bounds (dict): dictionary of varialbe bounds
+        vars (list): list of variables
+    """
+    sqltables = []
+    timevars = []
+    bounds = ctx['bounds']
+    for var in vars:
+        sqlvar = bounds[var]
+        sqltable = sqlvar.split('.')[0]
+        sqltable = sqltable.strip('`')
+        sqltables.append(sqltable)
+    sqltables = list(set(sqltables))
+    for tab in sqltables:
+        timevars.append(f'{tab}.ts')
+    return timevars
+
+
+def set_group_by_vars(ctx, vars):
+    for var in vars:
+        if 'group_by_vars' not in ctx:
+            ctx['group_by_vars'] = []
+        ctx['group_by_vars'].append(create_varname(var))
+
+
+def add_group_by_vars(ctx, rdfvar):
+    var = create_varname(rdfvar)
+    if 'group_by_vars' in ctx:
+        if var not in ctx['group_by_vars']:
+            ctx['group_by_vars'].append(var)
+    else:
+        ctx['group_by_vars'] = [var]
+
+
+def get_group_by_vars(ctx):
+    if 'group_by_vars' in ctx:
+        return ctx['group_by_vars']
+    else:
+        return None
+
+
+def set_is_aggregate_var(ctx, state):
     ctx['is_aggregate_var'] = state
+
+
+def get_is_aggregate_var(ctx):
+    if 'is_aggregate_var' in ctx:
+        return ctx['is_aggregate_var']
+    else:
+        return False
 
 
 def get_aggregate_vars(ctx):
@@ -49,6 +100,13 @@ def get_aggregate_vars(ctx):
     if 'aggregate_vars' in ctx:
         vars = ctx['aggregate_vars']
     return vars
+
+
+def set_aggregate_vars(ctx, vars):
+    for var in vars:
+        if 'aggregate_vars' not in ctx:
+            ctx['aggregate_vars'] = []
+        ctx['aggregate_vars'].append(var)
 
 
 def add_aggregate_var_to_context(ctx, var):

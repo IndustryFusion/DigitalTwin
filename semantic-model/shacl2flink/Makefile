@@ -17,6 +17,7 @@ build: $(SHACL) $(KNOWLEDGE $(MODEL)
 	@echo Build tables
 	$(PYTHON) create_rdf_table.py $(KNOWLEDGE)
 	$(PYTHON) create_core_tables.py
+	${PYTHON} create_udfs.py
 	$(PYTHON) create_ngsild_tables.py $(SHACL)
 	$(PYTHON) create_ngsild_models.py $(SHACL) $(KNOWLEDGE) $(MODEL)
 	$(PYTHON) create_sql_checks_from_shacl.py $(SHACL) $(KNOWLEDGE)
@@ -56,6 +57,20 @@ test-sqlite:
 	echo ------------------------------------------------
 	echo "select * from attributes_insert_filter;"| sqlite3 ${SQLITEDB}
 
+
+test-sqlite-udf:
+	@echo Test with sqlite
+	for file in $(sqlite_files); do \
+		${PYTHON} udf/sqlite3_insert.py $(SQLITEDB) $${file};\
+	done
+	echo "Alerts"
+	echo ------------------------------------------------
+	echo 'select * from alerts_bulk;'| sqlite3 ${SQLITEDB}
+	echo "Inserts"
+	echo ------------------------------------------------
+	echo "select * from attributes_insert_filter;"| sqlite3 ${SQLITEDB}
+
+
 test-sqlite-update:
 	@echo Update model
 	$(PYTHON) create_ngsild_models.py $(SHACL) $(KNOWLEDGE) $(MODEL)
@@ -70,7 +85,7 @@ test-kms:
 flink-deploy: clean
 	@echo deploy helm package
 	make helm
-	cd ../../helm && ./helmfile -f helmfile-shacl.yaml apply
+	cd ../../helm && ./helmfile -f helmfile-shacl.yaml apply --args "--force"
 	make test-flink-is-deployed
 	sleep 2
 	kubectl -n $(NAMESPACE) -l "app.kubernetes.io/instance"="kafka-connect" delete pod

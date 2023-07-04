@@ -33,6 +33,9 @@ import bgp_translation_utils  # noqa: E402
 sh = Namespace("http://www.w3.org/ns/shacl#")
 
 iff = Namespace("https://industry-fusion.com/types/v0.9/")
+IFA = Namespace("https://industry-fusion.com/aggregators/v0.9/")
+IFN = Namespace("https://industry-fusion.com/functions/v0.9/")
+
 debug = 0
 debugoutput = sys.stdout
 dummyvar = 'dummyvar'
@@ -238,9 +241,9 @@ def translate_unary_not(ctx, elem):
 
 def process_aggregate(ctx, elem):
     distinct = elem.distinct
-    utils.set_aggregate_var(ctx, True)
+    utils.set_is_aggregate_var(ctx, True)
     expression = translate(ctx, elem.vars)
-    utils.set_aggregate_var(ctx, False)
+    utils.set_is_aggregate_var(ctx, False)
     distinct_string = 'DISTINCT'
     if distinct != 'DISTINCT':
         distinct_string = ''
@@ -258,9 +261,8 @@ def translate_aggregate_count(ctx, elem):
 
 
 def translate_group(ctx, elem):
-    ctx['group_by_vars'] = elem.expr
-    if Variable('this') not in ctx['group_by_vars']:
-        ctx['group_by_vars'].append(Variable('this'))
+    utils.set_group_by_vars(ctx, elem.expr)
+    utils.add_group_by_vars(ctx, Variable('this'))
     translate(ctx, elem.p)
     elem['target_sql'] = elem.p['target_sql']
     elem['where'] = elem.p['where']
@@ -285,16 +287,12 @@ def translate_builtin_bound(ctx, elem):
 def translate_additive_expression(ctx, elem):
     if isinstance(elem.expr, Variable):
         expr = utils.unwrap_variables(ctx, elem.expr)
-    elif isinstance(elem.expr, Literal) or isinstance(elem.expr, URIRef):
-        expr = utils.unwrap_variables(elem.expr)
     else:  # Neither Variable, nor Literal, nor IRI - hope it is further translatable
         expr = translate(ctx, elem.expr)
 
     for op, other in zip(elem.op, elem.other):
         if isinstance(other, Variable):
             other_val = utils.unwrap_variables(ctx, other)
-        elif isinstance(other, Literal) or isinstance(other, URIRef):
-            other_val = utils.unwrap_variables(other)
         else:
             other_val = translate(ctx, other)
         expr += f" {op} {other_val} "
@@ -316,12 +314,15 @@ def translate_multiplicative_expression(ctx, elem):
 def translate_function(ctx, function):
     iri = function.iri
     expr = function.expr
-    if len(expr) != 1:
-        raise utils.WrongSparqlStructure('Only functions with one parameter implemented.')
+    numargs = len(expr)
+
     # This is only supporting single parameter functions
     # TODO: Generalize the functin translation for arbitrary parameters
-    expression = translate(ctx, expr[0])
+    expression = None
     if iri in XSD:  # CAST
+        if numargs != 1:
+            raise utils.WrongSparqlStructure('CASTS need only one parameter.')
+        expression = translate(ctx, expr[0])
 
         cast = 'notfound'
         stringcast = False
@@ -341,6 +342,27 @@ def translate_function(ctx, function):
                 result = f'SQL_DIALECT_CAST(SQL_DIALECT_STRIP_IRI{{{expression}}} as {cast})'
         else:
             result = f'SQL_DIALECT_TIME_TO_MILLISECONDS{{{expression}}}'
+    elif iri in IFA:
+        udf = utils.strip_class(iri)
+        result = f'{udf}('
+        utils.set_is_aggregate_var(ctx, True)
+        for i in range(0, numargs):
+            if i != 0:
+                result += ', '
+            expression = translate(ctx, expr[i])
+            result += expression
+        utils.set_is_aggregate_var(ctx, False)
+        result += ')'
+    elif iri in IFN:
+        udf = utils.strip_class(iri)
+        result = f'{udf}('
+        for i in range(0, numargs):
+            if i != 0:
+                result += ', '
+            expression = translate(ctx, expr[i])
+            result += expression
+        utils.set_is_aggregate_var(ctx, False)
+        result += ')'
     else:
         raise utils.WrongSparqlStructure(f'Function {iri.toPython()} not supported!')
     return result
@@ -435,10 +457,7 @@ def wrap_sql_construct(ctx, node):
         construct_query += 'FROM ' + node['target_sql']
         if node['where'] != '':
             construct_query += ' WHERE ' + node['where']
-        group_by = None
-        if 'group_by_vars' in ctx:
-            group_by = reduce(lambda x, y: f'{x}, {y}', map(lambda x: bounds[utils.create_varname(x)],
-                                                            ctx['group_by_vars']))
+        group_by = create_group_by(ctx)
         if group_by is not None:
             construct_query += f' GROUP BY {group_by}'
     node['target_sql'] = construct_query
@@ -453,7 +472,7 @@ def get_bound_trim_string(ctx, boundsvar):
         else:
             return f"SQL_DIALECT_STRIP_LITERAL{{{bounds[boundsvarname]}}}"
     elif boundsvarname in bounds and boundsvar in ctx['time_variables']:
-        return f"SQL_DIALECT_STRIP_LITERAL{{{bounds[boundsvarname]}}}"
+        return f"SQL_DIALIFAECT_STRIP_LITERAL{{{bounds[boundsvarname]}}}"
     else:
         raise utils.WrongSparqlStructure(f"Trying to trim non-bound variable ?{boundsvarname} in expression \
 {ctx['query']}")
@@ -501,7 +520,6 @@ def wrap_sql_projection(ctx, node):
             expression += ', '
         try:
             column = bounds[utils.create_varname(var)]
-            # column_no_bacticks =  column.replace('`', '')
             expression += f'{column} AS `{utils.create_varname(var)}` '
         except:
             # variable could not be bound, bind it with NULL
@@ -509,10 +527,9 @@ def wrap_sql_projection(ctx, node):
 
     target_sql = node['target_sql']
     target_where = node['where']
-    group_by = None
-    if 'group_by_vars' in ctx:
-        group_by = reduce(lambda x, y: f'{x}, {y}', map(lambda x: bounds[utils.create_varname(x)],
-                                                        ctx['group_by_vars']))
+    group_by = create_group_by(ctx)
+
+    if group_by is not None:
         group_by_term = f' GROUP BY {group_by}'
     else:
         group_by_term = ''
@@ -814,3 +831,48 @@ def translate_BGP(ctx, bgp):
         bgp['where'] = local_ctx['where']
 
     ctx['tables'] = {**(ctx['tables']), **local_ctx['bgp_tables']}
+
+
+def create_subbounds(ctx, node):
+    group_by_vars = utils.get_group_by_vars(ctx)
+    aggregate_vars = utils.get_aggregate_vars(ctx)
+    subquery_vars = ''
+    aliasmap = {}
+    bounds = ctx['bounds']
+    first = True
+    for var in group_by_vars + aggregate_vars:
+        if first:
+            first = False
+        else:
+            subquery_vars += ', '
+        alias = "X" + bgp_translation_utils.get_random_string(16)
+        column_name = bounds[var]
+        aliasmap[column_name] = alias
+        subquery_vars += f'{column_name} as {alias}'
+        bounds[var] = alias
+    node['column_alias'] = aliasmap
+    return subquery_vars
+
+
+def replace_column_by_alias(node, value):
+    aliasmap = node['column_alias']
+    for k, v in aliasmap.items():
+        value = value.replace(k, v)
+    return value
+
+
+def create_order_by(ctx):
+    aggregate_vars = utils.get_aggregate_vars(ctx)
+    timevars = utils.get_timevars(ctx, aggregate_vars)
+    result = ', '.join(timevars)
+    return result
+
+
+def create_group_by(ctx):
+    bounds = ctx['bounds']
+    group_by_vars = utils.get_group_by_vars(ctx)
+    result = None
+    if group_by_vars is not None:
+        result = reduce(lambda x, y: f'{x}, {y}', map(lambda x: bounds[x],
+                        group_by_vars))
+    return result
