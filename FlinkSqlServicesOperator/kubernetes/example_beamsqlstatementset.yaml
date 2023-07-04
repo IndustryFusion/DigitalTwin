@@ -1,11 +1,42 @@
-apiVersion: industry-fusion.com/v1alpha1
+apiVersion: industry-fusion.com/v1alpha2
 kind: BeamSqlStatementSet
 metadata:
   name: beamsqlstatementset-example
+  namespace: iff
 spec:
   sqlstatements:
     - insert into `metrics-copy` select `aid`, `cid`, `dataType`, `on`, `systemon`, `value` FROM `metrics`;
   tables:
     - metrics
     - metrics-copy
-
+---
+apiVersion: industry-fusion.com/v1alpha3
+kind: BeamSqlStatementSet
+metadata:
+  name: beamsqlstatementset-example
+  namespace: iff
+spec:
+  sqlstatementmaps:
+    - iff/configmap1
+    - iff/configmap2
+  tables:
+    - metrics
+    - metrics-copy
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: configmap1
+  namespace: iff
+data:
+  sqlstatementset:
+  - insert into `metrics-copy` select `aid`, `cid`, `dataType`, `on`, `systemon`, `value` FROM `metrics`;
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: configmap2
+  namespace: iff
+data:
+  sqlstatementset:
+  - insert into `metrics-cop` select `aid`, `cid`, `dataType`, `on`, `systemon`, `value` FROM `metrics`;

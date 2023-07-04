@@ -95,8 +95,11 @@ class TestMonitoring(TestCase):
         """mock successful statementset creation"""
         # Keeping normal assert statement as this does not seem to
         # be an object method after mocking
-        assert statementset == "SET pipeline.name = 'namespace/name';\nDDL;" \
-            "\nBEGIN STATEMENT SET;\nselect;\nEND;"
+        #assert statementset == "SET pipeline.name = 'namespace/name';\nDDL;" \
+        #    "\nBEGIN STATEMENT SET;\nselect;\nEND;"
+        assert statementset == {'sqlsets': ["SET pipeline.name = 'namespace/name';"],
+                                'tables': ['DDL;'],
+                                'sqlstatementset': ['select;']}
         return "job_id"
 
     # pylint: disable=no-self-use, unused-argument, no-self-argument
@@ -134,8 +137,8 @@ class TestMonitoring(TestCase):
         patchx.status = {}
 
         beamsqltables = {("namespace", "table"): ({}, {})}
-        target.monitor(beamsqltables, None, patchx,  Logger(),
-                       body, body["spec"], body["status"])
+        target.monitor(beamsqltables, None, None, patchx,  Logger(),
+                       body, body["spec"])
         self.assertEqual(patchx.status['state'], "DEPLOYING")
         self.assertEqual(patchx.status['job_id'], "job_id")
 
@@ -164,8 +167,9 @@ class TestMonitoring(TestCase):
         patchx.status = {}
 
         beamsqltables = {("namespace", "table"): ({}, {})}
-        target.monitor(beamsqltables, None, patchx,  Logger(),
-                       body, body["spec"], body["status"])
+
+        target.monitor(beamsqltables, None, None, patchx,  Logger(),
+                       body, body["spec"])
         self.assertNotIn('state', patchx.status)
         self.assertNotIn('job_id', patchx.status)
 
@@ -195,8 +199,8 @@ class TestMonitoring(TestCase):
 
         beamsqltables = {("namespace", "table"): ({}, {})}
         try:
-            target.monitor(beamsqltables, None, patchx,  Logger(),
-                           body, body["spec"], body["status"])
+            target.monitor(beamsqltables, None, None, patchx,  Logger(),
+                           body, body["spec"])
         except kopf.TemporaryError:
             pass
         self.assertEqual(patchx.status['state'], "DEPLOYMENT_FAILURE")
@@ -228,8 +232,8 @@ class TestMonitoring(TestCase):
 
         beamsqltables = {}
         with self.assertRaises(kopf.TemporaryError) as cmx:
-            target.monitor(beamsqltables, None, patchx, Logger(),
-                           body, body["spec"], body["status"])
+            target.monitor(beamsqltables, None, None, patchx, Logger(),
+                           body, body["spec"])
             self.assertTrue(str(cmx.exception).startswith(
                 "Table DDLs could not be created for namespace/name."))
 
@@ -260,8 +264,8 @@ class TestMonitoring(TestCase):
 
         beamsqltables = {}
 
-        target.monitor(beamsqltables, None, patchx, Logger(),
-                       body, body["spec"], body["status"])
+        target.monitor(beamsqltables, None, None, patchx, Logger(),
+                       body, body["spec"])
         self.assertEqual(patchx.status["state"], "INITIALIZED")
         self.assertIsNone(patchx.status["job_id"])
 
@@ -307,8 +311,8 @@ class TestMonitoring(TestCase):
             "sqlstatement": "sqlstatement"
         }
         with self.assertRaises(kopf.TemporaryError):
-            target.monitor(beamsqltables, beamsqlviews, patchx, Logger(),
-                       body, body["spec"], body["status"])
+            target.monitor(beamsqltables, beamsqlviews, None, patchx, Logger(),
+                       body, body["spec"])
 
 class TestDeletion(TestCase):
     """Unit test class for job deletion tests"""

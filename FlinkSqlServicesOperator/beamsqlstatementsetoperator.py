@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
 
 """A kopf operator that manages SQL jobs on flink."""
 
@@ -85,7 +84,7 @@ UPDATE_STRATEGY_SAVEPOINT = "savepoint"
 UPDATE_STRATEGY_NONE = "none"
 
 
-@kopf.on.create("industry-fusion.com", "v1alpha2", "beamsqlstatementsets")
+@kopf.on.create("industry-fusion.com", "v1alpha3", "beamsqlstatementsets")
 # pylint: disable=unused-argument
 # Kopf decorated functions match their expectations
 def create(body, spec, patch, logger, **kwargs):
@@ -102,7 +101,7 @@ def create(body, spec, patch, logger, **kwargs):
     return {"createdOn": str(time.time())}
 
 
-@kopf.on.delete("industry-fusion.com", "v1alpha2", "beamsqlstatementsets",
+@kopf.on.delete("industry-fusion.com", "v1alpha3", "beamsqlstatementsets",
                 retries=10)
 # pylint: disable=unused-argument
 # Kopf decorated functions match their expectations
@@ -164,7 +163,13 @@ def beamsqlviews(name: str, namespace: str, body: kopf.Body, **_):
     return {(namespace, name): body}
 
 
-@kopf.on.update("industry-fusion.com", "v1alpha2", "beamsqlstatementsets")
+@kopf.index("", "v1", "configmaps")
+# pylint: disable=missing-function-docstring
+def configmaps(name: str, namespace: str, body: kopf.Body, **_):
+    return {(namespace, name): body}
+
+
+@kopf.on.update("industry-fusion.com", "v1alpha3", "beamsqlstatementsets")
 # pylint: disable=unused-argument
 # Kopf decorated functions match their expectations
 def update(body, spec, patch, logger, retries=20, **kwargs):
@@ -252,13 +257,14 @@ def update(body, spec, patch, logger, retries=20, **kwargs):
                 patch.status[STATE] = States.UPDATING.name
 
 
-@kopf.timer("industry-fusion.com", "v1alpha2", "beamsqlstatementsets",
+@kopf.timer("industry-fusion.com", "v1alpha3", "beamsqlstatementsets",
             interval=timer_interval_seconds, backoff=timer_backoff_seconds)
 # pylint: disable=too-many-arguments unused-argument redefined-outer-name
-# pylint: disable=too-many-locals too-many-statements
+# pylint: disable=too-many-locals too-many-statements too-many-branches
 # Kopf decorated functions match their expectations
-def monitor(beamsqltables: kopf.Index, beamsqlviews: kopf.Index, patch, logger,
-            body, spec, status, **kwargs):
+def monitor(beamsqltables: kopf.Index, beamsqlviews: kopf.Index,
+            configmaps: kopf.Index,
+            patch, logger, body, spec, **kwargs):
     """
     Managaging the main lifecycle of the beamsqlstatementset crd
     Current state is stored under
@@ -314,21 +320,24 @@ def monitor(beamsqltables: kopf.Index, beamsqlviews: kopf.Index, patch, logger,
         # (1) SET statements (sqlsettings)
         # (2) Tables
         # (3) Views
-
-        ddls = create_sets(spec, body, namespace, name, logger)
+        statementset = {}
+        sets = create_sets(spec, body, namespace, name, logger)
+        statementset['sqlsets'] = sets
 
         # get first all table ddls
         # get inputTable and outputTable
 
-        ddls += create_tables(beamsqltables, spec, body, namespace, name,
+        tables = create_tables(beamsqltables, spec, body, namespace, name,
                               logger)
-
+        statementset['tables'] = tables
         # Now get all views
         try:
             if spec.get("views") is not None:
-                ddls += "\n".join(tables_and_views.create_view(
-                    list(beamsqlviews[(namespace, view_name)])[0]
-                    ) for view_name in spec.get("views")) + "\n"
+                views = []
+                for view_name in spec.get("views"):
+                    views.append(tables_and_views.create_view(
+                    list(beamsqlviews[(namespace, view_name)])[0]))
+                statementset['views'] = views
 
         except (KeyError, TypeError) as exc:
             logger.error("Views could not be created for "
@@ -343,12 +352,25 @@ def monitor(beamsqltables: kopf.Index, beamsqlviews: kopf.Index, patch, logger,
                 from exc
 
         # now create statement set
-        statementset = ddls
-        statementset += "BEGIN STATEMENT SET;\n"
-        statementset += "\n".join(spec.get("sqlstatements")) + "\n"
-        # TODO: check for "insert into" prefix and terminating ";"
-        # in sqlstatement
-        statementset += "END;"
+        if spec.get("sqlstatements") is not None and \
+                spec.get("sqlstatementmaps") is not None:
+            logger.error(f"The resoure {namespace}/{name} needs either \
+sqlstatements or sqlstatementmaps.")
+            raise kopf.PermanentError(f"The resoure {namespace}/{name} \
+needs either sqlstatements or sqlstatementmaps.")
+        #statementset += "BEGIN STATEMENT SET;\n"
+        sqlstatementset = []
+        if spec.get("sqlstatements"):
+            sqlstatementset = spec.get("sqlstatements")
+            # TODO: check for "insert into" prefix and terminating ";"
+            # in sqlstatement
+        if spec.get("sqlstatementmaps"):
+            sqlstatementset += create_statementmaps(configmaps,
+                                                           spec, body,
+                                                           namespace,
+                                                           name,
+                                                           logger)
+        statementset['sqlstatementset'] = sqlstatementset
         logger.debug(f"Now deploying statementset {statementset}")
         try:
             patch.status[JOB_ID] = deploy_statementset(statementset, logger)
@@ -397,11 +419,13 @@ def create_tables(beamsqltables, spec, body, namespace, name, logger):
     """
     create tables from beamsqltables index
     """
-    ddls = ""
+    ddls = []
     try:
-        ddls += "\n".join(tables_and_views.create_ddl_from_beamsqltables(
+        for table_name in spec.get("tables"):
+
+            ddls.append(tables_and_views.create_ddl_from_beamsqltables(
             list(beamsqltables[(namespace, table_name)])[0],
-            logger) for table_name in spec.get("tables")) + "\n"
+            logger))
 
     except (KeyError, TypeError) as exc:
         logger.error("Table DDLs could not be created for "
@@ -421,24 +445,24 @@ def create_sets(spec, body, namespace, name, logger):
     create the list of SET statements which configures the
     statementsets
     """
-    sets = ""
+    sets = []
     sqlsettings = spec.get('sqlsettings')
     if not sqlsettings:
         message = "pipeline name not determined in"\
                   f" {namespace}/{name}, using default"
         logger.debug(message)
-        sets = f"SET pipeline.name = '{namespace}/{name}';\n"
+        sets.append(f"SET pipeline.name = '{namespace}/{name}';")
     elif all(x for x in sqlsettings if x.get('pipeline.name') is None):
-        sets = f"SET pipeline.name = '{namespace}/{name}';\n"
+        sets.append(f"SET pipeline.name = '{namespace}/{name}';")
         for setting in sqlsettings:
             key = list(setting.keys())[0]
             value = setting.get(key)
-            sets += f"SET '{key}' = '{value}';\n"
+            sets.append(f"SET '{key}' = '{value}';")
     # add savepoint if location is set
     try:
         savepoint_location = body['status'].get(SAVEPOINT_LOCATION)
         if savepoint_location is not None:
-            sets += f"SET execution.savepoint.path = '{savepoint_location}';\n"
+            sets.append(f"SET execution.savepoint.path = '{savepoint_location}';")
         logger.debug(f"Savepoint location {savepoint_location} used for sets.")
     except KeyError:
         pass
@@ -494,7 +518,7 @@ def deploy_statementset(statementset, logger):
     try:
         response = requests.post(request,
                                  timeout=DEFAULT_TIMEOUT,
-                                 json={"statement": statementset})
+                                 json=statementset)
     except requests.RequestException as err:
         raise DeploymentFailedException(
             f"Could not deploy job to {request}, server unreachable ({err})")\
@@ -545,3 +569,16 @@ def add_message(logger, body, patch, reason, mtype):
     messages.append({"timestamp": f"{datetime.datetime.now()}",
                     "type": mtype, "message": reason})
     patch.status[MESSAGES] = messages
+
+
+def create_statementmaps(configmaps, spec, body, namespace, name, logger):
+    """create statements from configmap
+    """
+    statementmaps = spec.get('sqlstatementmaps')
+    result = []
+    for statementmap in statementmaps:
+        map_namespace, map_name = statementmap.split('/')
+        cfm = configmaps[(map_namespace, map_name)]
+        for dat in list(list(cfm)[0].get('data').values()):
+            result.append(dat)
+    return result

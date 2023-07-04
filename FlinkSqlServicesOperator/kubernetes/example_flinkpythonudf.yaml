@@ -1,0 +1,92 @@
+apiVersion: industry-fusion.com/v1alpha1
+kind: flinkpythonudf
+metadata:
+  name: statetime
+spec:
+  filename: statetime
+  version: v1
+  class: |
+    try:
+        from pyflink.common import Row
+        from pyflink.table import AggregateFunction, DataTypes
+        from pyflink.table.expressions import call
+        from pyflink.table.udf import udaf
+        from pyflink.table.expressions import col, lit
+    except ImportError:
+        class Row():
+            def __init__(self, a, b, c, d, e):
+                pass
+        class AggregateFunction():
+            pass
+
+
+    class Statetime(AggregateFunction):
+
+        def create_accumulator(self):
+            # statetime, last_state, last_timeInMs, first_state, first_timeInMs
+            return Row(None, None, None, None, None)
+            pass
+
+        def get_value(self, accumulator):
+                return accumulator[0]
+
+        def accumulate(self, accumulator, state, timeInMs):
+            if accumulator[1] is None or accumulator[2] is None:
+                accumulator[1] = state
+                accumulator[2] = timeInMs
+            else:
+                if accumulator[1] == 1:
+                    if accumulator[0] is None:
+                        accumulator[0] = timeInMs - accumulator[2]
+                    else:
+                        accumulator[0] += timeInMs - accumulator[2]
+                accumulator[1] = state
+                accumulator[2] = timeInMs
+
+
+        def retract(self, accumulator, state, timeInMs):
+            if accumulator[3] is None:
+                accumulator[4] = timeInMs
+                accumulator[3] = state
+            else:
+                if accumulator[3] == 1:
+                    accumulator[0] -= (timeInMs - accumulator[4])
+                accumulator[4] = timeInMs
+                accumulator[3] = state
+
+        def get_result_type(self):
+            return DataTypes.BIGINT()
+
+        def get_accumulator_type(self):
+            return DataTypes.ROW([
+                DataTypes.FIELD("f0", DataTypes.INT()),
+                DataTypes.FIELD("f1", DataTypes.BIGINT())])
+
+
+    def register(table_env):
+        statetime = udaf(Statetime())
+        table_env.create_temporary_function("statetime", statetime)
+---
+apiVersion: industry-fusion.com/v1alpha1
+kind: flinkpythonudf
+metadata:
+  name: hash
+spec:
+  filename: hash
+  version: v1
+  class: |
+    from pyflink.table.expressions import call, col
+    from pyflink.table import DataTypes, TableEnvironment, EnvironmentSettings
+    from pyflink.table.udf import ScalarFunction, udf
+
+    class HashCode(ScalarFunction):
+    def __init__(self):
+        self.factor = 12
+
+    def eval(self, s):
+        return hash(s) * self.factor
+
+
+    def register(table_env):
+        hashcode = udf(HashCode(), result_type=DataTypes.BIGINT())
+        table_env.create_temporary_function("hash", hashcode)
