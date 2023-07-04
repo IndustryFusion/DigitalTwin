@@ -23,7 +23,7 @@ spec:
       {{- end }}
       containers:
       - name: taskmanager
-        image: apache/flink:{{ .Values.flink.imageTag }}
+        image: '{{ .Values.mainRepo }}/flink-sql-gateway:{{ .Values.mainVersion }}'
         workingDir: /opt/flink
         command: ["/bin/bash", "-c", "mkdir -p /opt/flink/plugins/s3; \
           cp /opt/flink/opt/flink-s3-fs-hadoop-*.jar /opt/flink/plugins/s3; \
@@ -42,6 +42,8 @@ spec:
         volumeMounts:
         - name: flink-config-volume
           mountPath: /opt/flink/conf/
+        - mountPath: /tmp
+          name: tm-tmp-volume
         securityContext:
           runAsUser: 9999  # refers to user _flink_ from official flink image, change if necessary
       serviceAccountName: flink-service-account # Service account which has the permissions to create, edit, delete ConfigMaps
@@ -54,3 +56,6 @@ spec:
             path: flink-conf.yaml
           - key: log4j-console.properties
             path: log4j-console.properties
+      - name: tm-tmp-volume
+        emptyDir:
+          sizeLimit: {{ .Values.flink.taskmanagerCacheSize }}
