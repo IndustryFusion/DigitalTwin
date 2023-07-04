@@ -1,0 +1,237 @@
+[
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "id": "urn:plasmacutter:1",
+    "type": "https://industry-fusion.com/types/v0.9/cutter",
+    "https://industry-fusion.com/types/v0.9/state": [
+      {
+      "type": "Property",
+      "observedAt": "2023-03-24 13:42:32.0",
+      "value": {
+        "@id": "https://industry-fusion.com/types/v0.9/state_PROCESSING"
+      }},
+      {
+        "type": "Property",
+        "observedAt": "2023-03-24 13:52:32.0",
+        "value": {
+          "@id": "https://industry-fusion.com/types/v0.9/state_PROCESSING"
+        }
+    }],
+    "https://industry-fusion.com/types/v0.9/hasOutWorkpiece": [{
+      "type": "Relationship",
+      "object": "urn:workpiece:1",
+      "observedAt": "2023-03-24 13:42:32.0"
+
+    },
+    {
+      "type": "Relationship",
+      "object": "urn:workpiece:2",
+      "observedAt": "2023-03-24 13:52:32.0"
+
+    }],
+    "https://industry-fusion.com/types/v0.9/hasInWorkpiece": {
+      "type": "Relationship",
+      "object": "urn:workpiece:1"
+    },
+    "https://industry-fusion.com/types/v0.9/hasFilter": {
+      "type": "Relationship",
+      "object": "urn:filter:1"
+    },
+    "https://industry-fusion.com/oee/v0.9/availabilityState":[
+      {
+        "type": "Property",
+        "value": "0",
+        "observedAt": "2023-03-24 13:42:32.0"
+      },
+      {
+        "type": "Property",
+        "value": "1",
+        "observedAt": "2023-03-24 13:42:42.0"
+      },
+      {
+        "type": "Property",
+        "value": "1",
+        "observedAt": "2023-03-24 13:42:45.0"
+      },
+      {
+        "type": "Property",
+        "value": "0",
+        "observedAt": "2023-03-24 13:42:50.0"
+      },
+      {
+        "type": "Property",
+        "value": "1",
+        "observedAt": "2023-03-24 13:42:55.0"
+      }
+    ]
+  },
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "id": "urn:filter:1",
+    "type": "https://industry-fusion.com/types/v0.9/filter",
+    "https://industry-fusion.com/types/v0.9/state": [
+      {
+        "type": "Property",
+        "value": {
+          "@id": "https://industry-fusion.com/types/v0.9/state_ON"
+        }
+      },
+      {
+        "type": "Property",
+        "value": {
+          "@id": "https://industry-fusion.com/types/v0.9/state_ON"
+        }
+      }
+    ],
+    "https://industry-fusion.com/types/v0.9/strength": {
+      "type": "Property",
+      "value": "1"
+    },
+    "https://industry-fusion.com/types/v0.9/hasCartridge": {
+      "type": "Relationship",
+      "object": "urn:filterCartridge:1"
+    }
+  },
+  {
+
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "id": "urn:workpiece:1",
+    "type": "https://industry-fusion.com/types/v0.9/workpiece",
+    "https://industry-fusion.com/types/v0.9/material": {
+      "type": "Property",
+      "value": {
+        "@type": "https://industry-fusion.com/types/v0.9/steelGrade",
+        "@value": "1.4301"
+      }
+    },
+    "https://schema.org/depth": {
+      "type": "Property",
+      "unitCode": "MMT",
+      "value": "550"
+    },
+    "https://schema.org/height": {
+      "type": "Property",
+      "value": "100",
+      "unitCode": "MMT"
+    },
+    "https://schema.org/weight": {
+      "type": "Property",
+      "value": "10000",
+      "unitCode": "GRM"
+    },
+    "https://schema.org/width": {
+      "type": "Property",
+      "value": "100",
+      "unitCode": "MMT"
+    }
+  },
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "id": "urn:workpiece:2",
+    "type": "https://industry-fusion.com/types/v0.9/workpiece",
+    "https://industry-fusion.com/types/v0.9/material": {
+      "type": "Property",
+      "value": {
+        "@type": "https://industry-fusion.com/types/v0.9/steelGrade",
+        "@value": "1.4301"
+      }
+    },
+    "https://industry-fusion.com/types/v0.9/qualityCheck": [
+      {
+        "value": "1",
+        "type": "Property",
+        "datasetId": "0",
+        "observedAt": "2023-03-24 13:42:32.0"
+      },
+      {
+        "value": "0",
+        "type": "Property",
+        "datasetId": "0",
+        "observedAt": "2023-03-24 13:52:32.0"
+      }
+    ],
+    "https://schema.org/depth": {
+      "type": "Property",
+      "unitCode": "MMT",
+      "value": "550"
+    },
+    "https://schema.org/height": {
+      "type": "Property",
+      "value": "100",
+      "unitCode": "MMT"
+    },
+    "https://schema.org/weight": {
+      "type": "Property",
+      "value": "10000",
+      "unitCode": "GRM"
+    },
+    "https://schema.org/width": {
+      "type": "Property",
+      "value": "100",
+      "unitCode": "MMT"
+    }
+  },
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "id": "urn:lasercutter:1",
+    "type": "https://industry-fusion.com/types/v0.9/lasercutter",
+    "https://industry-fusion.com/types/v0.9/state": {
+      "type": "Property",
+      "value": {
+        "@id": "https://industry-fusion.com/types/v0.9/state_OFF"
+      }
+    },
+    "https://industry-fusion.com/types/v0.9/hasWorkpiece": {
+      "type": "Relationship",
+      "object": "urn:workpiece:1"
+    },
+    "https://industry-fusion.com/types/v0.9/hasFilter": {
+      "type": "Relationship",
+      "object": "urn:filter:2"
+    }
+  },
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "id": "urn:filterCartridge:1",
+    "type": "https://industry-fusion.com/types/v0.9/filterCartridge",
+    "https://industry-fusion.com/types/v0.9/wasteClass": {
+      "type": "Property",
+      "value": {
+        "@id": "https://industry-fusion.com/types/v0.9/WC0"
+      }
+    }
+  },
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "id": "urn:filterCartridge:2",
+    "type": "https://industry-fusion.com/types/v0.9/filterCartridge",
+    "https://industry-fusion.com/types/v0.9/inUseUntil": {
+      "type": "Property",
+      "value": "2021-10-25 13:54:55.4"
+    },
+    "https://industry-fusion.com/types/v0.9/wasteClass": {
+      "type": "Property",
+      "value": {
+        "@id": "https://industry-fusion.com/types/v0.9/WC1"
+      }
+    }
+  },
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "id": "urn:oee:1",
+    "type": "https://industry-fusion.com/types/v0.9/oeeTemplate",
+    "https://industry-fusion.com/types/v0.9/startTime": {
+      "type": "Property",
+      "value": "2000-03-23 13:42:31"
+    },
+    "https://industry-fusion.com/types/v0.9/endTime": {
+      "type": "Property",
+      "value": "2099-03-25 14:42:31"
+    },
+
+    "https://industry-fusion.com/oee/v0.9/hasReferenceMachine": {
+      "type": "Relationship",
+      "object": "urn:plasmacutter:1"
+    }
+  }
+]
