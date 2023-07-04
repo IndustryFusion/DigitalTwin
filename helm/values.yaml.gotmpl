@@ -80,6 +80,8 @@ flink:
   alertWindow: '0.001'
   ngsildUpdateWindow: '0.001'
   attributeInsertWindow: '0.001'
+  jobmanagerCacheSize: 2Gi
+  taskmanagerCacheSize: 10Gi
 
 minio:
   enabled: {{ .StateValues.minio.enabled }}

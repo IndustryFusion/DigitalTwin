@@ -39,7 +39,7 @@ spec:
         command: ["/bin/bash", "-c", "mc mb -p iff/{{ .Values.flink.bucket }}"]
       containers:
       - name: jobmanager
-        image: apache/flink:{{ .Values.flink.imageTag }}
+        image: '{{ .Values.mainRepo }}/flink-sql-gateway:{{ .Values.mainVersion }}'
         workingDir: /opt/flink
         command: ["/bin/bash", "-c", "mkdir -p /opt/flink/plugins/s3; \
           cp /opt/flink/opt/flink-s3-fs-hadoop-*.jar /opt/flink/plugins/s3 ; \
@@ -68,6 +68,8 @@ spec:
         volumeMounts:
         - name: flink-config-volume
           mountPath: /opt/flink/conf
+        - mountPath: /tmp
+          name: jm-tmp-volume
         securityContext:
           runAsUser: 9999  # refers to user _flink_ from official flink image, change if necessary
       - name: sql-gateway
@@ -91,9 +93,10 @@ spec:
         volumeMounts:
         - name: flink-config-volume
           mountPath: /opt/flink/conf
+        - mountPath: /tmp
+          name: gw-tmp-volume
         securityContext:
           runAsUser: 9999  # refers to user _flink_ from official flink image, change if necessary
-
       serviceAccountName: flink-service-account # Service account which has the permissions to create, edit, delete ConfigMaps
       volumes:
       - name: flink-config-volume
@@ -104,6 +107,12 @@ spec:
             path: flink-conf.yaml
           - key: log4j-console.properties
             path: log4j-console.properties
+      - name: jm-tmp-volume
+        emptyDir:
+          sizeLimit: {{ .Values.flink.jobmanagerCacheSize }}
+      - name: gw-tmp-volume
+        emptyDir:
+          sizeLimit: {{ .Values.flink.jobmanagerCacheSize }}
       imagePullSecrets:
         - name: {{ .Values.pullSecretCredentials }}
 ---

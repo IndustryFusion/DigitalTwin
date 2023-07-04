@@ -39,6 +39,7 @@ data:
     restart-strategy: fixed-delay
     restart-strategy.fixed-delay.attempts: 10
     execution.checkpointing.interval: {{ .Values.flink.checkpointInterval }}
+    process.working-dir: '/tmp'
   log4j-console.properties: |+
     # This affects logging for both user code and Flink
     rootLogger.level = INFO

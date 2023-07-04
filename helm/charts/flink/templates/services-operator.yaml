@@ -16,7 +16,7 @@ spec:
       - image: {{ .Values.mainRepo }}/flink-services-operator:{{ .Values.mainVersion }}
         name: beamservices-operator
         command: ["kopf"]
-        args: ["run", "--log-format", "plain", "--standalone", "-A", "/opt/beamsqlstatementsetoperator.py"]
+        args: ["run", "--log-format", "plain", "--standalone", "-A", "/opt/beamsqlstatementsetoperator.py", "/opt/flinkpythonudfoperator.py"]
         resources:
           requests:
             cpu: 50m
