@@ -17,6 +17,7 @@
 
 const chai = require('chai');
 global.should = chai.should();
+const expect = chai.expect;
 
 const rewire = require('rewire');
 const toTest = rewire('../gateway.js');
@@ -56,40 +57,68 @@ describe('Test statement path', function () {
 
     const response = {
       status: function (val) {
-
       }
     };
+    const body = {
+      sqlstatementset: statement
+    };
+
     const request = {
-      body: {
-        statement: statement
-      }
+      body: body
     };
     const exec = function (command, output) {
-      command.should.equal(flinkSqlCommand + fsWriteFilename);
+      command.should.equal(flinkSqlCommand + fsWriteFilename + ' --pyExecutable /usr/local/bin/python3 --pyFiles testfile');
     };
     const fs = {
       writeFileSync: function (filename, data) {
         fsWriteFilename = filename;
-        data.should.equal(statement);
+        data.should.equal(JSON.stringify(body));
+      },
+      mkdirSync: function (dirname, mode) {
+        mode.should.equal('0744');
+        dirname.startsWith('/tmp/gateway_').should.equal(true);
+      },
+      cpSync: function (src, tgt, mode) {
+        tgt.startsWith('/tmp/gateway_').should.equal(true);
+      },
+      copyFileSync: function (file) {
+        file.should.equal('testfile');
+      },
+      rmSync: function (file) {
+        file.startsWith('/tmp/gateway_').should.equal(true);
       }
     };
+
+    const getLocalPythonUdfs = function () {
+      return ['testfile'];
+    };
+
+    const process = {
+      cwd: function () { return 'cwd'; },
+      chdir: function (dir) {}
+    };
+
     const revert = toTest.__set__({
       logger: logger,
       exec: exec,
-      fs: fs
+      fs: fs,
+      getLocalPythonUdfs: getLocalPythonUdfs,
+      process: process
     });
 
     const apppost = toTest.__get__('apppost');
     apppost(request, response);
     revert();
   });
+});
+describe('Test apppost', function () {
   it('Test empty body (should return 500)', function () {
     const response = {
       status: function (val) {
         val.should.equal(500);
       },
       send: function (val) {
-        val.should.equal('Wrong format! No statement field in body');
+        val.should.equal('Wrong format! No sqlstatementset field in body');
       }
     };
     const request = {
@@ -125,7 +154,7 @@ describe('Test statement path', function () {
         val.should.equal(500);
       },
       send: function (val) {
-        val.should.equal('Error while executing sql-client: ' + error);
+        val.should.equal('Wrong format! No sqlstatementset field in body');
       }
     };
     const uuid = {
@@ -135,7 +164,10 @@ describe('Test statement path', function () {
       unlinkSync: function (filename) {
         filename.should.equal('/tmp/script_uuid.sql');
       },
-      writeFileSync: () => {}
+      writeFileSync: () => {},
+      rmSync: function (file) {
+        file.startsWith('/tmp/gateway_').should.equal(true);
+      }
     };
     const request = {
       body: {
@@ -145,18 +177,24 @@ describe('Test statement path', function () {
     const exec = function (command, output) {
       output(error, null, null);
     };
+
+    const getLocalPythonUdfs = function () {
+      return ['testfile'];
+    };
+
     const revert = toTest.__set__({
       logger: logger,
       exec: exec,
       uuid: uuid,
-      fs: fs
+      fs: fs,
+      getLocalPythonUdfs: getLocalPythonUdfs
     });
 
     const apppost = toTest.__get__('apppost');
     apppost(request, response);
     revert();
   });
-  it('Test exec output with Job ID (should return 200)', function () {
+  it('Test exec output with Job ID (should return 200)', function (done) {
     const stdout = 'Job ID: abcdef123456789';
     const response = {
       status: function (val) {
@@ -178,26 +216,37 @@ describe('Test statement path', function () {
       unlinkSync: function (filename) {
         filename.should.equal('/tmp/script_uuid.sql');
       },
-      writeFileSync: () => {}
+      writeFileSync: () => {},
+      rmSync: function (file) {
+        file.startsWith('/tmp/gateway_').should.equal(true);
+        done();
+        revert();
+      }
     };
     const request = {
       body: {
-        statement: 'select *;'
+        sqlstatementset: 'select *;'
       }
     };
     const exec = function (command, output) {
       output(null, stdout, null);
     };
+
+    const getLocalPythonUdfs = function () {
+      return ['testfile'];
+    };
+
     const revert = toTest.__set__({
       logger: logger,
       exec: exec,
       uuid: uuid,
-      fs: fs
+      fs: fs,
+      getLocalPythonUdfs: getLocalPythonUdfs
     });
 
     const apppost = toTest.__get__('apppost');
     apppost(request, response);
-    revert();
+    // revert();
   });
   it('Test exec output with no Job ID (should return 500)', function () {
     const stdout = 'Job : error';
@@ -217,25 +266,207 @@ describe('Test statement path', function () {
       unlinkSync: function (filename) {
         filename.should.equal('/tmp/script_uuid.sql');
       },
-      writeFileSync: () => {}
+      writeFileSync: () => {},
+      rmSync: function (file) {
+        file.startsWith('/tmp/gateway_').should.equal(true);
+      }
     };
     const request = {
       body: {
-        statement: 'select *;'
+        sqlstatementset: 'select *;'
       }
     };
     const exec = function (command, output) {
       output(null, stdout, null);
     };
+
+    const getLocalPythonUdfs = function () {
+      return ['testfile'];
+    };
+
     const revert = toTest.__set__({
       logger: logger,
       exec: exec,
       uuid: uuid,
-      fs: fs
+      fs: fs,
+      getLocalPythonUdfs: getLocalPythonUdfs
     });
 
     const apppost = toTest.__get__('apppost');
     apppost(request, response);
+    revert();
+  });
+});
+describe('Test udf functions', function () {
+  it('Test getLocalPythonUdf', function () {
+    const fs = {
+      readdirSync: function (filename) {
+        return ['file1_v1.py', 'file2_v2.py', 'file3_v1.py', 'file3_v22.py', 'file3_v23-alpha.py', 'file4_v1'];
+      }
+    };
+    const revert = toTest.__set__({
+      fs: fs
+    });
+
+    const getLocalPythonUdfs = toTest.__get__('getLocalPythonUdfs');
+    const result = getLocalPythonUdfs();
+    expect(result).to.deep.equal(['/tmp/udf/file1_v1.py',
+      '/tmp/udf/file2_v2.py',
+      '/tmp/udf/file3_v23-alpha.py']);
+    revert();
+  });
+  it('Test udfpost without body', function () {
+    const request = {
+      params: {
+        filename: 'filename'
+      },
+      body: undefined
+    };
+    const response = {
+      status: function (val) {
+        val.should.equal(500);
+      },
+      send: function (val) {
+        val.should.equal('No body received!');
+      }
+    };
+    const revert = toTest.__set__({
+      logger: logger
+    });
+    const udfpost = toTest.__get__('udfpost');
+    udfpost(request, response);
+    revert();
+  });
+  it('Test udfpost with text body', function () {
+    const request = {
+      params: {
+        filename: 'filename'
+      },
+      body: 'body'
+    };
+    const response = {
+      status: function (val) {
+        val.should.equal(201);
+        return response;
+      },
+      send: function (val) {
+        val.should.equal('CREATED');
+      }
+    };
+    const fs = {
+      writeFileSync: function (filename, data) {
+        filename.should.equal('/tmp/udf/filename.py');
+        data.should.equal('body');
+      }
+    };
+    const revert = toTest.__set__({
+      logger: logger,
+      fs: fs
+    });
+    const udfpost = toTest.__get__('udfpost');
+    udfpost(request, response);
+    revert();
+  });
+  it('Test udfget', function () {
+    const request = {
+      params: {
+        filename: 'filename'
+      }
+    };
+    const response = {
+      status: function (val) {
+        val.should.equal(200);
+        return response;
+      },
+      send: function (val) {
+        val.should.equal('OK');
+      }
+    };
+    const fs = {
+      readFileSync: function (filename) {
+        filename.should.equal('/tmp/udf/filename.py');
+      }
+    };
+    const revert = toTest.__set__({
+      logger: logger,
+      fs: fs
+    });
+    const udfget = toTest.__get__('udfget');
+    udfget(request, response);
+    revert();
+  });
+});
+describe('Test submitJob', function () {
+  it('Submit without error', function (done) {
+    const command = 'command';
+    const exec = function (command, fn) {
+      fn('error', null, null);
+    };
+    const response = {
+      status: function (val) {
+        val.should.equal(500);
+        return response;
+      },
+      send: function (val) {
+        val.should.equal('Error while submitting sql job: error');
+        revert();
+        done();
+      }
+    };
+    const revert = toTest.__set__({
+      logger: logger,
+      exec: exec
+    });
+    const submitJob = toTest.__get__('submitJob');
+    submitJob(command, response);
+    revert();
+  });
+  it('Submit without jobId', function (done) {
+    const command = 'command';
+    const exec = function (command, fn) {
+      fn(null, 'nojobid', null);
+    };
+    const response = {
+      status: function (val) {
+        val.should.equal(500);
+        return response;
+      },
+      send: function (val) {
+        val.should.equal('Not successfully submitted. No JOB ID found in server reply.');
+        revert();
+        done();
+      }
+    };
+    const revert = toTest.__set__({
+      logger: logger,
+      exec: exec
+    });
+    const submitJob = toTest.__get__('submitJob');
+    submitJob(command, response);
+    revert();
+  });
+  it('Submit with jobId', function (done) {
+    const command = 'command';
+    const exec = function (command, fn) {
+      fn(null, 'JobID=[1234]', null);
+    };
+    const response = {
+      status: function (val) {
+        val.should.equal(200);
+        return response;
+      },
+      send: function (val) {
+        val.should.equal('{ "jobid": "1234" }');
+        revert();
+        done();
+      }
+    };
+    const revert = toTest.__set__({
+      logger: logger,
+      exec: exec
+    });
+    const submitJob = toTest.__get__('submitJob');
+    submitJob(command, response);
     revert();
   });
 });
