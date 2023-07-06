@@ -62,6 +62,24 @@ spec:
               claim.name: gateway
               jsonType.label: String
               userinfo.token.claim: 'true'
+      - id: 89b2c144-b41e-4739-b006-8941e5d3875a
+        name: device_id
+        protocol: openid-connect
+        attributes:
+          include.in.token.scope: "true"
+          display.on.consent.screen: "true"
+        protocolMappers:
+          - id: 1e31bc10-f51c-47d1-a45e-08056adb27b9
+            name: Device ID Mapper
+            protocol: openid-connect
+            protocolMapper: script-deviceid-mapper.js
+            consentRequired: false
+            config:
+              id.token.claim: "true"
+              access.token.claim: "true"
+              claim.name: "device_id"
+              multivalued: "false"
+              userinfo.token.claim: "true"
       - id: 829f8f77-0d01-4dc1-ab9e-5a9816a39ff8
         name: type
         protocol: openid-connect
@@ -428,6 +446,150 @@ spec:
               claim.name: email
               jsonType.label: String
     clients:
+      - id: edfd038b-51b5-4487-b669-e4c4922d582b
+        clientId: realm-management
+        name: "${client_realm-management}"
+        surrogateAuthRequired: false
+        enabled: true
+        alwaysDisplayInConsole: false
+        clientAuthenticatorType: client-secret
+        redirectUris: []
+        webOrigins: []
+        notBefore: 0
+        bearerOnly: true
+        consentRequired: false
+        standardFlowEnabled: true
+        implicitFlowEnabled: false
+        directAccessGrantsEnabled: false
+        serviceAccountsEnabled: false
+        authorizationServicesEnabled: true
+        publicClient: false
+        frontchannelLogout: false
+        protocol: openid-connect
+        attributes: {}
+        authenticationFlowBindingOverrides: {}
+        fullScopeAllowed: false
+        nodeReRegistrationTimeout: 0
+        defaultClientScopes: []
+        optionalClientScopes: []
+        authorizationSettings:
+          allowRemoteResourceManagement: false
+          policyEnforcementMode: ENFORCING
+          resources:
+          - name: client.resource.a79bc0de-5c9f-4149-adb8-842f53bad7f1
+            type: Client
+            ownerManagedAccess: false
+            attributes: {}
+            _id: be2ed202-4cfa-49f9-91cf-a622bc1207d5
+            uris: []
+            scopes:
+            - name: view
+            - name: map-roles-client-scope
+            - name: configure
+            - name: map-roles
+            - name: manage
+            - name: token-exchange
+            - name: map-roles-composite
+          policies:
+          - id: 69252f6e-c8e7-4d2f-8bbd-e91dafc373e6
+            name: device-onboarding-token-exchange
+            description: ''
+            type: client
+            logic: POSITIVE
+            decisionStrategy: UNANIMOUS
+            config:
+              clients: '["device-onboarding"]'
+          - id: ccd1cdfb-7cfe-4eb2-883d-a1d398a0d91e
+            name: manage.permission.client.a79bc0de-5c9f-4149-adb8-842f53bad7f1
+            type: scope
+            logic: POSITIVE
+            decisionStrategy: UNANIMOUS
+            config:
+              resources: '["client.resource.a79bc0de-5c9f-4149-adb8-842f53bad7f1"]'
+              scopes: '["manage"]'
+          - id: 3aff4bff-26d2-4bba-b3fd-3594a2ed634c
+            name: configure.permission.client.a79bc0de-5c9f-4149-adb8-842f53bad7f1
+            type: scope
+            logic: POSITIVE
+            decisionStrategy: UNANIMOUS
+            config:
+              resources: '["client.resource.a79bc0de-5c9f-4149-adb8-842f53bad7f1"]'
+              scopes: '["configure"]'
+          - id: cf5677e1-b2a4-42cb-bf3e-d2683bebe68b
+            name: view.permission.client.a79bc0de-5c9f-4149-adb8-842f53bad7f1
+            type: scope
+            logic: POSITIVE
+            decisionStrategy: UNANIMOUS
+            config:
+              resources: '["client.resource.a79bc0de-5c9f-4149-adb8-842f53bad7f1"]'
+              scopes: '["view"]'
+          - id: e5997dce-d90f-4ca2-9ed4-12ddcf9b2a18
+            name: map-roles.permission.client.a79bc0de-5c9f-4149-adb8-842f53bad7f1
+            type: scope
+            logic: POSITIVE
+            decisionStrategy: UNANIMOUS
+            config:
+              resources: '["client.resource.a79bc0de-5c9f-4149-adb8-842f53bad7f1"]'
+              scopes: '["map-roles"]'
+          - id: 81c268c3-6f1d-427e-9c3e-103bbe0c900e
+            name: map-roles-client-scope.permission.client.a79bc0de-5c9f-4149-adb8-842f53bad7f1
+            type: scope
+            logic: POSITIVE
+            decisionStrategy: UNANIMOUS
+            config:
+              resources: '["client.resource.a79bc0de-5c9f-4149-adb8-842f53bad7f1"]'
+              scopes: '["map-roles-client-scope"]'
+          - id: bb5b7bb5-30b6-4788-89d0-52c1f4b97382
+            name: map-roles-composite.permission.client.a79bc0de-5c9f-4149-adb8-842f53bad7f1
+            type: scope
+            logic: POSITIVE
+            decisionStrategy: UNANIMOUS
+            config:
+              resources: '["client.resource.a79bc0de-5c9f-4149-adb8-842f53bad7f1"]'
+              scopes: '["map-roles-composite"]'
+          - id: e8ba92b9-c405-46ac-8ce1-5d465c7e48cb
+            name: token-exchange.permission.client.a79bc0de-5c9f-4149-adb8-842f53bad7f1
+            description: ''
+            type: scope
+            logic: POSITIVE
+            decisionStrategy: UNANIMOUS
+            config:
+              resources: '["client.resource.a79bc0de-5c9f-4149-adb8-842f53bad7f1"]'
+              scopes: '["token-exchange"]'
+              applyPolicies: '["device-onboarding-token-exchange"]'
+          scopes:
+          - id: b363e45e-f6ee-417f-b4a4-9e91f384fbf4
+            name: manage
+          - id: 38b93805-5f24-4b2b-b65a-240b053c72bb
+            name: view
+          - id: 8e20ae57-d134-471a-ab6d-1102c7a7b15e
+            name: map-roles
+          - id: f732e02c-9cb1-400c-9b22-b80d13d48b40
+            name: map-roles-client-scope
+          - id: d5fc5994-9b7d-4cbf-945a-561251cde839
+            name: map-roles-composite
+          - id: '090a6a3b-79d8-4775-8622-967510e5b412'
+            name: configure
+          - id: 67fdf044-dbe4-4746-80a2-ff2e750aec29
+            name: token-exchange
+          decisionStrategy: UNANIMOUS
+      - id: a79bc0de-5c9f-4149-adb8-842f53bad7f1
+        clientId: device
+        publicClient: true
+        standardFlowEnabled: true
+        directAccessGrantsEnabled: true
+        defaultClientScopes:
+          - mqtt-broker
+          - device_id
+          - oisp-frontend
+          - offline_access
+          - type
+          - gateway
+      - id: 475cee5e-0547-4daf-b97c-7062cce8093d
+        clientId: device-onboarding
+        publicClient: true
+        standardFlowEnabled: true
+        directAccessGrantsEnabled: true
       - id: 31c8cc5a-9df2-4606-927a-4aeda07c1e56
         clientId: {{ .Values.keycloak.alerta.client }}
         publicClient: False
@@ -487,7 +649,6 @@ spec:
           - email
           - offline_access
           - web-origins
-        optionalClientScopes:
           - gateway
         {{ if $oispfrontendsecret }}
         secret: {{ $oispfrontendsecret.data.CLIENT_SECRET | b64dec }}
