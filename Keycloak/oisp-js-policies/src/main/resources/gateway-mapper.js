@@ -39,7 +39,7 @@ var gatewayId = "";
 // Set type and subject id
 if (accessType === DEVICE) {
     gatewayId = keycloakSession.getContext().getRequestHeaders()
-        .getRequestHeader("X-GatewayId")[0];
+        .getRequestHeader("X-GatewayID")[0];
 }
 
 exports = gatewayId;
