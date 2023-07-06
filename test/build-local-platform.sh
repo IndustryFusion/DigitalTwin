@@ -31,7 +31,7 @@ else
     ( cd ../.. && git clone https://github.com/IndustryFusion/ScorpioBroker.git )
     ( cd ../../ScorpioBroker && mvn clean package -DskipTests -Pdocker )
 fi
-docker images | tail -n +2 | awk '{print $1":"$2}'| grep ibn40 |
+docker images | tail -n +2 | awk '{print $1":"$2}'| grep ibn40 | grep scorpio | grep ${VERSION} |
 {
     while read -r i; do
     j=${i//ibn40/k3d-iff.localhost:12345};
