@@ -54,11 +54,18 @@ There are two installation instructions below. The first [`section`](#installati
 6. Verify all pods are running using `kubectl -n iff get pods`, in some slow systems keycloak realm import job might fail and needs to be restarted, this is due to postgres database not being ready on time. 
 7. Login to keycloak with browser using `http://keycloak.local/auth`
 
-   * The username is `admin`, the password can be found by `kubectl -n iff get secret/keycloak-initial-admin -o=jsonpath='{.data.password}' | base64 -d | xargs echo`
+   * The username is `admin`, the password can be found by
+  
+     ```
+     kubectl -n iff get secret/keycloak-initial-admin -o=jsonpath='{.data.password}' | base64 -d | xargs echo
+     ```
 8. Verify that there are 2 realms `master`, `iff`
 9. Verify that there is a user in realm `iff`, named: `realm_user`
 
-   * The password for `realm_user` can be found by  `kubectl -n iff get secret/credential-iff-realm-user-iff -o jsonpath='{.data.password}'| base64 -d | xargs echo`
+   * The password for `realm_user` can be found by
+     ```
+     kubectl -n iff get secret/credential-iff-realm-user-iff -o jsonpath='{.data.password}'| base64 -d | xargs echo
+     ```
 10. Get token through http://keycloak.local/auth
 11. Use ngsi-ld api via `ngsild.local`
 
