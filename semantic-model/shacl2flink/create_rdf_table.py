@@ -120,7 +120,8 @@ def main(knowledgefile, output_folder='output'):
         fp.write('\n')
         fp.write(sqlstatements)
 
-    with open(os.path.join(output_folder, "rdf.yaml"), "w") as fp:
+    with open(os.path.join(output_folder, "rdf.yaml"), "w") as fp,\
+            open(os.path.join(output_folder, "rdf-kafka.yaml"), "w") as fk:
         fp.write('---\n')
         yaml.dump(utils.create_yaml_table(table_name, connector, table,
                   primary_key, kafka, value), fp)
@@ -130,12 +131,11 @@ def main(knowledgefile, output_folder='output'):
             fp.write("---\n")
             yaml.dump(utils.create_statementset('rdf-statements' + str(num), [table_name],
                                                 [], None, [statementset]), fp)
-        fp.write("---\n")
-        yaml.dump(utils.create_kafka_topic(utils.class_to_obj_name(
-                                           configs.rdf_topic),
+        fk.write("---\n")
+        yaml.dump(utils.create_kafka_topic(utils.class_to_obj_name(configs.rdf_topic),
                                            configs.rdf_topic,
                                            configs.kafka_topic_object_label,
-                                           config), fp)
+                                           config), fk)
 
 
 if __name__ == '__main__':

@@ -64,7 +64,8 @@ def main(shaclfile, output_folder='output'):
     config = {}
     config['retention.ms'] = configs.kafka_topic_ngsi_retention
     with open(os.path.join(output_folder, "ngsild.yaml"), "w") as f,\
-            open(os.path.join(output_folder, "ngsild.sqlite"), "w") as sqlitef:
+            open(os.path.join(output_folder, "ngsild.sqlite"), "w") as sqlitef,\
+            open(os.path.join(output_folder, "ngsild-kafka.yaml"), "w") as fk:
         for table_name, table in tables.items():
             connector = 'kafka'
             primary_key = None
@@ -88,12 +89,12 @@ def main(shaclfile, output_folder='output'):
             print('---', file=f)
             yaml.dump(utils.create_yaml_view(table_name, table), f)
             print(utils.create_sql_view(table_name, table), file=sqlitef)
-            print('---', file=f)
+            print('---', file=fk)
             yaml.dump(utils.create_kafka_topic(f'{configs.kafka_topic_ngsi_prefix}.\
 {utils.class_to_obj_name(table_name)}',
                                                f'{configs.kafka_topic_ngsi_prefix}.\
 {table_name}', configs.kafka_topic_object_label,
-                                               config), f)
+                                               config), fk)
 
 
 if __name__ == '__main__':
