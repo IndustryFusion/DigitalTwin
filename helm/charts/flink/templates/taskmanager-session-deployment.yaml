@@ -44,6 +44,11 @@ spec:
           mountPath: /opt/flink/conf/
         - mountPath: /tmp
           name: tm-tmp-volume
+        resources:
+          requests:
+            memory: "2.5G"
+            cpu: 1
+          limits:
         securityContext:
           runAsUser: 9999  # refers to user _flink_ from official flink image, change if necessary
       serviceAccountName: flink-service-account # Service account which has the permissions to create, edit, delete ConfigMaps
