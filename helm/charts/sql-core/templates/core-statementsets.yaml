@@ -9,6 +9,10 @@ metadata:
             {{ include (print $.Template.BasePath "/core-tables.yaml") . | sha256sum }}
             {{ include (print $.Template.BasePath "/core-kafka-topics.yaml") . | sha256sum }}
 spec:
+    sqlsettings:
+        - table.exec.state.ttl: '{{.Values.kafkaBridge.debezium.attributesTopicRetention}} ms'
+        - execution.savepoint.ignore-unclaimed-state: 'true'
+        - pipeline.object-reuse: 'true'
     sqlstatements:
         - |-
             /* validates changes in alerts_bulk and only forward if there are specific changes
