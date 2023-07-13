@@ -30,13 +30,13 @@ with open('data/SQL-structures.json') as f:
                 print(error)
 
     # Create SETs
-    if 'sqlsets' in d:
-        sets = d['sqlsets']
+    if 'sqlsettings' in d:
+        sets = d['sqlsettings']
         for set in sets:
-            v = set.replace('=', ' ').split(' ')
-            key = v[1]
-            value = v[-1].strip(';').strip('\'')
-            print(f'SET: {key}={value}')
+            keys = list(set.keys())
+            key = keys[0]
+            value = set[key]
+            print(f'SET: {key}, {value}')
             table_env.get_config().set(key, value)
 
     # Create Tables

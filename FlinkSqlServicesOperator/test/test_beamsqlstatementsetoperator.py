@@ -97,7 +97,7 @@ class TestMonitoring(TestCase):
         # be an object method after mocking
         #assert statementset == "SET pipeline.name = 'namespace/name';\nDDL;" \
         #    "\nBEGIN STATEMENT SET;\nselect;\nEND;"
-        assert statementset == {'sqlsets': ["SET pipeline.name = 'namespace/name';"],
+        assert statementset == {'sqlsettings': [{'pipeline.name': 'namespace/name'}],
                                 'tables': ['DDL;'],
                                 'sqlstatementset': ['select;']}
         return "job_id"

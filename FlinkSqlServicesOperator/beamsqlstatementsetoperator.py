@@ -40,10 +40,10 @@ FLINK_SAVEPOINT_DIR = os.getenv("IFF_FLINK_SAVEPOINT_DIR",
 DEFAULT_TIMEOUT = 60
 
 timer_interval_seconds = int(os.getenv("TIMER_INTERVAL", default="10"))
-timer_backoff_seconds = int(os.getenv("TIMER_BACKOFF_INTERVAL", default="10"))
+timer_backoff_seconds = int(os.getenv("TIMER_BACKOFF_INTERVAL", default="30"))
 timer_backoff_temp_failure_seconds = int(
     os.getenv("TIMER_BACKOFF_TEMPORARY_FAILURE_INTERVAL", default="30"))
-
+monitor_retries = int(os.getenv("MONITOR_RETRIES", default="10000000"))
 
 class States(Enum):
     """SQL Job states as defined by Flink"""
@@ -258,7 +258,7 @@ def update(body, spec, patch, logger, retries=20, **kwargs):
 
 
 @kopf.timer("industry-fusion.com", "v1alpha3", "beamsqlstatementsets",
-            interval=timer_interval_seconds, backoff=timer_backoff_seconds)
+            interval=timer_interval_seconds, backoff=timer_backoff_seconds, retries=monitor_retries)
 # pylint: disable=too-many-arguments unused-argument redefined-outer-name
 # pylint: disable=too-many-locals too-many-statements too-many-branches
 # Kopf decorated functions match their expectations
@@ -322,7 +322,7 @@ def monitor(beamsqltables: kopf.Index, beamsqlviews: kopf.Index,
         # (3) Views
         statementset = {}
         sets = create_sets(spec, body, namespace, name, logger)
-        statementset['sqlsets'] = sets
+        statementset['sqlsettings'] = sets
 
         # get first all table ddls
         # get inputTable and outputTable
@@ -404,14 +404,16 @@ needs either sqlstatements or sqlstatementmaps.")
             create(body, spec, patch, logger, **kwargs)
     # If state is not INITIALIZED, DEPLOYMENT_FAILURE nor CANCELED,
     # the state is monitored
-    if state not in [States.CANCELED.name,
-       States.CANCELING.name, States.SAVEPOINTING.name, States.UPDATING.name]:
+    if state not in [States.CANCELING.name, States.SAVEPOINTING.name, States.UPDATING.name]:
         refresh_state(body, patch, logger)
         if patch.status[STATE] == States.NOT_FOUND.name:
             logger.info("Job seems to be lost. Will re-initialize")
             patch.status[STATE] = States.INITIALIZED.name
             patch.status[JOB_ID] = None
-
+        if patch.status[STATE] == States.CANCELED.name:
+            logger.info("Job is cancelled. Will re-initialize")
+            patch.status[STATE] = States.INITIALIZED.name
+            patch.status[JOB_ID] = None
 
 # pylint: disable=too-many-arguments unused-argument redefined-outer-name
 # kopf is ingesting too many parameters, this is inherite by subroutine
@@ -447,17 +449,18 @@ def create_sets(spec, body, namespace, name, logger):
     """
     sets = []
     sqlsettings = spec.get('sqlsettings')
+    pipeline_name = {'pipeline.name': f'{namespace}/{name}'}
     if not sqlsettings:
         message = "pipeline name not determined in"\
                   f" {namespace}/{name}, using default"
         logger.debug(message)
-        sets.append(f"SET pipeline.name = '{namespace}/{name}';")
+        sets.append(pipeline_name)
     elif all(x for x in sqlsettings if x.get('pipeline.name') is None):
-        sets.append(f"SET pipeline.name = '{namespace}/{name}';")
+        sets.append(pipeline_name)
         for setting in sqlsettings:
-            key = list(setting.keys())[0]
-            value = setting.get(key)
-            sets.append(f"SET '{key}' = '{value}';")
+            #key = list(setting.keys())[0]
+            #value = setting.get(key)
+            sets.append(setting)
     # add savepoint if location is set
     try:
         savepoint_location = body['status'].get(SAVEPOINT_LOCATION)
@@ -486,12 +489,15 @@ def refresh_state(body, patch, logger):
             f"Could not monitor task {job_id}: {exc}",
             timer_backoff_temp_failure_seconds) from exc
     if job_info is not None:
-        patch.status[STATE] = job_info.get("state")
+        state = job_info.get("state")
+        patch.status[STATE] = state
     else:
         # API etc works but no job found. Can happen for instance
         # after restart of job manager
-        # In this case, we need to signal that stage
+        # In this case, we need to redeploy the service
+        #
         patch.status[STATE] = States.UNKNOWN.name
+
 
 
 def deploy_statementset(statementset, logger):
