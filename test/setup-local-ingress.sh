@@ -20,15 +20,16 @@ fi
 
 # Patch Coredns to add keyloak.local
 # ----------------------------------
-kubectl -n kube-system get cm/coredns -o jsonpath=\{".data.Corefile"\} > /tmp/Corefile
-kubectl -n kube-system get cm/coredns -o jsonpath=\{".data.NodeHosts"\} > /tmp/NodeHosts
+kubectl -n kube-system get cm/coredns -o jsonpath=\{".data.Corefile"\} > /tmp/Corefile || exit 1
+kubectl -n kube-system get cm/coredns -o jsonpath=\{".data.NodeHosts"\} > /tmp/NodeHosts || exit 1
 
 while [ -z "$INGRESS_IP" ]; do
     INGRESS_IP=$(kubectl -n iff get ingress/keycloak-iff-ingress -o jsonpath=\{".status.loadBalancer.ingress[0].ip"\})
     echo waiting for ingress to provide IP-Address
     sleep 1
 done
-echo "$INGRESS_IP" keycloak.local >> /tmp/NodeHosts
+echo "$INGRESS_IP" keycloak.local >> /tmp/NodeHosts || exit 1
+
 kubectl -n kube-system create cm coredns  --from-file=/tmp/NodeHosts --from-file=/tmp/Corefile --dry-run=client -o yaml | kubectl replace -f -
 
 # Restart coredns
