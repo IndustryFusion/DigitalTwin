@@ -12,14 +12,17 @@ metadata:
 data:
   flink-conf.yaml: |+
     jobmanager.rpc.address: flink-jobmanager
-    taskmanager.numberOfTaskSlots: 5
+    taskmanager.numberOfTaskSlots: 4
+    pipeline.max-parallelism: 4
     blob.server.port: 6124
     jobmanager.rpc.port: 6123
     taskmanager.rpc.port: 6122
+    rest.flamegraph.enabled: true
+
     queryable-state.proxy.ports: 6125
-    jobmanager.memory.process.size: 1600m
-    taskmanager.memory.process.size: 1728m
-    parallelism.default: {{ .Values.flink.defaultParalellism }}
+    jobmanager.memory.process.size: 1000m
+    taskmanager.memory.process.size: 2500m
+
     s3.endpoint: {{ printf "%s://%s" .Values.s3.protocol .Values.s3.endpoint }}
     {{- if .Values.minio.enabled }}
     s3.path.style.access: true
@@ -30,16 +33,23 @@ data:
     {{ else }}
     s3.secret-key: {{ .Values.s3.userSecretKey }}
     {{ end }}
+    state.backend: rocksdb
+    state.backend.rocksdb.localdir: /tmp/rocksdb
+    state.backend.incremental: false
+    state.backend.rocksdb.writebuffer.size: 64 kb
+    state.backend.rocksdb.compaction.level.target-file-size-base: 64 kb
+    state.backend.rocksdb.use-bloom-filter: true
+    state.backend.rocksdb.predefined-options: SPINNING_DISK_OPTIMIZED
     state.checkpoints.dir: s3://{{ .Values.flink.bucket }}/{{ .Values.flink.checkpointDir }}
     state.savepoints.dir: s3://{{ .Values.flink.bucket }}/{{ .Values.flink.savepointDir }}
     kubernetes.cluster-id: {{ .Values.flink.clusterId }}
-    high-availability: org.apache.flink.kubernetes.highavailability.KubernetesHaServicesFactory
+    high-availability: kubernetes
     high-availability.storageDir: s3://{{ .Values.flink.bucket }}/{{ .Values.flink.haDir }}
     kubernetes.namespace: {{ .Release.Namespace }}
-    restart-strategy: fixed-delay
-    restart-strategy.fixed-delay.attempts: 10
+    restart-strategy: exponential-delay
+    restart-strategy.exponential-delay.max-backoff: 2 min
     execution.checkpointing.interval: {{ .Values.flink.checkpointInterval }}
-    process.working-dir: '/tmp'
+    process.working-dir: /tmp/process
   log4j-console.properties: |+
     # This affects logging for both user code and Flink
     rootLogger.level = INFO
