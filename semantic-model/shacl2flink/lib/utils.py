@@ -290,10 +290,10 @@ def create_statementset(object_name, table_object_names,
     if ttl is not None:
         spec['sqlsettings'] = [
             {"table.exec.state.ttl": f"{ttl}"},
-                               {"execution.savepoint.ignore-unclaimed-state": "true"},
-                               {"pipeline.object-reuse": "true"},
-                               {"parallelism.default": "{{ .Values.flink.defaultParalellism }}"}
-            ]
+            {"execution.savepoint.ignore-unclaimed-state": "true"},
+            {"pipeline.object-reuse": "true"},
+            {"parallelism.default": "{{ .Values.flink.defaultParalellism }}"}
+        ]
     spec['sqlstatements'] = statementsets
     spec['updateStrategy'] = "savepoint"
     return yaml_bsqls
