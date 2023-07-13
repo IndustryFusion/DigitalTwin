@@ -49,9 +49,6 @@ def main(output_folder='output'):
             crd['spec'] = spec
             f.write('---')
             yaml.dump(crd, f)
-    with open(os.path.join(output_folder, 'test'), 'w') as f:
-        f.write('---')
-        f.close()
 
 
 if __name__ == '__main__':
