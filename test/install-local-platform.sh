@@ -15,8 +15,17 @@
 #
 set -e
 
+NAMESPACE=iff
+
 echo Install operators
 ( cd ../helm && bash ./install_operators.sh )
+
+echo Test whether operator install plans are coming up
+( cd ./bats && bats test-olm-install-plans/install-plan-is-up.bats )
+
+echo Approve operator install plan
+plan_name=$(kubectl get -n iff installplans -o json | jq -r '.items | map(select(.spec.approval == "Manual")) | .[0].metadata.name')
+kubectl patch -n ${NAMESPACE} installplan ${plan_name} --type=merge -p '{"spec":{"approved":true}}'
 
 echo Test whether operators are coming up
 ( cd ./bats && bats test-operators/*.bats )
@@ -28,7 +37,7 @@ echo Install first two parts of horizontal platform
 # Increase backoff limit for realm import job, unfortunately, right now,
 # keycloak operator does not reset the job if backoff limit is exceeded,
 # this behavior will probably be fixed in the future
-kubectl -n iff patch job iff-keycloak-realm-import -p '{"spec":{"backoffLimit":60}}'
+kubectl -n ${NAMESPACE} patch job iff-keycloak-realm-import -p '{"spec":{"backoffLimit":60}}'
 ( cd ./bats && bats test-horizontal-platform/horizontal-platform-up-and-running-first.bats )
         
 echo Install second part
