@@ -42,6 +42,8 @@ spec:
   channel: fast
   source: operatorhubio-catalog
   sourceNamespace: olm
+  installPlanApproval: Manual
+  startingCSV: keycloak-operator.v21.1.2
 ---
 apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
@@ -52,7 +54,7 @@ spec:
   name: strimzi-kafka-operator
   channel: strimzi-0.32.x
   source: operatorhubio-catalog
-  installPlanApproval: Automatic
+  installPlanApproval: Manual
   startingCSV: strimzi-cluster-operator.v0.32.0
   sourceNamespace: olm
 EOF
