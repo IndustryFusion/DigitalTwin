@@ -17,7 +17,6 @@ data:
     blob.server.port: 6124
     jobmanager.rpc.port: 6123
     taskmanager.rpc.port: 6122
-    rest.flamegraph.enabled: true
 
     queryable-state.proxy.ports: 6125
     jobmanager.memory.process.size: 1000m
@@ -33,13 +32,51 @@ data:
     {{ else }}
     s3.secret-key: {{ .Values.s3.userSecretKey }}
     {{ end }}
-    state.backend: rocksdb
     state.backend.rocksdb.localdir: /tmp/rocksdb
+    state.backend.rocksdb.log.level: INFO_LEVEL
+    state.backend.rocksdb.log.max-file-size: 10MB
+    state.backend.rocksdb.log.file-num: 10
+    state.backend.rocksdb.log.dir: /tmp/rocksdb/logs
     state.backend.incremental: false
-    state.backend.rocksdb.writebuffer.size: 64 kb
-    state.backend.rocksdb.compaction.level.target-file-size-base: 64 kb
-    state.backend.rocksdb.use-bloom-filter: true
-    state.backend.rocksdb.predefined-options: SPINNING_DISK_OPTIMIZED
+
+    # RocksDB metrics and Flamegraph. Enable these for debugging troubleshooting
+    # rest.flamegraph.enabled: true
+    # state.backend.rocksdb.metrics.actual-delayed-write-rate: true
+    # state.backend.rocksdb.metrics.background-errors: true
+    # state.backend.rocksdb.metrics.block-cache-capacity: true
+    # state.backend.rocksdb.metrics.block-cache-hit: true
+    # state.backend.rocksdb.metrics.block-cache-miss: true
+    # state.backend.rocksdb.metrics.block-cache-pinned-usage: true
+    # state.backend.rocksdb.metrics.block-cache-usage: true
+    # state.backend.rocksdb.metrics.bytes-read: true
+    # state.backend.rocksdb.metrics.bytes-written: true
+    # state.backend.rocksdb.metrics.column-family-as-variable: true
+    # state.backend.rocksdb.metrics.compaction-pending: true
+    # state.backend.rocksdb.metrics.compaction-read-bytes: true
+    # state.backend.rocksdb.metrics.compaction-write-bytes: true
+    # state.backend.rocksdb.metrics.cur-size-active-mem-table: true
+    # state.backend.rocksdb.metrics.cur-size-all-mem-tables: true
+    # state.backend.rocksdb.metrics.estimate-live-data-size: true
+    # state.backend.rocksdb.metrics.estimate-num-keys: true
+    # state.backend.rocksdb.metrics.estimate-pending-compaction-bytes: true
+    # state.backend.rocksdb.metrics.estimate-table-readers-mem: true
+    # state.backend.rocksdb.metrics.is-write-stopped: true
+    # state.backend.rocksdb.metrics.iter-bytes-read: true
+    # state.backend.rocksdb.metrics.live-sst-files-size: true
+    # state.backend.rocksdb.metrics.mem-table-flush-pending: true
+    # state.backend.rocksdb.metrics.num-deletes-active-mem-table: true
+    # state.backend.rocksdb.metrics.num-deletes-imm-mem-tables: true
+    # state.backend.rocksdb.metrics.num-entries-active-mem-table: true
+    # state.backend.rocksdb.metrics.num-entries-imm-mem-tables: true
+    # state.backend.rocksdb.metrics.num-immutable-mem-table: true
+    # state.backend.rocksdb.metrics.num-live-versions: true
+    # state.backend.rocksdb.metrics.num-running-compactions: true
+    # state.backend.rocksdb.metrics.num-running-flushes: true
+    # state.backend.rocksdb.metrics.num-snapshots: true
+    # state.backend.rocksdb.metrics.size-all-mem-tables: true
+    # state.backend.rocksdb.metrics.stall-micros: true
+    # state.backend.rocksdb.metrics.total-sst-files-size: true
+
     state.checkpoints.dir: s3://{{ .Values.flink.bucket }}/{{ .Values.flink.checkpointDir }}
     state.savepoints.dir: s3://{{ .Values.flink.bucket }}/{{ .Values.flink.savepointDir }}
     kubernetes.cluster-id: {{ .Values.flink.clusterId }}
@@ -48,7 +85,6 @@ data:
     kubernetes.namespace: {{ .Release.Namespace }}
     restart-strategy: exponential-delay
     restart-strategy.exponential-delay.max-backoff: 2 min
-    execution.checkpointing.interval: {{ .Values.flink.checkpointInterval }}
     process.working-dir: /tmp/process
   log4j-console.properties: |+
     # This affects logging for both user code and Flink

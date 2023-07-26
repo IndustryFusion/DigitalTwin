@@ -25,7 +25,8 @@ const flinkVersion = '1.14.3';
 
 const logger = {
   debug: function () {},
-  error: function () {}
+  error: function () {},
+  info: function () {}
 };
 
 describe('Test health path', function () {

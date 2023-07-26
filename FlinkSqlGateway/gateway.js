@@ -24,6 +24,7 @@ const bodyParser = require('body-parser');
 
 const logger = require('./lib/logger.js');
 const port = process.env.SIMPLE_FLINK_SQL_GATEWAY_PORT || 9000;
+const debug = process.env.DEBUG || 'false';
 const flinksubmit = '/opt/flink/bin/flink run';
 const runningAsMain = require.main === module;
 
@@ -102,16 +103,27 @@ function apppost (request, response) {
 
     const command = createCommand(dirname);
     submitJob(command, response).then(
-      () => { fs.rmSync(dirname, { recursive: true, force: true }); }
+      () => {
+        if (debug === 'false') {
+          logger.info('Removing ' + dirname + ': debug = ' + debug);
+          fs.rmSync(dirname, { recursive: true, force: true });
+        }
+      }
     ).catch(
       (e) => {
         logger.error(e.stack || e);
-        fs.rmSync(dirname, { recursive: true, force: true });
+        if (debug === 'false') {
+          logger.info('Removing ' + dirname + ': debug = ' + debug);
+          fs.rmSync(dirname, { recursive: true, force: true });
+        }
       }
     );
   } catch (e) {
     logger.error('Could not submit job: ' + e.stack || e);
-    fs.rmSync(dirname, { recursive: true, force: true });
+    if (debug === 'false') {
+      logger.info('Removing ' + dirname + ': debug = ' + debug);
+      fs.rmSync(dirname, { recursive: true, force: true });
+    }
   }
 }
 
