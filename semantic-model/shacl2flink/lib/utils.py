@@ -290,8 +290,14 @@ def create_statementset(object_name, table_object_names,
     if ttl is not None:
         spec['sqlsettings'] = [
             {"table.exec.state.ttl": f"{ttl}"},
+            {"state.backend.rocksdb.writebuffer.size": "64 kb"},
+            {"state.backend.rocksdb.use-bloom-filter": "true"},
+            {"execution.checkpointing.interval": "{{ .Values.flink.checkpointInterval }}"},
+            {"table.exec.sink.upsert-materialize": "none"},
+            {"state.backend": "rocksdb"},
             {"execution.savepoint.ignore-unclaimed-state": "true"},
             {"pipeline.object-reuse": "true"},
+            {"state.backend.rocksdb.predefined-options": "SPINNING_DISK_OPTIMIZED_HIGH_MEM"},
             {"parallelism.default": "{{ .Values.flink.defaultParalellism }}"}
         ]
     spec['sqlstatements'] = statementsets

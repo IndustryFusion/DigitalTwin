@@ -85,11 +85,11 @@ test-kms:
 
 
 disable-strimzi:
-	kubectl -n $(NAMESPACE) scale deployment -l "operators.coreos.com/strimzi-kafka-operator.iff"="" --replicas=0
+	kubectl -n $(NAMESPACE) scale deployment -l "strimzi.io/name=my-cluster-entity-operator" --replicas=0
 
 
 enable-strimzi:
-	kubectl -n $(NAMESPACE) scale deployment -l "operators.coreos.com/strimzi-kafka-operator.iff"="" --replicas=1
+	kubectl -n $(NAMESPACE) scale deployment -l "strimzi.io/name=my-cluster-entity-operator" --replicas=1
 
 
 flink-deploy: clean
@@ -99,7 +99,7 @@ flink-deploy: clean
 	make build || make enable-strimzi
 	kubectl -n $(NAMESPACE) delete -f output/ngsild-kafka.yaml --ignore-not-found || make enable-strimzi
 	kubectl -n $(NAMESPACE) delete -f output/rdf-kafka.yaml --ignore-not-found || make enable-strimzi
-	cd ../../helm && ./helmfile -f helmfile-shacl.yaml apply --args "--force" || make enable-strimzi
+	cd ../../helm && ./helmfile -f helmfile-shacl.yaml apply || make enable-strimzi
 	make enable-strimzi
 	make test-flink-is-deployed
 	sleep 2
