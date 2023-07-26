@@ -11,7 +11,7 @@ ADD .eslintrc.json .eslintrc.json
 WORKDIR /
 RUN npm install && npm run lint && npm run test
 
-FROM flink:1.16.1
+FROM flink:1.16.2
 
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
 ENV NVM_DIR="$HOME/.nvm"
@@ -28,7 +28,8 @@ COPY --from=nodelint gateway.js gateway.js
 ADD package.json package.json
 ADD lib/ lib
 COPY --from=plint submitjob submitjob
-RUN mkdir jars && cd jars && wget https://repo1.maven.org/maven2/org/apache/flink/flink-sql-connector-kafka/1.16.1/flink-sql-connector-kafka-1.16.1.jar
+RUN mkdir jars && cd jars && wget https://repo1.maven.org/maven2/org/apache/flink/flink-sql-connector-kafka/1.16.2/flink-sql-connector-kafka-1.16.2.jar
+RUN mkdir -p jars && cd jars && wget https://repo1.maven.org/maven2/org/apache/flink/flink-sql-connector-kafka/1.16.1/flink-sql-connector-kafka-1.16.1.jar
 RUN . $HOME/.nvm/nvm.sh && npm install --production
 ADD sql-client-defaults.yaml /opt/flink/conf/
 
@@ -48,7 +49,7 @@ apt-get clean && \
 rm -rf /var/lib/apt/lists/*
 
 # install PyFlink
-RUN pip3 install apache-flink==1.16.0
+RUN pip3 install apache-flink==1.16.2
 
 
 USER 9999
