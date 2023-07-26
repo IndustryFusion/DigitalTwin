@@ -650,6 +650,7 @@ iff:OeeTemplateShape
             PREFIX iff: <https://industry-fusion.com/types/v0.9/>
             PREFIX oee: <https://industry-fusion.com/oee/v0.9/>
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            PREFIX ifa: <https://industry-fusion.com/aggregators/v0.9/>
             PREFIX rdf:	<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 			CONSTRUCT {
                 $this oee:availabilityTimeAgg [ <https://uri.etsi.org/ngsi-ld/hasValue> ?availabilityStateAgg ] .
@@ -660,7 +661,8 @@ iff:OeeTemplateShape
                     $this oee:hasReferenceMachine [ <https://uri.etsi.org/ngsi-ld/hasObject> ?machine ] .
                     ?machine oee:availabilityState [ <https://uri.etsi.org/ngsi-ld/hasValue> ?state ] .
                     ?machine oee:availabilityState [ <https://uri.etsi.org/ngsi-ld/observedAt> ?stateTs ] .
-                    bind(SUM(xsd:integer(?state))*5 as ?availabilityStateAgg) .
+                    bind(ifa:statetime(xsd:integer(?state), ?stateTs) as ?availabilityStateAgg) .
+                    #bind(SUM(xsd:integer(?state))*5 as ?availabilityStateAgg) .
                     FILTER(?stateTs > xsd:dateTime(?startTime) && ?stateTs < xsd:dateTime(?endTime))
 			}
             GROUP BY $this ?machine
@@ -737,7 +739,6 @@ PREFIX rdf:	<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 SELECT $this ?v1 ?pc ?v2
     where {
         $this  iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?v1 ] .
-        ?pc rdf:type iff:plasmacutter .
         ?pc iff:hasFilter [ <https://uri.etsi.org/ngsi-ld/hasObject> $this ] .
         ?pc  iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?v2 ] .
         FILTER(?v1 = <https://industry-fusion.com/types/v0.9/state_ON> && ?v2 != <https://industry-fusion.com/types/v0.9/state_PROCESSING>)
@@ -814,7 +815,6 @@ iff:TimestampCartridgeFromRulesShape
                 PREFIX rdf:	<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 			CONSTRUCT {
 				$this iff:inUseFrom [ <https://uri.etsi.org/ngsi-ld/hasValue> ?ts ] .
-                $this iff:inUseUntil [ <https://uri.etsi.org/ngsi-ld/hasValue> ?ts ] .
 			}
 			WHERE {
 				
@@ -851,12 +851,10 @@ iff:TimestampCartridgeUntilRulesShape
 			}
 			WHERE {
 				
-                                #$this iff:wasteClass [ <https://uri.etsi.org/ngsi-ld/hasValue> ?wc ] .
                                 ?filter iff:hasCartridge [ <https://uri.etsi.org/ngsi-ld/hasObject> $this ] .
                                 ?cutter iff:hasFilter [ <https://uri.etsi.org/ngsi-ld/hasObject> ?filter ] .
                                 ?cutter iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?cstate ] .
                                 ?filter iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?fstate ] .
-                                #?this iff:inUseUntil [ <https://uri.etsi.org/ngsi-ld/hasValue> ?old ] .
                                 bind(xsd:dateTime(now()) as ?ts)
                                 FILTER(?cstate = iff:state_PROCESSING && ?fstate = iff:state_ON)
 			}

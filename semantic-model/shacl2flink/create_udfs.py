@@ -18,10 +18,12 @@ import os.path
 import ruamel.yaml
 from lib import utils
 import glob
+import re
 
 
 udfdir = 'udf/*/flink_*.py'
 udfcrdname = 'udf.yaml'
+pattern = r'^([^_]+)_(.+?)_(v\d+)$'
 
 
 def main(output_folder='output'):
@@ -34,20 +36,25 @@ def main(output_folder='output'):
         for file in udfs_full:
             with open(file) as fi:
                 txt = fi.read()
+
             file_base = os.path.basename(os.path.splitext(file)[0])
-            _, file_name, file_ver = file_base.split('_')
+            match = re.match(pattern, file_base)
+            if match:
+                _, file_name, file_ver = match.groups()
+            else:
+                raise Exception("Error in parsing udf names.")
             crd = {}
             crd['apiVersion'] = 'industry-fusion.com/v1alpha1'
             crd['kind'] = 'flinkpythonudf'
             metadata = {}
-            metadata['name'] = file_name
+            metadata['name'] = utils.snake_case_to_kebab_case(file_name)
             spec = {}
             spec['filename'] = file_name
             spec['version'] = file_ver
             spec['class'] = txt
             crd['metadata'] = metadata
             crd['spec'] = spec
-            f.write('---')
+            f.write('---\n')
             yaml.dump(crd, f)
 
 
