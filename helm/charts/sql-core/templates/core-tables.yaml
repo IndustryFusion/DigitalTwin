@@ -40,8 +40,8 @@ spec:
     - 'severity': STRING
     - 'customer': STRING
     - 'text': STRING
-    - 'watermark': FOR `timestamp` AS `timestamp`
-    - 'timestamp': TIMESTAMP(3) METADATA VIRTUAL
+    - 'watermark': FOR ts AS ts - INTERVAL {{.Values.flink.alertDelay | squote}} SECONDS
+    - 'ts': TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL
   kafka:
     topic: {{.Values.kafkaBridge.alerta.bulkTopic}}
     properties:
@@ -52,33 +52,6 @@ spec:
     json.fail-on-missing-field: false
     json.ignore-parse-errors: true
   primaryKey: [resource, event]
----
-apiVersion: industry-fusion.com/v1alpha2
-kind: BeamSqlTable
-metadata:
-  name: alerts-filter
-spec:
-  name: alerts_filter
-  connector: kafka
-  fields:
-    - 'resource': STRING
-    - 'event': STRING
-    - 'environment': STRING
-    - 'service': ARRAY<STRING>
-    - 'severity': STRING
-    - 'customer': STRING
-    - 'text': STRING
-    - 'watermark': FOR ts AS ts
-    - 'ts': TIMESTAMP(3) METADATA FROM 'timestamp'
-  kafka:
-    topic: {{.Values.kafkaBridge.alerta.bulkTopic}}
-    properties:
-      bootstrap.servers: {{.Values.kafka.bootstrapServer}}
-    scan.startup.mode: latest-offset
-  value:
-    format: json
-    json.fail-on-missing-field: false
-    json.ignore-parse-errors: true
 ---
 apiVersion: industry-fusion.com/v1alpha2
 kind: BeamSqlTable
