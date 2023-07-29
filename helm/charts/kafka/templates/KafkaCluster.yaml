@@ -16,15 +16,13 @@ spec:
         type: internal
         tls: true
     resources:
-      requests:
-        memory: 800Mi
-        cpu: 500m
-      limits:
-        memory: 800Mi
-        cpu: 500m
+{{ if .Values.kafka.resources }}
+{{ .Values.kafka.resources | toYaml | indent 6 }}
+{{ end }}
+{{ if .Values.kafka.jvmOptions }}
     jvmOptions:
-      "-Xmx": "400m"
-      "-Xms": "300m"
+{{ .Values.kafka.jvmOptions | toYaml | indent 6 }}
+{{ end }}
     config:
       offsets.topic.replication.factor: 1
       transaction.state.log.replication.factor: 1

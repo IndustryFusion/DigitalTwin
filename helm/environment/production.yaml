@@ -57,31 +57,42 @@ minio:
   enabled: true
   storageSize: 10G
 
-
 kafka:
   storage:
     type: persistent-claim
-    size: 5Gi
+    size: 20Gi
   zookeeper:
     replicas: 1
     storage:
       type: persistent-claim
       size: 1Gi
+  resources:
+    requests:
+      memory: 400Mi
+      cpu: 200m
+    limits:
+      memory: 1000Mi
+      cpu: 800m
+  jvmOptions:
+    "-Xmx": "500m"
+  name: my-cluster
 
 kafkaBridge:
   debezium:
     replicaCount: 1
-    listenTopicRetention: 86400000
-    entityTopicRetention: 604800000
-    attributesTopicRetention: 86400000
+    listenTopicRetention: 28800000
+    listenTopicCompression: gzip
+    entityTopicRetention: 28800000
+    attributesTopicRetention: 28800000
+    attributesTopicCompression: gzip
   alerta:
     replicaCount: 1
     bulkTopicRetention: 300000
-    listenTopicRetention: 86400000
+    listenTopicRetention: 28800000
   ngsildUpdates:
     replicaCount: 1
     tokenRefreshInterval: 200
-    listenTopicRetention: 86400000
+    listenTopicRetention: 28800000
 
 velero:
   backupBucket: velero-backup
