@@ -78,10 +78,13 @@ flink:
   savepointDir: savepoints
   defaultParalellism: 1
   alertWindow: '0.001'
+  alertDelay: '0.2'
   ngsildUpdateWindow: '0.001'
   attributeInsertWindow: '0.001'
   jobmanagerCacheSize: 2Gi
   taskmanagerCacheSize: 10Gi
+  ttl: "86400000 ms"
+  coreTtl: "300000 ms"
 
 minio:
   enabled: {{ .StateValues.minio.enabled }}
@@ -113,6 +116,10 @@ alerta:
 
 kafka:
   name: my-cluster
+  resources:
+{{ .StateValues.kafka.resources | toYaml | indent 4 }}
+  jvmOptions:
+{{ .StateValues.kafka.jvmOptions | toYaml | indent 4 }}
   bootstrapServer: my-cluster-kafka-bootstrap:9092
   storage:
     type: persistent-claim
@@ -132,22 +139,38 @@ kafkaBridge:
   debezium:
     replicaCount: 1
     listenTopic: "iff.ngsild.public.entity"
-    listenTopicRetention: "86400000"
+    listenTopicRetention: {{- if hasKey .StateValues.kafkaBridge.debezium "listenTopicRetention" }} {{ .StateValues.kafkaBridge.debezium.listenTopicRetention | quote}}
+                          {{- else }} "3600000"
+                          {{- end }}
+    listenTopicCompression: {{- if hasKey .StateValues.kafkaBridge.debezium "listenTopicCompression" }} {{ .StateValues.kafkaBridge.debezium.listenTopicCompression}}
+                            {{- else }} uncompressed
+                            {{- end }}
     entityTopicPrefix: "iff.ngsild.entities"
+    entityTopicRetention: {{- if hasKey .StateValues.kafkaBridge.debezium "entityTopicRetention" }} {{ .StateValues.kafkaBridge.debezium.entityTopicRetention | quote}}
+                          {{- else }} "3600000"
+                          {{- end }}
     attributesTopic: "iff.ngsild.attributes"
-    entityTopicRetention: "604800000"
-    attributesTopicRetention: "86400000"
+    attributesTopicRetention: {{- if hasKey .StateValues.kafkaBridge.debezium "attributesTopicRetention" }} {{ .StateValues.kafkaBridge.debezium.attributesTopicRetention | quote}}
+                              {{- else }} "3600000"
+                              {{- end }}
+    attributesTopicCompression: {{- if hasKey .StateValues.kafkaBridge.debezium "attributesTopicCompression" }} {{ .StateValues.kafkaBridge.debezium.attributesTopicCompression}}
+                                {{- else }} uncompressed
+                                {{- end }}
   alerta:
     replicaCount: 1
     listenTopic: "iff.alerts"
     bulkTopic: "iff.alerts.bulk"
-    bulkTopicRetention: "300000"
-    listenTopicRetention: 86400000
+    bulkTopicRetention: "10000"
+    listenTopicRetention: {{- if hasKey .StateValues.kafkaBridge.alerta "listenTopicRetention" }} {{ .StateValues.kafkaBridge.alerta.listenTopicRetention | quote}}
+                          {{- else }} "3600000"
+                          {{- end }}
   ngsildUpdates:
     replicaCount: 1
     tokenRefreshInterval: 200
     listenTopic: "iff.ngsild-updates"
-    listenTopicRetention: "86400000"
+    listenTopicRetention: {{- if hasKey .StateValues.kafkaBridge.ngsildUpdates "listenTopicRetention" }} {{ .StateValues.kafkaBridge.ngsildUpdates.listenTopicRetention | quote}}
+                          {{- else }} "3600000"
+                          {{- end }}
 
 keycloak:
   adminName: admin

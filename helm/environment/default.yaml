@@ -66,21 +66,31 @@ kafka:
     storage:
       type: persistent-claim
       size: 1Gi
+  resources:
+    requests:
+      memory: 400Mi
+      cpu: 200m
+    limits:
+      memory: 800Mi
+      cpu: 500m
+  jvmOptions:
+    "-Xmx": "400m"
+  name: my-cluster
 
 kafkaBridge:
   debezium:
     replicaCount: 1
-    listenTopicRetention: 86400000
-    entityTopicRetention: 604800000
-    attributesTopicRetention: 86400000
+    listenTopicRetention: 3600000
+    entityTopicRetention: 3600000
+    attributesTopicRetention: 3600000
   alerta:
     replicaCount: 1
     bulkTopicRetention: 300000
-    listenTopicRetention: 86400000
+    listenTopicRetention: 3600000
   ngsildUpdates:
     replicaCount: 1
     tokenRefreshInterval: 200
-    listenTopicRetention: 86400000
+    listenTopicRetention: 3600000
 
 velero:
   backupBucket: velero-backup

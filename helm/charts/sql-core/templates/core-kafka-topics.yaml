@@ -46,6 +46,7 @@ spec:
   replicas: 1
   config:
     retention.ms: {{.Values.kafkaBridge.debezium.attributesTopicRetention}}
+    compression.type: {{.Values.kafkaBridge.debezium.attributesTopicCompression}}
 ---
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
