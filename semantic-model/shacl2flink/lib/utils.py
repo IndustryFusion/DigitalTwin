@@ -274,10 +274,25 @@ def create_sql_view(table_name, table, primary_key=['id'],
     return sqlstatement
 
 
-def create_statementset(object_name, table_object_names,
-                        view_object_names, ttl, statementsets):
+def create_configmap(object_name, sqlstatementset):
+    yaml_cm = {}
+    yaml_cm['apiVersion'] = 'v1'
+    yaml_cm['kind'] = 'ConfigMap'
+    metadata = {}
+    yaml_cm['metadata'] = metadata
+    metadata['name'] = object_name
+
+    data = {}
+    yaml_cm['data'] = data
+    for index, value in enumerate(sqlstatementset):
+        data[index] = value
+    return yaml_cm
+
+
+def create_statementmap(object_name, table_object_names,
+                        view_object_names, ttl, statementmaps, refresh_interval="12h"):
     yaml_bsqls = {}
-    yaml_bsqls['apiVersion'] = 'industry-fusion.com/v1alpha2'
+    yaml_bsqls['apiVersion'] = 'industry-fusion.com/v1alpha4'
     yaml_bsqls['kind'] = 'BeamSqlStatementSet'
     metadata = {}
     yaml_bsqls['metadata'] = metadata
@@ -286,6 +301,39 @@ def create_statementset(object_name, table_object_names,
     spec = {}
     yaml_bsqls['spec'] = spec
     spec['tables'] = table_object_names
+    spec['refreshInterval'] = refresh_interval
+    spec['views'] = view_object_names
+    if ttl is not None:
+        spec['sqlsettings'] = [
+            {"table.exec.state.ttl": f"{ttl}"},
+            {"state.backend.rocksdb.writebuffer.size": "64 kb"},
+            {"state.backend.rocksdb.use-bloom-filter": "true"},
+            {"execution.checkpointing.interval": "{{ .Values.flink.checkpointInterval }}"},
+            {"table.exec.sink.upsert-materialize": "none"},
+            {"state.backend": "rocksdb"},
+            {"execution.savepoint.ignore-unclaimed-state": "true"},
+            {"pipeline.object-reuse": "true"},
+            {"state.backend.rocksdb.predefined-options": "SPINNING_DISK_OPTIMIZED_HIGH_MEM"},
+            {"parallelism.default": "{{ .Values.flink.defaultParalellism }}"}
+        ]
+    spec['sqlstatementmaps'] = statementmaps
+    spec['updateStrategy'] = "none"
+    return yaml_bsqls
+
+
+def create_statementset(object_name, table_object_names,
+                        view_object_names, ttl, statementsets, refresh_interval="12h"):
+    yaml_bsqls = {}
+    yaml_bsqls['apiVersion'] = 'industry-fusion.com/v1alpha4'
+    yaml_bsqls['kind'] = 'BeamSqlStatementSet'
+    metadata = {}
+    yaml_bsqls['metadata'] = metadata
+    metadata['name'] = object_name
+
+    spec = {}
+    yaml_bsqls['spec'] = spec
+    spec['tables'] = table_object_names
+    spec['refreshInterval'] = refresh_interval
     spec['views'] = view_object_names
     if ttl is not None:
         spec['sqlsettings'] = [
@@ -301,7 +349,7 @@ def create_statementset(object_name, table_object_names,
             {"parallelism.default": "{{ .Values.flink.defaultParalellism }}"}
         ]
     spec['sqlstatements'] = statementsets
-    spec['updateStrategy'] = "savepoint"
+    spec['updateStrategy'] = "none"
     return yaml_bsqls
 
 
