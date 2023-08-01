@@ -27,9 +27,10 @@ from lib import configs
 
 
 def parse_args(args=sys.argv[1:]):
-    parser = argparse.ArgumentParser(description='create_rdf_table.py \
+    parser = argparse.ArgumentParser(description='create_rdf_table.py --namespace <ns>\
                                                   <knowledge.ttl>')
     parser.add_argument('knowledgefile', help='Path to the knowledge file')
+    parser.add_argument('--namespace', help='namespace for configmaps', default='iff')
     parsed_args = parser.parse_args(args)
     return parsed_args
 
@@ -75,7 +76,7 @@ def create_statementset(graph):
     return statementsets
 
 
-def main(knowledgefile, output_folder='output'):
+def main(knowledgefile, namespace, output_folder='output'):
     yaml = ruamel.yaml.YAML()
 
     utils.create_output_folder(output_folder)
@@ -126,11 +127,16 @@ def main(knowledgefile, output_folder='output'):
         yaml.dump(utils.create_yaml_table(table_name, connector, table,
                   primary_key, kafka, value), fp)
         num = 0
+        statementmap = []
         for statementset in statementsets:
             num += 1
             fp.write("---\n")
-            yaml.dump(utils.create_statementset('rdf-statements' + str(num), [table_name],
-                                                [], None, [statementset]), fp)
+            configmapname = 'rdf-configmap' + str(num)
+            yaml.dump(utils.create_configmap(configmapname, [statementset]), fp)
+            statementmap.append(f'{namespace}/{configmapname}')
+        fp.write("---\n")
+        yaml.dump(utils.create_statementmap('rdf-statements', [table_name],
+                                            [], None, statementmap), fp)
         fk.write("---\n")
         yaml.dump(utils.create_kafka_topic(utils.class_to_obj_name(configs.rdf_topic),
                                            configs.rdf_topic,
@@ -141,4 +147,5 @@ def main(knowledgefile, output_folder='output'):
 if __name__ == '__main__':
     args = parse_args()
     knowledgefile = args.knowledgefile
-    main(knowledgefile)
+    namespace = args.namespace
+    main(knowledgefile, namespace)

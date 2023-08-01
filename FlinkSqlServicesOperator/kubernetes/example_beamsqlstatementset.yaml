@@ -29,8 +29,8 @@ metadata:
   name: configmap1
   namespace: iff
 data:
-  sqlstatementset:
-  - insert into `metrics-copy` select `aid`, `cid`, `dataType`, `on`, `systemon`, `value` FROM `metrics`;
+  0: insert into `metrics-copy` select `aid`, `cid`, `dataType`, `on`, `systemon`, `value` FROM `metrics`;
+  1: insert into `metrics-x` select `aid`, `cid`, `dataType`, `on`, `systemon`, `value` FROM `metrics`;
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -38,5 +38,18 @@ metadata:
   name: configmap2
   namespace: iff
 data:
-  sqlstatementset:
-  - insert into `metrics-cop` select `aid`, `cid`, `dataType`, `on`, `systemon`, `value` FROM `metrics`;
+  0: insert into `metrics-cop` select `aid`, `cid`, `dataType`, `on`, `systemon`, `value` FROM `metrics`;
+---
+apiVersion: industry-fusion.com/v1alpha4
+kind: BeamSqlStatementSet
+metadata:
+  name: beamsqlstatementset-example
+  namespace: iff
+spec:
+  sqlstatements:
+    - insert into `metrics-copy` select `aid`, `cid`, `dataType`, `on`, `systemon`, `value` FROM `metrics`;
+  tables:
+    - metrics
+    - metrics-copy
+  refresh: "Mo 31. Jul 13:24:30 CEST 2023"
+---

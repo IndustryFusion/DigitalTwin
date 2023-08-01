@@ -149,16 +149,51 @@ def test_create_statementset():
     result = utils.create_statementset('object', 'table_object', 'view', None,
                                        'statementset')
     assert result == {
-        'apiVersion': 'industry-fusion.com/v1alpha2',
+        'apiVersion': 'industry-fusion.com/v1alpha4',
         'kind': 'BeamSqlStatementSet',
         'metadata': {
             'name': 'object'
         },
         'spec': {
             'tables': 'table_object',
+            'refreshInterval': "12h",
             'views': 'view',
             'sqlstatements': 'statementset',
-            'updateStrategy': 'savepoint'
+            'updateStrategy': 'none'
+        }
+    }
+
+
+def test_create_statementmap():
+    result = utils.create_statementmap('object', 'table_object', 'view', None,
+                                       ['namespace/configmap'])
+    assert result == {
+        'apiVersion': 'industry-fusion.com/v1alpha4',
+        'kind': 'BeamSqlStatementSet',
+        'metadata': {
+            'name': 'object'
+        },
+        'spec': {
+            'tables': 'table_object',
+            'refreshInterval': '12h',
+            'views': 'view',
+            'sqlstatementmaps': ['namespace/configmap'],
+            'updateStrategy': 'none'
+        }
+    }
+
+
+def test_create_configmap():
+    result = utils.create_configmap('object', ['statementset1', 'statementset2'])
+    assert result == {
+        'apiVersion': 'v1',
+        'kind': 'ConfigMap',
+        'metadata': {
+            'name': 'object'
+        },
+        'data': {
+            0: 'statementset1',
+            1: 'statementset2'
         }
     }
 

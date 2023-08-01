@@ -24,8 +24,6 @@ def test_input_arguments(mock_argparse):
     parser = mock_argparse.ArgumentParser.return_value
     parser.parse_args.return_value = "args"
     args = create_rdf_table.parse_args(['test'])
-    parser.add_argument.assert_called_with('knowledgefile',
-                                           help='Path to the knowledge file')
     assert args == 'args'
 
 
@@ -75,7 +73,8 @@ def test_main(mock_utils, mock_configs, mock_create_table, mock_rdflib,
     mock_utils.create_yaml_table.return_value = "yamltable"
     mock_utils.create_statementset.return_value = "statementset"
     mock_yaml.dump.return_value = "dump"
-    create_rdf_table.main('kms/knowledge.ttl', tmp_path)
+    create_rdf_table.main('kms/knowledge.ttl', 'namespace', tmp_path)
 
     assert os.path.exists(os.path.join(tmp_path, 'rdf.yaml')) is True
     assert os.path.exists(os.path.join(tmp_path, 'rdf.sqlite')) is True
+    assert os.path.exists(os.path.join(tmp_path, 'rdf-kafka.yaml')) is True

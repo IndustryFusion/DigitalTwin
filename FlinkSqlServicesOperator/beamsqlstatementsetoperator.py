@@ -17,14 +17,17 @@
 
 import time
 import datetime
+
 import os
 from enum import Enum
+from pytimeparse.timeparse import timeparse
 
 import requests
 import kopf
 
 import flink_util
 import tables_and_views
+
 
 iff_namespace = os.getenv("IFF_NAMESPACE", default="iff")
 FLINK_URL = os.getenv("IFF_FLINK_REST",
@@ -82,9 +85,9 @@ MESSAGES = "messages"
 UPDATE_STRATEGY = "updateStrategy"
 UPDATE_STRATEGY_SAVEPOINT = "savepoint"
 UPDATE_STRATEGY_NONE = "none"
+UPDATEDON = "updatedOn"
 
-
-@kopf.on.create("industry-fusion.com", "v1alpha3", "beamsqlstatementsets")
+@kopf.on.create("industry-fusion.com", "v1alpha4", "beamsqlstatementsets")
 # pylint: disable=unused-argument
 # Kopf decorated functions match their expectations
 def create(body, spec, patch, logger, **kwargs):
@@ -101,7 +104,7 @@ def create(body, spec, patch, logger, **kwargs):
     return {"createdOn": str(time.time())}
 
 
-@kopf.on.delete("industry-fusion.com", "v1alpha3", "beamsqlstatementsets",
+@kopf.on.delete("industry-fusion.com", "v1alpha4", "beamsqlstatementsets",
                 retries=10)
 # pylint: disable=unused-argument
 # Kopf decorated functions match their expectations
@@ -169,7 +172,7 @@ def configmaps(name: str, namespace: str, body: kopf.Body, **_):
     return {(namespace, name): body}
 
 
-@kopf.on.update("industry-fusion.com", "v1alpha3", "beamsqlstatementsets")
+@kopf.on.update("industry-fusion.com", "v1alpha4", "beamsqlstatementsets")
 # pylint: disable=unused-argument
 # Kopf decorated functions match their expectations
 def update(body, spec, patch, logger, retries=20, **kwargs):
@@ -257,7 +260,7 @@ def update(body, spec, patch, logger, retries=20, **kwargs):
                 patch.status[STATE] = States.UPDATING.name
 
 
-@kopf.timer("industry-fusion.com", "v1alpha3", "beamsqlstatementsets",
+@kopf.timer("industry-fusion.com", "v1alpha4", "beamsqlstatementsets",
             interval=timer_interval_seconds, backoff=timer_backoff_seconds, retries=monitor_retries)
 # pylint: disable=too-many-arguments unused-argument redefined-outer-name
 # pylint: disable=too-many-locals too-many-statements too-many-branches
@@ -301,8 +304,35 @@ def monitor(beamsqltables: kopf.Index, beamsqlviews: kopf.Index,
     except (KeyError, TypeError):
         create(body, spec, patch, logger, **kwargs)
         return
+
+    # If state is FINISHED, check if there is a refresh interval
+    # If there is refreshInterval is there, check last update/creation timestamp
+    # If the last update/creation
     if state == States.FINISHED.name:
-        # Don't worry about FINISHED jobs
+        status_obj = body.get('status')
+        refresh_interval = spec.get('refreshInterval')
+        last_timestamp = None
+        if refresh_interval is not None:
+            if status_obj is not None:
+                updated_on = status_obj.get(UPDATEDON)
+                if updated_on is not None:
+                    last_timestamp = updated_on
+            # if last_timestamp not defined, lookup the createdOn timestamp
+            try:
+                last_timestamp = float(last_timestamp)
+            except ValueError:
+                last_timestamp = None
+            if last_timestamp is None:
+                create_obj = status_obj.get('create')
+                if create_obj is not None:
+                    last_timestamp = create_obj.get("createdOn")
+        if refresh_interval is not None and float(last_timestamp) is not None:
+            interval_seconds = timeparse(refresh_interval)
+            if interval_seconds is not None and interval_seconds != 0:
+                if time.time() - float(last_timestamp) > interval_seconds: # interval_seconds:
+                    patch.status[UPDATEDON] = str(time.time())
+                    patch.status[STATE] = States.INITIALIZED.name
+                    patch.status[JOB_ID] = None
         return
     logger.debug(
         f"Triggered monitor for {namespace}/{metadata_name}"

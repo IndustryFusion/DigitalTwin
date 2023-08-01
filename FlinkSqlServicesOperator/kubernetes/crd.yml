@@ -83,6 +83,50 @@ spec:
                   type: string
     - name: v1alpha3
       served: true
+      storage: false
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                sqlstatements:
+                  type: array
+                  items:
+                    type: string
+                sqlstatementmaps:
+                  type: array
+                  items:
+                    type: string
+                tables:
+                  type: array
+                  items:
+                    type: string
+                views:
+                  type: array
+                  items:
+                    type: string
+                sqlsettings:
+                  type: array
+                  items:
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
+                updateStrategy:
+                  type: string
+                  enum: ["none", "savepoint"]
+              required:
+              - tables
+            status:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+              properties:
+                state:
+                  type: string
+                job_id:
+                  type: string
+    - name: v1alpha4
+      served: true
       storage: true
       schema:
         openAPIV3Schema:
@@ -103,6 +147,10 @@ spec:
                   type: array
                   items:
                     type: string
+                refresh:
+                  type: string
+                refreshInterval:
+                  type: string
                 views:
                   type: array
                   items:

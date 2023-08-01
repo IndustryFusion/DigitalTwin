@@ -1,6 +1,6 @@
 ---
 # yamllint disable rule:line-length
-apiVersion: industry-fusion.com/v1alpha2
+apiVersion: industry-fusion.com/v1alpha4
 kind: BeamSqlStatementSet
 metadata:
     name: core-services
