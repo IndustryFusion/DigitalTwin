@@ -1,0 +1,92 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kafka-connect-restart
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kafka-connect-restart
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["delete", "list", "get"]
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-connect-restart-script
+data:
+  my-script.sh: |
+    #!/bin/bash
+    LABEL_SELECTOR="app.kubernetes.io/instance=kafka-connect"
+    TEST_TIME={{ .Values.kafka.connect.restartAfter }}
+    NAMESPACE="{{.Release.Namespace}}"
+    # Get the pod names matching the label selector
+    POD_NAMES=$(kubectl get pods -n $NAMESPACE -l "$LABEL_SELECTOR" -o jsonpath='{.items[*].metadata.name}')
+    # Flag to track if any pod is smaller than test_time
+    at_least_one_pod_smaller=false
+    # Loop through the pod names and check their ages
+    for pod_name in $POD_NAMES; do
+      # Get the creation timestamp of the pod
+      CREATION_TIMESTAMP=$(kubectl get pod "$pod_name" -n $NAMESPACE -o jsonpath='{.metadata.creationTimestamp}')
+      # Convert the creation timestamp to seconds since epoch
+      CREATION_EPOCH_SECONDS=$(date -d "$CREATION_TIMESTAMP" +%s)
+      # Get the current time in seconds since epoch
+      CURRENT_EPOCH_SECONDS=$(date +%s)
+      # Calculate the age of the pod in seconds
+      AGE_SECONDS=$((CURRENT_EPOCH_SECONDS - CREATION_EPOCH_SECONDS))
+      # Check if any pod is smaller than test_time
+      if [ "$AGE_SECONDS" -lt "$TEST_TIME" ]; then
+        at_least_one_pod_smaller=true
+        break
+      fi
+    done
+
+    # Check the flag and take action accordingly
+    if [ "$at_least_one_pod_smaller" = true ]; then
+      echo "Nothing to do"
+    else
+      echo "deleteting pod"
+      kubectl -n {{.Release.Namespace}} -l app.kubernetes.io/instance=kafka-connect delete pod
+      kubectl delete pod -n "$NAMESPACE" -l "$LABEL_SELECTOR" --sort-by=.metadata.creationTimestamp --field-selector status.phase!=Pending --force=true
+    fi
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kafka-connect-restart
+subjects:
+- kind: ServiceAccount
+  name: kafka-connect-restart
+  namespace: {{.Release.Namespace}}
+roleRef:
+  kind: Role
+  name: kafka-connect-restart
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: kafka-connect-restart
+spec:
+  schedule: "0 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          volumes:
+          - name: script-volume
+            configMap:
+              name: kafka-connect-restart-script
+          serviceAccountName: kafka-connect-restart
+          restartPolicy: OnFailure
+          containers:
+            - name: my-container
+              image: bitnami/kubectl:1.24
+              volumeMounts:
+              - name: script-volume
+                mountPath: /scripts
+              command: ["/bin/bash", "/scripts/my-script.sh"]
+
