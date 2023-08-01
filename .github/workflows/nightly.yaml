@@ -32,6 +32,7 @@ jobs:
             docker tag ${image} ${newimage};
             docker push ${newimage};
           done
+          docker system prune -a -f
 
 
 
