@@ -320,7 +320,7 @@ def monitor(beamsqltables: kopf.Index, beamsqlviews: kopf.Index,
             # if last_timestamp not defined, lookup the createdOn timestamp
             try:
                 last_timestamp = float(last_timestamp)
-            except ValueError:
+            except (ValueError, TypeError):
                 last_timestamp = None
             if last_timestamp is None:
                 create_obj = status_obj.get('create')
