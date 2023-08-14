@@ -1,0 +1,153 @@
+{
+    "id": "urn:ngsi-ld:assetv5:2:44",
+    "type": "http://www.industry-fusion.org/schema#sensor",
+    "http://www.industry-fusion.org/fields#base-objects-v0.1-operation-conditions-runtime-ambient-operating-temperature": {
+        "type": "Property",
+        "value": "14.137"
+    },
+    "http://www.industry-fusion.org/fields#base-objects-v0.1-operation-conditions-runtime-dustiness": {
+        "type": "Property",
+        "value": "0.0"
+    },
+    "http://www.industry-fusion.org/fields#base-objects-v0.1-operation-conditions-runtime-machine-state": {
+        "type": "Property",
+        "value": "2"
+    },
+    "http://www.industry-fusion.org/fields#base-objects-v0.1-operation-conditions-runtime-relative-humidity": {
+        "type": "Property",
+        "value": "46.043"
+    },
+    "http://www.industry-fusion.org/schema#base-objects-v0.1-machine-identification-alias": {
+        "type": "Property",
+        "value": {
+            "type": "Property",
+            "value": "Air Sensor"
+        }
+    },
+    "http://www.industry-fusion.org/schema#base-objects-v0.1-machine-identification-asset-communication-protocol": {
+        "type": "Property",
+        "value": {
+            "type": "Property",
+            "value": "mqtt"
+        }
+    },
+    "http://www.industry-fusion.org/schema#base-objects-v0.1-machine-identification-asset-serial-number": {
+        "type": "Property",
+        "value": {
+            "type": "Property",
+            "value": "000006"
+        }
+    },
+    "http://www.industry-fusion.org/schema#base-objects-v0.1-machine-identification-ce-marking": {
+        "type": "Property",
+        "value": {
+            "type": "Property",
+            "value": ""
+        }
+    },
+    "http://www.industry-fusion.org/schema#base-objects-v0.1-machine-identification-documentation": {
+        "type": "Property",
+        "value": {
+            "type": "Property",
+            "value": ""
+        }
+    },
+    "http://www.industry-fusion.org/schema#base-objects-v0.1-machine-identification-manufacturing-year": {
+        "type": "Property",
+        "value": {
+            "type": "Property",
+            "value": "2022"
+        }
+    },
+    "http://www.industry-fusion.org/schema#base-objects-v0.1-machine-identification-product-name": {
+        "type": "Property",
+        "value": {
+            "type": "Property",
+            "value": "AirTracker"
+        }
+    },
+    "http://www.industry-fusion.org/schema#base-objects-v0.1-operation-conditions-ambient-operating-temperature-max": {
+        "type": "Property",
+        "value": {
+            "type": "Property",
+            "value": "60"
+        }
+    },
+    "http://www.industry-fusion.org/schema#base-objects-v0.1-operation-conditions-ambient-operating-temperature-min": {
+        "type": "Property",
+        "value": {
+            "type": "Property",
+            "value": "0"
+        }
+    },
+    "http://www.industry-fusion.org/schema#base-objects-v0.1-operation-conditions-atmospheric-pressure-max": {
+        "type": "Property",
+        "value": {
+            "type": "Property",
+            "value": "1020"
+        }
+    },
+    "http://www.industry-fusion.org/schema#base-objects-v0.1-operation-conditions-atmospheric-pressure-min": {
+        "type": "Property",
+        "value": {
+            "type": "Property",
+            "value": "1000"
+        }
+    },
+    "http://www.industry-fusion.org/schema#base-objects-v0.1-operation-conditions-dustiness-max": {
+        "type": "Property",
+        "value": {
+            "type": "Property",
+            "value": "1.25"
+        }
+    },
+    "http://www.industry-fusion.org/schema#base-objects-v0.1-operation-conditions-relative-humidity-max": {
+        "type": "Property",
+        "value": {
+            "type": "Property",
+            "value": "95"
+        }
+    },
+    "http://www.industry-fusion.org/schema#base-objects-v0.1-operation-conditions-relative-humidity-min": {
+        "type": "Property",
+        "value": {
+            "type": "Property",
+            "value": "10"
+        }
+    },
+    "http://www.industry-fusion.org/schema#base-objects-v0.1-power-electric-power": {
+        "type": "Property",
+        "value": {
+            "type": "Property",
+            "value": "35"
+        }
+    },
+    "http://www.industry-fusion.org/schema#base-objects-v0.1-power-frequency": {
+        "type": "Property",
+        "value": {
+            "type": "Property",
+            "value": "50"
+        }
+    },
+    "http://www.industry-fusion.org/schema#base-objects-v0.1-power-supply-voltage": {
+        "type": "Property",
+        "value": {
+            "type": "Property",
+            "value": "230"
+        }
+    },
+    "http://www.industry-fusion.org/schema#base-objects-v0.1-power-voltage-type": {
+        "type": "Property",
+        "value": {
+            "type": "Property",
+            "value": "AC"
+        }
+    },
+    "https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn": {
+        "type": "Property",
+        "value": "1692009686735.ouab2"
+    },
+    "@context": [
+        "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.3.jsonld"
+    ]
+}
