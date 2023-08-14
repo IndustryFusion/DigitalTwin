@@ -51,7 +51,7 @@ PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
 SELECT
     ?nodeshape ?targetclass ?propertypath ?mincount ?maxcount ?attributeclass ?nodekind
-    ?minexclusive ?maxexclusive ?mininclusive ?maxinclusive ?minlength ?maxlength ?pattern
+    ?minexclusive ?maxexclusive ?mininclusive ?maxinclusive ?minlength ?maxlength ?pattern ?severitycode
 where {
     ?nodeshape a sh:NodeShape .
     ?nodeshape sh:targetClass ?targetclass .
@@ -73,7 +73,7 @@ where {
     OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsild:hasValue ; sh:maxLength ?maxlength ;] ; ] }
     OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsild:hasValue ; sh:pattern ?pattern ;] ; ] }
     OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsild:hasValue ; sh:class ?attributeclass ;] ; ] }
-
+    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath; sh:severity ?severity ; ] . ?severity iff:severityCode ?severitycode .}
 }
 order by ?targetclass
 
@@ -468,6 +468,8 @@ def translate(shaclefile, knowledgefile):
             else None
         mincount = row.mincount.toPython() if row.mincount else 0
         maxcount = row.maxcount.toPython() if row.maxcount else None
+        severitycode = row.severitycode.toPython() if row.severitycode \
+            else 'warning'
         nodekind = row.nodekind
         min_exclusive = row.minexclusive.toPython() if row.minexclusive \
             is not None else None
