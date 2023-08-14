@@ -1,0 +1,40 @@
+# baseURI: http://www.industry-fusion.org/fields
+# imports: http://www.industry-fusion.org/schema
+
+@prefix : <http://www.industry-fusion.org/fields#> .
+@prefix fields: <https://www.industry-fusion.com/fields#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <http://www.industry-fusion.org/schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://www.industry-fusion.org/fields>
+  rdf:type owl:Ontology ;
+  owl:imports <http://www.industry-fusion.org/schema> ;
+.
+:ambient-operator-temperature
+  rdf:type sh:NodeShape ;
+  sh:property [
+      rdf:type sh:PropertyShape ;
+      sh:path <http://www.industry-fusion.org/fields#base-objects-v0.1-operation-conditions-runtime-ambient-operating-temperature> ;
+      sh:maxCount 1 ;
+      sh:minCount 1 ;
+      sh:name "base-objects-v0.1-operation-conditions-runtime-ambient-operating-temperature" ;
+      sh:nodeKind sh:BlankNode ;
+      sh:order "1" ;
+      sh:property [
+          sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
+          sh:maxCount 1 ;
+          sh:maxInclusive "25" ;
+          sh:minCount 1 ;
+          sh:minInclusive "15" ;
+          sh:nodeKind sh:Literal ;
+        ] ;
+    ] ;
+  sh:targetClass schema:sensor ;
+.
+<http://www.industry-fusion.org/fields#base-objects-v0.1-operation-conditions-runtime-ambient-operating-temperature>
+  rdf:type rdf:Property ;
+.

@@ -132,6 +132,14 @@ test-flink-is-undeployed:
 	cd tests/bats && bats test-shacl-flink-undeploy
 	rm tests/bats/lib
 
+prepare-kms:
+ifdef KMS_DIR
+	@echo copy kms values from $(KMS_DIR)
+	cd ../kms && cp $(KMS_DIR)/* .
+else
+	@echo No KMS_DIR defined, doing nothing
+endif
+
 clean:
 	@rm -rf $(OUTPUTDIR)
 
