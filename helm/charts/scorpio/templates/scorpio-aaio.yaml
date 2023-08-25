@@ -54,6 +54,10 @@ spec:
             - name: {{ $key }}
               value: {{ $val | quote }}
           {{- end }}
+          {{- range $key, $val := .Values.kafka_topic_vars }}
+            - name: {{ $key }}
+              value: {{ $val | quote }}
+          {{- end }}
           ports:
             - containerPort: 9090
               protocol: TCP
