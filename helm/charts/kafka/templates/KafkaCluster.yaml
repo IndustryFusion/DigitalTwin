@@ -29,6 +29,7 @@ spec:
       transaction.state.log.min.isr: 1
       log.message.format.version: "3.3"
       inter.broker.protocol.version: "3.3"
+      auto.create.topics.enable: true
     storage:
       type: jbod
       volumes:

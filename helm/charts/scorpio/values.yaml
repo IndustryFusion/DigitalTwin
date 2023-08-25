@@ -32,6 +32,19 @@ kafka_vars:
   KAFKA_LOG_RETENTION_MS: 10000
   KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS: 5000
 
+## kafka topic names for topics used by scorpio
+kafka_topic_vars:
+  ENTITY_TOPIC: scorpio.entity
+  REGISTRY_TOPIC: scorpio.registry
+  TEMPORAL_TOPIC: scorpio.temporal
+  INTERNAL_NOTIFY_TOPIC: scorpio.inotify
+  INTERNAL_REGISTRYSUB_TOPIC: scorpio.regsub
+  SUB_ALIVE_TOPIC: scorpio.sub.alive
+  SUB_SYNC_TOPIC: scorpio.sub.sync
+  REGISTRYSUB_ALIVE_TOPIC: scorpio.regsub.alive
+  REGISTRYSUB_SYNC_TOPIC: scorpio.regsub.sync
+  retention: 3600000
+
 ## credentials for private docker repo
 imageCredentials:
   name: regcred
