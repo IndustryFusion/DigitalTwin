@@ -86,11 +86,11 @@ printf -- "------------------------\033[0m\n"
 kubectl -n ${NAMESPACE} apply -f ../FlinkSqlServicesOperator/kubernetes/crd.yml
 
 printf "\n"
-printf "\033[1mInstalling Postgres-operator v1.8.2\n"
+printf "\033[1mInstalling Postgres-operator v1.9.0\n"
 printf -- "------------------------\033[0m\n"
 git clone https://github.com/zalando/postgres-operator.git
 cd postgres-operator
-git checkout v1.8.2
+git checkout v1.9.0
 helm -n iff install postgres-operator ./charts/postgres-operator
 
 printf -- "\033[1mOperators installed successfully.\033[0m\n"
