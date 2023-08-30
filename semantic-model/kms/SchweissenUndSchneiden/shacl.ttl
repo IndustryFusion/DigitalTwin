@@ -14,14 +14,15 @@
   rdf:type owl:Ontology ;
   owl:imports <http://www.industry-fusion.org/schema> ;
 .
-:ambient-operator-temperature
+
+:ambient-operating-temperature
   rdf:type sh:NodeShape ;
   sh:property [
       rdf:type sh:PropertyShape ;
-      sh:path <http://www.industry-fusion.org/fields#base-objects-v0.1-operation-conditions-runtime-ambient-operating-temperature> ;
+      sh:path <http://www.industry-fusion.org/fields#sensor-v0.1-sensor-runtime-ambient-operating-temperature> ;
       sh:maxCount 1 ;
       sh:minCount 1 ;
-      sh:name "base-objects-v0.1-operation-conditions-runtime-ambient-operating-temperature" ;
+      sh:name "sensor-v0.1-sensor-runtime-ambient-operating-temperature" ;
       sh:nodeKind sh:BlankNode ;
       sh:order "1" ;
       sh:property [
@@ -35,6 +36,32 @@
     ] ;
   sh:targetClass schema:sensor ;
 .
-<http://www.industry-fusion.org/fields#base-objects-v0.1-operation-conditions-runtime-ambient-operating-temperature>
+
+:ambient-noise
+  rdf:type sh:NodeShape ;
+  sh:property [
+      rdf:type sh:PropertyShape ;
+      sh:path <http://www.industry-fusion.org/fields#sensor-v0.1-sensor-runtime-ambient-noise> ;
+      sh:maxCount 1 ;
+      sh:minCount 1 ;
+      sh:name "sensor-v0.1-sensor-runtime-ambient-noise" ;
+      sh:nodeKind sh:BlankNode ;
+      sh:order "1" ;
+      sh:property [
+          sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
+          sh:maxCount 1 ;
+          sh:maxInclusive "44" ;
+          sh:minCount 1 ;
+          sh:nodeKind sh:Literal ;
+        ] ;
+    ] ;
+  sh:targetClass schema:sensor ;
+.
+
+<http://www.industry-fusion.org/fields#sensor-v0.1-sensor-runtime-ambient-operating-temperature>
+  rdf:type rdf:Property ;
+.
+
+<http://www.industry-fusion.org/fields#sensor-v0.1-sensor-runtime-ambient-noise>
   rdf:type rdf:Property ;
 .
