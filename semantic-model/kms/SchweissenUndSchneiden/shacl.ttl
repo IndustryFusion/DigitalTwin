@@ -58,10 +58,35 @@
   sh:targetClass schema:sensor ;
 .
 
+:humidity
+  rdf:type sh:NodeShape ;
+  sh:property [
+      rdf:type sh:PropertyShape ;
+      sh:path <http://www.industry-fusion.org/fields#sensor-v0.1-sensor-runtime-relative-humidity> ;
+      sh:maxCount 1 ;
+      sh:minCount 1 ;
+      sh:name "sensor-v0.1-sensor-runtime-relative-humidity" ;
+      sh:nodeKind sh:BlankNode ;
+      sh:order "1" ;
+      sh:property [
+          sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
+          sh:maxCount 1 ;
+          sh:maxInclusive "60" ;
+          sh:minCount 1 ;
+          sh:nodeKind sh:Literal ;
+        ] ;
+    ] ;
+  sh:targetClass schema:sensor ;
+.
+
 <http://www.industry-fusion.org/fields#sensor-v0.1-sensor-runtime-ambient-operating-temperature>
   rdf:type rdf:Property ;
 .
 
 <http://www.industry-fusion.org/fields#sensor-v0.1-sensor-runtime-ambient-noise>
+  rdf:type rdf:Property ;
+.
+
+<http://www.industry-fusion.org/fields#sensor-v0.1-sensor-runtime-relative-humidity>
   rdf:type rdf:Property ;
 .
