@@ -3,6 +3,15 @@ on:
   schedule:
     - cron: '0 0 * * *'
 jobs:
+  cleanup:
+    runs-on: private
+    steps:
+      - name: Clear registry and unused images
+        shell: bash
+        run: |
+          set +e
+          k3d registry delete k3d-iff.localhost
+          docker system prune -a -f
   call-build:
     uses: IndustryFusion/DigitalTwin/.github/workflows/build.yaml@main
   call-test:
@@ -35,7 +44,6 @@ jobs:
             docker tag ${image} ${newimage};
             docker push ${newimage};
           done
-          docker system prune -a -f
 
 
 
