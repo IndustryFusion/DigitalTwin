@@ -36,4 +36,7 @@ load "lib/linter"
 
 	run lint "test-bridges/test-ngsild-updates-bridge.bats"
 	[ "$status" -eq 0 ]
+
+	run lint "test-device-authorization/test-device-authorization.bats"
+	[ "$status" -eq 0 ]
 }
