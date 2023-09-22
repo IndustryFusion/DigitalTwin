@@ -90,6 +90,7 @@ printf "\033[1mInstalling Postgres-operator v1.9.0\n"
 printf -- "------------------------\033[0m\n"
 git clone https://github.com/zalando/postgres-operator.git
 cd postgres-operator
+git fetch
 git checkout v1.9.0
 helm -n iff install postgres-operator ./charts/postgres-operator
 

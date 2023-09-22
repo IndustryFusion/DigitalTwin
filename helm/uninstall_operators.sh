@@ -27,7 +27,8 @@ printf "\033[1mUninstalling Postgres-operator\n"
 printf -- "------------------------\033[0m\n"
 git clone https://github.com/zalando/postgres-operator.git
 cd postgres-operator
-git checkout v1.8.2
+git fetch
+git checkout v1.9.0
 helm -n iff delete postgres-operator ./charts/postgres-operator
 
 
