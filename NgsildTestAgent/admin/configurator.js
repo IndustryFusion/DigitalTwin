@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014, Intel Corporation
+Copyright (c) 2023, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -31,19 +31,14 @@ var configFileKey = {
     loggerLevel: 'logger.LEVEL',
     connectorRestProxyHost: 'connector.rest.proxy.host',
     connectorRestProxyPort: 'connector.rest.proxy.port',
-    connectorWsProxyHost: 'connector.ws.proxy.host',
-    connectorWsProxyPort: 'connector.ws.proxy.port',
-    udpListenerPort: 'listeners.udp_port',
-    activationCode: 'activation_code',
-    accountId : 'account_id',
     gatewayId : 'gateway_id',
     deviceId: 'device_id',
     deviceName: 'device_name',
+    keycloakUrl: 'keycloak_url',
     deviceToken: 'device_token',
     refreshToken: 'refresh_token',
     deviceTokenExpire: 'device_token_expire',
-    sensorList: 'sensor_list',
-    lastActuationsPull: 'last_actuations_pull_time'
+    attributeList: 'attribute_list'
 };
 
 var setGatewayId = function(id, cb) {
@@ -55,14 +50,6 @@ var setDeviceId = function(id) {
     common.saveToDeviceConfig(configFileKey.deviceId, id);
 };
 
-var setLastActuationsPullTime = function(time) {
-    common.saveToDeviceConfig(configFileKey.lastActuationsPull, time);
-};
-
-var getLastActuationsPullTime = function(cb) {
-    utils.getValueFromDeviceConfig(configFileKey.lastActuationsPull, cb);
-};
-
 var getGatewayId = function(cb) {
     utils.getGatewayId(configFileKey.gatewayId, cb);
 };
@@ -71,12 +58,7 @@ var getDataDirectory = function(cb) {
     utils.getDataDirectory(configFileKey.dataDirectory, cb);
 };
 
-var setDeviceName = function(name, cb) {
-    common.saveToDeviceConfig(configFileKey.deviceName, name);
-    cb(name);
-};
 
-/*istanbul ignore next*/
 module.exports = {
     addCommand : function (program) {
 
@@ -122,40 +104,7 @@ module.exports = {
                     logger.info("Gateway Id set to: %s", id);
                 });
             });
-
-        program
-            .command('set-device-name <name>')
-            .description('Change device name')
-            .action(function(name) {
-                setDeviceName(name, function(name) {
-                    logger.info("Device name set to: %s", name);
-                });
-            });
-
-        program
-            .command('reset-device-name')
-            .description('Resets to default device name.')
-            .action(function() {
-                common.saveToDeviceConfig(configFileKey.deviceName, false);
-                logger.info("Device name changed to default.");
-            });
-
-        program
-            .command('save-code <activation_code>')
-            .description('Adds the activation code to the device.')
-            .action(function(activation_code) {
-                common.saveToDeviceConfig(configFileKey.activationCode, activation_code);
-                logger.info("Activation code saved.");
-            });
-
-        program
-            .command('reset-code')
-            .description('Clears the activation code of the device.')
-            .action(function() {
-                common.saveToDeviceConfig(configFileKey.activationCode, null);
-                logger.info("Activation code cleared.");
-            });
-
+       
         program
             .command('data-directory')
             .description('Displays current data directory.')
@@ -184,6 +133,4 @@ module.exports = {
     getGatewayId: getGatewayId,
     setGatewayId: setGatewayId,
     setDeviceId: setDeviceId,
-    setLastActuationsPullTime: setLastActuationsPullTime,
-    getLastActuationsPullTime: getLastActuationsPullTime
 };

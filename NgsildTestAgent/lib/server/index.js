@@ -22,8 +22,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-var utils = require("./../lib/utils").init();
-
-utils.getExternalInfo(function(data) {
-    console.dir(data);
-});
+"use strict";
+module.exports = {
+    "udp"    : require('./udp'),
+};

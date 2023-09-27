@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014, Intel Corporation
+Copyright (c) 2023, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -27,15 +27,17 @@ var Cloud = require("../lib/cloud.proxy"),
     utils = require("../lib/utils").init(),
     logger = require('../lib/logger').init(),
     Component = require('../lib/data/Components'),
-    common = require('../lib/common'),
+    common = require('../lib/common')
 
 var configFileKey = {
     realmId : 'realm_id',
     gatewayId : 'gateway_id',
     deviceId: 'device_id',
     deviceName: 'device_name',
+    keycloakUrl: 'keycloak_url',
+    onboardingToken:'onboarding_token',
     deviceToken: 'device_token',
-    metricList: 'metric_list'
+    attributeList: 'attribute_list'
 };
 
 var resetComponents = function () {
