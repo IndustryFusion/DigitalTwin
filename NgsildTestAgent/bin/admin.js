@@ -64,9 +64,6 @@ if(process.argv[2] === 'observation') {
     admin.parse(process.argv);
 }
 /*
- * Run if the command were specified at parameter
- */
-/*
  * Help and versions also as commands
  */
 if (!admin.args.length || admin.args[0] === 'help') {

@@ -33,16 +33,14 @@ var configFileKey = {
     realmId : 'realm_id',
     gatewayId : 'gateway_id',
     deviceId: 'device_id',
-    deviceName: 'device_name',
     keycloakUrl: 'keycloak_url',
-    onboardingToken:'onboarding_token',
     deviceToken: 'device_token',
     attributeList: 'attribute_list'
 };
 
 var resetComponents = function () {
     var data = [];
-    common.saveToDeviceConfig(configFileKey.metricList, data);
+    common.saveToDeviceConfig(configFileKey.attributeList, data);
 };
 
 var resetToken = function () {

@@ -3,11 +3,7 @@
 # Brief: Script to onboard a new device
 # Description: Dependend on Environment variables use onboarding token or ask for it and get device token
 # Environemnt:
-# - OISP_DEVICE_ACTIVATION_CODE if defined and device is not yet activated, it will activate using the code in
-#                        the variable
 # - OISP_DEVICE_ID the device id for activation
-# - OISP_DEVICE_NAME the device name for activation
-# - OISP_FORCE_REACTIVATION if set to "true" it will initialize the device and activate again with the code in OISP_ACTIVATION_CODE
 
 # How can I check whether device is activated? There is only a test for connectivity
 # For the time being, it checks whether device has a token.
