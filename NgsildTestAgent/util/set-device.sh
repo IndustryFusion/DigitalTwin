@@ -3,8 +3,8 @@
 # Brief: Script to set device configuration to onboard
 # Description: Dependend on Environment variables use onboarding token or ask for it and get device token
 
-if [ ! -d ./data ]; then
-  mkdir ./data
+if [ ! -d ../data ]; then
+  mkdir ../data
 fi
 
 #Check if Jq is installed or not 
@@ -18,7 +18,7 @@ else
 fi
 
 # Define the JSON file path
-json_file="./data/device.json"
+json_file="../data/device.json"
 
 # Prompt the user for input
 read -p "Enter device id: " deviceid
