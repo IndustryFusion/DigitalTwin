@@ -19,13 +19,13 @@ const fs = require('fs')
 const url = require('url')
 const Ajv = require('ajv/dist/2020')
 const yargs = require('yargs')
-const path = require('path')
 
-const removedKeywords = ["anyOf", "oneOf", "if", "then", "else", "prefixItems", "items",
-                         "valid", "error", "annotation", "additionalProperties", "propertyNames",
-                         "$vocabulary", "$defs", "multipleOf", "uniqueItems", "maxContains",
-                         "minContains", "maxProperties", "minPropeties", "dependentRequired"]
-const addedKeywords = ["relationship"]
+const removedKeywords = [
+  'anyOf', 'oneOf', 'if', 'then', 'else', 'prefixItems', 'items',
+  'valid', 'error', 'annotation', 'additionalProperties', 'propertyNames',
+  '$vocabulary', '$defs', 'multipleOf', 'uniqueItems', 'maxContains',
+  'minContains', 'maxProperties', 'minPropeties', 'dependentRequired']
+const addedKeywords = ['relationship']
 
 const argv = yargs
   .option('schema', {
@@ -50,10 +50,15 @@ const argv = yargs
   .alias('help', 'h')
   .argv
 
-const ajv = new Ajv({strict: true, strictTypes: true, strictSchema: true, strictTuples: false})
+const ajv = new Ajv({
+  strict: true,
+  strictTypes: true,
+  strictSchema: true,
+  strictTuples: false
+})
 
 const schema = fs.readFileSync(argv.s, 'utf8')
-const parsedSchema =  JSON.parse(schema)
+const parsedSchema = JSON.parse(schema)
 
 ajv.addSchema(parsedSchema)
 
@@ -62,22 +67,22 @@ ajv.addSchema(parsedSchema)
 // incompatible with $id definition of JSON-Schema. Workaround
 // is to use URL-encoding
 
-const id = url.parse(argv.i)
-var idFragment = '';
-var idPath = '';
+const id = url.URL(argv.i)
+let idFragment = ''
+let idPath = ''
 if (id.hash !== null) {
-  idFragment = encodeURIComponent(id.hash);
+  idFragment = encodeURIComponent(id.hash)
 }
 if (id.path !== null) {
-  idPath = id.path;
+  idPath = id.path
 }
-const idUrl = id.protocol + '//' + id.host + idPath + idFragment; 
+const idUrl = id.protocol + '//' + id.host + idPath + idFragment
 
 const data = JSON.parse(fs.readFileSync(argv.d, 'utf8'))
 
 // Remove all non supported and add all proprietary keywords.
-removedKeywords.forEach(kw => ajv.removeKeyword(kw));
-addedKeywords.forEach(kw => ajv.addKeyword({keyword: kw}));
+removedKeywords.forEach(kw => ajv.removeKeyword(kw))
+addedKeywords.forEach(kw => ajv.addKeyword({ keyword: kw }))
 
 if (ajv.validate(idUrl, data)) {
   console.log('The Datafile is compliant with Schema')

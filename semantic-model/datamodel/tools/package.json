@@ -4,12 +4,20 @@
   "description": "This package contains tools for validating NGSI-LD data for the Process Data Twin (PDT)",
   "main": "validate.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "./node_modules/.bin/eslint *.js"
   },
   "author": "Marcel Wagner",
   "license": "Apache-2.0",
   "dependencies": {
     "ajv": "^8.12.0",
     "yargs": "^17.7.2"
+  },
+  "devDependencies": {
+    "eslint": "^8.53.0",
+    "eslint-config-standard": "^17.1.0",
+    "eslint-plugin-import": "^2.29.0",
+    "eslint-plugin-n": "^16.2.0",
+    "eslint-plugin-promise": "^6.1.1"
   }
 }
