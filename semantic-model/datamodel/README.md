@@ -268,7 +268,7 @@ In order to validate it with a JSON-Schema, first the base object must be descri
 ```
  {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "$id": "https://industry-fusion.org/eclass#0173-1#01-AKJ975#017",
+        "$id": "<URL-Encoded expanded type>",
         "title": "Plasmacutter",
         "description": "Plasmacutter template for IFF",
         "type": "object",
@@ -285,6 +285,139 @@ In order to validate it with a JSON-Schema, first the base object must be descri
         "allOf": [<urls describing further properties or relationships>]
     }
 ```
+This specifies the mandatory `id` and `type` field of every NGSI-LD object. `id` must be an *URN* and `type` must contain a *compacted* form.
+The "$schema" field must be "https://json-schema.org/draft/2020-12/schema", the $id of the schema must be a valid URL with the additional constraint that all '#' fields must be URL-Encoded. An example for a schema and related data can be seen in the following:
+
+```
+# JSON-Schema:
+[{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://industry-fusion.org/eclass%230173-1%2301-AKJ975%23017",
+    "title": "Cutter",
+    "description": "Cutter template for IFF",
+    "type": "object",
+    "properties": {
+       "type": {
+        "const": "eclass:0173-1#01-AKJ975#017"
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^urn:[a-zA-Z0-9][a-zA-Z0-9-]{1,31}:([a-zA-Z0-9()+,.:=@;$_!*'-]|%[0-9a-fA-F]{2})*$"
+        }
+    },
+    "required": ["type", "id"]
+}]
+
+# JSON-LD Object
+{
+    "@context": "https://industryfusion.github.io/contexts/v0.1/context.jsonld",
+    "id": "urn:iff:abc123",
+    "type": "eclass:0173-1#01-AKJ975#017"
+}
+```
+
+The *properties* and *relationships* can be grouped and aggregated by the `allOf` array. In the following a *string* property is validated by a schema:
+
+```
+{
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "https://industry-fusion.org/base-objects/v0.1/cutter/properties",
+        "title": "Cutter properties",
+        "description": "Properties for class cutter",
+        "type": "object",
+        "properties": {
+            "machine_state": {
+                "type": "string",
+                "title": "Machine Status",
+                "description": "Current status of the machine (Online_Idle, Run, Online_Error, Online_Maintenance, Setup, Testing)",
+                "enum": [
+                    "Online_Idle",
+                    "Run",
+                    "Online_Error",
+                    "Online_Maintenance",
+                    "Setup",
+                    "Testing"
+                ]
+            }
+        }
+}
+```
+The following validates a *relationship*:
+
+
+```
+ {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "https://industry-fusion.org/base-objects/v0.1/cutter/relationships",
+        "title": "IFF template for cutter relationship",
+        "description": "Cutter template for IFF",
+        "type": "object",
+        "properties": {
+            "hasFilter": {
+                "relationship": "eclass:0173-1#01-ACK991#016",
+                "$ref": "https://industry-fusion.org/base-objects/v0.1/link"
+            }
+        }
+    },
+    {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "https://industry-fusion.org/base-objects/v0.1/link",
+        "title": "IFF template for cutter relationship",
+        "description": "Cutter template for IFF",
+        "type": "object",
+        "properties": {
+            "object": {
+                "type": "string",
+                "pattern": "^urn:[a-zA-Z0-9][a-zA-Z0-9-]{0,31}:[a-zA-Z0-9()+,\\-.:=@;$_!*']*[a-zA-Z0-9()+,\\-.:=@;$_!*']$"
+            }
+        },
+        "required": ["object"]
+    },
+
+```
+Overall, the resulting full JSON-Schema looks like follows:
+
+```
+# JSON-Schema:
+[{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://industry-fusion.org/eclass%230173-1%2301-AKJ975%23017",
+    "title": "Cutter",
+    "description": "Cutter template for IFF",
+    "type": "object",
+    "properties": {
+       "type": {
+        "const": "eclass:0173-1#01-AKJ975#017"
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^urn:[a-zA-Z0-9][a-zA-Z0-9-]{1,31}:([a-zA-Z0-9()+,.:=@;$_!*'-]|%[0-9a-fA-F]{2})*$"
+        }
+    },
+    "allOf": [
+        {
+            "$ref": "https://industry-fusion.org/base-objects/v0.1/cutter/properties"
+        },
+        {
+            "$ref": "https://industry-fusion.org/base-objects/v0.1/cutter/relationships"
+        }
+    ],
+    "required": ["type", "id"]
+}]
+
+# JSON-LD Object
+{
+    "@context": "https://industryfusion.github.io/contexts/v0.1/context.jsonld",
+    "id": "urn:iff:abc123",
+    "type": "eclass:0173-1#01-AKJ975#017",
+    "hasFilter": {
+        "object": "urn:iff:filter:1"
+    },
+    "machine_state": "Testing"
+}
+
+```
+## Integrating ECLASS Properties
 
 ## Translating JSON-Schema to SHACL
 
