@@ -21,6 +21,12 @@ const Ajv = require('ajv/dist/2020')
 const yargs = require('yargs')
 const path = require('path')
 
+const removedKeywords = ["anyOf", "oneOf", "if", "then", "else", "prefixItems", "items",
+                         "valid", "error", "annotation", "additionalProperties", "propertyNames",
+                         "$vocabulary", "$defs", "multipleOf", "uniqueItems", "maxContains",
+                         "minContains", "maxProperties", "minPropeties", "dependentRequired"]
+const addedKeywords = ["relationship"]
+
 const argv = yargs
   .option('schema', {
     alias: 's',
@@ -44,7 +50,7 @@ const argv = yargs
   .alias('help', 'h')
   .argv
 
-const ajv = new Ajv({strict: false, strictTypes: false, strictSchema: false, strictTuples: false})
+const ajv = new Ajv({strict: true, strictTypes: true, strictSchema: true, strictTuples: false})
 
 const schema = fs.readFileSync(argv.s, 'utf8')
 const parsedSchema =  JSON.parse(schema)
@@ -68,6 +74,11 @@ if (id.path !== null) {
 const idUrl = id.protocol + '//' + id.host + idPath + idFragment; 
 
 const data = JSON.parse(fs.readFileSync(argv.d, 'utf8'))
+
+// Remove all non supported and add all proprietary keywords.
+removedKeywords.forEach(kw => ajv.removeKeyword(kw));
+addedKeywords.forEach(kw => ajv.addKeyword({keyword: kw}));
+
 if (ajv.validate(idUrl, data)) {
   console.log('The Datafile is compliant with Schema')
 } else {

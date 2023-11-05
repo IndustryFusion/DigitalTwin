@@ -417,8 +417,60 @@ Overall, the resulting full JSON-Schema looks like follows:
 }
 
 ```
+
+## Forbidden JSON-Schema keywords:
+The following JSON-Schema Keywords from the standard are forbidded:
+
+* anyOf, oneOf
+* if, then, else
+* prefixItems, items
+* valid, error, annotations
+* additionalProperties
+* propertyNames
+* $vocabulary, $defs
+* multipleOf
+* uniqueItems
+* maxContains, minContains
+* maxProperties, minProperties
+* dependentRequired
+
+## Added JSON-Schmea Keywords:
+The following JSON-Schema Keywords are added to the standard:
+
+* **relationship:** Contains the *compacted* type for a NGSI-LD relationship. 
+
 ## Integrating ECLASS Properties
+`ECLASS` provides additional data for every `IRDI` which can be added/mapped to `JSON-Schema`:
+
+- `Preferred Name` is mapped to `title` field
+- `Definition` is mapped to `description` field
+- The unit symbol of `Unit` is mapped to `unit` field
+- `Type` of the field is mapped to `datatype` and xsd-type as described [here](https://eclass.eu/support/technical-specification/data-model/datatype-to-xsd-mapping)
+- The `JSON` `type` field of every `ECLASS` property is `string`.
+
+For [example](./schema-ngsild-eclass/schema.json), the `ECLASS` property `` is described in the `JSON-Schema` as:
+
+```
+ "eclass:0173-1#02-AAH880#003": {
+                "type": "string",
+                "datatype": "double",
+                "title": "min. cutting current",
+                "description": "specification of the minimum cutting current",
+                "unit": "A"
+            }
+```
 
 ## Translating JSON-Schema to SHACL
 
 ## Tools
+This section describes the tools which are used for validation, data conversion and SHACL creation. The tools can be found in the `./tools`
+
+### Validation
+
+The validation tool is `validate.js`. It is a nodejs tool working with node v1.16
+
+`node tools/validate.js -s examples/plasmacutter_schema.json -d examples/plasmacutter_data.json -i https://industry-fusion.org/eclass#0173-1#01-AKJ975#017`
+
+### Convert JSON-Schema to SHACL
+
+### Convert NGSI-LD forms
