@@ -1,0 +1,10 @@
+Not Compliant:
+[
+  {
+    instancePath: '/hasFilter',
+    schemaPath: 'https://industry-fusion.org/base-objects/v0.1/link/type',
+    keyword: 'type',
+    params: { type: 'object' },
+    message: 'must be object'
+  }
+]

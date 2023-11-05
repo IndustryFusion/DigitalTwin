@@ -1,0 +1,53 @@
+[
+  {
+    "@context": [
+      "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+      {
+        "@vocab": "https://industry-fusion.org/base/v0.1/",
+        "eclass": {
+          "@id": "https://industry-fusion.org/eclass#",
+          "@prefix": true
+        },
+        "xsd": {
+          "@id": "http://www.w3.org/2001/XMLSchema#",
+          "@prefix": true
+        },
+        "iffb": {
+          "@id": "https://industry-fusion.org/base/v0.1/",
+          "@prefix": true
+        },
+        "iffk": {
+          "@id": "https://industry-fusion.org/knowledge/v0.1/",
+          "@prefix": true
+        },
+        "rdf": {
+          "@id": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+          "@prefix": true
+        },
+        "rdfs": {
+          "@id": "http://www.w3.org/2000/01/rdf-schema#",
+          "@prefix": true
+        },
+        "schema": {
+          "@id": "http://schema.org/",
+          "@prefix": true
+        },
+        "sh": {
+          "@id": "http://www.w3.org/ns/shacl#",
+          "@prefix": true
+        }
+      }
+    ],
+    "id": "urn:x:1",
+    "type": "iffk:0173-1#01-AKJ975#017",
+    "hasFilter": {
+      "object": "urn:filter:1"
+    },
+    "machine_state": "Testing",
+    "machine_state_from_smartbox": "Offline_Idle",
+    "testiri": {
+      "id": "iffk:testiri"
+    },
+    "eclass:0173-1#02-AAH880#003": "10"
+  }
+]

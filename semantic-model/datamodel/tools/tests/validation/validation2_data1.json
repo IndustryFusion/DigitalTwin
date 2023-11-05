@@ -1,0 +1,5 @@
+{
+    "@context": "https://industryfusion.github.io/contexts/v0.1/context.jsonld",
+    "id": "urn:iff:abc123",
+    "type": "Plasmacutter"
+}

@@ -1,0 +1,10 @@
+Not Compliant:
+[
+  {
+    instancePath: '/type',
+    schemaPath: '#/properties/type/const',
+    keyword: 'const',
+    params: { allowedValue: 'eclass:0173-1#01-AKJ975#017' },
+    message: 'must be equal to constant'
+  }
+]
