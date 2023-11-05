@@ -1,0 +1,12 @@
+Not Compliant:
+[
+  {
+    instancePath: '/hasFilter/object',
+    schemaPath: 'https://industry-fusion.org/base-objects/v0.1/link/properties/object/pattern',
+    keyword: 'pattern',
+    params: {
+      pattern: "^urn:[a-zA-Z0-9][a-zA-Z0-9-]{0,31}:[a-zA-Z0-9()+,\\-.:=@;$_!*']*[a-zA-Z0-9()+,\\-.:=@;$_!*']$"
+    },
+    message: `must match pattern "^urn:[a-zA-Z0-9][a-zA-Z0-9-]{0,31}:[a-zA-Z0-9()+,\\-.:=@;$_!*']*[a-zA-Z0-9()+,\\-.:=@;$_!*']$"`
+  }
+]

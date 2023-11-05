@@ -1,0 +1,12 @@
+Not Compliant:
+[
+  {
+    instancePath: '/id',
+    schemaPath: '#/properties/id/pattern',
+    keyword: 'pattern',
+    params: {
+      pattern: "^urn:[a-zA-Z0-9][a-zA-Z0-9-]{1,31}:([a-zA-Z0-9()+,.:=@;$_!*'-]|%[0-9a-fA-F]{2})*$"
+    },
+    message: `must match pattern "^urn:[a-zA-Z0-9][a-zA-Z0-9-]{1,31}:([a-zA-Z0-9()+,.:=@;$_!*'-]|%[0-9a-fA-F]{2})*$"`
+  }
+]
