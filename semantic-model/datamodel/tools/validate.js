@@ -67,14 +67,14 @@ ajv.addSchema(parsedSchema)
 // incompatible with $id definition of JSON-Schema. Workaround
 // is to use URL-encoding
 
-const id = url.URL(argv.i)
+const id = new url.URL(argv.i)
 let idFragment = ''
 let idPath = ''
 if (id.hash !== null) {
   idFragment = encodeURIComponent(id.hash)
 }
-if (id.path !== null) {
-  idPath = id.path
+if (id.pathname !== null) {
+  idPath = id.pathname
 }
 const idUrl = id.protocol + '//' + id.host + idPath + idFragment
 
