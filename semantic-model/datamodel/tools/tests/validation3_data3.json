@@ -5,5 +5,5 @@
     "hasFilter": {
         "object": "urn:iff:filter:1"
     },
-    "machine_state": "Testing"
+    "machine_state": "wrongState"
 }

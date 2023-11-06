@@ -1,1 +1,10 @@
-The Datafile is compliant with Schema
+Not Compliant:
+[
+  {
+    instancePath: '/machine_state',
+    schemaPath: 'https://industry-fusion.org/base-objects/v0.1/cutter/properties/properties/machine_state/enum',
+    keyword: 'enum',
+    params: { allowedValues: [Array] },
+    message: 'must be equal to one of the allowed values'
+  }
+]
