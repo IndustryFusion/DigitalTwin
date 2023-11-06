@@ -1,0 +1,9 @@
+{
+    "@context": "https://industryfusion.github.io/contexts/v0.1/context.jsonld",
+    "id": "urn:iff:abc123",
+    "type": "eclass:0173-1#01-AKJ975#017",
+    "hasFilter": {
+        "object": "wrongurn"
+    },
+    "machine_state": "Testing"
+}

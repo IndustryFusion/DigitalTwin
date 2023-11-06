@@ -4,7 +4,7 @@
   "description": "This package contains tools for validating NGSI-LD data for the Process Data Twin (PDT)",
   "main": "validate.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "cd tests && bash ./test_validation.sh && exit 0",
     "lint": "./node_modules/.bin/eslint *.js"
   },
   "author": "Marcel Wagner",

@@ -467,7 +467,26 @@ This section describes the tools which are used for validation, data conversion 
 
 ### Validation
 
-The validation tool is `validate.js`. It is a nodejs tool working with node v1.16
+The validation tool is `validate.js`. 
+
+#### Install
+
+```
+npm install
+```
+
+#### Usage
+
+```
+Optionen:
+      --version   Version anzeigen                                     [boolean]
+  -s, --schema    Schema File                            [string] [erforderlich]
+  -d, --datafile  File to validate                       [string] [erforderlich]
+  -i, --schemaid  Schema-id to validate                  [string] [erforderlich]
+  -h, --help      Hilfe anzeigen                                       [boolean]
+```
+
+#### Examples
 
 `node tools/validate.js -s examples/plasmacutter_schema.json -d examples/plasmacutter_data.json -i https://industry-fusion.org/eclass#0173-1#01-AKJ975#017`
 
