@@ -44,7 +44,7 @@ spec:
   databases:
 {{ toYaml .Values.databases | indent 4 }}
   postgresql:
-    version: "12"
+    version: "14"
     parameters:
       wal_level: logical
   {{- if .Values.db.cloneEnabled }}
