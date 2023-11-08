@@ -99,32 +99,6 @@ if (!Array.isArray(jsonObj)) {
   jsonArr = jsonObj
 }
 
-function assertNoContext (jsonObj) {
-  if (Array.isArray(jsonObj)) {
-    jsonObj.forEach((obj) => {
-      if ('@context' in obj) {
-        console.error('Error: @contex found in json-object. Only fully expanded objects without @context can be compacted. Exiting!')
-        process.exit(1)
-      }
-    })
-  } else {
-    if ('@context' in jsonObj) {
-      console.error('Error: @context found in json-object. Only fully expanded objects without @context can be compacted. Exiting!')
-      process.exit(1)
-    }
-  }
-}
-
-// Check if every object in array whether it has Context
-function hasContexts (jsonArr) {
-  jsonArr.forEach(jsonObj => {
-    if (!('@context' in jsonObj)) {
-      return false
-    }
-  })
-  return true
-}
-
 function loadContextFromFile (fileName) {
   const context = fs.readFileSync(fileName, 'utf8')
   const contextParsed = JSON.parse(context)
@@ -154,9 +128,9 @@ function mergeContexts (jsonArr, context) {
     return mergedContext
   }
   if (context !== undefined) {
-    const parseContextUrl = new url.parse(context, true)
+    const parseContextUrl = new url.URL(context)
     if (parseContextUrl.protocol === 'file:') {
-      context = loadContextFromFile(parseContextUrl.path)
+      context = loadContextFromFile(parseContextUrl.pathname)
     }
   }
   return jsonArr.map(jsonObj => {

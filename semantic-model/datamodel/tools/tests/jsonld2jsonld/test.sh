@@ -15,19 +15,13 @@
 # limitations under the License.
 #
 
-#for testdir in $(ls payload*.jsonld_?_c*); do
 while IFS='_' read -ra ADDR; do
   payload=${ADDR[0]}
   switch=${ADDR[1]}
   context=${ADDR[2]}
   comparewith=${payload}_${switch}_${context}
-  echo comparewith $comparewith
+  echo comparewith "$comparewith"
   command="node ../../jsonldConverter.js $payload -$switch -c file://$PWD/$context"
-  echo Executing: $command
-  $command | diff ${comparewith} -
-  #$command
-  #for i in "${ADDR[@]}"; do
-    # process "$i"
-  #  echo $i
-  #done
-done <<< $(ls payload*.jsonld_?_c*)
+  echo Executing: "$command"
+  $command | diff "${comparewith}" -
+done <<< "$(ls payload*.jsonld_?_c*)"

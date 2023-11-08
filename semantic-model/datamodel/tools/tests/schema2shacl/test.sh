@@ -15,14 +15,13 @@
 # limitations under the License.
 #
 
-#for testdir in $(ls payload*.jsonld_?_c*); do
 while IFS='_' read -ra ADDR; do
   schemaname=${ADDR[0]}
   context=${ADDR[1]%.json}
   file=${schemaname}_${context}.json
   comparewith=${file}_result
   id=${file}_id
-  command="node ../../jsonschema2shacl.js -s $file -c file://$PWD/$context -i $(cat $id)"
-  echo Executing: $command
-  $command | diff ${comparewith} -
-done <<< $(ls schema*_*.json)
+  command="node ../../jsonschema2shacl.js -s $file -c file://$PWD/$context -i $(cat "$id")"
+  echo Executing: "$command"
+  $command | diff "${comparewith}" -
+done <<< "$(ls schema*_*.json)"

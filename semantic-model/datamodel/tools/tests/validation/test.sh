@@ -21,8 +21,8 @@ while IFS='_' read -ra ADDR; do
   dataname=${testname}_${ADDR[1]}
   resultname=${dataname}_result
   idname=${dataname}_id
-  command="node ../../validate.js -s ${schemaname} -d ${dataname} -i $(cat ${idname})"
+  command="node ../../validate.js -s ${schemaname} -d ${dataname} -i $(cat "${idname}")"
   echo -n "Executing test $command ... "
-  $command | diff ${resultname} -
+  $command | diff "${resultname}" -
   echo OK
-done <<< $(ls validation*_data*.json)
+done <<< "$(ls validation*_data*.json)"
