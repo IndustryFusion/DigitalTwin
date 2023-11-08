@@ -1,4 +1,3 @@
-#!/bin/bash
 #
 # Copyright (c) 2023 Intel Corporation
 #
@@ -15,14 +14,14 @@
 # limitations under the License.
 #
 
-while IFS='_' read -ra ADDR; do
-  testname=${ADDR[0]}
-  schemaname=${testname}_schema.json
-  dataname=${testname}_${ADDR[1]}
-  resultname=${dataname}_result
-  idname=${dataname}_id
-  command="node ../../validate.js -s ${schemaname} -d ${dataname} -i $(cat ${idname})"
-  echo -n "Executing test $command ... "
-  $command | diff ${resultname} -
-  echo OK
-done <<< $(ls validation*_data*.json)
+
+setup:
+	pip3 install pyshacl
+	npm install
+
+lint:
+	npm run lint
+	shellcheck tests/*/test.sh
+
+test:
+	npm run test

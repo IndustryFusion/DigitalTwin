@@ -4,13 +4,16 @@
   "description": "This package contains tools for validating NGSI-LD data for the Process Data Twin (PDT)",
   "main": "validate.js",
   "scripts": {
-    "test": "cd tests && bash ./test_validation.sh && exit 0",
+    "test": "cd tests && for dir in $(ls); do (cd $dir; bash ./test.sh); done && exit 0",
     "lint": "./node_modules/.bin/eslint *.js"
   },
   "author": "Marcel Wagner",
   "license": "Apache-2.0",
   "dependencies": {
     "ajv": "^8.12.0",
+    "json-schema-ref-parser": "^9.0.9",
+    "jsonld-context-parser": "^2.4.0",
+    "rdflib": "^2.2.32",
     "yargs": "^17.7.2"
   },
   "devDependencies": {

@@ -1,0 +1,7 @@
+@prefix iffb: <https://industry-fusion.org/base/v0.1/>.
+@prefix iffk: <https://industry-fusion.org/knowledge/v0.1/>.
+@prefix sh: <http://www.w3.org/ns/shacl#>.
+
+iffk:Shape a sh:NodeShape; sh:targetClass iffb:Plasmacutter.
+
+

@@ -1,0 +1,17 @@
+[{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://industry-fusion.org/eclass%230173-1%2301-AKJ975%23017",
+    "title": "Cutter",
+    "description": "Cutter template for IFF",
+    "type": "object",
+    "properties": {
+       "type": {
+        "const": "eclass:0173-1#01-AKJ975#017"
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^urn:[a-zA-Z0-9][a-zA-Z0-9-]{1,31}:([a-zA-Z0-9()+,.:=@;$_!*'-]|%[0-9a-fA-F]{2})*$"
+        }
+    },
+    "required": ["type", "id"]
+}]

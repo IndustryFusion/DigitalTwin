@@ -1,0 +1,6 @@
+@prefix sh: <http://www.w3.org/ns/shacl#>.
+
+<https://industry-fusion.org/knowledge/v0.1/0173-1#01-AKJ975#017Shape>
+    a sh:NodeShape;
+    sh:targetClass <https://industry-fusion.org/eclass#0173-1#01-AKJ975#017>.
+
