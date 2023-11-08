@@ -1,0 +1,37 @@
+[
+  {
+    "https://industry-fusion.org/eclass#0173-1#02-AAH880#003": [
+      {
+        "@value": "10"
+      }
+    ],
+    "https://industry-fusion.org/base/v0.1/hasFilter": [
+      {
+        "https://uri.etsi.org/ngsi-ld/hasObject": [
+          {
+            "@id": "urn:filter:1"
+          }
+        ]
+      }
+    ],
+    "@id": "urn:x:1",
+    "https://industry-fusion.org/base/v0.1/machine_state": [
+      {
+        "@value": "Testing"
+      }
+    ],
+    "https://industry-fusion.org/base/v0.1/machine_state_from_smartbox": [
+      {
+        "@value": "Offline_Idle"
+      }
+    ],
+    "https://industry-fusion.org/base/v0.1/testiri": [
+      {
+        "@id": "https://industry-fusion.org/knowledge/v0.1/testiri"
+      }
+    ],
+    "@type": [
+      "https://industry-fusion.org/knowledge/v0.1/0173-1#01-AKJ975#017"
+    ]
+  }
+]

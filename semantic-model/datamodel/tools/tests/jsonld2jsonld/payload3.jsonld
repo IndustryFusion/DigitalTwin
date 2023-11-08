@@ -1,0 +1,24 @@
+[{
+    "machine_state": "Testing",
+    "machine_state_from_smartbox": "Offline_Idle",
+    "hasFilter": {
+        "type": "Relationship",
+        "object": "urn:filter:1"
+    },
+    "testiri": {
+        "@id": "iffk:testiri"
+    },
+    "eclass:0173-1#02-AAH880#003": {
+        "value": "10",
+        "type": "Property"
+    },
+    "id": "urn:x:1",
+    "type": "eclass:0173-1#01-AKJ975#017"
+},
+{
+    "machine_state": "Testing",
+    "machine_state_from_smartbox": "Offline_Idle",
+    "id": "urn:filter:1",
+    "type": "eclass:0173-1#01-ACK991#016"
+}
+]
