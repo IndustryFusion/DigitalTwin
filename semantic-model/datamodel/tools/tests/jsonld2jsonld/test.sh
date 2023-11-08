@@ -23,5 +23,5 @@ while IFS='_' read -ra ADDR; do
   echo comparewith "$comparewith"
   command="node ../../jsonldConverter.js $payload -$switch -c file://$PWD/$context"
   echo Executing: "$command"
-  $command | diff "${comparewith}" -
+  $command | diff "${comparewith}" - || exit 1
 done <<< "$(ls payload*.jsonld_?_c*)"

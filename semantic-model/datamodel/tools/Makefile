@@ -24,4 +24,7 @@ lint:
 	shellcheck tests/*/test.sh
 
 test:
-	npm run test
+	#npm run test
+	cd tests/validation && bash ./test.sh
+	cd tests/jsonld2jsonld && bash ./test.sh
+	cd tests/schema2shacl && bash ./test.sh

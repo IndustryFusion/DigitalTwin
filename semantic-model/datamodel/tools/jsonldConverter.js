@@ -15,25 +15,11 @@
 */
 'use strict'
 
-// const $RefParser = require('json-schema-ref-parser');
-// const $rdf = require('rdflib')
 const fs = require('fs')
 const yargs = require('yargs')
-// const path = require('path')
-// const N3 = require('n3')
 const url = require('url')
-// const { DataFactory } = N3
-// const { namedNode, literal, blankNode, defaultGraph, quad } = DataFactory;
-// const { URL } = require('url'); // Import the URL module
-// const ContextParser = require('jsonld-context-parser').ContextParser
-// const ContextUtil = require('jsonld-context-parser').Util;
-// const myParser = new ContextParser()
 const jsonld = require('jsonld')
-// const exp = require('constants');
-
-// const RDF = $rdf.Namespace('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
-// const SHACL = $rdf.Namespace('http://www.w3.org/ns/shacl#');
-// const IFFK = $rdf.Namespace('https://industry-fusion.org/knowledge/v0.1/');
+const jsonldUtils = require('./lib/jsonldUtils')
 let jsonFileName
 const argv = yargs
   .option('concise', {
@@ -97,46 +83,6 @@ if (!Array.isArray(jsonObj)) {
   jsonArr = [jsonObj]
 } else {
   jsonArr = jsonObj
-}
-
-function loadContextFromFile (fileName) {
-  const context = fs.readFileSync(fileName, 'utf8')
-  const contextParsed = JSON.parse(context)
-  return contextParsed
-}
-
-// Merge Contexts
-function mergeContexts (jsonArr, context) {
-  function mergeContext (localContext, context) {
-    let mergedContext = []
-    if (!Array.isArray(localContext) && localContext !== undefined) {
-      mergedContext = [localContext]
-    }
-    if (context === undefined) {
-      if (mergedContext.length === 0) {
-        return null
-      }
-      return mergedContext
-    } else if (!Array.isArray(context)) {
-      context = [context]
-    }
-    context.forEach(c => {
-      if (typeof (c) !== 'string' || mergedContext.find(x => c === x) === undefined) {
-        mergedContext.push(c)
-      }
-    })
-    return mergedContext
-  }
-  if (context !== undefined) {
-    const parseContextUrl = new url.URL(context)
-    if (parseContextUrl.protocol === 'file:') {
-      context = loadContextFromFile(parseContextUrl.pathname)
-    }
-  }
-  return jsonArr.map(jsonObj => {
-    const localContext = jsonObj['@context']
-    return mergeContext(localContext, context)
-  })
 }
 
 function conciseExpandedForm (expanded) {
@@ -210,7 +156,7 @@ async function compact (objArr, contextArr) {
 
 (async (jsonArr) => {
   if (!(argv.n === undefined)) {
-    const mergedContexts = mergeContexts(jsonArr, argv.c)
+    const mergedContexts = jsonldUtils.mergeContexts(jsonArr, argv.c)
     if (mergedContexts !== undefined && mergedContexts.find(x => x === null)) {
       console.error('Error: For Compaction, context must be either defined in all objects or externally. Exiting!')
       process.exit(1)
@@ -222,7 +168,7 @@ async function compact (objArr, contextArr) {
     console.log(JSON.stringify(compacted, null, 2))
   }
   if (!(argv.x === undefined)) {
-    const mergedContexts = mergeContexts(jsonArr, argv.c)
+    const mergedContexts = jsonldUtils.mergeContexts(jsonArr, argv.c)
     if (mergedContexts !== undefined && mergedContexts.find(x => x === null)) {
       console.error('Error: For Extraction, context must be either defined in all objects or externally. Exiting!')
       process.exit(1)
@@ -231,7 +177,7 @@ async function compact (objArr, contextArr) {
     console.log(JSON.stringify(expanded, null, 2))
   }
   if (!(argv.r === undefined)) {
-    const mergedContexts = mergeContexts(jsonArr, argv.c)
+    const mergedContexts = jsonldUtils.mergeContexts(jsonArr, argv.c)
     if (mergedContexts !== undefined && mergedContexts.find(x => x === null)) {
       console.error('Error: For Normalization, context must be either defined in all objects or externally. Exiting!')
       process.exit(1)
