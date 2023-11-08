@@ -1,0 +1,13 @@
+{
+    "machine_state": "Testing",
+    "machine_state_from_smartbox": "Offline_Idle",
+    "hasFilter": {
+        "object": "urn:filter:1"
+    },
+    "testiri": {
+        "@id": "iffk:testiri"
+    },
+    "eclass:0173-1#02-AAH880#003": "10",
+    "id": "urn:x:1",
+    "type": "eclass:0173-1#01-AKJ975#017"
+}
