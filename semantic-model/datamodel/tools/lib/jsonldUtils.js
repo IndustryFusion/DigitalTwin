@@ -58,6 +58,9 @@ function mergeContexts (jsonArr, context) {
       context = loadContextFromFile(parseContextUrl.pathname)
     }
   }
+  if (jsonArr === undefined) {
+    return mergeContext(undefined, context)
+  }
   return jsonArr.map(jsonObj => {
     const localContext = jsonObj['@context']
     return mergeContext(localContext, context)
