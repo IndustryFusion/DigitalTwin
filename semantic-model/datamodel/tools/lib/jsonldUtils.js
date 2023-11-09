@@ -64,6 +64,74 @@ function mergeContexts (jsonArr, context) {
   })
 }
 
+/**
+ * Expects NGSI-LD object in expanded form and transforms to NGSI-LD concise form
+ * @param {object} expanded
+ * @returns concise and expanded form
+ */
+function conciseExpandedForm (expanded) {
+  function filterAttribute (attr) {
+    if (typeof (attr) === 'object') {
+      if ('@type' in attr && (attr['@type'][0] === 'https://uri.etsi.org/ngsi-ld/Property' ||
+                                    attr['@type'][0] === 'https://uri.etsi.org/ngsi-ld/Relationship')) {
+        delete attr['@type']
+      }
+      if ('https://uri.etsi.org/ngsi-ld/hasValue' in attr) {
+        attr['@value'] = attr['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@value']
+        delete attr['https://uri.etsi.org/ngsi-ld/hasValue']
+      }
+    }
+  }
+  expanded.forEach(c => {
+    Object.keys(c).forEach(key => {
+      if (Array.isArray(c[key])) {
+        c[key].forEach(a => filterAttribute(a))
+      } else {
+        filterAttribute(c[key])
+      }
+    })
+  })
+  return expanded
+}
+
+/**
+ * Expects NGSI-LD object in expanded form and transforms to NGSI-LD normalized
+ * @param {object} expanded
+ * @returns normalized NGSI-LD and expanded form
+ */
+function normalizeExpandedForm (expanded) {
+  function extendAttribute (attr) {
+    if (typeof (attr) === 'object') {
+      if (!('@type' in attr)) {
+        if ('https://uri.etsi.org/ngsi-ld/hasValue' in attr || '@value' in attr || '@id' in attr) {
+          attr['@type'] = 'https://uri.etsi.org/ngsi-ld/Property'
+        } else if ('https://uri.etsi.org/ngsi-ld/hasObject' in attr) {
+          attr['@type'] = 'https://uri.etsi.org/ngsi-ld/Relationship'
+        }
+        if ('@value' in attr) {
+          attr['https://uri.etsi.org/ngsi-ld/hasValue'] = attr['@value']
+          delete attr['@value']
+        } else if ('@id' in attr) {
+          attr['https://uri.etsi.org/ngsi-ld/hasValue'] = { '@id': attr['@id'] }
+          delete attr['@id']
+        }
+      }
+    }
+  }
+  expanded.forEach(c => {
+    Object.keys(c).forEach(key => {
+      if (Array.isArray(c[key])) {
+        c[key].forEach(a => extendAttribute(a))
+      } else {
+        extendAttribute(c[key])
+      }
+    })
+  })
+  return expanded
+}
+
 module.exports = {
-  mergeContexts
+  mergeContexts,
+  conciseExpandedForm,
+  normalizeExpandedForm
 }

@@ -19,11 +19,8 @@ const $RefParser = require('json-schema-ref-parser')
 const $rdf = require('rdflib')
 const fs = require('fs')
 const yargs = require('yargs')
-// const N3 = require('n3')
 const url = require('url')
-// const { DataFactory } = N3
-// const { namedNode, literal, blankNode, defaultGraph, quad } = DataFactory
-// const { URL } = require('url')
+const ShaclUtils = require('./lib/shaclUtils')
 const ContextParser = require('jsonld-context-parser').ContextParser
 const ContextUtil = require('jsonld-context-parser').Util
 const myParser = new ContextParser()
@@ -60,136 +57,6 @@ const jsonSchemaText = fs.readFileSync(argv.s, 'utf8')
 const jsonSchema = JSON.parse(jsonSchemaText)
 let globalContext
 let globalPrefixHash
-
-class NodeShape {
-  constructor (targetClass) {
-    this.targetClass = targetClass
-    this.properties = []
-  }
-
-  addPropertyShape (propertyShape) {
-    this.properties.push(propertyShape)
-  }
-
-  get properties () {
-    return this._properties
-  }
-
-  set properties (prop) {
-    this._properties = prop
-  }
-}
-
-class PropertyShape {
-  constructor (mincount, maxcount, nodeKind, path, isProperty) {
-    this.mincount = mincount
-    this.maxcount = maxcount
-    this.nodeKind = nodeKind
-    this.path = path
-    this.constraints = []
-    this.isProperty = isProperty
-  }
-
-  addConstraint (constraint) {
-    this.constraints.push(constraint)
-  }
-
-  set propertyNode (node) {
-    this._propertyNode = node
-  }
-
-  get propertyNode () {
-    return this._propertyNode
-  }
-}
-
-class Constraint {
-  constructor (type, params) {
-    this.type = type
-    this.params = params
-  }
-}
-
-function scanNodeShape (typeschema) {
-  const id = typeschema.$id
-
-  const nodeShape = new NodeShape(id)
-  scanProperties(nodeShape, typeschema)
-  return nodeShape
-}
-
-function scanProperties (nodeShape, typeschema) {
-  let required = []
-  if ('required' in typeschema) {
-    required = typeschema.required
-  }
-  if ('properties' in typeschema) {
-    Object.keys(typeschema.properties).forEach(
-      (property) => {
-        if (property === 'type' || property === 'id') {
-          return
-        }
-        let nodeKind = SHACL('Literal')
-        let klass = null
-        let isProperty = true
-        if ('relationship' in typeschema.properties[property]) {
-          nodeKind = SHACL('IRI')
-          klass = typeschema.properties[property].relationship
-          klass = globalContext.expandTerm(klass, true)
-          isProperty = false
-        }
-        let mincount = 0
-        const maxcount = 1
-        if (required.includes(property)) {
-          mincount = 1
-        }
-        let path = property
-        if (!ContextUtil.isValidIri(path)) {
-          path = globalContext.expandTerm(path, true)
-        }
-        const propertyShape = new PropertyShape(mincount, maxcount, nodeKind, $rdf.sym(path), isProperty)
-        nodeShape.addPropertyShape(propertyShape)
-        if (klass !== null) {
-          propertyShape.addConstraint(new Constraint(SHACL('class'), $rdf.sym(klass)))
-        }
-        scanConstraints(propertyShape, typeschema.properties[property])
-      })
-  }
-  if ('allOf' in typeschema) {
-    typeschema.allOf.forEach((elem) => {
-      scanProperties(nodeShape, elem)
-    })
-  }
-}
-
-function scanConstraints (propertyShape, typeschema) {
-  if ('enum' in typeschema) {
-    propertyShape.addConstraint(new Constraint(SHACL('in'), typeschema.enum))
-  }
-  if ('datatype' in typeschema) {
-    // datatype constraints are not used actively. It is not testing the value but only checks if the formal
-    // datatype "tag" conforms
-    // propertyShape.addConstraint(new Constraint(SHACL('datatype'), typeschema.datatype))
-  }
-  if ('maxiumum' in typeschema) {
-    propertyShape.addConstraint(new Constraint(SHACL('maxInclusive'), typeschema.maximum))
-  }
-  if ('miniumum' in typeschema) {
-    propertyShape.addConstraint(new Constraint(SHACL('minInclusive'), typeschema.minimum))
-  }
-  if ('exclusiveMiniumum' in typeschema) {
-    propertyShape.addConstraint(new Constraint(SHACL('minExclusive'), typeschema.exclusiveMinimum))
-  }
-  if ('exclusiveMaxiumum' in typeschema) {
-    propertyShape.addConstraint(new Constraint(SHACL('maxExclusive'), typeschema.exclusiveMaximum))
-  }
-  if ('maxLength' in typeschema) {
-    propertyShape.addConstraint(new Constraint(SHACL('maxLength'), typeschema.maxLength))
-  }
-  if ('minLength' in typeschema) {
-    propertyShape.addConstraint(new Constraint(SHACL('minLength'), typeschema.minLength))
-  }
-}
 
 function dumpShacl (nodeShape, store) {
   dumpNodeShape(nodeShape, store)
@@ -244,7 +111,7 @@ function shaclize (schemas, id) {
   id = encodeHash(id)
   const store = new $rdf.IndexedFormula()
   const typeschema = schemas.find((schema) => schema.$id === id)
-  const nodeShape = scanNodeShape(typeschema)
+  const nodeShape = ShaclUtils.scanNodeShape(typeschema, globalContext)
   dumpShacl(nodeShape, store)
   const serializer = new $rdf.Serializer(store)
   serializer.setFlags('u')

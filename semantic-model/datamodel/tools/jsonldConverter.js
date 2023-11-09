@@ -17,7 +17,6 @@
 
 const fs = require('fs')
 const yargs = require('yargs')
-const url = require('url')
 const jsonld = require('jsonld')
 const jsonldUtils = require('./lib/jsonldUtils')
 let jsonFileName
@@ -85,62 +84,6 @@ if (!Array.isArray(jsonObj)) {
   jsonArr = jsonObj
 }
 
-function conciseExpandedForm (expanded) {
-  function filterAttribute (attr) {
-    if (typeof (attr) === 'object') {
-      if ('@type' in attr && (attr['@type'][0] === 'https://uri.etsi.org/ngsi-ld/Property' ||
-                                    attr['@type'][0] === 'https://uri.etsi.org/ngsi-ld/Relationship')) {
-        delete attr['@type']
-      }
-      if ('https://uri.etsi.org/ngsi-ld/hasValue' in attr) {
-        attr['@value'] = attr['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@value']
-        delete attr['https://uri.etsi.org/ngsi-ld/hasValue']
-      }
-    }
-  }
-  expanded.forEach(c => {
-    Object.keys(c).forEach(key => {
-      if (Array.isArray(c[key])) {
-        c[key].forEach(a => filterAttribute(a))
-      } else {
-        filterAttribute(c[key])
-      }
-    })
-  })
-  return expanded
-}
-
-function normalizeExpandedForm (expanded) {
-  function extendAttribute (attr) {
-    if (typeof (attr) === 'object') {
-      if (!('@type' in attr)) {
-        if ('https://uri.etsi.org/ngsi-ld/hasValue' in attr || '@value' in attr || '@id' in attr) {
-          attr['@type'] = 'https://uri.etsi.org/ngsi-ld/Property'
-        } else if ('https://uri.etsi.org/ngsi-ld/hasObject' in attr) {
-          attr['@type'] = 'https://uri.etsi.org/ngsi-ld/Relationship'
-        }
-        if ('@value' in attr) {
-          attr['https://uri.etsi.org/ngsi-ld/hasValue'] = attr['@value']
-          delete attr['@value']
-        } else if ('@id' in attr) {
-          attr['https://uri.etsi.org/ngsi-ld/hasValue'] = { '@id': attr['@id'] }
-          delete attr['@id']
-        }
-      }
-    }
-  }
-  expanded.forEach(c => {
-    Object.keys(c).forEach(key => {
-      if (Array.isArray(c[key])) {
-        c[key].forEach(a => extendAttribute(a))
-      } else {
-        extendAttribute(c[key])
-      }
-    })
-  })
-  return expanded
-}
-
 async function expand (objArr, contextArr) {
   const expanded = await Promise.all(objArr.map(async (jsonObj, index) => {
     jsonObj['@context'] = contextArr[index]
@@ -163,7 +106,7 @@ async function compact (objArr, contextArr) {
     }
     // Compaction to find Properties in compacted form
     const expanded = await expand(jsonArr, mergedContexts)
-    const concised = conciseExpandedForm(expanded)
+    const concised = jsonldUtils.conciseExpandedForm(expanded)
     const compacted = await compact(concised, mergedContexts)
     console.log(JSON.stringify(compacted, null, 2))
   }
@@ -183,7 +126,7 @@ async function compact (objArr, contextArr) {
       process.exit(1)
     }
     const expanded = await expand(jsonArr, mergedContexts)
-    const normalized = normalizeExpandedForm(expanded)
+    const normalized = jsonldUtils.normalizeExpandedForm(expanded)
     const compacted = await compact(normalized, mergedContexts)
     console.log(JSON.stringify(compacted, null, 2))
   }
