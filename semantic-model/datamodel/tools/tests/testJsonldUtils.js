@@ -31,7 +31,7 @@ describe('Test loadContextFromFile', function () {
       }
     }
     const revert = ToTest.__set__('fs', fs)
-    //ToTest.__set__('process', process)
+    // ToTest.__set__('process', process)
     const loadContextFromFile = ToTest.__get__('loadContextFromFile')
     const result = loadContextFromFile('filename')
     result.should.deep.equal(['context'])
@@ -39,37 +39,56 @@ describe('Test loadContextFromFile', function () {
   })
 })
 
-describe('Test mergeContexts', function() {
-  it('should return null with undefined contexts', function() {
+describe('Test mergeContexts', function () {
+  it('should return null with undefined contexts', function () {
     const result = ToTest.mergeContexts(undefined, undefined)
     assert(result === null)
   })
-  it('should return only the global context', function() {
+  it('should return only the global context', function () {
     const context = 'http://context'
     const result = ToTest.mergeContexts(undefined, context)
     result.should.deep.equal([context])
   })
-  it('should return only the local context', function() {
+  it('should return only the local context', function () {
     const context = [{ '@context': 'http://context' }]
     const result = ToTest.mergeContexts(context, undefined)
     result.should.deep.equal([['http://context']])
   })
-  it('should merge both contexts', function() {
+  it('should merge both contexts', function () {
     const globalcontext = 'http://context2'
     const context = [{ '@context': 'http://context' }]
     const result = ToTest.mergeContexts(context, globalcontext)
     result.should.deep.equal([['http://context', 'http://context2']])
   })
-  it('should merge object with string contexts', function() {
+  it('should merge object with string contexts', function () {
     const globalcontext = 'http://context2'
     const context = [{ '@context': { ns: 'http://context' } }]
     const result = ToTest.mergeContexts(context, globalcontext)
-    result.should.deep.equal([[{ns: 'http://context'}, 'http://context2']])
+    result.should.deep.equal([[{ ns: 'http://context' }, 'http://context2']])
   })
-  it('should remove double context', function() {
+  it('should remove double context', function () {
     const globalcontext = 'http://context2'
-    const context = [{ '@context': { ns: 'http://context' } }, {'@context': 'http://context2'}]
+    const context = [{ '@context': { ns: 'http://context' } }, { '@context': 'http://context2' }]
     const result = ToTest.mergeContexts(context, globalcontext)
-    result.should.deep.equal([[{ns: 'http://context'}, 'http://context2'], ['http://context2']])
+    result.should.deep.equal([[{ ns: 'http://context' }, 'http://context2'], ['http://context2']])
+  })
+})
+describe('Test conciseExpandedForm', function () {
+  it('should concise a property', function () {
+    const expandedForm = [{
+      '@id': 'id',
+      '@type': 'type',
+      property: {
+        '@type': ['https://uri.etsi.org/ngsi-ld/Property'],
+        'https://uri.etsi.org/ngsi-ld/hasValue': [{ '@value': 'value' }]
+      }
+    }]
+    const expectedConciseForm = [{
+      '@id': 'id',
+      '@type': 'type',
+      property: { '@value': 'value' }
+    }]
+    const result = ToTest.conciseExpandedForm(expandedForm)
+    expectedConciseForm.should.deep.equal(result)
   })
 })
