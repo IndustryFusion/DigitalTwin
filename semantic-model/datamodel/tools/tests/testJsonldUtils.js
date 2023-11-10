@@ -44,4 +44,32 @@ describe('Test mergeContexts', function() {
     const result = ToTest.mergeContexts(undefined, undefined)
     assert(result === null)
   })
+  it('should return only the global context', function() {
+    const context = 'http://context'
+    const result = ToTest.mergeContexts(undefined, context)
+    result.should.deep.equal([context])
+  })
+  it('should return only the local context', function() {
+    const context = [{ '@context': 'http://context' }]
+    const result = ToTest.mergeContexts(context, undefined)
+    result.should.deep.equal([['http://context']])
+  })
+  it('should merge both contexts', function() {
+    const globalcontext = 'http://context2'
+    const context = [{ '@context': 'http://context' }]
+    const result = ToTest.mergeContexts(context, globalcontext)
+    result.should.deep.equal([['http://context', 'http://context2']])
+  })
+  it('should merge object with string contexts', function() {
+    const globalcontext = 'http://context2'
+    const context = [{ '@context': { ns: 'http://context' } }]
+    const result = ToTest.mergeContexts(context, globalcontext)
+    result.should.deep.equal([[{ns: 'http://context'}, 'http://context2']])
+  })
+  it('should remove double context', function() {
+    const globalcontext = 'http://context2'
+    const context = [{ '@context': { ns: 'http://context' } }, {'@context': 'http://context2'}]
+    const result = ToTest.mergeContexts(context, globalcontext)
+    result.should.deep.equal([[{ns: 'http://context'}, 'http://context2'], ['http://context2']])
+  })
 })
