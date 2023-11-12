@@ -237,3 +237,165 @@ describe('Test dumpNodeShape', function () {
     revert()
   })
 })
+describe('Test scanProperties', function () {
+  it('Should dump without properties', function () {
+    const scanProperties = ToTest.__get__('scanProperties')
+    const typeSchema = {
+      properties: {
+        type: {
+          const: 'Plasmacutter'
+        },
+        id: {
+          type: 'string',
+          pattern: "^urn:[a-zA-Z0-9][a-zA-Z0-9-]{1,31}:([a-zA-Z0-9()+,.:=@;$_!*'-]|%[0-9a-fA-F]{2})*$"
+        }
+
+      },
+      required: ['type', 'id']
+    }
+    const expectedNodeShape = {
+      _properties: [],
+      targetClass: 'targetClass'
+    }
+    const nodeShape = new ToTest.NodeShape('targetClass')
+    scanProperties(nodeShape, typeSchema)
+    nodeShape.should.deep.equal(expectedNodeShape)
+  })
+})
+describe('Test scanProperties', function () {
+  it('Should dump without properties', function () {
+    const scanProperties = ToTest.__get__('scanProperties')
+    const typeSchema = {
+      properties: {
+        type: {
+          const: 'Plasmacutter'
+        },
+        id: {
+          type: 'string',
+          pattern: "^urn:[a-zA-Z0-9][a-zA-Z0-9-]{1,31}:([a-zA-Z0-9()+,.:=@;$_!*'-]|%[0-9a-fA-F]{2})*$"
+        }
+
+      },
+      required: ['type', 'id']
+    }
+    const expectedNodeShape = {
+      _properties: [],
+      targetClass: 'targetClass'
+    }
+    const nodeShape = new ToTest.NodeShape('targetClass')
+    scanProperties(nodeShape, typeSchema)
+    nodeShape.should.deep.equal(expectedNodeShape)
+  })
+  it('Should dump with property', function () {
+    const scanProperties = ToTest.__get__('scanProperties')
+    const typeSchema = {
+      properties: {
+        machine_state: {
+          type: 'string',
+          title: 'Machine Status',
+          description: 'Current status of the machine (Online_Idle, Run, Online_Error, Online_Maintenance, Setup, Testing)',
+          enum: [
+            'Testing'
+          ]
+        }
+      }
+    }
+    const expectedNodeShape = {
+      targetClass: 'targetClass',
+      _properties: [
+        {
+          mincount: 0,
+          maxcount: 1,
+          nodeKind: 'shacl:Literal',
+          path: 'sym:machine_state',
+          constraints: [
+            {
+              type: 'shacl:in',
+              params: [
+                'Testing']
+            }],
+          isProperty: true
+        }
+      ]
+    }
+    const nodeShape = new ToTest.NodeShape('targetClass')
+    scanProperties(nodeShape, typeSchema)
+    nodeShape.should.deep.equal(expectedNodeShape)
+  })
+  it('Should dump with relationship', function () {
+    const scanProperties = ToTest.__get__('scanProperties')
+    const typeSchema = {
+      properties: {
+        hasFilter: {
+          relationship: 'eclass:0173-1#01-ACK991#016',
+          $ref: 'https://industry-fusion.org/base-objects/v0.1/link'
+        }
+      }
+    }
+    const expectedNodeShape = {
+      targetClass: 'targetClass',
+      _properties: [
+        {
+          mincount: 0,
+          maxcount: 1,
+          nodeKind: 'shacl:IRI',
+          path: 'sym:hasFilter',
+          constraints: [
+            {
+              type: 'shacl:class',
+              params: 'sym:eclass:0173-1#01-ACK991#016'
+            }
+          ],
+          isProperty: false
+        }]
+    }
+    const nodeShape = new ToTest.NodeShape('targetClass')
+    scanProperties(nodeShape, typeSchema)
+    nodeShape.should.deep.equal(expectedNodeShape)
+  })
+  it('Should dump with allOf', function () {
+    const scanProperties = ToTest.__get__('scanProperties')
+    const typeSchema = {
+      allOf: [
+        {
+          properties: {
+            machine_state: {
+              type: 'string',
+              title: 'Machine Status',
+              description: 'Current status of the machine (Online_Idle, Run, Online_Error, Online_Maintenance, Setup, Testing)',
+              enum: [
+                'Setup',
+                'Testing'
+              ]
+            }
+          }
+        }
+      ]
+    }
+    const expectedNodeShape = {
+      targetClass: 'targetClass',
+      _properties: [
+        {
+          mincount: 0,
+          maxcount: 1,
+          nodeKind: 'shacl:Literal',
+          path: 'sym:machine_state',
+          constraints: [
+            {
+              type: 'shacl:in',
+              params:
+          [
+            'Setup',
+            'Testing'
+          ]
+            }
+          ],
+          isProperty: true
+        }
+      ]
+    }
+    const nodeShape = new ToTest.NodeShape('targetClass')
+    scanProperties(nodeShape, typeSchema)
+    nodeShape.should.deep.equal(expectedNodeShape)
+  })
+})
