@@ -210,4 +210,30 @@ describe('Test dumpNodeShape', function () {
     ])
     revert()
   })
+  it('Should dump with hash type', function () {
+    const nodeShape = new ToTest.NodeShape('http://example.com/example#targetClass#1#2')
+    const storeAdds = []
+    const store = {
+      add: (s, p, o) => { storeAdds.push([s, p, o]) }
+    }
+    const $rdf = {
+      blankNode: () => { return {} },
+      sym: (x) => 'sym:' + x
+    }
+    const globalContext = {
+      expandTerm: (x) => x
+    }
+    const revert = ToTest.__set__('SHACL', (x) => 'shacl:' + x)
+    ToTest.__set__('IFFK', (x) => 'iffk:' + x)
+    ToTest.__set__('RDF', (x) => 'rdf:' + x)
+    ToTest.__set__('globalContext', globalContext)
+    ToTest.__set__('$rdf', $rdf)
+    const dumpNodeShape = ToTest.__get__('dumpNodeShape')
+    dumpNodeShape(nodeShape, store)
+    storeAdds.should.deep.equal([
+      ['iffk:targetClass#1#2Shape', 'rdf:type', 'shacl:NodeShape'],
+      ['iffk:targetClass#1#2Shape', 'shacl:targetClass', 'sym:http://example.com/example#targetClass#1#2']
+    ])
+    revert()
+  })
 })
