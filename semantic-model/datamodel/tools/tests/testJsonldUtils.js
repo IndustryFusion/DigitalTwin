@@ -78,17 +78,74 @@ describe('Test conciseExpandedForm', function () {
     const expandedForm = [{
       '@id': 'id',
       '@type': 'type',
-      property: {
+      property: [{
         '@type': ['https://uri.etsi.org/ngsi-ld/Property'],
         'https://uri.etsi.org/ngsi-ld/hasValue': [{ '@value': 'value' }]
-      }
+      }]
     }]
     const expectedConciseForm = [{
       '@id': 'id',
       '@type': 'type',
-      property: { '@value': 'value' }
+      property: [{ '@value': 'value' }]
     }]
     const result = ToTest.conciseExpandedForm(expandedForm)
     expectedConciseForm.should.deep.equal(result)
+  })
+  it('should concise a relationship', function () {
+    const expandedForm = [{
+      '@id': 'id',
+      '@type': 'type',
+      hasRelationship: [{
+        '@type': ['https://uri.etsi.org/ngsi-ld/Relationship'],
+        'https://uri.etsi.org/ngsi-ld/hasObject': [{ '@id': 'iri' }]
+      }]
+    }]
+    const expectedConciseForm = [{
+      '@id': 'id',
+      '@type': 'type',
+      hasRelationship: [{ 'https://uri.etsi.org/ngsi-ld/hasObject': [{ '@id': 'iri' }] }]
+    }]
+    const result = ToTest.conciseExpandedForm(expandedForm)
+    expectedConciseForm.should.deep.equal(result)
+  })
+})
+describe('Test normalizeExpandedForm', function () {
+  it('should normalize a property', function () {
+    const expandedForm = [{
+      '@id': 'id',
+      '@type': 'type',
+      property: [{
+        'https://uri.etsi.org/ngsi-ld/hasValue': [{ '@value': 'value' }]
+      }]
+    }]
+    const expectedNormalizedForm = [{
+      '@id': 'id',
+      '@type': 'type',
+      property: [{
+        '@type': ['https://uri.etsi.org/ngsi-ld/Property'],
+        'https://uri.etsi.org/ngsi-ld/hasValue': [{ '@value': 'value' }]
+      }]
+    }]
+    const result = ToTest.normalizeExpandedForm(expandedForm)
+    expectedNormalizedForm.should.deep.equal(result)
+  })
+  it('should normalize a property', function () {
+    const expandedForm = [{
+      '@id': 'id',
+      '@type': 'type',
+      hasRelationship: [{
+        'https://uri.etsi.org/ngsi-ld/hasObject': [{ '@id': 'iri' }]
+      }]
+    }]
+    const expectedNormalizedForm = [{
+      '@id': 'id',
+      '@type': 'type',
+      hasRelationship: [{
+        '@type': ['https://uri.etsi.org/ngsi-ld/Relationship'],
+        'https://uri.etsi.org/ngsi-ld/hasObject': [{ '@id': 'iri' }]
+      }]
+    }]
+    const result = ToTest.normalizeExpandedForm(expandedForm)
+    expectedNormalizedForm.should.deep.equal(result)
   })
 })

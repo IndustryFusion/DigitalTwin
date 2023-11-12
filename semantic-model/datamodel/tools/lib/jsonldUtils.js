@@ -107,9 +107,9 @@ function normalizeExpandedForm (expanded) {
     if (typeof (attr) === 'object') {
       if (!('@type' in attr)) {
         if ('https://uri.etsi.org/ngsi-ld/hasValue' in attr || '@value' in attr || '@id' in attr) {
-          attr['@type'] = 'https://uri.etsi.org/ngsi-ld/Property'
+          attr['@type'] = ['https://uri.etsi.org/ngsi-ld/Property']
         } else if ('https://uri.etsi.org/ngsi-ld/hasObject' in attr) {
-          attr['@type'] = 'https://uri.etsi.org/ngsi-ld/Relationship'
+          attr['@type'] = ['https://uri.etsi.org/ngsi-ld/Relationship']
         }
         if ('@value' in attr) {
           attr['https://uri.etsi.org/ngsi-ld/hasValue'] = attr['@value']
