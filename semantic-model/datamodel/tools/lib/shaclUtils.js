@@ -18,6 +18,7 @@ const $rdf = require('rdflib')
 const ContextUtil = require('jsonld-context-parser').Util
 const url = require('url')
 const fs = require('fs')
+const path = require('path')
 const ContextParser = require('jsonld-context-parser').ContextParser
 const myParser = new ContextParser()
 
@@ -104,8 +105,12 @@ function dumpPropertyShape (propertyShape, store) {
 function dumpNodeShape (nodeShape, store) {
   const nodeName = decodeURIComponent(globalContext.expandTerm(nodeShape.targetClass))
   const parsedUrl = new url.URL(nodeName)
-  const fragment = parsedUrl.hash.substring(1)
-  const shapeName = fragment + 'Shape'
+  let shapeNamePrefix = parsedUrl.hash.substring(1)
+  const pathname = parsedUrl.pathname
+  if (shapeNamePrefix === '') {
+    shapeNamePrefix = path.basename(pathname)
+  }
+  const shapeName = shapeNamePrefix + 'Shape'
   store.add(IFFK(shapeName), RDF('type'), SHACL('NodeShape'))
   store.add(IFFK(shapeName), SHACL('targetClass'), $rdf.sym(nodeName))
   nodeShape.properties.forEach((property) => {
