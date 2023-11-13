@@ -20,4 +20,4 @@ jobs:
         cd semantic-model/shacl2flink && make setup && make lint test build test-kms
     - name: Build datamodel tools
       run: |
-        cd semantic-model/datamodel && make setup && make lint test
+        cd semantic-model/datamodel/tools && make setup && make lint test
