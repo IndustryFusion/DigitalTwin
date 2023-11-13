@@ -18,3 +18,6 @@ jobs:
       run: |
         sudo  apt install sqlite3 sqlite3-pcre
         cd semantic-model/shacl2flink && make setup && make lint test build test-kms
+    - name: Build datamodel tools
+      run: |
+        cd semantic-model/datamodel && make setup && make lint test

@@ -23,5 +23,5 @@ while IFS='_' read -ra ADDR; do
   id=${file}_id
   command="node ../../jsonschema2shacl.js -s $file -c file://$PWD/$context -i $(cat "$id")"
   echo Executing: "$command"
-  $command | diff "${comparewith}" -
+  $command | diff "${comparewith}" - || exit 1
 done <<< "$(ls schema*_*.json)"

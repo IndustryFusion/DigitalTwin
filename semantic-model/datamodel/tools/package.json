@@ -4,7 +4,7 @@
   "description": "This package contains tools for validating NGSI-LD data for the Process Data Twin (PDT)",
   "main": "validate.js",
   "scripts": {
-    "test": "./node_modules/.bin/nyc --check-coverage ./node_modules/.bin/mocha tests/*.js --lines 80",
+    "test": "./node_modules/.bin/nyc --lines 80 --check-coverage ./node_modules/.bin/mocha tests/*.js",
     "lint": "./node_modules/.bin/eslint *.js"
   },
   "author": "Marcel Wagner",
