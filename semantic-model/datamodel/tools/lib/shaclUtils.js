@@ -182,16 +182,16 @@ function scanConstraints (propertyShape, typeschema) {
     // datatype "tag" conforms
     // propertyShape.addConstraint(new Constraint(SHACL('datatype'), typeschema.datatype))
   }
-  if ('maxiumum' in typeschema) {
+  if ('maximum' in typeschema) {
     propertyShape.addConstraint(new Constraint(SHACL('maxInclusive'), typeschema.maximum))
   }
-  if ('miniumum' in typeschema) {
+  if ('minimum' in typeschema) {
     propertyShape.addConstraint(new Constraint(SHACL('minInclusive'), typeschema.minimum))
   }
-  if ('exclusiveMiniumum' in typeschema) {
+  if ('exclusiveMinimum' in typeschema) {
     propertyShape.addConstraint(new Constraint(SHACL('minExclusive'), typeschema.exclusiveMinimum))
   }
-  if ('exclusiveMaxiumum' in typeschema) {
+  if ('exclusiveMaximum' in typeschema) {
     propertyShape.addConstraint(new Constraint(SHACL('maxExclusive'), typeschema.exclusiveMaximum))
   }
   if ('maxLength' in typeschema) {

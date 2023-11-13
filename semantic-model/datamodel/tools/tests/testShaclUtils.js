@@ -263,7 +263,7 @@ describe('Test scanProperties', function () {
   })
 })
 describe('Test scanProperties', function () {
-  it('Should dump without properties', function () {
+  it('Should scan without properties', function () {
     const scanProperties = ToTest.__get__('scanProperties')
     const typeSchema = {
       properties: {
@@ -286,7 +286,7 @@ describe('Test scanProperties', function () {
     scanProperties(nodeShape, typeSchema)
     nodeShape.should.deep.equal(expectedNodeShape)
   })
-  it('Should dump with property', function () {
+  it('Should scan with property', function () {
     const scanProperties = ToTest.__get__('scanProperties')
     const typeSchema = {
       properties: {
@@ -322,7 +322,7 @@ describe('Test scanProperties', function () {
     scanProperties(nodeShape, typeSchema)
     nodeShape.should.deep.equal(expectedNodeShape)
   })
-  it('Should dump with relationship', function () {
+  it('Should scan with relationship', function () {
     const scanProperties = ToTest.__get__('scanProperties')
     const typeSchema = {
       properties: {
@@ -353,7 +353,7 @@ describe('Test scanProperties', function () {
     scanProperties(nodeShape, typeSchema)
     nodeShape.should.deep.equal(expectedNodeShape)
   })
-  it('Should dump with allOf', function () {
+  it('Should scan with allOf', function () {
     const scanProperties = ToTest.__get__('scanProperties')
     const typeSchema = {
       allOf: [
@@ -397,5 +397,80 @@ describe('Test scanProperties', function () {
     const nodeShape = new ToTest.NodeShape('targetClass')
     scanProperties(nodeShape, typeSchema)
     nodeShape.should.deep.equal(expectedNodeShape)
+  })
+})
+describe('Test scanConstraints', function () {
+  it('Should dump without properties', function () {
+    const scanConstraints = ToTest.__get__('scanConstraints')
+    const propertyShape = new ToTest.PropertyShape(0, 2, 'nodeKind', 'path', true)
+    const typeSchema = {
+      type: 'string',
+      title: 'Machine Status',
+      description: 'Current status of the machine (Online_Idle, Run, Online_Error, Online_Maintenance, Setup, Testing)',
+      enum: [
+        'Online_Idle'
+      ],
+      maximum: 2,
+      minimum: 1,
+      exclusiveMinimum: 0,
+      exclusiveMaximum: 3,
+      maxLength: 100,
+      minLength: 10
+    }
+    const expectedConstraints = [
+      { type: 'shacl:in', params: ['Online_Idle'] },
+      { type: 'shacl:maxInclusive', params: 2 },
+      { type: 'shacl:minInclusive', params: 1 },
+      { type: 'shacl:minExclusive', params: 0 },
+      { type: 'shacl:maxExclusive', params: 3 },
+      { type: 'shacl:maxLength', params: 100 },
+      { type: 'shacl:minLength', params: 10 }
+    ]
+    scanConstraints(propertyShape, typeSchema)
+    propertyShape.constraints.should.deep.equal(expectedConstraints)
+  })
+})
+describe('Test encodeHash', function () {
+  it('Should uri-encode hash', function () {
+    const encodeHash = ToTest.__get__('encodeHash')
+    const result = encodeHash('https://example.com/test#1#2#3')
+    result.should.equal('https://example.com/test%231%232%233')
+  })
+})
+describe('Test loadContext', function () {
+  it('Should resolve https uri', async function () {
+    const loadContext = ToTest.__get__('loadContext')
+    const context = {
+      getContextRaw: () => {
+        return {
+          '@vocab': 'https://industry-fusion.org/base/v0.1/',
+          eclass: {
+            '@id': 'https://industry-fusion.org/eclass#',
+            '@prefix': true
+          },
+          xsd: {
+            '@id': 'http://www.w3.org/2001/XMLSchema#',
+            '@prefix': true
+          },
+          iffb: {
+            '@id': 'https://industry-fusion.org/base/v0.1/',
+            '@prefix': true
+          }
+        }
+      }
+    }
+    const myParser = {
+      parse: async (x) => { return context }
+    }
+    const expectedResult = {
+      eclass: 'https://industry-fusion.org/eclass#',
+      xsd: 'http://www.w3.org/2001/XMLSchema#',
+      iffb: 'https://industry-fusion.org/base/v0.1/'
+    }
+    const revert = ToTest.__set__('myParser', myParser)
+    await loadContext('https://example.com/context')
+    const globalPrefixHash = ToTest.__get__('globalPrefixHash')
+    globalPrefixHash.should.deep.equal(expectedResult)
+    revert()
   })
 })
