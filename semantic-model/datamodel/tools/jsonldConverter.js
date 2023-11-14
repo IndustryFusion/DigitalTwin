@@ -23,19 +23,19 @@ let jsonFileName
 const argv = yargs
   .option('concise', {
     alias: 'n',
-    description: 'Create concise/compacted from',
+    description: 'Create concise/compacted form',
     demandOption: false,
     type: 'boolean'
   })
   .option('expand', {
     alias: 'x',
-    description: 'Create expanded from',
+    description: 'Create expanded form',
     demandOption: false,
     type: 'boolean'
   })
   .option('normalize', {
     alias: 'r',
-    description: 'Create normalized from',
+    description: 'Create normalized form',
     demandOption: false,
     type: 'boolean'
   })

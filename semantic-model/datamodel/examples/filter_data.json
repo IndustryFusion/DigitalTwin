@@ -1,0 +1,7 @@
+{
+    "@context": "https://industryfusion.github.io/contexts/v0.1/context.jsonld",
+    "id": "urn:iff:filter1",
+    "type": "eeclass:0173-1#01-ACK991#016",
+
+    "machine_state": "Testing"
+}

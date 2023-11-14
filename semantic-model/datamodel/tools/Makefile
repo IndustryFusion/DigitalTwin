@@ -16,7 +16,7 @@
 
 
 setup:
-	pip3 install pyshacl
+	pip3 install pyshacl rdflib
 	npm install
 
 lint:
