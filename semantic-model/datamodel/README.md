@@ -2,7 +2,7 @@
 
 The following motivates, descibes and defines version 0.1 of the Datamodel. It is in alpha stage and subject to changes.
 
-## JSON-LD (Linked Data)
+## [JSON-LD](https://json-ld.org/) (JSON for Linked Data)
 
 JSON-LD, which stands for "JavaScript Object Notation for Linked Data," is a powerful data serialization format that extends the capabilities of traditional JSON. Its strength lies in its ability to represent structured data in a way that is both human-readable and machine-understandable. JSON-LD is particularly well-suited for the web and semantic data integration for several key reasons:
 
@@ -22,11 +22,11 @@ In summary, JSON-LD is a versatile and powerful tool for structuring data with s
 
 ## JSON-LD Forms
 
-Since JSON-LD represents graph data, it can become very explicit and details. However, In many cases aspects of a graph can also be simplified and described implicitly.
+Since JSON-LD represents graph data, it can become very explicit and detailed. However, In many cases aspects of a graph can also be simplified and described implicitly.
 
-The following shows a so called *compacted* JSON-LD expression. It contains a *context* and a minimized key *name*:
+The following shows a so called *[compacted](https://www.w3.org/TR/json-ld11-api/#dfn-compact-form)* JSON-LD expression. It contains a *context* and a minimized key *name*:
 
-```
+```json
 {
   "@context": {
     "name": "http://schema.org/name"
@@ -36,22 +36,31 @@ The following shows a so called *compacted* JSON-LD expression. It contains a *c
 }
 ```
 
-This is an implicit representation of a *expanded* form
+This is an implicit representation of a *[expanded](https://www.w3.org/TR/json-ld11-api/#dfn-expanded)* form
+```json
+[
+  {
+    "@id": "https://iri/max.mustermann",
+    "http://schema.org/name": [
+      {
+        "@value": "Max Mustermann"
+      }
+    ]
+  }
+]
 ```
-[{
-  "@id": "https://iri/max.mustermann",
-  "http://schema.org/name": [{"@value": "Max Mustermann"}]
-}]
+Try conversion in the *JSON-LD* [playground](https://json-ld.org/playground/#startTab=tab-expanded&json-ld=%7B%22%40context%22%3A%7B%22name%22%3A%22http%3A%2F%2Fschema.org%2Fname%22%7D%2C%22%40id%22%3A%22https%3A%2F%2Firi%2Fmax.mustermann%22%2C%22name%22%3A%22Max%20Mustermann%22%7D).
+
+
+Note that in the Expanded form, the *context* is missing, but everything is now provided with *namespaces* and *@value* which indicates that "Max Mustermann" is a *Literal*, i.e. string, number or boolean.
+The expanded form can easiliy be transformed into a *[RDF](https://www.w3.org/TR/rdf12-concepts/)* graph representation:
+
+```mermaid
+flowchart LR
+   A(https://iri/max.mustermann) -- http://schema.org/name --> B("Max Mustermann")
 ```
 
-Note that in the Expanded form, the *context* is missing, but everything is now provided with *namespaces* and *@value* which indicates that "Max Mustermann" is a *literal*, i.e. string, number or boolean.
-The expanded form can easiliy be transformed into a *Semantic Web* graph representation:
-
-```meermaid
-A(https://iri/max.mustermann) -- http://schema.org/name --> B("Max Mustermann")
-```
-
-which can also be serialized as turtle graph:
+which can also be serialized as [turtle](https://www.w3.org/TR/rdf12-turtle/) graph:
 
 ```
 @prefix schema: <http://schema.org/> .
@@ -88,7 +97,7 @@ NGSI-LD is a significant advancement in the field of IoT, as it provides a stand
 Since NGSI-LD is extending JSON-LD, it inherits the capability of creating different forms like *expanded* or *compacted*. In addition, it provides a simplification called *concise* form and a more explicit form, called *normalized* form.
 
 NGSI-LD reuqires from every entity to have at least *id* and *type*. All other data is either a *property* or a *relationship*:
-```
+```json
 {
     "@context": [
       "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
@@ -110,9 +119,9 @@ NGSI-LD reuqires from every entity to have at least *id* and *type*. All other d
 
 ```
 
-The *type* field is here redundant, that is why NGSI-LD defines a *concise* form which is reducing redudancy:
+The *type* field in the *Properties* and *Relationship* is here redundant. It can be differentiated already by the `value` and `object fields`. That is why NGSI-LD defines a *concise* form which further reduces redundancy:
 
-```
+```json
 {
     "@context": [
       "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
@@ -129,9 +138,9 @@ The *type* field is here redundant, that is why NGSI-LD defines a *concise* form
 }
 ```
 
-Since NGSI-LD is JSON-LD compliant, it can be *compacted* and *extended*. Note that both forms, *normalized* and *concise* NGSI-LD, are already *compacted* JSON-LD forms. The expanded *normalized* form of the above example looks like
+Since NGSI-LD is JSON-LD compliant, it can be *compacted* and *extended*. Note that both forms, *normalized* and *concise* NGSI-LD, are *compacted* JSON-LD forms. The *expanded* **and** *normalized* form of the above example looks like
 
-```
+```json
 [
   {
     "https://industry-fusion.org/base/v0.1/hasFilter": [
@@ -171,8 +180,7 @@ Since NGSI-LD is JSON-LD compliant, it can be *compacted* and *extended*. Note t
 Validation of JSON objects is typically done with [JSON-Schema](https://json-schema.org/). A plain JSON object structure can therefore be validated. However, as described above, JSON-LD represent a graph and has different forms. For instance, the following two expressions are equivalent in JSON-LD but cannot be schemed with JSON-Schema:
 
 Expression 1
-
-```
+```json
 [{
     "@context": [
       "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
@@ -210,7 +218,7 @@ Expression 1
 
 Expression 2
 
-```
+```json
 {
     "@context": [
       "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
@@ -250,7 +258,7 @@ As shown in the last section, it is impossible to use JSON-Schema to validate JS
 In the following, we describe the validation schema.
 We use the default *contex* https://industryfusion.github.io/contexts/v0.1/context.jsonld. An example for a *concise* form with this *conext* can be seen in the following. It contains an *ECLASS* type, one *ECLASS* property and attributes (properties and relationships) `machine_state` and `hasFilter` from the default vocabulary. The object has an ID expressed as URN:
 
-```
+```json
 {
     "@context": "https://industryfusion.github.io/contexts/v0.1/context.jsonld",
     "machine_state": "Testing",
@@ -265,7 +273,7 @@ We use the default *contex* https://industryfusion.github.io/contexts/v0.1/conte
 
 In order to validate it with a JSON-Schema, first the base object must be described:
 
-```
+```json
  {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "$id": "<URL-Encoded expanded type>",
@@ -286,9 +294,9 @@ In order to validate it with a JSON-Schema, first the base object must be descri
     }
 ```
 This specifies the mandatory `id` and `type` field of every NGSI-LD object. `id` must be an *URN* and `type` must contain a *compacted* form.
-The "$schema" field must be "https://json-schema.org/draft/2020-12/schema", the $id of the schema must be a valid URL with the additional constraint that all '#' fields must be URL-Encoded. An example for a schema and related data can be seen in the following:
+The "$schema" field must be "https://json-schema.org/draft/2020-12/schema", the $id of the schema must be a valid URL with the additional constraint that all '#' fields **must be URL-Encoded**. An example for a schema and related data can be seen in the following:
 
-```
+```json
 # JSON-Schema:
 [{
     "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -318,7 +326,7 @@ The "$schema" field must be "https://json-schema.org/draft/2020-12/schema", the 
 
 The *properties* and *relationships* can be grouped and aggregated by the `allOf` array. In the following a *string* property is validated by a schema:
 
-```
+```json
 {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "$id": "https://industry-fusion.org/base-objects/v0.1/cutter/properties",
@@ -345,7 +353,7 @@ The *properties* and *relationships* can be grouped and aggregated by the `allOf
 The following validates a *relationship*:
 
 
-```
+```json
  {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "$id": "https://industry-fusion.org/base-objects/v0.1/cutter/relationships",
@@ -377,7 +385,7 @@ The following validates a *relationship*:
 ```
 Overall, the resulting full JSON-Schema looks like follows:
 
-```
+```json
 # JSON-Schema:
 [{
     "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -448,9 +456,9 @@ The following JSON-Schema Keywords are added to the standard:
 - `Type` of the field is mapped to `datatype` and xsd-type as described [here](https://eclass.eu/support/technical-specification/data-model/datatype-to-xsd-mapping)
 - The `JSON` `type` field of every `ECLASS` property is `string`.
 
-For [example](./schema-ngsild-eclass/schema.json), the `ECLASS` property `` is described in the `JSON-Schema` as:
+For [example](./schema-ngsild-eclass/schema.json), the `ECLASS` property `eclass:0173-1#02-AAH880#003` is described in the `JSON-Schema` like so:
 
-```
+```json
  "eclass:0173-1#02-AAH880#003": {
                 "type": "string",
                 "datatype": "double",
@@ -478,18 +486,178 @@ npm install
 #### Usage
 
 ```
-Optionen:
-      --version   Version anzeigen                                     [boolean]
-  -s, --schema    Schema File                            [string] [erforderlich]
-  -d, --datafile  File to validate                       [string] [erforderlich]
-  -i, --schemaid  Schema-id to validate                  [string] [erforderlich]
-  -h, --help      Hilfe anzeigen                                       [boolean]
+validate.js
+
+Validate a JSON-LD object with IFF Schema.
+
+Options:
+      --version   Show version number                                  [boolean]
+  -s, --schema    Schema File                                [string] [required]
+  -d, --datafile  File to validate                           [string] [required]
+  -i, --schemaid  Schema-id to validate                      [string] [required]
+  -h, --help      Show help                                            [boolean]
+                                   [boolean]
 ```
 
 #### Examples
 
-`node tools/validate.js -s examples/plasmacutter_schema.json -d examples/plasmacutter_data.json -i https://industry-fusion.org/eclass#0173-1#01-AKJ975#017`
+```
+node tools/validate.js -s examples/plasmacutter_schema.json -d examples/plasmacutter_data.json -i https://industry-fusion.org/eclass#0173-1#01-AKJ975#017
+```
 
+```
+# Result:
+The Datafile is compliant with Schema
+```
 ### Convert JSON-Schema to SHACL
 
+#### Install
+
+```
+npm install
+```
+
+#### Usage
+
+```
+jsonschema2shacl.js
+
+Converting an IFF Schema file for NGSI-LD objects into a SHACL constraint.
+
+Options:
+      --version   Show version number                                  [boolean]
+  -s, --schema    Schema File containing array of Schemas    [string] [required]
+  -i, --schemaid  Schma-id of object to generate SHACL for   [string] [required]
+  -c, --context   JSON-LD-Context                            [string] [required]
+  -h, --help      Show help                                            [boolean]
+
+```
+
+#### Examples
+
+```
+node tools/jsonschema2shacl.js -s examples/plasmacutter_schema.json -i  https://industry-fusion.org/eclass#0173-1#01-AKJ975#017 -c https://industryfusion.github.io/contexts/v0.1/context.jsonld
+```
+
+```
+# Result:
+
+@prefix iffb: <https://industry-fusion.org/base/v0.1/>.
+@prefix sh: <http://www.w3.org/ns/shacl#>.
+@prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/>.
+
+<https://industry-fusion.org/knowledge/v0.1/0173-1#01-AKJ975#017Shape>
+    a sh:NodeShape;
+    sh:property
+            [
+                sh:maxCount 1;
+                sh:minCount 0;
+                sh:nodeKind sh:BlankNode;
+                sh:path iffb:hasFilter;
+                sh:property
+                        [
+                            sh:class
+                                <https://industry-fusion.org/eclass#0173-1#01-ACK991#016>;
+                            sh:maxCount 1;
+                            sh:minCount 1;
+                            sh:nodeKind sh:IRI;
+                            sh:path ngsi-ld:hasObject
+                        ]
+            ],
+            [
+                sh:maxCount 1;
+                sh:minCount 1;
+                sh:nodeKind sh:BlankNode;
+                sh:path iffb:machine_state;
+                sh:property
+                        [
+                            sh:in
+                                    ( "Online_Idle" "Run" "Online_Error"
+                                    "Online_Maintenance" "Setup" "Testing" );
+                            sh:maxCount 1;
+                            sh:minCount 1;
+                            sh:nodeKind sh:Literal;
+                            sh:path ngsi-ld:hasValue
+                        ]
+            ];
+    sh:targetClass <https://industry-fusion.org/eclass#0173-1#01-AKJ975#017>.
+
+```
+
 ### Convert NGSI-LD forms
+
+#### Install
+
+```
+npm install
+```
+
+#### Usage
+
+```
+jsonldConverter.js <filename>
+
+Convert a JSON-LD file into different normal forms.
+
+Options:
+      --version    Show version number                                 [boolean]
+  -n, --concise    Create concise/compacted form                       [boolean]
+  -x, --expand     Create expanded form                                [boolean]
+  -r, --normalize  Create normalized form                              [boolean]
+  -c, --context    JSON-LD-Context                                      [string]
+  -h, --help       Show help                                           [boolean]
+```
+
+#### Examples
+
+```
+node tools/jsonldConverter.js -r examples/plasmacutter_data.json
+```
+
+```
+# Result:
+[
+  {
+    "@context": "https://industryfusion.github.io/contexts/v0.1/context.jsonld",
+    "id": "urn:iff:abc123",
+    "type": "eclass:0173-1#01-AKJ975#017",
+    "hasFilter": {
+      "type": "Relationship",
+      "object": "urn:iff:filter:1"
+    },
+    "machine_state": {
+      "type": "Property",
+      "value": "Testing"
+    }
+  }
+]
+```
+
+```
+node tools/jsonldConverter.js -x examples/plasmacutter_data.json
+```
+
+```
+# Result:
+[
+  {
+    "https://industry-fusion.org/base/v0.1/hasFilter": [
+      {
+        "https://uri.etsi.org/ngsi-ld/hasObject": [
+          {
+            "@id": "urn:iff:filter:1"
+          }
+        ]
+      }
+    ],
+    "@id": "urn:iff:abc123",
+    "https://industry-fusion.org/base/v0.1/machine_state": [
+      {
+        "@value": "Testing"
+      }
+    ],
+    "@type": [
+      "https://industry-fusion.org/eclass#0173-1#01-AKJ975#017"
+    ]
+  }
+]

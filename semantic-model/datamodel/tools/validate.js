@@ -28,6 +28,7 @@ const removedKeywords = [
 const addedKeywords = ['relationship']
 
 const argv = yargs
+  .command('$0', 'Validate a JSON-LD object with IFF Schema.')
   .option('schema', {
     alias: 's',
     description: 'Schema File',
