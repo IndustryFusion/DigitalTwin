@@ -30,6 +30,25 @@ iff:MachineShape
             sh:minCount 1 ;
         ] ;
     ] ;
+    sh:property [
+        sh:path <https://industry-fusion.com/types/v0.9/stringState> ;
+        sh:order 2 ;
+        sh:nodeKind sh:BlankNode;
+        sh:minCount 0 ;
+        sh:maxCount 1 ;
+        sh:property [
+            sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
+            sh:nodeKind sh:Literal;
+            sh:in ("ON" "OFF" "t1,t2");
+            sh:minCount 1 ;
+            sh:maxCount 1 ;
+        ] ;
+        sh:property [
+            sh:path rdf:type ;
+            sh:hasValue <https://uri.etsi.org/ngsi-ld/Property> ;
+            sh:minCount 1 ;
+        ] ;
+    ] ;
 .
 
 

@@ -1,6 +1,8 @@
 from rdflib import Graph, Namespace
 import os
 import sys
+import csv
+from io import StringIO
 import ruamel.yaml
 from jinja2 import Template
 
@@ -52,6 +54,7 @@ PREFIX sh: <http://www.w3.org/ns/shacl#>
 SELECT
     ?nodeshape ?targetclass ?propertypath ?mincount ?maxcount ?attributeclass ?nodekind
     ?minexclusive ?maxexclusive ?mininclusive ?maxinclusive ?minlength ?maxlength ?pattern ?severitycode
+    (GROUP_CONCAT(CONCAT('"',?in, '"'); separator=',') as ?ins)
 where {
     ?nodeshape a sh:NodeShape .
     ?nodeshape sh:targetClass ?targetclass .
@@ -72,9 +75,12 @@ where {
     OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsild:hasValue ; sh:minLength ?minlength ;] ; ] }
     OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsild:hasValue ; sh:maxLength ?maxlength ;] ; ] }
     OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsild:hasValue ; sh:pattern ?pattern ;] ; ] }
+    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsild:hasValue ; sh:in/(rdf:rest*/rdf:first)+ ?in ;] ; ] }
     OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsild:hasValue ; sh:class ?attributeclass ;] ; ] }
     OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath; sh:severity ?severity ; ] . ?severity iff:severityCode ?severitycode .}
 }
+GROUP BY ?nodeshape ?targetclass ?propertypath ?mincount ?maxcount ?attributeclass ?nodekind
+    ?minexclusive ?maxexclusive ?mininclusive ?maxinclusive ?minlength ?maxlength ?pattern ?severitycode
 order by ?targetclass
 
 """  # noqa: E501
@@ -325,6 +331,28 @@ SELECT this AS resource,
 FROM A1
 """  # noqa: E501
 
+sql_check_literal_in = """
+SELECT this AS resource,
+ '{{constraintname}}({{property_path}}[' || CAST( `index` AS STRING) || '])' AS event,
+    'Development' AS environment,
+     {%- if sqlite -%}
+    '[SHACL Validator]' AS service,
+    {%- else %}
+    ARRAY ['SHACL Validator'] AS service,
+    {%- endif %}
+    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND val NOT IN ({% for elem in ins %}'{{ elem }}'{{ ", " if not loop.last else "" }}{% endfor %})
+        THEN '{{severity}}'
+        ELSE 'ok' END AS severity,
+    'customer'  customer,
+    CASE WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND val NOT IN ({% for elem in ins %}'{{ elem }}'{{ ", " if not loop.last else "" }}{% endfor %})
+        THEN 'Model validation for Property {{property_path}} failed for ' || this || '. Value ' || IFNULL(val, 'NULL') || ' is not allowed.'
+        ELSE 'All ok' END as `text`
+        {% if sqlite %}
+        ,CURRENT_TIMESTAMP
+        {% endif %}
+FROM A1
+"""  # noqa: E501
+
 
 def translate(shaclefile, knowledgefile):
     """
@@ -484,6 +512,11 @@ def translate(shaclefile, knowledgefile):
         max_length = row.maxlength.toPython() if row.maxlength is not None \
             else None
         pattern = row.pattern.toPython() if row.pattern is not None else None
+        ins = row.ins.toPython() if row.ins is not None else None
+        if ins is not None and ins != '':
+            reader = csv.reader(StringIO(ins))
+            parsed_list = next(reader)
+            ins = [element.replace("'", "\\'") for element in parsed_list]
         if (nodekind == sh.IRI):
             sql_command_yaml = Template(sql_check_property_iri_base).render(
                 alerts_bulk_table=alerts_bulk_table,
@@ -539,7 +572,6 @@ def translate(shaclefile, knowledgefile):
                         property_class=property_class,
                         severity=severitycode,
                         sqlite=True)
-
         elif (nodekind == sh.Literal):
             sql_command_yaml = Template(sql_check_property_iri_base).render(
                 alerts_bulk_table=alerts_bulk_table,
@@ -598,6 +630,29 @@ def translate(shaclefile, knowledgefile):
                         severity=severitycode,
                         minmaxname="MinExclusive",
                         sqlite=True)
+            if ins is not None and len(ins) != 0:
+                sql_command_yaml += "\nUNION ALL"
+                sql_command_sqlite += "\nUNION ALL"
+                sql_command_yaml += \
+                    Template(sql_check_literal_in).render(
+                        alerts_bulk_table=alerts_bulk_table,
+                        target_class=target_class,
+                        property_path=property_path,
+                        property_class=property_class,
+                        severity=severitycode,
+                        sqlite=False,
+                        constraintname="InConstraintComponent",
+                        ins=ins)
+                sql_command_sqlite += \
+                    Template(sql_check_literal_in).render(
+                        alerts_bulk_table=alerts_bulk_table,
+                        target_class=target_class,
+                        property_path=property_path,
+                        property_class=property_class,
+                        severity=severitycode,
+                        sqlite=True,
+                        constraintname="InConstraintComponent",
+                        ins=ins)
             if max_exclusive is not None:
                 sql_command_yaml += "\nUNION ALL"
                 sql_command_sqlite += "\nUNION ALL"
