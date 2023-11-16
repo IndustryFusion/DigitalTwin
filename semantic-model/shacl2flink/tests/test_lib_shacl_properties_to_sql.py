@@ -64,6 +64,8 @@ def test_lib_shacl_prroperties_to_sql(mock_utils, mock_configs, mock_yaml,
     maxlength.toPython.return_value = None
     pattern = MagicMock()
     pattern.toPython.return_value = 'pattern'
+    ins = MagicMock()
+    ins.toPython.return_value = '"SHIN1","SHIN2"'
     g.__iadd__.return_value.query.return_value = [Bunch()]
     g.__iadd__.return_value.query.return_value[0].targetclass = targetclass
     g.__iadd__.return_value.query.return_value[0].propertypath = propertypath
@@ -81,6 +83,7 @@ def test_lib_shacl_prroperties_to_sql(mock_utils, mock_configs, mock_yaml,
     g.__iadd__.return_value.query.return_value[0].minlength = minlength
     g.__iadd__.return_value.query.return_value[0].maxlength = maxlength
     g.__iadd__.return_value.query.return_value[0].pattern = pattern
+    g.__iadd__.return_value.query.return_value[0].ins = ins
     sqlite, (statementsets, tables, views) = \
         lib.shacl_properties_to_sql.translate('kms/shacl.ttl',
                                               'kms/knowledge.ttl')
@@ -91,13 +94,15 @@ def test_lib_shacl_prroperties_to_sql(mock_utils, mock_configs, mock_yaml,
                      'attributeclass-view']
     assert len(statementsets) == 2
     lower_sqlite = sqlite.lower()
-    assert lower_sqlite.count('select') == 12
+    assert lower_sqlite.count('select') == 13
     assert lower_sqlite.count(' < 4') == 4
     assert lower_sqlite.count(' < 3') == 3
     assert lower_sqlite.count(' <= 2') == 3
     assert lower_sqlite.count(' > 0') == 3
     assert lower_sqlite.count(' >= 1') == 3
     assert lower_sqlite.count("regexp 'pattern'") == 2
+    assert lower_sqlite.count("('shin1', 'shin2')") == 2
+    assert lower_sqlite.count("inconstraintcomponent") == 1
 
     targetclass = MagicMock()
     targetclass.toPython.return_value = 'targetclass'
@@ -143,6 +148,7 @@ def test_lib_shacl_prroperties_to_sql(mock_utils, mock_configs, mock_yaml,
     g.__iadd__.return_value.query.return_value[0].minlength = minlength
     g.__iadd__.return_value.query.return_value[0].maxlength = maxlength
     g.__iadd__.return_value.query.return_value[0].pattern = None
+    g.__iadd__.return_value.query.return_value[0].ins = None
     sqlite, (statementsets, tables, views) = \
         lib.shacl_properties_to_sql.translate('kms/shacl.ttl',
                                               'kms/knowledge.ttl')
