@@ -126,3 +126,11 @@ releases:
   - values.yaml.gotmpl
   needs:
   - {{ .Values.namespace }}/minio
+- name: redis
+  labels:
+    app: redis
+    order: first
+  chart: ./charts/redis
+  namespace: {{ .Values.namespace }}
+  values:
+  - values.yaml.gotmpl

@@ -94,3 +94,12 @@ kafkaBridge:
 
 velero:
   backupBucket: velero-backup
+
+redis:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 100Mi
+    limits:
+      cpu: 50m
+      memory: 100Mi
