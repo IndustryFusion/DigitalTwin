@@ -87,7 +87,7 @@ The same graph can, however, be represented by different JSON-LD structures. For
 ]
 ```
 
-The problem is that there are even more representations of the same graph. Therefore, it is challenging, to use a JSON-Schema which is focussing on the *syntactic* structures of an object and not so much on the linked representation. Moreover, it would be very complex, if not impossible, to create a compliant JSON-Schema which validates all potential representations of the graph above. This shows that linked data cannot be handled with classical JSON-tools. On the other hand, most developers in the IT world are used to handle their data with JSON and JSON-Schema. Therefore, a bridge is needed between the two technologies. It is clear that JSON-Schema cannot validate links between objects. But all non-linked data must be validatable with JSON-Schemas. The approach to reach that goal contains three steps:
+The problem is that there are even more representations of the same graph. Therefore, it is challenging, to use a JSON-Schema which is focussing on the *syntactic* structures of an object and not so much on the linked representation. Moreover, it would be very complex, if not impossible, to create a compliant JSON-Schema which validates all potential representations of the graph above. This shows that linked data cannot be handled with classical JSON-tools. On the other hand, most developers in the IT world are used to handle their data with JSON and JSON-Schema. Therefore, a bridge is needed between the two technologies. It is clear that JSON-Schema cannot validate links between objects. But all non-linked data must be validatable with JSON-Schemas. The approach to reach that goal contains the following steps:
 1. Simplify the problem: Handle with JSON-Schema only single objects, e.g. only a *Cutter* or *Filter* object.
 2. Transform the JSON-LD object into a canonical normal form which ensures that same (sub-)graphs are represented by identical objects.
 3. Generate the SHACL constraints from JSON-Schemas
@@ -102,13 +102,10 @@ Step 1. can be achieved straight forward. The other step need additional conside
 The Resource Description Framework, commonly known as RDF, is a key technology underpinning the concept of linked data. Developed by the World Wide Web Consortium (W3C), RDF serves as a foundation for representing and linking diverse data on the web in a machine-readable format.
 Key Concepts of RDF:
 
-    Triple Structure: RDF represents information in triples, each consisting of a subject, predicate, and object. This structure forms the basis for creating statements about resources.
-
-    Resource Identification: Resources are identified using Uniform Resource Identifiers (URIs), providing a globally unique and standardized way to reference entities on the web.
-
-    Graph-Based Model: RDF employs a graph-based data model, enabling the creation of interconnected networks of information. This facilitates the creation of relationships between different pieces of data.
-
-    Ontologies and Vocabularies: RDF can be enhanced with ontologies and vocabularies, such as RDF Schema (RDFS) and the Web Ontology Language (OWL), to provide a shared understanding of the meaning of terms and relationships.
+- **Triple Structure:** RDF represents information in triples, each consisting of a subject, predicate, and object. This structure forms the basis for creating statements about resources.
+- **Resource Identification:** Resources are identified using Uniform Resource Identifiers (URIs), providing a globally unique and standardized way to reference entities on the web.
+- **Graph-Based Model:** RDF employs a graph-based data model, enabling the creation of interconnected networks of information. This facilitates the creation of relationships between different pieces of data.
+- **Ontologies and Vocabularies:** RDF can be enhanced with ontologies and vocabularies, such as RDF Schema (RDFS) and the Web Ontology Language (OWL), to provide a shared understanding of the meaning of terms and relationships.
 
 A good introduction to RDF is given [here](https://cambridgesemantics.com/blog/semantic-university/learn-rdf/).
 
@@ -508,7 +505,23 @@ node ./jsonschema2shacl.js -s ../examples/plasmacutter_schema.json -i  https://i
 
 ## Validate objects
 
-Finally we can describe in detail the steps needed for JSON-LD Data validation with JSON-Schema, lined out in the first section.
+Finally we can describe in detail the steps needed for JSON-LD Data validation with JSON-Schema, lined out in the first section. The relationship between the concpepts described above are summarized in the following figure:
+
+```mermaid
+---
+title: Overall Tool and Format Relationship
+---
+graph LR;
+
+A[JSON-Schema]--Validation by\nvalidate.js-->B{NGSI-LD\nConcise Form};
+B<--Conversion by\njsonldConverter.js-->C{NGSI-LD\nNormalized Form};
+
+C ~~~ D[SHACL]
+D --Validation by\npyshacl--> C
+A--Translation by\njsonschema2shacl.js-->D
+```
+
+Therefore, the validation steps are as follows: 
 1. Simplify the problem: Handle with JSON-Schema only single objects, e.g. only a *Cutter* or *Filter* object. For instance the [plasmacutter](./examples/plasmacutter_data.json) or [filter](./examples/filter_data.json) files in the [examples](./examples) directory.
 2. Transform the JSON-LD object into a canonical normal form which ensures that same (sub-)graphs are represented by identical objects.
 
