@@ -283,3 +283,12 @@ velero:
     #  limits:
     #    cpu: 1000m
     #    memory: 1024Mi
+
+redis:
+  resources:
+    requests:
+      cpu: {{ .StateValues.redis.resources.requests.cpu }}
+      memory: {{ .StateValues.redis.resources.requests.memory }}
+    limits:
+      cpu: {{ .StateValues.redis.resources.limits.cpu }}
+      memory: {{ .StateValues.redis.resources.limits.memory }}
