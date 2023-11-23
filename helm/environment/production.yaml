@@ -105,3 +105,6 @@ redis:
     limits:
       cpu: 1
       memory: 2Gi
+
+emqx:
+  externalHostname: testing.industry-fusion.com

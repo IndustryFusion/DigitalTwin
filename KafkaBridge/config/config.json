@@ -23,6 +23,16 @@
 			"bearer-only": true,
 			"verify-token-audience": false,
 			"ssl-required": "external"
+		},
+		"mqttAuthService": {
+			"auth-server-url": "http://keycloak.local/auth/",
+			"realm": "iff",
+			"clientId": "mqtt-broker",
+			"resource": "mqtt-broker",
+			"secret": "secret",
+			"bearer-only": true,
+			"verify-token-audience": true,
+			"ssl-required": "external"
 		}
 	},
 	"ngsildUpdates": {
@@ -43,5 +53,43 @@
 	},
 	"bridgeCommon": {
 		"kafkaSyncOnAttribute": "https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn"
+	},
+	"mqtt":{
+        "host": "emqx-listeners",
+        "port": 1883,
+        "retain": false,
+        "secure": false,
+        "retries": 30000,
+        "adminUsername": "admin",
+        "adminPassword": "password",
+		"clientSecretVariable": "MQTT_CLIENT_SECRET",
+		"authServicePort": 3025,
+		"sparkplug": {
+			"spBKafkaProduce": false,
+			"spBkafKaTopic": "sparkplugB",
+			"ngsildKafkaProduce": true,
+			"ngsildKafkaTopic": "ngsildSpB",
+			"topics": {
+				"subscribe": {
+					"sparkplugb_data_ingestion": "spBv1.0/+/+/+/+"
+				},
+				"publish": {
+				"error": "server/error/{accountId}/{deviceId}",
+				"actuation": "/{realmId}/DCMD/{gatewayId}/{deviceId}"
+				 }
+			}
+		},
+		"kafka": {
+			"requestTimeout": 20000,
+			"maxRetryTime": 5000,
+			"retries": 10,
+			"linger": 50,
+			"partitioner": "defaultPartitioner"
+		  }
+    },
+	"cache": {
+		"host": "redis",
+		"port": 6379
 	}
+
 }

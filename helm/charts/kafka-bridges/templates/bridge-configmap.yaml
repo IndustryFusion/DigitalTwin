@@ -34,7 +34,17 @@ data:
                       "bearer-only": true,
                       "verify-token-audience": false,
                       "ssl-required": false
-              }
+              },
+              "mqttAuthService": {
+                        "auth-server-url": "http://keycloak.local/auth/",
+                        "realm": "iff",
+                        "clientId": "mqtt-broker",
+                        "resource": "mqtt-broker",
+                        "secret": "secret",
+                        "bearer-only": true,
+                        "verify-token-audience": true,
+                        "ssl-required": "external"
+                }
       },
       "ngsildUpdates": {
               "topic": {{ .Values.kafkaBridge.ngsildUpdates.listenTopic | quote }},
@@ -54,7 +64,44 @@ data:
       },
       "bridgeCommon": {
               "kafkaSyncOnAttribute": "https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn"
-      }
-    }
+      },
+      "mqtt": {
+                "host": {{ .Values.mqtt.broker.url | quote }},
+                "port": {{ .Values.mqtt.broker.localport }},
+                "retain": false,
+                "secure": {{ .Values.mqtt.broker.secure }},
+                "retries": {{ .Values.mqtt.broker.retries }},
+                "adminUsername": {{ .Values.mqtt.broker.adminUsername | quote}},
+                "adminPassword": {{ .Values.mqtt.broker.adminPassword | quote}},
+                "clientSecretVariable": "MQTT_CLIENT_SECRET",
+                "authServicePort": {{ .Values.mqtt.bridge.port }},
+                "sparkplug": {
+                        "spBKafkaProduce": false,
+                        "spBkafKaTopic": "sparkplugB",
+                        "ngsildKafkaProduce": true,
+                        "ngsildKafkaTopic": {{ .Values.kafkaBridge.mqtt.attributesTopic | quote }},
+                        "topics": {
+                                "subscribe": {
+                                        "sparkplugb_data_ingestion": "spBv1.0/+/+/+/+"
+                                },
+                                "publish": {
+                                        "error": "server/error/{accountId}/{deviceId}",
+                                        "actuation": "/{realmId}/DCMD/{gatewayId}/{deviceId}"
+                                }
+                        }
+                },
+                "kafka": {
+                        "requestTimeout": {{ .Values.mqtt.kafka.requestTimeout }},
+                        "maxRetryTime": {{ .Values.mqtt.kafka.maxRetryTime }},
+                        "retries": {{ .Values.mqtt.kafka.retries }},
+                        "linger": {{ .Values.mqtt.kafka.linger }},
+                        "partitioner": {{ .Values.mqtt.kafka.partitioner | quote }}
+                }
+        },
+        "cache": {
+                "host": {{ .Values.mqtt.cache.host | quote }},
+                "port": {{ .Values.mqtt.cache.port }}
+                }
+        }
   knowledge.ttl: |
 {{ .Files.Get "kms/knowledge.ttl" | indent 4 }}

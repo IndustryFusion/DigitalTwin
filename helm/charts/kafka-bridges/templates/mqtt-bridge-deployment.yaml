@@ -1,0 +1,65 @@
+---
+# yamllint disable rule:line-length
+# yamllint disable rule:braces
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mqtt-bridge
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: mqtt-bridge
+spec:
+  replicas: {{ .Values.kafkaBridge.mqtt.replicaCount }}
+  selector:
+    matchLabels:
+      app: mqtt-bridge
+  template:
+    metadata:
+      labels:
+        app: mqtt-bridge
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/bridge-configmap.yaml") . | sha256sum }}
+    spec:
+      containers:
+        - name: mqtt-bridge
+          image: '{{ .Values.mainRepo }}/kafka-bridge:{{ .Values.mainVersion }}'
+          command: ["node"]
+          args: ["/opt/mqttBridge/app.js"]
+          imagePullPolicy: IfNotPresent
+          ports:
+          - containerPort: {{ .Values.mqtt.bridge.port }}
+            name: rest
+          env:
+          - name: MQTT_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: keycloak-client-secret-mqtt-broker
+                key: CLIENT_SECRET
+          livenessProbe:
+            exec:
+              command:
+                - cat
+                - /tmp/healthy
+            initialDelaySeconds: 300
+          readinessProbe:
+            exec:
+              command:
+                - cat
+                - /tmp/ready
+            initialDelaySeconds: 5
+          volumeMounts:
+            - name: config
+              mountPath: /opt/config
+              readOnly: true
+          resources:
+      volumes:
+        - name: config
+          configMap:
+            # Provide the name of the ConfigMap you want to mount.
+            name: bridge-configmap
+            # An array of keys from the ConfigMap to create as files
+            items:
+              - key: "config.json"
+                path: "config.json"
+      imagePullSecrets:
+        - name: {{ .Values.pullSecretCredentials }}

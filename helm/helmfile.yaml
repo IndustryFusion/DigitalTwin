@@ -134,3 +134,13 @@ releases:
   namespace: {{ .Values.namespace }}
   values:
   - values.yaml.gotmpl
+- name: emqx
+  labels:
+    app: emqx
+    order: third
+  chart: ./charts/emqx
+  namespace: {{ .Values.namespace }}
+  values:
+  - values.yaml.gotmpl
+  needs:
+  - kafka-bridges
