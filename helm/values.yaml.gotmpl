@@ -292,3 +292,18 @@ redis:
     limits:
       cpu: {{ .StateValues.redis.resources.limits.cpu }}
       memory: {{ .StateValues.redis.resources.limits.memory }}
+
+emqx:
+  replicas: 1
+
+mqtt:
+  broker:
+    username: username
+    password: password
+    url: emqx-headless
+    localport: 1883
+  bridge:
+    port: 3025
+    url: mqtt-bridge
+  externalHostname:
+    mqtt.local
