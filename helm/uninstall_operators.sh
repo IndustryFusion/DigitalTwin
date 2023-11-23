@@ -42,4 +42,12 @@ printf "\033[1mUninstalling Minio-operator \n"
 kubectl delete ns minio-operator
 rm -rf kubectl-minio
 
+printf "\n"
+printf "\033[1mUninstalling EMQX Operator\n"
+printf -- "------------------------\033[0m\n"
+helm repo add emqx https://repos.emqx.io/charts
+helm repo update
+helm uninstall emqx-operator --namespace emqx-operator-system
+
+
 printf -- "\n\033[1mOperators uninstalled successfully.\033[0m\n"

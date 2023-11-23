@@ -2,6 +2,7 @@ FROM node:16
 COPY alerta/ /opt/alerta/
 COPY debeziumBridge/ /opt/debeziumBridge/
 COPY ngsildUpdates/ /opt/ngsildUpdates/
+COPY mqttBridge /opt/mqttBridge
 ADD package.json /opt/package.json
 ADD package-lock.json package-lock.json
 COPY lib/ /opt/lib/

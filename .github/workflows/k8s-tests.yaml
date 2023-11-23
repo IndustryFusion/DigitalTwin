@@ -35,8 +35,13 @@ jobs:
       run: cd test && bash install-local-platform.sh
     - name: Run all e2e tests
       run: |
+        echo sleep 60s to let the system settle
+        sleep 60
+        (exec kubefwd -n iff svc) &
+        sleep 10
         cd ./test/bats
-        bats */*.bats
+        DEBUG=true bats */*.bats
+        killall kubefwd
     - name: Build and test shacl2flink
       run: |
         ( cd semantic-model/shacl2flink && make setup && make lint test test-kms )

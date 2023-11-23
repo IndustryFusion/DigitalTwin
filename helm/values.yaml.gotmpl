@@ -172,6 +172,9 @@ kafkaBridge:
     listenTopicRetention: {{- if hasKey .StateValues.kafkaBridge.ngsildUpdates "listenTopicRetention" }} {{ .StateValues.kafkaBridge.ngsildUpdates.listenTopicRetention | quote}}
                           {{- else }} "3600000"
                           {{- end }}
+  mqtt:
+    replicaCount: 1
+    attributesTopic: "iff.ngsild.attributes"
 
 keycloak:
   adminName: admin
@@ -292,3 +295,38 @@ redis:
     limits:
       cpu: {{ .StateValues.redis.resources.limits.cpu }}
       memory: {{ .StateValues.redis.resources.limits.memory }}
+
+emqx:
+  replicas: 1
+  resources:
+  {{- if hasKey .StateValues.emqx "resources"}}
+    requests:
+        memory: {{ .StateValues.emqx.resources.requests.memory }}
+        cpu: {{ .StateValues.emqx.resources.requests.cpu }}
+    limits:
+        memory: {{ .StateValues.emqx.resources.limits.memory }}
+        cpu: {{ .StateValues.emqx.resources.limits.cpu }}
+  {{- end }}
+
+mqtt:
+  broker:
+    adminUsername: admin
+    adminPassword: {{ .StateValues.mqttBrokerClientSecret }}
+    url: emqx-listeners
+    localport: 1883
+    secure: false
+    retries: 100
+  bridge:
+    port: 3025
+    url: mqtt-bridge
+  externalHostname:
+    mqtt.local
+  kafka:
+    linger: 50
+    partitioner: "defaultPartitioner"
+    retries: 10
+    maxRetryTime: 5000
+    "requestTimeout": 20000
+  cache:
+    host: redis
+    port: 6379

@@ -94,4 +94,17 @@ git fetch
 git checkout v1.9.0
 helm -n iff install postgres-operator ./charts/postgres-operator
 
+
+printf "\n"
+printf "\033[1mInstalling EMQX Operator\n"
+printf -- "------------------------\033[0m\n"
+printf "\033[1mWait 30 seconds to give cert-manager time to settle\n"
+sleep 30 # Wait 30 seconds to give cert-manager time to settle (otherwise it is failing due to missing api)
+printf "\033[1mNow install\n"
+helm repo add emqx https://repos.emqx.io/charts
+helm repo update
+helm upgrade --install emqx-operator emqx/emqx-operator --namespace emqx-operator-system --create-namespace --version 2.2.3
+
+
 printf -- "\033[1mOperators installed successfully.\033[0m\n"
+

@@ -58,3 +58,7 @@ DETIK_DEBUG="true"
     [ "$status" -eq 0 ]
 
 }
+@test "verify that emqx is up and running" {
+    run try "at most 30 times every 60s to find 1 pod named 'emqx-core' with 'status.containerStatuses[0].ready' being 'true'"
+    [ "$status" -eq 0 ]
+}

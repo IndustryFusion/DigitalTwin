@@ -1,0 +1,456 @@
+{
+    "POST": {
+        "type": "object",
+        "properties": {
+            "accountId": {
+                "type": "string",
+                "required": true
+            },
+            "on": {
+                "type": "number",
+                "required": true
+            },
+            "data": {
+                "type": "array",
+                "required": true,
+                "minItems": 1,
+                "maxItems": 1024,
+                "items": {
+                    "properties": {
+                        "componentId": {
+                            "type": "string",
+                            "required": true
+                        },
+                        "on": {
+                            "type": "number",
+                            "required": true
+                        },
+                        "loc": {
+                            "type": "array",
+                            "required": false,
+                            "minItems": 2,
+                            "maxItems": 3,
+                            "items": {
+                                "type" : "number"
+                            }
+                        },
+                        "value": {
+                            "type": ["number", "string", "boolean"],
+                            "required": true
+                        },
+                        "attributes": {
+                            "type":"object",
+                            "required": false
+                        }
+                    },
+                    "additionalProperties": false
+                }
+            }
+        },
+        "additionalProperties": false
+    },
+    "SEARCH": {
+        "type": "object",
+        "properties": {
+            "from": {
+                "type": "number",
+                "required": false,
+		"description": "beginning of the time window in ms from epoch.  If from is positive it will represent the number of milliseconds since Jan-01-1970T00:00:00.000. If from is negative, it represents the number of seconds to add to to (because the number is negative, it will decrease to, moving backward in time.",
+		"examples": [ 0, -86400, 1407979291000 ]
+            },
+            "to": {
+                "type": "number",
+                "required": false,
+		"description": "end of the time window in ms from epoch. If omitted,  data will be retrieved up to the current time.",
+		"examples": [ 1407979291860 ]
+            },
+            "maxItems": {
+                "type": "number",
+                "required": false,
+		"description": "Number of dataPoints to return. Time period will be devided into this number of windows, and all points in each window will be averaged. DO NOT include maxPoints if you want the actual data values which were submitted.",
+		"examples": [ 100 ]
+            },
+            "targetFilter": {
+                "type":"object",
+                "required": true,
+		"description": "The filter object that will be used to select devices",
+		"examples": [ "criteria or deviceList object" ],
+
+
+                "properties": {
+                    "criteria": {
+                        "type": "object",
+                        "required": false,
+                        "properties": {
+                            "deviceId": {
+                                "type": "object",
+                                "required": false,
+                                "properties": {
+                                    "operator": {
+                                        "type": "string",
+                                        "required": true,
+					"description": "operator to apply, <in|neq|eq|gt|lt>",
+					"examples": ["in", "eq"]
+                                    },
+                                    "value": {
+                                        "type": ["array", "string"],
+                                        "required": true,
+					"description": "Device attribute value",
+					"examples": [ "linux", "x86" ]
+                                    }
+                                },
+                                "additionalProperties": false
+                            },
+                            "gatewayId": {
+                                "type": "object",
+                                "required": false,
+                                "properties": {
+                                    "operator": {
+                                        "type": "string",
+                                        "required": true
+                                    },
+                                    "value": {
+                                        "type": ["array", "string"],
+                                        "required": true
+                                    }
+                                },
+                                "additionalProperties": false
+                            },
+                            "name": {
+                                "type": "object",
+                                "required": false,
+                                "properties": {
+                                    "operator": {
+                                        "type": "string",
+                                        "required": true
+                                    },
+                                    "value": {
+                                        "type": ["array", "string"],
+                                        "required": true
+                                    }
+                                },
+                                "additionalProperties": false
+                            },
+                            "tags": {
+                                "type": "object",
+                                "required": false,
+                                "properties": {
+                                    "operator": {
+                                        "type": "string",
+                                        "required": true
+                                    },
+                                    "value": {
+                                        "type": ["array", "string","boolean"],
+                                        "required": true
+                                    }
+                                },
+                                "additionalProperties": false
+                            },
+                            "attributes": {
+                                "type": "object",
+                                "required": false
+                            }
+                        }
+                    },
+                    "deviceList": {
+                        "type" : "array",
+                        "minItems" : 1,
+                        "items" : {
+                            "type" : "string"
+                        }
+                    }
+                },
+                "additionalProperties": false
+            },
+            "metrics": {
+                "type":"array",
+                "minItems": 1,
+                "required": true,
+		"description": "array of metrics (data series) to return - each object in array contains ID that represents the ID of component. Up to 10 such objects can be provided.",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "id": {
+                            "type": "string",
+                            "required": true,
+			    "description": "Component ID",
+			    "examples": "436e7e74-6771-4898-9057-26932f5eb7e1"
+                        },
+                        "op": {
+                            "type": "string",
+                            "required": false
+                        }
+                    },
+                    "additionalProperties": false
+                }
+            },
+            "recipients": {
+                "type":"array",
+                "minItems": 1,
+                "required": false,
+		"description": "array of mail message recipients, optional",
+		"examples": [ "recipients: [ \"example@gmail.com \"]" ],
+                "items": {
+                    "type": "string"
+                }
+            },
+            "queryMeasureLocation": {
+                "type": "boolean",
+                "required": false,
+		"description": "true to include the geo location of each measurement, optional, false by default. Cannot be true if maxItems parameter is provided.",
+		"examples": [ "true", "false"]
+            }
+        },
+        "additionalProperties": false
+    },
+    "SEARCH_ADVANCED": {
+        "type": "object",
+        "properties": {
+            "gatewayIds": {
+                "type": "array",
+                "required": false,
+		"description": "An array of gateway IDs that devices connected to them will be returned in the response.",
+		"examples": ["436-e7e", "269-32f"],
+                "items": {
+                    "type": "string"
+                }
+            },
+            "deviceIds": {
+                "type": "array",
+                "required": false,
+		"description": "An array of devices IDs to return in the response. If field isn't sent - will return all devices in account.",
+		"examples": ["436-e7e", "269-32f"],
+                "items": {
+                    "type": "string"
+                }
+            },
+            "componentIds": {
+                "type": "array",
+                "required": false,
+		"description": "An array of component IDs to return in the response. If field isn't sent - will return all components in account.",
+		"examples": ["234-f7a", "249-42c"],
+                "items": {
+                    "type": "string"
+                }
+            },
+            "from": {
+                "type": "number",
+                "required": true,
+		"description": "Earliest measurement to include in response.",
+		"examples": [ 1391971083468 ]
+            },
+            "to": {
+                "type": "number",
+                "required": false,
+		"description": "Latest measurement to include in response.",
+		"examples": [ 1391972538404 ]
+            },
+            "returnedMeasureAttributes": {
+                "type": "array",
+                "required": false,
+		"description": "An array of attributes that will be returned for each measurement. If the requested attribute was not sent in the measurement, an empty string will be returned for that attribute.",
+		"examples": ["interval", "intensity"],
+                "items": {
+                    "type": "string"
+                }
+            },
+            "showMeasureLocation": {
+                "type": "boolean",
+                "required": false,
+		"description": "If set to true, the lat, lon and alt fields will be returned for each measurement. If one of the location fields does not exist in the measurement, a null value will be returned for that field. Possibel Values: true, false. Default: false.",
+		"examples": [ true, false]
+            },
+            "aggregations": {
+                "type":"string",
+                "required": false,
+		"description": "include would add aggregations to the response(Max, Min, Count, Sum, sumSquares) for each component; only would not have the samples array; Non-numeric metrics will be ignored during for aggregation calculations. Possible Values: include, exclude, only. Default: exclude",
+                "enum": ["include", "exclude", "only"]
+            },
+            "devCompAttributeFilter": {
+                "type": "object",
+                "required": false,
+		"description": "Filters by device and/or component attributes. See API documentation.",
+		"examples": [ "{\"componentType\" : [\"temperature.v1.0\", \"humidity.v1.0\"], \"deviceName\" : [\"My Watch\" ], \"Tags\" : [\"Intel\",\"IOT\"]}" ]
+            },
+            "measurementAttributeFilter": {
+                "type": "object",
+                "required": false,
+		"description": "Filters by measurement attributes. See API Documentation.",
+		"examples": ["{\"fromPhoneNumber\" :[\"123\",\"456\"]}"]
+            },
+            "valueFilter": {
+                "type": "object",
+                "required": false,
+		"description": "Filters by measurement values. See below.",
+		"examples": [ "\"value\":[\"1\",\"0\"]" ]
+            },
+            "componentRowStart": {
+                "type": "number",
+                "required": false
+            },
+            "componentRowLimit": {
+                "type": "number",
+                "required": false,
+		"description": "Limits the number of records returned for each component in the response. Can be used in conjuction with the sorting options to get \"top\" records.",
+		"examples": [ 10 ]
+            },
+            "countOnly": {
+                "type": "boolean",
+                "required": false,
+		"description": "Setting to true will return the number of rows that would have returned from this query. Default: false"
+            },
+            "sort": {
+                "type": "array",
+                "required": false,
+		"description": "An array of sort objects, each has the sort field as a key and the sort order as value. The objects order in the list sets the sorting order within each component. Possible values for the sortField key: Timestamp, Value. Possible values for sortOrder: Asc, Desc.",
+		"examples": [ "[{\"Timestamp\": \"Asc\"},{\"Value\": \"Desc\"}]" ],
+                "items": {
+                    "type": "object"
+                }
+            }
+        },
+        "additionalProperties": false
+    },
+    "REPORT": {
+        "type": "object",
+        "properties": {
+            "from": {
+                "type": "number",
+                "required": true
+            },
+            "to": {
+                "type": "number",
+                "required": false
+            },
+            "aggregationMethods": {
+                "type":"array",
+                "required": false,
+                "items": {
+                    "type": "string",
+                    "enum": ["average", "min", "max", "std", "count", "sum"]
+                }
+            },
+            "dimensions": {
+                "type": "array",
+                "required": false,
+                "items": {
+                    "type": "string"
+                }
+            },
+            "offset":  {
+                "type": "number",
+                "required": false
+            },
+            "limit":  {
+                "type": "number",
+                "required": false
+            },
+            "countOnly":  {
+                "type": "boolean",
+                "required": false
+            },
+            "outputType":  {
+                "type": "string",
+                "enum": ["json", "csv"],
+                "required": false
+            },
+            "deviceIds": {
+                "type":"array",
+                "minItems": 1,
+                "required": false,
+                "items": {
+                    "type": "string"
+                }
+            },
+            "gatewayIds": {
+                "type":"array",
+                "minItems": 1,
+                "required": false,
+                "items": {
+                    "type": "string"
+                }
+            },
+            "componentIds": {
+                "type":"array",
+                "minItems": 1,
+                "required": false,
+                "items": {
+                    "type": "string"
+                }
+            },
+            "sort": {
+                "type": "array",
+                "minItems": 1,
+                "required": false,
+                "items": {
+                    "type": "object"
+                }
+            },
+            "filters": {
+                "type":"object",
+                "required": false
+            }
+        },
+        "additionalProperties": false
+    },
+    "SPARKPLUGB": {
+        "type": "object",
+        "properties": {
+            "timestamp": {
+                "type": "number",
+                "required": true
+            },
+            "metrics": {
+                "type": "array",
+                "required": true,
+                "minItems": 1,
+                "maxItems": 1024,
+                "items": {
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "required": true
+                        },
+                        "alias": {
+                            "type": "string",
+                            "format": "uuid",
+                            "required": false
+                        },
+                        "timestamp": {
+                            "type": "number",
+                            "required": true
+                        },
+                        "dataType": {
+                            "type": "string",
+                            "required": true
+                        },
+                        "value": {
+                            "type": ["number", "string", "boolean"],
+                            "required": true
+                        }
+                    },
+                    "additionalProperties": false
+                }
+            },
+            "seq": {
+                "type": "number",
+                "required": true
+            },
+        "additionalProperties": false
+        }
+    },
+    "FIRST_LAST_MEASUREMENT": {
+        "type": "object",
+        "properties": {
+            "components": {
+                "type": "array",
+                "minItems": 1,
+                "required": true,
+                "items": {
+                    "type": "string"
+                }
+            }
+        },
+        "additionalProperties": false
+    }
+}
