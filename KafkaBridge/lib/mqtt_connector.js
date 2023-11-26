@@ -140,14 +140,15 @@ function Broker (conf, logger) {
       end: function () {}
     };
   };
-  me.attach = function (topic, handler) {
+  me.attach = function (topic, handler, context) {
     // New feature shared subscription starts topic with $share/topic/
     // This needs to be removed as it will not be the reported topic
     // e.g. subscription is $share/topic/hello/world but received topic is hello/world
     topic = topic.replace(/^\$share\/\w+\//, '');
     me.messageHandler.push({
       t: topic,
-      h: handler
+      h: handler,
+      c: context
     });
   };
   function tryPattern (pattern, text) {
@@ -175,11 +176,11 @@ function Broker (conf, logger) {
       const obj = me.messageHandler[i];
       if (tryPattern(obj.t, topic)) {
         me.logger.debug('Fired STATUS: ' + topic + JSON.stringify(message));
-        obj.h(topic, message);
+        obj.h.call(obj.c, topic, message);
       }
     }
   };
-  me.bind = function (topic, handler, callback) {
+  me.bind = function (topic, handler, context, callback) {
     /**
          * since the bind and publish connect automatically,
          * it is require to chain the callbacks
@@ -188,10 +189,13 @@ function Broker (conf, logger) {
     function connectCallback () {
       me.logger.debug('Subscribing to: ' + topic);
       me.client.subscribe(topic, { qos: 1 }, function (err, granted) {
+        if (err) {
+          throw new Error('Cannot bind handler.');
+        }
         me.logger.debug('grant ' + JSON.stringify(granted));
         const topicAsPattern = granted[0].topic.replace(/\+/g, '[^<>]*');
         me.logger.info('Topic Pattern :' + topicAsPattern);
-        me.attach(topicAsPattern, handler);
+        me.attach(topicAsPattern, handler, context);
         if (toCallBack) {
           toCallBack();
         }

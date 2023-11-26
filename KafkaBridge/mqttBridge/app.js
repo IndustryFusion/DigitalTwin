@@ -19,7 +19,6 @@ const Broker = require('../lib/mqtt_connector');
 const SparkplugApiData = require('./sparkplug_data_ingestion');
 const config = require('../config/config.json');
 const authService = require('../lib/authService');
-const health = require('./health');
 const Logger = require('../lib/logger');
 const fs = require('fs');
 
@@ -27,12 +26,11 @@ process.env.APP_ROOT = __dirname;
 const logger = Logger(config);
 const brokerConnector = Broker.singleton(config.mqtt, logger);
 
-function brokerCb (err) {
+async function brokerCb (err) {
   if (!err) {
     // SparkplugB connector
     const sparkplugapiDataConnector = new SparkplugApiData(config);
-    sparkplugapiDataConnector.bind(brokerConnector);
-    health.init(brokerConnector);
+    sparkplugapiDataConnector.bind(brokerConnector, sparkplugapiDataConnector);
   } else {
     logger.error('Error on Broker connection ', err);
     process.exit(1);
@@ -44,7 +42,7 @@ const startListener = async function () {
   const signalTraps = ['SIGTERM', 'SIGINT', 'SIGUSR2'];
 
   logger.info('Now starting MQTT auth service.');
-  authService.init(config);
+  await authService.init(config);
 
   logger.info('Now starting MQTT-Kafka bridge forwarding.');
   brokerConnector.connect(brokerCb);

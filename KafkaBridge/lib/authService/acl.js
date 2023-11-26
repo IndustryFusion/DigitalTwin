@@ -32,17 +32,17 @@ class Acl {
 
   async acl (req, res) {
     const username = req.query.username;
-    if (username === this.config.broker.username) {
+    if (username === this.config.mqtt.adminUsername) {
       // superuser
       this.logger.info('Superuser ACL accepted!');
-      res.sendStatus(200);
+      res.status(200).json({ result: 'allow' });;
       return;
     }
     const topic = req.query.topic;
     this.logger.debug('ACL request for username ' + username + ' and topic ' + topic);
     // allow all $SYS topics
     if (topic.startsWith('$SYS/')) {
-      res.sendStatus(200);
+      res.status(200).json({ result: 'allow' });
       return;
     }
 
@@ -59,10 +59,10 @@ class Acl {
         this.logger.debug('Granting spB ACL for device id: ' + spBdevId + 'and datatype: ' + spBMessageType);
         const spBAclKey = spBAccountId + '/' + spBdevId;
         const allowed = await this.cache.getValue(spBAclKey, 'acl');
-        if (!allowed || allowed === undefined || spBdevId !== username) {
+        if (allowed === undefined || !(allowed === 'true') || spBdevId !== username) {
           res.sendStatus(400);
         } else {
-          res.sendStatus(200);
+          res.status(200).json({ result: 'allow' });
         }
       } else if (spBMessageType === 'NCMD' || spBMessageType === 'NBIRTH' || spBMessageType === 'NDEATH' || spBMessageType === 'NDATA') {
         this.logger.debug('Granting spB ACL for node: ' + spBEonId + ' with messagetype: ' + spBMessageType);
@@ -71,7 +71,7 @@ class Acl {
         if (!allowed || allowed === undefined) {
           res.sendStatus(400);
         } else {
-          res.sendStatus(200);
+          res.status(200).json({ result: 'allow' });
         }
       }
     } else {
@@ -79,7 +79,7 @@ class Acl {
       const access = req.query.access;
       let accountId = null;
       let deviceId = null;
-      const re = this.config.topics.prefix + '\\/([^\\/]*)\\/DCMD\\/([^\\/]*)\\/(.*)';
+      const re = this.config.mqtt.sparkplug.topics.prefix + '\\/([^\\/]*)\\/DCMD\\/([^\\/]*)\\/(.*)';
       let match = topic.match(new RegExp(re));
       if (match !== null && match !== undefined && match.length === 4) {
         if (access !== SUBSCRIBE) {
@@ -102,12 +102,13 @@ class Acl {
         res.sendStatus(400);
         return;
       }
-      const allowed = await this.cache.getValue(accountId + '/' + deviceId, 'acl');
-      if (!allowed || allowed === undefined || deviceId !== username) {
+      const allowedStr = await this.cache.getValue(accountId + '/' + deviceId, 'acl');
+      const allowed = !(allowedStr === undefined || allowedStr !== 'true');
+      if (!allowed || deviceId !== username) {
         res.sendStatus(400);
       } else {
         this.logger.debug('Granting ACL for device: ' + deviceId + ' with topic: ' + topic);
-        res.sendStatus(200);
+        res.status(200).json({ result: 'allow' });;
       }
     }
   }

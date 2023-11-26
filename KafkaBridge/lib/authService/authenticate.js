@@ -19,18 +19,6 @@
 
 const Cache = require('../cache');
 const Keycloak = require('keycloak-connect');
-//let me;
-
-function verifyAndDecodeToken (token) {
-  me.logger.debug('decode token: ' + token);
-  return me.keycloakAdapter.grantManager
-    .createGrant({ access_token: token })
-    .then(grant => grant.access_token.content)
-    .catch(err => {
-      me.logger.debug('Token decoding error: ' + err);
-      return null;
-    });
-}
 
 function getRealm (token) {
   // issuer has to contain realm id, e.g.: http://<keycloak-url>/auth/realms/iff
@@ -88,38 +76,52 @@ class Authenticate {
       res.status(200).json({ result: 'allow', is_superuser: 'true' });
       return;
     }
-    const decoded_token = await verifyAndDecodeToken(token);
-    this.logger.debug('token decoded: ' + JSON.stringify(decoded_token));
-    if (decoded_token === null) {
+    const decodedToken = await this.verifyAndDecodeToken(token);
+    this.logger.debug('token decoded: ' + JSON.stringify(decodedToken));
+    if (decodedToken === null) {
       res.sendStatus(400);
       return;
     }
-    if (!validate(decoded_token, username) && !legacyValidate(decoded_token, username)) {
+    if (!validate(decodedToken, username) || username === this.config.mqtt.adminUsername) {
       res.sendStatus(400);
       return;
     }
     // check whether accounts contains only one element and role is device
-    const accounts = decoded_token.accounts;
-    const did = decoded_token.device_id ? decoded_token.device_id : decoded_token.sub;
+    const accounts = decodedToken.accounts;
+    const did = decodedToken.device_id ? decodedToken.device_id : decodedToken.sub;
     const accountId = accounts && accounts.length > 0 ? accounts[0].id : null;
-    const realm = getRealm(decoded_token);
+    const realm = getRealm(decodedToken);
     // put realm/device into the list of accepted topics
-    await this.cache.setValue(realm + '/' + did, 'acl', true);
+    await this.cache.setValue(realm + '/' + did, 'acl', 'true');
     // put account/device into the list of accepted topics (legacy)
     if (accountId) {
       const key = accountId + '/' + did;
-      await this.cache.setValue(key, 'acl', true);
+      await this.cache.setValue(key, 'acl', 'true');
     }
     // For SparkplugB put (legacy) account/gateway(node) and realm/gateway(node) into the list of accepted topics to authenticate Node/gateway messages
-    if (decoded_token.gateway !== undefined || decoded_token.gateway === null) {
+    if (decodedToken.gateway !== undefined || decodedToken.gateway === null) {
       if (accountId) {
-        const legacyGatewayKey = accountId + '/' + decoded_token.gateway;
-        await this.cache.setValue(legacyGatewayKey, 'acl', true);
+        const legacyGatewayKey = accountId + '/' + decodedToken.gateway;
+        await this.cache.setValue(legacyGatewayKey, 'acl', 'true');
       }
-      const gatewayKey = realm + '/' + decoded_token.gateway;
-      await this.cache.setValue(gatewayKey, 'acl', true);
+      const gatewayKey = realm + '/gateway/' + decodedToken.gateway;
+      /* wagmarcel: I do not understand why gateway and device should be treated the same, is this intended?
+                    hence I added the /gateway/ prefix to avoid mixing
+     */
+      await this.cache.setValue(gatewayKey, 'acl', 'true');
     }
-    res.sendStatus(200);
+    res.status(200).json({ result: 'allow', is_superuser: 'false' });
+  }
+
+  verifyAndDecodeToken (token) {
+    this.logger.debug('decode token: ' + token);
+    return this.keycloakAdapter.grantManager
+      .createGrant({ access_token: token })
+      .then(grant => grant.access_token.content)
+      .catch(err => {
+        this.logger.debug('Token decoding error: ' + err);
+        return null;
+      });
   }
 }
 module.exports = Authenticate;

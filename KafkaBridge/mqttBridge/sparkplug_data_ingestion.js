@@ -15,16 +15,15 @@
 */
 
 'use strict';
-const config = require('../config/config.json');
 const { Kafka, logLevel } = require('kafkajs');
 const { Partitioners } = require('kafkajs');
-const CacheFactory = require('../lib/cache');
 const ngsildMapper = require('./spb-ngsild-mapper');
 const Logger = require('../lib/logger');
 const dataSchema = require('./schemas/data.json');
 const Validator = require('jsonschema').Validator;
+const Cache = require('../lib/cache');
 
-let me;
+// let me;
 const MESSAGE_TYPE = {
   WITHSEQ: {
     NBIRTH: 'NBIRTH',
@@ -139,28 +138,29 @@ class KafkaAggregator {
   }
 }
 
-module.exports = async function SparkplugHandler (config) {
-  const logger = new Logger(config);
-  const topics_subscribe = config.mqtt.sparkplug.topics.subscribe;
-  const topics_publish = config.mqtt.sparkplug.topics.publish;
+module.exports = class SparkplugHandler {
+  constructor (config) {
+    const logger = new Logger(config);
+    this.topics_subscribe = config.mqtt.sparkplug.topics.subscribe;
+    this.topics_publish = config.mqtt.sparkplug.topics.publish;
 
-  const validator = new Validator();
-  const cacheFactory = await new CacheFactory(config, logger);
-  const cache = cacheFactory.getInstance();
-  me = this;
-  me.kafkaAggregator = new KafkaAggregator(config);
-  me.kafkaAggregator.start(config.mqtt.kafka.linger);
+    const validator = new Validator();
+    const cache = new Cache(config);
+    this.kafkaAggregator = new KafkaAggregator(config);
+    this.kafkaAggregator.start(config.mqtt.kafka.linger);
 
-  me.logger = logger;
-  me.cache = cache;
-  me.token = null;
-  me.config = config;
+    this.logger = logger;
+    this.cache = cache;
+    this.token = null;
+    this.config = config;
+    this.validator = validator;
+  }
 
-  me.stopAggregator = function () {
-    me.kafkaAggregator.stop();
+  stopAggregator () {
+    this.kafkaAggregator.stop();
   };
 
-  me.getToken = function (did) {
+  getToken (did) {
     /* jshint unused:false */
     return new Promise(function (resolve, reject) {
       resolve(null);
@@ -168,9 +168,9 @@ module.exports = async function SparkplugHandler (config) {
   };
 
   /* Validate SpB Node & Device are with proper seq number and store in cache
-    * To Do: In future add function to send node command for RE-BIRTH message in case seq number or CID/alias not matched
-    */
-  me.validateSpbDevSeq = async function (topic, bodyMessage) {
+      * To Do: In future add function to send node command for RE-BIRTH message in case seq number or CID/alias not matched
+      */
+  async validateSpbDevSeq (topic, bodyMessage) {
     const subTopic = topic.split('/');
     const accountId = subTopic[1];
     const devID = subTopic[4];
@@ -179,53 +179,53 @@ module.exports = async function SparkplugHandler (config) {
     try {
       if (subTopic[2] === 'NBIRTH') {
         if (bodyMessage.seq === 0) {
-          const redisResult = await me.cache.setValue(redisSeqKey, 'seq', 0);
+          const redisResult = await this.cache.setValue(redisSeqKey, 'seq', 0);
           if (redisResult !== null || redisResult !== undefined) {
-            me.logger.debug('NBIRTH  message of eonid: ' + eonID + ' has right seq no. 0  and stored in redis ');
+            this.logger.debug('NBIRTH  message of eonid: ' + eonID + ' has right seq no. 0  and stored in redis ');
             return true;
           } else {
-            me.logger.warn('Could not store birth seq value in redis with key: ' + redisSeqKey + ', this will effect seq no verification for data message');
+            this.logger.warn('Could not store birth seq value in redis with key: ' + redisSeqKey + ', this will effect seq no verification for data message');
             return false;
           }
         } else {
-          me.logger.error('Sequence is not 0, so ignoring BIRTH message for eonID: ' + eonID + ', and seq no: ' + bodyMessage.seq);
+          this.logger.error('Sequence is not 0, so ignoring BIRTH message for eonID: ' + eonID + ', and seq no: ' + bodyMessage.seq);
           return false;
         }
       } else if (subTopic[2] === 'DDATA' || subTopic[2] === 'DBIRTH' || subTopic[2] === 'DDEATH' || subTopic[2] === 'NDATA') {
-        let redisSeq = await me.cache.getValue(redisSeqKey, 'seq');
+        let redisSeq = await this.cache.getValue(redisSeqKey, 'seq');
         if (redisSeq === null || redisSeq === undefined) {
-          me.logger.warn('Could not load seq value from redis for topic: ' + subTopic[2] + ' and dev :' + devID);
+          this.logger.warn('Could not load seq value from redis for topic: ' + subTopic[2] + ' and dev :' + devID);
           return false;
         }
         if ((bodyMessage.seq > redisSeq && bodyMessage.seq <= 255) || (bodyMessage.seq === 0 && redisSeq === 255)) {
           redisSeq = bodyMessage.seq;
-          const redisResult = await me.cache.setValue(redisSeqKey, 'seq', redisSeq);
+          const redisResult = await this.cache.setValue(redisSeqKey, 'seq', redisSeq);
           if (!redisResult) {
-            me.logger.warn('Could not store seq value in redis, this will effect seq no verification for data message');
+            this.logger.warn('Could not store seq value in redis, this will effect seq no verification for data message');
             return false;
           } else {
-            me.logger.debug('Valid seq, Data Seq: ' + redisSeq + ' added for dev: ' + devID);
+            this.logger.debug('Valid seq, Data Seq: ' + redisSeq + ' added for dev: ' + devID);
             return true;
           }
         } else {
-          me.logger.error('Sequence is not more than previous seq number so ignoring message for devID: ' + devID + ', and seq no: ' + bodyMessage.seq);
+          this.logger.error('Sequence is not more than previous seq number so ignoring message for devID: ' + devID + ', and seq no: ' + bodyMessage.seq);
           return false;
         }
       }
     } catch (err) {
-      me.logger.error('ERROR in validating the SparkPlugB payload ' + err);
+      this.logger.error('ERROR in validating the SparkPlugB payload ' + err);
       return false;
     }
   };
 
-  me.createKafakaPubData = function (topic, bodyMessage) {
+  createKafakaPubData (topic, bodyMessage) {
     /** * For forwarding sparkplugB data directly without kafka metrics format
         * @param ngsildKafkaProduce is set in the config file
         *  */
     const subTopic = topic.split('/');
     const devID = subTopic[4];
 
-    if (config.sparkplug.spBKafkaProduce) {
+    if (this.config.mqtt.sparkplug.spBKafkaProduce) {
       /* Validating each component of metric payload if they are valid or not
             * By verifying there existence in DB or cache
             */
@@ -234,40 +234,39 @@ module.exports = async function SparkplugHandler (config) {
         if (subTopic[2] === 'NBIRTH' || subTopic[2] === 'DDATA' || subTopic[2] === 'DBIRTH') {
           const key = topic;
           const message = { key, value: JSON.stringify(kafkaMessage) };
-          me.logger.debug('Selecting kafka message topic SparkplugB with spB format payload for data type: ' + subTopic[2]);
-          me.kafkaAggregator.addMessage(message, config.sparkplug.spBkafKaTopic);
+          this.logger.debug('Selecting kafka message topic SparkplugB with spB format payload for data type: ' + subTopic[2]);
+          this.kafkaAggregator.addMessage(message, this.config.mqtt.sparkplug.spBkafKaTopic);
           return true;
         }
       });
     }
-    if (config.sparkplug.ngsildKafkaProduce) {
+    if (this.config.mqtt.sparkplug.ngsildKafkaProduce) {
       /* Validating each component of metric payload if they are valid or not
             * By verifying there existence in DB or cache
             */
       bodyMessage.metrics.forEach(item => {
         const kafkaMessage = item;
         if (subTopic[2] === 'NBIRTH' || subTopic[2] === 'DBIRTH') {
-          me.logger.info('Received spB NBIRTH/DBIRTH message, ignoring currently kafka forward for SpBNGSI-LD topic');
+          this.logger.info('Received spB NBIRTH/DBIRTH message, ignoring currently kafka forward for SpBNGSI-LD topic');
           return true;
-        }
-        /** Validating component id in the database to check for DDATA */
-        else if (subTopic[2] === 'DDATA') {
+        } else if (subTopic[2] === 'DDATA') {
+          /** Validating component id in the database to check for DDATA */
           const metricName = kafkaMessage.name.split('/');
           const metricType = metricName[0];
           const key = topic;
           let ngsiMappedKafkaMessage;
           if (metricType === 'Relationship') {
             ngsiMappedKafkaMessage = ngsildMapper.mapSpbRelationshipToKafka(devID, kafkaMessage);
-            me.logger.debug(' Mapped SpB Relationship data to NGSI-LD relationship type:  ' + JSON.stringify(ngsiMappedKafkaMessage));
+            this.logger.debug(' Mapped SpB Relationship data to NGSI-LD relationship type:  ' + JSON.stringify(ngsiMappedKafkaMessage));
             const message = { key, value: JSON.stringify(ngsiMappedKafkaMessage) };
-            me.kafkaAggregator.addMessage(message, config.sparkplug.ngsildKafkaTopic);
+            this.kafkaAggregator.addMessage(message, this.config.mqtt.sparkplug.ngsildKafkaTopic);
           } else if (metricType === 'Property') {
             ngsiMappedKafkaMessage = ngsildMapper.mapSpbPropertyToKafka(devID, kafkaMessage);
-            me.logger.debug(' Mapped SpB Properties data to NGSI-LD properties type:  ' + JSON.stringify(ngsiMappedKafkaMessage));
+            this.logger.debug(' Mapped SpB Properties data to NGSI-LD properties type:  ' + JSON.stringify(ngsiMappedKafkaMessage));
             const message = { key, value: JSON.stringify(ngsiMappedKafkaMessage) };
-            me.kafkaAggregator.addMessage(message, config.sparkplug.ngsildKafkaTopic);
+            this.kafkaAggregator.addMessage(message, this.config.mqtt.sparkplug.ngsildKafkaTopic);
           } else {
-            me.logger.debug(' Unable to create kafka message topic for SpBNGSI-LD topic for Metric Name: ' + kafkaMessage.name + " ,doesn't match NGSI-LD Name type: ");
+            this.logger.debug(' Unable to create kafka message topic for SpBNGSI-LD topic for Metric Name: ' + kafkaMessage.name + " ,doesn't match NGSI-LD Name type: ");
           }
           return true;
         }
@@ -275,66 +274,69 @@ module.exports = async function SparkplugHandler (config) {
     }
   };
 
-  me.processDataIngestion = function (topic, message) {
+  processDataIngestion (topic, message) {
     /*  It will be checked if the ttl exist, if it exits the package need to be discarded
         */
     const subTopic = topic.split('/');
-    me.logger.debug('Data Submission Detected : ' + topic + ' Message: ' + JSON.stringify(message));
+    this.logger.debug('Data Submission Detected : ' + topic + ' Message: ' + JSON.stringify(message));
     if (Object.values(MESSAGE_TYPE.WITHSEQ).includes(subTopic[2])) {
-      const validationResult = validator.validate(message, dataSchema.SPARKPLUGB);
+      const validationResult = this.validator.validate(message, dataSchema.SPARKPLUGB);
       if (validationResult.errors.length > 0) {
-        me.logger.warn('Schema rejected message! Message will be discarded: ' + message);
+        this.logger.warn('Schema rejected message! Message will be discarded: ' + message);
       } else {
         /* Validating SpB seq number if it is alligned with previous or not
             *  To Do: If seq number is incorrect, send command to device for resend Birth Message
             */
-        me.validateSpbDevSeq(topic, message).then(values => {
+        this.validateSpbDevSeq(topic, message).then(values => {
           if (values) {
             //          me.createKafakaPubData(topic,message);
-            me.logger.info('Valid SpB Seq Number, creating Kafka pub data ');
+            this.logger.info('Valid SpB Seq Number, creating Kafka pub data ');
             //            return;
           }
         }).catch(function (err) {
           //      me.logger.warn("Could not send data to Kafka due to SpB Validity failure " + err);
-          me.logger.warn('Invalid SpB Sequance number, still moving forward to create Kafka pub data ' + err);
+          this.logger.warn('Invalid SpB Sequance number, still moving forward to create Kafka pub data ' + err);
           //        return null;
         });
-        me.createKafakaPubData(topic, message);
+        this.createKafakaPubData(topic, message);
         return true;
       }
     } else {
-      me.logger.warn('Invalid SparkplugB topic');
+      this.logger.warn('Invalid SparkplugB topic');
     }
   };
-  me.connectTopics = function () {
-    me.broker.bind(topics_subscribe.sparkplugb_data_ingestion, me.processDataIngestion);
+
+  connectTopics (context) {
+    this.broker.bind(this.topics_subscribe.sparkplugb_data_ingestion, this.processDataIngestion, context);
     return true;
   };
-  me.handshake = function () {
-    if (me.broker) {
-      me.broker.on('reconnect', function () {
-        me.logger.debug('Reconnect topics');
-        me.broker.unbind(topics_subscribe.sparkplugb_data_ingestion, function () {
-          me.token = null;
-          me.connectTopics();
-          me.sessionObject = {};
+
+  handshake () {
+    if (this.broker) {
+      this.broker.on('reconnect', function () {
+        this.logger.debug('Reconnect topics');
+        this.broker.unbind(this.topics_subscribe.sparkplugb_data_ingestion, function () {
+          this.token = null;
+          this.connectTopics();
+          this.sessionObject = {};
         });
       });
     }
   };
 
   // setup channel to provide error feedback to device agent
-  me.sendErrorOverChannel = function (topic, did, message) {
-    const path = me.broker.buildPath(topics_publish.error, [topic, did]);
-    me.broker.publish(path, message, null);
+  sendErrorOverChannel (topic, did, message) {
+    const path = this.broker.buildPath(this.topics_publish.error, [topic, did]);
+    this.broker.publish(path, message, null);
   };
+
   /**
     * @description It's bind to the MQTT topics
     * @param broker
     */
-  me.bind = function (broker) {
-    me.broker = broker;
-    me.handshake();
-    me.connectTopics();
+  bind (broker, context) {
+    this.broker = broker;
+    this.handshake();
+    this.connectTopics(context);
   };
 };

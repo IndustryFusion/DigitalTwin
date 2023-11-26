@@ -33,18 +33,13 @@ class Cache {
     await this.redisClient.connect();
   }
 
-  async setValue (key, valueType, value) {
-    // return new Promise((resolve, reject) => {
-    await this.redisClient.hSet(key, valueType, value);
-    // });
+  async setValue (key, valueKey, value) {
+    await this.redisClient.hSet(key, valueKey, value);
   }
 
-  async getValue (key, valueType) {
-    return await this.redisClient.hgetall(key);
-  }
-
-  async getValues (key) {
-    return await this.redisClient.hgetall(key);
+  async getValue (key, valueKey) {
+    const obj = await this.redisClient.hGetAll(key);
+    return obj[valueKey];
   }
 }
 module.exports = Cache;
