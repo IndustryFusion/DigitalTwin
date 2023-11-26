@@ -103,3 +103,6 @@ redis:
     limits:
       cpu: 50m
       memory: 100Mi
+
+emqx:
+  externalHostname: mqtt.local
