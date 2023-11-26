@@ -15,12 +15,14 @@
 */
 
 'use strict';
-//const config = require('../config/config.json');
+const config = require('../config/config.json');
 const { Kafka, logLevel } = require('kafkajs');
 const { Partitioners } = require('kafkajs');
 const CacheFactory = require('../lib/cache');
 const ngsildMapper = require('./spb-ngsild-mapper');
 const Logger = require('../lib/logger');
+const dataSchema = require('./schemas/data.json');
+const Validator = require('jsonschema').Validator;
 
 let me;
 const MESSAGE_TYPE = {
@@ -57,7 +59,6 @@ class KafkaAggregator {
     this.config = config;
     this.spbMessageArray = [];
     this.ngsildMessageArray = [];
-    //const brokers = config.kafka.host.split(',');
     try {
       const kafka = new Kafka({
         logLevel: logLevel.INFO,
@@ -81,7 +82,7 @@ class KafkaAggregator {
         this.logger.warn(`SparkplugB Metric producer disconnected!: ${e.timestamp}`);
         this.kafkaProducer.connect();
       });
-      this.kafkaProducer.on(CONNECT, e => logger.debug('Kafka SparkplugB metric producer connected: ' + e));
+      this.kafkaProducer.on(CONNECT, e => this.logger.debug('Kafka SparkplugB metric producer connected: ' + e));
       this.kafkaProducer.connect();
     } catch (e) {
       this.logger.error('Exception occured while creating Kafka SparkplugB Producer: ' + e);
@@ -138,20 +139,22 @@ class KafkaAggregator {
   }
 }
 
-module.exports = function SparkplugHandler (logger) {
-  const topics_subscribe = this.config.mqtt.sparkplug.topics.subscribe;
-  const topics_publish = this.config.mqtt.sparkplug.topics.publish;
-  const dataSchema = require('../lib/schemas/data.json');
-  const Validator = require('jsonschema').Validator;
+module.exports = async function SparkplugHandler (config) {
+  const logger = new Logger(config);
+  const topics_subscribe = config.mqtt.sparkplug.topics.subscribe;
+  const topics_publish = config.mqtt.sparkplug.topics.publish;
+
   const validator = new Validator();
-  const cache = new CacheFactory(this.config, logger).getInstance();
+  const cacheFactory = await new CacheFactory(config, logger);
+  const cache = cacheFactory.getInstance();
   me = this;
-  me.kafkaAggregator = new KafkaAggregator(logger);
-  me.kafkaAggregator.start(this.config.mqtt.kafka.linger);
+  me.kafkaAggregator = new KafkaAggregator(config);
+  me.kafkaAggregator.start(config.mqtt.kafka.linger);
 
   me.logger = logger;
   me.cache = cache;
   me.token = null;
+  me.config = config;
 
   me.stopAggregator = function () {
     me.kafkaAggregator.stop();
