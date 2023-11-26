@@ -27,11 +27,7 @@ const logger = Logger(config);
 const brokerConnector = Broker.singleton(config.mqtt, logger);
 
 async function brokerCb (err) {
-  if (!err) {
-    // SparkplugB connector
-    const sparkplugapiDataConnector = new SparkplugApiData(config);
-    sparkplugapiDataConnector.bind(brokerConnector, sparkplugapiDataConnector);
-  } else {
+  if (err) {
     logger.error('Error on Broker connection ', err);
     process.exit(1);
   }
@@ -46,7 +42,10 @@ const startListener = async function () {
 
   logger.info('Now starting MQTT-Kafka bridge forwarding.');
   brokerConnector.connect(brokerCb);
-
+  // SparkplugB connector
+  const sparkplugapiDataConnector = new SparkplugApiData(config);
+  sparkplugapiDataConnector.init();
+  sparkplugapiDataConnector.bind(brokerConnector, sparkplugapiDataConnector);
   errorTypes.map(type =>
     process.on(type, async e => {
       try {

@@ -156,6 +156,10 @@ module.exports = class SparkplugHandler {
     this.validator = validator;
   }
 
+  async init () {
+    await this.cache.init();
+  }
+
   stopAggregator () {
     this.kafkaAggregator.stop();
   };

@@ -35,6 +35,7 @@ class Cache {
 
   async setValue (key, valueKey, value) {
     await this.redisClient.hSet(key, valueKey, value);
+    return value;
   }
 
   async getValue (key, valueKey) {
