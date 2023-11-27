@@ -433,7 +433,7 @@ describe(fileToTest, function () {
     };
     myBroker.connect(function (err) {
       assert.isNull(err, 'None error shall returned');
-      myBroker.bind(topicPattern, topicHandler, function () {
+      myBroker.bind(topicPattern, topicHandler, null, function () {
         callHandler('dev/' + id + '/act', JSON.stringify(msg));
       });
       // myBroker.onMessage(realTopic, msg);
@@ -548,7 +548,7 @@ describe(fileToTest, function () {
     const callback = function () {
       done();
     };
-    myBroker.bind(topicPattern, topicHandler, callback);
+    myBroker.bind(topicPattern, topicHandler, null, callback);
   });
   it('Shall unbind and detach topic', function (done) {
     toTest.__set__('mqtt', mqtt);
