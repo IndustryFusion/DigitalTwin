@@ -1,5 +1,5 @@
 /**
-* Copyright (c) 2021 Intel Corporation
+* Copyright (c) 2021, 2023 Intel Corporation
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -93,18 +93,6 @@ class Authenticate {
     if (accountId) {
       const key = accountId + '/' + did;
       await this.cache.setValue(key, 'acl', 'true');
-    }
-    // For SparkplugB put (legacy) account/gateway(node) and realm/gateway(node) into the list of accepted topics to authenticate Node/gateway messages
-    if (decodedToken.gateway !== undefined || decodedToken.gateway === null) {
-      if (accountId) {
-        const legacyGatewayKey = accountId + '/' + decodedToken.gateway;
-        await this.cache.setValue(legacyGatewayKey, 'acl', 'true');
-      }
-      const gatewayKey = realm + '/gateway/' + decodedToken.gateway;
-      /* wagmarcel: I do not understand why gateway and device should be treated the same, is this intended?
-                    hence I added the /gateway/ prefix to avoid mixing
-     */
-      await this.cache.setValue(gatewayKey, 'acl', 'true');
     }
     res.status(200).json({ result: 'allow', is_superuser: 'false' });
   }
