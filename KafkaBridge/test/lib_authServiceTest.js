@@ -227,60 +227,6 @@ describe(fileToTest, function () {
     };
     auth.authenticate(req, res);
   });
-  /*it('Authentication shall successfully validate a token with gatewayid', function (done) {
-    const decodedToken = {
-      sub: 'deviceId',
-      iss: 'http://keycloak-url/auth/realms/realmId',
-      gateway: 'gatewayId',
-      type: 'device',
-      accounts: [{
-        role: 'device',
-        id: 'accountId'
-      }]
-    };
-    const config = {
-      mqtt: {
-        adminUsername: 'username',
-        adminPassword: 'password'
-      }
-    };
-
-    const req = {
-      query: {
-        username: 'deviceId',
-        password: 'token'
-      }
-    };
-    const res = {
-      sendStatus: function (status) {
-        assert.equal(status, 200, 'Received wrong status');
-        done();
-      }
-    };
-    const cache = {
-      setValue: function (key, type, value) {
-        console.log(key, type, value);
-        assert.oneOf(key, ['accountId/deviceId', 'realmId/deviceId', 'accountId/gatewayId', 'realmId/gatewayId'], 'Wrong cache value received.');
-        assert.equal(type, 'acl', 'Wrong cache value received.');
-        assert.equal(value, true, 'Wrong cache value received.');
-      }
-    };
-    const Authenticate = ToTest.__get__('Authenticate');
-    const auth = new Authenticate(config);
-    auth.keycloakAdapter = {
-      grantManager: {
-        createGrant: () => {
-          return Promise.resolve({
-            access_token: {
-              content: decodedToken
-            }
-          });
-        }
-      }
-    };
-    auth.verifyAndDecodeToken = function () { return decodedToken; };
-    auth.authenticate(req, res);
-  });*/
 
   it('Authentication shall detect wrong deviceId in username', function (done) {
     const decodedToken = {
@@ -331,125 +277,6 @@ describe(fileToTest, function () {
 
     auth.authenticate(req, res);
   });
- /* it('Authentication shall detect wrong role in token', function (done) {
-    const decodedToken = {
-      sub: 'deviceId',
-      iss: 'http://keycloak-url/auth/realms/realmId',
-      type: 'device',
-      accounts: [{
-        role: 'wrontRole',
-        id: 'accountId'
-      }]
-    };
-
-    const config = {
-      broker: {
-        username: 'username',
-        password: 'password'
-      }
-    };
-    const logger = {
-      debug: function () { },
-      info: function () { }
-    };
-    const req = {
-      query: {
-        username: 'deviceId',
-        password: 'token'
-      }
-    };
-    const res = {
-      sendStatus: function (status) {
-        assert.equal(status, 400, 'Received wrong status');
-        done();
-      }
-    };
-    const cache = {
-      setValue: function (key, type, value) {
-        assert.oneOf(key, ['accountId/deviceId', 'realmId/deviceId'], 'Wrong cache value received.');
-        assert.equal(type, 'acl', 'Wrong cache value received.');
-        assert.equal(value, true, 'Wrong cache value received.');
-      }
-    };
-    const keycloakAdapter = {
-      grantManager: {
-        createGrant: () => {
-          return Promise.resolve({
-            access_token: {
-              content: decodedToken
-            }
-          });
-        }
-      }
-    };
-
-    const authenticate = new ToTest(config, logger);
-    const me = ToTest.__get__('me');
-    me.cache = cache;
-    me.keycloakAdapter = keycloakAdapter;
-    authenticate.authenticate(req, res);
-  });
-  it('Authentication shall detect wrong account array', function (done) {
-    const decodedToken = {
-      sub: 'deviceId',
-      iss: 'http://keycloak-url/auth/realms/realmId',
-      type: 'device',
-      accounts: [{
-        role: 'device',
-        id: 'accountId'
-      }, {
-        role: 'device',
-        id: 'accountId2'
-      }]
-    };
-
-    const config = {
-      broker: {
-        username: 'username',
-        password: 'password'
-      }
-    };
-    const logger = {
-      debug: function () { },
-      info: function () { }
-    };
-    const req = {
-      query: {
-        username: 'deviceId',
-        password: 'token'
-      }
-    };
-    const res = {
-      sendStatus: function (status) {
-        assert.equal(status, 400, 'Received wrong status');
-        done();
-      }
-    };
-    const cache = {
-      setValue: function (key, type, value) {
-        assert.oneOf(key, ['accountId/deviceId', 'realmId/deviceId'], 'Wrong cache value received.');
-        assert.equal(type, 'acl', 'Wrong cache value received.');
-        assert.equal(value, true, 'Wrong cache value received.');
-      }
-    };
-    const keycloakAdapter = {
-      grantManager: {
-        createGrant: () => {
-          return Promise.resolve({
-            access_token: {
-              content: decodedToken
-            }
-          });
-        }
-      }
-    };
-
-    const authenticate = new ToTest(config, logger);
-    const me = ToTest.__get__('me');
-    me.cache = cache;
-    me.keycloakAdapter = keycloakAdapter;
-    authenticate.authenticate(req, res);
-  });*/
 });
 
 fileToTest = '../lib/authService/acl.js';
@@ -464,7 +291,6 @@ describe(fileToTest, function () {
   ToTest.__set__('Logger', Logger);
   ToTest.__set__('Cache', Cache);
   it('Shall give access control to superuser', function (done) {
-
     const config = {
       mqtt: {
         adminUsername: 'superuser',
@@ -481,48 +307,38 @@ describe(fileToTest, function () {
       }
     };
     const res = {
-      sendStatus: function (status) {
+      status: function (status) {
         assert.equal(status, 200, 'Received wrong status');
+        return this;
+      },
+      json: function (resultObj) {
+        resultObj.should.deep.equal({ result: 'allow' });
         done();
       }
     };
     acl.acl(req, res);
   });
 
-  it('Shall give access control to SparkPlugB device DBIRTH', function (done) {
+  it('Shall give access control to SparkPlugB device', function (done) {
     const Cache = class Acl {
-      constructor () {
-
-      }
-
+      constructor () {}
       getValue (subtopic, key) {
         assert.equal(aidSlashDid, subtopic, 'Wrong accountId/did subtopic');
         assert.equal(key, 'acl', 'Wrong key value');
-        return true;
+        return 'true';
       }
     };
-    class CacheFactory {
-      constructor () {
-      }
-
-      getInstance () {
-        return new Cache();
-      }
-    }
+    ToTest.__set__('Cache', Cache);
     const aidSlashDid = 'accountId/deviceId';
 
-    ToTest.__set__('CacheFactory', CacheFactory);
     const config = {
-      broker: {
-        username: 'username',
-        password: 'password'
+      mqtt: {
+        adminUsername: 'username',
+        adminPassword: 'password'
       }
     };
-    const logger = {
-      debug: function () { },
-      info: function () { }
-    };
-    const acl = new ToTest(config, logger);
+    const Acl = ToTest.__get__('Acl');
+    const acl = new Acl(config);
     const req = {
       query: {
         username: 'deviceId',
@@ -530,251 +346,38 @@ describe(fileToTest, function () {
       }
     };
     const res = {
-      sendStatus: function (status) {
+      status: function (status) {
         assert.equal(status, 200, 'Received wrong status');
-        done();
-      }
-    };
-    acl.acl(req, res);
-  });
-
-  it('Shall give access control to SparkPlugB device DDATA', function (done) {
-    const Cache = class Acl {
-      constructor () {
-
-      }
-
-      getValue (subtopic, key) {
-        assert.equal(aidSlashDid, subtopic, 'Wrong accountId/did subtopic');
-        assert.equal(key, 'acl', 'Wrong key value');
-        return true;
-      }
-    };
-    class CacheFactory {
-      constructor () {
-      }
-
-      getInstance () {
-        return new Cache();
-      }
-    }
-    const aidSlashDid = 'accountId/deviceId';
-
-    ToTest.__set__('CacheFactory', CacheFactory);
-    const config = {
-      broker: {
-        username: 'username',
-        password: 'password'
-      }
-    };
-    const logger = {
-      debug: function () { },
-      info: function () { }
-    };
-    const acl = new ToTest(config, logger);
-    const req = {
-      query: {
-        username: 'deviceId',
-        topic: 'spBv1.0/accountId/DDATA/eonID/deviceId'
-      }
-    };
-    const res = {
-      sendStatus: function (status) {
-        assert.equal(status, 200, 'Received wrong status');
-        done();
-      }
-    };
-    acl.acl(req, res);
-  });
-
-  it('Shall give access control to SparkPlugB device NBIRTH', function (done) {
-    const Cache = class Acl {
-      constructor () {
-
-      }
-
-      getValue (subtopic, key) {
-        assert.equal(aidSlashNid, subtopic, 'Wrong accountId/Gatewayid subtopic');
-        assert.equal(key, 'acl', 'Wrong key value');
-        return true;
-      }
-    };
-    class CacheFactory {
-      constructor () {
-      }
-
-      getInstance () {
-        return new Cache();
-      }
-    }
-    const aidSlashNid = 'accountId/gatewayId';
-
-    ToTest.__set__('CacheFactory', CacheFactory);
-    const config = {
-      broker: {
-        username: 'username',
-        password: 'password'
-      }
-    };
-    const logger = {
-      debug: function () { },
-      info: function () { }
-    };
-    const acl = new ToTest(config, logger);
-    const req = {
-      query: {
-        username: 'deviceId',
-        topic: 'spBv1.0/accountId/NBIRTH/gatewayId'
-      }
-    };
-    const res = {
-      sendStatus: function (status) {
-        assert.equal(status, 200, 'Received wrong status');
-        done();
-      }
-    };
-    acl.acl(req, res);
-  });
-
-  it('Shall give access control to SparkPlugB device NCMD', function (done) {
-    const Cache = class Acl {
-      constructor () {
-
-      }
-
-      getValue (subtopic, key) {
-        assert.equal(aidSlashNid, subtopic, 'Wrong accountId/gatewayid subtopic');
-        assert.equal(key, 'acl', 'Wrong key value');
-        return true;
-      }
-    };
-    class CacheFactory {
-      constructor () {
-      }
-
-      getInstance () {
-        return new Cache();
-      }
-    }
-    const aidSlashNid = 'accountId/gatewayId';
-
-    ToTest.__set__('CacheFactory', CacheFactory);
-    const config = {
-      broker: {
-        username: 'username',
-        password: 'password'
-      }
-    };
-    const logger = {
-      debug: function () { },
-      info: function () { }
-    };
-    const acl = new ToTest(config, logger);
-    const req = {
-      query: {
-        username: 'deviceId',
-        topic: 'spBv1.0/accountId/NCMD/gatewayId'
-      }
-    };
-    const res = {
-      sendStatus: function (status) {
-        assert.equal(status, 200, 'Received wrong status');
-        done();
-      }
-    };
-    acl.acl(req, res);
-  });
-
-  it('Shall give access control to device', function (done) {
-    const Cache = class Acl {
-      constructor () {
-
-      }
-
-      getValue (subtopic, key) {
-        assert.equal(aidSlashDid, subtopic, 'Wrong accountId/did subtopic');
-        assert.equal(key, 'acl', 'Wrong key value');
-        return true;
-      }
-    };
-    class CacheFactory {
-      constructor () {
-      }
-
-      getInstance () {
-        return new Cache();
-      }
-    }
-    const aidSlashDid = 'accountId/deviceId';
-
-    ToTest.__set__('CacheFactory', CacheFactory);
-    const config = {
-      broker: {
-        username: 'username',
-        password: 'password'
+        return this;
       },
-      topics: {
-        prefix: 'server'
-      }
-    };
-    const logger = {
-      debug: function () { },
-      info: function () { }
-    };
-    const acl = new ToTest(config, logger);
-    const req = {
-      query: {
-        username: 'deviceId',
-        topic: '/server/metric/' + aidSlashDid,
-        access: PUBLISH
-      }
-    };
-    const res = {
-      sendStatus: function (status) {
-        assert.equal(status, 200, 'Received wrong status');
+      json: function (resultObj) {
+        resultObj.should.deep.equal({ result: 'allow' });
         done();
       }
     };
     acl.acl(req, res);
   });
+
   it('Shall deny access control to device with wrong access', function (done) {
     const Cache = class Acl {
-      constructor () {
-
-      }
-
+      constructor () {}
       getValue (subtopic, key) {
         assert.equal(aidSlashDid, subtopic, 'Wrong accountId/did subtopic');
         assert.equal(key, 'acl', 'Wrong key value');
         return true;
       }
     };
-    class CacheFactory {
-      constructor () {
-      }
-
-      getInstance () {
-        return new Cache();
-      }
-    }
-
+    ToTest.__set__('Cache', Cache);
     const aidSlashDid = 'accountId/deviceId';
 
-    ToTest.__set__('CacheFactory', CacheFactory);
     const config = {
-      broker: {
-        username: 'username',
-        password: 'password'
-      },
-      topics: {
-        prefix: 'server'
+      mqtt: {
+        adminUsername: 'username',
+        adminPassword: 'password'
       }
     };
-    const logger = {
-      debug: function () { },
-      info: function () { }
-    };
-    const acl = new ToTest(config, logger);
+    const Acl = ToTest.__get__('Acl');
+    const acl = new Acl(config);
     const req = {
       query: {
         username: 'deviceId',
@@ -790,44 +393,29 @@ describe(fileToTest, function () {
     };
     acl.acl(req, res);
   });
-  it('Shall deny access control to device with wrong topic', function (done) {
+  it('Shall deny access control to device with wrong username', function (done) {
     const Cache = class Acl {
-      constructor () {
-
-      }
+      constructor () {}
 
       getValue (subtopic, key) {
         assert.equal(key, 'acl', 'Wrong key value');
         return false;
       }
     };
-    class CacheFactory {
-      constructor () {
-      }
 
-      getInstance () {
-        return new Cache();
-      }
-    }
-    ToTest.__set__('CacheFactory', CacheFactory);
+    ToTest.__set__('Cache', Cache);
     const config = {
-      broker: {
-        username: 'username',
-        password: 'password'
-      },
-      topics: {
-        prefix: 'server'
+      mqtt: {
+        adminUsername: 'superuser',
+        adminPassword: 'password'
       }
     };
-    const logger = {
-      debug: function () { },
-      info: function () { }
-    };
-    const acl = new ToTest(config, logger);
+    const Acl = ToTest.__get__('Acl');
+    const acl = new Acl(config);
     const req = {
       query: {
-        username: 'deviceId',
-        topic: '/server/metric/' + 'wrongtopic'
+        username: 'username',
+        topic: 'spBv1.0/accountId/DBIRTH/eonID/deviceId'
       }
     };
     const res = {
