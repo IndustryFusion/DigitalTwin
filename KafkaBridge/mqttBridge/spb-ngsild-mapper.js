@@ -14,7 +14,7 @@
 * limitations under the License.
 */
 
-"use strict";
+'use strict';
 
 /* Example. NGSI-LD format for Relationship"
 *
@@ -34,43 +34,43 @@
  *
  * {"timestamp":1655974018778,"
 metrics":
-	[{
-	"name":"relationship/https://industry-fusion.com/types/v0.9/hasFilter",
-	"alias":"fbb3b7cd-a5ff-491b-ad61-d43edf513b7a",
-	"timestamp":1655974018777,
-	"dataType":"string",
-	"value":"urn:filter:1"}],
-"seq":2}, 
+    [{
+    "name":"relationship/https://industry-fusion.com/types/v0.9/hasFilter",
+    "alias":"fbb3b7cd-a5ff-491b-ad61-d43edf513b7a",
+    "timestamp":1655974018777,
+    "dataType":"string",
+    "value":"urn:filter:1"}],
+"seq":2},
 
  */
 
-var etsiNgsiRelationshipUrl = "https://uri.etsi.org/ngsi-ld/Relationship";
-var etsiNgsiPropertysUrl = "https://uri.etsi.org/ngsi-ld/Property";
+const etsiNgsiRelationshipUrl = 'https://uri.etsi.org/ngsi-ld/Relationship';
+const etsiNgsiPropertysUrl = 'https://uri.etsi.org/ngsi-ld/Property';
 
 module.exports.mapSpbRelationshipToKafka = function (deviceId, metric) {
-    let originalName = metric.name.substr(metric.name.indexOf("/") + 1);
-    let mappedKafkaMessage = {
-        "id" : deviceId + "\\" + originalName,
-        "entityId" : deviceId,
-        "name": originalName,
-        "type": etsiNgsiRelationshipUrl,
-        "https://uri.etsi.org/ngsi-ld/hasObject": metric.value,
-        "nodeType": "@id",
-        "index": 0
-    };
-    return mappedKafkaMessage;
+  const originalName = metric.name.substr(metric.name.indexOf('/') + 1);
+  const mappedKafkaMessage = {
+    id: deviceId + '\\' + originalName,
+    entityId: deviceId,
+    name: originalName,
+    type: etsiNgsiRelationshipUrl,
+    'https://uri.etsi.org/ngsi-ld/hasObject': metric.value,
+    nodeType: '@id',
+    index: 0
+  };
+  return mappedKafkaMessage;
 };
 
 module.exports.mapSpbPropertyToKafka = function (deviceId, metric) {
-    let originalName = metric.name.substr(metric.name.indexOf("/") + 1);
-    let mappedPropKafkaMessage = {
-        "id" : deviceId + "\\" + originalName,
-        "entityId" : deviceId,
-        "nodeType": "@value",
-        "name": originalName,
-        "type": etsiNgsiPropertysUrl,
-        "https://uri.etsi.org/ngsi-ld/hasValue": metric.value,
-        "index": 0
-    };
-    return mappedPropKafkaMessage;
+  const originalName = metric.name.substr(metric.name.indexOf('/') + 1);
+  const mappedPropKafkaMessage = {
+    id: deviceId + '\\' + originalName,
+    entityId: deviceId,
+    nodeType: '@value',
+    name: originalName,
+    type: etsiNgsiPropertysUrl,
+    'https://uri.etsi.org/ngsi-ld/hasValue': metric.value,
+    index: 0
+  };
+  return mappedPropKafkaMessage;
 };
