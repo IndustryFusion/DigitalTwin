@@ -16,13 +16,12 @@
 'use strict';
 
 const Cache = require('../cache');
-const SUBSCRIBE = '1';
-const PUBLISH = '2';
+const Logger = require('../logger');
 
 class Acl {
-  constructor (config, logger) {
+  constructor (config) {
     this.config = config;
-    this.logger = logger;
+    this.logger = new Logger(config);
     this.cache = new Cache(this.config);
   }
 
@@ -35,7 +34,7 @@ class Acl {
     if (username === this.config.mqtt.adminUsername) {
       // superuser
       this.logger.info('Superuser ACL accepted!');
-      res.status(200).json({ result: 'allow' });;
+      res.status(200).json({ result: 'allow' });
       return;
     }
     const topic = req.query.topic;
@@ -52,64 +51,16 @@ class Acl {
     const splitTopic = topic.split('/');
     if (splitTopic[0] === 'spBv1.0') {
       const spBAccountId = splitTopic[1];
-      const spBMessageType = splitTopic[2];
-      const spBEonId = splitTopic[3];
       const spBdevId = splitTopic[4];
-      if (spBMessageType === 'DDATA' || spBMessageType === 'DBIRTH' || spBMessageType === 'DCMD') {
-        this.logger.debug('Granting spB ACL for device id: ' + spBdevId + 'and datatype: ' + spBMessageType);
-        const spBAclKey = spBAccountId + '/' + spBdevId;
-        const allowed = await this.cache.getValue(spBAclKey, 'acl');
-        if (allowed === undefined || !(allowed === 'true') || spBdevId !== username) {
-          res.sendStatus(400);
-        } else {
-          res.status(200).json({ result: 'allow' });
-        }
-      } else if (spBMessageType === 'NCMD' || spBMessageType === 'NBIRTH' || spBMessageType === 'NDEATH' || spBMessageType === 'NDATA') {
-        this.logger.debug('Granting spB ACL for node: ' + spBEonId + ' with messagetype: ' + spBMessageType);
-        const spBNodeAclKey = spBAccountId + '/' + spBEonId;
-        const allowed = await this.cache.getValue(spBNodeAclKey, 'acl');
-        if (!allowed || allowed === undefined) {
-          res.sendStatus(400);
-        } else {
-          res.status(200).json({ result: 'allow' });
-        }
-      }
-    } else {
-      // Check: Is accountId/username authorized
-      const access = req.query.access;
-      let accountId = null;
-      let deviceId = null;
-      const re = this.config.mqtt.sparkplug.topics.prefix + '\\/([^\\/]*)\\/DCMD\\/([^\\/]*)\\/(.*)';
-      let match = topic.match(new RegExp(re));
-      if (match !== null && match !== undefined && match.length === 4) {
-        if (access !== SUBSCRIBE) {
-          res.sendStatus(400);
-          return;
-        }
-        accountId = match[1];
-        deviceId = match[3];
-      }
-      match = topic.match(/server\/metric\/([^\/]*)\/(.*)/);
-      if (match !== null && match !== undefined && match.length === 3) {
-        if (access !== PUBLISH) {
-          res.sendStatus(400);
-          return;
-        }
-        accountId = match[1];
-        deviceId = match[2];
-      }
-      if (accountId === null || deviceId === null) {
-        res.sendStatus(400);
-        return;
-      }
-      const allowedStr = await this.cache.getValue(accountId + '/' + deviceId, 'acl');
-      const allowed = !(allowedStr === undefined || allowedStr !== 'true');
-      if (!allowed || deviceId !== username) {
+      const spBAclKey = spBAccountId + '/' + spBdevId;
+      const allowed = await this.cache.getValue(spBAclKey, 'acl');
+      if (allowed === undefined || !(allowed === 'true') || spBdevId !== username) {
         res.sendStatus(400);
       } else {
-        this.logger.debug('Granting ACL for device: ' + deviceId + ' with topic: ' + topic);
-        res.status(200).json({ result: 'allow' });;
+        res.status(200).json({ result: 'allow' });
       }
+    } else {
+      res.sendStatus(400);
     }
   }
 }

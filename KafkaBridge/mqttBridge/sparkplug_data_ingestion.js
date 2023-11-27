@@ -81,7 +81,7 @@ class KafkaAggregator {
         this.logger.warn(`SparkplugB Metric producer disconnected!: ${e.timestamp}`);
         this.kafkaProducer.connect();
       });
-      this.kafkaProducer.on(CONNECT, e => this.logger.debug('Kafka SparkplugB metric producer connected: ' + e));
+      this.kafkaProducer.on(CONNECT, e => this.logger.info('Kafka SparkplugB metric producer connected: ' + e));
       this.kafkaProducer.connect();
     } catch (e) {
       this.logger.error('Exception occured while creating Kafka SparkplugB Producer: ' + e);
@@ -113,7 +113,7 @@ class KafkaAggregator {
           topic: this.config.mqtt.sparkplug.ngsildKafkaTopic,
           messages: this.ngsildMessageArray
         };
-        this.logger.info('will now deliver Kafka message  on topic :  ' + ngsildKafkaPayloads.topic + ' with message:  ' + JSON.stringify(ngsildKafkaPayloads));
+        this.logger.debug('will now deliver Kafka message  on topic :  ' + ngsildKafkaPayloads.topic + ' with message:  ' + JSON.stringify(ngsildKafkaPayloads));
         this.kafkaProducer.send(ngsildKafkaPayloads)
           .catch((err) => {
             return this.logger.error('Could not send message to Kafka on topic: ' + ngsildKafkaPayloads.topic + ' with error msg:  ' + err);
@@ -294,7 +294,7 @@ module.exports = class SparkplugHandler {
         this.validateSpbDevSeq(topic, message).then(values => {
           if (values) {
             //          me.createKafakaPubData(topic,message);
-            this.logger.info('Valid SpB Seq Number, creating Kafka pub data ');
+            this.logger.debug('Valid SpB Seq Number, creating Kafka pub data ');
             //            return;
           }
         }).catch(function (err) {

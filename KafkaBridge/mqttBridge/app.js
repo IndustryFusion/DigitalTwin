@@ -41,7 +41,7 @@ const startListener = async function () {
   await authService.init(config);
 
   logger.info('Now starting MQTT-Kafka bridge forwarding.');
-  brokerConnector.connect(brokerCb);
+  //brokerConnector.connect(brokerCb);
   // SparkplugB connector
   const sparkplugapiDataConnector = new SparkplugApiData(config);
   sparkplugapiDataConnector.init();

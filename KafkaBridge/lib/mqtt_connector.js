@@ -118,7 +118,7 @@ function Broker (conf, logger) {
         if (retries < me.max_retries) {
           setTimeout(waitForConnection, 1500);
         } else {
-          me.logger.info('MQTTConnector: Error Connecting to ' + me.host + ':' + me.port);
+          me.logger.error('MQTTConnector: Error Connecting to ' + me.host + ':' + me.port);
           done(new Error('Maximal connection tries reached'));
         }
         return false;
@@ -241,7 +241,7 @@ function Broker (conf, logger) {
       options = options || me.pubArgs;
     }
     function publishCallback () {
-      me.logger.info('Publishing : T => ' + topic + ' MSG => ' + JSON.stringify(message));
+      me.logger.debug('Publishing : T => ' + topic + ' MSG => ' + JSON.stringify(message));
       me.client.publish(topic, JSON.stringify(message), options, callback);
     }
     if (!me.connected()) {

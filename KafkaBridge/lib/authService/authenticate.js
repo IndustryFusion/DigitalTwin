@@ -19,6 +19,7 @@
 
 const Cache = require('../cache');
 const Keycloak = require('keycloak-connect');
+const Logger = require('../logger');
 
 function getRealm (token) {
   // issuer has to contain realm id, e.g.: http://<keycloak-url>/auth/realms/iff
@@ -38,23 +39,10 @@ function validate (token, username) {
   return true;
 }
 
-function legacyValidate (token, username) {
-  const accounts = token.accounts;
-  const type = token.type;
-  const did = token.sub;
-  if (!accounts || !type || !did) {
-    return false;
-  }
-  if (accounts.length !== 1 || accounts[0].role !== 'device' || type !== 'device' || did !== username) {
-    return false;
-  }
-  return true;
-}
-
 class Authenticate {
-  constructor (config, logger) {
+  constructor (config) {
     this.config = config;
-    this.logger = logger;
+    this.logger = new Logger(config);
     this.cache = new Cache(this.config);
   }
 
@@ -70,19 +58,27 @@ class Authenticate {
     this.logger.debug('Auth request ' + JSON.stringify(req.query));
     const username = req.query.username;
     const token = req.query.password;
-    if (username === this.config.mqtt.adminUsername && token === this.config.mqtt.adminPassword) {
-      // superuser
-      this.logger.info('Superuser connected');
-      res.status(200).json({ result: 'allow', is_superuser: 'true' });
-      return;
+    if (username === this.config.mqtt.adminUsername) {
+      if (token === this.config.mqtt.adminPassword) {
+        // superuser
+        this.logger.info('Superuser connected');
+        res.status(200).json({ result: 'allow', is_superuser: 'false' });
+        return;
+      } else {
+        // will also kick out tokens who use the superuser name as deviceId
+        this.logger.info('Wrong Superuser password.');
+        res.sendStatus(400);
+        return;
+      }
     }
     const decodedToken = await this.verifyAndDecodeToken(token);
     this.logger.debug('token decoded: ' + JSON.stringify(decodedToken));
     if (decodedToken === null) {
+      this.logger.info('Could not decode token.');
       res.sendStatus(400);
       return;
     }
-    if (!validate(decodedToken, username) || username === this.config.mqtt.adminUsername) {
+    if (!validate(decodedToken, username)) {
       res.sendStatus(400);
       return;
     }
