@@ -112,10 +112,7 @@ describe(fileToTest, function () {
       sub: 'deviceId',
       iss: 'http://keycloak-url/auth/realms/realmId',
       type: 'device',
-      accounts: [{
-        role: 'device',
-        id: 'accountId'
-      }]
+      device_id: 'deviceId'
     };
     const config = {
       mqtt: {
@@ -131,10 +128,18 @@ describe(fileToTest, function () {
     };
     const res = {
       sendStatus: function (status) {
-        assert.equal(status, 400, 'Received wrong status');
+        assert.equal(status, 200, 'Received wrong status');
         done();
       }
     };
+    class Cache {
+      setValue (key, valueKey, value) {
+        key.should.equal('realmId/deviceId');
+        valueKey.should.equal('acl');
+        value.should.equal('true');
+      }
+    }
+    ToTest.__set__('Cache', Cache);
     const Authenticate = ToTest.__get__('Authenticate');
     const auth = new Authenticate(config);
     auth.keycloakAdapter = {
@@ -148,10 +153,12 @@ describe(fileToTest, function () {
         }
       }
     };
+
     auth.verifyAndDecodeToken = function () {
-      return null;
+      return decodedToken;
     };
     auth.authenticate(req, res);
+    done();
   });
   it('Shall authenticate super user', function (done) {
     const Authenticate = ToTest.__get__('Authenticate');
@@ -254,13 +261,6 @@ describe(fileToTest, function () {
         done();
       }
     };
-    const cache = {
-      setValue: function (key, type, value) {
-        assert.oneOf(key, ['accountId/deviceId', 'realmId/deviceId'], 'Wrong cache value received.');
-        assert.equal(type, 'acl', 'Wrong cache value received.');
-        assert.equal(value, true, 'Wrong cache value received.');
-      }
-    };
     const Authenticate = ToTest.__get__('Authenticate');
     const auth = new Authenticate(config);
     auth.keycloakAdapter = {
@@ -276,6 +276,37 @@ describe(fileToTest, function () {
     };
 
     auth.authenticate(req, res);
+  });
+  it('Test verifyAndDecodeToken', function (done) {
+    const token = 'token';
+    const decodedToken = {
+      sub: 'deviceId',
+      deviceId: 'deviceId',
+      iss: 'http://keycloak-url/auth/realms/realmId',
+      type: 'device'
+    };
+
+    const config = {
+      mqtt: {
+        adminUsername: 'username',
+        adminPassword: 'password'
+      }
+    };
+    const Authenticate = ToTest.__get__('Authenticate');
+    const auth = new Authenticate(config);
+    auth.keycloakAdapter = {
+      grantManager: {
+        createGrant: () => {
+          return Promise.resolve({
+            access_token: {
+              content: decodedToken
+            }
+          });
+        }
+      }
+    };
+    auth.verifyAndDecodeToken(token).then(result => result.should.deep.equal(decodedToken));
+    done();
   });
 });
 
