@@ -14,7 +14,6 @@
 * limitations under the License.
 */
 
-const assert = require('chai').assert;
 const rewire = require('rewire');
 const chai = require('chai');
 global.should = chai.should();
