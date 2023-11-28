@@ -521,12 +521,11 @@ describe(fileToTest, function () {
       Kafka: Kafka,
       Cache: Cache,
       Logger: Logger,
-      Validator: Validator,
-      KafkaAggregator: KafkaAggregator
+      Validator: Validator
     });
     const spbdataIngestion = new ToTest(config);
     spbdataIngestion.validateSpbDevSeq = validateSpbDevSeq;
-    const message = {
+    let message = {
       timestamp: 12345,
       metrics: [{
         name: 'temp',
@@ -540,8 +539,8 @@ describe(fileToTest, function () {
     spbdataIngestion.processDataIngestion('spBv1.0/accountId/NBIRTH/eonID/', message);
     spbdataIngestion.processDataIngestion('spBv1.0/accountId/DBIRTH/eonID/deviceId', message);
     spbdataIngestion.processDataIngestion('spBv1.0/accountId/DDATA/eonID/deviceId', message);
-    revert();
-    done();
+    //revert();
+    //done();
   });
 
   it('Create Kafka  publish Relationship data on NGSI-LD Spb topic', function (done) {
@@ -568,6 +567,7 @@ describe(fileToTest, function () {
               };
               assert.deepEqual(JSON.parse(message.value), value, 'Received Kafke message not correct');
               spbdataIngestion.stopAggregator();
+              revert()
               done();
               return new Promise(() => {});
             },
@@ -591,8 +591,7 @@ describe(fileToTest, function () {
       Kafka: Kafka,
       Cache: Cache,
       Logger: Logger,
-      Validator: Validator,
-      KafkaAggregator: KafkaAggregator
+      Validator: Validator
     });
     const spbdataIngestion = new ToTest(config);
     spbdataIngestion.validateSpbDevSeq = validateSpbDevSeq;
@@ -609,8 +608,8 @@ describe(fileToTest, function () {
     };
     spbdataIngestion.processDataIngestion('spBv1.0/accountId/DBIRTH/eonID/deviceId', message);
     spbdataIngestion.processDataIngestion('spBv1.0/accountId/DDATA/eonID/deviceId', message);
-    revert();
-    done();
+    //revert();
+    //done();
   });
 
   it('Create Kafka  publish Properties data on NGSI-LD Spb topic', function (done) {
@@ -636,6 +635,7 @@ describe(fileToTest, function () {
               };
               assert.deepEqual(JSON.parse(message.value), value, 'Received Kafke message not correct');
               spbdataIngestion.stopAggregator();
+              revert();
               done();
               return new Promise(() => {});
             },
@@ -653,14 +653,13 @@ describe(fileToTest, function () {
         return { errors: [] };
       }
     }
-    config.mqtt.sparkplug.spBKafkaProduce = true;
+    config.mqtt.sparkplug.spBKafkaProduce = false;
     config.mqtt.sparkplug.ngsildKafkaProduce = true;
     const revert = ToTest.__set__({
       Kafka: Kafka,
       Cache: Cache,
       Logger: Logger,
-      Validator: Validator,
-      KafkaAggregator: KafkaAggregator
+      Validator: Validator
     });
     const spbdataIngestion = new ToTest(config);
     spbdataIngestion.validateSpbDevSeq = validateSpbDevSeq;
@@ -677,8 +676,8 @@ describe(fileToTest, function () {
     };
     spbdataIngestion.processDataIngestion('spBv1.0/accountId/DBIRTH/eonID/deviceId', message);
     spbdataIngestion.processDataIngestion('spBv1.0/accountId/DDATA/eonID/deviceId', message);
-    revert();
-    done();
+    //revert();
+    //done();
   });
 
   it('Process data Ingestion for sparkplugB topic', function (done) {
