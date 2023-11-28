@@ -43,7 +43,6 @@ const init = async function (conf) {
 
   app.listen(config.mqtt.authServicePort, () => {
     console.log(`Auth/ACL Service started and listening on port ${config.mqtt.authServicePort}`);
-    //cb();
   });
 };
 module.exports.init = init;

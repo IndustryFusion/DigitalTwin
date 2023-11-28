@@ -67,7 +67,7 @@ describe(fileToTest, function () {
           hSet: function (key, valueKey, value) {
             key.should.equal('key');
             valueKey.should.equal('valueKey');
-            value.should.equal('value')
+            value.should.equal('value');
           }
         };
       }

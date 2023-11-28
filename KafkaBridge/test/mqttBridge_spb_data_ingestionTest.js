@@ -19,43 +19,6 @@ const rewire = require('rewire');
 const fileToTest = '../mqttBridge/sparkplug_data_ingestion.js';
 
 describe(fileToTest, function () {
-  process.env.OISP_KEYCLOAK_CONFIG = '{\
-        "listenerPort": 4080, \
-        "auth-server-url": "keycloak" \
-    }';
-  process.env.OISP_KAFKA_CONFIG = '{\
-        "uri": "uri", \
-        "partitions": 1, \
-        "metricsPartitions": 1, \
-        "replication": 1, \
-        "timeoutMs": 10000, \
-        "topicsObservations": "metricsTopic", \
-        "topicsRuleEngine": "rules-update", \
-        "topicsHeartbeatName": "heartbeat", \
-        "topicsHeartbeatInterval": 5000, \
-        "maxPayloadSize": 1234456, \
-        "retries": 10, \
-        "requestTimeout": 4, \
-        "maxRetryTime": 10 \
-    }';
-  process.env.OISP_MQTT_GATEWAY_CONFIG = '{ \
-        "mqttBrokerUrl": "brokerUrl", \
-        "mqttBrokerLocalPort": "1234", \
-        "mqttBrokerUsername": "brokerUsername", \
-        "mqttBrokerPassword": "brokerPassword", \
-        "authServicePort": "2345", \
-        "redisConf": "@@OISP_REDIS_CONFIG", \
-        "kafkaConfig": "@@OISP_KAFKA_CONFIG", \
-        "keycloakConfig": "@@OISP_KEYCLOAK_CONFIG", \
-        "aesKey": "/app/keys/mqtt/mqtt_gw_secret.key" \
-    }';
-
-  process.env.OISP_REDIS_CONFIG = '{\
-        "hostname": "redis",\
-        "port": "6379",\
-        "password": "password" \
-    }';
-
   const config = {
     mqttBrokerUrl: 'brokerUrl',
     mqttBrokerLocalPort: '1234',
@@ -104,38 +67,6 @@ describe(fileToTest, function () {
     aesKey: '/app/keys/mqtt/mqtt_gw_secret.key'
   };
 
-  const config_ngsild = {
-    mqttBrokerUrl: 'brokerUrl',
-    mqttBrokerLocalPort: '1234',
-    mqttBrokerUsername: 'brokerUsername',
-    mqttBrokerPassword: 'brokerPassword',
-    authServicePort: '2345',
-    topics: {
-      subscribe: 'topic/subscribe'
-    },
-    cache: {
-      hostname: 'redis',
-      port: '6379',
-      password: 'password'
-    },
-    kafka: {
-      host: 'uri',
-      partitions: 1,
-      metricsPartitions: 1,
-      replication: 1,
-      timeoutMs: 10000,
-      metricsTopic: 'metricsTopic',
-      topicsRuleEngine: 'rules-update',
-      topicsHeartbeatName: 'heartbeat',
-      topicsHeartbeatInterval: 5000,
-      maxPayloadSize: 1234456,
-      retries: 10,
-      requestTimeout: 4,
-      maxRetryTime: 10
-    },
-    aesKey: '/app/keys/mqtt/mqtt_gw_secret.key'
-  };
-
   const ToTest = rewire(fileToTest);
 
   const Kafka = function () {
@@ -147,7 +78,6 @@ describe(fileToTest, function () {
           on: function () {
           },
           send: function () {
-            done();
           },
           events: 'event'
         };
@@ -539,8 +469,6 @@ describe(fileToTest, function () {
     spbdataIngestion.processDataIngestion('spBv1.0/accountId/NBIRTH/eonID/', message);
     spbdataIngestion.processDataIngestion('spBv1.0/accountId/DBIRTH/eonID/deviceId', message);
     spbdataIngestion.processDataIngestion('spBv1.0/accountId/DDATA/eonID/deviceId', message);
-    //revert();
-    //done();
   });
 
   it('Create Kafka  publish Relationship data on NGSI-LD Spb topic', function (done) {
@@ -567,7 +495,7 @@ describe(fileToTest, function () {
               };
               assert.deepEqual(JSON.parse(message.value), value, 'Received Kafke message not correct');
               spbdataIngestion.stopAggregator();
-              revert()
+              revert();
               done();
               return new Promise(() => {});
             },
@@ -595,7 +523,7 @@ describe(fileToTest, function () {
     });
     const spbdataIngestion = new ToTest(config);
     spbdataIngestion.validateSpbDevSeq = validateSpbDevSeq;
-    var message = {
+    let message = {
       timestamp: 12345,
       metrics: [{
         name: 'Relationship/https://industry-fusion.com/types/v0.9/hasFilter',
@@ -608,8 +536,6 @@ describe(fileToTest, function () {
     };
     spbdataIngestion.processDataIngestion('spBv1.0/accountId/DBIRTH/eonID/deviceId', message);
     spbdataIngestion.processDataIngestion('spBv1.0/accountId/DDATA/eonID/deviceId', message);
-    //revert();
-    //done();
   });
 
   it('Create Kafka  publish Properties data on NGSI-LD Spb topic', function (done) {
@@ -663,7 +589,7 @@ describe(fileToTest, function () {
     });
     const spbdataIngestion = new ToTest(config);
     spbdataIngestion.validateSpbDevSeq = validateSpbDevSeq;
-    var message = {
+    let message = {
       timestamp: 12345,
       metrics: [{
         name: 'Property/https://industry-fusion.com/types/v0.9/hasFilter',
@@ -676,8 +602,6 @@ describe(fileToTest, function () {
     };
     spbdataIngestion.processDataIngestion('spBv1.0/accountId/DBIRTH/eonID/deviceId', message);
     spbdataIngestion.processDataIngestion('spBv1.0/accountId/DDATA/eonID/deviceId', message);
-    //revert();
-    //done();
   });
 
   it('Process data Ingestion for sparkplugB topic', function (done) {
@@ -859,11 +783,6 @@ describe(fileToTest, function () {
     done();
   });
   it('Process data Ingestion with missing metric in SparkplugB payload', function (done) {
-    class Validator {
-      validate () {
-        return { errors: [] };
-      }
-    }
     const revert = ToTest.__set__({
       Kafka: Kafka,
       Cache: Cache,
@@ -891,11 +810,6 @@ describe(fileToTest, function () {
   });
 
   it('Process data Ingestion with INVALID seq of SparkplugB Metric', function (done) {
-    class Validator {
-      validate () {
-        return { errors: [] };
-      }
-    }
     const revert = ToTest.__set__({
       Kafka: Kafka,
       Cache: Cache,

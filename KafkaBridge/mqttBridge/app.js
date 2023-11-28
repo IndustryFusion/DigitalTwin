@@ -26,13 +26,6 @@ process.env.APP_ROOT = __dirname;
 const logger = Logger(config);
 const brokerConnector = Broker.singleton(config.mqtt, logger);
 
-async function brokerCb (err) {
-  if (err) {
-    logger.error('Error on Broker connection ', err);
-    process.exit(1);
-  }
-}
-
 const startListener = async function () {
   const errorTypes = ['unhandledRejection', 'uncaughtException'];
   const signalTraps = ['SIGTERM', 'SIGINT', 'SIGUSR2'];
@@ -41,7 +34,6 @@ const startListener = async function () {
   await authService.init(config);
 
   logger.info('Now starting MQTT-Kafka bridge forwarding.');
-  //brokerConnector.connect(brokerCb);
   // SparkplugB connector
   const sparkplugapiDataConnector = new SparkplugApiData(config);
   sparkplugapiDataConnector.init();
