@@ -65,17 +65,6 @@ describe(fileToTest, function () {
     topics: {
       subscribe: 'topic/subscribe'
     },
-    sparkplug: {
-      spBKafkaProduce: true,
-      spBkafkaTopic: 'sparkplugB',
-      ngsildKafkaProduce: true,
-      ngsildKafkaTopic: 'ngsildSpB',
-      topics: {
-        subscribe: {
-          sparkplugb_data_ingestion: 'spBv1.0/+/+/+/+'
-        }
-      }
-    },
     cache: {
       hostname: 'redis',
       port: '6379',
@@ -98,9 +87,14 @@ describe(fileToTest, function () {
     },
     mqtt: {
       sparkplug: {
+        spBKafkaProduce: true,
+        spBkafkaTopic: 'sparkplugB',
+        ngsildKafkaProduce: true,
+        ngsildKafkaTopic: 'ngsildSpB',
         topics: {
-          subscribe: 'subscribe',
-          publish: 'publish'
+          subscribe: {
+            sparkplugb_data_ingestion: 'spBv1.0/+/+/+/+'
+          }
         }
       },
       kafka: {
@@ -118,17 +112,6 @@ describe(fileToTest, function () {
     authServicePort: '2345',
     topics: {
       subscribe: 'topic/subscribe'
-    },
-    sparkplug: {
-      spBKafkaProduce: false,
-      spBkafkaTopic: 'sparkplugB',
-      ngsildKafkaProduce: true,
-      ngsildKafkaTopic: 'ngsildSpB',
-      topics: {
-        subscribe: {
-          sparkplugb_data_ingestion: 'spBv1.0/+/+/+/+'
-        }
-      }
     },
     cache: {
       hostname: 'redis',
@@ -219,12 +202,13 @@ describe(fileToTest, function () {
   }
   // let origKafkaAggregator;
   it('Shall initialize data ingestion modules Kafka and Cache', function (done) {
-    const revert = ToTest.__set__('Kafka', Kafka);
-    ToTest.__set__('Cache', Cache);
-    ToTest.__set__('Logger', Logger);
-    ToTest.__set__('Validator', Validator);
-    // ToTest.__set__('config', config);
-    ToTest.__set__('KafkaAggregator', KafkaAggregator);
+    const revert = ToTest.__set__({
+      Kafka: Kafka,
+      Cache: Cache,
+      Logger: Logger,
+      Validator: Validator,
+      KafkaAggregator: KafkaAggregator
+    });
     const spbdataIngestion = new ToTest(config);
     assert.isObject(spbdataIngestion);
     revert();
@@ -232,10 +216,13 @@ describe(fileToTest, function () {
   });
 
   it('Validate SparkplugB Node Birth message device seq', function (done) {
-    const revert = ToTest.__set__('Kafka', Kafka);
-    ToTest.__set__('Cache', Cache);
-    ToTest.__set__('KafkaAggregator', KafkaAggregator);
-    ToTest.__set__('Validator', Validator);
+    const revert = ToTest.__set__({
+      Kafka: Kafka,
+      Cache: Cache,
+      Logger: Logger,
+      Validator: Validator,
+      KafkaAggregator: KafkaAggregator
+    });
     const spbdataIngestion = new ToTest(config);
     const birthMessage = {
       timestamp: 12345,
@@ -258,10 +245,13 @@ describe(fileToTest, function () {
   });
 
   it('Validate SparkplugB Node Birth message  wrong device seq', function (done) {
-    const revert = ToTest.__set__('Kafka', Kafka);
-    ToTest.__set__('Cache', Cache);
-    ToTest.__set__('KafkaAggregator', KafkaAggregator);
-    ToTest.__set__('Validator', Validator);
+    const revert = ToTest.__set__({
+      Kafka: Kafka,
+      Cache: Cache,
+      Logger: Logger,
+      Validator: Validator,
+      KafkaAggregator: KafkaAggregator
+    });
     const spbdataIngestion = new ToTest(config);
     const birthMessage = {
       timestamp: 12345,
@@ -282,10 +272,13 @@ describe(fileToTest, function () {
   });
 
   it('Validate SparkplugB Device Birth message device seq >0', function (done) {
-    const revert = ToTest.__set__('Kafka', Kafka);
-    ToTest.__set__('Cache', Cache);
-    ToTest.__set__('KafkaAggregator', KafkaAggregator);
-    ToTest.__set__('Validator', Validator);
+    const revert = ToTest.__set__({
+      Kafka: Kafka,
+      Cache: Cache,
+      Logger: Logger,
+      Validator: Validator,
+      KafkaAggregator: KafkaAggregator
+    });
     const spbdataIngestion = new ToTest(config);
     const birthMessage = {
       timestamp: 12345,
@@ -307,10 +300,13 @@ describe(fileToTest, function () {
   });
 
   it('Validate SparkplugB DBirth message device wrong seq i.e =0', function (done) {
-    const revert = ToTest.__set__('Kafka', Kafka);
-    ToTest.__set__('Cache', Cache);
-    ToTest.__set__('KafkaAggregator', KafkaAggregator);
-    ToTest.__set__('Validator', Validator);
+    const revert = ToTest.__set__({
+      Kafka: Kafka,
+      Cache: Cache,
+      Logger: Logger,
+      Validator: Validator,
+      KafkaAggregator: KafkaAggregator
+    });
     const spbdataIngestion = new ToTest(config);
     const birthMessage = {
       timestamp: 12345,
@@ -326,17 +322,20 @@ describe(fileToTest, function () {
     spbdataIngestion.validateSpbDevSeq('spBv1.0/accountId/DBIRTH/eonID/deviceId', birthMessage)
       .then((result) => {
         assert.deepEqual(result, false, 'Valid Seq for BIRTH Message received');
-        revert()
+        revert();
         done();
       })
       .catch((e) => done(e));
   });
 
   it('Validate SparkplugB Device Data message device seq <255', function (done) {
-    const revert = ToTest.__set__('Kafka', Kafka);
-    ToTest.__set__('KafkaAggregator', KafkaAggregator);
-    ToTest.__set__('Cache', Cache);
-    ToTest.__set__('Validator', Validator);
+    const revert = ToTest.__set__({
+      Kafka: Kafka,
+      Cache: Cache,
+      Logger: Logger,
+      Validator: Validator,
+      KafkaAggregator: KafkaAggregator
+    });
     const spbdataIngestion = new ToTest(config);
     const DataMessage = {
       timestamp: 12345,
@@ -359,10 +358,13 @@ describe(fileToTest, function () {
   });
 
   it('Validate SparkplugB Device Data message wrong device seq >255', function (done) {
-    const revert = ToTest.__set__('Kafka', Kafka);
-    ToTest.__set__('KafkaAggregator', KafkaAggregator);
-    ToTest.__set__('Cache', Cache);
-    ToTest.__set__('Validator', Validator);
+    const revert = ToTest.__set__({
+      Kafka: Kafka,
+      Cache: Cache,
+      Logger: Logger,
+      Validator: Validator,
+      KafkaAggregator: KafkaAggregator
+    });
     const spbdataIngestion = new ToTest(config);
     const DataMessage = {
       timestamp: 12345,
@@ -385,10 +387,13 @@ describe(fileToTest, function () {
   });
 
   it(' Send Warning message for INVALID SparkplugB Device Data message with device seq >255', function (done) {
-    const revert = ToTest.__set__('Kafka', Kafka);
-    ToTest.__set__('KafkaAggregator', KafkaAggregator);
-    ToTest.__set__('Cache', Cache);
-    ToTest.__set__('Validator', Validator);
+    const revert = ToTest.__set__({
+      Kafka: Kafka,
+      Cache: Cache,
+      Logger: Logger,
+      Validator: Validator,
+      KafkaAggregator: KafkaAggregator
+    });
     const spbdataIngestion = new ToTest(config);
     const DataMessage = {
       timestamp: 12345,
@@ -411,11 +416,14 @@ describe(fileToTest, function () {
   });
 
   it('KafkaProduce for SparkplugB metric fails due to empty sparkplugB message', function (done) {
-    config.sparkplug.spBKafkaProduce = true;
-    const revert = ToTest.__set__('Kafka', Kafka);
-    ToTest.__set__('KafkaAggregator', KafkaAggregator);
-    ToTest.__set__('Cache', Cache);
-    ToTest.__set__('Validator', Validator);
+    config.mqtt.sparkplug.spBKafkaProduce = true;
+    const revert = ToTest.__set__({
+      Kafka: Kafka,
+      Cache: Cache,
+      Logger: Logger,
+      Validator: Validator,
+      KafkaAggregator: KafkaAggregator
+    });
     const spbdataIngestion = new ToTest(config);
     const DataMessage = {
       timestamp: 12345,
@@ -438,14 +446,17 @@ describe(fileToTest, function () {
   });
 
   it('KafkaProduce for SparkplugB metric fails for only ngsild topic due to empty sparkplugB message', function (done) {
-    config.sparkplug.spBKafkaProduce = false;
-    config.sparkplug.ngsildKafkaProduce = true;
+    config.mqtt.sparkplug.spBKafkaProduce = false;
+    config.mqtt.sparkplug.ngsildKafkaProduce = true;
 
-    ToTest.__set__('Kafka', Kafka);
-    ToTest.__set__('CacheFactory', CacheFactory);
-    ToTest.__set__('config', config);
-    ToTest.__set__('KafkaAggregator', KafkaAggregator);
-    const spbdataIngestion = new ToTest(logger);
+    const revert = ToTest.__set__({
+      Kafka: Kafka,
+      Cache: Cache,
+      Logger: Logger,
+      Validator: Validator,
+      KafkaAggregator: KafkaAggregator
+    });
+    const spbdataIngestion = new ToTest(config);
     const DataMessage = {
       timestamp: 12345,
       metrics: [],
@@ -462,6 +473,7 @@ describe(fileToTest, function () {
 
     const kafkaPubReturn = spbdataIngestion.createKafakaPubData('spBv1.0/accountId/DBIRTH/eonID/deviceId', DataMessage);
     assert.oneOf(kafkaPubReturn, [false, undefined], ' Possible to produce kafka message for wrong alias/CID id: ' + kafkaPubReturn);
+    revert();
     done();
   });
 
@@ -486,6 +498,7 @@ describe(fileToTest, function () {
               };
               assert.deepEqual(JSON.parse(message.value), value, 'Received Kafke message not correct');
               spbdataIngestion.stopAggregator();
+              revert();
               done();
               return new Promise(() => {});
             },
@@ -498,16 +511,22 @@ describe(fileToTest, function () {
     const validateSpbDevSeq = function () {
       return Promise.resolve(true);
     };
-
-    config.sparkplug.spBKafkaProduce = true;
-    ToTest.__set__('Kafka', Kafka);
-    ToTest.__set__('config', config);
-    ToTest.__set__('CacheFactory', CacheFactory);
-    ToTest.__set__('KafkaAggregator', origKafkaAggregator);
-
-    var spbdataIngestion = new ToTest(logger);
+    class Validator {
+      validate () {
+        return { errors: [] };
+      }
+    }
+    config.mqtt.sparkplug.spBKafkaProduce = true;
+    const revert = ToTest.__set__({
+      Kafka: Kafka,
+      Cache: Cache,
+      Logger: Logger,
+      Validator: Validator,
+      KafkaAggregator: KafkaAggregator
+    });
+    const spbdataIngestion = new ToTest(config);
     spbdataIngestion.validateSpbDevSeq = validateSpbDevSeq;
-    var message = {
+    const message = {
       timestamp: 12345,
       metrics: [{
         name: 'temp',
@@ -521,6 +540,8 @@ describe(fileToTest, function () {
     spbdataIngestion.processDataIngestion('spBv1.0/accountId/NBIRTH/eonID/', message);
     spbdataIngestion.processDataIngestion('spBv1.0/accountId/DBIRTH/eonID/deviceId', message);
     spbdataIngestion.processDataIngestion('spBv1.0/accountId/DDATA/eonID/deviceId', message);
+    revert();
+    done();
   });
 
   it('Create Kafka  publish Relationship data on NGSI-LD Spb topic', function (done) {
@@ -559,15 +580,21 @@ describe(fileToTest, function () {
     const validateSpbDevSeq = function () {
       return Promise.resolve(true);
     };
-
-    config.sparkplug.spBKafkaProduce = false;
-    config.sparkplug.ngsildKafkaProduce = true;
-    ToTest.__set__('Kafka', Kafka);
-    ToTest.__set__('config', config);
-    ToTest.__set__('CacheFactory', CacheFactory);
-    ToTest.__set__('KafkaAggregator', origKafkaAggregator);
-
-    var spbdataIngestion = new ToTest(logger);
+    class Validator {
+      validate () {
+        return { errors: [] };
+      }
+    }
+    config.mqtt.sparkplug.spBKafkaProduce = false;
+    config.mqtt.sparkplug.ngsildKafkaProduce = true;
+    const revert = ToTest.__set__({
+      Kafka: Kafka,
+      Cache: Cache,
+      Logger: Logger,
+      Validator: Validator,
+      KafkaAggregator: KafkaAggregator
+    });
+    const spbdataIngestion = new ToTest(config);
     spbdataIngestion.validateSpbDevSeq = validateSpbDevSeq;
     var message = {
       timestamp: 12345,
@@ -582,6 +609,8 @@ describe(fileToTest, function () {
     };
     spbdataIngestion.processDataIngestion('spBv1.0/accountId/DBIRTH/eonID/deviceId', message);
     spbdataIngestion.processDataIngestion('spBv1.0/accountId/DDATA/eonID/deviceId', message);
+    revert();
+    done();
   });
 
   it('Create Kafka  publish Properties data on NGSI-LD Spb topic', function (done) {
@@ -619,15 +648,21 @@ describe(fileToTest, function () {
     const validateSpbDevSeq = function () {
       return Promise.resolve(true);
     };
-
-    config.sparkplug.spBKafkaProduce = true;
-    config.sparkplug.ngsildKafkaProduce = true;
-    ToTest.__set__('Kafka', Kafka);
-    ToTest.__set__('config', config_ngsild);
-    ToTest.__set__('CacheFactory', CacheFactory);
-    ToTest.__set__('KafkaAggregator', origKafkaAggregator);
-
-    var spbdataIngestion = new ToTest(logger);
+    class Validator {
+      validate () {
+        return { errors: [] };
+      }
+    }
+    config.mqtt.sparkplug.spBKafkaProduce = true;
+    config.mqtt.sparkplug.ngsildKafkaProduce = true;
+    const revert = ToTest.__set__({
+      Kafka: Kafka,
+      Cache: Cache,
+      Logger: Logger,
+      Validator: Validator,
+      KafkaAggregator: KafkaAggregator
+    });
+    const spbdataIngestion = new ToTest(config);
     spbdataIngestion.validateSpbDevSeq = validateSpbDevSeq;
     var message = {
       timestamp: 12345,
@@ -642,14 +677,24 @@ describe(fileToTest, function () {
     };
     spbdataIngestion.processDataIngestion('spBv1.0/accountId/DBIRTH/eonID/deviceId', message);
     spbdataIngestion.processDataIngestion('spBv1.0/accountId/DDATA/eonID/deviceId', message);
+    revert();
+    done();
   });
 
   it('Process data Ingestion for sparkplugB topic', function (done) {
-    ToTest.__set__('Kafka', Kafka);
-    ToTest.__set__('CacheFactory', CacheFactory);
-    ToTest.__set__('config', config);
-    ToTest.__set__('KafkaAggregator', KafkaAggregator);
-    const spbdataIngestion = new ToTest(logger);
+    class Validator {
+      validate () {
+        return { errors: [] };
+      }
+    }
+    const revert = ToTest.__set__({
+      Kafka: Kafka,
+      Cache: Cache,
+      Logger: Logger,
+      Validator: Validator,
+      KafkaAggregator: KafkaAggregator
+    });
+    const spbdataIngestion = new ToTest(config);
     const validateSpbDevSeq = function () {
       return Promise.resolve(true);
     };
@@ -672,15 +717,24 @@ describe(fileToTest, function () {
     };
 
     spbdataIngestion.processDataIngestion('spBv1.0/accountId/DDATA/eonID/deviceId', message);
+    revert();
     done();
   });
 
   it('Process data Ingestion for wrong SparkplugB topic', function (done) {
-    ToTest.__set__('Kafka', Kafka);
-    ToTest.__set__('CacheFactory', CacheFactory);
-    ToTest.__set__('config', config);
-    ToTest.__set__('KafkaAggregator', KafkaAggregator);
-    const spbdataIngestion = new ToTest(logger);
+    class Validator {
+      validate () {
+        return { errors: [] };
+      }
+    }
+    const revert = ToTest.__set__({
+      Kafka: Kafka,
+      Cache: Cache,
+      Logger: Logger,
+      Validator: Validator,
+      KafkaAggregator: KafkaAggregator
+    });
+    const spbdataIngestion = new ToTest(config);
     const validateSpbDevSeq = function () {
       return Promise.resolve(true);
     };
@@ -703,15 +757,18 @@ describe(fileToTest, function () {
     };
     const processDataIngestReturn = spbdataIngestion.processDataIngestion('spBv1.0/accountId/MATA/eonID/deviceId', message);
     assert.deepEqual(processDataIngestReturn, undefined, 'Unable to validate SParkplugB schema');
+    revert();
     done();
   });
 
   it('Process data Ingestion with 2nd array component of SparkplugB Metric empty', function (done) {
-    ToTest.__set__('Kafka', Kafka);
-    ToTest.__set__('CacheFactory', CacheFactory);
-    ToTest.__set__('config', config);
-    ToTest.__set__('KafkaAggregator', KafkaAggregator);
-    const spbdataIngestion = new ToTest(logger);
+    const revert = ToTest.__set__({
+      Kafka: Kafka,
+      Cache: Cache,
+      Logger: Logger,
+      KafkaAggregator: KafkaAggregator
+    });
+    const spbdataIngestion = new ToTest(config);
     const validateSpbDevSeq = function () {
       return Promise.resolve(true);
     };
@@ -735,15 +792,18 @@ describe(fileToTest, function () {
     };
     const processDataIngestReturn = spbdataIngestion.processDataIngestion('spBv1.0/accountId/DDATA/eonID/deviceId', message);
     assert.deepEqual(processDataIngestReturn, undefined, 'Unable to validate SParkplugB schema');
+    revert();
     done();
   });
 
   it('Process data Ingestion with wrong type for SparkplugB Metric', function (done) {
-    ToTest.__set__('Kafka', Kafka);
-    ToTest.__set__('CacheFactory', CacheFactory);
-    ToTest.__set__('config', config);
-    ToTest.__set__('KafkaAggregator', KafkaAggregator);
-    const spbdataIngestion = new ToTest(logger);
+    const revert = ToTest.__set__({
+      Kafka: Kafka,
+      Cache: Cache,
+      Logger: Logger,
+      KafkaAggregator: KafkaAggregator
+    });
+    const spbdataIngestion = new ToTest(config);
     const validateSpbDevSeq = function () {
       return Promise.resolve(true);
     };
@@ -767,15 +827,19 @@ describe(fileToTest, function () {
     };
     const processDataIngestReturn = spbdataIngestion.processDataIngestion('spBv1.0/accountId/DDATA/eonID/deviceId', message);
     assert.deepEqual(processDataIngestReturn, undefined, 'Unable to validate SParkplugB schema');
+    revert();
     done();
   });
 
   it('Process data Ingestion with wrong format SparkplugB Metric', function (done) {
-    ToTest.__set__('Kafka', Kafka);
-    ToTest.__set__('CacheFactory', CacheFactory);
-    ToTest.__set__('config', config);
-    ToTest.__set__('KafkaAggregator', KafkaAggregator);
-    const spbdataIngestion = new ToTest(logger);
+    const revert = ToTest.__set__({
+      Kafka: Kafka,
+      Cache: Cache,
+      Logger: Logger,
+      KafkaAggregator: KafkaAggregator
+    });
+
+    const spbdataIngestion = new ToTest(config);
     const validateSpbDevSeq = function () {
       return Promise.resolve(true);
     };
@@ -792,14 +856,22 @@ describe(fileToTest, function () {
     };
     const processDataIngestReturn = spbdataIngestion.processDataIngestion('spBv1.0/accountId/DDATA/eonID/deviceId', message);
     assert.deepEqual(processDataIngestReturn, undefined, 'Unable to validate SParkplugB schema');
+    revert();
     done();
   });
   it('Process data Ingestion with missing metric in SparkplugB payload', function (done) {
-    ToTest.__set__('Kafka', Kafka);
-    ToTest.__set__('CacheFactory', CacheFactory);
-    ToTest.__set__('config', config);
-    ToTest.__set__('KafkaAggregator', KafkaAggregator);
-    const spbdataIngestion = new ToTest(logger);
+    class Validator {
+      validate () {
+        return { errors: [] };
+      }
+    }
+    const revert = ToTest.__set__({
+      Kafka: Kafka,
+      Cache: Cache,
+      Logger: Logger,
+      KafkaAggregator: KafkaAggregator
+    });
+    const spbdataIngestion = new ToTest(config);
     const validateSpbDevSeq = function () {
       return Promise.resolve(true);
     };
@@ -815,15 +887,23 @@ describe(fileToTest, function () {
     };
     const processDataIngestReturn = spbdataIngestion.processDataIngestion('spBv1.0/accountId/DDATA/eonID/deviceId', message);
     assert.deepEqual(processDataIngestReturn, undefined, 'Unable to validate SParkplugB schema');
+    revert();
     done();
   });
 
   it('Process data Ingestion with INVALID seq of SparkplugB Metric', function (done) {
-    ToTest.__set__('Kafka', Kafka);
-    ToTest.__set__('CacheFactory', CacheFactory);
-    ToTest.__set__('config', config);
-    ToTest.__set__('KafkaAggregator', KafkaAggregator);
-    const spbdataIngestion = new ToTest(logger);
+    class Validator {
+      validate () {
+        return { errors: [] };
+      }
+    }
+    const revert = ToTest.__set__({
+      Kafka: Kafka,
+      Cache: Cache,
+      Logger: Logger,
+      KafkaAggregator: KafkaAggregator
+    });
+    const spbdataIngestion = new ToTest(config);
     // var validateSpbDevSeq = function(){
     //     return Promise.resolve(true);
     // };
@@ -847,18 +927,21 @@ describe(fileToTest, function () {
     };
     const processDataIngestReturn = spbdataIngestion.processDataIngestion('spBv1.0/accountId/DDATA/eonID/deviceId', message);
     assert.deepEqual(processDataIngestReturn, true, 'Unable to validate SParkplugB schema');
+    revert();
     done();
   });
 
   it('Shall check mqtt bind to topic', function (done) {
-    ToTest.__set__('Kafka', Kafka);
-    ToTest.__set__('CacheFactory', CacheFactory);
-    ToTest.__set__('config', config);
-    ToTest.__set__('KafkaAggregator', KafkaAggregator);
-    // ToTest.__set__("broker", broker);
-    const spbdataIngestion = new ToTest(logger);
+    const revert = ToTest.__set__({
+      Kafka: Kafka,
+      Cache: Cache,
+      Logger: Logger,
+      KafkaAggregator: KafkaAggregator
+    });
+    const spbdataIngestion = new ToTest(config);
 
     spbdataIngestion.bind(broker);
+    revert();
     done();
   });
 });
