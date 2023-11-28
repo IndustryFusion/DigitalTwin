@@ -943,4 +943,23 @@ describe(fileToTest, function () {
     revert();
     done();
   });
+
+  it('Shall check RR partitioner', function (done) {
+    const partitionMetadata = {
+      length: 4
+    };
+    const partitionerConstructor = ToTest.__get__('RoundRobinPartitioner');
+    const partitioner = partitionerConstructor();
+    let partition = partitioner({ partitionMetadata });
+    assert(partition === 0);
+    partition = partitioner({ partitionMetadata });
+    assert(partition === 1);
+    partition = partitioner({ partitionMetadata });
+    assert(partition === 2);
+    partition = partitioner({ partitionMetadata });
+    assert(partition === 3);
+    partition = partitioner({ partitionMetadata });
+    assert(partition === 0);
+    done();
+  });
 });
