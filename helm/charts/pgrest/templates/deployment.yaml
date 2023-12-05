@@ -1,0 +1,49 @@
+{{- $name := printf "%s.%s.%s" .Values.db.dbUser .Values.clusterSvcName .Values.db.secretPostfix -}}
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace $name) -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pgrest
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pgrest
+  template:
+    metadata:
+      labels:
+        app: pgrest
+    spec:
+      initContainers:
+      - name: get-jwk
+        image: busybox:1.28
+        command: ['sh', '-c', "wget http://{{ .Values.keycloak.internalAuthService.name}}:{{ .Values.keycloak.internalAuthService.port}}{{ .Values.keycloak.internalAuthService.path}}/realms/{{ .Values.keycloak.scorpio.realm }}/protocol/openid-connect/certs -O /keyconfig/jwk.json;"]
+        volumeMounts:
+        - mountPath: /keyconfig
+          name: config-volume
+      containers:
+      - name: pgrest
+        image: postgrest/postgrest:v12.0.0
+        env:
+        - name: PGRST_DB_URI
+          {{ if $secret }}
+          {{- $pgurl := printf "postgres://%s:%s@%s:5432/%s" .Values.db.dbUser (b64dec $secret.data.password) .Values.clusterSvcName .Values.db.timescaleDb -}}
+          value: {{ $pgurl }}
+          {{- end }}
+        - name: PGRST_JWT_SECRET_IS_BASE64
+          value: "false"
+        #- name: PGRST_DB_ANON_ROLE
+        #  value: {{ .Values.db.timescaleReadUser}}
+        - name: PGRST_JWT_SECRET
+          value: '@/keyconfig/jwk.json'
+        ports:
+        - containerPort: 3000
+          name: rest
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /keyconfig
+          name: config-volume
+      volumes:
+      - name: config-volume
+        emptyDir: {}

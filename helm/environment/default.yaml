@@ -117,3 +117,7 @@ emqx:
    limits:
      memory: "512Mi"
      cpu: "500m"
+
+pgrest:
+  externalPath: / # note: must end with /
+  externalHostname: pgrest.local

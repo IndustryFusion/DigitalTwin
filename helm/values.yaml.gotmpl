@@ -23,6 +23,9 @@ db:
   dbUser: {{ .StateValues.db.dbUser }}
   oispdbUser: {{ .StateValues.db.oispdbUser }}
   scorpioDb: ngb
+  timescaleDb: tsdb
+  timescaleReadUser: tsdb_reader
+  timescaleTable: entityhistory
   secretPostfix: credentials.postgresql.acid.zalan.do
   backupBucket: {{ .StateValues.db.backupBucket }}
   backupNum: {{ .StateValues.db.backupNum }}
@@ -224,6 +227,7 @@ keycloak:
     - email
     - type
     - roles
+    - pgrest_role
   scorpio:
     realm: iff
     client: scorpio
@@ -338,3 +342,7 @@ mqtt:
   cache:
     host: redis
     port: 6379
+
+pgrest:
+  externalHostname: {{ .StateValues.pgrest.externalHostname }}
+  externalPath: {{ .StateValues.pgrest.externalPath }}

@@ -1,5 +1,5 @@
 /**
-* Copyright (c) 2022 Intel Corporation
+* Copyright (c) 2022, 2023 Intel Corporation
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -229,9 +229,11 @@ describe('Test timescaledb processMessage', function () {
 });
 
 describe('Test startListener', function () {
-  const historyTableName = 'entityhistories';
+  const historyTableName = 'entityhistory';
   const htChecksqlquery = 'SELECT * FROM timescaledb_information.hypertables WHERE hypertable_name = \'' + historyTableName + '\';';
   const htCreateSqlquery = 'SELECT create_hypertable(\'' + historyTableName + '\', \'observedAt\', migrate_data => true);';
+  const htCreateRole = 'CREATE ROLE tsdbuser;';
+  const htGrant = 'GRANT SELECT ON ALL TABLES IN SCHEMA public TO tsdbuser;';
 
   const SequelizeClass = class Sequelize {
     authenticate () {
@@ -243,7 +245,7 @@ describe('Test startListener', function () {
     }
 
     query (sqlquery) {
-      assert.oneOf(sqlquery, [htChecksqlquery, htCreateSqlquery], 'Wrong query message for timescaledb table.');
+      assert.oneOf(sqlquery, [htChecksqlquery, htCreateSqlquery, htCreateRole, htGrant], 'Wrong query message for timescaledb table.');
       return Promise.resolve(sqlquery);
     }
   };
@@ -270,7 +272,8 @@ describe('Test startListener', function () {
   };
   const config = {
     timescaledb: {
-      topic: 'topic'
+      topic: 'topic',
+      tsdbuser: 'tsdbuser'
     }
   };
   const process = {

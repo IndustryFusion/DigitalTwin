@@ -24,7 +24,7 @@ const sequelize = require('./utils/tsdb-connect'); // Import sequelize object, D
 const { QueryTypes } = require('sequelize');
 const Logger = require('../lib/logger.js');
 const entityHistoryTable = require('./model/entity_history.js'); // Import entityHistory model/table defined
-const historyTableName = 'entityhistories';
+const historyTableName = config.timescaledb.tablename;
 const runningAsMain = require.main === module;
 const logger = new Logger(config);
 
@@ -97,6 +97,19 @@ const startListener = async function () {
       logger.error('Unable to create/sync table in  tsdb:', error);
     });
 
+  const createUserQuery = 'CREATE ROLE ' + config.timescaledb.tsdbuser + ';';
+  await sequelize.query(createUserQuery, { type: QueryTypes.SELECT }).then(() => {
+    logger.error('User ' + config.timescaledb.tsdbuser + 'created');
+  }).catch(error => {
+    logger.warn('Cannot create user, probably already existing.', error);
+  });
+
+  const grantUserQuery = 'GRANT SELECT ON ALL TABLES IN SCHEMA public TO ' + config.timescaledb.tsdbuser + ';';
+  await sequelize.query(grantUserQuery, { type: QueryTypes.SELECT }).then(() => {
+    logger.info('Granted access to user ' + config.timescaledb.tsdbuser);
+  }).catch(error => {
+    logger.warn('Cannot grant access to user.', error);
+  });
   const htChecksqlquery = 'SELECT * FROM timescaledb_information.hypertables WHERE hypertable_name = \'' + historyTableName + '\';';
   await sequelize.query(htChecksqlquery, { type: QueryTypes.SELECT }).then((hypertableInfo) => {
     if (hypertableInfo.length) {

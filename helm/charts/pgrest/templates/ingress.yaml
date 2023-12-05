@@ -1,0 +1,52 @@
+---
+{{- if and (ne .Values.ingressType "traefik") (ne .Values.ingressType "nginx") }}
+{{- fail "ingressType must either be \"traefik\" or \"nginx\"" }}
+{{- end }}
+{{- if not (regexMatch "/$" .Values.pgrest.externalPath) }}
+{{- fail "pgrest.externalPath does not end with /" }}
+{{- end}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pgrest-ingress
+  annotations:
+    kubernetes.io/ingress.class: {{ .Values.ingressType | quote }}
+    {{- if and (ne .Values.scorpio.externalPath "/") (eq .Values.ingressType "traefik") }}
+    traefik.ingress.kubernetes.io/router.middlewares: iff-remove-path-pgrest@kubernetescrd
+    {{- else }}
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    {{- end }}
+    cert-manager.io/cluster-issuer: {{ .Values.certmanager.issuer }}
+
+  namespace: {{ .Release.Namespace }}
+spec:
+  tls:
+  - hosts:
+    - {{ .Values.pgrest.externalHostname }}
+    secretName: {{ .Values.certmanager.secret }}-pgrest
+  rules:
+  - host: {{ .Values.pgrest.externalHostname }}
+    http:
+      paths:
+      - backend:
+          service:
+            name: pgrest
+            port:
+              number: 3000
+        {{- if (eq .Values.ingressType "nginx") }}
+        path: {{ .Values.pgrest.externalPath}}(.*)
+        {{- else }}
+        path: {{ .Values.pgrest.externalPath}}
+        {{- end }}
+        pathType: ImplementationSpecific
+---
+{{- if and (ne .Values.pgrest.externalPath "/") (eq .Values.ingressType "traefik") }}
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: remove-path-pgrest
+spec:
+  replacePathRegex:
+    regex: ^{{ .Values.pgrest.externalPath }}(.*)
+    replacement: /$1
+{{- end }}

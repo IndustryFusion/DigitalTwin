@@ -94,7 +94,7 @@ send_to_kafka_bridge() {
 get_datapoints() {
     urn=$1
     targetfile=$2
-    echo 'select json_agg(t) from public.entityhistories as t where t."entityId" = ' \'"$urn"\' ';' | \
+    echo 'select json_agg(t) from public.entityhistory as t where t."entityId" = ' \'"$urn"\' ';' | \
         PGPASSWORD=${POSTGRES_PASSWORD} psql -t -h localhost -U ${POSTGRES_USERNAME} -d ${POSTGRES_DATABASE} -A | \
         jq -S 'map(del(.modifiedAt, .observedAt))' >"$targetfile"
 }

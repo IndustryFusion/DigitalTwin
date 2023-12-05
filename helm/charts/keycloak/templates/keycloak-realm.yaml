@@ -44,6 +44,26 @@ spec:
       - oisp-event-listener
     displayName: "Basic Realm for Alerta and Scorpio"
     clientScopes:
+      - id: b697f384-0390-4f5e-80b8-2a6bc3f07c96
+        name: pgrest_role
+        protocol: openid-connect
+        attributes:
+          include.in.token.scope: "true"
+          display.on.consent.screen: "true"
+        protocolMappers:
+        - id: ae6a1615-aa60-4816-9e59-2be65429ed2b
+          name: pgrest_role_claim
+          protocol: openid-connect
+          protocolMapper: oidc-hardcoded-claim-mapper
+          consentRequired: false
+          config:
+            claim.value: {{ .Values.db.timescaleReadUser }}
+            userinfo.token.claim: "true"
+            id.token.claim: "true"
+            access.token.claim: "true"
+            claim.name: role
+            jsonType.label: String
+            access.tokenResponse.claim: "false"
       - id: a3e864e7-8641-46a2-a52f-0cb23d8bb936
         name: gateway
         protocol: openid-connect
