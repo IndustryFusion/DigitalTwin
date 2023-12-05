@@ -105,10 +105,12 @@ data:
       "timescaledb": {
               "topic": "iff.ngsild.attributes",
               "PGSSLMODE": "require",
-              "dbname": "tsdb",
+              "dbname": {{ .Values.db.timescaleDb | quote }},
+              "tablename": {{ .Values.db.timescaleTable | quote }},
               "hostname": "acid-cluster",
               "port": "5432",
-              "username": "ngb",
+              "username": {{ .Values.db.scorpioDb | quote }},
+              "tsdbuser": {{ .Values.db.timescaleReadUser| quote }},
               "password": "POSTGRES_PASSWORD"
       }
     }

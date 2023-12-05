@@ -112,3 +112,7 @@ redis:
 
 emqx:
   externalHostname: testing.industry-fusion.com
+
+pgrest:
+  externalPath: /pgrest/ # note: must end with /
+  externalHostname: testing.industry-fusion.com

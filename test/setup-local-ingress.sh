@@ -41,4 +41,4 @@ kubectl -n kube-system delete pod "${COREDNS_POD}"
 # -----------------
 echo Update hostfile for local api
 echo ------------------
-${SUDO} bash -c "echo $INGRESS_IP keycloak.local alerta.local ngsild.local >> /etc/hosts"
+${SUDO} bash -c "echo $INGRESS_IP keycloak.local alerta.local ngsild.local pgrest.local >> /etc/hosts"

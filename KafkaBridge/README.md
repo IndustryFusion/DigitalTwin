@@ -84,10 +84,10 @@ This service which listens at specific Kafka topic (iff.ngsild.attributes) and f
 
 * entities: Array of valid [NGSI-LD](https://www.etsi.org/deliver/etsi_gs/CIM/001_099/009/01.05.01_60/gs_CIM009v010501p.pdf) entities
 
-Data stored in the hypertable "entityhistories" of timescaledb database "tsdb" in below format:
+Data stored in the hypertable "entityhistory" of timescaledb database "tsdb" in below format:
 
 ```
-tsdb=# select * from entityhistories;
+tsdb=# select * from entityhistory;
          observedAt         |         modifiedAt         |      entityId      |                    attributeId                    |               attributeType                |                              datasetId                              | nodeType |                      value                       | index 
 ----------------------------+----------------------------+--------------------+--------------------------------------------------+-------------------------------------------+---------------------------------------------------------------------+----------+--------------------------------------------------+-------
  2023-07-18 09:40:24.22+00  | 2023-07-18 09:40:24.22+00  | urn:plasmacutter:1 | https://industry-fusion.com/types/v0.9/state     | https://uri.etsi.org/ngsi-ld/Property     | urn:plasmacutter:1\https://industry-fusion.com/types/v0.9/state     | @value   |  https://industry-fusion.com/types/v0.9/state_OFF                                         |     0

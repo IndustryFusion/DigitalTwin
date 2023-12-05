@@ -95,6 +95,8 @@
 		"topic": "iff.ngsild.attributes",
 		"PGSSLMODE": "require",
 		"dbname": "tsdb",
+		"tsdbuser": "tsdb_reader",
+		"tablename": "entityhistory",
 		"hostname": "acid-cluster.iff.svc.cluster.local",
 		"port": "5432",
 		"username": "ngb",

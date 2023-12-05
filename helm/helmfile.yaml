@@ -144,3 +144,13 @@ releases:
   - values.yaml.gotmpl
   needs:
   - kafka-bridges
+- name: pgrest
+  labels:
+    app: pgrest
+    order: second
+  chart: ./charts/pgrest
+  namespace: {{ .Values.namespace }}
+  values:
+  - values.yaml.gotmpl
+  needs:
+  - postgres
