@@ -1,0 +1,60 @@
+[
+    {
+        "_id": "f6a8c87b-09ce-4948-88e3-2c339d5bf0cb",
+        "id": "humidity.v1.0",
+        "domainId": null,
+        "dimension": "humidity",
+        "default": true,
+        "display": "timeSeries",
+        "format": "float",
+        "measureunit": "Percent (%)",
+        "version": "1.0",
+        "type": "sensor",
+        "dataType": "Number",
+        "min": null,
+        "max": null,
+        "href": "http://frontend.oisp:4001/v1/api/cmpcatalog/humidity.v1.0"
+    },
+    {
+        "_id": "35f80cdb-2710-46a2-b235-ec75f7d15e7d",
+        "id": "powerswitch.v1.0",
+        "domainId": null,
+        "dimension": "powerswitch",
+        "default": true,
+        "display": "Binary",
+        "format": "boolean",
+        "measureunit": null,
+        "version": "1.0",
+        "type": "actuator",
+        "dataType": "Boolean",
+        "command": {
+            "commandString": "LED.v1.0",
+            "parameters": [
+                {
+                    "name": "LED",
+                    "values": "0,1",
+                    "display": "switcher"
+                }
+            ]
+        },
+        "min": null,
+        "max": null,
+        "href": "http://frontend.oisp:4001/v1/api/cmpcatalog/powerswitch.v1.0"
+    },
+    {
+        "_id": "d923a78b-b07d-4d12-8087-9c4a0f63fe23",
+        "id": "temperature.v1.0",
+        "domainId": null,
+        "dimension": "temperature",
+        "default": true,
+        "display": "timeSeries",
+        "format": "float",
+        "measureunit": "Degrees Celsius",
+        "version": "1.0",
+        "type": "sensor",
+        "dataType": "Number",
+        "min": "-179769313486231570000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "max": "179769313486231570000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "href": "http://frontend.oisp:4001/v1/api/cmpcatalog/temperature.v1.0"
+    }
+]
