@@ -54,11 +54,10 @@ echo "API endpoint is :" $ONBOARDING_TOKEN_ENDPOINT
 # Make the curl request with access token as a header and store the response in the temporary file
 response_token=$(curl -X POST "$ONBOARDING_TOKEN_ENDPOINT" -d "client_id=device-onboarding" -d "subject_token=$access_token" \
 -d "grant_type=urn:ietf:params:oauth:grant-type:token-exchange" -d "requested_token_type=urn:ietf:params:oauth:token-type:refresh_token" \
--d "audience=device" -H "X-GatewayID: $gatewayid" -H "X-DeviceID: $deviceid" -H "X-Access-Type: device" -H "X-DeviceUID: uid" | jq '.')
-echo "response token" $response_token
-if [ -n "$(echo $response_token | jq '.error') |  tr -d '[:space:]'" ]; then
+-d "audience=device" -H "X-GatewayID: $gatewayid" -H "X-DeviceID: $deviceid" -H "X-Access-Type: device" -H "X-DeviceUID: uid" 2>/dev/null | jq '.')
+
+if [ "$(echo $response_token | jq 'has("error")')" = "true" ]; then
     echo "Error: Invalid onbarding token found."
-    echo $response_token
     exit 1
 fi
 

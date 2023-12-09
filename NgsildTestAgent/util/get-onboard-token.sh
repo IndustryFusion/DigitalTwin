@@ -76,8 +76,7 @@ ONBOARDING_TOKEN_ENDPOINT="$keycloakurl/protocol/openid-connect/token"
 echo "API endpoint is :" $ONBOARDING_TOKEN_ENDPOINT
 # Make the curl request with "name" as a header and store the response in the temporary file
 response_token=$(curl -X POST "$ONBOARDING_TOKEN_ENDPOINT" -d "client_id=device-onboarding" -d "username=realm_user" -d "password=$PASSWORD" \
--d "grant_type=password" | jq '.')
-echo "response token" $response_token
+-d "grant_type=password" 2>/dev/null | jq '.')
 
 # Overwrite the JSON file with the updated JSON data
 echo "$response_token" > "$temp_token_json_file"
