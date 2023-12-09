@@ -80,7 +80,7 @@ var Data = function (connector, SensorStore, logT) {
                     }
                 }*/     
                 me.connector.dataSubmit(msg, function(dat) {
-                    me.logger.info("Response received: " + dat);
+                    me.logger.info("Response received: " + JSON.stringify(dat));
                     return callback(dat);
                 });
             } else {
