@@ -1,11 +1,50 @@
 #!/bin/bash
-# Author: Yatindra shashi
-# Brief: Script2 to onboard a new device
-# Description: Dependend on Environment variables get device onboarding token
+# Copyright (c) 2023 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+set -e
 
 # Define the JSON file path
 json_file="../data/device.json"
 temp_token_json_file="../data/onboard-token.json"
+
+usage="Usage: $(basename $0) [-p userpassword] [-t]\n"
+while getopts 'p:ht' opt; do
+  case "$opt" in
+    p)
+      arg="$OPTARG"
+      password="${arg}"
+      ;;
+    t)
+      testmode=true
+      ;;
+    ?|h)
+      printf "$usage"
+      exit 1
+      ;;
+  esac
+done
+shift "$(($OPTIND -1))"
+
+if [ -z "$password" ] && [ -z "$testmode" ]; then
+    echo "Error: Either password or testflag must be set."
+    exit 1
+fi
+if [ -n "$password" ] && [ -n "$testmode" ]; then
+    echo "Error: password and testflag cannot be set both."
+    exit 1
+fi
 
 # Check if the file exists
 if [ ! -f "$json_file" ]; then
@@ -13,7 +52,11 @@ if [ ! -f "$json_file" ]; then
     exit 1
 fi
 
-PASSWORD=$(kubectl get secret credential-iff-realm-user-iff -n iff -o jsonpath='{.data.password}' | base64 --decode)
+if [ -n "$testmode" ]; then
+    PASSWORD=$(kubectl get secret credential-iff-realm-user-iff -n iff -o jsonpath='{.data.password}' | base64 --decode)
+else
+    PASSWORD=${password}
+fi
 
 # Check if the file exists
 if [ -z "$PASSWORD" ]; then
@@ -21,7 +64,6 @@ if [ -z "$PASSWORD" ]; then
     exit 1
 fi
 
-echo "If you are running on local host, please check if you already run script ../test/setup-local-ingress.sh"
 keycloakurl=$(jq -r '.keycloakUrl' "$json_file")
 # Check if the file exists
 if [ -z "$keycloakurl" ]; then
