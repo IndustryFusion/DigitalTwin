@@ -31,7 +31,6 @@ var jwtDecoder = require('jwt-decode'),
     udpServer = require('./server/udp'),
     Sensor = require('./sensors-store'),
     conf = require('../config'),
-    configurator = require('../admin/configurator'),
     proxyConnector = require('@open-iot-service-platform/oisp-sdk-js')(conf).lib.proxies.getProxyConnector();
 
 function IoTKitCloud(logger, deviceId, customProxy) {
@@ -56,7 +55,7 @@ function IoTKitCloud(logger, deviceId, customProxy) {
         //Checking if SparkplugB is enabled or not
         if (conf.connector.mqtt.sparkplugB) {
             me.spbMetricList = [];
-            deviceConf['sensor_list'].forEach(comp => {               
+            /*deviceConf['sensor_list'].forEach(comp => {               
                 utils.getItemFromCatalog(comp.type, function (item) {               
                     if (item) {
                         var compMetric = {
@@ -69,7 +68,7 @@ function IoTKitCloud(logger, deviceId, customProxy) {
                         me.spbMetricList.push(compMetric);
                     }
                 });
-            });
+            });*/
             me.devProf = {
                 groupId   : deviceConf['account_id'],
                 edgeNodeId : deviceConf['gateway_id'],
@@ -536,51 +535,6 @@ IoTKitCloud.prototype.catalog = function (callback) {
     me.checkDeviceToken(handler);
 };
 
-IoTKitCloud.prototype.pullActuations = function () {
-    var me = this;
-
-    var handler = function() {
-        var data = {
-            deviceToken: me.secret.deviceToken,
-            deviceId: me.deviceId,
-            accountId: me.secret.accountId
-        };
-        configurator.getLastActuationsPullTime(function(lastPullTimestamp) {
-            if(lastPullTimestamp) {
-                me.logger.info("Pulling actuations from last pull time: " + new Date(lastPullTimestamp));
-                data.from = lastPullTimestamp;
-            } else {
-                me.logger.info("Pulling actuations from last 24 hours");
-            }
-            me.proxy.pullActuations(data, function (result) {
-                if (result && result.length) {
-                    me.logger.info("Running " + result.length + " actuations.");
-                    var udp = udpServer.singleton(conf.listeners.udp_port, me.logger);
-                    var receiverInfo = {
-                        port: conf.receivers.udp_port,
-                        address: conf.receivers.udp_address
-                    };
-                    for (var i = 0; i < result.length; i++ ) {
-                        var actuation = result[i];
-                        me.logger.debug('Received actuation content: ' + JSON.stringify(actuation));
-                        var comp = me.store.byCid(actuation.componentId);
-                        var udpMessage = {
-                            component: comp.name,
-                            command: actuation.command,
-                            argv: actuation.params
-                        };
-                        me.logger.info("Sending actuation: " + JSON.stringify(udpMessage));
-                        udp.send(receiverInfo, udpMessage);
-                    }
-                    configurator.setLastActuationsPullTime(Date.now());
-                    udp.close();
-                }
-            });
-        });
-    };
-
-    me.checkDeviceToken(handler);
-};
 
 IoTKitCloud.prototype.getActualTime = function (callback) {
     var me = this;

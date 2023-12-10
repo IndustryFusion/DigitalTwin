@@ -29,8 +29,7 @@ var utils = require("../lib/utils").init(),
     Control = require ("../lib/control.proxy"),
     Message = require('../lib/agent-message'),
     udpServer = require('../lib/server/udp'),
-    Listener = require("../listeners/"),
-    admin= require('commander'),
+    tcpServer = require("../lib/server/tcp"),
     pkgJson = require('../package.json'),
     conf = require('../config');
 
@@ -40,10 +39,6 @@ process.on("uncaughtException", function(err) {
     // let the process exit so that forever can restart it
     process.exit(1);
 });
-
-admin.version(pkgJson.version);
-
-admin.parse(process.argv);
 
 utils.getDeviceId(function (id) {
     var cloud = Cloud.init(logger, id);
@@ -59,7 +54,7 @@ utils.getDeviceId(function (id) {
                 var ctrl = Control.init(conf, logger, id);
                 ctrl.bind(udp);
             }
-            Listener.TCP.init(conf.listeners, logger, agentMessage.handler);
+            tcpServer.init(conf.listeners, logger, agentMessage.handler);
 
             // Update catalog
             cloud.catalog(function (catalog) {
