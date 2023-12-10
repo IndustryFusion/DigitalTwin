@@ -30,6 +30,136 @@ var jwtDecoder = require('jwt-decode'),
     utils = require('./utils').init(),
     udpServer = require('./server/udp'),
     conf = require('../config');
+const http = require('http');
+const url = require('url');
+const querystring = require('querystring');
+
+const devicefile = './data/device.json';
+
+
+function updateToken(token) {
+    const parsedToken = JSON.parse(token);
+    common.saveToDeviceConfig('device_token', parsedToken.access_token);
+    common.saveToDeviceConfig('refresh_token', parsedToken.refresh_token);
+}
+
+function updateSecrets(me) {
+    var deviceConf = common.getDeviceConfig();
+    me.secret = {'accountId' : deviceConf['account_id'],
+                'deviceToken' : deviceConf['device_token'],
+                'refreshToken' : deviceConf['refresh_token'],
+                'refreshUrl' : deviceConf['keycloakUrl'],
+                'deviceTokenExpire': deviceConf['device_token_expire']};
+}
+
+function getDeviceToken(me, token) {
+    return new Promise(function(resolve, reject) {
+        const parsedToken = JSON.parse(token);
+        const data = querystring.stringify({
+            client_id: 'device-onboarding',
+            subject_token: parsedToken.access_token,
+            grant_type: 'urn:ietf:params:oauth:grant-type:token-exchange',
+            reuquest_token_type: 'urn:ietf:params:oauth:token-type:refresh_token',
+            audience: 'device'
+        })
+        const myURL = new URL(me.secret.refreshUrl);
+        const myHostname = myURL.hostname;
+        const myPath = myURL.pathname + '/protocol/openid-connect/token';
+        const options = {
+            hostname: myHostname,
+            path: myPath,
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Content-Length': Buffer.byteLength(data),
+                'X-GatewayID': me.gatewayId,
+                'X-DeviceID': me.deviceId,
+                'X-Access-Type': 'device',
+                'X-DeviceUID': 'uid'
+            }
+        }
+
+        const req = http.request(options, res => {
+            let data = ''
+            const statusCode = res.statusCode;
+            //console.log('Status Code:', res.statusCode)
+
+            res.on('data', chunk => {
+                data += chunk
+            })
+
+            res.on('end', () => {
+                
+                if (res.statusCode === 200) {
+                    resolve(data);
+                } else {
+                    reject(data);
+                }
+            })
+        })
+        .on('error', err => {
+            console.log('Error: ', err.message)
+            reject(err.message)
+        })
+
+        req.write(data)
+        req.end()
+    });
+}
+
+function refreshToken(me) {
+    return new Promise(function(resolve, reject) {
+        var deviceConf = common.getDeviceConfig();
+        const data = querystring.stringify({
+            client_id: 'device-onboarding',
+            refresh_token: deviceConf.refresh_token,
+            grant_type: 'refresh_token'
+        })
+        const myURL = new URL(me.secret.refreshUrl);
+        const myHostname = myURL.hostname;
+        const myPath = myURL.pathname + '/protocol/openid-connect/token';
+        const options = {
+            hostname: myHostname,
+            path: myPath,
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Content-Length': Buffer.byteLength(data),
+                'X-GatewayID': me.gatewayId,
+                'X-DeviceID': me.deviceId,
+                'X-Access-Type': 'device',
+                'X-DeviceUID': 'uid'
+            }
+        }
+
+        const req = http.request(options, res => {
+            let data = ''
+            const statusCode = res.statusCode;
+            //console.log('Status Code:', res.statusCode)
+
+            res.on('data', chunk => {
+                data += chunk
+            })
+
+            res.on('end', () => {
+                
+                if (res.statusCode === 200) {
+                    resolve(data);
+                } else {
+                    reject(data);
+                }
+            })
+        })
+        .on('error', err => {
+            console.log('Error: ', err.message)
+            reject(err.message)
+        })
+
+        req.write(data)
+        req.end()
+    });
+}
+
 
 function IoTKitCloud(logger, deviceId, customProxy) {
     var deviceConf = common.getDeviceConfig();
@@ -39,6 +169,7 @@ function IoTKitCloud(logger, deviceId, customProxy) {
     me.secret = {'accountId' : deviceConf['account_id'],
                  'deviceToken' : deviceConf['device_token'],
                  'refreshToken' : deviceConf['refresh_token'],
+                 'refreshUrl' : deviceConf['keycloakUrl'],
                  'deviceTokenExpire': deviceConf['device_token_expire']};
     me.max_retries = deviceConf.activation_retries || 10;
     me.deviceId = deviceId;
@@ -148,16 +279,23 @@ IoTKitCloud.prototype.checkDeviceToken = function (callback) {
         me.secret.deviceTokenExpire = jwtDecoder(me.secret.deviceToken).exp * 1000; // convert to miliseconds
     }
 
-    if (new Date().getTime() < me.secret.deviceTokenExpire) {
+    if (false) {//(new Date().getTime() < me.secret.deviceTokenExpire) {
         return toCall();
     } else {
         me.logger.info('Device token has expired - refreshing it now...');
+        const onboarding_token = require('../data/onboard-token.json');
         var data = {
             token: me.secret.deviceToken,
             body: {
                 refreshToken: me.secret.refreshToken
             }
         };
+        refreshToken(me)
+            .then(data => getDeviceToken(me, data))
+            .then(data => updateToken(data))
+            .then(() => updateSecrets(me))
+            .then(toCall())
+            .catch((err) => this.logger.error("Could not refresh token: " + err.message))
         //TODO: Keycloak based refresh
         /*return me.proxy.client.auth.refreshAuthToken(data, function(err, res) {
             if (err) {
