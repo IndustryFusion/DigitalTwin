@@ -26,7 +26,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 var utils = require("../lib/utils").init(),
     logger = require('../lib/logger').init(),
     Cloud = require("../lib/cloud.proxy"),
-    Control = require ("../lib/control.proxy"),
     Message = require('../lib/agent-message'),
     udpServer = require('../lib/server/udp'),
     tcpServer = require("../lib/server/tcp"),
@@ -50,10 +49,6 @@ utils.getDeviceId(function (id) {
             logger.info("Starting listeners...");
             udp.listen(agentMessage.handler);
 
-            if (conf.connector.mqtt != undefined) {
-                var ctrl = Control.init(conf, logger, id);
-                ctrl.bind(udp);
-            }
             tcpServer.init(conf.listeners, logger, agentMessage.handler);
 
             // Update catalog

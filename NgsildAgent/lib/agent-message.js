@@ -22,15 +22,13 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 'use strict';
-var Comp = require('./comp.registration'),
-    Data = require('./data.submission'),
+var Data = require('./data.submission'),
     Sensor = require('./sensors-store'),
     schemaValidation = require('./schema-validator')
 
 var MessageHandler = function(connector, logger) {
     var me = this;
     me.store = Sensor.init("device.json", logger);
-    me.comp = Comp.init(connector, me.store, logger);
     me.data = Data.init(connector,  me.store, logger);
 
     me.handler = function (msg, callback) {
