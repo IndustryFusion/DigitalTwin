@@ -35,7 +35,13 @@
     "json-socket": "^0.3.0",
     "jwt-decode": "^2.2.0",
     "uuid": "^3.3.2",
-    "winston": "^3.7.2"
+    "winston": "^3.7.2",
+    "async": "^3.1.0",
+    "borc": "^2.1.1",
+    "mqtt": "^4.2.8",
+    "request": "^2.88.0",
+    "tunnel": "0.0.6"
+
   },
   "devDependencies": {
     "chai": "^4.2.0",
