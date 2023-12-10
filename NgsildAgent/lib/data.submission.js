@@ -36,11 +36,10 @@ var sampleMetric = {"n": "temp-sensor",
 
 
 
-var Data = function (connector, SensorStore, logT) {
+var Data = function (connector, logT) {
     var me = this;
     me.logger = logT || {};
     me.connector = connector;
-    me.store = SensorStore;
     me.validator = schemaValidation.validateSchema(schemaValidation.schemas.data.SUBMIT);
 
     /**
@@ -53,32 +52,6 @@ var Data = function (connector, SensorStore, logT) {
         if (me.validator(msg)) {
             me.logger.info ("Submitting: ", msg);
             if (config.connector.mqtt.sparkplugB) {
-                // Handle multiple observations
-                /*if (Array.isArray(msg)) {
-                    for (let i = msg.length - 1; i >= 0; i -= 1) {
-                        // Check component id
-                        var aliasArr = me.store.byName(msg[i].n);
-                        if (aliasArr) {
-                            msg[i].alias = aliasArr.cid; // Add component id to observation
-                        } else {
-                            me.logger.error('Data submission - could not find time series with the name: %s.', msg[i].n);
-                            msg.splice(i, 1);
-                        }
-                    }
-                    // Check if we have any data left to submit
-                    if (msg.length === 0) {
-                        me.logger.error('Data submission - no data to submit.');
-                        return callback(false);
-                    }
-                } else {
-                    /*var alias = me.store.byName(msg.n);
-                    if (alias) {
-                        msg.alias = alias.cid; // Add component id to message
-                    } else {
-                        me.logger.error('Data submission - could not find time series with the name: %s.', msg.n);
-                        return callback(true);
-                    }
-                }*/     
                 me.connector.dataSubmit(msg, function(dat) {
                     me.logger.info("Response received: " + JSON.stringify(dat));
                     return callback(dat);
@@ -91,13 +64,13 @@ var Data = function (connector, SensorStore, logT) {
                 if (Array.isArray(msg)) {
                     for (var i = msg.length - 1; i >= 0; i -= 1) {
                         // Check component id
-                        var cidArr = me.store.byName(msg[i].n);
+                        /*var cidArr = me.store.byName(msg[i].n);
                         if (cidArr) {
                             msg[i].cid = cidArr.cid; // Add component id to observation
                         } else {
                             me.logger.error('Data submission - could not find time series with the name: %s.', msg[i].n);
                             msg.splice(i, 1);
-                        }
+                        }*/
                     }
                     // Check if we have any data left to submit
                     if (msg.length === 0) {
@@ -105,13 +78,13 @@ var Data = function (connector, SensorStore, logT) {
                         return callback(false);
                     }
                 } else {
-                    var cid = me.store.byName(msg.n);
+                    /*var cid = me.store.byName(msg.n);
                     if (cid) {
                         msg.cid = cid.cid; // Add component id to message
                     } else {
                         me.logger.error('Data submission - could not find time series with the name: %s.', msg.n);
                         return callback(true);
-                    }
+                    }*/
                 }
 
                 metric.set(msg);
@@ -128,7 +101,7 @@ var Data = function (connector, SensorStore, logT) {
     };
 
 };
-var init = function(connector, SensorStore, logger) {
-    return new Data(connector, SensorStore, logger);
+var init = function(connector, logger) {
+    return new Data(connector, logger);
 };
 module.exports.init = init;

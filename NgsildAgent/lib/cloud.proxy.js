@@ -29,7 +29,6 @@ var jwtDecoder = require('jwt-decode'),
     common = require('./common'),
     utils = require('./utils').init(),
     udpServer = require('./server/udp'),
-    Sensor = require('./sensors-store'),
     conf = require('../config'),
     proxyConnector = require('@open-iot-service-platform/oisp-sdk-js')(conf).lib.proxies.getProxyConnector();
 
@@ -47,7 +46,6 @@ function IoTKitCloud(logger, deviceId, customProxy) {
     me.deviceId = deviceId;
     me.deviceName = deviceConf.device_name;
     me.gatewayId = deviceConf.gateway_id || deviceId;
-    me.store = Sensor.init("device.json", me.logger);
     me.activationCode = deviceConf.activation_code;
     me.logger.info("Cloud Proxy created with Cloud Handler: " + me.proxy.type);
     //set mqtt proxy if PROVIDED
@@ -229,13 +227,7 @@ IoTKitCloud.prototype.activate = function (code, callback) {
         * It were sent ever activation the update Metadata,
          * since every start/stop the HW could change.
         */
-        if (status === 0) {
-            me.update(null, function() {
-                toCall(status);
-            });
-        } else {
-            toCall(status);
-        }
+        toCall(status);
     }
     if (!me.isActivated()) {
         var ActMessage = {
@@ -263,71 +255,6 @@ IoTKitCloud.prototype.setDeviceCredentials = function() {
     me.proxy.setCredential(me.deviceId, me.secret.deviceToken);
 };
 
-IoTKitCloud.prototype.update = function(doc, callback) {
-    var me = this;
-
-    var handler = function() {
-        msg.metadataExtended(me.gatewayId , function (metadata) {
-            if(me.deviceName) {
-                metadata.name = me.deviceName;
-            }
-            metadata.deviceToken = me.secret.deviceToken;
-            metadata.deviceId = me.deviceId;
-            me.logger.info("Updating metadata...");
-
-            if(proxyConnector.type === "rest") {
-                // Get device to read existing attributes
-                me.proxy.getDevice(metadata, function(result) {
-                    // Append custom attributes to update
-                    for (var attribute in result.attributes) {
-                        if(metadata.attributes[attribute] === undefined) {
-                            metadata.attributes[attribute] = result.attributes[attribute];
-                        }
-                    }
-
-                    // Update supported attributes
-                    if(doc) {
-                        // Attributes
-                        if(doc.attributes) {
-                            for (attribute in doc.attributes) {
-                                metadata.attributes[attribute] = doc.attributes[attribute];
-                            }
-                        }
-
-                        // Location
-                        if(doc.loc) {
-                            metadata.loc = doc.loc;
-                        }
-
-                        // Tags
-                        if(doc.tags) {
-                            // Append existing tags to update
-                            if(result.tags) {
-                                for(var tag in result.tags) {
-                                    if(!doc.tags.includes(tag)) {
-                                        doc.tags.push(tag);
-                                    }
-                                }
-                            }
-                            metadata.tags = doc.tags;
-                        }
-                    }
-                    // Update attributes
-                    me.updateAttributes(metadata, callback);
-
-                    // Sync componentlist from cloud with local cache
-                    me.updateComponents(result.components)
-                });
-            } else {
-                me.updateAttributes(metadata, callback);
-            }
-            me.logger.info("Metadata updated.");
-
-        });
-    };
-
-    me.checkDeviceToken(handler);
-};
 
 IoTKitCloud.prototype.updateAttributes = function(doc, callback) {
     var me = this;
@@ -542,30 +469,6 @@ IoTKitCloud.prototype.getActualTime = function (callback) {
         me.logger.debug("Response: ", result);
         callback(result);
     });
-};
-
-/**
- * @brief Update components in storage
- * @description Update components in storage. This is used to sync sensors/actuators between cloud and agent.
- * @param <string> data Contains the components of the API device object
- */
-IoTKitCloud.prototype.updateComponents = function (data) {
-    var me = this;
-    if (data == undefined) {
-        return;
-    }
-    data.forEach(function(cloudSensor) {
-        var sen = {}
-        sen.cid = cloudSensor.cid;
-        sen.name = cloudSensor.name;
-        sen.type = cloudSensor.componentType.id
-        //if already in store, delete old sensor and sync with cloud
-        if (me.store.byName(sen.name) !== undefined) {
-            me.store.del(sen.cid);
-        }
-        me.store.add(sen);
-    })
-    me.store.save();
 };
 
 
