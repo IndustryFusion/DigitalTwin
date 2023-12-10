@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014, Intel Corporation
+Copyright (c) 2014, 2023 Intel Corporation
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -29,8 +29,7 @@ var jwtDecoder = require('jwt-decode'),
     common = require('./common'),
     utils = require('./utils').init(),
     udpServer = require('./server/udp'),
-    conf = require('../config'),
-    proxyConnector = require('@open-iot-service-platform/oisp-sdk-js')(conf).lib.proxies.getProxyConnector();
+    conf = require('../config');
 
 function IoTKitCloud(logger, deviceId, customProxy) {
     var deviceConf = common.getDeviceConfig();
@@ -41,13 +40,11 @@ function IoTKitCloud(logger, deviceId, customProxy) {
                  'deviceToken' : deviceConf['device_token'],
                  'refreshToken' : deviceConf['refresh_token'],
                  'deviceTokenExpire': deviceConf['device_token_expire']};
-    me.proxy = customProxy || proxyConnector;
     me.max_retries = deviceConf.activation_retries || 10;
     me.deviceId = deviceId;
     me.deviceName = deviceConf.device_name;
     me.gatewayId = deviceConf.gateway_id || deviceId;
     me.activationCode = deviceConf.activation_code;
-    me.logger.info("Cloud Proxy created with Cloud Handler: " + me.proxy.type);
     //set mqtt proxy if PROVIDED
     if (conf.connector.mqtt != undefined) {
         //Checking if SparkplugB is enabled or not
@@ -74,7 +71,7 @@ function IoTKitCloud(logger, deviceId, customProxy) {
                 deviceId   : deviceConf['device_id'],         
                 componentMetric : me.spbMetricList
             };
-            me.spBProxy = require('@open-iot-service-platform/oisp-sdk-js')(conf).lib.proxies.getSpBConnector();
+            me.spBProxy = require('./proxy')(conf).lib.proxies.getSpBConnector();
             me.logger.info("SparkplugB MQTT proxy found! Configuring  Sparkplug and MQTT for data sending.");
             if (deviceConf.device_token && me.spBProxy != undefined) {
                 me.spBProxy.updateDeviceInfo(deviceConf);
@@ -107,7 +104,7 @@ function IoTKitCloud(logger, deviceId, customProxy) {
                 });       
             }
         } else {
-            me.mqttProxy = require('@open-iot-service-platform/oisp-sdk-js')(conf).lib.proxies.getMQTTConnector();
+            me.mqttProxy = require('./proxy')(conf).lib.proxies.getMQTTConnector();
             me.logger.info("Configuring MQTT...");
             if (deviceConf.device_id && deviceConf.device_token) {
                 me.mqttProxy.updateDeviceInfo(deviceConf);
@@ -161,7 +158,8 @@ IoTKitCloud.prototype.checkDeviceToken = function (callback) {
                 refreshToken: me.secret.refreshToken
             }
         };
-        return me.proxy.client.auth.refreshAuthToken(data, function(err, res) {
+        //TODO: Keycloak based refresh
+        /*return me.proxy.client.auth.refreshAuthToken(data, function(err, res) {
             if (err) {
                 me.logger.error('Cannot refresh the device token - exiting: ' + err);
                 process.exit(1);
@@ -176,7 +174,7 @@ IoTKitCloud.prototype.checkDeviceToken = function (callback) {
                 me.setDeviceCredentials();
                 return toCall();
             }
-        });
+        });*/
     }
 };
 
@@ -230,65 +228,16 @@ IoTKitCloud.prototype.activate = function (code, callback) {
         toCall(status);
     }
     if (!me.isActivated()) {
-        var ActMessage = {
-            deviceId: me.deviceId,
-            code: code || me.activationCode,
-            gatewayId: me.gatewayId,
-            name: me.deviceName
-        };
-        if (ActMessage.code == null) {
-            me.logger.error("Device has not been activated, and activation code has not been set - exiting");
-            process.exit(1);
-        }
-        me.logger.info('Activating ...');
-        me.proxy.activation(ActMessage, me.activationComplete(complete));
+   
+        me.logger.error("Device has not been activated - exiting");
+        process.exit(1);
     } else {
         // skip the update since we were already activated
-        me.logger.info('Device has already been activated. Updating ...');
-        me.setDeviceCredentials();
+        me.logger.info('Device has already been activated.');
         complete(0);
     }
 };
 
-IoTKitCloud.prototype.setDeviceCredentials = function() {
-    var me = this;
-    me.proxy.setCredential(me.deviceId, me.secret.deviceToken);
-};
-
-
-IoTKitCloud.prototype.updateAttributes = function(doc, callback) {
-    var me = this;
-    me.proxy.attributes(doc, function (response) {
-        me.logger.debug("Attributes returned from " + me.proxy.type);
-        if (callback) {
-            callback(response);
-        }
-    });
-};
-
-
-IoTKitCloud.prototype.updateOld = function(callback) {
-    var me = this;
-
-    var handler = function() {
-        var doc = new msg.Metadata(me.gatewayId);
-        doc.deviceToken = me.secret.deviceToken;
-        doc.deviceId = me.deviceId;
-        me.proxy.attributes(doc, function () {
-            me.logger.debug("Attributes returned from " + me.proxy.type);
-            if (callback) {
-                callback();
-            }
-        });
-    };
-
-    me.checkDeviceToken(handler);
-};
-
-IoTKitCloud.prototype.disconnect = function () {
-    var me = this;
-    me.proxy.disconnect();
-};
 
 IoTKitCloud.prototype.dataSubmit = function (metric, callback) {
     var me = this;
@@ -340,135 +289,12 @@ IoTKitCloud.prototype.dataSubmit = function (metric, callback) {
                 }
             }
             checkFlag();
-        } else if (me.mqttProxy != undefined) {
-
-            metric.accountId = me.secret.accountId;
-            metric.did = me.deviceId;
-            metric.gatewayId = me.gatewayId;
-            metric.deviceToken = me.secret.deviceToken;
-            //the next few lines are needed as workaround to work with current sdk
-            //once SDK has been updated this can be removed ...
-            metric.data.forEach(function(element) {
-                element.componentId = element.cid
-                delete element.cid
-            });
-            var data = {
-                deviceId: me.deviceId,
-                deviceToken: metric.deviceToken,
-                body: {
-                    accountId: metric.accountId,
-                    on: new Date().getTime(),
-                    data: metric.data
-                }
-            }
-            data.convertToMQTTPayload = function() {
-                delete this.convertToMQTTPayload;
-                return this.body;
-            }
-            data.did = metric.did;
-            data.accountId = metric.accountId;
-            me.logger.debug("MQTT Metric: %j", data, {});
-            me.mqttProxy.data(data, function(err, response) {
-                if (err) {
-                    callback(err);
-                } else {
-                    if (response) {
-                        callback(null, response);
-                    }
-                }
-            });
-        // ...until here
         } else {
-            me.logger.debug("Rest Metric: %j", metric, {});
-            me.proxy.data(metric, function (dato) {
-                if (callback) {
-                    return callback(dato);
-                }
-                return true;
-            })
+            me.warning.error("MQTT proxy not defined.");
         }
     };
 
     me.checkDeviceToken(handler);
-};
-
-IoTKitCloud.prototype.regComponent = function(comp, callback) {
-    var me = this;
-
-    // Check and update catalog
-    utils.getItemFromCatalog(comp.type, function (item) {
-        if (!item) {
-            me.catalog(function (catalog) {
-                if (catalog) {
-                    utils.updateCatalog(catalog);
-                }
-            });
-        }
-    });
-
-    var handler = function() {
-        var doc = JSON.parse(JSON.stringify(comp)); //HardCopy to remove reference bind
-        doc.deviceToken = me.secret.deviceToken;
-        doc.deviceId =  me.deviceId;
-        me.logger.debug("Reg Component doc: %j", doc, {});
-        me.proxy.addComponent(doc, callback);
-    };
-
-    me.checkDeviceToken(handler);
-};
-
-IoTKitCloud.prototype.desRegComponent = function() {
-    /*
-    var me = this;
-    var doc =  JSON.parse(JSON.stringify(comp)); //HardCopy to remove reference bind
-    doc.deviceToken = me.secret.deviceToken;
-    me.logger.debug("DesReg Component doc: %j", doc, {});
-    me.client.publish(buildPath(me.topics.device_component_del, me.deviceId),
-                                doc,
-                                me.pubArgs);*/
-};
-
-IoTKitCloud.prototype.test = function(callback) {
-    var me = this;
-    me.logger.info("Trying to connect to host with REST...");
-    me.proxy.health(me.deviceId, function (result) {
-        me.logger.info("Response: ", result);
-        callback(result);
-        //TODO: Add healthcheck for MQTT
-    });
-};
-
-IoTKitCloud.prototype.catalog = function (callback) {
-    var me = this;
-
-    var handler = function() {
-        var data = {
-            deviceToken: me.secret.deviceToken,
-            deviceId: me.deviceId
-        };
-        me.proxy.getCatalog(data , function (result) {
-            if (result) {
-                me.logger.debug("Catalog Response : %j ", result);
-                var length = result.length;
-                for (var i = 0; i < length; ++i) {
-                    var o = result[i];
-                    me.logger.info("Comp: ", o.id, " ", o.dimension, " ", o.type );
-                }
-            }
-            callback(result);
-        });
-    };
-
-    me.checkDeviceToken(handler);
-};
-
-
-IoTKitCloud.prototype.getActualTime = function (callback) {
-    var me = this;
-    me.proxy.getActualTime(function (result) {
-        me.logger.debug("Response: ", result);
-        callback(result);
-    });
 };
 
 

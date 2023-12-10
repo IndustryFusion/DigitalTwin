@@ -24,10 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 "use strict";
 var mac = require("getmac"),
     os = require("os"),
-    http = require("http"),
     config = require ('../config'),
-    publicApi = require('@open-iot-service-platform/oisp-sdk-js')(config).api.rest.publicApi,
-    pkgJson = require('../package.json'),
     common = require('./common');
     
 function IoTKitUtils(cfg) {
@@ -37,60 +34,17 @@ function IoTKitUtils(cfg) {
     me.config = cfg;
     me.did = me.deviceConf.device_id;
 }
-IoTKitUtils.prototype.getLocation = function () {
-    //TODO Need to implement location gather info
-    if (this.deviceConf.device_loc) {
-        return this.deviceConf.device_loc;
-    }
-    return null;
-};
+
 IoTKitUtils.prototype.getAgentAttr = function () {
     return {
-        "agent_version": pkgJson.version,
         "hardware_vendor": os.cpus()[0].model,
         "hardware_model": os.platform(),
         "Model Name": os.arch(),
         "Firmware Version": os.release()
     };
 };
-IoTKitUtils.prototype.externalInfo = function(cb) {
-    var me = this;
-    if (!cb) {
-        throw "Callback required";
-    }
-    publicApi.getExternalInfo(function (err, data) {
-        if (!err) {
-            data.ip_local = me.getIPs()[0];
-            cb(data);
-        } else {
-            cb(null);
-        }
-    });
-};
-IoTKitUtils.prototype.getExternalInfo = function(cb) {
-    var me = this;
-    if (!cb) {
-        throw "Callback required";
-    }
 
-    var options = {
-        host: 'ipinfo.io',
-        port: 80,
-        method: 'GET'
-    };
-    http.request(options, function(res) {
-        if (res.statusCode === 200) {
-            res.setEncoding('utf8');
-            res.on('data', function (chunk) {
-                var data = JSON.parse(chunk);
-                data.ip_local = me.getIPs()[0];
-                cb(data);
-            });
-        } else {
-            cb(null);
-        }
-    }).end();
-};
+
 IoTKitUtils.prototype.getDeviceId = function(cb) {
     var me = this;
     if (!cb) {
@@ -174,25 +128,7 @@ IoTKitUtils.prototype.getValueFromDeviceConfig = function(key, cb) {
     }
 };
 
-IoTKitUtils.prototype.updateCatalog = function(data) {
-    common.writeCatalog(data);
-};
 
-IoTKitUtils.prototype.getItemFromCatalog = function(id, callback) {
-    if (!callback) {
-        throw "Callback required!";
-    }
-
-    // Update catalog
-    var catalog = common.getCatalog();
-
-    var item = catalog.find(i => i.id === id);
-    if (item) {
-        callback(item)
-    } else {
-        callback(null);
-    }
-};
 
 IoTKitUtils.prototype.getMinutesAndSecondsFromMiliseconds = function(miliseconds) {
     var minutes = Math.floor(miliseconds / 60000),

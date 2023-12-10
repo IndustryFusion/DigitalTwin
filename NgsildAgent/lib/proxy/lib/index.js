@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /*
 Copyright (c) 2014, Intel Corporation
 
@@ -22,38 +21,15 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 "use strict";
-var logger = require('../lib/logger').init(),
-    Cloud = require("../lib/cloud.proxy"),
-    Message = require('../lib/agent-message'),
-    udpServer = require('../lib/server/udp'),
-    tcpServer = require("../lib/server/tcp"),
-    utils = require("../lib/utils").init(),
-    pkgJson = require('../package.json'),
-    conf = require('../config');
 
-process.on("uncaughtException", function(err) {
-    logger.error("UncaughtException:", err.message);
-    logger.error(err.stack);
-    // let the process exit so that forever can restart it
-    process.exit(1);
-});
-
-utils.getDeviceId(function (id) {
-    var cloud = Cloud.init(logger, id);
-    cloud.activate(function (status) {
-        if (status === 0) {
-            var udp = udpServer.singleton(conf.listeners.udp_port, logger);
-
-            var agentMessage = Message.init(cloud, logger);
-            logger.info("Starting listeners...");
-            udp.listen(agentMessage.handler);
-
-            tcpServer.init(conf.listeners, logger, agentMessage.handler);
-
-        } else {
-            logger.error("Error in activation... err # : ", status);
-            process.exit(status);
-        }
-    });
-});
+module.exports = function(config) {
+    var module = {};
+    
+    module.common     = require('./common.js');
+    module.proxies    = require('./proxies')(config);
+    module.data       = require('./data');
+    
+    return module;
+}

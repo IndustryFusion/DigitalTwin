@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /*
 Copyright (c) 2014, Intel Corporation
 
@@ -23,37 +22,16 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 "use strict";
-var logger = require('../lib/logger').init(),
-    Cloud = require("../lib/cloud.proxy"),
-    Message = require('../lib/agent-message'),
-    udpServer = require('../lib/server/udp'),
-    tcpServer = require("../lib/server/tcp"),
-    utils = require("../lib/utils").init(),
-    pkgJson = require('../package.json'),
-    conf = require('../config');
+    
+function IoTKitUtils() {}
 
-process.on("uncaughtException", function(err) {
-    logger.error("UncaughtException:", err.message);
-    logger.error(err.stack);
-    // let the process exit so that forever can restart it
-    process.exit(1);
-});
+IoTKitUtils.prototype.getMinutesAndSecondsFromMiliseconds = function(miliseconds) {
+    var minutes = Math.floor(miliseconds / 60000),
+        seconds = ((miliseconds % 60000) / 1000).toFixed(0);
+    return {m: minutes, s: seconds};
+};
 
-utils.getDeviceId(function (id) {
-    var cloud = Cloud.init(logger, id);
-    cloud.activate(function (status) {
-        if (status === 0) {
-            var udp = udpServer.singleton(conf.listeners.udp_port, logger);
-
-            var agentMessage = Message.init(cloud, logger);
-            logger.info("Starting listeners...");
-            udp.listen(agentMessage.handler);
-
-            tcpServer.init(conf.listeners, logger, agentMessage.handler);
-
-        } else {
-            logger.error("Error in activation... err # : ", status);
-            process.exit(status);
-        }
-    });
-});
+exports.init = function() {
+    var utils = new IoTKitUtils();
+    return utils;
+};  

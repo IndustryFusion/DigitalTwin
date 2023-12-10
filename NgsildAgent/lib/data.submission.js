@@ -25,7 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 'use strict';
 var schemaValidation = require('./schema-validator'),
     config = require ('../config'),
-    Metric = require('@open-iot-service-platform/oisp-sdk-js')(config).lib.data.metric.init();
+    Metric = require('./proxy')(config).lib.data.metric.init();
 
 /**
  *

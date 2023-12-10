@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /*
 Copyright (c) 2014, Intel Corporation
 
@@ -22,38 +21,47 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
 "use strict";
-var logger = require('../lib/logger').init(),
-    Cloud = require("../lib/cloud.proxy"),
-    Message = require('../lib/agent-message'),
-    udpServer = require('../lib/server/udp'),
-    tcpServer = require("../lib/server/tcp"),
-    utils = require("../lib/utils").init(),
-    pkgJson = require('../package.json'),
-    conf = require('../config');
+var path = require('path');
 
-process.on("uncaughtException", function(err) {
-    logger.error("UncaughtException:", err.message);
-    logger.error(err.stack);
-    // let the process exit so that forever can restart it
-    process.exit(1);
-});
+/**
+ * @description Build a path replacing patter {} by the data arguments
+ * if more the one {} pattern is present it shall be use Array
+ * @param path string the represent a URL path
+ * @param data Array or string,
+ * @returns {*}
+ */
+module.exports.buildPath = function (path, data) {
+    var re = /{\w+}/;
+    var pathReplace = path;
+    if (Array.isArray(data)) {
+        data.forEach(function (value) {
+            pathReplace = pathReplace.replace(re, value);
+        });
+    } else {
+        pathReplace = pathReplace.replace(re, data);
+    }
+    return pathReplace;
+};
 
-utils.getDeviceId(function (id) {
-    var cloud = Cloud.init(logger, id);
-    cloud.activate(function (status) {
-        if (status === 0) {
-            var udp = udpServer.singleton(conf.listeners.udp_port, logger);
+module.exports.isAbsolutePath = function(location) {
+    return path.resolve(location) === path.normalize(location);
+};
 
-            var agentMessage = Message.init(cloud, logger);
-            logger.info("Starting listeners...");
-            udp.listen(agentMessage.handler);
-
-            tcpServer.init(conf.listeners, logger, agentMessage.handler);
-
-        } else {
-            logger.error("Error in activation... err # : ", status);
-            process.exit(status);
+module.exports.isBinary = function(object) {
+    if ( Buffer.isBuffer(object) ) {
+        return true;
+    }
+    var keys = Object.keys(object);
+    for(var index in keys) {
+        var key = keys[index];
+        if(typeof object[key] == 'object') {
+            if( this.isBinary(object[key]) ) {
+                return true;
+            }
         }
-    });
-});
+    }
+    return false;
+};
+
