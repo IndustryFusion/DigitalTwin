@@ -52,12 +52,36 @@ exchange_onboarding_token() {
         | jq ".access_token" | tr -d '"'
 }
 
+exchange_onboarding_token_refresh() {
+    curl -X POST "${KEYCLOAK_URL}/${NAMESPACE}/protocol/openid-connect/token" \
+        -d "client_id=${ONBOARDING_CLIENT_ID}" \
+        -d "grant_type=urn:ietf:params:oauth:grant-type:token-exchange" \
+        -d "subject_token=${onboarding_token}" \
+        -d "requested_token_type=urn:ietf:params:oauth:token-type:refresh_token" \
+        -d "audience=${DEVICE_CLIENT_ID}" \
+        -H "X-DeviceID: ${DEVICE_ID}" \
+        -H "X-GatewayID: ${GATEWAY_ID}" \
+        -H "X-Access-Type: device" \
+        | jq ".refresh_token" | tr -d '"'
+}
+
 get_device_token() {
     curl -X POST "${KEYCLOAK_URL}/${NAMESPACE}/protocol/openid-connect/token" \
         -d "client_id=${DEVICE_CLIENT_ID}" \
         -d "grant_type=password" \
         -d "username=${USER}" \
         -d "password=${password}" \
+        -H "X-DeviceID: ${DEVICE_ID}" \
+        -H "X-GatewayID: ${GATEWAY_ID}" \
+        -H "X-Access-Type: device" \
+        | jq ".access_token" | tr -d '"'
+}
+
+get_refresh_token() {
+    curl -X POST "${KEYCLOAK_URL}/${NAMESPACE}/protocol/openid-connect/token" \
+        -d "client_id=${ONBOARDING_CLIENT_ID}" \
+        -d "grant_type=refresh_token" \
+        -d "refresh_token=${token}" \
         -H "X-DeviceID: ${DEVICE_ID}" \
         -H "X-GatewayID: ${GATEWAY_ID}" \
         -H "X-Access-Type: device" \
@@ -91,7 +115,7 @@ check_json_field() {
 check_onboarding_token() {
     jwt=$(echo "$1" | jq -R 'split(".") | .[1] | @base64d | fromjson')
     check_json_field "${jwt}" "azp" "device-onboarding" || return 1
-    check_json_field "${jwt}" "scope" "" || return 1
+    check_json_field "${jwt}" "scope" "offline_access" || return 1
     return 0
 }
 
@@ -171,6 +195,18 @@ setup() {
     token=$(exchange_onboarding_token)
     run check_device_token_from_exchange "${token}"
     [ "${status}" -eq "0" ]
+}
+
+@test "verify device token can be refreshed" {
+    $SKIP
+    password=$(get_password)
+    onboarding_token=$(get_onboarding_token)
+    run check_onboarding_token "${onboarding_token}"
+    [ "${status}" -eq "0" ]
+    token=$(exchange_onboarding_token_refresh)
+    onboarding_token=$(get_refresh_token)
+    token=$(exchange_onboarding_token)
+    run check_device_token_from_exchange "${token}"        
 }
 
 @test "verify user can request device token directly" {

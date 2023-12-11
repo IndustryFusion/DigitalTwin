@@ -82,7 +82,6 @@ function getDeviceToken(me, token) {
         const req = http.request(options, res => {
             let data = ''
             const statusCode = res.statusCode;
-            //console.log('Status Code:', res.statusCode)
 
             res.on('data', chunk => {
                 data += chunk
@@ -135,7 +134,6 @@ function refreshToken(me) {
         const req = http.request(options, res => {
             let data = ''
             const statusCode = res.statusCode;
-            //console.log('Status Code:', res.statusCode)
 
             res.on('data', chunk => {
                 data += chunk
@@ -181,20 +179,6 @@ function IoTKitCloud(logger, deviceId, customProxy) {
         //Checking if SparkplugB is enabled or not
         if (conf.connector.mqtt.sparkplugB) {
             me.spbMetricList = [];
-            /*deviceConf['sensor_list'].forEach(comp => {               
-                utils.getItemFromCatalog(comp.type, function (item) {               
-                    if (item) {
-                        var compMetric = {
-                            "name" : comp.name,
-                            "alias"  : comp.cid ,
-                            "timestamp" : new Date().getTime(),
-                            "dataType" : item.format,
-                            "value" : 0
-                        }
-                        me.spbMetricList.push(compMetric);
-                    }
-                });
-            });*/
             me.devProf = {
                 groupId   : deviceConf['account_id'],
                 edgeNodeId : deviceConf['gateway_id'],
@@ -279,7 +263,7 @@ IoTKitCloud.prototype.checkDeviceToken = function (callback) {
         me.secret.deviceTokenExpire = jwtDecoder(me.secret.deviceToken).exp * 1000; // convert to miliseconds
     }
 
-    if (false) {//(new Date().getTime() < me.secret.deviceTokenExpire) {
+    if (new Date().getTime() < me.secret.deviceTokenExpire) {
         return toCall();
     } else {
         me.logger.info('Device token has expired - refreshing it now...');
@@ -296,23 +280,6 @@ IoTKitCloud.prototype.checkDeviceToken = function (callback) {
             .then(() => updateSecrets(me))
             .then(toCall())
             .catch((err) => this.logger.error("Could not refresh token: " + err.message))
-        //TODO: Keycloak based refresh
-        /*return me.proxy.client.auth.refreshAuthToken(data, function(err, res) {
-            if (err) {
-                me.logger.error('Cannot refresh the device token - exiting: ' + err);
-                process.exit(1);
-            } else {
-                me.secret.deviceToken = res.jwt;
-                me.secret.refreshToken = res.refreshToken;
-                me.secret.deviceTokenExpire = jwtDecoder(res.jwt).exp * 1000;
-                me.logger.info('Saving new device and refresh tokens...');
-                common.saveToDeviceConfig('device_token', me.secret.deviceToken);
-                common.saveToDeviceConfig('refresh_token', me.secret.refreshToken);
-                common.saveToDeviceConfig('device_token_expire', me.secret.deviceTokenExpire);
-                me.setDeviceCredentials();
-                return toCall();
-            }
-        });*/
     }
 };
 
