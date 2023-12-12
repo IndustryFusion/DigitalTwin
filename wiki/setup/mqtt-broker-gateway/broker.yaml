@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mqtt-broker
+  labels:
+    app: mqtt-broker
+spec:
+  affinity: {}
+  containers:
+  - image: eclipse-mosquitto
+    imagePullPolicy: IfNotPresent
+    name: mqtt
+    ports:
+    - containerPort: 1883
+      hostPort: 1883
+    volumeMounts:
+    - mountPath: /mosquitto/config/mosquitto.conf
+      name: conf
+    - mountPath: /mosquitto/log
+      name: log
+  volumes:
+  - hostPath:
+      path: /root/mqtt-broker-gateway/broker.conf
+    name: conf
+  - hostPath:
+      path: /root/mqtt-broker-gateway/mosquitto/log
+      type: ""
+    name: log
