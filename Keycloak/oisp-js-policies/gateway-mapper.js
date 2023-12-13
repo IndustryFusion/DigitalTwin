@@ -23,23 +23,12 @@
  * keycloakSession - the current keycloakSession
  */
 
-var DEVICE = "device";
-var USER = "user";
-
-var accessType = keycloakSession.getContext().getRequestHeaders()
-    .getRequestHeader("X-Access-Type");
-if (accessType.length > 0) {
-    accessType = accessType[0];
+var gatewayIdH = keycloakSession.getContext().getRequestHeaders()
+    .getRequestHeader("X-GatewayID");
+var  gatewayIdS = userSession.getNote('gatewayId');
+if (gatewayIdS !== null && gatewayIdS !== undefined) {
+    exports = gatewayIdS;
 } else {
-    accessType = USER;
+    userSession.setNote('gatewayId', gatewayIdH[0]);
+    exports = gatewayIdH[0];
 }
-
-var gatewayId = "";
-
-// Set type and subject id
-if (accessType === DEVICE) {
-    gatewayId = keycloakSession.getContext().getRequestHeaders()
-        .getRequestHeader("X-GatewayID")[0];
-}
-
-exports = gatewayId;
