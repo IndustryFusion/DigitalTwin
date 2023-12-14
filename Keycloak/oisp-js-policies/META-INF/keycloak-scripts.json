@@ -11,11 +11,6 @@
             "name": "Device ID Mapper",
             "fileName": "deviceid-mapper.js",
             "description": "deviceId - only valid if access type is device"
-        },
-        {
-            "name": "Session Mapper",
-            "fileName": "session-mapper.js",
-            "description": "Create new session for exchange token"
         }
     ],
     "saml-mappers": []
