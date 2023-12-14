@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2022 Intel Corporation
+ * Copyright (c) 2023 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,11 +24,27 @@
  */
 
 var gatewayIdH = keycloakSession.getContext().getRequestHeaders()
-    .getRequestHeader("X-GatewayID");
-var  gatewayIdS = userSession.getNote('gatewayId');
+    .getRequestHeader("X-GatewayID")[0];
+var gatewayIdS = userSession.getNote('gatewayId');
+var grantType = params.getFirst("grant_type");
 if (gatewayIdS !== null && gatewayIdS !== undefined) {
-    exports = gatewayIdS;
+    if (gatewayIdH !== null && gatewayIdH !== undefined) {
+        if (gatwayIdH === gatewayIdS) {
+            // You get only gateway_id claim when you know who you are
+            exports = gatewayIdS;
+        } else {
+            print("Warning: Rejecting gateway_id claim: Mismatch between stored gateway_id and header.")
+        }
+    } else {
+        exports = gatewayIdS;        
+    }
 } else {
-    userSession.setNote('gatewayId', gatewayIdH[0]);
-    exports = gatewayIdH[0];
+    if (gatewayIdH !== null && gatewayIdH !== undefined) {
+        userSession.setNote('gatewayId', gatewayIdH);
+        exports = gatewayIdH;
+    } else if (grantType == 'refresh_token') {
+        // Refreshing without assigning gatewayId? Token is tainted. Forget it.
+        userSession.setNote('gatewayId', 'TAINTED');
+        exports = 'TAINTED'
+    }
 }

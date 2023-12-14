@@ -1,9 +1,55 @@
+/**
+ * Copyright (c) 2023 Intel Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * Available variables:
+ * user - the current user
+ * realm - the current realm
+ * token - the current token
+ * userSession - the current userSession
+ * keycloakSession - the current keycloakSession
+ */
 var deviceIdH = keycloakSession.getContext().getRequestHeaders()
-    .getRequestHeader("X-DeviceID");
+    .getRequestHeader("X-DeviceID")[0];
+var inputRequest = keycloakSession.getContext().getHttpRequest();
+var params = inputRequest.getDecodedFormParameters();
+var grantType = params.getFirst("grant_type");
+print("grant_type: " + grantType);
 var  deviceIdS = userSession.getNote('deviceId');
+print("deviceIdH " + deviceIdH);
+print("deviceIdS " + deviceIdS);
+print("token " + token)
 if (deviceIdS !== null && deviceIdS !== undefined) {
-    exports = deviceIdS;
+    if (deviceIdH !== null && deviceIdH !== undefined) {
+        if (deviceIdH === deviceIdS) {
+            // You get only a device_id claim when you know who you are
+            exports = deviceIdS;
+        } else {
+            print("Warning: Rejecting device_id claim: Mismatch between stored device_id and header.")
+        }
+    } else {
+        exports = deviceIdS;        
+    }
 } else {
-    userSession.setNote('deviceId', deviceIdH[0]);
-    exports = deviceIdH[0];
+    if (deviceIdH !== null && deviceIdH !== undefined) {
+        userSession.setNote('deviceId', deviceIdH);
+        exports = deviceIdH;
+    } else if (grantType == 'refresh_token') {
+        // Refreshing without assigning deviceId? Token is tainted. Forget it.
+        userSession.setNote('deviceId', 'TAINTED');
+        exports = 'TAINTED'
+    }
 }
