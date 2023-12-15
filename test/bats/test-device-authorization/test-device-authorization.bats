@@ -13,7 +13,9 @@ KEYCLOAK_URL=http://keycloak.local/auth/realms
 ONBOARDING_CLIENT_ID="device-onboarding"
 DEVICE_CLIENT_ID="device"
 GATEWAY_ID="testgateway"
+GATEWAY_ID2="testgateway2"
 DEVICE_ID="testdevice"
+DEVICE_ID2="testdevice2"
 DEVICE_TOKEN_SCOPE="device_id gateway mqtt-broker offline_access"
 DEVICE_TOKEN_AUDIENCE_FROM_EXCHANGE='["device","mqtt-broker","oisp-frontend"]'
 DEVICE_TOKEN_AUDIENCE_FROM_DIRECT='mqtt-broker'
@@ -24,6 +26,7 @@ KAFKA_BOOTSTRAP=my-cluster-kafka-bootstrap:9092
 KAFKACAT_ATTRIBUTES=/tmp/KAFKACAT_ATTRIBUTES
 KAFKACAT_ATTRIBUTES_TOPIC=iff.ngsild.attributes
 MQTT_SUB=/tmp/MQTT_SUB
+TAINTED='TAINTED'
 
 
 get_password() {
@@ -106,6 +109,34 @@ get_refreshed_device_token() {
         | jq ".access_token" | tr -d '"'
 }
 
+get_refreshed_device_token_with_wrong_ids() {
+    curl -X POST "${KEYCLOAK_URL}/${NAMESPACE}/protocol/openid-connect/token" \
+        -d "client_id=${DEVICE_CLIENT_ID}" \
+        -d "grant_type=refresh_token" \
+        -d "refresh_token=$1" \
+        -H "X-DeviceID: ${DEVICE_ID2}" \
+        -H "X-GatewayID: ${GATEWAY_ID2}" \
+        | jq ".access_token" | tr -d '"'
+}
+
+get_refreshed_refresh_token() {
+    curl -X POST "${KEYCLOAK_URL}/${NAMESPACE}/protocol/openid-connect/token" \
+        -d "client_id=${DEVICE_CLIENT_ID}" \
+        -d "grant_type=refresh_token" \
+        -d "refresh_token=$1" \
+        -H "X-DeviceID: ${DEVICE_ID}" \
+        -H "X-GatewayID: ${GATEWAY_ID}" \
+        | jq ".refresh_token" | tr -d '"'
+}
+
+get_refreshed_vanilla_token() {
+    curl -X POST "${KEYCLOAK_URL}/${NAMESPACE}/protocol/openid-connect/token" \
+        -d "client_id=${DEVICE_CLIENT_ID}" \
+        -d "grant_type=refresh_token" \
+        -d "refresh_token=$1" \
+        | jq ".access_token" | tr -d '"'
+}
+
 check_device_token_audience_from_exchange() {
     field=$(echo "$1" | jq -rc '.aud | sort')
     [ "$field" = "${DEVICE_TOKEN_AUDIENCE_FROM_EXCHANGE}" ] || { echo "wrong value for field audience: $field!=${DEVICE_TOKEN_AUDIENCE_FROM_EXCHANGE}" >&3; return 1; }
@@ -130,6 +161,12 @@ check_json_field() {
     return 0
 }
 
+check_json_field_not_exists() {
+    field=$(echo "$1" | jq ".$2" | tr -d '"')
+    [ -z "$field" ] || [ "$field" = "null" ] || { echo "field $2 found with value $field" >&3; return 1; }
+    return 0
+}
+
 check_onboarding_token() {
     jwt=$(echo "$1" | jq -R 'split(".") | .[1] | @base64d | fromjson')
     check_json_field "${jwt}" "azp" "device-onboarding" || return 1
@@ -144,7 +181,25 @@ check_refreshed_device_token() {
     check_json_field "${jwt}" "gateway" "${GATEWAY_ID}" || return 1
     check_device_token_scope "${jwt}"
     check_vanilla_device_token_audience "${jwt}"
-    return 0
+}
+
+check_refreshed_device_token_with_wrong_ids() {
+    jwt=$(echo "$1" | jq -R 'split(".") | .[1] | @base64d | fromjson')
+    check_json_field "${jwt}" "azp" "device" || return 1
+    check_json_field_not_exists "${jwt}" "device_id" || return 1
+    check_json_field_not_exists "${jwt}" "gateway" || return 1
+    check_device_token_scope "${jwt}"
+    check_vanilla_device_token_audience "${jwt}"
+}
+
+
+check_refreshed_vanilla_token() {
+    jwt=$(echo "$1" | jq -R 'split(".") | .[1] | @base64d | fromjson')
+    check_json_field "${jwt}" "azp" "device" || return 1
+    check_json_field "${jwt}" "device_id" "${TAINTED}" || return 1
+    check_json_field "${jwt}" "gateway" "${TAINTED}" || return 1
+    check_device_token_scope "${jwt}"
+    check_vanilla_device_token_audience "${jwt}"
 }
 
 check_vanilla_device_token() {
@@ -224,7 +279,7 @@ setup() {
 }
 
 @test "verify device token can be refreshed" {
-    #$SKIP
+    $SKIP
     password=$(get_password)
     refresh_token=$(get_vanilla_refresh_token)
     run check_vanilla_refresh_token "${refresh_token}"
@@ -235,6 +290,29 @@ setup() {
     [ "${status}" -eq "0" ]
 }
 
+@test "verify device token becomes tainted if not properly" {
+    $SKIP
+    password=$(get_password)
+    refresh_token=$(get_vanilla_refresh_token)
+    run check_vanilla_refresh_token "${refresh_token}"
+    [ "${status}" -eq "0" ]
+    device_token=$(get_refreshed_vanilla_token "${refresh_token}")
+    run check_refreshed_vanilla_token "${device_token}"
+    [ "${status}" -eq "0" ]
+}
+
+
+@test "verify device token contains no device_id and gateway when wrong headers are used" {
+    #$SKIP
+    password=$(get_password)
+    refresh_token=$(get_vanilla_refresh_token)
+    run check_vanilla_refresh_token "${refresh_token}"
+    [ "${status}" -eq "0" ]
+    refresh_token=$(get_refreshed_refresh_token "${refresh_token}")
+    device_token=$(get_refreshed_device_token_with_wrong_ids "${refresh_token}")
+    run check_refreshed_device_token_with_wrong_ids "${device_token}"
+    [ "${status}" -eq "0" ]
+}
 
 @test "verify device token can send data and is forwarded to Kafka" {
     $SKIP
