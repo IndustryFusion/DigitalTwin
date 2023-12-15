@@ -26,6 +26,8 @@
 var gatewayIdH = keycloakSession.getContext().getRequestHeaders()
     .getRequestHeader("X-GatewayID")[0];
 var gatewayIdS = userSession.getNote('gatewayId');
+var inputRequest = keycloakSession.getContext().getHttpRequest();
+var params = inputRequest.getDecodedFormParameters();
 var grantType = params.getFirst("grant_type");
 if (gatewayIdS !== null && gatewayIdS !== undefined) {
     if (gatewayIdH !== null && gatewayIdH !== undefined) {

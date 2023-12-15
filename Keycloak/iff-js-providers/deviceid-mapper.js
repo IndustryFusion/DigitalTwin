@@ -27,11 +27,7 @@ var deviceIdH = keycloakSession.getContext().getRequestHeaders()
 var inputRequest = keycloakSession.getContext().getHttpRequest();
 var params = inputRequest.getDecodedFormParameters();
 var grantType = params.getFirst("grant_type");
-print("grant_type: " + grantType);
 var  deviceIdS = userSession.getNote('deviceId');
-print("deviceIdH " + deviceIdH);
-print("deviceIdS " + deviceIdS);
-print("token " + token)
 if (deviceIdS !== null && deviceIdS !== undefined) {
     if (deviceIdH !== null && deviceIdH !== undefined) {
         if (deviceIdH === deviceIdS) {
