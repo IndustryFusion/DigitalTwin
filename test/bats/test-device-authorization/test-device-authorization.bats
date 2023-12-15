@@ -5,7 +5,7 @@
 # fi
 
 DEBUG=${DEBUG:-false}
-SKIP=
+SKIP=skip
 NAMESPACE=iff
 USER_SECRET=secret/credential-iff-realm-user-iff
 USER=realm_user
@@ -14,9 +14,9 @@ ONBOARDING_CLIENT_ID="device-onboarding"
 DEVICE_CLIENT_ID="device"
 GATEWAY_ID="testgateway"
 DEVICE_ID="testdevice"
-DEVICE_TOKEN_SCOPE="accounts device_id gateway mqtt-broker offline_access oisp_frontend type"
+DEVICE_TOKEN_SCOPE="device_id gateway mqtt-broker offline_access"
 DEVICE_TOKEN_AUDIENCE_FROM_EXCHANGE='["device","mqtt-broker","oisp-frontend"]'
-DEVICE_TOKEN_AUDIENCE_FROM_DIRECT='["mqtt-broker","oisp-frontend"]'
+DEVICE_TOKEN_AUDIENCE_FROM_DIRECT='mqtt-broker'
 MQTT_URL=emqx-listeners:1883
 MQTT_TOPIC_NAME="spBv1.0/${NAMESPACE}/DDATA/${GATEWAY_ID}/${DEVICE_ID}"
 MQTT_MESSAGE='{"timestamp":1655974018778,"metrics":[{ "name":"Property/https://industry-fusion.com/types/v0.9/state","timestamp":1655974018777,"dataType":"string","value":"https://industry-fusion.com/types/v0.9/state_OFF"}],"seq":1}'
@@ -65,7 +65,26 @@ exchange_onboarding_token_refresh() {
         | jq ".refresh_token" | tr -d '"'
 }
 
-get_device_token() {
+get_vanilla_device_token() {
+    curl -X POST "${KEYCLOAK_URL}/${NAMESPACE}/protocol/openid-connect/token" \
+        -d "client_id=${DEVICE_CLIENT_ID}" \
+        -d "grant_type=password" \
+        -d "username=${USER}" \
+        -d "password=${password}" \
+        | jq ".access_token" | tr -d '"'
+}
+
+
+get_vanilla_refresh_token() {
+    curl -X POST "${KEYCLOAK_URL}/${NAMESPACE}/protocol/openid-connect/token" \
+        -d "client_id=${DEVICE_CLIENT_ID}" \
+        -d "grant_type=password" \
+        -d "username=${USER}" \
+        -d "password=${password}" \
+        | jq ".refresh_token" | tr -d '"'
+}
+
+get_dedicated_device_token() {
     curl -X POST "${KEYCLOAK_URL}/${NAMESPACE}/protocol/openid-connect/token" \
         -d "client_id=${DEVICE_CLIENT_ID}" \
         -d "grant_type=password" \
@@ -73,42 +92,41 @@ get_device_token() {
         -d "password=${password}" \
         -H "X-DeviceID: ${DEVICE_ID}" \
         -H "X-GatewayID: ${GATEWAY_ID}" \
-        -H "X-Access-Type: device" \
         | jq ".access_token" | tr -d '"'
 }
 
-get_refresh_token() {
+
+get_refreshed_device_token() {
     curl -X POST "${KEYCLOAK_URL}/${NAMESPACE}/protocol/openid-connect/token" \
-        -d "client_id=${ONBOARDING_CLIENT_ID}" \
+        -d "client_id=${DEVICE_CLIENT_ID}" \
         -d "grant_type=refresh_token" \
-        -d "refresh_token=${token}" \
+        -d "refresh_token=$1" \
         -H "X-DeviceID: ${DEVICE_ID}" \
         -H "X-GatewayID: ${GATEWAY_ID}" \
-        -H "X-Access-Type: device" \
         | jq ".access_token" | tr -d '"'
 }
 
 check_device_token_audience_from_exchange() {
     field=$(echo "$1" | jq -rc '.aud | sort')
-    [ "$field" = "${DEVICE_TOKEN_AUDIENCE_FROM_EXCHANGE}" ] || { echo "wrong value for field audience: $field!=${DEVICE_TOKEN_AUDIENCE_FROM_EXCHANGE}"; return 1; }
+    [ "$field" = "${DEVICE_TOKEN_AUDIENCE_FROM_EXCHANGE}" ] || { echo "wrong value for field audience: $field!=${DEVICE_TOKEN_AUDIENCE_FROM_EXCHANGE}" >&3; return 1; }
     return 0
 }
 
-check_device_token_audience_from_direct() {
-    field=$(echo "$1" | jq -rc '.aud | sort')
-    [ "$field" = "${DEVICE_TOKEN_AUDIENCE_FROM_DIRECT}" ] || { echo "wrong value for field audience: $field!=${DEVICE_TOKEN_AUDIENCE_FROM_DIRECT}"; return 1; }
+check_vanilla_device_token_audience() {
+    field=$(echo "$1" | jq -rc '.aud')
+    [ "$field" = "${DEVICE_TOKEN_AUDIENCE_FROM_DIRECT}" ] || { echo "wrong value for field audience: $field!=${DEVICE_TOKEN_AUDIENCE_FROM_DIRECT}" >&3; return 1; }
     return 0
 }
 
 check_device_token_scope() {
     field=$(echo "$1" | jq ".scope" | tr -d '"' | xargs -n1 | LC_ALL="en_US.UTF-8" sort | xargs)
-    [ "$field" = "${DEVICE_TOKEN_SCOPE}" ] || { echo "wrong value for field scope: $field!=${DEVICE_TOKEN_SCOPE}"; return 1; }
+    [ "$field" = "${DEVICE_TOKEN_SCOPE}" ] || { echo "wrong value for field scope: $field!=${DEVICE_TOKEN_SCOPE}" >&3; return 1; }
     return 0
 }
 
 check_json_field() {
     field=$(echo "$1" | jq ".$2" | tr -d '"')
-    [ "$field" = "$3" ] || { echo "wrong value for field $2: $field!=$3"; return 1; }
+    [ "$field" = "$3" ] || { echo "wrong value for field $2: $field!=$3" >&3; return 1; }
     return 0
 }
 
@@ -119,26 +137,36 @@ check_onboarding_token() {
     return 0
 }
 
-check_device_token_from_exchange() {
-    jwt=$(echo "$1" | jq -R 'split(".") | .[1] | @base64d | fromjson')
-    check_json_field "${jwt}" "azp" "device-onboarding" || return 1
-    check_json_field "${jwt}" "device_id" "${DEVICE_ID}" || return 1
-    check_json_field "${jwt}" "type" "device" || return 1
-    check_json_field "${jwt}" "gateway" "${GATEWAY_ID}" || return 1
-    check_device_token_scope "${jwt}"
-    check_device_token_audience_from_exchange "${jwt}"
-    return 0
-}
-
-check_device_token_from_direct() {
+check_refreshed_device_token() {
     jwt=$(echo "$1" | jq -R 'split(".") | .[1] | @base64d | fromjson')
     check_json_field "${jwt}" "azp" "device" || return 1
     check_json_field "${jwt}" "device_id" "${DEVICE_ID}" || return 1
-    check_json_field "${jwt}" "type" "device" || return 1
     check_json_field "${jwt}" "gateway" "${GATEWAY_ID}" || return 1
     check_device_token_scope "${jwt}"
-    check_device_token_audience_from_direct "${jwt}"
+    check_vanilla_device_token_audience "${jwt}"
     return 0
+}
+
+check_vanilla_device_token() {
+    jwt=$(echo "$1" | jq -R 'split(".") | .[1] | @base64d | fromjson')
+    check_json_field "${jwt}" "azp" "device" || return 1
+    check_device_token_scope "${jwt}"
+    check_vanilla_device_token_audience "${jwt}"
+}
+
+check_vanilla_refresh_token() {
+    jwt=$(echo "$1" | jq -R 'split(".") | .[1] | @base64d | fromjson')
+    check_json_field "${jwt}" "azp" "device" || return 1
+    check_device_token_scope "${jwt}"
+}
+
+check_dedicated_device_token() {
+    jwt=$(echo "$1" | jq -R 'split(".") | .[1] | @base64d | fromjson')
+    check_json_field "${jwt}" "azp" "device" || return 1
+    check_json_field "${jwt}" "device_id" "${DEVICE_ID}" || return 1
+    check_json_field "${jwt}" "gateway" "${GATEWAY_ID}" || return 1
+    check_device_token_scope "${jwt}"
+    check_vanilla_device_token_audience "${jwt}"
 }
 
 
@@ -178,44 +206,35 @@ setup() {
     fi
 }
 
-@test "verify user can request onboarding token" {
+
+@test "verify user can request vanilla device token" {
     $SKIP
     password=$(get_password)
-    onboarding_token=$(get_onboarding_token)
-    run check_onboarding_token "${onboarding_token}"
+    token=$(get_vanilla_device_token)
+    run check_vanilla_device_token "${token}"
     [ "${status}" -eq "0" ]
 }
 
-@test "verify onboarding token can be exchanged for a device token" {
+@test "verify user can request dedicated device token" {
     $SKIP
     password=$(get_password)
-    onboarding_token=$(get_onboarding_token)
-    run check_onboarding_token "${onboarding_token}"
-    [ "${status}" -eq "0" ]
-    token=$(exchange_onboarding_token)
-    run check_device_token_from_exchange "${token}"
+    token=$(get_dedicated_device_token)
+    run check_dedicated_device_token "${token}"
     [ "${status}" -eq "0" ]
 }
 
 @test "verify device token can be refreshed" {
-    $SKIP
+    #$SKIP
     password=$(get_password)
-    onboarding_token=$(get_onboarding_token)
-    run check_onboarding_token "${onboarding_token}"
+    refresh_token=$(get_vanilla_refresh_token)
+    run check_vanilla_refresh_token "${refresh_token}"
     [ "${status}" -eq "0" ]
-    token=$(exchange_onboarding_token_refresh)
-    onboarding_token=$(get_refresh_token)
-    token=$(exchange_onboarding_token)
-    run check_device_token_from_exchange "${token}"        
+    device_token=$(get_refreshed_device_token "${refresh_token}")
+    echo $device_token
+    run check_refreshed_device_token "${device_token}"
+    [ "${status}" -eq "0" ]
 }
 
-@test "verify user can request device token directly" {
-    $SKIP
-    password=$(get_password)
-    token=$(get_device_token)
-    run check_device_token_from_direct "${token}"
-    [ "${status}" -eq "0" ]
-}
 
 @test "verify device token can send data and is forwarded to Kafka" {
     $SKIP
