@@ -66,7 +66,7 @@ class Authenticate {
         return;
       } else {
         // will also kick out tokens who use the superuser name as deviceId
-        this.logger.info('Wrong Superuser password.');
+        this.logger.warn('Wrong Superuser password.');
         res.sendStatus(400);
         return;
       }
@@ -79,21 +79,24 @@ class Authenticate {
       return;
     }
     if (!validate(decodedToken, username)) {
+      this.logger.warn('Validation of token failed. Username: ' + username);
       res.sendStatus(400);
       return;
     }
     // check whether accounts contains only one element and role is device
-    const accounts = decodedToken.accounts;
-    const did = decodedToken.device_id ? decodedToken.device_id : decodedToken.sub;
-    const accountId = accounts && accounts.length > 0 ? accounts[0].id : null;
+    const did = decodedToken.device_id;
     const realm = getRealm(decodedToken);
+    if (did === null || did === undefined || realm === null || realm === undefined) {
+      this.logger.warn('Validation failed: Device id or realm not valid.');
+      res.sendStatus(400);
+      return;
+    }
+    if (did === this.config.mqtt.tainted) {
+      this.logger.warn('This token is tained! Rejecting');
+      res.sendStatus(400);
+    }
     // put realm/device into the list of accepted topics
     await this.cache.setValue(realm + '/' + did, 'acl', 'true');
-    // put account/device into the list of accepted topics (legacy)
-    if (accountId) {
-      const key = accountId + '/' + did;
-      await this.cache.setValue(key, 'acl', 'true');
-    }
     res.status(200).json({ result: 'allow', is_superuser: 'false' });
   }
 

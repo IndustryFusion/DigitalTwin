@@ -5,7 +5,7 @@
 # fi
 
 DEBUG=${DEBUG:-false}
-SKIP=skip
+SKIP=
 NAMESPACE=iff
 USER_SECRET=secret/credential-iff-realm-user-iff
 USER=realm_user
@@ -16,7 +16,7 @@ GATEWAY_ID="testgateway"
 GATEWAY_ID2="testgateway2"
 DEVICE_ID="testdevice"
 DEVICE_ID2="testdevice2"
-DEVICE_TOKEN_SCOPE="device_id gateway mqtt-broker offline_access"
+DEVICE_TOKEN_SCOPE="device_id gateway mqtt-broker offline_access type"
 DEVICE_TOKEN_AUDIENCE_FROM_EXCHANGE='["device","mqtt-broker","oisp-frontend"]'
 DEVICE_TOKEN_AUDIENCE_FROM_DIRECT='mqtt-broker'
 MQTT_URL=emqx-listeners:1883
@@ -26,8 +26,8 @@ KAFKA_BOOTSTRAP=my-cluster-kafka-bootstrap:9092
 KAFKACAT_ATTRIBUTES=/tmp/KAFKACAT_ATTRIBUTES
 KAFKACAT_ATTRIBUTES_TOPIC=iff.ngsild.attributes
 MQTT_SUB=/tmp/MQTT_SUB
+MQTT_RESULT=/tmp/MQTT_RES
 TAINTED='TAINTED'
-
 
 get_password() {
     kubectl -n ${NAMESPACE} get ${USER_SECRET} -o jsonpath='{.data.password}' | base64 -d
@@ -179,8 +179,8 @@ check_refreshed_device_token() {
     check_json_field "${jwt}" "azp" "device" || return 1
     check_json_field "${jwt}" "device_id" "${DEVICE_ID}" || return 1
     check_json_field "${jwt}" "gateway" "${GATEWAY_ID}" || return 1
-    check_device_token_scope "${jwt}"
-    check_vanilla_device_token_audience "${jwt}"
+    check_device_token_scope "${jwt}" || return 1
+    check_vanilla_device_token_audience "${jwt}" || return 1
 }
 
 check_refreshed_device_token_with_wrong_ids() {
@@ -188,8 +188,8 @@ check_refreshed_device_token_with_wrong_ids() {
     check_json_field "${jwt}" "azp" "device" || return 1
     check_json_field_not_exists "${jwt}" "device_id" || return 1
     check_json_field_not_exists "${jwt}" "gateway" || return 1
-    check_device_token_scope "${jwt}"
-    check_vanilla_device_token_audience "${jwt}"
+    check_device_token_scope "${jwt}" || return 1
+    check_vanilla_device_token_audience "${jwt}" || return 1
 }
 
 
@@ -198,21 +198,21 @@ check_refreshed_vanilla_token() {
     check_json_field "${jwt}" "azp" "device" || return 1
     check_json_field "${jwt}" "device_id" "${TAINTED}" || return 1
     check_json_field "${jwt}" "gateway" "${TAINTED}" || return 1
-    check_device_token_scope "${jwt}"
-    check_vanilla_device_token_audience "${jwt}"
+    check_device_token_scope "${jwt}" || return 1
+    check_vanilla_device_token_audience "${jwt}" || return 1
 }
 
 check_vanilla_device_token() {
     jwt=$(echo "$1" | jq -R 'split(".") | .[1] | @base64d | fromjson')
     check_json_field "${jwt}" "azp" "device" || return 1
-    check_device_token_scope "${jwt}"
-    check_vanilla_device_token_audience "${jwt}"
+    check_device_token_scope "${jwt}" || return 1
+    check_vanilla_device_token_audience "${jwt}" || return 1
 }
 
 check_vanilla_refresh_token() {
     jwt=$(echo "$1" | jq -R 'split(".") | .[1] | @base64d | fromjson')
     check_json_field "${jwt}" "azp" "device" || return 1
-    check_device_token_scope "${jwt}"
+    check_device_token_scope "${jwt}" || return 1
 }
 
 check_dedicated_device_token() {
@@ -220,8 +220,8 @@ check_dedicated_device_token() {
     check_json_field "${jwt}" "azp" "device" || return 1
     check_json_field "${jwt}" "device_id" "${DEVICE_ID}" || return 1
     check_json_field "${jwt}" "gateway" "${GATEWAY_ID}" || return 1
-    check_device_token_scope "${jwt}"
-    check_vanilla_device_token_audience "${jwt}"
+    check_device_token_scope "${jwt}" || return 1
+    check_vanilla_device_token_audience "${jwt}" || return 1
 }
 
 
@@ -290,7 +290,7 @@ setup() {
     [ "${status}" -eq "0" ]
 }
 
-@test "verify device token becomes tainted if not properly" {
+@test "verify device token becomes tainted if not properly used" {
     $SKIP
     password=$(get_password)
     refresh_token=$(get_vanilla_refresh_token)
@@ -303,7 +303,7 @@ setup() {
 
 
 @test "verify device token contains no device_id and gateway when wrong headers are used" {
-    #$SKIP
+    $SKIP
     password=$(get_password)
     refresh_token=$(get_vanilla_refresh_token)
     run check_vanilla_refresh_token "${refresh_token}"
@@ -316,25 +316,31 @@ setup() {
 
 @test "verify device token can send data and is forwarded to Kafka" {
     $SKIP
-    (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ATTRIBUTES}) &
     password=$(get_password)
-    onboarding_token=$(get_onboarding_token)
-    run check_onboarding_token "${onboarding_token}"
-    [ "${status}" -eq "0" ]
-    token=$(exchange_onboarding_token)
-    run check_device_token_from_exchange "${token}"
+    token=$(get_dedicated_device_token)
+    run check_dedicated_device_token "${token}"
     [ "${status}" -eq "0" ]
     run mosquitto_pub -L "mqtt://${DEVICE_ID}:${token}@${MQTT_URL}/${MQTT_TOPIC_NAME}" -m "${MQTT_MESSAGE}"
     [ "${status}" -eq "0" ]
     echo "# Sent mqtt sparkplugB message, sleep 2s to let bridge react"
     sleep 2
     echo "# now killing kafkacat and evaluate result"
-    killall kafkacat
     LC_ALL="en_US.UTF-8" sort -o ${KAFKACAT_ATTRIBUTES} ${KAFKACAT_ATTRIBUTES}
     echo "# Compare ATTRIBUTES"
     run compare_create_attributes ${KAFKACAT_ATTRIBUTES}
     [ "$status" -eq 0 ]
 }
+
+@test "verify tainted device is rejected" {
+    $SKIP
+    password=$(get_password)
+    refresh_token=$(get_vanilla_refresh_token)
+    token=$(get_refreshed_vanilla_token "${refresh_token}")
+    echo $token
+    mosquitto_pub -L "mqtt://${DEVICE_ID}:${token}@${MQTT_URL}/${MQTT_TOPIC_NAME}" -m "${MQTT_MESSAGE}" 2>${MQTT_RESULT} || true
+    cat ${MQTT_RESULT} | grep "not authorised"
+}
+
 @test "verify mqtt admin can send and receive data" {
     $SKIP
     password=$(get_adminPassword | tr -d '"')

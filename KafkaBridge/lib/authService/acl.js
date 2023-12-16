@@ -55,11 +55,13 @@ class Acl {
       const spBAclKey = spBAccountId + '/' + spBdevId;
       const allowed = await this.cache.getValue(spBAclKey, 'acl');
       if (allowed === undefined || !(allowed === 'true') || spBdevId !== username) {
+        this.logger.info('Connection rejected for realm ' + spBAccountId + ' device ' + spBdevId);
         res.sendStatus(400);
       } else {
         res.status(200).json({ result: 'allow' });
       }
     } else {
+      this.logger.warn('Topic sructure not valid.');
       res.sendStatus(400);
     }
   }

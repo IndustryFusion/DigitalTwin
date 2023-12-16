@@ -64,6 +64,7 @@
         "adminPassword": "password",
 		"clientSecretVariable": "MQTT_CLIENT_SECRET",
 		"authServicePort": 3025,
+		"tainted": "TAINTED",
 		"sparkplug": {
 			"spBKafkaProduce": false,
 			"spBkafKaTopic": "sparkplugB",
