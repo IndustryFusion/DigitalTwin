@@ -336,7 +336,6 @@ setup() {
     password=$(get_password)
     refresh_token=$(get_vanilla_refresh_token)
     token=$(get_refreshed_vanilla_token "${refresh_token}")
-    echo $token
     mosquitto_pub -L "mqtt://${DEVICE_ID}:${token}@${MQTT_URL}/${MQTT_TOPIC_NAME}" -m "${MQTT_MESSAGE}" 2>${MQTT_RESULT} || true
     cat ${MQTT_RESULT} | grep "not authorised"
 }
