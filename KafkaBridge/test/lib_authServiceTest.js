@@ -29,7 +29,7 @@ describe(fileToTest, function () {
   class Logger {
     info () {}
     debug () {}
-    warn() {}
+    warn () {}
   };
   class Cache {
     init () {}
@@ -76,7 +76,7 @@ describe(fileToTest, function () {
       env: {
         CLIENTSECRETVARIABLE: 'CLIENTSECRETVARIABLE'
       }
-    }
+    };
     ToTest.__set__('Keycloak', Keycloak);
     ToTest.__set__('process', process);
     auth.initialize().then(() => {
