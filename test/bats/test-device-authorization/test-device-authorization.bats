@@ -28,6 +28,7 @@ KAFKACAT_ATTRIBUTES_TOPIC=iff.ngsild.attributes
 MQTT_SUB=/tmp/MQTT_SUB
 MQTT_RESULT=/tmp/MQTT_RES
 TAINTED='TAINTED'
+onboarding_token=
 
 get_password() {
     kubectl -n ${NAMESPACE} get ${USER_SECRET} -o jsonpath='{.data.password}' | base64 -d
@@ -285,7 +286,6 @@ setup() {
     run check_vanilla_refresh_token "${refresh_token}"
     [ "${status}" -eq "0" ]
     device_token=$(get_refreshed_device_token "${refresh_token}")
-    echo $device_token
     run check_refreshed_device_token "${device_token}"
     [ "${status}" -eq "0" ]
 }
@@ -316,6 +316,9 @@ setup() {
 
 @test "verify device token can send data and is forwarded to Kafka" {
     $SKIP
+    rm ${KAFKACAT_ATTRIBUTES}
+    (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ATTRIBUTES}) &
+    echo "# Launched kafkacat"
     password=$(get_password)
     token=$(get_dedicated_device_token)
     run check_dedicated_device_token "${token}"
@@ -325,6 +328,7 @@ setup() {
     echo "# Sent mqtt sparkplugB message, sleep 2s to let bridge react"
     sleep 2
     echo "# now killing kafkacat and evaluate result"
+    killall kafkacat
     LC_ALL="en_US.UTF-8" sort -o ${KAFKACAT_ATTRIBUTES} ${KAFKACAT_ATTRIBUTES}
     echo "# Compare ATTRIBUTES"
     run compare_create_attributes ${KAFKACAT_ATTRIBUTES}
@@ -342,6 +346,8 @@ setup() {
 
 @test "verify mqtt admin can send and receive data" {
     $SKIP
+    #rm ${KAFKACAT_ATTRIBUTES}
+    #(exec stdbuf -oL kafkacat -C -t ${KAFKACAT_ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ATTRIBUTES}) &
     password=$(get_adminPassword | tr -d '"')
     username=$(get_adminUsername | tr -d '"')
     (exec stdbuf -oL mosquitto_sub -L "mqtt://${username}:${password}@${MQTT_URL}/${MQTT_TOPIC_NAME}" >${MQTT_SUB}) &
@@ -352,6 +358,7 @@ setup() {
     sleep 2
     echo "# now killing kafkacat and evaluate result"
     killall mosquitto_sub
+    #killall kafkacat
     echo "# Compare ATTRIBUTES"
     run compare_mqtt_sub ${MQTT_SUB}
     [ "$status" -eq 0 ]
