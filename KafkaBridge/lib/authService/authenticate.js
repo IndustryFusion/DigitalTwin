@@ -92,7 +92,7 @@ class Authenticate {
       return;
     }
     if (did === this.config.mqtt.tainted) {
-      this.logger.warn('This token is tained! Rejecting');
+      this.logger.warn('This token is tained! Rejecting.');
       res.sendStatus(400);
     }
     // put realm/device into the list of accepted topics

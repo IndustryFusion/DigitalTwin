@@ -29,6 +29,7 @@ describe(fileToTest, function () {
   class Logger {
     info () {}
     debug () {}
+    warn() {}
   };
   class Cache {};
   ToTest.__set__('Logger', Logger);
@@ -317,6 +318,7 @@ describe(fileToTest, function () {
   class Logger {
     info () {}
     debug () {}
+    warn () {}
   };
   class Cache {};
   ToTest.__set__('Logger', Logger);
