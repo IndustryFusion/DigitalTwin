@@ -136,23 +136,6 @@ spec:
               userinfo.token.claim: 'true'
               claim.name: IF_COMPANY
               jsonType.label: long
-      - id: aff3473b-2ffd-4e3c-8696-4e3f5aa9cdde
-        name: oisp-frontend
-        protocol: openid-connect
-        attributes:
-          include.in.token.scope: 'true'
-          display.on.consent.screen: 'true'
-        protocolMappers:
-          - id: 7b66be24-fe26-4be9-9116-0eccc31c4f34
-            name: oisp-frontend
-            protocol: openid-connect
-            protocolMapper: oidc-audience-mapper
-            consentRequired: false
-            config:
-              included.client.audience: {{ .Values.keycloak.oisp.frontend.client }}
-              id.token.claim: 'false'
-              access.token.claim: 'true'
-              userinfo.token.claim: 'false'
       - id: 5ed16465-f532-4fd1-a697-b9f66d6160ac
         name: mqtt-broker
         protocol: openid-connect
@@ -170,26 +153,6 @@ spec:
               id.token.claim: 'false'
               access.token.claim: 'true'
               userinfo.token.claim: 'false'
-      - id: 59b9e667-75be-43d4-8d7c-6189d27d67aa
-        name: accounts
-        description: accounts that user has access to
-        protocol: openid-connect
-        attributes:
-          include.in.token.scope: 'true'
-          display.on.consent.screen: 'false'
-        protocolMappers:
-          - id: 24e06173-456c-4404-9f57-529d065dafc9
-            name: accounts mapper
-            protocol: openid-connect
-            protocolMapper: script-accounts-mapper.js
-            consentRequired: false
-            config:
-              multivalued: 'false'
-              userinfo.token.claim: 'true'
-              id.token.claim: 'true'
-              access.token.claim: 'true'
-              claim.name: accounts
-              jsonType.label: JSON
       - id: f88fa5e5-05b2-4214-94ba-89c0de3de3c1
         name: web-origins
         description: OpenID Connect scope for add allowed web origins to the access token
@@ -601,11 +564,9 @@ spec:
         defaultClientScopes:
           - mqtt-broker
           - device_id
-          - oisp-frontend
           - offline_access
           - type
           - gateway
-          - accounts
       - id: 475cee5e-0547-4daf-b97c-7062cce8093d
         clientId: device-onboarding
         publicClient: true
@@ -647,8 +608,6 @@ spec:
         defaultClientScopes:
           - roles
           - factory-admin
-          - oisp-frontend
-          - accounts
           - type
           - offline_access
         {{ if $ngsildupdatessecret }}
@@ -665,10 +624,8 @@ spec:
         defaultRoles:
           - user
         defaultClientScopes:
-          - oisp-frontend
           - mqtt-broker
           - roles
-          - accounts
           - type
           - email
           - offline_access
@@ -684,11 +641,9 @@ spec:
         publicClient: false
         directAccessGrantsEnabled: true
         defaultClientScopes:
-          - oisp-frontend
           - role_list
           - profile
           - roles
-          - accounts
           - type
           - email
           - web-origins
@@ -704,12 +659,10 @@ spec:
         serviceAccountsEnabled: true
         authorizationServicesEnabled: true
         defaultClientScopes:
-          - oisp-frontend
           - offline_access
           - profile
           - role_list
           - roles
-          - accounts
           - if-company
           - type
           - email
@@ -742,12 +695,10 @@ spec:
               claim.name: IF_COMPANY
               jsonType.label: long
         defaultClientScopes:
-          - oisp-frontend
           - offline_access
           - role_list
           - profile
           - roles
-          - accounts
           - type
           - if-company
           - email
