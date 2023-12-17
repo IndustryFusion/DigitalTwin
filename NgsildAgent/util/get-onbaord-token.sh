@@ -15,11 +15,55 @@
 #
 set -e
 
+secret_enabled=false;
+usage="Usage: $(basename $0) [-p password] [-s secret-file-name] <username>"
+while getopts 's:p:h' opt; do
+  case "$opt" in
+    p)
+      arg="$OPTARG"
+      password="${arg}"
+      ;;
+    s)
+      arg="$OPTARG"
+      secret_file=$arg
+      secret_enabled=true
+      ;;
+    ?|h)
+      printf "$usage"
+      exit 1
+      ;;
+  esac
+done
+shift "$(($OPTIND -1))"
 
+if [ $# -eq 1 ]; then
+  username="$1"
+else
+  echo "Error: Expected <username>."
+  printf "${usage}"
+  exit 1
+fi
 
+if [ -z "${password}" ]; then
+    echo -n Password: 
+    read -s password
+fi;
 # Define the JSON file path
 onboard_token_json_file="../data/onboard-token.json"
 dev_json_file="../data/device.json"
+
+function create_secret() {
+    token=$(echo $1| base64)
+    randompf=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 12;)
+cat >$secret_file << EOF
+apiVersion: v1
+kind: Secret
+metadata:
+  name: iff-device-onboarding-${randompf}
+data:
+  onboarding_token: ${token}
+EOF
+}
 
 # Check if the file exists
 if [ ! -f "$dev_json_file" ]; then
@@ -32,29 +76,29 @@ if [ ! -f "$onboard_token_json_file" ]; then
     exit 1
 fi
 
-access_token=$(jq -r '.access_token' "$onboard_token_json_file")
-if [ -z "$access_token" ]; then
-    echo "access_token not found, please check again"
-    exit 1
-fi
+#access_token=$(jq -r '.access_token' "$onboard_token_json_file")
+#if [ -z "$access_token" ]; then
+#    echo "access_token not found, please check again"
+#    exit 1
+#fi
 
 keycloakurl=$(jq -r '.keycloakUrl' "$dev_json_file")
-gatewayid=$(jq -r '.gateway_id' "$dev_json_file")
-deviceid=$(jq -r '.device_id' "$dev_json_file")
+#gatewayid=$(jq -r '.gateway_id' "$dev_json_file")
+#deviceid=$(jq -r '.device_id' "$dev_json_file")
 
 # Check if the file exists
-if [ -z "$keycloakurl" ] || [ -z "$gatewayid" ] ||[ -z "$deviceid" ]; then
-    echo "device json file doesnot contain required item, may run again ./set-device.sh"
-    exit 1
-fi
+#if [ -z "$keycloakurl" ] || [ -z "$gatewayid" ] ||[ -z "$deviceid" ]; then
+#    echo "device json file doesnot contain required item, may run again ./set-device.sh"
+#    exit 1
+#fi
 
 # Define the API endpoint
 ONBOARDING_TOKEN_ENDPOINT="$keycloakurl/protocol/openid-connect/token"
-echo "API endpoint is :" $ONBOARDING_TOKEN_ENDPOINT
+#echo "API endpoint is :" $ONBOARDING_TOKEN_ENDPOINT
 # Make the curl request with access token as a header and store the response in the temporary file
-response_token=$(curl -X POST "$ONBOARDING_TOKEN_ENDPOINT" -d "client_id=device-onboarding" -d "subject_token=$access_token" \
--d "grant_type=urn:ietf:params:oauth:grant-type:token-exchange" -d "requested_token_type=urn:ietf:params:oauth:token-type:refresh_token" \
--d "audience=device" -H "X-GatewayID: $gatewayid" -H "X-DeviceID: $deviceid" -H "X-Access-Type: device" -H "X-DeviceUID: uid" 2>/dev/null | jq '.')
+response_token=$(curl -X POST "$ONBOARDING_TOKEN_ENDPOINT"  -d "client_id=device" \
+-d "grant_type=password" -d "password=${password}" -d "username=${username}" 2>/dev/null | jq '.')
+#echo $response_token
 
 if [ "$(echo $response_token | jq 'has("error")')" = "true" ]; then
     echo "Error: Invalid onbarding token found."
@@ -62,9 +106,12 @@ if [ "$(echo $response_token | jq 'has("error")')" = "true" ]; then
 fi
 
 # Replace access_key by device_key
-response_token=$(echo $response_token | jq 'with_entries(if .key == "access_token" then .key = "device_token" else . end)')
-echo $response_token
-updated_json_data=$(jq --argjson response "$response_token" '. += $response' "$dev_json_file")
-echo "$updated_json_data" > "$dev_json_file"
-
-echo "Device token stored in $dev_json_file " 
+#response_token=$(echo $response_token | jq 'with_entries(if .key == "access_token" then .key = "device_token" else . end)')
+if [ "$secret_enabled" = "true" ]; then
+    create_secret "$response_token"
+    echo "Device token secret stored in $secret_file"
+else
+    echo "$response_token" > "$onboard_token_json_file"
+    echo "Device token stored in $onboard_token_json_file"
+fi
+#updated_json_data=$(jq --argjson response "$response_token" '. += $response' "$dev_json_file")
