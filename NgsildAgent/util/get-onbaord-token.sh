@@ -15,6 +15,7 @@
 #
 set -e
 
+DEVICES_NAMESPACE=devices
 secret_enabled=false;
 usage="Usage: $(basename $0) [-p password] [-s secret-file-name] <username>"
 while getopts 's:p:h' opt; do
@@ -60,6 +61,9 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: iff-device-onboarding-${randompf}
+  namespace: ${DEVICES_NAMESPACE}
+  label:
+    iff-device-onboarding: true
 data:
   onboarding_token: ${token}
 EOF
