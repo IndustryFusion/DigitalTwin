@@ -29,7 +29,8 @@ function getRealm (token) {
 
 function validate (token, username) {
   const did = token.device_id;
-  if (!did) {
+  const gateway = token.gateway;
+  if (did === null || did === undefined || gateway === null || gateway === undefined) {
     return false;
   }
   if (did !== username) {
@@ -84,13 +85,14 @@ class Authenticate {
     }
     // check whether accounts contains only one element and role is device
     const did = decodedToken.device_id;
+    const gateway = decodedToken.gateway;
     const realm = getRealm(decodedToken);
     if (did === null || did === undefined || realm === null || realm === undefined) {
       this.logger.warn('Validation failed: Device id or realm not valid.');
       res.sendStatus(400);
       return;
     }
-    if (did === this.config.mqtt.tainted) {
+    if (did === this.config.mqtt.tainted || gateway === this.config.mqtt.tainted) {
       this.logger.warn('This token is tained! Rejecting.');
       res.sendStatus(400);
     }

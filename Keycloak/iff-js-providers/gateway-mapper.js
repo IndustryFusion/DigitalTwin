@@ -31,11 +31,13 @@ var params = inputRequest.getDecodedFormParameters();
 var grantType = params.getFirst("grant_type");
 if (gatewayIdS !== null && gatewayIdS !== undefined) {
     if (gatewayIdH !== null && gatewayIdH !== undefined) {
-        if (gatwayIdH === gatewayIdS) {
+        if (gatewayIdH === gatewayIdS) {
             // You get only gateway_id claim when you know who you are
             exports = gatewayIdS;
         } else {
-            print("Warning: Rejecting gateway_id claim: Mismatch between stored gateway_id and header.")
+            print("Warning: Rejecting gateway_id claim: Mismatch between stored gateway_id and header. gateway_id is tainted.")
+            userSession.setNote('gatewayId', 'TAINTED');
+            exports = 'TAINTED'    
         }
     } else {
         exports = gatewayIdS;        
@@ -46,6 +48,7 @@ if (gatewayIdS !== null && gatewayIdS !== undefined) {
         exports = gatewayIdH;
     } else if (grantType == 'refresh_token') {
         // Refreshing without assigning gatewayId? Token is tainted. Forget it.
+        print("Warning: Refreshing token without gatewayId. Gateway id is tainted.")
         userSession.setNote('gatewayId', 'TAINTED');
         exports = 'TAINTED'
     }

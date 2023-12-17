@@ -16,7 +16,7 @@ GATEWAY_ID="testgateway"
 GATEWAY_ID2="testgateway2"
 DEVICE_ID="testdevice"
 DEVICE_ID2="testdevice2"
-DEVICE_TOKEN_SCOPE="device_id gateway mqtt-broker offline_access type"
+DEVICE_TOKEN_SCOPE="device_id gateway mqtt-broker offline_access"
 DEVICE_TOKEN_AUDIENCE_FROM_EXCHANGE='["device","mqtt-broker","oisp-frontend"]'
 DEVICE_TOKEN_AUDIENCE_FROM_DIRECT='mqtt-broker'
 MQTT_URL=emqx-listeners:1883
@@ -187,8 +187,8 @@ check_refreshed_device_token() {
 check_refreshed_device_token_with_wrong_ids() {
     jwt=$(echo "$1" | jq -R 'split(".") | .[1] | @base64d | fromjson')
     check_json_field "${jwt}" "azp" "device" || return 1
-    check_json_field_not_exists "${jwt}" "device_id" || return 1
-    check_json_field_not_exists "${jwt}" "gateway" || return 1
+    check_json_field "${jwt}" "device_id" "${TAINTED}"|| return 1
+    check_json_field "${jwt}" "gateway" "${TAINTED}" || return 1
     check_device_token_scope "${jwt}" || return 1
     check_vanilla_device_token_audience "${jwt}" || return 1
 }
@@ -302,7 +302,7 @@ setup() {
 }
 
 
-@test "verify device token contains no device_id and gateway when wrong headers are used" {
+@test "verify device token is tainted when wrong headers are used" {
     $SKIP
     password=$(get_password)
     refresh_token=$(get_vanilla_refresh_token)

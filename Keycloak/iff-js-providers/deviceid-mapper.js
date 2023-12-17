@@ -34,7 +34,9 @@ if (deviceIdS !== null && deviceIdS !== undefined) {
             // You get only a device_id claim when you know who you are
             exports = deviceIdS;
         } else {
-            print("Warning: Rejecting device_id claim: Mismatch between stored device_id and header.")
+            print("Warning: Rejecting device_id claim: Mismatch between stored device_id and header. device_id is now tainted.")
+            userSession.setNote('deviceId', 'TAINTED');
+            exports = 'TAINTED'
         }
     } else {
         exports = deviceIdS;        
@@ -45,6 +47,7 @@ if (deviceIdS !== null && deviceIdS !== undefined) {
         exports = deviceIdH;
     } else if (grantType == 'refresh_token') {
         // Refreshing without assigning deviceId? Token is tainted. Forget it.
+        print("Warning: Refreshing token without device_id. device_id is now tainted. You cannot use the token any longer.")
         userSession.setNote('deviceId', 'TAINTED');
         exports = 'TAINTED'
     }
