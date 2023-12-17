@@ -28,12 +28,11 @@ function getRealm (token) {
 }
 
 function validate (token, username) {
-  const type = token.type;
   const did = token.device_id;
-  if (!type || !did) {
+  if (!did) {
     return false;
   }
-  if (type !== 'device' || did !== username) {
+  if (did !== username) {
     return false;
   }
   return true;

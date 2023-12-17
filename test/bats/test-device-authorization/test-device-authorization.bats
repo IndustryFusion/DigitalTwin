@@ -321,10 +321,9 @@ setup() {
     echo "# Launched kafkacat"
     password=$(get_password)
     token=$(get_dedicated_device_token)
-    run check_dedicated_device_token "${token}"
-    [ "${status}" -eq "0" ]
-    run mosquitto_pub -L "mqtt://${DEVICE_ID}:${token}@${MQTT_URL}/${MQTT_TOPIC_NAME}" -m "${MQTT_MESSAGE}"
-    [ "${status}" -eq "0" ]
+    check_dedicated_device_token "${token}"
+    echo "# token: $token"
+    mosquitto_pub -L "mqtt://${DEVICE_ID}:${token}@${MQTT_URL}/${MQTT_TOPIC_NAME}" -m "${MQTT_MESSAGE}"
     echo "# Sent mqtt sparkplugB message, sleep 2s to let bridge react"
     sleep 2
     echo "# now killing kafkacat and evaluate result"
@@ -352,8 +351,7 @@ setup() {
     username=$(get_adminUsername | tr -d '"')
     (exec stdbuf -oL mosquitto_sub -L "mqtt://${username}:${password}@${MQTT_URL}/${MQTT_TOPIC_NAME}" >${MQTT_SUB}) &
     sleep 2
-    run mosquitto_pub -L "mqtt://${username}:${password}@${MQTT_URL}/${MQTT_TOPIC_NAME}" -m "${MQTT_MESSAGE}"
-    [ "${status}" -eq "0" ]
+    mosquitto_pub -L "mqtt://${username}:${password}@${MQTT_URL}/${MQTT_TOPIC_NAME}" -m "${MQTT_MESSAGE}"
     echo "# Sent mqtt sparkplugB message, sleep 2s to let bridge react"
     sleep 2
     echo "# now killing kafkacat and evaluate result"
