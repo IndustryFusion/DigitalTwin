@@ -22,33 +22,47 @@
  * userSession - the current userSession
  * keycloakSession - the current keycloakSession
  */
+
+var onboarding_token_expiration = java.lang.System.getenv("OISP_FRONTEND_DEVICE_ACCOUNT_ENDPOINT");
+var tainted = 'TAINTED';
 var deviceIdH = keycloakSession.getContext().getRequestHeaders()
     .getRequestHeader("X-DeviceID")[0];
 var inputRequest = keycloakSession.getContext().getHttpRequest();
 var params = inputRequest.getDecodedFormParameters();
+var origTokenParam = params.getFirst("orig_token");
 var grantType = params.getFirst("grant_type");
-var  deviceIdS = userSession.getNote('deviceId');
-if (deviceIdS !== null && deviceIdS !== undefined) {
-    if (deviceIdH !== null && deviceIdH !== undefined) {
-        if (deviceIdH === deviceIdS) {
-            // You get only a device_id claim when you know who you are
-            exports = deviceIdS;
+if (typeof(onboarding_token_expiration) !== 'number') {
+    // if not otherwise configured onboardig token is valid for 5 minutes
+    onboarding_token_expiration = 300;
+}
+if (grantType === 'refresh_token') {
+    //var client = keycloakSession.getContext().getClient();
+    var tokens = keycloakSession.tokens();
+    var session = userSession.getId();
+    var origToken = tokens.decode(origTokenParam, Java.type("org.keycloak.representations.AccessToken").class)
+    var origTokenDeviceId = origToken.getOtherClaims().get("device_id");
+    var origTokenSession = origToken.getSessionId();
+
+    if (origTokenDeviceId !== null && origTokenDeviceId !== undefined) {
+        // Has origToken same session?
+        if (origTokenSession !== session) {
+            print("Warning: Rejecting token due to session mismatch between refresh_token and orig_token")
+            exports = tainted;
         } else {
-            print("Warning: Rejecting device_id claim: Mismatch between stored device_id and header. device_id is now tainted.")
-            userSession.setNote('deviceId', 'TAINTED');
-            exports = 'TAINTED'
+            exports = origTokenDeviceId;
         }
     } else {
-        exports = deviceIdS;        
+        // If there is no origTokenDeviceId, there must be an X-DeviceId header AND origToken must be valid
+        if (!origToken.isExpired() && deviceIdH !== null && deviceIdH !== undefined) {
+            exports = deviceIdH
+        } else {
+            print("Warning: Rejecting token due to orig_token is expired or there is not valid X-DeviceId Header.")
+            exports = tainted;
+        }   
     }
-} else {
-    if (deviceIdH !== null && deviceIdH !== undefined) {
-        userSession.setNote('deviceId', deviceIdH);
-        exports = deviceIdH;
-    } else if (grantType == 'refresh_token') {
-        // Refreshing without assigning deviceId? Token is tainted. Forget it.
-        print("Warning: Refreshing token without device_id. device_id is now tainted. You cannot use the token any longer.")
-        userSession.setNote('deviceId', 'TAINTED');
-        exports = 'TAINTED'
-    }
+} else if (grantType === 'password'){
+    var currentTimeInSeconds = new Date().getTime() / 1000;
+    token.exp(currentTimeInSeconds + onboarding_token_expiration);
+    exports = ''
+
 }
