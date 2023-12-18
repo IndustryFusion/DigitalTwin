@@ -48,6 +48,14 @@ fi
 onboard_token_json_file="../data/onboard-token.json"
 dev_json_file="../data/device.json"
 
+# Check if the file exists
+if [ ! -f "$dev_json_file" ]; then
+    echo "JSON file not found: $dev_json_file. Initialization of device is needed."
+    exit 1
+fi
+
+
+
 function get_token() {
   secrets=$(kubectl -n ${DEVICES_NAMESPACE} get secret -l iff-device-onboarding=true -oname)
   for secret in $secrets; do
@@ -60,67 +68,63 @@ function get_token() {
   done
 }
 
-success=false
-while [ "$success" = "false" ]; do
-  echo "Waiting for secrets ..."
-  raw_token=$(get_token)
-  echo $raw_token
-  token=$(echo $raw_token | base64 -d ) || token=""
-  if [ -n "$token" ]; then
-    success=true
-  fi
-  sleep 2
-done
-echo $token
-exit 0
-
-# Check if the file exists
-if [ ! -f "$dev_json_file" ]; then
-    echo "JSON file not found: $dev_json_file"
-    exit 1
-fi
-
+if [ -z "$file" ]; then
+  success=false
+  while [ "$success" = "false" ]; do
+    echo "Waiting for secrets ..."
+    raw_token=$(get_token)
+    token=$(echo $raw_token | base64 -d ) || token=""
+    if [ -n "$token" ]; then
+      success=true
+    fi
+    sleep 2
+  done
+else
 if [ ! -f "$onboard_token_json_file" ]; then
-    echo "JSON file not found: $onboard_token_json_file"
+    echo "JSON file not found: $onboard_token_json_file. But this is needed for onboarding from token file."
     exit 1
 fi
+token=$(cat $onboard_token_json_file) 
+fi
 
-#access_token=$(jq -r '.access_token' "$onboard_token_json_file")
-#if [ -z "$access_token" ]; then
-#    echo "access_token not found, please check again"
-#    exit 1
-#fi
+
+refresh_token=$(jq -r '.refresh_token' "$onboard_token_json_file")
+if [ -z "$refresh_token" ]; then
+    echo "refresh_token not found, please check again"
+    exit 1
+fi
 
 keycloakurl=$(jq -r '.keycloakUrl' "$dev_json_file")
-#gatewayid=$(jq -r '.gateway_id' "$dev_json_file")
-#deviceid=$(jq -r '.device_id' "$dev_json_file")
+gatewayid=$(jq -r '.gateway_id' "$dev_json_file")
+deviceid=$(jq -r '.device_id' "$dev_json_file")
 
 # Check if the file exists
-#if [ -z "$keycloakurl" ] || [ -z "$gatewayid" ] ||[ -z "$deviceid" ]; then
-#    echo "device json file doesnot contain required item, may run again ./set-device.sh"
-#    exit 1
-#fi
+if [ -z "$keycloakurl" ] || [ -z "$gatewayid" ] ||[ -z "$deviceid" ]; then
+    echo "device json file doesnot contain required item, please do initialize device."
+    exit 1
+fi
 
 # Define the API endpoint
-ONBOARDING_TOKEN_ENDPOINT="$keycloakurl/protocol/openid-connect/token"
-#echo "API endpoint is :" $ONBOARDING_TOKEN_ENDPOINT
+DEVICE_TOKEN_ENDPOINT="$keycloakurl/protocol/openid-connect/token"
+echo "API endpoint is :" $DEVICE_TOKEN_ENDPOINT
 # Make the curl request with access token as a header and store the response in the temporary file
-response_token=$(curl -X POST "$ONBOARDING_TOKEN_ENDPOINT"  -d "client_id=device" \
--d "grant_type=password" -d "password=${password}" -d "username=${username}" 2>/dev/null | jq '.')
-#echo $response_token
+device_token=$(curl -X POST "$DEVICE_TOKEN_ENDPOINT"  -d "client_id=device" \
+-d "grant_type=refresh_token" -d "refresh_token=${refresh_token}" -d "audience=device" \
+-H "X-GatewayID: $gatewayid" -H "X-DeviceID: $deviceid" 2>/dev/null | jq '.')
 
-if [ "$(echo $response_token | jq 'has("error")')" = "true" ]; then
-    echo "Error: Invalid onbarding token found."
+if [ "$(echo $device_token | jq 'has("error")')" = "true" ]; then
+    echo "Error: Onboarding token coule not be retrieved."
+    exit 1
+fi
+if [ -n "$(echo $device_token | jq '.access_token' | tr -d '"' | jq -R 'split(".") | .[1] | @base64d | fromjson' | grep TAINTED)" ]; then
+    echo "Error: Tainted onbarding token found."
     exit 1
 fi
 
 # Replace access_key by device_key
-#response_token=$(echo $response_token | jq 'with_entries(if .key == "access_token" then .key = "device_token" else . end)')
-if [ "$secret_enabled" = "true" ]; then
-    create_secret "$response_token"
-    echo "Device token secret stored in $secret_file"
-else
-    echo "$response_token" > "$onboard_token_json_file"
-    echo "Device token stored in $onboard_token_json_file"
-fi
-#updated_json_data=$(jq --argjson response "$response_token" '. += $response' "$dev_json_file")
+device_token=$(echo $device_token | jq 'with_entries(if .key == "access_token" then .key = "device_token" else . end)')
+updated_json_data=$(jq --argjson response "$device_token" '. += $response' "$dev_json_file")
+echo "$updated_json_data" > "$dev_json_file"
+
+echo "Device token stored in $dev_json_file " 
+
