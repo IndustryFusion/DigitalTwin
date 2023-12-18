@@ -16,18 +16,14 @@
 set -e
 
 DEVICES_NAMESPACE=devices
-secret_enabled=false;
-usage="Usage: $(basename $0) [-p password] [-s secret-file-name] <username>"
-while getopts 's:p:h' opt; do
+usage="Usage: $(basename $0) [-s] [-f]"
+while getopts 'sfh' opt; do
   case "$opt" in
-    p)
-      arg="$OPTARG"
-      password="${arg}"
+    f)
+      file=true
       ;;
     s)
-      arg="$OPTARG"
-      secret_file=$arg
-      secret_enabled=true
+      secret=true
       ;;
     ?|h)
       printf "$usage"
@@ -37,41 +33,55 @@ while getopts 's:p:h' opt; do
 done
 shift "$(($OPTIND -1))"
 
-if [ $# -eq 1 ]; then
-  username="$1"
-else
-  echo "Error: Expected <username>."
+if [ -n "$file" ] && [ -n "$secret" ]; then
+  echo "Error: Both -f and -s cannot be set"
+  printf "${usage}"
+  exit 1
+fi
+if [ -z "$file" ] && [ -z "$secret" ]; then
+  echo "Error: Either -f and -s must be set"
   printf "${usage}"
   exit 1
 fi
 
-if [ -z "${password}" ]; then
-    echo -n Password: 
-    read -s password
-fi;
 # Define the JSON file path
 onboard_token_json_file="../data/onboard-token.json"
 dev_json_file="../data/device.json"
 
-function create_secret() {
-    token=$(echo -n "$1"| base64 -w 0)
-    randompf=$(tr -dc a-z0-9 </dev/urandom | head -c 12;)
-cat >$secret_file << EOF
-apiVersion: v1
-kind: Secret
-metadata:
-  name: iff-device-onboarding-${randompf}
-  namespace: ${DEVICES_NAMESPACE}
-  labels:
-    iff-device-onboarding: "true"
-data:
-  onboarding_token: ${token}
-EOF
+function get_token() {
+  secrets=$(kubectl -n ${DEVICES_NAMESPACE} get secret -l iff-device-onboarding=true -oname)
+  for secret in $secrets; do
+    echo "Processing Secret $secret" >&2
+    token=$(kubectl -n ${DEVICES_NAMESPACE} get $secret -o jsonpath='{.data.onboarding_token}')
+    if kubectl -n ${DEVICES_NAMESPACE} delete $secret 2>&1 >/dev/null; then 
+      echo $token
+      break
+    fi
+  done
 }
 
+success=false
+while [ "$success" = "false" ]; do
+  echo "Waiting for secrets ..."
+  raw_token=$(get_token)
+  echo $raw_token
+  token=$(echo $raw_token | base64 -d ) || token=""
+  if [ -n "$token" ]; then
+    success=true
+  fi
+  sleep 2
+done
+echo $token
+exit 0
 
+# Check if the file exists
 if [ ! -f "$dev_json_file" ]; then
-    echo "Device file not found: $dev_json_file"
+    echo "JSON file not found: $dev_json_file"
+    exit 1
+fi
+
+if [ ! -f "$onboard_token_json_file" ]; then
+    echo "JSON file not found: $onboard_token_json_file"
     exit 1
 fi
 
@@ -80,7 +90,6 @@ fi
 #    echo "access_token not found, please check again"
 #    exit 1
 #fi
-
 
 keycloakurl=$(jq -r '.keycloakUrl' "$dev_json_file")
 #gatewayid=$(jq -r '.gateway_id' "$dev_json_file")
