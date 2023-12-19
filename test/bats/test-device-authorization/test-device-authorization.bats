@@ -30,44 +30,11 @@ MQTT_RESULT=/tmp/MQTT_RES
 TAINTED='TAINTED'
 onboarding_token=
 
+
 get_password() {
     kubectl -n ${NAMESPACE} get ${USER_SECRET} -o jsonpath='{.data.password}' | base64 -d
 }
 
-get_onboarding_token() {
-    curl -X POST "${KEYCLOAK_URL}/${NAMESPACE}/protocol/openid-connect/token" \
-        -d "client_id=${ONBOARDING_CLIENT_ID}" \
-        -d "grant_type=password" \
-        -d "username=${USER}" \
-        -d "password=${password}" \
-        | jq ".access_token" | tr -d '"'
-}
-
-exchange_onboarding_token() {
-    curl -X POST "${KEYCLOAK_URL}/${NAMESPACE}/protocol/openid-connect/token" \
-        -d "client_id=${ONBOARDING_CLIENT_ID}" \
-        -d "grant_type=urn:ietf:params:oauth:grant-type:token-exchange" \
-        -d "subject_token=${onboarding_token}" \
-        -d "requested_token_type=urn:ietf:params:oauth:token-type:refresh_token" \
-        -d "audience=${DEVICE_CLIENT_ID}" \
-        -H "X-DeviceID: ${DEVICE_ID}" \
-        -H "X-GatewayID: ${GATEWAY_ID}" \
-        -H "X-Access-Type: device" \
-        | jq ".access_token" | tr -d '"'
-}
-
-exchange_onboarding_token_refresh() {
-    curl -X POST "${KEYCLOAK_URL}/${NAMESPACE}/protocol/openid-connect/token" \
-        -d "client_id=${ONBOARDING_CLIENT_ID}" \
-        -d "grant_type=urn:ietf:params:oauth:grant-type:token-exchange" \
-        -d "subject_token=${onboarding_token}" \
-        -d "requested_token_type=urn:ietf:params:oauth:token-type:refresh_token" \
-        -d "audience=${DEVICE_CLIENT_ID}" \
-        -H "X-DeviceID: ${DEVICE_ID}" \
-        -H "X-GatewayID: ${GATEWAY_ID}" \
-        -H "X-Access-Type: device" \
-        | jq ".refresh_token" | tr -d '"'
-}
 
 get_vanilla_device_token() {
     curl -X POST "${KEYCLOAK_URL}/${NAMESPACE}/protocol/openid-connect/token" \
@@ -86,17 +53,6 @@ get_vanilla_refresh_and_access_token() {
         -d "username=${USER}" \
         -d "password=${password}"
         
-}
-
-get_dedicated_device_token() {
-    curl -X POST "${KEYCLOAK_URL}/${NAMESPACE}/protocol/openid-connect/token" \
-        -d "client_id=${DEVICE_CLIENT_ID}" \
-        -d "grant_type=password" \
-        -d "username=${USER}" \
-        -d "password=${password}" \
-        -H "X-DeviceID: ${DEVICE_ID}" \
-        -H "X-GatewayID: ${GATEWAY_ID}" \
-        | jq ".access_token" | tr -d '"'
 }
 
 
@@ -140,11 +96,6 @@ get_refreshed_vanilla_token() {
         | jq ".access_token" | tr -d '"'
 }
 
-check_device_token_audience_from_exchange() {
-    field=$(echo "$1" | jq -rc '.aud | sort')
-    [ "$field" = "${DEVICE_TOKEN_AUDIENCE_FROM_EXCHANGE}" ] || { echo "wrong value for field audience: $field!=${DEVICE_TOKEN_AUDIENCE_FROM_EXCHANGE}" >&3; return 1; }
-    return 0
-}
 
 check_vanilla_device_token_audience() {
     field=$(echo "$1" | jq -rc '.aud')
@@ -170,12 +121,6 @@ check_json_field_not_exists() {
     return 0
 }
 
-check_onboarding_token() {
-    jwt=$(echo "$1" | jq -R 'split(".") | .[1] | @base64d | fromjson')
-    check_json_field "${jwt}" "azp" "device-onboarding" || return 1
-    check_json_field "${jwt}" "scope" "offline_access" || return 1
-    return 0
-}
 
 check_refreshed_device_token() {
     jwt=$(echo "$1" | jq -R 'split(".") | .[1] | @base64d | fromjson')
@@ -288,8 +233,8 @@ setup() {
     $SKIP
     password=$(get_password)
     token=$(get_vanilla_refresh_and_access_token)
-    refresh_token=$(echo $token | jq ".refresh_token" | tr -d '"')
-    access_token=$(echo $token | jq ".access_token" | tr -d '"')
+    refresh_token=$(echo "$token" | jq ".refresh_token" | tr -d '"')
+    access_token=$(echo "$token" | jq ".access_token" | tr -d '"')
     echo "# refresh_token=$refresh_token"
     echo "# access_token=$access_token"
     run check_vanilla_refresh_token "${refresh_token}"
@@ -304,8 +249,8 @@ setup() {
     $SKIP
     password=$(get_password)
     token=$(get_vanilla_refresh_and_access_token)
-    refresh_token=$(echo $token | jq ".refresh_token" | tr -d '"')
-    access_token=$(echo $token | jq ".access_token" | tr -d '"')
+    refresh_token=$(echo "$token" | jq ".refresh_token" | tr -d '"')
+    access_token=$(echo "$token" | jq ".access_token" | tr -d '"')
     run check_vanilla_refresh_token "${refresh_token}"
     [ "${status}" -eq "0" ]
     device_token=$(get_refreshed_vanilla_token "${refresh_token}" "${access_token}")
@@ -317,8 +262,8 @@ setup() {
     $SKIP
     password=$(get_password)
     token=$(get_vanilla_refresh_and_access_token)
-    refresh_token=$(echo $token | jq ".refresh_token" | tr -d '"')
-    access_token=$(echo $token | jq ".access_token" | tr -d '"')
+    refresh_token=$(echo "$token" | jq ".refresh_token" | tr -d '"')
+    access_token=$(echo "$token" | jq ".access_token" | tr -d '"')
     echo "# refresh_token=$refresh_token"
     echo "# access_token=$access_token"
     run check_vanilla_refresh_token "${refresh_token}"
@@ -334,15 +279,15 @@ setup() {
     $SKIP
     password=$(get_password)
     token=$(get_vanilla_refresh_and_access_token)
-    refresh_token=$(echo $token | jq ".refresh_token" | tr -d '"')
-    access_token=$(echo $token | jq ".access_token" | tr -d '"')
+    refresh_token=$(echo "$token" | jq ".refresh_token" | tr -d '"')
+    access_token=$(echo "$token" | jq ".access_token" | tr -d '"')
     run check_vanilla_refresh_token "${refresh_token}"
     [ "${status}" -eq "0" ]
     refresh_token=$(get_refreshed_refresh_token "${refresh_token}")
     device_token=$(get_refreshed_device_token_with_wrong_ids "${refresh_token}" "${access_token}")
-    echo refresh_token $refresh_token
-    echo device_token $device_token
-    echo access_token $access_token
+    echo "# refresh_token $refresh_token"
+    echo "# device_token $device_token"
+    echo "# access_token $access_token"
     run check_refreshed_device_token_with_wrong_ids "${device_token}"
     [ "${status}" -eq "0" ]
 }
@@ -352,8 +297,8 @@ setup() {
     (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ATTRIBUTES}) &
     password=$(get_password)
     token=$(get_vanilla_refresh_and_access_token)
-    refresh_token=$(echo $token | jq ".refresh_token" | tr -d '"')
-    access_token=$(echo $token | jq ".access_token" | tr -d '"')
+    refresh_token=$(echo "$token" | jq ".refresh_token" | tr -d '"')
+    access_token=$(echo "$token" | jq ".access_token" | tr -d '"')
     echo "# refresh_token=$refresh_token"
     echo "# access_token=$access_token"
     device_token=$(get_refreshed_device_token "${refresh_token}" "${access_token}")
@@ -373,8 +318,8 @@ setup() {
     $SKIP
     password=$(get_password)
     token=$(get_vanilla_refresh_and_access_token)
-    refresh_token=$(echo $token | jq ".refresh_token" | tr -d '"')
-    access_token=$(echo $token | jq ".access_token" | tr -d '"')
+    refresh_token=$(echo "$token" | jq ".refresh_token" | tr -d '"')
+    access_token=$(echo "$token" | jq ".access_token" | tr -d '"')
     device_token=$(get_refreshed_vanilla_token "${refresh_token}" "${access_token}")
     mosquitto_pub -L "mqtt://${DEVICE_ID}:${device_token}@${MQTT_URL}/${MQTT_TOPIC_NAME}" -m "${MQTT_MESSAGE}" 2>${MQTT_RESULT} || true
     cat ${MQTT_RESULT} | grep "not authorised"
