@@ -23,33 +23,36 @@
  * keycloakSession - the current keycloakSession
  */
 
+var tainted = 'TAINTED';
 var gatewayIdH = keycloakSession.getContext().getRequestHeaders()
     .getRequestHeader("X-GatewayID")[0];
-var gatewayIdS = userSession.getNote('gatewayId');
 var inputRequest = keycloakSession.getContext().getHttpRequest();
 var params = inputRequest.getDecodedFormParameters();
+var origTokenParam = params.getFirst("orig_token");
 var grantType = params.getFirst("grant_type");
-if (gatewayIdS !== null && gatewayIdS !== undefined) {
-    if (gatewayIdH !== null && gatewayIdH !== undefined) {
-        if (gatewayIdH === gatewayIdS) {
-            // You get only gateway_id claim when you know who you are
-            exports = gatewayIdS;
+if (grantType === 'refresh_token') {
+    var tokens = keycloakSession.tokens();
+    var session = userSession.getId();
+    var origToken = tokens.decode(origTokenParam, Java.type("org.keycloak.representations.AccessToken").class)
+    var origTokenGatewayId = origToken.getOtherClaims().get("gateway");
+    var origTokenSession = origToken.getSessionId();
+
+    if (origTokenGatewayId !== null && origTokenGatewayId !== undefined) {
+        // Has origToken same session?
+        if (origTokenSession !== session) {
+            print("Warning: Rejecting token due to session mismatch between refresh_token and orig_token")
+            exports = tainted;
         } else {
-            print("Warning: Rejecting gateway_id claim: Mismatch between stored gateway_id and header. gateway_id is tainted.")
-            userSession.setNote('gatewayId', 'TAINTED');
-            exports = 'TAINTED'    
+            exports = origTokenGatewayId;
         }
     } else {
-        exports = gatewayIdS;        
-    }
-} else {
-    if (gatewayIdH !== null && gatewayIdH !== undefined) {
-        userSession.setNote('gatewayId', gatewayIdH);
-        exports = gatewayIdH;
-    } else if (grantType == 'refresh_token') {
-        // Refreshing without assigning gatewayId? Token is tainted. Forget it.
-        print("Warning: Refreshing token without gatewayId. Gateway id is tainted.")
-        userSession.setNote('gatewayId', 'TAINTED');
-        exports = 'TAINTED'
+        // If there is no origTokenGatewayId, there must be an X-GatewayId header AND origToken must be valid
+        if (!origToken.isExpired() && gatewayIdH !== null && gatewayIdH !== undefined) {
+            exports = gatewayIdH
+        } else {
+            print("Warning: Rejecting token due to orig_token is expired or there is not valid X-GatewayId Header.")
+            exports = tainted;
+        }   
     }
 }
+

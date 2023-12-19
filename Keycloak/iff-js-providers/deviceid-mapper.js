@@ -36,7 +36,6 @@ if (typeof(onboarding_token_expiration) !== 'number') {
     onboarding_token_expiration = 300;
 }
 if (grantType === 'refresh_token') {
-    //var client = keycloakSession.getContext().getClient();
     var tokens = keycloakSession.tokens();
     var session = userSession.getId();
     var origToken = tokens.decode(origTokenParam, Java.type("org.keycloak.representations.AccessToken").class)
@@ -63,6 +62,5 @@ if (grantType === 'refresh_token') {
 } else if (grantType === 'password'){
     var currentTimeInSeconds = new Date().getTime() / 1000;
     token.exp(currentTimeInSeconds + onboarding_token_expiration);
-    exports = ''
-
+    exports = null
 }
