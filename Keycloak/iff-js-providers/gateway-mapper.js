@@ -24,17 +24,24 @@
  */
 
 var tainted = 'TAINTED';
+exports = tainted;
 var gatewayIdH = keycloakSession.getContext().getRequestHeaders()
     .getRequestHeader("X-GatewayID")[0];
 var inputRequest = keycloakSession.getContext().getHttpRequest();
 var params = inputRequest.getDecodedFormParameters();
 var origTokenParam = params.getFirst("orig_token");
 var grantType = params.getFirst("grant_type");
-if (grantType === 'refresh_token') {
-    var tokens = keycloakSession.tokens();
+var tokens = keycloakSession.tokens();
+var origToken = tokens.decode(origTokenParam, Java.type("org.keycloak.representations.AccessToken").class)
+
+if (grantType === 'refresh_token' && origToken !== null) {
     var session = userSession.getId();
     var origToken = tokens.decode(origTokenParam, Java.type("org.keycloak.representations.AccessToken").class)
-    var origTokenGatewayId = origToken.getOtherClaims().get("gateway");
+    var otherClaims = origToken.getOtherClaims();
+    var origTokenGatewayId;
+    if (otherClaims !== null) {
+        origTokenGatewayId = otherClaims.get("gateway");
+    }
     var origTokenSession = origToken.getSessionId();
 
     if (origTokenGatewayId !== null && origTokenGatewayId !== undefined) {
@@ -54,5 +61,9 @@ if (grantType === 'refresh_token') {
             exports = tainted;
         }   
     }
+} else if (grantType === 'password'){
+    exports = null
+} else if (origToken === null) {
+    print("Warning: Rejecting token due to invalid orig_token.")
+    exports = tainted
 }
-

@@ -79,13 +79,13 @@ get_vanilla_device_token() {
 }
 
 
-get_vanilla_refresh_token() {
+get_vanilla_refresh_and_access_token() {
     curl -X POST "${KEYCLOAK_URL}/${NAMESPACE}/protocol/openid-connect/token" \
         -d "client_id=${DEVICE_CLIENT_ID}" \
         -d "grant_type=password" \
         -d "username=${USER}" \
-        -d "password=${password}" \
-        | jq ".refresh_token" | tr -d '"'
+        -d "password=${password}"
+        
 }
 
 get_dedicated_device_token() {
@@ -105,6 +105,7 @@ get_refreshed_device_token() {
         -d "client_id=${DEVICE_CLIENT_ID}" \
         -d "grant_type=refresh_token" \
         -d "refresh_token=$1" \
+        -d "orig_token=$2" \
         -H "X-DeviceID: ${DEVICE_ID}" \
         -H "X-GatewayID: ${GATEWAY_ID}" \
         | jq ".access_token" | tr -d '"'
@@ -135,6 +136,7 @@ get_refreshed_vanilla_token() {
         -d "client_id=${DEVICE_CLIENT_ID}" \
         -d "grant_type=refresh_token" \
         -d "refresh_token=$1" \
+        -d "orig_token=$2" \
         | jq ".access_token" | tr -d '"'
 }
 
@@ -180,6 +182,15 @@ check_refreshed_device_token() {
     check_json_field "${jwt}" "azp" "device" || return 1
     check_json_field "${jwt}" "device_id" "${DEVICE_ID}" || return 1
     check_json_field "${jwt}" "gateway" "${GATEWAY_ID}" || return 1
+    check_device_token_scope "${jwt}" || return 1
+    check_vanilla_device_token_audience "${jwt}" || return 1
+}
+
+check_refreshed_device_token_fail() {
+    jwt=$(echo "$1" | jq -R 'split(".") | .[1] | @base64d | fromjson')
+    check_json_field "${jwt}" "azp" "device" || return 1
+    check_json_field "${jwt}" "device_id" "${TAINTED}" || return 1
+    check_json_field "${jwt}" "gateway" "${TAINTED}" || return 1
     check_device_token_scope "${jwt}" || return 1
     check_vanilla_device_token_audience "${jwt}" || return 1
 }
@@ -263,41 +274,58 @@ setup() {
 }
 
 
-@test "verify user can request vanilla device token" {
+@test "verify user can request onboarding token" {
     $SKIP
     password=$(get_password)
     token=$(get_vanilla_device_token)
+    echo "# token=$token"
     run check_vanilla_device_token "${token}"
     [ "${status}" -eq "0" ]
 }
 
-@test "verify user can request dedicated device token" {
-    $SKIP
-    password=$(get_password)
-    token=$(get_dedicated_device_token)
-    run check_dedicated_device_token "${token}"
-    [ "${status}" -eq "0" ]
-}
 
 @test "verify device token can be refreshed" {
     $SKIP
     password=$(get_password)
-    refresh_token=$(get_vanilla_refresh_token)
+    token=$(get_vanilla_refresh_and_access_token)
+    refresh_token=$(echo $token | jq ".refresh_token" | tr -d '"')
+    access_token=$(echo $token | jq ".access_token" | tr -d '"')
+    echo "# refresh_token=$refresh_token"
+    echo "# access_token=$access_token"
     run check_vanilla_refresh_token "${refresh_token}"
     [ "${status}" -eq "0" ]
-    device_token=$(get_refreshed_device_token "${refresh_token}")
+    device_token=$(get_refreshed_device_token "${refresh_token}" "${access_token}")
+    echo "# device_token=$device_token"
     run check_refreshed_device_token "${device_token}"
     [ "${status}" -eq "0" ]
 }
 
-@test "verify device token becomes tainted if not properly used" {
+@test "verify device token becomes tainted if refreshed without headers" {
     $SKIP
     password=$(get_password)
-    refresh_token=$(get_vanilla_refresh_token)
+    token=$(get_vanilla_refresh_and_access_token)
+    refresh_token=$(echo $token | jq ".refresh_token" | tr -d '"')
+    access_token=$(echo $token | jq ".access_token" | tr -d '"')
     run check_vanilla_refresh_token "${refresh_token}"
     [ "${status}" -eq "0" ]
-    device_token=$(get_refreshed_vanilla_token "${refresh_token}")
+    device_token=$(get_refreshed_vanilla_token "${refresh_token}" "${access_token}")
     run check_refreshed_vanilla_token "${device_token}"
+    [ "${status}" -eq "0" ]
+}
+
+@test "verify device token becomes tainted if orig_token is missing" {
+    $SKIP
+    password=$(get_password)
+    token=$(get_vanilla_refresh_and_access_token)
+    refresh_token=$(echo $token | jq ".refresh_token" | tr -d '"')
+    access_token=$(echo $token | jq ".access_token" | tr -d '"')
+    echo "# refresh_token=$refresh_token"
+    echo "# access_token=$access_token"
+    run check_vanilla_refresh_token "${refresh_token}"
+    [ "${status}" -eq "0" ]
+    device_token=$(get_refreshed_device_token "${refresh_token}")
+    echo "# device_token=$device_token"
+    run check_refreshed_device_token_fail "${device_token}"
     [ "${status}" -eq "0" ]
 }
 
@@ -305,25 +333,32 @@ setup() {
 @test "verify device token is tainted when wrong headers are used" {
     $SKIP
     password=$(get_password)
-    refresh_token=$(get_vanilla_refresh_token)
+    token=$(get_vanilla_refresh_and_access_token)
+    refresh_token=$(echo $token | jq ".refresh_token" | tr -d '"')
+    access_token=$(echo $token | jq ".access_token" | tr -d '"')
     run check_vanilla_refresh_token "${refresh_token}"
     [ "${status}" -eq "0" ]
     refresh_token=$(get_refreshed_refresh_token "${refresh_token}")
-    device_token=$(get_refreshed_device_token_with_wrong_ids "${refresh_token}")
+    device_token=$(get_refreshed_device_token_with_wrong_ids "${refresh_token}" "${access_token}")
+    echo refresh_token $refresh_token
+    echo device_token $device_token
+    echo access_token $access_token
     run check_refreshed_device_token_with_wrong_ids "${device_token}"
     [ "${status}" -eq "0" ]
 }
 
 @test "verify device token can send data and is forwarded to Kafka" {
     $SKIP
-    rm ${KAFKACAT_ATTRIBUTES}
     (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ATTRIBUTES}) &
-    echo "# Launched kafkacat"
     password=$(get_password)
-    token=$(get_dedicated_device_token)
-    check_dedicated_device_token "${token}"
-    echo "# token: $token"
-    mosquitto_pub -L "mqtt://${DEVICE_ID}:${token}@${MQTT_URL}/${MQTT_TOPIC_NAME}" -m "${MQTT_MESSAGE}"
+    token=$(get_vanilla_refresh_and_access_token)
+    refresh_token=$(echo $token | jq ".refresh_token" | tr -d '"')
+    access_token=$(echo $token | jq ".access_token" | tr -d '"')
+    echo "# refresh_token=$refresh_token"
+    echo "# access_token=$access_token"
+    device_token=$(get_refreshed_device_token "${refresh_token}" "${access_token}")
+    echo "# device_token: $device_token"
+    mosquitto_pub -L "mqtt://${DEVICE_ID}:${device_token}@${MQTT_URL}/${MQTT_TOPIC_NAME}" -m "${MQTT_MESSAGE}"
     echo "# Sent mqtt sparkplugB message, sleep 2s to let bridge react"
     sleep 2
     echo "# now killing kafkacat and evaluate result"
@@ -337,16 +372,16 @@ setup() {
 @test "verify tainted device is rejected" {
     $SKIP
     password=$(get_password)
-    refresh_token=$(get_vanilla_refresh_token)
-    token=$(get_refreshed_vanilla_token "${refresh_token}")
-    mosquitto_pub -L "mqtt://${DEVICE_ID}:${token}@${MQTT_URL}/${MQTT_TOPIC_NAME}" -m "${MQTT_MESSAGE}" 2>${MQTT_RESULT} || true
+    token=$(get_vanilla_refresh_and_access_token)
+    refresh_token=$(echo $token | jq ".refresh_token" | tr -d '"')
+    access_token=$(echo $token | jq ".access_token" | tr -d '"')
+    device_token=$(get_refreshed_vanilla_token "${refresh_token}" "${access_token}")
+    mosquitto_pub -L "mqtt://${DEVICE_ID}:${device_token}@${MQTT_URL}/${MQTT_TOPIC_NAME}" -m "${MQTT_MESSAGE}" 2>${MQTT_RESULT} || true
     cat ${MQTT_RESULT} | grep "not authorised"
 }
 
 @test "verify mqtt admin can send and receive data" {
     $SKIP
-    #rm ${KAFKACAT_ATTRIBUTES}
-    #(exec stdbuf -oL kafkacat -C -t ${KAFKACAT_ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ATTRIBUTES}) &
     password=$(get_adminPassword | tr -d '"')
     username=$(get_adminUsername | tr -d '"')
     (exec stdbuf -oL mosquitto_sub -L "mqtt://${username}:${password}@${MQTT_URL}/${MQTT_TOPIC_NAME}" >${MQTT_SUB}) &
@@ -356,7 +391,6 @@ setup() {
     sleep 2
     echo "# now killing kafkacat and evaluate result"
     killall mosquitto_sub
-    #killall kafkacat
     echo "# Compare ATTRIBUTES"
     run compare_mqtt_sub ${MQTT_SUB}
     [ "$status" -eq 0 ]

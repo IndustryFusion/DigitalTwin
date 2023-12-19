@@ -25,21 +25,28 @@
 
 var onboarding_token_expiration = java.lang.System.getenv("OISP_FRONTEND_DEVICE_ACCOUNT_ENDPOINT");
 var tainted = 'TAINTED';
+exports = tainted;
 var deviceIdH = keycloakSession.getContext().getRequestHeaders()
     .getRequestHeader("X-DeviceID")[0];
 var inputRequest = keycloakSession.getContext().getHttpRequest();
 var params = inputRequest.getDecodedFormParameters();
 var origTokenParam = params.getFirst("orig_token");
 var grantType = params.getFirst("grant_type");
+var tokens = keycloakSession.tokens();
+var origToken = tokens.decode(origTokenParam, Java.type("org.keycloak.representations.AccessToken").class)
+
 if (typeof(onboarding_token_expiration) !== 'number') {
     // if not otherwise configured onboardig token is valid for 5 minutes
     onboarding_token_expiration = 300;
 }
-if (grantType === 'refresh_token') {
-    var tokens = keycloakSession.tokens();
+if (grantType === 'refresh_token' && origToken !== null) {
     var session = userSession.getId();
-    var origToken = tokens.decode(origTokenParam, Java.type("org.keycloak.representations.AccessToken").class)
-    var origTokenDeviceId = origToken.getOtherClaims().get("device_id");
+    var otherClaims = origToken.getOtherClaims();
+    var origTokenDeviceId;
+    if (otherClaims !== null) {
+        
+        origTokenDeviceId = otherClaims.get("device_id");
+    }
     var origTokenSession = origToken.getSessionId();
 
     if (origTokenDeviceId !== null && origTokenDeviceId !== undefined) {
@@ -63,4 +70,7 @@ if (grantType === 'refresh_token') {
     var currentTimeInSeconds = new Date().getTime() / 1000;
     token.exp(currentTimeInSeconds + onboarding_token_expiration);
     exports = null
+} else if (origToken === null) {
+    print("Warning: Rejecting token due to invalid orig_token.")
+    exports = tainted
 }
