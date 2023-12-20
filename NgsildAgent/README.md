@@ -1,11 +1,61 @@
 # IFF IoT Agent
 
 
-The agent sends metrics data to the IFF-PDT,
+The agent sends metrics data to the IFF-PDT.
 
-### oisp-admin
-This is a command line "wrapper" for the [REST API](https://github.com/Open-IoT-Service-Platform/platform-launcher/wiki/REST-API), enabling you to test connectivity, activate a device, register time series and send observations all from the command line.
+## Utils
+The utils directory contains bash scripts to setup and activate a device.
+### init-device.sh
+This script is setting up the default device-file and metadata.
+```bash
+Usage: init-device.sh <deviceId> <gatewayId> [-k keycloakurl] [-r realmId]
+Defaults: 
+keycloakurl=http://keycloak.local/auth/realms/iff
+realmid=iff
+```
+Example:
+```bash
+./init-device.sh deviceid gatewayid
+```
 
+### get-onbaording-token.sh
+This script assumes a setup device-file, creates an onboarding token and stores it in the data directory.
+```bash
+Usage: get-onbaording-token.sh [-p password] [-s secret-file-name] <username>
+-p provide password through commandline. If missing, password will requested interactively
+-s if set, it puts the token into a k8s secret with name 'secret-file-name' otherwise it will be dumped to file ../data/onboard-token.json.
+```
+example
+```
+Usage: ./get-onbaording-token.sh -p LhCU0Jd9zwoHD40izcf6s10hdLUiOuqQ realm_user
+```
+The secret of the realm_user can be retrieve from K8s by using:
+```bash
+kubectl -n iff get secret/credential-iff-realm-user-iff -o jsonpath='{.data.password}'| base64 -d | xargs echo
+```
+
+### activate.sh
+This script assumes a setup device-file and a onboarding-token either dumped to file or a kubernetes secret. I takes an obaording secret an created a device token which is stored in the `data` directory
+```bash
+Usage: activate.sh [-s] [-f]
+```
+Example:
+```bash
+./activate.sh -f
+```
+
+### send-data.sh
+
+### Use tools alltogether
+On a test system with a local kubernetes installed the following flow creates a default test device
+
+```bash
+./init-device.sh deviceid gatewayid
+password=$(kubectl -n iff get secret/credential-iff-realm-user-iff -o jsonpath='{.data.password}'| base64 -d)
+./get-onbaording-token.sh -p ${password} realm_user
+./activate.sh -f
+./send_data.sh "https://example.com/state" "ON"
+```
 ### oisp-agent
 This is a "agent" program intended to run as a service. You can send a very simple message, such as
 ```
@@ -25,10 +75,8 @@ or a device update
 ```
 to a UDP socket on port 41234 or TCP socket on port 7070. The agent will handle secure communication with the upstream OISP instance.
 
-## Installing using git
+## Installing
 ``` bash
-git clone https://github.com/Open-IoT-Service-Platform/oisp-iot-agent.git
-cd oisp-iot-agent
 npm install
 ```
 
