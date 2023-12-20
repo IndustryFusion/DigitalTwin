@@ -45,10 +45,9 @@ function updateToken(token) {
 
 function updateSecrets(me) {
     var deviceConf = common.getDeviceConfig();
-    me.secret = {'accountId' : deviceConf['account_id'],
-                'deviceToken' : deviceConf['device_token'],
+    me.secret = {'deviceToken' : deviceConf['device_token'],
                 'refreshToken' : deviceConf['refresh_token'],
-                'refreshUrl' : deviceConf['keycloakUrl'],
+                'refreshUrl' : deviceConf['keycloak_url'],
                 'deviceTokenExpire': deviceConf['device_token_expire']};
 }
 
@@ -56,11 +55,11 @@ function getDeviceToken(me, token) {
     return new Promise(function(resolve, reject) {
         const parsedToken = JSON.parse(token);
         const data = querystring.stringify({
-            client_id: 'device-onboarding',
-            subject_token: parsedToken.access_token,
-            grant_type: 'urn:ietf:params:oauth:grant-type:token-exchange',
-            reuquest_token_type: 'urn:ietf:params:oauth:token-type:refresh_token',
-            audience: 'device'
+            client_id: 'device',
+            orig_token: parsedToken.access_token,
+            grant_type: 'refresh_token',
+            audience: 'device',
+            refresh_token: parsedToken.refreshToken
         })
         const myURL = new URL(me.secret.refreshUrl);
         const myHostname = myURL.hostname;
@@ -73,9 +72,7 @@ function getDeviceToken(me, token) {
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'Content-Length': Buffer.byteLength(data),
                 'X-GatewayID': me.gatewayId,
-                'X-DeviceID': me.deviceId,
-                'X-Access-Type': 'device',
-                'X-DeviceUID': 'uid'
+                'X-DeviceID': me.deviceId
             }
         }
 
@@ -110,9 +107,11 @@ function refreshToken(me) {
     return new Promise(function(resolve, reject) {
         var deviceConf = common.getDeviceConfig();
         const data = querystring.stringify({
-            client_id: 'device-onboarding',
+            client_id: 'device',
             refresh_token: deviceConf.refresh_token,
-            grant_type: 'refresh_token'
+            orig_token: deviceConf.device_token,
+            grant_type: 'refresh_token',
+            audience: 'device'
         })
         const myURL = new URL(me.secret.refreshUrl);
         const myHostname = myURL.hostname;
@@ -125,9 +124,7 @@ function refreshToken(me) {
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'Content-Length': Buffer.byteLength(data),
                 'X-GatewayID': me.gatewayId,
-                'X-DeviceID': me.deviceId,
-                'X-Access-Type': 'device',
-                'X-DeviceUID': 'uid'
+                'X-DeviceID': me.deviceId
             }
         }
 
@@ -164,10 +161,9 @@ function IoTKitCloud(logger, deviceId, customProxy) {
     var me = this;
     me.logger = logger;
     me.birthMsgStatus = false;
-    me.secret = {'accountId' : deviceConf['account_id'],
-                 'deviceToken' : deviceConf['device_token'],
+    me.secret = {'deviceToken' : deviceConf['device_token'],
                  'refreshToken' : deviceConf['refresh_token'],
-                 'refreshUrl' : deviceConf['keycloakUrl'],
+                 'refreshUrl' : deviceConf['keycloak_url'],
                  'deviceTokenExpire': deviceConf['device_token_expire']};
     me.max_retries = deviceConf.activation_retries || 10;
     me.deviceId = deviceId;
@@ -180,7 +176,7 @@ function IoTKitCloud(logger, deviceId, customProxy) {
         if (conf.connector.mqtt.sparkplugB) {
             me.spbMetricList = [];
             me.devProf = {
-                groupId   : deviceConf['account_id'],
+                groupId   : deviceConf['realm_id'],
                 edgeNodeId : deviceConf['gateway_id'],
                 clientId   : deviceConf['device_name'],
                 deviceId   : deviceConf['device_id'],         
@@ -231,33 +227,10 @@ function IoTKitCloud(logger, deviceId, customProxy) {
     }
 }
 
-IoTKitCloud.prototype.isActivated = function () {
-    return true;
-    var me = this;
-    if (!me.secret) {
-        me.secret = {
-            deviceToken: null,
-            accountId: null,
-            refreshToken: null,
-            deviceTokenExpire: null,
-        };
-    }
-    var token  = me.secret.deviceToken;
-    var account  = me.secret.accountId;
-    if (token && token.length > 0) {
-        if (account) {
-            return true;
-        }
-    }
-    return false;
-};
 
 IoTKitCloud.prototype.checkDeviceToken = function (callback) {
     var me = this,
         toCall = callback;
-    if (!me.isActivated()) {
-        return me.activate(callback);
-    }
 
     if (!me.secret.deviceTokenExpire) {
         me.secret.deviceTokenExpire = jwtDecoder(me.secret.deviceToken).exp * 1000; // convert to miliseconds
@@ -267,7 +240,7 @@ IoTKitCloud.prototype.checkDeviceToken = function (callback) {
         return toCall();
     } else {
         me.logger.info('Device token has expired - refreshing it now...');
-        const onboarding_token = require('../data/onboard-token.json');
+        //const onboarding_token = require('../data/onboard-token.json');
         var data = {
             token: me.secret.deviceToken,
             body: {
@@ -275,71 +248,11 @@ IoTKitCloud.prototype.checkDeviceToken = function (callback) {
             }
         };
         refreshToken(me)
-            .then(data => getDeviceToken(me, data))
+            //.then(data => getDeviceToken(me, data))
             .then(data => updateToken(data))
             .then(() => updateSecrets(me))
             .then(toCall())
             .catch((err) => this.logger.error("Could not refresh token: " + err.message))
-    }
-};
-
-/**
- * Handler to wait the token from server,
- * the token is use to auth metrics send by the device
- * @param data
- */
-IoTKitCloud.prototype.activationComplete = function (callback) {
-    var me = this,
-        toCall = callback;
-
-    var handler = function (data) {
-        me.logger.debug('Activation Data Received: ', data);
-        if (data && (data.status === 0)) {
-            me.secret.deviceToken = data.deviceToken;
-            me.secret.accountId = data.accountId;
-            me.secret.refreshToken = data.refreshToken;
-            me.secret.deviceTokenExpire = jwtDecoder(data.deviceToken).exp * 1000;
-            me.activationCompleted = true;
-            me.logger.info('Saving device and refresh tokens...');
-            common.saveToDeviceConfig('device_token', me.secret.deviceToken);
-            common.saveToDeviceConfig('refresh_token', me.secret.refreshToken);
-            common.saveToDeviceConfig('device_token_expire', me.secret.deviceTokenExpire);
-            common.saveToDeviceConfig('account_id', me.secret.accountId);
-        }
-        me.setDeviceCredentials();
-        toCall(data.status);
-    };
-    return handler;
-};
-
-/**
- * It will activate the device, by sending the activation code and receiving the token
- * from server if the token is at device the activation will not called.
- * @param callback
- */
-IoTKitCloud.prototype.activate = function (code, callback) {
-    var me = this,
-        toCall = callback;
-    me.logger.debug('Starting Activate Process function');
-    if ("function" === typeof code) {
-        toCall = code;
-        code = null;
-    }
-    function complete (status) {
-        /**
-        * It were sent ever activation the update Metadata,
-         * since every start/stop the HW could change.
-        */
-        toCall(status);
-    }
-    if (!me.isActivated()) {
-   
-        me.logger.error("Device has not been activated - exiting");
-        process.exit(1);
-    } else {
-        // skip the update since we were already activated
-        me.logger.info('Device has already been activated.');
-        complete(0);
     }
 };
 
@@ -395,7 +308,7 @@ IoTKitCloud.prototype.dataSubmit = function (metric, callback) {
             }
             checkFlag();
         } else {
-            me.warning.error("MQTT proxy not defined.");
+            me.warn.error("MQTT proxy not defined.");
         }
     };
 

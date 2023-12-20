@@ -1,30 +1,13 @@
 {
-  "name": "@open-iot-service-platform/oisp-iot-agent",
-  "version": "2.4.1",
-  "description": "OISP IoT agent for devices",
-  "main": "server.js",
-  "bin": {
-    "oisp-admin": "./oisp-admin.js",
-    "oisp-agent": "./oisp-agent.js"
-  },
+  "name": "iff-iot-agent",
+  "version": "0.1",
+  "description": "IFF IoT agent",
   "scripts": {
     "start": "node agent",
     "test": "grunt"
   },
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/Open-IoT-Service-Platform/oisp-iot-agent.git"
-  },
-  "keywords": [
-    "oisp",
-    "agent"
-  ],
   "author": "Intel",
   "license": "BSD-2-Clause",
-  "bugs": {
-    "url": "https://github.com/Open-IoT-Service-Platform/oisp-iot-agent/issues"
-  },
-  "homepage": "https://github.com/Open-IoT-Service-Platform/oisp-iot-agent",
   "dependencies": {
     "cli-table": "^0.3.1",
     "commander": "^2.20.0",

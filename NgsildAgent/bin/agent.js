@@ -41,19 +41,11 @@ process.on("uncaughtException", function(err) {
 
 utils.getDeviceId(function (id) {
     var cloud = Cloud.init(logger, id);
-    cloud.activate(function (status) {
-        if (status === 0) {
-            var udp = udpServer.singleton(conf.listeners.udp_port, logger);
+    var udp = udpServer.singleton(conf.listeners.udp_port, logger);
 
-            var agentMessage = Message.init(cloud, logger);
-            logger.info("Starting listeners...");
-            udp.listen(agentMessage.handler);
+    var agentMessage = Message.init(cloud, logger);
+    logger.info("Starting listeners...");
+    udp.listen(agentMessage.handler);
 
-            tcpServer.init(conf.listeners, logger, agentMessage.handler);
-
-        } else {
-            logger.error("Error in activation... err # : ", status);
-            process.exit(status);
-        }
-    });
+    tcpServer.init(conf.listeners, logger, agentMessage.handler);      
 });
