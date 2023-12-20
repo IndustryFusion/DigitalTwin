@@ -15,8 +15,9 @@
 #
 set -e
 
-DEVICES_NAMESPACE=devices
-usage="Usage: $(basename $0) [-s] [-f]"
+. common.sh
+
+usage="Usage: $(basename $0) [-s] [-f]\n"
 while getopts 'sfh' opt; do
   case "$opt" in
     f)
@@ -44,13 +45,9 @@ if [ -z "$file" ] && [ -z "$secret" ]; then
   exit 1
 fi
 
-# Define the JSON file path
-onboard_token_json_file="../data/onboard-token.json"
-dev_json_file="../data/device.json"
-
 # Check if the file exists
-if [ ! -f "$dev_json_file" ]; then
-    echo "JSON file not found: $dev_json_file. Initialization of device is needed."
+if [ ! -f "$DEVICE_FILE" ]; then
+    echo "JSON file not found: $DEVICE_FILE. Initialization of device is needed."
     exit 1
 fi
 
@@ -80,23 +77,24 @@ if [ -z "$file" ]; then
     sleep 2
   done
 else
-if [ ! -f "$onboard_token_json_file" ]; then
-    echo "JSON file not found: $onboard_token_json_file. But this is needed for onboarding from token file."
+if [ ! -f "$ONBOARDING_TOKEN_FILE" ]; then
+    echo "JSON file not found: $ONBOARDING_TOKEN_FILE. But this is needed for onboarding from token file."
     exit 1
 fi
-token=$(cat $onboard_token_json_file) 
+  token=$(cat $ONBOARDING_TOKEN_FILE) 
 fi
 
 
-refresh_token=$(jq -r '.refresh_token' "$onboard_token_json_file")
+refresh_token=$(echo $token | jq -r '.refresh_token')
+orig_token=$(echo $token | jq -r '.access_token')
 if [ -z "$refresh_token" ]; then
     echo "refresh_token not found, please check again"
     exit 1
 fi
 
-keycloakurl=$(jq -r '.keycloakUrl' "$dev_json_file")
-gatewayid=$(jq -r '.gateway_id' "$dev_json_file")
-deviceid=$(jq -r '.device_id' "$dev_json_file")
+keycloakurl=$(jq -r '.keycloak_url' "$DEVICE_FILE")
+gatewayid=$(jq -r '.gateway_id' "$DEVICE_FILE")
+deviceid=$(jq -r '.device_id' "$DEVICE_FILE")
 
 # Check if the file exists
 if [ -z "$keycloakurl" ] || [ -z "$gatewayid" ] ||[ -z "$deviceid" ]; then
@@ -109,7 +107,7 @@ DEVICE_TOKEN_ENDPOINT="$keycloakurl/protocol/openid-connect/token"
 echo "API endpoint is :" $DEVICE_TOKEN_ENDPOINT
 # Make the curl request with access token as a header and store the response in the temporary file
 device_token=$(curl -X POST "$DEVICE_TOKEN_ENDPOINT"  -d "client_id=device" \
--d "grant_type=refresh_token" -d "refresh_token=${refresh_token}" -d "audience=device" \
+-d "grant_type=refresh_token" -d "refresh_token=${refresh_token}" -d "orig_token=${orig_token}" -d "audience=device" \
 -H "X-GatewayID: $gatewayid" -H "X-DeviceID: $deviceid" 2>/dev/null | jq '.')
 
 if [ "$(echo $device_token | jq 'has("error")')" = "true" ]; then
@@ -123,8 +121,8 @@ fi
 
 # Replace access_key by device_key
 device_token=$(echo $device_token | jq 'with_entries(if .key == "access_token" then .key = "device_token" else . end)')
-updated_json_data=$(jq --argjson response "$device_token" '. += $response' "$dev_json_file")
-echo "$updated_json_data" > "$dev_json_file"
+updated_json_data=$(jq --argjson response "$device_token" '. += $response' "$DEVICE_FILE")
+echo "$updated_json_data" > "$DEVICE_FILE"
 
-echo "Device token stored in $dev_json_file " 
+echo "Device token stored in $DEVICE_FILE " 
 

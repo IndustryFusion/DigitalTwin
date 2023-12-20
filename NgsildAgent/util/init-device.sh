@@ -15,6 +15,7 @@
 #
 set -e
 
+. common.sh
 
 keycloakurl="http://keycloak.local/auth/realms/iff"
 realmid="iff"
@@ -61,7 +62,6 @@ if ! dpkg -l | grep -q "jq"; then
 fi
 
 # Define the JSON file path
-json_file="../data/device.json"
 
 json_data=$(jq -n \
         --arg deviceId "$deviceid" \
@@ -71,11 +71,11 @@ json_data=$(jq -n \
         '{ 
             "device_id": $deviceId, 
             "gateway_id": $gatewayId,
-            "realmId": $realmId,
-            "keycloakUrl": $keycloakUrl
+            "realm_id": $realmId,
+            "keycloak_url": $keycloakUrl
         }')
 
 # Create a new file and write the JSON data to it
-echo "$json_data" > "$json_file"
+echo "$json_data" > "$DEVICE_FILE"
 
-echo "Data has been saved to $json_file"
+echo "Data has been saved to $DEVICE_FILE"

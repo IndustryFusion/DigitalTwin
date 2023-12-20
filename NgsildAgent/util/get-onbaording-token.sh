@@ -15,9 +15,11 @@
 #
 set -e
 
-DEVICES_NAMESPACE=devices
+. common.sh
+
+
 secret_enabled=false;
-usage="Usage: $(basename $0) [-p password] [-s secret-file-name] <username>"
+usage="Usage: $(basename $0) [-p password] [-s secret-file-name] <username>\n"
 while getopts 's:p:h' opt; do
   case "$opt" in
     p)
@@ -49,9 +51,6 @@ if [ -z "${password}" ]; then
     echo -n Password: 
     read -s password
 fi;
-# Define the JSON file path
-onboard_token_json_file="../data/onboard-token.json"
-dev_json_file="../data/device.json"
 
 function create_secret() {
     token=$(echo -n "$1"| base64 -w 0)
@@ -70,48 +69,31 @@ EOF
 }
 
 
-if [ ! -f "$dev_json_file" ]; then
-    echo "Device file not found: $dev_json_file"
+if [ ! -f "$DEVICE_FILE" ]; then
+    echo "Device file not found: $DEVICE_FILE"
     exit 1
 fi
 
-#access_token=$(jq -r '.access_token' "$onboard_token_json_file")
-#if [ -z "$access_token" ]; then
-#    echo "access_token not found, please check again"
-#    exit 1
-#fi
 
 
-keycloakurl=$(jq -r '.keycloakUrl' "$dev_json_file")
-#gatewayid=$(jq -r '.gateway_id' "$dev_json_file")
-#deviceid=$(jq -r '.device_id' "$dev_json_file")
+keycloakurl=$(jq -r '.keycloak_url' "$DEVICE_FILE")
 
-# Check if the file exists
-#if [ -z "$keycloakurl" ] || [ -z "$gatewayid" ] ||[ -z "$deviceid" ]; then
-#    echo "device json file doesnot contain required item, may run again ./set-device.sh"
-#    exit 1
-#fi
 
-# Define the API endpoint
 ONBOARDING_TOKEN_ENDPOINT="$keycloakurl/protocol/openid-connect/token"
-#echo "API endpoint is :" $ONBOARDING_TOKEN_ENDPOINT
-# Make the curl request with access token as a header and store the response in the temporary file
+
 response_token=$(curl -X POST "$ONBOARDING_TOKEN_ENDPOINT"  -d "client_id=device" \
 -d "grant_type=password" -d "password=${password}" -d "username=${username}" 2>/dev/null | jq '.')
-#echo $response_token
 
-if [ "$(echo $response_token | jq 'has("error")')" = "true" ]; then
-    echo "Error: Invalid onbarding token found."
+if [ -z "$response_token" ] || [ "$(echo $response_token | jq 'has("error")')" = "true" ]; then
+    echo "Error: Invalid or no onbarding token received."
     exit 1
 fi
 
 # Replace access_key by device_key
-#response_token=$(echo $response_token | jq 'with_entries(if .key == "access_token" then .key = "device_token" else . end)')
 if [ "$secret_enabled" = "true" ]; then
     create_secret "$response_token"
     echo "Device token secret stored in $secret_file"
 else
-    echo "$response_token" > "$onboard_token_json_file"
-    echo "Device token stored in $onboard_token_json_file"
+    echo "$response_token" > "$ONBOARDING_TOKEN_FILE"
+    echo "Device token stored in $ONBOARDING_TOKEN_FILE"
 fi
-#updated_json_data=$(jq --argjson response "$response_token" '. += $response' "$dev_json_file")
