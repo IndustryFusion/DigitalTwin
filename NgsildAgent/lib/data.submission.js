@@ -50,6 +50,11 @@ var Data = function (connector, logT) {
      */
     me.submission = function (msg, callback) {
         if (me.validator(msg)) {
+            if (msg.t === undefined || msg.t === null) {
+                msg.t = "Property"
+            }
+            msg.n = msg.t + '/' + msg.n;
+            delete msg.t;
             me.logger.info ("Submitting: ", msg);
             if (config.connector.mqtt.sparkplugB) {
                 me.connector.dataSubmit(msg, function(dat) {

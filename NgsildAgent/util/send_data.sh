@@ -38,6 +38,6 @@ if [ -z $udpPort ]; then
   echo "No udp Port found. Please check $CONFIG_FILE"
 fi
 
-echo sending '{"n":"'${propName}'", "v":"'${value}'"}' to udp port ${udpPort} 
-echo '{"n":"'${propName}'", "v":"'${value}'"}'  > /dev/udp/127.0.0.1/${udpPort}
+echo sending '{"n":"'${propName}'", "v":"'${value}'", "t":"Property"}' to udp port ${udpPort} 
+echo -n '{"n":"'${propName}'", "v":"'${value}'", "t":"Property"}'  > /dev/udp/127.0.0.1/${udpPort}
 

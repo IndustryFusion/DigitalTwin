@@ -55,7 +55,7 @@ class Acl {
       const spBAclKey = spBAccountId + '/' + spBdevId;
       const allowed = await this.cache.getValue(spBAclKey, 'acl');
       if (allowed === undefined || !(allowed === 'true') || spBdevId !== username) {
-        this.logger.info('Connection rejected for realm ' + spBAccountId + ' device ' + spBdevId);
+        this.logger.info('Connection rejected for realm ' + spBAccountId + ' and device ' + spBdevId);
         res.sendStatus(400);
       } else {
         res.status(200).json({ result: 'allow' });

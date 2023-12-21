@@ -56,6 +56,7 @@ password=$(kubectl -n iff get secret/credential-iff-realm-user-iff -o jsonpath='
 ./activate.sh -f
 ./send_data.sh "https://example.com/state" "ON"
 ```
+
 ### oisp-agent
 This is a "agent" program intended to run as a service. You can send a very simple message, such as
 ```

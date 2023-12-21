@@ -308,7 +308,7 @@ IoTKitCloud.prototype.dataSubmit = function (metric, callback) {
             }
             checkFlag();
         } else {
-            me.warn.error("MQTT proxy not defined.");
+            me.logger.error("MQTT proxy not defined.");
         }
     };
 

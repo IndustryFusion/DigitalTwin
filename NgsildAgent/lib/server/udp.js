@@ -30,30 +30,30 @@ function Server(udpServerPort, logger) {
     me.server = dgram.createSocket("udp4");
 
     me.server.on("error", function (err) {
-        me.logger.error('UDP Error: ', err.stack);
+        me.logger.error('UDP Error: ' + err.stack);
     });
     me.server.on('close', function(rinfo) {
-        console.log('UDP Closing from ', rinfo);
+        console.log('UDP Closing from ' + rinfo);
     });
     me.server.on("message", function (msg, rinfo) {
-        me.logger.debug('UDP message from %s:%d', rinfo.address, rinfo.port);
+        me.logger.debug(`UDP message from ${rinfo.address}:${rinfo.port}`);
         if(rinfo.address !== "127.0.0.1") {
-            me.logger.debug('Ignoring external UDP message from %s', rinfo.address);
+            me.logger.debug('Ignoring external UDP message from ' + rinfo.address);
             return;
         }
         try {
             if (me.handleronMessage) {
-                var data = JSON.parse(msg);
+                var data =  JSON.parse(msg);
                 me.handleronMessage(data);
             }
         } catch (ex) {
-            me.logger.error('UDP Error on message: %s', ex.message);
+            me.logger.error('UDP Error on message: ' + ex.message);
             me.logger.error(ex.stack);
         }
     });
     me.server.on("listening", function () {
         var addr = me.server.address();
-        me.logger.info("UDP listener started on port: %d", addr.port);
+        me.logger.info("UDP listener started on port: " + addr.port);
     });
     me.server.bind(udpServerPort);
 }
@@ -66,7 +66,7 @@ Server.prototype.send = function (toClient, data) {
     var me = this;
     var msg = new Buffer.from(JSON.stringify(data));
     me.server.send(msg, 0, msg.length, toClient.port, toClient.address, function(err, bytes) {
-        me.logger.debug("Response: Send", err , " bytes ", bytes);
+        me.logger.debug("Response: Send" + err + " bytes " + bytes);
     });
 };
 Server.prototype.close = function () {
