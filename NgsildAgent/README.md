@@ -57,14 +57,15 @@ password=$(kubectl -n iff get secret/credential-iff-realm-user-iff -o jsonpath='
 ./send_data.sh "https://example.com/state" "ON"
 ```
 
-### oisp-agent
+### iff-agent
 This is a "agent" program intended to run as a service. You can send a very simple message, such as
 ```
-{"n": "temp", "v": 26.9}
+{"n": "<uri>", "v": 26.9, "t": "Property"}
+{"n": "<uri>", "v": "<urn>, "t": "Relationship"}
 ```
 or an array like this
 ```
-[{"n": "temp", "v": 26.9, "t": 1618325707931},{"n": "temp", "v": 27.2, "t": 1618325787105}]
+[{"n": "<uri>", "v": 26.9, "t": 1618325707931},{"n": "temp", "v": 27.2, "t": 1618325787105}]
 ```
 or a component registration
 ```

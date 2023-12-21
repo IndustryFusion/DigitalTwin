@@ -49,6 +49,14 @@ else
   exit 1
 fi
 
+urnPattern='^urn:[a-zA-Z0-9][a-zA-Z0-9-]{0,31}:[a-zA-Z0-9()+,\-\.:=@;$_!*%/?#]+$'
+if echo "$deviceid" | grep -E -q "$urnPattern"; then
+    echo "$deviceid is URN compliant."
+else
+    echo "$deviceid must be an URN. Please fix the deviceId. Exiting."
+    exit 1
+fi
+
 echo Processing with deviceid=${deviceid} gatewayid=${gatewayid} keycloakurl=${keycloakurl} realmid=${realmid}
 
 if [ ! -d ../data ]; then
