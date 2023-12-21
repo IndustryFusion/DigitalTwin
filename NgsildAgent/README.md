@@ -15,9 +15,9 @@ realmid=iff
 ```
 Example:
 ```bash
-./init-device.sh deviceid gatewayid
+./init-device.sh urn:iff:deviceid:1 gatewayid
 ```
-
+Note that `deviceid` must be compliant wiht URN format.
 ### get-onbaording-token.sh
 This script assumes a setup device-file, creates an onboarding token and stores it in the data directory.
 ```bash
@@ -45,12 +45,17 @@ Example:
 ```
 
 ### send-data.sh
+This script sends data to a device. It uses the UDP API (see below) to communicate to the Agent.
+```bash
+Usage: send_data.sh <propertyname> <value>
+```
+Node that it can only be used to send Properties. Relationships must be changed with NGSI-LD API or using the UDP API directly as shown below.
 
-### Use tools alltogether
+### Use tools alltogether to activate a device
 On a test system with a local kubernetes installed the following flow creates a default test device
 
 ```bash
-./init-device.sh deviceid gatewayid
+./init-device.sh urn:iff:deviceid:1 gatewayid
 password=$(kubectl -n iff get secret/credential-iff-realm-user-iff -o jsonpath='{.data.password}'| base64 -d)
 ./get-onbaording-token.sh -p ${password} realm_user
 ./activate.sh -f
@@ -58,24 +63,31 @@ password=$(kubectl -n iff get secret/credential-iff-realm-user-iff -o jsonpath='
 ```
 
 ### iff-agent
-This is a "agent" program intended to run as a service. You can send a very simple message, such as
+This is a "agent" program intended to run as a service. You can send a very simple NGSI-LD component message, such as
 ```
 {"n": "<uri>", "v": 26.9, "t": "Property"}
 {"n": "<uri>", "v": "<urn>, "t": "Relationship"}
 ```
 or an array like this
 ```
-[{"n": "<uri>", "v": 26.9, "t": 1618325707931},{"n": "temp", "v": 27.2, "t": 1618325787105}]
+[{"n": "<uri>", "v": 26.9, "on": 1618325707931, "t": "Property"},{"n": "<url>", "v": 27.2, "on": 1618325787105, "t": "Property}]
 ```
-or a component registration
+to a UDP socket on port 41234 or TCP socket on port 7070. The agent will handle secure communication with the upstream IFF instance.
+Note that the `<uri>` is the fully expanded JSON-LD field name of the property or relationship. E.g. The NGSI-LD object looks like
+
+```json
+{
+  "id": "urn:iff:deviceid:1",
+  "type": "type",
+  "http://example.com/state": "state" 
+}
+
 ```
-{"n": "temp", "t": "temperature.v1.0"}
+then the state can be updated by
+```json
+{"n": "http://example.com/state", "v": "ON", "t": "Property"}
 ```
-or a device update
-```
-{"attributes": {"owner": "Scott Ware"}, "tags": ["home","intel","x86_64"], "loc": [32.149989, -110.835842, 0]}
-```
-to a UDP socket on port 41234 or TCP socket on port 7070. The agent will handle secure communication with the upstream OISP instance.
+Note that the `t` paramter can be left out. In this case the default value for `t` is `Property`. 
 
 ## Installing
 ``` bash
@@ -88,78 +100,16 @@ Before using the agent you need to configure it so it knows how to communicate w
 ``` bash
 cp config/config.json.template config/config.json
 ```
-  
-#### Testing the connection
-Run the following command to test the connection: 
-``` bash
-./oisp-admin.js test
-```
-
-#### Configuring and Activating the Agent
-
-Set a unique Device Id with this command:
-``` bash
-./oisp-admin.js set-device-id <device_id>
-```
-
-You can also set a different Device name with this command:
-``` bash
-./oisp-admin.js set-device-name <device_name>
-```
-
-After the device registration, copy the activation code in _My Account_ UI, tab _Details_ (in _Account_ menu) and execute the activation command:
-``` bash
-./oisp-admin.js activate <activation_code>     
-```
-To verify activation, go back to your OISP dashboard and verify the status of the device previously registered.
-
-#### Adding Sensors and Actuators
-
-View in _My Account_ the _Catalog_ tab. You see predefined Sensors and Actuators but can also define your own types. For instance a default sensor is the _temperature.v1.0_ sensor. It can be added by the following command with the name _temp_:
-``` bash
-./oisp-admin.js register <name> <type>
-```
-e.g.
-``` bash
-./oisp-admin.js register temp temperature.v1.0
-```
-
-You can also register a component by sending
-```
-{"n": "temp", "t": "temperature.v1.0"}
-```
-to a UDP socket on port 41234 or TCP socket on port 7070.
-
-#### Sending Metrics
-
-After that, values for the component _temp_ can be sent by either the _oisp-admin_ to test, e.g.
-```
-./oisp-admin.js observation temp 22.1
-```
-
-or when the oisp-agent is running by sending
-```
-{"n": "temp", "v": 26.9}
-```
-or an array like this
-```
-[{"n": "temp", "v": 26.9, "t": 1618325707931},{"n": "temp", "v": 27.2, "t": 1618325787105}]
-```
-to a UDP socket on port 41234 or TCP socket on port 7070.
-
-Dependent of the configuration, the agent sends data with REST or MQTT. If MQTT is configured, agent and admin always try to use MQTT for data submission and control. All other calls, like activation of devices or registration of components is always done with REST.
 
 #### Starting the Agent
 
 To start the oisp-agent service simply execute the start script:
 ``` bash
-./oisp-agent.js
+./iff-agent.js
 ```
-## Usage
 
-For examples of how to use the 'oisp-agent' please see the [Examples](https://github.com/Open-IoT-Service-Platform/oisp-iot-agent/tree/master/examples) provided.
 
-### Enabling SparkPlugB Standard 
+### Configure SparkPlugB Standard 
 
 1. To enable SparkplugB standard data format, you need to update the agent config as below:
 
@@ -211,55 +161,14 @@ For examples of how to use the 'oisp-agent' please see the [Examples](https://gi
 
   Eg. Name: "Property/https://industry-fusion.com/types/v0.9/state"
 
-## Test
-
-The oisp-agent project uses [gruntjs](http://gruntjs.com/) [mocha](http://visionmedia.github.io/mocha/) as its test framework. 
-To run all tests:
-``` bash
-npm install 
-./node_modules/grunt-cli/bin/grunt
-```
-
-## Certificates
-
-> Do not use the default certificates in production.
-
-The OISP Agent includes default certificates to provide "out of the box" connectivity. These are fine for public data submissions but should not be used for production deployments.
 
 ## Using Docker
 
-### Build the image
-````bash
-make
-````
+TBD
 
-### Start container with bash to configure agent
-````bash
-make configure
-````
-
-### Start container (connect to production server)
-````bash
-make start
-````
-
-### Start container (connect to local server)
-````bash
-make start-local
-````
-
-### Stop container
-````bash
-make stop
-````
-
-### Remove container and image 
-````bash
-make clean
-````
 #### Known limitations
  
-* Components registered through the OISP Cloud API will not be known by the oisp-agent.
+* TBD
 
 
 ## Onboarding
@@ -278,14 +187,14 @@ autonumber
    Admin ->> Keycloak: Request Onboarding Token
    Keycloak ->> Admin: Return Onboarding Token
    Admin ->> Device: Provide Onboarding Token
-   Device ->> Keycloak: Activate by Refreshing and providing device id in HTTP Headers ('X-DeviceId' and 'X-GatewayId')
+   Device ->> Keycloak: Activate by Refreshing with refresh_token, providing the old access token in the "orig_token" form-data-fiel and providing device id in HTTP Headers ('X-DeviceId' and 'X-GatewayId')
    Keycloak ->> Device: Provide Device Token and Refreshed Token with "device_id" and "gateway" as claim
    Device ->> MQTT: checks "device_id" claim in token and compares it with mqtt topics
 
 ```
 There are two kinds of tokens:
 1. Onboarding Token - A token which is not yet assigned to a specific device and can be used to onboard any device.
-2. Device Token - A token which has assigned a specific device and can be refreshed with a `refresh token`. A Device Token is generated by refreshing an Onboarding Token and set in this request the headers `X-DeviceId` and `X-GatewayId`
+2. Device Token - A token which has assigned a specific device and can be refreshed with a `refresh token`. A Device Token is generated by refreshing an Onboarding Token, adding the old `access_token` to the `orig_token` form-field and set in this request the headers `X-DeviceId` and `X-GatewayId`
 
 (1) Example for payload of Onboarding Token
 ```
