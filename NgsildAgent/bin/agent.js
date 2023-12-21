@@ -29,13 +29,12 @@ var logger = require('../lib/logger').init(),
     udpServer = require('../lib/server/udp'),
     tcpServer = require("../lib/server/tcp"),
     utils = require("../lib/utils").init(),
-    pkgJson = require('../package.json'),
     conf = require('../config');
 
 process.on("uncaughtException", function(err) {
     logger.error("UncaughtException:", err.message);
     logger.error(err.stack);
-    // let the process exit so that forever can restart it
+    // let the process exit so that k8s can restart is
     process.exit(1);
 });
 
@@ -46,6 +45,5 @@ utils.getDeviceId(function (id) {
     var agentMessage = Message.init(cloud, logger);
     logger.info("Starting listeners...");
     udp.listen(agentMessage.handler);
-
     tcpServer.init(conf.listeners, logger, agentMessage.handler);      
 });

@@ -68,28 +68,12 @@ var Data = function (connector, logT) {
                 // Handle multiple observations
                 if (Array.isArray(msg)) {
                     for (var i = msg.length - 1; i >= 0; i -= 1) {
-                        // Check component id
-                        /*var cidArr = me.store.byName(msg[i].n);
-                        if (cidArr) {
-                            msg[i].cid = cidArr.cid; // Add component id to observation
-                        } else {
-                            me.logger.error('Data submission - could not find time series with the name: %s.', msg[i].n);
-                            msg.splice(i, 1);
-                        }*/
                     }
                     // Check if we have any data left to submit
                     if (msg.length === 0) {
                         me.logger.error('Data submission - no data to submit.');
                         return callback(false);
                     }
-                } else {
-                    /*var cid = me.store.byName(msg.n);
-                    if (cid) {
-                        msg.cid = cid.cid; // Add component id to message
-                    } else {
-                        me.logger.error('Data submission - could not find time series with the name: %s.', msg.n);
-                        return callback(true);
-                    }*/
                 }
 
                 metric.set(msg);
@@ -100,7 +84,7 @@ var Data = function (connector, logT) {
                 });
             }
         } else {
-            me.logger.debug('Data submission - No detected Expected %j got %j', sampleMetric, msg, {});
+            me.logger.debug(`Data submission - No detected Expected ${sampleMetric} got ${msg}`);
             return callback(false);
         }
     };

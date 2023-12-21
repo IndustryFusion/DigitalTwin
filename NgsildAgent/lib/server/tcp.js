@@ -33,7 +33,7 @@ exports.init = function(conf, logger, onMessage) {
         try {
             onMessage(data);
         } catch (ex) {
-            logger.error('TCP Error on message: %s', ex.message);
+            logger.error('TCP Error on message: ' + ex.message);
             logger.error(ex.stack);
         }
     }
@@ -42,9 +42,9 @@ exports.init = function(conf, logger, onMessage) {
     server.listen(tcpServerPort, tcpServerHost);
 
     server.on('connection', function(socket) {
-        logger.debug('TCP connection from %s:%d', socket.remoteAddress, socket.remotePort);
+        logger.debug(`TCP connection from ${socket.remoteAddress}:${socket.remotePort}%d`);
         if(socket.remoteAddress !== "127.0.0.1") {
-            logger.debug("Ignoring remote connection from %s", socket.remoteAddress);
+            logger.debug("Ignoring remote connection from " + socket.remoteAddress);
             return;
         }
 
@@ -55,8 +55,7 @@ exports.init = function(conf, logger, onMessage) {
         });
     });
 
-    logger.info("TCP listener started on port: %d", tcpServerPort);
-
+    logger.info("TCP listener started on port: " + tcpServerPort);
     return server;
 
 };

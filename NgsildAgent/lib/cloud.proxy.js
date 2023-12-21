@@ -25,15 +25,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 "use strict";
 
 var jwtDecoder = require('jwt-decode'),
-    msg = require('../lib/cloud-message'),
     common = require('./common'),
-    utils = require('./utils').init(),
-    udpServer = require('./server/udp'),
     conf = require('../config');
 const http = require('http');
-const url = require('url');
 const querystring = require('querystring');
-
 const devicefile = './data/device.json';
 
 
@@ -188,7 +183,7 @@ function IoTKitCloud(logger, deviceId, customProxy) {
                 me.spBProxy.updateDeviceInfo(deviceConf);
             } else {
                 me.logger.info("No credentials found for MQTT");
-                me.spBProxy = undefined;
+                process.exit(1);
             }
             if (me.spBProxy != undefined ) { 
                 /** 
@@ -197,15 +192,15 @@ function IoTKitCloud(logger, deviceId, customProxy) {
                 */
                 me.spBProxy.nodeBirth(me.devProf, function(err) {
                     if (err === "fail") {
-                        me.logger.error("SparkplugB MQTT NBIRTH Metric not sent");
-                        me.spBProxy = undefined;
+                        me.logger.error("SparkplugB MQTT NBIRTH Metric not sent. Trying to refresh token. Then start me again.");
+                        me.checkDeviceToken(() => {process.exit(1);});
                     } else {
                         me.logger.info("SparkplugB MQTT NBIRTH Metric sent succesfully for eonid: " + me.gatewayId);
                         me.logger.debug("SparkplugB MQTT DBIRTH Metric: " + me.spbMetricList);
                         me.spBProxy.deviceBirth(me.devProf, function(err) {                
                             if (err === "fail") {
-                                me.logger.error("SparkplugB MQTT DBIRTH Metric not sent");
-                                me.spBProxy = undefined;
+                                me.logger.error("SparkplugB MQTT DBIRTH Metric not sent. Check connection and token. Bye!");
+                                process.exit(1);
                             } else {
                                 me.birthMsgStatus = true; 
                                 me.logger.info("SparkplugB MQTT DBIRTH Metric sent succesfully for device: " + me.deviceId);
@@ -215,14 +210,8 @@ function IoTKitCloud(logger, deviceId, customProxy) {
                 });       
             }
         } else {
-            me.mqttProxy = require('./proxy')(conf).lib.proxies.getMQTTConnector();
-            me.logger.info("Configuring MQTT...");
-            if (deviceConf.device_id && deviceConf.device_token) {
-                me.mqttProxy.updateDeviceInfo(deviceConf);
-            } else {
-                me.logger.info("No credentials found for MQTT!");
-                me.mqttProxy = undefined;
-            }
+            me.logger.error("Could not start MQTT Proxy. Try later again. Bye!");
+            process.exit(1);
         }
     }
 }
@@ -251,7 +240,7 @@ IoTKitCloud.prototype.checkDeviceToken = function (callback) {
             //.then(data => getDeviceToken(me, data))
             .then(data => updateToken(data))
             .then(() => updateSecrets(me))
-            .then(toCall())
+            .then(() => toCall())
             .catch((err) => this.logger.error("Could not refresh token: " + err.message))
     }
 };
