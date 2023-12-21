@@ -25,16 +25,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 var Data = require('./data.submission'),
     schemaValidation = require('./schema-validator')
 
-var MessageHandler = function(connector, logger) {
+var MessageHandler = function(connector, logger, data) {
     var me = this;
-    me.data = Data.init(connector, logger);
+    me.data = data; //Data.init(connector, logger);
 
-    me.handler = function (msg, callback) {
+    me.handler = async function (msg, callback) {
         var msgResult = [];
 
         // Validate data submission
         if (schemaValidation.validate(msg, schemaValidation.schemas.data.SUBMIT).length === 0) {
-            me.data.submission(msg, function (status_sub) {
+            await me.data.submission(msg, function (status_sub) {
                 if (status_sub === false) {
                     msgResult.push(new Error("None Submit data matching"));
                     logger.error('Invalid message received (empty) : ', msg, msgResult);
@@ -53,8 +53,9 @@ var MessageHandler = function(connector, logger) {
     };
 };
 
-var init = function(connector, logger) {
-    return new MessageHandler(connector, logger);
+var init = async function(connector, logger) {
+    var data = await Data.init(connector, logger)
+    return new MessageHandler(connector, logger, data);
 };
 module.exports = {
     init : init

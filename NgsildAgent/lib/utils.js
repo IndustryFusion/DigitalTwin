@@ -45,19 +45,10 @@ IoTKitUtils.prototype.getAgentAttr = function () {
 };
 
 
-IoTKitUtils.prototype.getDeviceId = function(cb) {
-    var me = this;
-    if (!cb) {
-        throw "Callback required";
-    }
-    // if use explicit Id if one was defined in the configuration file
-    // account for the different ways people could spell it ;)
-    if (me.did) {
-        cb(me.did);
-        return;
-    }
+IoTKitUtils.prototype.getDeviceId = function() {
+    return this.did;
   
-    mac.getMac(function(err, macAddress) {
+    /*mac.getMac(function(err, macAddress) {
         var result = null;
         if (err) {
         //Unable to get MAC address
@@ -67,7 +58,7 @@ IoTKitUtils.prototype.getDeviceId = function(cb) {
         }
         me.did = result;
         cb(result);
-    });
+    });*/
 };
 IoTKitUtils.prototype.getIPs = function() {
     var addresses = [];

@@ -24,8 +24,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 'use strict';
 var schemaValidation = require('./schema-validator'),
-    config = require ('../config'),
-    Metric = require('./proxy')(config).lib.data.metric.init();
+    config = require ('../config');
+    //Metric = require('./proxy')(config).lib.data.metric.init();
+const DbManager = require('./dbManager')
 
 /**
  *
@@ -36,32 +37,48 @@ var sampleMetric = {"n": "temp-sensor",
 
 
 
-var Data = function (connector, logT) {
+var Data = function (connector, logT, dbManager) {
     var me = this;
     me.logger = logT || {};
     me.connector = connector;
     me.validator = schemaValidation.validateSchema(schemaValidation.schemas.data.SUBMIT);
-
+    me.dbManager = dbManager;
     /**
      * It will process a component registration if
      * it is not a component registration will return false
      * @param msg
      * @returns {boolean}
      */
-    me.submission = function (msg, callback) {
+    me.submission = async function (msg, callback) {
+        if (msg.t === undefined || msg.t === null) {
+            msg.t = "Property"
+        }
+        if (msg.on === undefined || msg.on === null) {
+            msg.on = new Date().getTime();
+        }
         if (me.validator(msg)) {
-            if (msg.t === undefined || msg.t === null) {
-                msg.t = "Property"
+            try {
+                await dbManager.preInsert(msg, 1)
+            } catch (e) {
+                this.logger.warn("Error in local database: " + e.message)
             }
+            const msgKey = {n: msg.n, on: msg.on};
             msg.n = msg.t + '/' + msg.n;
             delete msg.t;
             me.logger.info ("Submitting: ", msg);
             if (config.connector.mqtt.sparkplugB) {
-                me.connector.dataSubmit(msg, function(dat) {
+                me.connector.dataSubmit(msg, async function(dat) {
+                    if (dat !== 'fail') {
+                        try {
+                            await me.dbManager.acknowledge(msgKey)
+                        } catch (e) {
+                            me.logger.warn("Error in local database: " + e.message)
+                        }
+                    }       
                     me.logger.info("Response received: " + JSON.stringify(dat));
                     return callback(dat);
                 });
-            } else {
+            } /*else {
                 // Metric to hold data for submission
                 var metric = new Metric();
 
@@ -82,15 +99,22 @@ var Data = function (connector, logT) {
                     me.logger.info("Response received:", dat);
                     return callback(dat);
                 });
-            }
+            }*/
         } else {
             me.logger.debug(`Data submission - No detected Expected ${sampleMetric} got ${msg}`);
+            try {
+                await dbManager.preInsert(msg, 0)
+            } catch (e) {
+                this.logger.warn("Error in local database: " + e.message)
+            }
             return callback(false);
         }
     };
 
 };
-var init = function(connector, logger) {
-    return new Data(connector, logger);
+var init = async function(connector, logger) {
+    var dbManager = new DbManager(config)
+    await dbManager.init()
+    return new Data(connector, logger, dbManager);
 };
 module.exports.init = init;

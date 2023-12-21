@@ -9,6 +9,9 @@
 		"path": "/tmp/",
 		"max_size": 134217728
 	},
+	"dbManager": {
+		"file": "metric.db"
+	},
 	"connector": {
 		"mqtt": {
 			"host": "emqx-listeners",

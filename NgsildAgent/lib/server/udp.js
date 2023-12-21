@@ -35,7 +35,7 @@ function Server(udpServerPort, logger) {
     me.server.on('close', function(rinfo) {
         console.log('UDP Closing from ' + rinfo);
     });
-    me.server.on("message", function (msg, rinfo) {
+    me.server.on("message", async function (msg, rinfo) {
         me.logger.debug(`UDP message from ${rinfo.address}:${rinfo.port}`);
         if(rinfo.address !== "127.0.0.1") {
             me.logger.debug('Ignoring external UDP message from ' + rinfo.address);
@@ -44,7 +44,7 @@ function Server(udpServerPort, logger) {
         try {
             if (me.handleronMessage) {
                 var data =  JSON.parse(msg);
-                me.handleronMessage(data);
+                await me.handleronMessage(data);
             }
         } catch (ex) {
             me.logger.error('UDP Error on message: ' + ex.message);

@@ -38,12 +38,12 @@ process.on("uncaughtException", function(err) {
     process.exit(1);
 });
 
-utils.getDeviceId(function (id) {
+const id = utils.getDeviceId();
+(async () => {
     var cloud = Cloud.init(logger, id);
     var udp = udpServer.singleton(conf.listeners.udp_port, logger);
-
-    var agentMessage = Message.init(cloud, logger);
+    var agentMessage = await Message.init(cloud, logger);
     logger.info("Starting listeners...");
     udp.listen(agentMessage.handler);
     tcpServer.init(conf.listeners, logger, agentMessage.handler);      
-});
+})();
