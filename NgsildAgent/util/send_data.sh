@@ -13,23 +13,51 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-set -e
+set +e
 
 . common.sh
 
-usage="Usage: $(basename $0) <propertyname> <value> \n"
+usage="Usage: $(basename $0) [-a] [<propertyname> <value>]+ \n"
+while getopts 'ah' opt; do
+  case "$opt" in
+    a)
+      array=true
+      ;;
+    ?|h)
+      printf "$usage"
+      exit 1
+      ;;
+  esac
+done
+shift "$(($OPTIND -1))"
 
-if [ $# -eq 2 ]; then
+num_args=$#
+if [ "${num_args}" -eq 2 ] && [ -z "$array" ]; then
   propName="$1"
   value="$2"
+  payload='{"n":"'${propName}'", "v":"'${value}'", "t":"Property"}'
+elif [ "$((num_args%2))" -eq 0 ] && [ -n "$array" ]; then
+  payload="["
+  while [ "$#" -gt 0 ]; do
+    payload="${payload}{\"n\": \"$1\", \"v\": \"$2\"}"
+    shift 2
+    if [ $# -gt 0 ]; then
+      payload="${payload},"
+    fi
+  done
+  payload="${payload}]"
+elif [ -z "$array" ]; then
+  echo "Error: Expected propertyname and value"
+  printf "${usage}"
+  exit 1
 else
-  echo "Error: Expected propertyname and value."
+  echo "Error: Expected even number of arguments to form propertyname and value pairs."
   printf "${usage}"
   exit 1
 fi
 
 if [ -z "$CONFIG_FILE" ]; then
-  echo "$CONFIG_FILE does not exists. Please prepare it.!"
+  echo "$CONFIG_FILE does not exists. Please prepare it!"
   exit 1
 fi
 udpPort=$(jq '.listeners.udp_port' $CONFIG_FILE)
@@ -38,6 +66,5 @@ if [ -z $udpPort ]; then
   echo "No udp Port found. Please check $CONFIG_FILE"
 fi
 
-echo sending '{"n":"'${propName}'", "v":"'${value}'", "t":"Property"}' to udp port ${udpPort} 
-echo -n '{"n":"'${propName}'", "v":"'${value}'", "t":"Property"}'  > /dev/udp/127.0.0.1/${udpPort}
-
+echo "sending $payload to udp port ${udpPort}"
+echo -n "$payload"  > /dev/udp/127.0.0.1/${udpPort}

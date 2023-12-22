@@ -10,7 +10,7 @@
 		"max_size": 134217728
 	},
 	"dbManager": {
-		"file": "metric.db"
+		"file": "metrics.db"
 	},
 	"connector": {
 		"mqtt": {

@@ -32,8 +32,8 @@ const DbManager = require('./dbManager')
  *
  * @type {{n: string, v: number}}
  */
-var sampleMetric = {"n": "temp-sensor",
-                    "v": 26.7 };
+var sampleMetric = {"n": "<uri>",
+                    "v": "value" };
 
 
 
@@ -49,65 +49,50 @@ var Data = function (connector, logT, dbManager) {
      * @param msg
      * @returns {boolean}
      */
-    me.submission = async function (msg, callback) {
-        if (msg.t === undefined || msg.t === null) {
-            msg.t = "Property"
+    me.submission = async function (msgs, callback) {
+        if (! Array.isArray(msgs)) {
+            msgs = [msgs]
         }
-        if (msg.on === undefined || msg.on === null) {
-            msg.on = new Date().getTime();
-        }
-        if (me.validator(msg)) {
-            try {
-                await dbManager.preInsert(msg, 1)
-            } catch (e) {
-                this.logger.warn("Error in local database: " + e.message)
+        let msgKeys=[];
+        for (const msg of msgs) {
+            if (msg.t === undefined || msg.t === null) {
+                msg.t = "Property"
             }
-            const msgKey = {n: msg.n, on: msg.on};
-            msg.n = msg.t + '/' + msg.n;
-            delete msg.t;
-            me.logger.info ("Submitting: ", msg);
-            if (config.connector.mqtt.sparkplugB) {
-                me.connector.dataSubmit(msg, async function(dat) {
-                    if (dat !== 'fail') {
-                        try {
-                            await me.dbManager.acknowledge(msgKey)
-                        } catch (e) {
-                            me.logger.warn("Error in local database: " + e.message)
-                        }
-                    }       
-                    me.logger.info("Response received: " + JSON.stringify(dat));
-                    return callback(dat);
-                });
-            } /*else {
-                // Metric to hold data for submission
-                var metric = new Metric();
-
-                // Handle multiple observations
-                if (Array.isArray(msg)) {
-                    for (var i = msg.length - 1; i >= 0; i -= 1) {
-                    }
-                    // Check if we have any data left to submit
-                    if (msg.length === 0) {
-                        me.logger.error('Data submission - no data to submit.');
-                        return callback(false);
-                    }
+            if (msg.on === undefined || msg.on === null) {
+                msg.on = new Date().getTime();
+            }
+            if (me.validator(msg)) {
+                try {
+                    await dbManager.preInsert(msg, 1)
+                } catch (e) {
+                    this.logger.warn("Error in local database: " + e.message)
                 }
-
-                metric.set(msg);
-
-                me.connector.dataSubmit(metric, function(dat) {
-                    me.logger.info("Response received:", dat);
-                    return callback(dat);
-                });
-            }*/
-        } else {
-            me.logger.debug(`Data submission - No detected Expected ${sampleMetric} got ${msg}`);
-            try {
-                await dbManager.preInsert(msg, 0)
-            } catch (e) {
-                this.logger.warn("Error in local database: " + e.message)
+                msgKeys.push({n: msg.n, on: msg.on});
+                msg.n = msg.t + '/' + msg.n;
+                delete msg.t;
+            } else {
+                me.logger.debug(`Data submission - Validation failed. Expected something like ${sampleMetric} got ${msg}`);
+                try {
+                    await dbManager.preInsert(msg, 0)
+                } catch (e) {
+                    this.logger.warn("Error in local database: " + e.message)
+                }
+                return callback(false);
             }
-            return callback(false);
+        }
+        me.logger.info ("Submitting: ", msgs);
+        if (config.connector.mqtt.sparkplugB) {
+            me.connector.dataSubmit(msgs, async function(dat) {
+                if (dat !== 'fail') {
+                    try {
+                        await me.dbManager.acknowledge(msgKeys)
+                    } catch (e) {
+                        me.logger.warn("Error in local database: " + e.message)
+                    }
+                }       
+                me.logger.info("Response received: " + JSON.stringify(dat));
+                return callback(dat);
+            });
         }
     };
 

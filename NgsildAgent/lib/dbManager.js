@@ -43,7 +43,7 @@ class DbManager{
                 if (error) {
                     reject(error);
                 } else {
-                    me.db.run(`CREATE TABLE IF NOT EXISTS ${tableName} (n TEXT, v TEXT, \`on\` TIMESTAMP, sent INTEGER, valid INTEGER)`, error => {
+                    me.db.run(`CREATE TABLE IF NOT EXISTS ${tableName} (n TEXT, v TEXT, \`on\` TIMESTAMP, t TEXT, sent INTEGER, valid INTEGER)`, error => {
                         if (error) {
                             reject(error);
                         } else {
@@ -59,7 +59,7 @@ class DbManager{
     }
     async preInsert(msg, valid) {
         return new Promise( (resolve, reject) =>
-            this.db.run(`INSERT INTO ${tableName} VALUES ('${msg.n}', '${msg.v}', '${msg.on}', 0, ${valid})`, error => { 
+            this.db.run(`INSERT INTO ${tableName} VALUES ('${msg.n}', '${msg.v}', '${msg.on}', '${msg.t}', 0, ${valid})`, error => { 
                 if (error) {
                     reject(error)
                 } else {
@@ -68,10 +68,19 @@ class DbManager{
             })
         )
     }
-    async acknowledge(msg) {
+    async acknowledge(msgs) {
         return new Promise( (resolve, reject) => {
-            const statement = `UPDATE ${tableName} SET sent = 1 where \`on\` = ${msg.on} and n = '${msg.n}'`;
-            console.log("statement: " + statement); 
+            let conditions = '';
+            let first = true;
+            for (const msg of msgs) {
+                if (first) {
+                    first = false;
+                } else {
+                    conditions += ' or '
+                }
+                conditions += `(\`on\` = ${msg.on} and n = '${msg.n}')`;
+            }
+            const statement = `UPDATE ${tableName} SET sent = 1 where ${conditions}`;
             this.db.run(statement, error => { 
                 if (error) {
                     reject(error)
