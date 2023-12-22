@@ -24,14 +24,31 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 'use strict';
 
 const sqlite3 = require('sqlite3').verbose();
-const housekeepingInterval = 3600000;
+const housekeepingIntervalDefault = 3600000;
 const tableName = 'metrics';
+const retentionDefault = 3600;
+
+
+async function housekeeping (retention, db) {
+    console.log(`dbManager housekeeping. Deleteing samples older than ${retention}s.`);
+    const statement = `DELETE FROM ${tableName} where \`on\` < strftime('%s', 'now') * 1000-${retention} * 1000;` 
+    return new Promise((resolve, reject) =>
+        db.run(statement, error => { 
+            if (error) {
+                reject(error)
+            } else {
+                resolve()
+            }
+        })
+    )
+}
+
 
 class DbManager{
 
     constructor(config){
         this.config = config;
-        setTimeout(this.housekeeping, housekeepingInterval)
+
     }
 
     async init () {
@@ -52,13 +69,15 @@ class DbManager{
                     });
                 }
             });
+            let retention = this.config.dbManager.retentionInSeconds || retentionDefault;
+            let housekeepingInterval = this.config.dbManager.housekeepingIntervalInSeconds * 1000 || housekeepingIntervalDefault;
+            console.log(`DBManager setup with housekeeping interval ${housekeepingInterval}ms and retention ${retention}s`)
+            this.intervalId = setInterval(housekeeping, housekeepingInterval, retention, this.db)
         });
     }
-    housekeeping () {
-        console.log("dbManager housekeeping");
-    }
+    
     async preInsert(msg, valid) {
-        return new Promise( (resolve, reject) =>
+        return new Promise((resolve, reject) =>
             this.db.run(`INSERT INTO ${tableName} VALUES ('${msg.n}', '${msg.v}', '${msg.on}', '${msg.t}', 0, ${valid})`, error => { 
                 if (error) {
                     reject(error)
@@ -69,7 +88,7 @@ class DbManager{
         )
     }
     async acknowledge(msgs) {
-        return new Promise( (resolve, reject) => {
+        return new Promise((resolve, reject) => {
             let conditions = '';
             let first = true;
             for (const msg of msgs) {
