@@ -102,25 +102,28 @@ IoTKitSparkplugBCloud.prototype.pullActuations = function (data, callback) {
 * Payload for device birth is by default created in function createNodeBirthMetrics
 */
 
-IoTKitSparkplugBCloud.prototype.nodeBirth = function (devProf, callback) {
-    var me = this;
-    var topic = common.buildPath(me.topics.metric_topic, [me.spbConf.version,devProf.groupId,"NBIRTH",devProf.edgeNodeId, "" ]);
-    var client_data = {
-        "hwVersion" : null,
-        "swVersion" : null
-    }
-    var payload = {
-        "timestamp" : new Date().getTime(),
-        "metrics" : createNodeBirthMetrics(client_data),
-        "seq" : 0
-    };   
-   
-    return me.client.publish(topic, payload, me.pubArgs, function(err) {
-        if (err) {
-            return callback("fail");
-        } 
-        return callback({status : 0});
-    });
+IoTKitSparkplugBCloud.prototype.nodeBirth = async function (devProf) {
+    return new Promise((resolve, reject) => {
+        var me = this;
+        var topic = common.buildPath(me.topics.metric_topic, [me.spbConf.version,devProf.groupId,"NBIRTH",devProf.edgeNodeId, "" ]);
+        var client_data = {
+            "hwVersion" : null,
+            "swVersion" : null
+        }
+        var payload = {
+            "timestamp" : new Date().getTime(),
+            "metrics" : createNodeBirthMetrics(client_data),
+            "seq" : 0
+        };   
+    
+        me.client.publish(topic, payload, me.pubArgs, function(err) {
+            if (err) {
+                reject(err);
+            } else {
+                resolve({status : 0});
+            }
+        });
+    })
 };
 
 /* For publishing sparkplugB standard device BIRTH message
@@ -130,18 +133,21 @@ IoTKitSparkplugBCloud.prototype.nodeBirth = function (devProf, callback) {
 */
 
 IoTKitSparkplugBCloud.prototype.deviceBirth = function (devProf, callback) {
-    var me = this;
-    var topic = common.buildPath(me.topics.metric_topic, [me.spbConf.version,devProf.groupId,"DBIRTH",devProf.edgeNodeId,devProf.deviceId]);
-    var payload = {
-        "timestamp" : new Date().getTime(),
-        "metrics" : devProf.componentMetric,
-        "seq" : incSeqNum()
-    };   
-    return me.client.publish(topic, payload, me.pubArgs, function(err) {
-        if (err) {     
-            return callback("fail");
-        }
-        return callback({status : 0});
+    return new Promise((resolve, reject) => {
+        var me = this;
+        var topic = common.buildPath(me.topics.metric_topic, [me.spbConf.version,devProf.groupId,"DBIRTH",devProf.edgeNodeId,devProf.deviceId]);
+        var payload = {
+            "timestamp" : new Date().getTime(),
+            "metrics" : devProf.componentMetric,
+            "seq" : incSeqNum()
+        };   
+        me.client.publish(topic, payload, me.pubArgs, function(err) {
+            if (err) {     
+                reject(err);
+            } else {
+                resolve({status : 0});
+            }
+        });
     });
 };
 

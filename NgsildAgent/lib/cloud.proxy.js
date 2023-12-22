@@ -40,63 +40,13 @@ function updateToken(token) {
 
 function updateSecrets(me) {
     var deviceConf = common.getDeviceConfig();
+    me.spBProxy.updateDeviceInfo(deviceConf);
     me.secret = {'deviceToken' : deviceConf['device_token'],
                 'refreshToken' : deviceConf['refresh_token'],
                 'refreshUrl' : deviceConf['keycloak_url'],
                 'deviceTokenExpire': deviceConf['device_token_expire']};
 }
 
-function getDeviceToken(me, token) {
-    return new Promise(function(resolve, reject) {
-        const parsedToken = JSON.parse(token);
-        const data = querystring.stringify({
-            client_id: 'device',
-            orig_token: parsedToken.access_token,
-            grant_type: 'refresh_token',
-            audience: 'device',
-            refresh_token: parsedToken.refreshToken
-        })
-        const myURL = new URL(me.secret.refreshUrl);
-        const myHostname = myURL.hostname;
-        const myPath = myURL.pathname + '/protocol/openid-connect/token';
-        const options = {
-            hostname: myHostname,
-            path: myPath,
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'Content-Length': Buffer.byteLength(data),
-                'X-GatewayID': me.gatewayId,
-                'X-DeviceID': me.deviceId
-            }
-        }
-
-        const req = http.request(options, res => {
-            let data = ''
-            const statusCode = res.statusCode;
-
-            res.on('data', chunk => {
-                data += chunk
-            })
-
-            res.on('end', () => {
-                
-                if (res.statusCode === 200) {
-                    resolve(data);
-                } else {
-                    reject(data);
-                }
-            })
-        })
-        .on('error', err => {
-            console.log('Error: ', err.message)
-            reject(err.message)
-        })
-
-        req.write(data)
-        req.end()
-    });
-}
 
 function refreshToken(me) {
     return new Promise(function(resolve, reject) {
@@ -150,25 +100,23 @@ function refreshToken(me) {
     });
 }
 
+class CloudProxy {
 
-function IoTKitCloud(logger, deviceId, customProxy) {
-    var deviceConf = common.getDeviceConfig();
-    var me = this;
-    me.logger = logger;
-    me.birthMsgStatus = false;
-    me.secret = {'deviceToken' : deviceConf['device_token'],
-                 'refreshToken' : deviceConf['refresh_token'],
-                 'refreshUrl' : deviceConf['keycloak_url'],
-                 'deviceTokenExpire': deviceConf['device_token_expire']};
-    me.max_retries = deviceConf.activation_retries || 10;
-    me.deviceId = deviceId;
-    me.deviceName = deviceConf.device_name;
-    me.gatewayId = deviceConf.gateway_id || deviceId;
-    me.activationCode = deviceConf.activation_code;
-    //set mqtt proxy if PROVIDED
-    if (conf.connector.mqtt != undefined) {
-        //Checking if SparkplugB is enabled or not
-        if (conf.connector.mqtt.sparkplugB) {
+    constructor(logger, deviceId) {
+        var deviceConf = common.getDeviceConfig();
+        var me = this;
+        me.logger = logger;
+        me.birthMsgStatus = false;
+        me.secret = {'deviceToken' : deviceConf['device_token'],
+                    'refreshToken' : deviceConf['refresh_token'],
+                    'refreshUrl' : deviceConf['keycloak_url'],
+                    'deviceTokenExpire': deviceConf['device_token_expire']};
+        me.max_retries = deviceConf.activation_retries || 10;
+        me.deviceId = deviceId;
+        me.deviceName = deviceConf.device_name;
+        me.gatewayId = deviceConf.gateway_id || deviceId;
+        me.activationCode = deviceConf.activation_code;
+        if (conf.connector.mqtt !== undefined && conf.connector.mqtt.sparkplugB !== undefined) {
             me.spbMetricList = [];
             me.devProf = {
                 groupId   : deviceConf['realm_id'],
@@ -182,7 +130,7 @@ function IoTKitCloud(logger, deviceId, customProxy) {
             if (deviceConf.device_token && me.spBProxy != undefined) {
                 me.spBProxy.updateDeviceInfo(deviceConf);
             } else {
-                me.logger.info("No credentials found for MQTT");
+                me.logger.info("No credentials found for MQTT. Please check activation.");
                 process.exit(1);
             }
             if (me.spBProxy != undefined ) { 
@@ -190,121 +138,126 @@ function IoTKitCloud(logger, deviceId, customProxy) {
                 *  Sending Birth message for SparkplugB (of node/agent and for device),
                 * As per standard Birth message is mandatory to send on start before sending Data
                 */
-                me.spBProxy.nodeBirth(me.devProf, function(err) {
-                    if (err === "fail") {
-                        me.logger.error("SparkplugB MQTT NBIRTH Metric not sent. Trying to refresh token. Then start me again.");
-                        me.checkDeviceToken(() => {process.exit(1);});
-                    } else {
-                        me.logger.info("SparkplugB MQTT NBIRTH Metric sent succesfully for eonid: " + me.gatewayId);
-                        me.logger.debug("SparkplugB MQTT DBIRTH Metric: " + me.spbMetricList);
-                        me.spBProxy.deviceBirth(me.devProf, function(err) {                
-                            if (err === "fail") {
-                                me.logger.error("SparkplugB MQTT DBIRTH Metric not sent. Check connection and token. Bye!");
-                                process.exit(1);
-                            } else {
-                                me.birthMsgStatus = true; 
-                                me.logger.info("SparkplugB MQTT DBIRTH Metric sent succesfully for device: " + me.deviceId);
-                            }                          
-                        }); 
-                    }                                        
-                });       
+            
             }
         } else {
-            me.logger.error("Could not start MQTT Proxy. Try later again. Bye!");
+            me.logger.error("Could not start MQTT Proxy. Please check configuraiton. Bye!");
             process.exit(1);
         }
     }
-}
+    
+
+    async init () {
+        let me = this;
+
+        try {
+            await me.spBProxy.nodeBirth(me.devProf);
+        } catch (err) {
+            me.logger.error("SparkplugB MQTT NBIRTH Metric not sent. Trying to refresh token.");
+            await me.checkDeviceToken()
+            return 1;
+        }
+        me.logger.info("SparkplugB MQTT NBIRTH Metric sent succesfully for eonid: " + me.gatewayId);
+        me.logger.debug("SparkplugB MQTT DBIRTH Metric: " + me.spbMetricList);
+        try {
+            await me.spBProxy.deviceBirth(me.devProf);
+        } catch (err) {
+            me.logger.error("SparkplugB MQTT DBIRTH Metric not sent. Check connection and token: " + err.message);
+            return 1;
+        } 
+        me.birthMsgStatus = true; 
+        me.logger.info("SparkplugB MQTT DBIRTH Metric sent succesfully for device: " + me.deviceId);
+        return 0;
+    }; 
 
 
-IoTKitCloud.prototype.checkDeviceToken = function (callback) {
-    var me = this,
-        toCall = callback;
+    async checkDeviceToken () {
+        var me = this;
 
-    if (!me.secret.deviceTokenExpire) {
-        me.secret.deviceTokenExpire = jwtDecoder(me.secret.deviceToken).exp * 1000; // convert to miliseconds
-    }
+        if (!me.secret.deviceTokenExpire) {
+            me.secret.deviceTokenExpire = jwtDecoder(me.secret.deviceToken).exp * 1000; // convert to miliseconds
+        }
 
-    if (new Date().getTime() < me.secret.deviceTokenExpire) {
-        return toCall();
-    } else {
-        me.logger.info('Device token has expired - refreshing it now...');
-        //const onboarding_token = require('../data/onboard-token.json');
-        var data = {
-            token: me.secret.deviceToken,
-            body: {
-                refreshToken: me.secret.refreshToken
-            }
-        };
-        refreshToken(me)
-            //.then(data => getDeviceToken(me, data))
-            .then(data => updateToken(data))
-            .then(() => updateSecrets(me))
-            .then(() => toCall())
-            .catch((err) => this.logger.error("Could not refresh token: " + err.message))
-    }
-};
-
-
-IoTKitCloud.prototype.dataSubmit = function (metric, callback) {
-    var me = this;
-    function getCompMetric(metric) {
-        let compMetric = {};    
-        compMetric.value = metric.v;
-        compMetric.name = metric.n;
-        compMetric.dataType = "string";
-        compMetric.timestamp = metric.on || new Date().getTime();
-        return compMetric;
-    }
-    var handler = function() {    
-        // SparkplugB format data submission to sdk
-        let timecount = 0;
-        if (me.spBProxy != undefined) {
-            let checkFlag = function () {
-                if ( !me.birthMsgStatus ) {
-                    setTimeout(checkFlag, 250)  /* this checks the flag every 250 milliseconds*/
-                    if (timecount == 20) {  /* return if birthmsgstatus not true for 5 seconds */
-                        return callback("timeout");
-                    }
-                    timecount++;
-                } else {
-                    var componentMetrics = [];
-                         
-                    if (Array.isArray(metric)) {
-                        metric.forEach(item => {
-                            componentMetrics.push(getCompMetric(item));
-                        })
-                        // Check if we have any data left to submit
-                    } else {
-                        componentMetrics.push(getCompMetric(metric));
-                    }
-                    if (componentMetrics.length === 0) {
-                        me.logger.error(' SPB Data submit - no data to submit.');
-                        return callback(false);
-                    }
-                    me.logger.debug("SparkplugB MQTT DDATA Metric: " + componentMetrics);
-                    me.logger.debug("SparkplugB MQTT device profile: " + me.devProf);
-                    me.spBProxy.data(me.devProf,componentMetrics, function(response) {
-                        if (!response || response === "fail") {
-                            me.logger.error("SparkplugB MQTT DDATA Metric not send ");
-                            callback(response);
-                        } else {
-                            me.logger.info("SparkplugB MQTT DDATA Metric sent successfully");
-                            callback(response);
-                        }
-                    });
-                }
-            }
-            checkFlag();
+        if (new Date().getTime() < me.secret.deviceTokenExpire) {
+            return 0;
         } else {
-            me.logger.error("MQTT proxy not defined.");
+            me.logger.info('Device token has expired - refreshing it now...');
+            //const onboarding_token = require('../data/onboard-token.json');
+            /*var data = {
+                token: me.secret.deviceToken,
+                body: {
+                    refreshToken: me.secret.refreshToken
+                }
+            };*/
+            const data = await refreshToken(me)
+            try {
+                await updateToken(data)
+                await updateSecrets(me)
+            } catch (err) {
+                this.logger.error("Could not refresh token: " + err.message)
+            }
         }
     };
 
-    me.checkDeviceToken(handler);
-};
 
+    async dataSubmit (metric, callback) {
+        var me = this;
+        function getCompMetric(metric) {
+            let compMetric = {};    
+            compMetric.value = metric.v;
+            compMetric.name = metric.n;
+            compMetric.dataType = "string";
+            compMetric.timestamp = metric.on || new Date().getTime();
+            return compMetric;
+        }
+        var handler = function() {    
+            // SparkplugB format data submission to sdk
+            let timecount = 0;
+            if (me.spBProxy != undefined) {
+                let checkFlag = function () {
+                    if ( !me.birthMsgStatus ) {
+                        setTimeout(checkFlag, 250)  /* this checks the flag every 250 milliseconds*/
+                        if (timecount == 20) {  /* return if birthmsgstatus not true for 5 seconds */
+                            return callback("timeout");
+                        }
+                        timecount++;
+                    } else {
+                        var componentMetrics = [];
+                            
+                        if (Array.isArray(metric)) {
+                            metric.forEach(item => {
+                                componentMetrics.push(getCompMetric(item));
+                            })
+                            // Check if we have any data left to submit
+                        } else {
+                            componentMetrics.push(getCompMetric(metric));
+                        }
+                        if (componentMetrics.length === 0) {
+                            me.logger.error(' SPB Data submit - no data to submit.');
+                            return callback(false);
+                        }
+                        me.logger.debug("SparkplugB MQTT DDATA Metric: " + componentMetrics);
+                        me.logger.debug("SparkplugB MQTT device profile: " + me.devProf);
+                        me.spBProxy.data(me.devProf,componentMetrics, function(response) {
+                            if (!response || response === "fail") {
+                                me.logger.error("SparkplugB MQTT DDATA Metric not send ");
+                                callback(response);
+                            } else {
+                                me.logger.info("SparkplugB MQTT DDATA Metric sent successfully");
+                                callback(response);
+                            }
+                        });
+                    }
+                    }
+                    checkFlag();
+                } else {
+                    me.logger.error("MQTT proxy not defined.");
+                }
+            };
 
-exports.init = function(logger, deviceId) {
-    return new IoTKitCloud(logger, deviceId);
-};
+        await me.checkDeviceToken();
+        handler();
+    };
+
+}
+module.exports = CloudProxy;

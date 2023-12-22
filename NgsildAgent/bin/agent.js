@@ -24,7 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 "use strict";
 var logger = require('../lib/logger').init(),
-    Cloud = require("../lib/cloud.proxy"),
+    CloudProxy = require("../lib/cloud.proxy"),
     Message = require('../lib/agent-message'),
     udpServer = require('../lib/server/udp'),
     tcpServer = require("../lib/server/tcp"),
@@ -40,10 +40,22 @@ process.on("uncaughtException", function(err) {
 
 const id = utils.getDeviceId();
 (async () => {
-    var cloud = Cloud.init(logger, id);
+    var cloudProxy = new CloudProxy(logger, id);
     var udp = udpServer.singleton(conf.listeners.udp_port, logger);
-    var agentMessage = await Message.init(cloud, logger);
+    var agentMessage = await Message.init(cloudProxy, logger);
     logger.info("Starting listeners...");
     udp.listen(agentMessage.handler);
-    tcpServer.init(conf.listeners, logger, agentMessage.handler);      
+    tcpServer.init(conf.listeners, logger, agentMessage.handler);
+    
+    let res = await cloudProxy.init();
+    if (res) {
+        setTimeout(async () => {
+            let res = await cloudProxy.init();
+            if (res) {
+                console.error("Could not setup the Proxy. Please check logs and settings.")
+                process.exit(1)
+            }
+        }
+            , 1000);
+    }
 })();

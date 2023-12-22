@@ -76,29 +76,21 @@ function Broker(conf) {
                     password: me.deviceInfo.device_token,
                     rejectUnauthorized: false
                 });
+                me.client.on('connect', () => {
+                    me.listen();
+                    done(null)
+                })
+                me.client.on('error', (err) => {
+                    me.disconnect();
+                    done(new Error(err))
+                })
+            } else {
+                done(null);
             }
         } catch(e) {
             done(new Error("Connection Error", 1002));
             return;
         }
-        function waitForConnection() {
-            if (!me.client.connected) {
-                retries++;
-                if (retries < me.max_retries) {
-                    setTimeout(waitForConnection, 1500);
-                } else {
-                    done(new Error("Connection Error", 1001));
-                }
-                return false;
-            }
-
-            me.listen();
-            if (done) {
-                done(null);
-            }
-            return true;
-        }
-        waitForConnection();
     };
     me.disconnect = function () {
         me.client.end();
