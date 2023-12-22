@@ -29,7 +29,6 @@ module.exports = function(config) {
     
     module.common     = require('./common.js');
     module.proxies    = require('./proxies')(config);
-    module.data       = require('./data');
     
     return module;
 }
