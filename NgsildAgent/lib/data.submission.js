@@ -42,6 +42,7 @@ var Data = function (connector, logT, dbManager) {
     me.connector = connector;
     me.validator = schemaValidation.validateSchema(schemaValidation.schemas.data.SUBMIT);
     me.dbManager = dbManager;
+    me.sessionIsOnline = true;
     /**
      * It will process a component registration if
      * it is not a component registration will return false
@@ -81,17 +82,18 @@ var Data = function (connector, logT, dbManager) {
         }
         me.logger.info ("Submitting: ", msgs);
         if (config.connector.mqtt.sparkplugB) {
-            me.connector.dataSubmit(msgs, async function(dat) {
-                if (dat !== 'fail') {
-                    try {
-                        await me.dbManager.acknowledge(msgKeys)
-                    } catch (e) {
-                        me.logger.warn("Error in local database: " + e.message)
-                    }
-                }       
-                me.logger.info("Response received: " + JSON.stringify(dat));
-                return callback(dat);
-            });
+            try {
+                await me.connector.dataSubmit(msgs);
+                try {
+                    await me.dbManager.acknowledge(msgKeys)
+                } catch (e) {
+                    me.logger.warn("Error in local database: " + e.message)
+                }
+                me.sessionIsOnline = true;
+            } catch(err) {
+                me.sessionIsOnline = false;
+                me.logger.warn("Could not submit sample: " + err.message());
+            }
         }
     };
 

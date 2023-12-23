@@ -157,19 +157,21 @@ IoTKitSparkplugBCloud.prototype.deviceBirth = function (devProf, callback) {
 *   its component ids
 * @payloadMetric: Contains submitted data value in spB metric format to be sent to server
 */
-IoTKitSparkplugBCloud.prototype.data = function (devProf,payloadMetric, callback) {
+IoTKitSparkplugBCloud.prototype.data = async function (devProf,payloadMetric) {
+    return new Promise((resolve, reject) => {
     var me = this;   
-    var topic = common.buildPath(me.topics.metric_topic, [me.spbConf.version,devProf.groupId,"DDATA",devProf.edgeNodeId,devProf.deviceId]);  
-    var payload = {
-        "timestamp" : new Date().getTime(),
-        "metrics" : payloadMetric,
-        "seq" : incSeqNum()
-    };
-    return me.client.publish(topic, payload, me.pubArgs, function(err) {
-        if (err) {
-            return callback("fail");
-        }
-        return callback({status : 0});
+        var topic = common.buildPath(me.topics.metric_topic, [me.spbConf.version,devProf.groupId,"DDATA",devProf.edgeNodeId,devProf.deviceId]);  
+        var payload = {
+            "timestamp" : new Date().getTime(),
+            "metrics" : payloadMetric,
+            "seq" : incSeqNum()
+        };
+        me.client.publish(topic, payload, me.pubArgs, function(err) {
+            if (err) {
+                reject(err);
+            }
+            resolve({status : 0});
+        });
     });
 };
 

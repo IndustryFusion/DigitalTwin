@@ -200,7 +200,7 @@ class CloudProxy {
     };
 
 
-    async dataSubmit (metric, callback) {
+    async dataSubmit (metric) {
         var me = this;
         function getCompMetric(metric) {
             let compMetric = {};    
@@ -210,54 +210,31 @@ class CloudProxy {
             compMetric.timestamp = metric.on || new Date().getTime();
             return compMetric;
         }
-        var handler = function() {    
-            // SparkplugB format data submission to sdk
-            let timecount = 0;
-            if (me.spBProxy != undefined) {
-                let checkFlag = function () {
-                    if ( !me.birthMsgStatus ) {
-                        setTimeout(checkFlag, 250)  /* this checks the flag every 250 milliseconds*/
-                        if (timecount == 20) {  /* return if birthmsgstatus not true for 5 seconds */
-                            return callback("timeout");
-                        }
-                        timecount++;
-                    } else {
-                        var componentMetrics = [];
-                            
-                        if (Array.isArray(metric)) {
-                            metric.forEach(item => {
-                                componentMetrics.push(getCompMetric(item));
-                            })
-                            // Check if we have any data left to submit
-                        } else {
-                            componentMetrics.push(getCompMetric(metric));
-                        }
-                        if (componentMetrics.length === 0) {
-                            me.logger.error(' SPB Data submit - no data to submit.');
-                            return callback(false);
-                        }
-                        me.logger.debug("SparkplugB MQTT DDATA Metric: " + componentMetrics);
-                        me.logger.debug("SparkplugB MQTT device profile: " + me.devProf);
-                        me.spBProxy.data(me.devProf,componentMetrics, function(response) {
-                            if (!response || response === "fail") {
-                                me.logger.error("SparkplugB MQTT DDATA Metric not send ");
-                                callback(response);
-                            } else {
-                                me.logger.info("SparkplugB MQTT DDATA Metric sent successfully");
-                                callback(response);
-                            }
-                        });
-                    }
-                    }
-                    checkFlag();
-                } else {
-                    me.logger.error("MQTT proxy not defined.");
-                }
-            };
-
         await me.checkDeviceToken();
-        handler();
+        if ( !me.birthMsgStatus ) {
+            throw(new Error("Session is not initialized."));
+        } else {
+            var componentMetrics = [];
+            if (Array.isArray(metric)) {
+                metric.forEach(item => {
+                    componentMetrics.push(getCompMetric(item));
+                })
+                // Check if we have any data left to submit
+            } else {
+                componentMetrics.push(getCompMetric(metric));
+            }
+            if (componentMetrics.length === 0) {
+                me.logger.error(' SPB Data submit - no data to submit.');
+                return;
+            }
+            me.logger.debug("SparkplugB MQTT DDATA Metric: " + componentMetrics);
+            me.logger.debug("SparkplugB MQTT device profile: " + me.devProf);
+            
+            await me.spBProxy.data(me.devProf,componentMetrics);
+            me.logger.info("SparkplugB MQTT DDATA Metric sent successfully");
+        }
     };
 
 }
+
 module.exports = CloudProxy;
