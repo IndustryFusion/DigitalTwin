@@ -29,26 +29,20 @@ var MessageHandler = function(connector, logger, data) {
     var me = this;
     me.data = data; //Data.init(connector, logger);
 
-    me.handler = async function (msg, callback) {
+    me.handler = async function (msg) {
         var msgResult = [];
 
         // Validate data submission
         if (schemaValidation.validate(msg, schemaValidation.schemas.data.SUBMIT).length === 0) {
-            await me.data.submission(msg, function (status_sub) {
-                if (status_sub === false) {
-                    msgResult.push(new Error("None Submit data matching"));
-                    logger.error('Invalid message received (empty) : ', msg, msgResult);
-                }
-                if (callback) {
-                    callback(status_sub);
-                }
-            });
-            return;
-        }
-
-        // Data matched no valid schema
-        if (callback) {
-            callback('Message invalid');
+            try {
+                await me.data.submission(msg); 
+            } catch(err){            
+                //msgResult.push(new Error("None Submit data matching"));
+                logger.error('Invalid message received (empty) : ', err);
+                throw err;
+            }
+        } else {
+            throw new Error("Message invalid");
         }
     };
 };

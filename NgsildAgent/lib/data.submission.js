@@ -49,7 +49,7 @@ var Data = function (connector, logT, dbManager) {
      * @param msg
      * @returns {boolean}
      */
-    me.submission = async function (msgs, callback) {
+    me.submission = async function (msgs) {
         if (! Array.isArray(msgs)) {
             msgs = [msgs]
         }
@@ -87,12 +87,12 @@ var Data = function (connector, logT, dbManager) {
                 try {
                     await me.dbManager.acknowledge(msgKeys)
                 } catch (e) {
-                    me.logger.warn("Error in local database: " + e.message)
+                    me.logger.warn("Error in local database: " + e)
                 }
                 me.sessionIsOnline = true;
             } catch(err) {
                 me.sessionIsOnline = false;
-                me.logger.warn("Could not submit sample: " + err.message());
+                me.logger.warn("Could not submit sample: " + err);
             }
         }
     };

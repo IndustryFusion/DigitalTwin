@@ -138,26 +138,19 @@ class SparkplugbConnector {
     * @payloadMetric: Contains submitted data value in spB metric format to be sent to server
     */
     publishData = async function (devProf,payloadMetric) {
-        return new Promise((resolve, reject) => {
-        var me = this;   
-            var topic = common.buildPath(me.topics.metric_topic, [me.spbConf.version,devProf.groupId,"DDATA",devProf.edgeNodeId,devProf.deviceId]);  
-            var payload = {
-                "timestamp" : new Date().getTime(),
-                "metrics" : payloadMetric,
-                "seq" : incSeqNum()
-            };
-            me.client.publish(topic, payload, me.pubArgs, function(err) {
-                if (err) {
-                    reject(err);
-                }
-                resolve({status : 0});
-            });
-        });
+        var topic = common.buildPath(this.topics.metric_topic, [this.spbConf.version,devProf.groupId,"DDATA",devProf.edgeNodeId,devProf.deviceId]);  
+        var payload = {
+            "timestamp" : new Date().getTime(),
+            "metrics" : payloadMetric,
+            "seq" : incSeqNum()
+        };
+            await this.client.publish(topic, payload, this.pubArgs);
+
     };
 
     disconnect = function () {
         var me = this;
-        me.client.disconnect();
+        this.client.disconnect();
     };
 
     updateDeviceInfo = function (deviceInfo) {

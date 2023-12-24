@@ -238,7 +238,7 @@ class CloudProxy {
             me.logger.debug("SparkplugB MQTT DDATA Metric: " + componentMetrics);
             me.logger.debug("SparkplugB MQTT device profile: " + me.devProf);
             
-            await me.spBProxy.data(me.devProf,componentMetrics);
+            await me.spBProxy.publishData(me.devProf,componentMetrics);
             me.logger.info("SparkplugB MQTT DDATA Metric sent successfully");
         }
     };
