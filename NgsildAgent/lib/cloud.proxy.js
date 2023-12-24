@@ -30,7 +30,8 @@ var jwtDecoder = require('jwt-decode'),
 const http = require('http');
 const querystring = require('querystring');
 const devicefile = './data/device.json';
-
+const SparkplugbConnector  = require('./SparkplugbConnector');
+const ConnectionError = require('./ConnectionError');
 
 function updateToken(token) {
     const parsedToken = JSON.parse(token);
@@ -125,7 +126,7 @@ class CloudProxy {
                 deviceId   : deviceConf['device_id'],         
                 componentMetric : me.spbMetricList
             };
-            me.spBProxy = require('./proxy')(conf).lib.proxies.getSpBConnector();
+            me.spBProxy = new SparkplugbConnector(conf);
             me.logger.info("SparkplugB MQTT proxy found! Configuring  Sparkplug and MQTT for data sending.");
             if (deviceConf.device_token && me.spBProxy != undefined) {
                 me.spBProxy.updateDeviceInfo(deviceConf);
@@ -153,9 +154,14 @@ class CloudProxy {
         try {
             await me.spBProxy.nodeBirth(me.devProf);
         } catch (err) {
-            me.logger.error("SparkplugB MQTT NBIRTH Metric not sent. Trying to refresh token.");
-            await me.checkDeviceToken()
-            return 1;
+            if (err instanceof ConnectionError && err.errno === 1) {
+                me.logger.error("SparkplugB MQTT NBIRTH Metric not sent. Trying to refresh token.");
+                await me.checkDeviceToken()
+                return 1;
+            } else { //unrecoverable
+                me.logger.error("Unexpected Error: " + err.stack);
+                return 2;
+            }
         }
         me.logger.info("SparkplugB MQTT NBIRTH Metric sent succesfully for eonid: " + me.gatewayId);
         me.logger.debug("SparkplugB MQTT DBIRTH Metric: " + me.spbMetricList);

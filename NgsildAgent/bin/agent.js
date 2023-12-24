@@ -48,7 +48,7 @@ const id = utils.getDeviceId();
     tcpServer.init(conf.listeners, logger, agentMessage.handler);
     
     let res = await cloudProxy.init();
-    if (res) {
+    if (res == 1) {
         setTimeout(async () => {
             let res = await cloudProxy.init();
             if (res) {
@@ -57,5 +57,9 @@ const id = utils.getDeviceId();
             }
         }
             , 1000);
+    }
+    if (res == 2) {
+        console.error("Unrecoverable Error. Bye!")
+        process.exit(1)
     }
 })();

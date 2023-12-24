@@ -235,3 +235,42 @@ module.exports.writeCatalog = function(data) {
     this.writeToJson(fileName, data);
 };
 
+/**
+ * @description Build a path replacing patter {} by the data arguments
+ * if more the one {} pattern is present it shall be use Array
+ * @param path string the represent a URL path
+ * @param data Array or string,
+ * @returns {*}
+ */
+module.exports.buildPath = function (path, data) {
+    var re = /{\w+}/;
+    var pathReplace = path;
+    if (Array.isArray(data)) {
+        data.forEach(function (value) {
+            pathReplace = pathReplace.replace(re, value);
+        });
+    } else {
+        pathReplace = pathReplace.replace(re, data);
+    }
+    return pathReplace;
+};
+
+module.exports.isAbsolutePath = function(location) {
+    return path.resolve(location) === path.normalize(location);
+};
+
+module.exports.isBinary = function(object) {
+    if ( Buffer.isBuffer(object) ) {
+        return true;
+    }
+    var keys = Object.keys(object);
+    for(var index in keys) {
+        var key = keys[index];
+        if(typeof object[key] == 'object') {
+            if( this.isBinary(object[key]) ) {
+                return true;
+            }
+        }
+    }
+    return false;
+};
