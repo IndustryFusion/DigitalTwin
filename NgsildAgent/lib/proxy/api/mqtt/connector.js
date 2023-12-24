@@ -17,6 +17,8 @@
 "use strict";
 var mqtt = require('mqtt');
 var events = require('events');
+const ConnectionError = require('../../../ConnectionError');
+
 
 var MQTT = 'mqtt://';
 var MQTT_SECURE = 'mqtts://';
@@ -82,7 +84,8 @@ function Broker(conf) {
                 })
                 me.client.on('error', (err) => {
                     me.disconnect();
-                    done(new Error(err))
+                    const connerr = me.createConnectionError(err)
+                    done(connerr)
                 })
             } else {
                 done(null);
@@ -196,6 +199,19 @@ function Broker(conf) {
     me.connected = function () {
         return me.client.connected;
     };
+    me.createConnectionError = function (err) {
+        let connerr;
+        if (err.errno === -111) {
+            connerr = new ConnectionError(err.message, 0)
+        }
+        if (err.code === 5) {
+            connerr = new ConnectionError(err.message, 1)
+        }
+        if (connerr) {
+            return connerr;
+        }
+        return err;
+    }
 }
 
 Broker.prototype = new events.EventEmitter();

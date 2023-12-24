@@ -78,7 +78,7 @@ var createNodeBirthMetrics = function(client_data) {
 };
 
 
-function IoTKitSparkplugBCloud(conf, broker) {
+function SparkplugbConnector(conf, broker) {
 
     var me = this;
     me.spbConf = conf.connector.mqtt;
@@ -92,7 +92,7 @@ function IoTKitSparkplugBCloud(conf, broker) {
     
 }
 
-IoTKitSparkplugBCloud.prototype.pullActuations = function (data, callback) {
+SparkplugbConnector.prototype.pullActuations = function (data, callback) {
     callback(null);
 };
 
@@ -102,7 +102,7 @@ IoTKitSparkplugBCloud.prototype.pullActuations = function (data, callback) {
 * Payload for device birth is by default created in function createNodeBirthMetrics
 */
 
-IoTKitSparkplugBCloud.prototype.nodeBirth = async function (devProf) {
+SparkplugbConnector.prototype.nodeBirth = async function (devProf) {
     return new Promise((resolve, reject) => {
         var me = this;
         var topic = common.buildPath(me.topics.metric_topic, [me.spbConf.version,devProf.groupId,"NBIRTH",devProf.edgeNodeId, "" ]);
@@ -132,7 +132,7 @@ IoTKitSparkplugBCloud.prototype.nodeBirth = async function (devProf) {
 * Payload for device birth is in device profile componentMetric
 */
 
-IoTKitSparkplugBCloud.prototype.deviceBirth = function (devProf, callback) {
+SparkplugbConnector.prototype.deviceBirth = function (devProf, callback) {
     return new Promise((resolve, reject) => {
         var me = this;
         var topic = common.buildPath(me.topics.metric_topic, [me.spbConf.version,devProf.groupId,"DBIRTH",devProf.edgeNodeId,devProf.deviceId]);
@@ -157,7 +157,7 @@ IoTKitSparkplugBCloud.prototype.deviceBirth = function (devProf, callback) {
 *   its component ids
 * @payloadMetric: Contains submitted data value in spB metric format to be sent to server
 */
-IoTKitSparkplugBCloud.prototype.data = async function (devProf,payloadMetric) {
+SparkplugbConnector.prototype.data = async function (devProf,payloadMetric) {
     return new Promise((resolve, reject) => {
     var me = this;   
         var topic = common.buildPath(me.topics.metric_topic, [me.spbConf.version,devProf.groupId,"DDATA",devProf.edgeNodeId,devProf.deviceId]);  
@@ -175,17 +175,17 @@ IoTKitSparkplugBCloud.prototype.data = async function (devProf,payloadMetric) {
     });
 };
 
-IoTKitSparkplugBCloud.prototype.disconnect = function () {
+SparkplugbConnector.prototype.disconnect = function () {
     var me = this;
     me.client.disconnect();
 };
 
-IoTKitSparkplugBCloud.prototype.updateDeviceInfo = function (deviceInfo) {
+SparkplugbConnector.prototype.updateDeviceInfo = function (deviceInfo) {
     var me = this;
     me.client.updateDeviceInfo(deviceInfo);
 };
 
-IoTKitSparkplugBCloud.prototype.healthResponse = function (device, callback, syncCallback) {
+SparkplugbConnector.prototype.healthResponse = function (device, callback, syncCallback) {
     var me = this;
     var healthStatus = common.buildPath(me.topics.health_status, device);
     var handler = function (topic, message) {
@@ -195,7 +195,7 @@ IoTKitSparkplugBCloud.prototype.healthResponse = function (device, callback, syn
     me.client.bind(healthStatus, handler, syncCallback);
 };
 
-IoTKitSparkplugBCloud.prototype.health = function (device, callback) {
+SparkplugbConnector.prototype.health = function (device, callback) {
     var me = this;
     me.healthResponse(device, callback, function (err) {
         if (!err) {
@@ -209,7 +209,7 @@ IoTKitSparkplugBCloud.prototype.health = function (device, callback) {
     });
 };
 
-IoTKitSparkplugBCloud.prototype.setCredential = function (user, password) {
+SparkplugbConnector.prototype.setCredential = function (user, password) {
     var me = this;
     me.crd = {
         username: user || '',
@@ -219,11 +219,11 @@ IoTKitSparkplugBCloud.prototype.setCredential = function (user, password) {
     me.client.setCredential(me.crd);
 };
 
-IoTKitSparkplugBCloud.prototype.getActualTime = function (callback) {
+SparkplugbConnector.prototype.getActualTime = function (callback) {
     callback(null);
 };
 
 module.exports.init = function(conf) {
     var broker = Broker.singleton(conf.connector.mqtt);  
-    return new IoTKitSparkplugBCloud(conf, broker);   
+    return new SparkplugbConnector(conf, broker);   
 };

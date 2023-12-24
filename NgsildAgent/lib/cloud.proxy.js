@@ -30,7 +30,7 @@ var jwtDecoder = require('jwt-decode'),
 const http = require('http');
 const querystring = require('querystring');
 const devicefile = './data/device.json';
-const SparkplugbConnector  = require('./SparkplugbConnector');
+const SparkplugbConnector = require('./SparkplugbConnector');
 const ConnectionError = require('./ConnectionError');
 
 function updateToken(token) {
@@ -105,74 +105,76 @@ class CloudProxy {
 
     constructor(logger, deviceId) {
         var deviceConf = common.getDeviceConfig();
-        var me = this;
-        me.logger = logger;
-        me.birthMsgStatus = false;
-        me.secret = {'deviceToken' : deviceConf['device_token'],
+        this.logger = logger;
+        this.birthMsgStatus = false;
+        this.secret = {'deviceToken' : deviceConf['device_token'],
                     'refreshToken' : deviceConf['refresh_token'],
                     'refreshUrl' : deviceConf['keycloak_url'],
                     'deviceTokenExpire': deviceConf['device_token_expire']};
-        me.max_retries = deviceConf.activation_retries || 10;
-        me.deviceId = deviceId;
-        me.deviceName = deviceConf.device_name;
-        me.gatewayId = deviceConf.gateway_id || deviceId;
-        me.activationCode = deviceConf.activation_code;
+        this.max_retries = deviceConf.activation_retries || 10;
+        this.deviceId = deviceId;
+        this.deviceName = deviceConf.device_name;
+        this.gatewayId = deviceConf.gateway_id || deviceId;
+        this.activationCode = deviceConf.activation_code;
         if (conf.connector.mqtt !== undefined && conf.connector.mqtt.sparkplugB !== undefined) {
-            me.spbMetricList = [];
-            me.devProf = {
+            this.spbMetricList = [];
+            this.devProf = {
                 groupId   : deviceConf['realm_id'],
                 edgeNodeId : deviceConf['gateway_id'],
                 clientId   : deviceConf['device_name'],
                 deviceId   : deviceConf['device_id'],         
-                componentMetric : me.spbMetricList
+                componentMetric : this.spbMetricList
             };
-            me.spBProxy = new SparkplugbConnector(conf);
-            me.logger.info("SparkplugB MQTT proxy found! Configuring  Sparkplug and MQTT for data sending.");
-            if (deviceConf.device_token && me.spBProxy != undefined) {
-                me.spBProxy.updateDeviceInfo(deviceConf);
+            this.spBProxy = new SparkplugbConnector(conf, logger);
+            this.logger.info("SparkplugB MQTT proxy found! Configuring  Sparkplug and MQTT for data sending.");
+            if (deviceConf.device_token && this.spBProxy != undefined) {
+                this.spBProxy.updateDeviceInfo(deviceConf);
             } else {
-                me.logger.info("No credentials found for MQTT. Please check activation.");
+                this.logger.info("No credentials found for MQTT. Please check activation.");
                 process.exit(1);
             }
-            if (me.spBProxy != undefined ) { 
-                /** 
-                *  Sending Birth message for SparkplugB (of node/agent and for device),
-                * As per standard Birth message is mandatory to send on start before sending Data
-                */
-            
-            }
         } else {
-            me.logger.error("Could not start MQTT Proxy. Please check configuraiton. Bye!");
+            this.logger.error("Could not start MQTT Proxy. Please check configuraiton. Bye!");
             process.exit(1);
         }
     }
     
 
     async init () {
-        let me = this;
-
         try {
-            await me.spBProxy.nodeBirth(me.devProf);
-        } catch (err) {
+            await this.spBProxy.init()
+        } catch(err) {
             if (err instanceof ConnectionError && err.errno === 1) {
-                me.logger.error("SparkplugB MQTT NBIRTH Metric not sent. Trying to refresh token.");
-                await me.checkDeviceToken()
+                this.logger.error("SparkplugB MQTT NBIRTH Metric not sent. Trying to refresh token.");
+                await this.checkDeviceToken()
                 return 1;
             } else { //unrecoverable
-                me.logger.error("Unexpected Error: " + err.stack);
+                this.logger.error("Unexpected Error: " + err.stack);
                 return 2;
             }
         }
-        me.logger.info("SparkplugB MQTT NBIRTH Metric sent succesfully for eonid: " + me.gatewayId);
-        me.logger.debug("SparkplugB MQTT DBIRTH Metric: " + me.spbMetricList);
         try {
-            await me.spBProxy.deviceBirth(me.devProf);
+            await this.spBProxy.nodeBirth(this.devProf);
         } catch (err) {
-            me.logger.error("SparkplugB MQTT DBIRTH Metric not sent. Check connection and token: " + err.message);
-            return 1;
+            if (err instanceof ConnectionError && err.errno === 1) {
+                this.logger.error("SparkplugB MQTT NBIRTH Metric not sent. Trying to refresh token.");
+                await this.checkDeviceToken()
+                return 1;
+            } else { //unrecoverable
+                this.logger.error("Unexpected Error: " + err.stack);
+                return 2;
+            }
+        }
+        this.logger.info("SparkplugB MQTT NBIRTH Metric sent succesfully for eonid: " + this.gatewayId);
+        this.logger.debug("SparkplugB MQTT DBIRTH Metric: " + this.spbMetricList);
+        try {
+            await this.spBProxy.deviceBirth(this.devProf);
+        } catch (err) {
+            this.logger.error("SparkplugB MQTT DBIRTH Metric not sent. Check connection and token: " + err.stack);
+            return 2;
         } 
-        me.birthMsgStatus = true; 
-        me.logger.info("SparkplugB MQTT DBIRTH Metric sent succesfully for device: " + me.deviceId);
+        this.birthMsgStatus = true; 
+        this.logger.info("SparkplugB MQTT DBIRTH Metric sent succesfully for device: " + this.deviceId);
         return 0;
     }; 
 

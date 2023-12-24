@@ -23,7 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 "use strict";
 var common = require('./common'),
-    Broker = require("./Broker");
+    ConnectionManager = require("./ConnectionManager");
 
 
 var topic = {
@@ -80,45 +80,40 @@ var createNodeBirthMetrics = function(client_data) {
 
 
 class SparkplugbConnector {
-    constructor(conf) {
+    constructor(conf, logger) {
+        this.logger = logger;
+        this.spbConf = conf.connector.mqtt;
+        this.type = 'mqtt';
+        this.topics = topic;
+        this.pubArgs = {
+            qos: 1,
+            retain: false
+        };
+        this.client = new ConnectionManager(conf.connector.mqtt, logger);
+    }
 
-    this.spbConf = conf.connector.mqtt;
-    this.type = 'mqtt';
-    this.topics = topic;
-    this.pubArgs = {
-        qos: 1,
-        retain: false
-    };
-    this.client = Broker.singleton(conf.connector.mqtt);
-}
-
+    async init () {
+        await this.client.init();
+    }
 
     /* For publishing sparkplugB standard Node Birth message
     * @devProf: Conatains all the device information and default component registered with 
     *   its component ids
     * Payload for device birth is by default created in function createNodeBirthMetrics
     */
-    nodeBirth = async function (devProf) {
-        return new Promise((resolve, reject) => {
-            var topic = common.buildPath(this.topics.metric_topic, [this.spbConf.version,devProf.groupId,"NBIRTH",devProf.edgeNodeId, "" ]);
-            var client_data = {
-                "hwVersion" : null,
-                "swVersion" : null
-            }
-            var payload = {
-                "timestamp" : new Date().getTime(),
-                "metrics" : createNodeBirthMetrics(client_data),
-                "seq" : 0
-            };   
+    async nodeBirth (devProf) {
+        var topic = common.buildPath(this.topics.metric_topic, [this.spbConf.version,devProf.groupId,"NBIRTH",devProf.edgeNodeId, "" ]);
+        var client_data = {
+            "hwVersion" : null,
+            "swVersion" : null
+        }
+        var payload = {
+            "timestamp" : new Date().getTime(),
+            "metrics" : createNodeBirthMetrics(client_data),
+            "seq" : 0
+        };   
         
-            this.client.publish(topic, payload, this.pubArgs, function(err) {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve({status : 0});
-                }
-            });
-        })
+        return await this.client.publish(topic, payload, this.pubArgs);
     };
 
     /* For publishing sparkplugB standard device BIRTH message
@@ -126,23 +121,14 @@ class SparkplugbConnector {
     *   its component ids
     * Payload for device birth is in device profile componentMetric
     */
-    deviceBirth = function (devProf, callback) {
-        return new Promise((resolve, reject) => {
-            var me = this;
-            var topic = common.buildPath(me.topics.metric_topic, [me.spbConf.version,devProf.groupId,"DBIRTH",devProf.edgeNodeId,devProf.deviceId]);
-            var payload = {
-                "timestamp" : new Date().getTime(),
-                "metrics" : devProf.componentMetric,
-                "seq" : incSeqNum()
-            };   
-            me.client.publish(topic, payload, me.pubArgs, function(err) {
-                if (err) {     
-                    reject(err);
-                } else {
-                    resolve({status : 0});
-                }
-            });
-        });
+    async deviceBirth (devProf) {
+        var topic = common.buildPath(this.topics.metric_topic, [this.spbConf.version,devProf.groupId,"DBIRTH",devProf.edgeNodeId,devProf.deviceId]);
+        var payload = {
+            "timestamp" : new Date().getTime(),
+            "metrics" : devProf.componentMetric,
+            "seq" : incSeqNum()
+        };   
+        return await this.client.publish(topic, payload, this.pubArgs);
     };
 
 
