@@ -29,8 +29,11 @@ describe(fileToTest, function () {
   class Logger {
     info () {}
     debug () {}
+    warn () {}
   };
-  class Cache {};
+  class Cache {
+    init () {}
+  };
   ToTest.__set__('Logger', Logger);
   ToTest.__set__('Cache', Cache);
   it('Shall verify and decode token successfully', function (done) {
@@ -51,6 +54,32 @@ describe(fileToTest, function () {
     };
     auth.verifyAndDecodeToken('ex1123').then(result => {
       assert.equal(decodedToken, result, 'Wrong decoded Token');
+      done();
+    }).catch(err => {
+      done(err);
+    });
+  });
+  it('Shall test initialize', function (done) {
+    const config = {
+      keycloak: {
+        mqttAuthService: {}
+      },
+      mqtt: {
+        clientSecretVariable: 'CLIENTSECRETVARIABLE'
+      }
+    };
+    const Authenticate = ToTest.__get__('Authenticate');
+    const auth = new Authenticate(config);
+    class Keycloak {
+    }
+    const process = {
+      env: {
+        CLIENTSECRETVARIABLE: 'CLIENTSECRETVARIABLE'
+      }
+    };
+    ToTest.__set__('Keycloak', Keycloak);
+    ToTest.__set__('process', process);
+    auth.initialize().then(() => {
       done();
     }).catch(err => {
       done(err);
@@ -317,6 +346,7 @@ describe(fileToTest, function () {
   class Logger {
     info () {}
     debug () {}
+    warn () {}
   };
   class Cache {};
   ToTest.__set__('Logger', Logger);

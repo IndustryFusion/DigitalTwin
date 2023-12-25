@@ -286,7 +286,7 @@ module.exports = class SparkplugHandler {
     if (Object.values(MESSAGE_TYPE.WITHSEQ).includes(subTopic[2])) {
       const validationResult = this.validator.validate(message, dataSchema.SPARKPLUGB);
       if (validationResult.errors.length > 0) {
-        this.logger.warn('Schema rejected message! Message will be discarded: ' + message);
+        this.logger.warn('Schema rejected message! Message will be discarded: ' + JSON.stringify(message));
       } else {
         /* Validating SpB seq number if it is alligned with previous or not
             *  To Do: If seq number is incorrect, send command to device for resend Birth Message

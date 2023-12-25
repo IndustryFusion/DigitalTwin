@@ -1,5 +1,4 @@
 {{- $alertasecret := (lookup "v1" "Secret" .Release.Namespace "keycloak-client-secret-alerta-ui") -}}
-{{- $oispfrontendsecret := (lookup "v1" "Secret" .Release.Namespace "keycloak-client-secret-oisp-frontend") -}}
 {{- $mqttbrokersecret := (lookup "v1" "Secret" .Release.Namespace "keycloak-client-secret-mqtt-broker") -}}
 {{- $fusionbackendsecret := (lookup "v1" "Secret" .Release.Namespace "keycloak-client-secret-fusion-backend") -}}
 {{- $ngsildupdatessecret := (lookup "v1" "Secret" .Release.Namespace "keycloak-client-secret-ngsild-updates") -}}
@@ -41,7 +40,6 @@ spec:
     accountTheme: fusion
     eventsListeners:
       - jboss-logging
-      - oisp-event-listener
     displayName: "Basic Realm for Alerta and Scorpio"
     clientScopes:
       - id: b697f384-0390-4f5e-80b8-2a6bc3f07c96
@@ -100,24 +98,6 @@ spec:
               claim.name: "device_id"
               multivalued: "false"
               userinfo.token.claim: "true"
-      - id: 829f8f77-0d01-4dc1-ab9e-5a9816a39ff8
-        name: type
-        protocol: openid-connect
-        attributes:
-          include.in.token.scope: 'true'
-          display.on.consent.screen: 'false'
-        protocolMappers:
-          - id: 0fcbb880-7b3e-4878-ba29-710db602cd71
-            name: type mapper
-            protocol: openid-connect
-            protocolMapper: script-type-mapper.js
-            consentRequired: false
-            config:
-              id.token.claim: 'true'
-              access.token.claim: 'true'
-              claim.name: type
-              jsonType.label: String
-              userinfo.token.claim: 'true'
       - id: 36d973cc-4c8c-4dad-b6b7-a56eb9c75e57
         name: if-company
         protocol: openid-connect
@@ -136,23 +116,6 @@ spec:
               userinfo.token.claim: 'true'
               claim.name: IF_COMPANY
               jsonType.label: long
-      - id: aff3473b-2ffd-4e3c-8696-4e3f5aa9cdde
-        name: oisp-frontend
-        protocol: openid-connect
-        attributes:
-          include.in.token.scope: 'true'
-          display.on.consent.screen: 'true'
-        protocolMappers:
-          - id: 7b66be24-fe26-4be9-9116-0eccc31c4f34
-            name: oisp-frontend
-            protocol: openid-connect
-            protocolMapper: oidc-audience-mapper
-            consentRequired: false
-            config:
-              included.client.audience: {{ .Values.keycloak.oisp.frontend.client }}
-              id.token.claim: 'false'
-              access.token.claim: 'true'
-              userinfo.token.claim: 'false'
       - id: 5ed16465-f532-4fd1-a697-b9f66d6160ac
         name: mqtt-broker
         protocol: openid-connect
@@ -170,26 +133,6 @@ spec:
               id.token.claim: 'false'
               access.token.claim: 'true'
               userinfo.token.claim: 'false'
-      - id: 59b9e667-75be-43d4-8d7c-6189d27d67aa
-        name: accounts
-        description: accounts that user has access to
-        protocol: openid-connect
-        attributes:
-          include.in.token.scope: 'true'
-          display.on.consent.screen: 'false'
-        protocolMappers:
-          - id: 24e06173-456c-4404-9f57-529d065dafc9
-            name: accounts mapper
-            protocol: openid-connect
-            protocolMapper: script-accounts-mapper.js
-            consentRequired: false
-            config:
-              multivalued: 'false'
-              userinfo.token.claim: 'true'
-              id.token.claim: 'true'
-              access.token.claim: 'true'
-              claim.name: accounts
-              jsonType.label: JSON
       - id: f88fa5e5-05b2-4214-94ba-89c0de3de3c1
         name: web-origins
         description: OpenID Connect scope for add allowed web origins to the access token
@@ -511,14 +454,6 @@ spec:
             - name: token-exchange
             - name: map-roles-composite
           policies:
-          - id: 69252f6e-c8e7-4d2f-8bbd-e91dafc373e6
-            name: device-onboarding-token-exchange
-            description: ''
-            type: client
-            logic: POSITIVE
-            decisionStrategy: UNANIMOUS
-            config:
-              clients: '["device-onboarding"]'
           - id: ccd1cdfb-7cfe-4eb2-883d-a1d398a0d91e
             name: manage.permission.client.a79bc0de-5c9f-4149-adb8-842f53bad7f1
             type: scope
@@ -567,16 +502,6 @@ spec:
             config:
               resources: '["client.resource.a79bc0de-5c9f-4149-adb8-842f53bad7f1"]'
               scopes: '["map-roles-composite"]'
-          - id: e8ba92b9-c405-46ac-8ce1-5d465c7e48cb
-            name: token-exchange.permission.client.a79bc0de-5c9f-4149-adb8-842f53bad7f1
-            description: ''
-            type: scope
-            logic: POSITIVE
-            decisionStrategy: UNANIMOUS
-            config:
-              resources: '["client.resource.a79bc0de-5c9f-4149-adb8-842f53bad7f1"]'
-              scopes: '["token-exchange"]'
-              applyPolicies: '["device-onboarding-token-exchange"]'
           scopes:
           - id: b363e45e-f6ee-417f-b4a4-9e91f384fbf4
             name: manage
@@ -601,19 +526,9 @@ spec:
         defaultClientScopes:
           - mqtt-broker
           - device_id
-          - oisp-frontend
           - offline_access
           - type
           - gateway
-          - accounts
-      - id: 475cee5e-0547-4daf-b97c-7062cce8093d
-        clientId: device-onboarding
-        publicClient: true
-        standardFlowEnabled: true
-        directAccessGrantsEnabled: true
-        attributes:
-          access.token.lifespan: "3600"
-          client.session.idle.timeout: "60"
       - id: 31c8cc5a-9df2-4606-927a-4aeda07c1e56
         clientId: {{ .Values.keycloak.alerta.client }}
         publicClient: False
@@ -647,8 +562,6 @@ spec:
         defaultClientScopes:
           - roles
           - factory-admin
-          - oisp-frontend
-          - accounts
           - type
           - offline_access
         {{ if $ngsildupdatessecret }}
@@ -656,39 +569,14 @@ spec:
         {{ else }}
         secret: {{ .Values.keycloak.ngsildUpdates.clientSecret }}
         {{ end }}
-      - id: 0a5c1e78-e10d-4c1c-98bb-8f6f07860306
-        clientId: {{ .Values.keycloak.oisp.frontend.client }}
-        publicClient: false
-        directAccessGrantsEnabled: true
-        serviceAccountsEnabled: true
-        authorizationServicesEnabled: true
-        defaultRoles:
-          - user
-        defaultClientScopes:
-          - oisp-frontend
-          - mqtt-broker
-          - roles
-          - accounts
-          - type
-          - email
-          - offline_access
-          - web-origins
-          - gateway
-        {{ if $oispfrontendsecret }}
-        secret: {{ $oispfrontendsecret.data.CLIENT_SECRET | b64dec }}
-        {{ else }}
-        secret: {{ .Values.keycloak.oisp.frontend.clientSecret }}
-        {{ end }}
       - id: 56707dab-c91b-4c6e-99b8-718b29d7506d
         clientId: {{ .Values.keycloak.oisp.mqttBroker.client }}
         publicClient: false
         directAccessGrantsEnabled: true
         defaultClientScopes:
-          - oisp-frontend
           - role_list
           - profile
           - roles
-          - accounts
           - type
           - email
           - web-origins
@@ -704,12 +592,10 @@ spec:
         serviceAccountsEnabled: true
         authorizationServicesEnabled: true
         defaultClientScopes:
-          - oisp-frontend
           - offline_access
           - profile
           - role_list
           - roles
-          - accounts
           - if-company
           - type
           - email
@@ -742,12 +628,10 @@ spec:
               claim.name: IF_COMPANY
               jsonType.label: long
         defaultClientScopes:
-          - oisp-frontend
           - offline_access
           - role_list
           - profile
           - roles
-          - accounts
           - type
           - if-company
           - email
@@ -757,16 +641,7 @@ spec:
           - gateway
     roles:
       realm:
-        - id: eda3350f-395c-449c-b985-fd8111f2dfe8
-          name: uma_authorization
-          description: "${role_uma_authorization}"
-          clientRole: false
-          containerId: oisp-frontend
-        - id: 76176cd7-5bfc-4739-9883-4164ce0e8b5a
-          name: offline_access
-          description: "${role_offline-access}"
-          clientRole: false
-          containerId: oisp-frontend
+      
       client:
         {{ .Values.keycloak.scorpio.client }}: 
           - id: 57adefda-7cd3-4519-80d2-8336b82c5488
@@ -777,19 +652,6 @@ spec:
             clientRole: true
           - id: 72162ebf-2816-43a1-8df0-2d2e9380a7d6
             name: "Factory-Reader"
-            clientRole: true
-        {{ .Values.keycloak.oisp.frontend.client }}:
-          - id: '069018ee-a092-41d0-a736-ac92b0ac6cd2'
-            name: sysadmin
-            clientRole: true
-          - id: d36cf39e-89bf-40a6-a4e3-b7a74916b7a3
-            name: uma_protection
-            clientRole: true
-          - id: f2dc88fe-b66a-412a-9268-824c9a601ecd
-            name: system
-            clientRole: true
-          - id: 4dc379aa-f32c-45d0-9546-4f1d1a83acce
-            name: user
             clientRole: true
         {{ .Values.keycloak.oisp.fusionBackend.client }}:
           - id: 4294f9fb-010a-4e15-bad5-acbf9d928692
@@ -831,8 +693,6 @@ spec:
             - "manage-users"
           {{ .Values.keycloak.scorpio.client }}:
             - Factory-Admin
-          {{ .Values.keycloak.oisp.frontend.client }}:
-            - "user"
       - id: 8a561605-7b80-44b8-aa65-4368e292a60f
         username: service-account-fusion-backend
         createdTimestamp: 1614222112374
@@ -850,32 +710,6 @@ spec:
             - manage-account
           {{ .Values.keycloak.oisp.fusionBackend.client }}:
             - uma_protection
-          {{ .Values.keycloak.oisp.frontend.client }}:
-            - user
-      - id: d2a2f87d-ca88-4b17-a716-7ce07ec7f71d
-        username: service-account-oisp-frontend
-        createdTimestamp: 1574012647096
-        enabled: true
-        totp: false
-        emailVerified: false
-        email: service-account-oisp-frontend@placeholder.org
-        serviceAccountClientId: {{ .Values.keycloak.oisp.frontend.client }}
-        credentials: []
-        realmRoles:
-          - uma_authorization
-          - offline_access
-        clientRoles:
-          realm-management:
-            - impersonation
-            - view-realm
-            - view-clients
-            - view-users
-            - manage-users
-          {{ .Values.keycloak.oisp.frontend.client }}:
-            - uma_protection
-          account:
-            - view-profile
-            - manage-account
       - id: d5c1fe02-043a-4a62-ba0f-d3260bf4d9a7
         username: service-account-realm-management
         createdTimestamp: 1576086685765
@@ -891,24 +725,10 @@ spec:
         clientRoles:
           realm-management:
             - uma_protection
-          {{ .Values.keycloak.oisp.frontend.client }}:
-            - user
           account:
             - view-profile
             - manage-account
     scopeMappings:
-      - client: {{ .Values.keycloak.oisp.frontend.client }}
-        roles:
-          - uma_authorization
       - clientScope: offline_access
         roles:
           - offline_access
-    clientScopeMappings:
-      realm-management:
-        - client: {{ .Values.keycloak.oisp.frontend.client }}
-          roles:
-            - view-realm
-            - impersonation
-            - manage-users
-            - view-users
-            - view-clients

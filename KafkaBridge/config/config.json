@@ -64,6 +64,7 @@
         "adminPassword": "password",
 		"clientSecretVariable": "MQTT_CLIENT_SECRET",
 		"authServicePort": 3025,
+		"tainted": "TAINTED",
 		"sparkplug": {
 			"spBKafkaProduce": false,
 			"spBkafKaTopic": "sparkplugB",
@@ -71,7 +72,7 @@
 			"ngsildKafkaTopic": "ngsildSpB",
 			"topics": {
 				"subscribe": {
-					"sparkplugb_data_ingestion": "spBv1.0/+/+/+/+"
+					"sparkplugb_data_ingestion": "$share/kafka/spBv1.0/+/+/+/+"
 				},
 				"publish": {
 				"error": "server/error/{accountId}/{deviceId}",
