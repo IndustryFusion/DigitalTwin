@@ -24,8 +24,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 "use strict";
 var logger = require('../lib/logger').init(),
-    CloudProxy = require("../lib/cloud.proxy"),
-    Message = require('../lib/agent-message'),
+    CloudProxy = require("../lib/CloudProxy"),
+    DataSubmission = require('../lib/DataSubmission'),
     udpServer = require('../lib/server/udp'),
     tcpServer = require("../lib/server/tcp"),
     utils = require("../lib/utils").init(),
@@ -42,10 +42,11 @@ const id = utils.getDeviceId();
 (async () => {
     var cloudProxy = new CloudProxy(logger, id);
     var udp = udpServer.singleton(conf.listeners.udp_port, logger);
-    var agentMessage = await Message.init(cloudProxy, logger);
+    var dataSubmission = new DataSubmission(cloudProxy, logger);
+    dataSubmission.init();
     logger.info("Starting listeners...");
-    udp.listen(agentMessage.handler);
-    tcpServer.init(conf.listeners, logger, agentMessage.handler);
+    udp.listen(dataSubmission.submission);
+    tcpServer.init(conf.listeners, logger, dataSubmission.submission);
     
     let res = await cloudProxy.init();
     if (res == 1) {
