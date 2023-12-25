@@ -109,6 +109,18 @@ class DbManager{
             })
         })
     }
+    async mostRecentPropertyUpdateStrategy() {
+        return new Promise((resolve,reject) => {
+            const statement = `select * from ${tableName} where (n, \`on\`, sent) in  (select  n, MAX(\`on\`), sent from metrics group by n) and sent = 0;`
+            this.db.all(statement, (error, rows) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve({msgs: rows, finished: true})
+                }
+            })
+        });
+    }
 }
 
 module.exports = DbManager;

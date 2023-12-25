@@ -50,62 +50,83 @@ class DataSubmission {
      * @param msg
      * @returns {boolean}
      */
-    async submission (msgs) {
-        if (! Array.isArray(msgs)) {
-            msgs = [msgs]
-        }
-        let msgKeys=[];
-        for (const msg of msgs) {
-            if (msg.t === undefined || msg.t === null) {
-                msg.t = "Property"
+    getSubmissionCallback() {
+        let me = this;
+        return async function (msgs) {
+            if (! Array.isArray(msgs)) {
+                msgs = [msgs]
             }
-            if (msg.on === undefined || msg.on === null) {
-                msg.on = new Date().getTime();
-            }
-            if (this.validator(msg)) {
-                try {
-                    await dbManager.preInsert(msg, 1)
-                } catch (e) {
-                    this.logger.warn("Error in local database: " + e.message)
+            let msgKeys=[];
+            for (const msg of msgs) {
+                if (msg.t === undefined || msg.t === null) {
+                    msg.t = "Property"
                 }
-                msgKeys.push({n: msg.n, on: msg.on});
-                msg.n = msg.t + '/' + msg.n;
-                delete msg.t;
+                if (msg.on === undefined || msg.on === null) {
+                    msg.on = new Date().getTime();
+                }
+                if (me.validator(msg)) {
+                    try {
+                        await me.dbManager.preInsert(msg, 1)
+                    } catch (e) {
+                        me.logger.warn("Error in local database: " + e.message)
+                    }
+                    msgKeys.push({n: msg.n, on: msg.on});
+                    msg.n = msg.t + '/' + msg.n;
+                    delete msg.t;
+                } else {
+                    me.logger.debug(`Data submission - Validation failed. Expected something like ${sampleMetric} got ${msg}`);
+                    try {
+                        await me.dbManager.preInsert(msg, 0)
+                    } catch (e) {
+                        me.logger.warn("Error in local database: " + e.message)
+                    }
+                    return false;
+                }
+            }
+            me.logger.info ("Submitting: ", msgs);
+            // Check online state
+            const isOnline = await me.connector.checkOnlineState();
+            if (isOnline) {
+                if (me.sessionIsOnline === 0) { // if session was offline, go into catch-up mode
+                    me.sessionIsOnline = 2; // 2 means online but catch up
+                }
             } else {
-                this.logger.debug(`Data submission - Validation failed. Expected something like ${sampleMetric} got ${msg}`);
+                me.sessionIsOnline = 0;
+            }
+            if (me.sessionIsOnline === 2) { 
+                // We are in the catch-up mode
+                // All relevant should be in database,
+                // so fetch it and ignore original messages.
                 try {
-                    await dbManager.preInsert(msg, 0)
+                    const result = await me.dbManager.mostRecentPropertyUpdateStrategy();
+                    msgs = result.msgs;
+                    msgKeys=[];
+                    for (const msg of msgs) {
+                        msgKeys.push({n: msg.n, on: msg.on});
+                    }
+                    if (result.finished) {
+                        me.sessionIsOnline = 1;
+                    }
                 } catch (e) {
-                    this.logger.warn("Error in local database: " + e.message)
+                    me.logger.warn("Error in local database: " + e)
                 }
-                return callback(false);
             }
-        }
-        this.logger.info ("Submitting: ", msgs);
-        // Check online state
-        const isOnline = await this.connector.checkOnlineState();
-        if (isOnline) {
-            if (this.sessionIsOnline === 0) { // if session was offline, go into catch-up mode
-                this.sessionIsOnline = 2; // 2 means online but catch up
-            }
-        } else {
-            this.sessionIsOnline = 0;
-        }
-        if (config.connector.mqtt.sparkplugB && this.sessionIsOnline > 0) {
-            try {
-                await this.connector.dataSubmit(msgs);
+            if (config.connector.mqtt.sparkplugB && me.sessionIsOnline > 0) {
                 try {
-                    await this.dbManager.acknowledge(msgKeys)
-                } catch (e) {
-                    this.logger.warn("Error in local database: " + e)
+                    await me.connector.dataSubmit(msgs);
+                    try {
+                        await me.dbManager.acknowledge(msgKeys)
+                    } catch (e) {
+                        me.logger.warn("Error in local database: " + e)
+                    }
+                    
+                } catch(err) {
+                    me.sessionIsOnline = 0;
+                    me.logger.warn("Could not submit sample: " + err);
                 }
-                
-            } catch(err) {
-                this.sessionIsOnline = 0;
-                this.logger.warn("Could not submit sample: " + err);
             }
-        }
-    };
+        };
+    }
 
     async init () {
         this.dbManager = new DbManager(config)

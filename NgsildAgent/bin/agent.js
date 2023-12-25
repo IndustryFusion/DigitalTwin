@@ -43,10 +43,10 @@ const id = utils.getDeviceId();
     var cloudProxy = new CloudProxy(logger, id);
     var udp = udpServer.singleton(conf.listeners.udp_port, logger);
     var dataSubmission = new DataSubmission(cloudProxy, logger);
-    dataSubmission.init();
+    await dataSubmission.init();
     logger.info("Starting listeners...");
-    udp.listen(dataSubmission.submission);
-    tcpServer.init(conf.listeners, logger, dataSubmission.submission);
+    udp.listen(dataSubmission.getSubmissionCallback());
+    tcpServer.init(conf.listeners, logger, dataSubmission.getSubmissionCallback());
     
     let res = await cloudProxy.init();
     if (res == 1) {
