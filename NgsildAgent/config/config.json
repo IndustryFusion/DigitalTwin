@@ -12,7 +12,8 @@
 	"dbManager": {
 		"file": "metrics.db",
 		"retentionInSeconds": 3600,
-		"housekeepingIntervalInSeconds": 60
+		"housekeepingIntervalInSeconds": 60,
+		"enabled": true
 	},
 	"connector": {
 		"mqtt": {

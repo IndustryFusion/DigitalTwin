@@ -48,10 +48,14 @@ class DbManager{
 
     constructor(config){
         this.config = config;
+        this.enabled = config.dbManager.enabled;
 
     }
 
     async init () {
+        if (!this.enabled) {
+            return;
+        }
         return new Promise((resolve, reject) => {
             const me = this;
             const dataDir = this.config.data_directory;
@@ -77,6 +81,9 @@ class DbManager{
     }
     
     async preInsert(msg, valid) {
+        if (!this.enabled) {
+            return;
+        }
         return new Promise((resolve, reject) =>
             this.db.run(`INSERT INTO ${tableName} VALUES ('${msg.n}', '${msg.v}', '${msg.on}', '${msg.t}', 0, ${valid})`, error => { 
                 if (error) {
@@ -88,6 +95,9 @@ class DbManager{
         )
     }
     async acknowledge(msgs) {
+        if (!this.enabled) {
+            return;
+        }
         return new Promise((resolve, reject) => {
             let conditions = '';
             let first = true;
@@ -110,6 +120,9 @@ class DbManager{
         })
     }
     async mostRecentPropertyUpdateStrategy() {
+        if (!this.enabled) {
+            return;
+        }
         return new Promise((resolve,reject) => {
             const statement = `select * from ${tableName} where (n, \`on\`, sent) in  (select  n, MAX(\`on\`), sent from metrics group by n) and sent = 0;`
             this.db.all(statement, (error, rows) => {
