@@ -46,6 +46,7 @@ function updateSecrets(me) {
                 'refreshToken' : deviceConf['refresh_token'],
                 'refreshUrl' : deviceConf['keycloak_url'],
                 'deviceTokenExpire': deviceConf['device_token_expire']};
+    return deviceConf;
 }
 
 
@@ -180,27 +181,20 @@ class CloudProxy {
 
 
     async checkDeviceToken () {
-        var me = this;
-
-        if (!me.secret.deviceTokenExpire) {
-            me.secret.deviceTokenExpire = jwtDecoder(me.secret.deviceToken).exp * 1000; // convert to miliseconds
+        if (!this.secret.deviceTokenExpire) {
+            this.secret.deviceTokenExpire = jwtDecoder(this.secret.deviceToken).exp * 1000; // convert to miliseconds
         }
 
-        if (new Date().getTime() < me.secret.deviceTokenExpire) {
+        if (new Date().getTime() < this.secret.deviceTokenExpire) {
             return 0;
         } else {
-            me.logger.info('Device token has expired - refreshing it now...');
-            //const onboarding_token = require('../data/onboard-token.json');
-            /*var data = {
-                token: me.secret.deviceToken,
-                body: {
-                    refreshToken: me.secret.refreshToken
-                }
-            };*/
-            const data = await refreshToken(me)
+            this.logger.info('Device token has expired - refreshing it now...');
+            const data = await refreshToken(this)
             try {
                 await updateToken(data)
-                await updateSecrets(me)
+                const deviceConf = await updateSecrets(this)
+                this.spBProxy.updateDeviceInfo(deviceConf);
+                await this.spBProxy.init();
             } catch (err) {
                 this.logger.error("Could not refresh token: " + err.message)
             }
@@ -218,7 +212,7 @@ class CloudProxy {
             compMetric.timestamp = metric.on || new Date().getTime();
             return compMetric;
         }
-        await me.checkDeviceToken();
+        //await me.checkDeviceToken();
         if ( !me.birthMsgStatus ) {
             throw(new Error("Session is not initialized."));
         } else {
@@ -242,7 +236,13 @@ class CloudProxy {
             me.logger.info("SparkplugB MQTT DDATA Metric sent successfully");
         }
     };
-
+    async checkOnlineState() {
+        await this.checkDeviceToken();
+        if (this.spBProxy) {
+            return this.spBProxy.connected() || false;
+        }
+        return false;
+    }
 }
 
 module.exports = CloudProxy;

@@ -192,6 +192,12 @@ class SparkplugbConnector {
         me.client.setCredential(me.crd);
     };
 
+    connected() {
+        if (this.client) {
+            return this.client.connected() || false;
+        } 
+        return false; 
+    }
 }
 
 module.exports = SparkplugbConnector;

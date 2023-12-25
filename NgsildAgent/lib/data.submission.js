@@ -42,7 +42,7 @@ var Data = function (connector, logT, dbManager) {
     me.connector = connector;
     me.validator = schemaValidation.validateSchema(schemaValidation.schemas.data.SUBMIT);
     me.dbManager = dbManager;
-    me.sessionIsOnline = true;
+    me.sessionIsOnline = 1;
     /**
      * It will process a component registration if
      * it is not a component registration will return false
@@ -81,7 +81,16 @@ var Data = function (connector, logT, dbManager) {
             }
         }
         me.logger.info ("Submitting: ", msgs);
-        if (config.connector.mqtt.sparkplugB) {
+        // Check online state
+        const isOnline = await me.connector.checkOnlineState();
+        if (isOnline) {
+            if (me.sessionIsOnline === 0) { // if session was offline, go into catch-up mode
+                me.sessionIsOnline = 2; // 2 means online but catch up
+            }
+        } else {
+            me.sessionIsOnline = 0;
+        }
+        if (config.connector.mqtt.sparkplugB && me.sessionIsOnline > 0) {
             try {
                 await me.connector.dataSubmit(msgs);
                 try {
@@ -89,9 +98,9 @@ var Data = function (connector, logT, dbManager) {
                 } catch (e) {
                     me.logger.warn("Error in local database: " + e)
                 }
-                me.sessionIsOnline = true;
+                
             } catch(err) {
-                me.sessionIsOnline = false;
+                me.sessionIsOnline = 0;
                 me.logger.warn("Could not submit sample: " + err);
             }
         }
