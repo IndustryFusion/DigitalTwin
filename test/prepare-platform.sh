@@ -139,6 +139,17 @@ echo Install python3-pip
 echo -------------------
 sudo apt install -yq python3-pip python3-venv
 
+echo Install nodejs
+echo -------------------
+sudo apt remove -y nodejs libnode-dev libnode72
+sudo apt purge -y nodejs
+curl -sL https://deb.nodesource.com/setup_18.x -o /tmp/nodesource_setup.sh
+sudo bash /tmp/nodesource_setup.sh
+sudo apt install -y nodejs
+
+
+echo Install Bats
+echo -------------------
 sudo apt install -yq bats
 
 if [ -n "${SELF_HOSTED_RUNNER}" ]; then

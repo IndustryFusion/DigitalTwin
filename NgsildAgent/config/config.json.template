@@ -1,0 +1,32 @@
+{
+        "data_directory": "./data",
+        "listeners": {
+                "udp_port": 41234,
+                "tcp_port": 7070
+        },
+        "logger": {
+                "level": "info",
+                "path": "/tmp/",
+                "max_size": 134217728
+        },
+        "dbManager": {
+                "file": "metrics.db",
+                "retentionInSeconds": 3600,
+                "housekeepingIntervalInSeconds": 60,
+                "enabled": false
+        },
+        "connector": {
+                "mqtt": {
+                        "host": "mqtt-test-service",
+                        "port": 1883,
+                        "websockets": false,
+                        "qos": 1,
+                        "retain": false,
+                        "secure": false,
+                        "retries": 5,
+                        "strictSSL": false,
+                        "sparkplugB": true,
+                        "version": "spBv1.0"          
+                }
+        }
+}

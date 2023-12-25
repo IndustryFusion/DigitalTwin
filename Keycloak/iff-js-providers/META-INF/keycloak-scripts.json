@@ -1,0 +1,17 @@
+{
+    "authenticators": [],
+    "policies": [],
+    "mappers": [
+        {
+            "name": "Gateway ID Mapper",
+            "fileName": "gateway-mapper.js",
+            "description": "gatewayId - only valid if access type is device"
+        },
+        {
+            "name": "Device ID Mapper",
+            "fileName": "deviceid-mapper.js",
+            "description": "deviceId - only valid if access type is device"
+        }
+    ],
+    "saml-mappers": []
+}

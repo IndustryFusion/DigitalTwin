@@ -1,0 +1,82 @@
+/*
+Copyright (c) 2014, Intel Corporation
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright notice,
+      this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright notice,
+      this list of conditions and the following disclaimer in the documentation
+      and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+const dgram = require('dgram');
+
+function Server (udpServerPort, logger) {
+  const me = this;
+  me.logger = logger;
+  me.server = dgram.createSocket('udp4');
+
+  me.server.on('error', function (err) {
+    me.logger.error('UDP Error: ' + err.stack);
+  });
+  me.server.on('close', function (rinfo) {
+    console.log('UDP Closing from ' + rinfo);
+  });
+  me.server.on('message', async function (msg, rinfo) {
+    me.logger.debug(`UDP message from ${rinfo.address}:${rinfo.port}`);
+    if (rinfo.address !== '127.0.0.1') {
+      me.logger.debug('Ignoring external UDP message from ' + rinfo.address);
+      return;
+    }
+    try {
+      if (me.handleronMessage) {
+        const data = JSON.parse(msg);
+        await me.handleronMessage(data);
+      }
+    } catch (ex) {
+      me.logger.error('UDP Error on message: ' + ex.message);
+      me.logger.error(ex.stack);
+    }
+  });
+  me.server.on('listening', function () {
+    const addr = me.server.address();
+    me.logger.info('UDP listener started on port: ' + addr.port);
+  });
+  me.server.bind(udpServerPort);
+}
+
+Server.prototype.listen = function (handler) {
+  const me = this;
+  me.handleronMessage = handler;
+};
+Server.prototype.send = function (toClient, data) {
+  const me = this;
+  const msg = Buffer.from(JSON.stringify(data));
+  me.server.send(msg, 0, msg.length, toClient.port, toClient.address, function (err, bytes) {
+    me.logger.debug('Response: Send' + err + ' bytes ' + bytes);
+  });
+};
+Server.prototype.close = function () {
+  const me = this;
+  me.server.close();
+};
+let server;
+module.exports.singleton = function (port, logger) {
+  if (!server) {
+    server = new Server(port, logger);
+  }
+  return server;
+};
