@@ -70,8 +70,7 @@ const processMessage = async function ({ topic, partition, message }) {
       logger.error('Could not send Datapoints: Neither Property nor Relationship');
       return;
     }
-
-    entityHistoryTable.create(datapoint).then(() => {
+    entityHistoryTable.upsert(datapoint).then(() => {
       logger.debug('Datapoint succefully stored in tsdb table');
     })
       .catch((err) => logger.error('Error in storing datapoint in tsdb: ' + err));
