@@ -1,1 +1,1 @@
-../../semantic-model/knowledge.ttl
+../../semantic-model/kms/knowledge.ttl

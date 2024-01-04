@@ -129,6 +129,15 @@ module.exports = function DebeziumBridge (conf) {
           obj.id = refId;
           obj.entityId = id;
           obj.name = key;
+          // extract timestamp
+          // timestamp is normally observedAt but it is non-mandatory
+          // If observedAt is missing (e.g. because it was entered over REST API)
+          // the modifiedAt value is taken.
+          if ('https://uri.etsi.org/ngsi-ld/observedAt' in refObj) {
+            obj['https://uri.etsi.org/ngsi-ld/observedAt'] = refObj['https://uri.etsi.org/ngsi-ld/observedAt'];
+          } else if ('https://uri.etsi.org/ngsi-ld/modifiedAt' in refObj) {
+            obj['https://uri.etsi.org/ngsi-ld/observedAt'] = refObj['https://uri.etsi.org/ngsi-ld/modifiedAt'];
+          }
           if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'] !== undefined) {
             obj.type = 'https://uri.etsi.org/ngsi-ld/Property';
             // every Property is array with one element, hence [0] is no restriction

@@ -133,6 +133,7 @@ describe('Test diffAttributes', function () {
         {
           id: 'id',
           value: 'value',
+          observedAt: 'observedAt',
           index: 0
         },
         {
@@ -158,7 +159,7 @@ describe('Test diffAttributes', function () {
     };
     const revert = ToTest.__set__('Logger', Logger);
     const debeziumBridge = new ToTest(config);
-    const result = debeziumBridge.diffAttributes(beforeAttrs, afterAttrs);
+    const result = debeziumBridge.diffAttributes(beforeAttrs, afterAttrs, 'observedAt');
     assert.deepEqual(result.updatedAttrs, { attr1: [{ id: 'id3', value: 'value4', index: 0 }] });
     assert.deepEqual(result.deletedAttrs, { attr2: [{ id: 'id2', index: 0 }], attr1: [{ id: 'id', index: 1 }] });
     revert();
@@ -292,11 +293,99 @@ describe('Test parseBeforeAfterEntity', function () {
         name: 'https://example/prop',
         type: 'https://uri.etsi.org/ngsi-ld/Property',
         'https://uri.etsi.org/ngsi-ld/hasValue': 'value',
+        'https://uri.etsi.org/ngsi-ld/observedAt': [{
+          '@type': 'https://uri.etsi.org/ngsi-ld/DateTime',
+          '@value': '2022-02-19T23:11:28.457509Z'
+        }],
         index: 0
       }]
     });
     revert();
   });
+
+  it('Should return one entity, one Property & one Relationship with observedAt field', async function () {
+    const config = {
+      bridgeCommon: {
+        kafkaSyncOnAttribute: 'kafkaSyncOn'
+      }
+    };
+    const Logger = function () {
+      return logger;
+    };
+    const ba = {
+      id: 'id',
+      type: 'type',
+      data: '{\
+                "@id":"id", "@type": ["type"],\
+                "https://uri.etsi.org/ngsi-ld/createdAt":[{\
+                    "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
+                    "@value": "2022-02-19T20:31:26.123656Z"\
+                }],\
+                "https://example/hasRel": [{\
+                    "@type": ["https://uri.etsi.org/ngsi-ld/Relationship"],\
+                    "https://uri.etsi.org/ngsi-ld/createdAt":[{\
+                        "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
+                        "@value": "2022-02-19T20:31:26.123656Z"\
+                    }],\
+                    "https://uri.etsi.org/ngsi-ld/modifiedAt":[{\
+                        "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
+                        "@value": "2022-02-19T20:31:26.123656Z"\
+                    }],\
+                    "https://uri.etsi.org/ngsi-ld/observedAt":[{\
+                        "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
+                        "@value": "2022-02-19T20:32:26.123656Z"\
+                    }],\
+                    "https://uri.etsi.org/ngsi-ld/hasObject": [{"@id": "urn:object:1"}]\
+                }],\
+                "https://example/prop":[{\
+                    "https://uri.etsi.org/ngsi-ld/hasValue": [{"@value": "value"}],\
+                    "https://uri.etsi.org/ngsi-ld/observedAt":[{\
+                        "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
+                        "@value": "2022-02-19T20:31:26.123656Z"\
+                    }],\
+                    "https://uri.etsi.org/ngsi-ld/modifiedAt":[{\
+                        "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
+                        "@value": "2022-02-19T23:11:28.457509Z"\
+                    }]\
+                }]\
+            }'
+    };
+
+    const revert = ToTest.__set__('Logger', Logger);
+    const debeziumBridge = new ToTest(config);
+    const result = debeziumBridge.parseBeforeAfterEntity(ba);
+    assert.deepEqual(result.entity, { id: 'id', type: 'type', 'https://example/hasRel': 'id\\https://example/hasRel', 'https://example/prop': 'id\\https://example/prop' });
+    assert.deepEqual(result.attributes, {
+      'https://example/hasRel': [{
+        id: 'id\\https://example/hasRel',
+        entityId: 'id',
+        nodeType: '@id',
+        name: 'https://example/hasRel',
+        type: 'https://uri.etsi.org/ngsi-ld/Relationship',
+        'https://uri.etsi.org/ngsi-ld/observedAt': [{
+          '@type': 'https://uri.etsi.org/ngsi-ld/DateTime',
+          '@value': '2022-02-19T20:32:26.123656Z'
+        }],
+        'https://uri.etsi.org/ngsi-ld/hasObject': 'urn:object:1',
+        index: 0
+      }],
+      'https://example/prop': [{
+        id: 'id\\https://example/prop',
+        entityId: 'id',
+        nodeType: '@value',
+        name: 'https://example/prop',
+        type: 'https://uri.etsi.org/ngsi-ld/Property',
+        'https://uri.etsi.org/ngsi-ld/hasValue': 'value',
+        'https://uri.etsi.org/ngsi-ld/observedAt': [{
+          '@type': 'https://uri.etsi.org/ngsi-ld/DateTime',
+          '@value': '2022-02-19T20:31:26.123656Z'
+        }],
+        index: 0
+      }]
+    });
+    revert();
+  });
+
   it('Should return one entity, one Property with valuetype', async function () {
     const config = {
       bridgeCommon: {
@@ -344,6 +433,10 @@ describe('Test parseBeforeAfterEntity', function () {
         name: 'https://example/prop',
         type: 'https://uri.etsi.org/ngsi-ld/Property',
         'https://uri.etsi.org/ngsi-ld/hasValue': 'value',
+        'https://uri.etsi.org/ngsi-ld/observedAt': [{
+          '@type': 'https://uri.etsi.org/ngsi-ld/DateTime',
+          '@value': '2022-02-19T23:11:28.457509Z'
+        }],
         valueType: 'https://example/type',
         index: 0
       }]

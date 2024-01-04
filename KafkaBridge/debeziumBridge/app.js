@@ -134,6 +134,17 @@ const getTopic = function (topic) {
   return pascalCaseToSnakeCase(topic.match(/([^/#]*)$/)[0]);
 };
 
+const checkTimestamp = function (val) {
+  let isotimestamp = null;
+  let timestamp = null;
+  try {
+    isotimestamp = val['https://uri.etsi.org/ngsi-ld/observedAt'][0]['@value'];
+    timestamp = new Date(isotimestamp).getTime();
+    delete (val['https://uri.etsi.org/ngsi-ld/observedAt']);
+  } catch (err) {}
+  return timestamp;
+};
+
 /**
  * send batch of ngsild updates from debezium to respective kafka/sql topic
  * @param entity {object}- the entity object
@@ -151,7 +162,7 @@ const sendUpdates = async function ({ entity, deletedEntity, updatedAttrs, delet
     entity = deletedEntity;
     removeType = true;
   }
-  // if attributes are updated ONLY - no entity is needed
+  // if attributes are updated ONLY - no entity refresh/update is needed
   if (updatedAttrs !== undefined && updatedAttrs !== null && Object.keys(updatedAttrs).length > 0 &&
       (insertedAttrs === undefined || insertedAttrs === null || Object.keys(insertedAttrs).length === 0) &&
       (deletedAttrs === undefined || deletedAttrs === null || Object.keys(deletedAttrs).length === 0)) {
@@ -204,11 +215,16 @@ const sendUpdates = async function ({ entity, deletedEntity, updatedAttrs, delet
   }
   if (updatedAttrs !== null && updatedAttrs !== undefined && Object.keys(updatedAttrs).length > 0) {
     // Flatmap the array, i.e. {key: k, value: [m1, m2]} => [{key: k, value: m1}, {key: k, value: m2}]
-    const updateMessages = Object.entries(updatedAttrs).flatMap(([key, value]) =>
-      value.map(val => {
-        return { key: genKey, value: JSON.stringify(val) };
-      })
-    );
+    const updateMessages = Object.entries(updatedAttrs).flatMap(([key, value]) => {
+      return value.map(val => {
+        const timestamp = checkTimestamp(val);
+        const result = { key: genKey, value: JSON.stringify(val) };
+        if (timestamp !== null) {
+          result.timestamp = timestamp;
+        }
+        return result;
+      });
+    });
     topicMessages.push({
       topic: config.debeziumBridge.attributesTopic,
       messages: updateMessages
@@ -216,11 +232,16 @@ const sendUpdates = async function ({ entity, deletedEntity, updatedAttrs, delet
   }
   if (insertedAttrs !== null && insertedAttrs !== undefined && Object.keys(insertedAttrs).length > 0) {
     // Flatmap the array, i.e. {key: k, value: [m1, m2]} => [{key: k, value: m1}, {key: k, value: m2}]
-    const insertMessages = Object.entries(insertedAttrs).flatMap(([key, value]) =>
-      value.map(val => {
-        return { key: genKey, value: JSON.stringify(val) };
-      })
-    );
+    const insertMessages = Object.entries(insertedAttrs).flatMap(([key, value]) => {
+      return value.map(val => {
+        const timestamp = checkTimestamp(val);
+        const result = { key: genKey, value: JSON.stringify(val) };
+        if (timestamp !== null) {
+          result.timestamp = timestamp;
+        }
+        return result;
+      });
+    });
     topicMessages.push({
       topic: config.debeziumBridge.attributesTopic,
       messages: insertMessages

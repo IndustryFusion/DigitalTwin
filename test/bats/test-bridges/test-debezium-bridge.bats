@@ -4,12 +4,14 @@ if [ -z "${SELF_HOSTED_RUNNER}" ]; then
     SUDO="sudo -E"
 fi
 DEBUG=${DEBUG:-false} # set this to true to disable starting and stopping of kubefwd
+SKIP=
 NAMESPACE=iff
 USERSECRET=secret/credential-iff-realm-user-iff
 USER=realm_user
 CLIENT_ID=scorpio
 KEYCLOAKURL=http://keycloak.local/auth/realms
 CUTTER=/tmp/CUTTER
+CUTTER_TIMESTAMPED=/tmp/CUTTER_TIMESTAMPED
 KAFKA_BOOTSTRAP=my-cluster-kafka-bootstrap:9092
 KAFKACAT_ATTRIBUTES=/tmp/KAFKACAT_ATTRIBUTES
 KAFKACAT_ATTRIBUTES_TOPIC=iff.ngsild.attributes
@@ -83,6 +85,47 @@ cat << EOF > ${CUTTER}
 }
 EOF
 
+cat << EOF > ${CUTTER_TIMESTAMPED}
+{
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "id": "${PLASMACUTTER_ID}",
+    "type": "https://industry-fusion.com/types/v0.9/${KAFKACAT_ENTITY_PLASMACUTTER_NAME}",
+    "https://industry-fusion.com/types/v0.9/state": [
+        {
+            "type": "Property",
+            "value": "OFF",
+            "observedAt": "2023-01-08T01:11:35.99Z"
+        },
+        {
+            "type": "Property",
+            "value": "ON",
+            "observedAt": "2023-01-08T01:10:35.555Z"
+        }
+    ],
+    "https://industry-fusion.com/types/v0.9/hasWorkpiece": [
+        {
+            "type": "Relationship",
+            "object": "urn:workpiece-test:12345",
+            "observedAt": "2023-05-19T01:19:35Z"
+        }
+    ],
+    "https://industry-fusion.com/types/v0.9/hasFilter": {
+      "type": "Relationship",
+      "object": "urn:filter-test:12345",
+      "observedAt": "2023-01-08T01:11:35.100Z"
+    }
+}
+EOF
+
+
+compare_create_attributes_timestamps() {
+    cat << EOF | diff "$1" - >&3
+1673140235555
+1673140295100
+1673140295990
+1684459175000
+EOF
+}
 
 compare_create_attributes() {
     cat << EOF | diff "$1" - >&3
@@ -240,15 +283,17 @@ teardown(){
 
 
 @test "verify debezium bridge sends updates to attributes and entity topics when entity is created" {
-
+    $SKIP
+    password=$(get_password)
+    token=$(get_token)
+    echo "# token: $token"
+    delete_ngsild "$token" "$PLASMACUTTER_ID" || echo "Could not delete $PLASMACUTTER_ID. But that is okay."
+    sleep 2
     (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ATTRIBUTES}) &
     (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_ENTITY_CUTTER_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ENTITY_CUTTER}) &
     (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_ENTITY_PLASMACUTTER_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ENTITY_PLASMACUTTER}) &
     echo "# launched kafkacat for debezium updates, wait some time to let it connect"
     sleep 2
-    password=$(get_password)
-    token=$(get_token)
-    echo "# token: $token"
     create_ngsild "$token" "$CUTTER"
     echo "# Sent ngsild updates, sleep 5s to let debezium bridge react"
     sleep 2
@@ -271,14 +316,16 @@ teardown(){
 }
 
 @test "verify debezium bridge sends updates to attributes and entity topics when entity is deleted" {
-
+    $SKIP
+    password=$(get_password)
+    token=$(get_token)
+    create_ngsild "$token" "$CUTTER" || echo "Could not create $PLASMACUTTER_ID. But that is okay."
+    sleep 2
     (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ATTRIBUTES}) &
     (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_ENTITY_CUTTER_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ENTITY_CUTTER}) &
     (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_ENTITY_PLASMACUTTER_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ENTITY_PLASMACUTTER}) &
     echo "# launched kafkacat for debezium updates, wait some time to let it connect"
     sleep 2
-    password=$(get_password)
-    token=$(get_token)
     delete_ngsild "$token" "$PLASMACUTTER_ID"
     echo "# Sent ngsild updates, sleep 5s to let debezium bridge react"
     sleep 2
@@ -296,4 +343,26 @@ teardown(){
 
     run compare_delete_plasmacutter ${KAFKACAT_ENTITY_PLASMACUTTER_SORTED}
     [ "$status" -eq 0 ]
+}
+
+@test "verify debezium bridge sends updates to attributes with correct Kafka timestamps" {
+    $SKIP
+    password=$(get_password)
+    token=$(get_token)
+    echo "# token: $token"
+    delete_ngsild "$token" "$PLASMACUTTER_ID" || echo "Could not delete $PLASMACUTTER_ID. But that is okay."
+    sleep 2
+    (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} -f '%T\n' -o end >${KAFKACAT_ATTRIBUTES}) &
+    echo "# launched kafkacat for debezium updates, wait some time to let it connect"
+    sleep 2
+    create_ngsild "$token" "$CUTTER_TIMESTAMPED"
+    echo "# Sent ngsild updates, sleep 5s to let debezium bridge react"
+    sleep 2
+    echo "# now killing kafkacat and evaluate result"
+    killall kafkacat
+    LC_ALL="en_US.UTF-8" sort -o ${KAFKACAT_ATTRIBUTES} ${KAFKACAT_ATTRIBUTES}
+    echo "# Compare ATTRIBUTES"
+    run compare_create_attributes_timestamps ${KAFKACAT_ATTRIBUTES}
+    [ "$status" -eq 0 ]
+
 }

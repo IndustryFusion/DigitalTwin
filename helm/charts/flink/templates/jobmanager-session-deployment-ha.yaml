@@ -43,6 +43,7 @@ spec:
         workingDir: /opt/flink
         command: ["/bin/bash", "-c", "mkdir -p /opt/flink/plugins/s3; \
           cp /opt/flink/opt/flink-s3-fs-hadoop-*.jar /opt/flink/plugins/s3 ; \
+          $FLINK_HOME/bin/sql-gateway.sh start -Dsql-gateway.endpoint.rest.address=localhost; \
           $FLINK_HOME/bin/jobmanager.sh start-foreground; \
           "]
         env:
@@ -157,6 +158,8 @@ spec:
     port: 8081
   - name: sql-gateway
     port: 9000
+  - name: native-gateway
+    port: 8083
   selector:
     app: flink
     component: jobmanager

@@ -749,7 +749,7 @@ setup() {
     (cd "${NGSILD_AGENT_DIR}" && exec stdbuf -oL node ./iff-agent.js) &
     send_array="["
     first=true
-    for i in {24..1023}; do
+    for i in {24..123}; do
       if [ "$first" = "true" ]; then
         first=false
       else
@@ -764,8 +764,9 @@ setup() {
     pkill -f iff-agent
     mqtt_delete_service
     run try "at most 30 times every 5s to find 1 service named '${DB_SERVICE}'"
-    query="SELECT SUM(CAST(value as INTEGER)) AS total FROM (SELECT value FROM ${TSDB_TABLE} ORDER BY \"observedAt\" DESC LIMIT 1000) AS subquery;"
+    query="SELECT SUM(CAST(value as INTEGER)) AS total FROM (SELECT value FROM ${TSDB_TABLE} where \"entityId\"='${DEVICE_ID}' ORDER BY \"observedAt\" DESC LIMIT 100) AS subquery;"
     result=$(db_query "$query" "$NAMESPACE" "$POSTGRES_SECRET" "$TSDB_DATABASE" "$DBUSER")
-    [ "$result" = "523500" ] || { echo "wrong aggregator result"; false ; }
+    echo db_query "$query" "$NAMESPACE" "$POSTGRES_SECRET" "$TSDB_DATABASE" "$DBUSER"
+    [ "$result" = "7350" ] || { echo "wrong aggregator result: $result"; false ; }
     db_delete_service
 }

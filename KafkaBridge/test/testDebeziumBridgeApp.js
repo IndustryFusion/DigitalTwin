@@ -131,6 +131,51 @@ describe('Test sendUpdates', function () {
     await sendUpdates({ entity, updatedAttrs, deletedAttrs });
     revert();
   });
+  it('Should update and delete attributes with timestamp', async function () {
+    const messages = [
+      { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
+      { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
+      { key: 'id', value: '{"deleteValueKey":"deleteValueValue"}' },
+      { key: 'id', value: '{"updateValueKey":"updateValueValue"}', timestamp: 1672914001456 }
+    ];
+    const sendUpdates = toTest.__get__('sendUpdates');
+    const config = {
+      debeziumBridge: {
+        attributesTopic: 'attributesTopic',
+        entityTopicPrefix: 'topicPrefix'
+      }
+    };
+    const producer = {
+      sendBatch: function ({ topicMessages }) {
+        topicMessages[0].topic.should.equal('topicPrefix.klass');
+        assert.deepEqual(topicMessages[0].messages[0], messages[0]);
+        topicMessages[1].topic.should.equal('topicPrefix.subklass');
+        assert.deepEqual(topicMessages[1].messages[0], messages[1]);
+        topicMessages[2].topic.should.equal('attributesTopic');
+        assert.deepEqual(topicMessages[2].messages[0], messages[2]);
+        topicMessages[3].topic.should.equal('attributesTopic');
+        assert.deepEqual(topicMessages[3].messages[0], messages[3]);
+      }
+    };
+    const entity = {
+      id: 'id',
+      type: 'http://example/type'
+    };
+    const updatedAttrs = {
+      updateKey: [{ updateValueKey: 'updateValueValue', 'https://uri.etsi.org/ngsi-ld/observedAt': [{ '@value': '2023-01-05T10:20:01.456Z' }] }]
+    };
+    const deletedAttrs = {
+      deleteKey: [{ deleteValueKey: 'deleteValueValue' }]
+    };
+    const getSubClasses = function () {
+      return ['klass', 'subklass'];
+    };
+    const revert = toTest.__set__('producer', producer);
+    toTest.__set__('config', config);
+    toTest.__set__('getSubClasses', getSubClasses);
+    await sendUpdates({ entity, updatedAttrs, deletedAttrs });
+    revert();
+  });
   it('Should delete entity', async function () {
     const messages = [
       { key: 'id', value: '{"id":"id"}' },
@@ -252,6 +297,46 @@ describe('Test sendUpdates', function () {
     await sendUpdates({ entity, updatedAttrs, deletedAttrs });
     revert();
   });
+  it('Should insert attributes with timestamp', async function () {
+    const messages = [
+      { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
+      { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
+      { key: 'id', value: '{"insertValueKey":"insertValueValue"}', timestamp: 1704460984123 }
+    ];
+    const sendUpdates = toTest.__get__('sendUpdates');
+    const config = {
+      debeziumBridge: {
+        attributesTopic: 'attributesTopic',
+        entityTopicPrefix: 'topicPrefix'
+      }
+    };
+    const producer = {
+      sendBatch: function ({ topicMessages }) {
+        topicMessages[0].topic.should.equal('topicPrefix.klass');
+        assert.deepEqual(topicMessages[0].messages[0], messages[0]);
+        topicMessages[1].topic.should.equal('topicPrefix.subklass');
+        assert.deepEqual(topicMessages[1].messages[0], messages[1]);
+        topicMessages[2].topic.should.equal('attributesTopic');
+        assert.deepEqual(topicMessages[2].messages[0], messages[2]);
+      }
+    };
+    const entity = {
+      id: 'id',
+      type: 'http://example/type'
+    };
+    const insertedAttrs = {
+      insertKey: [{ insertValueKey: 'insertValueValue', 'https://uri.etsi.org/ngsi-ld/observedAt': [{ '@value': '2024-01-05T13:23:04.123Z' }] }]
+    };
+
+    const getSubClasses = function () {
+      return ['klass', 'subklass'];
+    };
+    const revert = toTest.__set__('producer', producer);
+    toTest.__set__('config', config);
+    toTest.__set__('getSubClasses', getSubClasses);
+    await sendUpdates({ entity, insertedAttrs });
+    revert();
+  });
   it('Should insert attributes', async function () {
     const messages = [
       { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
@@ -293,6 +378,7 @@ describe('Test sendUpdates', function () {
     revert();
   });
 });
+
 describe('Test startListener', function () {
   it('Setup Kafka listener, readiness and health status', async function () {
     const consumer = {
