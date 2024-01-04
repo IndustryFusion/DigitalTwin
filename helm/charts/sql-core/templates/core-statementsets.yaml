@@ -35,32 +35,31 @@ spec:
                    GROUP BY A.resource, A.event, A.service, A.customer, A.environment
             );
         - |-
-          /* aggregates entities from attributes topic and insert it every 2 seconds in update channel
+            /* aggregates entities from attributes topic and insert it every 2 seconds in update channel
             part of CORE SERVICES */
-          insert into ngsild_updates
-          select 'update', true, true, '[{"id": "' || id || '",' || LISTAGG(attributeagg) || '}]'
-          from (
-              select  window_start, window_end, B.entityId as id, '"' || B.name || '":[' || LISTAGG(B.indexagg) || ']' as attributeagg
-              from(
-                  select window_start, window_end, entityId, name,
-                  '{"type": "'
-                          || LAST_VALUE(A.`type`)
-                          || IF(LAST_VALUE(A.`type`) =  'https://uri.etsi.org/ngsi-ld/Relationship','", "object": "', '", "value": ')
-                          || IF(LAST_VALUE(A.`type`) =  'https://uri.etsi.org/ngsi-ld/Relationship', LAST_VALUE(A.`https://uri.etsi.org/ngsi-ld/hasObject`) || '"',
-                                  /* Value depends on the nodeType: @id, @value, or @json*/
-                                  /* @value is the default case, encapsulate within ""*/
-                                  IF((LAST_VALUE(A.nodeType) <> '@json' AND LAST_VALUE(A.nodeType) <> '@id') OR LAST_VALUE(A.nodeType) IS NULL, '"' || LAST_VALUE(A.`https://uri.etsi.org/ngsi-ld/hasValue`) || '"',
-                                      /* @id needs encoding with "@id": value */
-                                      IF(LAST_VALUE(A.nodeType) = '@id', '{"@id": "' || LAST_VALUE(A.`https://uri.etsi.org/ngsi-ld/hasValue`) || '"}',
-                                      /* @json is put directly into value field */
-                                          IF(LAST_VALUE(A.nodeType) = '@json', LAST_VALUE(A.`https://uri.etsi.org/ngsi-ld/hasValue`), 'null' /*should not happen */)))
-                          )
-                          || '}' as indexagg
-                  FROM TABLE( TUMBLE(TABLE attributes, DESCRIPTOR(ts), INTERVAL {{.Values.flink.ngsildUpdateWindow|squote}} second)) as A
-                  WHERE A.entityId IS NOT NULL
-                  GROUP BY A.entityId, A.index, A.name, window_start, window_end) as B
-              GROUP BY window_start, window_end, entityId, name
-          ) GROUP BY window_start, window_end, id;
+            insert into ngsild_updates
+            select 'update', true, true, '[{"id": "' || id || '",' || LISTAGG(attributeagg) || '}]'
+                      from (
+                          select  window_start, window_end, B.entityId as id, '"' || B.name || '":[' || LISTAGG(B.indexagg) || ']' as attributeagg
+                          from(
+                              select window_start, window_end, entityId, name,
+                              '{"observedAt": "' || LAST_VALUE(DATE_FORMAT(A.`ts`,  'yyyy-MM-dd''T''HH:mm:ss.') || CAST(EXTRACT(MILLISECOND from A.`ts`) as STRING)) || 'Z", "type": "'
+                                      || LAST_VALUE(A.`type`)
+                                      || IF(LAST_VALUE(A.`type`) =  'https://uri.etsi.org/ngsi-ld/Relationship','", "object": "', '", "value": ')
+                                      || IF(LAST_VALUE(A.`type`) =  'https://uri.etsi.org/ngsi-ld/Relationship', LAST_VALUE(A.`https://uri.etsi.org/ngsi-ld/hasObject`) || '"',
+                                              
+                                              IF((LAST_VALUE(A.nodeType) <> '@json' AND LAST_VALUE(A.nodeType) <> '@id') OR LAST_VALUE(A.nodeType) IS NULL, '"' || LAST_VALUE(A.`https://uri.etsi.org/ngsi-ld/hasValue`) || '"',
+                                                  /* @id needs encoding with "@id": value */
+                                                  IF(LAST_VALUE(A.nodeType) = '@id', '{"@id": "' || LAST_VALUE(A.`https://uri.etsi.org/ngsi-ld/hasValue`) || '"}',
+                                                  /* @json is put directly into value field */
+                                                      IF(LAST_VALUE(A.nodeType) = '@json', LAST_VALUE(A.`https://uri.etsi.org/ngsi-ld/hasValue`), 'null' /*should not happen */)))
+                                      )
+                                      || '}' as indexagg
+                              FROM TABLE( TUMBLE(TABLE attributes, DESCRIPTOR(ts), INTERVAL {{.Values.flink.ngsildUpdateWindow|squote}} second)) as A
+                              WHERE A.entityId IS NOT NULL
+                              GROUP BY A.entityId, A.index, A.name, window_start, window_end) as B
+                          GROUP BY window_start, window_end, entityId, name
+                      ) GROUP BY window_start, window_end, id;
         - |-
             /* forward only non-retracted attribute changes
             This is part of the core service */

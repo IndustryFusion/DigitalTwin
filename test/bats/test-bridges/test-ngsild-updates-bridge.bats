@@ -11,6 +11,7 @@ USER=realm_user
 CLIENT_ID=scorpio
 KEYCLOAKURL=http://keycloak.local/auth/realms
 UPSERT_FILTER=/tmp/UPSERT_FILTER
+UPSERT_FILTER_TIMESTAMPED=/tmp/UPSERT_FILTER_TIMESTAMPED
 UPSERT_FILTER_OVERWRITE=/tmp/UPSERT_FILTER_OVERWRITE
 UPSERT_FILTER_NON_OVERWRITE=/tmp/UPSERT_FILTER_NON_OVERWRITE
 UPSERT_2_ENTITIES=/tmp/UPSERT_2_ENTITIES
@@ -46,6 +47,35 @@ cat << EOF | tr -d '\n' > ${UPSERT_FILTER}
         "https://industry-fusion.com/types/v0.9/hasCartridge": {
           "type": "Relationship",
           "object": "urn:filterCartridge-test:12345"
+        }
+      }
+    ]
+}
+EOF
+
+cat << EOF | tr -d '\n' > ${UPSERT_FILTER_TIMESTAMPED}
+{
+    "op": "upsert",
+    "overwriteOrReplace": "false",
+    "entities": [
+        {
+        "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+        "id": "${FILTER_ID}",
+        "type": "${FILTER_TYPE}",
+        "https://industry-fusion.com/types/v0.9/state": {
+          "type": "Property",
+          "value": "OFFF",
+          "observedAt": "2024-01-08T01:01:28.172Z"
+        },
+        "https://industry-fusion.com/types/v0.9/strength": {
+          "type": "Property",
+          "value": "0.9",
+          "observedAt": "2024-01-08T01:01:28.512Z"
+        },
+        "https://industry-fusion.com/types/v0.9/hasCartridge": {
+          "type": "Relationship",
+          "object": "urn:filterCartridge-test:12345",
+          "observedAt": "2024-01-08T01:02:28.0Z"
         }
       }
     ]
@@ -168,7 +198,13 @@ cat << EOF | tr -d '\n' > ${UPDATE_FILTER_NO_OVERWRITE}
 }
 EOF
 
-cat << EOF | tr -d '\n' > ${UPSERT_2_ENTITIES}
+get_iso_timestamp(){
+  echo '"'"$(date +"%Y-%m-%dT%T.%3NZ" -u)"'"'
+}
+
+timestamp_upsert_2_entities(){
+  timestamp=$(get_iso_timestamp)
+  cat << EOF | tr -d '\n' > ${UPSERT_2_ENTITIES}
 {
     "op": "upsert",
     "overwriteOrReplace": "false",
@@ -179,15 +215,18 @@ cat << EOF | tr -d '\n' > ${UPSERT_2_ENTITIES}
         "type": "${FILTER_TYPE}",
         "https://industry-fusion.com/types/v0.9/state": {
           "type": "Property",
-          "value": "OFFF"
+          "value": "OFFF",
+          "observedAt": ${timestamp}
         },
         "https://industry-fusion.com/types/v0.9/strength": {
           "type": "Property",
-          "value": "0.9"
+          "value": "0.9",
+          "observedAt": ${timestamp}
         },
         "https://industry-fusion.com/types/v0.9/hasCartridge": {
           "type": "Relationship",
-          "object": "urn:filterCartridge-test:12345"
+          "object": "urn:filterCartridge-test:12345",
+          "observedAt": ${timestamp}
         }
       },
       {
@@ -196,22 +235,28 @@ cat << EOF | tr -d '\n' > ${UPSERT_2_ENTITIES}
         "type": "${PLASMACUTTER_TYPE}",
         "https://industry-fusion.com/types/v0.9/state": {
         "type": "Property",
-        "value": "OFF"
+        "value": "OFF",
+        "observedAt": ${timestamp}
         },
         "https://industry-fusion.com/types/v0.9/hasWorkpiece": {
         "type": "Relationship",
-        "object": "urn:workpiece-test:12345"
+        "object": "urn:workpiece-test:12345",
+        "observedAt": ${timestamp}
         },
         "https://industry-fusion.com/types/v0.9/hasFilter": {
         "type": "Relationship",
-        "object": "urn:filter-test:12345"
+        "object": "urn:filter-test:12345",
+        "observedAt": ${timestamp}
         }
       }
     ]
 }
 EOF
+}
 
-cat << EOF | tr -d '\n' > ${UPSERT_2_ENTITIES2}
+timestamp_upsert_2_entities2(){
+  timestamp=$(get_iso_timestamp)
+  cat << EOF | tr -d '\n' > ${UPSERT_2_ENTITIES2}
 {
     "op": "upsert",
     "overwriteOrReplace": "false",
@@ -222,15 +267,18 @@ cat << EOF | tr -d '\n' > ${UPSERT_2_ENTITIES2}
         "type": "https://industry-fusion.com/types/v0.9/filter",
         "https://industry-fusion.com/types/v0.9/state": {
           "type": "Property",
-          "value": "O"
+          "value": "O",
+          "observedAt": ${timestamp}
         },
         "https://industry-fusion.com/types/v0.9/strength": {
           "type": "Property",
-          "value": "0.422"
+          "value": "0.422",
+          "observedAt": ${timestamp}
         },
         "https://industry-fusion.com/types/v0.9/hasCartridge": {
           "type": "Relationship",
-          "object": "urn:filterCartridge-test:02345"
+          "object": "urn:filterCartridge-test:02345",
+          "observedAt": ${timestamp}
         }
       },
       {
@@ -239,22 +287,28 @@ cat << EOF | tr -d '\n' > ${UPSERT_2_ENTITIES2}
         "type": "${PLASMACUTTER_TYPE}",
         "https://industry-fusion.com/types/v0.9/state": {
         "type": "Property",
-        "value": "OFFON"
+        "value": "OFFON",
+        "observedAt": ${timestamp}
         },
         "https://industry-fusion.com/types/v0.9/hasWorkpiece": {
         "type": "Relationship",
-        "object": "urn:workpiece-test:02345"
+        "object": "urn:workpiece-test:02345",
+        "observedAt": ${timestamp}
         },
         "https://industry-fusion.com/types/v0.9/hasFilter": {
         "type": "Relationship",
-        "object": "urn:filter-test:02345"
+        "object": "urn:filter-test:02345",
+        "observedAt": ${timestamp}
         }
       }
     ]
 }
 EOF
+}
 
-cat << EOF | tr -d '\n' > ${UPDATE_2_ENTITIES}
+timestamp_update_2_entities(){
+  timestamp=$(get_iso_timestamp)
+  cat << EOF | tr -d '\n' > ${UPDATE_2_ENTITIES}
 {
     "op": "update",
     "overwriteOrReplace": "true",
@@ -265,15 +319,18 @@ cat << EOF | tr -d '\n' > ${UPDATE_2_ENTITIES}
         "type": "${FILTER_TYPE}",
         "https://industry-fusion.com/types/v0.9/state": {
           "type": "Property",
-          "value": "OFF"
+          "value": "OFF",
+          "observedAt": ${timestamp}
         },
         "https://industry-fusion.com/types/v0.9/strength": {
           "type": "Property",
-          "value": "1.0"
+          "value": "1.0",
+          "observedAt": ${timestamp}
         },
         "https://industry-fusion.com/types/v0.9/hasCartridge": {
           "type": "Relationship",
-          "object": "urn:filterCartridge-test:22345"
+          "object": "urn:filterCartridge-test:22345",
+          "observedAt": ${timestamp}
         }
       },
       {
@@ -282,22 +339,28 @@ cat << EOF | tr -d '\n' > ${UPDATE_2_ENTITIES}
         "type": "${PLASMACUTTER_TYPE}",
         "https://industry-fusion.com/types/v0.9/state": {
         "type": "Property",
-        "value": "ON"
+        "value": "ON",
+        "observedAt": ${timestamp}
         },
         "https://industry-fusion.com/types/v0.9/hasWorkpiece": {
         "type": "Relationship",
-        "object": "urn:workpiece-test:22345"
+        "object": "urn:workpiece-test:22345",
+        "observedAt": ${timestamp}
         },
         "https://industry-fusion.com/types/v0.9/hasFilter": {
         "type": "Relationship",
-        "object": "urn:filter-test:22345"
+        "object": "urn:filter-test:22345",
+        "observedAt": ${timestamp}
         }
       }
     ]
 }
 EOF
+}
 
-cat << EOF | tr -d '\n' > ${UPDATE_2_ENTITIES2}
+timestamp_update_2_entities2(){
+  timestamp=$(get_iso_timestamp)
+  cat << EOF | tr -d '\n' > ${UPDATE_2_ENTITIES2}
 {
     "op": "update",
     "overwriteOrReplace": "true",
@@ -308,15 +371,18 @@ cat << EOF | tr -d '\n' > ${UPDATE_2_ENTITIES2}
         "type": "${FILTER_TYPE}",
         "https://industry-fusion.com/types/v0.9/state": {
           "type": "Property",
-          "value": "OF"
+          "value": "OF",
+          "observedAt": ${timestamp}
         },
         "https://industry-fusion.com/types/v0.9/strength": {
           "type": "Property",
-          "value": "1.0"
+          "value": "1.0",
+          "observedAt": ${timestamp}
         },
         "https://industry-fusion.com/types/v0.9/hasCartridge": {
           "type": "Relationship",
-          "object": "urn:filterCartridge-test:32345"
+          "object": "urn:filterCartridge-test:32345",
+          "observedAt": ${timestamp}
         }
       },
       {
@@ -325,20 +391,24 @@ cat << EOF | tr -d '\n' > ${UPDATE_2_ENTITIES2}
         "type": "${PLASMACUTTER_TYPE}",
         "https://industry-fusion.com/types/v0.9/state": {
         "type": "Property",
-        "value": "ONN"
+        "value": "ONN",
+        "observedAt": ${timestamp}
         },
         "https://industry-fusion.com/types/v0.9/hasWorkpiece": {
         "type": "Relationship",
-        "object": "urn:workpiece-test:32345"
+        "object": "urn:workpiece-test:32345",
+        "observedAt": ${timestamp}
         },
         "https://industry-fusion.com/types/v0.9/hasFilter": {
         "type": "Relationship",
-        "object": "urn:filter-test:22345"
+        "object": "urn:filter-test:22345",
+        "observedAt": ${timestamp}
         }
       }
     ]
 }
 EOF
+}
 
 # compare entity with reference
 # $1: file to compare with
@@ -360,6 +430,33 @@ compare_inserted_entity() {
     "value" : "0.9"
   }
 }
+EOF
+}
+
+# compare entity with reference
+# $1: file to compare with
+compare_inserted_entity_timestamped() {
+    cat << EOF | jq | diff "$1" - >&3
+{
+  "id": "urn:filter-test:12345",
+  "type": "https://industry-fusion.com/types/v0.9/filter_test",
+  "https://industry-fusion.com/types/v0.9/hasCartridge": {
+    "type": "Relationship",
+    "object": "urn:filterCartridge-test:12345",
+    "observedAt": "2024-01-08T01:02:28.0Z"
+  },
+  "https://industry-fusion.com/types/v0.9/state": {
+    "type": "Property",
+    "value": "OFFF",
+    "observedAt": "2024-01-08T01:01:28.172Z"
+  },
+  "https://industry-fusion.com/types/v0.9/strength": {
+    "type": "Property",
+    "value": "0.9",
+    "observedAt": "2024-01-08T01:01:28.512Z"
+  }
+}
+
 EOF
 }
 
@@ -578,8 +675,8 @@ teardown(){
     sleep 2
     password=$(get_password)
     token=$(get_token)
-    get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )' >${RECEIVED_ENTITY}
-    delete_ngsild "${token}" ${FILTER_ID}
+    get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )' | jq 'del(..|.observedAt?)' >${RECEIVED_ENTITY}
+    #delete_ngsild "${token}" ${FILTER_ID}
     run compare_inserted_entity ${RECEIVED_ENTITY}
     [ "$status" -eq 0 ]
 }
@@ -591,12 +688,12 @@ teardown(){
     sleep 2
     password=$(get_password)
     token=$(get_token)
-    get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )' >${RECEIVED_ENTITY}
+    get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )'| jq 'del(..|.observedAt?)'  >${RECEIVED_ENTITY}
     run compare_inserted_entity ${RECEIVED_ENTITY}
     [ "$status" -eq 0 ]
     kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPSERT_FILTER_OVERWRITE}
     sleep 2
-    get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )' >${RECEIVED_ENTITY}
+    get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )'| jq 'del(..|.observedAt?)'  >${RECEIVED_ENTITY}
     delete_ngsild "${token}" ${FILTER_ID}
     run compare_upserted_overwritten_entity ${RECEIVED_ENTITY}
     [ "$status" -eq 0 ]
@@ -616,12 +713,12 @@ teardown(){
     sleep 2
     password=$(get_password)
     token=$(get_token)
-    get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )' >${RECEIVED_ENTITY}
+    get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )'| jq 'del(..|.observedAt?)' >${RECEIVED_ENTITY}
     run compare_inserted_entity ${RECEIVED_ENTITY}
     [ "$status" -eq 0 ]
     kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPSERT_FILTER_NON_OVERWRITE}
     sleep 2
-    get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )' >${RECEIVED_ENTITY}
+    get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )'| jq 'del(..|.observedAt?)' >${RECEIVED_ENTITY}
     delete_ngsild "${token}" ${FILTER_ID}
     run compare_upserted_non_overwritten_entity ${RECEIVED_ENTITY}
     [ "$status" -eq 0 ]
@@ -637,7 +734,7 @@ teardown(){
     kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPDATE_FILTER}
     echo "# Sent update object to ngsi-ld-updates-bridge, wait some time to let it settle"
     sleep 2
-    get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )' >${RECEIVED_ENTITY}
+    get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )'| jq 'del(..|.observedAt?)' >${RECEIVED_ENTITY}
     delete_ngsild "${token}" ${FILTER_ID}
     run compare_updated_entity ${RECEIVED_ENTITY}
     [ "$status" -eq 0 ]
@@ -653,7 +750,7 @@ teardown(){
     kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPDATE_FILTER_NO_OVERWRITE} 
     echo "# Sent update object to ngsi-ld-updates-bridge, wait some time to let it settle"
     sleep 2
-    get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )' >${RECEIVED_ENTITY}
+    get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )'| jq 'del(..|.observedAt?)' >${RECEIVED_ENTITY}
     delete_ngsild "${token}" ${FILTER_ID}
     run compare_updated_no_overwrite_entity ${RECEIVED_ENTITY}
     [ "$status" -eq 0 ]
@@ -661,16 +758,19 @@ teardown(){
 
 @test "verify ngsild-update bridge is upserting 2 entities" {
     $SKIP
-    kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPSERT_2_ENTITIES}
-    echo "# Sent upsert object to ngsi-ld-updates-bridge, wait some time to let it settle"
-    sleep 2
     password=$(get_password)
     token=$(get_token)
-    get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )' >${RECEIVED_ENTITY}
+    delete_ngsild "${token}" ${CUTTER_ID} || echo "${CUTTER_ID} already deleted"
+    delete_ngsild "${token}" ${FILTER_ID} || echo "${FILTER_ID} already deleted"
+    timestamp_upsert_2_entities
+    kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPSERT_2_ENTITIES}
+    echo "# Sent upsert object to ngsi-ld-updates-bridge, wait some time to let it settle"
+    sleep 2  
+    get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )'| jq 'del(..|.observedAt?)' >${RECEIVED_ENTITY}
     delete_ngsild "${token}" ${FILTER_ID}
     run compare_inserted_entity ${RECEIVED_ENTITY}
     [ "$status" -eq 0 ]
-    get_ngsild "${token}" ${CUTTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )' >${RECEIVED_ENTITY}
+    get_ngsild "${token}" ${CUTTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )'| jq 'del(..|.observedAt?)' >${RECEIVED_ENTITY}
     delete_ngsild "${token}" ${CUTTER_ID}
     run compare_cutter_entity ${RECEIVED_ENTITY}
     [ "$status" -eq 0 ]
@@ -678,17 +778,21 @@ teardown(){
 
 @test "verify ngsild-update bridge is updating 2 entities" {
     $SKIP
+    password=$(get_password)
+    token=$(get_token)
+    delete_ngsild "${token}" ${CUTTER_ID} || echo "${CUTTER_ID} already deleted"
+    delete_ngsild "${token}" ${FILTER_ID} || echo "${FILTER_ID} already deleted"
+    timestamp_upsert_2_entities
     kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPSERT_2_ENTITIES}
+    timestamp_update_2_entities
     kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPDATE_2_ENTITIES}
     echo "# Sent upsert object to ngsi-ld-updates-bridge, wait some time to let it settle"
     sleep 2
-    password=$(get_password)
-    token=$(get_token)
-    get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )' >${RECEIVED_ENTITY}
+    get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )'| jq 'del(..|.observedAt?)' >${RECEIVED_ENTITY}
     delete_ngsild "${token}" ${FILTER_ID}
     run compare_updated_filter_entity ${RECEIVED_ENTITY}
     [ "$status" -eq 0 ]
-    get_ngsild "${token}" ${CUTTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )' >${RECEIVED_ENTITY}
+    get_ngsild "${token}" ${CUTTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )'| jq 'del(..|.observedAt?)' >${RECEIVED_ENTITY}
     delete_ngsild "${token}" ${CUTTER_ID}
     run compare_update_cutter_entity ${RECEIVED_ENTITY}
     [ "$status" -eq 0 ]
@@ -696,21 +800,41 @@ teardown(){
 
 @test "verify ngsild-update bridge is updating many entities in order" {
     $SKIP
+    password=$(get_password)
+    token=$(get_token)
+    delete_ngsild "${token}" ${CUTTER_ID} || echo "${CUTTER_ID} already deleted"
+    delete_ngsild "${token}" ${FILTER_ID} || echo "${FILTER_ID} already deleted"
+    timestamp_upsert_2_entities
+    timestamp_upsert_2_entities2
     kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPSERT_2_ENTITIES}
+    timestamp_update_2_entities
     kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPDATE_2_ENTITIES}
+    timestamp_upsert_2_entities2
     kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPSERT_2_ENTITIES2}
+    timestamp_update_2_entities2
     kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPDATE_2_ENTITIES2}
+    timestamp_update_2_entities
     kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPDATE_2_ENTITIES}
+    echo "# Sent upsert object to ngsi-ld-updates-bridge, wait some time to let it settle"
+    sleep 2
+    get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )'| jq 'del(..|.observedAt?)' >${RECEIVED_ENTITY}
+    delete_ngsild "${token}" ${FILTER_ID}
+    run compare_updated_filter_entity ${RECEIVED_ENTITY}
+    [ "$status" -eq 0 ]
+    get_ngsild "${token}" ${CUTTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )'| jq 'del(..|.observedAt?)' >${RECEIVED_ENTITY}
+    delete_ngsild "${token}" ${CUTTER_ID}
+    run compare_update_cutter_entity ${RECEIVED_ENTITY}
+    [ "$status" -eq 0 ]
+}
+
+@test "verify ngsild-update bridge is inserting ngsi-ld entitiy with right timestamp" {
+    $SKIP
+    kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPSERT_FILTER_TIMESTAMPED}
     echo "# Sent upsert object to ngsi-ld-updates-bridge, wait some time to let it settle"
     sleep 2
     password=$(get_password)
     token=$(get_token)
     get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )' >${RECEIVED_ENTITY}
-    delete_ngsild "${token}" ${FILTER_ID}
-    run compare_updated_filter_entity ${RECEIVED_ENTITY}
-    [ "$status" -eq 0 ]
-    get_ngsild "${token}" ${CUTTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )' >${RECEIVED_ENTITY}
-    delete_ngsild "${token}" ${CUTTER_ID}
-    run compare_update_cutter_entity ${RECEIVED_ENTITY}
+    run compare_inserted_entity_timestamped ${RECEIVED_ENTITY}
     [ "$status" -eq 0 ]
 }

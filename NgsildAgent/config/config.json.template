@@ -17,7 +17,7 @@
         },
         "connector": {
                 "mqtt": {
-                        "host": "mqtt-test-service",
+                        "host": "emqx-listeners",
                         "port": 1883,
                         "websockets": false,
                         "qos": 1,
