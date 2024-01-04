@@ -48,9 +48,13 @@ exports.init = function (conf, logger, onMessage) {
     }
 
     socket.on('data', function (msg) {
-      const data = JSON.parse(msg);
-      logger.debug('Data arrived: ' + JSON.stringify(data));
-      processMessage(data);
+      try {
+        const data = JSON.parse(msg);
+        logger.debug('Data arrived: ' + JSON.stringify(data));
+        processMessage(data);
+      } catch (err) {
+        logger.warn('Parsing of message failed: ' + JSON.stringify(msg) + 'Message will be ignored.');
+      }
     });
   });
 
