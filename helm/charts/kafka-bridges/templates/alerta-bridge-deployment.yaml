@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: alerta-bridge
-          image: '{{ .Values.mainRepo }}/kafka-bridge:{{ .Values.mainVersion }}'
+          image: '{{ .Values.mainRegistry }}/{{ .Values.mainRepo }}/kafka-bridge:{{ .Values.mainVersion }}'
           command: ["node"]
           args: ["/opt/alerta/app.js"]
           imagePullPolicy: IfNotPresent

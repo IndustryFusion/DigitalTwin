@@ -18,12 +18,12 @@ spec:
       {{- if .Values.minio.enabled }}
       initContainers:
       - name: wait-for-minio
-        image: busybox:1.28
+        image: {{ .Values.externalRegistry }}/busybox:1.28
         command: ['sh', '-c', "until wget -S {{ printf "%s://%s" .Values.s3.protocol .Values.s3.endpoint }}{{ .Values.minio.healthPath }} 2>&1 | awk '/^  HTTP/{print $2}' | grep 200; do echo waiting for minio; sleep 1; done"]
       {{- end }}
       containers:
       - name: taskmanager
-        image: '{{ .Values.mainRepo }}/flink-sql-gateway:{{ .Values.mainVersion }}'
+        image: '{{ .Values.mainRegistry }}/{{ .Values.mainRepo }}/flink-sql-gateway:{{ .Values.mainVersion }}'
         workingDir: /opt/flink
         command: ["/bin/bash", "-c", "mkdir -p /opt/flink/plugins/s3; \
           cp /opt/flink/opt/flink-s3-fs-hadoop-*.jar /opt/flink/plugins/s3; \

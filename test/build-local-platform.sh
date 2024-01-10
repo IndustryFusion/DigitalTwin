@@ -14,11 +14,13 @@
 # limitations under the License.
 #
 TEST="true"
-VERSION="v0.5.0-alpha.2"
+. ../.env
+. ../helm/env.sh
+
 
 echo Build DT containers and push to local registry
-(cd .. && DOCKER_PREFIX=k3d-iff.localhost:12345 docker-compose build)
-(cd .. && DOCKER_PREFIX=k3d-iff.localhost:12345 docker-compose push)
+(cd .. && DOCKER_PREFIX=${LOCAL_REGISTRY}/ibn40 docker-compose build)
+(cd .. && DOCKER_PREFIX=${LOCAL_REGISTRY}/ibn40 docker-compose push)
 
 echo Build Scorpio containers
 ( cd ../.. && rm -rf ScorpioBroker)
@@ -26,15 +28,17 @@ echo Build Scorpio containers
 if [[ $TEST -eq "true" ]]; then
     ( cd ../.. && git clone https://github.com/IndustryFusion/ScorpioBroker.git)
     ( cd ../../ScorpioBroker && git checkout 10a93c8 ) # Checking out specific commit for CI purposes
-    ( cd ../../ScorpioBroker && source /etc/profile.d/maven.sh && mvn clean package -DskipTests -Ddocker -Ddocker-tag=$VERSION -Dkafka -Pkafka -Dquarkus.profile=kafka -Dos=java)
+    ( cd ../../ScorpioBroker && source /etc/profile.d/maven.sh && mvn clean package -DskipTests -Ddocker -Ddocker-tag=$DOCKER_TAG -Dkafka -Pkafka -Dquarkus.profile=kafka -Dos=java)
 else
     ( cd ../.. && git clone https://github.com/IndustryFusion/ScorpioBroker.git )
     ( cd ../../ScorpioBroker && mvn clean package -DskipTests -Pdocker )
 fi
-docker images | tail -n +2 | awk '{print $1":"$2}'| grep ibn40 | grep scorpio | grep ${VERSION} |
+
+docker images | tail -n +2 | awk '{print $1":"$2}'| grep ibn40 | grep -v ${LOCAL_REGISTRY} | grep scorpio | grep ${DOCKER_TAG} |
 {
     while read -r i; do
-    j=${i//ibn40/k3d-iff.localhost:12345};
+    j=${i//ibn40/${LOCAL_REGISTRY}\/ibn40};
+    echo $i --- $j
     docker tag "$i" "$j";
     docker push "$j";
     done

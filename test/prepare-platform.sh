@@ -15,7 +15,7 @@
 #
 
 # use specific k3s image to avoid surprises with k8s api changes
-K3S_IMAGE=rancher/k3s:v1.25.12-k3s1-amd64
+K3S_IMAGE=rancher/k3s:v1.28.5-k3s1-amd64
 CURR_DIR=$(pwd)
 SCRIPT_PATH=$(realpath $0)
 
@@ -51,12 +51,17 @@ echo ----------------------
 sudo apt -qq install snapd
 sudo snap install kubectl --classic
 
+echo Installing yq
+echo ----------------------
+sudo apt -qq install snapd
+sudo snap install yq --classic
+
 echo Installing K3d cluster
 echo ----------------------
 ## k3d cluster with 2 nodes
 curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | TAG=v5.4.7 bash
 k3d registry create iff.localhost -p 12345
-k3d cluster create --image ${K3S_IMAGE} -a 2 --registry-use iff.localhost:12345 iff-cluster
+k3d cluster create --image ${K3S_IMAGE} -a 2 --registry-use k3d-iff.localhost:12345 iff-cluster
 
 echo Install Helm v3.10.3
 echo ---------------

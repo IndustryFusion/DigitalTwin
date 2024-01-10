@@ -13,7 +13,7 @@ spec:
     spec:
       serviceAccountName: beamservices-operator
       containers:
-      - image: {{ .Values.mainRepo }}/flink-services-operator:{{ .Values.mainVersion }}
+      - image: {{ .Values.mainRegistry }}/{{ .Values.mainRepo }}/flink-services-operator:{{ .Values.mainVersion }}
         name: beamservices-operator
         command: ["kopf"]
         args: ["run", "--log-format", "plain", "--standalone", "-A", "/opt/beamsqlstatementsetoperator.py", "/opt/flinkpythonudfoperator.py"]

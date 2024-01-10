@@ -4,6 +4,7 @@ metadata:
   name: iff-minio-tenant
   namespace: {{ .Release.Namespace }}
 spec:
+  image: {{ .Values.externalRegistry }}/{{ .Values.minio.minioImage }}
   env:
   - name: "MINIO_STORAGE_CLASS_STANDARD"
     value: "EC:2"

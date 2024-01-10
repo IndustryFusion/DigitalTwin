@@ -9,6 +9,7 @@ metadata:
   name: {{ .Values.clusterSvcName }}
   namespace: {{ .Release.Namespace }}
 spec:
+  dockerImage: {{ .Values.externalRegistry4 }}/zalando/spilo-15:2.1-p9
   env:
   - name: AWS_SECRET_ACCESS_KEY
 # NOTE: This env value must be index 0 - see above the lookup
@@ -70,10 +71,10 @@ spec:
   {{- if .Values.minio.enabled }}
   initContainers:
       - name: wait-for-minio
-        image: busybox:1.28
+        image: {{ .Values.externalRegistry }}/busybox:1.28
         command: ['sh', '-c', "until wget -S {{ printf "%s://%s" .Values.s3.protocol .Values.s3.endpoint }}{{ .Values.minio.healthPath }} 2>&1 | awk '/^  HTTP/{print $2}' | grep 200; do echo waiting for minio; sleep 1; done"]
       - name: test-bucket
-        image: {{ .Values.minio.mcImage }}
+        image: {{ .Values.externalRegistry }}/{{ .Values.minio.mcImage }}
         env:
         - name: MC_HOST_iff
           {{- if $secret }}

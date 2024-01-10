@@ -17,14 +17,14 @@ spec:
     spec:
       initContainers:
       - name: get-jwk
-        image: busybox:1.28
+        image: {{ .Values.externalRegistry }}/busybox:1.28
         command: ['sh', '-c', "wget http://{{ .Values.keycloak.internalAuthService.name}}:{{ .Values.keycloak.internalAuthService.port}}{{ .Values.keycloak.internalAuthService.path}}/realms/{{ .Values.keycloak.scorpio.realm }}/protocol/openid-connect/certs -O /keyconfig/jwk.json;"]
         volumeMounts:
         - mountPath: /keyconfig
           name: config-volume
       containers:
       - name: pgrest
-        image: postgrest/postgrest:v12.0.0
+        image: {{ .Values.externalRegistry }}/postgrest/postgrest:v12.0.0
         env:
         - name: PGRST_DB_URI
           {{ if $secret }}
@@ -33,8 +33,6 @@ spec:
           {{- end }}
         - name: PGRST_JWT_SECRET_IS_BASE64
           value: "false"
-        #- name: PGRST_DB_ANON_ROLE
-        #  value: {{ .Values.db.timescaleReadUser}}
         - name: PGRST_JWT_SECRET
           value: '@/keyconfig/jwk.json'
         ports:

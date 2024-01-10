@@ -8,7 +8,7 @@ metadata:
    app: {{ .Values.custom_resource.name }}
 spec:
   instances: {{ .Values.custom_resource.instances }}
-  image: '{{ .Values.mainRepo }}/keycloak:{{ .Values.mainVersion }}'
+  image: '{{ .Values.mainRegistry }}/{{ .Values.mainRepo }}/keycloak:{{ .Values.mainVersion }}'
   hostname:
     hostname: {{ .Values.keycloak.externalAuthService.domainname }}
   http:

@@ -51,7 +51,7 @@ releases:
   - values.yaml.gotmpl
 - name: alerta
   labels:
-    order: second
+    order: third
     app: alerta
   chart: ./charts/alerta
   namespace: {{ .Values.namespace }}
@@ -153,4 +153,4 @@ releases:
   values:
   - values.yaml.gotmpl
   needs:
-  - postgres
+  - postgres  
