@@ -1,7 +1,12 @@
-mainVersion: v0.5.0-alpha.2
+mainVersion: v0.6.0-beta.1
 mainRepo: ibn40
+mainRegistry: docker.io
 namespace: iff
 pullSecretCredentials: regcred
+externalRegistry: docker.io
+externalRegistry2: quay.io
+externalRegistry3: registry.opensource.zalan.do
+externalRegistry4: ghcr.io
 
 db:
   teamId: acid

@@ -4,7 +4,8 @@ metadata:
   name: {{ .Values.kafka.name }}
 spec:
   kafka:
-    version: 3.3.1
+    #version: 3.3.1
+    image: {{ .Values.externalRegistry2 }}/strimzi/kafka:0.32.0-kafka-3.3.1
     replicas: 1
     listeners:
       - name: plain
@@ -38,6 +39,7 @@ spec:
         size: {{ .Values.kafka.storage.size }}
         deleteClaim: false
   zookeeper:
+    image: {{ .Values.externalRegistry2 }}/strimzi/kafka:0.32.0-kafka-3.3.1
     replicas: {{ .Values.kafka.zookeeper.replicas }}
     storage:
       type: {{ .Values.kafka.zookeeper.storage.type }}
@@ -52,6 +54,7 @@ spec:
         cpu: 400m
   entityOperator:
     topicOperator:
+      image: {{ .Values.externalRegistry2 }}/strimzi/operator:0.32.0
       resources:
         requests:
           cpu: 150m
@@ -60,6 +63,7 @@ spec:
           cpu: 300m
           memory: 256Mi
     userOperator:
+      image: {{ .Values.externalRegistry2 }}/strimzi/operator:0.32.0
       resources:
         requests:
           cpu: 150m
@@ -68,6 +72,7 @@ spec:
           cpu: 300m
           memory: 256Mi
     tlsSidecar:
+      image: {{ .Values.externalRegistry2 }}/strimzi/kafka:0.32.0-kafka-3.3.1
       resources:
         requests:
           cpu: 100m

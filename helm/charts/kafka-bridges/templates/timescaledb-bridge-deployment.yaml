@@ -26,7 +26,7 @@ spec:
     spec:
       containers:
         - name: timescaledb-bridge
-          image: '{{ .Values.mainRepo }}/kafka-bridge:{{ .Values.mainVersion }}'
+          image: '{{ .Values.mainRegistry }}/{{ .Values.mainRepo }}/kafka-bridge:{{ .Values.mainVersion }}'
           command: ["node"]
           args: ["/opt/timescaledb/app.js"]
           imagePullPolicy: IfNotPresent

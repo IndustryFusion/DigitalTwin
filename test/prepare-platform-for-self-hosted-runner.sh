@@ -15,7 +15,7 @@
 #
 
 # use specific k3s image to avoid surprises with k8s api changes
-K3S_IMAGE=rancher/k3s:v1.25.12-k3s1-amd64
+K3S_IMAGE=rancher/k3s:v1.28.5-k3s1-amd64
 
 
 echo Installing K3d cluster
@@ -23,7 +23,7 @@ echo ----------------------
 ## k3d cluster with 2 nodes
 k3d registry create iff.localhost -p 12345
 k3d cluster list | grep iff-cluster > /dev/null && k3d cluster delete iff-cluster
-k3d cluster create --image ${K3S_IMAGE} -a 2 --registry-use iff.localhost:12345 iff-cluster
+k3d cluster create --image ${K3S_IMAGE} -a 2 --registry-use k3d-iff.localhost:12345 iff-cluster
 
 echo Install Helm diff plugin
 echo ------------------------ 

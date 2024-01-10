@@ -28,11 +28,14 @@ jobs:
         bash ./prepare-test.sh
         bats linting.bats
         shellcheck *.sh *.bats test-*/*.bats
+    - name: Prepare airgap deployment
+      run: |
+        cd helm/airgap-deployment && bash prepare-airgap.bash
     - name: Build Platform locally
       run: |
         cd test && bash build-local-platform.sh
     - name: Install from local registry
-      run: cd test && bash install-local-platform.sh
+      run: cd test && bash ./install-platform.sh -lo -c all
     - name: Run all e2e tests
       run: |
         echo sleep 60s to let the system settle
