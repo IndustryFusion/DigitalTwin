@@ -36,7 +36,7 @@ data:
                       "ssl-required": false
               },
               "mqttAuthService": {
-                        "auth-server-url": "http://keycloak.local/auth/",
+                        "auth-server-url": {{ printf "%s//%s%s" .Values.keycloak.externalAuthService.protocol .Values.keycloak.externalAuthService.domainname .Values.keycloak.externalAuthService.path | quote}},
                         "realm": "iff",
                         "clientId": "mqtt-broker",
                         "resource": "mqtt-broker",
