@@ -6,30 +6,41 @@ on:
       - v*
 
 jobs:
-  call-build:
-    uses: IndustryFusion/DigitalTwin/.github/workflows/build.yaml@main
-  call-test:
-    uses: IndustryFusion/DigitalTwin/.github/workflows/k8s-tests.yaml@main
   push-release-images:
-    needs: call-test
-    runs-on: private
+    runs-on: ubuntu-22.04
     env: 
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
       DOCKER_PREFIX: ${{ secrets.DOCKER_PREFIX }}
-      SELF_HOSTED_RUNNER: true
+      BUILDONLY: true
     steps:
+      - uses: actions/checkout@v2
+      - name: Prepare K3d cluster
+        run: |
+          cd ./test && bash ./prepare-platform.sh
+          sudo update-alternatives --set java /usr/lib/jvm/java-17-openjdk-amd64/bin/java
+          java --version
+      - name: Build Platform locally
+        run: |
+          export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+          cd test && bash build-local-platform.sh
       - name: Push release images
         shell: bash
         run: |
           set +o pipefail
           docker login -u "${DOCKER_USERNAME}" -p "${DOCKER_PASSWORD}"
           TARGET_DOCKER_TAG=`git describe --tags --exact-match` || exit 1
+          echo Selected tag ${TARGET_DOCKER_TAG}
           # Tag and push passed "k3d-iff.localhost:12345" with release tag
-          images=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep ":${TARGET_DOCKER_TAG}")
+          docker images
+          images=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep ":${TARGET_DOCKER_TAG}" | grep "k3d-iff.localhost")
+          echo I will push the following images: ${images}
           for image in $images; do
-            newimage=$(echo $image | sed -r "s/k3d-iff.localhost:12345/${DOCKER_PREFIX}/g");
+            newimage=$(echo $image | sed -r "s/k3d-iff.localhost:12345/docker.io/g");
+            echo I will push image ${image} as ${newimage}
             docker tag ${image} ${newimage};
             docker push ${newimage};
           done
-
+      - name: Setup upterm session
+        if: failure()
+        uses: lhotari/action-upterm@v1

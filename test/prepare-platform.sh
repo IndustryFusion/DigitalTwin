@@ -46,6 +46,7 @@ sudo chmod +x /usr/bin/docker-compose
 printf "\033[1mSuccessfully installed docker-compose %s\033[0m\n"
 printf "\n"
 
+
 echo Installing kubectl
 echo ----------------------
 sudo apt -qq install snapd
@@ -63,27 +64,29 @@ curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | TAG=v5.4
 k3d registry create iff.localhost -p 12345
 k3d cluster create --image ${K3S_IMAGE} -a 2 --registry-use k3d-iff.localhost:12345 iff-cluster
 
-echo Install Helm v3.10.3
-echo ---------------
- # helm v3.10.3
-wget https://get.helm.sh/helm-v3.10.3-linux-amd64.tar.gz
-tar -zxvf helm-v3.10.3-linux-amd64.tar.gz
-sudo mv linux-amd64/helm /usr/bin/helm
-rm helm-v3.10.3-linux-amd64.tar.gz
+if [ -z "$BUILDONLY" ];then
+    echo Install Helm v3.10.3
+    echo ---------------
+    # helm v3.10.3
+    wget https://get.helm.sh/helm-v3.10.3-linux-amd64.tar.gz
+    tar -zxvf helm-v3.10.3-linux-amd64.tar.gz
+    sudo mv linux-amd64/helm /usr/bin/helm
+    rm helm-v3.10.3-linux-amd64.tar.gz
 
-echo Install Helm diff plugin
-echo ------------------------ 
-helm plugin install https://github.com/databus23/helm-diff
+    echo Install Helm diff plugin
+    echo ------------------------ 
+    helm plugin install https://github.com/databus23/helm-diff
 
-echo Install Helmfile 0.149.0
-echo ----------------
-cd ../helm || exit 1
-# helmfile v0.149.0
-wget https://github.com/helmfile/helmfile/releases/download/v0.149.0/helmfile_0.149.0_linux_amd64.tar.gz
-tar -zxvf helmfile_0.149.0_linux_amd64.tar.gz
-chmod u+x helmfile
-rm helmfile_0.149.0_linux_amd64.tar.gz
-cd -
+    echo Install Helmfile 0.149.0
+    echo ----------------
+    cd ../helm || exit 1
+    # helmfile v0.149.0
+    wget https://github.com/helmfile/helmfile/releases/download/v0.149.0/helmfile_0.149.0_linux_amd64.tar.gz
+    tar -zxvf helmfile_0.149.0_linux_amd64.tar.gz
+    chmod u+x helmfile
+    rm helmfile_0.149.0_linux_amd64.tar.gz
+    cd -
+fi
 
 echo Install Java 17
 echo ---------------
@@ -105,57 +108,58 @@ sudo mv maven.sh /etc/profile.d/
 source /etc/profile.d/maven.sh
 mvn --version
 
+if [ -z "$BUILDONLY" ];then
+    echo Install shellcheck
+    echo ------------------
+    sudo apt install -yq shellcheck
 
-echo Install shellcheck
-echo ------------------
-sudo apt install -yq shellcheck
+    echo Install jq
+    echo ------------------
+    sudo apt install -yq jq
 
-echo Install jq
-echo ------------------
-sudo apt install -yq jq
+    echo Install kafkacat
+    echo ------------------
+    sudo apt install -yq kafkacat
 
-echo Install kafkacat
-echo ------------------
-sudo apt install -yq kafkacat
+    echo Install bats
+    echo ------------------
+    sudo apt install -yq bats
 
-echo Install bats
-echo ------------------
-sudo apt install -yq bats
+    echo Install kubefwd
+    echo ------------------
+    wget https://github.com/txn2/kubefwd/releases/download/1.22.0/kubefwd_Linux_x86_64.tar.gz
+    tar xvzf kubefwd_Linux_x86_64.tar.gz
+    sudo mv kubefwd /usr/local/bin
+    rm kubefwd_Linux_x86_64.tar.gz
 
-echo Install kubefwd
-echo ------------------
-wget https://github.com/txn2/kubefwd/releases/download/1.22.0/kubefwd_Linux_x86_64.tar.gz
-tar xvzf kubefwd_Linux_x86_64.tar.gz
-sudo mv kubefwd /usr/local/bin
-rm kubefwd_Linux_x86_64.tar.gz
+    echo Install bats version 1.9.0
+    echo ------------------
+    wget https://github.com/bats-core/bats-core/archive/refs/tags/v1.9.0.tar.gz
+    tar -zxvf v1.9.0.tar.gz
+    sudo ./bats-core-1.9.0/install.sh /usr/local
+    rm -rf v1.9.0.tar.gz bats-core-1.9.0
 
-echo Install bats version 1.9.0
-echo ------------------
-wget https://github.com/bats-core/bats-core/archive/refs/tags/v1.9.0.tar.gz
-tar -zxvf v1.9.0.tar.gz
-sudo ./bats-core-1.9.0/install.sh /usr/local
-rm -rf v1.9.0.tar.gz bats-core-1.9.0
+    echo Install sqlite and pcre component
+    echo ---------------------------------
+    sudo  apt install -yq sqlite3 sqlite3-pcre
 
-echo Install sqlite and pcre component
-echo ---------------------------------
-sudo  apt install -yq sqlite3 sqlite3-pcre
+    echo Install python3-pip
+    echo -------------------
+    sudo apt install -yq python3-pip python3-venv
 
-echo Install python3-pip
-echo -------------------
-sudo apt install -yq python3-pip python3-venv
-
-echo Install nodejs
-echo -------------------
-sudo apt remove -y nodejs libnode-dev libnode72
-sudo apt purge -y nodejs
-curl -sL https://deb.nodesource.com/setup_18.x -o /tmp/nodesource_setup.sh
-sudo bash /tmp/nodesource_setup.sh
-sudo apt install -y nodejs
+    echo Install nodejs
+    echo -------------------
+    sudo apt remove -y nodejs libnode-dev libnode72
+    sudo apt purge -y nodejs
+    curl -sL https://deb.nodesource.com/setup_18.x -o /tmp/nodesource_setup.sh
+    sudo bash /tmp/nodesource_setup.sh
+    sudo apt install -y nodejs
 
 
-echo Install Bats
-echo -------------------
-sudo apt install -yq bats
+    echo Install Bats
+    echo -------------------
+    sudo apt install -yq bats
+fi
 
 if [ -n "${SELF_HOSTED_RUNNER}" ]; then
     echo Change group of /etc/hosts
