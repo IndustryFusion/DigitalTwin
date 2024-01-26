@@ -237,11 +237,6 @@ Once the local tests are passed in the above documentation, perform the followin
 **Note:** The realm_user and the associated password will be used in the IFF smartbox services.
 
 
-In order to establish the connection to PDT located in factory server from smartbox, the OISP GW services in the PDT must be exposed locally as shown below using [Kubefwd](https://github.com/txn2/kubefwd).
-
-`sudo kubefwd services -n oisp --kubeconfig='<path of the kubeconfig file>'`
-
-
 ### 6. Deployment of IFF Smartbox Services
 
 Before deploying these services, respective Docker images must be built and pushed to a custom Docker Hub repo. 
@@ -259,16 +254,10 @@ Build the Docker image using the Dockerfile located in this [repo](https://githu
 Build the Docker image using the Dockerfile located in this [repo](https://github.com/IndustryFusion/fusionmqttdataservice). Push the image with a desired name and version to your Docker Hub repo.
 
 
-**4. oisp-token-operator** (Will be deprecated soon)
+**3. iff-iot-agent**
 
 
-Build the Docker image using the Dockerfile located in this [repo](https://github.com/IndustryFusion/oisp-token-operator). Push the image with a desired name and version to your Docker Hub repo.
-
-
-**5. oisp-iot-agent**
-
-
-Build the Docker image using the Dockerfile located in this [repo](https://github.com/Open-IoT-Service-Platform/oisp-iot-agent). Push the image with a desired name and version to your Docker Hub repo.
+Build the Docker image using the Dockerfile and instructions located in this [repo](https://github.com/IndustryFusion/DigitalTwin/tree/main/NgsildAgent). Push the image with a desired name and version to your Docker Hub repo.
 
 
 For OPC-UA based machines, with the help of Helm charts, Akri discovery handler will be used to deploy the IFF services automatically upon finding the active server. For MQTT based machines, Kustomize will be used to deploy the services.
@@ -436,6 +425,29 @@ For our example, the constraint for the temperature value is minimum inclusive 1
 ![image](https://github.com/IndustryFusion/docs/assets/128161316/02196980-4fe2-43cc-9329-76980e71ad62)
 
 Similarly, if two assets are linked to each other using relationships in semantic modelling of the asset, the validation rules can also be extended to check whether the relationship graph is intact or not using SHACL.
+
+
+#### PDT Endpoints
+
+1. Scorpio Broker
+
+- http://ngsild.local/
+- API documentation: [Docs](https://scorpio.readthedocs.io/en/latest/introduction.html)
+
+2. Alerta
+
+- http://alerta.local/
+- API documentation: [Docs](https://docs.alerta.io/api/reference.html)
+
+3. PGRest
+
+- http://pgrest.local/
+- API documentation: [Docs](https://postgrest.org/en/stable/)
+
+4. Keycloak
+
+- http://keycloak.local/auth
+- API documentation: [Docs](https://www.keycloak.org/documentation)
 
 
 ### 8. NeuVector - Container Security Platform
