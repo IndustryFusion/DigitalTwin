@@ -10,7 +10,7 @@ This script is setting up the default device-file and metadata.
 ```bash
 Usage: init-device.sh <deviceId> <gatewayId> [-k keycloakurl] [-r realmId]
 Defaults: 
-keycloakurl=http://keycloak.local/auth/realms/iff
+keycloakurl=http://keycloak.local/auth/realms
 realmid=iff
 ```
 Example:
@@ -167,7 +167,19 @@ To start the oisp-agent service simply execute the start script:
 
 ## Using Docker
 
-TBD
+To build and run the Docker container for the agent, run the below 'make' commands with necessary metadata required for the onboarding scripts.
+
+** To Build the Image
+
+````bash
+make IMAGE_NAME=<dockerImageName>
+````
+
+** To Run the Image
+
+````bash
+make DEVICE_ID=<deviceId> GATEWAY_ID=<gatewayId> KEYCLOAK_URL=<keycloakurl> REALM_ID=<realmId> REALM_USER_PASSWORD=<password> IMAGE_NAME=<dockerImageName>
+````
 
 #### Known limitations
  
