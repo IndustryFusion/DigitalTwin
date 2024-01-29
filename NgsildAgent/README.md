@@ -175,7 +175,7 @@ make IMAGE_NAME=<dockerImageName>
 ** To Run the Image
 
 ````bash
-make DEVICE_ID=<deviceId> GATEWAY_ID=<gatewayId> KEYCLOAK_URL=<keycloakurl> REALM_ID=<realmId> REALM_USER_PASSWORD=<password> IMAGE_NAME=<dockerImageName>
+make DEVICE_ID=<deviceId> GATEWAY_ID=<gatewayId> KEYCLOAK_URL=<keycloakurl> REALM_ID=<realmId> REALM_USER_PASSWORD=<password> IMAGE_NAME=<dockerImageName> DEBUG=<true/false>
 ````
 
 #### Known limitations
