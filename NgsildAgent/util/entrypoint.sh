@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (c) 2023 Intel Corporation
+# Copyright (c) 2024 IB Systems GmbH
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,16 +12,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+
 set -e
 
 cd /app/util
 
-# Debugging output
-echo "ARG1: $DEVICE_ID"
-echo "ARG2: $GATEWAY_ID"
-echo "ARG3: $KEYCLOAK_URL"
-echo "ARG4: $REALM_ID"
-echo "ARG5: $REALM_USER_PASSWORD"
+if [ "$DEBUG" = true ]; then
+    echo "Debugging is enabled"
+    echo "ARG1: $DEVICE_ID"
+    echo "ARG2: $GATEWAY_ID"
+    echo "ARG3: $KEYCLOAK_URL"
+    echo "ARG4: $REALM_ID"
+    echo "ARG5: $REALM_USER_PASSWORD"
+else
+    echo "Debugging is disabled"
+fi
 
 # Execute the first script with passed arguments
 ./init-device.sh -k "$KEYCLOAK_URL" -r "$REALM_ID" "$DEVICE_ID" "$GATEWAY_ID"
