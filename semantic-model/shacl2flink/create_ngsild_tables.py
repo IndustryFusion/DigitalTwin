@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from rdflib import Graph, Namespace
+from rdflib import Graph, Namespace, Variable
 from rdflib.namespace import RDF
 import os
 import sys
@@ -23,6 +23,22 @@ import ruamel.yaml
 import lib.utils as utils
 import lib.configs as configs
 from ruamel.yaml.scalarstring import (SingleQuotedScalarString as sq)
+
+
+field_query = """
+PREFIX iff: <https://industry-fusion.com/types/v0.9/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
+PREFIX sh: <http://www.w3.org/ns/shacl#>
+
+SELECT DISTINCT ?path
+where {
+    ?nodeshape a sh:NodeShape .
+    ?nodeshape sh:targetClass ?shacltype .
+    ?nodeshape sh:property [ sh:path ?path ; sh:order ?ord ] .
+    }
+    ORDER BY ?ord
+"""
 
 
 def parse_args(args=sys.argv[1:]):
@@ -53,9 +69,11 @@ def main(shaclfile, output_folder='output'):
                 table = tables[stripped_class]
             table.append({sq("id"): "STRING"})
             table.append({sq("type"): "STRING"})
-
-            for _, _, target_property in g.triples((s, sh.property, None)):
-                target_path = g.value(target_property, sh.path)
+            # Query the fields in order
+            bindings = {Variable("shacltype"): target_class}
+            qres = g.query(field_query, initBindings=bindings)
+            for row in qres:
+                target_path = row.path
                 table.append({sq(f'{target_path}'): "STRING"})
             table.append({sq("ts"): "TIMESTAMP(3) METADATA FROM 'timestamp'"})
             table.append({"watermark": "FOR `ts` AS `ts`"})
