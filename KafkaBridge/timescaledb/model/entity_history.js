@@ -33,10 +33,10 @@ const entityHistoryTable = sequelize.define(config.timescaledb.tablename, {
   modifiedAt: { type: Sequelize.DATE, allowNull: false },
 
   // Column-2, entityId
-  entityId: { type: Sequelize.TEXT, allowNull: false },
+  entityId: { type: Sequelize.TEXT, allowNull: false, primaryKey: true },
 
   // Column-3, attributeId-> full name as URI
-  attributeId: { type: Sequelize.TEXT, allowNull: false },
+  attributeId: { type: Sequelize.TEXT, allowNull: false, primaryKey: true },
 
   // Column-4, attributeType-> Relaionship or properties
   attributeType: { type: Sequelize.TEXT, allowNull: false },

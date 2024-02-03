@@ -23,33 +23,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 'use strict';
-const validator = require('json-schema');
-let logger = require('./logger').init();
-/**
- *
- * @param obj
- * @param schema
- * @returns {Array}
- */
-const validate = function (obj, schema) {
-  return validator.validate(obj, schema).errors.map(function (e) {
-    logger.debug('Scheme Error: %s', e.message);
-    return e;
-  });
-};
-
-const parseErrors = function (result, cb) {
-  let msg = '';
-  if (result.length > 0) {
-    for (let i = 0; i < result.length; i++) {
-      // validate method from schema-validator returns error message in which on first place there is filed
-      // identifier (n - for name; t - for type)
-      msg += result[i].customMessage.replace(/^n/, 'name').replace(/^t/, 'type') +
-                ((i + 1) < result.length ? ', ' : '');
-    }
-  }
-  cb(msg);
-};
+const Ajv = require('ajv-draft-04');
+const ajv = new Ajv();
 
 /**
  * @description it will validate the json schema
@@ -62,16 +37,12 @@ const validateSchema = function (schema) {
      * @param data
      * @return {bool}
      */
+  const validate = ajv.compile(schema);
   return function (data) {
-    const errors = validate(data, schema);
-    return (errors.length === 0);
+    validate(data);
+    return validate.errors;
   };
 };
 module.exports = {
-  validate,
-  validateSchema,
-  setLogger: function (log) {
-    logger = log;
-  },
-  parseErrors
+  validateSchema
 };

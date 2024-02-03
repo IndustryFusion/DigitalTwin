@@ -17,7 +17,7 @@
 'use strict';
 const { Kafka, logLevel } = require('kafkajs');
 const { Partitioners } = require('kafkajs');
-const ngsildMapper = require('./spb-ngsild-mapper');
+const ngsildMapper = require('./spb_ngsild_mapper');
 const Logger = require('../lib/logger');
 const dataSchema = require('./schemas/data.json');
 const Validator = require('jsonschema').Validator;
@@ -264,9 +264,19 @@ module.exports = class SparkplugHandler {
             this.logger.debug(' Mapped SpB Relationship data to NGSI-LD relationship type:  ' + JSON.stringify(ngsiMappedKafkaMessage));
             const message = { key, value: JSON.stringify(ngsiMappedKafkaMessage) };
             this.kafkaAggregator.addMessage(message, this.config.mqtt.sparkplug.ngsildKafkaTopic);
-          } else if (metricType === 'Property') {
+          } else if (metricType === 'Property' || metricType === 'PropertyLiteral') {
             ngsiMappedKafkaMessage = ngsildMapper.mapSpbPropertyToKafka(devID, kafkaMessage);
             this.logger.debug(' Mapped SpB Properties data to NGSI-LD properties type:  ' + JSON.stringify(ngsiMappedKafkaMessage));
+            const message = { key, value: JSON.stringify(ngsiMappedKafkaMessage) };
+            this.kafkaAggregator.addMessage(message, this.config.mqtt.sparkplug.ngsildKafkaTopic);
+          } else if (metricType === 'PropertyIri') {
+            ngsiMappedKafkaMessage = ngsildMapper.mapSpbPropertyIriToKafka(devID, kafkaMessage);
+            this.logger.debug(' Mapped SpB PropertyIri data to NGSI-LD IRI type:  ' + JSON.stringify(ngsiMappedKafkaMessage));
+            const message = { key, value: JSON.stringify(ngsiMappedKafkaMessage) };
+            this.kafkaAggregator.addMessage(message, this.config.mqtt.sparkplug.ngsildKafkaTopic);
+          } else if (metricType === 'PropertyJson') {
+            ngsiMappedKafkaMessage = ngsildMapper.mapSpbPropertyJsonToKafka(devID, kafkaMessage);
+            this.logger.debug(' Mapped SpB PropertyIri data to NGSI-LD IRI type:  ' + JSON.stringify(ngsiMappedKafkaMessage));
             const message = { key, value: JSON.stringify(ngsiMappedKafkaMessage) };
             this.kafkaAggregator.addMessage(message, this.config.mqtt.sparkplug.ngsildKafkaTopic);
           } else {
@@ -286,7 +296,7 @@ module.exports = class SparkplugHandler {
     if (Object.values(MESSAGE_TYPE.WITHSEQ).includes(subTopic[2])) {
       const validationResult = this.validator.validate(message, dataSchema.SPARKPLUGB);
       if (validationResult.errors.length > 0) {
-        this.logger.warn('Schema rejected message! Message will be discarded: ' + JSON.stringify(message));
+        this.logger.warn('Schema rejected message! Message will be discarded: ' + JSON.stringify(message) + ' with validation result: ' + validationResult);
       } else {
         /* Validating SpB seq number if it is alligned with previous or not
             *  To Do: If seq number is incorrect, send command to device for resend Birth Message

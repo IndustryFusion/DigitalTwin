@@ -95,7 +95,7 @@ check_tsdb_sample() {
   {
     "attributeId": "https://industry-fusion.com/types/v0.9/state",
     "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
-    "datasetId": "$URN\\\\https://industry-fusion.com/types/v0.9/state",
+    "datasetId": "@none",
     "entityId": "$URN",
     "index": 0,
     "nodeType": "@value",

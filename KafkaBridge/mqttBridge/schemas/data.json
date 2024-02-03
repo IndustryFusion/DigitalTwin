@@ -427,6 +427,26 @@
                         "value": {
                             "type": ["number", "string", "boolean"],
                             "required": true
+                        },
+                        "properties": {
+                            "type": "object",
+                            "properties": {
+                                "values": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "required": true
+                                },
+                                "keys": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "required": true
+                                }
+                            },
+                            "required": false
                         }
                     },
                     "additionalProperties": false

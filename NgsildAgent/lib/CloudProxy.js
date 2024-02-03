@@ -206,6 +206,7 @@ class CloudProxy {
       compMetric.name = metric.n;
       compMetric.dataType = 'string';
       compMetric.timestamp = metric.on || new Date().getTime();
+      compMetric.properties = metric.properties;
       return compMetric;
     }
     // await me.checkDeviceToken();
