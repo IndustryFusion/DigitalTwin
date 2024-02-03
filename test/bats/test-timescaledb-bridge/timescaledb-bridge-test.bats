@@ -110,7 +110,7 @@ check_tsdb_sample1() {
   {
     "attributeId": "https://industry-fusion.com/types/v0.9/state",
     "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
-    "datasetId": "$URN\\\\https://industry-fusion.com/types/v0.9/state",
+    "datasetId": "@none",
     "entityId": "$URN",
     "index": 0,
     "nodeType": "@id",
@@ -131,7 +131,7 @@ check_tsdb_sample2() {
   {
     "attributeId": "https://industry-fusion.com/types/v0.9/relationship",
     "attributeType": "https://uri.etsi.org/ngsi-ld/Relationship",
-    "datasetId": "$URN\\\\https://industry-fusion.com/types/v0.9/relationship",
+    "datasetId": "@none",
     "entityId": "$URN",
     "index": 0,
     "nodeType": "@id",
@@ -149,7 +149,7 @@ check_tsdb_sample3() {
   {
     "attributeId": "https://industry-fusion.com/types/v0.9/state",
     "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
-    "datasetId": "$URN4\\\\https://industry-fusion.com/types/v0.9/state",
+    "datasetId": "@none",
     "entityId": "$URN4",
     "index": 0,
     "nodeType": "@value",
@@ -203,6 +203,7 @@ teardown(){
     send_to_kafka_bridge ${ATTRIBUTES_PROPERTY2} ${ATTRIBUTES_TOPIC}
     sleep 2
     get_datapoints "$URN4" "${TSDB_RESULT}"
+    cat "${TSDB_RESULT}"
     echo "# Now checking result."
     run check_tsdb_sample3 "$TSDB_RESULT" "$URN4"
     [ "$status" -eq "0" ]

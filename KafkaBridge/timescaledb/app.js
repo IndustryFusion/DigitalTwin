@@ -51,7 +51,11 @@ const processMessage = async function ({ topic, partition, message }) {
     datapoint.attributeId = body.name;
     datapoint.nodeType = body.nodeType;
     datapoint.index = body.index;
-    datapoint.datasetId = body.id;
+    if ('datasetId' in body) {
+      datapoint.datasetId = body.datasetId;
+    } else {
+      datapoint.datasetId = '@none';
+    }
 
     if (body.type === 'https://uri.etsi.org/ngsi-ld/Property') {
       let value = body['https://uri.etsi.org/ngsi-ld/hasValue'];

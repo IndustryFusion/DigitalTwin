@@ -1,26 +1,26 @@
 {
-    "SUBMIT": {
-        "name": "data",
-        "type": "object",
-        "additionalProperties": true,
-        "properties": {
-            "v": {
-                "required": true
-            },
-            "n": {
-                "type": "string",
-                "required": true,
-                "minLength": 4
-            },
-            "t": {
-                "type": "string",
-                "required": false,
-                "enum": ["Property", "Relationship"]
-            },
-            "on": {
-                "type": "number",
-                "required": false
-            }
-        }
-    }
-}
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+      "v": {
+        "type": "string"
+      },
+      "t": {
+        "type": "string",
+        "enum": ["Property", "PropertyLiteral", "PropertyIri", "PropertyJson", "Relationship"]
+      },
+      "on": {
+        "type": "integer"
+      },
+      "n": {
+        "type": "string"
+      },
+      "d": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "v",
+      "n"
+    ]
+  }
