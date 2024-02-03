@@ -79,13 +79,13 @@ esac
 
 if [ "$LOCAL" = "true" ]; then
     export REGISTRY=${LOCAL_REGISTRY}
-    if [ "$OFFLINE" = "true" ]; then
-
-        export EXT_REGISTRY=${LOCAL_REGISTRY}
-        export EXT_REGISTRY2=${LOCAL_REGISTRY}
-        export EXT_REGISTRY3=${LOCAL_REGISTRY}
-        export EXT_REGISTRY4=${LOCAL_REGISTRY}
-    fi
+fi
+if [ "$OFFLINE" = "true" ]; then
+    export REGISTRY=${LOCAL_REGISTRY}
+    export EXT_REGISTRY=${LOCAL_REGISTRY}
+    export EXT_REGISTRY2=${LOCAL_REGISTRY}
+    export EXT_REGISTRY3=${LOCAL_REGISTRY}
+    export EXT_REGISTRY4=${LOCAL_REGISTRY}
 fi
 
 

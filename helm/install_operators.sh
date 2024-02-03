@@ -86,7 +86,7 @@ printf "\n"
 printf "\033[1mInstalling Postgres-operator ${POSTGRES_OPERATOR_VERSION}\n"
 printf -- "------------------------\033[0m\n"
 if [ "$OFFLINE" = "true" ]; then
-  ( cd ${OFFLINE_DIR}/postgres-operator && helm -n iff upgrade --install postgres-operator ./charts/postgres-operator --set image.registry=${REGISTRY} --set configGeneral.docker_image=${REGISTRY}/zalando/spilo-15:2.1-p9)
+  ( cd ${OFFLINE_DIR}/postgres-operator && helm -n iff upgrade --install postgres-operator ./charts/postgres-operator --set image.registry=${EXT_REGISTRY3} --set configGeneral.docker_image=${EXT_REGISTRY4}/zalando/spilo-15:2.1-p9)
 else
   git clone https://github.com/zalando/postgres-operator.git
   ( cd postgres-operator && git fetch && git checkout ${POSTGRES_OPERATOR_VERSION} && helm -n iff upgrade --install postgres-operator ./charts/postgres-operator )
