@@ -171,6 +171,8 @@ To build and run the Docker container for the agent, run the below 'make' comman
 Before build, edit the config.json.template in the config folder with appropriate host and port values.
 
 ````bash
+cd util
+
 make build IMAGE_NAME=<dockerImageName>
 ````
 
@@ -183,6 +185,8 @@ Relam user password from digital twin:
 `$(kubectl -n iff get secret/credential-iff-realm-user-iff -o jsonpath='{.data.password}'| base64 -d)`
 
 ````bash
+cd util
+
 make start ACTIVATION_MODE=<file or secret> IMAGE_NAME=<dockerImageName> DEVICE_ID=<Device ID> GATEWAY_ID=<gateway id> PASSWORD=<realm user password>
 ````
 
