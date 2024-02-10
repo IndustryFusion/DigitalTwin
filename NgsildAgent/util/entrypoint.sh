@@ -21,7 +21,7 @@ cd /app/util
 if [ "$ACTIVATION_MODE" = "file" ]; then
   # Execute the script to activate the device if the condition is true
   ./activate.sh -f
-else if [ "$ACTIVATION_MODE" = "secret" ]; then
+elif [ "$ACTIVATION_MODE" = "secret" ]; then
   # Optional: Do something else if the condition is false
   ./activate.sh -s
 fi
