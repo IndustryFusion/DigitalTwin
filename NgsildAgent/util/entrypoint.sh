@@ -18,23 +18,13 @@ set -e
 
 cd /app/util
 
-if [ "$DEBUG" = true ]; then
-    echo "Debugging is enabled"
-    echo "ARG1: $DEVICE_ID"
-    echo "ARG2: $GATEWAY_ID"
-    echo "ARG3: $KEYCLOAK_URL"
-    echo "ARG4: $REALM_ID"
-    echo "ARG5: $REALM_USER_PASSWORD"
-else
-    echo "Debugging is disabled"
+if [ "$ACTIVATION_MODE" = "file" ]; then
+  # Execute the script to activate the device if the condition is true
+  ./activate.sh -f
+else if [ "$ACTIVATION_MODE" = "secret" ]; then
+  # Optional: Do something else if the condition is false
+  ./activate.sh -s
 fi
-
-# Execute the first script with passed arguments
-./init-device.sh -k "$KEYCLOAK_URL" -r "$REALM_ID" "$DEVICE_ID" "$GATEWAY_ID"
-# Execute the second script with passed arguments
-./get-onboarding-token.sh -p "$REALM_USER_PASSWORD" "realm_user"
-# Execute the third script with passed arguments
-./activate.sh -f
 
 cd /app/
 

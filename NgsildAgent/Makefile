@@ -23,12 +23,11 @@ build:
 start:
 	@$(call msg,"Starting iff-iot-agent container...")
 
+	./util/init-device.sh ${DEVICE_ID} ${GATEWAY_ID}
+	./util/get-onbaording-token.sh -p ${PASSWORD} realm_user
+
 	docker run  \
 				-d -t -i --network=host --rm \
-				--env DEVICE_ID=${DEVICE_ID} \
-				--env GATEWAY_ID=${GATEWAY_ID} \
-				--env KEYCLOAK_URL=${KEYCLOAK_URL} \
-				--env REALM_ID=${REALM_ID} \
-				--env REALM_USER_PASSWORD=${REALM_USER_PASSWORD} \
-				--env DEBUG=${DEBUG} \
+				-v ./data/:/data  \
+				-e ACTIVATION_MODE=${ACTIVATION_MODE} \
 				--name ${CONTAINER_NAME} ${IMAGE_NAME}
