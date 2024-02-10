@@ -176,17 +176,17 @@ make build IMAGE_NAME=<dockerImageName>
 
 ** To Run the Image
 
-The below makefile command initiates the device locally and creates device file wth credentials locally, starts the Docker image with device.json mount from local. Pass the ACTIVATION_MODE=file to make command for Docker only local execution.
+The below makefile command initiates the device locally, creates device file wth credentials locally, starts the Docker image with device.json mount from local connected to digital twin keycloak at local URL. Pass the ACTIVATION_MODE=file to make command for Docker only local execution.
+
+Relam user password from digital twin:
+
+`$(kubectl -n iff get secret/credential-iff-realm-user-iff -o jsonpath='{.data.password}'| base64 -d)`
 
 ````bash
 make start ACTIVATION_MODE=<file or secret> IMAGE_NAME=<dockerImageName> DEVICE_ID=<Device ID> GATEWAY_ID=<gateway id> PASSWORD=<realm user password>
 ````
 
-Relam user password:
-
-`$(kubectl -n iff get secret/credential-iff-realm-user-iff -o jsonpath='{.data.password}'| base64 -d)`
-
-Note: For Kubernetes, before using the Docker image in Pod, the device activation and token generation steps must be done on the device using individual scripts and mounted to Pod via data folder. Use secrets for onboarding token and pass the ACTIVATION_MODE=secret to container directly.
+Note: For Kubernetes, before using the Docker image in Pod, the device activation and onboarding token generation steps must be done on the device using individual scripts. Use secrets for onboarding token and pass the ACTIVATION_MODE=secret to container directly.
 
 
 #### Known limitations
