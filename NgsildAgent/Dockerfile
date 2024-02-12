@@ -23,7 +23,7 @@ RUN groupadd -g 1001 agent && useradd -u 1001 -g agent -ms /bin/bash agent
 RUN apt-get update && apt-get install -y jq bash curl && apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN mkdir /volume && chown -R agent /volume && mkdir /app/data && chown -R agent /app/data && chown -R agent /app && chmod u+x /app/util/* && chmod u+x /app/data
 
-RUN cp -rf /app/config /volume && rm -f /app/config/config.json && ln -s /volume/config/config.json /app/config/config.json
+RUN cp -rf /app/config /volume && rm -f /app/config/config.json && ln -s /volume/config/config.json /app/config/config.json && ln -s /volume/data/device.json /app/data/device.json
 
 RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
 
