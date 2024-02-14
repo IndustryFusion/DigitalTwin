@@ -27,6 +27,7 @@ const schemaValidation = require('./schema-validator');
 const dataSchema = require('./schemas/data');
 const config = require('../config');
 const DbManager = require('./DbManager');
+const validate = require('validate-iri');
 
 /**
  *
@@ -58,14 +59,38 @@ class DataSubmission {
         msgs = [msgs];
       }
       let msgKeys = [];
-      for (const msg of msgs) {
+      const toTransmitMsgs = await Promise.all(msgs.map(async msg => {
+        if (validate.validateIri(msg.n)) {
+          me.logger.warn(`Metric name ${msg.n} not an IRI. Ignoring message.`);
+          return;
+        }
+        if (msg.t === 'PropertyJson') {
+          try {
+            JSON.parse(msg.v);
+          } catch {
+            me.logger.warn(`Metric name ${msg.n} with ${msg.v} not a parsable JSON object. Ignoring message.`);
+            return;
+          }
+        }
         if (msg.t === undefined || msg.t === null) {
           msg.t = 'Property';
+        }
+        if (msg.d !== undefined && msg.d !== null) {
+          const datasetId = msg.d;
+          delete msg.d;
+          if (validate.validateIri(datasetId)) {
+            me.logger.warn(`DatasetId ${datasetId} not an IRI. Will ignore datasetId value`);
+          } else {
+            msg.properties = {};
+            msg.properties.values = [datasetId];
+            msg.properties.keys = ['datasetId'];
+          }
         }
         if (msg.on === undefined || msg.on === null) {
           msg.on = new Date().getTime();
         }
-        if (me.validator(msg)) {
+        const validationResult = me.validator(msg);
+        if (validationResult === null) {
           try {
             await me.dbManager.preInsert(msg, 1);
           } catch (e) {
@@ -75,14 +100,19 @@ class DataSubmission {
           msg.n = msg.t + '/' + msg.n;
           delete msg.t;
         } else {
-          me.logger.debug(`Data submission - Validation failed. Expected something like ${sampleMetric} got ${msg}`);
+          me.logger.warn(`Data submission - Validation failed. ${JSON.stringify(validationResult)}`);
           try {
             await me.dbManager.preInsert(msg, 0);
           } catch (e) {
             me.logger.warn('Error in local database: ' + e.message);
           }
-          return false;
+          return;
         }
+        return msg;
+      }));
+      msgs = toTransmitMsgs.filter(msg => (msg !== undefined));
+      if (msgs === undefined || msgs === null) {
+        return;
       }
       me.logger.info('Submitting: ', msgs);
       // Check online state

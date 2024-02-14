@@ -29,7 +29,6 @@ DETIK_DEBUG="true"
 DEBUG=${DEBUG:-false}
 SKIP=
 
-
 TEST_DIR="$(dirname "$BATS_TEST_FILENAME")"
 CLIENT_ID=scorpio
 GATEWAY_ID="testgateway"
@@ -44,6 +43,8 @@ AGENT_CONFIG2=/tmp/AGENT_CONFIG2
 PROPERTY1="http://example.com/property1"
 PROPERTY2="http://example.com/property2"
 RELATIONSHIP1="http://example.com/relationship1"
+IRI1="http://example.com/iri1"
+JSON1="http://example.com/json1"
 PGREST_URL="http://pgrest.local/entityhistory"
 PGREST_RESULT=/tmp/PGREST_RESULT
 
@@ -171,7 +172,7 @@ get_tsdb_samples() {
     entityId=$1
     limit=$2
     token=$3
-    curl  -H "Authorization: Bearer $token" "${PGREST_URL}?limit=${limit}&order=observedAt.desc,attributeId.asc&entityId=eq.${entityId}" 2>/dev/null | jq -S 'map(del(.modifiedAt, .observedAt))'
+    curl -H "Authorization: Bearer $token" "${PGREST_URL}?limit=${limit}&order=observedAt.desc,attributeId.asc&entityId=eq.${entityId}" 2>/dev/null | jq -S 'map(del(.modifiedAt, .observedAt))'
 }
 
 # compare entity with reference
@@ -182,7 +183,7 @@ compare_pgrest_result1() {
   {
     "attributeId": "http://example.com/property1",
     "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
-    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property1",
+    "datasetId": "@none",
     "entityId": "urn:iff:testdevice:1",
     "index": 0,
     "nodeType": "@value",
@@ -201,7 +202,7 @@ compare_pgrest_result2() {
   {
     "attributeId": "http://example.com/property1",
     "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
-    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property1",
+    "datasetId": "@none",
     "entityId": "urn:iff:testdevice:1",
     "index": 0,
     "nodeType": "@value",
@@ -211,7 +212,7 @@ compare_pgrest_result2() {
   {
     "attributeId": "http://example.com/property2",
     "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
-    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property2",
+    "datasetId": "@none",
     "entityId": "urn:iff:testdevice:1",
     "index": 0,
     "nodeType": "@value",
@@ -228,7 +229,7 @@ compare_pgrest_result3() {
   {
     "attributeId": "http://example.com/property1",
     "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
-    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property1",
+    "datasetId": "@none",
     "entityId": "urn:iff:testdevice:1",
     "index": 0,
     "nodeType": "@value",
@@ -238,7 +239,7 @@ compare_pgrest_result3() {
   {
     "attributeId": "http://example.com/property1",
     "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
-    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property1",
+    "datasetId": "@none",
     "entityId": "urn:iff:testdevice:1",
     "index": 0,
     "nodeType": "@value",
@@ -248,7 +249,7 @@ compare_pgrest_result3() {
   {
     "attributeId": "http://example.com/property2",
     "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
-    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property2",
+    "datasetId": "@none",
     "entityId": "urn:iff:testdevice:1",
     "index": 0,
     "nodeType": "@value",
@@ -266,7 +267,7 @@ compare_pgrest_result4() {
   {
     "attributeId": "http://example.com/property1",
     "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
-    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property1",
+    "datasetId": "@none",
     "entityId": "urn:iff:testdevice:1",
     "index": 0,
     "nodeType": "@value",
@@ -277,7 +278,7 @@ compare_pgrest_result4() {
   { 
     "attributeId": "http://example.com/property2",
     "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
-    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property2",
+    "datasetId": "@none",
     "entityId": "urn:iff:testdevice:1",
     "index": 0,
     "nodeType": "@value",
@@ -287,7 +288,7 @@ compare_pgrest_result4() {
   { 
     "attributeId": "http://example.com/property1",
     "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
-    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property1",
+    "datasetId": "@none",
     "entityId": "urn:iff:testdevice:1",
     "index": 0,
     "nodeType": "@value",
@@ -297,7 +298,7 @@ compare_pgrest_result4() {
   { 
     "attributeId": "http://example.com/property2",
     "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
-    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property2",
+    "datasetId": "@none",
     "entityId": "urn:iff:testdevice:1",
     "index": 0,
     "nodeType": "@value",
@@ -307,7 +308,7 @@ compare_pgrest_result4() {
   {
     "attributeId": "http://example.com/property1",
     "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
-    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property1",
+    "datasetId": "@none",
     "entityId": "urn:iff:testdevice:1",
     "index": 0,
     "nodeType": "@value",
@@ -317,7 +318,7 @@ compare_pgrest_result4() {
   {
     "attributeId": "http://example.com/property2",
     "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
-    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property2",
+    "datasetId": "@none",
     "entityId": "urn:iff:testdevice:1",
     "index": 0,
     "nodeType": "@value",
@@ -335,7 +336,7 @@ compare_pgrest_result5() {
   {
     "attributeId": "http://example.com/property1",
     "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
-    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property1",
+    "datasetId": "@none",
     "entityId": "urn:iff:testdevice:1",
     "index": 0,
     "nodeType": "@value",
@@ -345,7 +346,7 @@ compare_pgrest_result5() {
   {
     "attributeId": "http://example.com/property1",
     "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
-    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property1",
+    "datasetId": "@none",
     "entityId": "urn:iff:testdevice:1",
     "index": 0,
     "nodeType": "@value",
@@ -355,7 +356,7 @@ compare_pgrest_result5() {
   {
     "attributeId": "http://example.com/property2",
     "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
-    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property2",
+    "datasetId": "@none",
     "entityId": "urn:iff:testdevice:1",
     "index": 0,
     "nodeType": "@value",
@@ -372,7 +373,7 @@ compare_pgrest_result6() {
   {
     "attributeId": "http://example.com/property1",
     "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
-    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property1",
+    "datasetId": "@none",
     "entityId": "urn:iff:testdevice:1",
     "index": 0,
     "nodeType": "@value",
@@ -382,7 +383,7 @@ compare_pgrest_result6() {
   {
     "attributeId": "http://example.com/property2",
     "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
-    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property2",
+    "datasetId": "@none",
     "entityId": "urn:iff:testdevice:1",
     "index": 0,
     "nodeType": "@value",
@@ -392,7 +393,7 @@ compare_pgrest_result6() {
   {
     "attributeId": "http://example.com/property1",
     "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
-    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property1",
+    "datasetId": "@none",
     "entityId": "urn:iff:testdevice:1",
     "index": 0,
     "nodeType": "@value",
@@ -402,7 +403,7 @@ compare_pgrest_result6() {
   {
     "attributeId": "http://example.com/property2",
     "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
-    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property2",
+    "datasetId": "@none",
     "entityId": "urn:iff:testdevice:1",
     "index": 0,
     "nodeType": "@value",
@@ -421,7 +422,7 @@ compare_pgrest_result7() {
   { 
     "attributeId": "http://example.com/relationship1",
     "attributeType": "https://uri.etsi.org/ngsi-ld/Relationship",
-    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/relationship1",
+    "datasetId": "@none",
     "entityId": "urn:iff:testdevice:1",
     "index": 0,
     "nodeType": "@id",
@@ -431,7 +432,7 @@ compare_pgrest_result7() {
   { 
     "attributeId": "http://example.com/relationship1",
     "attributeType": "https://uri.etsi.org/ngsi-ld/Relationship",
-    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/relationship1",
+    "datasetId": "@none",
     "entityId": "urn:iff:testdevice:1",
     "index": 0,
     "nodeType": "@id",
@@ -441,7 +442,7 @@ compare_pgrest_result7() {
   { 
     "attributeId": "http://example.com/property1",
     "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
-    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property1",
+    "datasetId": "@none",
     "entityId": "urn:iff:testdevice:1",
     "index": 0,
     "nodeType": "@value",
@@ -451,7 +452,7 @@ compare_pgrest_result7() {
   { 
     "attributeId": "http://example.com/property2",
     "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
-    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property2",
+    "datasetId": "@none",
     "entityId": "urn:iff:testdevice:1",
     "index": 0,
     "nodeType": "@value",
@@ -461,7 +462,7 @@ compare_pgrest_result7() {
   { 
     "attributeId": "http://example.com/relationship1",
     "attributeType": "https://uri.etsi.org/ngsi-ld/Relationship",
-    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/relationship1",
+    "datasetId": "@none",
     "entityId": "urn:iff:testdevice:1",
     "index": 0,
     "nodeType": "@id",
@@ -471,7 +472,7 @@ compare_pgrest_result7() {
   { 
     "attributeId": "http://example.com/property1",
     "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
-    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property1",
+    "datasetId": "@none",
     "entityId": "urn:iff:testdevice:1",
     "index": 0,
     "nodeType": "@value",
@@ -481,7 +482,7 @@ compare_pgrest_result7() {
   { 
     "attributeId": "http://example.com/property2",
     "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
-    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/property2",
+    "datasetId": "@none",
     "entityId": "urn:iff:testdevice:1",
     "index": 0,
     "nodeType": "@value",
@@ -491,7 +492,7 @@ compare_pgrest_result7() {
   { 
     "attributeId": "http://example.com/relationship1",
     "attributeType": "https://uri.etsi.org/ngsi-ld/Relationship",
-    "datasetId": "urn:iff:testdevice:1\\\\http://example.com/relationship1",
+    "datasetId": "@none",
     "entityId": "urn:iff:testdevice:1",
     "index": 0,
     "nodeType": "@id",
@@ -501,6 +502,93 @@ compare_pgrest_result7() {
 ]
 EOF
 }
+
+
+compare_pgrest_result8() {
+    cat << EOF | jq | diff "$1" - >&3
+[
+  {
+    "attributeId": "http://example.com/json1",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
+    "datasetId": "@none",
+    "entityId": "urn:iff:testdevice:1",
+    "index": 0,
+    "nodeType": "@json",
+    "value": "{}",
+    "valueType": null
+  },
+  {
+    "attributeId": "http://example.com/iri1",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
+    "datasetId": "@none",
+    "entityId": "urn:iff:testdevice:1",
+    "index": 0,
+    "nodeType": "@id",
+    "value": "iri1",
+    "valueType": null
+  },
+  {
+    "attributeId": "http://example.com/property1",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
+    "datasetId": "@none",
+    "entityId": "urn:iff:testdevice:1",
+    "index": 0,
+    "nodeType": "@value",
+    "value": "1000",
+    "valueType": null
+  }
+]
+EOF
+}
+
+
+compare_pgrest_result9() {
+    cat << EOF | jq | diff "$1" - >&3
+[
+    {
+    "attributeId": "http://example.com/relationship1",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/Relationship",
+    "datasetId": "urn:iff:index:3",
+    "entityId": "urn:iff:testdevice:1",
+    "index": 0,
+    "nodeType": "@id",
+    "value": "urn:iff:test:1",
+    "valueType": null
+  },
+  {
+    "attributeId": "http://example.com/json1",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
+    "datasetId": "urn:iff:index:2",
+    "entityId": "urn:iff:testdevice:1",
+    "index": 0,
+    "nodeType": "@json",
+    "value": "[]",
+    "valueType": null
+  },
+  {
+    "attributeId": "http://example.com/iri1",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
+    "datasetId": "urn:iff:index:1",
+    "entityId": "urn:iff:testdevice:1",
+    "index": 0,
+    "nodeType": "@id",
+    "value": "iri2",
+    "valueType": null
+  },
+  {
+    "attributeId": "http://example.com/property1",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
+    "datasetId": "urn:iff:index:0",
+    "entityId": "urn:iff:testdevice:1",
+    "index": 0,
+    "nodeType": "@value",
+    "value": "1001",
+    "valueType": null
+  }
+]
+EOF
+}
+
 
 setup() {
     # shellcheck disable=SC2086
@@ -590,7 +678,7 @@ setup() {
     cp "${AGENT_CONFIG1}" "${NGSILD_AGENT_DIR}"/config/config.json
     (cd "${NGSILD_AGENT_DIR}" && exec stdbuf -oL node ./iff-agent.js) &
     sleep 2
-    (cd "${NGSILD_AGENT_DIR}"/util && bash ./send_data.sh -a "${PROPERTY1}" 1 "${PROPERTY2}" 2 )
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./send_data.sh -a "${PROPERTY1}" 1 "${PROPERTY2}" 2)
     sleep 2
     pkill -f iff-agent
     mqtt_delete_service
@@ -769,4 +857,54 @@ setup() {
     echo db_query "$query" "$NAMESPACE" "$POSTGRES_SECRET" "$TSDB_DATABASE" "$DBUSER"
     [ "$result" = "7350" ] || { echo "wrong aggregator result: $result"; false ; }
     db_delete_service
+}
+@test "test agent starting up and sending IRIs, JSONs and Literals" {
+    $SKIP
+    init_agent_and_device_file
+    delete_tmp
+    mqtt_setup_service
+    password=$(get_password)
+    token=$(get_token "$password")
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./get-onboarding-token.sh -p "$password" "${USER}")
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./activate.sh -f)
+    cp "${AGENT_CONFIG1}" "${NGSILD_AGENT_DIR}"/config/config.json
+    (cd "${NGSILD_AGENT_DIR}" && exec stdbuf -oL node ./iff-agent.js) &
+    sleep 2
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./send_data.sh -t -y Literal "${PROPERTY1}" 1000)
+    sleep 1
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./send_data.sh -t -y Iri "${IRI1}" "iri1")
+    sleep 1
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./send_data.sh -t -y Json "${JSON1}" "{}")
+    sleep 2
+    mqtt_delete_service
+    get_tsdb_samples "${DEVICE_ID}" 3 "${token}" > ${PGREST_RESULT}
+    pkill -f iff-agent
+    run compare_pgrest_result8 ${PGREST_RESULT}
+    [ "${status}" -eq "0" ]
+}
+@test "test agent starting up and sending IRIs, JSONs, Literals and Relationships with datasetIds" {
+    $SKIP
+    init_agent_and_device_file
+    delete_tmp
+    mqtt_setup_service
+    password=$(get_password)
+    token=$(get_token "$password")
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./get-onboarding-token.sh -p "$password" "${USER}")
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./activate.sh -f)
+    cp "${AGENT_CONFIG1}" "${NGSILD_AGENT_DIR}"/config/config.json
+    (cd "${NGSILD_AGENT_DIR}" && exec stdbuf -oL node ./iff-agent.js) &
+    sleep 2
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./send_data.sh -t -y Literal -d urn:iff:index:0 "${PROPERTY1}" 1001)
+    sleep 1
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./send_data.sh -t -y Iri -d urn:iff:index:1 "${IRI1}" "iri2")
+    sleep 1
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./send_data.sh -t -y Json -d urn:iff:index:2 "${JSON1}" "[]")
+    sleep 1
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./send_data.sh -t -y Relationship -d urn:iff:index:3 "${RELATIONSHIP1}" "urn:iff:test:1")
+    sleep 2
+    mqtt_delete_service
+    get_tsdb_samples "${DEVICE_ID}" 4 "${token}" > ${PGREST_RESULT}
+    pkill -f iff-agent
+    run compare_pgrest_result9 ${PGREST_RESULT}
+    [ "${status}" -eq "0" ]
 }

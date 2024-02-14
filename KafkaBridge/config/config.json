@@ -5,7 +5,7 @@
 	},
 	"alerta": {
 		"topic": "iff.alerts",
-		"hostname": "alerta",
+		"hostname": "alerta.iff",
 		"port": "8080",
 		"protocol": "http:",
 		"accessKeyVariable": "ALERTA_API_KEY"
@@ -41,7 +41,7 @@
 		"clientSecretVariable": "NGSILD_UPDATES_CLIENT_SECRET"
 	},        
 	"ngsildServer": {
-		"hostname": "gateway",
+		"hostname": "gateway.iff",
 		"protocol": "http:",
 		"port": 9090
 	},
@@ -55,7 +55,7 @@
 		"kafkaSyncOnAttribute": "https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn"
 	},
 	"mqtt":{
-        "host": "emqx-listeners",
+        "host": "emqx-listeners.iff",
         "port": 1883,
         "retain": false,
         "secure": false,
@@ -69,7 +69,7 @@
 			"spBKafkaProduce": false,
 			"spBkafKaTopic": "sparkplugB",
 			"ngsildKafkaProduce": true,
-			"ngsildKafkaTopic": "ngsildSpB",
+			"ngsildKafkaTopic": "iff.ngsild.attributes",
 			"topics": {
 				"subscribe": {
 					"sparkplugb_data_ingestion": "$share/kafka/spBv1.0/+/+/+/+"
@@ -89,7 +89,7 @@
 		  }
     },
 	"cache": {
-		"host": "redis",
+		"host": "redis.iff",
 		"port": 6379
 	},
 	"timescaledb": {

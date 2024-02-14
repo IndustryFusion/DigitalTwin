@@ -45,11 +45,14 @@ Example:
 ```
 
 ### send-data.sh
-This script sends data to a device. It uses the UDP API (see below) to communicate to the Agent.
+This script sends data to a device. It uses as default the UDP API (see below) to communicate to the Agent.
 ```bash
-Usage: send_data.sh <propertyname> <value>
+Usage: send_data.sh [-a] [-t] [-y <attribute type>] [-d datasetId] [<propertyname> <value>]+ 
+-a: send array of values
+-t: use tcp connection to agent (default: udp)
+-d: give ngsild datasetId (must be iri)
+-y: attribute types are {Literal, Iri, Relationship, Json}
 ```
-Node that it can only be used to send Properties. Relationships must be changed with NGSI-LD API or using the UDP API directly as shown below.
 
 ### Use tools alltogether to activate a device
 On a test system with a local kubernetes installed the following flow creates a default test device
