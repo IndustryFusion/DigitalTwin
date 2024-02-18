@@ -1,0 +1,30 @@
+---
+# yamllint disable rule:line-length
+# yamllint disable rule:braces
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: knowledge
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: knowledge
+data:
+  {{- $configmap := (lookup "v1" "ConfigMap" .Release.Namespace "knowledge") }}
+  {{- if $configmap }}
+  {{- $knowledge := get $configmap.data "knowledge.ttl" }}
+  knowledge.ttl: {{ $knowledge | quote }}
+  {{- else }}
+  knowledge.ttl: |
+        PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+        PREFIX iff: <https://industry-fusion.com/types/v0.9/>
+        PREFIX oee: <https://industry-fusion.com/oee/v0.9/>
+        PREFIX owl: <http://www.w3.org/2002/07/owl#>
+
+        ### Test classes
+        iff:cutter_test rdfs:subClassOf iff:machine_test ;
+                a rdfs:Class .
+        iff:plasmacutter_test rdfs:subClassOf iff:cutter_test ;
+                a rdfs:Class .
+        ### End of Test Content
+  {{- end }}

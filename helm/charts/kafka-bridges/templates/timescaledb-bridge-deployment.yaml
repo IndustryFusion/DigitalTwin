@@ -64,7 +64,5 @@ spec:
             items:
               - key: "config.json"
                 path: "config.json"
-              - key: "knowledge.ttl"
-                path: "knowledge.ttl"
       imagePullSecrets:
         - name: {{ .Values.pullSecretCredentials }}

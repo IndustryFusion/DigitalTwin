@@ -14,6 +14,7 @@ export STRIMZI_VERSION="0.32.0"
 export OFFLINE=${OFFLINE:-false}
 export OFFLINE_DIR=$(cd $DIRNAME/airgap-deployment; pwd)
 export KEYCLOAK_VERSION=21.1.2
+export RELOADER_HELM_VERSION=v1.0.67
 COMMON_MAIN_REGISTRY=$(yq ".mainRegistry" < $DIRNAME/common.yaml)
 COMMON_EXTERNAL_REGISTRY=$(yq ".externalRegistry" < $DIRNAME/common.yaml)
 COMMON_EXTERNAL_REGISTRY2=$(yq ".externalRegistry2" < $DIRNAME/common.yaml)
