@@ -18,6 +18,7 @@ set -e
 . ../../.env
 . ../env.sh
 
+<<<<<<< HEAD
 if [ "${REGISTRY}" = "docker.io" ]; then
   IMAGES=(
       quay.io/strimzi/operator:0.32.0 
@@ -91,6 +92,48 @@ else
       docker.io/rancher/mirrored-library-busybox:1.36.1
   )
 fi
+=======
+IMAGES=(
+    quay.io/strimzi/operator:0.32.0 
+    registry.opensource.zalan.do/acid/postgres-operator:v1.9.0 
+    docker.io/minio/operator:v4.5.8 
+    docker.io/minio/mc:RELEASE.2023-06-28T21-54-17Z
+    docker.io/emqx/emqx-operator-controller:2.2.3
+    docker.io/minio/minio:RELEASE.2023-01-12T02-06-16Z
+    docker.io/redis:7.2
+    ghcr.io/zalando/spilo-15:2.1-p9
+    ghcr.io/stakater/reloader:v1.0.67
+    docker.io/minio/console:v0.22.5
+    docker.io/velero/velero:${VELERO_VERSION}
+    docker.io/alerta/alerta-web:8.1.0
+    docker.io/busybox:1.28
+    docker.io/postgrest/postgrest:v12.0.0
+    quay.io/strimzi/kafka:0.32.0-kafka-3.3.1
+    quay.io/strimzi/operator:0.32.0
+    quay.io/jetstack/cert-manager-controller:v1.9.1
+    quay.io/jetstack/cert-manager-webhook:v1.9.1
+    quay.io/jetstack/cert-manager-cainjector:v1.9.1
+    docker.io/emqx:5.1
+    quay.io/keycloak/keycloak-operator:21.1.2
+    docker.io/bitnami/kubectl:${KUBECTL_VERSION}
+    docker.io/velero/velero-plugin-for-aws:${VELERO_PLUGIN_VERSION}
+    docker.io/rancher/mirrored-pause:3.6
+    docker.io/rancher/mirrored-coredns-coredns:1.10.1
+    docker.io/rancher/klipper-helm:v0.8.2-build20230815
+    docker.io/rancher/local-path-provisioner:v0.0.24
+    docker.io/rancher/mirrored-metrics-server:v0.6.3
+    docker.io/rancher/klipper-lb:v0.4.4
+    docker.io/rancher/mirrored-library-traefik:2.10.5
+    docker.io/rancher/mirrored-library-busybox:1.36.1
+    ${REGISTRY}/ibn40/scorpio-all-in-one-runner:${DOCKER_TAG}
+    ${REGISTRY}/ibn40/flink-services-operator:${DOCKER_TAG}
+    ${REGISTRY}/ibn40/kafka-bridge:${DOCKER_TAG}
+    ${REGISTRY}/ibn40/keycloak:${DOCKER_TAG}
+    ${REGISTRY}/ibn40/flink-sql-gateway:${DOCKER_TAG}
+    ${REGISTRY}/ibn40/debezium-postgresql-connector:${DOCKER_TAG}
+)
+
+>>>>>>> 66c6403b (Introduce external ontology handling.)
 for image in ${IMAGES[@]}; do 
     tagged=${image/quay.io/$LOCAL_REGISTRY}
     tagged=${tagged/docker.io/$LOCAL_REGISTRY}
@@ -117,3 +160,4 @@ wget -O- https://github.com/strimzi/strimzi-kafka-operator/releases/download/${S
 ( cd ${OFFLINE_DIR} && rm -rf emqx-operator && git clone https://github.com/emqx/emqx-operator.git && cd emqx-operator && git checkout ${EMQX_OPERATOR_VERSION} )
 ( cd ${OFFLINE_DIR} && rm -rf postgres-operator && git clone https://github.com/zalando/postgres-operator.git && cd postgres-operator && git checkout ${POSTGRES_OPERATOR_VERSION} )
 ( cd ${OFFLINE_DIR} && rm -rf helm-charts && git clone https://github.com/vmware-tanzu/helm-charts.git && cd helm-charts && git checkout ${VELERO_HELM_VERSION})
+( cd ${OFFLINE_DIR} && rm -rf Reloader && git clone https://github.com/stakater/Reloader.git && cd Reloader && git checkout ${RELOADER_HELM_VERSION})

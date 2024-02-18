@@ -93,6 +93,13 @@ echo ---------------
 sudo apt update
 sudo apt install openjdk-17-jdk openjdk-17-jre
 
+
+echo Install rdflib
+echo --------------
+sudo apt update
+sudo apt install python3-rdflib
+
+
 echo Installing maven
 echo ----------------------
 wget https://archive.apache.org/dist/maven/maven-3/3.8.7/binaries/apache-maven-3.8.7-bin.tar.gz

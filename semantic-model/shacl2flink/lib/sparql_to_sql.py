@@ -18,7 +18,8 @@ import sys
 import os
 import re
 from rdflib import Graph, Namespace, URIRef, Variable, BNode, Literal
-from rdflib.namespace import RDF, XSD
+from rdflib.namespace import RDF, XSD, RDFS
+from rdflib.paths import MulPath
 from rdflib.plugins.sparql.parser import parseQuery
 from rdflib.plugins.sparql.algebra import translateQuery
 from functools import reduce
@@ -139,6 +140,7 @@ def translate_query(query, target_class, orig_query):
     query: parsed sparql object
     """
     algebra = query.algebra
+    randomstr = 'this' + bgp_translation_utils.get_random_string(16)
     ctx = {
         'namespace_manager': query.prologue.namespace_manager,
         'relationships': relationships,
@@ -152,7 +154,10 @@ def translate_query(query, target_class, orig_query):
         'target_sql': '',
         'target_where': '',
         'target_modifiers': [],
-        'add_triples': [(Variable('this'), RDF['type'], target_class)],
+        'add_triples': [(Variable('this'), RDF['type'], Variable(randomstr)),
+                        (Variable(randomstr),
+                         RDFS['subClassOf'],
+                         target_class)],
         'query': orig_query
     }
     if algebra.name == 'SelectQuery' or algebra.name == 'ConstructQuery':
@@ -787,13 +792,17 @@ def translate_BGP(ctx, bgp):
         bgp['target_sql'] = ''
         return
     h = Graph()
+    filtered_triples = []
     for s, p, o in bgp.triples:
+        if isinstance(p, MulPath):
+            p = p.path
         h.add((s, p, o))
+        filtered_triples.append((s, p, o))
 
     property_variables, entity_variables, time_variables, row = bgp_translation_utils.create_ngsild_mappings(ctx, h)
 
     # before translating, sort the bgp order to allow easier binds
-    bgp.triples = bgp_translation_utils.sort_triples(ctx, ctx['bounds'], bgp.triples, h)
+    bgp.triples = bgp_translation_utils.sort_triples(ctx, ctx['bounds'], filtered_triples, h)
 
     bgp_translation_utils.merge_vartypes(ctx, property_variables, entity_variables, time_variables)
     local_ctx = {}

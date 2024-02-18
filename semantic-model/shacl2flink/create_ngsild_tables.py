@@ -14,8 +14,7 @@
 # limitations under the License.
 #
 
-from rdflib import Graph, Namespace, Variable
-from rdflib.namespace import RDF
+from rdflib import Graph
 import os
 import sys
 import argparse
@@ -23,60 +22,61 @@ import ruamel.yaml
 import lib.utils as utils
 import lib.configs as configs
 from ruamel.yaml.scalarstring import (SingleQuotedScalarString as sq)
+import owlrl
 
 
 field_query = """
-PREFIX iff: <https://industry-fusion.com/types/v0.9/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
 
-SELECT DISTINCT ?path
+SELECT DISTINCT ?path ?shacltype
 where {
     ?nodeshape a sh:NodeShape .
-    ?nodeshape sh:targetClass ?shacltype .
-    ?nodeshape sh:property [ sh:path ?path ; sh:order ?ord ] .
+    ?nodeshape sh:targetClass ?shacltypex .
+    ?shacltype rdfs:subClassOf* ?shacltypex .
+    ?nodeshape sh:property [ sh:path ?path ; ] .
     }
-    ORDER BY ?ord
+    ORDER BY STR(?path)
 """
 
 
 def parse_args(args=sys.argv[1:]):
     parser = argparse.ArgumentParser(description='create_ngsild_tables.py \
-                                                  <shacl.ttl>')
+                                                  <shacl.ttl> <knowledge.ttl>')
     parser.add_argument('shaclfile', help='Path to the SHACL file')
+    parser.add_argument('knowledgefile', help='Path to the Knowledge file')
     parsed_args = parser.parse_args(args)
     return parsed_args
 
 
-def main(shaclfile, output_folder='output'):
+def main(shaclfile, knowledgefile, output_folder='output'):
     yaml = ruamel.yaml.YAML()
     utils.create_output_folder(output_folder)
     g = Graph()
     g.parse(shaclfile)
-    sh = Namespace("http://www.w3.org/ns/shacl#")
+    h = Graph()
+    h.parse(knowledgefile)
+    owlrl.DeductiveClosure(owlrl.OWLRL_Extension, rdfs_closure=True, axiomatic_triples=True,
+                           datatype_axioms=True).expand(h)
+    g += h
     tables = {}
-    for s, p, o in g.triples((None, RDF.type, sh.NodeShape)):
-        for _, _, target_class in g.triples((s, sh.targetClass, None)):
-            if (s, sh.property, None) not in g:
-                break
-            stripped_class = utils.camelcase_to_snake_case(utils.strip_class(utils.strip_class(
-                target_class.toPython())))
-            if stripped_class not in tables:
-                table = []
-                tables[stripped_class] = table
-            else:
-                table = tables[stripped_class]
+    qres = g.query(field_query)
+    for row in qres:
+        target_class = row.shacltype
+        stripped_class = utils.camelcase_to_snake_case(utils.strip_class(utils.strip_class(
+            target_class.toPython())))
+        if stripped_class not in tables:
+            table = []
+            tables[stripped_class] = table
             table.append({sq("id"): "STRING"})
             table.append({sq("type"): "STRING"})
-            # Query the fields in order
-            bindings = {Variable("shacltype"): target_class}
-            qres = g.query(field_query, initBindings=bindings)
-            for row in qres:
-                target_path = row.path
-                table.append({sq(f'{target_path}'): "STRING"})
             table.append({sq("ts"): "TIMESTAMP(3) METADATA FROM 'timestamp'"})
             table.append({"watermark": "FOR `ts` AS `ts`"})
+        else:
+            table = tables[stripped_class]
+        target_path = row.path
+        table.append({sq(f'{target_path}'): "STRING"})
 
     # Kafka topic object for RDF
     config = {}
@@ -118,4 +118,5 @@ def main(shaclfile, output_folder='output'):
 if __name__ == '__main__':
     args = parse_args()
     shaclfile = args.shaclfile
-    main(shaclfile)
+    knowledgefile = args.knowledgefile
+    main(shaclfile, knowledgefile)

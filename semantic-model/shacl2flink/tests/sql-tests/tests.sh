@@ -27,7 +27,7 @@ for testdir in ${testdirs_constraints}; do
         rm -f ${DATABASE}
         echo -n "Test with model ${MODEL} in dir ${testdir} ..."
         python3 $TOOLDIR/create_ngsild_models.py  ${SHACL} ${KNOWLEDGE} ${MODEL}
-        python3 $TOOLDIR/create_ngsild_tables.py ${SHACL}
+        python3 $TOOLDIR/create_ngsild_tables.py ${SHACL} ${KNOWLEDGE}
         # Test logic
         sqlite3 ${DATABASE} < $OUTPUTDIR/rdf.sqlite
         sqlite3 ${DATABASE} < $OUTPUTDIR/core.sqlite
@@ -61,7 +61,7 @@ for testdir in ${testdirs_rules}; do
         rm -f ${DATABASE}
         echo -n "Test with model ${MODEL} in dir ${testdir} ..."
         python3 $TOOLDIR/create_ngsild_models.py  ${SHACL} ${KNOWLEDGE} ${MODEL}
-        python3 $TOOLDIR/create_ngsild_tables.py ${SHACL}
+        python3 $TOOLDIR/create_ngsild_tables.py ${SHACL} ${KNOWLEDGE} 
         # Test logic
         sqlite3 ${DATABASE} < $OUTPUTDIR/rdf.sqlite
         sqlite3 ${DATABASE} < $OUTPUTDIR/core.sqlite
@@ -93,7 +93,7 @@ for testdir in ${testdirs_udf}; do
         rm -f ${DATABASE}
         echo -n "Test with model ${MODEL} in dir ${testdir} ..."
         python3 $TOOLDIR/create_ngsild_models.py  ${SHACL} ${KNOWLEDGE} ${MODEL}
-        python3 $TOOLDIR/create_ngsild_tables.py ${SHACL}
+        python3 $TOOLDIR/create_ngsild_tables.py ${SHACL} ${KNOWLEDGE}
         # Test logic
         sqlite3 ${DATABASE} < $OUTPUTDIR/rdf.sqlite
         sqlite3 ${DATABASE} < $OUTPUTDIR/core.sqlite

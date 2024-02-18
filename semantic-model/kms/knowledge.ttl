@@ -1,102 +1,453 @@
-PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX iff: <https://industry-fusion.com/types/v0.9/>
-PREFIX oee: <https://industry-fusion.com/oee/v0.9/>
-PREFIX owl: <http://www.w3.org/2002/07/owl#>
+@prefix : <https://industryfusion.github.io/contexts/ontology/v0.1/base_entities/> .
+@prefix default1: <https://industryfusion.github.io/contexts/ontology/v0.1/base_knowledge/> .
+@prefix default2: <https://industryfusion.github.io/contexts/ontology/v0.1/filter_entities/> .
+@prefix default3: <https://industryfusion.github.io/contexts/ontology/v0.1/filter_knowledge/> .
+@prefix default4: <https://industryfusion.github.io/contexts/ontology/v0.1/material/> .
+@prefix default5: <https://uri.etsi.org/ngsi-ld/> .
+@prefix default6: <http://www.semanticweb.org/marcel/ontologies/2024/1/untitled-ontology-7/> .
+@prefix default7: <http://www.semanticweb.org/marcel/ontologies/2024/1/untitled-ontology-6/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-### Test classes
-iff:cutter_test rdfs:subClassOf iff:machine_test ;
-    a iff:class .
-iff:plasmacutter_test rdfs:subClassOf iff:cutter_test ;
-    a iff:class .
-### End of Test Content
+default7:error a default7:ProcessStep,
+        owl:NamedIndividual .
 
-iff:entity a iff:class ;
-    a rdfs:class .
-iff:machine a iff:class ; 
-    a rdfs:class .
-iff:filter rdfs:subClassOf iff:machine ;
-    a iff:class .
-iff:plasmacutter rdfs:subClassOf iff:cutter ;
-    a iff:class .
-iff:lasercutter rdfs:subClassOf iff:cutter;
-    a iff:class .
-iff:cutter rdfs:subClassOf iff:machine ;
-    a iff:class .
-iff:workpiece rdfs:subClassOf iff:entity ;
-    a iff:class .
-iff:filterCartridge rdfs:subClassOf iff:entity ;
-    a iff:class .
+default7:hasNextStep a owl:ObjectProperty ;
+    rdfs:domain default7:ProcessStep ;
+    rdfs:range default7:ProcessStep .
 
+default7:isProcessType a owl:ObjectProperty ;
+    rdfs:domain default7:ProcessStep ;
+    rdfs:range default7:StepType .
 
-iff:scheduleEntity a iff:class .
-iff:oeeTemplate rdfs:subClassOf iff:scheduleEntity .
+default7:step1 a default7:ProcessStep,
+        owl:NamedIndividual ;
+    default7:hasNextStep default7:step2 ;
+    default7:isProcessType default7:initial .
 
-### Machine states
-iff:machineState a rdfs:class .
-iff:state_OFF a iff:machineState .
-iff:state_OFF iff:stateValidFor iff:filter, iff:cutter .
-iff:state_ON a iff:machineState  .
-iff:state_ON iff:stateValidFor iff:filter, iff:cutter .
-iff:state_PREPARING a iff:machineState  .
-iff:state_PREPARING iff:stateValidFor iff:cutter .
-iff:state_PROCESSING a iff:machineState  .
-iff:state_PROCESSING iff:stateValidFor iff:cutter .
-iff:state_CLEARING a iff:machineState .
-iff:state_CLEARING iff:stateValidFor iff:cutter .
-iff:state_CLEANING a iff:machineState .
-iff:state_CLEANING iff:stateValidFor iff:filter .
-iff:state_ERROR a iff:machineState .
-iff:state_ERROR iff:stateValidFor iff:filter, iff:cutter .
+default7:undefined a default7:ProcessStep,
+        owl:NamedIndividual .
 
-### OEE definitions: What state defines availability
-iff:state_PROCESSING oee:availability "1" .
-iff:state_PREPARING oee:availability "0" .
+default6:hasCurrentStep a owl:ObjectProperty ;
+    rdfs:domain default6:Process ;
+    rdfs:range default5:Property .
 
-# labels for states
-iff:state_ON rdfs:label "ON" .
-iff:state_OFF rdfs:label "OFF" .
-iff:state_PREPARING rdfs:label "PREPARING" .
-iff:state_PROCESSING rdfs:label "PROCESSING" .
-iff:state_CLEARING rdfs:label "ON" .
-iff:state_ERROR rdfs:label "ERROR" .
+default6:hasTimeInCurrentStep a owl:ObjectProperty ;
+    rdfs:domain default6:Process .
 
-iff:WC0 a iff:WC .
-iff:WC1 a iff:WC .
-iff:WC2 a iff:WC .
-iff:WC3 a iff:WC .
-iff:higherHazardLevel a owl:TransitiveProperty .
-iff:WC3 iff:higherHazardLevel iff:WC2 .
-iff:WC2 iff:higherHazardLevel iff:WC1 .
-iff:WC1 iff:higherHazardLevel iff:WC0 .
-#iff:WC1 a rdf:Bag .
-iff:WC1 iff:containsMaterialNumber [
-    a rdf:Bag ;
-    rdf:_1 "1.4301" ;
-    rdf:_2 "1.4302" ;
-    rdf:_3 "1.4303" ;
-    rdf:_4 "1.4304" ;
-    rdf:_5 "1.4305" ;
-] .
-iff:WC2 iff:containsMaterialNumber [
-    a rdf:Bag ;
-    rdf:_1 "1.3301" ;
-    rdf:_2 "1.3302" ;
-    rdf:_3 "1.3303" ;
-    rdf:_4 "1.3304" ;
-    rdf:_5 "1.3305" ;
- ] .
-iff:WC3 iff:containsMaterialNumber [
-    a rdf:Bag ;
-    rdf:_1 "1.5301" ;
-    rdf:_2 "1.5302" ;
-    rdf:_3 "1.5303" ;
-    rdf:_4 "1.5304" ;
-    rdf:_5 "1.5305" ;
- ] .
+: a owl:Ontology ;
+    owl:imports default5: ;
+    owl:versionIRI <https://industryfusion.github.io/contexts/staging/ontology/v0.1/base_entities/> .
 
-# Severity
-iff:severityCritical a iff:severityClass .
-iff:SeverityWarning a iff:severityClass .
-iff:severityCritical iff:severityCode "critical" .
-iff:severityWarning iff:severityCode "warning" .
+:Lasercutter a owl:Class,
+        owl:NamedIndividual ;
+    rdfs:subClassOf :Cutter .
+
+:Plasmacutter a owl:Class,
+        owl:NamedIndividual ;
+    rdfs:subClassOf :Cutter .
+
+:hasCartridge a owl:ObjectProperty ;
+    rdfs:domain :Filter ;
+    rdfs:range default5:Relationship .
+
+:hasFilter a owl:ObjectProperty ;
+    rdfs:domain :Cutter ;
+    rdfs:range default5:Relationship .
+
+:hasHeight a owl:ObjectProperty ;
+    rdfs:domain :Workpiece ;
+    rdfs:range default5:Property .
+
+:hasInWorkpiece a owl:ObjectProperty ;
+    rdfs:domain :Cutter ;
+    rdfs:range default5:Relationship .
+
+:hasLength a owl:ObjectProperty ;
+    rdfs:domain :Workpiece ;
+    rdfs:range default5:Property .
+
+:hasMaterial a owl:ObjectProperty ;
+    rdfs:domain :Workpiece ;
+    rdfs:range default5:Property .
+
+:hasOutWorkpiece a owl:ObjectProperty ;
+    rdfs:domain :Cutter ;
+    rdfs:range default5:Relationship .
+
+:hasState a owl:ObjectProperty ;
+    rdfs:domain :Machine ;
+    rdfs:range default5:Property .
+
+:hasStrength a owl:ObjectProperty ;
+    rdfs:domain :Filter ;
+    rdfs:range default5:Property .
+
+:hasWidth a owl:ObjectProperty ;
+    rdfs:domain :Workpiece ;
+    rdfs:range default5:Property .
+
+:isUsedFrom a owl:ObjectProperty ;
+    rdfs:domain :FilterCartridge ;
+    rdfs:range default5:Property .
+
+:isUsedUntil a owl:ObjectProperty ;
+    rdfs:domain :FilterCartridge ;
+    rdfs:range default5:Property .
+
+default1: a owl:Ontology ;
+    owl:versionIRI <https://industryfusion.github.io/contexts/staging/ontology/v0.1/base_knowledge/> .
+
+default1:isValidFor a owl:ObjectProperty ;
+    rdfs:domain default1:MachineState .
+
+default1:severityCritical a owl:NamedIndividual,
+        default1:SeverityClass ;
+    rdfs:label "critical" .
+
+default1:severityWarning a owl:NamedIndividual,
+        default1:SeverityClass ;
+    rdfs:label "warning" .
+
+default1:state_CLEANING a owl:NamedIndividual,
+        default1:MachineState ;
+    rdfs:label "CLEANING" ;
+    default1:isValidFor :Filter .
+
+default1:state_CLEARING a owl:NamedIndividual,
+        default1:MachineState ;
+    rdfs:label "CLEARING" ;
+    default1:isValidFor :Cutter .
+
+default1:state_ERROR a owl:NamedIndividual,
+        default1:MachineState ;
+    rdfs:label "ERROR" ;
+    default1:isValidFor :Machine .
+
+default1:state_OFF a owl:NamedIndividual,
+        default1:MachineState ;
+    rdfs:label "OFF" ;
+    default1:isValidFor :Machine .
+
+default1:state_ON a owl:NamedIndividual,
+        default1:MachineState ;
+    rdfs:label "ON" ;
+    default1:isValidFor :Machine .
+
+default1:state_PREPARING a owl:NamedIndividual,
+        default1:MachineState ;
+    rdfs:label "PREPARING" ;
+    default1:isValidFor :Cutter .
+
+default1:state_PROCESSING a owl:NamedIndividual,
+        default1:MachineState ;
+    rdfs:label "PROCESSING" ;
+    default1:isValidFor :Cutter .
+
+default2: a owl:Ontology ;
+    owl:imports <https://industryfusion.github.io/contexts/staging/ontology/v0.1/base_entities/>,
+        <https://industryfusion.github.io/contexts/staging/ontology/v0.1/filter_knowledge/>,
+        default5: ;
+    owl:versionIRI <https://industryfusion.github.io/contexts/staging/ontology/v0.1/filter_entities/> .
+
+default2:hasWasteclass a owl:ObjectProperty ;
+    rdfs:domain :FilterCartridge ;
+    rdfs:range default5:Property .
+
+default3: a owl:Ontology ;
+    owl:imports <https://industryfusion.github.io/contexts/staging/ontology/v0.1/material/> ;
+    owl:versionIRI <https://industryfusion.github.io/contexts/staging/ontology/v0.1/filter_knowledge/> .
+
+default3:hasWasteclass a owl:ObjectProperty ;
+    rdfs:domain default4:Material ;
+    rdfs:range default3:Wasteclass .
+
+default3:higherHazardLevel a owl:ObjectProperty,
+        owl:TransitiveProperty ;
+    rdfs:domain default3:Wasteclass ;
+    rdfs:range default3:Wasteclass .
+
+default4: a owl:Ontology ;
+    owl:versionIRI <https://industryfusion.github.io/contexts/staging/ontology/v0.1/material/> .
+
+default4:EN_1.3401 a owl:NamedIndividual,
+        default4:Material ;
+    default3:hasWasteclass default3:WC1 ;
+    default4:contains default4:_17,
+        default4:_18,
+        default4:_19,
+        default4:_20,
+        default4:_21,
+        default4:_22 .
+
+default4:EN_1.4301 a owl:NamedIndividual,
+        default4:Material ;
+    default3:hasWasteclass default3:WC2 ;
+    default4:contains default4:_10,
+        default4:_11,
+        default4:_12,
+        default4:_13,
+        default4:_14,
+        default4:_15,
+        default4:_16,
+        default4:_9 .
+
+default4:EN_1.5301 a owl:NamedIndividual,
+        default4:Material ;
+    default3:hasWasteclass default3:WC3 ;
+    default4:contains default4:_1,
+        default4:_2,
+        default4:_3,
+        default4:_4,
+        default4:_5,
+        default4:_6,
+        default4:_7,
+        default4:_8 ;
+    default4:hasEvaporationTemperature "1200" .
+
+default4:contains a owl:ObjectProperty ;
+    rdfs:domain default4:Material ;
+    rdfs:range default4:_ElementOccurance .
+
+default4:hasChemicalSymbol a owl:DatatypeProperty ;
+    rdfs:domain default4:ChemicalElement ;
+    rdfs:range xsd:string .
+
+default4:hasEvaporationTemperature a owl:DatatypeProperty ;
+    rdfs:domain default4:Material ;
+    rdfs:range xsd:string .
+
+default4:hasMaxPercent a owl:DatatypeProperty ;
+    rdfs:domain default4:_ElementOccurance ;
+    rdfs:range xsd:string .
+
+default4:hasMinPercent a owl:DatatypeProperty ;
+    rdfs:domain default4:_ElementOccurance ;
+    rdfs:range xsd:string .
+
+default4:isChemicalElement a owl:ObjectProperty ;
+    rdfs:domain default4:_ElementOccurance ;
+    rdfs:range default4:ChemicalElement .
+
+<https://industryfusion.github.io/contexts/ontology/v0.1/process_entities/> a owl:Ontology ;
+    owl:imports default5: ;
+    owl:versionIRI <https://industryfusion.github.io/contexts/staging/ontology/v0.1/process_entities/> .
+
+<https://industryfusion.github.io/contexts/ontology/v0.1/process_knowledge/> a owl:Ontology ;
+    owl:versionIRI <https://industryfusion.github.io/contexts/staging/ontology/v0.1/process_knowledge/> .
+
+default7:end a default7:StepType,
+        owl:NamedIndividual .
+
+default7:initial a default7:StepType,
+        owl:NamedIndividual .
+
+default7:step2 a default7:ProcessStep,
+        owl:NamedIndividual ;
+    default7:hasNextStep default7:step3 .
+
+default7:step3 a default7:ProcessStep,
+        owl:NamedIndividual ;
+    default7:isProcessType default7:end .
+
+default3:WC0 a owl:NamedIndividual,
+        default3:Wasteclass .
+
+default3:WC3 a owl:NamedIndividual,
+        default3:Wasteclass ;
+    default3:higherHazardLevel default3:WC2 .
+
+default4:_1 a owl:NamedIndividual,
+        default4:_ElementOccurance ;
+    default4:hasMaxPercent "0.08" ;
+    default4:isChemicalElement default4:carbon .
+
+default4:_10 a owl:NamedIndividual ;
+    default4:hasMaxPercent "2.0" ;
+    default4:isChemicalElement default4:manganese .
+
+default4:_11 a owl:NamedIndividual ;
+    default4:hasMaxPercent "1.0" ;
+    default4:isChemicalElement default4:silicon .
+
+default4:_12 a owl:NamedIndividual ;
+    default4:hasMaxPercent "0.045" ;
+    default4:isChemicalElement default4:phosphorus .
+
+default4:_13 a owl:NamedIndividual ;
+    default4:hasMaxPercent "0.03" ;
+    default4:isChemicalElement default4:sulfur .
+
+default4:_14 a owl:NamedIndividual ;
+    default4:hasMaxPercent "19.5" ;
+    default4:hasMinPercent "17.5" ;
+    default4:isChemicalElement default4:chromium .
+
+default4:_15 a owl:NamedIndividual ;
+    default4:hasMaxPercent "10.5" ;
+    default4:hasMinPercent "8.0" ;
+    default4:isChemicalElement default4:nickel .
+
+default4:_16 a owl:NamedIndividual ;
+    default4:hasMaxPercent "0.1" ;
+    default4:isChemicalElement default4:nitrogen .
+
+default4:_17 a owl:NamedIndividual ;
+    default4:hasMaxPercent "1.3" ;
+    default4:hasMinPercent "1.1" ;
+    default4:isChemicalElement default4:carbon .
+
+default4:_18 a owl:NamedIndividual ;
+    default4:hasMaxPercent "13" ;
+    default4:hasMinPercent "12" ;
+    default4:isChemicalElement default4:manganese .
+
+default4:_19 a owl:NamedIndividual ;
+    default4:hasMaxPercent "0.50" ;
+    default4:hasMinPercent "0.30" ;
+    default4:isChemicalElement default4:silicon .
+
+default4:_2 a owl:NamedIndividual,
+        default4:_ElementOccurance ;
+    default4:hasMaxPercent "2.0" ;
+    default4:isChemicalElement default4:manganese .
+
+default4:_20 a owl:NamedIndividual ;
+    default4:hasMaxPercent "0.1" ;
+    default4:isChemicalElement default4:phosphorus .
+
+default4:_21 a owl:NamedIndividual ;
+    default4:hasMaxPercent "0.04" ;
+    default4:isChemicalElement default4:sulfur .
+
+default4:_22 a owl:NamedIndividual ;
+    default4:hasMaxPercent "1.5" ;
+    default4:isChemicalElement default4:chromium .
+
+default4:_3 a owl:NamedIndividual,
+        default4:_ElementOccurance ;
+    default4:hasChemicalSymbol "Cr" ;
+    default4:hasMaxPercent "1.0" ;
+    default4:isChemicalElement default4:silicon .
+
+default4:_4 a owl:NamedIndividual,
+        default4:_ElementOccurance ;
+    default4:hasMaxPercent "0.045" ;
+    default4:isChemicalElement default4:phosphorus .
+
+default4:_5 a owl:NamedIndividual,
+        default4:_ElementOccurance ;
+    default4:hasMaxPercent "0.03" ;
+    default4:isChemicalElement default4:sulfur .
+
+default4:_6 a owl:NamedIndividual,
+        default4:_ElementOccurance ;
+    default4:hasMaxPercent "19.0" ;
+    default4:hasMinPercent "17.0" ;
+    default4:isChemicalElement default4:chromium .
+
+default4:_7 a owl:NamedIndividual,
+        default4:_ElementOccurance ;
+    default4:hasMaxPercent "12.0" ;
+    default4:hasMinPercent "12.0" ;
+    default4:isChemicalElement default4:nickel .
+
+default4:_8 a owl:NamedIndividual,
+        default4:_ElementOccurance ;
+    default4:hasMaxPercent "0.7" ;
+    default4:hasMinPercent "0.17" ;
+    default4:isChemicalElement default4:titan .
+
+default4:_9 a owl:NamedIndividual,
+        default4:_ElementOccurance ;
+    default4:hasMaxPercent "0.07" ;
+    default4:isChemicalElement default4:carbon .
+
+default4:nitrogen a owl:NamedIndividual,
+        default4:ChemicalElement ;
+    default4:hasChemicalSymbol "N" .
+
+default4:titan a owl:NamedIndividual,
+        default4:ChemicalElement ;
+    default4:hasChemicalSymbol "Ti" .
+
+default6:Process a owl:Class .
+
+:Entity a owl:Class .
+
+default1:SeverityClass a owl:Class .
+
+default3:WC1 a owl:NamedIndividual,
+        default3:Wasteclass ;
+    default3:higherHazardLevel default3:WC0 .
+
+default3:WC2 a owl:NamedIndividual,
+        default3:Wasteclass ;
+    default3:higherHazardLevel default3:WC1 .
+
+default4:nickel a owl:NamedIndividual,
+        default4:ChemicalElement ;
+    default4:hasChemicalSymbol "Ni" .
+
+default7:StepType a owl:Class .
+
+:Filter a owl:Class,
+        owl:NamedIndividual ;
+    rdfs:subClassOf :Machine .
+
+:FilterCartridge a owl:Class ;
+    rdfs:subClassOf :Entity .
+
+default4:carbon a owl:NamedIndividual,
+        default4:ChemicalElement ;
+    default4:hasChemicalSymbol "C" .
+
+default4:chromium a owl:NamedIndividual,
+        default4:ChemicalElement ;
+    default4:hasChemicalSymbol "Cr" .
+
+default4:manganese a owl:NamedIndividual,
+        default4:ChemicalElement ;
+    default4:hasChemicalSymbol "Mn" .
+
+default4:phosphorus a owl:NamedIndividual,
+        default4:ChemicalElement ;
+    default4:hasChemicalSymbol "P" .
+
+default4:silicon a owl:NamedIndividual,
+        default4:ChemicalElement ;
+    default4:hasChemicalSymbol "Si" .
+
+default4:sulfur a owl:NamedIndividual,
+        default4:ChemicalElement ;
+    default4:hasChemicalSymbol "S" .
+
+default5: a owl:Ontology .
+
+:Workpiece a owl:Class ;
+    rdfs:subClassOf :Entity .
+
+default5:Relationship a owl:Class .
+
+:Machine a owl:Class,
+        owl:NamedIndividual .
+
+default4:Material a owl:Class .
+
+default3:Wasteclass a owl:Class .
+
+default7:ProcessStep a owl:Class .
+
+:Cutter a owl:Class,
+        owl:NamedIndividual ;
+    rdfs:subClassOf :Machine .
+
+default1:MachineState a owl:Class .
+
+default5:Property a owl:Class .
+
+default4:ChemicalElement a owl:Class .
+
+default4:_ElementOccurance a owl:Class .
+

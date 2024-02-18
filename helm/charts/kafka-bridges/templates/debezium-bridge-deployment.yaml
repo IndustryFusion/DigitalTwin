@@ -8,6 +8,8 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     app: debezium-bridge
+  annotations:
+    reloader.stakater.com/auto: "true"
 spec:
   replicas: {{ .Values.kafkaBridge.debezium.replicaCount }}
   selector:
@@ -45,19 +47,20 @@ spec:
             initialDelaySeconds: 5
           volumeMounts:
             - name: config
-              mountPath: /opt/config
+              mountPath: /opt/config/config.json
+              readOnly: true
+              subPath: config.json
+            - name: knowledge-config
+              mountPath: /opt/config/knowledge.ttl
+              subPath: knowledge.ttl
               readOnly: true
           resources:
       volumes:
         - name: config
           configMap:
-            # Provide the name of the ConfigMap you want to mount.
             name: bridge-configmap
-            # An array of keys from the ConfigMap to create as files
-            items:
-              - key: "config.json"
-                path: "config.json"
-              - key: "knowledge.ttl"
-                path: "knowledge.ttl"
+        - name: knowledge-config
+          configMap:
+            name: knowledge
       imagePullSecrets:
         - name: {{ .Values.pullSecretCredentials }}

@@ -9,6 +9,7 @@ SQLITEDB := $(OUTPUTDIR)/database.db
 SQLITE3 := sqlite3
 HELM_DIR := ../../helm/charts/shacl
 NAMESPACE := iff
+ONTDIR := ../kms/ontology
 
 
 sqlite_files = $(OUTPUTDIR)/core.sqlite $(OUTPUTDIR)/ngsild.sqlite $(OUTPUTDIR)/rdf.sqlite $(OUTPUTDIR)/ngsild-models.sqlite $(OUTPUTDIR)/shacl-validation.sqlite
@@ -18,7 +19,7 @@ build: $(SHACL) $(KNOWLEDGE $(MODEL)
 	$(PYTHON) create_rdf_table.py $(KNOWLEDGE) $(KAFKA_TOPICS)
 	$(PYTHON) create_core_tables.py
 	${PYTHON} create_udfs.py
-	$(PYTHON) create_ngsild_tables.py $(SHACL) $(KAFKA_TOPICS)
+	$(PYTHON) create_ngsild_tables.py $(SHACL) $(KNOWLEDGE) $(KAFKA_TOPICS)
 	$(PYTHON) create_ngsild_models.py $(SHACL) $(KNOWLEDGE) $(MODEL)
 	$(PYTHON) create_sql_checks_from_shacl.py $(SHACL) $(KNOWLEDGE)
 
@@ -27,7 +28,7 @@ helm: build
 	mkdir -p ${HELM_DIR}
 	rm -rf ${HELM_DIR}/templates 
 	mv ${OUTPUTDIR} ${HELM_DIR}/templates
-	rm -f ${HELM_DIR}/templates/*.sqlite ${HELM_DIR}/templates/core.yaml
+	rm -f ${HELM_DIR}/templates/*.sqlite ${HELM_DIR}/templates/core.yaml ${HELM_DIR}/templates/knowledge.yaml
 	cp Chart.yaml ${HELM_DIR}
 
 test: requirements-dev.txt
@@ -99,6 +100,7 @@ flink-deploy: clean
 	make build || make enable-strimzi
 	kubectl -n $(NAMESPACE) delete -f output/ngsild-kafka.yaml --ignore-not-found || make enable-strimzi
 	kubectl -n $(NAMESPACE) delete -f output/rdf-kafka.yaml --ignore-not-found || make enable-strimzi
+	kubectl -n $(NAMESPACE) delete -f output/knowledge-configmap.yaml --ignore-not-found
 	cd ../../helm && ./helmfile -f helmfile-shacl.yaml apply || make enable-strimzi
 	make enable-strimzi
 	make test-flink-is-deployed
@@ -139,6 +141,23 @@ ifdef KMS_DIR
 else
 	@echo No KMS_DIR defined, doing nothing
 endif
+
+
+ontology2kms:
+	BASEURI=$$(cat ../../helm/common.yaml | yq '.ontology.baseUri') && \
+		if [ -z "$(ONTDEBUG)" ]; then rm -rf $(ONTDIR); wget -r --no-parent  --directory-prefix=$(ONTDIR) -nd -A ttl,jsonld $${BASEURI}; else \
+		echo Not updating local ontolgoy directory; fi
+	@for ontology in $(ONTOLOGIES) base; do \
+		echo "Processing $${ontology}"; \
+		entitiesfile=$(ONTDIR)/$${ontology}_entities.ttl; \
+		knowledgefile=$(ONTDIR)/$${ontology}_knowledge.ttl; \
+		shaclfile=$(ONTDIR)/$${ontology}_shacl.ttl; \
+		if [ -f "$${entitiesfile}" ]; then ontpattern=$${ontpattern}" $${entitiesfile}"; fi; \
+		if [ -f "$${knowledgefile}" ]; then ontpattern=$${ontpattern}" $${knowledgefile}"; fi; \
+		if [ -f "$${shaclfile}" ]; then shaclpattern=$${shaclpattern}" $${shaclfile}"; fi; \
+	done; \
+	echo creating knowledge.ttl with $${ontpattern}; /bin/bash -O extglob -c 'rdfpipe -i ttl -o ttl $${ontpattern} $(ONTDIR)/!(*_shacl.ttl|*.html|*.jsonld|*.txt) > ../kms/knowledge.ttl'; \
+	echo creating shacl.ttl with $${shaclpattern}; rdfpipe -i ttl -o ttl $${shaclpattern} > ../kms/shacl.ttl
 
 clean:
 	@rm -rf $(OUTPUTDIR)
