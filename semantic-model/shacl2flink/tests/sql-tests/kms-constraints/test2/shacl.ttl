@@ -346,17 +346,13 @@ iff:StateValueShape
         PREFIX iff: <https://industry-fusion.com/types/v0.9/>
         PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
         SELECT $this ?value ?type
-        where {
-            ?this a iff:machine .
-            ?this  iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?value ] .
-            ?this a ?type .
-            OPTIONAL{?type rdfs:subClassOf ?basetype .}
-            ?x iff:stateValidFor ?basetype .
-            FILTER( ?type != <http://www.w3.org/2000/01/rdf-schema#Resource> )
-            FILTER NOT EXISTS {
-
-                ?value iff:stateValidFor ?basetype .
-
+         where {
+             ?this a ?type .
+             ?type rdfs:subClassOf iff:machine .
+             ?this  iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?value ] .
+           FILTER NOT EXISTS{
+                ?value iff:stateValidFor ?subtype .
+                ?type rdfs:subClassOf* ?subtype .
             }
         }
         """ ;

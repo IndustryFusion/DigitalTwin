@@ -1,0 +1,46 @@
+#
+# Copyright (c) 2024 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+import sys
+import os
+import rdflib
+import owlrl
+import argparse
+
+
+def parse_args(args=sys.argv[1:]):
+    parser = argparse.ArgumentParser(description='Create deductive closure of knowledge file.')
+    parser.add_argument('knowledgefile', help='Path to the knowledge file')
+    parser.add_argument('-o', '--outputfile', default='knowledge_closure.ttl',
+                        help='Name of the result knowledge file.')
+    parsed_args = parser.parse_args(args)
+    return parsed_args
+
+
+def main(knowledgefile, outputfile):
+    h = rdflib.Graph()
+    h.parse(knowledgefile)
+    owlrl.DeductiveClosure(owlrl.OWLRL_Extension, rdfs_closure=True,
+                           axiomatic_triples=True, datatype_axioms=True).expand(h)
+    filename = os.path.dirname(os.path.abspath(knowledgefile)) + '/' + outputfile
+    h.serialize(destination=filename, format='turtle')
+
+
+if __name__ == '__main__':
+    args = parse_args()
+    knowledgefile = args.knowledgefile
+    outputfile = args.outputfile
+    main(knowledgefile, outputfile)

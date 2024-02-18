@@ -118,6 +118,19 @@ fi
 sleep 10
 done
 
+
+printf "\n"
+printf "\033[1mInstalling Reloader Operator\n"
+printf -- "------------------------\033[0m\n"
+if [ "$OFFLINE" = "true" ]; then
+  ( cd ${OFFLINE_DIR}/Reloader && helm upgrade --install --atomic reloader ./deployments/kubernetes/chart/reloader \
+      --set reloader.image.name=${REGISTRY}/stakater/reloader --set reloader.reloadOnCreate=true)
+else
+  helm repo add stakater https://stakater.github.io/stakater-charts
+  helm repo update
+  helm upgrade --install reloader stakater/reloader --version ${RELOADER_HELM_VERSION} --set reloader.reloadOnCreate=true
+fi
+
 printf "\n"
 printf "\033[1mPrepare Velero Helm Chart Repo\n"
 printf -- "------------------------\033[0m\n"
@@ -125,4 +138,5 @@ printf -- "------------------------\033[0m\n"
 if [ ! "$OFFLINE" = "true" ]; then
   ( cd ${OFFLINE_DIR} && rm -rf helm-charts && git clone https://github.com/vmware-tanzu/helm-charts.git && cd helm-charts && git checkout ${VELERO_HELM_VERSION} )
 fi
+
 printf -- "\033[1mOperators installed successfully.\033[0m\n"
