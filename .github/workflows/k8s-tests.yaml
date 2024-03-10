@@ -30,7 +30,7 @@ jobs:
         shellcheck *.sh *.bats test-*/*.bats
     - name: Prepare airgap deployment
       run: |
-        cd helm/airgap-deployment && bash prepare-airgap.bash
+        cd helm/airgap-deployment && REGISTRY=k3d-iff.localhost:12345 bash prepare-airgap.bash
     - name: Build Platform locally
       run: |
         cd test && bash build-local-platform.sh
