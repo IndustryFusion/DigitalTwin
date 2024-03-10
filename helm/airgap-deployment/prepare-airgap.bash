@@ -28,7 +28,7 @@ IMAGES=(
     docker.io/redis:7.2
     ghcr.io/zalando/spilo-15:2.1-p9
     docker.io/minio/console:v0.22.5
-    docker.io/velero/velero:v1.10.0
+    docker.io/velero/velero:${VELERO_VERSION}
     docker.io/alerta/alerta-web:8.1.0
     docker.io/busybox:1.28
     docker.io/postgrest/postgrest:v12.0.0
@@ -39,8 +39,8 @@ IMAGES=(
     quay.io/jetstack/cert-manager-cainjector:v1.9.1
     docker.io/emqx:5.1
     quay.io/keycloak/keycloak-operator:21.1.2
-    docker.io/bitnami/kubectl:1.28
-    docker.io/velero/velero-plugin-for-aws:v1.5.0
+    docker.io/bitnami/kubectl:${KUBECTL_VERSION}
+    docker.io/velero/velero-plugin-for-aws:${VELERO_PLUGIN_VERSION}
     docker.io/rancher/mirrored-pause:3.6
     docker.io/rancher/mirrored-coredns-coredns:1.10.1
     docker.io/rancher/klipper-helm:v0.8.2-build20230815
@@ -49,12 +49,12 @@ IMAGES=(
     docker.io/rancher/klipper-lb:v0.4.4
     docker.io/rancher/mirrored-library-traefik:2.10.5
     docker.io/rancher/mirrored-library-busybox:1.36.1
-    docker.io/ibn40/scorpio-all-in-one-runner:${DOCKER_TAG}
-    docker.io/ibn40/flink-services-operator:${DOCKER_TAG}
-    docker.io/ibn40/kafka-bridge:${DOCKER_TAG}
-    docker.io/ibn40/keycloak:${DOCKER_TAG}
-    docker.io/ibn40/flink-sql-gateway:${DOCKER_TAG}
-    docker.io/ibn40/debezium-postgresql-connector:${DOCKER_TAG}
+    ${REGISTRY}/ibn40/scorpio-all-in-one-runner:${DOCKER_TAG}
+    ${REGISTRY}/ibn40/flink-services-operator:${DOCKER_TAG}
+    ${REGISTRY}/ibn40/kafka-bridge:${DOCKER_TAG}
+    ${REGISTRY}/ibn40/keycloak:${DOCKER_TAG}
+    ${REGISTRY}/ibn40/flink-sql-gateway:${DOCKER_TAG}
+    ${REGISTRY}/ibn40/debezium-postgresql-connector:${DOCKER_TAG}
 )
 
 for image in ${IMAGES[@]}; do 

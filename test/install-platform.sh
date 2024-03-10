@@ -143,10 +143,14 @@ install_velero(){
         --set "velero.image.repository=$LOCAL_REGISTRY/velero/velero" \
         --set "velero.kubectl.image.repository=$LOCAL_REGISTRY/bitnami/kubectl" \
         --set "velero.kubectl.image.tag=${KUBECTL_VERSION}" \
-        --set "velero.initContainers[0].image=$LOCAL_REGISTRY/velero/velero-plugin-for-aws:v${VELERO_PLUGIN_VERSION}" -l app=velero $command
+        --set "velero.initContainers[0].image=$LOCAL_REGISTRY/velero/velero-plugin-for-aws:${VELERO_PLUGIN_VERSION}" -l app=velero $command
         )
     else
-      ( cd ../helm && ./helmfile $(set_helm_params) -l app=velero $command )
+        echo Install velero from remote registry
+        ( cd ../helm && ./helmfile $(set_helm_params) \
+        --set "velero.kubectl.image.tag=${KUBECTL_VERSION}" \
+        -l app=velero $command
+        )
     fi
 }
 
