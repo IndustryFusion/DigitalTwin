@@ -13,22 +13,66 @@ The Services consist of
 * Apache Flink Streaming SQL
 * SQL scripts for IFF example scenario 
 
-There are two installation instructions below. The first [`section`](#installation-of-platform-with-dockerhub-access) describes how to deploy the platform using public Dockerhub IFF registry. The second [`section`](#building-and-installation-platform-locally) describes how to build everything from scratch with a local registry.
 
-# Installation of Platform with DockerHub Access
+# Building and Installation of Platform Locally
+
+The following setup procedure is executed in the Kubernetes end to end [`test`](../.github/workflows/k8s-tests.yaml) as part of the Continous Integration procedure. It is tested and regularly executed on `Ubuntu 20.04` and `Ubuntu 22.04`.
+
+---
+
+> **_NOTE_**: All following instructions have to be executed with an account with SUDO permission (i.e. Ubuntu admin user) 
 
 ---
 
-> **_NOTE_**: Make sure you have access to IFF DockerHub repository. Otherwise follow the [local](#building-and-installation-of-whole-platform-locally) installation procedure below
+The platform has to be prepared only once with the prepare script:
+```
+(cd ../test && bash ./prepare-platform.sh)
+```
+
+After that, the following steps have to be executed (note the round brackets):
+
+```
+(cd ../test/bats && bash ./prepare-test.sh)
+(cd ../test && bash build-local-platform.sh)
+(cd ../test && bash ./install-platform.sh -l -c all)
+```
 
 ---
+
+> **_NOTE_**: This all can take some time when executed the first time because all the containers have to be downloaded to the local system. Be aware that DockerHub is restricting downloads of anonymous participants.
+
+---
+
+
+# Accessing Keycloak and Scorpio
+
+1. Login to keycloak with browser using `http://keycloak.local/auth`
+
+   * The username is `admin`, the password can be found by
+  
+     ```
+     kubectl -n iff get secret/keycloak-initial-admin -o=jsonpath='{.data.password}' | base64 -d | xargs echo
+     ```
+2. Verify that there are 2 realms `master`, `iff`
+3. Verify that there is a user in realm `iff`, named: `realm_user`
+
+   * The password for `realm_user` can be found by
+     ```
+     kubectl -n iff get secret/credential-iff-realm-user-iff -o jsonpath='{.data.password}'| base64 -d | xargs echo
+     ```
+4. Get token through http://keycloak.local/auth
+5. Use ngsi-ld api via `ngsild.local`
+
+
+# Other Installation Options
+
 
 1. Activate your Kubernetes cluster and install `kubectl` (`kubens` is also recommended) on your local machine.
 
    * Install an ingress controller, in case of K3s it is traefik, in other cases, install nginx ingress controller. [Instructions here.](https://kubernetes.github.io/ingress-nginx/deploy/#quick-start)
    * Edit you /etc/hosts file to make sure that `keycloak.local`, `alerta.local` and `ngsild.local` point to the ingress IP of your kubernetes cluster.
    * Make sure that the Pods within your Kubernetes cluster can resolve keycloak.local
-2. Install operators using `bash install_operators.sh`
+
 3. Install helm with diff plugin and helmfile 0.149.0:
 
    ```
@@ -50,26 +94,72 @@ There are two installation instructions below. The first [`section`](#installati
    ```
    kubectl -n iff create secret docker-registry regcred --docker-password=<password> --docker-username=<username> --docker-server=https://index.docker.io/v1/
    ```
-5. Install the charts by using helmfile, don't forget to specify the docker registry and version tag (use 'latest' tag for the current development version, it is updated nightly): `./helmfile apply --set "mainRepo=ibn40" --set "mainVersion=<RELEASE_VERSION>"`
-6. Verify all pods are running using `kubectl -n iff get pods`, in some slow systems keycloak realm import job might fail and needs to be restarted, this is due to postgres database not being ready on time. 
-7. Login to keycloak with browser using `http://keycloak.local/auth`
+## Installation Script
+The installation script is located in the `../test` directory. It provides several installation options:
+```
+Usage: install-platform.sh [-t label] [-c command] [-olsv] <command>
+-t:    Define label to apply
+-o:    offline installation
+-l:    local installation (for test & debug)
+-c:    command: apply|sync|all|show|destroy|opinst|opuninst
+-v:    verbose output
 
-   * The username is `admin`, the password can be found by
-  
-     ```
-     kubectl -n iff get secret/keycloak-initial-admin -o=jsonpath='{.data.password}' | base64 -d | xargs echo
-     ```
-8. Verify that there are 2 realms `master`, `iff`
-9. Verify that there is a user in realm `iff`, named: `realm_user`
+```
+With the `-c` option it can either 
+* install `all` by using `-c all`
+* install dedicated sub parts by using `-c apply` and additional tag e.g.
+   * `-t order=first` installs first part
+   * `-t order=second` installs second part
+   * `-t order=third` installs third part
+   * `-t app=velero` installs velero
+   * `-t app=keycloak` installs keyclaok
+   * etc
+* destroy dedicated sub parts by using `-c destroy` and tags, e.g
+   * `-t order=first` installs first part
+   * `-t app=velero` installs velero
+   * etc
+* install operators by using `-c opinst`
+* destroy operators by using `-c opuninst`
 
-   * The password for `realm_user` can be found by
-     ```
-     kubectl -n iff get secret/credential-iff-realm-user-iff -o jsonpath='{.data.password}'| base64 -d | xargs echo
-     ```
-10. Get token through http://keycloak.local/auth
-11. Use ngsi-ld api via `ngsild.local`
+Example 1:
+```
+bash ./install-platform.sh -c apply -t order=third
+```
+installs third subpart of platform from external repositories.
+
+Example 2:
+```
+bash ./install-platform.sh -l -c apply -t order=first
+```
+installs first subpart where iff specific images are pulled locally and all other images are pulled from external repositories.
+
+## Install with Dockerhub Access
+
+When the Kubernetes cluster is configured as describe above, the installation of platform with dockerhub access works as follows:
+```
+(cd ../test && bash ./install-platform.sh -c all)
+```
+
+## Install with Airgap Mode
+
+The Airgap mode works with a locally setup Kubernetes as described [here](#building-and-installation-of-platform-locally) 
+Then download all the containers and github repositories locally:
+
+```
+(cd ./airgap-deployment && REGISTRY=k3d-iff.localhost:12345 bash ./prepare-airgap.bash)
+```
+After that, the offline and local deployment works as follows:
+
+```
+(cd ../test && bash ./install-platform.sh -lo -c all)
+```
+
+
 
 ## Configure Keycloak.local dns
+
+This is normally done by the platform installation scripts. However, dependent on K8s version, it needs to be done manually. For Keycloak to run properly, it needs to reach keycloak.local (or the defined external keycloak name) from inside of the K8s cluster.
+
 
 First, find out which node in k3s is used as ingress ip by using `kubectl -n iff get ingress/keycloak-ingress -o jsonpath={".status.loadBalancer.ingress[0].ip"}`
 
@@ -94,40 +184,6 @@ PING keycloak.local (172.27.0.2): 56 data bytes
 64 bytes from 172.27.0.2: seq=1 ttl=64 time=0.032 ms
 64 bytes from 172.27.0.2: seq=2 ttl=64 time=0.032 ms
 
-```
-
-# Building and Installation of Platform Locally
-
-The following setup procedure is executed in the Kubernetes end to end [`test`](../.github/workflows/k8s-tests.yaml) as part of the Continous Integration procedure. It is tested and regularly executed on `Ubuntu 20.04` and `Ubuntu 22.04`.
-
----
-
-> **_NOTE_**: All following instructions have to be executed with an account with SUDO permission (i.e. Ubuntu admin user) 
-
----
-
-The platform has to be prepared only once with the prepare script:
-```
-(cd test && bash ./prepare-platform.sh)
-```
-
-After that, the following steps have to be executed (note the round brackets):
-
-```
-(cd ./test/bats && bash ./prepare-test.sh)
-(cd ./test && bash build-local-platform.sh)
-(cd ./test && bash install-local-platform.sh)
-```
-
----
-
-> **_NOTE_**: This all can take some time when executed the first time because all the containers have to be downloaded to the local system. Be aware that DockerHub is restricting downloads of anonymous participants.
-
----
-
-Finally, an optional (but recommended) end-to-end test can be executed to validate that all is up and running.
-```
-(cd ./test/bats && bats */*.bats)
 ```
 
 # Troubleshooting
@@ -185,13 +241,6 @@ In case of a database corruption, the database can be recoverd from S3 with the 
 9. Update all charts again `helmfile apply # --set "mainRepo=k3d-iff.localhost:12345" --set "mainVersion=0.1" in case you pull images from local, adapt accordingly if you are pulling from dockerhub`
 
 After that procedure, the database is running and all dependent pods should have been restarted and working with the new password credentials
-# Uninstallation Procedure
 
-Test systems can uninstall all helm charts by:
-
-```
-./helmfile destroy
-bash ./uninstall_operators.sh
-```
 
 
