@@ -1,0 +1,15 @@
+apiVersion: crossplane.industry-fusion.com/v1alpha1
+kind: DigitalTwinPlatform
+metadata:
+  name: ionos-example
+  namespace: default
+spec:
+  parameters:
+    size: S
+  compositionSelector:
+    matchLabels:
+      provider: ionos
+  writeConnectionSecretToRef:
+    name: digitaltwinplatform-ionos-connection-secret
+
+
