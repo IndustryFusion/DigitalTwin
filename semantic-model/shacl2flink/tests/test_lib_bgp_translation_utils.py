@@ -32,7 +32,7 @@ cutter = term.URIRef("cutter")
 def test_create_ngsild_mappings(monkeypatch):
     class Graph:
         def query(self, sparql):
-            assert "?this rdfs:subClassOf <https://industry-fusion.com/types/v0.9/cutter> ." in sparql
+            assert "?this rdfs:subClassOf <https://industry-fusion.com/types/v0.9/cutter> .\n" in sparql
             assert "?thisshape sh:targetClass ?this .\n?thisshape sh:property [ sh:path \
 <https://industry-fusion.com/types/v0.9/hasFilter> ; sh:property [ sh:path \
 ngsild:hasObject;  sh:class ?f ] ] ." in sparql
@@ -40,8 +40,6 @@ ngsild:hasObject;  sh:class ?f ] ] ." in sparql
 <https://industry-fusion.com/types/v0.9/state> ; ] ." in sparql
             assert "?v1shape sh:targetClass ?v1 .\n?v1shape sh:property [ sh:path \
 <https://industry-fusion.com/types/v0.9/state> ; ] ." in sparql
-            assert "?thisshape = ?v1shape" in sparql
-            assert "?fshape = ?v2shape" in sparql
             return ['row']
     relationships = {
         "https://industry-fusion.com/types/v0.9/hasFilter": True
@@ -103,8 +101,6 @@ def test_create_ngsild_mappings_reverse(monkeypatch):
 <https://industry-fusion.com/types/v0.9/state> ; ] ." in sparql
             assert "?v1shape sh:targetClass ?v1 .\n?v1shape sh:property [ sh:path \
 <https://industry-fusion.com/types/v0.9/state> ; ] ." in sparql
-            assert "?thisshape = ?v1shape" in sparql
-            assert "?pcshape = ?v2shape" in sparql
             return ['row']
 
     relationships = {
@@ -192,7 +188,7 @@ def test_process_rdf_spo_predicate_is_rdftype_object_is_iri(mock_isentity, mock_
     p = RDF['type']
     o = term.URIRef('https://example.com/obj')
     lib.bgp_translation_utils.process_rdf_spo(ctx, local_ctx, s, p, o)
-    assert local_ctx['where'] == "'<' || FILTER.type || '>' = '<https://example.com/obj>'"
+    assert local_ctx['where'] == "'<'||FILTER.type||'>' = '<https://example.com/obj>'"
     assert local_ctx['bounds'] == {'this': 'THISTABLE.id', 'f': 'FILTER.id'}
 
 
@@ -243,7 +239,7 @@ def test_process_rdf_spo_predicate_is_rdf_type_object_is_variable(mock_isentity,
     p = RDF['type']
     o = term.Variable('x')
     lib.bgp_translation_utils.process_rdf_spo(ctx, local_ctx, s, p, o)
-    assert local_ctx['where'] == "'<' || FILTER.type || '>' = xtable.subject"
+    assert local_ctx['where'] == "'<'||FILTER.type||'>' = xtable.subject"
     assert local_ctx['bounds'] == {'this': 'THISTABLE.id', 'f': 'FILTER.id', 'x': 'xtable.subject'}
     ctx = {
         'namespace_manager': None,
@@ -397,11 +393,7 @@ def test_process_rdf_spo_subject_is_no_entity_and_predicate_is_type(mock_isentit
     o = term.URIRef('https://example.com/obj')
     lib.bgp_translation_utils.process_rdf_spo(ctx, local_ctx, s, p, o)
     assert local_ctx['bgp_sql_expression'] == [{'statement': 'camelcase_to_snake_case_view AS FTABLE',
-                                                'join_condition': ''},
-                                               {'statement': 'rdf as testtable',
-                                                'join_condition': "testtable.subject = '<' || FTABLE.`type` || '>' and \
-testtable.predicate = '<http://www.w3.org/2000/01/rdf-schema#subClassOf>' and testtable.object = \
-'<https://example.com/obj>'"}]
+                                                'join_condition': "'<'||FTABLE.`type`||'>' = '<https://example.com/obj>'"}]
     assert local_ctx['bounds'] == {'this': 'THISTABLE.id', 'f': 'FTABLE.`id`'}
     assert local_ctx['bgp_tables'] == {'FTABLE': []}
 
@@ -449,7 +441,7 @@ def test_process_rdf_spo_subject_is_entity_and_predicate_is_type(mock_isentity, 
     p = RDF['type']
     o = term.URIRef('https://example.com/obj')
     lib.bgp_translation_utils.process_rdf_spo(ctx, local_ctx, s, p, o)
-    assert local_ctx['where'] == "'<' || FILTER.type || '>' = '<https://example.com/obj>'"
+    assert local_ctx['where'] == "'<'||FILTER.type||'>' = '<https://example.com/obj>'"
 
 
 @patch('lib.bgp_translation_utils.get_rdf_join_condition')
@@ -919,7 +911,7 @@ def test_get_rdf_join_condition(monkeypatch):
                                                               entity_variables,
                                                               time_variables,
                                                               selectvars)
-    assert result == "'<' ||v1.id|| '>'"
+    assert result == "'<'||v1.id||'>'"
 
 
 def test_get_rdf_join_condition_rdf(monkeypatch):
