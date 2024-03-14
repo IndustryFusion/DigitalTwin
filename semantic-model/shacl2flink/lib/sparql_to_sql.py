@@ -25,6 +25,7 @@ from rdflib.plugins.sparql.algebra import translateQuery
 from functools import reduce
 import copy
 
+
 file_dir = os.path.dirname(__file__)
 sys.path.append(file_dir)
 import utils  # noqa: E402

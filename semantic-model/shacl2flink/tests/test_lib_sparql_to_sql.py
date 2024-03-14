@@ -76,6 +76,16 @@ def test_translate_function(monkeypatch):
     function.expr = [term.Variable('var')]
     result = lib.sparql_to_sql.translate_function(ctx, function)
     assert result == 'SQL_DIALECT_CAST(SQL_DIALECT_STRIP_LITERAL{vartest} as FLOAT)'
+    function = MagicMock()
+    function.iri = term.URIRef('https://industry-fusion.com/aggregators/v0.9/test')
+    function.expr = [term.Variable('var')]
+    result = lib.sparql_to_sql.translate_function(ctx, function)
+    assert result == 'test(vartest)'
+    function = MagicMock()
+    function.iri = term.URIRef('https://industry-fusion.com/functions/v0.9/test')
+    function.expr = [term.Variable('var')]
+    result = lib.sparql_to_sql.translate_function(ctx, function)
+    assert result == 'test(vartest)'
 
 
 @patch('lib.sparql_to_sql.translate')
@@ -271,9 +281,11 @@ def test_translate_sparql(mock_graph, mock_translate_query, mock_parseQuery, moc
     row2 = Bunch()
     row1.property = term.URIRef('property')
     row1.relationship = term.URIRef('relationship')
+    row1.kind = term.URIRef('kind')
     row2.property = term.URIRef('property2')
     row2.relationship = term.URIRef('relationship2')
-    g.__iadd__.return_value.query = MagicMock(side_effect=[[row1], [row2]])
+    row2.kind = term.URIRef('kind')
+    g.query = MagicMock(side_effect=[[row1], [row2]])
     relationships = {
         "https://industry-fusion.com/types/v0.9/hasFilter": True
     }
@@ -287,7 +299,7 @@ def test_translate_sparql(mock_graph, mock_translate_query, mock_parseQuery, moc
     assert mock_translate_query.called
     assert mock_translateQuery.called
     assert mock_parseQuery.called
-
+    
 
 @patch('lib.sparql_to_sql.translate')
 def test_translate_filter(mock_translate):
@@ -304,6 +316,22 @@ def test_translate_filter(mock_translate):
     lib.sparql_to_sql.translate_filter(ctx, filter)
     assert mock_translate.called
     assert filter['where'] == 'wherex and where'
+
+
+@patch('lib.sparql_to_sql.translate')
+@patch('lib.sparql_to_sql.bgp_translation_utils')
+def test_translate_aggregate_join(mock_translation_utils, mock_translate):
+    ctx = MagicMock()
+    elem = Bunch()
+    p = {
+        'target_sql': 'target_sql',
+         'where': 'where'
+         }
+    elem.p = p
+    lib.sparql_to_sql.translate_aggregate_join(ctx, elem)
+    assert mock_translate.called
+    assert mock_translation_utils.replace_attributes_table_expression.called
+    assert elem['where'] == 'where'
 
 
 def test_get_attribute_column_value(monkeypatch):
