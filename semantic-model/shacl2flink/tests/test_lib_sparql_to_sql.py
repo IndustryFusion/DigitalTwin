@@ -299,7 +299,7 @@ def test_translate_sparql(mock_graph, mock_translate_query, mock_parseQuery, moc
     assert mock_translate_query.called
     assert mock_translateQuery.called
     assert mock_parseQuery.called
-    
+
 
 @patch('lib.sparql_to_sql.translate')
 def test_translate_filter(mock_translate):
@@ -325,8 +325,8 @@ def test_translate_aggregate_join(mock_translation_utils, mock_translate):
     elem = Bunch()
     p = {
         'target_sql': 'target_sql',
-         'where': 'where'
-         }
+        'where': 'where'
+    }
     elem.p = p
     lib.sparql_to_sql.translate_aggregate_join(ctx, elem)
     assert mock_translate.called

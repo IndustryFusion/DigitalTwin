@@ -14,10 +14,8 @@
 # limitations under the License.
 #
 
-import os.path
 from unittest.mock import patch, mock_open
 import check_sparql_expression
-
 
 
 @patch('check_sparql_expression.rdflib')

@@ -29,6 +29,7 @@ class dotdict(dict):
     __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
 
+
 @patch('create_ngsild_tables.ruamel.yaml')
 @patch('create_ngsild_tables.Graph')
 @patch('create_ngsild_tables.configs')

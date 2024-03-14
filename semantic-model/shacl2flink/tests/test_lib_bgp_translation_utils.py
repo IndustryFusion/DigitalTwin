@@ -393,7 +393,8 @@ def test_process_rdf_spo_subject_is_no_entity_and_predicate_is_type(mock_isentit
     o = term.URIRef('https://example.com/obj')
     lib.bgp_translation_utils.process_rdf_spo(ctx, local_ctx, s, p, o)
     assert local_ctx['bgp_sql_expression'] == [{'statement': 'camelcase_to_snake_case_view AS FTABLE',
-                                                'join_condition': "'<'||FTABLE.`type`||'>' = '<https://example.com/obj>'"}]
+                                                'join_condition':
+                                                "'<'||FTABLE.`type`||'>' = '<https://example.com/obj>'"}]
     assert local_ctx['bounds'] == {'this': 'THISTABLE.id', 'f': 'FTABLE.`id`'}
     assert local_ctx['bgp_tables'] == {'FTABLE': []}
 
