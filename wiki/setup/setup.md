@@ -444,6 +444,96 @@ Similarly, if two assets are linked to each other using relationships in semanti
 - http://pgrest.local/
 - API documentation: [Docs](https://postgrest.org/en/stable/)
 
+The PGRest API uses the Postgres service connected to Scorpio Broker (acid cluster pods), and fetches the data from all columns of 'tsdb' database, 'entityhistory' table.
+
+The sample query in PGRest looks like below.
+
+```
+http://pgrest.local/entityhistory?limit=2
+
+```
+
+Note: Pass the keycloak Bearer token in headers for the above request.
+
+The example result for the above query looks like below.
+
+```
+[
+    {
+        "observedAt": "2024-01-25T11:56:01+00:00",
+        "modifiedAt": "2024-01-25T11:56:01+00:00",
+        "entityId": "urn:ngsi-ld:asset:2:002",
+        "attributeId": "http://www.industry-fusion.org/schema#hasFilter",
+        "attributeType": "https://uri.etsi.org/ngsi-ld/Relationship",
+        "datasetId": "urn:ngsi-ld:asset:2:002\\http://www.industry-fusion.org/schema#hasFilter",
+        "nodeType": "@id",
+        "value": "urn:ngsi-ld:asset:2:000",
+        "valueType": null,
+        "index": 0
+    },
+    {
+        "observedAt": "2024-01-25T15:10:05.393+00:00",
+        "modifiedAt": "2024-01-25T15:10:05.393+00:00",
+        "entityId": "urn:ngsi-ld:asset:2:001",
+        "attributeId": "http://www.industry-fusion.org/fields#dustiness",
+        "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
+        "datasetId": "urn:ngsi-ld:asset:2:001\\http://www.industry-fusion.org/fields#dustiness",
+        "nodeType": "@value",
+        "value": "0.005",
+        "valueType": null,
+        "index": 0
+    }
+]
+
+```
+
+The query can be modififed to accomadate filters to the above result as shown below.
+
+```
+http://pgrest.local/entityhistory?limit=10&attributeId=eq.http://www.industry-fusion.org/fields%23dustiness
+
+```
+
+The result would only contain results with attributeId equal to (.eq) http://www.industry-fusion.org/fields%23dustiness. (%23 = #)
+
+```
+[
+   {
+        "observedAt": "2024-01-25T15:10:05.393+00:00",
+        "modifiedAt": "2024-01-25T15:10:05.393+00:00",
+        "entityId": "urn:ngsi-ld:asset:2:001",
+        "attributeId": "http://www.industry-fusion.org/fields#dustiness",
+        "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
+        "datasetId": "urn:ngsi-ld:asset:2:001\\http://www.industry-fusion.org/fields#dustiness",
+        "nodeType": "@value",
+        "value": "0.005",
+        "valueType": null,
+        "index": 0
+    }
+]
+
+```
+
+Further filter options can be found in the API documentation.
+
+Complex queries on Postgres service can also be made using PGRest by adding a custom function/view in the database and addressing that view in PGRest HTTP request. For example, the below complex query can be created as a view in database.
+
+
+```
+
+CREATE VIEW value_change_state_entries AS SELECT * FROM ( SELECT *, LAG(value) OVER (ORDER BY "entityId", "observedAt" ASC) AS prev_value FROM entityhistory WHERE "attributeId"='http://www.industry-fusion.org/fields#machine-state' ) AS subquery WHERE value IS DISTINCT FROM prev_value;
+
+GRANT SELECT ON value_change_state_entries TO pgrest;
+
+```
+
+This predefined view of the database can then called in PGRest as shown below.
+
+```
+http://pgrest.local/value_change_state_entries?entityId=eq.urn:ngsi-ld:asset:2:101
+
+```
+
 4. Keycloak
 
 - http://keycloak.local/auth
