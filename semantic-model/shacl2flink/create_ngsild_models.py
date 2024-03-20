@@ -20,6 +20,7 @@ import sys
 import argparse
 import lib.utils as utils
 import lib.configs as configs
+import owlrl
 
 
 def parse_args(args=sys.argv[1:]):
@@ -82,16 +83,20 @@ PREFIX iff: <https://industry-fusion.com/types/v0.9/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
 
-SELECT DISTINCT ?id ?type ?field ?ord ?shacltype
+SELECT DISTINCT ?id ?type ?field ?tabletype
 where {
     ?nodeshape a sh:NodeShape .
-    ?nodeshape sh:targetClass ?shacltype .
+    ?nodeshape sh:targetClass ?basetype .
     ?id a ?type .
-    ?type rdfs:subClassOf* ?shacltype .
-    ?nodeshape sh:property [ sh:path ?field ; sh:order ?ord ] .
+    ?type rdfs:subClassOf* ?basetype .
+    ?tabletype rdfs:subClassOf* ?basetype .
+    ?type rdfs:subClassOf* ?tabletype .
+    ?nodeshape sh:property [ sh:path ?field ;] .
+    FILTER(?tabletype != rdfs:Resource && ?tabletype != owl:Thing && ?tabletype != owl:Nothing )
     }
-    ORDER BY ?id ?ord
+    ORDER BY ?id STR(?field)
 """
 
 
@@ -113,9 +118,9 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
         model.parse(modelfile)
         knowledge = Graph()
         knowledge.parse(knowledgefile)
-        model += g + knowledge
+        attributes_model = model + g + knowledge
 
-        qres = model.query(attributes_query)
+        qres = attributes_model.query(attributes_query)
         first = True
         if len(qres) > 0:
             print(f'INSERT INTO `{configs.attributes_table_name}` VALUES',
@@ -155,11 +160,14 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
         print(";", file=sqlitef)
 
         # Create ngsild tables by sparql
-        qres = model.query(ngsild_tables_query_noinference)
+        owlrl.DeductiveClosure(owlrl.OWLRL_Extension, rdfs_closure=True, axiomatic_triples=True,
+                               datatype_axioms=True).expand(knowledge)
+        table_model = model + knowledge + g
+        qres = table_model.query(ngsild_tables_query_noinference)
         tables = {}
 
         # Now create the entity tables
-        for id, type, field, ord, tabletype in qres:
+        for id, type, field, tabletype in qres:
             key = utils.camelcase_to_snake_case(utils.strip_class(tabletype.toPython()))
             if key not in tables:
                 table = {}
@@ -170,12 +178,9 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
                 tables[key][idstr] = []
                 tables[key][idstr].append(idstr)
                 tables[key][idstr].append(type.toPython())
+                tables[key][idstr].append('CURRENT_TIMESTAMP')
             tables[key][idstr].append(idstr + "\\\\" +
                                       field.toPython())
-        for type, ids in tables.items():
-            for id, table in ids.items():
-                table.append('CURRENT_TIMESTAMP')
-
         for type, ids in tables.items():
             for id, table in ids.items():
                 print(f'INSERT INTO `{type}` VALUES',

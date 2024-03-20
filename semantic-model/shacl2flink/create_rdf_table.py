@@ -26,6 +26,25 @@ from lib import utils
 from lib import configs
 
 
+filter_out = """
+PREFIX iff: <https://industry-fusion.com/types/v0.9/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
+PREFIX sh: <http://www.w3.org/ns/shacl#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+
+CONSTRUCT {?s ?p ?o}
+where {
+    ?s ?p ?o .
+    FILTER((?o = rdfs:Class || ?p = rdfs:subClassOf)
+    && ?o != rdfs:Resource
+    && ?o != rdfs:Thing
+    && ?o != owl:Thing
+    && ?o != owl:Class)
+}
+"""
+
+
 def parse_args(args=sys.argv[1:]):
     parser = argparse.ArgumentParser(description='create_rdf_table.py --namespace <ns>\
                                                   <knowledge.ttl>')
@@ -101,7 +120,8 @@ def main(knowledgefile, namespace, output_folder='output'):
     # Create RDF statements to insert data
     g = rdflib.Graph()
     g.parse(knowledgefile)
-    owlrl.OWLRLExtras.OWLRL_Extension(g, axioms=True, daxioms=True, rdfs=True).closure()
+    owlrl.DeductiveClosure(owlrl.OWLRL_Extension, rdfs_closure=True, axiomatic_triples=True,
+                           datatype_axioms=True).expand(g)
 
     statementsets = create_statementset(g)
     sqlstatements = ''
@@ -142,6 +162,12 @@ def main(knowledgefile, namespace, output_folder='output'):
                                            configs.rdf_topic,
                                            configs.kafka_topic_object_label,
                                            config), fk)
+    with open(os.path.join(output_folder, "knowledge-configmap.yaml"), "w") as fp:
+        qres = g.query(filter_out)
+        class_ttl = {}
+        class_ttl['knowledge.ttl'] = qres.serialize(format='turtle').decode("utf-8")
+        fp.write("---\n")
+        yaml.dump(utils.create_configmap_generic('knowledge', class_ttl), fp)
 
 
 if __name__ == '__main__':

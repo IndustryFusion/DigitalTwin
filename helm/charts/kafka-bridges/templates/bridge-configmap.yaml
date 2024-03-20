@@ -114,5 +114,4 @@ data:
               "password": "POSTGRES_PASSWORD"
       }
     }
-  knowledge.ttl: |
-{{ .Files.Get "kms/knowledge.ttl" | indent 4 }}
+

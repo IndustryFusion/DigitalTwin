@@ -14,3 +14,7 @@ db:
   svcPort: "5432"
   dbUser: "ngb"
   oispdbUser: "oisp"
+
+ontology:
+  baseUri: https://industryfusion.github.io/contexts/staging/ontology/v0.1/
+ 
