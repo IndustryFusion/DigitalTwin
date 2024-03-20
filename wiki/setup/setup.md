@@ -1,6 +1,6 @@
 # Setup Manual - IndustryFusion Open
 
-The following documentation steps illustrates the setup of IFF open source components including PDT inside a factory premise as shown in the figure below. The main goal is to enable a Kuberenets expert to setup the IFF open stack and start with the creation of digital assets, semantic model and validation for industrial machines/processes supporting MQTT/OPC-UA protocols at the machine end.
+The following documentation steps illustrates the setup of IndustryFusion Foundation (IFF) open source components including Process Digital Twin (PDT) inside a factory premise as shown in the figure below. The main goal is to enable a Kuberenets expert to setup the IFF open stack and start with the creation of digital assets, semantic model and validation for industrial machines/processes supporting MQTT/OPC-UA protocols at the machine end.
 
 
 ![image](https://github.com/IndustryFusion/docs/assets/128161316/dfa28417-bd79-465f-9e6e-c25d4029251b)
@@ -10,11 +10,11 @@ The following documentation steps illustrates the setup of IFF open source compo
 
 a. In order to enable the digitization of the machines with OPC-UA server, make sure that the machine is connected to the factory LAN. Note down the IP address and port of the OPC-UA server. For example, "opc.tcp://192.168.49.198:62548".
 
-Also, to enable the automated dicovery later with Akri Discovery Handler, note down the 'applicationName' value of the OPC-UA server, as shown in the example below.
+Also, to enable the automated dicovery later with Akri Discovery Handler, note down the 'applicationName' (if available) value of the OPC-UA server, as shown in the example below.
 
 ![image](https://github.com/IndustryFusion/docs/assets/128161316/c7f19949-8e1b-42de-8962-7668e690fccd)
 
-b. In order to enable the digitization of the machines with MQTT Publisher, make sure that the machine is connected to the factory LAN. The machines with MQTT publisher usually comes with an UI for configuring the MQTT central broker IP address and port as shown below. This page will be used later, once the MQTT broker is functional in the central factory server.
+b. In order to enable the digitization of the machines with MQTT Publisher, make sure that the machine is connected to the factory LAN. The machines with MQTT publisher usually comes with an user interface for configuring the MQTT central broker IP address and port as shown below in an example. This page will be used later to configure broker IP and other details, once the MQTT broker is functional in the central factory server. Note down the main topic of each device to use it in the Akri handler in the later section.
 
 ![image](https://github.com/IndustryFusion/docs/assets/128161316/7d2eda97-9797-4b08-9285-ca7f4060d443)
 
@@ -22,19 +22,19 @@ b. In order to enable the digitization of the machines with MQTT Publisher, make
 ### 2. Factory Server
 
 #### a. Hardware Requirements:
-* Intel Xeon Processor - Minimum, 8 Cores (16 CPU Threads).
-* Memory - Minimum, 16 GB DDR4.
+* Intel Xeon Processor - Minimum, 4 Cores (8 CPU Threads).
+* Memory - Minimum, 32 GB.
 * Storage - Minimum, 512 GB.
 
 
 #### b. SLE Micro OS - 5.5
-Visit this page [OS download](https://www.suse.com/download/sle-micro/) and download the 'SLE-Micro-5.5-DVD-x86_64-GM-Media1.iso' image. Flash the ISO to an USB drive (Min. 16GB). Insert and boot the server from the USB drive. Follow the on-screen steps to complete the OS installation. Skip the 'Product Registration' page if the free version is desired.
+Visit this page [OS download](https://www.suse.com/download/sle-micro/) and download the 'SLE-Micro-5.5-DVD-x86_64-GM-Media1.iso' image. Flash the ISO to an USB drive (Min. 16GB drive). Insert and boot the server from the USB drive. Follow the on-screen steps to complete the OS installation. Skip the 'Product Registration' page if the free version is desired.
 
 For more detailed installation steps follow this [documentation](https://documentation.suse.com/sle-micro/5.5/html/SLE-Micro-all/cha-install.html).
 
 
 #### c. RKE2 - Kubernetes Distribution
-Install the RKE2 latest stable version on the previously installed OS. IFF stack currently uses single node for the factory server, follow the instructions [here](https://docs.rke2.io/install/quickstart#server-node-installation) to install the server node.
+Install the RKE2 latest stable version on the installed OS. IFF stack currently uses single node for the factory server, follow the instructions [here](https://docs.rke2.io/install/quickstart#server-node-installation) to install the server node.
 
 Once the installation of RKE2 is done, Kubectl CLI must be able to communicate with the Kubernetes API and execute commands.
 
@@ -45,7 +45,7 @@ Follow these [instructions](https://ranchermanager.docs.rancher.com/pages-for-su
 **Note:**
 1. Use the 'rancher-stable' Helm chart.
 2. Use the 'Rancher-generated TLS certificate', so install cert-manager as described.
-3. At the last step, set the --version tag to 2.7.3.
+3. At the last step, set the --version tag to 2.7.3 or any latest stable version.
 4. Also, global.cattle.psp.enabled to false.
 5. Set the hostname to your desired name. For e.g, rancher.iff.org
 
@@ -57,18 +57,16 @@ Once the installation is done, set the DNS for the factory server in the LAN and
 
 **Troubleshooting:**
 
-If there any issue with resolving DNS name in the factory server. Most probably it is because of NetworkManager.
-
+If there any issue with resolving DNS name in the factory server. Most probably it is because of NetworkManager of the factory server node.
 
 **Solution:**
 
 Login to the factory server, and perform following steps.
 
-* Edit /etc/sysconfig/network/config and update NETCONFIG_DNS_POLICY=" "
 * Edit /etc/NetworkManager/NetworkManager.conf and make sure the below params are defined as shown.
         
-         dns=default
-         rc-manager=netconfig
+         dns=none
+         rc-manager=unmanaged
 
 * Restart the below services.
 
@@ -76,13 +74,13 @@ Login to the factory server, and perform following steps.
         sudo service NetworkManager restart
 
 
-**Fleet** - Continous Delivery Plugin will be installed by default. 
+**Fleet** - This Continous Delivery Plugin will be installed by default in the Rancher. 
 
 
-**Elemental** - OS management plugin must be installed seperatley. Follow these [instructions](https://elemental.docs.rancher.com/quickstart-ui#install-elemental-operator) to install Elemental using Rancher UI. 
+**Elemental** - OS management plugin must be installed seperatley. Follow these [instructions](https://elemental.docs.rancher.com/quickstart-ui#install-elemental-operator) to install Elemental using Rancher UI.
 
 
-**Note** - Follow the above doc untill you can see the OS Manamagent option in the Rancher Manager menu. Further steps for creating Machine Registration Endpoint and Preparing Seed Image will be described below.
+**Note** - Follow the above document untill you can see the OS Manamagent option in the Rancher Manager menu. Further steps for creating Machine Registration Endpoint and Preparing Seed Image will be described below.
 
 
 **Machine Registration Endpoint Creation**
@@ -153,7 +151,7 @@ machineInventoryLabels:
   serialNumber: ${System Information/Serial Number}
 ```
 
-**Note:** Update the 'emulated-tpm-seed' to a unique number everytime for each TPM 2.0 disabled machine. Also, according to the smartbox configuration, update the device path and password.
+**Note:** Update the 'emulated-tpm-seed' to a unique number everytime for each TPM 2.0 disabled machine. Also, according to the smartbox configuration, update the device path and desired password.
 
 
 Click 'Create' in the 'Registration Endpoint: Create' page after entering the above cloud configs accordingly. The below page will be visible, select the latest Elemental OS version and click 'Build ISO', then Click 'Download ISO' to download the ISO file.
@@ -165,7 +163,7 @@ Click 'Create' in the 'Registration Endpoint: Create' page after entering the ab
 
 #### a. Hardware Requirements
 * Intel Atom Processor - 4 Cores.
-* Memory - 8 GB DDR4.
+* Memory - Minimum, 16 GB.
 * Storage - Minimum, 64 GB.
 
 Burn the downloaded ISO file in to an USB drive and boot the smartbox from the drive, click 'Elemental Install'. Rest of the process is automated untill a new machine appears in the below shown 'Inventory of Machines' page and becomes active. The same USB drive can be used again to onboard the devices in case of TMP 2.0 enabled smartboxes. In TPM 2.0 disabled devices, create a new registration endpoint with new 'emulated-tpm-seed' value, build the ISO, download and install for every new machine.
@@ -188,9 +186,9 @@ The process of RKE2 provisioning can be watched in the 'Cluster Management' page
 
 ### 4. MQTT Broker on the Factory Server
 
-The MQTT broker must be deployed to the factory server as a Kubernetes pod. Copy the given 'mqtt-broker-gateway' folder to the factory server, using Kubectl targeting the local cluster, execute the following commands. 
+The MQTT broker must be deployed to the factory server as a Kubernetes pod. Copy the given 'mqtt-broker-gateway' folder to the factory server node, using Kubectl targeting the local cluster, execute the following commands.
 
-**Note:** Create an empty sub-folder with name 'mosquitto' inside the 'mqtt-broker-gateway' folder, before running below command. Also make sure 'broker.yaml' is pointing to the right folder paths.
+**Note:** Create an empty sub-folder with name 'mosquitto' inside the 'mqtt-broker-gateway' folder, before running below command. Also make sure contents of the 'broker.yaml' is pointing to the right folder paths.
 
 `cd mqtt-broker-gateway`
 
@@ -198,10 +196,11 @@ The MQTT broker must be deployed to the factory server as a Kubernetes pod. Copy
 
 `kubectl apply -f broker.yaml`
 
-Once the MQTT broker pod is active, the machines with MQTT publishers can be updated with the IP address of the factory server with port 1883.
-
+Once the MQTT broker pod is active, the machines with MQTT publishers can be updated with the IP address of the factory server with port 1883. Also, note down the broker URL to use it in the Akri handler in the later section.
 
 ### 5. Deployment of Process Digital Twin (PDT) on Factory Server
+
+**Note:** The PDT build and tests must be performed on a Ubuntu 20 or 22 OS that is present in the local LAN as a jump machine for deployment on the desired cluster. Build PDT in the jump machine, and then use the kubeconfig of the Factory Server's RKE2 cluster for the deployment.
 
 Follow the local deployment documentation [here](https://github.com/IndustryFusion/DigitalTwin/blob/main/helm/README.md#building-and-installation-of-platform-locally) to install the PDT components on the factory server.
 
@@ -209,7 +208,7 @@ Once the local tests are passed in the above documentation, perform the followin
 
 * Verify all pods are running using `kubectl -n iff get pods`, in some slow systems keycloak realm import job might fail and needs to be restarted, this is due to postgres database not being ready on time.
 
-* Edit the /etc/hosts file and add DNS entry for PDT APIs as shown below.
+* In the machine which needs PDT access, edit the /etc/hosts file and add DNS entry for PDT APIs as shown below.
 
   ```
   <IP address of the factory server> keycloak.local
@@ -217,7 +216,7 @@ Once the local tests are passed in the above documentation, perform the followin
   <IP address of the factory server> alerta.local
   ```
 
-* Login to keycloak with browser using `http://keycloak.local/auth`
+* Login to keycloak with a browser connected to the LAN using `http://keycloak.local/auth`
 
   a. The username is `admin`, the password can be found by
   
@@ -260,9 +259,19 @@ Build the Docker image using the Dockerfile located in this [repo](https://githu
 Build the Docker image using the Dockerfile and instructions located in this [repo](https://github.com/IndustryFusion/DigitalTwin/tree/main/NgsildAgent). Push the image with a desired name and version to your Docker Hub repo.
 
 
-For OPC-UA based machines, with the help of Helm charts, Akri discovery handler will be used to deploy the IFF services automatically upon finding the active server. For MQTT based machines, Kustomize will be used to deploy the services.
+**4. iff-akri-controller**
 
-The deployment config files related to both these services are located [here](https://github.com/IndustryFusion/fleet-deployments) in a GitHub repo. However, the deployment files expect that a digital asset is already created in the PDT and the unique URN of the asset is ready.
+
+Build the Docker image using the Dockerfile and instructions located in this [repo](https://github.com/IndustryFusion/iff-akri-controller). Push the image with a desired name and version to your Docker Hub repo.
+
+
+**Akri Helm Charts** 
+
+For OPC-UA and MQTT based machines, with the help of Helm charts, Akri discovery handler will be deployed on the respective smartbox. The Helm charts for both OPC-UA and MQTT is in this GitHub [repo] (https://github.com/IndustryFusion/-deployments). This repo also contains charts for the smartbox which deals with both OPC-UA and MQTT at the same time (Example, a power measuring device (MQTT), and the machine(OPC-UA)). Further details of deployment follows.
+
+Clone the correct branch according to the machine protocol to local. For MQTT Helm, update the Broker URL and the main topic of the device before deploying to each smartbox. For OPC-UA Helm, update the OPC-UA URL and the applicationName (If available, or else empty list) of the device before deploying to each smartbox. Also update the docker image name with your custom image name.
+
+Once the changes are done, push the helm chart branch to a different GitHub remote repository with a desired branch name. Note down the URL and branch of this new repo.
 
 
 **Create a sample Asset in PDT using Scorpio REST API**
@@ -300,16 +309,12 @@ Copy the access token from the response.
 
 The asset is successfully created if the response is 200. JSON-LD is used as the data model to define assets in PDT. More details on the model of the data can be found [here](https://github.com/IndustryFusion/DigitalTwin/tree/main/semantic-model/datamodel#json-ld-json-for-linked-data).
 
-Clone the correct branch according to the machine protocol to local. Using the asset ID created in the above step, and all the other information from previous steps, update the deployment files as described in the READMEs of the respective branches. Also, for OPC-UA machines - Namespace, Identifier of the desired datapoint to fetch must be known at this point and for MQTT based machines, the topic of the datapoint, if the datatype is JSON, the respective key must also be known.
-
-Once the changes are done, push the branch to a different GitHub remote repository with a desired branch name. Note down the URL and branch of this new repo.
-
 
 **Fleet - Continous Delivery**
 
-The Rancher's Fleet plugin is used to deploy the IFF smartbox services directly from the above created new GitHub repo and branch. 
+The Rancher's Fleet plugin is used to deploy the IFF smartbox services directly from the above created new GitHub repo and branch of Akri Helm chart. 
 
-Go to the 'Continuous Delivery' page in Rancher, click 'Git Repos' and then click 'Add Repository'. In the below shown page, add a name, paste the URL of the GitHub repo from last step, mention the branch name. If the repository is private, add credentials in 'Git Authentication', then click 'Next'.
+Go to the 'Continuous Delivery' page in Rancher tool, click 'Git Repos' and then click 'Add Repository'. In the below shown page, add a name, paste the URL of the GitHub repo from last step, mention the branch name. If the repository is private, add credentials in 'Git Authentication', then click 'Next'.
 
 ![image](https://github.com/IndustryFusion/docs/assets/128161316/a8b308de-24f6-40f9-898a-f771f0ac57cb)
 
@@ -317,8 +322,110 @@ In the below shown page, select a target Elemental created RKE2 smartbox cluster
 
 ![image](https://github.com/IndustryFusion/docs/assets/128161316/11eb8da3-e4a3-4780-9c61-6ccae3ebcecd)
 
-The IFF smartbox related services will deployed to the single node cluster that will be responsbile for sending the machine data to PDT's digital asset. Any further changes to the deployment configs in the associated GitHub repo will be deployed automatically in future.
+The IFF smartbox related Akri services will deployed to the single node cluster that will be responsbile for deploying the IFF data and gateway agent services automatically upon device discovery and also PDT asset details. Any further changes to the deployment configs in the associated GitHub repo will be deployed automatically in future.
 
+
+**Gateway Asset Configurations** 
+
+Once the Akri Helm charts are deployed to smartbox in the last step, the Akri discovery handler will continously scan the network for the given IP and details. If the device is present, Akri creates an 'Instance' custom resource in the cluster. The iff-akri-controller will then take these instances and searches for the relevant asset in the PDT using the configuration files in this [repository] (https://github.com/IndustryFusion/gateway-configs).
+
+For the PDT asset created in the last step the configuration file in the above repo should look like this.
+
+Filename: urn:ngsi-ld:asset:2:47.yaml
+
+If the device is OPC-UA,
+
+```yaml
+
+ip_address: '<IP address of the OPC-UA server>'
+main_topic: ''
+protocol: opcua
+app_config: | 
+  {
+       "fusionopcuadataservice": {
+           "specification": [
+               {
+                 "node_id": "ns=2",
+                 "identifier": "s=1:MergedRootGroupNode/MsncCoreRootNode/ActualStateOfCuttingMachine/ActualState?msnc.mMov",
+                 "parameter": "machine-state"
+               },
+               {
+                   "node_id": "ns=2",
+                   "identifier": "s=1:MergedRootGroupNode/MsncCoreRootNode/ActualStateOfCuttingMachine/ActualPosition?msnc.mAxX",
+                   "parameter": "machine-position-x"
+               },
+               {
+                 "node_id": "ns=2",
+                 "identifier": "s=1:MergedRootGroupNode/MsncCoreRootNode/ActualStateOfCuttingMachine/ActualPosition?msnc.mAxY",
+                 "parameter": "machine-position-y"
+               },
+               {
+                 "node_id": "ns=2",
+                 "identifier": "s=1:MergedRootGroupNode/MsncCoreRootNode/ActualStateOfCuttingMachine/ActualPosition?msnc.mAxZ",
+                 "parameter": "machine-position-z"
+               }
+           ]
+         }
+      }
+
+pod_name: 'mse-smartfl-opcua'
+pdt_mqtt_hostname: '<IP of the PDT Gateway>'
+pdt_mqtt_port: '1883'
+device_id: urn:ngsi-ld:asset:2:47
+gateway_id: urn:ngsi-ld:asset:2:47
+keycloak_url: http://keycloak.local/auth/realms
+realm_password: <realm password>
+secure_config: 'false'
+username_config: ''
+password_config: ''
+dataservice_image_config: <OPC-UA data service image name>
+agentservice_image_config: <iff iot agent image name>
+
+```
+
+If the device is MQTT,
+
+```yaml
+
+ip_address: '<IP address of the MQTT broker>'
+main_topic: 'airtracker-74145/relay1'
+protocol: mqtt
+app_config: | 
+   {
+       "fusionmqttdataservice": {
+           "specification": [
+              {
+                  "topic": "airtracker-74145/relay1",
+                  "key": [],
+                  "parameter": ["machine-state"]
+              },
+              {
+                  "topic": "airtracker-74145/dust",
+                  "key": [],
+                  "parameter": ["dustiness"]
+              }
+           ]
+       }
+    }
+
+pod_name: 'machine-name-mqtt'
+pdt_mqtt_hostname: '<IP of the PDT Gateway>'
+pdt_mqtt_port: '1883'
+device_id: urn:ngsi-ld:asset:2:47
+gateway_id: urn:ngsi-ld:asset:2:47
+keycloak_url: http://keycloak.local/auth/realms
+realm_password: <realm password>
+secure_config: 'false'
+username_config: ''
+password_config: ''
+dataservice_image_config: <MQTT data service image name>
+agentservice_image_config: <iff iot agent image name>
+
+```
+
+If the Instance discovered and the asset configurations shown above match, the iff-akri-controller will deploy IFF data and GW services to the smartbox. The lifecycle of these services will then be managed by Akri according to the instance discovery. If these is no asset config but instance, no services will be deployed.
+
+**Note:** If the asset configs are updated, either delete the instance resource and let the Akri to rediscover the instance, or switch the OPC-UA server of the machine off and then on. The controller will then update the services accordingly.
 
 ### 7. Semantic Modelling
 
@@ -444,7 +551,7 @@ Similarly, if two assets are linked to each other using relationships in semanti
 - http://pgrest.local/
 - API documentation: [Docs](https://postgrest.org/en/stable/)
 
-The PGRest API uses the Postgres service connected to Scorpio Broker (acid cluster pods), and fetches the data from all columns of 'tsdb' database, 'entityhistory' table.
+The PGRest API uses the Postgres service connected to Scorpio Broker (acid cluster pods), and fetches the rows from all columns of 'tsdb' database, 'entityhistory' table with a timestamp.
 
 The sample query in PGRest looks like below.
 
@@ -516,7 +623,7 @@ The result would only contain results with attributeId equal to (.eq) http://www
 
 Further filter options can be found in the API documentation.
 
-Complex queries on Postgres service can also be made using PGRest by adding a custom function/view in the database and addressing that view in PGRest HTTP request. For example, the below complex query can be created as a view in database.
+Complex queries on Postgres service can also be made using PGRest by adding a custom function/view in the database and addressing that view in PGRest HTTP request. For example, the below complex query can be created as a view in the database.
 
 
 ```
@@ -527,7 +634,7 @@ GRANT SELECT ON value_change_state_entries TO pgrest;
 
 ```
 
-This predefined view of the database can then called in PGRest as shown below.
+The above view creates a table where the row has entries only when the 'machine-state' is toggled. This predefined view of the database can then called in PGRest as shown below with required filters.
 
 ```
 http://pgrest.local/value_change_state_entries?entityId=eq.urn:ngsi-ld:asset:2:101
