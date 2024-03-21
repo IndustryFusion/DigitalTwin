@@ -16,5 +16,5 @@ db:
   oispdbUser: "oisp"
 
 ontology:
-  baseUri: https://industryfusion.github.io/contexts/staging/ontology/v0.1/
+  baseUri: https://industryfusion.github.io/contexts/staging/example/v0.1/
  

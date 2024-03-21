@@ -1,0 +1,4 @@
+rdflib==6.2.0
+owlrl==6.0.2
+ruamel.yaml==0.17.21
+setuptools>=65.5.1 # not directly required, pinned by Snyk to avoid a vulnerability

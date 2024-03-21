@@ -91,7 +91,13 @@ def create_statementset(graph):
                                 ", " + utils.format_node_type(o) + ", " + str(hash_counter[hex_dig]) + ")"
         num += 1
     for num in range(num_sets):
-        statementsets[num] += ";"
+        if statementsets[num] != '':
+            statementsets[num] += ";"
+        else:
+            # Why is this needed? Looks like RDFS-Closure creates Literal subjects
+            # which are filtered out by the continue above. This can lead to mismatch between
+            # calculated sets and real-sets.
+            del statementsets[num]
     return statementsets
 
 

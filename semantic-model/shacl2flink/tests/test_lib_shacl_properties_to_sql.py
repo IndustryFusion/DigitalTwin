@@ -84,9 +84,10 @@ def test_lib_shacl_prroperties_to_sql(mock_utils, mock_configs, mock_yaml,
     g.__iadd__.return_value.query.return_value[0].maxlength = maxlength
     g.__iadd__.return_value.query.return_value[0].pattern = pattern
     g.__iadd__.return_value.query.return_value[0].ins = ins
+    prefixes = {"sh": "http://example.com/sh", "base": "http://example.com/base"}
     sqlite, (statementsets, tables, views) = \
         lib.shacl_properties_to_sql.translate('kms/shacl.ttl',
-                                              'kms/knowledge.ttl')
+                                              'kms/knowledge.ttl', prefixes)
 
     assert tables == ['alerts-bulk', 'attributes', 'rdf', 'targetclass',
                       'attributeclass']
@@ -149,9 +150,10 @@ def test_lib_shacl_prroperties_to_sql(mock_utils, mock_configs, mock_yaml,
     g.__iadd__.return_value.query.return_value[0].maxlength = maxlength
     g.__iadd__.return_value.query.return_value[0].pattern = None
     g.__iadd__.return_value.query.return_value[0].ins = None
+
     sqlite, (statementsets, tables, views) = \
         lib.shacl_properties_to_sql.translate('kms/shacl.ttl',
-                                              'kms/knowledge.ttl')
+                                              'kms/knowledge.ttl', prefixes)
 
     assert tables == ['alerts-bulk', 'attributes', 'rdf', 'targetclass',
                       'attributeclass']

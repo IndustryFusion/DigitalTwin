@@ -1,0 +1,68 @@
+[
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context1.jsonld",
+    "id": "urn:cutter:1",
+    "type": "iffBaseEntities:Machine",
+    "iffBaseEntities:hasState": [
+      {
+      "type": "Property",
+      "value": {
+        "@id": "base:state_ON"
+      }}]
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context1.jsonld",
+    "id": "urn:plasmacutter:1",
+    "type": "iffBaseEntities:Cutter",
+    "iffBaseEntities:hasState": [
+      {
+      "type": "Property",
+      "value": {
+        "@id": "base:state_PROCESSING"
+      }}],
+      "iffBaseEntities:hasFilter": [
+        {
+          "type": "Relationship",
+          "object": "urn:filter:2"
+        }
+      ]
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context1.jsonld",
+    "id": "urn:filter:1",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasState": [
+    {
+      "type": "Property",
+      "value": {
+        "@id": "base:state_ON"
+      }
+    }],
+    "iffBaseEntities:hasCartridge": [
+      {
+          "type": "Relationship",
+          "object": "urn:cartridge:1"
+      }
+    ],
+    "iffBaseEntities:hasStrength": [
+      {
+        "type": "Property",
+        "value": 0.9
+      }]
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context1.jsonld",
+    "id": "urn:cartridge:1",
+    "type": "iffBaseEntities:FilterCartridge",
+    "iffBaseEntities:isUsedFrom": [
+    {
+      "type": "Property",
+      "value": "2021-10-25 13:54:55.4"
+    }],
+    "iffBaseEntities:isUsedUntil": [
+      {
+        "type": "Property",
+        "value": "2024-02-27 13:54:55.4"
+      }]
+  }
+]

@@ -41,9 +41,9 @@ def test_main(mock_utils, mock_configs, mock_graph, mock_nullify, tmp_path):
     mock_configs.iff_namespace = 'iff_namespace'
     mock_configs.attributes_table_name = 'attributes'
     mock_utils.strip_class.return_value = 'strip_class'
-    mock_graph.__add__.return_value = 'xxxx'
-    g = mock_graph.return_value.__iadd__.return_value
-    g.parse.return_value = 'xx'
+    mock_graph.__add__.return_value = mock_graph
+    mock_graph.return_value = mock_graph
+    mock_graph.__iadd__.return_value = mock_graph
     entityId = MagicMock()
     entityId.toPython.return_value = 'entityId'
     name = MagicMock()
@@ -63,13 +63,12 @@ def test_main(mock_utils, mock_configs, mock_graph, mock_nullify, tmp_path):
     observedAt.toPython.return_value = 'Timestamp'
     index = MagicMock()
     index.toPython.return_value = 'index'
-    g.query = MagicMock(side_effect=[
-        [(entityId, name, type, nodeType, valueType, hasValue, hasObject, observedAt, index),
-         (entityId, name, type, nodeType, valueType, hasValue, hasObject, observedAt, None),
-         (entityId, name, type, nodeType, valueType, hasValue, hasObject, observedAt, None)],
-        [(entityId, type, name, 1, type)]
-    ])
-
+    mock_graph.query.side_effect = [[
+        (entityId, name, type, nodeType, valueType, hasValue, hasObject, observedAt, index),
+        (entityId, name, type, nodeType, valueType, hasValue, hasObject, observedAt, None),
+        (entityId, name, type, nodeType, valueType, hasValue, hasObject, observedAt, None)],
+        [(entityId, type, name, type)]
+    ]
     create_ngsild_models.main('kms/shacl.ttl', 'kms/knowledge.ttl',
                               'kms/model.jsonld', tmp_path)
     assert os.path.exists(os.path.join(tmp_path, 'ngsild-models.sqlite'))\

@@ -18,9 +18,7 @@ alerts_bulk_table = configs.alerts_bulk_table_name
 alerts_bulk_table_object = configs.alerts_bulk_table_object_name
 attributes_insert_table_obj_name = configs.attributes_insert_table_obj_name
 sparql_get_all_rule_nodes = """
-PREFIX iff: <https://industry-fusion.com/types/v0.9/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
 SELECT ?nodeshape ?targetclass ?construct
 where {

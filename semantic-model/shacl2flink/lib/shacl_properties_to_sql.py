@@ -18,10 +18,6 @@ alerts_bulk_table = configs.alerts_bulk_table_name
 alerts_bulk_table_object = configs.alerts_bulk_table_object_name
 
 sparql_get_all_relationships = """
-PREFIX iff: <https://industry-fusion.com/types/v0.9/>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
-PREFIX sh: <http://www.w3.org/ns/shacl#>
 SELECT ?nodeshape ?targetclass ?propertypath ?mincount ?maxcount ?attributeclass ?severitycode
 where {
     ?nodeshape a sh:NodeShape .
@@ -29,7 +25,7 @@ where {
     ?nodeshape sh:property [
         sh:path ?propertypath ;
         sh:property [
-            sh:path ngsild:hasObject ;
+            sh:path ngsi-ld:hasObject ;
             sh:class ?attributeclass ;
         ]
     ] .
@@ -40,17 +36,13 @@ where {
             sh:path ?propertypath;
             sh:severity ?severity ;
         ] .
-        ?severity iff:severityCode ?severitycode .
+        ?severity rdfs:label ?severitycode .
     }
 }
 order by ?targetclass
 """  # noqa: E501
 
 sparql_get_all_properties = """
-PREFIX iff: <https://industry-fusion.com/types/v0.9/>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
-PREFIX sh: <http://www.w3.org/ns/shacl#>
 SELECT
     ?nodeshape ?targetclass ?propertypath ?mincount ?maxcount ?attributeclass ?nodekind
     ?minexclusive ?maxexclusive ?mininclusive ?maxinclusive ?minlength ?maxlength ?pattern ?severitycode
@@ -61,23 +53,23 @@ where {
     ?nodeshape sh:property [
         sh:path ?propertypath ;
         sh:property [
-            sh:path ngsild:hasValue ;
+            sh:path ngsi-ld:hasValue ;
             sh:nodeKind ?nodekind ;
         ] ;
 
     ] .
     OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:minCount ?mincount ; ] }
     OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:maxCount ?maxcount ; ] }
-    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsild:hasValue ; sh:minExclusive ?minexclusive ;] ; ] }
-    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsild:hasValue ; sh:maxExclusive ?maxexclusive ;] ; ] }
-    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsild:hasValue ; sh:minInclusive ?mininclusive ;] ; ] }
-    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsild:hasValue ; sh:maxInclusive ?maxinclusive ;] ; ] }
-    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsild:hasValue ; sh:minLength ?minlength ;] ; ] }
-    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsild:hasValue ; sh:maxLength ?maxlength ;] ; ] }
-    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsild:hasValue ; sh:pattern ?pattern ;] ; ] }
-    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsild:hasValue ; sh:in/(rdf:rest*/rdf:first)+ ?in ;] ; ] }
-    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsild:hasValue ; sh:class ?attributeclass ;] ; ] }
-    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath; sh:severity ?severity ; ] . ?severity iff:severityCode ?severitycode .}
+    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:minExclusive ?minexclusive ;] ; ] }
+    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:maxExclusive ?maxexclusive ;] ; ] }
+    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:minInclusive ?mininclusive ;] ; ] }
+    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:maxInclusive ?maxinclusive ;] ; ] }
+    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:minLength ?minlength ;] ; ] }
+    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:maxLength ?maxlength ;] ; ] }
+    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:pattern ?pattern ;] ; ] }
+    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:in/(rdf:rest*/rdf:first)+ ?in ;] ; ] }
+    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath ; sh:property [sh:path ngsi-ld:hasValue ; sh:class ?attributeclass ;] ; ] }
+    OPTIONAL { ?nodeshape sh:property [ sh:path ?propertypath; sh:severity ?severity ; ] . ?severity rdfs:label ?severitycode .}
 }
 GROUP BY ?nodeshape ?targetclass ?propertypath ?mincount ?maxcount ?attributeclass ?nodekind
     ?minexclusive ?maxexclusive ?mininclusive ?maxinclusive ?minlength ?maxlength ?pattern ?severitycode
@@ -354,7 +346,7 @@ FROM A1
 """  # noqa: E501
 
 
-def translate(shaclefile, knowledgefile):
+def translate(shaclefile, knowledgefile, prefixes):
     """
     Translate shacl properties into SQL constraints.
 
@@ -378,7 +370,7 @@ def translate(shaclefile, knowledgefile):
     statementsets = []
     sqlite = ''
     # Get all NGSI-LD Relationship
-    qres = g.query(sparql_get_all_relationships)
+    qres = g.query(sparql_get_all_relationships, initNs=prefixes)
     for row in qres:
         target_class = utils.camelcase_to_snake_case(utils.strip_class(row.targetclass.toPython())) \
             if row.targetclass else None
@@ -485,7 +477,7 @@ def translate(shaclefile, knowledgefile):
             tables.append(target_class_obj)
             views.append(target_class_obj + "-view")
     # Get all NGSI-LD Properties
-    qres = g.query(sparql_get_all_properties)
+    qres = g.query(sparql_get_all_properties, initNs=prefixes)
     for row in qres:
         nodeshape = row.nodeshape.toPython()
         target_class = utils.camelcase_to_snake_case(utils.strip_class(row.targetclass.toPython())) \
