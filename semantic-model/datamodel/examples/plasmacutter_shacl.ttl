@@ -1,4 +1,4 @@
-@prefix iffb: <https://industry-fusion.org/base/v0.1/>.
+@prefix iffb: <https://industry-fusion.org/base/v0/>.
 @prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/>.
 

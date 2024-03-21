@@ -1,5 +1,5 @@
 {
-    "@context": "https://industryfusion.github.io/contexts/v0.1/context.jsonld",
+    "@context": "https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld",
     "id": "urn:iff:filter1",
     "type": "eeclass:0173-1#01-ACK991#016",
 

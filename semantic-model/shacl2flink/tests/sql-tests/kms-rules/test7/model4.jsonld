@@ -1,0 +1,132 @@
+[
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context1.jsonld",
+    "id": "urn:cutter:1",
+    "type": "iffBaseEntities:Machine",
+    "iffBaseEntities:hasState": [
+      {
+      "type": "Property",
+      "value": {
+        "@id": "base:state_ON"
+      }}]
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context1.jsonld",
+    "id": "urn:plasmacutter:1",
+    "type": "iffBaseEntities:Cutter",
+    "iffBaseEntities:hasState": [
+      {
+      "type": "Property",
+      "value": {
+        "@id": "base:state_PROCESSING"
+      }}],
+      "iffBaseEntities:hasFilter": [
+        {
+          "type": "Relationship",
+          "object": "urn:filter:1"
+        }
+      ],
+      "iffBaseEntities:hasInWorkpiece": [
+        {
+          "type": "Relationship",
+          "object": "urn:workpiece:1"
+        }
+      ]
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context1.jsonld",
+    "id": "urn:filter:1",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasState": [
+    {
+      "type": "Property",
+      "value": {
+        "@id": "base:state_ON"
+      },
+      "observedAt": "2024-02-29 13:52:32.0"
+    }],
+    "iffBaseEntities:hasCartridge": [
+      {
+          "type": "Relationship",
+          "object": "urn:cartridge:1"
+      }
+    ],
+    "iffBaseEntities:hasStrength": [
+      {
+        "type": "Property",
+        "value": 0.9,
+        "observedAt": "2024-02-28 13:52:32.0"
+      },
+      {
+        "type": "Property",
+        "value": 0.8,
+        "observedAt": "2024-02-28 13:52:33.0" 
+      },
+      {
+        "type": "Property",
+        "value": 0.7,
+        "observedAt": "2024-02-28 13:52:34.0" 
+      },
+      {
+        "type": "Property",
+        "value": 0.6,
+        "observedAt": "2024-02-28 13:52:35.0" 
+      }
+    ]
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context1.jsonld",
+    "id": "urn:cartridge:1",
+    "type": "iffBaseEntities:FilterCartridge",
+    
+    "iffBaseEntities:isUsedUntil": [
+      {
+        "type": "Property",
+        "value": "2024-02-27 13:54:55.4"
+      }],
+      "iffBaseEntities:isUsedFrom": [
+        {
+          "type": "Property",
+          "value": "2024-02-27 13:54:55.4"
+        }],
+      "iffFilterEntities:hasWasteclass":[
+        {
+          "type": "Property",
+          "value": {
+            "@id": "iffFilterKnowledge:WC1"
+          }
+        }        
+      ]
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context1.jsonld",
+    "id": "urn:workpiece:1",
+    "type": "iffBaseEntities:Workpiece",
+    
+    "iffBaseEntities:hasMaterial": [
+      {
+        "type": "Property",
+        "value": {
+          "@id": "material:EN_1.5301"
+        }
+      }],
+      "iffBaseEntities:hasHeight": [
+        {
+          "type": "Property",
+          "value": 5
+        }
+      ],
+      "iffBaseEntities:hasLength": [
+        {
+          "type": "Property",
+          "value": 100
+        }
+      ],
+      "iffBaseEntities:hasWidth": [
+        {
+          "type": "Property",
+          "value": 100
+        }
+      ]
+  }
+]

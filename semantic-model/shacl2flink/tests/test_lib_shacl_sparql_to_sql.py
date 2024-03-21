@@ -55,10 +55,11 @@ def test_translate(mock_utils, mock_add_variables_to_message, mock_translate_spa
     g.__iadd__.return_value.query.return_value[0].nodeshape = nodeshape
     g.__iadd__.return_value.query.return_value[0].targetclass = targetclass
     g.__iadd__.return_value.query.return_value[0].severitylabel = severitylabel
+    prefixes = {"sh": "http://example.com/sh", "base": "http://example.com/base"}
     mock_utils.process_sql_dialect.return_value = 'adapted_sql_dialect'
     sqlite, (statementsets, tables, views) = \
         lib.shacl_sparql_to_sql.translate('kms/shacl.ttl',
-                                          'kms/knowledge.ttl')
+                                          'kms/knowledge.ttl', prefixes)
     assert tables == ['alerts-bulk', 'rdf']
     assert views == []
     assert len(statementsets) == 1

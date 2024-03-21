@@ -52,8 +52,8 @@ iff:WC2 rdf:_n ("1.3301" "1.3302" "1.3303" "1.3304" "1.3305") .
 iff:WC3 rdf:_n ("1.5301" "1.5302" "1.5303" "1.5304" "1.5305") .
 iff:Severity a rdfs:class .
 iff:severityWarning a iff:Severity .
-iff:severityWarning iff:severityCode 'warning' .
+iff:severityWarning rdfs:label 'warning' .
 iff:severityMajor a iff:Severity .
-iff:severityMajor iff:severityCode 'major' .
+iff:severityMajor rdfs:label 'major' .
 iff:severityCritical a iff:Severity .
-iff:severityCritical iff:severityCode 'critical' .
+iff:severityCritical rdfs:label 'critical' .

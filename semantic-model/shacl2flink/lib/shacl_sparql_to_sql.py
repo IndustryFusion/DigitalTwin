@@ -18,10 +18,6 @@ alerts_bulk_table = configs.alerts_bulk_table_name
 alerts_bulk_table_object = configs.alerts_bulk_table_object_name
 
 sparql_get_all_sparql_nodes = """
-PREFIX iff: <https://industry-fusion.com/types/v0.9/>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
-PREFIX sh: <http://www.w3.org/ns/shacl#>
 SELECT ?nodeshape ?targetclass ?message ?select ?severitylabel
 where {
     ?nodeshape a sh:NodeShape .
@@ -35,7 +31,7 @@ where {
         ?nodeshape sh:sparql [
             sh:severity ?severity ;
         ] .
-        ?severity iff:severityCode ?severitylabel .
+        ?severity rdfs:label ?severitylabel .
     }
 }
 
@@ -80,7 +76,7 @@ def add_variables_to_message(message):
     return re.sub(r"\{([\?\$])(\w*)\}", r"' || IFNULL(`\2`, 'NULL') || '", message)
 
 
-def translate(shaclfile, knowledgefile):
+def translate(shaclfile, knowledgefile, prefixes):
     """
     Translate shacl properties into SQL constraints.
 
@@ -103,7 +99,7 @@ def translate(shaclfile, knowledgefile):
     statementsets = []
     sqlite = ''
     # Get all NGSI-LD Relationship
-    qres = g.query(sparql_get_all_sparql_nodes)
+    qres = g.query(sparql_get_all_sparql_nodes, initNs=prefixes)
     for row in qres:
         target_class = row.targetclass
         message = row.message.toPython() if row.message else None

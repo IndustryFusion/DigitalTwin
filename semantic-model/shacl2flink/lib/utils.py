@@ -426,7 +426,8 @@ def format_node_type(node):
                 node.datatype == rdflib.XSD.float or node.datatype == rdflib.XSD.integer:
             return node.toPython()
         else:
-            return f'\'"{node.toPython()}"\''
+            quoted_string = node.toPython().replace("'", "''")
+            return f'\'"{quoted_string}"\''
     elif isinstance(node, rdflib.BNode):
         return f'\'_:{node.toPython()}\''
     else:

@@ -1,24 +1,24 @@
 [
   {
-    "@context": "https://industryfusion.github.io/contexts/v0.1/context.jsonld",
+    "@context": "https://industryfusion.github.io/contexts/staging/example/v0.1/context.jsonld",
     "id": "urn:cutter:1",
     "type": "iffBaseEntities:Machine",
     "iffBaseEntities:hasState": [
       {
       "type": "Property",
       "value": {
-        "@id": "iffBaseKnowledge:state_ON"
+        "@id": "base:state_ON"
       }}]
   },
   {
-    "@context": "https://industryfusion.github.io/contexts/v0.1/context.jsonld",
+    "@context": "https://industryfusion.github.io/contexts/staging/example/v0.1/context.jsonld",
     "id": "urn:plasmacutter:1",
     "type": "iffBaseEntities:Cutter",
     "iffBaseEntities:hasState": [
       {
       "type": "Property",
       "value": {
-        "@id": "iffBaseKnowledge:state_PROCESSING"
+        "@id": "base:state_PROCESSING"
       }}],
       "iffBaseEntities:hasFilter": [
         {
@@ -34,14 +34,14 @@
       ]
   },
   {
-    "@context": "https://industryfusion.github.io/contexts/v0.1/context.jsonld",
+    "@context": "https://industryfusion.github.io/contexts/staging/example/v0.1/context.jsonld",
     "id": "urn:filter:1",
     "type": "iffBaseEntities:Filter",
     "iffBaseEntities:hasState": [
     {
       "type": "Property",
       "value": {
-        "@id": "iffBaseKnowledge:state_ON"
+        "@id": "base:state_ON"
       }
     }],
     "iffBaseEntities:hasCartridge": [
@@ -74,7 +74,7 @@
     ]
   },
   {
-    "@context": "https://industryfusion.github.io/contexts/v0.1/context.jsonld",
+    "@context": "https://industryfusion.github.io/contexts/staging/example/v0.1/context.jsonld",
     "id": "urn:cartridge:1",
     "type": "iffBaseEntities:FilterCartridge",
     
@@ -98,7 +98,7 @@
       ]
   },
   {
-    "@context": "https://industryfusion.github.io/contexts/v0.1/context.jsonld",
+    "@context": "https://industryfusion.github.io/contexts/staging/example/v0.1/context.jsonld",
     "id": "urn:workpiece:1",
     "type": "iffBaseEntities:Workpiece",
     

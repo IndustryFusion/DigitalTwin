@@ -6,7 +6,7 @@ A fundamental difference between JSON-LD and JSON is, that JSON describe generic
 ```json
 [
     {
-        "@context": "https://industryfusion.github.io/contexts/v0.1/context.jsonld",
+        "@context": "https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld",
         "id": "urn:iff:cutter1",
         "type": "eclass:0173-1#01-AKJ975#017",
         "hasFilter": {
@@ -19,7 +19,7 @@ A fundamental difference between JSON-LD and JSON is, that JSON describe generic
         }
     },
     {
-        "@context": "https://industryfusion.github.io/contexts/v0.1/context.jsonld",
+        "@context": "https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld",
         "id": "urn:iff:filter1",
         "type": "eclass:0173-1#01-ACK991#016",
         "machine_state": {
@@ -65,7 +65,7 @@ The same graph can, however, be represented by different JSON-LD structures. For
 ```json
 [
     {
-        "@context": "https://industryfusion.github.io/contexts/v0.1/context.jsonld",
+        "@context": "https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld",
         "id": "urn:iff:cutter1",
         "type": "eclass:0173-1#01-AKJ975#017",
         "hasFilter": {
@@ -139,7 +139,7 @@ First exercise is to transform JSON-LD into RDF/turtle data:
 ```json
 # JSON-LD Data:
 {
-    "@context": "https://industryfusion.github.io/contexts/v0.1/context.jsonld",
+    "@context": "https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld",
     "id": "urn:iff:cutter1",
     "type": "eclass:0173-1#01-AKJ975#017"
 }
@@ -154,10 +154,10 @@ rdfpipe  -i json-ld -o ttl ../examples/simple_plasmacutter_data.json
 <urn:iff:abc123> a <https://industry-fusion.org/eclass#0173-1#01-AKJ975#017> .
 ```
 
-The result is showing a single triple line. `a` is an abbreviation for `rdf:type`. I.e. the triple defines an object with `id` equal to `<urn:iff:abc123>` and type equal to `https://industry-fusion.org/eclass#0173-1#01-AKJ975#017`. But why was `eclass:0173-1#01-AKJ975#017` translated to `https://industry-fusion.org/eclass#0173-1#01-AKJ975#017`? To answer the question, we take a closer look to the `@context` field. When we resolve the url `https://industryfusion.github.io/contexts/v0.1/context.jsonld`, we get the following result:
+The result is showing a single triple line. `a` is an abbreviation for `rdf:type`. I.e. the triple defines an object with `id` equal to `<urn:iff:abc123>` and type equal to `https://industry-fusion.org/eclass#0173-1#01-AKJ975#017`. But why was `eclass:0173-1#01-AKJ975#017` translated to `https://industry-fusion.org/eclass#0173-1#01-AKJ975#017`? To answer the question, we take a closer look to the `@context` field. When we resolve the url `https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld`, we get the following result:
 
 ```
-wget -O - https://industryfusion.github.io/contexts/v0.1/context.jsonld 2> /dev/null
+wget -O - https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld 2> /dev/null
 ```
 ```json
 # Result:
@@ -239,13 +239,13 @@ You can see that as a result, the @context field is missing and the `eclass:` pr
 
 The inverse operation of *expansion* is a *compaction*. One problem of the *compaction* is, that the *expanded Form* does no longer contain a @context. So the @context has to be added back explicitly. With a fixed @context, the *compaction* is uniquely defined, i.e. there is no other *compacted form*, given an *expanded form* and a @context.
 ```
-node ./jsonldConverter.js -n ../examples/simple_plasmacutter_data_expanded.json -c https://industryfusion.github.io/contexts/v0.1/context.jsonld
+node ./jsonldConverter.js -n ../examples/simple_plasmacutter_data_expanded.json -c https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld
 ```
 ```json
 # Result
 [
   {
-    "@context": "https://industryfusion.github.io/contexts/v0.1/context.jsonld",
+    "@context": "https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld",
     "id": "urn:iff:cutter1",
     "type": "eclass:0173-1#01-AKJ975#017"
   }
@@ -273,7 +273,7 @@ An example for the *concise* form is shown below:
 
 ```json
 {
-    "@context": "https://industryfusion.github.io/contexts/v0.1/context.jsonld",
+    "@context": "https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld",
     "id": "urn:iff:cutter1",
     "type": "eclass:0173-1#01-AKJ975#017",
     "hasFilter": {
@@ -292,7 +292,7 @@ node ./jsonldConverter.js -r ../examples/plasmacutter_data.json
 # Result:
 [
   {
-    "@context": "https://industryfusion.github.io/contexts/v0.1/context.jsonld",
+    "@context": "https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld",
     "id": "urn:iff:cutter1",
     "type": "eclass:0173-1#01-AKJ975#017",
     "hasFilter": {
@@ -316,7 +316,7 @@ node ./jsonldConverter.js -n ../examples/plasmacutter_data_normalized.json
 # Result
 [
   {
-    "@context": "https://industryfusion.github.io/contexts/v0.1/context.jsonld",
+    "@context": "https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld",
     "id": "urn:iff:cutter1",
     "type": "eclass:0173-1#01-AKJ975#017",
     "hasFilter": {
@@ -457,7 +457,7 @@ Basic SHACL shapes can be created from JSON-Schema by using the `jsonschema2shac
 For instance, the JSON-Schema for the plasmacutter above, can be converted by providing the schema to convert by option `-s`, the id of the single object by option '-i' and a context by option '-c':
 
 ```
-node ./jsonschema2shacl.js -s ../examples/plasmacutter_schema.json -i  https://industry-fusion.org/eclass#0173-1#01-AKJ975#017 -c https://industryfusion.github.io/contexts/v0.1/context.jsonld
+node ./jsonschema2shacl.js -s ../examples/plasmacutter_schema.json -i  https://industry-fusion.org/eclass#0173-1#01-AKJ975#017 -c https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld
 ```
 ```
 # Result:
@@ -530,11 +530,11 @@ Therefore, the validation steps are as follows:
 
     For instance, the SHACL constraints for the plasmacutter and filter above can be generated by:
     ```
-    node ./jsonschema2shacl.js -s ../examples/plasmacutter_and_filter_schema.json -i  https://industry-fusion.org/eclass#0173-1#01-AKJ975#017 -c https://industryfusion.github.io/contexts/v0.1/context.jsonld
+    node ./jsonschema2shacl.js -s ../examples/plasmacutter_and_filter_schema.json -i  https://industry-fusion.org/eclass#0173-1#01-AKJ975#017 -c https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld
     ```
     and
     ```
-    node ./jsonschema2shacl.js -s ../examples/plasmacutter_and_filter_schema.json -i  https://industry-fusion.org/eclass#0173-1#01-ACK991#016 -c https://industryfusion.github.io/contexts/v0.1/context.jsonld
+    node ./jsonschema2shacl.js -s ../examples/plasmacutter_and_filter_schema.json -i  https://industry-fusion.org/eclass#0173-1#01-ACK991#016 -c https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld
     ```
     respectively.
 4. Validate single objects with JSON-Schema and linked objects with SHACL
@@ -551,7 +551,7 @@ Therefore, the validation steps are as follows:
     Validation of single object with SHACL is possible but will always lead to an error when connected data is invovled. Let's look at the follwing example. Let's first create the SHACL file for the plasmacutter from the respective JSON-Schema and write it into `/tmp/shacl.ttl`:
 
     ```
-    node ./jsonschema2shacl.js -s ../examples/plasmacutter_and_filter_schema.json -i  https://industry-fusion.org/eclass#0173-1#01-AKJ975#017 -c https://industryfusion.github.io/contexts/v0.1/context.jsonld >/tmp/shacl.ttl
+    node ./jsonschema2shacl.js -s ../examples/plasmacutter_and_filter_schema.json -i  https://industry-fusion.org/eclass#0173-1#01-AKJ975#017 -c https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld >/tmp/shacl.ttl
     ```
     Then convert the *concise* plasmacutter object into a *normalized* form and dump it into `/tmp/plasmacutter_normalized.json`
     ```
@@ -592,7 +592,7 @@ node ./jsonldConverter.js -r ../examples/plasmacutter_and_filter_data.json  > /t
 ```
 Then validate it with pyshacl and the plasmacutter only shema:
 ```
-node ./jsonschema2shacl.js -s ../examples/plasmacutter_and_filter_schema.json -i  https://industry-fusion.org/eclass#0173-1#01-AKJ975#017 -c https://industryfusion.github.io/contexts/v0.1/context.jsonld >/tmp/shacl.ttl
+node ./jsonschema2shacl.js -s ../examples/plasmacutter_and_filter_schema.json -i  https://industry-fusion.org/eclass#0173-1#01-AKJ975#017 -c https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld >/tmp/shacl.ttl
 ```
 Finally, use `pyshacl` to validate:
 ```

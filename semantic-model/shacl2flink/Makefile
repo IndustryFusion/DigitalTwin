@@ -156,7 +156,7 @@ ontology2kms:
 		if [ -f "$${knowledgefile}" ]; then ontpattern=$${ontpattern}" $${knowledgefile}"; fi; \
 		if [ -f "$${shaclfile}" ]; then shaclpattern=$${shaclpattern}" $${shaclfile}"; fi; \
 	done; \
-	echo creating knowledge.ttl with $${ontpattern}; /bin/bash -O extglob -c 'rdfpipe -i ttl -o ttl $${ontpattern} $(ONTDIR)/!(*_shacl.ttl|*.html|*.jsonld|*.txt) > ../kms/knowledge.ttl'; \
+	/bin/bash -O extglob -c 'echo creating knowledge.ttl with $${ontpattern} $(ONTDIR)/!(*_shacl.ttl|*.html|*.jsonld|*.txt); rdfpipe -i ttl -o ttl $${ontpattern} $(ONTDIR)/!(*_shacl.ttl|*.html|*.jsonld|*.txt) > ../kms/knowledge.ttl'; \
 	echo creating shacl.ttl with $${shaclpattern}; rdfpipe -i ttl -o ttl $${shaclpattern} > ../kms/shacl.ttl
 
 clean:

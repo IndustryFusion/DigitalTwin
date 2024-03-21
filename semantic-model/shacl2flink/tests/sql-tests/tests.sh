@@ -11,15 +11,17 @@ testdirs_constraints=${@:-"$(ls ${KMS_CONSTRAINTS})"}
 testdirs_rules=${@:-"$(ls ${KMS_RULES})"}
 testdirs_udf=${@:-"$(ls ${KMS_UDF})"}
 for testdir in ${testdirs_constraints}; do
+    echo Entering test ${testdir} in  ${KMS_CONSTRAINTS}
     KNOWLEDGE=knowledge.ttl
     SHACL=shacl.ttl
+    CONTEXT=context.jsonld
     pushd .
     cd $KMS_CONSTRAINTS/$testdir || break
     mkdir -p $OUTPUTDIR
 
     python3 $TOOLDIR/create_rdf_table.py ${KNOWLEDGE}
     python3 $TOOLDIR/create_core_tables.py
-    python3 $TOOLDIR/create_sql_checks_from_shacl.py ${SHACL} ${KNOWLEDGE}
+    python3 $TOOLDIR/create_sql_checks_from_shacl.py -c ${CONTEXT} ${SHACL} ${KNOWLEDGE} 
 
     for model in $(ls model*.jsonld); do
         MODEL=$model
@@ -45,6 +47,7 @@ for testdir in ${testdirs_constraints}; do
 done;
 
 for testdir in ${testdirs_rules}; do
+    echo Entering test ${testdir} in ${KMS_RULES}
     KNOWLEDGE=knowledge.ttl
     SHACL=shacl.ttl
     pushd .
@@ -53,7 +56,7 @@ for testdir in ${testdirs_rules}; do
 
     python3 $TOOLDIR/create_rdf_table.py ${KNOWLEDGE}
     python3 $TOOLDIR/create_core_tables.py
-    python3 $TOOLDIR/create_sql_checks_from_shacl.py ${SHACL} ${KNOWLEDGE}
+    python3 $TOOLDIR/create_sql_checks_from_shacl.py  -c ${CONTEXT} ${SHACL} ${KNOWLEDGE}
 
     for model in $(ls model*.jsonld); do
         MODEL=$model
@@ -77,6 +80,7 @@ for testdir in ${testdirs_rules}; do
 done;
 
 for testdir in ${testdirs_udf}; do
+    echo Entering test ${testdir} in ${KMS_UDF}
     KNOWLEDGE=knowledge.ttl
     SHACL=shacl.ttl
     pushd .
@@ -85,7 +89,7 @@ for testdir in ${testdirs_udf}; do
 
     python3 $TOOLDIR/create_rdf_table.py ${KNOWLEDGE}
     python3 $TOOLDIR/create_core_tables.py
-    python3 $TOOLDIR/create_sql_checks_from_shacl.py ${SHACL} ${KNOWLEDGE}
+    python3 $TOOLDIR/create_sql_checks_from_shacl.py -c ${CONTEXT} ${SHACL} ${KNOWLEDGE}
 
     for model in $(ls model*.jsonld); do
         MODEL=$model
