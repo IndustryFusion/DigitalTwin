@@ -18,10 +18,10 @@ Example:
 ./init-device.sh urn:iff:deviceid:1 gatewayid
 ```
 Note that `deviceid` must be compliant wiht URN format.
-### get-onbaording-token.sh
+### get-onboarding-token.sh
 This script assumes a setup device-file, creates an onboarding token and stores it in the data directory.
 ```bash
-Usage: get-onbaording-token.sh [-p password] [-s secret-file-name] <username>
+Usage: get-onboarding-token.sh [-p password] [-s secret-file-name] <username>
 -p provide password through commandline. If missing, password will requested interactively
 -s if set, it puts the token into a k8s secret with name 'secret-file-name' otherwise it will be dumped to file ../data/onboard-token.json.
 ```
@@ -60,7 +60,7 @@ On a test system with a local kubernetes installed the following flow creates a 
 ```bash
 ./init-device.sh urn:iff:deviceid:1 gatewayid
 password=$(kubectl -n iff get secret/credential-iff-realm-user-iff -o jsonpath='{.data.password}'| base64 -d)
-./get-onbaording-token.sh -p ${password} realm_user
+./get-onboarding-token.sh -p ${password} realm_user
 ./activate.sh -f
 ./send_data.sh "https://example.com/state" "ON"
 ```
@@ -118,7 +118,7 @@ To start the oisp-agent service simply execute the start script:
 
 ``` bash
  "mqtt": {
-              "host": "emqx",
+              "host": "emqx-listeners",
               "port": 1883,
               "qos": 1,
               "retain": false,
