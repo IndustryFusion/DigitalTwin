@@ -2,7 +2,8 @@ module.exports = {
   env: {
     browser: true,
     commonjs: true,
-    es2021: true
+    es2021: true,
+    mocha: true
   },
   extends: 'standard',
   overrides: [
@@ -22,5 +23,6 @@ module.exports = {
     ecmaVersion: 'latest'
   },
   rules: {
+    semi: [1, 'always']
   }
-}
+};

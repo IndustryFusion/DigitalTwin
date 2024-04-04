@@ -1,0 +1,6 @@
+@prefix owl: <http://www.w3.org/2002/07/owl#>.
+@prefix iffb: <https://industry-fusion.org/base/v0.1/>.
+
+iffb:Plasmacutter a owl:Class.
+
+

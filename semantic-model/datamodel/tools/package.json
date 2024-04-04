@@ -5,7 +5,7 @@
   "main": "validate.js",
   "scripts": {
     "test": "./node_modules/.bin/nyc --lines 80 --check-coverage ./node_modules/.bin/mocha tests/*.js",
-    "lint": "./node_modules/.bin/eslint *.js"
+    "lint": "./node_modules/.bin/eslint *.js tests/*.js lib/*.js"
   },
   "author": "Marcel Wagner",
   "license": "Apache-2.0",

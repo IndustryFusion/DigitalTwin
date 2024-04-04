@@ -1,5 +1,6 @@
+#!/bin/bash
 #
-# Copyright (c) 2023 Intel Corporation
+# Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,18 +15,13 @@
 # limitations under the License.
 #
 
-
-setup:
-	pip3 install pyshacl rdflib
-	npm install
-
-lint:
-	npm run lint
-	shellcheck tests/*/test.sh
-
-test:
-	npm run test
-	cd tests/validation && bash ./test.sh
-	cd tests/jsonld2jsonld && bash ./test.sh
-	cd tests/schema2shacl && bash ./test.sh
-	cd tests/schema2owl && bash ./test.sh
+while IFS='_' read -ra ADDR; do
+  schemaname=${ADDR[0]}
+  context=${ADDR[1]%.json}
+  file=${schemaname}_${context}.json
+  comparewith=${file}_result
+  id=${file}_id
+  command="node ../../jsonschema2owl.js -s $file -c file://$PWD/$context -i $(cat "$id")"
+  echo Executing: "$command"
+  $command | diff "${comparewith}" - || exit 1
+done <<< "$(ls schema*_*.json)"
