@@ -424,7 +424,7 @@ def format_node_type(node):
     elif isinstance(node, rdflib.Literal):
         if node.datatype == rdflib.XSD.decimal or node.datatype == rdflib.XSD.double or\
                 node.datatype == rdflib.XSD.float or node.datatype == rdflib.XSD.integer:
-            return node.toPython()
+            return f"'{node.toPython()}'"
         else:
             quoted_string = node.toPython().replace("'", "''")
             return f'\'"{quoted_string}"\''
