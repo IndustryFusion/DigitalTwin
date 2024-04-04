@@ -13,13 +13,13 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-'use strict'
+'use strict';
 
-const fs = require('fs')
-const yargs = require('yargs')
-const jsonld = require('jsonld')
-const jsonldUtils = require('./lib/jsonldUtils')
-let jsonFileName
+const fs = require('fs');
+const yargs = require('yargs');
+const jsonld = require('jsonld');
+const jsonldUtils = require('./lib/jsonldUtils');
+let jsonFileName;
 const argv = yargs
   .option('concise', {
     alias: 'n',
@@ -49,85 +49,85 @@ const argv = yargs
     command: '$0 <filename>',
     describe: 'Convert a JSON-LD file into different normal forms.',
     handler: (argv) => {
-      const { filename } = argv
-      jsonFileName = filename
+      const { filename } = argv;
+      jsonFileName = filename;
     }
   })
   .help()
   .alias('help', 'h')
-  .argv
+  .argv;
 
-const jsonText = fs.readFileSync(jsonFileName, 'utf8')
-const jsonObj = JSON.parse(jsonText)
-let jsonArr
+const jsonText = fs.readFileSync(jsonFileName, 'utf8');
+const jsonObj = JSON.parse(jsonText);
+let jsonArr;
 
 if (!(argv.x === undefined) && !(argv.n === undefined)) {
-  console.error('Expand and Concise are mutally exclusive. Bye!')
-  process.exit(1)
+  console.error('Expand and Concise are mutally exclusive. Bye!');
+  process.exit(1);
 }
 if (!(argv.r === undefined) && !(argv.n === undefined)) {
-  console.error('Normalized and Concise are mutally exclusive. Bye!')
-  process.exit(1)
+  console.error('Normalized and Concise are mutally exclusive. Bye!');
+  process.exit(1);
 }
 if (!(argv.x === undefined) && !(argv.r === undefined)) {
-  console.error('Normalized and Expanded are mutally exclusive. Bye!')
-  process.exit(1)
+  console.error('Normalized and Expanded are mutally exclusive. Bye!');
+  process.exit(1);
 }
 if (argv.x === undefined && argv.r === undefined && argv.n === undefined) {
-  console.error('No processing switch selected. Bye!')
-  process.exit(1)
+  console.error('No processing switch selected. Bye!');
+  process.exit(1);
 }
 
 if (!Array.isArray(jsonObj)) {
-  jsonArr = [jsonObj]
+  jsonArr = [jsonObj];
 } else {
-  jsonArr = jsonObj
+  jsonArr = jsonObj;
 }
 
 async function expand (objArr, contextArr) {
   const expanded = await Promise.all(objArr.map(async (jsonObj, index) => {
-    jsonObj['@context'] = contextArr[index]
-    const res = await jsonld.expand(jsonObj)
-    return res[0]
-  }))
-  return expanded
+    jsonObj['@context'] = contextArr[index];
+    const res = await jsonld.expand(jsonObj);
+    return res[0];
+  }));
+  return expanded;
 }
 
 async function compact (objArr, contextArr) {
-  return await Promise.all(objArr.map(async (jsonObj, index) => jsonld.compact(jsonObj, contextArr[index])))
+  return await Promise.all(objArr.map(async (jsonObj, index) => jsonld.compact(jsonObj, contextArr[index])));
 }
 
 (async (jsonArr) => {
   if (!(argv.n === undefined)) {
-    const mergedContexts = jsonldUtils.mergeContexts(jsonArr, argv.c)
+    const mergedContexts = jsonldUtils.mergeContexts(jsonArr, argv.c);
     if (mergedContexts !== undefined && mergedContexts.find(x => x === null)) {
-      console.error('Error: For Compaction, context must be either defined in all objects or externally. Exiting!')
-      process.exit(1)
+      console.error('Error: For Compaction, context must be either defined in all objects or externally. Exiting!');
+      process.exit(1);
     }
     // Compaction to find Properties in compacted form
-    const expanded = await expand(jsonArr, mergedContexts)
-    const concised = jsonldUtils.conciseExpandedForm(expanded)
-    const compacted = await compact(concised, mergedContexts)
-    console.log(JSON.stringify(compacted, null, 2))
+    const expanded = await expand(jsonArr, mergedContexts);
+    const concised = jsonldUtils.conciseExpandedForm(expanded);
+    const compacted = await compact(concised, mergedContexts);
+    console.log(JSON.stringify(compacted, null, 2));
   }
   if (!(argv.x === undefined)) {
-    const mergedContexts = jsonldUtils.mergeContexts(jsonArr, argv.c)
+    const mergedContexts = jsonldUtils.mergeContexts(jsonArr, argv.c);
     if (mergedContexts !== undefined && mergedContexts.find(x => x === null)) {
-      console.error('Error: For Extraction, context must be either defined in all objects or externally. Exiting!')
-      process.exit(1)
+      console.error('Error: For Extraction, context must be either defined in all objects or externally. Exiting!');
+      process.exit(1);
     }
-    const expanded = await expand(jsonArr, mergedContexts)
-    console.log(JSON.stringify(expanded, null, 2))
+    const expanded = await expand(jsonArr, mergedContexts);
+    console.log(JSON.stringify(expanded, null, 2));
   }
   if (!(argv.r === undefined)) {
-    const mergedContexts = jsonldUtils.mergeContexts(jsonArr, argv.c)
+    const mergedContexts = jsonldUtils.mergeContexts(jsonArr, argv.c);
     if (mergedContexts !== undefined && mergedContexts.find(x => x === null)) {
-      console.error('Error: For Normalization, context must be either defined in all objects or externally. Exiting!')
-      process.exit(1)
+      console.error('Error: For Normalization, context must be either defined in all objects or externally. Exiting!');
+      process.exit(1);
     }
-    const expanded = await expand(jsonArr, mergedContexts)
-    const normalized = jsonldUtils.normalizeExpandedForm(expanded)
-    const compacted = await compact(normalized, mergedContexts)
-    console.log(JSON.stringify(compacted, null, 2))
+    const expanded = await expand(jsonArr, mergedContexts);
+    const normalized = jsonldUtils.normalizeExpandedForm(expanded);
+    const compacted = await compact(normalized, mergedContexts);
+    console.log(JSON.stringify(compacted, null, 2));
   }
-})(jsonArr)
+})(jsonArr);

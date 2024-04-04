@@ -13,19 +13,19 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-'use strict'
+'use strict';
 
-const fs = require('fs')
-const url = require('url')
-const Ajv = require('ajv/dist/2020')
-const yargs = require('yargs')
+const fs = require('fs');
+const url = require('url');
+const Ajv = require('ajv/dist/2020');
+const yargs = require('yargs');
 
 const removedKeywords = [
   'anyOf', 'oneOf', 'if', 'then', 'else', 'prefixItems', 'items',
   'valid', 'error', 'annotation', 'additionalProperties', 'propertyNames',
   '$vocabulary', '$defs', 'multipleOf', 'uniqueItems', 'maxContains',
-  'minContains', 'maxProperties', 'minPropeties', 'dependentRequired']
-const addedKeywords = ['relationship', 'datatype', 'unit']
+  'minContains', 'maxProperties', 'minPropeties', 'dependentRequired'];
+const addedKeywords = ['relationship', 'datatype', 'unit'];
 
 const argv = yargs
   .command('$0', 'Validate a JSON-LD object with IFF Schema.')
@@ -49,45 +49,45 @@ const argv = yargs
   })
   .help()
   .alias('help', 'h')
-  .argv
+  .argv;
 
 const ajv = new Ajv({
   strict: true,
   strictTypes: true,
   strictSchema: true,
   strictTuples: false
-})
+});
 
-const schema = fs.readFileSync(argv.s, 'utf8')
-const parsedSchema = JSON.parse(schema)
+const schema = fs.readFileSync(argv.s, 'utf8');
+const parsedSchema = JSON.parse(schema);
 
-ajv.addSchema(parsedSchema)
+ajv.addSchema(parsedSchema);
 
 // This special processing is needed to allow ECLASS integration with
 // URL. ECLASS uses IRDI which makes a lot of use of '#' which is
 // incompatible with $id definition of JSON-Schema. Workaround
 // is to use URL-encoding
 
-const id = new url.URL(argv.i)
-let idFragment = ''
-let idPath = ''
+const id = new url.URL(argv.i);
+let idFragment = '';
+let idPath = '';
 if (id.hash !== null) {
-  idFragment = encodeURIComponent(id.hash)
+  idFragment = encodeURIComponent(id.hash);
 }
 if (id.pathname !== null) {
-  idPath = id.pathname
+  idPath = id.pathname;
 }
-const idUrl = id.protocol + '//' + id.host + idPath + idFragment
+const idUrl = id.protocol + '//' + id.host + idPath + idFragment;
 
-const data = JSON.parse(fs.readFileSync(argv.d, 'utf8'))
+const data = JSON.parse(fs.readFileSync(argv.d, 'utf8'));
 
 // Remove all non supported and add all proprietary keywords.
-removedKeywords.forEach(kw => ajv.removeKeyword(kw))
-addedKeywords.forEach(kw => ajv.addKeyword({ keyword: kw }))
+removedKeywords.forEach(kw => ajv.removeKeyword(kw));
+addedKeywords.forEach(kw => ajv.addKeyword({ keyword: kw }));
 
 if (ajv.validate(idUrl, data)) {
-  console.log('The Datafile is compliant with Schema')
+  console.log('The Datafile is compliant with Schema');
 } else {
-  console.log('Not Compliant:')
-  console.log(ajv.errors)
+  console.log('Not Compliant:');
+  console.log(ajv.errors);
 };

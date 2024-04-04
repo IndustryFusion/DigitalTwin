@@ -1,5 +1,5 @@
 /**
-* Copyright (c) 2023 Intel Corporation
+* Copyright (c) 2024 Intel Corporation
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -17,11 +17,13 @@
 
 const $RefParser = require('json-schema-ref-parser');
 const fs = require('fs');
+const url = require('url');
 const yargs = require('yargs');
-const ShaclUtils = require('./lib/shaclUtils');
+const jsonldUtils = require('./lib/jsonldUtils');
+const owlUtils = require('./lib/owlUtils');
 
 const argv = yargs
-  .command('$0', 'Converting an IFF Schema file for NGSI-LD objects into a SHACL constraint.')
+  .command('$0', 'Converting an IFF Schema file for NGSI-LD objects into an OWL entity file.')
   .option('schema', {
     alias: 's',
     description: 'Schema File containing array of Schemas',
@@ -40,6 +42,12 @@ const argv = yargs
     demandOption: true,
     type: 'string'
   })
+  .option('namespace', {
+    alias: 'n',
+    description: 'default namespace (if not derived by context)',
+    demandOption: false,
+    type: 'string'
+  })
   .help()
   .alias('help', 'h')
   .argv;
@@ -47,6 +55,12 @@ const argv = yargs
 // Read in an array of JSON-Schemas
 const jsonSchemaText = fs.readFileSync(argv.s, 'utf8');
 const jsonSchema = JSON.parse(jsonSchemaText);
+let uriOrContext = argv.c;
+const parseUrl = new url.URL(uriOrContext);
+if (parseUrl.protocol === 'file:') {
+  uriOrContext = JSON.parse(fs.readFileSync(parseUrl.pathname, 'utf-8'));
+}
+const contextManager = new jsonldUtils.ContextManager(uriOrContext);
 
 (async (jsconSchema) => {
   const myResolver = {
@@ -69,15 +83,12 @@ const jsonSchema = JSON.parse(jsonSchemaText);
   };
   try {
     const schema = await $RefParser.dereference(jsonSchema, options);
+    await contextManager.init();
     return schema;
   } catch (err) {
     console.error(err);
   }
 })(jsonSchema)
-  .then(async (schema) => {
-    await ShaclUtils.loadContext(argv.c);
-    return schema;
-  })
   .then(schema => {
-    ShaclUtils.shaclize(schema, argv.i);
+    owlUtils.owlize(schema, argv.i, contextManager);
   });

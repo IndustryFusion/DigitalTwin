@@ -1,0 +1,5 @@
+@prefix owl: <http://www.w3.org/2002/07/owl#>.
+
+<https://industry-fusion.org/eclass#0173-1#01-AKJ975#017> a owl:Class.
+
+

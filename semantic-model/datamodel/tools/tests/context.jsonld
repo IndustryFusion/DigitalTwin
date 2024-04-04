@@ -1,0 +1,9 @@
+[
+    {
+        "@vocab": "https://industry-fusion.org/base/v0.1/",
+        "rdf": {
+            "@id": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+            "@prefix": true
+        }
+    }
+]

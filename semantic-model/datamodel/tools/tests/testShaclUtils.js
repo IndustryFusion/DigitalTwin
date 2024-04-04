@@ -13,70 +13,69 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-'use strict'
+'use strict';
 
-const { assert } = require('chai')
-const chai = require('chai')
-global.should = chai.should()
+const chai = require('chai');
+global.should = chai.should();
 
-const rewire = require('rewire')
-const ToTest = rewire('../lib/shaclUtils.js')
+const rewire = require('rewire');
+const ToTest = rewire('../lib/shaclUtils.js');
 
 describe('Test class NodeShape', function () {
   it('Should manage properties', function () {
-    const nodeShape = new ToTest.NodeShape('targetClass')
-    nodeShape.properties = 'property'
-    const properties = nodeShape.properties
-    properties.should.deep.equal('property')
-    const nodeShape2 = new ToTest.NodeShape('targetClass')
-    nodeShape2.properties = ['property1']
-    nodeShape2.addPropertyShape('propertyShape')
-    nodeShape2.addPropertyShape('propertyShape2')
-    const properties2 = nodeShape2.properties
-    properties2.should.deep.equal(['property1', 'propertyShape', 'propertyShape2'])
-  })
-})
+    const nodeShape = new ToTest.NodeShape('targetClass');
+    nodeShape.properties = 'property';
+    const properties = nodeShape.properties;
+    properties.should.deep.equal('property');
+    const nodeShape2 = new ToTest.NodeShape('targetClass');
+    nodeShape2.properties = ['property1'];
+    nodeShape2.addPropertyShape('propertyShape');
+    nodeShape2.addPropertyShape('propertyShape2');
+    const properties2 = nodeShape2.properties;
+    properties2.should.deep.equal(['property1', 'propertyShape', 'propertyShape2']);
+  });
+});
 describe('Test class PropertyShape', function () {
   it('Should manage properties', function () {
-    const propertyShape = new ToTest.PropertyShape(0, 1, 'nodeKind', 'path', true)
-    propertyShape.addConstraint('property')
-    propertyShape.addConstraint('property2')
-    const constraints = propertyShape.constraints
-    constraints.should.deep.equal(['property', 'property2'])
-    propertyShape.mincount.should.equal(0)
-    propertyShape.maxcount.should.equal(1)
-    propertyShape.nodeKind.should.equal('nodeKind')
-    propertyShape.path.should.equal('path')
-    propertyShape.isProperty.should.equal(true)
-    propertyShape.propertyNode = 'node'
-    propertyShape.propertyNode.should.equal('node')
-  })
-})
+    const propertyShape = new ToTest.PropertyShape(0, 1, 'nodeKind', 'path', true);
+    propertyShape.addConstraint('property');
+    propertyShape.addConstraint('property2');
+    const constraints = propertyShape.constraints;
+    constraints.should.deep.equal(['property', 'property2']);
+    propertyShape.mincount.should.equal(0);
+    propertyShape.maxcount.should.equal(1);
+    propertyShape.nodeKind.should.equal('nodeKind');
+    propertyShape.path.should.equal('path');
+    propertyShape.isProperty.should.equal(true);
+    propertyShape.propertyNode = 'node';
+    propertyShape.propertyNode.should.equal('node');
+  });
+});
 describe('Test class Constraint', function () {
   it('Should construct', function () {
-    const constraint = new ToTest.Constraint('type', 'param')
-    constraint.type.should.equal('type')
-    constraint.params.should.equal('param')
-  })
-})
+    const constraint = new ToTest.Constraint('type', 'param');
+    constraint.type.should.equal('type');
+    constraint.params.should.equal('param');
+  });
+});
 describe('Test dumpPropertyShape', function () {
   it('Should dump property without constraints', function () {
-    const propertyShape = new ToTest.PropertyShape(1, 2, 'nodeKind', 'path', true)
-    propertyShape.propertyNode = 'propertyNode'
-    const storeAdds = []
+    const propertyShape = new ToTest.PropertyShape(1, 2, 'nodeKind', 'path', true);
+    propertyShape.propertyNode = 'propertyNode';
+    const storeAdds = [];
     const store = {
-      add: (s, p, o) => { storeAdds.push([s, p, o]) }
-    }
+      add: (s, p, o) => { storeAdds.push([s, p, o]); }
+    };
     const $rdf = {
-      blankNode: () => { return {} },
+      blankNode: () => { return {}; },
       Namespace: () => (x) => 'ngsild:' + x
-    }
-    const SHACL = (x) => 'shacl:' + x
-    const revert = ToTest.__set__('$rdf', $rdf)
-    ToTest.__set__('SHACL', SHACL)
-    ToTest.__set__('globalPrefixHash', { 'ngsi-ld': 'ngsi-ld' })
-    const dumpPropertyShape = ToTest.__get__('dumpPropertyShape')
-    dumpPropertyShape(propertyShape, store)
+    };
+    const SHACL = (x) => 'shacl:' + x;
+    const revert = ToTest.__set__('$rdf', $rdf);
+    ToTest.__set__('SHACL', SHACL);
+    ToTest.__set__('globalPrefixHash', { 'ngsi-ld': 'ngsi-ld' });
+    const dumpPropertyShape = ToTest.__get__('dumpPropertyShape');
+    dumpPropertyShape(propertyShape, store);
     storeAdds.should.deep.equal([
       ['propertyNode', 'shacl:minCount', 1],
       ['propertyNode', 'shacl:maxCount', 2],
@@ -86,28 +85,28 @@ describe('Test dumpPropertyShape', function () {
       [{}, 'shacl:path', 'ngsild:hasValue'],
       [{}, 'shacl:minCount', 1],
       [{}, 'shacl:maxCount', 1],
-      [{}, 'shacl:nodeKind', 'nodeKind']])
-    revert()
-  })
+      [{}, 'shacl:nodeKind', 'nodeKind']]);
+    revert();
+  });
   it('Should dump property with constraints', function () {
-    const propertyShape = new ToTest.PropertyShape(0, 2, 'nodeKind', 'path', true)
-    propertyShape.propertyNode = 'propertyNode'
-    propertyShape.addConstraint(new ToTest.Constraint('type', 'params'))
-    propertyShape.addConstraint(new ToTest.Constraint('type2', ['p1', 'p2']))
-    const storeAdds = []
+    const propertyShape = new ToTest.PropertyShape(0, 2, 'nodeKind', 'path', true);
+    propertyShape.propertyNode = 'propertyNode';
+    propertyShape.addConstraint(new ToTest.Constraint('type', 'params'));
+    propertyShape.addConstraint(new ToTest.Constraint('type2', ['p1', 'p2']));
+    const storeAdds = [];
     const store = {
-      add: (s, p, o) => { storeAdds.push([s, p, o]) }
-    }
+      add: (s, p, o) => { storeAdds.push([s, p, o]); }
+    };
     const $rdf = {
-      blankNode: () => { return {} },
+      blankNode: () => { return {}; },
       Namespace: () => (x) => 'ngsild:' + x
-    }
-    const SHACL = (x) => 'shacl:' + x
-    const revert = ToTest.__set__('$rdf', $rdf)
-    ToTest.__set__('SHACL', SHACL)
-    ToTest.__set__('globalPrefixHash', { 'ngsi-ld': 'ngsi-ld' })
-    const dumpPropertyShape = ToTest.__get__('dumpPropertyShape')
-    dumpPropertyShape(propertyShape, store)
+    };
+    const SHACL = (x) => 'shacl:' + x;
+    const revert = ToTest.__set__('$rdf', $rdf);
+    ToTest.__set__('SHACL', SHACL);
+    ToTest.__set__('globalPrefixHash', { 'ngsi-ld': 'ngsi-ld' });
+    const dumpPropertyShape = ToTest.__get__('dumpPropertyShape');
+    dumpPropertyShape(propertyShape, store);
     storeAdds.should.deep.equal([
       ['propertyNode', 'shacl:minCount', 0],
       ['propertyNode', 'shacl:maxCount', 2],
@@ -119,26 +118,26 @@ describe('Test dumpPropertyShape', function () {
       [{}, 'shacl:maxCount', 1],
       [{}, 'shacl:nodeKind', 'nodeKind'],
       [{}, 'type', 'params'],
-      [{}, 'type2', ['p1', 'p2']]])
-    revert()
-  })
+      [{}, 'type2', ['p1', 'p2']]]);
+    revert();
+  });
   it('Should dump relationship without constraints', function () {
-    const propertyShape = new ToTest.PropertyShape(1, 1, 'nodeKind', 'relationship', false)
-    propertyShape.propertyNode = 'propertyNode'
-    const storeAdds = []
+    const propertyShape = new ToTest.PropertyShape(1, 1, 'nodeKind', 'relationship', false);
+    propertyShape.propertyNode = 'propertyNode';
+    const storeAdds = [];
     const store = {
-      add: (s, p, o) => { storeAdds.push([s, p, o]) }
-    }
+      add: (s, p, o) => { storeAdds.push([s, p, o]); }
+    };
     const $rdf = {
-      blankNode: () => { return {} },
+      blankNode: () => { return {}; },
       Namespace: () => (x) => 'ngsild:' + x
-    }
-    const SHACL = (x) => 'shacl:' + x
-    const revert = ToTest.__set__('$rdf', $rdf)
-    ToTest.__set__('SHACL', SHACL)
-    ToTest.__set__('globalPrefixHash', { 'ngsi-ld': 'ngsi-ld' })
-    const dumpPropertyShape = ToTest.__get__('dumpPropertyShape')
-    dumpPropertyShape(propertyShape, store)
+    };
+    const SHACL = (x) => 'shacl:' + x;
+    const revert = ToTest.__set__('$rdf', $rdf);
+    ToTest.__set__('SHACL', SHACL);
+    ToTest.__set__('globalPrefixHash', { 'ngsi-ld': 'ngsi-ld' });
+    const dumpPropertyShape = ToTest.__get__('dumpPropertyShape');
+    dumpPropertyShape(propertyShape, store);
     storeAdds.should.deep.equal([
       ['propertyNode', 'shacl:minCount', 1],
       ['propertyNode', 'shacl:maxCount', 1],
@@ -148,98 +147,98 @@ describe('Test dumpPropertyShape', function () {
       [{}, 'shacl:path', 'ngsild:hasObject'],
       [{}, 'shacl:minCount', 1],
       [{}, 'shacl:maxCount', 1],
-      [{}, 'shacl:nodeKind', 'nodeKind']])
-    revert()
-  })
-})
+      [{}, 'shacl:nodeKind', 'nodeKind']]);
+    revert();
+  });
+});
 describe('Test dumpNodeShape', function () {
   it('Should dump without properties', function () {
-    const nodeShape = new ToTest.NodeShape('http://example.com/targetClass')
-    const storeAdds = []
+    const nodeShape = new ToTest.NodeShape('http://example.com/targetClass');
+    const storeAdds = [];
     const store = {
-      add: (s, p, o) => { storeAdds.push([s, p, o]) }
-    }
+      add: (s, p, o) => { storeAdds.push([s, p, o]); }
+    };
     const $rdf = {
-      blankNode: () => { return {} },
+      blankNode: () => { return {}; },
       sym: (x) => 'sym:' + x
-    }
+    };
     const globalContext = {
       expandTerm: (x) => x
-    }
-    const revert = ToTest.__set__('SHACL', (x) => 'shacl:' + x)
-    ToTest.__set__('IFFK', (x) => 'iffk:' + x)
-    ToTest.__set__('RDF', (x) => 'rdf:' + x)
-    ToTest.__set__('globalContext', globalContext)
-    ToTest.__set__('$rdf', $rdf)
-    const dumpNodeShape = ToTest.__get__('dumpNodeShape')
-    dumpNodeShape(nodeShape, store)
+    };
+    const revert = ToTest.__set__('SHACL', (x) => 'shacl:' + x);
+    ToTest.__set__('IFFK', (x) => 'iffk:' + x);
+    ToTest.__set__('RDF', (x) => 'rdf:' + x);
+    ToTest.__set__('globalContext', globalContext);
+    ToTest.__set__('$rdf', $rdf);
+    const dumpNodeShape = ToTest.__get__('dumpNodeShape');
+    dumpNodeShape(nodeShape, store);
     storeAdds.should.deep.equal([
       ['iffk:targetClassShape', 'rdf:type', 'shacl:NodeShape'],
       ['iffk:targetClassShape', 'shacl:targetClass', 'sym:http://example.com/targetClass']
-    ])
-    revert()
-  })
+    ]);
+    revert();
+  });
   it('Should dump relationship with properties', function () {
-    const nodeShape = new ToTest.NodeShape('http://example.com/targetClass')
-    const propertyShape = new ToTest.PropertyShape(0, 2, 'nodeKind', 'path', true)
-    nodeShape.addPropertyShape(propertyShape)
-    const storeAdds = []
+    const nodeShape = new ToTest.NodeShape('http://example.com/targetClass');
+    const propertyShape = new ToTest.PropertyShape(0, 2, 'nodeKind', 'path', true);
+    nodeShape.addPropertyShape(propertyShape);
+    const storeAdds = [];
     const store = {
-      add: (s, p, o) => { storeAdds.push([s, p, o]) }
-    }
+      add: (s, p, o) => { storeAdds.push([s, p, o]); }
+    };
     const $rdf = {
-      blankNode: () => { return {} },
+      blankNode: () => { return {}; },
       sym: (x) => 'sym:' + x
-    }
+    };
     const globalContext = {
       expandTerm: (x) => x
-    }
-    const dumpPropertyShape = (x, y) => { x.propertyNode.should.deep.equal({}) }
-    const revert = ToTest.__set__('SHACL', (x) => 'shacl:' + x)
-    ToTest.__set__('IFFK', (x) => 'iffk:' + x)
-    ToTest.__set__('RDF', (x) => 'rdf:' + x)
-    ToTest.__set__('globalContext', globalContext)
-    ToTest.__set__('dumpPropertyShape', dumpPropertyShape)
-    ToTest.__set__('$rdf', $rdf)
-    const dumpNodeShape = ToTest.__get__('dumpNodeShape')
-    dumpNodeShape(nodeShape, store)
+    };
+    const dumpPropertyShape = (x, y) => { x.propertyNode.should.deep.equal({}); };
+    const revert = ToTest.__set__('SHACL', (x) => 'shacl:' + x);
+    ToTest.__set__('IFFK', (x) => 'iffk:' + x);
+    ToTest.__set__('RDF', (x) => 'rdf:' + x);
+    ToTest.__set__('globalContext', globalContext);
+    ToTest.__set__('dumpPropertyShape', dumpPropertyShape);
+    ToTest.__set__('$rdf', $rdf);
+    const dumpNodeShape = ToTest.__get__('dumpNodeShape');
+    dumpNodeShape(nodeShape, store);
     storeAdds.should.deep.equal([
       ['iffk:targetClassShape', 'rdf:type', 'shacl:NodeShape'],
       ['iffk:targetClassShape', 'shacl:targetClass', 'sym:http://example.com/targetClass'],
       ['iffk:targetClassShape', 'shacl:property', {}]
-    ])
-    revert()
-  })
+    ]);
+    revert();
+  });
   it('Should dump with hash type', function () {
-    const nodeShape = new ToTest.NodeShape('http://example.com/example#targetClass#1#2')
-    const storeAdds = []
+    const nodeShape = new ToTest.NodeShape('http://example.com/example#targetClass#1#2');
+    const storeAdds = [];
     const store = {
-      add: (s, p, o) => { storeAdds.push([s, p, o]) }
-    }
+      add: (s, p, o) => { storeAdds.push([s, p, o]); }
+    };
     const $rdf = {
-      blankNode: () => { return {} },
+      blankNode: () => { return {}; },
       sym: (x) => 'sym:' + x
-    }
+    };
     const globalContext = {
       expandTerm: (x) => x
-    }
-    const revert = ToTest.__set__('SHACL', (x) => 'shacl:' + x)
-    ToTest.__set__('IFFK', (x) => 'iffk:' + x)
-    ToTest.__set__('RDF', (x) => 'rdf:' + x)
-    ToTest.__set__('globalContext', globalContext)
-    ToTest.__set__('$rdf', $rdf)
-    const dumpNodeShape = ToTest.__get__('dumpNodeShape')
-    dumpNodeShape(nodeShape, store)
+    };
+    const revert = ToTest.__set__('SHACL', (x) => 'shacl:' + x);
+    ToTest.__set__('IFFK', (x) => 'iffk:' + x);
+    ToTest.__set__('RDF', (x) => 'rdf:' + x);
+    ToTest.__set__('globalContext', globalContext);
+    ToTest.__set__('$rdf', $rdf);
+    const dumpNodeShape = ToTest.__get__('dumpNodeShape');
+    dumpNodeShape(nodeShape, store);
     storeAdds.should.deep.equal([
       ['iffk:targetClass#1#2Shape', 'rdf:type', 'shacl:NodeShape'],
       ['iffk:targetClass#1#2Shape', 'shacl:targetClass', 'sym:http://example.com/example#targetClass#1#2']
-    ])
-    revert()
-  })
-})
+    ]);
+    revert();
+  });
+});
 describe('Test scanProperties', function () {
   it('Should dump without properties', function () {
-    const scanProperties = ToTest.__get__('scanProperties')
+    const scanProperties = ToTest.__get__('scanProperties');
     const typeSchema = {
       properties: {
         type: {
@@ -252,19 +251,19 @@ describe('Test scanProperties', function () {
 
       },
       required: ['type', 'id']
-    }
+    };
     const expectedNodeShape = {
       _properties: [],
       targetClass: 'targetClass'
-    }
-    const nodeShape = new ToTest.NodeShape('targetClass')
-    scanProperties(nodeShape, typeSchema)
-    nodeShape.should.deep.equal(expectedNodeShape)
-  })
-})
+    };
+    const nodeShape = new ToTest.NodeShape('targetClass');
+    scanProperties(nodeShape, typeSchema);
+    nodeShape.should.deep.equal(expectedNodeShape);
+  });
+});
 describe('Test scanProperties', function () {
   it('Should scan without properties', function () {
-    const scanProperties = ToTest.__get__('scanProperties')
+    const scanProperties = ToTest.__get__('scanProperties');
     const typeSchema = {
       properties: {
         type: {
@@ -277,17 +276,17 @@ describe('Test scanProperties', function () {
 
       },
       required: ['type', 'id']
-    }
+    };
     const expectedNodeShape = {
       _properties: [],
       targetClass: 'targetClass'
-    }
-    const nodeShape = new ToTest.NodeShape('targetClass')
-    scanProperties(nodeShape, typeSchema)
-    nodeShape.should.deep.equal(expectedNodeShape)
-  })
+    };
+    const nodeShape = new ToTest.NodeShape('targetClass');
+    scanProperties(nodeShape, typeSchema);
+    nodeShape.should.deep.equal(expectedNodeShape);
+  });
   it('Should scan with property', function () {
-    const scanProperties = ToTest.__get__('scanProperties')
+    const scanProperties = ToTest.__get__('scanProperties');
     const typeSchema = {
       properties: {
         machine_state: {
@@ -299,7 +298,7 @@ describe('Test scanProperties', function () {
           ]
         }
       }
-    }
+    };
     const expectedNodeShape = {
       targetClass: 'targetClass',
       _properties: [
@@ -317,13 +316,13 @@ describe('Test scanProperties', function () {
           isProperty: true
         }
       ]
-    }
-    const nodeShape = new ToTest.NodeShape('targetClass')
-    scanProperties(nodeShape, typeSchema)
-    nodeShape.should.deep.equal(expectedNodeShape)
-  })
+    };
+    const nodeShape = new ToTest.NodeShape('targetClass');
+    scanProperties(nodeShape, typeSchema);
+    nodeShape.should.deep.equal(expectedNodeShape);
+  });
   it('Should scan with relationship', function () {
-    const scanProperties = ToTest.__get__('scanProperties')
+    const scanProperties = ToTest.__get__('scanProperties');
     const typeSchema = {
       properties: {
         hasFilter: {
@@ -331,7 +330,7 @@ describe('Test scanProperties', function () {
           $ref: 'https://industry-fusion.org/base-objects/v0.1/link'
         }
       }
-    }
+    };
     const expectedNodeShape = {
       targetClass: 'targetClass',
       _properties: [
@@ -348,13 +347,13 @@ describe('Test scanProperties', function () {
           ],
           isProperty: false
         }]
-    }
-    const nodeShape = new ToTest.NodeShape('targetClass')
-    scanProperties(nodeShape, typeSchema)
-    nodeShape.should.deep.equal(expectedNodeShape)
-  })
+    };
+    const nodeShape = new ToTest.NodeShape('targetClass');
+    scanProperties(nodeShape, typeSchema);
+    nodeShape.should.deep.equal(expectedNodeShape);
+  });
   it('Should scan with allOf', function () {
-    const scanProperties = ToTest.__get__('scanProperties')
+    const scanProperties = ToTest.__get__('scanProperties');
     const typeSchema = {
       allOf: [
         {
@@ -371,7 +370,7 @@ describe('Test scanProperties', function () {
           }
         }
       ]
-    }
+    };
     const expectedNodeShape = {
       targetClass: 'targetClass',
       _properties: [
@@ -393,16 +392,16 @@ describe('Test scanProperties', function () {
           isProperty: true
         }
       ]
-    }
-    const nodeShape = new ToTest.NodeShape('targetClass')
-    scanProperties(nodeShape, typeSchema)
-    nodeShape.should.deep.equal(expectedNodeShape)
-  })
-})
+    };
+    const nodeShape = new ToTest.NodeShape('targetClass');
+    scanProperties(nodeShape, typeSchema);
+    nodeShape.should.deep.equal(expectedNodeShape);
+  });
+});
 describe('Test scanConstraints', function () {
   it('Should dump without properties', function () {
-    const scanConstraints = ToTest.__get__('scanConstraints')
-    const propertyShape = new ToTest.PropertyShape(0, 2, 'nodeKind', 'path', true)
+    const scanConstraints = ToTest.__get__('scanConstraints');
+    const propertyShape = new ToTest.PropertyShape(0, 2, 'nodeKind', 'path', true);
     const typeSchema = {
       type: 'string',
       title: 'Machine Status',
@@ -416,7 +415,7 @@ describe('Test scanConstraints', function () {
       exclusiveMaximum: 3,
       maxLength: 100,
       minLength: 10
-    }
+    };
     const expectedConstraints = [
       { type: 'shacl:in', params: ['Online_Idle'] },
       { type: 'shacl:maxInclusive', params: 2 },
@@ -425,21 +424,21 @@ describe('Test scanConstraints', function () {
       { type: 'shacl:maxExclusive', params: 3 },
       { type: 'shacl:maxLength', params: 100 },
       { type: 'shacl:minLength', params: 10 }
-    ]
-    scanConstraints(propertyShape, typeSchema)
-    propertyShape.constraints.should.deep.equal(expectedConstraints)
-  })
-})
+    ];
+    scanConstraints(propertyShape, typeSchema);
+    propertyShape.constraints.should.deep.equal(expectedConstraints);
+  });
+});
 describe('Test encodeHash', function () {
   it('Should uri-encode hash', function () {
-    const encodeHash = ToTest.__get__('encodeHash')
-    const result = encodeHash('https://example.com/test#1#2#3')
-    result.should.equal('https://example.com/test%231%232%233')
-  })
-})
+    const encodeHash = ToTest.__get__('encodeHash');
+    const result = encodeHash('https://example.com/test#1#2#3');
+    result.should.equal('https://example.com/test%231%232%233');
+  });
+});
 describe('Test loadContext', function () {
   it('Should resolve https uri', async function () {
-    const loadContext = ToTest.__get__('loadContext')
+    const loadContext = ToTest.__get__('loadContext');
     const context = {
       getContextRaw: () => {
         return {
@@ -456,21 +455,21 @@ describe('Test loadContext', function () {
             '@id': 'https://industry-fusion.org/base/v0.1/',
             '@prefix': true
           }
-        }
+        };
       }
-    }
+    };
     const myParser = {
-      parse: async (x) => { return context }
-    }
+      parse: async (x) => { return context; }
+    };
     const expectedResult = {
       eclass: 'https://industry-fusion.org/eclass#',
       xsd: 'http://www.w3.org/2001/XMLSchema#',
       iffb: 'https://industry-fusion.org/base/v0.1/'
-    }
-    const revert = ToTest.__set__('myParser', myParser)
-    await loadContext('https://example.com/context')
-    const globalPrefixHash = ToTest.__get__('globalPrefixHash')
-    globalPrefixHash.should.deep.equal(expectedResult)
-    revert()
-  })
-})
+    };
+    const revert = ToTest.__set__('myParser', myParser);
+    await loadContext('https://example.com/context');
+    const globalPrefixHash = ToTest.__get__('globalPrefixHash');
+    globalPrefixHash.should.deep.equal(expectedResult);
+    revert();
+  });
+});

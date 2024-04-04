@@ -1,4 +1,3 @@
-
 /**
 * Copyright (c) 2023 Intel Corporation
 *
@@ -14,14 +13,17 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-'use strict'
-const url = require('url')
-const fs = require('fs')
+'use strict';
+const url = require('url');
+const fs = require('fs');
+const ContextParser = require('jsonld-context-parser').ContextParser;
+const ContextUtil = require('jsonld-context-parser').Util;
+const myParser = new ContextParser();
 
 function loadContextFromFile (fileName) {
-  const context = fs.readFileSync(fileName, 'utf8')
-  const contextParsed = JSON.parse(context)
-  return contextParsed
+  const context = fs.readFileSync(fileName, 'utf8');
+  const contextParsed = JSON.parse(context);
+  return contextParsed;
 }
 
 /**
@@ -33,38 +35,38 @@ function loadContextFromFile (fileName) {
  */
 function mergeContexts (jsonArr, context) {
   function mergeContext (localContext, context) {
-    let mergedContext = []
+    let mergedContext = [];
     if (!Array.isArray(localContext) && localContext !== undefined) {
-      mergedContext = [localContext]
+      mergedContext = [localContext];
     }
     if (context === undefined) {
       if (mergedContext.length === 0) {
-        return null
+        return null;
       }
-      return mergedContext
+      return mergedContext;
     } else if (!Array.isArray(context)) {
-      context = [context]
+      context = [context];
     }
     context.forEach(c => {
       if (typeof (c) !== 'string' || mergedContext.find(x => c === x) === undefined) {
-        mergedContext.push(c)
+        mergedContext.push(c);
       }
-    })
-    return mergedContext
+    });
+    return mergedContext;
   }
   if (context !== undefined) {
-    const parseContextUrl = new url.URL(context)
+    const parseContextUrl = new url.URL(context);
     if (parseContextUrl.protocol === 'file:') {
-      context = loadContextFromFile(parseContextUrl.pathname)
+      context = loadContextFromFile(parseContextUrl.pathname);
     }
   }
   if (jsonArr === undefined) {
-    return mergeContext(undefined, context)
+    return mergeContext(undefined, context);
   }
   return jsonArr.map(jsonObj => {
-    const localContext = jsonObj['@context']
-    return mergeContext(localContext, context)
-  })
+    const localContext = jsonObj['@context'];
+    return mergeContext(localContext, context);
+  });
 }
 
 /**
@@ -77,24 +79,24 @@ function conciseExpandedForm (expanded) {
     if (typeof (attr) === 'object') {
       if ('@type' in attr && (attr['@type'][0] === 'https://uri.etsi.org/ngsi-ld/Property' ||
                                     attr['@type'][0] === 'https://uri.etsi.org/ngsi-ld/Relationship')) {
-        delete attr['@type']
+        delete attr['@type'];
       }
       if ('https://uri.etsi.org/ngsi-ld/hasValue' in attr) {
-        attr['@value'] = attr['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@value']
-        delete attr['https://uri.etsi.org/ngsi-ld/hasValue']
+        attr['@value'] = attr['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@value'];
+        delete attr['https://uri.etsi.org/ngsi-ld/hasValue'];
       }
     }
   }
   expanded.forEach(c => {
     Object.keys(c).forEach(key => {
       if (Array.isArray(c[key])) {
-        c[key].forEach(a => filterAttribute(a))
+        c[key].forEach(a => filterAttribute(a));
       } else {
-        filterAttribute(c[key])
+        filterAttribute(c[key]);
       }
-    })
-  })
-  return expanded
+    });
+  });
+  return expanded;
 }
 
 /**
@@ -107,16 +109,16 @@ function normalizeExpandedForm (expanded) {
     if (typeof (attr) === 'object') {
       if (!('@type' in attr)) {
         if ('https://uri.etsi.org/ngsi-ld/hasValue' in attr || '@value' in attr || '@id' in attr) {
-          attr['@type'] = ['https://uri.etsi.org/ngsi-ld/Property']
+          attr['@type'] = ['https://uri.etsi.org/ngsi-ld/Property'];
         } else if ('https://uri.etsi.org/ngsi-ld/hasObject' in attr) {
-          attr['@type'] = ['https://uri.etsi.org/ngsi-ld/Relationship']
+          attr['@type'] = ['https://uri.etsi.org/ngsi-ld/Relationship'];
         }
         if ('@value' in attr) {
-          attr['https://uri.etsi.org/ngsi-ld/hasValue'] = attr['@value']
-          delete attr['@value']
+          attr['https://uri.etsi.org/ngsi-ld/hasValue'] = attr['@value'];
+          delete attr['@value'];
         } else if ('@id' in attr) {
-          attr['https://uri.etsi.org/ngsi-ld/hasValue'] = { '@id': attr['@id'] }
-          delete attr['@id']
+          attr['https://uri.etsi.org/ngsi-ld/hasValue'] = { '@id': attr['@id'] };
+          delete attr['@id'];
         }
       }
     }
@@ -124,17 +126,66 @@ function normalizeExpandedForm (expanded) {
   expanded.forEach(c => {
     Object.keys(c).forEach(key => {
       if (Array.isArray(c[key])) {
-        c[key].forEach(a => extendAttribute(a))
+        c[key].forEach(a => extendAttribute(a));
       } else {
-        extendAttribute(c[key])
+        extendAttribute(c[key]);
       }
-    })
-  })
-  return expanded
+    });
+  });
+  return expanded;
 }
 
+class ContextManager {
+  constructor (context) {
+    this._context = context;
+  }
+
+  async init () {
+    const parseUrl = new url.URL(this._context);
+    if (parseUrl.protocol === 'file:') {
+      this._context = JSON.parse(fs.readFileSync(parseUrl.pathname, 'utf-8'));
+    }
+    this._mycontext = await myParser.parse(this._context);
+    const prefixHash = {};
+    Object.keys(this._mycontext.getContextRaw()).filter((key) => key !== '@vocab').forEach((key) => {
+      const value = this._mycontext.getContextRaw()[key];
+      if (typeof value === 'string') {
+        if (ContextUtil.isPrefixIriEndingWithGenDelim(value)) {
+          prefixHash[key] = value;
+        }
+      } else if (typeof value === 'object') {
+        if (ContextUtil.isPrefixIriEndingWithGenDelim(value['@id'])) {
+          prefixHash[key] = value['@id'];
+        }
+      }
+    });
+    this._prefixHash = prefixHash;
+    // test expansion to check default context
+    if (this._mycontext.expandTerm('test', true) === 'test') {
+      console.log('Cannot derive default namespace. Neither derived by context nor explict given.');
+      process.exit(1);
+    }
+  }
+
+  /**
+   * Function to extract namespace prefixes from a JSON-LD context
+   * @param {parsed JSON structure} context
+   */
+  getNamespacePrefixes () {
+    return this._prefixHash;
+  }
+
+  expandTerm (term) {
+    return this._mycontext.expandTerm(term, true);
+  }
+
+  isValidIri (iri) {
+    return ContextUtil.isValidIri(iri);
+  }
+}
 module.exports = {
   mergeContexts,
   conciseExpandedForm,
-  normalizeExpandedForm
-}
+  normalizeExpandedForm,
+  ContextManager
+};
