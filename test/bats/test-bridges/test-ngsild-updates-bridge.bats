@@ -41,11 +41,14 @@ cat << EOF | tr -d '\n' > ${UPSERT_FILTER}
           "value": "OFFF"
         },
         "https://industry-fusion.com/types/v0.9/strength": {
+          "datasetId": "https://example.com/source1",
           "type": "Property",
-          "value": "0.9"
+          "value": "0.9",
+          "unitCode": "unitCode"
         },
         "https://industry-fusion.com/types/v0.9/hasCartridge": {
           "type": "Relationship",
+          "datasetId": "@none",
           "object": "urn:filterCartridge-test:12345"
         }
       }
@@ -69,11 +72,13 @@ cat << EOF | tr -d '\n' > ${UPSERT_FILTER_TIMESTAMPED}
         },
         "https://industry-fusion.com/types/v0.9/strength": {
           "type": "Property",
+          "datasetId": "https://example.com/source1",
           "value": "0.9",
           "observedAt": "2024-01-08T01:01:28.512Z"
         },
         "https://industry-fusion.com/types/v0.9/hasCartridge": {
           "type": "Relationship",
+          "datasetId": "https://example.com/source2",
           "object": "urn:filterCartridge-test:12345",
           "observedAt": "2024-01-08T01:02:28.0Z"
         }
@@ -97,15 +102,18 @@ cat << EOF | tr -d '\n' > ${UPSERT_FILTER_OVERWRITE}
         },
         "https://industry-fusion.com/types/v0.9/strength": {
           "type": "Property",
-          "value": "0.1"
+          "value": "0.1",
+          "datasetId": "https://example.com/source1"
         },
         "https://industry-fusion.com/types/v0.9/strength2": {
           "type": "Property",
-          "value": "0.1"
+          "value": "0.1",
+          "datasetId": "@none"
         },
         "https://industry-fusion.com/types/v0.9/hasCartridge": {
           "type": "Relationship",
-          "object": "urn:filterCartridge-test:22345"
+          "object": "urn:filterCartridge-test:22345",
+          "datasetId": "https://example.com/source3"
         }
       }
     ]
@@ -123,15 +131,24 @@ cat << EOF | tr -d '\n' > ${UPSERT_FILTER_NON_OVERWRITE}
         "type": "${FILTER_TYPE}",
         "https://industry-fusion.com/types/v0.9/state": {
           "type": "Property",
-          "value": "OFF"
+          "value": "OFF",
+          "datasetId": "@none"
         },
-        "https://industry-fusion.com/types/v0.9/strength": {
+        "https://industry-fusion.com/types/v0.9/strength": [
+          {
           "type": "Property",
+          "datasetId": "https://example.com/source1",
           "value": "0.1"
-        },
+          },
+          {
+            "type": "Property",
+            "value": "0.9"
+          }
+        ],
         "https://industry-fusion.com/types/v0.9/strength2": {
           "type": "Property",
-          "value": "0.5"
+          "value": "0.5",
+          "datasetId": "https://example.com/source4"
         },
         "https://industry-fusion.com/types/v0.9/hasCartridge": {
           "type": "Relationship",
@@ -156,6 +173,7 @@ cat << EOF | tr -d '\n' > ${UPDATE_FILTER}
           "value": "OFF"
         },
         "https://industry-fusion.com/types/v0.9/strength": {
+          "datasetId": "https://example.com/source1",
           "type": "Property",
           "value": "0.5"
         },
@@ -179,10 +197,12 @@ cat << EOF | tr -d '\n' > ${UPDATE_FILTER_NO_OVERWRITE}
         "type": "${FILTER_TYPE}",
         "https://industry-fusion.com/types/v0.9/state": {
           "type": "Property",
+          "datasetId": "@none",
           "value": "ON"
         },
         "https://industry-fusion.com/types/v0.9/strength": {
           "type": "Property",
+          "datasetId": "https://example.com/source1",
           "value": "0.75"
         },
         "https://industry-fusion.com/types/v0.9/strength2": {
@@ -220,6 +240,7 @@ timestamp_upsert_2_entities(){
         },
         "https://industry-fusion.com/types/v0.9/strength": {
           "type": "Property",
+          "datasetId": "https://example.com/source1",
           "value": "0.9",
           "observedAt": ${timestamp}
         },
@@ -272,6 +293,7 @@ timestamp_upsert_2_entities2(){
         },
         "https://industry-fusion.com/types/v0.9/strength": {
           "type": "Property",
+          "datasetId": "https://example.com/source1",
           "value": "0.422",
           "observedAt": ${timestamp}
         },
@@ -324,6 +346,7 @@ timestamp_update_2_entities(){
         },
         "https://industry-fusion.com/types/v0.9/strength": {
           "type": "Property",
+          "datasetId": "https://example.com/source1",
           "value": "1.0",
           "observedAt": ${timestamp}
         },
@@ -376,6 +399,7 @@ timestamp_update_2_entities2(){
         },
         "https://industry-fusion.com/types/v0.9/strength": {
           "type": "Property",
+          "datasetId": "https://example.com/source1",
           "value": "1.0",
           "observedAt": ${timestamp}
         },
@@ -427,6 +451,7 @@ compare_inserted_entity() {
   },
   "https://industry-fusion.com/types/v0.9/strength" : {
     "type" : "Property",
+    "datasetId": "https://example.com/source1",
     "value" : "0.9"
   }
 }
@@ -442,6 +467,7 @@ compare_inserted_entity_timestamped() {
   "type": "https://industry-fusion.com/types/v0.9/filter_test",
   "https://industry-fusion.com/types/v0.9/hasCartridge": {
     "type": "Relationship",
+    "datasetId": "https://example.com/source2",
     "object": "urn:filterCartridge-test:12345",
     "observedAt": "2024-01-08T01:02:28.0Z"
   },
@@ -452,6 +478,7 @@ compare_inserted_entity_timestamped() {
   },
   "https://industry-fusion.com/types/v0.9/strength": {
     "type": "Property",
+    "datasetId": "https://example.com/source1",
     "value": "0.9",
     "observedAt": "2024-01-08T01:01:28.512Z"
   }
@@ -469,6 +496,7 @@ compare_upserted_overwritten_entity() {
   "type" : "${FILTER_TYPE}",
   "https://industry-fusion.com/types/v0.9/hasCartridge" : {
     "type" : "Relationship",
+    "datasetId": "https://example.com/source3",
     "object" : "urn:filterCartridge-test:22345"
   },
   "https://industry-fusion.com/types/v0.9/state" : {
@@ -477,6 +505,7 @@ compare_upserted_overwritten_entity() {
   },
   "https://industry-fusion.com/types/v0.9/strength" : {
     "type" : "Property",
+    "datasetId": "https://example.com/source1",
     "value" : "0.1"
   },
   "https://industry-fusion.com/types/v0.9/strength2": {
@@ -502,12 +531,21 @@ compare_upserted_non_overwritten_entity() {
     "type" : "Property",
     "value" : "OFF"
   },
-  "https://industry-fusion.com/types/v0.9/strength" : {
-    "type" : "Property",
-    "value" : "0.1"
-  },
+  "https://industry-fusion.com/types/v0.9/strength" : [
+    {
+      "type" : "Property",
+      "datasetId": "https://example.com/source1",
+      "value" : "0.1"
+    },
+    {
+      "type": "Property",
+      "value": "0.9"
+    }
+
+  ],
   "https://industry-fusion.com/types/v0.9/strength2": {
     "type": "Property",
+    "datasetId": "https://example.com/source4",
     "value": "0.5"
   }
 }
@@ -531,6 +569,7 @@ compare_updated_entity() {
   },
   "https://industry-fusion.com/types/v0.9/strength" : {
     "type" : "Property",
+    "datasetId": "https://example.com/source1",
     "value" : "0.5"
   }
 }
@@ -555,6 +594,7 @@ compare_updated_no_overwrite_entity() {
   },
   "https://industry-fusion.com/types/v0.9/strength" : {
     "type" : "Property",
+    "datasetId": "https://example.com/source1",
     "value" : "0.9"
   },
   "https://industry-fusion.com/types/v0.9/strength2" : {
@@ -628,6 +668,7 @@ compare_updated_filter_entity() {
   },
   "https://industry-fusion.com/types/v0.9/strength" : {
     "type" : "Property",
+    "datasetId": "https://example.com/source1",
     "value" : "1.0"
   }
 }
@@ -655,6 +696,13 @@ delete_ngsild() {
     curl -X DELETE -H "Authorization: Bearer $1" http://ngsild.local/ngsi-ld/v1/entities/"$2" -H "Content-Type: application/ld+json" 2>/dev/null
 }
 
+# deletes ngsild entity
+# $1: auth token
+# $2: id of entity to delete
+try_delete_ngsild() {
+    curl -X DELETE -H "Authorization: Bearer $1" http://ngsild.local/ngsi-ld/v1/entities/"$2" -H "Content-Type: application/ld+json" 2>/dev/null || true
+}
+
 setup() {
     # shellcheck disable=SC2086
     [ $DEBUG = "true" ] || (exec ${SUDO} kubefwd -n iff -l app.kubernetes.io/name=kafka svc  >/dev/null 2>&1) &
@@ -670,24 +718,28 @@ teardown(){
 
 @test "verify ngsild-update bridge is inserting ngsi-ld entitiy" {
     $SKIP
+    password=$(get_password)
+    # shellcheck disable=SC2030
+    token=$(get_token)
+    try_delete_ngsild "${token}" ${FILTER_ID}
     kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPSERT_FILTER}
     echo "# Sent upsert object to ngsi-ld-updates-bridge, wait some time to let it settle"
     sleep 2
-    password=$(get_password)
-    token=$(get_token)
     get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )' | jq 'del(..|.observedAt?)' >${RECEIVED_ENTITY}
-    #delete_ngsild "${token}" ${FILTER_ID}
+    delete_ngsild "${token}" ${FILTER_ID}
     run compare_inserted_entity ${RECEIVED_ENTITY}
     [ "$status" -eq 0 ]
 }
 
 @test "verify ngsild-update bridge is upserting and overwriting ngsi-ld entitiy" {
     $SKIP
+    password=$(get_password)
+    # shellcheck disable=SC2030
+    token=$(get_token)
+    try_delete_ngsild "${token}" ${FILTER_ID}
     kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPSERT_FILTER}
     echo "# Sent upsert object to ngsi-ld-updates-bridge, wait some time to let it settle"
     sleep 2
-    password=$(get_password)
-    token=$(get_token)
     get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )'| jq 'del(..|.observedAt?)'  >${RECEIVED_ENTITY}
     run compare_inserted_entity ${RECEIVED_ENTITY}
     [ "$status" -eq 0 ]
@@ -708,13 +760,17 @@ teardown(){
     # Update: In Scorpio Version 3.0.11 the program behaviour changed again but it is still not quite aligned
     # with the NGSI-LD documentations, therefore we tweaked the test case to work with the current behaviour.
     # When this test fails in the future, we will know that the behaviour has changed again.
+    password=$(get_password)
+    # shellcheck disable=SC2030
+    token=$(get_token)
+    delete_ngsild "${token}" ${FILTER_ID}
     kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPSERT_FILTER}
     echo "# Sent upsert object to ngsi-ld-updates-bridge, wait some time to let it settle"
     sleep 2
-    password=$(get_password)
-    token=$(get_token)
+
     get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )'| jq 'del(..|.observedAt?)' >${RECEIVED_ENTITY}
     run compare_inserted_entity ${RECEIVED_ENTITY}
+    rm ${RECEIVED_ENTITY}
     [ "$status" -eq 0 ]
     kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPSERT_FILTER_NON_OVERWRITE}
     sleep 2
@@ -801,6 +857,7 @@ teardown(){
 @test "verify ngsild-update bridge is updating many entities in order" {
     $SKIP
     password=$(get_password)
+    # shellcheck disable=SC2030
     token=$(get_token)
     delete_ngsild "${token}" ${CUTTER_ID} || echo "${CUTTER_ID} already deleted"
     delete_ngsild "${token}" ${FILTER_ID} || echo "${FILTER_ID} already deleted"
@@ -829,11 +886,14 @@ teardown(){
 
 @test "verify ngsild-update bridge is inserting ngsi-ld entitiy with right timestamp" {
     $SKIP
+    password=$(get_password)
+    # shellcheck disable=SC2030
+    token=$(get_token)
+    delete_ngsild "${token}" ${FILTER_ID}
+    delete_ngsild "${token}" ${CUTTER_ID}
     kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPSERT_FILTER_TIMESTAMPED}
     echo "# Sent upsert object to ngsi-ld-updates-bridge, wait some time to let it settle"
     sleep 2
-    password=$(get_password)
-    token=$(get_token)
     get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )' >${RECEIVED_ENTITY}
     run compare_inserted_entity_timestamped ${RECEIVED_ENTITY}
     [ "$status" -eq 0 ]

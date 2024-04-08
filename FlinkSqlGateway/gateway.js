@@ -15,7 +15,7 @@
 */
 'use strict';
 const express = require('express');
-const { exec } = require('child_process');
+const { spawn } = require('child_process');
 const uuid = require('uuid');
 const fs = require('fs');
 const path = require('path');
@@ -42,33 +42,41 @@ function appget (_, response) {
 };
 
 function submitJob (command, response) {
-  return new Promise((resolve, reject) =>
-    exec(command, (error, stdout, stderr) => {
-      if (error) {
-        logger.error('Error while submitting sql job: ' + error);
-        logger.error('Additional stdout messages from applicatino: ' + stdout);
-        logger.error('Additional sterr messages from applicatino: ' + stderr);
-        response.status(500);
-        response.send('Error while submitting sql job: ' + error);
-        reject(error);
-        return;
-      }
+  const args = command.split(' ');
+  let jobId = null;
+  return new Promise((resolve, reject) => {
+    const res = spawn(args[0], args.slice(1));
+    res.stdout.on('data', (data) => {
+      logger.info('Stdout messages from application: ' + data);
       // find Job ID ind stdout, e.g.
       // Job ID: e1ebb6b314c82b27cf81cbc812300d97
       const regexp = /JobID=\[([0-9a-f]*)\]/i;
-      const found = stdout.match(regexp);
-      logger.debug('Server output: ' + stdout);
-      if (found !== null && found !== undefined) {
-        const jobId = found[1];
-        logger.debug('jobId found:' + jobId);
+      try {
+        const found = data.toString().match(regexp);
+        if (found !== null && found !== undefined) {
+          jobId = found[1];
+          logger.debug(`JobId matched: ${jobId}`);
+        }
+      } catch (e) {
+        logger.debug('No JobId found');
+      }
+    });
+    res.stderr.on('data', (data) => {
+      logger.error('Stderr messages from application: ' + data);
+    });
+    res.on('close', (code) => {
+      logger.info(`child process exited with code ${code}`);
+      if (code === 0) {
+        logger.info('jobId found: ' + jobId);
         response.status(200).send('{ "jobid": "' + jobId + '" }');
-      } else { // no JOB ID found, unsuccessful
+        resolve();
+      } else {
         response.status(500);
         response.send('Not successfully submitted. No JOB ID found in server reply.');
+        reject(new Error('Could not find JOB ID'));
       }
-      resolve();
-    })
-  );
+    });
+  });
 }
 
 const createCommand = function (dirname) {

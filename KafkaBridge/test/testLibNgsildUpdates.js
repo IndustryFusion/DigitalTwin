@@ -111,6 +111,264 @@ describe('Test libNgsildUpdates', function () {
     updatePropertiesCalled.should.equal(true);
     revert();
   });
+  it('Should post body and filter out datasetId === "@none"', async function () {
+    let updatePropertiesCalled = false;
+    const config = {
+      ngsildUpdates: {
+        clientSecretVariable: 'CLIENT_SECRET',
+        refreshIntervalInSeconds: 200
+      },
+      keycloak: {
+        ngsildUpdatesAuthService: {
+        }
+      },
+      bridgeCommon: {
+        kafkaSyncOnAttribute: 'kafkaSyncOn'
+      }
+    };
+    const Logger = function () {
+      return logger;
+    };
+    const process = {
+      env: {
+        CLIENT_SECRET: 'client_secret'
+      }
+    };
+    const body = {
+      op: 'update',
+      entities: [{
+        id: 'id',
+        type: 'type',
+        attribute: {
+          datasetId: '@none',
+          value: 'value'
+        }
+      }],
+      overwriteOrReplace: false
+    };
+    const expHeaders = {
+      Authorization: 'Bearer token'
+    };
+    const Ngsild = function () {
+      return {
+        updateProperties: function ({ id, body, isOverwrite }, { headers }) {
+          updatePropertiesCalled = true;
+          id.should.equal('id');
+          assert.deepEqual(body, { id: 'id', type: 'type', attribute: { value: 'value' } });
+          isOverwrite.should.equal(false);
+          assert.deepEqual(headers, expHeaders);
+          return new Promise(function (resolve) {
+            resolve({
+              statusCode: 204
+            });
+          });
+        },
+        replaceEntities: function () {
+        }
+      };
+    };
+    const setInterval = function (fun, interv) {
+    };
+    const Keycloak = function () {
+      return {
+        grantManager: {
+          obtainFromClientCredentials: async function () {
+            return new Promise(function (resolve, reject) {
+              resolve({
+                access_token: {
+                  token: 'token'
+                }
+              });
+            });
+          }
+        }
+      };
+    };
+    const revert = ToTest.__set__('Logger', Logger);
+    ToTest.__set__('process', process);
+    ToTest.__set__('NgsiLd', Ngsild);
+    ToTest.__set__('setInterval', setInterval);
+    ToTest.__set__('Keycloak', Keycloak);
+    ToTest.__set__('addSyncOnAttribute', addSyncOnAttribute);
+    const ngsildUpdates = new ToTest(config);
+    await ngsildUpdates.ngsildUpdates(body);
+    updatePropertiesCalled.should.equal(true);
+    revert();
+  });
+  it('Should post body and filter out datasetId === "@none" from attribute array', async function () {
+    let updatePropertiesCalled = false;
+    const config = {
+      ngsildUpdates: {
+        clientSecretVariable: 'CLIENT_SECRET',
+        refreshIntervalInSeconds: 200
+      },
+      keycloak: {
+        ngsildUpdatesAuthService: {
+        }
+      },
+      bridgeCommon: {
+        kafkaSyncOnAttribute: 'kafkaSyncOn'
+      }
+    };
+    const Logger = function () {
+      return logger;
+    };
+    const process = {
+      env: {
+        CLIENT_SECRET: 'client_secret'
+      }
+    };
+    const body = {
+      op: 'update',
+      entities: [{
+        id: 'id',
+        type: 'type',
+        attribute: [
+          {
+            datasetId: '@none',
+            value: 'value'
+          },
+          {
+            datasetId: 'http://example.com#source10',
+            value: 'value2'
+          }
+        ]
+      }],
+      overwriteOrReplace: false
+    };
+    const expHeaders = {
+      Authorization: 'Bearer token'
+    };
+    const Ngsild = function () {
+      return {
+        updateProperties: function ({ id, body, isOverwrite }, { headers }) {
+          updatePropertiesCalled = true;
+          id.should.equal('id');
+          assert.deepEqual(body, { id: 'id', type: 'type', attribute: [{ value: 'value' }, { value: 'value2', datasetId: 'http://example.com#source10' }] });
+          isOverwrite.should.equal(false);
+          assert.deepEqual(headers, expHeaders);
+          return new Promise(function (resolve) {
+            resolve({
+              statusCode: 204
+            });
+          });
+        },
+        replaceEntities: function () {
+        }
+      };
+    };
+    const setInterval = function (fun, interv) {
+    };
+    const Keycloak = function () {
+      return {
+        grantManager: {
+          obtainFromClientCredentials: async function () {
+            return new Promise(function (resolve, reject) {
+              resolve({
+                access_token: {
+                  token: 'token'
+                }
+              });
+            });
+          }
+        }
+      };
+    };
+    const revert = ToTest.__set__('Logger', Logger);
+    ToTest.__set__('process', process);
+    ToTest.__set__('NgsiLd', Ngsild);
+    ToTest.__set__('setInterval', setInterval);
+    ToTest.__set__('Keycloak', Keycloak);
+    ToTest.__set__('addSyncOnAttribute', addSyncOnAttribute);
+    const ngsildUpdates = new ToTest(config);
+    await ngsildUpdates.ngsildUpdates(body);
+    updatePropertiesCalled.should.equal(true);
+    revert();
+  });
+  it('Should post body and not filter out datasetId !== "@none"', async function () {
+    let updatePropertiesCalled = false;
+    const config = {
+      ngsildUpdates: {
+        clientSecretVariable: 'CLIENT_SECRET',
+        refreshIntervalInSeconds: 200
+      },
+      keycloak: {
+        ngsildUpdatesAuthService: {
+        }
+      },
+      bridgeCommon: {
+        kafkaSyncOnAttribute: 'kafkaSyncOn'
+      }
+    };
+    const Logger = function () {
+      return logger;
+    };
+    const process = {
+      env: {
+        CLIENT_SECRET: 'client_secret'
+      }
+    };
+    const body = {
+      op: 'update',
+      entities: [{
+        id: 'id',
+        type: 'type',
+        attribute: {
+          datasetId: 'https://example.com/source1',
+          value: 'value'
+        }
+      }],
+      overwriteOrReplace: false
+    };
+    const expHeaders = {
+      Authorization: 'Bearer token'
+    };
+    const Ngsild = function () {
+      return {
+        updateProperties: function ({ id, body, isOverwrite }, { headers }) {
+          updatePropertiesCalled = true;
+          id.should.equal('id');
+          assert.deepEqual(body, { id: 'id', type: 'type', attribute: { datasetId: 'https://example.com/source1', value: 'value' } });
+          isOverwrite.should.equal(false);
+          assert.deepEqual(headers, expHeaders);
+          return new Promise(function (resolve) {
+            resolve({
+              statusCode: 204
+            });
+          });
+        },
+        replaceEntities: function () {
+        }
+      };
+    };
+    const setInterval = function (fun, interv) {
+    };
+    const Keycloak = function () {
+      return {
+        grantManager: {
+          obtainFromClientCredentials: async function () {
+            return new Promise(function (resolve, reject) {
+              resolve({
+                access_token: {
+                  token: 'token'
+                }
+              });
+            });
+          }
+        }
+      };
+    };
+    const revert = ToTest.__set__('Logger', Logger);
+    ToTest.__set__('process', process);
+    ToTest.__set__('NgsiLd', Ngsild);
+    ToTest.__set__('setInterval', setInterval);
+    ToTest.__set__('Keycloak', Keycloak);
+    ToTest.__set__('addSyncOnAttribute', addSyncOnAttribute);
+    const ngsildUpdates = new ToTest(config);
+    await ngsildUpdates.ngsildUpdates(body);
+    updatePropertiesCalled.should.equal(true);
+    revert();
+  });
   it('Should post body with correct path and token for nonOverwrite upsert', async function () {
     let replaceEntitiyCalled = false;
     const config = {

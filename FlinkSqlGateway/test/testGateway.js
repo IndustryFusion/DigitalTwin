@@ -67,8 +67,10 @@ describe('Test statement path', function () {
     const request = {
       body: body
     };
-    const exec = function (command, output) {
-      command.should.equal(flinkSqlCommand + fsWriteFilename + ' --pyExecutable /usr/local/bin/python3 --pyFiles testfile');
+    const spawn = function (command, args, output) {
+      const fullcommand = flinkSqlCommand + fsWriteFilename + ' --pyExecutable /usr/local/bin/python3 --pyFiles testfile';
+      command.should.equal(fullcommand.split(' ')[0]);
+      args.should.equal(fullcommand.split(' ').slice(1));
     };
     const fs = {
       writeFileSync: function (filename, data) {
@@ -101,7 +103,7 @@ describe('Test statement path', function () {
 
     const revert = toTest.__set__({
       logger: logger,
-      exec: exec,
+      spawn: spawn,
       fs: fs,
       getLocalPythonUdfs: getLocalPythonUdfs,
       process: process
@@ -175,7 +177,7 @@ describe('Test apppost', function () {
         statement: 'select *;'
       }
     };
-    const exec = function (command, output) {
+    const spawn = function (command, output) {
       output(error, null, null);
     };
 
@@ -185,7 +187,7 @@ describe('Test apppost', function () {
 
     const revert = toTest.__set__({
       logger: logger,
-      exec: exec,
+      spawn: spawn,
       uuid: uuid,
       fs: fs,
       getLocalPythonUdfs: getLocalPythonUdfs
@@ -239,7 +241,7 @@ describe('Test apppost', function () {
 
     const revert = toTest.__set__({
       logger: logger,
-      exec: exec,
+      spawn: exec,
       uuid: uuid,
       fs: fs,
       getLocalPythonUdfs: getLocalPythonUdfs
@@ -287,7 +289,7 @@ describe('Test apppost', function () {
 
     const revert = toTest.__set__({
       logger: logger,
-      exec: exec,
+      spawn: exec,
       uuid: uuid,
       fs: fs,
       getLocalPythonUdfs: getLocalPythonUdfs
@@ -401,22 +403,36 @@ describe('Test submitJob', function () {
   it('Submit without error', function (done) {
     const command = 'command';
     const exec = function (command, fn) {
-      fn('error', null, null);
+      return {
+        stdout: {
+          on: function (data, fn) {
+            fn(Buffer.from('JobID=[1]', 'utf8'));
+          }
+        },
+        stderr: {
+          on: function (data, fn) {
+            fn('');
+          }
+        },
+        on: function (ev, fn) {
+          fn(0);
+        }
+      };
     };
     const response = {
       status: function (val) {
-        val.should.equal(500);
+        val.should.equal(200);
         return response;
       },
       send: function (val) {
-        val.should.equal('Error while submitting sql job: error');
+        val.should.deep.equal('{ "jobid": "1" }');
         revert();
         done();
       }
     };
     const revert = toTest.__set__({
       logger: logger,
-      exec: exec
+      spawn: exec
     });
     const submitJob = toTest.__get__('submitJob');
     submitJob(command, response);
@@ -425,7 +441,21 @@ describe('Test submitJob', function () {
   it('Submit without jobId', function (done) {
     const command = 'command';
     const exec = function (command, fn) {
-      fn(null, 'nojobid', null);
+      return {
+        stdout: {
+          on: function (data, fn) {
+            fn(Buffer.from('JobID=', 'utf8'));
+          }
+        },
+        stderr: {
+          on: function (data, fn) {
+            fn('stderr');
+          }
+        },
+        on: function (ev, fn) {
+          fn(1);
+        }
+      };
     };
     const response = {
       status: function (val) {
@@ -440,7 +470,7 @@ describe('Test submitJob', function () {
     };
     const revert = toTest.__set__({
       logger: logger,
-      exec: exec
+      spawn: exec
     });
     const submitJob = toTest.__get__('submitJob');
     submitJob(command, response);
@@ -449,7 +479,21 @@ describe('Test submitJob', function () {
   it('Submit with jobId', function (done) {
     const command = 'command';
     const exec = function (command, fn) {
-      fn(null, 'JobID=[1234]', null);
+      return {
+        stdout: {
+          on: function (data, fn) {
+            fn(Buffer.from('JobID=[1234]', 'utf8'));
+          }
+        },
+        stderr: {
+          on: function (data, fn) {
+            fn('');
+          }
+        },
+        on: function (ev, fn) {
+          fn(0);
+        }
+      };
     };
     const response = {
       status: function (val) {
@@ -464,7 +508,7 @@ describe('Test submitJob', function () {
     };
     const revert = toTest.__set__({
       logger: logger,
-      exec: exec
+      spawn: exec
     });
     const submitJob = toTest.__get__('submitJob');
     submitJob(command, response);

@@ -151,6 +151,7 @@ def main():
              {'valueType': 'STRING'},
              {'index': 'INTEGER'},
              {'type': 'STRING'},
+             {'https://uri.etsi.org/ngsi-ld/datasetId': 'STRING'},
              {'https://uri.etsi.org/ngsi-ld/hasValue': 'STRING'},
              {'https://uri.etsi.org/ngsi-ld/hasObject': 'STRING'},
              {'watermark': 'FOR `ts` AS `ts`'},
@@ -186,6 +187,7 @@ def main():
              {'valueType': 'STRING'},
              {'index': 'INTEGER'},
              {'type': 'STRING'},
+             {'https://uri.etsi.org/ngsi-ld/datasetId': 'STRING'},
              {'https://uri.etsi.org/ngsi-ld/hasValue': 'STRING'},
              {'https://uri.etsi.org/ngsi-ld/hasObject': 'STRING'}
              ]
@@ -219,6 +221,7 @@ def main():
              {'valueType': 'STRING'},
              {'index': 'INTEGER'},
              {'type': 'STRING'},
+             {'https://uri.etsi.org/ngsi-ld/datasetId': 'STRING'},
              {'https://uri.etsi.org/ngsi-ld/hasValue': 'STRING'},
              {'https://uri.etsi.org/ngsi-ld/hasObject': 'STRING'},
              {'ts': "TIMESTAMP(3) METADATA FROM 'timestamp'"},

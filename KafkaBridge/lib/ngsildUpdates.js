@@ -40,6 +40,29 @@ const addSyncOnAttribute = function (entities, syncOnAttribute, timestamp) {
   });
 };
 
+/**
+ * Remove "@none" dataset ids
+ *
+ * entities: NGSILD entities
+*/
+const removeDefaultDatasetID = function (entities) {
+  entities.forEach(entity => {
+    Object.keys(entity).forEach(key => {
+      let attributes = entity[key];
+      if (!Array.isArray(attributes)) {
+        attributes = [attributes];
+      }
+      attributes.forEach(attribute => {
+        if (typeof attribute === 'object') {
+          if ('datasetId' in attribute && attribute.datasetId === '@none') {
+            delete attribute.datasetId;
+          }
+        }
+      });
+    });
+  });
+};
+
 module.exports = function NgsildUpdates (conf) {
   const config = conf;
   const ngsild = new NgsiLd(config);
@@ -93,6 +116,8 @@ module.exports = function NgsildUpdates (conf) {
     } else {
       entities = body.entities;
     }
+    removeDefaultDatasetID(entities);
+
     const overwriteOrReplace = getFlag(body.overwriteOrReplace);
     const noForward = getFlag(body.noForward);
     let result;
@@ -110,17 +135,19 @@ module.exports = function NgsildUpdates (conf) {
           if (entity.id === undefined || entity.id == null) {
             logger.error('Unhealthy entity - ignoring it:' + JSON.stringify(entity));
           } else {
+            logger.debug('Updating: ' + JSON.stringify(entities));
             result = await ngsild.updateProperties({ id: entity.id, body: entity, isOverwrite: overwriteOrReplace }, { headers });
             if (result.statusCode !== 204 && result.statusCode !== 207) {
-              logger.error('Entity cannot update entity:' + JSON.stringify(result.body)); // throw no error, log it and ignore it, repeating would probably not solve it
+              logger.error('Entity cannot update entity:' + JSON.stringify(result.body) + ' and status code ' + result.statusCode); // throw no error, log it and ignore it, repeating would probably not solve it
             }
           }
         };
       } else if (op === 'upsert') {
         // in this case, entity will be created if not existing
+        logger.debug('Upserting: ' + JSON.stringify(entities));
         result = await ngsild.replaceEntities(entities, overwriteOrReplace, { headers });
-        if (result.statusCode !== 204) {
-          logger.error('Cannot upsert entity:' + JSON.stringify(result.body)); // throw no error, log it and igonore it, repeating would probalby not solve it
+        if (result.statusCode !== 204 && result.statusCode !== 201) {
+          logger.error('Cannot upsert entity:' + JSON.stringify(result.body) + ' and status code ' + result.statusCode); // throw no error, log it and igonore it, repeating would probalby not solve it
         }
       }
     } catch (e) {

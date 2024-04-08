@@ -411,6 +411,7 @@ def test_wrap_sql_construct(attribute_column_mock, get_bound_trim_string_mock):
 \nCAST(NULL as STRING) as valueType,\
 \n0 as `index`,\
 \n'type' as `type`,\
+\n'@none' as `datasetId`,\
 \nbound_trim_string as `value`,\
 \nCAST(NULL as STRING) as `object`\n,\
 SQL_DIALECT_SQLITE_TIMESTAMP\nFROM target_sql WHERE where"
