@@ -456,6 +456,7 @@ def wrap_sql_construct(ctx, node):
         construct_query += 'CAST(NULL as STRING) as valueType,\n'  # valueType
         construct_query += '0 as `index`,\n'  # index
         construct_query += f'\'{attribute_type}\' as `type`,\n'
+        construct_query += '\'@none\' as `datasetId`,\n'
         construct_query += f"{get_bound_trim_string(ctx, value_var)} as `value`,\n"  # value
         construct_query += 'CAST(NULL as STRING) as `object`\n'  # object
         construct_query += ',SQL_DIALECT_SQLITE_TIMESTAMP\n'  # ts

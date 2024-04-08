@@ -29,10 +29,16 @@ cat << EOF > ${CUTTER}
     "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
     "id": "${PLASMACUTTER_ID}",
     "type": "https://industry-fusion.com/types/v0.9/${KAFKACAT_ENTITY_PLASMACUTTER_NAME}",
-    "https://industry-fusion.com/types/v0.9/state": {
-      "type": "Property",
-      "value": "OFF"
-    },
+    "https://industry-fusion.com/types/v0.9/state": [
+        {
+            "type": "Property",
+            "value": "ON"
+        },
+        {
+            "type": "Property",
+            "value": "OFF"
+        }
+    ],
     "https://industry-fusion.com/types/v0.9/hasWorkpiece": [
         {
             "type": "Relationship",

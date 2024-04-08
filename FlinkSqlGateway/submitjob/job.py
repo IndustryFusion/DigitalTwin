@@ -2,6 +2,7 @@ from pyflink.table import TableEnvironment, EnvironmentSettings
 import json
 import pathlib
 import os
+import sys
 
 
 JARDIR = '/opt/gateway/jars'
@@ -57,5 +58,9 @@ with open('data/SQL-structures.json') as f:
     for statement in d["sqlstatementset"]:
         statement_set.add_insert_sql(statement)
 
-    jobresult = statement_set.execute()
-    print(f'JobID=[{jobresult.get_job_client().get_job_id()}]')
+    try:
+        jobresult = statement_set.execute()
+        print(f'JobID=[{jobresult.get_job_client().get_job_id()}]')
+    except Exception as e:
+        print(f'Error executing statement set: {e}')
+        sys.exit(1)

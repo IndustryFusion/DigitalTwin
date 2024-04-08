@@ -154,7 +154,8 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
                   name.toPython() +
                   "', '" + nodeType + "', " + valueType + ", " +
                   str(current_index) +
-                  ", '" + type.toPython() + "'," + hasValue + ", " +
+                  ", '" + type.toPython() + "', 'http://example.com/index/" + str(current_index) +
+                  "'," + hasValue + ", " +
                   hasObject + ", " + current_timestamp + ")", end='',
                   file=sqlitef)
         print(";", file=sqlitef)
