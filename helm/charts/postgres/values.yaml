@@ -43,22 +43,15 @@ pvSize: 1Gi
 ##
 dbUsers:
   ngb: # dbowner: [permissions]; refer to spilo documentation for available permissions
-  - superuser
   - createrole
   - createdb
   - replication
-  - bypassrls
-  oisp:
-  - superuser
-  - createrole
-  - createdb
-  - replication
-  - bypassrls
-  pgrest:
-  - nosuperuser
-  - noreplication
-  - nocreaterole
+  dbreader:
+  - login
+  - noinherit
   - nocreatedb
+  - nocreaterole
+  - nosuperuser
 
 ## Databases; corresponding DB owner must be specified above
 ##
@@ -68,4 +61,5 @@ databases:
   monitoring: ngb # alerta
   tsdb: ngb # timescaledb ngsild timeseries data
 
-preparedDatabases: tsdb
+preparedTimescaleDatabases: tsdb
+preparedPostgisDatabases: ngb

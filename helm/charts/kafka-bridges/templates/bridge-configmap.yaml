@@ -110,7 +110,7 @@ data:
               "hostname": "acid-cluster",
               "port": "5432",
               "username": {{ .Values.db.scorpioDb | quote }},
-              "tsdbuser": {{ .Values.db.timescaleReadUser| quote }},
+              "tsdbuser": {{ .Values.db.dbReaderUser| quote }},
               "password": "POSTGRES_PASSWORD"
       }
     }
