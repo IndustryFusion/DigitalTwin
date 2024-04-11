@@ -1,4 +1,4 @@
-{{- $name := printf "%s.%s.%s" .Values.db.dbUser .Values.clusterSvcName .Values.db.secretPostfix -}}
+{{- $name := printf "%s.%s.%s" .Values.db.dbReaderUser .Values.clusterSvcName .Values.db.secretPostfix -}}
 {{- $secret := (lookup "v1" "Secret" .Release.Namespace $name) -}}
 apiVersion: apps/v1
 kind: Deployment
@@ -28,9 +28,11 @@ spec:
         env:
         - name: PGRST_DB_URI
           {{ if $secret }}
-          {{- $pgurl := printf "postgres://%s:%s@%s:5432/%s" .Values.db.dbUser (b64dec $secret.data.password) .Values.clusterSvcName .Values.db.timescaleDb -}}
+          {{- $pgurl := printf "postgres://%s:%s@%s:5432/%s" .Values.db.dbReaderUser (b64dec $secret.data.password) .Values.clusterSvcName .Values.db.timescaleDb -}}
           value: {{ $pgurl }}
           {{- end }}
+        - name: PGRST_DB_SCHEMA
+          value: "public"
         - name: PGRST_JWT_SECRET_IS_BASE64
           value: "false"
         - name: PGRST_JWT_SECRET

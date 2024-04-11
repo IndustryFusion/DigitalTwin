@@ -13,7 +13,7 @@ db:
   clusterSvcPostfix: cluster
   svcPort: "5432"
   dbUser: "ngb"
-  oispdbUser: "oisp"
+  dbReaderUser: "dbreader"
 
 ontology:
   baseUri: https://industryfusion.github.io/contexts/staging/example/v0.1/

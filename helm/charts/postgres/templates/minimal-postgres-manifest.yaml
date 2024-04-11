@@ -45,9 +45,15 @@ spec:
   databases:
 {{ toYaml .Values.databases | indent 4 }}
   preparedDatabases:
-{{ toYaml .Values.preparedDatabases | indent 4 }}:
+{{ toYaml .Values.preparedTimescaleDatabases | indent 4 }}:
       extensions:
         timescaledb: public
+      schemas:
+        public:
+          defaultRoles: false
+{{ toYaml .Values.preparedPostgisDatabases | indent 4 }}:
+      extensions:
+        postgis: public
       schemas:
         public:
           defaultRoles: false

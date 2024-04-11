@@ -55,7 +55,7 @@ spec:
           protocolMapper: oidc-hardcoded-claim-mapper
           consentRequired: false
           config:
-            claim.value: {{ .Values.db.timescaleReadUser }}
+            claim.value: {{ .Values.db.dbReaderUser }}
             userinfo.token.claim: "true"
             id.token.claim: "true"
             access.token.claim: "true"

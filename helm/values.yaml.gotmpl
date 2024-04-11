@@ -10,7 +10,7 @@ externalRegistry4: {{ .StateValues.externalRegistry4 }}
 
 ingressType: {{ .StateValues.ingressType }}
 dbpassword: {{ .StateValues.dbpassword }}
-oispdbPassword: {{ .StateValues.oispdbPassword }}
+dbReaderPassword: {{ .StateValues.dbReaderPassword }}
 clusterSvcName: {{ .StateValues.db.teamId -}}-{{- .StateValues.db.clusterSvcPostfix }}
 clusterExternalSvcName: {{ .StateValues.db.teamId -}}-{{- .StateValues.db.clusterSvcPostfix }}.{{ .StateValues.namespace }}.svc.cluster.local
 minioAdminSecretKey: {{ .StateValues.minioAdminSecretKey }}
@@ -26,10 +26,9 @@ db:
   podInstances: {{ .StateValues.db.podInstances }}
   alertaDb: monitoring
   dbUser: {{ .StateValues.db.dbUser }}
-  oispdbUser: {{ .StateValues.db.oispdbUser }}
+  dbReaderUser: {{ .StateValues.db.dbReaderUser }}
   scorpioDb: ngb
   timescaleDb: tsdb
-  timescaleReadUser: tsdb_reader
   timescaleTable: entityhistory
   secretPostfix: credentials.postgresql.acid.zalan.do
   backupBucket: {{ .StateValues.db.backupBucket }}
