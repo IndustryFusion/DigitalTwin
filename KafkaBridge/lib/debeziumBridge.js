@@ -45,9 +45,9 @@ module.exports = function DebeziumBridge (conf) {
     const { insertedAttrs, updatedAttrs, deletedAttrs } = this.diffAttributes(beforeAttrs, afterAttrs);
     const isKafkaUpdate = (updatedAttrs[syncOnAttribute] !== undefined ||
       insertedAttrs[syncOnAttribute] !== undefined) && body.before != null; // There is one important exception:
-      // When body.before is null, it means that the whole entity is created.
-      // This is unlikely happening over default Kafka update. Even if it is a Kafka update
-      // the next iteration will be an update with body.before != null so the loop will be detected.
+    // When body.before is null, it means that the whole entity is created.
+    // This is unlikely happening over default Kafka update. Even if it is a Kafka update
+    // the next iteration will be an update with body.before != null so the loop will be detected.
     // when syncOnAttribute is used, it means that update
     // did not come through API but through Kafka channel
     // so do not forward to avoid 'infinity' loop
@@ -58,7 +58,7 @@ module.exports = function DebeziumBridge (conf) {
     delete afterEntity[syncOnAttribute];
     // isAttributesChanged: When there are changes in any of the attrs (not coming over Kafka)
     const isAttributesChanged = !isKafkaUpdate && (Object.keys(updatedAttrs).length > 0 ||
-                      Object.keys(deletedAttrs).length > 0 || Object.keys(insertedAttrs).length > 0);
+      Object.keys(deletedAttrs).length > 0 || Object.keys(insertedAttrs).length > 0);
     // deletedEntity needs to remember type so that it can be deleted for
     // all subtypes. However, type must be removed lated since it is not part of
     // primary key. Deletion means to set type to null
@@ -129,6 +129,12 @@ module.exports = function DebeziumBridge (conf) {
           obj.id = refId;
           obj.entityId = id;
           obj.name = key;
+          if ('https://uri.etsi.org/ngsi-ld/datasetId' in refObj) {
+            obj['https://uri.etsi.org/ngsi-ld/datasetId'] = refObj['https://uri.etsi.org/ngsi-ld/datasetId'][0]['@id'];
+          } else {
+            obj['https://uri.etsi.org/ngsi-ld/datasetId'] = '@none';
+          }
+
           // extract timestamp
           // timestamp is normally observedAt but it is non-mandatory
           // If observedAt is missing (e.g. because it was entered over REST API)
@@ -165,9 +171,30 @@ module.exports = function DebeziumBridge (conf) {
           } else {
             return;
           }
-          obj.index = index;
           baAttrs[key].push(obj);
         });
+        // Check if datasetId is doubled
+        let counter = 0;
+        const copyArr = [];
+        baAttrs[key].forEach((obj, idx) => {
+          let check = false;
+          const curDatId = obj['https://uri.etsi.org/ngsi-ld/datasetId'];
+          for (let i = idx + 1; i < baAttrs[key].length; i++) {
+            if (curDatId === baAttrs[key][i]['https://uri.etsi.org/ngsi-ld/datasetId']) {
+              check = true;
+              copyArr[counter] = baAttrs[key][i];
+            }
+          }
+          if (check === false) {
+            copyArr[counter] = baAttrs[key][idx];
+            counter++;
+          }
+        });
+        copyArr.sort((a, b) => a[['https://uri.etsi.org/ngsi-ld/datasetId']].localeCompare(b['https://uri.etsi.org/ngsi-ld/datasetId']));
+        copyArr.forEach((obj, idx) => { // Index it according to their sorting
+          obj.index = idx;
+        });
+        baAttrs[key] = copyArr;
       });
     return { entity: resEntity, attributes: baAttrs };
   };

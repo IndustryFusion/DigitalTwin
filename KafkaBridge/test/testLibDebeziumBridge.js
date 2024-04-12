@@ -283,6 +283,7 @@ describe('Test parseBeforeAfterEntity', function () {
         nodeType: '@id',
         name: 'https://example/hasRel',
         type: 'https://uri.etsi.org/ngsi-ld/Relationship',
+        'https://uri.etsi.org/ngsi-ld/datasetId': '@none',
         'https://uri.etsi.org/ngsi-ld/hasObject': 'urn:object:1',
         index: 0
       }],
@@ -292,6 +293,7 @@ describe('Test parseBeforeAfterEntity', function () {
         nodeType: '@value',
         name: 'https://example/prop',
         type: 'https://uri.etsi.org/ngsi-ld/Property',
+        'https://uri.etsi.org/ngsi-ld/datasetId': '@none',
         'https://uri.etsi.org/ngsi-ld/hasValue': 'value',
         'https://uri.etsi.org/ngsi-ld/observedAt': [{
           '@type': 'https://uri.etsi.org/ngsi-ld/DateTime',
@@ -362,6 +364,7 @@ describe('Test parseBeforeAfterEntity', function () {
         nodeType: '@id',
         name: 'https://example/hasRel',
         type: 'https://uri.etsi.org/ngsi-ld/Relationship',
+        'https://uri.etsi.org/ngsi-ld/datasetId': '@none',
         'https://uri.etsi.org/ngsi-ld/observedAt': [{
           '@type': 'https://uri.etsi.org/ngsi-ld/DateTime',
           '@value': '2022-02-19T20:32:26.123656Z'
@@ -376,6 +379,7 @@ describe('Test parseBeforeAfterEntity', function () {
         name: 'https://example/prop',
         type: 'https://uri.etsi.org/ngsi-ld/Property',
         'https://uri.etsi.org/ngsi-ld/hasValue': 'value',
+        'https://uri.etsi.org/ngsi-ld/datasetId': '@none',
         'https://uri.etsi.org/ngsi-ld/observedAt': [{
           '@type': 'https://uri.etsi.org/ngsi-ld/DateTime',
           '@value': '2022-02-19T20:31:26.123656Z'
@@ -432,6 +436,7 @@ describe('Test parseBeforeAfterEntity', function () {
         nodeType: '@value',
         name: 'https://example/prop',
         type: 'https://uri.etsi.org/ngsi-ld/Property',
+        'https://uri.etsi.org/ngsi-ld/datasetId': '@none',
         'https://uri.etsi.org/ngsi-ld/hasValue': 'value',
         'https://uri.etsi.org/ngsi-ld/observedAt': [{
           '@type': 'https://uri.etsi.org/ngsi-ld/DateTime',
