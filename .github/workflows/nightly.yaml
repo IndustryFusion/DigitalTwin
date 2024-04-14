@@ -22,7 +22,6 @@ jobs:
     env:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-      DOCKER_PREFIX: ${{ secrets.DOCKER_PREFIX }}
       SELF_HOSTED_RUNNER: true
     steps:
       - uses: actions/checkout@v4
@@ -37,14 +36,10 @@ jobs:
           # Tag and push passed "k3d-iff.localhost:12345:<image>:${DOCKER_TAG}" images as latest
           images=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep k3d-iff | grep ${DOCKER_TAG} )
           for image in ${images}; do
-            newimage=$(echo $image | sed -r "s/:${DOCKER_TAG}/:latest/g" | sed -r "s/k3d-iff.localhost:12345/${DOCKER_PREFIX}/g");
+            newimage=$(echo $image | sed -r "s/:${DOCKER_TAG}/:latest/g" | sed -r "s/k3d-iff.localhost:12345\///g");
             docker tag ${image} ${newimage};
             docker push ${newimage};
-            newimage=$(echo $image | sed -r "s/:${DOCKER_TAG}/:${TARGET_DOCKER_TAG}/g" | sed -r "s/k3d-iff.localhost:12345/${DOCKER_PREFIX}/g");
+            newimage=$(echo $image | sed -r "s/:${DOCKER_TAG}/:${TARGET_DOCKER_TAG}/g" | sed -r "s/k3d-iff.localhost:12345\///g");
             docker tag ${image} ${newimage};
             docker push ${newimage};
           done
-
-
-
-
