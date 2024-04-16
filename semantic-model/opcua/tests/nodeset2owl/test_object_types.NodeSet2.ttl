@@ -1,0 +1,363 @@
+@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+@prefix opcua: <http://opcfoundation.org/UA/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix test: <http://test/UA/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+opcua:nodei1 a opcua:DataTypeNodeClass ;
+    base:definesType opcua:Boolean ;
+    base:hasBrowseName "Boolean" ;
+    base:hasDisplayName "Boolean" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "1" .
+
+opcua:nodei10 a opcua:DataTypeNodeClass ;
+    base:definesType opcua:Float ;
+    base:hasBrowseName "Float" ;
+    base:hasDisplayName "Float" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "10" .
+
+opcua:nodei11 a opcua:DataTypeNodeClass ;
+    base:definesType opcua:Double ;
+    base:hasBrowseName "Double" ;
+    base:hasDisplayName "Double" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "11" .
+
+opcua:nodei12 a opcua:DataTypeNodeClass ;
+    base:definesType opcua:String ;
+    base:hasBrowseName "String" ;
+    base:hasDisplayName "String" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "12" .
+
+opcua:nodei13 a opcua:DataTypeNodeClass ;
+    base:definesType opcua:DateTime ;
+    base:hasBrowseName "DateTime" ;
+    base:hasDisplayName "DateTime" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "13" .
+
+opcua:nodei14 a opcua:DataTypeNodeClass ;
+    base:definesType opcua:Guid ;
+    base:hasBrowseName "Guid" ;
+    base:hasDisplayName "Guid" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "14" .
+
+opcua:nodei15 a opcua:DataTypeNodeClass ;
+    base:definesType opcua:ByteString ;
+    base:hasBrowseName "ByteString" ;
+    base:hasDisplayName "ByteString" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "15" .
+
+opcua:nodei16 a opcua:DataTypeNodeClass ;
+    base:definesType opcua:XmlElement ;
+    base:hasBrowseName "XmlElement" ;
+    base:hasDisplayName "XmlElement" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "16" .
+
+opcua:nodei17 a opcua:DataTypeNodeClass ;
+    base:definesType opcua:NodeId ;
+    base:hasBrowseName "NodeId" ;
+    base:hasDisplayName "NodeId" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "17" .
+
+opcua:nodei18 a opcua:DataTypeNodeClass ;
+    base:definesType opcua:ExpandedNodeId ;
+    base:hasBrowseName "ExpandedNodeId" ;
+    base:hasDisplayName "ExpandedNodeId" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "18" .
+
+opcua:nodei19 a opcua:DataTypeNodeClass ;
+    base:definesType opcua:StatusCode ;
+    base:hasBrowseName "StatusCode" ;
+    base:hasDisplayName "StatusCode" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "19" .
+
+opcua:nodei2 a opcua:DataTypeNodeClass ;
+    base:definesType opcua:SByte ;
+    base:hasBrowseName "SByte" ;
+    base:hasDisplayName "SByte" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "2" .
+
+opcua:nodei20 a opcua:DataTypeNodeClass ;
+    base:definesType opcua:QualifiedName ;
+    base:hasBrowseName "QualifiedName" ;
+    base:hasDisplayName "QualifiedName" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "20" .
+
+opcua:nodei21 a opcua:DataTypeNodeClass ;
+    base:definesType opcua:LocalizedText ;
+    base:hasBrowseName "LocalizedText" ;
+    base:hasDisplayName "LocalizedText" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "21" .
+
+opcua:nodei22 a opcua:DataTypeNodeClass ;
+    base:definesType opcua:Structure ;
+    base:hasBrowseName "Structure" ;
+    base:hasDisplayName "Structure" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "22" .
+
+opcua:nodei23 a opcua:DataTypeNodeClass ;
+    base:definesType opcua:DataValue ;
+    base:hasBrowseName "DataValue" ;
+    base:hasDisplayName "DataValue" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "23" .
+
+opcua:nodei24 a opcua:DataTypeNodeClass ;
+    base:definesType opcua:BaseDataType ;
+    base:hasBrowseName "BaseDataType" ;
+    base:hasDisplayName "BaseDataType" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "24" .
+
+opcua:nodei25 a opcua:DataTypeNodeClass ;
+    base:definesType opcua:DiagnosticInfo ;
+    base:hasBrowseName "DiagnosticInfo" ;
+    base:hasDisplayName "DiagnosticInfo" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "25" .
+
+opcua:nodei26 a opcua:DataTypeNodeClass ;
+    base:definesType opcua:Number ;
+    base:hasBrowseName "Number" ;
+    base:hasDisplayName "Number" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "26" .
+
+opcua:nodei27 a opcua:DataTypeNodeClass ;
+    base:definesType opcua:Integer ;
+    base:hasBrowseName "Integer" ;
+    base:hasDisplayName "Integer" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "27" .
+
+opcua:nodei28 a opcua:DataTypeNodeClass ;
+    base:definesType opcua:UInteger ;
+    base:hasBrowseName "UInteger" ;
+    base:hasDisplayName "UInteger" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "28" .
+
+opcua:nodei29 a opcua:DataTypeNodeClass ;
+    base:definesType opcua:Enumeration ;
+    base:hasBrowseName "Enumeration" ;
+    base:hasDisplayName "Enumeration" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "29" .
+
+opcua:nodei3 a opcua:DataTypeNodeClass ;
+    base:definesType opcua:Byte ;
+    base:hasBrowseName "Byte" ;
+    base:hasDisplayName "Byte" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "3" .
+
+opcua:nodei30 a opcua:DataTypeNodeClass ;
+    base:definesType opcua:Image ;
+    base:hasBrowseName "Image" ;
+    base:hasDisplayName "Image" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "30" .
+
+opcua:nodei4 a opcua:DataTypeNodeClass ;
+    base:definesType opcua:Int16 ;
+    base:hasBrowseName "Int16" ;
+    base:hasDisplayName "Int16" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "4" .
+
+opcua:nodei5 a opcua:DataTypeNodeClass ;
+    base:definesType opcua:UInt16 ;
+    base:hasBrowseName "UInt16" ;
+    base:hasDisplayName "UInt16" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "5" .
+
+opcua:nodei50 a opcua:DataTypeNodeClass ;
+    base:definesType opcua:Decimal ;
+    base:hasBrowseName "Decimal" ;
+    base:hasDisplayName "Decimal" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "50" .
+
+opcua:nodei6 a opcua:DataTypeNodeClass ;
+    base:definesType opcua:Int32 ;
+    base:hasBrowseName "Int32" ;
+    base:hasDisplayName "Int32" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "6" .
+
+opcua:nodei7 a opcua:DataTypeNodeClass ;
+    base:definesType opcua:UInt32 ;
+    base:hasBrowseName "UInt32" ;
+    base:hasDisplayName "UInt32" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "7" .
+
+opcua:nodei8 a opcua:DataTypeNodeClass ;
+    base:definesType opcua:Int64 ;
+    base:hasBrowseName "Int64" ;
+    base:hasDisplayName "Int64" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "8" .
+
+opcua:nodei9 a opcua:DataTypeNodeClass ;
+    base:definesType opcua:UInt64 ;
+    base:hasBrowseName "UInt64" ;
+    base:hasDisplayName "UInt64" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "9" .
+
+test: a owl:Ontology ;
+    owl:imports <https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl> ;
+    owl:versionIRI <http://example.com/v0.1/UA/> ;
+    owl:versionInfo 1e-01 .
+
+test:TESTNamespace a base:Namespace ;
+    base:hasPrefix "test" ;
+    base:hasUri "http://test/UA/" .
+
+opcua:Boolean a owl:Class ;
+    rdfs:subClassOf opcua:BaseDataType .
+
+opcua:Byte a owl:Class ;
+    rdfs:subClassOf opcua:UInteger .
+
+opcua:DataValue a owl:Class ;
+    rdfs:subClassOf opcua:BaseDataType .
+
+opcua:DateTime a owl:Class ;
+    rdfs:subClassOf opcua:BaseDataType .
+
+opcua:Decimal a owl:Class ;
+    rdfs:subClassOf opcua:Number .
+
+opcua:DiagnosticInfo a owl:Class ;
+    rdfs:subClassOf opcua:BaseDataType .
+
+opcua:Double a owl:Class ;
+    rdfs:subClassOf opcua:Number .
+
+opcua:Enumeration a owl:Class ;
+    rdfs:subClassOf opcua:BaseDataType ;
+    base:isAbstract "true" .
+
+opcua:ExpandedNodeId a owl:Class ;
+    rdfs:subClassOf opcua:BaseDataType .
+
+opcua:Float a owl:Class ;
+    rdfs:subClassOf opcua:Number .
+
+opcua:Guid a owl:Class ;
+    rdfs:subClassOf opcua:BaseDataType .
+
+opcua:Image a owl:Class ;
+    rdfs:subClassOf opcua:ByteString ;
+    base:isAbstract "true" .
+
+opcua:Int16 a owl:Class ;
+    rdfs:subClassOf opcua:Integer .
+
+opcua:Int32 a owl:Class ;
+    rdfs:subClassOf opcua:Integer .
+
+opcua:Int64 a owl:Class ;
+    rdfs:subClassOf opcua:Integer .
+
+opcua:LocalizedText a owl:Class ;
+    rdfs:subClassOf opcua:BaseDataType .
+
+opcua:NodeId a owl:Class ;
+    rdfs:subClassOf opcua:BaseDataType .
+
+opcua:QualifiedName a owl:Class ;
+    rdfs:subClassOf opcua:BaseDataType .
+
+opcua:SByte a owl:Class ;
+    rdfs:subClassOf opcua:Integer .
+
+opcua:StatusCode a owl:Class ;
+    rdfs:subClassOf opcua:BaseDataType .
+
+opcua:String a owl:Class ;
+    rdfs:subClassOf opcua:BaseDataType .
+
+opcua:Structure a owl:Class ;
+    rdfs:subClassOf opcua:BaseDataType ;
+    base:isAbstract "true" .
+
+opcua:UInt16 a owl:Class ;
+    rdfs:subClassOf opcua:UInteger .
+
+opcua:UInt32 a owl:Class ;
+    rdfs:subClassOf opcua:UInteger .
+
+opcua:UInt64 a owl:Class ;
+    rdfs:subClassOf opcua:UInteger .
+
+opcua:XmlElement a owl:Class ;
+    rdfs:subClassOf opcua:BaseDataType .
+
+opcua:ByteString a owl:Class ;
+    rdfs:subClassOf opcua:BaseDataType .
+
+opcua:Integer a owl:Class ;
+    rdfs:subClassOf opcua:Number ;
+    base:isAbstract "true" .
+
+opcua:UInteger a owl:Class ;
+    rdfs:subClassOf opcua:Number ;
+    base:isAbstract "true" .
+
+opcua:Number a owl:Class ;
+    rdfs:subClassOf opcua:BaseDataType ;
+    base:isAbstract "true" .
+
+opcua:BaseDataType a owl:Class ;
+    base:isAbstract "true" .
+

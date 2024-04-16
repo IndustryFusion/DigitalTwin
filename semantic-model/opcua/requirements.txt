@@ -1,0 +1,3 @@
+owlrl==6.0.2
+rdflib==6.2.0
+xmlschema==3.3.2

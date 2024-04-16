@@ -24,3 +24,6 @@ jobs:
     - name: Build datamodel tools
       run: |
         cd semantic-model/datamodel/tools && make setup && make lint test
+    - name: Build opcua tools
+      run: |
+        cd semantic-model/opcua && make setup && make lint test

@@ -1,0 +1,161 @@
+@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+@prefix opcua: <http://opcfoundation.org/UA/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix test: <http://test/UA/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+opcua:nodei14209 base:hasComponent opcua:nodei14221 .
+
+opcua:nodei21145 a opcua:ObjectTypeNodeClass ;
+    base:definesType opcua:NetworkAddressType ;
+    base:hasBrowseName "NetworkAddressType" ;
+    base:hasComponent opcua:nodei21146 ;
+    base:hasDisplayName "NetworkAddressType" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "21145" .
+
+opcua:nodei3062 a opcua:BaseObjectType,
+        opcua:ObjectNodeClass ;
+    base:hasBrowseName "Default Binary" ;
+    base:hasDescription "The default binary encoding for a data type." ;
+    base:hasDisplayName "Default Binary" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "3062" ;
+    base:hasSymbolicName "DefaultBinary" .
+
+opcua:nodei3063 a opcua:BaseObjectType,
+        opcua:ObjectNodeClass ;
+    base:hasBrowseName "Default XML" ;
+    base:hasDescription "The default XML encoding for a data type." ;
+    base:hasDisplayName "Default XML" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "3063" ;
+    base:hasSymbolicName "DefaultXml" .
+
+opcua:nodei31 a opcua:ReferenceTypeNodeClass ;
+    base:definesType opcua:References ;
+    base:hasBrowseName "References" ;
+    base:hasDisplayName "References" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "31" ;
+    base:isSymmetric "true" .
+
+opcua:nodei32 a opcua:ReferenceTypeNodeClass ;
+    base:definesType opcua:NonHierarchicalReferences ;
+    base:hasBrowseName "NonHierarchicalReferences" ;
+    base:hasDisplayName "NonHierarchicalReferences" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "32" ;
+    base:isSymmetric "true" .
+
+opcua:nodei33 a opcua:ReferenceTypeNodeClass ;
+    base:definesType opcua:HierarchicalReferences ;
+    base:hasBrowseName "HierarchicalReferences" ;
+    base:hasDisplayName "HierarchicalReferences" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "33" .
+
+opcua:nodei34 a opcua:ReferenceTypeNodeClass ;
+    base:definesType opcua:HasChild ;
+    base:hasBrowseName "HasChild" ;
+    base:hasDisplayName "HasChild" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "34" .
+
+opcua:nodei37 a opcua:ReferenceTypeNodeClass ;
+    base:definesType opcua:HasModellingRule ;
+    base:hasBrowseName "HasModellingRule" ;
+    base:hasDisplayName "HasModellingRule" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "37" .
+
+opcua:nodei44 a opcua:ReferenceTypeNodeClass ;
+    base:definesType opcua:Aggregates ;
+    base:hasBrowseName "Aggregates" ;
+    base:hasDisplayName "Aggregates" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "44" .
+
+opcua:nodei47 a opcua:ReferenceTypeNodeClass ;
+    base:definesType opcua:HasComponent ;
+    base:hasBrowseName "HasComponent" ;
+    base:hasDisplayName "HasComponent" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "47" .
+
+opcua:nodei58 a opcua:ObjectTypeNodeClass ;
+    base:definesType opcua:BaseObjectType ;
+    base:hasBrowseName "BaseObjectType" ;
+    base:hasDisplayName "BaseObjectType" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "58" .
+
+test: a owl:Ontology ;
+    owl:imports <https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl> ;
+    owl:versionIRI <http://example.com/v0.1/UA/> ;
+    owl:versionInfo 1e-01 .
+
+test:TESTNamespace a base:Namespace ;
+    base:hasPrefix "test" ;
+    base:hasUri "http://test/UA/" .
+
+opcua:HasComponent a owl:Class,
+        owl:ObjectProperty ;
+    rdfs:subClassOf opcua:Aggregates .
+
+opcua:HasModellingRule a owl:Class,
+        owl:ObjectProperty ;
+    rdfs:subClassOf opcua:NonHierarchicalReferences .
+
+opcua:nodei14221 a opcua:NetworkAddressType,
+        opcua:ObjectNodeClass ;
+    base:hasBrowseName "Address" ;
+    base:hasComponent opcua:nodei17202 ;
+    base:hasDisplayName "Address" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasModellingRule opcua:nodei78 ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "14221" .
+
+opcua:Aggregates a owl:Class,
+        owl:ObjectProperty ;
+    rdfs:subClassOf opcua:HasChild ;
+    base:isAbstract "true" .
+
+opcua:HasChild a owl:Class,
+        owl:ObjectProperty ;
+    rdfs:subClassOf opcua:HierarchicalReferences ;
+    base:isAbstract "true" .
+
+opcua:HierarchicalReferences a owl:Class,
+        owl:ObjectProperty ;
+    rdfs:subClassOf opcua:References ;
+    base:isAbstract "true" .
+
+opcua:NetworkAddressType a owl:Class ;
+    rdfs:subClassOf opcua:BaseObjectType ;
+    base:isAbstract "true" .
+
+opcua:NonHierarchicalReferences a owl:Class,
+        owl:ObjectProperty ;
+    rdfs:subClassOf opcua:References ;
+    base:isAbstract "true" .
+
+opcua:References a owl:Class,
+        owl:ObjectProperty ;
+    base:isAbstract "true" .
+
+opcua:BaseObjectType a owl:Class .
+
