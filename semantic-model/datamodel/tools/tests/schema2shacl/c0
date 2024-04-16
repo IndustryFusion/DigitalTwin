@@ -33,6 +33,10 @@
         "sh": {
             "@id": "http://www.w3.org/ns/shacl#",
             "@prefix": true
+        },
+        "base": {
+            "@id": "https://industryfusion.github.io/contexts/ontology/v0/base/",
+            "@prefix": true
         }
     }
 ]

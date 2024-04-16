@@ -26,6 +26,7 @@ direction TB:
     `#colon;BoundMap` "1" -- "1" `rdfs#colon;Datatype` : #colon;bindsMapDatatype
     `#colon;Binding` "1" -- "1" `#colon;BoundMap` : #colon;bindsMap
     `#colon;Binding` "1" -- "1" `owl#colon;Thing` : #colon;bindsEntity
+    `#colon;Binding` "1" -- "1" `ngsi-ld#colon;AttributeType` : #colon;bindsAttributeType
     `#colon;Binding`: bindingVersion xsd#colon;string
     `#colon;Binding`: bindsContext xsd#colon;string
     `#colon;Binding`: bindsFirmware xsd#colon;string
@@ -49,7 +50,8 @@ Example:
     ex:myBinding :bindsMap ex:map2 .
     ex:myBinding :bindingVersion "0.1"
     ex:myBinding :bindsFirmware "myFirmware"
-    ex:myBinding:bindsLogic "WHERE { BIND(?var1) as ?value}"
+    ex:myBinding :bindsLogic "WHERE { BIND(?var1) as ?value}"
+    ex:myBinding :bindsAttributeType ngsi-ld:Property
 
 :BoundMap
     A Bound Map contains a single map to define mapping from metrics to a model property. Several maps can be used to provide metrics for model properties. For instance it provides the rules to calculate the property ex:state with two maps:
@@ -90,9 +92,9 @@ Start dataservice with `startDataservice.py`:
 
 *\<ontology\>* is supposed to be downloadable from a directory containing different *.ttl files, *\<type\>* is the (in the ontology context) namespaced class (e.g. `ex:MyClass` if `ex:` is defined in the ontologies context) and *\<binding-name\>* is the name of a *.ttl file in the *bindings* subdirectory of the ontoloy.
 
-Example:
+Example (note `-d` for dry-run):
 
-    python3 ./startDataservice.py  https://industryfusion.github.io/contexts/example/v0.1  iffBaseEntity:Cutter  base_test.ttl
+    python3 startDataservice.py -d -e filter_and_cartridge_subcomponent_entities.ttl examples/ urn:iff:filter1 examples/bindings.ttl
 
 ## Example Setup
 

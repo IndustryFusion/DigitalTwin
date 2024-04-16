@@ -38,23 +38,22 @@ def split_params(param):
 # to read out data from machines or databases.
 # It will update the values in regular intervals
 ##########################################################################################
-async def subscribe(connector_attribute_dict, firmware):
+async def subscribe(map, firmware):
     while True:
-        logic_var_type = connector_attribute_dict['logicVarType']
+        logic_var_type = map['logicVarType']
         try:
-            connector_attr = connector_attribute_dict['connectorAttribute']
+            connector_attr = map['connectorAttribute']
         except:
             pass
-
         if logic_var_type == XSD.boolean:
-            connector_attribute_dict['value'] = Literal(random.choice([True, False]))
+            map['value'] = Literal(random.choice([True, False]))
         elif logic_var_type == XSD.integer:
             lower, upper = split_params(connector_attr)
-            connector_attribute_dict['value'] = Literal(randint(lower, upper))
+            map['value'] = Literal(randint(lower, upper))
         elif logic_var_type == XSD.decimal or logic_var_type == XSD.float or logic_var_type == XSD.double:
             lower, upper = split_params(connector_attr)
-            connector_attribute_dict['value'] = Literal(float(randint(lower, upper)) / 100.0)
-        connector_attribute_dict['updated'] = True
-        connector_attribute_dict['firmware'] = firmware
+            map['value'] = Literal(float(randint(lower, upper)) / 100.0)
+        map['updated'] = True
+        map['firmware'] = firmware
 
         await asyncio.sleep(1)

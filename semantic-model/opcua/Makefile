@@ -19,7 +19,7 @@ LINTER := python3 -m flake8
 PIP := pip
 HELM_DIR := ../../helm/charts/shacl
 NAMESPACE := iff
-TOLINT := nodeset2owl.py lib/nodesetparser.py lib/utils.py
+TOLINT := nodeset2owl.py extractType.py lib/nodesetparser.py lib/utils.py lib/shacl.py lib/entity.py lib/jsonld.py lib/bindings.py
 PYTEST := python3 -m pytest
 
 
@@ -33,5 +33,6 @@ setup-dev: requirements-dev.txt
 	$(PIP) install -r requirements-dev.txt
 
 test:
-	${PYTEST} tests
+	${PYTEST} tests --cov . --cov-fail-under=80
 	(cd tests/nodeset2owl; bash ./test.bash)
+	(cd tests/extractType; bash ./test.bash)

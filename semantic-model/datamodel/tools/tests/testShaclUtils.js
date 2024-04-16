@@ -71,8 +71,12 @@ describe('Test dumpPropertyShape', function () {
       Namespace: () => (x) => 'ngsild:' + x
     };
     const SHACL = (x) => 'shacl:' + x;
+    const BASE = (x) => 'base:' + x;
+    const RDF = (x) => 'rdf:' + x;
     const revert = ToTest.__set__('$rdf', $rdf);
     ToTest.__set__('SHACL', SHACL);
+    ToTest.__set__('BASE', BASE);
+    ToTest.__set__('RDF', RDF);
     ToTest.__set__('globalPrefixHash', { 'ngsi-ld': 'ngsi-ld' });
     const dumpPropertyShape = ToTest.__get__('dumpPropertyShape');
     dumpPropertyShape(propertyShape, store);
@@ -80,6 +84,7 @@ describe('Test dumpPropertyShape', function () {
       ['propertyNode', 'shacl:minCount', 1],
       ['propertyNode', 'shacl:maxCount', 2],
       ['propertyNode', 'shacl:nodeKind', 'shacl:BlankNode'],
+      ['propertyNode', 'rdf:type', 'base:Property'],
       ['propertyNode', 'shacl:path', 'path'],
       ['propertyNode', 'shacl:property', {}],
       [{}, 'shacl:path', 'ngsild:hasValue'],
@@ -102,8 +107,12 @@ describe('Test dumpPropertyShape', function () {
       Namespace: () => (x) => 'ngsild:' + x
     };
     const SHACL = (x) => 'shacl:' + x;
+    const BASE = (x) => 'base:' + x;
+    const RDF = (x) => 'rdf:' + x;
     const revert = ToTest.__set__('$rdf', $rdf);
     ToTest.__set__('SHACL', SHACL);
+    ToTest.__set__('BASE', BASE);
+    ToTest.__set__('RDF', RDF);
     ToTest.__set__('globalPrefixHash', { 'ngsi-ld': 'ngsi-ld' });
     const dumpPropertyShape = ToTest.__get__('dumpPropertyShape');
     dumpPropertyShape(propertyShape, store);
@@ -111,6 +120,7 @@ describe('Test dumpPropertyShape', function () {
       ['propertyNode', 'shacl:minCount', 0],
       ['propertyNode', 'shacl:maxCount', 2],
       ['propertyNode', 'shacl:nodeKind', 'shacl:BlankNode'],
+      ['propertyNode', 'rdf:type', 'base:Property'],
       ['propertyNode', 'shacl:path', 'path'],
       ['propertyNode', 'shacl:property', {}],
       [{}, 'shacl:path', 'ngsild:hasValue'],
@@ -122,7 +132,7 @@ describe('Test dumpPropertyShape', function () {
     revert();
   });
   it('Should dump relationship without constraints', function () {
-    const propertyShape = new ToTest.PropertyShape(1, 1, 'nodeKind', 'relationship', false);
+    const propertyShape = new ToTest.PropertyShape(1, 1, 'nodeKind', 'relationship', false, true);
     propertyShape.propertyNode = 'propertyNode';
     const storeAdds = [];
     const store = {
@@ -142,6 +152,7 @@ describe('Test dumpPropertyShape', function () {
       ['propertyNode', 'shacl:minCount', 1],
       ['propertyNode', 'shacl:maxCount', 1],
       ['propertyNode', 'shacl:nodeKind', 'shacl:BlankNode'],
+      ['propertyNode', 'rdf:type', 'base:SubComponentRelationship'],
       ['propertyNode', 'shacl:path', 'relationship'],
       ['propertyNode', 'shacl:property', {}],
       [{}, 'shacl:path', 'ngsild:hasObject'],
@@ -313,7 +324,8 @@ describe('Test scanProperties', function () {
               params: [
                 'Testing']
             }],
-          isProperty: true
+          isProperty: true,
+          isSubComponent: false
         }
       ]
     };
@@ -327,6 +339,7 @@ describe('Test scanProperties', function () {
       properties: {
         hasFilter: {
           relationship: 'eclass:0173-1#01-ACK991#016',
+          relationship_type: 'subcomponent',
           $ref: 'https://industry-fusion.org/base-objects/v0.1/link'
         }
       }
@@ -345,7 +358,8 @@ describe('Test scanProperties', function () {
               params: 'sym:eclass:0173-1#01-ACK991#016'
             }
           ],
-          isProperty: false
+          isProperty: false,
+          isSubComponent: true
         }]
     };
     const nodeShape = new ToTest.NodeShape('targetClass');
@@ -389,7 +403,8 @@ describe('Test scanProperties', function () {
           ]
             }
           ],
-          isProperty: true
+          isProperty: true,
+          isSubComponent: false
         }
       ]
     };

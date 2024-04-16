@@ -1,0 +1,408 @@
+[
+    {
+        "type": "http://opcfoundation.org/UA/Pumps/DriveMeasurementsType",
+        "id": "urn:test:ExamplePump:sub:i5006",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "uaentity:hasFrequency": {
+            "type": "Property",
+            "value": 0.0
+        },
+        "uaentity:hasMotorVoltage": {
+            "type": "Property",
+            "value": 0.0
+        },
+        "uaentity:hasDriverPowerInput": {
+            "type": "Property",
+            "value": 0.0
+        },
+        "uaentity:hasMotorCurrent": {
+            "type": "Property",
+            "value": 0.0
+        },
+        "uaentity:hasEnergyConsumption": {
+            "type": "Property",
+            "value": 0.0
+        },
+        "uaentity:hasMotorTemperature": {
+            "type": "Property",
+            "value": 0.0
+        }
+    },
+    {
+        "type": "http://opcfoundation.org/UA/Pumps/DrivePortType",
+        "id": "urn:test:ExamplePump:sub:i5004",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "uaentity:hasMeasurements": {
+            "type": "Relationship",
+            "object": "urn:test:ExamplePump:sub:i5006"
+        }
+    },
+    {
+        "type": "http://opcfoundation.org/UA/Pumps/PortsGroupType",
+        "id": "urn:test:ExamplePump:sub:i5003",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "uaentity:has%3CDrive%3E": {
+            "type": "Relationship",
+            "object": "urn:test:ExamplePump:sub:i5004"
+        }
+    },
+    {
+        "type": "http://opcfoundation.org/UA/Pumps/DesignType",
+        "id": "urn:test:ExamplePump:sub:i5021",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "uaentity:hasMaximumAllowableContinuousSpeed": {
+            "type": "Property",
+            "value": 56.67
+        },
+        "uaentity:hasOfferedControlModes": {
+            "type": "Property",
+            "value": ""
+        },
+        "uaentity:hasPumpClass": {
+            "type": "Property",
+            "value": {
+                "@id": "http://opcfoundation.org/UA/Pumps/LiquidPump"
+            }
+        },
+        "uaentity:hasMaximumPumpPowerInput": {
+            "type": "Property",
+            "value": 85.0
+        },
+        "uaentity:hasMaximumAllowableHead": {
+            "type": "Property",
+            "value": 6.3
+        },
+        "uaentity:hasClockwiseRotation": {
+            "type": "Property",
+            "value": true
+        },
+        "uaentity:hasMinimumAllowableContinuousSpeed": {
+            "type": "Property",
+            "value": 23.33
+        },
+        "uaentity:hasMinimumAllowableAmbientTemperature": {
+            "type": "Property",
+            "value": 278.15
+        },
+        "uaentity:hasControllable": {
+            "type": "Property",
+            "value": false
+        },
+        "uaentity:hasOfferedFieldbuses": {
+            "type": "Property",
+            "value": ""
+        },
+        "uaentity:hasMaximumAllowableRelativeHumidity": {
+            "type": "Property",
+            "value": 80.0
+        },
+        "uaentity:hasMaximumAllowableAmbientTemperature": {
+            "type": "Property",
+            "value": 343.15
+        }
+    },
+    {
+        "type": "http://opcfoundation.org/UA/Pumps/SystemRequirementsType",
+        "id": "urn:test:ExamplePump:sub:i5022",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "uaentity:hasFieldbus": {
+            "type": "Property",
+            "value": {
+                "@id": "http://opcfoundation.org/UA/Pumps/BACnet_MSTP"
+            }
+        }
+    },
+    {
+        "type": "http://opcfoundation.org/UA/Pumps/ConfigurationGroupType",
+        "id": "urn:test:ExamplePump:sub:i5020",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "uaentity:hasDesign": {
+            "type": "Relationship",
+            "object": "urn:test:ExamplePump:sub:i5021"
+        },
+        "uaentity:hasSystemRequirements": {
+            "type": "Relationship",
+            "object": "urn:test:ExamplePump:sub:i5022"
+        }
+    },
+    {
+        "type": "http://opcfoundation.org/UA/Pumps/SupervisionProcessFluidType",
+        "id": "urn:test:ExamplePump:sub:i5010",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "uaentity:hasTemperature": {
+            "type": "Property",
+            "value": false
+        },
+        "uaentity:hasBlockage": {
+            "type": "Property",
+            "value": false
+        }
+    },
+    {
+        "type": "http://opcfoundation.org/UA/Pumps/SupervisionPumpOperationType",
+        "id": "urn:test:ExamplePump:sub:i5011",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "uaentity:hasMaximumOperationTime": {
+            "type": "Property",
+            "value": false
+        },
+        "uaentity:hasMaximumNumberStarts": {
+            "type": "Property",
+            "value": false
+        }
+    },
+    {
+        "type": "http://opcfoundation.org/UA/Pumps/SupervisionMechanicsType",
+        "id": "urn:test:ExamplePump:sub:i5009",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "uaentity:hasRotorBlocked": {
+            "type": "Property",
+            "value": false
+        },
+        "uaentity:hasUnbalance": {
+            "type": "Property",
+            "value": false
+        },
+        "uaentity:hasExcessVibration": {
+            "type": "Property",
+            "value": false
+        }
+    },
+    {
+        "type": "http://opcfoundation.org/UA/Pumps/SupervisionType",
+        "id": "urn:test:ExamplePump:sub:i5008",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "uaentity:hasSupervisionProcessFluid": {
+            "type": "Relationship",
+            "object": "urn:test:ExamplePump:sub:i5010"
+        },
+        "uaentity:hasSupervisionPumpOperation": {
+            "type": "Relationship",
+            "object": "urn:test:ExamplePump:sub:i5011"
+        },
+        "uaentity:hasSupervisionMechanics": {
+            "type": "Relationship",
+            "object": "urn:test:ExamplePump:sub:i5009"
+        }
+    },
+    {
+        "type": "http://opcfoundation.org/UA/Pumps/DocumentationType",
+        "id": "urn:test:ExamplePump:sub:i5005",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "uaentity:hasTechnicalDataLink": {
+            "type": "Property",
+            "value": "www.LinkToTechnicalData.com/example"
+        }
+    },
+    {
+        "type": "http://opcfoundation.org/UA/Pumps/PreventiveMaintenanceType",
+        "id": "urn:test:ExamplePump:sub:i5015",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "uaentity:hasNextInspectionDate": {
+            "type": "Property",
+            "value": "2022-05-01T10:00:00Z"
+        },
+        "uaentity:hasNextServicingDate": {
+            "type": "Property",
+            "value": "2022-05-01T10:00:00Z"
+        },
+        "uaentity:hasInstallationDate": {
+            "type": "Property",
+            "value": "2021-05-01T10:00:00Z"
+        },
+        "uaentity:hasLastInspectionDate": {
+            "type": "Property",
+            "value": "2021-05-01T10:00:00Z"
+        },
+        "uaentity:hasLastServicingDate": {
+            "type": "Property",
+            "value": "2021-05-01T10:00:00Z"
+        }
+    },
+    {
+        "type": "http://opcfoundation.org/UA/Pumps/GeneralMaintenanceType",
+        "id": "urn:test:ExamplePump:sub:i5014",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "uaentity:hasActiveMaintenanceTime": {
+            "type": "Property",
+            "value": 0.0
+        },
+        "uaentity:hasOperatingTime": {
+            "type": "Property",
+            "value": 0.0
+        }
+    },
+    {
+        "type": "http://opcfoundation.org/UA/Pumps/BreakdownMaintenanceType",
+        "id": "urn:test:ExamplePump:sub:i5013",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "uaentity:hasFailure": {
+            "type": "Property",
+            "value": false
+        },
+        "uaentity:hasNumberOfFailures": {
+            "type": "Property",
+            "value": 0
+        }
+    },
+    {
+        "type": "http://opcfoundation.org/UA/Pumps/MaintenanceGroupType",
+        "id": "urn:test:ExamplePump:sub:i5012",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "uaentity:hasPreventiveMaintenance": {
+            "type": "Relationship",
+            "object": "urn:test:ExamplePump:sub:i5015"
+        },
+        "uaentity:hasGeneralMaintenance": {
+            "type": "Relationship",
+            "object": "urn:test:ExamplePump:sub:i5014"
+        },
+        "uaentity:hasBreakdownMaintenance": {
+            "type": "Relationship",
+            "object": "urn:test:ExamplePump:sub:i5013"
+        }
+    },
+    {
+        "type": "http://opcfoundation.org/UA/Pumps/PumpActuationType",
+        "id": "urn:test:ExamplePump:sub:i5017",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "uaentity:hasActualControlMode": {
+            "type": "Property",
+            "value": {
+                "@id": "http://opcfoundation.org/UA/Pumps/ConstantPressureControl"
+            }
+        },
+        "uaentity:hasOnOff": {
+            "type": "Property",
+            "value": false
+        }
+    },
+    {
+        "type": "http://opcfoundation.org/UA/Pumps/VibrationMeasurementType",
+        "id": "urn:test:ExamplePump:sub:i5019",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "uaentity:hasOverallVibrationAcceleration0_P": {
+            "type": "Property",
+            "value": 0.0
+        },
+        "uaentity:hasOverallVibrationAccelerationP_P": {
+            "type": "Property",
+            "value": 0.0
+        },
+        "uaentity:hasOverallVibrationAccelerationPerG0_P": {
+            "type": "Property",
+            "value": 0.0
+        }
+    },
+    {
+        "type": "http://opcfoundation.org/UA/Pumps/MeasurementsType",
+        "id": "urn:test:ExamplePump:sub:i5018",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "uaentity:hasSensor1": {
+            "type": "Relationship",
+            "object": "urn:test:ExamplePump:sub:i5019"
+        },
+        "uaentity:hasSpeed": {
+            "type": "Property",
+            "value": 0.0
+        },
+        "uaentity:hasFluidTemperature": {
+            "type": "Property",
+            "value": 0.0
+        },
+        "uaentity:hasDifferentialPressure": {
+            "type": "Property",
+            "value": 0.0
+        },
+        "uaentity:hasPumpPowerInput": {
+            "type": "Property",
+            "value": 0.0
+        },
+        "uaentity:hasNumberOfStarts": {
+            "type": "Property",
+            "value": 0
+        }
+    },
+    {
+        "type": "http://opcfoundation.org/UA/Pumps/OperationalGroupType",
+        "id": "urn:test:ExamplePump:sub:i5016",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "uaentity:hasPumpActuation": {
+            "type": "Relationship",
+            "object": "urn:test:ExamplePump:sub:i5017"
+        },
+        "uaentity:hasMeasurements": {
+            "type": "Relationship",
+            "object": "urn:test:ExamplePump:sub:i5018"
+        }
+    },
+    {
+        "type": "http://opcfoundation.org/UA/Pumps/PumpType",
+        "id": "urn:test:ExamplePump",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "uaentity:hasPorts": {
+            "type": "Relationship",
+            "object": "urn:test:ExamplePump:sub:i5003"
+        },
+        "uaentity:hasConfiguration": {
+            "type": "Relationship",
+            "object": "urn:test:ExamplePump:sub:i5020"
+        },
+        "uaentity:hasEvents": {
+            "type": "Relationship",
+            "object": "urn:test:ExamplePump:sub:i5008"
+        },
+        "uaentity:hasDocumentation": {
+            "type": "Relationship",
+            "object": "urn:test:ExamplePump:sub:i5005"
+        },
+        "uaentity:hasMaintenance": {
+            "type": "Relationship",
+            "object": "urn:test:ExamplePump:sub:i5012"
+        },
+        "uaentity:hasOperational": {
+            "type": "Relationship",
+            "object": "urn:test:ExamplePump:sub:i5016"
+        }
+    }
+]

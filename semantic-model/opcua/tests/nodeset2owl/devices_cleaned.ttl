@@ -9,43 +9,56 @@ devices: a owl:Ontology ;
     owl:versionIRI <http://example.com/v0.1/DI/> ;
     owl:versionInfo 1e-01 .
 
-devices:CHECK_FUNCTION a devices:DeviceHealthEnumeration ;
+devices:CHECK_FUNCTION a devices:DeviceHealthEnumeration,
+        owl:NamedIndividual ;
     base:hasFieldName "CHECK_FUNCTION" .
 
-devices:Current a devices:SoftwareVersionFileType ;
+devices:Current a devices:SoftwareVersionFileType,
+        owl:NamedIndividual ;
     base:hasFieldName "Current" .
 
-devices:FAILURE a devices:DeviceHealthEnumeration ;
+devices:FAILURE a devices:DeviceHealthEnumeration,
+        owl:NamedIndividual ;
     base:hasFieldName "FAILURE" .
 
-devices:Fallback a devices:SoftwareVersionFileType ;
+devices:Fallback a devices:SoftwareVersionFileType,
+        owl:NamedIndividual ;
     base:hasFieldName "Fallback" .
 
-devices:KeepsParameters a devices:UpdateBehavior ;
+devices:KeepsParameters a devices:UpdateBehavior,
+        owl:NamedIndividual ;
     base:hasFieldName "KeepsParameters" .
 
-devices:MAINTENANCE_REQUIRED a devices:DeviceHealthEnumeration ;
+devices:MAINTENANCE_REQUIRED a devices:DeviceHealthEnumeration,
+        owl:NamedIndividual ;
     base:hasFieldName "MAINTENANCE_REQUIRED" .
 
-devices:NORMAL a devices:DeviceHealthEnumeration ;
+devices:NORMAL a devices:DeviceHealthEnumeration,
+        owl:NamedIndividual ;
     base:hasFieldName "NORMAL" .
 
-devices:NeedsPreparation a devices:UpdateBehavior ;
+devices:NeedsPreparation a devices:UpdateBehavior,
+        owl:NamedIndividual ;
     base:hasFieldName "NeedsPreparation" .
 
-devices:OFF_SPEC a devices:DeviceHealthEnumeration ;
+devices:OFF_SPEC a devices:DeviceHealthEnumeration,
+        owl:NamedIndividual ;
     base:hasFieldName "OFF_SPEC" .
 
-devices:Pending a devices:SoftwareVersionFileType ;
+devices:Pending a devices:SoftwareVersionFileType,
+        owl:NamedIndividual ;
     base:hasFieldName "Pending" .
 
-devices:RequiresPowerCycle a devices:UpdateBehavior ;
+devices:RequiresPowerCycle a devices:UpdateBehavior,
+        owl:NamedIndividual ;
     base:hasFieldName "RequiresPowerCycle" .
 
-devices:WillDisconnect a devices:UpdateBehavior ;
+devices:WillDisconnect a devices:UpdateBehavior,
+        owl:NamedIndividual ;
     base:hasFieldName "WillDisconnect" .
 
-devices:WillReboot a devices:UpdateBehavior ;
+devices:WillReboot a devices:UpdateBehavior,
+        owl:NamedIndividual ;
     base:hasFieldName "WillReboot" .
 
 devices:nodei1 a opcua:ObjectTypeNodeClass ;
@@ -655,7 +668,8 @@ devices:DiameterIndicationType a owl:Class ;
 devices:DirectLoadingType a owl:Class ;
     rdfs:subClassOf devices:PackageLoadingType .
 
-devices:EndOfResults a base:Field ;
+devices:EndOfResults a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Boolean ;
     base:hasFieldName "EndOfResults" .
 
@@ -699,7 +713,8 @@ devices:LifetimeVariableType a owl:Class ;
 devices:MaintenanceRequiredAlarmType a owl:Class ;
     rdfs:subClassOf devices:DeviceHealthDiagnosticAlarmType .
 
-devices:NodePath a base:Field ;
+devices:NodePath a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:QualifiedName ;
     base:hasFieldName "NodePath" .
 
@@ -714,11 +729,13 @@ devices:NumberOfUsagesIndicationType a owl:Class ;
 devices:OffSpecAlarmType a owl:Class ;
     rdfs:subClassOf devices:DeviceHealthDiagnosticAlarmType .
 
-devices:ParameterDefs a base:Field ;
+devices:ParameterDefs a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype devices:ParameterResultDataType ;
     base:hasFieldName "ParameterDefs" .
 
-devices:SequenceNumber a base:Field ;
+devices:SequenceNumber a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Int32 ;
     base:hasFieldName "SequenceNumber" .
 
@@ -728,11 +745,13 @@ devices:SoftwareType a owl:Class ;
 devices:SoftwareUpdateType a owl:Class ;
     rdfs:subClassOf opcua:BaseObjectType .
 
-devices:Status a base:Field ;
+devices:Status a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Int32 ;
     base:hasFieldName "Status" .
 
-devices:StatusCode a base:Field ;
+devices:StatusCode a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:StatusCode ;
     base:hasFieldName "StatusCode" .
 
@@ -4367,7 +4386,8 @@ devices:ConnectsTo a owl:Class,
         owl:ObjectProperty ;
     rdfs:subClassOf opcua:HierarchicalReferences .
 
-devices:Diagnostics a base:Field ;
+devices:Diagnostics a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:DiagnosticInfo ;
     base:hasFieldName "Diagnostics" .
 

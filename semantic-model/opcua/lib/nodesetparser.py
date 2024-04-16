@@ -154,7 +154,7 @@ class NodesetParser:
         if args.namespace is None:
             models = self.root.find('opcua:Models', self.xml_ns)
             if models is None:
-                print("Error: Namespace cannot be retrieved, plase set it explicitly.")
+                print("Error: Namespace cannot be retrieved, please set it explicitly.")
                 exit(1)
             model = models.find('opcua:Model', self.xml_ns)
             self.ontology_name = URIRef(model.get('ModelUri'))
@@ -446,6 +446,7 @@ Did you forget to import it?")
                     self.g.add((typeIri, self.rdf_ns['base']['hasField'], itemname))
                 else:  # Enumtype is considered as instance of class
                     self.g.add((itemname, RDF.type, typeIri))
+                self.g.add((itemname, RDF.type, OWL.NamedIndividual))
                 if value is not None:
                     bnode = BNode()
                     bbnode = self.rdf_ns['base']['_' + str(bnode)]

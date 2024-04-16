@@ -1,0 +1,51 @@
+@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+@prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix shacl: <http://my.test/shacl/> .
+@prefix test: <http://my.test/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+shacl:AlphaTypeShape a sh:NodeShape ;
+    sh:property [ a base:SubComponentRelationship ;
+            sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path <http://my.test/entity/hasB> ;
+            sh:property [ sh:class test:BType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path <http://my.test/entity/hasC> ;
+            sh:property [ sh:datatype xsd:double ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:Literal ;
+                    sh:path ngsi-ld:hasValue ] ] ;
+    sh:targetClass test:AlphaType .
+
+shacl:BTypeShape a sh:NodeShape ;
+    sh:property [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path <http://my.test/entity/hasMyVariable> ;
+            sh:property [ sh:datatype xsd:boolean ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:Literal ;
+                    sh:path ngsi-ld:hasValue ] ],
+        [ a base:PeerRelationship ;
+            sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:X ;
+            sh:property [ sh:class test:AlphaType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ] ;
+    sh:targetClass test:BType .
+

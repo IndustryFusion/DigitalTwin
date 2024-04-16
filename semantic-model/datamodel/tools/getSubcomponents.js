@@ -44,6 +44,11 @@ const argv = yargs
     description: 'Entity Files containing description of attributes',
     type: 'array'
   })
+  .option('shacl', {
+    alias: 's',
+    description: 'SHACL File for the object model',
+    type: 'string'
+  })
   .option('token', {
     alias: 't',
     description: 'Token for rest call',
@@ -60,16 +65,16 @@ function namespace (baseIRI) {
 const NGSILD = namespace('https://uri.etsi.org/ngsi-ld/');
 
 // Read in all the entity files
-const entitiesstore = new N3.Store();
+const ontstore = new N3.Store();
 
-const loadEntities = async (entities) => {
-  if (entities && entities.length > 0) {
-    for (const entity of entities) {
+const loadOntologies = async (ont) => {
+  if (ont && ont.length > 0) {
+    for (const entity of ont) {
       const parser = new N3.Parser();
       const ttlContent = fs.readFileSync(entity, 'utf8');
       parser.parse(ttlContent, (error, quad) => {
         if (quad) {
-          entitiesstore.addQuad(quad);
+          ontstore.addQuad(quad);
         } else if (error) {
           console.error('Parsing error:', error);
         }
@@ -157,38 +162,47 @@ const analyseNgsildObject = async (id, brokerUrl, token) => {
     return;
   }
 
-  const quadsFromEntitiesStore = entitiesstore.getQuads(null, null, null, null);
+  const quadsFromEntitiesStore = ontstore.getQuads(null, null, null, null);
   store.addQuads(quadsFromEntitiesStore);
 
   const bindingsStream = await myEngine.queryBindings(`
-    PREFIX base: <https://industryfusion.github.io/contexts/ontology/v0/base/>
-    PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
-    SELECT ?s ?id
+  PREFIX base: <https://industryfusion.github.io/contexts/ontology/v0/base/>
+  PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
+  PREFIX sh: <http://www.w3.org/ns/shacl#>
+  SELECT ?id ?type ?attribute
     WHERE {
-      ?b a ngsild:Relationship .
-      ?s a base:SubComponentRelationship .
-      ?id ?s ?b .
+     ?id a ?type .
+     ?id ?attribute ?blank .
+     ?blank a ngsild:Relationship .
+     ?shape a sh:NodeShape .
+     ?shape sh:property ?property .
+     ?property sh:path ?attribute .
+     ?property a base:SubComponentRelationship .
     }`,
   { sources: [store] }
   );
 
   const bindings = await bindingsStream.toArray();
   for (const binding of bindings) {
-    const s = binding.get('s').value;
+    const s = binding.get('attribute').value;
     const triples = store.getQuads(null, s, null, null);
     for (const quad of triples) {
       const ngsildObjects = store.getQuads(quad.object, NGSILD('hasObject'), null, null);
       for (const ngsildObject of ngsildObjects) {
         const subId = ngsildObject.object.value;
-        subids.push(subId);
-        await analyseNgsildObject(subId, brokerUrl, token);
+        if (!subids.includes(subId)) {
+          subids.push(subId);
+          await analyseNgsildObject(subId, brokerUrl, token);
+        }
       }
     }
   }
 };
 
 (async () => {
-  await loadEntities(argv.entities);
+  const ontologies = argv.entities;
+  ontologies.push(argv.shacl);
+  await loadOntologies(ontologies);
   await analyseNgsildObject(argv._[0], argv['broker-url'], argv.token);
 
   let cmdlineargs = '';

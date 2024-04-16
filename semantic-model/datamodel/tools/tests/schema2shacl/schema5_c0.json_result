@@ -1,10 +1,12 @@
 @prefix sh: <http://www.w3.org/ns/shacl#>.
+@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/>.
 @prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/>.
 
 <https://industry-fusion.org/knowledge/v0.1/0173-1#01-ADN228#012Shape>
     a sh:NodeShape;
     sh:property
             [
+                a base:Property;
                 sh:maxCount 1;
                 sh:minCount 0;
                 sh:nodeKind sh:BlankNode;
@@ -19,6 +21,7 @@
                         ]
             ],
             [
+                a base:Property;
                 sh:maxCount 1;
                 sh:minCount 1;
                 sh:nodeKind sh:BlankNode;

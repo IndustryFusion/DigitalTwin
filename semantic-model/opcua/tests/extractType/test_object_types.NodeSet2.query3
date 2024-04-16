@@ -1,0 +1,4 @@
+ask where {
+    test:AlphaType a owl:Class ;
+    rdfs:subClassOf opcua:BaseObjectType .
+}

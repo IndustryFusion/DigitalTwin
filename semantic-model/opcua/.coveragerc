@@ -1,0 +1,2 @@
+[run]
+omit = extractType.py,nodeset2owl.py

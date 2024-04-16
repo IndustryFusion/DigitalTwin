@@ -1,0 +1,32 @@
+[
+    {
+        "type": "http://my.test/BWrongType",
+        "id": "urn:test:AlphaInstance:sub:i2012",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "uaentity:hasMyVariable": {
+            "type": "Property",
+            "value": false
+        }
+    },
+    {
+        "type": "http://my.test/AlphaType",
+        "id": "urn:test:AlphaInstance",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "uaentity:hasC": {
+            "type": "Property",
+            "value": 0.0
+        },
+        "uaentity:hasB": {
+            "type": "Relationship",
+            "object": "urn:test:AlphaInstance:sub:i2012"
+        },
+        "test:Y": {
+            "type": "Relationship",
+            "object": "urn:test:AlphaInstance:sub:i2012"
+        }
+    }
+]
