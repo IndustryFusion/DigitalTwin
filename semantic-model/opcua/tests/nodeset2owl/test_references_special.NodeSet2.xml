@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+
+-->
+
+<UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" LastModified="2024-07-15T00:00:00Z" xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
+  <Models>
+    <Model ModelUri="http://test/UA/" XmlSchemaUri="http://opcfoundation.org/UA/2008/02/Types.xsd" Version="1.05.03" PublicationDate="2024-07-29T00:00:00Z" ModelVersion="1.5.3" />
+  </Models>
+  <Aliases>
+    <Alias Alias="Boolean">i=1</Alias>
+    <Alias Alias="SByte">i=2</Alias>
+    <Alias Alias="Byte">i=3</Alias>
+    <Alias Alias="Int16">i=4</Alias>
+    <Alias Alias="UInt16">i=5</Alias>
+    <Alias Alias="Int32">i=6</Alias>
+    <Alias Alias="UInt32">i=7</Alias>
+    <Alias Alias="Int64">i=8</Alias>
+    <Alias Alias="UInt64">i=9</Alias>
+    <Alias Alias="Float">i=10</Alias>
+    <Alias Alias="Double">i=11</Alias>
+    <Alias Alias="DateTime">i=13</Alias>
+    <Alias Alias="String">i=12</Alias>
+    <Alias Alias="ByteString">i=15</Alias>
+    <Alias Alias="Guid">i=14</Alias>
+    <Alias Alias="XmlElement">i=16</Alias>
+    <Alias Alias="NodeId">i=17</Alias>
+    <Alias Alias="ExpandedNodeId">i=18</Alias>
+    <Alias Alias="QualifiedName">i=20</Alias>
+    <Alias Alias="LocalizedText">i=21</Alias>
+    <Alias Alias="StatusCode">i=19</Alias>
+    <Alias Alias="Structure">i=22</Alias>
+    <Alias Alias="Number">i=26</Alias>
+    <Alias Alias="Integer">i=27</Alias>
+    <Alias Alias="UInteger">i=28</Alias>
+    <Alias Alias="HasComponent">i=47</Alias>
+    <Alias Alias="HasProperty">i=46</Alias>
+    <Alias Alias="Organizes">i=35</Alias>
+    <Alias Alias="HasEventSource">i=36</Alias>
+    <Alias Alias="HasNotifier">i=48</Alias>
+    <Alias Alias="HasSubtype">i=45</Alias>
+    <Alias Alias="HasTypeDefinition">i=40</Alias>
+    <Alias Alias="HasModellingRule">i=37</Alias>
+    <Alias Alias="HasEncoding">i=38</Alias>
+    <Alias Alias="HasDescription">i=39</Alias>
+    <Alias Alias="HasCause">i=53</Alias>
+    <Alias Alias="ToState">i=52</Alias>
+    <Alias Alias="FromState">i=51</Alias>
+    <Alias Alias="HasEffect">i=54</Alias>
+    <Alias Alias="HasTrueSubState">i=9004</Alias>
+    <Alias Alias="HasFalseSubState">i=9005</Alias>
+    <Alias Alias="HasDictionaryEntry">i=17597</Alias>
+    <Alias Alias="HasCondition">i=9006</Alias>
+    <Alias Alias="HasGuard">i=15112</Alias>
+    <Alias Alias="HasAddIn">i=17604</Alias>
+    <Alias Alias="HasInterface">i=17603</Alias>
+  </Aliases>
+  <UAReferenceType NodeId="i=31" BrowseName="References" IsAbstract="true" Symmetric="true">
+    <DisplayName>References</DisplayName>
+    <Category>Base Info Base Types</Category>
+    <Documentation>https://reference.opcfoundation.org/v105/Core/docs/Part5/11.1</Documentation>
+    <References />
+  </UAReferenceType>
+  <UAReferenceType NodeId="i=32" BrowseName="NonHierarchicalReferences" IsAbstract="true" Symmetric="true">
+    <DisplayName>NonHierarchicalReferences</DisplayName>
+    <Category>Base Info Base Types</Category>
+    <Documentation>https://reference.opcfoundation.org/v105/Core/docs/Part5/11.3</Documentation>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=31</Reference>
+    </References>
+  </UAReferenceType>
+      <UAReferenceType NodeId="i=33" BrowseName="HierarchicalReferences" IsAbstract="true">
+    <DisplayName>HierarchicalReferences</DisplayName>
+    <Category>Base Info Base Types</Category>
+    <Documentation>https://reference.opcfoundation.org/v105/Core/docs/Part5/11.2</Documentation>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=31</Reference>
+    </References>
+    <InverseName>InverseHierarchicalReferences</InverseName>
+  </UAReferenceType>
+  <UAReferenceType NodeId="i=34" BrowseName="HasChild" IsAbstract="true">
+    <DisplayName>HasChild</DisplayName>
+    <Category>Base Info Base Types</Category>
+    <Documentation>https://reference.opcfoundation.org/v105/Core/docs/Part5/11.4</Documentation>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=33</Reference>
+    </References>
+    <InverseName>ChildOf</InverseName>
+  </UAReferenceType>
+
+  <UAObject NodeId="i=78" BrowseName="Mandatory" SymbolicName="ModellingRule_Mandatory">
+    <DisplayName>Mandatory</DisplayName>
+    <Description>Specifies that an instance with the attributes and references of the instance declaration must appear when a type is instantiated.</Description>
+    <Category>Base Info Base Types</Category>
+    <Documentation>https://reference.opcfoundation.org/v105/Core/docs/Part5/8.3.4</Documentation>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=77</Reference>
+    </References>
+  </UAObject>
+  <UAReferenceType NodeId="i=37" BrowseName="HasModellingRule">
+    <DisplayName>HasModellingRule</DisplayName>
+    <Category>Base Info Base Types</Category>
+    <Documentation>https://reference.opcfoundation.org/v105/Core/docs/Part5/11.11</Documentation>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=32</Reference>
+    </References>
+    <InverseName>ModellingRuleOf</InverseName>
+  </UAReferenceType>
+  <UAReferenceType NodeId="i=35" BrowseName="Organizes">
+    <DisplayName>Organizes</DisplayName>
+    <Category>Base Info Base Types</Category>
+    <Documentation>https://reference.opcfoundation.org/v105/Core/docs/Part5/11.6</Documentation>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=33</Reference>
+    </References>
+    <InverseName>OrganizedBy</InverseName>
+  </UAReferenceType>
+  <UAReferenceType NodeId="i=44" BrowseName="Aggregates" IsAbstract="true">
+    <DisplayName>Aggregates</DisplayName>
+    <Category>Base Info Base Types</Category>
+    <Documentation>https://reference.opcfoundation.org/v105/Core/docs/Part5/11.5</Documentation>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=34</Reference>
+    </References>
+    <InverseName>AggregatedBy</InverseName>
+  </UAReferenceType>
+  <UAReferenceType NodeId="i=46" BrowseName="HasProperty">
+    <DisplayName>HasProperty</DisplayName>
+    <Category>Base Info Base Types</Category>
+    <Documentation>https://reference.opcfoundation.org/v105/Core/docs/Part5/11.9</Documentation>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=44</Reference>
+    </References>
+    <InverseName>PropertyOf</InverseName>
+  </UAReferenceType>
+  <UAReferenceType NodeId="i=47" BrowseName="HasComponent">
+    <DisplayName>HasComponent</DisplayName>
+    <Category>Base Info Base Types</Category>
+    <Documentation>https://reference.opcfoundation.org/v105/Core/docs/Part5/11.7</Documentation>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=44</Reference>
+    </References>
+    <InverseName>ComponentOf</InverseName>
+  </UAReferenceType>
+  <UAObjectType NodeId="i=58" BrowseName="BaseObjectType">
+    <DisplayName>BaseObjectType</DisplayName>
+    <Category>Base Info Base Types</Category>
+    <Documentation>https://reference.opcfoundation.org/v105/Core/docs/Part5/6.2</Documentation>
+    <References />
+  </UAObjectType>
+  <UAObjectType NodeId="i=77" BrowseName="ModellingRuleType">
+    <DisplayName>ModellingRuleType</DisplayName>
+    <Category>Base Info Base Types</Category>
+    <Documentation>https://reference.opcfoundation.org/v105/Core/docs/Part5/6.5</Documentation>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+    </References>
+  </UAObjectType>
+  <UAReferenceType NodeId="i=17604" BrowseName="HasAddIn">
+    <DisplayName>HasAddIn</DisplayName>
+    <Category>Address Space AddIn Reference</Category>
+    <Documentation>https://reference.opcfoundation.org/v105/Core/docs/Part5/11.21</Documentation>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=47</Reference>
+    </References>
+    <InverseName>AddInOf</InverseName>
+  </UAReferenceType>
+  <UAVariableType NodeId="i=62" BrowseName="BaseVariableType" IsAbstract="true" ValueRank="-2">
+    <DisplayName>BaseVariableType</DisplayName>
+    <Category>Base Info Base Types</Category>
+    <Documentation>https://reference.opcfoundation.org/v105/Core/docs/Part5/7.2</Documentation>
+    <References />
+  </UAVariableType>
+
+   <UAReferenceType NodeId="i=31" BrowseName="References" IsAbstract="true" Symmetric="true">
+    <DisplayName>References</DisplayName>
+    <Category>Base Info Base Types</Category>
+    <References />
+  </UAReferenceType>
+    <UAReferenceType NodeId="i=33" BrowseName="HierarchicalReferences" IsAbstract="true">
+    <DisplayName>HierarchicalReferences</DisplayName>
+    <Category>Base Info Base Types</Category>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=31</Reference>
+    </References>
+    <InverseName>InverseHierarchicalReferences</InverseName>
+  </UAReferenceType>
+    <UADataType NodeId="i=24" BrowseName="BaseDataType" IsAbstract="true">
+    <DisplayName>BaseDataType</DisplayName>
+    <Category>Base Info Base Types</Category>
+    <References />
+  </UADataType>
+  <UADataType NodeId="i=26" BrowseName="Number" IsAbstract="true">
+    <DisplayName>Number</DisplayName>
+    <Category>Base Info Base Types</Category>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=24</Reference>
+    </References>
+  </UADataType>
+  <UAReferenceType NodeId="i=32558" BrowseName="MyTestReference">
+    <DisplayName>HasMyTestReference</DisplayName>
+    <Category>Test Reference</Category>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=33</Reference>
+    </References>
+  </UAReferenceType>
+  <UAReferenceType NodeId="i=17603" BrowseName="HasInterface">
+    <DisplayName>HasInterface</DisplayName>
+    <Category>Address Space Interfaces</Category>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=32</Reference>
+    </References>
+    <InverseName>InterfaceOf</InverseName>
+  </UAReferenceType>
+  <UAObjectType NodeId="i=4711" BrowseName="MyType" IsAbstract="false">
+    <DisplayName>MyType</DisplayName>
+    <Category>MyType</Category>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+      <Reference ReferenceType="HasComponent">i=47112</Reference>
+      <Reference ReferenceType="HasProperty">i=16363</Reference>
+      <Reference ReferenceType="Organizes">i=47112</Reference>
+      <Reference ReferenceType="HasAddIn">i=47112</Reference>
+      <Reference ReferenceType="HasInterface">i=58</Reference>
+      <Reference ReferenceType="HasModellingRule">i=78</Reference>
+    </References>
+  </UAObjectType>
+  <UAVariable NodeId="i=16363" BrowseName="MyTestVar" DataType="Number" ValueRank="1" ArrayDimensions="0">
+    <DisplayName>My Test Variable</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=62</Reference>
+      <Reference ReferenceType="HasModellingRule">i=78</Reference>
+    </References>
+  </UAVariable>
+  <UAObject NodeId="i=47112" BrowseName="MyObject" ParentNodeId="i=4711">
+    <DisplayName>MyObject</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=58</Reference>
+    </References>
+  </UAObject>
+</UANodeSet>
