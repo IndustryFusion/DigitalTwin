@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UANodeSet xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
+  <NamespaceUris>
+    <Uri>http://example.org/MinimalNodeset</Uri>
+  </NamespaceUris>
+  <Models>
+    <Model ModelUri="http://example.org/MinimalNodeset" PublicationDate="2024-08-05T00:00:00Z" Version="1.00">
+      <RequiredModel ModelUri="http://opcfoundation.org/UA/" PublicationDate="2021-09-15T00:00:00Z" Version="1.04.10"/>
+    </Model>
+  </Models>
+  <Aliases>
+    <Alias Alias="Boolean">i=1</Alias>
+    <Alias Alias="Double">i=11</Alias>
+    <Alias Alias="DateTime">i=13</Alias>
+    <Alias Alias="String">i=12</Alias>
+    <Alias Alias="LocalizedText">i=21</Alias>
+    <Alias Alias="HasComponent">i=47</Alias>
+    <Alias Alias="HasProperty">i=46</Alias>
+    <Alias Alias="Organizes">i=35</Alias>
+    <Alias Alias="HasSubtype">i=45</Alias>
+    <Alias Alias="HasTypeDefinition">i=40</Alias>
+    <Alias Alias="HasModellingRule">i=37</Alias>
+    <Alias Alias="HasAddIn">i=17604</Alias>
+    <Alias Alias="IdType">i=256</Alias>
+    <Alias Alias="NumericRange">i=291</Alias>
+    <Alias Alias="EUInformation">i=887</Alias>
+</Aliases>
+  <!-- Define the ObjectType for the Object -->
+  <UAObjectType NodeId="ns=1;i=1001" BrowseName="1:ObjectType">
+    <DisplayName>ObjectType</DisplayName>
+    <Description>A custom Object Type</Description>
+    <References>
+      <Reference ReferenceType="HasComponent" IsForward="true">ns=1;i=2001</Reference>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+    </References>
+  </UAObjectType>
+  
+  <!-- Define the Object instance -->
+  <UAObject NodeId="ns=1;i=1002" BrowseName="1:Object">
+    <DisplayName>Object</DisplayName>
+    <References>
+      <Reference ReferenceType="HasComponent" IsForward="true">ns=1;i=2001</Reference>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1001</Reference>
+    </References>
+  </UAObject>
+  
+  <!-- Define the Variable inside the Object -->
+  <UAVariable NodeId="ns=1;i=2001" BrowseName="1:Variable" DataType="i=11" ParentNodeId="ns=1;i=1002">
+    <DisplayName>Variable</DisplayName>
+    <Description>A variable within the object</Description>
+    <Value>
+      <Double xmlns="http://opcfoundation.org/UA/2008/02/Types.xsd">123.456</Double>
+    </Value>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference> <!-- i=63 is the NodeId for BaseDataVariableType -->
+    </References>
+  </UAVariable>
+</UANodeSet>

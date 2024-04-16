@@ -12,500 +12,650 @@ pumps: a owl:Ontology ;
     owl:versionInfo 1e-01 .
 
 pumps:ARCNET a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "ARCNET" .
 
 pumps:AS_Interface a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "AS_Interface" .
 
-pumps:AdditionOperation a pumps:MultiPumpOperationModeEnum ;
+pumps:AdditionOperation a pumps:MultiPumpOperationModeEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "AdditionOperation" .
 
-pumps:Advanced a pumps:OperationModeEnum ;
+pumps:Advanced a pumps:OperationModeEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "Advanced" .
 
-pumps:AutoControl a pumps:OperationModeEnum ;
+pumps:AutoControl a pumps:OperationModeEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "AutoControl" .
 
 pumps:Automatic a pumps:ControlModeEnum,
-        pumps:OfferedControlModesOptionSet ;
+        pumps:OfferedControlModesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "Automatic" .
 
 pumps:BACnet_IP a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "BACnet_IP" .
 
 pumps:BACnet_MSTP a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "BACnet_MSTP" .
 
 pumps:Bluetooth a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "Bluetooth" .
 
-pumps:BluetoothLowEnergy a pumps:FieldbusEnum ;
+pumps:BluetoothLowEnergy a pumps:FieldbusEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "BluetoothLowEnergy" .
 
-pumps:Bluetooth_Low_Energy a pumps:OfferedFieldbusesOptionSet ;
+pumps:Bluetooth_Low_Energy a pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "Bluetooth_Low_Energy" .
 
 pumps:CAN a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "CAN" .
 
 pumps:CANopen a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "CANopen" .
 
 pumps:CC_Link a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "CC_Link" .
 
-pumps:Calibration a pumps:OperationModeEnum ;
+pumps:Calibration a pumps:OperationModeEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "Calibration" .
 
-pumps:ClosedLoopMax a pumps:OperationModeEnum ;
+pumps:ClosedLoopMax a pumps:OperationModeEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "ClosedLoopMax" .
 
-pumps:ClosedLoopMin a pumps:OperationModeEnum ;
+pumps:ClosedLoopMin a pumps:OperationModeEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "ClosedLoopMin" .
 
-pumps:ClosedLoopStandardPID a pumps:OperationModeEnum ;
+pumps:ClosedLoopStandardPID a pumps:OperationModeEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "ClosedLoopStandardPID" .
 
-pumps:ConcerningLoadDistribution a pumps:DistributionTypeEnum ;
+pumps:ConcerningLoadDistribution a pumps:DistributionTypeEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "ConcerningLoadDistribution" .
 
-pumps:ConcerningTimeDistribution a pumps:DistributionTypeEnum ;
+pumps:ConcerningTimeDistribution a pumps:DistributionTypeEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "ConcerningTimeDistribution" .
 
-pumps:ConstantDifferentialPressureControl a pumps:ControlModeEnum ;
+pumps:ConstantDifferentialPressureControl a pumps:ControlModeEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "ConstantDifferentialPressureControl" .
 
-pumps:ConstantPressureControl a pumps:ControlModeEnum ;
+pumps:ConstantPressureControl a pumps:ControlModeEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "ConstantPressureControl" .
 
-pumps:ConstantTemperatureControl a pumps:ControlModeEnum ;
+pumps:ConstantTemperatureControl a pumps:ControlModeEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "ConstantTemperatureControl" .
 
-pumps:Constant_differential_pressure_control a pumps:OfferedControlModesOptionSet ;
+pumps:Constant_differential_pressure_control a pumps:OfferedControlModesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "Constant_differential_pressure_control" .
 
-pumps:Constant_pressure_control a pumps:OfferedControlModesOptionSet ;
+pumps:Constant_pressure_control a pumps:OfferedControlModesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "Constant_pressure_control" .
 
-pumps:Constant_temperature_control a pumps:OfferedControlModesOptionSet ;
+pumps:Constant_temperature_control a pumps:OfferedControlModesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "Constant_temperature_control" .
 
 pumps:ControlNet a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "ControlNet" .
 
 pumps:DALI a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "DALI" .
 
-pumps:DECTULE a pumps:FieldbusEnum ;
+pumps:DECTULE a pumps:FieldbusEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "DECTULE" .
 
-pumps:DECT_ULE a pumps:OfferedFieldbusesOptionSet ;
+pumps:DECT_ULE a pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "DECT_ULE" .
 
 pumps:DMX a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "DMX" .
 
 pumps:DeviceNet a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "DeviceNet" .
 
-pumps:DifferentialPressureControl a pumps:ControlModeEnum ;
+pumps:DifferentialPressureControl a pumps:ControlModeEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "DifferentialPressureControl" .
 
-pumps:Differential_pressure_control a pumps:OfferedControlModesOptionSet ;
+pumps:Differential_pressure_control a pumps:OfferedControlModesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "Differential_pressure_control" .
 
-pumps:Disabled a pumps:PumpKickModeEnum ;
+pumps:Disabled a pumps:PumpKickModeEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "Disabled" .
 
-pumps:DownState a pumps:StateOfTheItemEnum ;
+pumps:DownState a pumps:StateOfTheItemEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "DownState" .
 
 pumps:EnOcean a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "EnOcean" .
 
 pumps:EtherCAT a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "EtherCAT" .
 
-pumps:EthernetTCP_IP a pumps:FieldbusEnum ;
+pumps:EthernetTCP_IP a pumps:FieldbusEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "EthernetTCP_IP" .
 
 pumps:Ethernet_IP a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "Ethernet_IP" .
 
-pumps:Ethernet_TCP_IP a pumps:OfferedFieldbusesOptionSet ;
+pumps:Ethernet_TCP_IP a pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "Ethernet_TCP_IP" .
 
-pumps:ExchangeDisabled a pumps:ExchangeModeEnum ;
+pumps:ExchangeDisabled a pumps:ExchangeModeEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "ExchangeDisabled" .
 
-pumps:ExternalDisabledState a pumps:StateOfTheItemEnum ;
+pumps:ExternalDisabledState a pumps:StateOfTheItemEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "ExternalDisabledState" .
 
-pumps:FlowDependentDifferentialPressureControl a pumps:ControlModeEnum ;
+pumps:FlowDependentDifferentialPressureControl a pumps:ControlModeEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "FlowDependentDifferentialPressureControl" .
 
-pumps:FlowRateControl a pumps:ControlModeEnum ;
+pumps:FlowRateControl a pumps:ControlModeEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "FlowRateControl" .
 
-pumps:FlowTemperatureControl a pumps:ControlModeEnum ;
+pumps:FlowTemperatureControl a pumps:ControlModeEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "FlowTemperatureControl" .
 
-pumps:Flow_dependent_differential_pressure_control a pumps:OfferedControlModesOptionSet ;
+pumps:Flow_dependent_differential_pressure_control a pumps:OfferedControlModesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "Flow_dependent_differential_pressure_control" .
 
-pumps:Flow_rate_control a pumps:OfferedControlModesOptionSet ;
+pumps:Flow_rate_control a pumps:OfferedControlModesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "Flow_rate_control" .
 
-pumps:Flow_temperature_control a pumps:OfferedControlModesOptionSet ;
+pumps:Flow_temperature_control a pumps:OfferedControlModesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "Flow_temperature_control" .
 
 pumps:GSM a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "GSM" .
 
 pumps:HART a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "HART" .
 
 pumps:IEEE1588 a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "IEEE1588" .
 
 pumps:IO_Link a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "IO_Link" .
 
-pumps:IdleState a pumps:StateOfTheItemEnum ;
+pumps:IdleState a pumps:StateOfTheItemEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "IdleState" .
 
-pumps:In a pumps:PortDirectionEnum ;
+pumps:In a pumps:PortDirectionEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "In" .
 
-pumps:InOut a pumps:PortDirectionEnum ;
+pumps:InOut a pumps:PortDirectionEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "InOut" .
 
 pumps:Interbus a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "Interbus" .
 
 pumps:KNX a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "KNX" .
 
 pumps:LIN_Bus a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "LIN_Bus" .
 
 pumps:LON a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "LON" .
 
 pumps:LTE a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "LTE" .
 
 pumps:LTE_M a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "LTE_M" .
 
-pumps:Level1 a pumps:MaintenanceLevelEnum ;
+pumps:Level1 a pumps:MaintenanceLevelEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "Level1" .
 
-pumps:Level2 a pumps:MaintenanceLevelEnum ;
+pumps:Level2 a pumps:MaintenanceLevelEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "Level2" .
 
-pumps:Level3 a pumps:MaintenanceLevelEnum ;
+pumps:Level3 a pumps:MaintenanceLevelEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "Level3" .
 
-pumps:Level4 a pumps:MaintenanceLevelEnum ;
+pumps:Level4 a pumps:MaintenanceLevelEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "Level4" .
 
-pumps:Level5 a pumps:MaintenanceLevelEnum ;
+pumps:Level5 a pumps:MaintenanceLevelEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "Level5" .
 
-pumps:LiquidPump a pumps:PumpClassEnum ;
+pumps:LiquidPump a pumps:PumpClassEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "LiquidPump" .
 
 pumps:LoRaWAN a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "LoRaWAN" .
 
-pumps:M1 a pumps:ExplosionProtectionOptionSet ;
+pumps:M1 a pumps:ExplosionProtectionOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "M1" .
 
-pumps:M2 a pumps:ExplosionProtectionOptionSet ;
+pumps:M2 a pumps:ExplosionProtectionOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "M2" .
 
 pumps:MP_Bus a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "MP_Bus" .
 
 pumps:M_Bus a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "M_Bus" .
 
 pumps:ManufacturerSpecific a pumps:DistributionTypeEnum,
         pumps:ExchangeModeEnum,
-        pumps:PumpKickModeEnum ;
+        pumps:PumpKickModeEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "ManufacturerSpecific" .
 
-pumps:Master a pumps:PumpRoleEnum ;
+pumps:Master a pumps:PumpRoleEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "Master" .
 
-pumps:MixedRedundancy a pumps:MultiPumpOperationModeEnum ;
+pumps:MixedRedundancy a pumps:MultiPumpOperationModeEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "MixedRedundancy" .
 
-pumps:ModbusRTU a pumps:FieldbusEnum ;
+pumps:ModbusRTU a pumps:FieldbusEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "ModbusRTU" .
 
-pumps:ModbusTCP a pumps:FieldbusEnum ;
+pumps:ModbusTCP a pumps:FieldbusEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "ModbusTCP" .
 
-pumps:Modbus_RTU a pumps:OfferedFieldbusesOptionSet ;
+pumps:Modbus_RTU a pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "Modbus_RTU" .
 
-pumps:Modbus_TCP a pumps:OfferedFieldbusesOptionSet ;
+pumps:Modbus_TCP a pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "Modbus_TCP" .
 
 pumps:NB_IOT a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "NB_IOT" .
 
 pumps:NFC a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "NFC" .
 
-pumps:OPCDA a pumps:FieldbusEnum ;
+pumps:OPCDA a pumps:FieldbusEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "OPCDA" .
 
-pumps:OPCUA a pumps:FieldbusEnum ;
+pumps:OPCUA a pumps:FieldbusEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "OPCUA" .
 
-pumps:OPC_DA a pumps:OfferedFieldbusesOptionSet ;
+pumps:OPC_DA a pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "OPC_DA" .
 
-pumps:OPC_UA a pumps:OfferedFieldbusesOptionSet ;
+pumps:OPC_UA a pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "OPC_UA" .
 
-pumps:OpenLoopMax a pumps:OperationModeEnum ;
+pumps:OpenLoopMax a pumps:OperationModeEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "OpenLoopMax" .
 
-pumps:OpenLoopMin a pumps:OperationModeEnum ;
+pumps:OpenLoopMin a pumps:OperationModeEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "OpenLoopMin" .
 
-pumps:OpenLoopValue a pumps:OperationModeEnum ;
+pumps:OpenLoopValue a pumps:OperationModeEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "OpenLoopValue" .
 
-pumps:OperatingState a pumps:StateOfTheItemEnum ;
+pumps:OperatingState a pumps:StateOfTheItemEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "OperatingState" .
 
 pumps:OperatorSpecific a pumps:DistributionTypeEnum,
         pumps:ExchangeModeEnum,
-        pumps:PumpKickModeEnum ;
+        pumps:PumpKickModeEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "OperatorSpecific" .
 
 pumps:Other a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "Other" .
 
-pumps:Out a pumps:PortDirectionEnum ;
+pumps:Out a pumps:PortDirectionEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "Out" .
 
-pumps:PROFIBUSDP a pumps:FieldbusEnum ;
+pumps:PROFIBUSDP a pumps:FieldbusEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "PROFIBUSDP" .
 
-pumps:PROFIBUS_DP a pumps:OfferedFieldbusesOptionSet ;
+pumps:PROFIBUS_DP a pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "PROFIBUS_DP" .
 
-pumps:PROFINETRT a pumps:FieldbusEnum ;
+pumps:PROFINETRT a pumps:FieldbusEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "PROFINETRT" .
 
-pumps:PROFINET_RT a pumps:OfferedFieldbusesOptionSet ;
+pumps:PROFINET_RT a pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "PROFINET_RT" .
 
-pumps:ParallelOperation a pumps:OperatingModeEnum ;
+pumps:ParallelOperation a pumps:OperatingModeEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "ParallelOperation" .
 
-pumps:PositiveDisplacementPump a pumps:PumpClassEnum ;
+pumps:PositiveDisplacementPump a pumps:PumpClassEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "PositiveDisplacementPump" .
 
 pumps:Powerlink a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "Powerlink" .
 
-pumps:ProcessVacuumPump a pumps:PumpClassEnum ;
+pumps:ProcessVacuumPump a pumps:PumpClassEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "ProcessVacuumPump" .
 
-pumps:Pump a pumps:PumpClassEnum ;
+pumps:Pump a pumps:PumpClassEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "Pump" .
 
-pumps:RedundancyOperation a pumps:MultiPumpOperationModeEnum ;
+pumps:RedundancyOperation a pumps:MultiPumpOperationModeEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "RedundancyOperation" .
 
-pumps:ReturnFlowTemperatureControl a pumps:ControlModeEnum ;
+pumps:ReturnFlowTemperatureControl a pumps:ControlModeEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "ReturnFlowTemperatureControl" .
 
-pumps:Return_flow_temperature_control a pumps:OfferedControlModesOptionSet ;
+pumps:Return_flow_temperature_control a pumps:OfferedControlModesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "Return_flow_temperature_control" .
 
-pumps:RotodynamicPump a pumps:PumpClassEnum ;
+pumps:RotodynamicPump a pumps:PumpClassEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "RotodynamicPump" .
 
-pumps:S1D a pumps:ExplosionProtectionOptionSet ;
+pumps:S1D a pumps:ExplosionProtectionOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "S1D" .
 
-pumps:S1G a pumps:ExplosionProtectionOptionSet ;
+pumps:S1G a pumps:ExplosionProtectionOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "S1G" .
 
-pumps:S2006_42_EC a pumps:DeclarationOfConformityOptionSet ;
+pumps:S2006_42_EC a pumps:DeclarationOfConformityOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "S2006_42_EC" .
 
-pumps:S2009_125_EC a pumps:DeclarationOfConformityOptionSet ;
+pumps:S2009_125_EC a pumps:DeclarationOfConformityOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "S2009_125_EC" .
 
-pumps:S2011_65_EU a pumps:DeclarationOfConformityOptionSet ;
+pumps:S2011_65_EU a pumps:DeclarationOfConformityOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "S2011_65_EU" .
 
-pumps:S2014_29_EU a pumps:DeclarationOfConformityOptionSet ;
+pumps:S2014_29_EU a pumps:DeclarationOfConformityOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "S2014_29_EU" .
 
-pumps:S2014_30_EU a pumps:DeclarationOfConformityOptionSet ;
+pumps:S2014_30_EU a pumps:DeclarationOfConformityOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "S2014_30_EU" .
 
-pumps:S2014_34_EU a pumps:DeclarationOfConformityOptionSet ;
+pumps:S2014_34_EU a pumps:DeclarationOfConformityOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "S2014_34_EU" .
 
-pumps:S2014_35_EU a pumps:DeclarationOfConformityOptionSet ;
+pumps:S2014_35_EU a pumps:DeclarationOfConformityOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "S2014_35_EU" .
 
-pumps:S2014_68_EU a pumps:DeclarationOfConformityOptionSet ;
+pumps:S2014_68_EU a pumps:DeclarationOfConformityOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "S2014_68_EU" .
 
-pumps:S2D a pumps:ExplosionProtectionOptionSet ;
+pumps:S2D a pumps:ExplosionProtectionOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "S2D" .
 
-pumps:S2G a pumps:ExplosionProtectionOptionSet ;
+pumps:S2G a pumps:ExplosionProtectionOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "S2G" .
 
-pumps:S3D a pumps:ExplosionProtectionOptionSet ;
+pumps:S3D a pumps:ExplosionProtectionOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "S3D" .
 
-pumps:S3G a pumps:ExplosionProtectionOptionSet ;
+pumps:S3G a pumps:ExplosionProtectionOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "S3G" .
 
 pumps:SERCOS a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "SERCOS" .
 
 pumps:SMI a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "SMI" .
 
-pumps:SeriesOperation a pumps:OperatingModeEnum ;
+pumps:SeriesOperation a pumps:OperatingModeEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "SeriesOperation" .
 
-pumps:SingleOperation a pumps:OperatingModeEnum ;
+pumps:SingleOperation a pumps:OperatingModeEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "SingleOperation" .
 
-pumps:Slave a pumps:PumpRoleEnum ;
+pumps:Slave a pumps:PumpRoleEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "Slave" .
 
-pumps:SlaveAndAuxiliaryMaster a pumps:PumpRoleEnum ;
+pumps:SlaveAndAuxiliaryMaster a pumps:PumpRoleEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "SlaveAndAuxiliaryMaster" .
 
-pumps:SpeedControl a pumps:ControlModeEnum ;
+pumps:SpeedControl a pumps:ControlModeEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "SpeedControl" .
 
-pumps:Speed_control a pumps:OfferedControlModesOptionSet ;
+pumps:Speed_control a pumps:OfferedControlModesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "Speed_control" .
 
-pumps:StandBy a pumps:OperationModeEnum ;
+pumps:StandBy a pumps:OperationModeEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "StandBy" .
 
-pumps:StandByState a pumps:StateOfTheItemEnum ;
+pumps:StandByState a pumps:StateOfTheItemEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "StandByState" .
 
-pumps:Standalone a pumps:MultiPumpOperationModeEnum ;
+pumps:Standalone a pumps:MultiPumpOperationModeEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "Standalone" .
 
-pumps:Test a pumps:OperationModeEnum ;
+pumps:Test a pumps:OperationModeEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "Test" .
 
 pumps:Thread a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "Thread" .
 
-pumps:TurboVacuumPump a pumps:PumpClassEnum ;
+pumps:TurboVacuumPump a pumps:PumpClassEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "TurboVacuumPump" .
 
 pumps:UMTS a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "UMTS" .
 
 pumps:Uncontrolled a pumps:ControlModeEnum,
-        pumps:OfferedControlModesOptionSet ;
+        pumps:OfferedControlModesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "Uncontrolled" .
 
 pumps:VARAN a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "VARAN" .
 
-pumps:VacuumPump a pumps:PumpClassEnum ;
+pumps:VacuumPump a pumps:PumpClassEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "VacuumPump" .
 
-pumps:VariableDifferentialPressureControl a pumps:ControlModeEnum ;
+pumps:VariableDifferentialPressureControl a pumps:ControlModeEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "VariableDifferentialPressureControl" .
 
-pumps:Variable_differential_pressure_control a pumps:OfferedControlModesOptionSet ;
+pumps:Variable_differential_pressure_control a pumps:OfferedControlModesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "Variable_differential_pressure_control" .
 
 pumps:WIFI a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "WIFI" .
 
 pumps:X2X_Link a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "X2X_Link" .
 
 pumps:Z_Wave a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "Z_Wave" .
 
 pumps:ZigBee a pumps:FieldbusEnum,
-        pumps:OfferedFieldbusesOptionSet ;
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "ZigBee" .
 
-pumps:Zone_0 a pumps:ExplosionZoneOptionSet ;
+pumps:Zone_0 a pumps:ExplosionZoneOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "Zone_0" .
 
-pumps:Zone_1 a pumps:ExplosionZoneOptionSet ;
+pumps:Zone_1 a pumps:ExplosionZoneOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "Zone_1" .
 
-pumps:Zone_2 a pumps:ExplosionZoneOptionSet ;
+pumps:Zone_2 a pumps:ExplosionZoneOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "Zone_2" .
 
-pumps:Zone_20 a pumps:ExplosionZoneOptionSet ;
+pumps:Zone_20 a pumps:ExplosionZoneOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "Zone_20" .
 
-pumps:Zone_21 a pumps:ExplosionZoneOptionSet ;
+pumps:Zone_21 a pumps:ExplosionZoneOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "Zone_21" .
 
-pumps:Zone_22 a pumps:ExplosionZoneOptionSet ;
+pumps:Zone_22 a pumps:ExplosionZoneOptionSet,
+        owl:NamedIndividual ;
     base:hasFieldName "Zone_22" .
 
 pumps:nodei1002 a opcua:ObjectTypeNodeClass ;
@@ -1819,11 +1969,13 @@ opcua:nodei92 base:hasComponent pumps:nodei6004 .
 
 opcua:nodei93 base:hasComponent pumps:nodei6002 .
 
-pumps:City a base:Field ;
+pumps:City a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasFieldName "City" .
 
-pumps:Country a base:Field ;
+pumps:Country a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasFieldName "Country" .
 
@@ -1831,22 +1983,26 @@ pumps:IPumpVendorNameplateType a owl:Class ;
     rdfs:subClassOf machinery:IMachineVendorNameplateType ;
     base:isAbstract "true" .
 
-pumps:Number a base:Field ;
+pumps:Number a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasFieldName "Number" .
 
-pumps:PostalCode a base:Field ;
+pumps:PostalCode a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasFieldName "PostalCode" .
 
 pumps:PumpType a owl:Class ;
     rdfs:subClassOf devices:TopologyElementType .
 
-pumps:State a base:Field ;
+pumps:State a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasFieldName "State" .
 
-pumps:Street a base:Field ;
+pumps:Street a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasFieldName "Street" .
 

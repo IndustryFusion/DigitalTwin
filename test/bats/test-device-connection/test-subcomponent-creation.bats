@@ -331,7 +331,7 @@ EOF
     for id in "${SCHEMA_IDS[@]}"; do
         node $JSONSCHEMA2SHACL -s "${SCHEMA}" -i "$id" -c "$CONTEXT"
     done | sed 's/"/\\"/g' | xargs echo | rdfpipe - > ${SHACL_FILE}
-    node $GETSUBCOMPONENTS -e "$ENTITY_FILE" -t "$token" "$FILTERID" > $SUBCOMPONENTS
+    node $GETSUBCOMPONENTS -e "$ENTITY_FILE" -s "${SHACL_FILE}" -t "$token" "$FILTERID" > $SUBCOMPONENTS
     run compare_subcomponents "$SUBCOMPONENTS"
     [ "$status" -eq 0 ]
     delete_ngsild "$token" "$FILTERID"

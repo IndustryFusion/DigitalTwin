@@ -28,12 +28,11 @@ except ImportError:
     asyncua_client = None
     print("The 'asyncua' library is not installed. Please install it separately to use this functionality.")
 
-
 url = os.environ.get('OPCUA_TCP_CONNECT') or "opc.tcp://localhost:4840/"
 
 
-async def update_namespace_parameter(client, connector_attribute_dict):
-    nodeid = connector_attribute_dict['connectorAttribute']
+async def get_node(client, map):
+    nodeid = map['connectorAttribute']
     if 'nsu=' not in nodeid:
         return nodeid
     try:
@@ -44,8 +43,11 @@ async def update_namespace_parameter(client, connector_attribute_dict):
     if ns_part is not None:
         namespace = ns_part.split('=')[1]
     nsidx = await client.get_namespace_index(namespace)
+    print(f"Retrieved namespace idx {nsidx}")
     nodeid = f'ns={nsidx};{i_part}'
-    return nodeid
+    print(f"Requesting {nodeid}")
+    var = client.get_node(nodeid)
+    return var
 
 
 ##########################################################################################
@@ -53,18 +55,24 @@ async def update_namespace_parameter(client, connector_attribute_dict):
 # to read out data from machines or databases.
 # It will update the values in regular intervals
 ##########################################################################################
-async def subscribe(connector_attribute_dict, firmware, sleeptime=5):
+async def subscribe(map, firmware, sleeptime=5):
     if asyncua_client is None:
         raise ImportError("The 'asyncua' library is required for this function. Please install it separately.")
     async with asyncua_client(url=url) as client:
-        # first resolve explicit namespace when given
-        connector_attribute_dict['connectorAttribute'] = \
-            await update_namespace_parameter(client, connector_attribute_dict)
+        try:
+            var = await get_node(client, map)
+        except:
+            print(f"Warning. Namespace or node in {map['connectorAttribute']} not found. Not providing values for \
+this attribute.")
+            return
         while True:
-            nodeset = connector_attribute_dict['connectorAttribute']
-            var = client.get_node(nodeset)
-            value = await var.get_value()
-            print(f'In OPCUA Connector with parameters {nodeset} and value {value}')
-            connector_attribute_dict['value'] = Literal(value)
-            connector_attribute_dict['updated'] = True
+            print(f"Get value for {map['connectorAttribute']}")
+            try:
+                value = await var.get_value()
+            except:
+                print(f"Warning Could not retrieve data for nodeid {map['connectorAttribute']}.")
+                value = None
+            print(f"Value {value} received")
+            map['value'] = Literal(value)
+            map['updated'] = True
             await asyncio.sleep(sleeptime)

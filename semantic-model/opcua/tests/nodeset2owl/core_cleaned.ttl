@@ -8,426 +8,558 @@ opcua: a owl:Ontology ;
     owl:versionIRI <http://example.com/v0.1/UA/> ;
     owl:versionInfo 1e-01 .
 
-opcua:AbsoluteValue a opcua:ExceptionDeviationFormat ;
+opcua:AbsoluteValue a opcua:ExceptionDeviationFormat,
+        owl:NamedIndividual ;
     base:hasFieldName "AbsoluteValue" .
 
 opcua:AccessLevel a opcua:AttributeWriteMask,
-        opcua:NodeAttributesMask ;
+        opcua:NodeAttributesMask,
+        owl:NamedIndividual ;
     base:hasFieldName "AccessLevel" .
 
-opcua:AccessLevelEx a opcua:AttributeWriteMask ;
+opcua:AccessLevelEx a opcua:AttributeWriteMask,
+        owl:NamedIndividual ;
     base:hasFieldName "AccessLevelEx" .
 
 opcua:AccessRestrictions a opcua:AttributeWriteMask,
-        opcua:NodeAttributesMask ;
+        opcua:NodeAttributesMask,
+        owl:NamedIndividual ;
     base:hasFieldName "AccessRestrictions" .
 
-opcua:Active a opcua:AlarmMask ;
+opcua:Active a opcua:AlarmMask,
+        owl:NamedIndividual ;
     base:hasFieldName "Active" .
 
-opcua:AddNode a opcua:PermissionType ;
+opcua:AddNode a opcua:PermissionType,
+        owl:NamedIndividual ;
     base:hasFieldName "AddNode" .
 
-opcua:AddReference a opcua:PermissionType ;
+opcua:AddReference a opcua:PermissionType,
+        owl:NamedIndividual ;
     base:hasFieldName "AddReference" .
 
-opcua:Advanced a opcua:DiagnosticsLevel ;
+opcua:Advanced a opcua:DiagnosticsLevel,
+        owl:NamedIndividual ;
     base:hasFieldName "Advanced" .
 
 opcua:All a opcua:NodeAttributesMask,
-        opcua:TrustListMasks ;
+        opcua:TrustListMasks,
+        owl:NamedIndividual ;
     base:hasFieldName "All" .
 
-opcua:And a opcua:FilterOperator ;
+opcua:And a opcua:FilterOperator,
+        owl:NamedIndividual ;
     base:hasFieldName "And" .
 
 opcua:Anonymous a opcua:IdentityCriteriaType,
-        opcua:UserTokenType ;
+        opcua:UserTokenType,
+        owl:NamedIndividual ;
     base:hasFieldName "Anonymous" .
 
-opcua:Append a opcua:OpenFileMode ;
+opcua:Append a opcua:OpenFileMode,
+        owl:NamedIndividual ;
     base:hasFieldName "Append" .
 
-opcua:Application a opcua:IdentityCriteriaType ;
+opcua:Application a opcua:IdentityCriteriaType,
+        owl:NamedIndividual ;
     base:hasFieldName "Application" .
 
-opcua:ApplyRestrictionsToBrowse a opcua:AccessRestrictionType ;
+opcua:ApplyRestrictionsToBrowse a opcua:AccessRestrictionType,
+        owl:NamedIndividual ;
     base:hasFieldName "ApplyRestrictionsToBrowse" .
 
-opcua:AscendingWriterId a opcua:DataSetOrderingType ;
+opcua:AscendingWriterId a opcua:DataSetOrderingType,
+        owl:NamedIndividual ;
     base:hasFieldName "AscendingWriterId" .
 
-opcua:AscendingWriterIdSingle a opcua:DataSetOrderingType ;
+opcua:AscendingWriterIdSingle a opcua:DataSetOrderingType,
+        owl:NamedIndividual ;
     base:hasFieldName "AscendingWriterIdSingle" .
 
-opcua:AtLeastOnce a opcua:BrokerTransportQualityOfService ;
+opcua:AtLeastOnce a opcua:BrokerTransportQualityOfService,
+        owl:NamedIndividual ;
     base:hasFieldName "AtLeastOnce" .
 
-opcua:AtMostOnce a opcua:BrokerTransportQualityOfService ;
+opcua:AtMostOnce a opcua:BrokerTransportQualityOfService,
+        owl:NamedIndividual ;
     base:hasFieldName "AtMostOnce" .
 
-opcua:AuthenticatedUser a opcua:IdentityCriteriaType ;
+opcua:AuthenticatedUser a opcua:IdentityCriteriaType,
+        owl:NamedIndividual ;
     base:hasFieldName "AuthenticatedUser" .
 
-opcua:BackupNotReady a opcua:RedundantServerMode ;
+opcua:BackupNotReady a opcua:RedundantServerMode,
+        owl:NamedIndividual ;
     base:hasFieldName "BackupNotReady" .
 
-opcua:BackupReady a opcua:RedundantServerMode ;
+opcua:BackupReady a opcua:RedundantServerMode,
+        owl:NamedIndividual ;
     base:hasFieldName "BackupReady" .
 
-opcua:BaseNode a opcua:NodeAttributesMask ;
+opcua:BaseNode a opcua:NodeAttributesMask,
+        owl:NamedIndividual ;
     base:hasFieldName "BaseNode" .
 
-opcua:Basic a opcua:DiagnosticsLevel ;
+opcua:Basic a opcua:DiagnosticsLevel,
+        owl:NamedIndividual ;
     base:hasFieldName "Basic" .
 
-opcua:BestEffort a opcua:BrokerTransportQualityOfService ;
+opcua:BestEffort a opcua:BrokerTransportQualityOfService,
+        owl:NamedIndividual ;
     base:hasFieldName "BestEffort" .
 
-opcua:Between a opcua:FilterOperator ;
+opcua:Between a opcua:FilterOperator,
+        owl:NamedIndividual ;
     base:hasFieldName "Between" .
 
-opcua:BitwiseAnd a opcua:FilterOperator ;
+opcua:BitwiseAnd a opcua:FilterOperator,
+        owl:NamedIndividual ;
     base:hasFieldName "BitwiseAnd" .
 
-opcua:BitwiseOr a opcua:FilterOperator ;
+opcua:BitwiseOr a opcua:FilterOperator,
+        owl:NamedIndividual ;
     base:hasFieldName "BitwiseOr" .
 
-opcua:Body a opcua:UABinaryFileDataType ;
+opcua:Body a opcua:UABinaryFileDataType,
+        owl:NamedIndividual ;
     base:hasFieldName "Body" .
 
-opcua:BridgeDoesNotProvideNetworkId a opcua:TsnFailureCode ;
+opcua:BridgeDoesNotProvideNetworkId a opcua:TsnFailureCode,
+        owl:NamedIndividual ;
     base:hasFieldName "BridgeDoesNotProvideNetworkId" .
 
-opcua:Browse a opcua:PermissionType ;
+opcua:Browse a opcua:PermissionType,
+        owl:NamedIndividual ;
     base:hasFieldName "Browse" .
 
-opcua:Call a opcua:PermissionType ;
+opcua:Call a opcua:PermissionType,
+        owl:NamedIndividual ;
     base:hasFieldName "Call" .
 
-opcua:CannotStoreDestinationAddress a opcua:TsnFailureCode ;
+opcua:CannotStoreDestinationAddress a opcua:TsnFailureCode,
+        owl:NamedIndividual ;
     base:hasFieldName "CannotStoreDestinationAddress" .
 
-opcua:Cast a opcua:FilterOperator ;
+opcua:Cast a opcua:FilterOperator,
+        owl:NamedIndividual ;
     base:hasFieldName "Cast" .
 
-opcua:Certificate a opcua:UserTokenType ;
+opcua:Certificate a opcua:UserTokenType,
+        owl:NamedIndividual ;
     base:hasFieldName "Certificate" .
 
-opcua:CheckRevocationStatusOffline a opcua:TrustListValidationOptions ;
+opcua:CheckRevocationStatusOffline a opcua:TrustListValidationOptions,
+        owl:NamedIndividual ;
     base:hasFieldName "CheckRevocationStatusOffline" .
 
-opcua:CheckRevocationStatusOnline a opcua:TrustListValidationOptions ;
+opcua:CheckRevocationStatusOnline a opcua:TrustListValidationOptions,
+        owl:NamedIndividual ;
     base:hasFieldName "CheckRevocationStatusOnline" .
 
-opcua:Client a opcua:ApplicationType ;
+opcua:Client a opcua:ApplicationType,
+        owl:NamedIndividual ;
     base:hasFieldName "Client" .
 
-opcua:ClientAndServer a opcua:ApplicationType ;
+opcua:ClientAndServer a opcua:ApplicationType,
+        owl:NamedIndividual ;
     base:hasFieldName "ClientAndServer" .
 
-opcua:Cold a opcua:RedundancySupport ;
+opcua:Cold a opcua:RedundancySupport,
+        owl:NamedIndividual ;
     base:hasFieldName "Cold" .
 
-opcua:CommunicationFault a opcua:ServerState ;
+opcua:CommunicationFault a opcua:ServerState,
+        owl:NamedIndividual ;
     base:hasFieldName "CommunicationFault" .
 
-opcua:Complete a opcua:NegotiationStatus ;
+opcua:Complete a opcua:NegotiationStatus,
+        owl:NamedIndividual ;
     base:hasFieldName "Complete" .
 
-opcua:Configuring a opcua:TsnStreamState ;
+opcua:Configuring a opcua:TsnStreamState,
+        owl:NamedIndividual ;
     base:hasFieldName "Configuring" .
 
-opcua:Constant a opcua:AccessLevelExType ;
+opcua:Constant a opcua:AccessLevelExType,
+        owl:NamedIndividual ;
     base:hasFieldName "Constant" .
 
-opcua:Constraint a opcua:NamingRuleType ;
+opcua:Constraint a opcua:NamingRuleType,
+        owl:NamedIndividual ;
     base:hasFieldName "Constraint" .
 
 opcua:ContainsNoLoops a opcua:AttributeWriteMask,
-        opcua:NodeAttributesMask ;
+        opcua:NodeAttributesMask,
+        owl:NamedIndividual ;
     base:hasFieldName "ContainsNoLoops" .
 
 opcua:CurrentRead a opcua:AccessLevelExType,
-        opcua:AccessLevelType ;
+        opcua:AccessLevelType,
+        owl:NamedIndividual ;
     base:hasFieldName "CurrentRead" .
 
 opcua:CurrentWrite a opcua:AccessLevelExType,
-        opcua:AccessLevelType ;
+        opcua:AccessLevelType,
+        owl:NamedIndividual ;
     base:hasFieldName "CurrentWrite" .
 
-opcua:DataSetMessageHeader a opcua:JsonNetworkMessageContentMask ;
+opcua:DataSetMessageHeader a opcua:JsonNetworkMessageContentMask,
+        owl:NamedIndividual ;
     base:hasFieldName "DataSetMessageHeader" .
 
-opcua:DataSetWriterName a opcua:JsonDataSetMessageContentMask ;
+opcua:DataSetWriterName a opcua:JsonDataSetMessageContentMask,
+        owl:NamedIndividual ;
     base:hasFieldName "DataSetWriterName" .
 
-opcua:Debug a opcua:DiagnosticsLevel ;
+opcua:Debug a opcua:DiagnosticsLevel,
+        owl:NamedIndividual ;
     base:hasFieldName "Debug" .
 
-opcua:Delete a opcua:HistoryUpdateType ;
+opcua:Delete a opcua:HistoryUpdateType,
+        owl:NamedIndividual ;
     base:hasFieldName "Delete" .
 
-opcua:DeleteHistory a opcua:PermissionType ;
+opcua:DeleteHistory a opcua:PermissionType,
+        owl:NamedIndividual ;
     base:hasFieldName "DeleteHistory" .
 
-opcua:DeleteNode a opcua:PermissionType ;
+opcua:DeleteNode a opcua:PermissionType,
+        owl:NamedIndividual ;
     base:hasFieldName "DeleteNode" .
 
 opcua:Disabled a opcua:OverrideValueHandling,
         opcua:PubSubState,
         opcua:TsnStreamState,
-        opcua:UserConfigurationMask ;
+        opcua:UserConfigurationMask,
+        owl:NamedIndividual ;
     base:hasFieldName "Disabled" .
 
-opcua:DiscoveryServer a opcua:ApplicationType ;
+opcua:DiscoveryServer a opcua:ApplicationType,
+        owl:NamedIndividual ;
     base:hasFieldName "DiscoveryServer" .
 
-opcua:Dormant a opcua:InterfaceOperStatus ;
+opcua:Dormant a opcua:InterfaceOperStatus,
+        owl:NamedIndividual ;
     base:hasFieldName "Dormant" .
 
 opcua:Down a opcua:InterfaceAdminStatus,
-        opcua:InterfaceOperStatus ;
+        opcua:InterfaceOperStatus,
+        owl:NamedIndividual ;
     base:hasFieldName "Down" .
 
-opcua:EgressPortNotAvbCapable a opcua:TsnFailureCode ;
+opcua:EgressPortNotAvbCapable a opcua:TsnFailureCode,
+        owl:NamedIndividual ;
     base:hasFieldName "EgressPortNotAvbCapable" .
 
-opcua:ElementAdd a opcua:PubSubConfigurationRefMask ;
+opcua:ElementAdd a opcua:PubSubConfigurationRefMask,
+        owl:NamedIndividual ;
     base:hasFieldName "ElementAdd" .
 
-opcua:ElementMatch a opcua:PubSubConfigurationRefMask ;
+opcua:ElementMatch a opcua:PubSubConfigurationRefMask,
+        owl:NamedIndividual ;
     base:hasFieldName "ElementMatch" .
 
-opcua:ElementModify a opcua:PubSubConfigurationRefMask ;
+opcua:ElementModify a opcua:PubSubConfigurationRefMask,
+        owl:NamedIndividual ;
     base:hasFieldName "ElementModify" .
 
-opcua:ElementRemove a opcua:PubSubConfigurationRefMask ;
+opcua:ElementRemove a opcua:PubSubConfigurationRefMask,
+        owl:NamedIndividual ;
     base:hasFieldName "ElementRemove" .
 
-opcua:EncryptionRequired a opcua:AccessRestrictionType ;
+opcua:EncryptionRequired a opcua:AccessRestrictionType,
+        owl:NamedIndividual ;
     base:hasFieldName "EncryptionRequired" .
 
-opcua:Equals a opcua:FilterOperator ;
+opcua:Equals a opcua:FilterOperator,
+        owl:NamedIndividual ;
     base:hasFieldName "Equals" .
 
-opcua:EraseExisting a opcua:OpenFileMode ;
+opcua:EraseExisting a opcua:OpenFileMode,
+        owl:NamedIndividual ;
     base:hasFieldName "EraseExisting" .
 
-opcua:EventFields a opcua:HistoryEventFieldList ;
+opcua:EventFields a opcua:HistoryEventFieldList,
+        owl:NamedIndividual ;
     base:hasFieldName "EventFields" .
 
-opcua:ExactlyOnce a opcua:BrokerTransportQualityOfService ;
+opcua:ExactlyOnce a opcua:BrokerTransportQualityOfService,
+        owl:NamedIndividual ;
     base:hasFieldName "ExactlyOnce" .
 
 opcua:Executable a opcua:AttributeWriteMask,
-        opcua:NodeAttributesMask ;
+        opcua:NodeAttributesMask,
+        owl:NamedIndividual ;
     base:hasFieldName "Executable" .
 
 opcua:Failed a opcua:NegotiationStatus,
         opcua:ServerState,
         opcua:TsnListenerStatus,
-        opcua:TsnTalkerStatus ;
+        opcua:TsnTalkerStatus,
+        owl:NamedIndividual ;
     base:hasFieldName "Failed" .
 
-opcua:FeatureNotPropagated a opcua:TsnFailureCode ;
+opcua:FeatureNotPropagated a opcua:TsnFailureCode,
+        owl:NamedIndividual ;
     base:hasFieldName "FeatureNotPropagated" .
 
-opcua:FeatureNotSupported a opcua:TsnFailureCode ;
+opcua:FeatureNotSupported a opcua:TsnFailureCode,
+        owl:NamedIndividual ;
     base:hasFieldName "FeatureNotSupported" .
 
-opcua:FirstValueChangedForStreamId a opcua:TsnFailureCode ;
+opcua:FirstValueChangedForStreamId a opcua:TsnFailureCode,
+        owl:NamedIndividual ;
     base:hasFieldName "FirstValueChangedForStreamId" .
 
-opcua:Full a opcua:Duplex ;
+opcua:Full a opcua:Duplex,
+        owl:NamedIndividual ;
     base:hasFieldName "Full" .
 
-opcua:GreaterThan a opcua:FilterOperator ;
+opcua:GreaterThan a opcua:FilterOperator,
+        owl:NamedIndividual ;
     base:hasFieldName "GreaterThan" .
 
-opcua:GreaterThanOrEqual a opcua:FilterOperator ;
+opcua:GreaterThanOrEqual a opcua:FilterOperator,
+        owl:NamedIndividual ;
     base:hasFieldName "GreaterThanOrEqual" .
 
-opcua:GroupHeader a opcua:UadpNetworkMessageContentMask ;
+opcua:GroupHeader a opcua:UadpNetworkMessageContentMask,
+        owl:NamedIndividual ;
     base:hasFieldName "GroupHeader" .
 
-opcua:GroupId a opcua:IdentityCriteriaType ;
+opcua:GroupId a opcua:IdentityCriteriaType,
+        owl:NamedIndividual ;
     base:hasFieldName "GroupId" .
 
-opcua:Half a opcua:Duplex ;
+opcua:Half a opcua:Duplex,
+        owl:NamedIndividual ;
     base:hasFieldName "Half" .
 
 opcua:Historizing a opcua:AttributeWriteMask,
-        opcua:NodeAttributesMask ;
+        opcua:NodeAttributesMask,
+        owl:NamedIndividual ;
     base:hasFieldName "Historizing" .
 
 opcua:HistoryRead a opcua:AccessLevelExType,
         opcua:AccessLevelType,
-        opcua:EventNotifierType ;
+        opcua:EventNotifierType,
+        owl:NamedIndividual ;
     base:hasFieldName "HistoryRead" .
 
 opcua:HistoryWrite a opcua:AccessLevelExType,
         opcua:AccessLevelType,
-        opcua:EventNotifierType ;
+        opcua:EventNotifierType,
+        owl:NamedIndividual ;
     base:hasFieldName "HistoryWrite" .
 
-opcua:Hot a opcua:RedundancySupport ;
+opcua:Hot a opcua:RedundancySupport,
+        owl:NamedIndividual ;
     base:hasFieldName "Hot" .
 
-opcua:HotAndMirrored a opcua:RedundancySupport ;
+opcua:HotAndMirrored a opcua:RedundancySupport,
+        owl:NamedIndividual ;
     base:hasFieldName "HotAndMirrored" .
 
-opcua:InList a opcua:FilterOperator ;
+opcua:InList a opcua:FilterOperator,
+        owl:NamedIndividual ;
     base:hasFieldName "InList" .
 
-opcua:InProgress a opcua:NegotiationStatus ;
+opcua:InProgress a opcua:NegotiationStatus,
+        owl:NamedIndividual ;
     base:hasFieldName "InProgress" .
 
-opcua:InView a opcua:FilterOperator ;
+opcua:InView a opcua:FilterOperator,
+        owl:NamedIndividual ;
     base:hasFieldName "InView" .
 
-opcua:Info a opcua:DiagnosticsLevel ;
+opcua:Info a opcua:DiagnosticsLevel,
+        owl:NamedIndividual ;
     base:hasFieldName "Info" .
 
-opcua:Information a opcua:PubSubDiagnosticsCounterClassification ;
+opcua:Information a opcua:PubSubDiagnosticsCounterClassification,
+        owl:NamedIndividual ;
     base:hasFieldName "Information" .
 
 opcua:Insert a opcua:HistoryUpdateType,
-        opcua:PerformUpdateType ;
+        opcua:PerformUpdateType,
+        owl:NamedIndividual ;
     base:hasFieldName "Insert" .
 
-opcua:InsertHistory a opcua:PermissionType ;
+opcua:InsertHistory a opcua:PermissionType,
+        owl:NamedIndividual ;
     base:hasFieldName "InsertHistory" .
 
-opcua:InsufficientBandwidth a opcua:TsnFailureCode ;
+opcua:InsufficientBandwidth a opcua:TsnFailureCode,
+        owl:NamedIndividual ;
     base:hasFieldName "InsufficientBandwidth" .
 
-opcua:InsufficientResources a opcua:TsnFailureCode ;
+opcua:InsufficientResources a opcua:TsnFailureCode,
+        owl:NamedIndividual ;
     base:hasFieldName "InsufficientResources" .
 
-opcua:InsufficientTrafficClassBandwidth a opcua:TsnFailureCode ;
+opcua:InsufficientTrafficClassBandwidth a opcua:TsnFailureCode,
+        owl:NamedIndividual ;
     base:hasFieldName "InsufficientTrafficClassBandwidth" .
 
-opcua:Invalid a opcua:MessageSecurityMode ;
+opcua:Invalid a opcua:MessageSecurityMode,
+        owl:NamedIndividual ;
     base:hasFieldName "Invalid" .
 
 opcua:InverseName a opcua:AttributeWriteMask,
-        opcua:NodeAttributesMask ;
+        opcua:NodeAttributesMask,
+        owl:NamedIndividual ;
     base:hasFieldName "InverseName" .
 
 opcua:IsAbstract a opcua:AttributeWriteMask,
-        opcua:NodeAttributesMask ;
+        opcua:NodeAttributesMask,
+        owl:NamedIndividual ;
     base:hasFieldName "IsAbstract" .
 
-opcua:IsNull a opcua:FilterOperator ;
+opcua:IsNull a opcua:FilterOperator,
+        owl:NamedIndividual ;
     base:hasFieldName "IsNull" .
 
-opcua:Issue a opcua:SecurityTokenRequestType ;
+opcua:Issue a opcua:SecurityTokenRequestType,
+        owl:NamedIndividual ;
     base:hasFieldName "Issue" .
 
-opcua:IssuedToken a opcua:UserTokenType ;
+opcua:IssuedToken a opcua:UserTokenType,
+        owl:NamedIndividual ;
     base:hasFieldName "IssuedToken" .
 
-opcua:LastMethodInputValues a opcua:ProgramDiagnostic2DataType ;
+opcua:LastMethodInputValues a opcua:ProgramDiagnostic2DataType,
+        owl:NamedIndividual ;
     base:hasFieldName "LastMethodInputValues" .
 
-opcua:LastMethodOutputValues a opcua:ProgramDiagnostic2DataType ;
+opcua:LastMethodOutputValues a opcua:ProgramDiagnostic2DataType,
+        owl:NamedIndividual ;
     base:hasFieldName "LastMethodOutputValues" .
 
-opcua:LastUsableValue a opcua:OverrideValueHandling ;
+opcua:LastUsableValue a opcua:OverrideValueHandling,
+        owl:NamedIndividual ;
     base:hasFieldName "LastUsableValue" .
 
-opcua:LatencyHasChanged a opcua:TsnFailureCode ;
+opcua:LatencyHasChanged a opcua:TsnFailureCode,
+        owl:NamedIndividual ;
     base:hasFieldName "LatencyHasChanged" .
 
-opcua:LessThan a opcua:FilterOperator ;
+opcua:LessThan a opcua:FilterOperator,
+        owl:NamedIndividual ;
     base:hasFieldName "LessThan" .
 
-opcua:LessThanOrEqual a opcua:FilterOperator ;
+opcua:LessThanOrEqual a opcua:FilterOperator,
+        owl:NamedIndividual ;
     base:hasFieldName "LessThanOrEqual" .
 
-opcua:Like a opcua:FilterOperator ;
+opcua:Like a opcua:FilterOperator,
+        owl:NamedIndividual ;
     base:hasFieldName "Like" .
 
-opcua:Limited a opcua:ConversionLimitEnum ;
+opcua:Limited a opcua:ConversionLimitEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "Limited" .
 
-opcua:Linear a opcua:AxisScaleEnumeration ;
+opcua:Linear a opcua:AxisScaleEnumeration,
+        owl:NamedIndividual ;
     base:hasFieldName "Linear" .
 
-opcua:Ln a opcua:AxisScaleEnumeration ;
+opcua:Ln a opcua:AxisScaleEnumeration,
+        owl:NamedIndividual ;
     base:hasFieldName "Ln" .
 
 opcua:Log a opcua:AxisScaleEnumeration,
-        opcua:DiagnosticsLevel ;
+        opcua:DiagnosticsLevel,
+        owl:NamedIndividual ;
     base:hasFieldName "Log" .
 
-opcua:LowerLayerDown a opcua:InterfaceOperStatus ;
+opcua:LowerLayerDown a opcua:InterfaceOperStatus,
+        owl:NamedIndividual ;
     base:hasFieldName "LowerLayerDown" .
 
-opcua:Mandatory a opcua:NamingRuleType ;
+opcua:Mandatory a opcua:NamingRuleType,
+        owl:NamedIndividual ;
     base:hasFieldName "Mandatory" .
 
-opcua:MaxFanInPortsLimitReached a opcua:TsnFailureCode ;
+opcua:MaxFanInPortsLimitReached a opcua:TsnFailureCode,
+        owl:NamedIndividual ;
     base:hasFieldName "MaxFanInPortsLimitReached" .
 
-opcua:MaxFrameSizeTooLarge a opcua:TsnFailureCode ;
+opcua:MaxFrameSizeTooLarge a opcua:TsnFailureCode,
+        owl:NamedIndividual ;
     base:hasFieldName "MaxFrameSizeTooLarge" .
 
-opcua:MaxLatencyExceeded a opcua:TsnFailureCode ;
+opcua:MaxLatencyExceeded a opcua:TsnFailureCode,
+        owl:NamedIndividual ;
     base:hasFieldName "MaxLatencyExceeded" .
 
-opcua:MessageType a opcua:JsonDataSetMessageContentMask ;
+opcua:MessageType a opcua:JsonDataSetMessageContentMask,
+        owl:NamedIndividual ;
     base:hasFieldName "MessageType" .
 
-opcua:MetaDataVersion a opcua:JsonDataSetMessageContentMask ;
+opcua:MetaDataVersion a opcua:JsonDataSetMessageContentMask,
+        owl:NamedIndividual ;
     base:hasFieldName "MetaDataVersion" .
 
 opcua:Method a opcua:NodeAttributesMask,
-        opcua:NodeClass ;
+        opcua:NodeClass,
+        owl:NamedIndividual ;
     base:hasFieldName "Method" .
 
 opcua:MinimumSamplingInterval a opcua:AttributeWriteMask,
-        opcua:NodeAttributesMask ;
+        opcua:NodeAttributesMask,
+        owl:NamedIndividual ;
     base:hasFieldName "MinimumSamplingInterval" .
 
-opcua:ModifyHistory a opcua:PermissionType ;
+opcua:ModifyHistory a opcua:PermissionType,
+        owl:NamedIndividual ;
     base:hasFieldName "ModifyHistory" .
 
-opcua:MustChangePassword a opcua:UserConfigurationMask ;
+opcua:MustChangePassword a opcua:UserConfigurationMask,
+        owl:NamedIndividual ;
     base:hasFieldName "MustChangePassword" .
 
-opcua:NetworkMessageHeader a opcua:JsonNetworkMessageContentMask ;
+opcua:NetworkMessageHeader a opcua:JsonNetworkMessageContentMask,
+        owl:NamedIndividual ;
     base:hasFieldName "NetworkMessageHeader" .
 
-opcua:NoChangeByUser a opcua:UserConfigurationMask ;
+opcua:NoChangeByUser a opcua:UserConfigurationMask,
+        owl:NamedIndividual ;
     base:hasFieldName "NoChangeByUser" .
 
-opcua:NoConfiguration a opcua:ServerState ;
+opcua:NoConfiguration a opcua:ServerState,
+        owl:NamedIndividual ;
     base:hasFieldName "NoConfiguration" .
 
-opcua:NoConversion a opcua:ConversionLimitEnum ;
+opcua:NoConversion a opcua:ConversionLimitEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "NoConversion" .
 
-opcua:NoDelete a opcua:UserConfigurationMask ;
+opcua:NoDelete a opcua:UserConfigurationMask,
+        owl:NamedIndividual ;
     base:hasFieldName "NoDelete" .
 
-opcua:NoFailure a opcua:TsnFailureCode ;
+opcua:NoFailure a opcua:TsnFailureCode,
+        owl:NamedIndividual ;
     base:hasFieldName "NoFailure" .
 
-opcua:NoNegotiation a opcua:NegotiationStatus ;
+opcua:NoNegotiation a opcua:NegotiationStatus,
+        owl:NamedIndividual ;
     base:hasFieldName "NoNegotiation" .
 
-opcua:NoSubDataTypes a opcua:AccessLevelExType ;
+opcua:NoSubDataTypes a opcua:AccessLevelExType,
+        owl:NamedIndividual ;
     base:hasFieldName "NoSubDataTypes" .
 
-opcua:NonVolatile a opcua:AccessLevelExType ;
+opcua:NonVolatile a opcua:AccessLevelExType,
+        owl:NamedIndividual ;
     base:hasFieldName "NonVolatile" .
 
-opcua:NonatomicRead a opcua:AccessLevelExType ;
+opcua:NonatomicRead a opcua:AccessLevelExType,
+        owl:NamedIndividual ;
     base:hasFieldName "NonatomicRead" .
 
-opcua:NonatomicWrite a opcua:AccessLevelExType ;
+opcua:NonatomicWrite a opcua:AccessLevelExType,
+        owl:NamedIndividual ;
     base:hasFieldName "NonatomicWrite" .
 
 opcua:None a opcua:MessageSecurityMode,
@@ -435,423 +567,550 @@ opcua:None a opcua:MessageSecurityMode,
         opcua:RedundancySupport,
         opcua:TrustListMasks,
         opcua:TsnListenerStatus,
-        opcua:TsnTalkerStatus ;
+        opcua:TsnTalkerStatus,
+        owl:NamedIndividual ;
     base:hasFieldName "None" .
 
-opcua:Not a opcua:FilterOperator ;
+opcua:Not a opcua:FilterOperator,
+        owl:NamedIndividual ;
     base:hasFieldName "Not" .
 
-opcua:NotPresent a opcua:InterfaceOperStatus ;
+opcua:NotPresent a opcua:InterfaceOperStatus,
+        owl:NamedIndividual ;
     base:hasFieldName "NotPresent" .
 
-opcua:NotSpecified a opcua:BrokerTransportQualityOfService ;
+opcua:NotSpecified a opcua:BrokerTransportQualityOfService,
+        owl:NamedIndividual ;
     base:hasFieldName "NotSpecified" .
 
-opcua:Numeric a opcua:IdType ;
+opcua:Numeric a opcua:IdType,
+        owl:NamedIndividual ;
     base:hasFieldName "Numeric" .
 
 opcua:Object a opcua:NodeAttributesMask,
-        opcua:NodeClass ;
+        opcua:NodeClass,
+        owl:NamedIndividual ;
     base:hasFieldName "Object" .
 
 opcua:ObjectType a opcua:NodeAttributesMask,
-        opcua:NodeClass ;
+        opcua:NodeClass,
+        owl:NamedIndividual ;
     base:hasFieldName "ObjectType" .
 
-opcua:OfType a opcua:FilterOperator ;
+opcua:OfType a opcua:FilterOperator,
+        owl:NamedIndividual ;
     base:hasFieldName "OfType" .
 
-opcua:Opaque a opcua:IdType ;
+opcua:Opaque a opcua:IdType,
+        owl:NamedIndividual ;
     base:hasFieldName "Opaque" .
 
 opcua:Operational a opcua:PubSubState,
-        opcua:TsnStreamState ;
+        opcua:TsnStreamState,
+        owl:NamedIndividual ;
     base:hasFieldName "Operational" .
 
-opcua:Optional a opcua:NamingRuleType ;
+opcua:Optional a opcua:NamingRuleType,
+        owl:NamedIndividual ;
     base:hasFieldName "Optional" .
 
-opcua:Or a opcua:FilterOperator ;
+opcua:Or a opcua:FilterOperator,
+        owl:NamedIndividual ;
     base:hasFieldName "Or" .
 
-opcua:OutOfMmrpResources a opcua:TsnFailureCode ;
+opcua:OutOfMmrpResources a opcua:TsnFailureCode,
+        owl:NamedIndividual ;
     base:hasFieldName "OutOfMmrpResources" .
 
-opcua:OutOfMsrpResources a opcua:TsnFailureCode ;
+opcua:OutOfMsrpResources a opcua:TsnFailureCode,
+        owl:NamedIndividual ;
     base:hasFieldName "OutOfMsrpResources" .
 
 opcua:OverrideValue a opcua:FieldTargetDataType,
-        opcua:OverrideValueHandling ;
+        opcua:OverrideValueHandling,
+        owl:NamedIndividual ;
     base:hasFieldName "OverrideValue" .
 
-opcua:PartialFailed a opcua:TsnListenerStatus ;
+opcua:PartialFailed a opcua:TsnListenerStatus,
+        owl:NamedIndividual ;
     base:hasFieldName "PartialFailed" .
 
-opcua:Paused a opcua:PubSubState ;
+opcua:Paused a opcua:PubSubState,
+        owl:NamedIndividual ;
     base:hasFieldName "Paused" .
 
-opcua:PayloadHeader a opcua:UadpNetworkMessageContentMask ;
+opcua:PayloadHeader a opcua:UadpNetworkMessageContentMask,
+        owl:NamedIndividual ;
     base:hasFieldName "PayloadHeader" .
 
-opcua:PercentOfEURange a opcua:ExceptionDeviationFormat ;
+opcua:PercentOfEURange a opcua:ExceptionDeviationFormat,
+        owl:NamedIndividual ;
     base:hasFieldName "PercentOfEURange" .
 
-opcua:PercentOfRange a opcua:ExceptionDeviationFormat ;
+opcua:PercentOfRange a opcua:ExceptionDeviationFormat,
+        owl:NamedIndividual ;
     base:hasFieldName "PercentOfRange" .
 
-opcua:PercentOfValue a opcua:ExceptionDeviationFormat ;
+opcua:PercentOfValue a opcua:ExceptionDeviationFormat,
+        owl:NamedIndividual ;
     base:hasFieldName "PercentOfValue" .
 
 opcua:PicoSeconds a opcua:UadpDataSetMessageContentMask,
-        opcua:UadpNetworkMessageContentMask ;
+        opcua:UadpNetworkMessageContentMask,
+        owl:NamedIndividual ;
     base:hasFieldName "PicoSeconds" .
 
-opcua:PreOperational a opcua:PubSubState ;
+opcua:PreOperational a opcua:PubSubState,
+        owl:NamedIndividual ;
     base:hasFieldName "PreOperational" .
 
-opcua:PrimaryOnly a opcua:RedundantServerMode ;
+opcua:PrimaryOnly a opcua:RedundantServerMode,
+        owl:NamedIndividual ;
     base:hasFieldName "PrimaryOnly" .
 
-opcua:PrimaryWithBackup a opcua:RedundantServerMode ;
+opcua:PrimaryWithBackup a opcua:RedundantServerMode,
+        owl:NamedIndividual ;
     base:hasFieldName "PrimaryWithBackup" .
 
-opcua:PriorityIsNotAnSrcClass a opcua:TsnFailureCode ;
+opcua:PriorityIsNotAnSrcClass a opcua:TsnFailureCode,
+        owl:NamedIndividual ;
     base:hasFieldName "PriorityIsNotAnSrcClass" .
 
-opcua:PromotedField a opcua:DataSetFieldFlags ;
+opcua:PromotedField a opcua:DataSetFieldFlags,
+        owl:NamedIndividual ;
     base:hasFieldName "PromotedField" .
 
-opcua:PromotedFields a opcua:UadpNetworkMessageContentMask ;
+opcua:PromotedFields a opcua:UadpNetworkMessageContentMask,
+        owl:NamedIndividual ;
     base:hasFieldName "PromotedFields" .
 
 opcua:PublisherId a opcua:DataSetReaderDataType,
         opcua:JsonDataSetMessageContentMask,
         opcua:JsonNetworkMessageContentMask,
         opcua:PubSubConnectionDataType,
-        opcua:UadpNetworkMessageContentMask ;
+        opcua:UadpNetworkMessageContentMask,
+        owl:NamedIndividual ;
     base:hasFieldName "PublisherId" .
 
-opcua:RawData a opcua:DataSetFieldContentMask ;
+opcua:RawData a opcua:DataSetFieldContentMask,
+        owl:NamedIndividual ;
     base:hasFieldName "RawData" .
 
 opcua:Read a opcua:OpenFileMode,
-        opcua:PermissionType ;
+        opcua:PermissionType,
+        owl:NamedIndividual ;
     base:hasFieldName "Read" .
 
-opcua:ReadHistory a opcua:PermissionType ;
+opcua:ReadHistory a opcua:PermissionType,
+        owl:NamedIndividual ;
     base:hasFieldName "ReadHistory" .
 
-opcua:ReadRolePermissions a opcua:PermissionType ;
+opcua:ReadRolePermissions a opcua:PermissionType,
+        owl:NamedIndividual ;
     base:hasFieldName "ReadRolePermissions" .
 
 opcua:Ready a opcua:TsnListenerStatus,
         opcua:TsnStreamState,
-        opcua:TsnTalkerStatus ;
+        opcua:TsnTalkerStatus,
+        owl:NamedIndividual ;
     base:hasFieldName "Ready" .
 
-opcua:ReceiveEvents a opcua:PermissionType ;
+opcua:ReceiveEvents a opcua:PermissionType,
+        owl:NamedIndividual ;
     base:hasFieldName "ReceiveEvents" .
 
-opcua:ReferenceConnection a opcua:PubSubConfigurationRefMask ;
+opcua:ReferenceConnection a opcua:PubSubConfigurationRefMask,
+        owl:NamedIndividual ;
     base:hasFieldName "ReferenceConnection" .
 
-opcua:ReferencePubDataset a opcua:PubSubConfigurationRefMask ;
+opcua:ReferencePubDataset a opcua:PubSubConfigurationRefMask,
+        owl:NamedIndividual ;
     base:hasFieldName "ReferencePubDataset" .
 
-opcua:ReferencePushTarget a opcua:PubSubConfigurationRefMask ;
+opcua:ReferencePushTarget a opcua:PubSubConfigurationRefMask,
+        owl:NamedIndividual ;
     base:hasFieldName "ReferencePushTarget" .
 
-opcua:ReferenceReader a opcua:PubSubConfigurationRefMask ;
+opcua:ReferenceReader a opcua:PubSubConfigurationRefMask,
+        owl:NamedIndividual ;
     base:hasFieldName "ReferenceReader" .
 
-opcua:ReferenceReaderGroup a opcua:PubSubConfigurationRefMask ;
+opcua:ReferenceReaderGroup a opcua:PubSubConfigurationRefMask,
+        owl:NamedIndividual ;
     base:hasFieldName "ReferenceReaderGroup" .
 
-opcua:ReferenceSecurityGroup a opcua:PubSubConfigurationRefMask ;
+opcua:ReferenceSecurityGroup a opcua:PubSubConfigurationRefMask,
+        owl:NamedIndividual ;
     base:hasFieldName "ReferenceSecurityGroup" .
 
-opcua:ReferenceSubDataset a opcua:PubSubConfigurationRefMask ;
+opcua:ReferenceSubDataset a opcua:PubSubConfigurationRefMask,
+        owl:NamedIndividual ;
     base:hasFieldName "ReferenceSubDataset" .
 
-opcua:ReferenceWriter a opcua:PubSubConfigurationRefMask ;
+opcua:ReferenceWriter a opcua:PubSubConfigurationRefMask,
+        owl:NamedIndividual ;
     base:hasFieldName "ReferenceWriter" .
 
-opcua:ReferenceWriterGroup a opcua:PubSubConfigurationRefMask ;
+opcua:ReferenceWriterGroup a opcua:PubSubConfigurationRefMask,
+        owl:NamedIndividual ;
     base:hasFieldName "ReferenceWriterGroup" .
 
-opcua:RelatedTo a opcua:FilterOperator ;
+opcua:RelatedTo a opcua:FilterOperator,
+        owl:NamedIndividual ;
     base:hasFieldName "RelatedTo" .
 
-opcua:Remove a opcua:PerformUpdateType ;
+opcua:Remove a opcua:PerformUpdateType,
+        owl:NamedIndividual ;
     base:hasFieldName "Remove" .
 
-opcua:RemoveReference a opcua:PermissionType ;
+opcua:RemoveReference a opcua:PermissionType,
+        owl:NamedIndividual ;
     base:hasFieldName "RemoveReference" .
 
-opcua:Renew a opcua:SecurityTokenRequestType ;
+opcua:Renew a opcua:SecurityTokenRequestType,
+        owl:NamedIndividual ;
     base:hasFieldName "Renew" .
 
 opcua:Replace a opcua:HistoryUpdateType,
-        opcua:PerformUpdateType ;
+        opcua:PerformUpdateType,
+        owl:NamedIndividual ;
     base:hasFieldName "Replace" .
 
-opcua:ReplyTo a opcua:JsonNetworkMessageContentMask ;
+opcua:ReplyTo a opcua:JsonNetworkMessageContentMask,
+        owl:NamedIndividual ;
     base:hasFieldName "ReplyTo" .
 
-opcua:RequiresDigitCharacters a opcua:PasswordOptionsMask ;
+opcua:RequiresDigitCharacters a opcua:PasswordOptionsMask,
+        owl:NamedIndividual ;
     base:hasFieldName "RequiresDigitCharacters" .
 
-opcua:RequiresLowerCaseCharacters a opcua:PasswordOptionsMask ;
+opcua:RequiresLowerCaseCharacters a opcua:PasswordOptionsMask,
+        owl:NamedIndividual ;
     base:hasFieldName "RequiresLowerCaseCharacters" .
 
-opcua:RequiresSpecialCharacters a opcua:PasswordOptionsMask ;
+opcua:RequiresSpecialCharacters a opcua:PasswordOptionsMask,
+        owl:NamedIndividual ;
     base:hasFieldName "RequiresSpecialCharacters" .
 
-opcua:RequiresUpperCaseCharacters a opcua:PasswordOptionsMask ;
+opcua:RequiresUpperCaseCharacters a opcua:PasswordOptionsMask,
+        owl:NamedIndividual ;
     base:hasFieldName "RequiresUpperCaseCharacters" .
 
-opcua:ReversibleFieldEncoding a opcua:JsonDataSetMessageContentMask ;
+opcua:ReversibleFieldEncoding a opcua:JsonDataSetMessageContentMask,
+        owl:NamedIndividual ;
     base:hasFieldName "ReversibleFieldEncoding" .
 
-opcua:Role a opcua:IdentityCriteriaType ;
+opcua:Role a opcua:IdentityCriteriaType,
+        owl:NamedIndividual ;
     base:hasFieldName "Role" .
 
-opcua:Running a opcua:ServerState ;
+opcua:Running a opcua:ServerState,
+        owl:NamedIndividual ;
     base:hasFieldName "Running" .
 
 opcua:SemanticChange a opcua:AccessLevelExType,
-        opcua:AccessLevelType ;
+        opcua:AccessLevelType,
+        owl:NamedIndividual ;
     base:hasFieldName "SemanticChange" .
 
 opcua:SequenceNumber a opcua:JsonDataSetMessageContentMask,
         opcua:UadpDataSetMessageContentMask,
-        opcua:UadpNetworkMessageContentMask ;
+        opcua:UadpNetworkMessageContentMask,
+        owl:NamedIndividual ;
     base:hasFieldName "SequenceNumber" .
 
-opcua:ServerPicoSeconds a opcua:DataSetFieldContentMask ;
+opcua:ServerPicoSeconds a opcua:DataSetFieldContentMask,
+        owl:NamedIndividual ;
     base:hasFieldName "ServerPicoSeconds" .
 
-opcua:ServerTimestamp a opcua:DataSetFieldContentMask ;
+opcua:ServerTimestamp a opcua:DataSetFieldContentMask,
+        owl:NamedIndividual ;
     base:hasFieldName "ServerTimestamp" .
 
-opcua:SessionRequired a opcua:AccessRestrictionType ;
+opcua:SessionRequired a opcua:AccessRestrictionType,
+        owl:NamedIndividual ;
     base:hasFieldName "SessionRequired" .
 
-opcua:Shutdown a opcua:ServerState ;
+opcua:Shutdown a opcua:ServerState,
+        owl:NamedIndividual ;
     base:hasFieldName "Shutdown" .
 
-opcua:Sign a opcua:MessageSecurityMode ;
+opcua:Sign a opcua:MessageSecurityMode,
+        owl:NamedIndividual ;
     base:hasFieldName "Sign" .
 
-opcua:SignAndEncrypt a opcua:MessageSecurityMode ;
+opcua:SignAndEncrypt a opcua:MessageSecurityMode,
+        owl:NamedIndividual ;
     base:hasFieldName "SignAndEncrypt" .
 
-opcua:SigningRequired a opcua:AccessRestrictionType ;
+opcua:SigningRequired a opcua:AccessRestrictionType,
+        owl:NamedIndividual ;
     base:hasFieldName "SigningRequired" .
 
-opcua:SingleDataSetMessage a opcua:JsonNetworkMessageContentMask ;
+opcua:SingleDataSetMessage a opcua:JsonNetworkMessageContentMask,
+        owl:NamedIndividual ;
     base:hasFieldName "SingleDataSetMessage" .
 
-opcua:SourcePicoSeconds a opcua:DataSetFieldContentMask ;
+opcua:SourcePicoSeconds a opcua:DataSetFieldContentMask,
+        owl:NamedIndividual ;
     base:hasFieldName "SourcePicoSeconds" .
 
-opcua:SourceTimestamp a opcua:DataSetFieldContentMask ;
+opcua:SourceTimestamp a opcua:DataSetFieldContentMask,
+        owl:NamedIndividual ;
     base:hasFieldName "SourceTimestamp" .
 
-opcua:SrClassPriorityMismatch a opcua:TsnFailureCode ;
+opcua:SrClassPriorityMismatch a opcua:TsnFailureCode,
+        owl:NamedIndividual ;
     base:hasFieldName "SrClassPriorityMismatch" .
 
 opcua:Status a opcua:JsonDataSetMessageContentMask,
-        opcua:UadpDataSetMessageContentMask ;
+        opcua:UadpDataSetMessageContentMask,
+        owl:NamedIndividual ;
     base:hasFieldName "Status" .
 
 opcua:StatusWrite a opcua:AccessLevelExType,
-        opcua:AccessLevelType ;
+        opcua:AccessLevelType,
+        owl:NamedIndividual ;
     base:hasFieldName "StatusWrite" .
 
-opcua:StreamDestinationAddressInUse a opcua:TsnFailureCode ;
+opcua:StreamDestinationAddressInUse a opcua:TsnFailureCode,
+        owl:NamedIndividual ;
     base:hasFieldName "StreamDestinationAddressInUse" .
 
-opcua:StreamIdInUse a opcua:TsnFailureCode ;
+opcua:StreamIdInUse a opcua:TsnFailureCode,
+        owl:NamedIndividual ;
     base:hasFieldName "StreamIdInUse" .
 
-opcua:StreamIdTypeNotSupported a opcua:TsnFailureCode ;
+opcua:StreamIdTypeNotSupported a opcua:TsnFailureCode,
+        owl:NamedIndividual ;
     base:hasFieldName "StreamIdTypeNotSupported" .
 
-opcua:StreamPreemptedByHigherRank a opcua:TsnFailureCode ;
+opcua:StreamPreemptedByHigherRank a opcua:TsnFailureCode,
+        owl:NamedIndividual ;
     base:hasFieldName "StreamPreemptedByHigherRank" .
 
-opcua:StreamTransformNotSupported a opcua:TsnFailureCode ;
+opcua:StreamTransformNotSupported a opcua:TsnFailureCode,
+        owl:NamedIndividual ;
     base:hasFieldName "StreamTransformNotSupported" .
 
-opcua:StructureWithOptionalFields a opcua:StructureType ;
+opcua:StructureWithOptionalFields a opcua:StructureType,
+        owl:NamedIndividual ;
     base:hasFieldName "StructureWithOptionalFields" .
 
-opcua:StructureWithSubtypedValues a opcua:StructureType ;
+opcua:StructureWithSubtypedValues a opcua:StructureType,
+        owl:NamedIndividual ;
     base:hasFieldName "StructureWithSubtypedValues" .
 
-opcua:SubscribeToEvents a opcua:EventNotifierType ;
+opcua:SubscribeToEvents a opcua:EventNotifierType,
+        owl:NamedIndividual ;
     base:hasFieldName "SubscribeToEvents" .
 
-opcua:SubstituteValue a opcua:PublishedVariableDataType ;
+opcua:SubstituteValue a opcua:PublishedVariableDataType,
+        owl:NamedIndividual ;
     base:hasFieldName "SubstituteValue" .
 
-opcua:SupportDescriptionForUser a opcua:PasswordOptionsMask ;
+opcua:SupportDescriptionForUser a opcua:PasswordOptionsMask,
+        owl:NamedIndividual ;
     base:hasFieldName "SupportDescriptionForUser" .
 
-opcua:SupportDisableDeleteForUser a opcua:PasswordOptionsMask ;
+opcua:SupportDisableDeleteForUser a opcua:PasswordOptionsMask,
+        owl:NamedIndividual ;
     base:hasFieldName "SupportDisableDeleteForUser" .
 
-opcua:SupportDisableUser a opcua:PasswordOptionsMask ;
+opcua:SupportDisableUser a opcua:PasswordOptionsMask,
+        owl:NamedIndividual ;
     base:hasFieldName "SupportDisableUser" .
 
-opcua:SupportInitialPasswordChange a opcua:PasswordOptionsMask ;
+opcua:SupportInitialPasswordChange a opcua:PasswordOptionsMask,
+        owl:NamedIndividual ;
     base:hasFieldName "SupportInitialPasswordChange" .
 
-opcua:SupportNoChangeForUser a opcua:PasswordOptionsMask ;
+opcua:SupportNoChangeForUser a opcua:PasswordOptionsMask,
+        owl:NamedIndividual ;
     base:hasFieldName "SupportNoChangeForUser" .
 
-opcua:SuppressCertificateExpired a opcua:TrustListValidationOptions ;
+opcua:SuppressCertificateExpired a opcua:TrustListValidationOptions,
+        owl:NamedIndividual ;
     base:hasFieldName "SuppressCertificateExpired" .
 
-opcua:SuppressHostNameInvalid a opcua:TrustListValidationOptions ;
+opcua:SuppressHostNameInvalid a opcua:TrustListValidationOptions,
+        owl:NamedIndividual ;
     base:hasFieldName "SuppressHostNameInvalid" .
 
-opcua:SuppressIssuerCertificateExpired a opcua:TrustListValidationOptions ;
+opcua:SuppressIssuerCertificateExpired a opcua:TrustListValidationOptions,
+        owl:NamedIndividual ;
     base:hasFieldName "SuppressIssuerCertificateExpired" .
 
-opcua:SuppressIssuerRevocationStatusUnknown a opcua:TrustListValidationOptions ;
+opcua:SuppressIssuerRevocationStatusUnknown a opcua:TrustListValidationOptions,
+        owl:NamedIndividual ;
     base:hasFieldName "SuppressIssuerRevocationStatusUnknown" .
 
-opcua:SuppressRevocationStatusUnknown a opcua:TrustListValidationOptions ;
+opcua:SuppressRevocationStatusUnknown a opcua:TrustListValidationOptions,
+        owl:NamedIndividual ;
     base:hasFieldName "SuppressRevocationStatusUnknown" .
 
-opcua:Suspended a opcua:ServerState ;
+opcua:Suspended a opcua:ServerState,
+        owl:NamedIndividual ;
     base:hasFieldName "Suspended" .
 
 opcua:Symmetric a opcua:AttributeWriteMask,
-        opcua:NodeAttributesMask ;
+        opcua:NodeAttributesMask,
+        owl:NamedIndividual ;
     base:hasFieldName "Symmetric" .
 
-opcua:Test a opcua:ServerState ;
+opcua:Test a opcua:ServerState,
+        owl:NamedIndividual ;
     base:hasFieldName "Test" .
 
 opcua:Testing a opcua:InterfaceAdminStatus,
-        opcua:InterfaceOperStatus ;
+        opcua:InterfaceOperStatus,
+        owl:NamedIndividual ;
     base:hasFieldName "Testing" .
 
-opcua:Thumbprint a opcua:IdentityCriteriaType ;
+opcua:Thumbprint a opcua:IdentityCriteriaType,
+        owl:NamedIndividual ;
     base:hasFieldName "Thumbprint" .
 
 opcua:Timestamp a opcua:JsonDataSetMessageContentMask,
         opcua:UadpDataSetMessageContentMask,
-        opcua:UadpNetworkMessageContentMask ;
+        opcua:UadpNetworkMessageContentMask,
+        owl:NamedIndividual ;
     base:hasFieldName "Timestamp" .
 
 opcua:TimestampWrite a opcua:AccessLevelExType,
-        opcua:AccessLevelType ;
+        opcua:AccessLevelType,
+        owl:NamedIndividual ;
     base:hasFieldName "TimestampWrite" .
 
-opcua:Transparent a opcua:RedundancySupport ;
+opcua:Transparent a opcua:RedundancySupport,
+        owl:NamedIndividual ;
     base:hasFieldName "Transparent" .
 
-opcua:Unacknowledged a opcua:AlarmMask ;
+opcua:Unacknowledged a opcua:AlarmMask,
+        owl:NamedIndividual ;
     base:hasFieldName "Unacknowledged" .
 
-opcua:Unconfirmed a opcua:AlarmMask ;
+opcua:Unconfirmed a opcua:AlarmMask,
+        owl:NamedIndividual ;
     base:hasFieldName "Unconfirmed" .
 
-opcua:Undefined a opcua:DataSetOrderingType ;
+opcua:Undefined a opcua:DataSetOrderingType,
+        owl:NamedIndividual ;
     base:hasFieldName "Undefined" .
 
-opcua:UnionWithSubtypedValues a opcua:StructureType ;
+opcua:UnionWithSubtypedValues a opcua:StructureType,
+        owl:NamedIndividual ;
     base:hasFieldName "UnionWithSubtypedValues" .
 
 opcua:Unknown a opcua:Duplex,
         opcua:ExceptionDeviationFormat,
         opcua:InterfaceOperStatus,
         opcua:NegotiationStatus,
-        opcua:ServerState ;
+        opcua:ServerState,
+        owl:NamedIndividual ;
     base:hasFieldName "Unknown" .
 
-opcua:Unlimited a opcua:ConversionLimitEnum ;
+opcua:Unlimited a opcua:ConversionLimitEnum,
+        owl:NamedIndividual ;
     base:hasFieldName "Unlimited" .
 
-opcua:Unspecified a opcua:NodeClass ;
+opcua:Unspecified a opcua:NodeClass,
+        owl:NamedIndividual ;
     base:hasFieldName "Unspecified" .
 
 opcua:Up a opcua:InterfaceAdminStatus,
-        opcua:InterfaceOperStatus ;
+        opcua:InterfaceOperStatus,
+        owl:NamedIndividual ;
     base:hasFieldName "Up" .
 
 opcua:Update a opcua:HistoryUpdateType,
-        opcua:PerformUpdateType ;
+        opcua:PerformUpdateType,
+        owl:NamedIndividual ;
     base:hasFieldName "Update" .
 
-opcua:UseDifferentDestinationAddress a opcua:TsnFailureCode ;
+opcua:UseDifferentDestinationAddress a opcua:TsnFailureCode,
+        owl:NamedIndividual ;
     base:hasFieldName "UseDifferentDestinationAddress" .
 
 opcua:UserAccessLevel a opcua:AttributeWriteMask,
-        opcua:NodeAttributesMask ;
+        opcua:NodeAttributesMask,
+        owl:NamedIndividual ;
     base:hasFieldName "UserAccessLevel" .
 
 opcua:UserExecutable a opcua:AttributeWriteMask,
-        opcua:NodeAttributesMask ;
+        opcua:NodeAttributesMask,
+        owl:NamedIndividual ;
     base:hasFieldName "UserExecutable" .
 
 opcua:UserWriteMask a opcua:AttributeWriteMask,
-        opcua:NodeAttributesMask ;
+        opcua:NodeAttributesMask,
+        owl:NamedIndividual ;
     base:hasFieldName "UserWriteMask" .
 
-opcua:ValueForVariableType a opcua:AttributeWriteMask ;
+opcua:ValueForVariableType a opcua:AttributeWriteMask,
+        owl:NamedIndividual ;
     base:hasFieldName "ValueForVariableType" .
 
 opcua:Variable a opcua:NodeAttributesMask,
-        opcua:NodeClass ;
+        opcua:NodeClass,
+        owl:NamedIndividual ;
     base:hasFieldName "Variable" .
 
 opcua:VariableType a opcua:NodeAttributesMask,
-        opcua:NodeClass ;
+        opcua:NodeClass,
+        owl:NamedIndividual ;
     base:hasFieldName "VariableType" .
 
 opcua:View a opcua:NodeAttributesMask,
-        opcua:NodeClass ;
+        opcua:NodeClass,
+        owl:NamedIndividual ;
     base:hasFieldName "View" .
 
-opcua:VlanBlockedOnEgress a opcua:TsnFailureCode ;
+opcua:VlanBlockedOnEgress a opcua:TsnFailureCode,
+        owl:NamedIndividual ;
     base:hasFieldName "VlanBlockedOnEgress" .
 
-opcua:VlanTaggingDisabledOnEgress a opcua:TsnFailureCode ;
+opcua:VlanTaggingDisabledOnEgress a opcua:TsnFailureCode,
+        owl:NamedIndividual ;
     base:hasFieldName "VlanTaggingDisabledOnEgress" .
 
-opcua:Warm a opcua:RedundancySupport ;
+opcua:Warm a opcua:RedundancySupport,
+        owl:NamedIndividual ;
     base:hasFieldName "Warm" .
 
 opcua:Write a opcua:OpenFileMode,
-        opcua:PermissionType ;
+        opcua:PermissionType,
+        owl:NamedIndividual ;
     base:hasFieldName "Write" .
 
-opcua:WriteAttribute a opcua:PermissionType ;
+opcua:WriteAttribute a opcua:PermissionType,
+        owl:NamedIndividual ;
     base:hasFieldName "WriteAttribute" .
 
-opcua:WriteFullArrayOnly a opcua:AccessLevelExType ;
+opcua:WriteFullArrayOnly a opcua:AccessLevelExType,
+        owl:NamedIndividual ;
     base:hasFieldName "WriteFullArrayOnly" .
 
-opcua:WriteHistorizing a opcua:PermissionType ;
+opcua:WriteHistorizing a opcua:PermissionType,
+        owl:NamedIndividual ;
     base:hasFieldName "WriteHistorizing" .
 
 opcua:WriteMask a opcua:AttributeWriteMask,
-        opcua:NodeAttributesMask ;
+        opcua:NodeAttributesMask,
+        owl:NamedIndividual ;
     base:hasFieldName "WriteMask" .
 
-opcua:WriteRolePermissions a opcua:PermissionType ;
+opcua:WriteRolePermissions a opcua:PermissionType,
+        owl:NamedIndividual ;
     base:hasFieldName "WriteRolePermissions" .
 
 opcua:WriterGroupName a opcua:JsonDataSetMessageContentMask,
-        opcua:JsonNetworkMessageContentMask ;
+        opcua:JsonNetworkMessageContentMask,
+        owl:NamedIndividual ;
     base:hasFieldName "WriterGroupName" .
 
-opcua:X509Subject a opcua:IdentityCriteriaType ;
+opcua:X509Subject a opcua:IdentityCriteriaType,
+        owl:NamedIndividual ;
     base:hasFieldName "X509Subject" .
 
 opcua:nodei1 a opcua:DataTypeNodeClass ;
@@ -8424,23 +8683,28 @@ opcua:3DFrameType a owl:Class ;
 opcua:3DVectorType a owl:Class ;
     rdfs:subClassOf opcua:VectorType .
 
-opcua:A a base:Field ;
+opcua:A a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Double ;
     base:hasFieldName "A" .
 
-opcua:AbsoluteTemperatureExponent a base:Field ;
+opcua:AbsoluteTemperatureExponent a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:SByte ;
     base:hasFieldName "AbsoluteTemperatureExponent" .
 
-opcua:ActualSessionTimeout a base:Field ;
+opcua:ActualSessionTimeout a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Duration ;
     base:hasFieldName "ActualSessionTimeout" .
 
-opcua:AddNodesCount a base:Field ;
+opcua:AddNodesCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ServiceCounterDataType ;
     base:hasFieldName "AddNodesCount" .
 
-opcua:AddReferencesCount a base:Field ;
+opcua:AddReferencesCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ServiceCounterDataType ;
     base:hasFieldName "AddReferencesCount" .
 
@@ -8469,7 +8733,8 @@ opcua:AlarmSuppressionGroupMember a owl:Class,
 opcua:AlarmSuppressionGroupType a owl:Class ;
     rdfs:subClassOf opcua:AlarmGroupType .
 
-opcua:Alias a base:Field ;
+opcua:Alias a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "Alias" .
 
@@ -8477,7 +8742,8 @@ opcua:AliasFor a owl:Class,
         owl:ObjectProperty ;
     rdfs:subClassOf opcua:NonHierarchicalReferences .
 
-opcua:AliasName a base:Field ;
+opcua:AliasName a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:QualifiedName ;
     base:hasFieldName "AliasName" .
 
@@ -8486,7 +8752,8 @@ opcua:AliasNameDataType a owl:Class ;
     base:hasField opcua:AliasName,
         opcua:ReferencedNodes .
 
-opcua:AlphabeticCode a base:Field ;
+opcua:AlphabeticCode a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "AlphabeticCode" .
 
@@ -8494,21 +8761,24 @@ opcua:AlwaysGeneratesEvent a owl:Class,
         owl:ObjectProperty ;
     rdfs:subClassOf opcua:GeneratesEvent .
 
-opcua:AmountOfSubstanceExponent a base:Field ;
+opcua:AmountOfSubstanceExponent a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:SByte ;
     base:hasFieldName "AmountOfSubstanceExponent" .
 
 opcua:AnalogUnitRangeType a owl:Class ;
     rdfs:subClassOf opcua:AnalogItemType .
 
-opcua:AnnotationTime a base:Field ;
+opcua:AnnotationTime a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UtcTime ;
     base:hasFieldName "AnnotationTime" .
 
 opcua:AnonymousIdentityToken a owl:Class ;
     rdfs:subClassOf opcua:UserIdentityToken .
 
-opcua:ApplicationName a base:Field ;
+opcua:ApplicationName a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasFieldName "ApplicationName" .
 
@@ -8645,22 +8915,26 @@ opcua:AuditWriteUpdateEventType a owl:Class ;
     rdfs:subClassOf opcua:AuditUpdateEventType ;
     base:isAbstract "true" .
 
-opcua:AuthenticationMechanism a base:Field ;
+opcua:AuthenticationMechanism a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "AuthenticationMechanism" .
 
 opcua:AuthorizationServicesConfigurationFolderType a owl:Class ;
     rdfs:subClassOf opcua:FolderType .
 
-opcua:AxisScaleType a base:Field ;
+opcua:AxisScaleType a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:AxisScaleEnumeration ;
     base:hasFieldName "AxisScaleType" .
 
-opcua:AxisSteps a base:Field ;
+opcua:AxisSteps a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Double ;
     base:hasFieldName "AxisSteps" .
 
-opcua:B a base:Field ;
+opcua:B a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Double ;
     base:hasFieldName "B" .
 
@@ -8712,33 +8986,40 @@ opcua:BrokerWriterGroupTransportDataType a owl:Class ;
 opcua:BrokerWriterGroupTransportType a owl:Class ;
     rdfs:subClassOf opcua:WriterGroupTransportType .
 
-opcua:BrowseCount a base:Field ;
+opcua:BrowseCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ServiceCounterDataType ;
     base:hasFieldName "BrowseCount" .
 
 opcua:BrowseName a opcua:AttributeWriteMask,
         opcua:NodeAttributesMask,
+        owl:NamedIndividual,
         base:Field ;
     base:hasDatatype opcua:QualifiedName ;
     base:hasFieldName "BrowseName" .
 
-opcua:BrowseNextCount a base:Field ;
+opcua:BrowseNextCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ServiceCounterDataType ;
     base:hasFieldName "BrowseNextCount" .
 
-opcua:BuildDate a base:Field ;
+opcua:BuildDate a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UtcTime ;
     base:hasFieldName "BuildDate" .
 
-opcua:BuildNumber a base:Field ;
+opcua:BuildNumber a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "BuildNumber" .
 
-opcua:C a base:Field ;
+opcua:C a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Double ;
     base:hasFieldName "C" .
 
-opcua:CallCount a base:Field ;
+opcua:CallCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ServiceCounterDataType ;
     base:hasFieldName "CallCount" .
 
@@ -8750,34 +9031,41 @@ opcua:CertificateUpdatedAuditEventType a owl:Class ;
     rdfs:subClassOf opcua:AuditEventType ;
     base:isAbstract "true" .
 
-opcua:ChannelLifetime a base:Field ;
+opcua:ChannelLifetime a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Int32 ;
     base:hasFieldName "ChannelLifetime" .
 
 opcua:ChoiceStateType a owl:Class ;
     rdfs:subClassOf opcua:StateType .
 
-opcua:ClientCertificate a base:Field ;
+opcua:ClientCertificate a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ByteString ;
     base:hasFieldName "ClientCertificate" .
 
-opcua:ClientConnectionTime a base:Field ;
+opcua:ClientConnectionTime a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UtcTime ;
     base:hasFieldName "ClientConnectionTime" .
 
-opcua:ClientDescription a base:Field ;
+opcua:ClientDescription a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ApplicationDescription ;
     base:hasFieldName "ClientDescription" .
 
-opcua:ClientLastContactTime a base:Field ;
+opcua:ClientLastContactTime a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UtcTime ;
     base:hasFieldName "ClientLastContactTime" .
 
-opcua:ClientUserIdHistory a base:Field ;
+opcua:ClientUserIdHistory a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "ClientUserIdHistory" .
 
-opcua:ClientUserIdOfSession a base:Field ;
+opcua:ClientUserIdOfSession a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "ClientUserIdOfSession" .
 
@@ -8786,31 +9074,38 @@ opcua:ComplexNumberType a owl:Class ;
     base:hasField opcua:Imaginary,
         opcua:Real .
 
-opcua:ConfigurationElement a base:Field ;
+opcua:ConfigurationElement a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:PubSubConfigurationRefDataType ;
     base:hasFieldName "ConfigurationElement" .
 
-opcua:ConfigurationMask a base:Field ;
+opcua:ConfigurationMask a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:PubSubConfigurationRefMask ;
     base:hasFieldName "ConfigurationMask" .
 
-opcua:ConfigurationProperties a base:Field ;
+opcua:ConfigurationProperties a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:KeyValuePair ;
     base:hasFieldName "ConfigurationProperties" .
 
-opcua:ConfiguredSize a base:Field ;
+opcua:ConfiguredSize a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt16 ;
     base:hasFieldName "ConfiguredSize" .
 
-opcua:ConnectionIndex a base:Field ;
+opcua:ConnectionIndex a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt16 ;
     base:hasFieldName "ConnectionIndex" .
 
-opcua:ConnectionProperties a base:Field ;
+opcua:ConnectionProperties a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:KeyValuePair ;
     base:hasFieldName "ConnectionProperties" .
 
-opcua:Connections a base:Field ;
+opcua:Connections a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:PubSubConnectionDataType ;
     base:hasFieldName "Connections" .
 
@@ -8824,94 +9119,116 @@ opcua:Controls a owl:Class,
 opcua:Counter a owl:Class ;
     rdfs:subClassOf opcua:UInt32 .
 
-opcua:CreateMonitoredItemsCount a base:Field ;
+opcua:CreateMonitoredItemsCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ServiceCounterDataType ;
     base:hasFieldName "CreateMonitoredItemsCount" .
 
-opcua:CreateSubscriptionCount a base:Field ;
+opcua:CreateSubscriptionCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ServiceCounterDataType ;
     base:hasFieldName "CreateSubscriptionCount" .
 
-opcua:Criteria a base:Field ;
+opcua:Criteria a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "Criteria" .
 
-opcua:CriteriaType a base:Field ;
+opcua:CriteriaType a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:IdentityCriteriaType ;
     base:hasFieldName "CriteriaType" .
 
 opcua:CubeItemType a owl:Class ;
     rdfs:subClassOf opcua:ArrayItemType .
 
-opcua:CumulatedSessionCount a base:Field ;
+opcua:CumulatedSessionCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "CumulatedSessionCount" .
 
-opcua:CumulatedSubscriptionCount a base:Field ;
+opcua:CumulatedSubscriptionCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "CumulatedSubscriptionCount" .
 
-opcua:Currency a base:Field ;
+opcua:Currency a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasFieldName "Currency" .
 
-opcua:CurrentKeepAliveCount a base:Field ;
+opcua:CurrentKeepAliveCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "CurrentKeepAliveCount" .
 
-opcua:CurrentLifetimeCount a base:Field ;
+opcua:CurrentLifetimeCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "CurrentLifetimeCount" .
 
-opcua:CurrentMonitoredItemsCount a base:Field ;
+opcua:CurrentMonitoredItemsCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "CurrentMonitoredItemsCount" .
 
-opcua:CurrentPublishRequestsInQueue a base:Field ;
+opcua:CurrentPublishRequestsInQueue a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "CurrentPublishRequestsInQueue" .
 
-opcua:CurrentSessionCount a base:Field ;
+opcua:CurrentSessionCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "CurrentSessionCount" .
 
-opcua:CurrentSubscriptionCount a base:Field ;
+opcua:CurrentSubscriptionCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "CurrentSubscriptionCount" .
 
-opcua:CurrentSubscriptionsCount a base:Field ;
+opcua:CurrentSubscriptionsCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "CurrentSubscriptionsCount" .
 
-opcua:CurrentTime a base:Field ;
+opcua:CurrentTime a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UtcTime ;
     base:hasFieldName "CurrentTime" .
 
-opcua:CyclicDataSet a base:Field ;
+opcua:CyclicDataSet a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Boolean ;
     base:hasFieldName "CyclicDataSet" .
 
-opcua:DataChangeNotificationsCount a base:Field ;
+opcua:DataChangeNotificationsCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "DataChangeNotificationsCount" .
 
-opcua:DataSetClasses a base:Field ;
+opcua:DataSetClasses a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:DataSetMetaDataType ;
     base:hasFieldName "DataSetClasses" .
 
-opcua:DataSetOrdering a base:Field ;
+opcua:DataSetOrdering a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:DataSetOrderingType ;
     base:hasFieldName "DataSetOrdering" .
 
-opcua:DataSetReaderProperties a base:Field ;
+opcua:DataSetReaderProperties a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:KeyValuePair ;
     base:hasFieldName "DataSetReaderProperties" .
 
-opcua:DataSetReaders a base:Field ;
+opcua:DataSetReaders a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:DataSetReaderDataType ;
     base:hasFieldName "DataSetReaders" .
 
-opcua:DataSetSource a base:Field ;
+opcua:DataSetSource a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:PublishedDataSetSourceDataType ;
     base:hasFieldName "DataSetSource" .
 
@@ -8919,15 +9236,18 @@ opcua:DataSetToWriter a owl:Class,
         owl:ObjectProperty ;
     rdfs:subClassOf opcua:HierarchicalReferences .
 
-opcua:DataSetWriterProperties a base:Field ;
+opcua:DataSetWriterProperties a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:KeyValuePair ;
     base:hasFieldName "DataSetWriterProperties" .
 
-opcua:DataSetWriters a base:Field ;
+opcua:DataSetWriters a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:DataSetWriterDataType ;
     base:hasFieldName "DataSetWriters" .
 
-opcua:DataTypeId a base:Field ;
+opcua:DataTypeId a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:NodeId ;
     base:hasFieldName "DataTypeId" .
 
@@ -8965,15 +9285,18 @@ opcua:DatagramWriterGroupTransportType a owl:Class ;
 opcua:DateString a owl:Class ;
     rdfs:subClassOf opcua:String .
 
-opcua:DaylightSavingInOffset a base:Field ;
+opcua:DaylightSavingInOffset a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Boolean ;
     base:hasFieldName "DaylightSavingInOffset" .
 
-opcua:DeadbandType a base:Field ;
+opcua:DeadbandType a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "DeadbandType" .
 
-opcua:DeadbandValue a base:Field ;
+opcua:DeadbandValue a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Double ;
     base:hasFieldName "DeadbandValue" .
 
@@ -8983,35 +9306,43 @@ opcua:Decimal a owl:Class ;
 opcua:DecimalString a owl:Class ;
     rdfs:subClassOf opcua:String .
 
-opcua:DefaultEncodingId a base:Field ;
+opcua:DefaultEncodingId a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:NodeId ;
     base:hasFieldName "DefaultEncodingId" .
 
-opcua:DefaultSecurityKeyServices a base:Field ;
+opcua:DefaultSecurityKeyServices a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:EndpointDescription ;
     base:hasFieldName "DefaultSecurityKeyServices" .
 
-opcua:DeleteBidirectional a base:Field ;
+opcua:DeleteBidirectional a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Boolean ;
     base:hasFieldName "DeleteBidirectional" .
 
-opcua:DeleteMonitoredItemsCount a base:Field ;
+opcua:DeleteMonitoredItemsCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ServiceCounterDataType ;
     base:hasFieldName "DeleteMonitoredItemsCount" .
 
-opcua:DeleteNodesCount a base:Field ;
+opcua:DeleteNodesCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ServiceCounterDataType ;
     base:hasFieldName "DeleteNodesCount" .
 
-opcua:DeleteReferencesCount a base:Field ;
+opcua:DeleteReferencesCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ServiceCounterDataType ;
     base:hasFieldName "DeleteReferencesCount" .
 
-opcua:DeleteSubscriptionsCount a base:Field ;
+opcua:DeleteSubscriptionsCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ServiceCounterDataType ;
     base:hasFieldName "DeleteSubscriptionsCount" .
 
-opcua:DeleteTargetReferences a base:Field ;
+opcua:DeleteTargetReferences a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Boolean ;
     base:hasFieldName "DeleteTargetReferences" .
 
@@ -9022,42 +9353,51 @@ opcua:DeviceFailureEventType a owl:Class ;
 opcua:DialogConditionType a owl:Class ;
     rdfs:subClassOf opcua:ConditionType .
 
-opcua:DimensionlessExponent a base:Field ;
+opcua:DimensionlessExponent a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:SByte ;
     base:hasFieldName "DimensionlessExponent" .
 
-opcua:DisableCount a base:Field ;
+opcua:DisableCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "DisableCount" .
 
-opcua:DiscardedMessageCount a base:Field ;
+opcua:DiscardedMessageCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "DiscardedMessageCount" .
 
-opcua:Discipline a base:Field ;
+opcua:Discipline a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "Discipline" .
 
-opcua:DiscoveryAddress a base:Field ;
+opcua:DiscoveryAddress a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:NetworkAddressDataType ;
     base:hasFieldName "DiscoveryAddress" .
 
-opcua:DiscoveryMaxMessageSize a base:Field ;
+opcua:DiscoveryMaxMessageSize a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "DiscoveryMaxMessageSize" .
 
-opcua:DiscoveryProfileUri a base:Field ;
+opcua:DiscoveryProfileUri a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "DiscoveryProfileUri" .
 
-opcua:DiscoveryUrl a base:Field ;
+opcua:DiscoveryUrl a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "DiscoveryUrl" .
 
 opcua:DiscrepancyAlarmType a owl:Class ;
     rdfs:subClassOf opcua:AlarmConditionType .
 
-opcua:Divisor a base:Field ;
+opcua:Divisor a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Float ;
     base:hasFieldName "Divisor" .
 
@@ -9069,7 +9409,8 @@ opcua:DoubleComplexNumberType a owl:Class ;
 opcua:DurationString a owl:Class ;
     rdfs:subClassOf opcua:String .
 
-opcua:EURange a base:Field ;
+opcua:EURange a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Range ;
     base:hasFieldName "EURange" .
 
@@ -9091,11 +9432,13 @@ opcua:EccNistP256ApplicationCertificateType a owl:Class ;
 opcua:EccNistP384ApplicationCertificateType a owl:Class ;
     rdfs:subClassOf opcua:EccApplicationCertificateType .
 
-opcua:ElectricCurrentExponent a base:Field ;
+opcua:ElectricCurrentExponent a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:SByte ;
     base:hasFieldName "ElectricCurrentExponent" .
 
-opcua:ElementIndex a base:Field ;
+opcua:ElementIndex a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt16 ;
     base:hasFieldName "ElementIndex" .
 
@@ -9106,18 +9449,21 @@ opcua:ElementOperand a owl:Class ;
 opcua:ElseGuardVariableType a owl:Class ;
     rdfs:subClassOf opcua:GuardVariableType .
 
-opcua:EnableCount a base:Field ;
+opcua:EnableCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "EnableCount" .
 
 opcua:EncodedTicket a owl:Class ;
     rdfs:subClassOf opcua:String .
 
-opcua:Encoding a base:Field ;
+opcua:Encoding a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "Encoding" .
 
-opcua:EndingBitPosition a base:Field ;
+opcua:EndingBitPosition a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "EndingBitPosition" .
 
@@ -9133,15 +9479,18 @@ opcua:EndpointConfiguration a owl:Class ;
         opcua:SecurityTokenLifetime,
         opcua:UseBinaryEncoding .
 
-opcua:EndpointUrlList a base:Field ;
+opcua:EndpointUrlList a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "EndpointUrlList" .
 
-opcua:EngineeringUnits a base:Field ;
+opcua:EngineeringUnits a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:EUInformation ;
     base:hasFieldName "EngineeringUnits" .
 
-opcua:EnumDataTypes a base:Field ;
+opcua:EnumDataTypes a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:EnumDescription ;
     base:hasFieldName "EnumDataTypes" .
 
@@ -9153,25 +9502,30 @@ opcua:EphemeralKeyType a owl:Class ;
 opcua:Error a opcua:PubSubDiagnosticsCounterClassification,
         opcua:PubSubState,
         opcua:TsnStreamState,
+        owl:NamedIndividual,
         base:Field ;
     base:hasDatatype opcua:StatusCode ;
     base:hasFieldName "Error" .
 
-opcua:ErrorCount a base:Field ;
+opcua:ErrorCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "ErrorCount" .
 
-opcua:EventNotificationsCount a base:Field ;
+opcua:EventNotificationsCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "EventNotificationsCount" .
 
 opcua:EventNotifier a opcua:AttributeWriteMask,
         opcua:NodeAttributesMask,
+        owl:NamedIndividual,
         base:Field ;
     base:hasDatatype opcua:NodeId ;
     base:hasFieldName "EventNotifier" .
 
-opcua:EventQueueOverFlowCount a base:Field ;
+opcua:EventQueueOverFlowCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "EventQueueOverFlowCount" .
 
@@ -9179,7 +9533,8 @@ opcua:EventQueueOverflowEventType a owl:Class ;
     rdfs:subClassOf opcua:BaseEventType ;
     base:isAbstract "true" .
 
-opcua:Events a base:Field ;
+opcua:Events a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:HistoryEventFieldList ;
     base:hasFieldName "Events" .
 
@@ -9192,34 +9547,41 @@ opcua:ExclusiveLevelAlarmType a owl:Class ;
 opcua:ExclusiveRateOfChangeAlarmType a owl:Class ;
     rdfs:subClassOf opcua:ExclusiveLimitAlarmType .
 
-opcua:Exponent a base:Field ;
+opcua:Exponent a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:SByte ;
     base:hasFieldName "Exponent" .
 
 opcua:ExpressionGuardVariableType a owl:Class ;
     rdfs:subClassOf opcua:GuardVariableType .
 
-opcua:ExtensionFields a base:Field ;
+opcua:ExtensionFields a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:KeyValuePair ;
     base:hasFieldName "ExtensionFields" .
 
-opcua:FieldFlags a base:Field ;
+opcua:FieldFlags a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:DataSetFieldFlags ;
     base:hasFieldName "FieldFlags" .
 
-opcua:FileHeader a base:Field ;
+opcua:FileHeader a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:KeyValuePair ;
     base:hasFieldName "FileHeader" .
 
-opcua:Filter a base:Field ;
+opcua:Filter a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ContentFilter ;
     base:hasFieldName "Filter" .
 
-opcua:FilterOperands a base:Field ;
+opcua:FilterOperands a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Structure ;
     base:hasFieldName "FilterOperands" .
 
-opcua:FinalAddend a base:Field ;
+opcua:FinalAddend a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Float ;
     base:hasFieldName "FinalAddend" .
 
@@ -9231,7 +9593,8 @@ opcua:GeneralModelChangeEventType a owl:Class ;
     rdfs:subClassOf opcua:BaseModelChangeEventType ;
     base:isAbstract "true" .
 
-opcua:GroupIndex a base:Field ;
+opcua:GroupIndex a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt16 ;
     base:hasFieldName "GroupIndex" .
 
@@ -9398,7 +9761,8 @@ opcua:HasWriterGroup a owl:Class,
         owl:ObjectProperty ;
     rdfs:subClassOf opcua:HasComponent .
 
-opcua:High a base:Field ;
+opcua:High a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Double ;
     base:hasFieldName "High" .
 
@@ -9413,11 +9777,13 @@ opcua:HistoryModifiedEvent a owl:Class ;
     rdfs:subClassOf opcua:HistoryEvent ;
     base:hasField opcua:ModificationInfos .
 
-opcua:HistoryReadCount a base:Field ;
+opcua:HistoryReadCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ServiceCounterDataType ;
     base:hasFieldName "HistoryReadCount" .
 
-opcua:HistoryUpdateCount a base:Field ;
+opcua:HistoryUpdateCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ServiceCounterDataType ;
     base:hasFieldName "HistoryUpdateCount" .
 
@@ -9485,6 +9851,7 @@ opcua:IVlanIdType a owl:Class ;
     base:isAbstract "true" .
 
 opcua:Identifier a opcua:PubSubConfigurationValueDataType,
+        owl:NamedIndividual,
         base:Field ;
     base:hasDatatype opcua:NodeId ;
     base:hasFieldName "Identifier" .
@@ -9507,11 +9874,13 @@ opcua:ImageJPG a owl:Class ;
 opcua:ImagePNG a owl:Class ;
     rdfs:subClassOf opcua:Image .
 
-opcua:IncludeSubtypes a base:Field ;
+opcua:IncludeSubtypes a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Boolean ;
     base:hasFieldName "IncludeSubtypes" .
 
-opcua:InitialAddend a base:Field ;
+opcua:InitialAddend a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Float ;
     base:hasFieldName "InitialAddend" .
 
@@ -9537,15 +9906,18 @@ opcua:IsHostedBy a owl:Class,
         owl:ObjectProperty ;
     rdfs:subClassOf opcua:Utilizes .
 
-opcua:IsInverse a base:Field ;
+opcua:IsInverse a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Boolean ;
     base:hasFieldName "IsInverse" .
 
-opcua:IsOnline a base:Field ;
+opcua:IsOnline a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Boolean ;
     base:hasFieldName "IsOnline" .
 
-opcua:IsOptional a base:Field ;
+opcua:IsOptional a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Boolean ;
     base:hasFieldName "IsOptional" .
 
@@ -9558,21 +9930,25 @@ opcua:IssuedIdentityToken a owl:Class ;
     base:hasField opcua:EncryptionAlgorithm,
         opcua:TokenData .
 
-opcua:IssuedTokenType a base:Field ;
+opcua:IssuedTokenType a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "IssuedTokenType" .
 
 opcua:IssuerCertificates a opcua:TrustListMasks,
+        owl:NamedIndividual,
         base:Field ;
     base:hasDatatype opcua:ByteString ;
     base:hasFieldName "IssuerCertificates" .
 
 opcua:IssuerCrls a opcua:TrustListMasks,
+        owl:NamedIndividual,
         base:Field ;
     base:hasDatatype opcua:ByteString ;
     base:hasFieldName "IssuerCrls" .
 
-opcua:IssuerEndpointUrl a base:Field ;
+opcua:IssuerEndpointUrl a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "IssuerEndpointUrl" .
 
@@ -9598,11 +9974,13 @@ opcua:JsonWriterGroupMessageDataType a owl:Class ;
 opcua:JsonWriterGroupMessageType a owl:Class ;
     rdfs:subClassOf opcua:WriterGroupMessageType .
 
-opcua:KeepAliveTime a base:Field ;
+opcua:KeepAliveTime a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Duration ;
     base:hasFieldName "KeepAliveTime" .
 
-opcua:Key a base:Field ;
+opcua:Key a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:QualifiedName ;
     base:hasFieldName "Key" .
 
@@ -9612,23 +9990,28 @@ opcua:KeyCredentialDeletedAuditEventType a owl:Class ;
 opcua:KeyCredentialUpdatedAuditEventType a owl:Class ;
     rdfs:subClassOf opcua:KeyCredentialAuditEventType .
 
-opcua:KeyLifetime a base:Field ;
+opcua:KeyLifetime a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Duration ;
     base:hasFieldName "KeyLifetime" .
 
-opcua:LatePublishRequestCount a base:Field ;
+opcua:LatePublishRequestCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "LatePublishRequestCount" .
 
-opcua:LengthExponent a base:Field ;
+opcua:LengthExponent a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:SByte ;
     base:hasFieldName "LengthExponent" .
 
-opcua:Low a base:Field ;
+opcua:Low a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Double ;
     base:hasFieldName "Low" .
 
-opcua:LuminousIntensityExponent a base:Field ;
+opcua:LuminousIntensityExponent a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:SByte ;
     base:hasFieldName "LuminousIntensityExponent" .
 
@@ -9637,67 +10020,83 @@ opcua:MaintenanceConditionClassType a owl:Class ;
     base:isAbstract "true" .
 
 opcua:MajorVersion a opcua:UadpDataSetMessageContentMask,
+        owl:NamedIndividual,
         base:Field ;
     base:hasDatatype opcua:VersionTime ;
     base:hasFieldName "MajorVersion" .
 
-opcua:ManufacturerName a base:Field ;
+opcua:ManufacturerName a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "ManufacturerName" .
 
-opcua:MappingUri a base:Field ;
+opcua:MappingUri a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "MappingUri" .
 
-opcua:MassExponent a base:Field ;
+opcua:MassExponent a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:SByte ;
     base:hasFieldName "MassExponent" .
 
-opcua:MaxArrayLength a base:Field ;
+opcua:MaxArrayLength a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Int32 ;
     base:hasFieldName "MaxArrayLength" .
 
-opcua:MaxBufferSize a base:Field ;
+opcua:MaxBufferSize a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Int32 ;
     base:hasFieldName "MaxBufferSize" .
 
-opcua:MaxByteStringLength a base:Field ;
+opcua:MaxByteStringLength a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Int32 ;
     base:hasFieldName "MaxByteStringLength" .
 
-opcua:MaxFutureKeyCount a base:Field ;
+opcua:MaxFutureKeyCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "MaxFutureKeyCount" .
 
-opcua:MaxKeepAliveCount a base:Field ;
+opcua:MaxKeepAliveCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "MaxKeepAliveCount" .
 
-opcua:MaxLifetimeCount a base:Field ;
+opcua:MaxLifetimeCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "MaxLifetimeCount" .
 
-opcua:MaxMessageSize a base:Field ;
+opcua:MaxMessageSize a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Int32 ;
     base:hasFieldName "MaxMessageSize" .
 
-opcua:MaxMonitoredItemCount a base:Field ;
+opcua:MaxMonitoredItemCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "MaxMonitoredItemCount" .
 
-opcua:MaxNetworkMessageSize a base:Field ;
+opcua:MaxNetworkMessageSize a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "MaxNetworkMessageSize" .
 
-opcua:MaxNotificationsPerPublish a base:Field ;
+opcua:MaxNotificationsPerPublish a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "MaxNotificationsPerPublish" .
 
-opcua:MaxPastKeyCount a base:Field ;
+opcua:MaxPastKeyCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "MaxPastKeyCount" .
 
-opcua:MaxResponseMessageSize a base:Field ;
+opcua:MaxResponseMessageSize a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "MaxResponseMessageSize" .
 
@@ -9706,57 +10105,70 @@ opcua:MdnsDiscoveryConfiguration a owl:Class ;
     base:hasField opcua:MdnsServerName,
         opcua:ServerCapabilities .
 
-opcua:MdnsServerName a base:Field ;
+opcua:MdnsServerName a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "MdnsServerName" .
 
-opcua:MessageReceiveTimeout a base:Field ;
+opcua:MessageReceiveTimeout a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Duration ;
     base:hasFieldName "MessageReceiveTimeout" .
 
-opcua:MessageRepeatCount a base:Field ;
+opcua:MessageRepeatCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Byte ;
     base:hasFieldName "MessageRepeatCount" .
 
-opcua:MessageRepeatDelay a base:Field ;
+opcua:MessageRepeatDelay a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Duration ;
     base:hasFieldName "MessageRepeatDelay" .
 
-opcua:MetaDataProperties a base:Field ;
+opcua:MetaDataProperties a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:QualifiedName ;
     base:hasFieldName "MetaDataProperties" .
 
-opcua:MetaDataUpdateTime a base:Field ;
+opcua:MetaDataUpdateTime a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Duration ;
     base:hasFieldName "MetaDataUpdateTime" .
 
 opcua:MinorVersion a opcua:JsonDataSetMessageContentMask,
         opcua:UadpDataSetMessageContentMask,
+        owl:NamedIndividual,
         base:Field ;
     base:hasDatatype opcua:VersionTime ;
     base:hasFieldName "MinorVersion" .
 
-opcua:ModificationInfos a base:Field ;
+opcua:ModificationInfos a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ModificationInfo ;
     base:hasFieldName "ModificationInfos" .
 
-opcua:ModificationTime a base:Field ;
+opcua:ModificationTime a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UtcTime ;
     base:hasFieldName "ModificationTime" .
 
-opcua:ModifyCount a base:Field ;
+opcua:ModifyCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "ModifyCount" .
 
-opcua:ModifyMonitoredItemsCount a base:Field ;
+opcua:ModifyMonitoredItemsCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ServiceCounterDataType ;
     base:hasFieldName "ModifyMonitoredItemsCount" .
 
-opcua:ModifySubscriptionCount a base:Field ;
+opcua:ModifySubscriptionCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ServiceCounterDataType ;
     base:hasFieldName "ModifySubscriptionCount" .
 
-opcua:MonitoringQueueOverflowCount a base:Field ;
+opcua:MonitoringQueueOverflowCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "MonitoringQueueOverflowCount" .
 
@@ -9766,14 +10178,16 @@ opcua:MultiStateDictionaryEntryDiscreteType a owl:Class ;
 opcua:MultiStateDiscreteType a owl:Class ;
     rdfs:subClassOf opcua:DiscreteItemType .
 
-opcua:Multiplicand a base:Field ;
+opcua:Multiplicand a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Float ;
     base:hasFieldName "Multiplicand" .
 
 opcua:NDimensionArrayItemType a owl:Class ;
     rdfs:subClassOf opcua:ArrayItemType .
 
-opcua:Namespaces a base:Field ;
+opcua:Namespaces a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "Namespaces" .
 
@@ -9784,19 +10198,23 @@ opcua:NetworkAddressUrlDataType a owl:Class ;
 opcua:NetworkAddressUrlType a owl:Class ;
     rdfs:subClassOf opcua:NetworkAddressType .
 
-opcua:NetworkInterface a base:Field ;
+opcua:NetworkInterface a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "NetworkInterface" .
 
-opcua:NetworkPaths a base:Field ;
+opcua:NetworkPaths a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:EndpointUrlListDataType ;
     base:hasFieldName "NetworkPaths" .
 
-opcua:NextSequenceNumber a base:Field ;
+opcua:NextSequenceNumber a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "NextSequenceNumber" .
 
-opcua:NodeAttributes a base:Field ;
+opcua:NodeAttributes a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Structure ;
     base:hasFieldName "NodeAttributes" .
 
@@ -9818,19 +10236,23 @@ opcua:NonTransparentNetworkRedundancyType a owl:Class ;
 opcua:NormalizedString a owl:Class ;
     rdfs:subClassOf opcua:String .
 
-opcua:NotificationsCount a base:Field ;
+opcua:NotificationsCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "NotificationsCount" .
 
-opcua:NumericCode a base:Field ;
+opcua:NumericCode a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Int16 ;
     base:hasFieldName "NumericCode" .
 
-opcua:Offset a base:Field ;
+opcua:Offset a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Int16 ;
     base:hasFieldName "Offset" .
 
-opcua:OperationTimeout a base:Field ;
+opcua:OperationTimeout a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Int32 ;
     base:hasFieldName "OperationTimeout" .
 
@@ -9846,31 +10268,38 @@ opcua:OptionSetType a owl:Class ;
 opcua:OrderedListType a owl:Class ;
     rdfs:subClassOf opcua:BaseObjectType .
 
-opcua:Parameters a base:Field ;
+opcua:Parameters a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:KeyValuePair ;
     base:hasFieldName "Parameters" .
 
-opcua:ParentNodeId a base:Field ;
+opcua:ParentNodeId a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ExpandedNodeId ;
     base:hasFieldName "ParentNodeId" .
 
-opcua:ParentNodeName a base:Field ;
+opcua:ParentNodeName a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "ParentNodeName" .
 
-opcua:Password a base:Field ;
+opcua:Password a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ByteString ;
     base:hasFieldName "Password" .
 
-opcua:PercentDataBad a base:Field ;
+opcua:PercentDataBad a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Byte ;
     base:hasFieldName "PercentDataBad" .
 
-opcua:PercentDataGood a base:Field ;
+opcua:PercentDataGood a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Byte ;
     base:hasFieldName "PercentDataGood" .
 
-opcua:Permissions a base:Field ;
+opcua:Permissions a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:PermissionType ;
     base:hasFieldName "Permissions" .
 
@@ -9887,11 +10316,13 @@ opcua:PortableQualifiedName a owl:Class ;
 opcua:PriorityMappingTableType a owl:Class ;
     rdfs:subClassOf opcua:BaseObjectType .
 
-opcua:PriorityValue_DSCP a base:Field ;
+opcua:PriorityValue_DSCP a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "PriorityValue_DSCP" .
 
-opcua:PriorityValue_PCP a base:Field ;
+opcua:PriorityValue_PCP a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Byte ;
     base:hasFieldName "PriorityValue_PCP" .
 
@@ -9899,11 +10330,13 @@ opcua:ProcessConditionClassType a owl:Class ;
     rdfs:subClassOf opcua:BaseConditionClassType ;
     base:isAbstract "true" .
 
-opcua:ProcessingOffset a base:Field ;
+opcua:ProcessingOffset a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Duration ;
     base:hasFieldName "ProcessingOffset" .
 
-opcua:ProductName a base:Field ;
+opcua:ProductName a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "ProductName" .
 
@@ -9924,7 +10357,8 @@ opcua:ProgressEventType a owl:Class ;
     rdfs:subClassOf opcua:BaseEventType ;
     base:isAbstract "true" .
 
-opcua:Properties a base:Field ;
+opcua:Properties a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:KeyValuePair ;
     base:hasFieldName "Properties" .
 
@@ -9942,7 +10376,8 @@ opcua:PubSubConfiguration2DataType a owl:Class ;
         opcua:SecurityGroups,
         opcua:SubscribedDataSets .
 
-opcua:PubSubKeyPushTargets a base:Field ;
+opcua:PubSubKeyPushTargets a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:PubSubKeyPushTargetDataType ;
     base:hasFieldName "PubSubKeyPushTargets" .
 
@@ -9950,19 +10385,23 @@ opcua:PubSubTransportLimitsExceedEventType a owl:Class ;
     rdfs:subClassOf opcua:PubSubStatusEventType ;
     base:isAbstract "true" .
 
-opcua:PublicKey a base:Field ;
+opcua:PublicKey a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ByteString ;
     base:hasFieldName "PublicKey" .
 
-opcua:PublishCount a base:Field ;
+opcua:PublishCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ServiceCounterDataType ;
     base:hasFieldName "PublishCount" .
 
-opcua:PublishRequestCount a base:Field ;
+opcua:PublishRequestCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "PublishRequestCount" .
 
-opcua:PublishedData a base:Field ;
+opcua:PublishedData a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:PublishedVariableDataType ;
     base:hasFieldName "PublishedData" .
 
@@ -9977,7 +10416,8 @@ opcua:PublishedDataSetCustomSourceDataType a owl:Class ;
     rdfs:subClassOf opcua:PublishedDataSetSourceDataType ;
     base:hasField opcua:CyclicDataSet .
 
-opcua:PublishedDataSets a base:Field ;
+opcua:PublishedDataSets a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:PublishedDataSetDataType ;
     base:hasFieldName "PublishedDataSets" .
 
@@ -9990,50 +10430,61 @@ opcua:PublishedEventsDataType a owl:Class ;
 opcua:PublishedEventsType a owl:Class ;
     rdfs:subClassOf opcua:PublishedDataSetType .
 
-opcua:PublishedVariable a base:Field ;
+opcua:PublishedVariable a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:NodeId ;
     base:hasFieldName "PublishedVariable" .
 
-opcua:PublishingEnabled a base:Field ;
+opcua:PublishingEnabled a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Boolean ;
     base:hasFieldName "PublishingEnabled" .
 
-opcua:PublishingIntervalCount a base:Field ;
+opcua:PublishingIntervalCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "PublishingIntervalCount" .
 
-opcua:PublishingOffset a base:Field ;
+opcua:PublishingOffset a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Duration ;
     base:hasFieldName "PublishingOffset" .
 
-opcua:PushTargetFolder a base:Field ;
+opcua:PushTargetFolder a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "PushTargetFolder" .
 
-opcua:PushTargetProperties a base:Field ;
+opcua:PushTargetProperties a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:KeyValuePair ;
     base:hasFieldName "PushTargetProperties" .
 
-opcua:QueryFirstCount a base:Field ;
+opcua:QueryFirstCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ServiceCounterDataType ;
     base:hasFieldName "QueryFirstCount" .
 
-opcua:QueryNextCount a base:Field ;
+opcua:QueryNextCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ServiceCounterDataType ;
     base:hasFieldName "QueryNextCount" .
 
 opcua:RationalNumberType a owl:Class ;
     rdfs:subClassOf opcua:BaseDataVariableType .
 
-opcua:ReadCount a base:Field ;
+opcua:ReadCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ServiceCounterDataType ;
     base:hasFieldName "ReadCount" .
 
-opcua:ReaderGroups a base:Field ;
+opcua:ReaderGroups a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ReaderGroupDataType ;
     base:hasFieldName "ReaderGroups" .
 
-opcua:ReceiveOffset a base:Field ;
+opcua:ReceiveOffset a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Duration ;
     base:hasFieldName "ReceiveOffset" .
 
@@ -10041,18 +10492,21 @@ opcua:ReceiveQosPriorityDataType a owl:Class ;
     rdfs:subClassOf opcua:ReceiveQosDataType ;
     base:hasField opcua:PriorityLabel .
 
-opcua:ReceiverIndexRange a base:Field ;
+opcua:ReceiverIndexRange a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:NumericRange ;
     base:hasFieldName "ReceiverIndexRange" .
 
-opcua:RecordId a base:Field ;
+opcua:RecordId a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "RecordId" .
 
 opcua:ReferenceDescriptionVariableType a owl:Class ;
     rdfs:subClassOf opcua:BaseDataVariableType .
 
-opcua:ReferencedNodes a base:Field ;
+opcua:ReferencedNodes a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ExpandedNodeId ;
     base:hasFieldName "ReferencedNodes" .
 
@@ -10068,7 +10522,8 @@ opcua:RefreshStartEventType a owl:Class ;
     rdfs:subClassOf opcua:SystemEventType ;
     base:isAbstract "true" .
 
-opcua:RegisterNodesCount a base:Field ;
+opcua:RegisterNodesCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ServiceCounterDataType ;
     base:hasFieldName "RegisterNodesCount" .
 
@@ -10083,11 +10538,13 @@ opcua:RegisteredServer a owl:Class ;
         opcua:ServerType,
         opcua:ServerUri .
 
-opcua:RejectedRequestsCount a base:Field ;
+opcua:RejectedRequestsCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "RejectedRequestsCount" .
 
-opcua:RejectedSessionCount a base:Field ;
+opcua:RejectedSessionCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "RejectedSessionCount" .
 
@@ -10099,27 +10556,33 @@ opcua:RepresentsSameHardwareAs a owl:Class,
         owl:ObjectProperty ;
     rdfs:subClassOf opcua:RepresentsSameEntityAs .
 
-opcua:RepublishCount a base:Field ;
+opcua:RepublishCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ServiceCounterDataType ;
     base:hasFieldName "RepublishCount" .
 
-opcua:RepublishMessageCount a base:Field ;
+opcua:RepublishMessageCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "RepublishMessageCount" .
 
-opcua:RepublishMessageRequestCount a base:Field ;
+opcua:RepublishMessageRequestCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "RepublishMessageRequestCount" .
 
-opcua:RepublishRequestCount a base:Field ;
+opcua:RepublishRequestCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "RepublishRequestCount" .
 
-opcua:RequestedKeyCount a base:Field ;
+opcua:RequestedKeyCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt16 ;
     base:hasFieldName "RequestedKeyCount" .
 
-opcua:RequestedNewNodeId a base:Field ;
+opcua:RequestedNewNodeId a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ExpandedNodeId ;
     base:hasFieldName "RequestedNewNodeId" .
 
@@ -10127,15 +10590,18 @@ opcua:Requires a owl:Class,
         owl:ObjectProperty ;
     rdfs:subClassOf opcua:HierarchicalReferences .
 
-opcua:Reserved a base:Field ;
+opcua:Reserved a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Boolean ;
     base:hasFieldName "Reserved" .
 
-opcua:RetryInterval a base:Field ;
+opcua:RetryInterval a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Duration ;
     base:hasFieldName "RetryInterval" .
 
-opcua:RoleId a base:Field ;
+opcua:RoleId a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:NodeId ;
     base:hasFieldName "RoleId" .
 
@@ -10153,51 +10619,63 @@ opcua:SafetyConditionClassType a owl:Class ;
     rdfs:subClassOf opcua:BaseConditionClassType ;
     base:isAbstract "true" .
 
-opcua:SamplingInterval a base:Field ;
+opcua:SamplingInterval a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Duration ;
     base:hasFieldName "SamplingInterval" .
 
-opcua:SamplingIntervalHint a base:Field ;
+opcua:SamplingIntervalHint a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Duration ;
     base:hasFieldName "SamplingIntervalHint" .
 
-opcua:SamplingOffset a base:Field ;
+opcua:SamplingOffset a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Duration ;
     base:hasFieldName "SamplingOffset" .
 
-opcua:SchemaLocation a base:Field ;
+opcua:SchemaLocation a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "SchemaLocation" .
 
-opcua:SecondsTillShutdown a base:Field ;
+opcua:SecondsTillShutdown a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "SecondsTillShutdown" .
 
-opcua:SecurityGroupFolder a base:Field ;
+opcua:SecurityGroupFolder a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "SecurityGroupFolder" .
 
-opcua:SecurityLevel a base:Field ;
+opcua:SecurityLevel a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Byte ;
     base:hasFieldName "SecurityLevel" .
 
-opcua:SecurityRejectedRequestsCount a base:Field ;
+opcua:SecurityRejectedRequestsCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "SecurityRejectedRequestsCount" .
 
-opcua:SecurityRejectedSessionCount a base:Field ;
+opcua:SecurityRejectedSessionCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "SecurityRejectedSessionCount" .
 
-opcua:SecurityTokenLifetime a base:Field ;
+opcua:SecurityTokenLifetime a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Int32 ;
     base:hasFieldName "SecurityTokenLifetime" .
 
-opcua:SelectClauses a base:Field ;
+opcua:SelectClauses a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:SimpleAttributeOperand ;
     base:hasFieldName "SelectClauses" .
 
-opcua:SelectedFields a base:Field ;
+opcua:SelectedFields a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:SimpleAttributeOperand ;
     base:hasFieldName "SelectedFields" .
 
@@ -10205,28 +10683,34 @@ opcua:SemanticChangeEventType a owl:Class ;
     rdfs:subClassOf opcua:BaseEventType ;
     base:isAbstract "true" .
 
-opcua:SemaphoreFilePath a base:Field ;
+opcua:SemaphoreFilePath a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "SemaphoreFilePath" .
 
 opcua:Server a opcua:ApplicationType,
+        owl:NamedIndividual,
         base:Field ;
     base:hasDatatype opcua:ApplicationDescription ;
     base:hasFieldName "Server" .
 
-opcua:ServerCertificate a base:Field ;
+opcua:ServerCertificate a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ApplicationInstanceCertificate ;
     base:hasFieldName "ServerCertificate" .
 
-opcua:ServerId a base:Field ;
+opcua:ServerId a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "ServerId" .
 
-opcua:ServerName a base:Field ;
+opcua:ServerName a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "ServerName" .
 
-opcua:ServerNames a base:Field ;
+opcua:ServerNames a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasFieldName "ServerNames" .
 
@@ -10237,58 +10721,71 @@ opcua:ServerOnNetwork a owl:Class ;
         opcua:ServerCapabilities,
         opcua:ServerName .
 
-opcua:ServerViewCount a base:Field ;
+opcua:ServerViewCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "ServerViewCount" .
 
-opcua:ServiceLevel a base:Field ;
+opcua:ServiceLevel a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Byte ;
     base:hasFieldName "ServiceLevel" .
 
-opcua:SessionAbortCount a base:Field ;
+opcua:SessionAbortCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "SessionAbortCount" .
 
 opcua:SessionAuthenticationToken a owl:Class ;
     rdfs:subClassOf opcua:NodeId .
 
-opcua:SessionName a base:Field ;
+opcua:SessionName a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "SessionName" .
 
-opcua:SessionTimeoutCount a base:Field ;
+opcua:SessionTimeoutCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "SessionTimeoutCount" .
 
-opcua:SetMonitoringModeCount a base:Field ;
+opcua:SetMonitoringModeCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ServiceCounterDataType ;
     base:hasFieldName "SetMonitoringModeCount" .
 
-opcua:SetPublishingModeCount a base:Field ;
+opcua:SetPublishingModeCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ServiceCounterDataType ;
     base:hasFieldName "SetPublishingModeCount" .
 
-opcua:SetTriggeringCount a base:Field ;
+opcua:SetTriggeringCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ServiceCounterDataType ;
     base:hasFieldName "SetTriggeringCount" .
 
-opcua:ShutdownReason a base:Field ;
+opcua:ShutdownReason a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasFieldName "ShutdownReason" .
 
-opcua:SimpleDataTypes a base:Field ;
+opcua:SimpleDataTypes a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:SimpleTypeDescription ;
     base:hasFieldName "SimpleDataTypes" .
 
-opcua:SoftwareVersion a base:Field ;
+opcua:SoftwareVersion a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "SoftwareVersion" .
 
-opcua:SourceNode a base:Field ;
+opcua:SourceNode a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:NodeId ;
     base:hasFieldName "SourceNode" .
 
-opcua:SpecifiedLists a base:Field ;
+opcua:SpecifiedLists a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "SpecifiedLists" .
 
@@ -10296,15 +10793,18 @@ opcua:StandaloneSubscribedDataSetRefDataType a owl:Class ;
     rdfs:subClassOf opcua:SubscribedDataSetDataType ;
     base:hasField opcua:DataSetName .
 
-opcua:StartTime a base:Field ;
+opcua:StartTime a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UtcTime ;
     base:hasFieldName "StartTime" .
 
-opcua:StartingBitPosition a base:Field ;
+opcua:StartingBitPosition a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "StartingBitPosition" .
 
-opcua:State a base:Field ;
+opcua:State a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ServerState ;
     base:hasFieldName "State" .
 
@@ -10312,7 +10812,8 @@ opcua:StatisticalConditionClassType a owl:Class ;
     rdfs:subClassOf opcua:BaseConditionClassType ;
     base:isAbstract "true" .
 
-opcua:StructureDataTypes a base:Field ;
+opcua:StructureDataTypes a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:StructureDescription ;
     base:hasFieldName "StructureDataTypes" .
 
@@ -10324,11 +10825,13 @@ opcua:SubscribedDataSetMirrorDataType a owl:Class ;
 opcua:SubscribedDataSetMirrorType a owl:Class ;
     rdfs:subClassOf opcua:SubscribedDataSetType .
 
-opcua:SubscribedDataSets a base:Field ;
+opcua:SubscribedDataSets a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:StandaloneSubscribedDataSetDataType ;
     base:hasFieldName "SubscribedDataSets" .
 
-opcua:SubscriptionId a base:Field ;
+opcua:SubscriptionId a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "SubscriptionId" .
 
@@ -10346,23 +10849,28 @@ opcua:SystemStatusChangeEventType a owl:Class ;
     rdfs:subClassOf opcua:SystemEventType ;
     base:isAbstract "true" .
 
-opcua:TargetId a base:Field ;
+opcua:TargetId a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:NodeId ;
     base:hasFieldName "TargetId" .
 
-opcua:TargetName a base:Field ;
+opcua:TargetName a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:QualifiedName ;
     base:hasFieldName "TargetName" .
 
-opcua:TargetNodeClass a base:Field ;
+opcua:TargetNodeClass a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:NodeClass ;
     base:hasFieldName "TargetNodeClass" .
 
-opcua:TargetServerUri a base:Field ;
+opcua:TargetServerUri a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "TargetServerUri" .
 
-opcua:TargetVariables a base:Field ;
+opcua:TargetVariables a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:FieldTargetDataType ;
     base:hasFieldName "TargetVariables" .
 
@@ -10380,14 +10888,16 @@ opcua:TestingConditionClassType a owl:Class ;
     rdfs:subClassOf opcua:BaseConditionClassType ;
     base:isAbstract "true" .
 
-opcua:TimeExponent a base:Field ;
+opcua:TimeExponent a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:SByte ;
     base:hasFieldName "TimeExponent" .
 
 opcua:TimeString a owl:Class ;
     rdfs:subClassOf opcua:String .
 
-opcua:Title a base:Field ;
+opcua:Title a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasFieldName "Title" .
 
@@ -10395,19 +10905,23 @@ opcua:ToState a owl:Class,
         owl:ObjectProperty ;
     rdfs:subClassOf opcua:NonHierarchicalReferences .
 
-opcua:TokenData a base:Field ;
+opcua:TokenData a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ByteString ;
     base:hasFieldName "TokenData" .
 
-opcua:TokenType a base:Field ;
+opcua:TokenType a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UserTokenType ;
     base:hasFieldName "TokenType" .
 
-opcua:TotalCount a base:Field ;
+opcua:TotalCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "TotalCount" .
 
-opcua:TotalRequestCount a base:Field ;
+opcua:TotalRequestCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ServiceCounterDataType ;
     base:hasFieldName "TotalRequestCount" .
 
@@ -10415,23 +10929,28 @@ opcua:TrainingConditionClassType a owl:Class ;
     rdfs:subClassOf opcua:BaseConditionClassType ;
     base:isAbstract "true" .
 
-opcua:TransferRequestCount a base:Field ;
+opcua:TransferRequestCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "TransferRequestCount" .
 
-opcua:TransferSubscriptionsCount a base:Field ;
+opcua:TransferSubscriptionsCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ServiceCounterDataType ;
     base:hasFieldName "TransferSubscriptionsCount" .
 
-opcua:TransferredToAltClientCount a base:Field ;
+opcua:TransferredToAltClientCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "TransferredToAltClientCount" .
 
-opcua:TransferredToSameClientCount a base:Field ;
+opcua:TransferredToSameClientCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "TransferredToSameClientCount" .
 
-opcua:TranslateBrowsePathsToNodeIdsCount a base:Field ;
+opcua:TranslateBrowsePathsToNodeIdsCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ServiceCounterDataType ;
     base:hasFieldName "TranslateBrowsePathsToNodeIdsCount" .
 
@@ -10442,11 +10961,13 @@ opcua:TransmitQosPriorityDataType a owl:Class ;
 opcua:TransparentRedundancyType a owl:Class ;
     rdfs:subClassOf opcua:ServerRedundancyType .
 
-opcua:TransportProtocol a base:Field ;
+opcua:TransportProtocol a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "TransportProtocol" .
 
-opcua:TreatUncertainAsBad a base:Field ;
+opcua:TreatUncertainAsBad a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Boolean ;
     base:hasFieldName "TreatUncertainAsBad" .
 
@@ -10473,11 +10994,13 @@ opcua:TrustListUpdatedAuditEventType a owl:Class ;
     base:isAbstract "true" .
 
 opcua:TrustedCertificates a opcua:TrustListMasks,
+        owl:NamedIndividual,
         base:Field ;
     base:hasDatatype opcua:ByteString ;
     base:hasFieldName "TrustedCertificates" .
 
 opcua:TrustedCrls a opcua:TrustListMasks,
+        owl:NamedIndividual,
         base:Field ;
     base:hasDatatype opcua:ByteString ;
     base:hasFieldName "TrustedCrls" .
@@ -10485,11 +11008,13 @@ opcua:TrustedCrls a opcua:TrustListMasks,
 opcua:TwoStateDiscreteType a owl:Class ;
     rdfs:subClassOf opcua:DiscreteItemType .
 
-opcua:TypeDefinition a base:Field ;
+opcua:TypeDefinition a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ExpandedNodeId ;
     base:hasFieldName "TypeDefinition" .
 
-opcua:TypeDefinitionId a base:Field ;
+opcua:TypeDefinitionId a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:NodeId ;
     base:hasFieldName "TypeDefinitionId" .
 
@@ -10529,63 +11054,76 @@ opcua:UadpWriterGroupMessageDataType a owl:Class ;
 opcua:UadpWriterGroupMessageType a owl:Class ;
     rdfs:subClassOf opcua:WriterGroupMessageType .
 
-opcua:UnacknowledgedMessageCount a base:Field ;
+opcua:UnacknowledgedMessageCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "UnacknowledgedMessageCount" .
 
-opcua:UnauthorizedRequestCount a base:Field ;
+opcua:UnauthorizedRequestCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "UnauthorizedRequestCount" .
 
 opcua:Union a opcua:StructureType,
-        owl:Class ;
+        owl:Class,
+        owl:NamedIndividual ;
     rdfs:subClassOf opcua:Structure ;
     base:hasFieldName "Union" ;
     base:isAbstract "true" .
 
-opcua:UnitId a base:Field ;
+opcua:UnitId a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Int32 ;
     base:hasFieldName "UnitId" .
 
-opcua:UnregisterNodesCount a base:Field ;
+opcua:UnregisterNodesCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ServiceCounterDataType ;
     base:hasFieldName "UnregisterNodesCount" .
 
-opcua:UpdateType a base:Field ;
+opcua:UpdateType a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:HistoryUpdateType ;
     base:hasFieldName "UpdateType" .
 
-opcua:Uri a base:Field ;
+opcua:Uri a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "Uri" .
 
 opcua:UriDictionaryEntryType a owl:Class ;
     rdfs:subClassOf opcua:DictionaryEntryType .
 
-opcua:Url a base:Field ;
+opcua:Url a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "Url" .
 
-opcua:UseBinaryEncoding a base:Field ;
+opcua:UseBinaryEncoding a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Boolean ;
     base:hasFieldName "UseBinaryEncoding" .
 
-opcua:UseServerCapabilitiesDefaults a base:Field ;
+opcua:UseServerCapabilitiesDefaults a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Boolean ;
     base:hasFieldName "UseServerCapabilitiesDefaults" .
 
-opcua:UseSlopedExtrapolation a base:Field ;
+opcua:UseSlopedExtrapolation a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Boolean ;
     base:hasFieldName "UseSlopedExtrapolation" .
 
-opcua:UserConfiguration a base:Field ;
+opcua:UserConfiguration a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UserConfigurationMask ;
     base:hasFieldName "UserConfiguration" .
 
 opcua:UserCredentialCertificateType a owl:Class ;
     rdfs:subClassOf opcua:CertificateType .
 
-opcua:UserIdentityTokens a base:Field ;
+opcua:UserIdentityTokens a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UserTokenPolicy ;
     base:hasFieldName "UserIdentityTokens" .
 
@@ -10599,27 +11137,33 @@ opcua:UsesPriorityMappingTable a owl:Class,
         owl:ObjectProperty ;
     rdfs:subClassOf opcua:NonHierarchicalReferences .
 
-opcua:ValidBits a base:Field ;
+opcua:ValidBits a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ByteString ;
     base:hasFieldName "ValidBits" .
 
-opcua:Verb a base:Field ;
+opcua:Verb a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Byte ;
     base:hasFieldName "Verb" .
 
-opcua:WhereClause a base:Field ;
+opcua:WhereClause a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ContentFilter ;
     base:hasFieldName "WhereClause" .
 
-opcua:WriteCount a base:Field ;
+opcua:WriteCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ServiceCounterDataType ;
     base:hasFieldName "WriteCount" .
 
-opcua:WriteIndexRange a base:Field ;
+opcua:WriteIndexRange a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:NumericRange ;
     base:hasFieldName "WriteIndexRange" .
 
-opcua:WriterGroups a base:Field ;
+opcua:WriterGroups a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:WriterGroupDataType ;
     base:hasFieldName "WriterGroups" .
 
@@ -50740,11 +51284,13 @@ opcua:AddReferencesItem a owl:Class ;
 opcua:AddressSpaceFileType a owl:Class ;
     rdfs:subClassOf opcua:FileType .
 
-opcua:Affected a base:Field ;
+opcua:Affected a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:NodeId ;
     base:hasFieldName "Affected" .
 
-opcua:AffectedType a base:Field ;
+opcua:AffectedType a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:NodeId ;
     base:hasFieldName "AffectedType" .
 
@@ -50773,7 +51319,8 @@ opcua:ApplicationConfigurationType a owl:Class ;
 opcua:ApplicationInstanceCertificate a owl:Class ;
     rdfs:subClassOf opcua:ByteString .
 
-opcua:ApplicationUri a base:Field ;
+opcua:ApplicationUri a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "ApplicationUri" .
 
@@ -50807,19 +51354,22 @@ opcua:BitFieldDefinition a owl:Class ;
         opcua:Reserved,
         opcua:StartingBitPosition .
 
-opcua:BrowsePath a base:Field ;
+opcua:BrowsePath a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:QualifiedName,
         opcua:RelativePath ;
     base:hasFieldName "BrowsePath" .
 
-opcua:CertificateData a base:Field ;
+opcua:CertificateData a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ByteString ;
     base:hasFieldName "CertificateData" .
 
 opcua:CertificateExpirationAlarmType a owl:Class ;
     rdfs:subClassOf opcua:SystemOffNormalAlarmType .
 
-opcua:ConfigurationVersion a base:Field ;
+opcua:ConfigurationVersion a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ConfigurationVersionDataType,
         opcua:VersionTime ;
     base:hasFieldName "ConfigurationVersion" .
@@ -50829,11 +51379,13 @@ opcua:ContentFilterElement a owl:Class ;
     base:hasField opcua:FilterOperands,
         opcua:FilterOperator .
 
-opcua:CreateClientName a base:Field ;
+opcua:CreateClientName a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "CreateClientName" .
 
-opcua:CreateSessionId a base:Field ;
+opcua:CreateSessionId a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:NodeId ;
     base:hasFieldName "CreateSessionId" .
 
@@ -50846,23 +51398,28 @@ opcua:CurrencyUnitType a owl:Class ;
 
 opcua:DataSetClassId a opcua:JsonNetworkMessageContentMask,
         opcua:UadpNetworkMessageContentMask,
+        owl:NamedIndividual,
         base:Field ;
     base:hasDatatype opcua:Guid ;
     base:hasFieldName "DataSetClassId" .
 
-opcua:DataSetFieldId a base:Field ;
+opcua:DataSetFieldId a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Guid ;
     base:hasFieldName "DataSetFieldId" .
 
-opcua:DataSetFolder a base:Field ;
+opcua:DataSetFolder a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "DataSetFolder" .
 
-opcua:DataSetName a base:Field ;
+opcua:DataSetName a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "DataSetName" .
 
-opcua:DataSetOffset a base:Field ;
+opcua:DataSetOffset a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt16 ;
     base:hasFieldName "DataSetOffset" .
 
@@ -50882,6 +51439,7 @@ opcua:DataSetWriterDataType a owl:Class ;
         opcua:TransportSettings .
 
 opcua:DataSetWriterId a opcua:JsonDataSetMessageContentMask,
+        owl:NamedIndividual,
         base:Field ;
     base:hasDatatype opcua:UInt16 ;
     base:hasFieldName "DataSetWriterId" .
@@ -50908,22 +51466,26 @@ opcua:DeleteReferencesItem a owl:Class ;
         opcua:SourceNodeId,
         opcua:TargetNodeId .
 
-opcua:Denominator a base:Field ;
+opcua:Denominator a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "Denominator" .
 
-opcua:DisabledMonitoredItemCount a base:Field ;
+opcua:DisabledMonitoredItemCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "DisabledMonitoredItemCount" .
 
-opcua:DiscoveryAnnounceRate a base:Field ;
+opcua:DiscoveryAnnounceRate a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "DiscoveryAnnounceRate" .
 
 opcua:DiscoveryConfiguration a owl:Class ;
     rdfs:subClassOf opcua:Structure .
 
-opcua:DiscoveryUrls a base:Field ;
+opcua:DiscoveryUrls a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "DiscoveryUrls" .
 
@@ -50932,16 +51494,19 @@ opcua:DiscreteAlarmType a owl:Class ;
 
 opcua:DisplayName a opcua:AttributeWriteMask,
         opcua:NodeAttributesMask,
+        owl:NamedIndividual,
         base:Field ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasFieldName "DisplayName" .
 
-opcua:Elements a base:Field ;
+opcua:Elements a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ContentFilterElement,
         opcua:RelativePathElement ;
     base:hasFieldName "Elements" .
 
-opcua:EncryptionAlgorithm a base:Field ;
+opcua:EncryptionAlgorithm a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "EncryptionAlgorithm" .
 
@@ -50984,7 +51549,8 @@ opcua:FrameType a owl:Class ;
     rdfs:subClassOf opcua:BaseDataVariableType ;
     base:isAbstract "true" .
 
-opcua:GatewayServerUri a base:Field ;
+opcua:GatewayServerUri a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "GatewayServerUri" .
 
@@ -50992,11 +51558,13 @@ opcua:GeneratesEvent a owl:Class,
         owl:ObjectProperty ;
     rdfs:subClassOf opcua:NonHierarchicalReferences .
 
-opcua:GroupProperties a base:Field ;
+opcua:GroupProperties a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:KeyValuePair ;
     base:hasFieldName "GroupProperties" .
 
 opcua:GroupVersion a opcua:UadpNetworkMessageContentMask,
+        owl:NamedIndividual,
         base:Field ;
     base:hasDatatype opcua:VersionTime ;
     base:hasFieldName "GroupVersion" .
@@ -51009,7 +51577,8 @@ opcua:HasEventSource a owl:Class,
         owl:ObjectProperty ;
     rdfs:subClassOf opcua:HierarchicalReferences .
 
-opcua:HeaderLayoutUri a base:Field ;
+opcua:HeaderLayoutUri a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "HeaderLayoutUri" .
 
@@ -51023,12 +51592,14 @@ opcua:HistoryEvent a owl:Class ;
 opcua:HistoryServerCapabilitiesType a owl:Class ;
     rdfs:subClassOf opcua:BaseObjectType .
 
-opcua:Imaginary a base:Field ;
+opcua:Imaginary a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Double,
         opcua:Float ;
     base:hasFieldName "Imaginary" .
 
 opcua:Index a owl:Class,
+        owl:NamedIndividual,
         base:Field ;
     rdfs:subClassOf opcua:UInt32 ;
     base:hasDatatype opcua:UInt32 ;
@@ -51043,7 +51614,8 @@ opcua:Int64 a owl:Class ;
 opcua:IntegerId a owl:Class ;
     rdfs:subClassOf opcua:UInt32 .
 
-opcua:InvocationCreationTime a base:Field ;
+opcua:InvocationCreationTime a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UtcTime ;
     base:hasFieldName "InvocationCreationTime" .
 
@@ -51053,36 +51625,44 @@ opcua:KeyCredentialConfigurationFolderType a owl:Class ;
 opcua:KeyCredentialConfigurationType a owl:Class ;
     rdfs:subClassOf opcua:BaseObjectType .
 
-opcua:KeyFrameCount a base:Field ;
+opcua:KeyFrameCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "KeyFrameCount" .
 
-opcua:LastMethodCall a base:Field ;
+opcua:LastMethodCall a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "LastMethodCall" .
 
-opcua:LastMethodCallTime a base:Field ;
+opcua:LastMethodCallTime a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UtcTime ;
     base:hasFieldName "LastMethodCallTime" .
 
-opcua:LastMethodInputArguments a base:Field ;
+opcua:LastMethodInputArguments a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Argument ;
     base:hasFieldName "LastMethodInputArguments" .
 
-opcua:LastMethodOutputArguments a base:Field ;
+opcua:LastMethodOutputArguments a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Argument ;
     base:hasFieldName "LastMethodOutputArguments" .
 
-opcua:LastMethodReturnStatus a base:Field ;
+opcua:LastMethodReturnStatus a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:StatusCode,
         opcua:StatusResult ;
     base:hasFieldName "LastMethodReturnStatus" .
 
-opcua:LastMethodSessionId a base:Field ;
+opcua:LastMethodSessionId a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:NodeId ;
     base:hasFieldName "LastMethodSessionId" .
 
-opcua:LastTransitionTime a base:Field ;
+opcua:LastTransitionTime a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UtcTime ;
     base:hasFieldName "LastTransitionTime" .
 
@@ -51096,16 +51676,19 @@ opcua:LinearConversionDataType a owl:Class ;
 opcua:LiteralOperand a owl:Class ;
     rdfs:subClassOf opcua:FilterOperand .
 
-opcua:LocaleIds a base:Field ;
+opcua:LocaleIds a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:LocaleId ;
     base:hasFieldName "LocaleIds" .
 
-opcua:Message a base:Field ;
+opcua:Message a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:LocalizedText,
         opcua:String ;
     base:hasFieldName "Message" .
 
-opcua:MetaDataQueueName a base:Field ;
+opcua:MetaDataQueueName a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "MetaDataQueueName" .
 
@@ -51121,7 +51704,8 @@ opcua:ModificationInfo a owl:Class ;
         opcua:UpdateType,
         opcua:UserName .
 
-opcua:MonitoredItemCount a base:Field ;
+opcua:MonitoredItemCount a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "MonitoredItemCount" .
 
@@ -51135,11 +51719,13 @@ opcua:MultiStateValueDiscreteType a owl:Class ;
     rdfs:subClassOf opcua:DiscreteItemType .
 
 opcua:NetworkMessageNumber a opcua:UadpNetworkMessageContentMask,
+        owl:NamedIndividual,
         base:Field ;
     base:hasDatatype opcua:UInt16 ;
     base:hasFieldName "NetworkMessageNumber" .
 
-opcua:Numerator a base:Field ;
+opcua:Numerator a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Int32,
         opcua:UInt32 ;
     base:hasFieldName "Numerator" .
@@ -51148,11 +51734,13 @@ opcua:Organizes a owl:Class,
         owl:ObjectProperty ;
     rdfs:subClassOf opcua:HierarchicalReferences .
 
-opcua:PolicyId a base:Field ;
+opcua:PolicyId a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "PolicyId" .
 
-opcua:Priority a base:Field ;
+opcua:Priority a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Byte ;
     base:hasFieldName "Priority" .
 
@@ -51283,7 +51871,8 @@ opcua:ReaderGroupTransportType a owl:Class ;
 opcua:ReaderGroupType a owl:Class ;
     rdfs:subClassOf opcua:PubSubGroupType .
 
-opcua:Real a base:Field ;
+opcua:Real a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Double,
         opcua:Float ;
     base:hasFieldName "Real" .
@@ -51303,6 +51892,7 @@ opcua:ReferenceListEntryDataType a owl:Class ;
 
 opcua:ReferenceType a opcua:NodeAttributesMask,
         opcua:NodeClass,
+        owl:NamedIndividual,
         base:Field ;
     base:hasDatatype opcua:NodeId ;
     base:hasFieldName "ReferenceType" .
@@ -51320,6 +51910,7 @@ opcua:RelativePathElement a owl:Class ;
 
 opcua:RolePermissions a opcua:AttributeWriteMask,
         opcua:NodeAttributesMask,
+        owl:NamedIndividual,
         base:Field ;
     base:hasDatatype opcua:RolePermissionType ;
     base:hasFieldName "RolePermissions" .
@@ -51339,12 +51930,14 @@ opcua:SecurityGroupDataType a owl:Class ;
         opcua:SecurityGroupId,
         opcua:SecurityPolicyUri .
 
-opcua:SecurityGroups a base:Field ;
+opcua:SecurityGroups a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:SecurityGroupDataType,
         opcua:String ;
     base:hasFieldName "SecurityGroups" .
 
-opcua:SecurityKeyServices a base:Field ;
+opcua:SecurityKeyServices a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:EndpointDescription ;
     base:hasFieldName "SecurityKeyServices" .
 
@@ -51353,7 +51946,8 @@ opcua:SemanticChangeStructureDataType a owl:Class ;
     base:hasField opcua:Affected,
         opcua:AffectedType .
 
-opcua:ServerCapabilities a base:Field ;
+opcua:ServerCapabilities a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "ServerCapabilities" .
 
@@ -51370,7 +51964,8 @@ opcua:SessionDiagnosticsObjectType a owl:Class ;
 opcua:ShelvedStateMachineType a owl:Class ;
     rdfs:subClassOf opcua:FiniteStateMachineType .
 
-opcua:Signature a base:Field ;
+opcua:Signature a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ByteString ;
     base:hasFieldName "Signature" .
 
@@ -51379,7 +51974,8 @@ opcua:SimpleTypeDescription a owl:Class ;
     base:hasField opcua:BaseDataType,
         opcua:BuiltInType .
 
-opcua:SourceNodeId a base:Field ;
+opcua:SourceNodeId a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:NodeId ;
     base:hasFieldName "SourceNodeId" .
 
@@ -51410,18 +52006,21 @@ opcua:StructureField a owl:Class ;
         opcua:Name,
         opcua:ValueRank .
 
-opcua:SubscribedDataSet a base:Field ;
+opcua:SubscribedDataSet a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:SubscribedDataSetDataType ;
     base:hasFieldName "SubscribedDataSet" .
 
 opcua:SubscriptionDiagnosticsType a owl:Class ;
     rdfs:subClassOf opcua:BaseDataVariableType .
 
-opcua:TargetNode a base:Field ;
+opcua:TargetNode a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ExpandedNodeId ;
     base:hasFieldName "TargetNode" .
 
-opcua:Topic a base:Field ;
+opcua:Topic a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "Topic" .
 
@@ -51465,6 +52064,7 @@ opcua:WriterGroupDataType a owl:Class ;
         opcua:WriterGroupId .
 
 opcua:WriterGroupId a opcua:UadpNetworkMessageContentMask,
+        owl:NamedIndividual,
         base:Field ;
     base:hasDatatype opcua:UInt16 ;
     base:hasFieldName "WriterGroupId" .
@@ -51477,11 +52077,13 @@ opcua:XVType a owl:Class ;
     base:hasField opcua:Value,
         opcua:X .
 
-opcua:Y a base:Field ;
+opcua:Y a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Double ;
     base:hasFieldName "Y" .
 
-opcua:Z a base:Field ;
+opcua:Z a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Double ;
     base:hasFieldName "Z" .
 
@@ -54900,12 +55502,14 @@ opcua:nodei9455 a opcua:ExclusiveLimitStateMachineType,
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "9455" .
 
-opcua:Address a base:Field ;
+opcua:Address a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:NetworkAddressDataType ;
     base:hasFieldName "Address" .
 
 opcua:ArrayDimensions a opcua:AttributeWriteMask,
         opcua:NodeAttributesMask,
+        owl:NamedIndividual,
         base:Field ;
     base:hasDatatype opcua:UInt32 ;
     base:hasFieldName "ArrayDimensions" .
@@ -54924,7 +55528,8 @@ opcua:AuditUpdateStateEventType a owl:Class ;
 opcua:BaseAnalogType a owl:Class ;
     rdfs:subClassOf opcua:DataItemType .
 
-opcua:BuiltInType a base:Field ;
+opcua:BuiltInType a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Byte ;
     base:hasFieldName "BuiltInType" .
 
@@ -54939,7 +55544,8 @@ opcua:ConditionType a owl:Class ;
 opcua:DataSetFieldFlags a owl:Class ;
     rdfs:subClassOf opcua:UInt16 .
 
-opcua:DataSetMetaData a base:Field ;
+opcua:DataSetMetaData a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:DataSetMetaDataType ;
     base:hasFieldName "DataSetMetaData" .
 
@@ -54976,13 +55582,15 @@ opcua:DataSetWriterType a owl:Class ;
 opcua:DataType a opcua:AttributeWriteMask,
         opcua:NodeAttributesMask,
         opcua:NodeClass,
+        owl:NamedIndividual,
         base:Field ;
     base:hasDatatype opcua:NodeId ;
     base:hasFieldName "DataType" .
 
 opcua:DataTypeDefinition a opcua:AttributeWriteMask,
         opcua:NodeAttributesMask,
-        owl:Class ;
+        owl:Class,
+        owl:NamedIndividual ;
     rdfs:subClassOf opcua:Structure ;
     base:hasFieldName "DataTypeDefinition" ;
     base:isAbstract "true" .
@@ -55001,13 +55609,15 @@ opcua:DataTypeSchemaHeader a owl:Class ;
 opcua:DataTypeSystemType a owl:Class ;
     rdfs:subClassOf opcua:BaseObjectType .
 
-opcua:DatagramQos a base:Field ;
+opcua:DatagramQos a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:QosDataType,
         opcua:ReceiveQosDataType,
         opcua:TransmitQosDataType ;
     base:hasFieldName "DatagramQos" .
 
 opcua:DiagnosticInfo a owl:Class,
+        owl:NamedIndividual,
         base:Field ;
     rdfs:subClassOf opcua:BaseDataType ;
     base:hasDatatype opcua:DiagnosticInfo ;
@@ -55017,13 +55627,15 @@ opcua:DictionaryFolderType a owl:Class ;
     rdfs:subClassOf opcua:FolderType .
 
 opcua:EnumDefinition a owl:Class,
+        owl:NamedIndividual,
         base:Field ;
     rdfs:subClassOf opcua:DataTypeDefinition ;
     base:hasDatatype opcua:EnumDefinition ;
     base:hasField opcua:Fields ;
     base:hasFieldName "EnumDefinition" .
 
-opcua:Fields a base:Field ;
+opcua:Fields a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:EnumField,
         opcua:FieldMetaData,
         opcua:StructureField ;
@@ -55050,7 +55662,8 @@ opcua:IIeeeTsnInterfaceConfigurationType a owl:Class ;
     rdfs:subClassOf opcua:BaseInterfaceType ;
     base:isAbstract "true" .
 
-opcua:IndexRange a base:Field ;
+opcua:IndexRange a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:NumericRange ;
     base:hasFieldName "IndexRange" .
 
@@ -55061,7 +55674,8 @@ opcua:KeyCredentialAuditEventType a owl:Class ;
 opcua:LimitAlarmType a owl:Class ;
     rdfs:subClassOf opcua:AlarmConditionType .
 
-opcua:MaxStringLength a base:Field ;
+opcua:MaxStringLength a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Int32,
         opcua:UInt32 ;
     base:hasFieldName "MaxStringLength" .
@@ -55069,7 +55683,8 @@ opcua:MaxStringLength a base:Field ;
 opcua:NamespaceMetadataType a owl:Class ;
     rdfs:subClassOf opcua:BaseObjectType .
 
-opcua:NamespaceUri a base:Field ;
+opcua:NamespaceUri a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "NamespaceUri" .
 
@@ -55091,11 +55706,13 @@ opcua:OrientationType a owl:Class ;
     rdfs:subClassOf opcua:BaseDataVariableType ;
     base:isAbstract "true" .
 
-opcua:PriorityLabel a base:Field ;
+opcua:PriorityLabel a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "PriorityLabel" .
 
-opcua:ProductUri a base:Field ;
+opcua:ProductUri a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "ProductUri" .
 
@@ -55138,11 +55755,13 @@ opcua:PubSubStatusEventType a owl:Class ;
     rdfs:subClassOf opcua:SystemEventType ;
     base:isAbstract "true" .
 
-opcua:PublishingInterval a base:Field ;
+opcua:PublishingInterval a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Duration ;
     base:hasFieldName "PublishingInterval" .
 
-opcua:QosCategory a base:Field ;
+opcua:QosCategory a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "QosCategory" .
 
@@ -55157,7 +55776,8 @@ opcua:QuantityDimension a owl:Class ;
         opcua:MassExponent,
         opcua:TimeExponent .
 
-opcua:QueueName a base:Field ;
+opcua:QueueName a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "QueueName" .
 
@@ -55169,7 +55789,8 @@ opcua:RepresentsSameEntityAs a owl:Class,
         owl:ObjectProperty ;
     rdfs:subClassOf opcua:NonHierarchicalReferences .
 
-opcua:RequestedDeliveryGuarantee a base:Field ;
+opcua:RequestedDeliveryGuarantee a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:BrokerTransportQualityOfService ;
     base:hasFieldName "RequestedDeliveryGuarantee" .
 
@@ -55179,7 +55800,8 @@ opcua:RoleSetType a owl:Class ;
 opcua:SamplingIntervalDiagnosticsArrayType a owl:Class ;
     rdfs:subClassOf opcua:BaseDataVariableType .
 
-opcua:SecurityGroupId a base:Field ;
+opcua:SecurityGroupId a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "SecurityGroupId" .
 
@@ -55202,16 +55824,19 @@ opcua:ServerStatusType a owl:Class ;
     rdfs:subClassOf opcua:BaseDataVariableType .
 
 opcua:ServerType a owl:Class,
+        owl:NamedIndividual,
         base:Field ;
     rdfs:subClassOf opcua:BaseObjectType ;
     base:hasDatatype opcua:ApplicationType ;
     base:hasFieldName "ServerType" .
 
-opcua:ServerUri a base:Field ;
+opcua:ServerUri a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "ServerUri" .
 
-opcua:SessionId a base:Field ;
+opcua:SessionId a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:NodeId ;
     base:hasFieldName "SessionId" .
 
@@ -55221,6 +55846,7 @@ opcua:StatusResult a owl:Class ;
         opcua:StatusCode .
 
 opcua:StructureDefinition a owl:Class,
+        owl:NamedIndividual,
         base:Field ;
     rdfs:subClassOf opcua:DataTypeDefinition ;
     base:hasDatatype opcua:StructureDefinition ;
@@ -55233,7 +55859,8 @@ opcua:StructureDefinition a owl:Class,
 opcua:SystemOffNormalAlarmType a owl:Class ;
     rdfs:subClassOf opcua:OffNormalAlarmType .
 
-opcua:TargetNodeId a base:Field ;
+opcua:TargetNodeId a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ExpandedNodeId,
         opcua:NodeId ;
     base:hasFieldName "TargetNodeId" .
@@ -55244,7 +55871,8 @@ opcua:TransactionErrorType a owl:Class ;
         opcua:Message,
         opcua:TargetId .
 
-opcua:TransportProfileUri a base:Field ;
+opcua:TransportProfileUri a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "TransportProfileUri" .
 
@@ -55261,6 +55889,7 @@ opcua:Utilizes a owl:Class,
 opcua:Value a opcua:KeyValuePair,
         opcua:LiteralOperand,
         opcua:NodeAttributesMask,
+        owl:NamedIndividual,
         base:Field ;
     base:hasDatatype opcua:ByteString,
         opcua:Float,
@@ -55269,6 +55898,7 @@ opcua:Value a opcua:KeyValuePair,
 
 opcua:ValueRank a opcua:AttributeWriteMask,
         opcua:NodeAttributesMask,
+        owl:NamedIndividual,
         base:Field ;
     base:hasDatatype opcua:Int32 ;
     base:hasFieldName "ValueRank" .
@@ -55280,7 +55910,8 @@ opcua:Vector a owl:Class ;
 opcua:VendorServerInfoType a owl:Class ;
     rdfs:subClassOf opcua:BaseObjectType .
 
-opcua:X a base:Field ;
+opcua:X a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Double ;
     base:hasFieldName "X" .
 
@@ -55409,7 +56040,8 @@ opcua:ApplicationCertificateType a owl:Class ;
     rdfs:subClassOf opcua:CertificateType ;
     base:isAbstract "true" .
 
-opcua:AttributeId a base:Field ;
+opcua:AttributeId a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:IntegerId ;
     base:hasFieldName "AttributeId" .
 
@@ -55424,7 +56056,8 @@ opcua:AuditSessionEventType a owl:Class ;
     rdfs:subClassOf opcua:AuditSecurityEventType ;
     base:isAbstract "true" .
 
-opcua:AuthenticationProfileUri a base:Field ;
+opcua:AuthenticationProfileUri a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "AuthenticationProfileUri" .
 
@@ -55457,7 +56090,8 @@ opcua:DataItemType a owl:Class ;
 opcua:DataSetFolderType a owl:Class ;
     rdfs:subClassOf opcua:FolderType .
 
-opcua:DataSetMessageContentMask a base:Field ;
+opcua:DataSetMessageContentMask a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:JsonDataSetMessageContentMask,
         opcua:UadpDataSetMessageContentMask ;
     base:hasFieldName "DataSetMessageContentMask" .
@@ -55496,7 +56130,8 @@ opcua:DiscreteItemType a owl:Class ;
     rdfs:subClassOf opcua:DataItemType ;
     base:isAbstract "true" .
 
-opcua:EndpointUrl a base:Field ;
+opcua:EndpointUrl a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "EndpointUrl" .
 
@@ -55528,11 +56163,13 @@ opcua:HasChild a owl:Class,
 opcua:Int16 a owl:Class ;
     rdfs:subClassOf opcua:Integer .
 
-opcua:IsForward a base:Field ;
+opcua:IsForward a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Boolean ;
     base:hasFieldName "IsForward" .
 
-opcua:MessageSettings a base:Field ;
+opcua:MessageSettings a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:DataSetReaderMessageDataType,
         opcua:DataSetWriterMessageDataType,
         opcua:ReaderGroupMessageDataType,
@@ -55547,7 +56184,8 @@ opcua:NetworkAddressDataType a owl:Class ;
     base:hasField opcua:NetworkInterface ;
     base:isAbstract "true" .
 
-opcua:NetworkMessageContentMask a base:Field ;
+opcua:NetworkMessageContentMask a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:JsonNetworkMessageContentMask,
         opcua:UadpNetworkMessageContentMask ;
     base:hasFieldName "NetworkMessageContentMask" .
@@ -55581,11 +56219,13 @@ opcua:RedundantServerDataType a owl:Class ;
         opcua:ServerState,
         opcua:ServiceLevel .
 
-opcua:ReferenceTypeId a base:Field ;
+opcua:ReferenceTypeId a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:NodeId ;
     base:hasFieldName "ReferenceTypeId" .
 
-opcua:ResourceUri a base:Field ;
+opcua:ResourceUri a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "ResourceUri" .
 
@@ -55639,6 +56279,7 @@ opcua:UnitType a owl:Class ;
 
 opcua:UserName a opcua:IdentityCriteriaType,
         opcua:UserTokenType,
+        owl:NamedIndividual,
         base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "UserName" .
@@ -55720,6 +56361,7 @@ opcua:AliasNameCategoryType a owl:Class ;
     rdfs:subClassOf opcua:FolderType .
 
 opcua:Annotation a owl:Class,
+        owl:NamedIndividual,
         base:Field ;
     rdfs:subClassOf opcua:Structure ;
     base:hasDatatype opcua:String ;
@@ -55740,6 +56382,7 @@ opcua:BaseVariableType a owl:Class ;
     base:isAbstract "true" .
 
 opcua:CartesianCoordinates a owl:Class,
+        owl:NamedIndividual,
         base:Field ;
     rdfs:subClassOf opcua:Structure ;
     base:hasDatatype opcua:3DCartesianCoordinates ;
@@ -55752,7 +56395,8 @@ opcua:DataValue a owl:Class ;
 opcua:Duplex a owl:Class ;
     rdfs:subClassOf opcua:Enumeration .
 
-opcua:Enabled a base:Field ;
+opcua:Enabled a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:Boolean ;
     base:hasFieldName "Enabled" .
 
@@ -55768,7 +56412,8 @@ opcua:FiniteStateMachineType a owl:Class ;
     base:isAbstract "true" .
 
 opcua:Guid a opcua:IdType,
-        owl:Class ;
+        owl:Class,
+        owl:NamedIndividual ;
     rdfs:subClassOf opcua:BaseDataType ;
     base:hasFieldName "Guid" .
 
@@ -55787,6 +56432,7 @@ opcua:OpenFileMode a owl:Class ;
     rdfs:subClassOf opcua:Enumeration .
 
 opcua:Orientation a owl:Class,
+        owl:NamedIndividual,
         base:Field ;
     rdfs:subClassOf opcua:Structure ;
     base:hasDatatype opcua:3DOrientation ;
@@ -55814,7 +56460,8 @@ opcua:QosDataType a owl:Class ;
     rdfs:subClassOf opcua:Structure ;
     base:isAbstract "true" .
 
-opcua:SecurityMode a base:Field ;
+opcua:SecurityMode a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:MessageSecurityMode ;
     base:hasFieldName "SecurityMode" .
 
@@ -55852,7 +56499,8 @@ opcua:TimeZoneDataType a owl:Class ;
     base:hasField opcua:DaylightSavingInOffset,
         opcua:Offset .
 
-opcua:TransportSettings a base:Field ;
+opcua:TransportSettings a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:ConnectionTransportDataType,
         opcua:DataSetReaderTransportDataType,
         opcua:DataSetWriterTransportDataType,
@@ -55961,6 +56609,7 @@ opcua:ModellingRuleType a owl:Class ;
     rdfs:subClassOf opcua:BaseObjectType .
 
 opcua:OverrideValueHandling a owl:Class,
+        owl:NamedIndividual,
         base:Field ;
     rdfs:subClassOf opcua:Enumeration ;
     base:hasDatatype opcua:OverrideValueHandling ;
@@ -55981,7 +56630,8 @@ opcua:SamplingIntervalDiagnosticsDataType a owl:Class ;
         opcua:MonitoredItemCount,
         opcua:SamplingInterval .
 
-opcua:SecurityPolicyUri a base:Field ;
+opcua:SecurityPolicyUri a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:String ;
     base:hasFieldName "SecurityPolicyUri" .
 
@@ -56063,6 +56713,7 @@ opcua:AuditUpdateMethodEventType a owl:Class ;
     base:isAbstract "true" .
 
 opcua:BuildInfo a owl:Class,
+        owl:NamedIndividual,
         base:Field ;
     rdfs:subClassOf opcua:Structure ;
     base:hasDatatype opcua:BuildInfo ;
@@ -56120,6 +56771,7 @@ opcua:UInteger a owl:Class ;
     base:isAbstract "true" .
 
 opcua:UserTokenType a owl:Class,
+        owl:NamedIndividual,
         base:Field ;
     rdfs:subClassOf opcua:Enumeration ;
     base:hasDatatype opcua:UserTokenPolicy ;
@@ -56130,6 +56782,7 @@ opcua:AccessLevelType a owl:Class ;
 
 opcua:Description a opcua:AttributeWriteMask,
         opcua:NodeAttributesMask,
+        owl:NamedIndividual,
         base:Field ;
     base:hasDatatype opcua:LocalizedText,
         opcua:String ;
@@ -56151,6 +56804,7 @@ opcua:PerformUpdateType a owl:Class ;
     rdfs:subClassOf opcua:Enumeration .
 
 opcua:StructureType a owl:Class,
+        owl:NamedIndividual,
         base:Field ;
     rdfs:subClassOf opcua:Enumeration ;
     base:hasDatatype opcua:StructureType ;
@@ -56409,6 +57063,7 @@ opcua:UriString a owl:Class ;
     rdfs:subClassOf opcua:String .
 
 opcua:ApplicationType a owl:Class,
+        owl:NamedIndividual,
         base:Field ;
     rdfs:subClassOf opcua:Enumeration ;
     base:hasDatatype opcua:ApplicationType ;
@@ -56434,6 +57089,7 @@ opcua:HasComponent a owl:Class,
 opcua:NodeClass a opcua:AttributeWriteMask,
         opcua:NodeAttributesMask,
         owl:Class,
+        owl:NamedIndividual,
         base:Field ;
     rdfs:subClassOf opcua:Enumeration ;
     base:hasDatatype opcua:NodeClass ;
@@ -56461,6 +57117,7 @@ opcua:BaseInterfaceType a owl:Class ;
     base:isAbstract "true" .
 
 opcua:DataSetFieldContentMask a owl:Class,
+        owl:NamedIndividual,
         base:Field ;
     rdfs:subClassOf opcua:UInt32 ;
     base:hasDatatype opcua:DataSetFieldContentMask ;
@@ -56495,12 +57152,14 @@ opcua:VersionTime a owl:Class ;
 opcua:MessageSecurityMode a owl:Class ;
     rdfs:subClassOf opcua:Enumeration .
 
-opcua:Name a base:Field ;
+opcua:Name a owl:NamedIndividual,
+        base:Field ;
     base:hasDatatype opcua:QualifiedName,
         opcua:String ;
     base:hasFieldName "Name" .
 
 opcua:ServerState a owl:Class,
+        owl:NamedIndividual,
         base:Field ;
     rdfs:subClassOf opcua:Enumeration ;
     base:hasDatatype opcua:ServerState ;
@@ -56513,6 +57172,7 @@ opcua:StateType a owl:Class ;
     rdfs:subClassOf opcua:BaseObjectType .
 
 opcua:BaseDataType a owl:Class,
+        owl:NamedIndividual,
         base:Field ;
     base:hasDatatype opcua:NodeId ;
     base:hasFieldName "BaseDataType" ;
@@ -56523,6 +57183,7 @@ opcua:PermissionType a owl:Class ;
 
 opcua:StatusCode a opcua:DataSetFieldContentMask,
         owl:Class,
+        owl:NamedIndividual,
         base:Field ;
     rdfs:subClassOf opcua:BaseDataType ;
     base:hasDatatype opcua:StatusCode ;
@@ -56538,6 +57199,7 @@ opcua:PubSubState a owl:Class ;
     rdfs:subClassOf opcua:Enumeration .
 
 opcua:FilterOperator a owl:Class,
+        owl:NamedIndividual,
         base:Field ;
     rdfs:subClassOf opcua:Enumeration ;
     base:hasDatatype opcua:FilterOperator ;
@@ -56614,7 +57276,8 @@ opcua:UInt16 a owl:Class ;
 opcua:BaseObjectType a owl:Class .
 
 opcua:Structure a opcua:StructureType,
-        owl:Class ;
+        owl:Class,
+        owl:NamedIndividual ;
     rdfs:subClassOf opcua:BaseDataType ;
     base:hasFieldName "Structure" ;
     base:isAbstract "true" .
@@ -56625,6 +57288,7 @@ opcua:UtcTime a owl:Class ;
 opcua:NodeId a opcua:AttributeWriteMask,
         opcua:NodeAttributesMask,
         owl:Class,
+        owl:NamedIndividual,
         base:Field ;
     rdfs:subClassOf opcua:BaseDataType ;
     base:hasDatatype opcua:NodeId ;
@@ -56675,7 +57339,8 @@ opcua:BaseDataVariableType a owl:Class ;
     rdfs:subClassOf opcua:BaseVariableType .
 
 opcua:String a opcua:IdType,
-        owl:Class ;
+        owl:Class,
+        owl:NamedIndividual ;
     rdfs:subClassOf opcua:BaseDataType ;
     base:hasFieldName "String" .
 

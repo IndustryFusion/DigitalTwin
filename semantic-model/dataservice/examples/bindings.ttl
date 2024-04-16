@@ -7,7 +7,9 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix binding: <http://yourorganisation.org/InstanceExample/bindings/> .
 @prefix entities: <http://yourorganisation.org/InstanceExample/entities/> .
+@prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/> .
 @base <http://www.w3.org/2002/07/owl#> .
+
 
 [ rdf:type owl:Ontology ;
    owl:imports <https://industryfusion.github.io/contexts/staging/ontology/v0.1/base/>
@@ -37,6 +39,7 @@ iffb:wasteClass rdf:type owl:ObjectProperty .
 binding:binding_cartridge_wasteClass rdf:type owl:NamedIndividual ,
                                               base:Binding ;
                                      base:bindsEntity <urn:iff:cartridge1> ;
+                                     base:bindsAttributeType ngsi-ld:Property ;
                                      base:bindsMap binding:map_wasteclass ;
                                      base:bindingVersion "0.9" ;
                                      base:bindsFirmware "abc.1" ;
@@ -55,6 +58,7 @@ binding:binding_cartridge_wasteClass rdf:type owl:NamedIndividual ,
 binding:binding_filter_machineState rdf:type owl:NamedIndividual ,
                                              base:Binding ;
                                     base:bindsEntity <urn:iff:filter1> ;
+                                    base:bindsAttributeType ngsi-ld:Property ;
                                     base:bindsMap binding:map_machineState ;
                                     base:bindingVersion "0.9" ;
                                     base:bindsFirmware "abc.1" ;
@@ -74,6 +78,7 @@ binding:binding_filter_machineState rdf:type owl:NamedIndividual ,
 binding:binding_filter_strength rdf:type owl:NamedIndividual ,
                                          base:Binding ;
                                 base:bindsEntity <urn:iff:filter1> ;
+                                base:bindsAttributeType ngsi-ld:Property ;
                                 base:bindsMap binding:map_strength ;
                                 base:bindingVersion "0.9" ;
                                 base:bindsFirmware "abc.1" .

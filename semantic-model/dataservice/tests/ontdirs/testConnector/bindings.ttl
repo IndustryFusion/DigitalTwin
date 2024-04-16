@@ -1,0 +1,46 @@
+@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+@prefix binding: <http://yourorganisation.org/InstanceExample/bindings/> .
+@prefix entities: <http://yourorganisation.org/InstanceExample/entities/> .
+
+entities:hasDifferentialPressure base:boundBy binding:binding_LRLLYKV8IG8PAIUP .
+
+entities:hasEnergyConsumption base:boundBy binding:binding_JKEXWUZG5YC9S3YG .
+
+entities:hasMotorTemperature base:boundBy binding:binding_RLZG83N97DJZMYTQ .
+
+binding:binding_JKEXWUZG5YC9S3YG a base:Binding ;
+    base:bindingVersion "0.1" ;
+    base:bindsEntity <urn:iff:ExamplePump:sub:i5006> ;
+    base:bindsFirmware "firmware" ;
+    base:bindsMap binding:map_JKEXWUZG5YC9S3YG .
+
+binding:binding_LRLLYKV8IG8PAIUP a base:Binding ;
+    base:bindingVersion "0.1" ;
+    base:bindsEntity <urn:iff:ExamplePump:sub:i5018> ;
+    base:bindsFirmware "firmware" ;
+    base:bindsMap binding:map_LRLLYKV8IG8PAIUP .
+
+binding:binding_RLZG83N97DJZMYTQ a base:Binding ;
+    base:bindingVersion "0.1" ;
+    base:bindsEntity <urn:iff:ExamplePump:sub:i5006> ;
+    base:bindsFirmware "firmware" ;
+    base:bindsMap binding:map_RLZG83N97DJZMYTQ .
+
+binding:map_JKEXWUZG5YC9S3YG a base:BoundMap ;
+    base:bindsConnector base:OPCUAConnector ;
+    base:bindsConnectorParameter "nsu=http://yourorganisation.org/InstanceExample/;i=6017" ;
+    base:bindsLogicVar "var1" ;
+    base:bindsMapDatatype <http://opcfoundation.org/UA/Double> .
+
+binding:map_LRLLYKV8IG8PAIUP a base:BoundMap ;
+    base:bindsConnector base:OPCUAConnector ;
+    base:bindsConnectorParameter "nsu=http://yourorganisation.org/InstanceExample/;i=6117" ;
+    base:bindsLogicVar "var1" ;
+    base:bindsMapDatatype <http://opcfoundation.org/UA/Double> .
+
+binding:map_RLZG83N97DJZMYTQ a base:BoundMap ;
+    base:bindsConnector base:OPCUAConnector ;
+    base:bindsConnectorParameter "nsu=http://yourorganisation.org/InstanceExample/;i=6020" ;
+    base:bindsLogicVar "var1" ;
+    base:bindsMapDatatype <http://opcfoundation.org/UA/Double> .
+

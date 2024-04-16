@@ -1,0 +1,13 @@
+[
+    {
+        "type": "http://example.org/MinimalNodeset/ObjectType",
+        "id": "urn:test:Object",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "uaentity:hasVariable": {
+            "type": "Property",
+            "value": 123.456
+        }
+    }
+]

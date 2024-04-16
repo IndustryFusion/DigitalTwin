@@ -3,6 +3,7 @@
 @prefix ns1: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/> .
 
 ex:ns1_Binding a sh:NodeShape ;
     sh:nodeKind sh:BlankNodeOrIRI ;
@@ -10,6 +11,7 @@ ex:ns1_Binding a sh:NodeShape ;
         ex:ns1_bindsEntity,
         ex:ns1_bindsFirmware,
         ex:ns1_bindsLogic,
+        ex:ns1_bindsAttributeType,
         ex:ns1_bindsMap ;
     sh:targetClass ns1:Binding .
 
@@ -77,6 +79,13 @@ ex:ns1_bindsMapDatatype a sh:PropertyShape ;
     sh:minCount 1 ;
     sh:maxCount 1 .
 
+ex:ns1_bindsAttributeType a sh:PropertyShape ;
+    sh:nodeKind sh:IRI ;
+    sh:path ns1:bindsAttributeType ;
+    sh:in (ngsi-ld:Property ngsi-ld:Relationship);
+    sh:minCount 1 ;
+    sh:maxCount 1 .
+
 ex:ns1_allbound a sh:NodeShape ;
     sh:targetClass ns1:Binding ;
     sh:property [
@@ -103,7 +112,7 @@ ex:BindingShape
                 $this ns1:bindsMap ?map .
                 ?map a ns1:BoundMap ;
                      ns1:bindsLogicVar ?var .
-                FILTER(!CONTAINS(?logic, CONCAT('?', ?var, 'x ')))
+                FILTER(!CONTAINS(?logic, CONCAT('?', ?var, ' ')))
             }
         """ ;
     ] .

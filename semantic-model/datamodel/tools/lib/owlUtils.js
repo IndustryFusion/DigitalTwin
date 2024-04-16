@@ -21,7 +21,6 @@ const RDF = $rdf.Namespace('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
 const RDFS = $rdf.Namespace('http://www.w3.org/2000/01/rdf-schema#');
 const OWL = $rdf.Namespace('http://www.w3.org/2002/07/owl#');
 const NGSILD = $rdf.Namespace('https://uri.etsi.org/ngsi-ld/');
-const BASE = $rdf.Namespace('https://industryfusion.github.io/contexts/ontology/v0/base/');
 
 const globalAttributes = [];
 const globalEntities = [];
@@ -81,11 +80,6 @@ function dumpAttribute (attribute, entity, store) {
       store.add($rdf.sym(attribute.attributeName), RDFS('range'), NGSILD('Property'));
     } else {
       store.add($rdf.sym(attribute.attributeName), RDFS('range'), NGSILD('Relationship'));
-      if (attribute.isSubcomponent) {
-        store.add($rdf.sym(attribute.attributeName), RDF('type'), BASE('SubComponentRelationship'));
-      } else {
-        store.add($rdf.sym(attribute.attributeName), RDF('type'), BASE('PeerRelationship'));
-      }
     }
   }
 }

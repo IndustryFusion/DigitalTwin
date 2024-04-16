@@ -1,11 +1,10 @@
 @prefix owl: <http://www.w3.org/2002/07/owl#>.
 @prefix iffb: <https://industry-fusion.org/base/v0.1/>.
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
-@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/>.
 @prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/>.
 
 iffb:hasFilter
-    a owl:Property, base:PeerRelationship;
+    a owl:Property;
     rdfs:domain <https://industry-fusion.org/eclass%230173-1%2301-AKJ975%23017>;
     rdfs:range ngsi-ld:Relationship.
 iffb:machine_state

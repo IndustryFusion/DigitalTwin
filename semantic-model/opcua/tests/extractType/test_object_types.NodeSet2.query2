@@ -1,0 +1,4 @@
+ask where {
+    test:Y a owl:ObjectProperty ;
+        rdfs:domain test:AlphaType .
+}

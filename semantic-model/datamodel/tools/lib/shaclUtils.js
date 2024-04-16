@@ -25,6 +25,7 @@ const myParser = new ContextParser();
 const RDF = $rdf.Namespace('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
 const SHACL = $rdf.Namespace('http://www.w3.org/ns/shacl#');
 const IFFK = $rdf.Namespace('https://industry-fusion.org/knowledge/v0.1/');
+const BASE = $rdf.Namespace('https://industryfusion.github.io/contexts/ontology/v0/base/');
 
 let globalContext;
 let globalPrefixHash;
@@ -49,13 +50,14 @@ class NodeShape {
 }
 
 class PropertyShape {
-  constructor (mincount, maxcount, nodeKind, path, isProperty) {
+  constructor (mincount, maxcount, nodeKind, path, isProperty, isSubComponent) {
     this.mincount = mincount;
     this.maxcount = maxcount;
     this.nodeKind = nodeKind;
     this.path = path;
     this.constraints = [];
     this.isProperty = isProperty;
+    this.isSubComponent = isSubComponent;
   }
 
   addConstraint (constraint) {
@@ -83,6 +85,13 @@ function dumpPropertyShape (propertyShape, store) {
   store.add(propNode, SHACL('minCount'), propertyShape.mincount);
   store.add(propNode, SHACL('maxCount'), propertyShape.maxcount);
   store.add(propNode, SHACL('nodeKind'), SHACL('BlankNode'));
+  if (propertyShape.isSubComponent && !propertyShape.isProperty) {
+    store.add(propNode, RDF('type'), BASE('SubComponentRelationship'));
+  } else if (!propertyShape.isSubComponent && !propertyShape.isProperty) {
+    store.add(propNode, RDF('type'), BASE('PeerRelationship'));
+  } else {
+    store.add(propNode, RDF('type'), BASE('Property'));
+  }
   store.add(propNode, SHACL('path'), propertyShape.path);
   const attributeNode = $rdf.blankNode();
   store.add(propNode, SHACL('property'), attributeNode);
@@ -143,11 +152,15 @@ function scanProperties (nodeShape, typeschema) {
         let nodeKind = SHACL('Literal');
         let klass = null;
         let isProperty = true;
+        let isSubComponent = false;
         if ('relationship' in typeschema.properties[property]) {
           nodeKind = SHACL('IRI');
           klass = typeschema.properties[property].relationship;
           klass = globalContext.expandTerm(klass, true);
           isProperty = false;
+        }
+        if ('relationship_type' in typeschema.properties[property] && typeschema.properties[property].relationship_type === 'subcomponent') {
+          isSubComponent = true;
         }
         let mincount = 0;
         const maxcount = 1;
@@ -158,7 +171,7 @@ function scanProperties (nodeShape, typeschema) {
         if (!ContextUtil.isValidIri(path)) {
           path = globalContext.expandTerm(path, true);
         }
-        const propertyShape = new PropertyShape(mincount, maxcount, nodeKind, $rdf.sym(path), isProperty);
+        const propertyShape = new PropertyShape(mincount, maxcount, nodeKind, $rdf.sym(path), isProperty, isSubComponent);
         nodeShape.addPropertyShape(propertyShape);
         if (klass !== null) {
           propertyShape.addConstraint(new Constraint(SHACL('class'), $rdf.sym(klass)));

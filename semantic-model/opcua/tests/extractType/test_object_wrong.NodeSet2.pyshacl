@@ -1,0 +1,21 @@
+@prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix test: <http://my.test/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+[] a sh:ValidationReport ;
+    sh:conforms false ;
+    sh:result [ a sh:ValidationResult ;
+            sh:focusNode [ a ngsi-ld:Relationship ;
+                    ngsi-ld:hasObject <urn:test:AlphaInstance:sub:i2012> ] ;
+            sh:resultMessage "Value does not have class test:BType" ;
+            sh:resultPath ngsi-ld:hasObject ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:ClassConstraintComponent ;
+            sh:sourceShape [ sh:class test:BType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            sh:value <urn:test:AlphaInstance:sub:i2012> ] .
+
