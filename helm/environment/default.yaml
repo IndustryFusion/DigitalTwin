@@ -77,6 +77,8 @@ kafka:
   jvmOptions:
     "-Xmx": "400m"
   name: my-cluster
+  config:
+    logRetentionHours: 24
 
 kafkaBridge:
   debezium:
