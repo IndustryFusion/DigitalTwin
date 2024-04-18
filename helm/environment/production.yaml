@@ -116,3 +116,4 @@ emqx:
 pgrest:
   externalPath: /pgrest/ # note: must end with /
   externalHostname: testing.industry-fusion.com
+  dbPool: "10" # note: must not be more than max_connections in Postgres DB, default is 10
