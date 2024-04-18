@@ -37,6 +37,8 @@ spec:
           value: "false"
         - name: PGRST_JWT_SECRET
           value: '@/keyconfig/jwk.json'
+        - name: PGRST_DB_POOL
+          value: {{ .Values.pgrest.dbPool }}
         ports:
         - containerPort: 3000
           name: rest
