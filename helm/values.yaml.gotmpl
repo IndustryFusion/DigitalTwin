@@ -144,6 +144,8 @@ kafka:
     image: debezium-postgresql-connector
     snapshotMode: always
     restartAfter: 43200
+  config:
+    logRetentionHours: {{ .StateValues.kafka.config.logRetentionHours }}
 
 kafkaBridge:
   debezium:
