@@ -52,6 +52,7 @@ flink:
   taskmanagers: 1
   jobmanager: 1
   defaultParalellism: 1
+  bucket: flink
 
 minio:
   enabled: true
