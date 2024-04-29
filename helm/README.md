@@ -206,11 +206,26 @@ s3:
    userSecretKey: <secret key>
 ```
 
-The selection of the environment files is depenend to the selected helmfile profile, if no profile is set, the `environment/default.yaml` file is used. In addition, when external S3 storage is used, Minio should be disabled in the profile:
+The selection of the environment files is depenend to the selected helmfile profile, if no profile is set, the `environment/default.yaml` file is used. In addition, when external S3 storage is used, Minio should be disabled in the profile, create the buckets in external S3 and then update the S3 bucket names in the following sections:
 
 ```
 minio:
    enabled: false
+```
+
+```
+velero:
+  backupBucket: <External S3 bucket name for Velero>
+```
+
+```
+flink:
+  bucket: <External S3 bucket name for Flink>
+```
+
+```
+db:
+  backupBucket: <External S3 bucket name for Postgres>
 ```
 
 Some Kubernetes Resources which are not easy recoverable are backed up once per day by `velero`.

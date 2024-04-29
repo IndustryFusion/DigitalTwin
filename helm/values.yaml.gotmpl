@@ -79,7 +79,7 @@ flink:
   taskmanagers: 1
   jobmanager: 1
   sqlClientPort: 9000
-  bucket: flink
+  bucket: {{ .StateValues.flink.bucket }}
   haDir: recovery
   checkpointDir: checkpoints
   checkpointInterval: 1 min
@@ -282,7 +282,7 @@ velero:
       accessMode: ReadWrite
       config:
         region: de
-        s3Url: {{ if (hasKey $s3 "protocol") }} {{ $s3.protocol }} {{- else }} http{{- end }}://{{ if (hasKey $s3 "endpoint") }}{{ quote $s3.endpoint }}{{- else }}minio.{{ .StateValues.namespace }}.svc.cluster.local{{- end }}
+        s3Url: {{ if (hasKey $s3 "protocol") }} {{ $s3.protocol }} {{- else }} http{{- end }}://{{ if (hasKey $s3 "endpoint") }}{{ $s3.endpoint }}{{- else }}minio.{{ .StateValues.namespace }}.svc.cluster.local{{- end }}
         s3ForcePathStyle: {{- if .StateValues.minio.enabled }} true {{- else }} false {{- end }}
       defaultVolumesToRestic: true
   credentials:
