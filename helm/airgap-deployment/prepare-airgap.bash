@@ -22,13 +22,12 @@ if [ "${REGISTRY}" = "docker.io" ]; then
   IMAGES=(
       quay.io/strimzi/operator:0.32.0 
       registry.opensource.zalan.do/acid/postgres-operator:v1.9.0 
-      docker.io/minio/operator:v4.5.8 
+      docker.io/minio/operator:v${MINIO_OPERATOR_VERSION}
       docker.io/minio/mc:RELEASE.2023-06-28T21-54-17Z
       docker.io/emqx/emqx-operator-controller:2.2.3
       docker.io/minio/minio:RELEASE.2023-01-12T02-06-16Z
       docker.io/redis:7.2
       ghcr.io/zalando/spilo-15:2.1-p9
-      docker.io/minio/console:v0.22.5
       docker.io/velero/velero:${VELERO_VERSION}
       docker.io/alerta/alerta-web:8.1.0
       docker.io/busybox:1.28
@@ -61,13 +60,12 @@ else
   IMAGES=(
       quay.io/strimzi/operator:0.32.0 
       registry.opensource.zalan.do/acid/postgres-operator:v1.9.0 
-      docker.io/minio/operator:v4.5.8 
+      docker.io/minio/operator:v${MINIO_OPERATOR_VERSION}
       docker.io/minio/mc:RELEASE.2023-06-28T21-54-17Z
       docker.io/emqx/emqx-operator-controller:2.2.3
       docker.io/minio/minio:RELEASE.2023-01-12T02-06-16Z
       docker.io/redis:7.2
       ghcr.io/zalando/spilo-15:2.1-p9
-      docker.io/minio/console:v0.22.5
       docker.io/velero/velero:${VELERO_VERSION}
       docker.io/alerta/alerta-web:8.1.0
       docker.io/busybox:1.28

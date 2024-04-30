@@ -65,7 +65,7 @@ if [ "$OFFLINE" = "true" ]; then
   chmod +x kubectl-minio
   export PATH="$(pwd):$PATH"
   kubectl minio version
-  kubectl minio init --image=${REGISTRY}/minio/operator:v${MINIO_OPERATOR_VERSION} --console-image=${REGISTRY}/minio/console:v0.22.5
+  kubectl minio init --image=${REGISTRY}/minio/operator:v${MINIO_OPERATOR_VERSION} --console-image=${REGISTRY}/minio/operator:v${MINIO_OPERATOR_VERSION}
 else
   wget https://github.com/minio/operator/releases/download/v${MINIO_OPERATOR_VERSION}/kubectl-minio_${MINIO_OPERATOR_VERSION}_linux_amd64
   mv kubectl-minio_${MINIO_OPERATOR_VERSION}_linux_amd64 kubectl-minio
