@@ -317,6 +317,7 @@ redis:
 
 emqx:
   replicas: 1
+  externalHostname: {{ .StateValues.emqx.externalHostname }}
   resources:
   {{- if hasKey .StateValues.emqx "resources"}}
     requests:
@@ -338,8 +339,6 @@ mqtt:
   bridge:
     port: 3025
     url: mqtt-bridge
-  externalHostname:
-    mqtt.local
   kafka:
     linger: 50
     partitioner: "defaultPartitioner"
