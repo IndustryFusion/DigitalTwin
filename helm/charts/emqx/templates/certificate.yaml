@@ -5,7 +5,7 @@ metadata:
 spec:
   secretName: emqx-crt-secret
   dnsNames:
-  - {{ .Values.mqtt.externalHostname }}
+  - {{ .Values.emqx.externalHostname }}
   issuerRef:
     name: {{ .Values.certmanager.issuer }}
     # We can reference ClusterIssuers by changing the kind here.
