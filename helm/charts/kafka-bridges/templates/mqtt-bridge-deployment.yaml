@@ -25,7 +25,7 @@ spec:
           image: '{{ .Values.mainRegistry }}/{{ .Values.mainRepo }}/kafka-bridge:{{ .Values.mainVersion }}'
           command: ["node"]
           args: ["/opt/mqttBridge/app.js"]
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
           - containerPort: {{ .Values.mqtt.bridge.port }}
             name: rest

@@ -27,7 +27,7 @@ spec:
           image: '{{ .Values.mainRegistry }}/{{ .Values.mainRepo }}/kafka-bridge:{{ .Values.mainVersion }}'
           command: ["node"]
           args: ["/opt/debeziumBridge/app.js"]
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           env:
           ports:
             - name: http
