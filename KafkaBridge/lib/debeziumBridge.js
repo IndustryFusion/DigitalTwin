@@ -190,7 +190,11 @@ module.exports = function DebeziumBridge (conf) {
             counter++;
           }
         });
-        copyArr.sort((a, b) => a[['https://uri.etsi.org/ngsi-ld/datasetId']].localeCompare(b['https://uri.etsi.org/ngsi-ld/datasetId']));
+        copyArr.sort((a, b) => {
+          if (a['https://uri.etsi.org/ngsi-ld/datasetId'] === '@none') return -1;
+          if (b['https://uri.etsi.org/ngsi-ld/datasetId'] === '@none') return 1;
+          return a['https://uri.etsi.org/ngsi-ld/datasetId'].localeCompare(b['https://uri.etsi.org/ngsi-ld/datasetId']);
+        });
         copyArr.forEach((obj, idx) => { // Index it according to their sorting
           obj.index = idx;
         });
