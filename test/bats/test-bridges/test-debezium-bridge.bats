@@ -12,6 +12,7 @@ CLIENT_ID=scorpio
 KEYCLOAKURL=http://keycloak.local/auth/realms
 CUTTER=/tmp/CUTTER
 CUTTER_TIMESTAMPED=/tmp/CUTTER_TIMESTAMPED
+CUTTER_DATASETID=/tmp/CUTTER_DATASETID
 KAFKA_BOOTSTRAP=my-cluster-kafka-bootstrap:9092
 KAFKACAT_ATTRIBUTES=/tmp/KAFKACAT_ATTRIBUTES
 KAFKACAT_ATTRIBUTES_TOPIC=iff.ngsild.attributes
@@ -43,7 +44,7 @@ cat << EOF > ${CUTTER}
         {
             "type": "Relationship",
             "object": "urn:workpiece-test:12345",
-            "datasetId": "urn:workpiece-test:12345-ZZZ" 
+            "datasetId": "urn:workpiece-test:12345-ZZZ"
         },
         {
             "type": "Relationship",
@@ -127,6 +128,39 @@ cat << EOF > ${CUTTER_TIMESTAMPED}
 }
 EOF
 
+cat << EOF > ${CUTTER_DATASETID}
+{
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "id": "${PLASMACUTTER_ID}",
+    "type": "https://industry-fusion.com/types/v0.9/${KAFKACAT_ENTITY_PLASMACUTTER_NAME}",
+    "https://industry-fusion.com/types/v0.9/state": [
+        {
+            "type": "Property",
+            "value": "ON",
+            "datasetId": "urn:state_on"
+        },
+        {
+            "type": "Property",
+            "value": "OFF",
+            "datasetId": "urn:state_off"
+        },
+        {
+            "type": "Property",
+            "value": "ONN",
+            "datasetId": "2urn:state_on"
+        },
+        {
+            "type": "Property",
+            "value": "MAYBE"
+        },
+        {
+            "type": "Property",
+            "value": "OFFOFF",
+            "datasetId": "+=-urn:state_off"
+        }
+    ]
+}
+EOF
 
 compare_create_attributes_timestamps() {
     cat << EOF | diff "$1" - >&3
@@ -263,6 +297,41 @@ compare_delete_plasmacutter() {
 EOF
 }
 
+compare_create_attributes_datasetid() {
+    cat << EOF | LC_ALL="en_US.UTF-8" sort | diff "$1" - >&3
+{"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/state",\
+"entityId":"${PLASMACUTTER_ID}",\
+"name":"https://industry-fusion.com/types/v0.9/state",\
+"https://uri.etsi.org/ngsi-ld/datasetId":"@none",\
+"type":"https://uri.etsi.org/ngsi-ld/Property",\
+"https://uri.etsi.org/ngsi-ld/hasValue":"MAYBE","nodeType":"@value","index":0}
+{"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/state",\
+"entityId":"${PLASMACUTTER_ID}",\
+"name":"https://industry-fusion.com/types/v0.9/state",\
+"https://uri.etsi.org/ngsi-ld/datasetId":"+=-urn:state_off",\
+"type":"https://uri.etsi.org/ngsi-ld/Property",\
+"https://uri.etsi.org/ngsi-ld/hasValue":"OFFOFF","nodeType":"@value","index":1}
+{"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/state",\
+"entityId":"${PLASMACUTTER_ID}",\
+"name":"https://industry-fusion.com/types/v0.9/state",\
+"https://uri.etsi.org/ngsi-ld/datasetId":"2urn:state_on",\
+"type":"https://uri.etsi.org/ngsi-ld/Property",\
+"https://uri.etsi.org/ngsi-ld/hasValue":"ONN","nodeType":"@value","index":2}
+{"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/state",\
+"entityId":"${PLASMACUTTER_ID}",\
+"name":"https://industry-fusion.com/types/v0.9/state",\
+"https://uri.etsi.org/ngsi-ld/datasetId":"urn:state_off",\
+"type":"https://uri.etsi.org/ngsi-ld/Property",\
+"https://uri.etsi.org/ngsi-ld/hasValue":"OFF","nodeType":"@value","index":3}
+{"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/state",\
+"entityId":"${PLASMACUTTER_ID}",\
+"name":"https://industry-fusion.com/types/v0.9/state",\
+"https://uri.etsi.org/ngsi-ld/datasetId":"urn:state_on",\
+"type":"https://uri.etsi.org/ngsi-ld/Property",\
+"https://uri.etsi.org/ngsi-ld/hasValue":"ON","nodeType":"@value","index":4}
+EOF
+}
+
 get_password() {
     kubectl -n ${NAMESPACE} get ${USERSECRET} -o jsonpath='{.data.password}'| base64 -d
 }
@@ -385,4 +454,24 @@ teardown(){
     run compare_create_attributes_timestamps ${KAFKACAT_ATTRIBUTES}
     [ "$status" -eq 0 ]
 
+}
+
+@test "verify debezium bridge sorts attributes based on their datasetIds" {
+    $SKIP
+    password=$(get_password)
+    token=$(get_token)
+    delete_ngsild "$token" "$PLASMACUTTER_ID" || echo "Could not delete $PLASMACUTTER_ID. But that is okay."
+    sleep 2
+    (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ATTRIBUTES}) &
+    echo "# launched kafkacat for debezium updates, wait some time to let it connect"
+    sleep 2
+    create_ngsild "$token" "$CUTTER_DATASETID"
+    echo "# Sent ngsild updates, sleep 5s to let debezium bridge react"
+    sleep 2
+    echo "# now killing kafkacat and evaluate result"
+    killall kafkacat
+    LC_ALL="en_US.UTF-8" sort -o ${KAFKACAT_ATTRIBUTES} ${KAFKACAT_ATTRIBUTES}
+    echo "# Compare ATTRIBUTES"
+    run compare_create_attributes_datasetid ${KAFKACAT_ATTRIBUTES}
+    [ "$status" -eq 0 ]
 }

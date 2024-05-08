@@ -448,6 +448,192 @@ describe('Test parseBeforeAfterEntity', function () {
     });
     revert();
   });
+  it('Should sort attributes based on datasetId with @none at index 0', async function () {
+    const config = {
+      bridgeCommon: {
+        kafkaSyncOnAttribute: 'kafkaSyncOn'
+      }
+    };
+    const Logger = function () {
+      return logger;
+    };
+    const ba = {
+      id: 'id',
+      type: 'type',
+      data: '{\
+                "@id":"id", "@type": ["type"],\
+                "https://uri.etsi.org/ngsi-ld/createdAt":[{\
+                    "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
+                    "@value": "2022-02-19T20:31:26.123656Z"\
+                }],\
+                "https://example/prop":[{\
+                    "https://uri.etsi.org/ngsi-ld/hasValue": [{\
+                        "@value": "value",\
+                        "@type": "https://example/type"\
+                    }],\
+                    "https://uri.etsi.org/ngsi-ld/datasetId": [{\
+                        "@id": "-+brokenuri:withspecialsigns"\
+                    }],\
+                    "https://uri.etsi.org/ngsi-ld/createdAt":[{\
+                        "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
+                        "@value": "2022-02-19T20:31:26.123656Z"\
+                    }],\
+                    "https://uri.etsi.org/ngsi-ld/modifiedAt":[{\
+                        "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
+                        "@value": "2022-02-19T23:11:28.457509Z"\
+                    }]\
+                },\
+                {\
+                  "https://uri.etsi.org/ngsi-ld/hasValue": [{\
+                        "@value": "value2",\
+                        "@type": "https://example/type"\
+                    }],\
+                    "https://uri.etsi.org/ngsi-ld/createdAt":[{\
+                        "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
+                        "@value": "2022-02-19T20:31:26.123656Z"\
+                    }],\
+                    "https://uri.etsi.org/ngsi-ld/modifiedAt":[{\
+                        "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
+                        "@value": "2022-02-19T23:11:28.457509Z"\
+                    }]\
+                },\
+                {\
+                    "https://uri.etsi.org/ngsi-ld/hasValue": [{\
+                        "@value": "value3",\
+                        "@type": "https://example/type"\
+                    }],\
+                    "https://uri.etsi.org/ngsi-ld/datasetId": [{\
+                        "@id": "23brokenuri:withnumbers"\
+                    }],\
+                    "https://uri.etsi.org/ngsi-ld/createdAt":[{\
+                        "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
+                        "@value": "2022-02-19T20:31:26.123656Z"\
+                    }],\
+                    "https://uri.etsi.org/ngsi-ld/modifiedAt":[{\
+                        "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
+                        "@value": "2022-02-19T23:11:28.457509Z"\
+                    }]\
+                },\
+                {\
+                    "https://uri.etsi.org/ngsi-ld/hasValue": [{\
+                        "@value": "value4",\
+                        "@type": "https://example/type"\
+                    }],\
+                    "https://uri.etsi.org/ngsi-ld/datasetId": [{\
+                        "@id": "uri:normal_second"\
+                    }],\
+                    "https://uri.etsi.org/ngsi-ld/createdAt":[{\
+                        "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
+                        "@value": "2022-02-19T20:31:26.123656Z"\
+                    }],\
+                    "https://uri.etsi.org/ngsi-ld/modifiedAt":[{\
+                        "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
+                        "@value": "2022-02-19T23:11:28.457509Z"\
+                    }]\
+                },\
+                {\
+                    "https://uri.etsi.org/ngsi-ld/hasValue": [{\
+                        "@value": "value5",\
+                        "@type": "https://example/type"\
+                    }],\
+                    "https://uri.etsi.org/ngsi-ld/datasetId": [{\
+                        "@id": "uri:normal_first"\
+                    }],\
+                    "https://uri.etsi.org/ngsi-ld/createdAt":[{\
+                        "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
+                        "@value": "2022-02-19T20:31:26.123656Z"\
+                    }],\
+                    "https://uri.etsi.org/ngsi-ld/modifiedAt":[{\
+                        "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
+                        "@value": "2022-02-19T23:11:28.457509Z"\
+                    }]\
+                }\
+              ]\
+            }'
+    };
+    const revert = ToTest.__set__('Logger', Logger);
+    const debeziumBridge = new ToTest(config);
+    const result = debeziumBridge.parseBeforeAfterEntity(ba);
+    assert.deepEqual(result.entity, { id: 'id', type: 'type', 'https://example/prop': 'id\\https://example/prop' });
+    assert.deepEqual(result.attributes, {
+      'https://example/prop': [{
+        id: 'id\\https://example/prop',
+        entityId: 'id',
+        nodeType: '@value',
+        name: 'https://example/prop',
+        type: 'https://uri.etsi.org/ngsi-ld/Property',
+        'https://uri.etsi.org/ngsi-ld/datasetId': '@none',
+        'https://uri.etsi.org/ngsi-ld/hasValue': 'value2',
+        'https://uri.etsi.org/ngsi-ld/observedAt': [{
+          '@type': 'https://uri.etsi.org/ngsi-ld/DateTime',
+          '@value': '2022-02-19T23:11:28.457509Z'
+        }],
+        valueType: 'https://example/type',
+        index: 0
+      },
+      {
+        id: 'id\\https://example/prop',
+        entityId: 'id',
+        nodeType: '@value',
+        name: 'https://example/prop',
+        type: 'https://uri.etsi.org/ngsi-ld/Property',
+        'https://uri.etsi.org/ngsi-ld/datasetId': '-+brokenuri:withspecialsigns',
+        'https://uri.etsi.org/ngsi-ld/hasValue': 'value',
+        'https://uri.etsi.org/ngsi-ld/observedAt': [{
+          '@type': 'https://uri.etsi.org/ngsi-ld/DateTime',
+          '@value': '2022-02-19T23:11:28.457509Z'
+        }],
+        valueType: 'https://example/type',
+        index: 1
+      },
+      {
+        id: 'id\\https://example/prop',
+        entityId: 'id',
+        nodeType: '@value',
+        name: 'https://example/prop',
+        type: 'https://uri.etsi.org/ngsi-ld/Property',
+        'https://uri.etsi.org/ngsi-ld/datasetId': '23brokenuri:withnumbers',
+        'https://uri.etsi.org/ngsi-ld/hasValue': 'value3',
+        'https://uri.etsi.org/ngsi-ld/observedAt': [{
+          '@type': 'https://uri.etsi.org/ngsi-ld/DateTime',
+          '@value': '2022-02-19T23:11:28.457509Z'
+        }],
+        valueType: 'https://example/type',
+        index: 2
+      },
+      {
+        id: 'id\\https://example/prop',
+        entityId: 'id',
+        nodeType: '@value',
+        name: 'https://example/prop',
+        type: 'https://uri.etsi.org/ngsi-ld/Property',
+        'https://uri.etsi.org/ngsi-ld/datasetId': 'uri:normal_first',
+        'https://uri.etsi.org/ngsi-ld/hasValue': 'value5',
+        'https://uri.etsi.org/ngsi-ld/observedAt': [{
+          '@type': 'https://uri.etsi.org/ngsi-ld/DateTime',
+          '@value': '2022-02-19T23:11:28.457509Z'
+        }],
+        valueType: 'https://example/type',
+        index: 3
+      },
+      {
+        id: 'id\\https://example/prop',
+        entityId: 'id',
+        nodeType: '@value',
+        name: 'https://example/prop',
+        type: 'https://uri.etsi.org/ngsi-ld/Property',
+        'https://uri.etsi.org/ngsi-ld/datasetId': 'uri:normal_second',
+        'https://uri.etsi.org/ngsi-ld/hasValue': 'value4',
+        'https://uri.etsi.org/ngsi-ld/observedAt': [{
+          '@type': 'https://uri.etsi.org/ngsi-ld/DateTime',
+          '@value': '2022-02-19T23:11:28.457509Z'
+        }],
+        valueType: 'https://example/type',
+        index: 4
+      }]
+    });
+    revert();
+  });
   it('Should return `undefined` due to json parse error', async function () {
     const config = {
       bridgeCommon: {
