@@ -243,8 +243,8 @@ describe('Test parseBeforeAfterEntity', function () {
     };
     const ba = {
       id: 'id',
-      type: 'type',
-      data: '{\
+      e_types: ['type'],
+      entity: '{\
                 "@id":"id", "@type": ["type"],\
                 "https://uri.etsi.org/ngsi-ld/createdAt":[{\
                     "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
@@ -316,8 +316,8 @@ describe('Test parseBeforeAfterEntity', function () {
     };
     const ba = {
       id: 'id',
-      type: 'type',
-      data: '{\
+      e_types: ['type'],
+      entity: '{\
                 "@id":"id", "@type": ["type"],\
                 "https://uri.etsi.org/ngsi-ld/createdAt":[{\
                     "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
@@ -401,8 +401,8 @@ describe('Test parseBeforeAfterEntity', function () {
     };
     const ba = {
       id: 'id',
-      type: 'type',
-      data: '{\
+      e_types: ['type'],
+      entity: '{\
                 "@id":"id", "@type": ["type"],\
                 "https://uri.etsi.org/ngsi-ld/createdAt":[{\
                     "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
@@ -459,8 +459,8 @@ describe('Test parseBeforeAfterEntity', function () {
     };
     const ba = {
       id: 'id',
-      type: 'type',
-      data: '{\
+      e_types: ['type'],
+      entity: '{\
                 "@id":"id", "@type": ["type"],\
                 "https://uri.etsi.org/ngsi-ld/createdAt":[{\
                     "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
@@ -645,8 +645,8 @@ describe('Test parseBeforeAfterEntity', function () {
     };
     const ba = {
       id: 'id',
-      type: 'type',
-      data: '{"@id":"id", "@type": ["type"],'
+      e_types: ['type'],
+      entity: '{"@id":"id", "@type": ["type"],'
     };
 
     const revert = ToTest.__set__('Logger', Logger);

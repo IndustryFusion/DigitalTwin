@@ -92,7 +92,7 @@ module.exports = function DebeziumBridge (conf) {
     }
 
     try {
-      baEntity = JSON.parse(ba.data);
+      baEntity = JSON.parse(ba.entity);
       // Delete all non-properties as defined by ETSI SPEC (ETSI GS CIM 009 V1.5.1 (2021-11))
       delete baEntity['@id'];
       delete baEntity['@type'];
@@ -100,7 +100,7 @@ module.exports = function DebeziumBridge (conf) {
       delete baEntity['https://uri.etsi.org/ngsi-ld/modifiedAt'];
       delete baEntity['https://uri.etsi.org/ngsi-ld/obvervedAt'];
       baEntity.id = ba.id;
-      baEntity.type = ba.type;
+      baEntity.type = ba.e_types[0];
     } catch (e) { logger.error(`Cannot parse debezium before field ${e}`); return; } // not throwing an error due to the fact that it cannot be fixed in next try
 
     // create entity table
