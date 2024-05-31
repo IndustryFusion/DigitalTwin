@@ -27,7 +27,7 @@ echo Build Scorpio containers
 
 if [[ $TEST -eq "true" ]]; then
     ( cd ../.. && git clone https://github.com/IndustryFusion/ScorpioBroker.git)
-    ( cd ../../ScorpioBroker && git checkout 10a93c8 ) # Checking out specific commit for CI purposes
+    ( cd ../../ScorpioBroker && git checkout e4716f1 ) # Checking out specific commit for CI purposes
     ( cd ../../ScorpioBroker && source /etc/profile.d/maven.sh && mvn clean package -DskipTests -Ddocker -Ddocker-tag=$DOCKER_TAG -Dkafka -Pkafka -Dquarkus.profile=kafka -Dos=java)
 else
     ( cd ../.. && git clone https://github.com/IndustryFusion/ScorpioBroker.git )

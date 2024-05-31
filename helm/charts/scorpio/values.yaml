@@ -43,6 +43,7 @@ kafka_topic_vars:
   SUB_SYNC_TOPIC: scorpio.sub.sync
   REGISTRYSUB_ALIVE_TOPIC: scorpio.regsub.alive
   REGISTRYSUB_SYNC_TOPIC: scorpio.regsub.sync
+  ENTITYBATCH_TOPIC: scorpio.entitybatch
   retention: 3600000
 
 ## credentials for private docker repo
