@@ -8,16 +8,19 @@ The utils directory contains bash scripts to setup and activate a device.
 ### init-device.sh
 This script is setting up the default device-file and metadata.
 ```bash
-Usage: init-device.sh <deviceId> <gatewayId> [-k keycloakurl] [-r realmId]
+Usage: init-device.sh[-k keycloakurl] [-r realmId] [-d additionalDeviceIds] <deviceId> <gatewayId>
 Defaults: 
 keycloakurl=http://keycloak.local/auth/realms
 realmid=iff
+
 ```
 Example:
 ```bash
 ./init-device.sh urn:iff:deviceid:1 gatewayid
+./init-device.sh -d urn:iff:subdeviceid:1 -d urn:iff:subdeviceid:2 urn:iff:deviceid:1 gatewayid
 ```
-Note that `deviceid` must be compliant wiht URN format.
+First example creates a device with a single urn and a gateway id. Second example creates a device with subcomponents `urn:iff:subdeviceid:1` and `urn:iff:subdeviceid:2`.
+Note that `deviceid` and `additionalDeviceIds` must be compliant wiht URN format.
 ### get-onboarding-token.sh
 This script assumes a setup device-file, creates an onboarding token and stores it in the data directory.
 ```bash
@@ -45,16 +48,17 @@ Example:
 ```
 
 ### send-data.sh
-This script sends data to a device. It uses as default the UDP API (see below) to communicate to the Agent.
+This script sends data to a device. It uses as default the UDP API (see below) to communicate to the Agent. If no id is given, it is assumed to use the default `deviceId`. If data is sent to subcomponents, the `-i` switch is used together with the URN of the respective subdevice id.
 ```bash
-Usage: send_data.sh [-a] [-t] [-y <attribute type>] [-d datasetId] [<propertyname> <value>]+ 
+Usage: send_data.sh [-a] [-t] [-y <attribute type>] [-d datasetId] [-i subdeviceid] [<propertyname> <value>]+ 
 -a: send array of values
 -t: use tcp connection to agent (default: udp)
 -d: give ngsild datasetId (must be iri)
+-i: id of subdevice
 -y: attribute types are {Literal, Iri, Relationship, Json}
 ```
 
-### Use tools alltogether to activate a device
+### Use tools alltogether to activate a device and send data
 On a test system with a local kubernetes installed the following flow creates a default test device
 
 ```bash
@@ -63,6 +67,16 @@ password=$(kubectl -n iff get secret/credential-iff-realm-user-iff -o jsonpath='
 ./get-onboarding-token.sh -p ${password} realm_user
 ./activate.sh -f
 ./send_data.sh "https://example.com/state" "ON"
+```
+
+Send data in combination of subdevices looks as follows:
+
+```bash
+./init-device.sh -d urn:iff:subdeviceid:1 -d urn:iff:subdeviceid:2 urn:iff:deviceid:1 gatewayid
+./get-onboarding-token.sh -p ${password} realm_user
+./activate.sh -f
+./send_data.sh "https://example.com/state" "ON" # sends data to root/main device urn:iff:deviceid:1
+./send_data.sh -i urn:iff:subdeviceid:1 "https://example.com/state" "OFF" # sends data to subdevice/subcomponent urn:iff:subdeviceid:1
 ```
 
 ### iff-agent

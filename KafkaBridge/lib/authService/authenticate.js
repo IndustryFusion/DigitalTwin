@@ -53,11 +53,22 @@ class Authenticate {
     this.cache.init();
   }
 
+  async addSubdeviceAcl (realm, clientid, decodedToken) {
+    if ('subdevice_ids' in decodedToken) {
+      const subdevices = decodedToken.subdevice_ids;
+      const parsedSubdevices = JSON.parse(subdevices);
+      for (const did of parsedSubdevices) {
+        await this.cache.setValue(realm + '/' + did, 'acl', clientid);
+      }
+    }
+  }
+
   // expects "username" and "password" as url-query-parameters
   async authenticate (req, res) {
     this.logger.debug('Auth request ' + JSON.stringify(req.query));
     const username = req.query.username;
     const token = req.query.password;
+    const clientid = req.query.clientid;
     if (username === this.config.mqtt.adminUsername) {
       if (token === this.config.mqtt.adminPassword) {
         // superuser
@@ -67,7 +78,7 @@ class Authenticate {
       } else {
         // will also kick out tokens who use the superuser name as deviceId
         this.logger.warn('Wrong Superuser password.');
-        res.sendStatus(400);
+        res.status(200).json({ result: 'deny' });
         return;
       }
     }
@@ -75,12 +86,12 @@ class Authenticate {
     this.logger.debug('token decoded: ' + JSON.stringify(decodedToken));
     if (decodedToken === null) {
       this.logger.info('Could not decode token.');
-      res.sendStatus(400);
+      res.status(200).json({ result: 'deny' });
       return;
     }
     if (!validate(decodedToken, username)) {
       this.logger.warn('Validation of token failed. Username: ' + username);
-      res.sendStatus(400);
+      res.status(200).json({ result: 'deny' });
       return;
     }
     // check whether accounts contains only one element and role is device
@@ -89,15 +100,17 @@ class Authenticate {
     const realm = getRealm(decodedToken);
     if (did === null || did === undefined || realm === null || realm === undefined) {
       this.logger.warn('Validation failed: Device id or realm not valid.');
-      res.sendStatus(400);
+      res.status(200).json({ result: 'deny' });
       return;
     }
     if (did === this.config.mqtt.tainted || gateway === this.config.mqtt.tainted) {
       this.logger.warn('This token is tained! Rejecting.');
-      res.sendStatus(400);
+      res.status(200).json({ result: 'deny' });
     }
     // put realm/device into the list of accepted topics
-    await this.cache.setValue(realm + '/' + did, 'acl', 'true');
+    await this.cache.deleteKeysWithValue('acl', clientid);
+    await this.addSubdeviceAcl(realm, clientid, decodedToken);
+    await this.cache.setValue(realm + '/' + did, 'acl', clientid);
     res.status(200).json({ result: 'allow', is_superuser: 'false' });
   }
 

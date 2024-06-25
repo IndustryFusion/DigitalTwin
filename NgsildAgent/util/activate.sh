@@ -98,7 +98,8 @@ keycloakurl=$(jq -r '.keycloak_url' "$DEVICE_FILE")
 realmid=$(jq -r '.realm_id' "$DEVICE_FILE")
 gatewayid=$(jq -r '.gateway_id' "$DEVICE_FILE")
 deviceid=$(jq -r '.device_id' "$DEVICE_FILE")
-
+deviceids=$(jq -r '.subdevice_ids' "$DEVICE_FILE" | tr -d '\n')
+deviceids='"'${deviceids//\"/\\\"}'"'
 # Check if the file exists
 if [ -z "$keycloakurl" ] || [ -z "$gatewayid" ] || [ -z "$deviceid" ] || [ -z "$realmid" ]; then
     echo "device json file doesnot contain required item, please do initialize device."
@@ -111,7 +112,7 @@ echo "API endpoint is : $DEVICE_TOKEN_ENDPOINT"
 # Make the curl request with access token as a header and store the response in the temporary file
 device_token=$(curl -X POST "$DEVICE_TOKEN_ENDPOINT"  -d "client_id=device" \
 -d "grant_type=refresh_token" -d "refresh_token=${refresh_token}" -d "orig_token=${orig_token}" -d "audience=device" \
--H "X-GatewayID: $gatewayid" -H "X-DeviceID: $deviceid" 2>/dev/null | jq '.')
+-H "X-GatewayID: $gatewayid" -H "X-DeviceID: $deviceid" -H "X-SubDeviceIDs: $deviceids" 2>/dev/null | jq '.')
 
 if [ "$(echo "$device_token" | jq 'has("error")')" = "true" ]; then
     echo "Error: Onboarding token coule not be retrieved."

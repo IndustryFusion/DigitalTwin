@@ -43,5 +43,29 @@ class Cache {
     const obj = await this.redisClient.hGetAll(key);
     return obj[valueKey];
   }
+
+  async deleteKeysWithValue (valueKey, clientid) {
+    let cursor = 0;
+    const keysToDelete = [];
+
+    do {
+      const reply = await this.redisClient.scan(cursor);
+      cursor = parseInt(reply.cursor, 10);
+      const keys = reply.keys;
+
+      for (const key of keys) {
+        const value = await this.redisClient.hGet(key, valueKey);
+        if (value === clientid) {
+          keysToDelete.push(key);
+        }
+      }
+    } while (cursor !== 0);
+
+    for (const key of keysToDelete) {
+      await this.redisClient.del(key);
+    }
+
+    this.logger.info(`Deleted keys with ${valueKey}=${clientid}: ${keysToDelete.join(', ')}`);
+  }
 }
 module.exports = Cache;

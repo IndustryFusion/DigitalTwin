@@ -33,10 +33,17 @@ TEST_DIR="$(dirname "$BATS_TEST_FILENAME")"
 CLIENT_ID=scorpio
 GATEWAY_ID="testgateway"
 DEVICE_ID="urn:iff:testdevice:1"
+SUBDEVICE_ID1="urn:iff:testsubdevice:1"
+SUBDEVICE_ID2="urn:iff:testsubdevice:2"
+SUBDEVICE_IDS='[
+  urn:iff:testsubdevice:1,
+  urn:iff:testsubdevice:2
+]'
 DEVICE_FILE="device.json"
 ONBOARDING_TOKEN="onboard-token.json"
 NGSILD_AGENT_DIR=${TEST_DIR}/../../../NgsildAgent
 DEVICE_ID2="testdevice2"
+SUBDEVICE_ID3="testsubdevice3"
 SECRET_FILENAME=/tmp/SECRET
 AGENT_CONFIG1=/tmp/AGENT_CONFIG1
 AGENT_CONFIG2=/tmp/AGENT_CONFIG2
@@ -47,7 +54,6 @@ IRI1="http://example.com/iri1"
 JSON1="http://example.com/json1"
 PGREST_URL="http://pgrest.local/entityhistory"
 PGREST_RESULT=/tmp/PGREST_RESULT
-
 
 
 cat << EOF > ${AGENT_CONFIG1}
@@ -70,7 +76,7 @@ cat << EOF > ${AGENT_CONFIG1}
         },
         "connector": {
                 "mqtt": {
-                        "host": "${MQTT_SERVICE}",
+                        "host": "localhost",
                         "port": 1883,
                         "websockets": false,
                         "qos": 1,
@@ -84,7 +90,6 @@ cat << EOF > ${AGENT_CONFIG1}
         }
 }
 EOF
-
 
 cat << EOF > ${AGENT_CONFIG2}
 {
@@ -106,7 +111,7 @@ cat << EOF > ${AGENT_CONFIG2}
         },
         "connector": {
                 "mqtt": {
-                        "host": "${MQTT_SERVICE}",
+                        "host": "localhost",
                         "port": 1883,
                         "websockets": false,
                         "qos": 1,
@@ -129,13 +134,30 @@ check_device_file_contains() {
     [ "$deviceid" = "$1" ] && [ "$gatewayid" = "$2" ] && [ "$realmid" = "$3" ] && [ "$keycloakurl" = "$4" ]
 }
 
+check_device_file_contains_with_subcomponents() {
+    deviceid=$(jq '.device_id' "${NGSILD_AGENT_DIR}"/data/"${DEVICE_FILE}" | tr -d '"')
+    gatewayid=$(jq '.gateway_id' "${NGSILD_AGENT_DIR}"/data/"${DEVICE_FILE}" | tr -d '"')
+    realmid=$(jq '.realm_id' "${NGSILD_AGENT_DIR}"/data/"${DEVICE_FILE}" | tr -d '"')
+    keycloakurl=$(jq '.keycloak_url' "${NGSILD_AGENT_DIR}"/data/"${DEVICE_FILE}" | tr -d '"')
+    subdevice_ids=$(jq '.subdevice_ids' "${NGSILD_AGENT_DIR}"/data/"${DEVICE_FILE}" | tr -d '"')
+    echo "# subdevice_ids $subdevice_ids"
+    echo [ "$subdevice_ids" = "$5" ]
+    [ "$deviceid" = "$1" ] && [ "$gatewayid" = "$2" ] && [ "$realmid" = "$3" ] && [ "$keycloakurl" = "$4" ] && [ "$subdevice_ids" = "$5" ]
+}
+
 
 init_agent_and_device_file() {
     (rm -f "${NGSILD_AGENT_DIR}"/data/"${DEVICE_FILE}")
-    ( { cd "${NGSILD_AGENT_DIR}" && [ -d node_modules ]  && echo "iff-agent already insalled"; } || { npm install && echo "iff-agent successfully installed."; } )
+    ( { cd "${NGSILD_AGENT_DIR}" && [ -d node_modules ]  && echo "iff-agent already installed"; } || { npm install && echo "iff-agent successfully installed."; } )
     (cd "${NGSILD_AGENT_DIR}"/util && bash ./init-device.sh "${DEVICE_ID}" "${GATEWAY_ID}")
 }
 
+
+init_agent_and_device_file_with_subcomponents() {
+    (rm -f "${NGSILD_AGENT_DIR}"/data/"${DEVICE_FILE}")
+    ( { cd "${NGSILD_AGENT_DIR}" && [ -d node_modules ]  && echo "iff-agent already installed"; } || { npm install && echo "iff-agent successfully installed."; } )
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./init-device.sh -d "$SUBDEVICE_ID1" -d "$SUBDEVICE_ID2" "${DEVICE_ID}" "${GATEWAY_ID}")
+}
 
 delete_tmp() {
   rm -f "${PGREST_RESULT}"
@@ -178,7 +200,8 @@ get_tsdb_samples() {
 # compare entity with reference
 # $1: file to compare with
 compare_pgrest_result1() {
-    cat << EOF | jq | diff "$1" - >&3
+    number=$1
+    cat << EOF | jq | diff "$2" - >&3
 [
   {
     "attributeId": "http://example.com/property1",
@@ -187,12 +210,33 @@ compare_pgrest_result1() {
     "entityId": "urn:iff:testdevice:1",
     "index": 0,
     "nodeType": "@value",
-    "value": "0",
+    "value": "${number}",
     "valueType": null
   }
 ]
 EOF
 }
+
+# compare entity with reference
+# $1: file to compare with
+compare_pgrest_subdevice_result1() {
+    number=$1
+    cat << EOF | jq | diff "$2" - >&3
+[
+  {
+    "attributeId": "http://example.com/property1",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
+    "datasetId": "@none",
+    "entityId": "urn:iff:testsubdevice:2",
+    "index": 0,
+    "nodeType": "@value",
+    "value": "${number}",
+    "valueType": null
+  }
+]
+EOF
+}
+
 
 # compare entity with reference
 # $1: file to compare with
@@ -606,10 +650,25 @@ setup() {
     [ "${status}" -eq "0" ]    
 }
 
+@test "test init_device.sh with subcomponents" {
+    $SKIP
+    init_agent_and_device_file_with_subcomponents
+    run check_device_file_contains_with_subcomponents "${DEVICE_ID}" "${GATEWAY_ID}" "${REALM_ID}" "${KEYCLOAK_URL}" "${SUBDEVICE_IDS}"
+    [ "${status}" -eq "0" ]    
+}
+
 @test "test init_device.sh with deviceid no URN" {
     $SKIP
     (rm -f "${NGSILD_AGENT_DIR}"/data/"${DEVICE_FILE}")
     (cd "${NGSILD_AGENT_DIR}"/util && bash ./init-device.sh "${DEVICE_ID2}" "${GATEWAY_ID}" || echo "failed as expected")
+    run [ ! -f "${NGSILD_AGENT_DIR}"/data/"${DEVICE_FILE}" ]
+    [ "${status}" -eq "0" ]    
+}
+
+@test "test init_device.sh with subdeviceid no URN" {
+    $SKIP
+    (rm -f "${NGSILD_AGENT_DIR}"/data/"${DEVICE_FILE}")
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./init-device.sh -d "${SUBDEVICE_ID3}" "${DEVICE_ID}" "${GATEWAY_ID}" || echo "failed as expected")
     run [ ! -f "${NGSILD_AGENT_DIR}"/data/"${DEVICE_FILE}" ]
     [ "${status}" -eq "0" ]    
 }
@@ -657,12 +716,36 @@ setup() {
     cp "${AGENT_CONFIG1}" "${NGSILD_AGENT_DIR}"/config/config.json
     (cd "${NGSILD_AGENT_DIR}" && exec stdbuf -oL node ./iff-agent.js) &
     sleep 2
-    (cd "${NGSILD_AGENT_DIR}"/util && bash ./send_data.sh "${PROPERTY1}" 0 )
+    randomnr=$RANDOM
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./send_data.sh "${PROPERTY1}" ${randomnr} )
     sleep 2
     pkill -f iff-agent
     mqtt_delete_service
     get_tsdb_samples "${DEVICE_ID}" 1 "${token}" > ${PGREST_RESULT}
-    run compare_pgrest_result1 ${PGREST_RESULT}
+    run compare_pgrest_result1 ${randomnr} ${PGREST_RESULT}
+    [ "${status}" -eq "0" ]
+}
+
+@test "test agent starting up and sending subcomponent data" {
+    $SKIP
+    init_agent_and_device_file_with_subcomponents
+    delete_tmp
+    mqtt_setup_service
+    password=$(get_password)
+    token=$(get_token "$password")
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./get-onboarding-token.sh -p "$password" "${USER}")
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./activate.sh -f)
+    cp "${AGENT_CONFIG1}" "${NGSILD_AGENT_DIR}"/config/config.json
+    (cd "${NGSILD_AGENT_DIR}" && exec stdbuf -oL node ./iff-agent.js) &
+    sleep 2
+    randomnr=$RANDOM
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./send_data.sh -i ${SUBDEVICE_ID2} "${PROPERTY1}" ${randomnr} )
+    sleep 2
+    pkill -f iff-agent
+    mqtt_delete_service
+    rm -f ${PGREST_RESULT}
+    get_tsdb_samples "${SUBDEVICE_ID2}" 1 "${token}" > ${PGREST_RESULT}
+    run compare_pgrest_subdevice_result1 "${randomnr}" "${PGREST_RESULT}"
     [ "${status}" -eq "0" ]
 }
 
@@ -729,8 +812,8 @@ setup() {
     echo -n '{"n": "'$PROPERTY1'", "v": "8"}' >/dev/tcp/127.0.0.1/7070
     echo '{"n": "'$PROPERTY2'", "v": "9"}' >/dev/udp/127.0.0.1/41234
     sleep 1
-    pkill -f iff-agent
     mqtt_delete_service
+    pkill -f iff-agent
     get_tsdb_samples "${DEVICE_ID}" 6 "${token}" > ${PGREST_RESULT}
     run compare_pgrest_result4 ${PGREST_RESULT}
     [ "${status}" -eq "0" ]
@@ -750,14 +833,14 @@ setup() {
     sleep 2
     (cd "${NGSILD_AGENT_DIR}"/util && bash ./send_data.sh -at "${PROPERTY1}" 10 "${PROPERTY2}" 11 )
     sleep 1
-    mqtt_delete_service
-    sleep 10
+    mqtt_delete_service 
+    sleep 5
     mqtt_setup_service
-    sleep 2
+    sleep 3
     (cd "${NGSILD_AGENT_DIR}"/util && bash ./send_data.sh -t "${PROPERTY1}" 12 )
     sleep 1
-    pkill -f iff-agent
     mqtt_delete_service
+    pkill -f iff-agent
     get_tsdb_samples "${DEVICE_ID}" 3 "${token}" > ${PGREST_RESULT}
     run compare_pgrest_result5 ${PGREST_RESULT}
     [ "${status}" -eq "0" ]

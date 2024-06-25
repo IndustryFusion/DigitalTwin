@@ -17,6 +17,9 @@
       },
       "d": {
         "type": "string"
+      },
+      "i": {
+        "type": "string"
       }
     },
     "required": [

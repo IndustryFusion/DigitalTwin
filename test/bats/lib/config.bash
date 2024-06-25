@@ -25,3 +25,4 @@ export REALM_ID=iff
 export KEYCLOAK_URL="http://keycloak.local/auth/realms"
 export MQTT_URL=emqx-listeners:1883
 export KAFKA_BOOTSTRAP=my-cluster-kafka-bootstrap:9092
+export EMQX_LABEL="apps.emqx.io/instance=emqx"

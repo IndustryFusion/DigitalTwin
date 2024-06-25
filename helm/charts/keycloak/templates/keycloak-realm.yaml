@@ -98,6 +98,28 @@ spec:
               claim.name: "device_id"
               multivalued: "false"
               userinfo.token.claim: "true"
+      - id: 674b4aac-397d-46bb-84ac-3594408a5e6c
+        name: subdevice_ids
+        description: ''
+        protocol: openid-connect
+        attributes:
+          include.in.token.scope: 'true'
+          display.on.consent.screen: 'true'
+          gui.order: ''
+          consent.screen.text: ''
+        protocolMappers:
+        - id: ce7158c1-88c2-42ec-9b44-bf44f092fb86
+          name: subdeviceids
+          protocol: openid-connect
+          protocolMapper: script-subdeviceids-mapper.js
+          consentRequired: false
+          config:
+            multivalued: 'false'
+            userinfo.token.claim: 'true'
+            id.token.claim: 'true'
+            access.token.claim: 'true'
+            claim.name: subdevice_ids
+            jsonType.label: String
       - id: 36d973cc-4c8c-4dad-b6b7-a56eb9c75e57
         name: if-company
         protocol: openid-connect
@@ -529,6 +551,7 @@ spec:
           - offline_access
           - type
           - gateway
+          - subdevice_ids
       - id: 31c8cc5a-9df2-4606-927a-4aeda07c1e56
         clientId: {{ .Values.keycloak.alerta.client }}
         publicClient: False

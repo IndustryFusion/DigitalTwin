@@ -38,6 +38,7 @@ class Acl {
       return;
     }
     const topic = req.query.topic;
+    const clientid = req.query.clientid;
     this.logger.debug('ACL request for username ' + username + ' and topic ' + topic);
     // allow all $SYS topics
     if (topic.startsWith('$SYS/')) {
@@ -51,18 +52,26 @@ class Acl {
     const splitTopic = topic.split('/');
     if (splitTopic[0] === 'spBv1.0') {
       const spBAccountId = splitTopic[1];
+      const gateway = splitTopic[3];
+      const command = splitTopic[2];
       const spBdevId = splitTopic[4];
       const spBAclKey = spBAccountId + '/' + spBdevId;
-      const allowed = await this.cache.getValue(spBAclKey, 'acl');
-      if (allowed === undefined || !(allowed === 'true') || spBdevId !== username) {
+      let allowed = await this.cache.getValue(spBAclKey, 'acl');
+      if (allowed === undefined && spBdevId === '' && command === 'NBIRTH') { // if it is a NBIRTH command check if gatewayid is permitted for this session
+        allowed = await this.cache.getValue(spBAccountId + '/' + gateway, 'acl');
+        if (allowed === undefined) {
+          this.logger.warn('Gateway id not permitted for this token/session. Use a token which has device_id==gateway_id.');
+        }
+      }
+      if (allowed === undefined || allowed !== clientid) {
         this.logger.info('Connection rejected for realm ' + spBAccountId + ' and device ' + spBdevId);
-        res.sendStatus(400);
+        return res.status(200).json({ result: 'deny' });
       } else {
-        res.status(200).json({ result: 'allow' });
+        return res.status(200).json({ result: 'allow' });
       }
     } else {
       this.logger.warn('Topic sructure not valid.');
-      res.sendStatus(400);
+      return res.status(200).json({ result: 'deny' });
     }
   }
 }
