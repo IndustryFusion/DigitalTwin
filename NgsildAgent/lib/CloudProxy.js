@@ -123,7 +123,8 @@ class CloudProxy {
         edgeNodeId: deviceConf.gateway_id,
         clientId: deviceConf.device_name,
         deviceId: deviceConf.device_id,
-        componentMetric: this.spbMetricList
+        componentMetric: this.spbMetricList,
+        subdeviceIds: deviceConf.subdevice_ids,
       };
       this.spBProxy = new SparkplugbConnector(conf, logger);
       this.logger.info('SparkplugB MQTT proxy found! Configuring  Sparkplug and MQTT for data sending.');
@@ -153,7 +154,11 @@ class CloudProxy {
       }
     }
     try {
-      await this.spBProxy.nodeBirth(this.devProf);
+      if (this.deviceId === this.gatewayId) {
+        await this.spBProxy.nodeBirth(this.devProf);
+      } else {
+        this.logger.info('No Nodebirth sent because gatewayid != deviceid');
+      }
     } catch (err) {
       if (err instanceof ConnectionError && err.errno === 1) {
         this.logger.error('SparkplugB MQTT NBIRTH Metric not sent. Trying to refresh token.');
@@ -204,6 +209,9 @@ class CloudProxy {
       const compMetric = {};
       compMetric.value = metric.v;
       compMetric.name = metric.n;
+      if ('i' in metric) {
+        compMetric.deviceId = metric.i;
+      }
       compMetric.dataType = 'string';
       compMetric.timestamp = metric.on || new Date().getTime();
       compMetric.properties = metric.properties;
@@ -230,7 +238,7 @@ class CloudProxy {
       me.logger.debug('SparkplugB MQTT device profile: ' + me.devProf);
 
       await me.spBProxy.publishData(me.devProf, componentMetrics);
-      me.logger.info('SparkplugB MQTT DDATA Metric sent successfully');
+      me.logger.info('SparkplugB MQTT DDATA Metric sent');
     }
   };
 

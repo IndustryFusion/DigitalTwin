@@ -97,7 +97,11 @@ class ConnectionManager {
   };
 
   connected () {
-    return this.client.connected;
+    if (this.client !== undefined) {
+      return this.client.connected;
+    } else {
+      return false;
+    }
   };
 
   authorized () {

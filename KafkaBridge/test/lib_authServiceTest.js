@@ -240,8 +240,12 @@ describe(fileToTest, function () {
       }
     };
     const res = {
-      sendStatus: function (status) {
-        assert.equal(status, 400, 'Received wrong status');
+      status: function (status) {
+        assert.equal(status, 200, 'Received wrong status');
+        return this;
+      },
+      json: function (resultObj) {
+        resultObj.should.deep.equal({ result: 'deny' });
         done();
       }
     };
@@ -285,8 +289,12 @@ describe(fileToTest, function () {
       }
     };
     const res = {
-      sendStatus: function (status) {
-        assert.equal(status, 400, 'Received wrong status');
+      status: function (status) {
+        assert.equal(status, 200, 'Received wrong status');
+        return this;
+      },
+      json: function (resultObj) {
+        resultObj.should.deep.equal({ result: 'deny' });
         done();
       }
     };
@@ -386,7 +394,7 @@ describe(fileToTest, function () {
       getValue (subtopic, key) {
         assert.equal(aidSlashDid, subtopic, 'Wrong accountId/did subtopic');
         assert.equal(key, 'acl', 'Wrong key value');
-        return 'true';
+        return 'clientid';
       }
     };
     ToTest.__set__('Cache', Cache);
@@ -403,6 +411,7 @@ describe(fileToTest, function () {
     const req = {
       query: {
         username: 'deviceId',
+        clientid: 'clientid',
         topic: 'spBv1.0/accountId/DBIRTH/eonID/deviceId'
       }
     };
@@ -447,8 +456,12 @@ describe(fileToTest, function () {
       }
     };
     const res = {
-      sendStatus: function (status) {
-        assert.equal(status, 400, 'Received wrong status');
+      status: function (status) {
+        assert.equal(status, 200, 'Received wrong status');
+        return this;
+      },
+      json: function (resultObj) {
+        resultObj.should.deep.equal({ result: 'deny' });
         done();
       }
     };
@@ -480,8 +493,12 @@ describe(fileToTest, function () {
       }
     };
     const res = {
-      sendStatus: function (status) {
-        assert.equal(status, 400, 'Received wrong status');
+      status: function (status) {
+        assert.equal(status, 200, 'Received wrong status');
+        return this;
+      },
+      json: function (resultObj) {
+        resultObj.should.deep.equal({ result: 'deny' });
         done();
       }
     };

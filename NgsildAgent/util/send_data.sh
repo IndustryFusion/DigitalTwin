@@ -18,12 +18,13 @@ set +e
 # shellcheck disable=SC1091
 . ./common.sh
 
-usage="Usage: $(basename "$0") [-a] [-t] [-y <attribute type>] [-d datasetId] [<propertyname> <value>]+ \n\
+usage="Usage: $(basename "$0") [-a] [-t] [-y <attribute type>] [-d datasetId] [-i subdeviceid] [<propertyname> <value>]+ \n\
 -a: send array of values\n\
 -t: use tcp connection to agent (default: udp)\n\
 -d: give ngsild datasetId (must be iri)\n\
+-i: id of subdevice
 -y: attribute types are {Literal, Iri, Relationship, Json}\n"
-while getopts 'athy:d:' opt; do
+while getopts 'athy:d:i:' opt; do
   # shellcheck disable=SC2221,SC2222
   case "$opt" in
     a)
@@ -31,6 +32,10 @@ while getopts 'athy:d:' opt; do
       ;;
     t)
       tcp=true
+      ;;
+    i)
+      arg="$OPTARG"
+      deviceId=$arg
       ;;
     y)
       arg="$OPTARG"
@@ -79,6 +84,9 @@ if [ "${num_args}" -eq 2 ] && [ -z "$array" ]; then
   if [ -n "$datasetId" ]; then
     payload=${payload}', "d":"'$datasetId'"'
   fi
+  if [ -n "$deviceId" ]; then
+    payload=${payload}', "i":"'$deviceId'"'
+  fi
   payload=${payload}'}'
   echo $payload
 elif [ "$((num_args%2))" -eq 0 ] && [ -n "$array" ]; then
@@ -87,6 +95,9 @@ elif [ "$((num_args%2))" -eq 0 ] && [ -n "$array" ]; then
     payload="${payload}{\"n\": \"$1\", \"v\": \"$2\", \"t\":\"$attribute_type\""
     if [ -n "$datasetId" ]; then
       payload=${payload}', "d":"'$datasetId'"'
+    fi
+    if [ -n "$deviceId" ]; then
+      payload=${payload}', "i":"'$deviceId'"'
     fi
     payload=${payload}'}'
     shift 2

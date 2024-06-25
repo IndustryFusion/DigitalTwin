@@ -121,13 +121,21 @@ class SparkplugbConnector {
     * Payload for device birth is in device profile componentMetric
     */
   async deviceBirth (devProf) {
-    const topic = common.buildPath(this.topics.metric_topic, [this.spbConf.version, devProf.groupId, 'DBIRTH', devProf.edgeNodeId, devProf.deviceId]);
-    const payload = {
-      timestamp: new Date().getTime(),
-      metrics: devProf.componentMetric,
-      seq: incSeqNum()
+    let subdeviceIds = [];
+    if ('subdeviceIds' in devProf) {
+      subdeviceIds = devProf.subdeviceIds
     };
-    return await this.client.publish(topic, payload, this.pubArgs);
+    const alldeviceIds = subdeviceIds;
+    alldeviceIds.push(devProf.deviceId);
+    for (const deviceId of alldeviceIds) {
+      const topic = common.buildPath(this.topics.metric_topic, [this.spbConf.version, devProf.groupId, 'DBIRTH', devProf.edgeNodeId, deviceId]);
+      const payload = {
+        timestamp: new Date().getTime(),
+        metrics: devProf.componentMetric,
+        seq: incSeqNum()
+      };
+      await this.client.publish(topic, payload, this.pubArgs);
+    }
   };
 
   /* For publishing sparkplugB standard device DATA message
@@ -135,14 +143,35 @@ class SparkplugbConnector {
     *   its component ids
     * @payloadMetric: Contains submitted data value in spB metric format to be sent to server
     */
-  publishData = async function (devProf, payloadMetric) {
-    const topic = common.buildPath(this.topics.metric_topic, [this.spbConf.version, devProf.groupId, 'DDATA', devProf.edgeNodeId, devProf.deviceId]);
-    const payload = {
-      timestamp: new Date().getTime(),
-      metrics: payloadMetric,
-      seq: incSeqNum()
-    };
-    await this.client.publish(topic, payload, this.pubArgs);
+  publishData = async function (devProf, payloadMetrics) {
+    let deviceId = devProf.deviceId;
+    const topics = this.topics;
+    const spbConf = this.spbConf;
+    const client = this.client;
+    const pubArgs = this.pubArgs;
+    const deviceIdMetrics = {};
+    for (const payloadMetric of payloadMetrics) {
+      if ('deviceId' in payloadMetric && devProf.subdeviceIds.includes(payloadMetric.deviceId)) {
+        deviceId = payloadMetric.deviceId;
+      } else if ('deviceId' in payloadMetric && !(payloadMetric.deviceId in devProf.subdeviceIds) && (payloadMetric.deviceId !== devProf.deviceId)) {
+        console.warn('Unknown deviceid: ' + payloadMetric.deviceId);
+        return;
+      }
+      delete payloadMetric.deviceId;
+      if (!(deviceId in deviceIdMetrics)) {
+        deviceIdMetrics[deviceId] = [];
+      }
+      deviceIdMetrics[deviceId].push(payloadMetric);
+    }
+    Object.keys(deviceIdMetrics).forEach(async function (did) {
+      const topic = common.buildPath(topics.metric_topic, [spbConf.version, devProf.groupId, 'DDATA', devProf.edgeNodeId, did]);
+      const payload = {
+        timestamp: new Date().getTime(),
+        metrics: deviceIdMetrics[did],
+        seq: incSeqNum()
+      };
+      await client.publish(topic, payload, pubArgs);
+    });
   };
 
   disconnect = function () {

@@ -292,6 +292,9 @@ module.exports = class SparkplugHandler {
     /*  It will be checked if the ttl exist, if it exits the package need to be discarded
         */
     const subTopic = topic.split('/');
+    if (subTopic[2] !== 'DDATA') {
+      return;
+    }
     this.logger.debug('Data Submission Detected : ' + topic + ' Message: ' + JSON.stringify(message));
     if (Object.values(MESSAGE_TYPE.WITHSEQ).includes(subTopic[2])) {
       const validationResult = this.validator.validate(message, dataSchema.SPARKPLUGB);

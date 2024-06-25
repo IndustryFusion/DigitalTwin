@@ -103,4 +103,40 @@ describe(fileToTest, function () {
     cache.getValue('key').then(result => result.should.equal('true'));
     done();
   });
+
+  it('Shall test deleteKeysWithValue', function (done) {
+    const config = {
+      cache: {
+        port: 1234,
+        host: 'redishost'
+      }
+    };
+
+    const redis = {
+      createClient: function () {
+        return {
+          on: function (evType) {
+            evType.should.equal('error');
+          },
+          scan: async function (cursor) {
+            return { cursor: '0', keys: ['key1', 'key2', 'key3'] };
+          },
+          hGet: async function (key, valueKey) {
+            if (key === 'key1' && valueKey === 'field1') return 'clientid1';
+            if (key === 'key2' && valueKey === 'field1') return 'clientid2';
+            if (key === 'key3' && valueKey === 'field1') return 'clientid1';
+            return null;
+          },
+          del: async function (key) {
+          }
+        };
+      }
+    };
+    ToTest.__set__('redis', redis);
+    const cache = new ToTest(config);
+    cache.deleteKeysWithValue('field1', 'clientid1').then(() => {
+      // Add assertions for the deletion logic if needed
+      done();
+    });
+  });
 });

@@ -11,6 +11,11 @@
             "name": "Device ID Mapper",
             "fileName": "deviceid-mapper.js",
             "description": "deviceId - only valid if access type is device"
+        },
+        {
+            "name": "Device SUB IDs Mapper",
+            "fileName": "subdeviceids-mapper.js",
+            "description": "subdeviceIds - only valid if access type is device"
         }
     ],
     "saml-mappers": []
