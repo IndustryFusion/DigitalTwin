@@ -1,0 +1,13 @@
+apiVersion: crossplane.industry-fusion.com/v1alpha1
+kind: DigitalTwinPlatform
+metadata:
+  name: test
+  namespace: test
+spec:
+  parameters:
+    size: S
+  compositionSelector:
+    matchLabels:
+      provider: test
+  writeConnectionSecretToRef:
+    name: test
