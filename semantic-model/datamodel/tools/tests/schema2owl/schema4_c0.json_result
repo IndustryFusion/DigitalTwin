@@ -4,14 +4,14 @@
 @prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/>.
 @prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/>.
 
-iffb:hasFilter
-    a owl:Property, base:PeerRelationship;
-    rdfs:domain <https://industry-fusion.org/eclass%230173-1%2301-AKJ975%23017>;
+iffb:hasCartridge
+    a owl:Property, base:SubComponentRelationship;
+    rdfs:domain <https://industry-fusion.org/eclass%230173-1%2301-ACK991%23016>;
     rdfs:range ngsi-ld:Relationship.
 iffb:machine_state
     a owl:Property;
-    rdfs:domain <https://industry-fusion.org/eclass%230173-1%2301-AKJ975%23017>;
+    rdfs:domain <https://industry-fusion.org/eclass%230173-1%2301-ACK991%23016>;
     rdfs:range ngsi-ld:Property.
-<https://industry-fusion.org/eclass#0173-1#01-AKJ975#017> a owl:Class.
+<https://industry-fusion.org/eclass#0173-1#01-ACK991#016> a owl:Class.
 
 

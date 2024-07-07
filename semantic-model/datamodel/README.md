@@ -294,7 +294,7 @@ In order to validate it with a JSON-Schema, first the base object must be descri
     }
 ```
 This specifies the mandatory `id` and `type` field of every NGSI-LD object. `id` must be an *URN* and `type` must contain a *compacted* form.
-The "$schema" field must be "https://json-schema.org/draft/2020-12/schema", the $id of the schema must be a valid URL with the additional constraint that all '#' fields **must be URL-Encoded**. An example for a schema and related data can be seen in the following:
+The `$schema` field must be https://json-schema.org/draft/2020-12/schema, the `$id` of the schema must be a valid URL with the additional constraint that all '#' fields **must be URL-Encoded**. An example for a schema and related data can be seen in the following:
 
 ```json
 # JSON-Schema:
@@ -445,7 +445,8 @@ The following JSON-Schema Keywords from the standard are forbidded:
 ## Added JSON-Schmea Keywords:
 The following JSON-Schema Keywords are added to the standard:
 
-* **relationship:** Contains the *compacted* type for a NGSI-LD relationship. 
+* **relationship:** Contains the *compacted* type for a NGSI-LD relationship.
+* **relationship_type** is further detailing the relationship type. There are two values allowed: `subcomponent` or `peer`
 
 ## Integrating ECLASS Properties
 `ECLASS` provides additional data for every `IRDI` which can be added/mapped to `JSON-Schema`:
@@ -581,6 +582,55 @@ node tools/jsonschema2shacl.js -s examples/plasmacutter_schema.json -i  https://
                         ]
             ];
     sh:targetClass <https://industry-fusion.org/eclass#0173-1#01-AKJ975#017>.
+
+```
+
+### Create OWL Entities descriptions
+
+The `entities.ttl` description contains all non validation relevant information about entities. It defines **domain** and **range** of attributes and more details, e.g. whether a NGSI-LD Relationship is a subcomponent or a peer relationship. The description is created in [OWL](https://www.w3.org/OWL/).
+
+#### Install
+
+```
+npm install
+```
+
+#### Usage
+
+```
+jsonschema2owl.js
+
+Converting an IFF Schema file for NGSI-LD objects into an OWL entity file.
+
+Options:
+      --version    Show version number                                 [boolean]
+  -s, --schema     Schema File containing array of Schemas   [string] [required]
+  -i, --schemaid   Schma-id of object to generate SHACL for  [string] [required]
+  -c, --context    JSON-LD-Context                           [string] [required]
+  -n, --namespace  default namespace (if not derived by context)        [string]
+  -h, --help       Show help                                           [boolean]
+```
+
+#### Examples
+```
+node ./tools/jsonschema2owl.js -s ./examples/filter_and_cartridge_subcomponent_schema.json -c file:$PWD/./examples/context.jsonld -i https://industry-fusion.org/eclass#0173-1#01-ACK991#016
+```
+```
+@prefix owl: <http://www.w3.org/2002/07/owl#>.
+@prefix iffb: <https://industry-fusion.org/base/v0.1/>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/>.
+@prefix b: <https://industryfusion.github.io/contexts/ontology/v0/base/>.
+
+iffb:hasCartridge
+    a owl:Property, b:SubComponentRelationship;
+    rdfs:domain <https://industry-fusion.org/eclass%230173-1%2301-ACK991%23016>;
+    rdfs:range ngsi-ld:Relationship.
+iffb:machine_state
+    a owl:Property;
+    rdfs:domain <https://industry-fusion.org/eclass%230173-1%2301-ACK991%23016>;
+    rdfs:range ngsi-ld:Property.
+<https://industry-fusion.org/eclass#0173-1#01-ACK991#016> a owl:Class.
 
 ```
 
