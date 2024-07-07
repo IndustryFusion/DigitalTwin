@@ -26,6 +26,7 @@ const RDF = $rdf.Namespace('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
 const RDFS = $rdf.Namespace('http://www.w3.org/2000/01/rdf-schema#');
 const OWL = $rdf.Namespace('http://www.w3.org/2002/07/owl#');
 const NGSILD = $rdf.Namespace('https://uri.etsi.org/ngsi-ld/');
+const BASE = $rdf.Namespace('https://industryfusion.github.io/contexts/ontology/v0/base/');
 
 describe('Test class Entity', function () {
   it('Should create Entity with IRI', function () {
@@ -75,7 +76,8 @@ describe('Test dumpAttribute', function () {
     const expected = [
       [$rdf.namedNode(attributeName), RDF('type'), OWL('Property')],
       [$rdf.namedNode(attributeName), RDFS('domain'), $rdf.namedNode(entityName)],
-      [$rdf.namedNode(attributeName), RDFS('range'), NGSILD('Relationship')]
+      [$rdf.namedNode(attributeName), RDFS('range'), NGSILD('Relationship')],
+      [$rdf.namedNode(attributeName), RDF('type'), BASE('PeerRelationship')]
     ];
     const store = {
       add: (s, p, o) => { added.push([s, p, o]); }

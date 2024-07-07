@@ -25,7 +25,7 @@ const removedKeywords = [
   'valid', 'error', 'annotation', 'additionalProperties', 'propertyNames',
   '$vocabulary', '$defs', 'multipleOf', 'uniqueItems', 'maxContains',
   'minContains', 'maxProperties', 'minPropeties', 'dependentRequired'];
-const addedKeywords = ['relationship', 'datatype', 'unit'];
+const addedKeywords = ['relationship', 'relationship_type', 'datatype', 'unit'];
 
 const argv = yargs
   .command('$0', 'Validate a JSON-LD object with IFF Schema.')

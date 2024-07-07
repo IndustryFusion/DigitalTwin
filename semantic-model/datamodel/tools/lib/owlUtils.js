@@ -21,6 +21,7 @@ const RDF = $rdf.Namespace('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
 const RDFS = $rdf.Namespace('http://www.w3.org/2000/01/rdf-schema#');
 const OWL = $rdf.Namespace('http://www.w3.org/2002/07/owl#');
 const NGSILD = $rdf.Namespace('https://uri.etsi.org/ngsi-ld/');
+const BASE = $rdf.Namespace('https://industryfusion.github.io/contexts/ontology/v0/base/');
 
 const globalAttributes = [];
 const globalEntities = [];
@@ -40,6 +41,7 @@ class Attribute {
     this._entities = [];
     this._attributeName = attributeName;
     this._isProperty = true;
+    this._isSubcomponent = false;
   }
 
   addEntity (entity) {
@@ -61,6 +63,14 @@ class Attribute {
   get entities () {
     return this._entities;
   }
+
+  get isSubcomponent () {
+    return this._isSubcomponent;
+  }
+
+  set isSubcomponent (isSc) {
+    this._isSubcomponent = isSc;
+  }
 }
 
 function dumpAttribute (attribute, entity, store) {
@@ -71,6 +81,11 @@ function dumpAttribute (attribute, entity, store) {
       store.add($rdf.sym(attribute.attributeName), RDFS('range'), NGSILD('Property'));
     } else {
       store.add($rdf.sym(attribute.attributeName), RDFS('range'), NGSILD('Relationship'));
+      if (attribute.isSubcomponent) {
+        store.add($rdf.sym(attribute.attributeName), RDF('type'), BASE('SubComponentRelationship'));
+      } else {
+        store.add($rdf.sym(attribute.attributeName), RDF('type'), BASE('PeerRelationship'));
+      }
     }
   }
 }
@@ -103,6 +118,10 @@ function scanProperties (entity, typeschema, contextManager) {
         if ('relationship' in typeschema.properties[property]) {
           isProperty = false;
         }
+        let isSubcomponent = false;
+        if ('relationship_type' in typeschema.properties[property] && typeschema.properties[property].relationship_type === 'subcomponent') {
+          isSubcomponent = true;
+        }
         let path = property;
         if (!contextManager.isValidIri(path)) {
           path = contextManager.expandTerm(path);
@@ -111,6 +130,7 @@ function scanProperties (entity, typeschema, contextManager) {
         const attribute = new Attribute(path);
         attribute.addEntity(entity);
         attribute.isProperty = isProperty;
+        attribute.isSubcomponent = isSubcomponent;
         globalAttributes.push(attribute);
       });
   }
