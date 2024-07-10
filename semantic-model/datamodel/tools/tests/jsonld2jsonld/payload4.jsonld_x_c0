@@ -1,0 +1,132 @@
+[
+  {
+    "https://industry-fusion.org/base/v0.1/hasFilter": [
+      {
+        "https://uri.etsi.org/ngsi-ld/hasObject": [
+          {
+            "@id": "urn:iff:filter1"
+          }
+        ]
+      }
+    ],
+    "https://industry-fusion.org/base/v0.1/hasIdentification": [
+      {
+        "https://uri.etsi.org/ngsi-ld/hasObject": [
+          {
+            "@id": "urn:iff:identification1"
+          }
+        ]
+      }
+    ],
+    "@id": "urn:iff:cartridge1",
+    "@type": [
+      "https://industry-fusion.org/eclass#0173-1#01-AKE795#017"
+    ],
+    "https://industry-fusion.org/base/v0.1/waste_class": [
+      {
+        "@value": "WC0"
+      }
+    ]
+  },
+  {
+    "https://industry-fusion.org/base/v0.1/hasCartridge": [
+      {
+        "https://uri.etsi.org/ngsi-ld/hasObject": [
+          {
+            "@id": "urn:iff:cartridge1"
+          }
+        ]
+      }
+    ],
+    "https://industry-fusion.org/base/v0.1/hasIdentification": [
+      {
+        "https://uri.etsi.org/ngsi-ld/hasObject": [
+          {
+            "@id": "urn:iff:identification2"
+          }
+        ]
+      }
+    ],
+    "@id": "urn:iff:filter1",
+    "https://industry-fusion.org/base/v0.1/machine_state": [
+      {
+        "@value": "Testing"
+      }
+    ],
+    "@type": [
+      "https://industry-fusion.org/eclass#0173-1#01-ACK991#016"
+    ]
+  },
+  {
+    "https://industry-fusion.org/eclass#0173-1#01-ADN198#012": [
+      {
+        "@type": [
+          "https://uri.etsi.org/ngsi-ld/Property"
+        ],
+        "https://uri.etsi.org/ngsi-ld/hasValue": [
+          {
+            "@type": "@json",
+            "@value": {
+              "test2": "1234"
+            }
+          }
+        ]
+      }
+    ],
+    "https://industry-fusion.org/eclass#0173-1#01-ADN199#011": [
+      {
+        "@type": [
+          "https://uri.etsi.org/ngsi-ld/Property"
+        ],
+        "https://uri.etsi.org/ngsi-ld/hasValue": [
+          {
+            "@type": "@json",
+            "@value": {
+              "test": "123"
+            }
+          }
+        ]
+      }
+    ],
+    "@id": "urn:iff:identification1",
+    "@type": [
+      "https://industry-fusion.org/eclass#0173-1#01-ACK991#016"
+    ]
+  },
+  {
+    "https://industry-fusion.org/eclass#0173-1#01-ADN198#012": [
+      {
+        "@type": [
+          "https://uri.etsi.org/ngsi-ld/Property"
+        ],
+        "https://uri.etsi.org/ngsi-ld/hasValue": [
+          {
+            "@type": "@json",
+            "@value": {
+              "test3": "y1234"
+            }
+          }
+        ]
+      }
+    ],
+    "https://industry-fusion.org/eclass#0173-1#01-ADN199#011": [
+      {
+        "@type": [
+          "https://uri.etsi.org/ngsi-ld/Property"
+        ],
+        "https://uri.etsi.org/ngsi-ld/hasValue": [
+          {
+            "@type": "@json",
+            "@value": {
+              "test3": "x123"
+            }
+          }
+        ]
+      }
+    ],
+    "@id": "urn:iff:identification2",
+    "@type": [
+      "https://industry-fusion.org/eclass#0173-1#01-ACK991#016"
+    ]
+  }
+]

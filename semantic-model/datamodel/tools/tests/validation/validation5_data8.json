@@ -1,0 +1,17 @@
+{
+    "@context": "https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld",
+    "id": "urn:iff:identification1",
+    "type": "eclass:0173-1#01-ADN228#012",
+    "eclass:0173-1#01-ADN199#011": {
+        "value": {
+            "@value": {"test": "123"},
+            "@type": "@json"
+        }
+    },
+    "eclass:0173-1#01-ADN198#012": {
+        "value": {
+            "@value": {"test2": "1234"},
+            "@type": "@json"
+        }
+    }
+}

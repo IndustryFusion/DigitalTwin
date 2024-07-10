@@ -1,0 +1,12 @@
+{
+    "@context": "https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld",
+    "id": "urn:iff:cartridge1",
+    "type": "eclass:0173-1#01-AKE795#017",
+    "hasFilter": {
+        "object": "urn:iff:filter1"
+    },
+    "waste_class": "WC0",
+    "hasIdentification": {
+        "object": "urn:iff:identification1"
+    }
+}

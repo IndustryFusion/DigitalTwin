@@ -1,0 +1,234 @@
+[
+  {
+    "@context": [
+      "https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld",
+      "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+      {
+        "@vocab": "https://industry-fusion.org/base/v0.1/",
+        "eclass": {
+          "@id": "https://industry-fusion.org/eclass#",
+          "@prefix": true
+        },
+        "xsd": {
+          "@id": "http://www.w3.org/2001/XMLSchema#",
+          "@prefix": true
+        },
+        "iffb": {
+          "@id": "https://industry-fusion.org/base/v0.1/",
+          "@prefix": true
+        },
+        "iffk": {
+          "@id": "https://industry-fusion.org/knowledge/v0.1/",
+          "@prefix": true
+        },
+        "rdf": {
+          "@id": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+          "@prefix": true
+        },
+        "rdfs": {
+          "@id": "http://www.w3.org/2000/01/rdf-schema#",
+          "@prefix": true
+        },
+        "schema": {
+          "@id": "http://schema.org/",
+          "@prefix": true
+        },
+        "sh": {
+          "@id": "http://www.w3.org/ns/shacl#",
+          "@prefix": true
+        }
+      }
+    ],
+    "id": "urn:iff:cartridge1",
+    "type": "eclass:0173-1#01-AKE795#017",
+    "hasFilter": {
+      "type": "Relationship",
+      "object": "urn:iff:filter1"
+    },
+    "hasIdentification": {
+      "type": "Relationship",
+      "object": "urn:iff:identification1"
+    },
+    "waste_class": {
+      "type": "Property",
+      "value": "WC0"
+    }
+  },
+  {
+    "@context": [
+      "https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld",
+      "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+      {
+        "@vocab": "https://industry-fusion.org/base/v0.1/",
+        "eclass": {
+          "@id": "https://industry-fusion.org/eclass#",
+          "@prefix": true
+        },
+        "xsd": {
+          "@id": "http://www.w3.org/2001/XMLSchema#",
+          "@prefix": true
+        },
+        "iffb": {
+          "@id": "https://industry-fusion.org/base/v0.1/",
+          "@prefix": true
+        },
+        "iffk": {
+          "@id": "https://industry-fusion.org/knowledge/v0.1/",
+          "@prefix": true
+        },
+        "rdf": {
+          "@id": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+          "@prefix": true
+        },
+        "rdfs": {
+          "@id": "http://www.w3.org/2000/01/rdf-schema#",
+          "@prefix": true
+        },
+        "schema": {
+          "@id": "http://schema.org/",
+          "@prefix": true
+        },
+        "sh": {
+          "@id": "http://www.w3.org/ns/shacl#",
+          "@prefix": true
+        }
+      }
+    ],
+    "id": "urn:iff:filter1",
+    "type": "eclass:0173-1#01-ACK991#016",
+    "hasCartridge": {
+      "type": "Relationship",
+      "object": "urn:iff:cartridge1"
+    },
+    "hasIdentification": {
+      "type": "Relationship",
+      "object": "urn:iff:identification2"
+    },
+    "machine_state": {
+      "type": "Property",
+      "value": "Testing"
+    }
+  },
+  {
+    "@context": [
+      "https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld",
+      "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+      {
+        "@vocab": "https://industry-fusion.org/base/v0.1/",
+        "eclass": {
+          "@id": "https://industry-fusion.org/eclass#",
+          "@prefix": true
+        },
+        "xsd": {
+          "@id": "http://www.w3.org/2001/XMLSchema#",
+          "@prefix": true
+        },
+        "iffb": {
+          "@id": "https://industry-fusion.org/base/v0.1/",
+          "@prefix": true
+        },
+        "iffk": {
+          "@id": "https://industry-fusion.org/knowledge/v0.1/",
+          "@prefix": true
+        },
+        "rdf": {
+          "@id": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+          "@prefix": true
+        },
+        "rdfs": {
+          "@id": "http://www.w3.org/2000/01/rdf-schema#",
+          "@prefix": true
+        },
+        "schema": {
+          "@id": "http://schema.org/",
+          "@prefix": true
+        },
+        "sh": {
+          "@id": "http://www.w3.org/ns/shacl#",
+          "@prefix": true
+        }
+      }
+    ],
+    "id": "urn:iff:identification1",
+    "type": "eclass:0173-1#01-ACK991#016",
+    "eclass:0173-1#01-ADN198#012": {
+      "type": "Property",
+      "value": {
+        "type": "@json",
+        "@value": {
+          "test2": "1234"
+        }
+      }
+    },
+    "eclass:0173-1#01-ADN199#011": {
+      "type": "Property",
+      "value": {
+        "type": "@json",
+        "@value": {
+          "test": "123"
+        }
+      }
+    }
+  },
+  {
+    "@context": [
+      "https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld",
+      "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+      {
+        "@vocab": "https://industry-fusion.org/base/v0.1/",
+        "eclass": {
+          "@id": "https://industry-fusion.org/eclass#",
+          "@prefix": true
+        },
+        "xsd": {
+          "@id": "http://www.w3.org/2001/XMLSchema#",
+          "@prefix": true
+        },
+        "iffb": {
+          "@id": "https://industry-fusion.org/base/v0.1/",
+          "@prefix": true
+        },
+        "iffk": {
+          "@id": "https://industry-fusion.org/knowledge/v0.1/",
+          "@prefix": true
+        },
+        "rdf": {
+          "@id": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+          "@prefix": true
+        },
+        "rdfs": {
+          "@id": "http://www.w3.org/2000/01/rdf-schema#",
+          "@prefix": true
+        },
+        "schema": {
+          "@id": "http://schema.org/",
+          "@prefix": true
+        },
+        "sh": {
+          "@id": "http://www.w3.org/ns/shacl#",
+          "@prefix": true
+        }
+      }
+    ],
+    "id": "urn:iff:identification2",
+    "type": "eclass:0173-1#01-ACK991#016",
+    "eclass:0173-1#01-ADN198#012": {
+      "type": "Property",
+      "value": {
+        "type": "@json",
+        "@value": {
+          "test3": "y1234"
+        }
+      }
+    },
+    "eclass:0173-1#01-ADN199#011": {
+      "type": "Property",
+      "value": {
+        "type": "@json",
+        "@value": {
+          "test3": "x123"
+        }
+      }
+    }
+  }
+]
