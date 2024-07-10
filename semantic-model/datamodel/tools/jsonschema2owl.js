@@ -17,7 +17,6 @@
 
 const $RefParser = require('json-schema-ref-parser');
 const fs = require('fs');
-const url = require('url');
 const yargs = require('yargs');
 const jsonldUtils = require('./lib/jsonldUtils');
 const owlUtils = require('./lib/owlUtils');
@@ -55,12 +54,8 @@ const argv = yargs
 // Read in an array of JSON-Schemas
 const jsonSchemaText = fs.readFileSync(argv.s, 'utf8');
 const jsonSchema = JSON.parse(jsonSchemaText);
-let uriOrContext = argv.c;
-const parseUrl = new url.URL(uriOrContext);
-if (parseUrl.protocol === 'file:') {
-  uriOrContext = JSON.parse(fs.readFileSync(parseUrl.pathname, 'utf-8'));
-}
-const contextManager = new jsonldUtils.ContextManager(uriOrContext);
+
+const contextManager = new jsonldUtils.ContextManager(argv.c);
 
 (async (jsconSchema) => {
   const myResolver = {
@@ -87,6 +82,7 @@ const contextManager = new jsonldUtils.ContextManager(uriOrContext);
     return schema;
   } catch (err) {
     console.error(err);
+    throw new Error('Could not retrieve schema.');
   }
 })(jsonSchema)
   .then(schema => {

@@ -1,0 +1,36 @@
+@prefix sh: <http://www.w3.org/ns/shacl#>.
+@prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/>.
+
+<https://industry-fusion.org/knowledge/v0.1/0173-1#01-ADN228#012Shape>
+    a sh:NodeShape;
+    sh:property
+            [
+                sh:maxCount 1;
+                sh:minCount 0;
+                sh:nodeKind sh:BlankNode;
+                sh:path
+                <https://industry-fusion.org/eclass#0173-1#01-ADN199#011>;
+                sh:property
+                        [
+                            sh:maxCount 1;
+                            sh:minCount 1;
+                            sh:nodeKind sh:Literal;
+                            sh:path ngsi-ld:hasValue
+                        ]
+            ],
+            [
+                sh:maxCount 1;
+                sh:minCount 1;
+                sh:nodeKind sh:BlankNode;
+                sh:path
+                <https://industry-fusion.org/eclass#0173-1#01-ADN198#012>;
+                sh:property
+                        [
+                            sh:maxCount 1;
+                            sh:minCount 1;
+                            sh:nodeKind sh:Literal;
+                            sh:path ngsi-ld:hasValue
+                        ]
+            ];
+    sh:targetClass <https://industry-fusion.org/eclass#0173-1#01-ADN228#012>.
+

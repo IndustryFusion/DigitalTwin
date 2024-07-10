@@ -50,7 +50,7 @@
         "description": "Properties for class cutter",
         "type": "object",
         "properties": {
-            "machineState": {
+            "machine_state": {
                 "type": "string",
                 "title": "Machine Status",
                 "description": "Current status of the machine (Online_Idle, Run, Online_Error, Online_Maintenance, Setup, Testing)",
@@ -65,7 +65,7 @@
             }
         },
         "required": [
-            "machineState"
+            "machine_state"
         ]
     },
     {
@@ -97,7 +97,7 @@
         "description": "Attributes for class cutter",
         "type": "object",
         "properties": {
-            "wasteClass": {
+            "waste_class": {
                 "type": "string",
                 "title": "Waste Class",
                 "description": "Current wasteclass of the cartridge (WC0, WC1, WC2, WC3)",
@@ -115,7 +115,7 @@
             }
         },
         "required": [
-            "wasteClass"
+            "waste_class"
         ]
     },
     {

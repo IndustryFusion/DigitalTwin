@@ -10,25 +10,22 @@
   "author": "Marcel Wagner",
   "license": "Apache-2.0",
   "dependencies": {
+    "@comunica/query-sparql-rdfjs": "^3.2.0",
     "ajv": "^8.12.0",
-
     "json-schema-ref-parser": "^9.0.9",
     "jsonld-context-parser": "^2.4.0",
-  
-
     "rdflib": "^2.2.32",
-
     "yargs": "^17.7.2"
   },
   "devDependencies": {
-    "rewire": "^7.0.0",
-    "nyc": "^15.1.0",
-    "mocha": "^10.2.0",
     "chai": "^4.3.10",
     "eslint": "^8.53.0",
     "eslint-config-standard": "^17.1.0",
     "eslint-plugin-import": "^2.29.0",
     "eslint-plugin-n": "^16.2.0",
-    "eslint-plugin-promise": "^6.1.1"
+    "eslint-plugin-promise": "^6.1.1",
+    "mocha": "^10.2.0",
+    "nyc": "^15.1.0",
+    "rewire": "^7.0.0"
   }
 }

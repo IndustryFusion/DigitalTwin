@@ -6,7 +6,7 @@
         "hasFilter": {
             "object": "urn:iff:filter1"
         },
-        "wasteClass": "WC0",
+        "waste_class": "WC0",
         "hasIdentification": {
             "object": "urn:iff:identification1"
         }
@@ -15,7 +15,7 @@
         "@context": "https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld",
         "id": "urn:iff:filter1",
         "type": "eclass:0173-1#01-ACK991#016",
-        "machineState": "Testing",
+        "machine_state": "Testing",
         "hasCartridge": {
             "object": "urn:iff:cartridge1"
         },
@@ -26,7 +26,7 @@
     {
         "@context": "https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld",
         "id": "urn:iff:identification1",
-        "type": "eclass:0173-1#01-ADN228#012",
+        "type": "eclass:0173-1#01-ACK991#016",
         "eclass:0173-1#01-ADN199#011": {
             "type": "Property",
             "value": {
@@ -45,7 +45,7 @@
     {
         "@context": "https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld",
         "id": "urn:iff:identification2",
-        "type": "eclass:0173-1#01-ADN228#012",
+        "type": "eclass:0173-1#01-ACK991#016",
         "eclass:0173-1#01-ADN199#011": {
             "type": "Property",
             "value": {
