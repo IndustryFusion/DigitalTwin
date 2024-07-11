@@ -101,8 +101,11 @@ kafkaBridge:
 
 velero:
   backupBucket: velero-backup
+  region: de
 
 redis:
+  storage:
+    size: 2Gi
   resources:
     requests:
       cpu: 50m
