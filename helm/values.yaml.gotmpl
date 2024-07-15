@@ -187,7 +187,7 @@ kafkaBridge:
     attributesTopic: "iff.ngsild.attributes"
     
   timescaledb:
-    postgresPort: 5432
+    postgresPort: {{ .StateValues.kafkaBridge.timescaledb.postgresPort }}
     replicaCount: 1
     tokenRefreshInterval: 200
     listenTopic: "iff.ngsild.attributes"
