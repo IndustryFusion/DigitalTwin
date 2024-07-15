@@ -1,0 +1,74 @@
+[
+    {
+        "@context": "https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld",
+        "id": "urn:iff:cartridge1",
+        "type": "eclass:0173-1#01-AKE795#017",
+        "hasFilter": {
+            "type": "Relationship",
+            "object": "urn:iff:filter1"
+        },
+        "waste_class": {
+            "type": "Property",
+            "value": "WC0"
+        },
+        "hasIdentification": {
+            "type": "Relationship",
+            "object": "urn:iff:identification1"
+        }
+    },
+    {
+        "@context": "https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld",
+        "id": "urn:iff:filter1",
+        "type": "eclass:0173-1#01-ACK991#016",
+        "machine_state": {
+            "type": "Property",
+            "value": "Testing"
+        },
+        "hasCartridge": {
+            "type": "Relationship",
+            "object": "urn:iff:cartridge1"
+        },
+        "hasIdentification": {
+            "type": "Relationship",
+            "object": "urn:iff:identification2"
+        }
+    },
+    {
+        "@context": "https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld",
+        "id": "urn:iff:identification1",
+        "type": "eclass:0173-1#01-ACK991#016",
+        "eclass:0173-1#01-ADN199#011": {
+            "type": "Property",
+            "value": {
+                "@value": {"test": "123"},
+                "@type": "@json"
+            }
+        },
+        "eclass:0173-1#01-ADN198#012": {
+            "type": "Property",
+            "value": {
+                "@value": {"test2": "1234"},
+                "@type": "@json"
+            }
+        }
+    },
+    {
+        "@context": "https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld",
+        "id": "urn:iff:identification2",
+        "type": "eclass:0173-1#01-ACK991#016",
+        "eclass:0173-1#01-ADN199#011": {
+            "type": "Property",
+            "value": {
+                "@value": {"test3": "x123"},
+                "@type": "@json"
+            }
+        },
+        "eclass:0173-1#01-ADN198#012": {
+            "type": "Property",
+            "value": {
+                "@value": {"test3": "y1234"},
+                "@type": "@json"
+            }
+        }
+    }
+]
