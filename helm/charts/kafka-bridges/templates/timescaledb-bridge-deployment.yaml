@@ -39,7 +39,7 @@ spec:
             - name: POSTGRES_SERVICE
               value: {{ .Values.clusterSvcName }}
             - name: POSTGRES_PORT
-              value: {{ .Values.kafkaBridge.timescaledb.postgresPort }}
+              value: "{{ .Values.kafkaBridge.timescaledb.postgresPort }}"
           livenessProbe:
             exec:
               command:

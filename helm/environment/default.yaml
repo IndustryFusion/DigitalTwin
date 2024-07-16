@@ -95,7 +95,7 @@ kafkaBridge:
     tokenRefreshInterval: 200
     listenTopicRetention: 3600000
   timescaledb:
-    postgresPort: '5432'
+    postgresPort: 5432
     replicaCount: 1
     tokenRefreshInterval: 200
     listenTopicRetention: 3600000
