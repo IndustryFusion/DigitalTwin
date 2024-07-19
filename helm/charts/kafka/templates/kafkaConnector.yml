@@ -27,3 +27,5 @@ spec:
     key.converter.schemas.enable: "false"
     value.converter.schemas.enable: "false"
     plugin.name: "pgoutput"
+    max.batch.size: "2048"
+    poll.interval.ms: "500"
