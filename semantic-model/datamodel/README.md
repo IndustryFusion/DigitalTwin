@@ -476,7 +476,7 @@ This section describes the tools which are used for validation, data conversion 
 
 ### Validation
 
-The validation tool is `validate.js`. 
+The validation tool is `validate.js`. It validates only **concise** NGSI-LD objects.
 
 #### Install
 
@@ -489,19 +489,20 @@ npm install
 ```
 validate.js
 
-Validate a JSON-LD object with IFF Schema.
+Validate a concise NGSI-LD object with IFF Schema.
 
 Options:
       --version   Show version number                                  [boolean]
   -s, --schema    Schema File                                [string] [required]
-  -d, --datafile  File to validate                           [string] [required]
+  -d, --datafile  File to validate. "-" reads from stdin [string] [default: "-"]
   -i, --schemaid  Schema-id to validate                      [string] [required]
   -h, --help      Show help                                            [boolean]
-                                   [boolean]
+
 ```
 
 #### Examples
 
+Validate object in file `examples/plasmacutter_data.json` directly:
 ```
 node tools/validate.js -s examples/plasmacutter_schema.json -d examples/plasmacutter_data.json -i https://industry-fusion.org/eclass#0173-1#01-AKJ975#017
 ```
@@ -510,6 +511,17 @@ node tools/validate.js -s examples/plasmacutter_schema.json -d examples/plasmacu
 # Result:
 The Datafile is compliant with Schema
 ```
+
+Validate file from stdin:
+```
+jq '.[1]' examples/filter_and_cartridge_subcomponent_data.json | node ./tools/validate.js -s examples/filter_and_cartridge_subcomponent_schema.json -i https://industry-fusion.org/eclass%230173-1%2301-ACK991%23016
+```
+
+```
+# Result:
+The Datafile is compliant with Schema
+```
+
 ### Convert JSON-Schema to SHACL
 
 #### Install
@@ -711,3 +723,137 @@ node tools/jsonldConverter.js -x examples/plasmacutter_data.json
     ]
   }
 ]
+```
+
+
+### Retrieve Subcomponents from NGSI-LD Service
+
+#### Problem Statement
+In NGSI-LD Relationships are used to define links between objects. However, there is in plain NGSI-LD no way to further detail the type of relationship, e.g. to describe whether it is a peer or a hierarchical Relationship. One way to add this kind of metadata is to add additional Properties to Relationships. For instance
+
+```
+{
+        "@context": "https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld",
+        "id": "urn:iff:filter1",
+        "type": "eclass:0173-1#01-ACK991#016",
+        "machineState": "Testing",
+        "hasCartridge": {
+            "object": "urn:iff:cartridge1",
+            "relationshipType": "base:SubcomponentRelationship"
+        },
+        "hasIdentification": {
+            "object": "urn:iff:identification2",
+            "relationshipType": "base:SubcomponentRelationship"
+        }
+    }
+```
+
+In this example, the Relationships *hasIdentifiation* and *hasCartridge* have a Property *relationshipType* which further describes whether the Relationship is hierarchical or not. The disadvantage of such approach is that every instance of this type has to add this additional metadata to its respective Relationships. And if it is missing, the Relationship might be interpreted wrong. In addition, it is waste of data in the case when the respective Relationships of an Entity are **always** subcomponents. In this case this metadata should be stored in the respective type definitions. For onboarding of assets the type of the Relationships is essential, since a Filter might be authorized to update its subcomponents such as a Cartridge but not other related machines like a Cutter. Therefore, the Relationsip type is important for the onboarding process to recieve the correct authorizations. In the following, we show how the onboarding of NGSI-LD Entities with subcomponents can be done.
+
+### JSON-Schema definition of subcomponents
+
+In case the datamodel is described as JSON-Schema, a Relationship can be defined to be a Peer relationsip or a Subcomponent as follows:
+
+```
+    {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "https://industry-fusion.org/base-objects/v0.1/filter/relationships",
+        "title": "IFF template for filter relationship",
+        "description": "Filter template for IFF",
+        "type": "object",
+        "properties": {
+            "hasCartridge": {
+                "relationship": "eclass:0173-1#01-AKE795#017",
+                "relationship_type": "subcomponent",
+                "$ref": "https://industry-fusion.org/base-objects/v0.1/link"
+            },
+            "hasIdentification": {
+                "relationship": "eclass:0173-1#01-ADN228#012",
+                "relationship_type": "subcomponent",
+                "$ref": "https://industry-fusion.org/base-objects/v0.1/link"
+            }
+        }
+    }
+```
+
+The semantic description about the type of relationship can be generated with the *jsonschema2owl.js* script. In this case, it would look like
+
+```
+@prefix owl: <http://www.w3.org/2002/07/owl#>.
+@prefix iffb: <https://industry-fusion.org/base/v0/>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/>.
+@prefix b: <https://industryfusion.github.io/contexts/ontology/v0/base/>.
+
+iffb:hasCartridge
+    a owl:Property, b:SubComponentRelationship;
+    rdfs:domain <https://industry-fusion.org/eclass%230173-1%2301-ACK991%23016>;
+    rdfs:range ngsi-ld:Relationship.
+iffb:hasIdentification
+    a owl:Property, b:SubComponentRelationship;
+    rdfs:domain <https://industry-fusion.org/eclass%230173-1%2301-ACK991%23016>;
+    rdfs:range ngsi-ld:Relationship.
+```
+
+Finally, with this meta data in mind of all types, the *ids* of subcomponents can be retrieved directly from the NGSI-LD API with the `getSubcomponents.js` script:
+
+```
+getSubcomponents.js
+
+Creating list of subcomponents of objects.
+
+Positionals:
+  root-id     ID of the object                                          [string]
+  broker-url  URL of NGSI-LD broker
+                               [string] [default: "http://ngsild.local/ngsi-ld"]
+
+Options:
+      --version   Show version number                                  [boolean]
+  -e, --entities  Entity Files containing description of attributes      [array]
+  -t, --token     Token for rest call                        [string] [required]
+  -h, --help      Show help                                            [boolean]
+
+```
+
+### Example
+
+Precondition:
+
+* Local PDT deployment:
+  * Process Data Twin is reached by URL `http://ngsild.local/ngsi-ld`
+  * Keycloak can be reached by URL `http://keycloak.local`
+  * Keycloak secrets for user `realm_user` is stored in secret `
+* Installed: `kubectl`, `jq`, `nodejs` v20
+
+First create the `entitiy.ttl` files:
+
+```
+node ./tools/jsonschema2owl.js -c https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld -s examples/filter_and_cartridge_subcomponent_schema.json -i https://industry-fusion.org/eclass%230173-1%2301-ACK991%23016 > /tmp/filter_entity.ttl
+node ./tools/jsonschema2owl.js -c https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld -s examples/filter_and_cartridge_subcomponent_schema.json -i https://industry-fusion.org/eclass%230173-1%2301-AKE795%23017 > /tmp/cartridge_entity.ttl
+node ./tools/jsonschema2owl.js -c https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld -s examples/filter_and_cartridge_subcomponent_schema.json -i https://industry-fusion.org/eclass%230173-1%2301-ADN228%23012 > /tmp/identification_entity.ttl
+```
+
+In order to access the NGSI-LD Context broker, we need to generate a token:
+```
+KEYCLOAKURL=http://keycloak.local/auth/realms
+NAMESPACE=iff
+USER=realm_user
+password=$(kubectl -n iff get secret/credential-iff-realm-user-iff -o jsonpath='{.data.password}'| base64 -d | xargs echo)
+token=$(curl -d "client_id=scorpio" -d "username=${USER}" -d "password=$password" -d 'grant_type=password' "${KEYCLOAKURL}/${NAMESPACE}/protocol/openid-connect/token"| jq ".access_token"| tr -d '"')
+```
+
+The NGSI-LD context broker needs to know the instances of interest. So the example set of objects as defined in `examples/filter_and_cartridge_subcomponent_data.json` is submitted to the broker:
+
+```
+curl -vv -X POST -H "Authorization: Bearer $token" -d @"examples/filter_and_cartridge_subcomponent_data.json" http://ngsild.local/ngsi-ld/v1/entityOperations/create -H "Content-Type: application/ld+json"
+```
+Finally, the NGSI-LD context broker is contacted and all subcomponents are derived.
+
+```
+node ./tools/getSubcomponents.js -e /tmp/filter_entity.ttl -e /tmp/cartridge_entity.ttl -e /tmp/identification_entity.ttl -t $token urn:iff:filter1
+
+#RESULT:
+ -d urn:iff:cartridge1 -d urn:iff:identification1 -d urn:iff:identification2
+```
+
+Note that the result is deliverd in a format which can direcly used by the iff-agent onboarding scripts.

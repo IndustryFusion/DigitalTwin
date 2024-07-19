@@ -82,8 +82,10 @@ function conciseExpandedForm (expanded) {
         delete attr['@type'];
       }
       if ('https://uri.etsi.org/ngsi-ld/hasValue' in attr) {
-        attr['@value'] = attr['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@value'];
-        delete attr['https://uri.etsi.org/ngsi-ld/hasValue'];
+        if (!(attr['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'])) {
+          attr['@value'] = attr['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@value'];
+          delete attr['https://uri.etsi.org/ngsi-ld/hasValue'];
+        }
       }
     }
   }
