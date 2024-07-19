@@ -61,6 +61,8 @@ spec:
     version: "14"
     parameters:
       wal_level: logical
+      max_replication_slots: "4"
+      max_wal_senders: "4"
   {{- if .Values.db.cloneEnabled }}
   clone:
     cluster: {{ .Values.clusterSvcName | quote }}
