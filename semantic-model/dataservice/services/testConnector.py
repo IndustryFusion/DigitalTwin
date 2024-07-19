@@ -21,6 +21,18 @@ from rdflib import Literal
 from rdflib.namespace import XSD
 
 
+def split_params(param):
+    try:
+        # Split the input string by comma
+        parts = param.split(',')
+        # Strip any leading/trailing whitespace from the parts
+        upper = int(parts[1].strip())
+        lower = int(parts[0].strip())
+    except IndexError:
+        raise ValueError("TestConnector Parameter must be in the format 'lower(int), upper(int)'")
+    return lower, upper
+
+
 ##########################################################################################
 # This function will receive an array of dictionaries containing the needed parameters
 # to read out data from machines or databases.
@@ -29,12 +41,20 @@ from rdflib.namespace import XSD
 async def subscribe(connector_attribute_dict, firmware):
     while True:
         logic_var_type = connector_attribute_dict['logicVarType']
+        try:
+            connector_attr = connector_attribute_dict['connectorAttribute']
+        except:
+            pass
+
         if logic_var_type == XSD.boolean:
             connector_attribute_dict['value'] = Literal(random.choice([True, False]))
         elif logic_var_type == XSD.integer:
-            connector_attribute_dict['value'] = Literal(randint(0, 1000))
+            lower, upper = split_params(connector_attr)
+            connector_attribute_dict['value'] = Literal(randint(lower, upper))
         elif logic_var_type == XSD.decimal or logic_var_type == XSD.float or logic_var_type == XSD.double:
-            connector_attribute_dict['value'] = Literal(float(randint(0, 100000)) / 100.0)
+            lower, upper = split_params(connector_attr)
+            connector_attribute_dict['value'] = Literal(float(randint(lower, upper)) / 100.0)
+        connector_attribute_dict['updated'] = True
         connector_attribute_dict['firmware'] = firmware
 
         await asyncio.sleep(1)

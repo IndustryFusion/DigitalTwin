@@ -21,31 +21,32 @@ import re
 import socket
 import rdflib
 import argparse
-from rdflib.namespace import RDF
 from rdflib import Variable, URIRef, Namespace
 import services.testConnector as testConnector
-
+try:
+    import external_services.opcuaConnector as opcuaConnector
+except:
+    opcuaConnector = None
 
 get_maps_query = """
-SELECT ?attribute ?connectorAttribute ?logicVar ?logicVarType ?connector ?firmwareVersion  WHERE  {
+SELECT ?map ?attribute ?connectorAttribute ?logicVar ?logicVarType ?connector ?firmwareVersion  WHERE  {
     ?attribute base:boundBy ?binding .
-    ?binding base:bindsEntityType ?entityType .
+    ?binding base:bindsEntity ?entityId .
     ?binding base:bindsMap ?map .
     ?binding base:bindsFirmware ?firmwareVersion .
     ?map base:bindsConnectorAttribute ?connectorAttribute .
     ?map base:bindsLogicVar ?logicVar .
     ?map base:bindsConnector ?connector .
-    ?map base:bindsMapDataType ?logicVarType .
+    ?map base:bindsMapDatatype ?logicVarType .
 }
-
 """
 
 get_attributes_query = """
-SELECT ?attribute ?attributeType ?entityType ?apiVersion ?firmwareVersion ?logic WHERE  {
+SELECT ?attribute ?attributeType ?entityId ?apiVersion ?firmwareVersion ?logic WHERE  {
     ?attribute base:boundBy ?binding .
-    ?binding base:bindsEntityType ?entityType .
+    ?binding base:bindsEntity ?entityId .
     ?binding base:bindsMap ?map .
-    ?binding base:bindsLogic ?logic .
+    OPTIONAL {?binding base:bindsLogic ?logic . } .
     ?binding base:bindingVersion ?apiVersion .
     ?binding base:bindsFirmware ?firmwareVersion .
     ?attribute rdfs:range ?attributeType .
@@ -55,17 +56,21 @@ SELECT ?attribute ?attributeType ?entityType ?apiVersion ?firmwareVersion ?logic
 
 def parse_args(args=sys.argv[1:]):
     parser = argparse.ArgumentParser(description='Start a Dataservice based on ontology and binding information.')
-    parser.add_argument('ontdir', help='Remote directory to pull down the ontology.')
-    parser.add_argument('type', help='Type of entity to start service for, e.g. cutter, filter.')
-    parser.add_argument('binding', help='Resources which describe the contexg binding to the type.')
-    parser.add_argument('-u', '--usecases', help='List of Usecases from ontoloy in a comma separated list, \
-e.g. -u "base,filter" or -u "base"', default='base')
-    parser.add_argument('-r', '--resources', help='List of additional resources from the ontdir directory, \
+    parser.add_argument('ontdir',
+                        help='Directory containing the context.jsonld, entities.ttl, and knowledge.ttl files.')
+    parser.add_argument('entityId', help='ID of entity to start service for, e.g. urn:iff:cutter:1 .')
+    parser.add_argument('binding', help='Resources which describe the contex binding to the type.')
+    parser.add_argument('-r', '--resources', help='List of additional knowledge resources from the ontdir directory, \
 e.g. -r "material.ttl"')
     parser.add_argument('-f', '--firmwareVersion', help='Firmware version of system to connect to. If no given, \
 the most recent firmware is selected.')
-    parser.add_argument('-p', '--port', help='TCP port to forward date to device agent', default=7070, type=int)
+    parser.add_argument('-p', '--port', help='TCP port to forward data to device agent', default=7070, type=int)
+    parser.add_argument('-e', '--entities', help='Name of the entities file', default='entities.ttl', type=str)
     parser.add_argument('-d', '--dryrun', help='Do not send data.', action='store_true')
+    parser.add_argument('-b', '--baseOntology',
+                        help='Name of base ontology. Default: \
+"https://industryfusion.github.io/contexts/ontology/v0/base/"',
+                        default='https://industryfusion.github.io/contexts/ontology/v0/base/')
     parsed_args = parser.parse_args(args)
     return parsed_args
 
@@ -75,35 +80,31 @@ prefixes = {}
 tasks = []
 query_prefixes = ''
 g = rdflib.Graph()
-supported_versions = ["0.9"]
+supported_versions = ["0.1", "0.9"]
 
 
-async def main(type, ontdir, binding, usecases, resources, requestedFirmwareVersion, port, dryrun):
+async def main(entityId, ontdir, entitiesfile, binding_name, entity_id, resources,
+               baseOntology, requestedFirmwareVersion, port, dryrun):
     global attributes
     global prefixes
     global query_prefixes
     global g
 
-    if 'base' not in usecases:
-        usecases += ',base'
     if not ontdir.endswith('/'):
         ontdir += '/'
 
-    for item in usecases.split(','):
-        knowledge = rdflib.Graph()
-        entities = rdflib.Graph()
-        try:
-            parsefile = ontdir + item + '_knowledge.ttl'
-            print(f'Parsing knowledge: {parsefile}')
-            knowledge.parse(parsefile)
-        except:
-            print('No valid Knowledge found.')
-        parsefile = ontdir + item + '_entities.ttl'
-        print(f'Parsing entities: {parsefile}')
-        entities.parse(parsefile)
+    entities_name = f'{ontdir}{entitiesfile}'
+    knowledge_name = f'{ontdir}knowledge.ttl'
 
-        g += knowledge
-        g += entities
+    g = rdflib.Graph()
+    g.parse(entities_name)
+    knowledge = rdflib.Graph()
+    try:
+        knowledge.parse(knowledge_name)
+    except:
+        print("Warning: No knowledge file found.")
+        pass
+    g += knowledge
     if resources:
         for item in resources.split(','):
             parsefile = ontdir + item
@@ -111,11 +112,10 @@ async def main(type, ontdir, binding, usecases, resources, requestedFirmwareVers
             resource = rdflib.Graph()
             resource.parse(parsefile)
             g += resource
-    parsefile = ontdir + 'bindings/' + binding
-    print(f'Parsing binding {parsefile}')
-    binding = rdflib.Graph()
-    binding.parse(parsefile)
-    g += binding
+    print(f'Parsing binding {binding_name}')
+    bindings = rdflib.Graph()
+    bindings.parse(binding_name)
+    g += bindings
 
     # Get Context Prefixes
     context = ontdir + 'context.jsonld'
@@ -129,21 +129,14 @@ async def main(type, ontdir, binding, usecases, resources, requestedFirmwareVers
     for prefix, namespace in context_graph.namespaces():
         query_prefixes += f'PREFIX {prefix}: <{namespace}>\n'
         prefixes[prefix] = Namespace(namespace)
-
-    # Expand type and check if defined in ontology
-    entity_type = context_graph.namespace_manager.expand_curie(type)
-    type_found = False
-    for s, p, o in g.triples((entity_type, RDF.type, None)):
-        type_found = True
-    if not type_found:
-        print(f"Given Type {entity_type} is not found in the ontology. Please check spelling.")
-        exit(1)
+    if 'base' not in prefixes:
+        prefixes['base'] = Namespace(baseOntology)
 
     # Add official Context to attribute query and try to find bindings
-    bindings = {Variable("entityType"): entity_type}
-    qres = g.query(get_attributes_query, initBindings=bindings, initNs=prefixes)
+    # sparql_bindings = {Variable("entityId"): entityId}
+    qres = g.query(get_attributes_query, initNs=prefixes)
     for row in qres:
-        print(f'Found attributes: {row.attribute}, {row.entityType}')
+        print(f'Found attributes: {row.attribute}, {row.entityId}')
     if len(qres) == 0:
         print("Warning: No bindings found. Exiting.")
         exit(1)
@@ -152,30 +145,31 @@ async def main(type, ontdir, binding, usecases, resources, requestedFirmwareVers
     tasks = []
     for row in qres:
         attribute = row.attribute.toPython()
-        logic = row.logic.toPython()
+        logic = row.logic.toPython() if row.logic is not None else None
         attributeType = row.attributeType.toPython()
         apiVersion = row.apiVersion.toPython()
         firmwareVersion = row.firmwareVersion.toPython()
-
+        entityId = row.entityId.toPython()
         if attribute not in attributes.keys():
             attributes[attribute] = {}
         if firmwareVersion not in attributes[attribute]:
             attributes[attribute][firmwareVersion] = {}
         current_attribute = attributes[attribute][firmwareVersion]
-        if 'connectorAttributes' not in current_attribute.keys():
-            current_attribute['connectorAttributes'] = {}
+        if 'maps' not in current_attribute.keys():
+            current_attribute['maps'] = {}
         current_attribute['apiVersion'] = apiVersion
         current_attribute['attributeType'] = attributeType
         current_attribute['logic'] = logic
+        current_attribute['entityId'] = entityId
 
         # Basic checks
         if apiVersion not in supported_versions:
-            print(f"Error: found binding version {apiVersion} not in list of supported versions {supported_versions}")
+            print(f"Error: found binding API version {apiVersion} not in list of \
+supported API versions {supported_versions}")
             exit(1)
 
     # Add official Context to mapping query and try to find bindings
-    bindings = {Variable("entityType"): entity_type}
-    qres = g.query(get_maps_query, initBindings=bindings, initNs=prefixes)
+    qres = g.query(get_maps_query, initNs=prefixes)
     for row in qres:
         print(f'Found mappings: {row.attribute}, {row.connectorAttribute}, {row.logicVar}, {row.connector}')
     if len(qres) == 0:
@@ -186,16 +180,18 @@ async def main(type, ontdir, binding, usecases, resources, requestedFirmwareVers
     for row in qres:
         attribute = row.attribute.toPython()
         connectorAttribute = row.connectorAttribute.toPython()
+        map = str(row.map)
         logicVar = row.logicVar.toPython()
         connector = row.connector.toPython()
         logicVarType = row.logicVarType
         firmwareVersion = row.firmwareVersion.toPython()
-        current_connector_attributes = attributes[attribute][firmwareVersion]['connectorAttributes']
-        if connectorAttribute not in current_connector_attributes:
-            current_connector_attributes[connectorAttribute] = {}
-        current_connector_attributes[connectorAttribute]['logicVar'] = logicVar
-        current_connector_attributes[connectorAttribute]['connector'] = connector
-        current_connector_attributes[connectorAttribute]['logicVarType'] = logicVarType
+        current_maps = attributes[attribute][firmwareVersion]['maps']
+        if map not in current_maps:
+            current_maps[map] = {}
+        current_maps[map]['logicVar'] = logicVar
+        current_maps[map]['connector'] = connector
+        current_maps[map]['logicVarType'] = logicVarType
+        current_maps[map]['connectorAttribute'] = connectorAttribute
 
     # Start a service for every Attribute
     for attribute in attributes.keys():
@@ -207,15 +203,17 @@ async def main(type, ontdir, binding, usecases, resources, requestedFirmwareVers
         else:
             firmwareVersion = sorted(list(attributes[attribute].keys()))[0]
 
-        attribute_dict = attributes[attribute][firmwareVersion]['connectorAttributes']
-        for connector_attribute in attribute_dict:
-            print(f"Requesting connector_attribute {connector_attribute} from {connector}")
+        attribute_dict = attributes[attribute][firmwareVersion]['maps']
+        for map in attribute_dict:
+            print(f"Requesting map {map} from {connector}")
             firmware_data = attributes[attribute][firmwareVersion]
-            connector_attrs = firmware_data['connectorAttributes']
-            connector_attribute_dict = connector_attrs[connector_attribute]
-            connector = connector_attribute_dict['connector']
+            maps = firmware_data['maps'][map]
+            connector = maps['connector']
             if connector == prefixes['base'].TestConnector.toPython():
-                task = asyncio.create_task(testConnector.subscribe(connector_attribute_dict, firmwareVersion))
+                task = asyncio.create_task(testConnector.subscribe(maps, firmwareVersion))
+                tasks.append(task)
+            elif opcuaConnector is not None and connector == prefixes['base'].OPCUAConnector.toPython():
+                task = asyncio.create_task(opcuaConnector.subscribe(maps, firmwareVersion))
                 tasks.append(task)
             else:
                 print(f"Error: No connector found for {connector}")
@@ -261,27 +259,37 @@ async def calculate_attribute(attribute, firmwareVersion, attribute_trust_level,
         bindings = {}
         connector_attribute_trust_level = 1.0
         attribute_dict = attributes[attribute][firmwareVersion]
-        for conntectorAttribute in attribute_dict['connectorAttributes']:
-            logic_var = attribute_dict['connectorAttributes'][conntectorAttribute]['logicVar']
+        for map in attribute_dict['maps']:
+            logic_var = attribute_dict['maps'][map]['logicVar']
             value = None
             try:
-                value = attribute_dict['connectorAttributes'][conntectorAttribute]['value']
+                value = attribute_dict['maps'][map]['value']
             except:
                 pass
+            attribute_dict['maps'][map]['updated'] = False
             bindings[Variable(logic_var)] = value
             if value is None:
                 connector_attribute_trust_level = 0.0
 
-        # Remove all (forbidded) pre-defined contexts
-        query = 'SELECT ?type ?value ?object ?datasetId ?trustLevel ' + attribute_dict['logic']
-        query = re.sub(r'^PREFIX .*\n', '', query)
-        qres = g.query(query, initBindings=bindings, initNs=prefixes)
-        if len(qres) == 0:
-            print("Warning: Could not derive any value binding from connector data.")
-            return
         results = {}
         overallTrust = min(attribute_trust_level,
                            connector_attribute_trust_level)
+        # Remove all (forbidden) pre-defined contexts
+        if attribute_dict['logic'] is not None:
+            query = 'SELECT ?type ?value ?object ?datasetId ?trustLevel ' + attribute_dict['logic']
+            query = re.sub(r'^PREFIX .*\n', '', query)
+            qres = g.query(query, initBindings=bindings, initNs=prefixes)
+            if len(qres) == 0:
+                print("Warning: Could not derive any value binding from connector data.")
+                return
+
+        else:  # if there is only one map, take this over directly
+            if len(attribute_dict['maps']) == 1:
+                map = next(iter(attribute_dict['maps'].values()))
+                if 'value' in map:
+                    qres = [{'value': map['value'], 'type': URIRef(attribute_dict['attributeType'])}]
+                else:
+                    qres = []
         for row in qres:
             datasetId = '@none'
             type = None
@@ -292,38 +300,43 @@ async def calculate_attribute(attribute, firmwareVersion, attribute_trust_level,
             else:
                 results[datasetId] = {}
             if row.get('type') is not None:
-                type = row.type
-                results[datasetId]['type'] = row.type
+                type = row.get('type')
             else:
-                overallTrust = 0.0
+                type = URIRef(attribute_dict['attributeType'])
+            results[datasetId]['type'] = type
             if row.get('value') is not None:
-                results[datasetId]['value'] = row.value
+                results[datasetId]['value'] = row.get('value')
             else:
                 if type == prefixes['ngsi-ld'].Property:
                     overallTrust = 0.0
             if row.get('object') is not None:
-                results[datasetId]['object'] = row.object
+                results[datasetId]['object'] = row.get('object')
             else:
                 if type == prefixes['ngsi-ld'].Relationship:
                     overallTrust = 0.0
             if row.get('trustLevel') is not None:
-                results[datasetId]['trustLevel'] = row.trustLevel.toPython()
+                results[datasetId]['trustLevel'] = row.get('trustLevel').toPython()
             else:
                 results[datasetId]['trustLevel'] = 0.0
         # Revise trust level with overall trust
         for result in results:
             results[result]['trustLevel'] = min(overallTrust, results[result]
                                                 ['trustLevel'])
-        send(results, attribute, dryrun, port)
-        await asyncio.sleep(sleep)
+        if len(results) > 0:
+            send(results, attribute, attribute_dict['entityId'], dryrun, port)
+        update_found = False
+        while not update_found:
+            await asyncio.sleep(0)
+            for map in attribute_dict['maps']:
+                update_found = attribute_dict['maps'][map]['updated'] or update_found
 
 
-def send(results, attribute, dryrun, port):
+def send(results, attribute, entityId, dryrun, port):
     payload = []
     for datasetId in results.keys():
         result = results[datasetId]
         value = result['value']
-        type = result['type']
+        type = result.get('type')
         datasetId = result
         prefix = "Property"
         if type == prefixes['ngsi-ld'].Relationship:
@@ -333,27 +346,32 @@ def send(results, attribute, dryrun, port):
         # Send over mqtt/device-agent
 
         payload.append(f'{{ "n": "{attribute}",\
-"v": "{value.toPython()}", "t": "{prefix}"}}')
+"v": "{value.toPython()}", "t": "{prefix}", "i": "{entityId}"}}')
     payloads = f'[{",".join(payload)}]'
     if not dryrun:
-        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client_socket.connect(("127.0.0.1", port))
-        client_socket.sendall(payloads.encode('ascii'))
-        client_socket.close()
-    print(f"sent {payloads}")
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
+                client_socket.connect(("127.0.0.1", port))
+                client_socket.sendall(payloads.encode('ascii'))
+                print(f"sent {payloads}")
+        except Exception as e:
+            print(f'Warning: Error while sending data: {e}')
+    else:
+        print(f"Dryrun: sent {payloads}")
 
 
 if __name__ == '__main__':
     args = parse_args()
-    type = args.type
+    entityId = args.entityId
+    entitiesfile = args.entities
     ontdir = args.ontdir
     binding = args.binding
-    usecases = args.usecases
     resources = args.resources
     firmwareVersion = args.firmwareVersion
     port = args.port
     dryrun = args.dryrun
-    asyncio.run(main(type, ontdir, binding, usecases, resources,
+    baseontoloy = args.baseOntology
+    asyncio.run(main(entityId, ontdir, entitiesfile, binding, entityId, resources, baseontoloy,
                      firmwareVersion,
                      port,
                      dryrun))

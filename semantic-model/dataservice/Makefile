@@ -1,5 +1,5 @@
 PYTHON := python3
-LINTER := $(HOME)/.local/bin/flake8
+LINTER := flake8
 PIP := pip
 HELM_DIR := ../../helm/charts/shacl
 NAMESPACE := iff
@@ -13,3 +13,6 @@ setup: requirements.txt setup-dev
 
 setup-dev: requirements-dev.txt
 	$(PIP) install -r requirements-dev.txt
+
+test:
+	pytest tests

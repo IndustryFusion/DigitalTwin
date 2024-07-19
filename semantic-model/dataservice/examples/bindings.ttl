@@ -1,0 +1,132 @@
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+@prefix iffb: <https://industry-fusion.org/base/v0/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix binding: <http://yourorganisation.org/InstanceExample/bindings/> .
+@prefix entities: <http://yourorganisation.org/InstanceExample/entities/> .
+@base <http://www.w3.org/2002/07/owl#> .
+
+[ rdf:type owl:Ontology ;
+   owl:imports <https://industryfusion.github.io/contexts/staging/ontology/v0.1/base/>
+ ] .
+
+#################################################################
+#    Object Properties
+#################################################################
+
+###  https://industry-fusion.org/base/v0/machineState
+iffb:machineState rdf:type owl:ObjectProperty .
+
+
+###  https://industry-fusion.org/base/v0/strength
+iffb:strength rdf:type owl:ObjectProperty .
+
+
+###  https://industry-fusion.org/base/v0/wasteClass
+iffb:wasteClass rdf:type owl:ObjectProperty .
+
+
+#################################################################
+#    Individuals
+#################################################################
+
+###  http://yourorganisation.org/InstanceExample/bindings/binding_cartridge_wasteClass
+binding:binding_cartridge_wasteClass rdf:type owl:NamedIndividual ,
+                                              base:Binding ;
+                                     base:bindsEntity <urn:iff:cartridge1> ;
+                                     base:bindsMap binding:map_wasteclass ;
+                                     base:bindingVersion "0.9" ;
+                                     base:bindsFirmware "abc.1" ;
+                                     base:bindsLogic """WHERE {
+  
+  # Create IRIs based on the value of ?var1
+  BIND (
+    IF(?var1 = 0, iffk:WC0,
+    IF(?var1 = 1, iffk:WC1,
+    IF(?var1 = 2, iffk:WC2, iffk:WC0))) AS ?value
+  )
+}""" .
+
+
+###  http://yourorganisation.org/InstanceExample/bindings/binding_filter_machineState
+binding:binding_filter_machineState rdf:type owl:NamedIndividual ,
+                                             base:Binding ;
+                                    base:bindsEntity <urn:iff:filter1> ;
+                                    base:bindsMap binding:map_machineState ;
+                                    base:bindingVersion "0.9" ;
+                                    base:bindsFirmware "abc.1" ;
+                                    base:bindsLogic """WHERE {
+  
+  # Create IRIs based on the value of ?var1
+  BIND (
+    IF(?var1 = 0, \"OFFLINE\",
+    IF(?var1 = 1, \"STANDBY\",
+    IF(?var1 = 2, \"RUNNING\", \"ERROR\"
+))) AS ?value
+  )
+}""" .
+
+
+###  http://yourorganisation.org/InstanceExample/bindings/binding_filter_strength
+binding:binding_filter_strength rdf:type owl:NamedIndividual ,
+                                         base:Binding ;
+                                base:bindsEntity <urn:iff:filter1> ;
+                                base:bindsMap binding:map_strength ;
+                                base:bindingVersion "0.9" ;
+                                base:bindsFirmware "abc.1" .
+
+
+###  http://yourorganisation.org/InstanceExample/bindings/map_machineState
+binding:map_machineState rdf:type owl:NamedIndividual ,
+                                  base:BoundMap ;
+                         base:bindsConnector base:TestConnector ;
+                         base:bindsMapDatatype xsd:integer ;
+                         base:bindsConnectorAttribute "0,3" ;
+                         base:bindsLogicVar "var1" .
+
+
+###  http://yourorganisation.org/InstanceExample/bindings/map_strength
+binding:map_strength rdf:type owl:NamedIndividual ,
+                              base:BoundMap ;
+                     base:bindsConnector base:TestConnector ;
+                     base:bindsMapDatatype xsd:double ;
+                     base:bindsConnectorAttribute "0,100" ;
+                     base:bindsLogicVar "var1" .
+
+
+###  http://yourorganisation.org/InstanceExample/bindings/map_wasteclass
+binding:map_wasteclass rdf:type owl:NamedIndividual ,
+                                base:BoundMap ;
+                       base:bindsConnector base:TestConnector ;
+                       base:bindsMapDatatype xsd:integer ;
+                       base:bindsConnectorAttribute "0,2" ;
+                       base:bindsLogicVar "var1" .
+
+
+###  https://industry-fusion.org/base/v0/machineState
+iffb:machineState rdf:type owl:NamedIndividual ;
+                  base:boundBy binding:binding_filter_machineState .
+
+
+###  https://industry-fusion.org/base/v0/strength
+iffb:strength rdf:type owl:NamedIndividual ;
+              base:boundBy binding:binding_filter_strength .
+
+
+###  https://industry-fusion.org/base/v0/wasteClass
+iffb:wasteClass rdf:type owl:NamedIndividual ;
+                base:boundBy binding:binding_cartridge_wasteClass .
+
+
+###  urn:iff:cartridge1
+<urn:iff:cartridge1> rdf:type owl:NamedIndividual .
+
+
+###  urn:iff:filter1
+<urn:iff:filter1> rdf:type owl:NamedIndividual .
+
+
+###  Generated by the OWL API (version 4.5.26.2023-07-17T20:34:13Z) https://github.com/owlcs/owlapi
