@@ -95,14 +95,18 @@ kafkaBridge:
     tokenRefreshInterval: 200
     listenTopicRetention: 3600000
   timescaledb:
+    postgresPort: 5432
     replicaCount: 1
     tokenRefreshInterval: 200
     listenTopicRetention: 3600000
 
 velero:
   backupBucket: velero-backup
+  region: de
 
 redis:
+  storage:
+    size: 2Gi
   resources:
     requests:
       cpu: 50m

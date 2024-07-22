@@ -21,10 +21,12 @@ const config = require('../../config/config.json');
 var sequelize;
 const postgPassword = process.env.POSTGRES_PASSWORD || config.timescaledb.password;
 const postgHostname = process.env.POSTGRES_SERVICE || config.timescaledb.hostname;
+const postgPort = process.env.POSTGRES_PORT || config.timescaledb.port;
+
 if (config.timescaledb.PGSSLMODE === "require") {
     sequelize = new Sequelize(config.timescaledb.dbname, config.timescaledb.username, postgPassword, {
         host: postgHostname,
-        port: config.timescaledb.port,
+        port: postgPort,
         dialect: 'postgres',
         dialectOptions: {
         ssl: {
@@ -35,7 +37,7 @@ if (config.timescaledb.PGSSLMODE === "require") {
 } else {
     sequelize = new Sequelize(config.timescaledb.dbname, config.timescaledb.username, postgPassword, {
         host: postgHostname,
-        port: config.timescaledb.port,
+        port: postgPort,
         dialect: 'postgres'
     });
 }
