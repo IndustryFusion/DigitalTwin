@@ -131,12 +131,12 @@ kafka:
   bootstrapServer: my-cluster-kafka-bootstrap:9092
   storage:
     type: persistent-claim
-    size: 5Gi
+    size: {{ .StateValues.kafka.storage.size }}
   zookeeper:
     replicas: 1
     storage:
       type: persistent-claim
-      size: 1Gi
+      size: {{ .StateValues.kafka.zookeeper.storage.size }}
   connect:
     debeziumTopicPrefix: iff.ngsild
     tableIncludeList: public.entity$
@@ -187,6 +187,7 @@ kafkaBridge:
     attributesTopic: "iff.ngsild.attributes"
     
   timescaledb:
+    postgresPort: {{ .StateValues.kafkaBridge.timescaledb.postgresPort }}
     replicaCount: 1
     tokenRefreshInterval: 200
     listenTopic: "iff.ngsild.attributes"
@@ -282,7 +283,7 @@ velero:
       default: true
       accessMode: ReadWrite
       config:
-        region: de
+        region: {{ .StateValues.velero.region }}
         s3Url: {{ if (hasKey $s3 "protocol") }} {{ $s3.protocol }} {{- else }} http{{- end }}://{{ if (hasKey $s3 "endpoint") }}{{ $s3.endpoint }}{{- else }}minio.{{ .StateValues.namespace }}.svc.cluster.local{{- end }}
         s3ForcePathStyle: {{- if .StateValues.minio.enabled }} true {{- else }} false {{- end }}
       defaultVolumesToRestic: true
@@ -307,6 +308,8 @@ velero:
     #    memory: 1024Mi
 
 redis:
+  storage:
+    size: {{ .StateValues.redis.storage.size }}
   resources:
     requests:
       cpu: {{ .StateValues.redis.resources.requests.cpu }}
