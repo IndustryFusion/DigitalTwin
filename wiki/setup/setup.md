@@ -6,6 +6,15 @@ The following documentation steps illustrates the setup of IndustryFusion Founda
 ![image](https://github.com/IndustryFusion/docs/assets/128161316/dfa28417-bd79-465f-9e6e-c25d4029251b)
 
 
+The documentation has two parts:
+
+1. Infrastructure Layer - Provisioning of central Server Harware, OS, Kubernetes, SUSE Rancher for managing gateways inside the factory, Gateway hardware preparation from Rancher and supporting services.
+2. Application Layer - Provisioning of DigitalTwin on the above central server, DigitalTwin API interaction for creating Asset objects and validation jobs, Building and deploying Gateway services using Rancher Fleet and IFF Akri controller, interaction with DigitalTwin APIs.
+
+**Note:** The Infrastrutre layer utilizes SUSE building blocks. The application layer is independent of Infrastructure layer. Any existing or new Kubernetes cluster at Edge or Cloud can be used for both server and gateway service deployments. Make sure the IFF-Akri controller and PDT services are deployed properly on desired Kubernetes cluster by setting KUBECONFIG variable before installation procedures.
+
+
+
 ### 1. OPC-UA Server / MQTT Publisher
 
 a. In order to enable the digitization of the machines with OPC-UA server, make sure that the machine is connected to the factory LAN. Note down the IP address and port of the OPC-UA server. For example, "opc.tcp://192.168.49.198:62548".
@@ -18,6 +27,7 @@ b. In order to enable the digitization of the machines with MQTT Publisher, make
 
 ![image](https://github.com/IndustryFusion/docs/assets/128161316/7d2eda97-9797-4b08-9285-ca7f4060d443)
 
+## Infrastructure Layer
 
 ### 2. Factory Server
 
@@ -184,7 +194,22 @@ In the next page, give a name to the cluster, select the latest RKE2 version, se
 The process of RKE2 provisioning can be watched in the 'Cluster Management' page of Rancher. Once the cluster is active, further IFF smartbox services can be deployed. (Will be described in the later section).
 
 
-### 4. MQTT Broker on the Factory Server
+### 4. NeuVector - Container Security Platform
+
+If needed, The NeuVector must be installed on both factory server and all smartboxes.
+
+Visit the documentation [here](https://open-docs.neuvector.com/deploying/rancher) for installing NeuVector from Rancher for both factory server and smartboxes.
+
+Once the installtion is done, to use the federated multi-cluster management from factroy server as primary cluster and smartboxes as secondary, use these [instructions](https://open-docs.neuvector.com/navigation/multicluster#configuring-the-primary-and-remote-clusters). 
+
+Once the federated management is active, the dashboard of NeuVector from the primary cluster looks like as shown below.
+
+![image](https://github.com/IndustryFusion/docs/assets/128161316/bd8f7cfb-45ad-49c5-aec4-0a007dab8bae)
+
+
+## Application Layer
+
+### 5. MQTT Broker on the Factory Server
 
 The MQTT broker must be deployed to the factory server as a Kubernetes pod. Copy the given 'mqtt-broker-gateway' folder to the factory server node, using Kubectl targeting the local cluster, execute the following commands.
 
@@ -198,9 +223,10 @@ The MQTT broker must be deployed to the factory server as a Kubernetes pod. Copy
 
 Once the MQTT broker pod is active, the machines with MQTT publishers can be updated with the IP address of the factory server with port 1883. Also, note down the broker URL to use it in the Akri handler in the later section.
 
-### 5. Deployment of Process Digital Twin (PDT) on Factory Server
 
-**Note:** The PDT build and tests must be performed on a Ubuntu 20 or 22 OS that is present in the local LAN as a jump machine for deployment on the desired cluster. Build PDT in the jump machine, and then use the kubeconfig of the Factory Server's RKE2 cluster for the deployment.
+### 6. Deployment of Process Digital Twin (PDT) on Factory Server
+
+**Note:** The PDT build and tests must be performed on a Ubuntu 20 or 22 OS that is present in the local LAN as a jump machine for deployment on the desired cluster. Build PDT in the jump machine, and then use the kubeconfig of the Factory Server's RKE2 cluster for the deployment. (If using existing cluster, set KUBECONFIG accordingly)
 
 Follow the local deployment documentation [here](https://github.com/IndustryFusion/DigitalTwin/blob/main/helm/README.md#building-and-installation-of-platform-locally) to install the PDT components on the factory server.
 
@@ -208,12 +234,13 @@ Once the local tests are passed in the above documentation, perform the followin
 
 * Verify all pods are running using `kubectl -n iff get pods`, in some slow systems keycloak realm import job might fail and needs to be restarted, this is due to postgres database not being ready on time.
 
-* In the machine which needs PDT access, edit the /etc/hosts file and add DNS entry for PDT APIs as shown below.
+* In the machine which needs PDT access, edit the /etc/hosts file and add DNS entry for PDT APIs as shown below. In local deployment, all services must be used with HTTP if no valid CA is provided. In production, HTTPS must be used with valid domain name and CA certificate.
 
   ```
   <IP address of the factory server> keycloak.local
   <IP address of the factory server> ngsild.local
   <IP address of the factory server> alerta.local
+  <IP address of the factory server> pgrest.local
   ```
 
 * Login to keycloak with a browser connected to the LAN using `http://keycloak.local/auth`
@@ -236,7 +263,7 @@ Once the local tests are passed in the above documentation, perform the followin
 **Note:** The realm_user and the associated password will be used in the IFF smartbox services.
 
 
-### 6. Deployment of IFF Smartbox Services
+### 7. Deployment of IFF Smartbox Services
 
 Before deploying these services, respective Docker images must be built and pushed to a custom Docker Hub repo. 
 
@@ -267,11 +294,11 @@ Build the Docker image using the Dockerfile and instructions located in this [re
 
 **Akri Helm Charts** 
 
-For OPC-UA and MQTT based machines, with the help of Helm charts, Akri discovery handler will be deployed on the respective smartbox. The Helm charts for both OPC-UA and MQTT is in this GitHub [repo] (https://github.com/IndustryFusion/-deployments). This repo also contains charts for the smartbox which deals with both OPC-UA and MQTT at the same time (Example, a power measuring device (MQTT), and the machine(OPC-UA)). Further details of deployment follows.
+For OPC-UA and MQTT based machines, with the help of Helm charts, Akri discovery handler and IFF-Akri-controller will be deployed on the respective smartbox. The Helm charts for both OPC-UA and MQTT is in this GitHub [repo] (https://github.com/IndustryFusion/iff-akri-fleet-configs). This repo also contains charts for the smartbox which deals with both OPC-UA and MQTT at the same time (Example, a power measuring device (MQTT), and the machine(OPC-UA)). Further details of deployment follows.
 
-Clone the correct branch according to the machine protocol to local. For MQTT Helm, update the Broker URL and the main topic of the device before deploying to each smartbox. For OPC-UA Helm, update the OPC-UA URL and the applicationName (If available, or else empty list) of the device before deploying to each smartbox. Also update the docker image name with your custom image name.
+Clone the correct branch according to the machine protocol to local. For MQTT Helm, update the Broker URL and the main topic of the device before deploying to each smartbox. For OPC-UA Helm, update the OPC-UA URL and the applicationName (If available, or else empty list) of the device before deploying to each smartbox. Also update the docker image name of IFF-Akri-controller with your custom image name.
 
-Once the changes are done, push the helm chart branch to a different GitHub remote repository with a desired branch name. Note down the URL and branch of this new repo.
+Once the changes are done, push the helm chart branch to a different GitHub remote repository with a desired branch name. Note down the URL and branch of this new repo. (If using existing cluster for gateway, directly install the Helm chart instead of keeping the chart in a repository and using Rancher's Fleet Plugin later.)
 
 
 **Create a sample Asset in PDT using Scorpio REST API**
@@ -281,7 +308,7 @@ Login in to the factory server, and follow te below instructions.
 1. Get Keycloak Access Token. Update the username and password in below <>.
 
    ```
-   curl --location 'https://keycloak.local/auth/realms/iff/protocol/openid-connect/token' \
+   curl --location 'http://keycloak.local/auth/realms/iff/protocol/openid-connect/token' \
    --header 'Content-Type: application/x-www-form-urlencoded' \
    --data-urlencode 'grant_type=password' \
    --data-urlencode 'client_id=scorpio' \
@@ -294,7 +321,7 @@ Copy the access token from the response.
 2. Create an simple asset in the PDT without relationships. Update token from last step.
 
    ```
-   curl --location 'ngsild.local/scorpio/ngsi-ld/v1/entities/' \
+   curl --location 'http://ngsild.local/ngsi-ld/v1/entities/' \
    --header 'Content-Type: application/ld+json' \
    --header 'Accept: application/ld+json' \
    --header 'Authorization: Bearer <token>' \
@@ -427,7 +454,7 @@ If the Instance discovered and the asset configurations shown above match, the i
 
 **Note:** If the asset configs are updated, either delete the instance resource and let the Akri to rediscover the instance, or switch the OPC-UA server of the machine off and then on. The controller will then update the services accordingly.
 
-### 7. Semantic Modelling
+### 8. Semantic Modelling
 
 Once the asset JSON-LD is created with Scorpio API, and the real-time data from the machine starts flowing in to PDT, the validation rules for the entire asset type category can be created using modelling tools and JSON-Schema. However, PDT requires SHACL (Shapes Constraints Language) backed with RDF knowledge to create streaming validation jobs for Apache Flink (Details in later section). The PDT offers tools to use JSON-Schema to create the constraints and validate them against JSON-LD object, then convert the JSON-Schema to SHACL. Detailed documentation of this process can be found [here](https://github.com/IndustryFusion/DigitalTwin/tree/main/semantic-model/datamodel#readme).
 
@@ -525,15 +552,6 @@ Step 4: Go the semantic-model/shacl2flink folder, and execute the following comm
 Once these steps are completed, the jobs will running in Apache Flink. According to the constraints written in the SHACL file, the alerts can be seen in Alerta UI and API.
 
 
-#### Alerts in Alerta UI
-
-For our example, the constraint for the temperature value is minimum inclusive 15 and maximum inclusive 25. When the value goes out of the range, an alert will be automatically visible in the Alerta UI avaliable at 'alerta.local' endpoint. (Use Keycloak real_user credentials for login)
-
-![image](https://github.com/IndustryFusion/docs/assets/128161316/02196980-4fe2-43cc-9329-76980e71ad62)
-
-Similarly, if two assets are linked to each other using relationships in semantic modelling of the asset, the validation rules can also be extended to check whether the relationship graph is intact or not using SHACL.
-
-
 #### PDT Endpoints
 
 1. Scorpio Broker
@@ -545,6 +563,14 @@ Similarly, if two assets are linked to each other using relationships in semanti
 
 - http://alerta.local/
 - API documentation: [Docs](https://docs.alerta.io/api/reference.html)
+
+#### Alerts in Alerta UI
+
+For our example, the constraint for the temperature value is minimum inclusive 15 and maximum inclusive 25. When the value goes out of the range, an alert will be automatically visible in the Alerta UI avaliable at 'alerta.local' endpoint. (Use Keycloak real_user credentials for login)
+
+![image](https://github.com/IndustryFusion/docs/assets/128161316/02196980-4fe2-43cc-9329-76980e71ad62)
+
+Similarly, if two assets are linked to each other using relationships in semantic modelling of the asset, the validation rules can also be extended to check whether the relationship graph is intact or not using SHACL.
 
 3. PGRest
 
@@ -645,16 +671,3 @@ http://pgrest.local/value_change_state_entries?entityId=eq.urn:ngsi-ld:asset:2:1
 
 - http://keycloak.local/auth
 - API documentation: [Docs](https://www.keycloak.org/documentation)
-
-
-### 8. NeuVector - Container Security Platform
-
-If needed, The NeuVector must be installed on both factory server and all smartboxes.
-
-Visit the documentation [here](https://open-docs.neuvector.com/deploying/rancher) for installing NeuVector from Rancher for both factory server and smartboxes.
-
-Once the installtion is done, to use the federated multi-cluster management from factroy server as primary cluster and smartboxes as secondary, use these [instructions](https://open-docs.neuvector.com/navigation/multicluster#configuring-the-primary-and-remote-clusters). 
-
-Once the federated management is active, the dashboard of NeuVector from the primary cluster looks like as shown below.
-
-![image](https://github.com/IndustryFusion/docs/assets/128161316/bd8f7cfb-45ad-49c5-aec4-0a007dab8bae)
