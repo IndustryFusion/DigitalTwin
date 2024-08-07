@@ -91,6 +91,107 @@ Key features and concepts of NGSI-LD:
 
 NGSI-LD is a significant advancement in the field of IoT, as it provides a standardized approach for managing and exchanging context data, enabling more efficient and interoperable IoT solutions. It leverages the power of Linked Data to create a dynamic and interconnected IoT ecosystem. NGSI-LD is already used heavily in smart city applications
 
+## NGSI-LD Motivation
+
+What does NGSI-LD bring to the table? What is missing? Lets take a look at a basic JSON-LD object:
+```json
+{
+  "@context": {...},
+  "@id": "urn:x:1",
+  "machine_state": "Standby",
+  "hasFilter": "urn:x:2"
+}
+```
+What we see is a simple description of a machine. There are two fields, `machine_state` and `hasFilter`. The machine has an id `urn:x:1`, great. So I can refer to it in this uniqe way. However, how do I know what kind of machine this is? There might be an ontology of machines like:
+
+```mermaid
+---
+title: Ontology of Cutters and Filters
+---
+graph TD;
+
+    Machine--rdfs:subClassOf--> Cutter;
+    Cutter--rdfs:subClassOf-->Plasmacutter;
+    Cutter--rdfs:subClassOf-->Lasercutter;
+    Cutter--rdfs:subClassOf-->Watercutter;
+    Cutter--rdfs:subClassOf-->Autogencutter;
+    Machine--rdfs:subClassOf-->Filter;
+    Filter--rdfs:subClassOf-->PressureFilter;
+    Filter--rdfs:subClassOf-->VaccumFilter;
+   
+```
+```mermaid
+---
+title: Ontology of Machine States
+---
+graph TD;
+
+    CutterState--subClassOf-->MachineState;
+    FilterState--subClassOf-->MachineState;
+    Running--rdf:type-->MachineState;
+    Standby--rdf:type-->MachineState;
+    Cutting--rdf:type-->CutterState;
+    Cleaning--rdf:type-->FilterState;
+```
+If one wants to reference or reuse this ontology, one has to stay in this formal language model. Therefore, the vocabulary of this formal language has to be used. The vocabulary to describe a type in the semantic web is `type`. So the resulting object looks like:
+
+```
+{
+  "@context": {...},
+  "@id": "urn:x:1",
+  "@type": "Lasercutter",
+  "machine_state": "Standby",
+  "temperature": 44,
+  "hasFilter": "urn:x:2"
+}
+```
+
+Next problem: What does the field `machine_state` contain? And what is meant by `hasFilter`. At its simplest, you want to know whether machine_state value comes from another ontology or whether it is a string. Also, you want to know whether `hasFilter` is a string or an IRI, etc. To do that, one can use the `@context` of JSON-LD. However, if you want to add more metadata to `machine_state` like a timestamp or unit value. You also want to know if an IRI describes an element of an ontology or another entitiy. What unit is the `temperature` value? 
+```
+{
+  "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+  "id": "urn:x:1",
+  "type": "Lasercutter",
+  "machine_state": {
+    "type": "Property",
+    "value": { "@id": "http://ontology/Standby"},
+    "observerdAt": "2024-08-07T16:00:00Z",
+    "createdAt": "2024-08-07T12:00:00Z",
+    "modifiedAt": "2024-08-07T16:01:00Z"
+    },
+  "hasFilter": {
+    "object": "urn:x:2",
+    "type": "Relationship",
+    "observerdAt": "2024-01-01T16:00:00Z"
+  },
+  "temperature": {
+    "type": "Property",
+    "value": 44,
+    "unitCode": "CEL",
+    "observerdAt": "2024-08-07T16:00:00Z"
+  }
+}
+```
+Since JSON-LD is just a serialization for graphs and NGSI-LD is an ontology withint JSON-LD, this can still be translated to a triples graph:
+
+```
+<urn:x:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://uri.etsi.org/ngsi-ld/default-context/Lasercutter> .
+<urn:x:1> <https://uri.etsi.org/ngsi-ld/default-context/hasFilter> _:b0 .
+<urn:x:1> <https://uri.etsi.org/ngsi-ld/default-context/machine_state> _:b1 .
+<urn:x:1> <https://uri.etsi.org/ngsi-ld/default-context/temperature> _:b2 .
+_:b0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://uri.etsi.org/ngsi-ld/Relationship> .
+_:b0 <https://uri.etsi.org/ngsi-ld/default-context/observerdAt> "2024-01-01T16:00:00Z" .
+_:b0 <https://uri.etsi.org/ngsi-ld/hasObject> <urn:x:2> .
+_:b1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://uri.etsi.org/ngsi-ld/Property> .
+_:b1 <https://uri.etsi.org/ngsi-ld/createdAt> "2024-08-07T12:00:00Z"^^<https://uri.etsi.org/ngsi-ld/DateTime> .
+_:b1 <https://uri.etsi.org/ngsi-ld/default-context/observerdAt> "2024-08-07T16:00:00Z" .
+_:b1 <https://uri.etsi.org/ngsi-ld/hasValue> <http://ontology/Standby> .
+_:b1 <https://uri.etsi.org/ngsi-ld/modifiedAt> "2024-08-07T16:01:00Z"^^<https://uri.etsi.org/ngsi-ld/DateTime> .
+_:b2 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://uri.etsi.org/ngsi-ld/Property> .
+_:b2 <https://uri.etsi.org/ngsi-ld/default-context/observerdAt> "2024-08-07T16:00:00Z" .
+_:b2 <https://uri.etsi.org/ngsi-ld/hasValue> "44"^^<http://www.w3.org/2001/XMLSchema#integer> .
+_:b2 <https://uri.etsi.org/ngsi-ld/unitCode> "CEL" .
+```
 
 ## NGSI-LD forms
 
