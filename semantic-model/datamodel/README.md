@@ -155,20 +155,20 @@ Next problem: What does the field `machine_state` contain? And what is meant by 
   "machine_state": {
     "type": "Property",
     "value": { "@id": "http://ontology/Standby"},
-    "observerdAt": "2024-08-07T16:00:00Z",
+    "observedAt": "2024-08-07T16:00:00Z",
     "createdAt": "2024-08-07T12:00:00Z",
     "modifiedAt": "2024-08-07T16:01:00Z"
     },
   "hasFilter": {
     "object": "urn:x:2",
     "type": "Relationship",
-    "observerdAt": "2024-01-01T16:00:00Z"
+    "observedAt": "2024-01-01T16:00:00Z"
   },
   "temperature": {
     "type": "Property",
     "value": 44,
     "unitCode": "CEL",
-    "observerdAt": "2024-08-07T16:00:00Z"
+    "observedAt": "2024-08-07T16:00:00Z"
   }
 }
 ```
@@ -180,15 +180,15 @@ Since JSON-LD is just a serialization for graphs and NGSI-LD is an ontology with
 <urn:x:1> <https://uri.etsi.org/ngsi-ld/default-context/machine_state> _:b1 .
 <urn:x:1> <https://uri.etsi.org/ngsi-ld/default-context/temperature> _:b2 .
 _:b0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://uri.etsi.org/ngsi-ld/Relationship> .
-_:b0 <https://uri.etsi.org/ngsi-ld/default-context/observerdAt> "2024-01-01T16:00:00Z" .
+_:b0 <https://uri.etsi.org/ngsi-ld/default-context/observedAt> "2024-01-01T16:00:00Z" .
 _:b0 <https://uri.etsi.org/ngsi-ld/hasObject> <urn:x:2> .
 _:b1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://uri.etsi.org/ngsi-ld/Property> .
 _:b1 <https://uri.etsi.org/ngsi-ld/createdAt> "2024-08-07T12:00:00Z"^^<https://uri.etsi.org/ngsi-ld/DateTime> .
-_:b1 <https://uri.etsi.org/ngsi-ld/default-context/observerdAt> "2024-08-07T16:00:00Z" .
+_:b1 <https://uri.etsi.org/ngsi-ld/default-context/observedAt> "2024-08-07T16:00:00Z" .
 _:b1 <https://uri.etsi.org/ngsi-ld/hasValue> <http://ontology/Standby> .
 _:b1 <https://uri.etsi.org/ngsi-ld/modifiedAt> "2024-08-07T16:01:00Z"^^<https://uri.etsi.org/ngsi-ld/DateTime> .
 _:b2 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://uri.etsi.org/ngsi-ld/Property> .
-_:b2 <https://uri.etsi.org/ngsi-ld/default-context/observerdAt> "2024-08-07T16:00:00Z" .
+_:b2 <https://uri.etsi.org/ngsi-ld/default-context/observedAt> "2024-08-07T16:00:00Z" .
 _:b2 <https://uri.etsi.org/ngsi-ld/hasValue> "44"^^<http://www.w3.org/2001/XMLSchema#integer> .
 _:b2 <https://uri.etsi.org/ngsi-ld/unitCode> "CEL" .
 ```
