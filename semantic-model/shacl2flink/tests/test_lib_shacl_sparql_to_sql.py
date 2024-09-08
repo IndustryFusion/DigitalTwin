@@ -16,7 +16,7 @@
 
 from unittest.mock import MagicMock, patch
 import lib.shacl_sparql_to_sql
-from bunch import Bunch
+from munch import Munch
 
 
 @patch('lib.shacl_sparql_to_sql.Graph')
@@ -49,7 +49,7 @@ def test_translate(mock_utils, mock_add_variables_to_message, mock_translate_spa
     severitylabel = MagicMock()
     severitylabel.toPython.return_value = 'severitylabel'
     mock_translate_sparql.return_value = ([], [])
-    g.__iadd__.return_value.query.return_value = [Bunch()]
+    g.__iadd__.return_value.query.return_value = [Munch()]
     g.__iadd__.return_value.query.return_value[0].message = message
     g.__iadd__.return_value.query.return_value[0].select = select
     g.__iadd__.return_value.query.return_value[0].nodeshape = nodeshape

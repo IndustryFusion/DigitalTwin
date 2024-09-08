@@ -47,7 +47,7 @@ const argv = yargs
   .option('shacl', {
     alias: 's',
     description: 'SHACL File for the object model',
-    type: 'string'
+    type: 'array'
   })
   .option('token', {
     alias: 't',
@@ -201,7 +201,10 @@ const analyseNgsildObject = async (id, brokerUrl, token) => {
 
 (async () => {
   const ontologies = argv.entities;
-  ontologies.push(argv.shacl);
+  const shacls = argv.shacl;
+  for (const shacl of shacls) {
+    ontologies.push(shacl);
+  }
   await loadOntologies(ontologies);
   await analyseNgsildObject(argv._[0], argv['broker-url'], argv.token);
 

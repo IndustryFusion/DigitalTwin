@@ -528,3 +528,28 @@ plain RDF context')
             return f"SQL_DIALECT_TIME_TO_MILLISECONDS{{{bounds[varname]}}}"
     else:  # plain RDF variable
         return bounds[varname]
+
+
+def split_statementsets(statementsets, max_map_size):
+    grouped_strings = []  # This will hold the final list of grouped strings
+    current_group = []    # Temporary list to hold the current group of strings
+    current_size = 0       # Keep track of the total size of the current group
+
+    for string in statementsets:
+        string_size = len(string)  # Calculate the size of the current string
+
+        # If adding the current string exceeds the max_map_size, save the current group
+        if current_size + string_size > max_map_size:
+            grouped_strings.append(current_group)
+            current_group = []    # Start a new group
+            current_size = 0      # Reset the size counter for the new group
+
+        # Add the current string to the group and update the size
+        current_group.append(string)
+        current_size += string_size
+
+    # Don't forget to add the last group if it's not empty
+    if current_group:
+        grouped_strings.append(current_group)
+
+    return grouped_strings

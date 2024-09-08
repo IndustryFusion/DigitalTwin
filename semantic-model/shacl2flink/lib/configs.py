@@ -52,3 +52,4 @@ alerts_bulk_table_name = 'alerts_bulk'
 alerts_bulk_table_object_name = 'alerts-bulk'
 attributes_insert_table_obj_name = 'attributes-insert'
 rdf_max_per_set = 1500
+max_sql_configmap_size = 200000

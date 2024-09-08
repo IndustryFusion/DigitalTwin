@@ -41,7 +41,7 @@ def test_main(mock_rdflib, mock_utils, mock_yaml, mock_translate_construct, mock
     mock_rdflib.Graph.return_value = mock_rdflib
     mock_rdflib.namespaces.return_value = [['base', 'baseurl']]
     with patch("builtins.open", mock_open(read_data="data")) as mock_file:
-        create_sql_checks_from_shacl.main('kms/shacl.ttl', 'kms/knowledge.ttl', None,
+        create_sql_checks_from_shacl.main('kms/shacl.ttl', 'kms/knowledge.ttl', 'iff', None,
                                           tmp_path)
     mock_file.assert_called_with(os.path.join(tmp_path, 'shacl-validation.sqlite'), 'w')
     assert mock_yaml.YAML().dump.called
