@@ -363,6 +363,7 @@ def scan_entitiy_recursive(node, id, instance, node_id, o):
                 instance[f'{entity_ontology_prefix}:{attributename}']['debug'] = \
                     f'{entity_ontology_prefix}:{attributename}'
             shacl_rule['contentclass'] = classtype
+            minshaclg.copy_property_from_shacl(shaclg, instance['type'], entity_namespace[attributename])
         if not shacl_rule['optional']:
             has_components = True
             shacl_rule['contentclass'] = classtype
@@ -395,6 +396,7 @@ def scan_entitiy_recursive(node, id, instance, node_id, o):
                     '@id': str(value)
                 }
             }
+        minshaclg.copy_property_from_shacl(shaclg, instance['type'], entity_namespace[attributename])
         if debug:
             instance[f'{entity_ontology_prefix}:{attributename}']['debug'] = f'{entity_ontology_prefix}:{attributename}'
         try:
@@ -481,6 +483,11 @@ if __name__ == '__main__':
     shaclg.bind('ngsi-ld', ngsildns)
     shaclg.bind('sh', SH)
     shaclg.bind('base', basens)
+    minshaclg = Shacl(namespace_prefix, basens, opcuans)
+    minshaclg.bind('shacl', shacl_namespace)
+    minshaclg.bind('ngsi-ld', ngsildns)
+    minshaclg.bind('sh', SH)
+    minshaclg.bind('base', basens)
     e = Entity(namespace_prefix, basens, opcuans)
     e.bind('base', basens)
     e.bind(f'{entity_ontology_prefix}', entity_namespace)
@@ -506,7 +513,7 @@ if __name__ == '__main__':
     scan_type(root, rootinstancetype)
     # Then scan the entity with the real values
     rootentity = next(g.subjects(RDF.type, URIRef(rootinstancetype)))
-    scan_entity(rootentity, rootinstancetype, entity_id)
+    scan_entity(rootentity, URIRef(rootinstancetype), entity_id)
     # Add types to entities
     for type in types:
         e.add_subclass(type)
@@ -518,6 +525,7 @@ if __name__ == '__main__':
         e.serialize(destination=entitiesname)
     if shaclname is not None:
         shaclg.serialize(destination=shaclname)
+        minshaclg.serialize(destination=f'min_{shaclname}')
     entities_ns = utils.extract_namespaces(e.get_graph())
     shacl_ns = utils.extract_namespaces(shaclg.get_graph())
     combined_namespaces = {**entities_ns, **shacl_ns}

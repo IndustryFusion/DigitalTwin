@@ -17,6 +17,7 @@
 import os
 import sys
 import lib.utils as utils
+import lib.configs as configs
 from lib.shacl_properties_to_sql import translate as translate_properties
 from lib.shacl_sparql_to_sql import translate as translate_sparql
 from lib.shacl_construct_to_sql import translate as translate_construct
@@ -35,11 +36,13 @@ create_sql_checks_from_shacl.py <shacl.ttl> <knowledge.ttl>')
     parser.add_argument('knowledgefile', help='Path to the knowledge file')
     parser.add_argument('-c', '--context', help='Context URI. If not given it is derived implicitly \
 from the common helmfile configs.')
+    parser.add_argument('--namespace', help='namespace for configmaps', default='iff')
+
     parsed_args = parser.parse_args(args)
     return parsed_args
 
 
-def main(shaclfile, knowledgefile, context, output_folder='output'):
+def main(shaclfile, knowledgefile, context, maps_namespace, output_folder='output'):
     # If no context is defined, try to derive it from common.yaml
     prefixes = {}
     if context is None:
@@ -79,10 +82,23 @@ is accessible.")
     tables = list(set(tables2).union(set(tables)).union(set(tables3)))  # deduplication
     views = list(set(views2).union(set(views)).union(set(views3)))  # deduplication
 
+    split_statementsets = utils.split_statementsets(statementsets + statementsets2 + statementsets3,
+                                                    configs.max_sql_configmap_size)
     ttl = '{{.Values.flink.ttl}}'
-    with open(os.path.join(output_folder, "shacl-validation.yaml"), "w") as f:
-        yaml.dump(utils.create_statementset('shacl-validation', tables, views, ttl,
-                                            statementsets + statementsets2 + statementsets3), f)
+    with open(os.path.join(output_folder, "shacl-validation.yaml"), "w") as f, \
+            open(os.path.join(output_folder, "shacl-validation-maps.yaml"), "w") as fm:
+
+        num = 0
+        statementmap = []
+        for statementset_map in split_statementsets:
+            num += 1
+            fm.write("---\n")
+            configmapname = 'shacl-validation-configmap' + str(num)
+            yaml.dump(utils.create_configmap(configmapname, statementset_map), fm)
+            statementmap.append(f'{maps_namespace}/{configmapname}')
+        yaml.dump(utils.create_statementmap('shacl-validation', tables, views, ttl,
+                                            statementmap), f)
+
     with open(os.path.join(output_folder, "shacl-validation.sqlite"), "w") \
             as sqlitef:
         print(sqlite + sqlite2 + sqlite3, file=sqlitef)
@@ -93,4 +109,5 @@ if __name__ == '__main__':
     shaclfile = args.shaclfile
     knowledgefile = args.knowledgefile
     context = args.context
-    main(shaclfile, knowledgefile, context)
+    maps_namespace = args.namespace
+    main(shaclfile, knowledgefile, context, maps_namespace)

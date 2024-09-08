@@ -17,7 +17,7 @@
 from unittest.mock import MagicMock, patch
 import lib.sparql_to_sql
 import lib.utils
-from bunch import Bunch
+from munch import Munch
 from rdflib import term
 import pytest
 
@@ -166,7 +166,7 @@ def test_translate_left_join(mock_translate):
         'where': 'where2'
     }
     ctx = MagicMock()
-    join = Bunch()
+    join = Munch()
     join['target_sql'] = ''
     join.p1 = hash1
     join.p2 = hash2
@@ -197,7 +197,7 @@ def test_translate_join(mock_translate):
         'where': 'where2'
     }
     ctx = MagicMock()
-    join = Bunch()
+    join = Munch()
     join['target_sql'] = ''
     join.p1 = hash1
     join.p2 = hash2
@@ -277,8 +277,8 @@ def test_translate_sparql(mock_graph, mock_translate_query, mock_parseQuery, moc
         'sql_tables': 'sql_tables'
     }
     mock_translate_query.return_value = ctx
-    row1 = Bunch()
-    row2 = Bunch()
+    row1 = Munch()
+    row2 = Munch()
     row1.property = term.URIRef('property')
     row1.relationship = term.URIRef('relationship')
     row1.kind = term.URIRef('kind')
@@ -303,7 +303,7 @@ def test_translate_sparql(mock_graph, mock_translate_query, mock_parseQuery, moc
 
 @patch('lib.sparql_to_sql.translate')
 def test_translate_filter(mock_translate):
-    filter = Bunch()
+    filter = Munch()
     p = {
         'where': 'where',
         'target_sql': 'target_sql'
@@ -322,7 +322,7 @@ def test_translate_filter(mock_translate):
 @patch('lib.sparql_to_sql.bgp_translation_utils')
 def test_translate_aggregate_join(mock_translation_utils, mock_translate):
     ctx = MagicMock()
-    elem = Bunch()
+    elem = Munch()
     p = {
         'target_sql': 'target_sql',
         'where': 'where'

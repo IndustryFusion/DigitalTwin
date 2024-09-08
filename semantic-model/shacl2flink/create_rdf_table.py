@@ -147,8 +147,9 @@ def main(knowledgefile, namespace, output_folder='output'):
         fp.write('\n')
         fp.write(sqlstatements)
 
-    with open(os.path.join(output_folder, "rdf.yaml"), "w") as fp,\
-            open(os.path.join(output_folder, "rdf-kafka.yaml"), "w") as fk:
+    with open(os.path.join(output_folder, "rdf.yaml"), "w") as fp, \
+            open(os.path.join(output_folder, "rdf-kafka.yaml"), "w") as fk, \
+            open(os.path.join(output_folder, "rdf-maps.yaml"), "w") as fm:
         fp.write('---\n')
         yaml.dump(utils.create_yaml_table(table_name, connector, table,
                   primary_key, kafka, value), fp)
@@ -156,9 +157,9 @@ def main(knowledgefile, namespace, output_folder='output'):
         statementmap = []
         for statementset in statementsets:
             num += 1
-            fp.write("---\n")
+            fm.write("---\n")
             configmapname = 'rdf-configmap' + str(num)
-            yaml.dump(utils.create_configmap(configmapname, [statementset]), fp)
+            yaml.dump(utils.create_configmap(configmapname, [statementset]), fm)
             statementmap.append(f'{namespace}/{configmapname}')
         fp.write("---\n")
         yaml.dump(utils.create_statementmap('rdf-statements', [table_name],

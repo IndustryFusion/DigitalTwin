@@ -106,6 +106,20 @@ then the state can be updated by
 ```
 Note that the `t` paramter can be left out. In this case the default value for `t` is `Property`. 
 
+### IFF-agent with Subcomponents
+
+In the example above the metrics were sent directly to the main or root deviceId. But when subcomponents are involved, the specific subcomponent IDs need to be addressed. This can be done by the addiontal `"i"` paremeter:
+
+```
+{"n": "<uri>", "v": 26.9, "t": "Property", "i": "<subcomponentId>"}
+{"n": "<uri>", "v": "<urn>, "t": "Relationship", "i": "subcomponentId>}
+```
+for instance:
+```
+{"n": "http://example.com/state", "v": "ON", "t": "Property", "i": "urn:iff:subdeviceid:1"}
+
+```
+
 ## Installing
 ``` bash
 npm install

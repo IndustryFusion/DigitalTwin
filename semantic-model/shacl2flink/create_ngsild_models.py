@@ -125,7 +125,7 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
         if len(qres) > 0:
             print(f'INSERT INTO `{configs.attributes_table_name}` VALUES',
                   file=sqlitef)
-        for entityId, name, type, nodeType, valueType, hasValue,\
+        for entityId, name, type, nodeType, valueType, hasValue, \
                 hasObject, observedAt, index in qres:
             id = entityId.toPython() + "\\\\" + name.toPython()
             current_index = None

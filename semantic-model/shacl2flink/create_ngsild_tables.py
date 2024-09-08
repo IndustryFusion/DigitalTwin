@@ -15,6 +15,7 @@
 #
 
 from rdflib import Graph
+from rdflib.namespace import OWL
 import os
 import sys
 import argparse
@@ -32,11 +33,22 @@ PREFIX sh: <http://www.w3.org/ns/shacl#>
 
 SELECT DISTINCT ?path ?shacltype
 where {
-    ?nodeshape a sh:NodeShape .
-    ?nodeshape sh:targetClass ?shacltypex .
-    ?shacltype rdfs:subClassOf* ?shacltypex .
-    ?nodeshape sh:property [ sh:path ?path ; ] .
-    }
+  {    ?nodeshape a sh:NodeShape .
+      ?nodeshape sh:targetClass ?shacltypex .
+      ?shacltype rdfs:subClassOf* ?shacltypex .
+      ?nodeshape sh:property [ sh:path ?path ; ] .
+
+  }
+    UNION
+  {    ?nodeshape a sh:NodeShape .
+      ?nodeshape sh:targetClass ?shacltypex .
+      ?shacltype rdfs:subClassOf* ?shacltypex .
+      FILTER NOT EXISTS {
+          ?nodeshape sh:property [ sh:path ?path ; ] .
+      }
+    BIND(owl:Nothing as ?path)
+  }
+}
     ORDER BY STR(?path)
 """
 
@@ -64,8 +76,10 @@ def main(shaclfile, knowledgefile, output_folder='output'):
     qres = g.query(field_query)
     for row in qres:
         target_class = row.shacltype
-        stripped_class = utils.camelcase_to_snake_case(utils.strip_class(utils.strip_class(
-            target_class.toPython())))
+        stripped_class = utils.camelcase_to_snake_case(utils.strip_class(
+            target_class.toPython()))
+        if stripped_class == 'nothing':  # owl deductive closure is creating something not always needed
+            continue
         if stripped_class not in tables:
             table = []
             tables[stripped_class] = table
@@ -76,13 +90,15 @@ def main(shaclfile, knowledgefile, output_folder='output'):
         else:
             table = tables[stripped_class]
         target_path = row.path
+        if target_path == OWL.Nothing:
+            continue
         table.append({sq(f'{target_path}'): "STRING"})
 
     # Kafka topic object for RDF
     config = {}
     config['retention.ms'] = configs.kafka_topic_ngsi_retention
-    with open(os.path.join(output_folder, "ngsild.yaml"), "w") as f,\
-            open(os.path.join(output_folder, "ngsild.sqlite"), "w") as sqlitef,\
+    with open(os.path.join(output_folder, "ngsild.yaml"), "w") as f, \
+            open(os.path.join(output_folder, "ngsild.sqlite"), "w") as sqlitef, \
             open(os.path.join(output_folder, "ngsild-kafka.yaml"), "w") as fk:
         for table_name, table in tables.items():
             connector = 'kafka'

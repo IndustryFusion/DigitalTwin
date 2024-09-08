@@ -16,7 +16,7 @@
 
 from unittest.mock import MagicMock, patch
 import lib.shacl_properties_to_sql
-from bunch import Bunch
+from munch import Munch
 from rdflib import Namespace
 
 
@@ -66,7 +66,7 @@ def test_lib_shacl_prroperties_to_sql(mock_utils, mock_configs, mock_yaml,
     pattern.toPython.return_value = 'pattern'
     ins = MagicMock()
     ins.toPython.return_value = '"SHIN1","SHIN2"'
-    g.__iadd__.return_value.query.return_value = [Bunch()]
+    g.__iadd__.return_value.query.return_value = [Munch()]
     g.__iadd__.return_value.query.return_value[0].targetclass = targetclass
     g.__iadd__.return_value.query.return_value[0].propertypath = propertypath
     g.__iadd__.return_value.query.return_value[0].attributeclass = \
@@ -132,7 +132,7 @@ def test_lib_shacl_prroperties_to_sql(mock_utils, mock_configs, mock_yaml,
     minlength.toPython.return_value = 3
     maxlength = MagicMock()
     maxlength.toPython.return_value = 10
-    g.__iadd__.return_value.query.return_value = [Bunch()]
+    g.__iadd__.return_value.query.return_value = [Munch()]
     g.__iadd__.return_value.query.return_value[0].targetclass = targetclass
     g.__iadd__.return_value.query.return_value[0].propertypath = propertypath
     g.__iadd__.return_value.query.return_value[0].attributeclass = \

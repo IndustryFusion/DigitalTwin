@@ -906,14 +906,14 @@ Creating list of subcomponents of objects.
 Positionals:
   root-id     ID of the object                                          [string]
   broker-url  URL of NGSI-LD broker
-                               [string] [default: "http://ngsild.local/ngsi-ld"]
+                              [string] [Standard: "http://ngsild.local/ngsi-ld"]
 
-Options:
-      --version   Show version number                                  [boolean]
+Optionen:
+      --version   Version anzeigen                                     [boolean]
   -e, --entities  Entity Files containing description of attributes      [array]
-  -t, --token     Token for rest call                        [string] [required]
-  -h, --help      Show help                                            [boolean]
-
+  -s, --shacl     SHACL File for the object model                       [string]
+  -t, --token     Token for rest call                    [string] [erforderlich]
+  -h, --help      Hilfe anzeigen                                       [boolean]
 ```
 
 ### Example
@@ -933,6 +933,14 @@ node ./tools/jsonschema2owl.js -c https://industryfusion.github.io/contexts/tuto
 node ./tools/jsonschema2owl.js -c https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld -s examples/filter_and_cartridge_subcomponent_schema.json -i https://industry-fusion.org/eclass%230173-1%2301-AKE795%23017 > /tmp/cartridge_entity.ttl
 node ./tools/jsonschema2owl.js -c https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld -s examples/filter_and_cartridge_subcomponent_schema.json -i https://industry-fusion.org/eclass%230173-1%2301-ADN228%23012 > /tmp/identification_entity.ttl
 ```
+The respective 'shacl.ttl' files are created as follows:
+
+```
+node ./tools/jsonschema2shacl.js -c https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld -s examples/filter_and_cartridge_subcomponent_schema.json -i https://industry-fusion.org/eclass%230173-1%2301-ACK991%23016 > /tmp/filter_shacl.ttl
+node ./tools/jsonschema2shacl.js -c https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld -s examples/filter_and_cartridge_subcomponent_schema.json -i https://industry-fusion.org/eclass%230173-1%2301-AKE795%23017 > /tmp/cartridge_shacl.ttl
+node ./tools/jsonschema2shacl.js -c https://industryfusion.github.io/contexts/tutorial/v0.1/context.jsonld -s examples/filter_and_cartridge_subcomponent_schema.json -i https://industry-fusion.org/eclass%230173-1%2301-ADN228%23012 > /tmp/identification_shacl.ttl
+```
+
 
 In order to access the NGSI-LD Context broker, we need to generate a token:
 ```
@@ -951,10 +959,15 @@ curl -vv -X POST -H "Authorization: Bearer $token" -d @"examples/filter_and_cart
 Finally, the NGSI-LD context broker is contacted and all subcomponents are derived.
 
 ```
-node ./tools/getSubcomponents.js -e /tmp/filter_entity.ttl -e /tmp/cartridge_entity.ttl -e /tmp/identification_entity.ttl -t $token urn:iff:filter1
+node ./tools/getSubcomponents.js -e /tmp/filter_entity.ttl -e /tmp/cartridge_entity.ttl -e /tmp/identification_entity.ttl -s /tmp/filter_shacl.ttl -s /tmp/cartridge_shacl.ttl -s /tmp/identification_shacl.ttl -t $token urn:iff:filter1
 
 #RESULT:
  -d urn:iff:cartridge1 -d urn:iff:identification1 -d urn:iff:identification2
 ```
 
-Note that the result is deliverd in a format which can direcly used by the iff-agent onboarding scripts.
+Note that the result is deliverd in a format which can direcly used by the iff-agent onboarding scripts. You can follow all the instructions for device onboarding described [here](../../NgsildAgent/README.md). There is only one exception. When  you initialized the device, use the just describe way to retrieve the subcomponents:
+
+```
+subcomponents=$(node ./tools/getSubcomponents.js -e /tmp/filter_entity.ttl -e /tmp/cartridge_entity.ttl -e /tmp/identification_entity.ttl -s /tmp/filter_shacl.ttl -s /tmp/cartridge_shacl.ttl -s /tmp/identification_shacl.ttl -t $token urn:iff:filter1)
+( cd ../../NgsildAgent/util/ && ./init-device.sh -d urn:iff:subdeviceid:1 ${subcomponents} urn:iff:deviceid:1 gatewayid )
+```
