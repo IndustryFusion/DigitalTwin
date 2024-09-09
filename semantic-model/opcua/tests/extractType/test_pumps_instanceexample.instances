@@ -64,7 +64,7 @@
         },
         "uaentity:hasOfferedControlModes": {
             "type": "Property",
-            "value": ""
+            "value": "{\"xsd:TypeId\": {\"xsd:Identifier\": \"ns=2;i=5008\"}, \"xsd:Body\": {\"xsd:OptionSet\": {\"xsd:Value\": \"AAA=\", \"xsd:ValidBits\": \"gA8=\"}}}"
         },
         "uaentity:hasPumpClass": {
             "type": "Property",
@@ -98,7 +98,7 @@
         },
         "uaentity:hasOfferedFieldbuses": {
             "type": "Property",
-            "value": ""
+            "value": "{\"xsd:TypeId\": {\"xsd:Identifier\": \"ns=2;i=5011\"}, \"xsd:Body\": {\"xsd:OptionSet\": {\"xsd:Value\": \"AAAAAAAAAA==\", \"xsd:ValidBits\": \"gICAgICAAw==\"}}}"
         },
         "uaentity:hasMaximumAllowableRelativeHumidity": {
             "type": "Property",

@@ -19,6 +19,7 @@ from rdflib.namespace import OWL, RDF, RDFS
 import xml.etree.ElementTree as ET
 import urllib
 import lib.utils as utils
+import json
 
 query_namespaces = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -512,6 +513,22 @@ Did you forget to import it?")
                         result = data["$"]
                         result = utils.convert_to_json_type(result, basic_json_type)
                         self.g.add((classiri, self.rdf_ns['base']['hasValue'], Literal(result)))
+                else:  # does it contain a complex structure
+                    data = self.data_schema.to_dict(children, namespaces=xml_ns, indent=4)
+                    if "LocalizedText" in tag:
+                        text = data.get('xsd:Text')
+                        locale = data.get('xsd:Locale')
+                        if text is not None:
+                            result = Literal(text, lang=locale)
+                            self.g.add((classiri, self.rdf_ns['base']['hasValue'], Literal(result)))
+                    else:
+                        json_obj = {}
+                        for k, v in data.items():
+                            if "xsd:" in k:
+                                json_obj[k] = v
+                        if len(json_obj.keys()) > 0:
+                            result = Literal(json.dumps(json_obj), datatype=RDF.JSON)
+                            self.g.add((classiri, self.rdf_ns['base']['hasValue'], Literal(result)))
 
     def references_get_special(self, id, ns):
         special_components = {

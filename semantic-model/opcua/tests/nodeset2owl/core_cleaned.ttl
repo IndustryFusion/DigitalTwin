@@ -1,6 +1,7 @@
 @prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
 @prefix opcua: <http://opcfoundation.org/UA/> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
@@ -11207,7 +11208,8 @@ opcua:nodei10027 a opcua:PropertyType,
     base:hasDisplayName "TrueState" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "10027" .
+    base:hasNodeId "10027" ;
+    base:hasValue "HighHigh active"@en .
 
 opcua:nodei10028 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -11216,7 +11218,8 @@ opcua:nodei10028 a opcua:PropertyType,
     base:hasDisplayName "FalseState" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "10028" .
+    base:hasNodeId "10028" ;
+    base:hasValue "HighHigh inactive"@en .
 
 opcua:nodei10030 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -11245,7 +11248,8 @@ opcua:nodei10036 a opcua:PropertyType,
     base:hasDisplayName "TrueState" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "10036" .
+    base:hasNodeId "10036" ;
+    base:hasValue "High active"@en .
 
 opcua:nodei10037 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -11254,7 +11258,8 @@ opcua:nodei10037 a opcua:PropertyType,
     base:hasDisplayName "FalseState" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "10037" .
+    base:hasNodeId "10037" ;
+    base:hasValue "High inactive"@en .
 
 opcua:nodei10039 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -11283,7 +11288,8 @@ opcua:nodei10045 a opcua:PropertyType,
     base:hasDisplayName "TrueState" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "10045" .
+    base:hasNodeId "10045" ;
+    base:hasValue "Low active"@en .
 
 opcua:nodei10046 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -11292,7 +11298,8 @@ opcua:nodei10046 a opcua:PropertyType,
     base:hasDisplayName "FalseState" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "10046" .
+    base:hasNodeId "10046" ;
+    base:hasValue "Low inactive"@en .
 
 opcua:nodei10048 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -11321,7 +11328,8 @@ opcua:nodei10054 a opcua:PropertyType,
     base:hasDisplayName "TrueState" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "10054" .
+    base:hasNodeId "10054" ;
+    base:hasValue "LowLow active"@en .
 
 opcua:nodei10055 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -11330,7 +11338,8 @@ opcua:nodei10055 a opcua:PropertyType,
     base:hasDisplayName "FalseState" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "10055" .
+    base:hasNodeId "10055" ;
+    base:hasValue "LowLow inactive"@en .
 
 opcua:nodei104 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -25865,7 +25874,8 @@ opcua:nodei16378 a opcua:PropertyType,
     base:hasDisplayName "TrueState" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "16378" .
+    base:hasNodeId "16378" ;
+    base:hasValue "Out of Service"@en .
 
 opcua:nodei16379 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -25874,7 +25884,8 @@ opcua:nodei16379 a opcua:PropertyType,
     base:hasDisplayName "FalseState" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "16379" .
+    base:hasNodeId "16379" ;
+    base:hasValue "In Service"@en .
 
 opcua:nodei16380 a opcua:TwoStateVariableType,
         opcua:VariableNodeClass ;
@@ -25917,7 +25928,8 @@ opcua:nodei16387 a opcua:PropertyType,
     base:hasDisplayName "TrueState" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "16387" .
+    base:hasNodeId "16387" ;
+    base:hasValue "Silenced"@en .
 
 opcua:nodei16388 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -25926,7 +25938,8 @@ opcua:nodei16388 a opcua:PropertyType,
     base:hasDisplayName "FalseState" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "16388" .
+    base:hasNodeId "16388" ;
+    base:hasValue "Not Silenced"@en .
 
 opcua:nodei16389 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -26463,7 +26476,8 @@ opcua:nodei16472 a opcua:PropertyType,
     base:hasDisplayName "TrueState" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "16472" .
+    base:hasNodeId "16472" ;
+    base:hasValue "Active"@en .
 
 opcua:nodei16473 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -26472,7 +26486,8 @@ opcua:nodei16473 a opcua:PropertyType,
     base:hasDisplayName "FalseState" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "16473" .
+    base:hasNodeId "16473" ;
+    base:hasValue "Inactive"@en .
 
 opcua:nodei16474 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -29764,7 +29779,8 @@ opcua:nodei18197 a opcua:PropertyType,
     base:hasDisplayName "TrueState" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "18197" .
+    base:hasNodeId "18197" ;
+    base:hasValue "Latched"@en .
 
 opcua:nodei18198 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -29773,7 +29789,8 @@ opcua:nodei18198 a opcua:PropertyType,
     base:hasDisplayName "FalseState" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "18198" .
+    base:hasNodeId "18198" ;
+    base:hasValue "Unlatched"@en .
 
 opcua:nodei18199 a opcua:MethodNodeClass ;
     base:hasBrowseName "Reset" ;
@@ -40292,7 +40309,8 @@ opcua:nodei24157 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "24157" .
+    base:hasNodeId "24157" ;
+    base:hasValue "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=888\"}, \"xsd:Body\": {\"xsd:EUInformation\": {\"xsd:NamespaceUri\": \"http://www.opcfoundation.org/UA/units/un/cefact\", \"xsd:UnitId\": 4337968, \"xsd:DisplayName\": {\"xsd:Locale\": \"en\", \"xsd:Text\": \"bit/s\"}, \"xsd:Description\": {\"xsd:Locale\": \"en\", \"xsd:Text\": \"bit per second\"}}}}"^^rdf:JSON .
 
 opcua:nodei24159 a opcua:AnalogUnitType,
         opcua:VariableNodeClass ;
@@ -40327,7 +40345,8 @@ opcua:nodei24164 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "24164" .
+    base:hasNodeId "24164" ;
+    base:hasValue "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=888\"}, \"xsd:Body\": {\"xsd:EUInformation\": {\"xsd:NamespaceUri\": \"http://www.opcfoundation.org/UA/units/un/cefact\", \"xsd:UnitId\": 4534832, \"xsd:DisplayName\": {\"xsd:Locale\": \"en\", \"xsd:Text\": \"Mbit/s\"}, \"xsd:Description\": {\"xsd:Locale\": \"en\", \"xsd:Text\": \"megabit per second\"}}}}"^^rdf:JSON .
 
 opcua:nodei24165 a opcua:BaseDataVariableType,
         opcua:VariableNodeClass ;
@@ -41603,7 +41622,8 @@ opcua:nodei25252 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "25252" .
+    base:hasNodeId "25252" ;
+    base:hasValue "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=888\"}, \"xsd:Body\": {\"xsd:EUInformation\": {\"xsd:NamespaceUri\": \"http://www.opcfoundation.org/UA/units/un/cefact\", \"xsd:UnitId\": 4337968, \"xsd:DisplayName\": {\"xsd:Locale\": \"en\", \"xsd:Text\": \"bit/s\"}, \"xsd:Description\": {\"xsd:Locale\": \"en\", \"xsd:Text\": \"bit per second\"}}}}"^^rdf:JSON .
 
 opcua:nodei25267 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -50317,7 +50337,8 @@ opcua:nodei9018 a opcua:PropertyType,
     base:hasDisplayName "TrueState" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "9018" .
+    base:hasNodeId "9018" ;
+    base:hasValue "Enabled"@en .
 
 opcua:nodei9019 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -50326,7 +50347,8 @@ opcua:nodei9019 a opcua:PropertyType,
     base:hasDisplayName "FalseState" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "9019" .
+    base:hasNodeId "9019" ;
+    base:hasValue "Disabled"@en .
 
 opcua:nodei9020 a opcua:ConditionVariableType,
         opcua:VariableNodeClass ;
@@ -50483,7 +50505,8 @@ opcua:nodei9062 a opcua:PropertyType,
     base:hasDisplayName "TrueState" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "9062" .
+    base:hasNodeId "9062" ;
+    base:hasValue "Active"@en .
 
 opcua:nodei9063 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -50492,7 +50515,8 @@ opcua:nodei9063 a opcua:PropertyType,
     base:hasDisplayName "FalseState" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "9063" .
+    base:hasNodeId "9063" ;
+    base:hasValue "Inactive"@en .
 
 opcua:nodei9064 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -50625,7 +50649,8 @@ opcua:nodei9100 a opcua:PropertyType,
     base:hasDisplayName "TrueState" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "9100" .
+    base:hasNodeId "9100" ;
+    base:hasValue "Acknowledged"@en .
 
 opcua:nodei9101 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -50634,7 +50659,8 @@ opcua:nodei9101 a opcua:PropertyType,
     base:hasDisplayName "FalseState" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "9101" .
+    base:hasNodeId "9101" ;
+    base:hasValue "Unacknowledged"@en .
 
 opcua:nodei9103 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -50663,7 +50689,8 @@ opcua:nodei9109 a opcua:PropertyType,
     base:hasDisplayName "TrueState" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "9109" .
+    base:hasNodeId "9109" ;
+    base:hasValue "Confirmed"@en .
 
 opcua:nodei9110 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -50672,7 +50699,8 @@ opcua:nodei9110 a opcua:PropertyType,
     base:hasDisplayName "FalseState" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "9110" .
+    base:hasNodeId "9110" ;
+    base:hasValue "Unconfirmed"@en .
 
 opcua:nodei9111 a opcua:MethodNodeClass ;
     base:hasBrowseName "Acknowledge" ;
@@ -50793,7 +50821,8 @@ opcua:nodei9167 a opcua:PropertyType,
     base:hasDisplayName "TrueState" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "9167" .
+    base:hasNodeId "9167" ;
+    base:hasValue "Active"@en .
 
 opcua:nodei9168 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -50802,7 +50831,8 @@ opcua:nodei9168 a opcua:PropertyType,
     base:hasDisplayName "FalseState" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "9168" .
+    base:hasNodeId "9168" ;
+    base:hasValue "Inactive"@en .
 
 opcua:nodei9170 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -50831,7 +50861,8 @@ opcua:nodei9176 a opcua:PropertyType,
     base:hasDisplayName "TrueState" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "9176" .
+    base:hasNodeId "9176" ;
+    base:hasValue "Suppressed"@en .
 
 opcua:nodei9177 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -50840,7 +50871,8 @@ opcua:nodei9177 a opcua:PropertyType,
     base:hasDisplayName "FalseState" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "9177" .
+    base:hasNodeId "9177" ;
+    base:hasValue "Unsuppressed"@en .
 
 opcua:nodei9179 a opcua:FiniteStateVariableType,
         opcua:VariableNodeClass ;

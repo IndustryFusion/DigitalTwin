@@ -2,6 +2,7 @@
 @prefix devices: <http://opcfoundation.org/UA/DI/> .
 @prefix opcua: <http://opcfoundation.org/UA/> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
@@ -937,7 +938,8 @@ devices:nodei134 a opcua:PropertyType,
     base:hasDisplayName "DefaultInstanceBrowseName" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "134" .
+    base:hasNodeId "134" ;
+    base:hasValue "{\"xsd:NamespaceIndex\": 1, \"xsd:Name\": \"SoftwareUpdate\"}"^^rdf:JSON .
 
 devices:nodei136 a opcua:BaseDataVariableType,
         opcua:VariableNodeClass ;
@@ -1738,7 +1740,8 @@ devices:nodei15890 a opcua:PropertyType,
     base:hasDisplayName "DefaultInstanceBrowseName" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "15890" .
+    base:hasNodeId "15890" ;
+    base:hasValue "{\"xsd:NamespaceIndex\": 1, \"xsd:Name\": \"Lock\"}"^^rdf:JSON .
 
 devices:nodei15891 a opcua:DataTypeEncodingType,
         opcua:ObjectNodeClass ;
