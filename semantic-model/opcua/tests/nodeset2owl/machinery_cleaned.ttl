@@ -3,6 +3,7 @@
 @prefix machinery: <http://opcfoundation.org/UA/Machinery/> .
 @prefix opcua: <http://opcfoundation.org/UA/> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
@@ -828,7 +829,8 @@ machinery:nodei6016 a opcua:PropertyType,
     base:hasDisplayName "DefaultInstanceBrowseName" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace machinery:MACHINERYNamespace ;
-    base:hasNodeId "6016" .
+    base:hasNodeId "6016" ;
+    base:hasValue "{\"xsd:NamespaceIndex\": 2, \"xsd:Name\": \"Identification\"}"^^rdf:JSON .
 
 machinery:nodei6017 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -849,7 +851,8 @@ machinery:nodei6018 a opcua:PropertyType,
     base:hasDisplayName "DefaultInstanceBrowseName" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace machinery:MACHINERYNamespace ;
-    base:hasNodeId "6018" .
+    base:hasNodeId "6018" ;
+    base:hasValue "{\"xsd:NamespaceIndex\": 1, \"xsd:Name\": \"Components\"}"^^rdf:JSON .
 
 machinery:nodei6019 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -881,7 +884,8 @@ machinery:nodei6021 a opcua:PropertyType,
     base:hasDisplayName "DefaultInstanceBrowseName" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace machinery:MACHINERYNamespace ;
-    base:hasNodeId "6021" .
+    base:hasNodeId "6021" ;
+    base:hasValue "{\"xsd:NamespaceIndex\": 1, \"xsd:Name\": \"MachineryItemState\"}"^^rdf:JSON .
 
 machinery:nodei6022 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -979,7 +983,8 @@ machinery:nodei6030 a opcua:PropertyType,
     base:hasDisplayName "DefaultInstanceBrowseName" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace machinery:MACHINERYNamespace ;
-    base:hasNodeId "6030" .
+    base:hasNodeId "6030" ;
+    base:hasValue "{\"xsd:NamespaceIndex\": 2, \"xsd:Name\": \"Identification\"}"^^rdf:JSON .
 
 machinery:nodei6031 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -1279,7 +1284,8 @@ machinery:nodei6058 a opcua:PropertyType,
     base:hasDisplayName "DefaultInstanceBrowseName" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace machinery:MACHINERYNamespace ;
-    base:hasNodeId "6058" .
+    base:hasNodeId "6058" ;
+    base:hasValue "{\"xsd:NamespaceIndex\": 1, \"xsd:Name\": \"MachineryOperationMode\"}"^^rdf:JSON .
 
 machinery:nodei6059 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -1542,7 +1548,8 @@ machinery:nodei6082 a opcua:PropertyType,
     base:hasDisplayName "DefaultInstanceBrowseName" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace machinery:MACHINERYNamespace ;
-    base:hasNodeId "6082" .
+    base:hasNodeId "6082" ;
+    base:hasValue "{\"xsd:NamespaceIndex\": 2, \"xsd:Name\": \"OperationCounters\"}"^^rdf:JSON .
 
 machinery:nodei6083 a devices:LifetimeVariableType,
         opcua:VariableNodeClass ;
@@ -1598,7 +1605,8 @@ machinery:nodei6087 a opcua:PropertyType,
     base:hasDisplayName "DefaultInstanceBrowseName" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace machinery:MACHINERYNamespace ;
-    base:hasNodeId "6087" .
+    base:hasNodeId "6087" ;
+    base:hasValue "{\"xsd:NamespaceIndex\": 1, \"xsd:Name\": \"LifetimeCounters\"}"^^rdf:JSON .
 
 machinery:nodei6088 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -1608,7 +1616,8 @@ machinery:nodei6088 a opcua:PropertyType,
     base:hasDisplayName "DefaultInstanceBrowseName" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace machinery:MACHINERYNamespace ;
-    base:hasNodeId "6088" .
+    base:hasNodeId "6088" ;
+    base:hasValue "{\"xsd:NamespaceIndex\": 2, \"xsd:Name\": \"Identification\"}"^^rdf:JSON .
 
 machinery:IMachineryItemVendorNameplateType a owl:Class ;
     rdfs:subClassOf devices:IVendorNameplateType ;
