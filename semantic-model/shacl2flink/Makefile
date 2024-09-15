@@ -1,6 +1,6 @@
 SHACL:= ../kms/shacl.ttl
 KNOWLEDGE := ../kms/knowledge.ttl
-MODEL := ../kms/model-example.jsonld
+MODEL := ../kms/model-instance.jsonld
 PYTHON := python3
 LINTER := flake8
 PIP := pip
@@ -26,16 +26,16 @@ build: $(SHACL) $(KNOWLEDGE $(MODEL)
 	$(PYTHON) create_rdf_table.py $(KNOWLEDGE) $(KAFKA_TOPICS)
 	$(PYTHON) create_core_tables.py
 	${PYTHON} create_udfs.py
-	$(PYTHON) create_ngsild_tables.py $(SHACL) $(KNOWLEDGE) $(KAFKA_TOPICS)
+	$(PYTHON) create_ngsild_tables.py $(KAFKA_TOPICS)
 	$(PYTHON) create_ngsild_models.py $(SHACL) $(KNOWLEDGE) $(MODEL)
 	$(PYTHON) create_sql_checks_from_shacl.py $(CHECKPOINTSWITCH) $(SHACL) $(KNOWLEDGE)
 
 helm: export IFF_HELM=true
-helm: build
+helm:
 	mkdir -p ${HELM_DIR}
 	rm -rf ${HELM_DIR}/templates 
-	mv ${OUTPUTDIR} ${HELM_DIR}/templates
-	rm -f ${HELM_DIR}/templates/*.sqlite ${HELM_DIR}/templates/core.yaml ${HELM_DIR}/templates/knowledge.yaml ${HELM_DIR}/templates/*.debug
+	cp -rf ${OUTPUTDIR} ${HELM_DIR}/templates
+	rm -f ${HELM_DIR}/templates/*.sqlite ${HELM_DIR}/templates/core.yaml ${HELM_DIR}/templates/knowledge.yaml ${HELM_DIR}/templates/rdf-maps.yaml
 	cp Chart.yaml ${HELM_DIR}
 
 test: requirements-dev.txt
@@ -50,6 +50,12 @@ setup: requirements.txt setup-dev
 	echo ".mode column" >> ~/.sqliterc
 	echo ".load /usr/lib/sqlite3/pcre.so" >> ~/.sqliterc
 
+update-rdf-cm: delete-rdf-cm
+	kubectl -n $(NAMESPACE) create -f output/rdf-maps.yaml
+	rm -f ${HELM_DIR}/templates/rdf-maps.yaml
+
+ delete-rdf-cm:
+	kubectl -n $(NAMESPACE) delete configmap -l "shacl-data"="rdf-configmap"
 
 
 setup-dev: requirements-dev.txt
@@ -102,9 +108,11 @@ enable-strimzi:
 
 flink-deploy: clean
 	@echo deploy helm package
+	make build
 	make helm
+	make update-rdf-cm
 	make disable-strimzi || echo "Can fail"
-	make build || make enable-strimzi
+	# make build || make enable-strimzi
 	kubectl -n $(NAMESPACE) delete -f output/ngsild-kafka.yaml --ignore-not-found || make enable-strimzi
 	kubectl -n $(NAMESPACE) delete -f output/rdf-kafka.yaml --ignore-not-found || make enable-strimzi
 	kubectl -n $(NAMESPACE) delete -f output/knowledge-configmap.yaml --ignore-not-found
@@ -115,7 +123,7 @@ flink-deploy: clean
 	kubectl -n $(NAMESPACE) -l "app.kubernetes.io/instance"="kafka-connect" delete pod
 
 
-flink-undeploy:
+flink-undeploy: delete-rdf-cm
 	@echo undeploy helm package
 	cd ../../helm && ./helmfile -f helmfile-shacl.yaml destroy
 	make test-flink-is-undeployed

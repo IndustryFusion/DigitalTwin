@@ -404,17 +404,17 @@ def test_wrap_sql_construct(attribute_column_mock, get_bound_trim_string_mock):
         'where': 'where'
     }
     lib.sparql_to_sql.wrap_sql_construct(ctx, node)
-    assert node['target_sql'] == "SQL_DIALECT_INSERT_ATTRIBUTES\nSELECT DISTINCT TABLE.`id` || '\\' || 'name' as id,\
-\nTABLE.`id` as entityId,\
+    assert node['target_sql'] == "SQL_DIALECT_INSERT_ATTRIBUTES\
+\nSELECT DISTINCT TABLE.`id` as entityId,\
 \n'name' as name,\
 \n'nodetype' as nodeType,\
 \nCAST(NULL as STRING) as valueType,\
-\n0 as `index`,\
 \n'type' as `type`,\
 \n'@none' as `datasetId`,\
 \nbound_trim_string as `value`,\
-\nCAST(NULL as STRING) as `object`\n,\
-SQL_DIALECT_SQLITE_TIMESTAMP\nFROM target_sql WHERE where"
+\nCAST(NULL as STRING) as `object`\
+\n,SQL_DIALECT_SQLITE_TIMESTAMP\
+\nFROM target_sql WHERE where"
 
 
 @patch('lib.sparql_to_sql.translate')
@@ -451,3 +451,52 @@ def test_merge_bgp_context():
     expression, where = lib.sparql_to_sql.merge_bgp_context(bgp_context, True)
     assert where == 'join_condition'
     assert expression == 'statement JOIN statement2 ON join_condition2'
+
+
+@patch('utils.unwrap_variables')
+def test_translate_additive_expression(mock_unwrap_variables):
+    ctx = MagicMock()
+    elem = MagicMock()
+    elem.expr = term.Variable('var1')
+    elem.op = ['+']
+    elem.other = [term.Variable('var2')]
+
+    # Mocking utility functions
+    def unwrap_mock(ctx, variable):
+        if variable.toPython() == '?var1':
+            return 'var1_value'
+        elif variable.toPython() == '?var2':
+            return 'var2_value'
+        return ''
+
+    mock_unwrap_variables.side_effect = unwrap_mock
+
+    result = lib.sparql_to_sql.translate_additive_expression(ctx, elem)
+    assert result == "var1_value + var2_value "
+    assert mock_unwrap_variables.call_count == 2
+
+
+@patch('utils.set_is_aggregate_var')
+@patch('lib.sparql_to_sql.translate')
+@patch('utils.create_varname')
+def test_process_aggregate(mock_create_varname, mock_translate, mock_set_is_aggregate_var):
+    ctx = {
+        'bounds': {'var': 'resolved_var'},
+        'time_variables': {},
+    }
+    elem = MagicMock()
+    elem.distinct = 'DISTINCT'
+    elem.vars = term.Variable('var')
+
+    # Mocking utility functions
+    mock_create_varname.return_value = 'var'
+    mock_translate.return_value = 'translated_var'
+
+    # Run the function
+    result_expression, result_distinct = lib.sparql_to_sql.process_aggregate(ctx, elem)
+
+    # Asserting the results
+    assert result_expression == 'translated_var'
+    assert result_distinct == 'DISTINCT'
+    assert mock_translate.called
+    assert mock_set_is_aggregate_var.call_count == 2

@@ -23,75 +23,12 @@ const sinon = require('sinon');
 const rewire = require('rewire');
 const toTest = rewire('../debeziumBridge/app.js');
 
-describe('Test GetTopic', function () {
-  it('Should return last part of url path', async function () {
-    const getTopic = toTest.__get__('getTopic');
-    const result = getTopic('http://example/Device');
-    result.should.equal('device');
-  });
-  it('Should return last part in snake_case', async function () {
-    const getTopic = toTest.__get__('getTopic');
-    const result = getTopic('http://example/Device_Test_WithUnderscore');
-    result.should.equal('device__test__with_underscore');
-  });
-  it('Should return reference part of url', async function () {
-    const getTopic = toTest.__get__('getTopic');
-    const result = getTopic('http://example/Device#realDevice');
-    result.should.equal('real_device');
-  });
-  it('Should return snake_case', async function () {
-    const getTopic = toTest.__get__('getTopic');
-    const result = getTopic('http://example/Device#RealDevice');
-    result.should.equal('real_device');
-  });
-});
-
-describe('Test getSubclasses', function () {
-  it('Should construct queryterm and use right rdfSource', async function () {
-    const config = {
-      debeziumBridge: {
-        rdfSources: 'rdfSource'
-      }
-    };
-    const klass = 'klass';
-    const queryTermExpected = `
-    PREFIX iff: <https://industry-fusion.com/types/v0.9/>
-    SELECT ?o WHERE {
-    <${klass}> rdfs:subClassOf* ?o.
-    } LIMIT 100`;
-    const res = {
-      bindings: () => new Promise(function (resolve, reject) {
-        resolve([
-          {
-            get: (arg) => { arg.should.equal('?o'); return { value: 'subklass' }; }
-          }
-        ]);
-      })
-    };
-    const iffEngine = {
-      query: function (queryTerm, { sources }) {
-        return new Promise(function (resolve, reject) {
-          sources.should.equal(config.debeziumBridge.rdfSources);
-          queryTerm.should.equal(queryTermExpected);
-          resolve(res);
-        });
-      }
-    };
-    const revert = toTest.__set__('iffEngine', iffEngine);
-    toTest.__set__('config', config);
-    const getSubClasses = toTest.__get__('getSubClasses');
-    const result = await getSubClasses(klass);
-    result[0].should.equal('subklass');
-    revert();
-  });
-});
 describe('Test sendUpdates', function () {
   it('Should update and delete attributes', async function () {
     const messages = [
       { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
-      { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
-      { key: 'id', value: '{"deleteValueKey":"deleteValueValue"}' },
-      { key: 'id', value: '{"updateValueKey":"updateValueValue"}' }
+      { key: 'id', value: '{"deleteValueKey":"deleteValueValue","deleted":true,"synched":true}' },
+      { key: 'id', value: '{"updateValueKey":"updateValueValue","synched":true}' }
     ];
     const sendUpdates = toTest.__get__('sendUpdates');
     const config = {
@@ -102,175 +39,7 @@ describe('Test sendUpdates', function () {
     };
     const producer = {
       sendBatch: function ({ topicMessages }) {
-        topicMessages[0].topic.should.equal('topicPrefix.klass');
-        assert.deepEqual(topicMessages[0].messages[0], messages[0]);
-        topicMessages[1].topic.should.equal('topicPrefix.subklass');
-        assert.deepEqual(topicMessages[1].messages[0], messages[1]);
-        topicMessages[2].topic.should.equal('attributesTopic');
-        assert.deepEqual(topicMessages[2].messages[0], messages[2]);
-        topicMessages[3].topic.should.equal('attributesTopic');
-        assert.deepEqual(topicMessages[3].messages[0], messages[3]);
-      }
-    };
-    const entity = {
-      id: 'id',
-      type: 'http://example/type'
-    };
-    const updatedAttrs = {
-      updateKey: [{ updateValueKey: 'updateValueValue' }]
-    };
-    const deletedAttrs = {
-      deleteKey: [{ deleteValueKey: 'deleteValueValue' }]
-    };
-    const getSubClasses = function () {
-      return ['klass', 'subklass'];
-    };
-    const revert = toTest.__set__('producer', producer);
-    toTest.__set__('config', config);
-    toTest.__set__('getSubClasses', getSubClasses);
-    await sendUpdates({ entity, updatedAttrs, deletedAttrs });
-    revert();
-  });
-  it('Should update and delete attributes with timestamp', async function () {
-    const messages = [
-      { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
-      { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
-      { key: 'id', value: '{"deleteValueKey":"deleteValueValue"}' },
-      { key: 'id', value: '{"updateValueKey":"updateValueValue"}', timestamp: 1672914001456 }
-    ];
-    const sendUpdates = toTest.__get__('sendUpdates');
-    const config = {
-      debeziumBridge: {
-        attributesTopic: 'attributesTopic',
-        entityTopicPrefix: 'topicPrefix'
-      }
-    };
-    const producer = {
-      sendBatch: function ({ topicMessages }) {
-        topicMessages[0].topic.should.equal('topicPrefix.klass');
-        assert.deepEqual(topicMessages[0].messages[0], messages[0]);
-        topicMessages[1].topic.should.equal('topicPrefix.subklass');
-        assert.deepEqual(topicMessages[1].messages[0], messages[1]);
-        topicMessages[2].topic.should.equal('attributesTopic');
-        assert.deepEqual(topicMessages[2].messages[0], messages[2]);
-        topicMessages[3].topic.should.equal('attributesTopic');
-        assert.deepEqual(topicMessages[3].messages[0], messages[3]);
-      }
-    };
-    const entity = {
-      id: 'id',
-      type: 'http://example/type'
-    };
-    const updatedAttrs = {
-      updateKey: [{ updateValueKey: 'updateValueValue', 'https://uri.etsi.org/ngsi-ld/observedAt': [{ '@value': '2023-01-05T10:20:01.456Z' }] }]
-    };
-    const deletedAttrs = {
-      deleteKey: [{ deleteValueKey: 'deleteValueValue' }]
-    };
-    const getSubClasses = function () {
-      return ['klass', 'subklass'];
-    };
-    const revert = toTest.__set__('producer', producer);
-    toTest.__set__('config', config);
-    toTest.__set__('getSubClasses', getSubClasses);
-    await sendUpdates({ entity, updatedAttrs, deletedAttrs });
-    revert();
-  });
-  it('Should delete entity', async function () {
-    const messages = [
-      { key: 'id', value: '{"id":"id"}' },
-      { key: 'id', value: '{"id":"id"}' }
-    ];
-    const sendUpdates = toTest.__get__('sendUpdates');
-    const config = {
-      debeziumBridge: {
-        attributesTopic: 'attributesTopic',
-        entityTopicPrefix: 'topicPrefix'
-      }
-    };
-    const producer = {
-      sendBatch: function ({ topicMessages }) {
-        topicMessages[0].topic.should.equal('topicPrefix.klass');
-        assert.deepEqual(topicMessages[0].messages[0], messages[0]);
-        topicMessages[1].topic.should.equal('topicPrefix.subklass');
-        assert.deepEqual(topicMessages[1].messages[0], messages[1]);
-      }
-    };
-
-    const deletedEntity = {
-      id: 'id',
-      type: 'http://example/type'
-    };
-    const getSubClasses = function () {
-      return ['klass', 'subklass'];
-    };
-    const revert = toTest.__set__('producer', producer);
-    toTest.__set__('config', config);
-    toTest.__set__('getSubClasses', getSubClasses);
-    await sendUpdates({ deletedEntity });
-    revert();
-  });
-  it('Should flatten input arrays of attributes', async function () {
-    const messages = [
-      { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
-      { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
-      [{ key: 'id', value: '{"deleteValueKey":"deleteValueValue"}' }, { key: 'id', value: '{"deleteValueKey":"deleteValueValue2"}' }],
-      [{ key: 'id', value: '{"updateValueKey":"updateValueValue"}' }, { key: 'id', value: '{"updateValueKey":"updateValueValue2"}' }]
-    ];
-    const sendUpdates = toTest.__get__('sendUpdates');
-    const config = {
-      debeziumBridge: {
-        attributesTopic: 'attributesTopic',
-        entityTopicPrefix: 'topicPrefix'
-      }
-    };
-    const producer = {
-      sendBatch: function ({ topicMessages }) {
-        topicMessages[0].topic.should.equal('topicPrefix.klass');
-        assert.deepEqual(topicMessages[0].messages[0], messages[0]);
-        topicMessages[1].topic.should.equal('topicPrefix.subklass');
-        assert.deepEqual(topicMessages[1].messages[0], messages[1]);
-        topicMessages[2].topic.should.equal('attributesTopic');
-        assert.deepEqual(topicMessages[2].messages, messages[2]);
-        topicMessages[3].topic.should.equal('attributesTopic');
-        assert.deepEqual(topicMessages[3].messages, messages[3]);
-      }
-    };
-    const entity = {
-      id: 'id',
-      type: 'http://example/type'
-    };
-    const updatedAttrs = {
-      updateKey: [{ updateValueKey: 'updateValueValue' }, { updateValueKey: 'updateValueValue2' }]
-    };
-    const deletedAttrs = {
-      deleteKey: [{ deleteValueKey: 'deleteValueValue' }, { deleteValueKey: 'deleteValueValue2' }]
-    };
-    const getSubClasses = function () {
-      return ['klass', 'subklass'];
-    };
-    const revert = toTest.__set__('producer', producer);
-    toTest.__set__('config', config);
-    toTest.__set__('getSubClasses', getSubClasses);
-    await sendUpdates({ entity, updatedAttrs, deletedAttrs });
-    revert();
-  });
-  it('Should work without subclasses ', async function () {
-    const messages = [
-      { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
-      { key: 'id', value: '{"deleteValueKey":"deleteValueValue"}' },
-      { key: 'id', value: '{"updateValueKey":"updateValueValue"}' }
-    ];
-    const sendUpdates = toTest.__get__('sendUpdates');
-    const config = {
-      debeziumBridge: {
-        attributesTopic: 'attributesTopic',
-        entityTopicPrefix: 'topicPrefix'
-      }
-    };
-    const producer = {
-      sendBatch: function ({ topicMessages }) {
-        topicMessages[0].topic.should.equal('topicPrefix.type');
+        topicMessages[0].topic.should.equal('topicPrefix');
         assert.deepEqual(topicMessages[0].messages[0], messages[0]);
         topicMessages[1].topic.should.equal('attributesTopic');
         assert.deepEqual(topicMessages[1].messages[0], messages[1]);
@@ -288,20 +57,16 @@ describe('Test sendUpdates', function () {
     const deletedAttrs = {
       deleteKey: [{ deleteValueKey: 'deleteValueValue' }]
     };
-    const getSubClasses = function () {
-      return [];
-    };
     const revert = toTest.__set__('producer', producer);
     toTest.__set__('config', config);
-    toTest.__set__('getSubClasses', getSubClasses);
     await sendUpdates({ entity, updatedAttrs, deletedAttrs });
     revert();
   });
-  it('Should insert attributes with timestamp', async function () {
+  it('Should update and delete attributes with timestamp', async function () {
     const messages = [
       { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
-      { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
-      { key: 'id', value: '{"insertValueKey":"insertValueValue"}', timestamp: 1704460984123 }
+      { key: 'id', value: '{"deleteValueKey":"deleteValueValue","deleted":true,"synched":true}' },
+      { key: 'id', value: '{"updateValueKey":"updateValueValue","synched":true}', timestamp: 1672914001456 }
     ];
     const sendUpdates = toTest.__get__('sendUpdates');
     const config = {
@@ -312,12 +77,150 @@ describe('Test sendUpdates', function () {
     };
     const producer = {
       sendBatch: function ({ topicMessages }) {
-        topicMessages[0].topic.should.equal('topicPrefix.klass');
+        topicMessages[0].topic.should.equal('topicPrefix');
         assert.deepEqual(topicMessages[0].messages[0], messages[0]);
-        topicMessages[1].topic.should.equal('topicPrefix.subklass');
+        topicMessages[1].topic.should.equal('attributesTopic');
         assert.deepEqual(topicMessages[1].messages[0], messages[1]);
         topicMessages[2].topic.should.equal('attributesTopic');
         assert.deepEqual(topicMessages[2].messages[0], messages[2]);
+      }
+    };
+    const entity = {
+      id: 'id',
+      type: 'http://example/type'
+    };
+    const updatedAttrs = {
+      updateKey: [{ updateValueKey: 'updateValueValue', 'https://uri.etsi.org/ngsi-ld/observedAt': [{ '@value': '2023-01-05T10:20:01.456Z' }] }]
+    };
+    const deletedAttrs = {
+      deleteKey: [{ deleteValueKey: 'deleteValueValue' }]
+    };
+    const revert = toTest.__set__('producer', producer);
+    toTest.__set__('config', config);
+    await sendUpdates({ entity, updatedAttrs, deletedAttrs });
+    revert();
+  });
+  it('Should delete entity', async function () {
+    const messages = [
+      { key: 'id', value: '{"id":"id","type":"http://example/type","deleted":true}' }
+    ];
+    const sendUpdates = toTest.__get__('sendUpdates');
+    const config = {
+      debeziumBridge: {
+        attributesTopic: 'attributesTopic',
+        entityTopicPrefix: 'topicPrefix'
+      }
+    };
+    const producer = {
+      sendBatch: function ({ topicMessages }) {
+        topicMessages[0].topic.should.equal('topicPrefix');
+        assert.deepEqual(topicMessages[0].messages[0], messages[0]);
+      }
+    };
+
+    const deletedEntity = {
+      id: 'id',
+      type: 'http://example/type'
+    };
+    const revert = toTest.__set__('producer', producer);
+    toTest.__set__('config', config);
+    await sendUpdates({ deletedEntity });
+    revert();
+  });
+  it('Should flatten input arrays of attributes', async function () {
+    const messages = [
+      { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
+      [{ key: 'id', value: '{"deleteValueKey":"deleteValueValue","deleted":true,"synched":true}' }, { key: 'id', value: '{"deleteValueKey":"deleteValueValue2","deleted":true,"synched":true}' }],
+      [{ key: 'id', value: '{"updateValueKey":"updateValueValue","synched":true}' }, { key: 'id', value: '{"updateValueKey":"updateValueValue2","synched":true}' }]
+    ];
+    const sendUpdates = toTest.__get__('sendUpdates');
+    const config = {
+      debeziumBridge: {
+        attributesTopic: 'attributesTopic',
+        entityTopicPrefix: 'topicPrefix'
+      }
+    };
+    const producer = {
+      sendBatch: function ({ topicMessages }) {
+        topicMessages[0].topic.should.equal('topicPrefix');
+        assert.deepEqual(topicMessages[0].messages[0], messages[0]);
+        topicMessages[1].topic.should.equal('attributesTopic');
+        assert.deepEqual(topicMessages[1].messages, messages[1]);
+        topicMessages[2].topic.should.equal('attributesTopic');
+        assert.deepEqual(topicMessages[2].messages, messages[2]);
+      }
+    };
+    const entity = {
+      id: 'id',
+      type: 'http://example/type'
+    };
+    const updatedAttrs = {
+      updateKey: [{ updateValueKey: 'updateValueValue' }, { updateValueKey: 'updateValueValue2' }]
+    };
+    const deletedAttrs = {
+      deleteKey: [{ deleteValueKey: 'deleteValueValue' }, { deleteValueKey: 'deleteValueValue2' }]
+    };
+    const revert = toTest.__set__('producer', producer);
+    toTest.__set__('config', config);
+    await sendUpdates({ entity, updatedAttrs, deletedAttrs });
+    revert();
+  });
+  it('Should work without subclasses ', async function () {
+    const messages = [
+      { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
+      { key: 'id', value: '{"deleteValueKey":"deleteValueValue","deleted":true,"synched":true}' },
+      { key: 'id', value: '{"updateValueKey":"updateValueValue","synched":true}' }
+    ];
+    const sendUpdates = toTest.__get__('sendUpdates');
+    const config = {
+      debeziumBridge: {
+        attributesTopic: 'attributesTopic',
+        entityTopicPrefix: 'topicPrefix'
+      }
+    };
+    const producer = {
+      sendBatch: function ({ topicMessages }) {
+        topicMessages[0].topic.should.equal('topicPrefix');
+        assert.deepEqual(topicMessages[0].messages[0], messages[0]);
+        topicMessages[1].topic.should.equal('attributesTopic');
+        assert.deepEqual(topicMessages[1].messages[0], messages[1]);
+        topicMessages[2].topic.should.equal('attributesTopic');
+        assert.deepEqual(topicMessages[2].messages[0], messages[2]);
+      }
+    };
+    const entity = {
+      id: 'id',
+      type: 'http://example/type'
+    };
+    const updatedAttrs = {
+      updateKey: [{ updateValueKey: 'updateValueValue' }]
+    };
+    const deletedAttrs = {
+      deleteKey: [{ deleteValueKey: 'deleteValueValue' }]
+    };
+    const revert = toTest.__set__('producer', producer);
+    toTest.__set__('config', config);
+    await sendUpdates({ entity, updatedAttrs, deletedAttrs });
+    revert();
+  });
+  it('Should insert attributes with timestamp', async function () {
+    const messages = [
+      { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
+      { key: 'id', value: '{"insertValueKey":"insertValueValue","synched":true}', timestamp: 1704460984123 }
+    ];
+    const sendUpdates = toTest.__get__('sendUpdates');
+    const config = {
+      debeziumBridge: {
+        attributesTopic: 'attributesTopic',
+        entityTopicPrefix: 'topicPrefix'
+      }
+    };
+    const producer = {
+      sendBatch: function ({ topicMessages }) {
+        topicMessages[0].topic.should.equal('topicPrefix');
+        assert.deepEqual(topicMessages[0].messages[0], messages[0]);
+        topicMessages[1].topic.should.equal('attributesTopic');
+        assert.deepEqual(topicMessages[1].messages[0], messages[1]);
       }
     };
     const entity = {
@@ -328,20 +231,15 @@ describe('Test sendUpdates', function () {
       insertKey: [{ insertValueKey: 'insertValueValue', 'https://uri.etsi.org/ngsi-ld/observedAt': [{ '@value': '2024-01-05T13:23:04.123Z' }] }]
     };
 
-    const getSubClasses = function () {
-      return ['klass', 'subklass'];
-    };
     const revert = toTest.__set__('producer', producer);
     toTest.__set__('config', config);
-    toTest.__set__('getSubClasses', getSubClasses);
     await sendUpdates({ entity, insertedAttrs });
     revert();
   });
   it('Should insert attributes', async function () {
     const messages = [
       { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
-      { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
-      { key: 'id', value: '{"insertValueKey":"insertValueValue"}' }
+      { key: 'id', value: '{"insertValueKey":"insertValueValue","synched":true}' }
     ];
     const sendUpdates = toTest.__get__('sendUpdates');
     const config = {
@@ -352,12 +250,10 @@ describe('Test sendUpdates', function () {
     };
     const producer = {
       sendBatch: function ({ topicMessages }) {
-        topicMessages[0].topic.should.equal('topicPrefix.klass');
+        topicMessages[0].topic.should.equal('topicPrefix');
         assert.deepEqual(topicMessages[0].messages[0], messages[0]);
-        topicMessages[1].topic.should.equal('topicPrefix.subklass');
+        topicMessages[1].topic.should.equal('attributesTopic');
         assert.deepEqual(topicMessages[1].messages[0], messages[1]);
-        topicMessages[2].topic.should.equal('attributesTopic');
-        assert.deepEqual(topicMessages[2].messages[0], messages[2]);
       }
     };
     const entity = {
@@ -368,12 +264,8 @@ describe('Test sendUpdates', function () {
       insertKey: [{ insertValueKey: 'insertValueValue' }]
     };
 
-    const getSubClasses = function () {
-      return ['klass', 'subklass'];
-    };
     const revert = toTest.__set__('producer', producer);
     toTest.__set__('config', config);
-    toTest.__set__('getSubClasses', getSubClasses);
     await sendUpdates({ entity, insertedAttrs });
     revert();
   });
@@ -424,7 +316,7 @@ describe('Test startListener', function () {
             return true;
           }
         });
-        await f('Test Error');
+        await f('Test Error output');
       },
       exit: function (value) {
       },

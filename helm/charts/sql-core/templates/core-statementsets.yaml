@@ -71,43 +71,43 @@ spec:
             /* aggregates entities from attributes topic and insert it every 2 seconds in update channel
             part of CORE SERVICES */
             insert into ngsild_updates
-            select 'update', true, true, '[{"id": "' || id || '",' || LISTAGG(attributeagg) || '}]'
-                      from (
-                          select  window_start, window_end, B.entityId as id, '"' || B.name || '":[' || LISTAGG(B.indexagg) || ']' as attributeagg
-                          from(
-                              select window_start, window_end, entityId, name,
-                              '{"observedAt": "' || LAST_VALUE(DATE_FORMAT(A.`ts`,  'yyyy-MM-dd''T''HH:mm:ss.') || CAST(EXTRACT(MILLISECOND from A.`ts`) as STRING)) || 'Z", "type": "'
-                                      || LAST_VALUE(A.`type`)
-                                      || '", "datasetId": "'
-                                      || IF(A.`https://uri.etsi.org/ngsi-ld/datasetId` IS NOT NULL, A.`https://uri.etsi.org/ngsi-ld/datasetId`, '@none')
-                                      || IF(LAST_VALUE(A.`type`) =  'https://uri.etsi.org/ngsi-ld/Relationship','", "object": "', '", "value": ')
-                                      || IF(LAST_VALUE(A.`type`) =  'https://uri.etsi.org/ngsi-ld/Relationship', LAST_VALUE(A.`https://uri.etsi.org/ngsi-ld/hasObject`) || '"',
-                                              
-                                              IF((LAST_VALUE(A.nodeType) <> '@json' AND LAST_VALUE(A.nodeType) <> '@id') OR LAST_VALUE(A.nodeType) IS NULL, '"' || LAST_VALUE(A.`https://uri.etsi.org/ngsi-ld/hasValue`) || '"',
-                                                  /* @id needs encoding with "@id": value */
-                                                  IF(LAST_VALUE(A.nodeType) = '@id', '{"@id": "' || LAST_VALUE(A.`https://uri.etsi.org/ngsi-ld/hasValue`) || '"}',
-                                                  /* @json is put directly into value field */
-                                                      IF(LAST_VALUE(A.nodeType) = '@json', LAST_VALUE(A.`https://uri.etsi.org/ngsi-ld/hasValue`), 'null' /*should not happen */)))
-                                      )
-                                      || '}' as indexagg
-                              FROM TABLE( TUMBLE(TABLE attributes, DESCRIPTOR(ts), INTERVAL {{.Values.flink.ngsildUpdateWindow|squote}} second)) as A
-                              WHERE A.entityId IS NOT NULL
-                              GROUP BY A.entityId, A.index, A.`https://uri.etsi.org/ngsi-ld/datasetId`, A.name, window_start, window_end) as B
-                          GROUP BY window_start, window_end, entityId, name
-                      ) GROUP BY window_start, window_end, id;
+                select 'update', true, true, '[{"id": "' || id || '",' || LISTAGG(attributeagg) || '}]'
+                from (
+                    select  window_start, window_end, B.entityId as id, '"' || B.name || '":[' || LISTAGG(B.indexagg) || ']' as attributeagg
+                    from(
+                        select window_start, window_end, entityId, name, `https://uri.etsi.org/ngsi-ld/datasetId`,
+                        '{"observedAt": "' || LAST_VALUE(DATE_FORMAT(A.`ts`,  'yyyy-MM-dd''T''HH:mm:ss.') || CAST(EXTRACT(MILLISECOND from A.`ts`) as STRING)) || 'Z", "type": "'
+                                || LAST_VALUE(A.`type`)
+                                || '", "datasetId": "'
+                                || IF(A.`https://uri.etsi.org/ngsi-ld/datasetId` IS NOT NULL, A.`https://uri.etsi.org/ngsi-ld/datasetId`, '@none')
+                                || IF(LAST_VALUE(A.`type`) =  'https://uri.etsi.org/ngsi-ld/Relationship','", "object": "', '", "value": ')
+                                || IF(LAST_VALUE(A.`type`) =  'https://uri.etsi.org/ngsi-ld/Relationship', LAST_VALUE(A.`https://uri.etsi.org/ngsi-ld/hasObject`) || '"',
+                                        
+                                        IF((LAST_VALUE(A.nodeType) <> '@json' AND LAST_VALUE(A.nodeType) <> '@id') OR LAST_VALUE(A.nodeType) IS NULL, '"' || LAST_VALUE(A.`https://uri.etsi.org/ngsi-ld/hasValue`) || '"',
+                                            /* @id needs encoding with "@id": value */
+                                            IF(LAST_VALUE(A.nodeType) = '@id', '{"@id": "' || LAST_VALUE(A.`https://uri.etsi.org/ngsi-ld/hasValue`) || '"}',
+                                            /* @json is put directly into value field */
+                                                IF(LAST_VALUE(A.nodeType) = '@json', LAST_VALUE(A.`https://uri.etsi.org/ngsi-ld/hasValue`), 'null' /*should not happen */)))
+                                )
+                                || '}' as indexagg
+                        FROM TABLE( TUMBLE(TABLE attributes, DESCRIPTOR(ts), INTERVAL {{.Values.flink.ngsildUpdateWindow|squote}} second)) as A
+                        WHERE A.entityId IS NOT NULL and (A.deleted IS NULL or A.deleted = false) and (A.synched IS NULL or A.synched = false)
+                        GROUP BY A.entityId, A.name, A.`https://uri.etsi.org/ngsi-ld/datasetId`, window_start, window_end) as B
+                    GROUP BY window_start, window_end, entityId, name, `https://uri.etsi.org/ngsi-ld/datasetId`
+                ) GROUP BY window_start, window_end, id;
         - |-
             /* forward only non-retracted attribute changes
             This is part of the core service */
             insert into attributes_writeback
-            select id, entityId, name, nodeType, valueType, `index`, `type`, `value`, `datasetId`, `object` from
-            (select id, last_value(entityId) as entityId, last_value(name) as name, last_value(nodeType) as nodeType, last_value(valueType) as valueType , `index`, last_value(`type`) as `type`,
-            last_value(`https://uri.etsi.org/ngsi-ld/datasetId`) as `datasetId`,
-            last_value(`https://uri.etsi.org/ngsi-ld/hasValue`) as `value`,
-            last_value(`https://uri.etsi.org/ngsi-ld/hasObject`) as `object`,
+            select entityId, name, nodeType, valueType, `type`, `https://uri.etsi.org/ngsi-ld/datasetId`, `https://uri.etsi.org/ngsi-ld/hasValue`, `https://uri.etsi.org/ngsi-ld/hasObject` from
+            (select entityId as entityId, name as name, last_value(nodeType) as nodeType, last_value(valueType) as valueType , last_value(`type`) as `type`,
+            `https://uri.etsi.org/ngsi-ld/datasetId` as `https://uri.etsi.org/ngsi-ld/datasetId`,
+            last_value(`https://uri.etsi.org/ngsi-ld/hasValue`) as `https://uri.etsi.org/ngsi-ld/hasValue`,
+            last_value(`https://uri.etsi.org/ngsi-ld/hasObject`) as `https://uri.etsi.org/ngsi-ld/hasObject`,
               TUMBLE_START(ts, INTERVAL {{ .Values.flink.attributeInsertWindow |squote }} SECOND),
               TUMBLE_END(ts, INTERVAL {{ .Values.flink.attributeInsertWindow |squote }} SECOND)
             from attributes_insert
-            group by id, `index`, TUMBLE(ts, INTERVAL {{ .Values.flink.attributeInsertWindow| squote }} SECOND));
+            group by entityId, name, `https://uri.etsi.org/ngsi-ld/datasetId`, TUMBLE(ts, INTERVAL {{ .Values.flink.attributeInsertWindow |squote }} SECOND));
 
     tables:
         - alerts

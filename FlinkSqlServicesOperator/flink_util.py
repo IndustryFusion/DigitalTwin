@@ -27,10 +27,39 @@ DEFAULT_TIMEOUT = 60
 class CancelJobFailedException(Exception):
     """Exception for a failed SQL Job cancellation"""
 
+def get_jobs(logger):
+    """Get jobs list"""
+    logger.debug("Request job list from flink job-manager")
+    job_response = requests.get(
+        f"{FLINK_URL}/jobs",
+        timeout=DEFAULT_TIMEOUT)
+    if job_response.status_code == 404:
+        return None
+    job_response.raise_for_status()
+    job_response = job_response.json()
+    return job_response
+
+
+def get_job_from_name(logger, name):
+    """retrieve jobid and job deails throguh job name"""
+    logger.debug(f"Request job-id for name {name} from flink job-manager")
+    job_list = get_jobs(logger)
+    found_job_id = None
+    for job in job_list.get('jobs'):
+        job_id = job.get('id')
+        logger.debug(f'Checking name of job_id {job_id}')
+        status_info = get_job_status(logger, job_id)
+        job_name = status_info.get('name')
+        job_state = status_info.get('state')
+        logger.debug(f'Found job name {job_name}')
+        if job_name == name and job_state not in ["CANCELED", "FINISHED"] :
+            found_job_id = job_id
+            break
+    return found_job_id
 
 def get_job_status(logger, job_id):
     """Get job status as json dict as returned by Flink"""
-    logger.debug(f"Requestion status for {job_id} from flink job-manager")
+    logger.debug(f"Request status for {job_id} from flink job-manager")
     job_response = requests.get(
         f"{FLINK_URL}/jobs/{job_id}",
         timeout=DEFAULT_TIMEOUT)
