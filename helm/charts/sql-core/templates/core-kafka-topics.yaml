@@ -1,4 +1,6 @@
 ---
+{{- $topicExists := (lookup "kafka.strimzi.io/v1beta2" "KafkaTopic" .Release.Namespace .Values.kafkaBridge.alerta.bulkTopic) }}
+{{- if not $topicExists }}
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
 metadata:
@@ -10,7 +12,10 @@ spec:
   replicas: 1
   config:
     retention.ms: {{.Values.kafkaBridge.alerta.bulkTopicRetention}}
+{{- end }}
 ---
+{{- $topicExists := (lookup "kafka.strimzi.io/v1beta2" "KafkaTopic" .Release.Namespace .Values.kafkaBridge.alerta.listenTopic) }}
+{{- if not $topicExists }}
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
 metadata:
@@ -22,6 +27,7 @@ spec:
   replicas: 1
   config:
     retention.ms: {{.Values.kafkaBridge.alerta.listenTopicRetention}}
+{{- end }}
 ---
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
@@ -35,18 +41,21 @@ spec:
   config:
     retention.ms: {{.Values.kafkaBridge.ngsildUpdates.listenTopicRetention}}
 ---
+{{- $topicExists := (lookup "kafka.strimzi.io/v1beta2" "KafkaTopic" .Release.Namespace .Values.kafkaBridge.debezium.attributesTopic) }}
+{{- if not $topicExists }}
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
 metadata:
-  name: {{.Values.kafkaBridge.debezium.attributesTopic}}
+  name: {{ .Values.kafkaBridge.debezium.attributesTopic }}
   labels:
     strimzi.io/cluster: my-cluster
 spec:
   partitions: 1
   replicas: 1
   config:
-    retention.ms: {{.Values.kafkaBridge.debezium.attributesTopicRetention}}
-    compression.type: {{.Values.kafkaBridge.debezium.attributesTopicCompression}}
+    retention.ms: {{ .Values.kafkaBridge.debezium.attributesTopicRetention }}
+    compression.type: {{ .Values.kafkaBridge.debezium.attributesTopicCompression }}
+{{- end }}
 ---
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic

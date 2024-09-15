@@ -63,10 +63,12 @@ def test_main(mock_utils, mock_configs, mock_graph, mock_nullify, tmp_path):
     observedAt.toPython.return_value = 'Timestamp'
     index = MagicMock()
     index.toPython.return_value = 'index'
+    unitCode = MagicMock()
+    unitCode.toPython.return_value = 'unitCode'
     mock_graph.query.side_effect = [[
-        (entityId, name, type, nodeType, valueType, hasValue, hasObject, observedAt, index),
-        (entityId, name, type, nodeType, valueType, hasValue, hasObject, observedAt, None),
-        (entityId, name, type, nodeType, valueType, hasValue, hasObject, observedAt, None)],
+        (entityId, name, type, nodeType, valueType, hasValue, hasObject, observedAt, index, unitCode),
+        (entityId, name, type, nodeType, valueType, hasValue, hasObject, observedAt, None, unitCode),
+        (entityId, name, type, nodeType, valueType, hasValue, hasObject, observedAt, None, None)],
         [(entityId, type, name, type)]
     ]
     create_ngsild_models.main('kms/shacl.ttl', 'kms/knowledge.ttl',

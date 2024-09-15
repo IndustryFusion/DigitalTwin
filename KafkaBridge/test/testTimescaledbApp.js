@@ -33,24 +33,24 @@ const Logger = function () {
 };
 
 describe('Test timescaledb processMessage', function () {
-  it('Should send a Property with @value nodetype', async function () {
-    const entityHistoryTable = {
-      create: async function (datapoint) {
-        assert.equal(datapoint.observedAt, '2023-07-14T14:29:13.110Z');
-        assert.equal(datapoint.modifiedAt, '2023-07-14T14:29:13.110Z');
-        assert.equal(datapoint.entityId, 'entityId');
-        assert.equal(datapoint.attributeId, 'name');
-        assert.equal(datapoint.nodeType, '@value');
-        assert.equal(datapoint.index, 0);
-        assert.equal(datapoint.datasetId, 'id');
-        assert.equal(datapoint.attributeType, 'https://uri.etsi.org/ngsi-ld/Property');
-        assert.equal(datapoint.value, 123);
-        return Promise.resolve(datapoint);
-      }
-    };
+  it('Should send an attribute', async function () {
+    const upsertSpy = sinon.spy(async function (datapoint) {
+      assert.equal(datapoint.observedAt, '2023-07-14T14:29:13.110Z');
+      assert.equal(datapoint.modifiedAt, '2023-07-14T14:29:13.110Z');
+      assert.equal(datapoint.entityId, 'entityId');
+      assert.equal(datapoint.attributeId, 'name');
+      assert.equal(datapoint.nodeType, '@value');
+      assert.equal(datapoint.datasetId, '@none');
+      assert.equal(datapoint.attributeType, 'https://uri.etsi.org/ngsi-ld/Property');
+      assert.equal(datapoint.value, 123);
+      assert.equal(datapoint.deleted, false);
+      return Promise.resolve(datapoint);
+    });
+
+    const attributeHistoryTable = { upsert: upsertSpy };
 
     const kafkamessage = {
-      topic: 'topic',
+      topic: 'iff.ngsild.attributes',
       partition: 'partition',
       message: {
         value: JSON.stringify({
@@ -58,47 +58,36 @@ describe('Test timescaledb processMessage', function () {
           entityId: 'entityId',
           name: 'name',
           type: 'https://uri.etsi.org/ngsi-ld/Property',
-          'https://uri.etsi.org/ngsi-ld/hasValue': 123,
+          attributeValue: 123,
           nodeType: '@value',
-          index: 0
+          datasetId: '@none'
         }),
         timestamp: '1689344953110'
       }
     };
-    toTest.__set__('entityHistoryTable', entityHistoryTable);
+    toTest.__set__('attributeHistoryTable', attributeHistoryTable);
     toTest.__set__('Logger', Logger);
     const processMessage = toTest.__get__('processMessage');
     await processMessage(kafkamessage);
+    sinon.assert.calledOnce(upsertSpy);
   });
-
-  it('Should send a Relationship', async function () {
-    const entityHistoryTable = {
-      create: async function (datapoint) {
-        assert.equal(datapoint.observedAt, '2023-07-14T14:29:13.110Z');
-        assert.equal(datapoint.modifiedAt, '2023-07-14T14:29:13.110Z');
-        assert.equal(datapoint.entityId, 'entityId');
-        assert.equal(datapoint.attributeId, 'relationship');
-        assert.equal(datapoint.nodeType, '@id');
-        assert.equal(datapoint.index, 0);
-        assert.equal(datapoint.datasetId, 'id');
-        assert.equal(datapoint.attributeType, 'https://uri.etsi.org/ngsi-ld/Relationship');
-        assert.equal(datapoint.value, 'object');
-        return Promise.resolve(datapoint);
-      }
-    };
-
+  it('Should send an entity', async function () {
+    const upsertSpy = sinon.spy(async function (datapoint) {
+      assert.equal(datapoint.observedAt, '2023-07-14T14:29:13.110Z');
+      assert.equal(datapoint.modifiedAt, '2023-07-14T14:29:13.110Z');
+      assert.equal(datapoint.id, 'id');
+      assert.equal(datapoint.type, 'https://example.com/type');
+      assert.equal(datapoint.deleted, false);
+      return Promise.resolve(datapoint);
+    });
+    const entityHistoryTable = { upsert: upsertSpy };
     const kafkamessage = {
-      topic: 'topic',
+      topic: 'iff.ngsild.entities',
       partition: 'partition',
       message: {
         value: JSON.stringify({
           id: 'id',
-          entityId: 'entityId',
-          name: 'relationship',
-          type: 'https://uri.etsi.org/ngsi-ld/Relationship',
-          'https://uri.etsi.org/ngsi-ld/hasObject': 'object',
-          nodeType: '@id',
-          index: 0
+          type: 'https://example.com/type'
         }),
         timestamp: '1689344953110'
       }
@@ -107,131 +96,289 @@ describe('Test timescaledb processMessage', function () {
     toTest.__set__('Logger', Logger);
     const processMessage = toTest.__get__('processMessage');
     await processMessage(kafkamessage);
+    sinon.assert.calledOnce(upsertSpy);
+  });
+});
+describe('Test timescaledb processAttributeMessage', function () {
+  it('Should send a Property with @value nodetype', async function () {
+    const upsertSpy = sinon.spy(async function (datapoint) {
+      assert.equal(datapoint.observedAt, '2023-07-14T14:29:13.110Z');
+      assert.equal(datapoint.modifiedAt, '2023-07-14T14:29:13.110Z');
+      assert.equal(datapoint.entityId, 'entityId');
+      assert.equal(datapoint.attributeId, 'name');
+      assert.equal(datapoint.nodeType, '@value');
+      assert.equal(datapoint.datasetId, '@none');
+      assert.equal(datapoint.attributeType, 'https://uri.etsi.org/ngsi-ld/Property');
+      assert.equal(datapoint.value, 123);
+      assert.equal(datapoint.deleted, false);
+      return Promise.resolve(datapoint);
+    });
+    const attributeHistoryTable = { upsert: upsertSpy };
+    const message = {
+      value: JSON.stringify({
+        id: 'id',
+        entityId: 'entityId',
+        name: 'name',
+        type: 'https://uri.etsi.org/ngsi-ld/Property',
+        attributeValue: 123,
+        nodeType: '@value',
+        index: 0
+      }),
+      timestamp: '1689344953110'
+    };
+    toTest.__set__('attributeHistoryTable', attributeHistoryTable);
+    toTest.__set__('Logger', Logger);
+    const processMessage = toTest.__get__('processAttributeMessage');
+    await processMessage(message);
+    sinon.assert.calledOnce(upsertSpy);
+  });
+  it('Should delete a Property', async function () {
+    const upsertSpy = sinon.spy(async function (datapoint) {
+      assert.equal(datapoint.deleted, true);
+      return Promise.resolve(datapoint);
+    });
+    const attributeHistoryTable = { upsert: upsertSpy };
+    const message = {
+      value: JSON.stringify({
+        id: 'id',
+        entityId: 'entityId',
+        name: 'name',
+        type: 'https://uri.etsi.org/ngsi-ld/Property',
+        attributeValue: 123,
+        nodeType: '@value',
+        deleted: true
+      }),
+      timestamp: '1689344953110'
+    };
+    toTest.__set__('attributeHistoryTable', attributeHistoryTable);
+    toTest.__set__('Logger', Logger);
+    const processMessage = toTest.__get__('processAttributeMessage');
+    await processMessage(message);
+    sinon.assert.calledOnce(upsertSpy);
+  });
+  it('Should explicitly undelete a Property', async function () {
+    const upsertSpy = sinon.spy(async function (datapoint) {
+      assert.equal(datapoint.deleted, false);
+      return Promise.resolve(datapoint);
+    });
+    const attributeHistoryTable = { upsert: upsertSpy };
+    const message = {
+      value: JSON.stringify({
+        id: 'id',
+        entityId: 'entityId',
+        name: 'name',
+        type: 'https://uri.etsi.org/ngsi-ld/Property',
+        attributeValue: 123,
+        nodeType: '@value',
+        deleted: false
+      }),
+      timestamp: '1689344953110'
+    };
+    toTest.__set__('attributeHistoryTable', attributeHistoryTable);
+    toTest.__set__('Logger', Logger);
+    const processMessage = toTest.__get__('processAttributeMessage');
+    await processMessage(message);
+    sinon.assert.calledOnce(upsertSpy);
+  });
+  it('Should send a Relationship', async function () {
+    const upsertSpy = sinon.spy(async function (datapoint) {
+      assert.equal(datapoint.observedAt, '2023-07-14T14:29:13.110Z');
+      assert.equal(datapoint.modifiedAt, '2023-07-14T14:29:13.110Z');
+      assert.equal(datapoint.entityId, 'entityId');
+      assert.equal(datapoint.attributeId, 'relationship');
+      assert.equal(datapoint.nodeType, '@id');
+      assert.equal(datapoint.datasetId, '@none');
+      assert.equal(datapoint.attributeType, 'https://uri.etsi.org/ngsi-ld/Relationship');
+      assert.equal(datapoint.value, 'object');
+      assert.equal(datapoint.deleted, false);
+      return Promise.resolve(datapoint);
+    });
+    const attributeHistoryTable = { upsert: upsertSpy };
+    const message = {
+      value: JSON.stringify({
+        id: 'id',
+        entityId: 'entityId',
+        name: 'relationship',
+        type: 'https://uri.etsi.org/ngsi-ld/Relationship',
+        attributeValue: 'object',
+        nodeType: '@id'
+      }),
+      timestamp: '1689344953110'
+    };
+    toTest.__set__('attributeHistoryTable', attributeHistoryTable);
+    toTest.__set__('Logger', Logger);
+    const processMessage = toTest.__get__('processAttributeMessage');
+    await processMessage(message);
+    sinon.assert.calledOnce(upsertSpy);
   });
 
   it('Should send a Property with @value nodetype and valueType string', async function () {
-    const entityHistoryTable = {
-      create: async function (datapoint) {
-        assert.equal(datapoint.observedAt, '2023-07-14T14:29:13.110Z');
-        assert.equal(datapoint.modifiedAt, '2023-07-14T14:29:13.110Z');
-        assert.equal(datapoint.entityId, 'entityId');
-        assert.equal(datapoint.attributeId, 'property');
-        assert.equal(datapoint.nodeType, '@value');
-        assert.equal(datapoint.index, 0);
-        assert.equal(datapoint.datasetId, 'id');
-        assert.equal(datapoint.attributeType, 'https://uri.etsi.org/ngsi-ld/Property');
-        assert.equal(datapoint.value, 'value');
-        assert.equal(datapoint.valueType, 'http://www.w3.org/2001/XMLSchema#string');
-        return Promise.resolve(datapoint);
-      }
+    const upsertSpy = sinon.spy(async function (datapoint) {
+      assert.equal(datapoint.observedAt, '2023-07-14T14:29:13.110Z');
+      assert.equal(datapoint.modifiedAt, '2023-07-14T14:29:13.110Z');
+      assert.equal(datapoint.entityId, 'entityId');
+      assert.equal(datapoint.attributeId, 'property');
+      assert.equal(datapoint.nodeType, '@value');
+      assert.equal(datapoint.datasetId, '@none');
+      assert.equal(datapoint.attributeType, 'https://uri.etsi.org/ngsi-ld/Property');
+      assert.equal(datapoint.value, 'value');
+      assert.equal(datapoint.valueType, 'http://www.w3.org/2001/XMLSchema#string');
+      assert.equal(datapoint.deleted, false);
+      return Promise.resolve(datapoint);
+    });
+    const attributeHistoryTable = { upsert: upsertSpy };
+    const message = {
+      value: JSON.stringify({
+        id: 'id',
+        entityId: 'entityId',
+        name: 'property',
+        type: 'https://uri.etsi.org/ngsi-ld/Property',
+        attributeValue: 'value',
+        nodeType: '@value',
+        valueType: 'http://www.w3.org/2001/XMLSchema#string',
+        index: 0
+      }),
+      timestamp: '1689344953110'
     };
-
-    const kafkamessage = {
-      topic: 'topic',
-      partition: 'partition',
-      message: {
-        value: JSON.stringify({
-          id: 'id',
-          entityId: 'entityId',
-          name: 'property',
-          type: 'https://uri.etsi.org/ngsi-ld/Property',
-          'https://uri.etsi.org/ngsi-ld/hasValue': 'value',
-          nodeType: '@value',
-          valueType: 'http://www.w3.org/2001/XMLSchema#string',
-          index: 0
-        }),
-        timestamp: '1689344953110'
-      }
-    };
-    toTest.__set__('entityHistoryTable', entityHistoryTable);
+    toTest.__set__('attributeHistoryTable', attributeHistoryTable);
     toTest.__set__('Logger', Logger);
-    const processMessage = toTest.__get__('processMessage');
-    await processMessage(kafkamessage);
+    const processMessage = toTest.__get__('processAttributeMessage');
+    await processMessage(message);
+    sinon.assert.calledOnce(upsertSpy);
   });
 
-  it('Should check correct object type- property/relationship with @value nodetype and valueType string', async function () {
-    const entityHistoryTable = {
-      create: async function (datapoint) {
-        assert.equal(datapoint.observedAt, '2023-07-14T14:29:13.110Z');
-        assert.equal(datapoint.modifiedAt, '2023-07-14T14:29:13.110Z');
-        assert.equal(datapoint.entityId, 'entityId');
-        assert.equal(datapoint.attributeId, 'property');
-        assert.equal(datapoint.nodeType, '@value');
-        assert.equal(datapoint.index, 0);
-        assert.equal(datapoint.datasetId, 'id');
-        assert.notEqual(datapoint.attributeType, 'https://uri.etsi.org/ngsi-ld/Property');
-        assert.equal(datapoint.value, 'value');
-        assert.equal(datapoint.valueType, 'http://www.w3.org/2001/XMLSchema#string');
-        return Promise.resolve(datapoint);
-      }
+  it('Should reject wrong object type- property/relationship with @value nodetype and valueType string', async function () {
+    const upsertSpy = sinon.spy(async function (datapoint) {
+      return Promise.resolve(datapoint);
+    });
+    const attributeHistoryTable = { upsert: upsertSpy };
+    const message = {
+      value: JSON.stringify({
+        id: 'id',
+        entityId: 'entityId',
+        name: 'property',
+        type: 'https://uri.etsi.org/ngsi-ld',
+        attributeValue: 'value',
+        nodeType: '@value',
+        valueType: 'http://www.w3.org/2001/XMLSchema#string',
+        index: 0
+      }),
+      timestamp: '1689344953110'
     };
-
-    const kafkamessage = {
-      topic: 'topic',
-      partition: 'partition',
-      message: {
-        value: JSON.stringify({
-          id: 'id',
-          entityId: 'entityId',
-          name: 'property',
-          type: 'https://uri.etsi.org/ngsi-ld/',
-          'https://uri.etsi.org/ngsi-ld/hasValue': 'value',
-          nodeType: '@value',
-          valueType: 'http://www.w3.org/2001/XMLSchema#string',
-          index: 0
-        }),
-        timestamp: '1689344953110'
-      }
-    };
-    toTest.__set__('entityHistoryTable', entityHistoryTable);
+    toTest.__set__('attributeHistoryTable', attributeHistoryTable);
     toTest.__set__('Logger', Logger);
-    const processMessage = toTest.__get__('processMessage');
-    await processMessage(kafkamessage);
+    const processMessage = toTest.__get__('processAttributeMessage');
+    await processMessage(message);
+    sinon.assert.notCalled(upsertSpy);
   });
 
   it('Should send a Property with wrong timestamp and attributeType', async function () {
-    const entityHistoryTable = {
-      create: async function (datapoint) {
-        assert.notEqual(datapoint.observedAt, '2023-07-14T14:29:13.110Z');
-        assert.notEqual(datapoint.modifiedAt, '2023-07-14T14:29:13.110Z');
-        assert.equal(datapoint.entityId, 'entityId');
-        assert.equal(datapoint.attributeId, 'property');
-        assert.equal(datapoint.nodeType, '@value');
-        assert.equal(datapoint.index, 0);
-        assert.equal(datapoint.datasetId, 'id');
-        assert.notEqual(datapoint.attributeType, 'https://uri.etsi.org/ngsi-ld/Relationship');
-        assert.equal(datapoint.value, 'value');
-        return Promise.resolve(datapoint);
-      }
+    const upsertSpy = sinon.spy(async function (datapoint) {
+      assert.notEqual(datapoint.observedAt, '2023-07-14T14:29:13.110Z');
+      assert.notEqual(datapoint.modifiedAt, '2023-07-14T14:29:13.110Z');
+      assert.equal(datapoint.entityId, 'entityId');
+      assert.equal(datapoint.attributeId, 'property');
+      assert.equal(datapoint.nodeType, '@value');
+      assert.equal(datapoint.index, 0);
+      assert.equal(datapoint.datasetId, '@none');
+      assert.notEqual(datapoint.attributeType, 'https://uri.etsi.org/ngsi-ld/Relationship');
+      assert.equal(datapoint.value, 'value');
+      return Promise.resolve(datapoint);
+    });
+    const attributeHistoryTable = { upsert: upsertSpy };
+    const message = {
+      value: JSON.stringify({
+        id: 'id',
+        entityId: 'entityId',
+        name: 'property',
+        type: 'https://uri.etsi.org/ngsi-ld/Property',
+        attributeValue: 'value',
+        nodeType: '@value',
+        index: 0
+      }),
+      timestamp: '168934495320'
     };
-
-    const kafkamessage = {
-      topic: 'topic',
-      partition: 'partition',
-      message: {
-        value: JSON.stringify({
-          id: 'id',
-          entityId: 'entityId',
-          name: 'property',
-          type: 'https://uri.etsi.org/ngsi-ld/Property',
-          'https://uri.etsi.org/ngsi-ld/hasValue': 'value',
-          nodeType: '@value',
-          index: 0
-        }),
-        timestamp: '168934495320'
-      }
+    toTest.__set__('attributeHistoryTable', attributeHistoryTable);
+    toTest.__set__('Logger', Logger);
+    const processMessage = toTest.__get__('processAttributeMessage');
+    await processMessage(message);
+    sinon.assert.calledOnce(upsertSpy);
+  });
+});
+describe('Test timescaledb processEntityMessage', function () {
+  it('Should send an entity', async function () {
+    const upsertSpy = sinon.spy(async function (datapoint) {
+      assert.equal(datapoint.id, 'id');
+      assert.equal(datapoint.type, 'https://example.com/type');
+      assert.equal(datapoint.deleted, false);
+      return Promise.resolve(datapoint);
+    });
+    const entityHistoryTable = { upsert: upsertSpy };
+    const message = {
+      value: JSON.stringify({
+        id: 'id',
+        type: 'https://example.com/type'
+      }),
+      timestamp: '1689344953110'
     };
     toTest.__set__('entityHistoryTable', entityHistoryTable);
     toTest.__set__('Logger', Logger);
-    const processMessage = toTest.__get__('processMessage');
-    await processMessage(kafkamessage);
+    const processMessage = toTest.__get__('processEntityMessage');
+    await processMessage(message);
+    sinon.assert.calledOnce(upsertSpy);
+  });
+  it('Should delete an entity', async function () {
+    const upsertSpy = sinon.spy(async function (datapoint) {
+      assert.equal(datapoint.id, 'id');
+      assert.equal(datapoint.type, 'https://example.com/type');
+      assert.equal(datapoint.deleted, true);
+      return Promise.resolve(datapoint);
+    });
+    const entityHistoryTable = { upsert: upsertSpy };
+    const message = {
+      value: JSON.stringify({
+        id: 'id',
+        type: 'https://example.com/type',
+        deleted: true
+      }),
+      timestamp: '1689344953110'
+    };
+    toTest.__set__('entityHistoryTable', entityHistoryTable);
+    toTest.__set__('Logger', Logger);
+    const processMessage = toTest.__get__('processEntityMessage');
+    await processMessage(message);
+    sinon.assert.calledOnce(upsertSpy);
+  });
+  it('Should explicitly undelete an entity', async function () {
+    const upsertSpy = sinon.spy(async function (datapoint) {
+      assert.equal(datapoint.id, 'id');
+      assert.equal(datapoint.type, 'https://example.com/type');
+      assert.equal(datapoint.deleted, false);
+      return Promise.resolve(datapoint);
+    });
+    const entityHistoryTable = { upsert: upsertSpy };
+    const message = {
+      value: JSON.stringify({
+        id: 'id',
+        type: 'https://example.com/type',
+        deleted: false
+      }),
+      timestamp: '1689344953110'
+    };
+    toTest.__set__('entityHistoryTable', entityHistoryTable);
+    toTest.__set__('Logger', Logger);
+    const processMessage = toTest.__get__('processEntityMessage');
+    await processMessage(message);
+    sinon.assert.calledOnce(upsertSpy);
   });
 });
-
 describe('Test startListener', function () {
-  const historyTableName = 'entityhistory';
-  const htChecksqlquery = 'SELECT * FROM timescaledb_information.hypertables WHERE hypertable_name = \'' + historyTableName + '\';';
-  const htCreateSqlquery = 'SELECT create_hypertable(\'' + historyTableName + '\', \'observedAt\', migrate_data => true);';
+  const entityTableName = 'entities';
+  const attributeTableName = 'attributes';
+  const htAttributeChecksqlquery = 'SELECT * FROM timescaledb_information.hypertables WHERE hypertable_name = \'' + attributeTableName + '\';';
+  const htEntityChecksqlquery = 'SELECT * FROM timescaledb_information.hypertables WHERE hypertable_name = \'' + entityTableName + '\';';
+  const htAttributeCreateSqlquery = 'SELECT create_hypertable(\'' + attributeTableName + '\', \'observedAt\', migrate_data => true);';
+  const htEntityCreateSqlquery = 'SELECT create_hypertable(\'' + entityTableName + '\', \'observedAt\', migrate_data => true);';
   const htCreateRole = 'CREATE ROLE tsdbuser;';
   const htGrant = 'GRANT SELECT ON ALL TABLES IN SCHEMA public TO tsdbuser;';
 
@@ -245,7 +392,7 @@ describe('Test startListener', function () {
     }
 
     query (sqlquery) {
-      assert.oneOf(sqlquery, [htChecksqlquery, htCreateSqlquery, htCreateRole, htGrant], 'Wrong query message for timescaledb table.');
+      assert.oneOf(sqlquery, [htAttributeChecksqlquery, htEntityChecksqlquery, htAttributeCreateSqlquery, htEntityCreateSqlquery, htCreateRole, htGrant], 'Wrong query message for timescaledb table.');
       return Promise.resolve(sqlquery);
     }
   };
@@ -258,7 +405,7 @@ describe('Test startListener', function () {
     },
     connect: function () {},
     subscribe: function (obj) {
-      obj.topic.should.equal('topic');
+      assert.oneOf(obj.topic, ['attributeTopic', 'entityTopic']);
       obj.fromBeginning.should.equal(false);
     },
     disconnect: function () {
@@ -272,7 +419,8 @@ describe('Test startListener', function () {
   };
   const config = {
     timescaledb: {
-      topic: 'topic',
+      attributeTopic: 'attributeTopic',
+      entityTopic: 'entityTopic',
       tsdbuser: 'tsdbuser'
     }
   };

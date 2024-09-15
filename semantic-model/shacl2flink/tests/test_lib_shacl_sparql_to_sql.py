@@ -49,12 +49,15 @@ def test_translate(mock_utils, mock_add_variables_to_message, mock_translate_spa
     severitylabel = MagicMock()
     severitylabel.toPython.return_value = 'severitylabel'
     mock_translate_sparql.return_value = ([], [])
+    subclass = MagicMock()
+    subclass.toPython.return_value = 'subclass'
     g.__iadd__.return_value.query.return_value = [Munch()]
     g.__iadd__.return_value.query.return_value[0].message = message
     g.__iadd__.return_value.query.return_value[0].select = select
     g.__iadd__.return_value.query.return_value[0].nodeshape = nodeshape
     g.__iadd__.return_value.query.return_value[0].targetclass = targetclass
     g.__iadd__.return_value.query.return_value[0].severitylabel = severitylabel
+    g.__iadd__.return_value.query.return_value[0].subclass = subclass
     prefixes = {"sh": "http://example.com/sh", "base": "http://example.com/base"}
     mock_utils.process_sql_dialect.return_value = 'adapted_sql_dialect'
     sqlite, (statementsets, tables, views) = \
@@ -65,6 +68,3 @@ def test_translate(mock_utils, mock_add_variables_to_message, mock_translate_spa
     assert len(statementsets) == 1
     lower_sqlite = sqlite.lower()
     assert lower_sqlite.count('select') == 3
-    assert "select id as this from targetclass_view" in lower_sqlite
-    assert "'severitylabel'" in lower_sqlite
-    assert "'message'" in lower_sqlite

@@ -490,9 +490,8 @@ describe(fileToTest, function () {
                 datasetId: '@none',
                 name: 'https://industry-fusion.com/types/v0.9/hasFilter',
                 type: 'https://uri.etsi.org/ngsi-ld/Relationship',
-                'https://uri.etsi.org/ngsi-ld/hasObject': 'value',
-                nodeType: '@id',
-                index: 0
+                attributeValue: 'value',
+                nodeType: '@id'
               };
               assert.deepEqual(JSON.parse(message.value), value, 'Received Kafke message not correct');
               spbdataIngestion.stopAggregator();
@@ -558,8 +557,7 @@ describe(fileToTest, function () {
                 nodeType: '@value',
                 name: 'https://industry-fusion.com/types/v0.9/hasFilter',
                 type: 'https://uri.etsi.org/ngsi-ld/Property',
-                'https://uri.etsi.org/ngsi-ld/hasValue': 'value',
-                index: 0
+                attributeValue: 'value'
               };
               assert.deepEqual(JSON.parse(message.value), value, 'Received Kafke message not correct');
               spbdataIngestion.stopAggregator();

@@ -113,6 +113,11 @@ function addProperties (message, metric) {
         const value = metric.properties.values[index];
         message.datasetId = value;
       }
+      const langIndex = metric.properties.keys.indexOf('lang');
+      if (langIndex !== -1 && langIndex < metric.properties.values.length) {
+        const value = metric.properties.values[langIndex];
+        message.lang = value;
+      }
     }
   }
 
@@ -128,9 +133,8 @@ module.exports.mapSpbRelationshipToKafka = function (deviceId, metric) {
     entityId: deviceId,
     name: originalName,
     type: etsiNgsiRelationshipUrl,
-    'https://uri.etsi.org/ngsi-ld/hasObject': metric.value,
-    nodeType: '@id',
-    index: 0
+    attributeValue: metric.value,
+    nodeType: '@id'
   };
   addProperties(mappedKafkaMessage, metric);
   return mappedKafkaMessage;
@@ -144,8 +148,7 @@ module.exports.mapSpbPropertyToKafka = function (deviceId, metric) {
     nodeType: '@value',
     name: originalName,
     type: etsiNgsiPropertysUrl,
-    'https://uri.etsi.org/ngsi-ld/hasValue': metric.value,
-    index: 0
+    attributeValue: metric.value
   };
   addProperties(mappedPropKafkaMessage, metric);
   return mappedPropKafkaMessage;
@@ -159,8 +162,7 @@ module.exports.mapSpbPropertyIriToKafka = function (deviceId, metric) {
     nodeType: '@id',
     name: originalName,
     type: etsiNgsiPropertysUrl,
-    'https://uri.etsi.org/ngsi-ld/hasValue': metric.value,
-    index: 0
+    attributeValue: metric.value
   };
   addProperties(mappedPropKafkaMessage, metric);
   return mappedPropKafkaMessage;
@@ -174,8 +176,7 @@ module.exports.mapSpbPropertyJsonToKafka = function (deviceId, metric) {
     nodeType: '@json',
     name: originalName,
     type: etsiNgsiPropertysUrl,
-    'https://uri.etsi.org/ngsi-ld/hasValue': metric.value,
-    index: 0
+    attributeValue: metric.value
   };
   addProperties(mappedPropKafkaMessage, metric);
   return mappedPropKafkaMessage;

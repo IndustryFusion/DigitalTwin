@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-export TSDB_TABLE=entityhistory
+export TSDB_TABLE=attributes
 export TSDB_DATABASE=tsdb
 export POSTGRES_SECRET=ngb.acid-cluster.credentials.postgresql.acid.zalan.do
 export DBUSER=ngb
