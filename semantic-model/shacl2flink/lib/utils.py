@@ -17,9 +17,9 @@
 import os
 import re
 import rdflib
-from rdflib import RDFS, OWL, RDF, Graph, Literal, XSD
 from urllib.parse import urlparse
 from enum import Enum
+from rdflib import Graph, RDFS, RDF, OWL, XSD, Literal
 from collections import deque
 
 
@@ -40,6 +40,36 @@ class DnsNameNotCompliant(Exception):
     """
     Exception for non compliant DNS name
     """
+
+
+relationship_checks_tablename = "relationshipChecksTable"
+property_checks_tablename = "propertyChecksTable"
+checks_table_primary_key = ["targetClass", "propertyPath"]
+relationship_checks_table = [
+    {"targetClass": "STRING"},
+    {"propertyPath": "STRING"},
+    {"propertyClass": "STRING"},
+    {"maxCount": "STRING"},
+    {"minCount": "STRING"},
+    {"severity": "STRING"}
+]
+property_checks_table = [
+    {"targetClass": "STRING"},
+    {"propertyPath": "STRING"},
+    {"propertyClass": "STRING"},
+    {"propertyNodetype": "STRING"},
+    {"maxCount": "STRING"},
+    {"minCount": "STRING"},
+    {"severity": "STRING"},
+    {"minExclusive": "STRING"},
+    {"maxExclusive": "STRING"},
+    {"minInclusive": "STRING"},
+    {"maxInclusive": "STRING"},
+    {"minLength": "STRING"},
+    {"maxLength": "STRING"},
+    {"pattern": "STRING"},
+    {"ins": "STRING"}
+]
 
 
 def get_timevars(ctx, vars):
@@ -169,47 +199,6 @@ def create_yaml_table(name, connector, table, primary_key, kafka, value):
     return yaml_table
 
 
-def create_flink_debug_table(name, connector, table, primary_key, kafka, value):
-    sqltable = f'DROP TABLE IF EXISTS `{name}`;\n'
-    first = True
-    sqltable += f'CREATE TABLE `{name}` (\n'
-    tsname = 'ts'
-    for field in table:
-        for fname, ftype in field.items():
-            if fname.lower() == 'watermark':
-                break
-            if 'metadata' in ftype.lower() and 'timestamp' in ftype.lower():
-                ftype = "TIMESTAMP(3) METADATA FROM 'timestamp'"
-                tsname = fname
-            if first:
-                first = False
-            else:
-                sqltable += ',\n'
-            sqltable += f'`{fname}` {ftype}'
-    sqltable += f", \nwatermark FOR `{tsname}` AS `{tsname}`"
-    if primary_key is not None:
-        sqltable += ',\nPRIMARY KEY('
-        first = True
-        for key in primary_key:
-            if first:
-                first = False
-            else:
-                sqltable += ','
-            sqltable += f'`{key}`'
-        sqltable += ')\n'
-    sqltable += ')'
-    sqltable += ' WITH (\n'
-    sqltable += "'format' = 'json',\n"
-    sqltable += f"'connector' = '{connector}',\n"
-    sqltable += f"'topic' = '{kafka['topic']}',\n"
-    sqltable += "'scan.startup.mode' = 'earliest-offset'\n"
-    properties = kafka['properties']
-    for k in properties:
-        sqltable += f",\n'properties.{k}' = '{properties[k]}'\n"
-    sqltable += ');'
-    return sqltable
-
-
 def create_sql_table(name, table, primary_key, dialect=SQL_DIALECT. SQL):
     sqltable = f'DROP TABLE IF EXISTS `{name}`;\n'
     first = True
@@ -243,7 +232,7 @@ def create_sql_table(name, table, primary_key, dialect=SQL_DIALECT. SQL):
     return sqltable
 
 
-def create_yaml_view(name, table, primary_key=['id']):
+def create_yaml_view(name, table, primary_key=None):
     table_name = class_to_obj_name(name)
     if not check_dns_name(table_name):
         raise DnsNameNotCompliant
@@ -256,17 +245,16 @@ def create_yaml_view(name, table, primary_key=['id']):
     spec = {}
     yaml_view['spec'] = spec
     spec['name'] = f'{name}_view'
-    sqlstatement = "SELECT `id`, `type`"
+    sqlstatement = "SELECT `type`"
     for field in table:
         for field_name, field_type in field.items():
             if ('metadata' not in field_name.lower() and
-                    field_name.lower() != "id" and
                     field_name.lower() != "watermark" and
                     field_name.lower() != "type"):
                 sqlstatement += f',\n `{field_name}`'
     sqlstatement += " FROM (\n  SELECT *,\nROW_NUMBER() OVER (PARTITION BY "
     first = True
-    for key in primary_key:
+    for key in (primary_key or []):
         if first:
             first = False
         else:
@@ -278,8 +266,8 @@ def create_yaml_view(name, table, primary_key=['id']):
     return yaml_view
 
 
-def create_sql_view(table_name, table, primary_key=['id'],
-                    additional_keys=['id', 'type']):
+def create_sql_view(table_name, table, primary_key=None,
+                    additional_keys=['type']):
     sqlstatement = f'DROP VIEW IF EXISTS `{table_name}_view`;\n'
     sqlstatement += f"CREATE VIEW `{table_name}_view` AS\n"
     sqlstatement += "SELECT "
@@ -296,7 +284,6 @@ def create_sql_view(table_name, table, primary_key=['id'],
     for field in table:
         for field_name, field_type in field.items():
             if ('metadata' not in field_name.lower() and
-                    field_name.lower() != "id" and
                     field_name.lower() != "watermark" and
                     field_name.lower() != "type"):
                 if first:
@@ -306,7 +293,7 @@ def create_sql_view(table_name, table, primary_key=['id'],
                 sqlstatement += f'`{field_name}`'
     sqlstatement += " FROM (\n  SELECT *,\nROW_NUMBER() OVER (PARTITION BY "
     first = True
-    for key in primary_key:
+    for key in (primary_key or []):
         if first:
             first = False
         else:
@@ -317,25 +304,20 @@ def create_sql_view(table_name, table, primary_key=['id'],
     return sqlstatement
 
 
-def create_configmap(object_name, sqlstatementset):
-    # yaml_cm = {}
-    # yaml_cm['apiVersion'] = 'v1'
-    # yaml_cm['kind'] = 'ConfigMap'
-    # metadata = {}
-    # yaml_cm['metadata'] = metadata
-    # metadata['name'] = object_name
+def create_configmap(object_name, sqlstatementset, labels=None):
     data = {}
-    # yaml_cm['data'] = data
     for index, value in enumerate(sqlstatementset):
         data[index] = value
-    return create_configmap_generic(object_name, data)
+    return create_configmap_generic(object_name, data, labels)
 
 
-def create_configmap_generic(object_name, data):
+def create_configmap_generic(object_name, data, labels=None):
     yaml_cm = {}
     yaml_cm['apiVersion'] = 'v1'
     yaml_cm['kind'] = 'ConfigMap'
     metadata = {}
+    if labels is not None:
+        metadata['labels'] = labels
     yaml_cm['metadata'] = metadata
     metadata['name'] = object_name
     yaml_cm['data'] = data
@@ -552,7 +534,6 @@ def wrap_ngsild_variable(ctx, var):
         raise TypeError("NGSI-LD Wrapping of non-variables is not allowed.")
     bounds = ctx['bounds']
     property_variables = ctx['property_variables']
-    entity_variables = ctx['entity_variables']
     time_variables = ctx['time_variables']
     varname = create_varname(var)
     add_aggregate_var_to_context(ctx, varname)
@@ -564,9 +545,6 @@ def wrap_ngsild_variable(ctx, var):
             return "'<' || " + bounds[varname] + " || '>'"
         else:
             return "'\"' || " + bounds[varname] + " || '\"'"
-    elif var in entity_variables:
-        raise SparqlValidationFailed(f'Cannot bind enttiy variable {varname} to \
-plain RDF context')
     elif var in time_variables:
         if varname in bounds:
             return f"SQL_DIALECT_TIME_TO_MILLISECONDS{{{bounds[varname]}}}"
@@ -597,6 +575,85 @@ def split_statementsets(statementsets, max_map_size):
         grouped_strings.append(current_group)
 
     return grouped_strings
+
+
+def create_relationship_check_yaml_table(connector, kafka, value):
+    return create_yaml_table(relationship_checks_tablename, connector, relationship_checks_table,
+                             checks_table_primary_key, kafka, value)
+
+
+def create_relationship_check_sql_table():
+    return create_sql_table(relationship_checks_tablename, relationship_checks_table, checks_table_primary_key,
+                            SQL_DIALECT.SQLITE)
+
+
+def create_property_check_yaml_table(connector, kafka, value):
+    return create_yaml_table(property_checks_tablename, connector, property_checks_table,
+                             checks_table_primary_key, kafka, value)
+
+
+def create_property_check_sql_table():
+    return create_sql_table(property_checks_tablename, property_checks_table, checks_table_primary_key,
+                            SQL_DIALECT.SQLITE)
+
+
+def add_relationship_checks(checks, sqldialect):
+    if sqldialect == SQL_DIALECT.SQLITE:
+        statement = f'INSERT OR REPLACE INTO {relationship_checks_tablename} VALUES'
+    else:
+        statement = f'INSERT INTO {relationship_checks_tablename} VALUES'
+    first = True
+    for check in checks:
+        lcheck = {}
+        for k, v in check.items():
+            if v is None:
+                lcheck[k] = 'CAST(NULL as STRING)'
+            else:
+                lcheck[k] = f"'{v}'"
+        if first:
+            first = False
+        else:
+            statement += ', '
+        statement += f'({lcheck["targetClass"]}, {lcheck["propertyPath"]}, {lcheck["propertyClass"]}, \
+{lcheck["maxCount"]}, {lcheck["minCount"]}, {lcheck["severity"]})'
+    statement += ';'
+    return statement
+
+
+def add_property_checks(checks, sqldialect):
+    if sqldialect == SQL_DIALECT.SQLITE:
+        statement = f'INSERT OR REPLACE INTO {property_checks_tablename} VALUES'
+    else:
+        statement = f'INSERT INTO {property_checks_tablename} VALUES'
+    first = True
+    for check in checks:
+        lcheck = {}
+        for k, v in check.items():
+            if v is None:
+                lcheck[k] = 'CAST (NULL as STRING)'
+            else:
+                lcheck[k] = f"'{v}'"
+        if first:
+            first = False
+        else:
+            statement += ', '
+        statement += f'({lcheck["targetClass"]}, \
+{lcheck["propertyPath"]}, \
+{lcheck["propertyClass"]}, \
+{lcheck["propertyNodetype"]}, \
+{lcheck["maxCount"]}, \
+{lcheck["minCount"]}, \
+{lcheck["severity"]}, \
+{lcheck["minExclusive"]}, \
+{lcheck["maxExclusive"]}, \
+{lcheck["minInclusive"]}, \
+{lcheck["maxInclusive"]}, \
+{lcheck["minLength"]}, \
+{lcheck["maxLength"]}, \
+{lcheck["pattern"]}, \
+{lcheck["ins"]})'
+    statement += ';'
+    return statement
 
 
 # This creates a transitive closure of all OWL.TransitiveProperty elements given in the ontology

@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from rdflib import Graph, URIRef
+from rdflib import Graph
 import os
 import sys
 import argparse
@@ -39,40 +39,24 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
 SELECT DISTINCT (?a as ?entityId) (?b as ?name) (?e as ?type) (IF(bound(?g), IF(isIRI(?g), '@id', '@value'), IF(isIRI(?f), '@id', '@value')) as ?nodeType)
-(datatype(?g) as ?valueType) (?f as ?hasValue) (?g as ?hasObject) ?observedAt ?index
+(datatype(?g) as ?valueType) (?f as ?hasValue) (?g as ?hasObject) ?observedAt ?index ?unitCode
 where {
-    ?nodeshape a sh:NodeShape .
-    ?nodeshape sh:targetClass ?class .
-    ?nodeshape sh:property [ sh:path ?b ] .
     ?a a ?subclass .
-    ?subclass rdfs:subClassOf* ?class .
-    FILTER NOT EXISTS {
-        ?class rdfs:subClassOf+ ?further .
-        ?subnodeshape sh:targetClass ?further .
-        ?subnodeshape sh:property [ sh:path ?b ] .
-    } .
     {?a ?b [ ngsild:hasObject ?g ] .
     VALUES ?e {ngsild:Relationship} .
     OPTIONAl{?a ?b [ ngsild:observedAt ?observedAt; ngsild:hasObject ?g  ] .} .
     OPTIONAl{?a ?b [ ngsild:datasetId ?index; ngsild:hasObject ?g  ] .} .
+    OPTIONAl{?a ?b [ ngsild:unitCode ?unitCode; ngsild:hasObject ?g  ] .} .
     }
-    UNION
-    { ?a ?b [ ngsild:hasValue ?f ] .
-    VALUES ?d {'@value'} .
-    VALUES ?e {ngsild:Property}
-    FILTER(!isIRI(?f))
-    ?nodeshape sh:property [ sh:path ?b ] .
-    OPTIONAl{?a ?b [ ngsild:observedAt ?observedAt; ngsild:hasValue ?f ] .} .
-    OPTIONAl{?a ?b [ ngsild:datasetId ?index; ngsild:hasValue ?f ] .} .
+  UNION
+  {
+    {?a ?b [ ngsild:hasValue ?f ] .
+    VALUES ?e {ngsild:Property} .
+    OPTIONAl{?a ?b [ ngsild:observedAt ?observedAt; ngsild:hasValue ?f  ] .} .
+    OPTIONAl{?a ?b [ ngsild:datasetId ?index; ngsild:hasValue ?f  ] .} .
+    OPTIONAl{?a ?b [ ngsild:unitCode ?unitCode; ngsild:hasValue ?f  ] .} .
     }
-    UNION
-    { ?a ?b [ ngsild:hasValue ?f ] .
-    VALUES ?d {'@id'} .
-    VALUES ?e {ngsild:Property}
-    FILTER(isIRI(?f))
-    OPTIONAl{?a ?b [ ngsild:observedAt ?observedAt;ngsild:hasValue ?f  ] .} .
-    OPTIONAl{?a ?b [ ngsild:datasetId ?index;ngsild:hasValue ?f  ] .} .
-    }
+  }
 }
 order by ?observedAt
 """  # noqa: E501
@@ -138,7 +122,7 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
         knowledge = Graph(store="Oxigraph")
         knowledge.parse(knowledgefile)
         attributes_model = model + g + knowledge
-        string_indexer = StringIndexer()
+        entity_table_name = configs.kafka_topic_ngsi_prefix_name
 
         qres = attributes_model.query(attributes_query)
         first = True
@@ -146,21 +130,19 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
             print(f'INSERT INTO `{configs.attributes_table_name}` VALUES',
                   file=sqlitef)
         for entityId, name, type, nodeType, valueType, hasValue, \
-                hasObject, observedAt, index in qres:
-            id = entityId.toPython() + "\\\\" + name.toPython()
-            current_index = None
+                hasObject, observedAt, index, unitCode in qres:
             if index is None:
-                current_index = 0
+                current_dataset_id = "'@none'"
             else:
-                current_index = index
-                if isinstance(index, URIRef):
-                    try:
-                        current_index = string_indexer.add_or_get_index(id, utils.strip_class(current_index.toPython()))
-                    except:
-                        current_index = 0
+                current_dataset_id = f"'{index}'"
             valueType = nullify(valueType)
-            hasValue = nullify(hasValue)
-            hasObject = nullify(hasObject)
+            attributeValue = nullify(None)
+            unitCode = nullify(unitCode)
+            if str(type) == 'https://uri.etsi.org/ngsi-ld/Relationship':
+                attributeValue = nullify(hasObject)
+            elif str(type) == 'https://uri.etsi.org/ngsi-ld/Property':
+                attributeValue = nullify(hasValue)
+            id = f'{entityId}\\{name}'
             if "string" in valueType:
                 valueType = 'NULL'
             if first:
@@ -170,13 +152,13 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
             current_timestamp = "CURRENT_TIMESTAMP"
             if observedAt is not None:
                 current_timestamp = f"'{str(observedAt)}'"
-            print("('" + id + "', '" + entityId.toPython() + "', '" +
+            print("('" + id + "', " + "CAST(NULL AS STRING), '" + entityId.toPython() + "', '" +
                   name.toPython() +
-                  "', '" + nodeType + "', " + valueType + ", " +
-                  str(current_index) +
-                  ", '" + type.toPython() + "', '" + str(index) +
-                  "'," + hasValue + ", " +
-                  hasObject + ", " + current_timestamp + ")", end='',
+                  "', '" + nodeType + "', " + valueType + ", '" + type.toPython() + "', " + attributeValue +
+                  ", " + str(current_dataset_id) +
+                  ", " + unitCode +
+                  ", CAST(NULL AS STRING), CAST(NULL AS BOOLEAN), CAST(NULL AS BOOLEAN), " + current_timestamp +
+                  ")", end='',
                   file=sqlitef)
         print(";", file=sqlitef)
 
@@ -198,12 +180,11 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
                 tables[key][idstr] = []
                 tables[key][idstr].append(idstr)
                 tables[key][idstr].append(type.toPython())
+                tables[key][idstr].append('CAST(NULL as BOOLEAN)')
                 tables[key][idstr].append('CURRENT_TIMESTAMP')
-            tables[key][idstr].append(idstr + "\\\\" +
-                                      field.toPython())
         for type, ids in tables.items():
             for id, table in ids.items():
-                print(f'INSERT INTO `{type}` VALUES',
+                print(f'INSERT INTO `{entity_table_name}` VALUES',
                       file=sqlitef)
                 first = True
                 print("(", end='', file=sqlitef)
@@ -213,7 +194,7 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
                     else:
                         print(", ", end='', file=sqlitef)
                     if isinstance(field, str) and not field ==\
-                            'CURRENT_TIMESTAMP':
+                            'CURRENT_TIMESTAMP' and 'CAST(' not in field:
                         print("'" + field + "'", end='', file=sqlitef)
                     else:
                         print(field, end='', file=sqlitef)

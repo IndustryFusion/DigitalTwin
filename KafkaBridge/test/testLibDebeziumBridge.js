@@ -1,5 +1,5 @@
 /**
-* Copyright (c) 2022 Intel Corporation
+* Copyright (c) 2022, 2024 Intel Corporation
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -96,11 +96,17 @@ describe('Test diffAttributes', function () {
     const beforeAttrs = {
       attr1: [{
         id: 'id',
+        type: 'type',
+        name: 'name',
+        entityId: 'entityId',
         value: 'value',
         index: 0
       }],
       attr2: [{
         id: 'id2',
+        type: 'type',
+        name: 'name',
+        entityId: 'entityId',
         value: 'value3',
         index: 0
       }]
@@ -108,6 +114,9 @@ describe('Test diffAttributes', function () {
     const afterAttrs = {
       attr1: [{
         id: 'id',
+        type: 'type',
+        name: 'name',
+        entityId: 'entityId',
         value: 'value',
         index: 0
       }]
@@ -116,7 +125,16 @@ describe('Test diffAttributes', function () {
     const debeziumBridge = new ToTest(config);
     const result = debeziumBridge.diffAttributes(beforeAttrs, afterAttrs);
     assert.deepEqual(result.updatedAttrs, {});
-    assert.deepEqual(result.deletedAttrs, { attr2: [{ id: 'id2', index: 0, value: 'value3' }] });
+    assert.deepEqual(result.deletedAttrs, {
+      attr2: [{
+        id: 'id2',
+        entityId: 'entityId',
+        name: 'name',
+        type: 'type',
+        index: 0,
+        datasetId: '@none'
+      }]
+    });
     revert();
   });
   it('Should delete higher index value and update changed value', async function () {
@@ -131,7 +149,7 @@ describe('Test diffAttributes', function () {
     const beforeAttrs = {
       attr1: [
         {
-          id: 'id',
+          id: 'id3',
           value: 'value',
           observedAt: 'observedAt',
           index: 0
@@ -139,7 +157,8 @@ describe('Test diffAttributes', function () {
         {
           id: 'id',
           value: 'value2',
-          index: 1
+          index: 1,
+          datasetId: 'urn:iff:index:1'
         }
       ],
       attr2: [{
@@ -160,8 +179,28 @@ describe('Test diffAttributes', function () {
     const revert = ToTest.__set__('Logger', Logger);
     const debeziumBridge = new ToTest(config);
     const result = debeziumBridge.diffAttributes(beforeAttrs, afterAttrs, 'observedAt');
-    assert.deepEqual(result.updatedAttrs, { attr1: [{ id: 'id3', value: 'value4', index: 0 }] });
-    assert.deepEqual(result.deletedAttrs, { attr2: [{ id: 'id2', index: 0, value: 'value3' }], attr1: [{ id: 'id', index: 1, value: 'value2' }] });
+    assert.deepEqual(result.updatedAttrs, {
+      attr1: [{
+        id: 'id3',
+        value: 'value4',
+        index: 0,
+        datasetId: '@none'
+      }]
+    });
+    assert.deepEqual(result.deletedAttrs, {
+      attr2:
+      [{
+        id: 'id2',
+        index: 0,
+        datasetId: '@none'
+      }],
+      attr1:
+      [{
+        id: 'id',
+        index: 1,
+        datasetId: 'urn:iff:index:1'
+      }]
+    });
     revert();
   });
 });
@@ -275,7 +314,7 @@ describe('Test parseBeforeAfterEntity', function () {
     const revert = ToTest.__set__('Logger', Logger);
     const debeziumBridge = new ToTest(config);
     const result = debeziumBridge.parseBeforeAfterEntity(ba);
-    assert.deepEqual(result.entity, { id: 'id', type: 'type', 'https://example/hasRel': 'id\\https://example/hasRel', 'https://example/prop': 'id\\https://example/prop' });
+    assert.deepEqual(result.entity, { id: 'id', type: 'type' });
     assert.deepEqual(result.attributes, {
       'https://example/hasRel': [{
         id: 'id\\https://example/hasRel',
@@ -283,8 +322,8 @@ describe('Test parseBeforeAfterEntity', function () {
         nodeType: '@id',
         name: 'https://example/hasRel',
         type: 'https://uri.etsi.org/ngsi-ld/Relationship',
-        'https://uri.etsi.org/ngsi-ld/datasetId': '@none',
-        'https://uri.etsi.org/ngsi-ld/hasObject': 'urn:object:1',
+        datasetId: '@none',
+        attributeValue: 'urn:object:1',
         index: 0
       }],
       'https://example/prop': [{
@@ -293,8 +332,8 @@ describe('Test parseBeforeAfterEntity', function () {
         nodeType: '@value',
         name: 'https://example/prop',
         type: 'https://uri.etsi.org/ngsi-ld/Property',
-        'https://uri.etsi.org/ngsi-ld/datasetId': '@none',
-        'https://uri.etsi.org/ngsi-ld/hasValue': 'value',
+        datasetId: '@none',
+        attributeValue: 'value',
         'https://uri.etsi.org/ngsi-ld/observedAt': [{
           '@type': 'https://uri.etsi.org/ngsi-ld/DateTime',
           '@value': '2022-02-19T23:11:28.457509Z'
@@ -356,7 +395,7 @@ describe('Test parseBeforeAfterEntity', function () {
     const revert = ToTest.__set__('Logger', Logger);
     const debeziumBridge = new ToTest(config);
     const result = debeziumBridge.parseBeforeAfterEntity(ba);
-    assert.deepEqual(result.entity, { id: 'id', type: 'type', 'https://example/hasRel': 'id\\https://example/hasRel', 'https://example/prop': 'id\\https://example/prop' });
+    assert.deepEqual(result.entity, { id: 'id', type: 'type' });
     assert.deepEqual(result.attributes, {
       'https://example/hasRel': [{
         id: 'id\\https://example/hasRel',
@@ -364,12 +403,12 @@ describe('Test parseBeforeAfterEntity', function () {
         nodeType: '@id',
         name: 'https://example/hasRel',
         type: 'https://uri.etsi.org/ngsi-ld/Relationship',
-        'https://uri.etsi.org/ngsi-ld/datasetId': '@none',
+        datasetId: '@none',
         'https://uri.etsi.org/ngsi-ld/observedAt': [{
           '@type': 'https://uri.etsi.org/ngsi-ld/DateTime',
           '@value': '2022-02-19T20:32:26.123656Z'
         }],
-        'https://uri.etsi.org/ngsi-ld/hasObject': 'urn:object:1',
+        attributeValue: 'urn:object:1',
         index: 0
       }],
       'https://example/prop': [{
@@ -378,8 +417,8 @@ describe('Test parseBeforeAfterEntity', function () {
         nodeType: '@value',
         name: 'https://example/prop',
         type: 'https://uri.etsi.org/ngsi-ld/Property',
-        'https://uri.etsi.org/ngsi-ld/hasValue': 'value',
-        'https://uri.etsi.org/ngsi-ld/datasetId': '@none',
+        attributeValue: 'value',
+        datasetId: '@none',
         'https://uri.etsi.org/ngsi-ld/observedAt': [{
           '@type': 'https://uri.etsi.org/ngsi-ld/DateTime',
           '@value': '2022-02-19T20:31:26.123656Z'
@@ -428,7 +467,7 @@ describe('Test parseBeforeAfterEntity', function () {
     const revert = ToTest.__set__('Logger', Logger);
     const debeziumBridge = new ToTest(config);
     const result = debeziumBridge.parseBeforeAfterEntity(ba);
-    assert.deepEqual(result.entity, { id: 'id', type: 'type', 'https://example/prop': 'id\\https://example/prop' });
+    assert.deepEqual(result.entity, { id: 'id', type: 'type' });
     assert.deepEqual(result.attributes, {
       'https://example/prop': [{
         id: 'id\\https://example/prop',
@@ -436,8 +475,8 @@ describe('Test parseBeforeAfterEntity', function () {
         nodeType: '@value',
         name: 'https://example/prop',
         type: 'https://uri.etsi.org/ngsi-ld/Property',
-        'https://uri.etsi.org/ngsi-ld/datasetId': '@none',
-        'https://uri.etsi.org/ngsi-ld/hasValue': 'value',
+        datasetId: '@none',
+        attributeValue: 'value',
         'https://uri.etsi.org/ngsi-ld/observedAt': [{
           '@type': 'https://uri.etsi.org/ngsi-ld/DateTime',
           '@value': '2022-02-19T23:11:28.457509Z'
@@ -554,7 +593,7 @@ describe('Test parseBeforeAfterEntity', function () {
     const revert = ToTest.__set__('Logger', Logger);
     const debeziumBridge = new ToTest(config);
     const result = debeziumBridge.parseBeforeAfterEntity(ba);
-    assert.deepEqual(result.entity, { id: 'id', type: 'type', 'https://example/prop': 'id\\https://example/prop' });
+    assert.deepEqual(result.entity, { id: 'id', type: 'type' });
     assert.deepEqual(result.attributes, {
       'https://example/prop': [{
         id: 'id\\https://example/prop',
@@ -562,8 +601,8 @@ describe('Test parseBeforeAfterEntity', function () {
         nodeType: '@value',
         name: 'https://example/prop',
         type: 'https://uri.etsi.org/ngsi-ld/Property',
-        'https://uri.etsi.org/ngsi-ld/datasetId': '@none',
-        'https://uri.etsi.org/ngsi-ld/hasValue': 'value2',
+        datasetId: '@none',
+        attributeValue: 'value2',
         'https://uri.etsi.org/ngsi-ld/observedAt': [{
           '@type': 'https://uri.etsi.org/ngsi-ld/DateTime',
           '@value': '2022-02-19T23:11:28.457509Z'
@@ -577,8 +616,8 @@ describe('Test parseBeforeAfterEntity', function () {
         nodeType: '@value',
         name: 'https://example/prop',
         type: 'https://uri.etsi.org/ngsi-ld/Property',
-        'https://uri.etsi.org/ngsi-ld/datasetId': '-+brokenuri:withspecialsigns',
-        'https://uri.etsi.org/ngsi-ld/hasValue': 'value',
+        datasetId: '-+brokenuri:withspecialsigns',
+        attributeValue: 'value',
         'https://uri.etsi.org/ngsi-ld/observedAt': [{
           '@type': 'https://uri.etsi.org/ngsi-ld/DateTime',
           '@value': '2022-02-19T23:11:28.457509Z'
@@ -592,8 +631,8 @@ describe('Test parseBeforeAfterEntity', function () {
         nodeType: '@value',
         name: 'https://example/prop',
         type: 'https://uri.etsi.org/ngsi-ld/Property',
-        'https://uri.etsi.org/ngsi-ld/datasetId': '23brokenuri:withnumbers',
-        'https://uri.etsi.org/ngsi-ld/hasValue': 'value3',
+        datasetId: '23brokenuri:withnumbers',
+        attributeValue: 'value3',
         'https://uri.etsi.org/ngsi-ld/observedAt': [{
           '@type': 'https://uri.etsi.org/ngsi-ld/DateTime',
           '@value': '2022-02-19T23:11:28.457509Z'
@@ -607,8 +646,8 @@ describe('Test parseBeforeAfterEntity', function () {
         nodeType: '@value',
         name: 'https://example/prop',
         type: 'https://uri.etsi.org/ngsi-ld/Property',
-        'https://uri.etsi.org/ngsi-ld/datasetId': 'uri:normal_first',
-        'https://uri.etsi.org/ngsi-ld/hasValue': 'value5',
+        datasetId: 'uri:normal_first',
+        attributeValue: 'value5',
         'https://uri.etsi.org/ngsi-ld/observedAt': [{
           '@type': 'https://uri.etsi.org/ngsi-ld/DateTime',
           '@value': '2022-02-19T23:11:28.457509Z'
@@ -622,8 +661,8 @@ describe('Test parseBeforeAfterEntity', function () {
         nodeType: '@value',
         name: 'https://example/prop',
         type: 'https://uri.etsi.org/ngsi-ld/Property',
-        'https://uri.etsi.org/ngsi-ld/datasetId': 'uri:normal_second',
-        'https://uri.etsi.org/ngsi-ld/hasValue': 'value4',
+        datasetId: 'uri:normal_second',
+        attributeValue: 'value4',
         'https://uri.etsi.org/ngsi-ld/observedAt': [{
           '@type': 'https://uri.etsi.org/ngsi-ld/DateTime',
           '@value': '2022-02-19T23:11:28.457509Z'

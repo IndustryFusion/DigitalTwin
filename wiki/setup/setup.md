@@ -534,7 +534,7 @@ Step 3: Inside the newly created 'demo' folder, create 3 files with contents as 
  .
  ```
 
- b. model-example.jsonld, paste the JSON-LD created in the previous steps.
+ b. model-instance.jsonld, paste the JSON-LD created in the previous steps.
  
  c. shacl.ttl, paste the result of the conversion from JSON-Schema.
 

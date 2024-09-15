@@ -53,7 +53,7 @@ sql_check_sparql_base = """
                 ,CURRENT_TIMESTAMP
                 {%- endif %}
 
-            FROM (SELECT A.this as this_left, B.this as this, * FROM (SELECT id as this from {{targetclass}}_view) as A LEFT JOIN ({{sql_expression}}) as B ON A.this = B.this)
+            FROM (SELECT A.this as this_left, B.this as this, * FROM (SELECT id as this) as A LEFT JOIN ({{sql_expression}}) as B ON A.this = B.this)
 """  # noqa E501
 
 

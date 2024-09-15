@@ -24,12 +24,40 @@ const config = require('../../config/config.json');
 // CREATE table/model in tsdb to enter SpB NGSI_LD data
 // Define method takes two arguments
 // 1st - name of table, 2nd - columns inside the table
-const entityHistoryTable = sequelize.define(config.timescaledb.entityTablename, {
+const attributeHistoryTable = sequelize.define(config.timescaledb.attributeTablename, {
 
   id: { type: Sequelize.TEXT, allowNull: false, primaryKey: true },
+  parentId: { type: Sequelize.TEXT, allowNull: true, primaryKey: false },
+  // Column-1, observedAt is an object with kafka timestamp to date Data_Type UTC timestamp
   observedAt: { type: Sequelize.DATE, allowNull: false, primaryKey: true },
+
+  // Same as observedAt for now-> Later we modify
   modifiedAt: { type: Sequelize.DATE, allowNull: false },
-  type: { type: Sequelize.TEXT, allowNull: false },
+
+  // Column-2, entityId
+  entityId: { type: Sequelize.TEXT, allowNull: false, primaryKey: false },
+
+  // Column-3, attributeId-> full name as URI
+  attributeId: { type: Sequelize.TEXT, allowNull: false, primaryKey: false },
+
+  // Column-4, attributeType-> Relaionship or properties
+  attributeType: { type: Sequelize.TEXT, allowNull: false },
+
+  // Column-5, datasetId-> entityid+name(Must be URI)
+  datasetId: { type: Sequelize.TEXT, allowNull: false, primaryKey: true },
+
+  nodeType: { type: Sequelize.TEXT, allowNull: false },
+
+  value: { type: Sequelize.TEXT, allowNull: false },
+
+  // In future can be used for literals value types
+  valueType: { type: Sequelize.TEXT, allowNull: true },
+
+  // NGSI-LD defined unitType
+  unitType: { type: Sequelize.TEXT, allowNull: true },
+  // language tag if applicable
+  lang: { type: Sequelize.TEXT, allowNull: true },
+  // indicates if attribute has been deleted
   deleted: { type: Sequelize.BOOLEAN, allowNull: true }
 
 }, {
@@ -38,4 +66,4 @@ const entityHistoryTable = sequelize.define(config.timescaledb.entityTablename, 
   freezeTableName: true
 });
 
-module.exports = entityHistoryTable;
+module.exports = attributeHistoryTable;

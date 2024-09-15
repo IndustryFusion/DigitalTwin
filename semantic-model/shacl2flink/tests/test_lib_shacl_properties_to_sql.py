@@ -28,19 +28,20 @@ def test_lib_shacl_prroperties_to_sql(mock_utils, mock_configs, mock_yaml,
                                       mock_graph):
     def identity(klass):
         return klass
-
-    def identity2(klass, param):
-        return klass
     mock_utils.strip_class = identity
     mock_utils.class_to_obj_name = identity
     mock_utils.camelcase_to_snake_case = identity
-    mock_utils.process_sql_dialect = identity2
+    mock_utils.relationship_checks_tablename = 'relationship_table'
+    mock_utils.property_checks_tablename = 'property_table'
     mock_configs.attributes_table_obj_name = 'attributes'
     mock_configs.rdf_table_obj_name = 'rdf'
     mock_configs.attributes_view_obj_name = 'attributes-view'
+    mock_configs.kafka_topic_ngsi_prefix_name = 'ngsild-prefix'
     sh = Namespace("http://www.w3.org/ns/shacl#")
     targetclass = MagicMock()
     targetclass.toPython.return_value = 'targetclass'
+    inheritedTargetclass = MagicMock()
+    inheritedTargetclass.toPython.return_value = 'inheritedTargetclass'
     propertypath = MagicMock()
     propertypath.toPython.return_value = 'propertypath'
     attributeclass = MagicMock()
@@ -72,6 +73,7 @@ def test_lib_shacl_prroperties_to_sql(mock_utils, mock_configs, mock_yaml,
     ins.toPython.return_value = '"SHIN1","SHIN2"'
     g.__iadd__.return_value.query.return_value = [Munch()]
     g.__iadd__.return_value.query.return_value[0].targetclass = targetclass
+    g.__iadd__.return_value.query.return_value[0].inheritedTargetclass = inheritedTargetclass
     g.__iadd__.return_value.query.return_value[0].propertypath = propertypath
     g.__iadd__.return_value.query.return_value[0].attributeclass = \
         attributeclass
@@ -93,24 +95,15 @@ def test_lib_shacl_prroperties_to_sql(mock_utils, mock_configs, mock_yaml,
         lib.shacl_properties_to_sql.translate('kms/shacl.ttl',
                                               'kms/knowledge.ttl', prefixes)
 
-    assert tables == ['alerts-bulk', 'attributes', 'rdf', 'targetclass',
-                      'attributeclass']
-    assert views == ['attributes-view', 'targetclass-view',
-                     'attributeclass-view']
-    assert len(statementsets) == 2
-    lower_sqlite = sqlite.lower()
-    assert lower_sqlite.count('select') == 13
-    assert lower_sqlite.count(' < 4') == 4
-    assert lower_sqlite.count(' < 3') == 3
-    assert lower_sqlite.count(' <= 2') == 3
-    assert lower_sqlite.count(' > 0') == 3
-    assert lower_sqlite.count(' >= 1') == 3
-    assert lower_sqlite.count("regexp 'pattern'") == 2
-    assert lower_sqlite.count("('shin1', 'shin2')") == 2
-    assert lower_sqlite.count("inconstraintcomponent") == 1
+    assert tables == ['alerts-bulk', 'attributes', 'rdf', 'ngsild-prefix',
+                      'relationship_table', 'property_table']
+    assert views == ['attributes-view', 'ngsild-prefix-view']
+    assert len(statementsets) == 4
 
     targetclass = MagicMock()
     targetclass.toPython.return_value = 'targetclass'
+    ins = MagicMock()
+    ins.toPython.return_value = 'ins'
     propertypath = MagicMock()
     propertypath.toPython.return_value = 'propertypath'
     attributeclass = MagicMock()
@@ -138,6 +131,7 @@ def test_lib_shacl_prroperties_to_sql(mock_utils, mock_configs, mock_yaml,
     maxlength.toPython.return_value = 10
     g.__iadd__.return_value.query.return_value = [Munch()]
     g.__iadd__.return_value.query.return_value[0].targetclass = targetclass
+    g.__iadd__.return_value.query.return_value[0].inheritedTargetclass = inheritedTargetclass
     g.__iadd__.return_value.query.return_value[0].propertypath = propertypath
     g.__iadd__.return_value.query.return_value[0].attributeclass = \
         attributeclass
@@ -153,18 +147,13 @@ def test_lib_shacl_prroperties_to_sql(mock_utils, mock_configs, mock_yaml,
     g.__iadd__.return_value.query.return_value[0].minlength = minlength
     g.__iadd__.return_value.query.return_value[0].maxlength = maxlength
     g.__iadd__.return_value.query.return_value[0].pattern = None
-    g.__iadd__.return_value.query.return_value[0].ins = None
+    g.__iadd__.return_value.query.return_value[0].ins = ins
 
     sqlite, (statementsets, tables, views) = \
         lib.shacl_properties_to_sql.translate('kms/shacl.ttl',
                                               'kms/knowledge.ttl', prefixes)
 
-    assert tables == ['alerts-bulk', 'attributes', 'rdf', 'targetclass',
-                      'attributeclass']
-    assert views == ['attributes-view', 'targetclass-view',
-                     'attributeclass-view']
-    assert len(statementsets) == 2
-    lower_sqlite = sqlite.lower()
-    assert lower_sqlite.count('select') == 10
-    assert lower_sqlite.count('> 10') == 3
-    assert lower_sqlite.count('< 3') == 3
+    assert tables == ['alerts-bulk', 'attributes', 'rdf', 'ngsild-prefix',
+                      'relationship_table', 'property_table']
+    assert views == ['attributes-view', 'ngsild-prefix-view']
+    assert len(statementsets) == 4

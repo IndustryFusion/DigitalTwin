@@ -106,10 +106,10 @@ module.exports = function DebeziumBridge (conf) {
     // create entity table
     let id = baEntity.id;
     const resEntity = {};
-    Object.keys(baEntity).filter(key => key !== 'type' && key !== 'id')
-      .forEach(key => {
-        resEntity[key] = id + '\\' + key;
-      });
+    // Object.keys(baEntity).filter(key => key !== 'type' && key !== 'id')
+    //   .forEach(key => {
+    //     resEntity[key] = id + '\\' + key;
+    //   });
     resEntity.id = baEntity.id;
     resEntity.type = baEntity.type;
     delete resEntity[syncOnAttribute]; // this attribute should not change the diff calculation, but should be in attributes to detect changes from Kafka
@@ -130,9 +130,9 @@ module.exports = function DebeziumBridge (conf) {
           obj.entityId = id;
           obj.name = key;
           if ('https://uri.etsi.org/ngsi-ld/datasetId' in refObj) {
-            obj['https://uri.etsi.org/ngsi-ld/datasetId'] = refObj['https://uri.etsi.org/ngsi-ld/datasetId'][0]['@id'];
+            obj.datasetId = refObj['https://uri.etsi.org/ngsi-ld/datasetId'][0]['@id'];
           } else {
-            obj['https://uri.etsi.org/ngsi-ld/datasetId'] = '@none';
+            obj.datasetId = '@none';
           }
 
           // extract timestamp
@@ -149,13 +149,13 @@ module.exports = function DebeziumBridge (conf) {
             // every Property is array with one element, hence [0] is no restriction
             // Property can be Literal => @value,@json or IRI => @id
             if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@value'] !== undefined) {
-              obj['https://uri.etsi.org/ngsi-ld/hasValue'] = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@value'];
+              obj.attributeValue = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@value'];
               obj.nodeType = '@value';
             } else if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@id'] !== undefined) { // Property can be IRI => @id
-              obj['https://uri.etsi.org/ngsi-ld/hasValue'] = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@id'];
+              obj.attributeValue = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@id'];
               obj.nodeType = '@id';
             } else if (typeof refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0] === 'object') { // no @id, no @value, must be a @json type
-              obj['https://uri.etsi.org/ngsi-ld/hasValue'] = JSON.stringify(refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]);
+              obj.attributeValue = JSON.stringify(refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]);
               obj.nodeType = '@json';
             }
 
@@ -166,7 +166,7 @@ module.exports = function DebeziumBridge (conf) {
           } else if (refObj['https://uri.etsi.org/ngsi-ld/hasObject'] !== undefined) {
             obj.type = 'https://uri.etsi.org/ngsi-ld/Relationship';
             // every Relationship is array with one element, hence [0] is no restriction
-            obj['https://uri.etsi.org/ngsi-ld/hasObject'] = refObj['https://uri.etsi.org/ngsi-ld/hasObject'][0]['@id'];
+            obj.attributeValue = refObj['https://uri.etsi.org/ngsi-ld/hasObject'][0]['@id'];
             obj.nodeType = '@id';
           } else {
             return;
@@ -178,9 +178,9 @@ module.exports = function DebeziumBridge (conf) {
         const copyArr = [];
         baAttrs[key].forEach((obj, idx) => {
           let check = false;
-          const curDatId = obj['https://uri.etsi.org/ngsi-ld/datasetId'];
+          const curDatId = obj.datasetId;
           for (let i = idx + 1; i < baAttrs[key].length; i++) {
-            if (curDatId === baAttrs[key][i]['https://uri.etsi.org/ngsi-ld/datasetId']) {
+            if (curDatId === baAttrs[key][i].datasetId) {
               check = true;
               copyArr[counter] = baAttrs[key][i];
             }
@@ -191,9 +191,9 @@ module.exports = function DebeziumBridge (conf) {
           }
         });
         copyArr.sort((a, b) => {
-          if (a['https://uri.etsi.org/ngsi-ld/datasetId'] === '@none') return -1;
-          if (b['https://uri.etsi.org/ngsi-ld/datasetId'] === '@none') return 1;
-          return a['https://uri.etsi.org/ngsi-ld/datasetId'].localeCompare(b['https://uri.etsi.org/ngsi-ld/datasetId']);
+          if (a.datasetId === '@none') return -1;
+          if (b.datasetId === '@none') return 1;
+          return a.datasetId.localeCompare(b.datasetId);
         });
         copyArr.forEach((obj, idx) => { // Index it according to their sorting
           obj.index = idx;
@@ -214,60 +214,185 @@ module.exports = function DebeziumBridge (conf) {
   };
 
   /**
-   *
+   * @name diffAttributes
    * @param {object} beforeAttrs - object with atrributes
    * @param {object} afterAttrs - object with attributes
-   * @returns list with inserted, updated and deleted atributes {insertedAttrs, updatedAttrs, deletedAttrs}
+   * @returns inserted, updated and deleted atributes {insertedAttrs, updatedAttrs, deletedAttrs}
+    The function gets two objects, beforeAttrs and afterAttrs. The objects keys are attribute names which index an array of attribute-objects.
+    The elements are uniquely identified by attribute-name and  one of the fields in the object, called
+    "https://uri.etsi.org/ngsi-ld/datasetId", for instance:
+   * const beforeAttrs = {
+      attr1: [{
+        id: 'id',
+        type: 'type',
+        name: 'name',
+        entityId: 'entityId',
+        value: 'value',
+        index: 0
+      }],
+      attr2: [{
+        id: 'id2',
+        type: 'type',
+        name: 'name',
+        entityId: 'entityId',
+        value: 'value3',
+        'https://uri.etsi.org/ngsi-ld/datasetId': 'http://example/datasetId',
+        index: 0
+      }]
+    }; contains two  ids (attr1, "@none") and (attr1, "http://example/datasetId'") Like in this example,
+    when the datasetId is not defined at all it is equivalent of it being equal to "@none".
+    The function returns
+    { insertedAttrs, updatedAttrs, deletedAttrs } objects again indexed by the attr keys and containing arrays.
+    insertedAttrs contains the attributes which are in the afterAttrs
+    but not in beforeAttrs, updatedAttrs contains the attributes which are in the before and in the afterAttrs
+    (and the respective afterAttr object is provided" and deltedAttrs are in the beforeAttrs and not in the afterAttrs.
+    Additional requiements:
+    - When no datasetId is given, the respective result object contains the "@none" value.
+    - Deleted attributes contain only the following fields id, name, entityId, type, datasetId, index, and of this selection only the existing fields
+    - When there are two objects with same attr/datasetId, take the latest in list and ignore the earlier ones
+    Example afterAttrs would be:
+    const afterAttrs = {
+      attr1: [{
+        id: 'id',
+        type: 'type',
+        name: 'name',
+        entityId: 'entityId',
+        value: 'value2',
+        'https://uri.etsi.org/ngsi-ld/datasetId': '@none',
+        index: 0
+      },
+      {
+        id: 'id4',
+        type: 'type',
+        name: 'name',
+        entityId: 'entityId',
+        value: 'value5',
+        'https://uri.etsi.org/ngsi-ld/datasetId': 'http://example/datasetId2',
+        index: 0
+      }]
+    };
+    Example result would be:
+    insertedAttrs = {
+      attr1: [{
+        id: 'id4',
+        type: 'type',
+        name: 'name',
+        entityId: 'entityId',
+        value: 'value5',
+        'https://uri.etsi.org/ngsi-ld/datasetId': 'http://example/datasetId2',
+        index: 0
+      }]
+    }
+    updatedAttrs = {
+       attr1: [{
+        id: 'id',
+        type: 'type',
+        name: 'name',
+        entityId: 'entityId',
+        value: 'value2',
+        'https://uri.etsi.org/ngsi-ld/datasetId': '@none',
+        index: 0
+      }]
+    }, deletedAttrs = {
+           attr2: [{
+        id: 'id2',
+        type: 'type',
+        name: 'name',
+        entityId: 'entityId',
+        'https://uri.etsi.org/ngsi-ld/datasetId': 'http://example/datasetId',
+        index: 0
+      }]
+    }
+    Must comply with ESLint standard rules
+    API: this.diffAttributes = function(..)
+    No comment header
+    base indentation: 2
+    identation space: 2
    */
   this.diffAttributes = function (beforeAttrs, afterAttrs) {
-    const insertedAttrs = {}; // contains all attributes which are found in afterAttrs but not in beforeAttrs
-    const updatedAttrs = {}; // contains all attribures which are found in afterAttrs and in beforeAttrs
-    const deletedAttrs = {}; // contains all attributes which are not found in afterAttrs but in beforeAttrs
+    const insertedAttrs = {};
+    const updatedAttrs = {};
+    const deletedAttrs = {};
 
-    // Determine all attributes which are found in beforeAttrs but not in afterAttrs
-    // These attributes are added to deleteAttrs
-    Object.keys(beforeAttrs).forEach(key => {
-      if (afterAttrs[key] === undefined || afterAttrs[key] === null || !Array.isArray(afterAttrs[key]) || afterAttrs[key].length === 0) {
-        const obj = beforeAttrs[key].reduce((accum, element) => {
-          delete element.type;
-          accum.push(element);
-          return accum;
-        }, []);
-        deletedAttrs[key] = obj;
+    const getDatasetId = (attrObj) =>
+      attrObj.datasetId || '@none';
+
+    const setDatasetId = (attrObj) => {
+      if (!attrObj.datasetId) {
+        attrObj.datasetId = '@none';
       }
-    });
+      return attrObj;
+    };
 
-    // Determine all attributes which are found in afterAttrs but not in beforeAttrs
-    // These attributes are added to insertedAttrs
-    Object.keys(afterAttrs).forEach(key => {
-      if (beforeAttrs[key] === undefined || beforeAttrs[key] === null || !Array.isArray(beforeAttrs[key]) || beforeAttrs[key].length === 0) {
-        insertedAttrs[key] = afterAttrs[key];
-      }
-    });
-
-    // Determine all attributes which are changed and add them to updatedAttrs
-    // Detect wheter before had higher index and add these to deleteAttrs
-    Object.keys(afterAttrs).forEach(key => {
-      // if the attributes are not existing in
-      // if the attributes are unequal
-      // add every different attribute per index to the updatedAttrs
-      // add every attribute which have indexes in before but not mentioned in after to deletedAttrs
-      if (beforeAttrs[key] !== undefined && beforeAttrs[key] !== null &&
-        !_.isEqual(afterAttrs[key], beforeAttrs[key])) {
-        // delete all old elements with higher indexes
-        // the attribute lists are sorted so length diff reveals what has to be deleted
-        const delementArray = [];
-        if (beforeAttrs[key] !== undefined && beforeAttrs[key].length > afterAttrs[key].length) {
-          for (let i = afterAttrs[key].length; i < beforeAttrs[key].length; i++) {
-            delete beforeAttrs[key][i].type;
-            delementArray.push(beforeAttrs[key][i]);
-          }
-          deletedAttrs[key] = delementArray;
+    const pickFields = (attrObj, fields) => {
+      const result = {};
+      fields.forEach((field) => {
+        if (attrObj[field] !== undefined) {
+          result[field] = attrObj[field];
         }
-        // and create new one
-        updatedAttrs[key] = afterAttrs[key];
+      });
+      return result;
+    };
+
+    const beforeMap = new Map();
+    Object.entries(beforeAttrs).forEach(([attrName, attrArray]) => {
+      for (let i = attrArray.length - 1; i >= 0; i--) {
+        const attrObj = attrArray[i];
+        const datasetId = getDatasetId(attrObj);
+        const key = `${attrName}:${datasetId}`;
+        if (!beforeMap.has(key)) {
+          beforeMap.set(key, { attrName, attrObj: setDatasetId(attrObj) });
+        }
       }
     });
+
+    const afterMap = new Map();
+    Object.entries(afterAttrs).forEach(([attrName, attrArray]) => {
+      for (let i = attrArray.length - 1; i >= 0; i--) {
+        const attrObj = attrArray[i];
+        const datasetId = getDatasetId(attrObj);
+        const key = `${attrName}:${datasetId}`;
+        if (!afterMap.has(key)) {
+          afterMap.set(key, { attrName, attrObj: setDatasetId(attrObj) });
+        }
+      }
+    });
+
+    afterMap.forEach(({ attrName, attrObj }, key) => {
+      if (beforeMap.has(key)) {
+        const { attrObj: beforeAttrObj } = beforeMap.get(key);
+        if (JSON.stringify(beforeAttrObj) !== JSON.stringify(attrObj)) {
+          if (!updatedAttrs[attrName]) {
+            updatedAttrs[attrName] = [];
+          }
+          updatedAttrs[attrName].push(attrObj);
+        }
+        beforeMap.delete(key);
+      } else {
+        if (!insertedAttrs[attrName]) {
+          insertedAttrs[attrName] = [];
+        }
+        insertedAttrs[attrName].push(attrObj);
+      }
+    });
+
+    beforeMap.forEach(({ attrName, attrObj }) => {
+      if (!deletedAttrs[attrName]) {
+        deletedAttrs[attrName] = [];
+      }
+      const fields = [
+        'id',
+        'name',
+        'entityId',
+        'type',
+        'datasetId',
+        'nodeType',
+        'index'
+      ];
+      const deletedAttrObj = pickFields(attrObj, fields);
+      deletedAttrs[attrName].push(deletedAttrObj);
+    });
+
     return { insertedAttrs, updatedAttrs, deletedAttrs };
   };
 };
