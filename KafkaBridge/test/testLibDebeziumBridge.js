@@ -96,11 +96,17 @@ describe('Test diffAttributes', function () {
     const beforeAttrs = {
       attr1: [{
         id: 'id',
+        type: 'type',
+        name: 'name',
+        entityId: 'entityId',
         value: 'value',
         index: 0
       }],
       attr2: [{
         id: 'id2',
+        type: 'type',
+        name: 'name',
+        entityId: 'entityId',
         value: 'value3',
         index: 0
       }]
@@ -108,6 +114,9 @@ describe('Test diffAttributes', function () {
     const afterAttrs = {
       attr1: [{
         id: 'id',
+        type: 'type',
+        name: 'name',
+        entityId: 'entityId',
         value: 'value',
         index: 0
       }]

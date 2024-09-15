@@ -35,14 +35,14 @@ const Logger = function () {
 describe('Test timescaledb processMessage', function () {
   it('Should send a Property with @value nodetype', async function () {
     const entityHistoryTable = {
-      create: async function (datapoint) {
+      upsert: async function (datapoint) {
         assert.equal(datapoint.observedAt, '2023-07-14T14:29:13.110Z');
         assert.equal(datapoint.modifiedAt, '2023-07-14T14:29:13.110Z');
         assert.equal(datapoint.entityId, 'entityId');
         assert.equal(datapoint.attributeId, 'name');
         assert.equal(datapoint.nodeType, '@value');
         assert.equal(datapoint.index, 0);
-        assert.equal(datapoint.datasetId, 'id');
+        assert.equal(datapoint.datasetId, '@none');
         assert.equal(datapoint.attributeType, 'https://uri.etsi.org/ngsi-ld/Property');
         assert.equal(datapoint.value, 123);
         return Promise.resolve(datapoint);
@@ -73,14 +73,14 @@ describe('Test timescaledb processMessage', function () {
 
   it('Should send a Relationship', async function () {
     const entityHistoryTable = {
-      create: async function (datapoint) {
+      upsert: async function (datapoint) {
         assert.equal(datapoint.observedAt, '2023-07-14T14:29:13.110Z');
         assert.equal(datapoint.modifiedAt, '2023-07-14T14:29:13.110Z');
         assert.equal(datapoint.entityId, 'entityId');
         assert.equal(datapoint.attributeId, 'relationship');
         assert.equal(datapoint.nodeType, '@id');
         assert.equal(datapoint.index, 0);
-        assert.equal(datapoint.datasetId, 'id');
+        assert.equal(datapoint.datasetId, '@none');
         assert.equal(datapoint.attributeType, 'https://uri.etsi.org/ngsi-ld/Relationship');
         assert.equal(datapoint.value, 'object');
         return Promise.resolve(datapoint);
@@ -111,14 +111,14 @@ describe('Test timescaledb processMessage', function () {
 
   it('Should send a Property with @value nodetype and valueType string', async function () {
     const entityHistoryTable = {
-      create: async function (datapoint) {
+      upsert: async function (datapoint) {
         assert.equal(datapoint.observedAt, '2023-07-14T14:29:13.110Z');
         assert.equal(datapoint.modifiedAt, '2023-07-14T14:29:13.110Z');
         assert.equal(datapoint.entityId, 'entityId');
         assert.equal(datapoint.attributeId, 'property');
         assert.equal(datapoint.nodeType, '@value');
         assert.equal(datapoint.index, 0);
-        assert.equal(datapoint.datasetId, 'id');
+        assert.equal(datapoint.datasetId, '@none');
         assert.equal(datapoint.attributeType, 'https://uri.etsi.org/ngsi-ld/Property');
         assert.equal(datapoint.value, 'value');
         assert.equal(datapoint.valueType, 'http://www.w3.org/2001/XMLSchema#string');
@@ -149,16 +149,16 @@ describe('Test timescaledb processMessage', function () {
     await processMessage(kafkamessage);
   });
 
-  it('Should check correct object type- property/relationship with @value nodetype and valueType string', async function () {
+  it('Should reject wrong object type- property/relationship with @value nodetype and valueType string', async function () {
     const entityHistoryTable = {
-      create: async function (datapoint) {
+      upsert: async function (datapoint) {
         assert.equal(datapoint.observedAt, '2023-07-14T14:29:13.110Z');
         assert.equal(datapoint.modifiedAt, '2023-07-14T14:29:13.110Z');
         assert.equal(datapoint.entityId, 'entityId');
         assert.equal(datapoint.attributeId, 'property');
         assert.equal(datapoint.nodeType, '@value');
         assert.equal(datapoint.index, 0);
-        assert.equal(datapoint.datasetId, 'id');
+        assert.equal(datapoint.datasetId, '@none');
         assert.notEqual(datapoint.attributeType, 'https://uri.etsi.org/ngsi-ld/Property');
         assert.equal(datapoint.value, 'value');
         assert.equal(datapoint.valueType, 'http://www.w3.org/2001/XMLSchema#string');
@@ -174,7 +174,7 @@ describe('Test timescaledb processMessage', function () {
           id: 'id',
           entityId: 'entityId',
           name: 'property',
-          type: 'https://uri.etsi.org/ngsi-ld/',
+          type: 'https://uri.etsi.org/ngsi-ld',
           'https://uri.etsi.org/ngsi-ld/hasValue': 'value',
           nodeType: '@value',
           valueType: 'http://www.w3.org/2001/XMLSchema#string',
@@ -191,14 +191,14 @@ describe('Test timescaledb processMessage', function () {
 
   it('Should send a Property with wrong timestamp and attributeType', async function () {
     const entityHistoryTable = {
-      create: async function (datapoint) {
+      upsert: async function (datapoint) {
         assert.notEqual(datapoint.observedAt, '2023-07-14T14:29:13.110Z');
         assert.notEqual(datapoint.modifiedAt, '2023-07-14T14:29:13.110Z');
         assert.equal(datapoint.entityId, 'entityId');
         assert.equal(datapoint.attributeId, 'property');
         assert.equal(datapoint.nodeType, '@value');
         assert.equal(datapoint.index, 0);
-        assert.equal(datapoint.datasetId, 'id');
+        assert.equal(datapoint.datasetId, '@none');
         assert.notEqual(datapoint.attributeType, 'https://uri.etsi.org/ngsi-ld/Relationship');
         assert.equal(datapoint.value, 'value');
         return Promise.resolve(datapoint);

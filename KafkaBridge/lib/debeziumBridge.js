@@ -214,15 +214,105 @@ module.exports = function DebeziumBridge (conf) {
   };
 
   /**
-   *
+   * @name diffAttributes
    * @param {object} beforeAttrs - object with atrributes
    * @param {object} afterAttrs - object with attributes
-   * @returns list with inserted, updated and deleted atributes {insertedAttrs, updatedAttrs, deletedAttrs}
+   * @returns inserted, updated and deleted atributes {insertedAttrs, updatedAttrs, deletedAttrs}
+    The function gets two objects, beforeAttrs and afterAttrs. The objects keys are attribute names which index an array of attribute-objects.
+    The elements are uniquely identified by attribute-name and  one of the fields in the object, called
+    "https://uri.etsi.org/ngsi-ld/datasetId", for instance:
+   * const beforeAttrs = {
+      attr1: [{
+        id: 'id',
+        type: 'type',
+        name: 'name',
+        entityId: 'entityId',
+        value: 'value',
+        index: 0
+      }],
+      attr2: [{
+        id: 'id2',
+        type: 'type',
+        name: 'name',
+        entityId: 'entityId',
+        value: 'value3',
+        'https://uri.etsi.org/ngsi-ld/datasetId': 'http://example/datasetId',
+        index: 0
+      }]
+    }; contains two  ids (attr1, "@none") and (attr1, "http://example/datasetId'") Like in this example,
+    when the datasetId is not defined at all it is equivalent of it being equal to "@none".
+    The function returns
+    { insertedAttrs, updatedAttrs, deletedAttrs } objects again indexed by the attr keys and containing arrays.
+    insertedAttrs contains the attributes which are in the afterAttrs
+    but not in beforeAttrs, updatedAttrs contains the attributes which are in the before and in the afterAttrs
+    (and the respective afterAttr object is provided" and deltedAttrs are in the beforeAttrs and not in the afterAttrs.
+    Additional requiements:
+    - When no datasetId is given, the respective result object contains the "@none" value.
+    - Deleted attributes contain only the following fields id, name, entityId, type, datasetId, index, and of this selection only the existing fields
+    - When there are two objects with same attr/datasetId, take the latest in list and ignore the earlier ones
+    Example afterAttrs would be:
+    const afterAttrs = {
+      attr1: [{
+        id: 'id',
+        type: 'type',
+        name: 'name',
+        entityId: 'entityId',
+        value: 'value2',
+        'https://uri.etsi.org/ngsi-ld/datasetId': '@none',
+        index: 0
+      },
+      {
+        id: 'id4',
+        type: 'type',
+        name: 'name',
+        entityId: 'entityId',
+        value: 'value5',
+        'https://uri.etsi.org/ngsi-ld/datasetId': 'http://example/datasetId2',
+        index: 0
+      }]
+    };
+    Example result would be:
+    insertedAttrs = {
+      attr1: [{
+        id: 'id4',
+        type: 'type',
+        name: 'name',
+        entityId: 'entityId',
+        value: 'value5',
+        'https://uri.etsi.org/ngsi-ld/datasetId': 'http://example/datasetId2',
+        index: 0
+      }]
+    }
+    updatedAttrs = {
+       attr1: [{
+        id: 'id',
+        type: 'type',
+        name: 'name',
+        entityId: 'entityId',
+        value: 'value2',
+        'https://uri.etsi.org/ngsi-ld/datasetId': '@none',
+        index: 0
+      }]
+    }, deletedAttrs = {
+           attr2: [{
+        id: 'id2',
+        type: 'type',
+        name: 'name',
+        entityId: 'entityId',
+        'https://uri.etsi.org/ngsi-ld/datasetId': 'http://example/datasetId',
+        index: 0
+      }]
+    }
+    Must comply with ESLint standard rules
+    API: this.diffAttributes = function(..)
+    No comment header
+    base indentation: 2
+    identation space: 2
    */
   this.diffAttributes = function (beforeAttrs, afterAttrs) {
-    const insertedAttrs = {}; // contains all attributes which are found in afterAttrs but not in beforeAttrs
-    const updatedAttrs = {}; // contains all attribures which are found in afterAttrs and in beforeAttrs
-    const deletedAttrs = {}; // contains all attributes which are not found in afterAttrs but in beforeAttrs
+    const insertedAttrs = {};
+    const updatedAttrs = {};
+    const deletedAttrs = {};
 
     // Determine all attributes which are found in beforeAttrs but not in afterAttrs
     // These attributes are added to deleteAttrs
@@ -235,7 +325,8 @@ module.exports = function DebeziumBridge (conf) {
         }, []);
         deletedAttrs[key] = obj;
       }
-    });
+      return attrObj;
+    };
 
     // Determine all attributes which are found in afterAttrs but not in beforeAttrs
     // These attributes are added to insertedAttrs
@@ -264,10 +355,55 @@ module.exports = function DebeziumBridge (conf) {
           }
           deletedAttrs[key] = delementArray;
         }
-        // and create new one
-        updatedAttrs[key] = afterAttrs[key];
       }
     });
+
+    const afterMap = new Map();
+    Object.entries(afterAttrs).forEach(([attrName, attrArray]) => {
+      for (let i = attrArray.length - 1; i >= 0; i--) {
+        const attrObj = attrArray[i];
+        const datasetId = getDatasetId(attrObj);
+        const key = `${attrName}:${datasetId}`;
+        if (!afterMap.has(key)) {
+          afterMap.set(key, { attrName, attrObj: setDatasetId(attrObj) });
+        }
+      }
+    });
+
+    afterMap.forEach(({ attrName, attrObj }, key) => {
+      if (beforeMap.has(key)) {
+        const { attrObj: beforeAttrObj } = beforeMap.get(key);
+        if (JSON.stringify(beforeAttrObj) !== JSON.stringify(attrObj)) {
+          if (!updatedAttrs[attrName]) {
+            updatedAttrs[attrName] = [];
+          }
+          updatedAttrs[attrName].push(attrObj);
+        }
+        beforeMap.delete(key);
+      } else {
+        if (!insertedAttrs[attrName]) {
+          insertedAttrs[attrName] = [];
+        }
+        insertedAttrs[attrName].push(attrObj);
+      }
+    });
+
+    beforeMap.forEach(({ attrName, attrObj }) => {
+      if (!deletedAttrs[attrName]) {
+        deletedAttrs[attrName] = [];
+      }
+      const fields = [
+        'id',
+        'name',
+        'entityId',
+        'type',
+        'https://uri.etsi.org/ngsi-ld/datasetId',
+        'index'
+      ];
+      const deletedAttrObj = pickFields(attrObj, fields);
+      deletedAttrs[attrName].push(deletedAttrObj);
+    });
+
     return { insertedAttrs, updatedAttrs, deletedAttrs };
   };
 };
