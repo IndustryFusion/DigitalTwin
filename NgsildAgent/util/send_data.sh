@@ -46,7 +46,7 @@ while getopts 'athy:d:i:' opt; do
       datasetId=$arg
      ;;
     ?|h)
-      printf "$usage"
+      echo -e "$usage"
       exit 1
       ;;
   esac
@@ -88,7 +88,7 @@ if [ "${num_args}" -eq 2 ] && [ -z "$array" ]; then
     payload=${payload}', "i":"'$deviceId'"'
   fi
   payload=${payload}'}'
-  echo $payload
+  echo "$payload"
 elif [ "$((num_args%2))" -eq 0 ] && [ -n "$array" ]; then
   payload="["
   while [ "$#" -gt 0 ]; do
@@ -108,11 +108,11 @@ elif [ "$((num_args%2))" -eq 0 ] && [ -n "$array" ]; then
   payload="${payload}]"
 elif [ -z "$array" ]; then
   echo "Error: Expected propertyname and value"
-  printf "${usage}"
+  echo -e "${usage}"
   exit 1
 else
   echo "Error: Expected even number of arguments to form propertyname and value pairs."
-  printf "${usage}"
+  echo -e "${usage}"
   exit 1
 fi
 

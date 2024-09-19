@@ -33,10 +33,10 @@ const validate = require('validate-iri');
  *
  * @type {{n: string, v: number}}
  */
-const sampleMetric = {
-  n: '<uri>',
-  v: 'value'
-};
+// const sampleMetric = {
+//   n: '<uri>',
+//   v: 'value'
+// };
 
 class DataSubmission {
   constructor (connector, logger) {
