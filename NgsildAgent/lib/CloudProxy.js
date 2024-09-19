@@ -124,7 +124,7 @@ class CloudProxy {
         clientId: deviceConf.device_name,
         deviceId: deviceConf.device_id,
         componentMetric: this.spbMetricList,
-        subdeviceIds: deviceConf.subdevice_ids,
+        subdeviceIds: deviceConf.subdevice_ids
       };
       this.spBProxy = new SparkplugbConnector(conf, logger);
       this.logger.info('SparkplugB MQTT proxy found! Configuring  Sparkplug and MQTT for data sending.');

@@ -27,3 +27,7 @@ jobs:
     - name: Build opcua tools
       run: |
         cd semantic-model/opcua && make setup && make lint test
+    - name: Build iff-agent
+      run: |
+        (cd NgsildAgent/config && cp config.json.template config.json)  
+        cd NgsildAgent && npm install && npm run lint && npm run test && npm audit --production --audit-level high

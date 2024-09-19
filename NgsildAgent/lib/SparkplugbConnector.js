@@ -123,7 +123,7 @@ class SparkplugbConnector {
   async deviceBirth (devProf) {
     let subdeviceIds = [];
     if ('subdeviceIds' in devProf) {
-      subdeviceIds = devProf.subdeviceIds
+      subdeviceIds = devProf.subdeviceIds;
     };
     const alldeviceIds = subdeviceIds;
     alldeviceIds.push(devProf.deviceId);

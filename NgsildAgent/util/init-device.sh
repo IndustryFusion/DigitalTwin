@@ -20,6 +20,7 @@ set -e
 
 function checkurn(){
   local deviceid="$1"
+  # shellcheck disable=SC2016
   urnPattern='^urn:[a-zA-Z0-9][a-zA-Z0-9-]{0,31}:[a-zA-Z0-9()+,\-\.:=@;$_!*%/?#]+$'
   if echo "$deviceid" | grep -E -q "$urnPattern"; then
       echo "$deviceid is URN compliant."
@@ -49,7 +50,7 @@ while getopts 'k:r:d:h' opt; do
       echo "Added additional deviceId ${OPTARG}"
     ;;
     ?|h)
-      printf "$usage"
+      echo -e "$usage"
       exit 1
       ;;
   esac
@@ -65,11 +66,12 @@ else
   exit 1
 fi
 
-checkurn $deviceid
-if [ ! -z "${additionalDeviceIds}" ]; then
+checkurn "$deviceid"
+# shellcheck disable=SC2128
+if [ -n "${additionalDeviceIds}" ]; then
   #deviceid='["'${deviceid}'"'
   for i in "${additionalDeviceIds[@]}"; do
-    checkurn $i
+    checkurn "$i"
     #echo proecessing $i
     #deviceid=${deviceid}', "'$i'"'
   done
