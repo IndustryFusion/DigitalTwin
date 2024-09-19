@@ -9,23 +9,42 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v2
     - name: Build the Docker images
       run: docker compose build
+    # Use conda-incubator to install Miniconda
+    - name: Setup Miniconda with Python 3.10
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        python-version: "3.10"  # Specify Python 3.10
+        auto-activate-base: false  # Do not auto-activate the base environment
+        use-mamba: true  # Optional: use mamba for faster environment creation
+    - name: Create a new Conda environment
+      run: conda create --name py310 python=3.10 -y
     - name: Build shacl2flink
       run: |
-        sudo  apt install sqlite3 sqlite3-pcre
+        sudo  apt install -y sqlite3 libsqlite3-dev libpcre2-dev
+        sudo mkdir -p /usr/lib/sqlite3
+        git clone https://github.com/christian-proust/sqlite3-pcre2.git
+        cd sqlite3-pcre2 && make && make install
+        cd ../ && rm -rf sqlite3-pcre2
+        source $CONDA/bin/activate
+        conda activate py310
         cd semantic-model/shacl2flink && make setup && make lint test build test-kms
     - name: Build Dataservice
       run: |
+        source $CONDA/bin/activate
+        conda activate py310
         cd semantic-model/dataservice && make setup && make lint test
     - name: Build datamodel tools
       run: |
         cd semantic-model/datamodel/tools && make setup && make lint test
     - name: Build opcua tools
       run: |
+        source $CONDA/bin/activate
+        conda activate py310
         pip3 install asyncua
         cd semantic-model/opcua && make setup && make lint test
     - name: Build iff-agent

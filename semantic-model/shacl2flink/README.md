@@ -23,25 +23,29 @@ A first [overview](../datamodel/README.md) and [tutorial](../datamodel/Tutorial.
 
 ## Requirements
 
-- Python > 3.8
-- Virtualenv installed
-
-In addition, install `sqlite3` and `sqlite3-pcre`
+- You need to have Python > 3.8
+- Virtualenv needs to be installed
+- `sqlite3` and `sqlite3-pcre` need to be installed
 
   ```bash
-  sudo  apt install sqlite3 sqlite3-pcre
+  sudo  apt install sqlite3 libsqlite3-dev libpcre2-dev
   ```
 
 ## Installation
 
+If miniconda installed with python3.10 environment (using prepare-platform.sh), move to step 2 else use below script to install and create python env
+### Step 1 :
 ```bash
-python -m venv venv
+bash pyenv_setup.sh
+source ./miniconda3/bin/activate
+conda create -n py310 python=3.10 -y
 ```
-
-Everytime you are starting a new shell you need to enable the Virtual Environment:
+### Step 2 :
+Everytime you are starting a new shell you need to enable the miniconda Virtual Environment which runs python 3.10 sourcing miniconda installation path:
 
 ```bash
-source venv/bin/activate
+source ./miniconda3/bin/activate
+conda activate py310
 make setup
 ```
 
@@ -56,7 +60,8 @@ Press `Ctrl + Shift + p` and type `Python: Select Interpreter` and select the vi
 Install the development dependencies:
 
 ```bash
-source venv/bin/activate
+source ./miniconda3/bin/activate
+conda activate py310
 pip install -r requirements-dev.txt
 ```
 
