@@ -437,7 +437,7 @@ def format_node_type(node):
 def process_sql_dialect(expression, isSqlite):
     result_expression = expression
     max_recursion = 10
-    while "SQL_DIALECT_STRIP" in result_expression:
+    while "SQL_DIALECT_STRIP" in result_expression or "SQL_DIALECT_CAST" in result_expression:
         max_recursion = max_recursion - 1
         if max_recursion == 0:
             raise WrongSparqlStructure("Unexpected problem with SQL_DIALECT macros.")

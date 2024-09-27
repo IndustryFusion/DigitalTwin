@@ -46,10 +46,9 @@ if (grantType === 'refresh_token' && origToken !== null) {
     var origTokenSubDeviceIds;
     if (otherClaims !== null) {
         
-        origTokenSubDeviceIds = otherClaims.get("sub_device_ids");
+        origTokenSubDeviceIds = otherClaims.get("subdevice_ids");
     }
     var origTokenSession = origToken.getSessionId();
-
     if (origTokenSubDeviceIds !== null && origTokenSubDeviceIds !== undefined) {
         // Has origToken same session?
         if (origTokenSession !== session) {

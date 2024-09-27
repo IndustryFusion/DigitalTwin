@@ -31,6 +31,7 @@ const http = require('http');
 const querystring = require('querystring');
 const SparkplugbConnector = require('./SparkplugbConnector');
 const ConnectionError = require('./ConnectionError');
+const { Mutex } = require('async-mutex');
 
 function updateToken (token) {
   const parsedToken = JSON.parse(token);
@@ -103,6 +104,7 @@ function refreshToken (me) {
 class CloudProxy {
   constructor (logger, deviceId) {
     const deviceConf = common.getDeviceConfig();
+    this.checkOnlineStateMutex = new Mutex();
     this.logger = logger;
     this.birthMsgStatus = false;
     this.secret = {
@@ -242,12 +244,14 @@ class CloudProxy {
     }
   };
 
-  async checkOnlineState () {
-    this.checkDeviceToken(); // await or not await, that's the question. Do you want delay a sample because it is stuck in refreshing?
-    if (this.spBProxy) {
-      return this.spBProxy.connected() || false;
-    }
-    return false;
+  async checkOnlineState() {
+    return this.checkOnlineStateMutex.runExclusive(async () => {
+      await this.checkDeviceToken();
+      if (this.spBProxy) {
+        return this.spBProxy.connected() || false;
+      }
+      return false;
+    });
   }
 }
 
