@@ -28,9 +28,13 @@ def test_lib_shacl_prroperties_to_sql(mock_utils, mock_configs, mock_yaml,
                                       mock_graph):
     def identity(klass):
         return klass
+
+    def identity2(klass, param):
+        return klass
     mock_utils.strip_class = identity
     mock_utils.class_to_obj_name = identity
     mock_utils.camelcase_to_snake_case = identity
+    mock_utils.process_sql_dialect = identity2
     mock_configs.attributes_table_obj_name = 'attributes'
     mock_configs.rdf_table_obj_name = 'rdf'
     mock_configs.attributes_view_obj_name = 'attributes-view'
