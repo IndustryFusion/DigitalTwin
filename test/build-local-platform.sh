@@ -34,12 +34,45 @@ else
     ( cd ../../ScorpioBroker && mvn clean package -DskipTests -Pdocker )
 fi
 
-docker images | tail -n +2 | awk '{print $1":"$2}'| grep ibn40 | grep -v ${LOCAL_REGISTRY} | grep scorpio | grep ${DOCKER_TAG} |
-{
-    while read -r i; do
-    j=${i//ibn40/${LOCAL_REGISTRY}\/ibn40};
-    echo $i --- $j
-    docker tag "$i" "$j";
-    docker push "$j";
+# Fetch Docker images, filter them, and process accordingly
+docker images --format "{{.Repository}}:{{.Tag}}" | \
+    grep scorpio | \
+    grep ibn40 | \
+    grep "${DOCKER_TAG}" | \
+    grep -v "${LOCAL_REGISTRY}" | \
+    while read -r image; do
+        # Debug: Display the current image being processed
+        echo "Processing image: $image"
+
+        # Extract the image path starting from 'ibn40/'
+        # This handles both 'ibn40/...' and 'scorpiobroker/ibn40/...'
+        image_path=$(echo "$image" | sed -n 's|.*\(ibn40/.*\)|\1|p')
+
+        # Check if the image_path was successfully extracted
+        if [ -z "$image_path" ]; then
+            echo "Skipping image '$image' as it does not match expected patterns."
+            continue
+        fi
+
+        # Construct the new image name by prefixing with LOCAL_REGISTRY
+        new_image="${LOCAL_REGISTRY}/${image_path}"
+
+        # Display the tagging and pushing action
+        echo "Tagging and pushing: $image -> $new_image"
+
+        # Tag the image
+        docker tag "$image" "$new_image"
+        if [ $? -ne 0 ]; then
+            echo "Error: Failed to tag image '$image'. Skipping..."
+            continue
+        fi
+
+        # Push the new image to the local registry
+        docker push "$new_image"
+        if [ $? -ne 0 ]; then
+            echo "Error: Failed to push image '$new_image'. Skipping..."
+            continue
+        fi
+
+        echo "Successfully tagged and pushed: $new_image"
     done
-}
