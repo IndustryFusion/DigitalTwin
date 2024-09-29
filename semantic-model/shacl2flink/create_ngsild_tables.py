@@ -99,7 +99,8 @@ def main(shaclfile, knowledgefile, output_folder='output'):
     config['retention.ms'] = configs.kafka_topic_ngsi_retention
     with open(os.path.join(output_folder, "ngsild.yaml"), "w") as f, \
             open(os.path.join(output_folder, "ngsild.sqlite"), "w") as sqlitef, \
-            open(os.path.join(output_folder, "ngsild-kafka.yaml"), "w") as fk:
+            open(os.path.join(output_folder, "ngsild-kafka.yaml"), "w") as fk, \
+            open(os.path.join(output_folder, "ngsild.flinksql.debug"), "w") as dt:
         for table_name, table in tables.items():
             connector = 'kafka'
             primary_key = None
@@ -129,6 +130,8 @@ def main(shaclfile, knowledgefile, output_folder='output'):
                                                f'{configs.kafka_topic_ngsi_prefix}.\
 {table_name}', configs.kafka_topic_object_label,
                                                config), fk)
+            print(utils.create_flink_debug_table(table_name, connector, table, primary_key, kafka, value), file=dt)
+            print(utils.create_sql_view(table_name, table), file=dt)
 
 
 if __name__ == '__main__':

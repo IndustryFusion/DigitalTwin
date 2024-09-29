@@ -167,6 +167,47 @@ def create_yaml_table(name, connector, table, primary_key, kafka, value):
     return yaml_table
 
 
+def create_flink_debug_table(name, connector, table, primary_key, kafka, value):
+    sqltable = f'DROP TABLE IF EXISTS `{name}`;\n'
+    first = True
+    sqltable += f'CREATE TABLE `{name}` (\n'
+    tsname = 'ts'
+    for field in table:
+        for fname, ftype in field.items():
+            if fname.lower() == 'watermark':
+                break
+            if 'metadata' in ftype.lower() and 'timestamp' in ftype.lower():
+                ftype = "TIMESTAMP(3) METADATA FROM 'timestamp'"
+                tsname = fname
+            if first:
+                first = False
+            else:
+                sqltable += ',\n'
+            sqltable += f'`{fname}` {ftype}'
+    sqltable += f", \nwatermark FOR `{tsname}` AS `{tsname}`"
+    if primary_key is not None:
+        sqltable += ',\nPRIMARY KEY('
+        first = True
+        for key in primary_key:
+            if first:
+                first = False
+            else:
+                sqltable += ','
+            sqltable += f'`{key}`'
+        sqltable += ')\n'
+    sqltable += ')'
+    sqltable += ' WITH (\n'
+    sqltable += "'format' = 'json',\n"
+    sqltable += f"'connector' = '{connector}',\n"
+    sqltable += f"'topic' = '{kafka['topic']}',\n"
+    sqltable += "'scan.startup.mode' = 'earliest-offset'\n"
+    properties = kafka['properties']
+    for k in properties:
+        sqltable += f",\n'properties.{k}' = '{properties[k]}'\n"
+    sqltable += ');'
+    return sqltable
+
+
 def create_sql_table(name, table, primary_key, dialect=SQL_DIALECT. SQL):
     sqltable = f'DROP TABLE IF EXISTS `{name}`;\n'
     first = True
