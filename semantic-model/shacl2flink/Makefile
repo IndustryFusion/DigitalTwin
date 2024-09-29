@@ -28,7 +28,7 @@ helm: build
 	mkdir -p ${HELM_DIR}
 	rm -rf ${HELM_DIR}/templates 
 	mv ${OUTPUTDIR} ${HELM_DIR}/templates
-	rm -f ${HELM_DIR}/templates/*.sqlite ${HELM_DIR}/templates/core.yaml ${HELM_DIR}/templates/knowledge.yaml
+	rm -f ${HELM_DIR}/templates/*.sqlite ${HELM_DIR}/templates/core.yaml ${HELM_DIR}/templates/knowledge.yaml ${HELM_DIR}/templates/*.debug
 	cp Chart.yaml ${HELM_DIR}
 
 test: requirements-dev.txt
