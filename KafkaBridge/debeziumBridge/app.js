@@ -121,8 +121,8 @@ const getSubClasses = async function (klass) {
  *      camelCase => camel_case
  * @param {*} str string in Pascal/camelCase
  */
-const pascalCaseToSnakeCase = function (str) {
-  return str.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase();
+const pascalCaseToSnakeCase = function (name) {
+  return name.replace(/(?<!^)(?=[A-Z])/g, '_').toLowerCase();
 };
 
 /**

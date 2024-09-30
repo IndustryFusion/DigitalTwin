@@ -31,8 +31,8 @@ describe('Test GetTopic', function () {
   });
   it('Should return last part in snake_case', async function () {
     const getTopic = toTest.__get__('getTopic');
-    const result = getTopic('http://example/Device_Test');
-    result.should.equal('device_test');
+    const result = getTopic('http://example/Device_Test_WithUnderscore');
+    result.should.equal('device__test__with_underscore');
   });
   it('Should return reference part of url', async function () {
     const getTopic = toTest.__get__('getTopic');
