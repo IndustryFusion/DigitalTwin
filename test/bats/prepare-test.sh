@@ -4,4 +4,4 @@
     curl https://raw.githubusercontent.com/bats-core/bats-detik/v1.1.0/lib/linter.bash > linter.bash &&
     curl https://raw.githubusercontent.com/bats-core/bats-detik/v1.1.0/lib/utils.bash > utils.bash
 )
-( cd ../../../DigitalTwin/semantic-model/datamodel/tools/ || exit 1; npm install )
+( cd ../../semantic-model/datamodel/tools/ || exit 1; npm install )
