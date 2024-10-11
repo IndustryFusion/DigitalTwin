@@ -26,6 +26,8 @@ from lib.entity import Entity
 from lib.shacl import Shacl
 
 
+attribute_prefix = 'has'
+
 query_namespaces = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -215,15 +217,16 @@ def scan_type_recursive(o, node, instancetype, shapename):
     if str(instancetype) == str(classtype):
         return False
 
-    attributename = urllib.parse.quote(f'has{browse_name}')
+    attributename = urllib.parse.quote(f'{browse_name}')
     rdfutils.get_modelling_rule(g, o, shacl_rule, instancetype)
 
+    placeholder_pattern = None
     decoded_attributename = urllib.parse.unquote(attributename)
     if utils.contains_both_angle_brackets(decoded_attributename):
-        decoded_attributename = utils.normalize_angle_bracket_name(decoded_attributename)
-    attributename = urllib.parse.quote(decoded_attributename)
-    if attributename == 'has':  # full template, ignore it
-        return False
+        decoded_attributename, placeholder_pattern = utils.normalize_angle_bracket_name(decoded_attributename)
+    attributename = urllib.parse.quote(f'{attribute_prefix}{decoded_attributename}')
+    if len(decoded_attributename) == 0:  # full template, ignore it
+        raise Exception(f"Unexpected attributename {attributename}")
     shacl_rule['path'] = entity_namespace[attributename]
 
     if rdfutils.isObjectNodeClass(nodeclass):
@@ -248,7 +251,8 @@ def scan_type_recursive(o, node, instancetype, shapename):
             has_components = True
             shacl_rule['contentclass'] = classtype
             shaclg.create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], shacl_rule['array'],
-                                         False, True, shacl_rule['contentclass'], None, is_subcomponent=True)
+                                         False, True, shacl_rule['contentclass'], None, is_subcomponent=True,
+                                         placeholder_pattern=placeholder_pattern)
     elif rdfutils.isVariableNodeClass(nodeclass):
         stop_scan = check_variable_consistency(instancetype, entity_namespace[attributename], classtype)
         if stop_scan:
@@ -332,36 +336,51 @@ def scan_entitiy_recursive(node, id, instance, node_id, o):
     shacl_rule = {}
     browse_name = next(g.objects(o, basens['hasBrowseName']))
     nodeclass, classtype = rdfutils.get_type(g, o)
-    attributename = urllib.parse.quote(f'has{browse_name}')
+    attributename = urllib.parse.quote(browse_name)
 
-    decoded_attributename = utils.normalize_angle_bracket_name(urllib.parse.unquote(attributename))
-    optional, array = shaclg.get_modelling_rule(entity_namespace[decoded_attributename], URIRef(instance['type']))
+    original_attributename = None
+    decoded_attributename = urllib.parse.unquote(attributename)
+    optional, array, path = shaclg.get_modelling_rule_and_path(decoded_attributename, URIRef(instance['type']),
+                                                               classtype, attribute_prefix)
+    if path is not None:
+        original_attributename = decoded_attributename
+        decoded_attributename = path.removeprefix(entity_namespace)
+        if not path.startswith(str(entity_namespace)):
+            print(f"Warning: Mismatch of {entity_namespace} namespace and {path}")
+    else:
+        decoded_attributename = f'{attribute_prefix}{decoded_attributename}'
     shacl_rule['optional'] = optional
     shacl_rule['array'] = array
     datasetId = None
+
     try:
         is_placeholder = shaclg.is_placeholder(URIRef(instance['type']), entity_namespace[decoded_attributename])
     except:
         is_placeholder = False
     if is_placeholder:
-        datasetId = f'{datasetid_urn}:{attributename}'
-        attributename = urllib.parse.quote(decoded_attributename)
-    shacl_rule['path'] = entity_namespace[attributename]
+        if original_attributename is None:
+            raise Exception(f"No original_attributename given but datasetId neeeded for {decoded_attributename}")
+        datasetId = f'{datasetid_urn}:{original_attributename}'
+    attributename = urllib.parse.quote(decoded_attributename)
 
     if rdfutils.isObjectNodeClass(nodeclass):
         shacl_rule['is_property'] = False
         relid = scan_entity(o, classtype, id, shacl_rule['optional'])
         if relid is not None:
             has_components = True
-            instance[f'{entity_ontology_prefix}:{attributename}'] = {
+            full_attribute_name = f'{entity_ontology_prefix}:{attributename}'
+            if instance.get(full_attribute_name) is None:
+                instance[full_attribute_name] = []
+            attr_instance = {
                 'type': 'Relationship',
                 'object': relid
             }
             if is_placeholder and datasetId is not None:
-                instance[f'{entity_ontology_prefix}:{attributename}']['datasetId'] = datasetId
+                attr_instance['datasetId'] = datasetId
             if debug:
-                instance[f'{entity_ontology_prefix}:{attributename}']['debug'] = \
+                attr_instance['debug'] = \
                     f'{entity_ontology_prefix}:{attributename}'
+            instance[full_attribute_name].append(attr_instance)
             shacl_rule['contentclass'] = classtype
             minshaclg.copy_property_from_shacl(shaclg, instance['type'], entity_namespace[attributename])
         if not shacl_rule['optional']:

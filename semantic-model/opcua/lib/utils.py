@@ -152,11 +152,30 @@ def get_default_value(datatype):
 
 
 def normalize_angle_bracket_name(s):
-    # Remove content inside angle brackets and the brackets themselves
-    no_brackets = re.sub(r'<[^>]*>', '', s)
-    # Strip trailing numbers and non-alphabetic characters
-    normalized = re.sub(r'[^a-zA-Z]+$', '', no_brackets)
-    return normalized
+    # Check if there are any angle brackets in the input string
+    if '<' in s and '>' in s:
+        # Remove everything inside and including the angle brackets
+        no_brackets = re.sub(r'<[^>]*>', '', s)
+
+        # If the result is empty, it means the entire name was in brackets like <Tank>
+        if no_brackets.strip() == '':
+            # Extract the name inside the angle brackets
+            base_name = re.sub(r'[<>]', '', s)
+            # The pattern should match valid BrowseNames
+            pattern = r'[a-zA-Z0-9_-]+'
+        else:
+            # Otherwise, use the part before the angle brackets
+            base_name = no_brackets.strip()
+            # Construct a pattern to match the base name followed by valid BrowseName characters
+            pattern = re.sub(r'<[^>]*>', r'[a-zA-Z0-9_-]+', s)
+    else:
+        # If there are no angle brackets, the base name is just the input string itself
+        base_name = s
+        # Pattern matches exactly the base name
+        pattern = re.escape(s)  # Escape any special characters in the base name
+
+    # Return the cleaned base name and the regular expression pattern
+    return base_name.strip(), pattern
 
 
 def contains_both_angle_brackets(s):
