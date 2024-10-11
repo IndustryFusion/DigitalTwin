@@ -36,10 +36,12 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasMeasurements": {
-            "type": "Relationship",
-            "object": "urn:test:ExamplePump:sub:i5006"
-        }
+        "uaentity:hasMeasurements": [
+            {
+                "type": "Relationship",
+                "object": "urn:test:ExamplePump:sub:i5006"
+            }
+        ]
     },
     {
         "type": "http://opcfoundation.org/UA/Pumps/PortsGroupType",
@@ -47,10 +49,12 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:has%3CDrive%3E": {
-            "type": "Relationship",
-            "object": "urn:test:ExamplePump:sub:i5004"
-        }
+        "uaentity:hasDrive": [
+            {
+                "type": "Relationship",
+                "object": "urn:test:ExamplePump:sub:i5004"
+            }
+        ]
     },
     {
         "type": "http://opcfoundation.org/UA/Pumps/DesignType",
@@ -128,14 +132,18 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasDesign": {
-            "type": "Relationship",
-            "object": "urn:test:ExamplePump:sub:i5021"
-        },
-        "uaentity:hasSystemRequirements": {
-            "type": "Relationship",
-            "object": "urn:test:ExamplePump:sub:i5022"
-        }
+        "uaentity:hasDesign": [
+            {
+                "type": "Relationship",
+                "object": "urn:test:ExamplePump:sub:i5021"
+            }
+        ],
+        "uaentity:hasSystemRequirements": [
+            {
+                "type": "Relationship",
+                "object": "urn:test:ExamplePump:sub:i5022"
+            }
+        ]
     },
     {
         "type": "http://opcfoundation.org/UA/Pumps/SupervisionProcessFluidType",
@@ -192,18 +200,24 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasSupervisionProcessFluid": {
-            "type": "Relationship",
-            "object": "urn:test:ExamplePump:sub:i5010"
-        },
-        "uaentity:hasSupervisionPumpOperation": {
-            "type": "Relationship",
-            "object": "urn:test:ExamplePump:sub:i5011"
-        },
-        "uaentity:hasSupervisionMechanics": {
-            "type": "Relationship",
-            "object": "urn:test:ExamplePump:sub:i5009"
-        }
+        "uaentity:hasSupervisionProcessFluid": [
+            {
+                "type": "Relationship",
+                "object": "urn:test:ExamplePump:sub:i5010"
+            }
+        ],
+        "uaentity:hasSupervisionPumpOperation": [
+            {
+                "type": "Relationship",
+                "object": "urn:test:ExamplePump:sub:i5011"
+            }
+        ],
+        "uaentity:hasSupervisionMechanics": [
+            {
+                "type": "Relationship",
+                "object": "urn:test:ExamplePump:sub:i5009"
+            }
+        ]
     },
     {
         "type": "http://opcfoundation.org/UA/Pumps/DocumentationType",
@@ -279,18 +293,24 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasPreventiveMaintenance": {
-            "type": "Relationship",
-            "object": "urn:test:ExamplePump:sub:i5015"
-        },
-        "uaentity:hasGeneralMaintenance": {
-            "type": "Relationship",
-            "object": "urn:test:ExamplePump:sub:i5014"
-        },
-        "uaentity:hasBreakdownMaintenance": {
-            "type": "Relationship",
-            "object": "urn:test:ExamplePump:sub:i5013"
-        }
+        "uaentity:hasPreventiveMaintenance": [
+            {
+                "type": "Relationship",
+                "object": "urn:test:ExamplePump:sub:i5015"
+            }
+        ],
+        "uaentity:hasGeneralMaintenance": [
+            {
+                "type": "Relationship",
+                "object": "urn:test:ExamplePump:sub:i5014"
+            }
+        ],
+        "uaentity:hasBreakdownMaintenance": [
+            {
+                "type": "Relationship",
+                "object": "urn:test:ExamplePump:sub:i5013"
+            }
+        ]
     },
     {
         "type": "http://opcfoundation.org/UA/Pumps/PumpActuationType",
@@ -334,10 +354,13 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasSensor1": {
-            "type": "Relationship",
-            "object": "urn:test:ExamplePump:sub:i5019"
-        },
+        "uaentity:hasVibration": [
+            {
+                "type": "Relationship",
+                "object": "urn:test:ExamplePump:sub:i5019",
+                "datasetId": "urn:iff:datasetId:Sensor1"
+            }
+        ],
         "uaentity:hasSpeed": {
             "type": "Property",
             "value": 0.0
@@ -365,14 +388,18 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasPumpActuation": {
-            "type": "Relationship",
-            "object": "urn:test:ExamplePump:sub:i5017"
-        },
-        "uaentity:hasMeasurements": {
-            "type": "Relationship",
-            "object": "urn:test:ExamplePump:sub:i5018"
-        }
+        "uaentity:hasPumpActuation": [
+            {
+                "type": "Relationship",
+                "object": "urn:test:ExamplePump:sub:i5017"
+            }
+        ],
+        "uaentity:hasMeasurements": [
+            {
+                "type": "Relationship",
+                "object": "urn:test:ExamplePump:sub:i5018"
+            }
+        ]
     },
     {
         "type": "http://opcfoundation.org/UA/Pumps/PumpType",
@@ -380,29 +407,41 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasPorts": {
-            "type": "Relationship",
-            "object": "urn:test:ExamplePump:sub:i5003"
-        },
-        "uaentity:hasConfiguration": {
-            "type": "Relationship",
-            "object": "urn:test:ExamplePump:sub:i5020"
-        },
-        "uaentity:hasEvents": {
-            "type": "Relationship",
-            "object": "urn:test:ExamplePump:sub:i5008"
-        },
-        "uaentity:hasDocumentation": {
-            "type": "Relationship",
-            "object": "urn:test:ExamplePump:sub:i5005"
-        },
-        "uaentity:hasMaintenance": {
-            "type": "Relationship",
-            "object": "urn:test:ExamplePump:sub:i5012"
-        },
-        "uaentity:hasOperational": {
-            "type": "Relationship",
-            "object": "urn:test:ExamplePump:sub:i5016"
-        }
+        "uaentity:hasPorts": [
+            {
+                "type": "Relationship",
+                "object": "urn:test:ExamplePump:sub:i5003"
+            }
+        ],
+        "uaentity:hasConfiguration": [
+            {
+                "type": "Relationship",
+                "object": "urn:test:ExamplePump:sub:i5020"
+            }
+        ],
+        "uaentity:hasEvents": [
+            {
+                "type": "Relationship",
+                "object": "urn:test:ExamplePump:sub:i5008"
+            }
+        ],
+        "uaentity:hasDocumentation": [
+            {
+                "type": "Relationship",
+                "object": "urn:test:ExamplePump:sub:i5005"
+            }
+        ],
+        "uaentity:hasMaintenance": [
+            {
+                "type": "Relationship",
+                "object": "urn:test:ExamplePump:sub:i5012"
+            }
+        ],
+        "uaentity:hasOperational": [
+            {
+                "type": "Relationship",
+                "object": "urn:test:ExamplePump:sub:i5016"
+            }
+        ]
     }
 ]

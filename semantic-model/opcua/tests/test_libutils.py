@@ -1,9 +1,9 @@
 # tests/test_utils.py
 import unittest
 from unittest.mock import MagicMock, patch
-from rdflib import Graph, Namespace, URIRef, Literal
+from rdflib import Graph, Namespace, URIRef, Literal, BNode
 from rdflib.namespace import RDFS, XSD, OWL
-from lib.utils import RdfUtils, downcase_string, isNodeId, convert_to_json_type, idtype2String, extract_namespaces, get_datatype, attributename_from_type, get_default_value, normalize_angle_bracket_name, contains_both_angle_brackets, get_typename
+from lib.utils import RdfUtils, downcase_string, isNodeId, convert_to_json_type, idtype2String, extract_namespaces, get_datatype, attributename_from_type, get_default_value, normalize_angle_bracket_name, contains_both_angle_brackets, get_typename, get_common_supertype
 
 class TestUtils(unittest.TestCase):
 
@@ -12,6 +12,13 @@ class TestUtils(unittest.TestCase):
         self.basens = Namespace("http://example.org/base/")
         self.opcuans = Namespace("http://example.org/opcua/")
         self.rdf_utils = RdfUtils(self.basens, self.opcuans)
+        self.graph = Graph()
+        self.ns = Namespace("http://example.org/")
+        self.class1 = URIRef(self.ns['Class1'])
+        self.class2 = URIRef(self.ns['Class2'])
+        self.node = URIRef(self.ns['Node'])
+        self.shacl_rule = {}
+        self.instancetype = URIRef(self.ns['InstanceType'])
 
     def test_downcase_string(self):
         """Test downcasing the first character of a string."""
@@ -91,7 +98,7 @@ class TestUtils(unittest.TestCase):
         """Test normalizing a name by removing angle bracket content."""
         input_str = "example<test>123"
         result = normalize_angle_bracket_name(input_str)
-        self.assertEqual(result, "example")
+        self.assertEqual(result, ("example123", "example[a-zA-Z0-9_-]+123"))
 
     def test_contains_both_angle_brackets(self):
         """Test checking if a string contains both angle brackets."""
@@ -141,6 +148,150 @@ class TestUtils(unittest.TestCase):
         ignored_references = self.rdf_utils.get_ignored_references(g)
         self.assertEqual(ignored_references, [URIRef("http://example.org/subclass")])
         mock_query.assert_called_once()
+
+
+    def test_get_all_supertypes(self):
+        """Test retrieving all supertypes for a given node."""
+        graph = MagicMock()
+        instancetype = "http://example.org/InstanceType"
+        node = URIRef("http://example.org/Node")
+
+        # Case 1: Node is an instancetype definition
+        graph.objects.side_effect = [
+            iter([URIRef("http://example.org/TypeNode")]),  # definesType found
+            iter([URIRef("http://example.org/SuperClass")]),  # RDFS.subClassOf found
+        ]
+        graph.subjects.side_effect = [
+            iter([URIRef("http://example.org/TypeNode")]),  # definesType found for supertype
+        ]
+
+        supertypes = self.rdf_utils.get_all_supertypes(graph, instancetype, node)
+
+        expected_supertypes = [
+            (URIRef("http://example.org/InstanceType"), URIRef("http://example.org/Node")),
+            (URIRef("http://example.org/SuperClass"), URIRef("http://example.org/TypeNode"))
+        ]
+        self.assertEqual(supertypes, expected_supertypes)
+
+        # Reset mocks for next case
+        graph.objects.reset_mock()
+        graph.subjects.reset_mock()
+
+        # Case 2: Node is not an instancetype definition, with no additional supertypes
+        graph.objects.side_effect = [
+            iter([]),  # No definesType found for the node
+            iter([]),  # No RDFS.subClassOf found
+        ]
+        graph.subjects.side_effect = [
+            iter([URIRef("http://example.org/TypeNode")]),  # definesType found for current type
+        ]
+
+        supertypes = self.rdf_utils.get_all_supertypes(graph, instancetype, node)
+        expected_supertypes = [
+            (None, node),
+            (URIRef("http://example.org/InstanceType"), URIRef("http://example.org/TypeNode"))
+        ]
+        self.assertEqual(supertypes, expected_supertypes)
+
+        # Reset mocks for next case
+        graph.object.reset_mock()
+        graph.subjects.reset_mock()
+
+        # Case 3: BaseObjectType is reached, ending the loop
+        graph.objects.side_effect = [
+            iter([URIRef("http://example.org/TypeNode")]),  # definesType found
+            iter([self.opcuans['BaseObjectType']]),  # BaseObjectType reached
+        ]
+        graph.subjects.side_effect = [
+            iter([URIRef("http://example.org/TypeNode")]),  # definesType found for supertype
+        ]
+
+        supertypes = self.rdf_utils.get_all_supertypes(graph, instancetype, node)
+        expected_supertypes = [
+            (URIRef("http://example.org/InstanceType"), node)
+        ]
+        self.assertEqual(supertypes, expected_supertypes)
+
+        # Reset mocks for next case
+        graph.objects.reset_mock()
+        graph.subjects.reset_mock()
+
+        # Case 4: Properly terminate the loop when BaseObjectType is the highest superclass
+        graph.objects.side_effect = [
+            iter([URIRef("http://example.org/TypeNode")]),  # definesType found
+            iter([self.opcuans['BaseObjectType']]),  # BaseObjectType reached
+            iter([]),  # No further subclass
+        ]
+        graph.subjects.side_effect = [
+            iter([URIRef("http://example.org/TypeNode")]),  # definesType for current type
+            iter([]),  # No further subjects for definesType
+        ]
+
+        supertypes = self.rdf_utils.get_all_supertypes(graph, instancetype, node)
+        expected_supertypes = [
+            (URIRef("http://example.org/InstanceType"), node)
+        ]
+        self.assertEqual(supertypes, expected_supertypes)
+
+
+    @patch.object(Graph, 'query')
+    def test_get_common_supertype(self, mock_query):
+        """Test finding common superclass of two classes."""
+        # Set up the mocked return value of the query
+        mock_query.return_value = [
+            {
+                'commonSuperclass': URIRef("http://example.org/CommonSuperclass")
+            }
+        ]
+
+        # Call the function under test
+        result = get_common_supertype(self.graph, self.class1, self.class2)
+
+        # Check if the result is as expected
+        self.assertEqual(result, URIRef("http://example.org/CommonSuperclass"))
+        
+        # Verify that the query was called once
+        mock_query.assert_called_once()
+
+    @patch.object(Graph, 'query', side_effect=Exception("Query failed"))
+    def test_get_common_supertype_query_failure(self, mock_query):
+        """Test handling of an exception when query fails."""
+        # Call the function under test
+        result = get_common_supertype(self.graph, self.class1, self.class2)
+
+        # Ensure the result is None when an exception occurs
+        self.assertIsNone(result)
+
+    @patch.object(Graph, 'objects')
+    def test_get_modelling_rule(self, mock_objects):
+        """Test retrieving the modelling rule of a node."""
+        # Set up the mocked return values for objects
+        mock_objects.side_effect = [
+            iter([URIRef("http://example.org/ModellingNode")]),
+            iter([Literal(1)])  # Assuming modelling_nodeid_optional or similar value
+        ]
+
+        # Call the function under test
+        is_optional, use_instance_declaration = self.rdf_utils.get_modelling_rule(self.graph, self.node, self.shacl_rule, self.instancetype)
+
+        # Check if the results are as expected
+        self.assertTrue(is_optional)
+        self.assertFalse(use_instance_declaration)
+        self.assertTrue(self.shacl_rule['optional'])
+        self.assertFalse(self.shacl_rule['array'])
+
+    @patch.object(Graph, 'objects', side_effect=StopIteration)
+    def test_get_modelling_rule_no_modelling_node(self, mock_objects):
+        """Test handling when there is no modelling node found."""
+        # Call the function under test
+        is_optional, use_instance_declaration = self.rdf_utils.get_modelling_rule(self.graph, self.node, self.shacl_rule, self.instancetype)
+
+        # Ensure the default values are returned when no modelling node is found
+        self.assertTrue(is_optional)
+        self.assertFalse(use_instance_declaration)
+        self.assertTrue(self.shacl_rule['optional'])
+        self.assertFalse(self.shacl_rule['array'])
+
 
 if __name__ == "__main__":
     unittest.main()

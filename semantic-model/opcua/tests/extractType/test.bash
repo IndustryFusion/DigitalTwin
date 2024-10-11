@@ -23,6 +23,7 @@ TESTNODESETS=(
     test_object_overwrite_type.NodeSet2,${TESTURI}AlphaType
     test_variable_enum.NodeSet2,${TESTURI}AlphaType
     test_object_subtypes.NodeSet2,${TESTURI}AlphaType
+    test_object_example.NodeSet2,${TESTURI}AlphaType
     test_object_hierarchies_no_DataValue,${TESTURI}AlphaType
     test_ignore_references.NodeSet2,${TESTURI}AlphaType
     test_references_to_typedefinitions.NodeSet2,${TESTURI}AlphaType
