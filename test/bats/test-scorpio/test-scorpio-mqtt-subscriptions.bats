@@ -83,7 +83,8 @@ cat << EOF > ${CUTTER_MERGE}
   "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
   "https://industry-fusion.com/types/v0.9/state": {
     "type": "Property",
-    "value": "OFF"
+    "value": "OFF",
+    "datasetId": "urn:cutter:test1"
   }
 }
 EOF
