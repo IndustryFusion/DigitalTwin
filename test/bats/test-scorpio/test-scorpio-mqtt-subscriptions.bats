@@ -150,7 +150,8 @@ compare_mqtt_sub_update() {
         type,
         "https://industry-fusion.com/types/v0.9/state": {
             type: ."https://industry-fusion.com/types/v0.9/state".type,
-            value: ."https://industry-fusion.com/types/v0.9/state".value
+            value: ."https://industry-fusion.com/types/v0.9/state".value,
+            datasetId: ."https://industry-fusion.com/types/v0.9/state".datasetId
         }
     }' "$temp_file") - >&3
 {
@@ -158,7 +159,8 @@ compare_mqtt_sub_update() {
   "type": "https://industry-fusion.com/types/v0.9/plasmacutter_test",
   "https://industry-fusion.com/types/v0.9/state": {
     "type": "Property",
-    "value": "OFF"
+    "value": "OFF",
+    "datasetId": "urn:cutter:test1"
   }
 }
 EOF
