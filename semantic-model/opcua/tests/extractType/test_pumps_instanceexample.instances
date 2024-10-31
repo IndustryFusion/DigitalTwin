@@ -68,7 +68,10 @@
         },
         "uaentity:hasOfferedControlModes": {
             "type": "Property",
-            "value": "{\"xsd:TypeId\": {\"xsd:Identifier\": \"ns=2;i=5008\"}, \"xsd:Body\": {\"xsd:OptionSet\": {\"xsd:Value\": \"AAA=\", \"xsd:ValidBits\": \"gA8=\"}}}"
+            "value": {
+                "@value": "{\"xsd:TypeId\": {\"xsd:Identifier\": \"ns=2;i=5008\"}, \"xsd:Body\": {\"xsd:OptionSet\": {\"xsd:Value\": \"AAA=\", \"xsd:ValidBits\": \"gA8=\"}}}",
+                "@type": "@json"
+            }
         },
         "uaentity:hasPumpClass": {
             "type": "Property",
@@ -102,7 +105,10 @@
         },
         "uaentity:hasOfferedFieldbuses": {
             "type": "Property",
-            "value": "{\"xsd:TypeId\": {\"xsd:Identifier\": \"ns=2;i=5011\"}, \"xsd:Body\": {\"xsd:OptionSet\": {\"xsd:Value\": \"AAAAAAAAAA==\", \"xsd:ValidBits\": \"gICAgICAAw==\"}}}"
+            "value": {
+                "@value": "{\"xsd:TypeId\": {\"xsd:Identifier\": \"ns=2;i=5011\"}, \"xsd:Body\": {\"xsd:OptionSet\": {\"xsd:Value\": \"AAAAAAAAAA==\", \"xsd:ValidBits\": \"gICAgICAAw==\"}}}",
+                "@type": "@json"
+            }
         },
         "uaentity:hasMaximumAllowableRelativeHumidity": {
             "type": "Property",
@@ -238,23 +244,38 @@
         ],
         "uaentity:hasNextInspectionDate": {
             "type": "Property",
-            "value": "2022-05-01T10:00:00Z"
+            "value": {
+                "@value": "2022-05-01T10:00:00Z",
+                "@type": "xsd:dateTime"
+            }
         },
         "uaentity:hasNextServicingDate": {
             "type": "Property",
-            "value": "2022-05-01T10:00:00Z"
+            "value": {
+                "@value": "2022-05-01T10:00:00Z",
+                "@type": "xsd:dateTime"
+            }
         },
         "uaentity:hasInstallationDate": {
             "type": "Property",
-            "value": "2021-05-01T10:00:00Z"
+            "value": {
+                "@value": "2021-05-01T10:00:00Z",
+                "@type": "xsd:dateTime"
+            }
         },
         "uaentity:hasLastInspectionDate": {
             "type": "Property",
-            "value": "2021-05-01T10:00:00Z"
+            "value": {
+                "@value": "2021-05-01T10:00:00Z",
+                "@type": "xsd:dateTime"
+            }
         },
         "uaentity:hasLastServicingDate": {
             "type": "Property",
-            "value": "2021-05-01T10:00:00Z"
+            "value": {
+                "@value": "2021-05-01T10:00:00Z",
+                "@type": "xsd:dateTime"
+            }
         }
     },
     {

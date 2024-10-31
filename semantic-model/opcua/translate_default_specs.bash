@@ -31,6 +31,7 @@ PUMPS_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/${NODES
 PUMP_EXAMPLE_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/${NODESET_VERSION}/Pumps/instanceexample.xml
 MACHINETOOL_EXAMPLE_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/${NODESET_VERSION}/MachineTool/Machinetool-Example.xml
 LASERSYSTEMS_EXAMPLE_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/${NODESET_VERSION}/LaserSystems/LaserSystem-Example.NodeSet2.xml
+PACKML_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/${NODESET_VERSION}/PackML/Opc.Ua.PackML.NodeSet2.xml
 BASE_ONTOLOGY=https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl
 if [ "$1" = "remote" ]; then
     OPCUA_PREFIX=https://industryfusion.github.io/contexts/staging/opcua/v0.1/
@@ -76,3 +77,5 @@ echo create machinery_processvalues.ttl
 python3 nodeset2owl.py  ${MACHINERY_PROCESSVALUES_NODESET} -i ${BASE_ONTOLOGY} ${CORE_ONTOLOGY} ${PADIM_ONTOLOGY} -v http://example.com/v0.1/Machinery/ProcessValues -p machinery_processvalues -o machinery_processvalues.ttl
 echo create machinery_jobs.ttl
 python3 nodeset2owl.py  ${MACHINERY_JOBS_NODESET} -i ${BASE_ONTOLOGY} ${CORE_ONTOLOGY}  -v http://example.com/v0.1/Machinery/Jobs -p machinery_jobs -o machinery_jobs.ttl
+echo create_packml.ttl
+python3 nodeset2owl.py  ${PACKML_NODESET} -i ${BASE_ONTOLOGY} ${CORE_ONTOLOGY}  -p packml -o packml.ttl

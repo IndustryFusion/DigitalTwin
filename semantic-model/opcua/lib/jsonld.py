@@ -15,7 +15,7 @@
 #
 
 import json
-from rdflib.namespace import XSD
+from rdflib.namespace import XSD, RDF
 import lib.utils as utils
 
 ngsild_context = "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"
@@ -72,13 +72,28 @@ class JsonLd:
                         opcuans['Double'],
                         opcuans['Duration'],
                         opcuans['Float']]
+        string_types = [opcuans['LocalizedText'],
+                        opcuans['String'],
+                        opcuans['DateString'],
+                        opcuans['DecimalString'],
+                        opcuans['NormalizedString'],
+                        opcuans['SemanticVersionString'],
+                        opcuans['UriString']]
+        regexp_types = [opcuans['Number']]
+        regexp_map = {opcuans['Number']: '^(0|0\\.0)$'}
         if data_type in boolean_types:
-            return XSD.boolean
+            return XSD.boolean, None
         if data_type in integer_types:
-            return XSD.integer
+            return XSD.integer, None
         if data_type in number_types:
-            return XSD.double
-        return XSD.string
+            return XSD.double, None
+        if data_type in string_types:
+            return XSD.string, None
+        if data_type in regexp_types:
+            return None, regexp_map[data_type]
+        if data_type == opcuans['DateTime']:
+            return XSD.dateTime, None
+        return RDF.JSON, None
 
     def generate_node_id(self, graph, rootentity, node, id):
         try:
