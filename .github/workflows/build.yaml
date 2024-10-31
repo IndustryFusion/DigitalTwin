@@ -26,6 +26,7 @@ jobs:
         cd semantic-model/datamodel/tools && make setup && make lint test
     - name: Build opcua tools
       run: |
+        pip3 install asyncua
         cd semantic-model/opcua && make setup && make lint test
     - name: Build iff-agent
       run: |
