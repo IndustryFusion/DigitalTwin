@@ -114,4 +114,33 @@ Extract ngsi-ld prototype:
 
 Check the SHACL compliance:
 
-    pyshacl -df json-ld entities.jsonld -s shacl.ttl -e knowledge.ttl    
+    pyshacl -df json-ld entities.jsonld -s shacl.ttl -e knowledge.ttl
+
+
+## nodeset-dump.py
+Dump OPC UA server nodeset to XML-File
+
+    usage: nodeset-dump.py [-h] [--server-url SERVER_URL] [--start-node START_NODE] [--output-file OUTPUT_FILE] [--namespaces [NAMESPACES ...]] [--excluded [EXCLUDED ...]] [-d] [-v] [-s] [-b]
+
+    Dump OPC UA server nodeset to XML.
+
+    options:
+    -h, --help            show this help message and exit
+    --server-url SERVER_URL
+                            OPC UA server URL (default is opc.tcp://localhost:4840/freeopcua/server/)
+    --start-node START_NODE
+                            Node ID to start browsing from (default is the Root node, i=84)
+    --output-file OUTPUT_FILE
+                            Output XML file name (default is nodeset2.xml)
+    --namespaces [NAMESPACES ...]
+                            List of Namespaces to collect nodes from.
+    --excluded [EXCLUDED ...]
+                            List of Nodes to exclude from export.
+    -d, --debug           Set debug flag.
+    -v, --values          Export values.
+    -s, --single          Export single node.
+    -b, --backward        Consider forward and backward references.
+
+### Example
+
+    python3 ./nodeset-dump.py --namespaces http://examples.com/url1

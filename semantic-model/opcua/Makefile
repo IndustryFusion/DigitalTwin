@@ -19,7 +19,7 @@ LINTER := python3 -m flake8
 PIP := pip
 HELM_DIR := ../../helm/charts/shacl
 NAMESPACE := iff
-TOLINT := nodeset2owl.py extractType.py lib/nodesetparser.py lib/utils.py lib/shacl.py lib/entity.py lib/jsonld.py lib/bindings.py
+TOLINT := nodeset2owl.py extractType.py nodeset-dump.py lib/nodesetparser.py lib/utils.py lib/shacl.py lib/entity.py lib/jsonld.py lib/bindings.py
 PYTEST := python3 -m pytest
 
 
@@ -36,3 +36,4 @@ test:
 	${PYTEST} tests --cov . --cov-fail-under=80
 	(cd tests/nodeset2owl; bash ./test.bash)
 	(cd tests/extractType; bash ./test.bash)
+	(cd tests/nodeset-dump; bash ./test.bash)
