@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 from rdflib import Graph, Namespace, URIRef, Literal
 from lib.jsonld import JsonLd
 import lib.utils as utils
-from rdflib.namespace import XSD
+from rdflib.namespace import XSD, RDF
 
 
 class TestJsonLd(unittest.TestCase):
@@ -66,20 +66,25 @@ class TestJsonLd(unittest.TestCase):
     def test_map_datatype_to_jsonld(self):
         """Test mapping OPC UA data types to JSON-LD data types."""
         # Boolean type test
-        result = JsonLd.map_datatype_to_jsonld(self.opcuans['Boolean'], self.opcuans)
+        result, _ = JsonLd.map_datatype_to_jsonld(self.opcuans['Boolean'], self.opcuans)
         self.assertEqual(result, XSD.boolean)
 
         # Integer type test
-        result = JsonLd.map_datatype_to_jsonld(self.opcuans['Int32'], self.opcuans)
+        result, _ = JsonLd.map_datatype_to_jsonld(self.opcuans['Int32'], self.opcuans)
         self.assertEqual(result, XSD.integer)
 
         # Double type test
-        result = JsonLd.map_datatype_to_jsonld(self.opcuans['Double'], self.opcuans)
+        result, _ = JsonLd.map_datatype_to_jsonld(self.opcuans['Double'], self.opcuans)
         self.assertEqual(result, XSD.double)
 
         # Unknown type test
-        result = JsonLd.map_datatype_to_jsonld(self.opcuans['UnknownType'], self.opcuans)
-        self.assertEqual(result, XSD.string)
+        result, _ = JsonLd.map_datatype_to_jsonld(self.opcuans['UnknownType'], self.opcuans)
+        self.assertEqual(result, RDF.JSON)
+        
+        # Test Number with regexp
+        result, regexp = JsonLd.map_datatype_to_jsonld(self.opcuans['Number'], self.opcuans)
+        self.assertEqual(result, None)
+        self.assertEqual(regexp, '^(0|0\\.0)$')
 
     @patch("lib.utils.idtype2String", return_value="i")
     def test_generate_node_id(self, mock_idtype2string):

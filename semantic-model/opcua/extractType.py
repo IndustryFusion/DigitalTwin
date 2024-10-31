@@ -266,8 +266,14 @@ def scan_type_recursive(o, node, instancetype, shapename):
             return False
         shacl_rule['is_property'] = True
         shaclg.get_shacl_iri_and_contentclass(g, o, shacl_rule)
-        shaclg.create_shacl_property(shapename, shacl_rule['path'], shacl_rule['optional'], shacl_rule['array'],
-                                     True, shacl_rule['is_iri'], shacl_rule['contentclass'], shacl_rule['datatype'])
+        shaclg.create_shacl_property(shapename,
+                                     shacl_rule['path'],
+                                     shacl_rule['optional'],
+                                     shacl_rule['array'],
+                                     True, shacl_rule['is_iri'],
+                                     shacl_rule['contentclass'],
+                                     shacl_rule['datatype'],
+                                     pattern=shacl_rule['pattern'])
         e.add_enum_class(g, shacl_rule['contentclass'])
     return has_components
 
@@ -359,8 +365,11 @@ def scan_entitiy_recursive(node, id, instance, node_id, o):
         is_placeholder = False
     if is_placeholder:
         if original_attributename is None:
-            raise Exception(f"No original_attributename given but datasetId neeeded for {decoded_attributename}")
-        datasetId = f'{datasetid_urn}:{original_attributename}'
+            print(f"Warning: No original_attributename given but datasetId neeeded for {decoded_attributename}. \
+Chosing default datasetId.")
+            datasetId = "@none"
+        else:
+            datasetId = f'{datasetid_urn}:{original_attributename}'
     attributename = urllib.parse.quote(decoded_attributename)
 
     if rdfutils.isObjectNodeClass(nodeclass):
@@ -379,7 +388,7 @@ def scan_entitiy_recursive(node, id, instance, node_id, o):
                 attr_instance['datasetId'] = datasetId
             if debug:
                 attr_instance['debug'] = \
-                    f'{entity_ontology_prefix}:{attributename}'
+                    f'{entity_ontology_prefix}:{attributename}, {str(node)}'
             instance[full_attribute_name].append(attr_instance)
             shacl_rule['contentclass'] = classtype
             minshaclg.copy_property_from_shacl(shaclg, instance['type'], entity_namespace[attributename])
@@ -389,13 +398,15 @@ def scan_entitiy_recursive(node, id, instance, node_id, o):
     elif rdfutils.isVariableNodeClass(nodeclass):
         shacl_rule['is_property'] = True
         shaclg.get_shacl_iri_and_contentclass(g, o, shacl_rule)
+        if shacl_rule['isAbstract']:
+            print(f"Warning: Abstract OPCUA DataType {str(shacl_rule['data_type'])} \
+in attribute {entity_ontology_prefix}:{attributename}.")
         try:
             value = next(g.objects(o, basens['hasValue']))
             if not shacl_rule['is_iri']:
-                value = value.toPython()
+                value = utils.get_value(value, shacl_rule['datatype'])
             else:
                 value = e.get_contentclass(shacl_rule['contentclass'], value)
-
                 value = value.toPython()
         except StopIteration:
             if not shacl_rule['is_iri']:
@@ -417,7 +428,8 @@ def scan_entitiy_recursive(node, id, instance, node_id, o):
             }
         minshaclg.copy_property_from_shacl(shaclg, instance['type'], entity_namespace[attributename])
         if debug:
-            instance[f'{entity_ontology_prefix}:{attributename}']['debug'] = f'{entity_ontology_prefix}:{attributename}'
+            instance[f'{entity_ontology_prefix}:{attributename}']['debug'] = \
+                f'{entity_ontology_prefix}:{attributename}, {str(node)}'
         try:
             is_updating = bool(next(g.objects(o, basens['isUpdating'])))
         except:
