@@ -23,7 +23,6 @@ import ruamel.yaml
 import lib.utils as utils
 import lib.configs as configs
 from ruamel.yaml.scalarstring import (SingleQuotedScalarString as sq)
-import owlrl
 
 
 field_query = """
@@ -65,12 +64,11 @@ def parse_args(args=sys.argv[1:]):
 def main(shaclfile, knowledgefile, output_folder='output'):
     yaml = ruamel.yaml.YAML()
     utils.create_output_folder(output_folder)
-    g = Graph()
+    g = Graph(store="Oxigraph")
     g.parse(shaclfile)
-    h = Graph()
+    h = Graph(store="Oxigraph")
     h.parse(knowledgefile)
-    owlrl.DeductiveClosure(owlrl.OWLRL_Extension, rdfs_closure=True, axiomatic_triples=True,
-                           datatype_axioms=True).expand(h)
+    h = utils.transitive_closure(h)
     g += h
     tables = {}
     qres = g.query(field_query)

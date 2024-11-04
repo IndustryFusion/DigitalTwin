@@ -19,7 +19,6 @@ import os.path
 import sys
 import math
 import hashlib
-import owlrl
 import ruamel.yaml
 import rdflib
 from lib import utils
@@ -124,11 +123,9 @@ def main(knowledgefile, namespace, output_folder='output'):
     primary_key = ['subject', 'predicate', 'index']
 
     # Create RDF statements to insert data
-    g = rdflib.Graph()
+    g = rdflib.Graph(store="Oxigraph")
     g.parse(knowledgefile)
-    owlrl.DeductiveClosure(owlrl.OWLRL_Extension, rdfs_closure=True, axiomatic_triples=True,
-                           datatype_axioms=True).expand(g)
-
+    g = utils.transitive_closure(g)
     statementsets = create_statementset(g)
     sqlstatements = ''
     for statementset in statementsets:

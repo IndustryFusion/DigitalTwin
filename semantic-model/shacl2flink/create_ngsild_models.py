@@ -20,7 +20,6 @@ import sys
 import argparse
 import lib.utils as utils
 import lib.configs as configs
-import owlrl
 
 
 def parse_args(args=sys.argv[1:]):
@@ -112,11 +111,11 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
     utils.create_output_folder(output_folder)
     with open(os.path.join(output_folder, "ngsild-models.sqlite"), "w")\
             as sqlitef:
-        g = Graph()
+        g = Graph(store="Oxigraph")
         g.parse(shaclfile)
-        model = Graph()
+        model = Graph(store="Oxigraph")
         model.parse(modelfile)
-        knowledge = Graph()
+        knowledge = Graph(store="Oxigraph")
         knowledge.parse(knowledgefile)
         attributes_model = model + g + knowledge
 
@@ -161,8 +160,7 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
         print(";", file=sqlitef)
 
         # Create ngsild tables by sparql
-        owlrl.DeductiveClosure(owlrl.OWLRL_Extension, rdfs_closure=True, axiomatic_triples=True,
-                               datatype_axioms=True).expand(knowledge)
+        knowledge = utils.transitive_closure(knowledge)
         table_model = model + knowledge + g
         qres = table_model.query(ngsild_tables_query_noinference)
         tables = {}

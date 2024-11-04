@@ -207,8 +207,7 @@ while processing {ctx['query']}")
     elif elem.name == 'Builtin_NOTEXISTS':
         return translate_notexists(ctx, elem)
     elif elem.name == 'Distinct':
-        ctx['target_modifiers'].append('Distinct')
-        translate(ctx, elem.p)
+        return translate_distinct(ctx, elem)
     elif elem.name == 'LeftJoin':
         return translate_left_join(ctx, elem)
     elif elem.name == 'Extend':
@@ -238,6 +237,13 @@ while processing {ctx['query']}")
     else:
         raise utils.WrongSparqlStructure(f'SparQL structure {elem.name} not \
 supported!')
+
+
+def translate_distinct(ctx, elem):
+    ctx['target_modifiers'].append('Distinct')
+    translate(ctx, elem.p)
+    elem['target_sql'] = elem.p['target_sql']
+    elem['where'] = elem.p['where']
 
 
 def translate_unary_not(ctx, elem):
@@ -608,7 +614,11 @@ def remap_join_constraint_to_where(node):
 
 
 def copy_context(ctx):
+    # avoid deep copy of graph. it is not needed and creates problems with oxigraph
+    graph = ctx['g']
     ctx_copy = copy.deepcopy(ctx)
+    # copy graph manually into the new structure
+    ctx_copy['g'] = graph
     ctx_copy['target_sql'] = ''
     ctx_copy['target_modifiers'] = []
     ctx_copy['sql_tables'] = ctx['sql_tables']

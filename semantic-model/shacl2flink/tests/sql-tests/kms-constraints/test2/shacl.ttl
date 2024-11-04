@@ -325,7 +325,7 @@ iff:StateOnFilterShape
 PREFIX iff: <https://industry-fusion.com/types/v0.9/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX rdf:	<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-SELECT $this ?v1 ?pc ?v2
+SELECT DISTINCT $this ?v1 ?pc ?v2
     where {
         $this  iff:state [ <https://uri.etsi.org/ngsi-ld/hasValue> ?v1 ] .
         ?pc rdf:type iff:plasmacutter .

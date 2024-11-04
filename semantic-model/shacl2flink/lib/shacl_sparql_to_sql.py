@@ -1,5 +1,4 @@
 from rdflib import Graph
-import owlrl
 import os
 import sys
 import re
@@ -89,12 +88,12 @@ def translate(shaclfile, knowledgefile, prefixes):
         (statementset, tables, views): statementset in yaml format
 
     """
-    g = Graph()
-    h = Graph()
+    g = Graph(store="Oxigraph")
+    h = Graph(store="Oxigraph")
     g.parse(shaclfile)
     h.parse(knowledgefile)
     g += h
-    owlrl.RDFSClosure.RDFS_Semantics(g, axioms=True, daxioms=False, rdfs=True).closure()
+    g = utils.transitive_closure(g)
     tables_all = []
     statementsets = []
     sqlite = ''

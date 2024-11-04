@@ -32,14 +32,14 @@ cutter = term.URIRef("cutter")
 def test_create_ngsild_mappings(monkeypatch):
     class Graph:
         def query(self, sparql):
-            assert "?this rdfs:subClassOf <https://industry-fusion.com/types/v0.9/cutter> .\n" in sparql
-            assert "?thisshape sh:targetClass ?this .\n?thisshape sh:property [ sh:path \
-<https://industry-fusion.com/types/v0.9/hasFilter> ; sh:property [ sh:path \
-ngsild:hasObject;  sh:class ?f ] ] ." in sparql
-            assert "?v2shape sh:targetClass ?v2 .\n?v2shape sh:property [ sh:path \
-<https://industry-fusion.com/types/v0.9/state> ; ] ." in sparql
-            assert "?v1shape sh:targetClass ?v1 .\n?v1shape sh:property [ sh:path \
-<https://industry-fusion.com/types/v0.9/state> ; ] ." in sparql
+            assert "{?this rdfs:subClassOf <https://industry-fusion.com/types/v0.9/cutter> .\n\
+<https://industry-fusion.com/types/v0.9/cutter> rdfs:subClassOf ?this .}" in sparql
+            assert "{?fshapex sh:targetClass/rdfs:subClassOf ?f .\n\
+?fshape sh:targetClass ?f .}" in sparql
+            assert "{?thisshape sh:property [ sh:path <https://industry-fusion.com/types/v0.9/hasFilter> ; \
+sh:property [ sh:path ngsild:hasObject;  sh:class ?f ] ] .}" in sparql
+            assert "{?v2shapex sh:targetClass/rdfs:subClassOf ?v2 .\n\
+?v2shape sh:targetClass ?v2 .}" in sparql
             return ['row']
     relationships = {
         "https://industry-fusion.com/types/v0.9/hasFilter": True
@@ -97,10 +97,9 @@ def test_create_ngsild_mappings_reverse(monkeypatch):
             assert "?this rdfs:subClassOf <https://industry-fusion.com/types/v0.9/filter> ." in sparql
             assert "pcshape sh:property [ sh:path <https://industry-fusion.com/types/v0.9/hasFilter> ; sh:property \
 [ sh:path ngsild:hasObject;  sh:class ?this ] ]" in sparql
-            assert "?v2shape sh:targetClass ?v2 .\n?v2shape sh:property [ sh:path \
-<https://industry-fusion.com/types/v0.9/state> ; ] ." in sparql
-            assert "?v1shape sh:targetClass ?v1 .\n?v1shape sh:property [ sh:path \
-<https://industry-fusion.com/types/v0.9/state> ; ] ." in sparql
+            assert "{?v2shapex sh:targetClass/rdfs:subClassOf ?v2 .\n\
+?v2shape sh:targetClass ?v2 .}" in sparql
+            assert "{?v1shape sh:property [ sh:path <https://industry-fusion.com/types/v0.9/state> ; ] .}" in sparql
             return ['row']
 
     relationships = {

@@ -20,12 +20,11 @@ from munch import Munch
 
 
 @patch('lib.shacl_sparql_to_sql.Graph')
-@patch('lib.shacl_sparql_to_sql.owlrl')
 @patch('lib.shacl_sparql_to_sql.translate_sparql')
 @patch('lib.shacl_sparql_to_sql.add_variables_to_message')
 @patch('lib.shacl_sparql_to_sql.utils')
 def test_translate(mock_utils, mock_add_variables_to_message, mock_translate_sparql,
-                   mock_owlrl, mock_graph, monkeypatch):
+                   mock_graph, monkeypatch):
     def mock_add_variables_to_message(message):
         return message
     g = mock_graph.return_value
@@ -37,6 +36,7 @@ def test_translate(mock_utils, mock_add_variables_to_message, mock_translate_spa
     monkeypatch.setattr(mock_utils, "strip_class", mock_strip_class)
     monkeypatch.setattr(mock_utils, "class_to_obj_name", mock_strip_class)
     monkeypatch.setattr(mock_utils, "camelcase_to_snake_case", mock_strip_class)
+    monkeypatch.setattr(mock_utils, "transitive_closure", mock_strip_class)
 
     message = MagicMock()
     message.toPython.return_value = 'message'
