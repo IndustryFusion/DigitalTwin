@@ -3,9 +3,9 @@ PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX iff: <https://industry-fusion.com/types/v0.9/>
 
 iff:entity a iff:class ;
-    a rdfs:class .
+    a rdfs:Class .
 iff:machine a iff:class ; 
-    a rdfs:class .
+    a rdfs:Class .
 iff:filter rdfs:subClassOf iff:machine ;
     a iff:class .
 iff:plasmacutter rdfs:subClassOf iff:cutter ;
@@ -22,7 +22,7 @@ iff:operationSchedule rdfs:subClassOf iff:linkedEntity ;
     a iff:class .
 iff:maintenanceInterval rdfs:subClassOf iff:linkedEntity ;
     a iff:class .
-iff:machineState a rdfs:class .
+iff:machineState a rdfs:Class .
 iff:state_OFF a iff:machineState .
 iff:state_OFF iff:stateValidFor iff:filter, iff:cutter .
 iff:state_ON a iff:machineState  .
@@ -50,7 +50,7 @@ iff:WC1 iff:moreExpensiveThan iff:WC0 .
 iff:WC1 rdf:_n ("1.4301" "1.4302" "1.4303" "1.4304" "1.4305") .
 iff:WC2 rdf:_n ("1.3301" "1.3302" "1.3303" "1.3304" "1.3305") .
 iff:WC3 rdf:_n ("1.5301" "1.5302" "1.5303" "1.5304" "1.5305") .
-iff:Severity a rdfs:class .
+iff:Severity a rdfs:Class .
 iff:severityWarning a iff:Severity .
 iff:severityWarning rdfs:label 'warning' .
 iff:severityMajor a iff:Severity .

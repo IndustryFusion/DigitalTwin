@@ -18,6 +18,7 @@ import os.path
 from unittest.mock import patch
 import lib.utils as utils
 import rdflib
+from rdflib import Graph, Namespace, RDF, RDFS, OWL, Literal, XSD
 
 
 def test_check_dns_name():
@@ -316,3 +317,51 @@ as STRING), \'>|<\', \'\') AS STRING)) + EXTRACT(MILLISECOND FROM TRY_CAST(REGEX
     isSqlite = True
     result_expression = utils.process_sql_dialect(expression, isSqlite)
     assert result_expression == 'trim(CAST(julianday(ltrim(rtrim(test, \'>\'), \'<\')) * 86400000 as INTEGER), \'\\"\')'
+
+
+def test_transitive_closure():
+    # Define a custom namespace for testing
+    TEST = Namespace("http://example.org/test#")
+
+    # Create an RDF graph for testing
+    g = Graph()
+    g.bind("test", TEST)
+
+    # Add some initial triples
+    g.add((TEST.A, RDF.type, RDFS.Class))
+    g.add((TEST.B, RDF.type, RDFS.Class))
+    g.add((TEST.A, RDFS.subClassOf, TEST.B))
+
+    g.add((TEST.C, RDF.type, OWL.Class))
+    g.add((TEST.C, RDFS.subClassOf, TEST.A))
+
+    # Add a transitive property
+    g.add((TEST.transitiveProp, RDF.type, OWL.TransitiveProperty))
+    g.add((TEST.X, TEST.transitiveProp, TEST.Y))
+    g.add((TEST.Y, TEST.transitiveProp, TEST.Z))
+
+    # Add a container type
+    g.add((TEST.container, RDF.type, RDF.Bag))
+    g.add((TEST.container, RDF._1, Literal("value1")))
+    g.add((TEST.container, RDF._2, Literal("value2")))
+
+    # Apply the transitive_closure function to the graph
+    closure_graph = utils.transitive_closure(g)
+    for s, p, o in closure_graph:
+        print((s, p, o))
+    # Check if the reflexive relationships are added
+    assert (TEST.A, RDFS.subClassOf, TEST.A) in closure_graph
+    assert (TEST.B, RDFS.subClassOf, TEST.B) in closure_graph
+    assert (TEST.C, RDFS.subClassOf, TEST.C) in closure_graph
+
+    # Check if the transitive relationships are added
+    assert (TEST.A, RDFS.subClassOf, TEST.B) in closure_graph
+    assert (TEST.C, RDFS.subClassOf, TEST.B) in closure_graph
+
+    # Check transitive property propagation
+    assert (TEST.X, TEST.transitiveProp, TEST.Z) in closure_graph
+
+    # Check container relationships
+    assert (TEST.container, RDF.type, RDFS.Container) in closure_graph
+    assert (TEST.container, RDFS.member, Literal("value1", datatype=XSD.string)) in closure_graph
+    assert (TEST.container, RDFS.member, Literal("value2", datatype=XSD.string)) in closure_graph

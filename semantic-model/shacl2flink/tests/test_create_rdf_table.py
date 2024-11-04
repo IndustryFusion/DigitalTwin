@@ -62,17 +62,20 @@ def test_create_statementset(mock_utils, mock_configs, mock_hashlib):
 
 
 @patch('create_rdf_table.ruamel.yaml')
-@patch('create_rdf_table.owlrl')
 @patch('create_rdf_table.rdflib')
 @patch('create_rdf_table.create_table')
 @patch('create_rdf_table.configs')
 @patch('create_rdf_table.utils')
 def test_main(mock_utils, mock_configs, mock_create_table, mock_rdflib,
-              mock_owlrl, mock_yaml, tmp_path):
+              mock_yaml, tmp_path, monkeypatch):
+    def identity(val):
+        return val
     mock_utils.create_sql_table.return_value = "sqltable"
     mock_utils.create_yaml_table.return_value = "yamltable"
     mock_utils.create_statementset.return_value = "statementset"
     mock_yaml.dump.return_value = "dump"
+    monkeypatch.setattr(mock_utils, "transitive_closure", identity)
+
     create_rdf_table.main('kms/knowledge.ttl', 'namespace', tmp_path)
 
     assert os.path.exists(os.path.join(tmp_path, 'rdf.yaml')) is True

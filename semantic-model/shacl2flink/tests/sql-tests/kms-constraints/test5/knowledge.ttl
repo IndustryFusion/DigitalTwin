@@ -12,9 +12,9 @@ iff:plasmacutter_test rdfs:subClassOf iff:cutter_test ;
 ### End of Test Content
 
 iff:entity a iff:class ;
-    a rdfs:class .
+    a rdfs:Class .
 iff:machine a iff:class ;
-    a rdfs:class .
+    a rdfs:Class .
 iff:filter rdfs:subClassOf iff:machine ;
     a iff:class .
 iff:plasmacutter rdfs:subClassOf iff:cutter ;
@@ -29,11 +29,11 @@ iff:filterCartridge rdfs:subClassOf iff:entity ;
     a iff:class .
 
 
-iff:scheduleEntity a iff:class .
+iff:scheduleEntity a iff:class, rdfs:Class .
 iff:oeeTemplate rdfs:subClassOf iff:scheduleEntity .
 
 ### Machine states
-iff:machineState a rdfs:class .
+iff:machineState a rdfs:Class .
 iff:state_OFF a iff:machineState .
 iff:state_OFF iff:stateValidFor iff:filter, iff:cutter .
 iff:state_ON a iff:machineState  .

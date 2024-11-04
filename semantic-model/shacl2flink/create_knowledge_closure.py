@@ -17,8 +17,8 @@
 import sys
 import os
 import rdflib
-import owlrl
 import argparse
+import lib.utils as utils
 
 
 def parse_args(args=sys.argv[1:]):
@@ -33,8 +33,7 @@ def parse_args(args=sys.argv[1:]):
 def main(knowledgefile, outputfile):
     h = rdflib.Graph()
     h.parse(knowledgefile)
-    owlrl.DeductiveClosure(owlrl.OWLRL_Extension, rdfs_closure=True,
-                           axiomatic_triples=True, datatype_axioms=True).expand(h)
+    h = utils.transitive_closure(h)
     filename = os.path.dirname(os.path.abspath(knowledgefile)) + '/' + outputfile
     h.serialize(destination=filename, format='turtle')
 

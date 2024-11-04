@@ -352,37 +352,37 @@ def create_ngsild_mappings(ctx, sorted_graph):
         equivalence = []
         variables = []
         for key, value in ctx['classes'].items():
-            sparqlvalidationquery += f'?{key} rdfs:subClassOf <{value.toPython()}> .\n'
-            sparqlvalidationquery += f'<{value.toPython()}> rdfs:subClassOf ?{key} .\n'
+            sparqlvalidationquery += f'{{?{key} rdfs:subClassOf <{value.toPython()}> .\n'
+            sparqlvalidationquery += f'<{value.toPython()}> rdfs:subClassOf ?{key} .}}\n'
         for entity in entity_variables.keys():
-            sparqlvalidationquery += f'?{entity}shapex sh:targetClass/rdfs:subClassOf* ?{entity} .\n'
-            sparqlvalidationquery += f'?{entity}shape sh:targetClass ?{entity} .\n'
+            sparqlvalidationquery += f'{{?{entity}shapex sh:targetClass/rdfs:subClassOf ?{entity} .\n'
+            sparqlvalidationquery += f'?{entity}shape sh:targetClass ?{entity} .}}\n'
             variables.append(entity)
             for s, p, o in sorted_graph.triples((entity, None, None)):
                 property_class = sorted_graph.value(o, ngsild['hasObject'])
                 if property_class is not None:
-                    sparqlvalidationquery += f'?{s}shape sh:property [ sh:path <{p}> ; sh:property \
-[ sh:path ngsild:hasObject;  sh:class ?{property_class} ] ] .\n'
+                    sparqlvalidationquery += f'{{?{s}shape sh:property [ sh:path <{p}> ; sh:property \
+[ sh:path ngsild:hasObject;  sh:class ?{property_class} ] ] .}}\n'
         for property in property_variables:
             variables.append(property)
-            sparqlvalidationquery += f'?{property}shapex sh:targetClass/rdfs:subClassOf* ?{property} .\n'
-            sparqlvalidationquery += f'?{property}shape sh:targetClass ?{property} .\n'
+            sparqlvalidationquery += f'{{?{property}shapex sh:targetClass/rdfs:subClassOf ?{property} .\n'
+            sparqlvalidationquery += f'?{property}shape sh:targetClass ?{property} .}}\n'
             for s, p, o in sorted_graph.triples((None, ngsild['hasValue'], property)):
                 for p in sorted_graph.predicates(object=s):
-                    sparqlvalidationquery += f'?{property}shape sh:property [ sh:path <{p}> ; ] .\n'
+                    sparqlvalidationquery += f'{{?{property}shape sh:property [ sh:path <{p}> ; ] .}}\n'
                     for subj in sorted_graph.subjects(predicate=p, object=s):
                         if isinstance(subj, Variable):
-                            sparqlvalidationquery += f'{subj.toPython()} rdfs:subClassOf* ?{property} .\n'
+                            sparqlvalidationquery += f'{{{subj.toPython()} rdfs:subClassOf ?{property} .}}\n'
         for property in time_variables:
             variables.append(property)
-            sparqlvalidationquery += f'?{property}shapex sh:targetClass/rdfs:subClassOf* ?{property} .\n'
-            sparqlvalidationquery += f'?{property}shape sh:targetClass ?{property} .\n'
+            sparqlvalidationquery += f'{{?{property}shapex sh:targetClass/rdfs:subClassOf ?{property} .\n'
+            sparqlvalidationquery += f'?{property}shape sh:targetClass ?{property} .}}\n'
             for s, p, o in sorted_graph.triples((None, ngsild['observedAt'], property)):
                 for p in sorted_graph.predicates(object=s):
-                    sparqlvalidationquery += f'?{property}shape sh:property [ sh:path <{p}> ; ] .\n'
+                    sparqlvalidationquery += f'{{?{property}shape sh:property [ sh:path <{p}> ; ] .}}\n'
                     for subj in sorted_graph.subjects(predicate=p, object=s):
                         if isinstance(subj, Variable):
-                            sparqlvalidationquery += f'{subj.toPython()} rdfs:subClassOf ?{property}'
+                            sparqlvalidationquery += f'{{{subj.toPython()} rdfs:subClassOf ?{property}}}'
 
         query = basequery
         for variable in variables:

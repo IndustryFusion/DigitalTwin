@@ -19,6 +19,9 @@ import create_knowledge_closure
 
 
 @patch('create_knowledge_closure.rdflib')
-@patch('create_knowledge_closure.owlrl')
-def test_main(mock_owlrl, mock_rdflib, tmp_path):
+@patch('create_knowledge_closure.utils')
+def test_main(mock_utils, mock_rdflib, tmp_path, monkeypatch):
+    def identity(val):
+        return val
+    monkeypatch.setattr(mock_utils, "transitive_closure", identity)
     create_knowledge_closure.main('kms/knowledge.ttl', 'knowledge_closure.ttl')
