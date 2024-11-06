@@ -1,0 +1,94 @@
+{
+	"info": {
+		"_postman_id": "b801e165-3e19-435c-a1f8-98c0fed594d1",
+		"name": "pgrest",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "29168847",
+		"_collection_link": "https://red-meadow-9044-1.postman.co/workspace/My-Workspace~70c949dc-6684-4820-85df-5718362b357e/collection/29168847-b801e165-3e19-435c-a1f8-98c0fed594d1?action=share&source=collection_link&creator=29168847"
+	},
+	"item": [
+		{
+			"name": "get datapoint",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{pgresturl}}/entityhistory?limit=10&order=observedAt.desc,attributeId.asc",
+					"host": [
+						"{{pgresturl}}"
+					],
+					"path": [
+						"entityhistory"
+					],
+					"query": [
+						{
+							"key": "limit",
+							"value": "10"
+						},
+						{
+							"key": "order",
+							"value": "observedAt.desc,attributeId.asc"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "aggregate",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "pgrest.local/entityhistory?limit=20&order=observedAt.desc,attributeId.asc&select=value.count()",
+					"host": [
+						"pgrest",
+						"local"
+					],
+					"path": [
+						"entityhistory"
+					],
+					"query": [
+						{
+							"key": "limit",
+							"value": "20"
+						},
+						{
+							"key": "order",
+							"value": "observedAt.desc,attributeId.asc"
+						},
+						{
+							"key": "select",
+							"value": "value.count()"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
