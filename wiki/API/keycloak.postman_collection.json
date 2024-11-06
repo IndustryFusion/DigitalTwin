@@ -1,0 +1,336 @@
+{
+	"info": {
+		"_postman_id": "5f47704a-53b2-48f7-afbf-60244153f69c",
+		"name": "keycloak",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "29168847",
+		"_collection_link": "https://red-meadow-9044-1.postman.co/workspace/My-Workspace~70c949dc-6684-4820-85df-5718362b357e/collection/20295401-5f47704a-53b2-48f7-afbf-60244153f69c?action=share&source=collection_link&creator=29168847"
+	},
+	"item": [
+		{
+			"name": "keycloak Copy",
+			"item": [
+				{
+					"name": "Device Onboarding",
+					"item": [
+						{
+							"name": "Create onboarding token",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "X-GatewayID",
+										"value": "gatewayid",
+										"type": "text",
+										"disabled": true
+									},
+									{
+										"key": "X-DeviceID",
+										"value": "deviceidxx",
+										"type": "text",
+										"disabled": true
+									},
+									{
+										"key": "X-DeviceUID",
+										"value": "uid",
+										"type": "text",
+										"disabled": true
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "grant_type",
+											"value": "password",
+											"type": "text"
+										},
+										{
+											"key": "client_id",
+											"value": "device-onboarding",
+											"type": "text"
+										},
+										{
+											"key": "client_secret",
+											"value": "g5mazZJStwUpJGyochsHQC3kS7gnwycA",
+											"type": "text",
+											"disabled": true
+										},
+										{
+											"key": "subject_token",
+											"value": "",
+											"type": "text",
+											"disabled": true
+										},
+										{
+											"key": "password",
+											"value": "{{user-password}}",
+											"type": "text"
+										},
+										{
+											"key": "requested_token_type",
+											"value": "urn:ietf:params:oauth:token-type:refresh_token",
+											"type": "text",
+											"disabled": true
+										},
+										{
+											"key": "audience",
+											"value": "device",
+											"type": "text",
+											"disabled": true
+										},
+										{
+											"key": "username",
+											"value": "realm_user",
+											"type": "text"
+										},
+										{
+											"key": "scope",
+											"value": "device_id",
+											"type": "text",
+											"disabled": true
+										}
+									]
+								},
+								"url": {
+									"raw": "{{keycloak}}/auth/realms/iff/protocol/openid-connect/token",
+									"host": [
+										"{{keycloak}}"
+									],
+									"path": [
+										"auth",
+										"realms",
+										"iff",
+										"protocol",
+										"openid-connect",
+										"token"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "refresh device token",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "X-GatewayID",
+										"value": "gatewayid",
+										"type": "text"
+									},
+									{
+										"key": "X-DeviceID",
+										"value": "deviceidxx",
+										"type": "text"
+									},
+									{
+										"key": "X-DeviceUID",
+										"value": "uid",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "grant_type",
+											"value": "refresh_token",
+											"type": "text"
+										},
+										{
+											"key": "client_id",
+											"value": "device-onboarding",
+											"type": "text"
+										},
+										{
+											"key": "client_secret",
+											"value": "g5mazZJStwUpJGyochsHQC3kS7gnwycA",
+											"type": "text",
+											"disabled": true
+										},
+										{
+											"key": "refresh_token",
+											"value": "",
+											"type": "text"
+										},
+										{
+											"key": "password",
+											"value": "{{user-password}}",
+											"type": "text",
+											"disabled": true
+										},
+										{
+											"key": "requested_token_type",
+											"value": "urn:ietf:params:oauth:token-type:refresh_token",
+											"type": "text",
+											"disabled": true
+										},
+										{
+											"key": "audience",
+											"value": "device",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{keycloak}}/auth/realms/iff/protocol/openid-connect/token",
+									"host": [
+										"{{keycloak}}"
+									],
+									"path": [
+										"auth",
+										"realms",
+										"iff",
+										"protocol",
+										"openid-connect",
+										"token"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "keycloak token IFF SA",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "",
+								"value": "",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "client_credentials",
+									"type": "text"
+								},
+								{
+									"key": "client_id",
+									"value": "ngsild-updates",
+									"type": "text"
+								},
+								{
+									"key": "client_secret",
+									"value": "rOmAzzVVMz1pqaW58C7sgpMFrtmA9wLk",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "realm_user",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "password",
+									"value": "test",
+									"type": "text",
+									"disabled": true
+								}
+							]
+						},
+						"url": {
+							"raw": "http://keycloak.local/auth/realms/iff/protocol/openid-connect/token",
+							"protocol": "http",
+							"host": [
+								"keycloak",
+								"local"
+							],
+							"path": [
+								"auth",
+								"realms",
+								"iff",
+								"protocol",
+								"openid-connect",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "keycloak token IFF User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"pm.globals.set(\"token\", jsonData.access_token);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "",
+								"value": "",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "password",
+									"type": "text"
+								},
+								{
+									"key": "client_id",
+									"value": "scorpio",
+									"type": "text"
+								},
+								{
+									"key": "client_secret",
+									"value": "g5mazZJStwUpJGyochsHQC3kS7gnwycA",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "username",
+									"value": "realm_user",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "{{user-password}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{keycloak}}/auth/realms/iff/protocol/openid-connect/token",
+							"host": [
+								"{{keycloak}}"
+							],
+							"path": [
+								"auth",
+								"realms",
+								"iff",
+								"protocol",
+								"openid-connect",
+								"token"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
