@@ -10,7 +10,14 @@ SQLITE3 := sqlite3
 HELM_DIR := ../../helm/charts/shacl
 NAMESPACE := iff
 ONTDIR := ../kms/ontology
+CHECKPOINT ?= false
 
+# Conditionally set CHECKPOINTVAR based on CHECKPOINT
+ifeq ($(CHECKPOINT), true)
+    CHECKPOINTSWITCH = -p
+else
+    CHECKPOINTSWITCH =
+endif
 
 sqlite_files = $(OUTPUTDIR)/core.sqlite $(OUTPUTDIR)/ngsild.sqlite $(OUTPUTDIR)/rdf.sqlite $(OUTPUTDIR)/ngsild-models.sqlite $(OUTPUTDIR)/shacl-validation.sqlite
 
@@ -21,7 +28,7 @@ build: $(SHACL) $(KNOWLEDGE $(MODEL)
 	${PYTHON} create_udfs.py
 	$(PYTHON) create_ngsild_tables.py $(SHACL) $(KNOWLEDGE) $(KAFKA_TOPICS)
 	$(PYTHON) create_ngsild_models.py $(SHACL) $(KNOWLEDGE) $(MODEL)
-	$(PYTHON) create_sql_checks_from_shacl.py $(SHACL) $(KNOWLEDGE)
+	$(PYTHON) create_sql_checks_from_shacl.py $(CHECKPOINTSWITCH) $(SHACL) $(KNOWLEDGE)
 
 helm: export IFF_HELM=true
 helm: build
