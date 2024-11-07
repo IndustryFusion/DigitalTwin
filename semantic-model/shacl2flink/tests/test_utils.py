@@ -197,6 +197,74 @@ def test_create_statementmap():
             'tables': 'table_object',
             'refreshInterval': '12h',
             'views': 'view',
+            'sqlsettings': [
+                {"table.exec.sink.upsert-materialize": "none"},
+                {"execution.savepoint.ignore-unclaimed-state": "true"},
+                {"pipeline.object-reuse": "true"},
+                {"parallelism.default": "{{ .Values.flink.defaultParalellism }}"},
+                {"state.backend.rocksdb.writebuffer.size": "64 kb"},
+                {"state.backend.rocksdb.use-bloom-filter": "true"},
+                {"state.backend": "rocksdb"},
+                {"state.backend.rocksdb.predefined-options": "SPINNING_DISK_OPTIMIZED_HIGH_MEM"}
+            ],
+            'sqlstatementmaps': ['namespace/configmap'],
+            'updateStrategy': 'none'
+        }
+    }
+
+    result = utils.create_statementmap('object', 'table_object', 'view', 'ttl',
+                                       ['namespace/configmap'])
+
+    assert result == {
+        'apiVersion': 'industry-fusion.com/v1alpha4',
+        'kind': 'BeamSqlStatementSet',
+        'metadata': {
+            'name': 'object'
+        },
+        'spec': {
+            'tables': 'table_object',
+            'refreshInterval': '12h',
+            'views': 'view',
+            'sqlsettings': [
+                {"table.exec.sink.upsert-materialize": "none"},
+                {"execution.savepoint.ignore-unclaimed-state": "true"},
+                {"pipeline.object-reuse": "true"},
+                {"parallelism.default": "{{ .Values.flink.defaultParalellism }}"},
+                {"state.backend.rocksdb.writebuffer.size": "64 kb"},
+                {"state.backend.rocksdb.use-bloom-filter": "true"},
+                {"state.backend": "rocksdb"},
+                {"state.backend.rocksdb.predefined-options": "SPINNING_DISK_OPTIMIZED_HIGH_MEM"},
+                {"table.exec.state.ttl": 'ttl'}
+            ],
+            'sqlstatementmaps': ['namespace/configmap'],
+            'updateStrategy': 'none'
+        }
+    }
+
+    result = utils.create_statementmap('object', 'table_object', 'view', None,
+                                       ['namespace/configmap'], enable_checkpointing=True)
+
+    assert result == {
+        'apiVersion': 'industry-fusion.com/v1alpha4',
+        'kind': 'BeamSqlStatementSet',
+        'metadata': {
+            'name': 'object'
+        },
+        'spec': {
+            'tables': 'table_object',
+            'refreshInterval': '12h',
+            'views': 'view',
+            'sqlsettings': [
+                {"table.exec.sink.upsert-materialize": "none"},
+                {"execution.savepoint.ignore-unclaimed-state": "true"},
+                {"pipeline.object-reuse": "true"},
+                {"parallelism.default": "{{ .Values.flink.defaultParalellism }}"},
+                {"state.backend.rocksdb.writebuffer.size": "64 kb"},
+                {"state.backend.rocksdb.use-bloom-filter": "true"},
+                {"state.backend": "rocksdb"},
+                {"state.backend.rocksdb.predefined-options": "SPINNING_DISK_OPTIMIZED_HIGH_MEM"},
+                {"execution.checkpointing.interval": "{{ .Values.flink.checkpointInterval }}"}
+            ],
             'sqlstatementmaps': ['namespace/configmap'],
             'updateStrategy': 'none'
         }

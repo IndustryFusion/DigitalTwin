@@ -37,12 +37,14 @@ create_sql_checks_from_shacl.py <shacl.ttl> <knowledge.ttl>')
     parser.add_argument('-c', '--context', help='Context URI. If not given it is derived implicitly \
 from the common helmfile configs.')
     parser.add_argument('--namespace', help='namespace for configmaps', default='iff')
+    parser.add_argument('-p', '--enable-checkpointing', action="store_true", default=False,
+                        help="Enable checkpointing by putting checkpointing options into the flink sql yaml.")
 
     parsed_args = parser.parse_args(args)
     return parsed_args
 
 
-def main(shaclfile, knowledgefile, context, maps_namespace, output_folder='output'):
+def main(shaclfile, knowledgefile, context, maps_namespace, output_folder='output', enable_checkpointing=False):
     # If no context is defined, try to derive it from common.yaml
     prefixes = {}
     if context is None:
@@ -97,7 +99,7 @@ is accessible.")
             yaml.dump(utils.create_configmap(configmapname, statementset_map), fm)
             statementmap.append(f'{maps_namespace}/{configmapname}')
         yaml.dump(utils.create_statementmap('shacl-validation', tables, views, ttl,
-                                            statementmap), f)
+                                            statementmap, enable_checkpointing), f)
 
     with open(os.path.join(output_folder, "shacl-validation.sqlite"), "w") \
             as sqlitef:
@@ -110,4 +112,4 @@ if __name__ == '__main__':
     knowledgefile = args.knowledgefile
     context = args.context
     maps_namespace = args.namespace
-    main(shaclfile, knowledgefile, context, maps_namespace)
+    main(shaclfile, knowledgefile, context, maps_namespace, enable_checkpointing=args.enable_checkpointing)

@@ -343,7 +343,7 @@ def create_configmap_generic(object_name, data):
 
 
 def create_statementmap(object_name, table_object_names,
-                        view_object_names, ttl, statementmaps, refresh_interval="12h"):
+                        view_object_names, ttl, statementmaps, enable_checkpointing=False, refresh_interval="12h"):
     yaml_bsqls = {}
     yaml_bsqls['apiVersion'] = 'industry-fusion.com/v1alpha4'
     yaml_bsqls['kind'] = 'BeamSqlStatementSet'
@@ -356,19 +356,20 @@ def create_statementmap(object_name, table_object_names,
     spec['tables'] = table_object_names
     spec['refreshInterval'] = refresh_interval
     spec['views'] = view_object_names
+    spec['sqlsettings'] = [
+        {"table.exec.sink.upsert-materialize": "none"},
+        {"execution.savepoint.ignore-unclaimed-state": "true"},
+        {"pipeline.object-reuse": "true"},
+        {"parallelism.default": "{{ .Values.flink.defaultParalellism }}"},
+        {"state.backend.rocksdb.writebuffer.size": "64 kb"},
+        {"state.backend.rocksdb.use-bloom-filter": "true"},
+        {"state.backend": "rocksdb"},
+        {"state.backend.rocksdb.predefined-options": "SPINNING_DISK_OPTIMIZED_HIGH_MEM"}
+    ]
     if ttl is not None:
-        spec['sqlsettings'] = [
-            {"table.exec.state.ttl": f"{ttl}"},
-            {"state.backend.rocksdb.writebuffer.size": "64 kb"},
-            {"state.backend.rocksdb.use-bloom-filter": "true"},
-            {"execution.checkpointing.interval": "{{ .Values.flink.checkpointInterval }}"},
-            {"table.exec.sink.upsert-materialize": "none"},
-            {"state.backend": "rocksdb"},
-            {"execution.savepoint.ignore-unclaimed-state": "true"},
-            {"pipeline.object-reuse": "true"},
-            {"state.backend.rocksdb.predefined-options": "SPINNING_DISK_OPTIMIZED_HIGH_MEM"},
-            {"parallelism.default": "{{ .Values.flink.defaultParalellism }}"}
-        ]
+        spec['sqlsettings'].append({"table.exec.state.ttl": f"{ttl}"})
+    if enable_checkpointing:
+        spec['sqlsettings'].append({"execution.checkpointing.interval": "{{ .Values.flink.checkpointInterval }}"})
     spec['sqlstatementmaps'] = statementmaps
     spec['updateStrategy'] = "none"
     return yaml_bsqls
