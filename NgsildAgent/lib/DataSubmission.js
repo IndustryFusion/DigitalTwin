@@ -86,6 +86,17 @@ class DataSubmission {
             msg.properties.keys = ['datasetId'];
           }
         }
+        if (msg.l !== undefined || msg.l === null) {
+          const lang = msg.l;
+          delete msg.l;
+          if (msg.properties === undefined) {
+            msg.properties = {};
+            msg.properties.values = [];
+            msg.properties.keys = [];
+          }
+          msg.properties.values.push(lang);
+          msg.properties.keys.push('lang');
+        }
         if (msg.on === undefined || msg.on === null) {
           msg.on = new Date().getTime();
         }

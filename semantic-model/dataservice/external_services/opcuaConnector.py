@@ -24,6 +24,7 @@ asyncua_client = None
 try:
     asyncua = importlib.import_module('asyncua')
     asyncua_client = asyncua.Client
+    ua = asyncua.ua
 except ImportError:
     asyncua_client = None
     print("The 'asyncua' library is not installed. Please install it separately to use this functionality.")
@@ -73,6 +74,11 @@ this attribute.")
                 print(f"Warning Could not retrieve data for nodeid {map['connectorAttribute']}.")
                 value = None
             print(f"Value {value} received")
-            map['value'] = Literal(value)
+            if isinstance(value, ua.LocalizedText):
+                map['value'] = Literal(value.Text)
+                map['lang'] = value.Locale
+            else:
+                map['value'] = Literal(value)
+                map['lang'] = None
             map['updated'] = True
             await asyncio.sleep(sleeptime)

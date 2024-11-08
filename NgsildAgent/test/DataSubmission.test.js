@@ -274,13 +274,13 @@ describe('DataSubmission', function () {
       validateIriStub.validateIri.withArgs('dataset1').returns(false);
 
       // Mock validator to return null (valid)
-      const processedMsg = {
+      const processedMsg = [{
         n: 'Property/metric1',
         v: 100,
         on: 1627891234567,
         properties: { values: ['dataset1'], keys: ['datasetId'] }
-      };
-      validatorFunction.withArgs(processedMsg).returns(null);
+      }];
+      validatorFunction.returns(null);
 
       // Act
       await submissionCallback(msgs);
@@ -294,10 +294,81 @@ describe('DataSubmission', function () {
 
       // acknowledge should be called with msgKeys
       expect(dbManagerMock.acknowledge).to.have.been.calledOnce;
+      expect(connectorStub.dataSubmit.firstCall.args[0]).to.deep.equal(processedMsg);
 
-      expect(dbManagerMock.acknowledge).to.have.been.calledWith([]);
     });
 
+    it('should handle messages with lang', async function () {
+      // Arrange
+      const msgs = [
+        {
+          n: 'metric1',
+          v: "test",
+          l: 'lang',
+          on: 1627891234667,
+        },
+      ];
+
+      // Mock validator to return null (valid)
+      const processedMsg = [{
+        n: 'Property/metric1',
+        v: "test",
+        on: 1627891234667,
+        properties: { values: ['lang'], keys: ['lang'] }
+      }];
+      validatorFunction.returns(null);
+
+      // Act
+      await submissionCallback(msgs);
+
+      // Assert
+      // preInsert should be called with status 1
+      expect(dbManagerMock.preInsert).to.have.been.calledOnce;
+
+      // connector.dataSubmit should be called with modified message
+      expect(connectorStub.dataSubmit).to.have.been.calledOnce;
+
+      // acknowledge should be called with msgKeys
+      expect(dbManagerMock.acknowledge).to.have.been.calledOnce;
+      expect(connectorStub.dataSubmit.firstCall.args[0]).to.deep.equal(processedMsg);
+    });
+
+    it('should handle messages with lang and datasetId', async function () {
+      // Arrange
+      const msgs = [
+        {
+          n: 'metric1',
+          v: "test",
+          l: 'lang',
+          d: 'dataset2',
+          on: 1627891234667,
+        },
+      ];
+
+      // Mock validator to return null (valid)
+      const processedMsg = [{
+        n: 'Property/metric1',
+        v: "test",
+        on: 1627891234667,
+        properties: { values: ['dataset2', 'lang'], keys: ['datasetId', 'lang'] }
+      }];
+      validatorFunction.returns(null);
+
+      // Act
+      await submissionCallback(msgs);
+
+      // Assert
+      // preInsert should be called with status 1
+      expect(dbManagerMock.preInsert).to.have.been.calledOnce;
+
+      // connector.dataSubmit should be called with modified message
+      expect(connectorStub.dataSubmit).to.have.been.calledOnce;
+
+      // acknowledge should be called with msgKeys
+      expect(dbManagerMock.acknowledge).to.have.been.calledOnce;
+      expect(connectorStub.dataSubmit.firstCall.args[0]).to.deep.equal(processedMsg);
+    });
+  
     it('should handle validation failures', async function () {
       // Arrange
       const msgs = [

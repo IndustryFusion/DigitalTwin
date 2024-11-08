@@ -345,6 +345,9 @@ def send(results, attribute, entityId, dryrun, port):
         result = results[datasetId]
         value = result['value']
         type = result['type']
+        lang = None
+        if 'lang' in result:
+            lang = result['lang']
         datasetId = result
         prefix = "Property"
         if type == prefixes['ngsi-ld'].Relationship:
@@ -352,9 +355,12 @@ def send(results, attribute, entityId, dryrun, port):
         elif isinstance(value, URIRef):
             prefix = "PropertyIri"
         # Send over mqtt/device-agent
-
-        payload.append(f'{{ "n": "{attribute}",\
-"v": "{value.toPython()}", "t": "{prefix}", "i": "{entityId}"}}')
+        payload_build = f'{{ "n": "{attribute}",\
+"v": "{value.toPython()}", "t": "{prefix}", "i": "{entityId}"'
+        if lang is not None:
+            payload_build += f', "l": "{lang}"'
+        payload_build += '}'
+        payload.append(payload_build)
     payloads = f'[{",".join(payload)}]'
     if not dryrun:
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

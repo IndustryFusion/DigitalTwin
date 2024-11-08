@@ -1,4 +1,3 @@
-#
 # Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,11 +25,13 @@ import string
 
 ua = None
 Server = None
+LocalizedText = None
 
 try:
     asyncua = importlib.import_module('asyncua')
     ua = asyncua.ua
     Server = asyncua.Server
+    LocalizedText = ua.LocalizedText
 except ImportError:
     asyncua_client = None
     print("The 'asyncua' library is not installed. Please install it separately to use this functionality.")
@@ -61,6 +62,8 @@ async def update_values(variables):
                 value = random.randint(0, 100)
             elif datatype == str:
                 value = generate_random_string(12)  # Generate a 12 character random string
+            elif datatype == LocalizedText:
+                value = LocalizedText(generate_random_string(12), "en")  # Random string with English locale
             else:
                 value = "UnknownType"
 
@@ -120,6 +123,8 @@ async def setup_opcua_server(mapping_data):
             value = random.randint(0, 100)
         elif data['datatype'] == str:
             value = generate_random_string(12)
+        elif data['datatype'] == LocalizedText:
+            value = LocalizedText(generate_random_string(12), "en")
         else:
             value = "UnknownType"
 
@@ -180,7 +185,7 @@ def parse_rdf_to_mapping(rdf_file, base_ns, binding_ns=None, uaentity_ns=None):
             elif datatype_uri == opcua_ns.String:
                 datatype = str
             elif datatype_uri == opcua_ns.LocalizedText:
-                datatype = str
+                datatype = LocalizedText
             else:
                 print(f"Warning, could not determine python type for {datatype_uri}. Using default: str.")
                 datatype = str  # Default to string if not recognized
