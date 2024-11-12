@@ -106,6 +106,7 @@ def nullify(field):
         field = "'" + str(field.toPython()) + "'"
     return field
 
+
 class StringIndexer:
     def __init__(self):
         self.id_to_index_map = {}
@@ -114,7 +115,7 @@ class StringIndexer:
         # Initialize the id in the map if it doesn't exist
         if id not in self.id_to_index_map:
             self.id_to_index_map[id] = {'string_to_index': {}, 'current_index': 0}
-        
+
         id_map = self.id_to_index_map[id]
         # If the string is already known for this id, return its index
         if string in id_map['string_to_index']:
