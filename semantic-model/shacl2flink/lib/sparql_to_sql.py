@@ -96,7 +96,7 @@ where {
 
 properties = {}
 relationships = {}
-g = Graph()
+g = Graph(store="Oxigraph")
 
 
 def translate_sparql(shaclfile, knowledgefile, sparql_query, target_class, lg):
@@ -616,6 +616,7 @@ def remap_join_constraint_to_where(node):
 def copy_context(ctx):
     # avoid deep copy of graph. it is not needed and creates problems with oxigraph
     graph = ctx['g']
+    del ctx['g']
     ctx_copy = copy.deepcopy(ctx)
     # copy graph manually into the new structure
     ctx_copy['g'] = graph
