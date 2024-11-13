@@ -150,7 +150,7 @@ spec:
            `ts`
     FROM (
       SELECT *,
-      ROW_NUMBER() OVER (PARTITION BY `id`
+      ROW_NUMBER() OVER (PARTITION BY `id`, `index`
          ORDER BY ts DESC) AS rownum
       FROM `attributes`)
       WHERE rownum = 1 and entityId is NOT NULL;
@@ -232,7 +232,7 @@ spec:
            `ts`
     FROM (
       SELECT *,
-      ROW_NUMBER() OVER (PARTITION BY `id`
+      ROW_NUMBER() OVER (PARTITION BY `id`, `index`
          ORDER BY ts DESC) AS rownum
       FROM `attributes_insert_filter`)
       WHERE rownum = 1 and entityId is NOT NULL;
