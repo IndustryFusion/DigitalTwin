@@ -86,14 +86,15 @@ sql_check_relationship_base = """
                            {%- endif %}
                            B.`type` AS link,
                            B.`nodeType` as nodeType,
-                    IFNULL(B.`index`, 0) as `index` FROM {{target_class}}_view AS A
+                    CAST(B.`index` as INTEGER) as `index` FROM {{target_class}}_view AS A
                     LEFT JOIN attributes_view AS B ON B.id = A.`{{property_path}}`
                     {%- if property_class %}
                     LEFT JOIN {{property_class}}_view AS C ON B.`https://uri.etsi.org/ngsi-ld/hasObject` = C.id
                     {%- endif %}
                     WHERE
-                        (B.entityId = A.id OR B.entityId IS NULL)
-                        AND (B.name = '{{property_path}}' OR B.name IS NULL)
+                        index IS NOT NULL
+                        --(B.entityId = A.id OR B.entityId IS NULL)
+                        --AND (B.name = '{{property_path}}' OR B.name IS NULL)
 
             )
 """  # noqa: E501
