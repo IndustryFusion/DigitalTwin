@@ -86,16 +86,13 @@ sql_check_relationship_base = """
                            {%- endif %}
                            B.`type` AS link,
                            B.`nodeType` as nodeType,
-                    CAST(B.`index` as INTEGER) as `index` FROM {{target_class}}_view AS A
+                    B.`index` as `index` FROM {{target_class}}_view AS A
                     LEFT JOIN attributes_view AS B ON B.id = A.`{{property_path}}`
                     {%- if property_class %}
                     LEFT JOIN {{property_class}}_view AS C ON B.`https://uri.etsi.org/ngsi-ld/hasObject` = C.id
                     {%- endif %}
                     WHERE
                         index IS NOT NULL
-                        --(B.entityId = A.id OR B.entityId IS NULL)
-                        --AND (B.name = '{{property_path}}' OR B.name IS NULL)
-
             )
 """  # noqa: E501
 
@@ -180,12 +177,14 @@ WITH A1 AS (SELECT A.id as this,
                    C.subject as foundVal,
                    C.object as foundClass,
                    {%- endif %}
-                   IFNULL(B.`index`, 0) as `index` FROM `{{target_class}}_view` AS A
+                   B.`index` as `index` FROM `{{target_class}}_view` AS A
             LEFT JOIN attributes_view AS B ON A.`{{property_path}}` = B.id
             {% if property_class -%}
             LEFT JOIN {{rdf_table_name}} as C ON C.subject = '<' || B.`https://uri.etsi.org/ngsi-ld/hasValue` || '>'
                 and C.predicate = '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>' and C.object = '<{{property_class}}>'
             {%- endif %}
+              WHERE
+                        index IS NOT NULL
             )
 """  # noqa: E501
 

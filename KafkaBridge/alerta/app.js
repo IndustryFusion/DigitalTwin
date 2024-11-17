@@ -42,10 +42,12 @@ const startListener = async function () {
     eachMessage: async ({ topic, partition, message }) => {
       try {
         const body = JSON.parse(message.value);
-        const result = await alerta.sendAlert(body).catch((err) => { logger.error('Could not send Alert: ' + err); console.error(err); });
+        if (body !== null) {
+          const result = await alerta.sendAlert(body).catch((err) => { logger.error('Could not send Alert: ' + err); console.error(err); });
 
-        if (result.statusCode !== 201) {
-          logger.error(`submission to Alerta failed with statuscode ${result.statusCode} and ${JSON.stringify(result.body)}`);
+          if (result.statusCode !== 201) {
+            logger.error(`submission to Alerta failed with statuscode ${result.statusCode} and ${JSON.stringify(result.body)}`);
+          }
         }
       } catch (e) {
         logger.error('Could not process message: ' + e);
