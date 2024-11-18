@@ -91,8 +91,6 @@ sql_check_relationship_base = """
                     {%- if property_class %}
                     LEFT JOIN {{property_class}}_view AS C ON B.`https://uri.etsi.org/ngsi-ld/hasObject` = C.id
                     {%- endif %}
-                    WHERE
-                        index IS NOT NULL
             )
 """  # noqa: E501
 
@@ -115,7 +113,7 @@ sql_check_relationship_property_class = """
                 {%- if sqlite %}
                 ,CURRENT_TIMESTAMP
                 {%- endif %}
-            FROM A1
+            FROM A1 where `index` IS NOT NULL
 """  # noqa: E501
 
 sql_check_relationship_property_count = """
@@ -145,7 +143,7 @@ sql_check_relationship_property_count = """
 
 sql_check_relationship_nodeType = """
             SELECT this AS resource,
-                'NodeKindConstraintComponent({{property_path}})' AS event,
+                'NodeKindConstraintComponent({{property_path}})[' || SQL_DIALECT_CAST( `index` AS STRING) || '])' AS event,
                 'Development' AS environment,
                 {% if sqlite %}
                 '[SHACL Validator]' AS service,
@@ -156,14 +154,14 @@ sql_check_relationship_nodeType = """
                     THEN '{{severity}}'
                     ELSE 'ok' END AS severity,
                 'customer'  customer,
-                CASE WHEN typ IS NOT NULL AND  link IS NOT NULL AND (nodeType is NULL OR nodeType <> '{{ property_nodetype }}')
+                CASE WHEN typ IS NOT NULL AND link IS NOT NULL AND (nodeType is NULL OR nodeType <> '{{ property_nodetype }}')
                     THEN
                         'Model validation for relationship {{property_path}} failed for ' || this || ' . NodeType is '|| nodeType || ' but must be an IRI.'
                     ELSE 'All ok' END as `text`
                 {%- if sqlite %}
                 ,CURRENT_TIMESTAMP
                 {%- endif %}
-            FROM A1
+            FROM A1 where `index` IS NOT NULL
 """  # noqa: E501
 
 sql_check_property_iri_base = """
@@ -183,8 +181,6 @@ WITH A1 AS (SELECT A.id as this,
             LEFT JOIN {{rdf_table_name}} as C ON C.subject = '<' || B.`https://uri.etsi.org/ngsi-ld/hasValue` || '>'
                 and C.predicate = '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>' and C.object = '<{{property_class}}>'
             {%- endif %}
-              WHERE
-                        index IS NOT NULL
             )
 """  # noqa: E501
 
@@ -230,7 +226,7 @@ SELECT this AS resource,
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
-FROM A1
+FROM A1 where `index` IS NOT NULL
 """  # noqa: E501
 
 sql_check_property_nodeType = """
@@ -252,7 +248,7 @@ SELECT this AS resource,
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
-FROM A1
+FROM A1 where `index` IS NOT NULL
 """  # noqa: E501
 
 sql_check_property_minmax = """
@@ -275,7 +271,7 @@ SELECT this AS resource,
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
-FROM A1
+FROM A1 where `index` IS NOT NULL
 """  # noqa: E501
 
 sql_check_string_length = """
@@ -297,7 +293,7 @@ SELECT this AS resource,
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
-FROM A1
+FROM A1 where `index` IS NOT NULL
 """  # noqa: E501
 
 sql_check_literal_pattern = """
@@ -319,7 +315,7 @@ SELECT this AS resource,
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
-FROM A1
+FROM A1 where `index` IS NOT NULL
 """  # noqa: E501
 
 sql_check_literal_in = """
@@ -341,7 +337,7 @@ SELECT this AS resource,
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
-FROM A1
+FROM A1 where `index` IS NOT NULL
 """  # noqa: E501
 
 
