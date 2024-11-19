@@ -262,8 +262,8 @@ to Variable and use FILTER.')
     while len(sorted_triples) > 0:
         candidate = select_candidates(bounds, sorted_triples, graph)
         if candidate is None:
-            raise utils.SparqlValidationFailed("Could not determine the right order \
-of triples")
+            raise utils.SparqlValidationFailed(f"Could not determine the right order \
+of triples {str(triples)}")
         result.append(candidate)
         sorted_triples.remove(candidate)
     return result
