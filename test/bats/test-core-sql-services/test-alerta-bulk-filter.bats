@@ -10,10 +10,11 @@ ALERT3=/tmp/ALERT3
 ALERT4=/tmp/ALERT4
 ALERT5=/tmp/ALERT5
 ALERT6=/tmp/ALERT6
+ALERT7=/tmp/ALERT7
 ALERTS_TOPIC=iff.alerts
 BULK_ALERTS_TOPIC=iff.alerts.bulk
 KAFKACAT_ATTRIBUTES=/tmp/KAFKACAT_ATTRIBUTES
-KAFKACAT_ATTRIBUTES_FILTERED=/tmp/KAFKACAT_ATTRIBUTES_FILTERED
+KAFKACAT_ATTRIBUTES_FILTERED=/tmp/KAFKACAT_ATTRIBUTES_FILTERED  
 KAFKA_BOOTSTRAP=my-cluster-kafka-bootstrap:9092
 
 
@@ -97,6 +98,18 @@ cat << EOF | tr -d '\n' > ${ALERT6}
 }
 EOF
 
+cat << EOF | tr -d '\n' > ${ALERT7}
+{"resource":"urn:plasmacutter-test:12345","event":"Test event"};{
+  "resource": "urn:plasmacutter-test:12345",
+  "event": "Test event",
+  "environment": "Development",
+  "service": ["E2E test"],
+  "severity": "flush",
+  "customer": "test",
+  "text": "OKok"
+}
+EOF
+
 compare_attributes1() {
     cat << EOF | diff "$1" - >&3
 {"resource":"urn:plasmacutter-test:12345","event":"Test event","environment":"Development","service":["E2E test"],"severity":"ok","customer":"test","text":"OK"}
@@ -134,36 +147,41 @@ teardown(){
     sleep 0.2
     kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT5}
     sleep 0.2
+    kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT7}
+    sleep 1
     kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT1}
     sleep 0.2
     kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT6}
-    sleep 0.2
+    sleep 1
     kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT2}
     sleep 0.2
     kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT5}
-    sleep 0.2
+    sleep 1
     kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT1}
     sleep 0.2
     kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT6}
-    sleep 0.2
+    sleep 1
     kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT1}
     sleep 0.2
     kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT5}
-    sleep 0.2
+    sleep 1
     kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT3}
     sleep 0.2
     kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT6}
-    sleep 0.2
+    sleep 1
     kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT3}
     sleep 0.2
     kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT5}
-    sleep 0.2
+    sleep 1
     kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT1}
     sleep 0.2
     kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT6}
-    sleep 0.2
+    sleep 1
     kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT1}
     echo "# Sent attribute to attribute topic, wait some time for aggregation"
+    sleep 2
+    echo "# Send final alert to trigger window update in alert filter"
+    kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT1}
     sleep 2
     killall kafkacat
     grep -v flush  < ${KAFKACAT_ATTRIBUTES} | grep -v '^$' > ${KAFKACAT_ATTRIBUTES_FILTERED}
