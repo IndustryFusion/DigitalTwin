@@ -5,7 +5,7 @@ metadata:
   name: alerts
 spec:
   name: alerts
-  connector: upsert-kafka
+  connector: kafka
   fields:
     - 'resource': STRING
     - 'event': STRING
@@ -18,12 +18,11 @@ spec:
     topic: {{.Values.kafkaBridge.alerta.listenTopic}}
     properties:
       bootstrap.servers: {{.Values.kafka.bootstrapServer}}
-    key.format: json
+    scan.startup.mode: latest-offset
   value:
     format: json
     json.fail-on-missing-field: false
     json.ignore-parse-errors: true
-  primaryKey: [resource, event]
 ---
 apiVersion: industry-fusion.com/v1alpha2
 kind: BeamSqlTable
@@ -150,7 +149,7 @@ spec:
            `ts`
     FROM (
       SELECT *,
-      ROW_NUMBER() OVER (PARTITION BY `id`
+      ROW_NUMBER() OVER (PARTITION BY `id`, `index`
          ORDER BY ts DESC) AS rownum
       FROM `attributes`)
       WHERE rownum = 1 and entityId is NOT NULL;
@@ -232,7 +231,7 @@ spec:
            `ts`
     FROM (
       SELECT *,
-      ROW_NUMBER() OVER (PARTITION BY `id`
+      ROW_NUMBER() OVER (PARTITION BY `id`, `index`
          ORDER BY ts DESC) AS rownum
       FROM `attributes_insert_filter`)
       WHERE rownum = 1 and entityId is NOT NULL;

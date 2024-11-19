@@ -14,26 +14,59 @@ spec:
     sqlstatements:
         - |-
           /* validates changes in alerts_bulk and only forward if there are specific changes*/
-          insert into alerts select  resource, event, environment, service, severity, customer, `text` from
-            (
-                select resource, event,
-                    environment,
-                    service,
-                    customer,
-                    last_value(`text`) AS `text`,
-                    last_value(severity) as severity
-                from (
-                select `resource`, `event`,
-                        `environment`,
-                        service,
-                        last_value(severity) as `severity`,
-                        `customer`,
-                        last_value(`text`) as `text`
-                            from alerts_bulk
-                            group by `resource`, `event`, service, customer, environment, TUMBLE(ts, INTERVAL {{.Values.flink.alertWindow | squote}} SECOND)
-                ) as A
-                   GROUP BY A.resource, A.event, A.service, A.customer, A.environment
-            );
+            insert into alerts
+            WITH WindowedAlerts AS (
+                SELECT
+                    `resource`,
+                    `event`,
+                    `environment`,
+                    `service`,
+                    `customer`,
+                    LAST_VALUE(severity) AS `severity`,
+                    LAST_VALUE(`text`) AS `text`,
+                    TUMBLE_START(`ts`, INTERVAL {{.Values.flink.alertWindow | squote}} SECOND) AS window_start,
+                    TUMBLE_END(`ts`, INTERVAL {{.Values.flink.alertWindow | squote}} SECOND) AS window_end,
+                    TUMBLE_ROWTIME(`ts`, INTERVAL {{.Values.flink.alertWindow | squote}} SECOND) AS window_time
+                FROM TABLE(
+                    TUMBLE(TABLE alerts_bulk, DESCRIPTOR(ts), INTERVAL {{.Values.flink.alertWindow | squote}} SECOND)
+                )
+                GROUP BY
+                    `resource`,
+                    `event`,
+                    `service`,
+                    `customer`,
+                    `environment`,
+                    TUMBLE(`ts`, INTERVAL {{.Values.flink.alertWindow | squote}} SECOND)
+            ),
+            AlertsWithPreviousSeverity AS (
+                SELECT
+                    `resource`,
+                    `event`,
+                    `environment`,
+                    `service`,
+                    `customer`,
+                    `severity`,
+                    `text`,
+                    `window_end`,
+                    `window_time`,
+                    LAG(`severity`) OVER (
+                        PARTITION BY `resource`, `event`, `service`, `customer`, `environment`
+                        ORDER BY `window_time`
+                    ) AS prev_severity
+                FROM WindowedAlerts
+            )
+            SELECT
+                `resource`,
+                `event`,
+                `environment`,
+                `service`,
+                `severity`,
+                `customer`,
+                `text`
+            FROM
+                AlertsWithPreviousSeverity
+            WHERE
+                prev_severity IS NULL OR severity <> prev_severity;
         - |-
             /* aggregates entities from attributes topic and insert it every 2 seconds in update channel
             part of CORE SERVICES */
