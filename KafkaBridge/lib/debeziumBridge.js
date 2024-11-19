@@ -229,10 +229,8 @@ module.exports = function DebeziumBridge (conf) {
     Object.keys(beforeAttrs).forEach(key => {
       if (afterAttrs[key] === undefined || afterAttrs[key] === null || !Array.isArray(afterAttrs[key]) || afterAttrs[key].length === 0) {
         const obj = beforeAttrs[key].reduce((accum, element) => {
-          const obj = {};
-          obj.id = element.id;
-          obj.index = element.index;
-          accum.push(obj);
+          delete element.type;
+          accum.push(element);
           return accum;
         }, []);
         deletedAttrs[key] = obj;
@@ -261,10 +259,8 @@ module.exports = function DebeziumBridge (conf) {
         const delementArray = [];
         if (beforeAttrs[key] !== undefined && beforeAttrs[key].length > afterAttrs[key].length) {
           for (let i = afterAttrs[key].length; i < beforeAttrs[key].length; i++) {
-            const delement = {};
-            delement.id = beforeAttrs[key][i].id;
-            delement.index = i;
-            delementArray.push(delement);
+            delete beforeAttrs[key][i].type;
+            delementArray.push(beforeAttrs[key][i]);
           }
           deletedAttrs[key] = delementArray;
         }

@@ -4,7 +4,7 @@ if [ -z "${SELF_HOSTED_RUNNER}" ]; then
     SUDO="sudo -E"
 fi
 DEBUG=${DEBUG:-false} # set this to true to disable starting and stopping of kubefwd
-SKIP=
+SKIP=skip
 NAMESPACE=iff
 USERSECRET=secret/credential-iff-realm-user-iff
 USER=realm_user
@@ -237,15 +237,59 @@ EOF
 
 compare_delete_attributes() {
     cat << EOF | diff "$1" - >&3
-{"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/hasFilter","index":0}
-{"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/hasWorkpiece","index":0}
-{"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/hasWorkpiece","index":1}
-{"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/jsonValueArray","index":0}
-{"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/jsonValueArray","index":1}
-{"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/jsonValue","index":0}
-{"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/multiState","index":0}
-{"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/multiState","index":1}
-{"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/state","index":0}
+{"id":"urn:plasmacutter-test:12345\\https://industry-fusion.com/types/v0.9/hasFilter","entityId":"urn:plasmacutter-test:12345",\
+"name":"https://industry-fusion.com/types/v0.9/hasFilter","https://uri.etsi.org/ngsi-ld/datasetId":"@none",\
+"https://uri.etsi.org/ngsi-ld/observedAt":[{"@type":"https://uri.etsi.org/ngsi-ld/DateTime","@value":"2024-11-19T13:38:48.196000Z"}],\
+"https://uri.etsi.org/ngsi-ld/hasObject":"urn:filter-test:12345","nodeType":"@id","index":0}
+{"id":"urn:plasmacutter-test:12345\\https://industry-fusion.com/types/v0.9/hasWorkpiece",\
+"entityId":"urn:plasmacutter-test:12345","name":"https://industry-fusion.com/types/v0.9/hasWorkpiece",\
+"https://uri.etsi.org/ngsi-ld/datasetId":"@none",\
+"https://uri.etsi.org/ngsi-ld/observedAt":[{"@type":"https://uri.etsi.org/ngsi-ld/DateTime","@value":"2024-11-19T13:38:48.196000Z"}],\
+"https://uri.etsi.org/ngsi-ld/hasObject":"urn:workpiece-test:23456","nodeType":"@id","index":0}
+{"id":"urn:plasmacutter-test:12345\\https://industry-fusion.com/types/v0.9/hasWorkpiece",\
+"entityId":"urn:plasmacutter-test:12345",\
+"name":"https://industry-fusion.com/types/v0.9/hasWorkpiece",\
+"https://uri.etsi.org/ngsi-ld/datasetId":"urn:workpiece-test:12345-ZZZ",\
+"https://uri.etsi.org/ngsi-ld/observedAt":[{"@type":"https://uri.etsi.org/ngsi-ld/DateTime",\
+"@value":"2024-11-19T13:38:48.196000Z"}],\
+"https://uri.etsi.org/ngsi-ld/hasObject":"urn:workpiece-test:12345","nodeType":"@id","index":1}
+{"id":"urn:plasmacutter-test:12345\\https://industry-fusion.com/types/v0.9/jsonValueArray",\
+"entityId":"urn:plasmacutter-test:12345","name":"https://industry-fusion.com/types/v0.9/jsonValueArray",\
+"https://uri.etsi.org/ngsi-ld/datasetId":"@none","https://uri.etsi.org/ngsi-ld/observedAt":[{"@type":"https://uri.etsi.org/ngsi-ld/DateTime",\
+"@value":"2024-11-19T13:38:48.196000Z"}],"https://uri.etsi.org/ngsi-ld/hasValue":"{\"@type\":[\"https://industry-fusion.com/types/v0.9/myJsonType\"],\"https://industry-fusion.com/types/v0.9/my\":[{\"@value\":\"json2\"}]}","nodeType":"@json","valueType":["https://industry-fusion.com/types/v0.9/myJsonType"],"index":0}
+{"id":"urn:plasmacutter-test:12345\\https://industry-fusion.com/types/v0.9/jsonValueArray",\
+"entityId":"urn:plasmacutter-test:12345","name":"https://industry-fusion.com/types/v0.9/jsonValueArray",\
+"https://uri.etsi.org/ngsi-ld/datasetId":"urn:json-value-test:json1",\
+"https://uri.etsi.org/ngsi-ld/observedAt":[{"@type":"https://uri.etsi.org/ngsi-ld/DateTime",\
+"@value":"2024-11-19T13:38:48.196000Z"}],\
+"https://uri.etsi.org/ngsi-ld/hasValue":"{\"https://industry-fusion.com/types/v0.9/my\":[{\"@value\":\"json1\"}]}","nodeType":"@json","index":1}
+{"id":"urn:plasmacutter-test:12345\\https://industry-fusion.com/types/v0.9/jsonValue",\
+"entityId":"urn:plasmacutter-test:12345",\
+"name":"https://industry-fusion.com/types/v0.9/jsonValue",\
+"https://uri.etsi.org/ngsi-ld/datasetId":"@none",\
+"https://uri.etsi.org/ngsi-ld/observedAt":[{"@type":"https://uri.etsi.org/ngsi-ld/DateTime","@value":"2024-11-19T13:38:48.196000Z"}],\
+"https://uri.etsi.org/ngsi-ld/hasValue":"{\"@type\":[\"https://industry-fusion.com/types/v0.9/myJsonType\"],\
+\"https://industry-fusion.com/types/v0.9/my\":[{\"@value\":\"json\"}]}",\
+"nodeType":"@json","valueType":["https://industry-fusion.com/types/v0.9/myJsonType"],"index":0}
+{"id":"urn:plasmacutter-test:12345\\https://industry-fusion.com/types/v0.9/multiState",\
+"entityId":"urn:plasmacutter-test:12345",\
+"name":"https://industry-fusion.com/types/v0.9/multiState",\
+"https://uri.etsi.org/ngsi-ld/datasetId":"@none",\
+"https://uri.etsi.org/ngsi-ld/observedAt":[{"@type":"https://uri.etsi.org/ngsi-ld/DateTime",\
+"@value":"2024-11-19T13:38:48.196000Z"}],\
+"https://uri.etsi.org/ngsi-ld/hasValue":"ON","nodeType":"@value",\
+"valueType":"https://industry-fusion.com/types/v0.9/multiStateType","index":0}
+{"id":"urn:plasmacutter-test:12345\\https://industry-fusion.com/types/v0.9/multiState",\
+"entityId":"urn:plasmacutter-test:12345","name":"https://industry-fusion.com/types/v0.9/multiState",\
+"https://uri.etsi.org/ngsi-ld/datasetId":"urn:multistate-test:off",\
+"https://uri.etsi.org/ngsi-ld/observedAt":[{"@type":"https://uri.etsi.org/ngsi-ld/DateTime",\
+"@value":"2024-11-19T13:38:48.196000Z"}],\
+"https://uri.etsi.org/ngsi-ld/hasValue":"OFF","nodeType":"@value","index":1}
+{"id":"urn:plasmacutter-test:12345\\https://industry-fusion.com/types/v0.9/state",\
+"entityId":"urn:plasmacutter-test:12345","name":"https://industry-fusion.com/types/v0.9/state",\
+"https://uri.etsi.org/ngsi-ld/datasetId":"@none",\
+"https://uri.etsi.org/ngsi-ld/observedAt":[{"@type":"https://uri.etsi.org/ngsi-ld/DateTime",\
+"@value":"2024-11-19T13:38:48.196Z"}],"https://uri.etsi.org/ngsi-ld/hasValue":"OFF","nodeType":"@value","index":0}
 EOF
 }
 
@@ -372,7 +416,7 @@ teardown(){
 
 
 @test "verify debezium bridge sends updates to attributes and entity topics when entity is created" {
-    $SKIP
+    #$SKIP
     password=$(get_password)
     token=$(get_token)
     echo "# token: $token"
