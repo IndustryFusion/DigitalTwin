@@ -116,7 +116,7 @@ describe('Test diffAttributes', function () {
     const debeziumBridge = new ToTest(config);
     const result = debeziumBridge.diffAttributes(beforeAttrs, afterAttrs);
     assert.deepEqual(result.updatedAttrs, {});
-    assert.deepEqual(result.deletedAttrs, { attr2: [{ id: 'id2', index: 0 }] });
+    assert.deepEqual(result.deletedAttrs, { attr2: [{ id: 'id2', index: 0, value: 'value3' }] });
     revert();
   });
   it('Should delete higher index value and update changed value', async function () {
@@ -161,7 +161,7 @@ describe('Test diffAttributes', function () {
     const debeziumBridge = new ToTest(config);
     const result = debeziumBridge.diffAttributes(beforeAttrs, afterAttrs, 'observedAt');
     assert.deepEqual(result.updatedAttrs, { attr1: [{ id: 'id3', value: 'value4', index: 0 }] });
-    assert.deepEqual(result.deletedAttrs, { attr2: [{ id: 'id2', index: 0 }], attr1: [{ id: 'id', index: 1 }] });
+    assert.deepEqual(result.deletedAttrs, { attr2: [{ id: 'id2', index: 0, value: 'value3' }], attr1: [{ id: 'id', index: 1, value: 'value2' }] });
     revert();
   });
 });
