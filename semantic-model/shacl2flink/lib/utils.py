@@ -602,7 +602,7 @@ def split_statementsets(statementsets, max_map_size):
 # This creates a transitive closure of all OWL.TransitiveProperty elements given in the ontology
 # plus rdfs:subClassOf. In addition is makes sure that every rdfs:Class and owl:Class are reflexive
 def transitive_closure(g):
-    closure_graph = Graph()
+    closure_graph = Graph(store="Oxigraph")
     closure_graph += g
 
     # Ensure rdfs:subClassOf is defined as an OWL.TransitiveProperty if it is not already defined

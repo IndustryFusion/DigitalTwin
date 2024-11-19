@@ -107,6 +107,26 @@ def nullify(field):
     return field
 
 
+class StringIndexer:
+    def __init__(self):
+        self.id_to_index_map = {}
+
+    def add_or_get_index(self, id, string):
+        # Initialize the id in the map if it doesn't exist
+        if id not in self.id_to_index_map:
+            self.id_to_index_map[id] = {'string_to_index': {}, 'current_index': 0}
+
+        id_map = self.id_to_index_map[id]
+        # If the string is already known for this id, return its index
+        if string in id_map['string_to_index']:
+            return id_map['string_to_index'][string]
+        # Otherwise, assign a new index, increment the counter, and return it
+        else:
+            id_map['string_to_index'][string] = id_map['current_index']
+            id_map['current_index'] += 1
+            return id_map['string_to_index'][string]
+
+
 def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
     utils.create_output_folder(output_folder)
     with open(os.path.join(output_folder, "ngsild-models.sqlite"), "w")\
@@ -118,6 +138,7 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
         knowledge = Graph(store="Oxigraph")
         knowledge.parse(knowledgefile)
         attributes_model = model + g + knowledge
+        string_indexer = StringIndexer()
 
         qres = attributes_model.query(attributes_query)
         first = True
@@ -134,7 +155,7 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
                 current_index = index
                 if isinstance(index, URIRef):
                     try:
-                        current_index = int(utils.strip_class(current_index.toPython()))
+                        current_index = string_indexer.add_or_get_index(id, utils.strip_class(current_index.toPython()))
                     except:
                         current_index = 0
             valueType = nullify(valueType)
@@ -153,7 +174,7 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
                   name.toPython() +
                   "', '" + nodeType + "', " + valueType + ", " +
                   str(current_index) +
-                  ", '" + type.toPython() + "', 'http://example.com/index/" + str(current_index) +
+                  ", '" + type.toPython() + "', '" + str(index) +
                   "'," + hasValue + ", " +
                   hasObject + ", " + current_timestamp + ")", end='',
                   file=sqlitef)
