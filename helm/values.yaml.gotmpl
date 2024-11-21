@@ -121,6 +121,11 @@ alerta:
   # apiKey: {{ .StateValues.alertaApiKey }}
   adminPassword: {{ .StateValues.alertaAdminPassword }}
   adminKey: {{ .StateValues.alertaAdminKey }}
+  kafkaResumeTimeout: 2000
+  heartbeatInterval: 1000
+  heartbeatDelay: 2000
+  requestTimeout: 2000
+  kafkaCommitThreshold: 200
 
 kafka:
   name: my-cluster

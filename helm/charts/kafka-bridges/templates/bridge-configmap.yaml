@@ -17,9 +17,15 @@ data:
       "alerta": {
               "topic": {{ .Values.kafkaBridge.alerta.listenTopic | quote }},
               "hostname": {{ .Values.alerta.internalService | quote }},
+              "heartbeatTopic": {{ .Values.kafkaBridge.alerta.bulkTopic | quote }},
               "port": {{ .Values.alerta.internalPort | quote }},
               "protocol": {{ .Values.alerta.internalProtocol | quote }},
-              "accessKeyVariable": "ALERTA_API_KEY"
+              "accessKeyVariable": "ALERTA_API_KEY",
+              "kafkaResumeTimeout": {{ .Values.alerta.kafkaResumeTimeout }},
+              "heartbeatInterval": {{ .Values.alerta.heartbeatInterval }},
+              "heartbeatDelay": {{ .Values.alerta.heartbeatDelay }},
+              "requestTimeout": {{ .Values.alerta.requestTimeout }},
+              "kafkaCommitThreshold": {{ .Values.alerta.kafkaCommitThreshold }}
       },
       "logger": {
               "loglevel": "info"

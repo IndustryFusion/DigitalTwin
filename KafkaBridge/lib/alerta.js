@@ -26,7 +26,7 @@ module.exports = function Alerta (conf) {
 
   let headers;
 
-  this.sendAlert = async function (body) {
+  this.sendAlert = async function (body, timeout) {
     headers = {};
     headers.Authorization = 'Key ' + token;
 
@@ -41,6 +41,9 @@ module.exports = function Alerta (conf) {
       method: 'POST',
       headers: headers
     };
+    if (timeout !== undefined) {
+      options.timeout = timeout;
+    }
     return await rest.postBody({ options, body, disableChunks: true });
   };
 };
