@@ -6,9 +6,15 @@
 	"alerta": {
 		"topic": "iff.alerts",
 		"hostname": "alerta.iff",
+		"heartbeatTopic": "iff.alerts.bulk",
 		"port": "8080",
 		"protocol": "http:",
-		"accessKeyVariable": "ALERTA_API_KEY"
+		"accessKeyVariable": "ALERTA_API_KEY",
+		"kafkaResumeTimeout": 2000,
+		"heartbeatInterval": 1000,
+		"heartbeatDelay": 10000,
+		"requestTimeout": 2000,
+		"kafkaCommitThreshold": 200
 	},
 	"logger": {
 		"loglevel": "debug"

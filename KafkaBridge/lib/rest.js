@@ -58,6 +58,7 @@ module.exports = function Rest (config) {
       req.on('error', error => {
         reject(error);
       });
+      req.on('timeout', () => req.destroy());
       logger.debug('Now sending: ' + body);
       req.write(body);
       req.end();

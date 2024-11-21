@@ -32,28 +32,66 @@ const kafka = new Kafka({
 });
 
 const consumer = kafka.consumer({ groupId: GROUPID, allowAutoTopicCreation: false });
+const producer = kafka.producer();
 console.log(JSON.stringify(config));
+
+const commitAppliedMessages = function (consumer, commitArray) {
+  logger.debug(`Commit ${commitArray.length} messages `);
+  consumer.commitOffsets(commitArray);
+  return [];
+};
+
+const pauseresume = function (consumer, topic) {
+  consumer.pause([{ topic }]);
+  setTimeout(() => consumer.resume([{ topic }]), config.alerta.kafkaResumeTimeout);
+  logger.debug('Set timeout. Waiting to resume');
+};
 
 const startListener = async function () {
   await consumer.connect();
   await consumer.subscribe({ topic: config.alerta.topic, fromBeginning: false });
 
+  let committedOffsets = [];
   await consumer.run({
-    eachMessage: async ({ topic, partition, message }) => {
+    autoCommit: false,
+    eachMessage: async ({ topic, partition, message, pause }) => {
+      let body = null;
       try {
-        const body = JSON.parse(message.value);
-        if (body !== null) {
-          const result = await alerta.sendAlert(body).catch((err) => { logger.error('Could not send Alert: ' + err); console.error(err); });
-
-          if (result.statusCode !== 201) {
-            logger.error(`submission to Alerta failed with statuscode ${result.statusCode} and ${JSON.stringify(result.body)}`);
-          }
-        }
+        body = JSON.parse(message.value);
       } catch (e) {
-        logger.error('Could not process message: ' + e);
+        logger.error(`Could not deserialize message ${message.value}`);
+      }
+      if (body !== null && body.resource !== null && body.resource !== '' && body.event !== null && body.event !== '') {
+        const result = await alerta.sendAlert(body, config.alerta.requestTimeout)
+          .catch((err) => {
+            logger.error('Could not send Alert: ' + err);
+            committedOffsets = commitAppliedMessages(consumer, committedOffsets);
+            pauseresume(consumer, topic);
+            throw new Error('Could not send Alert ' + err);
+          });
+        logger.debug(`Alerta Result ${result.statusCode}}`);
+        if (result.statusCode !== 201) {
+          logger.error(`submission to Alerta failed with statuscode ${result.statusCode} and ${JSON.stringify(result.body)}`);
+          committedOffsets = commitAppliedMessages(consumer, committedOffsets);
+          pauseresume(consumer, topic);
+          throw new Error('Retry submission of Alert.');
+        } else {
+          committedOffsets.push({ topic, partition, offset: message.offset });
+        }
+      } else {
+        logger.debug('Ignoring ' + JSON.stringify(body));
+        committedOffsets.push({ topic, partition, offset: message.offset });
+      }
+      if (committedOffsets.length > config.alerta.kafkaCommitThreshold) {
+        committedOffsets = commitAppliedMessages(consumer, committedOffsets);
       }
     }
-  }).catch(e => console.error(`[example/consumer] ${e.message}`, e));
+  }).catch(
+    e => {
+      console.error(`[example/consumer] ${e.message}`, e);
+      throw e;
+    }
+  );
 
   const errorTypes = ['unhandledRejection', 'uncaughtException'];
   const signalTraps = ['SIGTERM', 'SIGINT', 'SIGUSR2'];
@@ -86,5 +124,38 @@ const startListener = async function () {
   }
 };
 
+const startPeriodicProducer = async function () {
+  if (config.alerta.heartbeatInterval === 0 || config.alerta.heartbeatInterval === undefined) {
+    return;
+  }
+  logger.info(`Starting heartbeat to topic ${config.alerta.heartbeatTopic} with interval ${config.alerta.heartbeatInterval} and delay ${config.alerta.heartbeatDelay}`);
+  await producer.connect();
+  const heartbeat = {
+    key: '{"resource":"heartbeat-owner","event":"heartbeat"}',
+    value: null,
+    topic: config.alerta.heartbeatTopic
+  };
+
+  setInterval(async () => {
+    try {
+      const timestamp = Date.now() - config.alerta.heartbeatDelay; // Current Kafka timestamp - 5 seconds
+      await producer.send({
+        topic: heartbeat.topic,
+        messages: [
+          {
+            key: heartbeat.key,
+            value: heartbeat.value,
+            timestamp: timestamp.toString()
+          }
+        ]
+      });
+      logger.info('Alert heartbeat sent successfully');
+    } catch (err) {
+      logger.error('Could not send heartbeat: ' + err);
+    }
+  }, config.alerta.heartbeatInterval); // Send every second
+};
 logger.info('Now staring Kafka listener');
 startListener();
+logger.info('Now starting Kafka periodic producer');
+startPeriodicProducer();

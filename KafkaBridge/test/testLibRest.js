@@ -49,7 +49,7 @@ describe('Test postBody', function () {
     const evmap = {};
     const req = {
       on: function (ev, cb) {
-        ev.should.equal('error');
+        ev.should.oneOf(['error', 'timeout']);
       },
       write: function (bo) {
         bo.should.equal(JSON.stringify(body));
@@ -111,7 +111,7 @@ describe('Test postBody', function () {
     const evmap = {};
     const req = {
       on: function (ev, cb) {
-        ev.should.equal('error');
+        ev.should.oneOf(['error', 'timeout']);
       },
       write: function (bo) {
         bo.should.equal(body);
@@ -177,7 +177,7 @@ describe('Test postBody', function () {
     const evmap = {};
     const req = {
       on: function (ev, cb) {
-        ev.should.equal('error');
+        ev.should.oneOf(['error', 'timeout']);
       },
       write: function (bo) {
         bo.should.equal(JSON.stringify(body));

@@ -91,7 +91,7 @@ spec:
                                       )
                                       || '}' as indexagg
                               FROM TABLE( TUMBLE(TABLE attributes, DESCRIPTOR(ts), INTERVAL {{.Values.flink.ngsildUpdateWindow|squote}} second)) as A
-                              WHERE A.entityId IS NOT NULL
+                              WHERE A.`type` IS NOT NULL
                               GROUP BY A.entityId, A.index, A.`https://uri.etsi.org/ngsi-ld/datasetId`, A.name, window_start, window_end) as B
                           GROUP BY window_start, window_end, entityId, name
                       ) GROUP BY window_start, window_end, id;
