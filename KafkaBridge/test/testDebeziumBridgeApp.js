@@ -27,8 +27,8 @@ describe('Test sendUpdates', function () {
   it('Should update and delete attributes', async function () {
     const messages = [
       { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
-      { key: 'id', value: '{"deleteValueKey":"deleteValueValue","deleted":true,"synched":true}' },
-      { key: 'id', value: '{"updateValueKey":"updateValueValue","synched":true}' }
+      { key: 'id', value: '{"deleteValueKey":"deleteValueValue","deleted":true,"synced":true}' },
+      { key: 'id', value: '{"updateValueKey":"updateValueValue","synced":true}' }
     ];
     const sendUpdates = toTest.__get__('sendUpdates');
     const config = {
@@ -65,8 +65,8 @@ describe('Test sendUpdates', function () {
   it('Should update and delete attributes with timestamp', async function () {
     const messages = [
       { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
-      { key: 'id', value: '{"deleteValueKey":"deleteValueValue","deleted":true,"synched":true}' },
-      { key: 'id', value: '{"updateValueKey":"updateValueValue","synched":true}', timestamp: 1672914001456 }
+      { key: 'id', value: '{"deleteValueKey":"deleteValueValue","deleted":true,"synced":true}' },
+      { key: 'id', value: '{"updateValueKey":"updateValueValue","synced":true}', timestamp: 1672914001456 }
     ];
     const sendUpdates = toTest.__get__('sendUpdates');
     const config = {
@@ -130,8 +130,8 @@ describe('Test sendUpdates', function () {
   it('Should flatten input arrays of attributes', async function () {
     const messages = [
       { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
-      [{ key: 'id', value: '{"deleteValueKey":"deleteValueValue","deleted":true,"synched":true}' }, { key: 'id', value: '{"deleteValueKey":"deleteValueValue2","deleted":true,"synched":true}' }],
-      [{ key: 'id', value: '{"updateValueKey":"updateValueValue","synched":true}' }, { key: 'id', value: '{"updateValueKey":"updateValueValue2","synched":true}' }]
+      [{ key: 'id', value: '{"deleteValueKey":"deleteValueValue","deleted":true,"synced":true}' }, { key: 'id', value: '{"deleteValueKey":"deleteValueValue2","deleted":true,"synced":true}' }],
+      [{ key: 'id', value: '{"updateValueKey":"updateValueValue","synced":true}' }, { key: 'id', value: '{"updateValueKey":"updateValueValue2","synced":true}' }]
     ];
     const sendUpdates = toTest.__get__('sendUpdates');
     const config = {
@@ -168,8 +168,8 @@ describe('Test sendUpdates', function () {
   it('Should work without subclasses ', async function () {
     const messages = [
       { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
-      { key: 'id', value: '{"deleteValueKey":"deleteValueValue","deleted":true,"synched":true}' },
-      { key: 'id', value: '{"updateValueKey":"updateValueValue","synched":true}' }
+      { key: 'id', value: '{"deleteValueKey":"deleteValueValue","deleted":true,"synced":true}' },
+      { key: 'id', value: '{"updateValueKey":"updateValueValue","synced":true}' }
     ];
     const sendUpdates = toTest.__get__('sendUpdates');
     const config = {
@@ -206,7 +206,7 @@ describe('Test sendUpdates', function () {
   it('Should insert attributes with timestamp', async function () {
     const messages = [
       { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
-      { key: 'id', value: '{"insertValueKey":"insertValueValue","synched":true}', timestamp: 1704460984123 }
+      { key: 'id', value: '{"insertValueKey":"insertValueValue","synced":true}', timestamp: 1704460984123 }
     ];
     const sendUpdates = toTest.__get__('sendUpdates');
     const config = {
@@ -239,7 +239,7 @@ describe('Test sendUpdates', function () {
   it('Should insert attributes', async function () {
     const messages = [
       { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
-      { key: 'id', value: '{"insertValueKey":"insertValueValue","synched":true}' }
+      { key: 'id', value: '{"insertValueKey":"insertValueValue","synced":true}' }
     ];
     const sendUpdates = toTest.__get__('sendUpdates');
     const config = {
