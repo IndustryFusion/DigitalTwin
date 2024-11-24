@@ -156,7 +156,7 @@ def main():
         {'datasetId': 'STRING'},
         {'unitCode': 'STRING'},
         {'deleted': 'BOOLEAN'},
-        {'synched': 'BOOLEAN'},
+        {'synced': 'BOOLEAN'},
         {'watermark': 'FOR `ts` AS `ts`'},
         {'ts': "TIMESTAMP(3) METADATA FROM 'timestamp'"}
     ]
