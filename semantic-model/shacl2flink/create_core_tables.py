@@ -195,7 +195,9 @@ def main():
         {'type': 'STRING'},
         {'attributeValue': 'STRING'},
         {'datasetId': 'STRING'},
-        {'unitCode': 'STRING'}
+        {'unitCode': 'STRING'},
+        {'deleted': 'BOOLEAN'},
+        {'synced': 'BOOLEAN'}
     ]
     kafka = {
         'topic': kafka_topic_attributes_insert,
@@ -207,7 +209,7 @@ def main():
         'json.fail-on-missing-field': False,
         'json.ignore-parse-errors': True
     }
-    primary_key = ['entityId', 'name', 'datasetId']
+    primary_key = ['id', 'datasetId']
 
     print('---', file=f)
     yaml.dump(utils.create_yaml_table(spec_name, connector, table,
@@ -231,6 +233,8 @@ def main():
         {'attributeValue': 'STRING'},
         {'datasetId': 'STRING'},
         {'unitCode': 'STRING'},
+        {'deleted': 'BOOLEAN'},
+        {'synced': 'BOOLEAN'},
         {'ts': "TIMESTAMP(3) METADATA FROM 'timestamp'"},
         {'watermark': 'FOR `ts` AS `ts`'}
     ]
