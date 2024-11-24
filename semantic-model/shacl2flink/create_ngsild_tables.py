@@ -23,33 +23,6 @@ import lib.configs as configs
 from ruamel.yaml.scalarstring import (SingleQuotedScalarString as sq)
 
 
-field_query = """
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
-PREFIX sh: <http://www.w3.org/ns/shacl#>
-
-SELECT DISTINCT ?path ?shacltype
-where {
-  {    ?nodeshape a sh:NodeShape .
-      ?nodeshape sh:targetClass ?shacltypex .
-      ?shacltype rdfs:subClassOf* ?shacltypex .
-      ?nodeshape sh:property [ sh:path ?path ; ] .
-
-  }
-    UNION
-  {    ?nodeshape a sh:NodeShape .
-      ?nodeshape sh:targetClass ?shacltypex .
-      ?shacltype rdfs:subClassOf* ?shacltypex .
-      FILTER NOT EXISTS {
-          ?nodeshape sh:property [ sh:path ?path ; ] .
-      }
-    BIND(owl:Nothing as ?path)
-  }
-}
-    ORDER BY STR(?path)
-"""
-
-
 def parse_args(args=sys.argv[1:]):
     parser = argparse.ArgumentParser(description='create_ngsild_tables.py')
     parsed_args = parser.parse_args(args)
@@ -59,33 +32,6 @@ def parse_args(args=sys.argv[1:]):
 def main(output_folder='output'):
     yaml = ruamel.yaml.YAML()
     utils.create_output_folder(output_folder)
-    g = Graph(store="Oxigraph")
-    g.parse(shaclfile)
-    h = Graph(store="Oxigraph")
-    h.parse(knowledgefile)
-    h = utils.transitive_closure(h)
-    g += h
-    tables = {}
-    qres = g.query(field_query)
-    for row in qres:
-        target_class = row.shacltype
-        stripped_class = utils.camelcase_to_snake_case(utils.strip_class(
-            target_class.toPython()))
-        if stripped_class == 'nothing':  # owl deductive closure is creating something not always needed
-            continue
-        if stripped_class not in tables:
-            table = []
-            tables[stripped_class] = table
-            table.append({sq("id"): "STRING"})
-            table.append({sq("type"): "STRING"})
-            table.append({sq("ts"): "TIMESTAMP(3) METADATA FROM 'timestamp'"})
-            table.append({"watermark": "FOR `ts` AS `ts`"})
-        else:
-            table = tables[stripped_class]
-        target_path = row.path
-        if target_path == OWL.Nothing:
-            continue
-        table.append({sq(f'{target_path}'): "STRING"})
 
     # Kafka topic object for RDF
     config = {}

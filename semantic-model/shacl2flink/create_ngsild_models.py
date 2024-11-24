@@ -159,11 +159,9 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
                 current_timestamp = f"'{str(observedAt)}'"
             print("('" + id + "', " + "CAST(NULL AS STRING), '" + entityId.toPython() + "', '" +
                   name.toPython() +
-                  "', '" + nodeType + "', " + valueType + ", " +
-                  str(current_index) +
-                  ", '" + type.toPython() + "', '" + str(index) +
-                  "'," + hasValue + ", " +
-                  hasObject + ", " + current_timestamp + ")", end='',
+                  "', '" + nodeType + "', " + valueType + ", '" + type.toPython() + "', " + attributeValue + ", " + str(current_dataset_id) +
+                  ", " + unitCode +
+                  ", CAST(NULL AS BOOLEAN), CAST(NULL AS BOOLEAN), " + current_timestamp + ")", end='',
                   file=sqlitef)
         print(";", file=sqlitef)
 
