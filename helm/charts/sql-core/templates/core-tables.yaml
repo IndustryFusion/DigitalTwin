@@ -82,16 +82,18 @@ spec:
   name: attributes
   connector: kafka
   fields:
-    - 'entityId': STRING
-    - 'name': STRING
-    - 'nodeType': STRING
-    - 'valueType': STRING
-    - 'type': STRING
-    - 'https://uri.etsi.org/ngsi-ld/datasetId': STRING
-    - 'https://uri.etsi.org/ngsi-ld/hasValue': STRING
-    - 'https://uri.etsi.org/ngsi-ld/hasObject': STRING
-    - 'deleted' : BOOLEAN
-    - 'synched': BOOLEAN
+    - id: STRING
+    - parentId: STRING
+    - entityId: STRING
+    - name: STRING
+    - nodeType: STRING
+    - valueType: STRING
+    - type: STRING
+    - attributeValue: STRING
+    - datasetId: STRING
+    - unitCode: STRING
+    - deleted: BOOLEAN
+    - synced: BOOLEAN
     - 'ts': TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL
     - 'watermark': FOR ts AS ts
   kafka:
@@ -112,14 +114,18 @@ spec:
   name: attributes_writeback
   connector: upsert-kafka
   fields:
+  - id: STRING
+  - parentId: STRING
   - entityId: STRING
   - name: STRING
   - nodeType: STRING
   - valueType: STRING
   - type: STRING
-  - 'https://uri.etsi.org/ngsi-ld/datasetId': STRING
-  - 'https://uri.etsi.org/ngsi-ld/hasValue': STRING
-  - 'https://uri.etsi.org/ngsi-ld/hasObject': STRING
+  - attributeValue: STRING
+  - datasetId: STRING
+  - unitCode: STRING
+  - deleted: BOOLEAN
+  - synced: BOOLEAN
   kafka:
     topic: iff.ngsild.attributes
     properties:
@@ -130,9 +136,8 @@ spec:
     json.fail-on-missing-field: false
     json.ignore-parse-errors: true
   primaryKey:
-  - entityId
-  - name
-  - "`https://uri.etsi.org/ngsi-ld/datasetId`"
+  - id
+  - datasetId
 ---
 apiVersion: industry-fusion.com/v1alpha1
 kind: BeamSqlView
@@ -141,16 +146,16 @@ metadata:
 spec:
   name: attributes_view
   sqlstatement: |
-    SELECT entityId, name, nodeType, valueType, `type`,
-           `https://uri.etsi.org/ngsi-ld/datasetId`,
-           `https://uri.etsi.org/ngsi-ld/hasValue`,
-           `https://uri.etsi.org/ngsi-ld/hasObject`,
-           `deleted`,
-           `synched`,
+    SELECT id, parentId, entityId, name, nodeType, valueType, `type`,
+            `attributeValue`,
+            `datasetId`,
+            `unitCode`,
+            `deleted`,
+            `synced`,
            `ts`
     FROM (
       SELECT *,
-      ROW_NUMBER() OVER (PARTITION BY `id`, `index`
+      ROW_NUMBER() OVER (PARTITION BY `id`, `datasetId`
          ORDER BY ts DESC) AS rownum
       FROM `attributes`)
       WHERE rownum = 1;
@@ -163,14 +168,18 @@ spec:
   name: attributes_insert
   connector: upsert-kafka
   fields:
+  - id: STRING
+  - parentId: STRING
   - entityId: STRING
   - name: STRING
   - nodeType: STRING
   - valueType: STRING
   - type: STRING
-  - 'https://uri.etsi.org/ngsi-ld/datasetId': STRING
-  - 'https://uri.etsi.org/ngsi-ld/hasValue': STRING
-  - 'https://uri.etsi.org/ngsi-ld/hasObject': STRING
+  - attributeValue: STRING
+  - datasetId: STRING
+  - unitCode: STRING
+  - deleted: BOOLEAN
+  - synced: BOOLEAN
   - ts: TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL
   - watermark: FOR `ts` AS `ts`
   kafka:
@@ -183,9 +192,8 @@ spec:
     json.fail-on-missing-field: false
     json.ignore-parse-errors: true
   primaryKey:
-  - entityId
-  - name
-  - '`https://uri.etsi.org/ngsi-ld/datasetId`'
+  - id
+  - datasetId
 ---
 apiVersion: industry-fusion.com/v1alpha2
 kind: BeamSqlTable
@@ -195,14 +203,18 @@ spec:
   name: attributes_insert_filter
   connector: kafka
   fields:
+  - id: STRING
+  - parentId: STRING
   - entityId: STRING
   - name: STRING
   - nodeType: STRING
   - valueType: STRING
   - type: STRING
-  - 'https://uri.etsi.org/ngsi-ld/datasetId': STRING
-  - 'https://uri.etsi.org/ngsi-ld/hasValue': STRING
-  - 'https://uri.etsi.org/ngsi-ld/hasObject': STRING
+  - attributeValue: STRING
+  - datasetId: STRING
+  - unitCode: STRING
+  - deleted: BOOLEAN
+  - synced: BOOLEAN
   - ts: TIMESTAMP(3) METADATA FROM 'timestamp'
   - watermark: FOR `ts` AS `ts`
   kafka:
@@ -223,13 +235,15 @@ spec:
   name: attributes_insert_view
   sqlstatement: |
     SELECT entityId, name, nodeType, valueType, `type`,
-           `https://uri.etsi.org/ngsi-ld/datasetId`,
-           `https://uri.etsi.org/ngsi-ld/hasValue`,
-           `https://uri.etsi.org/ngsi-ld/hasObject`,
-           `ts`
+          `attributeValue`,
+          `datasetId`,
+          `unitCode`,
+          `deleted`,
+          `synced`,
+          `ts`
     FROM (
       SELECT *,
-      ROW_NUMBER() OVER (PARTITION BY `id`, `index`
+      ROW_NUMBER() OVER (PARTITION BY `id`, `datasetId`
          ORDER BY ts DESC) AS rownum
       FROM `attributes_insert_filter`)
-      WHERE rownum = 1 and entityId is NOT NULL;
+      WHERE rownum = 1;
