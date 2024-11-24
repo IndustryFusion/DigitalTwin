@@ -156,7 +156,7 @@ def main(knowledgefile, namespace, output_folder='output'):
             num += 1
             fm.write("---\n")
             configmapname = 'rdf-configmap' + str(num)
-            yaml.dump(utils.create_configmap(configmapname, [statementset]), fm)
+            yaml.dump(utils.create_configmap(configmapname, [statementset], {'shacl-data': 'rdf-configmap'}), fm)
             statementmap.append(f'{namespace}/{configmapname}')
         fp.write("---\n")
         yaml.dump(utils.create_statementmap('rdf-statements', [table_name],

@@ -1,12 +1,8 @@
-"""
-Unittest for util.py
-"""
-
 from unittest import TestCase
 import unittest
 from bunch import Bunch
 from mock import patch
-
+import os
 import util as target
 
 
@@ -14,9 +10,10 @@ import util as target
 # --------------
 
 get_environ_ENV = {
-    "conf": '{ "a": "b"}'
+    "conf": '{ "a": "b", "c": "@@other_conf"}',
+    "other_conf": '{ "d": "e" }',
+    "cyclic_conf": '{ "a": "@@cyclic_conf"}'
 }
-
 
 def oisp_token():
     """
@@ -60,7 +57,16 @@ class TestUtils(TestCase):
         test load config
         """
         response = target.load_config_from_env("conf")
-        self.assertEqual(response, {"a": "b"})
+        self.assertEqual(response, {"a": "b", "c": {"d": "e"}})
+
+    @patch('os.environ', get_environ_ENV)
+    def test_load_config_cyclic(self):
+        """
+        test load config with cyclic reference
+        """
+        with self.assertRaises(AssertionError) as context:
+            target.load_config_from_env("cyclic_conf")
+        self.assertEqual(str(context.exception), "Cyclic config")
 
     @patch('oisp.Client', oisp_pass)
     def test_get_tokens(self):

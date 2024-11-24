@@ -30,9 +30,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * 2: other
  */
 class ConnectionError extends Error {
-  constructor (message, errno) {
+  constructor(errno, message) {
     super(message);
-    this.name = 'ConnectorError';
+    this.name = 'ConnectionError';
     this.errno = errno;
   }
 }

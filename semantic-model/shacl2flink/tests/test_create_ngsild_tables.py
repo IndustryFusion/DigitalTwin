@@ -16,7 +16,6 @@
 
 from unittest.mock import patch, MagicMock
 from rdflib import Namespace
-from rdflib.namespace import RDF
 import create_ngsild_tables
 import os
 
@@ -31,7 +30,6 @@ class dotdict(dict):
 
 
 @patch('create_ngsild_tables.ruamel.yaml')
-@patch('create_ngsild_tables.Graph')
 @patch('create_ngsild_tables.configs')
 @patch('create_ngsild_tables.utils')
 def test_main(mock_utils, mock_configs, mock_graph,
@@ -48,12 +46,6 @@ def test_main(mock_utils, mock_configs, mock_graph,
     monkeypatch.setattr(mock_utils, "transitive_closure", identity)
 
     mock_yaml.dump.return_value = "dump"
-    g = mock_graph.return_value
-    g.__contains__.return_value = True
-    g.__iadd__.return_value = g
-    g.triples.return_value = [(ex.test, RDF.type, sh.NodeShape)]
-    g.value.return_value = [(ex.test, sh.targetClass, ex.test2)]
-    g.return_value = [(ex.test, sh.property, None)]
     shacltype = MagicMock()
     shacltype.toPython.return_value = 'shacltype'
     row = {'shacltype': shacltype, 'path': 'path'}
