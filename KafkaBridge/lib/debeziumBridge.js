@@ -130,9 +130,9 @@ module.exports = function DebeziumBridge (conf) {
           obj.entityId = id;
           obj.name = key;
           if ('https://uri.etsi.org/ngsi-ld/datasetId' in refObj) {
-            obj['https://uri.etsi.org/ngsi-ld/datasetId'] = refObj['https://uri.etsi.org/ngsi-ld/datasetId'][0]['@id'];
+            obj.datasetId = refObj['https://uri.etsi.org/ngsi-ld/datasetId'][0]['@id'];
           } else {
-            obj['https://uri.etsi.org/ngsi-ld/datasetId'] = '@none';
+            obj.datasetId = '@none';
           }
 
           // extract timestamp
@@ -149,13 +149,13 @@ module.exports = function DebeziumBridge (conf) {
             // every Property is array with one element, hence [0] is no restriction
             // Property can be Literal => @value,@json or IRI => @id
             if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@value'] !== undefined) {
-              obj['https://uri.etsi.org/ngsi-ld/hasValue'] = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@value'];
+              obj.attributeValue = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@value'];
               obj.nodeType = '@value';
             } else if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@id'] !== undefined) { // Property can be IRI => @id
-              obj['https://uri.etsi.org/ngsi-ld/hasValue'] = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@id'];
+              obj.attributeValue = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@id'];
               obj.nodeType = '@id';
             } else if (typeof refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0] === 'object') { // no @id, no @value, must be a @json type
-              obj['https://uri.etsi.org/ngsi-ld/hasValue'] = JSON.stringify(refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]);
+              obj.attributeValue = JSON.stringify(refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]);
               obj.nodeType = '@json';
             }
 
@@ -166,7 +166,7 @@ module.exports = function DebeziumBridge (conf) {
           } else if (refObj['https://uri.etsi.org/ngsi-ld/hasObject'] !== undefined) {
             obj.type = 'https://uri.etsi.org/ngsi-ld/Relationship';
             // every Relationship is array with one element, hence [0] is no restriction
-            obj['https://uri.etsi.org/ngsi-ld/hasObject'] = refObj['https://uri.etsi.org/ngsi-ld/hasObject'][0]['@id'];
+            obj.attributeValue = refObj['https://uri.etsi.org/ngsi-ld/hasObject'][0]['@id'];
             obj.nodeType = '@id';
           } else {
             return;
@@ -178,9 +178,9 @@ module.exports = function DebeziumBridge (conf) {
         const copyArr = [];
         baAttrs[key].forEach((obj, idx) => {
           let check = false;
-          const curDatId = obj['https://uri.etsi.org/ngsi-ld/datasetId'];
+          const curDatId = obj.datasetId;
           for (let i = idx + 1; i < baAttrs[key].length; i++) {
-            if (curDatId === baAttrs[key][i]['https://uri.etsi.org/ngsi-ld/datasetId']) {
+            if (curDatId === baAttrs[key][i].datasetId) {
               check = true;
               copyArr[counter] = baAttrs[key][i];
             }
@@ -191,9 +191,9 @@ module.exports = function DebeziumBridge (conf) {
           }
         });
         copyArr.sort((a, b) => {
-          if (a['https://uri.etsi.org/ngsi-ld/datasetId'] === '@none') return -1;
-          if (b['https://uri.etsi.org/ngsi-ld/datasetId'] === '@none') return 1;
-          return a['https://uri.etsi.org/ngsi-ld/datasetId'].localeCompare(b['https://uri.etsi.org/ngsi-ld/datasetId']);
+          if (a.datasetId === '@none') return -1;
+          if (b.datasetId === '@none') return 1;
+          return a.datasetId.localeCompare(b.datasetId);
         });
         copyArr.forEach((obj, idx) => { // Index it according to their sorting
           obj.index = idx;
@@ -314,46 +314,34 @@ module.exports = function DebeziumBridge (conf) {
     const updatedAttrs = {};
     const deletedAttrs = {};
 
-    // Determine all attributes which are found in beforeAttrs but not in afterAttrs
-    // These attributes are added to deleteAttrs
-    Object.keys(beforeAttrs).forEach(key => {
-      if (afterAttrs[key] === undefined || afterAttrs[key] === null || !Array.isArray(afterAttrs[key]) || afterAttrs[key].length === 0) {
-        const obj = beforeAttrs[key].reduce((accum, element) => {
-          delete element.type;
-          accum.push(element);
-          return accum;
-        }, []);
-        deletedAttrs[key] = obj;
+    const getDatasetId = (attrObj) =>
+      attrObj.datasetId || '@none';
+
+    const setDatasetId = (attrObj) => {
+      if (!attrObj.datasetId) {
+        attrObj.datasetId = '@none';
       }
       return attrObj;
     };
 
-    // Determine all attributes which are found in afterAttrs but not in beforeAttrs
-    // These attributes are added to insertedAttrs
-    Object.keys(afterAttrs).forEach(key => {
-      if (beforeAttrs[key] === undefined || beforeAttrs[key] === null || !Array.isArray(beforeAttrs[key]) || beforeAttrs[key].length === 0) {
-        insertedAttrs[key] = afterAttrs[key];
-      }
-    });
+    const pickFields = (attrObj, fields) => {
+      const result = {};
+      fields.forEach((field) => {
+        if (attrObj[field] !== undefined) {
+          result[field] = attrObj[field];
+        }
+      });
+      return result;
+    };
 
-    // Determine all attributes which are changed and add them to updatedAttrs
-    // Detect wheter before had higher index and add these to deleteAttrs
-    Object.keys(afterAttrs).forEach(key => {
-      // if the attributes are not existing in
-      // if the attributes are unequal
-      // add every different attribute per index to the updatedAttrs
-      // add every attribute which have indexes in before but not mentioned in after to deletedAttrs
-      if (beforeAttrs[key] !== undefined && beforeAttrs[key] !== null &&
-        !_.isEqual(afterAttrs[key], beforeAttrs[key])) {
-        // delete all old elements with higher indexes
-        // the attribute lists are sorted so length diff reveals what has to be deleted
-        const delementArray = [];
-        if (beforeAttrs[key] !== undefined && beforeAttrs[key].length > afterAttrs[key].length) {
-          for (let i = afterAttrs[key].length; i < beforeAttrs[key].length; i++) {
-            delete beforeAttrs[key][i].type;
-            delementArray.push(beforeAttrs[key][i]);
-          }
-          deletedAttrs[key] = delementArray;
+    const beforeMap = new Map();
+    Object.entries(beforeAttrs).forEach(([attrName, attrArray]) => {
+      for (let i = attrArray.length - 1; i >= 0; i--) {
+        const attrObj = attrArray[i];
+        const datasetId = getDatasetId(attrObj);
+        const key = `${attrName}:${datasetId}`;
+        if (!beforeMap.has(key)) {
+          beforeMap.set(key, { attrName, attrObj: setDatasetId(attrObj) });
         }
       }
     });
@@ -397,7 +385,7 @@ module.exports = function DebeziumBridge (conf) {
         'name',
         'entityId',
         'type',
-        'https://uri.etsi.org/ngsi-ld/datasetId',
+        'datasetId',
         'index'
       ];
       const deletedAttrObj = pickFields(attrObj, fields);
