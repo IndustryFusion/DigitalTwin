@@ -19,7 +19,7 @@ import re
 import rdflib
 from urllib.parse import urlparse
 from enum import Enum
-from rdflib import Graph, RDFS, RDF, OWL, Graph, XSD
+from rdflib import Graph, RDFS, RDF, OWL, Graph, XSD, Literal
 from collections import deque
 
 
