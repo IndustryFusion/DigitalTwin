@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from rdflib import Graph
+from rdflib import Graph, URIRef
 import os
 import sys
 import argparse
@@ -132,14 +132,15 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
         for entityId, name, type, nodeType, valueType, hasValue, \
                 hasObject, observedAt, index, unitCode in qres:
             if index is None:
-                current_dataset_id = "NULL"
+                current_dataset_id = "'@none'"
             else:
-                current_index = index
-                if isinstance(index, URIRef):
-                    try:
-                        current_index = string_indexer.add_or_get_index(id, utils.strip_class(current_index.toPython()))
-                    except:
-                        current_index = 0
+                current_dataset_id = f"'{index}'"
+                # current_index = index
+                # if isinstance(index, URIRef):
+                #     try:
+                #         current_index = string_indexer.add_or_get_index(id, utils.strip_class(current_index.toPython()))
+                #     except:
+                #         current_index = 0
             valueType = nullify(valueType)
             attributeValue = nullify(None)
             unitCode = nullify(unitCode)

@@ -86,7 +86,7 @@ sql_check_relationship_base = """
                         B.`type` AS link,
                         B.`nodeType` as nodeType,
                         B.`deleted` as `adeleted`,
-                        IFNULL(B.`datasetId`, '@none') as `index`,
+                        B.`datasetId` as `index`,
                         D.targetClass as targetClass,
                         D.propertyPath as propertyPath,
                         D.propertyClass as propertyClass,
@@ -122,7 +122,7 @@ sql_check_relationship_property_class = """
                 {%- if sqlite %}
                 ,CURRENT_TIMESTAMP
                 {%- endif %}
-            FROM A1 WHERE A1.propertyClass IS NOT NULL
+            FROM A1 WHERE A1.propertyClass IS NOT NULL and `index` IS NOT NULL
 """  # noqa: E501
 
 sql_check_relationship_property_count = """
@@ -173,7 +173,7 @@ sql_check_relationship_nodeType = """
                 {%- if sqlite %}
                 ,CURRENT_TIMESTAMP
                 {%- endif %}
-            FROM A1
+            FROM A1 WHERE `index` IS NOT NULL
 """  # noqa: E501
 
 sql_check_property_iri_base = """
@@ -187,7 +187,7 @@ WITH A1 AS (SELECT A.id as this,
                    B.`deleted` as `adeleted`,
                    C.subject as foundVal,
                    C.object as foundClass,
-                   IFNULL(B.`datasetId`, '@none') as `index`,
+                   B.`datasetId` as `index`,
                    D.propertyPath as propertyPath,
                    D.propertyClass as propertyClass,
                    D.propertyNodetype as propertyNodetype,
@@ -252,7 +252,7 @@ SELECT this AS resource,
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
-FROM A1  WHERE propertyNodetype = '@id' and propertyClass IS NOT NULL and NOT IFNULL(adeleted, false)
+FROM A1  WHERE propertyNodetype = '@id' and propertyClass IS NOT NULL and NOT IFNULL(adeleted, false) and `index` IS NOT NULL
 """  # noqa: E501
 
 sql_check_property_nodeType = """
@@ -275,7 +275,7 @@ SELECT this AS resource,
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
-FROM A1 WHERE propertyNodetype IS NOT NULL
+FROM A1 WHERE propertyNodetype IS NOT NULL and `index` IS NOT NULL
 """  # noqa: E501
 
 sql_check_property_minmax = """
@@ -299,7 +299,7 @@ SELECT this AS resource,
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
-FROM A1 where `{{ comparison_value}}` IS NOT NULL
+FROM A1 where `{{ comparison_value}}` IS NOT NULL and `index` IS NOT NULL
 """  # noqa: E501
 
 sql_check_string_length = """
@@ -321,7 +321,7 @@ SELECT this AS resource,
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
-FROM A1 WHERE `{{ comparison_value }}` IS NOT NULL
+FROM A1 WHERE `{{ comparison_value }}` IS NOT NULL and `index` IS NOT NULL
 """  # noqa: E501
 
 sql_check_literal_pattern = """
@@ -343,7 +343,7 @@ SELECT this AS resource,
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
-FROM A1 WHERE `pattern` IS NOT NULL
+FROM A1 WHERE `pattern` IS NOT NULL and `index` IS NOT NULL
 """  # noqa: E501
 
 sql_check_literal_in = """
@@ -365,7 +365,7 @@ SELECT this AS resource,
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
-FROM A1 where `ins` IS NOT NULL
+FROM A1 where `ins` IS NOT NULL and `index` IS NOT NULL
 """  # noqa: E501
 
 
@@ -634,7 +634,7 @@ def translate(shaclefile, knowledgefile, prefixes):
             else None
         property_class = row.attributeclass.toPython() if row.attributeclass\
             else None
-        mincount = row.mincount.toPython() if row.mincount else 0
+        mincount = row.mincount.toPython() if row.mincount else None
         maxcount = row.maxcount.toPython() if row.maxcount else None
         severitycode = row.severitycode.toPython() if row.severitycode \
             else 'warning'
