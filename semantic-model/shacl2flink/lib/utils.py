@@ -17,9 +17,9 @@
 import os
 import re
 import rdflib
-from rdflib import RDFS, OWL, RDF, Graph, Literal, XSD
 from urllib.parse import urlparse
 from enum import Enum
+from rdflib import Graph, RDFS, RDF, OWL, Graph, XSD
 from collections import deque
 
 
@@ -325,7 +325,7 @@ def create_configmap_generic(object_name, data, labels=None):
 
 
 def create_statementmap(object_name, table_object_names,
-                        view_object_names, ttl, statementmaps, enable_checkpointing=False, refresh_interval="12h"):
+                        view_object_names, ttl, statementmaps, refresh_interval="12h"):
     yaml_bsqls = {}
     yaml_bsqls['apiVersion'] = 'industry-fusion.com/v1alpha4'
     yaml_bsqls['kind'] = 'BeamSqlStatementSet'
@@ -338,20 +338,19 @@ def create_statementmap(object_name, table_object_names,
     spec['tables'] = table_object_names
     spec['refreshInterval'] = refresh_interval
     spec['views'] = view_object_names
-    spec['sqlsettings'] = [
-        {"table.exec.sink.upsert-materialize": "none"},
-        {"execution.savepoint.ignore-unclaimed-state": "true"},
-        {"pipeline.object-reuse": "true"},
-        {"parallelism.default": "{{ .Values.flink.defaultParalellism }}"},
-        {"state.backend.rocksdb.writebuffer.size": "64 kb"},
-        {"state.backend.rocksdb.use-bloom-filter": "true"},
-        {"state.backend": "rocksdb"},
-        {"state.backend.rocksdb.predefined-options": "SPINNING_DISK_OPTIMIZED_HIGH_MEM"}
-    ]
     if ttl is not None:
-        spec['sqlsettings'].append({"table.exec.state.ttl": f"{ttl}"})
-    if enable_checkpointing:
-        spec['sqlsettings'].append({"execution.checkpointing.interval": "{{ .Values.flink.checkpointInterval }}"})
+        spec['sqlsettings'] = [
+            {"table.exec.state.ttl": f"{ttl}"},
+            {"state.backend.rocksdb.writebuffer.size": "64 kb"},
+            {"state.backend.rocksdb.use-bloom-filter": "true"},
+            {"execution.checkpointing.interval": "{{ .Values.flink.checkpointInterval }}"},
+            {"table.exec.sink.upsert-materialize": "none"},
+            {"state.backend": "rocksdb"},
+            {"execution.savepoint.ignore-unclaimed-state": "true"},
+            {"pipeline.object-reuse": "true"},
+            {"state.backend.rocksdb.predefined-options": "SPINNING_DISK_OPTIMIZED_HIGH_MEM"},
+            {"parallelism.default": "{{ .Values.flink.defaultParalellism }}"}
+        ]
     spec['sqlstatementmaps'] = statementmaps
     spec['updateStrategy'] = "none"
     return yaml_bsqls
@@ -576,6 +575,84 @@ def split_statementsets(statementsets, max_map_size):
 
     return grouped_strings
 
+
+def create_relationship_check_yaml_table(connector, kafka, value):
+    return create_yaml_table(relationship_checks_tablename, connector, relationship_checks_table,
+                             checks_table_primary_key, kafka, value)
+
+
+def create_relationship_check_sql_table():
+    return create_sql_table(relationship_checks_tablename, relationship_checks_table, checks_table_primary_key,
+                            SQL_DIALECT.SQLITE)
+
+
+def create_property_check_yaml_table(connector, kafka, value):
+    return create_yaml_table(property_checks_tablename, connector, property_checks_table,
+                             checks_table_primary_key, kafka, value)
+
+
+def create_property_check_sql_table():
+    return create_sql_table(property_checks_tablename, property_checks_table, checks_table_primary_key,
+                            SQL_DIALECT.SQLITE)
+
+
+def add_relationship_checks(checks, sqldialect):
+    if sqldialect == SQL_DIALECT.SQLITE:
+        statement = f'INSERT OR REPLACE INTO {relationship_checks_tablename} VALUES'
+    else:
+        statement = f'INSERT INTO {relationship_checks_tablename} VALUES'
+    first = True
+    for check in checks:
+        lcheck = {}
+        for k, v in check.items():
+            if v is None:
+                lcheck[k] = 'CAST(NULL as STRING)'
+            else:
+                lcheck[k] = f"'{v}'"
+        if first:
+            first = False
+        else:
+            statement += ', '
+        statement += f'({lcheck["targetClass"]}, {lcheck["propertyPath"]}, {lcheck["propertyClass"]}, \
+{lcheck["maxCount"]}, {lcheck["minCount"]}, {lcheck["severity"]})'
+    statement += ';'
+    return statement
+
+
+def add_property_checks(checks, sqldialect):
+    if sqldialect == SQL_DIALECT.SQLITE:
+        statement = f'INSERT OR REPLACE INTO {property_checks_tablename} VALUES'
+    else:
+        statement = f'INSERT INTO {property_checks_tablename} VALUES'
+    first = True
+    for check in checks:
+        lcheck = {}
+        for k, v in check.items():
+            if v is None:
+                lcheck[k] = 'CAST (NULL as STRING)'
+            else:
+                lcheck[k] = f"'{v}'"
+        if first:
+            first = False
+        else:
+            statement += ', '
+        statement += f'({lcheck["targetClass"]}, \
+{lcheck["propertyPath"]}, \
+{lcheck["propertyClass"]}, \
+{lcheck["propertyNodetype"]}, \
+{lcheck["maxCount"]}, \
+{lcheck["minCount"]}, \
+{lcheck["severity"]}, \
+{lcheck["minExclusive"]}, \
+{lcheck["maxExclusive"]}, \
+{lcheck["minInclusive"]}, \
+{lcheck["maxInclusive"]}, \
+{lcheck["minLength"]}, \
+{lcheck["maxLength"]}, \
+{lcheck["pattern"]}, \
+{lcheck["ins"]})'
+    statement += ';'
+    return statement
 
 # This creates a transitive closure of all OWL.TransitiveProperty elements given in the ontology
 # plus rdfs:subClassOf. In addition is makes sure that every rdfs:Class and owl:Class are reflexive

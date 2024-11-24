@@ -80,17 +80,26 @@ sql_check_relationship_base = """
             INSERT {% if sqlite %}OR REPlACE{% endif %} INTO {{alerts_bulk_table}}
             WITH A1 as (
                     SELECT A.id AS this,
-                           A.`type` as typ,
-                           {%- if property_class %}
-                           C.`type` AS entity,
-                           {%- endif %}
-                           B.`type` AS link,
-                           B.`nodeType` as nodeType,
-                    B.`index` as `index` FROM {{target_class}}_view AS A
-                    LEFT JOIN attributes_view AS B ON B.id = A.`{{property_path}}`
-                    {%- if property_class %}
-                    LEFT JOIN {{property_class}}_view AS C ON B.`https://uri.etsi.org/ngsi-ld/hasObject` = C.id
-                    {%- endif %}
+                        A.`type` as typ,
+                        IFNULL(A.`deleted`, false) as edeleted,
+                        C.`type` AS entity,
+                        B.`type` AS link,
+                        B.`nodeType` as nodeType,
+                        B.`deleted` as `adeleted`,
+                        IFNULL(B.`datasetId`, '@none') as `index`,
+                        D.targetClass as targetClass,
+                        D.propertyPath as propertyPath,
+                        D.propertyClass as propertyClass,
+                        D.maxCount as maxCount,
+                        D.minCount as minCount,
+                        D.severity as severity
+                    FROM {{target_class}}_view AS A JOIN `relationshipChecksTable` as D ON A.`type` = D.targetClass
+                    LEFT JOIN attributes_view AS B ON B.name = D.propertyPath and B.entityId = A.id
+                    LEFT JOIN {{target_class}}_view AS C ON B.`attributeValue` = C.id and B.`type` = 'https://uri.etsi.org/ngsi-ld/Relationship'
+                    -- WHERE
+                    --    (B.entityId = A.id OR B.entityId IS NULL)
+                    --    AND (B.name = D.propertyPath OR B.name IS NULL)
+
             )
 """  # noqa: E501
 
@@ -113,7 +122,7 @@ sql_check_relationship_property_class = """
                 {%- if sqlite %}
                 ,CURRENT_TIMESTAMP
                 {%- endif %}
-            FROM A1 where `index` IS NOT NULL
+            FROM A1 WHERE A1.propertyClass IS NOT NULL
 """  # noqa: E501
 
 sql_check_relationship_property_count = """
@@ -146,7 +155,7 @@ sql_check_relationship_property_count = """
 
 sql_check_relationship_nodeType = """
             SELECT this AS resource,
-                'NodeKindConstraintComponent({{property_path}})[' || SQL_DIALECT_CAST( `index` AS STRING) || '])' AS event,
+                'NodeKindConstraintComponent(' || `propertyPath` || '[' || CASE WHEN `index` = '@none' THEN '0' ELSE `index` END || '])' AS event,
                 'Development' AS environment,
                 {% if sqlite %}
                 '[SHACL Validator]' AS service,
@@ -157,14 +166,14 @@ sql_check_relationship_nodeType = """
                     THEN `severity`
                     ELSE 'ok' END AS severity,
                 'customer'  customer,
-                CASE WHEN typ IS NOT NULL AND link IS NOT NULL AND (nodeType is NULL OR nodeType <> '{{ property_nodetype }}')
+                CASE WHEN NOT edeleted AND NOT IFNULL(`adeleted`, false) AND (nodeType <> '{{ property_nodetype }}')
                     THEN
                         'Model validation for relationship ' || `propertyPath` || ' failed for ' || this || ' . NodeType is '|| nodeType || ' but must be an IRI.'
                     ELSE 'All ok' END as `text`
                 {%- if sqlite %}
                 ,CURRENT_TIMESTAMP
                 {%- endif %}
-            FROM A1 where `index` IS NOT NULL
+            FROM A1
 """  # noqa: E501
 
 sql_check_property_iri_base = """
@@ -178,13 +187,25 @@ WITH A1 AS (SELECT A.id as this,
                    B.`deleted` as `adeleted`,
                    C.subject as foundVal,
                    C.object as foundClass,
-                   {%- endif %}
-                   B.`index` as `index` FROM `{{target_class}}_view` AS A
-            LEFT JOIN attributes_view AS B ON A.`{{property_path}}` = B.id
-            {% if property_class -%}
-            LEFT JOIN {{rdf_table_name}} as C ON C.subject = '<' || B.`https://uri.etsi.org/ngsi-ld/hasValue` || '>'
-                and C.predicate = '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>' and C.object = '<{{property_class}}>'
-            {%- endif %}
+                   IFNULL(B.`datasetId`, '@none') as `index`,
+                   D.propertyPath as propertyPath,
+                   D.propertyClass as propertyClass,
+                   D.propertyNodetype as propertyNodetype,
+                   D.maxCount as maxCount,
+                   D.minCount as minCount,
+                   D.severity as severity,
+                   D.minExclusive as minExclusive,
+                   D.maxExclusive as maxExclusive,
+                   D.minInclusive as minInclusive,
+                   D.maxInclusive as maxInclusive,
+                   D.minLength as minLength,
+                   D.maxLength as maxLength,
+                   D.`pattern` as `pattern`,
+                   D.ins as ins
+                   FROM `{{target_class}}_view` AS A JOIN `propertyChecksTable` as D ON A.`type` = D.targetClass
+            LEFT JOIN attributes_view AS B ON D.propertyPath = B.name and B.entityId = A.id
+            LEFT JOIN {{rdf_table_name}} as C ON C.subject = '<' || B.`attributeValue` || '>' and B.`type` = 'https://uri.etsi.org/ngsi-ld/Property'
+                and C.predicate = '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>' and C.object = '<' || D.propertyClass || '>'
             )
 """  # noqa: E501
 
@@ -231,7 +252,7 @@ SELECT this AS resource,
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
-FROM A1 where `index` IS NOT NULL
+FROM A1  WHERE propertyNodetype = '@id' and propertyClass IS NOT NULL and NOT IFNULL(adeleted, false)
 """  # noqa: E501
 
 sql_check_property_nodeType = """
@@ -254,7 +275,7 @@ SELECT this AS resource,
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
-FROM A1 where `index` IS NOT NULL
+FROM A1 WHERE propertyNodetype IS NOT NULL
 """  # noqa: E501
 
 sql_check_property_minmax = """
@@ -278,7 +299,7 @@ SELECT this AS resource,
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
-FROM A1 where `index` IS NOT NULL
+FROM A1 where `{{ comparison_value}}` IS NOT NULL
 """  # noqa: E501
 
 sql_check_string_length = """
@@ -300,7 +321,7 @@ SELECT this AS resource,
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
-FROM A1 where `index` IS NOT NULL
+FROM A1 WHERE `{{ comparison_value }}` IS NOT NULL
 """  # noqa: E501
 
 sql_check_literal_pattern = """
@@ -322,7 +343,7 @@ SELECT this AS resource,
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
-FROM A1 where `index` IS NOT NULL
+FROM A1 WHERE `pattern` IS NOT NULL
 """  # noqa: E501
 
 sql_check_literal_in = """
@@ -344,7 +365,7 @@ SELECT this AS resource,
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
-FROM A1 where `index` IS NOT NULL
+FROM A1 where `ins` IS NOT NULL
 """  # noqa: E501
 
 
