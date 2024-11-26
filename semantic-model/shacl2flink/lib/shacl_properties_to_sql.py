@@ -96,9 +96,6 @@ sql_check_relationship_base = """
                     FROM {{target_class}}_view AS A JOIN `relationshipChecksTable` as D ON A.`type` = D.targetClass
                     LEFT JOIN attributes_view AS B ON B.name = D.propertyPath and B.entityId = A.id
                     LEFT JOIN {{target_class}}_view AS C ON B.`attributeValue` = C.id and B.`type` = 'https://uri.etsi.org/ngsi-ld/Relationship'
-                    -- WHERE
-                    --    (B.entityId = A.id OR B.entityId IS NULL)
-                    --    AND (B.name = D.propertyPath OR B.name IS NULL)
 
             )
 """  # noqa: E501

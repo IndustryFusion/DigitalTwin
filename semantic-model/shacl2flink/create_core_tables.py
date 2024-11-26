@@ -177,9 +177,9 @@ def main():
     print(utils.create_sql_table(table_name, table, primary_key,
                                  utils.SQL_DIALECT.SQLITE), file=sqlitef)
     print('---', file=f)
-    yaml.dump(utils.create_yaml_view(table_name, table, ['entityId', 'name',
+    yaml.dump(utils.create_yaml_view(table_name, table, ['id',
                                                          'datasetId']), f)
-    print(utils.create_sql_view(table_name, table, ['entityId', 'name', 'datasetId']),
+    print(utils.create_sql_view(table_name, table, ['id', 'datasetId']),
           file=sqlitef)
     # attributes_insert upsert-table
     table_name = "attributes-insert"
