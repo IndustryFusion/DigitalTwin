@@ -45,20 +45,28 @@ const processMessage = async function ({ topic, partition, message }) {
     const utcTime = epochDate.toISOString();
 
     // Creating datapoint which will be inserted to tsdb
+    datapoint.id = body.id;
     datapoint.observedAt = utcTime;
     datapoint.modifiedAt = utcTime;
     datapoint.entityId = body.entityId;
     datapoint.attributeId = body.name;
     datapoint.nodeType = body.nodeType;
-    datapoint.index = body.index;
     if ('datasetId' in body) {
       datapoint.datasetId = body.datasetId;
     } else {
       datapoint.datasetId = '@none';
     }
-
+    if ('unitCode' in body) {
+      datapoint.unitCode = body.unitCode;
+    }
+    if ('lang' in body) {
+      datapoint.lang = body.lang;
+    }
+    if ('parentId' in body) {
+      datapoint.parentId = body.parentId;
+    }
     if (body.type === 'https://uri.etsi.org/ngsi-ld/Property') {
-      let value = body['https://uri.etsi.org/ngsi-ld/hasValue'];
+      let value = body.attributeValue;
       if (!isNaN(value)) {
         value = Number(value);
       }
@@ -69,7 +77,7 @@ const processMessage = async function ({ topic, partition, message }) {
       }
     } else if (body.type === 'https://uri.etsi.org/ngsi-ld/Relationship') {
       datapoint.attributeType = body.type;
-      datapoint.value = body['https://uri.etsi.org/ngsi-ld/hasObject'];
+      datapoint.value = body.attributeValue;
     } else {
       logger.error('Could not send Datapoints: Neither Property nor Relationship');
       return;

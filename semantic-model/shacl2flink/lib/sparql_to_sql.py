@@ -467,6 +467,7 @@ def wrap_sql_construct(ctx, node):
         construct_query += f"{get_bound_trim_string(ctx, value_var)} as `attributeValue`,\n"  # value
         construct_query += '\'@none\' as `datasetId`,\n'
         construct_query += 'CAST(NULL as STRING) as unitCode,\n'  # unitCode
+        construct_query += 'CAST(NULL as STRING) as lang,\n'  # unitCode
         construct_query += 'false as `deleted`,\n'  # unitCode
         construct_query += 'false as `synched`\n'  # unitCode
         construct_query += ',SQL_DIALECT_SQLITE_TIMESTAMP\n'  # ts

@@ -99,11 +99,11 @@ spec:
             /* forward only non-retracted attribute changes
             This is part of the core service */
             insert into attributes_writeback
-            select id, parentId, entityId, name, nodeType, valueType, `type`, `attributeValue`, `datasetId`, `unitCode`, `deleted`, `synced` from
+            select id, parentId, entityId, name, nodeType, valueType, `type`, `attributeValue`, `datasetId`, `unitCode`, `lang`, `deleted`, `synced` from
             (select id, last_value(parentId) as parentId, last_value(entityId) as entityId, last_value(name) as name, last_value(nodeType) as nodeType,
                 last_value(valueType) as valueType , last_value(`type`) as `type`,
             last_value(`attributeValue`) as `attributeValue`,
-            `datasetId` as `datasetId`, last_value(`unitCode`) as `unitCode`, last_value(`deleted`) as `deleted`, last_value(`synced`) as `synced`,
+            `datasetId` as `datasetId`, last_value(`unitCode`) as `unitCode`, last_value(`lang`), last_value(`deleted`) as `deleted`, last_value(`synced`) as `synced`,
             TUMBLE_START(ts, INTERVAL {{ .Values.flink.attributeInsertWindow |squote }} SECOND),
             TUMBLE_END(ts, INTERVAL {{ .Values.flink.attributeInsertWindow |squote }} SECOND)
             from attributes_insert

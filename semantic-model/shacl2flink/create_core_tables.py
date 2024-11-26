@@ -155,6 +155,7 @@ def main():
         {'attributeValue': 'STRING'},
         {'datasetId': 'STRING'},
         {'unitCode': 'STRING'},
+        {'lang': 'STRING'},
         {'deleted': 'BOOLEAN'},
         {'synced': 'BOOLEAN'},
         {'watermark': 'FOR `ts` AS `ts`'},
@@ -196,6 +197,7 @@ def main():
         {'attributeValue': 'STRING'},
         {'datasetId': 'STRING'},
         {'unitCode': 'STRING'},
+        {'lang': 'STRING'},
         {'deleted': 'BOOLEAN'},
         {'synced': 'BOOLEAN'}
     ]
@@ -233,6 +235,7 @@ def main():
         {'attributeValue': 'STRING'},
         {'datasetId': 'STRING'},
         {'unitCode': 'STRING'},
+        {'lang': 'STRING'},
         {'deleted': 'BOOLEAN'},
         {'synced': 'BOOLEAN'},
         {'ts': "TIMESTAMP(3) METADATA FROM 'timestamp'"},

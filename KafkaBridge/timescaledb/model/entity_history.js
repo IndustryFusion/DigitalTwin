@@ -26,6 +26,8 @@ const config = require('../../config/config.json');
 // 1st - name of table, 2nd - columns inside the table
 const entityHistoryTable = sequelize.define(config.timescaledb.tablename, {
 
+  id: { type: Sequelize.TEXT, allowNull: false, primaryKey: true },
+  parentId: { type: Sequelize.TEXT, allowNull: true, primaryKey: false },
   // Column-1, observedAt is an object with kafka timestamp to date Data_Type UTC timestamp
   observedAt: { type: Sequelize.DATE, allowNull: false, primaryKey: true },
 
@@ -33,10 +35,10 @@ const entityHistoryTable = sequelize.define(config.timescaledb.tablename, {
   modifiedAt: { type: Sequelize.DATE, allowNull: false },
 
   // Column-2, entityId
-  entityId: { type: Sequelize.TEXT, allowNull: false, primaryKey: true },
+  entityId: { type: Sequelize.TEXT, allowNull: false, primaryKey: false },
 
   // Column-3, attributeId-> full name as URI
-  attributeId: { type: Sequelize.TEXT, allowNull: false, primaryKey: true },
+  attributeId: { type: Sequelize.TEXT, allowNull: false, primaryKey: false },
 
   // Column-4, attributeType-> Relaionship or properties
   attributeType: { type: Sequelize.TEXT, allowNull: false },
@@ -51,8 +53,12 @@ const entityHistoryTable = sequelize.define(config.timescaledb.tablename, {
   // In future can be used for literals value types
   valueType: { type: Sequelize.TEXT, allowNull: true },
 
-  // Useful when we have array
-  index: { type: Sequelize.INTEGER, allowNull: false }
+  // NGSI-LD defined unitType
+  unitType: { type: Sequelize.TEXT, allowNull: true },
+  // language tag if applicable
+  lang: { type: Sequelize.TEXT, allowNull: true },
+  // indicates if attribute has been deleted
+  deleted: { type: Sequelize.TEXT, allowNull: true }
 
 }, {
   // disabled for a model auto timestamping with createAt and ModifiedAt as we take value from Kafka
