@@ -314,7 +314,7 @@ class NodesetParser:
             self.g.add((self.ontology_name, OWL.versionIRI, self.versionIRI))
         self.g.add((self.ontology_name, OWL.versionInfo, Literal(0.1)))
         for ontology in self.imported_ontologies:
-            self.g.add((self.ontology_name, OWL.imports, ontology))
+            self.g.add((self.ontology_name, OWL.imports, utils.file_path_to_uri(ontology)))
 
     def create_prefixes(self, xml_node, base, opcua_namespace):
         self.rdf_ns['base'] = Namespace(base)
