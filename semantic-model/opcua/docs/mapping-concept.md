@@ -1,4 +1,6 @@
-# Semantic Data of OPCUA
+# Mapping Concept
+
+## Conversion to NGSI-LD(JSON-LD)
 
 In the following the mapping of OPCUA information model to NGSI-LD is described.
 This is the information model we use as refernce
@@ -80,7 +82,7 @@ Properties of Objects are only differentiable from Datavariables by metadata pro
     "hasPropertyZ": false
  }
  ```
-## Semantic conversion of OPCUA Object-arrays
+## Conversion of OPCUA Object-arrays
 
 Objects which are part of an array are typcially defined with a template <> definition. E.g. object_<no> means that there could be object_1, object_2, ... browsepath.
 The problem of this is that the name convention is not exactly specified, so object_#1, object#2, ... or object_01, object_02, ... is also possible. Moreover, this makes it difficult to write logic which addresses all element in an array because one needs to guess the names with a pattern. Therefore, we treat this case different. A NGSI-LD instance of such an object would look as follows:
