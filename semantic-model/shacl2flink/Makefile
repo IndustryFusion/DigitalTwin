@@ -48,7 +48,7 @@ setup: requirements.txt setup-dev
 	$(PIP) install -r requirements.txt
 	echo ".headers on" > ~/.sqliterc
 	echo ".mode column" >> ~/.sqliterc
-	echo ".load /usr/lib/sqlite3/pcre.so" >> ~/.sqliterc
+	echo ".load /usr/lib/sqlite3/pcre2.so" >> ~/.sqliterc
 
 
 
