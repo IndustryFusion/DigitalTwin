@@ -22,7 +22,8 @@
     "openid-client": "^5.1.2",
     "redis": "^4.6.11",
     "underscore": "^1.13.1",
-    "winston": "^3.8.1"
+    "winston": "^3.8.1",
+    "express-rate-limit": "^7.4.1"
   },
   "devDependencies": {
     "chai": "^4.3.6",
