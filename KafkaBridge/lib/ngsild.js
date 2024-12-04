@@ -500,6 +500,26 @@ function fiwareApi (conf) {
   };
 
   /**
+   * Run batch merge operation on the entities
+   * @param {array[Object]} entities - Array of JSON patches to merge
+   * @param {array[Object]} headers - additional headers
+   */
+  this.batchMerge = function (entities, { headers }) {
+    headers = headers || {};
+    headers['Content-Type'] = 'application/ld+json';
+
+    const options = {
+      hostname: config.ngsildServer.hostname,
+      protocol: config.ngsildServer.protocol,
+      port: config.ngsildServer.port,
+      path: '/ngsi-ld/v1/entityOperations/merge',
+      headers: headers,
+      method: 'POST'
+    };
+    return rest.postBody({ options, body: entities });
+  };
+
+  /**
    * Helpers
    */
   const jsonldFilesForTypes = {
