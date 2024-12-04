@@ -1,5 +1,5 @@
 /**
-* Copyright (c) 2023 Intel Corporation
+* Copyright (c) 2023, 2024 Intel Corporation
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -23,8 +23,10 @@ const config = require('../config/config.json');
 const sequelize = require('./utils/tsdb-connect'); // Import sequelize object, Database connection pool managed by Sequelize.
 const { QueryTypes } = require('sequelize');
 const Logger = require('../lib/logger.js');
+const attributeHistoryTable = require('./model/attribute_history.js'); // Import attributeHistory model/table defined
 const entityHistoryTable = require('./model/entity_history.js'); // Import entityHistory model/table defined
-const historyTableName = config.timescaledb.tablename;
+const attributeHistoryTableName = config.timescaledb.attributeTablename;
+const entityHistoryTableName = config.timescaledb.entityTablename;
 const runningAsMain = require.main === module;
 const logger = new Logger(config);
 
@@ -82,7 +84,7 @@ const processMessage = async function ({ topic, partition, message }) {
       logger.error('Could not send Datapoints: Neither Property nor Relationship');
       return;
     }
-    entityHistoryTable.upsert(datapoint).then(() => {
+    attributeHistoryTable.upsert(datapoint).then(() => {
       logger.debug('Datapoint succefully stored in tsdb table');
     })
       .catch((err) => logger.error('Error in storing datapoint in tsdb: ' + err));
@@ -102,7 +104,7 @@ const startListener = async function () {
     });
 
   await sequelize.sync().then(() => {
-    logger.debug('Succesfully created/synced tsdb table : ' + historyTableName);
+    logger.debug('Succesfully created/synced tsdb table : ' + attributeHistoryTableName);
   })
     .catch(error => {
       logger.error('Unable to create/sync table in  tsdb:', error);
@@ -121,7 +123,7 @@ const startListener = async function () {
   }).catch(error => {
     logger.warn('Cannot grant access to user.', error);
   });
-  const htChecksqlquery = 'SELECT * FROM timescaledb_information.hypertables WHERE hypertable_name = \'' + historyTableName + '\';';
+  const htChecksqlquery = 'SELECT * FROM timescaledb_information.hypertables WHERE hypertable_name = \'' + attributeHistoryTableName + '\';';
   await sequelize.query(htChecksqlquery, { type: QueryTypes.SELECT }).then((hypertableInfo) => {
     if (hypertableInfo.length) {
       hypertableStatus = true;
@@ -132,7 +134,7 @@ const startListener = async function () {
     });
 
   if (!hypertableStatus) {
-    const htCreateSqlquery = 'SELECT create_hypertable(\'' + historyTableName + '\', \'observedAt\', migrate_data => true);';
+    const htCreateSqlquery = 'SELECT create_hypertable(\'' + attributeHistoryTableName + '\', \'observedAt\', migrate_data => true);';
     await sequelize.query(htCreateSqlquery, { type: QueryTypes.SELECT }).then((hyperTableCreate) => {
       logger.debug('Hypertable created, return from sql query: ' + JSON.stringify(hyperTableCreate));
     })
@@ -143,7 +145,10 @@ const startListener = async function () {
 
   // Kafka topic subscription
   await consumer.connect();
-  await consumer.subscribe({ topic: config.timescaledb.topic, fromBeginning: false });
+  await consumer.subscribe(
+    { topic: config.timescaledb.attributeTopic, fromBeginning: false },
+    { topic: config.timescaledb.entityTopic, fromBeginning: false }
+  );
   await consumer.run({
     eachMessage: async ({ topic, partition, message }) => processMessage({ topic, partition, message })
   }).catch(e => console.error(`[example/consumer] ${e.message}`, e));

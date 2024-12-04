@@ -99,11 +99,13 @@
 		"port": 6379
 	},
 	"timescaledb": {
-		"topic": "iff.ngsild.attributes",
+		"attributeTopic": "iff.ngsild.attributes",
+		"entityTopic": "iff.ngsild.entity",
 		"PGSSLMODE": "require",
 		"dbname": "tsdb",
 		"tsdbuser": "tsdb_reader",
-		"tablename": "entityhistory",
+		"attributeTablename": "attributehistory",
+		"entityTablename": "entityhistory",
 		"hostname": "acid-cluster.iff.svc.cluster.local",
 		"port": "5432",
 		"username": "ngb",
