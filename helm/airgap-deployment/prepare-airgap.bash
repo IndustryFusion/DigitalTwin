@@ -54,7 +54,7 @@ if [ "${REGISTRY}" = "docker.io" ]; then
       docker.io/ibn40/kafka-bridge:${DOCKER_TAG}
       docker.io/ibn40/keycloak:${DOCKER_TAG}
       docker.io/ibn40/flink-sql-gateway:${DOCKER_TAG}
-      docier.io/ibn40/debezium-postgresql-connector:${DOCKER_TAG}
+      docker.io/ibn40/debezium-postgresql-connector:${DOCKER_TAG}
  )
 else
   IMAGES=(
