@@ -19,6 +19,7 @@ const { spawn } = require('child_process');
 const uuid = require('uuid');
 const fs = require('fs');
 const path = require('path');
+const sanitize = require('sanitize-filename');
 const app = express();
 const bodyParser = require('body-parser');
 
@@ -136,9 +137,15 @@ function apppost (request, response) {
 }
 
 function udfget (req, res) {
-  const filename = req.params.filename;
+  let filename = req.params.filename;
   logger.debug('python_udf get was requested for: ' + filename);
-  const fullname = `${udfdir}/${filename}.py`;
+  filename = sanitize(filename);
+  const fullname = path.resolve(udfdir, `${filename}.py`);
+  if (!fullname.startsWith(udfdir)) {
+    res.status(403).send('Access Denied');
+    logger.info('Access denied for: ' + fullname);
+    return;
+  }
   try {
     fs.readFileSync(fullname);
   } catch (err) {
@@ -150,7 +157,7 @@ function udfget (req, res) {
 };
 
 function udfpost (req, res) {
-  const filename = req.params.filename;
+  let filename = req.params.filename;
   const body = req.body;
   if (body === undefined || body === null) {
     res.status(500);
@@ -158,7 +165,13 @@ function udfpost (req, res) {
     return;
   }
   logger.debug(`python_udf with name ${filename}`);
-  const fullname = `${udfdir}/${filename}.py`;
+  filename = sanitize(filename);
+  const fullname = path.resolve(udfdir, `${filename}.py`);
+  if (!fullname.startsWith(udfdir)) {
+    res.status(403).send('Access Denied');
+    logger.info('Access denied for: ' + fullname);
+    return;
+  }
   try {
     fs.writeFileSync(fullname, body);
   } catch (err) {
