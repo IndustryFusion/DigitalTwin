@@ -21,6 +21,11 @@ const fs = require('fs');
 const path = require('path');
 const app = express();
 const bodyParser = require('body-parser');
+const RateLimit = require('express-rate-limit');
+const limiter = RateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100 // max 100 requests per windowMs
+});
 
 const logger = require('./lib/logger.js');
 const port = process.env.SIMPLE_FLINK_SQL_GATEWAY_PORT || 9000;
@@ -185,7 +190,7 @@ function getLocalPythonUdfs () {
 app.use(express.json({ limit: '10mb' }));
 
 app.get('/health', appget);
-app.get('/v1/python_udf/:filename', udfget);
+app.get('/v1/python_udf/:filename', limiter, udfget);
 
 app.post('/v1/sessions/:session_id/statements', apppost);
 app.post('/v1/python_udf/:filename', bodyParser.text(), udfpost);
