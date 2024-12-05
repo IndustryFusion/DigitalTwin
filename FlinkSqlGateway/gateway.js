@@ -21,6 +21,16 @@ const fs = require('fs');
 const path = require('path');
 const app = express();
 const bodyParser = require('body-parser');
+const RateLimit = require('express-rate-limit');
+
+// set up rate limiter: maximum of 100 requests per 15 minutes
+const limiter = RateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // max 100 requests per windowMs
+});
+
+// apply rate limiter to all requests
+app.use(limiter);
 
 const logger = require('./lib/logger.js');
 const port = process.env.SIMPLE_FLINK_SQL_GATEWAY_PORT || 9000;
