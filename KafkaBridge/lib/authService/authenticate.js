@@ -115,7 +115,8 @@ class Authenticate {
   }
 
   verifyAndDecodeToken (token) {
-    this.logger.debug('decode token: ' + token);
+    const maskedToken = token ? token.substring(0, 4) + '...' : 'null';
+    this.logger.debug('decode token: ' + maskedToken);
     return this.keycloakAdapter.grantManager
       .createGrant({ access_token: token })
       .then(grant => grant.access_token.content)
