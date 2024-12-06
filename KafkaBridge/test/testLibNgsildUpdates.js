@@ -30,8 +30,8 @@ const logger = {
 const addSyncOnAttribute = function () {};
 
 describe('Test libNgsildUpdates', function () {
-  it('Should post body with correct path and token for nonOverwrite update', async function () {
-    let updatePropertiesCalled = false;
+  it('Should post entities with correct path and token for nonOverwrite update using batchMerge', async function () {
+    let batchMergeCalled = false;
     const config = {
       ngsildUpdates: {
         clientSecretVariable: 'CLIENT_SECRET',
@@ -66,11 +66,9 @@ describe('Test libNgsildUpdates', function () {
     };
     const Ngsild = function () {
       return {
-        updateProperties: function ({ id, body, isOverwrite }, { headers }) {
-          updatePropertiesCalled = true;
-          id.should.equal('id');
-          assert.deepEqual(body, { id: 'id', type: 'type' });
-          isOverwrite.should.equal(false);
+        batchMerge: function (entities, { headers }) {
+          batchMergeCalled = true;
+          assert.deepEqual(entities, body.entities);
           assert.deepEqual(headers, expHeaders);
           return new Promise(function (resolve) {
             resolve({
@@ -78,7 +76,10 @@ describe('Test libNgsildUpdates', function () {
             });
           });
         },
+        // Stub updateProperties if needed
+        updateProperties: function () {},
         replaceEntities: function () {
+
         }
       };
     };
@@ -108,11 +109,11 @@ describe('Test libNgsildUpdates', function () {
     ToTest.__set__('addSyncOnAttribute', addSyncOnAttribute);
     const ngsildUpdates = new ToTest(config);
     await ngsildUpdates.ngsildUpdates(body);
-    updatePropertiesCalled.should.equal(true);
+    batchMergeCalled.should.equal(true);
     revert();
   });
-  it('Should post body and filter out datasetId === "@none"', async function () {
-    let updatePropertiesCalled = false;
+  it('Should post entities and filter out datasetId === "@none"', async function () {
+    let batchMergeCalled = false;
     const config = {
       ngsildUpdates: {
         clientSecretVariable: 'CLIENT_SECRET',
@@ -151,19 +152,24 @@ describe('Test libNgsildUpdates', function () {
     };
     const Ngsild = function () {
       return {
-        updateProperties: function ({ id, body, isOverwrite }, { headers }) {
-          updatePropertiesCalled = true;
-          id.should.equal('id');
-          assert.deepEqual(body, { id: 'id', type: 'type', attribute: { value: 'value' } });
-          isOverwrite.should.equal(false);
+        batchMerge: function (entities, { headers }) {
+          batchMergeCalled = true;
+          entities.forEach(entity => {
+            // Check top-level properties
+            assert.equal(entity.id, 'id');
+            assert.equal(entity.type, 'type');
+
+            // Check attribute properties
+            assert.isUndefined(entity.attribute.datasetId, 'datasetId should be filtered out');
+            assert.property(entity.attribute, 'value');
+            assert.equal(entity.attribute.value, 'value');
+          });
           assert.deepEqual(headers, expHeaders);
           return new Promise(function (resolve) {
             resolve({
               statusCode: 204
             });
           });
-        },
-        replaceEntities: function () {
         }
       };
     };
@@ -192,11 +198,11 @@ describe('Test libNgsildUpdates', function () {
     ToTest.__set__('addSyncOnAttribute', addSyncOnAttribute);
     const ngsildUpdates = new ToTest(config);
     await ngsildUpdates.ngsildUpdates(body);
-    updatePropertiesCalled.should.equal(true);
+    batchMergeCalled.should.equal(true);
     revert();
   });
   it('Should post body and filter out datasetId === "@none" from attribute array', async function () {
-    let updatePropertiesCalled = false;
+    let batchMergeCalled = false;
     const config = {
       ngsildUpdates: {
         clientSecretVariable: 'CLIENT_SECRET',
@@ -241,11 +247,12 @@ describe('Test libNgsildUpdates', function () {
     };
     const Ngsild = function () {
       return {
-        updateProperties: function ({ id, body, isOverwrite }, { headers }) {
-          updatePropertiesCalled = true;
-          id.should.equal('id');
-          assert.deepEqual(body, { id: 'id', type: 'type', attribute: [{ value: 'value' }, { value: 'value2', datasetId: 'http://example.com#source10' }] });
-          isOverwrite.should.equal(false);
+        batchMerge: function (entities, { headers }) {
+          batchMergeCalled = true;
+          entities.forEach(entity => {
+            assert.deepEqual(entity.id, 'id');
+            assert.deepEqual(entity, { id: 'id', type: 'type', attribute: [{ value: 'value' }, { value: 'value2', datasetId: 'http://example.com#source10' }] });
+          });
           assert.deepEqual(headers, expHeaders);
           return new Promise(function (resolve) {
             resolve({
@@ -282,11 +289,11 @@ describe('Test libNgsildUpdates', function () {
     ToTest.__set__('addSyncOnAttribute', addSyncOnAttribute);
     const ngsildUpdates = new ToTest(config);
     await ngsildUpdates.ngsildUpdates(body);
-    updatePropertiesCalled.should.equal(true);
+    batchMergeCalled.should.equal(true);
     revert();
   });
-  it('Should post body and not filter out datasetId !== "@none"', async function () {
-    let updatePropertiesCalled = false;
+  it('Should post entities and not filter out datasetId !== "@none"', async function () {
+    let batchMergeCalled = false;
     const config = {
       ngsildUpdates: {
         clientSecretVariable: 'CLIENT_SECRET',
@@ -325,11 +332,9 @@ describe('Test libNgsildUpdates', function () {
     };
     const Ngsild = function () {
       return {
-        updateProperties: function ({ id, body, isOverwrite }, { headers }) {
-          updatePropertiesCalled = true;
-          id.should.equal('id');
-          assert.deepEqual(body, { id: 'id', type: 'type', attribute: { datasetId: 'https://example.com/source1', value: 'value' } });
-          isOverwrite.should.equal(false);
+        batchMerge: function (entities, { headers }) {
+          batchMergeCalled = true;
+          assert.deepEqual(entities, body.entities);
           assert.deepEqual(headers, expHeaders);
           return new Promise(function (resolve) {
             resolve({
@@ -366,7 +371,7 @@ describe('Test libNgsildUpdates', function () {
     ToTest.__set__('addSyncOnAttribute', addSyncOnAttribute);
     const ngsildUpdates = new ToTest(config);
     await ngsildUpdates.ngsildUpdates(body);
-    updatePropertiesCalled.should.equal(true);
+    batchMergeCalled.should.equal(true);
     revert();
   });
   it('Should post body with correct path and token for nonOverwrite upsert', async function () {
@@ -446,7 +451,7 @@ describe('Test libNgsildUpdates', function () {
     revert();
   });
   it('Should post body with string entity', async function () {
-    let updatePropertiesCalled = false;
+    let batchMergeCalled = false;
     const config = {
       ngsildUpdates: {
         clientSecretVariable: 'CLIENT_SECRET',
@@ -481,11 +486,12 @@ describe('Test libNgsildUpdates', function () {
     };
     const Ngsild = function () {
       return {
-        updateProperties: function ({ id, body, isOverwrite }, { headers }) {
-          updatePropertiesCalled = true;
-          id.should.equal('id');
-          assert.deepEqual(body, { id: 'id', type: 'type' });
-          isOverwrite.should.equal(false);
+        batchMerge: function (entities, { headers }) {
+          batchMergeCalled = true;
+          entities.forEach(entity => {
+            assert.deepEqual(entity.id, 'id');
+            assert.deepEqual(entity, { id: 'id', type: 'type' });
+          });
           assert.deepEqual(headers, expHeaders);
           return new Promise(function (resolve) {
             resolve({
@@ -524,7 +530,7 @@ describe('Test libNgsildUpdates', function () {
     const ngsildUpdates = new ToTest(config);
     body.entities = JSON.stringify(body.entities);
     await ngsildUpdates.ngsildUpdates(body);
-    updatePropertiesCalled.should.equal(true);
+    batchMergeCalled.should.equal(true);
     revert();
   });
 });

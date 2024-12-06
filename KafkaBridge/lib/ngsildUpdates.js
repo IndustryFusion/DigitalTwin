@@ -128,20 +128,31 @@ module.exports = function NgsildUpdates (conf) {
     try {
       // update the entity - do not create it
       if (op === 'update') {
-        // NOTE: The batch update API of Scorpio does not yet support noOverwrite options. For the time being
-        // the batch processing will be done sequentially - until this is fixed in Scorpio
-        for (const entity of entities) { // olet i = 0; i < entities.length; i ++) {
-          // basic health check of entity
-          if (entity.id === undefined || entity.id == null) {
-            logger.error('Unhealthy entity - ignoring it:' + JSON.stringify(entity));
-          } else {
-            logger.debug('Updating: ' + JSON.stringify(entities));
-            result = await ngsild.updateProperties({ id: entity.id, body: entity, isOverwrite: overwriteOrReplace }, { headers });
-            if (result.statusCode !== 204 && result.statusCode !== 207) {
-              logger.error('Entity cannot update entity:' + JSON.stringify(result.body) + ' and status code ' + result.statusCode); // throw no error, log it and ignore it, repeating would probably not solve it
-            }
+        // Batch merge is run
+        // TODO: change behavior based on overwrite parameter
+        if (entities === undefined || entities == null) {
+          logger.error('Unhealthy entities - ignoring it:' + JSON.stringify(entities));
+        } else {
+          logger.debug('Updating: ' + JSON.stringify(entities));
+          result = await ngsild.batchMerge(entities, { headers });
+          if (result.statusCode !== 204 && result.statusCode !== 207) {
+            logger.error('Entity cannot run merge:' + JSON.stringify(result.body) + ' and status code ' + result.statusCode); // throw no error, log it and ignore it, repeating would probably not solve it
           }
-        };
+        }
+        // // NOTE: The batch update API of Scorpio does not yet support noOverwrite options. For the time being
+        // // the batch processing will be done sequentially - until this is fixed in Scorpio
+        // for (const entity of entities) { // olet i = 0; i < entities.length; i ++) {
+        //   // basic health check of entity
+        //   if (entity.id === undefined || entity.id == null) {
+        //     logger.error('Unhealthy entity - ignoring it:' + JSON.stringify(entity));
+        //   } else {
+        //     logger.debug('Updating: ' + JSON.stringify(entities));
+        //     result = await ngsild.updateProperties({ id: entity.id, body: entity, isOverwrite: overwriteOrReplace }, { headers });
+        //     if (result.statusCode !== 204 && result.statusCode !== 207) {
+        //       logger.error('Entity cannot update entity:' + JSON.stringify(result.body) + ' and status code ' + result.statusCode); // throw no error, log it and ignore it, repeating would probably not solve it
+        //     }
+        //   }
+        // };
       } else if (op === 'upsert') {
         // in this case, entity will be created if not existing
         logger.debug('Upserting: ' + JSON.stringify(entities));

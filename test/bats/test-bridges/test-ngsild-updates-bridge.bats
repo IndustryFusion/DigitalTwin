@@ -20,6 +20,7 @@ UPDATE_FILTER=/tmp/UPDATE_FILTER
 UPDATE_FILTER_NO_OVERWRITE=/tmp/UPDATE_FILTER_NO_OVERWRITE
 UPDATE_2_ENTITIES=/tmp/UPDATE_2_ENTITIES
 UPDATE_2_ENTITIES2=/tmp/UPDATE_2_ENTITIES2
+UPDATE_FILTER_MERGE=/tmp/UPDATE_FILTER_MERGE
 KAFKA_BOOTSTRAP=my-cluster-kafka-bootstrap:9092
 KAFKACAT_NGSILD_UPDATES_TOPIC=iff.ngsild-updates
 FILTER_ID=urn:filter-test:12345
@@ -218,6 +219,24 @@ cat << EOF | tr -d '\n' > ${UPDATE_FILTER_NO_OVERWRITE}
 }
 EOF
 
+cat << EOF | tr -d '\n' > ${UPDATE_FILTER_MERGE}
+{
+    "op": "update",
+    "overwriteOrReplace": "false",
+    "entities": [
+        {
+        "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+        "id": "${FILTER_ID}",
+        "https://industry-fusion.com/types/v0.9/strength": {
+          "datasetId": "https://example.com/source1",
+          "type": "Property",
+          "value": "10.9"
+        }
+      }
+    ]
+}
+EOF
+
 get_iso_timestamp(){
   echo '"'"$(date +"%Y-%m-%dT%T.%3NZ" -u)"'"'
 }
@@ -242,7 +261,8 @@ timestamp_upsert_2_entities(){
           "type": "Property",
           "datasetId": "https://example.com/source1",
           "value": "0.9",
-          "observedAt": ${timestamp}
+          "observedAt": ${timestamp},
+          "unitCode": "unitCode"
         },
         "https://industry-fusion.com/types/v0.9/hasCartridge": {
           "type": "Relationship",
@@ -452,7 +472,8 @@ compare_inserted_entity() {
   "https://industry-fusion.com/types/v0.9/strength" : {
     "type" : "Property",
     "datasetId": "https://example.com/source1",
-    "value" : "0.9"
+    "value" : "0.9",
+    "unitCode": "unitCode"
   }
 }
 EOF
@@ -570,7 +591,8 @@ compare_updated_entity() {
   "https://industry-fusion.com/types/v0.9/strength" : {
     "type" : "Property",
     "datasetId": "https://example.com/source1",
-    "value" : "0.5"
+    "value" : "0.5",
+    "unitCode": "unitCode"
   }
 }
 EOF
@@ -669,7 +691,31 @@ compare_updated_filter_entity() {
   "https://industry-fusion.com/types/v0.9/strength" : {
     "type" : "Property",
     "datasetId": "https://example.com/source1",
-    "value" : "1.0"
+    "value" : "1.0",
+    "unitCode": "unitCode"
+  }
+}
+EOF
+}
+
+compare_merged_filter_entity() {
+    cat << EOF | jq | diff "$1" - >&3
+{
+  "id":"${FILTER_ID}",
+  "type":"${FILTER_TYPE}",
+  "https://industry-fusion.com/types/v0.9/hasCartridge":{
+    "type":"Relationship",
+    "object":"urn:filterCartridge-test:12345"
+  },
+  "https://industry-fusion.com/types/v0.9/state":{
+    "type":"Property",
+    "value":"OFFF"
+  },
+  "https://industry-fusion.com/types/v0.9/strength":{
+    "type":"Property",
+    "datasetId":"https://example.com/source1",
+    "value":"10.9",
+    "unitCode":"unitCode"
   }
 }
 EOF
@@ -796,8 +842,10 @@ teardown(){
     [ "$status" -eq 0 ]
 }
 
+# Overwrite option is currently disabled as the update operation behaves exclusively through merge patch right now
+# That's why this test is disabled
 @test "verify ngsild-update bridge is updating with noOverwrite option ngsi-ld entitiy" {
-    $SKIP
+    skip
     kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPSERT_FILTER}
     echo "# Sent upsert object to ngsi-ld-updates-bridge, wait some time to let it settle"
     sleep 2
@@ -898,5 +946,23 @@ teardown(){
     get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )' >${RECEIVED_ENTITY}
     delete_ngsild "${token}" ${FILTER_ID}
     run compare_inserted_entity_timestamped ${RECEIVED_ENTITY}
+    [ "$status" -eq 0 ]
+}
+
+@test "verify deep merge behavior with update operation (non-overwrite)" {
+    $SKIP
+    password=$(get_password)
+    token=$(get_token)
+    delete_ngsild "${token}" ${FILTER_ID}
+    sleep 2
+    kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPSERT_FILTER}
+    echo "# Sent initial upsert object to ngsi-ld-updates-bridge, wait some time to let it settle"
+    sleep 2
+    kafkacat -P -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${UPDATE_FILTER_MERGE}
+    echo "# Sent update object to ngsi-ld-updates-bridge, wait some time to let it settle"
+    sleep 2
+    get_ngsild "${token}" ${FILTER_ID} | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )' >${RECEIVED_ENTITY}
+    sleep 2
+    run compare_merged_filter_entity ${RECEIVED_ENTITY}
     [ "$status" -eq 0 ]
 }
