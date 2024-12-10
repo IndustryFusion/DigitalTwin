@@ -12,6 +12,7 @@ The Services consist of
 * Cert-Manager
 * Apache Flink Streaming SQL
 * SQL scripts for IFF example scenario 
+* TimescaleDB and PostRest for generic access
 
 
 # Building and Installation of Platform Locally
@@ -135,10 +136,10 @@ installs first subpart where iff specific images are pulled locally and all othe
 
 ## Install with Dockerhub Access
 
-When the Kubernetes cluster is configured as describe above, the installation of platform with dockerhub access works as follows:
-```
-(cd ../test && bash ./install-platform.sh -c all)
-```
+The nighly builds and releases can be found at [Dockerhub](https://hub.docker.com/u/ibn40). To install a specific version, checkout the respective branch, update the tag description and apply the install script. For instance, to deploy version `v0.6.0-beta.1`, edit the file `.env` to containt the respective tag `DOCKER_TAG=v0.6.0-beta.1` and apply the procedure as follows:
+
+      git checkout v0.6.0-beta.1
+      (cd ../test && bash ./install-platform.sh -c all)
 
 ## Install with Airgap Mode
 
