@@ -10,7 +10,7 @@
 
 Welcome to the **Industry Process Data Twin** repository, an open-source initiative by the IndustryFusion Foundation (IFF). This project aims to revolutionize the manufacturing industry by leveraging cutting-edge semantic data technologies and cloud-native principles to create a scalable, interoperable, and highly automated platform for factory digitalization.
 
-## What is the IndustrFusion Process Data Twin?
+## What is the IndustryFusion Process Data Twin?
 
 The Process Data Twin Architecture is designed to address the challenges of digital transformation in the manufacturing sector. It provides a framework that bridges the gap between diverse factory systems, devices, and processes by introducing a standardized, semantic data-driven approach. This platform enables seamless integration, real-time monitoring, and advanced analytics, paving the way for smart factories and Industry 4.0 advancements.
 
@@ -39,7 +39,7 @@ Manufacturing ecosystems often involve heterogeneous systems and devices with li
 - **Enable Advanced Analytics**: Lay the groundwork for predictive maintenance, process optimization, and more.
 - **Promote Sustainability**: Facilitate data-driven decisions for energy efficiency and carbon neutrality.
 
-## Copncept
+## Concept
 
 This repository contains the ingredients for the Digital Twin Concept of IndustryFusion. 
 
