@@ -25,7 +25,8 @@ from rdflib import Variable, URIRef, Namespace
 import services.testConnector as testConnector
 try:
     import external_services.opcuaConnector as opcuaConnector
-except:
+except Exception as e:
+    print(f"Import error: {e}")
     opcuaConnector = None
 
 get_maps_query = """
