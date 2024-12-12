@@ -3,7 +3,7 @@ Unittests for tables_and_views.py
 """
 from unittest import TestCase
 import unittest
-from bunch import Bunch
+from bunch_py3 import Bunch
 from mock import patch
 
 import tables_and_views as target
