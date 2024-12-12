@@ -1,7 +1,7 @@
 """Unit test for beamservicesoperator.py"""
 from unittest import TestCase, mock
 import unittest
-from bunch import Bunch
+from bunch_py3 import Bunch
 from mock import patch, mock_open
 import aiounittest
 

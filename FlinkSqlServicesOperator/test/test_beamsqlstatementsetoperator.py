@@ -18,7 +18,7 @@ Unit tests for beamsqlstatementsetoperator.py
 """
 from unittest import TestCase
 import unittest
-from bunch import Bunch
+from bunch_py3 import Bunch
 from mock import patch
 import kopf
 import requests

@@ -3,7 +3,7 @@ Unittest for flink_util.yp
 """
 from unittest import TestCase
 import unittest
-from bunch import Bunch
+from bunch_py3 import Bunch
 from mock import patch
 import requests
 

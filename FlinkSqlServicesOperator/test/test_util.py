@@ -4,7 +4,7 @@ Unittest for util.py
 
 from unittest import TestCase
 import unittest
-from bunch import Bunch
+from bunch_py3 import Bunch
 from mock import patch
 
 import util as target
