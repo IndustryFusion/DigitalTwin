@@ -971,3 +971,44 @@ describe('Test updateEntities', function () {
     revert();
   });
 });
+describe('Test batchMerge', function () {
+  it('Should use correct options and headers', async function () {
+    const Logger = function () {
+      return logger;
+    };
+    const Rest = function () {
+      return rest;
+    };
+    const headers = { Authorization: 'Bearer token' };
+    const expectedOptions = {
+      hostname: 'hostname',
+      protocol: 'http:',
+      port: 1234,
+      method: 'POST',
+      path: '/ngsi-ld/v1/entityOperations/merge',
+      headers: {
+        'Content-Type': 'application/ld+json',
+        Authorization: 'Bearer token'
+      }
+    };
+    const rest = {
+      postBody: function (obj) {
+        assert.deepEqual(obj.options, expectedOptions);
+        assert.deepEqual(obj.body, entities);
+        return Promise.resolve('merged');
+      }
+    };
+
+    const entities = [
+      { id: 'id1', type: 'type1', attr1: 'value1' },
+      { id: 'id2', type: 'type2', attr2: 'value2' }
+    ];
+
+    const revert = ToTest.__set__('Logger', Logger);
+    ToTest.__set__('Rest', Rest);
+    const ngsild = new ToTest(config);
+    const result = await ngsild.batchMerge(entities, { headers });
+    result.should.equal('merged');
+    revert();
+  });
+});
