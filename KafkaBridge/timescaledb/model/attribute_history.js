@@ -24,7 +24,7 @@ const config = require('../../config/config.json');
 // CREATE table/model in tsdb to enter SpB NGSI_LD data
 // Define method takes two arguments
 // 1st - name of table, 2nd - columns inside the table
-const attributeHistoryTable = sequelize.define(config.timescaledb.tablename, {
+const attributeHistoryTable = sequelize.define(config.timescaledb.attributeTablename, {
 
   id: { type: Sequelize.TEXT, allowNull: false, primaryKey: true },
   parentId: { type: Sequelize.TEXT, allowNull: true, primaryKey: false },

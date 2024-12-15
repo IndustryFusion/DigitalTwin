@@ -229,9 +229,12 @@ describe('Test timescaledb processMessage', function () {
 });
 
 describe('Test startListener', function () {
-  const historyTableName = 'entityhistory';
-  const htChecksqlquery = 'SELECT * FROM timescaledb_information.hypertables WHERE hypertable_name = \'' + historyTableName + '\';';
-  const htCreateSqlquery = 'SELECT create_hypertable(\'' + historyTableName + '\', \'observedAt\', migrate_data => true);';
+  const entityTableName = 'entities';
+  const attributeTableName = 'attributes';
+  const htAttributeChecksqlquery = 'SELECT * FROM timescaledb_information.hypertables WHERE hypertable_name = \'' + attributeTableName + '\';';
+  const htEntitieChecksqlquery = 'SELECT * FROM timescaledb_information.hypertables WHERE hypertable_name = \'' + entityTableName + '\';';
+  const htAttributeCreateSqlquery = 'SELECT create_hypertable(\'' + attributeTableName + '\', \'observedAt\', migrate_data => true);';
+  const htEntityCreateSqlquery = 'SELECT create_hypertable(\'' + entityTableName + '\', \'observedAt\', migrate_data => true);';
   const htCreateRole = 'CREATE ROLE tsdbuser;';
   const htGrant = 'GRANT SELECT ON ALL TABLES IN SCHEMA public TO tsdbuser;';
 
@@ -245,7 +248,7 @@ describe('Test startListener', function () {
     }
 
     query (sqlquery) {
-      assert.oneOf(sqlquery, [htChecksqlquery, htCreateSqlquery, htCreateRole, htGrant], 'Wrong query message for timescaledb table.');
+      assert.oneOf(sqlquery, [htAttributeChecksqlquery, htEntitieChecksqlquery, htAttributeCreateSqlquery, htEntitieChecksqlquery, htCreateRole, htGrant], 'Wrong query message for timescaledb table.');
       return Promise.resolve(sqlquery);
     }
   };
@@ -258,7 +261,7 @@ describe('Test startListener', function () {
     },
     connect: function () {},
     subscribe: function (obj) {
-      obj.topic.should.equal('topic');
+      assert.oneOf(obj.topic, ['attributeTopic', 'entityTopic'])
       obj.fromBeginning.should.equal(false);
     },
     disconnect: function () {
@@ -272,7 +275,8 @@ describe('Test startListener', function () {
   };
   const config = {
     timescaledb: {
-      topic: 'topic',
+      attributeTopic: 'attributeTopic',
+      entityTopic: 'entityTopic',
       tsdbuser: 'tsdbuser'
     }
   };

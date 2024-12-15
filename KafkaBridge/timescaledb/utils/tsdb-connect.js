@@ -18,7 +18,7 @@
 const { Sequelize } = require('sequelize');
 const config = require('../../config/config.json');
 
-var sequelize;
+let sequelize;
 const postgPassword = process.env.POSTGRES_PASSWORD || config.timescaledb.password;
 const postgHostname = process.env.POSTGRES_SERVICE || config.timescaledb.hostname;
 const postgPort = process.env.POSTGRES_PORT || config.timescaledb.port;

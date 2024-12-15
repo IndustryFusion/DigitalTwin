@@ -40,7 +40,7 @@ def main(output_folder='output'):
             open(os.path.join(output_folder, "ngsild.sqlite"), "w") as sqlitef, \
             open(os.path.join(output_folder, "ngsild-kafka.yaml"), "w") as fk:
 
-        # Create "entity"
+        # Create "entities"
         value = {
             'format': 'json',
             'json.fail-on-missing-field': False,
