@@ -369,33 +369,33 @@ FROM A1 where `ins` IS NOT NULL and `index` IS NOT NULL
 def create_relationship_sql():
     sql_command_yaml = Template(sql_check_relationship_base).render(
         alerts_bulk_table=alerts_bulk_table,
-        target_class="entity",
+        target_class="entities",
         sqlite=False)
     sql_command_sqlite = Template(sql_check_relationship_base).render(
         alerts_bulk_table=alerts_bulk_table,
-        target_class="entity",
+        target_class="entities",
         sqlite=True)
     sql_command_yaml += \
         Template(sql_check_relationship_property_class).render(
             alerts_bulk_table=alerts_bulk_table,
-            target_class="entity",
+            target_class="entities",
             sqlite=False)
     sql_command_sqlite += \
         Template(sql_check_relationship_property_class).render(
             alerts_bulk_table=alerts_bulk_table,
-            target_class="entity",
+            target_class="entities",
             sqlite=True)
     sql_command_yaml += "\nUNION ALL"
     sql_command_sqlite += "\nUNION ALL"
     sql_command_yaml += \
         Template(sql_check_relationship_property_count).render(
             alerts_bulk_table=alerts_bulk_table,
-            target_class="entity",
+            target_class="entities",
             sqlite=False)
     sql_command_sqlite += \
         Template(sql_check_relationship_property_count).render(
             alerts_bulk_table=alerts_bulk_table,
-            target_class="entity",
+            target_class="entities",
             sqlite=True)
     sql_command_yaml += "\nUNION ALL"
     sql_command_sqlite += "\nUNION ALL"
@@ -423,13 +423,13 @@ def create_property_sql():
     sql_command_yaml = Template(
         sql_check_property_iri_base).render(
         alerts_bulk_table=alerts_bulk_table,
-        target_class="entity",
+        target_class="entities",
         rdf_table_name=configs.rdf_table_name,
         sqlite=False
     )
     sql_command_sqlite = Template(sql_check_property_iri_base).render(
         alerts_bulk_table=alerts_bulk_table,
-        target_class="entity",
+        target_class="entities",
         rdf_table_name=configs.rdf_table_name,
         sqlite=True
     )

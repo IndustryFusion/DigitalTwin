@@ -123,6 +123,7 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
         knowledge.parse(knowledgefile)
         attributes_model = model + g + knowledge
         string_indexer = StringIndexer()
+        entity_table_name = configs.kafka_topic_ngsi_prefix_name
 
         qres = attributes_model.query(attributes_query)
         first = True
@@ -162,7 +163,7 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
                   name.toPython() +
                   "', '" + nodeType + "', " + valueType + ", '" + type.toPython() + "', " + attributeValue + ", " + str(current_dataset_id) +
                   ", " + unitCode +
-                  ", CAST(NULL AS BOOLEAN), CAST(NULL AS BOOLEAN), " + current_timestamp + ")", end='',
+                  ", CAST(NULL AS STRING), CAST(NULL AS BOOLEAN), CAST(NULL AS BOOLEAN), " + current_timestamp + ")", end='',
                   file=sqlitef)
         print(";", file=sqlitef)
 
@@ -188,7 +189,7 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
                 tables[key][idstr].append('CURRENT_TIMESTAMP')
         for type, ids in tables.items():
             for id, table in ids.items():
-                print('INSERT INTO `entity` VALUES',
+                print(f'INSERT INTO `{entity_table_name}` VALUES',
                       file=sqlitef)
                 first = True
                 print("(", end='', file=sqlitef)
