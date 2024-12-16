@@ -106,10 +106,10 @@ module.exports = function DebeziumBridge (conf) {
     // create entity table
     let id = baEntity.id;
     const resEntity = {};
-    Object.keys(baEntity).filter(key => key !== 'type' && key !== 'id')
-      .forEach(key => {
-        resEntity[key] = id + '\\' + key;
-      });
+    // Object.keys(baEntity).filter(key => key !== 'type' && key !== 'id')
+    //   .forEach(key => {
+    //     resEntity[key] = id + '\\' + key;
+    //   });
     resEntity.id = baEntity.id;
     resEntity.type = baEntity.type;
     delete resEntity[syncOnAttribute]; // this attribute should not change the diff calculation, but should be in attributes to detect changes from Kafka
@@ -386,6 +386,7 @@ module.exports = function DebeziumBridge (conf) {
         'entityId',
         'type',
         'datasetId',
+        'nodeType',
         'index'
       ];
       const deletedAttrObj = pickFields(attrObj, fields);
