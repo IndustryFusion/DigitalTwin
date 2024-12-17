@@ -16,7 +16,6 @@
 
 from unittest.mock import patch, mock_open
 import os
-import sys
 import create_sql_checks_from_shacl
 from create_sql_checks_from_shacl import parse_args
 
@@ -56,7 +55,7 @@ def test_parse_args_minimal():
         "path/to/knowledge.ttl"
     ]
     parsed_args = parse_args(test_args)
-    
+
     assert parsed_args.shaclfile == "path/to/shacl.ttl"
     assert parsed_args.knowledgefile == "path/to/knowledge.ttl"
     assert parsed_args.context is None

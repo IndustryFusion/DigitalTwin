@@ -422,7 +422,6 @@ def test_wrap_sql_construct(attribute_column_mock, get_bound_trim_string_mock):
 \nFROM target_sql WHERE where"
 
 
-
 @patch('lib.sparql_to_sql.translate')
 @patch('lib.sparql_to_sql.wrap_sql_construct')
 @patch('lib.sparql_to_sql.bgp_translation_utils.merge_vartypes')
