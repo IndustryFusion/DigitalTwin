@@ -4,7 +4,7 @@ if [ -z "${SELF_HOSTED_RUNNER}" ]; then
     SUDO="sudo -E"
 fi
 DEBUG=${DEBUG:-false} # set this to true to disable starting and stopping of kubefwd
-SKIP=skip
+SKIP=
 NAMESPACE=iff
 USERSECRET=secret/credential-iff-realm-user-iff
 USER=realm_user
@@ -294,31 +294,31 @@ compare_create_attributes_datasetid() {
 "name":"https://industry-fusion.com/types/v0.9/state",\
 "datasetId":"@none",\
 "type":"https://uri.etsi.org/ngsi-ld/Property",\
-"attributeValue":"MAYBE","nodeType":"@value","index":0}
+"attributeValue":"MAYBE","nodeType":"@value","index":0,"synced":true}
 {"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/state",\
 "entityId":"${PLASMACUTTER_ID}",\
 "name":"https://industry-fusion.com/types/v0.9/state",\
 "datasetId":"+=-urn:state_off",\
 "type":"https://uri.etsi.org/ngsi-ld/Property",\
-"attributeValue":"OFFOFF","nodeType":"@value","index":1}
+"attributeValue":"OFFOFF","nodeType":"@value","index":1,"synced":true}
 {"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/state",\
 "entityId":"${PLASMACUTTER_ID}",\
 "name":"https://industry-fusion.com/types/v0.9/state",\
 "datasetId":"2urn:state_on",\
 "type":"https://uri.etsi.org/ngsi-ld/Property",\
-"attributeValue":"ONN","nodeType":"@value","index":2}
+"attributeValue":"ONN","nodeType":"@value","index":2,"synced":true}
 {"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/state",\
 "entityId":"${PLASMACUTTER_ID}",\
 "name":"https://industry-fusion.com/types/v0.9/state",\
 "datasetId":"urn:state_off",\
 "type":"https://uri.etsi.org/ngsi-ld/Property",\
-"attributeValue":"OFF","nodeType":"@value","index":3}
+"attributeValue":"OFF","nodeType":"@value","index":3,"synced":true}
 {"id":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/state",\
 "entityId":"${PLASMACUTTER_ID}",\
 "name":"https://industry-fusion.com/types/v0.9/state",\
 "datasetId":"urn:state_on",\
 "type":"https://uri.etsi.org/ngsi-ld/Property",\
-"attributeValue":"ON","nodeType":"@value","index":4}
+"attributeValue":"ON","nodeType":"@value","index":4,"synced":true}
 EOF
 }
 
@@ -395,7 +395,7 @@ teardown(){
 }
 
 @test "verify debezium bridge sends updates to attributes and entity topics when entity is deleted" {
-    #$SKIP
+    $SKIP
     password=$(get_password)
     token=$(get_token)
     create_ngsild "$token" "$CUTTER" || echo "Could not creatattributee $PLASMACUTTER_ID. But that is okay."

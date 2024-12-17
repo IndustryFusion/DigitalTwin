@@ -1,5 +1,5 @@
 /**
-* Copyright (c) 2022 Intel Corporation
+* Copyright (c) 2022, 2024 Intel Corporation
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -314,7 +314,7 @@ describe('Test parseBeforeAfterEntity', function () {
     const revert = ToTest.__set__('Logger', Logger);
     const debeziumBridge = new ToTest(config);
     const result = debeziumBridge.parseBeforeAfterEntity(ba);
-    assert.deepEqual(result.entity, { id: 'id', type: 'type', 'https://example/hasRel': 'id\\https://example/hasRel', 'https://example/prop': 'id\\https://example/prop' });
+    assert.deepEqual(result.entity, { id: 'id', type: 'type' });
     assert.deepEqual(result.attributes, {
       'https://example/hasRel': [{
         id: 'id\\https://example/hasRel',
@@ -395,7 +395,7 @@ describe('Test parseBeforeAfterEntity', function () {
     const revert = ToTest.__set__('Logger', Logger);
     const debeziumBridge = new ToTest(config);
     const result = debeziumBridge.parseBeforeAfterEntity(ba);
-    assert.deepEqual(result.entity, { id: 'id', type: 'type', 'https://example/hasRel': 'id\\https://example/hasRel', 'https://example/prop': 'id\\https://example/prop' });
+    assert.deepEqual(result.entity, { id: 'id', type: 'type' });
     assert.deepEqual(result.attributes, {
       'https://example/hasRel': [{
         id: 'id\\https://example/hasRel',
@@ -467,7 +467,7 @@ describe('Test parseBeforeAfterEntity', function () {
     const revert = ToTest.__set__('Logger', Logger);
     const debeziumBridge = new ToTest(config);
     const result = debeziumBridge.parseBeforeAfterEntity(ba);
-    assert.deepEqual(result.entity, { id: 'id', type: 'type', 'https://example/prop': 'id\\https://example/prop' });
+    assert.deepEqual(result.entity, { id: 'id', type: 'type' });
     assert.deepEqual(result.attributes, {
       'https://example/prop': [{
         id: 'id\\https://example/prop',
@@ -593,7 +593,7 @@ describe('Test parseBeforeAfterEntity', function () {
     const revert = ToTest.__set__('Logger', Logger);
     const debeziumBridge = new ToTest(config);
     const result = debeziumBridge.parseBeforeAfterEntity(ba);
-    assert.deepEqual(result.entity, { id: 'id', type: 'type', 'https://example/prop': 'id\\https://example/prop' });
+    assert.deepEqual(result.entity, { id: 'id', type: 'type' });
     assert.deepEqual(result.attributes, {
       'https://example/prop': [{
         id: 'id\\https://example/prop',
