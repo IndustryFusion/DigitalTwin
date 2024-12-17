@@ -16,10 +16,6 @@ CUTTER_DATASETID=/tmp/CUTTER_DATASETID
 KAFKA_BOOTSTRAP=my-cluster-kafka-bootstrap:9092
 KAFKACAT_ATTRIBUTES=/tmp/KAFKACAT_ATTRIBUTES
 KAFKACAT_ATTRIBUTES_TOPIC=iff.ngsild.attributes
-KAFKACAT_ENTITY_CUTTER=/tmp/KAFKACAT_ENTITY_CUTTER
-KAFKACAT_ENTITY_CUTTER_SORTED=/tmp/KAFKACAT_ENTITY_CUTTER_SORTED
-KAFKACAT_ENTITY_CUTTER_NAME=cutter_test
-KAFKACAT_ENTITY_CUTTER_TOPIC=iff.ngsild.entities
 KAFKACAT_ENTITY_PLASMACUTTER=/tmp/KAFKACAT_ENTITY_PLASMACUTTER
 KAFKACAT_ENTITY_PLASMACUTTER_SORTED=/tmp/KAFKACAT_ENTITY_PLASMACUTTER_SORTED
 KAFKACAT_ENTITY_PLASMACUTTER_NAME=plasmacutter_test
@@ -257,24 +253,6 @@ compare_delete_attributes() {
 EOF
 }
 
-# compare_create_cutter() {
-#     cat << EOF | jq -S | diff "$1" - >&3
-# {"id":"${PLASMACUTTER_ID}","type":"https://industry-fusion.com/types/v0.9/${KAFKACAT_ENTITY_PLASMACUTTER_NAME}"}
-# EOF
-# }
-
-# compare_delete_cutter() {
-#     cat << EOF | jq -S | diff "$1" - >&3
-# {"https://industry-fusion.com/types/v0.9/state":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/state",\
-# "https://industry-fusion.com/types/v0.9/jsonValue":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/jsonValue",\
-# "https://industry-fusion.com/types/v0.9/jsonValueArray":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/jsonValueArray",\
-# "https://industry-fusion.com/types/v0.9/multiState": "${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/multiState",\
-# "https://industry-fusion.com/types/v0.9/hasFilter":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/hasFilter",\
-# "https://industry-fusion.com/types/v0.9/hasWorkpiece":"${PLASMACUTTER_ID}\\\https://industry-fusion.com/types/v0.9/hasWorkpiece",\
-# "id":"${PLASMACUTTER_ID}"}
-# EOF
-# }
-
 compare_create_plasmacutter() {
     cat << EOF | jq -S | diff "$1" - >&3
 {"id":"${PLASMACUTTER_ID}","type":"https://industry-fusion.com/types/v0.9/${KAFKACAT_ENTITY_PLASMACUTTER_NAME}"}
@@ -351,7 +329,6 @@ setup() {
     sleep 3
     echo "# create needed kafka topics to make sure that consumers will not fail first time"
     echo "--------------------------New Test------------------" | kafkacat -P -t ${KAFKACAT_ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP}
-    echo "--------------------------New Test------------------" | kafkacat -P -t ${KAFKACAT_ENTITY_CUTTER_TOPIC} -b ${KAFKA_BOOTSTRAP}
     echo "--------------------------New Test------------------" | kafkacat -P -t ${KAFKACAT_ENTITY_PLASMACUTTER_TOPIC} -b ${KAFKA_BOOTSTRAP}
 }
 teardown(){
@@ -369,7 +346,6 @@ teardown(){
     delete_ngsild "$token" "$PLASMACUTTER_ID" || echo "Could not delete $PLASMACUTTER_ID. But that is okay."
     sleep 2
     (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ATTRIBUTES}) &
-    #(exec stdbuf -oL kafkacat -C -t ${KAFKACAT_ENTITY_CUTTER_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ENTITY_CUTTER}) &
     (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_ENTITY_PLASMACUTTER_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ENTITY_PLASMACUTTER}) &
     echo "# launched kafkacat for debezium updates, wait some time to let it connect"
     sleep 2
@@ -379,15 +355,10 @@ teardown(){
     echo "# now killing kafkacat and evaluate result"
     killall kafkacat
     LC_ALL="en_US.UTF-8" sort -o ${KAFKACAT_ATTRIBUTES} ${KAFKACAT_ATTRIBUTES}
-    #jq -S < ${KAFKACAT_ENTITY_CUTTER} > ${KAFKACAT_ENTITY_CUTTER_SORTED}
     jq -S < ${KAFKACAT_ENTITY_PLASMACUTTER} > ${KAFKACAT_ENTITY_PLASMACUTTER_SORTED}
     echo "# Compare ATTRIBUTES"
     run compare_create_attributes ${KAFKACAT_ATTRIBUTES}
     [ "$status" -eq 0 ]
-
-    # echo "# Compare CUTTER Entity"
-    # run compare_create_cutter ${KAFKACAT_ENTITY_CUTTER_SORTED}
-    # [ "$status" -eq 0 ]
 
     echo "# Compare PLASMACUTTER Entity"
     run compare_create_plasmacutter ${KAFKACAT_ENTITY_PLASMACUTTER_SORTED}
@@ -401,7 +372,6 @@ teardown(){
     create_ngsild "$token" "$CUTTER" || echo "Could not creatattributee $PLASMACUTTER_ID. But that is okay."
     sleep 2
     (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ATTRIBUTES}) &
-    (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_ENTITY_CUTTER_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ENTITY_CUTTER}) &
     (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_ENTITY_PLASMACUTTER_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ENTITY_PLASMACUTTER}) &
     echo "# launched kafkacat for debezium updates, wait some time to let it connect"
     sleep 2
@@ -412,13 +382,9 @@ teardown(){
     killall kafkacat
     sleep 2
     LC_ALL="en_US.UTF-8" sort -o ${KAFKACAT_ATTRIBUTES} ${KAFKACAT_ATTRIBUTES}
-    jq -S < ${KAFKACAT_ENTITY_CUTTER} > ${KAFKACAT_ENTITY_CUTTER_SORTED}
     jq -S < ${KAFKACAT_ENTITY_PLASMACUTTER} > ${KAFKACAT_ENTITY_PLASMACUTTER_SORTED}
     run compare_delete_attributes ${KAFKACAT_ATTRIBUTES}
     [ "$status" -eq 0 ]
-
-    # run compare_delete_cutter ${KAFKACAT_ENTITY_CUTTER_SORTED}
-    # [ "$status" -eq 0 ]
 
     run compare_delete_plasmacutter ${KAFKACAT_ENTITY_PLASMACUTTER_SORTED}
     [ "$status" -eq 0 ]
