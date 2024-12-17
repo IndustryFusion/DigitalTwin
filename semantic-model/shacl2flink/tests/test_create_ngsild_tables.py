@@ -32,7 +32,7 @@ class dotdict(dict):
 @patch('create_ngsild_tables.ruamel.yaml')
 @patch('create_ngsild_tables.configs')
 @patch('create_ngsild_tables.utils')
-def test_main(mock_utils, mock_configs, mock_graph,
+def test_main(mock_utils, mock_configs,
               mock_yaml, tmp_path, monkeypatch):
     def identity(val):
         return val
@@ -50,7 +50,6 @@ def test_main(mock_utils, mock_configs, mock_graph,
     shacltype.toPython.return_value = 'shacltype'
     row = {'shacltype': shacltype, 'path': 'path'}
     row = dotdict(row)
-    g.query.return_value = [row]
     create_ngsild_tables.main('kms/shacl.ttl', 'kms/knowledge.ttl', tmp_path)
 
     assert os.path.exists(os.path.join(tmp_path, 'ngsild.yaml')) is True

@@ -479,7 +479,8 @@ Consider to use a variable and FILTER. Target query is {ctx["query"]}')
         if attribute_tablename not in local_ctx['bgp_tables'] and attribute_tablename not in ctx['tables']:
             sql_expression = create_attribute_table_expression(ctx, attribute_tablename, ngsildvar[0])
             join_condition = f"{attribute_tablename}.name = '{p}' and {subject_tablename}.id = \
-{attribute_tablename}.entityId and {attribute_tablename}.type = '{str(ngsild['Property'])}' and IFNULL({attribute_tablename}.`deleted`, FALSE) IS FALSE"
+{attribute_tablename}.entityId and {attribute_tablename}.type = '{str(ngsild['Property'])}' and \
+IFNULL({attribute_tablename}.`deleted`, FALSE) IS FALSE"
             local_ctx['bgp_sql_expression'].append({'statement': f'{sql_expression}',
                                                     'join_condition': f'{join_condition}'})
         local_ctx['bgp_tables'][attribute_tablename] = []
@@ -506,12 +507,14 @@ Consider using a variable and FILTER instead.')
                                                     'join_condition': f'{join_condition}'})
             local_ctx['bgp_sql_expression'].append({'statement': f'{object_sqltable}_view AS {object_tablename}',
                                                     'join_condition': f'{object_tablename}.id = \
-{attribute_tablename}.`attributeValue` and {attribute_tablename}.type = \'{str(ngsild["Relationship"])}\' and IFNULL({object_tablename}.`deleted`, FALSE) IS FALSE'})
+{attribute_tablename}.`attributeValue` and {attribute_tablename}.type = \'{str(ngsild["Relationship"])}\' \
+and IFNULL({object_tablename}.`deleted`, FALSE) IS FALSE'})
             ctx['sql_tables'].append(object_sqltable)
             local_ctx['bounds'][object_varname] = f'{object_tablename}.`id`'
         else:
             # case (2)
-            join_condition = f'{attribute_tablename}.`attributeValue` = {object_tablename}.id and {attribute_tablename}.type = \
+            join_condition = f'{attribute_tablename}.`attributeValue` = \
+{object_tablename}.id and {attribute_tablename}.type = \
 \'{str(ngsild["Relationship"])}\' and IFNULL({attribute_tablename}.`deleted`, FALSE) IS FALSE'
             sql_expression = create_attribute_table_expression(ctx, attribute_tablename, ngsildvar[0])
             local_ctx['bgp_sql_expression'].append({'statement': f'{sql_expression}',

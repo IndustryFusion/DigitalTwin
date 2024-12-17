@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from rdflib import Graph, URIRef
+from rdflib import Graph
 import os
 import sys
 import argparse
@@ -122,7 +122,6 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
         knowledge = Graph(store="Oxigraph")
         knowledge.parse(knowledgefile)
         attributes_model = model + g + knowledge
-        string_indexer = StringIndexer()
         entity_table_name = configs.kafka_topic_ngsi_prefix_name
 
         qres = attributes_model.query(attributes_query)
@@ -136,12 +135,6 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
                 current_dataset_id = "'@none'"
             else:
                 current_dataset_id = f"'{index}'"
-                # current_index = index
-                # if isinstance(index, URIRef):
-                #     try:
-                #         current_index = string_indexer.add_or_get_index(id, utils.strip_class(current_index.toPython()))
-                #     except:
-                #         current_index = 0
             valueType = nullify(valueType)
             attributeValue = nullify(None)
             unitCode = nullify(unitCode)
@@ -161,9 +154,11 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
                 current_timestamp = f"'{str(observedAt)}'"
             print("('" + id + "', " + "CAST(NULL AS STRING), '" + entityId.toPython() + "', '" +
                   name.toPython() +
-                  "', '" + nodeType + "', " + valueType + ", '" + type.toPython() + "', " + attributeValue + ", " + str(current_dataset_id) +
+                  "', '" + nodeType + "', " + valueType + ", '" + type.toPython() + "', " + attributeValue +
+                  ", " + str(current_dataset_id) +
                   ", " + unitCode +
-                  ", CAST(NULL AS STRING), CAST(NULL AS BOOLEAN), CAST(NULL AS BOOLEAN), " + current_timestamp + ")", end='',
+                  ", CAST(NULL AS STRING), CAST(NULL AS BOOLEAN), CAST(NULL AS BOOLEAN), " + current_timestamp +
+                  ")", end='',
                   file=sqlitef)
         print(";", file=sqlitef)
 

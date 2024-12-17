@@ -19,7 +19,7 @@ import re
 import rdflib
 from urllib.parse import urlparse
 from enum import Enum
-from rdflib import Graph, RDFS, RDF, OWL, Graph, XSD, Literal
+from rdflib import Graph, RDFS, RDF, OWL, XSD, Literal
 from collections import deque
 
 
@@ -357,7 +357,6 @@ def create_statementmap(object_name, table_object_names,
     return yaml_bsqls
 
 
-
 def create_statementset(object_name, table_object_names,
                         view_object_names, ttl, statementsets, refresh_interval="12h"):
     yaml_bsqls = {}
@@ -655,6 +654,7 @@ def add_property_checks(checks, sqldialect):
 {lcheck["ins"]})'
     statement += ';'
     return statement
+
 
 # This creates a transitive closure of all OWL.TransitiveProperty elements given in the ontology
 # plus rdfs:subClassOf. In addition is makes sure that every rdfs:Class and owl:Class are reflexive

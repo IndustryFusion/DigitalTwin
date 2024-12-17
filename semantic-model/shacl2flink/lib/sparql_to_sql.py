@@ -455,7 +455,7 @@ def wrap_sql_construct(ctx, node):
             construct_query += "\nUNION ALL\n"
         entityId_varname = entityId_var.toPython()[1:]
         entityId = bounds[entityId_varname]
-        id = f"{entityId} || '\{name}'"
+        id = f"{entityId} || '\\{name}'"
         construct_query += "SELECT DISTINCT "
         construct_query += f'{id} as id,\n'
         construct_query += 'CAST(NULL as STRING) as parentId,\n'
