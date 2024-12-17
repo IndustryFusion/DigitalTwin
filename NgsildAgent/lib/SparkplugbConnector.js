@@ -178,7 +178,7 @@ class SparkplugbConnector {
     this.client.disconnect();
   };
 
-  updateDeviceInfo(deviceInfo) {
+  updateDeviceInfo = function (deviceInfo) {
     const me = this;
     me.client.updateDeviceInfo(deviceInfo);
   };

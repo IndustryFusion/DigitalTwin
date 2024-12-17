@@ -37,9 +37,6 @@ function updateToken (token) {
   const parsedToken = JSON.parse(token);
   common.saveToDeviceConfig('device_token', parsedToken.access_token);
   common.saveToDeviceConfig('refresh_token', parsedToken.refresh_token);
-  // Update device_token_expire
-  const expireTime = parsedToken.exp ? parsedToken.exp * 1000 : new Date().getTime() + 3600 * 1000;
-  common.saveToDeviceConfig('device_token_expire', expireTime);
 }
 
 function updateSecrets (me) {
@@ -145,15 +142,15 @@ class CloudProxy {
     }
   }
 
-  async init() {
+  async init () {
     try {
       await this.spBProxy.init();
     } catch (err) {
-      if (err.name === 'ConnectionError' && err.errno === 1) {
+      if (err instanceof ConnectionError && err.errno === 1) {
         this.logger.error('SparkplugB MQTT NBIRTH Metric not sent. Trying to refresh token.');
         await this.checkDeviceToken();
         return 1;
-      } else {
+      } else { // unrecoverable
         this.logger.error('Unexpected Error: ' + err.stack);
         return 2;
       }
