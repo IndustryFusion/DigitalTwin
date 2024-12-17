@@ -47,6 +47,8 @@ jobs:
         killall kubefwd
     - name: Build and test shacl2flink
       run: |
+        source ./miniconda3/etc/profile.d/conda.sh
+        conda activate py310
         ( cd semantic-model/shacl2flink && make setup && make lint test test-kms )
         ( cd semantic-model/shacl2flink && make test-full-flink-deployment )
 
