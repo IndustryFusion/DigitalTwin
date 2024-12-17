@@ -50,7 +50,7 @@ def test_main(mock_utils, mock_configs,
     shacltype.toPython.return_value = 'shacltype'
     row = {'shacltype': shacltype, 'path': 'path'}
     row = dotdict(row)
-    create_ngsild_tables.main('kms/shacl.ttl', 'kms/knowledge.ttl', tmp_path)
+    create_ngsild_tables.main(tmp_path)
 
     assert os.path.exists(os.path.join(tmp_path, 'ngsild.yaml')) is True
     assert os.path.exists(os.path.join(tmp_path, 'ngsild.sqlite')) is True
