@@ -390,7 +390,7 @@ def test_process_rdf_spo_subject_is_no_entity_and_predicate_is_type(mock_isentit
     p = RDF['type']
     o = term.URIRef('https://example.com/obj')
     lib.bgp_translation_utils.process_rdf_spo(ctx, local_ctx, s, p, o)
-    assert local_ctx['bgp_sql_expression'] == [{'statement': 'entity_view AS FTABLE',
+    assert local_ctx['bgp_sql_expression'] == [{'statement': 'entities_view AS FTABLE',
                                                 'join_condition':
                                                 "'<'||FTABLE.`type`||'>' = '<https://example.com/obj>'"}]
     assert local_ctx['bounds'] == {'this': 'THISTABLE.id', 'f': 'FTABLE.`id`'}
@@ -539,10 +539,11 @@ def test_process_ngsild_spo_hasValue(mock_isentity, mock_create_table_name, mock
     lib.bgp_translation_utils.process_ngsild_spo(ctx, local_ctx, s, p, o)
     assert local_ctx['bgp_tables'] == {'FSTATETABLE': []}
     assert local_ctx['bounds'] == {'this': 'THISTABLE.id', 'v1': '`FSTATETABLE`.\
-`https://uri.etsi.org/ngsi-ld/hasValue`'}
+`attributeValue`'}
     assert local_ctx['bgp_sql_expression'] == [{'statement': 'attributes_view AS FSTATETABLE', 'join_condition':
                                                "FSTATETABLE.name = 'https://industry-fusion.com/types/v0.9/state' \
-and FTABLE.id = FSTATETABLE.entityId"}]
+and FTABLE.id = FSTATETABLE.entityId and FSTATETABLE.type = 'https://uri.etsi.org/ngsi-ld/Property' and \
+IFNULL(FSTATETABLE.`deleted`, FALSE) IS FALSE"}]
 
     # Test with bound v1
     mock_create_varname.return_value = 'v1'
@@ -575,7 +576,8 @@ and FTABLE.id = FSTATETABLE.entityId"}]
     assert local_ctx['bounds'] == {'this': 'THISTABLE.id', 'f': 'FILTER.id', 'v1': 'V1TABLE.id'}
     assert local_ctx['bgp_sql_expression'] == [{'statement': 'attributes_view AS FSTATETABLE', 'join_condition':
                                                "FSTATETABLE.name = \
-'https://industry-fusion.com/types/v0.9/state' and FTABLE.id = FSTATETABLE.entityId"}]
+'https://industry-fusion.com/types/v0.9/state' and FTABLE.id = FSTATETABLE.entityId and FSTATETABLE.type = \
+'https://uri.etsi.org/ngsi-ld/Property' and IFNULL(FSTATETABLE.`deleted`, FALSE) IS FALSE"}]
 
 
 @patch('lib.bgp_translation_utils.get_random_string')
@@ -626,9 +628,11 @@ def test_process_ngsild_spo_hasObject(mock_isentity, mock_create_table_name, moc
     assert local_ctx['bounds'] == {'this': 'THISTABLE.id', 'f': 'FTABLE.`id`'}
     assert local_ctx['bgp_sql_expression'] == [
         {'statement': 'attributes_view AS FHAS_FILTERTABLE', 'join_condition': "FHAS_FILTERTABLE.name = \
-'https://industry-fusion.com/types/v0.9/hasFilter' and FHAS_FILTERTABLE.entityId = FTABLE.id"},
-        {'statement': 'entity_view AS FTABLE', 'join_condition': 'FTABLE.id = FHAS_FILTERTABLE.\
-`https://uri.etsi.org/ngsi-ld/hasObject`'}]
+'https://industry-fusion.com/types/v0.9/hasFilter' and FHAS_FILTERTABLE.entityId = FTABLE.id and \
+IFNULL(FHAS_FILTERTABLE.`deleted`, FALSE) IS FALSE"},
+        {'statement': 'entities_view AS FTABLE', 'join_condition': "FTABLE.id = FHAS_FILTERTABLE.`attributeValue` \
+and FHAS_FILTERTABLE.type = 'https://uri.etsi.org/ngsi-ld/Relationship' and \
+IFNULL(FTABLE.`deleted`, FALSE) IS FALSE"}]
 
     # Test with bound v1
     mock_create_varname.return_value = 'v1'
@@ -662,9 +666,9 @@ def test_process_ngsild_spo_hasObject(mock_isentity, mock_create_table_name, moc
     assert local_ctx['bounds'] == {'this': 'THISTABLE.id', 'c': 'CUTTER.id', 'f': 'FTABLE.`id`'}
     assert local_ctx['bgp_sql_expression'] == [
         {'statement': 'attributes_view AS CHAS_FILTERTABLE', 'join_condition': "CHAS_FILTERTABLE.name = \
-'https://industry-fusion.com/types/v0.9/hasFilter' and CHAS_FILTERTABLE.entityId = CTABLE.id"},
-        {'statement': 'entity_view AS FTABLE', 'join_condition': 'FTABLE.id = CHAS_FILTERTABLE.\
-`https://uri.etsi.org/ngsi-ld/hasObject`'}]
+'https://industry-fusion.com/types/v0.9/hasFilter' and CHAS_FILTERTABLE.entityId = CTABLE.id and IFNULL(CHAS_FILTERTABLE.`deleted`, FALSE) IS FALSE"},
+        {'statement': 'entities_view AS FTABLE', 'join_condition': "FTABLE.id = CHAS_FILTERTABLE.`attributeValue` and CHAS_FILTERTABLE.type = \
+'https://uri.etsi.org/ngsi-ld/Relationship' and IFNULL(FTABLE.`deleted`, FALSE) IS FALSE"}]
 
 
 @patch('lib.bgp_translation_utils.get_random_string')
@@ -714,10 +718,13 @@ def test_process_ngsild_spo_obj_defined(mock_isentity, mock_create_table_name, m
     assert local_ctx['bgp_tables'] == {'FHAS_FILTERTABLE': [], 'FTABLE': []}
     assert local_ctx['bounds'] == {'this': 'THISTABLE.id', 'f': 'FTABLE.id'}
     assert local_ctx['bgp_sql_expression'] == [
-        {'statement': 'attributes_view AS FHAS_FILTERTABLE', 'join_condition': 'FHAS_FILTERTABLE.\
-`https://uri.etsi.org/ngsi-ld/hasObject` = FTABLE.id'},
-        {'statement': 'entity_view AS FTABLE', 'join_condition': "FHAS_FILTERTABLE.name = \
-'https://industry-fusion.com/types/v0.9/hasFilter' and FHAS_FILTERTABLE.entityId = FTABLE.id"}]
+        {'statement': 'attributes_view AS FHAS_FILTERTABLE', 'join_condition': \
+"FHAS_FILTERTABLE.`attributeValue` \
+= FTABLE.id and FHAS_FILTERTABLE.type = 'https://uri.etsi.org/ngsi-ld/Relationship' and \
+IFNULL(FHAS_FILTERTABLE.`deleted`, FALSE) IS FALSE"},
+        {'statement': 'entities_view AS FTABLE', 'join_condition': "FHAS_FILTERTABLE.name = \
+'https://industry-fusion.com/types/v0.9/hasFilter' and FHAS_FILTERTABLE.entityId = FTABLE.id  \
+AND IFNULL(FTABLE.`deleted`, FALSE) IS FALSE"}]
 
 
 @patch('lib.bgp_translation_utils.get_random_string')
