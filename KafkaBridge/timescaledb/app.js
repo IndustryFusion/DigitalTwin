@@ -61,6 +61,10 @@ const processAttributeMessage = function (message) {
     datapoint.entityId = body.entityId;
     datapoint.attributeId = body.name;
     datapoint.nodeType = body.nodeType;
+    datapoint.deleted = false;
+    if ('deleted' in body) {
+      datapoint.deleted = body.deleted;
+    }
     if ('datasetId' in body) {
       datapoint.datasetId = body.datasetId;
     } else {
@@ -117,7 +121,7 @@ const processEntityMessage = function (message) {
     entity.observedAt = utcTime;
     entity.modifiedAt = utcTime;
     entity.type = body.type;
-    entity.deleted = null;
+    entity.deleted = false;
     if (body.deleted !== null && body.deleted !== undefined) {
       entity.deleted = body.deleted;
     }
