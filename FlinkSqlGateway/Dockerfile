@@ -11,7 +11,7 @@ ADD .eslintrc.json .eslintrc.json
 WORKDIR /
 RUN npm install && npm run lint && npm run test
 
-FROM flink:1.16.2
+FROM flink:1.19.1
 
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
 ENV NVM_DIR="$HOME/.nvm"
@@ -28,28 +28,28 @@ COPY --from=nodelint gateway.js gateway.js
 ADD package.json package.json
 ADD lib/ lib
 COPY --from=plint submitjob submitjob
-RUN mkdir jars && cd jars && wget https://repo1.maven.org/maven2/org/apache/flink/flink-sql-connector-kafka/1.16.2/flink-sql-connector-kafka-1.16.2.jar
-RUN mkdir -p jars && cd jars && wget https://repo1.maven.org/maven2/org/apache/flink/flink-sql-connector-kafka/1.16.1/flink-sql-connector-kafka-1.16.1.jar
+RUN mkdir jars && cd jars && wget https://repo1.maven.org/maven2/org/apache/flink/flink-sql-connector-kafka/3.2.0-1.19/flink-sql-connector-kafka-3.2.0-1.19.jar
+#RUN mkdir -p jars && cd jars && wget https://repo1.maven.org/maven2/org/apache/flink/flink-sql-connector-kafka/1.16.1/flink-sql-connector-kafka-1.16.1.jar
 RUN . $HOME/.nvm/nvm.sh && npm install --production
 ADD sql-client-defaults.yaml /opt/flink/conf/
 
 
 RUN apt-get update -y && \
 apt-get install -y build-essential libssl-dev zlib1g-dev libbz2-dev libffi-dev liblzma-dev zip && \
-wget https://www.python.org/ftp/python/3.7.9/Python-3.7.9.tgz && \
-tar -xvf Python-3.7.9.tgz && \
-cd Python-3.7.9 && \
+wget https://www.python.org/ftp/python/3.8.20/Python-3.8.20.tgz && \
+tar -xvf Python-3.8.20.tgz && \
+cd Python-3.8.20 && \
 ./configure --without-tests --enable-shared && \
 make -j6 && \
 make install && \
 ldconfig /usr/local/lib && \
-cd .. && rm -f Python-3.7.9.tgz && rm -rf Python-3.7.9 && \
+cd .. && rm -f Python-3.8.20.tgz && rm -rf Python-3.8.20 && \
 ln -s /usr/local/bin/python3 /usr/local/bin/python && \
 apt-get clean && \
 rm -rf /var/lib/apt/lists/*
 
 # install PyFlink
-RUN pip3 install apache-flink==1.16.2
+RUN pip3 install --no-cache-dir apache-flink==1.19.0
 
 
 USER 9999

@@ -178,7 +178,7 @@ def translate(ctx, elem):
         return utils.format_node_type(elem)
     elif isinstance(elem, Variable):
         try:
-            return utils.unwrap_variables(ctx, elem)
+            return utils.wrap_ngsild_variable(ctx, elem)
         except Exception as e:
             raise utils.SparqlValidationFailed(f"Error while unwrapping variables: {str(e)} \
 while processing {ctx['query']}")
@@ -353,7 +353,7 @@ def translate_function(ctx, function):
             else:
                 result = f'SQL_DIALECT_CAST(SQL_DIALECT_STRIP_IRI{{{expression}}} as {cast})'
         else:
-            result = f'SQL_DIALECT_TIME_TO_MILLISECONDS{{{expression}}}'
+            result = f'SQL_DIALECT_TIME_TO_MILLISECONDS{{SQL_DIALECT_STRIP_LITERAL{{{expression}}}}}'
     elif iri in IFA:
         udf = utils.strip_class(iri)
         result = f'{udf}('
@@ -454,17 +454,22 @@ def wrap_sql_construct(ctx, node):
         else:
             construct_query += "\nUNION ALL\n"
         entityId_varname = entityId_var.toPython()[1:]
+        entityId = bounds[entityId_varname]
+        id = f"{entityId} || '\\{name}'"
         construct_query += "SELECT DISTINCT "
-        construct_query += f'{bounds[entityId_varname]} || \'\\\' || \'{name}\' as id,\n'  # id
+        construct_query += f'{id} as id,\n'
+        construct_query += 'CAST(NULL as STRING) as parentId,\n'
         construct_query += f'{bounds[entityId_varname]} as entityId,\n'  # entityId
         construct_query += f'\'{name}\' as name,\n'  # name
         construct_query += f'\'{node_type}\' as nodeType,\n'  # nodeType
         construct_query += 'CAST(NULL as STRING) as valueType,\n'  # valueType
-        construct_query += '0 as `index`,\n'  # index
         construct_query += f'\'{attribute_type}\' as `type`,\n'
+        construct_query += f"{get_bound_trim_string(ctx, value_var)} as `attributeValue`,\n"  # value
         construct_query += '\'@none\' as `datasetId`,\n'
-        construct_query += f"{get_bound_trim_string(ctx, value_var)} as `value`,\n"  # value
-        construct_query += 'CAST(NULL as STRING) as `object`\n'  # object
+        construct_query += 'CAST(NULL as STRING) as unitCode,\n'  # unitCode
+        construct_query += 'CAST(NULL as STRING) as lang,\n'  # unitCode
+        construct_query += 'false as `deleted`,\n'  # unitCode
+        construct_query += 'false as `synched`\n'  # unitCode
         construct_query += ',SQL_DIALECT_SQLITE_TIMESTAMP\n'  # ts
 
         construct_query += 'FROM ' + node['target_sql']

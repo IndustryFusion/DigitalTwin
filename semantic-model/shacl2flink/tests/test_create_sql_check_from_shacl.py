@@ -17,6 +17,7 @@
 from unittest.mock import patch, mock_open
 import os
 import create_sql_checks_from_shacl
+from create_sql_checks_from_shacl import parse_args
 
 
 @patch('create_sql_checks_from_shacl.translate_sparql')
@@ -45,3 +46,18 @@ def test_main(mock_rdflib, mock_utils, mock_yaml, mock_translate_construct, mock
                                           tmp_path)
     mock_file.assert_called_with(os.path.join(tmp_path, 'shacl-validation.sqlite'), 'w')
     assert mock_yaml.YAML().dump.called
+
+
+def test_parse_args_minimal():
+    # Simulate minimal command-line arguments
+    test_args = [
+        "path/to/shacl.ttl",
+        "path/to/knowledge.ttl"
+    ]
+    parsed_args = parse_args(test_args)
+
+    assert parsed_args.shaclfile == "path/to/shacl.ttl"
+    assert parsed_args.knowledgefile == "path/to/knowledge.ttl"
+    assert parsed_args.context is None
+    assert parsed_args.namespace == "iff"
+    assert parsed_args.enable_checkpointing is False

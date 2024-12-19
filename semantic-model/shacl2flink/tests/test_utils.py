@@ -74,25 +74,6 @@ def test_create_yaml_table(mock_check, mock_class):
 
 @patch('lib.utils.class_to_obj_name')
 @patch('lib.utils.check_dns_name')
-def test_create_flink_debug_table(mock_check, mock_class):
-    mock_check.return_value = True
-    mock_class.return_value = 'object'
-    result = utils.create_flink_debug_table('name', 'connector', [{'field': 'type'}, {'ts': 'TIMESTAMP METADATA'}],
-                                            {'primary': 'key'}, {'topic': 'topic', 'properties': {'prop1': 'prop1'}},
-                                            'value')
-    assert result == "DROP TABLE IF EXISTS `name`;\nCREATE TABLE `name` (\n`field` type,\n`ts` TIMESTAMP(3) METADATA \
-FROM 'timestamp', \nwatermark FOR `ts` AS `ts`,\nPRIMARY KEY(`primary`)\n) WITH (\n'format' = 'json',\n'connector' = \
-'connector',\n'topic' = 'topic',\n'scan.startup.mode' = 'earliest-offset'\n,\n'properties.prop1' = 'prop1'\n);"
-
-    result = utils.create_flink_debug_table('name', 'connector', [{'field': 'type'}, {'ts': 'TIMESTAMP METADATA'}],
-                                            None, {'topic': 'topic', 'properties': {'prop1': 'prop1'}}, 'value')
-    assert result == "DROP TABLE IF EXISTS `name`;\nCREATE TABLE `name` (\n`field` type,\n`ts` TIMESTAMP(3) METADATA \
-FROM 'timestamp', \nwatermark FOR `ts` AS `ts`) WITH (\n'format' = 'json',\n'connector' = 'connector',\n'topic' = \
-'topic',\n'scan.startup.mode' = 'earliest-offset'\n,\n'properties.prop1' = 'prop1'\n);"
-
-
-@patch('lib.utils.class_to_obj_name')
-@patch('lib.utils.check_dns_name')
 def test_create_yaml_table_exception(mock_check, mock_class):
     mock_check.return_value = False
     mock_class.return_value = 'object'
@@ -135,9 +116,12 @@ def test_create_yaml_view(mock_check, mock_class):
                       'metadata': {'name': 'object-view'},
                       'spec': {
                           'name': 'name_view',
-                          'sqlstatement': 'SELECT `id`, `type`,\n `fieldname` \
-FROM (\n  SELECT *,\nROW_NUMBER() OVER (PARTITION BY `id`\nORDER BY ts DESC)\
- AS rownum\nFROM `name` )\nWHERE rownum = 1'
+                          'sqlstatement': 'SELECT `type`,\
+\n `fieldname` FROM (\
+\n  SELECT *,\
+\nROW_NUMBER() OVER (PARTITION BY \
+\nORDER BY ts DESC) AS rownum\nFROM `name` )\
+\nWHERE rownum = 1'
                       }}
     result = utils.create_yaml_view('name', [{'fieldname': 'type'}, ])
     assert result == {'apiVersion': 'industry-fusion.com/v1alpha1',
@@ -145,24 +129,40 @@ FROM (\n  SELECT *,\nROW_NUMBER() OVER (PARTITION BY `id`\nORDER BY ts DESC)\
                       'metadata': {'name': 'object-view'},
                       'spec': {
                           'name': 'name_view',
-                          'sqlstatement': 'SELECT `id`, `type`,\n `fieldname` \
-FROM (\n  SELECT *,\nROW_NUMBER() OVER (PARTITION BY `id`\nORDER BY ts DESC)\
- AS rownum\nFROM `name` )\nWHERE rownum = 1'
+                          'sqlstatement': 'SELECT `type`,\
+\n `fieldname` FROM (\
+\n  SELECT *,\
+\nROW_NUMBER() OVER (PARTITION BY \
+\nORDER BY ts DESC) AS rownum\
+\nFROM `name` )\
+\nWHERE rownum = 1'
                       }}
 
 
 def test_create_sql_view():
     result = utils.create_sql_view('table_name', [{'fieldname': 'type'}])
-    assert result == 'DROP VIEW IF EXISTS `table_name_view`;\nCREATE VIEW \
-`table_name_view` AS\nSELECT `id`,`type`,\n`fieldname` \
-FROM (\n  SELECT *,\nROW_NUMBER() OVER (PARTITION BY `id`\nORDER BY ts DESC)\
- AS rownum\nFROM `table_name` )\nWHERE rownum = 1;\n'
+    assert result == 'DROP VIEW IF EXISTS `table_name_view`;\
+\nCREATE VIEW `table_name_view` AS\
+\nSELECT `type`,\
+\n`fieldname` FROM (\
+\n  SELECT *,\
+\nROW_NUMBER() OVER (PARTITION BY \
+\nORDER BY ts DESC) AS rownum\
+\nFROM `table_name` )\
+\nWHERE rownum = 1;\n'
+
     result = utils.create_sql_view('table_name', [{'fieldname': 'type'},
                                    {'id': 'id'}, {'type': 'type'}])
-    assert result == 'DROP VIEW IF EXISTS `table_name_view`;\nCREATE VIEW \
-`table_name_view` AS\nSELECT `id`,`type`,\n`fieldname` \
-FROM (\n  SELECT *,\nROW_NUMBER() OVER (PARTITION BY `id`\nORDER BY ts DESC)\
- AS rownum\nFROM `table_name` )\nWHERE rownum = 1;\n'
+    assert result == 'DROP VIEW IF EXISTS `table_name_view`;\
+\nCREATE VIEW `table_name_view` AS\
+\nSELECT `type`,\
+\n`fieldname`,\
+\n`id` FROM (\
+\n  SELECT *,\
+\nROW_NUMBER() OVER (PARTITION BY \
+\nORDER BY ts DESC) AS rownum\
+\nFROM `table_name` )\
+\nWHERE rownum = 1;\n'
 
 
 def test_create_statementset():

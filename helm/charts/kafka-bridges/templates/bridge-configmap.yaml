@@ -109,10 +109,12 @@ data:
                 "port": {{ .Values.mqtt.cache.port }}
         },
       "timescaledb": {
-              "topic": "iff.ngsild.attributes",
+              "attributeTopic": {{ .Values.kafkaBridge.debezium.attributesTopic | quote}},
+              "entityTopic": {{ .Values.kafkaBridge.debezium.entitiesTopic | quote}},
               "PGSSLMODE": "require",
               "dbname": {{ .Values.db.timescaleDb | quote }},
-              "tablename": {{ .Values.db.timescaleTable | quote }},
+              "attributeTablename": {{ .Values.db.timescaleAttributeTable | quote }},
+              "entityTablename": {{ .Values.db.timescaleEntityTable | quote }},
               "hostname": "acid-cluster",
               "port": "5432",
               "username": {{ .Values.db.scorpioDb | quote }},

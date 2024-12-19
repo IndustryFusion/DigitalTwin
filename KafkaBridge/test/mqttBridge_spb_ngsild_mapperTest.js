@@ -33,9 +33,8 @@ describe(fileToTest, function () {
       datasetId: '@none',
       name: 'name',
       type: 'https://uri.etsi.org/ngsi-ld/Relationship',
-      'https://uri.etsi.org/ngsi-ld/hasObject': 'value',
-      nodeType: '@id',
-      index: 0
+      attributeValue: 'value',
+      nodeType: '@id'
     };
     const result = ToTest.mapSpbRelationshipToKafka(deviceId, metric);
     assert.deepEqual(result, expected);
@@ -56,9 +55,8 @@ describe(fileToTest, function () {
       entityId: deviceId,
       name: 'name',
       type: 'https://uri.etsi.org/ngsi-ld/Relationship',
-      'https://uri.etsi.org/ngsi-ld/hasObject': 'value',
+      attributeValue: 'value',
       nodeType: '@id',
-      index: 0,
       datasetId: 'datasetId'
     };
     const result = ToTest.mapSpbRelationshipToKafka(deviceId, metric);
@@ -77,9 +75,8 @@ describe(fileToTest, function () {
       datasetId: '@none',
       name: 'name',
       type: 'https://uri.etsi.org/ngsi-ld/Property',
-      'https://uri.etsi.org/ngsi-ld/hasValue': 'value',
-      nodeType: '@value',
-      index: 0
+      attributeValue: 'value',
+      nodeType: '@value'
     };
     const result = ToTest.mapSpbPropertyToKafka(deviceId, metric);
     assert.deepEqual(result, expected);
@@ -97,9 +94,8 @@ describe(fileToTest, function () {
       datasetId: '@none',
       name: 'name',
       type: 'https://uri.etsi.org/ngsi-ld/Property',
-      'https://uri.etsi.org/ngsi-ld/hasValue': 'value',
-      nodeType: '@value',
-      index: 0
+      attributeValue: 'value',
+      nodeType: '@value'
     };
     const result = ToTest.mapSpbPropertyToKafka(deviceId, metric);
     assert.deepEqual(result, expected);
@@ -120,10 +116,9 @@ describe(fileToTest, function () {
       entityId: deviceId,
       name: 'name',
       type: 'https://uri.etsi.org/ngsi-ld/Property',
-      'https://uri.etsi.org/ngsi-ld/hasValue': 'value',
+      attributeValue: 'value',
       nodeType: '@value',
-      datasetId: 'datasetId',
-      index: 0
+      datasetId: 'datasetId'
     };
     const result = ToTest.mapSpbPropertyToKafka(deviceId, metric);
     assert.deepEqual(result, expected);
@@ -144,10 +139,9 @@ describe(fileToTest, function () {
       entityId: deviceId,
       name: 'name',
       type: 'https://uri.etsi.org/ngsi-ld/Property',
-      'https://uri.etsi.org/ngsi-ld/hasValue': 'value',
+      attributeValue: 'value',
       nodeType: '@id',
-      datasetId: 'datasetId',
-      index: 0
+      datasetId: 'datasetId'
     };
     const result = ToTest.mapSpbPropertyIriToKafka(deviceId, metric);
     assert.deepEqual(result, expected);
@@ -165,9 +159,8 @@ describe(fileToTest, function () {
       datasetId: '@none',
       name: 'name',
       type: 'https://uri.etsi.org/ngsi-ld/Property',
-      'https://uri.etsi.org/ngsi-ld/hasValue': 'value',
-      nodeType: '@id',
-      index: 0
+      attributeValue: 'value',
+      nodeType: '@id'
     };
     const result = ToTest.mapSpbPropertyIriToKafka(deviceId, metric);
     assert.deepEqual(result, expected);
@@ -185,9 +178,8 @@ describe(fileToTest, function () {
       datasetId: '@none',
       name: 'name',
       type: 'https://uri.etsi.org/ngsi-ld/Property',
-      'https://uri.etsi.org/ngsi-ld/hasValue': 'value',
-      nodeType: '@json',
-      index: 0
+      attributeValue: 'value',
+      nodeType: '@json'
     };
     const result = ToTest.mapSpbPropertyJsonToKafka(deviceId, metric);
     assert.deepEqual(result, expected);
@@ -208,10 +200,9 @@ describe(fileToTest, function () {
       entityId: deviceId,
       name: 'name',
       type: 'https://uri.etsi.org/ngsi-ld/Property',
-      'https://uri.etsi.org/ngsi-ld/hasValue': 'value',
+      attributeValue: 'value',
       nodeType: '@json',
-      datasetId: 'datasetId',
-      index: 0
+      datasetId: 'datasetId'
     };
     const result = ToTest.mapSpbPropertyJsonToKafka(deviceId, metric);
     assert.deepEqual(result, expected);
