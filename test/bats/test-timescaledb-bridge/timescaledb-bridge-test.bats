@@ -32,7 +32,6 @@ VALUE2="1"
 PROPERTY=https://uri.etsi.org/ngsi-ld/Property
 RELATIONSHIP=https://uri.etsi.org/ngsi-ld/Relationship
 POSTGRES_PASSWORD=$(kubectl -n ${IFFNAMESPACE} get secret/${POSTGRES_SECRET} -o jsonpath='{.data.password}'| base64 -d)
-TSDB_EXPECTED=/tmp/TSDB_EXPECTED
 TSDB_RESULT=/tmp/TSDB_RESULT
 
 cat << EOF > ${ATTRIBUTES_PROPERTY}
@@ -78,19 +77,6 @@ cat << EOF > ${ENTITY}
     "type": "https://example.com/type"
 }
 EOF
-
-# cat << EOF > ${TSDB_EXPECTED}
-# {
-#     "id": "${IDSTATE}",
-#     "entityId": "${URN}",
-#     "name": "${STATE}",
-#     "type": "${PROPERTY}",
-#     "https://uri.etsi.org/ngsi-ld/hasValue": "${VALUE2}",
-#     "nodeType": "@value",
-#     "valueType": "http://www.w3.org/2001/XMLSchema#string",
-#     "index": 0
-# }
-# EOF
 
 # send data to kafka bridge
 # $1: file to send

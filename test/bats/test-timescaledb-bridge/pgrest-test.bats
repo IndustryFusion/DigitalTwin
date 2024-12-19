@@ -11,9 +11,6 @@ USER=realm_user
 KEYCLOAK_URL=http://keycloak.local/auth/realms
 CLIENT_ID="scorpio"
 PGREST_URL=pgrest.local
-POSTGRES_USERNAME=dbreader
-POSTGRES_DATABASE=tsdb
-POSTGRES_SECRET=dbreader.acid-cluster.credentials.postgresql.acid.zalan.do
 ATTRIBUTES_PROPERTY=/tmp/property.txt
 ATTRIBUTES_PROPERTY2=/tmp/property2.txt
 ATTRIBUTES_TOPIC=iff.ngsild.attributes
@@ -31,7 +28,6 @@ IDSTATE2="${URN2}\\\\${STATE}"
 VALUE="state"
 VALUE2="1"
 PROPERTY=https://uri.etsi.org/ngsi-ld/Property
-POSTGRES_PASSWORD=$(kubectl -n ${NAMESPACE} get secret/${POSTGRES_SECRET} -o jsonpath='{.data.password}'| base64 -d)
 TSDB_RESULT=/tmp/TSDB_RESULT
 TSDBTABLE=attributes
 ENTITYTABLE=entities
