@@ -58,7 +58,7 @@ const attributeHistoryTable = sequelize.define(config.timescaledb.attributeTable
   // language tag if applicable
   lang: { type: Sequelize.TEXT, allowNull: true },
   // indicates if attribute has been deleted
-  deleted: { type: Sequelize.TEXT, allowNull: true }
+  deleted: { type: Sequelize.BOOLEAN, allowNull: true }
 
 }, {
   // disabled for a model auto timestamping with createAt and ModifiedAt as we take value from Kafka

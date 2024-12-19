@@ -30,7 +30,7 @@ const entityHistoryTable = sequelize.define(config.timescaledb.entityTablename, 
   observedAt: { type: Sequelize.DATE, allowNull: false, primaryKey: true },
   modifiedAt: { type: Sequelize.DATE, allowNull: false },
   type: { type: Sequelize.TEXT, allowNull: false },
-  deleted: { type: Sequelize.TEXT, allowNull: true }
+  deleted: { type: Sequelize.BOOLEAN, allowNull: true }
 
 }, {
   // disabled for a model auto timestamping with createAt and ModifiedAt as we take value from Kafka
