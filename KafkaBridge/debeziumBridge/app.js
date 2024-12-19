@@ -22,8 +22,6 @@ const { Kafka } = require('kafkajs');
 const config = require('../config/config.json');
 const DebeziumBridge = require('../lib/debeziumBridge.js');
 const Logger = require('../lib/logger.js');
-const newEngine = require('@comunica/actor-init-sparql-file').newEngine;
-const iffEngine = newEngine();
 const runningAsMain = require.main === module;
 
 const debeziumBridge = new DebeziumBridge(config);
@@ -93,47 +91,6 @@ const startListener = async function () {
   }
 };
 
-/**
- *
- * @param klass {string} - a RDF klass
- * @returns {array<string>} RDF subclasses of klass, e.g.
- *                          'plasmacutter' => cutter, device
- */
-const getSubClasses = async function (klass) {
-  // TODO: needs caching
-  const queryTerm = `
-    PREFIX iff: <https://industry-fusion.com/types/v0.9/>
-    SELECT ?o WHERE {
-    <${klass}> rdfs:subClassOf* ?o.
-    } LIMIT 100`;
-
-  const result = await iffEngine.query(queryTerm, {
-    sources: config.debeziumBridge.rdfSources
-  });
-  const bindings = await result.bindings();
-  const subClasses = bindings.reduce((accum, element) => { accum.push(element.get('?o').value); return accum; }, []);
-  return subClasses;
-};
-
-/**
- * Converts PascalCase/camelCase to snake_case
- * e.g. PascalCase => pascal_case
- *      camelCase => camel_case
- * @param {*} str string in Pascal/camelCase
- */
-const pascalCaseToSnakeCase = function (name) {
-  return name.replace(/(?<!^)(?=[A-Z])/g, '_').toLowerCase();
-};
-
-/**
- * returns type-part of uri, e.g. https://test/Device => Device
- * @param topic {string}
- * @returns
- */
-const getTopic = function (topic) {
-  return pascalCaseToSnakeCase(topic.match(/([^/#]*)$/)[0]);
-};
-
 const checkTimestamp = function (val) {
   let isotimestamp = null;
   let timestamp = null;
@@ -179,32 +136,32 @@ const sendUpdates = async function ({ entity, deletedEntity, updatedAttrs, delet
   const topicMessages = [];
   // if only updates are detected, no update of entity is needed
   if (!updateOnly) {
-    let subClasses = await getSubClasses(entity.type);
-    if (subClasses.length === 0) {
-      subClasses = [entity.type];
-    }
+    // let subClasses = await getSubClasses(entity.type);
+    // if (subClasses.length === 0) {
+    //   subClasses = [entity.type];
+    // }
     // Now remove type. This has been determined earlier.
     if (removeType) {
       // delete of entities is done by set everything to NULL
-      delete entity.type;
+      entity.deleted = true;
     }
 
-    subClasses.forEach((element) => {
-      const obj = {};
-      const entityTopic = config.debeziumBridge.entityTopicPrefix + '.' + getTopic(element);
-      obj.topic = entityTopic;
-      obj.messages = [{
-        key: genKey,
-        value: JSON.stringify(entity)
-      }];
-      topicMessages.push(obj);
-    });
+    const obj = {};
+    const entityTopic = config.debeziumBridge.entityTopicPrefix;
+    obj.topic = entityTopic;
+    obj.messages = [{
+      key: genKey,
+      value: JSON.stringify(entity)
+    }];
+    topicMessages.push(obj);
   }
 
   if (deletedAttrs !== null && deletedAttrs !== undefined && Object.keys(deletedAttrs).length > 0) {
     // Flatmap the array, i.e. {key: k, value: [m1, m2]} => [{key: k, value: m1}, {key: k, value: m2}]
     const deleteMessages = Object.entries(deletedAttrs).flatMap(([key, value]) =>
       value.map(val => {
+        val.deleted = true;
+        val.synced = true;
         return { key: genKey, value: JSON.stringify(val) };
       })
     );
@@ -217,6 +174,7 @@ const sendUpdates = async function ({ entity, deletedEntity, updatedAttrs, delet
     // Flatmap the array, i.e. {key: k, value: [m1, m2]} => [{key: k, value: m1}, {key: k, value: m2}]
     const updateMessages = Object.entries(updatedAttrs).flatMap(([key, value]) => {
       return value.map(val => {
+        val.synced = true;
         const timestamp = checkTimestamp(val);
         const result = { key: genKey, value: JSON.stringify(val) };
         if (timestamp !== null) {
@@ -234,6 +192,7 @@ const sendUpdates = async function ({ entity, deletedEntity, updatedAttrs, delet
     // Flatmap the array, i.e. {key: k, value: [m1, m2]} => [{key: k, value: m1}, {key: k, value: m2}]
     const insertMessages = Object.entries(insertedAttrs).flatMap(([key, value]) => {
       return value.map(val => {
+        val.synced = true;
         const timestamp = checkTimestamp(val);
         const result = { key: genKey, value: JSON.stringify(val) };
         if (timestamp !== null) {

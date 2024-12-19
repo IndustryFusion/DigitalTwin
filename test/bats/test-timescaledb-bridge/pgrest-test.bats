@@ -17,10 +17,14 @@ POSTGRES_SECRET=dbreader.acid-cluster.credentials.postgresql.acid.zalan.do
 ATTRIBUTES_PROPERTY=/tmp/property.txt
 ATTRIBUTES_PROPERTY2=/tmp/property2.txt
 ATTRIBUTES_TOPIC=iff.ngsild.attributes
+ENTITIES_OBJECT=/tmp/entity.txt
+ENTITIES_TOPIC=iff.ngsild.entities
+ENTITY_TYPE=https://example.com/type
 KAFKA_BOOTSTRAP=my-cluster-kafka-bootstrap:9092
 RANDOMID=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 24; echo)
 URN=urn:iff:test1:${RANDOMID}
 URN2=urn:iff:test2:${RANDOMID}
+URN3=urn:iff:test3:${RANDOMID}
 STATE=https://industry-fusion.com/types/v0.9/state
 IDSTATE="${URN}\\\\${STATE}"
 IDSTATE2="${URN2}\\\\${STATE}"
@@ -29,7 +33,8 @@ VALUE2="1"
 PROPERTY=https://uri.etsi.org/ngsi-ld/Property
 POSTGRES_PASSWORD=$(kubectl -n ${NAMESPACE} get secret/${POSTGRES_SECRET} -o jsonpath='{.data.password}'| base64 -d)
 TSDB_RESULT=/tmp/TSDB_RESULT
-TSDBTABLE=entityhistory
+TSDBTABLE=attributes
+ENTITYTABLE=entities
 
 cat << EOF > ${ATTRIBUTES_PROPERTY}
 {
@@ -37,9 +42,9 @@ cat << EOF > ${ATTRIBUTES_PROPERTY}
     "entityId": "${URN}",
     "name": "${STATE}",
     "type": "${PROPERTY}",
-    "https://uri.etsi.org/ngsi-ld/hasValue": "${VALUE}",
-    "nodeType": "@id",
-    "index": 0}
+    "attributeValue": "${VALUE}",
+    "nodeType": "@value",
+    "datasetId": "@none"}
 EOF
 
 cat << EOF > ${ATTRIBUTES_PROPERTY2}
@@ -48,13 +53,19 @@ cat << EOF > ${ATTRIBUTES_PROPERTY2}
     "entityId": "${URN2}",
     "name": "${STATE}",
     "type": "${PROPERTY}",
-    "https://uri.etsi.org/ngsi-ld/hasValue": "${VALUE2}",
+    "attributeValue": "${VALUE2}",
     "nodeType": "@value",
     "valueType": "http://www.w3.org/2001/XMLSchema#string",
-    "index": 0
+    "datasetId": "@none"
 }
 EOF
 
+cat << EOF > ${ENTITIES_OBJECT}
+{
+    "id": "${URN3}",
+    "type": "${ENTITY_TYPE}"
+}
+EOF
 
 get_password() {
     kubectl -n ${NAMESPACE} get ${USER_SECRET} -o jsonpath='{.data.password}' | base64 -d
@@ -79,13 +90,13 @@ send_to_kafka_bridge() {
 
 # receive datapoints
 # $1: payload to post
-get_datapoints() {
-    urn=$1
-    targetfile=$2
-    echo 'select json_agg(t) from public.entityhistories as t where t."entityId" = ' \'"$urn"\' ';' | \
-        PGPASSWORD=${POSTGRES_PASSWORD} psql -t -h localhost -U ${POSTGRES_USERNAME} -d ${POSTGRES_DATABASE} -A | \
-        jq -S 'map(del(.modifiedAt, .observedAt))' >"$targetfile"
-}
+# get_datapoints() {
+#     urn=$1
+#     targetfile=$2
+#     echo 'select json_agg(t) from public.entityhistories as t where t."entityId" = ' \'"$urn"\' ';' | \
+#         PGPASSWORD=${POSTGRES_PASSWORD} psql -t -h localhost -U ${POSTGRES_USERNAME} -d ${POSTGRES_DATABASE} -A | \
+#         jq -S 'map(del(.modifiedAt, .observedAt))' >"$targetfile"
+# }
 
 
 check_tsdb_sample() {
@@ -96,11 +107,28 @@ check_tsdb_sample() {
     "attributeId": "https://industry-fusion.com/types/v0.9/state",
     "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
     "datasetId": "@none",
+    "deleted": false,
     "entityId": "$URN",
-    "index": 0,
+    "id": "${IDSTATE2}",
+    "lang": null,
     "nodeType": "@value",
+    "parentId": null,
+    "unitType": null,
     "value": "$VALUE2",
     "valueType": "http://www.w3.org/2001/XMLSchema#string"
+  }
+]
+EOF
+}
+
+check_entity_sample() {
+    URN=$2
+    cat << EOF | diff "$1" - >&3
+[
+  {
+    "deleted": false,
+    "id": "$URN3",
+    "type": "${ENTITY_TYPE}"
   }
 ]
 EOF
@@ -118,6 +146,21 @@ get_samples() {
         HEADER="Authorization: Bearer $token"
     fi
     curl http://"${url}"/"${TSDBTABLE}"?entityId=like."$urn" -H "$HEADER" | \
+        jq -S 'map(del(.modifiedAt, .observedAt))' >"$result"
+}
+
+get_entity_samples() {
+    
+    url=$1
+    token=$2
+    urn=$3
+    result=$4
+    if [ -z "$token" ]; then
+        HEADER="''"
+    else
+        HEADER="Authorization: Bearer $token"
+    fi
+    curl http://"${url}"/"${ENTITYTABLE}"?id=like."$urn" -H "$HEADER" | \
         jq -S 'map(del(.modifiedAt, .observedAt))' >"$result"
 }
 
@@ -163,6 +206,20 @@ teardown(){
     [ "$status" -eq "0" ]
 }
 
+@test "verify timescaledb-bridge is forwarding entity" {
+    $SKIP
+    password=$(get_password)
+    token=$(get_token)
+    echo "# token $token"
+    echo "# Sending entity to Kafka"
+    send_to_kafka_bridge ${ENTITIES_OBJECT} ${ENTITIES_TOPIC}
+    sleep 2
+    echo "# Now receiving sample"
+    get_entity_samples "$PGREST_URL" "$token" "$URN3" "$TSDB_RESULT"
+    run check_entity_sample "$TSDB_RESULT" "$URN2"
+    [ "$status" -eq "0" ]
+}
+
 @test "verify timescaledb-bridge is forwarding iri Property" {
     $SKIP
     password=$(get_password)
@@ -170,6 +227,7 @@ teardown(){
     echo "# token $token"
     echo "# Sending property to Kafka"
     send_to_kafka_bridge ${ATTRIBUTES_PROPERTY2} ${ATTRIBUTES_TOPIC}
+    sleep 2
     echo "# Now receiving sample"
     get_samples "$PGREST_URL" "$token" "$URN2" "$TSDB_RESULT"
     run check_tsdb_sample "$TSDB_RESULT" "$URN2"
