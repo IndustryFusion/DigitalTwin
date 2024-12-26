@@ -31,7 +31,7 @@ build: $(SHACL) $(KNOWLEDGE $(MODEL)
 	$(PYTHON) create_sql_checks_from_shacl.py $(CHECKPOINTSWITCH) $(SHACL) $(KNOWLEDGE)
 
 helm: export IFF_HELM=true
-helm:
+helm: build
 	mkdir -p ${HELM_DIR}
 	rm -rf ${HELM_DIR}/templates 
 	cp -rf ${OUTPUTDIR} ${HELM_DIR}/templates
@@ -108,7 +108,6 @@ enable-strimzi:
 
 flink-deploy: clean
 	@echo deploy helm package
-	make build
 	make helm
 	make update-rdf-cm
 	make disable-strimzi || echo "Can fail"

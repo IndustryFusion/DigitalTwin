@@ -32,8 +32,7 @@ attributesTopic}}" if helm else \
 kafka_topic_attributes_insert = "{{.Values.kafkaBridge.debezium.\
 attributesTopic}}_insert" if helm else "iff.ngsild.attributes_insert"
 
-kafka_topic_ngsi_prefix = "{{.Values.kafkaBridge.debezium.\
-entityTopicPrefix}}" if helm else "iff.ngsild.entities"
+kafka_topic_ngsi_prefix = "iff.ngsild.entities"
 kafka_topic_ngsi_prefix_name = "entities"
 kafka_topic_ngsi_retention = "{{.Values.kafkaBridge.debezium.\
 entityTopicRetention}}"
