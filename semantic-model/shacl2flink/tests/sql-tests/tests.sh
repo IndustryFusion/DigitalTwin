@@ -29,7 +29,7 @@ for testdir in ${testdirs_constraints}; do
         rm -f ${DATABASE}
         echo -n "Test with model ${MODEL} in dir ${testdir} ..."
         python3 $TOOLDIR/create_ngsild_models.py  ${SHACL} ${KNOWLEDGE} ${MODEL}
-        python3 $TOOLDIR/create_ngsild_tables.py ${SHACL} ${KNOWLEDGE}
+        python3 $TOOLDIR/create_ngsild_tables.py
         # Test logic
         sqlite3 ${DATABASE} < $OUTPUTDIR/rdf.sqlite
         sqlite3 ${DATABASE} < $OUTPUTDIR/core.sqlite
@@ -64,14 +64,14 @@ for testdir in ${testdirs_rules}; do
         rm -f ${DATABASE}
         echo -n "Test with model ${MODEL} in dir ${testdir} ..."
         python3 $TOOLDIR/create_ngsild_models.py  ${SHACL} ${KNOWLEDGE} ${MODEL}
-        python3 $TOOLDIR/create_ngsild_tables.py ${SHACL} ${KNOWLEDGE} 
+        python3 $TOOLDIR/create_ngsild_tables.py 
         # Test logic
         sqlite3 ${DATABASE} < $OUTPUTDIR/rdf.sqlite
         sqlite3 ${DATABASE} < $OUTPUTDIR/core.sqlite
         sqlite3 ${DATABASE} < $OUTPUTDIR/ngsild.sqlite
         sqlite3 ${DATABASE} < $OUTPUTDIR/ngsild-models.sqlite
         sqlite3 ${DATABASE} < $OUTPUTDIR/shacl-validation.sqlite
-        echo "select id, entityId, name, nodeType, valueType, \`index\`, \`type\`, \`https://uri.etsi.org/ngsi-ld/hasValue\`, \`https://uri.etsi.org/ngsi-ld/hasObject\` from attributes_insert_filter;" | sqlite3 -quote  -noheader ${DATABASE} | LC_ALL="en_US.UTF-8" sort > ${OUTPUTDIR}/${MODEL}_${TESTOUT}
+        echo "select entityId, name, nodeType, valueType, datasetId, \`type\`, attributeValue from attributes_insert_filter;" | sqlite3 -quote  -noheader ${DATABASE} | LC_ALL="en_US.UTF-8" sort > ${OUTPUTDIR}/${MODEL}_${TESTOUT}
         diff ${OUTPUTDIR}/${MODEL}_${TESTOUT} ${MODEL}_${RESULT} || { echo "failed"; exit 1; }
         echo " ok"
     done;
@@ -97,7 +97,7 @@ for testdir in ${testdirs_udf}; do
         rm -f ${DATABASE}
         echo -n "Test with model ${MODEL} in dir ${testdir} ..."
         python3 $TOOLDIR/create_ngsild_models.py  ${SHACL} ${KNOWLEDGE} ${MODEL}
-        python3 $TOOLDIR/create_ngsild_tables.py ${SHACL} ${KNOWLEDGE}
+        python3 $TOOLDIR/create_ngsild_tables.py
         # Test logic
         sqlite3 ${DATABASE} < $OUTPUTDIR/rdf.sqlite
         sqlite3 ${DATABASE} < $OUTPUTDIR/core.sqlite
@@ -105,7 +105,7 @@ for testdir in ${testdirs_udf}; do
         sqlite3 ${DATABASE} < $OUTPUTDIR/ngsild-models.sqlite
         #sqlite3 ${DATABASE} < $OUTPUTDIR/shacl-validation.sqlite
         python3 ${TOOLDIR}/udf/sqlite3_insert.py ${DATABASE} ${OUTPUTDIR}/shacl-validation.sqlite
-        echo "select id, entityId, name, nodeType, valueType, \`index\`, \`type\`, \`https://uri.etsi.org/ngsi-ld/hasValue\`, \`https://uri.etsi.org/ngsi-ld/hasObject\` from attributes_insert_filter;" | sqlite3 -quote  -noheader ${DATABASE} | LC_ALL="en_US.UTF-8" sort > ${OUTPUTDIR}/${MODEL}_${TESTOUT}
+        echo "select entityId, name, nodeType, valueType, datasetId, \`type\`, attributeValue from attributes_insert_filter;" | sqlite3 -quote  -noheader ${DATABASE} | LC_ALL="en_US.UTF-8" sort > ${OUTPUTDIR}/${MODEL}_${TESTOUT}
         diff ${OUTPUTDIR}/${MODEL}_${TESTOUT} ${MODEL}_${RESULT} || { echo "failed"; exit 1; }
         echo " ok"
     done;

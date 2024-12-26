@@ -401,9 +401,10 @@ needs either sqlstatements or sqlstatementmaps.")
                                                            name,
                                                            logger)
         statementset['sqlstatementset'] = sqlstatementset
+        fullname = f'{namespace}/{name}'
         logger.debug(f"Now deploying statementset {statementset}")
         try:
-            patch.status[JOB_ID] = deploy_statementset(statementset, logger)
+            patch.status[JOB_ID] = deploy_statementset(fullname, statementset, logger)
             patch.status[STATE] = States.DEPLOYING.name
             return
         except DeploymentFailedException as err:
@@ -530,7 +531,7 @@ def refresh_state(body, patch, logger):
 
 
 
-def deploy_statementset(statementset, logger):
+def deploy_statementset(jobname, statementset, logger):
     """
     deploy statementset to flink SQL gateway
 
@@ -549,9 +550,13 @@ def deploy_statementset(statementset, logger):
         id of the deployed job
 
     """
-    request = f"{FLINK_SQL_GATEWAY}/v1/sessions/session/statements"
-    logger.debug(f"Deployment request to SQL Gateway {request}")
+
     try:
+        job_id = flink_util.get_job_from_name(logger, jobname)
+        if job_id is not None:
+            return job_id
+        request = f"{FLINK_SQL_GATEWAY}/v1/sessions/session/statements"
+        logger.debug(f"Deployment request to SQL Gateway {request}")
         response = requests.post(request,
                                  timeout=DEFAULT_TIMEOUT,
                                  json=statementset)

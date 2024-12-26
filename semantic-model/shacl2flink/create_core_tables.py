@@ -144,18 +144,23 @@ def main():
     table_name = "attributes"
     spec_name = "attributes"
     connector = 'kafka'
-    table = [{'id': 'STRING'},
-             {'entityId': 'STRING'},
-             {'name': 'STRING'},
-             {'nodeType': 'STRING'},
-             {'valueType': 'STRING'},
-             {'index': 'INTEGER'},
-             {'type': 'STRING'},
-             {'https://uri.etsi.org/ngsi-ld/datasetId': 'STRING'},
-             {'https://uri.etsi.org/ngsi-ld/hasValue': 'STRING'},
-             {'https://uri.etsi.org/ngsi-ld/hasObject': 'STRING'},
-             {'watermark': 'FOR `ts` AS `ts`'},
-             {'ts': "TIMESTAMP(3) METADATA FROM 'timestamp'"}]
+    table = [
+        {'id': 'STRING'},
+        {'parentId': 'STRING'},
+        {'entityId': 'STRING'},
+        {'name': 'STRING'},
+        {'nodeType': 'STRING'},
+        {'valueType': 'STRING'},
+        {'type': 'STRING'},
+        {'attributeValue': 'STRING'},
+        {'datasetId': 'STRING'},
+        {'unitCode': 'STRING'},
+        {'lang': 'STRING'},
+        {'deleted': 'BOOLEAN'},
+        {'synced': 'BOOLEAN'},
+        {'watermark': 'FOR `ts` AS `ts`'},
+        {'ts': "TIMESTAMP(3) METADATA FROM 'timestamp'"}
+    ]
     primary_key = None
     kafka = {
         'topic': kafka_topic_attributes,
@@ -173,24 +178,29 @@ def main():
     print(utils.create_sql_table(table_name, table, primary_key,
                                  utils.SQL_DIALECT.SQLITE), file=sqlitef)
     print('---', file=f)
-    yaml.dump(utils.create_yaml_view(table_name, table, ['id', 'index']), f)
-    print(utils.create_sql_view(table_name, table, ['id', 'index']),
+    yaml.dump(utils.create_yaml_view(table_name, table, ['id',
+                                                         'datasetId']), f)
+    print(utils.create_sql_view(table_name, table, ['id', 'datasetId']),
           file=sqlitef)
     # attributes_insert upsert-table
     table_name = "attributes-insert"
     spec_name = "attributes_insert"
     connector = 'upsert-kafka'
-    table = [{'id': 'STRING'},
-             {'entityId': 'STRING'},
-             {'name': 'STRING'},
-             {'nodeType': 'STRING'},
-             {'valueType': 'STRING'},
-             {'index': 'INTEGER'},
-             {'type': 'STRING'},
-             {'https://uri.etsi.org/ngsi-ld/datasetId': 'STRING'},
-             {'https://uri.etsi.org/ngsi-ld/hasValue': 'STRING'},
-             {'https://uri.etsi.org/ngsi-ld/hasObject': 'STRING'}
-             ]
+    table = [
+        {'id': 'STRING'},
+        {'parentId': 'STRING'},
+        {'entityId': 'STRING'},
+        {'name': 'STRING'},
+        {'nodeType': 'STRING'},
+        {'valueType': 'STRING'},
+        {'type': 'STRING'},
+        {'attributeValue': 'STRING'},
+        {'datasetId': 'STRING'},
+        {'unitCode': 'STRING'},
+        {'lang': 'STRING'},
+        {'deleted': 'BOOLEAN'},
+        {'synced': 'BOOLEAN'}
+    ]
     kafka = {
         'topic': kafka_topic_attributes_insert,
         'properties': {'bootstrap.servers': kafka_bootstrap},
@@ -201,7 +211,7 @@ def main():
         'json.fail-on-missing-field': False,
         'json.ignore-parse-errors': True
     }
-    primary_key = ['id', 'index']
+    primary_key = ['id', 'datasetId']
 
     print('---', file=f)
     yaml.dump(utils.create_yaml_table(spec_name, connector, table,
@@ -214,18 +224,23 @@ def main():
     table_name = "attributes-insert-filter"
     spec_name = "attributes_insert_filter"
     connector = 'kafka'
-    table = [{'id': 'STRING'},
-             {'entityId': 'STRING'},
-             {'name': 'STRING'},
-             {'nodeType': 'STRING'},
-             {'valueType': 'STRING'},
-             {'index': 'INTEGER'},
-             {'type': 'STRING'},
-             {'https://uri.etsi.org/ngsi-ld/datasetId': 'STRING'},
-             {'https://uri.etsi.org/ngsi-ld/hasValue': 'STRING'},
-             {'https://uri.etsi.org/ngsi-ld/hasObject': 'STRING'},
-             {'ts': "TIMESTAMP(3) METADATA FROM 'timestamp'"},
-             {'watermark': 'FOR `ts` AS `ts`'}]
+    table = [
+        {'id': 'STRING'},
+        {'parentId': 'STRING'},
+        {'entityId': 'STRING'},
+        {'name': 'STRING'},
+        {'nodeType': 'STRING'},
+        {'valueType': 'STRING'},
+        {'type': 'STRING'},
+        {'attributeValue': 'STRING'},
+        {'datasetId': 'STRING'},
+        {'unitCode': 'STRING'},
+        {'lang': 'STRING'},
+        {'deleted': 'BOOLEAN'},
+        {'synced': 'BOOLEAN'},
+        {'ts': "TIMESTAMP(3) METADATA FROM 'timestamp'"},
+        {'watermark': 'FOR `ts` AS `ts`'}
+    ]
     kafka = {
         'topic': f'{kafka_topic_attributes_insert}',
         'properties': {'bootstrap.servers': kafka_bootstrap},

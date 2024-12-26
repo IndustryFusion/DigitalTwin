@@ -10,10 +10,12 @@ POSTGRES_POD=acid-cluster-0
 POSTGRES_USERNAME=ngb
 POSTGRES_DATABASE=tsdb
 POSTGRES_SECRET=ngb.acid-cluster.credentials.postgresql.acid.zalan.do
+ENTITY=/tmp/entity.txt
 ATTRIBUTES_PROPERTY=/tmp/property.txt
 ATTRIBUTES_PROPERTY2=/tmp/property2.txt
 ATTRIBUTES_RELATIONSHIP=/tmp/relationship.txt
 ATTRIBUTES_TOPIC=iff.ngsild.attributes
+ENTITIES_TOPIC=iff.ngsild.entities
 KAFKA_BOOTSTRAP=my-cluster-kafka-bootstrap:9092
 RANDOMID=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 24; echo)
 URN=urn:iff:test1:${RANDOMID}
@@ -30,7 +32,6 @@ VALUE2="1"
 PROPERTY=https://uri.etsi.org/ngsi-ld/Property
 RELATIONSHIP=https://uri.etsi.org/ngsi-ld/Relationship
 POSTGRES_PASSWORD=$(kubectl -n ${IFFNAMESPACE} get secret/${POSTGRES_SECRET} -o jsonpath='{.data.password}'| base64 -d)
-TSDB_EXPECTED=/tmp/TSDB_EXPECTED
 TSDB_RESULT=/tmp/TSDB_RESULT
 
 cat << EOF > ${ATTRIBUTES_PROPERTY}
@@ -39,9 +40,10 @@ cat << EOF > ${ATTRIBUTES_PROPERTY}
     "entityId": "${URN}",
     "name": "${STATE}",
     "type": "${PROPERTY}",
-    "https://uri.etsi.org/ngsi-ld/hasValue": "${VALUE}",
+    "attributeValue": "${VALUE}",
     "nodeType": "@id",
-    "index": 0}
+    "datasetId": "@none"
+}
 EOF
 
 cat << EOF > ${ATTRIBUTES_PROPERTY2}
@@ -50,7 +52,7 @@ cat << EOF > ${ATTRIBUTES_PROPERTY2}
     "entityId": "${URN4}",
     "name": "${STATE}",
     "type": "${PROPERTY}",
-    "https://uri.etsi.org/ngsi-ld/hasValue": "${VALUE2}",
+    "attributeValue": "${VALUE2}",
     "nodeType": "@value",
     "valueType": "http://www.w3.org/2001/XMLSchema#string",
     "index": 0
@@ -63,22 +65,16 @@ cat << EOF > ${ATTRIBUTES_RELATIONSHIP}
     "entityId": "${URN2}",
     "name": "${REL}",
     "type": "${RELATIONSHIP}",
-    "https://uri.etsi.org/ngsi-ld/hasObject": "${URN3}",
+    "attributeValue": "${URN3}",
     "nodeType": "@id",
     "index": 0
 }
 EOF
 
-cat << EOF > ${TSDB_EXPECTED}
+cat << EOF > ${ENTITY}
 {
-    "id": "${IDSTATE}",
-    "entityId": "${URN}",
-    "name": "${STATE}",
-    "type": "${PROPERTY}",
-    "https://uri.etsi.org/ngsi-ld/hasValue": "${VALUE2}",
-    "nodeType": "@value",
-    "valueType": "http://www.w3.org/2001/XMLSchema#string",
-    "index": 0
+    "id": "${URN}",
+    "type": "https://example.com/type"
 }
 EOF
 
@@ -94,11 +90,21 @@ send_to_kafka_bridge() {
 get_datapoints() {
     urn=$1
     targetfile=$2
-    echo 'select json_agg(t) from public.entityhistory as t where t."entityId" = ' \'"$urn"\' ';' | \
+    echo 'select json_agg(t) from public.attributes as t where t."entityId" = ' \'"$urn"\' ';' | \
         PGPASSWORD=${POSTGRES_PASSWORD} psql -t -h localhost -U ${POSTGRES_USERNAME} -d ${POSTGRES_DATABASE} -A | \
         jq -S 'map(del(.modifiedAt, .observedAt))' >"$targetfile"
 }
 
+
+# receive entity datapoints
+# $1: payload to post
+get_entity_datapoints() {
+    urn=$1
+    targetfile=$2
+    echo 'select json_agg(t) from public.entities as t where t."id" = ' \'"$urn"\' ';' | \
+        PGPASSWORD=${POSTGRES_PASSWORD} psql -t -h localhost -U ${POSTGRES_USERNAME} -d ${POSTGRES_DATABASE} -A | \
+        jq -S 'map(del(.modifiedAt, .observedAt))' >"$targetfile"
+}
 
 # check s
 # $1: retrieved tsdb objects
@@ -111,9 +117,13 @@ check_tsdb_sample1() {
     "attributeId": "https://industry-fusion.com/types/v0.9/state",
     "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
     "datasetId": "@none",
+    "deleted": false,
     "entityId": "$URN",
-    "index": 0,
+    "id": "$IDSTATE",
+    "lang": null,
     "nodeType": "@id",
+    "parentId": null,
+    "unitType": null,
     "value": "state",
     "valueType": null
   }
@@ -132,9 +142,13 @@ check_tsdb_sample2() {
     "attributeId": "https://industry-fusion.com/types/v0.9/relationship",
     "attributeType": "https://uri.etsi.org/ngsi-ld/Relationship",
     "datasetId": "@none",
+    "deleted": false,
     "entityId": "$URN",
-    "index": 0,
+    "id": "$IDREL",
+    "lang": null,
     "nodeType": "@id",
+    "parentId": null,
+    "unitType": null,
     "value": "$URN3",
     "valueType": null
   }
@@ -150,11 +164,32 @@ check_tsdb_sample3() {
     "attributeId": "https://industry-fusion.com/types/v0.9/state",
     "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
     "datasetId": "@none",
+    "deleted": false,
     "entityId": "$URN4",
-    "index": 0,
+    "id": "$IDSTATE2",
+    "lang": null,
     "nodeType": "@value",
+    "parentId": null,
+    "unitType": null,
     "value": "$VALUE2",
     "valueType": "http://www.w3.org/2001/XMLSchema#string"
+  }
+]
+EOF
+}
+
+
+# check entity
+# $1: retrieved tsdb objects
+# $2: expected tsdb objects
+check_tsdb_sample4() {
+    URN=$2
+    cat << EOF | diff "$1" - >&3
+[
+  {
+    "deleted": false,
+    "id": "$URN",
+    "type": "https://example.com/type"
   }
 ]
 EOF
@@ -206,5 +241,17 @@ teardown(){
     cat "${TSDB_RESULT}"
     echo "# Now checking result."
     run check_tsdb_sample3 "$TSDB_RESULT" "$URN4"
+    [ "$status" -eq "0" ]
+}
+
+@test "verify timescaledb-bridge is forwarding entity" {
+    $SKIP
+    echo "# Sending property to Kafka"
+    send_to_kafka_bridge ${ENTITY} ${ENTITIES_TOPIC}
+    sleep 2
+    get_entity_datapoints "$URN" "${TSDB_RESULT}"
+    cat "${TSDB_RESULT}"
+    echo "# Now checking result."
+    run check_tsdb_sample4 "$TSDB_RESULT" "$URN"
     [ "$status" -eq "0" ]
 }

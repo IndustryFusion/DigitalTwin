@@ -1,5 +1,5 @@
 /**
-* Copyright (c) 2023 Intel Corporation
+* Copyright (c) 2023, 2024 Intel Corporation
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -23,8 +23,10 @@ const config = require('../config/config.json');
 const sequelize = require('./utils/tsdb-connect'); // Import sequelize object, Database connection pool managed by Sequelize.
 const { QueryTypes } = require('sequelize');
 const Logger = require('../lib/logger.js');
+const attributeHistoryTable = require('./model/attribute_history.js'); // Import attributeHistory model/table defined
 const entityHistoryTable = require('./model/entity_history.js'); // Import entityHistory model/table defined
-const historyTableName = config.timescaledb.tablename;
+const attributeHistoryTableName = config.timescaledb.attributeTablename;
+const entityHistoryTableName = config.timescaledb.entityTablename;
 const runningAsMain = require.main === module;
 const logger = new Logger(config);
 
@@ -34,6 +36,14 @@ const kafka = new Kafka({
 });
 const consumer = kafka.consumer({ groupId: GROUPID, allowAutoTopicCreation: false });
 const processMessage = async function ({ topic, partition, message }) {
+  if (topic === config.timescaledb.attributeTopic) {
+    processAttributeMessage(message);
+  } else if (topic === config.timescaledb.entityTopic) {
+    processEntityMessage(message);
+  }
+};
+
+const processAttributeMessage = function (message) {
   try {
     const body = JSON.parse(message.value);
     if (body.type === undefined) {
@@ -45,20 +55,32 @@ const processMessage = async function ({ topic, partition, message }) {
     const utcTime = epochDate.toISOString();
 
     // Creating datapoint which will be inserted to tsdb
+    datapoint.id = body.id;
     datapoint.observedAt = utcTime;
     datapoint.modifiedAt = utcTime;
     datapoint.entityId = body.entityId;
     datapoint.attributeId = body.name;
     datapoint.nodeType = body.nodeType;
-    datapoint.index = body.index;
+    datapoint.deleted = false;
+    if ('deleted' in body) {
+      datapoint.deleted = body.deleted;
+    }
     if ('datasetId' in body) {
       datapoint.datasetId = body.datasetId;
     } else {
       datapoint.datasetId = '@none';
     }
-
+    if ('unitCode' in body) {
+      datapoint.unitCode = body.unitCode;
+    }
+    if ('lang' in body) {
+      datapoint.lang = body.lang;
+    }
+    if ('parentId' in body) {
+      datapoint.parentId = body.parentId;
+    }
     if (body.type === 'https://uri.etsi.org/ngsi-ld/Property') {
-      let value = body['https://uri.etsi.org/ngsi-ld/hasValue'];
+      let value = body.attributeValue;
       if (!isNaN(value)) {
         value = Number(value);
       }
@@ -69,15 +91,43 @@ const processMessage = async function ({ topic, partition, message }) {
       }
     } else if (body.type === 'https://uri.etsi.org/ngsi-ld/Relationship') {
       datapoint.attributeType = body.type;
-      datapoint.value = body['https://uri.etsi.org/ngsi-ld/hasObject'];
+      datapoint.value = body.attributeValue;
     } else {
       logger.error('Could not send Datapoints: Neither Property nor Relationship');
       return;
     }
-    entityHistoryTable.upsert(datapoint).then(() => {
+    attributeHistoryTable.upsert(datapoint).then(() => {
       logger.debug('Datapoint succefully stored in tsdb table');
     })
       .catch((err) => logger.error('Error in storing datapoint in tsdb: ' + err));
+  } catch (e) {
+    logger.error('could not process message: ' + e.stack);
+  }
+};
+
+const processEntityMessage = function (message) {
+  try {
+    const body = JSON.parse(message.value);
+    if (body.type === undefined) {
+      return;
+    }
+    const entity = {};
+    const kafkaTimestamp = Number(message.timestamp);
+    const epochDate = new Date(kafkaTimestamp);
+    const utcTime = epochDate.toISOString();
+
+    // Creating datapoint which will be inserted to tsdb
+    entity.id = body.id;
+    entity.observedAt = utcTime;
+    entity.modifiedAt = utcTime;
+    entity.type = body.type;
+    entity.deleted = false;
+    if (body.deleted !== null && body.deleted !== undefined) {
+      entity.deleted = body.deleted;
+    }
+    entityHistoryTable.upsert(entity).then(() => {
+      logger.debug('Entity succefully stored in entity table');
+    }).catch((err) => logger.error('Error in storing entity in tsdb: ' + err));
   } catch (e) {
     logger.error('could not process message: ' + e.stack);
   }
@@ -94,10 +144,10 @@ const startListener = async function () {
     });
 
   await sequelize.sync().then(() => {
-    logger.debug('Succesfully created/synced tsdb table : ' + historyTableName);
+    logger.debug('Succesfully created/synced timescaledb tables ' + attributeHistoryTableName + ' and ' + entityHistoryTableName);
   })
     .catch(error => {
-      logger.error('Unable to create/sync table in  tsdb:', error);
+      logger.error('Unable to create/sync table in timescaledb:', error);
     });
 
   const createUserQuery = 'CREATE ROLE ' + config.timescaledb.tsdbuser + ';';
@@ -113,29 +163,34 @@ const startListener = async function () {
   }).catch(error => {
     logger.warn('Cannot grant access to user.', error);
   });
-  const htChecksqlquery = 'SELECT * FROM timescaledb_information.hypertables WHERE hypertable_name = \'' + historyTableName + '\';';
-  await sequelize.query(htChecksqlquery, { type: QueryTypes.SELECT }).then((hypertableInfo) => {
-    if (hypertableInfo.length) {
-      hypertableStatus = true;
-    }
-  })
-    .catch(error => {
-      logger.warn('Hypertable was not created, creating one', error);
-    });
-
-  if (!hypertableStatus) {
-    const htCreateSqlquery = 'SELECT create_hypertable(\'' + historyTableName + '\', \'observedAt\', migrate_data => true);';
-    await sequelize.query(htCreateSqlquery, { type: QueryTypes.SELECT }).then((hyperTableCreate) => {
-      logger.debug('Hypertable created, return from sql query: ' + JSON.stringify(hyperTableCreate));
+  // check hypertable
+  const checkHypertable = async function (tablename) {
+    const htChecksqlquery = 'SELECT * FROM timescaledb_information.hypertables WHERE hypertable_name = \'' + tablename + '\';';
+    await sequelize.query(htChecksqlquery, { type: QueryTypes.SELECT }).then((hypertableInfo) => {
+      if (hypertableInfo.length) {
+        hypertableStatus = true;
+      }
     })
       .catch(error => {
-        logger.error('Unable to create hypertable', error);
+        logger.warn('Hypertable was not created, creating one', error);
       });
-  };
 
+    if (!hypertableStatus) {
+      const htCreateSqlquery = 'SELECT create_hypertable(\'' + tablename + '\', \'observedAt\', migrate_data => true);';
+      await sequelize.query(htCreateSqlquery, { type: QueryTypes.SELECT }).then((hyperTableCreate) => {
+        logger.debug('Hypertable created, return from sql query: ' + JSON.stringify(hyperTableCreate));
+      })
+        .catch(error => {
+          logger.error('Unable to create hypertable', error);
+        });
+    };
+  };
+  await checkHypertable(attributeHistoryTableName);
+  await checkHypertable(entityHistoryTableName);
   // Kafka topic subscription
   await consumer.connect();
-  await consumer.subscribe({ topic: config.timescaledb.topic, fromBeginning: false });
+  await consumer.subscribe({ topic: config.timescaledb.attributeTopic, fromBeginning: false });
+  await consumer.subscribe({ topic: config.timescaledb.entityTopic, fromBeginning: false });
   await consumer.run({
     eachMessage: async ({ topic, partition, message }) => processMessage({ topic, partition, message })
   }).catch(e => console.error(`[example/consumer] ${e.message}`, e));

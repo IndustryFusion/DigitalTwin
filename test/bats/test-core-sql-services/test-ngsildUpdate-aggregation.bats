@@ -30,8 +30,7 @@ cat << EOF | tr -d '\n' > ${ATTRIBUTE1}
     "entityId": "${CUTTER_ID}",
     "name": "https://industry-fusion.com/types/v0.9/state",
     "type": "https://uri.etsi.org/ngsi-ld/Property",
-    "https://uri.etsi.org/ngsi-ld/hasValue": "ON",
-    "index": 0
+    "attributeValue": "ON"
 }
 EOF
 
@@ -42,8 +41,8 @@ cat << EOF | tr -d '\n' > ${ATTRIBUTE8}
     "name": "https://industry-fusion.com/types/v0.9/state",
     "https://uri.etsi.org/ngsi-ld/datasetId": "http://example.com/source1",
     "type": "https://uri.etsi.org/ngsi-ld/Property",
-    "https://uri.etsi.org/ngsi-ld/hasValue": "ON",
-    "index": 0
+    "datasetId": "http://example.com/source1",
+    "attributeValue": "ON"
 }
 EOF
 
@@ -54,8 +53,7 @@ cat << EOF | tr -d '\n' > ${ATTRIBUTE2}
     "entityId": "${CUTTER_ID}",
     "name": "https://industry-fusion.com/types/v0.9/state",
     "type": "https://uri.etsi.org/ngsi-ld/Property",
-    "https://uri.etsi.org/ngsi-ld/hasValue": "OFF",
-    "index": 0
+    "attributeValue": "OFF"
 }
 EOF
 cat << EOF | tr -d '\n' > ${FLUSH_ATTRIBUTE}
@@ -64,8 +62,7 @@ cat << EOF | tr -d '\n' > ${FLUSH_ATTRIBUTE}
     "entityId": "flush",
     "name": "https://industry-fusion.com/types/v0.9/flush",
     "type": "https://uri.etsi.org/ngsi-ld/Property",
-    "https://uri.etsi.org/ngsi-ld/hasValue": "flush",
-    "index": 0
+    "attributeValue": "flush"
 }
 EOF
 cat << EOF | tr -d '\n' > ${ATTRIBUTE3}
@@ -74,8 +71,7 @@ cat << EOF | tr -d '\n' > ${ATTRIBUTE3}
     "entityId": "${CUTTER_ID}",
     "name": "https://industry-fusion.com/types/v0.9/state2",
     "type": "https://uri.etsi.org/ngsi-ld/Property",
-    "https://uri.etsi.org/ngsi-ld/hasValue": "ON",
-    "index": 0
+    "attributeValue": "ON"
 }
 EOF
 printf '\n' >> ${ATTRIBUTE3}
@@ -86,8 +82,7 @@ cat << EOF | tr -d '\n' > ${ATTRIBUTE4}
     "name": "https://industry-fusion.com/types/v0.9/hasWorkpiece",
     "type": "https://uri.etsi.org/ngsi-ld/Relationship",
     "nodeType": "@id",
-    "https://uri.etsi.org/ngsi-ld/hasObject": "urn:workpiece:1",
-    "index": 0
+    "attributeValue": "urn:workpiece:1"
 }
 EOF
 cat << EOF | tr -d '\n' > ${ATTRIBUTE9}
@@ -96,10 +91,9 @@ cat << EOF | tr -d '\n' > ${ATTRIBUTE9}
     "entityId": "${CUTTER_ID}",
     "name": "https://industry-fusion.com/types/v0.9/hasWorkpiece",
     "type": "https://uri.etsi.org/ngsi-ld/Relationship",
-    "https://uri.etsi.org/ngsi-ld/datasetId": "https://example.com/source4",
+    "datasetId": "https://example.com/source4",
     "nodeType": "@id",
-    "https://uri.etsi.org/ngsi-ld/hasObject": "urn:workpiece:1",
-    "index": 0
+    "attributeValue": "urn:workpiece:1"
 }
 EOF
 cat << EOF | tr -d '\n' > ${ATTRIBUTE5}
@@ -108,7 +102,7 @@ cat << EOF | tr -d '\n' > ${ATTRIBUTE5}
     "entityId": "${CUTTER_ID}",
     "name": "https://industry-fusion.com/types/v0.9/refState",
     "type": "https://uri.etsi.org/ngsi-ld/Property",
-    "https://uri.etsi.org/ngsi-ld/hasValue": "https://industry-fusion.com/v0.9/refStateIRI",
+    "attributeValue": "https://industry-fusion.com/v0.9/refStateIRI",
     "nodeType": "@id",
     "index": 0
 }
@@ -119,12 +113,11 @@ cat << EOF | tr -d '\n' > ${ATTRIBUTE6}
     "entityId": "${CUTTER_ID}",
     "name": "https://industry-fusion.com/types/v0.9/jsonValue",
     "type": "https://uri.etsi.org/ngsi-ld/Property",
-    "https://uri.etsi.org/ngsi-ld/hasValue": {
+    "attributeValue": {
         "type": "https://industry-fusion.com/v0.9/refStateIRI",
         "key": "value"
     },
-    "nodeType": "@json",
-    "index": 0
+    "nodeType": "@json"
 }
 EOF
 cat << EOF | tr -d '\n' > ${ATTRIBUTE7}
@@ -133,9 +126,8 @@ cat << EOF | tr -d '\n' > ${ATTRIBUTE7}
     "entityId": "${CUTTER_ID}",
     "name": "https://industry-fusion.com/types/v0.9/state",
     "type": "https://uri.etsi.org/ngsi-ld/Property",
-    "https://uri.etsi.org/ngsi-ld/datasetId": "http://example.com/source2",
-    "https://uri.etsi.org/ngsi-ld/hasValue": "OFF",
-    "index": 1
+    "datasetId": "http://example.com/source2",
+    "attributeValue": "OFF"
 }
 EOF
 

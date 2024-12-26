@@ -144,37 +144,37 @@ teardown(){
     (exec stdbuf -oL kafkacat -C -t ${ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end -f '%s\n'>${KAFKACAT_ATTRIBUTES}) &
     sleep 2 # wait for next aggregation window
     kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT4}
-    sleep 0.2
+    sleep 0.5
     kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT5}
-    sleep 0.2
+    sleep 0.5
     kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT7}
     sleep 1
     kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT1}
-    sleep 0.2
+    sleep 0.5
     kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT6}
     sleep 1
     kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT2}
-    sleep 0.2
+    sleep 0.5
     kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT5}
     sleep 1
     kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT1}
-    sleep 0.2
+    sleep 0.5
     kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT6}
     sleep 1
     kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT1}
-    sleep 0.2
+    sleep 0.5
     kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT5}
     sleep 1
     kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT3}
-    sleep 0.2
+    sleep 0.5
     kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT6}
     sleep 1
     kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT3}
-    sleep 0.2
+    sleep 0.5
     kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT5}
     sleep 1
     kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT1}
-    sleep 0.2
+    sleep 0.5
     kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT6}
     sleep 1
     kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT1}

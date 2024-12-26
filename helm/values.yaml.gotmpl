@@ -29,7 +29,8 @@ db:
   dbReaderUser: {{ .StateValues.db.dbReaderUser }}
   scorpioDb: ngb
   timescaleDb: tsdb
-  timescaleTable: entityhistory
+  timescaleEntityTable: entities
+  timescaleAttributeTable: attributes
   secretPostfix: credentials.postgresql.acid.zalan.do
   backupBucket: {{ .StateValues.db.backupBucket }}
   backupNum: {{ .StateValues.db.backupNum }}
@@ -166,6 +167,7 @@ kafkaBridge:
                           {{- else }} "3600000"
                           {{- end }}
     attributesTopic: "iff.ngsild.attributes"
+    entitiesTopic: "iff.ngsild.entities"
     attributesTopicRetention: {{- if hasKey .StateValues.kafkaBridge.debezium "attributesTopicRetention" }} {{ .StateValues.kafkaBridge.debezium.attributesTopicRetention | quote}}
                               {{- else }} "3600000"
                               {{- end }}

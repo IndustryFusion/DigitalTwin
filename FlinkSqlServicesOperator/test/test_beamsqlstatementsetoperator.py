@@ -91,7 +91,7 @@ class TestMonitoring(TestCase):
         return "DDL;"
 
     # pylint: disable=no-self-use, unused-argument, no-self-argument
-    def submit_statementset_successful(statementset, logger):
+    def submit_statementset_successful(fullname, statementset, logger):
         """mock successful statementset creation"""
         # Keeping normal assert statement as this does not seem to
         # be an object method after mocking
@@ -103,7 +103,7 @@ class TestMonitoring(TestCase):
         return "job_id"
 
     # pylint: disable=no-self-use, unused-argument, no-self-argument
-    def submit_statementset_failed(statementset, logger):
+    def submit_statementset_failed(fullname, statementset, logger):
         """mock submission failed"""
         raise target.DeploymentFailedException("Mock submission failed")
 
@@ -779,29 +779,41 @@ class TestHelpers(TestCase):
         """mock send_exception"""
         raise requests.RequestException("Error")
 
+    # pylint: disable=no-self-use, no-self-argument
+    def get_job_from_name(logger, jobname):
+        """mock get_job_from_name"""
+        return "jobid"
+    # pylint: disable=no-self-use, no-self-argument
+    def get_no_job_from_name(logger, jobname):
+        """mock get_job_from_name"""
+        return None
+
     @patch('kopf.info', kopf_info)
     @patch('requests.post', send_successful)
+    @patch('flink_util.get_job_from_name', get_job_from_name)
     # pylint: disable=no-self-use
     def test_deploy_statementset(self):
         """test deploy_statementset successful"""
         statementset = 'statementset'
-        target.deploy_statementset(statementset, Logger())
+        target.deploy_statementset('jobname', statementset, Logger())
 
     @patch('kopf.info', kopf_info)
     @patch('requests.post', send_unsuccessful)
+    @patch('flink_util.get_job_from_name', get_no_job_from_name)
     def test_deploy_statementset_unsuccessful(self):
         """test deploy_statementset unsuccessful"""
         statementset = 'statementset'
         with self.assertRaises(target.DeploymentFailedException):
-            target.deploy_statementset(statementset, Logger())
+            target.deploy_statementset('jobname', statementset, Logger())
 
     @patch('kopf.info', kopf_info)
     @patch('requests.post', send_exception)
+    @patch('flink_util.get_job_from_name', get_no_job_from_name)
     def test_deploy_statementset_exception(self):
         """test deploy_stamenetset with exception"""
         statementset = 'statementset'
         with self.assertRaises(target.DeploymentFailedException):
-            target.deploy_statementset(statementset, Logger())
+            target.deploy_statementset('jobid', statementset, Logger())
 
     def test_add_message(self):
         """test add_message with string message"""

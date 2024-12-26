@@ -243,8 +243,8 @@ compare_create_attributes() {
 "nodeType":"@value",\
 "name":"https://industry-fusion.com/types/v0.9/state",\
 "type":"https://uri.etsi.org/ngsi-ld/Property",\
-"https://uri.etsi.org/ngsi-ld/hasValue":"https://industry-fusion.com/types/v0.9/state_OFF",\
-"index":0,"datasetId":"@none"}
+"attributeValue":"https://industry-fusion.com/types/v0.9/state_OFF",\
+"datasetId":"@none"}
 EOF
 }
 
@@ -255,8 +255,8 @@ compare_create_attributes2() {
 "nodeType":"@value",\
 "name":"https://industry-fusion.com/types/v0.9/state",\
 "type":"https://uri.etsi.org/ngsi-ld/Property",\
-"https://uri.etsi.org/ngsi-ld/hasValue":"https://industry-fusion.com/types/v0.9/state_ON",\
-"index":0,"datasetId":"@none"}
+"attributeValue":"https://industry-fusion.com/types/v0.9/state_ON",\
+"datasetId":"@none"}
 EOF
 }
 
