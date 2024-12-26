@@ -70,31 +70,58 @@ spec:
         - |-
             /* aggregates entities from attributes topic and insert it every 2 seconds in update channel
             part of CORE SERVICES */
-            insert into ngsild_updates
-                select 'update', true, true, '[{"id": "' || id || '",' || LISTAGG(attributeagg) || '}]'
-                from (
-                    select  window_start, window_end, B.entityId as id, '"' || B.name || '":[' || LISTAGG(B.indexagg) || ']' as attributeagg
-                    from(
-                        select window_start, window_end, entityId, name, `datasetId`,
-                        '{"observedAt": "' || LAST_VALUE(DATE_FORMAT(A.`ts`,  'yyyy-MM-dd''T''HH:mm:ss.') || CAST(EXTRACT(MILLISECOND from A.`ts`) as STRING)) || 'Z", "type": "'
-                                || LAST_VALUE(A.`type`)
-                                || '", "datasetId": "'
-                                || IF(A.`datasetId` IS NOT NULL, A.`datasetId`, '@none')
-                                || IF(LAST_VALUE(A.`type`) =  'https://uri.etsi.org/ngsi-ld/Relationship','", "object": "', '", "value": ')
-                                || IF(LAST_VALUE(A.`type`) =  'https://uri.etsi.org/ngsi-ld/Relationship', LAST_VALUE(A.`attributeValue`) || '"',
-                                        
-                                        IF((LAST_VALUE(A.nodeType) <> '@json' AND LAST_VALUE(A.nodeType) <> '@id') OR LAST_VALUE(A.nodeType) IS NULL, '"' || LAST_VALUE(A.`attributeValue`) || '"',
-                                            /* @id needs encoding with "@id": value */
-                                            IF(LAST_VALUE(A.nodeType) = '@id', '{"@id": "' || LAST_VALUE(A.`attributeValue`) || '"}',
-                                            /* @json is put directly into value field */
-                                                IF(LAST_VALUE(A.nodeType) = '@json', LAST_VALUE(A.`attributeValue`), 'null' /*should not happen */)))
+            INSERT INTO ngsild_updates
+            SELECT 
+                'update', 
+                true, 
+                true, 
+                '[{"id": "' || id || '",' || LISTAGG(attributeagg) || '}]'
+            FROM (
+                SELECT  
+                    window_start, 
+                    window_end, 
+                    entityId AS id, 
+                    '"' || name || '":[' || LISTAGG(indexagg) || ']' AS attributeagg
+                FROM (
+                    SELECT 
+                        window_start, 
+                        window_end, 
+                        entityId, 
+                        name,
+                        /* Construct the JSON string for the latest value */
+                        '{"observedAt": "' || DATE_FORMAT(ts, 'yyyy-MM-dd''T''HH:mm:ss.') || CAST(EXTRACT(MILLISECOND FROM ts) AS STRING) || 'Z", "type": "'
+                        || type
+                        || '", "datasetId": "'
+                        || IF(datasetId IS NOT NULL, datasetId, '@none')
+                        || IF(type = 'https://uri.etsi.org/ngsi-ld/Relationship', '", "object": "', '", "value": ')
+                        || IF(type = 'https://uri.etsi.org/ngsi-ld/Relationship', attributeValue || '"',
+                            IF(
+                                (nodeType <> '@json' AND nodeType <> '@id') OR nodeType IS NULL,
+                                '"' || attributeValue || '"',
+                                IF(nodeType = '@id', '{"@id": "' || attributeValue || '"}',
+                                    IF(nodeType = '@json', attributeValue, 'null' /*should not happen */)
                                 )
-                                || '}' as indexagg
-                        FROM TABLE( TUMBLE(TABLE attributes, DESCRIPTOR(ts), INTERVAL {{.Values.flink.ngsildUpdateWindow|squote}} second)) as A
-                        WHERE A.entityId IS NOT NULL and (A.deleted IS NULL or A.deleted = false) and (A.synced IS NULL or A.synced = false)
-                        GROUP BY A.`id`, A.`datasetId`, A.`entityId`, A.`name`, window_start, window_end) as B
-                    GROUP BY window_start, window_end, `entityId`, `name`, `datasetId`
-                ) GROUP BY window_start, window_end, id;
+                            )
+                        )
+                        || '}' AS indexagg
+                    FROM (
+                        SELECT *, 
+                               ROW_NUMBER() OVER (
+                                   PARTITION BY entityId, name, datasetId, window_start, window_end
+                                   ORDER BY ts DESC
+                               ) AS row_num
+                        FROM TABLE(
+                            TUMBLE(TABLE attributes, DESCRIPTOR(ts), INTERVAL {{.Values.flink.ngsildUpdateWindow|squote}} second)
+                        )
+                        WHERE entityId IS NOT NULL 
+                            AND (deleted IS NULL OR deleted = false) 
+                            AND (synced IS NULL OR synced = false)
+                    ) AS ranked_data
+                    WHERE row_num = 1 -- Select only the most recent value for each group
+                ) AS filtered_data
+                GROUP BY window_start, window_end, entityId, name
+            ) AS aggregated_data
+            GROUP BY window_start, window_end, id;            
         - |-
             /* forward only non-retracted attribute changes
             This is part of the core service */
