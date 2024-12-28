@@ -1,0 +1,9 @@
+@prefix ns1: <https://industry-fusion.org/base/v1/> .
+@prefix ns2: <https://uri.etsi.org/ngsi-ld/> .
+
+<urn:iff:cutter:1> a ns1:Cutter ;
+    ns1:hasFilter [ a ns2:Relationship ;
+            ns2:hasObject <urn:iff:filter:1> ] .
+
+<urn:iff:filter:1> a ns1:Filter .
+

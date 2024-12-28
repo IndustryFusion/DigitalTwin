@@ -114,7 +114,6 @@ flink-deploy: clean
 	# make build || make enable-strimzi
 	kubectl -n $(NAMESPACE) delete -f output/ngsild-kafka.yaml --ignore-not-found || make enable-strimzi
 	kubectl -n $(NAMESPACE) delete -f output/rdf-kafka.yaml --ignore-not-found || make enable-strimzi
-	kubectl -n $(NAMESPACE) delete -f output/knowledge-configmap.yaml --ignore-not-found
 	cd ../../helm && ./helmfile -f helmfile-shacl.yaml apply || make enable-strimzi
 	make enable-strimzi
 	make test-flink-is-deployed

@@ -1,0 +1,74 @@
+@prefix : <https://example.com/> .
+@prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ontology: <https://industry-fusion.org/ontology/v1/> .
+@prefix iffbase: <https://industry-fusion.org/base/v1/> .
+
+:cutterTemperatureWithMinMaxShape a sh:NodeShape ;
+    sh:targetClass iffbase:Cutter ;
+    sh:property [
+        sh:maxCount 1 ;
+        sh:minCount 1 ;
+        sh:nodeKind sh:BlankNode ;
+        sh:path iffbase:hasTemperature ;
+        sh:property [
+            sh:minCount 1 ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:path ngsi-ld:hasValue ;
+            sh:datatype xsd:double ;
+            sh:minInclusive 20.0 ;
+            sh:maxExclusive 50.0 ;
+        ] ;
+    ] .
+
+:cutterLinkedToFilterShape a sh:NodeShape ;
+    sh:targetClass iffbase:Cutter ;
+        sh:property [
+            sh:maxCount 1;
+            sh:nodeKind sh:BlankNode;
+            sh:path iffbase:hasFilter;
+            sh:property [
+                sh:minCount 1 ;
+                sh:maxCount 1 ;
+                sh:nodeKind sh:IRI;
+                sh:path ngsi-ld:hasObject;
+                sh:class iffbase:Filter
+            ]
+        ]
+.
+
+:machineStateShape a sh:NodeShape ;
+    sh:targetClass iffbase:Machine ;
+        sh:property [
+            sh:maxCount 1;
+            sh:nodeKind sh:BlankNode;
+            sh:path iffbase:hasState;
+            sh:property [
+                sh:minCount 1 ;
+                sh:maxCount 1 ;
+                sh:nodeKind sh:IRI;
+                sh:path ngsi-ld:hasValue;
+                sh:class ontology:MachineState
+            ]
+        ]
+.
+
+:cutterStateInLineWithFilterShape a sh:NodeShape ;
+        sh:targetClass iffbase:Cutter ;
+        sh:sparql [ a sh:SPARQLConstraints ;
+            sh:message "Cutter {?this} running without running filter {?filter}" ;
+            sh:select """
+                PREFIX ontology: <https://industry-fusion.org/ontology/v1/>
+                PREFIX iffbase: <https://industry-fusion.org/base/v1/>
+                PREFIX ngsi-ld: <https://uri.etsi.org/ngsi-ld/>
+
+                SELECT ?this ?filter WHERE {
+                    ?this iffbase:hasFilter [ ngsi-ld:hasObject ?filter] .
+                    ?this iffbase:hasState [ ngsi-ld:hasValue ?cstate ] .
+                    ?filter iffbase:hasState [ngsi-ld:hasValue ?fstate] .
+                    FILTER( ?cstate = ontology:executingState && ?fstate != ontology:executingState)
+                }
+            """ ;
+        ].

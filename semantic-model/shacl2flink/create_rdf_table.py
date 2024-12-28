@@ -166,12 +166,6 @@ def main(knowledgefile, namespace, output_folder='output'):
                                            configs.rdf_topic,
                                            configs.kafka_topic_object_label,
                                            config), fk)
-    with open(os.path.join(output_folder, "knowledge-configmap.yaml"), "w") as fp:
-        qres = g.query(filter_out)
-        class_ttl = {}
-        class_ttl['knowledge.ttl'] = qres.serialize(format='turtle').decode("utf-8")
-        fp.write("---\n")
-        yaml.dump(utils.create_configmap_generic('knowledge', class_ttl), fp)
 
 
 if __name__ == '__main__':

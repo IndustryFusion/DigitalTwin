@@ -1,0 +1,23 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix iffbase: <https://industry-fusion.org/base/v1/> .
+@prefix ontology: <https://industry-fusion.org/ontology/v1/> .
+
+
+iffbase:Machine a owl:NamedIndividual,
+    owl:Class .
+iffbase:Cutter a owl:NamedIndividual,
+    owl:Class ;
+    rdfs:subClassOf iffbase:Machine .
+iffbase:Filter a owl:NamedIndividual,
+    owl:Class ;
+    rdfs:subClassOf iffbase:Machine .
+
+ontology:MachineState a owl:NamedIndividual,
+    owl:Class .
+ontology:executingState a owl:NamedIndividual,
+    ontology:MachineState .
+ontology:errorState a owl:NamedIndividual,
+    ontology:MachineState .
+ontology:notExecutingState a owl:NamedIndividual,
+    ontology:MachineState .
