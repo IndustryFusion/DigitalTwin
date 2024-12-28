@@ -1,0 +1,25 @@
+[{
+    "@context": [
+      "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+      {
+        "@vocab": "https://industry-fusion.org/base/v1/"
+      }
+    ],
+    "id": "urn:iff:cutter:1",
+    "type": "Cutter",
+    "hasFilter": {
+      "type": "Relationship",
+      "object": "urn:iff:filter:1"
+    }
+},
+{
+      "@context": [
+      "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+      {
+        "@vocab": "https://industry-fusion.org/base/v1/"
+      }
+    ],
+    "id": "urn:iff:filter:1",
+    "type": "Filter"
+}
+]

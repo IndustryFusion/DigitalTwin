@@ -1,0 +1,20 @@
+[{
+    "@context": [
+      "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+      {
+        "@vocab": "https://industry-fusion.org/base/v1/"
+      }
+    ],
+    "id": "urn:iff:cutter:1",
+    "type": "Cutter",
+    "hasState": {
+      "type": "Property",
+      "value": {
+        "@id": "https://industry-fusion.org/ontology/v1/executingState"
+      }
+    },
+    "hasTemperature": {
+        "type": "Property",
+        "value": 30.5
+    }
+}]

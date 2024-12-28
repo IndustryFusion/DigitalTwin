@@ -54,8 +54,7 @@
 	"debeziumBridge": {
 		"topic": "iff.ngsild.public.entity",
 		"entityTopicPrefix": "iff.ngsild.entities",
-		"attributesTopic": "iff.ngsild.attributes",
-		"rdfSources": ["../config/knowledge.ttl"]
+		"attributesTopic": "iff.ngsild.attributes"
 	},
 	"bridgeCommon": {
 		"kafkaSyncOnAttribute": "https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn"

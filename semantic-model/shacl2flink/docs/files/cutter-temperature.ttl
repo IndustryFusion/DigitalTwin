@@ -1,0 +1,8 @@
+@prefix : <https://industry-fusion.org/base/v1/> .
+@prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<urn:iff:cutter:1> a :Cutter ;
+    :hasTemperature [ a ngsi-ld:Property ;
+            ngsi-ld:hasValue 3.05e+01 ] .
+
