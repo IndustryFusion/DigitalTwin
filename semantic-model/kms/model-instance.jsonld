@@ -23,7 +23,14 @@
       "iffBaseEntities:hasFilter": [
         {
           "type": "Relationship",
-          "object": "urn:filter:1"
+          "object": "urn:filter:1",
+          "iffBaseEntities:hasTrust": {
+            "value": 1.0,
+            "type": "Property",
+            "iffBaseEntities:hasTrust2": {
+              "value": 2.0
+            }
+          }
         }
       ],
       "iffBaseEntities:hasInWorkpiece": [

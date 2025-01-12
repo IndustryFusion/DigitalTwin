@@ -323,8 +323,7 @@ describe('Test parseBeforeAfterEntity', function () {
         name: 'https://example/hasRel',
         type: 'https://uri.etsi.org/ngsi-ld/Relationship',
         datasetId: '@none',
-        attributeValue: 'urn:object:1',
-        index: 0
+        attributeValue: 'urn:object:1'
       }],
       'https://example/prop': [{
         id: 'id\\https://example/prop',
@@ -337,8 +336,7 @@ describe('Test parseBeforeAfterEntity', function () {
         'https://uri.etsi.org/ngsi-ld/observedAt': [{
           '@type': 'https://uri.etsi.org/ngsi-ld/DateTime',
           '@value': '2022-02-19T23:11:28.457509Z'
-        }],
-        index: 0
+        }]
       }]
     });
     revert();
@@ -408,8 +406,7 @@ describe('Test parseBeforeAfterEntity', function () {
           '@type': 'https://uri.etsi.org/ngsi-ld/DateTime',
           '@value': '2022-02-19T20:32:26.123656Z'
         }],
-        attributeValue: 'urn:object:1',
-        index: 0
+        attributeValue: 'urn:object:1'
       }],
       'https://example/prop': [{
         id: 'id\\https://example/prop',
@@ -422,8 +419,7 @@ describe('Test parseBeforeAfterEntity', function () {
         'https://uri.etsi.org/ngsi-ld/observedAt': [{
           '@type': 'https://uri.etsi.org/ngsi-ld/DateTime',
           '@value': '2022-02-19T20:31:26.123656Z'
-        }],
-        index: 0
+        }]
       }]
     });
     revert();
@@ -481,8 +477,7 @@ describe('Test parseBeforeAfterEntity', function () {
           '@type': 'https://uri.etsi.org/ngsi-ld/DateTime',
           '@value': '2022-02-19T23:11:28.457509Z'
         }],
-        valueType: 'https://example/type',
-        index: 0
+        valueType: 'https://example/type'
       }]
     });
     revert();
@@ -607,8 +602,7 @@ describe('Test parseBeforeAfterEntity', function () {
           '@type': 'https://uri.etsi.org/ngsi-ld/DateTime',
           '@value': '2022-02-19T23:11:28.457509Z'
         }],
-        valueType: 'https://example/type',
-        index: 0
+        valueType: 'https://example/type'
       },
       {
         id: 'id\\https://example/prop',
@@ -622,8 +616,7 @@ describe('Test parseBeforeAfterEntity', function () {
           '@type': 'https://uri.etsi.org/ngsi-ld/DateTime',
           '@value': '2022-02-19T23:11:28.457509Z'
         }],
-        valueType: 'https://example/type',
-        index: 1
+        valueType: 'https://example/type'
       },
       {
         id: 'id\\https://example/prop',
@@ -637,8 +630,7 @@ describe('Test parseBeforeAfterEntity', function () {
           '@type': 'https://uri.etsi.org/ngsi-ld/DateTime',
           '@value': '2022-02-19T23:11:28.457509Z'
         }],
-        valueType: 'https://example/type',
-        index: 2
+        valueType: 'https://example/type'
       },
       {
         id: 'id\\https://example/prop',
@@ -652,8 +644,7 @@ describe('Test parseBeforeAfterEntity', function () {
           '@type': 'https://uri.etsi.org/ngsi-ld/DateTime',
           '@value': '2022-02-19T23:11:28.457509Z'
         }],
-        valueType: 'https://example/type',
-        index: 3
+        valueType: 'https://example/type'
       },
       {
         id: 'id\\https://example/prop',
@@ -667,8 +658,7 @@ describe('Test parseBeforeAfterEntity', function () {
           '@type': 'https://uri.etsi.org/ngsi-ld/DateTime',
           '@value': '2022-02-19T23:11:28.457509Z'
         }],
-        valueType: 'https://example/type',
-        index: 4
+        valueType: 'https://example/type'
       }]
     });
     revert();
@@ -692,6 +682,453 @@ describe('Test parseBeforeAfterEntity', function () {
     const debeziumBridge = new ToTest(config);
     const result = debeziumBridge.parseBeforeAfterEntity(ba);
     assert.equal(result, undefined);
+    revert();
+  });
+  it('Should return a subproperty with parentId', async function () {
+    const config = {
+      bridgeCommon: {
+        kafkaSyncOnAttribute: 'kafkaSyncOn',
+        hashLength: 24
+      }
+    };
+    const Logger = function () {
+      return logger;
+    };
+    const ba = {
+      id: 'id',
+      e_types: ['type'],
+      entity: '{\
+                "@id":"id", "@type": ["type"],\
+                "https://example/prop":[{\
+                    "https://uri.etsi.org/ngsi-ld/hasValue": [{\
+                        "@value": "value",\
+                        "@type": "https://example/type"\
+                    }],\
+                    "https://example/subprop": [{\
+                        "https://uri.etsi.org/ngsi-ld/hasValue": [{\
+                        "@value": "subvalue"}]\
+                    }],\
+                    "https://uri.etsi.org/ngsi-ld/createdAt":[{\
+                        "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
+                        "@value": "2022-02-19T20:31:26.123656Z"\
+                    }],\
+                    "https://uri.etsi.org/ngsi-ld/modifiedAt":[{\
+                        "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
+                        "@value": "2022-02-19T23:11:28.457509Z"\
+                    }]\
+                }]\
+            }'
+    };
+
+    const revert = ToTest.__set__('Logger', Logger);
+    const debeziumBridge = new ToTest(config);
+    const result = debeziumBridge.parseBeforeAfterEntity(ba);
+    assert.deepEqual(result.entity, { id: 'id', type: 'type' });
+    assert.deepEqual(result.attributes, {
+      'https://example/prop': [{
+        id: 'id\\https://example/prop',
+        entityId: 'id',
+        nodeType: '@value',
+        name: 'https://example/prop',
+        type: 'https://uri.etsi.org/ngsi-ld/Property',
+        datasetId: '@none',
+        attributeValue: 'value',
+        'https://uri.etsi.org/ngsi-ld/observedAt': [{
+          '@type': 'https://uri.etsi.org/ngsi-ld/DateTime',
+          '@value': '2022-02-19T23:11:28.457509Z'
+        }],
+        valueType: 'https://example/type'
+      }],
+      'https://example/subprop': [{
+        attributeValue: 'subvalue',
+        datasetId: '@none',
+        entityId: 'id',
+        id: 'id\\82f18f004f263d076bbec740',
+        name: 'https://example/subprop',
+        nodeType: '@value',
+        parentId: 'id\\https://example/prop',
+        type: 'https://uri.etsi.org/ngsi-ld/Property'
+      }]
+    });
+    revert();
+  });
+  it('Should return 3 subproperties with parentId and datasetId', async function () {
+    const config = {
+      bridgeCommon: {
+        kafkaSyncOnAttribute: 'kafkaSyncOn',
+        hashLength: 24
+      }
+    };
+    const Logger = function () {
+      return logger;
+    };
+    const ba = {
+      id: 'id',
+      e_types: ['type'],
+      entity: '{\
+                "@id":"id", "@type": ["type"],\
+                "https://example/prop":[{\
+                    "https://uri.etsi.org/ngsi-ld/hasValue": [{\
+                        "@value": "value",\
+                        "@type": "https://example/type"\
+                    }],\
+                    "https://example/subprop": [{\
+                        "https://uri.etsi.org/ngsi-ld/hasValue": [{\
+                        "@value": "subvalue"}]\
+                    }],\
+                    "https://example/subprop2": [{\
+                        "https://uri.etsi.org/ngsi-ld/hasValue": [{\
+                        "@value": "subvalue"}],\
+                        "https://uri.etsi.org/ngsi-ld/datasetId": [{"@id": "http://dataset.id/1"}]\
+                    }],\
+                    "https://uri.etsi.org/ngsi-ld/createdAt":[{\
+                        "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
+                        "@value": "2022-02-19T20:31:26.123656Z"\
+                    }],\
+                    "https://uri.etsi.org/ngsi-ld/modifiedAt":[{\
+                        "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
+                        "@value": "2022-02-19T23:11:28.457509Z"\
+                    }]\
+                }],\
+                "https://example/prop2":[{\
+                    "https://uri.etsi.org/ngsi-ld/hasValue": [{\
+                        "@value": "value3",\
+                        "@type": "https://example/type3"\
+                    }],\
+                    "https://example/subprop2": [{\
+                        "https://uri.etsi.org/ngsi-ld/hasValue": [{\
+                        "@value": "subvalue3"}],\
+                         "https://uri.etsi.org/ngsi-ld/datasetId": [{"@id": "http://dataset.id/2"}]\
+                    }]\
+                }]\
+            }'
+    };
+
+    const revert = ToTest.__set__('Logger', Logger);
+    const debeziumBridge = new ToTest(config);
+    const result = debeziumBridge.parseBeforeAfterEntity(ba);
+    assert.deepEqual(result.entity, { id: 'id', type: 'type' });
+    assert.deepEqual(result.attributes, {
+      'https://example/prop': [{
+        id: 'id\\https://example/prop',
+        entityId: 'id',
+        nodeType: '@value',
+        name: 'https://example/prop',
+        type: 'https://uri.etsi.org/ngsi-ld/Property',
+        datasetId: '@none',
+        attributeValue: 'value',
+        'https://uri.etsi.org/ngsi-ld/observedAt': [{
+          '@type': 'https://uri.etsi.org/ngsi-ld/DateTime',
+          '@value': '2022-02-19T23:11:28.457509Z'
+        }],
+        valueType: 'https://example/type'
+      }],
+      'https://example/prop2': [{
+        attributeValue: 'value3',
+        datasetId: '@none',
+        entityId: 'id',
+        id: 'id\\https://example/prop2',
+        name: 'https://example/prop2',
+        nodeType: '@value',
+        type: 'https://uri.etsi.org/ngsi-ld/Property',
+        valueType: 'https://example/type3'
+      }],
+      'https://example/subprop': [{
+        attributeValue: 'subvalue',
+        datasetId: '@none',
+        entityId: 'id',
+        id: 'id\\82f18f004f263d076bbec740',
+        name: 'https://example/subprop',
+        nodeType: '@value',
+        parentId: 'id\\https://example/prop',
+        type: 'https://uri.etsi.org/ngsi-ld/Property'
+      }],
+      'https://example/subprop2': [{
+        attributeValue: 'subvalue',
+        datasetId: 'http://dataset.id/1',
+        entityId: 'id',
+        id: 'id\\ca607a801e0c3e81c2d97cae',
+        name: 'https://example/subprop2',
+        nodeType: '@value',
+        parentId: 'id\\https://example/prop',
+        type: 'https://uri.etsi.org/ngsi-ld/Property'
+      },
+      {
+        attributeValue: 'subvalue3',
+        datasetId: 'http://dataset.id/2',
+        entityId: 'id',
+        id: 'id\\a521a61fe262313a6c659e18',
+        name: 'https://example/subprop2',
+        nodeType: '@value',
+        parentId: 'id\\https://example/prop2',
+        type: 'https://uri.etsi.org/ngsi-ld/Property'
+      }]
+    });
+    revert();
+  });
+  it('Should return 1 subproperty and 2 subsubproperties with parentId and datasetId', async function () {
+    const config = {
+      bridgeCommon: {
+        kafkaSyncOnAttribute: 'kafkaSyncOn',
+        hashLength: 24
+      }
+    };
+    const Logger = function () {
+      return logger;
+    };
+    const ba = {
+      id: 'id',
+      e_types: ['type'],
+      entity: '{\
+                "@id":"id", "@type": ["type"],\
+                "https://example/prop":[{\
+                    "https://uri.etsi.org/ngsi-ld/hasValue": [{\
+                        "@value": "value",\
+                        "@type": "https://example/type"\
+                    }],\
+                    "https://example/subprop": [{\
+                        "https://uri.etsi.org/ngsi-ld/hasValue": [{\
+                          "@value": "subvalue"}],\
+                          "https://example/subsubprop": [{\
+                            "https://uri.etsi.org/ngsi-ld/hasValue": [{\
+                              "@value": "subsubvalue"}],\
+                            "https://uri.etsi.org/ngsi-ld/datasetId": [{"@id": "http://dataset.id/1"}]\
+                          }],\
+                          "https://example/subsubprop2": [{\
+                            "https://uri.etsi.org/ngsi-ld/hasValue": [{\
+                              "@value": "subsubvalue2"}],\
+                            "https://uri.etsi.org/ngsi-ld/datasetId": [{"@id": "http://dataset.id/1"}],\
+                            "https://uri.etsi.org/ngsi-ld/createdAt":[{\
+                              "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
+                              "@value": "2022-02-19T20:31:26.123656Z"\
+                            }],\
+                            "https://uri.etsi.org/ngsi-ld/modifiedAt":[{\
+                              "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
+                              "@value": "2022-02-19T23:11:28.457509Z"\
+                          }]\
+                      }]\
+                    }]\
+                }]\
+              }'
+    };
+
+    const revert = ToTest.__set__('Logger', Logger);
+    const debeziumBridge = new ToTest(config);
+    const result = debeziumBridge.parseBeforeAfterEntity(ba);
+    assert.deepEqual(result.entity, { id: 'id', type: 'type' });
+    assert.deepEqual(result.attributes, {
+      'https://example/prop': [{
+        id: 'id\\https://example/prop',
+        entityId: 'id',
+        nodeType: '@value',
+        name: 'https://example/prop',
+        type: 'https://uri.etsi.org/ngsi-ld/Property',
+        datasetId: '@none',
+        attributeValue: 'value',
+        valueType: 'https://example/type'
+      }],
+      'https://example/subprop': [{
+        attributeValue: 'subvalue',
+        datasetId: '@none',
+        entityId: 'id',
+        id: 'id\\82f18f004f263d076bbec740',
+        name: 'https://example/subprop',
+        nodeType: '@value',
+        parentId: 'id\\https://example/prop',
+        type: 'https://uri.etsi.org/ngsi-ld/Property'
+      }],
+      'https://example/subsubprop': [{
+        attributeValue: 'subsubvalue',
+        datasetId: 'http://dataset.id/1',
+        entityId: 'id',
+        id: 'id\\586cffdf80feb67a44131f7a',
+        name: 'https://example/subsubprop',
+        nodeType: '@value',
+        parentId: 'id\\82f18f004f263d076bbec740',
+        type: 'https://uri.etsi.org/ngsi-ld/Property'
+      }],
+      'https://example/subsubprop2': [{
+        attributeValue: 'subsubvalue2',
+        datasetId: 'http://dataset.id/1',
+        entityId: 'id',
+        'https://uri.etsi.org/ngsi-ld/observedAt': [{
+          '@type': 'https://uri.etsi.org/ngsi-ld/DateTime',
+          '@value': '2022-02-19T23:11:28.457509Z'
+        }],
+        id: 'id\\8989c2c5d4ab6abbc93a5967',
+        name: 'https://example/subsubprop2',
+        nodeType: '@value',
+        parentId: 'id\\82f18f004f263d076bbec740',
+        type: 'https://uri.etsi.org/ngsi-ld/Property'
+      }]
+    });
+    revert();
+  });
+  it('Should return 1 subproperty and 2 subrelationship with parentId and datasetId', async function () {
+    const config = {
+      bridgeCommon: {
+        kafkaSyncOnAttribute: 'kafkaSyncOn',
+        hashLength: 24
+      }
+    };
+    const Logger = function () {
+      return logger;
+    };
+    const ba = {
+      id: 'id',
+      e_types: ['type'],
+      entity: '{\
+                "@id":"id", "@type": ["type"],\
+                "https://example/prop":[{\
+                    "https://uri.etsi.org/ngsi-ld/hasValue": [{\
+                        "@value": "value",\
+                        "@type": "https://example/type"\
+                    }],\
+                    "https://example/subprop": [{\
+                        "https://uri.etsi.org/ngsi-ld/hasValue": [{\
+                          "@value": "subvalue"}],\
+                          "https://example/subsubprop": [{\
+                            "https://uri.etsi.org/ngsi-ld/hasObject": [{\
+                              "@id": "urn:test:1"}],\
+                            "https://uri.etsi.org/ngsi-ld/datasetId": [{"@id": "http://dataset.id/1"}]\
+                          }],\
+                          "https://example/subsubprop2": [{\
+                            "https://uri.etsi.org/ngsi-ld/hasObject": [{\
+                              "@id": "urn:test:2"}],\
+                            "https://uri.etsi.org/ngsi-ld/datasetId": [{"@id": "http://dataset.id/1"}],\
+                            "https://uri.etsi.org/ngsi-ld/createdAt":[{\
+                              "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
+                              "@value": "2022-02-19T20:31:26.123656Z"\
+                            }],\
+                            "https://uri.etsi.org/ngsi-ld/modifiedAt":[{\
+                              "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
+                              "@value": "2022-02-19T23:11:28.457509Z"\
+                          }]\
+                      }]\
+                    }]\
+                }]\
+              }'
+    };
+
+    const revert = ToTest.__set__('Logger', Logger);
+    const debeziumBridge = new ToTest(config);
+    const result = debeziumBridge.parseBeforeAfterEntity(ba);
+    assert.deepEqual(result.entity, { id: 'id', type: 'type' });
+    assert.deepEqual(result.attributes, {
+      'https://example/prop': [{
+        id: 'id\\https://example/prop',
+        entityId: 'id',
+        nodeType: '@value',
+        name: 'https://example/prop',
+        type: 'https://uri.etsi.org/ngsi-ld/Property',
+        datasetId: '@none',
+        attributeValue: 'value',
+        valueType: 'https://example/type'
+      }],
+      'https://example/subprop': [{
+        attributeValue: 'subvalue',
+        datasetId: '@none',
+        entityId: 'id',
+        id: 'id\\82f18f004f263d076bbec740',
+        name: 'https://example/subprop',
+        nodeType: '@value',
+        parentId: 'id\\https://example/prop',
+        type: 'https://uri.etsi.org/ngsi-ld/Property'
+      }],
+      'https://example/subsubprop': [{
+        attributeValue: 'urn:test:1',
+        datasetId: 'http://dataset.id/1',
+        entityId: 'id',
+        id: 'id\\586cffdf80feb67a44131f7a',
+        name: 'https://example/subsubprop',
+        nodeType: '@id',
+        parentId: 'id\\82f18f004f263d076bbec740',
+        type: 'https://uri.etsi.org/ngsi-ld/Relationship'
+      }],
+      'https://example/subsubprop2': [{
+        attributeValue: 'urn:test:2',
+        datasetId: 'http://dataset.id/1',
+        entityId: 'id',
+        'https://uri.etsi.org/ngsi-ld/observedAt': [{
+          '@type': 'https://uri.etsi.org/ngsi-ld/DateTime',
+          '@value': '2022-02-19T23:11:28.457509Z'
+        }],
+        id: 'id\\8989c2c5d4ab6abbc93a5967',
+        name: 'https://example/subsubprop2',
+        nodeType: '@id',
+        parentId: 'id\\82f18f004f263d076bbec740',
+        type: 'https://uri.etsi.org/ngsi-ld/Relationship'
+      }]
+    });
+    revert();
+  });
+  it('Keep last element of elements with same datasetId', async function () {
+    const config = {
+      bridgeCommon: {
+        kafkaSyncOnAttribute: 'kafkaSyncOn'
+      }
+    };
+    const Logger = function () {
+      return logger;
+    };
+    const ba = {
+      id: 'id',
+      e_types: ['type'],
+      entity: '{\
+                "@id":"id", "@type": ["type"],\
+                "https://example/prop":[{\
+                    "https://uri.etsi.org/ngsi-ld/hasValue": [{\
+                        "@value": "value1",\
+                        "@type": "https://example/type"\
+                    }]\
+                },\
+                {\
+                    "https://uri.etsi.org/ngsi-ld/hasValue": [\
+                    {\
+                        "@value": "value2",\
+                        "@type": "https://example/type"\
+                    }]\
+                }],\
+                "https://example/rel":[{\
+                    "https://uri.etsi.org/ngsi-ld/hasObject": [{\
+                            "@id": "urn:test:1"\
+                        }],\
+                        "https://uri.etsi.org/ngsi-ld/datasetId": [{"@id": "http://dataset.id/1"}]\
+                },\
+                {\
+                    "https://uri.etsi.org/ngsi-ld/hasObject": [{\
+                        "@id": "urn:test:2"\
+                    }],\
+                    "https://uri.etsi.org/ngsi-ld/datasetId": [{"@id": "http://dataset.id/1"}]\
+                }]\
+              }'
+    };
+
+    const revert = ToTest.__set__('Logger', Logger);
+    const debeziumBridge = new ToTest(config);
+    const result = debeziumBridge.parseBeforeAfterEntity(ba);
+    assert.deepEqual(result.entity, { id: 'id', type: 'type' });
+    assert.deepEqual(result.attributes, {
+      'https://example/prop': [{
+        id: 'id\\https://example/prop',
+        entityId: 'id',
+        nodeType: '@value',
+        name: 'https://example/prop',
+        type: 'https://uri.etsi.org/ngsi-ld/Property',
+        datasetId: '@none',
+        attributeValue: 'value2',
+        valueType: 'https://example/type'
+      }],
+      'https://example/rel': [{
+        attributeValue: 'urn:test:2',
+        datasetId: 'http://dataset.id/1',
+        entityId: 'id',
+        id: 'id\\https://example/rel',
+        name: 'https://example/rel',
+        nodeType: '@id',
+        type: 'https://uri.etsi.org/ngsi-ld/Relationship'
+      }]
+    });
     revert();
   });
 });

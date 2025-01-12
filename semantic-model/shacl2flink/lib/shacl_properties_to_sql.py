@@ -94,7 +94,7 @@ sql_check_relationship_base = """
                         D.minCount as minCount,
                         D.severity as severity
                     FROM {{target_class}}_view AS A JOIN `relationshipChecksTable` as D ON A.`type` = D.targetClass
-                    LEFT JOIN attributes_view AS B ON B.name = D.propertyPath and B.entityId = A.id
+                    LEFT JOIN attributes_view AS B ON B.name = D.propertyPath and B.entityId = A.id and parentId IS NULL
                     LEFT JOIN {{target_class}}_view AS C ON B.`attributeValue` = C.id and B.`type` = 'https://uri.etsi.org/ngsi-ld/Relationship'
 
             )
@@ -200,7 +200,7 @@ WITH A1 AS (SELECT A.id as this,
                    D.`pattern` as `pattern`,
                    D.ins as ins
                    FROM `{{target_class}}_view` AS A JOIN `propertyChecksTable` as D ON A.`type` = D.targetClass
-            LEFT JOIN attributes_view AS B ON D.propertyPath = B.name and B.entityId = A.id
+            LEFT JOIN attributes_view AS B ON D.propertyPath = B.name and B.entityId = A.id and B.parentId IS NULL
             LEFT JOIN {{rdf_table_name}} as C ON C.subject = '<' || B.`attributeValue` || '>' and B.`type` = 'https://uri.etsi.org/ngsi-ld/Property'
                 and C.predicate = '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>' and C.object = '<' || D.propertyClass || '>'
             )

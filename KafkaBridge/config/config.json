@@ -57,7 +57,8 @@
 		"attributesTopic": "iff.ngsild.attributes"
 	},
 	"bridgeCommon": {
-		"kafkaSyncOnAttribute": "https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn"
+		"kafkaSyncOnAttribute": "https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn",
+		"hashLength": 24
 	},
 	"mqtt":{
         "host": "emqx-listeners.iff",

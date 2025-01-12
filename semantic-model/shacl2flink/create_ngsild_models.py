@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from rdflib import Graph
+from rdflib import Graph, BNode
 import os
 import sys
 import argparse
@@ -111,6 +111,26 @@ class StringIndexer:
             return id_map['string_to_index'][string]
 
 
+def get_entity_id_and_parentId(node, name, g):
+    # go up the graph to find entityId and construct parentId
+    id = ''
+    entityId = node
+    while type(entityId) == BNode:
+        try:
+            uptriples = next(g.triples((None, None, entityId)))
+            entityId = uptriples[0]
+            id = f'\\{uptriples[1]}{id}'
+        except:
+            pass
+    if id != '':
+        parentId = f'\'{entityId}{id}\''
+        id = f'{entityId}{id}\\{name}'
+    else:
+        id = f'{entityId}\\{name}'
+        parentId = 'CAST(NULL as STRING)'
+    return id, entityId, parentId
+
+
 def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
     utils.create_output_folder(output_folder)
     with open(os.path.join(output_folder, "ngsild-models.sqlite"), "w")\
@@ -123,7 +143,6 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
         knowledge.parse(knowledgefile)
         attributes_model = model + g + knowledge
         entity_table_name = configs.kafka_topic_ngsi_prefix_name
-
         qres = attributes_model.query(attributes_query)
         first = True
         if len(qres) > 0:
@@ -131,6 +150,8 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
                   file=sqlitef)
         for entityId, name, type, nodeType, valueType, hasValue, \
                 hasObject, observedAt, index, unitCode in qres:
+            id, entityId, parentId = get_entity_id_and_parentId(entityId, name, attributes_model)
+
             if index is None:
                 current_dataset_id = "'@none'"
             else:
@@ -142,7 +163,6 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
                 attributeValue = nullify(hasObject)
             elif str(type) == 'https://uri.etsi.org/ngsi-ld/Property':
                 attributeValue = nullify(hasValue)
-            id = f'{entityId}\\{name}'
             if "string" in valueType:
                 valueType = 'NULL'
             if first:
@@ -152,7 +172,7 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
             current_timestamp = "CURRENT_TIMESTAMP"
             if observedAt is not None:
                 current_timestamp = f"'{str(observedAt)}'"
-            print("('" + id + "', " + "CAST(NULL AS STRING), '" + entityId.toPython() + "', '" +
+            print("('" + id + "', " + parentId + ", '" + entityId.toPython() + "', '" +
                   name.toPython() +
                   "', '" + nodeType + "', " + valueType + ", '" + type.toPython() + "', " + attributeValue +
                   ", " + str(current_dataset_id) +
