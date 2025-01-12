@@ -65,11 +65,11 @@ data:
       "debeziumBridge": {
               "topic": "iff.ngsild.public.entity",
               "entityTopicPrefix": "iff.ngsild.entities",
-              "attributesTopic": "iff.ngsild.attributes",
-              "rdfSources": ["/opt/config/knowledge.ttl"]
+              "attributesTopic": "iff.ngsild.attributes"
       },
       "bridgeCommon": {
-              "kafkaSyncOnAttribute": "https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn"
+              "kafkaSyncOnAttribute": "https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn",
+              "hashLength": 24
       },
       "mqtt": {
                 "host": {{ .Values.mqtt.broker.url | quote }},

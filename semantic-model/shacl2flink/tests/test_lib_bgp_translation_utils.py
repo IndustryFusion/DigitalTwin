@@ -543,7 +543,7 @@ def test_process_ngsild_spo_hasValue(mock_isentity, mock_create_table_name, mock
     assert local_ctx['bgp_sql_expression'] == [{'statement': 'attributes_view AS FSTATETABLE', 'join_condition':
                                                "FSTATETABLE.name = 'https://industry-fusion.com/types/v0.9/state' \
 and FTABLE.id = FSTATETABLE.entityId and FSTATETABLE.type = 'https://uri.etsi.org/ngsi-ld/Property' and \
-IFNULL(FSTATETABLE.`deleted`, FALSE) IS FALSE"}]
+IFNULL(FSTATETABLE.`deleted`, FALSE) IS FALSE and FSTATETABLE.parentId IS NULL"}]
 
     # Test with bound v1
     mock_create_varname.return_value = 'v1'
@@ -577,7 +577,8 @@ IFNULL(FSTATETABLE.`deleted`, FALSE) IS FALSE"}]
     assert local_ctx['bgp_sql_expression'] == [{'statement': 'attributes_view AS FSTATETABLE', 'join_condition':
                                                "FSTATETABLE.name = \
 'https://industry-fusion.com/types/v0.9/state' and FTABLE.id = FSTATETABLE.entityId and FSTATETABLE.type = \
-'https://uri.etsi.org/ngsi-ld/Property' and IFNULL(FSTATETABLE.`deleted`, FALSE) IS FALSE"}]
+'https://uri.etsi.org/ngsi-ld/Property' and IFNULL(FSTATETABLE.`deleted`, FALSE) IS FALSE and \
+FSTATETABLE.parentId IS NULL"}]
 
 
 @patch('lib.bgp_translation_utils.get_random_string')
@@ -629,7 +630,7 @@ def test_process_ngsild_spo_hasObject(mock_isentity, mock_create_table_name, moc
     assert local_ctx['bgp_sql_expression'] == [
         {'statement': 'attributes_view AS FHAS_FILTERTABLE', 'join_condition': "FHAS_FILTERTABLE.name = \
 'https://industry-fusion.com/types/v0.9/hasFilter' and FHAS_FILTERTABLE.entityId = FTABLE.id and \
-IFNULL(FHAS_FILTERTABLE.`deleted`, FALSE) IS FALSE"},
+IFNULL(FHAS_FILTERTABLE.`deleted`, FALSE) IS FALSE and FHAS_FILTERTABLE.parentId IS NULL"},
         {'statement': 'entities_view AS FTABLE', 'join_condition': "FTABLE.id = FHAS_FILTERTABLE.`attributeValue` \
 and FHAS_FILTERTABLE.type = 'https://uri.etsi.org/ngsi-ld/Relationship' and \
 IFNULL(FTABLE.`deleted`, FALSE) IS FALSE"}]
@@ -667,7 +668,7 @@ IFNULL(FTABLE.`deleted`, FALSE) IS FALSE"}]
     assert local_ctx['bgp_sql_expression'] == [
         {'statement': 'attributes_view AS CHAS_FILTERTABLE', 'join_condition': "CHAS_FILTERTABLE.name = \
 'https://industry-fusion.com/types/v0.9/hasFilter' and CHAS_FILTERTABLE.entityId = CTABLE.id and \
-IFNULL(CHAS_FILTERTABLE.`deleted`, FALSE) IS FALSE"},
+IFNULL(CHAS_FILTERTABLE.`deleted`, FALSE) IS FALSE and CHAS_FILTERTABLE.parentId IS NULL"},
         {'statement': 'entities_view AS FTABLE', 'join_condition': "FTABLE.id = \
 CHAS_FILTERTABLE.`attributeValue` and CHAS_FILTERTABLE.type = \
 'https://uri.etsi.org/ngsi-ld/Relationship' and IFNULL(FTABLE.`deleted`, FALSE) IS FALSE"}]
@@ -726,7 +727,7 @@ def test_process_ngsild_spo_obj_defined(mock_isentity, mock_create_table_name, m
 IFNULL(FHAS_FILTERTABLE.`deleted`, FALSE) IS FALSE"},
         {'statement': 'entities_view AS FTABLE', 'join_condition': "FHAS_FILTERTABLE.name = \
 'https://industry-fusion.com/types/v0.9/hasFilter' and FHAS_FILTERTABLE.entityId = FTABLE.id  \
-AND IFNULL(FTABLE.`deleted`, FALSE) IS FALSE"}]
+AND IFNULL(FTABLE.`deleted`, FALSE) IS FALSE and FHAS_FILTERTABLE.parentId IS NULL"}]
 
 
 @patch('lib.bgp_translation_utils.get_random_string')

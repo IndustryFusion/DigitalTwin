@@ -16,6 +16,7 @@
 
 from unittest.mock import MagicMock, patch
 import os
+from rdflib import BNode, URIRef
 
 import create_ngsild_models
 
@@ -75,6 +76,42 @@ def test_main(mock_utils, mock_configs, mock_graph, mock_nullify, tmp_path):
                               'kms/model.jsonld', tmp_path)
     assert os.path.exists(os.path.join(tmp_path, 'ngsild-models.sqlite'))\
         is True
+
+
+def test_get_entity_id_and_parentId():
+    # Create a mock graph
+    mock_graph = MagicMock()
+
+    # Create test nodes and triples
+    node = BNode()
+
+    parent_node = BNode()
+
+    grandparent_node = URIRef('urn:test:grendparent')
+
+    predicate1 = URIRef('urn:test:2')
+
+    predicate2 = URIRef('urn:test:3')
+
+    # Mock the triples in the graph
+    mock_graph.triples.side_effect = [
+        iter([(parent_node, predicate1, node)]),  # First call returns a triple
+        iter([(grandparent_node, predicate2, parent_node)]),  # Second call returns another triple
+        iter([])  # No more triples for the third call
+    ]
+
+    # Call the function
+    result_id, result_entityId, result_parentId = create_ngsild_models.get_entity_id_and_parentId(
+        node, 'test_name', mock_graph
+    )
+
+    # Verify the results
+    assert result_id == 'urn:test:grendparent\\urn:test:3\\urn:test:2\\test_name'
+    assert result_entityId == grandparent_node
+    assert result_parentId == "'urn:test:grendparent\\urn:test:3\\urn:test:2'"
+
+    # Verify the graph was traversed correctly
+    assert mock_graph.triples.call_count == 2
 
 
 def test_parser():

@@ -480,7 +480,7 @@ Consider to use a variable and FILTER. Target query is {ctx["query"]}')
             sql_expression = create_attribute_table_expression(ctx, attribute_tablename, ngsildvar[0])
             join_condition = f"{attribute_tablename}.name = '{p}' and {subject_tablename}.id = \
 {attribute_tablename}.entityId and {attribute_tablename}.type = '{str(ngsild['Property'])}' and \
-IFNULL({attribute_tablename}.`deleted`, FALSE) IS FALSE"
+IFNULL({attribute_tablename}.`deleted`, FALSE) IS FALSE and {attribute_tablename}.parentId IS NULL"
             local_ctx['bgp_sql_expression'].append({'statement': f'{sql_expression}',
                                                     'join_condition': f'{join_condition}'})
         local_ctx['bgp_tables'][attribute_tablename] = []
@@ -498,7 +498,8 @@ Consider using a variable and FILTER instead.')
         if object_varname not in local_ctx['bounds']:
             # case (1)
             join_condition = f"{attribute_tablename}.name = '{p}' and {attribute_tablename}.entityId = \
-{subject_tablename}.id and IFNULL({attribute_tablename}.`deleted`, FALSE) IS FALSE"
+{subject_tablename}.id and IFNULL({attribute_tablename}.`deleted`, FALSE) IS FALSE and \
+{attribute_tablename}.parentId IS NULL"
             sql_expression = create_attribute_table_expression(ctx, attribute_tablename, ngsildvar[0])
             local_ctx['bgp_tables'][attribute_tablename] = []
 
@@ -520,7 +521,8 @@ and IFNULL({object_tablename}.`deleted`, FALSE) IS FALSE'})
             local_ctx['bgp_sql_expression'].append({'statement': f'{sql_expression}',
                                                     'join_condition': f'{join_condition}'})
             join_condition = f"{attribute_tablename}.name = '{p}' and {attribute_tablename}.entityId = \
-{subject_tablename}.id  AND IFNULL({subject_tablename}.`deleted`, FALSE) IS FALSE"
+{subject_tablename}.id  AND IFNULL({subject_tablename}.`deleted`, FALSE) IS FALSE and \
+{attribute_tablename}.parentId IS NULL"
             sql_expression = f'{subject_sqltable}_view AS {subject_tablename}'
             ctx['sql_tables'].append(subject_sqltable)
             local_ctx['bgp_tables'][attribute_tablename] = []

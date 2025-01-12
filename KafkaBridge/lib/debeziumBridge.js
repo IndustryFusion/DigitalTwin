@@ -16,6 +16,7 @@
 'use strict';
 const Logger = require('./logger.js');
 const _ = require('underscore');
+const crypto = require('crypto');
 
 module.exports = function DebeziumBridge (conf) {
   const config = conf;
@@ -85,6 +86,15 @@ module.exports = function DebeziumBridge (conf) {
    *
    */
   this.parseBeforeAfterEntity = function (ba) {
+    const collectNonDefaultAttributes = function (refObj) {
+      const nonDefaultAttributes = {};
+      Object.keys(refObj).forEach(subkey => {
+        if (subkey !== '@type' && subkey !== '@id' && (!subkey.startsWith('https://uri.etsi.org/ngsi-ld/') || subkey.startsWith('https://uri.etsi.org/ngsi-ld/default-context'))) {
+          nonDefaultAttributes[subkey] = refObj[subkey];
+        }
+      });
+      return nonDefaultAttributes;
+    };
     let baEntity = {};
     const baAttrs = {};
     if (ba === null || ba === undefined) {
@@ -93,114 +103,140 @@ module.exports = function DebeziumBridge (conf) {
 
     try {
       baEntity = JSON.parse(ba.entity);
-      // Delete all non-properties as defined by ETSI SPEC (ETSI GS CIM 009 V1.5.1 (2021-11))
+      // Delete all non-properties as defined by ETSI SPEC
       delete baEntity['@id'];
       delete baEntity['@type'];
       delete baEntity['https://uri.etsi.org/ngsi-ld/createdAt'];
       delete baEntity['https://uri.etsi.org/ngsi-ld/modifiedAt'];
-      delete baEntity['https://uri.etsi.org/ngsi-ld/obvervedAt'];
+      delete baEntity['https://uri.etsi.org/ngsi-ld/observedAt'];
       baEntity.id = ba.id;
       baEntity.type = ba.e_types[0];
-    } catch (e) { logger.error(`Cannot parse debezium before field ${e}`); return; } // not throwing an error due to the fact that it cannot be fixed in next try
+    } catch (e) {
+      logger.error(`Cannot parse debezium before field ${e}`);
+      return;
+    }
 
-    // create entity table
-    let id = baEntity.id;
-    const resEntity = {};
-    // Object.keys(baEntity).filter(key => key !== 'type' && key !== 'id')
-    //   .forEach(key => {
-    //     resEntity[key] = id + '\\' + key;
-    //   });
-    resEntity.id = baEntity.id;
-    resEntity.type = baEntity.type;
-    delete resEntity[syncOnAttribute]; // this attribute should not change the diff calculation, but should be in attributes to detect changes from Kafka
+    const parseAttributes = (obj, parentDatasetId = null, parentId = null) => {
+      const parsedAttributes = [];
+      Object.keys(obj).forEach((key) => {
+        if (key === 'type' || key === 'id') return;
 
-    // create attribute table
-    id = baEntity.id;
-    Object.keys(baEntity).filter(key => key !== 'type' && key !== 'id').forEach(
-      key => {
-        const refId = id + '\\' + key;
-        let refObjArray = baEntity[key];
+        let refId = (parentId || baEntity.id);
+        if (parentDatasetId) {
+          refId += '\\' + parentDatasetId;
+        }
+        refId += '\\' + key;
+
+        let refObjArray = obj[key];
         if (!Array.isArray(refObjArray)) {
           refObjArray = [refObjArray];
         }
-        baAttrs[key] = [];
-        refObjArray.forEach((refObj, index) => {
-          const obj = {};
-          obj.id = refId;
-          obj.entityId = id;
-          obj.name = key;
-          if ('https://uri.etsi.org/ngsi-ld/datasetId' in refObj) {
-            obj.datasetId = refObj['https://uri.etsi.org/ngsi-ld/datasetId'][0]['@id'];
-          } else {
-            obj.datasetId = '@none';
+
+        refObjArray.forEach((refObj) => {
+          const attribute = {};
+          attribute.id = refId;
+          attribute.entityId = baEntity.id;
+          attribute.name = key;
+          if (parentId !== null) {
+            attribute.parentId = parentId;
           }
 
-          // extract timestamp
-          // timestamp is normally observedAt but it is non-mandatory
-          // If observedAt is missing (e.g. because it was entered over REST API)
-          // the modifiedAt value is taken.
-          if ('https://uri.etsi.org/ngsi-ld/observedAt' in refObj) {
-            obj['https://uri.etsi.org/ngsi-ld/observedAt'] = refObj['https://uri.etsi.org/ngsi-ld/observedAt'];
-          } else if ('https://uri.etsi.org/ngsi-ld/modifiedAt' in refObj) {
-            obj['https://uri.etsi.org/ngsi-ld/observedAt'] = refObj['https://uri.etsi.org/ngsi-ld/modifiedAt'];
+          if ('https://uri.etsi.org/ngsi-ld/datasetId' in refObj) {
+            attribute.datasetId = refObj['https://uri.etsi.org/ngsi-ld/datasetId'][0]['@id'];
+          } else {
+            attribute.datasetId = '@none';
           }
+
+          if ('https://uri.etsi.org/ngsi-ld/observedAt' in refObj) {
+            attribute['https://uri.etsi.org/ngsi-ld/observedAt'] = refObj['https://uri.etsi.org/ngsi-ld/observedAt'];
+          } else if ('https://uri.etsi.org/ngsi-ld/modifiedAt' in refObj) {
+            attribute['https://uri.etsi.org/ngsi-ld/observedAt'] = refObj['https://uri.etsi.org/ngsi-ld/modifiedAt'];
+          }
+
           if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'] !== undefined) {
-            obj.type = 'https://uri.etsi.org/ngsi-ld/Property';
-            // every Property is array with one element, hence [0] is no restriction
-            // Property can be Literal => @value,@json or IRI => @id
+            attribute.type = 'https://uri.etsi.org/ngsi-ld/Property';
             if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@value'] !== undefined) {
-              obj.attributeValue = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@value'];
-              obj.nodeType = '@value';
-            } else if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@id'] !== undefined) { // Property can be IRI => @id
-              obj.attributeValue = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@id'];
-              obj.nodeType = '@id';
-            } else if (typeof refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0] === 'object') { // no @id, no @value, must be a @json type
-              obj.attributeValue = JSON.stringify(refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]);
-              obj.nodeType = '@json';
+              attribute.attributeValue = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@value'];
+              attribute.nodeType = '@value';
+            } else if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@id'] !== undefined) {
+              attribute.attributeValue = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@id'];
+              attribute.nodeType = '@id';
+            } else if (typeof refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0] === 'object') {
+              attribute.attributeValue = JSON.stringify(refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]);
+              attribute.nodeType = '@json';
             }
 
             if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'] !== undefined) {
-              // every Property is array with one element, hence [0] is no restriction
-              obj.valueType = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'];
+              attribute.valueType = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'];
             }
           } else if (refObj['https://uri.etsi.org/ngsi-ld/hasObject'] !== undefined) {
-            obj.type = 'https://uri.etsi.org/ngsi-ld/Relationship';
-            // every Relationship is array with one element, hence [0] is no restriction
-            obj.attributeValue = refObj['https://uri.etsi.org/ngsi-ld/hasObject'][0]['@id'];
-            obj.nodeType = '@id';
+            attribute.type = 'https://uri.etsi.org/ngsi-ld/Relationship';
+            attribute.attributeValue = refObj['https://uri.etsi.org/ngsi-ld/hasObject'][0]['@id'];
+            attribute.nodeType = '@id';
           } else {
             return;
           }
-          baAttrs[key].push(obj);
+          // Remove all default subproperties of refObj and continue only with non standard attributes
+          const subProperties = collectNonDefaultAttributes(refObj);
+          if (typeof subProperties === 'object' && Object.keys(subProperties).length > 0) {
+            parsedAttributes.push(...parseAttributes(subProperties, attribute.datasetId, refId));
+          }
+          parsedAttributes.push(attribute);
         });
-        // Check if datasetId is doubled
-        let counter = 0;
-        const copyArr = [];
-        baAttrs[key].forEach((obj, idx) => {
-          let check = false;
-          const curDatId = obj.datasetId;
-          for (let i = idx + 1; i < baAttrs[key].length; i++) {
-            if (curDatId === baAttrs[key][i].datasetId) {
-              check = true;
-              copyArr[counter] = baAttrs[key][i];
+      });
+      return parsedAttributes;
+    };
+
+    const attributesArray = parseAttributes(baEntity);
+    attributesArray.forEach((attr) => {
+      if (!baAttrs[attr.name]) {
+        baAttrs[attr.name] = [];
+      }
+      baAttrs[attr.name].push(attr);
+    });
+
+    function hashString (input, length) {
+      // Create a SHA-256 hash of the input string and truncate to desired length
+      return crypto.createHash('sha256').update(input).digest('hex').slice(0, length);
+    }
+    // Sort attributes by datasetId
+    Object.keys(baAttrs).forEach((key) => {
+      // Create a map to track the latest element by `id` and `datasetId`
+      const uniqueMap = new Map();
+
+      // Hash the longer components
+      for (let i = baAttrs[key].length - 1; i >= 0; i--) {
+        const item = baAttrs[key][i];
+
+        // Hash transformation for id and parentId
+        ['id', 'parentId'].forEach((prop) => {
+          if (item[prop]) {
+            const parts = item[prop].split('\\');
+            if (parts.length > 2) {
+              // Hash all parts except the first one (preserve the urn prefix)
+              const prefix = parts[0];
+              const toHash = `${parts.slice(1).join('\\')}`;
+              const hashed = hashString(toHash, config.bridgeCommon.hashLength); // num of characters for the hash
+              item[prop] = `${prefix}\\${hashed}`;
             }
           }
-          if (check === false) {
-            copyArr[counter] = baAttrs[key][idx];
-            counter++;
-          }
         });
-        copyArr.sort((a, b) => {
-          if (a.datasetId === '@none') return -1;
-          if (b.datasetId === '@none') return 1;
-          return a.datasetId.localeCompare(b.datasetId);
-        });
-        copyArr.forEach((obj, idx) => { // Index it according to their sorting
-          obj.index = idx;
-        });
-        baAttrs[key] = copyArr;
+        // Traverse the array from the end to preserve the latest element
+        const uniqueKey = `${item.id}-${item.datasetId}`;
+        if (!uniqueMap.has(uniqueKey)) {
+          uniqueMap.set(uniqueKey, item);
+        }
+      }
+
+      // Convert the map back to an array and sort by `datasetId`
+      baAttrs[key] = Array.from(uniqueMap.values()).sort((a, b) => {
+        if (a.datasetId === '@none') return -1;
+        if (b.datasetId === '@none') return 1;
+        return a.datasetId.localeCompare(b.datasetId);
       });
-    return { entity: resEntity, attributes: baAttrs };
+    });
+
+    return { entity: { id: baEntity.id, type: baEntity.type }, attributes: baAttrs };
   };
 
   /**
