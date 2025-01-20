@@ -485,7 +485,7 @@ describe(fileToTest, function () {
               assert.oneOf(message.key, ['spBv1.0/accountId/NBIRTH/eonID/', 'spBv1.0/accountId/DBIRTH/eonID/deviceId',
                 'spBv1.0/accountId/DDATA/eonID/deviceId'], 'Received Kafka payload key not correct');
               const value = {
-                id: 'deviceId' + '\\' + 'https://industry-fusion.com/types/v0.9/hasFilter',
+                id: 'deviceId' + '\\' + '715fe7eb6833a04d08b433d3',
                 entityId: 'deviceId',
                 datasetId: '@none',
                 name: 'https://industry-fusion.com/types/v0.9/hasFilter',
@@ -551,7 +551,7 @@ describe(fileToTest, function () {
               message = payload.messages[0];
               assert.oneOf(message.key, ['spBv1.0/accountId/NBIRTH/eonID/', 'spBv1.0/accountId/DBIRTH/eonID/deviceId', 'spBv1.0/accountId/DDATA/eonID/deviceId'], 'Received Kafka payload key not correct');
               const value = {
-                id: 'deviceId' + '\\' + 'https://industry-fusion.com/types/v0.9/hasFilter',
+                id: 'deviceId' + '\\' + '715fe7eb6833a04d08b433d3',
                 entityId: 'deviceId',
                 datasetId: '@none',
                 nodeType: '@value',

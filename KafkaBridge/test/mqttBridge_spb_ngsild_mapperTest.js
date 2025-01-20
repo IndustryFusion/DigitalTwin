@@ -28,7 +28,7 @@ describe(fileToTest, function () {
       value: 'value'
     };
     const expected = {
-      id: 'deviceId' + '\\' + 'name',
+      id: 'deviceId' + '\\' + 'a86d0acbb0a853d4f9ca6fdc',
       entityId: deviceId,
       datasetId: '@none',
       name: 'name',
@@ -51,7 +51,7 @@ describe(fileToTest, function () {
       }
     };
     const expected = {
-      id: 'deviceId' + '\\' + 'name',
+      id: 'deviceId' + '\\' + '867452a23eff6f2f4175c3d3',
       entityId: deviceId,
       name: 'name',
       type: 'https://uri.etsi.org/ngsi-ld/Relationship',
@@ -70,7 +70,7 @@ describe(fileToTest, function () {
       value: 'value'
     };
     const expected = {
-      id: 'deviceId' + '\\' + 'name',
+      id: 'deviceId' + '\\' + 'a86d0acbb0a853d4f9ca6fdc',
       entityId: deviceId,
       datasetId: '@none',
       name: 'name',
@@ -89,7 +89,7 @@ describe(fileToTest, function () {
       value: 'value'
     };
     const expected = {
-      id: 'deviceId' + '\\' + 'name',
+      id: 'deviceId' + '\\' + 'a86d0acbb0a853d4f9ca6fdc',
       entityId: deviceId,
       datasetId: '@none',
       name: 'name',
@@ -112,7 +112,7 @@ describe(fileToTest, function () {
       }
     };
     const expected = {
-      id: 'deviceId' + '\\' + 'name',
+      id: 'deviceId' + '\\' + '867452a23eff6f2f4175c3d3',
       entityId: deviceId,
       name: 'name',
       type: 'https://uri.etsi.org/ngsi-ld/Property',
@@ -135,7 +135,7 @@ describe(fileToTest, function () {
       }
     };
     const expected = {
-      id: 'deviceId' + '\\' + 'name',
+      id: 'deviceId' + '\\' + '867452a23eff6f2f4175c3d3',
       entityId: deviceId,
       name: 'name',
       type: 'https://uri.etsi.org/ngsi-ld/Property',
@@ -154,7 +154,7 @@ describe(fileToTest, function () {
       value: 'value'
     };
     const expected = {
-      id: 'deviceId' + '\\' + 'name',
+      id: 'deviceId' + '\\' + 'a86d0acbb0a853d4f9ca6fdc',
       entityId: deviceId,
       datasetId: '@none',
       name: 'name',
@@ -173,7 +173,7 @@ describe(fileToTest, function () {
       value: 'value'
     };
     const expected = {
-      id: 'deviceId' + '\\' + 'name',
+      id: 'deviceId' + '\\' + 'a86d0acbb0a853d4f9ca6fdc',
       entityId: deviceId,
       datasetId: '@none',
       name: 'name',
@@ -196,7 +196,7 @@ describe(fileToTest, function () {
       }
     };
     const expected = {
-      id: 'deviceId' + '\\' + 'name',
+      id: 'deviceId' + '\\' + '867452a23eff6f2f4175c3d3',
       entityId: deviceId,
       name: 'name',
       type: 'https://uri.etsi.org/ngsi-ld/Property',
