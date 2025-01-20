@@ -16,6 +16,8 @@
 
 'use strict';
 
+const utils = require('../lib/utils');
+
 /* Example. NGSI-LD format for Relationship"
 *
 {
@@ -129,7 +131,6 @@ function addProperties (message, metric) {
 module.exports.mapSpbRelationshipToKafka = function (deviceId, metric) {
   const originalName = metric.name.substr(metric.name.indexOf('/') + 1);
   const mappedKafkaMessage = {
-    id: deviceId + '\\' + originalName,
     entityId: deviceId,
     name: originalName,
     type: etsiNgsiRelationshipUrl,
@@ -137,13 +138,14 @@ module.exports.mapSpbRelationshipToKafka = function (deviceId, metric) {
     nodeType: '@id'
   };
   addProperties(mappedKafkaMessage, metric);
+  const hash = utils.hashString(utils.getCanonicalName(originalName, mappedKafkaMessage.datasetId));
+  mappedKafkaMessage.id = `${deviceId}\\${hash}`;
   return mappedKafkaMessage;
 };
 
 module.exports.mapSpbPropertyToKafka = function (deviceId, metric) {
   const originalName = metric.name.substr(metric.name.indexOf('/') + 1);
   const mappedPropKafkaMessage = {
-    id: deviceId + '\\' + originalName,
     entityId: deviceId,
     nodeType: '@value',
     name: originalName,
@@ -151,13 +153,14 @@ module.exports.mapSpbPropertyToKafka = function (deviceId, metric) {
     attributeValue: metric.value
   };
   addProperties(mappedPropKafkaMessage, metric);
+  const hash = utils.hashString(utils.getCanonicalName(originalName, mappedPropKafkaMessage.datasetId));
+  mappedPropKafkaMessage.id = `${deviceId}\\${hash}`;
   return mappedPropKafkaMessage;
 };
 
 module.exports.mapSpbPropertyIriToKafka = function (deviceId, metric) {
   const originalName = metric.name.substr(metric.name.indexOf('/') + 1);
   const mappedPropKafkaMessage = {
-    id: deviceId + '\\' + originalName,
     entityId: deviceId,
     nodeType: '@id',
     name: originalName,
@@ -165,13 +168,14 @@ module.exports.mapSpbPropertyIriToKafka = function (deviceId, metric) {
     attributeValue: metric.value
   };
   addProperties(mappedPropKafkaMessage, metric);
+  const hash = utils.hashString(utils.getCanonicalName(originalName, mappedPropKafkaMessage.datasetId));
+  mappedPropKafkaMessage.id = `${deviceId}\\${hash}`;
   return mappedPropKafkaMessage;
 };
 
 module.exports.mapSpbPropertyJsonToKafka = function (deviceId, metric) {
   const originalName = metric.name.substr(metric.name.indexOf('/') + 1);
   const mappedPropKafkaMessage = {
-    id: deviceId + '\\' + originalName,
     entityId: deviceId,
     nodeType: '@json',
     name: originalName,
@@ -179,5 +183,7 @@ module.exports.mapSpbPropertyJsonToKafka = function (deviceId, metric) {
     attributeValue: metric.value
   };
   addProperties(mappedPropKafkaMessage, metric);
+  const hash = utils.hashString(utils.getCanonicalName(originalName, mappedPropKafkaMessage.datasetId));
+  mappedPropKafkaMessage.id = `${deviceId}\\${hash}`;
   return mappedPropKafkaMessage;
 };

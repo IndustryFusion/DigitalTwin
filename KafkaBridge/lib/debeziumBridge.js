@@ -15,8 +15,8 @@
 */
 'use strict';
 const Logger = require('./logger.js');
+const utils = require('./utils.js');
 const _ = require('underscore');
-const crypto = require('crypto');
 
 module.exports = function DebeziumBridge (conf) {
   const config = conf;
@@ -116,15 +116,12 @@ module.exports = function DebeziumBridge (conf) {
       return;
     }
 
-    const parseAttributes = (obj, parentDatasetId = null, parentId = null) => {
+    const parseAttributes = (obj, parentId = null) => {
       const parsedAttributes = [];
       Object.keys(obj).forEach((key) => {
         if (key === 'type' || key === 'id') return;
 
         let refId = (parentId || baEntity.id);
-        if (parentDatasetId) {
-          refId += '\\' + parentDatasetId;
-        }
         refId += '\\' + key;
 
         let refObjArray = obj[key];
@@ -134,7 +131,6 @@ module.exports = function DebeziumBridge (conf) {
 
         refObjArray.forEach((refObj) => {
           const attribute = {};
-          attribute.id = refId;
           attribute.entityId = baEntity.id;
           attribute.name = key;
           if (parentId !== null) {
@@ -178,8 +174,10 @@ module.exports = function DebeziumBridge (conf) {
           }
           // Remove all default subproperties of refObj and continue only with non standard attributes
           const subProperties = collectNonDefaultAttributes(refObj);
+          const refIdLocal = refId + '\\' + attribute.datasetId;
+          attribute.id = refIdLocal;
           if (typeof subProperties === 'object' && Object.keys(subProperties).length > 0) {
-            parsedAttributes.push(...parseAttributes(subProperties, attribute.datasetId, refId));
+            parsedAttributes.push(...parseAttributes(subProperties, refIdLocal));
           }
           parsedAttributes.push(attribute);
         });
@@ -195,10 +193,6 @@ module.exports = function DebeziumBridge (conf) {
       baAttrs[attr.name].push(attr);
     });
 
-    function hashString (input, length) {
-      // Create a SHA-256 hash of the input string and truncate to desired length
-      return crypto.createHash('sha256').update(input).digest('hex').slice(0, length);
-    }
     // Sort attributes by datasetId
     Object.keys(baAttrs).forEach((key) => {
       // Create a map to track the latest element by `id` and `datasetId`
@@ -216,7 +210,7 @@ module.exports = function DebeziumBridge (conf) {
               // Hash all parts except the first one (preserve the urn prefix)
               const prefix = parts[0];
               const toHash = `${parts.slice(1).join('\\')}`;
-              const hashed = hashString(toHash, config.bridgeCommon.hashLength); // num of characters for the hash
+              const hashed = utils.hashString(toHash, config.bridgeCommon.hashLength); // num of characters for the hash
               item[prop] = `${prefix}\\${hashed}`;
             }
           }
@@ -227,13 +221,13 @@ module.exports = function DebeziumBridge (conf) {
           uniqueMap.set(uniqueKey, item);
         }
       }
-
+      baAttrs[key] = Array.from(uniqueMap.values());
       // Convert the map back to an array and sort by `datasetId`
-      baAttrs[key] = Array.from(uniqueMap.values()).sort((a, b) => {
-        if (a.datasetId === '@none') return -1;
-        if (b.datasetId === '@none') return 1;
-        return a.datasetId.localeCompare(b.datasetId);
-      });
+      // baAttrs[key] = Array.from(uniqueMap.values()).sort((a, b) => {
+      //   if (a.datasetId === '@none') return -1;
+      //   if (b.datasetId === '@none') return 1;
+      //   return a.datasetId.localeCompare(b.datasetId);
+      // });
     });
 
     return { entity: { id: baEntity.id, type: baEntity.type }, attributes: baAttrs };

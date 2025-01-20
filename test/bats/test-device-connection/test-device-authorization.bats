@@ -34,6 +34,7 @@ MQTT_MESSAGE2='{"timestamp":1655974018778,"metrics":[{ "name":"Property/https://
 MQTT_MESSAGE3='{"timestamp":1655974018778,"metrics":[{ "name":"Property/https://industry-fusion.com/types/v0.9/state","timestamp":1655974018777,"dataType":"string","value":"no"}],"seq":1}'
 KAFKA_BOOTSTRAP=my-cluster-kafka-bootstrap:9092
 KAFKACAT_ATTRIBUTES=/tmp/KAFKACAT_ATTRIBUTES
+KAFKACAT_ATTRIBUTES_SORTED=/tmp/KAFKACAT_ATTRIBUTES_SORTED
 KAFKACAT_ATTRIBUTES_TOPIC=iff.ngsild.attributes
 MQTT_SUB=/tmp/MQTT_SUB
 MQTT_RESULT=/tmp/MQTT_RES
@@ -238,25 +239,13 @@ check_dedicated_device_token() {
 
 compare_create_attributes() {
     cat << EOF | diff "$1" - >&3
-{"id":"testdevice\\\\https://industry-fusion.com/types/v0.9/state",\
-"entityId":"testdevice",\
-"nodeType":"@value",\
-"name":"https://industry-fusion.com/types/v0.9/state",\
-"type":"https://uri.etsi.org/ngsi-ld/Property",\
-"attributeValue":"https://industry-fusion.com/types/v0.9/state_OFF",\
-"datasetId":"@none"}
+{"attributeValue":"https://industry-fusion.com/types/v0.9/state_OFF","datasetId":"@none","entityId":"testdevice","id":"testdevice\\\\6e27e969d7144bb8bcc17e7a","name":"https://industry-fusion.com/types/v0.9/state","nodeType":"@value","type":"https://uri.etsi.org/ngsi-ld/Property"}
 EOF
 }
 
 compare_create_attributes2() {
     cat << EOF | diff "$1" - >&3
-{"id":"testsubdevice1\\\\https://industry-fusion.com/types/v0.9/state",\
-"entityId":"testsubdevice1",\
-"nodeType":"@value",\
-"name":"https://industry-fusion.com/types/v0.9/state",\
-"type":"https://uri.etsi.org/ngsi-ld/Property",\
-"attributeValue":"https://industry-fusion.com/types/v0.9/state_ON",\
-"datasetId":"@none"}
+{"attributeValue":"https://industry-fusion.com/types/v0.9/state_ON","datasetId":"@none","entityId":"testsubdevice1","id":"testsubdevice1\\\\6e27e969d7144bb8bcc17e7a","name":"https://industry-fusion.com/types/v0.9/state","nodeType":"@value","type":"https://uri.etsi.org/ngsi-ld/Property"}
 EOF
 }
 
@@ -410,8 +399,9 @@ teardown() {
     echo "# now killing kafkacat and evaluate result"
     killall kafkacat
     LC_ALL="en_US.UTF-8" sort -o ${KAFKACAT_ATTRIBUTES} ${KAFKACAT_ATTRIBUTES}
+    jq -c 'to_entries | sort_by(.key) | from_entries' ${KAFKACAT_ATTRIBUTES} > ${KAFKACAT_ATTRIBUTES_SORTED}
     echo "# Compare ATTRIBUTES"
-    run compare_create_attributes ${KAFKACAT_ATTRIBUTES}
+    run compare_create_attributes ${KAFKACAT_ATTRIBUTES_SORTED}
     [ "$status" -eq 0 ]
 }
 
@@ -436,8 +426,9 @@ teardown() {
     echo "# now killing kafkacat and evaluate result"
     killall kafkacat
     LC_ALL="en_US.UTF-8" sort -o ${KAFKACAT_ATTRIBUTES} ${KAFKACAT_ATTRIBUTES}
+    jq -c 'to_entries | sort_by(.key) | from_entries' ${KAFKACAT_ATTRIBUTES} > ${KAFKACAT_ATTRIBUTES_SORTED}
     echo "# Compare ATTRIBUTES"
-    run compare_create_attributes2 ${KAFKACAT_ATTRIBUTES}
+    run compare_create_attributes2 ${KAFKACAT_ATTRIBUTES_SORTED}
     [ "$status" -eq 0 ]
 }
 
@@ -462,8 +453,9 @@ teardown() {
     echo "# now killing kafkacat and evaluate result"
     killall kafkacat
     LC_ALL="en_US.UTF-8" sort -o ${KAFKACAT_ATTRIBUTES} ${KAFKACAT_ATTRIBUTES}
+    jq -c 'to_entries | sort_by(.key) | from_entries' ${KAFKACAT_ATTRIBUTES} > ${KAFKACAT_ATTRIBUTES_SORTED}
     echo "# Compare ATTRIBUTES"
-    run compare_create_attributes2 ${KAFKACAT_ATTRIBUTES}
+    run compare_create_attributes2 ${KAFKACAT_ATTRIBUTES_SORTED}
     [ "$status" -eq 0 ]
 }
 
