@@ -35,6 +35,16 @@ const consumer = kafka.consumer({ groupId: GROUPID, allowAutoTopicCreation: fals
 const producer = kafka.producer();
 console.log(JSON.stringify(config));
 
+const errorIsUnrecoverable = function (body) {
+  // The error code is not very expressive in Alerta. try to detect patterns in error message to filter out
+  // non recoverable errors
+  if (body.message.includes('Severity') && body.message.includes('is not one of') && body.status === 'error') {
+    logger.info(`Dropping record due to unrecoverable error: ${body.message}`);
+    return true;
+  }
+  return false;
+};
+
 const commitAppliedMessages = function (consumer, commitArray) {
   logger.debug(`Commit ${commitArray.length} messages `);
   consumer.commitOffsets(commitArray);
@@ -73,8 +83,13 @@ const startListener = async function () {
         if (result.statusCode !== 201) {
           logger.error(`submission to Alerta failed with statuscode ${result.statusCode} and ${JSON.stringify(result.body)}`);
           committedOffsets = commitAppliedMessages(consumer, committedOffsets);
-          pauseresume(consumer, topic);
-          throw new Error('Retry submission of Alert.');
+          // Filter out non recoverable errors
+          if (errorIsUnrecoverable(result.body)) {
+            committedOffsets.push({ topic, partition, offset: message.offset });
+          } else {
+            pauseresume(consumer, topic);
+            throw new Error('Retry submission of Alert.');
+          }
         } else {
           committedOffsets.push({ topic, partition, offset: message.offset });
         }
