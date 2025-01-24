@@ -31,10 +31,10 @@ DETIK_DEBUG="true"
 
 }
 @test "verify that postgres is up and running" {
-    run try "at most 30 times every 60s to find 1 pod named 'acid-cluster' with 'status.containerStatuses[0].ready' being 'true'"
+    run try "at most 30 times every 60s to find 1 pod named 'acid-cluster-0' with 'status.containerStatuses[0].ready' being 'true'"
     [ "$status" -eq 0 ]
 
-    run verify "there is 1 pod named '^acid-cluster'"
+    run verify "there is 1 pod named '^acid-cluster-0'"
     [ "$status" -eq 0 ]
 
 }
