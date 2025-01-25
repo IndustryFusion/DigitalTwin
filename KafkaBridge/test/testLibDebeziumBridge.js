@@ -99,16 +99,14 @@ describe('Test diffAttributes', function () {
         type: 'type',
         name: 'name',
         entityId: 'entityId',
-        value: 'value',
-        index: 0
+        value: 'value'
       }],
       attr2: [{
         id: 'id2',
         type: 'type',
         name: 'name',
         entityId: 'entityId',
-        value: 'value3',
-        index: 0
+        value: 'value3'
       }]
     };
     const afterAttrs = {
@@ -117,8 +115,7 @@ describe('Test diffAttributes', function () {
         type: 'type',
         name: 'name',
         entityId: 'entityId',
-        value: 'value',
-        index: 0
+        value: 'value'
       }]
     };
     const revert = ToTest.__set__('Logger', Logger);
@@ -131,7 +128,6 @@ describe('Test diffAttributes', function () {
         entityId: 'entityId',
         name: 'name',
         type: 'type',
-        index: 0,
         datasetId: '@none'
       }]
     });
@@ -151,28 +147,24 @@ describe('Test diffAttributes', function () {
         {
           id: 'id3',
           value: 'value',
-          observedAt: 'observedAt',
-          index: 0
+          observedAt: 'observedAt'
         },
         {
           id: 'id',
           value: 'value2',
-          index: 1,
           datasetId: 'urn:iff:index:1'
         }
       ],
       attr2: [{
         id: 'id2',
-        value: 'value3',
-        index: 0
+        value: 'value3'
       }]
     };
     const afterAttrs = {
       attr1: [
         {
           id: 'id3',
-          value: 'value4',
-          index: 0
+          value: 'value4'
         }
       ]
     };
@@ -183,7 +175,6 @@ describe('Test diffAttributes', function () {
       attr1: [{
         id: 'id3',
         value: 'value4',
-        index: 0,
         datasetId: '@none'
       }]
     });
@@ -191,15 +182,186 @@ describe('Test diffAttributes', function () {
       attr2:
       [{
         id: 'id2',
-        index: 0,
         datasetId: '@none'
       }],
       attr1:
       [{
         id: 'id',
-        index: 1,
         datasetId: 'urn:iff:index:1'
       }]
+    });
+    revert();
+  });
+  it('Should create 3 subcomponents, update 3 subcomponents and delete 3 subcomponent', async function () {
+    const config = {
+      bridgeCommon: {
+        kafkaSyncOnAttribute: 'kafkaSyncOn'
+      }
+    };
+    const Logger = function () {
+      return logger;
+    };
+    const beforeAttrs = {
+      attr2: [
+        {
+          id: 'id5',
+          name: 'attr2',
+          entityId: 'entityId',
+          attrbuteValue: 'value5',
+          datasetId: 'urn:iff:index:1'
+        },
+        {
+          id: 'id6',
+          name: 'attr2',
+          entityId: 'entityId',
+          attrbuteValue: 'value6',
+          parentId: 'id5',
+          datasetId: 'urn:iff:index:1'
+        },
+        {
+          id: 'id7',
+          name: 'attr2',
+          entityId: 'entityId',
+          attrbuteValue: 'value7',
+          parentId: 'id5'
+        }
+      ],
+      attr3: [
+        {
+          id: 'id8',
+          name: 'attr3',
+          entityId: 'entityId',
+          attrbuteValue: 'value8',
+          datasetId: 'urn:iff:index:1'
+        },
+        {
+          id: 'id9',
+          name: 'attr3',
+          entityId: 'entityId',
+          attrbuteValue: 'value9',
+          parentId: 'id8',
+          datasetId: 'urn:iff:index:1'
+        },
+        {
+          id: 'id10',
+          name: 'attr3',
+          entityId: 'entityId',
+          attrbuteValue: 'value10',
+          parentId: 'id9'
+        }
+      ]
+    };
+    const afterAttrs = {
+      attr1: [
+        {
+          id: 'id1',
+          name: 'attr1',
+          entityId: 'entityId',
+          attributeValue: 'value1',
+          observedAt: 'observedAt'
+        },
+        {
+          id: 'id2',
+          name: 'attr1',
+          entityId: 'entityId',
+          parentId: 'id1',
+          attrbuteValue: 'value2',
+          datasetId: 'urn:iff:index:1'
+        },
+        {
+          id: 'id3',
+          name: 'attr1',
+          entityId: 'entityId',
+          parentId: 'id1',
+          attrbuteValue: 'value3'
+        },
+        {
+          id: 'id4',
+          name: 'attr1',
+          entityId: 'entityId',
+          parentId: 'id3',
+          attrbuteValue: 'value4',
+          datasetId: 'urn:iff:index:1'
+        }
+      ],
+      attr2: [
+        {
+          id: 'id5',
+          name: 'attr2',
+          entityId: 'entityId',
+          attrbuteValue: 'value11',
+          datasetId: 'urn:iff:index:1'
+        },
+        {
+          id: 'id6',
+          name: 'attr2',
+          entityId: 'entityId',
+          attrbuteValue: 'value12',
+          parentId: 'id5',
+          datasetId: 'urn:iff:index:1'
+        },
+        {
+          id: 'id7',
+          name: 'attr2',
+          entityId: 'entityId',
+          attrbuteValue: 'value13',
+          parentId: 'id5'
+        }
+      ]
+    };
+    const revert = ToTest.__set__('Logger', Logger);
+    const debeziumBridge = new ToTest(config);
+    const result = debeziumBridge.diffAttributes(beforeAttrs, afterAttrs, 'observedAt');
+    assert.deepEqual(result.updatedAttrs, {
+      attr2: [
+        {
+          id: 'id7',
+          name: 'attr2',
+          entityId: 'entityId',
+          attrbuteValue: 'value13',
+          datasetId: '@none',
+          parentId: 'id5'
+        },
+        {
+          id: 'id6',
+          name: 'attr2',
+          entityId: 'entityId',
+          attrbuteValue: 'value12',
+          parentId: 'id5',
+          datasetId: 'urn:iff:index:1'
+        },
+        {
+          id: 'id5',
+          name: 'attr2',
+          entityId: 'entityId',
+          attrbuteValue: 'value11',
+          datasetId: 'urn:iff:index:1'
+        }
+      ]
+    });
+    assert.deepEqual(result.deletedAttrs, {
+      attr3: [
+        {
+          id: 'id10',
+          name: 'attr3',
+          entityId: 'entityId',
+          datasetId: '@none',
+          parentId: 'id9'
+        },
+        {
+          id: 'id9',
+          name: 'attr3',
+          entityId: 'entityId',
+          parentId: 'id8',
+          datasetId: 'urn:iff:index:1'
+        },
+        {
+          id: 'id8',
+          name: 'attr3',
+          entityId: 'entityId',
+          datasetId: 'urn:iff:index:1'
+        }
+      ]
     });
     revert();
   });
