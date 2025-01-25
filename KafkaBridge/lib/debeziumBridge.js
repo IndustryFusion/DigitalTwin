@@ -344,9 +344,6 @@ module.exports = function DebeziumBridge (conf) {
     const updatedAttrs = {};
     const deletedAttrs = {};
 
-    const getDatasetId = (attrObj) =>
-      attrObj.datasetId || '@none';
-
     const setDatasetId = (attrObj) => {
       if (!attrObj.datasetId) {
         attrObj.datasetId = '@none';
@@ -368,8 +365,8 @@ module.exports = function DebeziumBridge (conf) {
     Object.entries(beforeAttrs).forEach(([attrName, attrArray]) => {
       for (let i = attrArray.length - 1; i >= 0; i--) {
         const attrObj = attrArray[i];
-        const datasetId = getDatasetId(attrObj);
-        const key = `${attrName}:${datasetId}`;
+        const id = attrObj.id;
+        const key = id;
         if (!beforeMap.has(key)) {
           beforeMap.set(key, { attrName, attrObj: setDatasetId(attrObj) });
         }
@@ -380,8 +377,8 @@ module.exports = function DebeziumBridge (conf) {
     Object.entries(afterAttrs).forEach(([attrName, attrArray]) => {
       for (let i = attrArray.length - 1; i >= 0; i--) {
         const attrObj = attrArray[i];
-        const datasetId = getDatasetId(attrObj);
-        const key = `${attrName}:${datasetId}`;
+        const id = attrObj.id;
+        const key = id;
         if (!afterMap.has(key)) {
           afterMap.set(key, { attrName, attrObj: setDatasetId(attrObj) });
         }
@@ -412,12 +409,12 @@ module.exports = function DebeziumBridge (conf) {
       }
       const fields = [
         'id',
+        'parentId',
         'name',
         'entityId',
         'type',
         'datasetId',
-        'nodeType',
-        'index'
+        'nodeType'
       ];
       const deletedAttrObj = pickFields(attrObj, fields);
       deletedAttrs[attrName].push(deletedAttrObj);
