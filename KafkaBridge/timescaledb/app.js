@@ -35,7 +35,7 @@ const kafka = new Kafka({
   brokers: config.kafka.brokers
 });
 const consumer = kafka.consumer({ groupId: GROUPID, allowAutoTopicCreation: false });
-const processMessage = async function ({ topic, partition, message }) {
+const processMessage = function ({ topic, partition, message }) {
   if (topic === config.timescaledb.attributeTopic) {
     processAttributeMessage(message);
   } else if (topic === config.timescaledb.entityTopic) {
@@ -79,7 +79,7 @@ const processAttributeMessage = function (message) {
     if ('parentId' in body) {
       datapoint.parentId = body.parentId;
     }
-    if (body.type === 'https://uri.etsi.org/ngsi-ld/Property') {
+    if (body.type === 'https://uri.etsi.org/ngsi-ld/Property' || body.type === 'https://uri.etsi.org/ngsi-ld/GeoProperty') {
       let value = body.attributeValue;
       if (!isNaN(value)) {
         value = Number(value);
@@ -93,13 +93,18 @@ const processAttributeMessage = function (message) {
       datapoint.attributeType = body.type;
       datapoint.value = body.attributeValue;
     } else {
-      logger.error('Could not send Datapoints: Neither Property nor Relationship');
+      logger.error('Could not send Datapoints: Neither Property, GeoProperty nor Relationship');
       return;
     }
     attributeHistoryTable.upsert(datapoint).then(() => {
       logger.debug('Datapoint succefully stored in tsdb table');
-    })
-      .catch((err) => logger.error('Error in storing datapoint in tsdb: ' + err));
+    }).catch((err) => {
+      logger.error('Error in storing datapoint in tsdb: ' + JSON.stringify(err));
+      // if (err.name === 'AssertionError') {
+      //   logger.error("In AssertionError")
+      //   throw err;
+      // }
+    });
   } catch (e) {
     logger.error('could not process message: ' + e.stack);
   }
@@ -152,7 +157,7 @@ const startListener = async function () {
 
   const createUserQuery = 'CREATE ROLE ' + config.timescaledb.tsdbuser + ';';
   await sequelize.query(createUserQuery, { type: QueryTypes.SELECT }).then(() => {
-    logger.error('User ' + config.timescaledb.tsdbuser + 'created');
+    logger.info('User ' + config.timescaledb.tsdbuser + 'created');
   }).catch(error => {
     logger.warn('Cannot create user, probably already existing.', error);
   });

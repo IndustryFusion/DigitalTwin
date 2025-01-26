@@ -213,7 +213,7 @@ compare_pgrest_result1() {
     "lang": null,
     "nodeType": "@value",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "${number}",
     "valueType": null
   }
@@ -237,7 +237,7 @@ compare_pgrest_subdevice_result1() {
     "lang": null,
     "nodeType": "@value",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "${number}",
     "valueType": null
   }
@@ -261,7 +261,7 @@ compare_pgrest_result2() {
     "lang": null,
     "nodeType": "@value",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "1",
     "valueType": null
   },
@@ -275,7 +275,7 @@ compare_pgrest_result2() {
     "lang": null,
     "nodeType": "@value",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "2",
     "valueType": null
   }
@@ -296,7 +296,7 @@ compare_pgrest_result3() {
     "lang": null,
     "nodeType": "@value",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "5",
     "valueType": null
   },
@@ -310,7 +310,7 @@ compare_pgrest_result3() {
     "lang": null,
     "nodeType": "@value",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "3",
     "valueType": null
   },
@@ -324,7 +324,7 @@ compare_pgrest_result3() {
     "lang": null,
     "nodeType": "@value",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "4",
     "valueType": null
   }
@@ -346,7 +346,7 @@ compare_pgrest_result4() {
     "lang": null,
     "nodeType": "@value",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "8",
     "valueType": null
   },
@@ -361,7 +361,7 @@ compare_pgrest_result4() {
     "lang": null,
     "nodeType": "@value",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "9",
     "valueType": null
   },
@@ -375,7 +375,7 @@ compare_pgrest_result4() {
     "lang": null,
     "nodeType": "@value",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "6",
     "valueType": null
   },
@@ -389,7 +389,7 @@ compare_pgrest_result4() {
     "lang": null,
     "nodeType": "@value",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "7",
     "valueType": null
   },
@@ -403,7 +403,7 @@ compare_pgrest_result4() {
     "lang": null,
     "nodeType": "@value",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "4",
     "valueType": null
   },
@@ -417,7 +417,7 @@ compare_pgrest_result4() {
     "lang": null,
     "nodeType": "@value",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "5",
     "valueType": null
   }
@@ -439,7 +439,7 @@ compare_pgrest_result5() {
     "lang": null,
     "nodeType": "@value",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "12",
     "valueType": null
   },
@@ -453,7 +453,7 @@ compare_pgrest_result5() {
     "lang": null,
     "nodeType": "@value",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "10",
     "valueType": null
   },
@@ -467,7 +467,7 @@ compare_pgrest_result5() {
     "lang": null,
     "nodeType": "@value",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "11",
     "valueType": null
   }
@@ -488,7 +488,7 @@ compare_pgrest_result6() {
     "lang": null,
     "nodeType": "@value",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "19",
     "valueType": null
   },
@@ -502,7 +502,7 @@ compare_pgrest_result6() {
     "lang": null,
     "nodeType": "@value",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "16",
     "valueType": null
   },
@@ -516,7 +516,7 @@ compare_pgrest_result6() {
     "lang": null,
     "nodeType": "@value",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "13",
     "valueType": null
   },
@@ -530,7 +530,7 @@ compare_pgrest_result6() {
     "lang": null,
     "nodeType": "@value",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "14",
     "valueType": null
   }
@@ -553,7 +553,7 @@ compare_pgrest_result7() {
     "lang": null,
     "nodeType": "@id",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "urn:iff:testdevice11",
     "valueType": null
   },
@@ -567,7 +567,7 @@ compare_pgrest_result7() {
     "lang": null,
     "nodeType": "@id",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "urn:iff:testdevice10",
     "valueType": null
   },
@@ -581,7 +581,7 @@ compare_pgrest_result7() {
     "lang": null,
     "nodeType": "@value",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "22",
     "valueType": null
   },
@@ -595,7 +595,7 @@ compare_pgrest_result7() {
     "lang": null,
     "nodeType": "@value",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "23",
     "valueType": null
   },
@@ -609,7 +609,7 @@ compare_pgrest_result7() {
     "lang": null,
     "nodeType": "@id",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "urn:iff:testdevice:8",
     "valueType": null
   },
@@ -623,7 +623,7 @@ compare_pgrest_result7() {
     "lang": null,
     "nodeType": "@value",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "20",
     "valueType": null
   },
@@ -637,7 +637,7 @@ compare_pgrest_result7() {
     "lang": null,
     "nodeType": "@value",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "21",
     "valueType": null
   },
@@ -651,7 +651,7 @@ compare_pgrest_result7() {
     "lang": null,
     "nodeType": "@id",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "urn:iff:testdevice:9",
     "valueType": null
   }
@@ -673,7 +673,7 @@ compare_pgrest_result8() {
     "lang": null,
     "nodeType": "@json",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "{}",
     "valueType": null
   },
@@ -687,7 +687,7 @@ compare_pgrest_result8() {
     "lang": null,
     "nodeType": "@id",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "iri1",
     "valueType": null
   },
@@ -701,7 +701,7 @@ compare_pgrest_result8() {
     "lang": null,
     "nodeType": "@value",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "1000",
     "valueType": null
   }
@@ -723,7 +723,7 @@ compare_pgrest_result9() {
     "lang": null,
     "nodeType": "@id",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "urn:iff:test:1",
     "valueType": null
   },
@@ -737,7 +737,7 @@ compare_pgrest_result9() {
     "lang": null,
     "nodeType": "@json",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "[]",
     "valueType": null
   },
@@ -751,7 +751,7 @@ compare_pgrest_result9() {
     "lang": null,
     "nodeType": "@id",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "iri2",
     "valueType": null
   },
@@ -765,7 +765,7 @@ compare_pgrest_result9() {
     "lang": null,
     "nodeType": "@value",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "1001",
     "valueType": null
   }
