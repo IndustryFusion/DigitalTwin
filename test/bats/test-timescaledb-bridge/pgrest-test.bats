@@ -109,7 +109,7 @@ check_tsdb_sample() {
     "lang": null,
     "nodeType": "@value",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "$VALUE2",
     "valueType": "http://www.w3.org/2001/XMLSchema#string"
   }

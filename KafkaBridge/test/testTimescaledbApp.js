@@ -21,6 +21,7 @@ global.should = chai.should();
 const rewire = require('rewire');
 const sinon = require('sinon');
 const toTest = rewire('../timescaledb/app.js');
+const expect = chai.expect;
 
 const logger = {
   debug: function () {},
@@ -100,8 +101,8 @@ describe('Test timescaledb processMessage', function () {
   });
 });
 describe('Test timescaledb processAttributeMessage', function () {
-  it('Should send a Property with @value nodetype', async function () {
-    const upsertSpy = sinon.spy(async function (datapoint) {
+  it('Should send a Property with @value nodetype', function () {
+    const upsertSpy = sinon.spy(function (datapoint) {
       assert.equal(datapoint.observedAt, '2023-07-14T14:29:13.110Z');
       assert.equal(datapoint.modifiedAt, '2023-07-14T14:29:13.110Z');
       assert.equal(datapoint.entityId, 'entityId');
@@ -111,6 +112,7 @@ describe('Test timescaledb processAttributeMessage', function () {
       assert.equal(datapoint.attributeType, 'https://uri.etsi.org/ngsi-ld/Property');
       assert.equal(datapoint.value, 123);
       assert.equal(datapoint.deleted, false);
+      assert.equal(datapoint.unitCode, 'MTR');
       return Promise.resolve(datapoint);
     });
     const attributeHistoryTable = { upsert: upsertSpy };
@@ -122,6 +124,7 @@ describe('Test timescaledb processAttributeMessage', function () {
         type: 'https://uri.etsi.org/ngsi-ld/Property',
         attributeValue: 123,
         nodeType: '@value',
+        unitCode: 'MTR',
         index: 0
       }),
       timestamp: '1689344953110'
@@ -129,11 +132,12 @@ describe('Test timescaledb processAttributeMessage', function () {
     toTest.__set__('attributeHistoryTable', attributeHistoryTable);
     toTest.__set__('Logger', Logger);
     const processMessage = toTest.__get__('processAttributeMessage');
-    await processMessage(message);
+    processMessage(message);
     sinon.assert.calledOnce(upsertSpy);
+    upsertSpy.threw().should.equal(false);
   });
-  it('Should delete a Property', async function () {
-    const upsertSpy = sinon.spy(async function (datapoint) {
+  it('Should delete a Property', function () {
+    const upsertSpy = sinon.spy(function (datapoint) {
       assert.equal(datapoint.deleted, true);
       return Promise.resolve(datapoint);
     });
@@ -153,8 +157,9 @@ describe('Test timescaledb processAttributeMessage', function () {
     toTest.__set__('attributeHistoryTable', attributeHistoryTable);
     toTest.__set__('Logger', Logger);
     const processMessage = toTest.__get__('processAttributeMessage');
-    await processMessage(message);
+    processMessage(message);
     sinon.assert.calledOnce(upsertSpy);
+    upsertSpy.threw().should.equal(false);
   });
   it('Should explicitly undelete a Property', async function () {
     const upsertSpy = sinon.spy(async function (datapoint) {
@@ -179,6 +184,7 @@ describe('Test timescaledb processAttributeMessage', function () {
     const processMessage = toTest.__get__('processAttributeMessage');
     await processMessage(message);
     sinon.assert.calledOnce(upsertSpy);
+    upsertSpy.threw().should.equal(false);
   });
   it('Should send a Relationship', async function () {
     const upsertSpy = sinon.spy(async function (datapoint) {
@@ -209,11 +215,48 @@ describe('Test timescaledb processAttributeMessage', function () {
     toTest.__set__('Logger', Logger);
     const processMessage = toTest.__get__('processAttributeMessage');
     await processMessage(message);
+
     sinon.assert.calledOnce(upsertSpy);
+    upsertSpy.threw().should.equal(false);
+  });
+  it('Should send a GeoProperty', function () {
+    const upsertSpy = sinon.spy(function (datapoint) {
+      assert.equal(datapoint.observedAt, '2023-07-14T14:29:13.110Z');
+      assert.equal(datapoint.modifiedAt, '2023-07-14T14:29:13.110Z');
+      assert.equal(datapoint.entityId, 'entityId');
+      assert.equal(datapoint.attributeId, 'geoproperty');
+      assert.equal(datapoint.nodeType, '@json');
+      assert.equal(datapoint.datasetId, '@none');
+      assert.equal(datapoint.attributeType, 'https://uri.etsi.org/ngsi-ld/GeoProperty');
+      assert.equal(datapoint.value, '{"@type":["https://purl.org/geojson/vocab#Point"],"https://purl.org/geojson/vocab#coordinates":[{"@list":[{"@value":13.3698},{"@value":52.5163}]}]}');
+      assert.equal(datapoint.deleted, false);
+      assert.equal(datapoint.valueType, 'https://purl.org/geojson/vocab#Point');
+      return Promise.resolve(datapoint);
+    });
+    const attributeHistoryTable = { upsert: upsertSpy };
+    const message = {
+      value: JSON.stringify({
+        id: 'id',
+        entityId: 'entityId',
+        name: 'geoproperty',
+        type: 'https://uri.etsi.org/ngsi-ld/GeoProperty',
+        attributeValue: '{"@type":["https://purl.org/geojson/vocab#Point"],"https://purl.org/geojson/vocab#coordinates":[{"@list":[{"@value":13.3698},{"@value":52.5163}]}]}',
+        nodeType: '@json',
+        valueType: 'https://purl.org/geojson/vocab#Point'
+      }),
+      timestamp: '1689344953110'
+    };
+    toTest.__set__('attributeHistoryTable', attributeHistoryTable);
+    toTest.__set__('Logger', Logger);
+    const processMessage = toTest.__get__('processAttributeMessage');
+    processMessage(message);
+    sinon.assert.calledOnce(upsertSpy);
+    sinon.assert.calledOnce(upsertSpy);
+    upsertSpy.threw().should.equal(false);
   });
 
-  it('Should send a Property with @value nodetype and valueType string', async function () {
-    const upsertSpy = sinon.spy(async function (datapoint) {
+  it('Should send a Property with @value nodetype and valueType string', function () {
+    const upsertSpy = sinon.spy(function (datapoint) {
       assert.equal(datapoint.observedAt, '2023-07-14T14:29:13.110Z');
       assert.equal(datapoint.modifiedAt, '2023-07-14T14:29:13.110Z');
       assert.equal(datapoint.entityId, 'entityId');
@@ -243,12 +286,13 @@ describe('Test timescaledb processAttributeMessage', function () {
     toTest.__set__('attributeHistoryTable', attributeHistoryTable);
     toTest.__set__('Logger', Logger);
     const processMessage = toTest.__get__('processAttributeMessage');
-    await processMessage(message);
+    processMessage(message);
     sinon.assert.calledOnce(upsertSpy);
+    upsertSpy.threw().should.equal(false);
   });
 
-  it('Should reject wrong object type- property/relationship with @value nodetype and valueType string', async function () {
-    const upsertSpy = sinon.spy(async function (datapoint) {
+  it('Should reject wrong object type- property/relationship with @value nodetype and valueType string', function () {
+    const upsertSpy = sinon.spy(function (datapoint) {
       return Promise.resolve(datapoint);
     });
     const attributeHistoryTable = { upsert: upsertSpy };
@@ -268,18 +312,17 @@ describe('Test timescaledb processAttributeMessage', function () {
     toTest.__set__('attributeHistoryTable', attributeHistoryTable);
     toTest.__set__('Logger', Logger);
     const processMessage = toTest.__get__('processAttributeMessage');
-    await processMessage(message);
+    processMessage(message);
     sinon.assert.notCalled(upsertSpy);
   });
 
-  it('Should send a Property with wrong timestamp and attributeType', async function () {
-    const upsertSpy = sinon.spy(async function (datapoint) {
+  it('Should send a Property with wrong timestamp and attributeType', function () {
+    const upsertSpy = sinon.spy(function (datapoint) {
       assert.notEqual(datapoint.observedAt, '2023-07-14T14:29:13.110Z');
       assert.notEqual(datapoint.modifiedAt, '2023-07-14T14:29:13.110Z');
       assert.equal(datapoint.entityId, 'entityId');
       assert.equal(datapoint.attributeId, 'property');
       assert.equal(datapoint.nodeType, '@value');
-      assert.equal(datapoint.index, 0);
       assert.equal(datapoint.datasetId, '@none');
       assert.notEqual(datapoint.attributeType, 'https://uri.etsi.org/ngsi-ld/Relationship');
       assert.equal(datapoint.value, 'value');
@@ -301,8 +344,9 @@ describe('Test timescaledb processAttributeMessage', function () {
     toTest.__set__('attributeHistoryTable', attributeHistoryTable);
     toTest.__set__('Logger', Logger);
     const processMessage = toTest.__get__('processAttributeMessage');
-    await processMessage(message);
+    processMessage(message);
     sinon.assert.calledOnce(upsertSpy);
+    upsertSpy.threw().should.equal(false);
   });
 });
 describe('Test timescaledb processEntityMessage', function () {
@@ -472,7 +516,6 @@ describe('Test startListener', function () {
     const consumerDisconnectSpy = sinon.spy(consumer, 'disconnect');
     const consumerConnectSpy = sinon.spy(consumer, 'connect');
     const processOnceSpy = sinon.spy(process, 'once');
-    // const processExitSpy = sinon.spy(process, 'exit');
     const revert = toTest.__set__('consumer', consumer);
     toTest.__set__('sequelize', sequelizeObj);
     toTest.__set__('fs', fs);
@@ -480,7 +523,7 @@ describe('Test startListener', function () {
     toTest.__set__('process', process);
     const startListener = toTest.__get__('startListener');
     await startListener();
-    consumerDisconnectSpy.callCount.should.equal(3);
+    consumerDisconnectSpy.callCount.should.equal(5);
     assert(consumerConnectSpy.calledOnce);
     assert(processOnceSpy.calledThrice);
     revert();
