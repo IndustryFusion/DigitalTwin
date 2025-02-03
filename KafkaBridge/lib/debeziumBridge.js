@@ -142,6 +142,9 @@ module.exports = function DebeziumBridge (conf) {
           } else {
             attribute.datasetId = '@none';
           }
+          if ('https://uri.etsi.org/ngsi-ld/unitCode' in refObj) {
+            attribute.unitCode = refObj['https://uri.etsi.org/ngsi-ld/unitCode'][0]['@value'];
+          }
 
           if ('https://uri.etsi.org/ngsi-ld/observedAt' in refObj) {
             attribute['https://uri.etsi.org/ngsi-ld/observedAt'] = refObj['https://uri.etsi.org/ngsi-ld/observedAt'];
@@ -150,7 +153,11 @@ module.exports = function DebeziumBridge (conf) {
           }
 
           if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'] !== undefined) {
-            attribute.type = 'https://uri.etsi.org/ngsi-ld/Property';
+            if ('@type' in refObj) {
+              attribute.type = refObj['@type'][0]; // Can be Property and GeoProperty
+            } else {
+              attribute.type = 'https://uri.etsi.org/ngsi-ld/Property';
+            }
             if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@value'] !== undefined) {
               attribute.attributeValue = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@value'];
               attribute.nodeType = '@value';
@@ -163,7 +170,11 @@ module.exports = function DebeziumBridge (conf) {
             }
 
             if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'] !== undefined) {
-              attribute.valueType = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'];
+              if (Array.isArray(refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'])) {
+                attribute.valueType = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'][0];
+              } else {
+                attribute.valueType = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'];
+              }
             }
           } else if (refObj['https://uri.etsi.org/ngsi-ld/hasObject'] !== undefined) {
             attribute.type = 'https://uri.etsi.org/ngsi-ld/Relationship';

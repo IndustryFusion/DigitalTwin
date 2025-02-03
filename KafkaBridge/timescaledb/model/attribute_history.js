@@ -53,8 +53,8 @@ const attributeHistoryTable = sequelize.define(config.timescaledb.attributeTable
   // In future can be used for literals value types
   valueType: { type: Sequelize.TEXT, allowNull: true },
 
-  // NGSI-LD defined unitType
-  unitType: { type: Sequelize.TEXT, allowNull: true },
+  // NGSI-LD defined unitCode
+  unitCode: { type: Sequelize.TEXT, allowNull: true },
   // language tag if applicable
   lang: { type: Sequelize.TEXT, allowNull: true },
   // indicates if attribute has been deleted

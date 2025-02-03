@@ -13,6 +13,7 @@ KEYCLOAKURL=http://keycloak.local/auth/realms
 CUTTER=/tmp/CUTTER
 CUTTER_TIMESTAMPED=/tmp/CUTTER_TIMESTAMPED
 CUTTER_SUBATTRIBUTES=/tmp/CUTTER_SUBATTRIBUTES
+GEOCUTTER_ATTRIBUTES=/tmp/GEOCUTTER_ATTRIBUTES
 KAFKA_BOOTSTRAP=my-cluster-kafka-bootstrap:9092
 KAFKACAT_ATTRIBUTES=/tmp/KAFKACAT_ATTRIBUTES
 KAFKACAT_ATTRIBUTES_SORTED=/tmp/KAFKACAT_ATTRIBUTES_SORTED
@@ -22,6 +23,7 @@ KAFKACAT_ENTITY_PLASMACUTTER_SORTED=/tmp/KAFKACAT_ENTITY_PLASMACUTTER_SORTED
 KAFKACAT_ENTITY_PLASMACUTTER_NAME=plasmacutter_test
 KAFKACAT_ENTITY_PLASMACUTTER_TOPIC=iff.ngsild.entities
 PLASMACUTTER_ID=urn:plasmacutter-test:12345
+GEOCUTTER_ID=urn:geocutter-test:12345
 cat << EOF > ${CUTTER}
 {
     "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
@@ -181,6 +183,49 @@ cat << EOF > ${CUTTER_SUBATTRIBUTES}
 }
 EOF
 
+cat << EOF > ${GEOCUTTER_ATTRIBUTES}
+{
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "id": "${GEOCUTTER_ID}",
+    "type": "https://industry-fusion.com/types/v0.9/${KAFKACAT_ENTITY_PLASMACUTTER_NAME}",
+    "https://uri.etsi.org/ngsi-ld/location": [
+        {
+            "type": "GeoProperty",
+            "unitCode": "MTR",
+            "value": {
+                "type": "Point",
+                "coordinates": [13.3698, 52.5163]
+            },
+            "datasetId": "urn:state_on"
+        },
+        {
+            "type": "GeoProperty",
+              "value": {
+                "type": "Point",
+                "coordinates": [-10.12, 5.5163]
+            }
+        }
+    ],
+    "relativeOperationalSpace": {
+            "type": "GeoProperty",
+            "unitCode": "MTR",
+            "crs": "local",
+            "value": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [-10.0, -10.0],
+                        [10.0, -10.0],
+                        [10.0, 10.0],
+                        [-10.0, 10.0],
+                        [-10.0, -10.0]
+                    ]
+                ]
+            }
+    }
+}
+EOF
+
 compare_create_attributes_timestamps() {
     cat << EOF | diff "$1" - >&3
 1673140235555
@@ -195,9 +240,9 @@ compare_create_attributes() {
 {"attributeValue":"urn:filter-test:12345","datasetId":"@none","entityId":"urn:plasmacutter-test:12345","id":"urn:plasmacutter-test:12345\\\\715fe7eb6833a04d08b433d3","name":"https://industry-fusion.com/types/v0.9/hasFilter","nodeType":"@id","synced":true,"type":"https://uri.etsi.org/ngsi-ld/Relationship"}
 {"attributeValue":"urn:workpiece-test:23456","datasetId":"@none","entityId":"urn:plasmacutter-test:12345","id":"urn:plasmacutter-test:12345\\\\6114697c79dec3f570cd2d19","name":"https://industry-fusion.com/types/v0.9/hasWorkpiece","nodeType":"@id","synced":true,"type":"https://uri.etsi.org/ngsi-ld/Relationship"}
 {"attributeValue":"urn:workpiece-test:12345","datasetId":"urn:workpiece-test:12345-ZZZ","entityId":"urn:plasmacutter-test:12345","id":"urn:plasmacutter-test:12345\\\\882d5719144799b508cc9140","name":"https://industry-fusion.com/types/v0.9/hasWorkpiece","nodeType":"@id","synced":true,"type":"https://uri.etsi.org/ngsi-ld/Relationship"}
-{"attributeValue":"{\"@type\":[\"https://industry-fusion.com/types/v0.9/myJsonType\"],\"https://industry-fusion.com/types/v0.9/my\":[{\"@value\":\"json2\"}]}","datasetId":"@none","entityId":"urn:plasmacutter-test:12345","id":"urn:plasmacutter-test:12345\\\\1f19b4954c2fa90c9c5aab69","name":"https://industry-fusion.com/types/v0.9/jsonValueArray","nodeType":"@json","synced":true,"type":"https://uri.etsi.org/ngsi-ld/Property","valueType":["https://industry-fusion.com/types/v0.9/myJsonType"]}
+{"attributeValue":"{\"@type\":[\"https://industry-fusion.com/types/v0.9/myJsonType\"],\"https://industry-fusion.com/types/v0.9/my\":[{\"@value\":\"json2\"}]}","datasetId":"@none","entityId":"urn:plasmacutter-test:12345","id":"urn:plasmacutter-test:12345\\\\1f19b4954c2fa90c9c5aab69","name":"https://industry-fusion.com/types/v0.9/jsonValueArray","nodeType":"@json","synced":true,"type":"https://uri.etsi.org/ngsi-ld/Property","valueType":"https://industry-fusion.com/types/v0.9/myJsonType"}
 {"attributeValue":"{\"https://industry-fusion.com/types/v0.9/my\":[{\"@value\":\"json1\"}]}","datasetId":"urn:json-value-test:json1","entityId":"urn:plasmacutter-test:12345","id":"urn:plasmacutter-test:12345\\\\2d82376db95502ccb2d95c08","name":"https://industry-fusion.com/types/v0.9/jsonValueArray","nodeType":"@json","synced":true,"type":"https://uri.etsi.org/ngsi-ld/Property"}
-{"attributeValue":"{\"@type\":[\"https://industry-fusion.com/types/v0.9/myJsonType\"],\"https://industry-fusion.com/types/v0.9/my\":[{\"@value\":\"json\"}]}","datasetId":"@none","entityId":"urn:plasmacutter-test:12345","id":"urn:plasmacutter-test:12345\\\\22feacb2a08bb41caebdb141","name":"https://industry-fusion.com/types/v0.9/jsonValue","nodeType":"@json","synced":true,"type":"https://uri.etsi.org/ngsi-ld/Property","valueType":["https://industry-fusion.com/types/v0.9/myJsonType"]}
+{"attributeValue":"{\"@type\":[\"https://industry-fusion.com/types/v0.9/myJsonType\"],\"https://industry-fusion.com/types/v0.9/my\":[{\"@value\":\"json\"}]}","datasetId":"@none","entityId":"urn:plasmacutter-test:12345","id":"urn:plasmacutter-test:12345\\\\22feacb2a08bb41caebdb141","name":"https://industry-fusion.com/types/v0.9/jsonValue","nodeType":"@json","synced":true,"type":"https://uri.etsi.org/ngsi-ld/Property","valueType":"https://industry-fusion.com/types/v0.9/myJsonType"}
 {"attributeValue":"ON","datasetId":"@none","entityId":"urn:plasmacutter-test:12345","id":"urn:plasmacutter-test:12345\\\\4bf8a2c53e468ed60ad7ac44","name":"https://industry-fusion.com/types/v0.9/multiState","nodeType":"@value","synced":true,"type":"https://uri.etsi.org/ngsi-ld/Property","valueType":"https://industry-fusion.com/types/v0.9/multiStateType"}
 {"attributeValue":"OFF","datasetId":"urn:multistate-test:off","entityId":"urn:plasmacutter-test:12345","id":"urn:plasmacutter-test:12345\\\\670a3d03d2f519573f495af1","name":"https://industry-fusion.com/types/v0.9/multiState","nodeType":"@value","synced":true,"type":"https://uri.etsi.org/ngsi-ld/Property"}
 {"attributeValue":"OFF","datasetId":"@none","entityId":"urn:plasmacutter-test:12345","id":"urn:plasmacutter-test:12345\\\\6e27e969d7144bb8bcc17e7a","name":"https://industry-fusion.com/types/v0.9/state","nodeType":"@value","synced":true,"type":"https://uri.etsi.org/ngsi-ld/Property"}
@@ -243,6 +288,15 @@ compare_subattributes() {
 {"attributeValue":"OFF","datasetId":"urn:state_off","entityId":"urn:plasmacutter-test:12345","id":"urn:plasmacutter-test:12345\\\\436a09c26ec3fb1a252c6384","name":"https://industry-fusion.com/types/v0.9/state","nodeType":"@value","synced":true,"type":"https://uri.etsi.org/ngsi-ld/Property"}
 {"attributeValue":"OFFOFF","datasetId":"+=-urn:state_off","entityId":"urn:plasmacutter-test:12345","id":"urn:plasmacutter-test:12345\\\\822584b81b5e26be88a16ebd","name":"https://industry-fusion.com/types/v0.9/state","nodeType":"@value","synced":true,"type":"https://uri.etsi.org/ngsi-ld/Property"}
 {"attributeValue":"ON","datasetId":"urn:state_on","entityId":"urn:plasmacutter-test:12345","id":"urn:plasmacutter-test:12345\\\\0688fd1bed196dfd63ebce11","name":"https://industry-fusion.com/types/v0.9/state","nodeType":"@value","synced":true,"type":"https://uri.etsi.org/ngsi-ld/Property"}
+EOF
+}
+
+compare_geoattributes() {
+    cat << EOF | diff "$1" - >&3
+{"attributeValue":"local","datasetId":"@none","entityId":"urn:geocutter-test:12345","id":"urn:geocutter-test:12345\\\\0f4aacc220af630349e4f439","name":"https://uri.etsi.org/ngsi-ld/default-context/crs","nodeType":"@value","parentId":"urn:geocutter-test:12345\\\\7b1e3d672b471e5711346193","synced":true,"type":"https://uri.etsi.org/ngsi-ld/Property"}
+{"attributeValue":"{\"@type\":[\"https://purl.org/geojson/vocab#Polygon\"],\"https://purl.org/geojson/vocab#coordinates\":[{\"@list\":[{\"@list\":[{\"@list\":[{\"@value\":-10},{\"@value\":-10}]},{\"@list\":[{\"@value\":10},{\"@value\":-10}]},{\"@list\":[{\"@value\":10},{\"@value\":10}]},{\"@list\":[{\"@value\":-10},{\"@value\":10}]},{\"@list\":[{\"@value\":-10},{\"@value\":-10}]}]}]}]}","datasetId":"@none","entityId":"urn:geocutter-test:12345","id":"urn:geocutter-test:12345\\\\7b1e3d672b471e5711346193","name":"https://uri.etsi.org/ngsi-ld/default-context/relativeOperationalSpace","nodeType":"@json","synced":true,"type":"https://uri.etsi.org/ngsi-ld/GeoProperty","unitCode":"MTR","valueType":"https://purl.org/geojson/vocab#Polygon"}
+{"attributeValue":"{\"@type\":[\"https://purl.org/geojson/vocab#Point\"],\"https://purl.org/geojson/vocab#coordinates\":[{\"@list\":[{\"@value\":-10.12},{\"@value\":5.5163}]}]}","datasetId":"@none","entityId":"urn:geocutter-test:12345","id":"urn:geocutter-test:12345\\\\af65fbaf9b16ce7e4077e96b","name":"https://uri.etsi.org/ngsi-ld/location","nodeType":"@json","synced":true,"type":"https://uri.etsi.org/ngsi-ld/GeoProperty","valueType":"https://purl.org/geojson/vocab#Point"}
+{"attributeValue":"{\"@type\":[\"https://purl.org/geojson/vocab#Point\"],\"https://purl.org/geojson/vocab#coordinates\":[{\"@list\":[{\"@value\":13.3698},{\"@value\":52.5163}]}]}","datasetId":"urn:state_on","entityId":"urn:geocutter-test:12345","id":"urn:geocutter-test:12345\\\\630176de6aa43b22b8e89219","name":"https://uri.etsi.org/ngsi-ld/location","nodeType":"@json","synced":true,"type":"https://uri.etsi.org/ngsi-ld/GeoProperty","unitCode":"MTR","valueType":"https://purl.org/geojson/vocab#Point"}
 EOF
 }
 
@@ -360,7 +414,6 @@ teardown(){
 
 }
 
-
 @test "verify debezium bridge sends subattributes" {
     $SKIP
     password=$(get_password)
@@ -379,5 +432,26 @@ teardown(){
     jq -c 'to_entries | sort_by(.key) | from_entries' ${KAFKACAT_ATTRIBUTES} > ${KAFKACAT_ATTRIBUTES_SORTED}
     echo "# Compare ATTRIBUTES"
     run compare_subattributes ${KAFKACAT_ATTRIBUTES_SORTED}
+    [ "$status" -eq 0 ]
+}
+
+@test "verify debezium bridge sends geoattributes" {
+    $SKIP
+    password=$(get_password)
+    token=$(get_token)
+    delete_ngsild "$token" "$GEOCUTTER_ID" || echo "Could not delete $GEOCUTTER_ID. But that is okay."
+    sleep 2
+    (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ATTRIBUTES}) &
+    echo "# launched kafkacat for debezium updates, wait some time to let it connect"
+    sleep 2
+    create_ngsild "$token" "$GEOCUTTER_ATTRIBUTES"
+    echo "# Sent ngsild updates, sleep 5s to let debezium bridge react"
+    sleep 2
+    echo "# now killing kafkacat and evaluate result"
+    killall kafkacat
+    LC_ALL="en_US.UTF-8" sort -o ${KAFKACAT_ATTRIBUTES} ${KAFKACAT_ATTRIBUTES}
+    jq -c 'to_entries | sort_by(.key) | from_entries' ${KAFKACAT_ATTRIBUTES} > ${KAFKACAT_ATTRIBUTES_SORTED}
+    echo "# Compare ATTRIBUTES"
+    run compare_geoattributes ${KAFKACAT_ATTRIBUTES_SORTED}
     [ "$status" -eq 0 ]
 }

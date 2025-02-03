@@ -13,6 +13,7 @@ POSTGRES_SECRET=ngb.acid-cluster.credentials.postgresql.acid.zalan.do
 ENTITY=/tmp/entity.txt
 ATTRIBUTES_PROPERTY=/tmp/property.txt
 ATTRIBUTES_PROPERTY2=/tmp/property2.txt
+ATTRIBUTES_PROPERTY3=/tmp/property3.txt
 ATTRIBUTES_RELATIONSHIP=/tmp/relationship.txt
 ATTRIBUTES_TOPIC=iff.ngsild.attributes
 ENTITIES_TOPIC=iff.ngsild.entities
@@ -22,14 +23,19 @@ URN=urn:iff:test1:${RANDOMID}
 URN2=urn:iff:test2:${RANDOMID}
 URN3=urn:iff:test3:${RANDOMID}
 URN4=urn:iff:test4:${RANDOMID}
+URN5=urn:iff:test5:${RANDOMID}
 STATE=https://industry-fusion.com/types/v0.9/state
 REL=https://industry-fusion.com/types/v0.9/relationship
+GEO=https://industry-fusion.com/types/v0.9/geoproperty
 IDSTATE="${URN}\\\\${STATE}"
 IDSTATE2="${URN4}\\\\${STATE}"
 IDREL="${URN2}\\\\${REL}"
+IDGEO="${URN5}\\\\${GEO}"
 VALUE="state"
 VALUE2="1"
+VALUE3='{\"@type\":[\"https://purl.org/geojson/vocab#Point\"],\"https://purl.org/geojson/vocab#coordinates\":[{\"@list\":[{\"@value\":13.3698},{\"@value\":52.5163}]}]}'
 PROPERTY=https://uri.etsi.org/ngsi-ld/Property
+GEOPROPERTY=https://uri.etsi.org/ngsi-ld/GeoProperty
 RELATIONSHIP=https://uri.etsi.org/ngsi-ld/Relationship
 POSTGRES_PASSWORD=$(kubectl -n ${IFFNAMESPACE} get secret/${POSTGRES_SECRET} -o jsonpath='{.data.password}'| base64 -d)
 TSDB_RESULT=/tmp/TSDB_RESULT
@@ -58,6 +64,19 @@ cat << EOF > ${ATTRIBUTES_PROPERTY2}
     "index": 0
 }
 EOF
+
+cat << EOF > ${ATTRIBUTES_PROPERTY3}
+{
+    "id": "${IDGEO}",
+    "entityId": "${URN5}",
+    "name": "${GEO}",
+    "type": "${GEOPROPERTY}",
+    "attributeValue": "${VALUE3}",
+    "nodeType": "@json",
+    "valueType": "https://purl.org/geojson/vocab#Point"
+}
+EOF
+
 
 cat << EOF > ${ATTRIBUTES_RELATIONSHIP}
 {
@@ -123,7 +142,7 @@ check_tsdb_sample1() {
     "lang": null,
     "nodeType": "@id",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "state",
     "valueType": null
   }
@@ -148,7 +167,7 @@ check_tsdb_sample2() {
     "lang": null,
     "nodeType": "@id",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "$URN3",
     "valueType": null
   }
@@ -170,7 +189,7 @@ check_tsdb_sample3() {
     "lang": null,
     "nodeType": "@value",
     "parentId": null,
-    "unitType": null,
+    "unitCode": null,
     "value": "$VALUE2",
     "valueType": "http://www.w3.org/2001/XMLSchema#string"
   }
@@ -190,6 +209,28 @@ check_tsdb_sample4() {
     "deleted": false,
     "id": "$URN",
     "type": "https://example.com/type"
+  }
+]
+EOF
+}
+
+check_tsdb_sample5() {
+    URN=$2
+    cat << EOF | diff "$1" - >&3
+[
+  {
+    "attributeId": "https://industry-fusion.com/types/v0.9/geoproperty",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/GeoProperty",
+    "datasetId": "@none",
+    "deleted": false,
+    "entityId": "$URN5",
+    "id": "$IDGEO",
+    "lang": null,
+    "nodeType": "@json",
+    "parentId": null,
+    "unitCode": null,
+    "value": "$VALUE3",
+    "valueType": "https://purl.org/geojson/vocab#Point"
   }
 ]
 EOF
@@ -253,5 +294,17 @@ teardown(){
     cat "${TSDB_RESULT}"
     echo "# Now checking result."
     run check_tsdb_sample4 "$TSDB_RESULT" "$URN"
+    [ "$status" -eq "0" ]
+}
+
+@test "verify timescaledb-bridge is forwarding GeoProperty" {
+    $SKIP
+    echo "# Sending property to Kafka"
+    send_to_kafka_bridge ${ATTRIBUTES_PROPERTY3} ${ATTRIBUTES_TOPIC}
+    sleep 2
+    get_datapoints "$URN5" "${TSDB_RESULT}"
+    cat "${TSDB_RESULT}"
+    echo "# Now checking result."
+    run check_tsdb_sample5 "$TSDB_RESULT" "$URN5"
     [ "$status" -eq "0" ]
 }
