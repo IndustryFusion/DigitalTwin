@@ -500,7 +500,8 @@ if __name__ == '__main__':
         h.parse(imprt)
         g += h
         for k, v in list(h.namespaces()):
-            g.bind(k, v)
+            if k != '':
+                g.bind(k, v)
 
     types = []
     basens = next(Namespace(uri) for prefix, uri in list(g.namespaces()) if prefix == 'base')
