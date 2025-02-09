@@ -35,7 +35,8 @@ optional arguments:
 ### Create Default Specs
 For local testing
 
-     bash ./translate_default_specs_local.bash
+    make -f translate_default_nodesets.make
+
 
 ### Examples
 
