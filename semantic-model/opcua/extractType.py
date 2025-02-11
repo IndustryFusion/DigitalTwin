@@ -365,8 +365,9 @@ def scan_entitiy_recursive(node, id, instance, node_id, o):
         is_placeholder = False
     if is_placeholder:
         if original_attributename is None:
-            print(f"Warning: No original_attributename given but datasetId neeeded for {decoded_attributename}. \
-Chosing default datasetId.")
+            print(f"Warning: Cannot find proper match in SHACL description for placeholder value \
+{decoded_attributename}. Will keep it with default datasetId. But it is very likely that the SHACL validation \
+will flag this.")
             datasetId = "@none"
         else:
             datasetId = f'{datasetid_urn}:{original_attributename}'
