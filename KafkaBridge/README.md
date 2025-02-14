@@ -79,18 +79,29 @@ Concept TBD.
 
 ## TimescaledDB Bridge
 
-This service which listens at specific Kafka topic (iff.ngsild.attributes) and forwards NGSI-LD data to timescaledb(tsdb) running in postgres database.
-- Currently it is disabled by default. To enable please remove timescaledb deployment file link from .helmignore of kafkabridge charts
+This service which listens at specific Kafka topic ("entityTopic": "iff.ngsild.entities","attributeTopic": "iff.ngsild.attributes") and forwards NGSI-LD data to timescaledb(tsdb) running in postgres database.
 
 * entities: Array of valid [NGSI-LD](https://www.etsi.org/deliver/etsi_gs/CIM/001_099/009/01.05.01_60/gs_CIM009v010501p.pdf) entities
 
-Data stored in the hypertable "entityhistory" of timescaledb database "tsdb" in below format:
+Data stored in the hypertable "entities" and "attributes" of timescaledb database "tsdb" in below format as per received data on kafka topic  "entityTopic": "iff.ngsild.entities","attributeTopic": "iff.ngsild.attributes" respectively:
 
 ```
-tsdb=# select * from entityhistory;
-         observedAt         |         modifiedAt         |      entityId      |                    attributeId                    |               attributeType                |                              datasetId                              | nodeType |                      value                       | index 
-----------------------------+----------------------------+--------------------+--------------------------------------------------+-------------------------------------------+---------------------------------------------------------------------+----------+--------------------------------------------------+-------
- 2023-07-18 09:40:24.22+00  | 2023-07-18 09:40:24.22+00  | urn:plasmacutter:1 | https://industry-fusion.com/types/v0.9/state     | https://uri.etsi.org/ngsi-ld/Property     | urn:plasmacutter:1\https://industry-fusion.com/types/v0.9/state     | @value   |  https://industry-fusion.com/types/v0.9/state_OFF                                         |     0
- 2023-07-18 09:38:15.559+00 | 2023-07-18 09:38:15.559+00 | urn:plasmacutter:1 | https://industry-fusion.com/types/v0.9/hasFilter | https://uri.etsi.org/ngsi-ld/Relationship | urn:plasmacutter:1\https://industry-fusion.com/types/v0.9/hasFilter | @id      | urn:filter:1                                     |     0
+tsdb=# select * from entities;
+                   id                   |         observedAt         |         modifiedAt         |                          type                           | deleted
+----------------------------------------+----------------------------+----------------------------+---------------------------------------------------------+---------
+ urn:iff:test1:5cFOyyIHca8ylag0AJsulNnM | 2025-01-24 14:02:44.769+00 | 2025-01-24 14:02:44.769+00 | https://example.com/type                                | f
+ urn:iff:test:identification1           | 2025-01-24 14:32:26.849+00 | 2025-01-24 14:32:26.849+00 | https://industry-fusion.org/eclass#0173-1#01-ACK991#016 | f
+ urn:iff:test:filter1                   | 2025-01-24 14:32:26.86+00  | 2025-01-24 14:32:26.86+00  | https://industry-fusion.org/eclass#0173-1#01-ACK991#016 | f
+ urn:iff:test:identification2           | 2025-01-24 14:32:26.862+00 | 2025-01-24 14:32:26.862+00 | https://industry-fusion.org/eclass#0173-1#01-ACK991#016 | f
+ urn:iff:test:cartridge1                | 2025-01-24 14:32:26.865+00 | 2025-01-24 14:32:26.865+00 | https://industry-fusion.org/eclass#0173-1#01-AKE795#017 | f
+ urn:iff:test:filter1                   | 2025-01-24 
+
+tsdb=# select * from attributes;
+                                             id                                             | parentId |         observedAt         |         modifiedAt         |                entityId                |                      attributeId                      |               attributeType               | datasetId | nodeType |                 value                  |                valueType                | unitType | lang | deleted
+--------------------------------------------------------------------------------------------+----------+----------------------------+----------------------------+----------------------------------------+-------------------------------------------------------+-------------------------------------------+-----------+----------+----------------------------------------+-----------------------------------------+----------+------+---------
+ urn:iff:test2:YhVCJOLd3sCJo3U1IqzoYCQU\https://industry-fusion.com/types/v0.9/relationship |          | 2025-01-24 14:02:34.342+00 | 2025-01-24 14:02:34.342+00 | urn:iff:test2:YhVCJOLd3sCJo3U1IqzoYCQU | https://industry-fusion.com/types/v0.9/relationship   | https://uri.etsi.org/ngsi-ld/Relationship | @none     | @id      | urn:iff:test3:YhVCJOLd3sCJo3U1IqzoYCQU |                                         |          |      | f
+ urn:iff:test4:Nrjj9WXMJsS2T3ILDX7c7b90\https://industry-fusion.com/types/v0.9/state        |          | 2025-01-24 14:02:39.581+00 | 2025-01-24 14:02:39.581+00 | urn:iff:test4:Nrjj9WXMJsS2T3ILDX7c7b90 | https://industry-fusion.com/types/v0.9/state          | https://uri.etsi.org/ngsi-ld/Property     | @none     | @value   | 1                                      | http://www.w3.org/2001/XMLSchema#string |          |      | f
+ urn:iff:test:filter1\https://industry-fusion.org/base/v0/hasIdentification                 |          | 2025-01-24 14:32:25.526+00 | 2025-01-24 14:32:25.526+00 | urn:iff:test:filter1                   | https://industry-fusion.org/base/v0/hasIdentification | https://uri.etsi.org/ngsi-ld/Relationship | @none     | @id      | urn:iff:test:identification2           |                                         |          |      | f
+
    
 ```
