@@ -11,9 +11,11 @@ POSTGRES_USERNAME=ngb
 POSTGRES_DATABASE=tsdb
 POSTGRES_SECRET=ngb.acid-cluster.credentials.postgresql.acid.zalan.do
 ENTITY=/tmp/entity.txt
+ENTITY2=/tmp/entity2.txt
 ATTRIBUTES_PROPERTY=/tmp/property.txt
 ATTRIBUTES_PROPERTY2=/tmp/property2.txt
 ATTRIBUTES_PROPERTY3=/tmp/property3.txt
+ATTRIBUTES_PROPERTY4=/tmp/property4.txt
 ATTRIBUTES_RELATIONSHIP=/tmp/relationship.txt
 ATTRIBUTES_TOPIC=iff.ngsild.attributes
 ENTITIES_TOPIC=iff.ngsild.entities
@@ -77,6 +79,17 @@ cat << EOF > ${ATTRIBUTES_PROPERTY3}
 }
 EOF
 
+cat << EOF > ${ATTRIBUTES_PROPERTY4}
+{
+    "id": "${IDSTATE}",
+    "entityId": "${URN}",
+    "name": "${STATE}",
+    "type": "${PROPERTY}",
+    "nodeType": "@id",
+    "datasetId": "@none",
+    "deleted": true
+}
+EOF
 
 cat << EOF > ${ATTRIBUTES_RELATIONSHIP}
 {
@@ -94,6 +107,14 @@ cat << EOF > ${ENTITY}
 {
     "id": "${URN}",
     "type": "https://example.com/type"
+}
+EOF
+
+cat << EOF > ${ENTITY2}
+{
+    "id": "${URN}",
+    "type": "https://example.com/type",
+    "deleted": true
 }
 EOF
 
@@ -236,6 +257,47 @@ check_tsdb_sample5() {
 EOF
 }
 
+# check s
+# $1: retrieved tsdb objects
+# $2: expected tsdb objects
+check_tsdb_sample6() {
+    URN=$2
+    cat << EOF | diff "$1" - >&3
+[
+  {
+    "attributeId": "https://industry-fusion.com/types/v0.9/state",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
+    "datasetId": "@none",
+    "deleted": true,
+    "entityId": "$URN",
+    "id": "$IDSTATE",
+    "lang": null,
+    "nodeType": "@id",
+    "parentId": null,
+    "unitCode": null,
+    "value": null,
+    "valueType": null
+  }
+]
+EOF
+}
+
+# check entity
+# $1: retrieved tsdb objects
+# $2: expected tsdb objects
+check_tsdb_sample7() {
+    URN=$2
+    cat << EOF | diff "$1" - >&3
+[
+  {
+    "deleted": true,
+    "id": "$URN",
+    "type": "https://example.com/type"
+  }
+]
+EOF
+}
+
 setup() {
     # shellcheck disable=SC2086
     [ "$DEBUG" = "true" ] || (exec ${SUDO} kubefwd -n ${IFFNAMESPACE} -l "app.kubernetes.io/name in (kafka)" svc) &
@@ -306,5 +368,29 @@ teardown(){
     cat "${TSDB_RESULT}"
     echo "# Now checking result."
     run check_tsdb_sample5 "$TSDB_RESULT" "$URN5"
+    [ "$status" -eq "0" ]
+}
+
+@test "verify timescaledb-bridge is forwarding deleted Property" {
+    $SKIP
+    echo "# Sending property to Kafka"
+    send_to_kafka_bridge ${ATTRIBUTES_PROPERTY4} ${ATTRIBUTES_TOPIC}
+    sleep 2
+    get_datapoints "$URN" "${TSDB_RESULT}"
+    cat "${TSDB_RESULT}"
+    echo "# Now checking result."
+    run check_tsdb_sample6 "$TSDB_RESULT" "$URN"
+    [ "$status" -eq "0" ]
+}
+
+@test "verify timescaledb-bridge is forwarding deleted entity" {
+    $SKIP
+    echo "# Sending property to Kafka"
+    send_to_kafka_bridge ${ENTITY2} ${ENTITIES_TOPIC}
+    sleep 2
+    get_entity_datapoints "$URN" "${TSDB_RESULT}"
+    cat "${TSDB_RESULT}"
+    echo "# Now checking result."
+    run check_tsdb_sample7 "$TSDB_RESULT" "$URN"
     [ "$status" -eq "0" ]
 }

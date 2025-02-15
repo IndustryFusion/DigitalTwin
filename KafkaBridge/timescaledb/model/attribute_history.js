@@ -48,7 +48,8 @@ const attributeHistoryTable = sequelize.define(config.timescaledb.attributeTable
 
   nodeType: { type: Sequelize.TEXT, allowNull: false },
 
-  value: { type: Sequelize.TEXT, allowNull: false },
+  // Value can be null, when row is deleted
+  value: { type: Sequelize.TEXT, allowNull: true },
 
   // In future can be used for literals value types
   valueType: { type: Sequelize.TEXT, allowNull: true },
