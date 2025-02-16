@@ -3,7 +3,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 from rdflib import Graph, Namespace, URIRef, Literal, BNode
 from rdflib.namespace import RDFS, XSD, OWL
-from lib.utils import RdfUtils, downcase_string, isNodeId, convert_to_json_type, idtype2String, extract_namespaces, get_datatype, attributename_from_type, get_default_value, normalize_angle_bracket_name, contains_both_angle_brackets, get_typename, get_common_supertype
+from lib.utils import RdfUtils, downcase_string, isNodeId, convert_to_json_type, idtype2String, extract_namespaces, get_datatype, attributename_from_type, get_default_value, get_value, normalize_angle_bracket_name, contains_both_angle_brackets, get_typename, get_common_supertype
 
 class TestUtils(unittest.TestCase):
 
@@ -94,6 +94,14 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(get_default_value(XSD.string), '')
         self.assertEqual(get_default_value(XSD.boolean), False)
 
+    def test_get_value(self):
+        """Test getting the converted value for a datatype."""
+        self.assertEqual(get_value('99', XSD.integer), int(99))
+        self.assertEqual(get_value('0.123', XSD.double), float(0.123))
+        self.assertEqual(get_value('hello', XSD.string), str('hello'))
+        self.assertEqual(get_value('True', XSD.boolean), True)
+        self.assertEqual(get_value('[ 0.0, 0.1 ]', XSD.boolean), [ 0.0, 0.1 ])
+        
     def test_normalize_angle_bracket_name(self):
         """Test normalizing a name by removing angle bracket content."""
         input_str = "example<test>123"
