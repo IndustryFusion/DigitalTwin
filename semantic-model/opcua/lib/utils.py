@@ -18,6 +18,7 @@ from urllib.parse import urlparse
 from rdflib.namespace import RDFS, XSD, OWL, RDF
 from rdflib import URIRef, Namespace, Graph
 from pathlib import Path
+import json
 import re
 import os
 
@@ -157,6 +158,14 @@ def get_default_value(datatype):
 
 
 def get_value(value, datatype):
+    # values can be arrays, so check first for arrays and do later the scalar
+    # transformations
+    try:
+        decoded = json.loads(value)
+        if isinstance(decoded, list):
+            return decoded
+    except:
+        pass
     if datatype == XSD.integer:
         return int(value)
     if datatype == XSD.double:
