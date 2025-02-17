@@ -16,7 +16,7 @@
 
 import random
 import string
-from rdflib import Graph, Namespace, Literal
+from rdflib import Graph, Namespace, Literal, XSD
 from rdflib.namespace import RDF
 import lib.utils as utils
 
@@ -34,7 +34,7 @@ class Bindings:
         randname = ''.join(random.choices(string.ascii_uppercase + string.digits, k=randnamelength))
         bindingiri = self.binding_namespace['binding_' + randname]
         mapiri = self.binding_namespace['map_' + randname]
-        dtype = next(g.objects(var_node, self.basens['hasDatatype']))
+        dtype = next(g.objects(var_node, self.basens['hasDatatype']), XSD.anyType)
         node_id = next(g.objects(var_node, self.basens['hasNodeId']))
         idtype = next(g.objects(var_node, self.basens['hasIdentifierType']))
         ns = next(g.objects(var_node, self.basens['hasNamespace']))

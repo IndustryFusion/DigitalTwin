@@ -138,6 +138,7 @@ class Shacl:
     def get_shacl_iri_and_contentclass(self, g, node, shacl_rule):
         try:
             data_type = utils.get_datatype(g, node, self.basens)
+            shacl_rule['orig_datatype'] = data_type
             shacl_type, shacl_pattern = JsonLd.map_datatype_to_jsonld(data_type, self.opcuans)
             shacl_rule['pattern'] = shacl_pattern
             if data_type is not None:
@@ -166,6 +167,7 @@ class Shacl:
             shacl_rule['contentclass'] = None
             shacl_rule['datatype'] = None
             shacl_rule['isAbstract'] = None
+            shacl_rule['orig_datatype'] = None
 
     def get_modelling_rule_and_path(self, name, target_class, attributeclass, prefix):
         bindings = {'targetclass': target_class, 'name': Literal(name), 'attributeclass': attributeclass,
