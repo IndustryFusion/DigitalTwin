@@ -31,6 +31,7 @@ IA_NODESET                := https://raw.githubusercontent.com/OPCFoundation/UA-
 MACHINERY_NODESET         := https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/$(NODESET_VERSION)/Machinery/Opc.Ua.Machinery.NodeSet2.xml
 MACHINERY_PROCESSVALUES_NODESET := https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/$(NODESET_VERSION)/Machinery/ProcessValues/opc.ua.machinery.processvalues.xml
 MACHINERY_JOBS_NODESET    := https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/$(NODESET_VERSION)/ISA95-JOBCONTROL/opc.ua.isa95-jobcontrol.nodeset2.xml
+MACHINERY_RESULT_NODESET    :=  https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/$(NODESET_VERSION)/Machinery/Result/Opc.Ua.Machinery.Result.NodeSet2.xml
 LASERSYSTEMS_NODESET      := https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/$(NODESET_VERSION)/LaserSystems/Opc.Ua.LaserSystems.NodeSet2.xml
 MACHINERY_EXAMPLE_NODESET := https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/$(NODESET_VERSION)/Machinery/Opc.Ua.Machinery.Examples.NodeSet2.xml
 MACHINETOOL_NODESET       := https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/$(NODESET_VERSION)/MachineTool/Opc.Ua.MachineTool.NodeSet2.xml
@@ -152,6 +153,12 @@ MACHINERY_JOBS_ONTOLOGY      := machinery_jobs.ttl
 MACHINERY_JOBS_DEPENDENCIES  := $(BASE_ONTOLOGY) $(CORE_ONTOLOGY)
 MACHINERY_JOBS_OPTS          := -v http://example.com/v0.1/Machinery/Jobs -p machinery_jobs
 
+# MACHINERY_RESULT target
+MACHINERY_RESULT_NODESET_URL   := $(MACHINERY_RESULT_NODESET)
+MACHINERY_RESULT_ONTOLOGY      := machinery_result.ttl
+MACHINERY_RESULT_DEPENDENCIES  := $(BASE_ONTOLOGY) $(CORE_ONTOLOGY)
+MACHINERY_RESULT_OPTS          := -v http://example.com/v0.1/Machinery/Result -p machinery_result
+
 # PACKML target
 PACKML_NODESET_URL   := $(PACKML_NODESET)
 PACKML_ONTOLOGY      := packml.ttl
@@ -165,7 +172,7 @@ ALL_TARGETS := $(CORE_ONTOLOGY) $(DEVICES_ONTOLOGY) $(IA_ONTOLOGY) $(MACHINERY_O
 	$(PUMPS_ONTOLOGY) $(PUMPEXAMPLE_ONTOLOGY) $(MACHINETOOL_ONTOLOGY) $(LASERSYSTEMS_ONTOLOGY) \
 	$(LASERSYSTEMSEXAMPLE_ONTOLOGY) $(MACHINETOOLEXAMPLE_ONTOLOGY) $(MACHINERYEXAMPLE_ONTOLOGY) \
 	$(DICTIONARY_IRDI_ONTOLOGY) $(PADIM_ONTOLOGY) $(MACHINERY_PROCESSVALUES_ONTOLOGY) \
-	$(MACHINERY_JOBS_ONTOLOGY) $(PACKML_ONTOLOGY)
+	$(MACHINERY_JOBS_ONTOLOGY) $(PACKML_ONTOLOGY) $(MACHINERY_RESULT_ONTOLOGY)
 
 .PHONY: all clean
 all: $(ALL_TARGETS)
