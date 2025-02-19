@@ -2,7 +2,8 @@
 import unittest
 from unittest.mock import MagicMock, patch
 from rdflib import Graph, Namespace, URIRef, Literal, BNode
-from rdflib.namespace import RDF, RDFS, SH
+from rdflib.namespace import RDF, RDFS, SH, XSD
+from rdflib.collection import Collection
 from urllib.parse import urlparse
 from lib.shacl import Shacl
 import lib.utils as utils
@@ -15,7 +16,8 @@ class TestShacl(unittest.TestCase):
         self.namespace_prefix = "http://example.org/"
         self.basens = Namespace("http://example.org/base/")
         self.opcuans = Namespace("http://example.org/opcua/")
-        self.shacl_instance = Shacl(self.namespace_prefix, self.basens, self.opcuans)
+        data_graph = Graph()
+        self.shacl_instance = Shacl(data_graph, self.namespace_prefix, self.basens, self.opcuans)
 
     def test_create_shacl_type(self):
         """Test creating a SHACL type in the RDF graph."""
@@ -25,6 +27,17 @@ class TestShacl(unittest.TestCase):
         triples = list(self.shacl_instance.get_graph())
         self.assertIn((shapename, RDF.type, SH.NodeShape), triples)
         self.assertIn((shapename, SH.targetClass, URIRef(targetclass)), triples)
+
+    def test_get_array_validation_shape(self):
+        """Test create array validation shape"""
+        datatype = [XSD.integer]
+        pattern = None
+        bnode = BNode()
+        collection = Collection(self.shacl_instance.data_graph, bnode, [Literal(2), Literal(3)])
+        property_node = self.shacl_instance.get_array_validation_shape(datatype, pattern, None, bnode)
+        _, _, property_shape = next(self.shacl_instance.shaclg.triples((property_node, SH.property, None)))
+        _, _, array_length = next(self.shacl_instance.shaclg.triples((property_shape, SH.maxCount, None)))
+        self.assertEqual(int(array_length), 6)
 
     def test_create_shacl_property(self):
         """Test creating a SHACL property in the RDF graph."""
@@ -67,7 +80,7 @@ class TestShacl(unittest.TestCase):
         # Additional test cases to improve coverage
 
         # Case 1: Test with is_array = True, is_subcomponent = True, and placeholder_pattern provided
-        self.shacl_instance = Shacl(self.namespace_prefix, self.basens, self.opcuans)  # Reset instance
+        self.shacl_instance = Shacl(Graph(), self.namespace_prefix, self.basens, self.opcuans)  # Reset instance
         placeholder_pattern = "PatternExample"
         is_array = True
         is_subcomponent = True
@@ -91,7 +104,7 @@ class TestShacl(unittest.TestCase):
         self.assertIn((property_bnode, RDF.type, self.basens['SubComponentRelationship']), triples)
 
         # Case 2: Test with is_property = False, is_iri = True, and contentclass provided
-        self.shacl_instance = Shacl(self.namespace_prefix, self.basens, self.opcuans)  # Reset instance
+        self.shacl_instance = Shacl(Graph(), self.namespace_prefix, self.basens, self.opcuans)  # Reset instance
         is_property = True
         is_iri = True
         contentclass = URIRef("http://example.org/ContentClass")
@@ -112,7 +125,7 @@ class TestShacl(unittest.TestCase):
         self.assertIn((innerproperty_bnode, SH['class'], contentclass), triples)
 
         # Case 3: Test with is_subcomponent = False to ensure PeerRelationship type is used
-        self.shacl_instance = Shacl(self.namespace_prefix, self.basens, self.opcuans)  # Reset instance
+        self.shacl_instance = Shacl(Graph(), self.namespace_prefix, self.basens, self.opcuans)  # Reset instance
         is_subcomponent = False
         is_property = False
         self.shacl_instance.create_shacl_property(shapename, path, optional, is_array, is_property, is_iri, contentclass, datatype, is_subcomponent)

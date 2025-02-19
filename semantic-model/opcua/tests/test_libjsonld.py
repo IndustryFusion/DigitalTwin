@@ -67,24 +67,24 @@ class TestJsonLd(unittest.TestCase):
         """Test mapping OPC UA data types to JSON-LD data types."""
         # Boolean type test
         result, _ = JsonLd.map_datatype_to_jsonld(self.opcuans['Boolean'], self.opcuans)
-        self.assertEqual(result, XSD.boolean)
+        self.assertEqual(result, [XSD.boolean])
 
         # Integer type test
         result, _ = JsonLd.map_datatype_to_jsonld(self.opcuans['Int32'], self.opcuans)
-        self.assertEqual(result, XSD.integer)
+        self.assertEqual(result, [XSD.integer])
 
         # Double type test
         result, _ = JsonLd.map_datatype_to_jsonld(self.opcuans['Double'], self.opcuans)
-        self.assertEqual(result, XSD.double)
+        self.assertEqual(result, [XSD.double])
+        
 
         # Unknown type test
         result, _ = JsonLd.map_datatype_to_jsonld(self.opcuans['UnknownType'], self.opcuans)
-        self.assertEqual(result, RDF.JSON)
+        self.assertEqual(result, [RDF.JSON])
         
-        # Test Number with regexp
+        # Test Number
         result, regexp = JsonLd.map_datatype_to_jsonld(self.opcuans['Number'], self.opcuans)
-        self.assertEqual(result, None)
-        self.assertEqual(regexp, '^(0|0\\.0)$')
+        self.assertEqual(result, [XSD.double, XSD.integer])
 
     @patch("lib.utils.idtype2String", return_value="i")
     def test_generate_node_id(self, mock_idtype2string):

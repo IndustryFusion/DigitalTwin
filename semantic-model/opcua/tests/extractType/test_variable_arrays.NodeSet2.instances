@@ -1,0 +1,77 @@
+[
+    {
+        "type": "http://my.test/BType",
+        "id": "urn:test:AlphaInstance:sub:i2012",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "uaentity:hasMyVariable2": {
+            "type": "Property",
+            "value": {
+                "@list": [
+                    0.0,
+                    1.0,
+                    2.0,
+                    3.0,
+                    4.0,
+                    5.0
+                ]
+            }
+        },
+        "uaentity:hasMyVariable5": {
+            "type": "Property",
+            "value": {
+                "@list": [
+                    "42"
+                ]
+            }
+        },
+        "uaentity:hasMyVariable4": {
+            "type": "Property",
+            "value": 42
+        },
+        "uaentity:hasMyVariable": {
+            "type": "Property",
+            "value": {
+                "@list": [
+                    0,
+                    1
+                ]
+            }
+        },
+        "uaentity:hasMyVariable6": {
+            "type": "Property",
+            "value": "42"
+        },
+        "uaentity:hasMyVariable3": {
+            "type": "Property",
+            "value": {
+                "@list": [
+                    true,
+                    false
+                ]
+            }
+        }
+    },
+    {
+        "type": "http://my.test/AlphaType",
+        "id": "urn:test:AlphaInstance",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "uaentity:hasC": {
+            "type": "Property",
+            "value": 0.0
+        },
+        "uaentity:hasB": [
+            {
+                "type": "Relationship",
+                "object": "urn:test:AlphaInstance:sub:i2012"
+            }
+        ],
+        "test:Y": {
+            "type": "Relationship",
+            "object": "urn:test:AlphaInstance:sub:i2012"
+        }
+    }
+]

@@ -79,21 +79,20 @@ class JsonLd:
                         opcuans['NormalizedString'],
                         opcuans['SemanticVersionString'],
                         opcuans['UriString']]
-        regexp_types = [opcuans['Number']]
-        regexp_map = {opcuans['Number']: '^(0|0\\.0)$'}
+        mixed_numeric_types = [opcuans['Number']]
         if data_type in boolean_types:
-            return XSD.boolean, None
+            return [XSD.boolean], None
         if data_type in integer_types:
-            return XSD.integer, None
+            return [XSD.integer], None
         if data_type in number_types:
-            return XSD.double, None
+            return [XSD.double], None
         if data_type in string_types:
-            return XSD.string, None
-        if data_type in regexp_types:
-            return None, regexp_map[data_type]
+            return [XSD.string], None
+        if data_type in mixed_numeric_types:
+            return [XSD.double, XSD.integer], None
         if data_type == opcuans['DateTime']:
-            return XSD.dateTime, None
-        return RDF.JSON, None
+            return [XSD.dateTime], None
+        return [RDF.JSON], None
 
     def generate_node_id(self, graph, rootentity, node, id):
         try:

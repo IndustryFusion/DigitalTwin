@@ -839,6 +839,7 @@ devices:nodei124 a opcua:MethodNodeClass ;
 
 devices:nodei125 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
@@ -850,6 +851,7 @@ devices:nodei125 a opcua:PropertyType,
 
 devices:nodei126 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 3 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
@@ -870,6 +872,7 @@ devices:nodei127 a opcua:MethodNodeClass ;
 
 devices:nodei128 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
@@ -881,6 +884,7 @@ devices:nodei128 a opcua:PropertyType,
 
 devices:nodei129 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 2 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
@@ -901,6 +905,7 @@ devices:nodei130 a opcua:MethodNodeClass ;
 
 devices:nodei131 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
@@ -912,6 +917,7 @@ devices:nodei131 a opcua:PropertyType,
 
 devices:nodei132 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
@@ -997,6 +1003,7 @@ devices:nodei142 a opcua:MethodNodeClass ;
 
 devices:nodei143 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
@@ -1008,6 +1015,7 @@ devices:nodei143 a opcua:PropertyType,
 
 devices:nodei144 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 3 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
@@ -1028,6 +1036,7 @@ devices:nodei145 a opcua:MethodNodeClass ;
 
 devices:nodei146 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
@@ -1039,6 +1048,7 @@ devices:nodei146 a opcua:PropertyType,
 
 devices:nodei147 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 2 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
@@ -1059,6 +1069,7 @@ devices:nodei148 a opcua:MethodNodeClass ;
 
 devices:nodei149 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
@@ -1070,6 +1081,7 @@ devices:nodei149 a opcua:PropertyType,
 
 devices:nodei150 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
@@ -1140,24 +1152,26 @@ devices:nodei15005 a opcua:PropertyType,
 
 devices:nodei15006 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 0 ) ;
     base:hasBrowseName "StaticNodeIdTypes" ;
     base:hasDatatype opcua:IdType ;
     base:hasDisplayName "StaticNodeIdTypes" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15006" ;
-    base:hasValue "[0]" ;
+    base:hasValue ( 0 ) ;
     base:hasValueRank "1" .
 
 devices:nodei15007 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 0 ) ;
     base:hasBrowseName "StaticNumericNodeIdRange" ;
     base:hasDatatype opcua:NumericRange ;
     base:hasDisplayName "StaticNumericNodeIdRange" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15007" ;
-    base:hasValue "['1:2147483647']" ;
+    base:hasValue ( "1:2147483647" ) ;
     base:hasValueRank "1" .
 
 devices:nodei15008 a opcua:PropertyType,
@@ -1171,6 +1185,7 @@ devices:nodei15008 a opcua:PropertyType,
 
 devices:nodei15031 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 0 ) ;
     base:hasBrowseName "DefaultRolePermissions" ;
     base:hasDatatype opcua:RolePermissionType ;
     base:hasDisplayName "DefaultRolePermissions" ;
@@ -1181,6 +1196,7 @@ devices:nodei15031 a opcua:PropertyType,
 
 devices:nodei15032 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 0 ) ;
     base:hasBrowseName "DefaultUserRolePermissions" ;
     base:hasDatatype opcua:RolePermissionType ;
     base:hasDisplayName "DefaultUserRolePermissions" ;
@@ -1901,6 +1917,7 @@ devices:nodei19 a opcua:MethodNodeClass ;
 
 devices:nodei190 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 3 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
@@ -1912,6 +1929,7 @@ devices:nodei190 a opcua:PropertyType,
 
 devices:nodei191 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
@@ -1945,6 +1963,7 @@ devices:nodei195 a opcua:MethodNodeClass ;
 
 devices:nodei196 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
@@ -1956,6 +1975,7 @@ devices:nodei196 a opcua:PropertyType,
 
 devices:nodei197 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
@@ -1976,6 +1996,7 @@ devices:nodei198 a opcua:MethodNodeClass ;
 
 devices:nodei199 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 2 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
@@ -2003,6 +2024,7 @@ devices:nodei20 a opcua:MethodNodeClass ;
 
 devices:nodei200 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 2 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
@@ -2023,6 +2045,7 @@ devices:nodei201 a opcua:MethodNodeClass ;
 
 devices:nodei202 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
@@ -2043,6 +2066,7 @@ devices:nodei203 a opcua:MethodNodeClass ;
 
 devices:nodei204 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 4 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
@@ -2054,6 +2078,7 @@ devices:nodei204 a opcua:PropertyType,
 
 devices:nodei205 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
@@ -2074,6 +2099,7 @@ devices:nodei206 a opcua:MethodNodeClass ;
 
 devices:nodei207 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
@@ -2085,6 +2111,7 @@ devices:nodei207 a opcua:PropertyType,
 
 devices:nodei208 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
@@ -2105,6 +2132,7 @@ devices:nodei209 a opcua:MethodNodeClass ;
 
 devices:nodei210 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
@@ -2116,6 +2144,7 @@ devices:nodei210 a opcua:PropertyType,
 
 devices:nodei211 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 2 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
@@ -2224,6 +2253,7 @@ devices:nodei239 a opcua:ObjectNodeClass,
 
 devices:nodei24 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 0 ) ;
     base:hasBrowseName "PatchIdentifiers" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "PatchIdentifiers" ;
@@ -2366,6 +2396,7 @@ devices:nodei265 a opcua:MethodNodeClass ;
 
 devices:nodei266 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 4 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
@@ -2385,6 +2416,7 @@ devices:nodei268 a opcua:MethodNodeClass ;
 
 devices:nodei269 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
@@ -2740,6 +2772,7 @@ devices:nodei330 a opcua:PropertyType,
 
 devices:nodei332 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 3 ) ;
     base:hasBrowseName "EnumStrings" ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasDisplayName "EnumStrings" ;
@@ -2819,6 +2852,7 @@ devices:nodei368 a opcua:PropertyType,
 
 devices:nodei37 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
@@ -2860,6 +2894,7 @@ devices:nodei375 a opcua:PropertyType,
 
 devices:nodei38 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
@@ -2901,6 +2936,7 @@ devices:nodei382 a opcua:PropertyType,
 
 devices:nodei383 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 0 ) ;
     base:hasBrowseName "PatchIdentifiers" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "PatchIdentifiers" ;
@@ -2953,6 +2989,7 @@ devices:nodei387 a opcua:PropertyType,
 
 devices:nodei388 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 5 ) ;
     base:hasBrowseName "OptionSetValues" ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasDisplayName "OptionSetValues" ;
@@ -3058,6 +3095,7 @@ devices:nodei471 a opcua:PropertyType,
 
 devices:nodei472 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 0 ) ;
     base:hasBrowseName "WarningValues" ;
     base:hasDatatype opcua:Number ;
     base:hasDescription "WarningValues indicates one or more levels when the end of lifetime is reached soon and may be used to inform the user when reached." ;
@@ -3275,6 +3313,7 @@ devices:nodei6010 a opcua:PropertyType,
 
 devices:nodei6011 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 0 ) ;
     base:hasBrowseName "PermittedMode" ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasDescription "Modes of operation that are allowed for the Block based on application requirements" ;
@@ -3287,6 +3326,7 @@ devices:nodei6011 a opcua:PropertyType,
 
 devices:nodei6012 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 0 ) ;
     base:hasBrowseName "NormalMode" ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasDescription "Mode the Block should be set to during normal operating conditions" ;
@@ -3299,6 +3339,7 @@ devices:nodei6012 a opcua:PropertyType,
 
 devices:nodei6013 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 0 ) ;
     base:hasBrowseName "TargetMode" ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasDescription "Mode of operation that is desired for the Block" ;
@@ -3447,6 +3488,7 @@ devices:nodei6166 a opcua:MethodNodeClass ;
 
 devices:nodei6167 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
@@ -3458,6 +3500,7 @@ devices:nodei6167 a opcua:PropertyType,
 
 devices:nodei6168 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
@@ -3477,6 +3520,7 @@ devices:nodei6169 a opcua:MethodNodeClass ;
 
 devices:nodei6170 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
@@ -3496,6 +3540,7 @@ devices:nodei6171 a opcua:MethodNodeClass ;
 
 devices:nodei6172 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
@@ -3515,6 +3560,7 @@ devices:nodei6173 a opcua:MethodNodeClass ;
 
 devices:nodei6174 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
@@ -3526,6 +3572,7 @@ devices:nodei6174 a opcua:PropertyType,
 
 devices:nodei62 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
@@ -3747,6 +3794,7 @@ devices:nodei63 a opcua:MethodNodeClass ;
 
 devices:nodei6300 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
@@ -3758,6 +3806,7 @@ devices:nodei6300 a opcua:PropertyType,
 
 devices:nodei6301 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
@@ -3777,6 +3826,7 @@ devices:nodei6302 a opcua:MethodNodeClass ;
 
 devices:nodei6303 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
@@ -3796,6 +3846,7 @@ devices:nodei6304 a opcua:MethodNodeClass ;
 
 devices:nodei6305 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
@@ -3815,6 +3866,7 @@ devices:nodei6306 a opcua:MethodNodeClass ;
 
 devices:nodei6307 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
@@ -3885,6 +3937,7 @@ devices:nodei6393 a opcua:MethodNodeClass ;
 
 devices:nodei6394 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
@@ -3896,6 +3949,7 @@ devices:nodei6394 a opcua:PropertyType,
 
 devices:nodei6395 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
@@ -3915,6 +3969,7 @@ devices:nodei6396 a opcua:MethodNodeClass ;
 
 devices:nodei6397 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
@@ -3934,6 +3989,7 @@ devices:nodei6398 a opcua:MethodNodeClass ;
 
 devices:nodei6399 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
@@ -3945,6 +4001,7 @@ devices:nodei6399 a opcua:PropertyType,
 
 devices:nodei64 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 2 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
@@ -3964,6 +4021,7 @@ devices:nodei6400 a opcua:MethodNodeClass ;
 
 devices:nodei6401 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
@@ -4029,6 +4087,7 @@ devices:nodei6437 a opcua:PropertyType,
 
 devices:nodei6450 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 5 ) ;
     base:hasBrowseName "EnumStrings" ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasDisplayName "EnumStrings" ;
@@ -4079,6 +4138,7 @@ devices:nodei6499 a devices:ProtocolType,
 
 devices:nodei65 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
@@ -4098,6 +4158,7 @@ devices:nodei6527 a opcua:MethodNodeClass ;
 
 devices:nodei6528 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 2 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
@@ -4117,6 +4178,7 @@ devices:nodei6529 a opcua:MethodNodeClass ;
 
 devices:nodei6530 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 2 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
@@ -4137,6 +4199,7 @@ devices:nodei6531 a opcua:MethodNodeClass ;
 
 devices:nodei6532 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 4 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
@@ -4148,6 +4211,7 @@ devices:nodei6532 a opcua:PropertyType,
 
 devices:nodei6533 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
@@ -4269,6 +4333,7 @@ devices:nodei66 a opcua:MethodNodeClass ;
 
 devices:nodei67 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 2 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
@@ -4289,6 +4354,7 @@ devices:nodei68 a opcua:MethodNodeClass ;
 
 devices:nodei69 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
@@ -4300,6 +4366,7 @@ devices:nodei69 a opcua:PropertyType,
 
 devices:nodei70 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
@@ -4319,6 +4386,7 @@ devices:nodei71 a opcua:MethodNodeClass ;
 
 devices:nodei72 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 2 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;

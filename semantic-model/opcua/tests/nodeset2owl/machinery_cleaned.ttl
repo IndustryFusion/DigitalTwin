@@ -1028,17 +1028,19 @@ machinery:nodei6034 a opcua:PropertyType,
 
 machinery:nodei6035 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 0 ) ;
     base:hasBrowseName "StaticNodeIdTypes" ;
     base:hasDatatype opcua:IdType ;
     base:hasDisplayName "StaticNodeIdTypes" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace machinery:MACHINERYNamespace ;
     base:hasNodeId "6035" ;
-    base:hasValue "[0]" ;
+    base:hasValue ( 0 ) ;
     base:hasValueRank "1" .
 
 machinery:nodei6036 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 0 ) ;
     base:hasBrowseName "StaticNumericNodeIdRange" ;
     base:hasDatatype opcua:NumericRange ;
     base:hasDisplayName "StaticNumericNodeIdRange" ;

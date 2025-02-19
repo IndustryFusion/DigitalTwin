@@ -738,8 +738,14 @@ class TestNodesetParser(unittest.TestCase):
     @patch.object(NodesetParser, 'get_value')
     def test_add_typedef(self, mock_get_value, mock_get_value_rank, mock_get_datatype, mock_get_type_from_references, mock_get_references, mock_add):
         # Mock a node with necessary attributes
+        def node_get(tag):
+            if tag == 'ArrayDimensions':
+                return None
+            else:
+                return 'ns=1;i=600'
         node = MagicMock()
-        node.get.return_value = 'ns=1;i=500'
+        # node.get.return_value = 'ns=1;i=500'
+        node.get = node_get
         self.parser.get_nid_ns_and_name = MagicMock(return_value=('500', 1, 'TestBrowseName', self.parser.rdf_ns['base']['numericID']))
         self.parser.get_rdf_ns_from_ua_index = MagicMock(return_value=Namespace('http://example.com/ns1#'))
         self.parser.nodeId_to_iri = MagicMock(return_value=URIRef('http://example.com/ns1#500'))
@@ -828,8 +834,15 @@ class TestNodesetParser(unittest.TestCase):
     @patch.object(Graph, 'add')
     def test_add_type(self, mock_add):
         # Mock the node with necessary attributes
+        def node_get(tag):
+            if tag == 'ArrayDimensions':
+                return None
+            else:
+                return 'ns=1;i=600'
+
         node = MagicMock()
-        node.get.return_value = 'ns=1;i=600'  # Mock NodeId
+        #node.get.return_value = 'ns=1;i=600'  # Mock NodeId
+        node.get = node_get  # Mock NodeId
         node.tag = 'opcua:UAObjectType'
         
         # Mock other necessary method returns
