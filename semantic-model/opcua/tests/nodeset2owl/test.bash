@@ -68,7 +68,7 @@ echo Test ${CORE_NODESET}
 echo --------------------
 python3 ${NODESET2OWL} ${CORE_NODESET} -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p opcua -o ${RESULT}
 python3 $CLEANGRAPH $RESULT $CLEANED 
-mydiff $comparewith $CLEANED 
+mydiff $comparewith $CLEANED
 nodeset=$DI_NODESET
 comparewith=devices_cleaned.ttl
 echo Test $DI_NODESET
@@ -78,7 +78,7 @@ python3 ${NODESET2OWL} ${CORE_NODESET} -i ${BASE_ONTOLOGY} -v http://example.com
 echo test devices
 python3 ${NODESET2OWL}  ${DI_NODESET} -i ${BASE_ONTOLOGY} core.ttl -v http://example.com/v0.1/DI/ -p devices -o ${RESULT}
 python3 $CLEANGRAPH $RESULT $CLEANED 
-mydiff $comparewith $CLEANED 
+mydiff $comparewith $CLEANED
 rm -f core.ttl
 comparewith=machinery_cleaned.ttl
 echo Test $MACHINERY_NODESET
@@ -91,7 +91,7 @@ echo test machinery
 echo --------------
 python3 ${NODESET2OWL} ${MACHINERY_NODESET} -i ${BASE_ONTOLOGY} core.ttl devices.ttl -v http://example.com/v0.1/Machinery/ -p machinery -o ${RESULT}
 python3 $CLEANGRAPH $RESULT $CLEANED 
-mydiff $comparewith $CLEANED 
+mydiff $comparewith $CLEANED
 rm -f core.ttl device.ttl
 comparewith=pumps_cleaned.ttl
 echo Test $PUMPS_NODESET

@@ -511,6 +511,17 @@ Did you forget to import it?")
         if value_rank is not None:
             self.g.add((classiri, self.rdf_ns['base']['hasValueRank'], Literal(value_rank)))
 
+    def get_array_dimensions(self, node, classiri):
+        array_dimensions = node.get('ArrayDimensions')
+        if array_dimensions is not None:
+            if isinstance(array_dimensions, str):
+                result = [int(num) for num in array_dimensions.split(",")]
+                array_dimensions = result
+            if not isinstance(array_dimensions, list):
+                array_dimensions = [array_dimensions]
+            list_start = utils.create_list(self.g, array_dimensions, int)
+            self.g.add((classiri, self.rdf_ns['base']['hasArrayDimensions'], list_start))
+
     def get_value(self, node, classiri, xml_ns):
         result = None
         value = node.find('opcua:Value', xml_ns)
@@ -526,7 +537,8 @@ Did you forget to import it?")
                         data = self.data_schema.to_dict(children, namespaces=xml_ns, indent=4)
                         field = [ele for ele in data.keys() if ('@' not in ele)][0]
                         result = data[field]
-                        self.g.add((classiri, self.rdf_ns['base']['hasValue'], Literal(result)))
+                        created_list = utils.create_list(self.g, result, lambda x: x)
+                        self.g.add((classiri, self.rdf_ns['base']['hasValue'], created_list))
                     continue
                 elif basic_type_found:
                     data = self.data_schema.to_dict(children, namespaces=xml_ns, indent=4)
@@ -645,6 +657,7 @@ Did you forget to import it?")
         self.get_type_from_references(references, classiri)
         self.get_datatype(node, classiri)
         self.get_value_rank(node, classiri)
+        self.get_array_dimensions(node, classiri)
         self.get_value(node, classiri, self.xml_ns)
         return
 
@@ -717,6 +730,7 @@ Did you forget to import it?")
         self.get_typedefinition_from_references(references, ref_classiri, node)
         self.get_datatype(node, ref_classiri)
         self.get_value_rank(node, ref_classiri)
+        self.get_array_dimensions(node, ref_classiri)
         self.get_value(node, ref_classiri, self.xml_ns)
         return
 

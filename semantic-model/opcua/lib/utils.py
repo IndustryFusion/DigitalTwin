@@ -16,11 +16,12 @@
 
 from urllib.parse import urlparse
 from rdflib.namespace import RDFS, XSD, OWL, RDF
-from rdflib import URIRef, Namespace, Graph
+from rdflib import URIRef, Namespace, Graph, Literal, BNode
+from rdflib.collection import Collection
 from pathlib import Path
-import json
 import re
 import os
+import math
 
 query_realtype = """
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
@@ -91,6 +92,10 @@ def isNodeId(nodeId):
     return 'i=' in nodeId or 'g=' in nodeId or 's=' in nodeId
 
 
+def rdfStringToPythonBool(literal):
+    return str(literal).strip().lower() == "true"
+
+
 def convert_to_json_type(result, basic_json_type):
     if basic_json_type == 'string':
         return str(result)
@@ -141,42 +146,76 @@ def attributename_from_type(type):
     return basename
 
 
-def get_default_value(datatype, orig_datatype=None):
+def get_default_value(datatypes, orig_datatype=None, value_rank=None, array_dimensions=None):
+    datatype = None
+    if isinstance(datatypes, list) and len(datatypes) > 0:
+        datatype = datatypes[0]
     if orig_datatype is not None and datatype is None:
         datatype = orig_datatype
+    data_value = None
     if datatype == XSD.integer:
-        return 0
-    if datatype == XSD.double or datatype == URIRef('http://opcfoundation.org/UA/Number'):
-        return 0.0
-    if datatype == XSD.string:
-        return ''
-    if datatype == XSD.boolean:
-        return False
-    if datatype == RDF.JSON:
-        return {'@value': {}, '@type': '@json'}
-    if datatype == XSD.dateTime:
-        return {'@value': '1970-1-1T00:00:00', '@type': 'xsd.dateTime'}
-    print(f'Warning: unknown default value for datatype {datatype}')
-    return 'null'
+        data_value = 0
+    elif datatype == XSD.double or datatype == URIRef('http://opcfoundation.org/UA/Number'):
+        data_value = 0.0
+    elif datatype == XSD.string:
+        data_value = ''
+    elif datatype == XSD.boolean:
+        data_value = False
+    elif datatype == RDF.JSON:
+        data_value = {'@value': {}, '@type': '@json'}
+    elif datatype == XSD.dateTime:
+        data_value = {'@value': '1970-1-1T00:00:00', '@type': 'xsd.dateTime'}
+    else:
+        print(f'Warning: unknown default value for datatype {datatype}')
+        data_value = 'null'
+    if value_rank is None or int(value_rank) < 0:
+        return data_value
+    data_array_value = []
+    if array_dimensions is not None:
+        array_length = 0
+        ad = Collection(Graph(), array_dimensions)
+        if len(ad) > 0:
+            array_length = math.prod(ad)
+        if array_length > 0:
+            data_array_value = [data_value] * array_length
+    return {'@list': data_array_value}
 
 
-def get_value(value, datatype):
-    # values can be arrays, so check first for arrays and do later the scalar
-    # transformations
-    try:
-        decoded = json.loads(value)
-        if isinstance(decoded, list):
-            return decoded
-    except:
-        pass
+def get_value(g, value, datatypes):
+    # values can be arrays or scalar, so remember first datatype and apply it
+    # later to scalar or array
+    cast = None
+    datatype = None
+    # Find the best matching datatype in case there are more options
+    if len(datatypes) == 1:
+        datatype = datatypes[0]
+    else:
+        for dt in datatypes:
+            if value.datatype == dt:
+                datatype = dt
+                break
+    if datatype is None:
+        print(f"Warning: Could not matchining datatype out of {datatypes} for value {value}. Is there a data mismatch?")
+        datatype = datatypes[0]
     if datatype == XSD.integer:
-        return int(value)
+        cast = int
     if datatype == XSD.double:
-        return float(value)
+        cast = float
     if datatype == XSD.string:
-        return str(value)
+        cast = str
     if datatype == XSD.boolean:
-        return bool(value)
+        cast = bool
+    if isinstance(value, BNode):
+        try:
+            if isinstance(value, BNode):
+                collection = Collection(g, value)
+                json_list = [item.toPython() if isinstance(item, Literal) else item for item in collection]
+                return {'@list': json_list}
+        except:
+            print("Warning: BNode which is not an rdf:List cannot be converted into a value")
+            return None
+    if cast is not None:
+        return cast(value)
     if datatype == RDF.JSON:
         return {'@value': str(value), '@type': '@json'}
     if datatype == XSD.dateTime:
@@ -279,6 +318,37 @@ def file_path_to_uri(file_path):
         return URIRef(str(file_path))
     path = Path(os.path.abspath(str(file_path)))
     return URIRef(path.as_uri())
+
+
+def create_list(g, arr, datatype):
+    literal_list = [Literal(datatype(item)) for item in arr]
+    list_start = BNode()
+    Collection(g, list_start, literal_list)
+    return list_start
+
+
+def get_rank_dimensions(graph, node, basens, opcuans):
+    query_rank_and_dimension = """
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    SELECT ?valueRank ?arrayDimensions ?typeValueRank ?typeArrayDimensions   WHERE {{
+       BIND(<{node}> AS ?node)
+        OPTIONAL{{?node base:hasValueRank ?valueRank}}
+        OPTIONAL{{?node base:hasArrayDimensions ?arrayDimensions}}
+        ?node a ?vartype .
+        ?vartypenode base:definesType ?vartype .
+        FILTER(?vartypenode!=opcua:VariableNodeClass) .
+        OPTIONAL{{?vartypenode base:hasValueRank ?typeValueRank}} .
+        OPTIONAL{{?vartype base:hasArrayDimensions ?typeArrayDimensions}}.
+    }}
+    """.format(node=node)
+    result = graph.query(query_rank_and_dimension, initNs={'base': basens, 'opcua': opcuans})
+    value_rank, array_dimensions, tvalue_rank, tarray_dimensions = next(iter(result))
+    if value_rank is None:
+        value_rank = tvalue_rank
+    if array_dimensions is None:
+        array_dimensions = tarray_dimensions
+    return value_rank, array_dimensions
 
 
 class RdfUtils:

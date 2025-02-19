@@ -1,5 +1,6 @@
 @prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
 @prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix shacl: <http://my.test/shacl/> .
 @prefix test: <http://my.test/> .
@@ -36,10 +37,10 @@ shacl:DTypeShape a sh:NodeShape ;
             sh:minCount 0 ;
             sh:nodeKind sh:BlankNode ;
             sh:path <http://my.test/entity/hasMyVariable> ;
-            sh:property [ sh:datatype xsd:boolean ;
-                    sh:maxCount 1 ;
+            sh:property [ sh:maxCount 1 ;
                     sh:minCount 1 ;
-                    sh:nodeKind sh:Literal ;
+                    sh:or ( [ sh:datatype xsd:boolean ] [ sh:property [ sh:datatype xsd:boolean ;
+                                        sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] ) ;
                     sh:path ngsi-ld:hasValue ] ] ;
     sh:targetClass test:DType .
 

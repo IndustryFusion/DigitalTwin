@@ -1,0 +1,495 @@
+@prefix : <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix opcua: <http://opcfoundation.org/UA/> .
+@prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/> .
+@base <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+
+<https://industryfusion.github.io/contexts/ontology/v0/base/> rdf:type owl:Ontology ;
+                                                               owl:versionIRI <https://industryfusion.github.io/contexts/staging/ontology/v0.1/base/> ;
+                                                               owl:imports rdf: ,
+                                                                           rdfs: ,
+                                                                           <https://industryfusion.github.io/contexts/staging/ontology/v0.1/ngsild.ttl> ;
+                                                               owl:versionInfo 0.1 .
+
+#################################################################
+#    Datatypes
+#################################################################
+
+###  http://www.w3.org/2001/XMLSchema#boolean
+xsd:boolean rdf:type rdfs:Datatype .
+
+
+###  http://www.w3.org/2001/XMLSchema#decimal
+xsd:decimal rdf:type rdfs:Datatype .
+
+
+###  http://www.w3.org/2001/XMLSchema#double
+xsd:double rdf:type rdfs:Datatype .
+
+
+###  http://www.w3.org/2001/XMLSchema#float
+xsd:float rdf:type rdfs:Datatype .
+
+
+###  http://www.w3.org/2001/XMLSchema#integer
+xsd:integer rdf:type rdfs:Datatype .
+
+
+###  http://www.w3.org/2001/XMLSchema#string
+xsd:string rdf:type rdfs:Datatype .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/BaseDataType
+base:BaseDataType rdf:type rdfs:Datatype .
+
+
+#################################################################
+#    Object Properties
+#################################################################
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/bindsAttribute
+base:bindsAttribute rdf:type owl:ObjectProperty ;
+                    rdfs:domain base:Binding ;
+                    rdfs:range owl:Thing .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/bindsAttributeType
+base:bindsAttributeType rdf:type owl:ObjectProperty ;
+                        rdfs:domain base:Binding ;
+                        rdfs:range owl:Thing .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/bindsConnector
+base:bindsConnector rdf:type owl:ObjectProperty ;
+                    rdfs:domain base:BoundMap ;
+                    rdfs:range base:BoundConnector .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/bindsEntity
+base:bindsEntity rdf:type owl:ObjectProperty ;
+                 rdfs:domain base:Binding .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/bindsMap
+base:bindsMap rdf:type owl:ObjectProperty ;
+              rdfs:domain base:Binding ;
+              rdfs:range base:BoundMap .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/bindsMapDatatype
+base:bindsMapDatatype rdf:type owl:ObjectProperty ;
+                      rdfs:domain base:BoundMap ;
+                      rdfs:range rdfs:Datatype .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/boundBy
+base:boundBy rdf:type owl:ObjectProperty ;
+             rdfs:range base:Binding .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/definesType
+base:definesType rdf:type owl:ObjectProperty .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/generatesEvent
+base:generatesEvent rdf:type owl:ObjectProperty .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/hasAddIn
+base:hasAddIn rdf:type owl:ObjectProperty .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/hasArrayDimensions
+base:hasArrayDimensions rdf:type owl:ObjectProperty ;
+                        rdfs:domain opcua:VariableTypeNodeClass ;
+                        rdfs:range rdf:List .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/hasComponent
+base:hasComponent rdf:type owl:ObjectProperty .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/hasDatatype
+base:hasDatatype rdf:type owl:ObjectProperty ;
+                 rdfs:domain opcua:BaseNodeClass ;
+                 rdfs:range opcua:BaseDataType .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/hasEncoding
+base:hasEncoding rdf:type owl:ObjectProperty .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/hasField
+base:hasField rdf:type owl:ObjectProperty ;
+              rdfs:range base:Field .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/hasIdentifierType
+base:hasIdentifierType rdf:type owl:ObjectProperty ;
+                       rdfs:domain opcua:BaseNodeClass ;
+                       rdfs:range base:IdentifierType .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/hasInterface
+base:hasInterface rdf:type owl:ObjectProperty .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/hasModellingRule
+base:hasModellingRule rdf:type owl:ObjectProperty .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/hasNamespace
+base:hasNamespace rdf:type owl:ObjectProperty .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/hasOPCUADatatype
+base:hasOPCUADatatype rdf:type owl:ObjectProperty .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/hasProperty
+base:hasProperty rdf:type owl:ObjectProperty .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/hasSubtype
+base:hasSubtype rdf:type owl:ObjectProperty .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/hasTypeDefinition
+base:hasTypeDefinition rdf:type owl:ObjectProperty .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/hasValueClass
+base:hasValueClass rdf:type owl:ObjectProperty .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/hasValueNode
+base:hasValueNode rdf:type owl:ObjectProperty .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/organizes
+base:organizes rdf:type owl:ObjectProperty .
+
+
+#################################################################
+#    Data properties
+#################################################################
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/bindingVersion
+base:bindingVersion rdf:type owl:DatatypeProperty ;
+                    rdfs:range xsd:string .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/bindsConnectorAttribute
+base:bindsConnectorAttribute rdf:type owl:DatatypeProperty .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/bindsContext
+base:bindsContext rdf:type owl:DatatypeProperty ;
+                  rdfs:range xsd:string .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/bindsFirmware
+base:bindsFirmware rdf:type owl:DatatypeProperty ;
+                   rdfs:domain base:Binding ;
+                   rdfs:range xsd:string .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/bindsLogic
+base:bindsLogic rdf:type owl:DatatypeProperty ;
+                rdfs:domain base:BoundMap ;
+                rdfs:range xsd:string .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/bindsLogicVar
+base:bindsLogicVar rdf:type owl:DatatypeProperty ;
+                   rdfs:domain base:BoundMap ;
+                   rdfs:range xsd:string .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/hasBrowseName
+base:hasBrowseName rdf:type owl:DatatypeProperty ;
+                   rdfs:domain opcua:BaseNodeClass ;
+                   rdfs:range xsd:string .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/hasDescription
+base:hasDescription rdf:type owl:DatatypeProperty ;
+                    rdfs:domain opcua:BaseNodeClass ;
+                    rdfs:range xsd:string .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/hasDisplayName
+base:hasDisplayName rdf:type owl:DatatypeProperty ;
+                    rdfs:domain opcua:BaseNodeClass ;
+                    rdfs:range xsd:string .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/hasEnumValue
+base:hasEnumValue rdf:type owl:DatatypeProperty .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/hasFieldName
+base:hasFieldName rdf:type owl:DatatypeProperty ;
+                  rdfs:range xsd:string .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/hasNodeId
+base:hasNodeId rdf:type owl:DatatypeProperty ;
+               rdfs:domain opcua:BaseNodeClass ;
+               rdfs:range xsd:integer .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/hasPrefix
+base:hasPrefix rdf:type owl:DatatypeProperty .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/hasSymbolicName
+base:hasSymbolicName rdf:type owl:DatatypeProperty ;
+                     rdfs:domain opcua:BaseNodeClass ;
+                     rdfs:range xsd:string .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/hasUri
+base:hasUri rdf:type owl:DatatypeProperty ;
+            rdfs:domain base:Namespace ;
+            rdfs:range xsd:string .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/hasValue
+base:hasValue rdf:type owl:DatatypeProperty ;
+              rdfs:range xsd:string .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/hasValueRank
+base:hasValueRank rdf:type owl:DatatypeProperty .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/isAbstract
+base:isAbstract rdf:type owl:DatatypeProperty ;
+                rdfs:range xsd:boolean .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/isMonitored
+base:isMonitored rdf:type owl:DatatypeProperty .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/isSymmetric
+base:isSymmetric rdf:type owl:DatatypeProperty ;
+                 rdfs:range xsd:boolean .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/isUpdating
+base:isUpdating rdf:type owl:DatatypeProperty ;
+                rdfs:domain opcua:VariableNodeClass ;
+                rdfs:range xsd:boolean .
+
+
+#################################################################
+#    Classes
+#################################################################
+
+###  http://opcfoundation.org/UA/BaseDataType
+opcua:BaseDataType rdf:type owl:Class .
+
+
+###  http://opcfoundation.org/UA/BaseNodeClass
+opcua:BaseNodeClass rdf:type owl:Class .
+
+
+###  http://opcfoundation.org/UA/BaseObjectType
+opcua:BaseObjectType rdf:type owl:Class .
+
+
+###  http://opcfoundation.org/UA/DataTypeNodeClass
+opcua:DataTypeNodeClass rdf:type owl:Class ;
+                        rdfs:subClassOf opcua:BaseNodeClass .
+
+
+###  http://opcfoundation.org/UA/MethodNodeClass
+opcua:MethodNodeClass rdf:type owl:Class ;
+                      rdfs:subClassOf opcua:BaseNodeClass .
+
+
+###  http://opcfoundation.org/UA/ObjectNodeClass
+opcua:ObjectNodeClass rdf:type owl:Class ;
+                      rdfs:subClassOf opcua:BaseNodeClass .
+
+
+###  http://opcfoundation.org/UA/ObjectTypeNodeClass
+opcua:ObjectTypeNodeClass rdf:type owl:Class ;
+                          rdfs:subClassOf opcua:BaseNodeClass .
+
+
+###  http://opcfoundation.org/UA/ReferenceTypeNodeClass
+opcua:ReferenceTypeNodeClass rdf:type owl:Class ;
+                             rdfs:subClassOf opcua:BaseNodeClass .
+
+
+###  http://opcfoundation.org/UA/References
+opcua:References rdf:type owl:Class .
+
+
+###  http://opcfoundation.org/UA/VariableNodeClass
+opcua:VariableNodeClass rdf:type owl:Class ;
+                        rdfs:subClassOf opcua:BaseNodeClass .
+
+
+###  http://opcfoundation.org/UA/VariableTypeNodeClass
+opcua:VariableTypeNodeClass rdf:type owl:Class ;
+                            rdfs:subClassOf opcua:BaseNodeClass .
+
+
+###  http://www.w3.org/2000/01/rdf-schema#Datatype
+rdfs:Datatype rdf:type owl:Class .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/AttributeClass
+base:AttributeClass rdf:type owl:Class .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/Binding
+base:Binding rdf:type owl:Class ;
+             rdfs:comment """A binding contains all informations to calculate the value of a model attribute. For instance, to calculate ex:state you need to know where to get the metrics from (e.g. from a machine and an ontology) and how to calculate it e.g. take a numeric value from the machine and use the ontology to create an IRI.
+Example:
+ex:myBinding a base:Binding .
+ex:myBinding base:bindsEntityType ex:cutter .
+ex:myBinding base:bindsMap ex:map1 .
+ex:myBinding base:bindsMap ex:map2 .
+ex:myBinding base:bindingVersion \"0.1\"
+ex:myBinding base:bindsFirmware \"myFirmware\"
+ex:myBinding:bindsLogic \"WHERE { BIND(?var1) as ?value}\"""" ,
+                          """This class describes the Connector type. There are only two connectors today:
+:""" .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/BoundConnector
+base:BoundConnector rdf:type owl:Class ;
+                    rdfs:comment """Contains the connector type. Examples:
+TestConnector
+OPCUAConnector""" .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/BoundMap
+base:BoundMap rdf:type owl:Class ;
+              rdfs:comment """A Bound Map contains a single map to define mapping from metrics to a model parameter. Several maps can be used to provide metrics for model properties. For instance it provides the rules to calculate the property ex:state with two maps:
+
+ex:map1 a base:BoundMap .
+ex:map2 a base:BoundMap .
+ex:map1 base:bindsConnector base:TestConnector .
+ex:map1 base:bindsMapsDataType xsd:float .
+ex:map1 base:bindsLogicVar \"var1\" .
+ex:map1 base:bindsConnectorParameter 'mytestparam' .
+ex:map2 base:bindsConnector base:OPCUAConnector .
+ex:map2 base:bindsMapsDataType xsd:boolean .
+ex:map2 base:bindsLogicVar \"var2\" .
+ex:map2 base:bindsConnectorParameter 'ns=3;i=5002' .""" .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/Field
+base:Field rdf:type owl:Class .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/IdentifierType
+base:IdentifierType rdf:type owl:Class .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/Namespace
+base:Namespace rdf:type owl:Class .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/OPCUAConnector
+base:OPCUAConnector rdf:type owl:Class ;
+                    rdfs:subClassOf base:BoundConnector .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/PeerRelationship
+base:PeerRelationship rdf:type owl:Class ;
+                      rdfs:subClassOf base:Relationship .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/Property
+base:Property rdf:type owl:Class ;
+              rdfs:subClassOf base:AttributeClass .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/Relationship
+base:Relationship rdf:type owl:Class ;
+                  rdfs:subClassOf base:AttributeClass .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/SubComponentRelationship
+base:SubComponentRelationship rdf:type owl:Class ;
+                              rdfs:subClassOf base:Relationship .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/TestConnector
+base:TestConnector rdf:type owl:Class ;
+                   rdfs:subClassOf base:BoundConnector .
+
+
+#################################################################
+#    Individuals
+#################################################################
+
+###  http://www.w3.org/2001/XMLSchema#boolean
+xsd:boolean rdf:type owl:NamedIndividual ,
+                     rdfs:Datatype .
+
+
+###  http://www.w3.org/2001/XMLSchema#double
+xsd:double rdf:type owl:NamedIndividual ,
+                    rdfs:Datatype .
+
+
+###  http://www.w3.org/2001/XMLSchema#integer
+xsd:integer rdf:type owl:NamedIndividual ,
+                     rdfs:Datatype .
+
+
+###  http://www.w3.org/2001/XMLSchema#string
+xsd:string rdf:type owl:NamedIndividual ,
+                    rdfs:Datatype .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/OPCUAConnector
+base:OPCUAConnector rdf:type owl:NamedIndividual ,
+                             base:BoundConnector .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/OPCUANamespace
+base:OPCUANamespace rdf:type owl:NamedIndividual ;
+                    base:hasPrefix "opcua" ;
+                    base:hasUri "http://opcfoundation.org/UA/" .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/TestConnector
+base:TestConnector rdf:type owl:NamedIndividual ,
+                            base:BoundConnector .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/guidID
+base:guidID rdf:type owl:NamedIndividual ,
+                     base:IdentifierType .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/numericID
+base:numericID rdf:type owl:NamedIndividual ,
+                        base:IdentifierType .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/opaqueID
+base:opaqueID rdf:type owl:NamedIndividual ,
+                       base:IdentifierType .
+
+
+###  https://industryfusion.github.io/contexts/ontology/v0/base/stringID
+base:stringID rdf:type owl:NamedIndividual ,
+                       base:IdentifierType .
+
+
+###  Generated by the OWL API (version 4.5.26.2023-07-17T20:34:13Z) https://github.com/owlcs/owlapi

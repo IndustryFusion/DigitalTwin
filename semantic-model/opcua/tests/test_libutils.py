@@ -3,7 +3,10 @@ import unittest
 from unittest.mock import MagicMock, patch
 from rdflib import Graph, Namespace, URIRef, Literal, BNode
 from rdflib.namespace import RDFS, XSD, OWL
-from lib.utils import RdfUtils, downcase_string, isNodeId, convert_to_json_type, idtype2String, extract_namespaces, get_datatype, attributename_from_type, get_default_value, get_value, normalize_angle_bracket_name, contains_both_angle_brackets, get_typename, get_common_supertype
+from rdflib.collection import Collection
+from lib.utils import RdfUtils, downcase_string, isNodeId, convert_to_json_type, idtype2String, extract_namespaces, \
+                                get_datatype, attributename_from_type, get_default_value, get_value, normalize_angle_bracket_name, \
+                                contains_both_angle_brackets, get_typename, get_common_supertype, rdfStringToPythonBool
 
 class TestUtils(unittest.TestCase):
 
@@ -89,18 +92,26 @@ class TestUtils(unittest.TestCase):
 
     def test_get_default_value(self):
         """Test getting the default value for a datatype."""
-        self.assertEqual(get_default_value(XSD.integer), 0)
-        self.assertEqual(get_default_value(XSD.double), 0.0)
-        self.assertEqual(get_default_value(XSD.string), '')
-        self.assertEqual(get_default_value(XSD.boolean), False)
+        self.assertEqual(get_default_value([XSD.integer]), 0)
+        self.assertEqual(get_default_value([XSD.double]), 0.0)
+        self.assertEqual(get_default_value([XSD.string]), '')
+        self.assertEqual(get_default_value([XSD.boolean]), False)
+
+    def test_rdfStringToPythonBool(self):
+        """Test getting the default value for a datatype."""
+        self.assertEqual(rdfStringToPythonBool(Literal('false')), False)
+        self.assertEqual(rdfStringToPythonBool(Literal('true')), True)
 
     def test_get_value(self):
         """Test getting the converted value for a datatype."""
-        self.assertEqual(get_value('99', XSD.integer), int(99))
-        self.assertEqual(get_value('0.123', XSD.double), float(0.123))
-        self.assertEqual(get_value('hello', XSD.string), str('hello'))
-        self.assertEqual(get_value('True', XSD.boolean), True)
-        self.assertEqual(get_value('[ 0.0, 0.1 ]', XSD.boolean), [ 0.0, 0.1 ])
+        g = Graph()
+        bnode = BNode()
+        collection = Collection(g, bnode, [Literal(0), Literal(1), Literal(2)])
+        self.assertEqual(get_value(g, '99', [XSD.integer]), int(99))
+        self.assertEqual(get_value(g, '0.123', [XSD.double]), float(0.123))
+        self.assertEqual(get_value(g, 'hello', [XSD.string]), str('hello'))
+        self.assertEqual(get_value(g, 'True', [XSD.boolean]), True)
+        self.assertEqual(get_value(g, bnode, [XSD.integer]), {'@list': [ 0, 1, 2 ]})
         
     def test_normalize_angle_bracket_name(self):
         """Test normalizing a name by removing angle bracket content."""

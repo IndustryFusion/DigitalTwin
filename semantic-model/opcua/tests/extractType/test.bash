@@ -19,6 +19,7 @@ if [ "$DEBUG" = "true" ]; then
     DEBUG_CMDLINE="-m debugpy --listen 5678"
 fi
 TESTNODESETS=(
+    test_variable_arrays.NodeSet2,${TESTURI}AlphaType
     test_object_wrong.NodeSet2,${TESTURI}AlphaType
     test_object_overwrite_type.NodeSet2,${TESTURI}AlphaType
     test_variable_enum.NodeSet2,${TESTURI}AlphaType
@@ -53,8 +54,12 @@ function mydiff() {
     echo "$1"
     result="$2"
     expected="$3"
-    echo "expected <=> result"
-    python3 ${COMPARE_GRAPHS} -f ${format} ${expected} ${result} || exit 1
+    if [ -f "${expected}.nocompare" ]; then
+        echo "Skipping test"
+    else
+        echo "expected <=> result"
+        python3 ${COMPARE_GRAPHS} -f ${format} ${expected} ${result} || exit 1
+    fi
     echo Done
 }
 
@@ -163,7 +168,7 @@ for tuple in "${TESTNODESETS[@]}"; do IFS=","
     python3 ${EXTRACTTYPE} -t ${instancetype} -n ${TESTURI} ${NODESET2OWL_RESULT} -i ${TESTURN} -xc ${LOCAL_CONTEXT} || exit 1
     startstop_context_server "Starting context server" true 
     #ask "Compare SHACL" ${SHACL} ${nodeset}.shacl
-    mydiff "Compare SHACL" "${nodeset}.shacl" "${SHACL}" "ttl"
+    mydiff "Compare SHACL" "${SHACL}" "${nodeset}.shacl" "ttl"
     mydiff "Compare instances" "${nodeset}.instances" "${INSTANCES}" "json-ld"
     #ask "Compare INSTANCE" ${INSTANCES} ${nodeset}.instances json-ld
     checkqueries "Check basic entities structure" ${nodeset}

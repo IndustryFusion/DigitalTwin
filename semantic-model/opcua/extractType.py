@@ -267,7 +267,7 @@ def scan_type_recursive(o, node, instancetype, shapename):
             return True
         has_components = True
         try:
-            isAbstract = next(g.objects(classtype, basens['isAbstract']))
+            isAbstract = utils.rdfStringToPythonBool(next(g.objects(classtype, basens['isAbstract'])))
         except:
             isAbstract = False
         if isAbstract:
@@ -281,7 +281,9 @@ def scan_type_recursive(o, node, instancetype, shapename):
                                      True, shacl_rule['is_iri'],
                                      shacl_rule['contentclass'],
                                      shacl_rule['datatype'],
-                                     pattern=shacl_rule['pattern'])
+                                     pattern=shacl_rule['pattern'],
+                                     value_rank=shacl_rule.get('value_rank'),
+                                     array_dimensions=shacl_rule.get('array_dimensions'))
         e.add_enum_class(g, shacl_rule['contentclass'])
     return has_components
 
@@ -413,13 +415,16 @@ in attribute {entity_ontology_prefix}:{attributename}.")
         try:
             value = next(g.objects(o, basens['hasValue']))
             if not shacl_rule['is_iri']:
-                value = utils.get_value(value, shacl_rule['datatype'])
+                value = utils.get_value(g, value, shacl_rule['datatype'])
             else:
                 value = e.get_contentclass(shacl_rule['contentclass'], value)
                 value = value.toPython()
         except StopIteration:
             if not shacl_rule['is_iri']:
-                value = utils.get_default_value(shacl_rule['datatype'], shacl_rule.get('orig_datatype'))
+                value = utils.get_default_value(shacl_rule['datatype'],
+                                                shacl_rule.get('orig_datatype'),
+                                                shacl_rule.get('value_rank'),
+                                                shacl_rule.get('array_dimensions'))
             else:
                 value = e.get_default_contentclass(shacl_rule['contentclass'])
         has_components = True
@@ -524,12 +529,12 @@ if __name__ == '__main__':
     bindingsg.bind(f'{entity_ontology_prefix}', entity_namespace)
     bindingsg.bind('base', basens)
     bindingsg.bind('binding', binding_namespace)
-    shaclg = Shacl(namespace_prefix, basens, opcuans)
+    shaclg = Shacl(g, namespace_prefix, basens, opcuans)
     shaclg.bind('shacl', shacl_namespace)
     shaclg.bind('ngsi-ld', ngsildns)
     shaclg.bind('sh', SH)
     shaclg.bind('base', basens)
-    minshaclg = Shacl(namespace_prefix, basens, opcuans)
+    minshaclg = Shacl(g, namespace_prefix, basens, opcuans)
     minshaclg.bind('shacl', shacl_namespace)
     minshaclg.bind('ngsi-ld', ngsildns)
     minshaclg.bind('sh', SH)
