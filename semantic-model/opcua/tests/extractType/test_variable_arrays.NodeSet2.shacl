@@ -7,16 +7,7 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 shacl:AlphaTypeShape a sh:NodeShape ;
-    sh:property [ sh:maxCount 1 ;
-            sh:minCount 0 ;
-            sh:nodeKind sh:BlankNode ;
-            sh:path <http://my.test/entity/hasC> ;
-            sh:property [ sh:maxCount 1 ;
-                    sh:minCount 1 ;
-                    sh:or ( [ sh:datatype xsd:double ] [ sh:property [ sh:datatype xsd:double ;
-                                        sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] ) ;
-                    sh:path ngsi-ld:hasValue ] ],
-        [ a base:PeerRelationship ;
+    sh:property [ a base:PeerRelationship ;
             sh:maxCount 1 ;
             sh:minCount 0 ;
             sh:nodeKind sh:BlankNode ;
@@ -35,29 +26,25 @@ shacl:AlphaTypeShape a sh:NodeShape ;
                     sh:maxCount 1 ;
                     sh:minCount 1 ;
                     sh:nodeKind sh:IRI ;
-                    sh:path ngsi-ld:hasObject ] ] ;
+                    sh:path ngsi-ld:hasObject ] ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path <http://my.test/entity/hasC> ;
+            sh:property [ sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:or ( [ sh:datatype xsd:double ] [ sh:property [ sh:datatype xsd:double ;
+                                        sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] ) ;
+                    sh:path ngsi-ld:hasValue ] ] ;
     sh:targetClass test:AlphaType .
 
 shacl:BTypeShape a sh:NodeShape ;
     sh:property [ sh:maxCount 1 ;
             sh:minCount 0 ;
             sh:nodeKind sh:BlankNode ;
-            sh:path <http://my.test/entity/hasMyVariable> ;
-            sh:property [ sh:maxCount 1 ;
-                    sh:minCount 1 ;
-                    sh:nodeKind sh:BlankNode ;
-                    sh:path ngsi-ld:hasValue ;
-                    sh:property [ sh:datatype xsd:integer ;
-                            sh:maxCount 2 ;
-                            sh:minCount 2 ;
-                            sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] ],
-        [ sh:maxCount 1 ;
-            sh:minCount 0 ;
-            sh:nodeKind sh:BlankNode ;
             sh:path <http://my.test/entity/hasMyVariable3> ;
             sh:property [ sh:maxCount 1 ;
                     sh:minCount 1 ;
-                    sh:nodeKind sh:BlankNode ;
                     sh:path ngsi-ld:hasValue ;
                     sh:property [ sh:datatype xsd:boolean ;
                             sh:maxCount 2 ;
@@ -69,7 +56,6 @@ shacl:BTypeShape a sh:NodeShape ;
             sh:path <http://my.test/entity/hasMyVariable2> ;
             sh:property [ sh:maxCount 1 ;
                     sh:minCount 1 ;
-                    sh:nodeKind sh:BlankNode ;
                     sh:path ngsi-ld:hasValue ;
                     sh:property [ sh:datatype xsd:double ;
                             sh:maxCount 6 ;
@@ -87,21 +73,31 @@ shacl:BTypeShape a sh:NodeShape ;
         [ sh:maxCount 1 ;
             sh:minCount 0 ;
             sh:nodeKind sh:BlankNode ;
-            sh:path <http://my.test/entity/hasMyVariable5> ;
-            sh:property [ sh:maxCount 1 ;
-                    sh:minCount 1 ;
-                    sh:nodeKind sh:BlankNode ;
-                    sh:path ngsi-ld:hasValue ;
-                    sh:property [ sh:datatype xsd:string ;
-                            sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] ],
-        [ sh:maxCount 1 ;
-            sh:minCount 0 ;
-            sh:nodeKind sh:BlankNode ;
             sh:path <http://my.test/entity/hasMyVariable6> ;
             sh:property [ sh:datatype xsd:string ;
                     sh:maxCount 1 ;
                     sh:minCount 1 ;
                     sh:nodeKind sh:Literal ;
-                    sh:path ngsi-ld:hasValue ] ] ;
+                    sh:path ngsi-ld:hasValue ] ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path <http://my.test/entity/hasMyVariable> ;
+            sh:property [ sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:path ngsi-ld:hasValue ;
+                    sh:property [ sh:datatype xsd:integer ;
+                            sh:maxCount 2 ;
+                            sh:minCount 2 ;
+                            sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path <http://my.test/entity/hasMyVariable5> ;
+            sh:property [ sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:path ngsi-ld:hasValue ;
+                    sh:property [ sh:datatype xsd:string ;
+                            sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] ] ;
     sh:targetClass test:BType .
 
