@@ -164,7 +164,6 @@ class Shacl:
                                                                          array_dimensions)
                 pred, obj = self.shacl_or([array_validation_shape])
                 self.shaclg.add((innerproperty, pred, obj))
-                self.shaclg.add((innerproperty, SH.nodeKind, SH.BlankNode))
             elif int(value_rank) < -1:
                 dt_array = self.create_datatype_shapes(datatype)
                 array_validation_shape = self.get_array_validation_shape(datatype,
