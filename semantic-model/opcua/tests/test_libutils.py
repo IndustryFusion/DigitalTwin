@@ -2,11 +2,12 @@
 import unittest
 from unittest.mock import MagicMock, patch
 from rdflib import Graph, Namespace, URIRef, Literal, BNode
-from rdflib.namespace import RDFS, XSD, OWL
+from rdflib.namespace import RDFS, XSD, OWL, RDF
 from rdflib.collection import Collection
 from lib.utils import RdfUtils, downcase_string, isNodeId, convert_to_json_type, idtype2String, extract_namespaces, \
                                 get_datatype, attributename_from_type, get_default_value, get_value, normalize_angle_bracket_name, \
-                                contains_both_angle_brackets, get_typename, get_common_supertype, rdfStringToPythonBool
+                                contains_both_angle_brackets, get_typename, get_common_supertype, rdfStringToPythonBool, \
+                                get_rank_dimensions, get_type_and_template, OntologyLoader
 
 class TestUtils(unittest.TestCase):
 
@@ -79,11 +80,21 @@ class TestUtils(unittest.TestCase):
         """Test retrieving a datatype from the RDF graph."""
         graph = Graph()
         node = URIRef("http://example.org/node")
-        graph.add((node, self.basens['hasDatatype'], XSD.string))
+        typenode = URIRef("http://example.org/typenode")
+        templatenode = URIRef("http://example.org/templatenode")
         
-        result = get_datatype(graph, node, self.basens)
+        graph.add((typenode, self.basens['hasDatatype'], XSD.string))
+        result = get_datatype(graph, node, typenode, templatenode, self.basens)
         self.assertEqual(result, XSD.string)
-
+        
+        graph.add((templatenode, self.basens['hasDatatype'], XSD.double))
+        result = get_datatype(graph, node, typenode, templatenode, self.basens)
+        self.assertEqual(result, XSD.double)
+        graph.add((node, self.basens['hasDatatype'], XSD.boolean))
+        result = get_datatype(graph, node, typenode, templatenode, self.basens)
+        self.assertEqual(result, XSD.boolean)
+        
+        
     def test_attributename_from_type(self):
         """Test extracting attribute name from a type."""
         type_uri = "http://example.org/SomeType"
@@ -96,6 +107,27 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(get_default_value([XSD.double]), 0.0)
         self.assertEqual(get_default_value([XSD.string]), '')
         self.assertEqual(get_default_value([XSD.boolean]), False)
+        self.assertEqual(get_default_value([RDF.JSON]), {'@value': {}, '@type': '@json'})
+        self.assertEqual(get_default_value([XSD.dateTime]), {'@value': '1970-1-1T00:00:00', '@type': 'xsd.dateTime'})
+        self.assertEqual(get_default_value(None,orig_datatype=XSD.integer), 0)
+
+        # No default value found
+        self.assertEqual(get_default_value(datatypes=None, orig_datatype=[XSD.byte]), 'null')
+        self.assertEqual(get_default_value(datatypes=[], orig_datatype=[XSD.byte]), 'null')
+
+        # Test array values
+        array_dimension_list = [Literal(1)]
+        array_dimension_node = BNode()
+        g = Graph()
+        Collection(g, array_dimension_node, array_dimension_list)
+        self.assertEqual(get_default_value([XSD.integer], value_rank=Literal(1), array_dimensions=array_dimension_node, g=g), {'@list': [0]})
+
+        array_dimension_list = [Literal(1), Literal(2), Literal(3)]
+        array_dimension_node = BNode()
+        g = Graph()
+        Collection(g, array_dimension_node, array_dimension_list)
+        self.assertEqual(get_default_value([XSD.integer], value_rank=Literal(3), array_dimensions=array_dimension_node, g=g), {'@list': [0, 0, 0, 0, 0, 0]})
+
 
     def test_rdfStringToPythonBool(self):
         """Test getting the default value for a datatype."""
@@ -112,7 +144,26 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(get_value(g, 'hello', [XSD.string]), str('hello'))
         self.assertEqual(get_value(g, 'True', [XSD.boolean]), True)
         self.assertEqual(get_value(g, bnode, [XSD.integer]), {'@list': [ 0, 1, 2 ]})
-        
+        self.assertEqual(get_value(g, Literal(99), [XSD.integer, XSD.double]), int(99))
+        self.assertEqual(get_value(g, Literal(99), [XSD.boolean, XSD.double]), True)
+        self.assertEqual(get_value(g, "{}", [RDF.JSON]), {'@value': '{}', '@type': '@json'})
+        self.assertEqual(get_value(g, '1970-2-1T00:00:00', [XSD.dateTime]), {'@value': '1970-2-1T00:00:00', '@type': 'xsd:dateTime'})
+
+
+    def test_get_value_collection_exception(self):
+        """Test that get_value raises an exception when Collection() fails."""
+        from rdflib import Graph, BNode
+        from rdflib.namespace import XSD
+        from lib.utils import get_value
+
+        g = Graph()
+        bnode = BNode()
+
+        # Patch the Collection in the lib.utils namespace so that it raises an exception.
+        with patch('lib.utils.Collection', side_effect=Exception("Test exception")):
+            self.assertEqual(get_value(g, bnode, [XSD.integer]), None)
+
+
     def test_normalize_angle_bracket_name(self):
         """Test normalizing a name by removing angle bracket content."""
         input_str = "example<test>123"
@@ -311,6 +362,207 @@ class TestUtils(unittest.TestCase):
         self.assertTrue(self.shacl_rule['optional'])
         self.assertFalse(self.shacl_rule['array'])
 
+class TestGetRankDimensions(unittest.TestCase):
 
+    def setUp(self):
+        # Create a fresh graph and define namespaces.
+        self.graph = Graph()
+        self.basens = Namespace('http://example.org/base/')
+        self.opcuans = Namespace('http://example.org/opcua/')
+        # Define nodes for testing.
+        self.node = URIRef('http://example.org/node')
+        self.typenode = URIRef('http://example.org/type')
+        self.templatenode = URIRef('http://example.org/template')
+
+    def test_rank_from_node(self):
+        """When the node has its own values, those are returned."""
+        self.graph.add((self.node, self.basens['hasValueRank'], Literal(10)))
+        self.graph.add((self.node, self.basens['hasArrayDimensions'], Literal(3)))
+        # Even if type or template have values, the node's values take precedence.
+        self.graph.add((self.typenode, self.basens['hasValueRank'], Literal(30)))
+        self.graph.add((self.templatenode, self.basens['hasValueRank'], Literal(20)))
+        result = get_rank_dimensions(self.graph, self.node, self.typenode, self.templatenode,
+                                     self.basens, self.opcuans)
+        self.assertEqual(result, (Literal(10), Literal(3)))
+
+    def test_rank_from_template(self):
+        """When the node is missing values but the template provides them, the template values are used."""
+        # Do not add triples to self.node.
+        self.graph.add((self.templatenode, self.basens['hasValueRank'], Literal(20)))
+        self.graph.add((self.templatenode, self.basens['hasArrayDimensions'], Literal(5)))
+        result = get_rank_dimensions(self.graph, self.node, self.typenode, self.templatenode,
+                                     self.basens, self.opcuans)
+        self.assertEqual(result, (Literal(20), Literal(5)))
+
+    def test_rank_from_type(self):
+        """When neither node nor template provide values but the type does, the type values are used."""
+        # Do not add any triples to self.node or a template.
+        self.graph.add((self.typenode, self.basens['hasValueRank'], Literal(30)))
+        self.graph.add((self.typenode, self.basens['hasArrayDimensions'], Literal(7)))
+        result = get_rank_dimensions(self.graph, self.node, self.typenode, None,
+                                     self.basens, self.opcuans)
+        self.assertEqual(result, (Literal(30), Literal(7)))
+
+    def test_default_value(self):
+        """
+        When no value_rank is provided by node, template, or type,
+        value_rank defaults to Literal(-1) and array_dimensions remains None.
+        """
+        result = get_rank_dimensions(self.graph, self.node, None, None,
+                                     self.basens, self.opcuans)
+        self.assertEqual(result, (Literal(-1), None))
+
+class TestGetTypeAndTemplate(unittest.TestCase):
+
+    def setUp(self):
+        # Create a graph and define our namespaces.
+        self.graph = Graph()
+        self.basens = Namespace("http://example.org/base/")
+        self.opcuans = Namespace("http://example.org/opcua/")
+        # Define the node and its parent.
+        self.node = URIRef("http://example.org/node")
+        self.parentnode = URIRef("http://example.org/parent")
+        # For the query to match, node must have a browse name.
+        self.graph.add((self.node, self.basens['hasBrowseName'], Literal("browse1")))
+        # And node must have a type.
+        self.vartype = URIRef("http://example.org/vartype")
+        self.graph.add((self.node, RDF.type, self.vartype))
+        # Parent must have a type.
+        self.parenttype = URIRef("http://example.org/parenttype")
+        self.graph.add((self.parentnode, RDF.type, self.parenttype))
+        # For the node type: add a triple linking vartypenode to vartype.
+        self.vartypenode = URIRef("http://example.org/vartypenode")
+        self.graph.add((self.vartypenode, self.basens['definesType'], self.vartype))
+        # For the parent type: add a triple linking parenttypenode to parenttype.
+        self.parenttypenode = URIRef("http://example.org/parenttypenode")
+        self.graph.add((self.parenttypenode, self.basens['definesType'], self.parenttype))
+
+    def test_get_type_and_template_with_template(self):
+        """Test that get_type_and_template returns both vartypenode and templatenode when available."""
+        # Add a template triple: parenttypenode hasComponent templatenode.
+        templatenode = URIRef("http://example.org/templatenode")
+        self.graph.add((self.parenttypenode, self.basens['hasComponent'], templatenode))
+        # The template must also have the same browse name as the node.
+        self.graph.add((templatenode, self.basens['hasBrowseName'], Literal("browse1")))
+
+        typenode, returned_templatenode = get_type_and_template(
+            self.graph, self.node, self.parentnode, self.basens, self.opcuans
+        )
+        self.assertEqual(typenode, self.vartypenode)
+        self.assertEqual(returned_templatenode, templatenode)
+
+    def test_get_type_and_template_without_template(self):
+        """Test that get_type_and_template returns vartypenode and None when template is absent."""
+        typenode, templatenode = get_type_and_template(
+            self.graph, self.node, self.parentnode, self.basens, self.opcuans
+        )
+        self.assertEqual(typenode, self.vartypenode)
+        self.assertIsNone(templatenode)
+
+    def test_get_type_and_template_no_result(self):
+        """Test that get_type_and_template returns (None, None) when the required triples are missing."""
+        # Create an empty graph so the query returns no results.
+        empty_graph = Graph()
+        typenode, templatenode = get_type_and_template(
+            empty_graph, self.node, self.parentnode, self.basens, self.opcuans
+        )
+        self.assertIsNone(typenode)
+        self.assertIsNone(templatenode)
+# A fake parse function to simulate ontology content.
+def fake_parse(self, source, *args, **kwargs):
+    """
+    Depending on the source (a string), add triples to the graph.
+    
+    - For "ont1": adds an ontology triple for ont1 and an owl:imports triple for "ont2".
+    - For "ont2": adds an ontology triple for ont2.
+    - For "ont3": simulates an ontology without an explicit ontology IRI.
+    """
+    if str(source) == "ont1":
+        # Simulate an ontology with IRI http://example.org/ont1 that imports ont2.
+        self.add((URIRef("http://example.org/ont1"), RDF.type, OWL.Ontology))
+        self.add((URIRef("http://example.org/ont1"), OWL.imports, Literal("ont2")))
+    elif str(source) == "ont2":
+        # Simulate an ontology with IRI http://example.org/ont2.
+        self.add((URIRef("http://example.org/ont2"), RDF.type, OWL.Ontology))
+    elif source == "ont3":
+        # Simulate an ontology that does not define an owl:Ontology triple.
+        pass
+
+class TestOntologyLoader(unittest.TestCase):
+
+    def setUp(self):
+        # We create a fresh loader in each test.
+        self.loader = OntologyLoader(verbose=False)
+
+    def test_get_graph_initially_empty(self):
+        """Test that get_graph returns an empty graph on initialization."""
+        self.assertEqual(len(self.loader.get_graph()), 0)
+    
+    def test_load_ontology_simple(self):
+        """Test that load_ontology loads a simple ontology (ont1) correctly."""
+        with patch('rdflib.Graph.parse', new=fake_parse):
+            self.loader.load_ontology("ont1")
+            # "ont1" should be marked as visited.
+            self.assertIn("ont1", self.loader.visited_files)
+            # The ontology IRI (http://example.org/ont1) should be in loaded_ontologies.
+            self.assertIn("http://example.org/ont1", self.loader.loaded_ontologies)
+            # The main graph should now contain the ontology triple for ont1.
+            self.assertIn(
+                (URIRef("http://example.org/ont1"), RDF.type, OWL.Ontology),
+                self.loader.get_graph()
+            )
+
+    def test_recursive_import(self):
+        """Test that load_ontology loads imported ontologies recursively."""
+        with patch('rdflib.Graph.parse', new=fake_parse):
+            self.loader.load_ontology("ont1")
+            # ont1 imports ont2, so both should be visited.
+            self.assertIn("ont1", self.loader.visited_files)
+            self.assertIn("ont2", self.loader.visited_files)
+            # And both ontology IRIs should be registered.
+            self.assertIn("http://example.org/ont1", self.loader.loaded_ontologies)
+            # Check that ont2's triple is present.
+            self.assertIn(
+                (URIRef("http://example.org/ont2"), RDF.type, OWL.Ontology),
+                self.loader.get_graph()
+            )
+
+    def test_prevent_duplicate_loading(self):
+        """Test that an ontology is not loaded twice."""
+        with patch('rdflib.Graph.parse', new=fake_parse):
+            self.loader.load_ontology("ont1")
+            visited_initial = set(self.loader.visited_files)
+            loaded_initial = set(self.loader.loaded_ontologies)
+            # Calling load_ontology with the same source should have no effect.
+            self.loader.load_ontology("ont1")
+            self.assertEqual(self.loader.visited_files, visited_initial)
+            self.assertEqual(self.loader.loaded_ontologies, loaded_initial)
+
+    def test_init_imports(self):
+        """Test that init_imports loads multiple ontologies."""
+        with patch('rdflib.Graph.parse', new=fake_parse):
+            # Provide a list of ontology sources.
+            self.loader.init_imports(["ont1", "ont3"])
+            # Both should be marked as visited.
+            self.assertIn("ont1", self.loader.visited_files)
+            self.assertIn("ont3", self.loader.visited_files)
+            # For ont1, the IRI is from its triple.
+            self.assertIn("http://example.org/ont1", self.loader.loaded_ontologies)
+            # For ont3, no owl:Ontology triple is added, so fallback uses the source string.
+            self.assertIn("ont3", self.loader.loaded_ontologies)
+            # Also, ont1 recursively loads ont2.
+            self.assertIn("ont2", self.loader.visited_files)
+            self.assertIn("http://example.org/ont2", self.loader.loaded_ontologies)
+
+    def test_verbose_print(self):
+        """Test that verbose mode prints the expected output during loading."""
+        with patch('rdflib.Graph.parse', new=fake_parse):
+            with patch('builtins.print') as mock_print:
+                loader_verbose = OntologyLoader(verbose=True)
+                loader_verbose.load_ontology("ont1")
+                # Expect a print call with a message containing the ontology IRI and source.
+                mock_print.assert_called_with(
+                   'Importing http://example.org/ont2 from url ont2.'
+                )
 if __name__ == "__main__":
     unittest.main()

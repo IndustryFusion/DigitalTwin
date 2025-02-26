@@ -273,7 +273,7 @@ def scan_type_recursive(o, node, instancetype, shapename):
         if isAbstract:
             return False
         shacl_rule['is_property'] = True
-        shaclg.get_shacl_iri_and_contentclass(g, o, shacl_rule)
+        shaclg.get_shacl_iri_and_contentclass(g, o, node, shacl_rule)
         shaclg.create_shacl_property(shapename,
                                      shacl_rule['path'],
                                      shacl_rule['optional'],
@@ -408,7 +408,7 @@ will flag this.")
             shacl_rule['contentclass'] = classtype
     elif rdfutils.isVariableNodeClass(nodeclass):
         shacl_rule['is_property'] = True
-        shaclg.get_shacl_iri_and_contentclass(g, o, shacl_rule)
+        shaclg.get_shacl_iri_and_contentclass(g, o, node, shacl_rule)
         if shacl_rule['isAbstract']:
             print(f"Warning: Abstract OPCUA DataType {str(shacl_rule.get('orig_datatype'))} \
 in attribute {entity_ontology_prefix}:{attributename}.")
@@ -424,7 +424,7 @@ in attribute {entity_ontology_prefix}:{attributename}.")
                 value = utils.get_default_value(shacl_rule['datatype'],
                                                 shacl_rule.get('orig_datatype'),
                                                 shacl_rule.get('value_rank'),
-                                                shacl_rule.get('array_dimensions'))
+                                                shacl_rule.get('array_dimensions'), g=g)
             else:
                 value = e.get_default_contentclass(shacl_rule['contentclass'])
         has_components = True

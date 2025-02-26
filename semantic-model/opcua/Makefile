@@ -33,7 +33,7 @@ setup-dev: requirements-dev.txt
 	$(PIP) install -r requirements-dev.txt
 
 test:
-	${PYTEST} tests --cov . --cov-fail-under=80
+	${PYTEST} tests --cov=lib . --cov-fail-under=80
 	(cd tests/nodeset2owl; bash ./test.bash)
 	(cd tests/extractType; bash ./test.bash)
 	(cd tests/nodeset-dump; bash ./test.bash)

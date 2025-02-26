@@ -30,6 +30,12 @@
             "type": "Property",
             "value": 42
         },
+        "uaentity:hasMyVariable8": {
+            "type": "Property",
+            "value": {
+                "@list": []
+            }
+        },
         "uaentity:hasMyVariable": {
             "type": "Property",
             "value": {
@@ -51,6 +57,10 @@
                     false
                 ]
             }
+        },
+        "uaentity:hasMyVariable7": {
+            "type": "Property",
+            "value": ""
         }
     },
     {

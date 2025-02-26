@@ -75,18 +75,6 @@ class Entity:
         self.e.bind('ngsi-ld', self.ngsildns)
         self.types = []
 
-    # def scan_type(self, g, node, instancetype):
-    #     # Implementation of the scan_type logic
-    #     pass
-
-    # def scan_entity(self, g, node, instancetype, id, optional=False):
-    #     # Implementation of the scan_entity logic
-    #     pass
-
-    # def generate_node_id(self, g, node, id, instancetype):
-    #     # Implementation for generating node ID
-    #     pass
-
     def bind(self, prefix, namespace):
         self.e.bind(prefix, namespace)
 
@@ -102,31 +90,6 @@ class Entity:
         self.e.add((iri, RDFS.domain, URIRef(instancetype)))
         self.e.add((iri, RDF.type, OWL.NamedIndividual))
 
-    # def add_relationship(self, attributename):
-    #     if isinstance(attributename, URIRef):
-    #         self.e.add((attributename, RDFS.range, ngsildns['Relationship']))
-    #     else:
-    #         self.e.add((self.entity_namespace[attributename], RDFS.range, ngsildns['Relationship']))
-
-    # def add_subcomponent(self, attributename):
-    #     self.e.add((self.entity_namespace[attributename], RDF.type, self.basens['SubComponentRelationship']))
-
-    # def add_placeholder(self, attributename):
-    #     self.e.add((self.entity_namespace[attributename], self.basens['isPlaceHolder'], Literal(True)))
-
-    # def add_property(self, attributename):
-    #     if isinstance(attributename, URIRef):
-    #         self.e.add((attributename, RDFS.range, ngsildns['Property']))
-    #     else:
-    #         self.e.add((self.entity_namespace[attributename], RDFS.range, ngsildns['Property']))
-
-    # def is_typematch(self, full_attribute_name, type):
-    #     try:
-    #         if len(list(self.e.triples((full_attribute_name, RDFS.domain, type)))) > 0:
-    #             return True
-    #     except:
-    #         return False
-
     def add_subclass(self, type):
         self.e.add((type, RDF.type, OWL.Class))
         self.e.add((type, RDF.type, OWL.NamedIndividual))
@@ -141,19 +104,8 @@ class Entity:
     def add(self, triple):
         self.e.add(triple)
 
-    # def attritube_instance_exists(self, attributename):
-    #     return len(list(self.e.objects(attributename, RDF.type))) > 0
-
     def get_graph(self):
         return self.e
-
-    # def add_opcdatatype(self, attribute_name, data_type):
-    #     self.e.add((attribute_name, self.basens['hasOPCUADatatype'], data_type))
-
-    # def add_datatype(self, g, node, attribute_name):
-    #     data_type = utils.get_datatype(g, node, self.basens)
-    #     if data_type is not None:
-    #         self.e.add((self.entity_namespace[attribute_name], self.basens['hasOPCUADatatype'], data_type))
 
     def create_ontolgoy_header(self, entity_namespace, version=0.1, versionIRI=None):
         self.e.add((URIRef(entity_namespace), RDF.type, OWL.Ontology))

@@ -177,11 +177,14 @@ class TestShacl(unittest.TestCase):
         mock_serialize.assert_called_once_with(destination)
 
     @patch('lib.utils.get_datatype', return_value=URIRef("http://example.org/datatype"))
-    @patch('lib.jsonld.JsonLd.map_datatype_to_jsonld', return_value=Literal("xsd:string"))
-    def test_get_shacl_iri_and_contentclass(self, mock_map_datatype_to_jsonld, mock_get_datatype):
+    @patch('lib.jsonld.JsonLd.map_datatype_to_jsonld', return_value=(Literal("xsd:string"), None))
+    @patch('lib.utils.get_type_and_template', return_value=(URIRef("http://example.rog/typenode"), URIRef("http://example.rog/templatenode")))
+    @patch('lib.utils.get_rank_dimensions', return_value=(Literal(-1), RDF.nil))
+    def test_get_shacl_iri_and_contentclass(self, moch_get_rank_dimensions, mocK_get_type_and_templat, mock_map_datatype_to_jsonld, mock_get_datatype):
         """Test retrieving SHACL IRI and content class."""
         g = Graph()
         node = URIRef("http://example.org/node")
+        parentnode = URIRef("http://example.org/parentnode")
         shacl_rule = {}
 
         # Mocking graph objects - Case 1: Enumeration type
@@ -189,7 +192,7 @@ class TestShacl(unittest.TestCase):
             iter([URIRef("http://example.org/Enumeration")]),  # RDFS.subClassOf
         ])
 
-        self.shacl_instance.get_shacl_iri_and_contentclass(g, node, shacl_rule)
+        self.shacl_instance.get_shacl_iri_and_contentclass(g, node, parentnode, shacl_rule)
 
         self.assertFalse(shacl_rule['is_iri'])
         self.assertEqual(shacl_rule['contentclass'], None)
@@ -201,7 +204,7 @@ class TestShacl(unittest.TestCase):
         ])
         shacl_rule = {}
 
-        self.shacl_instance.get_shacl_iri_and_contentclass(g, node, shacl_rule)
+        self.shacl_instance.get_shacl_iri_and_contentclass(g, node, parentnode, shacl_rule)
 
         self.assertFalse(shacl_rule['is_iri'])
         self.assertIsNone(shacl_rule['contentclass'])
@@ -211,7 +214,7 @@ class TestShacl(unittest.TestCase):
         mock_get_datatype.return_value = None
         shacl_rule = {}
 
-        self.shacl_instance.get_shacl_iri_and_contentclass(g, node, shacl_rule)
+        self.shacl_instance.get_shacl_iri_and_contentclass(g, node, parentnode, shacl_rule)
 
         self.assertFalse(shacl_rule['is_iri'])
         self.assertIsNone(shacl_rule['contentclass'])
@@ -222,7 +225,7 @@ class TestShacl(unittest.TestCase):
         g.objects = MagicMock(side_effect=Exception("Mocked exception"))
         shacl_rule = {}
 
-        self.shacl_instance.get_shacl_iri_and_contentclass(g, node, shacl_rule)
+        self.shacl_instance.get_shacl_iri_and_contentclass(g, node, parentnode, shacl_rule)
 
         self.assertFalse(shacl_rule['is_iri'])
         self.assertIsNone(shacl_rule['contentclass'])
