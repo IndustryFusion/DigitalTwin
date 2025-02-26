@@ -21,7 +21,8 @@ from rdflib.collection import Collection
 from pathlib import Path
 import re
 import os
-import math
+from functools import reduce
+import operator
 
 query_realtype = """
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
@@ -130,11 +131,13 @@ def extract_namespaces(graph):
         } for prefix, namespace in graph.namespaces()}
 
 
-def get_datatype(graph, node, basens):
-    try:
-        return next(graph.objects(node, basens['hasDatatype']))
-    except:
-        return None
+def get_datatype(graph, node, typenode, templatenode, basens):
+    datatype = next(graph.objects(node, basens['hasDatatype']), None)
+    if datatype is None:
+        datatype = next(graph.objects(templatenode, basens['hasDatatype']), None)
+        if datatype is None:
+            datatype = next(graph.objects(typenode, basens['hasDatatype']), None)
+    return datatype
 
 
 def attributename_from_type(type):
@@ -146,11 +149,11 @@ def attributename_from_type(type):
     return basename
 
 
-def get_default_value(datatypes, orig_datatype=None, value_rank=None, array_dimensions=None):
+def get_default_value(datatypes, orig_datatype=None, value_rank=None, array_dimensions=None, g=Graph()):
     datatype = None
     if isinstance(datatypes, list) and len(datatypes) > 0:
         datatype = datatypes[0]
-    if orig_datatype is not None and datatype is None:
+    if orig_datatype is not None and (datatype is None or len(datatype) == 0):
         datatype = orig_datatype
     data_value = None
     if datatype == XSD.integer:
@@ -173,9 +176,9 @@ def get_default_value(datatypes, orig_datatype=None, value_rank=None, array_dime
     data_array_value = []
     if array_dimensions is not None:
         array_length = 0
-        ad = Collection(Graph(), array_dimensions)
+        ad = Collection(g, array_dimensions)
         if len(ad) > 0:
-            array_length = math.prod(ad)
+            array_length = reduce(operator.mul, (item.toPython() for item in ad), 1)
         if array_length > 0:
             data_array_value = [data_value] * array_length
     return {'@list': data_array_value}
@@ -207,10 +210,9 @@ def get_value(g, value, datatypes):
         cast = bool
     if isinstance(value, BNode):
         try:
-            if isinstance(value, BNode):
-                collection = Collection(g, value)
-                json_list = [item.toPython() if isinstance(item, Literal) else item for item in collection]
-                return {'@list': json_list}
+            collection = Collection(g, value)
+            json_list = [item.toPython() if isinstance(item, Literal) else item for item in collection]
+            return {'@list': json_list}
         except:
             print("Warning: BNode which is not an rdf:List cannot be converted into a value")
             return None
@@ -327,27 +329,57 @@ def create_list(g, arr, datatype):
     return list_start
 
 
-def get_rank_dimensions(graph, node, basens, opcuans):
-    query_rank_and_dimension = """
-    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-    SELECT ?valueRank ?arrayDimensions ?typeValueRank ?typeArrayDimensions   WHERE {{
-       BIND(<{node}> AS ?node)
-        OPTIONAL{{?node base:hasValueRank ?valueRank}}
-        OPTIONAL{{?node base:hasArrayDimensions ?arrayDimensions}}
+def get_type_and_template(g, node, parentnode, basens, opcuans):
+    """Derives the type definition and potential template definition
+
+    Args:
+        g (RDF Graph): graph to search in
+        node (RDFURIRef): node to derive type and template
+        parentnode (RDFURIRef): parent
+    """
+    query_type_and_template = """
+    SELECT ?vartypenode ?templatenode WHERE {{
+        BIND(<{node}> as ?node)
+        BIND(<{parentnode}> as ?parentnode)
         ?node a ?vartype .
         ?vartypenode base:definesType ?vartype .
-        FILTER(?vartypenode!=opcua:VariableNodeClass) .
-        OPTIONAL{{?vartypenode base:hasValueRank ?typeValueRank}} .
-        OPTIONAL{{?vartype base:hasArrayDimensions ?typeArrayDimensions}}.
+        FILTER NOT EXISTS{{ ?vartype rdfs:subClassOf opcua:BaseNodeClass}}
+        ?node base:hasBrowseName ?browsename .
+        OPTIONAL{{
+            ?parentnode a ?parenttype .
+            ?parenttypenode base:definesType ?parenttype .
+            ?parenttypenode base:hasComponent ?templatenode .
+            ?templatenode base:hasBrowseName ?browsename.
+        }}
     }}
-    """.format(node=node)
-    result = graph.query(query_rank_and_dimension, initNs={'base': basens, 'opcua': opcuans})
-    value_rank, array_dimensions, tvalue_rank, tarray_dimensions = next(iter(result))
+    """.format(node=node, parentnode=parentnode)
+    result = g.query(query_type_and_template, initNs={'base': basens, 'opcua': opcuans})
+    typenode, templatenode = next(iter(result), (None, None))
+    return typenode, templatenode
+
+
+def get_rank_dimensions(graph, node, typenode, templatenode, basens, opcuans):
+    value_rank = next(graph.objects(node, basens['hasValueRank']), None)
+    array_dimensions = next(graph.objects(node, basens['hasArrayDimensions']), None)
+    type_value_rank = next(graph.objects(typenode, basens['hasValueRank']), None) if typenode is not None else None
+    type_array_dimensions = next(graph.objects(typenode, basens['hasArrayDimensions']), None) \
+        if typenode is not None else None
+    template_value_rank = next(graph.objects(templatenode, basens['hasValueRank']), None) \
+        if templatenode is not None else None
+    template_array_dimensions = next(graph.objects(templatenode, basens['hasArrayDimensions']), None) \
+        if templatenode is not None else None
     if value_rank is None:
-        value_rank = tvalue_rank
+        if template_value_rank is not None:
+            value_rank = template_value_rank
+        else:
+            value_rank = type_value_rank
+    if value_rank is None:
+        value_rank = Literal(-1)
     if array_dimensions is None:
-        array_dimensions = tarray_dimensions
+        if template_array_dimensions is not None:
+            array_dimensions = template_array_dimensions
+        else:
+            array_dimensions = type_array_dimensions
     return value_rank, array_dimensions
 
 

@@ -101,7 +101,7 @@ class Shacl:
             ad = Collection(self.data_graph, array_dimensions)
             if len(ad) > 0:
                 array_length = reduce(operator.mul, (item.toPython() for item in ad), 1)
-        if array_length is not None:
+        if array_length is not None and array_length > 0:
             self.shaclg.add((property_shape, SH.minCount, Literal(array_length)))
             self.shaclg.add((property_shape, SH.maxCount, Literal(array_length)))
         property_node = BNode()
@@ -163,6 +163,12 @@ class Shacl:
                                                                          value_rank,
                                                                          array_dimensions)
                 pred, obj = self.shacl_or([array_validation_shape])
+                self.shaclg.add((innerproperty, pred, obj))
+                blank_node_shape = BNode()
+                self.shaclg.add((blank_node_shape, SH.nodeKind, SH.BlankNode))
+                rdf_nil_value_shape = BNode()
+                self.shaclg.add((rdf_nil_value_shape, SH.hasValue, RDF.nil))
+                pred, obj = self.shacl_or([blank_node_shape, rdf_nil_value_shape])
                 self.shaclg.add((innerproperty, pred, obj))
             elif int(value_rank) < -1:
                 dt_array = self.create_datatype_shapes(datatype)
@@ -232,42 +238,37 @@ class Shacl:
     def get_graph(self):
         return self.shaclg
 
-    def get_shacl_iri_and_contentclass(self, g, node, shacl_rule):
-        try:
-            data_type = utils.get_datatype(g, node, self.basens)
-            value_rank, array_dimensions = utils.get_rank_dimensions(g, node, self.basens, self.opcuans)
-            shacl_rule['value_rank'] = value_rank
-            shacl_rule['array_dimensions'] = array_dimensions
-            shacl_rule['orig_datatype'] = data_type
-            shacl_type, shacl_pattern = JsonLd.map_datatype_to_jsonld(data_type, self.opcuans)
+    def get_shacl_iri_and_contentclass(self, g, node, parentnode, shacl_rule):
+        typenode, templatenode = utils.get_type_and_template(g, node, parentnode, self.basens, self.opcuans)
+        data_type = utils.get_datatype(g, node, typenode, templatenode, self.basens)
+        value_rank, array_dimensions = utils.get_rank_dimensions(g, node, typenode, templatenode, self.basens,
+                                                                 self.opcuans)
+        shacl_rule['value_rank'] = value_rank
+        shacl_rule['array_dimensions'] = array_dimensions
+        shacl_rule['orig_datatype'] = data_type
+        shacl_type, shacl_pattern = JsonLd.map_datatype_to_jsonld(data_type, self.opcuans)
+        shacl_rule['pattern'] = shacl_pattern
+        if data_type is not None:
+            base_data_type = next(g.objects(data_type, RDFS.subClassOf))  # Todo: This must become a sparql query
+            is_abstract = None
+            try:
+                is_abstract = bool(next(g.objects(data_type, self.basens['isAbstract'])))
+            except:
+                pass
+            shacl_rule['isAbstract'] = is_abstract
+            shacl_rule['datatype'] = shacl_type
             shacl_rule['pattern'] = shacl_pattern
-            if data_type is not None:
-                base_data_type = next(g.objects(data_type, RDFS.subClassOf))  # Todo: This must become a sparql query
-                is_abstract = None
-                try:
-                    is_abstract = bool(next(g.objects(data_type, self.basens['isAbstract'])))
-                except:
-                    pass
-                shacl_rule['isAbstract'] = is_abstract
-                shacl_rule['datatype'] = shacl_type
-                shacl_rule['pattern'] = shacl_pattern
-                if base_data_type != self.opcuans['Enumeration']:
-                    shacl_rule['is_iri'] = False
-                    shacl_rule['contentclass'] = None
-                else:
-                    shacl_rule['is_iri'] = True
-                    shacl_rule['contentclass'] = data_type
-            else:
+            if base_data_type != self.opcuans['Enumeration']:
                 shacl_rule['is_iri'] = False
                 shacl_rule['contentclass'] = None
-                shacl_rule['datatype'] = None
-                shacl_rule['isAbstract'] = None
-        except:
+            else:
+                shacl_rule['is_iri'] = True
+                shacl_rule['contentclass'] = data_type
+        else:
             shacl_rule['is_iri'] = False
             shacl_rule['contentclass'] = None
             shacl_rule['datatype'] = None
             shacl_rule['isAbstract'] = None
-            shacl_rule['orig_datatype'] = None
 
     def get_modelling_rule_and_path(self, name, target_class, attributeclass, prefix):
         bindings = {'targetclass': target_class, 'name': Literal(name), 'attributeclass': attributeclass,
