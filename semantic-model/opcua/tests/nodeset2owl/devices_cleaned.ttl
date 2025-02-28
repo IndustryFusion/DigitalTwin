@@ -847,7 +847,7 @@ devices:nodei125 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "125" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei126 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -859,7 +859,7 @@ devices:nodei126 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "126" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei127 a opcua:MethodNodeClass ;
     base:hasBrowseName "GenerateFileForWrite" ;
@@ -880,7 +880,7 @@ devices:nodei128 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "128" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei129 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -892,7 +892,7 @@ devices:nodei129 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "129" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei130 a opcua:MethodNodeClass ;
     base:hasBrowseName "CloseAndCommit" ;
@@ -913,7 +913,7 @@ devices:nodei131 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "131" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei132 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -925,7 +925,7 @@ devices:nodei132 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "132" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei133 a opcua:BaseDataVariableType,
         opcua:VariableNodeClass ;
@@ -1011,7 +1011,7 @@ devices:nodei143 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "143" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei144 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -1023,7 +1023,7 @@ devices:nodei144 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "144" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei145 a opcua:MethodNodeClass ;
     base:hasBrowseName "GenerateFileForWrite" ;
@@ -1044,7 +1044,7 @@ devices:nodei146 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "146" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei147 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -1056,7 +1056,7 @@ devices:nodei147 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "147" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei148 a opcua:MethodNodeClass ;
     base:hasBrowseName "CloseAndCommit" ;
@@ -1077,7 +1077,7 @@ devices:nodei149 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "149" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei150 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -1089,7 +1089,7 @@ devices:nodei150 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "150" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei15001 a opcua:NamespaceMetadataType,
         opcua:ObjectNodeClass ;
@@ -1160,7 +1160,7 @@ devices:nodei15006 a opcua:PropertyType,
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15006" ;
     base:hasValue ( 0 ) ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei15007 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -1172,7 +1172,7 @@ devices:nodei15007 a opcua:PropertyType,
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15007" ;
     base:hasValue ( "1:2147483647" ) ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei15008 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -1192,7 +1192,7 @@ devices:nodei15031 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15031" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei15032 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -1203,7 +1203,7 @@ devices:nodei15032 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15032" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei15033 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -1925,7 +1925,7 @@ devices:nodei190 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "190" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei191 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -1937,7 +1937,7 @@ devices:nodei191 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "191" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei194 a opcua:FileDirectoryType,
         opcua:ObjectNodeClass ;
@@ -1971,7 +1971,7 @@ devices:nodei196 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "196" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei197 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -1983,7 +1983,7 @@ devices:nodei197 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "197" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei198 a opcua:MethodNodeClass ;
     base:hasBrowseName "CreateFile" ;
@@ -2004,7 +2004,7 @@ devices:nodei199 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "199" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei2 a devices:SoftwareLoadingType,
         opcua:ObjectNodeClass ;
@@ -2032,7 +2032,7 @@ devices:nodei200 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "200" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei201 a opcua:MethodNodeClass ;
     base:hasBrowseName "Delete" ;
@@ -2053,7 +2053,7 @@ devices:nodei202 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "202" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei203 a opcua:MethodNodeClass ;
     base:hasBrowseName "MoveOrCopy" ;
@@ -2074,7 +2074,7 @@ devices:nodei204 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "204" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei205 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -2086,7 +2086,7 @@ devices:nodei205 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "205" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei206 a opcua:MethodNodeClass ;
     base:hasBrowseName "GetUpdateBehavior" ;
@@ -2107,7 +2107,7 @@ devices:nodei207 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "207" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei208 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -2119,7 +2119,7 @@ devices:nodei208 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "208" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei209 a opcua:MethodNodeClass ;
     base:hasBrowseName "ValidateFiles" ;
@@ -2140,7 +2140,7 @@ devices:nodei210 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "210" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei211 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -2152,7 +2152,7 @@ devices:nodei211 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "211" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei227 a opcua:BaseDataVariableType,
         opcua:VariableNodeClass ;
@@ -2261,7 +2261,7 @@ devices:nodei24 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "24" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei240 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -2404,7 +2404,7 @@ devices:nodei266 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "266" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei268 a opcua:MethodNodeClass ;
     base:hasBrowseName "InstallFiles" ;
@@ -2424,7 +2424,7 @@ devices:nodei269 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "269" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei27 a opcua:FolderType,
         opcua:ObjectNodeClass ;
@@ -2779,7 +2779,7 @@ devices:nodei332 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "332" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei345 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -2860,7 +2860,7 @@ devices:nodei37 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "37" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei373 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -2902,7 +2902,7 @@ devices:nodei38 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "38" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei380 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -2944,7 +2944,7 @@ devices:nodei383 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "383" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei384 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -2996,7 +2996,7 @@ devices:nodei388 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "388" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei39 a opcua:MethodNodeClass ;
     base:hasBrowseName "Close" ;
@@ -3104,7 +3104,7 @@ devices:nodei472 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "472" ;
-    base:hasValueRank "-3" .
+    base:hasValueRank -3 .
 
 devices:nodei481 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -3322,7 +3322,7 @@ devices:nodei6011 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6011" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei6012 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -3335,7 +3335,7 @@ devices:nodei6012 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6012" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei6013 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -3348,7 +3348,7 @@ devices:nodei6013 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6013" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei6014 a devices:FunctionalGroupType,
         opcua:ObjectNodeClass ;
@@ -3496,7 +3496,7 @@ devices:nodei6167 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6167" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei6168 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -3508,7 +3508,7 @@ devices:nodei6168 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6168" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei6169 a opcua:MethodNodeClass ;
     base:hasBrowseName "RenewLock" ;
@@ -3528,7 +3528,7 @@ devices:nodei6170 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6170" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei6171 a opcua:MethodNodeClass ;
     base:hasBrowseName "ExitLock" ;
@@ -3548,7 +3548,7 @@ devices:nodei6172 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6172" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei6173 a opcua:MethodNodeClass ;
     base:hasBrowseName "BreakLock" ;
@@ -3568,7 +3568,7 @@ devices:nodei6174 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6174" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei62 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -3580,7 +3580,7 @@ devices:nodei62 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "62" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei6208 a opcua:BaseDataVariableType,
         opcua:VariableNodeClass ;
@@ -3802,7 +3802,7 @@ devices:nodei6300 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6300" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei6301 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -3814,7 +3814,7 @@ devices:nodei6301 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6301" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei6302 a opcua:MethodNodeClass ;
     base:hasBrowseName "RenewLock" ;
@@ -3834,7 +3834,7 @@ devices:nodei6303 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6303" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei6304 a opcua:MethodNodeClass ;
     base:hasBrowseName "ExitLock" ;
@@ -3854,7 +3854,7 @@ devices:nodei6305 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6305" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei6306 a opcua:MethodNodeClass ;
     base:hasBrowseName "BreakLock" ;
@@ -3874,7 +3874,7 @@ devices:nodei6307 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6307" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei6354 a devices:FunctionalGroupType,
         opcua:ObjectNodeClass ;
@@ -3945,7 +3945,7 @@ devices:nodei6394 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6394" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei6395 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -3957,7 +3957,7 @@ devices:nodei6395 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6395" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei6396 a opcua:MethodNodeClass ;
     base:hasBrowseName "RenewLock" ;
@@ -3977,7 +3977,7 @@ devices:nodei6397 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6397" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei6398 a opcua:MethodNodeClass ;
     base:hasBrowseName "ExitLock" ;
@@ -3997,7 +3997,7 @@ devices:nodei6399 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6399" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei64 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -4009,7 +4009,7 @@ devices:nodei64 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "64" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei6400 a opcua:MethodNodeClass ;
     base:hasBrowseName "BreakLock" ;
@@ -4029,7 +4029,7 @@ devices:nodei6401 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6401" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei6423 a opcua:DataTypeDictionaryType,
         opcua:VariableNodeClass ;
@@ -4094,7 +4094,7 @@ devices:nodei6450 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6450" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei6468 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -4146,7 +4146,7 @@ devices:nodei65 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "65" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei6527 a opcua:MethodNodeClass ;
     base:hasBrowseName "TransferToDevice" ;
@@ -4166,7 +4166,7 @@ devices:nodei6528 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6528" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei6529 a opcua:MethodNodeClass ;
     base:hasBrowseName "TransferFromDevice" ;
@@ -4186,7 +4186,7 @@ devices:nodei6530 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6530" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei6531 a opcua:MethodNodeClass ;
     base:hasBrowseName "FetchTransferResultData" ;
@@ -4207,7 +4207,7 @@ devices:nodei6532 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6532" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei6533 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -4219,7 +4219,7 @@ devices:nodei6533 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6533" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei6534 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -4341,7 +4341,7 @@ devices:nodei67 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "67" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei68 a opcua:MethodNodeClass ;
     base:hasBrowseName "GetPosition" ;
@@ -4362,7 +4362,7 @@ devices:nodei69 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "69" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei70 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -4374,7 +4374,7 @@ devices:nodei70 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "70" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei71 a opcua:MethodNodeClass ;
     base:hasBrowseName "SetPosition" ;
@@ -4394,7 +4394,7 @@ devices:nodei72 a opcua:PropertyType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "72" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 devices:nodei76 a devices:PowerCycleStateMachineType,
         opcua:ObjectNodeClass ;

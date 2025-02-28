@@ -1036,7 +1036,7 @@ machinery:nodei6035 a opcua:PropertyType,
     base:hasNamespace machinery:MACHINERYNamespace ;
     base:hasNodeId "6035" ;
     base:hasValue ( 0 ) ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 machinery:nodei6036 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -1047,7 +1047,7 @@ machinery:nodei6036 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace machinery:MACHINERYNamespace ;
     base:hasNodeId "6036" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 machinery:nodei6037 a opcua:PropertyType,
         opcua:VariableNodeClass ;

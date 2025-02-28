@@ -1,0 +1,194 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+@prefix opcua: <http://opcfoundation.org/UA/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Main shape for OPC UA nodes (Properties and Variables)
+base:OPCUANodeShape a sh:NodeShape ;
+    sh:targetClass opcua:VariableNodeClass, opcua:VariableTypeNodeClass ;
+
+    # hasValueRank is optional; if absent, default to -1.
+    sh:property [
+        sh:path base:hasValueRank ;
+        sh:datatype xsd:integer ;
+        sh:maxCount 1 ;
+        sh:minInclusive -3 ;
+        sh:message "ValueRank can apopear at most once, must be xsd:integer and >= -3."
+    ] ;
+
+    # hasArrayDimensions, if present, must be a well-formed RDF list.
+    sh:property [
+        sh:path base:hasArrayDimensions ;
+        sh:node base:RdfListShape ;
+        sh:maxCount 1 ;
+        sh:message "ArrayDimension must be null or a List of integers > 0."
+    ] ;
+
+
+
+    # SPARQL constraint: compare node’s valueRank (or default -1 if missing)
+    # with the type definition’s hasValueRank.
+    sh:sparql [
+        sh:message "The node {$this} has a valueRank {?valueRank} which does not match its type definition's valueRank {?parentValueRank}." ;
+        sh:select """
+          PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+          PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+          PREFIX base: <https://industryfusion.github.io/contexts/ontology/v0/base/>
+          PREFIX opcua: <http://opcfoundation.org/UA/>
+
+          SELECT $this ?valueRank ?parentValueRank WHERE {
+            $this a ?type .
+            FILTER(?type != opcua:VarialbeNodeClass)
+            # When valueRank is not defined, set it to -1
+            OPTIONAL { $this base:hasValueRank ?actualValueRank . }
+            BIND( COALESCE(?actualValueRank, -1) AS ?valueRank ) .
+            ?parentnode base:definesType ?type .
+            # When parentValueRank is not defined, set it to -1
+            OPTIONAL { ?parentnode base:hasValueRank ?parentActualValueRank . }
+            BIND( COALESCE(?parentActualValueRank, -1) AS ?parentValueRank ) .
+            
+            FILTER ( !( 
+                (?parentValueRank = -2)
+                ||
+                ((?parentValueRank > 0) && (?parentValueRank = ?valueRank))
+                ||
+                ((?parentValueRank = 0) && (?valueRank >= 0))
+                ||
+                ((?parentValueRank = -1) && (?valueRank = -1))
+                ||
+                ((?parentValueRank = -3) && ((?valueRank = -1) || (?valueRank = 1) || (?valueRank = -3)))
+            ) )
+          }
+        """ ;
+    ] ;
+
+    # SPARQL constraint: compare variable type hierarchy valueRanks (or default -1 if missing)
+    sh:sparql [
+        sh:message "The variable type node {$this} has a valueRank {?valueRank} which does not match its super type definition's valueRank {?parentValueRank}." ;
+        sh:select """
+          PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+          PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+          PREFIX base: <https://industryfusion.github.io/contexts/ontology/v0/base/>
+          PREFIX opcua: <http://opcfoundation.org/UA/>
+
+          SELECT $this ?valueRank ?parentValueRank WHERE {
+            $this a opcua:VariableTypeNodeClass .
+            # When valueRank is not defined, set it to -1
+            OPTIONAL { $this base:hasValueRank ?actualValueRank . }
+            BIND( COALESCE(?actualValueRank, -1) AS ?valueRank ) .
+            $this base:definesType ?type .
+            ?type rdfs:subClassOf ?parentType .
+            ?parentnode base:definesType ?parentType .
+            # When parentValueRank is not defined, set it to -1
+            OPTIONAL { ?parentnode base:hasValueRank ?parentActualValueRank . }
+            BIND( COALESCE(?parentActualValueRank, -1) AS ?parentValueRank ) .
+            FILTER ( !( 
+                (?parentValueRank = -2)
+                ||
+                ((?parentValueRank > 0) && (?parentValueRank = ?valueRank))
+                ||
+                ((?parentValueRank = 0) && (?valueRank >= 0))
+                ||
+                ((?parentValueRank = -1) && (?valueRank = -1))
+                ||
+                ((?parentValueRank = -3) && ((?valueRank = -1) || (?valueRank = 1)))
+              ) )
+            
+          }
+        """ ;
+    ] ;
+    # SPARQL constraint: compare the node's array dimensions with definition from valuRank.
+    sh:sparql [
+        sh:message "The node {?this} hasArrayDimensions length of {?count} but this does not match the valueRank {?valueRank}." ;
+        sh:select """
+          PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+          PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+          PREFIX base: <https://industryfusion.github.io/contexts/ontology/v0/base/>
+          PREFIX opcua: <http://opcfoundation.org/UA/>
+
+          SELECT $this ?valueRank ?count WHERE {
+            # Retrieve the node's valueRank; default to -1 if not defined.
+            OPTIONAL { $this base:hasValueRank ?actualValueRank . }
+            BIND( COALESCE(?actualValueRank, -1) AS ?valueRank ) .  
+            # Get the ArrayDimensions list.
+            $this base:hasArrayDimensions ?arrayDimensions .
+            # Count the number of list nodes that contain an rdf:first value.
+            {
+              SELECT $this (COUNT(DISTINCT ?listNode) AS ?count)
+              WHERE {
+                $this base:hasArrayDimensions ?arrayDimensions .
+                ?arrayDimensions rdf:rest* ?listNode .
+                ?listNode rdf:first ?anyValue .
+              }
+              GROUP BY $this
+            }
+            # Trigger a violation if the number of dimensions does not match valueRank.
+  			    FILTER ( (?valueRank > 0 && ?count != ?valueRank) || (?valueRank <= 0 && ?count > 0) )
+          }
+        """ ;
+    ] ;
+    # SPARQL constraint: find valueRanks > 0 without arrayDimensions.
+    sh:sparql [
+        sh:message "The node {?this} has valueRank {?valueRank} without arrayDimension." ;
+        sh:select """
+          PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+          PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+          PREFIX base: <https://industryfusion.github.io/contexts/ontology/v0/base/>
+          PREFIX opcua: <http://opcfoundation.org/UA/>
+
+          SELECT $this ?valueRank WHERE {
+            # Retrieve the node's valueRank; default to -1 if not defined.
+            OPTIONAL { $this base:hasValueRank ?actualValueRank . }
+            BIND( COALESCE(?actualValueRank, -1) AS ?valueRank ) .  
+            # Get the ArrayDimensions list.
+            OPTIONAL{
+              $this base:hasArrayDimensions ?arrayDimensions .
+            }
+            # Trigger a violation if the number of dimensions does not match valueRank.
+            FILTER ( ?valueRank > 0 && ! bound(?arrayDimensions) )
+          }
+        """ ;
+    ] .
+# Conditional: if valueRank is -1 or is not provided, then hasArrayDimensions must be absent.
+
+    # sh:or (
+    #     [ a sh:NodeShape ;
+    #       # Alternative 1: valueRank is provided and is not equal to -1.
+    #       sh:property [
+    #           sh:path base:hasValueRank ;
+    #           sh:minCount 1 ;
+    #           sh:datatype xsd:integer ;
+    #           sh:not [
+    #               a sh:NodeShape ;
+    #               sh:in (0 -1 -2 -3) ;
+    #           ];
+    #           sh:message "When valueRank is missing or <= 0, ArrayDimensions must be absent.";
+    #       ] ;
+    #     ]
+    #     [ a sh:NodeShape ;
+    #       # Alternative 2: When valueRank is missing (null) or equals -1,
+    #       # ArrayDimensions must be absent.
+    #       sh:property [
+    #           sh:path base:hasArrayDimensions ;
+    #           sh:maxCount 0 ;
+    #       ];
+    #       sh:message "When valueRank is missing or <= 0, ArrayDimensions must be absent.";
+    #     ]
+    # ) ;
+    # sh:message "When valueRank is missing or <= 0, ArrayDimensions must be absent." .
+
+# Recursive shape to validate an RDF list structure.
+base:RdfListShape a sh:NodeShape ;
+    sh:or (
+        [ a sh:NodeShape ;
+          sh:hasValue rdf:nil
+        ]
+        [ a sh:NodeShape ;
+          sh:property [
+              sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+              sh:datatype xsd:integer ;
+              sh:minInclusive 0;
+          ]
+        ]
+    ) .
