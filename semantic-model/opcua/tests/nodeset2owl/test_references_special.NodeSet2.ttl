@@ -141,7 +141,7 @@ opcua:nodei62 a opcua:VariableTypeNodeClass ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "62" ;
-    base:hasValueRank "-2" .
+    base:hasValueRank -2 .
 
 opcua:nodei77 a opcua:ObjectTypeNodeClass ;
     base:definesType opcua:ModellingRuleType ;
@@ -198,7 +198,7 @@ opcua:nodei16363 a opcua:BaseVariableType,
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "16363" ;
-    base:hasValueRank "1" .
+    base:hasValueRank 1 .
 
 opcua:nodei58 a opcua:ObjectTypeNodeClass ;
     base:definesType opcua:BaseObjectType ;

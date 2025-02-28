@@ -362,6 +362,20 @@ class TestUtils(unittest.TestCase):
         self.assertTrue(self.shacl_rule['optional'])
         self.assertFalse(self.shacl_rule['array'])
 
+    def test_isNodeclass(self):
+        """Test checking if a given type is recognized as a node class."""
+        # These types (from the opcuans namespace) should be identified as node classes.
+        self.assertTrue(self.rdf_utils.isNodeclass(self.opcuans['BaseNodeClass']))
+        self.assertTrue(self.rdf_utils.isNodeclass(self.opcuans['DataTypeNodeClass']))
+        self.assertTrue(self.rdf_utils.isNodeclass(self.opcuans['ObjectNodeClass']))
+        self.assertTrue(self.rdf_utils.isNodeclass(self.opcuans['ObjectTypeNodeClass']))
+        self.assertTrue(self.rdf_utils.isNodeclass(self.opcuans['ReferenceTypeNodeClass']))
+        self.assertTrue(self.rdf_utils.isNodeclass(self.opcuans['VariableNodeClass']))
+
+        # A type that is not in the list should return False.
+        not_a_nodeclass = URIRef("http://example.org/opcua/NotANodeClass")
+        self.assertFalse(self.rdf_utils.isNodeclass(not_a_nodeclass))
+
 class TestGetRankDimensions(unittest.TestCase):
 
     def setUp(self):

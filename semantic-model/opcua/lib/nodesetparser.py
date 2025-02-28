@@ -509,7 +509,7 @@ Did you forget to import it?")
     def get_value_rank(self, node, classiri):
         value_rank = node.get('ValueRank')
         if value_rank is not None:
-            self.g.add((classiri, self.rdf_ns['base']['hasValueRank'], Literal(value_rank)))
+            self.g.add((classiri, self.rdf_ns['base']['hasValueRank'], Literal(int(value_rank))))
 
     def get_array_dimensions(self, node, classiri):
         array_dimensions = node.get('ArrayDimensions')

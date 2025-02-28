@@ -1,10 +1,12 @@
 # tests/test_jsonld.py
 import unittest
 from unittest.mock import MagicMock, patch
-from rdflib import Graph, Namespace, URIRef, Literal
+from rdflib import Graph, Namespace, URIRef, Literal, BNode
 from lib.jsonld import JsonLd
 import lib.utils as utils
 from rdflib.namespace import XSD, RDF
+from lib.jsonld import nested_json_from_graph
+import json
 
 
 class TestJsonLd(unittest.TestCase):
@@ -114,6 +116,72 @@ class TestJsonLd(unittest.TestCase):
         result = self.jsonld_instance.generate_node_id(graph, rootentity, node, id)
         self.assertEqual(result, "testId:RootName:sub:i123")
 
+class TestNestedJsonFromGraph(unittest.TestCase):
+    def test_nested_json_from_graph_valid(self):
+        """Test converting a graph with a blank node to a nested JSON object."""
+        # Set up a simple graph
+        graph = Graph()
+        ex = Namespace("http://example.org/")
+        person = URIRef(ex + "person/1")
+        name = URIRef(ex + "name")
+        knows = URIRef(ex + "knows")
+        blank = BNode()
+
+        # Add triples:
+        # person has a name "Alice"
+        graph.add((person, name, Literal("Alice")))
+        # person knows someone (a blank node) who has a name "John Doe"
+        graph.add((person, knows, blank))
+        graph.add((blank, name, Literal("John Doe")))
+
+        # Convert the graph to nested JSON (root will be auto‑selected as person)
+        nested = nested_json_from_graph(graph)
+
+        # Assert that the root node is the non‑blank node "person"
+        self.assertEqual(nested.get("@id"), str(person))
+        # Check that the direct property (name) is set correctly
+        self.assertEqual(nested.get(str(name)), {'@value': 'Alice'})
+        # Check that the blank node linked via "knows" is inlined (and its @id is omitted)
+        knows_value = nested.get(str(knows))
+        self.assertIsInstance(knows_value, dict)
+        self.assertNotIn("@id", knows_value)
+        self.assertEqual(knows_value.get(str(name)), {'@value': 'John Doe'})
+
+    def test_nested_json_from_graph_invalid_root(self):
+        """Test that specifying a non‑existent root node raises a ValueError."""
+        graph = Graph()
+        ex = Namespace("http://example.org/")
+        person = URIRef(ex + "person/1")
+        # Add a simple triple
+        graph.add((person, URIRef(ex + "name"), Literal("Alice")))
+
+        # Passing a root that does not exist in the graph should raise a ValueError
+        with self.assertRaises(ValueError) as context:
+            nested_json_from_graph(graph, root="http://nonexistent.org")
+        self.assertIn("Specified root node not found in the graph.", str(context.exception))
+
+class TestNestedJsonFromGraphAdditional(unittest.TestCase):
+    @patch("pyld.jsonld.flatten")
+    def test_dict_without_id(self, mock_flatten):
+        """
+        Test that when a property value is a dictionary without an "@id",
+        it is not processed further and remains unchanged.
+        """
+        # Define a custom flattened structure where the "prop" key's value is a dict without "@id".
+        custom_flattened = [{
+            "@id": "http://example.org/root",
+            "prop": {"value": "something"}
+        }]
+        mock_flatten.return_value = custom_flattened
+
+        # Create a dummy graph; its contents won't matter due to our patches.
+        graph = Graph()
+        # Patch the graph.serialize method to return valid JSON (the content here is irrelevant).
+        with patch.object(graph, "serialize", return_value=json.dumps({})):
+            nested = nested_json_from_graph(graph)
+
+        # The branch under test (a dict without "@id") should simply return the dict as is.
+        self.assertEqual(nested.get("prop"), {"value": "something"})
 
 if __name__ == "__main__":
     unittest.main()

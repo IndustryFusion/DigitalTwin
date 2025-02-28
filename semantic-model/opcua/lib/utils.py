@@ -23,6 +23,9 @@ import re
 import os
 from functools import reduce
 import operator
+import json
+from pyld import jsonld
+
 
 query_realtype = """
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
@@ -381,6 +384,46 @@ def get_rank_dimensions(graph, node, typenode, templatenode, basens, opcuans):
         else:
             array_dimensions = type_array_dimensions
     return value_rank, array_dimensions
+
+
+def extract_subgraph(graph, start_node, predicates=None):
+    subgraph = Graph()
+    visited = set()
+
+    def traverse(node):
+        if node in visited:
+            return
+        visited.add(node)
+        # Get all triples where the node is the subject and with predicate match if defined
+        pred = predicates.pop(0) if predicates else None
+        for s, p, o in graph.triples((node, pred, None)):
+            if p == NGSILD['datasetId'] and str(o).endswith('@none'):
+                o = URIRef('@none')
+            subgraph.add((s, p, o))
+            # Only traverse further if o is a resource (URI or blank node)
+            if isinstance(o, (BNode)):
+                traverse(o)
+    traverse(start_node)
+    return subgraph
+
+
+def dump_without_prefixes(g, format='turtle'):
+    data = g.serialize(format=format)
+    if isinstance(data, bytes):
+        data = data.decode("utf-8")
+
+    if format == 'json-ld':
+        # For JSON-LD, flatten the document to resolve blank nodes
+        jdata = json.loads(data)
+        flattened = jsonld.flatten(jdata)
+        data = json.dumps(flattened, indent=2)
+    elif format == 'turtle':
+        # For Turtle, filter out lines that define prefixes
+        data = "\n".join(
+            line for line in data.splitlines()
+            if not line.strip().startswith(("@prefix", "PREFIX"))
+        )
+    return data
 
 
 class RdfUtils:

@@ -15,11 +15,13 @@
 #
 
 import os
+import re
 from difflib import SequenceMatcher
 from urllib.parse import urlparse
 from rdflib import Graph, Namespace, Literal, URIRef, BNode
 from rdflib.namespace import RDF, RDFS, SH
 from rdflib.collection import Collection
+from pyshacl import validate
 import lib.utils as utils
 from lib.jsonld import JsonLd
 from functools import reduce
@@ -382,3 +384,277 @@ or placeholders or both. Will try to guess the right value, but this can go wron
                 if not isinstance(o, BNode):
                     self.shaclg.add((s, p, o))
             return shape
+
+
+class Validation:
+    """Stay compatible with Pyshacl - mid term replace it where possible
+    """
+    def __init__(self, shapes_graph, data_graph, extra_graph=None, strict=True, debug=False):
+        self.shapes_graph = shapes_graph
+        self.data_graph = data_graph
+        self.extra_graph = extra_graph
+        self.strict = strict
+        self.debug = debug
+
+    def update_results(self, message: str, conforms: bool, y: int) -> str:
+        """
+        This is a fix to keep complient with pyshacl.
+        Update the number in the third line of a message by adding a given value y.
+
+        Parameters:
+            message (str): A multi-line string with at least three lines. The third line should
+                contain a number in parentheses.
+            y (int): The value to add to the extracted number.
+
+        Returns:
+            str: The updated message with the number in the third line increased by y.
+        """
+        lines = message.splitlines()
+        if not conforms:
+            lines[2] = re.sub(r'\((\d+)\)', lambda m: f'({int(m.group(1)) + y})', lines[2])
+            return "\n".join(lines)
+        elif y > 0:
+            return f'Validation Report\nConforms: False\nResults ({y}):\n'
+        else:
+            return message
+
+    def format_shacl_violation(self, results_graph):
+        """
+        Translates SHACL validation results into a human-readable SHACL message format.
+
+        :param results_graph: An RDFLib Graph containing SHACL validation results.
+        :return: A formatted string representation of the violations.
+        """
+        violations = []
+
+        # Iterate over all validation result nodes
+        for report_node in results_graph.subjects(RDF.type, SH.ValidationResult):
+            severity = results_graph.value(report_node, SH.resultSeverity, None)
+            source_shape = results_graph.value(report_node, SH.sourceShape, None)
+            source_constraint_node = results_graph.value(report_node, SH.sourceConstraint, None)
+            source_constraint_graph = utils.extract_subgraph(self.shapes_graph, source_constraint_node)
+            source_constraint_dump = utils.dump_without_prefixes(source_constraint_graph)
+            focus_node = results_graph.value(report_node, SH.focusNode, None)
+            value_node = results_graph.value(report_node, SH.value, None)
+            result_message = results_graph.value(report_node, SH.resultMessage, None)
+
+            # Format the output
+            violation_message = f"""\
+    Constraint Violation in SPARQLConstraintComponent ({SH}SPARQLConstraintComponent):
+        Severity: {severity}
+        Source Shape: {source_shape}
+        Focus Node: {focus_node}
+        Value Node: {value_node}
+        Source Constraint: {source_constraint_dump}
+        Message: {result_message}
+    """
+            violations.append(violation_message)
+
+        return "\n".join(violations)
+
+    def add_term_to_query(self, query: str, target_class: URIRef) -> str:
+        """
+        Adds the term '$this a <target_class> .' immediately after the first occurrence
+        of the 'WHERE { ' clause in the given SPARQL query, accommodating variable whitespace.
+
+        Args:
+            query: A SPARQL query string.
+            target_class: An rdflib.URIRef representing the target class.
+
+        Returns:
+            The modified SPARQL query string with the new term inserted.
+
+        Raises:
+            ValueError: If no valid 'WHERE' clause is found in the query.
+        """
+        # This regex matches "WHERE" followed by any whitespace, an opening curly brace,
+        # and any additional whitespace. It is case-insensitive.
+        pattern = re.compile(r'(WHERE\s*\{\s*)', flags=re.IGNORECASE)
+        match = pattern.search(query)
+        if not match:
+            raise ValueError("The query does not contain a valid 'WHERE' clause.")
+
+        insertion = f"$this a <{target_class}> . "
+        insertion_point = match.end()
+        new_query = query[:insertion_point] + insertion + query[insertion_point:]
+        return new_query
+
+    def fill_message_template(self, message_template: str, binding: dict) -> str:
+        """
+        Replaces placeholders of the form {?var} and {$var} in the message_template with the
+        corresponding value from the binding dictionary.
+
+        :param message_template: The SHACL message template containing placeholders.
+        :param binding: A dictionary containing variable values.
+        :return: The formatted message with placeholders replaced.
+        """
+        def replacer(match):
+            var = match.group(2)  # Extract variable name (without ? or $)
+            return str(binding.get(var, match.group(0)))  # Keep original placeholder if not found
+
+        # Matches both {?var} and {$var}
+        return re.sub(r'\{([\?$])([^}]+)\}', replacer, message_template)
+
+    def validate_sparql_constraint(self, shape: URIRef, target_class: URIRef, sparql_constraint_node: BNode):
+        """
+        Validates all nodes of type target_class against a SPARQL constraint (a sh:sparql node).
+
+        This function:
+        - Extracts the sh:select query and sh:message from the constraint node.
+        - Modifies the query by inserting "$this a <target_class> ." after the first WHERE clause.
+        - Executes the modified query on the provided data_graph.
+        - For each violation (i.e. each result row), fills in the message template using
+            the query bindings.
+
+        Returns:
+            A tuple (conforms, results_graph, results_text) similar to pySHACL.
+        """
+
+        # Extract the sh:select query from the SPARQL constraint node.
+        query_literal = self.shapes_graph.value(sparql_constraint_node, SH.select)
+        if query_literal is None:
+            raise ValueError("No sh:select query found on the SPARQL constraint node.")
+        query = str(query_literal)
+
+        # Extract the sh:message (if provided).
+        message_literal = self.shapes_graph.value(sparql_constraint_node, SH.message)
+        message_template = str(message_literal) if message_literal is not None else "SPARQL constraint violation."
+
+        # Modify the query by inserting the condition using the helper function.
+        modified_query = self.add_term_to_query(query, target_class)
+
+        # Note: Here we assume that the query itself is written to bind $this as a variable.
+        # We do not replace $this with a specific node URI because we intend the query to check
+        # all nodes of type target_class in the graph.
+
+        # Execute the modified query on the data graph.
+        query_results = self.data_graph.query(modified_query)
+
+        # Process query results: each row is a set of variable bindings.
+        violations = []
+        for row in query_results:
+            # Build a dictionary mapping variable names to their bound values.
+            bindings = {str(var): row[var] for var in row.labels}
+            violations.append(bindings)
+
+        # Construct the results text from the message template.
+        if not violations:
+            conforms = True
+        else:
+            conforms = False
+            messages = []
+            for bindings in violations:
+                result_message = self.fill_message_template(message_template, bindings)
+                bindings['resultMessage'] = result_message
+                messages.append(result_message)
+
+        # Build a minimal results graph.
+        results_graph = Graph()
+
+        for bindings in violations:
+            report_node = BNode()
+            results_graph.add((report_node, SH.conforms, Literal(conforms)))
+            results_graph.add((report_node, SH.resultMessage, Literal(bindings['resultMessage'])))
+            results_graph.add((report_node, SH.focusNode, bindings['this']))
+            results_graph.add((report_node, SH.value, bindings['this']))
+            results_graph.add((report_node, SH.resultSeverity, SH.Violation))
+            results_graph.add((report_node, SH.sourceShape, shape))
+            results_graph.add((report_node, SH.sourceConstraint, sparql_constraint_node))
+            results_graph.add((report_node, RDF.type, SH.ValidationResult))
+        return conforms, results_graph
+
+    def shacl_validation(self):
+        """Execute a pyShacl validation but replace SPARQL queries
+           because it is done suboptimal in pyShacl implementation
+
+        Args:
+            data_graph (_type_): _description_
+            shapes_graph (_type_): _description_
+            extra_graph (_type_): _description_
+            strict (_type_): _description_
+            debug (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
+        full_results_graph = Graph()
+        full_results_text = ''
+        full_conforms = True
+        # Remove al top level SPARQL queries which can be processed by
+        # direct query
+        # Precondition is a SH.targetClass and root level sh:sparql query
+        if not self.strict:
+            sparql_graph = Graph(store='Oxigraph')
+            sparql_graph += self.data_graph + self.extra_graph
+            for shape, _, _ in self.shapes_graph.triples((None, RDF.type, SH.NodeShape)):
+                for s, p, o in self.shapes_graph.triples((shape, SH.sparql, None)):
+                    list_of_target_classes = list(self.shapes_graph.objects(shape, SH.targetClass))
+                    select_query = self.shapes_graph.value(o, SH.select)
+                    for tc in list_of_target_classes:
+                        if select_query is not None:
+                            # Remove it from the Shapes Graph
+                            conforms, results_graph = self.validate_sparql_constraint(shape, tc, o)
+                            full_results_graph += results_graph
+                            full_results_text += self.format_shacl_violation(results_graph)
+                            if not conforms:
+                                full_conforms = False
+                            self.shapes_graph.remove((s, p, o))
+
+        conforms, results_graph, results_text = validate(
+            data_graph=self.data_graph,
+            shacl_graph=self.shapes_graph,
+            ont_graph=self.extra_graph,
+            debug=self.debug
+        )
+        if not self.strict:
+            constraint_violations = len(list(full_results_graph.subjects(RDF.type, SH.ValidationResult)))
+            full_results_graph += results_graph
+            if not conforms:
+                full_conforms = False
+            results_text = self.update_results(results_text, conforms, constraint_violations)
+            full_results_text = results_text + '\n' + full_results_text
+
+        else:
+            full_results_graph = results_graph
+            full_conforms = conforms
+            full_results_text = results_text
+        return full_conforms, full_results_graph, full_results_text
+
+    def find_shape_name(self, shape_node):
+        """
+        Traverse shape graph to find parent which is a Nodeshape and is a name
+        Args:
+            shape_node (node): Node which triggered the validation failure
+        """
+        parent_node = None
+        inter_node = shape_node
+        while parent_node is None and inter_node is not None:
+            inter_node = next(self.shapes_graph.subjects(SH.property, inter_node), None)
+            if inter_node is not None and (inter_node, RDF.type, SH.NodeShape) in self.shapes_graph and \
+                    isinstance(inter_node, URIRef):
+                parent_node = inter_node
+        return parent_node
+
+    def find_entity_id(self, focus_node):
+        """
+        Traverse data graph to find entity id and context
+
+        Args:
+            data_graph (Graph): RDF Graph
+            focus_node (RDF Node): Data node which triggered the validation failure
+        """
+        parent_node = None
+        inter_node = focus_node
+        predicates = []
+        while parent_node is None and inter_node is not None:
+            s, p, _ = next(self.data_graph.triples((None, None, inter_node)), (None, None, None))
+            if s is not None:
+                inter_node = s
+                if self.data_graph.value(subject=s, predicate=RDF.type) is not None:
+                    parent_node = s
+                    inter_node = None
+            else:
+                parent_node = inter_node
+            if p is not None:
+                predicates.append(p)
+        return parent_node, predicates

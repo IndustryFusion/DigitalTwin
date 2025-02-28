@@ -1,3 +1,4 @@
 rdflib==6.3.2
 xmlschema==3.3.2
 oxrdflib==0.3.7
+pyLD==2.0.4

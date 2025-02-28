@@ -174,5 +174,45 @@ class TestEntity(unittest.TestCase):
         self.assertIn((URIRef(entity_ns), OWL.versionInfo, Literal(0.1)), graph)
         # Check that the versionIRI triple was added.
         self.assertIn((URIRef(entity_ns), OWL.versionIRI, versionIRI_value), graph)
+    def test_bind(self):
+        """Test that the bind method correctly binds a prefix to a namespace."""
+        test_prefix = "test"
+        test_namespace = Namespace("http://example.org/test/")
+        self.entity_instance.bind(test_prefix, test_namespace)
+        # Convert the namespace bindings into a dictionary for easy lookup.
+        namespaces = dict(self.entity_instance.get_graph().namespace_manager.namespaces())
+        self.assertIn(test_prefix, namespaces)
+        self.assertEqual(str(namespaces[test_prefix]), str(test_namespace))
+
+    def test_add_subclass(self):
+        """Test that add_subclass correctly adds the required triples to the RDF graph."""
+        subclass_uri = URIRef("http://example.org/subclass")
+        self.entity_instance.add_subclass(subclass_uri)
+        triples = list(self.entity_instance.get_graph())
+        # Verify that the triple for OWL.Class is added.
+        self.assertIn((subclass_uri, RDF.type, OWL.Class), triples)
+        # Verify that the triple for OWL.NamedIndividual is added.
+        self.assertIn((subclass_uri, RDF.type, OWL.NamedIndividual), triples)
+        # Verify that the triple for RDFS.subClassOf to BaseObjectType is added.
+        expected_base_obj = self.opcuans['BaseObjectType']
+        self.assertIn((subclass_uri, RDFS.subClassOf, expected_base_obj), triples)
+
+    def test_add_subclasses(self):
+        """Test that add_subclasses correctly adds all triples from a given Graph to the internal RDF graph."""
+        # Create a temporary graph with some triples.
+        temp_graph = Graph()
+        triple1 = (URIRef("http://example.org/s"), RDF.type, URIRef("http://example.org/o"))
+        triple2 = (URIRef("http://example.org/a"), RDFS.label, Literal("Test"))
+        temp_graph.add(triple1)
+        temp_graph.add(triple2)
+
+        # Call add_subclasses to add triples from temp_graph to the entity's graph.
+        self.entity_instance.add_subclasses(temp_graph)
+
+        # Retrieve the triples from the internal RDF graph.
+        entity_triples = list(self.entity_instance.get_graph())
+        self.assertIn(triple1, entity_triples)
+        self.assertIn(triple2, entity_triples)
+
 if __name__ == "__main__":
     unittest.main()
