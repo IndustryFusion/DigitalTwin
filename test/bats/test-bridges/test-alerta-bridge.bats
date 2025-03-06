@@ -104,7 +104,7 @@ teardown(){
     delete_all_test_alerts "$key"
     echo "# Alerta key: $key"
     send_to_kafka_bridge ${ALERTA_MSG} ${ALERTA_TOPIC}
-    sleep 3
+    sleep 5
     alerts=$(get_alerts "$key")
     length=$(echo "$alerts" | jq ".alerts | length ")
     id=$(echo "$alerts" | jq ".alerts[0].id"| tr -d '"')
