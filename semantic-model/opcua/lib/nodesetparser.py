@@ -504,7 +504,11 @@ Did you forget to import it?")
         if data_type is not None:
             data_type = self.resolve_alias(data_type)
             dt_index, dt_id, _ = self.parse_nodeid(data_type)
-            self.g.add((classiri, self.rdf_ns['base']['hasDatatype'], self.typeIds[dt_index][dt_id]))
+            try:
+                self.g.add((classiri, self.rdf_ns['base']['hasDatatype'], self.typeIds[dt_index][dt_id]))
+            except Exception as e:
+                print(f'Could not find datatype ns={dt_index},i={dt_id}')
+                raise (e)
 
     def get_value_rank(self, node, classiri):
         value_rank = node.get('ValueRank')
