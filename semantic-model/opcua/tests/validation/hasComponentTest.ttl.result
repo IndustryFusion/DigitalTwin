@@ -1,0 +1,4 @@
+Focus Node: http://opcfoundation.org/UA/nodei1
+Focus Node: http://opcfoundation.org/UA/nodei2
+Message: The VariableNodeClass has a base:hasComponent reference to another VariableNodeClass, but is not a DataVariable because it lacks an incoming base:hasComponent reference.
+Message: Variable node http://opcfoundation.org/UA/nodei1 reached by hasComponent reference must be (or inherit from) opcua:BaseDataVariableType.

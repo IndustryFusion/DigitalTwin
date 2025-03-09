@@ -6,8 +6,10 @@ import shutil
 import argparse
 import subprocess
 
+
 def is_remote(uri):
     return uri.startswith("http://") or uri.startswith("https://")
+
 
 def collect_dependencies(source, visited):
     """
@@ -59,13 +61,19 @@ def collect_dependencies(source, visited):
                 remote_uris.update(r)
     return local_files, remote_uris
 
+
 def main():
     parser = argparse.ArgumentParser(
-        description="Generate a Fuseki configuration file from an ontology and its dependencies, and optionally start Fuseki."
+        description="Generate a Fuseki configuration file from an ontology and its dependencies, \
+and optionally start Fuseki."
     )
     parser.add_argument("ontology_file", help="Path to the main ontology file.")
-    parser.add_argument("--prefixes-file", help="Path to a file with SPARQL PREFIX declarations.", default=None)
-    parser.add_argument("--fuseki-exec", help="Path to the fuseki-server executable. If provided, the server will be started.", default=None)
+    parser.add_argument("--prefixes-file",
+                        help="Path to a file with SPARQL PREFIX declarations.",
+                        default=None)
+    parser.add_argument("--fuseki-exec",
+                        help="Path to the fuseki-server executable. If provided, the server will be started.",
+                        default=None)
     args = parser.parse_args()
 
     ontology_path = args.ontology_file
@@ -178,6 +186,7 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>"""
                 subprocess.run([fuseki_exec, f"--config={config_filename}"])
             except Exception as e:
                 print("Error starting fuseki-server:", e)
+
 
 if __name__ == "__main__":
     main()

@@ -558,7 +558,7 @@ class TestValidation(unittest.TestCase):
         modified_query = "modified query"
         with patch.object(validation_instance, "add_term_to_query", return_value=modified_query) as mock_add_term:
             # Simulate that the data graph query returns no results.
-            with patch.object(data_graph, "query", return_value=[]) as mock_query:
+            with patch.object(validation_instance.sparql_graph, "query", return_value=[]) as mock_query:
                 conforms, results_graph = validation_instance.validate_sparql_constraint(shape, target_class, sparql_constraint_node)
                 
                 self.assertTrue(conforms)
@@ -596,7 +596,7 @@ class TestValidation(unittest.TestCase):
         
         with patch.object(validation_instance, "add_term_to_query", return_value=modified_query) as mock_add_term:
             # Simulate that the data graph query returns a list containing our dummy row.
-            with patch.object(data_graph, "query", return_value=[dummy_row]) as mock_query:
+            with patch.object(validation_instance.sparql_graph, "query", return_value=[dummy_row]) as mock_query:
                 conforms, results_graph = validation_instance.validate_sparql_constraint(shape, target_class, sparql_constraint_node)
                 
                 # Since a violation was found, conforms should be False.

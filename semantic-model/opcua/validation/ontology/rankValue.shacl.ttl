@@ -150,33 +150,6 @@ base:OPCUANodeShape a sh:NodeShape ;
           }
         """ ;
     ] .
-# Conditional: if valueRank is -1 or is not provided, then hasArrayDimensions must be absent.
-
-    # sh:or (
-    #     [ a sh:NodeShape ;
-    #       # Alternative 1: valueRank is provided and is not equal to -1.
-    #       sh:property [
-    #           sh:path base:hasValueRank ;
-    #           sh:minCount 1 ;
-    #           sh:datatype xsd:integer ;
-    #           sh:not [
-    #               a sh:NodeShape ;
-    #               sh:in (0 -1 -2 -3) ;
-    #           ];
-    #           sh:message "When valueRank is missing or <= 0, ArrayDimensions must be absent.";
-    #       ] ;
-    #     ]
-    #     [ a sh:NodeShape ;
-    #       # Alternative 2: When valueRank is missing (null) or equals -1,
-    #       # ArrayDimensions must be absent.
-    #       sh:property [
-    #           sh:path base:hasArrayDimensions ;
-    #           sh:maxCount 0 ;
-    #       ];
-    #       sh:message "When valueRank is missing or <= 0, ArrayDimensions must be absent.";
-    #     ]
-    # ) ;
-    # sh:message "When valueRank is missing or <= 0, ArrayDimensions must be absent." .
 
 # Recursive shape to validate an RDF list structure.
 base:RdfListShape a sh:NodeShape ;

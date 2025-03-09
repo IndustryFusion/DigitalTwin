@@ -1,0 +1,26 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+@prefix opcua: <http://opcfoundation.org/UA/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Main shape for OPC UA nodes (Properties and Variables)
+base:OPCUAHasPropertyRuleShape a sh:NodeShape ;
+    sh:targetClass opcua:BaseNodeClass;
+
+    sh:property [
+        sh:path base:hasProperty ;
+        sh:class opcua:VariableNodeClass ;
+        sh:class opcua:PropertyType ;
+        sh:nodeKind sh:IRI ;
+        sh:message "HasProperty must reference a VariableNodeClass."
+    ] ;
+
+.
+base:NoHasPropertyOnVariableNodeShape a sh:NodeShape ;
+    sh:targetObjectsOf base:hasProperty ;
+    sh:property [
+         sh:path base:hasProperty ;
+         sh:maxCount 0 ;
+         sh:message "A variable node (referenced via hasProperty) must not have its own hasProperty links." ;
+    ] .

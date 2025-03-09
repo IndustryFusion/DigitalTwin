@@ -574,6 +574,7 @@ if __name__ == '__main__':
     # If there is a rootinstancetype defined, use it. Otherwise,
     # check if there is a machinery folder
     rootentity = None
+    instancetypes = None
     if rootinstancetype is None:
         machinery_nodes_and_types = rdfutils.get_machinery_nodes(g)
         rootentity = machinery_nodes_and_types[0][0]
@@ -589,9 +590,11 @@ if __name__ == '__main__':
         except:
             print(f"Error: root-instance with type {rootinstancetype} not found. Please review the type parameter.")
             exit(1)
-        instancetypes = [rootinstancetype]
+        if instancetypes is None:
+            instancetypes = [rootinstancetype]
     for instancetype in instancetypes:
         print(f"Scanning type: {instancetype}")
+        root = next(g.subjects(basens['definesType'], URIRef(instancetype)))
         scan_type(root, instancetype)
     # Then scan the entity with the real values
     if rootentity is None:
