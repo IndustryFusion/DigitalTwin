@@ -232,6 +232,11 @@ class NodesetParser:
         for uadatatype in uadatatypes:
             self.add_uadatatype(uadatatype)
 
+        # Process properties which need datatypes
+        uanodes = self.root.findall('opcua:UAVariable', self.xml_ns)
+        for uanode in uanodes:
+            self.add_datatype_dependent(uanode)
+
     def init_imports(self, base_ontologies):
         if not self.isstrict:
             loader = utils.OntologyLoader(verbose=True)
@@ -410,6 +415,14 @@ Did you forget to import it?")
         isSymmetric = node.get('Symmetric')
         if isSymmetric is not None:
             self.g.add((classiri, self.rdf_ns['base']['isSymmetric'], Literal(isSymmetric)))
+        minimum_sampling_interval = node.get('MinimumSamplingInterval')
+        if minimum_sampling_interval is not None:
+            self.g.add((classiri, self.rdf_ns['base']['hasMinimumSamplingInterval'],
+                        Literal(float(minimum_sampling_interval))))
+
+        historizing = node.get('Historizing')
+        if historizing is not None:
+            self.g.add((classiri, self.rdf_ns['base']['isHistorizing'], Literal(bool(historizing))))
         return rdf_namespace, classiri
 
     def parse_nodeid(self, nodeid):
@@ -477,18 +490,6 @@ Did you forget to import it?")
                     self.g.add((bbnode, self.rdf_ns['base']['hasValueClass'], typeIri))
                     self.g.add((bbnode, self.rdf_ns['base']['hasEnumValue'], Literal(int(value))))
                 self.g.add((itemname, self.rdf_ns['base']['hasFieldName'], Literal(str(symbolicname))))
-
-    # def get_namespaced_browsename(self, index, id, ontology_name):
-    #     # Is it part of current or input graph?
-    #     namespace = self.get_rdf_ns_from_ua_index(index)
-    #     graph = None
-    #     if str(namespace) == ontology_name:
-    #         graph = self.g
-    #     else:
-    #         graph = self.ig
-    #     subject = graph.subjects((RDF.type, self.rdf_ns['base']['hasNodeId'], id))[0]
-    #     browsename = graph.object((subject, self.rdf_ns['base']['hasBrowseName']))[0]
-    #     return namespace()
 
     def add_uanode(self, node, type, xml_ns):
         namespace, classiri = self.add_nodeid_to_class(node, type, xml_ns)
@@ -664,6 +665,62 @@ Did you forget to import it?")
         self.get_array_dimensions(node, classiri)
         self.get_value(node, classiri, self.xml_ns)
         return
+
+    def add_datatype_dependent(self, node):
+        nodeid = node.get('NodeId')
+        index, id, idtype = self.parse_nodeid(nodeid)
+        namespace = self.get_rdf_ns_from_ua_index(index)
+        classiri = self.nodeId_to_iri(namespace, id, idtype)
+        self.get_user_access(node, classiri)
+        self.get_event_notifier(node, classiri)
+
+    def get_event_notifier(self, node, classiri):
+        event_notifier = node.get('EventNotifier')
+        if event_notifier is not None:
+            for bit in (0, 2, 3):
+                if int(event_notifier) & (1 << bit):
+                    try:
+                        content_class = utils.get_contentclass(self.rdf_ns['opcua']['EventNotifierType'],
+                                                               bit, self.ig, self.rdf_ns['base'])
+                        self.g.add((classiri, self.rdf_ns['base']['hasEventNotifier'], content_class))
+                    except:
+                        print(f"Warning: Cannot read all defined event in event_notifier value \
+{event_notifier} in node {classiri}")
+
+    def get_user_access(self, node, classiri):
+        access_level = node.get('AccessLevel')
+        if access_level is not None:
+            try:
+                content_class = utils.get_contentclass(self.rdf_ns['opcua']['AccessLevelType'],
+                                                       int(access_level), self.ig, self.rdf_ns['base'])
+                if content_class is None:
+                    content_class = utils.get_contentclass(self.rdf_ns['opcua']['AccessLevelType'],
+                                                       int(access_level), self.g, self.rdf_ns['base'])
+                self.g.add((classiri, self.rdf_ns['base']['hasAccessLevel'], content_class))
+            except:
+                print(f"Warning: Cannot read access_level value {access_level} in node {classiri}")
+        user_access_level = node.get('UserAccessLevel')
+        if user_access_level is not None:
+            try:
+                content_class = utils.get_contentclass(self.rdf_ns['opcua']['AccessLevelType'],
+                                                       int(user_access_level), self.ig, self.rdf_ns['base'])
+                if content_class is None:
+                    content_class = utils.get_contentclass(self.rdf_ns['opcua']['AccessLevelType'],
+                                                       int(user_access_level), self.g, self.rdf_ns['base'])
+                self.g.add((classiri, self.rdf_ns['base']['hasUserAccessLevel'], content_class))
+            except:
+                print(f"Warning: Cannot read access_level value {user_access_level} in node {classiri}")
+        access_level_ex = node.get('AccessLevelEx')
+        if access_level_ex is not None:
+            try:
+                content_class = utils.get_contentclass(self.rdf_ns['opcua']['AccessLevelExType'],
+                                                       int(access_level_ex), self.ig, self.rdf_ns['base'])
+                if content_class is None:
+                    content_class = utils.get_contentclass(self.rdf_ns['opcua']['AccessLevelExType'],
+                                                       int(access_level_ex), self.g, self.rdf_ns['base'])
+                self.g.add((classiri, self.rdf_ns['base']['hasAccessLevelEx'], content_class))
+            except:
+                print(f"Warning: Cannot read access_level value {access_level_ex} in node {classiri}")
 
     def is_objecttype_nodeset_node(node):
         return node.tag.endswith('UAObjectType')
