@@ -790,6 +790,8 @@ machinery:nodei6012 a opcua:PropertyType,
 
 machinery:nodei6013 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasAccessLevel opcua:CurrentRead,
+        opcua:CurrentWrite ;
     base:hasBrowseName "AssetId" ;
     base:hasDatatype opcua:String ;
     base:hasDescription "To be used by end users to store a unique identification in the context of their overall application. Servers shall support at least 40 Unicode characters for the clients writing this value, this means clients can expect to be able to write strings with a length of 40 Unicode characters into that field." ;
@@ -801,6 +803,8 @@ machinery:nodei6013 a opcua:PropertyType,
 
 machinery:nodei6014 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasAccessLevel opcua:CurrentRead,
+        opcua:CurrentWrite ;
     base:hasBrowseName "ComponentName" ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasDescription "To be used by end users to store a human-readable localized text for the MachineryItem. The minimum number of locales supported for this property shall be two. Servers shall support at least 40 Unicode characters for the clients writing the text part of each locale, this means clients can expect to be able to write texts with a length of 40 Unicode characters into that field." ;
@@ -823,6 +827,8 @@ machinery:nodei6015 a opcua:PropertyType,
 
 machinery:nodei6016 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasAccessLevel opcua:CurrentRead,
+        opcua:CurrentWrite ;
     base:hasBrowseName "DefaultInstanceBrowseName" ;
     base:hasDatatype opcua:QualifiedName ;
     base:hasDescription "The default BrowseName for instances of the type." ;
@@ -845,6 +851,8 @@ machinery:nodei6017 a opcua:PropertyType,
 
 machinery:nodei6018 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasAccessLevel opcua:CurrentRead,
+        opcua:CurrentWrite ;
     base:hasBrowseName "DefaultInstanceBrowseName" ;
     base:hasDatatype opcua:QualifiedName ;
     base:hasDescription "The default BrowseName for instances of the type." ;
@@ -878,6 +886,8 @@ machinery:nodei6020 a opcua:PropertyType,
 
 machinery:nodei6021 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasAccessLevel opcua:CurrentRead,
+        opcua:CurrentWrite ;
     base:hasBrowseName "DefaultInstanceBrowseName" ;
     base:hasDatatype opcua:QualifiedName ;
     base:hasDescription "The default BrowseName for instances of the type" ;
@@ -955,6 +965,8 @@ machinery:nodei6027 a opcua:PropertyType,
 
 machinery:nodei6028 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasAccessLevel opcua:CurrentRead,
+        opcua:CurrentWrite ;
     base:hasBrowseName "Location" ;
     base:hasDatatype opcua:String ;
     base:hasDescription "To be used by end users to store the location of the machine in a scheme specific to the end user Servers shall support at least 60 Unicode characters for the clients writing this value, this means clients can expect to be able to write strings with a length of 60 Unicode characters into that field." ;
@@ -966,6 +978,8 @@ machinery:nodei6028 a opcua:PropertyType,
 
 machinery:nodei6029 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasAccessLevel opcua:CurrentRead,
+        opcua:CurrentWrite ;
     base:hasBrowseName "Location" ;
     base:hasDatatype opcua:String ;
     base:hasDescription "To be used by end users to store the location of the machine in a scheme specific to the end user. Servers shall support at least 60 Unicode characters for the clients writing this value, this means clients can expect to be able to write strings with a length of 60 Unicode characters into that field." ;
@@ -1280,6 +1294,8 @@ machinery:nodei6057 a opcua:PropertyType,
 
 machinery:nodei6058 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasAccessLevel opcua:CurrentRead,
+        opcua:CurrentWrite ;
     base:hasBrowseName "DefaultInstanceBrowseName" ;
     base:hasDatatype opcua:QualifiedName ;
     base:hasDescription "The default BrowseName for instances of the type" ;
@@ -1511,6 +1527,8 @@ machinery:nodei6078 a opcua:PropertyType,
 
 machinery:nodei6079 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasAccessLevel opcua:CurrentRead,
+        opcua:CurrentWrite ;
     base:hasBrowseName "PowerOnDuration" ;
     base:hasDatatype opcua:Duration ;
     base:hasDescription "PowerOnDuration is the duration the MachineryItem has been powered. The main purpose is to determine the time in which degradation of the MachineryItem occurred. The details, when the time is counted, is implementation-specific. Companion specifications might define specific rules. Typically, when the MachineryItem has supply voltage and the main CPU is running, the time is counted. This may include any kind of sleep mode, but may not include pure Wake on LAN. This value shall only increase during the lifetime of the MachineryItem and shall not be reset when it is restarted. The PowerOnDuration is provided as Duration, i.e., in milliseconds or even fractions of a millisecond. However, the Server is not expected to update the value in such a high frequency, but maybe once a minute or once an hour, depending on the application." ;
@@ -1522,6 +1540,8 @@ machinery:nodei6079 a opcua:PropertyType,
 
 machinery:nodei6080 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasAccessLevel opcua:CurrentRead,
+        opcua:CurrentWrite ;
     base:hasBrowseName "OperationDuration" ;
     base:hasDatatype opcua:Duration ;
     base:hasDescription "OperationDuration is the duration the MachineryItem has been powered and performing an activity. This counter is intended for machines and components where a distinction is made between switched on and in operation. For example, a drive might be powered on but not operating. It is not intended for machines or components always performing an activity like sensors always measuring data. This value shall only increase during the lifetime of the MachineryItem and shall not be reset when it is restarted. The OperationDuration is provided as Duration, i.e., in milliseconds or even fractions of a millisecond. However, the Server is not expected to update the value in such a high frequency, but maybe once a minute or once an hour, depending on the application." ;
@@ -1533,6 +1553,8 @@ machinery:nodei6080 a opcua:PropertyType,
 
 machinery:nodei6081 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasAccessLevel opcua:CurrentRead,
+        opcua:CurrentWrite ;
     base:hasBrowseName "OperationCycleCounter" ;
     base:hasDatatype opcua:UInteger ;
     base:hasDescription "OperationCycleCounter is counting the times the component switches from not performing an activity to performing an activity. For example, each time a valve starts moving, is counted. This value shall only increase during the lifetime of the component and shall not be reset when the component is restarted." ;
@@ -1544,6 +1566,8 @@ machinery:nodei6081 a opcua:PropertyType,
 
 machinery:nodei6082 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasAccessLevel opcua:CurrentRead,
+        opcua:CurrentWrite ;
     base:hasBrowseName "DefaultInstanceBrowseName" ;
     base:hasDatatype opcua:QualifiedName ;
     base:hasDescription "The default BrowseName for instances of the type" ;
@@ -1555,6 +1579,8 @@ machinery:nodei6082 a opcua:PropertyType,
 
 machinery:nodei6083 a devices:LifetimeVariableType,
         opcua:VariableNodeClass ;
+    base:hasAccessLevel opcua:CurrentRead,
+        opcua:CurrentWrite ;
     base:hasBrowseName "<LifetimeVariable>" ;
     base:hasDatatype opcua:Number ;
     base:hasDisplayName "<LifetimeVariable>" ;
@@ -1601,6 +1627,8 @@ machinery:nodei6086 a opcua:PropertyType,
 
 machinery:nodei6087 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasAccessLevel opcua:CurrentRead,
+        opcua:CurrentWrite ;
     base:hasBrowseName "DefaultInstanceBrowseName" ;
     base:hasDatatype opcua:QualifiedName ;
     base:hasDescription "The default BrowseName for instances of the type" ;
@@ -1612,6 +1640,8 @@ machinery:nodei6087 a opcua:PropertyType,
 
 machinery:nodei6088 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasAccessLevel opcua:CurrentRead,
+        opcua:CurrentWrite ;
     base:hasBrowseName "DefaultInstanceBrowseName" ;
     base:hasDatatype opcua:QualifiedName ;
     base:hasDescription "The default BrowseName for instances of the type." ;

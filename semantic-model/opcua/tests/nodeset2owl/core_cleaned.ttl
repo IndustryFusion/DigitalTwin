@@ -194,16 +194,6 @@ opcua:ContainsNoLoops a opcua:AttributeWriteMask,
         owl:NamedIndividual ;
     base:hasFieldName "ContainsNoLoops" .
 
-opcua:CurrentRead a opcua:AccessLevelExType,
-        opcua:AccessLevelType,
-        owl:NamedIndividual ;
-    base:hasFieldName "CurrentRead" .
-
-opcua:CurrentWrite a opcua:AccessLevelExType,
-        opcua:AccessLevelType,
-        owl:NamedIndividual ;
-    base:hasFieldName "CurrentWrite" .
-
 opcua:DataSetMessageHeader a opcua:JsonNetworkMessageContentMask,
         owl:NamedIndividual ;
     base:hasFieldName "DataSetMessageHeader" .
@@ -16128,6 +16118,7 @@ opcua:nodei12882 a opcua:PropertyType,
     base:hasDatatype opcua:DateTime ;
     base:hasDisplayName "EstimatedReturnTime" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "12882" .
@@ -16158,6 +16149,7 @@ opcua:nodei12885 a opcua:PropertyType,
     base:hasDatatype opcua:DateTime ;
     base:hasDisplayName "EstimatedReturnTime" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "12885" .
 
@@ -20484,6 +20476,7 @@ opcua:nodei15003 a opcua:PropertyType,
     base:hasDatatype opcua:VersionTime ;
     base:hasDisplayName "UrisVersion" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "15003" .
@@ -20494,6 +20487,7 @@ opcua:nodei15004 a opcua:PropertyType,
     base:hasDatatype opcua:VersionTime ;
     base:hasDisplayName "UrisVersion" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "15004" .
 
@@ -29006,6 +29000,7 @@ opcua:nodei17612 a opcua:PropertyType,
     base:hasDatatype opcua:TimeZoneDataType ;
     base:hasDisplayName "LocalTime" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "17612" .
@@ -29049,6 +29044,7 @@ opcua:nodei17634 a opcua:PropertyType,
     base:hasDatatype opcua:TimeZoneDataType ;
     base:hasDisplayName "LocalTime" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "17634" .
 
@@ -34482,6 +34478,7 @@ opcua:nodei2005 a opcua:PropertyType,
     base:hasDatatype opcua:String ;
     base:hasDisplayName "ServerArray" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "2005" ;
@@ -34494,6 +34491,7 @@ opcua:nodei2006 a opcua:PropertyType,
     base:hasDatatype opcua:String ;
     base:hasDisplayName "NamespaceArray" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "2006" ;
@@ -34511,6 +34509,7 @@ opcua:nodei2007 a opcua:ServerStatusType,
     base:hasDatatype opcua:ServerStatusDataType ;
     base:hasDisplayName "ServerStatus" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "2007" .
@@ -34604,6 +34603,7 @@ opcua:nodei2008 a opcua:PropertyType,
     base:hasDatatype opcua:Byte ;
     base:hasDisplayName "ServiceLevel" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "2008" .
@@ -35358,6 +35358,8 @@ opcua:nodei20249 a opcua:PropertyType,
 
 opcua:nodei2025 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasAccessLevel opcua:CurrentRead,
+        opcua:CurrentWrite ;
     base:hasBrowseName "EnabledFlag" ;
     base:hasDatatype opcua:Boolean ;
     base:hasDisplayName "EnabledFlag" ;
@@ -38037,6 +38039,7 @@ opcua:nodei2254 a opcua:PropertyType,
     base:hasDatatype opcua:String ;
     base:hasDisplayName "ServerArray" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "2254" ;
     base:hasValueRank 1 .
@@ -38048,6 +38051,7 @@ opcua:nodei2255 a opcua:PropertyType,
     base:hasDatatype opcua:String ;
     base:hasDisplayName "NamespaceArray" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "2255" ;
     base:hasValueRank 1 .
@@ -38064,6 +38068,7 @@ opcua:nodei2256 a opcua:ServerStatusType,
     base:hasDatatype opcua:ServerStatusDataType ;
     base:hasDisplayName "ServerStatus" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "2256" .
 
@@ -38115,6 +38120,7 @@ opcua:nodei2261 a opcua:BaseDataVariableType,
     base:hasDatatype opcua:String ;
     base:hasDisplayName "ProductName" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "2261" .
 
@@ -38124,6 +38130,7 @@ opcua:nodei2262 a opcua:BaseDataVariableType,
     base:hasDatatype opcua:String ;
     base:hasDisplayName "ProductUri" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "2262" .
 
@@ -38133,6 +38140,7 @@ opcua:nodei2263 a opcua:BaseDataVariableType,
     base:hasDatatype opcua:String ;
     base:hasDisplayName "ManufacturerName" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "2263" .
 
@@ -38142,6 +38150,7 @@ opcua:nodei2264 a opcua:BaseDataVariableType,
     base:hasDatatype opcua:String ;
     base:hasDisplayName "SoftwareVersion" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "2264" .
 
@@ -38151,6 +38160,7 @@ opcua:nodei2265 a opcua:BaseDataVariableType,
     base:hasDatatype opcua:String ;
     base:hasDisplayName "BuildNumber" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "2265" .
 
@@ -38160,6 +38170,7 @@ opcua:nodei2266 a opcua:BaseDataVariableType,
     base:hasDatatype opcua:UtcTime ;
     base:hasDisplayName "BuildDate" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "2266" .
 
@@ -38169,6 +38180,7 @@ opcua:nodei2267 a opcua:PropertyType,
     base:hasDatatype opcua:Byte ;
     base:hasDisplayName "ServiceLevel" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "2267" .
 
@@ -38392,6 +38404,8 @@ opcua:nodei2290 a opcua:SubscriptionDiagnosticsArrayType,
 
 opcua:nodei2294 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasAccessLevel opcua:CurrentRead,
+        opcua:CurrentWrite ;
     base:hasBrowseName "EnabledFlag" ;
     base:hasDatatype opcua:Boolean ;
     base:hasDisplayName "EnabledFlag" ;
@@ -45248,6 +45262,7 @@ opcua:nodei2742 a opcua:PropertyType,
     base:hasDatatype opcua:Boolean ;
     base:hasDisplayName "Auditing" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "2742" .
@@ -45910,6 +45925,7 @@ opcua:nodei2994 a opcua:PropertyType,
     base:hasDatatype opcua:Boolean ;
     base:hasDisplayName "Auditing" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "2994" .
 
@@ -46203,6 +46219,7 @@ opcua:nodei3052 a opcua:BaseDataVariableType,
     base:hasDatatype opcua:String ;
     base:hasDisplayName "ProductUri" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "3052" .
@@ -46213,6 +46230,7 @@ opcua:nodei3053 a opcua:BaseDataVariableType,
     base:hasDatatype opcua:String ;
     base:hasDisplayName "ManufacturerName" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "3053" .
@@ -46223,6 +46241,7 @@ opcua:nodei3054 a opcua:BaseDataVariableType,
     base:hasDatatype opcua:String ;
     base:hasDisplayName "ProductName" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "3054" .
@@ -46233,6 +46252,7 @@ opcua:nodei3055 a opcua:BaseDataVariableType,
     base:hasDatatype opcua:String ;
     base:hasDisplayName "SoftwareVersion" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "3055" .
@@ -46243,6 +46263,7 @@ opcua:nodei3056 a opcua:BaseDataVariableType,
     base:hasDatatype opcua:String ;
     base:hasDisplayName "BuildNumber" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "3056" .
@@ -46253,6 +46274,7 @@ opcua:nodei3057 a opcua:BaseDataVariableType,
     base:hasDatatype opcua:UtcTime ;
     base:hasDisplayName "BuildDate" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "3057" .
@@ -46342,6 +46364,7 @@ opcua:nodei3078 a opcua:BaseDataVariableType,
     base:hasDatatype opcua:String ;
     base:hasDisplayName "ProductUri" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "3078" .
@@ -46352,6 +46375,7 @@ opcua:nodei3079 a opcua:BaseDataVariableType,
     base:hasDatatype opcua:String ;
     base:hasDisplayName "ManufacturerName" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "3079" .
@@ -46362,6 +46386,7 @@ opcua:nodei3080 a opcua:BaseDataVariableType,
     base:hasDatatype opcua:String ;
     base:hasDisplayName "ProductName" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "3080" .
@@ -46372,6 +46397,7 @@ opcua:nodei3081 a opcua:BaseDataVariableType,
     base:hasDatatype opcua:String ;
     base:hasDisplayName "SoftwareVersion" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "3081" .
@@ -46382,6 +46408,7 @@ opcua:nodei3082 a opcua:BaseDataVariableType,
     base:hasDatatype opcua:String ;
     base:hasDisplayName "BuildNumber" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "3082" .
@@ -46392,6 +46419,7 @@ opcua:nodei3083 a opcua:BaseDataVariableType,
     base:hasDatatype opcua:UtcTime ;
     base:hasDisplayName "BuildDate" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "3083" .
@@ -46730,6 +46758,8 @@ opcua:nodei3113 a opcua:SessionSecurityDiagnosticsArrayType,
 
 opcua:nodei3114 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    base:hasAccessLevel opcua:CurrentRead,
+        opcua:CurrentWrite ;
     base:hasBrowseName "EnabledFlag" ;
     base:hasDatatype opcua:Boolean ;
     base:hasDisplayName "EnabledFlag" ;
@@ -49218,6 +49248,7 @@ opcua:nodei3698 a opcua:BaseDataVariableType,
     base:hasDatatype opcua:String ;
     base:hasDisplayName "ProductUri" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "3698" .
@@ -49228,6 +49259,7 @@ opcua:nodei3699 a opcua:BaseDataVariableType,
     base:hasDatatype opcua:String ;
     base:hasDisplayName "ManufacturerName" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "3699" .
@@ -49238,6 +49270,7 @@ opcua:nodei3700 a opcua:BaseDataVariableType,
     base:hasDatatype opcua:String ;
     base:hasDisplayName "ProductName" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "3700" .
@@ -49248,6 +49281,7 @@ opcua:nodei3701 a opcua:BaseDataVariableType,
     base:hasDatatype opcua:String ;
     base:hasDisplayName "SoftwareVersion" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "3701" .
@@ -49258,6 +49292,7 @@ opcua:nodei3702 a opcua:BaseDataVariableType,
     base:hasDatatype opcua:String ;
     base:hasDisplayName "BuildNumber" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "3702" .
@@ -49268,6 +49303,7 @@ opcua:nodei3703 a opcua:BaseDataVariableType,
     base:hasDatatype opcua:UtcTime ;
     base:hasDisplayName "BuildDate" ;
     base:hasIdentifierType base:numericID ;
+    base:hasMinimumSamplingInterval 1e+03 ;
     base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "3703" .
@@ -56382,6 +56418,16 @@ opcua:CartesianCoordinatesType a owl:Class ;
 opcua:ConditionType a owl:Class ;
     rdfs:subClassOf opcua:BaseEventType ;
     base:isAbstract "true" .
+
+opcua:CurrentRead a opcua:AccessLevelExType,
+        opcua:AccessLevelType,
+        owl:NamedIndividual ;
+    base:hasFieldName "CurrentRead" .
+
+opcua:CurrentWrite a opcua:AccessLevelExType,
+        opcua:AccessLevelType,
+        owl:NamedIndividual ;
+    base:hasFieldName "CurrentWrite" .
 
 opcua:DataSetFieldFlags a owl:Class ;
     rdfs:subClassOf opcua:UInt16 .
