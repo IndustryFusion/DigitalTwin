@@ -1,0 +1,89 @@
+@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+@prefix opcua: <http://opcfoundation.org/UA/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+opcua: a owl:Ontology ;
+    owl:imports <https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl> ;
+    owl:versionInfo 1e-01 .
+
+
+# Not OK, nodei1 is not a DataValue (since not target of hascomponent) (3)
+opcua:nodei1 a opcua:PropertyType,
+        opcua:VariableNodeClass ;
+    base:hasBrowseName "Annotations1" ;
+    base:hasDatatype opcua:Annotation ;
+    base:hasDisplayName "Annotations1" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "1" ;
+    base:hasValueRank -2 .
+
+opcua:nodei2 a opcua:BaseDataVariableType,
+        opcua:VariableNodeClass ;
+    base:hasBrowseName "Annotations2" ;
+    base:hasComponent opcua:nodei1 ;
+    base:hasDatatype opcua:Annotation ;
+    base:hasDisplayName "Annotations2" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "2" ;
+    base:hasValueRank -2 .
+
+
+# OK
+opcua:nodei3 a opcua:BaseDataVariableType,
+        opcua:VariableNodeClass ;
+    base:hasBrowseName "Annotations3" ;
+    base:hasDatatype opcua:Annotation ;
+    base:hasDisplayName "Annotations3" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "3" ;
+    base:hasValueRank -2 .
+
+opcua:nodei4 a opcua:BaseDataVariableType,
+        opcua:VariableNodeClass ;
+    base:hasBrowseName "Annotations4" ;
+    base:hasComponent opcua:nodei3 ;
+    base:hasDatatype opcua:Annotation ;
+    base:hasDisplayName "Annotations4" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "4" ;
+    base:hasValueRank -2 .
+
+opcua:nodei5 a opcua:MyObjectType,
+        opcua:ObjectNodeClass ;
+    base:hasBrowseName "Annotations5" ;
+    base:hasComponent opcua:nodei4 ;
+    base:hasDatatype opcua:Annotation ;
+    base:hasDisplayName "Annotations5" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "5" ;
+    base:hasValueRank -2 .
+
+# Target of hasComponent is neither Object, Variable or Method (2)
+opcua:nodei6 a opcua:BaseDataVariableType,
+        opcua:VariableTypeNodeClass ;
+    base:hasBrowseName "Annotations6" ;
+    base:hasDatatype opcua:Annotation ;
+    base:hasDisplayName "Annotations6" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "6" ;
+    base:hasValueRank -2 .
+
+opcua:nodei7 a opcua:BaseDataVariableType,
+        opcua:VariableNodeClass ;
+    base:hasBrowseName "Annotations7" ;
+    base:hasComponent opcua:nodei6 ;
+    base:hasDatatype opcua:Annotation ;
+    base:hasDisplayName "Annotations7" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "7" ;
+    base:hasValueRank -2 .

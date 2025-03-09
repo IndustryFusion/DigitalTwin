@@ -1,0 +1,37 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+@prefix opcua: <http://opcfoundation.org/UA/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Main shape for OPC UA nodes (Properties and Variables)
+base:OPCUAModellingRuleShape a sh:NodeShape ;
+    sh:targetClass opcua:BaseNodeClass;
+
+    # hasValueRank is optional; if absent, default to -1.
+    sh:property [
+        sh:path base:hasModellingRule ;
+        sh:in (opcua:nodei78 opcua:nodei80 opcua:nodei11508 opcua:nodei11510 opcua:nodei83) ;
+        sh:maxCount 1 ;
+        sh:message "hasModellingRule must reference a modelling rule node and shall appear at most once."
+    ] ;
+
+
+    # SPARQL constraint: ModellingRule only for Object, Variable or Method
+    sh:sparql [
+        sh:message "The node {$this} should not have a ModellingRule." ;
+        sh:select """
+          PREFIX base: <https://industryfusion.github.io/contexts/ontology/v0/base/>
+          PREFIX opcua: <http://opcfoundation.org/UA/>
+          PREFIX owl: <http://www.w3.org/2002/07/owl#>
+          PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+          PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+          PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+          SELECT $this WHERE { 
+            $this base:hasModellingRule ?ml .
+              FILTER($this != opcua:ObjectNodeClass && $this && opcua:VariableNodeClass && $this != opcua:MethodNodeClass)
+          }
+        """ ;
+    ] ;
+.

@@ -1,3 +1,19 @@
+#
+# Copyright (c) 2025 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 import sys
 import argparse
 import json
@@ -14,7 +30,7 @@ NGSILD = Namespace('https://uri.etsi.org/ngsi-ld/')
 def main():
     parser = argparse.ArgumentParser(description="SHACL Validation with Shape and Focus Context")
     parser.add_argument("-s", "--shacl", required=False, help="Path to SHACL shapes file", default='shacl.ttl')
-    parser.add_argument("-e", "--extra", required=False, help="Path to extra ontology file", default='entities.ttl')
+    parser.add_argument("-e", "--extra", required=False, help="Path to extra ontology file")
     parser.add_argument("-df", "--data-format", required=False, default="turtle",
                         help="Data file format (e.g., turtle, json-ld, xml)")
     parser.add_argument('-d', '--debug',
@@ -29,6 +45,12 @@ def main():
                         help='Use strict, non accelerated SPARQL query.')
     parser.add_argument('-x', '--extended', required=False, action='store_true',
                         help='Use eXtended output with detailed context.')
+    parser.add_argument('-ni', '--no-imports', required=False, action='store_true',
+                        help='No imports of dependent ontologies.')
+    parser.add_argument('-so', '--sparql-only', required=False, action='store_true',
+                        help='Only apply sparql-rules')
+    parser.add_argument('-ns', '--no_sparql', required=False, action='store_true',
+                        help='Only apply sparql-rules')
 
     args = parser.parse_args()
     # Load RDF data (Data Graph)
@@ -40,13 +62,12 @@ def main():
     shapes_graph.parse(args.shacl, format="turtle")
     extra_graph = Graph(store='Oxigraph')
     if args.mode == 'instance':
-
         # Load extra ontology if provided
         if args.extra:
             extra_graph.parse(args.extra, format="turtle")
     elif args.mode == 'ontology':
         mainontology = next(data_graph.subjects(RDF.type, OWL.Ontology), None)
-        if mainontology:
+        if mainontology and not args.no_imports:
             imports = data_graph.objects(mainontology, OWL.imports)
             ontology_loader = OntologyLoader(True)
             ontology_loader.init_imports(imports)
@@ -56,7 +77,8 @@ def main():
         print("No valid mode selected.")
         sys.exit(1)
 
-    validation = Validation(shapes_graph, data_graph, extra_graph, args.strict, args.debug)
+    validation = Validation(shapes_graph, data_graph, extra_graph, args.strict,
+                            args.sparql_only, args.no_sparql, args.debug)
     # Run SHACL validation
     conforms, results_graph, results_text = validation.shacl_validation()
     # conforms, results_graph, results_text = validate(

@@ -389,12 +389,16 @@ or placeholders or both. Will try to guess the right value, but this can go wron
 class Validation:
     """Stay compatible with Pyshacl - mid term replace it where possible
     """
-    def __init__(self, shapes_graph, data_graph, extra_graph=None, strict=True, debug=False):
+    def __init__(self, shapes_graph, data_graph, extra_graph=None, strict=True, sparql_only=False,
+                 no_sparql=False, debug=False):
         self.shapes_graph = shapes_graph
         self.data_graph = data_graph
         self.extra_graph = extra_graph
         self.strict = strict
         self.debug = debug
+        self.sparql_only = sparql_only
+        self.no_sparql = no_sparql
+        self.sparql_graph = Graph()  # Will be replaced later by Oxigraph
 
     def update_results(self, message: str, conforms: bool, y: int) -> str:
         """
@@ -528,7 +532,7 @@ class Validation:
         # all nodes of type target_class in the graph.
 
         # Execute the modified query on the data graph.
-        query_results = self.data_graph.query(modified_query)
+        query_results = self.sparql_graph.query(modified_query)
 
         # Process query results: each row is a set of variable bindings.
         violations = []
@@ -584,8 +588,8 @@ class Validation:
         # direct query
         # Precondition is a SH.targetClass and root level sh:sparql query
         if not self.strict:
-            sparql_graph = Graph(store='Oxigraph')
-            sparql_graph += self.data_graph + self.extra_graph
+            self.sparql_graph = Graph(store='Oxigraph')
+            self.sparql_graph += self.data_graph + self.extra_graph
             for shape, _, _ in self.shapes_graph.triples((None, RDF.type, SH.NodeShape)):
                 for s, p, o in self.shapes_graph.triples((shape, SH.sparql, None)):
                     list_of_target_classes = list(self.shapes_graph.objects(shape, SH.targetClass))
@@ -593,20 +597,23 @@ class Validation:
                     for tc in list_of_target_classes:
                         if select_query is not None:
                             # Remove it from the Shapes Graph
-                            conforms, results_graph = self.validate_sparql_constraint(shape, tc, o)
-                            full_results_graph += results_graph
-                            full_results_text += self.format_shacl_violation(results_graph)
-                            if not conforms:
-                                full_conforms = False
+                            if not self.no_sparql:
+                                conforms, results_graph = self.validate_sparql_constraint(shape, tc, o)
+                                full_results_graph += results_graph
+                                full_results_text += self.format_shacl_violation(results_graph)
+                                if not conforms:
+                                    full_conforms = False
                             self.shapes_graph.remove((s, p, o))
 
-        conforms, results_graph, results_text = validate(
-            data_graph=self.data_graph,
-            shacl_graph=self.shapes_graph,
-            ont_graph=self.extra_graph,
-            debug=self.debug
-        )
         if not self.strict:
+            data_graph = self.sparql_graph
+            if self.sparql_only:
+                data_graph = Graph()
+            conforms, results_graph, results_text = validate(
+                data_graph=data_graph,
+                shacl_graph=self.shapes_graph,
+                debug=self.debug
+            )
             constraint_violations = len(list(full_results_graph.subjects(RDF.type, SH.ValidationResult)))
             full_results_graph += results_graph
             if not conforms:
@@ -615,6 +622,12 @@ class Validation:
             full_results_text = results_text + '\n' + full_results_text
 
         else:
+            conforms, results_graph, results_text = validate(
+                data_graph=self.data_graph,
+                shacl_graph=self.shapes_graph,
+                ont_graph=self.extra_graph,
+                debug=self.debug
+            )
             full_results_graph = results_graph
             full_conforms = conforms
             full_results_text = results_text
