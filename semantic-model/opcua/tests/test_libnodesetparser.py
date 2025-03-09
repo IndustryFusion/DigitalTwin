@@ -132,7 +132,8 @@ class TestNodesetParser(unittest.TestCase):
     @patch('lib.nodesetparser.NodesetParser.create_header')
     @patch('lib.nodesetparser.NodesetParser.init_nodeids')
     @patch('lib.nodesetparser.NodesetParser.create_prefixes')
-    def test_parse(self, mock_create_prefixes, mock_init_nodeids, mock_create_header, mock_scan_aliases, 
+    @patch('lib.nodesetparser.NodesetParser.add_datatype_dependent')
+    def test_parse(self, mock_add_datatype_dependent, mock_create_prefixes, mock_init_nodeids, mock_create_header, mock_scan_aliases,
                    mock_add_uanode, mock_add_type, mock_add_typedef, mock_add_uadatatype,
                    mock_urlopen, mock_et_parse):
         
@@ -192,6 +193,9 @@ class TestNodesetParser(unittest.TestCase):
         # Verify that add_typedef was called for typed node classes
         expected_typed_calls = len(mock_uavariable_nodes) + len(mock_uaobject_nodes)
         self.assertEqual(mock_add_typedef.call_count, expected_typed_calls)
+
+        expected_typed_calls = len(mock_uavariable_nodes)
+        self.assertEqual(mock_add_datatype_dependent.call_count, expected_typed_calls)
 
         # Verify that add_uadatatype was called for each UADataType node
         self.assertEqual(mock_add_uadatatype.call_count, len(mock_uadatatype_nodes))
@@ -518,6 +522,105 @@ class TestNodesetParser(unittest.TestCase):
         for triple in expected_triples:
             self.assertIn(triple, self.parser.g)
 
+    def test_add_nodeid_to_class_historizing_and_minimumsamplinginterval(self):
+        # Set up mocks for get_nid_ns_and_name, get_rdf_ns_from_ua_index, and nodeId_to_iri.
+        self.parser.get_nid_ns_and_name = MagicMock(return_value=('500', 1, 'TestBrowseName', self.parser.rdf_ns['base']['numericID']))
+        self.parser.get_rdf_ns_from_ua_index = MagicMock(return_value=Namespace('http://example.com/ns1#'))
+        self.parser.nodeId_to_iri = MagicMock(return_value=URIRef('http://example.com/ns1#500'))
+
+        # Prepare a fake node with Historizing and MinimumSamplingInterval attributes.
+        node = MagicMock()
+        node.get.side_effect = lambda key: {
+            'SymbolicName': 'TestSymbolicName',
+            'Historizing': 'true',  # any non-empty value becomes True when converted using bool()
+            'MinimumSamplingInterval': '200',
+            'Symmetric': None
+        }.get(key, None)
+        
+        # Simulate the XML find for DisplayName and Description.
+        display_node = MagicMock()
+        display_node.text = 'DisplayNameValue'
+        description_node = MagicMock()
+        description_node.text = 'TestDescription'
+        def find_side_effect(tag, ns):
+            if tag == 'opcua:DisplayName':
+                return display_node
+            elif tag == 'opcua:Description':
+                return description_node
+            return None
+        node.find.side_effect = find_side_effect
+
+        # Ensure that the required namespace information exists.
+        self.parser.opcua_ns = ['http://unused.org/', 'http://testnamespace.org/']
+        self.parser.known_ns_classes['http://testnamespace.org/'] = URIRef('http://testnamespace.org/Namespace')
+        self.parser.nodeIds = [{}, {}]  # Ensure the list has an entry for index 1.
+        self.parser.g = Graph()  # Reset the graph
+
+        # Call the method.
+        rdf_ns, classiri = self.parser.add_nodeid_to_class(node, 'ObjectTypeNodeClass', self.parser.xml_ns)
+
+        # Verify that the triple for MinimumSamplingInterval is added.
+        expected_triple_msi = (
+            classiri, 
+            self.parser.rdf_ns['base']['hasMinimumSamplingInterval'], 
+            Literal(200.0)
+        )
+        self.assertIn(expected_triple_msi, self.parser.g)
+
+        # Verify that the triple for Historizing is added.
+        # Note: bool('true') evaluates to True in Python.
+        expected_triple_hist = (
+            classiri, 
+            self.parser.rdf_ns['base']['isHistorizing'], 
+            Literal(True)
+        )
+        self.assertIn(expected_triple_hist, self.parser.g)
+
+    def test_add_nodeid_to_class_no_historizing_no_minimumsamplinginterval(self):
+        # Set up mocks for get_nid_ns_and_name, get_rdf_ns_from_ua_index, and nodeId_to_iri.
+        self.parser.get_nid_ns_and_name = MagicMock(return_value=('600', 1, 'TestBrowseName', self.parser.rdf_ns['base']['numericID']))
+        self.parser.get_rdf_ns_from_ua_index = MagicMock(return_value=Namespace('http://example.com/ns1#'))
+        self.parser.nodeId_to_iri = MagicMock(return_value=URIRef('http://example.com/ns1#600'))
+
+        # Prepare a fake node without Historizing and MinimumSamplingInterval.
+        node = MagicMock()
+        node.get.side_effect = lambda key: {
+            'SymbolicName': 'TestSymbolicName',
+            'Historizing': None,
+            'MinimumSamplingInterval': None,
+            'Symmetric': None
+        }.get(key, None)
+        
+        # Simulate the XML find for DisplayName and Description.
+        display_node = MagicMock()
+        display_node.text = 'DisplayNameValue'
+        description_node = MagicMock()
+        description_node.text = 'TestDescription'
+        def find_side_effect(tag, ns):
+            if tag == 'opcua:DisplayName':
+                return display_node
+            elif tag == 'opcua:Description':
+                return description_node
+            return None
+        node.find.side_effect = find_side_effect
+
+        # Ensure that the required namespace information exists.
+        self.parser.opcua_ns = ['http://unused.org/', 'http://testnamespace.org/']
+        self.parser.known_ns_classes['http://testnamespace.org/'] = URIRef('http://testnamespace.org/Namespace')
+        self.parser.nodeIds = [{}, {}]  # Ensure the list has an entry for index 1.
+        self.parser.g = Graph()  # Reset the graph
+
+        # Call the method.
+        rdf_ns, classiri = self.parser.add_nodeid_to_class(node, 'ObjectTypeNodeClass', self.parser.xml_ns)
+
+        # Verify that no triple is added for MinimumSamplingInterval.
+        for s, p, o in self.parser.g:
+            self.assertNotEqual(p, self.parser.rdf_ns['base']['hasMinimumSamplingInterval'])
+
+        # Verify that no triple is added for Historizing.
+        for s, p, o in self.parser.g:
+            self.assertNotEqual(p, self.parser.rdf_ns['base']['isHistorizing'])
+
     def test_parse_nodeid_numeric(self):
         # Test a NodeId with numeric identifier
         nodeid = "ns=1;i=123"
@@ -739,7 +842,11 @@ class TestNodesetParser(unittest.TestCase):
     def test_add_typedef(self, mock_get_value, mock_get_value_rank, mock_get_datatype, mock_get_type_from_references, mock_get_references, mock_add):
         # Mock a node with necessary attributes
         def node_get(tag):
-            if tag == 'ArrayDimensions':
+            if tag == 'ArrayDimensions' or \
+                tag == 'EventNotifier' or \
+                tag == 'AccessLevel' or \
+                tag == 'UserAccessLevel' or \
+                tag == 'AccessLevelEx':
                 return None
             else:
                 return 'ns=1;i=600'
@@ -941,6 +1048,195 @@ class TestNodesetParser(unittest.TestCase):
         # Assert that the index is None and the name is correctly returned
         self.assertIsNone(index)
         self.assertEqual(name, 'TestBrowseNameWithoutIndex')
+
+    @patch('lib.nodesetparser.utils.get_contentclass')
+    def test_get_event_notifier_adds_triples(self, mock_get_contentclass):
+        # Simulate an EventNotifier attribute with bits 0, 2, and 3 set.
+        # Value "13" in decimal is binary 1101, so bits 0, 2, and 3 are active.
+        node = MagicMock()
+        node.get.return_value = "13"
+        classiri = URIRef("http://example.com/classiri")
+        
+        # Define expected content classes for each bit.
+        content_classes = {
+            0: URIRef("http://example.com/event0"),
+            2: URIRef("http://example.com/event2"),
+            3: URIRef("http://example.com/event3")
+        }
+        
+        # Patch utils.get_contentclass to return the corresponding content class for each bit.
+        def side_effect(arg1, bit, arg3, arg4):
+            return content_classes[bit]
+        mock_get_contentclass.side_effect = side_effect
+        
+        # Clear the graph before calling.
+        self.parser.g = Graph()
+        self.parser.get_event_notifier(node, classiri)
+        
+        # Verify that for each active bit, the expected triple is added.
+        for bit in (0, 2, 3):
+            expected_triple = (classiri, self.parser.rdf_ns['base']['hasEventNotifier'], content_classes[bit])
+            self.assertIn(expected_triple, self.parser.g)
+        
+        # Ensure get_contentclass was called three times.
+        self.assertEqual(mock_get_contentclass.call_count, 3)
+
+    def test_get_event_notifier_no_value(self):
+        # Test that nothing is added to the graph when EventNotifier is None.
+        node = MagicMock()
+        node.get.return_value = None
+        classiri = URIRef("http://example.com/classiri")
+        
+        # Clear the graph.
+        self.parser.g = Graph()
+        self.parser.get_event_notifier(node, classiri)
+        
+        # Expect that no triples have been added.
+        self.assertEqual(len(self.parser.g), 0)
+
+    @patch('lib.nodesetparser.utils.get_contentclass')
+    def test_get_event_notifier_exception(self, mock_get_contentclass):
+        # Test the scenario where get_contentclass raises an exception for one of the bits.
+        # Using the same EventNotifier value "13" (bits 0, 2, and 3 set).
+        node = MagicMock()
+        node.get.return_value = "13"
+        classiri = URIRef("http://example.com/classiri")
+        
+        # For bit 0, raise an exception; for bits 2 and 3, return valid content classes.
+        def side_effect(arg1, bit, arg3, arg4):
+            if bit == 0:
+                raise Exception("Test exception")
+            else:
+                return URIRef(f"http://example.com/event{bit}")
+        mock_get_contentclass.side_effect = side_effect
+        
+        # Clear the graph.
+        self.parser.g = Graph()
+        
+        # Patch print to catch the warning message.
+        with patch('builtins.print') as mock_print:
+            self.parser.get_event_notifier(node, classiri)
+            
+            # Verify that for bits 2 and 3, the expected triples are added.
+            for bit in (2, 3):
+                expected_triple = (
+                    classiri,
+                    self.parser.rdf_ns['base']['hasEventNotifier'],
+                    URIRef(f"http://example.com/event{bit}")
+                )
+                self.assertIn(expected_triple, self.parser.g)
+            
+            # Ensure that get_contentclass was attempted for all three bits.
+            self.assertEqual(mock_get_contentclass.call_count, 3)
+            
+            # Verify that a warning message was printed (for the exception on bit 0).
+            self.assertTrue(mock_print.called)
+
+    @patch('lib.nodesetparser.utils.get_contentclass')
+    def test_get_user_access_all_values(self, mock_get_contentclass):
+        # Create a node that returns valid values for all access attributes.
+        node = MagicMock()
+        node.get.side_effect = lambda key: {
+            "AccessLevel": "1",
+            "UserAccessLevel": "2",
+            "AccessLevelEx": "4"
+        }.get(key)
+        classiri = URIRef("http://example.com/classiri")
+        
+        # Define expected return values from get_contentclass for each access type.
+        content_access = URIRef("http://example.com/access1")
+        content_user_access = URIRef("http://example.com/useraccess2")
+        content_access_ex = URIRef("http://example.com/accessEx3")
+        
+        def side_effect(namespace, value, ig, base):
+            if namespace == self.parser.rdf_ns['opcua']['AccessLevelType'] and value == 0:
+                return content_access
+            elif namespace == self.parser.rdf_ns['opcua']['AccessLevelType'] and value == 1:
+                return content_user_access
+            elif namespace == self.parser.rdf_ns['opcua']['AccessLevelExType'] and value == 2:
+                return content_access_ex
+            return None
+        mock_get_contentclass.side_effect = side_effect
+        
+        # Clear the graph and call the method.
+        self.parser.g = Graph()
+        self.parser.get_user_access(node, classiri)
+        
+        # Verify that the graph contains the expected triples.
+        self.assertIn(
+            (classiri, self.parser.rdf_ns['base']['hasAccessLevel'], content_access),
+            self.parser.g
+        )
+        self.assertIn(
+            (classiri, self.parser.rdf_ns['base']['hasUserAccessLevel'], content_user_access),
+            self.parser.g
+        )
+        self.assertIn(
+            (classiri, self.parser.rdf_ns['base']['hasAccessLevelEx'], content_access_ex),
+            self.parser.g
+        )
+
+    def test_get_user_access_missing_values(self):
+        # Create a node with only UserAccessLevel set.
+        node = MagicMock()
+        node.get.side_effect = lambda key: {
+            "AccessLevel": None,
+            "UserAccessLevel": "2",
+            "AccessLevelEx": None
+        }.get(key)
+        classiri = URIRef("http://example.com/classiri")
+        
+        with patch('lib.nodesetparser.utils.get_contentclass', return_value=URIRef("http://example.com/useraccess2")) as mock_get:
+            self.parser.g = Graph()
+            self.parser.get_user_access(node, classiri)
+            
+            # Only one triple should be added.
+            self.assertEqual(len(self.parser.g), 1)
+            self.assertIn(
+                (classiri, self.parser.rdf_ns['base']['hasUserAccessLevel'], URIRef("http://example.com/useraccess2")),
+                self.parser.g
+            )
+            self.assertEqual(mock_get.call_count, 1)
+
+    @patch('lib.nodesetparser.utils.get_contentclass')
+    def test_get_user_access_exception(self, mock_get_contentclass):
+        # Create a node with all access attributes provided.
+        node = MagicMock()
+        node.get.side_effect = lambda key: {
+            "AccessLevel": "1",
+            "UserAccessLevel": "2",
+            "AccessLevelEx": "4"
+        }.get(key)
+        classiri = URIRef("http://example.com/classiri")
+        
+        # Simulate an exception for AccessLevel while others succeed.
+        def side_effect(namespace, value, ig, base):
+            if namespace == self.parser.rdf_ns['opcua']['AccessLevelType'] and value == 0:
+                raise Exception("Test exception")
+            elif namespace == self.parser.rdf_ns['opcua']['AccessLevelType'] and value == 1:
+                return URIRef("http://example.com/useraccess2")
+            elif namespace == self.parser.rdf_ns['opcua']['AccessLevelExType'] and value == 2:
+                return URIRef("http://example.com/accessEx3")
+        mock_get_contentclass.side_effect = side_effect
+        
+        # Patch print to capture warning messages.
+        with patch('builtins.print') as mock_print:
+            self.parser.g = Graph()
+            self.parser.get_user_access(node, classiri)
+            
+            # Verify that only the UserAccessLevel and AccessLevelEx triples are added.
+            expected_user_access = (classiri, self.parser.rdf_ns['base']['hasUserAccessLevel'], URIRef("http://example.com/useraccess2"))
+            expected_access_ex = (classiri, self.parser.rdf_ns['base']['hasAccessLevelEx'], URIRef("http://example.com/accessEx3"))
+            
+            self.assertIn(expected_user_access, self.parser.g)
+            self.assertIn(expected_access_ex, self.parser.g)
+            
+            # Ensure that no triple is added for AccessLevel.
+            for s, p, o in self.parser.g:
+                self.assertNotEqual(p, self.parser.rdf_ns['base']['hasAccessLevel'])
+            
+            # Verify that a warning was printed for AccessLevel.
+            mock_print.assert_any_call(f"Warning: Cannot read access_level value 1 in node {classiri}")
 
 
 if __name__ == '__main__':
