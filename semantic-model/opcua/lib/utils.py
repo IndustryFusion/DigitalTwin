@@ -426,6 +426,28 @@ def dump_without_prefixes(g, format='turtle'):
     return data
 
 
+def get_contentclass(contentclass, value, g, basens):
+    query_instance = """
+    PREFIX owl: <http://www.w3.org/2002/07/owl#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    SELECT ?instance WHERE {{
+        bind(<{type}> as ?type)
+        bind({value} as ?value)
+        ?instance a ?type .
+        ?instance base:hasValueNode ?valueNode .
+        ?valueNode base:hasEnumValue ?value .
+        ?valueNode base:hasValueClass ?type .
+    }}
+    """.format(value=value, type=contentclass)
+    result = g.query(query_instance,
+                     initNs={'base': basens})
+    foundclass = None
+    if len(result) > 0:
+        foundclass = list(result)[0].instance
+    return foundclass
+
+
 class RdfUtils:
     def __init__(self, basens, opcuans):
         self.basens = basens
