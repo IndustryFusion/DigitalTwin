@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from urllib.parse import urlparse
+from urllib.parse import urlparse, quote
 from rdflib.namespace import RDFS, XSD, OWL, RDF
 from rdflib import URIRef, Namespace, Graph, Literal, BNode
 from rdflib.collection import Collection
@@ -81,6 +81,7 @@ modelling_nodeid_mandatory = 78
 modelling_nodeid_optional_array = 11508
 workaround_instances = ['http://opcfoundation.org/UA/DI/FunctionalGroupType', 'http://opcfoundation.org/UA/FolderType']
 NGSILD = Namespace('https://uri.etsi.org/ngsi-ld/')
+MACHINERY = Namespace('http://opcfoundation.org/UA/Machinery/')
 
 
 def dump_graph(g):
@@ -448,6 +449,10 @@ def get_contentclass(contentclass, value, g, basens):
     return foundclass
 
 
+def quote_url(uri):
+    return quote(uri)
+
+
 class RdfUtils:
     def __init__(self, basens, opcuans):
         self.basens = basens
@@ -543,6 +548,48 @@ class RdfUtils:
         result = graph.query(query_ignored_references, initNs={'opcua': self.opcuans})
         first_elements = [t[0] for t in set(result)]
         return first_elements
+
+    def get_machinery_nodes(self, g):
+        query_machines = """
+        PREFIX owl: <http://www.w3.org/2002/07/owl#>
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            SELECT ?machine ?type WHERE {
+                ?machine_folder a opcua:FolderType .
+                ?machine_folder base:hasNamespace machinery:MACHINERYNamespace .
+                ?machine_folder base:hasNodeId "1001" .
+                OPTIONAL{?machine_folder base:organizes ?machine .}
+                OPTIONAL{?machine_folder base:hasComponent ?machine .}
+                ?machine a ?type .
+                FILTER NOT EXISTS { ?type rdfs:subClassOf* opcua:BaseNodeClass .}
+            }
+        """
+        result = g.query(query_machines,
+                         initNs={'base': self.basens, 'machinery': MACHINERY, 'opcua': self.opcuans})
+        foundmachines = None
+        if len(result) > 0:
+            foundmachines = list(result)
+        return foundmachines
+
+    def get_object_types_from_namespace(self, g, entity_namespace):
+        query_instance = """
+        PREFIX owl: <http://www.w3.org/2002/07/owl#>
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        SELECT distinct ?type WHERE {{
+            bind("{prefix}" as ?prefix)
+            ?x a opcua:ObjectNodeClass .
+            FILTER(STRSTARTS(STR(?x), ?prefix))
+            ?x a ?type .
+            FILTER NOT EXISTS{{?type rdfs:subClassOf* opcua:BaseNodeClass}}
+        }}
+        """.format(prefix=str(entity_namespace))
+        result = g.query(query_instance,
+                         initNs={'opcua': self.opcuans})
+        foundtypes = None
+        if len(result) > 0:
+            foundtypes = [elem[0] for elem in list(result)]
+        return foundtypes
 
 
 class OntologyLoader:

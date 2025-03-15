@@ -83,6 +83,7 @@ class TestNodesetParser(unittest.TestCase):
         
         mock_root.find.return_value = mock_models_element
         mock_models_element.find.return_value = mock_model_element
+        mock_models_element.findall.return_value = [1]
         
         mock_et_parse.return_value.getroot.return_value = mock_root
 
@@ -632,6 +633,25 @@ class TestNodesetParser(unittest.TestCase):
         self.assertEqual(ns_index, 1)
         self.assertEqual(identifier, "123")
         self.assertEqual(identifierType, self.parser.rdf_ns['base']['numericID'])
+        
+        nodeid = "ns=12345;s=Test123==;Test123"
+        
+        # Call the method to be tested
+        ns_index, identifier, identifierType = self.parser.parse_nodeid(nodeid)
+        
+        # Assert the returned values
+        self.assertEqual(ns_index, 12345)
+        self.assertEqual(identifier, 'Test123==;Test123')
+        self.assertEqual(identifierType, self.parser.rdf_ns['base']['stringID'])
+        
+        nodeid = "ns=11;g=000-1111-2222-3333"
+        ns_index, identifier, identifierType = self.parser.parse_nodeid(nodeid)
+        
+        # Assert the returned values
+        self.assertEqual(ns_index, 11)
+        self.assertEqual(identifier, '000-1111-2222-3333')
+        self.assertEqual(identifierType, self.parser.rdf_ns['base']['guidID'])
+        
 
     @patch.object(Graph, 'add')
     def test_add_uadatatype_with_definition(self, mock_add):

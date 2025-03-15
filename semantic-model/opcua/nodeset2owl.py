@@ -36,6 +36,10 @@ parse nodeset and create RDF-graph <nodeset2.xml>')
     parser.add_argument('-b', '--baseOntology', help='Ontology containing the base terms, e.g. \
                         https://industryfusion.github.io/contexts/ontology/v0/base/',
                         required=False, default='https://industryfusion.github.io/contexts/ontology/v0/base/')
+    parser.add_argument('-burl', '--baseOntologyURL', help='Ontology URL , e.g. \
+                        https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl',
+                        required=False,
+                        default='https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl')
     parser.add_argument('-u', '--opcuaNamespace', help='OPCUA Core namespace, e.g. http://opcfoundation.org/UA/',
                         required=False, default='http://opcfoundation.org/UA/')
     parser.add_argument('-p', '--prefix', help='Prefix for added ontolgoy, e.g. "pumps"', required=True)
@@ -79,6 +83,8 @@ if __name__ == '__main__':
             if os.path.basename(input) == input:
                 input = f'{os.getcwd()}/{input}'
             imported_ontologies.append(URIRef(input))
+    if args.baseOntologyURL not in imported_ontologies:
+        imported_ontologies.append(URIRef(args.baseOntologyURL))
     opcua_output = args.output
     prefix = args.prefix
     data_schema = xmlschema.XMLSchema(args.typesxsd)
