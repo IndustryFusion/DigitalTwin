@@ -160,6 +160,11 @@ class NodesetParser:
             if models is None:
                 print("Error: Namespace cannot be retrieved, please set it explicitly.")
                 exit(1)
+            model_count = len(models.findall('opcua:Model', self.xml_ns))
+            if model_count != 1:
+                print("Error: Target Namespace cannot be retrieved, there is more than one <Model> definition. \
+Please set it explictly.")
+                exit(1)
             model = models.find('opcua:Model', self.xml_ns)
             self.ontology_name = URIRef(model.get('ModelUri'))
             if not str(self.ontology_name).endswith('/'):
@@ -437,7 +442,7 @@ Did you forget to import it?")
         """
         ns_index = 0
         try:
-            ns_part, i_part = nodeid.split(';')
+            ns_part, i_part = nodeid.split(';', 1)
         except:
             ns_part = None
             i_part = nodeid
@@ -452,7 +457,7 @@ Did you forget to import it?")
             identifierType = self.rdf_ns['base']['stringID']
         elif idt == 'b':
             identifierType = self.rdf_ns['base']['opqueID']
-        identifier = str(i_part.split('=')[1])
+        identifier = str(i_part.split('=', 1)[1])
         return ns_index, identifier, identifierType
 
     def add_uadatatype(self, node):

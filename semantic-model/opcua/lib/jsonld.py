@@ -18,6 +18,7 @@ import json
 from rdflib.namespace import XSD, RDF
 import lib.utils as utils
 from pyld import jsonld
+import urllib
 
 ngsild_context = "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"
 
@@ -199,7 +200,10 @@ class JsonLd:
         except:
             node_id = 'unknown'
         idt = utils.idtype2String(idtype, self.basens)
+        quoted_node_id = urllib.parse.quote(node_id)
+        quoted_id = urllib.parse.quote(id, safe='/:')
+        quoted_bn = urllib.parse.quote(bn, safe='/:')
         if str(node) == str(rootentity):
-            return f'{id}:{bn}'
+            return f'{quoted_id}:{quoted_bn}'
         else:
-            return f'{id}:{bn}:sub:{idt}{node_id}'
+            return f'{quoted_id}:{quoted_bn}:sub:{idt}{quoted_node_id}'
