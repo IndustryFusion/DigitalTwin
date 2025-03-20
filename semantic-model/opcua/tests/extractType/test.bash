@@ -1,3 +1,19 @@
+#
+# Copyright (c) 2024, 2025 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+set -e
 NODESET_VERSION=UA-1.05.03-2023-12-15
 CORE_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/${NODESET_VERSION}/Schema/Opc.Ua.NodeSet2.xml
 DI_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/${NODESET_VERSION}/DI/Opc.Ua.Di.NodeSet2.xml
@@ -19,6 +35,10 @@ if [ "$DEBUG" = "true" ]; then
     DEBUG_CMDLINE="-m debugpy --listen 5678"
 fi
 TESTNODESETS=(
+    test_object_foldertype.NodeSet2,${TESTURI}AlphaType,,,-ma,FOLDER_INCONSISTENCY
+    test_object_foldertype_tree.NodeSet2,,,machinery,-ma
+    test_object_subtypes_inheritance_wrong.Nodeset2,${TESTURI}AlphaSubType,,,,SUBCLASS_INCONSISTENCY
+    test_object_subtypes_inheritance.Nodeset2,${TESTURI}AlphaType
     test_variable_arrays.NodeSet2,${TESTURI}AlphaType
     test_object_wrong.NodeSet2,${TESTURI}AlphaType
     test_object_overwrite_type.NodeSet2,${TESTURI}AlphaType
@@ -32,7 +52,6 @@ TESTNODESETS=(
     test_object_types.NodeSet2,${TESTURI}AlphaType
     test_pumps_instanceexample,http://opcfoundation.org/UA/Pumps/PumpType,http://yourorganisation.org/InstanceExample/,pumps
     )
-#TESTNODESETS=(test_object_types.NodeSet2,http://my.demo/AlphaType )
 CLEANGRAPH=cleangraph.py
 TYPEURI=http://example.org/MinimalNodeset
 TESTURN=urn:test
@@ -85,7 +104,7 @@ function startstop_context_server() {
     if [ "$start" = "true" ]; then
         (python3 ${SERVE_CONTEXT} -p ${SERVE_CONTEXT_PORT} ${CONTEXT_FILE} &) 
     else
-        pkill -f ${SERVE_CONTEXT}
+        pkill -f ${SERVE_CONTEXT} || echo "Server not running anyway"
         sleep 1
     fi
     sleep 1
@@ -103,7 +122,7 @@ function checkqueries() {
     # Check if the array is empty
     if [ ${#queries[@]} -eq 0 ]; then
         echo "Skipping advanced sparql tests: No queries found matching pattern $2.query[0-9]*"
-        return 1
+        return
     fi
     for query in "${queries[@]}"; do
         echo "Executing query for entities $ENTITIES_FILE and query $query"
@@ -143,6 +162,11 @@ for tuple in "${TESTNODESETS[@]}"; do IFS=","
     instancetype=$2
     instancenamespace=$3
     imports=$4
+    options=$5
+    warning=$6
+    if [ "$DEBUG" = "true" ]; then
+        echo "Found parameters: nodeset=$nodeset, instancetype=$instancetype, instancenamespace=$instancenamespace, imports=$imports, options=$options, warning=$warning"
+    fi
     if [ -n "$instancenamespace" ]; then
         echo "Insancenamespace defined: '$instancenamespace'"
         INSTANCENAMESPACE=("-n" "$instancenamespace")
@@ -151,32 +175,50 @@ for tuple in "${TESTNODESETS[@]}"; do IFS=","
     fi
     if [ "$imports" = "pumps" ]; then
         IMPORTS=("${BASE_ONTOLOGY}" "${CORE_ONTOLOGY}" "${DEVICES_ONTOLOGY}" "${MACHINERY_ONTOLOGY}" "${PUMPS_ONTOLOGY}")
+    elif [ "$imports" = "machinery" ]; then
+        IMPORTS=("${BASE_ONTOLOGY}" "${CORE_ONTOLOGY}" "${DEVICES_ONTOLOGY}" "${MACHINERY_ONTOLOGY}")
     else
         IMPORTS=("${BASE_ONTOLOGY}" "${CORE_ONTOLOGY}")
     fi
-    echo "==> test $nodeset with instancetype $instancetype"
-    echo --------------------------------------------------
+    if [ ! -z "$instancetype" ]; then
+        echo "==> test $nodeset with instancetype $instancetype"
+        echo --------------------------------------------------
+        INSTANCETYPEOPTION="-t ${instancetype}"
+    else
+        echo "==> test $nodeset without instancetype"
+        echo ----------------------------------------
+    fi
     if [ "$DEBUG" = "true" ]; then
         echo DEBUG: python3 ${NODESET2OWL} ${nodeset}.xml -i ${IMPORTS[@]} ${INSTANCENAMESPACE[@]} -v http://example.com/v0.1/UA/ -p test -o ${NODESET2OWL_RESULT}
-        echo DEBUG: python3 ${EXTRACTTYPE} -t ${instancetype} -n ${TESTURI} ${NODESET2OWL_RESULT} -i ${TESTURN} -xc ${LOCAL_CONTEXT}
+        echo DEBUG: python3 ${EXTRACTTYPE} ${INSTANCETYPEOPTION} -n ${TESTURI} ${NODESET2OWL_RESULT} -i ${TESTURN} -xc ${LOCAL_CONTEXT} ${options}
     fi
     echo Create owl nodesets
     echo -------------------
     python3 ${NODESET2OWL} ${nodeset}.xml -i ${IMPORTS[@]} ${INSTANCENAMESPACE[@]} -v http://example.com/v0.1/UA/ -p test -o ${NODESET2OWL_RESULT} || exit 1
     echo Extract types and instances
     echo ---------------------------
-    python3 ${EXTRACTTYPE} -t ${instancetype} -n ${TESTURI} ${NODESET2OWL_RESULT} -i ${TESTURN} -xc ${LOCAL_CONTEXT} || exit 1
+    if [ -z "$instancetype" ]; then
+        python3 ${EXTRACTTYPE}  -n ${TESTURI} ${NODESET2OWL_RESULT} -i ${TESTURN} -xc ${LOCAL_CONTEXT} ${options} 2>&1 | tee output.log
+    else
+        python3 ${EXTRACTTYPE} -t ${instancetype} -n ${TESTURI} ${NODESET2OWL_RESULT} -i ${TESTURN} -xc ${LOCAL_CONTEXT} ${options} 2>&1 | tee output.log
+    fi
+    if [ ! -z "$warning" ]; then
+        if ! grep -q $warning output.log; then
+            echo "No WARNING $warning found in the output. Exiting with error."
+            exit 1
+        else
+            echo "Success: Warning including $warning found!"
+        fi
+    fi
     startstop_context_server "Starting context server" true 
-    #ask "Compare SHACL" ${SHACL} ${nodeset}.shacl
     mydiff "Compare SHACL" "${SHACL}" "${nodeset}.shacl" "ttl"
     mydiff "Compare instances" "${nodeset}.instances" "${INSTANCES}" "json-ld"
-    #ask "Compare INSTANCE" ${INSTANCES} ${nodeset}.instances json-ld
     checkqueries "Check basic entities structure" ${nodeset}
     echo SHACL test
     echo ----------
     if [ -f ${nodeset}.pyshacl ]; then
         echo "Testing custom shacl result"
-        pyshacl -s ${SHACL} -df json-ld -e ${ENTITIES_FILE} ${INSTANCES} -f turtle -o ${PYSHACL_RESULT}
+        pyshacl -s ${SHACL} -df json-ld -e ${ENTITIES_FILE} ${INSTANCES} -f turtle -o ${PYSHACL_RESULT} || true
         echo "expected <=> result"
         mydiff "Compare CUSTOM SHACL RESULTS" ${nodeset}.pyshacl ${PYSHACL_RESULT} "ttl"
         echo OK

@@ -20,7 +20,7 @@ from rdflib import Graph, Namespace, URIRef
 from rdflib.namespace import OWL, RDF, SH
 import argparse
 import lib.utils as utils
-from lib.utils import RdfUtils, OntologyLoader
+from lib.utils import RdfUtils, OntologyLoader, WARNSTR, NULL_IRI
 from lib.bindings import Bindings
 from lib.jsonld import JsonLd
 from lib.entity import Entity
@@ -151,6 +151,8 @@ parse nodeset instance and create ngsi-ld model')
                         required=False,
                         default=False,
                         action='store_true')
+    parser.add_argument('-sw', '--suppress-warnings', type=str, nargs='*',
+                        help='List of Warnings which are to be suppressed.')
 
     parsed_args = parser.parse_args(args)
     return parsed_args
@@ -162,26 +164,51 @@ ngsildns = Namespace('https://uri.etsi.org/ngsi-ld/')
 
 
 def check_object_consistency(instancetype, attribute_path, classtype):
+    """Check if attribute_path is already known.
+       In this case, it is important to differentiate between FolderTypes and
+       regular objects. For FolderType, we are relaxed, and search for common
+       superclass to make sure objects stay compiant.
+       If it is a regular object, then this means that the reference has already
+       been found. What can happen is that there is a superclass with the same
+       attribute_path but different classtype. This is only allowed when
+       classtype of superclass is subclass of existing. Since the objecttypes are
+       always scanned from special to general, it the superclass classtype must
+       alwyays fit.
+
+    Args:
+        instancetype (URIRef): targetclass (node on which the constraints are defined)
+        attribute_path (URIRef): property path which is questioned
+        classtype (URIRef): sh:class of referenced object through property
+
+    Returns:
+        bool, URIRef: stop_scanning, common superclass if found
+    """
     needed_superclass = None
     property = shaclg._get_property(instancetype, attribute_path)
     if property is None:
         e.add_instancetype(instancetype, attribute_path)
         e.add_type(classtype)
         return False, None
+    # Check if opcua:FolderType or its subclasses. This needs special treatment
+    is_folder = utils.is_subclass(g, instancetype, opcuans['FolderType'])
     shclass = shaclg._get_shclass_from_property(property)
-    if shclass != classtype:
-        print(f"Warning: Potential inconsistency: {instancetype} => {attribute_path} => \
-{shclass} vs {instancetype} => {attribute_path} => {classtype}.")
-        common_superclass = utils.get_common_supertype(g, shclass, classtype)
-        print(f"Warning: Replacing both classes by common supertype {common_superclass}. This is typcially an \
-artefact of using FolderType and \
-FunctionalGroupTypes in many places but having same attribute name with different types. TODO: Check whether \
-{classtype} or {shclass} SHAPES can be removed.")
-        shaclg.update_shclass_in_property(property, common_superclass)
-        if common_superclass != classtype and common_superclass != shclass:
-            print(f"Warning: common_superclass is neither of {classtype} and {shclass}. This is not yet implemented.")
-            needed_superclass = common_superclass
-    return True, needed_superclass
+    if is_folder:
+        if shclass != classtype:
+            common_superclass = utils.get_common_supertype(g, shclass, classtype)
+            shaclg.update_shclass_in_property(property, common_superclass)
+            warnstr = f"{WARNSTR['folder_reference_inconsistency']}: Class inconsistency found in (FolderType) \
+{instancetype}. The class {shclass} and {classtype} are defined for the same reference {attribute_path}."
+            warnings.warn(warnstr)
+        return True, needed_superclass
+    else:  # Normal Object
+        # shclass must be subclass of classtype since we assume that classtype must come
+        # from a superclass
+        is_subclass = utils.is_subclass(g, shclass, classtype)
+        if not is_subclass:
+            warnstr = f"{WARNSTR['subclass_inconsistency']}: Class inconsistency found in {instancetype}. \
+The class {shclass} must be subclass of {classtype} found in the hierarchy."
+            warnings.warn(warnstr)
+        return True, None
 
 
 def check_variable_consistency(instancetype, attribute_path, classtype):
@@ -263,7 +290,6 @@ def scan_type_recursive(o, node, instancetype, shapename):
         components_found = scan_type(o, classtype)
         if maximal_shacl:
             components_found = True
-        scan_type(o, classtype)
         if components_found:
             has_components = True
             shacl_rule['contentclass'] = classtype
@@ -349,7 +375,7 @@ def scan_entity(node, instancetype, id, optional=False):
         if generic_reference not in ignored_references:
             has_components = scan_entitiy_nonrecursive(node, id, instance, node_id, o,
                                                        generic_reference) or has_components
-    if has_components or not optional:
+    if has_components or not optional or maximal_shacl:
         jsonld.add_instance(instance)
         return node_id
     else:
@@ -418,10 +444,6 @@ will flag this.")
     elif rdfutils.isVariableNodeClass(nodeclass):
         shacl_rule['is_property'] = True
         shaclg.get_shacl_iri_and_contentclass(g, o, node, shacl_rule)
-        if shacl_rule['isAbstract']:
-            warnstr = f"Abstract OPCUA DataType {str(shacl_rule.get('orig_datatype'))} \
-in attribute {entity_ontology_prefix}:{attributename} found in {node}."
-            warnings.warn(warnstr)
         try:
             value = next(g.objects(o, basens['hasValue']))
             if not shacl_rule['is_iri']:
@@ -431,6 +453,11 @@ in attribute {entity_ontology_prefix}:{attributename} found in {node}."
                 value = value.toPython()
         except StopIteration:
             if not shacl_rule['is_iri']:
+                if shacl_rule['isAbstract']:
+                    warnstr = f"{WARNSTR['abstract_datatype']}: Abstract OPCUA DataType \
+{str(shacl_rule.get('orig_datatype'))} in instance attribute {entity_ontology_prefix}:{attributename} \
+found without concreate value in {node}."
+                    warnings.warn(warnstr)
                 value = utils.get_default_value(shacl_rule['datatype'],
                                                 shacl_rule.get('orig_datatype'),
                                                 shacl_rule.get('value_rank'),
@@ -444,6 +471,11 @@ in attribute {entity_ontology_prefix}:{attributename} found in {node}."
                 'value': value
             }
         else:
+            if value is None:
+                value = NULL_IRI
+                warnstr = f"{WARNSTR['no_iri_value']}: IRI value is not found for {attributename} in node {node}. \
+Check whether it has a proper type definition. Most likely this attribute is not defined by the type."
+                warnings.warn(warnstr)
             instance[f'{entity_ontology_prefix}:{attributename}'] = {
                 'type': 'Property',
                 'value': {
@@ -511,6 +543,10 @@ if __name__ == '__main__':
     entity_namespace = args.entity_namespace
     entity_prefix = args.entity_prefix
 
+    # set filter for warning suppressions
+    for warnstr in args.suppress_warnings or []:
+        message = f"{warnstr}.*"
+        warnings.filterwarnings("ignore", message=message)
     if minimal_shacl and maximal_shacl:
         print("--minimalshacl and --maximalshacl are mutual exclusive")
         exit(1)
@@ -577,6 +613,10 @@ if __name__ == '__main__':
     instancetypes = None
     if rootinstancetype is None:
         machinery_nodes_and_types = rdfutils.get_machinery_nodes(g)
+        if machinery_nodes_and_types is None:
+            print("Error: root-instance could not be determined. Neither type given explicitly (via -t) nor a \
+Machinery Folder was found in instance ontology.")
+            exit(1)
         rootentity = machinery_nodes_and_types[0][0]
         rootinstancetype = machinery_nodes_and_types[0][1]
         if maximal_shacl:
@@ -591,7 +631,7 @@ if __name__ == '__main__':
             print(f"Error: root-instance with type {rootinstancetype} not found. Please review the type parameter.")
             exit(1)
         if instancetypes is None:
-            instancetypes = [rootinstancetype]
+            instancetypes = [URIRef(rootinstancetype)]
     for instancetype in instancetypes:
         print(f"Scanning type: {instancetype}")
         root = next(g.subjects(basens['definesType'], URIRef(instancetype)))

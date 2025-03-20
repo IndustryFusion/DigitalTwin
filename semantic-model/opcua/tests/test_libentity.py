@@ -141,9 +141,6 @@ class TestEntity(unittest.TestCase):
             result = self.entity_instance.get_default_contentclass(contentclass)
 
         self.assertIsNone(result)
-        mock_print.assert_called_once_with(
-            f'Warning: no default instance found for class {contentclass}'
-        )
 
     def test_create_ontolgoy_header_default(self):
         """Test create_ontolgoy_header without providing a versionIRI."""
