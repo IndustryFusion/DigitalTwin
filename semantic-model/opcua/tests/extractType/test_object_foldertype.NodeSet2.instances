@@ -1,0 +1,35 @@
+[
+    {
+        "type": "http://my.test/MyFolderType",
+        "id": "urn:test:AlphaInstance:sub:i6001",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ]
+    },
+    {
+        "type": "http://my.test/MyFolderType",
+        "id": "urn:test:AlphaInstance:sub:i6000",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ]
+    },
+    {
+        "type": "http://my.test/AlphaType",
+        "id": "urn:test:AlphaInstance",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "uaentity:hasFolder2": [
+            {
+                "type": "Relationship",
+                "object": "urn:test:AlphaInstance:sub:i6001"
+            }
+        ],
+        "uaentity:hasFolder1": [
+            {
+                "type": "Relationship",
+                "object": "urn:test:AlphaInstance:sub:i6000"
+            }
+        ]
+    }
+]

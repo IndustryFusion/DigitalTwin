@@ -27,6 +27,15 @@ import json
 from pyld import jsonld
 
 
+WARNSTR = {
+    'subclass_inconsistency': 'SUBCLASS_INCONSISTENCY',
+    'folder_reference_inconsistency': 'FOLDER_INCONSISTENCY',
+    'abstract_datatype': "ABSTRACT_DATATYPE",
+    'no_default_instance': "NO_DEFAULT_INSTANCE",
+    'no_iri_value': "NO_IRI_VALUE"
+}
+
+NULL_IRI = URIRef('urn:ngsi-ld:null')
 query_realtype = """
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 
@@ -267,6 +276,29 @@ def get_typename(url):
     else:
         basename = os.path.basename(result.path)
         return basename
+
+
+def is_subclass(graph, class1, class2):
+    """Check if class1 is subclass of class2
+        Returns True when class1 is subclass of class2
+    Args:
+        graph (RDFLIB.Graph): Graph to search on
+        class1 (URIRef): subclass to check
+        class2 (URIRef): superclass to check
+    """
+    query = """
+        PREFIX base: <https://industryfusion.github.io/contexts/ontology/v0/base/>
+        PREFIX owl: <http://www.w3.org/2002/07/owl#>
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+        ASK {{
+            <{class1}> rdfs:subClassOf* <{class2}>
+        }}
+    """.format(class1=class1, class2=class2)
+    result = graph.query(query)
+    return list(result)[0]
 
 
 def get_common_supertype(graph, class1, class2):

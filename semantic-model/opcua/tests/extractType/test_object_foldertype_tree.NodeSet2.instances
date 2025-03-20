@@ -1,0 +1,61 @@
+[
+    {
+        "type": "http://my.test/TypeX",
+        "id": "urn:test:AlphaInstance:sub:i6101",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ]
+    },
+    {
+        "type": "http://opcfoundation.org/UA/FolderType",
+        "id": "urn:test:AlphaInstance:sub:i6001",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "uaentity:hasA": [
+            {
+                "type": "Relationship",
+                "object": "urn:test:AlphaInstance:sub:i6101"
+            }
+        ]
+    },
+    {
+        "type": "http://my.test/TypeA",
+        "id": "urn:test:AlphaInstance:sub:i6100",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ]
+    },
+    {
+        "type": "http://opcfoundation.org/UA/FolderType",
+        "id": "urn:test:AlphaInstance:sub:i6000",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "uaentity:hasA": [
+            {
+                "type": "Relationship",
+                "object": "urn:test:AlphaInstance:sub:i6100"
+            }
+        ]
+    },
+    {
+        "type": "http://my.test/AlphaType",
+        "id": "urn:test:AlphaInstance",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "uaentity:hasFolder2": [
+            {
+                "type": "Relationship",
+                "object": "urn:test:AlphaInstance:sub:i6001"
+            }
+        ],
+        "uaentity:hasFolder1": [
+            {
+                "type": "Relationship",
+                "object": "urn:test:AlphaInstance:sub:i6000"
+            }
+        ]
+    }
+]

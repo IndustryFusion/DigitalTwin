@@ -1,0 +1,26 @@
+[
+    {
+        "type": "http://my.test/SubA",
+        "id": "urn:test:AlphaInstance:sub:i2001",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "uaentity:hasDataVariable": {
+            "type": "Property",
+            "value": 0.0
+        }
+    },
+    {
+        "type": "http://my.test/AlphaType",
+        "id": "urn:test:AlphaInstance",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "uaentity:hasA": [
+            {
+                "type": "Relationship",
+                "object": "urn:test:AlphaInstance:sub:i2001"
+            }
+        ]
+    }
+]

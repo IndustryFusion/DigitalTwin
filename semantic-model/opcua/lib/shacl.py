@@ -27,42 +27,6 @@ from lib.jsonld import JsonLd
 from functools import reduce
 import operator
 
-query_minmax = """
-SELECT ?path ?pattern ?mincount ?maxcount ?localName
-WHERE {
-    ?shape a sh:NodeShape ;
-           sh:property ?property ;
-           sh:targetClass ?targetclass .
-
-    ?property sh:path ?path ;
-        sh:property [ sh:class ?attributeclass ] .
-    OPTIONAL {
-        ?property base:hasPlaceHolderPattern ?pattern .
-    }
-
-    OPTIONAL {
-        ?property sh:maxCount ?maxcount .
-    }
-
-    OPTIONAL {
-        ?property sh:minCount ?mincount .
-    }
-
-    # Extract the local name from the path (after the last occurrence of '/', '#' or ':')
-    BIND(REPLACE(str(?path), '.*[#/](?=[^#/]*$)', '') AS ?localName)
-
-    # Conditional filtering based on whether the pattern exists
-    FILTER (
-        IF(bound(?pattern),
-           regex(?name, ?pattern),  # If pattern exists, use regex
-           ?localName = ?prefixname        # Otherwise, match the local name
-        )
-    )
-  BIND(IF(?localName = ?prefixname, 0, 1) AS ?order)
-}
-ORDER BY ?order
-"""
-
 
 class Shacl:
     def __init__(self, data_graph, namespace_prefix, basens, opcuans):
@@ -273,6 +237,41 @@ class Shacl:
             shacl_rule['isAbstract'] = None
 
     def get_modelling_rule_and_path(self, name, target_class, attributeclass, prefix):
+        query_minmax = """
+            SELECT ?path ?pattern ?mincount ?maxcount ?localName
+            WHERE {
+                ?shape a sh:NodeShape ;
+                    sh:property ?property ;
+                    sh:targetClass ?targetclass .
+
+                ?property sh:path ?path ;
+                    sh:property [ sh:class ?attributeclass ] .
+                OPTIONAL {
+                    ?property base:hasPlaceHolderPattern ?pattern .
+                }
+
+                OPTIONAL {
+                    ?property sh:maxCount ?maxcount .
+                }
+
+                OPTIONAL {
+                    ?property sh:minCount ?mincount .
+                }
+
+                # Extract the local name from the path (after the last occurrence of '/', '#' or ':')
+                BIND(REPLACE(str(?path), '.*[#/](?=[^#/]*$)', '') AS ?localName)
+
+                # Conditional filtering based on whether the pattern exists
+                FILTER (
+                    IF(bound(?pattern),
+                    regex(?name, ?pattern),  # If pattern exists, use regex
+                    ?localName = ?prefixname        # Otherwise, match the local name
+                    )
+                )
+            BIND(IF(?localName = ?prefixname, 0, 1) AS ?order)
+            }
+            ORDER BY ?order
+        """
         bindings = {'targetclass': target_class, 'name': Literal(name), 'attributeclass': attributeclass,
                     'prefixname': Literal(f'{prefix}{name}')}
         optional = True

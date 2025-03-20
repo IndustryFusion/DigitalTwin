@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+           xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+           LastModified="2024-07-15T00:00:00Z" 
+           xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
+  <Models>
+    <Model ModelUri="http://my.test/" 
+           XmlSchemaUri="http://opcfoundation.org/UA/2008/02/Types.xsd" 
+           Version="1.05.03" 
+           PublicationDate="2024-07-29T00:00:00Z" 
+           ModelVersion="1.5.3" />
+  </Models>
+  <NamespaceUris>
+    <Uri>http://my.test/</Uri>
+  </NamespaceUris>
+  <Aliases>
+    <Alias Alias="HasComponent">i=47</Alias>
+    <Alias Alias="HasSubtype">i=45</Alias>
+    <Alias Alias="HasTypeDefinition">i=40</Alias>
+    <Alias Alias="BaseDataVariableType">i=63</Alias>
+    <Alias Alias="Double">i=11</Alias>
+    <Alias Alias="HasModellingRule">i=37</Alias>
+  </Aliases>
+  
+  <!-- Data Variables for BaseA and SubA -->
+  <UAVariable NodeId="ns=1;i=4000" BrowseName="1:DataVariable" DataType="Double">
+    <DisplayName>DataVariable_BaseA</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
+    </References>
+    <Value>0.0</Value>
+  </UAVariable>
+  
+  <UAVariable NodeId="ns=1;i=4001" BrowseName="1:DataVariable" DataType="Double">
+    <DisplayName>DataVariable_SubA</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=78</Reference>
+    </References>
+    <Value>1.0</Value>
+  </UAVariable>
+
+  <!-- Base object type for component "A" -->
+  <UAObjectType NodeId="ns=1;i=3000" BrowseName="1:BaseA">
+    <DisplayName>BaseA</DisplayName>
+    <Description>Base type for component A</Description>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=4000</Reference>
+    </References>
+  </UAObjectType>
+  
+  <!-- Subtype of BaseA -->
+  <UAObjectType NodeId="ns=1;i=3001" BrowseName="1:SubA">
+    <DisplayName>SubA</DisplayName>
+    <Description>Subtype of BaseA for overriding in subtypes</Description>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=4001</Reference>
+    </References>
+  </UAObjectType>
+  
+  <!-- Base type AlphaType with a component "A" (of type BaseA) -->
+  <UAObjectType NodeId="ns=1;i=2000" BrowseName="1:AlphaType">
+    <DisplayName>AlphaType</DisplayName>
+    <Description>Base type with component A of type BaseA</Description>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2002</Reference>
+    </References>
+  </UAObjectType>
+  
+  <!-- Instance declaration of component "A" in AlphaType (using BaseA) -->
+  <UAObject NodeId="ns=1;i=2002" BrowseName="1:A">
+    <DisplayName>A (BaseA)</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=3000</Reference>
+    </References>
+  </UAObject>
+  
+  <!-- Instance declaration of component "A" for AlphaSubType (using SubA) -->
+  <UAObject NodeId="ns=1;i=2001" BrowseName="1:A">
+    <DisplayName>A (SubA)</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=3001</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=5001</Reference>
+    </References>
+  </UAObject>
+  
+  <!-- Instance variable for SubA instance with the correct BrowseName -->
+  <UAVariable NodeId="ns=1;i=5001" BrowseName="1:DataVariable" DataType="Double">
+    <DisplayName>DataVariable_SubA_Instance</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+    </References>
+    <Value>1.0</Value>
+  </UAVariable>
+  
+  <!-- AlphaSubType referencing SubA -->
+  <UAObjectType NodeId="ns=1;i=2100" BrowseName="1:AlphaSubType">
+    <DisplayName>AlphaSubType</DisplayName>
+    <Description>Subtype of AlphaType using SubA</Description>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">ns=1;i=2000</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2001</Reference>
+    </References>
+  </UAObjectType>
+
+  <!-- Instance of AlphaType -->
+  <UAObject NodeId="ns=1;i=2200" BrowseName="1:AlphaInstance" TypeDefinition="ns=1;i=2000">
+    <DisplayName>AlphaInstance</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=2000</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2002</Reference>
+    </References>
+  </UAObject>
+
+  <!-- Instance of AlphaSubType -->
+  <UAObject NodeId="ns=1;i=2201" BrowseName="1:AlphaSubInstance" TypeDefinition="ns=1;i=2100">
+    <DisplayName>AlphaSubInstance</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=2100</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2001</Reference>
+    </References>
+  </UAObject>
+
+</UANodeSet>

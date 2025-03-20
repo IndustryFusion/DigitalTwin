@@ -140,6 +140,4 @@ class Entity:
         foundclass = None
         if len(result) > 0:
             foundclass = list(result)[0].instance
-        if foundclass is None:
-            print(f'Warning: no default instance found for class {contentclass}')
         return foundclass
