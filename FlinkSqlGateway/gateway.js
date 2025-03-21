@@ -193,7 +193,7 @@ app.get('/health', appget);
 app.get('/v1/python_udf/:filename', limiter, udfget);
 
 app.post('/v1/sessions/:session_id/statements', apppost);
-app.post('/v1/python_udf/:filename', bodyParser.text(), udfpost);
+app.post('/v1/python_udf/:filename', limiter, bodyParser.text(), udfpost);
 
 if (runningAsMain) {
   if (!fs.existsSync(udfdir)) {
