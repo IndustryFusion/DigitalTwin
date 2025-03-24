@@ -40,6 +40,8 @@ jobs:
       run: |
         echo sleep 60s to let the system settle
         sleep 60
+        source ./miniconda3/etc/profile.d/conda.sh
+        conda activate e2etest
         (exec kubefwd -n iff svc) &
         sleep 10
         cd ./test/bats
