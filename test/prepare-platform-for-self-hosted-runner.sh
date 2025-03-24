@@ -45,4 +45,6 @@ bash ../miniconda3/miniconda.sh -b -u -p ../miniconda3
 source ../miniconda3/bin/conda init
 source ../miniconda3/bin/activate
 conda create -n py310 python=3.10 -y
+conda create -n e2etest python=3.10 -y
+conda install -n e2etest -c conda-forge rdflib -y
 rm ../miniconda3/miniconda.sh
