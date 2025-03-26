@@ -87,10 +87,12 @@ class Shacl:
                               placeholder_pattern=None,
                               pattern=None,
                               value_rank=-1,
-                              array_dimensions=None):
+                              array_dimensions=None,
+                              reftype=None,
+                              maxCount=1
+                              ):
         innerproperty = BNode()
         property = BNode()
-        maxCount = 1
         minCount = 1
         if optional:
             minCount = 0
@@ -98,7 +100,9 @@ class Shacl:
         self.shaclg.add((property, SH.path, path))
         self.shaclg.add((property, SH.nodeKind, SH.BlankNode))
         self.shaclg.add((property, SH.minCount, Literal(minCount)))
-        if not is_array:
+        if reftype is not None:
+            self.shaclg.add((property, self.basens['hasReferenceType'], reftype))
+        if not is_array and maxCount is not None:
             self.shaclg.add((property, SH.maxCount, Literal(maxCount)))
         self.shaclg.add((property, SH.property, innerproperty))
         if is_property:

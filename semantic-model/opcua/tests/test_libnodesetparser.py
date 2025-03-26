@@ -753,22 +753,6 @@ class TestNodesetParser(unittest.TestCase):
         # Since there's no value, nothing should be added to the graph
         mock_add.assert_not_called()
 
-    def test_references_get_special(self):
-        # Test when the reference is a special component
-        special_id = '47'  # corresponds to hasComponentId
-        self.parser.opcua_namespace = 'http://example.com/opcua'
-        
-        # Call the method to be tested
-        result = self.parser.references_get_special(special_id, 'http://example.com/opcua')
-
-        # Assert that the correct special component is returned
-        self.assertEqual(result, 'hasComponent')
-
-        # Test when the reference is not a special component
-        result = self.parser.references_get_special('999', 'http://example.com/opcua')
-        
-        # Assert that None is returned for a non-special component
-        self.assertIsNone(result)
 
     def test_references_ignore(self):
         # Test when the reference should be ignored

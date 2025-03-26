@@ -5,12 +5,12 @@
 @prefix test: <http://test/UA/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-opcua:nodei14209 base:hasComponent opcua:nodei14221 .
+opcua:nodei14209 opcua:HasComponent opcua:nodei14221 .
 
 opcua:nodei21145 a opcua:ObjectTypeNodeClass ;
+    opcua:HasComponent opcua:nodei21146 ;
     base:definesType opcua:NetworkAddressType ;
     base:hasBrowseName "NetworkAddressType" ;
-    base:hasComponent opcua:nodei21146 ;
     base:hasDisplayName "NetworkAddressType" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
@@ -121,11 +121,11 @@ opcua:HasModellingRule a owl:Class,
 
 opcua:nodei14221 a opcua:NetworkAddressType,
         opcua:ObjectNodeClass ;
+    opcua:HasComponent opcua:nodei17202 ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "Address" ;
-    base:hasComponent opcua:nodei17202 ;
     base:hasDisplayName "Address" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "14221" .
 

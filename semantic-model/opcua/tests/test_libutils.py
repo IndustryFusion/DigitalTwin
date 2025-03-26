@@ -200,15 +200,19 @@ class TestUtils(unittest.TestCase):
         mock_query.assert_called_once()
 
 
-    @patch.object(Graph, 'query', return_value=[(URIRef("http://example.org/reference"), URIRef("http://example.org/target"))])
-    def test_get_generic_references(self, mock_query):
-        """Test retrieving generic references from the RDF graph."""
+    #@patch.object(Graph, 'query', return_value=[(URIRef("http://example.org/reference"), URIRef("http://example.org/target"))])
+    def test_get_all_subreferences(self):
+        """Test retrieving all subreferences from the RDF graph."""
         g = Graph()
         node = URIRef("http://example.org/node")
+        targetnode = URIRef("http://example.org/targetnode")
+        reference = URIRef('http://example.com/reference')
+        subreference = URIRef('http://example.com/subreference')
+        g.add((node, subreference, targetnode))
+        g.add((subreference, RDFS.subClassOf, reference))
 
-        references = self.rdf_utils.get_generic_references(g, node)
-        self.assertEqual(references, [(URIRef("http://example.org/reference"), URIRef("http://example.org/target"))])
-        mock_query.assert_called_once()
+        references = self.rdf_utils.get_all_subreferences(g, node, reference)
+        self.assertEqual(references, [(subreference, targetnode)])
 
     @patch.object(Graph, 'query', return_value=[(URIRef("http://example.org/subclass"),)])
     def test_get_ignored_references(self, mock_query):
@@ -455,7 +459,7 @@ class TestGetTypeAndTemplate(unittest.TestCase):
         """Test that get_type_and_template returns both vartypenode and templatenode when available."""
         # Add a template triple: parenttypenode hasComponent templatenode.
         templatenode = URIRef("http://example.org/templatenode")
-        self.graph.add((self.parenttypenode, self.basens['hasComponent'], templatenode))
+        self.graph.add((self.parenttypenode, self.opcuans['HasComponent'], templatenode))
         # The template must also have the same browse name as the node.
         self.graph.add((templatenode, self.basens['hasBrowseName'], Literal("browse1")))
 
