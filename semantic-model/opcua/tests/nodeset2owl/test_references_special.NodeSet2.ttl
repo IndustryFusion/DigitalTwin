@@ -121,18 +121,18 @@ opcua:nodei47 a opcua:ReferenceTypeNodeClass ;
     base:hasNodeId "47" .
 
 opcua:nodei4711 a opcua:ObjectTypeNodeClass ;
+    opcua:HasAddIn opcua:nodei47112 ;
+    opcua:HasComponent opcua:nodei47112 ;
+    opcua:HasInterface opcua:nodei58 ;
+    opcua:HasModellingRule opcua:nodei78 ;
+    opcua:HasProperty opcua:nodei16363 ;
+    opcua:Organizes opcua:nodei47112 ;
     base:definesType opcua:MyType ;
-    base:hasAddIn opcua:nodei47112 ;
     base:hasBrowseName "MyType" ;
-    base:hasComponent opcua:nodei47112 ;
     base:hasDisplayName "MyType" ;
     base:hasIdentifierType base:numericID ;
-    base:hasInterface opcua:nodei58 ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "4711" ;
-    base:hasProperty opcua:nodei16363 ;
-    base:organizes opcua:nodei47112 .
+    base:hasNodeId "4711" .
 
 opcua:nodei62 a opcua:VariableTypeNodeClass ;
     base:definesType opcua:BaseVariableType ;
@@ -190,12 +190,12 @@ opcua:Organizes a owl:Class,
 
 opcua:nodei16363 a opcua:BaseVariableType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 0 ) ;
     base:hasBrowseName "MyTestVar" ;
     base:hasDatatype opcua:Number ;
     base:hasDisplayName "My Test Variable" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "16363" ;
     base:hasValueRank 1 .

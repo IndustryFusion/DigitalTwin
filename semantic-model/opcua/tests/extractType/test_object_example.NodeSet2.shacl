@@ -1,5 +1,6 @@
 @prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
 @prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/> .
+@prefix opcua: <http://opcfoundation.org/UA/> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix shacl: <http://my.test/shacl/> .
@@ -7,7 +8,17 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 shacl:AlphaTypeShape a sh:NodeShape ;
-    sh:property [ a base:SubComponentRelationship ;
+    sh:property [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path <http://my.test/entity/hasC> ;
+            sh:property [ sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:or ( [ sh:datatype xsd:double ] [ sh:property [ sh:datatype xsd:double ;
+                                        sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] ) ;
+                    sh:path ngsi-ld:hasValue ] ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ a base:SubComponentRelationship ;
             sh:maxCount 1 ;
             sh:minCount 0 ;
             sh:nodeKind sh:BlankNode ;
@@ -16,16 +27,8 @@ shacl:AlphaTypeShape a sh:NodeShape ;
                     sh:maxCount 1 ;
                     sh:minCount 1 ;
                     sh:nodeKind sh:IRI ;
-                    sh:path ngsi-ld:hasObject ] ],
-        [ sh:maxCount 1 ;
-            sh:minCount 0 ;
-            sh:nodeKind sh:BlankNode ;
-            sh:path <http://my.test/entity/hasC> ;
-            sh:property [ sh:maxCount 1 ;
-                    sh:minCount 1 ;
-                    sh:or ( [ sh:datatype xsd:double ] [ sh:property [ sh:datatype xsd:double ;
-                                        sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] ) ;
-                    sh:path ngsi-ld:hasValue ] ] ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasReferenceType opcua:HasComponent ] ;
     sh:targetClass test:AlphaType .
 
 shacl:BTypeShape a sh:NodeShape ;
@@ -37,6 +40,7 @@ shacl:BTypeShape a sh:NodeShape ;
                     sh:minCount 1 ;
                     sh:or ( [ sh:datatype xsd:boolean ] [ sh:property [ sh:datatype xsd:boolean ;
                                         sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] ) ;
-                    sh:path ngsi-ld:hasValue ] ] ;
+                    sh:path ngsi-ld:hasValue ] ;
+            base:hasReferenceType opcua:HasComponent ] ;
     sh:targetClass test:BType .
 

@@ -32,7 +32,8 @@ WARNSTR = {
     'folder_reference_inconsistency': 'FOLDER_INCONSISTENCY',
     'abstract_datatype': "ABSTRACT_DATATYPE",
     'no_default_instance': "NO_DEFAULT_INSTANCE",
-    'no_iri_value': "NO_IRI_VALUE"
+    'no_iri_value': "NO_IRI_VALUE",
+    'ignored_variable_reference': "WRONG_VARIABLE_REFERENCE"
 }
 
 NULL_IRI = URIRef('urn:ngsi-ld:null')
@@ -64,26 +65,6 @@ SELECT ?nodeclass ?realtype WHERE {
 }
 """
 
-query_generic_references = """
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-
-select ?reference ?target where {
-  ?node ?reference ?target .
-  ?reference rdfs:subClassOf* opcua:References
-}
-"""
-
-query_ignored_references = """
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-
-SELECT ?subclass WHERE {
-  VALUES ?reference {
-    opcua:GeneratesEvent
-    opcua:HasEventSource
-  }
-    ?subclass rdfs:subClassOf* ?reference .
-}
-"""
 
 modelling_nodeid_optional = 80
 modelling_nodeid_mandatory = 78
@@ -384,7 +365,7 @@ def get_type_and_template(g, node, parentnode, basens, opcuans):
         OPTIONAL{{
             ?parentnode a ?parenttype .
             ?parenttypenode base:definesType ?parenttype .
-            ?parenttypenode base:hasComponent ?templatenode .
+            ?parenttypenode opcua:HasComponent ?templatenode .
             ?templatenode base:hasBrowseName ?browsename.
         }}
     }}
@@ -555,7 +536,7 @@ class RdfUtils:
         use_instance_declaration = False
         is_optional = True
         try:
-            modelling_node = next(graph.objects(node, self.basens['hasModellingRule']))
+            modelling_node = next(graph.objects(node, self.opcuans['HasModellingRule']))
             modelling_rule = next(graph.objects(modelling_node, self.basens['hasNodeId']))
             if int(modelling_rule) == modelling_nodeid_optional or str(instancetype) in workaround_instances:
                 is_optional = True
@@ -571,12 +552,45 @@ class RdfUtils:
             shacl_rule['array'] = use_instance_declaration
         return is_optional, use_instance_declaration
 
-    def get_generic_references(self, graph, node):
-        bindings = {'node': node}
+    def get_all_subreferences(self, graph, node, reference):
+        """Get non-hierarchical references
+
+        Args:
+            graph (Graph)): Graph to search in
+            node (URIRef): Node to start searching
+            reference (URIRef): Reference superclass
+
+        Returns:
+            list(URIRef): List of References found for the node
+        """
+        query_generic_references = """
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+        select ?reference ?target where {
+            ?node ?reference ?target .
+            ?reference rdfs:subClassOf* ?superclass .
+        }
+        """
+        bindings = {'node': node, 'superclass': reference}
         result = graph.query(query_generic_references, initBindings=bindings, initNs={'opcua': self.opcuans})
-        return list(result)
+        results = []
+        if len(result) > 0:
+            results = list(result)
+        return results
 
     def get_ignored_references(self, graph):
+        query_ignored_references = """
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+            SELECT ?subclass WHERE {
+                VALUES ?reference {
+                    opcua:GeneratesEvent
+                    opcua:HasEventSource
+                    opcua:HasModellingRule
+                }
+                    ?subclass rdfs:subClassOf* ?reference .
+            }
+            """
         result = graph.query(query_ignored_references, initNs={'opcua': self.opcuans})
         first_elements = [t[0] for t in set(result)]
         return first_elements
@@ -590,8 +604,8 @@ class RdfUtils:
                 ?machine_folder a opcua:FolderType .
                 ?machine_folder base:hasNamespace machinery:MACHINERYNamespace .
                 ?machine_folder base:hasNodeId "1001" .
-                OPTIONAL{?machine_folder base:organizes ?machine .}
-                OPTIONAL{?machine_folder base:hasComponent ?machine .}
+                OPTIONAL{?machine_folder opcua:Organizes ?machine .}
+                OPTIONAL{?machine_folder opcua:HasComponent ?machine .}
                 ?machine a ?type .
                 FILTER NOT EXISTS { ?type rdfs:subClassOf* opcua:BaseNodeClass .}
             }

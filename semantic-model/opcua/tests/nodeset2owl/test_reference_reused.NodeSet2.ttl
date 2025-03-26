@@ -99,8 +99,8 @@ opcua:nodei4711 a opcua:ObjectTypeNodeClass ;
 
 opcua:nodei47112 a opcua:BaseObjectType,
         opcua:ObjectNodeClass ;
+    opcua:HasComponent opcua:nodei16363 ;
     base:hasBrowseName "MyObject" ;
-    base:hasComponent opcua:nodei16363 ;
     base:hasDisplayName "MyObject" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
@@ -150,12 +150,12 @@ opcua:MyType a owl:Class ;
 
 opcua:nodei16363 a opcua:BaseVariableType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 0 ) ;
     base:hasBrowseName "MyTestVar" ;
     base:hasDatatype opcua:Number ;
     base:hasDisplayName "My Test Variable" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "16363" ;
     base:hasValueRank 1 .

@@ -573,20 +573,6 @@ Did you forget to import it?")
                             result = Literal(json.dumps(json_obj), datatype=RDF.JSON)
                             self.g.add((classiri, self.rdf_ns['base']['hasValue'], Literal(result)))
 
-    def references_get_special(self, id, ns):
-        special_components = {
-            (hasComponentId, self.opcua_namespace): 'hasComponent',
-            (hasAddInId, self.opcua_namespace): 'hasAddIn',
-            (hasPropertyId, self.opcua_namespace): 'hasProperty',
-            (organizesId, self.opcua_namespace): 'organizes',
-            (hasModellingRuleId, self.opcua_namespace): 'hasModellingRule',
-            (hasInterfaceId, self.opcua_namespace): 'hasInterface'
-        }
-        try:
-            return special_components[(id, ns)]
-        except:
-            return None
-
     def references_ignore(self, id, ns):
         ignored_components = [
             (hasSubtypeId, self.opcua_namespace),
@@ -614,15 +600,10 @@ Did you forget to import it?")
                 index, id, idtype = self.parse_nodeid(componentId)
                 namespace = self.get_rdf_ns_from_ua_index(index)
                 targetclassiri = self.nodeId_to_iri(namespace, id, idtype)
-                basens = self.rdf_ns['base']
-                if self.references_get_special(reftype_id, reftype_ns) is None:
-                    basens = reftype_ns
-                else:
-                    found_component = self.references_get_special(reftype_id, reftype_ns)
                 if isforward != 'false':
-                    self.g.add((classiri, basens[found_component], targetclassiri))
+                    self.g.add((classiri, reftype_ns[found_component], targetclassiri))
                 else:
-                    self.g.add((targetclassiri, basens[found_component], classiri))
+                    self.g.add((targetclassiri, reftype_ns[found_component], classiri))
             else:
                 print(f"Warning: Could not find reference: {reftype}")
 

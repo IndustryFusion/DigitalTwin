@@ -1,4 +1,6 @@
+@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
 @prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/> .
+@prefix opcua: <http://opcfoundation.org/UA/> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix shacl: <http://my.test/shacl/> .
@@ -14,6 +16,7 @@ shacl:ObjectTypeShape a sh:NodeShape ;
                     sh:minCount 1 ;
                     sh:or ( [ sh:datatype xsd:double ] [ sh:property [ sh:datatype xsd:double ;
                                         sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] ) ;
-                    sh:path ngsi-ld:hasValue ] ] ;
+                    sh:path ngsi-ld:hasValue ] ;
+            base:hasReferenceType opcua:HasComponent ] ;
     sh:targetClass test:ObjectType .
 

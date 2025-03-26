@@ -63,9 +63,7 @@ devices:WillReboot a devices:UpdateBehavior,
     base:hasFieldName "WillReboot" .
 
 devices:nodei1 a opcua:ObjectTypeNodeClass ;
-    base:definesType devices:SoftwareUpdateType ;
-    base:hasBrowseName "SoftwareUpdateType" ;
-    base:hasComponent devices:nodei122,
+    opcua:HasComponent devices:nodei122,
         devices:nodei133,
         devices:nodei2,
         devices:nodei4,
@@ -73,20 +71,22 @@ devices:nodei1 a opcua:ObjectTypeNodeClass ;
         devices:nodei402,
         devices:nodei76,
         devices:nodei98 ;
+    opcua:HasProperty devices:nodei134 ;
+    base:definesType devices:SoftwareUpdateType ;
+    base:hasBrowseName "SoftwareUpdateType" ;
     base:hasDisplayName "SoftwareUpdateType" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "1" ;
-    base:hasProperty devices:nodei134 .
+    base:hasNodeId "1" .
 
 devices:nodei1001 a opcua:ObjectTypeNodeClass ;
-    base:definesType devices:TopologyElementType ;
-    base:hasBrowseName "TopologyElementType" ;
-    base:hasComponent devices:nodei5002,
+    opcua:HasComponent devices:nodei5002,
         devices:nodei5003,
         devices:nodei6014,
         devices:nodei6161,
         devices:nodei6567 ;
+    base:definesType devices:TopologyElementType ;
+    base:hasBrowseName "TopologyElementType" ;
     base:hasDescription "Defines the basic information components for all configurable elements in a device topology" ;
     base:hasDisplayName "TopologyElementType" ;
     base:hasIdentifierType base:numericID ;
@@ -94,23 +94,16 @@ devices:nodei1001 a opcua:ObjectTypeNodeClass ;
     base:hasNodeId "1001" .
 
 devices:nodei1002 a opcua:ObjectTypeNodeClass ;
-    base:definesType devices:DeviceType ;
-    base:hasBrowseName "DeviceType" ;
-    base:hasComponent devices:nodei15105,
+    opcua:HasComponent devices:nodei15105,
         devices:nodei6208,
         devices:nodei6209,
         devices:nodei6211,
         devices:nodei6213,
         devices:nodei6215,
         devices:nodei6571 ;
-    base:hasDescription "Defines the basic information components for all configurable elements in a device topology" ;
-    base:hasDisplayName "DeviceType" ;
-    base:hasIdentifierType base:numericID ;
-    base:hasInterface devices:nodei15051,
+    opcua:HasInterface devices:nodei15051,
         devices:nodei15054 ;
-    base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "1002" ;
-    base:hasProperty devices:nodei15100,
+    opcua:HasProperty devices:nodei15100,
         devices:nodei15101,
         devices:nodei15102,
         devices:nodei6001,
@@ -121,27 +114,34 @@ devices:nodei1002 a opcua:ObjectTypeNodeClass ;
         devices:nodei6006,
         devices:nodei6007,
         devices:nodei6008,
-        devices:nodei6470 .
+        devices:nodei6470 ;
+    base:definesType devices:DeviceType ;
+    base:hasBrowseName "DeviceType" ;
+    base:hasDescription "Defines the basic information components for all configurable elements in a device topology" ;
+    base:hasDisplayName "DeviceType" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace devices:DEVICESNamespace ;
+    base:hasNodeId "1002" .
 
 devices:nodei1003 a opcua:ObjectTypeNodeClass ;
+    opcua:HasProperty devices:nodei6009,
+        devices:nodei6010,
+        devices:nodei6011,
+        devices:nodei6012,
+        devices:nodei6013 ;
     base:definesType devices:BlockType ;
     base:hasBrowseName "BlockType" ;
     base:hasDescription "Adds the concept of Blocks needed for block-oriented FieldDevices" ;
     base:hasDisplayName "BlockType" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "1003" ;
-    base:hasProperty devices:nodei6009,
-        devices:nodei6010,
-        devices:nodei6011,
-        devices:nodei6012,
-        devices:nodei6013 .
+    base:hasNodeId "1003" .
 
 devices:nodei1004 a opcua:ObjectTypeNodeClass ;
+    opcua:HasComponent devices:nodei5004,
+        devices:nodei6026 ;
     base:definesType devices:ConfigurableObjectType ;
     base:hasBrowseName "ConfigurableObjectType" ;
-    base:hasComponent devices:nodei5004,
-        devices:nodei6026 ;
     base:hasDescription "Defines a general pattern to expose and configure modular components" ;
     base:hasDisplayName "ConfigurableObjectType" ;
     base:hasIdentifierType base:numericID ;
@@ -149,10 +149,10 @@ devices:nodei1004 a opcua:ObjectTypeNodeClass ;
     base:hasNodeId "1004" .
 
 devices:nodei1005 a opcua:ObjectTypeNodeClass ;
+    opcua:HasComponent devices:nodei6027,
+        devices:nodei6243 ;
     base:definesType devices:FunctionalGroupType ;
     base:hasBrowseName "FunctionalGroupType" ;
-    base:hasComponent devices:nodei6027,
-        devices:nodei6243 ;
     base:hasDescription "FolderType is used to organize the Parameters and Methods from the complete set (ParameterSet, MethodSet) with regard to their application" ;
     base:hasDisplayName "FunctionalGroupType" ;
     base:hasIdentifierType base:numericID ;
@@ -169,36 +169,30 @@ devices:nodei1006 a opcua:ObjectTypeNodeClass ;
     base:hasNodeId "1006" .
 
 devices:nodei135 a opcua:ObjectTypeNodeClass ;
+    opcua:HasComponent devices:nodei136 ;
     base:definesType devices:SoftwareLoadingType ;
     base:hasBrowseName "SoftwareLoadingType" ;
-    base:hasComponent devices:nodei136 ;
     base:hasDisplayName "SoftwareLoadingType" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "135" .
 
 devices:nodei137 a opcua:ObjectTypeNodeClass ;
-    base:definesType devices:PackageLoadingType ;
-    base:hasBrowseName "PackageLoadingType" ;
-    base:hasComponent devices:nodei139,
+    opcua:HasComponent devices:nodei139,
         devices:nodei140,
         devices:nodei151 ;
+    opcua:HasProperty devices:nodei152 ;
+    base:definesType devices:PackageLoadingType ;
+    base:hasBrowseName "PackageLoadingType" ;
     base:hasDisplayName "PackageLoadingType" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "137" ;
-    base:hasProperty devices:nodei152 .
+    base:hasNodeId "137" .
 
 devices:nodei15063 a opcua:ObjectTypeNodeClass ;
-    base:definesType devices:ComponentType ;
-    base:hasBrowseName "ComponentType" ;
-    base:hasDisplayName "ComponentType" ;
-    base:hasIdentifierType base:numericID ;
-    base:hasInterface devices:nodei15035,
+    opcua:HasInterface devices:nodei15035,
         devices:nodei15048 ;
-    base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "15063" ;
-    base:hasProperty devices:nodei15086,
+    opcua:HasProperty devices:nodei15086,
         devices:nodei15087,
         devices:nodei15088,
         devices:nodei15089,
@@ -211,18 +205,24 @@ devices:nodei15063 a opcua:ObjectTypeNodeClass ;
         devices:nodei15096,
         devices:nodei15097,
         devices:nodei15098,
-        devices:nodei15099 .
+        devices:nodei15099 ;
+    base:definesType devices:ComponentType ;
+    base:hasBrowseName "ComponentType" ;
+    base:hasDisplayName "ComponentType" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace devices:DEVICESNamespace ;
+    base:hasNodeId "15063" .
 
 devices:nodei15106 a opcua:ObjectTypeNodeClass ;
+    opcua:HasProperty devices:nodei15129,
+        devices:nodei15131,
+        devices:nodei15133 ;
     base:definesType devices:SoftwareType ;
     base:hasBrowseName "SoftwareType" ;
     base:hasDisplayName "SoftwareType" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "15106" ;
-    base:hasProperty devices:nodei15129,
-        devices:nodei15131,
-        devices:nodei15133 .
+    base:hasNodeId "15106" .
 
 devices:nodei15143 a opcua:ObjectTypeNodeClass ;
     base:definesType devices:DeviceHealthDiagnosticAlarmType ;
@@ -241,14 +241,14 @@ devices:nodei15292 a opcua:ObjectTypeNodeClass ;
     base:hasNodeId "15292" .
 
 devices:nodei153 a opcua:ObjectTypeNodeClass ;
+    opcua:HasComponent devices:nodei169 ;
+    opcua:HasProperty devices:nodei170 ;
     base:definesType devices:DirectLoadingType ;
     base:hasBrowseName "DirectLoadingType" ;
-    base:hasComponent devices:nodei169 ;
     base:hasDisplayName "DirectLoadingType" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "153" ;
-    base:hasProperty devices:nodei170 .
+    base:hasNodeId "153" .
 
 devices:nodei15441 a opcua:ObjectTypeNodeClass ;
     base:definesType devices:CheckFunctionAlarmType ;
@@ -297,46 +297,44 @@ devices:nodei15889 a opcua:DataTypeNodeClass ;
     base:hasNodeId "15889" .
 
 devices:nodei171 a opcua:ObjectTypeNodeClass ;
-    base:definesType devices:CachedLoadingType ;
-    base:hasBrowseName "CachedLoadingType" ;
-    base:hasComponent devices:nodei187,
+    opcua:HasComponent devices:nodei187,
         devices:nodei188,
         devices:nodei189 ;
+    base:definesType devices:CachedLoadingType ;
+    base:hasBrowseName "CachedLoadingType" ;
     base:hasDisplayName "CachedLoadingType" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "171" .
 
 devices:nodei192 a opcua:ObjectTypeNodeClass ;
-    base:definesType devices:FileSystemLoadingType ;
-    base:hasBrowseName "FileSystemLoadingType" ;
-    base:hasComponent devices:nodei194,
+    opcua:HasComponent devices:nodei194,
         devices:nodei206,
         devices:nodei209 ;
+    base:definesType devices:FileSystemLoadingType ;
+    base:hasBrowseName "FileSystemLoadingType" ;
     base:hasDisplayName "FileSystemLoadingType" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "192" .
 
 devices:nodei212 a opcua:ObjectTypeNodeClass ;
-    base:definesType devices:SoftwareVersionType ;
-    base:hasBrowseName "SoftwareVersionType" ;
-    base:hasDisplayName "SoftwareVersionType" ;
-    base:hasIdentifierType base:numericID ;
-    base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "212" ;
-    base:hasProperty devices:nodei380,
+    opcua:HasProperty devices:nodei380,
         devices:nodei381,
         devices:nodei382,
         devices:nodei383,
         devices:nodei384,
         devices:nodei385,
-        devices:nodei386 .
+        devices:nodei386 ;
+    base:definesType devices:SoftwareVersionType ;
+    base:hasBrowseName "SoftwareVersionType" ;
+    base:hasDisplayName "SoftwareVersionType" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace devices:DEVICESNamespace ;
+    base:hasNodeId "212" .
 
 devices:nodei213 a opcua:ObjectTypeNodeClass ;
-    base:definesType devices:PrepareForUpdateStateMachineType ;
-    base:hasBrowseName "PrepareForUpdateStateMachineType" ;
-    base:hasComponent devices:nodei227,
+    opcua:HasComponent devices:nodei227,
         devices:nodei228,
         devices:nodei229,
         devices:nodei230,
@@ -349,15 +347,15 @@ devices:nodei213 a opcua:ObjectTypeNodeClass ;
         devices:nodei243,
         devices:nodei245,
         devices:nodei247 ;
+    base:definesType devices:PrepareForUpdateStateMachineType ;
+    base:hasBrowseName "PrepareForUpdateStateMachineType" ;
     base:hasDisplayName "PrepareForUpdateStateMachineType" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "213" .
 
 devices:nodei249 a opcua:ObjectTypeNodeClass ;
-    base:definesType devices:InstallationStateMachineType ;
-    base:hasBrowseName "InstallationStateMachineType" ;
-    base:hasComponent devices:nodei263,
+    opcua:HasComponent devices:nodei263,
         devices:nodei264,
         devices:nodei265,
         devices:nodei268,
@@ -369,56 +367,62 @@ devices:nodei249 a opcua:ObjectTypeNodeClass ;
         devices:nodei279,
         devices:nodei281,
         devices:nodei283 ;
+    base:definesType devices:InstallationStateMachineType ;
+    base:hasBrowseName "InstallationStateMachineType" ;
     base:hasDisplayName "InstallationStateMachineType" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "249" .
 
 devices:nodei285 a opcua:ObjectTypeNodeClass ;
-    base:definesType devices:PowerCycleStateMachineType ;
-    base:hasBrowseName "PowerCycleStateMachineType" ;
-    base:hasComponent devices:nodei299,
+    opcua:HasComponent devices:nodei299,
         devices:nodei301,
         devices:nodei303,
         devices:nodei305 ;
+    base:definesType devices:PowerCycleStateMachineType ;
+    base:hasBrowseName "PowerCycleStateMachineType" ;
     base:hasDisplayName "PowerCycleStateMachineType" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "285" .
 
 devices:nodei307 a opcua:ObjectTypeNodeClass ;
-    base:definesType devices:ConfirmationStateMachineType ;
-    base:hasBrowseName "ConfirmationStateMachineType" ;
-    base:hasComponent devices:nodei321,
+    opcua:HasComponent devices:nodei321,
         devices:nodei322,
         devices:nodei323,
         devices:nodei325,
         devices:nodei327,
         devices:nodei329 ;
+    base:definesType devices:ConfirmationStateMachineType ;
+    base:hasBrowseName "ConfirmationStateMachineType" ;
     base:hasDisplayName "ConfirmationStateMachineType" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "307" .
 
 devices:nodei331 a opcua:DataTypeNodeClass ;
+    opcua:HasProperty devices:nodei332 ;
     base:definesType devices:SoftwareVersionFileType ;
     base:hasBrowseName "SoftwareVersionFileType" ;
     base:hasDisplayName "SoftwareVersionFileType" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "331" ;
-    base:hasProperty devices:nodei332 .
+    base:hasNodeId "331" .
 
 devices:nodei333 a opcua:DataTypeNodeClass ;
+    opcua:HasProperty devices:nodei388 ;
     base:definesType devices:UpdateBehavior ;
     base:hasBrowseName "UpdateBehavior" ;
     base:hasDisplayName "UpdateBehavior" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "333" ;
-    base:hasProperty devices:nodei388 .
+    base:hasNodeId "333" .
 
 devices:nodei468 a opcua:VariableTypeNodeClass ;
+    opcua:HasProperty devices:nodei469,
+        devices:nodei470,
+        devices:nodei471,
+        devices:nodei472 ;
     base:definesType devices:LifetimeVariableType ;
     base:hasBrowseName "LifetimeVariableType" ;
     base:hasDatatype opcua:Number ;
@@ -426,11 +430,7 @@ devices:nodei468 a opcua:VariableTypeNodeClass ;
     base:hasDisplayName "LifetimeVariableType" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "468" ;
-    base:hasProperty devices:nodei469,
-        devices:nodei470,
-        devices:nodei471,
-        devices:nodei472 .
+    base:hasNodeId "468" .
 
 devices:nodei473 a opcua:ObjectTypeNodeClass ;
     base:definesType devices:BaseLifetimeIndicationType ;
@@ -496,16 +496,16 @@ devices:nodei479 a opcua:ObjectTypeNodeClass ;
     base:hasNodeId "479" .
 
 devices:nodei480 a opcua:ObjectTypeNodeClass ;
+    opcua:HasProperty devices:nodei481,
+        devices:nodei482,
+        devices:nodei483 ;
     base:definesType devices:IOperationCounterType ;
     base:hasBrowseName "IOperationCounterType" ;
     base:hasDescription "Interface defining counters for the duration of operation" ;
     base:hasDisplayName "IOperationCounterType" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "480" ;
-    base:hasProperty devices:nodei481,
-        devices:nodei482,
-        devices:nodei483 .
+    base:hasNodeId "480" .
 
 devices:nodei6030 a opcua:ReferenceTypeNodeClass ;
     base:definesType devices:ConnectsTo ;
@@ -527,13 +527,13 @@ devices:nodei6031 a opcua:ReferenceTypeNodeClass ;
     base:hasNodeId "6031" .
 
 devices:nodei6244 a opcua:DataTypeNodeClass ;
+    opcua:HasProperty devices:nodei6450 ;
     base:definesType devices:DeviceHealthEnumeration ;
     base:hasBrowseName "DeviceHealthEnumeration" ;
     base:hasDisplayName "DeviceHealthEnumeration" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "6244" ;
-    base:hasProperty devices:nodei6450 .
+    base:hasNodeId "6244" .
 
 devices:nodei6246 a opcua:VariableTypeNodeClass ;
     base:definesType devices:UIElementType ;
@@ -546,10 +546,10 @@ devices:nodei6246 a opcua:VariableTypeNodeClass ;
 
 devices:nodei6247 a opcua:ObjectTypeNodeClass ;
     devices:ConnectsTo devices:nodei6248 ;
+    opcua:HasComponent devices:nodei6294,
+        devices:nodei6596 ;
     base:definesType devices:NetworkType ;
     base:hasBrowseName "NetworkType" ;
-    base:hasComponent devices:nodei6294,
-        devices:nodei6596 ;
     base:hasDescription "Represents the communication means for Devices that are connected to it." ;
     base:hasDisplayName "NetworkType" ;
     base:hasIdentifierType base:numericID ;
@@ -558,10 +558,10 @@ devices:nodei6247 a opcua:ObjectTypeNodeClass ;
 
 devices:nodei6308 a opcua:ObjectTypeNodeClass ;
     devices:ConnectsTo devices:nodei6599 ;
+    opcua:HasComponent devices:nodei6354,
+        devices:nodei6499 ;
     base:definesType devices:ConnectionPointType ;
     base:hasBrowseName "ConnectionPointType" ;
-    base:hasComponent devices:nodei6354,
-        devices:nodei6499 ;
     base:hasDescription "Represents the interface (interface card) of a Device to a Network." ;
     base:hasDisplayName "ConnectionPointType" ;
     base:hasIdentifierType base:numericID ;
@@ -569,22 +569,22 @@ devices:nodei6308 a opcua:ObjectTypeNodeClass ;
     base:hasNodeId "6308" .
 
 devices:nodei6388 a opcua:ObjectTypeNodeClass ;
-    base:definesType devices:LockingServicesType ;
-    base:hasBrowseName "LockingServicesType" ;
-    base:hasComponent devices:nodei6393,
+    opcua:HasComponent devices:nodei6393,
         devices:nodei6396,
         devices:nodei6398,
         devices:nodei6400 ;
+    opcua:HasProperty devices:nodei15890,
+        devices:nodei6390,
+        devices:nodei6391,
+        devices:nodei6392,
+        devices:nodei6534 ;
+    base:definesType devices:LockingServicesType ;
+    base:hasBrowseName "LockingServicesType" ;
     base:hasDescription "An interface for Locking." ;
     base:hasDisplayName "LockingServicesType" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "6388" ;
-    base:hasProperty devices:nodei15890,
-        devices:nodei6390,
-        devices:nodei6391,
-        devices:nodei6392,
-        devices:nodei6534 .
+    base:hasNodeId "6388" .
 
 devices:nodei6467 a opcua:ReferenceTypeNodeClass ;
     base:definesType devices:ConnectsToParent ;
@@ -619,27 +619,27 @@ devices:nodei6525 a opcua:DataTypeNodeClass ;
     base:hasNodeId "6525" .
 
 devices:nodei6526 a opcua:ObjectTypeNodeClass ;
-    base:definesType devices:TransferServicesType ;
-    base:hasBrowseName "TransferServicesType" ;
-    base:hasComponent devices:nodei6527,
+    opcua:HasComponent devices:nodei6527,
         devices:nodei6529,
         devices:nodei6531 ;
+    base:definesType devices:TransferServicesType ;
+    base:hasBrowseName "TransferServicesType" ;
     base:hasDisplayName "TransferServicesType" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6526" .
 
-opcua:nodei11715 base:hasComponent devices:nodei15001 .
+opcua:nodei11715 opcua:HasComponent devices:nodei15001 .
 
-opcua:nodei2268 base:hasProperty devices:nodei6387 .
+opcua:nodei2268 opcua:HasProperty devices:nodei6387 .
 
-opcua:nodei85 base:organizes devices:nodei5001,
+opcua:nodei85 opcua:Organizes devices:nodei5001,
         devices:nodei6078,
         devices:nodei6094 .
 
-opcua:nodei92 base:hasComponent devices:nodei6423 .
+opcua:nodei92 opcua:HasComponent devices:nodei6423 .
 
-opcua:nodei93 base:hasComponent devices:nodei6435 .
+opcua:nodei93 opcua:HasComponent devices:nodei6435 .
 
 devices:BlockType a owl:Class ;
     rdfs:subClassOf devices:TopologyElementType ;
@@ -780,11 +780,11 @@ devices:TransferServicesType a owl:Class ;
 
 devices:nodei100 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "Id" ;
     base:hasDatatype opcua:NodeId ;
     base:hasDisplayName "Id" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "100" .
 
@@ -797,143 +797,143 @@ devices:nodei112 a opcua:MethodNodeClass ;
 
 devices:nodei113 a opcua:BaseDataVariableType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "ConfirmationTimeout" ;
     base:hasDatatype opcua:Duration ;
     base:hasDisplayName "ConfirmationTimeout" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "113" .
 
 devices:nodei122 a opcua:ObjectNodeClass,
         opcua:TemporaryFileTransferType ;
-    base:hasBrowseName "Parameters" ;
-    base:hasComponent devices:nodei124,
+    opcua:HasComponent devices:nodei124,
         devices:nodei127,
         devices:nodei130 ;
+    opcua:HasModellingRule opcua:nodei80 ;
+    opcua:HasProperty devices:nodei123 ;
+    base:hasBrowseName "Parameters" ;
     base:hasDisplayName "Parameters" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "122" ;
-    base:hasProperty devices:nodei123 .
+    base:hasNodeId "122" .
 
 devices:nodei123 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "ClientProcessingTimeout" ;
     base:hasDatatype opcua:Duration ;
     base:hasDisplayName "ClientProcessingTimeout" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "123" .
 
 devices:nodei124 a opcua:MethodNodeClass ;
+    opcua:HasProperty devices:nodei125,
+        devices:nodei126 ;
     base:hasBrowseName "GenerateFileForRead" ;
     base:hasDisplayName "GenerateFileForRead" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "124" ;
-    base:hasProperty devices:nodei125,
-        devices:nodei126 .
+    base:hasNodeId "124" .
 
 devices:nodei125 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "125" ;
     base:hasValueRank 1 .
 
 devices:nodei126 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 3 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "126" ;
     base:hasValueRank 1 .
 
 devices:nodei127 a opcua:MethodNodeClass ;
+    opcua:HasProperty devices:nodei128,
+        devices:nodei129 ;
     base:hasBrowseName "GenerateFileForWrite" ;
     base:hasDisplayName "GenerateFileForWrite" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "127" ;
-    base:hasProperty devices:nodei128,
-        devices:nodei129 .
+    base:hasNodeId "127" .
 
 devices:nodei128 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "128" ;
     base:hasValueRank 1 .
 
 devices:nodei129 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 2 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "129" ;
     base:hasValueRank 1 .
 
 devices:nodei130 a opcua:MethodNodeClass ;
+    opcua:HasProperty devices:nodei131,
+        devices:nodei132 ;
     base:hasBrowseName "CloseAndCommit" ;
     base:hasDisplayName "CloseAndCommit" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "130" ;
-    base:hasProperty devices:nodei131,
-        devices:nodei132 .
+    base:hasNodeId "130" .
 
 devices:nodei131 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "131" ;
     base:hasValueRank 1 .
 
 devices:nodei132 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "132" ;
     base:hasValueRank 1 .
 
 devices:nodei133 a opcua:BaseDataVariableType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "UpdateStatus" ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasDisplayName "UpdateStatus" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "133" .
 
@@ -949,156 +949,151 @@ devices:nodei134 a opcua:PropertyType,
 
 devices:nodei136 a opcua:BaseDataVariableType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "UpdateKey" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "UpdateKey" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "136" .
 
 devices:nodei139 a devices:SoftwareVersionType,
         opcua:ObjectNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
+    opcua:HasProperty devices:nodei345,
+        devices:nodei346,
+        devices:nodei347 ;
     base:hasBrowseName "CurrentVersion" ;
     base:hasDisplayName "CurrentVersion" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "139" ;
-    base:hasProperty devices:nodei345,
-        devices:nodei346,
-        devices:nodei347 .
+    base:hasNodeId "139" .
 
 devices:nodei140 a opcua:ObjectNodeClass,
         opcua:TemporaryFileTransferType ;
-    base:hasBrowseName "FileTransfer" ;
-    base:hasComponent devices:nodei142,
+    opcua:HasComponent devices:nodei142,
         devices:nodei145,
         devices:nodei148 ;
+    opcua:HasModellingRule opcua:nodei78 ;
+    opcua:HasProperty devices:nodei141 ;
+    base:hasBrowseName "FileTransfer" ;
     base:hasDisplayName "FileTransfer" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "140" ;
-    base:hasProperty devices:nodei141 .
+    base:hasNodeId "140" .
 
 devices:nodei141 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "ClientProcessingTimeout" ;
     base:hasDatatype opcua:Duration ;
     base:hasDisplayName "ClientProcessingTimeout" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "141" .
 
 devices:nodei142 a opcua:MethodNodeClass ;
+    opcua:HasProperty devices:nodei143,
+        devices:nodei144 ;
     base:hasBrowseName "GenerateFileForRead" ;
     base:hasDisplayName "GenerateFileForRead" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "142" ;
-    base:hasProperty devices:nodei143,
-        devices:nodei144 .
+    base:hasNodeId "142" .
 
 devices:nodei143 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "143" ;
     base:hasValueRank 1 .
 
 devices:nodei144 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 3 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "144" ;
     base:hasValueRank 1 .
 
 devices:nodei145 a opcua:MethodNodeClass ;
+    opcua:HasProperty devices:nodei146,
+        devices:nodei147 ;
     base:hasBrowseName "GenerateFileForWrite" ;
     base:hasDisplayName "GenerateFileForWrite" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "145" ;
-    base:hasProperty devices:nodei146,
-        devices:nodei147 .
+    base:hasNodeId "145" .
 
 devices:nodei146 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "146" ;
     base:hasValueRank 1 .
 
 devices:nodei147 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 2 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "147" ;
     base:hasValueRank 1 .
 
 devices:nodei148 a opcua:MethodNodeClass ;
+    opcua:HasProperty devices:nodei149,
+        devices:nodei150 ;
     base:hasBrowseName "CloseAndCommit" ;
     base:hasDisplayName "CloseAndCommit" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "148" ;
-    base:hasProperty devices:nodei149,
-        devices:nodei150 .
+    base:hasNodeId "148" .
 
 devices:nodei149 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "149" ;
     base:hasValueRank 1 .
 
 devices:nodei150 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "150" ;
     base:hasValueRank 1 .
 
 devices:nodei15001 a opcua:NamespaceMetadataType,
         opcua:ObjectNodeClass ;
-    base:hasBrowseName "http://opcfoundation.org/UA/DI/" ;
-    base:hasDisplayName "http://opcfoundation.org/UA/DI/" ;
-    base:hasIdentifierType base:numericID ;
-    base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "15001" ;
-    base:hasProperty devices:nodei15002,
+    opcua:HasProperty devices:nodei15002,
         devices:nodei15003,
         devices:nodei15004,
         devices:nodei15005,
@@ -1108,6 +1103,11 @@ devices:nodei15001 a opcua:NamespaceMetadataType,
         devices:nodei15031,
         devices:nodei15032,
         devices:nodei15033 ;
+    base:hasBrowseName "http://opcfoundation.org/UA/DI/" ;
+    base:hasDisplayName "http://opcfoundation.org/UA/DI/" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace devices:DEVICESNamespace ;
+    base:hasNodeId "15001" ;
     base:hasSymbolicName "OPCUADINamespaceMetadata" .
 
 devices:nodei15002 a opcua:PropertyType,
@@ -1223,13 +1223,7 @@ devices:nodei15034 a opcua:BaseObjectType,
     base:hasNodeId "15034" .
 
 devices:nodei15035 a opcua:ObjectTypeNodeClass ;
-    base:definesType devices:IVendorNameplateType ;
-    base:hasBrowseName "IVendorNameplateType" ;
-    base:hasDisplayName "IVendorNameplateType" ;
-    base:hasIdentifierType base:numericID ;
-    base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "15035" ;
-    base:hasProperty devices:nodei15036,
+    opcua:HasProperty devices:nodei15036,
         devices:nodei15037,
         devices:nodei15038,
         devices:nodei15039,
@@ -1242,163 +1236,169 @@ devices:nodei15035 a opcua:ObjectTypeNodeClass ;
         devices:nodei15046,
         devices:nodei15047,
         devices:nodei23,
-        devices:nodei24 .
+        devices:nodei24 ;
+    base:definesType devices:IVendorNameplateType ;
+    base:hasBrowseName "IVendorNameplateType" ;
+    base:hasDisplayName "IVendorNameplateType" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace devices:DEVICESNamespace ;
+    base:hasNodeId "15035" .
 
 devices:nodei15036 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "Manufacturer" ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasDisplayName "Manufacturer" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15036" .
 
 devices:nodei15037 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "ManufacturerUri" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "ManufacturerUri" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15037" .
 
 devices:nodei15038 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "Model" ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasDisplayName "Model" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15038" .
 
 devices:nodei15039 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "HardwareRevision" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "HardwareRevision" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15039" .
 
 devices:nodei15040 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "SoftwareRevision" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "SoftwareRevision" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15040" .
 
 devices:nodei15041 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "DeviceRevision" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "DeviceRevision" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15041" .
 
 devices:nodei15042 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "ProductCode" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "ProductCode" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15042" .
 
 devices:nodei15043 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "DeviceManual" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "DeviceManual" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15043" .
 
 devices:nodei15044 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "DeviceClass" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "DeviceClass" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15044" .
 
 devices:nodei15045 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "SerialNumber" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "SerialNumber" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15045" .
 
 devices:nodei15046 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "ProductInstanceUri" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "ProductInstanceUri" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15046" .
 
 devices:nodei15047 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "RevisionCounter" ;
     base:hasDatatype opcua:Int32 ;
     base:hasDisplayName "RevisionCounter" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15047" .
 
 devices:nodei15048 a opcua:ObjectTypeNodeClass ;
+    opcua:HasProperty devices:nodei15049,
+        devices:nodei15050 ;
     base:definesType devices:ITagNameplateType ;
     base:hasBrowseName "ITagNameplateType" ;
     base:hasDisplayName "ITagNameplateType" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "15048" ;
-    base:hasProperty devices:nodei15049,
-        devices:nodei15050 .
+    base:hasNodeId "15048" .
 
 devices:nodei15049 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "AssetId" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "AssetId" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15049" .
 
 devices:nodei15050 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "ComponentName" ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasDisplayName "ComponentName" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15050" .
 
 devices:nodei15051 a opcua:ObjectTypeNodeClass ;
+    opcua:HasComponent devices:nodei15052,
+        devices:nodei15053 ;
     base:definesType devices:IDeviceHealthType ;
     base:hasBrowseName "IDeviceHealthType" ;
-    base:hasComponent devices:nodei15052,
-        devices:nodei15053 ;
     base:hasDisplayName "IDeviceHealthType" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
@@ -1406,31 +1406,31 @@ devices:nodei15051 a opcua:ObjectTypeNodeClass ;
 
 devices:nodei15052 a opcua:BaseDataVariableType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "DeviceHealth" ;
     base:hasDatatype devices:DeviceHealthEnumeration ;
     base:hasDisplayName "DeviceHealth" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15052" .
 
 devices:nodei15053 a opcua:FolderType,
         opcua:ObjectNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "DeviceHealthAlarms" ;
     base:hasDisplayName "DeviceHealthAlarms" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15053" .
 
 devices:nodei15054 a opcua:ObjectTypeNodeClass ;
-    base:definesType devices:ISupportInfoType ;
-    base:hasBrowseName "ISupportInfoType" ;
-    base:hasComponent devices:nodei15055,
+    opcua:HasComponent devices:nodei15055,
         devices:nodei15057,
         devices:nodei15059,
         devices:nodei15061,
         devices:nodei27 ;
+    base:definesType devices:ISupportInfoType ;
+    base:hasBrowseName "ISupportInfoType" ;
     base:hasDisplayName "ISupportInfoType" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
@@ -1438,314 +1438,314 @@ devices:nodei15054 a opcua:ObjectTypeNodeClass ;
 
 devices:nodei15055 a opcua:FolderType,
         opcua:ObjectNodeClass ;
+    opcua:HasComponent devices:nodei15056 ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "DeviceTypeImage" ;
-    base:hasComponent devices:nodei15056 ;
     base:hasDisplayName "DeviceTypeImage" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15055" .
 
 devices:nodei15056 a opcua:BaseDataVariableType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei11510 ;
     base:hasBrowseName "<ImageIdentifier>" ;
     base:hasDatatype opcua:Image ;
     base:hasDisplayName "<ImageIdentifier>" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei11510 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15056" ;
     base:hasSymbolicName "ImageIdentifier" .
 
 devices:nodei15057 a opcua:FolderType,
         opcua:ObjectNodeClass ;
+    opcua:HasComponent devices:nodei15058 ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "Documentation" ;
-    base:hasComponent devices:nodei15058 ;
     base:hasDisplayName "Documentation" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15057" .
 
 devices:nodei15058 a opcua:BaseDataVariableType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei11510 ;
     base:hasBrowseName "<DocumentIdentifier>" ;
     base:hasDatatype opcua:ByteString ;
     base:hasDisplayName "<DocumentIdentifier>" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei11510 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15058" ;
     base:hasSymbolicName "DocumentIdentifier" .
 
 devices:nodei15059 a opcua:FolderType,
         opcua:ObjectNodeClass ;
+    opcua:HasComponent devices:nodei15060 ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "ProtocolSupport" ;
-    base:hasComponent devices:nodei15060 ;
     base:hasDisplayName "ProtocolSupport" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15059" .
 
 devices:nodei15060 a opcua:BaseDataVariableType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei11510 ;
     base:hasBrowseName "<ProtocolSupportIdentifier>" ;
     base:hasDatatype opcua:ByteString ;
     base:hasDisplayName "<ProtocolSupportIdentifier>" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei11510 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15060" ;
     base:hasSymbolicName "ProtocolSupportIdentifier" .
 
 devices:nodei15061 a opcua:FolderType,
         opcua:ObjectNodeClass ;
+    opcua:HasComponent devices:nodei15062 ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "ImageSet" ;
-    base:hasComponent devices:nodei15062 ;
     base:hasDisplayName "ImageSet" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15061" .
 
 devices:nodei15062 a opcua:BaseDataVariableType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei11510 ;
     base:hasBrowseName "<ImageIdentifier>" ;
     base:hasDatatype opcua:Image ;
     base:hasDisplayName "<ImageIdentifier>" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei11510 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15062" ;
     base:hasSymbolicName "ImageIdentifier" .
 
 devices:nodei15086 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "Manufacturer" ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasDisplayName "Manufacturer" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15086" .
 
 devices:nodei15087 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "ManufacturerUri" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "ManufacturerUri" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15087" .
 
 devices:nodei15088 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "Model" ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasDisplayName "Model" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15088" .
 
 devices:nodei15089 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "HardwareRevision" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "HardwareRevision" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15089" .
 
 devices:nodei15090 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "SoftwareRevision" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "SoftwareRevision" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15090" .
 
 devices:nodei15091 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "DeviceRevision" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "DeviceRevision" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15091" .
 
 devices:nodei15092 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "ProductCode" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "ProductCode" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15092" .
 
 devices:nodei15093 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "DeviceManual" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "DeviceManual" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15093" .
 
 devices:nodei15094 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "DeviceClass" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "DeviceClass" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15094" .
 
 devices:nodei15095 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "SerialNumber" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "SerialNumber" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15095" .
 
 devices:nodei15096 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "ProductInstanceUri" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "ProductInstanceUri" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15096" .
 
 devices:nodei15097 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "RevisionCounter" ;
     base:hasDatatype opcua:Int32 ;
     base:hasDisplayName "RevisionCounter" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15097" .
 
 devices:nodei15098 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "AssetId" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "AssetId" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15098" .
 
 devices:nodei15099 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "ComponentName" ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasDisplayName "ComponentName" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15099" .
 
 devices:nodei151 a opcua:BaseDataVariableType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "ErrorMessage" ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasDisplayName "ErrorMessage" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "151" .
 
 devices:nodei15100 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "ManufacturerUri" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "ManufacturerUri" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15100" .
 
 devices:nodei15101 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "ProductCode" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "ProductCode" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15101" .
 
 devices:nodei15102 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "ProductInstanceUri" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "ProductInstanceUri" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15102" .
 
 devices:nodei15105 a opcua:FolderType,
         opcua:ObjectNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "DeviceHealthAlarms" ;
     base:hasDisplayName "DeviceHealthAlarms" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15105" .
 
 devices:nodei15129 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "Manufacturer" ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasDisplayName "Manufacturer" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15129" .
 
 devices:nodei15131 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "Model" ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasDisplayName "Model" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15131" .
 
 devices:nodei15133 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "SoftwareRevision" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "SoftwareRevision" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "15133" .
 
 devices:nodei152 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "WriteBlockSize" ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "WriteBlockSize" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "152" .
 
@@ -1857,56 +1857,56 @@ devices:nodei15912 a opcua:DataTypeEncodingType,
 
 devices:nodei169 a opcua:BaseDataVariableType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "UpdateBehavior" ;
     base:hasDatatype devices:UpdateBehavior ;
     base:hasDisplayName "UpdateBehavior" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "169" .
 
 devices:nodei170 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "WriteTimeout" ;
     base:hasDatatype opcua:Duration ;
     base:hasDisplayName "WriteTimeout" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "170" .
 
 devices:nodei187 a devices:SoftwareVersionType,
         opcua:ObjectNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
+    opcua:HasProperty devices:nodei366,
+        devices:nodei367,
+        devices:nodei368 ;
     base:hasBrowseName "PendingVersion" ;
     base:hasDisplayName "PendingVersion" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "187" ;
-    base:hasProperty devices:nodei366,
-        devices:nodei367,
-        devices:nodei368 .
+    base:hasNodeId "187" .
 
 devices:nodei188 a devices:SoftwareVersionType,
         opcua:ObjectNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
+    opcua:HasProperty devices:nodei373,
+        devices:nodei374,
+        devices:nodei375 ;
     base:hasBrowseName "FallbackVersion" ;
     base:hasDisplayName "FallbackVersion" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "188" ;
-    base:hasProperty devices:nodei373,
-        devices:nodei374,
-        devices:nodei375 .
+    base:hasNodeId "188" .
 
 devices:nodei189 a opcua:MethodNodeClass ;
+    opcua:HasProperty devices:nodei190,
+        devices:nodei191 ;
     base:hasBrowseName "GetUpdateBehavior" ;
     base:hasDisplayName "GetUpdateBehavior" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "189" ;
-    base:hasProperty devices:nodei190,
-        devices:nodei191 .
+    base:hasNodeId "189" .
 
 devices:nodei19 a opcua:MethodNodeClass ;
     base:hasBrowseName "Prepare" ;
@@ -1917,101 +1917,101 @@ devices:nodei19 a opcua:MethodNodeClass ;
 
 devices:nodei190 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 3 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "190" ;
     base:hasValueRank 1 .
 
 devices:nodei191 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "191" ;
     base:hasValueRank 1 .
 
 devices:nodei194 a opcua:FileDirectoryType,
         opcua:ObjectNodeClass ;
-    base:hasBrowseName "FileSystem" ;
-    base:hasComponent devices:nodei195,
+    opcua:HasComponent devices:nodei195,
         devices:nodei198,
         devices:nodei201,
         devices:nodei203 ;
+    opcua:HasModellingRule opcua:nodei78 ;
+    base:hasBrowseName "FileSystem" ;
     base:hasDisplayName "FileSystem" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "194" .
 
 devices:nodei195 a opcua:MethodNodeClass ;
+    opcua:HasProperty devices:nodei196,
+        devices:nodei197 ;
     base:hasBrowseName "CreateDirectory" ;
     base:hasDisplayName "CreateDirectory" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "195" ;
-    base:hasProperty devices:nodei196,
-        devices:nodei197 .
+    base:hasNodeId "195" .
 
 devices:nodei196 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "196" ;
     base:hasValueRank 1 .
 
 devices:nodei197 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "197" ;
     base:hasValueRank 1 .
 
 devices:nodei198 a opcua:MethodNodeClass ;
+    opcua:HasProperty devices:nodei199,
+        devices:nodei200 ;
     base:hasBrowseName "CreateFile" ;
     base:hasDisplayName "CreateFile" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "198" ;
-    base:hasProperty devices:nodei199,
-        devices:nodei200 .
+    base:hasNodeId "198" .
 
 devices:nodei199 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 2 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "199" ;
     base:hasValueRank 1 .
 
 devices:nodei2 a devices:SoftwareLoadingType,
         opcua:ObjectNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "Loading" ;
     base:hasDisplayName "Loading" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "2" .
 
@@ -2024,143 +2024,143 @@ devices:nodei20 a opcua:MethodNodeClass ;
 
 devices:nodei200 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 2 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "200" ;
     base:hasValueRank 1 .
 
 devices:nodei201 a opcua:MethodNodeClass ;
+    opcua:HasProperty devices:nodei202 ;
     base:hasBrowseName "Delete" ;
     base:hasDisplayName "Delete" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "201" ;
-    base:hasProperty devices:nodei202 ;
     base:hasSymbolicName "DeleteFileSystemObject" .
 
 devices:nodei202 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "202" ;
     base:hasValueRank 1 .
 
 devices:nodei203 a opcua:MethodNodeClass ;
+    opcua:HasProperty devices:nodei204,
+        devices:nodei205 ;
     base:hasBrowseName "MoveOrCopy" ;
     base:hasDisplayName "MoveOrCopy" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "203" ;
-    base:hasProperty devices:nodei204,
-        devices:nodei205 .
+    base:hasNodeId "203" .
 
 devices:nodei204 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 4 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "204" ;
     base:hasValueRank 1 .
 
 devices:nodei205 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "205" ;
     base:hasValueRank 1 .
 
 devices:nodei206 a opcua:MethodNodeClass ;
+    opcua:HasProperty devices:nodei207,
+        devices:nodei208 ;
     base:hasBrowseName "GetUpdateBehavior" ;
     base:hasDisplayName "GetUpdateBehavior" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "206" ;
-    base:hasProperty devices:nodei207,
-        devices:nodei208 .
+    base:hasNodeId "206" .
 
 devices:nodei207 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "207" ;
     base:hasValueRank 1 .
 
 devices:nodei208 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "208" ;
     base:hasValueRank 1 .
 
 devices:nodei209 a opcua:MethodNodeClass ;
+    opcua:HasProperty devices:nodei210,
+        devices:nodei211 ;
     base:hasBrowseName "ValidateFiles" ;
     base:hasDisplayName "ValidateFiles" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "209" ;
-    base:hasProperty devices:nodei210,
-        devices:nodei211 .
+    base:hasNodeId "209" .
 
 devices:nodei210 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "210" ;
     base:hasValueRank 1 .
 
 devices:nodei211 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 2 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "211" ;
     base:hasValueRank 1 .
 
 devices:nodei227 a opcua:BaseDataVariableType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "PercentComplete" ;
     base:hasDatatype opcua:Byte ;
     base:hasDisplayName "PercentComplete" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "227" .
 
@@ -2180,11 +2180,11 @@ devices:nodei229 a opcua:MethodNodeClass ;
 
 devices:nodei23 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "SoftwareReleaseDate" ;
     base:hasDatatype opcua:DateTime ;
     base:hasDisplayName "SoftwareReleaseDate" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "23" .
 
@@ -2197,44 +2197,44 @@ devices:nodei230 a opcua:MethodNodeClass ;
 
 devices:nodei232 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "StateNumber" ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "StateNumber" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "232" ;
     base:hasValue 1 .
 
 devices:nodei234 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "StateNumber" ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "StateNumber" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "234" ;
     base:hasValue 2 .
 
 devices:nodei236 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "StateNumber" ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "StateNumber" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "236" ;
     base:hasValue 3 .
 
 devices:nodei238 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "StateNumber" ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "StateNumber" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "238" ;
     base:hasValue 4 .
@@ -2243,33 +2243,33 @@ devices:nodei239 a opcua:ObjectNodeClass,
         opcua:TransitionType ;
     opcua:FromState devices:nodei231 ;
     opcua:HasEffect opcua:nodei2311 ;
+    opcua:HasProperty devices:nodei240 ;
     opcua:ToState devices:nodei233 ;
     base:hasBrowseName "IdleToPreparing" ;
     base:hasDisplayName "IdleToPreparing" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "239" ;
-    base:hasProperty devices:nodei240 .
+    base:hasNodeId "239" .
 
 devices:nodei24 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasArrayDimensions ( 0 ) ;
     base:hasBrowseName "PatchIdentifiers" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "PatchIdentifiers" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "24" ;
     base:hasValueRank 1 .
 
 devices:nodei240 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "240" ;
     base:hasValue 12 .
@@ -2278,21 +2278,21 @@ devices:nodei241 a opcua:ObjectNodeClass,
         opcua:TransitionType ;
     opcua:FromState devices:nodei233 ;
     opcua:HasEffect opcua:nodei2311 ;
+    opcua:HasProperty devices:nodei242 ;
     opcua:ToState devices:nodei231 ;
     base:hasBrowseName "PreparingToIdle" ;
     base:hasDisplayName "PreparingToIdle" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "241" ;
-    base:hasProperty devices:nodei242 .
+    base:hasNodeId "241" .
 
 devices:nodei242 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "242" ;
     base:hasValue 21 .
@@ -2301,21 +2301,21 @@ devices:nodei243 a opcua:ObjectNodeClass,
         opcua:TransitionType ;
     opcua:FromState devices:nodei233 ;
     opcua:HasEffect opcua:nodei2311 ;
+    opcua:HasProperty devices:nodei244 ;
     opcua:ToState devices:nodei235 ;
     base:hasBrowseName "PreparingToPreparedForUpdate" ;
     base:hasDisplayName "PreparingToPreparedForUpdate" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "243" ;
-    base:hasProperty devices:nodei244 .
+    base:hasNodeId "243" .
 
 devices:nodei244 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "244" ;
     base:hasValue 23 .
@@ -2324,21 +2324,21 @@ devices:nodei245 a opcua:ObjectNodeClass,
         opcua:TransitionType ;
     opcua:FromState devices:nodei235 ;
     opcua:HasEffect opcua:nodei2311 ;
+    opcua:HasProperty devices:nodei246 ;
     opcua:ToState devices:nodei237 ;
     base:hasBrowseName "PreparedForUpdateToResuming" ;
     base:hasDisplayName "PreparedForUpdateToResuming" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "245" ;
-    base:hasProperty devices:nodei246 .
+    base:hasNodeId "245" .
 
 devices:nodei246 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "246" ;
     base:hasValue 34 .
@@ -2347,92 +2347,92 @@ devices:nodei247 a opcua:ObjectNodeClass,
         opcua:TransitionType ;
     opcua:FromState devices:nodei237 ;
     opcua:HasEffect opcua:nodei2311 ;
+    opcua:HasProperty devices:nodei248 ;
     opcua:ToState devices:nodei231 ;
     base:hasBrowseName "ResumingToIdle" ;
     base:hasDisplayName "ResumingToIdle" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "247" ;
-    base:hasProperty devices:nodei248 .
+    base:hasNodeId "247" .
 
 devices:nodei248 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "248" ;
     base:hasValue 41 .
 
 devices:nodei263 a opcua:BaseDataVariableType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "PercentComplete" ;
     base:hasDatatype opcua:Byte ;
     base:hasDisplayName "PercentComplete" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "263" .
 
 devices:nodei264 a opcua:BaseDataVariableType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "InstallationDelay" ;
     base:hasDatatype opcua:Duration ;
     base:hasDisplayName "InstallationDelay" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "264" .
 
 devices:nodei265 a opcua:MethodNodeClass ;
+    opcua:HasProperty devices:nodei266 ;
     base:hasBrowseName "InstallSoftwarePackage" ;
     base:hasDisplayName "InstallSoftwarePackage" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "265" ;
-    base:hasProperty devices:nodei266 .
+    base:hasNodeId "265" .
 
 devices:nodei266 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 4 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "266" ;
     base:hasValueRank 1 .
 
 devices:nodei268 a opcua:MethodNodeClass ;
+    opcua:HasProperty devices:nodei269 ;
     base:hasBrowseName "InstallFiles" ;
     base:hasDisplayName "InstallFiles" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "268" ;
-    base:hasProperty devices:nodei269 .
+    base:hasNodeId "268" .
 
 devices:nodei269 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "269" ;
     base:hasValueRank 1 .
 
 devices:nodei27 a opcua:FolderType,
         opcua:ObjectNodeClass ;
+    opcua:HasComponent devices:nodei28 ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "DocumentationFiles" ;
-    base:hasComponent devices:nodei28 ;
     base:hasDisplayName "DocumentationFiles" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "27" .
 
@@ -2445,33 +2445,33 @@ devices:nodei270 a opcua:MethodNodeClass ;
 
 devices:nodei272 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "StateNumber" ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "StateNumber" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "272" ;
     base:hasValue 1 .
 
 devices:nodei274 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "StateNumber" ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "StateNumber" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "274" ;
     base:hasValue 2 .
 
 devices:nodei276 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "StateNumber" ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "StateNumber" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "276" ;
     base:hasValue 3 .
@@ -2480,53 +2480,53 @@ devices:nodei277 a opcua:ObjectNodeClass,
         opcua:TransitionType ;
     opcua:FromState devices:nodei271 ;
     opcua:HasEffect opcua:nodei2311 ;
+    opcua:HasProperty devices:nodei387 ;
     opcua:ToState devices:nodei273 ;
     base:hasBrowseName "IdleToInstalling" ;
     base:hasDisplayName "IdleToInstalling" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "277" ;
-    base:hasProperty devices:nodei387 .
+    base:hasNodeId "277" .
 
 devices:nodei279 a opcua:ObjectNodeClass,
         opcua:TransitionType ;
     opcua:FromState devices:nodei273 ;
     opcua:HasEffect opcua:nodei2311 ;
+    opcua:HasProperty devices:nodei280 ;
     opcua:ToState devices:nodei271 ;
     base:hasBrowseName "InstallingToIdle" ;
     base:hasDisplayName "InstallingToIdle" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "279" ;
-    base:hasProperty devices:nodei280 .
+    base:hasNodeId "279" .
 
 devices:nodei28 a opcua:FileType,
         opcua:ObjectNodeClass ;
-    base:hasBrowseName "<DocumentFileId>" ;
-    base:hasComponent devices:nodei36,
+    opcua:HasComponent devices:nodei36,
         devices:nodei39,
         devices:nodei63,
         devices:nodei66,
         devices:nodei68,
         devices:nodei71 ;
-    base:hasDisplayName "<DocumentFileId>" ;
-    base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei11510 ;
-    base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "28" ;
-    base:hasProperty devices:nodei29,
+    opcua:HasModellingRule opcua:nodei11510 ;
+    opcua:HasProperty devices:nodei29,
         devices:nodei30,
         devices:nodei31,
         devices:nodei32 ;
+    base:hasBrowseName "<DocumentFileId>" ;
+    base:hasDisplayName "<DocumentFileId>" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace devices:DEVICESNamespace ;
+    base:hasNodeId "28" ;
     base:hasSymbolicName "DocumentFileId" .
 
 devices:nodei280 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "280" ;
     base:hasValue 21 .
@@ -2535,21 +2535,21 @@ devices:nodei281 a opcua:ObjectNodeClass,
         opcua:TransitionType ;
     opcua:FromState devices:nodei273 ;
     opcua:HasEffect opcua:nodei2311 ;
+    opcua:HasProperty devices:nodei282 ;
     opcua:ToState devices:nodei275 ;
     base:hasBrowseName "InstallingToError" ;
     base:hasDisplayName "InstallingToError" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "281" ;
-    base:hasProperty devices:nodei282 .
+    base:hasNodeId "281" .
 
 devices:nodei282 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "282" ;
     base:hasValue 23 .
@@ -2558,63 +2558,63 @@ devices:nodei283 a opcua:ObjectNodeClass,
         opcua:TransitionType ;
     opcua:FromState devices:nodei275 ;
     opcua:HasEffect opcua:nodei2311 ;
+    opcua:HasProperty devices:nodei284 ;
     opcua:ToState devices:nodei271 ;
     base:hasBrowseName "ErrorToIdle" ;
     base:hasDisplayName "ErrorToIdle" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "283" ;
-    base:hasProperty devices:nodei284 .
+    base:hasNodeId "283" .
 
 devices:nodei284 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "284" ;
     base:hasValue 31 .
 
 devices:nodei29 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "Size" ;
     base:hasDatatype opcua:UInt64 ;
     base:hasDisplayName "Size" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "29" .
 
 devices:nodei30 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "Writable" ;
     base:hasDatatype opcua:Boolean ;
     base:hasDisplayName "Writable" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "30" .
 
 devices:nodei300 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "StateNumber" ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "StateNumber" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "300" ;
     base:hasValue 1 .
 
 devices:nodei302 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "StateNumber" ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "StateNumber" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "302" ;
     base:hasValue 2 .
@@ -2623,21 +2623,21 @@ devices:nodei303 a opcua:ObjectNodeClass,
         opcua:TransitionType ;
     opcua:FromState devices:nodei299 ;
     opcua:HasEffect opcua:nodei2311 ;
+    opcua:HasProperty devices:nodei304 ;
     opcua:ToState devices:nodei301 ;
     base:hasBrowseName "NotWaitingForPowerCycleToWaitingForPowerCycle" ;
     base:hasDisplayName "NotWaitingForPowerCycleToWaitingForPowerCycle" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "303" ;
-    base:hasProperty devices:nodei304 .
+    base:hasNodeId "303" .
 
 devices:nodei304 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "304" ;
     base:hasValue 12 .
@@ -2646,42 +2646,42 @@ devices:nodei305 a opcua:ObjectNodeClass,
         opcua:TransitionType ;
     opcua:FromState devices:nodei301 ;
     opcua:HasEffect opcua:nodei2311 ;
+    opcua:HasProperty devices:nodei306 ;
     opcua:ToState devices:nodei299 ;
     base:hasBrowseName "WaitingForPowerCycleToNotWaitingForPowerCycle" ;
     base:hasDisplayName "WaitingForPowerCycleToNotWaitingForPowerCycle" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "305" ;
-    base:hasProperty devices:nodei306 .
+    base:hasNodeId "305" .
 
 devices:nodei306 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "306" ;
     base:hasValue 21 .
 
 devices:nodei31 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "UserWritable" ;
     base:hasDatatype opcua:Boolean ;
     base:hasDisplayName "UserWritable" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "31" .
 
 devices:nodei32 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "OpenCount" ;
     base:hasDatatype opcua:UInt16 ;
     base:hasDisplayName "OpenCount" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "32" .
 
@@ -2694,32 +2694,32 @@ devices:nodei321 a opcua:MethodNodeClass ;
 
 devices:nodei322 a opcua:BaseDataVariableType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "ConfirmationTimeout" ;
     base:hasDatatype opcua:Duration ;
     base:hasDisplayName "ConfirmationTimeout" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "322" .
 
 devices:nodei324 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "StateNumber" ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "StateNumber" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "324" ;
     base:hasValue 1 .
 
 devices:nodei326 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "StateNumber" ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "StateNumber" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "326" ;
     base:hasValue 2 .
@@ -2728,21 +2728,21 @@ devices:nodei327 a opcua:ObjectNodeClass,
         opcua:TransitionType ;
     opcua:FromState devices:nodei323 ;
     opcua:HasEffect opcua:nodei2311 ;
+    opcua:HasProperty devices:nodei328 ;
     opcua:ToState devices:nodei325 ;
     base:hasBrowseName "NotWaitingForConfirmToWaitingForConfirm" ;
     base:hasDisplayName "NotWaitingForConfirmToWaitingForConfirm" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "327" ;
-    base:hasProperty devices:nodei328 .
+    base:hasNodeId "327" .
 
 devices:nodei328 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "328" ;
     base:hasValue 12 .
@@ -2751,21 +2751,21 @@ devices:nodei329 a opcua:ObjectNodeClass,
         opcua:TransitionType ;
     opcua:FromState devices:nodei325 ;
     opcua:HasEffect opcua:nodei2311 ;
+    opcua:HasProperty devices:nodei330 ;
     opcua:ToState devices:nodei323 ;
     base:hasBrowseName "WaitingForConfirmToNotWaitingForConfirm" ;
     base:hasDisplayName "WaitingForConfirmToNotWaitingForConfirm" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "329" ;
-    base:hasProperty devices:nodei330 .
+    base:hasNodeId "329" .
 
 devices:nodei330 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "330" ;
     base:hasValue 21 .
@@ -2783,206 +2783,206 @@ devices:nodei332 a opcua:PropertyType,
 
 devices:nodei345 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "Manufacturer" ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasDisplayName "Manufacturer" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "345" .
 
 devices:nodei346 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "ManufacturerUri" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "ManufacturerUri" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "346" .
 
 devices:nodei347 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "SoftwareRevision" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "SoftwareRevision" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "347" .
 
 devices:nodei36 a opcua:MethodNodeClass ;
+    opcua:HasProperty devices:nodei37,
+        devices:nodei38 ;
     base:hasBrowseName "Open" ;
     base:hasDisplayName "Open" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "36" ;
-    base:hasProperty devices:nodei37,
-        devices:nodei38 .
+    base:hasNodeId "36" .
 
 devices:nodei366 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "Manufacturer" ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasDisplayName "Manufacturer" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "366" .
 
 devices:nodei367 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "ManufacturerUri" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "ManufacturerUri" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "367" .
 
 devices:nodei368 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "SoftwareRevision" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "SoftwareRevision" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "368" .
 
 devices:nodei37 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "37" ;
     base:hasValueRank 1 .
 
 devices:nodei373 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "Manufacturer" ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasDisplayName "Manufacturer" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "373" .
 
 devices:nodei374 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "ManufacturerUri" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "ManufacturerUri" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "374" .
 
 devices:nodei375 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "SoftwareRevision" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "SoftwareRevision" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "375" .
 
 devices:nodei38 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "38" ;
     base:hasValueRank 1 .
 
 devices:nodei380 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "Manufacturer" ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasDisplayName "Manufacturer" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "380" .
 
 devices:nodei381 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "ManufacturerUri" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "ManufacturerUri" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "381" .
 
 devices:nodei382 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "SoftwareRevision" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "SoftwareRevision" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "382" .
 
 devices:nodei383 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasArrayDimensions ( 0 ) ;
     base:hasBrowseName "PatchIdentifiers" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "PatchIdentifiers" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "383" ;
     base:hasValueRank 1 .
 
 devices:nodei384 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "ReleaseDate" ;
     base:hasDatatype opcua:DateTime ;
     base:hasDisplayName "ReleaseDate" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "384" .
 
 devices:nodei385 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "ChangeLogReference" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "ChangeLogReference" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "385" .
 
 devices:nodei386 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "Hash" ;
     base:hasDatatype opcua:ByteString ;
     base:hasDisplayName "Hash" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "386" .
 
 devices:nodei387 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "387" ;
     base:hasValue 12 .
@@ -2999,396 +2999,396 @@ devices:nodei388 a opcua:PropertyType,
     base:hasValueRank 1 .
 
 devices:nodei39 a opcua:MethodNodeClass ;
+    opcua:HasProperty devices:nodei62 ;
     base:hasBrowseName "Close" ;
     base:hasDisplayName "Close" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "39" ;
-    base:hasProperty devices:nodei62 .
+    base:hasNodeId "39" .
 
 devices:nodei4 a devices:PrepareForUpdateStateMachineType,
         opcua:ObjectNodeClass ;
-    base:hasBrowseName "PrepareForUpdate" ;
-    base:hasComponent devices:nodei19,
+    opcua:HasComponent devices:nodei19,
         devices:nodei20,
         devices:nodei5 ;
+    opcua:HasModellingRule opcua:nodei80 ;
+    base:hasBrowseName "PrepareForUpdate" ;
     base:hasDisplayName "PrepareForUpdate" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "4" .
 
 devices:nodei40 a devices:InstallationStateMachineType,
         opcua:ObjectNodeClass ;
-    base:hasBrowseName "Installation" ;
-    base:hasComponent devices:nodei41,
+    opcua:HasComponent devices:nodei41,
         devices:nodei61 ;
+    opcua:HasModellingRule opcua:nodei80 ;
+    base:hasBrowseName "Installation" ;
     base:hasDisplayName "Installation" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "40" .
 
 devices:nodei402 a opcua:BaseDataVariableType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "VendorErrorCode" ;
     base:hasDatatype opcua:Int32 ;
     base:hasDisplayName "VendorErrorCode" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "402" .
 
 devices:nodei41 a opcua:FiniteStateVariableType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
+    opcua:HasProperty devices:nodei42 ;
     base:hasBrowseName "CurrentState" ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasDisplayName "CurrentState" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "41" ;
-    base:hasProperty devices:nodei42 .
+    base:hasNodeId "41" .
 
 devices:nodei42 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "Id" ;
     base:hasDatatype opcua:NodeId ;
     base:hasDisplayName "Id" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "42" .
 
 devices:nodei469 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "StartValue" ;
     base:hasDatatype opcua:Number ;
     base:hasDescription "StartValue indicates the initial value, when there is still the full lifetime left." ;
     base:hasDisplayName "StartValue" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "469" .
 
 devices:nodei470 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "LimitValue" ;
     base:hasDatatype opcua:Number ;
     base:hasDescription "LimitValue indicates when the end of lifetime has been reached." ;
     base:hasDisplayName "LimitValue" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "470" .
 
 devices:nodei471 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "Indication" ;
     base:hasDatatype opcua:NodeId ;
     base:hasDescription "Indication gives an indication of what is actually measured / represented by the Value of the Variable and the StartValue and LimitValue." ;
     base:hasDisplayName "Indication" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "471" .
 
 devices:nodei472 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasArrayDimensions ( 0 ) ;
     base:hasBrowseName "WarningValues" ;
     base:hasDatatype opcua:Number ;
     base:hasDescription "WarningValues indicates one or more levels when the end of lifetime is reached soon and may be used to inform the user when reached." ;
     base:hasDisplayName "WarningValues" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "472" ;
     base:hasValueRank -3 .
 
 devices:nodei481 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "PowerOnDuration" ;
     base:hasDatatype opcua:Duration ;
     base:hasDescription "PowerOnDuration is the duration the Device has been powered. The main purpose is to determine the time in which degradation of the Device occurred. The details, when the time is counted, is implementation-specific. Companion specifications might define specific rules. Typically, when the Device has supply voltage and the main CPU is running, the time is counted. This may include any kind of sleep mode, but may not include pure Wake on LAN. This value shall only increase during the lifetime of the Device and shall not be reset when the Device is restarted. The PowerOnDuration is provided as Duration, i.e., in milliseconds or even fractions of a millisecond. However, the Server is not expected to update the value in such a high frequency, but maybe once a minute or once an hour, depending on the application." ;
     base:hasDisplayName "PowerOnDuration" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "481" .
 
 devices:nodei482 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "OperationDuration" ;
     base:hasDatatype opcua:Duration ;
     base:hasDescription "OperationDuration is the duration the Device has been powered and performing an activity. This counter is intended for Devices where a distinction is made between switched on and in operation. For example, a drive might be powered on but not operating. It is not intended for Devices always performing an activity like sensors always measuring data. This value shall only increase during the lifetime of the Device and shall not be reset when the Device is restarted. The OperationDuration is provided as Duration, i.e., in milliseconds or even fractions of a millisecond. However, the Server is not expected to update the value in such a high frequency, but maybe once a minute or once an hour, depending on the application." ;
     base:hasDisplayName "OperationDuration" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "482" .
 
 devices:nodei483 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "OperationCycleCounter" ;
     base:hasDatatype opcua:UInteger ;
     base:hasDescription "OperationCycleCounter is counting the times the Device switches from not performing an activity to performing an activity. For example, each time a valve starts moving, is counted. This value shall only increase during the lifetime of the Device and shall not be reset when the Device is restarted." ;
     base:hasDisplayName "OperationCycleCounter" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "483" .
 
 devices:nodei5 a opcua:FiniteStateVariableType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
+    opcua:HasProperty devices:nodei6 ;
     base:hasBrowseName "CurrentState" ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasDisplayName "CurrentState" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "5" ;
-    base:hasProperty devices:nodei6 .
+    base:hasNodeId "5" .
 
 devices:nodei5001 a opcua:BaseObjectType,
         opcua:ObjectNodeClass ;
+    opcua:Organizes devices:nodei15034 ;
     base:hasBrowseName "DeviceSet" ;
     base:hasDescription "Contains all instances of devices" ;
     base:hasDisplayName "DeviceSet" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "5001" ;
-    base:organizes devices:nodei15034 .
+    base:hasNodeId "5001" .
 
 devices:nodei5002 a opcua:BaseObjectType,
         opcua:ObjectNodeClass ;
+    opcua:HasComponent devices:nodei6017 ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "ParameterSet" ;
-    base:hasComponent devices:nodei6017 ;
     base:hasDescription "Flat list of Parameters" ;
     base:hasDisplayName "ParameterSet" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "5002" .
 
 devices:nodei5003 a opcua:BaseObjectType,
         opcua:ObjectNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "MethodSet" ;
     base:hasDescription "Flat list of Methods" ;
     base:hasDisplayName "MethodSet" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "5003" .
 
 devices:nodei5004 a opcua:FolderType,
         opcua:ObjectNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "SupportedTypes" ;
     base:hasDescription "Folder maintaining the set of (sub-types of) BaseObjectTypes that can be instantiated in the ConfigurableComponent" ;
     base:hasDisplayName "SupportedTypes" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "5004" .
 
 devices:nodei6 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "Id" ;
     base:hasDatatype opcua:NodeId ;
     base:hasDisplayName "Id" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6" .
 
 devices:nodei6001 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "SerialNumber" ;
     base:hasDatatype opcua:String ;
     base:hasDescription "Identifier that uniquely identifies, within a manufacturer, a device instance" ;
     base:hasDisplayName "SerialNumber" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6001" .
 
 devices:nodei6002 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "RevisionCounter" ;
     base:hasDatatype opcua:Int32 ;
     base:hasDescription "An incremental counter indicating the number of times the static data within the Device has been modified" ;
     base:hasDisplayName "RevisionCounter" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6002" .
 
 devices:nodei6003 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "Manufacturer" ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasDescription "Name of the company that manufactured the device" ;
     base:hasDisplayName "Manufacturer" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6003" .
 
 devices:nodei6004 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "Model" ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasDescription "Model name of the device" ;
     base:hasDisplayName "Model" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6004" .
 
 devices:nodei6005 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "DeviceManual" ;
     base:hasDatatype opcua:String ;
     base:hasDescription "Address (pathname in the file system or a URL | Web address) of user manual for the device" ;
     base:hasDisplayName "DeviceManual" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6005" .
 
 devices:nodei6006 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "DeviceRevision" ;
     base:hasDatatype opcua:String ;
     base:hasDescription "Overall revision level of the device" ;
     base:hasDisplayName "DeviceRevision" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6006" .
 
 devices:nodei6007 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "SoftwareRevision" ;
     base:hasDatatype opcua:String ;
     base:hasDescription "Revision level of the software/firmware of the device" ;
     base:hasDisplayName "SoftwareRevision" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6007" .
 
 devices:nodei6008 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "HardwareRevision" ;
     base:hasDatatype opcua:String ;
     base:hasDescription "Revision level of the hardware of the device" ;
     base:hasDisplayName "HardwareRevision" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6008" .
 
 devices:nodei6009 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "RevisionCounter" ;
     base:hasDatatype opcua:Int32 ;
     base:hasDescription "Incremental counter indicating the number of times the static data within the Block has been modified" ;
     base:hasDisplayName "RevisionCounter" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6009" .
 
 devices:nodei6010 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "ActualMode" ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasDescription "Current mode of operation the Block is able to achieve" ;
     base:hasDisplayName "ActualMode" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6010" .
 
 devices:nodei6011 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasArrayDimensions ( 0 ) ;
     base:hasBrowseName "PermittedMode" ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasDescription "Modes of operation that are allowed for the Block based on application requirements" ;
     base:hasDisplayName "PermittedMode" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6011" ;
     base:hasValueRank 1 .
 
 devices:nodei6012 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasArrayDimensions ( 0 ) ;
     base:hasBrowseName "NormalMode" ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasDescription "Mode the Block should be set to during normal operating conditions" ;
     base:hasDisplayName "NormalMode" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6012" ;
     base:hasValueRank 1 .
 
 devices:nodei6013 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasArrayDimensions ( 0 ) ;
     base:hasBrowseName "TargetMode" ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasDescription "Mode of operation that is desired for the Block" ;
     base:hasDisplayName "TargetMode" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6013" ;
     base:hasValueRank 1 .
 
 devices:nodei6014 a devices:FunctionalGroupType,
         opcua:ObjectNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "Identification" ;
     base:hasDescription "Used to organize parameters for identification of this TopologyElement" ;
     base:hasDisplayName "Identification" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6014" .
 
 devices:nodei6017 a opcua:BaseDataVariableType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei11510 ;
     base:hasBrowseName "<ParameterIdentifier>" ;
     base:hasDescription "A parameter which belongs to the topology element." ;
     base:hasDisplayName "<ParameterIdentifier>" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei11510 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6017" ;
     base:hasSymbolicName "ParameterIdentifier" .
 
 devices:nodei6026 a opcua:BaseObjectType,
         opcua:ObjectNodeClass ;
+    opcua:HasModellingRule opcua:nodei11508 ;
     base:hasBrowseName "<ObjectIdentifier>" ;
     base:hasDisplayName "<ObjectIdentifier>" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei11508 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6026" ;
     base:hasSymbolicName "ObjectIdentifier" .
 
 devices:nodei6027 a devices:FunctionalGroupType,
         opcua:ObjectNodeClass ;
+    opcua:HasComponent devices:nodei6242 ;
+    opcua:HasModellingRule opcua:nodei11508 ;
     base:hasBrowseName "<GroupIdentifier>" ;
-    base:hasComponent devices:nodei6242 ;
     base:hasDescription "An application specific functional group used to organize parameters and methods." ;
     base:hasDisplayName "<GroupIdentifier>" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei11508 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6027" ;
     base:hasSymbolicName "GroupIdentifier" .
@@ -3404,13 +3404,13 @@ devices:nodei6078 a opcua:BaseObjectType,
 
 devices:nodei6094 a opcua:BaseObjectType,
         opcua:ObjectNodeClass ;
+    opcua:HasProperty devices:nodei6095 ;
     base:hasBrowseName "DeviceTopology" ;
     base:hasDescription "Starting point of the configured device topology." ;
     base:hasDisplayName "DeviceTopology" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "6094" ;
-    base:hasProperty devices:nodei6095 .
+    base:hasNodeId "6094" .
 
 devices:nodei6095 a opcua:PropertyType,
         opcua:VariableNodeClass ;
@@ -3431,458 +3431,458 @@ devices:nodei61 a opcua:MethodNodeClass ;
 
 devices:nodei6161 a devices:LockingServicesType,
         opcua:ObjectNodeClass ;
-    base:hasBrowseName "Lock" ;
-    base:hasComponent devices:nodei6166,
+    opcua:HasComponent devices:nodei6166,
         devices:nodei6169,
         devices:nodei6171,
         devices:nodei6173 ;
+    opcua:HasModellingRule opcua:nodei80 ;
+    opcua:HasProperty devices:nodei6163,
+        devices:nodei6164,
+        devices:nodei6165,
+        devices:nodei6468 ;
+    base:hasBrowseName "Lock" ;
     base:hasDescription "Used to lock the topology element." ;
     base:hasDisplayName "Lock" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "6161" ;
-    base:hasProperty devices:nodei6163,
-        devices:nodei6164,
-        devices:nodei6165,
-        devices:nodei6468 .
+    base:hasNodeId "6161" .
 
 devices:nodei6163 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "LockingClient" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "LockingClient" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6163" .
 
 devices:nodei6164 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "LockingUser" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "LockingUser" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6164" .
 
 devices:nodei6165 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "RemainingLockTime" ;
     base:hasDatatype opcua:Duration ;
     base:hasDisplayName "RemainingLockTime" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6165" .
 
 devices:nodei6166 a opcua:MethodNodeClass ;
+    opcua:HasProperty devices:nodei6167,
+        devices:nodei6168 ;
     base:hasBrowseName "InitLock" ;
     base:hasDisplayName "InitLock" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "6166" ;
-    base:hasProperty devices:nodei6167,
-        devices:nodei6168 .
+    base:hasNodeId "6166" .
 
 devices:nodei6167 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6167" ;
     base:hasValueRank 1 .
 
 devices:nodei6168 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6168" ;
     base:hasValueRank 1 .
 
 devices:nodei6169 a opcua:MethodNodeClass ;
+    opcua:HasProperty devices:nodei6170 ;
     base:hasBrowseName "RenewLock" ;
     base:hasDisplayName "RenewLock" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "6169" ;
-    base:hasProperty devices:nodei6170 .
+    base:hasNodeId "6169" .
 
 devices:nodei6170 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6170" ;
     base:hasValueRank 1 .
 
 devices:nodei6171 a opcua:MethodNodeClass ;
+    opcua:HasProperty devices:nodei6172 ;
     base:hasBrowseName "ExitLock" ;
     base:hasDisplayName "ExitLock" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "6171" ;
-    base:hasProperty devices:nodei6172 .
+    base:hasNodeId "6171" .
 
 devices:nodei6172 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6172" ;
     base:hasValueRank 1 .
 
 devices:nodei6173 a opcua:MethodNodeClass ;
+    opcua:HasProperty devices:nodei6174 ;
     base:hasBrowseName "BreakLock" ;
     base:hasDisplayName "BreakLock" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "6173" ;
-    base:hasProperty devices:nodei6174 .
+    base:hasNodeId "6173" .
 
 devices:nodei6174 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6174" ;
     base:hasValueRank 1 .
 
 devices:nodei62 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "62" ;
     base:hasValueRank 1 .
 
 devices:nodei6208 a opcua:BaseDataVariableType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "DeviceHealth" ;
     base:hasDatatype devices:DeviceHealthEnumeration ;
     base:hasDisplayName "DeviceHealth" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6208" .
 
 devices:nodei6209 a opcua:FolderType,
         opcua:ObjectNodeClass ;
+    opcua:HasComponent devices:nodei6210 ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "DeviceTypeImage" ;
-    base:hasComponent devices:nodei6210 ;
     base:hasDescription "Organizes pictures of the device." ;
     base:hasDisplayName "DeviceTypeImage" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6209" .
 
 devices:nodei6210 a opcua:BaseDataVariableType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei11510 ;
     base:hasBrowseName "<ImageIdentifier>" ;
     base:hasDatatype opcua:Image ;
     base:hasDescription "An image of the device." ;
     base:hasDisplayName "<ImageIdentifier>" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei11510 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6210" ;
     base:hasSymbolicName "ImageIdentifier" .
 
 devices:nodei6211 a opcua:FolderType,
         opcua:ObjectNodeClass ;
+    opcua:HasComponent devices:nodei6212 ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "Documentation" ;
-    base:hasComponent devices:nodei6212 ;
     base:hasDescription "Organizes documents for the device." ;
     base:hasDisplayName "Documentation" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6211" .
 
 devices:nodei6212 a opcua:BaseDataVariableType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei11510 ;
     base:hasBrowseName "<DocumentIdentifier>" ;
     base:hasDatatype opcua:ByteString ;
     base:hasDescription "A document for the device." ;
     base:hasDisplayName "<DocumentIdentifier>" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei11510 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6212" ;
     base:hasSymbolicName "DocumentIdentifier" .
 
 devices:nodei6213 a opcua:FolderType,
         opcua:ObjectNodeClass ;
+    opcua:HasComponent devices:nodei6214 ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "ProtocolSupport" ;
-    base:hasComponent devices:nodei6214 ;
     base:hasDescription "Protocol-specific files for the device." ;
     base:hasDisplayName "ProtocolSupport" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6213" .
 
 devices:nodei6214 a opcua:BaseDataVariableType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei11510 ;
     base:hasBrowseName "<ProtocolSupportIdentifier>" ;
     base:hasDatatype opcua:ByteString ;
     base:hasDescription "A protocol-specific file for the device." ;
     base:hasDisplayName "<ProtocolSupportIdentifier>" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei11510 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6214" ;
     base:hasSymbolicName "ProtocolSupportIdentifier" .
 
 devices:nodei6215 a opcua:FolderType,
         opcua:ObjectNodeClass ;
+    opcua:HasComponent devices:nodei6216 ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "ImageSet" ;
-    base:hasComponent devices:nodei6216 ;
     base:hasDescription "Organizes images that are used within UIElements." ;
     base:hasDisplayName "ImageSet" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6215" .
 
 devices:nodei6216 a opcua:BaseDataVariableType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei11510 ;
     base:hasBrowseName "<ImageIdentifier>" ;
     base:hasDatatype opcua:Image ;
     base:hasDescription "An image for a UIElement." ;
     base:hasDisplayName "<ImageIdentifier>" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei11510 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6216" ;
     base:hasSymbolicName "ImageIdentifier" .
 
 devices:nodei6242 a devices:UIElementType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "UIElement" ;
     base:hasDescription "A user interface element assigned to this group." ;
     base:hasDisplayName "UIElement" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6242" .
 
 devices:nodei6243 a devices:UIElementType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "UIElement" ;
     base:hasDescription "A user interface element assigned to this group." ;
     base:hasDisplayName "UIElement" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6243" .
 
 devices:nodei6248 a devices:ConnectionPointType,
         opcua:ObjectNodeClass ;
+    opcua:HasComponent devices:nodei6292 ;
+    opcua:HasModellingRule opcua:nodei11508 ;
     base:hasBrowseName "<CPIdentifier>" ;
-    base:hasComponent devices:nodei6292 ;
     base:hasDescription "The ConnectionPoint(s) that have been configured for this Network." ;
     base:hasDisplayName "<CPIdentifier>" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei11508 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6248" ;
     base:hasSymbolicName "CPIdentifier" .
 
 devices:nodei6292 a devices:FunctionalGroupType,
         opcua:ObjectNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "NetworkAddress" ;
     base:hasDescription "The address of the device on this network." ;
     base:hasDisplayName "NetworkAddress" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6292" .
 
 devices:nodei6294 a devices:LockingServicesType,
         opcua:ObjectNodeClass ;
-    base:hasBrowseName "Lock" ;
-    base:hasComponent devices:nodei6299,
+    opcua:HasComponent devices:nodei6299,
         devices:nodei6302,
         devices:nodei6304,
         devices:nodei6306 ;
+    opcua:HasModellingRule opcua:nodei80 ;
+    opcua:HasProperty devices:nodei6296,
+        devices:nodei6297,
+        devices:nodei6298,
+        devices:nodei6497 ;
+    base:hasBrowseName "Lock" ;
     base:hasDescription "Used to lock the Network." ;
     base:hasDisplayName "Lock" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "6294" ;
-    base:hasProperty devices:nodei6296,
-        devices:nodei6297,
-        devices:nodei6298,
-        devices:nodei6497 .
+    base:hasNodeId "6294" .
 
 devices:nodei6296 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "LockingClient" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "LockingClient" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6296" .
 
 devices:nodei6297 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "LockingUser" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "LockingUser" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6297" .
 
 devices:nodei6298 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "RemainingLockTime" ;
     base:hasDatatype opcua:Duration ;
     base:hasDisplayName "RemainingLockTime" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6298" .
 
 devices:nodei6299 a opcua:MethodNodeClass ;
+    opcua:HasProperty devices:nodei6300,
+        devices:nodei6301 ;
     base:hasBrowseName "InitLock" ;
     base:hasDisplayName "InitLock" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "6299" ;
-    base:hasProperty devices:nodei6300,
-        devices:nodei6301 .
+    base:hasNodeId "6299" .
 
 devices:nodei63 a opcua:MethodNodeClass ;
+    opcua:HasProperty devices:nodei64,
+        devices:nodei65 ;
     base:hasBrowseName "Read" ;
     base:hasDisplayName "Read" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "63" ;
-    base:hasProperty devices:nodei64,
-        devices:nodei65 .
+    base:hasNodeId "63" .
 
 devices:nodei6300 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6300" ;
     base:hasValueRank 1 .
 
 devices:nodei6301 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6301" ;
     base:hasValueRank 1 .
 
 devices:nodei6302 a opcua:MethodNodeClass ;
+    opcua:HasProperty devices:nodei6303 ;
     base:hasBrowseName "RenewLock" ;
     base:hasDisplayName "RenewLock" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "6302" ;
-    base:hasProperty devices:nodei6303 .
+    base:hasNodeId "6302" .
 
 devices:nodei6303 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6303" ;
     base:hasValueRank 1 .
 
 devices:nodei6304 a opcua:MethodNodeClass ;
+    opcua:HasProperty devices:nodei6305 ;
     base:hasBrowseName "ExitLock" ;
     base:hasDisplayName "ExitLock" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "6304" ;
-    base:hasProperty devices:nodei6305 .
+    base:hasNodeId "6304" .
 
 devices:nodei6305 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6305" ;
     base:hasValueRank 1 .
 
 devices:nodei6306 a opcua:MethodNodeClass ;
+    opcua:HasProperty devices:nodei6307 ;
     base:hasBrowseName "BreakLock" ;
     base:hasDisplayName "BreakLock" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "6306" ;
-    base:hasProperty devices:nodei6307 .
+    base:hasNodeId "6306" .
 
 devices:nodei6307 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6307" ;
     base:hasValueRank 1 .
 
 devices:nodei6354 a devices:FunctionalGroupType,
         opcua:ObjectNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "NetworkAddress" ;
     base:hasDescription "The address of the device on this network." ;
     base:hasDisplayName "NetworkAddress" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6354" .
 
@@ -3898,153 +3898,153 @@ devices:nodei6387 a opcua:PropertyType,
 
 devices:nodei6390 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "LockingClient" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "LockingClient" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6390" .
 
 devices:nodei6391 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "LockingUser" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "LockingUser" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6391" .
 
 devices:nodei6392 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "RemainingLockTime" ;
     base:hasDatatype opcua:Duration ;
     base:hasDisplayName "RemainingLockTime" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6392" .
 
 devices:nodei6393 a opcua:MethodNodeClass ;
+    opcua:HasProperty devices:nodei6394,
+        devices:nodei6395 ;
     base:hasBrowseName "InitLock" ;
     base:hasDisplayName "InitLock" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "6393" ;
-    base:hasProperty devices:nodei6394,
-        devices:nodei6395 .
+    base:hasNodeId "6393" .
 
 devices:nodei6394 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6394" ;
     base:hasValueRank 1 .
 
 devices:nodei6395 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6395" ;
     base:hasValueRank 1 .
 
 devices:nodei6396 a opcua:MethodNodeClass ;
+    opcua:HasProperty devices:nodei6397 ;
     base:hasBrowseName "RenewLock" ;
     base:hasDisplayName "RenewLock" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "6396" ;
-    base:hasProperty devices:nodei6397 .
+    base:hasNodeId "6396" .
 
 devices:nodei6397 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6397" ;
     base:hasValueRank 1 .
 
 devices:nodei6398 a opcua:MethodNodeClass ;
+    opcua:HasProperty devices:nodei6399 ;
     base:hasBrowseName "ExitLock" ;
     base:hasDisplayName "ExitLock" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "6398" ;
-    base:hasProperty devices:nodei6399 .
+    base:hasNodeId "6398" .
 
 devices:nodei6399 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6399" ;
     base:hasValueRank 1 .
 
 devices:nodei64 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 2 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "64" ;
     base:hasValueRank 1 .
 
 devices:nodei6400 a opcua:MethodNodeClass ;
+    opcua:HasProperty devices:nodei6401 ;
     base:hasBrowseName "BreakLock" ;
     base:hasDisplayName "BreakLock" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "6400" ;
-    base:hasProperty devices:nodei6401 .
+    base:hasNodeId "6400" .
 
 devices:nodei6401 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6401" ;
     base:hasValueRank 1 .
 
 devices:nodei6423 a opcua:DataTypeDictionaryType,
         opcua:VariableNodeClass ;
-    base:hasBrowseName "Opc.Ua.Di" ;
-    base:hasComponent devices:nodei15903,
+    opcua:HasComponent devices:nodei15903,
         devices:nodei15906,
         devices:nodei6539,
         devices:nodei6548 ;
+    opcua:HasProperty devices:nodei15902,
+        devices:nodei6425 ;
+    base:hasBrowseName "Opc.Ua.Di" ;
     base:hasDatatype opcua:ByteString ;
     base:hasDisplayName "Opc.Ua.Di" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6423" ;
-    base:hasProperty devices:nodei15902,
-        devices:nodei6425 ;
     base:hasSymbolicName "OpcUaDi_XmlSchema" ;
     base:hasValue "PHhzOnNjaGVtYQ0KICB4bWxuczp4cz0iaHR0cDovL3d3dy53My5vcmcvMjAwMS9YTUxTY2hlbWEiDQogIHhtbG5zOnVhPSJodHRwOi8vb3BjZm91bmRhdGlvbi5vcmcvVUEvMjAwOC8wMi9UeXBlcy54c2QiDQogIHhtbG5zOnRucz0iaHR0cDovL29wY2ZvdW5kYXRpb24ub3JnL1VBL0RJL1R5cGVzLnhzZCINCiAgdGFyZ2V0TmFtZXNwYWNlPSJodHRwOi8vb3BjZm91bmRhdGlvbi5vcmcvVUEvREkvVHlwZXMueHNkIg0KICBlbGVtZW50Rm9ybURlZmF1bHQ9InF1YWxpZmllZCINCj4NCiAgPHhzOmFubm90YXRpb24+DQogICAgPHhzOmFwcGluZm8+DQogICAgICA8dWE6TW9kZWwgTW9kZWxVcmk9Imh0dHA6Ly9vcGNmb3VuZGF0aW9uLm9yZy9VQS9ESS8iIFZlcnNpb249IjEuMDQuMCIgUHVibGljYXRpb25EYXRlPSIyMDIyLTExLTAzVDAwOjAwOjAwWiIgLz4NCiAgICA8L3hzOmFwcGluZm8+DQogIDwveHM6YW5ub3RhdGlvbj4NCiAgDQogIDx4czppbXBvcnQgbmFtZXNwYWNlPSJodHRwOi8vb3BjZm91bmRhdGlvbi5vcmcvVUEvMjAwOC8wMi9UeXBlcy54c2QiIC8+DQoNCiAgPHhzOnNpbXBsZVR5cGUgIG5hbWU9IkRldmljZUhlYWx0aEVudW1lcmF0aW9uIj4NCiAgICA8eHM6cmVzdHJpY3Rpb24gYmFzZT0ieHM6c3RyaW5nIj4NCiAgICAgIDx4czplbnVtZXJhdGlvbiB2YWx1ZT0iTk9STUFMXzAiIC8+DQogICAgICA8eHM6ZW51bWVyYXRpb24gdmFsdWU9IkZBSUxVUkVfMSIgLz4NCiAgICAgIDx4czplbnVtZXJhdGlvbiB2YWx1ZT0iQ0hFQ0tfRlVOQ1RJT05fMiIgLz4NCiAgICAgIDx4czplbnVtZXJhdGlvbiB2YWx1ZT0iT0ZGX1NQRUNfMyIgLz4NCiAgICAgIDx4czplbnVtZXJhdGlvbiB2YWx1ZT0iTUFJTlRFTkFOQ0VfUkVRVUlSRURfNCIgLz4NCiAgICA8L3hzOnJlc3RyaWN0aW9uPg0KICA8L3hzOnNpbXBsZVR5cGU+DQogIDx4czplbGVtZW50IG5hbWU9IkRldmljZUhlYWx0aEVudW1lcmF0aW9uIiB0eXBlPSJ0bnM6RGV2aWNlSGVhbHRoRW51bWVyYXRpb24iIC8+DQoNCiAgPHhzOmNvbXBsZXhUeXBlIG5hbWU9Ikxpc3RPZkRldmljZUhlYWx0aEVudW1lcmF0aW9uIj4NCiAgICA8eHM6c2VxdWVuY2U+DQogICAgICA8eHM6ZWxlbWVudCBuYW1lPSJEZXZpY2VIZWFsdGhFbnVtZXJhdGlvbiIgdHlwZT0idG5zOkRldmljZUhlYWx0aEVudW1lcmF0aW9uIiBtaW5PY2N1cnM9IjAiIG1heE9jY3Vycz0idW5ib3VuZGVkIiAvPg0KICAgIDwveHM6c2VxdWVuY2U+DQogIDwveHM6Y29tcGxleFR5cGU+DQogIDx4czplbGVtZW50IG5hbWU9Ikxpc3RPZkRldmljZUhlYWx0aEVudW1lcmF0aW9uIiB0eXBlPSJ0bnM6TGlzdE9mRGV2aWNlSGVhbHRoRW51bWVyYXRpb24iIG5pbGxhYmxlPSJ0cnVlIj48L3hzOmVsZW1lbnQ+DQoNCiAgPHhzOmNvbXBsZXhUeXBlIG5hbWU9IkZldGNoUmVzdWx0RGF0YVR5cGUiPg0KICAgIDx4czpzZXF1ZW5jZT4NCiAgICA8L3hzOnNlcXVlbmNlPg0KICA8L3hzOmNvbXBsZXhUeXBlPg0KICA8eHM6ZWxlbWVudCBuYW1lPSJGZXRjaFJlc3VsdERhdGFUeXBlIiB0eXBlPSJ0bnM6RmV0Y2hSZXN1bHREYXRhVHlwZSIgLz4NCg0KICA8eHM6Y29tcGxleFR5cGUgbmFtZT0iTGlzdE9mRmV0Y2hSZXN1bHREYXRhVHlwZSI+DQogICAgPHhzOnNlcXVlbmNlPg0KICAgICAgPHhzOmVsZW1lbnQgbmFtZT0iRmV0Y2hSZXN1bHREYXRhVHlwZSIgdHlwZT0idG5zOkZldGNoUmVzdWx0RGF0YVR5cGUiIG1pbk9jY3Vycz0iMCIgbWF4T2NjdXJzPSJ1bmJvdW5kZWQiIG5pbGxhYmxlPSJ0cnVlIiAvPg0KICAgIDwveHM6c2VxdWVuY2U+DQogIDwveHM6Y29tcGxleFR5cGU+DQogIDx4czplbGVtZW50IG5hbWU9Ikxpc3RPZkZldGNoUmVzdWx0RGF0YVR5cGUiIHR5cGU9InRuczpMaXN0T2ZGZXRjaFJlc3VsdERhdGFUeXBlIiBuaWxsYWJsZT0idHJ1ZSI+PC94czplbGVtZW50Pg0KDQogIDx4czpjb21wbGV4VHlwZSBuYW1lPSJUcmFuc2ZlclJlc3VsdEVycm9yRGF0YVR5cGUiPg0KICAgIDx4czpjb21wbGV4Q29udGVudCBtaXhlZD0iZmFsc2UiPg0KICAgICAgPHhzOmV4dGVuc2lvbiBiYXNlPSJ0bnM6RmV0Y2hSZXN1bHREYXRhVHlwZSI+DQogICAgICAgIDx4czpzZXF1ZW5jZT4NCiAgICAgICAgICA8eHM6ZWxlbWVudCBuYW1lPSJTdGF0dXMiIHR5cGU9InhzOmludCIgbWluT2NjdXJzPSIwIiAvPg0KICAgICAgICAgIDx4czplbGVtZW50IG5hbWU9IkRpYWdub3N0aWNzIiB0eXBlPSJ1YTpEaWFnbm9zdGljSW5mbyIgbWluT2NjdXJzPSIwIiBuaWxsYWJsZT0idHJ1ZSIgLz4NCiAgICAgICAgPC94czpzZXF1ZW5jZT4NCiAgICAgIDwveHM6ZXh0ZW5zaW9uPg0KICAgIDwveHM6Y29tcGxleENvbnRlbnQ+DQogIDwveHM6Y29tcGxleFR5cGU+DQogIDx4czplbGVtZW50IG5hbWU9IlRyYW5zZmVyUmVzdWx0RXJyb3JEYXRhVHlwZSIgdHlwZT0idG5zOlRyYW5zZmVyUmVzdWx0RXJyb3JEYXRhVHlwZSIgLz4NCg0KICA8eHM6Y29tcGxleFR5cGUgbmFtZT0iTGlzdE9mVHJhbnNmZXJSZXN1bHRFcnJvckRhdGFUeXBlIj4NCiAgICA8eHM6c2VxdWVuY2U+DQogICAgICA8eHM6ZWxlbWVudCBuYW1lPSJUcmFuc2ZlclJlc3VsdEVycm9yRGF0YVR5cGUiIHR5cGU9InRuczpUcmFuc2ZlclJlc3VsdEVycm9yRGF0YVR5cGUiIG1pbk9jY3Vycz0iMCIgbWF4T2NjdXJzPSJ1bmJvdW5kZWQiIG5pbGxhYmxlPSJ0cnVlIiAvPg0KICAgIDwveHM6c2VxdWVuY2U+DQogIDwveHM6Y29tcGxleFR5cGU+DQogIDx4czplbGVtZW50IG5hbWU9Ikxpc3RPZlRyYW5zZmVyUmVzdWx0RXJyb3JEYXRhVHlwZSIgdHlwZT0idG5zOkxpc3RPZlRyYW5zZmVyUmVzdWx0RXJyb3JEYXRhVHlwZSIgbmlsbGFibGU9InRydWUiPjwveHM6ZWxlbWVudD4NCg0KICA8eHM6Y29tcGxleFR5cGUgbmFtZT0iVHJhbnNmZXJSZXN1bHREYXRhRGF0YVR5cGUiPg0KICAgIDx4czpjb21wbGV4Q29udGVudCBtaXhlZD0iZmFsc2UiPg0KICAgICAgPHhzOmV4dGVuc2lvbiBiYXNlPSJ0bnM6RmV0Y2hSZXN1bHREYXRhVHlwZSI+DQogICAgICAgIDx4czpzZXF1ZW5jZT4NCiAgICAgICAgICA8eHM6ZWxlbWVudCBuYW1lPSJTZXF1ZW5jZU51bWJlciIgdHlwZT0ieHM6aW50IiBtaW5PY2N1cnM9IjAiIC8+DQogICAgICAgICAgPHhzOmVsZW1lbnQgbmFtZT0iRW5kT2ZSZXN1bHRzIiB0eXBlPSJ4czpib29sZWFuIiBtaW5PY2N1cnM9IjAiIC8+DQogICAgICAgICAgPHhzOmVsZW1lbnQgbmFtZT0iUGFyYW1ldGVyRGVmcyIgdHlwZT0idG5zOkxpc3RPZlBhcmFtZXRlclJlc3VsdERhdGFUeXBlIiBtaW5PY2N1cnM9IjAiIG5pbGxhYmxlPSJ0cnVlIiAvPg0KICAgICAgICA8L3hzOnNlcXVlbmNlPg0KICAgICAgPC94czpleHRlbnNpb24+DQogICAgPC94czpjb21wbGV4Q29udGVudD4NCiAgPC94czpjb21wbGV4VHlwZT4NCiAgPHhzOmVsZW1lbnQgbmFtZT0iVHJhbnNmZXJSZXN1bHREYXRhRGF0YVR5cGUiIHR5cGU9InRuczpUcmFuc2ZlclJlc3VsdERhdGFEYXRhVHlwZSIgLz4NCg0KICA8eHM6Y29tcGxleFR5cGUgbmFtZT0iTGlzdE9mVHJhbnNmZXJSZXN1bHREYXRhRGF0YVR5cGUiPg0KICAgIDx4czpzZXF1ZW5jZT4NCiAgICAgIDx4czplbGVtZW50IG5hbWU9IlRyYW5zZmVyUmVzdWx0RGF0YURhdGFUeXBlIiB0eXBlPSJ0bnM6VHJhbnNmZXJSZXN1bHREYXRhRGF0YVR5cGUiIG1pbk9jY3Vycz0iMCIgbWF4T2NjdXJzPSJ1bmJvdW5kZWQiIG5pbGxhYmxlPSJ0cnVlIiAvPg0KICAgIDwveHM6c2VxdWVuY2U+DQogIDwveHM6Y29tcGxleFR5cGU+DQogIDx4czplbGVtZW50IG5hbWU9Ikxpc3RPZlRyYW5zZmVyUmVzdWx0RGF0YURhdGFUeXBlIiB0eXBlPSJ0bnM6TGlzdE9mVHJhbnNmZXJSZXN1bHREYXRhRGF0YVR5cGUiIG5pbGxhYmxlPSJ0cnVlIj48L3hzOmVsZW1lbnQ+DQoNCiAgPHhzOmNvbXBsZXhUeXBlIG5hbWU9IlBhcmFtZXRlclJlc3VsdERhdGFUeXBlIj4NCiAgICA8eHM6c2VxdWVuY2U+DQogICAgICA8eHM6ZWxlbWVudCBuYW1lPSJOb2RlUGF0aCIgdHlwZT0idWE6TGlzdE9mUXVhbGlmaWVkTmFtZSIgbWluT2NjdXJzPSIwIiBuaWxsYWJsZT0idHJ1ZSIgLz4NCiAgICAgIDx4czplbGVtZW50IG5hbWU9IlN0YXR1c0NvZGUiIHR5cGU9InVhOlN0YXR1c0NvZGUiIG1pbk9jY3Vycz0iMCIgLz4NCiAgICAgIDx4czplbGVtZW50IG5hbWU9IkRpYWdub3N0aWNzIiB0eXBlPSJ1YTpEaWFnbm9zdGljSW5mbyIgbWluT2NjdXJzPSIwIiBuaWxsYWJsZT0idHJ1ZSIgLz4NCiAgICA8L3hzOnNlcXVlbmNlPg0KICA8L3hzOmNvbXBsZXhUeXBlPg0KICA8eHM6ZWxlbWVudCBuYW1lPSJQYXJhbWV0ZXJSZXN1bHREYXRhVHlwZSIgdHlwZT0idG5zOlBhcmFtZXRlclJlc3VsdERhdGFUeXBlIiAvPg0KDQogIDx4czpjb21wbGV4VHlwZSBuYW1lPSJMaXN0T2ZQYXJhbWV0ZXJSZXN1bHREYXRhVHlwZSI+DQogICAgPHhzOnNlcXVlbmNlPg0KICAgICAgPHhzOmVsZW1lbnQgbmFtZT0iUGFyYW1ldGVyUmVzdWx0RGF0YVR5cGUiIHR5cGU9InRuczpQYXJhbWV0ZXJSZXN1bHREYXRhVHlwZSIgbWluT2NjdXJzPSIwIiBtYXhPY2N1cnM9InVuYm91bmRlZCIgbmlsbGFibGU9InRydWUiIC8+DQogICAgPC94czpzZXF1ZW5jZT4NCiAgPC94czpjb21wbGV4VHlwZT4NCiAgPHhzOmVsZW1lbnQgbmFtZT0iTGlzdE9mUGFyYW1ldGVyUmVzdWx0RGF0YVR5cGUiIHR5cGU9InRuczpMaXN0T2ZQYXJhbWV0ZXJSZXN1bHREYXRhVHlwZSIgbmlsbGFibGU9InRydWUiPjwveHM6ZWxlbWVudD4NCg0KICA8eHM6c2ltcGxlVHlwZSAgbmFtZT0iU29mdHdhcmVWZXJzaW9uRmlsZVR5cGUiPg0KICAgIDx4czpyZXN0cmljdGlvbiBiYXNlPSJ4czpzdHJpbmciPg0KICAgICAgPHhzOmVudW1lcmF0aW9uIHZhbHVlPSJDdXJyZW50XzAiIC8+DQogICAgICA8eHM6ZW51bWVyYXRpb24gdmFsdWU9IlBlbmRpbmdfMSIgLz4NCiAgICAgIDx4czplbnVtZXJhdGlvbiB2YWx1ZT0iRmFsbGJhY2tfMiIgLz4NCiAgICA8L3hzOnJlc3RyaWN0aW9uPg0KICA8L3hzOnNpbXBsZVR5cGU+DQogIDx4czplbGVtZW50IG5hbWU9IlNvZnR3YXJlVmVyc2lvbkZpbGVUeXBlIiB0eXBlPSJ0bnM6U29mdHdhcmVWZXJzaW9uRmlsZVR5cGUiIC8+DQoNCiAgPHhzOmNvbXBsZXhUeXBlIG5hbWU9Ikxpc3RPZlNvZnR3YXJlVmVyc2lvbkZpbGVUeXBlIj4NCiAgICA8eHM6c2VxdWVuY2U+DQogICAgICA8eHM6ZWxlbWVudCBuYW1lPSJTb2Z0d2FyZVZlcnNpb25GaWxlVHlwZSIgdHlwZT0idG5zOlNvZnR3YXJlVmVyc2lvbkZpbGVUeXBlIiBtaW5PY2N1cnM9IjAiIG1heE9jY3Vycz0idW5ib3VuZGVkIiAvPg0KICAgIDwveHM6c2VxdWVuY2U+DQogIDwveHM6Y29tcGxleFR5cGU+DQogIDx4czplbGVtZW50IG5hbWU9Ikxpc3RPZlNvZnR3YXJlVmVyc2lvbkZpbGVUeXBlIiB0eXBlPSJ0bnM6TGlzdE9mU29mdHdhcmVWZXJzaW9uRmlsZVR5cGUiIG5pbGxhYmxlPSJ0cnVlIj48L3hzOmVsZW1lbnQ+DQoNCiAgPHhzOnNpbXBsZVR5cGUgIG5hbWU9IlVwZGF0ZUJlaGF2aW9yIj4NCiAgICA8eHM6cmVzdHJpY3Rpb24gYmFzZT0ieHM6dW5zaWduZWRJbnQiPg0KICAgIDwveHM6cmVzdHJpY3Rpb24+DQogIDwveHM6c2ltcGxlVHlwZT4NCiAgPHhzOmVsZW1lbnQgbmFtZT0iVXBkYXRlQmVoYXZpb3IiIHR5cGU9InRuczpVcGRhdGVCZWhhdmlvciIgLz4NCg0KICA8eHM6Y29tcGxleFR5cGUgbmFtZT0iTGlzdE9mVXBkYXRlQmVoYXZpb3IiPg0KICAgIDx4czpzZXF1ZW5jZT4NCiAgICAgIDx4czplbGVtZW50IG5hbWU9IlVwZGF0ZUJlaGF2aW9yIiB0eXBlPSJ0bnM6VXBkYXRlQmVoYXZpb3IiIG1pbk9jY3Vycz0iMCIgbWF4T2NjdXJzPSJ1bmJvdW5kZWQiIC8+DQogICAgPC94czpzZXF1ZW5jZT4NCiAgPC94czpjb21wbGV4VHlwZT4NCiAgPHhzOmVsZW1lbnQgbmFtZT0iTGlzdE9mVXBkYXRlQmVoYXZpb3IiIHR5cGU9InRuczpMaXN0T2ZVcGRhdGVCZWhhdmlvciIgbmlsbGFibGU9InRydWUiPjwveHM6ZWxlbWVudD4NCg0KPC94czpzY2hlbWE+" .
 
@@ -4060,18 +4060,18 @@ devices:nodei6425 a opcua:PropertyType,
 
 devices:nodei6435 a opcua:DataTypeDictionaryType,
         opcua:VariableNodeClass ;
-    base:hasBrowseName "Opc.Ua.Di" ;
-    base:hasComponent devices:nodei15894,
+    opcua:HasComponent devices:nodei15894,
         devices:nodei15897,
         devices:nodei6555,
         devices:nodei6564 ;
+    opcua:HasProperty devices:nodei15893,
+        devices:nodei6437 ;
+    base:hasBrowseName "Opc.Ua.Di" ;
     base:hasDatatype opcua:ByteString ;
     base:hasDisplayName "Opc.Ua.Di" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6435" ;
-    base:hasProperty devices:nodei15893,
-        devices:nodei6437 ;
     base:hasSymbolicName "OpcUaDi_BinarySchema" ;
     base:hasValue "PG9wYzpUeXBlRGljdGlvbmFyeQ0KICB4bWxuczpvcGM9Imh0dHA6Ly9vcGNmb3VuZGF0aW9uLm9yZy9CaW5hcnlTY2hlbWEvIg0KICB4bWxuczp4c2k9Imh0dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hLWluc3RhbmNlIg0KICB4bWxuczp1YT0iaHR0cDovL29wY2ZvdW5kYXRpb24ub3JnL1VBLyINCiAgeG1sbnM6dG5zPSJodHRwOi8vb3BjZm91bmRhdGlvbi5vcmcvVUEvREkvIg0KICBEZWZhdWx0Qnl0ZU9yZGVyPSJMaXR0bGVFbmRpYW4iDQogIFRhcmdldE5hbWVzcGFjZT0iaHR0cDovL29wY2ZvdW5kYXRpb24ub3JnL1VBL0RJLyINCj4NCiAgPG9wYzpJbXBvcnQgTmFtZXNwYWNlPSJodHRwOi8vb3BjZm91bmRhdGlvbi5vcmcvVUEvIiBMb2NhdGlvbj0iT3BjLlVhLkJpbmFyeVNjaGVtYS5ic2QiLz4NCg0KICA8b3BjOkVudW1lcmF0ZWRUeXBlIE5hbWU9IkRldmljZUhlYWx0aEVudW1lcmF0aW9uIiBMZW5ndGhJbkJpdHM9IjMyIj4NCiAgICA8b3BjOkVudW1lcmF0ZWRWYWx1ZSBOYW1lPSJOT1JNQUwiIFZhbHVlPSIwIiAvPg0KICAgIDxvcGM6RW51bWVyYXRlZFZhbHVlIE5hbWU9IkZBSUxVUkUiIFZhbHVlPSIxIiAvPg0KICAgIDxvcGM6RW51bWVyYXRlZFZhbHVlIE5hbWU9IkNIRUNLX0ZVTkNUSU9OIiBWYWx1ZT0iMiIgLz4NCiAgICA8b3BjOkVudW1lcmF0ZWRWYWx1ZSBOYW1lPSJPRkZfU1BFQyIgVmFsdWU9IjMiIC8+DQogICAgPG9wYzpFbnVtZXJhdGVkVmFsdWUgTmFtZT0iTUFJTlRFTkFOQ0VfUkVRVUlSRUQiIFZhbHVlPSI0IiAvPg0KICA8L29wYzpFbnVtZXJhdGVkVHlwZT4NCg0KICA8b3BjOlN0cnVjdHVyZWRUeXBlIE5hbWU9IkZldGNoUmVzdWx0RGF0YVR5cGUiIEJhc2VUeXBlPSJ1YTpFeHRlbnNpb25PYmplY3QiPg0KICA8L29wYzpTdHJ1Y3R1cmVkVHlwZT4NCg0KICA8b3BjOlN0cnVjdHVyZWRUeXBlIE5hbWU9IlRyYW5zZmVyUmVzdWx0RXJyb3JEYXRhVHlwZSIgQmFzZVR5cGU9InRuczpGZXRjaFJlc3VsdERhdGFUeXBlIj4NCiAgICA8b3BjOkZpZWxkIE5hbWU9IlN0YXR1cyIgVHlwZU5hbWU9Im9wYzpJbnQzMiIgLz4NCiAgICA8b3BjOkZpZWxkIE5hbWU9IkRpYWdub3N0aWNzIiBUeXBlTmFtZT0idWE6RGlhZ25vc3RpY0luZm8iIC8+DQogIDwvb3BjOlN0cnVjdHVyZWRUeXBlPg0KDQogIDxvcGM6U3RydWN0dXJlZFR5cGUgTmFtZT0iVHJhbnNmZXJSZXN1bHREYXRhRGF0YVR5cGUiIEJhc2VUeXBlPSJ0bnM6RmV0Y2hSZXN1bHREYXRhVHlwZSI+DQogICAgPG9wYzpGaWVsZCBOYW1lPSJTZXF1ZW5jZU51bWJlciIgVHlwZU5hbWU9Im9wYzpJbnQzMiIgLz4NCiAgICA8b3BjOkZpZWxkIE5hbWU9IkVuZE9mUmVzdWx0cyIgVHlwZU5hbWU9Im9wYzpCb29sZWFuIiAvPg0KICAgIDxvcGM6RmllbGQgTmFtZT0iTm9PZlBhcmFtZXRlckRlZnMiIFR5cGVOYW1lPSJvcGM6SW50MzIiIC8+DQogICAgPG9wYzpGaWVsZCBOYW1lPSJQYXJhbWV0ZXJEZWZzIiBUeXBlTmFtZT0idG5zOlBhcmFtZXRlclJlc3VsdERhdGFUeXBlIiBMZW5ndGhGaWVsZD0iTm9PZlBhcmFtZXRlckRlZnMiIC8+DQogIDwvb3BjOlN0cnVjdHVyZWRUeXBlPg0KDQogIDxvcGM6U3RydWN0dXJlZFR5cGUgTmFtZT0iUGFyYW1ldGVyUmVzdWx0RGF0YVR5cGUiIEJhc2VUeXBlPSJ1YTpFeHRlbnNpb25PYmplY3QiPg0KICAgIDxvcGM6RmllbGQgTmFtZT0iTm9PZk5vZGVQYXRoIiBUeXBlTmFtZT0ib3BjOkludDMyIiAvPg0KICAgIDxvcGM6RmllbGQgTmFtZT0iTm9kZVBhdGgiIFR5cGVOYW1lPSJ1YTpRdWFsaWZpZWROYW1lIiBMZW5ndGhGaWVsZD0iTm9PZk5vZGVQYXRoIiAvPg0KICAgIDxvcGM6RmllbGQgTmFtZT0iU3RhdHVzQ29kZSIgVHlwZU5hbWU9InVhOlN0YXR1c0NvZGUiIC8+DQogICAgPG9wYzpGaWVsZCBOYW1lPSJEaWFnbm9zdGljcyIgVHlwZU5hbWU9InVhOkRpYWdub3N0aWNJbmZvIiAvPg0KICA8L29wYzpTdHJ1Y3R1cmVkVHlwZT4NCg0KICA8b3BjOkVudW1lcmF0ZWRUeXBlIE5hbWU9IlNvZnR3YXJlVmVyc2lvbkZpbGVUeXBlIiBMZW5ndGhJbkJpdHM9IjMyIj4NCiAgICA8b3BjOkVudW1lcmF0ZWRWYWx1ZSBOYW1lPSJDdXJyZW50IiBWYWx1ZT0iMCIgLz4NCiAgICA8b3BjOkVudW1lcmF0ZWRWYWx1ZSBOYW1lPSJQZW5kaW5nIiBWYWx1ZT0iMSIgLz4NCiAgICA8b3BjOkVudW1lcmF0ZWRWYWx1ZSBOYW1lPSJGYWxsYmFjayIgVmFsdWU9IjIiIC8+DQogIDwvb3BjOkVudW1lcmF0ZWRUeXBlPg0KDQogIDxvcGM6RW51bWVyYXRlZFR5cGUgTmFtZT0iVXBkYXRlQmVoYXZpb3IiIExlbmd0aEluQml0cz0iMzIiIElzT3B0aW9uU2V0PSJ0cnVlIj4NCiAgICA8b3BjOkVudW1lcmF0ZWRWYWx1ZSBOYW1lPSJOb25lIiBWYWx1ZT0iMCIgLz4NCiAgICA8b3BjOkVudW1lcmF0ZWRWYWx1ZSBOYW1lPSJLZWVwc1BhcmFtZXRlcnMiIFZhbHVlPSIxIiAvPg0KICAgIDxvcGM6RW51bWVyYXRlZFZhbHVlIE5hbWU9IldpbGxEaXNjb25uZWN0IiBWYWx1ZT0iMiIgLz4NCiAgICA8b3BjOkVudW1lcmF0ZWRWYWx1ZSBOYW1lPSJSZXF1aXJlc1Bvd2VyQ3ljbGUiIFZhbHVlPSI0IiAvPg0KICAgIDxvcGM6RW51bWVyYXRlZFZhbHVlIE5hbWU9IldpbGxSZWJvb3QiIFZhbHVlPSI4IiAvPg0KICAgIDxvcGM6RW51bWVyYXRlZFZhbHVlIE5hbWU9Ik5lZWRzUHJlcGFyYXRpb24iIFZhbHVlPSIxNiIgLz4NCiAgPC9vcGM6RW51bWVyYXRlZFR5cGU+DQoNCjwvb3BjOlR5cGVEaWN0aW9uYXJ5Pg==" .
 
@@ -4098,136 +4098,136 @@ devices:nodei6450 a opcua:PropertyType,
 
 devices:nodei6468 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "Locked" ;
     base:hasDatatype opcua:Boolean ;
     base:hasDisplayName "Locked" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6468" .
 
 devices:nodei6470 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "DeviceClass" ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "DeviceClass" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6470" .
 
 devices:nodei6497 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "Locked" ;
     base:hasDatatype opcua:Boolean ;
     base:hasDisplayName "Locked" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6497" .
 
 devices:nodei6499 a devices:ProtocolType,
         opcua:ObjectNodeClass ;
+    opcua:HasModellingRule opcua:nodei11510 ;
     base:hasBrowseName "<ProfileIdentifier>" ;
     base:hasDisplayName "<ProfileIdentifier>" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei11510 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6499" ;
     base:hasSymbolicName "ProfileIdentifier" .
 
 devices:nodei65 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "65" ;
     base:hasValueRank 1 .
 
 devices:nodei6527 a opcua:MethodNodeClass ;
+    opcua:HasProperty devices:nodei6528 ;
     base:hasBrowseName "TransferToDevice" ;
     base:hasDisplayName "TransferToDevice" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "6527" ;
-    base:hasProperty devices:nodei6528 .
+    base:hasNodeId "6527" .
 
 devices:nodei6528 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 2 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6528" ;
     base:hasValueRank 1 .
 
 devices:nodei6529 a opcua:MethodNodeClass ;
+    opcua:HasProperty devices:nodei6530 ;
     base:hasBrowseName "TransferFromDevice" ;
     base:hasDisplayName "TransferFromDevice" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "6529" ;
-    base:hasProperty devices:nodei6530 .
+    base:hasNodeId "6529" .
 
 devices:nodei6530 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 2 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6530" ;
     base:hasValueRank 1 .
 
 devices:nodei6531 a opcua:MethodNodeClass ;
+    opcua:HasProperty devices:nodei6532,
+        devices:nodei6533 ;
     base:hasBrowseName "FetchTransferResultData" ;
     base:hasDisplayName "FetchTransferResultData" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "6531" ;
-    base:hasProperty devices:nodei6532,
-        devices:nodei6533 .
+    base:hasNodeId "6531" .
 
 devices:nodei6532 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 4 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6532" ;
     base:hasValueRank 1 .
 
 devices:nodei6533 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6533" ;
     base:hasValueRank 1 .
 
 devices:nodei6534 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "Locked" ;
     base:hasDatatype opcua:Boolean ;
     base:hasDisplayName "Locked" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6534" .
 
@@ -4273,182 +4273,182 @@ devices:nodei6554 a opcua:DataTypeEncodingType,
 
 devices:nodei6567 a devices:FunctionalGroupType,
         opcua:ObjectNodeClass ;
+    opcua:HasModellingRule opcua:nodei11508 ;
     base:hasBrowseName "<GroupIdentifier>" ;
     base:hasDescription "An application specific functional group used to organize parameters and methods." ;
     base:hasDisplayName "<GroupIdentifier>" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei11508 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6567" ;
     base:hasSymbolicName "GroupIdentifier" .
 
 devices:nodei6571 a devices:ConnectionPointType,
         opcua:ObjectNodeClass ;
+    opcua:HasComponent devices:nodei6592 ;
+    opcua:HasModellingRule opcua:nodei11508 ;
     base:hasBrowseName "<CPIdentifier>" ;
-    base:hasComponent devices:nodei6592 ;
     base:hasDisplayName "<CPIdentifier>" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei11508 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6571" ;
     base:hasSymbolicName "CPIdentifier" .
 
 devices:nodei6592 a devices:FunctionalGroupType,
         opcua:ObjectNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "NetworkAddress" ;
     base:hasDescription "The address of the device on this network." ;
     base:hasDisplayName "NetworkAddress" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6592" .
 
 devices:nodei6596 a devices:ProtocolType,
         opcua:ObjectNodeClass ;
+    opcua:HasModellingRule opcua:nodei11510 ;
     base:hasBrowseName "<ProfileIdentifier>" ;
     base:hasDisplayName "<ProfileIdentifier>" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei11510 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6596" ;
     base:hasSymbolicName "ProfileIdentifier" .
 
 devices:nodei6599 a devices:NetworkType,
         opcua:ObjectNodeClass ;
+    opcua:HasModellingRule opcua:nodei11508 ;
     base:hasBrowseName "<NetworkIdentifier>" ;
     base:hasDisplayName "<NetworkIdentifier>" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei11508 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6599" ;
     base:hasSymbolicName "NetworkIdentifier" .
 
 devices:nodei66 a opcua:MethodNodeClass ;
+    opcua:HasProperty devices:nodei67 ;
     base:hasBrowseName "Write" ;
     base:hasDisplayName "Write" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "66" ;
-    base:hasProperty devices:nodei67 .
+    base:hasNodeId "66" .
 
 devices:nodei67 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 2 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "67" ;
     base:hasValueRank 1 .
 
 devices:nodei68 a opcua:MethodNodeClass ;
+    opcua:HasProperty devices:nodei69,
+        devices:nodei70 ;
     base:hasBrowseName "GetPosition" ;
     base:hasDisplayName "GetPosition" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "68" ;
-    base:hasProperty devices:nodei69,
-        devices:nodei70 .
+    base:hasNodeId "68" .
 
 devices:nodei69 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "69" ;
     base:hasValueRank 1 .
 
 devices:nodei70 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasBrowseName "OutputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "OutputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "70" ;
     base:hasValueRank 1 .
 
 devices:nodei71 a opcua:MethodNodeClass ;
+    opcua:HasProperty devices:nodei72 ;
     base:hasBrowseName "SetPosition" ;
     base:hasDisplayName "SetPosition" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "71" ;
-    base:hasProperty devices:nodei72 .
+    base:hasNodeId "71" .
 
 devices:nodei72 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 2 ) ;
     base:hasBrowseName "InputArguments" ;
     base:hasDatatype opcua:Argument ;
     base:hasDisplayName "InputArguments" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "72" ;
     base:hasValueRank 1 .
 
 devices:nodei76 a devices:PowerCycleStateMachineType,
         opcua:ObjectNodeClass ;
+    opcua:HasComponent devices:nodei77 ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "PowerCycle" ;
-    base:hasComponent devices:nodei77 ;
     base:hasDisplayName "PowerCycle" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "76" .
 
 devices:nodei77 a opcua:FiniteStateVariableType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
+    opcua:HasProperty devices:nodei78 ;
     base:hasBrowseName "CurrentState" ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasDisplayName "CurrentState" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "77" ;
-    base:hasProperty devices:nodei78 .
+    base:hasNodeId "77" .
 
 devices:nodei78 a opcua:PropertyType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "Id" ;
     base:hasDatatype opcua:NodeId ;
     base:hasDisplayName "Id" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "78" .
 
 devices:nodei98 a devices:ConfirmationStateMachineType,
         opcua:ObjectNodeClass ;
-    base:hasBrowseName "Confirmation" ;
-    base:hasComponent devices:nodei112,
+    opcua:HasComponent devices:nodei112,
         devices:nodei113,
         devices:nodei99 ;
+    opcua:HasModellingRule opcua:nodei80 ;
+    base:hasBrowseName "Confirmation" ;
     base:hasDisplayName "Confirmation" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei80 ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "98" .
 
 devices:nodei99 a opcua:FiniteStateVariableType,
         opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
+    opcua:HasProperty devices:nodei100 ;
     base:hasBrowseName "CurrentState" ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasDisplayName "CurrentState" ;
     base:hasIdentifierType base:numericID ;
-    base:hasModellingRule opcua:nodei78 ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "99" ;
-    base:hasProperty devices:nodei100 .
+    base:hasNodeId "99" .
 
 devices:ConfirmationStateMachineType a owl:Class ;
     rdfs:subClassOf opcua:FiniteStateMachineType .
@@ -4588,66 +4588,66 @@ devices:UIElementType a owl:Class ;
 
 devices:nodei235 a opcua:ObjectNodeClass,
         opcua:StateType ;
+    opcua:HasProperty devices:nodei236 ;
     base:hasBrowseName "PreparedForUpdate" ;
     base:hasDisplayName "PreparedForUpdate" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "235" ;
-    base:hasProperty devices:nodei236 .
+    base:hasNodeId "235" .
 
 devices:nodei237 a opcua:ObjectNodeClass,
         opcua:StateType ;
+    opcua:HasProperty devices:nodei238 ;
     base:hasBrowseName "Resuming" ;
     base:hasDisplayName "Resuming" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "237" ;
-    base:hasProperty devices:nodei238 .
+    base:hasNodeId "237" .
 
 devices:nodei275 a opcua:ObjectNodeClass,
         opcua:StateType ;
+    opcua:HasProperty devices:nodei276 ;
     base:hasBrowseName "Error" ;
     base:hasDisplayName "Error" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "275" ;
-    base:hasProperty devices:nodei276 .
+    base:hasNodeId "275" .
 
 devices:nodei299 a opcua:InitialStateType,
         opcua:ObjectNodeClass ;
+    opcua:HasProperty devices:nodei300 ;
     base:hasBrowseName "NotWaitingForPowerCycle" ;
     base:hasDisplayName "NotWaitingForPowerCycle" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "299" ;
-    base:hasProperty devices:nodei300 .
+    base:hasNodeId "299" .
 
 devices:nodei301 a opcua:ObjectNodeClass,
         opcua:StateType ;
+    opcua:HasProperty devices:nodei302 ;
     base:hasBrowseName "WaitingForPowerCycle" ;
     base:hasDisplayName "WaitingForPowerCycle" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "301" ;
-    base:hasProperty devices:nodei302 .
+    base:hasNodeId "301" .
 
 devices:nodei323 a opcua:InitialStateType,
         opcua:ObjectNodeClass ;
+    opcua:HasProperty devices:nodei324 ;
     base:hasBrowseName "NotWaitingForConfirm" ;
     base:hasDisplayName "NotWaitingForConfirm" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "323" ;
-    base:hasProperty devices:nodei324 .
+    base:hasNodeId "323" .
 
 devices:nodei325 a opcua:ObjectNodeClass,
         opcua:StateType ;
+    opcua:HasProperty devices:nodei326 ;
     base:hasBrowseName "WaitingForConfirm" ;
     base:hasDisplayName "WaitingForConfirm" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "325" ;
-    base:hasProperty devices:nodei326 .
+    base:hasNodeId "325" .
 
 devices:SoftwareLoadingType a owl:Class ;
     rdfs:subClassOf opcua:BaseObjectType ;
@@ -4665,39 +4665,39 @@ devices:TopologyElementType a owl:Class ;
 
 devices:nodei231 a opcua:InitialStateType,
         opcua:ObjectNodeClass ;
+    opcua:HasProperty devices:nodei232 ;
     base:hasBrowseName "Idle" ;
     base:hasDisplayName "Idle" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "231" ;
-    base:hasProperty devices:nodei232 .
+    base:hasNodeId "231" .
 
 devices:nodei233 a opcua:ObjectNodeClass,
         opcua:StateType ;
+    opcua:HasProperty devices:nodei234 ;
     base:hasBrowseName "Preparing" ;
     base:hasDisplayName "Preparing" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "233" ;
-    base:hasProperty devices:nodei234 .
+    base:hasNodeId "233" .
 
 devices:nodei271 a opcua:InitialStateType,
         opcua:ObjectNodeClass ;
+    opcua:HasProperty devices:nodei272 ;
     base:hasBrowseName "Idle" ;
     base:hasDisplayName "Idle" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "271" ;
-    base:hasProperty devices:nodei272 .
+    base:hasNodeId "271" .
 
 devices:nodei273 a opcua:ObjectNodeClass,
         opcua:StateType ;
+    opcua:HasProperty devices:nodei274 ;
     base:hasBrowseName "Installing" ;
     base:hasDisplayName "Installing" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
-    base:hasNodeId "273" ;
-    base:hasProperty devices:nodei274 .
+    base:hasNodeId "273" .
 
 devices:DeviceHealthDiagnosticAlarmType a owl:Class ;
     rdfs:subClassOf opcua:InstrumentDiagnosticAlarmType ;
