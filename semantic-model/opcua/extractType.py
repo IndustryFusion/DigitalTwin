@@ -154,6 +154,8 @@ parse nodeset instance and create ngsi-ld model')
                         action='store_true')
     parser.add_argument('-sw', '--suppress-warnings', type=str, nargs='*',
                         help='List of Warnings which are to be suppressed.')
+    parser.add_argument('-p', '--properties', help='Consider OPC UA Properties.', required=False, default=False,
+                        action='store_true')
 
     parsed_args = parser.parse_args(args)
     return parsed_args
@@ -216,20 +218,25 @@ The class {shclass} must be subclass of {classtype} found in the hierarchy."
         return True, None
 
 
-def check_variable_consistency(instancetype, attribute_path, classtype):
-    if shaclg.attribute_is_indomain(instancetype, attribute_path):
+def check_variable_consistency(shapenode, attribute_path, classtype):
+    if shaclg.attribute_is_indomain(shapenode, attribute_path):
         return True
-    e.add_instancetype(instancetype, attribute_path)
+    instancetype = shaclg.get_targetclass(shapenode)
+    if instancetype is not None:
+        e.add_instancetype(instancetype, attribute_path)
     e.add_type(classtype)
     return False
 
 
-def scan_type(node, instancetype):
+def scan_type(node, instancetype, shape_node=None):
 
     # Loop through all supertypes
     supertypes = rdfutils.get_all_supertypes(g, instancetype, node)
     # Loop through all components
-    shapename = shaclg.create_shacl_type(instancetype)
+    if shape_node is None:
+        shapename = shaclg.create_shacl_type(instancetype)
+    else:
+        shapename = shape_node
     has_components = False
     for (curtype, curnode) in supertypes:
         children = rdfutils.get_all_subreferences(g, curnode, opcuans['HasChild'])
@@ -260,10 +267,6 @@ def scan_type_recursive(o, node, instancetype, shapename, reftype):
     browse_name = next(g.objects(o, basens['hasBrowseName']))
     nodeclass, classtype = rdfutils.get_type(g, o)
     if nodeclass == opcuans['MethodNodeClass']:
-        return False
-
-    # If defnition is self referential, stop recursion
-    if str(instancetype) == str(classtype):
         return False
 
     attributename = urllib.parse.quote(f'{browse_name}')
@@ -324,7 +327,7 @@ a loop.")
                                          placeholder_pattern=placeholder_pattern,
                                          reftype=reftype)
     elif rdfutils.isVariableNodeClass(nodeclass):
-        stop_scan = check_variable_consistency(instancetype, entity_namespace[attributename], classtype)
+        stop_scan = check_variable_consistency(shapename, entity_namespace[attributename], classtype)
         if stop_scan:
             return True
         has_components = True
@@ -336,18 +339,19 @@ a loop.")
             return False
         shacl_rule['is_property'] = True
         shaclg.get_shacl_iri_and_contentclass(g, o, node, shacl_rule)
-        shaclg.create_shacl_property(shapename,
-                                     shacl_rule['path'],
-                                     shacl_rule['optional'],
-                                     shacl_rule['array'],
-                                     True, shacl_rule['is_iri'],
-                                     shacl_rule['contentclass'],
-                                     shacl_rule['datatype'],
-                                     pattern=shacl_rule['pattern'],
-                                     value_rank=shacl_rule.get('value_rank'),
-                                     array_dimensions=shacl_rule.get('array_dimensions'),
-                                     reftype=reftype)
+        shacl_node = shaclg.create_shacl_property(shapename,
+                                                  shacl_rule['path'],
+                                                  shacl_rule['optional'],
+                                                  shacl_rule['array'],
+                                                  True, shacl_rule['is_iri'],
+                                                  shacl_rule['contentclass'],
+                                                  shacl_rule['datatype'],
+                                                  pattern=shacl_rule['pattern'],
+                                                  value_rank=shacl_rule.get('value_rank'),
+                                                  array_dimensions=shacl_rule.get('array_dimensions'),
+                                                  reftype=reftype)
         e.add_enum_class(g, shacl_rule['contentclass'])
+        components_found = scan_type(o, classtype, shacl_node)
     return has_components
 
 
@@ -435,16 +439,17 @@ def scan_entity(node, instancetype, id, optional=False):
     children = rdfutils.get_all_subreferences(g, node, opcuans['HasChild'])
     for reference, target in children:
         if reference not in ignored_hierarchical_references:
-            has_components = scan_entitiy_recursive(node, id, instance, node_id, target) or has_components
+            has_components = scan_entity_recursive(node, id, instance, node_id,
+                                                   target, type=instancetype) or has_components
     organizes = rdfutils.get_all_subreferences(g, node, opcuans['Organizes'])
     for organizes_reference, target in organizes:
-        has_components = scan_entitiy_nonrecursive(node, id, instance, node_id, target,
-                                                   organizes_reference) or has_components
+        has_components = scan_entity_nonrecursive(node, id, instance, node_id, target,
+                                                  organizes_reference) or has_components
     non_hierarchicals = rdfutils.get_all_subreferences(g, node, opcuans['NonHierarchicalReferences'])
     for generic_reference, target in non_hierarchicals:
         if generic_reference not in ignored_references:
-            has_components = scan_entitiy_nonrecursive(node, id, instance, node_id, target,
-                                                       generic_reference) or has_components
+            has_components = scan_entity_nonrecursive(node, id, instance, node_id, target,
+                                                      generic_reference) or has_components
     if has_components or not optional or maximal_shacl:
         jsonld.add_instance(instance)
         scanned_entities.add(node_id)
@@ -453,7 +458,36 @@ def scan_entity(node, instancetype, id, optional=False):
         return None
 
 
-def scan_entitiy_recursive(node, id, instance, node_id, o):
+def scan_entity_variable(node, instancetype, id, optional=False):
+    node_id = jsonld.generate_node_id(g, rootentity, node, id)
+    # detect recursion
+    if node_id in scanned_entities:
+        return node_id
+
+    attributes = {}
+    # Loop through all components
+    has_components = False
+    children = rdfutils.get_all_subreferences(g, node, opcuans['HasComponent'])
+    for reference, target in children:
+        has_components = scan_entity_recursive(node, id, attributes, node_id, target) or has_components
+    children = rdfutils.get_all_subreferences(g, node, opcuans['HasProperty'])
+    for reference, target in children:
+        if reference not in ignored_hierarchical_references:
+            has_components = scan_entity_recursive(node,
+                                                   id,
+                                                   attributes,
+                                                   node_id,
+                                                   target,
+                                                   is_property=True) or has_components
+    non_hierarchicals = rdfutils.get_all_subreferences(g, node, opcuans['NonHierarchicalReferences'])
+    for generic_reference, target in non_hierarchicals:
+        if generic_reference not in ignored_references:
+            has_components = scan_entity_nonrecursive(node, id, attributes, node_id, target,
+                                                      generic_reference) or has_components
+    return attributes
+
+
+def scan_entity_recursive(node, id, instance, node_id, o, type=None, is_property=False):
     has_components = False
     shacl_rule = {}
     browse_name = next(g.objects(o, basens['hasBrowseName']))
@@ -462,8 +496,11 @@ def scan_entitiy_recursive(node, id, instance, node_id, o):
 
     original_attributename = None
     decoded_attributename = urllib.parse.unquote(attributename)
-    optional, array, path = shaclg.get_modelling_rule_and_path(decoded_attributename, URIRef(instance['type']),
-                                                               classtype, attribute_prefix)
+    if type is not None:
+        optional, array, path = shaclg.get_modelling_rule_and_path(decoded_attributename, URIRef(type),
+                                                                   classtype, attribute_prefix)
+    else:
+        optional, array, path = (None, None, None)
     if path is not None:
         original_attributename = decoded_attributename
         decoded_attributename = path.removeprefix(entity_namespace)
@@ -553,7 +590,8 @@ Check whether it has a proper type definition. Most likely this attribute is not
                     '@id': str(value)
                 }
             }
-        minshaclg.copy_property_from_shacl(shaclg, instance['type'], entity_namespace[attributename])
+        if type is not None:
+            minshaclg.copy_property_from_shacl(shaclg, type, entity_namespace[attributename])
         if debug:
             instance[f'{entity_ontology_prefix}:{attributename}']['debug'] = \
                 f'{entity_ontology_prefix}:{attributename}, {str(node)}'
@@ -561,13 +599,15 @@ Check whether it has a proper type definition. Most likely this attribute is not
             is_updating = bool(next(g.objects(o, basens['isUpdating'])))
         except:
             is_updating = False
-        if is_updating or not minimal_shacl:
+        if (is_updating or not minimal_shacl) and not is_property:
             quoted_node_id = utils.quote_url(node_id)
             bindingsg.create_binding(g, URIRef(quoted_node_id), o, entity_namespace[attributename])
+        attributes = scan_entity_variable(o, classtype, id, shacl_rule['optional'])
+        utils.merge_attributes(instance[f'{entity_ontology_prefix}:{attributename}'], attributes)
     return has_components
 
 
-def scan_entitiy_nonrecursive(node, id, instance, node_id, o, generic_reference=None):
+def scan_entity_nonrecursive(node, id, instance, node_id, o, generic_reference=None):
     has_components = False
     shacl_rule = {}
     browse_name = next(g.objects(o, basens['hasBrowseName']))
@@ -616,6 +656,7 @@ if __name__ == '__main__':
     context_url = args.context_url
     entity_namespace = args.entity_namespace
     entity_prefix = args.entity_prefix
+    parse_properties = args.properties
 
     # set filter for warning suppressions
     for warnstr in args.suppress_warnings or []:
@@ -679,7 +720,9 @@ if __name__ == '__main__':
     for uri, prefix, _ in result:
         e.bind(prefix, Namespace(uri))
     ignored_references = rdfutils.get_ignored_references(g)
-    ignored_hierarchical_references = [opcuans['HasProperty']]
+    ignored_hierarchical_references = []
+    if not parse_properties:
+        ignored_hierarchical_references.append(opcuans['HasProperty'])
 
     # First scan the templates to create the rules
     # If there is a rootinstancetype defined, use it. Otherwise,

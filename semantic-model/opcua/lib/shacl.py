@@ -153,6 +153,7 @@ class Shacl:
             self.shaclg.add((innerproperty, SH['pattern'], Literal(pattern)))
         self.shaclg.add((innerproperty, SH.minCount, Literal(1)))
         self.shaclg.add((innerproperty, SH.maxCount, Literal(1)))
+        return innerproperty
 
     def shacl_add_to_shape(self, property_shape, pred, obj):
         if pred is not None:
@@ -306,9 +307,27 @@ or placeholders or both. Will try to guess the right value, but this can go wron
             pass
         return optional, array, path
 
-    def attribute_is_indomain(self, targetclass, attributename):
-        property = self._get_property(targetclass, attributename)
-        return property is not None
+    def attribute_is_indomain(self, shapenode, attributename):
+        """Check if attributename is already part of the shape
+
+        Args:
+            shapenode (URIRef): shape_node
+            attributename (URIRef): attribute to check
+
+        Returns:
+            Bool: if attribute is found
+        """
+        properties = self.shaclg.objects(shapenode, SH.property)
+        result = None
+        for property in properties:
+            path = next(self.shaclg.objects(property, SH.path), None)
+            if str(path) == str(attributename):
+                result = property
+                break
+        return result is not None
+
+    def get_targetclass(self, shapenode):
+        return next(self.shaclg.objects(shapenode, SH.targetClass), None)
 
     def _get_property(self, targetclass, propertypath):
         result = None

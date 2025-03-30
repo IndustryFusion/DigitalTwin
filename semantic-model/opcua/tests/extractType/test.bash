@@ -35,6 +35,7 @@ if [ "$DEBUG" = "true" ]; then
     DEBUG_CMDLINE="-m debugpy --listen 5678"
 fi
 TESTNODESETS=(
+    test_reference_types_properties.Nodeset2,${TESTURI}AlphaType,,,-p
     test_reference_types.Nodeset2,${TESTURI}AlphaType
     test_object_foldertype.NodeSet2,${TESTURI}AlphaType,,,-ma,FOLDER_INCONSISTENCY
     test_object_foldertype_tree.NodeSet2,,,machinery,-ma

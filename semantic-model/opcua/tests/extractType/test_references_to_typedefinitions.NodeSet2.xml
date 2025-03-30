@@ -111,13 +111,6 @@
       <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1001</Reference>
     </References>
   </UAVariable>  
-  <UAVariable NodeId="ns=1;i=2002" BrowseName="1:E" DataType="i=11">
-    <DisplayName>Variable of Variable C</DisplayName>
-    <References>
-      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
-      <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=2001</Reference>
-    </References>
-  </UAVariable>
   <UAObject NodeId="ns=1;i=2003" BrowseName="1:B">
     <DisplayName>Object B</DisplayName>
     <References>
@@ -138,7 +131,6 @@
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
       <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=2010</Reference>
-      <Reference ReferenceType="ns=1;i=100" IsForward="true">ns=1;i=2011</Reference>
     </References>
   </UAVariable>
   <UAObject NodeId="ns=1;i=2012" BrowseName="1:B">

@@ -12,23 +12,24 @@ shacl:AlphaSubType2Shape a sh:NodeShape ;
             sh:maxCount 1 ;
             sh:minCount 0 ;
             sh:nodeKind sh:BlankNode ;
-            sh:path <http://my.test/entity/hasSubAlphaInstance> ;
-            sh:property [ sh:class test:AlphaSubType ;
+            sh:path <http://my.test/entity/hasB3> ;
+            sh:property [ sh:class test:BType ;
                     sh:maxCount 1 ;
                     sh:minCount 1 ;
                     sh:nodeKind sh:IRI ;
                     sh:path ngsi-ld:hasObject ] ;
             base:hasReferenceType opcua:HasComponent ],
-        [ a base:PeerRelationship ;
+        [ a base:SubComponentRelationship ;
+            sh:maxCount 1 ;
             sh:minCount 0 ;
             sh:nodeKind sh:BlankNode ;
-            sh:path test:X ;
-            sh:property [ sh:class test:BSubType ;
+            sh:path <http://my.test/entity/hasB4> ;
+            sh:property [ sh:class test:BType ;
                     sh:maxCount 1 ;
                     sh:minCount 1 ;
                     sh:nodeKind sh:IRI ;
                     sh:path ngsi-ld:hasObject ] ;
-            base:hasReferenceType test:X ],
+            base:hasReferenceType opcua:HasComponent ],
         [ a base:PeerRelationship ;
             sh:minCount 0 ;
             sh:nodeKind sh:BlankNode ;
@@ -39,39 +40,6 @@ shacl:AlphaSubType2Shape a sh:NodeShape ;
                     sh:nodeKind sh:IRI ;
                     sh:path ngsi-ld:hasObject ] ;
             base:hasReferenceType opcua:Organizes ],
-        [ a base:SubComponentRelationship ;
-            sh:maxCount 1 ;
-            sh:minCount 0 ;
-            sh:nodeKind sh:BlankNode ;
-            sh:path <http://my.test/entity/hasB1> ;
-            sh:property [ sh:class test:BType ;
-                    sh:maxCount 1 ;
-                    sh:minCount 1 ;
-                    sh:nodeKind sh:IRI ;
-                    sh:path ngsi-ld:hasObject ] ;
-            base:hasReferenceType opcua:HasComponent ],
-        [ a base:SubComponentRelationship ;
-            sh:maxCount 1 ;
-            sh:minCount 0 ;
-            sh:nodeKind sh:BlankNode ;
-            sh:path <http://my.test/entity/hasB2> ;
-            sh:property [ sh:class test:BType ;
-                    sh:maxCount 1 ;
-                    sh:minCount 1 ;
-                    sh:nodeKind sh:IRI ;
-                    sh:path ngsi-ld:hasObject ] ;
-            base:hasReferenceType opcua:HasAddIn ],
-        [ a base:SubComponentRelationship ;
-            sh:maxCount 1 ;
-            sh:minCount 0 ;
-            sh:nodeKind sh:BlankNode ;
-            sh:path <http://my.test/entity/hasSubAlphaInstance2> ;
-            sh:property [ sh:class test:AlphaSubType2 ;
-                    sh:maxCount 1 ;
-                    sh:minCount 1 ;
-                    sh:nodeKind sh:IRI ;
-                    sh:path ngsi-ld:hasObject ] ;
-            base:hasReferenceType opcua:HasComponent ],
         [ a base:SubComponentRelationship ;
             sh:maxCount 1 ;
             sh:minCount 0 ;
@@ -87,20 +55,6 @@ shacl:AlphaSubType2Shape a sh:NodeShape ;
             sh:maxCount 1 ;
             sh:minCount 0 ;
             sh:nodeKind sh:BlankNode ;
-            sh:path <http://my.test/entity/hasB3> ;
-            sh:property [ sh:class test:BType ;
-                    sh:maxCount 1 ;
-                    sh:minCount 1 ;
-                    sh:nodeKind sh:IRI ;
-                    sh:path ngsi-ld:hasObject ] ;
-            base:hasReferenceType opcua:HasComponent ] ;
-    sh:targetClass test:AlphaSubType2 .
-
-shacl:AlphaSubTypeShape a sh:NodeShape ;
-    sh:property [ a base:SubComponentRelationship ;
-            sh:maxCount 1 ;
-            sh:minCount 0 ;
-            sh:nodeKind sh:BlankNode ;
             sh:path <http://my.test/entity/hasSubAlphaInstance2> ;
             sh:property [ sh:class test:AlphaSubType2 ;
                     sh:maxCount 1 ;
@@ -108,49 +62,6 @@ shacl:AlphaSubTypeShape a sh:NodeShape ;
                     sh:nodeKind sh:IRI ;
                     sh:path ngsi-ld:hasObject ] ;
             base:hasReferenceType opcua:HasComponent ],
-        [ a base:SubComponentRelationship ;
-            sh:maxCount 1 ;
-            sh:minCount 0 ;
-            sh:nodeKind sh:BlankNode ;
-            sh:path <http://my.test/entity/hasSubAlphaInstance> ;
-            sh:property [ sh:class test:AlphaSubType ;
-                    sh:maxCount 1 ;
-                    sh:minCount 1 ;
-                    sh:nodeKind sh:IRI ;
-                    sh:path ngsi-ld:hasObject ] ;
-            base:hasReferenceType opcua:HasComponent ],
-        [ a base:SubComponentRelationship ;
-            sh:maxCount 1 ;
-            sh:minCount 0 ;
-            sh:nodeKind sh:BlankNode ;
-            sh:path <http://my.test/entity/hasSubB2> ;
-            sh:property [ sh:class test:BSubType ;
-                    sh:maxCount 1 ;
-                    sh:minCount 1 ;
-                    sh:nodeKind sh:IRI ;
-                    sh:path ngsi-ld:hasObject ] ;
-            base:hasReferenceType opcua:HasComponent ],
-        [ a base:SubComponentRelationship ;
-            sh:maxCount 1 ;
-            sh:minCount 0 ;
-            sh:nodeKind sh:BlankNode ;
-            sh:path <http://my.test/entity/hasB3> ;
-            sh:property [ sh:class test:BType ;
-                    sh:maxCount 1 ;
-                    sh:minCount 1 ;
-                    sh:nodeKind sh:IRI ;
-                    sh:path ngsi-ld:hasObject ] ;
-            base:hasReferenceType opcua:HasComponent ],
-        [ a base:PeerRelationship ;
-            sh:minCount 0 ;
-            sh:nodeKind sh:BlankNode ;
-            sh:path opcua:Organizes ;
-            sh:property [ sh:class test:BType ;
-                    sh:maxCount 1 ;
-                    sh:minCount 1 ;
-                    sh:nodeKind sh:IRI ;
-                    sh:path ngsi-ld:hasObject ] ;
-            base:hasReferenceType opcua:Organizes ],
         [ a base:SubComponentRelationship ;
             sh:maxCount 1 ;
             sh:minCount 0 ;
@@ -166,49 +77,48 @@ shacl:AlphaSubTypeShape a sh:NodeShape ;
             sh:maxCount 1 ;
             sh:minCount 0 ;
             sh:nodeKind sh:BlankNode ;
+            sh:path <http://my.test/entity/hasSubAlphaInstance> ;
+            sh:property [ sh:class test:AlphaSubType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path <http://my.test/entity/hasMyProperty> ;
+            sh:property [ sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:or ( [ sh:datatype xsd:double ] [ sh:property [ sh:datatype xsd:double ;
+                                        sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] ) ;
+                    sh:path ngsi-ld:hasValue ] ;
+            base:hasReferenceType opcua:HasProperty ],
+        [ a base:PeerRelationship ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:X ;
+            sh:property [ sh:class test:BSubType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasReferenceType test:X ],
+        [ a base:SubComponentRelationship ;
+            sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
             sh:path <http://my.test/entity/hasB1> ;
             sh:property [ sh:class test:BType ;
                     sh:maxCount 1 ;
                     sh:minCount 1 ;
                     sh:nodeKind sh:IRI ;
                     sh:path ngsi-ld:hasObject ] ;
-            base:hasReferenceType opcua:HasComponent ],
-        [ a base:PeerRelationship ;
-            sh:minCount 0 ;
-            sh:nodeKind sh:BlankNode ;
-            sh:path test:X ;
-            sh:property [ sh:class test:BType ;
-                    sh:maxCount 1 ;
-                    sh:minCount 1 ;
-                    sh:nodeKind sh:IRI ;
-                    sh:path ngsi-ld:hasObject ] ;
-            base:hasReferenceType test:X ] ;
-    sh:targetClass test:AlphaSubType .
+            base:hasReferenceType opcua:HasComponent ] ;
+    sh:targetClass test:AlphaSubType2 .
 
-shacl:AlphaTypeShape a sh:NodeShape ;
-    sh:property [ a base:SubComponentRelationship ;
-            sh:maxCount 1 ;
-            sh:minCount 0 ;
-            sh:nodeKind sh:BlankNode ;
-            sh:path <http://my.test/entity/hasB3> ;
-            sh:property [ sh:class test:BType ;
-                    sh:maxCount 1 ;
-                    sh:minCount 1 ;
-                    sh:nodeKind sh:IRI ;
-                    sh:path ngsi-ld:hasObject ] ;
-            base:hasReferenceType opcua:HasComponent ],
-        [ a base:SubComponentRelationship ;
-            sh:maxCount 1 ;
-            sh:minCount 0 ;
-            sh:nodeKind sh:BlankNode ;
-            sh:path <http://my.test/entity/hasSubAlphaInstance2> ;
-            sh:property [ sh:class test:AlphaSubType2 ;
-                    sh:maxCount 1 ;
-                    sh:minCount 1 ;
-                    sh:nodeKind sh:IRI ;
-                    sh:path ngsi-ld:hasObject ] ;
-            base:hasReferenceType opcua:HasComponent ],
-        [ a base:PeerRelationship ;
+shacl:AlphaSubTypeShape a sh:NodeShape ;
+    sh:property [ a base:PeerRelationship ;
             sh:minCount 0 ;
             sh:nodeKind sh:BlankNode ;
             sh:path opcua:Organizes ;
@@ -222,8 +132,30 @@ shacl:AlphaTypeShape a sh:NodeShape ;
             sh:maxCount 1 ;
             sh:minCount 0 ;
             sh:nodeKind sh:BlankNode ;
-            sh:path <http://my.test/entity/hasSubAlphaInstance> ;
-            sh:property [ sh:class test:AlphaSubType ;
+            sh:path <http://my.test/entity/hasSubB2> ;
+            sh:property [ sh:class test:BSubType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ a base:SubComponentRelationship ;
+            sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path <http://my.test/entity/hasB1> ;
+            sh:property [ sh:class test:BType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ a base:SubComponentRelationship ;
+            sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path <http://my.test/entity/hasB4> ;
+            sh:property [ sh:class test:BType ;
                     sh:maxCount 1 ;
                     sh:minCount 1 ;
                     sh:nodeKind sh:IRI ;
@@ -249,7 +181,138 @@ shacl:AlphaTypeShape a sh:NodeShape ;
                     sh:minCount 1 ;
                     sh:nodeKind sh:IRI ;
                     sh:path ngsi-ld:hasObject ] ;
-            base:hasReferenceType opcua:HasAddIn ] ;
+            base:hasReferenceType opcua:HasAddIn ],
+        [ a base:SubComponentRelationship ;
+            sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path <http://my.test/entity/hasSubAlphaInstance> ;
+            sh:property [ sh:class test:AlphaSubType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ a base:SubComponentRelationship ;
+            sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path <http://my.test/entity/hasSubAlphaInstance2> ;
+            sh:property [ sh:class test:AlphaSubType2 ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ a base:SubComponentRelationship ;
+            sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path <http://my.test/entity/hasB3> ;
+            sh:property [ sh:class test:BType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path <http://my.test/entity/hasMyProperty> ;
+            sh:property [ sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:or ( [ sh:datatype xsd:double ] [ sh:property [ sh:datatype xsd:double ;
+                                        sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] ) ;
+                    sh:path ngsi-ld:hasValue ] ;
+            base:hasReferenceType opcua:HasProperty ] ;
+    sh:targetClass test:AlphaSubType .
+
+shacl:AlphaTypeShape a sh:NodeShape ;
+    sh:property [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path <http://my.test/entity/hasMyProperty> ;
+            sh:property [ sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:or ( [ sh:datatype xsd:double ] [ sh:property [ sh:datatype xsd:double ;
+                                        sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] ) ;
+                    sh:path ngsi-ld:hasValue ] ;
+            base:hasReferenceType opcua:HasProperty ],
+        [ a base:PeerRelationship ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:X ;
+            sh:property [ sh:class test:BType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasReferenceType test:X ],
+        [ a base:SubComponentRelationship ;
+            sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path <http://my.test/entity/hasB4> ;
+            sh:property [ sh:class test:BType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ a base:SubComponentRelationship ;
+            sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path <http://my.test/entity/hasB3> ;
+            sh:property [ sh:class test:BType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ a base:SubComponentRelationship ;
+            sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path <http://my.test/entity/hasSubAlphaInstance2> ;
+            sh:property [ sh:class test:AlphaSubType2 ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ a base:SubComponentRelationship ;
+            sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path <http://my.test/entity/hasB2> ;
+            sh:property [ sh:class test:BType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasReferenceType opcua:HasAddIn ],
+        [ a base:PeerRelationship ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path opcua:Organizes ;
+            sh:property [ sh:class test:BType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasReferenceType opcua:Organizes ],
+        [ a base:SubComponentRelationship ;
+            sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path <http://my.test/entity/hasSubAlphaInstance> ;
+            sh:property [ sh:class test:AlphaSubType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasReferenceType opcua:HasComponent ] ;
     sh:targetClass test:AlphaType .
 
 shacl:BSubTypeShape a sh:NodeShape ;
@@ -274,7 +337,27 @@ shacl:BTypeShape a sh:NodeShape ;
                     sh:minCount 1 ;
                     sh:or ( [ sh:datatype xsd:double ] [ sh:property [ sh:datatype xsd:double ;
                                         sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] ) ;
-                    sh:path ngsi-ld:hasValue ] ;
+                    sh:path ngsi-ld:hasValue ;
+                    sh:property [ sh:maxCount 1 ;
+                            sh:minCount 0 ;
+                            sh:nodeKind sh:BlankNode ;
+                            sh:path <http://my.test/entity/hasMySubVariable> ;
+                            sh:property [ sh:maxCount 1 ;
+                                    sh:minCount 1 ;
+                                    sh:or ( [ sh:datatype xsd:double ] [ sh:property [ sh:datatype xsd:double ;
+                                                        sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] ) ;
+                                    sh:path ngsi-ld:hasValue ] ;
+                            base:hasReferenceType opcua:HasComponent ],
+                        [ sh:maxCount 1 ;
+                            sh:minCount 0 ;
+                            sh:nodeKind sh:BlankNode ;
+                            sh:path <http://my.test/entity/hasMyProperty> ;
+                            sh:property [ sh:maxCount 1 ;
+                                    sh:minCount 1 ;
+                                    sh:or ( [ sh:datatype xsd:double ] [ sh:property [ sh:datatype xsd:double ;
+                                                        sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] ) ;
+                                    sh:path ngsi-ld:hasValue ] ;
+                            base:hasReferenceType opcua:HasProperty ] ] ;
             base:hasReferenceType opcua:HasComponent ] ;
     sh:targetClass test:BType .
 
