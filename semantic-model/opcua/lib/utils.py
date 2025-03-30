@@ -466,6 +466,11 @@ def quote_url(uri):
     return quote(uri)
 
 
+def merge_attributes(instance, attributes):
+    for key in attributes:
+        instance[key] = attributes[key]
+
+
 class RdfUtils:
     def __init__(self, basens, opcuans):
         self.basens = basens
@@ -587,6 +592,7 @@ class RdfUtils:
                     opcua:GeneratesEvent
                     opcua:HasEventSource
                     opcua:HasModellingRule
+                    opcua:HasInterface
                 }
                     ?subclass rdfs:subClassOf* ?reference .
             }
