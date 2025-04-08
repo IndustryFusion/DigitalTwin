@@ -31,8 +31,9 @@ def main():
     parser = argparse.ArgumentParser(description="SHACL Validation with Shape and Focus Context")
     parser.add_argument("-s", "--shacl", required=False, help="Path to SHACL shapes file", default='shacl.ttl')
     parser.add_argument("-e", "--extra", required=False, help="Path to extra ontology file")
-    parser.add_argument("-df", "--data-format", required=False, default="turtle",
-                        help="Data file format (e.g., turtle, json-ld, xml)")
+    parser.add_argument("-df", "--data-format", required=False,
+                        help="Data file format (e.g., turtle, json-ld, xml). If not provided infered from \
+data-file name (.jsonld, .ttl).")
     parser.add_argument('-d', '--debug',
                         help='Debug output',
                         required=False,
@@ -56,6 +57,14 @@ def main():
     # Load RDF data (Data Graph)
 
     data_graph = Graph(store='Oxigraph')
+    if args.data_format is None:
+        if args.data.endswith('.jsonld'):
+            args.data_format = 'json-ld'
+        elif args.data.endswith('ttl'):
+            args.data_format = 'ttl'
+        else:
+            print(f"Error: No default data-format given and cannot infer it from filename {args.data}")
+            exit(1)
     data_graph.parse(args.data, format=args.data_format)
     # Load SHACL shapes (Shapes Graph)
     shapes_graph = Graph(store='Oxigraph')
@@ -63,8 +72,14 @@ def main():
     extra_graph = Graph(store='Oxigraph')
     if args.mode == 'instance':
         # Load extra ontology if provided
-        if args.extra:
-            extra_graph.parse(args.extra, format="turtle")
+        # if no extras given, default to entities.ttl
+        if args.extra is None:
+            args.extra = 'entities.ttl'
+        extra_graph.parse(args.extra, format="turtle")
+        # instance validation must be strict
+        # There should be no mix between ontologies and instances
+        args.strict = True
+        # Dataformat is json-ld if
     elif args.mode == 'ontology':
         mainontology = next(data_graph.subjects(RDF.type, OWL.Ontology), None)
         if mainontology and not args.no_imports:

@@ -23,8 +23,8 @@ RESULTFILE=result.txt
 # Each test is defined as:
 # "TestName SHACLFILE TESTFILE [extra options]"
 tests=(
-  "RankValueTest ../../validation/ontology/rankValue.shacl.ttl ./rankValueTest.ttl -ni"
-  "HasComponentTest ../../validation/ontology/hasComponent.shacl.ttl ./hasComponentTest.ttl"
+  "RankValueTest ../../validation/ontology/rankValue.shacl.ttl ./rankValueTest.ttl -ni -m ontology"
+  "HasComponentTest ../../validation/ontology/hasComponent.shacl.ttl ./hasComponentTest.ttl -m ontology -ni"
 )
 
 for test in "${tests[@]}"; do
