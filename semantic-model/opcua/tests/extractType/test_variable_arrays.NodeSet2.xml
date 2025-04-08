@@ -106,7 +106,12 @@
       <Reference ReferenceType="HasComponent">ns=1;i=1008</Reference>
       <Reference ReferenceType="HasComponent">ns=1;i=1009</Reference>
       <Reference ReferenceType="HasComponent">ns=1;i=1010</Reference>
-
+      <Reference ReferenceType="HasComponent">ns=1;i=1012</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1013</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1014</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1015</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1016</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1017</Reference>
     </References>
   </UAObject>
   <UAVariable NodeId="ns=1;i=1004" BrowseName="MyVariable" DataType="Int32" ValueRank="1" ArrayDimensions="2">
@@ -157,8 +162,42 @@
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=200</Reference>
     </References>
   </UAVariable>
-
-
+    <UAVariable NodeId="ns=1;i=1012" BrowseName="MyVariable9" DataType="Int32" ValueRank="1">
+    <DisplayName>Variable5 of B-object</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=200</Reference>
+    </References>
+  </UAVariable>
+  <UAVariable NodeId="ns=1;i=1013" BrowseName="MyVariable10" DataType="Float" ValueRank="-2">
+    <DisplayName>Variable5 of B-object</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=200</Reference>
+    </References>
+  </UAVariable>
+  <UAVariable NodeId="ns=1;i=1014" BrowseName="MyVariable11" DataType="String" ValueRank="1" ArrayDimensions="2">
+    <DisplayName>Variable2 of B-object</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+    </References>
+  </UAVariable>
+  <UAVariable NodeId="ns=1;i=1015" BrowseName="MyVariable12" DataType="Int32" ValueRank="1" ArrayDimensions="2">
+    <DisplayName>Variable2 of B-object</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+    </References>
+  </UAVariable>
+  <UAVariable NodeId="ns=1;i=1016" BrowseName="MyVariable13" DataType="Int32" ValueRank="0">
+    <DisplayName>Variable2 of B-object</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+    </References>
+  </UAVariable>
+  <UAVariable NodeId="ns=1;i=1017" BrowseName="MyVariable14" DataType="Int32" ValueRank="1" ArrayDimensions="2">
+    <DisplayName>Variable2 of B-object</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+    </References>
+  </UAVariable>
 
   <UAVariable NodeId="ns=1;i=2001" BrowseName="1:C" DataType="i=11">
     <DisplayName>Variable of AlphaType</DisplayName>
@@ -209,6 +248,12 @@
       <Reference ReferenceType="HasComponent">ns=1;i=2018</Reference>
       <Reference ReferenceType="HasComponent">ns=1;i=2019</Reference>
       <Reference ReferenceType="HasComponent">ns=1;i=2020</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2021</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2022</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2023</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2024</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2025</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2026</Reference>
     </References>
   </UAObject>
   <UAVariable NodeId="ns=1;i=2013" BrowseName="MyVariable" DataType="Int32">
@@ -285,8 +330,10 @@
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=200</Reference>
     </References>
+      <Value>
       <uax:ListOfString>
       </uax:ListOfString>
+      </Value>
   </UAVariable>
   <UAVariable NodeId="ns=1;i=2020" BrowseName="MyVariable8" DataType="String">
     <DisplayName>Scalar or array Variable</DisplayName>
@@ -295,5 +342,70 @@
     </References>
       <uax:ListOfString>
       </uax:ListOfString>
+  </UAVariable>
+    <UAVariable NodeId="ns=1;i=2021" BrowseName="MyVariable9" DataType="Int32">
+    <DisplayName>Int32 Array Variable</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+    </References>
+      <Value>
+        <uax:ListOfFloat>
+          <uax:Float>0.0</uax:Float>
+          <uax:Float>1.0</uax:Float>
+        </uax:ListOfFloat>
+      </Value>
+  </UAVariable>
+  <UAVariable NodeId="ns=1;i=2022" BrowseName="MyVariable10" DataType="Float" ValueRank="-2">
+    <DisplayName>Scalar Variable</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+    </References>
+      <Value>
+      <uax:Int32>1</uax:Int32>
+      </Value>
+  </UAVariable>
+  <UAVariable NodeId="ns=1;i=2023" BrowseName="MyVariable11" DataType="String">
+    <DisplayName>Scalar or array Variable</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=200</Reference>
+    </References>
+    <Value>
+      <uax:ListOfString>
+      <uax:String>x</uax:String>
+      <uax:String>y</uax:String>
+      <uax:String>z</uax:String>
+      </uax:ListOfString>
+    </Value>
+  </UAVariable>
+  <UAVariable NodeId="ns=1;i=2024" BrowseName="MyVariable12">
+    <DisplayName>Scalar or array Variable</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=200</Reference>
+    </References>
+    <Value>
+      <uax:ListOfInt32>
+      <uax:Int32>99</uax:Int32>
+      </uax:ListOfInt32>
+    </Value>
+  </UAVariable>
+  <UAVariable NodeId="ns=1;i=2025" BrowseName="MyVariable13">
+    <DisplayName>Scalar or array Variable</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=200</Reference>
+    </References>
+    <Value>
+      <uax:ListOfInt32>
+      </uax:ListOfInt32>
+    </Value>
+  </UAVariable>
+  <UAVariable NodeId="ns=1;i=2026" BrowseName="MyVariable14">
+    <DisplayName>Scalar or array Variable</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=200</Reference>
+    </References>
+    <Value>
+      <uax:ListOfInt32>
+      </uax:ListOfInt32>
+    </Value>
   </UAVariable>
 </UANodeSet>

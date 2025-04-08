@@ -1,4 +1,9 @@
 # tests/test_utils.py
+import io
+import sys
+import os
+from pathlib import Path
+from urllib.parse import quote
 import unittest
 from unittest.mock import MagicMock, patch
 from rdflib import Graph, Namespace, URIRef, Literal, BNode
@@ -7,8 +12,119 @@ from rdflib.collection import Collection
 from lib.utils import RdfUtils, downcase_string, isNodeId, convert_to_json_type, idtype2String, extract_namespaces, \
                                 get_datatype, attributename_from_type, get_default_value, get_value, normalize_angle_bracket_name, \
                                 contains_both_angle_brackets, get_typename, get_common_supertype, rdfStringToPythonBool, \
-                                get_rank_dimensions, get_type_and_template, OntologyLoader
+                                get_rank_dimensions, get_type_and_template, OntologyLoader, file_path_to_uri, create_list, \
+                                extract_subgraph, dump_without_prefixes, get_contentclass, quote_url, merge_attributes, dump_graph 
 
+class TestUtilityFunctions(unittest.TestCase):
+
+    def setUp(self):
+        # Initialize a base namespace for tests where needed.
+        self.basens = Namespace("http://example.org/base/")
+
+    def test_file_path_to_uri_http(self):
+        """Test that an HTTP URL remains unchanged when converting to a URI."""
+        test_url = "http://example.org/test"
+        result = file_path_to_uri(test_url)
+        self.assertEqual(result, URIRef(test_url))
+
+    def test_file_path_to_uri_local(self):
+        """Test that a local file path is converted to a proper file URI."""
+        test_path = "dummy_test.txt"
+        expected = URIRef(Path(os.path.abspath(test_path)).as_uri())
+        result = file_path_to_uri(test_path)
+        self.assertEqual(result, expected)
+
+    def test_create_list(self):
+        """Test that create_list builds a proper RDF collection from a Python list."""
+        graph = Graph()
+        arr = ['a', 'b', 'c']
+        list_start = create_list(graph, arr, str)
+        col = Collection(graph, list_start)
+        expected = [Literal(item) for item in arr]
+        self.assertEqual(list(col), expected)
+
+    def test_extract_subgraph_no_predicates(self):
+        """Test that extract_subgraph returns all triples recursively when no predicates are provided."""
+        graph = Graph()
+        a = URIRef("http://example.org/A")
+        b = BNode()
+        graph.add((a, URIRef("http://example.org/hasChild"), b))
+        graph.add((b, URIRef("http://example.org/type"), Literal("Child")))
+        subg = extract_subgraph(graph, a)
+        self.assertTrue((a, URIRef("http://example.org/hasChild"), b) in subg)
+        self.assertTrue((b, URIRef("http://example.org/type"), Literal("Child")) in subg)
+
+    def test_extract_subgraph_with_predicates(self):
+        """Test extract_subgraph when a list of predicates is provided."""
+        graph = Graph()
+        a = URIRef("http://example.org/A")
+        pred1 = URIRef("http://example.org/pred1")
+        pred2 = URIRef("http://example.org/pred2")
+        b = BNode()
+        c = BNode()
+        graph.add((a, pred1, b))
+        graph.add((b, pred2, c))
+        predicates = [pred1, pred2]
+        subg = extract_subgraph(graph, a, predicates=predicates.copy())
+        self.assertTrue((a, pred1, b) in subg)
+        self.assertTrue((b, pred2, c) in subg)
+
+    def test_dump_without_prefixes_turtle(self):
+        """Test that dump_without_prefixes removes prefix declarations in Turtle serialization."""
+        graph = Graph()
+        graph.bind("base", self.basens)
+        a = URIRef("http://example.org/A")
+        b = URIRef("http://example.org/B")
+        graph.add((a, RDF.type, b))
+        dumped = dump_without_prefixes(graph, format='turtle')
+        self.assertNotIn("@prefix", dumped)
+        self.assertNotIn("PREFIX", dumped)
+        self.assertIn("http://example.org/A", dumped)
+        self.assertIn("http://example.org/B", dumped)
+
+    def test_get_contentclass(self):
+        """Test that get_contentclass returns the expected instance given a content class and value."""
+        graph = Graph()
+        test_type = URIRef("http://example.org/TestClass")
+        instance = URIRef("http://example.org/instance")
+        value_str = '"test"'
+        value_node = BNode()
+        graph.add((instance, RDF.type, test_type))
+        graph.add((instance, self.basens['hasValueNode'], value_node))
+        graph.add((value_node, self.basens['hasEnumValue'], Literal("test")))
+        graph.add((value_node, self.basens['hasValueClass'], test_type))
+        result = get_contentclass(str(test_type), value_str, graph, self.basens)
+        self.assertEqual(result, instance)
+
+    def test_quote_url(self):
+        """Test that quote_url correctly percent-encodes a URL."""
+        test_input = "http://example.org/test?query=1"
+        expected = quote(test_input)
+        result = quote_url(test_input)
+        self.assertEqual(result, expected)
+
+    def test_merge_attributes(self):
+        """Test that merge_attributes correctly merges dictionary attributes."""
+        instance = {"a": 1}
+        attributes = {"b": 2, "a": 3}
+        merge_attributes(instance, attributes)
+        self.assertEqual(instance, {"a": 3, "b": 2})
+
+    def test_dump_graph(self):
+        """Test that dump_graph prints the triples in the graph."""
+        graph = Graph()
+        triple = (URIRef("http://example.org/A"), RDF.type, Literal("Test"))
+        graph.add(triple)
+        captured_output = io.StringIO()
+        original_stdout = sys.stdout
+        try:
+            sys.stdout = captured_output
+            dump_graph(graph)
+        finally:
+            sys.stdout = original_stdout
+        output = captured_output.getvalue()
+        self.assertIn("http://example.org/A", output)
+        self.assertIn("Test", output)
 class TestUtils(unittest.TestCase):
 
     def setUp(self):
@@ -139,16 +255,16 @@ class TestUtils(unittest.TestCase):
         g = Graph()
         bnode = BNode()
         collection = Collection(g, bnode, [Literal(0), Literal(1), Literal(2)])
-        self.assertEqual(get_value(g, '99', [XSD.integer]), int(99))
-        self.assertEqual(get_value(g, '0.123', [XSD.double]), float(0.123))
-        self.assertEqual(get_value(g, 'hello', [XSD.string]), str('hello'))
-        self.assertEqual(get_value(g, 'True', [XSD.boolean]), True)
+        self.assertEqual(get_value(g, Literal(int(99)), [XSD.integer]), int(99))
+        self.assertEqual(get_value(g, Literal(float('0.123')), [XSD.double]), float(0.123))
+        self.assertEqual(get_value(g, Literal('hello'), [XSD.string]), str('hello'))
+        self.assertEqual(get_value(g, Literal(True), [XSD.boolean]), True)
         self.assertEqual(get_value(g, bnode, [XSD.integer]), {'@list': [ 0, 1, 2 ]})
         self.assertEqual(get_value(g, Literal(99), [XSD.integer, XSD.double]), int(99))
-        self.assertEqual(get_value(g, Literal(99), [XSD.boolean, XSD.double]), True)
+        self.assertEqual(get_value(g, Literal(True), [XSD.boolean, XSD.double]), True)
         self.assertEqual(get_value(g, "{}", [RDF.JSON]), {'@value': '{}', '@type': '@json'})
         self.assertEqual(get_value(g, '1970-2-1T00:00:00', [XSD.dateTime]), {'@value': '1970-2-1T00:00:00', '@type': 'xsd:dateTime'})
-
+        self.assertEqual(get_value(g, RDF.nil, [RDF.JSON]), {'@list': [ ]})
 
     def test_get_value_collection_exception(self):
         """Test that get_value raises an exception when Collection() fails."""
@@ -380,6 +496,107 @@ class TestUtils(unittest.TestCase):
         not_a_nodeclass = URIRef("http://example.org/opcua/NotANodeClass")
         self.assertFalse(self.rdf_utils.isNodeclass(not_a_nodeclass))
 
+    def test_generate_node_id(self):
+        """Test the generate_node_id method with various namespace and id scenarios."""
+        # Scenario 1: id provided and node namespace equals root entity namespace.
+        graph = Graph()
+        node = URIRef("http://example.org/node")
+        rootentity = URIRef("http://example.org/root")
+        ns = URIRef("http://example.org/ns")
+        # Set required triples for node
+        graph.add((node, self.basens['hasNodeId'], Literal("12345")))
+        graph.add((node, self.basens['hasIdentifierType'], self.basens['numericID']))  # Expect idtype 'i'
+        graph.add((node, self.basens['hasNamespace'], ns))
+        graph.add((ns, self.basens['hasUri'], Literal("ns://example")))
+        # Set rootentity with matching namespace
+        graph.add((rootentity, self.basens['hasNamespace'], ns))
+        
+        result1 = self.rdf_utils.generate_node_id(graph, rootentity, node, "testID")
+        # Expected: "ns://example" + "testID" + ":" + "i" + "12345" => "ns://exampletestID:i12345"
+        self.assertEqual(result1, "ns://exampletestID:i12345")
+        
+        # Scenario 2: id is None, so the extra id value is not included.
+        graph2 = Graph()
+        node2 = URIRef("http://example.org/node2")
+        rootentity2 = URIRef("http://example.org/root2")
+        ns2 = URIRef("http://example.org/ns2")
+        graph2.add((node2, self.basens['hasNodeId'], Literal("67890")))
+        graph2.add((node2, self.basens['hasIdentifierType'], self.basens['guidID']))  # Expect idtype 'g'
+        graph2.add((node2, self.basens['hasNamespace'], ns2))
+        graph2.add((ns2, self.basens['hasUri'], Literal("ns://another")))
+        graph2.add((rootentity2, self.basens['hasNamespace'], ns2))
+        
+        result2 = self.rdf_utils.generate_node_id(graph2, rootentity2, node2, None)
+        # Expected: "ns://another" + "g" + "67890" => "ns://anotherg67890"
+        self.assertEqual(result2, "ns://anotherg67890")
+        
+        # Scenario 3: id provided but node namespace differs from root entity namespace.
+        graph3 = Graph()
+        node3 = URIRef("http://example.org/node3")
+        rootentity3 = URIRef("http://example.org/root3")
+        ns3_node = URIRef("http://example.org/nsnode")
+        ns3_root = URIRef("http://example.org/nsroot")
+        graph3.add((node3, self.basens['hasNodeId'], Literal("abcde")))
+        graph3.add((node3, self.basens['hasIdentifierType'], self.basens['opaqueID']))  # Expect idtype 'b'
+        graph3.add((node3, self.basens['hasNamespace'], ns3_node))
+        graph3.add((ns3_node, self.basens['hasUri'], Literal("ns://node")))
+        # Root entity with a different namespace
+        graph3.add((rootentity3, self.basens['hasNamespace'], ns3_root))
+        graph3.add((ns3_root, self.basens['hasUri'], Literal("ns://root")))
+        
+        result3 = self.rdf_utils.generate_node_id(graph3, rootentity3, node3, "whatever")
+        # Expected: "ns://node" + "b" + "abcde" => "ns://nodebabcde"
+        self.assertEqual(result3, "ns://nodebabcde")
+
+    def test_get_object_types_from_namespace(self):
+        """Test retrieving object types from the RDF graph within a specific namespace."""
+        graph = Graph()
+        # Use a test entity namespace as a string.
+        entity_namespace = "http://example.org/object/"
+        # Create a test object whose URI starts with the given namespace.
+        test_obj = URIRef("http://example.org/object/TestObject")
+        # Define a custom type for this object.
+        custom_type = URIRef("http://example.org/object/CustomType")
+        # Add the required triple to mark the object as an instance of the OPC UA Object Node Class.
+        graph.add((test_obj, RDF.type, self.opcuans['ObjectNodeClass']))
+        # Also, add a triple indicating the object is of a custom type.
+        graph.add((test_obj, RDF.type, custom_type))
+        # Call get_object_types_from_namespace to retrieve the types.
+        found_types = self.rdf_utils.get_object_types_from_namespace(graph, entity_namespace)
+        # Check that a list is returned and that the custom type is among the returned types.
+        self.assertIsInstance(found_types, list)
+        self.assertIn(custom_type, found_types)
+
+    def test_get_machinery_nodes(self):
+        """Test retrieving machinery nodes from the RDF graph."""
+        graph = Graph()
+        # Create a machine folder that is an instance of opcua:FolderType.
+        machine_folder = URIRef("http://example.org/machine_folder")
+        graph.add((machine_folder, RDF.type, self.opcuans['FolderType']))
+        # The machine folder must have a namespace equal to machinery:MACHINERYNamespace.
+        # Use the MACHINERY constant from utils.py.
+        from lib.utils import MACHINERY
+        graph.add((machine_folder, self.basens['hasNamespace'], MACHINERY['MACHINERYNamespace']))
+        # It must have a node id "1001".
+        graph.add((machine_folder, self.basens['hasNodeId'], Literal("1001")))
+        
+        # Create a machine node that is organized by the folder.
+        machine = URIRef("http://example.org/machine")
+        # The query uses opcua:Organizes OR opcua:HasComponent, here we use Organizes.
+        graph.add((machine_folder, self.opcuans['Organizes'], machine))
+        # Give the machine a type that is not a subclass of opcua:BaseNodeClass.
+        custom_type = URIRef("http://example.org/customType")
+        graph.add((machine, RDF.type, custom_type))
+        # (Do not add any triple that would relate custom_type to opcua:BaseNodeClass)
+
+        # Call get_machinery_nodes.
+        result = self.rdf_utils.get_machinery_nodes(graph)
+        # Verify that the result is a list
+        self.assertIsInstance(result, list)
+        # The SPARQL query returns rows with two columns: machine and type.
+        # Check that the tuple (machine, custom_type) is present in the result.
+        self.assertIn((machine, custom_type), result)
+
 class TestGetRankDimensions(unittest.TestCase):
 
     def setUp(self):
@@ -582,5 +799,6 @@ class TestOntologyLoader(unittest.TestCase):
                 mock_print.assert_called_with(
                    'Importing http://example.org/ont2 from url ont2.'
                 )
+
 if __name__ == "__main__":
     unittest.main()

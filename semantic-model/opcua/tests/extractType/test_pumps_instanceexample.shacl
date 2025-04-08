@@ -1,4 +1,4 @@
-@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+        @prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
 @prefix devices: <http://opcfoundation.org/UA/DI/> .
 @prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/> .
 @prefix opcua: <http://opcfoundation.org/UA/> .

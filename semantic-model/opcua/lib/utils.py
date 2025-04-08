@@ -25,6 +25,7 @@ from functools import reduce
 import operator
 import json
 from pyld import jsonld
+import urllib
 
 
 WARNSTR = {
@@ -33,7 +34,8 @@ WARNSTR = {
     'abstract_datatype': "ABSTRACT_DATATYPE",
     'no_default_instance': "NO_DEFAULT_INSTANCE",
     'no_iri_value': "NO_IRI_VALUE",
-    'ignored_variable_reference': "WRONG_VARIABLE_REFERENCE"
+    'ignored_variable_reference': "WRONG_VARIABLE_REFERENCE",
+    'non_reached_nodes': "NON_REACHED_NODES"
 }
 
 NULL_IRI = URIRef('urn:ngsi-ld:null')
@@ -210,8 +212,10 @@ def get_value(g, value, datatypes):
         except:
             print("Warning: BNode which is not an rdf:List cannot be converted into a value")
             return None
+    elif value == RDF.nil:
+        return {'@list': []}
     if cast is not None:
-        return cast(value)
+        return value.toPython()
     if datatype == RDF.JSON:
         return {'@value': str(value), '@type': '@json'}
     if datatype == XSD.dateTime:
@@ -340,6 +344,8 @@ def file_path_to_uri(file_path):
 
 
 def create_list(g, arr, datatype):
+    if len(arr) == 0:
+        return RDF.nil
     literal_list = [Literal(datatype(item)) for item in arr]
     list_start = BNode()
     Collection(g, list_start, literal_list)
@@ -642,6 +648,25 @@ class RdfUtils:
         if len(result) > 0:
             foundtypes = [elem[0] for elem in list(result)]
         return foundtypes
+
+    def generate_node_id(self, graph, rootentity, node, id):
+        try:
+            node_id = next(graph.objects(node, self.basens['hasNodeId']))
+            idtype = next(graph.objects(node, self.basens['hasIdentifierType']))
+            rootns = next(graph.objects(rootentity, self.basens['hasNamespace']))
+            rootnsuri = next(graph.objects(rootns, self.basens['hasUri']))
+            ns = next(graph.objects(node, self.basens['hasNamespace']))
+            nsuri = next(graph.objects(ns, self.basens['hasUri']))
+        except:
+            node_id = 'unknown'
+        idt = idtype2String(idtype, self.basens)
+        quoted_node_id = urllib.parse.quote(node_id)
+        if id is not None and str(nsuri) == str(rootnsuri):
+            quoted_id = urllib.parse.quote(id, safe='/:')
+            result = f'{nsuri}{quoted_id}:{idt}{quoted_node_id}'
+        else:
+            result = f'{nsuri}{idt}{quoted_node_id}'
+        return result
 
 
 class OntologyLoader:

@@ -26,6 +26,7 @@ import lib.utils as utils
 from lib.jsonld import JsonLd
 from functools import reduce
 import operator
+from lib.utils import NGSILD
 
 
 class Shacl:
@@ -48,6 +49,23 @@ class Shacl:
         return shapename
 
     def get_array_validation_shape(self, datatype, pattern, value_rank, array_dimensions):
+        """Create Shape for Array
+           Example: "@list": [1] is translated to RDF like a linked list:
+                     _:b0 rdf:first 1 ;
+                     rdf:rest rdf:nil .
+                     So the corresponding SHACL expression is
+                    [
+                      sh:property [ sh:or ( [ sh:datatype xsd:integer ] ) ;
+                        sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ]
+        Args:
+            datatype (_type_): _description_
+            pattern (_type_): _description_
+            value_rank (_type_): _description_
+            array_dimensions (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
         property_shape = BNode()
         zero_or_more_node = BNode()
         self.shaclg.add((zero_or_more_node, SH.zeroOrMorePath, RDF.rest))
@@ -58,8 +76,8 @@ class Shacl:
         self.shaclg.add((property_shape, SH.path, path_list_head))
         if datatype is not None:
             shapes = self.create_datatype_shapes(datatype)
-            pred, obj = self.shacl_or(shapes)
-            self.shacl_add_to_shape(property_shape, pred, obj)
+            tuples = self.shacl_or(shapes)
+            self.shacl_add_to_shape(property_shape, tuples)
         if pattern is not None:
             self.shaclg.add((property_shape, SH.pattern, Literal(pattern)))
         array_length = None
@@ -70,9 +88,16 @@ class Shacl:
         if array_length is not None and array_length > 0:
             self.shaclg.add((property_shape, SH.minCount, Literal(array_length)))
             self.shaclg.add((property_shape, SH.maxCount, Literal(array_length)))
+        property_node_array = []
         property_node = BNode()
         self.shaclg.add((property_node, SH.property, property_shape))
-        return property_node
+        self.shaclg.add((property_node, SH.nodeKind, SH.BlankNode))
+        property_node_array.append(property_node)
+        if array_length is None or array_length == 0:
+            property_node = BNode()
+            self.shaclg.add((property_node, SH.hasValue, RDF.nil))
+            property_node_array.append(property_node)
+        return property_node_array
 
     def create_shacl_property(self,
                               shapename,
@@ -125,39 +150,35 @@ class Shacl:
             if value_rank is None or int(value_rank) == -1:
                 self.shaclg.add((innerproperty, SH.nodeKind, SH.Literal))
                 shapes = self.create_datatype_shapes(datatype)
-                pred, obj = self.shacl_or(shapes)
-                self.shacl_add_to_shape(innerproperty, pred, obj)
+                tuples = self.shacl_or(shapes)
+                self.shacl_add_to_shape(innerproperty, tuples)
             elif int(value_rank) >= 0:
                 array_validation_shape = self.get_array_validation_shape(datatype,
                                                                          pattern,
                                                                          value_rank,
                                                                          array_dimensions)
-                pred, obj = self.shacl_or([array_validation_shape])
-                self.shaclg.add((innerproperty, pred, obj))
-                blank_node_shape = BNode()
-                self.shaclg.add((blank_node_shape, SH.nodeKind, SH.BlankNode))
-                rdf_nil_value_shape = BNode()
-                self.shaclg.add((rdf_nil_value_shape, SH.hasValue, RDF.nil))
-                pred, obj = self.shacl_or([blank_node_shape, rdf_nil_value_shape])
-                self.shaclg.add((innerproperty, pred, obj))
+                tuples = self.shacl_or(array_validation_shape)
+                self.shacl_add_to_shape(innerproperty, tuples)
+                self.shacl_add_to_shape(innerproperty, tuples)
             elif int(value_rank) < -1:
                 dt_array = self.create_datatype_shapes(datatype)
                 array_validation_shape = self.get_array_validation_shape(datatype,
                                                                          pattern,
                                                                          value_rank,
                                                                          array_dimensions)
-                dt_array.append(array_validation_shape)
-                pred, obj = self.shacl_or(dt_array)
-                self.shacl_add_to_shape(innerproperty, pred, obj)
+                dt_array += array_validation_shape
+                tuples = self.shacl_or(dt_array)
+                self.shacl_add_to_shape(innerproperty, tuples)
         if pattern is not None:
             self.shaclg.add((innerproperty, SH['pattern'], Literal(pattern)))
         self.shaclg.add((innerproperty, SH.minCount, Literal(1)))
         self.shaclg.add((innerproperty, SH.maxCount, Literal(1)))
-        return innerproperty
+        return property
 
-    def shacl_add_to_shape(self, property_shape, pred, obj):
-        if pred is not None:
-            self.shaclg.add((property_shape, pred, obj))
+    def shacl_add_to_shape(self, property_shape, tuples):
+        if tuples is not None:
+            for tup in tuples:
+                self.shaclg.add((property_shape, tup[0], tup[1]))
 
     def create_datatype_shapes(self, datatypes):
         if datatypes is None or len(datatypes) == 0:
@@ -179,18 +200,19 @@ class Shacl:
             shapes (): shapes to or, e.g. (in turtle notation) ( [sh:datatype xsd:integer] [sh:datatype xsd:string])
 
         Returns:
-            RDF Nodes: predicate, object
+            RDF Nodes as tuple: (predicate, object)
         """
         if len(shapes) == 1:
-            # only one OR element
-            # must start with BNode
-            s, p, o = next(self.shaclg.triples((shapes[0], None, None)))
-            # remove subject, it is expected to be relinked by the caller
-            self.shaclg.remove((s, p, o))
-            return p, o
+            result = []
+            # Get all elements in blank node
+            for s, p, o in self.shaclg.triples((shapes[0], None, None)):
+                result.append((p, o))
+                # remove subject, it is expected to be relinked by the caller
+                self.shaclg.remove((s, p, o))
+            return result
         or_node = BNode()
         Collection(self.shaclg, or_node, shapes)
-        return SH['or'], or_node
+        return [(SH['or'], or_node)]
 
     def get_typename(self, url):
         result = urlparse(url)
@@ -328,6 +350,16 @@ or placeholders or both. Will try to guess the right value, but this can go wron
 
     def get_targetclass(self, shapenode):
         return next(self.shaclg.objects(shapenode, SH.targetClass), None)
+
+    def get_property_from_shape(self, shape, propertypath):
+        result = None
+        properties = self.shaclg.objects(shape, SH.property)
+        for property in properties:
+            path = next(self.shaclg.objects(property, SH.path))
+            if str(path) == str(propertypath):
+                result = property
+                break
+        return result
 
     def _get_property(self, targetclass, propertypath):
         result = None
@@ -685,7 +717,8 @@ class Validation:
             s, p, _ = next(self.data_graph.triples((None, None, inter_node)), (None, None, None))
             if s is not None:
                 inter_node = s
-                if self.data_graph.value(subject=s, predicate=RDF.type) is not None:
+                type = self.data_graph.value(subject=s, predicate=RDF.type)
+                if type is not None and type != NGSILD['Property'] and type != NGSILD['Relationship']:
                     parent_node = s
                     inter_node = None
             else:

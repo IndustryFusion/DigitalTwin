@@ -23,23 +23,25 @@ shacl:AlphaTypeShape a sh:NodeShape ;
 
 shacl:SubAShape a sh:NodeShape ;
     sh:property [ sh:maxCount 1 ;
-            sh:minCount 0 ;
-            sh:nodeKind sh:BlankNode ;
-            sh:path <http://my.test/entity/hasDataVariable2> ;
-            sh:property [ sh:maxCount 1 ;
-                    sh:minCount 1 ;
-                    sh:or ( [ sh:datatype xsd:double ] [ sh:property [ sh:datatype xsd:double ;
-                                        sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] ) ;
-                    sh:path ngsi-ld:hasValue ] ;
-            base:hasReferenceType opcua:HasComponent ],
-        [ sh:maxCount 1 ;
             sh:minCount 1 ;
             sh:nodeKind sh:BlankNode ;
             sh:path <http://my.test/entity/hasDataVariable> ;
             sh:property [ sh:maxCount 1 ;
                     sh:minCount 1 ;
-                    sh:or ( [ sh:datatype xsd:double ] [ sh:property [ sh:datatype xsd:double ;
-                                        sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] ) ;
+                    sh:or ( [ sh:datatype xsd:double ] [ sh:nodeKind sh:BlankNode ;
+                                sh:property [ sh:datatype xsd:double ;
+                                        sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
+                    sh:path ngsi-ld:hasValue ] ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path <http://my.test/entity/hasDataVariable2> ;
+            sh:property [ sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:or ( [ sh:datatype xsd:double ] [ sh:nodeKind sh:BlankNode ;
+                                sh:property [ sh:datatype xsd:double ;
+                                        sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
                     sh:path ngsi-ld:hasValue ] ;
             base:hasReferenceType opcua:HasComponent ] ;
     sh:targetClass test:SubA .

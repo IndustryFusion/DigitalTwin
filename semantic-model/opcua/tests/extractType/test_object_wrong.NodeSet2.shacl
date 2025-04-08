@@ -18,6 +18,17 @@ shacl:AlphaTypeShape a sh:NodeShape ;
                     sh:nodeKind sh:IRI ;
                     sh:path ngsi-ld:hasObject ] ;
             base:hasReferenceType test:X ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path <http://my.test/entity/hasC> ;
+            sh:property [ sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:or ( [ sh:datatype xsd:double ] [ sh:nodeKind sh:BlankNode ;
+                                sh:property [ sh:datatype xsd:double ;
+                                        sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
+                    sh:path ngsi-ld:hasValue ] ;
+            base:hasReferenceType opcua:HasComponent ],
         [ a base:SubComponentRelationship ;
             sh:maxCount 1 ;
             sh:minCount 0 ;
@@ -28,16 +39,6 @@ shacl:AlphaTypeShape a sh:NodeShape ;
                     sh:minCount 1 ;
                     sh:nodeKind sh:IRI ;
                     sh:path ngsi-ld:hasObject ] ;
-            base:hasReferenceType opcua:HasComponent ],
-        [ sh:maxCount 1 ;
-            sh:minCount 0 ;
-            sh:nodeKind sh:BlankNode ;
-            sh:path <http://my.test/entity/hasC> ;
-            sh:property [ sh:maxCount 1 ;
-                    sh:minCount 1 ;
-                    sh:or ( [ sh:datatype xsd:double ] [ sh:property [ sh:datatype xsd:double ;
-                                        sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] ) ;
-                    sh:path ngsi-ld:hasValue ] ;
             base:hasReferenceType opcua:HasComponent ] ;
     sh:targetClass test:AlphaType .
 
@@ -48,8 +49,9 @@ shacl:BTypeShape a sh:NodeShape ;
             sh:path <http://my.test/entity/hasMyVariable> ;
             sh:property [ sh:maxCount 1 ;
                     sh:minCount 1 ;
-                    sh:or ( [ sh:datatype xsd:boolean ] [ sh:property [ sh:datatype xsd:boolean ;
-                                        sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] ) ;
+                    sh:or ( [ sh:datatype xsd:boolean ] [ sh:nodeKind sh:BlankNode ;
+                                sh:property [ sh:datatype xsd:boolean ;
+                                        sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
                     sh:path ngsi-ld:hasValue ] ;
             base:hasReferenceType opcua:HasComponent ] ;
     sh:targetClass test:BType .

@@ -1,7 +1,7 @@
 [
     {
         "type": "http://example.org/MinimalNodeset/ObjectType",
-        "id": "urn:test:Object",
+        "id": "http://example.org/MinimalNodeset/testid:i1002",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
