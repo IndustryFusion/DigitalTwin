@@ -88,34 +88,6 @@ class TestJsonLd(unittest.TestCase):
         result, regexp = JsonLd.map_datatype_to_jsonld(self.opcuans['Number'], self.opcuans)
         self.assertEqual(result, [XSD.double, XSD.integer])
 
-    @patch("lib.utils.idtype2String", return_value="i")
-    def test_generate_node_id(self, mock_idtype2string):
-        """Test generating node ID."""
-        graph = Graph()
-        rootentity = URIRef("http://example.org/root")
-        node = URIRef("http://example.org/node")
-        id = "testId"
-
-        # Mocking graph objects
-        graph.objects = MagicMock(side_effect=[
-            iter([Literal("123")]),  # hasNodeId
-            iter([Literal("numericID")]),  # hasIdentifierType
-            iter([Literal("RootName")])  # hasBrowseName
-        ])
-
-        # Test for root entity
-        result = self.jsonld_instance.generate_node_id(graph, rootentity, rootentity, id)
-        self.assertEqual(result, "testId:RootName")
-
-        graph.objects = MagicMock(side_effect=[
-            iter([Literal("123")]),  # hasNodeId
-            iter([Literal("numericID")]),  # hasIdentifierType
-            iter([Literal("RootName")])  # hasBrowseName
-        ])
-        # Test for a non-root entity
-        result = self.jsonld_instance.generate_node_id(graph, rootentity, node, id)
-        self.assertEqual(result, "testId:RootName:sub:i123")
-
 class TestNestedJsonFromGraph(unittest.TestCase):
     def test_nested_json_from_graph_valid(self):
         """Test converting a graph with a blank node to a nested JSON object."""

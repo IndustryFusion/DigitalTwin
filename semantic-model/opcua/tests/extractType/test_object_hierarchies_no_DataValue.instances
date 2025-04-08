@@ -1,14 +1,14 @@
 [
     {
         "type": "http://my.test/BType",
-        "id": "urn:test:AlphaInstance:sub:i2012",
+        "id": "http://my.test/testid:i2012",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ]
     },
     {
         "type": "http://my.test/AlphaType",
-        "id": "urn:test:AlphaInstance",
+        "id": "http://my.test/testid:i2010",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -18,7 +18,7 @@
         },
         "uaentity:hasB": {
             "type": "Relationship",
-            "object": "urn:test:AlphaInstance:sub:i2012"
+            "object": "http://my.test/testid:i2012"
         }
     }
 ]

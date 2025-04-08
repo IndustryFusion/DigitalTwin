@@ -1,7 +1,7 @@
 [
     {
         "type": "http://opcfoundation.org/UA/Pumps/DriveMeasurementsType",
-        "id": "urn:test:ExamplePump:sub:i5006",
+        "id": "http://yourorganisation.org/InstanceExample/testid:i5006",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -32,33 +32,33 @@
     },
     {
         "type": "http://opcfoundation.org/UA/Pumps/DrivePortType",
-        "id": "urn:test:ExamplePump:sub:i5004",
+        "id": "http://yourorganisation.org/InstanceExample/testid:i5004",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
         "uaentity:hasMeasurements": [
             {
                 "type": "Relationship",
-                "object": "urn:test:ExamplePump:sub:i5006"
+                "object": "http://yourorganisation.org/InstanceExample/testid:i5006"
             }
         ]
     },
     {
         "type": "http://opcfoundation.org/UA/Pumps/PortsGroupType",
-        "id": "urn:test:ExamplePump:sub:i5003",
+        "id": "http://yourorganisation.org/InstanceExample/testid:i5003",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
         "uaentity:hasDrive": [
             {
                 "type": "Relationship",
-                "object": "urn:test:ExamplePump:sub:i5004"
+                "object": "http://yourorganisation.org/InstanceExample/testid:i5004"
             }
         ]
     },
     {
         "type": "http://opcfoundation.org/UA/Pumps/DesignType",
-        "id": "urn:test:ExamplePump:sub:i5021",
+        "id": "http://yourorganisation.org/InstanceExample/testid:i5021",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -121,7 +121,7 @@
     },
     {
         "type": "http://opcfoundation.org/UA/Pumps/SystemRequirementsType",
-        "id": "urn:test:ExamplePump:sub:i5022",
+        "id": "http://yourorganisation.org/InstanceExample/testid:i5022",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -134,26 +134,26 @@
     },
     {
         "type": "http://opcfoundation.org/UA/Pumps/ConfigurationGroupType",
-        "id": "urn:test:ExamplePump:sub:i5020",
+        "id": "http://yourorganisation.org/InstanceExample/testid:i5020",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
         "uaentity:hasDesign": [
             {
                 "type": "Relationship",
-                "object": "urn:test:ExamplePump:sub:i5021"
+                "object": "http://yourorganisation.org/InstanceExample/testid:i5021"
             }
         ],
         "uaentity:hasSystemRequirements": [
             {
                 "type": "Relationship",
-                "object": "urn:test:ExamplePump:sub:i5022"
+                "object": "http://yourorganisation.org/InstanceExample/testid:i5022"
             }
         ]
     },
     {
         "type": "http://opcfoundation.org/UA/Pumps/SupervisionProcessFluidType",
-        "id": "urn:test:ExamplePump:sub:i5010",
+        "id": "http://yourorganisation.org/InstanceExample/testid:i5010",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -168,7 +168,7 @@
     },
     {
         "type": "http://opcfoundation.org/UA/Pumps/SupervisionPumpOperationType",
-        "id": "urn:test:ExamplePump:sub:i5011",
+        "id": "http://yourorganisation.org/InstanceExample/testid:i5011",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -183,7 +183,7 @@
     },
     {
         "type": "http://opcfoundation.org/UA/Pumps/SupervisionMechanicsType",
-        "id": "urn:test:ExamplePump:sub:i5009",
+        "id": "http://yourorganisation.org/InstanceExample/testid:i5009",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -202,32 +202,32 @@
     },
     {
         "type": "http://opcfoundation.org/UA/Pumps/SupervisionType",
-        "id": "urn:test:ExamplePump:sub:i5008",
+        "id": "http://yourorganisation.org/InstanceExample/testid:i5008",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
         "uaentity:hasSupervisionProcessFluid": [
             {
                 "type": "Relationship",
-                "object": "urn:test:ExamplePump:sub:i5010"
+                "object": "http://yourorganisation.org/InstanceExample/testid:i5010"
             }
         ],
         "uaentity:hasSupervisionPumpOperation": [
             {
                 "type": "Relationship",
-                "object": "urn:test:ExamplePump:sub:i5011"
+                "object": "http://yourorganisation.org/InstanceExample/testid:i5011"
             }
         ],
         "uaentity:hasSupervisionMechanics": [
             {
                 "type": "Relationship",
-                "object": "urn:test:ExamplePump:sub:i5009"
+                "object": "http://yourorganisation.org/InstanceExample/testid:i5009"
             }
         ]
     },
     {
         "type": "http://opcfoundation.org/UA/Pumps/DocumentationType",
-        "id": "urn:test:ExamplePump:sub:i5005",
+        "id": "http://yourorganisation.org/InstanceExample/testid:i5005",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -238,7 +238,7 @@
     },
     {
         "type": "http://opcfoundation.org/UA/Pumps/PreventiveMaintenanceType",
-        "id": "urn:test:ExamplePump:sub:i5015",
+        "id": "http://yourorganisation.org/InstanceExample/testid:i5015",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -280,7 +280,7 @@
     },
     {
         "type": "http://opcfoundation.org/UA/Pumps/GeneralMaintenanceType",
-        "id": "urn:test:ExamplePump:sub:i5014",
+        "id": "http://yourorganisation.org/InstanceExample/testid:i5014",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -295,7 +295,7 @@
     },
     {
         "type": "http://opcfoundation.org/UA/Pumps/BreakdownMaintenanceType",
-        "id": "urn:test:ExamplePump:sub:i5013",
+        "id": "http://yourorganisation.org/InstanceExample/testid:i5013",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -310,32 +310,32 @@
     },
     {
         "type": "http://opcfoundation.org/UA/Pumps/MaintenanceGroupType",
-        "id": "urn:test:ExamplePump:sub:i5012",
+        "id": "http://yourorganisation.org/InstanceExample/testid:i5012",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
         "uaentity:hasPreventiveMaintenance": [
             {
                 "type": "Relationship",
-                "object": "urn:test:ExamplePump:sub:i5015"
+                "object": "http://yourorganisation.org/InstanceExample/testid:i5015"
             }
         ],
         "uaentity:hasGeneralMaintenance": [
             {
                 "type": "Relationship",
-                "object": "urn:test:ExamplePump:sub:i5014"
+                "object": "http://yourorganisation.org/InstanceExample/testid:i5014"
             }
         ],
         "uaentity:hasBreakdownMaintenance": [
             {
                 "type": "Relationship",
-                "object": "urn:test:ExamplePump:sub:i5013"
+                "object": "http://yourorganisation.org/InstanceExample/testid:i5013"
             }
         ]
     },
     {
         "type": "http://opcfoundation.org/UA/Pumps/PumpActuationType",
-        "id": "urn:test:ExamplePump:sub:i5017",
+        "id": "http://yourorganisation.org/InstanceExample/testid:i5017",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -352,7 +352,7 @@
     },
     {
         "type": "http://opcfoundation.org/UA/Pumps/VibrationMeasurementType",
-        "id": "urn:test:ExamplePump:sub:i5019",
+        "id": "http://yourorganisation.org/InstanceExample/testid:i5019",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -371,14 +371,14 @@
     },
     {
         "type": "http://opcfoundation.org/UA/Pumps/MeasurementsType",
-        "id": "urn:test:ExamplePump:sub:i5018",
+        "id": "http://yourorganisation.org/InstanceExample/testid:i5018",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
         "uaentity:hasVibration": [
             {
                 "type": "Relationship",
-                "object": "urn:test:ExamplePump:sub:i5019",
+                "object": "http://yourorganisation.org/InstanceExample/testid:i5019",
                 "datasetId": "urn:iff:datasetId:Sensor1"
             }
         ],
@@ -405,63 +405,63 @@
     },
     {
         "type": "http://opcfoundation.org/UA/Pumps/OperationalGroupType",
-        "id": "urn:test:ExamplePump:sub:i5016",
+        "id": "http://yourorganisation.org/InstanceExample/testid:i5016",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
         "uaentity:hasPumpActuation": [
             {
                 "type": "Relationship",
-                "object": "urn:test:ExamplePump:sub:i5017"
+                "object": "http://yourorganisation.org/InstanceExample/testid:i5017"
             }
         ],
         "uaentity:hasMeasurements": [
             {
                 "type": "Relationship",
-                "object": "urn:test:ExamplePump:sub:i5018"
+                "object": "http://yourorganisation.org/InstanceExample/testid:i5018"
             }
         ]
     },
     {
         "type": "http://opcfoundation.org/UA/Pumps/PumpType",
-        "id": "urn:test:ExamplePump",
+        "id": "http://yourorganisation.org/InstanceExample/testid:i5002",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
         "uaentity:hasPorts": [
             {
                 "type": "Relationship",
-                "object": "urn:test:ExamplePump:sub:i5003"
+                "object": "http://yourorganisation.org/InstanceExample/testid:i5003"
             }
         ],
         "uaentity:hasConfiguration": [
             {
                 "type": "Relationship",
-                "object": "urn:test:ExamplePump:sub:i5020"
+                "object": "http://yourorganisation.org/InstanceExample/testid:i5020"
             }
         ],
         "uaentity:hasEvents": [
             {
                 "type": "Relationship",
-                "object": "urn:test:ExamplePump:sub:i5008"
+                "object": "http://yourorganisation.org/InstanceExample/testid:i5008"
             }
         ],
         "uaentity:hasDocumentation": [
             {
                 "type": "Relationship",
-                "object": "urn:test:ExamplePump:sub:i5005"
+                "object": "http://yourorganisation.org/InstanceExample/testid:i5005"
             }
         ],
         "uaentity:hasMaintenance": [
             {
                 "type": "Relationship",
-                "object": "urn:test:ExamplePump:sub:i5012"
+                "object": "http://yourorganisation.org/InstanceExample/testid:i5012"
             }
         ],
         "uaentity:hasOperational": [
             {
                 "type": "Relationship",
-                "object": "urn:test:ExamplePump:sub:i5016"
+                "object": "http://yourorganisation.org/InstanceExample/testid:i5016"
             }
         ]
     }

@@ -34,7 +34,12 @@ class TestShacl(unittest.TestCase):
         pattern = None
         bnode = BNode()
         collection = Collection(self.shacl_instance.data_graph, bnode, [Literal(2), Literal(3)])
-        property_node = self.shacl_instance.get_array_validation_shape(datatype, pattern, None, bnode)
+        property_nodes = self.shacl_instance.get_array_validation_shape(datatype, pattern, None, bnode)
+        property_node = None
+        for pnode in property_nodes:
+            if len(list(self.shacl_instance.shaclg.triples((pnode, SH.property, None)))) > 0:
+                property_node = pnode
+                break
         _, _, property_shape = next(self.shacl_instance.shaclg.triples((property_node, SH.property, None)))
         _, _, array_length = next(self.shacl_instance.shaclg.triples((property_shape, SH.maxCount, None)))
         self.assertEqual(int(array_length), 6)

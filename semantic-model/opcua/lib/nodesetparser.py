@@ -545,9 +545,12 @@ Did you forget to import it?")
                 if 'ListOf' in tag:
                     if basic_type_found:
                         data = self.data_schema.to_dict(children, namespaces=xml_ns, indent=4)
-                        field = [ele for ele in data.keys() if ('@' not in ele)][0]
-                        result = data[field]
-                        created_list = utils.create_list(self.g, result, lambda x: x)
+                        try:
+                            field = [ele for ele in data.keys() if ('@' not in ele)][0]
+                            result = data[field]
+                            created_list = utils.create_list(self.g, result, lambda x: x)
+                        except:
+                            created_list = utils.create_list(self.g, [], lambda x: x)
                         self.g.add((classiri, self.rdf_ns['base']['hasValue'], created_list))
                     continue
                 elif basic_type_found:

@@ -16,9 +16,7 @@
 
 import json
 from rdflib.namespace import XSD, RDF
-import lib.utils as utils
 from pyld import jsonld
-import urllib
 
 ngsild_context = "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"
 
@@ -191,19 +189,3 @@ class JsonLd:
         if data_type == opcuans['DateTime']:
             return [XSD.dateTime], None
         return [RDF.JSON], None
-
-    def generate_node_id(self, graph, rootentity, node, id):
-        try:
-            node_id = next(graph.objects(node, self.basens['hasNodeId']))
-            idtype = next(graph.objects(node, self.basens['hasIdentifierType']))
-            bn = next(graph.objects(rootentity, self.basens['hasBrowseName']))
-        except:
-            node_id = 'unknown'
-        idt = utils.idtype2String(idtype, self.basens)
-        quoted_node_id = urllib.parse.quote(node_id)
-        quoted_id = urllib.parse.quote(id, safe='/:')
-        quoted_bn = urllib.parse.quote(bn, safe='/:')
-        if str(node) == str(rootentity):
-            return f'{quoted_id}:{quoted_bn}'
-        else:
-            return f'{quoted_id}:{quoted_bn}:sub:{idt}{quoted_node_id}'

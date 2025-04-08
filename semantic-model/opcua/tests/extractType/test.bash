@@ -56,7 +56,7 @@ TESTNODESETS=(
     )
 CLEANGRAPH=cleangraph.py
 TYPEURI=http://example.org/MinimalNodeset
-TESTURN=urn:test
+TESTID=testid
 SHACL=shacl.ttl
 ENTITIES_FILE=entities.ttl
 INSTANCES=instances.jsonld
@@ -192,7 +192,7 @@ for tuple in "${TESTNODESETS[@]}"; do IFS=","
     fi
     if [ "$DEBUG" = "true" ]; then
         echo DEBUG: python3 ${NODESET2OWL} ${nodeset}.xml -i ${IMPORTS[@]} ${INSTANCENAMESPACE[@]} -v http://example.com/v0.1/UA/ -p test -o ${NODESET2OWL_RESULT}
-        echo DEBUG: python3 ${EXTRACTTYPE} ${INSTANCETYPEOPTION} -n ${TESTURI} ${NODESET2OWL_RESULT} -i ${TESTURN} -xc ${LOCAL_CONTEXT} ${options}
+        echo DEBUG: python3 ${EXTRACTTYPE} ${INSTANCETYPEOPTION} -n ${TESTURI} ${NODESET2OWL_RESULT} -i ${TESTID} -xc ${LOCAL_CONTEXT} ${options}
     fi
     echo Create owl nodesets
     echo -------------------
@@ -200,9 +200,9 @@ for tuple in "${TESTNODESETS[@]}"; do IFS=","
     echo Extract types and instances
     echo ---------------------------
     if [ -z "$instancetype" ]; then
-        python3 ${EXTRACTTYPE}  -n ${TESTURI} ${NODESET2OWL_RESULT} -i ${TESTURN} -xc ${LOCAL_CONTEXT} ${options} 2>&1 | tee output.log
+        python3 ${EXTRACTTYPE}  -n ${TESTURI} ${NODESET2OWL_RESULT} -i ${TESTID} -xc ${LOCAL_CONTEXT} ${options} 2>&1 | tee output.log
     else
-        python3 ${EXTRACTTYPE} -t ${instancetype} -n ${TESTURI} ${NODESET2OWL_RESULT} -i ${TESTURN} -xc ${LOCAL_CONTEXT} ${options} 2>&1 | tee output.log
+        python3 ${EXTRACTTYPE} -t ${instancetype} -n ${TESTURI} ${NODESET2OWL_RESULT} -i ${TESTID} -xc ${LOCAL_CONTEXT} ${options} 2>&1 | tee output.log
     fi
     if [ ! -z "$warning" ]; then
         if ! grep -q $warning output.log; then

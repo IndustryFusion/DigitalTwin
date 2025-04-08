@@ -1,7 +1,7 @@
 [
     {
         "type": "http://my.test/BType",
-        "id": "urn:test:AlphaInstance:sub:i2012",
+        "id": "http://my.test/testid:i2012",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -12,7 +12,7 @@
     },
     {
         "type": "http://my.test/BSubType",
-        "id": "urn:test:AlphaInstance:sub:i2413",
+        "id": "http://my.test/testid:i2413",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -23,14 +23,14 @@
     },
     {
         "type": "http://my.test/AlphaSubType2",
-        "id": "urn:test:AlphaInstance:sub:i2411",
+        "id": "http://my.test/testid:i2411",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
         "uaentity:hasB2": [
             {
                 "type": "Relationship",
-                "object": "urn:test:AlphaInstance:sub:i2012"
+                "object": "http://my.test/testid:i2012"
             }
         ],
         "uaentity:hasMyProperty": {
@@ -40,29 +40,29 @@
         "uaentity:hasSubB3": [
             {
                 "type": "Relationship",
-                "object": "urn:test:AlphaInstance:sub:i2413"
+                "object": "http://my.test/testid:i2413"
             }
         ],
         "opcua:Organizes": [
             {
                 "type": "Relationship",
-                "object": "urn:test:AlphaInstance:sub:i2013"
+                "object": "http://my.test/testid:i2013"
             }
         ],
         "test:X": [
             {
                 "type": "Relationship",
-                "object": "urn:test:AlphaInstance:sub:i2412"
+                "object": "http://my.test/testid:i2412"
             },
             {
                 "type": "Relationship",
-                "object": "urn:test:AlphaInstance:sub:i2413"
+                "object": "http://my.test/testid:i2413"
             }
         ]
     },
     {
         "type": "http://my.test/BType",
-        "id": "urn:test:AlphaInstance:sub:i2013",
+        "id": "http://my.test/testid:i2013",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -73,7 +73,7 @@
     },
     {
         "type": "http://my.test/BType",
-        "id": "urn:test:AlphaInstance:sub:i2022",
+        "id": "http://my.test/testid:i2022",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -92,7 +92,7 @@
     },
     {
         "type": "http://my.test/BType",
-        "id": "urn:test:AlphaInstance:sub:i2011",
+        "id": "http://my.test/testid:i2011",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -103,7 +103,7 @@
     },
     {
         "type": "http://my.test/BSubType",
-        "id": "urn:test:AlphaInstance:sub:i2412",
+        "id": "http://my.test/testid:i2412",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -114,14 +114,14 @@
     },
     {
         "type": "http://my.test/AlphaSubType",
-        "id": "urn:test:AlphaInstance:sub:i2410",
+        "id": "http://my.test/testid:i2410",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
         "uaentity:hasB1": [
             {
                 "type": "Relationship",
-                "object": "urn:test:AlphaInstance:sub:i2011"
+                "object": "http://my.test/testid:i2011"
             }
         ],
         "uaentity:hasMyProperty": {
@@ -131,36 +131,36 @@
         "uaentity:hasSubB2": [
             {
                 "type": "Relationship",
-                "object": "urn:test:AlphaInstance:sub:i2412"
+                "object": "http://my.test/testid:i2412"
             }
         ],
         "opcua:Organizes": [
             {
                 "type": "Relationship",
-                "object": "urn:test:AlphaInstance:sub:i2013"
+                "object": "http://my.test/testid:i2013"
             }
         ],
         "test:X": [
             {
                 "type": "Relationship",
-                "object": "urn:test:AlphaInstance:sub:i2011"
+                "object": "http://my.test/testid:i2011"
             },
             {
                 "type": "Relationship",
-                "object": "urn:test:AlphaInstance:sub:i2412"
+                "object": "http://my.test/testid:i2412"
             }
         ]
     },
     {
         "type": "http://my.test/AlphaType",
-        "id": "urn:test:AlphaInstance",
+        "id": "http://my.test/testid:i2010",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
         "uaentity:hasB2": [
             {
                 "type": "Relationship",
-                "object": "urn:test:AlphaInstance:sub:i2012"
+                "object": "http://my.test/testid:i2012"
             }
         ],
         "uaentity:hasMyProperty": {
@@ -170,41 +170,41 @@
         "uaentity:hasSubAlphaInstance2": [
             {
                 "type": "Relationship",
-                "object": "urn:test:AlphaInstance:sub:i2411"
+                "object": "http://my.test/testid:i2411"
             }
         ],
         "uaentity:hasB3": [
             {
                 "type": "Relationship",
-                "object": "urn:test:AlphaInstance:sub:i2013"
+                "object": "http://my.test/testid:i2013"
             }
         ],
         "uaentity:hasB4": [
             {
                 "type": "Relationship",
-                "object": "urn:test:AlphaInstance:sub:i2022"
+                "object": "http://my.test/testid:i2022"
             }
         ],
         "uaentity:hasSubAlphaInstance": [
             {
                 "type": "Relationship",
-                "object": "urn:test:AlphaInstance:sub:i2410"
+                "object": "http://my.test/testid:i2410"
             }
         ],
         "opcua:Organizes": [
             {
                 "type": "Relationship",
-                "object": "urn:test:AlphaInstance:sub:i2011"
+                "object": "http://my.test/testid:i2011"
             }
         ],
         "test:X": [
             {
                 "type": "Relationship",
-                "object": "urn:test:AlphaInstance:sub:i2011"
+                "object": "http://my.test/testid:i2011"
             },
             {
                 "type": "Relationship",
-                "object": "urn:test:AlphaInstance:sub:i2012"
+                "object": "http://my.test/testid:i2012"
             }
         ]
     }

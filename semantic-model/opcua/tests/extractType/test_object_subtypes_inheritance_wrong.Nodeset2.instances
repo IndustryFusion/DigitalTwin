@@ -1,7 +1,7 @@
 [
     {
         "type": "http://my.test/SubA",
-        "id": "urn:test:AlphaSubInstance:sub:i2001",
+        "id": "http://my.test/testid:i2001",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -12,14 +12,14 @@
     },
     {
         "type": "http://my.test/AlphaSubType",
-        "id": "urn:test:AlphaSubInstance",
+        "id": "http://my.test/testid:i2201",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
         "uaentity:hasA": [
             {
                 "type": "Relationship",
-                "object": "urn:test:AlphaSubInstance:sub:i2001"
+                "object": "http://my.test/testid:i2001"
             }
         ]
     }

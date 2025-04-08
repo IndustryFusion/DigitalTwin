@@ -42,8 +42,9 @@ shacl:DTypeShape a sh:NodeShape ;
             sh:path <http://my.test/entity/hasMyVariable> ;
             sh:property [ sh:maxCount 1 ;
                     sh:minCount 1 ;
-                    sh:or ( [ sh:datatype xsd:boolean ] [ sh:property [ sh:datatype xsd:boolean ;
-                                        sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] ) ;
+                    sh:or ( [ sh:datatype xsd:boolean ] [ sh:nodeKind sh:BlankNode ;
+                                sh:property [ sh:datatype xsd:boolean ;
+                                        sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
                     sh:path ngsi-ld:hasValue ] ;
             base:hasReferenceType opcua:HasComponent ] ;
     sh:targetClass test:DType .

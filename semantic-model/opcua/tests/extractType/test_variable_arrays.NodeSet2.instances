@@ -1,7 +1,7 @@
 [
     {
         "type": "http://my.test/BType",
-        "id": "urn:test:AlphaInstance:sub:i2012",
+        "id": "http://my.test/testid:i2012",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -26,9 +26,42 @@
                 ]
             }
         },
+        "uaentity:hasMyVariable14": {
+            "type": "Property",
+            "value": {
+                "@list": []
+            }
+        },
         "uaentity:hasMyVariable4": {
             "type": "Property",
             "value": 42
+        },
+        "uaentity:hasMyVariable9": {
+            "type": "Property",
+            "value": {
+                "@list": [
+                    0.0,
+                    1.0
+                ]
+            }
+        },
+        "uaentity:hasMyVariable11": {
+            "type": "Property",
+            "value": {
+                "@list": [
+                    "x",
+                    "y",
+                    "z"
+                ]
+            }
+        },
+        "uaentity:hasMyVariable12": {
+            "type": "Property",
+            "value": {
+                "@list": [
+                    99
+                ]
+            }
         },
         "uaentity:hasMyVariable8": {
             "type": "Property",
@@ -49,6 +82,12 @@
             "type": "Property",
             "value": "42"
         },
+        "uaentity:hasMyVariable13": {
+            "type": "Property",
+            "value": {
+                "@list": []
+            }
+        },
         "uaentity:hasMyVariable3": {
             "type": "Property",
             "value": {
@@ -60,12 +99,18 @@
         },
         "uaentity:hasMyVariable7": {
             "type": "Property",
-            "value": ""
+            "value": {
+                "@list": []
+            }
+        },
+        "uaentity:hasMyVariable10": {
+            "type": "Property",
+            "value": 1
         }
     },
     {
         "type": "http://my.test/AlphaType",
-        "id": "urn:test:AlphaInstance",
+        "id": "http://my.test/testid:i2010",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -76,12 +121,14 @@
         "uaentity:hasB": [
             {
                 "type": "Relationship",
-                "object": "urn:test:AlphaInstance:sub:i2012"
+                "object": "http://my.test/testid:i2012"
             }
         ],
-        "test:Y": {
-            "type": "Relationship",
-            "object": "urn:test:AlphaInstance:sub:i2012"
-        }
+        "test:Y": [
+            {
+                "type": "Relationship",
+                "object": "http://my.test/testid:i2012"
+            }
+        ]
     }
 ]
