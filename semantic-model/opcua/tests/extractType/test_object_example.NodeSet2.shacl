@@ -1,7 +1,6 @@
 @prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
 @prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/> .
 @prefix opcua: <http://opcfoundation.org/UA/> .
-@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix shacl: <http://my.test/shacl/> .
 @prefix test: <http://my.test/> .
@@ -12,10 +11,10 @@ shacl:AlphaTypeShape a sh:NodeShape ;
             sh:minCount 0 ;
             sh:nodeKind sh:BlankNode ;
             sh:path <http://my.test/entity/hasC> ;
-            sh:property [ sh:maxCount 1 ;
+            sh:property [ sh:datatype xsd:double ;
+                    sh:maxCount 1 ;
                     sh:minCount 1 ;
-                    sh:or ( [ sh:datatype xsd:double ] [ sh:nodeKind sh:BlankNode ; sh:property [ sh:datatype xsd:double ;
-                                        sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] ) ;
+                    sh:nodeKind sh:Literal ;
                     sh:path ngsi-ld:hasValue ] ;
             base:hasReferenceType opcua:HasComponent ],
         [ a base:SubComponentRelationship ;
@@ -36,10 +35,10 @@ shacl:BTypeShape a sh:NodeShape ;
             sh:minCount 0 ;
             sh:nodeKind sh:BlankNode ;
             sh:path <http://my.test/entity/hasMyVariable> ;
-            sh:property [ sh:maxCount 1 ;
+            sh:property [ sh:datatype xsd:boolean ;
+                    sh:maxCount 1 ;
                     sh:minCount 1 ;
-                    sh:or ( [ sh:datatype xsd:boolean ] [ sh:nodeKind sh:BlankNode ; sh:property [ sh:datatype xsd:boolean ;
-                                        sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] ) ;
+                    sh:nodeKind sh:Literal ;
                     sh:path ngsi-ld:hasValue ] ;
             base:hasReferenceType opcua:HasComponent ] ;
     sh:targetClass test:BType .
