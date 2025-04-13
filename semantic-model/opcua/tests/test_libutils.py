@@ -64,7 +64,7 @@ class TestUtilityFunctions(unittest.TestCase):
         c = BNode()
         graph.add((a, pred1, b))
         graph.add((b, pred2, c))
-        predicates = [pred1, pred2]
+        predicates = [pred2, pred1]
         subg = extract_subgraph(graph, a, predicates=predicates.copy())
         self.assertTrue((a, pred1, b) in subg)
         self.assertTrue((b, pred2, c) in subg)

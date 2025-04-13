@@ -17,14 +17,14 @@
 import sys
 import argparse
 import json
-from rdflib import Graph, Namespace
+from rdflib import Graph
 from rdflib.namespace import RDF, SH, OWL
 import lib.utils as utils
 from lib.utils import OntologyLoader
 from lib.shacl import Validation
 from lib.jsonld import nested_json_from_graph
 
-NGSILD = Namespace('https://uri.etsi.org/ngsi-ld/')
+generic_nodes = [RDF.nil]
 
 
 def main():
@@ -96,12 +96,6 @@ data-file name (.jsonld, .ttl).")
                             args.sparql_only, args.no_sparql, args.debug)
     # Run SHACL validation
     conforms, results_graph, results_text = validation.shacl_validation()
-    # conforms, results_graph, results_text = validate(
-    #     data_graph=data_graph,
-    #     shacl_graph=shapes_graph,
-    #     ont_graph=extra_graph,
-    #     debug=args.debug
-    # )
     print("Validation Conforms:", conforms)
     if conforms:
         print("No validation errors found.")
@@ -117,8 +111,11 @@ data-file name (.jsonld, .ttl).")
             result_message = results_graph.value(result, SH.resultMessage)
             severity = results_graph.value(result, SH.resultSeverity)
             value_node = results_graph.value(result, SH.value)
-            shape_name = validation.find_shape_name(source_shape)
-            entity_id, predicates = validation.find_entity_id(focus_node)
+            shape_name, paths = validation.find_shape_name(source_shape)
+            if focus_node not in generic_nodes:
+                entity_id, predicates = validation.find_entity_id(focus_node)
+            else:
+                entity_id, predicates = (focus_node, None)
 
             validation_nr = f'Validation error {idx + 1}'
             print(validation_nr)
@@ -127,14 +124,19 @@ data-file name (.jsonld, .ttl).")
             print(f'Severity: {severity}')
             print(f'Value Node: {value_node}')
             source_shape_subgraph = utils.extract_subgraph(shapes_graph, source_shape)
-            predicates_copy = predicates.copy()
-            focus_node_subgraph = utils.extract_subgraph(data_graph, entity_id, predicates_copy)
-            print(f'Source Shape (SHACL Rule which triggered the validation error): {shape_name}', end='')
             print(utils.dump_without_prefixes(source_shape_subgraph))
-            print(f'Focus Node (Entity which triggered the validation error): {entity_id}=>' +
-                  '=>'.join(map(str, predicates)))
-            result = nested_json_from_graph(focus_node_subgraph, root=None)
-            print(json.dumps(result, indent=2))
+            print(f'Source Shape (SHACL Rule which triggered the validation error): {shape_name}=>' +
+                  '=>'.join(map(str, reversed(paths))))
+            if predicates is not None:
+                predicates_copy = predicates.copy()
+                focus_node_subgraph = utils.extract_subgraph(data_graph, entity_id, predicates_copy)
+                print(f'Focus Node (Entity which triggered the validation error): {entity_id}=>' +
+                      '=>'.join(map(str, reversed(predicates))))
+                result = nested_json_from_graph(focus_node_subgraph, root=None)
+                print(json.dumps(result, indent=2))
+            else:
+                print(f'Focus Node (Entity which triggered the validation error): {entity_id}. It is generic, \
+entity_id of triggering node cannot be determined. Check SHACL Shape.')
 
 
 if __name__ == "__main__":
