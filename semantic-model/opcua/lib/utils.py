@@ -415,7 +415,7 @@ def extract_subgraph(graph, start_node, predicates=None):
             return
         visited.add(node)
         # Get all triples where the node is the subject and with predicate match if defined
-        pred = predicates.pop(0) if predicates else None
+        pred = predicates.pop(-1) if predicates else None
         for s, p, o in graph.triples((node, pred, None)):
             if p == NGSILD['datasetId'] and str(o).endswith('@none'):
                 o = URIRef('@none')

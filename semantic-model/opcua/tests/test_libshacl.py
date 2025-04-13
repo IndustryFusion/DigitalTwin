@@ -724,7 +724,7 @@ class TestValidation(unittest.TestCase):
         # Use a node that is not referenced by any triple with predicate SH.property.
         test_node = URIRef("http://example.org/node")
         result = validation_instance.find_shape_name(test_node)
-        self.assertIsNone(result)
+        self.assertEqual(result, (None, []))
 
     def test_find_shape_name_direct_candidate(self):
         """Test that find_shape_name returns a direct candidate that qualifies."""
@@ -733,18 +733,19 @@ class TestValidation(unittest.TestCase):
         shapes_graph = Graph()
         validation_instance = Validation(shapes_graph, Graph())
         validation_instance.shaclg = shapes_graph
-        
+        path = URIRef('http://example.com/path')
         # Create a candidate node that is a URIRef and qualifies as a NodeShape.
         candidate = URIRef("http://example.org/A")
         # The shape node which triggers the lookup.
         test_node = URIRef("http://example.org/B")
         # Add triple indicating that candidate has a property pointing to test_node.
         shapes_graph.add((candidate, SH.property, test_node))
+        shapes_graph.add((test_node, SH.path, path))
         # Mark candidate as a NodeShape.
         shapes_graph.add((candidate, RDF.type, SH.NodeShape))
         
         result = validation_instance.find_shape_name(test_node)
-        self.assertEqual(result, candidate)
+        self.assertEqual(result, (candidate, [path]))
 
     def test_find_shape_name_chain_candidate(self):
         """Test that find_shape_name returns a candidate from a chain of property relationships."""
@@ -761,10 +762,13 @@ class TestValidation(unittest.TestCase):
         intermediate = BNode()
         # Create a valid candidate that qualifies.
         valid_candidate = URIRef("http://example.org/A")
-        
+        path1 = URIRef('http://example.com/path1')
+        path2 =  URIRef('http://example.com/path2')
         # Build the chain:
         # First, add a triple where the intermediate (blank node) points to test_node.
         shapes_graph.add((intermediate, SH.property, test_node))
+        shapes_graph.add((test_node, SH.path, path1))
+        shapes_graph.add((intermediate, SH.path, path2))
         # Then, add a triple where the valid_candidate points to the intermediate.
         shapes_graph.add((valid_candidate, SH.property, intermediate))
         # Mark valid_candidate as a NodeShape.
@@ -772,7 +776,7 @@ class TestValidation(unittest.TestCase):
         
         # The function should skip the blank intermediate and eventually return valid_candidate.
         result = validation_instance.find_shape_name(test_node)
-        self.assertEqual(result, valid_candidate)
+        self.assertEqual(result, (valid_candidate, [path1, path2]))
 
     def test_find_entity_id_no_triple(self):
         """Test that find_entity_id returns the focus node itself when no triple is found."""

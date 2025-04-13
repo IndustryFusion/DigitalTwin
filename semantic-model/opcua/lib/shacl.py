@@ -694,13 +694,17 @@ class Validation:
             shape_node (node): Node which triggered the validation failure
         """
         parent_node = None
+        paths = []
         inter_node = shape_node
         while parent_node is None and inter_node is not None:
+            path = next(self.shapes_graph.objects(inter_node, SH.path, None), None)
+            if path is not None and not isinstance(path, BNode):
+                paths.append(path)
             inter_node = next(self.shapes_graph.subjects(SH.property, inter_node), None)
             if inter_node is not None and (inter_node, RDF.type, SH.NodeShape) in self.shapes_graph and \
                     isinstance(inter_node, URIRef):
                 parent_node = inter_node
-        return parent_node
+        return parent_node, paths
 
     def find_entity_id(self, focus_node):
         """
