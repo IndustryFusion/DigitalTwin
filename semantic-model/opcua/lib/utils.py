@@ -34,7 +34,7 @@ WARNSTR = {
     'abstract_datatype': "ABSTRACT_DATATYPE",
     'no_default_instance': "NO_DEFAULT_INSTANCE",
     'no_iri_value': "NO_IRI_VALUE",
-    'ignored_variable_reference': "WRONG_VARIABLE_REFERENCE",
+    'ignored_variable_reference': "IGNORED_VARIABLE_REFERENCE",
     'non_reached_nodes': "NON_REACHED_NODES"
 }
 
