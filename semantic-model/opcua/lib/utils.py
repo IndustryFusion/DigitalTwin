@@ -35,7 +35,8 @@ WARNSTR = {
     'no_default_instance': "NO_DEFAULT_INSTANCE",
     'no_iri_value': "NO_IRI_VALUE",
     'ignored_variable_reference': "IGNORED_VARIABLE_REFERENCE",
-    'non_reached_nodes': "NON_REACHED_NODES"
+    'non_reached_nodes': "NON_REACHED_NODES",
+    'ambiguous path match': "AMBIGUOUS_PATH_MATCH"
 }
 
 NULL_IRI = URIRef('urn:ngsi-ld:null')

@@ -263,7 +263,7 @@ class Shacl:
             shacl_rule['datatype'] = None
             shacl_rule['isAbstract'] = None
 
-    def get_modelling_rule_and_path(self, name, target_class, attributeclass, prefix):
+    def get_modelling_rule_and_path(self, name, target_class, attributeclass, prefix, warning_callback=None):
         query_minmax = """
             SELECT ?path ?pattern ?mincount ?maxcount ?localName
             WHERE {
@@ -307,12 +307,13 @@ class Shacl:
         try:
             results = list(self.shaclg.query(query_minmax, initBindings=bindings,
                                              initNs={'sh': SH, 'base': self.basens}))
+            warn_message = None
             if len(results) > 1:  # try similarity between options
-                print("Warning, found ambigous path match. Most likely due to use of generic FolderType \
-or placeholders or both. Will try to guess the right value, but this can go wrong ...")
+                warn_message = "Warning: found ambigous path match. Most likely due to use of generic FolderType \
+or placeholders or both. Will try to guess the right value, but this can go wrong."
                 similarity = []
                 for result in results:
-                    similarity.append(SequenceMatcher(None, name, str(result[4])).ratio())
+                    similarity.append(SequenceMatcher(None, prefix + name, str(result[4])).ratio())
                 target_index = similarity.index(max(similarity))
             if len(results) == 1:
                 target_index = 0
@@ -324,9 +325,16 @@ or placeholders or both. Will try to guess the right value, but this can go wron
                 if int(results[target_index][3]) <= 1:
                     array = False
             if len(results) > 1:
-                print(f"Guessed to use {path} for {name} and class {target_class}")
+                confidence = ''
+                if similarity[target_index] == 1.0:
+                    confidence = "with high confidence"
+                if similarity[target_index] < 0.5:
+                    confidence = "with low confidence"
+                warn_message += f" Guessed to use {path} for {name} and class {target_class} {confidence}."
         except:
             pass
+        if warning_callback is not None and warn_message is not None:
+            warning_callback(warn_message)
         return optional, array, path
 
     def attribute_is_indomain(self, shapenode, attributename):
