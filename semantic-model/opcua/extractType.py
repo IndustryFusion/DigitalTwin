@@ -583,7 +583,7 @@ found without concreate value in {node}."
             if value is None:
                 value = NULL_IRI
                 warnstr = f"{WARNSTR['no_iri_value']}: IRI value is not found for {attributename} in node {node}. \
-Check whether it has a proper type definition. Most likely this attribute is not defined by the type."
+Check whether it has a proper type definition. Most likely this attribute is not defined in the type definition."
                 warnings.warn(warnstr)
             instance[f'{entity_ontology_prefix}:{attributename}'] = {
                 'type': 'Property',
