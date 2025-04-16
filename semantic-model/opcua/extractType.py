@@ -499,7 +499,8 @@ def scan_entity_recursive(node, id, instance, node_id, o, type=None, is_property
     decoded_attributename = urllib.parse.unquote(attributename)
     if type is not None:
         optional, array, path = shaclg.get_modelling_rule_and_path(decoded_attributename, URIRef(type),
-                                                                   classtype, attribute_prefix)
+                                                                   classtype, attribute_prefix,
+                                                                   warning_callback('ambiguous path match'))
     else:
         optional, array, path = (None, None, None)
     if path is not None:
@@ -638,6 +639,13 @@ def scan_entity_nonrecursive(node, id, instance, node_id, o, generic_reference=N
         print(f"Warning: Variable node {o} is target of non-owning reference {full_attribute_name}. \
 This will be ignored.")
     return has_components
+
+
+def warning_callback(warnid):
+    def print_warning(message):
+        warnstr = f"{WARNSTR[warnid]}: {message}"
+        warnings.warn(warnstr)
+    return print_warning
 
 
 if __name__ == '__main__':
