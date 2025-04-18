@@ -13,7 +13,80 @@ from lib.utils import RdfUtils, downcase_string, isNodeId, convert_to_json_type,
                                 get_datatype, attributename_from_type, get_default_value, get_value, normalize_angle_bracket_name, \
                                 contains_both_angle_brackets, get_typename, get_common_supertype, rdfStringToPythonBool, \
                                 get_rank_dimensions, get_type_and_template, OntologyLoader, file_path_to_uri, create_list, \
-                                extract_subgraph, dump_without_prefixes, get_contentclass, quote_url, merge_attributes, dump_graph 
+                                extract_subgraph, dump_without_prefixes, get_contentclass, quote_url, merge_attributes, dump_graph, \
+                                is_subclass, create_list, get_contentclass, RdfUtils
+
+class TestIsSubclass(unittest.TestCase):
+    def test_direct_subclass(self):
+        graph = Graph()
+        class1 = URIRef("http://example.org/A")
+        class2 = URIRef("http://example.org/B")
+        graph.add((class1, RDFS.subClassOf, class2))
+        self.assertTrue(is_subclass(graph, class1, class2))
+
+    def test_indirect_subclass(self):
+        graph = Graph()
+        class1 = URIRef("http://example.org/A")
+        mid = URIRef("http://example.org/Mid")
+        class2 = URIRef("http://example.org/B")
+        graph.add((class1, RDFS.subClassOf, mid))
+        graph.add((mid, RDFS.subClassOf, class2))
+        self.assertTrue(is_subclass(graph, class1, class2))
+
+    def test_not_subclass(self):
+        graph = Graph()
+        class1 = URIRef("http://example.org/A")
+        class2 = URIRef("http://example.org/B")
+        self.assertFalse(is_subclass(graph, class1, class2))
+
+class TestCreateListEmptyAndContentclassNone(unittest.TestCase):
+    def setUp(self):
+        self.basens = Namespace("http://example.org/base/")
+
+    def test_create_list_empty(self):
+        g = Graph()
+        empty = create_list(g, [], int)
+        self.assertEqual(empty, RDF.nil)
+
+    def test_get_contentclass_no_match(self):
+        g = Graph()
+        result = get_contentclass(str(URIRef("http://example.org/TestClass")), "1", g, self.basens)
+        self.assertIsNone(result)
+
+class TestRdfUtilsNodeClassAndInterfaces(unittest.TestCase):
+    def setUp(self):
+        self.basens = Namespace("http://example.org/base/")
+        self.opcuans = Namespace("http://example.org/opcua/")
+        self.rdf_utils = RdfUtils(self.basens, self.opcuans)
+        self.graph = Graph()
+        self.node = URIRef("http://example.org/Node")
+
+    def test_is_object_node_class(self):
+        self.assertTrue(self.rdf_utils.isObjectNodeClass(self.opcuans['ObjectNodeClass']))
+        self.assertFalse(self.rdf_utils.isObjectNodeClass(URIRef("http://example.org/notObjectNode")))
+
+    def test_is_object_type_node_class(self):
+        self.assertTrue(self.rdf_utils.isObjectTypeNodeClass(self.opcuans['ObjectTypeNodeClass']))
+        self.assertFalse(self.rdf_utils.isObjectTypeNodeClass(URIRef("http://example.org/notObjectType")))
+
+    def test_is_variable_node_class(self):
+        self.assertTrue(self.rdf_utils.isVariableNodeClass(self.opcuans['VariableNodeClass']))
+        self.assertFalse(self.rdf_utils.isVariableNodeClass(URIRef("http://example.org/notVariable")))
+
+    def test_get_interfaces_no_interface(self):
+        self.assertEqual(self.rdf_utils.get_interfaces(self.graph, self.node), [])
+
+    def test_get_interfaces_with_chain(self):
+        interface_node = URIRef("http://example.org/interfaceNode")
+        # Add HasInterface on node
+        self.graph.add((self.node, self.opcuans['HasInterface'], interface_node))
+        # Define a first interface type
+        type1 = URIRef("http://example.org/InterfaceType1")
+        self.graph.add((interface_node, self.basens['definesType'], type1))
+        # Terminate the chain by subclassing BaseInterfaceType
+        self.graph.add((type1, RDFS.subClassOf, self.opcuans['BaseInterfaceType']))
+        result = self.rdf_utils.get_interfaces(self.graph, self.node)
+        self.assertEqual(result, [(type1, interface_node)])
 
 class TestUtilityFunctions(unittest.TestCase):
 
@@ -346,82 +419,94 @@ class TestUtils(unittest.TestCase):
         instancetype = "http://example.org/InstanceType"
         node = URIRef("http://example.org/Node")
 
+        # Prevent real interface traversal
+        self.rdf_utils.get_interfaces = MagicMock(return_value=[])
+
         # Case 1: Node is an instancetype definition
         graph.objects.side_effect = [
-            iter([URIRef("http://example.org/TypeNode")]),  # definesType found
-            iter([URIRef("http://example.org/SuperClass")]),  # RDFS.subClassOf found
+            # 1) definesType on the instance node
+            iter([URIRef("http://example.org/TypeNode")]),
+            # 2) subClassOf on instancetype → SuperClass
+            iter([URIRef("http://example.org/SuperClass")]),
+            # 3) next subClassOf on SuperClass → no further superclass
+            iter([])
         ]
         graph.subjects.side_effect = [
-            iter([URIRef("http://example.org/TypeNode")]),  # definesType found for supertype
+            # subjects(definesType, SuperClass) → TypeNode
+            iter([URIRef("http://example.org/TypeNode")])
         ]
-
-        supertypes = self.rdf_utils.get_all_supertypes(graph, instancetype, node)
-
-        expected_supertypes = [
+        supertypes = self.rdf_utils.get_all_supertypes_and_interfaces(graph, instancetype, node)
+        expected = [
             (URIRef("http://example.org/InstanceType"), URIRef("http://example.org/Node")),
-            (URIRef("http://example.org/SuperClass"), URIRef("http://example.org/TypeNode"))
+            (URIRef("http://example.org/SuperClass"),    URIRef("http://example.org/TypeNode")),
         ]
-        self.assertEqual(supertypes, expected_supertypes)
+        self.assertEqual(supertypes, expected)
 
-        # Reset mocks for next case
         graph.objects.reset_mock()
         graph.subjects.reset_mock()
 
-        # Case 2: Node is not an instancetype definition, with no additional supertypes
+        # Case 2: Node is not an instancetype definition
         graph.objects.side_effect = [
-            iter([]),  # No definesType found for the node
-            iter([]),  # No RDFS.subClassOf found
+            # 1) definesType on instance node → none
+            iter([]),
+            # 2) subClassOf on instancetype → none
+            iter([])
         ]
         graph.subjects.side_effect = [
-            iter([URIRef("http://example.org/TypeNode")]),  # definesType found for current type
+            # subjects(definesType, instancetype) → TypeNode
+            iter([URIRef("http://example.org/TypeNode")])
         ]
-
-        supertypes = self.rdf_utils.get_all_supertypes(graph, instancetype, node)
-        expected_supertypes = [
+        supertypes = self.rdf_utils.get_all_supertypes_and_interfaces(graph, instancetype, node)
+        expected = [
             (None, node),
-            (URIRef("http://example.org/InstanceType"), URIRef("http://example.org/TypeNode"))
+            (URIRef("http://example.org/InstanceType"), URIRef("http://example.org/TypeNode")),
         ]
-        self.assertEqual(supertypes, expected_supertypes)
+        self.assertEqual(supertypes, expected)
 
-        # Reset mocks for next case
-        graph.object.reset_mock()
-        graph.subjects.reset_mock()
-
-        # Case 3: BaseObjectType is reached, ending the loop
-        graph.objects.side_effect = [
-            iter([URIRef("http://example.org/TypeNode")]),  # definesType found
-            iter([self.opcuans['BaseObjectType']]),  # BaseObjectType reached
-        ]
-        graph.subjects.side_effect = [
-            iter([URIRef("http://example.org/TypeNode")]),  # definesType found for supertype
-        ]
-
-        supertypes = self.rdf_utils.get_all_supertypes(graph, instancetype, node)
-        expected_supertypes = [
-            (URIRef("http://example.org/InstanceType"), node)
-        ]
-        self.assertEqual(supertypes, expected_supertypes)
-
-        # Reset mocks for next case
         graph.objects.reset_mock()
         graph.subjects.reset_mock()
 
-        # Case 4: Properly terminate the loop when BaseObjectType is the highest superclass
+        # Case 3: BaseObjectType is reached immediately
         graph.objects.side_effect = [
-            iter([URIRef("http://example.org/TypeNode")]),  # definesType found
-            iter([self.opcuans['BaseObjectType']]),  # BaseObjectType reached
-            iter([]),  # No further subclass
+            # 1) definesType on instance node
+            iter([URIRef("http://example.org/TypeNode")]),
+            # 2) subClassOf on instancetype → BaseObjectType
+            iter([self.opcuans['BaseObjectType']])
         ]
         graph.subjects.side_effect = [
-            iter([URIRef("http://example.org/TypeNode")]),  # definesType for current type
-            iter([]),  # No further subjects for definesType
+            # subjects(definesType, BaseObjectType) → TypeNode
+            iter([URIRef("http://example.org/TypeNode")])
         ]
+        supertypes = self.rdf_utils.get_all_supertypes_and_interfaces(graph, instancetype, node)
+        expected = [
+            (URIRef("http://example.org/InstanceType"), node),
+        ]
+        self.assertEqual(supertypes, expected)
 
-        supertypes = self.rdf_utils.get_all_supertypes(graph, instancetype, node)
-        expected_supertypes = [
-            (URIRef("http://example.org/InstanceType"), node)
+        graph.objects.reset_mock()
+        graph.subjects.reset_mock()
+
+        # Case 4: BaseObjectType then no further superclass
+        graph.objects.side_effect = [
+            # 1) definesType on instance node
+            iter([URIRef("http://example.org/TypeNode")]),
+            # 2) subClassOf on instancetype → BaseObjectType
+            iter([self.opcuans['BaseObjectType']]),
+            # 3) any further subClassOf → none
+            iter([])
         ]
-        self.assertEqual(supertypes, expected_supertypes)
+        graph.subjects.side_effect = [
+            # subjects(definesType, BaseObjectType) → TypeNode
+            iter([URIRef("http://example.org/TypeNode")]),
+            # subjects(definesType, ?) → none
+            iter([])
+        ]
+        supertypes = self.rdf_utils.get_all_supertypes_and_interfaces(graph, instancetype, node)
+        expected = [
+            (URIRef("http://example.org/InstanceType"), node),
+        ]
+        self.assertEqual(supertypes, expected)
+
 
 
     @patch.object(Graph, 'query')

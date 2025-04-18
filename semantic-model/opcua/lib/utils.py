@@ -520,28 +520,64 @@ class RdfUtils:
             print(f"Warning: Could not find nodeclass of class node {node}. This should not happen")
             return None, None
 
-    def get_all_supertypes(self, g, instancetype, node):
+    def get_interfaces(self, g, node):
+        """Get all interfaces with their corresponding typenodes
+
+           Cannot be done with a query since the order matters
+        Args:
+            g (Graph): Graph which contains the interface node
+            node (URIRef): typenode to start scanning
+
+        Returns:
+            : [(URIRef type, URIRef node)]: type, node (instance declaration/type), type
+        """
+        interface_node = next(g.objects(node, self.opcuans['HasInterface']), None)
+        if interface_node is None:
+            return []
+
+        supertypes = []
+        curtype = None
+        curnode = interface_node
+        curtype = next(g.objects(curnode, self.basens['definesType']), None)
+        while curtype != self.opcuans['BaseInterfaceType'] and curtype is not None:
+            supertypes.append((curtype, curnode))
+            curtype = next(g.objects(curtype, RDFS.subClassOf), None)
+            curnode = next(g.subjects(self.basens['definesType'], curtype), None)
+        return supertypes
+
+    def get_all_supertypes_and_interfaces(self, g, instancetype, node):
+        """Find the supertypes and interfaces to build the Fully Inherited Instance Declaration Hierarchy
+
+           This can not be implemented by a sparql query since the order of the results is important
+        Args:
+            g (Graph): Graph containing the type and interface hierarchy
+            instancetype (URIRef): The type to create the list of supertypes/interfaces
+            node (URIRef): type node or instance declaration
+
+        Returns:
+            [(URIRef type, URIRef node)]: type, node (instance declaration/type)
+        """
         supertypes = []
 
         curtype = URIRef(instancetype)
         curnode = node
-        try:
-            cur_typenode = next(g.objects(URIRef(node), self.basens['definesType']))
-        except:
-            cur_typenode = None
+        cur_typenode = next(g.objects(URIRef(node), self.basens['definesType']), None)
         if cur_typenode is None:
             # node is not instancetype definition
             cur_typenode = next(g.subjects(self.basens['definesType'], URIRef(curtype)))
             supertypes.append((None, curnode))
+            interfaces = self.get_interfaces(g, curnode)
+            supertypes += interfaces
             curnode = cur_typenode
 
-        while curtype != self.opcuans['BaseObjectType']:
+        while curtype != self.opcuans['BaseObjectType'] and curtype is not None:
             supertypes.append((curtype, curnode))
-            try:
-                curtype = next(g.objects(curtype, RDFS.subClassOf))
-                curnode = next(g.subjects(self.basens['definesType'], URIRef(curtype)))
-            except:
-                break
+            interfaces = self.get_interfaces(g, curnode)
+            supertypes += interfaces
+            curtype = next(g.objects(curtype, RDFS.subClassOf), None)
+            if curtype is None:
+                continue
+            curnode = next(g.subjects(self.basens['definesType'], curtype), None)
         return supertypes
 
     def get_modelling_rule(self, graph, node, shacl_rule, instancetype):

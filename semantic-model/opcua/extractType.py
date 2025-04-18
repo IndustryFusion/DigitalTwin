@@ -231,7 +231,7 @@ def check_variable_consistency(shapenode, attribute_path, classtype):
 def scan_type(node, instancetype, shape_node=None):
 
     # Loop through all supertypes
-    supertypes = rdfutils.get_all_supertypes(g, instancetype, node)
+    supertypes = rdfutils.get_all_supertypes_and_interfaces(g, instancetype, node)
     # Loop through all components
     if shape_node is None:
         shapename = shaclg.create_shacl_type(instancetype)

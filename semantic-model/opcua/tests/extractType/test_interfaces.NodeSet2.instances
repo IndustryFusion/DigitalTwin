@@ -1,0 +1,30 @@
+[
+    {
+        "type": "http://my.test/BSubType",
+        "id": "http://my.test/testid:i2012",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "uaentity:hasMyVariable": {
+            "type": "Property",
+            "value": false
+        }
+    },
+    {
+        "type": "http://my.test/AlphaType",
+        "id": "http://my.test/testid:i2010",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "uaentity:hasC": {
+            "type": "Property",
+            "value": 0.0
+        },
+        "uaentity:hasB": [
+            {
+                "type": "Relationship",
+                "object": "http://my.test/testid:i2012"
+            }
+        ]
+    }
+]

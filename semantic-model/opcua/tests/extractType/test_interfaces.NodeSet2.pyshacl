@@ -1,0 +1,61 @@
+@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+@prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/> .
+@prefix opcua: <http://opcfoundation.org/UA/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+[] a sh:ValidationReport ;
+    sh:conforms false ;
+    sh:result [ a sh:ValidationResult ;
+            sh:focusNode <http://my.test/testid:i2012> ;
+            sh:resultMessage "Less than 1 values on <http://my.test/testid:i2012>-><http://my.test/entity/hasManufacturer>" ;
+            sh:resultPath <http://my.test/entity/hasManufacturer> ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:MinCountConstraintComponent ;
+            sh:sourceShape [ sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:BlankNode ;
+                    sh:path <http://my.test/entity/hasManufacturer> ;
+                    sh:property [ sh:maxCount 1 ;
+                            sh:minCount 1 ;
+                            sh:or ( [ sh:datatype xsd:string ] [ sh:nodeKind sh:BlankNode ;
+                                        sh:property [ sh:datatype xsd:string ;
+                                                sh:path [ ] ] ] [ sh:hasValue () ] ) ;
+                            sh:path ngsi-ld:hasValue ] ;
+                    base:hasReferenceType opcua:HasProperty ] ],
+        [ a sh:ValidationResult ;
+            sh:focusNode <http://my.test/testid:i2012> ;
+            sh:resultMessage "Less than 1 values on <http://my.test/testid:i2012>-><http://my.test/entity/hasProductInstanceUri>" ;
+            sh:resultPath <http://my.test/entity/hasProductInstanceUri> ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:MinCountConstraintComponent ;
+            sh:sourceShape [ sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:BlankNode ;
+                    sh:path <http://my.test/entity/hasProductInstanceUri> ;
+                    sh:property [ sh:maxCount 1 ;
+                            sh:minCount 1 ;
+                            sh:or ( [ sh:datatype xsd:string ] [ sh:nodeKind sh:BlankNode ;
+                                        sh:property [ sh:datatype xsd:string ;
+                                                sh:path [ ] ] ] [ sh:hasValue () ] ) ;
+                            sh:path ngsi-ld:hasValue ] ;
+                    base:hasReferenceType opcua:HasProperty ] ],
+        [ a sh:ValidationResult ;
+            sh:focusNode <http://my.test/testid:i2012> ;
+            sh:resultMessage "Less than 1 values on <http://my.test/testid:i2012>-><http://my.test/entity/hasSerialNumber>" ;
+            sh:resultPath <http://my.test/entity/hasSerialNumber> ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:MinCountConstraintComponent ;
+            sh:sourceShape [ sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:BlankNode ;
+                    sh:path <http://my.test/entity/hasSerialNumber> ;
+                    sh:property [ sh:maxCount 1 ;
+                            sh:minCount 1 ;
+                            sh:or ( [ sh:datatype xsd:string ] [ sh:nodeKind sh:BlankNode ;
+                                        sh:property [ sh:datatype xsd:string ;
+                                                sh:path [ ] ] ] [ sh:hasValue () ] ) ;
+                            sh:path ngsi-ld:hasValue ] ;
+                    base:hasReferenceType opcua:HasProperty ] ] .
+
