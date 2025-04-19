@@ -15,13 +15,13 @@
 #
 import sys
 import urllib
-import warnings
+from lib.utils import warnings, print_warning
 from collections import defaultdict
 from rdflib import Graph, Namespace, URIRef
 from rdflib.namespace import OWL, RDF, SH
 import argparse
 import lib.utils as utils
-from lib.utils import RdfUtils, OntologyLoader, WARNSTR, NULL_IRI
+from lib.utils import RdfUtils, OntologyLoader, NULL_IRI
 from lib.bindings import Bindings
 from lib.jsonld import JsonLd
 from lib.entity import Entity
@@ -203,18 +203,18 @@ def check_object_consistency(shapenode, attribute_path, classtype, suppress_warn
             common_superclass = utils.get_common_supertype(g, shclass, classtype)
             shaclg.update_shclass_in_property(property, common_superclass)
             if not suppress_warnings:
-                warnstr = f"{WARNSTR['folder_reference_inconsistency']}: Class inconsistency found in (FolderType) \
+                warnmsg = f"Class inconsistency found in (FolderType) \
     {instancetype}. The class {shclass} and {classtype} are defined for the same reference {attribute_path}."
-            warnings.warn(warnstr)
+            print_warning('folder_reference_inconsistency', warnmsg)
         return True, needed_superclass
     else:  # Normal Object
         # shclass must be subclass of classtype since we assume that classtype must come
         # from a superclass
         is_subclass = utils.is_subclass(g, shclass, classtype)
         if not is_subclass and not suppress_warnings:
-            warnstr = f"{WARNSTR['subclass_inconsistency']}: Class inconsistency found in shape {shapenode}. \
+            warnmsg = f"Class inconsistency found in shape {shapenode}. \
 The class {shclass} must be subclass of {classtype} found in the hierarchy."
-            warnings.warn(warnstr)
+            print_warning('subclass_inconsistency', warnmsg)
         return True, None
 
 
@@ -384,9 +384,9 @@ def scan_type_non_hierachical(target, node, instancetype, shapename, reftype):
         for t in target:
             t_nodeclass, t_classtype = rdfutils.get_type(g, t)
             if rdfutils.isVariableNodeClass(t_nodeclass):
-                warnstr = f"{WARNSTR['ignored_variable_reference']}: Warning: Variable node {t} is target of \
+                warnmsg = f"Warning: Variable node {t} is target of \
 non-owning or non-hierarchical reference {reftype} This will be ignored."
-                warnings.warn(warnstr)
+                print_warning('ignored_variable_reference', warnmsg)
                 continue
             if shclass is None:
                 shclass = t_classtype
@@ -415,9 +415,9 @@ non-owning or non-hierarchical reference {reftype} This will be ignored."
                                      reftype=reftype,
                                      maxCount=maxcount)
     elif rdfutils.isVariableNodeClass(nodeclass):
-        warnstr = f"{WARNSTR['ignored_variable_reference']}: Warning: Variable node {target} is target of \
+        warnmsg = f"Warning: Variable node {target} is target of \
 non-owning or non-hierarchical reference {reftype} This will be ignored."
-        warnings.warn(warnstr)
+        print_warning('ignored_variable_reference', warnmsg)
     return
 
 
@@ -499,8 +499,7 @@ def scan_entity_recursive(node, id, instance, node_id, o, type=None, is_property
     decoded_attributename = urllib.parse.unquote(attributename)
     if type is not None:
         optional, array, path = shaclg.get_modelling_rule_and_path(decoded_attributename, URIRef(type),
-                                                                   classtype, attribute_prefix,
-                                                                   warning_callback('ambiguous path match'))
+                                                                   classtype, attribute_prefix)
     else:
         optional, array, path = (None, None, None)
     if path is not None:
@@ -564,10 +563,10 @@ will flag this.")
         except StopIteration:
             if not shacl_rule['is_iri']:
                 if shacl_rule['isAbstract']:
-                    warnstr = f"{WARNSTR['abstract_datatype']}: Abstract OPCUA DataType \
+                    warnmsg = f"Abstract OPCUA DataType \
 {str(shacl_rule.get('orig_datatype'))} in instance attribute {entity_ontology_prefix}:{attributename} \
 found without concreate value in {node}."
-                    warnings.warn(warnstr)
+                    print_warning('abstract_datatype', warnmsg)
                 value = utils.get_default_value(shacl_rule['datatype'],
                                                 shacl_rule.get('orig_datatype'),
                                                 shacl_rule.get('value_rank'),
@@ -583,9 +582,9 @@ found without concreate value in {node}."
         else:
             if value is None:
                 value = NULL_IRI
-                warnstr = f"{WARNSTR['no_iri_value']}: IRI value is not found for {attributename} in node {node}. \
+                warnmsg = f"IRI value is not found for {attributename} in node {node}. \
 Check whether it has a proper type definition. Most likely this attribute is not defined in the type definition."
-                warnings.warn(warnstr)
+                print_warning('no_iri_value', warnmsg)
             instance[f'{entity_ontology_prefix}:{attributename}'] = {
                 'type': 'Property',
                 'value': {
@@ -639,13 +638,6 @@ def scan_entity_nonrecursive(node, id, instance, node_id, o, generic_reference=N
         print(f"Warning: Variable node {o} is target of non-owning reference {full_attribute_name}. \
 This will be ignored.")
     return has_components
-
-
-def warning_callback(warnid):
-    def print_warning(message):
-        warnstr = f"{WARNSTR[warnid]}: {message}"
-        warnings.warn(warnstr)
-    return print_warning
 
 
 if __name__ == '__main__':
@@ -780,9 +772,9 @@ Machinery Folder was found in instance ontology.")
         scan_entity(node_id, type, entity_id)
     # Did we catch all? If not, give warning
     if len(non_followed_nodes.difference(followed_nodes)) > 0:
-        warnstr = f"{WARNSTR['non_reached_nodes']}: Some nodes referenced by non-hierarchical references are not \
+        warnstr = "Some nodes referenced by non-hierarchical references are not \
 added. This will potentially create validation issues."
-        warnings.warn(warnstr)
+        print_warning('non_reached_nodes', warnstr)
     # Add types to entities
     for type in types:
         e.add_subclass(type)

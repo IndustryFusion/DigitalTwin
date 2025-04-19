@@ -26,6 +26,7 @@ import operator
 import json
 from pyld import jsonld
 import urllib
+import warnings
 
 
 WARNSTR = {
@@ -36,7 +37,8 @@ WARNSTR = {
     'no_iri_value': "NO_IRI_VALUE",
     'ignored_variable_reference': "IGNORED_VARIABLE_REFERENCE",
     'non_reached_nodes': "NON_REACHED_NODES",
-    'ambiguous path match': "AMBIGUOUS_PATH_MATCH"
+    'ambiguous path match': "AMBIGUOUS_PATH_MATCH",
+    'interface_not_subtype_of_interfacetype': "INTERFACE_NOT_SUBTYPE_OF_INTERFACETYPE"
 }
 
 NULL_IRI = URIRef('urn:ngsi-ld:null')
@@ -75,6 +77,14 @@ modelling_nodeid_optional_array = 11508
 workaround_instances = ['http://opcfoundation.org/UA/DI/FunctionalGroupType', 'http://opcfoundation.org/UA/FolderType']
 NGSILD = Namespace('https://uri.etsi.org/ngsi-ld/')
 MACHINERY = Namespace('http://opcfoundation.org/UA/Machinery/')
+
+
+def print_warning(dictid, message):
+    warnlabel = WARNSTR.get(dictid)
+    if warnlabel is None:
+        warnlabel = "GENERAL_WARNING"
+    warnstr = f"{warnlabel}: {message}"
+    warnings.warn(warnstr)
 
 
 def dump_graph(g):
@@ -540,6 +550,10 @@ class RdfUtils:
         curnode = interface_node
         curtype = next(g.objects(curnode, self.basens['definesType']), None)
         while curtype != self.opcuans['BaseInterfaceType'] and curtype is not None:
+            if curtype == self.opcuans['BaseObjectType']:
+                warnmsg = f"Interface added to {node} is not subtype of BaseInterfaceType."
+                print_warning('interface_not_subtype_of_interfacetype', warnmsg)
+                break
             supertypes.append((curtype, curnode))
             curtype = next(g.objects(curtype, RDFS.subClassOf), None)
             curnode = next(g.subjects(self.basens['definesType'], curtype), None)
