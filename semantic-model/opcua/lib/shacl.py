@@ -26,7 +26,7 @@ import lib.utils as utils
 from lib.jsonld import JsonLd
 from functools import reduce
 import operator
-from lib.utils import NGSILD
+from lib.utils import NGSILD, print_warning
 
 
 class Shacl:
@@ -263,7 +263,7 @@ class Shacl:
             shacl_rule['datatype'] = None
             shacl_rule['isAbstract'] = None
 
-    def get_modelling_rule_and_path(self, name, target_class, attributeclass, prefix, warning_callback=None):
+    def get_modelling_rule_and_path(self, name, target_class, attributeclass, prefix):
         query_minmax = """
             SELECT ?path ?pattern ?mincount ?maxcount ?localName
             WHERE {
@@ -333,8 +333,8 @@ or placeholders or both. Will try to guess the right value, but this can go wron
                 warn_message += f" Guessed to use {path} for {name} and class {target_class} {confidence}."
         except:
             pass
-        if warning_callback is not None and warn_message is not None:
-            warning_callback(warn_message)
+        if warn_message is not None:
+            print_warning('ambiguous path match', warn_message)
         return optional, array, path
 
     def attribute_is_indomain(self, shapenode, attributename):
