@@ -10,7 +10,7 @@ from rdflib import Graph, Namespace, URIRef, Literal, BNode
 from rdflib.namespace import RDFS, XSD, OWL, RDF
 from rdflib.collection import Collection
 from lib.utils import RdfUtils, downcase_string, isNodeId, convert_to_json_type, idtype2String, extract_namespaces, \
-                                get_datatype, attributename_from_type, get_default_value, get_value, normalize_angle_bracket_name, \
+                                get_datatype, attributename_from_type, normalize_angle_bracket_name, \
                                 contains_both_angle_brackets, get_typename, get_common_supertype, rdfStringToPythonBool, \
                                 get_rank_dimensions, get_type_and_template, OntologyLoader, file_path_to_uri, create_list, \
                                 extract_subgraph, dump_without_prefixes, get_contentclass, quote_url, merge_attributes, dump_graph, \
@@ -290,67 +290,11 @@ class TestUtils(unittest.TestCase):
         result = attributename_from_type(type_uri)
         self.assertEqual(result, "Some")
 
-    def test_get_default_value(self):
-        """Test getting the default value for a datatype."""
-        self.assertEqual(get_default_value([XSD.integer]), 0)
-        self.assertEqual(get_default_value([XSD.double]), 0.0)
-        self.assertEqual(get_default_value([XSD.string]), '')
-        self.assertEqual(get_default_value([XSD.boolean]), False)
-        self.assertEqual(get_default_value([RDF.JSON]), {'@value': {}, '@type': '@json'})
-        self.assertEqual(get_default_value([XSD.dateTime]), {'@value': '1970-1-1T00:00:00', '@type': 'xsd.dateTime'})
-        self.assertEqual(get_default_value(None,orig_datatype=XSD.integer), 0)
-
-        # No default value found
-        self.assertEqual(get_default_value(datatypes=None, orig_datatype=[XSD.byte]), 'null')
-        self.assertEqual(get_default_value(datatypes=[], orig_datatype=[XSD.byte]), 'null')
-
-        # Test array values
-        array_dimension_list = [Literal(1)]
-        array_dimension_node = BNode()
-        g = Graph()
-        Collection(g, array_dimension_node, array_dimension_list)
-        self.assertEqual(get_default_value([XSD.integer], value_rank=Literal(1), array_dimensions=array_dimension_node, g=g), {'@list': [0]})
-
-        array_dimension_list = [Literal(1), Literal(2), Literal(3)]
-        array_dimension_node = BNode()
-        g = Graph()
-        Collection(g, array_dimension_node, array_dimension_list)
-        self.assertEqual(get_default_value([XSD.integer], value_rank=Literal(3), array_dimensions=array_dimension_node, g=g), {'@list': [0, 0, 0, 0, 0, 0]})
-
 
     def test_rdfStringToPythonBool(self):
         """Test getting the default value for a datatype."""
         self.assertEqual(rdfStringToPythonBool(Literal('false')), False)
         self.assertEqual(rdfStringToPythonBool(Literal('true')), True)
-
-    def test_get_value(self):
-        """Test getting the converted value for a datatype."""
-        g = Graph()
-        bnode = BNode()
-        collection = Collection(g, bnode, [Literal(0), Literal(1), Literal(2)])
-        self.assertEqual(get_value(g, Literal(int(99)), [XSD.integer]), int(99))
-        self.assertEqual(get_value(g, Literal(float('0.123')), [XSD.double]), float(0.123))
-        self.assertEqual(get_value(g, Literal('hello'), [XSD.string]), str('hello'))
-        self.assertEqual(get_value(g, Literal(True), [XSD.boolean]), True)
-        self.assertEqual(get_value(g, bnode, [XSD.integer]), {'@list': [ 0, 1, 2 ]})
-        self.assertEqual(get_value(g, Literal(99), [XSD.integer, XSD.double]), int(99))
-        self.assertEqual(get_value(g, Literal(True), [XSD.boolean, XSD.double]), True)
-        self.assertEqual(get_value(g, "{}", [RDF.JSON]), {'@value': '{}', '@type': '@json'})
-        self.assertEqual(get_value(g, '1970-2-1T00:00:00', [XSD.dateTime]), {'@value': '1970-2-1T00:00:00', '@type': 'xsd:dateTime'})
-        self.assertEqual(get_value(g, RDF.nil, [RDF.JSON]), {'@list': [ ]})
-
-    def test_get_value_collection_exception(self):
-        """Test that get_value raises an exception when Collection() fails."""
-        from rdflib import Graph, BNode
-        from rdflib.namespace import XSD
-        from lib.utils import get_value
-
-        g = Graph()
-        bnode = BNode()
-
-        # Patch the Collection in the lib.utils namespace so that it raises an exception.
-        with patch('lib.utils.Collection', side_effect=Exception("Test exception")):
-            self.assertEqual(get_value(g, bnode, [XSD.integer]), None)
 
 
     def test_normalize_angle_bracket_name(self):

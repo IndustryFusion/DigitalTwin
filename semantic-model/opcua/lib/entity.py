@@ -16,8 +16,8 @@
 
 from rdflib import Graph, Namespace, Literal, URIRef
 from rdflib.namespace import OWL, RDF, RDFS
+from lib.utils import NGSILD
 
-ngsildns = Namespace('https://uri.etsi.org/ngsi-ld/')
 
 query_enumclass = """
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
@@ -71,7 +71,7 @@ class Entity:
         self.opcuans = opcuans
         self.entity_namespace = Namespace(f'{namespace_prefix}entity/')
         self.e.bind('uaentity', self.entity_namespace)
-        self.ngsildns = Namespace('https://uri.etsi.org/ngsi-ld/')
+        self.ngsildns = NGSILD
         self.e.bind('ngsi-ld', self.ngsildns)
         self.types = []
 

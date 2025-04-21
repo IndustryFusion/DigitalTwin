@@ -32,13 +32,17 @@ shacl:AlphaTypeShape a sh:NodeShape ;
         [ sh:maxCount 1 ;
             sh:minCount 0 ;
             sh:nodeKind sh:BlankNode ;
+            sh:or ( [ sh:property [ sh:datatype xsd:double ;
+                                sh:maxCount 1 ;
+                                sh:minCount 1 ;
+                                sh:nodeKind sh:Literal ;
+                                sh:path ngsi-ld:hasValue ] ] [ sh:property [ sh:maxCount 1 ;
+                                sh:minCount 1 ;
+                                sh:or ( [ sh:nodeKind sh:BlankNode ;
+                                            sh:property [ sh:datatype xsd:double ;
+                                                    sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
+                                sh:path ngsi-ld:hasValueList ] ] ) ;
             sh:path <http://my.test/entity/hasC> ;
-            sh:property [ sh:maxCount 1 ;
-                    sh:minCount 1 ;
-                    sh:or ( [ sh:datatype xsd:double ] [ sh:nodeKind sh:BlankNode ;
-                                sh:property [ sh:datatype xsd:double ;
-                                        sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
-                    sh:path ngsi-ld:hasValue ] ;
             base:hasReferenceType opcua:HasComponent ] ;
     sh:targetClass test:AlphaType .
 
@@ -46,12 +50,17 @@ shacl:BTypeShape a sh:NodeShape ;
     sh:property [ sh:maxCount 1 ;
             sh:minCount 0 ;
             sh:nodeKind sh:BlankNode ;
+            sh:or ( [ sh:property [ sh:class opcua:Duplex ;
+                                sh:maxCount 1 ;
+                                sh:minCount 1 ;
+                                sh:nodeKind sh:IRI ;
+                                sh:path ngsi-ld:hasValue ] ] [ sh:property [ sh:maxCount 1 ;
+                                sh:minCount 1 ;
+                                sh:or ( [ sh:nodeKind sh:BlankNode ;
+                                            sh:property [ sh:class opcua:Duplex ;
+                                                    sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
+                                sh:path ngsi-ld:hasValueList ] ] ) ;
             sh:path <http://my.test/entity/hasMyVariable> ;
-            sh:property [ sh:class opcua:Duplex ;
-                    sh:maxCount 1 ;
-                    sh:minCount 1 ;
-                    sh:nodeKind sh:IRI ;
-                    sh:path ngsi-ld:hasValue ] ;
             base:hasReferenceType opcua:HasComponent ] ;
     sh:targetClass test:BType .
 

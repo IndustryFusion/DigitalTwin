@@ -1,4 +1,6 @@
+@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
 @prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/> .
+@prefix opcua: <http://opcfoundation.org/UA/> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
@@ -6,6 +8,16 @@
 [] a sh:ValidationReport ;
     sh:conforms false ;
     sh:result [ a sh:ValidationResult ;
+            sh:focusNode () ;
+            sh:resultMessage "Less than 2 values on rdf:nil->( [ sh:zeroOrMorePath rdf:rest ] rdf:first )" ;
+            sh:resultPath ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:MinCountConstraintComponent ;
+            sh:sourceShape [ sh:datatype xsd:integer ;
+                    sh:maxCount 2 ;
+                    sh:minCount 2 ;
+                    sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ],
+        [ a sh:ValidationResult ;
             sh:focusNode ( "x" "y" "z" ) ;
             sh:resultMessage "More than 2 values on ( Literal(\"x\") Literal(\"y\") Literal(\"z\") )->( [ sh:zeroOrMorePath rdf:rest ] rdf:first )" ;
             sh:resultPath ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
@@ -15,6 +27,20 @@
                     sh:maxCount 2 ;
                     sh:minCount 2 ;
                     sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ],
+        [ a sh:ValidationResult ;
+            sh:focusNode [ a ngsi-ld:ListProperty ;
+                    ngsi-ld:hasValueList ( 0e+00 1e+00 ) ] ;
+            sh:resultMessage "Node ( Literal(\"0.0\", datatype=xsd:double) Literal(\"1.0\", datatype=xsd:double) ) does not conform to one or more shapes in [ sh:nodeKind sh:BlankNode ; sh:property [ sh:datatype xsd:integer ; sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] , [ sh:hasValue rdf:nil ]" ;
+            sh:resultPath ngsi-ld:hasValueList ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:OrConstraintComponent ;
+            sh:sourceShape [ sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:or ( [ sh:nodeKind sh:BlankNode ;
+                                sh:property [ sh:datatype xsd:integer ;
+                                        sh:path ( [ ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
+                    sh:path ngsi-ld:hasValueList ] ;
+            sh:value ( 0e+00 1e+00 ) ],
         [ a sh:ValidationResult ;
             sh:focusNode ( 99 ) ;
             sh:resultMessage "Less than 2 values on ( Literal(\"99\", datatype=xsd:integer) )->( [ sh:zeroOrMorePath rdf:rest ] rdf:first )" ;
@@ -26,57 +52,40 @@
                     sh:minCount 2 ;
                     sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ],
         [ a sh:ValidationResult ;
-            sh:focusNode [ a ngsi-ld:Property ;
-                    ngsi-ld:hasValue () ] ;
+            sh:focusNode [ a ngsi-ld:ListProperty ;
+                    ngsi-ld:hasValueList () ] ;
             sh:resultMessage "Value is not of Node Kind sh:BlankNode" ;
-            sh:resultPath ngsi-ld:hasValue ;
+            sh:resultPath ngsi-ld:hasValueList ;
             sh:resultSeverity sh:Violation ;
             sh:sourceConstraintComponent sh:NodeKindConstraintComponent ;
             sh:sourceShape [ sh:maxCount 1 ;
                     sh:minCount 1 ;
                     sh:nodeKind sh:BlankNode ;
-                    sh:path ngsi-ld:hasValue ;
+                    sh:path ngsi-ld:hasValueList ;
                     sh:property [ sh:datatype xsd:integer ;
                             sh:maxCount 2 ;
                             sh:minCount 2 ;
                             sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] ;
             sh:value () ],
         [ a sh:ValidationResult ;
-            sh:focusNode () ;
-            sh:resultMessage "Less than 2 values on rdf:nil->( [ sh:zeroOrMorePath rdf:rest ] rdf:first )" ;
-            sh:resultPath ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
-            sh:resultSeverity sh:Violation ;
-            sh:sourceConstraintComponent sh:MinCountConstraintComponent ;
-            sh:sourceShape [ sh:datatype xsd:integer ;
-                    sh:maxCount 2 ;
-                    sh:minCount 2 ;
-                    sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ],
-        [ a sh:ValidationResult ;
-            sh:focusNode [ a ngsi-ld:Property ;
-                    ngsi-ld:hasValue 1 ] ;
-            sh:resultMessage "Node Literal(\"1\", datatype=xsd:integer) does not conform to one or more shapes in [ sh:datatype xsd:double ] , [ sh:nodeKind sh:BlankNode ; sh:property [ sh:datatype xsd:double ; sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] , [ sh:hasValue rdf:nil ]" ;
-            sh:resultPath ngsi-ld:hasValue ;
+            sh:focusNode <http://my.test/testid:i2012> ;
+            sh:resultMessage "Node [ <https://uri.etsi.org/ngsi-ld/hasValue> Literal(\"1\", datatype=xsd:integer) ; rdf:type <https://uri.etsi.org/ngsi-ld/Property> ] does not conform to one or more shapes in [ sh:property [ sh:datatype xsd:double ; sh:maxCount Literal(\"1\", datatype=xsd:integer) ; sh:minCount Literal(\"1\", datatype=xsd:integer) ; sh:nodeKind sh:Literal ; sh:path ngsi-ld:hasValue ] ] , [ sh:property [ sh:maxCount Literal(\"1\", datatype=xsd:integer) ; sh:minCount Literal(\"1\", datatype=xsd:integer) ; sh:or ( [ sh:nodeKind sh:BlankNode ; sh:property [ sh:datatype xsd:double ; sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue rdf:nil ] ) ; sh:path ngsi-ld:hasValueList ] ]" ;
+            sh:resultPath <http://my.test/entity/hasMyVariable10> ;
             sh:resultSeverity sh:Violation ;
             sh:sourceConstraintComponent sh:OrConstraintComponent ;
             sh:sourceShape [ sh:maxCount 1 ;
-                    sh:minCount 1 ;
-                    sh:or ( [ sh:datatype xsd:double ] [ sh:nodeKind sh:BlankNode ;
-                                sh:property [ sh:datatype xsd:double ;
-                                        sh:path ( [ ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
-                    sh:path ngsi-ld:hasValue ] ;
-            sh:value 1 ],
-        [ a sh:ValidationResult ;
-            sh:focusNode [ a ngsi-ld:Property ;
-                    ngsi-ld:hasValue ( 0e+00 1e+00 ) ] ;
-            sh:resultMessage "Node ( Literal(\"0.0\", datatype=xsd:double) Literal(\"1.0\", datatype=xsd:double) ) does not conform to one or more shapes in [ sh:nodeKind sh:BlankNode ; sh:property [ sh:datatype xsd:integer ; sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] , [ sh:hasValue rdf:nil ]" ;
-            sh:resultPath ngsi-ld:hasValue ;
-            sh:resultSeverity sh:Violation ;
-            sh:sourceConstraintComponent sh:OrConstraintComponent ;
-            sh:sourceShape [ sh:maxCount 1 ;
-                    sh:minCount 1 ;
-                    sh:or ( [ sh:nodeKind sh:BlankNode ;
-                                sh:property [ sh:datatype xsd:integer ;
-                                        sh:path ( [ ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
-                    sh:path ngsi-ld:hasValue ] ;
-            sh:value ( 0e+00 1e+00 ) ] .
+                    sh:minCount 0 ;
+                    sh:nodeKind sh:BlankNode ;
+                    sh:or ( [ sh:property [ sh:datatype xsd:double ;
+                                        sh:maxCount 1 ;
+                                        sh:minCount 1 ;
+                                        sh:nodeKind sh:Literal ;
+                                        sh:path ngsi-ld:hasValue ] ] [ sh:property [ sh:maxCount 1 ;
+                                        sh:minCount 1 ;
+                                        sh:or ( [ ] [ ] ) ;
+                                        sh:path ngsi-ld:hasValueList ] ] ) ;
+                    sh:path <http://my.test/entity/hasMyVariable10> ;
+                    base:hasReferenceType opcua:HasComponent ] ;
+            sh:value [ a ngsi-ld:Property ;
+                    ngsi-ld:hasValue 1 ] ] .
 

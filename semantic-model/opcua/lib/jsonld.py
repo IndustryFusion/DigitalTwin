@@ -15,10 +15,15 @@
 #
 
 import json
+from rdflib import Graph, BNode, URIRef, Literal
 from rdflib.namespace import XSD, RDF
-from pyld import jsonld
+from rdflib.collection import Collection
+import operator
+from functools import reduce
+from lib.utils import is_subclass, ngsild_context
 
-ngsild_context = "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"
+
+from pyld import jsonld
 
 
 def nested_json_from_graph(g, root=None):
@@ -152,7 +157,7 @@ class JsonLd:
             json.dump(jsonld_context, f, indent=2)
 
     @staticmethod
-    def map_datatype_to_jsonld(data_type, opcuans):
+    def map_datatype_to_jsonld(g, data_type, opcuans):
         boolean_types = [opcuans['Boolean']]
         integer_types = [opcuans['Integer'],
                          opcuans['Int16'],
@@ -188,4 +193,128 @@ class JsonLd:
             return [XSD.double, XSD.integer], None
         if data_type == opcuans['DateTime']:
             return [XSD.dateTime], None
+        if is_subclass(g, data_type, opcuans['Enumeration']):
+            return [XSD.enumeration], None
         return [RDF.JSON], None
+
+    @staticmethod
+    def get_ngsild_property(value, isiri=False):
+        is_list = False
+        if isinstance(value, dict):
+            if '@value' in value:
+                pass
+            elif '@list' in value:
+                is_list = True
+            else:
+                return {
+                    'type': 'JsonProperty',
+                    'json': value
+                }
+        if isinstance(value, list) or is_list:
+            return {
+                'type': 'ListProperty',
+                'valueList': value
+            }
+
+        if isiri:
+            return {
+                'type': 'Property',
+                'value': {
+                    '@id': str(value)
+                }
+            }
+        else:
+            return {
+                'type': 'Property',
+                'value': value
+            }
+
+    @staticmethod
+    def get_ngsild_relationship(relationship):
+        return {
+            'type': 'Relationship',
+            'object': relationship
+        }
+
+    @staticmethod
+    def get_default_value(datatypes, orig_datatype=None, value_rank=None, array_dimensions=None, g=Graph()):
+        datatype = None
+        if isinstance(datatypes, list) and len(datatypes) > 0:
+            datatype = datatypes[0]
+        if orig_datatype is not None and (datatype is None or len(datatype) == 0):
+            datatype = orig_datatype
+        data_value = None
+        if datatype == XSD.integer:
+            data_value = 0
+        elif datatype == XSD.double or datatype == URIRef('http://opcfoundation.org/UA/Number'):
+            data_value = 0.0
+        elif datatype == XSD.string:
+            data_value = ''
+        elif datatype == XSD.boolean:
+            data_value = False
+        elif datatype == RDF.JSON:
+            data_value = {}
+        elif datatype == XSD.dateTime:
+            data_value = {'@value': '1970-1-1T00:00:00', '@type': 'xsd:dateTime'}
+        else:
+            print(f'Warning: unknown default value for datatype {datatype}')
+            data_value = 'null'
+        if value_rank is None or int(value_rank) < 0:
+            return data_value
+        data_array_value = []
+        if array_dimensions is not None:
+            array_length = 0
+            ad = Collection(g, array_dimensions)
+            if len(ad) > 0:
+                array_length = reduce(operator.mul, (item.toPython() for item in ad), 1)
+            if array_length > 0:
+                data_array_value = [data_value] * array_length
+        return data_array_value
+
+    @staticmethod
+    def get_value(g, value, datatypes):
+        # values can be arrays or scalar, so remember first datatype and apply it
+        # later to scalar or array
+        cast = None
+        datatype = None
+        # Find the best matching datatype in case there are more options
+        if len(datatypes) == 1:
+            datatype = datatypes[0]
+        else:
+            for dt in datatypes:
+                if value.datatype == dt:
+                    datatype = dt
+                    break
+        if datatype is None:
+            print(f"Warning: Could not matchining datatype out of {datatypes} for value {value}. \
+Is there a data mismatch?")
+            datatype = datatypes[0]
+        if datatype == XSD.integer:
+            cast = int
+        if datatype == XSD.double:
+            cast = float
+        if datatype == XSD.string:
+            cast = str
+        if datatype == XSD.boolean:
+            cast = bool
+        if isinstance(value, BNode):
+            try:
+                collection = Collection(g, value)
+                json_list = [item.toPython() if isinstance(item, Literal) else item for item in collection]
+                return json_list
+            except:
+                print("Warning: BNode which is not an rdf:List cannot be converted into a value")
+                return None
+        elif value == RDF.nil:
+            return []
+        if cast is not None:
+            return value.toPython()
+        if datatype == RDF.JSON:
+            try:
+                value = json.loads(value)
+            except:
+                pass
+            return value
+        if datatype == XSD.dateTime:
+            return {'@value': str(value), '@type': 'xsd:dateTime'}
+        return str(value)

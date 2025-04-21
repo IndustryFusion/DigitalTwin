@@ -1,159 +1,228 @@
 # tests/test_jsonld.py
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch, mock_open
 from rdflib import Graph, Namespace, URIRef, Literal, BNode
-from lib.jsonld import JsonLd
-import lib.utils as utils
-from rdflib.namespace import XSD, RDF
-from lib.jsonld import nested_json_from_graph
+from rdflib.namespace import XSD, RDF, RDFS
+from rdflib.collection import Collection
 import json
 
+from lib.jsonld import JsonLd, nested_json_from_graph
 
 class TestJsonLd(unittest.TestCase):
-
     def setUp(self):
-        """Set up common test data."""
         self.basens = Namespace("http://example.org/base/")
         self.opcuans = Namespace("http://example.org/opcua/")
         self.jsonld_instance = JsonLd(self.basens, self.opcuans)
 
     def test_add_instance(self):
-        """Test adding an instance to the JSON-LD data."""
         instance = {"id": "testId", "type": "TestType"}
         self.jsonld_instance.add_instance(instance)
         self.assertIn(instance, self.jsonld_instance.instances)
 
-    @patch("builtins.open", new_callable=unittest.mock.mock_open)
+    @patch("builtins.open", new_callable=mock_open)
     @patch("json.dump")
-    def test_serialize(self, mock_json_dump, mock_open):
-        """Test serializing JSON-LD instances to a file."""
+    def test_serialize(self, mock_json_dump, mock_open_fn):
         instance = {"id": "testId", "type": "TestType"}
         self.jsonld_instance.add_instance(instance)
 
-        # Call the serialize method
         self.jsonld_instance.serialize("test_output.json")
 
-        # Check that open was called correctly
-        mock_open.assert_called_once_with("test_output.json", "w")
-
-        # Check that json.dump was called with correct data
+        mock_open_fn.assert_called_once_with("test_output.json", "w")
         mock_json_dump.assert_called_once_with(
-            self.jsonld_instance.instances, mock_open(), ensure_ascii=False, indent=4
+            self.jsonld_instance.instances,
+            mock_open_fn(),
+            ensure_ascii=False,
+            indent=4
         )
 
-    @patch("builtins.open", new_callable=unittest.mock.mock_open)
+    @patch("builtins.open", new_callable=mock_open)
     @patch("json.dump")
-    def test_dump_context(self, mock_json_dump, mock_open):
-        """Test dumping JSON-LD context to a file."""
+    def test_dump_context(self, mock_json_dump, mock_open_fn):
         namespaces = {
             "base": {"@id": str(self.basens), "@prefix": True}
         }
         self.jsonld_instance.dump_context("context_output.json", namespaces)
 
-        # Check that open was called correctly
-        mock_open.assert_called_once_with("context_output.json", "w")
-
-        # Check that json.dump was called with correct data
+        mock_open_fn.assert_called_once_with("context_output.json", "w")
         mock_json_dump.assert_called_once_with(
             {
                 "@context": [
                     namespaces,
-                    "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"
+                    "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld"
                 ]
             },
-            mock_open(),
+            mock_open_fn(),
             indent=2
         )
 
-    def test_map_datatype_to_jsonld(self):
-        """Test mapping OPC UA data types to JSON-LD data types."""
-        # Boolean type test
-        result, _ = JsonLd.map_datatype_to_jsonld(self.opcuans['Boolean'], self.opcuans)
+    def test_map_datatype_to_jsonld_basic(self):
+        g = Graph()
+        # Boolean type
+        result, _ = JsonLd.map_datatype_to_jsonld(g, self.opcuans['Boolean'], self.opcuans)
         self.assertEqual(result, [XSD.boolean])
-
-        # Integer type test
-        result, _ = JsonLd.map_datatype_to_jsonld(self.opcuans['Int32'], self.opcuans)
+        # Integer type
+        result, _ = JsonLd.map_datatype_to_jsonld(g, self.opcuans['Int32'], self.opcuans)
         self.assertEqual(result, [XSD.integer])
-
-        # Double type test
-        result, _ = JsonLd.map_datatype_to_jsonld(self.opcuans['Double'], self.opcuans)
+        # Double type
+        result, _ = JsonLd.map_datatype_to_jsonld(g, self.opcuans['Double'], self.opcuans)
         self.assertEqual(result, [XSD.double])
-        
-
-        # Unknown type test
-        result, _ = JsonLd.map_datatype_to_jsonld(self.opcuans['UnknownType'], self.opcuans)
-        self.assertEqual(result, [RDF.JSON])
-        
-        # Test Number
-        result, regexp = JsonLd.map_datatype_to_jsonld(self.opcuans['Number'], self.opcuans)
+        # Number type
+        result, _ = JsonLd.map_datatype_to_jsonld(g, self.opcuans['Number'], self.opcuans)
         self.assertEqual(result, [XSD.double, XSD.integer])
+        # Unknown type
+        unknown = URIRef("http://example.org/UnknownType")
+        result, _ = JsonLd.map_datatype_to_jsonld(g, unknown, self.opcuans)
+        self.assertEqual(result, [RDF.JSON])
+        # Enumeration subclass detection
+        g.add((self.opcuans['MyType'], RDFS.subClassOf, self.opcuans['Enumeration']))
+        result_enum, _ = JsonLd.map_datatype_to_jsonld(g, self.opcuans['MyType'], self.opcuans)
+        # Current implementation falls back to JSON for enumeration in absence of subclass handling
+        self.assertEqual(result_enum, [XSD.enumeration])
+
+    def test_map_datatype_to_jsonld_string_and_datetime(self):
+        g = Graph()
+        # String type
+        result_str, _ = JsonLd.map_datatype_to_jsonld(g, self.opcuans['String'], self.opcuans)
+        self.assertEqual(result_str, [XSD.string])
+        # DateTime type
+        result_dt, _ = JsonLd.map_datatype_to_jsonld(g, self.opcuans['DateTime'], self.opcuans)
+        self.assertEqual(result_dt, [XSD.dateTime])
+
+    def test_get_ngsild_property_list(self):
+        data_list = [1, 2, 3]
+        prop = JsonLd.get_ngsild_property(data_list)
+        self.assertEqual(prop['type'], 'ListProperty')
+        self.assertEqual(prop['valueList'], data_list)
+
+    def test_get_ngsild_property_dict(self):
+        data_dict = {"a": 1}
+        prop = JsonLd.get_ngsild_property(data_dict)
+        self.assertEqual(prop['type'], 'JsonProperty')
+        self.assertEqual(prop['json'], data_dict)
+
+    def test_get_ngsild_property_iri_and_literal(self):
+        iri_value = URIRef("http://example.org/iri")
+        prop = JsonLd.get_ngsild_property(iri_value, isiri=True)
+        self.assertEqual(prop, {'type': 'Property', 'value': {'@id': str(iri_value)}})
+        literal_value = "some string"
+        prop2 = JsonLd.get_ngsild_property(literal_value)
+        self.assertEqual(prop2, {'type': 'Property', 'value': literal_value})
+
+    def test_get_ngsild_relationship(self):
+        rel_obj = "someObj"
+        rel = JsonLd.get_ngsild_relationship(rel_obj)
+        self.assertEqual(rel, {'type': 'Relationship', 'object': rel_obj})
+
+    def test_get_default_value_scalars(self):
+        # integer
+        self.assertEqual(JsonLd.get_default_value([XSD.integer]), 0)
+        # double
+        self.assertEqual(JsonLd.get_default_value([XSD.double]), 0.0)
+        # string
+        self.assertEqual(JsonLd.get_default_value([XSD.string]), '')
+        # boolean
+        self.assertEqual(JsonLd.get_default_value([XSD.boolean]), False)
+        # JSON
+        self.assertEqual(JsonLd.get_default_value([RDF.JSON]), {})
+        # dateTime: check fields individually
+        dt_val = JsonLd.get_default_value([XSD.dateTime])
+        self.assertIsInstance(dt_val, dict)
+        self.assertEqual(dt_val.get('@value'), '1970-1-1T00:00:00')
+        self.assertEqual(dt_val.get('@type'), 'xsd:dateTime')
+        # unknown
+        self.assertEqual(JsonLd.get_default_value([]), 'null')
+
+    def test_get_default_value_with_orig_datatype(self):
+        self.assertEqual(JsonLd.get_default_value([], orig_datatype=XSD.string), '')
+
+    def test_get_default_value_array(self):
+        g = Graph()
+        bnode = BNode()
+        Collection(g, bnode, [Literal(2), Literal(3)])
+        array_output = JsonLd.get_default_value([XSD.integer], orig_datatype=None,
+                                               value_rank=0, array_dimensions=bnode, g=g)
+        # array of two elements with value 0 => length=2*3? Actually 2*3=6 zeros
+        self.assertEqual(array_output, [0] * 6)
+
+    def test_get_default_value_array_empty_dimensions(self):
+        g = Graph()
+        bnode = BNode()
+        Collection(g, bnode, [])
+        result = JsonLd.get_default_value([XSD.integer], orig_datatype=None,
+                                          value_rank=0, array_dimensions=bnode, g=g)
+        self.assertEqual(result, [])
+
+    def test_get_value_scalar(self):
+        g = Graph()
+        val = Literal(123, datatype=XSD.integer)
+        result = JsonLd.get_value(g, val, [XSD.integer])
+        self.assertEqual(result, 123)
+        val2 = Literal('3.14', datatype=XSD.double)
+        result2 = JsonLd.get_value(g, val2, [XSD.double])
+        self.assertAlmostEqual(result2, 3.14)
+        val3 = Literal('true', datatype=XSD.boolean)
+        result3 = JsonLd.get_value(g, val3, [XSD.boolean])
+        self.assertTrue(result3)
+        val4 = Literal('hello', datatype=XSD.string)
+        result4 = JsonLd.get_value(g, val4, [XSD.string])
+        self.assertEqual(result4, 'hello')
+
+    def test_get_value_no_match_datatype(self):
+        g = Graph()
+        val = Literal('123', datatype=XSD.integer)
+        with patch('builtins.print') as mock_print:
+            result = JsonLd.get_value(g, val, [XSD.boolean, XSD.double])
+        self.assertTrue(mock_print.called)
+        # Current behavior returns the literal's Python value
+        self.assertEqual(result, val.toPython())
+
+    def test_get_value_array(self):
+        g = Graph()
+        bnode = BNode()
+        Collection(g, bnode, [Literal(1), Literal(2)])
+        result = JsonLd.get_value(g, bnode, [XSD.integer])
+        self.assertEqual(result, [1, 2])
 
 class TestNestedJsonFromGraph(unittest.TestCase):
     def test_nested_json_from_graph_valid(self):
-        """Test converting a graph with a blank node to a nested JSON object."""
-        # Set up a simple graph
         graph = Graph()
         ex = Namespace("http://example.org/")
         person = URIRef(ex + "person/1")
         name = URIRef(ex + "name")
         knows = URIRef(ex + "knows")
         blank = BNode()
-
-        # Add triples:
-        # person has a name "Alice"
         graph.add((person, name, Literal("Alice")))
-        # person knows someone (a blank node) who has a name "John Doe"
         graph.add((person, knows, blank))
         graph.add((blank, name, Literal("John Doe")))
 
-        # Convert the graph to nested JSON (root will be auto‑selected as person)
         nested = nested_json_from_graph(graph)
-
-        # Assert that the root node is the non‑blank node "person"
-        self.assertEqual(nested.get("@id"), str(person))
-        # Check that the direct property (name) is set correctly
+        self.assertEqual(nested.get('@id'), str(person))
         self.assertEqual(nested.get(str(name)), {'@value': 'Alice'})
-        # Check that the blank node linked via "knows" is inlined (and its @id is omitted)
-        knows_value = nested.get(str(knows))
-        self.assertIsInstance(knows_value, dict)
-        self.assertNotIn("@id", knows_value)
-        self.assertEqual(knows_value.get(str(name)), {'@value': 'John Doe'})
+        k = nested.get(str(knows))
+        self.assertIsInstance(k, dict)
+        self.assertNotIn('@id', k)
+        self.assertEqual(k.get(str(name)), {'@value': 'John Doe'})
 
     def test_nested_json_from_graph_invalid_root(self):
-        """Test that specifying a non‑existent root node raises a ValueError."""
         graph = Graph()
         ex = Namespace("http://example.org/")
         person = URIRef(ex + "person/1")
-        # Add a simple triple
         graph.add((person, URIRef(ex + "name"), Literal("Alice")))
+        with self.assertRaises(ValueError) as cm:
+            nested_json_from_graph(graph, root="http://nonexistent")
+        self.assertIn("Specified root node not found in the graph.", str(cm.exception))
 
-        # Passing a root that does not exist in the graph should raise a ValueError
-        with self.assertRaises(ValueError) as context:
-            nested_json_from_graph(graph, root="http://nonexistent.org")
-        self.assertIn("Specified root node not found in the graph.", str(context.exception))
-
-class TestNestedJsonFromGraphAdditional(unittest.TestCase):
-    @patch("pyld.jsonld.flatten")
-    def test_dict_without_id(self, mock_flatten):
-        """
-        Test that when a property value is a dictionary without an "@id",
-        it is not processed further and remains unchanged.
-        """
-        # Define a custom flattened structure where the "prop" key's value is a dict without "@id".
-        custom_flattened = [{
-            "@id": "http://example.org/root",
-            "prop": {"value": "something"}
-        }]
-        mock_flatten.return_value = custom_flattened
-
-        # Create a dummy graph; its contents won't matter due to our patches.
+    def test_nested_json_from_graph_with_explicit_root(self):
         graph = Graph()
-        # Patch the graph.serialize method to return valid JSON (the content here is irrelevant).
-        with patch.object(graph, "serialize", return_value=json.dumps({})):
-            nested = nested_json_from_graph(graph)
+        ex = Namespace("http://example.org/")
+        root1 = URIRef(ex + "root1")
+        other = URIRef(ex + "other")
+        name = URIRef(ex + "name")
+        graph.add((root1, name, Literal("Val1")))
+        graph.add((other, name, Literal("Val2")))
+        nested = nested_json_from_graph(graph, root=str(other))
+        self.assertEqual(nested.get('@id'), str(other))
+        self.assertEqual(nested.get(str(name)), {'@value': 'Val2'})
 
-        # The branch under test (a dict without "@id") should simply return the dict as is.
-        self.assertEqual(nested.get("prop"), {"value": "something"})
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()

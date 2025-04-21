@@ -15,14 +15,12 @@
 #
 
 from urllib.parse import urlparse, quote
-from rdflib.namespace import RDFS, XSD, OWL, RDF
+from rdflib.namespace import RDFS, OWL, RDF
 from rdflib import URIRef, Namespace, Graph, Literal, BNode
 from rdflib.collection import Collection
 from pathlib import Path
 import re
 import os
-from functools import reduce
-import operator
 import json
 from pyld import jsonld
 import urllib
@@ -77,6 +75,7 @@ modelling_nodeid_optional_array = 11508
 workaround_instances = ['http://opcfoundation.org/UA/DI/FunctionalGroupType', 'http://opcfoundation.org/UA/FolderType']
 NGSILD = Namespace('https://uri.etsi.org/ngsi-ld/')
 MACHINERY = Namespace('http://opcfoundation.org/UA/Machinery/')
+ngsild_context = "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld"
 
 
 def print_warning(dictid, message):
@@ -154,84 +153,6 @@ def attributename_from_type(type):
         basename = os.path.basename(url.path)
         basename = basename.removesuffix('Type')
     return basename
-
-
-def get_default_value(datatypes, orig_datatype=None, value_rank=None, array_dimensions=None, g=Graph()):
-    datatype = None
-    if isinstance(datatypes, list) and len(datatypes) > 0:
-        datatype = datatypes[0]
-    if orig_datatype is not None and (datatype is None or len(datatype) == 0):
-        datatype = orig_datatype
-    data_value = None
-    if datatype == XSD.integer:
-        data_value = 0
-    elif datatype == XSD.double or datatype == URIRef('http://opcfoundation.org/UA/Number'):
-        data_value = 0.0
-    elif datatype == XSD.string:
-        data_value = ''
-    elif datatype == XSD.boolean:
-        data_value = False
-    elif datatype == RDF.JSON:
-        data_value = {'@value': {}, '@type': '@json'}
-    elif datatype == XSD.dateTime:
-        data_value = {'@value': '1970-1-1T00:00:00', '@type': 'xsd.dateTime'}
-    else:
-        print(f'Warning: unknown default value for datatype {datatype}')
-        data_value = 'null'
-    if value_rank is None or int(value_rank) < 0:
-        return data_value
-    data_array_value = []
-    if array_dimensions is not None:
-        array_length = 0
-        ad = Collection(g, array_dimensions)
-        if len(ad) > 0:
-            array_length = reduce(operator.mul, (item.toPython() for item in ad), 1)
-        if array_length > 0:
-            data_array_value = [data_value] * array_length
-    return {'@list': data_array_value}
-
-
-def get_value(g, value, datatypes):
-    # values can be arrays or scalar, so remember first datatype and apply it
-    # later to scalar or array
-    cast = None
-    datatype = None
-    # Find the best matching datatype in case there are more options
-    if len(datatypes) == 1:
-        datatype = datatypes[0]
-    else:
-        for dt in datatypes:
-            if value.datatype == dt:
-                datatype = dt
-                break
-    if datatype is None:
-        print(f"Warning: Could not matchining datatype out of {datatypes} for value {value}. Is there a data mismatch?")
-        datatype = datatypes[0]
-    if datatype == XSD.integer:
-        cast = int
-    if datatype == XSD.double:
-        cast = float
-    if datatype == XSD.string:
-        cast = str
-    if datatype == XSD.boolean:
-        cast = bool
-    if isinstance(value, BNode):
-        try:
-            collection = Collection(g, value)
-            json_list = [item.toPython() if isinstance(item, Literal) else item for item in collection]
-            return {'@list': json_list}
-        except:
-            print("Warning: BNode which is not an rdf:List cannot be converted into a value")
-            return None
-    elif value == RDF.nil:
-        return {'@list': []}
-    if cast is not None:
-        return value.toPython()
-    if datatype == RDF.JSON:
-        return {'@value': str(value), '@type': '@json'}
-    if datatype == XSD.dateTime:
-        return {'@value': str(value), '@type': 'xsd:dateTime'}
-    return str(value)
 
 
 def normalize_angle_bracket_name(s):

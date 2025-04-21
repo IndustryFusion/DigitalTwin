@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 #
 # Copyright (c) 2024 Intel Corporation
 #
@@ -140,7 +141,7 @@ parse nodeset instance and create ngsi-ld model')
                         help='Overwrite Namespace for entities (which is otherwise derived from <namespace>/entity)',
                         required=False)
     parser.add_argument('-xc', '--context-url', help='Context URL',
-                        default="https://industryfusion.github.io/contexts/staging/opcua/v0.1/context.jsonld",
+                        default="https://industryfusion.github.io/contexts/staging/opcua/v0.2/context.jsonld",
                         required=False)
     parser.add_argument('-xp', '--entity-prefix',
                         help='prefix in context for entities',
@@ -535,10 +536,7 @@ will flag this.")
             full_attribute_name = f'{entity_ontology_prefix}:{attributename}'
             if instance.get(full_attribute_name) is None:
                 instance[full_attribute_name] = []
-            attr_instance = {
-                'type': 'Relationship',
-                'object': relid
-            }
+            attr_instance = jsonld.get_ngsild_relationship(relid)
             if is_placeholder and datasetId is not None:
                 attr_instance['datasetId'] = datasetId
             if debug:
@@ -556,7 +554,7 @@ will flag this.")
         try:
             value = next(g.objects(o, basens['hasValue']))
             if not shacl_rule['is_iri']:
-                value = utils.get_value(g, value, shacl_rule['datatype'])
+                value = jsonld.get_value(g, value, shacl_rule['datatype'])
             else:
                 value = e.get_contentclass(shacl_rule['contentclass'], value)
                 value = value.toPython()
@@ -567,30 +565,22 @@ will flag this.")
 {str(shacl_rule.get('orig_datatype'))} in instance attribute {entity_ontology_prefix}:{attributename} \
 found without concreate value in {node}."
                     print_warning('abstract_datatype', warnmsg)
-                value = utils.get_default_value(shacl_rule['datatype'],
-                                                shacl_rule.get('orig_datatype'),
-                                                shacl_rule.get('value_rank'),
-                                                shacl_rule.get('array_dimensions'), g=g)
+                value = jsonld.get_default_value(shacl_rule['datatype'],
+                                                 shacl_rule.get('orig_datatype'),
+                                                 shacl_rule.get('value_rank'),
+                                                 shacl_rule.get('array_dimensions'), g=g)
             else:
                 value = e.get_default_contentclass(shacl_rule['contentclass'])
         has_components = True
         if not shacl_rule['is_iri']:
-            instance[f'{entity_ontology_prefix}:{attributename}'] = {
-                'type': 'Property',
-                'value': value
-            }
+            instance[f'{entity_ontology_prefix}:{attributename}'] = jsonld.get_ngsild_property(value)
         else:
             if value is None:
                 value = NULL_IRI
                 warnmsg = f"IRI value is not found for {attributename} in node {node}. \
 Check whether it has a proper type definition. Most likely this attribute is not defined in the type definition."
                 print_warning('no_iri_value', warnmsg)
-            instance[f'{entity_ontology_prefix}:{attributename}'] = {
-                'type': 'Property',
-                'value': {
-                    '@id': str(value)
-                }
-            }
+            instance[f'{entity_ontology_prefix}:{attributename}'] = jsonld.get_ngsild_property(value, isiri=True)
         if type is not None:
             minshaclg.copy_property_from_shacl(shaclg, type, entity_namespace[attributename])
         if debug:
@@ -625,10 +615,7 @@ def scan_entity_nonrecursive(node, id, instance, node_id, o, generic_reference=N
             has_components = True
             if full_attribute_name not in instance:
                 instance[full_attribute_name] = []
-            toappend = {
-                'type': 'Relationship',
-                'object': relid
-            }
+            toappend = jsonld.get_ngsild_relationship(relid)
             non_followed_nodes.add(o)
             if debug:
                 toappend['debug'] = full_attribute_name
