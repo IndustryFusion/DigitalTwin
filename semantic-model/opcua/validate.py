@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 #
 # Copyright (c) 2025 Intel Corporation
 #
@@ -127,7 +128,7 @@ data-file name (.jsonld, .ttl).")
             print(utils.dump_without_prefixes(source_shape_subgraph))
             print(f'Source Shape (SHACL Rule which triggered the validation error): {shape_name}=>' +
                   '=>'.join(map(str, reversed(paths))))
-            if predicates is not None:
+            if predicates is not None and len(predicates) > 0:
                 predicates_copy = predicates.copy()
                 focus_node_subgraph = utils.extract_subgraph(data_graph, entity_id, predicates_copy)
                 print(f'Focus Node (Entity which triggered the validation error): {entity_id}=>' +
@@ -135,8 +136,8 @@ data-file name (.jsonld, .ttl).")
                 result = nested_json_from_graph(focus_node_subgraph, root=None)
                 print(json.dumps(result, indent=2))
             else:
-                print(f'Focus Node (Entity which triggered the validation error): {entity_id}. It is generic, \
-entity_id of triggering node cannot be determined. Check SHACL Shape.')
+                print(f'Focus Node (Entity which triggered the validation error): {entity_id}. More details \
+cannot be determined. Check Source Shape for detailed path.')
 
 
 if __name__ == "__main__":

@@ -35,7 +35,7 @@ class Shacl:
         self.shacl_namespace = Namespace(f'{namespace_prefix}shacl/')
         self.shaclg.bind('shacl', self.shacl_namespace)
         self.shaclg.bind('sh', SH)
-        self.ngsildns = Namespace('https://uri.etsi.org/ngsi-ld/')
+        self.ngsildns = NGSILD
         self.shaclg.bind('ngsi-ld', self.ngsildns)
         self.basens = basens
         self.opcuans = opcuans
@@ -99,6 +99,51 @@ class Shacl:
             property_node_array.append(property_node)
         return property_node_array
 
+    def get_array_validation_shape_for_iri(self, contentclass, array_dimensions):
+        """Create Shape for IRI Array
+           Example: "@list": [test:iri ] is translated to RDF like a linked list:
+                     _:b0 rdf:first test:iri ;
+                     rdf:rest rdf:nil .
+                     So the corresponding SHACL expression is
+                    [
+                      sh:property [ sh:or ( [ sh:class <class> ] ) ;
+                        sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ]
+        Args:
+            contnetclass (URIRef): class of the IRI
+            array_dimensions (list(int)): array values from opcua
+
+        Returns:
+            URIRef: SHACL shape
+        """
+        property_shape = BNode()
+        zero_or_more_node = BNode()
+        self.shaclg.add((zero_or_more_node, SH.zeroOrMorePath, RDF.rest))
+        path_list_head = BNode()
+        # The list items: first element is zero_or_more_node, second is rdf:first.
+        items = [zero_or_more_node, RDF.first]
+        Collection(self.shaclg, path_list_head, items)
+        self.shaclg.add((property_shape, SH.path, path_list_head))
+        self.shaclg.add((property_shape, SH['class'], contentclass))
+
+        array_length = None
+        if array_dimensions is not None:
+            ad = Collection(self.data_graph, array_dimensions)
+            if len(ad) > 0:
+                array_length = reduce(operator.mul, (item.toPython() for item in ad), 1)
+        if array_length is not None and array_length > 0:
+            self.shaclg.add((property_shape, SH.minCount, Literal(array_length)))
+            self.shaclg.add((property_shape, SH.maxCount, Literal(array_length)))
+        property_node_array = []
+        property_node = BNode()
+        self.shaclg.add((property_node, SH.property, property_shape))
+        self.shaclg.add((property_node, SH.nodeKind, SH.BlankNode))
+        property_node_array.append(property_node)
+        if array_length is None or array_length == 0:
+            property_node = BNode()
+            self.shaclg.add((property_node, SH.hasValue, RDF.nil))
+            property_node_array.append(property_node)
+        return property_node_array
+
     def create_shacl_property(self,
                               shapename,
                               path,
@@ -116,7 +161,6 @@ class Shacl:
                               reftype=None,
                               maxCount=1
                               ):
-        innerproperty = BNode()
         property = BNode()
         minCount = 1
         if optional:
@@ -129,11 +173,23 @@ class Shacl:
             self.shaclg.add((property, self.basens['hasReferenceType'], reftype))
         if not is_array and maxCount is not None:
             self.shaclg.add((property, SH.maxCount, Literal(maxCount)))
-        self.shaclg.add((property, SH.property, innerproperty))
         if is_property:
-            self.shaclg.add((innerproperty, SH.path, self.ngsildns['hasValue']))
+            shapes = self.get_ngsild_property_constraints(value_rank,
+                                                          array_dimensions,
+                                                          datatype,
+                                                          pattern,
+                                                          is_iri,
+                                                          contentclass)
+            tuples = self.shacl_or(shapes)
+            self.shacl_add_to_shape(property, tuples)
         else:
-            self.shaclg.add((innerproperty, SH.path, self.ngsildns['hasObject']))
+            shapes = self.get_ngsild_relationship_constraints(is_array,
+                                                              placeholder_pattern,
+                                                              is_subcomponent,
+                                                              is_iri,
+                                                              contentclass)
+            tuples = self.shacl_or(shapes)
+            self.shacl_add_to_shape(property, tuples)
             if is_array:
                 self.shaclg.add((property, self.basens['isPlaceHolder'], Literal(True)))
             if placeholder_pattern is not None:
@@ -142,38 +198,116 @@ class Shacl:
                 self.shaclg.add((property, RDF.type, self.basens['SubComponentRelationship']))
             else:
                 self.shaclg.add((property, RDF.type, self.basens['PeerRelationship']))
+        return property
+
+    def get_ngsild_relationship_constraints(self, is_array, placeholder_pattern, is_subcomponent, is_iri, contentclass):
+        """Create constraints for ngsi-ld Relationship
+
+        Args:
+            is_array (bool): If set it means that this is derived from a Generic Placeholder
+            placeholder_pattern (str): When retrieved from a Generic Placholder, it provides the pattern
+                                      e.g. <placeholder> maps to arbitrary names and placeholder_<id> only
+                                      to browsenames which start with placeholder_
+            is_subcomponent (bool): True if is it part of a hierarchical information model
+        """
+        shapes = []
+        innerproperty = BNode()
+        self.shaclg.add((innerproperty, SH.path, self.ngsildns['hasObject']))
         if is_iri:
             self.shaclg.add((innerproperty, SH.nodeKind, SH.IRI))
             if contentclass is not None:
                 self.shaclg.add((innerproperty, SH['class'], contentclass))
-        elif is_property:
+        self.shaclg.add((innerproperty, SH.minCount, Literal(1)))
+        self.shaclg.add((innerproperty, SH.maxCount, Literal(1)))
+        shape_node = BNode()
+        self.shaclg.add((shape_node, SH.property, innerproperty))
+        shapes.append(shape_node)
+        return shapes
+
+    def get_ngsild_property_constraints(self, value_rank, array_dimensions, datatype, pattern, is_iri, contentclass):
+        """Create constraints for ngsi-ld Property
+
+        There are three kind of specified properties:
+        - "Property": Default scalar property, e.g. "value": 1
+        - "ListProperty": List of Properties, e.g. "listValue": [1, 2, 3]
+        - "JsonProerty": JSON Property, e.g. "json": {"key": "value"}
+
+        Args:
+            value_rank (int): OPC UA defined Value Rank
+            array_dimensions (list(int)): list of integers according to OPC UA arrayDimension attribute
+            datatype (URIRef): XSD Datatype
+            pattern (str): Patter for generic Placeholder
+        """
+        shapes_list = []
+        json_datatype = [x for x in datatype if x == RDF.JSON]
+        non_json_datatypes = [x for x in datatype if x != RDF.JSON]
+        if value_rank is None or (int(value_rank) < 0 and len(non_json_datatypes) > 0):
+            innerproperty = BNode()
+            # It is a scalar!
+            self.shaclg.add((innerproperty, SH.path, self.ngsildns['hasValue']))
+            if is_iri:
+                self.shaclg.add((innerproperty, SH.nodeKind, SH.IRI))
+                if contentclass is not None:
+                    self.shaclg.add((innerproperty, SH['class'], contentclass))
+            else:
+                self.shaclg.add((innerproperty, SH.nodeKind, SH.Literal))
+                shapes = self.create_datatype_shapes(non_json_datatypes)
+                tuples = self.shacl_or(shapes)
+                self.shacl_add_to_shape(innerproperty, tuples)
+            self.shaclg.add((innerproperty, SH.minCount, Literal(1)))
+            self.shaclg.add((innerproperty, SH.maxCount, Literal(1)))
+            shape_node = BNode()
+            self.shaclg.add((shape_node, SH.property, innerproperty))
+            shapes_list.append(shape_node)
+        if value_rank is not None and int(value_rank) != -1 and len(non_json_datatypes) > 0:
+            # It is a list!
+            innerproperty = BNode()
+            self.shaclg.add((innerproperty, SH.path, self.ngsildns['hasValueList']))
+            if is_iri:
+                array_validation_shape = self.get_array_validation_shape_for_iri(contentclass, array_dimensions)
+            else:
+                array_validation_shape = self.get_array_validation_shape(non_json_datatypes,
+                                                                         pattern,
+                                                                         value_rank,
+                                                                         array_dimensions)
+            tuples = self.shacl_or(array_validation_shape)
+            self.shacl_add_to_shape(innerproperty, tuples)
+            self.shaclg.add((innerproperty, SH.minCount, Literal(1)))
+            self.shaclg.add((innerproperty, SH.maxCount, Literal(1)))
+            shape_node = BNode()
+            self.shaclg.add((shape_node, SH.property, innerproperty))
+            shapes_list.append(shape_node)
+        if len(json_datatype) > 0:
+            # Treat JSON separate due to NGSI-LD specification
+            innerproperty = BNode()
+            self.shaclg.add((innerproperty, SH.path, self.ngsildns['hasJSON']))
             if value_rank is None or int(value_rank) == -1:
                 self.shaclg.add((innerproperty, SH.nodeKind, SH.Literal))
-                shapes = self.create_datatype_shapes(datatype)
+                shapes = self.create_datatype_shapes(json_datatype)
                 tuples = self.shacl_or(shapes)
                 self.shacl_add_to_shape(innerproperty, tuples)
             elif int(value_rank) >= 0:
-                array_validation_shape = self.get_array_validation_shape(datatype,
+                array_validation_shape = self.get_array_validation_shape(json_datatype,
                                                                          pattern,
                                                                          value_rank,
                                                                          array_dimensions)
                 tuples = self.shacl_or(array_validation_shape)
                 self.shacl_add_to_shape(innerproperty, tuples)
-                self.shacl_add_to_shape(innerproperty, tuples)
             elif int(value_rank) < -1:
-                dt_array = self.create_datatype_shapes(datatype)
-                array_validation_shape = self.get_array_validation_shape(datatype,
+                dt_array = self.create_datatype_shapes(json_datatype)
+                array_validation_shape = self.get_array_validation_shape(json_datatype,
                                                                          pattern,
                                                                          value_rank,
                                                                          array_dimensions)
                 dt_array += array_validation_shape
                 tuples = self.shacl_or(dt_array)
                 self.shacl_add_to_shape(innerproperty, tuples)
-        if pattern is not None:
-            self.shaclg.add((innerproperty, SH['pattern'], Literal(pattern)))
-        self.shaclg.add((innerproperty, SH.minCount, Literal(1)))
-        self.shaclg.add((innerproperty, SH.maxCount, Literal(1)))
-        return property
+            self.shaclg.add((innerproperty, SH.minCount, Literal(1)))
+            self.shaclg.add((innerproperty, SH.maxCount, Literal(1)))
+            shape_node = BNode()
+            self.shaclg.add((shape_node, SH.property, innerproperty))
+            shapes_list.append(shape_node)
+        return shapes_list
 
     def shacl_add_to_shape(self, property_shape, tuples):
         if tuples is not None:
@@ -190,6 +324,13 @@ class Shacl:
                 self.shaclg.add((dt_node, SH.datatype, dt))
                 dt_items.append(dt_node)
             return dt_items
+
+    def create_iri_shape(self):
+        dt_items = []
+        dt_node = BNode()
+        self.shaclg.add((dt_node, SH.nodeKind, SH.IRI))
+        dt_items.append(dt_node)
+        return dt_items
 
     def shacl_or(self, shapes):
         """Creates shacl_or node if more than one shape is provided
@@ -239,7 +380,7 @@ class Shacl:
         shacl_rule['value_rank'] = value_rank
         shacl_rule['array_dimensions'] = array_dimensions
         shacl_rule['orig_datatype'] = data_type
-        shacl_type, shacl_pattern = JsonLd.map_datatype_to_jsonld(data_type, self.opcuans)
+        shacl_type, shacl_pattern = JsonLd.map_datatype_to_jsonld(g, data_type, self.opcuans)
         shacl_rule['pattern'] = shacl_pattern
         if data_type is not None:
             base_data_type = next(g.objects(data_type, RDFS.subClassOf))  # Todo: This must become a sparql query
@@ -725,12 +866,16 @@ class Validation:
         parent_node = None
         inter_node = focus_node
         predicates = []
+        if not isinstance(focus_node, BNode):
+            # This is propbalby the entity node already
+            # or useless to traverse since it starts with an IRI
+            return focus_node, predicates
         while parent_node is None and inter_node is not None:
             s, p, _ = next(self.data_graph.triples((None, None, inter_node)), (None, None, None))
             if s is not None:
                 inter_node = s
                 type = self.data_graph.value(subject=s, predicate=RDF.type)
-                if type is not None and type != NGSILD['Property'] and type != NGSILD['Relationship']:
+                if type is not None and not type.startswith(str(NGSILD)):
                     parent_node = s
                     inter_node = None
             else:

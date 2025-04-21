@@ -9,6 +9,177 @@ from lib.shacl import Shacl, Validation
 import lib.utils as utils
 from lib.jsonld import JsonLd
 
+
+class TestShaclAdditional(unittest.TestCase):
+    def setUp(self):
+        self.ns_prefix = "http://example.org/"
+        self.base = Namespace("http://example.org/base/")
+        self.opcua = Namespace("http://example.org/opcua/")
+        # data_graph is used by array‐validation shapes
+        self.data_graph = Graph()
+        self.sh = Shacl(self.data_graph, self.ns_prefix, self.base, self.opcua)
+
+    def test_get_array_validation_shape_for_iri_simple(self):
+        # build array_dimensions list [2, 3] => total 6
+        bnode = BNode()
+        Collection(self.data_graph, bnode, [Literal(2), Literal(3)])
+        shapes = self.sh.get_array_validation_shape_for_iri(URIRef("http://example.org/Clazz"), bnode)
+        # Should return one property placeholder shape when fixed length > 0
+        self.assertEqual(len(shapes), 1)
+        propn = shapes[0]
+        # Extract the actual property_shape (inner) that holds the constraints
+        property_shape = next(self.sh.shaclg.objects(propn, SH.property))
+        # That shape must include a minCount and maxCount equal to 6
+        self.assertIn((property_shape, SH.minCount, Literal(6)), list(self.sh.shaclg))
+        self.assertIn((property_shape, SH.maxCount, Literal(6)), list(self.sh.shaclg))
+        # And class constraint should be set on the property_shape
+        self.assertIn((property_shape, SH['class'], URIRef("http://example.org/Clazz")), list(self.sh.shaclg))
+
+    def test_ngsild_relationship_constraints_variants(self):
+        # non‐IRI, non‐array, subcomponent
+        shapes = self.sh.get_ngsild_relationship_constraints(
+            is_array=False, placeholder_pattern=None,
+            is_subcomponent=True, is_iri=False, contentclass=None
+        )
+        # should produce exactly one innerproperty shape
+        self.assertEqual(len(shapes), 1)
+        inner = next(self.sh.shaclg.objects(shapes[0], SH.property))
+        # check that SH.path → ngsi-ld:hasObject
+        self.assertIn((inner, SH.path, self.sh.ngsildns['hasObject']), list(self.sh.shaclg))
+
+        # IRI‐variant: is_iri True should add nodeKind IRI
+        shapes2 = self.sh.get_ngsild_relationship_constraints(
+            is_array=False, placeholder_pattern=None,
+            is_subcomponent=False, is_iri=True, contentclass=URIRef("http://example.org/CC")
+        )
+        inner2 = next(self.sh.shaclg.objects(shapes2[0], SH.property))
+        self.assertIn((inner2, SH.nodeKind, SH.IRI), list(self.sh.shaclg))
+        self.assertIn((inner2, SH['class'], URIRef("http://example.org/CC")), list(self.sh.shaclg))
+
+    def test_ngsild_property_constraints_scalar_and_list(self):
+        # scalar: value_rank None, no JSON, literal path
+        self.sh.shaclg = Graph()  # reset
+        shapes = self.sh.get_ngsild_property_constraints(
+            value_rank=None, array_dimensions=None,
+            datatype=[XSD.integer], pattern=None,
+            is_iri=False, contentclass=None
+        )
+        # should produce at least one property‐shape (scalar)
+        self.assertTrue(len(shapes) >= 1)
+        inner = next(self.sh.shaclg.objects(shapes[0], SH.property))
+        self.assertIn((inner, SH.path, self.sh.ngsildns['hasValue']), list(self.sh.shaclg))
+
+        # list: force list by non‐negative value_rank
+        self.sh.shaclg = Graph()
+        # create array_dimensions
+        arr = BNode()
+        Collection(self.data_graph, arr, [Literal(3)])
+        shapes2 = self.sh.get_ngsild_property_constraints(
+            value_rank=Literal(0), array_dimensions=arr,
+            datatype=[XSD.string], pattern=None,
+            is_iri=False, contentclass=None
+        )
+        # should include a property‐shape with SH.path → ngsi-ld:hasListValue
+        found = False
+        for s in shapes2:
+            inner = next(self.sh.shaclg.objects(s, SH.property))
+            if (inner, SH.path, self.sh.ngsildns['hasValueList']) in self.sh.shaclg:
+                found = True
+        self.assertTrue(found)
+
+    def test_create_datatype_and_iri_shapes_and_shacl_or(self):
+        # datatype shapes
+        dt_nodes = self.sh.create_datatype_shapes([XSD.boolean, XSD.double])
+        self.assertEqual(len(dt_nodes), 2)
+        # each node should have a precise datatype triple
+        expected = {XSD.boolean, XSD.double}
+        seen = set()
+        for n in dt_nodes:
+            for _, _, dt in self.sh.shaclg.triples((n, SH.datatype, None)):
+                seen.add(dt)
+        self.assertEqual(seen, expected)
+
+        # IRI shapes
+        iri_nodes = self.sh.create_iri_shape()
+        self.assertEqual(len(iri_nodes), 1)
+        n = iri_nodes[0]
+        self.assertIn((n, SH.nodeKind, SH.IRI), list(self.sh.shaclg))
+
+        # shacl_or: single
+        single = BNode()
+        # inject a triple
+        self.sh.shaclg.add((single, SH.datatype, XSD.string))
+        single_tup = self.sh.shacl_or([single])
+        # should return one tuple for the single shape
+        self.assertEqual(single_tup, [(SH.datatype, XSD.string)])
+        # and remove the triple from graph
+        self.assertNotIn((single, SH.datatype, XSD.string), self.sh.shaclg)
+
+        # multiple
+        a = BNode(); b = BNode()
+        self.sh.shaclg.add((a, SH.nodeKind, SH.Literal))
+        self.sh.shaclg.add((b, SH.nodeKind, SH.Literal))
+        or_tup = self.sh.shacl_or([a,b])
+        pred, obj = or_tup[0]
+        self.assertEqual(pred, SH['or'])
+        lst = list(Collection(self.sh.shaclg, obj))
+        self.assertCountEqual(lst, [a, b])
+
+    def test_attribute_and_property_helpers(self):
+        # create a basic shape & property
+        shape = self.sh.create_shacl_type("http://example.org/Clazz")
+        prop = self.sh.create_shacl_property(
+            shape,
+            URIRef("http://example.org/p"),
+            optional=False,
+            is_array=False,
+            is_property=False,
+            is_iri=False,
+            contentclass=None,
+            datatype=None
+        )
+        # attribute_is_indomain
+        self.assertTrue(self.sh.attribute_is_indomain(shape, URIRef("http://example.org/p")))
+        # get_targetclass
+        self.assertEqual(self.sh.get_targetclass(shape), URIRef("http://example.org/Clazz"))
+        # get_property_from_shape
+        got = self.sh.get_property_from_shape(shape, URIRef("http://example.org/p"))
+        self.assertEqual(got, prop)
+
+        # update_shclass_in_property: change inner class
+        sub = next(self.sh.shaclg.objects(prop, SH.property))
+        self.sh.shaclg.add((sub, SH['class'], URIRef("http://example.org/Old")))
+        self.sh.update_shclass_in_property(prop, URIRef("http://example.org/New"))
+        self.assertIn((sub, SH['class'], URIRef("http://example.org/New")), self.sh.shaclg)
+
+    def test_copy_property_from_shacl(self):
+        # source Shacl
+        src = Shacl(Graph(), self.ns_prefix, self.base, self.opcua)
+        shape = src.create_shacl_type("http://example.org/Target")
+        src.create_shacl_property(
+            shape,
+            URIRef("http://example.org/pp"),
+            optional=True,
+            is_array=False,
+            is_property=True,
+            is_iri=False,
+            contentclass=None,
+            datatype=[XSD.integer]
+        )
+        # now copy into self.sh
+        self.sh.copy_property_from_shacl(src, URIRef("http://example.org/Target"), URIRef("http://example.org/pp"))
+        # ensure our shaclg has a shape for the target
+        self.assertIn(shape, list(self.sh.shaclg.subjects(RDF.type, SH.NodeShape)))
+
+    def test_validation_update_results_and_exceptions(self):
+        v = Validation(Graph(), Graph())
+        # when not conforms and increase y
+        msg = "Line1\nLine2\nResults (5):\nLine4"
+        updated = v.update_results(msg, conforms=False, y=3)
+        self.assertIn("Results (8):", updated)
+        # when conforms and y>0 => still reports False count
+        ok = v.update_results("A\nB\nC\nD", conforms=True, y=2)
+        self.assertTrue(ok.startswith("Validation Report"))
 class TestShacl(unittest.TestCase):
 
     def setUp(self):
@@ -806,7 +977,13 @@ class TestValidation(unittest.TestCase):
         data_graph.add((subject, RDF.type, URIRef("http://example.org/Type")))
         
         parent, predicates = validation_instance.find_entity_id(focus_node)
-        self.assertEqual(parent, subject)
+        self.assertEqual(parent, focus_node)
+        self.assertEqual(predicates, [])
+        focus_node = BNode()
+        parent_node = URIRef("http://example.org/B")
+        data_graph.add((parent_node, predicate, focus_node))
+        parent, predicates = validation_instance.find_entity_id(focus_node)
+        self.assertEqual(parent, parent_node)
         self.assertEqual(predicates, [predicate])
 
     def test_find_entity_id_chain(self):
@@ -817,8 +994,8 @@ class TestValidation(unittest.TestCase):
         validation_instance = Validation(Graph(), data_graph)
         
         # Create a chain: focus_node <- predicate1 - intermediate <- predicate2 - parent_node.
-        focus_node = URIRef("http://example.org/O")
-        intermediate = URIRef("http://example.org/B")
+        focus_node = BNode()
+        intermediate = BNode()
         parent_node = URIRef("http://example.org/A")
         predicate1 = URIRef("http://example.org/p1")
         predicate2 = URIRef("http://example.org/p2")

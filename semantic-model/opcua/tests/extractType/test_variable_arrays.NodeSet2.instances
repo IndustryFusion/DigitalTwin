@@ -6,102 +6,80 @@
             "http://localhost:8099/context.jsonld"
         ],
         "uaentity:hasMyVariable2": {
-            "type": "Property",
-            "value": {
-                "@list": [
-                    0.0,
-                    1.0,
-                    2.0,
-                    3.0,
-                    4.0,
-                    5.0
-                ]
-            }
+            "type": "ListProperty",
+            "valueList": [
+                0.0,
+                1.0,
+                2.0,
+                3.0,
+                4.0,
+                5.0
+            ]
         },
         "uaentity:hasMyVariable5": {
-            "type": "Property",
-            "value": {
-                "@list": [
-                    "42"
-                ]
-            }
+            "type": "ListProperty",
+            "valueList": [
+                "42"
+            ]
         },
         "uaentity:hasMyVariable14": {
-            "type": "Property",
-            "value": {
-                "@list": []
-            }
+            "type": "ListProperty",
+            "valueList": []
         },
         "uaentity:hasMyVariable4": {
             "type": "Property",
             "value": 42
         },
         "uaentity:hasMyVariable9": {
-            "type": "Property",
-            "value": {
-                "@list": [
-                    0.0,
-                    1.0
-                ]
-            }
+            "type": "ListProperty",
+            "valueList": [
+                0.0,
+                1.0
+            ]
         },
         "uaentity:hasMyVariable11": {
-            "type": "Property",
-            "value": {
-                "@list": [
-                    "x",
-                    "y",
-                    "z"
-                ]
-            }
+            "type": "ListProperty",
+            "valueList": [
+                "x",
+                "y",
+                "z"
+            ]
         },
         "uaentity:hasMyVariable12": {
-            "type": "Property",
-            "value": {
-                "@list": [
-                    99
-                ]
-            }
+            "type": "ListProperty",
+            "valueList": [
+                99
+            ]
         },
         "uaentity:hasMyVariable8": {
-            "type": "Property",
-            "value": {
-                "@list": []
-            }
+            "type": "ListProperty",
+            "valueList": []
         },
         "uaentity:hasMyVariable": {
-            "type": "Property",
-            "value": {
-                "@list": [
-                    0,
-                    1
-                ]
-            }
+            "type": "ListProperty",
+            "valueList": [
+                0,
+                1
+            ]
         },
         "uaentity:hasMyVariable6": {
             "type": "Property",
             "value": "42"
         },
         "uaentity:hasMyVariable13": {
-            "type": "Property",
-            "value": {
-                "@list": []
-            }
+            "type": "ListProperty",
+            "valueList": []
         },
         "uaentity:hasMyVariable3": {
-            "type": "Property",
-            "value": {
-                "@list": [
-                    true,
-                    false
-                ]
-            }
+            "type": "ListProperty",
+            "valueList": [
+                true,
+                false
+            ]
         },
         "uaentity:hasMyVariable7": {
-            "type": "Property",
-            "value": {
-                "@list": []
-            }
+            "type": "ListProperty",
+            "valueList": []
         },
         "uaentity:hasMyVariable10": {
             "type": "Property",

@@ -20,13 +20,17 @@
             "type": "Property",
             "value": 0.0
         },
-        "uaentity:hasB": {
-            "type": "Relationship",
-            "object": "http://my.test/testid:i2012"
-        },
-        "test:Y": {
-            "type": "Relationship",
-            "object": "http://my.test/testid:i2012"
-        }
+        "uaentity:hasB": [
+            {
+                "type": "Relationship",
+                "object": "http://my.test/testid:i2012"
+            }
+        ],
+        "test:Y": [
+            {
+                "type": "Relationship",
+                "object": "http://my.test/testid:i2012"
+            }
+        ]
     }
 ]

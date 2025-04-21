@@ -15,11 +15,14 @@
 #
 
 import unittest
+import os
 from unittest.mock import patch, MagicMock
 from rdflib import Graph, URIRef, Literal, Namespace, BNode
 from lib.nodesetparser import NodesetParser
 from rdflib.namespace import RDF, OWL, RDFS
 import xml.etree.ElementTree as ET  # Import ElementTree as ET
+import tempfile
+
 
 class TestNodesetParser(unittest.TestCase):
 
@@ -1241,6 +1244,244 @@ class TestNodesetParser(unittest.TestCase):
             
             # Verify that a warning was printed for AccessLevel.
             mock_print.assert_any_call(f"Warning: Cannot read access_level value 1 in node {classiri}")
+
+    def test_scan_aliases_current_impl(self):
+        # Two fake <Alias> elements, each with .get() for 'Alias' and 'Value',
+        # and a .text property matching Value
+        alias1 = MagicMock()
+        alias1.get.side_effect = lambda k: 'foo' if k == 'Alias' else 'ns=1;i=42'
+        alias1.text = 'ns=1;i=42'
+        alias2 = MagicMock()
+        alias2.get.side_effect = lambda k: 'bar' if k == 'Alias' else 'ns=2;i=99'
+        alias2.text = 'ns=2;i=99'
+
+        # Clear any existing aliases and run
+        self.parser.aliases = {}
+        self.parser.scan_aliases([alias1, alias2])
+
+        # scan_aliases currently sets self.aliases[name] = alias.text
+        self.assertEqual(self.parser.aliases, {
+            'foo': 'ns=1;i=42',
+            'bar': 'ns=2;i=99'
+        })
+
+    def test_get_array_dimensions_creates_rdf_list(self):
+        # A node whose ArrayDimensions attribute is a comma‑separated string
+        node = MagicMock()
+        node.get.return_value = '2,3,4'
+        classiri = URIRef('http://example.com/classiri')
+
+        # Reset the parser graph
+        self.parser.g = Graph()
+
+        # Call the method under test
+        self.parser.get_array_dimensions(node, classiri)
+
+        # It should have added exactly one triple (classiri, hasArrayDimensions, list_head)
+        triples = list(self.parser.g.triples(
+            (classiri, self.parser.rdf_ns['base']['hasArrayDimensions'], None)
+        ))
+        self.assertEqual(len(triples), 1, "Expected one hasArrayDimensions triple")
+
+        # Now extract the RDF Collection of numbers from that blank node
+        list_node = triples[0][2]
+        from rdflib.collection import Collection
+        items = list(Collection(self.parser.g, list_node))
+
+        # And verify it matches [2,3,4]
+        self.assertEqual(items, [Literal(2), Literal(3), Literal(4)])
+
+    def test_get_value_rank_creates_literal(self):
+        # A node with ValueRank="7"
+        node = MagicMock()
+        node.get.return_value = '7'
+        classiri = URIRef('http://example.com/classiri')
+
+        # Reset the graph
+        self.parser.g = Graph()
+
+        # Call under test
+        self.parser.get_value_rank(node, classiri)
+
+        # Expect a hasValueRank triple with integer 7
+        expected = (classiri,
+                    self.parser.rdf_ns['base']['hasValueRank'],
+                    Literal(7))
+        self.assertIn(expected, list(self.parser.g))
+
+    def test_resolve_alias_handles_alias_and_nodeid(self):
+        # Prepare an alias mapping
+        self.parser.aliases = {'bar': 'ns=4;i=77'}
+
+        # When input is an alias (no 'i='), it should look up in parser.aliases
+        self.assertEqual(self.parser.resolve_alias('bar'), 'ns=4;i=77')
+
+        # When input already contains a NodeId pattern, it should be returned unchanged
+        nodeid = 'ns=3;i=100'
+        self.assertEqual(self.parser.resolve_alias(nodeid), nodeid)
+
+    def test_get_array_dimensions(self):
+        """Test that get_array_dimensions correctly parses and adds an RDF list for ArrayDimensions."""
+        # Fake a node with ArrayDimensions="3,4"
+        node = MagicMock()
+        node.get.return_value = '3,4'
+        classiri = URIRef('http://example.com/classiri')
+
+        # Call the method under test
+        self.parser.get_array_dimensions(node, classiri)
+
+        # It should have added exactly one triple with hasArrayDimensions
+        predicate = self.parser.rdf_ns['base']['hasArrayDimensions']
+        triples = list(self.parser.g.triples((classiri, predicate, None)))
+        self.assertEqual(len(triples), 1)
+
+        # The object is the head of an RDF list — verify its contents
+        list_head = triples[0][2]
+        from rdflib.collection import Collection
+        values = [lit.toPython() for lit in Collection(self.parser.g, list_head)]
+        self.assertEqual(values, [3, 4])
+
+    def test_get_array_dimensions_str(self):
+        """Test that get_array_dimensions parses a comma‑separated string into an RDF list."""
+        from rdflib.collection import Collection
+
+        classiri = URIRef("http://example.com/classiri")
+        # Simulate an XML node whose ArrayDimensions is a comma‑separated string
+        node = MagicMock()
+        node.get.return_value = "5,10,15"
+
+        # Reset parser graph and base namespace
+        self.parser.g = Graph()
+        base_ns = Namespace("http://example.com/base#")
+        self.parser.rdf_ns['base'] = base_ns
+
+        # Call the method under test
+        self.parser.get_array_dimensions(node, classiri)
+
+        # There should be exactly one hasArrayDimensions triple
+        triples = list(self.parser.g.triples((classiri, base_ns['hasArrayDimensions'], None)))
+        self.assertEqual(len(triples), 1)
+        _, _, list_node = triples[0]
+
+        # The blank node should expand into a Collection of [5,10,15]
+        items = [lit.toPython() for lit in Collection(self.parser.g, list_node)]
+        self.assertEqual(items, [5, 10, 15])
+    
+    def test_get_array_dimensions_none(self):
+        """Test that get_array_dimensions does nothing when ArrayDimensions is missing."""
+        classiri = URIRef("http://example.com/classiri")
+        node = MagicMock()
+        node.get.return_value = None
+
+        # Reset parser graph and base namespace
+        self.parser.g = Graph()
+        base_ns = Namespace("http://example.com/base#")
+        self.parser.rdf_ns['base'] = base_ns
+
+        # Call the method under test
+        self.parser.get_array_dimensions(node, classiri)
+
+        # There should be no hasArrayDimensions triples
+        self.assertEqual(
+            list(self.parser.g.triples((classiri, base_ns['hasArrayDimensions'], None))),
+            []
+        )
+
+class TestInitImportsNonStrict(unittest.TestCase):
+    @patch('lib.nodesetparser.utils.OntologyLoader')
+    def test_init_imports_non_strict(self, mock_loader_cls):
+        parser = NodesetParser.__new__(NodesetParser)
+        parser.isstrict = False
+        parser.ig = Graph()
+        loader = mock_loader_cls.return_value
+        loader.get_graph.return_value = Graph()
+        base_ontologies = ['foo', 'bar']
+        parser.init_imports(base_ontologies)
+        mock_loader_cls.assert_called_once_with(verbose=True)
+        loader.init_imports.assert_called_once_with(base_ontologies)
+        self.assertIs(parser.ig, loader.get_graph())
+
+class TestInitImportsStrict(unittest.TestCase):
+    @patch('lib.nodesetparser.Graph.parse')
+    def test_init_imports_strict(self, mock_parse):
+        parser = NodesetParser.__new__(NodesetParser)
+        parser.isstrict = True
+        parser.ig = Graph()
+        base_ontologies = ['file1', 'file2']
+        parser.init_imports(base_ontologies)
+        self.assertEqual(mock_parse.call_count, len(base_ontologies))
+
+class TestGetDatatype(unittest.TestCase):
+    def setUp(self):
+        self.parser = NodesetParser.__new__(NodesetParser)
+        self.parser.rdf_ns = {'base': Namespace('http://example.com/base#')}
+        self.parser.g = Graph()
+        self.parser.resolve_alias = lambda x: x
+        self.parser.parse_nodeid = lambda x: (1, '1', None)
+        self.parser.typeIds = [{}, {'1': URIRef('http://example.com/type/1')}]
+
+    def test_get_datatype_success(self):
+        node = MagicMock()
+        node.get.return_value = 'ns=1;i=1'
+        classiri = URIRef('http://example.com/classiri')
+        self.parser.get_datatype(node, classiri)
+        self.assertIn(
+            (classiri, self.parser.rdf_ns['base']['hasDatatype'], URIRef('http://example.com/type/1')),
+            self.parser.g
+        )
+
+
+class TestWriteGraph(unittest.TestCase):
+    def test_write_graph(self):
+        parser = NodesetParser.__new__(NodesetParser)
+        parser.g = Graph()
+        subj = URIRef('http://example.com/s')
+        pred = URIRef('http://example.com/p')
+        obj = Literal('o')
+        parser.g.add((subj, pred, obj))
+        tmp = tempfile.NamedTemporaryFile(delete=False)
+        tmp.close()
+        filename = tmp.name
+        try:
+            parser.write_graph(filename)
+            g2 = Graph()
+            g2.parse(filename)
+            self.assertIn((subj, pred, obj), g2)
+        finally:
+            os.remove(filename)
+
+class TestCreatePrefixesWithXmlNode(unittest.TestCase):
+    def test_create_prefixes_with_xml(self):
+        parser = NodesetParser.__new__(NodesetParser)
+        parser.rdf_ns = {}
+        parser.g = Graph()
+        parser.opcua_ns = []
+        base = 'http://base#'
+        opcua_namespace = 'http://opcua#'
+        xml_node = ET.Element('NamespaceUris')
+        child = ET.SubElement(xml_node, 'Uri')
+        child.text = 'http://uri1/'
+        parser.create_prefixes(xml_node, base, opcua_namespace)
+        self.assertEqual(str(parser.rdf_ns['base']), base)
+        self.assertEqual(str(parser.rdf_ns['opcua']), opcua_namespace)
+        self.assertIn('http://uri1/', parser.opcua_ns)
+
+class TestGetRdfNsFromUaIndexException(unittest.TestCase):
+    def test_get_rdf_ns_from_ua_index_missing(self):
+        parser = NodesetParser.__new__(NodesetParser)
+        parser.opcua_ns = ['http://uri1/']
+        parser.known_opcua_ns = {}
+        with patch('builtins.print') as mock_print:
+            with self.assertRaises(SystemExit):
+                parser.get_rdf_ns_from_ua_index(0)
+            mock_print.assert_called()
+
+class TestResolveAliasAlias(unittest.TestCase):
+    def test_resolve_alias_alias(self):
+        parser = NodesetParser.__new__(NodesetParser)
+        parser.aliases = {'a': 'ns=1;i=1'}
+        self.assertEqual(parser.resolve_alias('a'), 'ns=1;i=1')
+        self.assertEqual(parser.resolve_alias('ns=2;i=2'), 'ns=2;i=2')
 
 
 if __name__ == '__main__':
