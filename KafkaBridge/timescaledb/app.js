@@ -92,6 +92,9 @@ const processAttributeMessage = function (message) {
     } else if (body.type === 'https://uri.etsi.org/ngsi-ld/Relationship') {
       datapoint.attributeType = body.type;
       datapoint.value = body.attributeValue;
+    } else if (body.type === 'https://uri.etsi.org/ngsi-ld/JsonProperty' || body.type === 'https://uri.etsi.org/ngsi-ld/ListProperty') {
+      datapoint.attributeType = body.type;
+      datapoint.value = body.attributeValue;
     } else {
       logger.error('Could not send Datapoints: Neither Property, GeoProperty nor Relationship');
       return;

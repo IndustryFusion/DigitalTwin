@@ -7,7 +7,7 @@
       },
       "t": {
         "type": "string",
-        "enum": ["Property", "PropertyLiteral", "PropertyIri", "PropertyJson", "Relationship"]
+        "enum": ["Property", "PropertyLiteral", "LiteralProperty", "PropertyIri", "IriProperty", "PropertyJson", "JsonProperty", "ListProperty", "Relationship"]
       },
       "on": {
         "type": "integer"

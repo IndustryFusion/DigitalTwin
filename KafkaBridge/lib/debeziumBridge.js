@@ -151,8 +151,10 @@ module.exports = function DebeziumBridge (conf) {
           } else if ('https://uri.etsi.org/ngsi-ld/modifiedAt' in refObj) {
             attribute['https://uri.etsi.org/ngsi-ld/observedAt'] = refObj['https://uri.etsi.org/ngsi-ld/modifiedAt'];
           }
-
-          if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'] !== undefined) {
+          if (!Array.isArray(refObj['@type'])) {
+            refObj['@type'] = [refObj['@type']];
+          }
+          if (refObj['@type'].includes('https://uri.etsi.org/ngsi-ld/Property')) {
             if ('@type' in refObj) {
               attribute.type = refObj['@type'][0]; // Can be Property and GeoProperty
             } else {
@@ -164,9 +166,6 @@ module.exports = function DebeziumBridge (conf) {
             } else if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@id'] !== undefined) {
               attribute.attributeValue = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@id'];
               attribute.nodeType = '@id';
-            } else if (typeof refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0] === 'object') {
-              attribute.attributeValue = JSON.stringify(refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]);
-              attribute.nodeType = '@json';
             }
 
             if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'] !== undefined) {
@@ -176,7 +175,42 @@ module.exports = function DebeziumBridge (conf) {
                 attribute.valueType = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'];
               }
             }
-          } else if (refObj['https://uri.etsi.org/ngsi-ld/hasObject'] !== undefined) {
+          } else if (refObj['@type'].includes('https://uri.etsi.org/ngsi-ld/GeoProperty')) {
+            const obj = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0];
+            if (typeof (obj) !== 'object') {
+              logger.warn(`Dropping GeoProperty attribue ${attribute.id}. It is not an object.`);
+              return;
+            }
+            if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'] !== undefined) {
+              if (Array.isArray(refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'])) {
+                attribute.valueType = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'][0];
+              } else {
+                attribute.valueType = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'];
+              }
+            }
+            attribute.attributeValue = JSON.stringify(obj);
+            attribute.type = 'https://uri.etsi.org/ngsi-ld/GeoProperty';
+            attribute.nodeType = '@json';
+          } else if (refObj['@type'].includes('https://uri.etsi.org/ngsi-ld/JsonProperty')) {
+            const obj = refObj['https://uri.etsi.org/ngsi-ld/hasJSON'][0]['@value'];
+            if (typeof (obj) !== 'object') {
+              logger.warn(`Dropping JSON attribue ${attribute.id}. It is not an object.`);
+              return;
+            }
+            attribute.attributeValue = JSON.stringify(obj);
+            attribute.type = 'https://uri.etsi.org/ngsi-ld/JsonProperty';
+            attribute.nodeType = '@json';
+          } else if (refObj['@type'].includes('https://uri.etsi.org/ngsi-ld/ListProperty')) {
+            let lst = refObj['https://uri.etsi.org/ngsi-ld/hasValueList'][0]['@list'];
+            if (!Array.isArray(lst)) {
+              logger.warn(`Dropping list attribue ${attribute.id}. It is not a list.`);
+              return;
+            }
+            lst = lst.map(item => item['@value']); // remove '@values' from expanded list
+            attribute.attributeValue = JSON.stringify(lst);
+            attribute.type = 'https://uri.etsi.org/ngsi-ld/JsonProperty';
+            attribute.nodeType = '@list';
+          } else if (refObj['@type'].includes('https://uri.etsi.org/ngsi-ld/Relationship')) {
             attribute.type = 'https://uri.etsi.org/ngsi-ld/Relationship';
             attribute.attributeValue = refObj['https://uri.etsi.org/ngsi-ld/hasObject'][0]['@id'];
             attribute.nodeType = '@id';

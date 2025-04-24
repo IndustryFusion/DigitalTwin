@@ -264,19 +264,24 @@ module.exports = class SparkplugHandler {
             this.logger.debug(' Mapped SpB Relationship data to NGSI-LD relationship type:  ' + JSON.stringify(ngsiMappedKafkaMessage));
             const message = { key, value: JSON.stringify(ngsiMappedKafkaMessage) };
             this.kafkaAggregator.addMessage(message, this.config.mqtt.sparkplug.ngsildKafkaTopic);
-          } else if (metricType === 'Property' || metricType === 'PropertyLiteral') {
+          } else if (metricType === 'Property' || metricType === 'LiteralProperty') {
             ngsiMappedKafkaMessage = ngsildMapper.mapSpbPropertyToKafka(devID, kafkaMessage);
             this.logger.debug(' Mapped SpB Properties data to NGSI-LD properties type:  ' + JSON.stringify(ngsiMappedKafkaMessage));
             const message = { key, value: JSON.stringify(ngsiMappedKafkaMessage) };
             this.kafkaAggregator.addMessage(message, this.config.mqtt.sparkplug.ngsildKafkaTopic);
-          } else if (metricType === 'PropertyIri') {
+          } else if (metricType === 'IriProperty') {
             ngsiMappedKafkaMessage = ngsildMapper.mapSpbPropertyIriToKafka(devID, kafkaMessage);
-            this.logger.debug(' Mapped SpB PropertyIri data to NGSI-LD IRI type:  ' + JSON.stringify(ngsiMappedKafkaMessage));
+            this.logger.debug(' Mapped SpB IriProperty data to NGSI-LD IRI type:  ' + JSON.stringify(ngsiMappedKafkaMessage));
             const message = { key, value: JSON.stringify(ngsiMappedKafkaMessage) };
             this.kafkaAggregator.addMessage(message, this.config.mqtt.sparkplug.ngsildKafkaTopic);
-          } else if (metricType === 'PropertyJson') {
+          } else if (metricType === 'JsonProperty') {
             ngsiMappedKafkaMessage = ngsildMapper.mapSpbPropertyJsonToKafka(devID, kafkaMessage);
-            this.logger.debug(' Mapped SpB PropertyIri data to NGSI-LD IRI type:  ' + JSON.stringify(ngsiMappedKafkaMessage));
+            this.logger.debug(' Mapped SpB JsonProperty data to NGSI-LD IRI type:  ' + JSON.stringify(ngsiMappedKafkaMessage));
+            const message = { key, value: JSON.stringify(ngsiMappedKafkaMessage) };
+            this.kafkaAggregator.addMessage(message, this.config.mqtt.sparkplug.ngsildKafkaTopic);
+          } else if (metricType === 'ListProperty') {
+            ngsiMappedKafkaMessage = ngsildMapper.mapSpbPropertyListToKafka(devID, kafkaMessage);
+            this.logger.debug(' Mapped SpB ListProperty data to NGSI-LD IRI type:  ' + JSON.stringify(ngsiMappedKafkaMessage));
             const message = { key, value: JSON.stringify(ngsiMappedKafkaMessage) };
             this.kafkaAggregator.addMessage(message, this.config.mqtt.sparkplug.ngsildKafkaTopic);
           } else {

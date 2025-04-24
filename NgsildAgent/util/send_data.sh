@@ -23,7 +23,7 @@ usage="Usage: $(basename "$0") [-a] [-t] [-y <attribute type>] [-d datasetId] [-
 -t: use tcp connection to agent (default: udp)\n\
 -d: give ngsild datasetId (must be iri)\n\
 -i: id of subdevice
--y: attribute types are {Literal, Iri, Relationship, Json}\n"
+-y: attribute types are {Literal, Iri, Relationship, Json, List}\n"
 while getopts 'athy:d:i:' opt; do
   # shellcheck disable=SC2221,SC2222
   case "$opt" in
@@ -58,16 +58,19 @@ if [ -z "$attribute_type" ]; then
 else
   case "$attribute_type" in
     Literal)
-      attribute_type=PropertyLiteral
+      attribute_type=LiteralProperty
       ;;
     Iri)
-      attribute_type=PropertyIri
+      attribute_type=IriProperty
       ;;
     Json)
-      attribute_type=PropertyJson
+      attribute_type=JsonProperty
       ;;
     Relationship)
       attribute_type=Relationship
+      ;;
+    List)
+      attribute_type=ListProperty 
       ;;
     *)
       echo "Wrong Attribute given: ${attribute_type}. Not sending data."

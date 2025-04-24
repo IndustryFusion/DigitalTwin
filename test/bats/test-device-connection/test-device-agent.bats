@@ -52,6 +52,7 @@ PROPERTY2="http://example.com/property2"
 RELATIONSHIP1="http://example.com/relationship1"
 IRI1="http://example.com/iri1"
 JSON1="http://example.com/json1"
+LIST1="http://example.com/list"
 PGREST_URL="http://pgrest.local/attributes"
 PGREST_RESULT=/tmp/PGREST_RESULT
 
@@ -661,11 +662,25 @@ EOF
 
 
 compare_pgrest_result8() {
-    cat << EOF | jq | diff "$1" - >&3
+    cat << EOF | diff "$1" - >&3
 [
   {
+    "attributeId": "http://example.com/list",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/ListProperty",
+    "datasetId": "@none",
+    "deleted": false,
+    "entityId": "urn:iff:testdevice:1",
+    "id": "urn:iff:testdevice:1\\\\ecf0d98b3a1b39a029523c99",
+    "lang": null,
+    "nodeType": "@list",
+    "parentId": null,
+    "unitCode": null,
+    "value": "[1, 3]",
+    "valueType": null
+  },
+  {
     "attributeId": "http://example.com/json1",
-    "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/JsonProperty",
     "datasetId": "@none",
     "deleted": false,
     "entityId": "urn:iff:testdevice:1",
@@ -713,7 +728,21 @@ EOF
 compare_pgrest_result9() {
     cat << EOF | jq | diff "$1" - >&3
 [
-    {
+  {
+    "attributeId": "http://example.com/list",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/ListProperty",
+    "datasetId": "@none",
+    "deleted": false,
+    "entityId": "urn:iff:testdevice:1",
+    "id": "urn:iff:testdevice:1\\\\ecf0d98b3a1b39a029523c99",
+    "lang": null,
+    "nodeType": "@list",
+    "parentId": null,
+    "unitCode": null,
+    "value": "[1, 3]",
+    "valueType": null
+  },
+  {
     "attributeId": "http://example.com/relationship1",
     "attributeType": "https://uri.etsi.org/ngsi-ld/Relationship",
     "datasetId": "urn:iff:index:3",
@@ -729,7 +758,7 @@ compare_pgrest_result9() {
   },
   {
     "attributeId": "http://example.com/json1",
-    "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/JsonProperty",
     "datasetId": "urn:iff:index:2",
     "deleted": false,
     "entityId": "urn:iff:testdevice:1",
@@ -753,20 +782,6 @@ compare_pgrest_result9() {
     "parentId": null,
     "unitCode": null,
     "value": "iri2",
-    "valueType": null
-  },
-  {
-    "attributeId": "http://example.com/property1",
-    "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
-    "datasetId": "urn:iff:index:0",
-    "deleted": false,
-    "entityId": "urn:iff:testdevice:1",
-    "id": "urn:iff:testdevice:1\\\\7b8e2280ffaccb1bd9a032db",
-    "lang": null,
-    "nodeType": "@value",
-    "parentId": null,
-    "unitCode": null,
-    "value": "1001",
     "valueType": null
   }
 ]
@@ -1081,7 +1096,7 @@ setup() {
     [ "$result" = "7350" ] || { echo "wrong aggregator result: $result"; false ; }
     db_delete_service
 }
-@test "test agent starting up and sending IRIs, JSONs and Literals" {
+@test "test agent starting up and sending IRIs, JSONs, Lists, and Literals" {
     $SKIP
     init_agent_and_device_file
     delete_tmp
@@ -1098,14 +1113,16 @@ setup() {
     (cd "${NGSILD_AGENT_DIR}"/util && bash ./send_data.sh -t -y Iri "${IRI1}" "iri1")
     sleep 1
     (cd "${NGSILD_AGENT_DIR}"/util && bash ./send_data.sh -t -y Json "${JSON1}" "{}")
+    sleep 1
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./send_data.sh -t -y List "${LIST1}" "[1, 3]")
     sleep 2
     mqtt_delete_service
-    get_tsdb_samples "${DEVICE_ID}" 3 "${token}" > ${PGREST_RESULT}
+    get_tsdb_samples "${DEVICE_ID}" 4 "${token}" > ${PGREST_RESULT}
     pkill -f iff-agent
     run compare_pgrest_result8 ${PGREST_RESULT}
     [ "${status}" -eq "0" ]
 }
-@test "test agent starting up and sending IRIs, JSONs, Literals and Relationships with datasetIds" {
+@test "test agent starting up and sending IRIs, JSONs, Literals, Lists and Relationships with datasetIds" {
     $SKIP
     init_agent_and_device_file
     delete_tmp
@@ -1124,6 +1141,8 @@ setup() {
     (cd "${NGSILD_AGENT_DIR}"/util && bash ./send_data.sh -t -y Json -d urn:iff:index:2 "${JSON1}" "[]")
     sleep 1
     (cd "${NGSILD_AGENT_DIR}"/util && bash ./send_data.sh -t -y Relationship -d urn:iff:index:3 "${RELATIONSHIP1}" "urn:iff:test:1")
+    sleep 1
+    (cd "${NGSILD_AGENT_DIR}"/util && bash ./send_data.sh -t -y List "${LIST1}" "[1, 3]")
     sleep 2
     mqtt_delete_service
     get_tsdb_samples "${DEVICE_ID}" 4 "${token}" > ${PGREST_RESULT}
