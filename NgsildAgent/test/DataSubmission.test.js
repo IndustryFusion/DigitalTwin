@@ -120,8 +120,20 @@ describe('DataSubmission', function () {
         },
         {
           n: 'metric2',
-          v: 200,
-          t: 'PropertyJson',
+          v: '{}',
+          t: 'JsonProperty',
+          on: 1627891234568,
+        },
+        {
+          n: 'relationship',
+          v: 'urn:test:1',
+          t: 'Relationship',
+          on: 1627891234568,
+        },
+        {
+          n: 'list',
+          v: '[1, 2, 3]',
+          t: 'ListProperty',
           on: 1627891234568,
         },
       ];
@@ -129,17 +141,21 @@ describe('DataSubmission', function () {
       // Mock validateIri to return false (valid IRI)
       validateIriStub.validateIri.withArgs('metric1').returns(false);
       validateIriStub.validateIri.withArgs('metric2').returns(false);
+      validateIriStub.validateIri.withArgs('relationship').returns(false);
+      validateIriStub.validateIri.withArgs('list').returns(false);
 
       // Mock validator to return null (valid)
       validatorFunction.withArgs(msgs[0]).returns(null);
       validatorFunction.withArgs(msgs[1]).returns(null);
+      validatorFunction.withArgs(msgs[2]).returns(null);
+      validatorFunction.withArgs(msgs[3]).returns(null);
 
       // Act
       await submissionCallback(msgs);
 
       // Assert
       // preInsert should be called for each valid message with status 1
-      expect(dbManagerMock.preInsert).to.have.been.calledTwice;
+      expect(dbManagerMock.preInsert).to.have.callCount(4);
       expect(dbManagerMock.preInsert.firstCall).to.have.been.calledWith(msgs[0], 1);
       expect(dbManagerMock.preInsert.secondCall).to.have.been.calledWith(msgs[1], 1);
 
@@ -147,7 +163,10 @@ describe('DataSubmission', function () {
       expect(connectorStub.dataSubmit).to.have.been.calledOnce;
       const expectedMessages = [
         { n: 'Property/metric1', on: 1627891234567, v: 100 },
-        { n: 'PropertyJson/metric2', on: 1627891234568, v: 200 },
+        { n: 'JsonProperty/metric2', on: 1627891234568, v: '{}' },
+        { n: 'Relationship/relationship', on: 1627891234568, v: 'urn:test:1' },
+        { n: 'ListProperty/list', on: 1627891234568, v: '[1, 2, 3]' },
+
       ];
       const actualMessages = connectorStub.dataSubmit.firstCall.args[0];
       expect(actualMessages).to.deep.equal(expectedMessages);
@@ -157,6 +176,8 @@ describe('DataSubmission', function () {
       const expectedMsgKeys = [
         { n: 'metric1', on: 1627891234567 },
         { n: 'metric2', on: 1627891234568 },
+        { n: 'relationship', on: 1627891234568 },
+        { n: 'list', on: 1627891234568 }
       ];
       expect(dbManagerMock.acknowledge).to.have.been.calledWith(expectedMsgKeys);
     });

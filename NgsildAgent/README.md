@@ -55,7 +55,7 @@ Usage: send_data.sh [-a] [-t] [-y <attribute type>] [-d datasetId] [-i subdevice
 -t: use tcp connection to agent (default: udp)
 -d: give ngsild datasetId (must be iri)
 -i: id of subdevice
--y: attribute types are {Literal, Iri, Relationship, Json}
+-y: attribute types are {Literal, Iri, Relationship, Json, List}
 ```
 
 ### Use tools alltogether to activate a device and send data

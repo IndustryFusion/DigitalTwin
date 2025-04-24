@@ -25,46 +25,56 @@ const utils = require('../lib/utils');
     “entityId”: “urn:plasmacutter:1”,
     “name”: “https://industry-fusion.com/types/v0.9/hasFilter”,
     “type”: “https://uri.etsi.org/ngsi-ld/Relationship”,
-    “https://uri.etsi.org/ngsi-ld/hasObject”: “urn:filter:1”,
+    “attributeValue”: “urn:filter:1”,
     “nodeType”: “@id”,
     “index”: 0
 }
 */
 
-/* Example NGSI-LD format for Property|PropertyLiteral
+/* Example NGSI-LD format for Property|LiteralProperty
 {
     “id”: “urn:plasmacutter:1\\https://industry-fusion.com/types/v0.9/hasFilter”,
     “entityId”: “urn:plasmacutter:1”,
     “name”: “https://industry-fusion.com/types/v0.9/hasFilter”,
-    “type”: “https://uri.etsi.org/ngsi-ld/Relationship”,
-    “https://uri.etsi.org/ngsi-ld/hasValue”: “literal”,
+    “type”: “https://uri.etsi.org/ngsi-ld/Property”,
+    “attributeValue”: “literal”,
     “nodeType”: “@value”,
     “index”: 0
 }
 */
-/* Example NGSI-LD format for PropertyIri
+/* Example NGSI-LD format for IriProperty
 {
     “id”: “urn:plasmacutter:1\\https://industry-fusion.com/types/v0.9/hasClass”,
     “entityId”: “urn:plasmacutter:1”,
     “name”: “https://industry-fusion.com/types/v0.9/hasFilter”,
-    “type”: “https://uri.etsi.org/ngsi-ld/Relationship”,
-    “https://uri.etsi.org/ngsi-ld/hasValue”: “literal”,
+    “type”: “https://uri.etsi.org/ngsi-ld/Property”,
+    “attributeValue”: “http://example.com/term”,
     “nodeType”: “@id”,
     “index”: 0
 }
 */
-/* Example NGSI-LD format for PropertyJson
+/* Example NGSI-LD format for JsonProperty
 {
     “id”: “urn:plasmacutter:1\\https://industry-fusion.com/types/v0.9/hasClass”,
     “entityId”: “urn:plasmacutter:1”,
     “name”: “https://industry-fusion.com/types/v0.9/hasFilter”,
-    “type”: “https://uri.etsi.org/ngsi-ld/Relationship”,
-    “https://uri.etsi.org/ngsi-ld/hasValue”: “{\"my\": \"object\"}”,
+    “type”: “https://uri.etsi.org/ngsi-ld/JsonProperty”,
+    “attributeValue”: “{\"my\": \"object\"}”,
     “nodeType”: “@json”,
     “index”: 0
 }
 */
-
+/* Example NGSI-LD format for ListProperty
+{
+    “id”: “urn:plasmacutter:1\\https://industry-fusion.com/types/v0.9/hasClass”,
+    “entityId”: “urn:plasmacutter:1”,
+    “name”: “https://industry-fusion.com/types/v0.9/hasFilter”,
+    “type”: “https://uri.etsi.org/ngsi-ld/ListProperty”,
+    “attributeValue”: “[1, 2, 3]”,
+    “nodeType”: “@list”,
+    “index”: 0
+}
+*/
 /**
  *  Example Received metric:
  *
@@ -85,14 +95,14 @@ metrics":
     "value":"literal"}],
 "seq":7},
 {
-    "name":"PropertyIri/https://industry-fusion.com/types/v0.9/hasFilter",
+    "name":"IriProperty/https://industry-fusion.com/types/v0.9/hasFilter",
     "alias":"fbb3b7cd-a5ff-491b-ad61-d43edf513b7a",
     "timestamp":1655974018777,
     "dataType":"string",
     "value":"http://example.com/iri"}],
 "seq":2},
 {
-    "name":"PropertyJson/https://industry-fusion.com/types/v0.9/hasFilter",
+    "name":"JsonProperty/https://industry-fusion.com/types/v0.9/hasFilter",
     "alias":"fbb3b7cd-a5ff-491b-ad61-d43edf513b7a",
     "timestamp":1655974018777,
     "dataType":"string",
@@ -105,6 +115,8 @@ metrics":
 
 const etsiNgsiRelationshipUrl = 'https://uri.etsi.org/ngsi-ld/Relationship';
 const etsiNgsiPropertysUrl = 'https://uri.etsi.org/ngsi-ld/Property';
+const etsiNgsiJsonPropertysUrl = 'https://uri.etsi.org/ngsi-ld/JsonProperty';
+const etsiNgsiListPropertysUrl = 'https://uri.etsi.org/ngsi-ld/ListProperty';
 
 function addProperties (message, metric) {
   if ('properties' in metric) {
@@ -179,7 +191,22 @@ module.exports.mapSpbPropertyJsonToKafka = function (deviceId, metric) {
     entityId: deviceId,
     nodeType: '@json',
     name: originalName,
-    type: etsiNgsiPropertysUrl,
+    type: etsiNgsiJsonPropertysUrl,
+    attributeValue: metric.value
+  };
+  addProperties(mappedPropKafkaMessage, metric);
+  const hash = utils.hashString(utils.getCanonicalName(originalName, mappedPropKafkaMessage.datasetId));
+  mappedPropKafkaMessage.id = `${deviceId}\\${hash}`;
+  return mappedPropKafkaMessage;
+};
+
+module.exports.mapSpbPropertyListToKafka = function (deviceId, metric) {
+  const originalName = metric.name.substr(metric.name.indexOf('/') + 1);
+  const mappedPropKafkaMessage = {
+    entityId: deviceId,
+    nodeType: '@list',
+    name: originalName,
+    type: etsiNgsiListPropertysUrl,
     attributeValue: metric.value
   };
   addProperties(mappedPropKafkaMessage, metric);

@@ -433,7 +433,7 @@ describe('Test diffEntity', function () {
   });
 });
 describe('Test parseBeforeAfterEntity', function () {
-  it('Should return one entity, one Property & one Relationship', async function () {
+  it('Should return one entity, one Property & one Relationship & one JsonProperty & one ListProperty', async function () {
     const config = {
       bridgeCommon: {
         kafkaSyncOnAttribute: 'kafkaSyncOn'
@@ -459,7 +459,24 @@ describe('Test parseBeforeAfterEntity', function () {
                     }],\
                     "https://uri.etsi.org/ngsi-ld/hasObject": [{"@id": "urn:object:1"}]\
                 }],\
+                "https://example/hasJson": [{\
+                    "@type": ["https://uri.etsi.org/ngsi-ld/JsonProperty"],\
+                    "https://uri.etsi.org/ngsi-ld/createdAt":[{\
+                        "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
+                        "@value": "2022-02-19T20:31:26.123656Z"\
+                    }],\
+                    "https://uri.etsi.org/ngsi-ld/hasJSON": [{"@value":{"my": "object"}}]\
+                }],\
+                "https://example/hasList": [{\
+                    "@type": ["https://uri.etsi.org/ngsi-ld/ListProperty"],\
+                    "https://uri.etsi.org/ngsi-ld/createdAt":[{\
+                        "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
+                        "@value": "2022-02-19T20:31:26.123656Z"\
+                    }],\
+                    "https://uri.etsi.org/ngsi-ld/hasValueList": [{ "@list": [{"@value": 1}, {"@value": 2}, {"@value": 3}]}]\
+                }],\
                 "https://example/prop":[{\
+                  "@type": ["https://uri.etsi.org/ngsi-ld/Property"],\
                     "https://uri.etsi.org/ngsi-ld/hasValue": [{"@value": "value"}],\
                     "https://uri.etsi.org/ngsi-ld/createdAt":[{\
                         "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
@@ -478,6 +495,28 @@ describe('Test parseBeforeAfterEntity', function () {
     const result = debeziumBridge.parseBeforeAfterEntity(ba);
     assert.deepEqual(result.entity, { id: 'id', type: 'type' });
     assert.deepEqual(result.attributes, {
+      'https://example/hasJson': [
+        {
+          attributeValue: '{"my":"object"}',
+          datasetId: '@none',
+          entityId: 'id',
+          id: 'id\\286e9bdcd44df99ba2253c0a',
+          name: 'https://example/hasJson',
+          nodeType: '@json',
+          type: 'https://uri.etsi.org/ngsi-ld/JsonProperty'
+        }
+      ],
+      'https://example/hasList': [
+        {
+          attributeValue: '[1,2,3]',
+          datasetId: '@none',
+          entityId: 'id',
+          id: 'id\\8e35d5b0ad8ef2eadef775d2',
+          name: 'https://example/hasList',
+          nodeType: '@list',
+          type: 'https://uri.etsi.org/ngsi-ld/JsonProperty'
+        }
+      ],
       'https://example/hasRel': [{
         id: 'id\\cf3dbdad8b699fc18bbcc2c3',
         entityId: 'id',
@@ -539,6 +578,7 @@ describe('Test parseBeforeAfterEntity', function () {
                     "https://uri.etsi.org/ngsi-ld/hasObject": [{"@id": "urn:object:1"}]\
                 }],\
                 "https://example/prop":[{\
+                    "@type": ["https://uri.etsi.org/ngsi-ld/Property"],\
                     "https://uri.etsi.org/ngsi-ld/hasValue": [{"@value": "value"}],\
                     "https://uri.etsi.org/ngsi-ld/observedAt":[{\
                         "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
@@ -606,6 +646,7 @@ describe('Test parseBeforeAfterEntity', function () {
                     "@value": "2022-02-19T20:31:26.123656Z"\
                 }],\
                 "https://example/prop":[{\
+                    "@type": ["https://uri.etsi.org/ngsi-ld/Property"],\
                     "https://uri.etsi.org/ngsi-ld/hasValue": [{\
                         "@value": "value",\
                         "@type": "https://example/type"\
@@ -681,11 +722,13 @@ describe('Test parseBeforeAfterEntity', function () {
       entity: '{\
                 "@id":"id", "@type": ["type"],\
                 "https://example/prop":[{\
+                    "@type": ["https://uri.etsi.org/ngsi-ld/Property"],\
                     "https://uri.etsi.org/ngsi-ld/hasValue": [{\
                         "@value": "value",\
                         "@type": "https://example/type"\
                     }],\
                     "https://example/subprop": [{\
+                        "@type": ["https://uri.etsi.org/ngsi-ld/Property"],\
                         "https://uri.etsi.org/ngsi-ld/hasValue": [{\
                         "@value": "subvalue"}]\
                     }],\
@@ -749,15 +792,18 @@ describe('Test parseBeforeAfterEntity', function () {
       entity: '{\
                 "@id":"id", "@type": ["type"],\
                 "https://example/prop":[{\
+                    "@type": ["https://uri.etsi.org/ngsi-ld/Property"],\
                     "https://uri.etsi.org/ngsi-ld/hasValue": [{\
                         "@value": "value",\
                         "@type": "https://example/type"\
                     }],\
                     "https://example/subprop": [{\
+                        "@type": ["https://uri.etsi.org/ngsi-ld/Property"],\
                         "https://uri.etsi.org/ngsi-ld/hasValue": [{\
                         "@value": "subvalue"}]\
                     }],\
                     "https://example/subprop2": [{\
+                        "@type": ["https://uri.etsi.org/ngsi-ld/Property"],\
                         "https://uri.etsi.org/ngsi-ld/hasValue": [{\
                         "@value": "subvalue"}],\
                         "https://uri.etsi.org/ngsi-ld/datasetId": [{"@id": "http://dataset.id/1"}]\
@@ -772,11 +818,13 @@ describe('Test parseBeforeAfterEntity', function () {
                     }]\
                 }],\
                 "https://example/prop2":[{\
+                    "@type": ["https://uri.etsi.org/ngsi-ld/Property"],\
                     "https://uri.etsi.org/ngsi-ld/hasValue": [{\
                         "@value": "value3",\
                         "@type": "https://example/type3"\
                     }],\
                     "https://example/subprop2": [{\
+                        "@type": ["https://uri.etsi.org/ngsi-ld/Property"],\
                         "https://uri.etsi.org/ngsi-ld/hasValue": [{\
                         "@value": "subvalue3"}],\
                          "https://uri.etsi.org/ngsi-ld/datasetId": [{"@id": "http://dataset.id/2"}]\
@@ -863,19 +911,23 @@ describe('Test parseBeforeAfterEntity', function () {
       entity: '{\
                 "@id":"id", "@type": ["type"],\
                 "https://example/prop":[{\
+                    "@type": ["https://uri.etsi.org/ngsi-ld/Property"],\
                     "https://uri.etsi.org/ngsi-ld/hasValue": [{\
                         "@value": "value",\
                         "@type": "https://example/type"\
                     }],\
                     "https://example/subprop": [{\
+                        "@type": ["https://uri.etsi.org/ngsi-ld/Property"],\
                         "https://uri.etsi.org/ngsi-ld/hasValue": [{\
                           "@value": "subvalue"}],\
                           "https://example/subsubprop": [{\
+                            "@type": ["https://uri.etsi.org/ngsi-ld/Property"],\
                             "https://uri.etsi.org/ngsi-ld/hasValue": [{\
                               "@value": "subsubvalue"}],\
                             "https://uri.etsi.org/ngsi-ld/datasetId": [{"@id": "http://dataset.id/1"}]\
                           }],\
                           "https://example/subsubprop2": [{\
+                          "@type": ["https://uri.etsi.org/ngsi-ld/Property"],\
                             "https://uri.etsi.org/ngsi-ld/hasValue": [{\
                               "@value": "subsubvalue2"}],\
                             "https://uri.etsi.org/ngsi-ld/datasetId": [{"@id": "http://dataset.id/1"}],\
@@ -961,19 +1013,23 @@ describe('Test parseBeforeAfterEntity', function () {
       entity: '{\
                 "@id":"id", "@type": ["type"],\
                 "https://example/prop":[{\
+                    "@type": ["https://uri.etsi.org/ngsi-ld/Property"],\
                     "https://uri.etsi.org/ngsi-ld/hasValue": [{\
                         "@value": "value",\
                         "@type": "https://example/type"\
                     }],\
                     "https://example/subprop": [{\
+                        "@type": ["https://uri.etsi.org/ngsi-ld/Property"],\
                         "https://uri.etsi.org/ngsi-ld/hasValue": [{\
                           "@value": "subvalue"}],\
                           "https://example/subsubprop": [{\
+                            "@type": ["https://uri.etsi.org/ngsi-ld/Relationship"],\
                             "https://uri.etsi.org/ngsi-ld/hasObject": [{\
                               "@id": "urn:test:1"}],\
                             "https://uri.etsi.org/ngsi-ld/datasetId": [{"@id": "http://dataset.id/1"}]\
                           }],\
                           "https://example/subsubprop2": [{\
+                            "@type": ["https://uri.etsi.org/ngsi-ld/Relationship"],\
                             "https://uri.etsi.org/ngsi-ld/hasObject": [{\
                               "@id": "urn:test:2"}],\
                             "https://uri.etsi.org/ngsi-ld/datasetId": [{"@id": "http://dataset.id/1"}],\
@@ -1058,12 +1114,14 @@ describe('Test parseBeforeAfterEntity', function () {
       entity: '{\
                 "@id":"id", "@type": ["type"],\
                 "https://example/prop":[{\
+                    "@type": ["https://uri.etsi.org/ngsi-ld/Property"],\
                     "https://uri.etsi.org/ngsi-ld/hasValue": [{\
                         "@value": "value1",\
                         "@type": "https://example/type"\
                     }]\
                 },\
                 {\
+                    "@type": ["https://uri.etsi.org/ngsi-ld/Property"],\
                     "https://uri.etsi.org/ngsi-ld/hasValue": [\
                     {\
                         "@value": "value2",\
@@ -1071,12 +1129,14 @@ describe('Test parseBeforeAfterEntity', function () {
                     }]\
                 }],\
                 "https://example/rel":[{\
+                    "@type": ["https://uri.etsi.org/ngsi-ld/Relationship"],\
                     "https://uri.etsi.org/ngsi-ld/hasObject": [{\
                             "@id": "urn:test:1"\
                         }],\
                         "https://uri.etsi.org/ngsi-ld/datasetId": [{"@id": "http://dataset.id/1"}]\
                 },\
                 {\
+                    "@type": ["https://uri.etsi.org/ngsi-ld/Relationship"],\
                     "https://uri.etsi.org/ngsi-ld/hasObject": [{\
                         "@id": "urn:test:2"\
                     }],\

@@ -64,11 +64,22 @@ class DataSubmission {
           me.logger.warn(`Metric name ${msg.n} not an IRI. Ignoring message.`);
           return;
         }
-        if (msg.t === 'PropertyJson') {
+        if (msg.t === 'JsonProperty' || msg.t === 'PropertyJson' ) { // for backward compatibility we keep the 'ProeprtyJson'
+          msg.t = 'JsonProperty';
           try {
             JSON.parse(msg.v);
           } catch {
             me.logger.warn(`Metric name ${msg.n} with ${msg.v} not a parsable JSON object. Ignoring message.`);
+            return;
+          }
+        } else if (msg.t === 'ListProperty') {
+          try {
+            let arr = JSON.parse(msg.v);
+            if (!(arr instanceof Array)) {
+              throw new Error("No array");
+            }
+          } catch(e) {
+            me.logger.warn(`Metric name ${msg.n} with ${msg.v} not a parsable array. Ignoring message: ${e}`);
             return;
           }
         }

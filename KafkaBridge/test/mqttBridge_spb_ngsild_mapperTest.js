@@ -169,7 +169,7 @@ describe(fileToTest, function () {
   it('Shall create JSON Property', function (done) {
     const deviceId = 'deviceId';
     const metric = {
-      name: 'PropertyIri/name',
+      name: 'JsonProperty/name',
       value: 'value'
     };
     const expected = {
@@ -177,7 +177,7 @@ describe(fileToTest, function () {
       entityId: deviceId,
       datasetId: '@none',
       name: 'name',
-      type: 'https://uri.etsi.org/ngsi-ld/Property',
+      type: 'https://uri.etsi.org/ngsi-ld/JsonProperty',
       attributeValue: 'value',
       nodeType: '@json'
     };
@@ -188,8 +188,8 @@ describe(fileToTest, function () {
   it('Shall create JSON Property with datasetId', function (done) {
     const deviceId = 'deviceId';
     const metric = {
-      name: 'PropertyIri/name',
-      value: 'value',
+      name: 'JsonProperty/name',
+      value: '{}',
       properties: {
         keys: ['datasetId'],
         values: ['datasetId']
@@ -199,12 +199,35 @@ describe(fileToTest, function () {
       id: 'deviceId' + '\\' + '867452a23eff6f2f4175c3d3',
       entityId: deviceId,
       name: 'name',
-      type: 'https://uri.etsi.org/ngsi-ld/Property',
-      attributeValue: 'value',
+      type: 'https://uri.etsi.org/ngsi-ld/JsonProperty',
+      attributeValue: '{}',
       nodeType: '@json',
       datasetId: 'datasetId'
     };
     const result = ToTest.mapSpbPropertyJsonToKafka(deviceId, metric);
+    assert.deepEqual(result, expected);
+    done();
+  });
+  it('Shall create List Property with datasetId', function (done) {
+    const deviceId = 'deviceId';
+    const metric = {
+      name: 'ListProperty/name',
+      value: '[1, 2, 3]',
+      properties: {
+        keys: ['datasetId'],
+        values: ['datasetId']
+      }
+    };
+    const expected = {
+      id: 'deviceId' + '\\' + '867452a23eff6f2f4175c3d3',
+      entityId: deviceId,
+      name: 'name',
+      type: 'https://uri.etsi.org/ngsi-ld/ListProperty',
+      attributeValue: '[1, 2, 3]',
+      nodeType: '@list',
+      datasetId: 'datasetId'
+    };
+    const result = ToTest.mapSpbPropertyListToKafka(deviceId, metric);
     assert.deepEqual(result, expected);
     done();
   });
