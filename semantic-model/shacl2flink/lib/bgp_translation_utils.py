@@ -26,6 +26,8 @@ basequery = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
 SELECT DISTINCT
 """
 
@@ -361,8 +363,9 @@ def create_ngsild_mappings(ctx, sorted_graph):
             for s, p, o in sorted_graph.triples((entity, None, None)):
                 property_class = sorted_graph.value(o, ngsild['hasObject'])
                 if property_class is not None:
-                    sparqlvalidationquery += f'{{?{s}shape sh:property [ sh:path <{p}> ; sh:property \
-[ sh:path ngsild:hasObject;  sh:class ?{property_class} ] ] .}}\n'
+                    sparqlvalidationquery += f'{{?{s}shape sh:property [ sh:path <{p}> ; \
+(sh:or/rdf:rest*/rdf:first) [sh:property [ sh:path ngsild:hasObject;\
+(sh:or/rdf:rest*/rdf:first) [sh:class ?{property_class}]]]] .}}\n'
         for property in property_variables:
             variables.append(property)
             sparqlvalidationquery += f'{{?{property}shapex sh:targetClass/rdfs:subClassOf ?{property} .\n'

@@ -48,28 +48,22 @@ PREFIX iff: <https://industry-fusion.com/types/v0.9/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
-SELECT
-    ?targetclass ?property ((?nodekind = sh:IRI) as ?kind)
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+    SELECT
+    ?targetclass ?property ((?nodekind = sh:IRI) as ?kind) ?nodeKind
 where {
     ?nodeshape a sh:NodeShape .
     ?nodeshape sh:targetClass ?targetclass .
-    ?nodeshape sh:property [
+    ?nodeshape sh:property ?propertynode .
+    ?propertynode
         sh:path ?property ;
-        sh:property [
-            sh:nodeKind ?nodekind ;
-            sh:path ngsild:hasValue ;
-        ] ;
-    ] .
-    OPTIONAL{
-    ?nodeshape sh:property [
-        sh:property [
-            sh:nodeKind ?nodekind ;
-            sh:path ngsild:hasValue ;
-        ] ;
-    ] ;
-        }
+        sh:or ?outerOr .
+        ?outerOr rdf:rest*/rdf:first ?clause .
+        ?clause     sh:property    ?innerProp .
+        ?innerProp  sh:path ngsild:hasValue ;
+        (sh:or/rdf:rest*/rdf:first) [sh:nodeKind ?nodekind]
 }
-
 """
 
 sparql_get_relationships = """
@@ -77,20 +71,21 @@ PREFIX iff: <https://industry-fusion.com/types/v0.9/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
-SELECT
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+    SELECT
     ?targetclass ?relationship
 where {
     ?nodeshape a sh:NodeShape .
     ?nodeshape sh:targetClass ?targetclass .
-    ?nodeshape sh:property [
+    ?nodeshape sh:property ?propertynode .
+    ?propertynode
         sh:path ?relationship ;
-        sh:property [
-            sh:path ngsild:hasObject ;
-        ] ;
-
-    ] .
+        sh:or ?outerOr .
+        ?outerOr rdf:rest*/rdf:first ?clause .
+        ?clause     sh:property    ?innerProp .
+        ?innerProp  sh:path ngsild:hasObject ;
 }
-
 """
 
 

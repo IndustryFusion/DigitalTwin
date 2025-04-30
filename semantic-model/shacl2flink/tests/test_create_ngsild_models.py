@@ -16,9 +16,10 @@
 
 from unittest.mock import MagicMock, patch
 import os
-from rdflib import BNode, URIRef
-
+from rdflib import BNode, URIRef, XSD
+import unittest
 import create_ngsild_models
+from create_ngsild_models import nullify
 
 
 def test_nullify():
@@ -60,6 +61,10 @@ def test_main(mock_utils, mock_configs, mock_graph, mock_nullify, tmp_path):
     hasValue.toPython.return_value = 'hasValue'
     hasObject = MagicMock()
     hasObject.toPython.return_value = 'hasObject'
+    hasValueList = MagicMock()
+    hasValueList.toPython.return_value = 'hasValueList'
+    hasJSON = MagicMock()
+    hasJSON.toPython.return_value = 'hasJSON'
     observedAt = MagicMock()
     observedAt.toPython.return_value = 'Timestamp'
     index = MagicMock()
@@ -67,9 +72,12 @@ def test_main(mock_utils, mock_configs, mock_graph, mock_nullify, tmp_path):
     unitCode = MagicMock()
     unitCode.toPython.return_value = 'unitCode'
     mock_graph.query.side_effect = [[
-        (entityId, name, type, nodeType, valueType, hasValue, hasObject, observedAt, index, unitCode),
-        (entityId, name, type, nodeType, valueType, hasValue, hasObject, observedAt, None, unitCode),
-        (entityId, name, type, nodeType, valueType, hasValue, hasObject, observedAt, None, None)],
+        (entityId, name, type, nodeType, valueType, hasValue, hasObject, hasValueList,
+         hasJSON, observedAt, index, unitCode),
+        (entityId, name, type, nodeType, valueType, hasValue, hasObject, hasValueList,
+         hasJSON, observedAt, None, unitCode),
+        (entityId, name, type, nodeType, valueType, hasValue, hasObject, hasValueList,
+         hasJSON, observedAt, None, None)],
         [(entityId, type, name, type)]
     ]
     create_ngsild_models.main('kms/shacl.ttl', 'kms/knowledge.ttl',
@@ -99,16 +107,17 @@ def test_get_entity_id_and_parentId():
         iter([(grandparent_node, predicate2, parent_node)]),  # Second call returns another triple
         iter([])  # No more triples for the third call
     ]
-
+    mock_graph.objects.side_effect = [iter([]), iter([])]
     # Call the function
     result_id, result_entityId, result_parentId = create_ngsild_models.get_entity_id_and_parentId(
-        node, 'test_name', mock_graph
+        node, 'test_name', None, mock_graph
     )
 
     # Verify the results
-    assert result_id == 'urn:test:grendparent\\urn:test:3\\urn:test:2\\test_name'
+    assert result_id == 'urn:test:grendparent\\urn:test:3\\@none\\urn:test:2\\@none\\test_name\\@none'
+
     assert result_entityId == grandparent_node
-    assert result_parentId == "'urn:test:grendparent\\urn:test:3\\urn:test:2'"
+    assert result_parentId == "'urn:test:grendparent\\urn:test:3\\@none\\urn:test:2\\@none'"
 
     # Verify the graph was traversed correctly
     assert mock_graph.triples.call_count == 2
@@ -119,3 +128,43 @@ def test_parser():
     assert args.shaclfile == 'shaclfile.ttl'
     assert args.knowledgefile == 'knowledge.ttl'
     assert args.modelfile == 'model.jsonld'
+
+
+def test_add_or_get_index():
+    # Create an instance of StringIndexer
+    indexer = create_ngsild_models.StringIndexer()
+
+    # Test adding a new id and string
+    index = indexer.add_or_get_index("id1", "string1")
+    assert index == 0  # First index should be 0
+    assert indexer.id_to_index_map["id1"]["string_to_index"]["string1"] == 0
+
+    # Test retrieving an existing string
+    index = indexer.add_or_get_index("id1", "string1")
+    assert index == 0  # Index should remain 0 for the same string
+
+    # Test adding a new string under the same id
+    index = indexer.add_or_get_index("id1", "string2")
+    assert index == 1  # Next index should be 1
+    assert indexer.id_to_index_map["id1"]["string_to_index"]["string2"] == 1
+
+    # Test adding a new id and string
+    index = indexer.add_or_get_index("id2", "string1")
+    assert index == 0  # First index for a new id should be 0
+    assert indexer.id_to_index_map["id2"]["string_to_index"]["string1"] == 0
+
+    # Test retrieving an existing string under a different id
+    index = indexer.add_or_get_index("id2", "string1")
+    assert index == 0  # Index should remain 0 for the same string under the same id
+
+
+class TestCreateNgsildModels(unittest.TestCase):
+
+    def test_nullify(self):
+        # Test nullify function
+        self.assertEqual(nullify(None), 'NULL')
+        self.assertEqual(nullify(XSD.string), "'http://www.w3.org/2001/XMLSchema#string'")
+
+
+if __name__ == '__main__':
+    unittest.main()

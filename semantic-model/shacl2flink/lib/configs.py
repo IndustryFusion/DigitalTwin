@@ -39,6 +39,19 @@ entityTopicRetention}}"
 kafka_bootstrap = "{{.Values.kafka.bootstrapServer}}" if helm \
                   else "my-cluster-kafka-bootstrap:9092"
 rdf_topic = "iff.rdf"
+kafka_topic_constraint_table_name = "{{.Values.kafkaBridge.flink.constraintTopic.topicName}}" if \
+    helm else "iff.ngsild.flink.constraint_table"
+kafka_topic_constraint_table_object = "{{.Values.kafkaBridge.flink.constraintTopic.objectName}}" if \
+    helm else "iff.ngsild.flink.constraint-table"
+kafka_topic_constraint_trigger_table_name = "{{.Values.kafkaBridge.flink.constraintTriggerTopic.topicName}}" if \
+    helm else "iff.ngsild.flink.constraint_trigger_table"
+kafka_topic_constraint_trigger_table_object = "{{.Values.kafkaBridge.flink.constraintTriggerTopic.objectName}}" if \
+    helm else "iff.ngsild.flink.constraint-trigger-table"
+kafka_topic_constraint_combination_table_name = "{{.Values.kafkaBridge.flink.constraintCombinationTopic.topicName}}" \
+    if helm else "iff.ngsild.flink.constraint_combination_table"
+kafka_topic_constraint_combination_table_object = \
+    "{{.Values.kafkaBridge.flink.constraintCombinationTopic.objectName}}" if \
+    helm else "iff.ngsild.flink.constraint-combination-table"
 rdf_retention_ms = 86400000
 kafka_topic_object_label = ['strimzi.io/cluster', 'my-cluster']
 iff_namespace = 'https://industry-fusion.com/types/v0.9/'
@@ -51,5 +64,11 @@ rdf_table_name = 'rdf'
 alerts_bulk_table_name = 'alerts_bulk'
 alerts_bulk_table_object_name = 'alerts-bulk'
 attributes_insert_table_obj_name = 'attributes-insert'
+constraint_table_name = 'constraint_table'
+constraint_table_object_name = 'constraint-table'
+constraint_combination_table_name = 'constraint_combination_table'
+constraint_combination_table_object_name = 'constraint-combination-table'
+constraint_trigger_table_name = 'constraint_trigger_table'
+constraint_trigger_table_object_name = 'constraint-trigger-table'
 rdf_max_per_set = 1500
 max_sql_configmap_size = 200000

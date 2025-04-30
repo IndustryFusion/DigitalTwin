@@ -14,12 +14,13 @@
 # limitations under the License.
 #
 
-from rdflib import Graph, BNode
+from rdflib import Graph, BNode, XSD, Literal
 import os
 import sys
 import argparse
 import lib.utils as utils
 import lib.configs as configs
+from lib.utils import NGSILD
 
 
 def parse_args(args=sys.argv[1:]):
@@ -39,7 +40,7 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
 SELECT DISTINCT (?a as ?entityId) (?b as ?name) (?e as ?type) (IF(bound(?g), IF(isIRI(?g), '@id', '@value'), IF(isIRI(?f), '@id', '@value')) as ?nodeType)
-(datatype(?g) as ?valueType) (?f as ?hasValue) (?g as ?hasObject) ?observedAt ?index ?unitCode
+(datatype(?f) as ?valueType) (?f as ?hasValue) (?g as ?hasObject) (?h as ?hasValueList) (?i as ?hasJSON) ?observedAt ?index ?unitCode
 where {
     ?a a ?subclass .
     {?a ?b [ ngsild:hasObject ?g ] .
@@ -55,6 +56,24 @@ where {
     OPTIONAl{?a ?b [ ngsild:observedAt ?observedAt; ngsild:hasValue ?f  ] .} .
     OPTIONAl{?a ?b [ ngsild:datasetId ?index; ngsild:hasValue ?f  ] .} .
     OPTIONAl{?a ?b [ ngsild:unitCode ?unitCode; ngsild:hasValue ?f  ] .} .
+    }
+  }
+UNION
+  {
+    {?a ?b [ ngsild:hasValueList ?h ] .
+    VALUES ?e {ngsild:ListProperty} .
+    OPTIONAl{?a ?b [ ngsild:observedAt ?observedAt; ngsild:hasValueList ?h  ] .} .
+    OPTIONAl{?a ?b [ ngsild:datasetId ?index; ngsild:hasValueList ?h  ] .} .
+    OPTIONAl{?a ?b [ ngsild:unitCode ?unitCode; ngsild:hasValueList ?h  ] .} .
+    }
+  }
+UNION
+  {
+    {?a ?b [ ngsild:hasJSON ?i ] .
+    VALUES ?e {ngsild:JsonProperty} .
+    OPTIONAl{?a ?b [ ngsild:observedAt ?observedAt; ngsild:hasJSON ?i  ] .} .
+    OPTIONAl{?a ?b [ ngsild:datasetId ?index; ngsild:hasJSON ?i  ] .} .
+    OPTIONAl{?a ?b [ ngsild:unitCode ?unitCode; ngsild:hasJSON ?i  ] .} .
     }
   }
 }
@@ -111,22 +130,26 @@ class StringIndexer:
             return id_map['string_to_index'][string]
 
 
-def get_entity_id_and_parentId(node, name, g):
+def get_entity_id_and_parentId(node, name, target_datasetId, g):
     # go up the graph to find entityId and construct parentId
     id = ''
     entityId = node
+    if target_datasetId is None:
+        target_datasetId = '@none'
     while type(entityId) == BNode:
         try:
+            datasetId = next(g.objects(entityId, NGSILD.datasetId), '@none')
             uptriples = next(g.triples((None, None, entityId)))
             entityId = uptriples[0]
-            id = f'\\{uptriples[1]}{id}'
+            id = f'\\{uptriples[1]}\\{datasetId}{id}'
         except:
-            pass
+            entityId = None
+            break
     if id != '':
         parentId = f'\'{entityId}{id}\''
-        id = f'{entityId}{id}\\{name}'
+        id = f'{entityId}{id}\\{name}\\{target_datasetId}'
     else:
-        id = f'{entityId}\\{name}'
+        id = f'{entityId}\\{name}\\{target_datasetId}'
         parentId = 'CAST(NULL as STRING)'
     return id, entityId, parentId
 
@@ -149,8 +172,8 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
             print(f'INSERT INTO `{configs.attributes_table_name}` VALUES',
                   file=sqlitef)
         for entityId, name, type, nodeType, valueType, hasValue, \
-                hasObject, observedAt, index, unitCode in qres:
-            id, entityId, parentId = get_entity_id_and_parentId(entityId, name, attributes_model)
+                hasObject, hasValueList, hasJSON, observedAt, index, unitCode in qres:
+            id, entityId, parentId = get_entity_id_and_parentId(entityId, name, index, attributes_model)
 
             if index is None:
                 current_dataset_id = "'@none'"
@@ -163,8 +186,22 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
                 attributeValue = nullify(hasObject)
             elif str(type) == 'https://uri.etsi.org/ngsi-ld/Property':
                 attributeValue = nullify(hasValue)
-            if "string" in valueType:
-                valueType = 'NULL'
+                if valueType is None and nodeType == '@value':
+                    if isinstance(valueType, int):
+                        valueType = XSD.integer
+                    if isinstance(valueType, bool):
+                        valueType = XSD.boolean
+                    if isinstance(valueType, float):
+                        valueType = XSD.double
+                    if isinstance(valueType, str):
+                        valueType = XSD.string
+            elif str(type) == 'https://uri.etsi.org/ngsi-ld/ListProperty':
+                py_list = utils.rdf_list_to_pylist(attributes_model, hasValueList)
+                attributeValue = nullify(Literal(str(py_list)))
+                nodeType = '@list'
+            elif str(type) == 'https://uri.etsi.org/ngsi-ld/JsonProperty':
+                attributeValue = nullify(hasJSON)
+                nodeType = '@json'
             if first:
                 first = False
             else:

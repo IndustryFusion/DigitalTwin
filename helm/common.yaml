@@ -17,4 +17,8 @@ db:
 
 ontology:
   baseUri: https://industryfusion.github.io/contexts/staging/example/v0.1/
+
+kafkaBridge:
+  hashlength: 24
+
  
