@@ -19,8 +19,12 @@ import re
 import rdflib
 from urllib.parse import urlparse
 from enum import Enum
-from rdflib import Graph, RDFS, RDF, OWL, XSD, Literal
+from rdflib import Graph, RDFS, RDF, OWL, XSD, Literal, SH, Namespace, BNode
+from rdflib.collection import Collection
 from collections import deque
+from lib.configs import constraint_table_name, constraint_trigger_table_name, constraint_combination_table_name
+
+NGSILD = Namespace('https://uri.etsi.org/ngsi-ld/')
 
 
 class WrongSparqlStructure(Exception):
@@ -42,22 +46,15 @@ class DnsNameNotCompliant(Exception):
     """
 
 
-relationship_checks_tablename = "relationshipChecksTable"
-property_checks_tablename = "propertyChecksTable"
-checks_table_primary_key = ["targetClass", "propertyPath"]
-relationship_checks_table = [
+constraint_table_primary_key = ["id"]
+constraint_table = [
+    {"id": "INTEGER"},
     {"targetClass": "STRING"},
     {"propertyPath": "STRING"},
-    {"propertyClass": "STRING"},
-    {"maxCount": "STRING"},
-    {"minCount": "STRING"},
-    {"severity": "STRING"}
-]
-property_checks_table = [
-    {"targetClass": "STRING"},
-    {"propertyPath": "STRING"},
+    {"subpropertyPath": "STRING"},
     {"propertyClass": "STRING"},
     {"propertyNodetype": "STRING"},
+    {"attributeType": "STRING"},
     {"maxCount": "STRING"},
     {"minCount": "STRING"},
     {"severity": "STRING"},
@@ -68,8 +65,40 @@ property_checks_table = [
     {"minLength": "STRING"},
     {"maxLength": "STRING"},
     {"pattern": "STRING"},
-    {"ins": "STRING"}
+    {"ins": "STRING"},
+    {"datatypes": "STRING"},
+    {"hasValue": "STRING"}
 ]
+
+constraint_trigger_table_primary_key = ["resource", "constraint_id", "event"]
+constraint_trigger_table = [
+    {"resource": "STRING"},
+    {"event": "STRING"},
+    {"constraint_id": "INTEGER"},
+    {"triggered": "BOOLEAN"},
+    {"severity": "STRING"},
+    {"text": "STRING"},
+    {'ts': "TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL"}
+]
+
+constraint_combination_table_primary_key = ["member_constraint_id", "target_constraint_id"]
+constraint_combination_table = [
+    {"member_constraint_id": "INTEGER"},
+    {"operation": "STRING"},
+    {"target_constraint_id": "INTEGER"}
+]
+
+
+def get_full_path_of_shacl_property(g, property):
+    cur_property = property
+    paths = []
+    while (cur_property is not None):
+        path = g.value(cur_property, SH.path)
+        if path is not None:
+            paths.append(path)
+        next_property = next(g.subjects(SH.property, cur_property), None)
+        cur_property = next_property
+    return paths
 
 
 def get_timevars(ctx, vars):
@@ -577,83 +606,106 @@ def split_statementsets(statementsets, max_map_size):
     return grouped_strings
 
 
-def create_relationship_check_yaml_table(connector, kafka, value):
-    return create_yaml_table(relationship_checks_tablename, connector, relationship_checks_table,
-                             checks_table_primary_key, kafka, value)
+def create_constraint_yaml_table(connector, kafka, value):
+    return create_yaml_table(constraint_table_name, connector, constraint_table,
+                             constraint_table_primary_key, kafka, value)
 
 
-def create_relationship_check_sql_table():
-    return create_sql_table(relationship_checks_tablename, relationship_checks_table, checks_table_primary_key,
+def create_constraint_sql_table():
+    return create_sql_table(constraint_table_name, constraint_table, constraint_table_primary_key,
                             SQL_DIALECT.SQLITE)
 
 
-def create_property_check_yaml_table(connector, kafka, value):
-    return create_yaml_table(property_checks_tablename, connector, property_checks_table,
-                             checks_table_primary_key, kafka, value)
+def create_constraint_trigger_yaml_table(connector, kafka, value):
+    return create_yaml_table(constraint_trigger_table_name,
+                             connector,
+                             constraint_trigger_table,
+                             constraint_trigger_table_primary_key,
+                             kafka, value)
 
 
-def create_property_check_sql_table():
-    return create_sql_table(property_checks_tablename, property_checks_table, checks_table_primary_key,
+def create_constraint_trigger_sql_table():
+    return create_sql_table(constraint_trigger_table_name,
+                            constraint_trigger_table,
+                            constraint_trigger_table_primary_key,
                             SQL_DIALECT.SQLITE)
 
 
-def add_relationship_checks(checks, sqldialect):
+def create_constraint_combination_yaml_table(connector, kafka, value):
+    return create_yaml_table(constraint_combination_table_name,
+                             connector,
+                             constraint_combination_table,
+                             constraint_combination_table_primary_key, kafka, value)
+
+
+def create_constraint_combination_sql_table():
+    return create_sql_table(constraint_combination_table_name,
+                            constraint_combination_table,
+                            constraint_combination_table_primary_key,
+                            SQL_DIALECT.SQLITE)
+
+
+def add_table_values(values, table, sqldialect, table_name):
     if sqldialect == SQL_DIALECT.SQLITE:
-        statement = f'INSERT OR REPLACE INTO {relationship_checks_tablename} VALUES'
+        statement = f'INSERT OR REPLACE INTO {table_name} VALUES'
     else:
-        statement = f'INSERT INTO {relationship_checks_tablename} VALUES'
+        statement = f'INSERT INTO {table_name} VALUES'
     first = True
-    for check in checks:
+    for value in values:
         lcheck = {}
-        for k, v in check.items():
+        for k, v in value.items():
+            try:
+                datatype = next((typ[k] for typ in table if k in typ))
+            except:
+                print(f"Error: You provided a table field {k} which does not have a type in the given table \
+schema {table}.")
             if v is None:
-                lcheck[k] = 'CAST(NULL as STRING)'
+                lcheck[k] = f'CAST (NULL as {datatype})'
             else:
-                lcheck[k] = f"'{v}'"
+                if datatype in ("STRING", "TEXT"):
+                    lcheck[k] = f"'{v}'"
+                else:
+                    lcheck[k] = f"{v}"
         if first:
             first = False
         else:
             statement += ', '
-        statement += f'({lcheck["targetClass"]}, {lcheck["propertyPath"]}, {lcheck["propertyClass"]}, \
-{lcheck["maxCount"]}, {lcheck["minCount"]}, {lcheck["severity"]})'
-    statement += ';'
-    return statement
-
-
-def add_property_checks(checks, sqldialect):
-    if sqldialect == SQL_DIALECT.SQLITE:
-        statement = f'INSERT OR REPLACE INTO {property_checks_tablename} VALUES'
-    else:
-        statement = f'INSERT INTO {property_checks_tablename} VALUES'
-    first = True
-    for check in checks:
-        lcheck = {}
-        for k, v in check.items():
-            if v is None:
-                lcheck[k] = 'CAST (NULL as STRING)'
+        statement += '('
+        first = True
+        for col in table:
+            col_name = next(iter(col))
+            if first:
+                first = False
             else:
-                lcheck[k] = f"'{v}'"
-        if first:
-            first = False
-        else:
-            statement += ', '
-        statement += f'({lcheck["targetClass"]}, \
-{lcheck["propertyPath"]}, \
-{lcheck["propertyClass"]}, \
-{lcheck["propertyNodetype"]}, \
-{lcheck["maxCount"]}, \
-{lcheck["minCount"]}, \
-{lcheck["severity"]}, \
-{lcheck["minExclusive"]}, \
-{lcheck["maxExclusive"]}, \
-{lcheck["minInclusive"]}, \
-{lcheck["maxInclusive"]}, \
-{lcheck["minLength"]}, \
-{lcheck["maxLength"]}, \
-{lcheck["pattern"]}, \
-{lcheck["ins"]})'
+                statement += ','
+            statement += lcheck[col_name]
+        statement += ')'
     statement += ';'
     return statement
+
+
+def init_constraint_check():
+    check = {}
+    check["targetClass"] = None
+    check["propertyPath"] = None
+    check["subpropertyPath"] = None
+    check["propertyClass"] = None
+    check["propertyNodetype"] = None
+    check["attributeType"] = None
+    check["maxCount"] = None
+    check["minCount"] = None
+    check["severity"] = None
+    check["minExclusive"] = None
+    check["maxExclusive"] = None
+    check["minInclusive"] = None
+    check["maxInclusive"] = None
+    check["minLength"] = None
+    check["maxLength"] = None
+    check["pattern"] = None
+    check["ins"] = None
+    check["datatypes"] = None
+    check["hasValue"] = None
+    return check
 
 
 # This creates a transitive closure of all OWL.TransitiveProperty elements given in the ontology
@@ -719,3 +771,34 @@ def transitive_closure(g):
                 closure_graph.add((bag, RDFS.member, Literal(member, datatype=XSD.string)))
 
     return closure_graph
+
+
+def rdf_list_to_pylist(graph, head):
+    """
+    Recursively convert an RDF Collection (starting at `head`)
+    into a Python list. If an element is itself a blank‐node list,
+    recurse; otherwise, convert Literals/URIs to str.
+    """
+    if not isinstance(head, BNode) and head != RDF.nil:
+        # allow returning of potentially wrong list elements to allow
+        # debugging
+        return head
+    py_list = []
+    if head == RDF.nil:
+        # empty list
+        return py_list
+    if not isinstance(head, BNode):
+        raise TypeError("Head of RDF list must be a blank node or RDF.nil")
+    col = Collection(graph, head)
+    for item in col:
+        if isinstance(item, BNode) and (item, RDF.first, None) in graph:
+            # nested list
+            py_list.append(rdf_list_to_pylist(graph, item))
+        else:
+            # leaf node: Literal or URIRef
+            if isinstance(item, Literal):
+                py_list.append(item.toPython())
+            else:
+                # you can choose .n3(), .toPython(), or str(item) for URIs
+                py_list.append(str(item))
+    return py_list

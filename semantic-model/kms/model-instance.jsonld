@@ -1,6 +1,6 @@
 [
   {
-    "@context": "https://industryfusion.github.io/contexts/staging/example/v0.1/context.jsonld",
+    "@context": "https://industryfusion.github.io/contexts/staging/example/v0.2/context.jsonld",
     "id": "urn:cutter:1",
     "type": "iffBaseEntities:Machine",
     "iffBaseEntities:hasState": [
@@ -11,26 +11,40 @@
       }}]
   },
   {
-    "@context": "https://industryfusion.github.io/contexts/staging/example/v0.1/context.jsonld",
+    "@context": "https://industryfusion.github.io/contexts/staging/example/v0.2/context.jsonld",
     "id": "urn:plasmacutter:1",
     "type": "iffBaseEntities:Cutter",
     "iffBaseEntities:hasState": [
       {
+      "iffBaseEntities:hasXXXWorkpiece": {
+        "type": "Relationship",
+        "object": "urn:workpiece:1"
+      },
       "type": "Property",
       "value": {
         "@id": "base:state_PROCESSING"
       }}],
+      "iffBaseEntities:hasList": {
+        "type": "ListProperty",
+        "valueList": []
+      },
+      "iffBaseEntities:hasJSON": {
+        "type": "JsonProperty",
+        "json": {}
+      },
       "iffBaseEntities:hasFilter": [
         {
           "type": "Relationship",
           "object": "urn:filter:1",
-          "iffBaseEntities:hasTrust": {
-            "value": 1.0,
+          "iffBaseEntities:hasTrust": [{
+            "value": 2.1,
             "type": "Property",
-            "iffBaseEntities:hasTrust2": {
-              "value": 2.0
+            "iffBaseEntities:hasOutWorkpiecexx": { 
+              "type": "Property",
+              "value": 2.0,
+              "datasetId": "urn:index:1"
             }
-          }
+          }]
         }
       ],
       "iffBaseEntities:hasInWorkpiece": [
@@ -41,7 +55,7 @@
       ]
   },
   {
-    "@context": "https://industryfusion.github.io/contexts/staging/example/v0.1/context.jsonld",
+    "@context": "https://industryfusion.github.io/contexts/staging/example/v0.2/context.jsonld",
     "id": "urn:filter:1",
     "type": "iffBaseEntities:Filter",
     "iffBaseEntities:hasState": [
@@ -81,7 +95,7 @@
     ]
   },
   {
-    "@context": "https://industryfusion.github.io/contexts/staging/example/v0.1/context.jsonld",
+    "@context": "https://industryfusion.github.io/contexts/staging/example/v0.2/context.jsonld",
     "id": "urn:cartridge:1",
     "type": "iffBaseEntities:FilterCartridge",
     
@@ -105,7 +119,7 @@
       ]
   },
   {
-    "@context": "https://industryfusion.github.io/contexts/staging/example/v0.1/context.jsonld",
+    "@context": "https://industryfusion.github.io/contexts/staging/example/v0.2/context.jsonld",
     "id": "urn:workpiece:1",
     "type": "iffBaseEntities:Workpiece",
     

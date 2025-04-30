@@ -78,15 +78,10 @@ def main(output_folder='output'):
                                            f'{configs.kafka_topic_ngsi_prefix}', configs.kafka_topic_object_label,
                                            config),
                   fk)
-        # Create property_checks and relational_checks
-        kafka_relationship_checks = {
-            'topic': utils.relationship_checks_tablename,
-            'properties': {'bootstrap.servers': configs.kafka_bootstrap},
-            'key.format': 'json'
 
-        }
-        kafka_property_checks = {
-            'topic': utils.property_checks_tablename,
+        # Create constraint_checks and and combination tables
+        kafka_constraint_checks = {
+            'topic': configs.kafka_topic_constraint_table_name,
             'properties': {'bootstrap.servers': configs.kafka_bootstrap},
             'key.format': 'json'
         }
@@ -98,13 +93,67 @@ def main(output_folder='output'):
         }
         connector = 'upsert-kafka'
         print('---', file=f)
-        yaml.dump(utils. create_relationship_check_yaml_table(connector, kafka_relationship_checks, value), f)
+        yaml.dump(utils.create_constraint_yaml_table(connector, kafka_constraint_checks, value), f)
+
+        print(utils.create_constraint_sql_table(),
+              file=sqlitef)
+        print('---', file=fk)
+        yaml.dump(utils.create_kafka_topic(f'{configs.kafka_topic_constraint_table_object}',
+                                           f'{configs.kafka_topic_constraint_table_name}',
+                                           configs.kafka_topic_object_label,
+                                           config),
+                  fk)
+        # Create constraint trigger table
+        kafka_constraint_trigger_checks = {
+            'topic': configs.kafka_topic_constraint_trigger_table_name,
+            'properties': {'bootstrap.servers': configs.kafka_bootstrap},
+            'key.format': 'json'
+        }
+
+        value = {
+            'format': 'json',
+            'json.fail-on-missing-field': False,
+            'json.ignore-parse-errors': True
+        }
+        connector = 'upsert-kafka'
         print('---', file=f)
-        yaml.dump(utils.create_property_check_yaml_table(connector, kafka_property_checks, value), f)
-        print(utils.create_relationship_check_sql_table(),
+        yaml.dump(utils.create_constraint_trigger_yaml_table(connector, kafka_constraint_trigger_checks, value), f)
+
+        print(utils.create_constraint_trigger_sql_table(),
               file=sqlitef)
-        print(utils.create_property_check_sql_table(),
+        print('---', file=fk)
+        yaml.dump(utils.create_kafka_topic(f'{configs.kafka_topic_constraint_trigger_table_object}',
+                                           f'{configs.kafka_topic_constraint_trigger_table_name}',
+                                           configs.kafka_topic_object_label,
+                                           config),
+                  fk)
+        # Create constraint combination table
+        kafka_constraint_combination_checks = {
+            'topic': configs.kafka_topic_constraint_combination_table_name,
+            'properties': {'bootstrap.servers': configs.kafka_bootstrap},
+            'key.format': 'json'
+        }
+
+        value = {
+            'format': 'json',
+            'json.fail-on-missing-field': False,
+            'json.ignore-parse-errors': True
+        }
+        connector = 'upsert-kafka'
+        print('---', file=f)
+        yaml.dump(utils.create_constraint_combination_yaml_table(connector,
+                                                                 kafka_constraint_combination_checks,
+                                                                 value),
+                  f)
+
+        print(utils.create_constraint_combination_sql_table(),
               file=sqlitef)
+        print('---', file=fk)
+        yaml.dump(utils.create_kafka_topic(f'{configs.kafka_topic_constraint_combination_table_object}',
+                                           f'{configs.kafka_topic_constraint_combination_table_name}',
+                                           configs.kafka_topic_object_label,
+                                           config),
+                  fk)
 
 
 if __name__ == '__main__':

@@ -1,0 +1,55 @@
+{ 
+        "@context": [
+                "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld",
+                {
+                    "eclass": {
+                        "@id": "https://industry-fusion.org/eclass#",
+                        "@prefix": true
+                    },
+                    "xsd": {
+                        "@id": "http://www.w3.org/2001/XMLSchema#",
+                        "@prefix": true
+                    },
+                    "owl": {
+                        "@id": "http://www.w3.org/2002/07/owl#",
+                        "@prefix": true
+                    },
+                    "rdf": {
+                        "@id": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+                        "@prefix": true
+                    },
+                    "rdfs": {
+                        "@id": "http://www.w3.org/2000/01/rdf-schema#",
+                        "@prefix": true
+                    },
+                    "schema": {
+                        "@id": "http://schema.org/",
+                        "@prefix": true
+                    },
+                    "sh": {
+                        "@id": "http://www.w3.org/ns/shacl#",
+                        "@prefix": true
+                    },
+                    "iffBaseEntities": {
+                        "@id": "https://industryfusion.github.io/contexts/example/v0/base_entities/",
+                        "@prefix": true
+                    },
+                    "base": {
+                        "@id": "https://industryfusion.github.io/contexts/example/v0/base_knowledge/",
+                        "@prefix": true
+                    },
+                    "iffFilterKnowledge": {
+                        "@id": "https://industryfusion.github.io/contexts/example/v0/filter_knowledge/",
+                        "@prefix": true
+                    },
+                    "iffFilterEntities": {
+                        "@id": "https://industryfusion.github.io/contexts/example/v0/filter_entities/",
+                        "@prefix": true
+                    },
+                    "material": {
+                        "@id": "https://industryfusion.github.io/contexts/ontology/v0/material/",
+                        "@prefix": true
+                    }
+                }
+        ]
+}

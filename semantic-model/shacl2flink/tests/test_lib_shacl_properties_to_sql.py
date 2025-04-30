@@ -16,6 +16,8 @@
 
 from unittest.mock import MagicMock, patch
 import lib.shacl_properties_to_sql
+import lib.utils as utils
+import lib.configs as configs
 from munch import Munch
 from rdflib import Namespace
 
@@ -31,12 +33,15 @@ def test_lib_shacl_prroperties_to_sql(mock_utils, mock_configs, mock_yaml,
     mock_utils.strip_class = identity
     mock_utils.class_to_obj_name = identity
     mock_utils.camelcase_to_snake_case = identity
-    mock_utils.relationship_checks_tablename = 'relationship_table'
-    mock_utils.property_checks_tablename = 'property_table'
+    mock_utils.init_constraint_check = utils.init_constraint_check
+
     mock_configs.attributes_table_obj_name = 'attributes'
     mock_configs.rdf_table_obj_name = 'rdf'
     mock_configs.attributes_view_obj_name = 'attributes-view'
     mock_configs.kafka_topic_ngsi_prefix_name = 'ngsild-prefix'
+    mock_configs.constraint_combination_table_object_name = configs.constraint_combination_table_object_name
+    mock_configs.constraint_trigger_table_object_name = configs.constraint_trigger_table_object_name
+    mock_configs.constraint_table_object_name = configs.constraint_table_object_name
     sh = Namespace("http://www.w3.org/ns/shacl#")
     targetclass = MagicMock()
     targetclass.toPython.return_value = 'targetclass'
@@ -71,6 +76,14 @@ def test_lib_shacl_prroperties_to_sql(mock_utils, mock_configs, mock_yaml,
     pattern.toPython.return_value = 'pattern'
     ins = MagicMock()
     ins.toPython.return_value = '"SHIN1","SHIN2"'
+    property = MagicMock()
+    property.toPython.return_value = 'property'
+    valuepath = MagicMock()
+    valuepath.toPython.return_value = 'valuepath'
+    datatypes = MagicMock()
+    datatypes.toPython.return_value = 'datatypes'
+    hasValue = MagicMock()
+    hasValue.toPython.return_value = 'hasValue'
     g.__iadd__.return_value.query.return_value = [Munch()]
     g.__iadd__.return_value.query.return_value[0].targetclass = targetclass
     g.__iadd__.return_value.query.return_value[0].inheritedTargetclass = inheritedTargetclass
@@ -90,15 +103,23 @@ def test_lib_shacl_prroperties_to_sql(mock_utils, mock_configs, mock_yaml,
     g.__iadd__.return_value.query.return_value[0].maxlength = maxlength
     g.__iadd__.return_value.query.return_value[0].pattern = pattern
     g.__iadd__.return_value.query.return_value[0].ins = ins
-    prefixes = {"sh": "http://example.com/sh", "base": "http://example.com/base"}
-    sqlite, (statementsets, tables, views) = \
-        lib.shacl_properties_to_sql.translate('kms/shacl.ttl',
-                                              'kms/knowledge.ttl', prefixes)
+    g.__iadd__.return_value.query.return_value[0].property = property
+    g.__iadd__.return_value.query.return_value[0].valuepath = valuepath
+    g.__iadd__.return_value.query.return_value[0].datatypes = datatypes
+    g.__iadd__.return_value.query.return_value[0].hasValue = hasValue
 
-    assert tables == ['alerts-bulk', 'attributes', 'rdf', 'ngsild-prefix',
-                      'relationship_table', 'property_table']
+    g.value.side_effect = ['value1']
+    g.subjects.side_effect = [[iter([])]]
+    prefixes = {"sh": "http://example.com/sh", "base": "http://example.com/base"}
+    with patch('lib.shacl_properties_to_sql.get_full_path_of_shacl_property', return_value=['mocked_full_path']):
+        sqlite, (statementsets, tables, views) = \
+            lib.shacl_properties_to_sql.translate('kms/shacl.ttl',
+                                                  'kms/knowledge.ttl', prefixes)
+
+    assert tables == ['alerts-bulk', 'attributes', 'rdf', 'ngsild-prefix', 'constraint-table',
+                      'constraint-combination-table', 'constraint-trigger-table', 'constraint-table']
     assert views == ['attributes-view', 'ngsild-prefix-view']
-    assert len(statementsets) == 4
+    assert len(statementsets) == 6
 
     targetclass = MagicMock()
     targetclass.toPython.return_value = 'targetclass'
@@ -129,6 +150,8 @@ def test_lib_shacl_prroperties_to_sql(mock_utils, mock_configs, mock_yaml,
     minlength.toPython.return_value = 3
     maxlength = MagicMock()
     maxlength.toPython.return_value = 10
+    datatypes = MagicMock()
+    datatypes.toPython.return_value = ''
     g.__iadd__.return_value.query.return_value = [Munch()]
     g.__iadd__.return_value.query.return_value[0].targetclass = targetclass
     g.__iadd__.return_value.query.return_value[0].inheritedTargetclass = inheritedTargetclass
@@ -148,12 +171,19 @@ def test_lib_shacl_prroperties_to_sql(mock_utils, mock_configs, mock_yaml,
     g.__iadd__.return_value.query.return_value[0].maxlength = maxlength
     g.__iadd__.return_value.query.return_value[0].pattern = None
     g.__iadd__.return_value.query.return_value[0].ins = ins
+    g.__iadd__.return_value.query.return_value[0].property = property
+    g.__iadd__.return_value.query.return_value[0].valuepath = None
+    g.__iadd__.return_value.query.return_value[0].datatypes = datatypes
+    g.__iadd__.return_value.query.return_value[0].hasValue = None
 
-    sqlite, (statementsets, tables, views) = \
-        lib.shacl_properties_to_sql.translate('kms/shacl.ttl',
-                                              'kms/knowledge.ttl', prefixes)
+    with patch('lib.shacl_properties_to_sql.get_full_path_of_shacl_property',
+               return_value=['mocked_full_path']):
+        sqlite, (statementsets, tables, views) = \
+            lib.shacl_properties_to_sql.translate('kms/shacl.ttl',
+                                                  'kms/knowledge.ttl',
+                                                  prefixes)
 
-    assert tables == ['alerts-bulk', 'attributes', 'rdf', 'ngsild-prefix',
-                      'relationship_table', 'property_table']
+    assert tables == ['alerts-bulk', 'attributes', 'rdf', 'ngsild-prefix', 'constraint-table',
+                      'constraint-combination-table', 'constraint-trigger-table', 'constraint-table']
     assert views == ['attributes-view', 'ngsild-prefix-view']
-    assert len(statementsets) == 4
+    assert len(statementsets) == 6

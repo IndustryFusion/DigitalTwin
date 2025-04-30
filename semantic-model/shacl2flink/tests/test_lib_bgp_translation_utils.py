@@ -37,7 +37,8 @@ def test_create_ngsild_mappings(monkeypatch):
             assert "{?fshapex sh:targetClass/rdfs:subClassOf ?f .\n\
 ?fshape sh:targetClass ?f .}" in sparql
             assert "{?thisshape sh:property [ sh:path <https://industry-fusion.com/types/v0.9/hasFilter> ; \
-sh:property [ sh:path ngsild:hasObject;  sh:class ?f ] ] .}" in sparql
+(sh:or/rdf:rest*/rdf:first) [sh:property [ sh:path ngsild:hasObject;(sh:or/rdf:rest*/rdf:first) \
+[sh:class ?f]]]] .}" in sparql
             assert "{?v2shapex sh:targetClass/rdfs:subClassOf ?v2 .\n\
 ?v2shape sh:targetClass ?v2 .}" in sparql
             return ['row']
@@ -95,8 +96,9 @@ def test_create_ngsild_mappings_reverse(monkeypatch):
     class Graph:
         def query(self, sparql):
             assert "?this rdfs:subClassOf <https://industry-fusion.com/types/v0.9/filter> ." in sparql
-            assert "pcshape sh:property [ sh:path <https://industry-fusion.com/types/v0.9/hasFilter> ; sh:property \
-[ sh:path ngsild:hasObject;  sh:class ?this ] ]" in sparql
+            assert "{?pcshape sh:property [ sh:path <https://industry-fusion.com/types/v0.9/hasFilter> ; \
+(sh:or/rdf:rest*/rdf:first) \
+[sh:property [ sh:path ngsild:hasObject;(sh:or/rdf:rest*/rdf:first) [sh:class ?this]]]] .}" in sparql
             assert "{?v2shapex sh:targetClass/rdfs:subClassOf ?v2 .\n\
 ?v2shape sh:targetClass ?v2 .}" in sparql
             assert "{?v1shape sh:property [ sh:path <https://industry-fusion.com/types/v0.9/state> ; ] .}" in sparql

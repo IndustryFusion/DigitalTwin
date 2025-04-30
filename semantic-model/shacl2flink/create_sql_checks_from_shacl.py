@@ -62,8 +62,9 @@ is accessible.")
         context_graph.parse(context, format="json-ld")
         for prefix, namespace in context_graph.namespaces():
             prefixes[prefix] = rdflib.Namespace(namespace)
-    except:
-        print(f"Could not derive prefixes from context file. Check if contextfile {context} is valid and accessible.")
+    except Exception as e:
+        print(f"Could not derive prefixes from context file. Check if contextfile {context} is valid and \
+accessible: {e}")
         exit(1)
     if 'base' not in prefixes.keys():
         print(f"No prefix 'base:' is found in your given context {context}. This is needed!")

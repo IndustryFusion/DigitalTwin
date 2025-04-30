@@ -3,6 +3,7 @@
 'urn:filter:1','CountConstraintComponent(https://industry-fusion.com/types/v0.9/state)','ok'
 'urn:filter:1','CountConstraintComponent(https://industry-fusion.com/types/v0.9/stringState)','ok'
 'urn:filter:1','DatatypeConstraintComponent(https://industry-fusion.com/types/v0.9/state[0])','ok'
+'urn:filter:1','DatatypeConstraintComponent(https://industry-fusion.com/types/v0.9/strength[0])','ok'
 'urn:filter:1','MaxInclusiveConstraintComponent(https://industry-fusion.com/types/v0.9/strength[0])','ok'
 'urn:filter:1','MinInclusiveConstraintComponent(https://industry-fusion.com/types/v0.9/strength[0])','ok'
 'urn:filter:1','NodeKindConstraintComponent(https://industry-fusion.com/types/v0.9/hasCartridge[0])','warning'

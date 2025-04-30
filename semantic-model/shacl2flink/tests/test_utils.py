@@ -18,7 +18,7 @@ import os.path
 from unittest.mock import patch
 import lib.utils as utils
 import rdflib
-from rdflib import Graph, Namespace, RDF, RDFS, OWL, Literal, XSD
+from rdflib import Graph, Namespace, RDF, RDFS, OWL, Literal, XSD, BNode
 
 
 def test_check_dns_name():
@@ -433,3 +433,126 @@ def test_transitive_closure():
     assert (TEST.container, RDF.type, RDFS.Container) in closure_graph
     assert (TEST.container, RDFS.member, Literal("value1", datatype=XSD.string)) in closure_graph
     assert (TEST.container, RDFS.member, Literal("value2", datatype=XSD.string)) in closure_graph
+
+
+def test_rdf_list_to_pylist():
+    # Define a custom namespace for testing
+    TEST = Namespace("http://example.org/test#")
+
+    # Create an RDF graph for testing
+    g = Graph()
+    g.bind("test", TEST)
+
+    # Test empty list
+    empty_list = BNode()
+    g.add((empty_list, RDF.first, RDF.nil))
+    result = utils.rdf_list_to_pylist(g, RDF.nil)
+    assert result == []
+
+    # Test flat list
+    flat_list = BNode()
+    g.add((flat_list, RDF.first, Literal("item1")))
+    g.add((flat_list, RDF.rest, BNode()))
+    g.add((flat_list, RDF.rest, RDF.nil))
+    result = utils.rdf_list_to_pylist(g, flat_list)
+    assert result == ["item1"]
+
+    # Test nested list
+    nested_list = BNode()
+    inner_list = BNode()
+    g.add((nested_list, RDF.first, inner_list))
+    g.add((nested_list, RDF.rest, RDF.nil))
+    g.add((inner_list, RDF.first, Literal("nested_item")))
+    g.add((inner_list, RDF.rest, RDF.nil))
+    result = utils.rdf_list_to_pylist(g, nested_list)
+    assert result == [["nested_item"]]
+
+    # Test list with URIRef
+    uri_list = BNode()
+    g.add((uri_list, RDF.first, TEST.item))
+    g.add((uri_list, RDF.rest, RDF.nil))
+    result = utils.rdf_list_to_pylist(g, uri_list)
+    assert result == [str(TEST.item)]
+
+    # Test invalid head type
+    result = utils.rdf_list_to_pylist(g, Literal("invalid"))
+    assert result == Literal("invalid")
+
+
+def test_split_statementsets():
+    # Test case 1: Simple split
+    statementsets = ["short", "mediumlength", "longstatement"]
+    max_map_size = 10
+    result = utils.split_statementsets(statementsets, max_map_size)
+    assert result == [["short"], ["mediumlength"], ["longstatement"]]
+
+    # Test case 2: Grouping strings
+    statementsets = ["short", "medium", "long"]
+    max_map_size = 14
+    result = utils.split_statementsets(statementsets, max_map_size)
+    assert result == [["short", "medium"], ["long"]]
+
+    # Test case 3: All strings fit in one group
+    statementsets = ["short", "medium", "long"]
+    max_map_size = 50
+    result = utils.split_statementsets(statementsets, max_map_size)
+    assert result == [["short", "medium", "long"]]
+
+    # Test case 4: Empty input
+    statementsets = []
+    max_map_size = 10
+    result = utils.split_statementsets(statementsets, max_map_size)
+    assert result == []
+
+    # Test case 5: Single string larger than max_map_size
+    statementsets = ["verylongstatement"]
+    max_map_size = 10
+    result = utils.split_statementsets(statementsets, max_map_size)
+    assert result == [[], ["verylongstatement"]]
+
+    # Test case 6: Strings with exact fit
+    statementsets = ["short", "medium"]
+    max_map_size = len("short") + len("medium")
+    result = utils.split_statementsets(statementsets, max_map_size)
+    assert result == [["short", "medium"]]
+
+
+def test_add_table_values():
+    # Test case 1: Basic SQL dialect (SQLITE)
+    values = [{"id": 1, "name": "Alice"}, {"id": 2, "name": "Bob"}]
+    table = [{"id": "INTEGER"}, {"name": "STRING"}]
+    sqldialect = utils.SQL_DIALECT.SQLITE
+    table_name = "test_table"
+    result = utils.add_table_values(values, table, sqldialect, table_name)
+    expected = (
+        "INSERT OR REPLACE INTO test_table VALUES"
+        "(1,'Alice'),"
+        " (2,'Bob');"
+    )
+    assert result == expected
+
+    # Test case 2: Basic SQL dialect (SQL)
+    sqldialect = utils.SQL_DIALECT.SQL
+    result = utils.add_table_values(values, table, sqldialect, table_name)
+    expected = (
+        "INSERT INTO test_table VALUES"
+        "(1,'Alice'),"
+        " (2,'Bob');"
+    )
+    assert result == expected
+
+    # Test case 3: Null values
+    values = [{"id": None, "name": "Alice"}, {"id": 2, "name": None}]
+    result = utils.add_table_values(values, table, sqldialect, table_name)
+    expected = (
+        "INSERT INTO test_table VALUES"
+        "(CAST (NULL as INTEGER),'Alice'),"
+        " (2,CAST (NULL as STRING));"
+    )
+    assert result == expected
+
+    # Test case 4: Empty values
+    values = []
+    result = utils.add_table_values(values, table, sqldialect, table_name)
+    expected = "INSERT INTO test_table VALUES;"
+    assert result == expected

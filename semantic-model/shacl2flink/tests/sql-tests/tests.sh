@@ -1,4 +1,6 @@
 #!/bin/bash
+set -e
+export LANG=en_EN.UTF-8
 OUTPUTDIR=output
 TOOLDIR=$(cd ../..; echo $PWD)
 KMS_CONSTRAINTS=kms-constraints
@@ -11,9 +13,11 @@ testdirs_constraints=${@:-"$(ls ${KMS_CONSTRAINTS})"}
 testdirs_rules=${@:-"$(ls ${KMS_RULES})"}
 testdirs_udf=${@:-"$(ls ${KMS_UDF})"}
 for testdir in ${testdirs_constraints}; do
+    echo ----------------------------------------
     echo Entering test ${testdir} in  ${KMS_CONSTRAINTS}
     KNOWLEDGE=knowledge.ttl
     SHACL=shacl.ttl
+    SHACL_NORMALIZED=shacl_normalized.ttl
     CONTEXT=context.jsonld
     pushd .
     cd $KMS_CONSTRAINTS/$testdir || break
@@ -21,8 +25,11 @@ for testdir in ${testdirs_constraints}; do
 
     python3 $TOOLDIR/create_rdf_table.py ${KNOWLEDGE}
     python3 $TOOLDIR/create_core_tables.py
-    python3 $TOOLDIR/create_sql_checks_from_shacl.py -c ${CONTEXT} ${SHACL} ${KNOWLEDGE} 
-
+    python3 $TOOLDIR/shacl_normalization.py ${SHACL} ${SHACL_NORMALIZED}
+    echo now executing $TOOLDIR/create_sql_checks_from_shacl.py -c ${CONTEXT} ${SHACL_NORMALIZED} ${KNOWLEDGE} 
+    python3 $TOOLDIR/create_sql_checks_from_shacl.py -c ${CONTEXT} ${SHACL_NORMALIZED} ${KNOWLEDGE}
+    echo Generic Setup Done, now iterating through models
+    echo ------------------------------------------------
     for model in $(ls model*.jsonld); do
         MODEL=$model
         DATABASE=$OUTPUTDIR/database.db
@@ -53,10 +60,10 @@ for testdir in ${testdirs_rules}; do
     pushd .
     cd $KMS_RULES/$testdir || break
     mkdir -p $OUTPUTDIR
-
     python3 $TOOLDIR/create_rdf_table.py ${KNOWLEDGE}
     python3 $TOOLDIR/create_core_tables.py
-    python3 $TOOLDIR/create_sql_checks_from_shacl.py  -c ${CONTEXT} ${SHACL} ${KNOWLEDGE}
+    python3 $TOOLDIR/shacl_normalization.py ${SHACL} ${SHACL_NORMALIZED}
+    python3 $TOOLDIR/create_sql_checks_from_shacl.py  -c ${CONTEXT} ${SHACL_NORMALIZED} ${KNOWLEDGE}
 
     for model in $(ls model*.jsonld); do
         MODEL=$model
@@ -89,7 +96,8 @@ for testdir in ${testdirs_udf}; do
 
     python3 $TOOLDIR/create_rdf_table.py ${KNOWLEDGE}
     python3 $TOOLDIR/create_core_tables.py
-    python3 $TOOLDIR/create_sql_checks_from_shacl.py -c ${CONTEXT} ${SHACL} ${KNOWLEDGE}
+    python3 $TOOLDIR/shacl_normalization.py ${SHACL} ${SHACL_NORMALIZED}
+    python3 $TOOLDIR/create_sql_checks_from_shacl.py -c ${CONTEXT} ${SHACL_NORMALIZED} ${KNOWLEDGE}
 
     for model in $(ls model*.jsonld); do
         MODEL=$model
