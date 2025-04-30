@@ -69,7 +69,7 @@ data:
       },
       "bridgeCommon": {
               "kafkaSyncOnAttribute": "https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn",
-              "hashLength": 24
+              "hashLength": {{ .Values.kafkaBridge.hashlength }}
       },
       "mqtt": {
                 "host": {{ .Values.mqtt.broker.url | quote }},

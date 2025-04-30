@@ -8,6 +8,8 @@
 @prefix ngsild: <https://uri.etsi.org/ngsi-ld/> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
 
 :CartridgeShape a sh:NodeShape ;
     sh:property [ sh:maxCount 1 ;
@@ -36,6 +38,17 @@
             sh:nodeKind sh:BlankNode ;
             sh:order 1 ;
             sh:path iffBaseEntities:hasFilter ;
+             sh:property [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:order 30 ;
+            sh:path iffBaseEntities:hasTrust ;
+            sh:property [
+                    sh:datatype xsd:double ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:Literal ;
+                    sh:path ngsild:hasValue ] ] ;
             sh:property [ sh:class iffBaseEntities:Filter ;
                     sh:maxCount 1 ;
                     sh:minCount 1 ;
@@ -60,7 +73,21 @@
                     sh:maxCount 1 ;
                     sh:minCount 1 ;
                     sh:nodeKind sh:IRI ;
-                    sh:path ngsild:hasObject ] ] ;
+                    sh:path ngsild:hasObject ] ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path iffBaseEntities:hasList ;
+            sh:or ( [ sh:property [ sh:datatype xsd:integer ;
+                                sh:maxCount 1 ;
+                                sh:minCount 1 ;
+                                sh:nodeKind sh:Literal ;
+                                sh:path ngsild:hasValue ] ] [ sh:property [ sh:maxCount 1 ;
+                                sh:minCount 1 ;
+                                sh:or ( [ sh:nodeKind sh:BlankNode ;
+                                            sh:property [ sh:datatype xsd:integer ;
+                                                    sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
+                                sh:path ngsild:hasValueList ] ] ) ;] ;
     sh:targetClass iffBaseEntities:Cutter .
 
 :FilterShape a sh:NodeShape ;
@@ -73,6 +100,7 @@
                     sh:maxInclusive 100.0 ;
                     sh:minCount 1 ;
                     sh:minInclusive 0.0 ;
+                    sh:or ([sh:datatype xsd:double] [sh:datatype xsd:integer]) ;
                     sh:nodeKind sh:Literal ;
                     sh:path ngsild:hasValue ] ],
         [ sh:maxCount 1 ;
@@ -128,7 +156,18 @@ SELECT ?this ?value
                     sh:maxCount 1 ;
                     sh:minCount 1 ;
                     sh:nodeKind sh:IRI ;
-                    sh:path ngsild:hasValue ] ] ;
+                    sh:path ngsild:hasValue ],
+            [ sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path iffBaseEntities:hasXXXWorkpiece ;
+            sh:property [ sh:class iffBaseEntities:Workpiece ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsild:hasObject ] ]
+                    
+                    ] ;
     sh:targetClass iffBaseEntities:Machine .
 
 :StateOnCutterShape a sh:NodeShape ;

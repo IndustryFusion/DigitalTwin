@@ -1,4 +1,5 @@
 SHACL:= ../kms/shacl.ttl
+SHACL_NORMALIZED := ../kms/shacl_normalized.ttl
 KNOWLEDGE := ../kms/knowledge.ttl
 MODEL := ../kms/model-instance.jsonld
 PYTHON := python3
@@ -28,7 +29,8 @@ build: $(SHACL) $(KNOWLEDGE $(MODEL)
 	${PYTHON} create_udfs.py
 	$(PYTHON) create_ngsild_tables.py $(KAFKA_TOPICS)
 	$(PYTHON) create_ngsild_models.py $(SHACL) $(KNOWLEDGE) $(MODEL)
-	$(PYTHON) create_sql_checks_from_shacl.py $(CHECKPOINTSWITCH) $(SHACL) $(KNOWLEDGE)
+	$(PYTHON) shacl_normalization.py $(SHACL) $(SHACL_NORMALIZED)
+	$(PYTHON) create_sql_checks_from_shacl.py $(CHECKPOINTSWITCH) $(SHACL_NORMALIZED) $(KNOWLEDGE)
 
 helm: export IFF_HELM=true
 helm: build
