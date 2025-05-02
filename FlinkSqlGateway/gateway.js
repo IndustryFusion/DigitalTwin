@@ -192,7 +192,7 @@ app.use(express.json({ limit: '10mb' }));
 app.get('/health', appget);
 app.get('/v1/python_udf/:filename', limiter, udfget);
 
-app.post('/v1/sessions/:session_id/statements', apppost);
+app.post('/v1/sessions/:session_id/statements', limiter, apppost);
 app.post('/v1/python_udf/:filename', limiter, bodyParser.text(), udfpost);
 
 if (runningAsMain) {
