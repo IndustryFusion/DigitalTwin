@@ -140,10 +140,18 @@ def extract_namespaces(graph):
 def get_datatype(graph, node, typenode, templatenode, basens):
     datatype = next(graph.objects(node, basens['hasDatatype']), None)
     if datatype is None:
-        datatype = next(graph.objects(templatenode, basens['hasDatatype']), None)
-        if datatype is None:
+        if templatenode is not None:
+            datatype = next(graph.objects(templatenode, basens['hasDatatype']), None)
+        if datatype is None and typenode is not None:
             datatype = next(graph.objects(typenode, basens['hasDatatype']), None)
     return datatype
+# def get_datatype(graph, node, typenode, templatenode, basens):
+#     datatype = next(graph.objects(node, basens['hasDatatype']), None)
+#     if datatype is None:
+#         datatype = next(graph.objects(templatenode, basens['hasDatatype']), None)
+#         if datatype is None:
+#             datatype = next(graph.objects(typenode, basens['hasDatatype']), None)
+#     return datatype
 
 
 def attributename_from_type(type):

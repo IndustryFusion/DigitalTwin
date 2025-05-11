@@ -22,6 +22,14 @@
                 "42"
             ]
         },
+        "uaentity:hasMyVariable15": {
+            "https://uri.etsi.org/ngsi-ld/hasValueList": {
+                "@list": {
+                    "@value": [],
+                    "@type": "@json"
+                }
+            }
+        },
         "uaentity:hasMyVariable14": {
             "type": "ListProperty",
             "valueList": []
@@ -69,6 +77,27 @@
         "uaentity:hasMyVariable13": {
             "type": "ListProperty",
             "valueList": []
+        },
+        "uaentity:hasMyVariable16": {
+            "https://uri.etsi.org/ngsi-ld/hasValueList": {
+                "@list": {
+                    "@value": [
+                        {
+                            "xsd:Identifier": "ns=1;i=1001"
+                        },
+                        {
+                            "xsd:Identifier": "ns=2;s=TemperatureSensor"
+                        },
+                        {
+                            "xsd:Identifier": "ns=3;g=123e4567-e89b-12d3-a456-426614174000"
+                        },
+                        {
+                            "xsd:Identifier": "ns=4;x=0A0B0C0D"
+                        }
+                    ],
+                    "@type": "@json"
+                }
+            }
         },
         "uaentity:hasMyVariable3": {
             "type": "ListProperty",

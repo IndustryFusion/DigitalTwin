@@ -20,7 +20,7 @@ from rdflib.namespace import XSD, RDF
 from rdflib.collection import Collection
 import operator
 from functools import reduce
-from lib.utils import is_subclass, ngsild_context
+from lib.utils import is_subclass, ngsild_context, NGSILD
 
 
 from pyld import jsonld
@@ -158,6 +158,8 @@ class JsonLd:
 
     @staticmethod
     def map_datatype_to_jsonld(g, data_type, opcuans):
+        if data_type is None:
+            return None, None
         boolean_types = [opcuans['Boolean']]
         integer_types = [opcuans['Integer'],
                          opcuans['Int16'],
@@ -198,8 +200,10 @@ class JsonLd:
         return [RDF.JSON], None
 
     @staticmethod
-    def get_ngsild_property(value, isiri=False):
+    def get_ngsild_property(value, isiri=False, datatype=None):
         is_list = False
+        if value == RDF.nil:
+            value = []
         if isinstance(value, dict):
             if '@value' in value:
                 pass
@@ -211,10 +215,20 @@ class JsonLd:
                     'json': value
                 }
         if isinstance(value, list) or is_list:
-            return {
-                'type': 'ListProperty',
-                'valueList': value
-            }
+            if datatype and RDF.JSON in datatype:
+                return {
+                    str(NGSILD['hasValueList']): {
+                        "@list": {
+                            "@value": value,
+                            "@type": "@json"
+                        }
+                    }
+                }
+            else:
+                return {
+                    'type': 'ListProperty',
+                    "valueList": value
+                }
 
         if isiri:
             return {
@@ -275,6 +289,16 @@ class JsonLd:
     def get_value(g, value, datatypes):
         # values can be arrays or scalar, so remember first datatype and apply it
         # later to scalar or array
+        if datatypes is None:
+            # this is a theoretical fallback. It is to catch nodesets
+            # which do not have a datatype
+            try:
+                value = json.loads(value)
+            except:
+                pass
+            if isinstance(value, Literal):
+                value = value.toPython()
+            return value
         cast = None
         datatype = None
         # Find the best matching datatype in case there are more options
@@ -301,6 +325,11 @@ Is there a data mismatch?")
             try:
                 collection = Collection(g, value)
                 json_list = [item.toPython() if isinstance(item, Literal) else item for item in collection]
+                try:
+                    if datatype == RDF.JSON:
+                        json_list = [json.loads(item) for item in json_list]
+                except:
+                    pass
                 return json_list
             except:
                 print("Warning: BNode which is not an rdf:List cannot be converted into a value")
