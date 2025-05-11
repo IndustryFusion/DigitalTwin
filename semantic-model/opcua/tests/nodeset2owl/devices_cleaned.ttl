@@ -847,6 +847,7 @@ devices:nodei125 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "125" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"GenerateOptions\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=24\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei126 a opcua:PropertyType,
@@ -859,6 +860,7 @@ devices:nodei126 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "126" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"FileNodeId\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=17\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"FileHandle\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=7\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"CompletionStateMachine\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=17\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei127 a opcua:MethodNodeClass ;
@@ -880,6 +882,7 @@ devices:nodei128 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "128" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"GenerateOptions\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=24\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei129 a opcua:PropertyType,
@@ -892,6 +895,7 @@ devices:nodei129 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "129" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"FileNodeId\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=17\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"FileHandle\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=7\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei130 a opcua:MethodNodeClass ;
@@ -913,6 +917,7 @@ devices:nodei131 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "131" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"FileHandle\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=7\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei132 a opcua:PropertyType,
@@ -925,6 +930,7 @@ devices:nodei132 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "132" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"CompletionStateMachine\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=17\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei133 a opcua:BaseDataVariableType,
@@ -1011,6 +1017,7 @@ devices:nodei143 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "143" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"GenerateOptions\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=24\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei144 a opcua:PropertyType,
@@ -1023,6 +1030,7 @@ devices:nodei144 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "144" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"FileNodeId\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=17\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"FileHandle\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=7\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"CompletionStateMachine\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=17\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei145 a opcua:MethodNodeClass ;
@@ -1044,6 +1052,7 @@ devices:nodei146 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "146" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"GenerateOptions\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=24\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei147 a opcua:PropertyType,
@@ -1056,6 +1065,7 @@ devices:nodei147 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "147" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"FileNodeId\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=17\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"FileHandle\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=7\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei148 a opcua:MethodNodeClass ;
@@ -1077,6 +1087,7 @@ devices:nodei149 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "149" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"FileHandle\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=7\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei150 a opcua:PropertyType,
@@ -1089,6 +1100,7 @@ devices:nodei150 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "150" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"CompletionStateMachine\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=17\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei15001 a opcua:NamespaceMetadataType,
@@ -1925,6 +1937,7 @@ devices:nodei190 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "190" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"ManufacturerUri\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=12\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"SoftwareRevision\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=12\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"PatchIdentifiers\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=12\"}, \"xsd:ValueRank\": 1, \"xsd:ArrayDimensions\": {\"xsd:UInt32\": [0]}, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei191 a opcua:PropertyType,
@@ -1937,6 +1950,7 @@ devices:nodei191 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "191" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"UpdateBehavior\", \"xsd:DataType\": {\"xsd:Identifier\": \"ns=1;i=333\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei194 a opcua:FileDirectoryType,
@@ -1971,6 +1985,7 @@ devices:nodei196 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "196" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"DirectoryName\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=12\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei197 a opcua:PropertyType,
@@ -1983,6 +1998,7 @@ devices:nodei197 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "197" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"DirectoryNodeId\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=17\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei198 a opcua:MethodNodeClass ;
@@ -2004,6 +2020,7 @@ devices:nodei199 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "199" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"FileName\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=12\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"RequestFileOpen\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=1\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei2 a devices:SoftwareLoadingType,
@@ -2032,6 +2049,7 @@ devices:nodei200 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "200" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"FileNodeId\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=17\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"FileHandle\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=7\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei201 a opcua:MethodNodeClass ;
@@ -2053,6 +2071,7 @@ devices:nodei202 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "202" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"ObjectToDelete\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=17\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei203 a opcua:MethodNodeClass ;
@@ -2074,6 +2093,7 @@ devices:nodei204 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "204" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"ObjectToMoveOrCopy\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=17\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"TargetDirectory\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=17\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"CreateCopy\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=1\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"NewName\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=12\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei205 a opcua:PropertyType,
@@ -2086,6 +2106,7 @@ devices:nodei205 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "205" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"NewNodeId\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=17\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei206 a opcua:MethodNodeClass ;
@@ -2107,6 +2128,7 @@ devices:nodei207 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "207" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"NodeIds\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=17\"}, \"xsd:ValueRank\": 1, \"xsd:ArrayDimensions\": {\"xsd:UInt32\": [0]}, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei208 a opcua:PropertyType,
@@ -2119,6 +2141,7 @@ devices:nodei208 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "208" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"UpdateBehavior\", \"xsd:DataType\": {\"xsd:Identifier\": \"ns=1;i=333\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei209 a opcua:MethodNodeClass ;
@@ -2140,6 +2163,7 @@ devices:nodei210 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "210" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"NodeIds\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=17\"}, \"xsd:ValueRank\": 1, \"xsd:ArrayDimensions\": {\"xsd:UInt32\": [0]}, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei211 a opcua:PropertyType,
@@ -2152,6 +2176,7 @@ devices:nodei211 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "211" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"ErrorCode\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=6\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"ErrorMessage\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=21\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei227 a opcua:BaseDataVariableType,
@@ -2404,6 +2429,7 @@ devices:nodei266 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "266" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"ManufacturerUri\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=12\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"SoftwareRevision\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=12\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"PatchIdentifiers\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=12\"}, \"xsd:ValueRank\": 1, \"xsd:ArrayDimensions\": {\"xsd:UInt32\": [0]}, \"xsd:Description\": null}}}" "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"Hash\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=15\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei268 a opcua:MethodNodeClass ;
@@ -2424,6 +2450,7 @@ devices:nodei269 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "269" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"NodeIds\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=17\"}, \"xsd:ValueRank\": 1, \"xsd:ArrayDimensions\": {\"xsd:UInt32\": [0]}, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei27 a opcua:FolderType,
@@ -2779,6 +2806,7 @@ devices:nodei332 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "332" ;
+    base:hasValue ( "{\"xsd:Text\": \"Current\"}" "{\"xsd:Text\": \"Pending\"}" "{\"xsd:Text\": \"Fallback\"}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei345 a opcua:PropertyType,
@@ -2860,6 +2888,7 @@ devices:nodei37 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "37" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"Mode\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=3\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei373 a opcua:PropertyType,
@@ -2902,6 +2931,7 @@ devices:nodei38 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "38" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"FileHandle\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=7\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei380 a opcua:PropertyType,
@@ -2996,6 +3026,7 @@ devices:nodei388 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "388" ;
+    base:hasValue ( "{\"xsd:Text\": \"KeepsParameters\"}" "{\"xsd:Text\": \"WillDisconnect\"}" "{\"xsd:Text\": \"RequiresPowerCycle\"}" "{\"xsd:Text\": \"WillReboot\"}" "{\"xsd:Text\": \"NeedsPreparation\"}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei39 a opcua:MethodNodeClass ;
@@ -3496,6 +3527,7 @@ devices:nodei6167 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6167" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"Context\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=12\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei6168 a opcua:PropertyType,
@@ -3508,6 +3540,7 @@ devices:nodei6168 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6168" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"InitLockStatus\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=6\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei6169 a opcua:MethodNodeClass ;
@@ -3528,6 +3561,7 @@ devices:nodei6170 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6170" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"RenewLockStatus\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=6\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei6171 a opcua:MethodNodeClass ;
@@ -3548,6 +3582,7 @@ devices:nodei6172 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6172" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"ExitLockStatus\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=6\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei6173 a opcua:MethodNodeClass ;
@@ -3568,6 +3603,7 @@ devices:nodei6174 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6174" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"BreakLockStatus\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=6\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei62 a opcua:PropertyType,
@@ -3580,6 +3616,7 @@ devices:nodei62 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "62" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"FileHandle\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=7\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei6208 a opcua:BaseDataVariableType,
@@ -3802,6 +3839,7 @@ devices:nodei6300 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6300" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"Context\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=12\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei6301 a opcua:PropertyType,
@@ -3814,6 +3852,7 @@ devices:nodei6301 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6301" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"InitLockStatus\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=6\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei6302 a opcua:MethodNodeClass ;
@@ -3834,6 +3873,7 @@ devices:nodei6303 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6303" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"RenewLockStatus\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=6\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei6304 a opcua:MethodNodeClass ;
@@ -3854,6 +3894,7 @@ devices:nodei6305 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6305" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"ExitLockStatus\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=6\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei6306 a opcua:MethodNodeClass ;
@@ -3874,6 +3915,7 @@ devices:nodei6307 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6307" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"BreakLockStatus\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=6\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei6354 a devices:FunctionalGroupType,
@@ -3945,6 +3987,7 @@ devices:nodei6394 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6394" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"Context\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=12\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei6395 a opcua:PropertyType,
@@ -3957,6 +4000,7 @@ devices:nodei6395 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6395" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"InitLockStatus\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=6\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei6396 a opcua:MethodNodeClass ;
@@ -3977,6 +4021,7 @@ devices:nodei6397 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6397" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"RenewLockStatus\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=6\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei6398 a opcua:MethodNodeClass ;
@@ -3997,6 +4042,7 @@ devices:nodei6399 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6399" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"ExitLockStatus\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=6\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei64 a opcua:PropertyType,
@@ -4009,6 +4055,7 @@ devices:nodei64 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "64" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"FileHandle\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=7\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"Length\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=6\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei6400 a opcua:MethodNodeClass ;
@@ -4029,6 +4076,7 @@ devices:nodei6401 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6401" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"BreakLockStatus\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=6\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei6423 a opcua:DataTypeDictionaryType,
@@ -4094,6 +4142,7 @@ devices:nodei6450 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6450" ;
+    base:hasValue ( "{\"xsd:Text\": \"NORMAL\"}" "{\"xsd:Text\": \"FAILURE\"}" "{\"xsd:Text\": \"CHECK_FUNCTION\"}" "{\"xsd:Text\": \"OFF_SPEC\"}" "{\"xsd:Text\": \"MAINTENANCE_REQUIRED\"}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei6468 a opcua:PropertyType,
@@ -4146,6 +4195,7 @@ devices:nodei65 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "65" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"Data\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=15\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei6527 a opcua:MethodNodeClass ;
@@ -4166,6 +4216,7 @@ devices:nodei6528 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6528" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"TransferID\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=6\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"InitTransferStatus\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=6\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei6529 a opcua:MethodNodeClass ;
@@ -4186,6 +4237,7 @@ devices:nodei6530 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6530" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"TransferID\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=6\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"InitTransferStatus\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=6\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei6531 a opcua:MethodNodeClass ;
@@ -4207,6 +4259,7 @@ devices:nodei6532 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6532" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"TransferID\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=6\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"SequenceNumber\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=6\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"MaxParameterResultsToReturn\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=6\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"OmitGoodResults\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=1\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei6533 a opcua:PropertyType,
@@ -4219,6 +4272,7 @@ devices:nodei6533 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "6533" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"FetchResultData\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=22\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei6534 a opcua:PropertyType,
@@ -4341,6 +4395,7 @@ devices:nodei67 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "67" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"FileHandle\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=7\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"Data\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=15\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei68 a opcua:MethodNodeClass ;
@@ -4362,6 +4417,7 @@ devices:nodei69 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "69" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"FileHandle\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=7\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei70 a opcua:PropertyType,
@@ -4374,6 +4430,7 @@ devices:nodei70 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "70" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"Position\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=9\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei71 a opcua:MethodNodeClass ;
@@ -4394,6 +4451,7 @@ devices:nodei72 a opcua:PropertyType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace devices:DEVICESNamespace ;
     base:hasNodeId "72" ;
+    base:hasValue ( "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"FileHandle\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=7\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" "{\"xsd:TypeId\": {\"xsd:Identifier\": \"i=297\"}, \"xsd:Body\": {\"xsd:Argument\": {\"xsd:Name\": \"Position\", \"xsd:DataType\": {\"xsd:Identifier\": \"i=9\"}, \"xsd:ValueRank\": -1, \"xsd:ArrayDimensions\": null, \"xsd:Description\": null}}}" ) ;
     base:hasValueRank 1 .
 
 devices:nodei76 a devices:PowerCycleStateMachineType,

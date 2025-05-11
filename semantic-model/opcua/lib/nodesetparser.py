@@ -543,16 +543,30 @@ Did you forget to import it?")
                 if basic_type_found:
                     basic_json_type = [value for key, value in basic_types_map.items() if key in tag][0]
                 if 'ListOf' in tag:
-                    if basic_type_found:
-                        data = self.data_schema.to_dict(children, namespaces=xml_ns, indent=4)
-                        try:
-                            field = [ele for ele in data.keys() if ('@' not in ele)][0]
-                            result = data[field]
-                            created_list = utils.create_list(self.g, result, lambda x: x)
-                        except:
-                            created_list = utils.create_list(self.g, [], lambda x: x)
-                        self.g.add((classiri, self.rdf_ns['base']['hasValue'], created_list))
-                    continue
+                    # figure out the element tag (e.g. 'ListOfString' → 'String')
+                    items = []
+                    for item_node in children:
+                        # if it's a primitive type, extract its literal value
+                        if any(bt in item_node.tag for bt in basic_types):
+                            # reuse your existing basic logic
+                            basic_json_type = next(v for k, v in basic_types_map.items() if k in item_node.tag)
+                            data = self.data_schema.to_dict(item_node, namespaces=xml_ns, indent=4)
+                            raw = data.get('$', None)
+                            if raw is not None:
+                                items.append(utils.convert_to_json_type(raw, basic_json_type))
+                        else:
+                            # complex type: turn it into a JSON object
+                            data = self.data_schema.to_dict(item_node, namespaces=xml_ns, indent=4)
+                            # strip off any attributes, only keep child elements
+                            obj = {k: v for k, v in data.items() if not k.startswith('@')}
+                            items.append(obj)
+                    # create an RDF list of Python objects (literals or JSON-serialized)
+                    created_list = utils.create_list(
+                        self.g,
+                        [Literal(json.dumps(elem)) if isinstance(elem, dict) else Literal(elem) for elem in items],
+                        lambda x: x
+                    )
+                    self.g.add((classiri, self.rdf_ns['base']['hasValue'], created_list))
                 elif basic_type_found:
                     data = self.data_schema.to_dict(children, namespaces=xml_ns, indent=4)
                     if '$' in data:
