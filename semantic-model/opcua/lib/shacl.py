@@ -239,8 +239,11 @@ class Shacl:
             pattern (str): Patter for generic Placeholder
         """
         shapes_list = []
-        json_datatype = [x for x in datatype if x == RDF.JSON]
-        non_json_datatypes = [x for x in datatype if x != RDF.JSON]
+        json_datatype = []
+        non_json_datatypes = []
+        if datatype is not None:
+            json_datatype = [x for x in datatype if x == RDF.JSON]
+            non_json_datatypes = [x for x in datatype if x != RDF.JSON]
         if value_rank is None or (int(value_rank) < 0 and len(non_json_datatypes) > 0):
             innerproperty = BNode()
             # It is a scalar!
@@ -259,14 +262,14 @@ class Shacl:
             shape_node = BNode()
             self.shaclg.add((shape_node, SH.property, innerproperty))
             shapes_list.append(shape_node)
-        if value_rank is not None and int(value_rank) != -1 and len(non_json_datatypes) > 0:
+        if value_rank is not None and int(value_rank) != -1:
             # It is a list!
             innerproperty = BNode()
             self.shaclg.add((innerproperty, SH.path, self.ngsildns['hasValueList']))
             if is_iri:
                 array_validation_shape = self.get_array_validation_shape_for_iri(contentclass, array_dimensions)
             else:
-                array_validation_shape = self.get_array_validation_shape(non_json_datatypes,
+                array_validation_shape = self.get_array_validation_shape(datatype,
                                                                          pattern,
                                                                          value_rank,
                                                                          array_dimensions)
@@ -277,31 +280,15 @@ class Shacl:
             shape_node = BNode()
             self.shaclg.add((shape_node, SH.property, innerproperty))
             shapes_list.append(shape_node)
-        if len(json_datatype) > 0:
+        if len(json_datatype) > 0 and (value_rank is None or int(value_rank) < 0):
             # Treat JSON separate due to NGSI-LD specification
             innerproperty = BNode()
             self.shaclg.add((innerproperty, SH.path, self.ngsildns['hasJSON']))
-            if value_rank is None or int(value_rank) == -1:
-                self.shaclg.add((innerproperty, SH.nodeKind, SH.Literal))
-                shapes = self.create_datatype_shapes(json_datatype)
-                tuples = self.shacl_or(shapes)
-                self.shacl_add_to_shape(innerproperty, tuples)
-            elif int(value_rank) >= 0:
-                array_validation_shape = self.get_array_validation_shape(json_datatype,
-                                                                         pattern,
-                                                                         value_rank,
-                                                                         array_dimensions)
-                tuples = self.shacl_or(array_validation_shape)
-                self.shacl_add_to_shape(innerproperty, tuples)
-            elif int(value_rank) < -1:
-                dt_array = self.create_datatype_shapes(json_datatype)
-                array_validation_shape = self.get_array_validation_shape(json_datatype,
-                                                                         pattern,
-                                                                         value_rank,
-                                                                         array_dimensions)
-                dt_array += array_validation_shape
-                tuples = self.shacl_or(dt_array)
-                self.shacl_add_to_shape(innerproperty, tuples)
+            self.shaclg.add((innerproperty, SH.nodeKind, SH.Literal))
+            shapes = self.create_datatype_shapes(json_datatype)
+            tuples = self.shacl_or(shapes)
+            self.shacl_add_to_shape(innerproperty, tuples)
+
             self.shaclg.add((innerproperty, SH.minCount, Literal(1)))
             self.shaclg.add((innerproperty, SH.maxCount, Literal(1)))
             shape_node = BNode()

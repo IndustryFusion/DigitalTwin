@@ -573,7 +573,8 @@ found without concreate value in {node}."
                 value = e.get_default_contentclass(shacl_rule['contentclass'])
         has_components = True
         if not shacl_rule['is_iri']:
-            instance[f'{entity_ontology_prefix}:{attributename}'] = jsonld.get_ngsild_property(value)
+            instance[f'{entity_ontology_prefix}:{attributename}'] = \
+                jsonld.get_ngsild_property(value, datatype=shacl_rule['datatype'])
         else:
             if value is None:
                 value = NULL_IRI
