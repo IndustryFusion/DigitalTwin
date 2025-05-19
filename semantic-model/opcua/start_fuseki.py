@@ -74,6 +74,8 @@ and optionally start Fuseki."
     parser.add_argument("--fuseki-exec",
                         help="Path to the fuseki-server executable. If provided, the server will be started.",
                         default=None)
+    parser.add_argument('-o', '--ontology-files', nargs='+',
+                        help='Additional Ontology Files', required=False, default='')
     args = parser.parse_args()
 
     ontology_path = args.ontology_file
@@ -150,8 +152,9 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>"""
 """
     # Build the list of ontology URIs.
     local_uris = [f'"file://{os.path.abspath(os.path.join(ontology_dir, f))}"' for f in ontology_files]
+    additional_uris = [f'"file://{os.path.abspath(os.path.join(f))}"' for f in args.ontology_files]
     remote_uris = [f'"{uri}"' for uri in remote_deps]
-    all_uris = local_uris + remote_uris
+    all_uris = local_uris + remote_uris + additional_uris
     file_uris = ", ".join(all_uris)
 
     config_content += "<#dataset> a ja:MemoryDataset ;\n"

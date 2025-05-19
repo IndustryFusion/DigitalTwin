@@ -59,7 +59,7 @@ async def update_values(variables):
             elif datatype == bool:
                 value = random.choice([True, False])
             elif datatype == int:
-                value = random.randint(0, 100)
+                value = random.randint(0, 5)
             elif datatype == str:
                 value = generate_random_string(12)  # Generate a 12 character random string
             elif datatype == LocalizedText:
@@ -164,7 +164,7 @@ def parse_rdf_to_mapping(rdf_file, base_ns, binding_ns=None, uaentity_ns=None):
 
     mapping_data = {}
     for s, p, o in g.triples((None, RDF.type, BASE.BoundMap)):
-        connector_attribute = g.value(s, BASE.bindsConnectorAttribute)
+        connector_attribute = g.value(s, BASE.bindsConnectorParameter)
         datatype_uri = g.value(s, BASE.bindsMapDatatype)
 
         if connector_attribute and datatype_uri:
@@ -182,6 +182,8 @@ def parse_rdf_to_mapping(rdf_file, base_ns, binding_ns=None, uaentity_ns=None):
                 datatype = float
             elif datatype_uri == opcua_ns.Boolean:
                 datatype = bool
+            elif datatype_uri == opcua_ns.Int32:
+                datatype = int
             elif datatype_uri == opcua_ns.String:
                 datatype = str
             elif datatype_uri == opcua_ns.LocalizedText:

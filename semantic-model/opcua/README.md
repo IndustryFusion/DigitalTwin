@@ -145,3 +145,49 @@ Dump OPC UA server nodeset to XML-File
 ### Example
 
     python3 ./nodeset-dump.py --namespaces http://examples.com/url1
+
+## validate.py
+
+Validate shacl.ttl, entities.ttl, instances.jsonld combination or single ontology.
+
+
+```console
+usage: validate.py [-h] [-s SHACL] [-e EXTRA] [-df DATA_FORMAT] [-d] [-m MODE] [-st] [-x] [-ni] [-so] [-ns] data
+
+SHACL Validation with Shape and Focus Context
+
+positional arguments:
+  data                  Path to RDF data file to validate
+
+options:
+  -h, --help            show this help message and exit
+  -s SHACL, --shacl SHACL
+                        Path to SHACL shapes file
+  -e EXTRA, --extra EXTRA
+                        Path to extra ontology file
+  -df DATA_FORMAT, --data-format DATA_FORMAT
+                        Data file format (e.g., turtle, json-ld, xml). If not provided infered from data-file name (.jsonld, .ttl).
+  -d, --debug           Debug output
+  -m MODE, --mode MODE  Modes: "instance" to validate instance, "ontology" to validate ontology files.
+  -st, --strict         Use strict, non accelerated SPARQL query.
+  -x, --extended        Use eXtended output with detailed context.
+  -ni, --no-imports     No imports of dependent ontologies.
+  -so, --sparql-only    Only apply sparql-rules
+  -ns, --no_sparql      Only apply sparql-rules
+
+```
+
+This tool is operating in two modes:
+
+1) **instance** (default) takes shacl.ttl, instances.ttl and entities.ttl and executes a shacl evaluation equivalent to
+`pyshacl -s shacl.ttl -e entities.ttl -df json-ld instances.jsonld`
+
+2) **ontology** takes an ontology file and shacl.ttl and checks it against shacl constraints.
+
+
+The tool will provide more context information when used with `-x` switch.
+### Example
+
+Validate `instances.jsonld` against entities.ttl` and `shacl.ttl` with extended output:
+
+        python3 validate.py -x instances.jsonld

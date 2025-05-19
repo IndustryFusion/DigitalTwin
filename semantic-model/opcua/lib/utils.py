@@ -99,6 +99,25 @@ def isNodeId(nodeId):
     return 'i=' in nodeId or 'g=' in nodeId or 's=' in nodeId
 
 
+def create_node_ref(idtype, id, nsuri, basens):
+
+    # use nsu= scheme to make namespace explicit
+    # replace nsuri by nsid in the following
+    nsid = f'nsu={nsuri};'
+    if idtype == basens.numericID:
+        result = f'{nsid}i={id}'
+    elif idtype == basens.guidID:
+        result = f'{nsid}g={id}'
+    elif idtype == basens.stringID:
+        result = f'{nsid}s={id}'
+    elif idtype == basens.opaqueID:
+        result = f'{nsid}b={id}'
+    else:
+        result = None
+        warnings.warn(f"Unknown idtype {idtype} for id {id}")
+    return result
+
+
 def rdfStringToPythonBool(literal):
     return str(literal).strip().lower() == "true"
 

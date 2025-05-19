@@ -1,0 +1,13 @@
+[
+    {
+        "type": "http://www.industry-fusion.org/schema#Plasmacutter",
+        "id": "urn:iff:plasmacutter:1",
+        "@context": [
+            "https://industryfusion.github.io/contexts/staging/opcua/v0.2/context.jsonld"
+        ],
+        "http://www.industry-fusion.org/schema#TemperatureC": {
+            "type": "Property",
+            "value": 30
+        }
+    }
+]

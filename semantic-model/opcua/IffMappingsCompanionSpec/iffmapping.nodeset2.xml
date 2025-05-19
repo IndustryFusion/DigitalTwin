@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:uax="http://opcfoundation.org/UA/2008/02/Types.xsd" xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+  <!-- 1) Namespace and Model metadata -->
+  <NamespaceUris>
+    <Uri>https://industry-fusion.org/UA/Mapping/</Uri>
+  </NamespaceUris>
+  <Models>
+    <Model ModelUri="https://industry-fusion.org/UA/Mapping/"
+           Version="1.0.0"
+           PublicationDate="2025-05-18T00:00:00Z"/>
+  </Models>
+  <Aliases>
+    <Alias Alias="Boolean">i=1</Alias>
+    <Alias Alias="SByte">i=2</Alias>
+    <Alias Alias="Byte">i=3</Alias>
+    <Alias Alias="Int16">i=4</Alias>
+    <Alias Alias="UInt16">i=5</Alias>
+    <Alias Alias="Int32">i=6</Alias>
+    <Alias Alias="UInt32">i=7</Alias>
+    <Alias Alias="Int64">i=8</Alias>
+    <Alias Alias="UInt64">i=9</Alias>
+    <Alias Alias="Float">i=10</Alias>
+    <Alias Alias="Double">i=11</Alias>
+    <Alias Alias="DateTime">i=13</Alias>
+    <Alias Alias="String">i=12</Alias>
+    <Alias Alias="ByteString">i=15</Alias>
+    <Alias Alias="Guid">i=14</Alias>
+    <Alias Alias="XmlElement">i=16</Alias>
+    <Alias Alias="NodeId">i=17</Alias>
+    <Alias Alias="ExpandedNodeId">i=18</Alias>
+    <Alias Alias="QualifiedName">i=20</Alias>
+    <Alias Alias="LocalizedText">i=21</Alias>
+    <Alias Alias="StatusCode">i=19</Alias>
+    <Alias Alias="Structure">i=22</Alias>
+    <Alias Alias="Number">i=26</Alias>
+    <Alias Alias="Integer">i=27</Alias>
+    <Alias Alias="UInteger">i=28</Alias>
+    <Alias Alias="HasComponent">i=47</Alias>
+    <Alias Alias="HasProperty">i=46</Alias>
+    <Alias Alias="Organizes">i=35</Alias>
+    <Alias Alias="HasEventSource">i=36</Alias>
+    <Alias Alias="HasNotifier">i=48</Alias>
+    <Alias Alias="HasSubtype">i=45</Alias>
+    <Alias Alias="HasTypeDefinition">i=40</Alias>
+    <Alias Alias="HasModellingRule">i=37</Alias>
+    <Alias Alias="HasEncoding">i=38</Alias>
+    <Alias Alias="HasDescription">i=39</Alias>
+    <Alias Alias="HasCause">i=53</Alias>
+    <Alias Alias="ToState">i=52</Alias>
+    <Alias Alias="FromState">i=51</Alias>
+    <Alias Alias="HasEffect">i=54</Alias>
+    <Alias Alias="HasTrueSubState">i=9004</Alias>
+    <Alias Alias="HasFalseSubState">i=9005</Alias>
+    <Alias Alias="HasDictionaryEntry">i=17597</Alias>
+    <Alias Alias="HasCondition">i=9006</Alias>
+    <Alias Alias="HasGuard">i=15112</Alias>
+    <Alias Alias="HasAddIn">i=17604</Alias>
+    <Alias Alias="HasInterface">i=17603</Alias>
+  </Aliases>
+
+  <!-- Types -->
+  <UAObjectType NodeId="ns=1;i=1001" BrowseName="1:AttributeBindingType">
+    <DisplayName>AttributeBindingType</DisplayName>
+    <References>
+    <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+    <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=3001</Reference>
+    </References>
+  </UAObjectType>
+
+  <UAReferenceType NodeId="ns=1;i=1002" BrowseName="HasVariable" Symmetric="false">
+      <DisplayName>HasVariable</DisplayName>
+      <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=32</Reference>
+      </References>
+  </UAReferenceType>
+
+  <UAObjectType NodeId="ns=1;i=1003" BrowseName="1:AttributeParameterType">
+      <DisplayName>AttributeParameterType</DisplayName>
+      <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+      </References>
+  </UAObjectType>
+
+  <UAObjectType NodeId="ns=1;i=1004" BrowseName="1:IFFMappingsFolderType">
+    <DisplayName>IFFMappingsFolder</DisplayName>
+    <References>
+    <Reference ReferenceType="HasSubtype" IsForward="false">i=61</Reference>
+    <Reference ReferenceType="Organizes" IsForward="false">ns=1;i=3001</Reference>
+    </References>
+  </UAObjectType>
+
+  <UAObjectType NodeId="ns=1;i=1005" BrowseName="1:ModelInfoType">
+    <DisplayName>ModelInfoType</DisplayName>
+    <References>
+    <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+    </References>
+  </UAObjectType>
+
+  <!-- Variables -->
+    <UAVariable NodeId="ns=1;i=2001"
+               BrowseName="1:LogicExpression"
+               DataType="String"
+               ValueRank="-1">
+    <DisplayName>LogicExpression</DisplayName>
+    <References>
+      <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1001</Reference>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
+    </References>
+  </UAVariable>
+
+  <UAVariable NodeId="ns=1;i=2002"
+               BrowseName="1:AttributeName"
+               DataType="String"
+               ValueRank="-1">
+    <DisplayName>AttributeName</DisplayName>
+    <References>
+      <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1001</Reference>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=78</Reference>
+    </References>
+  </UAVariable>
+
+  <UAVariable NodeId="ns=1;i=2003"
+               BrowseName="1:EntitySelector"
+               DataType="String"
+               ValueRank="-1">
+    <DisplayName>EntitySelector</DisplayName>
+    <References>
+      <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1001</Reference>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
+    </References>
+  </UAVariable>
+
+  <UAVariable NodeId="ns=1;i=2004"
+               BrowseName="1:NGSILDAttributeType"
+               DataType="String"
+               ValueRank="-1">
+    <DisplayName>NGSILDAttributeType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1001</Reference>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
+    </References>
+  </UAVariable>
+
+    <UAVariable NodeId="ns=1;i=2005"
+               BrowseName="1:LogicVariable"
+               DataType="String"
+               ValueRank="-1">
+    <DisplayName>LogicVariable</DisplayName>
+    <References>
+      <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1003</Reference>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+    </References>
+  </UAVariable>
+
+  <UAVariable NodeId="ns=1;i=2006" BrowseName="EnumValues" DataType="i=7594" ValueRank="1" ArrayDimensions="4">
+    <DisplayName>EnumValues</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=68</Reference>
+      <Reference ReferenceType="HasProperty" IsForward="false">ns=1;i=4000</Reference>
+    </References>
+   <Value>
+      <ListOfExtensionObject xmlns="http://opcfoundation.org/UA/2008/02/Types.xsd">
+        <ExtensionObject>
+          <TypeId>
+            <Identifier>i=7616</Identifier>
+          </TypeId>
+          <Body>
+            <EnumValueType>
+              <Value>0</Value>
+              <DisplayName>
+                <Text>Property</Text>
+              </DisplayName>
+              <Description>
+                <Text>NGSI-LD Property</Text>
+              </Description>
+            </EnumValueType>
+          </Body>
+        </ExtensionObject>
+        <ExtensionObject>
+          <TypeId>
+            <Identifier>i=7616</Identifier>
+          </TypeId>
+          <Body>
+            <EnumValueType>
+              <Value>1</Value>
+              <DisplayName>
+                <Text>Relationship</Text>
+              </DisplayName>
+              <Description>
+                <Text>NGSI-LD Relationship</Text>
+              </Description>
+            </EnumValueType>
+          </Body>
+        </ExtensionObject>
+        <ExtensionObject>
+          <TypeId>
+            <Identifier>i=7616</Identifier>
+          </TypeId>
+          <Body>
+            <EnumValueType>
+              <Value>2</Value>
+              <DisplayName>
+                <Text>ListProperty</Text>
+              </DisplayName>
+              <Description>
+                <Text>NGSI-LD ListProperty</Text>
+              </Description>
+            </EnumValueType>
+          </Body>
+        </ExtensionObject>
+        <ExtensionObject>
+          <TypeId>
+            <Identifier>i=7616</Identifier>
+          </TypeId>
+          <Body>
+            <EnumValueType>
+              <Value>3</Value>
+              <DisplayName>
+                <Text>JsonProperty</Text>
+              </DisplayName>
+              <Description>
+                <Text>NGSI-LD JsonProperty</Text>
+              </Description>
+            </EnumValueType>
+          </Body>
+        </ExtensionObject>
+      </ListOfExtensionObject>
+    </Value>
+  </UAVariable>
+
+    <UAVariable NodeId="ns=1;i=2007"
+               BrowseName="1:LogicVariable"
+               DataType="String"
+               ValueRank="-1">
+    <DisplayName>LogicVariable</DisplayName>
+    <References>
+      <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=3001</Reference>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+    </References>
+  </UAVariable>
+
+  <UAVariable NodeId="ns=1;i=2008"
+               BrowseName="1:EntityType"
+               DataType="String"
+               ValueRank="-1">
+    <DisplayName>AttributeName</DisplayName>
+    <References>
+      <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1005</Reference>
+      <Reference ReferenceType="HasModellingRule">i=78</Reference>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+    </References>
+  </UAVariable>
+
+<!--Objects -->
+  <UAObject NodeId="ns=1;i=3001" BrowseName="1:AttributeParameter">
+    <DisplayName>AttributeParameter</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=1003</Reference>
+    </References>
+  </UAObject>
+
+  <UAObject NodeId="ns=1;i=3002" BrowseName="Attribute_&lt;name&gt;">
+    <DisplayName>Attribute_name</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=1001</Reference>
+    </References>
+  </UAObject>
+ 
+   <UAObject NodeId="ns=1;i=3003" BrowseName="ModelInfo">
+    <DisplayName>ModelInfo</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=1005</Reference>
+      <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1004</Reference>
+      <Reference ReferenceType="HasModellingRule">i=78</Reference>
+    </References>
+  </UAObject>
+
+  <UAObject NodeId="ns=1;i=42" BrowseName="IFFMappingsFolder">
+    <DisplayName>IFFMappingsFolder</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=1004</Reference>
+    </References>
+  </UAObject>
+
+
+  <!--DataTypes-->
+  
+  <UADataType NodeId="ns=1;i=4000" BrowseName="NGSILDAttribute">
+    <DisplayName>NGSILDAttribute</DisplayName>
+    <References>
+      <Reference ReferenceType="HasProperty">ns=1;i=2006</Reference>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=29</Reference>
+    </References>
+    <Definition Name="NGSILDAttribute">
+      <Field Name="Property" Value="0">
+        <Description>NGSI-LD Property</Description>
+      </Field>
+      <Field Name="Relationship" Value="1">
+        <Description>NGSI-LD Relationship</Description>
+      </Field>
+      <Field Name="ListProperty" Value="2">
+        <Description>NGSI-LD ListProperty</Description>
+      </Field>
+      <Field Name="JsonProperty" Value="3">
+        <Description>NGSI-LD JsonProperty</Description>
+      </Field>
+    </Definition>
+  </UADataType>
+</UANodeSet>
