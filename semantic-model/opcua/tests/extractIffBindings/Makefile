@@ -1,0 +1,1 @@
+../../IffMappingsCompanionSpec/example/Makefile

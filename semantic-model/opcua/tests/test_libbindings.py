@@ -53,7 +53,7 @@ class TestBindings(unittest.TestCase):
         self.assertIn((mapiri, RDF['type'], self.basens['BoundMap']), triples)
         self.assertIn((mapiri, self.basens['bindsConnector'], self.basens['OPCUAConnector']), triples)
         self.assertIn((mapiri, self.basens['bindsMapDatatype'], URIRef("http://example.org/dtype")), triples)
-        self.assertIn((mapiri, self.basens['bindsConnectorAttribute'], Literal('nsu=http://example.org/nsuri;i=node123')), triples)
+        self.assertIn((mapiri, self.basens['bindsConnectorParameter'], Literal('nsu=http://example.org/nsuri;i=node123')), triples)
 
     def test_bind(self):
         """Test binding a prefix to a namespace in the RDF graph."""

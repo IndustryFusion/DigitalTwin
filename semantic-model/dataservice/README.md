@@ -45,7 +45,7 @@ direction TB:
     A binding contains all informations to calculate the value of a model attribute. For instance, to calculate ex:state you need to know where to get the metrics from (e.g. from a machine and an ontology) and how to calculate it e.g. take a numeric value from the machine and use the ontology to create an IRI.
 Example:
     ex:myBinding a :Binding .
-    ex:myBinding :bindsEntityType ex:cutter .
+    ex:myBinding :bindsEntity urn:cutter:1 .
     ex:myBinding :bindsMap ex:map1 .
     ex:myBinding :bindsMap ex:map2 .
     ex:myBinding :bindingVersion "0.1"

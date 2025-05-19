@@ -1,0 +1,20 @@
+@prefix binding: <https://industry-fusion.org/UA/Bindings/bindings/> .
+@prefix ns1: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://www.industry-fusion.org/schema#TemperatureC> ns1:boundBy binding:binding_41PJSO2KRV6SK1WJ .
+
+binding:binding_41PJSO2KRV6SK1WJ a ns1:Binding ;
+    ns1:bindingVersion "0.1" ;
+    ns1:bindsAttributeType <https://uri.etsi.org/ngsi-ld/Property> ;
+    ns1:bindsEntity <urn:iff:plasmacutter:1> ;
+    ns1:bindsFirmware "firmware" ;
+    ns1:bindsLogic "WHERE {BIND (((?var1 - 32)/9 * 5) as ?value)}"^^xsd:string ;
+    ns1:bindsMap binding:map_6936L06YQDPV68R5 .
+
+binding:map_6936L06YQDPV68R5 a ns1:BoundMap ;
+    ns1:bindsConnector ns1:OPCUAConnector ;
+    ns1:bindsConnectorParameter "nsu=http://mycompany.com/UA/StandardModel/;i=2004" ;
+    ns1:bindsLogicVar "var1"^^xsd:string ;
+    ns1:bindsMapDatatype <http://opcfoundation.org/UA/Double> .
+

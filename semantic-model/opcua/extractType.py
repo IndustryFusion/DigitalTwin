@@ -592,8 +592,7 @@ Check whether it has a proper type definition. Most likely this attribute is not
         except:
             is_updating = False
         if (is_updating or not minimal_shacl) and not is_property:
-            quoted_node_id = utils.quote_url(node_id)
-            bindingsg.create_binding(g, URIRef(quoted_node_id), o, entity_namespace[attributename])
+            bindingsg.create_binding(g, URIRef(node_id), o, entity_namespace[attributename])
         attributes = scan_entity_variable(o, classtype, id, shacl_rule['optional'])
         utils.merge_attributes(instance[f'{entity_ontology_prefix}:{attributename}'], attributes)
     return has_components
