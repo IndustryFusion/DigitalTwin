@@ -21,9 +21,11 @@ function checkiri() {
   local iri="$1"
 
   # Strict URN pattern based on RFC 8141
+  # shellcheck disable=SC2016
   urnPattern='^urn:[a-zA-Z0-9][a-zA-Z0-9-]{0,31}:[a-zA-Z0-9()+,_.:=@;$_!*%/?#-]+$'
 
   # Strict URI pattern based on RFC 3986
+  # shellcheck disable=SC2016
   uriPattern='^[a-zA-Z][a-zA-Z0-9+.-]*:[^ ]+$'
 
   if echo "$iri" | grep -E -q "$urnPattern"; then
