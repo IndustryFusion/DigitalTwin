@@ -94,7 +94,7 @@ Start dataservice with `startDataservice.py`:
 
 Example (note `-d` for dry-run):
 
-    python3 startDataservice.py -d -e filter_and_cartridge_subcomponent_entities.ttl examples/ urn:iff:filter1 examples/bindings.ttl
+    python3 startDataservice.py -d -e filter_and_cartridge_subcomponent_entities.ttl examples/ examples/bindings.ttl
 
 ## Example Setup
 

@@ -14,7 +14,7 @@ binding:binding_41PJSO2KRV6SK1WJ a ns1:Binding ;
 
 binding:map_6936L06YQDPV68R5 a ns1:BoundMap ;
     ns1:bindsConnector ns1:OPCUAConnector ;
-    ns1:bindsConnectorParameter "nsu=http://mycompany.com/UA/StandardModel/;i=2004" ;
+    ns1:bindsConnectorParameter "nsu=http://mycompany.com/UA/ProprietaryModel/;i=2004" ;
     ns1:bindsLogicVar "var1"^^xsd:string ;
     ns1:bindsMapDatatype <http://opcfoundation.org/UA/Double> .
 

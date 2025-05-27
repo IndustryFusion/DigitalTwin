@@ -30,7 +30,7 @@ NODESET2OWL = ../../../opcua/nodeset2owl.py
 EXTRACTTYPE = ../../../opcua/extractType.py
 EXTRACTIFFBINDINGS = ../../../opcua/extractIffBindings.py
 
-INSTANCE_TYPE           := http://mycompany.com/UA/StandardModel/StandardDataObjectType
+INSTANCE_TYPE           := http://mycompany.com/UA/ProprietaryModel/ProprietaryDataObjectType
 INSTANCE_NS_PREFIX      := http://demo.machine/
 
 
@@ -179,27 +179,27 @@ PACKML_DEPENDENCIES  = $(BASE_ONTOLOGY) $(CORE_ONTOLOGY)
 PACKML_OPTS          = -p packml
 
 # COMPANY-SPECIFICATION
-COMPANY_STANDARDMODEL_NODESET_URL	= company_standardmodel.nodeset2.xml
-COMPANY_STANDARDMODEL_ONTOLOGY 		= company_standardmodel.ttl
-COMPANY_STANDARDMODEL_DEPENDENCIES	= $(BASE_ONTOLOGY) $(CORE_ONTOLOGY)
-COMPANY_STANDARDMODEL_OPTS 			= -p company_standardmodel
+COMPANY_PROPRIETARYMODEL_NODESET_URL	= company_proprietarymodel.nodeset2.xml
+COMPANY_PROPRIETARYMODEL_ONTOLOGY 		= company_proprietarymodel.ttl
+COMPANY_PROPRIETARYMODEL_DEPENDENCIES	= $(BASE_ONTOLOGY) $(CORE_ONTOLOGY)
+COMPANY_PROPRIETARYMODEL_OPTS 			= -p company_proprietarymodel
 
 # IFF-Mapping
 IFFMAPPING_NODESET_URL	= iffmapping.nodeset2.xml
 IFFMAPPING_ONTOLOGY		= iffmapping.ttl
-IFFMAPPING_DEPENDENCIES	= $(BASE_ONTOLOGY) $(CORE_ONTOLOGY) $(COMPANY_STANDARDMODEL_ONTOLOGY)
+IFFMAPPING_DEPENDENCIES	= $(BASE_ONTOLOGY) $(CORE_ONTOLOGY) $(COMPANY_PROPRIETARYMODEL_ONTOLOGY)
 IFFMAPPING_OPTS			= -p iffmapping
 
 # Company-Bindings
 COMPANY_IFFBINDINGS_NODESET_URL 	= company_iffbindings.nodeset2.xml
 COMPANY_IFFBINDINGS_ONTOLOGY 		= company_iffbindings.ttl
-COMPANY_IFFBINDINGS_DEPENDENCIES 	= $(BASE_ONTOLOGY) $(CORE_ONTOLOGY) $(COMPANY_STANDARDMODEL_ONTOLOGY) $(IFFMAPPING_ONTOLOGY)
+COMPANY_IFFBINDINGS_DEPENDENCIES 	= $(BASE_ONTOLOGY) $(CORE_ONTOLOGY) $(COMPANY_PROPRIETARYMODEL_ONTOLOGY) $(IFFMAPPING_ONTOLOGY)
 COMPANY_IFFBINDINGS_OPTS 			= -p company_iffbindings
 
 # -----------------------------------------------------------------------------
 # List of all target files to be built.
 # -----------------------------------------------------------------------------
-TARGET_NAMES = CORE COMPANY_STANDARDMODEL IFFMAPPING COMPANY_IFFBINDINGS
+TARGET_NAMES = CORE COMPANY_PROPRIETARYMODEL IFFMAPPING COMPANY_IFFBINDINGS
 
 ALL_TARGETS = $(foreach t, $(TARGET_NAMES), $($(t)_ONTOLOGY))
 
@@ -225,14 +225,15 @@ all: ontology instances iffbindings
 %.ttl: core.ttl
 	@echo "Creating $@"
 	$(eval NAME := $(shell echo $* | tr a-z A-Z))
+	echo  $(NAME)_DEPENDENCIES
 	python3 $(NODESET2OWL) $($(NAME)_NODESET_URL) -i $($(NAME)_DEPENDENCIES) $($(NAME)_OPTS) -o $@
 
 # -----------------------------------------------------------------------------
 # BUILD instance file
 #
 # -----------------------------------------------------------------------------
-INSTANCE_ONTOLOGY = $(COMPANY_STANDARDMODEL_ONTOLOGY)
-shacl.ttl instances.jsonld entities.ttl context.jsonld: $(COMPANY_STANDARDMODEL_ONTOLOGY) ontology
+INSTANCE_ONTOLOGY = $(COMPANY_PROPRIETARYMODEL_ONTOLOGY)
+shacl.ttl instances.jsonld entities.ttl context.jsonld: $(COMPANY_PROPRIETARYMODEL_ONTOLOGY) ontology
 	echo "Creating shacl.ttl, instances.jsonld, context.jsonld and entities.ttl"
 	python3 $(EXTRACTTYPE) -t $(INSTANCE_TYPE) -n $(INSTANCE_NS_PREFIX) $(INSTANCE_ONTOLOGY)
 
@@ -247,7 +248,7 @@ iffbindings: ontology
 $(foreach t, $(TARGET_NAMES), \
   $(eval $($(t)_ONTOLOGY): $(filter-out $(BASE_ONTOLOGY), $($(t)_DEPENDENCIES))))
 
-DEP_NAMES = COMPANY_STANDARDMODEL IFFMAPPING COMPANY_IFFBINDINGS
+DEP_NAMES = COMPANY_PROPRIETARYMODEL IFFMAPPING COMPANY_IFFBINDINGS
 $(foreach t, $(DEP_NAMES), \
   $(eval $($(t)_ONTOLOGY): $($(t)_NODESET_URL)))
 # -----------------------------------------------------------------------------

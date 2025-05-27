@@ -60,7 +60,6 @@ def parse_args(args=sys.argv[1:]):
     parser = argparse.ArgumentParser(description='Start a Dataservice based on ontology and binding information.')
     parser.add_argument('ontdir', help='Directory containing the context.jsonld, entities.ttl, and knowledge.ttl \
 files.')
-    parser.add_argument('entityId', help='ID of entity to start service for, e.g. urn:iff:cutter:1 .')
     parser.add_argument('binding', help='Resources which describe the contex binding to the type.')
     parser.add_argument('-r', '--resources', help='List of additional knowledge resources from the ontdir directory, \
 e.g. -r "material.ttl"')
@@ -85,7 +84,7 @@ supported_versions = ["0.1", "0.9"]
 owl_bindings = {}
 
 
-async def main(entityId, ontdir, entitiesfile, binding_name, entity_id, resources, baseOntology,
+async def main(ontdir, entitiesfile, binding_name, resources, baseOntology,
                requestedFirmwareVersion, port, dryrun):
     global attributes
     global prefixes
@@ -135,7 +134,6 @@ async def main(entityId, ontdir, entitiesfile, binding_name, entity_id, resource
         prefixes['base'] = Namespace(baseOntology)
 
     # Add official Context to attribute query and try to find bindings
-    # sparql_bindings = {Variable("entityId"): entityId}
     qres = g.query(get_attributes_query, initNs=prefixes)
     for row in qres:
         print(f'Found attributes: {row.attribute}, {row.entityId}')
@@ -375,7 +373,6 @@ def send(results, attribute, entityId, dryrun, port):
 
 if __name__ == '__main__':
     args = parse_args()
-    entityId = args.entityId
     entitiesfile = args.entities
     ontdir = args.ontdir
     binding = args.binding
@@ -384,7 +381,7 @@ if __name__ == '__main__':
     port = args.port
     dryrun = args.dryrun
     baseontoloy = args.baseOntology
-    asyncio.run(main(entityId, ontdir, entitiesfile, binding, entityId, resources, baseontoloy,
+    asyncio.run(main(ontdir, entitiesfile, binding, resources, baseontoloy,
                      firmwareVersion,
                      port,
                      dryrun))

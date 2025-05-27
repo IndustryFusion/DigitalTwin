@@ -25,7 +25,6 @@ from lib.utils import OntologyLoader, NGSILD
 from lib.bindings import Bindings
 
 warnings.filterwarnings("ignore", message=".*anyType is not defined in namespace XSD.*")
-attribute_prefix = 'has'
 
 
 def parse_args(args=sys.argv[1:]):
@@ -97,12 +96,10 @@ def get_bindings(graph, iffmappingns, basens, opcuans, iffmappingfolder_id):
     ?folder base:hasNamespace ?namespace .
     ?namespace base:hasUri ?iffmappingns .
     FILTER(?nodeid = ?folderid && ?iffmappingns = STR(iffmappingns:))
-    ?folder opcua:Organizes ?attributebinding .
-    OPTIONAL{{
-      ?attributebinding opcua:HasComponent ?namenode .
-      ?namenode base:hasBrowseName "AttributeName" .
-      ?namenode base:hasValue ?namestr .
-    }}
+    ?folder opcua:HasComponent ?attributebinding .
+    ?attributebinding opcua:HasComponent ?namenode .
+    ?namenode base:hasBrowseName "AttributeName" .
+    ?namenode base:hasValue ?namestr .
      OPTIONAL{{
       ?attributebinding opcua:HasComponent ?typenode .
       ?typenode base:hasBrowseName "NGSILDAttributeType" .
@@ -162,15 +159,13 @@ def get_attribute_parameter(graph, iffmappingns, basens, opcuans, iffmappingfold
     ?folder base:hasNamespace ?namespace .
     ?namespace base:hasUri ?iffmappingns .
     FILTER(?nodeid = ?folderid && ?iffmappingns = STR(iffmappingns:))
-    ?folder opcua:Organizes ?attributebinding .
+    ?folder opcua:HasComponent ?attributebinding .
     ?attributebinding opcua:HasComponent ?attributeParameter .
-    ?attributeParameter base:hasBrowseName "AttributeParameter" .
-    OPTIONAL{{
+    ?attributeParameter base:hasBrowseName ?attributeParameter_bn .
+    FILTER(STRSTARTS(?attributeParameter_bn, "AttributeParameter_")) .
       ?attributeParameter opcua:HasComponent ?lvnode .
       ?lvnode base:hasBrowseName "LogicVariable" .
       ?lvnode base:hasValue ?logicVariable .
-    }}
-
      OPTIONAL{{
       ?attributeParameter iffmappingns:HasVariable ?varnode .
       ?varnode base:hasIdentifierType ?varidtype .

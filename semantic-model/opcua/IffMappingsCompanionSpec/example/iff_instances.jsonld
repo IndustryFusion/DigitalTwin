@@ -8,6 +8,10 @@
         "http://www.industry-fusion.org/schema#TemperatureC": {
             "type": "Property",
             "value": 30
+        },
+        "http://www.industry-fusion.org/schema#State": {
+            "type": "Property",
+            "value": "RUNNING"
         }
     }
 ]

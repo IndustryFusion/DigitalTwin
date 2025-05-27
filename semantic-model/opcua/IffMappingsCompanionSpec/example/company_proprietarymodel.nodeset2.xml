@@ -2,10 +2,10 @@
 <UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:uax="http://opcfoundation.org/UA/2008/02/Types.xsd" xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <!-- 1) Namespace and Model metadata -->
   <NamespaceUris>
-    <Uri>http://mycompany.com/UA/StandardModel/</Uri>
+    <Uri>http://mycompany.com/UA/ProprietaryModel/</Uri>
   </NamespaceUris>
   <Models>
-    <Model ModelUri="http://mycompany.com/UA/StandardModel/"
+    <Model ModelUri="http://mycompany.com/UA/ProprietaryModel/"
            ModelVersion="1.0.0"
            PublicationDate="2025-05-18T00:00:00Z"/>
   </Models>
@@ -58,9 +58,9 @@
     <Alias Alias="HasInterface">i=17603</Alias>
   </Aliases>
 
-  <!-- 2) Define a new ObjectType: StandardDataObjectType -->
-  <UAObjectType NodeId="ns=1;i=1001" BrowseName="1:StandardDataObjectType">
-    <DisplayName>StandardDataObjectType</DisplayName>
+  <!-- 2) Define a new ObjectType: ProprietaryDataObjectType -->
+  <UAObjectType NodeId="ns=1;i=1001" BrowseName="1:ProprietaryDataObjectType">
+    <DisplayName>ProprietaryDataObjectType</DisplayName>
     <References>
       <!-- Inherit from BaseObjectType (i=58) -->
       <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
@@ -68,8 +68,8 @@
   </UAObjectType>
 
   <!-- 3) Instantiate one Object of that type -->
-  <UAObject NodeId="ns=1;i=1101" BrowseName="1:StandardDataObject1" ParentNodeId="i=85">
-    <DisplayName>StandardDataObject1</DisplayName>
+  <UAObject NodeId="ns=1;i=1101" BrowseName="1:ProprietaryDataObject1" ParentNodeId="i=85">
+    <DisplayName>ProprietaryDataObject1</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1001</Reference>
     </References>
