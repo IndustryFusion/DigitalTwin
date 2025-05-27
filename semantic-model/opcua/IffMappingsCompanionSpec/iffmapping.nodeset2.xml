@@ -64,7 +64,7 @@
     <DisplayName>AttributeBindingType</DisplayName>
     <References>
     <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
-    <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=3001</Reference>
+    <Reference ReferenceType="HasComponent">ns=1;i=3001</Reference>
     </References>
   </UAObjectType>
 
@@ -86,7 +86,7 @@
     <DisplayName>IFFMappingsFolder</DisplayName>
     <References>
     <Reference ReferenceType="HasSubtype" IsForward="false">i=61</Reference>
-    <Reference ReferenceType="Organizes" IsForward="false">ns=1;i=3001</Reference>
+    <Reference ReferenceType="HasComponent">ns=1;i=3002</Reference>
     </References>
   </UAObjectType>
 
@@ -248,7 +248,7 @@
                BrowseName="1:EntityType"
                DataType="String"
                ValueRank="-1">
-    <DisplayName>AttributeName</DisplayName>
+    <DisplayName>EntityType</DisplayName>
     <References>
       <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1005</Reference>
       <Reference ReferenceType="HasModellingRule">i=78</Reference>
@@ -257,10 +257,11 @@
   </UAVariable>
 
 <!--Objects -->
-  <UAObject NodeId="ns=1;i=3001" BrowseName="1:AttributeParameter">
-    <DisplayName>AttributeParameter</DisplayName>
+  <UAObject NodeId="ns=1;i=3001" BrowseName="1:AttributeParameter_&lt;no&gt;">
+    <DisplayName>AttributeParameter_no</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition">ns=1;i=1003</Reference>
+      <Reference ReferenceType="HasModellingRule">i=11510</Reference>
     </References>
   </UAObject>
 
@@ -268,6 +269,7 @@
     <DisplayName>Attribute_name</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition">ns=1;i=1001</Reference>
+      <Reference ReferenceType="HasModellingRule">i=11510</Reference>
     </References>
   </UAObject>
  
@@ -284,6 +286,7 @@
     <DisplayName>IFFMappingsFolder</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition">ns=1;i=1004</Reference>
+      <Reference ReferenceType="Organizes" IsForward="false">i=85</Reference>
     </References>
   </UAObject>
 

@@ -1,5 +1,11 @@
 # Tools to translate from OPC/UA Information Model to Semantic Web standards
 
+## Setup
+
+To setup the python environment start a python3 virtual environment with `Python 3.11` and install the dependencies with:
+
+`make setup`
+
 ## nodeset2owl.py
 
 This script translates OPCUA nodeset files to OWL (in ttl format).
@@ -191,3 +197,4 @@ The tool will provide more context information when used with `-x` switch.
 Validate `instances.jsonld` against entities.ttl` and `shacl.ttl` with extended output:
 
         python3 validate.py -x instances.jsonld
+
