@@ -30,7 +30,7 @@ Usage: get-onboarding-token.sh [-p password] [-s secret-file-name] <username>
 ```
 example
 ```
-Usage: ./get-onbaording-token.sh -p LhCU0Jd9zwoHD40izcf6s10hdLUiOuqQ realm_user
+Usage: ./get-onboarding-token.sh -p LhCU0Jd9zwoHD40izcf6s10hdLUiOuqQ realm_user
 ```
 The secret of the realm_user can be retrieve from K8s by using:
 ```bash

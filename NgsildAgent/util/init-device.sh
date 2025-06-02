@@ -17,18 +17,27 @@ set -e
 # shellcheck disable=SC1091
 . common.sh
 
+function checkiri() {
+  local iri="$1"
 
-function checkurn(){
-  local deviceid="$1"
+  # Strict URN pattern based on RFC 8141
   # shellcheck disable=SC2016
-  urnPattern='^urn:[a-zA-Z0-9][a-zA-Z0-9-]{0,31}:[a-zA-Z0-9()+,\-\.:=@;$_!*%/?#]+$'
-  if echo "$deviceid" | grep -E -q "$urnPattern"; then
-      echo "$deviceid is URN compliant."
+  urnPattern='^urn:[a-zA-Z0-9][a-zA-Z0-9-]{0,31}:[a-zA-Z0-9()+,_.:=@;$_!*%/?#-]+$'
+
+  # Strict URI pattern based on RFC 3986
+  # shellcheck disable=SC2016
+  uriPattern='^[a-zA-Z][a-zA-Z0-9+.-]*:[^ ]+$'
+
+  if echo "$iri" | grep -E -q "$urnPattern"; then
+    echo "$iri is a valid URN."
+  elif echo "$iri" | grep -E -q "$uriPattern"; then
+    echo "$iri is a valid URI."
   else
-      echo "$deviceid must be an URN. Please fix the parameter $deviceid. Exiting."
-      exit 1
+    echo "$iri is not a valid RFC compliant URN or URI (IRI). Please fix the input. Exiting."
+    exit 1
   fi
 }
+
 keycloakurl="http://keycloak.local/auth/realms"
 realmid="iff"
 usage="Usage: $(basename "$0")[-k keycloakurl] [-r realmId] [-d additionalDeviceIds] <deviceId> <gatewayId>\nDefaults: \nkeycloakurl=${keycloakurl}\nrealmid=${realmid}\n"
@@ -66,12 +75,12 @@ else
   exit 1
 fi
 
-checkurn "$deviceid"
+checkiri "$deviceid"
 # shellcheck disable=SC2128
 if [ -n "${additionalDeviceIds}" ]; then
   #deviceid='["'${deviceid}'"'
   for i in "${additionalDeviceIds[@]}"; do
-    checkurn "$i"
+    checkiri "$i"
     #echo proecessing $i
     #deviceid=${deviceid}', "'$i'"'
   done

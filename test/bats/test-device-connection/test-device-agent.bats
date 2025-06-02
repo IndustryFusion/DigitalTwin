@@ -39,6 +39,8 @@ SUBDEVICE_IDS='[
   urn:iff:testsubdevice:1,
   urn:iff:testsubdevice:2
 ]'
+VALID_DEVICE_IDS=("urn:iff:device:1" "https://example.org:8080/path?query=1#fragment" "ftp://ftp.example.com/resource.txt" "urn:ifric:ifx-eur-nld-ast-64972453-10a6-561d-a9ec-ef78fc2d5f0a")
+INVALID_DEVICE_IDS=("device123" "urn" "http//example.com" "urn:ngsi-ld Device 123")
 DEVICE_FILE="device.json"
 ONBOARDING_TOKEN="onboard-token.json"
 NGSILD_AGENT_DIR=${TEST_DIR}/../../../NgsildAgent
@@ -826,6 +828,28 @@ setup() {
     (cd "${NGSILD_AGENT_DIR}"/util && bash ./init-device.sh -d "${SUBDEVICE_ID3}" "${DEVICE_ID}" "${GATEWAY_ID}" || echo "failed as expected")
     run [ ! -f "${NGSILD_AGENT_DIR}"/data/"${DEVICE_FILE}" ]
     [ "${status}" -eq "0" ]    
+}
+
+@test "test init-device.sh with invalid IRIs for Device ID (not URN/URI)" {
+    $SKIP
+    for INVALID_DEVICE_ID in "${INVALID_DEVICE_IDS[@]}"; do
+      echo "Testing valid ID: $INVALID_DEVICE_ID"
+      rm -f "${NGSILD_AGENT_DIR}/data/${DEVICE_FILE}"
+      cd "${NGSILD_AGENT_DIR}/util" && run bash ./init-device.sh "$INVALID_DEVICE_ID" "$GATEWAY_ID"
+      run [ ! -f "${NGSILD_AGENT_DIR}/data/${DEVICE_FILE}" ]
+      [ "$status" -eq 0 ]
+    done
+}
+
+@test "test init-device.sh with valid IRIs for Device ID (URN & URI)" {
+    $SKIP
+    for VALID_DEVICE_ID in "${VALID_DEVICE_IDS[@]}"; do
+      echo "Testing valid ID: $VALID_DEVICE_ID"
+      rm -f "${NGSILD_AGENT_DIR}/data/${DEVICE_FILE}"
+      cd "${NGSILD_AGENT_DIR}/util" && run bash ./init-device.sh "$VALID_DEVICE_ID" "$GATEWAY_ID"
+      [ "$status" -eq 0 ]
+      [ -f "${NGSILD_AGENT_DIR}/data/${DEVICE_FILE}" ]
+    done
 }
 
 @test "test get-onboarding-token.sh" {
