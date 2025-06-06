@@ -1,5 +1,5 @@
 from rdflib import Graph
-from rdflib.namespace import SH, RDF
+from rdflib.namespace import SH
 import os
 import sys
 import ruamel.yaml
@@ -28,8 +28,8 @@ where {
     ?nodeshape sh:targetClass ?targetclass .
     ?inheritedTargetclass rdfs:subClassOf* ?targetclass .
     ?nodeshape sh:property/(sh:or/rdf:rest*/rdf:first/sh:property)* ?property .
-    ?property  
-    	sh:path ?propertypath ;
+    ?property
+        sh:path ?propertypath ;
         sh:or ?outerOr .
         ?outerOr rdf:rest*/rdf:first ?clause .
         OPTIONAL{?clause sh:maxCount ?maxcount ; }
@@ -86,7 +86,7 @@ where {
 GROUP BY ?nodeshape ?targetclass ?propertypath ?mincount ?maxcount ?attributeclass ?nodekind
     ?minexclusive ?maxexclusive ?mininclusive ?maxinclusive ?minlength ?maxlength ?pattern ?severitycode ?inheritedTargetclass ?property ?valuepath ?innerOr ?hasValue
 order by ?inheritedTargetclass
-"""  # noqa: E501   
+"""  # noqa: E501
 sql_check_relationship_base = """
             INSERT {% if sqlite %}OR REPlACE{% endif %} INTO {{alerts_bulk_table}}
             WITH A1 as (
@@ -162,7 +162,7 @@ sql_check_relationship_property_count = """
 sql_check_relationship_nodeType = """
             {% set constraint_cond %}
             NOT edeleted AND NOT IFNULL(`adeleted`, false) AND (nodeType <> '{{ property_nodetype }}'  OR link <> attributeType)
-            {% endset %} 
+            {% endset %}
             SELECT this AS resource,
                 'NodeKindConstraintComponent(' || `parentPath` || `printPath` || ')' AS event,
                 `constraint_id` as constraint_id,
@@ -370,7 +370,7 @@ sql_check_literal_datatypes = """
 {% set constraint_cond%}
 NOT edeleted AND NOT IFNULL(adeleted, false) AND attr_typ IS NOT NULL AND
         CASE WHEN ( {{ common_datatypes }}
-                    AND ((datatypes LIKE '%http://www.w3.org/2001/XMLSchema#double%' AND {%- if sqlite %} `val`  REGEXP '^(?=.*[\.eE])[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$' {%- else %} 
+                    AND ((datatypes LIKE '%http://www.w3.org/2001/XMLSchema#double%' AND {%- if sqlite %} `val`  REGEXP '^(?=.*[\.eE])[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$' {%- else %}
                                                                                                                 REGEXP(val, '^(?=.*[\.eE])[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$') {%- endif %})
                          OR (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#integer%' AND {%- if sqlite %} `val` REGEXP '^[+-]?\d+$' {%- else %}
                                                                                                                     REGEXP(val, '^[+-]?\d+$') {%- endif %})
@@ -390,18 +390,18 @@ SELECT this AS resource,
     CASE WHEN {{ constraint_cond }} THEN `severity` ELSE 'ok' END AS severity,
     CASE WHEN {{ constraint_cond }}
             THEN 'Datatype check failed. ' || CASE WHEN `datatypes` IS NULL THEN '"' || `val` || '" does not fit to '  ELSE '"' || `val`
-                                            || '" does not fit to datatypes "' 
-                                            || `datatypes` 
-                                            || '" or ' END 
-                                            || 'property node type "' 
-                                            || `propertyNodetype` 
-                                            || '".' 
+                                            || '" does not fit to datatypes "'
+                                            || `datatypes`
+                                            || '" or ' END
+                                            || 'property node type "'
+                                            || `propertyNodetype`
+                                            || '".'
         ELSE 'All ok' END as `text`
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
-FROM A1 where `index` IS NOT NULL AND `propertyNodetype` IN ('@value', '@list', '@json') 
-"""  # noqa: E501
+FROM A1 where `index` IS NOT NULL AND `propertyNodetype` IN ('@value', '@list', '@json')
+"""  # noqa: E501 W605
 
 
 sql_check_literal_hasvalue = """
@@ -410,9 +410,12 @@ sql_check_literal_hasvalue = """
   NOT edeleted AND NOT IFNULL(adeleted, false)
   AND attr_typ IS NOT NULL
   /* and the actual value <> the required hasValue constant */
-  AND CASE WHEN `valueType` = 'http://www.w3.org/2001/XMLSchema#double' THEN SQL_DIALECT_CAST(val as DOUBLE) <> SQL_DIALECT_CAST(hasValue as DOUBLE)
-    WHEN `valueType` = 'http://www.w3.org/2001/XMLSchema#integer' THEN SQL_DIALECT_CAST(val as INTEGER) <> SQL_DIALECT_CAST(hasValue as INTEGER)
-    WHEN `valueType` = 'http://www.w3.org/2001/XMLSchema#boolean' THEN SQL_DIALECT_CAST(val as BOOLEAN) <> SQL_DIALECT_CAST(hasValue as BOOLEAN)
+  AND CASE WHEN `valueType` = 'http://www.w3.org/2001/XMLSchema#double' THEN SQL_DIALECT_CAST(val as DOUBLE) <>
+        SQL_DIALECT_CAST(hasValue as DOUBLE)
+    WHEN `valueType` = 'http://www.w3.org/2001/XMLSchema#integer' THEN SQL_DIALECT_CAST(val as INTEGER) <>
+        SQL_DIALECT_CAST(hasValue as INTEGER)
+    WHEN `valueType` = 'http://www.w3.org/2001/XMLSchema#boolean' THEN SQL_DIALECT_CAST(val as BOOLEAN) <>
+        SQL_DIALECT_CAST(hasValue as BOOLEAN)
     ELSE `val` <> `hasValue`END
 {% endset %}
   SELECT this           AS resource,
@@ -440,7 +443,7 @@ sql_check_literal_hasvalue = """
   {% if sqlite %}, CURRENT_TIMESTAMP{% endif %}
 FROM A1
 
-WHERE hasValue IS NOT NULL AND `index` IS NOT NULL 
+WHERE hasValue IS NOT NULL AND `index` IS NOT NULL
 """
 
 sql_insert_constraint_in_alerts = """
@@ -547,6 +550,7 @@ CASE WHEN f.needed_count = IFNULL(f.fired_count, 0) THEN f.texts ELSE 'All ok' E
 FROM  constraint_table AS ct JOIN  fired AS f  ON ct.id = f.target_constraint_id;
 ;
 """
+
 
 def create_relationship_sql():
     sql_command_yaml = Template(sql_check_relationship_base).render(
@@ -819,7 +823,7 @@ def translate(shaclefile, knowledgefile, prefixes):
     qres = g.query(sparql_get_all_relationships, initNs=prefixes)
     for row in qres:
         paths = get_full_path_of_shacl_property(g, row.property)
-        if len(paths) > MAX_SUBPROPERTY_DEPTH +1:
+        if len(paths) > MAX_SUBPROPERTY_DEPTH + 1:
             print(f"Warning, subproperty depth {len(paths)} not supported in paths {paths}")
             continue
         check = utils.init_constraint_check()
@@ -848,7 +852,7 @@ def translate(shaclefile, knowledgefile, prefixes):
         check['maxCount'] = maxcount
         check['minCount'] = mincount
         check['severity'] = severitycode
-        check['id'] = constraint_id_counter     
+        check['id'] = constraint_id_counter
         constraint_checks.append(check)
         # combination table must publish this constraint
         combination = {}
@@ -862,7 +866,7 @@ def translate(shaclefile, knowledgefile, prefixes):
     qres = g.query(sparql_get_all_properties, initNs=prefixes)
     for row in qres:
         paths = get_full_path_of_shacl_property(g, row.property)
-        if len(paths) > MAX_SUBPROPERTY_DEPTH +1:
+        if len(paths) > MAX_SUBPROPERTY_DEPTH + 1:
             print(f"Warning, subproperty depth {len(paths)} not supported in paths {paths}")
             continue
         check = utils.init_constraint_check()
@@ -954,7 +958,6 @@ string elements in list are supported.")
         property_nodes[(property, target_class)].append(constraint_id_counter)
         constraint_id_counter += 1
 
-    
     for property_node in property_nodes.keys():
         if len(property_nodes[property_node]) == 1:
             constraint_id = property_nodes[property_node][0]
@@ -992,16 +995,25 @@ string elements in list are supported.")
     tables.append(configs.kafka_topic_ngsi_prefix_name)
     views.append(configs.kafka_topic_ngsi_prefix_name + "-view")
     sqlite += '\n'
-    #sqlite += utils.add_constraint_checks(constraint_checks, utils.SQL_DIALECT.SQLITE)
-    #sql_command_yaml = utils.add_constraint_checks(constraint_checks, utils.SQL_DIALECT.SQL)
-    sqlite += utils.add_table_values(constraint_checks, utils.constraint_table, utils.SQL_DIALECT.SQLITE, configs.constraint_table_name)
-    sql_command_yaml = utils.add_table_values(constraint_checks, utils.constraint_table, utils.SQL_DIALECT.SQL, configs.constraint_table_name)
+    sqlite += utils.add_table_values(constraint_checks,
+                                     utils.constraint_table,
+                                     utils.SQL_DIALECT.SQLITE,
+                                     configs.constraint_table_name)
+    sql_command_yaml = utils.add_table_values(constraint_checks,
+                                              utils.constraint_table,
+                                              utils.SQL_DIALECT.SQL,
+                                              configs.constraint_table_name)
     statementsets.append(sql_command_yaml)
     tables.append(configs.constraint_table_object_name)
-    #views.append(configs.constraint_table_object_name + "-view")
     sqlite += '\n'
-    sqlite += utils.add_table_values(constraint_combination, utils.constraint_combination_table, utils.SQL_DIALECT.SQLITE, configs.constraint_combination_table_name)
-    sql_command_yaml = utils.add_table_values(constraint_combination, utils.constraint_combination_table, utils.SQL_DIALECT.SQL, configs.constraint_combination_table_name)
+    sqlite += utils.add_table_values(constraint_combination,
+                                     utils.constraint_combination_table,
+                                     utils.SQL_DIALECT.SQLITE,
+                                     configs.constraint_combination_table_name)
+    sql_command_yaml = utils.add_table_values(constraint_combination,
+                                              utils.constraint_combination_table,
+                                              utils.SQL_DIALECT.SQL,
+                                              configs.constraint_combination_table_name)
     statementsets.append(sql_command_yaml)
     sqlite += '\n'
     sql_command_sqlite, sql_command_yaml = create_relationship_sql()
@@ -1011,38 +1023,36 @@ string elements in list are supported.")
     sql_command_sqlite, sql_command_yaml = create_property_sql()
     sqlite += sql_command_sqlite
     statementsets.append(sql_command_yaml)
-    
+
     sql_command_yaml = Template(sql_combine_or_into_alerts).render(
-    alerts_bulk_table=alerts_bulk_table,
-    constraint_trigger_table=constraint_trigger_table_name,
-    constraint_combination_table=constraint_combination_table_name,
-    sqlite=False)
+        alerts_bulk_table=alerts_bulk_table,
+        constraint_trigger_table=constraint_trigger_table_name,
+        constraint_combination_table=constraint_combination_table_name,
+        sqlite=False)
     sql_command_sqlite = Template(sql_combine_or_into_alerts).render(
-    alerts_bulk_table=alerts_bulk_table,
-    constraint_trigger_table=constraint_trigger_table_name,
-    constraint_combination_table=constraint_combination_table_name,
-    sqlite=True)
+        alerts_bulk_table=alerts_bulk_table,
+        constraint_trigger_table=constraint_trigger_table_name,
+        constraint_combination_table=constraint_combination_table_name,
+        sqlite=True)
     statementsets.append(sql_command_yaml)
     sqlite += sql_command_sqlite
     tables.append(configs.constraint_combination_table_object_name)
-    #views.append(configs.constraint_combination_table_object_name + "-view")
     tables.append(configs.constraint_trigger_table_object_name)
-    #views.append(configs.constraint_trigger_table_object_name + "-view")
     sqlite += '\n'
     sql_command_yaml = Template(sql_insert_constraint_in_alerts).render(
-    alerts_bulk_table=alerts_bulk_table,
-    constraint_table=constraint_table_name,
-    constraint_trigger_table=constraint_trigger_table_name,
-    constraint_combination_table=constraint_combination_table_name,
-    target_class="entities",
-    sqlite=False)
+        alerts_bulk_table=alerts_bulk_table,
+        constraint_table=constraint_table_name,
+        constraint_trigger_table=constraint_trigger_table_name,
+        constraint_combination_table=constraint_combination_table_name,
+        target_class="entities",
+        sqlite=False)
     sql_command_sqlite = Template(sql_insert_constraint_in_alerts).render(
-    alerts_bulk_table=alerts_bulk_table,
-    constraint_table=constraint_table_name,
-    constraint_trigger_table=constraint_trigger_table_name,
-    constraint_combination_table=constraint_combination_table_name,
-    target_class="entities",
-    sqlite=True)
+        alerts_bulk_table=alerts_bulk_table,
+        constraint_table=constraint_table_name,
+        constraint_trigger_table=constraint_trigger_table_name,
+        constraint_combination_table=constraint_combination_table_name,
+        target_class="entities",
+        sqlite=True)
     statementsets.append(sql_command_yaml)
     sqlite += sql_command_sqlite
     sqlite += '\n'
