@@ -153,6 +153,38 @@ kafka:
     logRetentionHours: {{ .StateValues.kafka.config.logRetentionHours }}
 
 kafkaBridge:
+  hashlength: {{ .StateValues.kafkaBridge.hashlength }}
+  flink:
+    constraintTopic:
+      replicaCount: 1
+      topicName: "iff.ngsild.flink.constraint_table"
+      objectName: "iff.ngsild.flink.constraint-table"
+      listenTopicRetention: {{- if hasKey .StateValues.kafkaBridge.debezium "listenTopicRetention" }} {{ .StateValues.kafkaBridge.debezium.listenTopicRetention | quote}}
+                          {{- else }} "3600000"
+                          {{- end }}
+      listenTopicCompression: {{- if hasKey .StateValues.kafkaBridge.debezium "listenTopicCompression" }} {{ .StateValues.kafkaBridge.debezium.listenTopicCompression}}
+                            {{- else }} uncompressed
+                            {{- end }}
+    constraintTriggerTopic:
+      replicaCount: 1
+      objectName: "iff.ngsild.flink.constraint-trigger-table"
+      topicName: "iff.ngsild.flink.constraint_trigger_table"
+      listenTopicRetention: {{- if hasKey .StateValues.kafkaBridge.debezium "listenTopicRetention" }} {{ .StateValues.kafkaBridge.debezium.listenTopicRetention | quote}}
+                          {{- else }} "3600000"
+                          {{- end }}
+      listenTopicCompression: {{- if hasKey .StateValues.kafkaBridge.debezium "listenTopicCompression" }} {{ .StateValues.kafkaBridge.debezium.listenTopicCompression}}
+                            {{- else }} uncompressed
+                            {{- end }}
+    constraintCombinationTopic:
+      replicaCount: 1
+      topicName: "iff.ngsild.flink.constraint_combination_table"
+      objectName: "iff.ngsild.flink.constraint-combination-table"
+      listenTopicRetention: {{- if hasKey .StateValues.kafkaBridge.debezium "listenTopicRetention" }} {{ .StateValues.kafkaBridge.debezium.listenTopicRetention | quote}}
+                          {{- else }} "3600000"
+                          {{- end }}
+      listenTopicCompression: {{- if hasKey .StateValues.kafkaBridge.debezium "listenTopicCompression" }} {{ .StateValues.kafkaBridge.debezium.listenTopicCompression}}
+                            {{- else }} uncompressed
+                            {{- end }}
   debezium:
     replicaCount: 1
     listenTopic: "iff.ngsild.public.entity"
