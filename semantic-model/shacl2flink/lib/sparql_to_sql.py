@@ -414,7 +414,7 @@ def translate_construct_query(ctx, query):
     h = Graph()
     for s, p, o in query.template:
         h.add((s, p, o))
-    property_variables, entity_variables, time_variables, _ = bgp_translation_utils.create_ngsild_mappings(ctx, h)
+    property_variables, entity_variables, time_variables = bgp_translation_utils.create_ngsild_mappings(ctx, h)
 
     translate(ctx, query.p)
     query['target_sql'] = query.p['target_sql']
@@ -812,7 +812,7 @@ def translate_BGP(ctx, bgp):
         h.add((s, p, o))
         filtered_triples.append((s, p, o))
 
-    property_variables, entity_variables, time_variables, row = bgp_translation_utils.create_ngsild_mappings(ctx, h)
+    property_variables, entity_variables, time_variables = bgp_translation_utils.create_ngsild_mappings(ctx, h)
 
     # before translating, sort the bgp order to allow easier binds
     bgp.triples = bgp_translation_utils.sort_triples(ctx, ctx['bounds'], filtered_triples, h)
@@ -824,7 +824,6 @@ def translate_BGP(ctx, bgp):
     local_ctx['bgp_sql_expression'] = []
     local_ctx['bgp_tables'] = {}
     local_ctx['h'] = h
-    local_ctx['row'] = row
 
     for s, p, o in bgp.triples:
         # If there are properties or relationships, assume it is a NGSI-LD matter

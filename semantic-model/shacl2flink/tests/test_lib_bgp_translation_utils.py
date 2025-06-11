@@ -76,7 +76,7 @@ def test_create_ngsild_mappings(monkeypatch):
     graph.add((term.BNode('3'), hasValueURI, term.Variable('v1')))
     graph.add((term.BNode('3'), observedAtURI, term.Variable('v1_time')))
 
-    property_variables, entity_variables, time_variables, row = \
+    property_variables, entity_variables, time_variables = \
         lib.bgp_translation_utils.create_ngsild_mappings(ctx, graph)
     assert property_variables == {
         term.Variable('v2'): True,
@@ -89,7 +89,6 @@ def test_create_ngsild_mappings(monkeypatch):
     assert time_variables == {
         term.Variable('v1_time'): False
     }
-    assert row == 'row'
 
 
 def test_create_ngsild_mappings_reverse(monkeypatch):
@@ -138,7 +137,7 @@ def test_create_ngsild_mappings_reverse(monkeypatch):
     graph.add((term.BNode('3'), hasValueURI, term.Variable('v2')))
 
     property_variables, entity_variables, \
-        time_variables, row = lib.bgp_translation_utils.create_ngsild_mappings(ctx, graph)
+        time_variables = lib.bgp_translation_utils.create_ngsild_mappings(ctx, graph)
     assert property_variables == {
         term.Variable('v2'): True,
         term.Variable('v1'): True
@@ -148,7 +147,6 @@ def test_create_ngsild_mappings_reverse(monkeypatch):
         term.Variable('this'): True
     }
     assert time_variables == {}
-    assert row == 'row'
 
 
 @patch('lib.bgp_translation_utils.get_random_string')

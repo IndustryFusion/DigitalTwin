@@ -120,7 +120,7 @@ def test_translate_BGP(mock_create_ngsild_mappings, mock_sort_triples, mock_proc
     lib.sparql_to_sql.translate_BGP(ctx, bgp)
     assert not mock_create_ngsild_mappings.called
 
-    mock_create_ngsild_mappings.return_value = ({}, {}, {}, {})
+    mock_create_ngsild_mappings.return_value = ({}, {}, {})
     bgp.triples = [(term.Variable('this'), term.URIRef('hasValue'), term.Literal('test'))]
     mock_sort_triples.return_value = bgp.triples
     lib.sparql_to_sql.translate_BGP(ctx, bgp)
@@ -436,7 +436,7 @@ def test_translate_construct_query(create_ngsild_mappings_mock, merge_vartypes_m
     }
     d = {}
     query.__setitem__.side_effect = d.__setitem__
-    create_ngsild_mappings_mock.return_value = ({}, {}, {}, {})
+    create_ngsild_mappings_mock.return_value = ({}, {}, {})
     lib.sparql_to_sql.translate_construct_query(ctx, query)
     assert d['where'] == 'where'
     assert d['target_sql'] == 'target_sql'
