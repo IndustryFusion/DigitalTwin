@@ -17,7 +17,7 @@ The Services consist of
 
 # Building and Installation of Platform Locally
 
-The following setup procedure is executed in the Kubernetes end to end [`test`](../.github/workflows/k8s-tests.yaml) as part of the Continous Integration procedure. It is tested and regularly executed on `Ubuntu 22.04` and `Ubuntu 24.04`.
+The following setup procedure is executed in the Kubernetes end to end [`test`](../.github/workflows/k8s-tests.yaml) as part of the Continuous Integration procedure. It is tested and regularly executed on `Ubuntu 22.04` and `Ubuntu 24.04`.
 
 ---
 
@@ -65,18 +65,19 @@ After that, the following steps have to be executed (note the round brackets):
 5. Use ngsi-ld api via `ngsild.local`
 
 
-# Other Installation Options
-
+# Other Installation Options (Hosted K8s cluster)
 
 1. Activate your Kubernetes cluster and install `kubectl` (`kubens` is also recommended) on your local machine.
 
    * Install an ingress controller, in case of K3s it is traefik, in other cases, install nginx ingress controller. [Instructions here.](https://kubernetes.github.io/ingress-nginx/deploy/#quick-start)
    * Edit you /etc/hosts file to make sure that `keycloak.local`, `alerta.local` and `ngsild.local` point to the ingress IP of your kubernetes cluster.
-   * Make sure that the Pods within your Kubernetes cluster can resolve keycloak.local
+   * Make sure that the Pods within your Kubernetes cluster can resolve keycloak.local, if not check if you need to modify local DNS. See test/setup-local-ingress.sh script for example.
 
-3. Install helm with diff plugin and helmfile 0.149.0:
+3. Install helm with diff plugin, helmfile 0.149.0 and bats in machine from where you are installing Digital Twin PDT:
 
    ```
+   cd helm
+
    # helm v3.10.3
    wget https://get.helm.sh/helm-v3.10.3-linux-amd64.tar.gz
    tar -zxvf helm-v3.10.3-linux-amd64.tar.gz
@@ -85,12 +86,30 @@ After that, the following steps have to be executed (note the round brackets):
    # helm-diff plugin
    helm plugin install https://github.com/databus23/helm-diff
 
-   # helmfile v0.149.0
+   # helmfile v0.149.0 in helm directory
    wget https://github.com/helmfile/helmfile/releases/download/v0.149.0/helmfile_0.149.0_linux_amd64.tar.gz
    tar -zxvf helmfile_0.149.0_linux_amd64.tar.gz
    chmod u+x helmfile
+
+   # yq install v4.45.2
+   sudo wget https://github.com/mikefarah/yq/releases/download/v4.45.2/yq_linux_amd64 -O /usr/local/bin/yq &&\
+   sudo chmod +x /usr/local/bin/yq
+
+   # Install bats version 1.9.0
+   wget https://github.com/bats-core/bats-core/archive/refs/tags/v1.9.0.tar.gz
+   tar -zxvf v1.9.0.tar.gz
+   sudo ./bats-core-1.9.0/install.sh /usr/local
+   rm -rf v1.9.0.tar.gz bats-core-1.9.0
+   (cd ../test/bats && bash ./prepare-test.sh)
    ```
-4. (OPTIONAL) Deploy secrets for industry fusion registry if you are going to use a private docker registry
+4. Check if your kubernetes cluster already have cert-manger operator installed or not. You can do similar check to other operator as well as sometime hosted kubernetes may have these operators. eg. like below
+   ```
+   $ kubectl get namespace cert-manager 
+   NAME           STATUS   AGE
+   cert-manager   Active   22d
+   ```
+   If already installed remove/comment  cert-manager operator (other operators) installation in install_operator.sh and  uninstall_operator.sh. Also you can remove from helmfile.yaml
+5. (OPTIONAL) Deploy secrets for industry fusion registry if you are going to use a private docker registry
 
    ```
    kubectl -n iff create secret docker-registry regcred --docker-password=<password> --docker-username=<username> --docker-server=https://index.docker.io/v1/
@@ -113,7 +132,7 @@ With the `-c` option it can either
    * `-t order=second` installs second part
    * `-t order=third` installs third part
    * `-t app=velero` installs velero
-   * `-t app=keycloak` installs keyclaok
+   * `-t app=keycloak` installs keycloak
    * etc
 * destroy dedicated sub parts by using `-c destroy` and tags, e.g
    * `-t order=first` installs first part
@@ -136,7 +155,7 @@ installs first subpart where iff specific images are pulled locally and all othe
 
 ## Install with Dockerhub Access
 
-The nighly builds and releases can be found at [Dockerhub](https://hub.docker.com/u/ibn40). To install a specific version, checkout the respective branch, update the tag description and apply the install script. For instance, to deploy version `v0.6.0-beta.1`, edit the file `.env` to containt the respective tag `DOCKER_TAG=v0.6.0-beta.1` and apply the procedure as follows:
+The nightly builds and releases can be found at [Dockerhub](https://hub.docker.com/u/ibn40). To install a specific version, checkout the respective branch, update the tag description and apply the install script. For instance, to deploy version `v0.6.0-beta.1`, edit the file `.env` to contain the respective tag `DOCKER_TAG=v0.6.0-beta.1` and apply the procedure as follows:
 
       git checkout v0.6.0-beta.1
       (cd ../test && bash ./install-platform.sh -c all)
@@ -164,7 +183,7 @@ This is normally done by the platform installation scripts. However, dependent o
 
 First, find out which node in k3s is used as ingress ip by using `kubectl -n iff get ingress/keycloak-ingress -o jsonpath={".status.loadBalancer.ingress[0].ip"}`
 
-Say the determined IP-addres is `172.27.0.2`. Then k8s internal, the keycloak.local has to be mapped to this IP. To do that, edit the coredns configmap of kubesystem:
+Say the determined IP-address is `172.27.0.2`. Then k8s internal, the keycloak.local has to be mapped to this IP. To do that, edit the coredns configmap of kubesystem:
 `kubectl -n kube-system edit cm/coredns`
 
 ```
@@ -207,7 +226,7 @@ s3:
    userSecretKey: <secret key>
 ```
 
-The selection of the environment files is depenend to the selected helmfile profile, if no profile is set, the `environment/default.yaml` file is used. In addition, when external S3 storage is used, Minio should be disabled in the profile, create the buckets in external S3 and then update the S3 bucket names in the following sections:
+The selection of the environment files is dependent to the selected helmfile profile, if no profile is set, the `environment/default.yaml` file is used. In addition, when external S3 storage is used, Minio should be disabled in the profile, create the buckets in external S3 and then update the S3 bucket names in the following sections:
 
 ```
 minio:
@@ -231,7 +250,7 @@ db:
 
 Some Kubernetes Resources which are not easy recoverable are backed up once per day by `velero`.
 
-In case of a database corruption, the database can be recoverd from S3 with the following steps:
+In case of a database corruption, the database can be recovered from S3 with the following steps:
 1. Remove postgres chart: `helmfile -l app=postgres destroy`
 2. Switch on database cloning mode in the profile:
 
