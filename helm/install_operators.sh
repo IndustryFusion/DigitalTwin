@@ -72,7 +72,36 @@ else
   chmod +x kubectl-minio
   export PATH="$(pwd):$PATH"
   kubectl minio version
-  kubectl minio init 
+  kubectl minio init
+  # Step 3: Apply preferred anti-affinity patch
+  echo "Patching MinIO Operator deployment with preferred anti-affinity..."
+  kubectl -n minio-operator patch deployment minio-operator \
+  --type='json' \
+  -p='[
+    {
+      "op": "replace",
+      "path": "/spec/template/spec/affinity/podAntiAffinity",
+      "value": {
+        "preferredDuringSchedulingIgnoredDuringExecution": [
+          {
+            "weight": 100,
+            "podAffinityTerm": {
+              "labelSelector": {
+                "matchExpressions": [
+                  {
+                    "key": "name",
+                    "operator": "In",
+                    "values": ["minio-operator"]
+                  }
+                ]
+              },
+              "topologyKey": "kubernetes.io/hostname"
+            }
+          }
+        ]
+      }
+    }
+  ]'
 fi
 printf -- "------------------------\033[0m\n"
 
