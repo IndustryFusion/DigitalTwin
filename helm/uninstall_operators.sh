@@ -88,5 +88,10 @@ helm -n ${EMQX_OPERATOR_NAMESPACE} delete emqx-operator
 # kubectl delete namespace ${NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -
 kubectl create namespace ${EMQX_OPERATOR_NAMESPACE} --dry-run=client -o yaml | kubectl delete -f -
 
+printf "\n"
+printf "\033[1mRemoving Flink Kubernetes Operator\n"
+printf -- "------------------------\033[0m\n"
+helm -n ${NAMESPACE} delete flink-kubernetes-operator
+
 
 printf -- "\033[1mOperators uninstalled successfully.\033[0m\n"

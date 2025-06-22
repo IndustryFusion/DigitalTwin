@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+set -e
+
 . env.sh
 
 printf "\n"
@@ -166,6 +168,25 @@ printf -- "------------------------\033[0m\n"
 
 if [ ! "$OFFLINE" = "true" ]; then
   ( cd ${OFFLINE_DIR} && rm -rf helm-charts && git clone https://github.com/vmware-tanzu/helm-charts.git && cd helm-charts && git checkout ${VELERO_HELM_VERSION} )
+fi
+
+printf "\n"
+printf "\033[1mInstalling Flink Operator\n"
+printf -- "------------------------\033[0m\n"
+
+FLINK_OPERATOR_IMAGE_REGISTRY=${COMMON_MAIN_REGISTRY}/${MAIN_REPO}
+if [ "$LOCAL" = "true" ]; then
+  FLINK_OPERATOR_IMAGE_REGISTRY=${LOCAL_REGISTRY}/${MAIN_REPO}
+  echo selected local image for flink operator: ${FLINK_OPERATOR_IMAGE_REGISTRY}
+fi
+if [ "$OFFLINE" = "true" ]; then
+  ( cd ${OFFLINE_DIR}/flink-kubernetes-operator && helm -n ${NAMESPACE} upgrade --install flink-kubernetes-operator flink-kubernetes-operator-1.11.0-helm.tgz \
+      --set image.repository="${FLINK_OPERATOR_IMAGE_REGISTRY}/flink-operator" --set image.tag="${DOCKER_TAG}" )
+else
+  helm repo add flink-kubernetes-operator https://downloads.apache.org/flink/flink-kubernetes-operator-1.11.0
+  helm repo update
+  helm -n ${NAMESPACE} install flink-kubernetes-operator flink-operator-repo/flink-kubernetes-operator --set image.repository="${FLINK_OPERATOR_IMAGE_REGISTRY}/flink-operator" --set image.tag="${DOCKER_TAG}"
+
 fi
 
 printf -- "\033[1mOperators installed successfully.\033[0m\n"

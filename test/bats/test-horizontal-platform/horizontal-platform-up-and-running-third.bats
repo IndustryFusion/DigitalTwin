@@ -26,13 +26,7 @@ DETIK_DEBUG="true"
 
 
 @test "verify that flink is up and running" {
-    run try "at most 30 times every 60s to find 1 pod named 'flink-jobmanager' with 'status.containerStatuses[*].ready' being 'true,true'"
-    [ "$status" -eq 0 ]
-
-    run try "at most 2 times every 30s to find 1 pod named 'flink-taskmanager' with 'status.containerStatuses[0].ready' being 'true'"
-    [ "$status" -eq 0 ]
-
-    run try "at most 2 times every 30s to find 1 pod named 'beamservices-operator' with 'status.containerStatuses[0].ready' being 'true'"
+    run try "at most 30 times every 60s to find 1 pod named 'flink-deployment' with 'status.containerStatuses[*].ready' being 'true,true'"
     [ "$status" -eq 0 ]
 
 }
@@ -57,8 +51,12 @@ DETIK_DEBUG="true"
 }
 
 @test "verify that the core services are up" {
-    run try "at most 30 times every 60s to find 1 bsqls named 'core-services' with 'status.state' being 'RUNNING'"
+    run try "at most 30 times every 60s to find 1 flinksessionjob named 'core-services-job' with 'status.jobStatus.state' being 'RUNNING'"
     [ "$status" -eq 0 ]
+    run try "at most 2 times every 30s to find 1 pod named 'flink-deployment-taskmanager' with 'status.containerStatuses[0].ready' being 'true'"
+    [ "$status" -eq 0 ]
+
+
 
 }
 @test "verify that emqx is up and running" {

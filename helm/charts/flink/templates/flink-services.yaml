@@ -1,0 +1,77 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: flink-jobmanager-rest
+  namespace: {{ .Release.Namespace }}
+spec:
+  type: NodePort
+  ports:
+  - name: rest
+    port: 8081
+    targetPort: 8081
+    nodePort: 30081
+  selector:
+    app: flink-deployment
+    component: jobmanager
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flink-sql-gateway
+  namespace: {{ .Release.Namespace }}
+spec:
+  type: ClusterIP
+  ports:
+  - name: rest
+    port: {{ .Values.flink.sqlClientPort }}
+    targetPort: {{ .Values.flink.sqlClientPort }}
+  selector:
+    app: flink-deployment
+    component: jobmanager
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flink-jobmanager
+  namespace: {{ .Release.Namespace }}
+spec:
+  type: ClusterIP
+  ports:
+  - name: rpc
+    port: 6123
+  - name: blob-server
+    port: 6124
+  - name: webui
+    port: 8081
+  - name: sql-gateway
+    port: 9000
+  - name: native-gateway
+    port: 8083
+  selector:
+    app: flink-deployment
+    component: jobmanager
+---
+# flink-extra-rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: flink-discovery
+  namespace: {{ .Release.Namespace }}
+rules:
+  - apiGroups: [""]
+    resources: ["services","endpoints"]
+    verbs: ["get","list","watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: flink-discovery-binding
+  namespace: iff
+subjects:
+  - kind: ServiceAccount
+    name: flink
+    namespace: iff
+roleRef:
+  kind: Role
+  name: flink-discovery
+  apiGroup: rbac.authorization.k8s.io

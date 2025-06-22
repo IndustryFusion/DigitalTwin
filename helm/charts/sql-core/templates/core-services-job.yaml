@@ -1,0 +1,10 @@
+apiVersion: flink.apache.org/v1beta1
+kind: FlinkSessionJob
+metadata:
+  name: core-services-job
+spec:
+  deploymentName: flink-deployment
+  job:
+    jarURI: file:///app/CoreServices.jar
+    parallelism: 1
+    upgradeMode: stateless

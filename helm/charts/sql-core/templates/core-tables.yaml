@@ -50,7 +50,7 @@ spec:
     format: json
     json.fail-on-missing-field: false
     json.ignore-parse-errors: true
-  primaryKey: [resource, event]
+  primaryKey: [resource, event, environment]
 ---
 apiVersion: industry-fusion.com/v1alpha2
 kind: BeamSqlTable
