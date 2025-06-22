@@ -45,3 +45,9 @@ DETIK_DEBUG="true"
     [ "$status" -eq 0 ]
 
 }
+@test "verify the flink operator is up and running" {
+
+    run try "at most 10 times every 30s to get pod named 'flink-kubernetes-operator' and verify that 'status' is 'running'"
+    [ "$status" -eq 0 ]
+
+}

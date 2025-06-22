@@ -86,11 +86,9 @@ alertaConfig: |
 
   DEFAULT_NORMAL_SEVERITY = 'ok'
   COLUMNS = ['severity', 'status', 'lastReceiveTime', 'duplicateCount', 'customer', 'environment', 'service', 'resource', 'event', 'value', 'text']
-  PLUGINS=['reject']
-  ALLOWED_ENVIRONMENTS=['Production', 'Development', 'Code']
 
   AUTH_PROVIDER = 'keycloak'
-
+  PLUGINS = ['blackout']
   REQUESTS_CA_BUNDLE=True
   ADMIN_USERS = ['admin']
   USER_DEFAULT_SCOPES = ['read','write:alerts']

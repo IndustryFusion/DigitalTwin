@@ -111,9 +111,9 @@ sql_check_relationship_base = """
                         D.severity as severity,
                         D.id as constraint_id
                     FROM {{target_class}}_view AS A JOIN {{constraint_table}} as D ON A.`type` = D.targetClass
-                    LEFT JOIN attributes_view AS B ON B.name = D.propertyPath and B.entityId = A.id and B.parentId IS NULL
-                    LEFT JOIN attributes_view AS E ON E.name = D.subpropertyPath and E.entityId = A.id and E.parentId = B.id
-                    LEFT JOIN {{target_class}}_view AS C ON COALESCE(E.`attributeValue`, B.`attributeValue`) = C.id
+                    LEFT JOIN attributes_view AS B ON B.name = D.propertyPath and B.entityId = A.id and B.parentId IS NULL and COALESCE(B.`deleted`, false) = false
+                    LEFT JOIN attributes_view AS E ON E.name = D.subpropertyPath and E.entityId = A.id and E.parentId = B.id and COALESCE(E.`deleted`, false) = false
+                    LEFT JOIN {{target_class}}_view AS C ON COALESCE(E.`attributeValue`, B.`attributeValue`) = C.id and COALESCE(C.`deleted`, false) = false
                     WHERE (D.subpropertyPath IS NULL or E.id is not NULL) and D.attributeType = 'https://uri.etsi.org/ngsi-ld/Relationship'
             )
 """  # noqa: E501
@@ -125,16 +125,14 @@ sql_check_relationship_property_class = """
             SELECT this AS resource,
                 'ClassConstraintComponent(' || `parentPath` || `printPath` || ')' AS event,
                 `constraint_id` as constraint_id,
-                CASE WHEN {{ constraint_cond }} THEN true ELSE false END as triggered,
-                CASE WHEN {{ constraint_cond }} THEN `severity`
-                    ELSE 'ok' END AS severity,
-                CASE WHEN {{ constraint_cond }}
-                        THEN 'Model validation for relationship' || `propertyPath` || 'failed for '|| this || '. Relationship not linked to existing entity of type ' ||  `propertyClass` || '.'
-                    ELSE 'All ok' END as `text`
+                true as triggered,
+                `severity` AS severity,
+                'Model validation for relationship' || `propertyPath` || 'failed for '|| this || '. Relationship not linked to existing entity of type ' ||  `propertyClass` || '.'
+                    as `text`
                 {%- if sqlite %}
                 ,CURRENT_TIMESTAMP
                 {%- endif %}
-            FROM A1 WHERE A1.propertyClass IS NOT NULL and `index` IS NOT NULL
+            FROM A1 WHERE A1.propertyClass IS NOT NULL and `index` IS NOT NULL and {{ constraint_cond }}
 """  # noqa: E501
 
 sql_check_relationship_property_count = """
@@ -145,20 +143,17 @@ sql_check_relationship_property_count = """
             SELECT this AS resource,
                 'CountConstraintComponent(' || `parentPath` || `propertyPath` || ')' AS event,
                 `constraint_id` as constraint_id,
-                CASE WHEN {{ constraint_cond }} THEN true ELSE false END as triggered,
-                CASE WHEN {{ constraint_cond }}
-                    THEN `severity`
-                    ELSE 'ok' END AS severity,
-                CASE WHEN {{ constraint_cond }}
-                    THEN
-                        'Model validation for relationship ' || `propertyPath` || 'failed for ' || this || ' . Found ' ||
+                true as triggered,
+                `severity` AS severity,
+               'Model validation for relationship ' || `propertyPath` || 'failed for ' || this || ' . Found ' ||
                             SQL_DIALECT_CAST(SUM(CASE WHEN NOT COALESCE(adeleted, FALSE) AND link IS NOT NULL THEN 1 ELSE 0 END) AS STRING) || ' relationships instead of [' || `minCount` || ', ' || `maxCount` || ']!'
-                    ELSE 'All ok' END as `text`
+                    as `text`
                 {%- if sqlite %}
                 ,CURRENT_TIMESTAMP
                 {%- endif %}
             FROM A1 WHERE `minCount` is NOT NULL or `maxCount` is NOT NULL
-            group by this, edeleted, propertyPath, maxCount, minCount, severity, constraint_id, parentPath
+            GROUP BY this, edeleted, propertyPath, maxCount, minCount, severity, constraint_id, parentPath
+            HAVING {{ constraint_cond }}
 """  # noqa: E501
 
 sql_check_relationship_nodeType = """
@@ -168,18 +163,14 @@ sql_check_relationship_nodeType = """
             SELECT this AS resource,
                 'NodeKindConstraintComponent(' || `parentPath` || `printPath` || ')' AS event,
                 `constraint_id` as constraint_id,
-                CASE WHEN {{ constraint_cond }} THEN true ELSE false END as triggered,
-                CASE WHEN {{ constraint_cond }}
-                    THEN `severity`
-                    ELSE 'ok' END AS severity,
-                CASE WHEN {{ constraint_cond }}
-                    THEN
-                        'Model validation for relationship ' || `propertyPath` || ' failed for ' || this || ' . Either NodeType '|| nodeType || ' is not an IRI or type is not a Relationship.'
-                    ELSE 'All ok' END as `text`
+                true as triggered,
+                `severity` AS severity,
+                'Model validation for relationship ' || `propertyPath` || ' failed for ' || this || ' . Either NodeType '|| nodeType || ' is not an IRI or type is not a Relationship.'
+                    as `text`
                 {%- if sqlite %}
                 ,CURRENT_TIMESTAMP
                 {%- endif %}
-            FROM A1 WHERE `index` IS NOT NULL
+            FROM A1 WHERE `index` IS NOT NULL AND {{ constraint_cond }}
 """  # noqa: E501
 
 sql_check_property_iri_base = """
@@ -232,19 +223,17 @@ sql_check_property_count = """
 SELECT this AS resource,
     'CountConstraintComponent(' || `parentPath` || `propertyPath` || ')' AS event,
     `constraint_id` as constraint_id,
-    CASE WHEN {{ constraint_cond }} THEN true ELSE false END as triggered,
-    CASE WHEN {{ constraint_cond }}
-        THEN `severity`
-        ELSE 'ok' END AS severity,
-    CASE WHEN {{ constraint_cond }}
-        THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '.  Found ' ||
+    true as triggered,
+    `severity` AS severity,
+   'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '.  Found ' ||
                             SQL_DIALECT_CAST(count(CASE WHEN NOT `adeleted` THEN 1 ELSE 0 END) AS STRING) || ' relationships instead of [' || IFNULL('[' || `minCount`, '[0') || IFNULL(`maxCount` || ']', '[') || '!'
-        ELSE 'All ok' END as `text`
+        as `text`
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
 FROM A1  WHERE `minCount` is NOT NULL or `maxCount` is NOT NULL
-group by this, typ, propertyPath, minCount, maxCount, severity, edeleted, constraint_id, parentPath
+GROUP BY this, typ, propertyPath, minCount, maxCount, severity, edeleted, constraint_id, parentPath
+HAVING {{ constraint_cond }}
 """  # noqa: E501
 
 sql_check_property_iri_class = """
@@ -255,17 +244,14 @@ NOT edeleted AND attr_typ IS NOT NULL AND NOT IFNULL(adeleted, false) AND (val i
 SELECT this AS resource,
     'DatatypeConstraintComponent(' || `parentPath` || `printPath` || ')' AS event,
     `constraint_id` as constraint_id,
-    CASE WHEN {{ constraint_cond }} THEN true ELSE false END as triggered,
-    CASE WHEN {{ constraint_cond }}
-        THEN `severity`
-        ELSE 'ok' END AS severity,
-    CASE WHEN {{ constraint_cond }}
-        THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Invalid value ' || IFNULL(val, 'NULL')  || ' not type of ' || `propertyClass` || '.'
-        ELSE 'All ok' END as `text`
+    true as triggered,
+    `severity` AS severity,
+    'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Invalid value ' || IFNULL(val, 'NULL')  || ' not type of ' || `propertyClass` || '.'
+        as `text`
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
-FROM A1  WHERE propertyNodetype = '@id' and propertyClass IS NOT NULL and `index` IS NOT NULL
+FROM A1  WHERE propertyNodetype = '@id' and propertyClass IS NOT NULL and `index` IS NOT NULL AND {{ constraint_cond }}
 """  # noqa: E501
 
 sql_check_property_nodeType = """
@@ -275,36 +261,38 @@ NOT edeleted AND NOT IFNULL(adeleted, false) AND (nodeType <> `propertyNodetype`
 SELECT this AS resource,
     'NodeKindConstraintComponent(' || `parentPath` || `printPath` || ')' AS event,
     `constraint_id` as constraint_id,
-    CASE WHEN {{ constraint_cond }} THEN true ELSE false END as triggered,
-    CASE WHEN {{ constraint_cond }} THEN `severity` ELSE 'ok' END AS severity,
-    CASE WHEN {{ constraint_cond }}
-        THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Node is not ' ||
+    true as triggered,
+    `severity` AS severity,
+    'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Node is not ' ||
             'of nodetype "' || `nodeType` || '" or not of attribute type "' || attributeType || '"'
-        ELSE 'All ok' END as `text`
+        as `text`
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
-FROM A1 WHERE propertyNodetype IS NOT NULL and `index` IS NOT NULL
+FROM A1 WHERE propertyNodetype IS NOT NULL and `index` IS NOT NULL AND {{ constraint_cond }}
 """  # noqa: E501
 
 sql_check_property_minmax = """
 {% set constraint_cond%}
 NOT edeleted AND NOT IFNULL(adeleted, false) AND attr_typ IS NOT NULL AND (SQL_DIALECT_CAST(val AS DOUBLE) is NULL or NOT (SQL_DIALECT_CAST(val as DOUBLE) {{ operator }} SQL_DIALECT_CAST(`{{ comparison_value }}` AS DOUBLE)) )
 {% endset %}
+{% set constraint_cond2%}
+typ IS NOT NULL AND attr_typ IS NOT NULL AND NOT (SQL_DIALECT_CAST(val as DOUBLE) {{ operator }} SQL_DIALECT_CAST( `{{ comparison_value }}` as DOUBLE) )
+{% endset %}
 SELECT this AS resource,
  '{{minmaxname}}ConstraintComponent(' || `parentPath` || `printPath` || ')' AS event,
     `constraint_id` as constraint_id,
-    CASE WHEN {{ constraint_cond }} THEN true ELSE false END as triggered,
-    CASE WHEN {{ constraint_cond }} THEN `severity` ELSE 'ok' END AS severity,
+    true as triggered,
+    `severity` AS severity,
     CASE WHEN {{ constraint_cond }}
         THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Value ' || IFNULL(val, 'NULL') || ' not comparable with ' || `{{ comparison_value }}` || '.'
-        WHEN typ IS NOT NULL AND attr_typ IS NOT NULL AND NOT (SQL_DIALECT_CAST(val as DOUBLE) {{ operator }} SQL_DIALECT_CAST( `{{ comparison_value }}` as DOUBLE) )
+        WHEN {{ constraint_cond2}}
         THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Value ' || IFNULL(val, 'NULL') || ' is not {{ operator }} ' || `{{ comparison_value }}` || '.'
-        ELSE 'All ok' END as `text`
+        END as `text`
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
-FROM A1 where `{{ comparison_value}}` IS NOT NULL and `index` IS NOT NULL
+FROM A1 where `{{ comparison_value}}` IS NOT NULL and `index` IS NOT NULL AND ({{ constraint_cond }} OR {{ constraint_cond2 }})
 """  # noqa: E501
 
 sql_check_string_length = """
@@ -314,15 +302,14 @@ NOT edeleted  AND NOT IFNULL(adeleted, false) AND attr_typ IS NOT NULL AND {%- i
 SELECT this AS resource,
  '{{minmaxname}}ConstraintComponent(' || `parentPath` || `printPath` || ')' AS event,
     `constraint_id` as constraint_id,
-    CASE WHEN {{ constraint_cond }} THEN true ELSE false END as triggered,
-    CASE WHEN {{ constraint_cond }} THEN `severity` ELSE 'ok' END AS severity,
-    CASE WHEN {{ constraint_cond }}
-        THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Length of ' || IFNULL(val, 'NULL') || ' is {{ operator }} ' || `{{ comparison_value }}` || '.'
-        ELSE 'All ok' END as `text`
+    true as triggered,
+    `severity` AS severity,
+    'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Length of ' || IFNULL(val, 'NULL') || ' is {{ operator }} ' || `{{ comparison_value }}` || '.'
+         as `text`
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
-FROM A1 WHERE `{{ comparison_value }}` IS NOT NULL and `index` IS NOT NULL
+FROM A1 WHERE `{{ comparison_value }}` IS NOT NULL and `index` IS NOT NULL AND {{ constraint_cond }}
 """  # noqa: E501
 
 sql_check_literal_pattern = """
@@ -332,15 +319,14 @@ NOT edeleted AND NOT IFNULL(adeleted, false) AND attr_typ IS NOT NULL AND {%- if
 SELECT this AS resource,
  '{{validationname}}ConstraintComponent(' || `parentPath` || `printPath` || ')' AS event,
     `constraint_id` as constraint_id,
-    CASE WHEN {{ constraint_cond }} THEN true ELSE false END as triggered,
-    CASE WHEN {{ constraint_cond }} THEN `severity` ELSE 'ok' END AS severity,
-    CASE WHEN {{ constraint_cond }}
-        THEN 'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Value ' || IFNULL(val, 'NULL') || ' does not match pattern ' || `pattern`
-        ELSE 'All ok' END as `text`
+    true as triggered,
+    `severity` AS severity,
+    'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Value ' || IFNULL(val, 'NULL') || ' does not match pattern ' || `pattern`
+         as `text`
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
-FROM A1 WHERE `pattern` IS NOT NULL and `index` IS NOT NULL
+FROM A1 WHERE `pattern` IS NOT NULL and `index` IS NOT NULL AND {{ constraint_cond }}
 """  # noqa: E501
 
 sql_check_literal_in = """
@@ -350,15 +336,14 @@ NOT edeleted AND NOT IFNULL(adeleted, false) AND attr_typ IS NOT NULL AND NOT ',
 SELECT this AS resource,
  '{{constraintname}}(' || `parentPath` || `printPath` || ')' AS event,
     `constraint_id` as constraint_id,
-    CASE WHEN {{ constraint_cond }} THEN true ELSE false END as triggered,
-    CASE WHEN {{ constraint_cond }} THEN `severity` ELSE 'ok' END AS severity,
-    CASE WHEN {{ constraint_cond }}
-        THEN 'Model validation for Property propertyPath failed for ' || this || '. Value ' || IFNULL(val, 'NULL') || ' is not allowed.'
-        ELSE 'All ok' END as `text`
+    true as triggered,
+    `severity` AS severity,
+    'Model validation for Property propertyPath failed for ' || this || '. Value ' || IFNULL(val, 'NULL') || ' is not allowed.'
+        as `text`
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
-FROM A1 where `ins` IS NOT NULL and `index` IS NOT NULL
+FROM A1 where `ins` IS NOT NULL and `index` IS NOT NULL AND {{ constraint_cond }}
 """  # noqa: E501
 
 sql_check_literal_datatypes = """
@@ -388,21 +373,20 @@ NOT edeleted AND NOT IFNULL(adeleted, false) AND attr_typ IS NOT NULL AND
 SELECT this AS resource,
  '{{constraintname}}(' || `parentPath` || `printPath` || ')' AS event,
     `constraint_id` as constraint_id,
-    CASE WHEN {{ constraint_cond }} THEN true ELSE false END as triggered,
-    CASE WHEN {{ constraint_cond }} THEN `severity` ELSE 'ok' END AS severity,
-    CASE WHEN {{ constraint_cond }}
-            THEN 'Datatype check failed. ' || CASE WHEN `datatypes` IS NULL THEN '"' || `val` || '" does not fit to '  ELSE '"' || `val`
+    true as triggered,
+    `severity` AS severity,
+    'Datatype check failed. ' || CASE WHEN `datatypes` IS NULL THEN '"' || `val` || '" does not fit to '  ELSE '"' || `val`
                                             || '" does not fit to datatypes "'
                                             || `datatypes`
                                             || '" or ' END
                                             || 'property node type "'
                                             || `propertyNodetype`
                                             || '".'
-        ELSE 'All ok' END as `text`
+       as `text`
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
-FROM A1 where `index` IS NOT NULL AND `propertyNodetype` IN ('@value', '@list', '@json')
+FROM A1 where `index` IS NOT NULL AND `propertyNodetype` IN ('@value', '@list', '@json') AND {{ constraint_cond }}
 """  # noqa: E501 W605
 
 
@@ -426,12 +410,9 @@ sql_check_literal_hasvalue = """
     || propertyPath
     || ')'         AS event,
   `constraint_id` as constraint_id,
-  CASE WHEN {{ constraint_cond }} THEN TRUE ELSE FALSE END  AS triggered,
-  CASE WHEN {{ constraint_cond }} THEN `severity` ELSE 'ok' END AS severity,
-  CASE
-    WHEN {{ constraint_cond }}
-    THEN
-      'Model validation for Property '
+  TRUE AS triggered,
+  `severity` AS severity,
+  'Model validation for Property '
       || propertyPath
       || ' failed for '
       || this
@@ -440,12 +421,11 @@ sql_check_literal_hasvalue = """
       || '" does not match required "'
       || hasValue
       || '".'
-    ELSE 'All ok'
-  END AS text
+    AS text
   {% if sqlite %}, CURRENT_TIMESTAMP{% endif %}
 FROM A1
 
-WHERE hasValue IS NOT NULL AND `index` IS NOT NULL
+WHERE hasValue IS NOT NULL AND `index` IS NOT NULL AND {{ constraint_cond }}
 """
 
 sql_insert_constraint_in_alerts = """
@@ -460,17 +440,9 @@ SELECT
     ARRAY ['SHACL Validator'] AS service,
     {% endif %}
 
-  CASE
-    WHEN MAX(CASE WHEN t.triggered THEN 1 ELSE 0 END) = 1
-      THEN MAX(t.severity)
-    ELSE 'ok'
-  END                                AS severity,
+  MAX(t.severity) AS severity,
   'customer'                        AS customer,
-  CASE
-    WHEN MAX(CASE WHEN t.triggered THEN 1 ELSE 0 END) = 1
-      THEN MAX(t.text)
-    ELSE 'ok'
-  END                                AS text
+ MAX(t.text) AS text
     {% if sqlite %}
     ,CURRENT_TIMESTAMP
     {% endif %}
@@ -483,7 +455,8 @@ FROM
     ON ct.id = comb.member_constraint_id
 GROUP BY
   t.resource,
-  t.event;
+  t.event
+  HAVING MAX(CASE WHEN t.triggered THEN 1 ELSE 0 END) = 1;
 """  # noqa: E501
 
 

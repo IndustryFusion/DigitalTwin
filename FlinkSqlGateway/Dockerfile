@@ -50,7 +50,7 @@ rm -rf /var/lib/apt/lists/*
 
 # install PyFlink
 RUN pip3 install --no-cache-dir apache-flink==1.19.0
-
+RUN mkdir -p /opt/flink/plugins/s3 && cp /opt/flink/opt/flink-s3-fs-hadoop-*.jar /opt/flink/plugins/s3
 
 USER 9999
 ENTRYPOINT [ "node ./gateway.js" ]

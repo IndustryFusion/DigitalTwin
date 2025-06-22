@@ -20,6 +20,7 @@ COMMON_EXTERNAL_REGISTRY=$(yq ".externalRegistry" < $DIRNAME/common.yaml)
 COMMON_EXTERNAL_REGISTRY2=$(yq ".externalRegistry2" < $DIRNAME/common.yaml)
 COMMON_EXTERNAL_REGISTRY3=$(yq ".externalRegistry3" < $DIRNAME/common.yaml)
 COMMON_EXTERNAL_REGISTRY4=$(yq ".externalRegistry4" < $DIRNAME/common.yaml)
+export MAIN_REPO=$(yq ".mainRepo" < $DIRNAME/common.yaml)
 export REGISTRY=${REGISTRY:-${COMMON_MAIN_REGISTRY}}
 export EXT_REGISTRY=${EXT_REGISTRY:-${COMMON_EXTERNAL_REGISTRY}}
 export EXT_REGISTRY2=${EXT_REGISTRY2:-${COMMON_EXTERNAL_REGISTRY2}}

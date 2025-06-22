@@ -38,7 +38,11 @@ console.log(JSON.stringify(config));
 const errorIsUnrecoverable = function (body) {
   // The error code is not very expressive in Alerta. try to detect patterns in error message to filter out
   // non recoverable errors
-  if (body.message.includes('Severity') && body.message.includes('is not one of') && body.status === 'error') {
+  console.log('Marcel123 body:', JSON.stringify(body));
+  // Use body.statusCode if it exists, otherwise try body.status or body.code
+  const statusCode = body.code;
+  if ((body.message.includes('Severity') && body.message.includes('is not one of') && body.status === 'error') ||
+  (statusCode === 400) || (statusCode === 415)) {
     logger.info(`Dropping record due to unrecoverable error: ${body.message}`);
     return true;
   }

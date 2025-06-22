@@ -36,3 +36,7 @@ services:
     image: ${DOCKER_PREFIX:-ibn40}/keycloak:${DOCKER_TAG}
     build:
       context: ./Keycloak
+  flink-operator:
+    image: ${DOCKER_PREFIX:-ibn40}/flink-operator:${DOCKER_TAG}
+    build:
+      context: ./FlinkOperatorWithCoreServices
