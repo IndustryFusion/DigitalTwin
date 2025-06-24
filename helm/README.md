@@ -65,18 +65,19 @@ After that, the following steps have to be executed (note the round brackets):
 5. Use ngsi-ld api via `ngsild.local`
 
 
-# Other Installation Options
-
+# Other Installation Options (Hosted K8s cluster)
 
 1. Activate your Kubernetes cluster and install `kubectl` (`kubens` is also recommended) on your local machine.
 
    * Install an ingress controller, in case of K3s it is traefik, in other cases, install nginx ingress controller. [Instructions here.](https://kubernetes.github.io/ingress-nginx/deploy/#quick-start)
    * Edit you /etc/hosts file to make sure that `keycloak.local`, `alerta.local` and `ngsild.local` point to the ingress IP of your kubernetes cluster.
-   * Make sure that the Pods within your Kubernetes cluster can resolve keycloak.local
+   * Make sure that the Pods within your Kubernetes cluster can resolve keycloak.local, if not check if you need to modify local DNS. See test/stup-local-ingress.sh script for example.
 
-3. Install helm with diff plugin and helmfile 0.149.0:
+3. Install helm with diff plugin, helmfile 0.149.0 and bats in machine from where you are installing Digital Twin PDT:
 
    ```
+   cd helm
+
    # helm v3.10.3
    wget https://get.helm.sh/helm-v3.10.3-linux-amd64.tar.gz
    tar -zxvf helm-v3.10.3-linux-amd64.tar.gz
@@ -85,12 +86,30 @@ After that, the following steps have to be executed (note the round brackets):
    # helm-diff plugin
    helm plugin install https://github.com/databus23/helm-diff
 
-   # helmfile v0.149.0
+   # helmfile v0.149.0 in helm directory
    wget https://github.com/helmfile/helmfile/releases/download/v0.149.0/helmfile_0.149.0_linux_amd64.tar.gz
    tar -zxvf helmfile_0.149.0_linux_amd64.tar.gz
    chmod u+x helmfile
+
+   # yq install v4.45.2
+   sudo wget https://github.com/mikefarah/yq/releases/download/v4.45.2/yq_linux_amd64 -O /usr/local/bin/yq &&\
+   sudo chmod +x /usr/local/bin/yq
+
+   # Install bats version 1.9.0
+   wget https://github.com/bats-core/bats-core/archive/refs/tags/v1.9.0.tar.gz
+   tar -zxvf v1.9.0.tar.gz
+   sudo ./bats-core-1.9.0/install.sh /usr/local
+   rm -rf v1.9.0.tar.gz bats-core-1.9.0
+   (cd ../test/bats && bash ./prepare-test.sh)
    ```
-4. (OPTIONAL) Deploy secrets for industry fusion registry if you are going to use a private docker registry
+4. Check if your kubernetes cluster already have cert-manger operator installed or not. You can do similar check to other operator as well as sometime hosted kubernetes may have these operators. eg. like below
+   ```
+   $ kubectl get namespace cert-manager 
+   NAME           STATUS   AGE
+   cert-manager   Active   22d
+   ```
+   If already installed remove/comment  cert-manager operator (other operators) installation in install_operator.sh and  uninstall_operator.sh. Also you can remove from helmfile.yaml
+5. (OPTIONAL) Deploy secrets for industry fusion registry if you are going to use a private docker registry
 
    ```
    kubectl -n iff create secret docker-registry regcred --docker-password=<password> --docker-username=<username> --docker-server=https://index.docker.io/v1/
