@@ -787,6 +787,7 @@ def translate(shaclefile, knowledgefile, prefixes):
               configs.rdf_table_obj_name]
     views = [configs.attributes_view_obj_name]
     statementsets = []
+    value_statementsets = []
     sqlite = ''
     # Get all NGSI-LD Relationship
 
@@ -970,26 +971,26 @@ string elements in list are supported.")
     tables.append(configs.kafka_topic_ngsi_prefix_name)
     views.append(configs.kafka_topic_ngsi_prefix_name + "-view")
     sqlite += '\n'
-    sqlite += utils.add_table_values(constraint_checks,
-                                     utils.constraint_table,
-                                     utils.SQL_DIALECT.SQLITE,
-                                     configs.constraint_table_name)
+    sqlite += "\n".join(utils.add_table_values(constraint_checks,
+                                               utils.constraint_table,
+                                               utils.SQL_DIALECT.SQLITE,
+                                               configs.constraint_table_name))
     sql_command_yaml = utils.add_table_values(constraint_checks,
                                               utils.constraint_table,
                                               utils.SQL_DIALECT.SQL,
                                               configs.constraint_table_name)
-    statementsets.append(sql_command_yaml)
+    value_statementsets.extend(sql_command_yaml)
     tables.append(configs.constraint_table_object_name)
     sqlite += '\n'
-    sqlite += utils.add_table_values(constraint_combination,
-                                     utils.constraint_combination_table,
-                                     utils.SQL_DIALECT.SQLITE,
-                                     configs.constraint_combination_table_name)
+    sqlite += "\n".join(utils.add_table_values(constraint_combination,
+                                               utils.constraint_combination_table,
+                                               utils.SQL_DIALECT.SQLITE,
+                                               configs.constraint_combination_table_name))
     sql_command_yaml = utils.add_table_values(constraint_combination,
                                               utils.constraint_combination_table,
                                               utils.SQL_DIALECT.SQL,
                                               configs.constraint_combination_table_name)
-    statementsets.append(sql_command_yaml)
+    value_statementsets.extend(sql_command_yaml)
     sqlite += '\n'
     sql_command_sqlite, sql_command_yaml = create_relationship_sql()
     statementsets.append(sql_command_yaml)
@@ -1032,4 +1033,4 @@ string elements in list are supported.")
     sqlite += sql_command_sqlite
     sqlite += '\n'
     tables.append(utils.class_to_obj_name(configs.constraint_table_object_name))
-    return sqlite, (statementsets, tables, views)
+    return sqlite, (statementsets, tables, views, value_statementsets)

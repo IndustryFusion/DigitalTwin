@@ -42,8 +42,12 @@ spec:
   numberOfInstances: {{ .Values.db.podInstances }}
   users:
 {{ toYaml .Values.dbUsers | indent 4 }}
+    {{ .Values.flink.db.replicationUser }}:
+    - REPLICATION
+    - LOGIN
   databases:
 {{ toYaml .Values.databases | indent 4 }}
+    flink: ngb
   preparedDatabases:
 {{ toYaml .Values.preparedTimescaleDatabases | indent 4 }}:
       extensions:
@@ -57,10 +61,29 @@ spec:
       schemas:
         public:
           defaultRoles: false
+    {{ .Values.flink.db.name}}:
+      defaultUsers: true
+      schemas:
+        {{ .Values.flink.db.schema }}: {}
+      initScripts:
+        set_reader_role.sql: |
+          GRANT USAGE ON SCHEMA public TO {{ .Values.flink.db.replicationUser }};
+          GRANT SELECT ON ALL TABLES IN SCHEMA public TO {{ .Values.flink.db.replicationUser }};
+          GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO {{ .Values.flink.db.replicationUser }};
+          ALTER DEFAULT PRIVILEGES FOR ROLE flink_writer_user IN SCHEMA public
+            GRANT SELECT ON TABLES TO {{ .Values.flink.db.replicationUser }};
+          ALTER DEFAULT PRIVILEGES FOR ROLE flink_writer_user IN SCHEMA public
+            GRANT USAGE, SELECT ON SEQUENCES TO {{ .Values.flink.db.replicationUser }};
   postgresql:
     version: "14"
     parameters:
       wal_level: logical
+  patroni:
+    slots:
+      my_slot:
+        type: logical
+        database: {{ .Values.flink.db.name }}
+        plugin: decoderbufs
   {{- if .Values.db.cloneEnabled }}
   clone:
     cluster: {{ .Values.clusterSvcName | quote }}

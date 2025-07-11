@@ -25,8 +25,8 @@ DETIK_CLIENT_NAMESPACE="iff"
 DETIK_DEBUG="true"
 
 
-@test "verify that flink is up and running" {
-    run try "at most 30 times every 60s to find 1 pod named 'flink-deployment' with 'status.containerStatuses[*].ready' being 'true,true'"
+@test "verify that flinkdeployment is deployed" {
+    run try "at most 30 times every 60s to find 1 flinkdeployment named 'flink-deployment' with 'status.reconciliationStatus.state' being 'DEPLOYED'"
     [ "$status" -eq 0 ]
 
 }
@@ -52,6 +52,10 @@ DETIK_DEBUG="true"
 
 @test "verify that the core services are up" {
     run try "at most 30 times every 60s to find 1 flinksessionjob named 'core-services-job' with 'status.jobStatus.state' being 'RUNNING'"
+    [ "$status" -eq 0 ]
+    run try "at most 30 times every 60s to find 1 flinksessionjob named 'core-services-job' with 'status.lifecycleState' being 'STABLE'"
+    [ "$status" -eq 0 ]
+    run try "at most 30 times every 60s to find 1 flinksessionjob named 'core-services-job' with 'status.reconciliationStatus.state' being 'DEPLOYED'"
     [ "$status" -eq 0 ]
     run try "at most 2 times every 30s to find 1 pod named 'flink-deployment-taskmanager' with 'status.containerStatuses[0].ready' being 'true'"
     [ "$status" -eq 0 ]

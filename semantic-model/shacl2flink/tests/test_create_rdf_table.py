@@ -73,6 +73,15 @@ def test_main(mock_utils, mock_configs, mock_create_table, mock_rdflib,
     mock_utils.create_sql_table.return_value = "sqltable"
     mock_utils.create_yaml_table.return_value = "yamltable"
     mock_utils.create_statementset.return_value = "statementset"
+    mock_utils.get_common_data.return_value = {
+        'flink': {
+            'db': {
+                'writeUser': 'flink-writer-user',
+                'readUser': 'flink-reader-user',
+                'replicationUser': 'flink-replication-user'
+            }
+        }
+    }
     mock_yaml.dump.return_value = "dump"
     monkeypatch.setattr(mock_utils, "transitive_closure", identity)
 

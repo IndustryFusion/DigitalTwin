@@ -527,5 +527,101 @@ class TestcreateKafkaDdl(TestCase):
         result = target.create_view(beamsqlview)
         self.assertEqual(result, "CREATE VIEW `name` AS sqlstatement;")
 
+class TestCreateCdcDdl(TestCase):
+    """
+    tests for create_cdc_ddl
+    """
+    def test_create_cdc_ddl_success(self):
+        """
+        test successful cdc ddl creation
+        """
+        global GLOBAL_MESSAGE
+        GLOBAL_MESSAGE = ""
+        beamsqltable = Bunch()
+        beamsqltable.metadata = Bunch()
+        beamsqltable.metadata.name = "cdc_table"
+        beamsqltable.metadata.namespace = "default"
+        beamsqltable.spec = {
+            "name": "cdc_table",
+            "fields": [
+                {"field1": "STRING"},
+                {"field2": "INT"}
+            ],
+            "cdc": {
+                "hostname": "localhost",
+                "port": "5432"
+            }
+        }
+        result = target.create_cdc_ddl(beamsqltable, "postgres-cdc", Logger())
+        self.assertEqual(result, "CREATE TABLE `cdc_table` (`field1` STRING,`field2` INT) WITH ('connector' = 'postgres-cdc', 'hostname' = 'localhost', 'port' = '5432');")
+
+    def test_create_cdc_ddl_no_name(self):
+        """
+        test cdc ddl creation with no name in spec
+        """
+        global GLOBAL_MESSAGE
+        GLOBAL_MESSAGE = ""
+        beamsqltable = Bunch()
+        beamsqltable.metadata = Bunch()
+        beamsqltable.metadata.name = "cdc_table"
+        beamsqltable.metadata.namespace = "default"
+        beamsqltable.spec = {
+            "fields": [
+                {"field1": "STRING"},
+                {"field2": "INT"}
+            ],
+            "cdc": {
+                "hostname": "localhost",
+                "port": "5432"
+            }
+        }
+        result = target.create_cdc_ddl(beamsqltable, "mysql-cdc", Logger())
+        self.assertEqual(result, "CREATE TABLE `cdc_table` (`field1` STRING,`field2` INT) WITH ('connector' = 'mysql-cdc', 'hostname' = 'localhost', 'port' = '5432');")
+        self.assertTrue(GLOBAL_MESSAGE.startswith("BeamsqlTable default/cdc_table has no defined name in spec:"))
+
+    def test_create_cdc_ddl_no_cdc(self):
+        """
+        test cdc ddl creation with no cdc in spec
+        """
+        global GLOBAL_MESSAGE
+        GLOBAL_MESSAGE = ""
+        beamsqltable = Bunch()
+        beamsqltable.metadata = Bunch()
+        beamsqltable.metadata.name = "cdc_table"
+        beamsqltable.metadata.namespace = "default"
+        beamsqltable.spec = {
+            "name": "cdc_table",
+            "fields": [
+                {"field1": "STRING"},
+                {"field2": "INT"}
+            ]
+            # no "cdc" key
+        }
+        result = target.create_cdc_ddl(beamsqltable, "postgres-cdc", Logger())
+        self.assertEqual(result, None)
+        self.assertTrue(GLOBAL_MESSAGE.startswith("Beamsqltable cdc_table has no cdc connector descriptor."))
+
+    def test_create_cdc_ddl_watermark_field(self):
+        """
+        test cdc ddl creation with watermark field
+        """
+        beamsqltable = Bunch()
+        beamsqltable.metadata = Bunch()
+        beamsqltable.metadata.name = "cdc_table"
+        beamsqltable.metadata.namespace = "default"
+        beamsqltable.spec = {
+            "name": "cdc_table",
+            "fields": [
+                {"watermark": "FOR TABLE"},
+                {"field2": "INT"}
+            ],
+            "cdc": {
+                "hostname": "localhost"
+            }
+        }
+        result = target.create_cdc_ddl(beamsqltable, "postgres-cdc", Logger())
+        self.assertIn("watermark FOR TABLE", result)
+        self.assertIn("`field2` INT", result)
+
 if __name__ == '__main__':
     unittest.main()

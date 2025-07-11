@@ -76,7 +76,7 @@ accessible: {e}")
     sqlite3, (statementsets3, tables3, views3) = \
         translate_construct(shaclfile, knowledgefile)
 
-    sqlite, (statementsets, tables, views) = \
+    sqlite, (statementsets, tables, views, constraints) = \
         translate_properties(shaclfile, knowledgefile, prefixes)
 
     sqlite2, (statementsets2, tables2, views2) = \
@@ -87,6 +87,8 @@ accessible: {e}")
 
     split_statementsets = utils.split_statementsets(statementsets + statementsets2 + statementsets3,
                                                     configs.max_sql_configmap_size)
+    split_constraints = utils.split_statementsets(constraints,
+                                                  configs.max_sql_configmap_size)
     ttl = '{{.Values.flink.ttl}}'
     with open(os.path.join(output_folder, "shacl-validation.yaml"), "w") as f, \
             open(os.path.join(output_folder, "shacl-validation-maps.yaml"), "w") as fm:
@@ -105,6 +107,20 @@ accessible: {e}")
     with open(os.path.join(output_folder, "shacl-validation.sqlite"), "w") \
             as sqlitef:
         print(sqlite + sqlite2 + sqlite3, file=sqlitef)
+
+    with open(os.path.join(output_folder, "shacl-constraints.yaml"), "w") as f, \
+            open(os.path.join(output_folder, "shacl-constraints-maps.yaml"), "w") as fm:
+
+        num = 0
+        statementmap = []
+        for statementset_map in split_constraints:
+            num += 1
+            fm.write("---\n")
+            configmapname = 'shacl-constraints-configmap' + str(num)
+            yaml.dump(utils.create_configmap(configmapname, statementset_map), fm)
+            statementmap.append(f'{maps_namespace}/{configmapname}')
+        yaml.dump(utils.create_statementmap('shacl-constraints', tables, views, ttl,
+                                            statementmap, False), f)
 
 
 if __name__ == '__main__':

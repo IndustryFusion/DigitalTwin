@@ -154,7 +154,7 @@ def delete(body, spec, patch, logger, **kwargs):
     logger.info(f" {namespace}/{name} cancelled and ready for deletion")
 
 
-@kopf.index('industry-fusion.com', "v1alpha2", "beamsqltables")
+@kopf.index('industry-fusion.com', "v1alpha3", "beamsqltables")
 # pylint: disable=missing-function-docstring
 def beamsqltables(name: str, namespace: str, body: kopf.Body, **_):
     return {(namespace, name): body}

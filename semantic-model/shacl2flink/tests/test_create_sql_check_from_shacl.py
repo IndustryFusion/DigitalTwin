@@ -34,7 +34,7 @@ def test_main(mock_rdflib, mock_utils, mock_yaml, mock_translate_construct, mock
     mock_utils.create_statementset.return_value = 'create_statementsets'
 
     mock_translate_properties.return_value = 'sqlite', ('statementsets',
-                                                        ['tables'], ['views'])
+                                                        ['tables'], ['views'], ['constraint_values'])
     mock_translate_sparql.return_value = 'sqlite2', ('statementsets2',
                                                      ['tables2'], ['views2'])
     mock_translate_construct.return_value = 'sqlite3', ('statementsets3',
@@ -44,7 +44,7 @@ def test_main(mock_rdflib, mock_utils, mock_yaml, mock_translate_construct, mock
     with patch("builtins.open", mock_open(read_data="data")) as mock_file:
         create_sql_checks_from_shacl.main('kms/shacl.ttl', 'kms/knowledge.ttl', 'iff', None,
                                           tmp_path)
-    mock_file.assert_called_with(os.path.join(tmp_path, 'shacl-validation.sqlite'), 'w')
+    mock_file.assert_called_with(os.path.join(tmp_path, 'shacl-constraints-maps.yaml'), 'w')
     assert mock_yaml.YAML().dump.called
 
 

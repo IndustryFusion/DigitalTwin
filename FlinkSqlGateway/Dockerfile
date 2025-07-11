@@ -51,6 +51,7 @@ rm -rf /var/lib/apt/lists/*
 # install PyFlink
 RUN pip3 install --no-cache-dir apache-flink==1.19.0
 RUN mkdir -p /opt/flink/plugins/s3 && cp /opt/flink/opt/flink-s3-fs-hadoop-*.jar /opt/flink/plugins/s3
+RUN wget https://repo1.maven.org/maven2/org/apache/flink/flink-sql-connector-postgres-cdc/3.4.0/flink-sql-connector-postgres-cdc-3.4.0.jar -P /opt/flink/lib
 
 USER 9999
 ENTRYPOINT [ "node ./gateway.js" ]
