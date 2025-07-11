@@ -93,6 +93,12 @@ flink:
   taskmanagerCacheSize: 10Gi
   ttl: "86400000 ms"
   coreTtl: "300000 ms"
+  db:
+    name: {{ .StateValues.flink.db.name }}
+    schema: {{ .StateValues.flink.db.schema }}
+    replicationUser: {{ .StateValues.flink.db.replicationUser }}
+    replicationUserSecret: {{ .StateValues.flink.db.replicationUserSecret }}
+    slotName: {{ .StateValues.flink.db.slotName }}
 
 minio:
   enabled: {{ .StateValues.minio.enabled }}

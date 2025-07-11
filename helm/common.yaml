@@ -21,4 +21,11 @@ ontology:
 kafkaBridge:
   hashlength: 24
 
- 
+flink:
+  db:
+    name: flink
+    schema: public
+    replicationUser: flink_repl_user
+    writeUser: flink_writer_user
+    replicationUserSecret: flink-repl-user.acid-cluster.credentials.postgresql.acid.zalan.do
+    slotName: my_slot

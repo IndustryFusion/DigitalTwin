@@ -39,14 +39,15 @@ def wrap_property_or(g):
             for p, o in extras:
                 g.remove((prop, p, o))
         else:
-            # No OR: wrap extras into a single-element OR
-            inner = BNode()
-            for p, o in extras:
-                g.add((inner, p, o))
-                g.remove((prop, p, o))
-            or_list = BNode()
-            Collection(g, or_list, [inner])
-            g.add((prop, SH['or'], or_list))
+            # No OR: wrap extras into a single-element OR (only if there are extras)
+            if extras:
+                inner = BNode()
+                for p, o in extras:
+                    g.add((inner, p, o))
+                    g.remove((prop, p, o))
+                or_list = BNode()
+                Collection(g, or_list, [inner])
+                g.add((prop, SH['or'], or_list))
 
 
 def main():

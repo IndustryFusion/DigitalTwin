@@ -52,10 +52,51 @@ def create_ddl_from_beamsqltables(beamsqltable, logger):
         return create_kafka_ddl(beamsqltable, logger)
     if connector == "upsert-kafka":
         return create_upsert_kafka_ddl(beamsqltable, logger)
+    if connector.endswith("-cdc"):
+        # cdc is a special case, it is not a kafka connector
+        # but a postgres-cdc or mysql-cdc
+        # the ddl is created in the same way as for upsert-kafka
+        return create_cdc_ddl(beamsqltable, connector, logger)
     message = f"Beamsqltable {name} has not supported connector: \
         {connector}. Only supported: kafka, upsert-kafka"
     logger.warning(message)
     return None
+
+
+def create_cdc_ddl(beamsqltable, connector, logger):
+    """
+    creates ddl table for cdc connector
+    """
+    metadata_name = beamsqltable.metadata.name
+    namespace = beamsqltable.metadata.namespace
+    name = beamsqltable.spec.get("name")
+    if not name:
+        message = f"BeamsqlTable {namespace}/{metadata_name}"\
+                  f" has no defined name in spec:"
+        logger.warning(message)
+        name = metadata_name
+    ddl = f"CREATE TABLE `{name}` ("
+    ddl += ",".join(f"{k} {v}" if k.lower() == "watermark" else f"`{k}` {v}"
+                    for k, v in {k: v for x in beamsqltable.spec.get("fields")
+                                 for k, v in x.items()}.items())
+    ddl += ") WITH ("
+    ddl += f"'connector' = '{connector}'"
+
+    # loop through the cdc structure
+    # map all key value pairs to 'key' = 'value',
+    cdc = beamsqltable.spec.get("cdc")
+    if not cdc:
+        message = f"Beamsqltable {metadata_name} has no cdc "\
+                  f"connector descriptor."
+        logger.warning(message)
+        return None
+
+    # insert cdc fields
+    for cdc_key, cdc_value in cdc.items():
+        ddl += f", '{cdc_key}' = '{cdc_value}'"
+    ddl += ");"
+    logger.debug(f"Created ddl for table {name}: {ddl}")
+    return ddl
 
 
 def create_kafka_ddl(beamsqltable, logger):

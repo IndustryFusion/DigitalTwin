@@ -147,6 +147,12 @@ spec:
               name: gw-tmp-volume
             securityContext:
               runAsUser: 9999  # refers to user _flink_ from official flink image, change if necessary
+          - name: native-sql-gateway
+            image: {{ .Values.mainRegistry }}/{{ .Values.mainRepo }}/flink-sql-gateway:{{ .Values.mainVersion }}
+            command:
+              - "/opt/flink/bin/sql-gateway.sh"
+              - "start-foreground"
+              - "-Dsql-gateway.endpoint.rest.address=localhost"
         volumes:
         - name: jm-tmp-volume
           emptyDir:

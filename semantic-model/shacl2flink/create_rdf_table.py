@@ -42,6 +42,25 @@ where {
     && ?o != owl:Class)
 }
 """
+golang_function = """
+{{- $canLookup := not (empty (lookup "v1" "Namespace" "" "kube-system")) -}}
+{{- $password := "PLACEHOLDER" -}}
+{{- $secName := trim (required "Set .Values.flink.db.replicationUserSecret" .Values.flink.db.replicationUserSecret) -}}
+{{- $sec := lookup "v1" "Secret" .Release.Namespace $secName -}}
+{{- if and $canLookup (not $sec) -}}
+  {{- fail (printf "Secret %q not found in %s" $secName .Release.Namespace) -}}
+{{- end -}}
+{{- if $canLookup -}}
+  {{- $password := b64dec (get $sec.data "password") -}}
+{{- end }}
+"""
+
+grant_reader_access = """
+ALTER DEFAULT PRIVILEGES FOR ROLE {{ flink_writer_user }} IN SCHEMA public
+  GRANT SELECT ON TABLES TO {{ flink_reader_user }};
+ALTER DEFAULT PRIVILEGES FOR ROLE {{ flink_writer_user }} IN SCHEMA public
+  GRANT USAGE, SELECT ON SEQUENCES TO {{ flink_reader_user }};
+"""
 
 
 def parse_args(args=sys.argv[1:]):
@@ -53,12 +72,18 @@ def parse_args(args=sys.argv[1:]):
     return parsed_args
 
 
-def create_table():
+def create_table(sqldialect=utils.SQL_DIALECT.SQL):
     table = []
-    table.append({"subject": "STRING"})
-    table.append({"predicate": "STRING"})
-    table.append({"object": "STRING"})
-    table.append({"index": "INTEGER"})
+    if sqldialect in [utils.SQL_DIALECT.SQL, utils.SQL_DIALECT.SQLITE]:
+        table.append({"subject": "STRING"})
+        table.append({"predicate": "STRING"})
+        table.append({"object": "STRING"})
+        table.append({"index": "INTEGER"})
+    elif sqldialect == utils.SQL_DIALECT.POSTGRES:
+        table.append({"subject": "TEXT"})
+        table.append({"predicate": "TEXT"})
+        table.append({"object": "TEXT"})
+        table.append({"index": "INTEGER"})
     return table
 
 
@@ -109,17 +134,18 @@ def main(knowledgefile, namespace, output_folder='output'):
     table_name = configs.rdf_table_obj_name
     spec_name = configs.rdf_table_name
     table = create_table()
-    connector = 'upsert-kafka'
-    kafka = {
-        'topic': configs.rdf_topic,
-        'properties': {
-            'bootstrap.servers': configs.kafka_bootstrap
-        },
-        'key.format': 'json'
+    connector = 'postgres-cdc'
+    cdc = {
+        'hostname': '{{.Values.clusterSvcName}}',
+        'port': '{{.Values.db.svcPort}}',
+        'username': '{{ .Values.flink.db.replicationUser }}',
+        'password': '{{ (dig "data" "password" "" $sec | b64dec | default "PLACEHOLDER") }}',
+        'database-name': '{{.Values.flink.db.name}}',
+        'schema-name': '{{.Values.flink.db.schema}}',
+        'table-name': 'rdf',
+        'slot.name': '{{.Values.flink.db.slotName}}',
+        'debezium.database.sslmode': 'require'
     }
-    value = {'format': 'json',
-             'json.fail-on-missing-field': False,
-             'json.ignore-parse-errors': True}
     primary_key = ['subject', 'predicate', 'index']
 
     # Create RDF statements to insert data
@@ -127,12 +153,19 @@ def main(knowledgefile, namespace, output_folder='output'):
     g.parse(knowledgefile)
     g = utils.transitive_closure(g)
     statementsets = create_statementset(g)
-    sqlstatements = ''
+    sqlitestatements = ''
+    common_data = utils.get_common_data()
+    postgresstatements = ''
+    postgress_repl_access = grant_reader_access.replace("{{ flink_writer_user }}",
+                                                        common_data['flink']['db']['writeUser']) \
+        .replace("{{ flink_reader_user }}", common_data['flink']['db']['replicationUser']) + '\n'
     for statementset in statementsets:
-        sqlstatements += f'INSERT OR REPLACE INTO `{spec_name}` VALUES\n' + \
-                         statementset
-    statementsets = list(map(lambda statementset: f'INSERT INTO `{spec_name}` VALUES\n' +
-                             statementset, statementsets))
+        sqlitestatements += f'INSERT OR REPLACE INTO `{spec_name}` VALUES\n' + \
+            statementset
+        postgresstatements += f'INSERT INTO "{spec_name}" VALUES\n' + \
+            statementset
+    sqlstatementsets = list(map(lambda statementset: f'INSERT INTO `{spec_name}` VALUES\n' +
+                            statementset, statementsets))
 
     # Kafka topic object for RDF
     config = {}
@@ -142,17 +175,29 @@ def main(knowledgefile, namespace, output_folder='output'):
     with open(os.path.join(output_folder, "rdf.sqlite"), "w") as fp:
         fp.write(utils.create_sql_table(spec_name, table, primary_key))
         fp.write('\n')
-        fp.write(sqlstatements)
+        fp.write(sqlitestatements)
+
+    # populate postgres file
+    with open(os.path.join(output_folder, "rdf.postgres"), "w") as fp:
+        postgres_table = create_table(utils.SQL_DIALECT.POSTGRES)
+        fp.write(postgress_repl_access)
+        fp.write('\n')
+        fp.write(utils.create_sql_table(spec_name, postgres_table, primary_key, dialect=utils.SQL_DIALECT.POSTGRES))
+        fp.write('\n')
+        fp.write(postgresstatements)
 
     with open(os.path.join(output_folder, "rdf.yaml"), "w") as fp, \
+            open(os.path.join(output_folder, "rdf-table.yaml"), "w") as ft, \
             open(os.path.join(output_folder, "rdf-kafka.yaml"), "w") as fk, \
             open(os.path.join(output_folder, "rdf-maps.yaml"), "w") as fm:
-        fp.write('---\n')
-        yaml.dump(utils.create_yaml_table(table_name, connector, table,
-                  primary_key, kafka, value), fp)
+        ft.write('---\n')
+        yamltable = utils.create_yaml_table_cdc(table_name, connector, table,
+                                                primary_key, cdc)
+        ft.write(golang_function)
+        yaml.dump(yamltable, ft)
         num = 0
         statementmap = []
-        for statementset in statementsets:
+        for statementset in sqlstatementsets:
             num += 1
             fm.write("---\n")
             configmapname = 'rdf-configmap' + str(num)

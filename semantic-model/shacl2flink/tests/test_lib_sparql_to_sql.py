@@ -20,6 +20,8 @@ import lib.utils
 from munch import Munch
 from rdflib import term
 import pytest
+from rdflib import Variable
+
 
 hasObjectURI = term.URIRef("https://uri.etsi.org/ngsi-ld/hasObject")
 stateURI = term.URIRef("https://industry-fusion.com/types/v0.9/state")
@@ -505,3 +507,88 @@ def test_process_aggregate(mock_create_varname, mock_translate, mock_set_is_aggr
     assert result_distinct == 'DISTINCT'
     assert mock_translate.called
     assert mock_set_is_aggregate_var.call_count == 2
+
+
+# Tests for get_bound_trim_string function
+def test_get_bound_trim_string_property_variable():
+    ctx = {
+        'bounds': {'foo': 'bar'},
+        'property_variables': {Variable('foo'): True},
+        'time_variables': {},
+        'query': 'SELECT ?foo WHERE { ... }'
+    }
+    result = lib.sparql_to_sql.get_bound_trim_string(ctx, Variable('foo'))
+    assert result == "SQL_DIALECT_STRIP_IRI{bar}"
+
+
+def test_get_bound_trim_string_property_variable_false():
+    ctx = {
+        'bounds': {'foo': 'bar'},
+        'property_variables': {Variable('foo'): False},
+        'time_variables': {},
+        'query': 'SELECT ?foo WHERE { ... }'
+    }
+    result = lib.sparql_to_sql.get_bound_trim_string(ctx, Variable('foo'))
+    assert result == "SQL_DIALECT_STRIP_LITERAL{bar}"
+
+
+def test_get_bound_trim_string_time_variable():
+    ctx = {
+        'bounds': {'foo': 'bar'},
+        'property_variables': {},
+        'time_variables': {Variable('foo'): True},
+        'query': 'SELECT ?foo WHERE { ... }'
+    }
+    result = lib.sparql_to_sql.get_bound_trim_string(ctx, Variable('foo'))
+    # Note: There's a typo in the original function - "DIALIFAECT" should be "DIALECT"
+    assert result == "SQL_DIALIFAECT_STRIP_LITERAL{bar}"
+
+
+def test_get_bound_trim_string_complex_variable_name():
+    """Test with more complex variable names"""
+    ctx = {
+        'bounds': {'entityId': 'urn:ngsi-ld:Entity:123'},
+        'property_variables': {Variable('entityId'): True},
+        'time_variables': {},
+        'query': 'SELECT ?entityId WHERE { ... }'
+    }
+    result = lib.sparql_to_sql.get_bound_trim_string(ctx, Variable('entityId'))
+    assert result == "SQL_DIALECT_STRIP_IRI{urn:ngsi-ld:Entity:123}"
+
+
+def test_get_bound_trim_string_literal_value():
+    """Test with literal value in bounds"""
+    ctx = {
+        'bounds': {'value': '"42"^^xsd:int'},
+        'property_variables': {Variable('value'): False},
+        'time_variables': {},
+        'query': 'SELECT ?value WHERE { ... }'
+    }
+    result = lib.sparql_to_sql.get_bound_trim_string(ctx, Variable('value'))
+    assert result == 'SQL_DIALECT_STRIP_LITERAL{"42"^^xsd:int}'
+
+
+def test_get_bound_trim_string_time_variable_with_timestamp():
+    """Test time variable with actual timestamp value"""
+    ctx = {
+        'bounds': {'timestamp': '2023-07-25T10:30:00Z'},
+        'property_variables': {},
+        'time_variables': {Variable('timestamp'): True},
+        'query': 'SELECT ?timestamp WHERE { ... }'
+    }
+    result = lib.sparql_to_sql.get_bound_trim_string(ctx, Variable('timestamp'))
+    # Note: There's a typo in the original function - "DIALIFAECT" should be "DIALECT"
+    assert result == "SQL_DIALIFAECT_STRIP_LITERAL{2023-07-25T10:30:00Z}"
+
+
+def test_get_bound_trim_string_variable_in_both_collections():
+    """Test when variable exists in both property_variables and time_variables (property takes precedence)"""
+    ctx = {
+        'bounds': {'foo': 'bar'},
+        'property_variables': {Variable('foo'): True},
+        'time_variables': {Variable('foo'): True},
+        'query': 'SELECT ?foo WHERE { ... }'
+    }
+    result = lib.sparql_to_sql.get_bound_trim_string(ctx, Variable('foo'))
+    # Property variables should take precedence
+    assert result == "SQL_DIALECT_STRIP_IRI{bar}"

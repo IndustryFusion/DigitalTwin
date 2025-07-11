@@ -508,7 +508,7 @@ def test_split_statementsets():
     statementsets = ["verylongstatement"]
     max_map_size = 10
     result = utils.split_statementsets(statementsets, max_map_size)
-    assert result == [[], ["verylongstatement"]]
+    assert result == [["verylongstatement"]]
 
     # Test case 6: Strings with exact fit
     statementsets = ["short", "medium"]
@@ -524,35 +524,35 @@ def test_add_table_values():
     sqldialect = utils.SQL_DIALECT.SQLITE
     table_name = "test_table"
     result = utils.add_table_values(values, table, sqldialect, table_name)
-    expected = (
+    expected = [
         "INSERT OR REPLACE INTO test_table VALUES"
         "(1,'Alice'),"
         " (2,'Bob');"
-    )
+    ]
     assert result == expected
 
     # Test case 2: Basic SQL dialect (SQL)
     sqldialect = utils.SQL_DIALECT.SQL
     result = utils.add_table_values(values, table, sqldialect, table_name)
-    expected = (
+    expected = [
         "INSERT INTO test_table VALUES"
         "(1,'Alice'),"
         " (2,'Bob');"
-    )
+    ]
     assert result == expected
 
     # Test case 3: Null values
     values = [{"id": None, "name": "Alice"}, {"id": 2, "name": None}]
     result = utils.add_table_values(values, table, sqldialect, table_name)
-    expected = (
+    expected = [
         "INSERT INTO test_table VALUES"
         "(CAST (NULL as INTEGER),'Alice'),"
         " (2,CAST (NULL as STRING));"
-    )
+    ]
     assert result == expected
 
     # Test case 4: Empty values
     values = []
     result = utils.add_table_values(values, table, sqldialect, table_name)
-    expected = "INSERT INTO test_table VALUES;"
+    expected = []
     assert result == expected

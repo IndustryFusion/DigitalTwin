@@ -17,6 +17,7 @@
 import os
 import re
 import rdflib
+import ruamel.yaml
 from urllib.parse import urlparse
 from enum import Enum
 from rdflib import Graph, RDFS, RDF, OWL, XSD, Literal, SH, Namespace, BNode
@@ -25,6 +26,7 @@ from collections import deque
 from lib.configs import constraint_table_name, constraint_trigger_table_name, constraint_combination_table_name
 
 NGSILD = Namespace('https://uri.etsi.org/ngsi-ld/')
+commonyamlfile = '../../../helm/common.yaml'
 
 
 class WrongSparqlStructure(Exception):
@@ -38,6 +40,7 @@ class SparqlValidationFailed(Exception):
 class SQL_DIALECT(Enum):
     SQL = 0
     SQLITE = 1
+    POSTGRES = 2
 
 
 class DnsNameNotCompliant(Exception):
@@ -87,6 +90,16 @@ constraint_combination_table = [
     {"operation": "STRING"},
     {"target_constraint_id": "INTEGER"}
 ]
+
+
+def get_common_data():
+    commonyaml = ruamel.yaml.YAML()
+    try:
+        with open(os.path.join(os.path.dirname(__file__), commonyamlfile), "r") as file:
+            yaml_dict = commonyaml.load(file)
+        return yaml_dict
+    except:
+        raise Exception("Could not read common.yaml file.")
 
 
 def get_full_path_of_shacl_property(g, property):
@@ -228,16 +241,43 @@ def create_yaml_table(name, connector, table, primary_key, kafka, value):
     return yaml_table
 
 
+def create_yaml_table_cdc(name, connector, table, primary_key, cdc):
+    obj_name = class_to_obj_name(name)
+    if not check_dns_name(obj_name):
+        raise DnsNameNotCompliant
+    yaml_table = {}
+    yaml_table['apiVersion'] = 'industry-fusion.com/v1alpha3'
+    yaml_table['kind'] = 'BeamSqlTable'
+    metadata = {}
+    yaml_table['metadata'] = metadata
+    metadata['name'] = obj_name
+    spec = {}
+    yaml_table['spec'] = spec
+    spec['name'] = name
+    spec['connector'] = connector
+    spec['fields'] = table
+    spec['cdc'] = cdc
+    if primary_key is not None:
+        spec['primaryKey'] = primary_key
+    return yaml_table
+
+
 def create_sql_table(name, table, primary_key, dialect=SQL_DIALECT. SQL):
-    sqltable = f'DROP TABLE IF EXISTS `{name}`;\n'
+    if dialect in [SQL_DIALECT.SQL, SQL_DIALECT.SQLITE]:
+        sqltable = f'DROP TABLE IF EXISTS `{name}`;\n'
+    elif dialect == SQL_DIALECT.POSTGRES:
+        sqltable = f'DROP TABLE IF EXISTS "{name}";\n'
     first = True
-    sqltable += f'CREATE TABLE `{name}` (\n'
+    if dialect in [SQL_DIALECT.SQL, SQL_DIALECT.SQLITE]:
+        sqltable += f'CREATE TABLE `{name}` (\n'
+    elif dialect == SQL_DIALECT.POSTGRES:
+        sqltable += f'CREATE TABLE "{name}" (\n'
     for field in table:
         for fname, ftype in field.items():
             if fname.lower() == 'watermark':
                 break
             if 'metadata' in ftype.lower() and 'timestamp' in ftype.lower():
-                if dialect == SQL_DIALECT.SQLITE:
+                if dialect in [SQL_DIALECT.SQLITE, SQL_DIALECT.POSTGRES]:
                     ftype = 'DEFAULT CURRENT_TIMESTAMP'
                 else:
                     ftype = 'TIMESTAMP(3)'
@@ -245,7 +285,10 @@ def create_sql_table(name, table, primary_key, dialect=SQL_DIALECT. SQL):
                 first = False
             else:
                 sqltable += ',\n'
-            sqltable += f'`{fname}` {ftype}'
+            if dialect in [SQL_DIALECT.SQL, SQL_DIALECT.SQLITE]:
+                sqltable += f'`{fname}` {ftype}'
+            elif dialect == SQL_DIALECT.POSTGRES:
+                sqltable += f'"{fname}" {ftype}'
     if primary_key is not None:
         sqltable += ',\nPRIMARY KEY('
         first = True
@@ -254,7 +297,10 @@ def create_sql_table(name, table, primary_key, dialect=SQL_DIALECT. SQL):
                 first = False
             else:
                 sqltable += ','
-            sqltable += f'`{key}`'
+            if dialect in [SQL_DIALECT.SQL, SQL_DIALECT.SQLITE]:
+                sqltable += f'`{key}`'
+            elif dialect == SQL_DIALECT.POSTGRES:
+                sqltable += f'"{key}"'
         sqltable += ')\n'
     sqltable += ');\n'
 
@@ -590,7 +636,7 @@ def split_statementsets(statementsets, max_map_size):
         string_size = len(string)  # Calculate the size of the current string
 
         # If adding the current string exceeds the max_map_size, save the current group
-        if current_size + string_size > max_map_size:
+        if current_size + string_size > max_map_size and current_size > 0:
             grouped_strings.append(current_group)
             current_group = []    # Start a new group
             current_size = 0      # Reset the size counter for the new group
@@ -645,43 +691,62 @@ def create_constraint_combination_sql_table():
                             SQL_DIALECT.SQLITE)
 
 
-def add_table_values(values, table, sqldialect, table_name):
-    if sqldialect == SQL_DIALECT.SQLITE:
-        statement = f'INSERT OR REPLACE INTO {table_name} VALUES'
-    else:
-        statement = f'INSERT INTO {table_name} VALUES'
-    first = True
-    for value in values:
-        lcheck = {}
-        for k, v in value.items():
-            try:
-                datatype = next((typ[k] for typ in table if k in typ))
-            except:
-                print(f"Error: You provided a table field {k} which does not have a type in the given table \
-schema {table}.")
-            if v is None:
-                lcheck[k] = f'CAST (NULL as {datatype})'
-            else:
-                if datatype in ("STRING", "TEXT"):
-                    lcheck[k] = f"'{v}'"
-                else:
-                    lcheck[k] = f"{v}"
-        if first:
-            first = False
+def add_table_values(values, table, sqldialect, table_name, max_size=500):
+    """
+    Create a list of SQL insert statements, each with at most max_size rows.
+
+    Args:
+        values (list of dict): Each dict contains field names and values.
+        table (list of dict): Table schema, each dict maps field name to type.
+        sqldialect (SQL_DIALECT): SQL dialect to use.
+        table_name (str): Name of the table.
+        max_size (int): Maximum number of rows per statement.
+
+    Returns:
+        list of str: List of SQL insert statements.
+    """
+    statements = []
+    total_values = len(values)
+    for start in range(0, total_values, max_size):
+        chunk = values[start:start + max_size]
+        if sqldialect == SQL_DIALECT.SQLITE:
+            statement = f'INSERT OR REPLACE INTO {table_name} VALUES'
         else:
-            statement += ', '
-        statement += '('
-        first = True
-        for col in table:
-            col_name = next(iter(col))
-            if first:
-                first = False
+            statement = f'INSERT INTO {table_name} VALUES'
+        first_row = True
+        for value in chunk:
+            lcheck = {}
+            for k, v in value.items():
+                try:
+                    datatype = next((typ[k] for typ in table if k in typ))
+                except Exception:
+                    print(f"Error: You provided a table field {k} which does not have a type in the given table \
+schema {table}.")
+                    datatype = "STRING"
+                if v is None:
+                    lcheck[k] = f'CAST (NULL as {datatype})'
+                else:
+                    if datatype in ("STRING", "TEXT"):
+                        lcheck[k] = f"'{v}'"
+                    else:
+                        lcheck[k] = f"{v}"
+            if first_row:
+                first_row = False
             else:
-                statement += ','
-            statement += lcheck[col_name]
-        statement += ')'
-    statement += ';'
-    return statement
+                statement += ', '
+            statement += '('
+            first_col = True
+            for col in table:
+                col_name = next(iter(col))
+                if first_col:
+                    first_col = False
+                else:
+                    statement += ','
+                statement += lcheck[col_name]
+            statement += ')'
+        statement += ';'
+        statements.append(statement)
+    return statements
 
 
 def init_constraint_check():

@@ -12,6 +12,12 @@ HELM_DIR := ../../helm/charts/shacl
 NAMESPACE := iff
 ONTDIR := ../kms/ontology
 CHECKPOINT ?= false
+COMMON_CONFIG_FILE = ../../helm/common.yaml
+FLINK_DATABASE = $$(cat $(COMMON_CONFIG_FILE) | yq '.flink.db.name')
+FLINK_DATABASE_SERVICE = $$(cat $(COMMON_CONFIG_FILE) | yq '.db.teamId')-$$(cat $(COMMON_CONFIG_FILE) | yq '.db.clusterSvcPostfix')
+FLINK_DATABASE_PORT = $$(cat $(COMMON_CONFIG_FILE) | yq '.db.svcPort')
+FLINK_DATABASE_USER_NAME = $$(cat $(COMMON_CONFIG_FILE) | yq '.flink.db.writeUser')
+FLINK_DATABASE_USER = $$(echo $(FLINK_DATABASE_USER_NAME) | tr '_' '-')
 
 # Conditionally set CHECKPOINTVAR based on CHECKPOINT
 ifeq ($(CHECKPOINT), true)
@@ -33,11 +39,12 @@ build: $(SHACL) $(KNOWLEDGE $(MODEL)
 	$(PYTHON) create_sql_checks_from_shacl.py $(CHECKPOINTSWITCH) $(SHACL_NORMALIZED) $(KNOWLEDGE)
 
 helm: export IFF_HELM=true
-helm: build
+helm: build submit-rdf-table
 	mkdir -p ${HELM_DIR}
 	rm -rf ${HELM_DIR}/templates 
 	cp -rf ${OUTPUTDIR} ${HELM_DIR}/templates
-	rm -f ${HELM_DIR}/templates/*.sqlite ${HELM_DIR}/templates/core.yaml ${HELM_DIR}/templates/knowledge.yaml ${HELM_DIR}/templates/rdf-maps.yaml
+	rm -f ${HELM_DIR}/templates/*.sqlite ${HELM_DIR}/templates/*.postgres ${HELM_DIR}/templates/core.yaml ${HELM_DIR}/templates/knowledge.yaml ${HELM_DIR}/templates/rdf-maps.yaml
+	rm -f ${HELM_DIR}/templates/rdf.yaml ${HELM_DIR}/templates/rdf-kafka.yaml
 	cp Chart.yaml ${HELM_DIR}
 
 test: requirements-dev.txt
@@ -52,12 +59,12 @@ setup: requirements.txt setup-dev
 	echo ".mode column" >> ~/.sqliterc
 	echo ".load /usr/lib/sqlite3/pcre2.so" >> ~/.sqliterc
 
-update-rdf-cm: delete-rdf-cm
-	kubectl -n $(NAMESPACE) create -f output/rdf-maps.yaml
-	rm -f ${HELM_DIR}/templates/rdf-maps.yaml
+# update-rdf-cm: delete-rdf-cm
+# 	kubectl -n $(NAMESPACE) create -f output/rdf-maps.yaml
+# 	rm -f ${HELM_DIR}/templates/rdf-maps.yaml
 
- delete-rdf-cm:
-	kubectl -n $(NAMESPACE) delete configmap -l "shacl-data"="rdf-configmap"
+#  delete-rdf-cm:
+# 	kubectl -n $(NAMESPACE) delete configmap -l "shacl-data"="rdf-configmap"
 
 
 setup-dev: requirements-dev.txt
@@ -109,9 +116,9 @@ enable-strimzi:
 
 
 flink-deploy: clean
+
 	@echo deploy helm package
 	make helm
-	make update-rdf-cm
 	make disable-strimzi || echo "Can fail"
 	# make build || make enable-strimzi
 	kubectl -n $(NAMESPACE) delete -f output/ngsild-kafka.yaml --ignore-not-found || make enable-strimzi
@@ -123,7 +130,7 @@ flink-deploy: clean
 	kubectl -n $(NAMESPACE) -l "app.kubernetes.io/instance"="kafka-connect" delete pod
 
 
-flink-undeploy: delete-rdf-cm
+flink-undeploy:
 	@echo undeploy helm package
 	cd ../../helm && ./helmfile -f helmfile-shacl.yaml destroy
 	make test-flink-is-undeployed
@@ -173,6 +180,22 @@ ontology2kms:
 	done; \
 	/bin/bash -O extglob -c 'echo creating knowledge.ttl with $${ontpattern} $(ONTDIR)/!(*_shacl.ttl|*.html|*.jsonld|*.txt); rdfpipe -i ttl -o ttl $${ontpattern} $(ONTDIR)/!(*_shacl.ttl|*.html|*.jsonld|*.txt) > ../kms/knowledge.ttl'; \
 	echo creating shacl.ttl with $${shaclpattern}; rdfpipe -i ttl -o ttl $${shaclpattern} > ../kms/shacl.ttl
+
+start-database-service:
+	POD=$$(kubectl -n $(NAMESPACE) get ep $(FLINK_DATABASE_SERVICE)   -o jsonpath='{.subsets[0].addresses[0].targetRef.name}') && \
+	kubectl -n $(NAMESPACE) port-forward pod/$${POD} $(FLINK_DATABASE_PORT):$(FLINK_DATABASE_PORT) &
+
+stop-database-service:
+	killall -9 kubectl >/dev/null 2>&1 || echo "No database service found to stop"
+
+submit-rdf-table:
+	@echo Create RDF table in database
+	make start-database-service
+	@FLINK_USER_SECRET=$$(kubectl -n $(NAMESPACE) get secrets | grep $(FLINK_DATABASE_USER) | cut -d " " -f 1) && \
+	echo usersecret $${FLINK_USER_SECRET} from $(FLINK_DATABASE_USER) which is transformed from $(FLINK_DATABASE_USER_NAME) && \
+	PGPASSWORD=$$(kubectl -n $(NAMESPACE) get secret $${FLINK_USER_SECRET} -o go-template='{{index .data "password" | base64decode}}') && export PGPASSWORD=$${PGPASSWORD} && \
+	cat $(OUTPUTDIR)/rdf.postgres | PGSSLMODE=require psql -h localhost -U $(FLINK_DATABASE_USER_NAME) -d $(FLINK_DATABASE)
+	make stop-database-service
 
 clean:
 	@rm -rf $(OUTPUTDIR)
