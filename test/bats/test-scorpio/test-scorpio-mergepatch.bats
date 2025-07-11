@@ -16,6 +16,7 @@ CUTTER_MERGE=/tmp/CUTTER_MERGE
 CUTTER_QUERY=/tmp/CUTTER_QUERY
 CUTTER_BATCH=/tmp/CUTTER_BATCH
 CUTTER_MERGE_BATCH=/tmp/CUTTER_MERGE_BATCH
+CUTTER_MERGE_BATCH_APPEND=/tmp/CUTTER_MERGE_BATCH_APPEND
 
 # Function definitions
 get_password() {
@@ -150,6 +151,20 @@ cat << EOF > ${CUTTER_MERGE_BATCH}
 ]
 EOF
 
+# Cutter merge batch definition for append:
+cat << EOF > ${CUTTER_MERGE_BATCH_APPEND}
+[
+{
+ "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+ "id": "${PLASMACUTTER_ID}",
+ "https://industry-fusion.com/types/v0.9/newAttribute": {
+    "type": "Property",
+    "value": "NEW_VALUE"
+ }
+}
+]
+EOF
+
 compare_merge_patch() {
     cat << EOF | jq | diff "$1" - >&3
 {
@@ -178,6 +193,28 @@ compare_merge_patch_batch_second() {
     "value": "OFF",
     "unitCode": "Binary"
  }  
+}
+EOF
+}
+
+compare_merge_patch_batch_append() {
+    cat << EOF | jq | diff "$1" - >&3
+ {
+ "id": "${PLASMACUTTER_ID}",
+ "type": "https://industry-fusion.com/types/v0.9/plasmacutter_test",
+ "https://industry-fusion.com/types/v0.9/hasFilter": {
+    "type": "Relationship",
+    "object": "urn:filter-test:12345"
+  },
+ "https://industry-fusion.com/types/v0.9/newAttribute": {
+    "type": "Property",
+    "value": "NEW_VALUE"
+  },
+ "https://industry-fusion.com/types/v0.9/state": {
+    "type": "Property",
+    "value": "ON",
+    "unitCode": "Binary"
+ }
 }
 EOF
 }
@@ -213,5 +250,22 @@ EOF
     delete_ngsild "$token" "$PLASMACUTTER_ID_2"
 
     run compare_merge_patch_batch_second ${CUTTER_QUERY}
+    [ "$status" -eq 0 ]
+}
+
+@test "verify merge patch batch behaviour with appending new attribute" {
+    $SKIP
+    password=$(get_password)
+    token=$(get_token)
+    # ensure clean state
+    delete_ngsild "$token" "$PLASMACUTTER_ID" || echo "Could not delete $PLASMACUTTER_ID. But that is okay."
+    create_ngsild "$token" "$CUTTER"
+    sleep 2
+    merge_patch_ngsild_batch "$token" "$CUTTER_MERGE_BATCH_APPEND"
+    sleep 2
+    query_ngsild "$token" "$PLASMACUTTER_ID" | jq 'del( ."https://industry-fusion.com/types/v0.9/metadata/kafkaSyncOn" )' >${CUTTER_QUERY}
+    delete_ngsild "$token" "$PLASMACUTTER_ID"
+
+    run compare_merge_patch_batch_append ${CUTTER_QUERY}
     [ "$status" -eq 0 ]
 }
