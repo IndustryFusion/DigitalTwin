@@ -20,7 +20,6 @@ set -e
 
 if [ "${REGISTRY}" = "docker.io" ]; then
   IMAGES=(
-      quay.io/strimzi/operator:0.45.0 
       registry.opensource.zalan.do/acid/postgres-operator:v1.9.0 
       docker.io/minio/operator:v${MINIO_OPERATOR_VERSION}
       docker.io/minio/mc:RELEASE.2023-06-28T21-54-17Z
@@ -32,8 +31,8 @@ if [ "${REGISTRY}" = "docker.io" ]; then
       docker.io/alerta/alerta-web:8.7.0
       docker.io/busybox:1.28
       docker.io/postgrest/postgrest:v12.0.0
-      quay.io/strimzi/kafka:0.45.0-kafka-3.8.1
-      quay.io/strimzi/operator:0.45.0
+      quay.io/strimzi/kafka:${STRIMZI_VERSION}-kafka-3.3.2
+      quay.io/strimzi/operator:${STRIMZI_VERSION}
       quay.io/jetstack/cert-manager-controller:v1.9.1
       quay.io/jetstack/cert-manager-webhook:v1.9.1
       quay.io/jetstack/cert-manager-cainjector:v1.9.1
@@ -58,7 +57,6 @@ if [ "${REGISTRY}" = "docker.io" ]; then
  )
 else
   IMAGES=(
-      quay.io/strimzi/operator:0.45.0 
       registry.opensource.zalan.do/acid/postgres-operator:v1.9.0 
       docker.io/minio/operator:v${MINIO_OPERATOR_VERSION}
       docker.io/minio/mc:RELEASE.2023-06-28T21-54-17Z
@@ -70,8 +68,8 @@ else
       docker.io/alerta/alerta-web:8.7.0
       docker.io/busybox:1.28
       docker.io/postgrest/postgrest:v12.0.0
-      quay.io/strimzi/kafka:0.45.0-kafka-3.8.1
-      quay.io/strimzi/operator:0.45.0
+      quay.io/strimzi/kafka:${STRIMZI_VERSION}-kafka-3.3.2
+      quay.io/strimzi/operator:${STRIMZI_VERSION}
       quay.io/jetstack/cert-manager-controller:v1.9.1
       quay.io/jetstack/cert-manager-webhook:v1.9.1
       quay.io/jetstack/cert-manager-cainjector:v1.9.1
