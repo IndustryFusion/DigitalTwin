@@ -340,7 +340,7 @@ describe('Test createEntities', function () {
       method: 'POST',
       path: '/ngsi-ld/v1/entityOperations/create',
       headers: {
-        'Content-Type': 'application/ld+json'
+        'Content-Type': 'application/json'
       }
     };
     const rest = {
@@ -384,7 +384,7 @@ describe('Test replaceEntities', function () {
       method: 'POST',
       path: '/ngsi-ld/v1/entityOperations/upsert?options=replace',
       headers: {
-        'Content-Type': 'application/ld+json',
+        'Content-Type': 'application/json',
         header: 'header'
       }
     };
@@ -429,7 +429,7 @@ describe('Test replaceEntities', function () {
       method: 'POST',
       path: '/ngsi-ld/v1/entityOperations/upsert?options=update',
       headers: {
-        'Content-Type': 'application/ld+json',
+        'Content-Type': 'application/json',
         header: 'header'
       }
     };
@@ -895,7 +895,7 @@ describe('Test updateEntities', function () {
       method: 'POST',
       path: '/ngsi-ld/v1/entityOperations/update',
       headers: {
-        'Content-Type': 'application/ld+json',
+        'Content-Type': 'application/json',
         header: 'header'
       }
     };
@@ -940,7 +940,7 @@ describe('Test updateEntities', function () {
       method: 'POST',
       path: '/ngsi-ld/v1/entityOperations/update?options=noOverwrite',
       headers: {
-        'Content-Type': 'application/ld+json',
+        'Content-Type': 'application/json',
         header: 'header'
       }
     };
@@ -1000,8 +1000,8 @@ describe('Test batchMerge', function () {
     };
 
     const entities = [
-      { id: 'id1', type: 'type1', attr1: 'value1' },
-      { id: 'id2', type: 'type2', attr2: 'value2' }
+      { id: 'id1', type: 'type1', '@context': 'https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld', attr1: 'value1' },
+      { id: 'id2', type: 'type2', '@context': 'https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld', attr2: 'value2' }
     ];
 
     const revert = ToTest.__set__('Logger', Logger);

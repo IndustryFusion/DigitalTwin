@@ -185,7 +185,7 @@ if [ "$OFFLINE" = "true" ]; then
 else
   helm repo add flink-kubernetes-operator https://downloads.apache.org/flink/flink-kubernetes-operator-1.11.0
   helm repo update
-  helm -n ${NAMESPACE} install flink-kubernetes-operator flink-operator-repo/flink-kubernetes-operator --set image.repository="${FLINK_OPERATOR_IMAGE_REGISTRY}/flink-operator" --set image.tag="${DOCKER_TAG}"
+  helm -n ${NAMESPACE} install flink-kubernetes-operator flink-kubernetes-operator/flink-kubernetes-operator --set image.repository="${FLINK_OPERATOR_IMAGE_REGISTRY}/flink-operator" --set image.tag="${DOCKER_TAG}"
 
 fi
 

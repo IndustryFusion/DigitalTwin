@@ -318,6 +318,12 @@ function fiwareApi (conf) {
    */
   this.createEntities = function (entities) {
     const data = entities;
+    let contentType = 'application/json';
+    const hasJsonLdContext = entities.some(entity => entity && entity['@context'] !== undefined);
+
+    if (hasJsonLdContext) {
+      contentType = 'application/ld+json';
+    }
 
     // return new Promise(function(resolve, reject) {
     const options = {
@@ -326,7 +332,7 @@ function fiwareApi (conf) {
       port: config.ngsildServer.port,
       path: '/ngsi-ld/v1/entityOperations/create',
       headers: {
-        'Content-Type': 'application/ld+json'
+        'Content-Type': contentType
       },
       method: 'POST'
     };
@@ -361,11 +367,18 @@ function fiwareApi (conf) {
    */
   this.replaceEntities = function (entities, isReplace, { headers }) {
     let queryString = '?options=replace';
+    let contentType = 'application/json';
     if (!isReplace) {
       queryString = '?options=update';
     }
+    const hasJsonLdContext = entities.some(entity => entity && entity['@context'] !== undefined);
+
+    if (hasJsonLdContext) {
+      contentType = 'application/ld+json';
+    }
+
     headers = headers || {};
-    headers['Content-Type'] = 'application/ld+json';
+    headers['Content-Type'] = contentType;
     const options = {
       hostname: config.ngsildServer.hostname,
       protocol: config.ngsildServer.protocol,
@@ -385,11 +398,17 @@ function fiwareApi (conf) {
    */
   this.updateEntities = function (entities, isOverwrite, { headers }) {
     let queryString = '';
+    let contentType = 'application/json';
+    const hasJsonLdContext = entities.some(entity => entity && entity['@context'] !== undefined);
+
+    if (hasJsonLdContext) {
+      contentType = 'application/ld+json';
+    }
     if (!isOverwrite) {
       queryString = '?options=noOverwrite';
     }
     headers = headers || {};
-    headers['Content-Type'] = 'application/ld+json';
+    headers['Content-Type'] = contentType;
     const options = {
       hostname: config.ngsildServer.hostname,
       protocol: config.ngsildServer.protocol,
@@ -505,8 +524,14 @@ function fiwareApi (conf) {
    * @param {array[Object]} headers - additional headers
    */
   this.batchMerge = function (entities, { headers }) {
+    let contentType = 'application/json';
+    const hasJsonLdContext = entities.some(entity => entity && entity['@context'] !== undefined);
+
+    if (hasJsonLdContext) {
+      contentType = 'application/ld+json';
+    }
     headers = headers || {};
-    headers['Content-Type'] = 'application/ld+json';
+    headers['Content-Type'] = contentType;
 
     const options = {
       hostname: config.ngsildServer.hostname,

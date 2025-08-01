@@ -34,7 +34,6 @@ cat << EOF | tr -d '\n' > ${UPSERT_FILTER}
     "overwriteOrReplace": "false",
     "entities": [
         {
-        "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
         "id": "${FILTER_ID}",
         "type": "${FILTER_TYPE}",
         "https://industry-fusion.com/types/v0.9/state": {
@@ -63,7 +62,6 @@ cat << EOF | tr -d '\n' > ${UPSERT_FILTER_TIMESTAMPED}
     "overwriteOrReplace": "false",
     "entities": [
         {
-        "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
         "id": "${FILTER_ID}",
         "type": "${FILTER_TYPE}",
         "https://industry-fusion.com/types/v0.9/state": {
@@ -94,7 +92,6 @@ cat << EOF | tr -d '\n' > ${UPSERT_FILTER_OVERWRITE}
     "overwriteOrReplace": "true",
     "entities": [
         {
-        "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
         "id": "${FILTER_ID}",
         "type": "${FILTER_TYPE}",
         "https://industry-fusion.com/types/v0.9/state": {
@@ -127,7 +124,6 @@ cat << EOF | tr -d '\n' > ${UPSERT_FILTER_NON_OVERWRITE}
     "overwriteOrReplace": false,
     "entities": [
         {
-        "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
         "id": "${FILTER_ID}",
         "type": "${FILTER_TYPE}",
         "https://industry-fusion.com/types/v0.9/state": {
@@ -166,7 +162,6 @@ cat << EOF | tr -d '\n' > ${UPDATE_FILTER}
     "overwriteOrReplace": "true",
     "entities": [
         {
-        "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
         "id": "${FILTER_ID}",
         "type": "${FILTER_TYPE}",
         "https://industry-fusion.com/types/v0.9/state": {
@@ -193,7 +188,6 @@ cat << EOF | tr -d '\n' > ${UPDATE_FILTER_NO_OVERWRITE}
     "overwriteOrReplace": false,
     "entities": [
         {
-        "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
         "id": "${FILTER_ID}",
         "type": "${FILTER_TYPE}",
         "https://industry-fusion.com/types/v0.9/state": {
@@ -225,7 +219,6 @@ cat << EOF | tr -d '\n' > ${UPDATE_FILTER_MERGE}
     "overwriteOrReplace": "false",
     "entities": [
         {
-        "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
         "id": "${FILTER_ID}",
         "https://industry-fusion.com/types/v0.9/strength": {
           "datasetId": "https://example.com/source1",
@@ -249,7 +242,6 @@ timestamp_upsert_2_entities(){
     "overwriteOrReplace": "false",
     "entities": [
         {
-        "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
         "id": "${FILTER_ID}",
         "type": "${FILTER_TYPE}",
         "https://industry-fusion.com/types/v0.9/state": {
@@ -271,7 +263,6 @@ timestamp_upsert_2_entities(){
         }
       },
       {
-        "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
         "id": "${CUTTER_ID}",
         "type": "${PLASMACUTTER_TYPE}",
         "https://industry-fusion.com/types/v0.9/state": {
@@ -303,7 +294,6 @@ timestamp_upsert_2_entities2(){
     "overwriteOrReplace": "false",
     "entities": [
         {
-        "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
         "id": "${FILTER_ID}",
         "type": "https://industry-fusion.com/types/v0.9/filter",
         "https://industry-fusion.com/types/v0.9/state": {
@@ -324,7 +314,6 @@ timestamp_upsert_2_entities2(){
         }
       },
       {
-        "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
         "id": "${CUTTER_ID}",
         "type": "${PLASMACUTTER_TYPE}",
         "https://industry-fusion.com/types/v0.9/state": {
@@ -356,7 +345,6 @@ timestamp_update_2_entities(){
     "overwriteOrReplace": "true",
     "entities": [
         {
-        "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
         "id": "${FILTER_ID}",
         "type": "${FILTER_TYPE}",
         "https://industry-fusion.com/types/v0.9/state": {
@@ -377,7 +365,6 @@ timestamp_update_2_entities(){
         }
       },
       {
-        "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
         "id": "${CUTTER_ID}",
         "type": "${PLASMACUTTER_TYPE}",
         "https://industry-fusion.com/types/v0.9/state": {
@@ -409,7 +396,6 @@ timestamp_update_2_entities2(){
     "overwriteOrReplace": "true",
     "entities": [
         {
-        "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
         "id": "${FILTER_ID}",
         "type": "${FILTER_TYPE}",
         "https://industry-fusion.com/types/v0.9/state": {
@@ -430,7 +416,6 @@ timestamp_update_2_entities2(){
         }
       },
       {
-        "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
         "id": "${CUTTER_ID}",
         "type": "${PLASMACUTTER_TYPE}",
         "https://industry-fusion.com/types/v0.9/state": {
