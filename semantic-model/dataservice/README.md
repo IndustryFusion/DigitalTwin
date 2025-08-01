@@ -5,6 +5,20 @@ Due to licency conflicts, the OPCUA module `asyncua` is NOT installed automatica
 
     pip3 install asyncua
 
+## Development Setup
+
+To set up the development environment with all dependencies including testing and linting tools:
+
+```bash
+make setup-dev
+```
+
+For production dependencies only:
+
+```bash
+make setup
+```
+
 ## Setup and Activate Device
 For this service to work, a multi-entity device activation is needed. That means that a device does not consist any longer of only one entity ID. A hierarchy of subcomponents with different device IDs can be supported.
 

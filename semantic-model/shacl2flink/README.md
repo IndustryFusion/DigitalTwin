@@ -9,6 +9,8 @@ There are always three ingredients to such a translation, called KMS (Knowledge,
 
 A first [overview](../datamodel/README.md) and [tutorial](../datamodel/Tutorial.md) can be found in the [datamodel](../datamodel/) directory.
 
+This project uses [UV](https://docs.astral.sh/uv/) - a modern, fast Python package manager for dependency management and virtual environments.
+
 # Table of Contents
 
 1. [Quick Setup](#quick-setup)
@@ -23,8 +25,8 @@ A first [overview](../datamodel/README.md) and [tutorial](../datamodel/Tutorial.
 
 ## Requirements
 
-- You need to have Python > 3.8
-- Virtualenv needs to be installed
+- You need to have Python >= 3.10
+- UV package manager (installed automatically by `pyenv_setup.sh`)
 - `sqlite3` and `sqlite3-pcre` need to be installed
 
   ```bash
@@ -33,19 +35,21 @@ A first [overview](../datamodel/README.md) and [tutorial](../datamodel/Tutorial.
 
 ## Installation
 
-If miniconda installed with python3.10 environment (using prepare-platform.sh), move to step 2 else use below script to install and create python env
-### Step 1 :
+If uv installed with python3.10 environment (using prepare-platform.sh), move to step 2 else use below script to install and create python env
+
+### Step 1:
 ```bash
 bash pyenv_setup.sh
-source ./miniconda3/bin/activate
-conda create -n py310 python=3.10 -y
+uv venv --python 3.10 .venv
+source .venv/bin/activate
 ```
-### Step 2 :
-Everytime you are starting a new shell you need to enable the miniconda Virtual Environment which runs python 3.10 sourcing miniconda installation path:
+
+### Step 2:
+If prepare-platform.sh has installed uv, the virtual environment which runs Python 3.10 will be activated when needed
 
 ```bash
-source ./miniconda3/bin/activate
-conda activate py310
+uv venv --python 3.10 .venv
+source .venv/bin/activate
 make setup
 ```
 
@@ -60,9 +64,25 @@ Press `Ctrl + Shift + p` and type `Python: Select Interpreter` and select the vi
 Install the development dependencies:
 
 ```bash
-source ./miniconda3/bin/activate
-conda activate py310
-pip install -r requirements-dev.txt
+source .venv/bin/activate
+make setup-dev
+```
+
+Alternatively, you can install only production dependencies with:
+```bash
+make setup
+```
+
+### Adding New Dependencies
+
+To add a new production dependency:
+```bash
+make add-dep DEP=package-name
+```
+
+To add a new development dependency:
+```bash
+make add-dev-dep DEP=package-name
 ```
 
 ### Unittests

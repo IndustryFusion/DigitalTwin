@@ -15,15 +15,15 @@
 #
 
 
-setup:
-	pip3 install pyshacl rdflib
+setup: pyproject.toml
+	uv sync
 	npm install
 
-lint:
+lint: pyproject.toml
 	npm run lint
 	shellcheck tests/*/test.sh
 
-test:
+test: pyproject.toml
 	npm run test
 	cd tests/validation && bash ./test.sh
 	cd tests/jsonld2jsonld && bash ./test.sh

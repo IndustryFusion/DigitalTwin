@@ -37,14 +37,14 @@ wget https://github.com/helmfile/helmfile/releases/download/v0.149.0/helmfile_0.
 tar -zxvf helmfile_0.149.0_linux_amd64.tar.gz
 chmod u+x helmfile
 
-echo Install miniconda with python 3.10 env py310
+echo Install UV with python 3.10
 echo ---------------------------------
-mkdir ../miniconda3
-wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ../miniconda3/miniconda.sh
-bash ../miniconda3/miniconda.sh -b -u -p ../miniconda3
-source ../miniconda3/bin/conda init
-source ../miniconda3/bin/activate
-conda create -n py310 python=3.10 -y
-conda create -n e2etest python=3.10 -y
-conda install -n e2etest -c conda-forge rdflib -y
-rm ../miniconda3/miniconda.sh
+# Install UV
+curl -LsSf https://astral.sh/uv/0.8.4/install.sh | sh
+# Add UV to PATH permanently  
+echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.bashrc
+export PATH="$HOME/.cargo/bin:$PATH"
+# Install Python 3.10
+uv python install 3.10
+# Create project environments (UV will handle this automatically in each project)
+echo "UV installation complete. Python environments will be created automatically per project."
