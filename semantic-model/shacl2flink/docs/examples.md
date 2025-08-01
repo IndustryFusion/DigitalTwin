@@ -265,8 +265,8 @@ TBD
 
 ### Precondition
 
-- Python >= 3.9
-- PyShacl is installed `pip install pyshacl`
+- Python >= 3.10
+- PyShacl is installed (automatically handled by UV dependencies)
 - Working directory is `docs`
 
 ### Files needed for validation

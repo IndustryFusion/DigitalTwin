@@ -2,9 +2,13 @@
 
 ## Setup
 
-To setup the python environment start a python3 virtual environment with `Python 3.11` and install the dependencies with:
+To setup the python environment start a python3 virtual environment with `Python 3.10+` and install the dependencies with:
 
 `make setup`
+
+For development (includes testing and linting tools):
+
+`make setup-dev`
 
 ## nodeset2owl.py
 

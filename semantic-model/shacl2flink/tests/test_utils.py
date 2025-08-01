@@ -556,3 +556,54 @@ def test_add_table_values():
     result = utils.add_table_values(values, table, sqldialect, table_name)
     expected = []
     assert result == expected
+
+
+def test_get_full_path_of_shacl_property():
+    """Test get_full_path_of_shacl_property function"""
+    from rdflib import Graph, Namespace
+    from rdflib.namespace import SH
+    
+    g = Graph()
+    TEST = Namespace("http://example.org/test#")
+    
+    # Test with property that has no path
+    prop1 = TEST.property1
+    result = utils.get_full_path_of_shacl_property(g, prop1)
+    assert result == []
+    
+    # Test with property that has a path
+    prop2 = TEST.property2
+    path2 = TEST.path2
+    g.add((prop2, SH.path, path2))
+    result = utils.get_full_path_of_shacl_property(g, prop2)
+    assert result == [path2]
+
+
+def test_get_group_by_vars():
+    """Test get_group_by_vars function"""
+    # Test with no group_by_vars
+    ctx = {}
+    result = utils.get_group_by_vars(ctx)
+    assert result is None
+    
+    # Test with group_by_vars
+    ctx['group_by_vars'] = ['var1']
+    result = utils.get_group_by_vars(ctx)
+    assert result == ['var1']
+
+
+def test_set_group_by_vars():
+    """Test set_group_by_vars function"""
+    import rdflib
+    
+    # Test setting first variable
+    ctx = {}
+    var1 = rdflib.Variable('var1')
+    utils.set_group_by_vars(ctx, [var1])
+    assert 'group_by_vars' in ctx
+    assert len(ctx['group_by_vars']) == 1
+    
+    # Test adding to existing group_by_vars
+    var2 = rdflib.Variable('var2')
+    utils.set_group_by_vars(ctx, [var2])
+    assert len(ctx['group_by_vars']) == 2

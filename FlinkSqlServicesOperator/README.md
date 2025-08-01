@@ -6,7 +6,6 @@ This operator uses 3 CRDs:
 - beamsqltables.industry-fusion.com/v1alpha2
 - beamsqlviews.industry-fusion.com/v1alpha1
 
-
 # beamsqlstatementsets
 
 Are defining a set of SQL statements. These statements are deployed on an Apache Flink cluster.

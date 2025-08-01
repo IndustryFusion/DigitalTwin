@@ -2,9 +2,9 @@ SHACL:= ../kms/shacl.ttl
 SHACL_NORMALIZED := ../kms/shacl_normalized.ttl
 KNOWLEDGE := ../kms/knowledge.ttl
 MODEL := ../kms/model-instance.jsonld
-PYTHON := python3
-LINTER := flake8
-PIP := pip
+PYTHON := uv run python
+LINTER := uv run flake8
+PIP := uv pip
 OUTPUTDIR := output
 SQLITEDB := $(OUTPUTDIR)/database.db
 SQLITE3 := sqlite3
@@ -47,14 +47,14 @@ helm: build submit-rdf-table
 	rm -f ${HELM_DIR}/templates/rdf.yaml ${HELM_DIR}/templates/rdf-kafka.yaml
 	cp Chart.yaml ${HELM_DIR}
 
-test: requirements-dev.txt
-	$(PYTHON) -m pytest --cov . --cov-fail-under=80
+test: pyproject.toml
+	uv run pytest --cov . --cov-fail-under=80
 
-lint: requirements-dev.txt
+lint: pyproject.toml
 	$(LINTER)
 
-setup: requirements.txt setup-dev
-	$(PIP) install -r requirements.txt
+setup: pyproject.toml
+	uv sync
 	echo ".headers on" > ~/.sqliterc
 	echo ".mode column" >> ~/.sqliterc
 	echo ".load /usr/lib/sqlite3/pcre2.so" >> ~/.sqliterc
@@ -67,8 +67,23 @@ setup: requirements.txt setup-dev
 # 	kubectl -n $(NAMESPACE) delete configmap -l "shacl-data"="rdf-configmap"
 
 
-setup-dev: requirements-dev.txt
-	$(PIP) install -r requirements-dev.txt
+setup-dev: pyproject.toml
+	uv sync --dev
+
+# Initialize UV project (run once when setting up)
+init-uv:
+	uv init --python 3.10 --no-readme
+	@echo "UV project initialized. Run 'make setup' to install dependencies."
+
+# Add new dependencies
+add-dep:
+	@if [ -z "$(DEP)" ]; then echo "Usage: make add-dep DEP=package-name"; exit 1; fi
+	uv add $(DEP)
+
+# Add new development dependencies  
+add-dev-dep:
+	@if [ -z "$(DEP)" ]; then echo "Usage: make add-dev-dep DEP=package-name"; exit 1; fi
+	uv add --dev $(DEP)
 
 test-sqlite:
 	@echo Test with sqlite
