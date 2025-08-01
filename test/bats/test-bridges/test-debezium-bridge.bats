@@ -24,9 +24,10 @@ KAFKACAT_ENTITY_PLASMACUTTER_NAME=plasmacutter_test
 KAFKACAT_ENTITY_PLASMACUTTER_TOPIC=iff.ngsild.entities
 PLASMACUTTER_ID=urn:plasmacutter-test:12345
 GEOCUTTER_ID=urn:geocutter-test:12345
+CONTEXT=https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld
 cat << EOF > ${CUTTER}
 {
-    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld",
+    "@context": "${CONTEXT}",
     "id": "${PLASMACUTTER_ID}",
     "type": "https://industry-fusion.com/types/v0.9/${KAFKACAT_ENTITY_PLASMACUTTER_NAME}",
     "https://industry-fusion.com/types/v0.9/state": [
@@ -94,7 +95,7 @@ EOF
 
 cat << EOF > ${CUTTER_TIMESTAMPED}
 {
-    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "@context": "${CONTEXT}",
     "id": "${PLASMACUTTER_ID}",
     "type": "https://industry-fusion.com/types/v0.9/${KAFKACAT_ENTITY_PLASMACUTTER_NAME}",
     "https://industry-fusion.com/types/v0.9/state": [
@@ -128,7 +129,7 @@ EOF
 
 cat << EOF > ${CUTTER_SUBATTRIBUTES}
 {
-    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "@context": "${CONTEXT}",
     "id": "${PLASMACUTTER_ID}",
     "type": "https://industry-fusion.com/types/v0.9/${KAFKACAT_ENTITY_PLASMACUTTER_NAME}",
     "https://industry-fusion.com/types/v0.9/state": [
@@ -192,7 +193,7 @@ EOF
 
 cat << EOF > ${GEOCUTTER_ATTRIBUTES}
 {
-    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "@context": "${CONTEXT}",
     "id": "${GEOCUTTER_ID}",
     "type": "https://industry-fusion.com/types/v0.9/${KAFKACAT_ENTITY_PLASMACUTTER_NAME}",
     "https://uri.etsi.org/ngsi-ld/location": [
