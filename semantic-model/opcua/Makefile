@@ -14,25 +14,25 @@
 # limitations under the License.
 #
 
-PYTHON := python3
-LINTER := python3 -m flake8
-PIP := pip
+PYTHON := uv run python
+LINTER := uv run python -m flake8
+PIP := uv pip
 HELM_DIR := ../../helm/charts/shacl
 NAMESPACE := iff
 TOLINT := nodeset2owl.py extractType.py nodeset-dump.py validate.py start_fuseki.py extractIffBindings.py lib/nodesetparser.py lib/utils.py lib/shacl.py lib/entity.py lib/jsonld.py lib/bindings.py
-PYTEST := python3 -m pytest
+PYTEST := uv run python -m pytest
 
 
-lint: requirements-dev.txt
+lint: pyproject.toml
 	$(LINTER) ${TOLINT}
 
-setup: requirements.txt setup-dev
-	$(PIP) install -r requirements.txt
+setup: pyproject.toml
+	uv sync
 
-setup-dev: requirements-dev.txt
-	$(PIP) install -r requirements-dev.txt
+setup-dev: pyproject.toml
+	uv sync --dev
 
-test:
+test: pyproject.toml
 	${PYTEST} tests --cov=lib . --cov-fail-under=80
 	(cd tests/nodeset2owl; bash ./test.bash)
 	(cd tests/extractType; bash ./test.bash)

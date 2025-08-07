@@ -1,18 +1,18 @@
-PYTHON := python3
-LINTER := flake8
-PIP := pip
+PYTHON := uv run python
+LINTER := uv run flake8
+PIP := uv pip
 HELM_DIR := ../../helm/charts/shacl
 NAMESPACE := iff
 
 
-lint: requirements-dev.txt
+lint: pyproject.toml
 	$(LINTER)
 
-setup: requirements.txt setup-dev
-	$(PIP) install -r requirements.txt
+setup: pyproject.toml
+	uv sync
 
-setup-dev: requirements-dev.txt
-	$(PIP) install -r requirements-dev.txt
+setup-dev: pyproject.toml
+	uv sync --dev
 
-test:
-	pytest tests
+test: pyproject.toml
+	uv run pytest tests

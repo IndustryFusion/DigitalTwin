@@ -161,9 +161,17 @@ if [ -z "$BUILDONLY" ];then
     cd sqlite3-pcre2 && make && make install
     cd ../ && rm -rf sqlite3-pcre2
 
-    echo Install python3-pip
+    echo Install python3-pip and UV
     echo -------------------
     sudo apt install -yq python3-pip python3-venv
+    
+    echo Install UV for Python environment management
+    echo -------------------------------------------
+    curl -LsSf https://astral.sh/uv/0.8.4/install.sh | sh
+    # Add UV to PATH permanently
+    echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.bashrc
+    export PATH="$HOME/.cargo/bin:$PATH"    
+    uv python install 3.10
 
     echo Install nodejs
     echo -------------------

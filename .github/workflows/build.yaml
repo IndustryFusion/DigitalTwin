@@ -14,15 +14,13 @@ jobs:
     - uses: actions/checkout@v2
     - name: Build the Docker images
       run: docker compose build
-    # Use conda-incubator to install Miniconda
-    - name: Setup Miniconda with Python 3.10
-      uses: conda-incubator/setup-miniconda@v2
+    # Install UV for Python environment management
+    - name: Install UV
+      uses: astral-sh/setup-uv@v6
       with:
-        python-version: "3.10"  # Specify Python 3.10
-        auto-activate-base: false  # Do not auto-activate the base environment
-        use-mamba: true  # Optional: use mamba for faster environment creation
-    - name: Create a new Conda environment
-      run: conda create --name py310 python=3.10 -y
+        version: "0.8.4"
+    - name: Install Python 3.10
+      run: uv python install 3.10
     - name: Build shacl2flink
       run: |
         sudo  apt install -y sqlite3 libsqlite3-dev libpcre2-dev
@@ -30,23 +28,19 @@ jobs:
         git clone https://github.com/christian-proust/sqlite3-pcre2.git
         cd sqlite3-pcre2 && make && make install
         cd ../ && rm -rf sqlite3-pcre2
-        source $CONDA/bin/activate
-        conda activate py310
-        cd semantic-model/shacl2flink && make setup && make lint test build test-kms
+        cd semantic-model/shacl2flink
+        make setup && make lint test build test-kms
     - name: Build Dataservice
       run: |
-        source $CONDA/bin/activate
-        conda activate py310
-        cd semantic-model/dataservice && make setup && make lint test
+        cd semantic-model/dataservice
+        make setup && make lint test
     - name: Build datamodel tools
       run: |
         cd semantic-model/datamodel/tools && make setup && make lint test
     - name: Build opcua tools
       run: |
-        source $CONDA/bin/activate
-        conda activate py310
-        pip3 install asyncua
-        cd semantic-model/opcua && make setup && make lint test
+        cd semantic-model/opcua
+        make setup && make lint test
     - name: Build iff-agent
       run: |
         (cd NgsildAgent/config && cp config.json.template config.json)  

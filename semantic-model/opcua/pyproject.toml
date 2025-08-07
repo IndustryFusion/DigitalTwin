@@ -1,0 +1,56 @@
+[project]
+name = "opcua"
+version = "0.1.0"
+description = "OPC UA tools for Digital Twin Scorpio"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "rdflib==6.3.2",
+    "xmlschema==3.3.2",
+    "oxrdflib==0.3.7",
+    "pyLD==2.0.4",
+    "asyncua",  # From GitHub workflow
+]
+
+[project.optional-dependencies]
+dev = [
+    "flake8==5.0.4",
+    "bandit==1.7.4",
+    "black==24.3.0",
+    "pytest==7.1.3",
+    "pytest-cov==4.0.0",
+    "pyshacl==0.26.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = []
+include = ["*.py", "lib/"]
+
+[tool.uv]
+dev-dependencies = [
+    "flake8==5.0.4",
+    "bandit==1.7.4",
+    "black==24.3.0",
+    "pytest==7.1.3",
+    "pytest-cov==4.0.0",
+    "pyshacl==0.26.0",
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py310']
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "--cov=lib . --cov-fail-under=80"
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203", "W503"]

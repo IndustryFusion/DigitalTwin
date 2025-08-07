@@ -28,6 +28,12 @@ jobs:
         bash ./prepare-test.sh
         bats linting.bats
         shellcheck *.sh *.bats test-*/*.bats
+    - name: Setup shared UV environment
+      run: |
+        export PATH="$HOME/.cargo/bin:$PATH"
+        uv venv --python 3.10 .venv
+        echo "VIRTUAL_ENV=$PWD/.venv" >> $GITHUB_ENV
+        echo "$PWD/.venv/bin" >> $GITHUB_PATH
     - name: Prepare airgap deployment
       run: |
         cd helm/airgap-deployment && REGISTRY=k3d-iff.localhost:12345 bash prepare-airgap.bash
@@ -40,8 +46,6 @@ jobs:
       run: |
         echo sleep 60s to let the system settle
         sleep 60
-        source ./miniconda3/etc/profile.d/conda.sh
-        conda activate e2etest
         (exec kubefwd -n iff svc) &
         sleep 10
         cd ./test/bats
@@ -49,8 +53,7 @@ jobs:
         killall kubefwd
     - name: Build and test shacl2flink
       run: |
-        source ./miniconda3/etc/profile.d/conda.sh
-        conda activate py310
-        ( cd semantic-model/shacl2flink && make setup && make lint test test-kms )
-        ( cd semantic-model/shacl2flink && make test-full-flink-deployment )
+        cd semantic-model/shacl2flink
+        make setup && make lint test test-kms
+        make test-full-flink-deployment
 
