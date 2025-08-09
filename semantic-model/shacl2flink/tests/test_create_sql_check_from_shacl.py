@@ -34,7 +34,8 @@ def test_main(mock_rdflib, mock_utils, mock_yaml, mock_translate_construct, mock
     mock_utils.create_statementset.return_value = 'create_statementsets'
 
     mock_translate_properties.return_value = 'sqlite', ('statementsets',
-                                                        ['tables'], ['views'], ['constraint_values'])
+                                                        ['tables'], ['views'], ['constraint_values'],
+                                                        ['pg_constraints'])
     mock_translate_sparql.return_value = 'sqlite2', ('statementsets2',
                                                      ['tables2'], ['views2'])
     mock_translate_construct.return_value = 'sqlite3', ('statementsets3',

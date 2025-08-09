@@ -76,7 +76,7 @@ accessible: {e}")
     sqlite3, (statementsets3, tables3, views3) = \
         translate_construct(shaclfile, knowledgefile)
 
-    sqlite, (statementsets, tables, views, constraints) = \
+    sqlite, (statementsets, tables, views, constraints, postgres_constraints) = \
         translate_properties(shaclfile, knowledgefile, prefixes)
 
     sqlite2, (statementsets2, tables2, views2) = \
@@ -104,9 +104,10 @@ accessible: {e}")
         yaml.dump(utils.create_statementmap('shacl-validation', tables, views, ttl,
                                             statementmap, enable_checkpointing), f)
 
-    with open(os.path.join(output_folder, "shacl-validation.sqlite"), "w") \
-            as sqlitef:
+    with open(os.path.join(output_folder, "shacl-validation.sqlite"), "w") as sqlitef, \
+            open(os.path.join(output_folder, "shacl-constraints.postgres"), "w") as postgresf:
         print(sqlite + sqlite2 + sqlite3, file=sqlitef)
+        print(postgres_constraints, file=postgresf)
 
     with open(os.path.join(output_folder, "shacl-constraints.yaml"), "w") as f, \
             open(os.path.join(output_folder, "shacl-constraints-maps.yaml"), "w") as fm:

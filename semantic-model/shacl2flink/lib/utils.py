@@ -285,6 +285,9 @@ def create_sql_table(name, table, primary_key, dialect=SQL_DIALECT. SQL):
                 first = False
             else:
                 sqltable += ',\n'
+            if dialect == SQL_DIALECT.POSTGRES:
+                ftype = ftype.replace('STRING', 'TEXT').replace('INTEGER', 'BIGINT')
+                # Postgres does not have INTEGER and STRING
             if dialect in [SQL_DIALECT.SQL, SQL_DIALECT.SQLITE]:
                 sqltable += f'`{fname}` {ftype}'
             elif dialect == SQL_DIALECT.POSTGRES:
@@ -652,14 +655,21 @@ def split_statementsets(statementsets, max_map_size):
     return grouped_strings
 
 
-def create_constraint_yaml_table(connector, kafka, value):
-    return create_yaml_table(constraint_table_name, connector, constraint_table,
-                             constraint_table_primary_key, kafka, value)
+def create_constraint_yaml_table(connector, kafka, value, cdc=None):
+    """
+    Create a YAML table for constraints.
+    If is_cdc is True, it creates a CDC table.
+    """
+    if cdc is None:
+        return create_yaml_table(constraint_table_name, connector, constraint_table,
+                                 constraint_table_primary_key, kafka, value)
+    return create_yaml_table_cdc(constraint_table_name, connector, constraint_table,
+                                 constraint_table_primary_key, cdc)
 
 
-def create_constraint_sql_table():
+def create_constraint_sql_table(sql_dialect=SQL_DIALECT.SQLITE):
     return create_sql_table(constraint_table_name, constraint_table, constraint_table_primary_key,
-                            SQL_DIALECT.SQLITE)
+                            sql_dialect)
 
 
 def create_constraint_trigger_yaml_table(connector, kafka, value):
@@ -677,18 +687,35 @@ def create_constraint_trigger_sql_table():
                             SQL_DIALECT.SQLITE)
 
 
-def create_constraint_combination_yaml_table(connector, kafka, value):
-    return create_yaml_table(constraint_combination_table_name,
-                             connector,
-                             constraint_combination_table,
-                             constraint_combination_table_primary_key, kafka, value)
+def create_constraint_combination_yaml_table(connector, kafka, value, cdc=None):
+    """Create a YAML table for constraint combinations.
+
+    Args:
+        connector (Any): Connector configuration.
+        kafka (Any): Kafka configuration.
+        value (Any): Value configuration.
+        cdc (Any, optional): CDC configuration. Defaults to None.
+
+    Returns:
+        dict: YAML table definition.
+    """
+    if cdc is None:
+        return create_yaml_table(constraint_combination_table_name,
+                                 connector,
+                                 constraint_combination_table,
+                                 constraint_combination_table_primary_key, kafka, value)
+
+    return create_yaml_table_cdc(constraint_combination_table_name,
+                                 connector,
+                                 constraint_combination_table,
+                                 constraint_combination_table_primary_key, cdc)
 
 
-def create_constraint_combination_sql_table():
+def create_constraint_combination_sql_table(sql_dialect=SQL_DIALECT.SQLITE):
     return create_sql_table(constraint_combination_table_name,
                             constraint_combination_table,
                             constraint_combination_table_primary_key,
-                            SQL_DIALECT.SQLITE)
+                            sql_dialect)
 
 
 def add_table_values(values, table, sqldialect, table_name, max_size=500):
@@ -723,6 +750,8 @@ def add_table_values(values, table, sqldialect, table_name, max_size=500):
                     print(f"Error: You provided a table field {k} which does not have a type in the given table \
 schema {table}.")
                     datatype = "STRING"
+                if sqldialect == SQL_DIALECT.POSTGRES:
+                    datatype = "TEXT"
                 if v is None:
                     lcheck[k] = f'CAST (NULL as {datatype})'
                 else:
