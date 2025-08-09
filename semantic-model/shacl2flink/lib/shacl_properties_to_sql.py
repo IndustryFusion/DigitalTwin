@@ -789,6 +789,7 @@ def translate(shaclefile, knowledgefile, prefixes):
     statementsets = []
     value_statementsets = []
     sqlite = ''
+    postgres_constraints = ''
     # Get all NGSI-LD Relationship
 
     constraint_checks = []
@@ -830,12 +831,6 @@ def translate(shaclefile, knowledgefile, prefixes):
         check['severity'] = severitycode
         check['id'] = constraint_id_counter
         constraint_checks.append(check)
-        # combination table must publish this constraint
-        combination = {}
-        combination['operation'] = 'PUBLISH'
-        combination['member_constraint_id'] = constraint_id_counter
-        combination['target_constraint_id'] = -1
-        constraint_combination.append(combination)
         property_nodes[(property, target_class)].append(constraint_id_counter)
         constraint_id_counter += 1
     # Get all NGSI-LD Properties
@@ -975,12 +970,22 @@ string elements in list are supported.")
                                                utils.constraint_table,
                                                utils.SQL_DIALECT.SQLITE,
                                                configs.constraint_table_name))
+    postgres_constraints += '\n'
+    postgres_constraints += "\n".join(utils.add_table_values(constraint_checks,
+                                                             utils.constraint_table,
+                                                             utils.SQL_DIALECT.POSTGRES,
+                                                             configs.constraint_table_name))
     sql_command_yaml = utils.add_table_values(constraint_checks,
                                               utils.constraint_table,
                                               utils.SQL_DIALECT.SQL,
                                               configs.constraint_table_name)
     value_statementsets.extend(sql_command_yaml)
     tables.append(configs.constraint_table_object_name)
+    postgres_constraints += '\n'
+    postgres_constraints += "\n".join(utils.add_table_values(constraint_combination,
+                                                             utils.constraint_combination_table,
+                                                             utils.SQL_DIALECT.POSTGRES,
+                                                             configs.constraint_combination_table_name))
     sqlite += '\n'
     sqlite += "\n".join(utils.add_table_values(constraint_combination,
                                                utils.constraint_combination_table,
@@ -1033,4 +1038,4 @@ string elements in list are supported.")
     sqlite += sql_command_sqlite
     sqlite += '\n'
     tables.append(utils.class_to_obj_name(configs.constraint_table_object_name))
-    return sqlite, (statementsets, tables, views, value_statementsets)
+    return sqlite, (statementsets, tables, views, value_statementsets, postgres_constraints)

@@ -80,7 +80,15 @@ spec:
       wal_level: logical
   patroni:
     slots:
-      my_slot:
+      {{ .Values.flink.db.rdfSlotName }}:
+        type: logical
+        database: {{ .Values.flink.db.name }}
+        plugin: decoderbufs
+      {{ .Values.flink.db.constraintSlotName }}:
+        type: logical
+        database: {{ .Values.flink.db.name }}
+        plugin: decoderbufs
+      {{ .Values.flink.db.constraintCombinationSlotName }}:
         type: logical
         database: {{ .Values.flink.db.name }}
         plugin: decoderbufs

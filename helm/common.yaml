@@ -28,4 +28,6 @@ flink:
     replicationUser: flink_repl_user
     writeUser: flink_writer_user
     replicationUserSecret: flink-repl-user.acid-cluster.credentials.postgresql.acid.zalan.do
-    slotName: my_slot
+    rdfSlotName: rdf_slot
+    constraintSlotName: constraint_slot
+    constraintCombinationSlotName: constraint_combination_slot

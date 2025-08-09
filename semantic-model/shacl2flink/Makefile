@@ -39,7 +39,7 @@ build: $(SHACL) $(KNOWLEDGE $(MODEL)
 	$(PYTHON) create_sql_checks_from_shacl.py $(CHECKPOINTSWITCH) $(SHACL_NORMALIZED) $(KNOWLEDGE)
 
 helm: export IFF_HELM=true
-helm: build submit-rdf-table
+helm: build submit-postgres-tables
 	mkdir -p ${HELM_DIR}
 	rm -rf ${HELM_DIR}/templates 
 	cp -rf ${OUTPUTDIR} ${HELM_DIR}/templates
@@ -188,13 +188,15 @@ start-database-service:
 stop-database-service:
 	killall -9 kubectl >/dev/null 2>&1 || echo "No database service found to stop"
 
-submit-rdf-table:
+submit-postgres-tables:
 	@echo Create RDF table in database
 	make start-database-service
 	@FLINK_USER_SECRET=$$(kubectl -n $(NAMESPACE) get secrets | grep $(FLINK_DATABASE_USER) | cut -d " " -f 1) && \
 	echo usersecret $${FLINK_USER_SECRET} from $(FLINK_DATABASE_USER) which is transformed from $(FLINK_DATABASE_USER_NAME) && \
 	PGPASSWORD=$$(kubectl -n $(NAMESPACE) get secret $${FLINK_USER_SECRET} -o go-template='{{index .data "password" | base64decode}}') && export PGPASSWORD=$${PGPASSWORD} && \
-	cat $(OUTPUTDIR)/rdf.postgres | PGSSLMODE=require psql -h localhost -U $(FLINK_DATABASE_USER_NAME) -d $(FLINK_DATABASE)
+	cat $(OUTPUTDIR)/rdf.postgres | PGSSLMODE=require psql -h localhost -U $(FLINK_DATABASE_USER_NAME) -d $(FLINK_DATABASE) && \
+	cat $(OUTPUTDIR)/ngsild.postgres | PGSSLMODE=require psql -h localhost -U $(FLINK_DATABASE_USER_NAME) -d $(FLINK_DATABASE) && \
+	cat $(OUTPUTDIR)/shacl-constraints.postgres | PGSSLMODE=require psql -h localhost -U $(FLINK_DATABASE_USER_NAME) -d $(FLINK_DATABASE)
 	make stop-database-service
 
 clean:

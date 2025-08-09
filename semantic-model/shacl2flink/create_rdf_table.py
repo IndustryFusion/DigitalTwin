@@ -143,7 +143,7 @@ def main(knowledgefile, namespace, output_folder='output'):
         'database-name': '{{.Values.flink.db.name}}',
         'schema-name': '{{.Values.flink.db.schema}}',
         'table-name': 'rdf',
-        'slot.name': '{{.Values.flink.db.slotName}}',
+        'slot.name': '{{.Values.flink.db.rdfSlotName}}',
         'debezium.database.sslmode': 'require'
     }
     primary_key = ['subject', 'predicate', 'index']

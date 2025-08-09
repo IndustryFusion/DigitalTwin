@@ -98,7 +98,10 @@ flink:
     schema: {{ .StateValues.flink.db.schema }}
     replicationUser: {{ .StateValues.flink.db.replicationUser }}
     replicationUserSecret: {{ .StateValues.flink.db.replicationUserSecret }}
-    slotName: {{ .StateValues.flink.db.slotName }}
+    rdfSlotName: {{ .StateValues.flink.db.rdfSlotName }}
+    constraintSlotName: {{ .StateValues.flink.db.constraintSlotName }}
+    constraintCombinationSlotName: {{ .StateValues.flink.db.constraintCombinationSlotName }}
+
 
 minio:
   enabled: {{ .StateValues.minio.enabled }}

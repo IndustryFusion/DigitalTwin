@@ -43,6 +43,14 @@ def test_main(mock_utils, mock_configs,
     mock_utils.create_sql_view.return_value = "sqlview"
     mock_utils.create_yaml_view.return_value = "yamlview"
     mock_utils.camelcase_to_snake_case.return_value = 'shacltype'
+    mock_utils.get_common_data.return_value = {
+        'flink': {
+            'db': {
+                'replicationUser': 'replication_user',
+                'writeUser': 'write_user'
+            }
+        }
+    }
     monkeypatch.setattr(mock_utils, "transitive_closure", identity)
 
     mock_yaml.dump.return_value = "dump"

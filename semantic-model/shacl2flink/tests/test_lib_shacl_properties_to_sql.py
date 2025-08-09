@@ -113,7 +113,7 @@ def test_lib_shacl_prroperties_to_sql(mock_utils, mock_configs, mock_yaml,
     g.subjects.side_effect = [[iter([])]]
     prefixes = {"sh": "http://example.com/sh", "base": "http://example.com/base"}
     with patch('lib.shacl_properties_to_sql.get_full_path_of_shacl_property', return_value=['mocked_full_path']):
-        sqlite, (statementsets, tables, views, constraints) = \
+        sqlite, (statementsets, tables, views, constraints, pg_constraints) = \
             lib.shacl_properties_to_sql.translate('kms/shacl.ttl',
                                                   'kms/knowledge.ttl', prefixes)
 
@@ -180,7 +180,7 @@ def test_lib_shacl_prroperties_to_sql(mock_utils, mock_configs, mock_yaml,
 
     with patch('lib.shacl_properties_to_sql.get_full_path_of_shacl_property',
                return_value=['mocked_full_path']):
-        sqlite, (statementsets, tables, views, constraints) = \
+        sqlite, (statementsets, tables, views, constraints, pg_constraints) = \
             lib.shacl_properties_to_sql.translate('kms/shacl.ttl',
                                                   'kms/knowledge.ttl',
                                                   prefixes)
