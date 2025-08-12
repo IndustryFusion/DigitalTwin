@@ -202,9 +202,10 @@ def test_create_statementmap():
                 {"execution.savepoint.ignore-unclaimed-state": "true"},
                 {"pipeline.object-reuse": "true"},
                 {"parallelism.default": "{{ .Values.flink.defaultParalellism }}"},
+                {"table.exec.source.idle-timeout": "{{ .Values.flink.idleTimeout }}"},
+                {"state.backend": "rocksdb"},
                 {"state.backend.rocksdb.writebuffer.size": "64 kb"},
                 {"state.backend.rocksdb.use-bloom-filter": "true"},
-                {"state.backend": "rocksdb"},
                 {"state.backend.rocksdb.predefined-options": "SPINNING_DISK_OPTIMIZED_HIGH_MEM"}
             ],
             'sqlstatementmaps': ['namespace/configmap'],
@@ -230,9 +231,10 @@ def test_create_statementmap():
                 {"execution.savepoint.ignore-unclaimed-state": "true"},
                 {"pipeline.object-reuse": "true"},
                 {"parallelism.default": "{{ .Values.flink.defaultParalellism }}"},
+                {"table.exec.source.idle-timeout": "{{ .Values.flink.idleTimeout }}"},
+                {"state.backend": "rocksdb"},
                 {"state.backend.rocksdb.writebuffer.size": "64 kb"},
                 {"state.backend.rocksdb.use-bloom-filter": "true"},
-                {"state.backend": "rocksdb"},
                 {"state.backend.rocksdb.predefined-options": "SPINNING_DISK_OPTIMIZED_HIGH_MEM"},
                 {"table.exec.state.ttl": 'ttl'}
             ],
@@ -259,9 +261,10 @@ def test_create_statementmap():
                 {"execution.savepoint.ignore-unclaimed-state": "true"},
                 {"pipeline.object-reuse": "true"},
                 {"parallelism.default": "{{ .Values.flink.defaultParalellism }}"},
+                {"table.exec.source.idle-timeout": "{{ .Values.flink.idleTimeout }}"},
+                {"state.backend": "rocksdb"},
                 {"state.backend.rocksdb.writebuffer.size": "64 kb"},
                 {"state.backend.rocksdb.use-bloom-filter": "true"},
-                {"state.backend": "rocksdb"},
                 {"state.backend.rocksdb.predefined-options": "SPINNING_DISK_OPTIMIZED_HIGH_MEM"},
                 {"execution.checkpointing.interval": "{{ .Values.flink.checkpointInterval }}"}
             ],
@@ -556,3 +559,40 @@ def test_add_table_values():
     result = utils.add_table_values(values, table, sqldialect, table_name)
     expected = []
     assert result == expected
+
+    def test_create_statementmap_use_rocksdb_and_checkpointing():
+        # Test with use_rocksdb=True and enable_checkpointing=True
+        result = utils.create_statementmap(
+            'object', 'table_object', 'view', None, ['namespace/configmap'],
+            enable_checkpointing=True, use_rocksdb=True
+        )
+        sqlsettings = result['spec']['sqlsettings']
+        assert any("state.backend" in s for s in sqlsettings)
+        assert any("execution.checkpointing.interval" in s for s in sqlsettings)
+
+        # Test with use_rocksdb=False and enable_checkpointing=True
+        result = utils.create_statementmap(
+            'object', 'table_object', 'view', None, ['namespace/configmap'],
+            enable_checkpointing=True, use_rocksdb=False
+        )
+        sqlsettings = result['spec']['sqlsettings']
+        assert not any("state.backend" in s for s in sqlsettings)
+        assert any("execution.checkpointing.interval" in s for s in sqlsettings)
+
+        # Test with use_rocksdb=True and enable_checkpointing=False
+        result = utils.create_statementmap(
+            'object', 'table_object', 'view', None, ['namespace/configmap'],
+            enable_checkpointing=False, use_rocksdb=True
+        )
+        sqlsettings = result['spec']['sqlsettings']
+        assert any("state.backend" in s for s in sqlsettings)
+        assert not any("execution.checkpointing.interval" in s for s in sqlsettings)
+
+        # Test with use_rocksdb=False and enable_checkpointing=False
+        result = utils.create_statementmap(
+            'object', 'table_object', 'view', None, ['namespace/configmap'],
+            enable_checkpointing=False, use_rocksdb=False
+        )
+        sqlsettings = result['spec']['sqlsettings']
+        assert not any("state.backend" in s for s in sqlsettings)
+        assert not any("execution.checkpointing.interval" in s for s in sqlsettings)

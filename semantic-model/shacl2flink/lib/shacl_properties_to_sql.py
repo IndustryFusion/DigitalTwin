@@ -92,7 +92,7 @@ order by ?inheritedTargetclass
 sql_check_relationship_base = """
             INSERT {% if sqlite %}OR REPlACE{% endif %} INTO {{alerts_bulk_table}}
             WITH A1 as (
-                    SELECT A.id AS this,
+                    SELECT /*+ STATE_TTL('D' = '0d') */ A.id AS this,
                         A.`type` as typ,
                         IFNULL(A.`deleted`, false) as edeleted,
                         C.`type` AS entity,
@@ -175,7 +175,7 @@ sql_check_relationship_nodeType = """
 
 sql_check_property_iri_base = """
 INSERT {% if sqlite %} OR REPlACE{% endif %} INTO {{alerts_bulk_table}}
-WITH A1 AS (SELECT A.id as this,
+WITH A1 AS (SELECT /*+ STATE_TTL('D' = '0d', 'C' = '0d') */ A.id as this,
                    A.`type` as typ,
                    IFNULL(A.`deleted`, false) as edeleted,
                    COALESCE(E.`attributeValue` ,B.`attributeValue`) as val,
@@ -430,7 +430,7 @@ WHERE hasValue IS NOT NULL AND `index` IS NOT NULL AND {{ constraint_cond }}
 
 sql_insert_constraint_in_alerts = """
 INSERT {% if sqlite %} OR REPlACE{% endif %} INTO {{alerts_bulk_table}}
-SELECT
+SELECT /*+ STATE_TTL('comb' = '0d', 'ct' = '0d') */
   t.resource,
   t.event,
   'Development'                      AS environment,
@@ -465,7 +465,7 @@ INSERT{% if sqlite %} OR REPlACE {% endif %} INTO constraint_trigger_table
 WITH
   -- 1) How many members each OR-rule has
   needed AS (
-    SELECT
+    SELECT /*+ STATE_TTL('constraint_combination_table' = '0d') */
       target_constraint_id,
       COUNT(*) AS needed_count
     FROM
@@ -479,7 +479,7 @@ WITH
   -- 2) For each resource/target, find how many distinct members actually triggered
   --    and collect their events
   fired AS (
-    SELECT DISTINCT
+    SELECT /*+ STATE_TTL('comb' = '0d') */ DISTINCT
       t.resource,
       comb.target_constraint_id,
       nm.needed_count as needed_count,
@@ -512,7 +512,7 @@ WITH
       nm.needed_count
   )
 
-SELECT
+SELECT /*+ STATE_TTL('ct' = '0d') */
   f.resource                             AS resource,
   f.events                               AS event,
   f.target_constraint_id                 AS constraint_id,

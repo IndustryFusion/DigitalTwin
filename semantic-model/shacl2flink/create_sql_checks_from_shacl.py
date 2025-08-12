@@ -21,6 +21,7 @@ import lib.configs as configs
 from lib.shacl_properties_to_sql import translate as translate_properties
 from lib.shacl_sparql_to_sql import translate as translate_sparql
 from lib.shacl_construct_to_sql import translate as translate_construct
+from lib.configs import flink_ttl
 import ruamel.yaml
 import rdflib
 import argparse
@@ -39,12 +40,15 @@ from the common helmfile configs.')
     parser.add_argument('--namespace', help='namespace for configmaps', default='iff')
     parser.add_argument('-p', '--enable-checkpointing', action="store_true", default=False,
                         help="Enable checkpointing by putting checkpointing options into the flink sql yaml.")
+    parser.add_argument('-d', '--disable-rocksdb', action="store_true", default=False,
+                        help="Disable RocksDB state backend.")
 
     parsed_args = parser.parse_args(args)
     return parsed_args
 
 
-def main(shaclfile, knowledgefile, context, maps_namespace, output_folder='output', enable_checkpointing=False):
+def main(shaclfile, knowledgefile, context, maps_namespace, output_folder='output', enable_checkpointing=False,
+         disable_rocksdb=False):
     # If no context is defined, try to derive it from common.yaml
     prefixes = {}
     if context is None:
@@ -89,7 +93,7 @@ accessible: {e}")
                                                     configs.max_sql_configmap_size)
     split_constraints = utils.split_statementsets(constraints,
                                                   configs.max_sql_configmap_size)
-    ttl = '{{.Values.flink.ttl}}'
+    ttl = flink_ttl
     with open(os.path.join(output_folder, "shacl-validation.yaml"), "w") as f, \
             open(os.path.join(output_folder, "shacl-validation-maps.yaml"), "w") as fm:
 
@@ -102,7 +106,7 @@ accessible: {e}")
             yaml.dump(utils.create_configmap(configmapname, statementset_map), fm)
             statementmap.append(f'{maps_namespace}/{configmapname}')
         yaml.dump(utils.create_statementmap('shacl-validation', tables, views, ttl,
-                                            statementmap, enable_checkpointing), f)
+                                            statementmap, enable_checkpointing, use_rocksdb=(not disable_rocksdb)), f)
 
     with open(os.path.join(output_folder, "shacl-validation.sqlite"), "w") as sqlitef, \
             open(os.path.join(output_folder, "shacl-constraints.postgres"), "w") as postgresf:
@@ -121,7 +125,7 @@ accessible: {e}")
             yaml.dump(utils.create_configmap(configmapname, statementset_map), fm)
             statementmap.append(f'{maps_namespace}/{configmapname}')
         yaml.dump(utils.create_statementmap('shacl-constraints', tables, views, ttl,
-                                            statementmap, False), f)
+                                            statementmap, enable_checkpointing=False, use_rocksdb=False), f)
 
 
 if __name__ == '__main__':
@@ -130,4 +134,5 @@ if __name__ == '__main__':
     knowledgefile = args.knowledgefile
     context = args.context
     maps_namespace = args.namespace
-    main(shaclfile, knowledgefile, context, maps_namespace, enable_checkpointing=args.enable_checkpointing)
+    main(shaclfile, knowledgefile, context, maps_namespace, enable_checkpointing=args.enable_checkpointing,
+         disable_rocksdb=args.disable_rocksdb)

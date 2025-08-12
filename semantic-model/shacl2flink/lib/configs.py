@@ -72,3 +72,4 @@ constraint_trigger_table_name = 'constraint_trigger_table'
 constraint_trigger_table_object_name = 'constraint-trigger-table'
 rdf_max_per_set = 1500
 max_sql_configmap_size = 200000
+flink_ttl = '{{.Values.flink.ttl}}'
