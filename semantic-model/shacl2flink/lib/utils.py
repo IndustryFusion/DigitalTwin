@@ -310,7 +310,7 @@ def create_sql_table(name, table, primary_key, dialect=SQL_DIALECT. SQL):
     return sqltable
 
 
-def create_yaml_view(name, table, primary_key=None):
+def create_yaml_view(name, table, primary_key=None, ttl=None):
     table_name = class_to_obj_name(name)
     if not check_dns_name(table_name):
         raise DnsNameNotCompliant
@@ -323,6 +323,9 @@ def create_yaml_view(name, table, primary_key=None):
     spec = {}
     yaml_view['spec'] = spec
     spec['name'] = f'{name}_view'
+    ttl_expression = ''
+    if ttl is not None:
+        ttl_expression = f"/*+ STATE_TTL('{name}' = '{ttl}') */ "
     sqlstatement = "SELECT `type`"
     for field in table:
         for field_name, field_type in field.items():
@@ -330,7 +333,7 @@ def create_yaml_view(name, table, primary_key=None):
                     field_name.lower() != "watermark" and
                     field_name.lower() != "type"):
                 sqlstatement += f',\n `{field_name}`'
-    sqlstatement += " FROM (\n  SELECT *,\nROW_NUMBER() OVER (PARTITION BY "
+    sqlstatement += f" FROM (\n  SELECT {ttl_expression}*,\nROW_NUMBER() OVER (PARTITION BY "
     first = True
     for key in (primary_key or []):
         if first:
@@ -403,7 +406,8 @@ def create_configmap_generic(object_name, data, labels=None):
 
 
 def create_statementmap(object_name, table_object_names,
-                        view_object_names, ttl, statementmaps, enable_checkpointing=False, refresh_interval="12h"):
+                        view_object_names, ttl, statementmaps, enable_checkpointing=False, refresh_interval="12h",
+                        use_rocksdb=True):
     yaml_bsqls = {}
     yaml_bsqls['apiVersion'] = 'industry-fusion.com/v1alpha4'
     yaml_bsqls['kind'] = 'BeamSqlStatementSet'
@@ -421,11 +425,13 @@ def create_statementmap(object_name, table_object_names,
         {"execution.savepoint.ignore-unclaimed-state": "true"},
         {"pipeline.object-reuse": "true"},
         {"parallelism.default": "{{ .Values.flink.defaultParalellism }}"},
-        {"state.backend.rocksdb.writebuffer.size": "64 kb"},
-        {"state.backend.rocksdb.use-bloom-filter": "true"},
-        {"state.backend": "rocksdb"},
-        {"state.backend.rocksdb.predefined-options": "SPINNING_DISK_OPTIMIZED_HIGH_MEM"}
+        {"table.exec.source.idle-timeout": "{{ .Values.flink.idleTimeout }}"}
     ]
+    if use_rocksdb:
+        spec['sqlsettings'].append({"state.backend": "rocksdb"})
+        spec['sqlsettings'].append({"state.backend.rocksdb.writebuffer.size": "64 kb"})
+        spec['sqlsettings'].append({"state.backend.rocksdb.use-bloom-filter": "true"})
+        spec['sqlsettings'].append({"state.backend.rocksdb.predefined-options": "SPINNING_DISK_OPTIMIZED_HIGH_MEM"})
     if ttl is not None:
         spec['sqlsettings'].append({"table.exec.state.ttl": f"{ttl}"})
     if enable_checkpointing:

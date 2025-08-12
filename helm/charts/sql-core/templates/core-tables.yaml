@@ -157,7 +157,7 @@ spec:
             `synced`,
            `ts`
     FROM (
-      SELECT *,
+      SELECT /*+ STATE_TTL('attributes' = '{{.Values.flink.ttl}}') */ *,
       ROW_NUMBER() OVER (PARTITION BY `id`, `datasetId`
          ORDER BY ts DESC) AS rownum
       FROM `attributes`)
@@ -248,7 +248,7 @@ spec:
           `synced`,
           `ts`
     FROM (
-      SELECT *,
+      SELECT /*+ STATE_TTL('attributes_insert_filter' = '{{.Values.flink.ttl}}') */ *,
       ROW_NUMBER() OVER (PARTITION BY `id`, `datasetId`
          ORDER BY ts DESC) AS rownum
       FROM `attributes_insert_filter`)

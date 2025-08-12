@@ -26,6 +26,13 @@ else
     CHECKPOINTSWITCH =
 endif
 
+# Conditionally set NOROCKSDBVAR based on NOROCKSDB
+ifeq ($(NOROCKSDB), true)
+    NOROCKSDBSWITCH = -d
+else
+    NOROCKSDBSWITCH =
+endif
+
 sqlite_files = $(OUTPUTDIR)/core.sqlite $(OUTPUTDIR)/ngsild.sqlite $(OUTPUTDIR)/rdf.sqlite $(OUTPUTDIR)/ngsild-models.sqlite $(OUTPUTDIR)/shacl-validation.sqlite
 
 build: $(SHACL) $(KNOWLEDGE $(MODEL)
@@ -36,7 +43,7 @@ build: $(SHACL) $(KNOWLEDGE $(MODEL)
 	$(PYTHON) create_ngsild_tables.py $(KAFKA_TOPICS)
 	$(PYTHON) create_ngsild_models.py $(SHACL) $(KNOWLEDGE) $(MODEL)
 	$(PYTHON) shacl_normalization.py $(SHACL) $(SHACL_NORMALIZED)
-	$(PYTHON) create_sql_checks_from_shacl.py $(CHECKPOINTSWITCH) $(SHACL_NORMALIZED) $(KNOWLEDGE)
+	$(PYTHON) create_sql_checks_from_shacl.py $(CHECKPOINTSWITCH) $(NOROCKSDBSWITCH) $(SHACL_NORMALIZED) $(KNOWLEDGE)
 
 helm: export IFF_HELM=true
 helm: build submit-postgres-tables
@@ -44,7 +51,7 @@ helm: build submit-postgres-tables
 	rm -rf ${HELM_DIR}/templates 
 	cp -rf ${OUTPUTDIR} ${HELM_DIR}/templates
 	rm -f ${HELM_DIR}/templates/*.sqlite ${HELM_DIR}/templates/*.postgres ${HELM_DIR}/templates/core.yaml ${HELM_DIR}/templates/knowledge.yaml ${HELM_DIR}/templates/rdf-maps.yaml
-	rm -f ${HELM_DIR}/templates/rdf.yaml ${HELM_DIR}/templates/rdf-kafka.yaml
+	rm -f ${HELM_DIR}/templates/rdf.yaml ${HELM_DIR}/templates/rdf-kafka.yaml ${HELM_DIR}/templates/shacl-constraints*.yaml
 	cp Chart.yaml ${HELM_DIR}
 
 test: requirements-dev.txt

@@ -205,7 +205,7 @@ def main(knowledgefile, namespace, output_folder='output'):
             statementmap.append(f'{namespace}/{configmapname}')
         fp.write("---\n")
         yaml.dump(utils.create_statementmap('rdf-statements', [table_name],
-                                            [], None, statementmap), fp)
+                                            [], None, statementmap, use_rocksdb=False), fp)
         fk.write("---\n")
         yaml.dump(utils.create_kafka_topic(utils.class_to_obj_name(configs.rdf_topic),
                                            configs.rdf_topic,
