@@ -1,0 +1,84 @@
+[
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:filter:1",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDouble": [
+      {
+      "type": "Property",
+      "value": 1.0 
+      }],
+    "iffBaseEntities:hasInteger": [
+      {
+      "type": "Property",
+      "value": 1
+      }],
+    "iffBaseEntities:hasBoolean": [
+    {
+    "type": "Property",
+    "value": true
+    }],
+    "iffBaseEntities:hasIntegerOrDouble": [
+    {
+    "type": "Property",
+    "value": 1
+    }],
+    "iffBaseEntities:hasString": [
+    {
+    "type": "Property",
+    "value": "1"
+    }],
+    "iffBaseEntities:hasJSON": [
+    {
+    "type": "JsonProperty",
+    "json": {"simple": "object"}
+    }],
+    "iffBaseEntities:hasList": [
+    {
+    "type": "ListProperty",
+    "valueList": [1, 2, 3]
+    }]
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:filter:2",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDouble": [
+      {
+      "type": "Property",
+      "value": 1 
+      }],
+    "iffBaseEntities:hasInteger": [
+      {
+      "type": "Property",
+      "value": 1.0
+      }],
+    "iffBaseEntities:hasBoolean": [
+    {
+    "type": "Property",
+    "value": 1
+    }],
+    "iffBaseEntities:hasIntegerOrDouble": [
+    {
+    "type": "Property",
+    "value": true
+    }],
+    "iffBaseEntities:hasString": [
+    {
+    "type": "Property",
+    "value": 1
+    }],
+    "iffBaseEntities:hasJSON": [
+    {
+    "type": "JsonProperty",
+    "json": 1
+    }],
+    "iffBaseEntities:hasList": [
+    {
+    "type": "ListProperty",
+    "https://uri.etsi.org/ngsi-ld/hasValueList": {
+      "@value": 1
+    } 
+    }]
+  }
+] 
