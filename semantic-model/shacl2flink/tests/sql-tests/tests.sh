@@ -35,7 +35,11 @@ for testdir in ${testdirs_constraints}; do
         DATABASE=$OUTPUTDIR/database.db
         rm -f ${DATABASE}
         echo -n "Test with model ${MODEL} in dir ${testdir} ..."
-        python3 $TOOLDIR/create_ngsild_models.py  ${SHACL} ${KNOWLEDGE} ${MODEL}
+        if [ -f ${MODEL}_model ]; then
+            cp ${MODEL}_model ${OUTPUTDIR}/ngsild-models.sqlite
+        else
+            python3 $TOOLDIR/create_ngsild_models.py  ${SHACL} ${KNOWLEDGE} ${MODEL}
+        fi
         python3 $TOOLDIR/create_ngsild_tables.py
         # Test logic
         sqlite3 ${DATABASE} < $OUTPUTDIR/rdf.sqlite

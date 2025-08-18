@@ -1,0 +1,6 @@
+'urn:filter:2','DatatypeConstraintComponent(https://industryfusion.github.io/contexts/example/v0/base_entities/hasBoolean[0])','warning'
+'urn:filter:2','DatatypeConstraintComponent(https://industryfusion.github.io/contexts/example/v0/base_entities/hasDouble[0])','warning'
+'urn:filter:2','DatatypeConstraintComponent(https://industryfusion.github.io/contexts/example/v0/base_entities/hasIntegerOrDouble[0])','warning'
+'urn:filter:2','DatatypeConstraintComponent(https://industryfusion.github.io/contexts/example/v0/base_entities/hasInteger[0])','warning'
+'urn:filter:2','DatatypeConstraintComponent(https://industryfusion.github.io/contexts/example/v0/base_entities/hasJSON[0])','warning'
+'urn:filter:2','OR Constraint id 8','warning'

@@ -354,39 +354,62 @@ sql_check_literal_datatypes = """
  datatypes LIKE '%http://www.w3.org/2001/XMLSchema#string%'
 )
 {%endset%}
+
+{% set check_datatypes %}
+(datatypes LIKE '%http://www.w3.org/2001/XMLSchema#double%' AND COALESCE(`valueType`, 'http://www.w3.org/2001/XMLSchema#double') = 'http://www.w3.org/2001/XMLSchema#double'
+        AND {%- if sqlite %} `val`  REGEXP '^(?:0|[+-]?(?:\d+\.\d*|\.\d+|\d+(?:[eE][+-]?\d+)))$' {%- else %}
+        REGEXP(val, '^(?:0|[+-]?(?:\d+\.\d*|\.\d+|\d+(?:[eE][+-]?\d+)))$') {%- endif %})
+    OR (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#integer%' AND COALESCE(`valueType`, 'http://www.w3.org/2001/XMLSchema#integer') = 'http://www.w3.org/2001/XMLSchema#integer'
+        AND {%- if sqlite %} `val` REGEXP '^[+-]?\d+$' {%- else %}
+        REGEXP(val, '^[+-]?\d+$') {%- endif %})
+    OR (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#boolean%' AND COALESCE(`valueType`, 'http://www.w3.org/2001/XMLSchema#boolean') = 'http://www.w3.org/2001/XMLSchema#boolean'
+        AND {%- if sqlite %} `val`  REGEXP '^(?i:true|false)$' {%- else %}
+        REGEXP(val, '^(?i:true|false)$'){%- endif %})
+    OR (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#string%' AND COALESCE(`valueType`, 'http://www.w3.org/2001/XMLSchema#string') = 'http://www.w3.org/2001/XMLSchema#string')
+{%endset%}
+
 {% set constraint_cond%}
 NOT edeleted AND NOT IFNULL(adeleted, false) AND attr_typ IS NOT NULL AND
-        CASE WHEN ( {{ common_datatypes }}
-                    AND ((datatypes LIKE '%http://www.w3.org/2001/XMLSchema#double%' AND {%- if sqlite %} `val`  REGEXP '^(?=.*[\.eE])[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$' {%- else %}
-                                                                                                                REGEXP(val, '^(?=.*[\.eE])[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$') {%- endif %})
-                         OR (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#integer%' AND {%- if sqlite %} `val` REGEXP '^[+-]?\d+$' {%- else %}
-                                                                                                                    REGEXP(val, '^[+-]?\d+$') {%- endif %})
-                         OR (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#boolean%' AND {%- if sqlite %} `val`  REGEXP '^(?i:true|false)$' {%- else %}
-                                                                                                                    REGEXP(val, '^(?i:true|false)$'){%- endif %})
-                         OR valueType LIKE '%' || datatypes || '%'
-                         )
-                         OR (propertyNodetype = '@json' AND CASE WHEN {%- if sqlite %} json_valid(`val`) AND json_type(`val`) = 'object' {%- else %} `val` IS JSON OBJECT {%- endif %} THEN TRUE ELSE FALSE END)
-                         OR (propertyNodetype = '@list' AND {%- if sqlite %} json_valid(`val`) AND json_type(`val`) = 'array') {%- else %} `val` IS JSON ARRAY) {%- endif %}
-                         OR (propertyNodetype = '@value' AND (datatypes IS NULL or NOT {{ common_datatypes }}))
-                    ) THEN false ELSE true END
+        CASE WHEN propertyNodetype = '@value' AND datatypes IS NOT NULL THEN
+            CASE
+                WHEN `val` IS NULL THEN true -- val cannot be NULL when a datatype is defined
+                WHEN NOT ({{ common_datatypes }}) THEN false -- we check only common datatypes
+                ELSE NOT ({{ check_datatypes }}) -- if val is defined and datatypes are known, we check the value
+            END
+        WHEN propertyNodetype = '@json' THEN
+            CASE
+                WHEN {%- if sqlite %} json_valid(`val`) AND json_type(`val`) = 'object' {%- else %} `val` IS JSON OBJECT {%- endif %} THEN false
+                ELSE true
+            END
+        WHEN propertyNodetype = '@list' THEN
+            CASE
+                WHEN {%- if sqlite %} json_valid(`val`) AND json_type(`val`) = 'array' {%- else %} `val` IS JSON ARRAY {%- endif %} THEN false
+                ELSE true
+            END
+        ELSE false -- we do not check other propertyNodetypes
+        END
 {% endset %}
 SELECT this AS resource,
  '{{constraintname}}(' || `parentPath` || `printPath` || ')' AS event,
     `constraint_id` as constraint_id,
     true as triggered,
     `severity` AS severity,
-    'Datatype check failed. ' || CASE WHEN `datatypes` IS NULL THEN '"' || `val` || '" does not fit to '  ELSE '"' || `val`
-                                            || '" does not fit to datatypes "'
+    'Datatype check failed: ' || CASE WHEN `propertyNodetype` = '@value' THEN
+        'value="' || COALESCE(`val`, 'NULL') || '", expected datatypes="' || COALESCE(`datatypes`, 'NULL')
+        || '" and found datatype="' || COALESCE(`valueType`, 'NULL') || '" do not match!'  ELSE '" There is a mismatch between value "'
+                                            || `val`
+                                            || '", expected datatypes "'
                                             || `datatypes`
-                                            || '" or ' END
+                                            || '" and '
                                             || 'property node type "'
                                             || `propertyNodetype`
                                             || '".'
+        END
        as `text`
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
-FROM A1 where `index` IS NOT NULL AND `propertyNodetype` IN ('@value', '@list', '@json') AND {{ constraint_cond }}
+FROM A1 where `index` IS NOT NULL AND `propertyNodetype` IN ('@value', '@list', '@json') AND ({{ constraint_cond }})
 """  # noqa: E501 W605
 
 
