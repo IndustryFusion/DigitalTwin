@@ -51,7 +51,7 @@ helm: build submit-postgres-tables
 	rm -rf ${HELM_DIR}/templates 
 	cp -rf ${OUTPUTDIR} ${HELM_DIR}/templates
 	rm -f ${HELM_DIR}/templates/*.sqlite ${HELM_DIR}/templates/*.postgres ${HELM_DIR}/templates/core.yaml ${HELM_DIR}/templates/knowledge.yaml ${HELM_DIR}/templates/rdf-maps.yaml
-	rm -f ${HELM_DIR}/templates/rdf.yaml ${HELM_DIR}/templates/rdf-kafka.yaml ${HELM_DIR}/templates/shacl-constraints*.yaml
+	rm -f ${HELM_DIR}/templates/shacl-constraints*.yaml
 	cp Chart.yaml ${HELM_DIR}
 
 test: requirements-dev.txt

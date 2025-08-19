@@ -154,7 +154,8 @@ def translate_query(query, target_class, orig_query):
                         (Variable(randomstr),
                          RDFS['subClassOf'],
                          target_class)],
-        'query': orig_query
+        'query': orig_query,
+        'ttl_aware_tables': []  # Tables which need special handling for TTL (e.g. RDF which is relatatively static)
     }
     if algebra.name == 'SelectQuery' or algebra.name == 'ConstructQuery':
         translate(ctx, algebra)

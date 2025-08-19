@@ -38,7 +38,7 @@ kafka_topic_ngsi_retention = "{{.Values.kafkaBridge.debezium.\
 entityTopicRetention}}"
 kafka_bootstrap = "{{.Values.kafka.bootstrapServer}}" if helm \
                   else "my-cluster-kafka-bootstrap:9092"
-rdf_topic = "iff.rdf"
+rdf_topic = "{{ .Values.kafkaBridge.debezium.rdf.topic }}" if helm else "iff.rdf"
 kafka_topic_constraint_table_name = "{{.Values.kafkaBridge.flink.constraintTopic.topicName}}" if \
     helm else "iff.ngsild.flink.constraint_table"
 kafka_topic_constraint_table_object = "{{.Values.kafkaBridge.flink.constraintTopic.objectName}}" if \

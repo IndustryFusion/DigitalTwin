@@ -79,6 +79,12 @@ def create_cdc_ddl(beamsqltable, connector, logger):
     ddl += ",".join(f"{k} {v}" if k.lower() == "watermark" else f"`{k}` {v}"
                     for k, v in {k: v for x in beamsqltable.spec.get("fields")
                                  for k, v in x.items()}.items())
+    primary_key = beamsqltable.spec.get("primaryKey")
+    if primary_key:
+        ddl += ", PRIMARY KEY (" + ",".join(
+               f"{v}" for v in primary_key) + ") "\
+               "NOT ENFORCED"
+        # Flink will not enforce the key in foreseeable future
     ddl += ") WITH ("
     ddl += f"'connector' = '{connector}'"
 

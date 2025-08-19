@@ -92,8 +92,8 @@ flink:
   jobmanagerCacheSize: 2Gi
   taskmanagerCacheSize: 10Gi
   idleTimeout: 1 s
-  ttl: "86400000 ms"
-  coreTtl: "300000 ms"
+  ttl: "86400 s"
+  coreTtl: "86400 s"
   db:
     name: {{ .StateValues.flink.db.name }}
     schema: {{ .StateValues.flink.db.schema }}
@@ -159,6 +159,13 @@ kafka:
     image: debezium-postgresql-connector
     snapshotMode: always
     restartAfter: 43200
+    rdfSlotName: rdf_slot
+    rdfTable: public.rdf
+    rdfTopicPrefix: iff
+    rdfTopicName: iff.rdf
+    rdfTopicRetention: {{- if hasKey .StateValues.kafkaBridge.debezium "listenTopicRetention" }} {{ .StateValues.kafkaBridge.debezium.listenTopicRetention | quote}}
+      {{- else }} "3600000"
+      {{- end }}
   config:
     logRetentionHours: {{ .StateValues.kafka.config.logRetentionHours }}
 
@@ -216,6 +223,8 @@ kafkaBridge:
     attributesTopicCompression: {{- if hasKey .StateValues.kafkaBridge.debezium "attributesTopicCompression" }} {{ .StateValues.kafkaBridge.debezium.attributesTopicCompression}}
                                 {{- else }} uncompressed
                                 {{- end }}
+    rdf:
+      topic: iff.rdf
   alerta:
     replicaCount: 1
     listenTopic: "iff.alerts"
