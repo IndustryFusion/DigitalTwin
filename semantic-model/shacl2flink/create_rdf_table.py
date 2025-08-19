@@ -68,6 +68,10 @@ def parse_args(args=sys.argv[1:]):
                                                   <knowledge.ttl>')
     parser.add_argument('knowledgefile', help='Path to the knowledge file')
     parser.add_argument('--namespace', help='namespace for configmaps', default='iff')
+    parser.add_argument('-c', '--create-yaml-statementsets', action="store_true", default=False,
+                        help="Create YAML statement sets (default is to use Postgres).")
+    parser.add_argument('-t', '--create-kafka-topic', action="store_true", default=False,
+                        help="Create Kafka topic.")
     parsed_args = parser.parse_args(args)
     return parsed_args
 
@@ -125,7 +129,7 @@ def create_statementset(graph):
     return statementsets
 
 
-def main(knowledgefile, namespace, output_folder='output'):
+def main(knowledgefile, namespace, output_folder='output', create_yaml_statementsets=False, create_kafka_topic=False):
     yaml = ruamel.yaml.YAML()
 
     utils.create_output_folder(output_folder)
@@ -134,18 +138,6 @@ def main(knowledgefile, namespace, output_folder='output'):
     table_name = configs.rdf_table_obj_name
     spec_name = configs.rdf_table_name
     table = create_table()
-    connector = 'postgres-cdc'
-    cdc = {
-        'hostname': '{{.Values.clusterSvcName}}',
-        'port': '{{.Values.db.svcPort}}',
-        'username': '{{ .Values.flink.db.replicationUser }}',
-        'password': '{{ (dig "data" "password" "" $sec | b64dec | default "PLACEHOLDER") }}',
-        'database-name': '{{.Values.flink.db.name}}',
-        'schema-name': '{{.Values.flink.db.schema}}',
-        'table-name': 'rdf',
-        'slot.name': '{{.Values.flink.db.rdfSlotName}}',
-        'debezium.database.sslmode': 'require'
-    }
     primary_key = ['subject', 'predicate', 'index']
 
     # Create RDF statements to insert data
@@ -187,34 +179,47 @@ def main(knowledgefile, namespace, output_folder='output'):
         fp.write(postgresstatements)
 
     with open(os.path.join(output_folder, "rdf.yaml"), "w") as fp, \
-            open(os.path.join(output_folder, "rdf-table.yaml"), "w") as ft, \
             open(os.path.join(output_folder, "rdf-kafka.yaml"), "w") as fk, \
             open(os.path.join(output_folder, "rdf-maps.yaml"), "w") as fm:
-        ft.write('---\n')
-        yamltable = utils.create_yaml_table_cdc(table_name, connector, table,
-                                                primary_key, cdc)
-        ft.write(golang_function)
-        yaml.dump(yamltable, ft)
+
         num = 0
         statementmap = []
-        for statementset in sqlstatementsets:
-            num += 1
-            fm.write("---\n")
-            configmapname = 'rdf-configmap' + str(num)
-            yaml.dump(utils.create_configmap(configmapname, [statementset], {'shacl-data': 'rdf-configmap'}), fm)
-            statementmap.append(f'{namespace}/{configmapname}')
-        fp.write("---\n")
-        yaml.dump(utils.create_statementmap('rdf-statements', [table_name],
-                                            [], None, statementmap, use_rocksdb=False), fp)
-        fk.write("---\n")
-        yaml.dump(utils.create_kafka_topic(utils.class_to_obj_name(configs.rdf_topic),
-                                           configs.rdf_topic,
-                                           configs.kafka_topic_object_label,
-                                           config), fk)
+        if create_yaml_statementsets:
+            for statementset in sqlstatementsets:
+                num += 1
+                fm.write("---\n")
+                configmapname = 'rdf-configmap' + str(num)
+                yaml.dump(utils.create_configmap(configmapname, [statementset], {'shacl-data': 'rdf-configmap'}), fm)
+                statementmap.append(f'{namespace}/{configmapname}')
+            fp.write("---\n")
+            yaml.dump(utils.create_statementmap('rdf-statements', [table_name],
+                                                [], None, statementmap, use_rocksdb=False), fp)
+        if create_kafka_topic:
+            fk.write("---\n")
+            yaml.dump(utils.create_kafka_topic(utils.class_to_obj_name(configs.rdf_topic),
+                                               configs.rdf_topic,
+                                               configs.kafka_topic_object_label,
+                                               config), fk)
+        fp.write('---\n')
+        value = {'format': 'json',
+                 'json.fail-on-missing-field': False,
+                 'json.ignore-parse-errors': True}
+        connector = 'upsert-kafka'
+        kafka = {
+            'topic': configs.rdf_topic,
+            'properties': {
+                'bootstrap.servers': configs.kafka_bootstrap
+            },
+            'key.format': 'json'
+        }
+        yaml.dump(utils.create_yaml_table(table_name, connector, table,
+                  primary_key, kafka, value), fp)
 
 
 if __name__ == '__main__':
     args = parse_args()
     knowledgefile = args.knowledgefile
     namespace = args.namespace
-    main(knowledgefile, namespace)
+    cys = args.create_yaml_statementsets
+    ckt = args.create_kafka_topic
+    main(knowledgefile, namespace, create_yaml_statementsets=cys, create_kafka_topic=ckt)

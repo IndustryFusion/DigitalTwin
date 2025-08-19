@@ -217,8 +217,8 @@ WITH A1 AS (SELECT /*+ STATE_TTL('D' = '0d', 'C' = '0d') */ A.id as this,
 
 sql_check_property_count = """
 {% set constraint_cond%}
-    NOT edeleted AND (SUM(CASE WHEN NOT COALESCE(adeleted, FALSE) and attr_typ IS NOT NULL THEN 1 ELSE 0 END) > SQL_DIALECT_CAST(`maxCount` AS INTEGER)
-                                    OR SUM(CASE WHEN NOT COALESCE(adeleted, FALSE) and attr_typ is NOT NULL THEN 1 ELSE 0 END) < SQL_DIALECT_CAST(`minCount` AS INTEGER))
+    NOT edeleted AND (SUM(DISTINCT CASE WHEN NOT COALESCE(adeleted, FALSE) and attr_typ IS NOT NULL THEN 1 ELSE 0 END) > SQL_DIALECT_CAST(`maxCount` AS INTEGER)
+                                    OR SUM(DISTINCT CASE WHEN NOT COALESCE(adeleted, FALSE) and attr_typ is NOT NULL THEN 1 ELSE 0 END) < SQL_DIALECT_CAST(`minCount` AS INTEGER))
 {% endset %}
 SELECT this AS resource,
     'CountConstraintComponent(' || `parentPath` || `propertyPath` || ')' AS event,
@@ -226,7 +226,8 @@ SELECT this AS resource,
     true as triggered,
     `severity` AS severity,
    'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '.  Found ' ||
-                            SQL_DIALECT_CAST(count(CASE WHEN NOT `adeleted` THEN 1 ELSE 0 END) AS STRING) || ' relationships instead of [' || IFNULL('[' || `minCount`, '[0') || IFNULL(`maxCount` || ']', '[') || '!'
+                            SQL_DIALECT_CAST(SUM(DISTINCT CASE WHEN NOT COALESCE(adeleted, FALSE) and attr_typ IS NOT NULL THEN 1 ELSE 0 END) AS STRING) || ' relationships instead of [' || IFNULL('[' || `minCount`, '0')
+                            || ', ' || IFNULL(`maxCount` || ']', '[') || '!'
         as `text`
         {% if sqlite %}
         ,CURRENT_TIMESTAMP

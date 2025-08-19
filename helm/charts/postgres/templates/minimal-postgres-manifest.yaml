@@ -48,6 +48,7 @@ spec:
   databases:
 {{ toYaml .Values.databases | indent 4 }}
     flink: ngb
+    {{ .Values.flink.db.name }}: {{ .Values.flink.db.user }}
   preparedDatabases:
 {{ toYaml .Values.preparedTimescaleDatabases | indent 4 }}:
       extensions:

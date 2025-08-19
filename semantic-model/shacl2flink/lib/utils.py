@@ -902,3 +902,16 @@ def rdf_list_to_pylist(graph, head):
                 # you can choose .n3(), .toPython(), or str(item) for URIs
                 py_list.append(str(item))
     return py_list
+
+
+def get_state_ttl_metadata(tablenames):
+    """
+    Create STATE_TTL metadata for a list of tables.
+    For instance, if we get tablenames ['D', 'C'], we return:
+    /*+ STATE_TTL('D' = '0d', 'C' = '0d') */
+
+    Args:
+        tablenames (list): A list of table names.
+    """
+    ttl_expr = ', '.join([f"'{name}' = '0d'" for name in tablenames])
+    return f"/*+ STATE_TTL({ttl_expr}) */"

@@ -3,7 +3,7 @@
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaConnector
 metadata:
-  name: {{ .Values.kafkaConnector.name }}
+  name: entity-table-connector
   labels:
     strimzi.io/cluster: {{ .Values.kafkaConnectConfig.name }}
 spec:
@@ -26,3 +26,42 @@ spec:
     value.converter: "org.apache.kafka.connect.json.JsonConverter"
     key.converter.schemas.enable: "false"
     value.converter.schemas.enable: "false"
+---
+{{- $canLookup := not (empty (lookup "v1" "Namespace" "" "kube-system")) -}}
+{{- $secName := trim (required "Set .Values.flink.db.replicationUserSecret" .Values.flink.db.replicationUserSecret) -}}
+{{- $sec := lookup "v1" "Secret" .Release.Namespace $secName -}}
+{{- if and $canLookup (not $sec) -}}
+  {{- fail (printf "Secret %q not found in %s" $secName .Release.Namespace) -}}
+{{- end -}}
+
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaConnector
+metadata:
+  name: rdf-table-connector
+  labels:
+    strimzi.io/cluster: {{ .Values.kafkaConnectConfig.name }}
+spec:
+  class: io.debezium.connector.postgresql.PostgresConnector
+  tasksMax: 1
+  config:
+    snapshot.mode: {{ .Values.kafka.connect.snapshotMode }}
+    database.hostname: {{ .Values.clusterSvcName | quote }}
+    database.port: {{ .Values.db.svcPort | quote }}
+    database.user: {{ .Values.flink.db.replicationUser | quote}}
+    database.password: '{{ (dig "data" "password" "" $sec | b64dec | default "PLACEHOLDER") }}'
+    database.dbname: {{ .Values.flink.db.name | quote }}
+    database.server.name: {{ .Values.kafka.connect.rdfTopicPrefix | quote }}
+    table.include.list: {{ .Values.kafka.connect.rdfTable | quote }}
+    slot.name : {{ .Values.kafka.connect.rdfSlotName | quote }}
+    key.converter: "org.apache.kafka.connect.json.JsonConverter"
+    value.converter: "org.apache.kafka.connect.json.JsonConverter"
+    key.converter.schemas.enable: "false"
+    value.converter.schemas.enable: "false"
+    # --- rename topic by removing the schema, e.g. iff.public.rdf  -> iff.rdf
+    transforms: Reroute, unwrap
+    transforms.Reroute.type: io.debezium.transforms.ByLogicalTableRouter
+    transforms.Reroute.topic.regex: "(.*)\\.public\\.(.*)"
+    transforms.Reroute.topic.replacement: "$1.$2"
+    # — only pass through the `after` object —
+    transforms.unwrap.type: io.debezium.transforms.ExtractNewRecordState
+    transforms.Reroute.key.enforce.uniqueness: "false"
