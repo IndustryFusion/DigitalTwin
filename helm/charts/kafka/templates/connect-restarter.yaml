@@ -84,7 +84,7 @@ spec:
           restartPolicy: OnFailure
           containers:
             - name: my-container
-              image: {{ .Values.externalRegistry }}/bitnami/kubectl:1.28-debian-11
+              image: {{ .Values.externalRegistry }}/bitnamilegacy/kubectl:1.28-debian-11
               volumeMounts:
               - name: script-volume
                 mountPath: /scripts
