@@ -20,9 +20,31 @@ metadata:
 data:
   my-script.sh: |
     #!/bin/bash
+
+    # usage: parse_duration_half "10d" -> 432000 ; parse_duration_half "5m" -> 150 ; parse_duration_half "3" -> 1
+    parse_duration_half() {
+      local input="$1" value unit seconds
+      if [[ $input =~ ^[[:space:]]*([0-9]+)[[:space:]]*([dDhHmMsS])?[[:space:]]*$ ]]; then
+        value="${BASH_REMATCH[1]}"
+        unit="${BASH_REMATCH[2],,}"  # may be empty
+        case "${unit:-s}" in
+          d) seconds=$(( value * 86400 )) ;;
+          h) seconds=$(( value * 3600 )) ;;
+          m) seconds=$(( value * 60 )) ;;
+          s|'') seconds=$(( value )) ;;
+          *) echo "error: unit must be d/h/m/s" >&2; return 1 ;;
+        esac
+        echo $(( seconds / 2 ))   # integer division (floor)
+      else
+        echo "error: expected <int>[unit] with unit in {d,h,m,s}, e.g. 10m or 42" >&2
+        return 1
+      fi
+    }
     LABEL_SELECTOR="app.kubernetes.io/instance=kafka-connect"
-    TEST_TIME={{ .Values.kafka.connect.restartAfter }}
+    TEST_TIME_TTL="{{ .Values.flink.ttl }}"
+    TEST_TIME=$(parse_duration_half "$TEST_TIME_TTL")
     NAMESPACE="{{.Release.Namespace}}"
+    echo "Test time is $TEST_TIME seconds (half of $TEST_TIME_TTL)"
     # Get the pod names matching the label selector
     POD_NAMES=$(kubectl get pods -n $NAMESPACE -l "$LABEL_SELECTOR" -o jsonpath='{.items[*].metadata.name}')
     # Flag to track if any pod is smaller than test_time
@@ -71,7 +93,7 @@ kind: CronJob
 metadata:
   name: kafka-connect-restart
 spec:
-  schedule: "0 * * * *"
+  schedule: "*/10 * * * *"
   jobTemplate:
     spec:
       template:
