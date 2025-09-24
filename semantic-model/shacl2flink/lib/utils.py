@@ -406,7 +406,7 @@ def create_configmap_generic(object_name, data, labels=None):
 
 
 def create_statementmap(object_name, table_object_names,
-                        view_object_names, ttl, statementmaps, enable_checkpointing=False, refresh_interval="12h",
+                        view_object_names, ttl, statementmaps, enable_checkpointing=False, refresh_interval=None,
                         use_rocksdb=True):
     yaml_bsqls = {}
     yaml_bsqls['apiVersion'] = 'industry-fusion.com/v1alpha4'
@@ -418,7 +418,8 @@ def create_statementmap(object_name, table_object_names,
     spec = {}
     yaml_bsqls['spec'] = spec
     spec['tables'] = table_object_names
-    spec['refreshInterval'] = refresh_interval
+    if refresh_interval:
+        spec['refreshInterval'] = refresh_interval
     spec['views'] = view_object_names
     spec['sqlsettings'] = [
         {"table.exec.sink.upsert-materialize": "none"},
@@ -442,7 +443,7 @@ def create_statementmap(object_name, table_object_names,
 
 
 def create_statementset(object_name, table_object_names,
-                        view_object_names, ttl, statementsets, refresh_interval="12h"):
+                        view_object_names, ttl, statementsets, refresh_interval=None):
     yaml_bsqls = {}
     yaml_bsqls['apiVersion'] = 'industry-fusion.com/v1alpha4'
     yaml_bsqls['kind'] = 'BeamSqlStatementSet'
@@ -453,7 +454,8 @@ def create_statementset(object_name, table_object_names,
     spec = {}
     yaml_bsqls['spec'] = spec
     spec['tables'] = table_object_names
-    spec['refreshInterval'] = refresh_interval
+    if refresh_interval:
+        spec['refreshInterval'] = refresh_interval
     spec['views'] = view_object_names
     if ttl is not None:
         spec['sqlsettings'] = [

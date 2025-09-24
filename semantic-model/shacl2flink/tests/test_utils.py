@@ -176,7 +176,6 @@ def test_create_statementset():
         },
         'spec': {
             'tables': 'table_object',
-            'refreshInterval': "12h",
             'views': 'view',
             'sqlstatements': 'statementset',
             'updateStrategy': 'none'
@@ -195,7 +194,6 @@ def test_create_statementmap():
         },
         'spec': {
             'tables': 'table_object',
-            'refreshInterval': '12h',
             'views': 'view',
             'sqlsettings': [
                 {"table.exec.sink.upsert-materialize": "none"},
@@ -224,7 +222,6 @@ def test_create_statementmap():
         },
         'spec': {
             'tables': 'table_object',
-            'refreshInterval': '12h',
             'views': 'view',
             'sqlsettings': [
                 {"table.exec.sink.upsert-materialize": "none"},
@@ -244,7 +241,7 @@ def test_create_statementmap():
     }
 
     result = utils.create_statementmap('object', 'table_object', 'view', None,
-                                       ['namespace/configmap'], enable_checkpointing=True)
+                                       ['namespace/configmap'], enable_checkpointing=True, refresh_interval="12h")
 
     assert result == {
         'apiVersion': 'industry-fusion.com/v1alpha4',
