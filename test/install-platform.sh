@@ -141,7 +141,7 @@ install_velero(){
         echo Install velero in offline mode
         ( cd ../helm && ./helmfile $(set_helm_params) \
         --set "velero.image.repository=$LOCAL_REGISTRY/velero/velero" \
-        --set "velero.kubectl.image.repository=$LOCAL_REGISTRY/bitnami/kubectl" \
+        --set "velero.kubectl.image.repository=$LOCAL_REGISTRY/bitnamilegacy/kubectl" \
         --set "velero.kubectl.image.tag=${KUBECTL_VERSION}" \
         --set "velero.initContainers[0].image=$LOCAL_REGISTRY/velero/velero-plugin-for-aws:${VELERO_PLUGIN_VERSION}" -l app=velero $command
         )
@@ -211,17 +211,6 @@ if [ -n "$all" ]; then
     ( cd ./bats && bats test-horizontal-platform/horizontal-platform-up-and-running-third.bats )
 
     install_velero apply
-    # if [ "$OFFLINE" = "true" ]; then
-    #     echo Install velero in offline mode
-    #     ( cd ../helm && ./helmfile $(set_helm_params) \
-    #     --set "velero.image.repository=$LOCAL_REGISTRY/velero/velero" \
-    #     --set "velero.kubectl.image.repository=$LOCAL_REGISTRY/bitnami/kubectl" \
-    #     --set "velero.kubectl.image.tag=${KUBECTL_VERSION}" \
-    #     --set "velero.initContainers[0].image=$LOCAL_REGISTRY/velero/velero-plugin-for-aws:v${VELERO_PLUGIN_VERSION}" -l app=velero apply
-    #     )
-    # else
-    #   ( cd ../helm && ./helmfile $(set_helm_params) -l app=velero apply )
-    # fi
 
     echo Install the rest
     apply_labels "app!=velero,order!=first,order!=second,order!=third" apply || echo "No remaining chart found." 

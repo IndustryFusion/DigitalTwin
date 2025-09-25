@@ -22,7 +22,7 @@ spec:
           {{ else }}
           value: {{ printf "%s://%s:%s@%s" .Values.s3.protocol .Values.s3.userAccessKey .Values.s3.userSecretKey .Values.s3.endpoint }}
           {{ end }}
-        command: ["/bin/bash", "-c", "echo $MC_HOST_IFF; mc mb -p iff/{{ .Values.velero.configuration.backupStorageLocation.bucket }}"]
+        command: ["/bin/bash", "-c", "echo $MC_HOST_IFF; mc mb -p iff/{{ (first .Values.velero.configuration.backupStorageLocation).bucket }}"]
       restartPolicy: Never
   backoffLimit: 4
 {{- end }}

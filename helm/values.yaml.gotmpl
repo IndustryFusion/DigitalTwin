@@ -317,7 +317,7 @@ keycloak_db:
 velero:
   image:
     repository: velero/velero
-    tag: v1.10.0
+    tag: v1.16.2
     pullPolicy: IfNotPresent
   resources:
     requests:
@@ -328,16 +328,16 @@ velero:
       memory: 512Mi
   initContainers:
     - name: velero-plugin-for-aws
-      image: velero/velero-plugin-for-aws:v1.5.0
+      image: velero/velero-plugin-for-aws:v1.12.2
       imagePullPolicy: IfNotPresent
       volumeMounts:
         - mountPath: /target
           name: plugins
   configuration:
-    provider: aws
     backupStorageLocation:
-      name: minio
+    - name: minio
       bucket: {{ .StateValues.velero.backupBucket }}
+      provider: aws
       default: true
       accessMode: ReadWrite
       config:
