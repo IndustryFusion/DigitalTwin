@@ -166,9 +166,8 @@ printf "\n"
 printf "\033[1mPrepare Velero Helm Chart Repo\n"
 printf -- "------------------------\033[0m\n"
 
-if [ ! "$OFFLINE" = "true" ]; then
-  ( cd ${OFFLINE_DIR} && rm -rf helm-charts && git clone https://github.com/vmware-tanzu/helm-charts.git && cd helm-charts && git checkout ${VELERO_HELM_VERSION} )
-fi
+( cd ${OFFLINE_DIR} && rm -rf helm-charts && git clone https://github.com/vmware-tanzu/helm-charts.git && cd helm-charts && git checkout ${VELERO_HELM_VERSION} && kubectl -n velero apply -f ./charts/velero/crds/ )
+
 
 printf "\n"
 printf "\033[1mInstalling Flink Operator\n"
