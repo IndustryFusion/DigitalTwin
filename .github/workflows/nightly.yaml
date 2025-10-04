@@ -1,4 +1,7 @@
 name: Nigthly
+permissions:
+  contents: read
+  packages: write
 on:
   schedule:
     - cron: '0 0 * * *'
