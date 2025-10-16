@@ -2,10 +2,17 @@ apiVersion: kafka.strimzi.io/v1beta2
 kind: Kafka
 metadata:
   name: {{ .Values.kafka.name }}
+  annotations:
+    strimzi.io/kraft: enabled
+    strimzi.io/node-pools: enabled
 spec:
   kafka:
-    image: {{ .Values.externalRegistry2 }}/strimzi/kafka:0.35.1-kafka-3.3.2
-    replicas: 1
+    version: 3.9.0
+    logging:
+      type: inline
+      loggers:
+        kafka.root.logger.level: INFO
+    # replicas: 1
     listeners:
       - name: plain
         port: 9092
@@ -27,9 +34,9 @@ spec:
       offsets.topic.replication.factor: 1
       transaction.state.log.replication.factor: 1
       transaction.state.log.min.isr: 1
-      log.message.format.version: "3.3"
+      log.message.format.version: "3.9"
       log.retention.hours: {{ .Values.kafka.config.logRetentionHours }}
-      inter.broker.protocol.version: "3.3"
+      inter.broker.protocol.version: "3.9"
       auto.create.topics.enable: true
     storage:
       type: jbod
@@ -38,23 +45,10 @@ spec:
         type: {{ .Values.kafka.storage.type }}
         size: {{ .Values.kafka.storage.size }}
         deleteClaim: false
-  zookeeper:
-    image: {{ .Values.externalRegistry2 }}/strimzi/kafka:0.35.1-kafka-3.3.2
-    replicas: {{ .Values.kafka.zookeeper.replicas }}
-    storage:
-      type: {{ .Values.kafka.zookeeper.storage.type }}
-      size: {{ .Values.kafka.zookeeper.storage.size }}
-      deleteClaim: false
-    resources:
-      requests:
-        memory: 128Mi
-        cpu: 200m
-      limits:
-        memory: 256Mi
-        cpu: 400m
+
   entityOperator:
     topicOperator:
-      image: {{ .Values.externalRegistry2 }}/strimzi/operator:0.35.1
+      #image: {{ .Values.externalRegistry2 }}/strimzi/operator:0.45.0
       resources:
         requests:
           cpu: 150m
@@ -63,7 +57,7 @@ spec:
           cpu: 300m
           memory: 256Mi
     userOperator:
-      image: {{ .Values.externalRegistry2 }}/strimzi/operator:0.35.1
+      #image: {{ .Values.externalRegistry2 }}/strimzi/operator:0.45.0
       resources:
         requests:
           cpu: 150m
@@ -71,12 +65,22 @@ spec:
         limits:
           cpu: 300m
           memory: 256Mi
-    tlsSidecar:
-      image: {{ .Values.externalRegistry2 }}/strimzi/kafka:0.35.1-kafka-3.3.2
-      resources:
-        requests:
-          cpu: 100m
-          memory: 128Mi
-        limits:
-          cpu: 200m
-          memory: 256Mi
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaNodePool
+metadata:
+  name: nodes
+  labels:
+    strimzi.io/cluster: {{ .Values.kafka.name }}
+spec:
+  replicas: 1
+  roles:
+    - controller
+    - broker
+  storage:
+    type: jbod
+    volumes:
+    - id: 0
+      type: {{ .Values.kafka.storage.type }}
+      size: {{ .Values.kafka.storage.size }}
+      deleteClaim: false

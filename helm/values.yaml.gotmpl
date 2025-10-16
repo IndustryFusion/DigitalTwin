@@ -92,7 +92,7 @@ flink:
   jobmanagerCacheSize: 2Gi
   taskmanagerCacheSize: 10Gi
   idleTimeout: 1 s
-  ttl: "86400 s" # Warning: if you change that value dynamically, the debezium service in kafka must be redeployed as well to fit to the Flink deployments ttl
+  ttl: "3600 s" # Warning: if you change that value dynamically, the debezium service in kafka must be redeployed as well to fit to the Flink deployments ttl
   coreTtl: "86400 s"
   db:
     name: {{ .StateValues.flink.db.name }}
