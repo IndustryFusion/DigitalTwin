@@ -23,10 +23,6 @@ postgres_vars:
 ## environment variables for kafka
 kafka_vars:
   # specify namespace if kafka is deployed in a different namespace
-  KAFKA_ADVERTISED_HOST_NAME: my-cluster-kafka-brokers
-  KAFKA_BOOTSTRAP: my-cluster-kafka-bootstrap
-  KAFKA_BROKERS: my-cluster-kafka-brokers
-  KAFKA_ZOOKEEPER_CONNECT: my-cluster-zookeeper-client:2181
   KAFKA_ADVERTISED_PORT: 9092
   KAFKA_PORT: 9092
   KAFKA_LOG_RETENTION_MS: 10000

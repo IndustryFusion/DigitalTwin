@@ -6,7 +6,7 @@ kind: KafkaTopic
 metadata:
   name: {{.Values.kafkaBridge.alerta.bulkTopic}}
   labels:
-    strimzi.io/cluster: my-cluster
+    strimzi.io/cluster: {{ .Values.kafka.name }}
 spec:
   partitions: 1
   replicas: 1
@@ -21,7 +21,7 @@ kind: KafkaTopic
 metadata:
   name: {{.Values.kafkaBridge.alerta.listenTopic}}
   labels:
-    strimzi.io/cluster: my-cluster
+    strimzi.io/cluster: {{ .Values.kafka.name }}
 spec:
   partitions: 1
   replicas: 1
@@ -34,7 +34,7 @@ kind: KafkaTopic
 metadata:
   name: {{.Values.kafkaBridge.ngsildUpdates.listenTopic}}
   labels:
-    strimzi.io/cluster: my-cluster
+    strimzi.io/cluster: {{ .Values.kafka.name }}
 spec:
   partitions: 1
   replicas: 1
@@ -48,7 +48,7 @@ kind: KafkaTopic
 metadata:
   name: {{ .Values.kafkaBridge.debezium.attributesTopic }}
   labels:
-    strimzi.io/cluster: my-cluster
+    strimzi.io/cluster: {{ .Values.kafka.name }}
 spec:
   partitions: 1
   replicas: 1
@@ -62,7 +62,7 @@ kind: KafkaTopic
 metadata:
   name: {{.Values.kafkaBridge.debezium.attributesTopic}}-insert
   labels:
-    strimzi.io/cluster: my-cluster
+    strimzi.io/cluster: {{ .Values.kafka.name }}
 spec:
   partitions: 1
   replicas: 1

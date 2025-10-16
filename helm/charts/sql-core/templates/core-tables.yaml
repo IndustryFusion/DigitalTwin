@@ -131,7 +131,7 @@ spec:
   kafka:
     topic: iff.ngsild.attributes
     properties:
-      bootstrap.servers: my-cluster-kafka-bootstrap:9092
+      bootstrap.servers: {{.Values.kafka.bootstrapServer}}
     key.format: json
   value:
     format: json
@@ -189,7 +189,7 @@ spec:
   kafka:
     topic: iff.ngsild.attributes_insert
     properties:
-      bootstrap.servers: my-cluster-kafka-bootstrap:9092
+      bootstrap.servers: {{.Values.kafka.bootstrapServer}}
     key.format: json
   value:
     format: json
@@ -225,7 +225,7 @@ spec:
   kafka:
     topic: iff.ngsild.attributes_insert
     properties:
-      bootstrap.servers: my-cluster-kafka-bootstrap:9092
+      bootstrap.servers: {{.Values.kafka.bootstrapServer}}
     scan.startup.mode: latest-offset
   value:
     format: json
