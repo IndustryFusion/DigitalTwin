@@ -31,7 +31,7 @@ if [ "${REGISTRY}" = "docker.io" ]; then
       docker.io/alerta/alerta-web:8.7.0
       docker.io/busybox:1.28
       docker.io/postgrest/postgrest:v12.0.0
-      quay.io/strimzi/kafka:${STRIMZI_VERSION}-kafka-3.3.2
+      quay.io/strimzi/kafka:${STRIMZI_VERSION}-kafka-3.9.0
       quay.io/strimzi/operator:${STRIMZI_VERSION}
       quay.io/jetstack/cert-manager-controller:v1.9.1
       quay.io/jetstack/cert-manager-webhook:v1.9.1
@@ -68,7 +68,7 @@ else
       docker.io/alerta/alerta-web:8.7.0
       docker.io/busybox:1.28
       docker.io/postgrest/postgrest:v12.0.0
-      quay.io/strimzi/kafka:${STRIMZI_VERSION}-kafka-3.3.2
+      quay.io/strimzi/kafka:${STRIMZI_VERSION}-kafka-3.9.0
       quay.io/strimzi/operator:${STRIMZI_VERSION}
       quay.io/jetstack/cert-manager-controller:v1.9.1
       quay.io/jetstack/cert-manager-webhook:v1.9.1

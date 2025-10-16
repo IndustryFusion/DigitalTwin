@@ -54,6 +54,12 @@ spec:
             - name: {{ $key }}
               value: {{ $val | quote }}
           {{- end }}
+            - name: KAFKA_BROKERS
+              value: {{ .Values.kafka.bootstrapServer | quote }}
+            - name: KAFKA_ADVERTISED_HOST_NAME
+              value: {{ .Values.kafka.advertisedHostName | quote }}
+            - name: KAFKA_BOOTSTRAP
+              value: {{ .Values.kafka.bootstrap | quote }}
           {{- range $key, $val := .Values.kafka_topic_vars }}
             - name: {{ $key }}
               value: {{ $val | quote }}

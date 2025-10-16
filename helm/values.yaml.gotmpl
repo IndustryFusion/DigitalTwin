@@ -92,7 +92,7 @@ flink:
   jobmanagerCacheSize: 2Gi
   taskmanagerCacheSize: 10Gi
   idleTimeout: 1 s
-  ttl: "86400 s" # Warning: if you change that value dynamically, the debezium service in kafka must be redeployed as well to fit to the Flink deployments ttl
+  ttl: "3600 s" # Warning: if you change that value dynamically, the debezium service in kafka must be redeployed as well to fit to the Flink deployments ttl
   coreTtl: "86400 s"
   db:
     name: {{ .StateValues.flink.db.name }}
@@ -139,12 +139,12 @@ alerta:
   kafkaCommitThreshold: 200
 
 kafka:
-  name: my-cluster
+  name: kafka
   resources:
 {{ .StateValues.kafka.resources | toYaml | indent 4 }}
   jvmOptions:
 {{ .StateValues.kafka.jvmOptions | toYaml | indent 4 }}
-  bootstrapServer: my-cluster-kafka-bootstrap:9092
+  bootstrapServer: kafka-kafka-bootstrap:9092
   storage:
     type: persistent-claim
     size: {{ .StateValues.kafka.storage.size }}
