@@ -25,6 +25,10 @@ public class CoreServices {
         if (alertsBulkTopic == null) {
             alertsBulkTopic = "iff.alerts.bulk"; // Default value if environment variable is not set
         }
+        String kafkaBootstrap = System.getenv("KAFKA_BOOTSTRAP");
+        if (kafkaBootstrap == null) {
+            kafkaBootstrap = "my-cluster-kafka-bootstrap:9092"; // Default value if environment variable is not set
+        }
         LOG.info("alertsBulkTopic is: {}", alertsBulkTopic);
         String alertsTopic = System.getenv("ALERTS_TOPIC");
         if (alertsTopic == null) {
@@ -44,10 +48,12 @@ public class CoreServices {
 
         // Load SQL statements
         final String sqlStatements = loadResourceFile("sql_statements.sql");
+        // Replace "my-cluster-kafka-bootstrap:9092" with kafkaBootstrap
+        final String sqlStatementsRepl = sqlStatements.replace("my-cluster-kafka-bootstrap:9092", kafkaBootstrap);
 
         // Kafka Source
         final KafkaSource<KeyValueRecord> kafkaSource = KafkaSource.<KeyValueRecord>builder()
-                .setBootstrapServers("my-cluster-kafka-bootstrap:9092")
+                .setBootstrapServers(kafkaBootstrap)
                 .setTopics(alertsBulkTopic)
                 .setGroupId("flink_json_key_reader2")
                 .setStartingOffsets(OffsetsInitializer.latest())
@@ -56,7 +62,7 @@ public class CoreServices {
 
         // Kafka Sink
         final KafkaSink<KeyValueRecord> kafkaSink = KafkaSink.<KeyValueRecord>builder()
-                .setBootstrapServers("my-cluster-kafka-bootstrap:9092")
+                .setBootstrapServers(kafkaBootstrap)
                 .setRecordSerializer(new KeyValueRecordSerializer(alertsTopic)) // directly pass your custom serializer
                 .build();
 
@@ -85,7 +91,7 @@ public class CoreServices {
         LOG.info("Adding SQL statements to joint pipeline.");
 
         final StreamStatementSet stmtSet = tableEnv.createStatementSet();
-        for (final String stmt : sqlStatements.split(";")) {
+        for (final String stmt : sqlStatementsRepl.split(";")) {
             final String stmtTrimmed = stmt.trim();
             if (stmtTrimmed.toUpperCase().startsWith("INSERT")) {
                 stmtSet.addInsertSql(stmtTrimmed + ";");

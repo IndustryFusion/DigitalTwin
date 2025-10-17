@@ -111,6 +111,8 @@ spec:
           - name: flink-main-container
             workingDir: /opt/flink
             env:
+            - name: KAFKA_BOOTSTRAP
+              value: {{ .Values.kafka.bootstrapServer | quote }}
             - name: POD_IP
               valueFrom:
                 fieldRef:
