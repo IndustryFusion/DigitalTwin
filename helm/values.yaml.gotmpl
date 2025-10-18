@@ -139,7 +139,7 @@ alerta:
   kafkaCommitThreshold: 200
 
 kafka:
-  name: kafka
+  name: my-cluster
   resources:
 {{ .StateValues.kafka.resources | toYaml | indent 4 }}
   jvmOptions:
