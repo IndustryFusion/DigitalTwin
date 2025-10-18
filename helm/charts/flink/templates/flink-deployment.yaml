@@ -10,6 +10,10 @@ spec:
   image: {{ .Values.mainRegistry }}/{{ .Values.mainRepo }}/flink-sql-gateway:{{ .Values.mainVersion }}
   flinkVersion: v1_19
   flinkConfiguration:
+    containerized.master.env.KAFKA_BOOTSTRAP: kafka-kafka-bootstrap:9092
+    containerized.taskmanager.env.KAFKA_BOOTSTRAP: kafka-kafka-bootstrap:9092
+    env.java.opts.jobmanager: "-DKAFKA_BOOTSTRAP=kafka-kafka-bootstrap:9092"
+    env.java.opts.taskmanager: "-DKAFKA_BOOTSTRAP=kafka-kafka-bootstrap:9092"
     web.submit.enable:  "true"
     web.cancel.enable:  "true"
     taskmanager.numberOfTaskSlots: "3"

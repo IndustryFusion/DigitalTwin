@@ -29,6 +29,7 @@ public class CoreServices {
         if (kafkaBootstrap == null) {
             kafkaBootstrap = "my-cluster-kafka-bootstrap:9092"; // Default value if environment variable is not set
         }
+        LOG.info("kafkaBootstrap is: {}", kafkaBootstrap);
         LOG.info("alertsBulkTopic is: {}", alertsBulkTopic);
         String alertsTopic = System.getenv("ALERTS_TOPIC");
         if (alertsTopic == null) {
@@ -48,8 +49,6 @@ public class CoreServices {
 
         // Load SQL statements
         final String sqlStatements = loadResourceFile("sql_statements.sql");
-        // Replace "my-cluster-kafka-bootstrap:9092" with kafkaBootstrap
-        final String sqlStatementsRepl = sqlStatements.replace("my-cluster-kafka-bootstrap:9092", kafkaBootstrap);
 
         // Kafka Source
         final KafkaSource<KeyValueRecord> kafkaSource = KafkaSource.<KeyValueRecord>builder()
@@ -79,7 +78,9 @@ public class CoreServices {
 
         // Apply the table definition
         LOG.info("Executing table definitions.");
-        final String[] tableDefList = tableDefinition.split(";");
+        // Replace "my-cluster-kafka-bootstrap:9092" with kafkaBootstrap
+        final String tblDefRepl = tableDefinition.replaceAll("my-cluster-kafka-bootstrap:9092", kafkaBootstrap); 
+        final String[] tableDefList = tblDefRepl.split(";");
         for (final String tableDef : tableDefList) {
             if (!tableDef.trim().isEmpty()) {
                 LOG.info("Executing table definition: {}", tableDef);
@@ -91,7 +92,7 @@ public class CoreServices {
         LOG.info("Adding SQL statements to joint pipeline.");
 
         final StreamStatementSet stmtSet = tableEnv.createStatementSet();
-        for (final String stmt : sqlStatementsRepl.split(";")) {
+        for (final String stmt : sqlStatements.split(";")) {
             final String stmtTrimmed = stmt.trim();
             if (stmtTrimmed.toUpperCase().startsWith("INSERT")) {
                 stmtSet.addInsertSql(stmtTrimmed + ";");
