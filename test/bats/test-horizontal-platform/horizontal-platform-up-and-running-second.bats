@@ -26,10 +26,7 @@ DETIK_DEBUG="true"
 
 
 @test "very that kafka is up and running" {
-    run try "at most 30 times every 60s to find 1 pods named 'kafka-0' with 'status.containerStatuses[0].ready' being 'true'"
-    [ "$status" -eq 0 ]
-
-    run try "at most 10 times every 30s to find 1 pod named 'zookeeper-0' with 'status.containerStatuses[0].ready' being 'true'"
+    run try "at most 30 times every 60s to find 1 pods named 'kafka-nodes-0' with 'status.containerStatuses[0].ready' being 'true'"
     [ "$status" -eq 0 ]
 
     run try "at most 10 times every 30s to find 1 pod named 'kafka-connect-connect' with 'status.containerStatuses[0].ready' being 'true'"

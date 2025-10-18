@@ -5,7 +5,7 @@ kind: KafkaTopic
 metadata:
   name: {{.Values.kafka_topic_vars.ENTITY_TOPIC}}
   labels:
-    strimzi.io/cluster: my-cluster
+    strimzi.io/cluster: {{ .Values.kafka.name }}
 spec:
   partitions: 1
   replicas: 1
@@ -17,7 +17,7 @@ kind: KafkaTopic
 metadata:
   name: {{.Values.kafka_topic_vars.REGISTRY_TOPIC}}
   labels:
-    strimzi.io/cluster: my-cluster
+    strimzi.io/cluster: {{ .Values.kafka.name }}
 spec:
   partitions: 1
   replicas: 1
@@ -29,7 +29,7 @@ kind: KafkaTopic
 metadata:
   name: {{.Values.kafka_topic_vars.TEMPORAL_TOPIC}}
   labels:
-    strimzi.io/cluster: my-cluster
+    strimzi.io/cluster: {{ .Values.kafka.name }}
 spec:
   partitions: 1
   replicas: 1
@@ -41,7 +41,7 @@ kind: KafkaTopic
 metadata:
   name: {{.Values.kafka_topic_vars.INTERNAL_NOTIFY_TOPIC}}
   labels:
-    strimzi.io/cluster: my-cluster
+    strimzi.io/cluster: {{ .Values.kafka.name }}
 spec:
   partitions: 1
   replicas: 1
@@ -53,7 +53,7 @@ kind: KafkaTopic
 metadata:
   name: {{.Values.kafka_topic_vars.INTERNAL_REGISTRYSUB_TOPIC}}
   labels:
-    strimzi.io/cluster: my-cluster
+    strimzi.io/cluster: {{ .Values.kafka.name }}
 spec:
   partitions: 1
   replicas: 1
@@ -65,7 +65,7 @@ kind: KafkaTopic
 metadata:
   name: {{.Values.kafka_topic_vars.SUB_ALIVE_TOPIC}}
   labels:
-    strimzi.io/cluster: my-cluster
+    strimzi.io/cluster: {{ .Values.kafka.name }}
 spec:
   partitions: 1
   replicas: 1
@@ -77,7 +77,7 @@ kind: KafkaTopic
 metadata:
   name: {{.Values.kafka_topic_vars.SUB_SYNC_TOPIC}}
   labels:
-    strimzi.io/cluster: my-cluster
+    strimzi.io/cluster: {{ .Values.kafka.name }}
 spec:
   partitions: 1
   replicas: 1
@@ -89,7 +89,7 @@ kind: KafkaTopic
 metadata:
   name: {{.Values.kafka_topic_vars.REGISTRYSUB_SYNC_TOPIC}}
   labels:
-    strimzi.io/cluster: my-cluster
+    strimzi.io/cluster: {{ .Values.kafka.name }}
 spec:
   partitions: 1
   replicas: 1
@@ -101,7 +101,7 @@ kind: KafkaTopic
 metadata:
   name: {{.Values.kafka_topic_vars.REGISTRYSUB_ALIVE_TOPIC}}
   labels:
-    strimzi.io/cluster: my-cluster
+    strimzi.io/cluster: {{ .Values.kafka.name }}
 spec:
   partitions: 1
   replicas: 1

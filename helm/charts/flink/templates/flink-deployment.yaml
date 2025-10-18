@@ -10,6 +10,8 @@ spec:
   image: {{ .Values.mainRegistry }}/{{ .Values.mainRepo }}/flink-sql-gateway:{{ .Values.mainVersion }}
   flinkVersion: v1_19
   flinkConfiguration:
+    env.java.opts.jobmanager: "-DKAFKA_BOOTSTRAP={{.Values.kafka.bootstrapServer}}"
+    env.java.opts.taskmanager: "-DKAFKA_BOOTSTRAP={{.Values.kafka.bootstrapServer}}"
     web.submit.enable:  "true"
     web.cancel.enable:  "true"
     taskmanager.numberOfTaskSlots: "3"
@@ -111,6 +113,8 @@ spec:
           - name: flink-main-container
             workingDir: /opt/flink
             env:
+            - name: KAFKA_BOOTSTRAP
+              value: {{ .Values.kafka.bootstrapServer | quote }}
             - name: POD_IP
               valueFrom:
                 fieldRef:
