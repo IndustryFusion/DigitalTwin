@@ -39,7 +39,7 @@ DETIK_DEBUG="true"
 
 }
 @test "very that keycloak is up and running" {
-    run try "at most 30 times every 60s to find 1 job named 'iff-keycloak-realm-import' with 'status.conditions[0].type' being 'Complete'"
+    run try "at most 30 times every 60s to find 1 job named 'iff-keycloak-realm-import' with 'status.conditions[-1].type' being 'Complete'"
     [ "$status" -eq 0 ]
 
     run try "at most 30 times every 60s to find 1 pod named 'keycloak-0' with 'status.containerStatuses[0].ready' being 'true'"
