@@ -41,12 +41,12 @@ if [ "${REGISTRY}" = "docker.io" ]; then
       docker.io/bitnamilegacy/kubectl:${KUBECTL_VERSION}
       docker.io/velero/velero-plugin-for-aws:${VELERO_PLUGIN_VERSION}
       docker.io/rancher/mirrored-pause:3.6
-      docker.io/rancher/mirrored-coredns-coredns:1.10.1
-      docker.io/rancher/klipper-helm:v0.8.2-build20230815
-      docker.io/rancher/local-path-provisioner:v0.0.24
-      docker.io/rancher/mirrored-metrics-server:v0.6.3
-      docker.io/rancher/klipper-lb:v0.4.4
-      docker.io/rancher/mirrored-library-traefik:2.10.5
+      docker.io/rancher/mirrored-coredns-coredns:1.12.0
+      docker.io/rancher/klipper-helm:v0.9.3-build20241008
+      docker.io/rancher/local-path-provisioner:v0.0.30
+      docker.io/rancher/mirrored-metrics-server:v0.7.2
+      docker.io/rancher/klipper-lb:v0.4.9
+      docker.io/rancher/mirrored-library-traefik:2.11.18
       docker.io/rancher/mirrored-library-busybox:1.36.1
       docker.io/ibn40/scorpio-all-in-one-runner:${DOCKER_TAG}
       docker.io/ibn40/flink-services-operator:${DOCKER_TAG}
@@ -78,12 +78,12 @@ else
       docker.io/bitnamilegacy/kubectl:${KUBECTL_VERSION}
       docker.io/velero/velero-plugin-for-aws:${VELERO_PLUGIN_VERSION}
       docker.io/rancher/mirrored-pause:3.6
-      docker.io/rancher/mirrored-coredns-coredns:1.10.1
-      docker.io/rancher/klipper-helm:v0.8.2-build20230815
-      docker.io/rancher/local-path-provisioner:v0.0.24
-      docker.io/rancher/mirrored-metrics-server:v0.6.3
-      docker.io/rancher/klipper-lb:v0.4.4
-      docker.io/rancher/mirrored-library-traefik:2.10.5
+      docker.io/rancher/mirrored-coredns-coredns:1.12.0
+      docker.io/rancher/klipper-helm:v0.9.3-build20241008
+      docker.io/rancher/local-path-provisioner:v0.0.30
+      docker.io/rancher/mirrored-metrics-server:v0.7.2
+      docker.io/rancher/klipper-lb:v0.4.9
+      docker.io/rancher/mirrored-library-traefik:2.11.18
       docker.io/rancher/mirrored-library-busybox:1.36.1
   )
 fi
