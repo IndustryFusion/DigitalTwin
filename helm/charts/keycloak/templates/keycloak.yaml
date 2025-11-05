@@ -29,6 +29,8 @@ spec:
   additionalOptions:
     - name: http-relative-path
       value: /auth
+    - name: http-management-relative-path
+      value: /
     - name: hostname-strict-https
       value: "false"
     - name: proxy

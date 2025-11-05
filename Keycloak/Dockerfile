@@ -1,6 +1,6 @@
-ARG KEYCLOAK_VERSION="22.0"
+ARG KEYCLOAK_VERSION="25.0.0"
 
-FROM node:12-alpine AS keycloak-themes-builder
+FROM node:24-alpine AS keycloak-themes-builder
 
 ADD themes /themes
 
@@ -32,4 +32,4 @@ COPY --from=keycloak-modules-builder --chown=1000 /deployments/fusion.jar /opt/k
 
 COPY --from=keycloak-modules-builder --chown=1000 /deployments/iff-js-providers.jar /opt/keycloak/providers/iff-js-providers.jar
 
-RUN /opt/keycloak/bin/kc.sh build --db=postgres
+RUN /opt/keycloak/bin/kc.sh build --db=postgres --health-enabled=true --metrics-enabled=true --features=scripts
