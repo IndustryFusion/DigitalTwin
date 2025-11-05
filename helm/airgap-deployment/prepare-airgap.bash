@@ -37,7 +37,7 @@ if [ "${REGISTRY}" = "docker.io" ]; then
       quay.io/jetstack/cert-manager-webhook:v1.9.1
       quay.io/jetstack/cert-manager-cainjector:v1.9.1
       docker.io/emqx:5.1
-      quay.io/keycloak/keycloak-operator:21.1.2
+      quay.io/keycloak/keycloak-operator:${KEYCLOAK_VERSION}
       docker.io/bitnamilegacy/kubectl:${KUBECTL_VERSION}
       docker.io/velero/velero-plugin-for-aws:${VELERO_PLUGIN_VERSION}
       docker.io/rancher/mirrored-pause:3.6
@@ -74,7 +74,7 @@ else
       quay.io/jetstack/cert-manager-webhook:v1.9.1
       quay.io/jetstack/cert-manager-cainjector:v1.9.1
       docker.io/emqx:5.1
-      quay.io/keycloak/keycloak-operator:21.1.2
+      quay.io/keycloak/keycloak-operator:${KEYCLOAK_VERSION}
       docker.io/bitnamilegacy/kubectl:${KUBECTL_VERSION}
       docker.io/velero/velero-plugin-for-aws:${VELERO_PLUGIN_VERSION}
       docker.io/rancher/mirrored-pause:3.6
