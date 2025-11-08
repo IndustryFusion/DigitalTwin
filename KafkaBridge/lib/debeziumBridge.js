@@ -160,60 +160,70 @@ module.exports = function DebeziumBridge (conf) {
             } else {
               attribute.type = 'https://uri.etsi.org/ngsi-ld/Property';
             }
-            if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@value'] !== undefined) {
-              attribute.attributeValue = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@value'];
-              attribute.nodeType = '@value';
-            } else if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@id'] !== undefined) {
-              attribute.attributeValue = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@id'];
-              attribute.nodeType = '@id';
-            }
+            if ('https://uri.etsi.org/ngsi-ld/hasValue' in refObj && refObj['https://uri.etsi.org/ngsi-ld/hasValue'].length > 0) {
+              if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@value'] !== undefined) {
+                attribute.attributeValue = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@value'];
+                attribute.nodeType = '@value';
+              } else if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@id'] !== undefined) {
+                attribute.attributeValue = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@id'];
+                attribute.nodeType = '@id';
+              }
 
-            if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'] !== undefined) {
-              if (Array.isArray(refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'])) {
-                attribute.valueType = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'][0];
-              } else {
-                attribute.valueType = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'];
+              if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'] !== undefined) {
+                if (Array.isArray(refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'])) {
+                  attribute.valueType = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'][0];
+                } else {
+                  attribute.valueType = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'];
+                }
               }
             }
           } else if (refObj['@type'].includes('https://uri.etsi.org/ngsi-ld/GeoProperty')) {
-            const obj = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0];
-            if (typeof (obj) !== 'object') {
-              logger.warn(`Dropping GeoProperty attribue ${attribute.id}. It is not an object.`);
-              return;
-            }
-            if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'] !== undefined) {
-              if (Array.isArray(refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'])) {
-                attribute.valueType = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'][0];
-              } else {
-                attribute.valueType = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'];
+            if ('https://uri.etsi.org/ngsi-ld/hasValue' in refObj && refObj['https://uri.etsi.org/ngsi-ld/hasValue'].length > 0) {
+              const obj = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0];
+              if (typeof (obj) !== 'object') {
+                logger.warn(`Dropping GeoProperty attribute ${attribute.id}. It is not an object.`);
+                return;
               }
+              if (refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'] !== undefined) {
+                if (Array.isArray(refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'])) {
+                  attribute.valueType = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'][0];
+                } else {
+                  attribute.valueType = refObj['https://uri.etsi.org/ngsi-ld/hasValue'][0]['@type'];
+                }
+              }
+              attribute.attributeValue = JSON.stringify(obj);
+              attribute.type = 'https://uri.etsi.org/ngsi-ld/GeoProperty';
+              attribute.nodeType = '@json';
             }
-            attribute.attributeValue = JSON.stringify(obj);
-            attribute.type = 'https://uri.etsi.org/ngsi-ld/GeoProperty';
-            attribute.nodeType = '@json';
           } else if (refObj['@type'].includes('https://uri.etsi.org/ngsi-ld/JsonProperty')) {
-            const obj = refObj['https://uri.etsi.org/ngsi-ld/hasJSON'][0]['@value'];
-            if (typeof (obj) !== 'object') {
-              logger.warn(`Dropping JSON attribue ${attribute.id}. It is not an object.`);
-              return;
+            if ('https://uri.etsi.org/ngsi-ld/hasJSON' in refObj && refObj['https://uri.etsi.org/ngsi-ld/hasJSON'].length > 0) {
+              const obj = refObj['https://uri.etsi.org/ngsi-ld/hasJSON'][0]['@value'];
+              if (typeof (obj) !== 'object') {
+                logger.warn(`Dropping JSON attribute ${attribute.id}. It is not an object.`);
+                return;
+              }
+              attribute.attributeValue = JSON.stringify(obj);
+              attribute.type = 'https://uri.etsi.org/ngsi-ld/JsonProperty';
+              attribute.nodeType = '@json';
             }
-            attribute.attributeValue = JSON.stringify(obj);
-            attribute.type = 'https://uri.etsi.org/ngsi-ld/JsonProperty';
-            attribute.nodeType = '@json';
           } else if (refObj['@type'].includes('https://uri.etsi.org/ngsi-ld/ListProperty')) {
-            let lst = refObj['https://uri.etsi.org/ngsi-ld/hasValueList'][0]['@list'];
-            if (!Array.isArray(lst)) {
-              logger.warn(`Dropping list attribue ${attribute.id}. It is not a list.`);
-              return;
+            if ('https://uri.etsi.org/ngsi-ld/hasValueList' in refObj && refObj['https://uri.etsi.org/ngsi-ld/hasValueList'].length > 0) {
+              let lst = refObj['https://uri.etsi.org/ngsi-ld/hasValueList'][0]['@list'];
+              if (!Array.isArray(lst)) {
+                logger.warn(`Dropping list attribute ${attribute.id}. It is not a list.`);
+                return;
+              }
+              lst = lst.map(item => item['@value']); // remove '@values' from expanded list
+              attribute.attributeValue = JSON.stringify(lst);
+              attribute.type = 'https://uri.etsi.org/ngsi-ld/JsonProperty';
+              attribute.nodeType = '@list';
             }
-            lst = lst.map(item => item['@value']); // remove '@values' from expanded list
-            attribute.attributeValue = JSON.stringify(lst);
-            attribute.type = 'https://uri.etsi.org/ngsi-ld/JsonProperty';
-            attribute.nodeType = '@list';
           } else if (refObj['@type'].includes('https://uri.etsi.org/ngsi-ld/Relationship')) {
-            attribute.type = 'https://uri.etsi.org/ngsi-ld/Relationship';
-            attribute.attributeValue = refObj['https://uri.etsi.org/ngsi-ld/hasObject'][0]['@id'];
-            attribute.nodeType = '@id';
+            if ('https://uri.etsi.org/ngsi-ld/hasObject' in refObj && refObj['https://uri.etsi.org/ngsi-ld/hasObject'].length > 0) {
+              attribute.type = 'https://uri.etsi.org/ngsi-ld/Relationship';
+              attribute.attributeValue = refObj['https://uri.etsi.org/ngsi-ld/hasObject'][0]['@id'];
+              attribute.nodeType = '@id';
+            }
           } else {
             return;
           }
@@ -224,7 +234,10 @@ module.exports = function DebeziumBridge (conf) {
           if (typeof subProperties === 'object' && Object.keys(subProperties).length > 0) {
             parsedAttributes.push(...parseAttributes(subProperties, refIdLocal));
           }
-          parsedAttributes.push(attribute);
+          if (attribute.attributeValue !== undefined) {
+            // Only push attribute if it has a value
+            parsedAttributes.push(attribute);
+          }
         });
       });
       return parsedAttributes;
@@ -267,12 +280,6 @@ module.exports = function DebeziumBridge (conf) {
         }
       }
       baAttrs[key] = Array.from(uniqueMap.values());
-      // Convert the map back to an array and sort by `datasetId`
-      // baAttrs[key] = Array.from(uniqueMap.values()).sort((a, b) => {
-      //   if (a.datasetId === '@none') return -1;
-      //   if (b.datasetId === '@none') return 1;
-      //   return a.datasetId.localeCompare(b.datasetId);
-      // });
     });
 
     return { entity: { id: baEntity.id, type: baEntity.type }, attributes: baAttrs };

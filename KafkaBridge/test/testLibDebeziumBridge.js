@@ -1172,6 +1172,88 @@ describe('Test parseBeforeAfterEntity', function () {
     });
     revert();
   });
+  it('Should drop silently incorrect Property, Relationship, JsonProperty & ListProperty', async function () {
+    const config = {
+      bridgeCommon: {
+        kafkaSyncOnAttribute: 'kafkaSyncOn'
+      }
+    };
+    const Logger = function () {
+      return logger;
+    };
+    const ba = {
+      id: 'id',
+      e_types: ['type'],
+      entity: '{\
+                "@id":"id", "@type": ["type"],\
+                "https://uri.etsi.org/ngsi-ld/createdAt":[{\
+                    "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
+                    "@value": "2022-02-19T20:31:26.123656Z"\
+                }],\
+                "https://example/hasRel": [{\
+                    "@type": ["https://uri.etsi.org/ngsi-ld/Relationship"],\
+                    "https://uri.etsi.org/ngsi-ld/createdAt":[{\
+                        "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
+                        "@value": "2022-02-19T20:31:26.123656Z"\
+                    }]\
+                }],\
+                "https://example/hasJson": [{\
+                    "@type": ["https://uri.etsi.org/ngsi-ld/JsonProperty"],\
+                    "https://uri.etsi.org/ngsi-ld/createdAt":[{\
+                        "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
+                        "@value": "2022-02-19T20:31:26.123656Z"\
+                    }]\
+                }],\
+                "https://example/hasList": [{\
+                    "@type": ["https://uri.etsi.org/ngsi-ld/ListProperty"],\
+                    "https://uri.etsi.org/ngsi-ld/createdAt":[{\
+                        "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
+                        "@value": "2022-02-19T20:31:26.123656Z"\
+                    }]\
+                }],\
+                "https://example/prop":[{\
+                  "@type": ["https://uri.etsi.org/ngsi-ld/Property"],\
+                    "https://uri.etsi.org/ngsi-ld/createdAt":[{\
+                        "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
+                        "@value": "2022-02-19T20:31:26.123656Z"\
+                    }],\
+                    "https://uri.etsi.org/ngsi-ld/modifiedAt":[{\
+                        "@type": "https://uri.etsi.org/ngsi-ld/DateTime",\
+                        "@value": "2022-02-19T23:11:28.457509Z"\
+                    }]\
+                }],\
+                "https://example/prop2":[{\
+                  "@type": ["https://uri.etsi.org/ngsi-ld/Property"],\
+                   "https://uri.etsi.org/ngsi-ld/hasValue": [],\
+                    "https://example/subprop": [{\
+                        "@type": ["https://uri.etsi.org/ngsi-ld/Property"],\
+                        "https://uri.etsi.org/ngsi-ld/hasValue": [{\
+                        "@value": "subvalue"}]\
+                    }]\
+                }]\
+            }'
+    };
+
+    const revert = ToTest.__set__('Logger', Logger);
+    const debeziumBridge = new ToTest(config);
+    const result = debeziumBridge.parseBeforeAfterEntity(ba);
+    assert.deepEqual(result.entity, { id: 'id', type: 'type' });
+    assert.deepEqual(result.attributes, {
+      'https://example/subprop': [
+        {
+          attributeValue: 'subvalue',
+          datasetId: '@none',
+          entityId: 'id',
+          id: 'id\\6d6cab5b1707785e3a5ce6be',
+          parentId: 'id\\c81b7f87902b3ee5c99dd5b4',
+          name: 'https://example/subprop',
+          nodeType: '@value',
+          type: 'https://uri.etsi.org/ngsi-ld/Property'
+        }
+      ]
+    });
+    revert();
+  });
 });
 describe('Test parse', function () {
   it('Should return null result', async function () {

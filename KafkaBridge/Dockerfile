@@ -1,4 +1,4 @@
-FROM node:16
+FROM node:24
 COPY alerta/ /opt/alerta/
 COPY debeziumBridge/ /opt/debeziumBridge/
 COPY ngsildUpdates/ /opt/ngsildUpdates/
