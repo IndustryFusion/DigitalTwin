@@ -1,0 +1,27 @@
+name: Docker cache cleanup
+
+on:
+  schedule:
+    # Runs every day at 11:00 UTC
+    # ≈ 06:00 EST (winter). Adjust if you care about DST.
+    - cron: '0 11 * * *'
+
+jobs:
+  clean-docker:
+    runs-on: [self-hosted]  # <-- use your runner's labels
+    steps:
+      - name: Docker usage before prune (for logging)
+        run: |
+          docker ps -a
+          docker images
+          docker volume ls || true
+
+      - name: Hard prune docker
+        run: |
+          docker system prune -af --volumes
+
+      - name: Docker usage after prune (for logging)
+        run: |
+          docker ps -a
+          docker images
+          docker volume ls || true
