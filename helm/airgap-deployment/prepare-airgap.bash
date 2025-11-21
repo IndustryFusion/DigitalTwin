@@ -28,7 +28,7 @@ if [ "${REGISTRY}" = "docker.io" ]; then
       docker.io/redis:7.2
       ghcr.io/zalando/spilo-15:2.1-p9
       docker.io/velero/velero:${VELERO_VERSION}
-      docker.io/alerta/alerta-web:8.7.0
+      docker.io/alerta/alerta-web:${ALERTA_VERSION}
       docker.io/busybox:1.28
       docker.io/postgrest/postgrest:v12.0.0
       quay.io/strimzi/kafka:${STRIMZI_VERSION}-kafka-3.9.0
@@ -65,7 +65,7 @@ else
       docker.io/redis:7.2
       ghcr.io/zalando/spilo-15:2.1-p9
       docker.io/velero/velero:${VELERO_VERSION}
-      docker.io/alerta/alerta-web:8.7.0
+      docker.io/alerta/alerta-web:${ALERTA_VERSION}
       docker.io/busybox:1.28
       docker.io/postgrest/postgrest:v12.0.0
       quay.io/strimzi/kafka:${STRIMZI_VERSION}-kafka-3.9.0

@@ -4,11 +4,6 @@
 
 replicaCount: 1
 
-image:
-  repository: alerta/alerta-web
-  tag: 8.7.0
-  pullPolicy: Always
-
 nameOverride: ""
 fullnameOverride: ""
 
@@ -57,7 +52,7 @@ extraSecretMounts:
 
 # ref: http://docs.alerta.io/en/latest/configuration.html
 alertaConfig: |
-  AUTH_REQUIRED = "True"
+  AUTH_REQUIRED = True
 
   SEVERITY_MAP = {
   'critical': 0,
@@ -87,7 +82,6 @@ alertaConfig: |
   DEFAULT_NORMAL_SEVERITY = 'ok'
   COLUMNS = ['severity', 'status', 'lastReceiveTime', 'duplicateCount', 'customer', 'environment', 'service', 'resource', 'event', 'value', 'text']
 
-  AUTH_PROVIDER = 'keycloak'
   PLUGINS = ['blackout']
   REQUESTS_CA_BUNDLE=True
   ADMIN_USERS = ['admin']

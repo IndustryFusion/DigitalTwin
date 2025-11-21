@@ -137,6 +137,10 @@ alerta:
   heartbeatDelay: 2000
   requestTimeout: 2000
   kafkaCommitThreshold: 200
+  image:
+    repository: alerta/alerta-web
+    tag: 9.0.4
+    pullPolicy: Always
 
 kafka:
   name: my-cluster
