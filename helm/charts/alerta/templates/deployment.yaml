@@ -25,9 +25,11 @@ spec:
     spec:
       containers:
         - name: {{ .Chart.Name }}
-          image: "{{ .Values.externalRegistry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          image: "{{ .Values.externalRegistry }}/{{ .Values.alerta.image.repository }}:{{ .Values.alerta.image.tag }}"
+          imagePullPolicy: {{ .Values.alerta.image.pullPolicy }}
           env:
+            - name: AUTH_PROVIDER
+              value: openid
             - name: OAUTH2_CLIENT_SECRET
               valueFrom: 
                 secretKeyRef:
@@ -40,10 +42,8 @@ spec:
                 secretKeyRef:
                   name: alerta-db-secret
                   key: DATABASE_URL
-            - name: KEYCLOAK_URL
-              value: {{ .Values.keycloak.externalAuthService.protocol }}//{{ .Values.keycloak.externalAuthService.domainname }}
-            - name: KEYCLOAK_REALM
-              value: {{ .Values.keycloak.alerta.realm }}
+            - name: OIDC_ISSUER_URL
+              value: {{ .Values.keycloak.externalAuthService.protocol }}//{{ .Values.keycloak.externalAuthService.domainname }}/auth/realms/{{ .Values.keycloak.alerta.realm }}
             - name: ADMIN_USERS
               value: {{ list .Values.alerta.adminUser | join "," }}
             - name: ADMIN_PASSWORD
