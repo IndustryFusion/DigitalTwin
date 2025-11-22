@@ -3,7 +3,8 @@ source $DIRNAME/../.env
 export NAMESPACE=iff
 export LOCAL_REGISTRY=k3d-iff.localhost:12345
 export EMQX_OPERATOR_NAMESPACE=emqx-operator-system
-export EMQX_OPERATOR_VERSION="2.2.3"
+export EMQX_OPERATOR_VERSION="2.2.29"
+export EMQX_VERSION=$(yq ".emqx.imageVersion" < $DIRNAME/common.yaml)
 export POSTGRES_OPERATOR_VERSION="v1.9.0"
 export VELERO_HELM_VERSION=velero-10.1.3
 export VELERO_PLUGIN_VERSION="v1.12.2"
