@@ -3,7 +3,7 @@ kind: EMQX
 metadata:
     name: emqx
 spec:
-    image: {{ .Values.externalRegistry }}/emqx:5.1
+    image: {{ .Values.externalRegistry }}/emqx:{{ .Values.emqx.imageVersion }}
     coreTemplate:
         spec:
             replicas: {{ .Values.emqx.replicas }}

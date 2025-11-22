@@ -23,7 +23,7 @@ if [ "${REGISTRY}" = "docker.io" ]; then
       registry.opensource.zalan.do/acid/postgres-operator:v1.9.0 
       docker.io/minio/operator:v${MINIO_OPERATOR_VERSION}
       docker.io/minio/mc:RELEASE.2023-06-28T21-54-17Z
-      docker.io/emqx/emqx-operator-controller:2.2.3
+      docker.io/emqx/emqx-operator-controller:${EMQX_OPERATOR_VERSION}
       docker.io/minio/minio:RELEASE.2023-01-12T02-06-16Z
       docker.io/redis:7.2
       ghcr.io/zalando/spilo-15:2.1-p9
@@ -36,7 +36,7 @@ if [ "${REGISTRY}" = "docker.io" ]; then
       quay.io/jetstack/cert-manager-controller:v1.9.1
       quay.io/jetstack/cert-manager-webhook:v1.9.1
       quay.io/jetstack/cert-manager-cainjector:v1.9.1
-      docker.io/emqx:5.1
+      docker.io/emqx:${EMQX_VERSION}
       quay.io/keycloak/keycloak-operator:${KEYCLOAK_VERSION}
       docker.io/bitnamilegacy/kubectl:${KUBECTL_VERSION}
       docker.io/velero/velero-plugin-for-aws:${VELERO_PLUGIN_VERSION}
@@ -60,7 +60,7 @@ else
       registry.opensource.zalan.do/acid/postgres-operator:v1.9.0 
       docker.io/minio/operator:v${MINIO_OPERATOR_VERSION}
       docker.io/minio/mc:RELEASE.2023-06-28T21-54-17Z
-      docker.io/emqx/emqx-operator-controller:2.2.3
+      docker.io/emqx/emqx-operator-controller:${EMQX_OPERATOR_VERSION}
       docker.io/minio/minio:RELEASE.2023-01-12T02-06-16Z
       docker.io/redis:7.2
       ghcr.io/zalando/spilo-15:2.1-p9
@@ -73,7 +73,7 @@ else
       quay.io/jetstack/cert-manager-controller:v1.9.1
       quay.io/jetstack/cert-manager-webhook:v1.9.1
       quay.io/jetstack/cert-manager-cainjector:v1.9.1
-      docker.io/emqx:5.1
+      docker.io/emqx:${EMQX_VERSION}
       quay.io/keycloak/keycloak-operator:${KEYCLOAK_VERSION}
       docker.io/bitnamilegacy/kubectl:${KUBECTL_VERSION}
       docker.io/velero/velero-plugin-for-aws:${VELERO_PLUGIN_VERSION}

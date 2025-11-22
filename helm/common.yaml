@@ -32,3 +32,5 @@ flink:
     rdfSlotName: rdf_slot
     constraintSlotName: constraint_slot
     constraintCombinationSlotName: constraint_combination_slot
+emqx:
+  imageVersion: 5.8.8

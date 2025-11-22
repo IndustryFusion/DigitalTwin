@@ -382,6 +382,7 @@ redis:
 
 emqx:
   replicas: 1
+  imageVersion: {{ .StateValues.emqx.imageVersion }}
   externalHostname: {{ .StateValues.emqx.externalHostname }}
   resources:
   {{- if hasKey .StateValues.emqx "resources"}}
