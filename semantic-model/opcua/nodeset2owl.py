@@ -21,6 +21,7 @@ import xmlschema
 from rdflib import Graph, URIRef
 import argparse
 from lib.nodesetparser import NodesetParser
+import lib.utils as utils
 
 
 def parse_args(args=sys.argv[1:]):
@@ -38,9 +39,9 @@ parse nodeset and create RDF-graph <nodeset2.xml>')
                         https://industryfusion.github.io/contexts/ontology/v0/base/',
                         required=False, default='https://industryfusion.github.io/contexts/ontology/v0/base/')
     parser.add_argument('-burl', '--baseOntologyURL', help='Ontology URL , e.g. \
-                        https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl',
+                        https://industryfusion.github.io/contexts/staging/ontology/v0/base.ttl',
                         required=False,
-                        default='https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl')
+                        default='https://industryfusion.github.io/contexts/staging/ontology/v0/base.ttl')
     parser.add_argument('-u', '--opcuaNamespace', help='OPCUA Core namespace, e.g. http://opcfoundation.org/UA/',
                         required=False, default='http://opcfoundation.org/UA/')
     parser.add_argument('-p', '--prefix', help='Prefix for added ontolgoy, e.g. "pumps"', required=True)
@@ -50,6 +51,8 @@ Schema/Opc.Ua.Types.xsd')
     parser.add_argument('--import-indirect-dependencies',
                         action="store_true",
                         default=False, help='Import not only direct dependencies but also indirect dependencies.')
+    parser.add_argument('--disable-semantic-bridge', required=False, action='store_true',
+                        help='Disable adding semantic bridge between OPC UA and Containment/Domain ontology terms.')
     parsed_args = parser.parse_args(args)
     return parsed_args
 
@@ -84,7 +87,12 @@ if __name__ == '__main__':
             if os.path.basename(input) == input:
                 input = f'{os.getcwd()}/{input}'
             imported_ontologies.append(URIRef(input))
-    if args.baseOntologyURL not in imported_ontologies:
+    base_ontology_found = False
+    for ontology in imported_ontologies:
+        if utils.v_major_equivalent(str(ontology), args.baseOntologyURL):
+            base_ontology_found = True
+            break
+    if not base_ontology_found:
         imported_ontologies.append(URIRef(args.baseOntologyURL))
     opcua_output = args.output
     prefix = args.prefix
@@ -97,5 +105,11 @@ if __name__ == '__main__':
                                   data_schema,
                                   imported_ontologies,
                                   not args.import_indirect_dependencies)
+    print("Parsing nodesets and build OWL graph ...")
     nodesetparser.parse()
+    if not args.disable_semantic_bridge:
+        print("Adding semantic relationships...")
+        nodesetparser.add_semantic_bridge()
+    print("Writing graph to file ...")
     nodesetparser.write_graph(opcua_output)
+    print(f"Done. Output written to: {opcua_output}")

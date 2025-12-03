@@ -1,0 +1,168 @@
+@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+@prefix opcua: <http://opcfoundation.org/UA/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+opcua: a owl:Ontology ;
+    owl:imports <https://industryfusion.github.io/contexts/staging/ontology/v0/base.ttl> ;
+    owl:versionIRI <http://example.com/v0.1/UA/> ;
+    owl:versionInfo 1e-01 .
+
+opcua:hasMyTestVar rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+opcua:nodei24 a opcua:DataTypeNodeClass ;
+    base:definesType opcua:BaseDataType ;
+    base:hasBrowseName "BaseDataType" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
+    base:hasDisplayName "BaseDataType" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "24" .
+
+opcua:nodei26 a opcua:DataTypeNodeClass ;
+    base:definesType opcua:Number ;
+    base:hasBrowseName "Number" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
+    base:hasDisplayName "Number" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "26" .
+
+opcua:nodei31 a opcua:ReferenceTypeNodeClass ;
+    base:definesType opcua:References ;
+    base:hasBrowseName "References" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
+    base:hasDisplayName "References" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "31" ;
+    base:isSymmetric "true" .
+
+opcua:nodei32 a opcua:ReferenceTypeNodeClass ;
+    base:definesType opcua:NonHierarchicalReferences ;
+    base:hasBrowseName "NonHierarchicalReferences" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
+    base:hasDisplayName "NonHierarchicalReferences" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "32" ;
+    base:isSymmetric "true" .
+
+opcua:nodei33 a opcua:ReferenceTypeNodeClass ;
+    base:definesType opcua:HierarchicalReferences ;
+    base:hasBrowseName "HierarchicalReferences" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
+    base:hasDisplayName "HierarchicalReferences" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "33" .
+
+opcua:nodei34 a opcua:ReferenceTypeNodeClass ;
+    base:definesType opcua:HasChild ;
+    base:hasBrowseName "HasChild" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
+    base:hasDisplayName "HasChild" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "34" .
+
+opcua:nodei44 a opcua:ReferenceTypeNodeClass ;
+    base:definesType opcua:Aggregates ;
+    base:hasBrowseName "Aggregates" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
+    base:hasDisplayName "Aggregates" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "44" .
+
+opcua:nodei47 a opcua:ReferenceTypeNodeClass ;
+    base:definesType opcua:HasComponent ;
+    base:hasBrowseName "HasComponent" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
+    base:hasDisplayName "HasComponent" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "47" .
+
+opcua:nodei47112 a opcua:BaseObjectType,
+        opcua:ObjectNodeClass ;
+    opcua:HasComponent opcua:nodei16363 ;
+    opcua:hasMyTestVar opcua:nodei16363 ;
+    base:hasBrowseName "MyObject" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
+    base:hasDisplayName "MyObject" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "47112" .
+
+opcua:nodei58 a opcua:ObjectTypeNodeClass ;
+    base:definesType opcua:BaseObjectType ;
+    base:hasBrowseName "BaseObjectType" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
+    base:hasDisplayName "BaseObjectType" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "58" .
+
+opcua:nodei62 a opcua:VariableTypeNodeClass ;
+    base:definesType opcua:BaseVariableType ;
+    base:hasBrowseName "BaseVariableType" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
+    base:hasDisplayName "BaseVariableType" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "62" ;
+    base:hasValueRank -2 .
+
+opcua:HasComponent a owl:ObjectProperty ;
+    rdfs:subPropertyOf opcua:Aggregates .
+
+opcua:NonHierarchicalReferences a owl:ObjectProperty ;
+    rdfs:subPropertyOf opcua:References ;
+    base:isAbstract "true" .
+
+opcua:Aggregates a owl:ObjectProperty ;
+    rdfs:subPropertyOf opcua:HasChild ;
+    base:isAbstract "true" .
+
+opcua:BaseDataType a owl:Class ;
+    base:isAbstract "true" .
+
+opcua:BaseObjectType a owl:Class .
+
+opcua:BaseVariableType a owl:Class ;
+    base:isAbstract "true" .
+
+opcua:HasChild a owl:ObjectProperty ;
+    rdfs:subPropertyOf opcua:HierarchicalReferences ;
+    base:isAbstract "true" .
+
+opcua:HierarchicalReferences a owl:ObjectProperty ;
+    rdfs:subPropertyOf opcua:References ;
+    base:isAbstract "true" .
+
+opcua:Number a owl:Class ;
+    rdfs:subClassOf opcua:BaseDataType ;
+    base:isAbstract "true" .
+
+opcua:nodei16363 a opcua:BaseVariableType,
+        opcua:VariableNodeClass ;
+    base:hasArrayDimensions ( 0 ) ;
+    base:hasBrowseName "MyTestVar" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
+    base:hasDatatype opcua:Number ;
+    base:hasDisplayName "My Test Variable" ;
+    base:hasIdentifierType base:numericID ;
+    base:hasNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "16363" ;
+    base:hasValueRank 1 .
+
+opcua:References a owl:ObjectProperty ;
+    base:isAbstract "true" .
+
+opcua:OPCUANamespace a base:Namespace ;
+    base:hasPrefix "opcua" ;
+    base:hasUri "http://opcfoundation.org/UA/" .
+

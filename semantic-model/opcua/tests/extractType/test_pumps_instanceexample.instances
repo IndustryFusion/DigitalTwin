@@ -5,27 +5,27 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasFrequency": {
+        "pumps:hasFrequency": {
             "type": "Property",
             "value": 0.0
         },
-        "uaentity:hasMotorVoltage": {
+        "pumps:hasMotorVoltage": {
             "type": "Property",
             "value": 0.0
         },
-        "uaentity:hasDriverPowerInput": {
+        "pumps:hasDriverPowerInput": {
             "type": "Property",
             "value": 0.0
         },
-        "uaentity:hasMotorCurrent": {
+        "pumps:hasMotorCurrent": {
             "type": "Property",
             "value": 0.0
         },
-        "uaentity:hasEnergyConsumption": {
+        "pumps:hasEnergyConsumption": {
             "type": "Property",
             "value": 0.0
         },
-        "uaentity:hasMotorTemperature": {
+        "pumps:hasMotorTemperature": {
             "type": "Property",
             "value": 0.0
         }
@@ -36,7 +36,7 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasMeasurements": [
+        "pumps:hasMeasurements": [
             {
                 "type": "Relationship",
                 "object": "http://yourorganisation.org/InstanceExample/testid:i5006"
@@ -49,7 +49,7 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasDrive": [
+        "pumps:has%3CDrive%3E": [
             {
                 "type": "Relationship",
                 "object": "http://yourorganisation.org/InstanceExample/testid:i5004"
@@ -62,11 +62,11 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasMaximumAllowableContinuousSpeed": {
+        "pumps:hasMaximumAllowableContinuousSpeed": {
             "type": "Property",
             "value": 56.67
         },
-        "uaentity:hasOfferedControlModes": {
+        "pumps:hasOfferedControlModes": {
             "type": "JsonProperty",
             "json": {
                 "xsd:TypeId": {
@@ -80,37 +80,37 @@
                 }
             }
         },
-        "uaentity:hasPumpClass": {
+        "pumps:hasPumpClass": {
             "type": "Property",
             "value": {
                 "@id": "http://opcfoundation.org/UA/Pumps/LiquidPump"
             }
         },
-        "uaentity:hasMaximumPumpPowerInput": {
+        "pumps:hasMaximumPumpPowerInput": {
             "type": "Property",
             "value": 85.0
         },
-        "uaentity:hasMaximumAllowableHead": {
+        "pumps:hasMaximumAllowableHead": {
             "type": "Property",
             "value": 6.3
         },
-        "uaentity:hasClockwiseRotation": {
+        "pumps:hasClockwiseRotation": {
             "type": "Property",
             "value": true
         },
-        "uaentity:hasMinimumAllowableContinuousSpeed": {
+        "pumps:hasMinimumAllowableContinuousSpeed": {
             "type": "Property",
             "value": 23.33
         },
-        "uaentity:hasMinimumAllowableAmbientTemperature": {
+        "pumps:hasMinimumAllowableAmbientTemperature": {
             "type": "Property",
             "value": 278.15
         },
-        "uaentity:hasControllable": {
+        "pumps:hasControllable": {
             "type": "Property",
             "value": false
         },
-        "uaentity:hasOfferedFieldbuses": {
+        "pumps:hasOfferedFieldbuses": {
             "type": "JsonProperty",
             "json": {
                 "xsd:TypeId": {
@@ -124,11 +124,11 @@
                 }
             }
         },
-        "uaentity:hasMaximumAllowableRelativeHumidity": {
+        "pumps:hasMaximumAllowableRelativeHumidity": {
             "type": "Property",
             "value": 80.0
         },
-        "uaentity:hasMaximumAllowableAmbientTemperature": {
+        "pumps:hasMaximumAllowableAmbientTemperature": {
             "type": "Property",
             "value": 343.15
         }
@@ -139,7 +139,7 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasFieldbus": {
+        "pumps:hasFieldbus": {
             "type": "Property",
             "value": {
                 "@id": "http://opcfoundation.org/UA/Pumps/BACnet_MSTP"
@@ -152,13 +152,13 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasDesign": [
+        "pumps:hasDesign": [
             {
                 "type": "Relationship",
                 "object": "http://yourorganisation.org/InstanceExample/testid:i5021"
             }
         ],
-        "uaentity:hasSystemRequirements": [
+        "pumps:hasSystemRequirements": [
             {
                 "type": "Relationship",
                 "object": "http://yourorganisation.org/InstanceExample/testid:i5022"
@@ -171,11 +171,11 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasTemperature": {
+        "pumps:hasTemperature": {
             "type": "Property",
             "value": false
         },
-        "uaentity:hasBlockage": {
+        "pumps:hasBlockage": {
             "type": "Property",
             "value": false
         }
@@ -186,11 +186,11 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasMaximumOperationTime": {
+        "pumps:hasMaximumOperationTime": {
             "type": "Property",
             "value": false
         },
-        "uaentity:hasMaximumNumberStarts": {
+        "pumps:hasMaximumNumberStarts": {
             "type": "Property",
             "value": false
         }
@@ -201,15 +201,15 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasRotorBlocked": {
+        "pumps:hasRotorBlocked": {
             "type": "Property",
             "value": false
         },
-        "uaentity:hasUnbalance": {
+        "pumps:hasUnbalance": {
             "type": "Property",
             "value": false
         },
-        "uaentity:hasExcessVibration": {
+        "pumps:hasExcessVibration": {
             "type": "Property",
             "value": false
         }
@@ -220,19 +220,19 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasSupervisionProcessFluid": [
+        "pumps:hasSupervisionProcessFluid": [
             {
                 "type": "Relationship",
                 "object": "http://yourorganisation.org/InstanceExample/testid:i5010"
             }
         ],
-        "uaentity:hasSupervisionPumpOperation": [
+        "pumps:hasSupervisionPumpOperation": [
             {
                 "type": "Relationship",
                 "object": "http://yourorganisation.org/InstanceExample/testid:i5011"
             }
         ],
-        "uaentity:hasSupervisionMechanics": [
+        "pumps:hasSupervisionMechanics": [
             {
                 "type": "Relationship",
                 "object": "http://yourorganisation.org/InstanceExample/testid:i5009"
@@ -245,7 +245,7 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasTechnicalDataLink": {
+        "pumps:hasTechnicalDataLink": {
             "type": "Property",
             "value": "www.LinkToTechnicalData.com/example"
         }
@@ -256,35 +256,35 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasNextInspectionDate": {
+        "pumps:hasNextInspectionDate": {
             "type": "Property",
             "value": {
                 "@value": "2022-05-01T10:00:00Z",
                 "@type": "xsd:dateTime"
             }
         },
-        "uaentity:hasNextServicingDate": {
+        "pumps:hasNextServicingDate": {
             "type": "Property",
             "value": {
                 "@value": "2022-05-01T10:00:00Z",
                 "@type": "xsd:dateTime"
             }
         },
-        "uaentity:hasInstallationDate": {
+        "pumps:hasInstallationDate": {
             "type": "Property",
             "value": {
                 "@value": "2021-05-01T10:00:00Z",
                 "@type": "xsd:dateTime"
             }
         },
-        "uaentity:hasLastInspectionDate": {
+        "pumps:hasLastInspectionDate": {
             "type": "Property",
             "value": {
                 "@value": "2021-05-01T10:00:00Z",
                 "@type": "xsd:dateTime"
             }
         },
-        "uaentity:hasLastServicingDate": {
+        "pumps:hasLastServicingDate": {
             "type": "Property",
             "value": {
                 "@value": "2021-05-01T10:00:00Z",
@@ -298,11 +298,11 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasActiveMaintenanceTime": {
+        "pumps:hasActiveMaintenanceTime": {
             "type": "Property",
             "value": 0.0
         },
-        "uaentity:hasOperatingTime": {
+        "pumps:hasOperatingTime": {
             "type": "Property",
             "value": 0.0
         }
@@ -313,11 +313,11 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasFailure": {
+        "pumps:hasFailure": {
             "type": "Property",
             "value": false
         },
-        "uaentity:hasNumberOfFailures": {
+        "pumps:hasNumberOfFailures": {
             "type": "Property",
             "value": 0
         }
@@ -328,19 +328,19 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasPreventiveMaintenance": [
+        "pumps:hasPreventiveMaintenance": [
             {
                 "type": "Relationship",
                 "object": "http://yourorganisation.org/InstanceExample/testid:i5015"
             }
         ],
-        "uaentity:hasGeneralMaintenance": [
+        "pumps:hasGeneralMaintenance": [
             {
                 "type": "Relationship",
                 "object": "http://yourorganisation.org/InstanceExample/testid:i5014"
             }
         ],
-        "uaentity:hasBreakdownMaintenance": [
+        "pumps:hasBreakdownMaintenance": [
             {
                 "type": "Relationship",
                 "object": "http://yourorganisation.org/InstanceExample/testid:i5013"
@@ -353,13 +353,13 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasActualControlMode": {
+        "pumps:hasActualControlMode": {
             "type": "Property",
             "value": {
                 "@id": "http://opcfoundation.org/UA/Pumps/ConstantPressureControl"
             }
         },
-        "uaentity:hasOnOff": {
+        "pumps:hasOnOff": {
             "type": "Property",
             "value": false
         }
@@ -370,15 +370,15 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasOverallVibrationAcceleration0_P": {
+        "pumps:hasOverallVibrationAcceleration0_P": {
             "type": "Property",
             "value": 0.0
         },
-        "uaentity:hasOverallVibrationAccelerationP_P": {
+        "pumps:hasOverallVibrationAccelerationP_P": {
             "type": "Property",
             "value": 0.0
         },
-        "uaentity:hasOverallVibrationAccelerationPerG0_P": {
+        "pumps:hasOverallVibrationAccelerationPerG0_P": {
             "type": "Property",
             "value": 0.0
         }
@@ -389,30 +389,30 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasVibration": [
+        "pumps:has%3CVibration%3E": [
             {
                 "type": "Relationship",
                 "object": "http://yourorganisation.org/InstanceExample/testid:i5019",
                 "datasetId": "urn:iff:datasetId:Sensor1"
             }
         ],
-        "uaentity:hasSpeed": {
+        "pumps:hasSpeed": {
             "type": "Property",
             "value": 0.0
         },
-        "uaentity:hasFluidTemperature": {
+        "pumps:hasFluidTemperature": {
             "type": "Property",
             "value": 0.0
         },
-        "uaentity:hasDifferentialPressure": {
+        "pumps:hasDifferentialPressure": {
             "type": "Property",
             "value": 0.0
         },
-        "uaentity:hasPumpPowerInput": {
+        "pumps:hasPumpPowerInput": {
             "type": "Property",
             "value": 0.0
         },
-        "uaentity:hasNumberOfStarts": {
+        "pumps:hasNumberOfStarts": {
             "type": "Property",
             "value": 0
         }
@@ -423,13 +423,13 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasPumpActuation": [
+        "pumps:hasPumpActuation": [
             {
                 "type": "Relationship",
                 "object": "http://yourorganisation.org/InstanceExample/testid:i5017"
             }
         ],
-        "uaentity:hasMeasurements": [
+        "pumps:hasMeasurements": [
             {
                 "type": "Relationship",
                 "object": "http://yourorganisation.org/InstanceExample/testid:i5018"
@@ -442,37 +442,37 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasPorts": [
+        "pumps:hasPorts": [
             {
                 "type": "Relationship",
                 "object": "http://yourorganisation.org/InstanceExample/testid:i5003"
             }
         ],
-        "uaentity:hasConfiguration": [
+        "devices:hasConfiguration": [
             {
                 "type": "Relationship",
                 "object": "http://yourorganisation.org/InstanceExample/testid:i5020"
             }
         ],
-        "uaentity:hasEvents": [
+        "pumps:hasEvents": [
             {
                 "type": "Relationship",
                 "object": "http://yourorganisation.org/InstanceExample/testid:i5008"
             }
         ],
-        "uaentity:hasDocumentation": [
+        "pumps:hasDocumentation": [
             {
                 "type": "Relationship",
                 "object": "http://yourorganisation.org/InstanceExample/testid:i5005"
             }
         ],
-        "uaentity:hasMaintenance": [
+        "devices:hasMaintenance": [
             {
                 "type": "Relationship",
                 "object": "http://yourorganisation.org/InstanceExample/testid:i5012"
             }
         ],
-        "uaentity:hasOperational": [
+        "devices:hasOperational": [
             {
                 "type": "Relationship",
                 "object": "http://yourorganisation.org/InstanceExample/testid:i5016"

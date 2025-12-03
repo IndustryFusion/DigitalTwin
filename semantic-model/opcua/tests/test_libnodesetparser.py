@@ -57,7 +57,8 @@ class TestNodesetParser(unittest.TestCase):
             'http://testnamespace.org/': 'myprefix'
         }
         self.parser.known_ns_classes = {
-            'http://testnamespace.org/': URIRef('http://testnamespace.org/Namespace')
+            'http://testnamespace.org/': URIRef('http://testnamespace.org/Namespace'),
+            'http://example.com/ns1#': URIRef('http://example.com/ns1/Namespace'),
         }
         self.parser.imported_ontologies = [URIRef('http://example.com/importedOntology')]
 
@@ -297,6 +298,7 @@ class TestNodesetParser(unittest.TestCase):
 
         expected_known_ns_classes = {
             'http://testnamespace.org/': URIRef('http://testnamespace.org/Namespace'),
+            'http://example.com/ns1#': URIRef('http://example.com/ns1/Namespace'),
             'http://example.com/ns1': URIRef('http://example.com/ns_class1'),
             'http://example.com/ns2': URIRef('http://example.com/ns_class2'),
             'http://example.com/baseOntology': URIRef('http://example.com/baseOntologyBaseNamespace')
@@ -511,7 +513,7 @@ class TestNodesetParser(unittest.TestCase):
         self.parser.opcua_ns = ['http://not.selected.org/', 'http://testnamespace.org/']
         self.parser.nodeIds.append({})
         # Mock other necessary method returns
-        self.parser.get_nid_ns_and_name = MagicMock(return_value=('400', 1, 'TestBrowseName', self.parser.rdf_ns['base']['numericID']))
+        self.parser.get_nid_ns_and_name = MagicMock(return_value=('400', 1, 'TestBrowseName', 1, self.parser.rdf_ns['base']['numericID']))
         self.parser.get_rdf_ns_from_ua_index = MagicMock(return_value=Namespace('http://example.com/ns1#'))
 
         # Call the method to be tested
@@ -521,14 +523,15 @@ class TestNodesetParser(unittest.TestCase):
         expected_triples = [
             (classiri, self.parser.rdf_ns['base']['hasNodeId'], Literal('400')),
             (classiri, self.parser.rdf_ns['base']['hasBrowseName'], Literal('TestBrowseName')),
-            (classiri, self.parser.rdf_ns['base']['hasSymbolicName'], Literal('TestSymbolicName'))
+            (classiri, self.parser.rdf_ns['base']['hasSymbolicName'], Literal('TestSymbolicName')),
+            (classiri, self.parser.rdf_ns['base']['hasBrowseNameNamespace'], URIRef('http://example.com/ns1/Namespace'))
         ]
         for triple in expected_triples:
             self.assertIn(triple, self.parser.g)
 
     def test_add_nodeid_to_class_historizing_and_minimumsamplinginterval(self):
         # Set up mocks for get_nid_ns_and_name, get_rdf_ns_from_ua_index, and nodeId_to_iri.
-        self.parser.get_nid_ns_and_name = MagicMock(return_value=('500', 1, 'TestBrowseName', self.parser.rdf_ns['base']['numericID']))
+        self.parser.get_nid_ns_and_name = MagicMock(return_value=('500', 1, 'TestBrowseName', 1, self.parser.rdf_ns['base']['numericID']))
         self.parser.get_rdf_ns_from_ua_index = MagicMock(return_value=Namespace('http://example.com/ns1#'))
         self.parser.nodeId_to_iri = MagicMock(return_value=URIRef('http://example.com/ns1#500'))
 
@@ -582,7 +585,7 @@ class TestNodesetParser(unittest.TestCase):
 
     def test_add_nodeid_to_class_no_historizing_no_minimumsamplinginterval(self):
         # Set up mocks for get_nid_ns_and_name, get_rdf_ns_from_ua_index, and nodeId_to_iri.
-        self.parser.get_nid_ns_and_name = MagicMock(return_value=('600', 1, 'TestBrowseName', self.parser.rdf_ns['base']['numericID']))
+        self.parser.get_nid_ns_and_name = MagicMock(return_value=('600', 1, 'TestBrowseName', 1, self.parser.rdf_ns['base']['numericID']))
         self.parser.get_rdf_ns_from_ua_index = MagicMock(return_value=Namespace('http://example.com/ns1#'))
         self.parser.nodeId_to_iri = MagicMock(return_value=URIRef('http://example.com/ns1#600'))
 
@@ -938,7 +941,7 @@ class TestNodesetParser(unittest.TestCase):
 
         # Assert that the correct triples were added to the graph
         expected_triples = [
-            (URIRef('http://example.com/ns1#TestBrowseName'), RDFS.subClassOf, URIRef('http://example.com/type/500')),
+            (URIRef('http://example.com/ns1#TestBrowseName'), RDFS.subPropertyOf, URIRef('http://example.com/type/500')),
             (URIRef('http://example.com/ns1#TestBrowseName'), self.parser.rdf_ns['base']['isAbstract'], Literal('true')),
             (ref_classiri, self.parser.rdf_ns['base']['definesType'], URIRef('http://example.com/ns1#TestBrowseName'))
         ]
@@ -996,15 +999,16 @@ class TestNodesetParser(unittest.TestCase):
         node.get.return_value = 'ns=1;i=700'  # Mock NodeId
         
         # Mock other necessary method returns
-        self.parser.getBrowsename = MagicMock(return_value=(None, 'TestBrowseName'))
+        self.parser.getBrowsename = MagicMock(return_value=(1, 'TestBrowseName'))
         self.parser.parse_nodeid = MagicMock(return_value=(1, '700', self.parser.rdf_ns['base']['numericID']))
         
         # Call the method to be tested
-        nid, index, bn_name, idtype = self.parser.get_nid_ns_and_name(node)
+        nid, index, bn_name, bn_index, idtype = self.parser.get_nid_ns_and_name(node)
         
         # Assert that the values were correctly returned
         self.assertEqual(nid, '700')
         self.assertEqual(index, 1)
+        self.assertEqual(bn_index, 1)
         self.assertEqual(bn_name, 'TestBrowseName')
         self.assertEqual(idtype, self.parser.rdf_ns['base']['numericID'])
 
@@ -1053,7 +1057,7 @@ class TestNodesetParser(unittest.TestCase):
         index, name = self.parser.getBrowsename(node)
         
         # Assert that the index is None and the name is correctly returned
-        self.assertIsNone(index)
+        self.assertEqual(index, 0)
         self.assertEqual(name, 'TestBrowseNameWithoutIndex')
 
     @patch('lib.nodesetparser.utils.get_contentclass')

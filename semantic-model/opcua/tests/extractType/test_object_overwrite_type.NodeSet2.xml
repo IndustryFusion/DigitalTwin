@@ -59,13 +59,13 @@
     <Alias Alias="HasInterface">i=17603</Alias>
   </Aliases>
  
-  <UAReferenceType NodeId="ns=1;i=100" BrowseName="X" IsAbstract="true" Symmetric="false">
+  <UAReferenceType NodeId="ns=1;i=100" BrowseName="1:X" IsAbstract="true" Symmetric="false">
     <DisplayName>X Reference</DisplayName>
     <References>
       <Reference ReferenceType="HasSubtype" IsForward="false">i=32</Reference>
     </References>
   </UAReferenceType>
-  <UAReferenceType NodeId="ns=1;i=101" BrowseName="Y" IsAbstract="true" Symmetric="false">
+  <UAReferenceType NodeId="ns=1;i=101" BrowseName="1:Y" IsAbstract="true" Symmetric="false">
     <DisplayName>Y Reference</DisplayName>
     <References>
       <Reference ReferenceType="HasSubtype" IsForward="false">i=32</Reference>
@@ -96,13 +96,13 @@
        <Reference ReferenceType="HasComponent">ns=1;i=1004</Reference>
     </References>
   </UAObject>
-  <UAVariable NodeId="ns=1;i=1004" BrowseName="MyVariable" DataType="Boolean">
+  <UAVariable NodeId="ns=1;i=1004" BrowseName="1:MyVariable" DataType="Boolean">
     <DisplayName>Variable of B-object</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
     </References>
   </UAVariable>
-    <UAVariable NodeId="ns=1;i=1005" BrowseName="MyVariable" DataType="Integer">
+    <UAVariable NodeId="ns=1;i=1005" BrowseName="1:MyVariable" DataType="Integer">
     <DisplayName>Variable of B-object</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
@@ -148,7 +148,7 @@
        <Reference ReferenceType="HasComponent">ns=1;i=2013</Reference>
     </References>
   </UAObject>
-  <UAVariable NodeId="ns=1;i=2013" BrowseName="MyVariable" DataType="Boolean">
+  <UAVariable NodeId="ns=1;i=2013" BrowseName="1:MyVariable" DataType="Boolean">
     <DisplayName>Variable of B-object</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>

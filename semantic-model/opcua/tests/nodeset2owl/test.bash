@@ -30,15 +30,15 @@ export PUMPS_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/
 export PUMP_EXAMPLE_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/Pumps/instanceexample.xml
 export MACHINETOOL_EXAMPLE_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/MachineTool/Machinetool-Example.xml
 export LASERSYSTEMS_EXAMPLE_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/LaserSystems/LaserSystem-Example.NodeSet2.xml
-export BASE_ONTOLOGY=https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl
+export BASE_ONTOLOGY=https://industryfusion.github.io/contexts/staging/ontology/v0/base.ttl
 export PACKML_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/PackML/Opc.Ua.PackML.NodeSet2.xml
 
 
 function mydiff() {
     result="$1"
     expected="$2"
-    echo "Compare expected <=> result" 
-    diff $result $expected || exit 1
+    echo "Compare expected=$expected <=> result=$result" 
+    diff $result $expected  >$DIFFRESULT || { echo "Diff failed, result can be found in $DIFFRESULT" && exit 1; }
 
 }
 RESULT=result.ttl
@@ -47,19 +47,29 @@ CLEANED=cleaned.ttl
 # if [ "$DEBUG"="true" ]; then
 #     DEBUG_CMDLINE="-m debugpy --listen 5678"
 # fi
-TESTNODESETS=(test_object_types.NodeSet2 test_objects.NodeSet2 test_reference_reused.NodeSet2 test_references_special.NodeSet2)
+TESTNODESETS=(
+    test_semantic_bridge.NodeSet2,opcua 
+    test_object_types.NodeSet2,test
+    test_objects.NodeSet2,test
+    test_reference_reused.NodeSet2,test
+    test_references_special.NodeSet2,test
+)
 CLEANGRAPH=cleangraph.py
 NODESET2OWL=../../nodeset2owl.py
+DIFFRESULT=diff_result.txt
 echo Starting Feature Tests
 echo -------------------------------- 
-for nodeset in "${TESTNODESETS[@]}"; do
-    echo test $nodeset
+for tuple in "${TESTNODESETS[@]}"; do  IFS=","
+    set -- $tuple;
+    nodeset=$1
+    prefix=$2
+    echo test $nodeset with prefix $prefix
     if [ "$DEBUG"="true" ]; then
-        echo DEBUG: python3 -m debugpy --listen 5678 --wait-for-client ${NODESET2OWL} ${nodeset}.xml -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p test -o ${RESULT}
+        echo DEBUG: python3 -m debugpy --listen 5678 --wait-for-client ${NODESET2OWL} ${nodeset}.xml -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p $prefix -o ${RESULT}
     fi
-    python3 ${NODESET2OWL} ${nodeset}.xml -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p test -o ${RESULT}
-    echo "Comparing expected <=> result"
-    diff ${nodeset}.ttl ${RESULT} || exit 1
+    python3 ${NODESET2OWL} ${nodeset}.xml -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p $prefix -o ${RESULT}
+    echo "Comparing expected=${nodeset}.ttl <=> result=${RESULT}"
+    diff ${nodeset}.ttl ${RESULT} >$DIFFRESULT || { echo "Diff failed, result can be found in $DIFFRESULT" && exit 1; }
 done
 echo Starting E2E specification tests
 echo -------------------------------- 

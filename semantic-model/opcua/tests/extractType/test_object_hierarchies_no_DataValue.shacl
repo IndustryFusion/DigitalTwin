@@ -12,7 +12,7 @@ shacl:AlphaTypeShape a sh:NodeShape ;
             sh:maxCount 1 ;
             sh:minCount 1 ;
             sh:nodeKind sh:BlankNode ;
-            sh:path <http://my.test/entity/hasB> ;
+            sh:path test:hasB ;
             sh:property [ sh:class test:BType ;
                     sh:maxCount 1 ;
                     sh:minCount 1 ;
@@ -26,7 +26,7 @@ shacl:BTypeShape a sh:NodeShape ;
             sh:maxCount 1 ;
             sh:minCount 0 ;
             sh:nodeKind sh:BlankNode ;
-            sh:path <http://my.test/entity/hasD> ;
+            sh:path test:hasD ;
             sh:property [ sh:class test:DType ;
                     sh:maxCount 1 ;
                     sh:minCount 1 ;
@@ -49,7 +49,7 @@ shacl:DTypeShape a sh:NodeShape ;
                                             sh:property [ sh:datatype xsd:boolean ;
                                                     sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
                                 sh:path ngsi-ld:hasValueList ] ] ) ;
-            sh:path <http://my.test/entity/hasMyVariable> ;
+            sh:path test:hasMyVariable ;
             base:hasReferenceType opcua:HasComponent ] ;
     sh:targetClass test:DType .
 

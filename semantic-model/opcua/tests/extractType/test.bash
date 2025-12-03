@@ -30,11 +30,14 @@ CORE_RESULT=core.ttl
 CLEANED=cleaned.ttl
 NODESET2OWL=../../nodeset2owl.py
 TESTURI=http://my.test/
+EXURI=http://example.org/
 DEBUG=${DEBUG:-false}
 if [ "$DEBUG" = "true" ]; then
     DEBUG_CMDLINE="-m debugpy --listen 5678"
 fi
 TESTNODESETS=(
+    test_object_example.NodeSet2,${EXURI}AlphaType,,,,,${EXURI}
+    test_pumps_instanceexample,http://opcfoundation.org/UA/Pumps/PumpType,http://yourorganisation.org/InstanceExample/,pumps
     test_interfaces.NodeSet2,${TESTURI}AlphaType,,machinery,-p,INTERFACE_NOT_SUBTYPE_OF_INTERFACETYPE
     test_reference_types_properties.Nodeset2,${TESTURI}AlphaType,,,-p
     test_reference_types.Nodeset2,${TESTURI}AlphaType
@@ -47,13 +50,11 @@ TESTNODESETS=(
     test_object_overwrite_type.NodeSet2,${TESTURI}AlphaType
     test_variable_enum.NodeSet2,${TESTURI}AlphaType
     test_object_subtypes.NodeSet2,${TESTURI}AlphaType
-    test_object_example.NodeSet2,${TESTURI}AlphaType
     test_object_hierarchies_no_DataValue,${TESTURI}AlphaType
     test_ignore_references.NodeSet2,${TESTURI}AlphaType
     test_references_to_typedefinitions.NodeSet2,${TESTURI}AlphaType
     test_minimal_object.NodeSet2,http://example.org/MinimalNodeset/ObjectType 
     test_object_types.NodeSet2,${TESTURI}AlphaType
-    test_pumps_instanceexample,http://opcfoundation.org/UA/Pumps/PumpType,http://yourorganisation.org/InstanceExample/,pumps
     )
 CLEANGRAPH=cleangraph.py
 TYPEURI=http://example.org/MinimalNodeset
@@ -64,6 +65,7 @@ INSTANCES=instances.jsonld
 SPARQLQUERY=query.py
 SERVE_CONTEXT=serve_context.py
 SERVE_CONTEXT_PORT=8099
+TEST_CONTEXT_FILE=context.jsonld.test
 CONTEXT_FILE=context.jsonld
 LOCAL_CONTEXT=http://localhost:${SERVE_CONTEXT_PORT}/${CONTEXT_FILE}
 PYSHACL_RESULT=pyshacl.ttl
@@ -105,7 +107,7 @@ function startstop_context_server() {
     echo $1
     start=$2
     if [ "$start" = "true" ]; then
-        (python3 ${SERVE_CONTEXT} -p ${SERVE_CONTEXT_PORT} ${CONTEXT_FILE} &) 
+        (python3 ${SERVE_CONTEXT} -p ${SERVE_CONTEXT_PORT} ${TEST_CONTEXT_FILE} &)
     else
         pkill -f ${SERVE_CONTEXT} || echo "Server not running anyway"
         sleep 1
@@ -167,6 +169,15 @@ for tuple in "${TESTNODESETS[@]}"; do IFS=","
     imports=$4
     options=$5
     warning=$6
+    testuri=$7
+
+
+    if [ -n "$testuri" ]; then
+        echo "Test URI defined: '$testuri'"
+        THETESTURI="$testuri"
+    else
+        THETESTURI=${TESTURI} # Default
+    fi
     if [ "$DEBUG" = "true" ]; then
         echo "Found parameters: nodeset=$nodeset, instancetype=$instancetype, instancenamespace=$instancenamespace, imports=$imports, options=$options, warning=$warning"
     fi
@@ -193,17 +204,18 @@ for tuple in "${TESTNODESETS[@]}"; do IFS=","
     fi
     if [ "$DEBUG" = "true" ]; then
         echo DEBUG: python3 ${NODESET2OWL} ${nodeset}.xml -i ${IMPORTS[@]} ${INSTANCENAMESPACE[@]} -v http://example.com/v0.1/UA/ -p test -o ${NODESET2OWL_RESULT}
-        echo DEBUG: python3 ${EXTRACTTYPE} ${INSTANCETYPEOPTION} -n ${TESTURI} ${NODESET2OWL_RESULT} -i ${TESTID} -xc ${LOCAL_CONTEXT} ${options}
+        echo DEBUG: python3 ${EXTRACTTYPE} ${INSTANCETYPEOPTION} -n ${THETESTURI} ${NODESET2OWL_RESULT} -i ${TESTID} -xc ${LOCAL_CONTEXT} ${options}
     fi
     echo Create owl nodesets
     echo -------------------
     python3 ${NODESET2OWL} ${nodeset}.xml -i ${IMPORTS[@]} ${INSTANCENAMESPACE[@]} -v http://example.com/v0.1/UA/ -p test -o ${NODESET2OWL_RESULT} || exit 1
+    startstop_context_server "Starting context server" true
     echo Extract types and instances
     echo ---------------------------
     if [ -z "$instancetype" ]; then
         python3 ${EXTRACTTYPE}  -n ${TESTURI} ${NODESET2OWL_RESULT} -i ${TESTID} -xc ${LOCAL_CONTEXT} ${options} 2>&1 | tee output.log
     else
-        python3 ${EXTRACTTYPE} -t ${instancetype} -n ${TESTURI} ${NODESET2OWL_RESULT} -i ${TESTID} -xc ${LOCAL_CONTEXT} ${options} 2>&1 | tee output.log
+        python3 ${EXTRACTTYPE} -t ${instancetype} -n ${THETESTURI} ${NODESET2OWL_RESULT} -i ${TESTID} -xc ${LOCAL_CONTEXT} ${options} 2>&1 | tee output.log
     fi
     if [ ! -z "$warning" ]; then
         if ! grep -q $warning output.log; then
@@ -213,7 +225,6 @@ for tuple in "${TESTNODESETS[@]}"; do IFS=","
             echo "Success: Warning including $warning found!"
         fi
     fi
-    startstop_context_server "Starting context server" true 
     mydiff "Compare SHACL" "${SHACL}" "${nodeset}.shacl" "ttl"
     mydiff "Compare instances" "${nodeset}.instances" "${INSTANCES}" "json-ld"
     checkqueries "Check basic entities structure" ${nodeset}
@@ -228,6 +239,12 @@ for tuple in "${TESTNODESETS[@]}"; do IFS=","
     else
         echo executing pyshacl -s ${SHACL} -df json-ld -e ${ENTITIES_FILE} ${INSTANCES}
         pyshacl -s ${SHACL} -df json-ld -e ${ENTITIES_FILE} ${INSTANCES} || exit 1
+    fi
+    if [ -f ${nodeset}.context ]; then
+        echo "Comparing context files"
+        diff "${nodeset}.context" "${CONTEXT_FILE}" || exit 1
+    else
+        echo "No context file to compare"
     fi
     startstop_context_server "Stopping context server" false
     echo "Test finished successfully"

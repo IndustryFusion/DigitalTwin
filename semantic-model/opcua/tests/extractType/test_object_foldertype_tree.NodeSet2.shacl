@@ -12,7 +12,7 @@ shacl:AlphaTypeShape a sh:NodeShape ;
             sh:maxCount 1 ;
             sh:minCount 0 ;
             sh:nodeKind sh:BlankNode ;
-            sh:path <http://my.test/entity/hasFolder2> ;
+            sh:path test:hasFolder1 ;
             sh:property [ sh:class opcua:FolderType ;
                     sh:maxCount 1 ;
                     sh:minCount 1 ;
@@ -23,7 +23,7 @@ shacl:AlphaTypeShape a sh:NodeShape ;
             sh:maxCount 1 ;
             sh:minCount 0 ;
             sh:nodeKind sh:BlankNode ;
-            sh:path <http://my.test/entity/hasFolder1> ;
+            sh:path test:hasFolder2 ;
             sh:property [ sh:class opcua:FolderType ;
                     sh:maxCount 1 ;
                     sh:minCount 1 ;
@@ -49,7 +49,7 @@ shacl:TypeAShape a sh:NodeShape ;
                                             sh:property [ sh:datatype xsd:double ;
                                                     sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
                                 sh:path ngsi-ld:hasValueList ] ] ) ;
-            sh:path <http://my.test/entity/hasDataVariable> ;
+            sh:path test:hasDataVariable ;
             base:hasReferenceType opcua:HasComponent ] ;
     sh:targetClass test:TypeA .
 

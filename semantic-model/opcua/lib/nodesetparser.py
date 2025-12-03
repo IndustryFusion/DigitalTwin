@@ -19,8 +19,11 @@ from rdflib.namespace import OWL, RDF, RDFS
 import xml.etree.ElementTree as ET
 import urllib
 import lib.utils as utils
+from lib.utils import RdfUtils
 import json
 
+
+attribute_prefix = utils.ATTRIBUTE_PREFIX
 query_namespaces = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -65,7 +68,7 @@ SELECT ?nodeId ?uri ?type WHERE {
    ?ns base:hasUri ?uri .
   }
    UNION
-  {?type rdfs:subClassOf* opcua:References .
+  {?type rdfs:subPropertyOf* opcua:References .
    ?node base:definesType ?type .
    ?node base:hasNodeId ?nodeId .
    ?node base:hasNamespace ?ns .
@@ -78,7 +81,7 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
 SELECT ?id ?namespaceUri ?name
 WHERE {
-  ?subclass rdfs:subClassOf* <http://opcfoundation.org/UA/References> .
+  ?subclass rdfs:subPropertyOf* <http://opcfoundation.org/UA/References> .
   ?node base:definesType ?subclass .
   ?node base:hasNodeId ?id .
   ?node base:hasNamespace ?ns .
@@ -179,6 +182,7 @@ Please set it explictly.")
         self.base_ontology = args.baseOntology
         self.opcua_namespace = args.opcuaNamespace
         self.ontology_prefix = args.prefix
+        self.rdf_utils = RdfUtils(Namespace(self.base_ontology), Namespace(self.opcua_namespace))
 
     def parse(self):
         self.create_prefixes(self.namespace_uris, self.base_ontology, self.opcua_namespace)
@@ -241,6 +245,42 @@ Please set it explictly.")
         uanodes = self.root.findall('opcua:UAVariable', self.xml_ns)
         for uanode in uanodes:
             self.add_datatype_dependent(uanode)
+
+    def add_semantic_bridge(self):
+        """Add semantic relationships to the graph.
+
+        This function executes a SPARQL query to find all semantic relationships and adds them to the graph.
+
+        """
+        not_needed_property_query = """
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+        SELECT ?s ?sbc ?o ?bn ?nsuri WHERE {
+            ?sbc rdfs:subPropertyOf* opcua:Aggregates .
+            ?s ?sbc ?o .
+            ?o base:hasBrowseName ?bn .
+            ?o base:hasBrowseNameNamespace ?bnn .
+            ?bnn base:hasUri ?nsuri .
+        }
+        """
+        joint_graph = self.g + self.ig
+        root_property = self.rdf_utils.get_root_property_of_semantic_bridge()
+        bindings = {'root_property': root_property}
+        query_result = joint_graph.query(not_needed_property_query, initNs=self.rdf_ns, initBindings=bindings)
+        for s, sbc, o, bn, nsuri in query_result:
+            if ((s, sbc, o) in self.g) is False:
+                continue
+            targetns = Namespace(str(nsuri))
+            targetreference = targetns[urllib.parse.quote(f'{attribute_prefix}{bn}')]
+            self.g.add((s, targetreference, o))
+            self.add_semantic_relationship(targetreference)
+
+    def add_semantic_relationship(self, targetreference):
+        semantic_bridge_property = self.rdf_utils.get_semantic_relationship_type()
+        if (targetreference, RDFS.subPropertyOf, semantic_bridge_property) not in self.ig:
+            self.g.add((targetreference, RDFS.subPropertyOf, semantic_bridge_property))
 
     def init_imports(self, base_ontologies):
         if not self.isstrict:
@@ -398,12 +438,14 @@ Did you forget to import it?")
         return namespace[f'node{idt}{nid}']
 
     def add_nodeid_to_class(self, node, nodeclasstype, xml_ns):
-        nid, index, bn_name, idtype = self.get_nid_ns_and_name(node)
+        nid, index, bn_name, bn_index, idtype = self.get_nid_ns_and_name(node)
         rdf_namespace = self.get_rdf_ns_from_ua_index(index)
+        bn_namespace = self.get_rdf_ns_from_ua_index(bn_index)
         classiri = self.nodeId_to_iri(rdf_namespace, nid, idtype)
         self.g.add((classiri, self.rdf_ns['base']['hasNodeId'], Literal(nid)))
         self.g.add((classiri, self.rdf_ns['base']['hasIdentifierType'], idtype))
         self.g.add((classiri, self.rdf_ns['base']['hasBrowseName'], Literal(bn_name)))
+        self.g.add((classiri, self.rdf_ns['base']['hasBrowseNameNamespace'], self.known_ns_classes[bn_namespace]))
         namespace = self.opcua_ns[index]
         self.g.add((classiri, self.rdf_ns['base']['hasNamespace'], self.known_ns_classes[namespace]))
         self.g.add((classiri, RDF.type, self.rdf_ns['opcua'][nodeclasstype]))
@@ -461,8 +503,11 @@ Did you forget to import it?")
         return ns_index, identifier, identifierType
 
     def add_uadatatype(self, node):
-        nid, index, name, idtype = self.get_nid_ns_and_name(node)
+        nid, index, name, bn_index, idtype = self.get_nid_ns_and_name(node)
         rdf_namespace = self.get_rdf_ns_from_ua_index(index)
+        bn_namespace = self.get_rdf_ns_from_ua_index(bn_index)
+        if bn_namespace != rdf_namespace:
+            print(f'Warning: BrowseName namespace differs from NodeId namespace for datatype {name}')
         # classiri = self.nodeId_to_iri(rdf_namespace, nid, idtype)
         typeIri = rdf_namespace[name]
         definition = node.find('opcua:Definition', self.xml_ns)
@@ -566,7 +611,7 @@ Did you forget to import it?")
                         [Literal(json.dumps(elem)) if isinstance(elem, dict) else Literal(elem) for elem in items],
                         lambda x: x
                     )
-                    self.g.add((classiri, self.rdf_ns['base']['hasValue'], created_list))
+                    self.g.add((classiri, self.rdf_ns['base']['hasValueList'], created_list))
                 elif basic_type_found:
                     data = self.data_schema.to_dict(children, namespaces=xml_ns, indent=4)
                     if '$' in data:
@@ -758,13 +803,16 @@ Did you forget to import it?")
                 subtype_index, subtype_id, _ = self.parse_nodeid(subtype)
                 typeiri = self.typeIds[subtype_index][subtype_id]
                 if (isforward == 'false'):
-                    self.g.add((br_namespace[browsename], RDFS.subClassOf, typeiri))
+                    if not node.tag.endswith("UAReferenceType"):
+                        self.g.add((br_namespace[browsename], RDFS.subClassOf, typeiri))
+                    else:
+                        self.g.add((br_namespace[browsename], RDFS.subPropertyOf, typeiri))
                     mandatory_typedef_found = True
                 else:
-                    self.g.add((typeiri, RDFS.subClassOf, br_namespace[browsename]))
-            # else:
-            #     if is_objecttype_nodeset(node):
-            #         g.add((br_namespace[browsename], RDFS.subClassOf, rdf_ns['opcua']['BaseObjectType']))
+                    if not node.tag.endswith("UAReferenceType"):
+                        self.g.add((typeiri, RDFS.subClassOf, br_namespace[browsename]))
+                    else:
+                        self.g.add((typeiri, RDFS.subPropertyOf, br_namespace[browsename]))
                 isAbstract = node.get('IsAbstract')
                 if isAbstract is not None:
                     self.g.add((br_namespace[browsename], self.rdf_ns['base']['isAbstract'], Literal(isAbstract)))
@@ -792,8 +840,9 @@ Did you forget to import it?")
             references = references_node.findall('opcua:Reference', self.xml_ns)
         except:
             references = []
-        self.g.add((ref_namespace[browsename], RDF.type, OWL.Class))
-        if (node.tag.endswith("UAReferenceType")):
+        if not node.tag.endswith("UAReferenceType"):
+            self.g.add((ref_namespace[browsename], RDF.type, OWL.Class))
+        else:
             self.known_references.append((Literal(ref_id), ref_namespace, Literal(browsename)))
             self.g.add((ref_namespace[browsename], RDF.type, OWL.ObjectProperty))
         self.get_references(references, ref_classiri)
@@ -807,9 +856,9 @@ Did you forget to import it?")
     def get_nid_ns_and_name(self, node):
         nodeid = node.get('NodeId')
         ni_index, ni_id, idtype = self.parse_nodeid(nodeid)
-        _, bn_name = self.getBrowsename(node)
+        bn_index, bn_name = self.getBrowsename(node)
         index = ni_index
-        return ni_id, index, bn_name, idtype
+        return ni_id, index, bn_name, bn_index, idtype
 
     def scan_aliases(self, alias_nodes):
         for alias in alias_nodes:
@@ -819,7 +868,7 @@ Did you forget to import it?")
 
     def getBrowsename(self, node):
         name = node.get('BrowseName')
-        index = None
+        index = 0
         if ':' in name:
             result = name.split(':', 1)
             name = result[1]

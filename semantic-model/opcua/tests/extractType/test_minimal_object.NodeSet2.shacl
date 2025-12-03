@@ -21,7 +21,7 @@ shacl:ObjectTypeShape a sh:NodeShape ;
                                             sh:property [ sh:datatype xsd:double ;
                                                     sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
                                 sh:path ngsi-ld:hasValueList ] ] ) ;
-            sh:path <http://my.test/entity/hasVariable> ;
+            sh:path test:hasVariable ;
             base:hasReferenceType opcua:HasComponent ] ;
     sh:targetClass test:ObjectType .
 

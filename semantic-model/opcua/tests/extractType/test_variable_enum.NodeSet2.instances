@@ -5,7 +5,7 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasMyVariable": {
+        "test:hasMyVariable": {
             "type": "Property",
             "value": {
                 "@id": "http://opcfoundation.org/UA/Full"
@@ -18,11 +18,11 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasC": {
+        "test:hasC": {
             "type": "Property",
             "value": 0.0
         },
-        "uaentity:hasB": [
+        "test:hasB": [
             {
                 "type": "Relationship",
                 "object": "http://my.test/testid:i2012"

@@ -11,6 +11,100 @@ machinery: a owl:Ontology ;
     owl:versionIRI <http://example.com/v0.1/Machinery/> ;
     owl:versionInfo 1e-01 .
 
+machinery:has%3CComponent%3E rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:has%3CLifetimeVariable%3E rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasExecuting rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasFromExecutingToExecuting rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasFromExecutingToNotAvailable rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasFromExecutingToNotExecuting rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasFromExecutingToOutOfService rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasFromMaintenanceToMaintenance rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasFromMaintenanceToNone rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasFromMaintenanceToProcessing rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasFromMaintenanceToSetup rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasFromNoneToMaintenance rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasFromNoneToNone rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasFromNoneToProcessing rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasFromNoneToSetup rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasFromNotAvailableToExecuting rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasFromNotAvailableToNotAvailable rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasFromNotAvailableToNotExecuting rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasFromNotAvailableToOutOfService rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasFromNotExecutingToExecuting rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasFromNotExecutingToNotAvailable rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasFromNotExecutingToNotExecuting rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasFromNotExecutingToOutOfService rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasFromOutOfServiceToExecuting rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasFromOutOfServiceToNotAvailable rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasFromOutOfServiceToNotExecuting rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasFromOutOfServiceToOutOfService rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasFromProcessingToMaintenance rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasFromProcessingToNone rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasFromProcessingToProcessing rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasFromProcessingToSetup rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasFromSetupToMaintenance rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasFromSetupToNone rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasFromSetupToProcessing rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasFromSetupToSetup rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasInitialOperationDate rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasLocation rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasMaintenance rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasMonthOfConstruction rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasNone rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasNotAvailable rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasNotExecuting rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasOutOfService rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasProcessing rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasSetup rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+machinery:hasYearOfConstruction rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+<http://opcfoundation.org/UA/Machinery/hashttp%3A//opcfoundation.org/UA/Machinery/> rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
 machinery:nodei1002 a opcua:ObjectTypeNodeClass ;
     opcua:HasComponent machinery:nodei5004,
         machinery:nodei5005,
@@ -33,8 +127,30 @@ machinery:nodei1002 a opcua:ObjectTypeNodeClass ;
         machinery:nodei5022,
         machinery:nodei5023 ;
     opcua:HasProperty machinery:nodei6021 ;
+    machinery:hasExecuting machinery:nodei5006 ;
+    machinery:hasFromExecutingToExecuting machinery:nodei5023 ;
+    machinery:hasFromExecutingToNotAvailable machinery:nodei5020 ;
+    machinery:hasFromExecutingToNotExecuting machinery:nodei5022 ;
+    machinery:hasFromExecutingToOutOfService machinery:nodei5021 ;
+    machinery:hasFromNotAvailableToExecuting machinery:nodei5010 ;
+    machinery:hasFromNotAvailableToNotAvailable machinery:nodei5011 ;
+    machinery:hasFromNotAvailableToNotExecuting machinery:nodei5009 ;
+    machinery:hasFromNotAvailableToOutOfService machinery:nodei5008 ;
+    machinery:hasFromNotExecutingToExecuting machinery:nodei5018 ;
+    machinery:hasFromNotExecutingToNotAvailable machinery:nodei5016 ;
+    machinery:hasFromNotExecutingToNotExecuting machinery:nodei5019 ;
+    machinery:hasFromNotExecutingToOutOfService machinery:nodei5017 ;
+    machinery:hasFromOutOfServiceToExecuting machinery:nodei5014 ;
+    machinery:hasFromOutOfServiceToNotAvailable machinery:nodei5012 ;
+    machinery:hasFromOutOfServiceToNotExecuting machinery:nodei5013 ;
+    machinery:hasFromOutOfServiceToOutOfService machinery:nodei5015 ;
+    machinery:hasNotAvailable machinery:nodei5005 ;
+    machinery:hasNotExecuting machinery:nodei5007 ;
+    machinery:hasOutOfService machinery:nodei5004 ;
+    opcua:hasDefaultInstanceBrowseName machinery:nodei6021 ;
     base:definesType machinery:MachineryItemState_StateMachineType ;
     base:hasBrowseName "MachineryItemState_StateMachineType" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "State machine representing the state of a machinery item" ;
     base:hasDisplayName "MachineryItemState_StateMachineType" ;
     base:hasIdentifierType base:numericID ;
@@ -42,6 +158,17 @@ machinery:nodei1002 a opcua:ObjectTypeNodeClass ;
     base:hasNodeId "1002" .
 
 machinery:nodei1004 a opcua:ObjectTypeNodeClass ;
+    devices:hasAssetId machinery:nodei6013 ;
+    devices:hasComponentName machinery:nodei6014 ;
+    devices:hasDeviceClass machinery:nodei6012 ;
+    devices:hasHardwareRevision machinery:nodei6010 ;
+    devices:hasManufacturer machinery:nodei6002 ;
+    devices:hasManufacturerUri machinery:nodei6007 ;
+    devices:hasModel machinery:nodei6008 ;
+    devices:hasProductCode machinery:nodei6009 ;
+    devices:hasProductInstanceUri machinery:nodei6001 ;
+    devices:hasSerialNumber machinery:nodei6003 ;
+    devices:hasSoftwareRevision machinery:nodei6011 ;
     opcua:HasInterface devices:nodei15048,
         machinery:nodei1003 ;
     opcua:HasProperty machinery:nodei6001,
@@ -59,8 +186,13 @@ machinery:nodei1004 a opcua:ObjectTypeNodeClass ;
         machinery:nodei6013,
         machinery:nodei6014,
         machinery:nodei6088 ;
+    machinery:hasInitialOperationDate machinery:nodei6006 ;
+    machinery:hasMonthOfConstruction machinery:nodei6005 ;
+    machinery:hasYearOfConstruction machinery:nodei6004 ;
+    opcua:hasDefaultInstanceBrowseName machinery:nodei6088 ;
     base:definesType machinery:MachineryItemIdentificationType ;
     base:hasBrowseName "MachineryItemIdentificationType" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Contains information about the identification and nameplate of a MachineryItem" ;
     base:hasDisplayName "MachineryItemIdentificationType" ;
     base:hasIdentifierType base:numericID ;
@@ -68,10 +200,13 @@ machinery:nodei1004 a opcua:ObjectTypeNodeClass ;
     base:hasNodeId "1004" .
 
 machinery:nodei1005 a opcua:ObjectTypeNodeClass ;
+    devices:hasDeviceRevision machinery:nodei6017 ;
     opcua:HasProperty machinery:nodei6016,
         machinery:nodei6017 ;
+    opcua:hasDefaultInstanceBrowseName machinery:nodei6016 ;
     base:definesType machinery:MachineryComponentIdentificationType ;
     base:hasBrowseName "MachineryComponentIdentificationType" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Contains information about the identification and nameplate of a component" ;
     base:hasDisplayName "MachineryComponentIdentificationType" ;
     base:hasIdentifierType base:numericID ;
@@ -81,8 +216,11 @@ machinery:nodei1005 a opcua:ObjectTypeNodeClass ;
 machinery:nodei1006 a opcua:ObjectTypeNodeClass ;
     opcua:HasComponent machinery:nodei5002 ;
     opcua:HasProperty machinery:nodei6018 ;
+    machinery:has%3CComponent%3E machinery:nodei5002 ;
+    opcua:hasDefaultInstanceBrowseName machinery:nodei6018 ;
     base:definesType machinery:MachineComponentsType ;
     base:hasBrowseName "MachineComponentsType" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Contains all identifiable components of a machine" ;
     base:hasDisplayName "MachineComponentsType" ;
     base:hasIdentifierType base:numericID ;
@@ -111,8 +249,30 @@ machinery:nodei1008 a opcua:ObjectTypeNodeClass ;
         machinery:nodei5042,
         machinery:nodei5043 ;
     opcua:HasProperty machinery:nodei6058 ;
+    machinery:hasFromMaintenanceToMaintenance machinery:nodei5035 ;
+    machinery:hasFromMaintenanceToNone machinery:nodei5032 ;
+    machinery:hasFromMaintenanceToProcessing machinery:nodei5034 ;
+    machinery:hasFromMaintenanceToSetup machinery:nodei5033 ;
+    machinery:hasFromNoneToMaintenance machinery:nodei5028 ;
+    machinery:hasFromNoneToNone machinery:nodei5031 ;
+    machinery:hasFromNoneToProcessing machinery:nodei5030 ;
+    machinery:hasFromNoneToSetup machinery:nodei5029 ;
+    machinery:hasFromProcessingToMaintenance machinery:nodei5041 ;
+    machinery:hasFromProcessingToNone machinery:nodei5040 ;
+    machinery:hasFromProcessingToProcessing machinery:nodei5043 ;
+    machinery:hasFromProcessingToSetup machinery:nodei5042 ;
+    machinery:hasFromSetupToMaintenance machinery:nodei5037 ;
+    machinery:hasFromSetupToNone machinery:nodei5036 ;
+    machinery:hasFromSetupToProcessing machinery:nodei5038 ;
+    machinery:hasFromSetupToSetup machinery:nodei5039 ;
+    machinery:hasMaintenance machinery:nodei5025 ;
+    machinery:hasNone machinery:nodei5024 ;
+    machinery:hasProcessing machinery:nodei5026 ;
+    machinery:hasSetup machinery:nodei5027 ;
+    opcua:hasDefaultInstanceBrowseName machinery:nodei6058 ;
     base:definesType machinery:MachineryOperationModeStateMachineType ;
     base:hasBrowseName "MachineryOperationModeStateMachineType" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "State machine representing the operation mode of a MachineryItem" ;
     base:hasDisplayName "MachineryOperationModeStateMachineType" ;
     base:hasIdentifierType base:numericID ;
@@ -120,26 +280,35 @@ machinery:nodei1008 a opcua:ObjectTypeNodeClass ;
     base:hasNodeId "1008" .
 
 machinery:nodei1009 a opcua:ObjectTypeNodeClass ;
+    devices:hasOperationCycleCounter machinery:nodei6081 ;
+    devices:hasOperationDuration machinery:nodei6080 ;
+    devices:hasPowerOnDuration machinery:nodei6079 ;
     opcua:HasInterface devices:nodei480 ;
     opcua:HasProperty machinery:nodei6079,
         machinery:nodei6080,
         machinery:nodei6081,
         machinery:nodei6082 ;
+    opcua:hasDefaultInstanceBrowseName machinery:nodei6082 ;
     base:definesType machinery:MachineryOperationCounterType ;
     base:hasBrowseName "MachineryOperationCounterType" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDisplayName "MachineryOperationCounterType" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace machinery:MACHINERYNamespace ;
     base:hasNodeId "1009" .
 
 machinery:nodei1012 a opcua:ObjectTypeNodeClass ;
+    devices:hasProductInstanceUri machinery:nodei6015 ;
     opcua:HasInterface machinery:nodei1010,
         machinery:nodei1011 ;
     opcua:HasProperty machinery:nodei6015,
         machinery:nodei6029,
         machinery:nodei6030 ;
+    machinery:hasLocation machinery:nodei6029 ;
+    opcua:hasDefaultInstanceBrowseName machinery:nodei6030 ;
     base:definesType machinery:MachineIdentificationType ;
     base:hasBrowseName "MachineIdentificationType" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Contains information about the identification and nameplate of a machine" ;
     base:hasDisplayName "MachineIdentificationType" ;
     base:hasIdentifierType base:numericID ;
@@ -149,14 +318,18 @@ machinery:nodei1012 a opcua:ObjectTypeNodeClass ;
 machinery:nodei1015 a opcua:ObjectTypeNodeClass ;
     opcua:HasComponent machinery:nodei6083 ;
     opcua:HasProperty machinery:nodei6087 ;
+    machinery:has%3CLifetimeVariable%3E machinery:nodei6083 ;
+    opcua:hasDefaultInstanceBrowseName machinery:nodei6087 ;
     base:definesType machinery:MachineryLifetimeCounterType ;
     base:hasBrowseName "MachineryLifetimeCounterType" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDisplayName "MachineryLifetimeCounterType" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace machinery:MACHINERYNamespace ;
     base:hasNodeId "1015" .
 
-opcua:nodei11715 opcua:HasComponent machinery:nodei5001 .
+opcua:nodei11715 opcua:HasComponent machinery:nodei5001 ;
+    <http://opcfoundation.org/UA/Machinery/hashttp%3A//opcfoundation.org/UA/Machinery/> machinery:nodei5001 .
 
 opcua:nodei85 opcua:Organizes machinery:nodei1001 .
 
@@ -192,6 +365,7 @@ machinery:MachineryOperationModeStateMachineType a owl:Class ;
 machinery:nodei1001 a opcua:FolderType,
         opcua:ObjectNodeClass ;
     base:hasBrowseName "Machines" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "This object is the entry point to machines managed in the server. All machines are directly referenced by this object." ;
     base:hasDisplayName "Machines" ;
     base:hasIdentifierType base:numericID ;
@@ -199,13 +373,19 @@ machinery:nodei1001 a opcua:FolderType,
     base:hasNodeId "1001" .
 
 machinery:nodei1003 a opcua:ObjectTypeNodeClass ;
+    devices:hasManufacturer machinery:nodei6022 ;
+    devices:hasSerialNumber machinery:nodei6024 ;
     opcua:HasProperty machinery:nodei6022,
         machinery:nodei6024,
         machinery:nodei6025,
         machinery:nodei6026,
         machinery:nodei6027 ;
+    machinery:hasInitialOperationDate machinery:nodei6027 ;
+    machinery:hasMonthOfConstruction machinery:nodei6026 ;
+    machinery:hasYearOfConstruction machinery:nodei6025 ;
     base:definesType machinery:IMachineryItemVendorNameplateType ;
     base:hasBrowseName "IMachineryItemVendorNameplateType" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Interface containing identification and nameplate information for a MachineryItem provided by the vendor" ;
     base:hasDisplayName "IMachineryItemVendorNameplateType" ;
     base:hasIdentifierType base:numericID ;
@@ -213,9 +393,11 @@ machinery:nodei1003 a opcua:ObjectTypeNodeClass ;
     base:hasNodeId "1003" .
 
 machinery:nodei1010 a opcua:ObjectTypeNodeClass ;
+    devices:hasProductInstanceUri machinery:nodei6023 ;
     opcua:HasProperty machinery:nodei6023 ;
     base:definesType machinery:IMachineVendorNameplateType ;
     base:hasBrowseName "IMachineVendorNameplateType" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Interface containing identification and nameplate information for a machine provided by the machine vendor" ;
     base:hasDisplayName "IMachineVendorNameplateType" ;
     base:hasIdentifierType base:numericID ;
@@ -224,13 +406,19 @@ machinery:nodei1010 a opcua:ObjectTypeNodeClass ;
 
 machinery:nodei1011 a opcua:ObjectTypeNodeClass ;
     opcua:HasProperty machinery:nodei6028 ;
+    machinery:hasLocation machinery:nodei6028 ;
     base:definesType machinery:IMachineTagNameplateType ;
     base:hasBrowseName "IMachineTagNameplateType" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Interface containing information of the identification of a machine set by the customer" ;
     base:hasDisplayName "IMachineTagNameplateType" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace machinery:MACHINERYNamespace ;
     base:hasNodeId "1011" .
+
+machinery:IMachineryItemVendorNameplateType a owl:Class ;
+    rdfs:subClassOf devices:IVendorNameplateType ;
+    base:isAbstract "true" .
 
 machinery:nodei5001 a opcua:NamespaceMetadataType,
         opcua:ObjectNodeClass ;
@@ -241,7 +429,15 @@ machinery:nodei5001 a opcua:NamespaceMetadataType,
         machinery:nodei6035,
         machinery:nodei6036,
         machinery:nodei6037 ;
+    opcua:hasIsNamespaceSubset machinery:nodei6031 ;
+    opcua:hasNamespacePublicationDate machinery:nodei6032 ;
+    opcua:hasNamespaceUri machinery:nodei6033 ;
+    opcua:hasNamespaceVersion machinery:nodei6034 ;
+    opcua:hasStaticNodeIdTypes machinery:nodei6035 ;
+    opcua:hasStaticNumericNodeIdRange machinery:nodei6036 ;
+    opcua:hasStaticStringNodeIdPattern machinery:nodei6037 ;
     base:hasBrowseName "http://opcfoundation.org/UA/Machinery/" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDisplayName "http://opcfoundation.org/UA/Machinery/" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace machinery:MACHINERYNamespace ;
@@ -250,9 +446,11 @@ machinery:nodei5001 a opcua:NamespaceMetadataType,
 
 machinery:nodei5002 a opcua:BaseObjectType,
         opcua:ObjectNodeClass ;
+    devices:hasIdentification machinery:nodei5003 ;
     opcua:HasAddIn machinery:nodei5003 ;
     opcua:HasModellingRule opcua:nodei11508 ;
     base:hasBrowseName "<Component>" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Represents the identifiable components of a machine." ;
     base:hasDisplayName "<Component>" ;
     base:hasIdentifierType base:numericID ;
@@ -262,10 +460,13 @@ machinery:nodei5002 a opcua:BaseObjectType,
 
 machinery:nodei5003 a machinery:MachineryItemIdentificationType,
         opcua:ObjectNodeClass ;
+    devices:hasManufacturer machinery:nodei6019 ;
+    devices:hasSerialNumber machinery:nodei6020 ;
     opcua:HasModellingRule opcua:nodei78 ;
     opcua:HasProperty machinery:nodei6019,
         machinery:nodei6020 ;
     base:hasBrowseName "Identification" ;
+    base:hasBrowseNameNamespace devices:DEVICESNamespace ;
     base:hasDescription "Contains information about the identification and nameplate of a MachineryItem" ;
     base:hasDisplayName "Identification" ;
     base:hasIdentifierType base:numericID ;
@@ -277,7 +478,9 @@ machinery:nodei5008 a opcua:ObjectNodeClass,
     opcua:FromState machinery:nodei5005 ;
     opcua:HasProperty machinery:nodei6042 ;
     opcua:ToState machinery:nodei5004 ;
+    opcua:hasTransitionNumber machinery:nodei6042 ;
     base:hasBrowseName "FromNotAvailableToOutOfService" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Transition from state NotAvailable to state OutOfService" ;
     base:hasDisplayName "FromNotAvailableToOutOfService" ;
     base:hasIdentifierType base:numericID ;
@@ -289,7 +492,9 @@ machinery:nodei5009 a opcua:ObjectNodeClass,
     opcua:FromState machinery:nodei5005 ;
     opcua:HasProperty machinery:nodei6043 ;
     opcua:ToState machinery:nodei5007 ;
+    opcua:hasTransitionNumber machinery:nodei6043 ;
     base:hasBrowseName "FromNotAvailableToNotExecuting" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Transition from state NotAvailable to state NotExecuting" ;
     base:hasDisplayName "FromNotAvailableToNotExecuting" ;
     base:hasIdentifierType base:numericID ;
@@ -301,7 +506,9 @@ machinery:nodei5010 a opcua:ObjectNodeClass,
     opcua:FromState machinery:nodei5005 ;
     opcua:HasProperty machinery:nodei6044 ;
     opcua:ToState machinery:nodei5006 ;
+    opcua:hasTransitionNumber machinery:nodei6044 ;
     base:hasBrowseName "FromNotAvailableToExecuting" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Transition from state NotAvailable to state Executing" ;
     base:hasDisplayName "FromNotAvailableToExecuting" ;
     base:hasIdentifierType base:numericID ;
@@ -313,7 +520,9 @@ machinery:nodei5011 a opcua:ObjectNodeClass,
     opcua:FromState machinery:nodei5005 ;
     opcua:HasProperty machinery:nodei6045 ;
     opcua:ToState machinery:nodei5005 ;
+    opcua:hasTransitionNumber machinery:nodei6045 ;
     base:hasBrowseName "FromNotAvailableToNotAvailable" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Transition from state NotAvailable to state NotAvailable" ;
     base:hasDisplayName "FromNotAvailableToNotAvailable" ;
     base:hasIdentifierType base:numericID ;
@@ -325,7 +534,9 @@ machinery:nodei5012 a opcua:ObjectNodeClass,
     opcua:FromState machinery:nodei5004 ;
     opcua:HasProperty machinery:nodei6046 ;
     opcua:ToState machinery:nodei5005 ;
+    opcua:hasTransitionNumber machinery:nodei6046 ;
     base:hasBrowseName "FromOutOfServiceToNotAvailable" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Transition from state OutOfService to state NotAvailable" ;
     base:hasDisplayName "FromOutOfServiceToNotAvailable" ;
     base:hasIdentifierType base:numericID ;
@@ -337,7 +548,9 @@ machinery:nodei5013 a opcua:ObjectNodeClass,
     opcua:FromState machinery:nodei5004 ;
     opcua:HasProperty machinery:nodei6047 ;
     opcua:ToState machinery:nodei5007 ;
+    opcua:hasTransitionNumber machinery:nodei6047 ;
     base:hasBrowseName "FromOutOfServiceToNotExecuting" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Transition from state OutOfService to state NotExecuting" ;
     base:hasDisplayName "FromOutOfServiceToNotExecuting" ;
     base:hasIdentifierType base:numericID ;
@@ -349,7 +562,9 @@ machinery:nodei5014 a opcua:ObjectNodeClass,
     opcua:FromState machinery:nodei5004 ;
     opcua:HasProperty machinery:nodei6048 ;
     opcua:ToState machinery:nodei5006 ;
+    opcua:hasTransitionNumber machinery:nodei6048 ;
     base:hasBrowseName "FromOutOfServiceToExecuting" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Transition from state OutOfService to state Executing" ;
     base:hasDisplayName "FromOutOfServiceToExecuting" ;
     base:hasIdentifierType base:numericID ;
@@ -361,7 +576,9 @@ machinery:nodei5015 a opcua:ObjectNodeClass,
     opcua:FromState machinery:nodei5004 ;
     opcua:HasProperty machinery:nodei6049 ;
     opcua:ToState machinery:nodei5004 ;
+    opcua:hasTransitionNumber machinery:nodei6049 ;
     base:hasBrowseName "FromOutOfServiceToOutOfService" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Transition from state OutOfService to state OutOfService" ;
     base:hasDisplayName "FromOutOfServiceToOutOfService" ;
     base:hasIdentifierType base:numericID ;
@@ -373,7 +590,9 @@ machinery:nodei5016 a opcua:ObjectNodeClass,
     opcua:FromState machinery:nodei5007 ;
     opcua:HasProperty machinery:nodei6050 ;
     opcua:ToState machinery:nodei5005 ;
+    opcua:hasTransitionNumber machinery:nodei6050 ;
     base:hasBrowseName "FromNotExecutingToNotAvailable" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Transition from state NotExecuting to state NotAvailable" ;
     base:hasDisplayName "FromNotExecutingToNotAvailable" ;
     base:hasIdentifierType base:numericID ;
@@ -385,7 +604,9 @@ machinery:nodei5017 a opcua:ObjectNodeClass,
     opcua:FromState machinery:nodei5007 ;
     opcua:HasProperty machinery:nodei6051 ;
     opcua:ToState machinery:nodei5004 ;
+    opcua:hasTransitionNumber machinery:nodei6051 ;
     base:hasBrowseName "FromNotExecutingToOutOfService" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Transition from state NotExecuting to state OutOfService" ;
     base:hasDisplayName "FromNotExecutingToOutOfService" ;
     base:hasIdentifierType base:numericID ;
@@ -397,7 +618,9 @@ machinery:nodei5018 a opcua:ObjectNodeClass,
     opcua:FromState machinery:nodei5007 ;
     opcua:HasProperty machinery:nodei6052 ;
     opcua:ToState machinery:nodei5006 ;
+    opcua:hasTransitionNumber machinery:nodei6052 ;
     base:hasBrowseName "FromNotExecutingToExecuting" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Transition from state NotExecuting to state Executing" ;
     base:hasDisplayName "FromNotExecutingToExecuting" ;
     base:hasIdentifierType base:numericID ;
@@ -409,7 +632,9 @@ machinery:nodei5019 a opcua:ObjectNodeClass,
     opcua:FromState machinery:nodei5007 ;
     opcua:HasProperty machinery:nodei6053 ;
     opcua:ToState machinery:nodei5007 ;
+    opcua:hasTransitionNumber machinery:nodei6053 ;
     base:hasBrowseName "FromNotExecutingToNotExecuting" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Transition from state NotExecuting to state NotExecuting" ;
     base:hasDisplayName "FromNotExecutingToNotExecuting" ;
     base:hasIdentifierType base:numericID ;
@@ -421,7 +646,9 @@ machinery:nodei5020 a opcua:ObjectNodeClass,
     opcua:FromState machinery:nodei5006 ;
     opcua:HasProperty machinery:nodei6054 ;
     opcua:ToState machinery:nodei5005 ;
+    opcua:hasTransitionNumber machinery:nodei6054 ;
     base:hasBrowseName "FromExecutingToNotAvailable" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Transition from state Executing to state NotAvailable" ;
     base:hasDisplayName "FromExecutingToNotAvailable" ;
     base:hasIdentifierType base:numericID ;
@@ -433,7 +660,9 @@ machinery:nodei5021 a opcua:ObjectNodeClass,
     opcua:FromState machinery:nodei5006 ;
     opcua:HasProperty machinery:nodei6055 ;
     opcua:ToState machinery:nodei5004 ;
+    opcua:hasTransitionNumber machinery:nodei6055 ;
     base:hasBrowseName "FromExecutingToOutOfService" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Transition from state Executing to state OutOfService" ;
     base:hasDisplayName "FromExecutingToOutOfService" ;
     base:hasIdentifierType base:numericID ;
@@ -445,7 +674,9 @@ machinery:nodei5022 a opcua:ObjectNodeClass,
     opcua:FromState machinery:nodei5006 ;
     opcua:HasProperty machinery:nodei6056 ;
     opcua:ToState machinery:nodei5007 ;
+    opcua:hasTransitionNumber machinery:nodei6056 ;
     base:hasBrowseName "FromExecutingToNotExecuting" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Transition from state Executing to state NotExecuting" ;
     base:hasDisplayName "FromExecutingToNotExecuting" ;
     base:hasIdentifierType base:numericID ;
@@ -457,7 +688,9 @@ machinery:nodei5023 a opcua:ObjectNodeClass,
     opcua:FromState machinery:nodei5006 ;
     opcua:HasProperty machinery:nodei6057 ;
     opcua:ToState machinery:nodei5006 ;
+    opcua:hasTransitionNumber machinery:nodei6057 ;
     base:hasBrowseName "FromExecutingToExecuting" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Transition from state Executing to state Executing" ;
     base:hasDisplayName "FromExecutingToExecuting" ;
     base:hasIdentifierType base:numericID ;
@@ -469,7 +702,9 @@ machinery:nodei5028 a opcua:ObjectNodeClass,
     opcua:FromState machinery:nodei5024 ;
     opcua:HasProperty machinery:nodei6063 ;
     opcua:ToState machinery:nodei5025 ;
+    opcua:hasTransitionNumber machinery:nodei6063 ;
     base:hasBrowseName "FromNoneToMaintenance" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Transition from state None to state Maintenance" ;
     base:hasDisplayName "FromNoneToMaintenance" ;
     base:hasIdentifierType base:numericID ;
@@ -481,7 +716,9 @@ machinery:nodei5029 a opcua:ObjectNodeClass,
     opcua:FromState machinery:nodei5024 ;
     opcua:HasProperty machinery:nodei6064 ;
     opcua:ToState machinery:nodei5027 ;
+    opcua:hasTransitionNumber machinery:nodei6064 ;
     base:hasBrowseName "FromNoneToSetup" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Transition from state None to state Setup" ;
     base:hasDisplayName "FromNoneToSetup" ;
     base:hasIdentifierType base:numericID ;
@@ -493,7 +730,9 @@ machinery:nodei5030 a opcua:ObjectNodeClass,
     opcua:FromState machinery:nodei5024 ;
     opcua:HasProperty machinery:nodei6065 ;
     opcua:ToState machinery:nodei5026 ;
+    opcua:hasTransitionNumber machinery:nodei6065 ;
     base:hasBrowseName "FromNoneToProcessing" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Transition from state None to state Processing" ;
     base:hasDisplayName "FromNoneToProcessing" ;
     base:hasIdentifierType base:numericID ;
@@ -505,7 +744,9 @@ machinery:nodei5031 a opcua:ObjectNodeClass,
     opcua:FromState machinery:nodei5024 ;
     opcua:HasProperty machinery:nodei6066 ;
     opcua:ToState machinery:nodei5024 ;
+    opcua:hasTransitionNumber machinery:nodei6066 ;
     base:hasBrowseName "FromNoneToNone" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Transition from state None to state None" ;
     base:hasDisplayName "FromNoneToNone" ;
     base:hasIdentifierType base:numericID ;
@@ -517,7 +758,9 @@ machinery:nodei5032 a opcua:ObjectNodeClass,
     opcua:FromState machinery:nodei5025 ;
     opcua:HasProperty machinery:nodei6067 ;
     opcua:ToState machinery:nodei5024 ;
+    opcua:hasTransitionNumber machinery:nodei6067 ;
     base:hasBrowseName "FromMaintenanceToNone" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Transition from state Maintenance to state None" ;
     base:hasDisplayName "FromMaintenanceToNone" ;
     base:hasIdentifierType base:numericID ;
@@ -529,7 +772,9 @@ machinery:nodei5033 a opcua:ObjectNodeClass,
     opcua:FromState machinery:nodei5025 ;
     opcua:HasProperty machinery:nodei6068 ;
     opcua:ToState machinery:nodei5027 ;
+    opcua:hasTransitionNumber machinery:nodei6068 ;
     base:hasBrowseName "FromMaintenanceToSetup" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Transition from state Maintenance to state Setup" ;
     base:hasDisplayName "FromMaintenanceToSetup" ;
     base:hasIdentifierType base:numericID ;
@@ -541,7 +786,9 @@ machinery:nodei5034 a opcua:ObjectNodeClass,
     opcua:FromState machinery:nodei5025 ;
     opcua:HasProperty machinery:nodei6069 ;
     opcua:ToState machinery:nodei5026 ;
+    opcua:hasTransitionNumber machinery:nodei6069 ;
     base:hasBrowseName "FromMaintenanceToProcessing" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Transition from state Maintenance to state Processing" ;
     base:hasDisplayName "FromMaintenanceToProcessing" ;
     base:hasIdentifierType base:numericID ;
@@ -553,7 +800,9 @@ machinery:nodei5035 a opcua:ObjectNodeClass,
     opcua:FromState machinery:nodei5025 ;
     opcua:HasProperty machinery:nodei6070 ;
     opcua:ToState machinery:nodei5025 ;
+    opcua:hasTransitionNumber machinery:nodei6070 ;
     base:hasBrowseName "FromMaintenanceToMaintenance" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Transition from state Maintenance to state Maintenance" ;
     base:hasDisplayName "FromMaintenanceToMaintenance" ;
     base:hasIdentifierType base:numericID ;
@@ -565,7 +814,9 @@ machinery:nodei5036 a opcua:ObjectNodeClass,
     opcua:FromState machinery:nodei5027 ;
     opcua:HasProperty machinery:nodei6071 ;
     opcua:ToState machinery:nodei5024 ;
+    opcua:hasTransitionNumber machinery:nodei6071 ;
     base:hasBrowseName "FromSetupToNone" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Transition from state Setup to state None" ;
     base:hasDisplayName "FromSetupToNone" ;
     base:hasIdentifierType base:numericID ;
@@ -577,7 +828,9 @@ machinery:nodei5037 a opcua:ObjectNodeClass,
     opcua:FromState machinery:nodei5027 ;
     opcua:HasProperty machinery:nodei6072 ;
     opcua:ToState machinery:nodei5025 ;
+    opcua:hasTransitionNumber machinery:nodei6072 ;
     base:hasBrowseName "FromSetupToMaintenance" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Transition from state Setup to state Maintenance" ;
     base:hasDisplayName "FromSetupToMaintenance" ;
     base:hasIdentifierType base:numericID ;
@@ -589,7 +842,9 @@ machinery:nodei5038 a opcua:ObjectNodeClass,
     opcua:FromState machinery:nodei5027 ;
     opcua:HasProperty machinery:nodei6073 ;
     opcua:ToState machinery:nodei5026 ;
+    opcua:hasTransitionNumber machinery:nodei6073 ;
     base:hasBrowseName "FromSetupToProcessing" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Transition from state Setup to state Processing" ;
     base:hasDisplayName "FromSetupToProcessing" ;
     base:hasIdentifierType base:numericID ;
@@ -601,7 +856,9 @@ machinery:nodei5039 a opcua:ObjectNodeClass,
     opcua:FromState machinery:nodei5027 ;
     opcua:HasProperty machinery:nodei6074 ;
     opcua:ToState machinery:nodei5027 ;
+    opcua:hasTransitionNumber machinery:nodei6074 ;
     base:hasBrowseName "FromSetupToSetup" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Transition from state Setup to state Setup" ;
     base:hasDisplayName "FromSetupToSetup" ;
     base:hasIdentifierType base:numericID ;
@@ -613,7 +870,9 @@ machinery:nodei5040 a opcua:ObjectNodeClass,
     opcua:FromState machinery:nodei5026 ;
     opcua:HasProperty machinery:nodei6075 ;
     opcua:ToState machinery:nodei5024 ;
+    opcua:hasTransitionNumber machinery:nodei6075 ;
     base:hasBrowseName "FromProcessingToNone" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Transition from state Processing to state None" ;
     base:hasDisplayName "FromProcessingToNone" ;
     base:hasIdentifierType base:numericID ;
@@ -625,7 +884,9 @@ machinery:nodei5041 a opcua:ObjectNodeClass,
     opcua:FromState machinery:nodei5026 ;
     opcua:HasProperty machinery:nodei6076 ;
     opcua:ToState machinery:nodei5025 ;
+    opcua:hasTransitionNumber machinery:nodei6076 ;
     base:hasBrowseName "FromProcessingToMaintenance" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Transition from state Processing to state Maintenance" ;
     base:hasDisplayName "FromProcessingToMaintenance" ;
     base:hasIdentifierType base:numericID ;
@@ -637,7 +898,9 @@ machinery:nodei5042 a opcua:ObjectNodeClass,
     opcua:FromState machinery:nodei5026 ;
     opcua:HasProperty machinery:nodei6077 ;
     opcua:ToState machinery:nodei5027 ;
+    opcua:hasTransitionNumber machinery:nodei6077 ;
     base:hasBrowseName "FromProcessingToSetup" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Transition from state Processing to state Setup" ;
     base:hasDisplayName "FromProcessingToSetup" ;
     base:hasIdentifierType base:numericID ;
@@ -649,7 +912,9 @@ machinery:nodei5043 a opcua:ObjectNodeClass,
     opcua:FromState machinery:nodei5026 ;
     opcua:HasProperty machinery:nodei6078 ;
     opcua:ToState machinery:nodei5026 ;
+    opcua:hasTransitionNumber machinery:nodei6078 ;
     base:hasBrowseName "FromProcessingToProcessing" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "Transition from state Processing to state Processing" ;
     base:hasDisplayName "FromProcessingToProcessing" ;
     base:hasIdentifierType base:numericID ;
@@ -660,6 +925,7 @@ machinery:nodei6001 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "ProductInstanceUri" ;
+    base:hasBrowseNameNamespace devices:DEVICESNamespace ;
     base:hasDatatype opcua:String ;
     base:hasDescription "A globally unique resource identifier provided by the manufacturer of the MachineryItem." ;
     base:hasDisplayName "ProductInstanceUri" ;
@@ -671,6 +937,7 @@ machinery:nodei6002 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "Manufacturer" ;
+    base:hasBrowseNameNamespace devices:DEVICESNamespace ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasDescription "A human-readable, localized name of the manufacturer of the MachineryItem." ;
     base:hasDisplayName "Manufacturer" ;
@@ -682,6 +949,7 @@ machinery:nodei6003 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "SerialNumber" ;
+    base:hasBrowseNameNamespace devices:DEVICESNamespace ;
     base:hasDatatype opcua:String ;
     base:hasDescription "A string containing a unique production number of the manufacturer of the MachineryItem. The global uniqueness of the serial number is only given in the context of the manufacturer, and potentially the model. The value shall not change during the life-cycle of the MachineryItem." ;
     base:hasDisplayName "SerialNumber" ;
@@ -693,6 +961,7 @@ machinery:nodei6004 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "YearOfConstruction" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDatatype opcua:UInt16 ;
     base:hasDescription "The year (Gregorian calendar) in which the manufacturing process of the MachineryItem has been completed. It shall be a four-digit number and never change during the life-cycle of a MachineryItem." ;
     base:hasDisplayName "YearOfConstruction" ;
@@ -704,6 +973,7 @@ machinery:nodei6005 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "MonthOfConstruction" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDatatype opcua:Byte ;
     base:hasDescription "The month in which the manufacturing process of the MachineryItem has been completed. It shall be a number between 1 and 12, representing the month from January to December." ;
     base:hasDisplayName "MonthOfConstruction" ;
@@ -715,6 +985,7 @@ machinery:nodei6006 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "InitialOperationDate" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDatatype opcua:DateTime ;
     base:hasDescription "The date, when the MachineryItem was switched on the first time after it has left the manufacturer plant." ;
     base:hasDisplayName "InitialOperationDate" ;
@@ -726,6 +997,7 @@ machinery:nodei6007 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "ManufacturerUri" ;
+    base:hasBrowseNameNamespace devices:DEVICESNamespace ;
     base:hasDatatype opcua:String ;
     base:hasDescription "A globally unique identifier of the manufacturer of the MachineryItem." ;
     base:hasDisplayName "ManufacturerUri" ;
@@ -737,6 +1009,7 @@ machinery:nodei6008 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "Model" ;
+    base:hasBrowseNameNamespace devices:DEVICESNamespace ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasDescription "A human-readable, localized name of the model of the MachineryItem." ;
     base:hasDisplayName "Model" ;
@@ -748,6 +1021,7 @@ machinery:nodei6009 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "ProductCode" ;
+    base:hasBrowseNameNamespace devices:DEVICESNamespace ;
     base:hasDatatype opcua:String ;
     base:hasDescription "A machine-readable string of the model of the MachineryItem, that might include options like the hardware configuration of the model. This information might be provided by the ERP system of the vendor. For example, it can be used as order information." ;
     base:hasDisplayName "ProductCode" ;
@@ -759,6 +1033,7 @@ machinery:nodei6010 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "HardwareRevision" ;
+    base:hasBrowseNameNamespace devices:DEVICESNamespace ;
     base:hasDatatype opcua:String ;
     base:hasDescription "A string representation of the revision level of the hardware of a MachineryItem. Hardware is physical equipment, as opposed to programs, procedures, rules and associated documentation. Many machines will not provide such information due to the modular and configurable nature of the machine." ;
     base:hasDisplayName "HardwareRevision" ;
@@ -770,6 +1045,7 @@ machinery:nodei6011 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "SoftwareRevision" ;
+    base:hasBrowseNameNamespace devices:DEVICESNamespace ;
     base:hasDatatype opcua:String ;
     base:hasDescription "A string representation of the revision level of a MachineryItem. In most cases, MachineryItems consist of several software components. In that case, information about the software components might be provided as additional information in the address space, including individual revision information. In that case, this property is either not provided or provides an overall software revision level. The value might change during the life-cycle of a MachineryItem." ;
     base:hasDisplayName "SoftwareRevision" ;
@@ -781,6 +1057,7 @@ machinery:nodei6012 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "DeviceClass" ;
+    base:hasBrowseNameNamespace devices:DEVICESNamespace ;
     base:hasDatatype opcua:String ;
     base:hasDescription "Indicates in which domain or for what purpose the MachineryItem is used." ;
     base:hasDisplayName "DeviceClass" ;
@@ -794,6 +1071,7 @@ machinery:nodei6013 a opcua:PropertyType,
     base:hasAccessLevel opcua:CurrentRead,
         opcua:CurrentWrite ;
     base:hasBrowseName "AssetId" ;
+    base:hasBrowseNameNamespace devices:DEVICESNamespace ;
     base:hasDatatype opcua:String ;
     base:hasDescription "To be used by end users to store a unique identification in the context of their overall application. Servers shall support at least 40 Unicode characters for the clients writing this value, this means clients can expect to be able to write strings with a length of 40 Unicode characters into that field." ;
     base:hasDisplayName "AssetId" ;
@@ -807,6 +1085,7 @@ machinery:nodei6014 a opcua:PropertyType,
     base:hasAccessLevel opcua:CurrentRead,
         opcua:CurrentWrite ;
     base:hasBrowseName "ComponentName" ;
+    base:hasBrowseNameNamespace devices:DEVICESNamespace ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasDescription "To be used by end users to store a human-readable localized text for the MachineryItem. The minimum number of locales supported for this property shall be two. Servers shall support at least 40 Unicode characters for the clients writing the text part of each locale, this means clients can expect to be able to write texts with a length of 40 Unicode characters into that field." ;
     base:hasDisplayName "ComponentName" ;
@@ -818,6 +1097,7 @@ machinery:nodei6015 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "ProductInstanceUri" ;
+    base:hasBrowseNameNamespace devices:DEVICESNamespace ;
     base:hasDatatype opcua:String ;
     base:hasDescription "A globally unique resource identifier provided by the manufacturer of the machine" ;
     base:hasDisplayName "ProductInstanceUri" ;
@@ -830,6 +1110,7 @@ machinery:nodei6016 a opcua:PropertyType,
     base:hasAccessLevel opcua:CurrentRead,
         opcua:CurrentWrite ;
     base:hasBrowseName "DefaultInstanceBrowseName" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:QualifiedName ;
     base:hasDescription "The default BrowseName for instances of the type." ;
     base:hasDisplayName "DefaultInstanceBrowseName" ;
@@ -842,6 +1123,7 @@ machinery:nodei6017 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "DeviceRevision" ;
+    base:hasBrowseNameNamespace devices:DEVICESNamespace ;
     base:hasDatatype opcua:String ;
     base:hasDescription "A string representation of the overall revision level of the component. Often, it is increased when either the SoftwareRevision and / or the HardwareRevision of the component is increased. As an example, it can be used in ERP systems together with the ProductCode." ;
     base:hasDisplayName "DeviceRevision" ;
@@ -854,6 +1136,7 @@ machinery:nodei6018 a opcua:PropertyType,
     base:hasAccessLevel opcua:CurrentRead,
         opcua:CurrentWrite ;
     base:hasBrowseName "DefaultInstanceBrowseName" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:QualifiedName ;
     base:hasDescription "The default BrowseName for instances of the type." ;
     base:hasDisplayName "DefaultInstanceBrowseName" ;
@@ -866,6 +1149,7 @@ machinery:nodei6019 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "Manufacturer" ;
+    base:hasBrowseNameNamespace devices:DEVICESNamespace ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasDescription "A human-readable, localized name of the manufacturer of the MachineryItem." ;
     base:hasDisplayName "Manufacturer" ;
@@ -877,6 +1161,7 @@ machinery:nodei6020 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "SerialNumber" ;
+    base:hasBrowseNameNamespace devices:DEVICESNamespace ;
     base:hasDatatype opcua:String ;
     base:hasDescription "A string containing a unique production number of the manufacturer of the MachineryItem. The global uniqueness of the serial number is only given in the context of the manufacturer, and potentially the model. The value shall not change during the life-cycle of the MachineryItem." ;
     base:hasDisplayName "SerialNumber" ;
@@ -889,6 +1174,7 @@ machinery:nodei6021 a opcua:PropertyType,
     base:hasAccessLevel opcua:CurrentRead,
         opcua:CurrentWrite ;
     base:hasBrowseName "DefaultInstanceBrowseName" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:QualifiedName ;
     base:hasDescription "The default BrowseName for instances of the type" ;
     base:hasDisplayName "DefaultInstanceBrowseName" ;
@@ -901,6 +1187,7 @@ machinery:nodei6022 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "Manufacturer" ;
+    base:hasBrowseNameNamespace devices:DEVICESNamespace ;
     base:hasDatatype opcua:LocalizedText ;
     base:hasDescription "A human-readable, localized name of the manufacturer of the MachineryItem." ;
     base:hasDisplayName "Manufacturer" ;
@@ -912,6 +1199,7 @@ machinery:nodei6023 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "ProductInstanceUri" ;
+    base:hasBrowseNameNamespace devices:DEVICESNamespace ;
     base:hasDatatype opcua:String ;
     base:hasDescription "A globally unique resource identifier provided by the manufacturer of the machine" ;
     base:hasDisplayName "ProductInstanceUri" ;
@@ -923,6 +1211,7 @@ machinery:nodei6024 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "SerialNumber" ;
+    base:hasBrowseNameNamespace devices:DEVICESNamespace ;
     base:hasDatatype opcua:String ;
     base:hasDescription "A string containing a unique production number of the manufacturer of the MachineryItem. The global uniqueness of the serial number is only given in the context of the manufacturer, and potentially the model. The value shall not change during the life-cycle of the MachineryItem." ;
     base:hasDisplayName "SerialNumber" ;
@@ -934,6 +1223,7 @@ machinery:nodei6025 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "YearOfConstruction" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDatatype opcua:UInt16 ;
     base:hasDescription "The year (Gregorian calendar) in which the manufacturing process of the MachineryItem has been completed. It shall be a four-digit number and never change during the life-cycle of a MachineryItem." ;
     base:hasDisplayName "YearOfConstruction" ;
@@ -945,6 +1235,7 @@ machinery:nodei6026 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "MonthOfConstruction" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDatatype opcua:Byte ;
     base:hasDescription "The month in which the manufacturing process of the MachineryItem has been completed. It shall be a number between 1 and 12, representing the month from January to December." ;
     base:hasDisplayName "MonthOfConstruction" ;
@@ -956,6 +1247,7 @@ machinery:nodei6027 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei80 ;
     base:hasBrowseName "InitialOperationDate" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDatatype opcua:DateTime ;
     base:hasDescription "The date, when the MachineryItem was switched on the first time after it has left the manufacturer plant." ;
     base:hasDisplayName "InitialOperationDate" ;
@@ -969,6 +1261,7 @@ machinery:nodei6028 a opcua:PropertyType,
     base:hasAccessLevel opcua:CurrentRead,
         opcua:CurrentWrite ;
     base:hasBrowseName "Location" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDatatype opcua:String ;
     base:hasDescription "To be used by end users to store the location of the machine in a scheme specific to the end user Servers shall support at least 60 Unicode characters for the clients writing this value, this means clients can expect to be able to write strings with a length of 60 Unicode characters into that field." ;
     base:hasDisplayName "Location" ;
@@ -982,6 +1275,7 @@ machinery:nodei6029 a opcua:PropertyType,
     base:hasAccessLevel opcua:CurrentRead,
         opcua:CurrentWrite ;
     base:hasBrowseName "Location" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDatatype opcua:String ;
     base:hasDescription "To be used by end users to store the location of the machine in a scheme specific to the end user. Servers shall support at least 60 Unicode characters for the clients writing this value, this means clients can expect to be able to write strings with a length of 60 Unicode characters into that field." ;
     base:hasDisplayName "Location" ;
@@ -992,6 +1286,7 @@ machinery:nodei6029 a opcua:PropertyType,
 machinery:nodei6030 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     base:hasBrowseName "DefaultInstanceBrowseName" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:QualifiedName ;
     base:hasDescription "The default BrowseName for instances of the type." ;
     base:hasDisplayName "DefaultInstanceBrowseName" ;
@@ -1003,6 +1298,7 @@ machinery:nodei6030 a opcua:PropertyType,
 machinery:nodei6031 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     base:hasBrowseName "IsNamespaceSubset" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:Boolean ;
     base:hasDisplayName "IsNamespaceSubset" ;
     base:hasIdentifierType base:numericID ;
@@ -1013,6 +1309,7 @@ machinery:nodei6031 a opcua:PropertyType,
 machinery:nodei6032 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     base:hasBrowseName "NamespacePublicationDate" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:DateTime ;
     base:hasDisplayName "NamespacePublicationDate" ;
     base:hasIdentifierType base:numericID ;
@@ -1023,6 +1320,7 @@ machinery:nodei6032 a opcua:PropertyType,
 machinery:nodei6033 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     base:hasBrowseName "NamespaceUri" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "NamespaceUri" ;
     base:hasIdentifierType base:numericID ;
@@ -1033,6 +1331,7 @@ machinery:nodei6033 a opcua:PropertyType,
 machinery:nodei6034 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     base:hasBrowseName "NamespaceVersion" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "NamespaceVersion" ;
     base:hasIdentifierType base:numericID ;
@@ -1044,18 +1343,20 @@ machinery:nodei6035 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     base:hasArrayDimensions ( 0 ) ;
     base:hasBrowseName "StaticNodeIdTypes" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:IdType ;
     base:hasDisplayName "StaticNodeIdTypes" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace machinery:MACHINERYNamespace ;
     base:hasNodeId "6035" ;
-    base:hasValue ( 0 ) ;
+    base:hasValueList ( 0 ) ;
     base:hasValueRank 1 .
 
 machinery:nodei6036 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     base:hasArrayDimensions ( 0 ) ;
     base:hasBrowseName "StaticNumericNodeIdRange" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:NumericRange ;
     base:hasDisplayName "StaticNumericNodeIdRange" ;
     base:hasIdentifierType base:numericID ;
@@ -1066,6 +1367,7 @@ machinery:nodei6036 a opcua:PropertyType,
 machinery:nodei6037 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     base:hasBrowseName "StaticStringNodeIdPattern" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:String ;
     base:hasDisplayName "StaticStringNodeIdPattern" ;
     base:hasIdentifierType base:numericID ;
@@ -1076,6 +1378,7 @@ machinery:nodei6038 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "StateNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "StateNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1087,6 +1390,7 @@ machinery:nodei6039 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "StateNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "StateNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1098,6 +1402,7 @@ machinery:nodei6040 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "StateNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "StateNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1109,6 +1414,7 @@ machinery:nodei6041 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "StateNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "StateNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1120,6 +1426,7 @@ machinery:nodei6042 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1131,6 +1438,7 @@ machinery:nodei6043 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1142,6 +1450,7 @@ machinery:nodei6044 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1153,6 +1462,7 @@ machinery:nodei6045 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1164,6 +1474,7 @@ machinery:nodei6046 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1175,6 +1486,7 @@ machinery:nodei6047 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1186,6 +1498,7 @@ machinery:nodei6048 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1197,6 +1510,7 @@ machinery:nodei6049 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1208,6 +1522,7 @@ machinery:nodei6050 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1219,6 +1534,7 @@ machinery:nodei6051 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1230,6 +1546,7 @@ machinery:nodei6052 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1241,6 +1558,7 @@ machinery:nodei6053 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1252,6 +1570,7 @@ machinery:nodei6054 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1263,6 +1582,7 @@ machinery:nodei6055 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1274,6 +1594,7 @@ machinery:nodei6056 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1285,6 +1606,7 @@ machinery:nodei6057 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1297,6 +1619,7 @@ machinery:nodei6058 a opcua:PropertyType,
     base:hasAccessLevel opcua:CurrentRead,
         opcua:CurrentWrite ;
     base:hasBrowseName "DefaultInstanceBrowseName" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:QualifiedName ;
     base:hasDescription "The default BrowseName for instances of the type" ;
     base:hasDisplayName "DefaultInstanceBrowseName" ;
@@ -1309,6 +1632,7 @@ machinery:nodei6059 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "StateNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "StateNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1320,6 +1644,7 @@ machinery:nodei6060 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "StateNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "StateNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1331,6 +1656,7 @@ machinery:nodei6061 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "StateNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "StateNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1342,6 +1668,7 @@ machinery:nodei6062 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "StateNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "StateNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1353,6 +1680,7 @@ machinery:nodei6063 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1364,6 +1692,7 @@ machinery:nodei6064 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1375,6 +1704,7 @@ machinery:nodei6065 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1386,6 +1716,7 @@ machinery:nodei6066 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1397,6 +1728,7 @@ machinery:nodei6067 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1408,6 +1740,7 @@ machinery:nodei6068 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1419,6 +1752,7 @@ machinery:nodei6069 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1430,6 +1764,7 @@ machinery:nodei6070 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1441,6 +1776,7 @@ machinery:nodei6071 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1452,6 +1788,7 @@ machinery:nodei6072 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1463,6 +1800,7 @@ machinery:nodei6073 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1474,6 +1812,7 @@ machinery:nodei6074 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1485,6 +1824,7 @@ machinery:nodei6075 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1496,6 +1836,7 @@ machinery:nodei6076 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1507,6 +1848,7 @@ machinery:nodei6077 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1518,6 +1860,7 @@ machinery:nodei6078 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "TransitionNumber" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:UInt32 ;
     base:hasDisplayName "TransitionNumber" ;
     base:hasIdentifierType base:numericID ;
@@ -1531,6 +1874,7 @@ machinery:nodei6079 a opcua:PropertyType,
     base:hasAccessLevel opcua:CurrentRead,
         opcua:CurrentWrite ;
     base:hasBrowseName "PowerOnDuration" ;
+    base:hasBrowseNameNamespace devices:DEVICESNamespace ;
     base:hasDatatype opcua:Duration ;
     base:hasDescription "PowerOnDuration is the duration the MachineryItem has been powered. The main purpose is to determine the time in which degradation of the MachineryItem occurred. The details, when the time is counted, is implementation-specific. Companion specifications might define specific rules. Typically, when the MachineryItem has supply voltage and the main CPU is running, the time is counted. This may include any kind of sleep mode, but may not include pure Wake on LAN. This value shall only increase during the lifetime of the MachineryItem and shall not be reset when it is restarted. The PowerOnDuration is provided as Duration, i.e., in milliseconds or even fractions of a millisecond. However, the Server is not expected to update the value in such a high frequency, but maybe once a minute or once an hour, depending on the application." ;
     base:hasDisplayName "PowerOnDuration" ;
@@ -1544,6 +1888,7 @@ machinery:nodei6080 a opcua:PropertyType,
     base:hasAccessLevel opcua:CurrentRead,
         opcua:CurrentWrite ;
     base:hasBrowseName "OperationDuration" ;
+    base:hasBrowseNameNamespace devices:DEVICESNamespace ;
     base:hasDatatype opcua:Duration ;
     base:hasDescription "OperationDuration is the duration the MachineryItem has been powered and performing an activity. This counter is intended for machines and components where a distinction is made between switched on and in operation. For example, a drive might be powered on but not operating. It is not intended for machines or components always performing an activity like sensors always measuring data. This value shall only increase during the lifetime of the MachineryItem and shall not be reset when it is restarted. The OperationDuration is provided as Duration, i.e., in milliseconds or even fractions of a millisecond. However, the Server is not expected to update the value in such a high frequency, but maybe once a minute or once an hour, depending on the application." ;
     base:hasDisplayName "OperationDuration" ;
@@ -1557,6 +1902,7 @@ machinery:nodei6081 a opcua:PropertyType,
     base:hasAccessLevel opcua:CurrentRead,
         opcua:CurrentWrite ;
     base:hasBrowseName "OperationCycleCounter" ;
+    base:hasBrowseNameNamespace devices:DEVICESNamespace ;
     base:hasDatatype opcua:UInteger ;
     base:hasDescription "OperationCycleCounter is counting the times the component switches from not performing an activity to performing an activity. For example, each time a valve starts moving, is counted. This value shall only increase during the lifetime of the component and shall not be reset when the component is restarted." ;
     base:hasDisplayName "OperationCycleCounter" ;
@@ -1569,6 +1915,7 @@ machinery:nodei6082 a opcua:PropertyType,
     base:hasAccessLevel opcua:CurrentRead,
         opcua:CurrentWrite ;
     base:hasBrowseName "DefaultInstanceBrowseName" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:QualifiedName ;
     base:hasDescription "The default BrowseName for instances of the type" ;
     base:hasDisplayName "DefaultInstanceBrowseName" ;
@@ -1579,13 +1926,17 @@ machinery:nodei6082 a opcua:PropertyType,
 
 machinery:nodei6083 a devices:LifetimeVariableType,
         opcua:VariableNodeClass ;
+    devices:hasLimitValue machinery:nodei6084 ;
+    devices:hasStartValue machinery:nodei6085 ;
     opcua:HasModellingRule opcua:nodei11510 ;
     opcua:HasProperty machinery:nodei6084,
         machinery:nodei6085,
         machinery:nodei6086 ;
+    opcua:hasEngineeringUnits machinery:nodei6086 ;
     base:hasAccessLevel opcua:CurrentRead,
         opcua:CurrentWrite ;
     base:hasBrowseName "<LifetimeVariable>" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDatatype opcua:Number ;
     base:hasDisplayName "<LifetimeVariable>" ;
     base:hasIdentifierType base:numericID ;
@@ -1597,6 +1948,7 @@ machinery:nodei6084 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "LimitValue" ;
+    base:hasBrowseNameNamespace devices:DEVICESNamespace ;
     base:hasDatatype opcua:Number ;
     base:hasDescription "LimitValue indicates when the end of lifetime has been reached." ;
     base:hasDisplayName "LimitValue" ;
@@ -1608,6 +1960,7 @@ machinery:nodei6085 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "StartValue" ;
+    base:hasBrowseNameNamespace devices:DEVICESNamespace ;
     base:hasDatatype opcua:Number ;
     base:hasDescription "StartValue indicates the initial value, when there is still the full lifetime left." ;
     base:hasDisplayName "StartValue" ;
@@ -1619,6 +1972,7 @@ machinery:nodei6086 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "EngineeringUnits" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:EUInformation ;
     base:hasDisplayName "EngineeringUnits" ;
     base:hasIdentifierType base:numericID ;
@@ -1630,6 +1984,7 @@ machinery:nodei6087 a opcua:PropertyType,
     base:hasAccessLevel opcua:CurrentRead,
         opcua:CurrentWrite ;
     base:hasBrowseName "DefaultInstanceBrowseName" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:QualifiedName ;
     base:hasDescription "The default BrowseName for instances of the type" ;
     base:hasDisplayName "DefaultInstanceBrowseName" ;
@@ -1643,6 +1998,7 @@ machinery:nodei6088 a opcua:PropertyType,
     base:hasAccessLevel opcua:CurrentRead,
         opcua:CurrentWrite ;
     base:hasBrowseName "DefaultInstanceBrowseName" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:QualifiedName ;
     base:hasDescription "The default BrowseName for instances of the type." ;
     base:hasDisplayName "DefaultInstanceBrowseName" ;
@@ -1651,10 +2007,6 @@ machinery:nodei6088 a opcua:PropertyType,
     base:hasNodeId "6088" ;
     base:hasValue "{\"xsd:NamespaceIndex\": 2, \"xsd:Name\": \"Identification\"}"^^rdf:JSON .
 
-machinery:IMachineryItemVendorNameplateType a owl:Class ;
-    rdfs:subClassOf devices:IVendorNameplateType ;
-    base:isAbstract "true" .
-
 machinery:MachineryItemIdentificationType a owl:Class ;
     rdfs:subClassOf devices:FunctionalGroupType ;
     base:isAbstract "true" .
@@ -1662,7 +2014,9 @@ machinery:MachineryItemIdentificationType a owl:Class ;
 machinery:nodei5004 a opcua:ObjectNodeClass,
         opcua:StateType ;
     opcua:HasProperty machinery:nodei6038 ;
+    opcua:hasStateNumber machinery:nodei6038 ;
     base:hasBrowseName "OutOfService" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "The machine is not functional and does not perform any activity (e.g., error, blocked)" ;
     base:hasDisplayName "OutOfService" ;
     base:hasIdentifierType base:numericID ;
@@ -1672,7 +2026,9 @@ machinery:nodei5004 a opcua:ObjectNodeClass,
 machinery:nodei5005 a opcua:ObjectNodeClass,
         opcua:StateType ;
     opcua:HasProperty machinery:nodei6039 ;
+    opcua:hasStateNumber machinery:nodei6039 ;
     base:hasBrowseName "NotAvailable" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "The machine is not available and does not perform any activity (e.g., switched off, in energy saving mode)" ;
     base:hasDisplayName "NotAvailable" ;
     base:hasIdentifierType base:numericID ;
@@ -1682,7 +2038,9 @@ machinery:nodei5005 a opcua:ObjectNodeClass,
 machinery:nodei5006 a opcua:ObjectNodeClass,
         opcua:StateType ;
     opcua:HasProperty machinery:nodei6040 ;
+    opcua:hasStateNumber machinery:nodei6040 ;
     base:hasBrowseName "Executing" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "The machine is available & functional and is actively performing an activity (pursues a purpose)" ;
     base:hasDisplayName "Executing" ;
     base:hasIdentifierType base:numericID ;
@@ -1692,7 +2050,9 @@ machinery:nodei5006 a opcua:ObjectNodeClass,
 machinery:nodei5007 a opcua:ObjectNodeClass,
         opcua:StateType ;
     opcua:HasProperty machinery:nodei6041 ;
+    opcua:hasStateNumber machinery:nodei6041 ;
     base:hasBrowseName "NotExecuting" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "The machine is available & functional and does not perform any activity. It waits for an action from outside to start or restart an activity" ;
     base:hasDisplayName "NotExecuting" ;
     base:hasIdentifierType base:numericID ;
@@ -1702,7 +2062,9 @@ machinery:nodei5007 a opcua:ObjectNodeClass,
 machinery:nodei5024 a opcua:ObjectNodeClass,
         opcua:StateType ;
     opcua:HasProperty machinery:nodei6059 ;
+    opcua:hasStateNumber machinery:nodei6059 ;
     base:hasBrowseName "None" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "There is currently no operation mode available" ;
     base:hasDisplayName "None" ;
     base:hasIdentifierType base:numericID ;
@@ -1712,7 +2074,9 @@ machinery:nodei5024 a opcua:ObjectNodeClass,
 machinery:nodei5025 a opcua:ObjectNodeClass,
         opcua:StateType ;
     opcua:HasProperty machinery:nodei6060 ;
+    opcua:hasStateNumber machinery:nodei6060 ;
     base:hasBrowseName "Maintenance" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "MachineryItem is set into maintenance mode with the intention to carry out maintenance or servicing activities" ;
     base:hasDisplayName "Maintenance" ;
     base:hasIdentifierType base:numericID ;
@@ -1722,7 +2086,9 @@ machinery:nodei5025 a opcua:ObjectNodeClass,
 machinery:nodei5026 a opcua:ObjectNodeClass,
         opcua:StateType ;
     opcua:HasProperty machinery:nodei6061 ;
+    opcua:hasStateNumber machinery:nodei6061 ;
     base:hasBrowseName "Processing" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "MachineryItem is set into processing mode with the intention to carry out the value adding activities" ;
     base:hasDisplayName "Processing" ;
     base:hasIdentifierType base:numericID ;
@@ -1732,7 +2098,9 @@ machinery:nodei5026 a opcua:ObjectNodeClass,
 machinery:nodei5027 a opcua:ObjectNodeClass,
         opcua:StateType ;
     opcua:HasProperty machinery:nodei6062 ;
+    opcua:hasStateNumber machinery:nodei6062 ;
     base:hasBrowseName "Setup" ;
+    base:hasBrowseNameNamespace machinery:MACHINERYNamespace ;
     base:hasDescription "MachineryItem is set into setup mode with the intention to carry out setup, preparation or postprocessing activities of a production process" ;
     base:hasDisplayName "Setup" ;
     base:hasIdentifierType base:numericID ;

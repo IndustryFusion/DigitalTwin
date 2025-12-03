@@ -122,6 +122,25 @@ def nested_json_from_graph(g, root=None):
     return nested
 
 
+def get_context_namespaces(context_url):
+    """Retrieve the namespaces defined in a JSON-LD context document.
+
+    Args:
+        context_url (str): The URL of the JSON-LD context document.
+
+    Returns:
+        Graph: An rdflib Graph with the respective namespaces.
+    """
+    dummy = {
+        "@context": context_url,
+        "@id": "ex:Dummy",
+        "schema:name": "placeholder"
+    }
+    g = Graph()
+    g.parse(data=json.dumps(dummy), format="json-ld")
+    return g
+
+
 class JsonLd:
     def __init__(self, basens, opcuans):
         self.instances = []

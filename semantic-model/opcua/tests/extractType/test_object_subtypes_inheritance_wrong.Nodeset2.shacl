@@ -12,7 +12,7 @@ shacl:AlphaSubTypeShape a sh:NodeShape ;
             sh:maxCount 1 ;
             sh:minCount 0 ;
             sh:nodeKind sh:BlankNode ;
-            sh:path <http://my.test/entity/hasA> ;
+            sh:path test:hasA ;
             sh:property [ sh:class test:SubA ;
                     sh:maxCount 1 ;
                     sh:minCount 1 ;
@@ -35,7 +35,7 @@ shacl:SubAShape a sh:NodeShape ;
                                             sh:property [ sh:datatype xsd:double ;
                                                     sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
                                 sh:path ngsi-ld:hasValueList ] ] ) ;
-            sh:path <http://my.test/entity/hasDataVariable> ;
+            sh:path test:hasDataVariable ;
             base:hasReferenceType opcua:HasComponent ] ;
     sh:targetClass test:SubA .
 
