@@ -60,7 +60,7 @@
     <Alias Alias="GeneratesEvent">i=41</Alias>
   </Aliases>
  
-  <UAReferenceType NodeId="ns=1;i=100" BrowseName="X" IsAbstract="true" Symmetric="false">
+  <UAReferenceType NodeId="ns=1;i=100" BrowseName="1:X" IsAbstract="true" Symmetric="false">
     <DisplayName>X Reference</DisplayName>
     <References>
       <Reference ReferenceType="HasSubtype" IsForward="false">i=32</Reference>
@@ -96,7 +96,7 @@
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1002</Reference>
     </References>
   </UAObject>
-  <UAVariable NodeId="ns=1;i=1004" BrowseName="MyVariable" DataType="i=11">
+  <UAVariable NodeId="ns=1;i=1004" BrowseName="1:MyVariable" DataType="i=11">
     <DisplayName>Variable of B-object</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
@@ -108,7 +108,7 @@
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1002</Reference>
     </References>
   </UAObject>
-  <UAVariable NodeId="ns=1;i=1006" BrowseName="MyVariable" DataType="i=11">
+  <UAVariable NodeId="ns=1;i=1006" BrowseName="1:MyVariable" DataType="i=11">
     <DisplayName>Variable of B-object</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
@@ -120,7 +120,7 @@
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1002</Reference>
     </References>
   </UAObject>
-  <UAVariable NodeId="ns=1;i=1008" BrowseName="MyVariable" DataType="i=11">
+  <UAVariable NodeId="ns=1;i=1008" BrowseName="1:MyVariable" DataType="i=11">
     <DisplayName>Variable of B-object</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
@@ -132,7 +132,7 @@
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1002</Reference>
     </References>
   </UAObject>
-  <UAVariable NodeId="ns=1;i=1012" BrowseName="MyVariable" DataType="i=11">
+  <UAVariable NodeId="ns=1;i=1012" BrowseName="1:MyVariable" DataType="i=11">
     <DisplayName>Variable of B-object</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
@@ -144,7 +144,7 @@
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=68</Reference>
     </References>
   </UAVariable>
-    <UAVariable NodeId="ns=1;i=1013" BrowseName="MySubVariable" DataType="i=11">
+    <UAVariable NodeId="ns=1;i=1013" BrowseName="1:MySubVariable" DataType="i=11">
     <DisplayName>Variable of B-object</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>

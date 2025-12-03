@@ -19,13 +19,13 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasFolder2": [
+        "test:hasFolder2": [
             {
                 "type": "Relationship",
                 "object": "http://my.test/testid:i6001"
             }
         ],
-        "uaentity:hasFolder1": [
+        "test:hasFolder1": [
             {
                 "type": "Relationship",
                 "object": "http://my.test/testid:i6000"

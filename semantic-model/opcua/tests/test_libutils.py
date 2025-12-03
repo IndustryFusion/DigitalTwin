@@ -14,7 +14,7 @@ from lib.utils import RdfUtils, downcase_string, isNodeId, convert_to_json_type,
                                 contains_both_angle_brackets, get_typename, get_common_supertype, rdfStringToPythonBool, \
                                 get_rank_dimensions, get_type_and_template, OntologyLoader, file_path_to_uri, create_list, \
                                 extract_subgraph, dump_without_prefixes, get_contentclass, quote_url, merge_attributes, dump_graph, \
-                                is_subclass, create_list, get_contentclass, RdfUtils
+                                is_subclass, create_list, get_contentclass, expand_term, RdfUtils
 
 class TestIsSubclass(unittest.TestCase):
     def test_direct_subclass(self):
@@ -38,6 +38,43 @@ class TestIsSubclass(unittest.TestCase):
         class1 = URIRef("http://example.org/A")
         class2 = URIRef("http://example.org/B")
         self.assertFalse(is_subclass(graph, class1, class2))
+
+class TestExpandTerm(unittest.TestCase):
+    def setUp(self):
+        self.graph = Graph()
+        self.ex_ns = Namespace("http://example.org/")
+        self.foo_ns = Namespace("http://foo.org/")
+        self.graph.bind("ex", self.ex_ns)
+        self.graph.bind('foo', self.foo_ns)
+    def test_expand_curie_known_prefix(self):
+        # ex:test should expand to http://example.org/test
+        # Ensure the prefix is bound before calling expand_term
+        self.graph.namespace_manager.bind("ex", self.ex_ns, override=True)
+        result = expand_term(self.graph, "ex:test")
+        self.assertEqual(result, URIRef("http://example.org/test"))
+        result = expand_term(self.graph, "ex:test")
+        self.assertEqual(result, URIRef("http://example.org/test"))
+
+    def test_expand_curie_another_prefix(self):
+        # foo:bar should expand to http://foo.org/bar
+        result = expand_term(self.graph, "foo:bar")
+        self.assertEqual(result, URIRef("http://foo.org/bar"))
+
+    def test_absolute_iri(self):
+        # Should return as URIRef
+        iri = "http://example.org/absolute"
+        result = expand_term(self.graph, iri)
+        self.assertEqual(result, URIRef(iri))
+
+    def test_curie_with_colon_in_value(self):
+        # ex:foo:bar should expand as a CURIE with known prefix
+        result = expand_term(self.graph, "ex:foo:bar")
+        self.assertEqual(result, URIRef("http://example.org/foo:bar"))
+
+    def test_non_curie_non_iri_raises(self):
+        # Should raise when not a CURIE or IRI
+        with self.assertRaises(Exception):
+            expand_term(self.graph, "notacurie")
 
 class TestCreateListEmptyAndContentclassNone(unittest.TestCase):
     def setUp(self):
@@ -342,7 +379,7 @@ class TestUtils(unittest.TestCase):
         reference = URIRef('http://example.com/reference')
         subreference = URIRef('http://example.com/subreference')
         g.add((node, subreference, targetnode))
-        g.add((subreference, RDFS.subClassOf, reference))
+        g.add((subreference, RDFS.subPropertyOf, reference))
 
         references = self.rdf_utils.get_all_subreferences(g, node, reference)
         self.assertEqual(references, [(subreference, targetnode)])

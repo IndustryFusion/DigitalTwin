@@ -1,29 +1,29 @@
 [
     {
-        "type": "http://my.test/BSubType",
-        "id": "http://my.test/testid:i2012",
+        "type": "http://example.org/BSubType",
+        "id": "http://example.org/testid:i2012",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasMyVariable": {
+        "http://example.org/hasMyVariable": {
             "type": "Property",
             "value": false
         }
     },
     {
-        "type": "http://my.test/AlphaType",
-        "id": "http://my.test/testid:i2010",
+        "type": "http://example.org/AlphaType",
+        "id": "http://example.org/testid:i2010",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasC": {
+        "http://example.org/hasC": {
             "type": "Property",
             "value": 0.0
         },
-        "uaentity:hasB": [
+        "http://example.org/hasB": [
             {
                 "type": "Relationship",
-                "object": "http://my.test/testid:i2012"
+                "object": "http://example.org/testid:i2012"
             }
         ]
     }

@@ -87,7 +87,7 @@
       <Reference ReferenceType="HasInterface">ns=1;i=1007</Reference>
     </References>
   </UAObject>
-  <UAVariable NodeId="ns=1;i=1004" BrowseName="MyVariable" DataType="Boolean">
+  <UAVariable NodeId="ns=1;i=1004" BrowseName="1:MyVariable" DataType="Boolean">
     <DisplayName>Variable of B-object</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
@@ -108,7 +108,7 @@
        <Reference ReferenceType="HasComponent">ns=1;i=1004</Reference>
     </References>
   </UAObject>
-  <UAObjectType NodeId="ns=1;i=1007" BrowseName="MyWrongInterface">
+  <UAObjectType NodeId="ns=1;i=1007" BrowseName="1:MyWrongInterface">
     <DisplayName>MyWrongInterface</DisplayName>
     <Description>An Interface which is not derived from BaseInterfaceType</Description>
     <References>
@@ -146,7 +146,7 @@
       <Reference ReferenceType="HasComponent">ns=1;i=2013</Reference>
     </References>
   </UAObject>
-  <UAVariable NodeId="ns=1;i=2013" BrowseName="MyVariable" DataType="Boolean">
+  <UAVariable NodeId="ns=1;i=2013" BrowseName="1:MyVariable" DataType="Boolean">
     <DisplayName>Variable of B-object</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>

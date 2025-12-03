@@ -15,6 +15,8 @@ class SingleFileRequestHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         if self.path == '/' or self.path == f'/{os.path.basename(self.file_to_serve)}':
             self.path = f'/{self.file_to_serve}'
+        elif self.path == '/context.jsonld':
+            self.path = f'/{self.file_to_serve}'
         else:
             self.send_error(404, "File not found")
             return

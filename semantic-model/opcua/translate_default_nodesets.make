@@ -21,6 +21,11 @@
 # Version and source NodeSet URLs
 # -----------------------------------------------------------------------------
 NODESET_VERSION := UA-1.05.03-2023-12-15
+DSB :=
+ifneq ($(DISABLE_SEMANTIC_BRIDGE), )
+	DSB := --disable-semantic-bridge
+endif
+
 
 CORE_NODESET              := https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/$(NODESET_VERSION)/Schema/Opc.Ua.NodeSet2.xml
 CORE_SERVICES_NODESET     := https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/$(NODESET_VERSION)/Schema/Opc.Ua.NodeSet2.Services.xml
@@ -44,11 +49,11 @@ PACKML_NODESET            := https://raw.githubusercontent.com/OPCFoundation/UA-
 # -----------------------------------------------------------------------------
 # Base Ontology URL and Remote Mode
 # -----------------------------------------------------------------------------
-BASE_ONTOLOGY := https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl
+BASE_ONTOLOGY := https://industryfusion.github.io/contexts/staging/ontology/v0/base.ttl
 
 # When REMOTE is defined the dependencies (ontologies) come from remote URLs.
 ifdef REMOTE
-  OPCUA_PREFIX := https://industryfusion.github.io/contexts/staging/opcua/v0.1/
+  OPCUA_PREFIX := https://industryfusion.github.io/contexts/staging/opcua/v0/
   $(info *** Remote mode selected ***)
 else
   OPCUA_PREFIX :=
@@ -191,7 +196,7 @@ all: $(ALL_TARGETS)
 %.ttl:
 	@echo "Creating $@"
 	$(eval NAME := $(shell echo $* | tr a-z A-Z))
-	python3 nodeset2owl.py $($(NAME)_NODESET_URL) -i $($(NAME)_DEPENDENCIES) $($(NAME)_OPTS) -o $@
+	python3 nodeset2owl.py $($(NAME)_NODESET_URL) -i $($(NAME)_DEPENDENCIES) $($(NAME)_OPTS) -o $@ $(DSB)
 
 # -----------------------------------------------------------------------------
 # Inter-target dependencies (if you need to ensure that some ontologies are built

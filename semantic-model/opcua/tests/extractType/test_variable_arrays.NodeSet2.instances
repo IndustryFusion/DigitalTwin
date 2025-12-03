@@ -5,7 +5,7 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasMyVariable2": {
+        "test:hasMyVariable2": {
             "type": "ListProperty",
             "valueList": [
                 0.0,
@@ -16,13 +16,13 @@
                 5.0
             ]
         },
-        "uaentity:hasMyVariable5": {
+        "test:hasMyVariable5": {
             "type": "ListProperty",
             "valueList": [
                 "42"
             ]
         },
-        "uaentity:hasMyVariable15": {
+        "test:hasMyVariable15": {
             "https://uri.etsi.org/ngsi-ld/hasValueList": {
                 "@list": {
                     "@value": [],
@@ -30,22 +30,22 @@
                 }
             }
         },
-        "uaentity:hasMyVariable14": {
+        "test:hasMyVariable14": {
             "type": "ListProperty",
             "valueList": []
         },
-        "uaentity:hasMyVariable4": {
+        "test:hasMyVariable4": {
             "type": "Property",
             "value": 42
         },
-        "uaentity:hasMyVariable9": {
+        "test:hasMyVariable9": {
             "type": "ListProperty",
             "valueList": [
                 0.0,
                 1.0
             ]
         },
-        "uaentity:hasMyVariable11": {
+        "test:hasMyVariable11": {
             "type": "ListProperty",
             "valueList": [
                 "x",
@@ -53,32 +53,32 @@
                 "z"
             ]
         },
-        "uaentity:hasMyVariable12": {
+        "test:hasMyVariable12": {
             "type": "ListProperty",
             "valueList": [
                 99
             ]
         },
-        "uaentity:hasMyVariable8": {
+        "test:hasMyVariable8": {
             "type": "ListProperty",
             "valueList": []
         },
-        "uaentity:hasMyVariable": {
+        "test:hasMyVariable": {
             "type": "ListProperty",
             "valueList": [
                 0,
                 1
             ]
         },
-        "uaentity:hasMyVariable6": {
+        "test:hasMyVariable6": {
             "type": "Property",
             "value": "42"
         },
-        "uaentity:hasMyVariable13": {
+        "test:hasMyVariable13": {
             "type": "ListProperty",
             "valueList": []
         },
-        "uaentity:hasMyVariable16": {
+        "test:hasMyVariable16": {
             "https://uri.etsi.org/ngsi-ld/hasValueList": {
                 "@list": {
                     "@value": [
@@ -99,18 +99,18 @@
                 }
             }
         },
-        "uaentity:hasMyVariable3": {
+        "test:hasMyVariable3": {
             "type": "ListProperty",
             "valueList": [
                 true,
                 false
             ]
         },
-        "uaentity:hasMyVariable7": {
+        "test:hasMyVariable7": {
             "type": "ListProperty",
             "valueList": []
         },
-        "uaentity:hasMyVariable10": {
+        "test:hasMyVariable10": {
             "type": "Property",
             "value": 1
         }
@@ -121,11 +121,11 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasC": {
+        "test:hasC": {
             "type": "Property",
             "value": 0.0
         },
-        "uaentity:hasB": [
+        "test:hasB": [
             {
                 "type": "Relationship",
                 "object": "http://my.test/testid:i2012"

@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from urllib.parse import urlparse, quote
+from urllib.parse import urlparse, quote, urlsplit, urlunsplit
 from rdflib.namespace import RDFS, OWL, RDF
 from rdflib import URIRef, Namespace, Graph, Literal, BNode
 from rdflib.collection import Collection
@@ -26,7 +26,11 @@ from pyld import jsonld
 import urllib
 import warnings
 
-
+EX = Namespace("http://example.org/")
+_V_SEG_REGEX = re.compile(r"/v(?P<maj>\d+)(?:\.\d+)?(?=/|$)")
+ATTRIBUTE_PREFIX = 'has'
+SEMANTIC_RELATIONSHIP_TYPE = 'SemanticBridgeReferenceType'
+ROOT_PROPERTY_OF_SEMANTIC_BRIDGE = 'Aggregates'
 WARNSTR = {
     'subclass_inconsistency': 'SUBCLASS_INCONSISTENCY',
     'folder_reference_inconsistency': 'FOLDER_INCONSISTENCY',
@@ -97,6 +101,25 @@ def downcase_string(s):
 
 def isNodeId(nodeId):
     return 'i=' in nodeId or 'g=' in nodeId or 's=' in nodeId
+
+
+def expand_term(graph: Graph, value: str):
+    """
+    Return a URIRef:
+    - If value is a CURIE and prefix is known -> expand.
+    - If value is an absolute IRI -> return as-is.
+    - Otherwise -> raise or handle as needed.
+    """
+    IRI_PATTERN = re.compile(r"^[a-zA-Z][a-zA-Z0-9+.-]*:")  # scheme:
+    if IRI_PATTERN.match(value):
+        prefix = value.split(":", 1)[0]
+        if prefix in dict(graph.namespace_manager.namespaces()):
+            # It's a CURIE, not an IRI → expand
+            return graph.namespace_manager.expand_curie(value)
+        return URIRef(value)  # absolute IRI → keep
+
+    # Otherwise attempt CURIE expansion
+    return graph.namespace_manager.expand_curie(value)
 
 
 def create_node_ref(idtype, id, nsuri, basens):
@@ -436,6 +459,46 @@ def merge_attributes(instance, attributes):
         instance[key] = attributes[key]
 
 
+def get_prefixed(g, uri):
+    prefixed = g.namespace_manager.normalizeUri(uri)
+    # remove surrounding <> if it is a full URI
+    if prefixed.startswith('<') and prefixed.endswith('>'):
+        prefixed = prefixed[1:-1]
+    return prefixed
+
+
+def _normalize_v_major(url: str, *, ignore_query_fragment: bool = True) -> str:
+    """
+    Normalize versioned path segments so 'vN' and 'vN.x' collapse to 'vN'.
+    Also lowercases scheme and host. Optionally strips query and fragment.
+    """
+    parts = urlsplit(url)
+    scheme = parts.scheme.lower()
+    netloc = parts.netloc.lower()
+
+    path = _V_SEG_REGEX.sub(lambda m: f"/v{m.group('maj')}", parts.path)
+
+    query = "" if ignore_query_fragment else parts.query
+    fragment = "" if ignore_query_fragment else parts.fragment
+    return urlunsplit((scheme, netloc, path, query, fragment))
+
+
+def v_major_equivalent(url_a: str, url_b: str, *, ignore_query_fragment: bool = True) -> bool:
+    """
+    True if URLs are identical after collapsing 'vN.x' to 'vN' in path segments.
+    """
+    return _normalize_v_major(url_a, ignore_query_fragment=ignore_query_fragment) == \
+        _normalize_v_major(url_b, ignore_query_fragment=ignore_query_fragment)
+
+
+def extract_major_version(url: str) -> int | None:
+    """
+    Returns the first matched major version N from a 'vN' or 'vN.x' path segment, else None
+    """
+    m = _V_SEG_REGEX.search(urlsplit(url).path)
+    return int(m.group('maj')) if m else None
+
+
 class RdfUtils:
     def __init__(self, basens, opcuans):
         self.basens = basens
@@ -578,7 +641,7 @@ class RdfUtils:
 
         select ?reference ?target where {
             ?node ?reference ?target .
-            ?reference rdfs:subClassOf* ?superclass .
+            ?reference rdfs:subPropertyOf* ?superclass .
         }
         """
         bindings = {'node': node, 'superclass': reference}
@@ -599,7 +662,7 @@ class RdfUtils:
                     opcua:HasModellingRule
                     opcua:HasInterface
                 }
-                    ?subclass rdfs:subClassOf* ?reference .
+                    ?subclass rdfs:subPropertyOf* ?reference .
             }
             """
         result = graph.query(query_ignored_references, initNs={'opcua': self.opcuans})
@@ -666,6 +729,21 @@ class RdfUtils:
         else:
             result = f'{nsuri}{idt}{quoted_node_id}'
         return result
+
+    def get_semantic_bridge(self, g, subject, object):
+        result = None
+        semantic_relationship_type = self.get_semantic_relationship_type()
+        for predicate in g.predicates(subject, object):
+            if (predicate, RDFS.subPropertyOf, semantic_relationship_type) in g:
+                result = predicate
+                break
+        return result
+
+    def get_semantic_relationship_type(self):
+        return self.basens[SEMANTIC_RELATIONSHIP_TYPE]
+
+    def get_root_property_of_semantic_bridge(self):
+        return self.opcuans[ROOT_PROPERTY_OF_SEMANTIC_BRIDGE]
 
 
 class OntologyLoader:

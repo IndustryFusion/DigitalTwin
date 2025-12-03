@@ -1,5 +1,6 @@
 @prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
 @prefix devices: <http://opcfoundation.org/UA/DI/> .
+@prefix machinery: <http://opcfoundation.org/UA/Machinery/> .
 @prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/> .
 @prefix opcua: <http://opcfoundation.org/UA/> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
@@ -9,7 +10,29 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 shacl:AlphaTypeShape a sh:NodeShape ;
-    sh:property [ sh:maxCount 1 ;
+    sh:property [ a base:SubComponentRelationship ;
+            sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasB ;
+            sh:property [ sh:class test:BType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ a base:SubComponentRelationship ;
+            sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasBSub ;
+            sh:property [ sh:class test:BSubType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ sh:maxCount 1 ;
             sh:minCount 0 ;
             sh:nodeKind sh:BlankNode ;
             sh:or ( [ sh:property [ sh:datatype xsd:double ;
@@ -22,34 +45,27 @@ shacl:AlphaTypeShape a sh:NodeShape ;
                                             sh:property [ sh:datatype xsd:double ;
                                                     sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
                                 sh:path ngsi-ld:hasValueList ] ] ) ;
-            sh:path <http://my.test/entity/hasC> ;
-            base:hasReferenceType opcua:HasComponent ],
-        [ a base:SubComponentRelationship ;
-            sh:maxCount 1 ;
-            sh:minCount 0 ;
-            sh:nodeKind sh:BlankNode ;
-            sh:path <http://my.test/entity/hasBSub> ;
-            sh:property [ sh:class test:BSubType ;
-                    sh:maxCount 1 ;
-                    sh:minCount 1 ;
-                    sh:nodeKind sh:IRI ;
-                    sh:path ngsi-ld:hasObject ] ;
-            base:hasReferenceType opcua:HasComponent ],
-        [ a base:SubComponentRelationship ;
-            sh:maxCount 1 ;
-            sh:minCount 0 ;
-            sh:nodeKind sh:BlankNode ;
-            sh:path <http://my.test/entity/hasB> ;
-            sh:property [ sh:class test:BType ;
-                    sh:maxCount 1 ;
-                    sh:minCount 1 ;
-                    sh:nodeKind sh:IRI ;
-                    sh:path ngsi-ld:hasObject ] ;
+            sh:path test:hasC ;
             base:hasReferenceType opcua:HasComponent ] ;
     sh:targetClass test:AlphaType .
 
 shacl:BSubTypeShape a sh:NodeShape ;
     sh:property [ sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:or ( [ sh:property [ sh:datatype xsd:string ;
+                                sh:maxCount 1 ;
+                                sh:minCount 1 ;
+                                sh:nodeKind sh:Literal ;
+                                sh:path ngsi-ld:hasValue ] ] [ sh:property [ sh:maxCount 1 ;
+                                sh:minCount 1 ;
+                                sh:or ( [ sh:nodeKind sh:BlankNode ;
+                                            sh:property [ sh:datatype xsd:string ;
+                                                    sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
+                                sh:path ngsi-ld:hasValueList ] ] ) ;
+            sh:path devices:hasSerialNumber ;
+            base:hasReferenceType opcua:HasProperty ],
+        [ sh:maxCount 1 ;
             sh:minCount 0 ;
             sh:nodeKind sh:BlankNode ;
             sh:or ( [ sh:property [ sh:datatype xsd:string ;
@@ -62,23 +78,8 @@ shacl:BSubTypeShape a sh:NodeShape ;
                                             sh:property [ sh:datatype xsd:string ;
                                                     sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
                                 sh:path ngsi-ld:hasValueList ] ] ) ;
-            sh:path <http://my.test/entity/hasHardwareRevision> ;
+            sh:path devices:hasHardwareRevision ;
             base:hasReferenceType opcua:HasProperty ],
-        [ sh:maxCount 1 ;
-            sh:minCount 0 ;
-            sh:nodeKind sh:BlankNode ;
-            sh:or ( [ sh:property [ sh:datatype xsd:boolean ;
-                                sh:maxCount 1 ;
-                                sh:minCount 1 ;
-                                sh:nodeKind sh:Literal ;
-                                sh:path ngsi-ld:hasValue ] ] [ sh:property [ sh:maxCount 1 ;
-                                sh:minCount 1 ;
-                                sh:or ( [ sh:nodeKind sh:BlankNode ;
-                                            sh:property [ sh:datatype xsd:boolean ;
-                                                    sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
-                                sh:path ngsi-ld:hasValueList ] ] ) ;
-            sh:path <http://my.test/entity/hasMyVariable> ;
-            base:hasReferenceType opcua:HasComponent ],
         [ sh:maxCount 1 ;
             sh:minCount 0 ;
             sh:nodeKind sh:BlankNode ;
@@ -92,10 +93,10 @@ shacl:BSubTypeShape a sh:NodeShape ;
                                             sh:property [ sh:datatype xsd:integer ;
                                                     sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
                                 sh:path ngsi-ld:hasValueList ] ] ) ;
-            sh:path <http://my.test/entity/hasRevisionCounter> ;
+            sh:path machinery:hasYearOfConstruction ;
             base:hasReferenceType opcua:HasProperty ],
         [ sh:maxCount 1 ;
-            sh:minCount 1 ;
+            sh:minCount 0 ;
             sh:nodeKind sh:BlankNode ;
             sh:or ( [ sh:property [ sh:datatype xsd:string ;
                                 sh:maxCount 1 ;
@@ -107,7 +108,7 @@ shacl:BSubTypeShape a sh:NodeShape ;
                                             sh:property [ sh:datatype xsd:string ;
                                                     sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
                                 sh:path ngsi-ld:hasValueList ] ] ) ;
-            sh:path <http://my.test/entity/hasManufacturer> ;
+            sh:path devices:hasDeviceManual ;
             base:hasReferenceType opcua:HasProperty ],
         [ sh:maxCount 1 ;
             sh:minCount 0 ;
@@ -122,7 +123,22 @@ shacl:BSubTypeShape a sh:NodeShape ;
                                             sh:property [ sh:datatype xsd:dateTime ;
                                                     sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
                                 sh:path ngsi-ld:hasValueList ] ] ) ;
-            sh:path <http://my.test/entity/hasInitialOperationDate> ;
+            sh:path machinery:hasInitialOperationDate ;
+            base:hasReferenceType opcua:HasProperty ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:or ( [ sh:property [ sh:datatype xsd:dateTime ;
+                                sh:maxCount 1 ;
+                                sh:minCount 1 ;
+                                sh:nodeKind sh:Literal ;
+                                sh:path ngsi-ld:hasValue ] ] [ sh:property [ sh:maxCount 1 ;
+                                sh:minCount 1 ;
+                                sh:or ( [ sh:nodeKind sh:BlankNode ;
+                                            sh:property [ sh:datatype xsd:dateTime ;
+                                                    sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
+                                sh:path ngsi-ld:hasValueList ] ] ) ;
+            sh:path devices:hasSoftwareReleaseDate ;
             base:hasReferenceType opcua:HasProperty ],
         [ sh:maxCount 1 ;
             sh:minCount 1 ;
@@ -137,7 +153,7 @@ shacl:BSubTypeShape a sh:NodeShape ;
                                             sh:property [ sh:datatype xsd:string ;
                                                     sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
                                 sh:path ngsi-ld:hasValueList ] ] ) ;
-            sh:path <http://my.test/entity/hasProductInstanceUri> ;
+            sh:path devices:hasManufacturer ;
             base:hasReferenceType opcua:HasProperty ],
         [ sh:maxCount 1 ;
             sh:minCount 0 ;
@@ -152,7 +168,52 @@ shacl:BSubTypeShape a sh:NodeShape ;
                                             sh:property [ sh:datatype xsd:string ;
                                                     sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
                                 sh:path ngsi-ld:hasValueList ] ] ) ;
-            sh:path <http://my.test/entity/hasDeviceRevision> ;
+            sh:path devices:hasManufacturerUri ;
+            base:hasReferenceType opcua:HasProperty ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:or ( [ sh:property [ sh:datatype xsd:string ;
+                                sh:maxCount 1 ;
+                                sh:minCount 1 ;
+                                sh:nodeKind sh:Literal ;
+                                sh:path ngsi-ld:hasValue ] ] [ sh:property [ sh:maxCount 1 ;
+                                sh:minCount 1 ;
+                                sh:or ( [ sh:nodeKind sh:BlankNode ;
+                                            sh:property [ sh:datatype xsd:string ;
+                                                    sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
+                                sh:path ngsi-ld:hasValueList ] ] ) ;
+            sh:path devices:hasProductCode ;
+            base:hasReferenceType opcua:HasProperty ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:or ( [ sh:property [ sh:datatype xsd:boolean ;
+                                sh:maxCount 1 ;
+                                sh:minCount 1 ;
+                                sh:nodeKind sh:Literal ;
+                                sh:path ngsi-ld:hasValue ] ] [ sh:property [ sh:maxCount 1 ;
+                                sh:minCount 1 ;
+                                sh:or ( [ sh:nodeKind sh:BlankNode ;
+                                            sh:property [ sh:datatype xsd:boolean ;
+                                                    sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
+                                sh:path ngsi-ld:hasValueList ] ] ) ;
+            sh:path test:hasMyVariable ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:or ( [ sh:property [ sh:datatype xsd:string ;
+                                sh:maxCount 1 ;
+                                sh:minCount 1 ;
+                                sh:nodeKind sh:Literal ;
+                                sh:path ngsi-ld:hasValue ] ] [ sh:property [ sh:maxCount 1 ;
+                                sh:minCount 1 ;
+                                sh:or ( [ sh:nodeKind sh:BlankNode ;
+                                            sh:property [ sh:datatype xsd:string ;
+                                                    sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
+                                sh:path ngsi-ld:hasValueList ] ] ) ;
+            sh:path devices:hasDeviceRevision ;
             base:hasReferenceType opcua:HasProperty ],
         [ sh:maxCount 1 ;
             sh:minCount 0 ;
@@ -167,12 +228,27 @@ shacl:BSubTypeShape a sh:NodeShape ;
                                             sh:property [ sh:datatype xsd:integer ;
                                                     sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
                                 sh:path ngsi-ld:hasValueList ] ] ) ;
-            sh:path <http://my.test/entity/hasYearOfConstruction> ;
+            sh:path machinery:hasMonthOfConstruction ;
             base:hasReferenceType opcua:HasProperty ],
         [ sh:maxCount 1 ;
             sh:minCount 0 ;
             sh:nodeKind sh:BlankNode ;
-            sh:path <http://my.test/entity/hasPatchIdentifiers> ;
+            sh:or ( [ sh:property [ sh:datatype xsd:string ;
+                                sh:maxCount 1 ;
+                                sh:minCount 1 ;
+                                sh:nodeKind sh:Literal ;
+                                sh:path ngsi-ld:hasValue ] ] [ sh:property [ sh:maxCount 1 ;
+                                sh:minCount 1 ;
+                                sh:or ( [ sh:nodeKind sh:BlankNode ;
+                                            sh:property [ sh:datatype xsd:string ;
+                                                    sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
+                                sh:path ngsi-ld:hasValueList ] ] ) ;
+            sh:path devices:hasModel ;
+            base:hasReferenceType opcua:HasProperty ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path devices:hasPatchIdentifiers ;
             sh:property [ sh:maxCount 1 ;
                     sh:minCount 1 ;
                     sh:or ( [ sh:nodeKind sh:BlankNode ;
@@ -193,82 +269,7 @@ shacl:BSubTypeShape a sh:NodeShape ;
                                             sh:property [ sh:datatype xsd:string ;
                                                     sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
                                 sh:path ngsi-ld:hasValueList ] ] ) ;
-            sh:path <http://my.test/entity/hasDeviceManual> ;
-            base:hasReferenceType opcua:HasProperty ],
-        [ sh:maxCount 1 ;
-            sh:minCount 0 ;
-            sh:nodeKind sh:BlankNode ;
-            sh:or ( [ sh:property [ sh:datatype xsd:string ;
-                                sh:maxCount 1 ;
-                                sh:minCount 1 ;
-                                sh:nodeKind sh:Literal ;
-                                sh:path ngsi-ld:hasValue ] ] [ sh:property [ sh:maxCount 1 ;
-                                sh:minCount 1 ;
-                                sh:or ( [ sh:nodeKind sh:BlankNode ;
-                                            sh:property [ sh:datatype xsd:string ;
-                                                    sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
-                                sh:path ngsi-ld:hasValueList ] ] ) ;
-            sh:path <http://my.test/entity/hasProductCode> ;
-            base:hasReferenceType opcua:HasProperty ],
-        [ sh:maxCount 1 ;
-            sh:minCount 1 ;
-            sh:nodeKind sh:BlankNode ;
-            sh:or ( [ sh:property [ sh:datatype xsd:string ;
-                                sh:maxCount 1 ;
-                                sh:minCount 1 ;
-                                sh:nodeKind sh:Literal ;
-                                sh:path ngsi-ld:hasValue ] ] [ sh:property [ sh:maxCount 1 ;
-                                sh:minCount 1 ;
-                                sh:or ( [ sh:nodeKind sh:BlankNode ;
-                                            sh:property [ sh:datatype xsd:string ;
-                                                    sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
-                                sh:path ngsi-ld:hasValueList ] ] ) ;
-            sh:path <http://my.test/entity/hasSerialNumber> ;
-            base:hasReferenceType opcua:HasProperty ],
-        [ sh:maxCount 1 ;
-            sh:minCount 0 ;
-            sh:nodeKind sh:BlankNode ;
-            sh:or ( [ sh:property [ sh:datatype xsd:dateTime ;
-                                sh:maxCount 1 ;
-                                sh:minCount 1 ;
-                                sh:nodeKind sh:Literal ;
-                                sh:path ngsi-ld:hasValue ] ] [ sh:property [ sh:maxCount 1 ;
-                                sh:minCount 1 ;
-                                sh:or ( [ sh:nodeKind sh:BlankNode ;
-                                            sh:property [ sh:datatype xsd:dateTime ;
-                                                    sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
-                                sh:path ngsi-ld:hasValueList ] ] ) ;
-            sh:path <http://my.test/entity/hasSoftwareReleaseDate> ;
-            base:hasReferenceType opcua:HasProperty ],
-        [ sh:maxCount 1 ;
-            sh:minCount 0 ;
-            sh:nodeKind sh:BlankNode ;
-            sh:or ( [ sh:property [ sh:datatype xsd:string ;
-                                sh:maxCount 1 ;
-                                sh:minCount 1 ;
-                                sh:nodeKind sh:Literal ;
-                                sh:path ngsi-ld:hasValue ] ] [ sh:property [ sh:maxCount 1 ;
-                                sh:minCount 1 ;
-                                sh:or ( [ sh:nodeKind sh:BlankNode ;
-                                            sh:property [ sh:datatype xsd:string ;
-                                                    sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
-                                sh:path ngsi-ld:hasValueList ] ] ) ;
-            sh:path <http://my.test/entity/hasDeviceClass> ;
-            base:hasReferenceType opcua:HasProperty ],
-        [ sh:maxCount 1 ;
-            sh:minCount 0 ;
-            sh:nodeKind sh:BlankNode ;
-            sh:or ( [ sh:property [ sh:datatype xsd:string ;
-                                sh:maxCount 1 ;
-                                sh:minCount 1 ;
-                                sh:nodeKind sh:Literal ;
-                                sh:path ngsi-ld:hasValue ] ] [ sh:property [ sh:maxCount 1 ;
-                                sh:minCount 1 ;
-                                sh:or ( [ sh:nodeKind sh:BlankNode ;
-                                            sh:property [ sh:datatype xsd:string ;
-                                                    sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
-                                sh:path ngsi-ld:hasValueList ] ] ) ;
-            sh:path <http://my.test/entity/hasManufacturerUri> ;
+            sh:path devices:hasSoftwareRevision ;
             base:hasReferenceType opcua:HasProperty ],
         [ sh:maxCount 1 ;
             sh:minCount 0 ;
@@ -283,7 +284,7 @@ shacl:BSubTypeShape a sh:NodeShape ;
                                             sh:property [ sh:datatype xsd:integer ;
                                                     sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
                                 sh:path ngsi-ld:hasValueList ] ] ) ;
-            sh:path <http://my.test/entity/hasMonthOfConstruction> ;
+            sh:path devices:hasRevisionCounter ;
             base:hasReferenceType opcua:HasProperty ],
         [ sh:maxCount 1 ;
             sh:minCount 0 ;
@@ -298,10 +299,10 @@ shacl:BSubTypeShape a sh:NodeShape ;
                                             sh:property [ sh:class devices:DeviceHealthEnumeration ;
                                                     sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
                                 sh:path ngsi-ld:hasValueList ] ] ) ;
-            sh:path <http://my.test/entity/hasDeviceHealth> ;
+            sh:path devices:hasDeviceHealth ;
             base:hasReferenceType opcua:HasComponent ],
         [ sh:maxCount 1 ;
-            sh:minCount 0 ;
+            sh:minCount 1 ;
             sh:nodeKind sh:BlankNode ;
             sh:or ( [ sh:property [ sh:datatype xsd:string ;
                                 sh:maxCount 1 ;
@@ -313,7 +314,7 @@ shacl:BSubTypeShape a sh:NodeShape ;
                                             sh:property [ sh:datatype xsd:string ;
                                                     sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
                                 sh:path ngsi-ld:hasValueList ] ] ) ;
-            sh:path <http://my.test/entity/hasSoftwareRevision> ;
+            sh:path devices:hasProductInstanceUri ;
             base:hasReferenceType opcua:HasProperty ],
         [ sh:maxCount 1 ;
             sh:minCount 0 ;
@@ -328,27 +329,12 @@ shacl:BSubTypeShape a sh:NodeShape ;
                                             sh:property [ sh:datatype xsd:string ;
                                                     sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
                                 sh:path ngsi-ld:hasValueList ] ] ) ;
-            sh:path <http://my.test/entity/hasModel> ;
+            sh:path devices:hasDeviceClass ;
             base:hasReferenceType opcua:HasProperty ] ;
     sh:targetClass test:BSubType .
 
 shacl:BTypeShape a sh:NodeShape ;
     sh:property [ sh:maxCount 1 ;
-            sh:minCount 0 ;
-            sh:nodeKind sh:BlankNode ;
-            sh:or ( [ sh:property [ sh:class devices:DeviceHealthEnumeration ;
-                                sh:maxCount 1 ;
-                                sh:minCount 1 ;
-                                sh:nodeKind sh:IRI ;
-                                sh:path ngsi-ld:hasValue ] ] [ sh:property [ sh:maxCount 1 ;
-                                sh:minCount 1 ;
-                                sh:or ( [ sh:nodeKind sh:BlankNode ;
-                                            sh:property [ sh:class devices:DeviceHealthEnumeration ;
-                                                    sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
-                                sh:path ngsi-ld:hasValueList ] ] ) ;
-            sh:path <http://my.test/entity/hasDeviceHealth> ;
-            base:hasReferenceType opcua:HasComponent ],
-        [ sh:maxCount 1 ;
             sh:minCount 0 ;
             sh:nodeKind sh:BlankNode ;
             sh:or ( [ sh:property [ sh:datatype xsd:boolean ;
@@ -361,7 +347,22 @@ shacl:BTypeShape a sh:NodeShape ;
                                             sh:property [ sh:datatype xsd:boolean ;
                                                     sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
                                 sh:path ngsi-ld:hasValueList ] ] ) ;
-            sh:path <http://my.test/entity/hasMyVariable> ;
+            sh:path test:hasMyVariable ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:or ( [ sh:property [ sh:class devices:DeviceHealthEnumeration ;
+                                sh:maxCount 1 ;
+                                sh:minCount 1 ;
+                                sh:nodeKind sh:IRI ;
+                                sh:path ngsi-ld:hasValue ] ] [ sh:property [ sh:maxCount 1 ;
+                                sh:minCount 1 ;
+                                sh:or ( [ sh:nodeKind sh:BlankNode ;
+                                            sh:property [ sh:class devices:DeviceHealthEnumeration ;
+                                                    sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
+                                sh:path ngsi-ld:hasValueList ] ] ) ;
+            sh:path devices:hasDeviceHealth ;
             base:hasReferenceType opcua:HasComponent ] ;
     sh:targetClass test:BType .
 

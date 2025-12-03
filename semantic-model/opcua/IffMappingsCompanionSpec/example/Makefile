@@ -57,11 +57,11 @@ PACKML_NODESET            := https://raw.githubusercontent.com/OPCFoundation/UA-
 # -----------------------------------------------------------------------------
 # Base Ontology URL and Remote Mode
 # -----------------------------------------------------------------------------
-BASE_ONTOLOGY := https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl
+BASE_ONTOLOGY := https://industryfusion.github.io/contexts/staging/ontology/v0/base.ttl
 
 # When REMOTE is defined the dependencies (ontologies) come from remote URLs.
 ifdef REMOTE
-  OPCUA_PREFIX := https://industryfusion.github.io/contexts/staging/opcua/v0.1/
+  OPCUA_PREFIX := https://industryfusion.github.io/contexts/staging/opcua/v0/
   $(info *** Remote mode selected ***)
 else
   OPCUA_PREFIX :=

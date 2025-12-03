@@ -2,15 +2,15 @@
 @prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/> .
 @prefix opcua: <http://opcfoundation.org/UA/> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
-@prefix shacl: <http://my.test/shacl/> .
-@prefix test: <http://my.test/> .
+@prefix shacl: <http://example.org/shacl/> .
+@prefix test: <http://example.org/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 shacl:AlphaTypeShape a sh:NodeShape ;
     sh:property [ sh:maxCount 1 ;
             sh:minCount 0 ;
             sh:nodeKind sh:BlankNode ;
-            sh:path <http://my.test/entity/hasC> ;
+            sh:path test:hasC ;
             sh:property [ sh:datatype xsd:double ;
                     sh:maxCount 1 ;
                     sh:minCount 1 ;
@@ -21,7 +21,7 @@ shacl:AlphaTypeShape a sh:NodeShape ;
             sh:maxCount 1 ;
             sh:minCount 0 ;
             sh:nodeKind sh:BlankNode ;
-            sh:path <http://my.test/entity/hasB> ;
+            sh:path test:hasB ;
             sh:property [ sh:class test:BType ;
                     sh:maxCount 1 ;
                     sh:minCount 1 ;
@@ -34,7 +34,7 @@ shacl:BTypeShape a sh:NodeShape ;
     sh:property [ sh:maxCount 1 ;
             sh:minCount 0 ;
             sh:nodeKind sh:BlankNode ;
-            sh:path <http://my.test/entity/hasMyVariable> ;
+            sh:path test:hasMyVariable ;
             sh:property [ sh:datatype xsd:boolean ;
                     sh:maxCount 1 ;
                     sh:minCount 1 ;

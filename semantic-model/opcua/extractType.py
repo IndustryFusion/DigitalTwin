@@ -16,6 +16,7 @@
 #
 import sys
 import urllib
+import lib.jsonld as libjsonld
 from lib.utils import warnings, print_warning
 from collections import defaultdict
 from rdflib import Graph, Namespace, URIRef
@@ -29,7 +30,8 @@ from lib.entity import Entity
 from lib.shacl import Shacl
 
 warnings.filterwarnings("ignore", message=".*anyType is not defined in namespace XSD.*")
-attribute_prefix = 'has'
+attribute_prefix = utils.ATTRIBUTE_PREFIX
+default_context_url = "https://industryfusion.github.io/contexts/staging/opcua/v0.2/context.jsonld"
 
 query_namespaces = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -68,7 +70,6 @@ randnamelength = 16
 modelling_nodeid_optional = 80
 modelling_nodeid_mandatory = 78
 modelling_nodeid_optional_array = 11508
-entity_ontology_prefix = 'uaentity'
 basic_types = [
     'String',
     'Boolean',
@@ -140,12 +141,8 @@ parse nodeset instance and create ngsi-ld model')
     parser.add_argument('-xe', '--entity-namespace',
                         help='Overwrite Namespace for entities (which is otherwise derived from <namespace>/entity)',
                         required=False)
-    parser.add_argument('-xc', '--context-url', help='Context URL',
-                        default="https://industryfusion.github.io/contexts/staging/opcua/v0.2/context.jsonld",
-                        required=False)
-    parser.add_argument('-xp', '--entity-prefix',
-                        help='prefix in context for entities',
-                        default="uaentity",
+    parser.add_argument('-xc', '--context-url', help=f'Context URL, default: {default_context_url}',
+                        default=f"{default_context_url}",
                         required=False)
     parser.add_argument('-r', '--recursive-import',
                         help='Import dependencies of dependencies',
@@ -172,13 +169,13 @@ def check_object_consistency(shapenode, attribute_path, classtype, suppress_warn
     """Check if attribute_path is already known.
        In this case, it is important to differentiate between FolderTypes and
        regular objects. For FolderType, we are relaxed, and search for common
-       superclass to make sure objects stay compiant.
+       superclass to make sure objects stay compliant.
        If it is a regular object, then this means that the reference has already
        been found. What can happen is that there is a superclass with the same
        attribute_path but different classtype. This is only allowed when
        classtype of superclass is subclass of existing. Since the objecttypes are
        always scanned from special to general, it the superclass classtype must
-       alwyays fit.
+       always fit.
 
     Args:
         shapenode (URIRef): SHACL shape node to compare with (node on which the constraints are defined)
@@ -269,21 +266,17 @@ def scan_type_recursive(o, node, instancetype, shapename, reftype):
     nodeclass, classtype = rdfutils.get_type(g, o)
     if nodeclass == opcuans['MethodNodeClass']:
         return False
-
-    attributename = urllib.parse.quote(f'{browse_name}')
+    attributename = rdfutils.get_semantic_bridge(g, node, o)
     rdfutils.get_modelling_rule(g, o, shacl_rule, instancetype)
 
     placeholder_pattern = None
     decoded_attributename = urllib.parse.unquote(attributename)
     if utils.contains_both_angle_brackets(decoded_attributename):
-        decoded_attributename, placeholder_pattern = utils.normalize_angle_bracket_name(decoded_attributename)
-    attributename = urllib.parse.quote(f'{attribute_prefix}{decoded_attributename}')
-    if len(decoded_attributename) == 0:  # full template, ignore it
-        raise Exception(f"Unexpected attributename {attributename}")
-    shacl_rule['path'] = entity_namespace[attributename]
+        _, placeholder_pattern = utils.normalize_angle_bracket_name(browse_name)
+    shacl_rule['path'] = attributename
 
     if rdfutils.isObjectNodeClass(nodeclass):
-        stop_scan, _ = check_object_consistency(shapename, entity_namespace[attributename], classtype)
+        stop_scan, _ = check_object_consistency(shapename, attributename, classtype)
         if stop_scan:
             return True
         # check for loop
@@ -328,7 +321,7 @@ a loop.")
                                          placeholder_pattern=placeholder_pattern,
                                          reftype=reftype)
     elif rdfutils.isVariableNodeClass(nodeclass):
-        stop_scan = check_variable_consistency(shapename, entity_namespace[attributename], classtype)
+        stop_scan = check_variable_consistency(shapename, attributename, classtype)
         if stop_scan:
             return True
         has_components = True
@@ -429,7 +422,8 @@ def scan_entity(node, instancetype, id, optional=False):
         return node_id
 
     instance = {}
-    instance['type'] = instancetype
+    prefixed_type = utils.get_prefixed(context_graph, instancetype)
+    instance['type'] = prefixed_type
     instance['id'] = node_id
     instance['@context'] = [
         context_url
@@ -494,35 +488,30 @@ def scan_entity_recursive(node, id, instance, node_id, o, type=None, is_property
     shacl_rule = {}
     browse_name = next(g.objects(o, basens['hasBrowseName']))
     nodeclass, classtype = rdfutils.get_type(g, o)
-    attributename = urllib.parse.quote(browse_name)
+    attributename = rdfutils.get_semantic_bridge(g, node, o)
 
     original_attributename = None
-    decoded_attributename = urllib.parse.unquote(attributename)
     if type is not None:
-        optional, array, path = shaclg.get_modelling_rule_and_path(decoded_attributename, URIRef(type),
+        optional, array, path = shaclg.get_modelling_rule_and_path(browse_name, URIRef(type),
                                                                    classtype, attribute_prefix)
     else:
         optional, array, path = (None, None, None)
     if path is not None:
-        original_attributename = decoded_attributename
-        decoded_attributename = path.removeprefix(entity_namespace)
-        if not path.startswith(str(entity_namespace)):
-            print(f"Warning: Mismatch of {entity_namespace} namespace and {path}")
-    else:
-        decoded_attributename = f'{attribute_prefix}{decoded_attributename}'
+        original_attributename = urllib.parse.quote(browse_name)
+        attributename = path
     shacl_rule['optional'] = optional
     shacl_rule['array'] = array
     datasetId = None
 
-    attributename = urllib.parse.quote(decoded_attributename)
     try:
-        is_placeholder = shaclg.is_placeholder(URIRef(instance['type']), entity_namespace[attributename])
+        expanded_type = utils.expand_term(context_graph, instance['type'])
+        is_placeholder = shaclg.is_placeholder(expanded_type, attributename)
     except:
         is_placeholder = False
     if is_placeholder:
         if original_attributename is None:
             print(f"Warning: Cannot find proper match in SHACL description for placeholder value \
-{decoded_attributename}. Will keep it with default datasetId. But it is very likely that the SHACL validation \
+{attributename}. Will keep it with default datasetId. But it is very likely that the SHACL validation \
 will flag this.")
             datasetId = "@none"
         else:
@@ -533,7 +522,7 @@ will flag this.")
         relid = scan_entity(o, classtype, id, shacl_rule['optional'])
         if relid is not None:
             has_components = True
-            full_attribute_name = f'{entity_ontology_prefix}:{attributename}'
+            full_attribute_name = utils.get_prefixed(context_graph, attributename)
             if instance.get(full_attribute_name) is None:
                 instance[full_attribute_name] = []
             attr_instance = jsonld.get_ngsild_relationship(relid)
@@ -541,88 +530,94 @@ will flag this.")
                 attr_instance['datasetId'] = datasetId
             if debug:
                 attr_instance['debug'] = \
-                    f'{entity_ontology_prefix}:{attributename}, {str(node)}'
+                    f'{full_attribute_name}, {str(node)}'
             instance[full_attribute_name].append(attr_instance)
             shacl_rule['contentclass'] = classtype
-            minshaclg.copy_property_from_shacl(shaclg, instance['type'], entity_namespace[attributename])
+            minshaclg.copy_property_from_shacl(shaclg, instance['type'], attributename)
         if not shacl_rule['optional']:
             has_components = True
             shacl_rule['contentclass'] = classtype
     elif rdfutils.isVariableNodeClass(nodeclass):
         shacl_rule['is_property'] = True
         shaclg.get_shacl_iri_and_contentclass(g, o, node, shacl_rule)
+        full_attribute_name = utils.get_prefixed(context_graph, attributename)
         try:
-            value = next(g.objects(o, basens['hasValue']))
-            if not shacl_rule['is_iri']:
-                value = jsonld.get_value(g, value, shacl_rule['datatype'])
+            value = next(g.objects(o, basens['hasValue']), None)
+            if value is None:
+                value = next(g.objects(o, basens['hasValueList']), None)
+            if value is not None:
+                if not shacl_rule['is_iri']:
+                    value = jsonld.get_value(g, value, shacl_rule['datatype'])
+                else:
+                    value = e.get_contentclass(shacl_rule['contentclass'], value)
+                    value = value.toPython()
             else:
-                value = e.get_contentclass(shacl_rule['contentclass'], value)
-                value = value.toPython()
-        except StopIteration:
-            if not shacl_rule['is_iri']:
-                if shacl_rule['isAbstract']:
-                    warnmsg = f"Abstract OPCUA DataType \
-{str(shacl_rule.get('orig_datatype'))} in instance attribute {entity_ontology_prefix}:{attributename} \
-found without concreate value in {node}."
-                    print_warning('abstract_datatype', warnmsg)
-                value = jsonld.get_default_value(shacl_rule['datatype'],
-                                                 shacl_rule.get('orig_datatype'),
-                                                 shacl_rule.get('value_rank'),
-                                                 shacl_rule.get('array_dimensions'), g=g)
-            else:
-                value = e.get_default_contentclass(shacl_rule['contentclass'])
+                if not shacl_rule['is_iri']:
+                    if shacl_rule['isAbstract']:
+                        warnmsg = f"Abstract OPCUA DataType \
+    {str(shacl_rule.get('orig_datatype'))} in instance attribute {attributename} \
+    found without concreate value in {node}."
+                        print_warning('abstract_datatype', warnmsg)
+                    value = jsonld.get_default_value(shacl_rule['datatype'],
+                                                     shacl_rule.get('orig_datatype'),
+                                                     shacl_rule.get('value_rank'),
+                                                     shacl_rule.get('array_dimensions'), g=g)
+                else:
+                    value = e.get_default_contentclass(shacl_rule['contentclass'])
+        except Exception as error:
+            print("Error:", error)
         has_components = True
         if not shacl_rule['is_iri']:
-            instance[f'{entity_ontology_prefix}:{attributename}'] = \
+            instance[f'{full_attribute_name}'] = \
                 jsonld.get_ngsild_property(value, datatype=shacl_rule['datatype'])
         else:
             if value is None:
                 value = NULL_IRI
-                warnmsg = f"IRI value is not found for {attributename} in node {node}. \
+                warnmsg = f"IRI value is not found for {full_attribute_name} in node {node}. \
 Check whether it has a proper type definition. Most likely this attribute is not defined in the type definition."
                 print_warning('no_iri_value', warnmsg)
-            instance[f'{entity_ontology_prefix}:{attributename}'] = jsonld.get_ngsild_property(value, isiri=True)
+            instance[f'{full_attribute_name}'] = jsonld.get_ngsild_property(value, isiri=True)
         if type is not None:
-            minshaclg.copy_property_from_shacl(shaclg, type, entity_namespace[attributename])
+            minshaclg.copy_property_from_shacl(shaclg, type, full_attribute_name)
         if debug:
-            instance[f'{entity_ontology_prefix}:{attributename}']['debug'] = \
-                f'{entity_ontology_prefix}:{attributename}, {str(node)}'
+            instance[f'{full_attribute_name}']['debug'] = \
+                f'{full_attribute_name}, {str(node)}'
         try:
             is_updating = bool(next(g.objects(o, basens['isUpdating'])))
         except:
             is_updating = False
         if (is_updating or not minimal_shacl) and not is_property:
-            bindingsg.create_binding(g, URIRef(node_id), o, entity_namespace[attributename])
+            bindingsg.create_binding(g, URIRef(node_id), o, attributename)
         attributes = scan_entity_variable(o, classtype, id, shacl_rule['optional'])
-        utils.merge_attributes(instance[f'{entity_ontology_prefix}:{attributename}'], attributes)
+        utils.merge_attributes(instance[f'{full_attribute_name}'], attributes)
     return has_components
 
 
 def scan_entity_nonrecursive(node, id, instance, node_id, o, generic_reference=None):
     has_components = False
     shacl_rule = {}
-    browse_name = next(g.objects(o, basens['hasBrowseName']))
     nodeclass, classtype = rdfutils.get_type(g, o)
-    attributename = urllib.parse.quote(f'has{browse_name}')
+    attributename = rdfutils.get_semantic_bridge(g, node, o)
+    prefixed_attribute_name = utils.get_prefixed(context_graph, attributename)
     shacl_rule['path'] = entity_namespace[attributename]
-    full_attribute_name = f'{entity_ontology_prefix}:{attributename}'
+
     if generic_reference is not None:
-        full_attribute_name = g.qname(generic_reference)
+        prefixed_attribute_name = g.qname(generic_reference)
     if rdfutils.isObjectNodeClass(nodeclass):
         shacl_rule['is_property'] = False
         relid = rdfutils.generate_node_id(g, rootentity, o, id)
         if relid is not None:
             has_components = True
-            if full_attribute_name not in instance:
-                instance[full_attribute_name] = []
+            if prefixed_attribute_name not in instance:
+                instance[prefixed_attribute_name] = []
             toappend = jsonld.get_ngsild_relationship(relid)
             non_followed_nodes.add(o)
             if debug:
-                toappend['debug'] = full_attribute_name
-            instance[full_attribute_name].append(toappend)
+                toappend['debug'] = prefixed_attribute_name
+            instance[prefixed_attribute_name].append(toappend)
             shacl_rule['contentclass'] = classtype
     elif rdfutils.isVariableNodeClass(nodeclass):
-        print(f"Warning: Variable node {o} is target of non-owning reference {full_attribute_name}. \
+        print(f"Warning: Variable node {o} is target of non-owning reference {prefixed_attribute_name}. \
 This will be ignored.")
     return has_components
 
@@ -644,8 +639,12 @@ if __name__ == '__main__':
     maximal_shacl = args.maximalshacl
     context_url = args.context_url
     entity_namespace = args.entity_namespace
-    entity_prefix = args.entity_prefix
     parse_properties = args.properties
+
+    # create the context_graph
+    # Context graph is resolving the context_url and provides just the
+    # namespace manager
+    context_graph = libjsonld.get_context_namespaces(context_url)
 
     # set filter for warning suppressions
     for warnstr in args.suppress_warnings or []:
@@ -657,7 +656,6 @@ if __name__ == '__main__':
     entity_namespace = Namespace(f'{namespace_prefix}entity/') if entity_namespace is None else entity_namespace
     shacl_namespace = Namespace(f'{namespace_prefix}shacl/')
     binding_namespace = Namespace(f'{namespace_prefix}bindings/')
-    entity_ontology_prefix = entity_prefix
     g = Graph(store='Oxigraph')
     g.parse(instancename)
     # get all owl imports
@@ -681,7 +679,6 @@ if __name__ == '__main__':
     basens = next(Namespace(uri) for prefix, uri in list(g.namespaces()) if prefix == 'base')
     opcuans = next(Namespace(uri) for prefix, uri in list(g.namespaces()) if prefix == 'opcua')
     bindingsg = Bindings(namespace_prefix, basens)
-    bindingsg.bind(f'{entity_ontology_prefix}', entity_namespace)
     bindingsg.bind('base', basens)
     bindingsg.bind('binding', binding_namespace)
     shaclg = Shacl(g, namespace_prefix, basens, opcuans)
@@ -696,7 +693,7 @@ if __name__ == '__main__':
     minshaclg.bind('base', basens)
     e = Entity(namespace_prefix, basens, opcuans)
     e.bind('base', basens)
-    e.bind(f'{entity_ontology_prefix}', entity_namespace)
+    e.bind('example', utils.EX)
     e.bind('ngsi-ld', ngsildns)
     rdfutils = RdfUtils(basens, opcuans)
     e.create_ontolgoy_header(entity_namespace)

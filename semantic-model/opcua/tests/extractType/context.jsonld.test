@@ -1,0 +1,159 @@
+{
+  "@context": [
+    {
+      "brick": {
+        "@id": "https://brickschema.org/schema/Brick#",
+        "@prefix": true
+      },
+      "csvw": {
+        "@id": "http://www.w3.org/ns/csvw#",
+        "@prefix": true
+      },
+      "dc": {
+        "@id": "http://purl.org/dc/elements/1.1/",
+        "@prefix": true
+      },
+      "dcat": {
+        "@id": "http://www.w3.org/ns/dcat#",
+        "@prefix": true
+      },
+      "dcmitype": {
+        "@id": "http://purl.org/dc/dcmitype/",
+        "@prefix": true
+      },
+      "dcterms": {
+        "@id": "http://purl.org/dc/terms/",
+        "@prefix": true
+      },
+      "dcam": {
+        "@id": "http://purl.org/dc/dcam/",
+        "@prefix": true
+      },
+      "doap": {
+        "@id": "http://usefulinc.com/ns/doap#",
+        "@prefix": true
+      },
+      "foaf": {
+        "@id": "http://xmlns.com/foaf/0.1/",
+        "@prefix": true
+      },
+      "geo": {
+        "@id": "http://www.opengis.net/ont/geosparql#",
+        "@prefix": true
+      },
+      "odrl": {
+        "@id": "http://www.w3.org/ns/odrl/2/",
+        "@prefix": true
+      },
+      "org": {
+        "@id": "http://www.w3.org/ns/org#",
+        "@prefix": true
+      },
+      "prof": {
+        "@id": "http://www.w3.org/ns/dx/prof/",
+        "@prefix": true
+      },
+      "prov": {
+        "@id": "http://www.w3.org/ns/prov#",
+        "@prefix": true
+      },
+      "qb": {
+        "@id": "http://purl.org/linked-data/cube#",
+        "@prefix": true
+      },
+      "schema": {
+        "@id": "https://schema.org/",
+        "@prefix": true
+      },
+      "sh": {
+        "@id": "http://www.w3.org/ns/shacl#",
+        "@prefix": true
+      },
+      "skos": {
+        "@id": "http://www.w3.org/2004/02/skos/core#",
+        "@prefix": true
+      },
+      "sosa": {
+        "@id": "http://www.w3.org/ns/sosa/",
+        "@prefix": true
+      },
+      "ssn": {
+        "@id": "http://www.w3.org/ns/ssn/",
+        "@prefix": true
+      },
+      "time": {
+        "@id": "http://www.w3.org/2006/time#",
+        "@prefix": true
+      },
+      "vann": {
+        "@id": "http://purl.org/vocab/vann/",
+        "@prefix": true
+      },
+      "void": {
+        "@id": "http://rdfs.org/ns/void#",
+        "@prefix": true
+      },
+      "wgs": {
+        "@id": "https://www.w3.org/2003/01/geo/wgs84_pos#",
+        "@prefix": true
+      },
+      "owl": {
+        "@id": "http://www.w3.org/2002/07/owl#",
+        "@prefix": true
+      },
+      "rdf": {
+        "@id": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "@prefix": true
+      },
+      "rdfs": {
+        "@id": "http://www.w3.org/2000/01/rdf-schema#",
+        "@prefix": true
+      },
+      "xsd": {
+        "@id": "http://www.w3.org/2001/XMLSchema#",
+        "@prefix": true
+      },
+      "xml": {
+        "@id": "http://www.w3.org/XML/1998/namespace",
+        "@prefix": true
+      },
+      "uaentity": {
+        "@id": "http://my.test/entity/",
+        "@prefix": true
+      },
+      "ngsi-ld": {
+        "@id": "https://uri.etsi.org/ngsi-ld/",
+        "@prefix": true
+      },
+      "base": {
+        "@id": "https://industryfusion.github.io/contexts/ontology/v0/base/",
+        "@prefix": true
+      },
+      "pumps": {
+        "@id": "http://opcfoundation.org/UA/Pumps/",
+        "@prefix": true
+      },
+      "opcua": {
+        "@id": "http://opcfoundation.org/UA/",
+        "@prefix": true
+      },
+      "machinery": {
+        "@id": "http://opcfoundation.org/UA/Machinery/",
+        "@prefix": true
+      },
+      "devices": {
+        "@id": "http://opcfoundation.org/UA/DI/",
+        "@prefix": true
+      },
+      "test": {
+        "@id": "http://my.test/",
+        "@prefix": true
+      },
+      "shacl": {
+        "@id": "http://my.test/shacl/",
+        "@prefix": true
+      }
+    },
+    "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld"
+  ]
+}

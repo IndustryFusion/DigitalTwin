@@ -5,7 +5,7 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasMyVariable": {
+        "test:hasMyVariable": {
             "type": "Property",
             "value": 0.0
         }
@@ -16,7 +16,7 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasMyVariable": {
+        "test:hasMyVariable": {
             "type": "Property",
             "value": 0.0
         }
@@ -27,17 +27,17 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasB2": [
+        "test:hasB2": [
             {
                 "type": "Relationship",
                 "object": "http://my.test/testid:i2012"
             }
         ],
-        "uaentity:hasMyProperty": {
+        "test:hasMyProperty": {
             "type": "Property",
             "value": 0.0
         },
-        "uaentity:hasSubB3": [
+        "test:hasSubB3": [
             {
                 "type": "Relationship",
                 "object": "http://my.test/testid:i2413"
@@ -66,7 +66,7 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasMyVariable": {
+        "test:hasMyVariable": {
             "type": "Property",
             "value": 0.0
         }
@@ -77,14 +77,14 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasMyVariable": {
+        "test:hasMyVariable": {
             "type": "Property",
             "value": 0.0,
-            "uaentity:hasMySubvariable": {
+            "test:hasMySubvariable": {
                 "type": "Property",
                 "value": 0.0
             },
-            "uaentity:hasMyProperty": {
+            "test:hasMyProperty": {
                 "type": "Property",
                 "value": 0.0
             }
@@ -96,7 +96,7 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasMyVariable": {
+        "test:hasMyVariable": {
             "type": "Property",
             "value": 0.0
         }
@@ -107,7 +107,7 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasMyVariable": {
+        "test:hasMyVariable": {
             "type": "Property",
             "value": 0.0
         }
@@ -118,17 +118,17 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasB1": [
+        "test:hasB1": [
             {
                 "type": "Relationship",
                 "object": "http://my.test/testid:i2011"
             }
         ],
-        "uaentity:hasMyProperty": {
+        "test:hasMyProperty": {
             "type": "Property",
             "value": 0.0
         },
-        "uaentity:hasSubB2": [
+        "test:hasSubB2": [
             {
                 "type": "Relationship",
                 "object": "http://my.test/testid:i2412"
@@ -157,35 +157,35 @@
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
-        "uaentity:hasB2": [
+        "test:hasB2": [
             {
                 "type": "Relationship",
                 "object": "http://my.test/testid:i2012"
             }
         ],
-        "uaentity:hasMyProperty": {
+        "test:hasMyProperty": {
             "type": "Property",
             "value": 0.0
         },
-        "uaentity:hasSubAlphaInstance2": [
+        "test:hasSubAlphaInstance2": [
             {
                 "type": "Relationship",
                 "object": "http://my.test/testid:i2411"
             }
         ],
-        "uaentity:hasB3": [
+        "test:hasB3": [
             {
                 "type": "Relationship",
                 "object": "http://my.test/testid:i2013"
             }
         ],
-        "uaentity:hasB4": [
+        "test:hasB4": [
             {
                 "type": "Relationship",
                 "object": "http://my.test/testid:i2022"
             }
         ],
-        "uaentity:hasSubAlphaInstance": [
+        "test:hasSubAlphaInstance": [
             {
                 "type": "Relationship",
                 "object": "http://my.test/testid:i2410"

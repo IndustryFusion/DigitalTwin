@@ -5,10 +5,10 @@
 
 <UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" LastModified="2024-07-15T00:00:00Z" xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
   <Models>
-    <Model ModelUri="http://my.test/" XmlSchemaUri="http://opcfoundation.org/UA/2008/02/Types.xsd" Version="1.05.03" PublicationDate="2024-07-29T00:00:00Z" ModelVersion="1.5.3" />
+    <Model ModelUri="http://example.org/" XmlSchemaUri="http://opcfoundation.org/UA/2008/02/Types.xsd" Version="1.05.03" PublicationDate="2024-07-29T00:00:00Z" ModelVersion="1.5.3" />
   </Models>
   <NamespaceUris>
-    <Uri>http://my.test/</Uri>
+    <Uri>http://example.org/</Uri>
   </NamespaceUris>
   <Aliases>
     <Alias Alias="Boolean">i=1</Alias>
@@ -82,7 +82,7 @@
        <Reference ReferenceType="HasComponent">ns=1;i=1004</Reference>
     </References>
   </UAObject>
-  <UAVariable NodeId="ns=1;i=1004" BrowseName="MyVariable" DataType="Boolean" ValueRank="-1">
+  <UAVariable NodeId="ns=1;i=1004" BrowseName="1:MyVariable" DataType="Boolean" ValueRank="-1">
     <DisplayName>Variable of B-object</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
@@ -95,7 +95,7 @@
       <Reference ReferenceType="HasSubtype" IsForward="false">ns=1;i=1002</Reference>
     </References>
   </UAObjectType>
-  <UAVariable NodeId="ns=1;i=1006" BrowseName="C" DataType="i=11" ValueRank="-1">
+  <UAVariable NodeId="ns=1;i=1006" BrowseName="1:C" DataType="i=11" ValueRank="-1">
     <DisplayName>C Variable of AlphaType</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
@@ -125,7 +125,7 @@
        <Reference ReferenceType="HasComponent">ns=1;i=2013</Reference>
     </References>
   </UAObject>
-  <UAVariable NodeId="ns=1;i=2013" BrowseName="MyVariable" DataType="Boolean">
+  <UAVariable NodeId="ns=1;i=2013" BrowseName="1:MyVariable" DataType="Boolean">
     <DisplayName>Variable of B-object</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>

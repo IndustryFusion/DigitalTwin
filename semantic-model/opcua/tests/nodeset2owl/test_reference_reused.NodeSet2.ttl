@@ -9,6 +9,7 @@
 opcua:nodei24 a opcua:DataTypeNodeClass ;
     base:definesType opcua:BaseDataType ;
     base:hasBrowseName "BaseDataType" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDisplayName "BaseDataType" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
@@ -17,6 +18,7 @@ opcua:nodei24 a opcua:DataTypeNodeClass ;
 opcua:nodei26 a opcua:DataTypeNodeClass ;
     base:definesType opcua:Number ;
     base:hasBrowseName "Number" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDisplayName "Number" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
@@ -25,6 +27,7 @@ opcua:nodei26 a opcua:DataTypeNodeClass ;
 opcua:nodei31 a opcua:ReferenceTypeNodeClass ;
     base:definesType opcua:References ;
     base:hasBrowseName "References" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDisplayName "References" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
@@ -34,6 +37,7 @@ opcua:nodei31 a opcua:ReferenceTypeNodeClass ;
 opcua:nodei32 a opcua:ReferenceTypeNodeClass ;
     base:definesType opcua:NonHierarchicalReferences ;
     base:hasBrowseName "NonHierarchicalReferences" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDisplayName "NonHierarchicalReferences" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
@@ -43,6 +47,7 @@ opcua:nodei32 a opcua:ReferenceTypeNodeClass ;
 opcua:nodei32558 a opcua:ReferenceTypeNodeClass ;
     base:definesType opcua:MyTestReference ;
     base:hasBrowseName "MyTestReference" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDisplayName "HasMyTestReference" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
@@ -51,6 +56,7 @@ opcua:nodei32558 a opcua:ReferenceTypeNodeClass ;
 opcua:nodei33 a opcua:ReferenceTypeNodeClass ;
     base:definesType opcua:HierarchicalReferences ;
     base:hasBrowseName "HierarchicalReferences" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDisplayName "HierarchicalReferences" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
@@ -59,6 +65,7 @@ opcua:nodei33 a opcua:ReferenceTypeNodeClass ;
 opcua:nodei34 a opcua:ReferenceTypeNodeClass ;
     base:definesType opcua:HasChild ;
     base:hasBrowseName "HasChild" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDisplayName "HasChild" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
@@ -67,6 +74,7 @@ opcua:nodei34 a opcua:ReferenceTypeNodeClass ;
 opcua:nodei37 a opcua:ReferenceTypeNodeClass ;
     base:definesType opcua:HasModellingRule ;
     base:hasBrowseName "HasModellingRule" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDisplayName "HasModellingRule" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
@@ -75,6 +83,7 @@ opcua:nodei37 a opcua:ReferenceTypeNodeClass ;
 opcua:nodei44 a opcua:ReferenceTypeNodeClass ;
     base:definesType opcua:Aggregates ;
     base:hasBrowseName "Aggregates" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDisplayName "Aggregates" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
@@ -83,6 +92,7 @@ opcua:nodei44 a opcua:ReferenceTypeNodeClass ;
 opcua:nodei47 a opcua:ReferenceTypeNodeClass ;
     base:definesType opcua:HasComponent ;
     base:hasBrowseName "HasComponent" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDisplayName "HasComponent" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
@@ -92,6 +102,7 @@ opcua:nodei4711 a opcua:ObjectTypeNodeClass ;
     opcua:MyTestReference opcua:nodei11113 ;
     base:definesType opcua:MyType ;
     base:hasBrowseName "MyType" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDisplayName "MyType" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
@@ -101,6 +112,7 @@ opcua:nodei47112 a opcua:BaseObjectType,
         opcua:ObjectNodeClass ;
     opcua:HasComponent opcua:nodei16363 ;
     base:hasBrowseName "MyObject" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDisplayName "MyObject" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
@@ -109,6 +121,7 @@ opcua:nodei47112 a opcua:BaseObjectType,
 opcua:nodei58 a opcua:ObjectTypeNodeClass ;
     base:definesType opcua:BaseObjectType ;
     base:hasBrowseName "BaseObjectType" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDisplayName "BaseObjectType" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
@@ -117,6 +130,7 @@ opcua:nodei58 a opcua:ObjectTypeNodeClass ;
 opcua:nodei62 a opcua:VariableTypeNodeClass ;
     base:definesType opcua:BaseVariableType ;
     base:hasBrowseName "BaseVariableType" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDisplayName "BaseVariableType" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
@@ -124,7 +138,7 @@ opcua:nodei62 a opcua:VariableTypeNodeClass ;
     base:hasValueRank -2 .
 
 test: a owl:Ontology ;
-    owl:imports <https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl> ;
+    owl:imports <https://industryfusion.github.io/contexts/staging/ontology/v0/base.ttl> ;
     owl:versionIRI <http://example.com/v0.1/UA/> ;
     owl:versionInfo 1e-01 .
 
@@ -132,17 +146,14 @@ test:TESTNamespace a base:Namespace ;
     base:hasPrefix "test" ;
     base:hasUri "http://test/UA/" .
 
-opcua:HasComponent a owl:Class,
-        owl:ObjectProperty ;
-    rdfs:subClassOf opcua:Aggregates .
+opcua:HasComponent a owl:ObjectProperty ;
+    rdfs:subPropertyOf opcua:Aggregates .
 
-opcua:HasModellingRule a owl:Class,
-        owl:ObjectProperty ;
-    rdfs:subClassOf opcua:NonHierarchicalReferences .
+opcua:HasModellingRule a owl:ObjectProperty ;
+    rdfs:subPropertyOf opcua:NonHierarchicalReferences .
 
-opcua:MyTestReference a owl:Class,
-        owl:ObjectProperty ;
-    rdfs:subClassOf opcua:HierarchicalReferences .
+opcua:MyTestReference a owl:ObjectProperty ;
+    rdfs:subPropertyOf opcua:HierarchicalReferences .
 
 opcua:MyType a owl:Class ;
     rdfs:subClassOf opcua:BaseObjectType ;
@@ -153,6 +164,7 @@ opcua:nodei16363 a opcua:BaseVariableType,
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasArrayDimensions ( 0 ) ;
     base:hasBrowseName "MyTestVar" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDatatype opcua:Number ;
     base:hasDisplayName "My Test Variable" ;
     base:hasIdentifierType base:numericID ;
@@ -160,9 +172,8 @@ opcua:nodei16363 a opcua:BaseVariableType,
     base:hasNodeId "16363" ;
     base:hasValueRank 1 .
 
-opcua:Aggregates a owl:Class,
-        owl:ObjectProperty ;
-    rdfs:subClassOf opcua:HasChild ;
+opcua:Aggregates a owl:ObjectProperty ;
+    rdfs:subPropertyOf opcua:HasChild ;
     base:isAbstract "true" .
 
 opcua:BaseDataType a owl:Class ;
@@ -171,14 +182,12 @@ opcua:BaseDataType a owl:Class ;
 opcua:BaseVariableType a owl:Class ;
     base:isAbstract "true" .
 
-opcua:HasChild a owl:Class,
-        owl:ObjectProperty ;
-    rdfs:subClassOf opcua:HierarchicalReferences ;
+opcua:HasChild a owl:ObjectProperty ;
+    rdfs:subPropertyOf opcua:HierarchicalReferences ;
     base:isAbstract "true" .
 
-opcua:NonHierarchicalReferences a owl:Class,
-        owl:ObjectProperty ;
-    rdfs:subClassOf opcua:References ;
+opcua:NonHierarchicalReferences a owl:ObjectProperty ;
+    rdfs:subPropertyOf opcua:References ;
     base:isAbstract "true" .
 
 opcua:Number a owl:Class ;
@@ -187,12 +196,10 @@ opcua:Number a owl:Class ;
 
 opcua:BaseObjectType a owl:Class .
 
-opcua:HierarchicalReferences a owl:Class,
-        owl:ObjectProperty ;
-    rdfs:subClassOf opcua:References ;
+opcua:HierarchicalReferences a owl:ObjectProperty ;
+    rdfs:subPropertyOf opcua:References ;
     base:isAbstract "true" .
 
-opcua:References a owl:Class,
-        owl:ObjectProperty ;
+opcua:References a owl:ObjectProperty ;
     base:isAbstract "true" .
 
