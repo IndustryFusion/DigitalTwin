@@ -15,7 +15,7 @@
     <maven.compiler.release>11</maven.compiler.release>
     <flink.version>1.19.2</flink.version>
     <flink.scope>compile</flink.scope>
-    <log4j.version>2.17.1</log4j.version>
+    <log4j.version>2.25.3</log4j.version>
   </properties>
 
   <dependencyManagement>
