@@ -14,7 +14,7 @@ from lib.utils import RdfUtils, downcase_string, isNodeId, convert_to_json_type,
                                 contains_both_angle_brackets, get_typename, get_common_supertype, rdfStringToPythonBool, \
                                 get_rank_dimensions, get_type_and_template, OntologyLoader, file_path_to_uri, create_list, \
                                 extract_subgraph, dump_without_prefixes, get_contentclass, quote_url, merge_attributes, dump_graph, \
-                                is_subclass, create_list, get_contentclass, expand_term, RdfUtils
+                                is_subclass, create_list, get_contentclass, expand_term, RdfUtils, rank_value_to_string
 
 class TestIsSubclass(unittest.TestCase):
     def test_direct_subclass(self):
@@ -865,6 +865,36 @@ class TestOntologyLoader(unittest.TestCase):
                 mock_print.assert_called_with(
                    'Importing http://example.org/ont2 from url ont2.'
                 )
+
+class TestRankValueToString(unittest.TestCase):
+    def test_scalar_or_one_dimension(self):
+        self.assertEqual(rank_value_to_string(-3), 'ScalarOrOneDimension')
+        self.assertEqual(rank_value_to_string('-3'), 'ScalarOrOneDimension')
+
+    def test_any(self):
+        self.assertEqual(rank_value_to_string(-2), 'Any')
+        self.assertEqual(rank_value_to_string('-2'), 'Any')
+
+    def test_scalar(self):
+        self.assertEqual(rank_value_to_string(-1), 'Scalar')
+        self.assertEqual(rank_value_to_string('-1'), 'Scalar')
+
+    def test_one_or_more_dimensions(self):
+        self.assertEqual(rank_value_to_string(0), 'OneOrMoreDimensions')
+        self.assertEqual(rank_value_to_string('0'), 'OneOrMoreDimensions')
+
+    def test_one_dimension(self):
+        self.assertEqual(rank_value_to_string(1), 'OneDimension')
+        self.assertEqual(rank_value_to_string('1'), 'OneDimension')
+
+    def test_n_dimensions(self):
+        self.assertEqual(rank_value_to_string(2), '2Dimensions')
+        self.assertEqual(rank_value_to_string('3'), '3Dimensions')
+        self.assertEqual(rank_value_to_string(10), '10Dimensions')
+
+    def test_unknown_rank(self):
+        self.assertEqual(rank_value_to_string(-99), 'UnknownRank')
+        self.assertEqual(rank_value_to_string('-99'), 'UnknownRank')
 
 if __name__ == "__main__":
     unittest.main()

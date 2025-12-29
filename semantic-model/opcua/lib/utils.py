@@ -103,6 +103,17 @@ def isNodeId(nodeId):
     return 'i=' in nodeId or 'g=' in nodeId or 's=' in nodeId
 
 
+def collection_to_list(collection, datagraph: Graph):
+    """Convert an RDF collection to a Python list."""
+    if collection is None:
+        return None
+    ad = Collection(datagraph, collection)
+    col_list = []
+    if len(ad) > 0:
+        col_list = [item.toPython() for item in ad]
+    return col_list
+
+
 def expand_term(graph: Graph, value: str):
     """
     Return a URIRef:
@@ -143,6 +154,36 @@ def create_node_ref(idtype, id, nsuri, basens):
 
 def rdfStringToPythonBool(literal):
     return str(literal).strip().lower() == "true"
+
+
+def rank_value_to_string(value):
+    """Convert an OPC UA rank value to its string representation.
+    ValueRank meanings:
+    -3: ScalarOrOneDimension
+    -2: Any
+    -1: Scalar
+     0: OneOrMoreDimensions
+     1: OneDimension
+     >1: nDimensions
+
+    Args:
+        value (int): str
+    """
+    rank = int(value)
+    if rank == -3:
+        return 'ScalarOrOneDimension'
+    elif rank == -2:
+        return 'Any'
+    elif rank == -1:
+        return 'Scalar'
+    elif rank == 0:
+        return 'OneOrMoreDimensions'
+    elif rank == 1:
+        return 'OneDimension'
+    elif rank > 1:
+        return f'{rank}Dimensions'
+    else:
+        return 'UnknownRank'
 
 
 def convert_to_json_type(result, basic_json_type):
@@ -187,13 +228,6 @@ def get_datatype(graph, node, typenode, templatenode, basens):
         if datatype is None and typenode is not None:
             datatype = next(graph.objects(typenode, basens['hasDatatype']), None)
     return datatype
-# def get_datatype(graph, node, typenode, templatenode, basens):
-#     datatype = next(graph.objects(node, basens['hasDatatype']), None)
-#     if datatype is None:
-#         datatype = next(graph.objects(templatenode, basens['hasDatatype']), None)
-#         if datatype is None:
-#             datatype = next(graph.objects(typenode, basens['hasDatatype']), None)
-#     return datatype
 
 
 def attributename_from_type(type):
