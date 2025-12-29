@@ -153,6 +153,10 @@ parse nodeset instance and create ngsi-ld model')
                         help='List of Warnings which are to be suppressed.')
     parser.add_argument('-p', '--properties', help='Consider OPC UA Properties.', required=False, default=False,
                         action='store_true')
+    parser.add_argument('-vrs', '--value-rank-subshapes', help='Add ValueRank subshapes (instead of nest '
+                        'the whole expression).',
+                        required=False, default=False,
+                        action='store_true')
 
     parsed_args = parser.parse_args(args)
     return parsed_args
@@ -640,6 +644,7 @@ if __name__ == '__main__':
     context_url = args.context_url
     entity_namespace = args.entity_namespace
     parse_properties = args.properties
+    value_rank_subshapes_enabled = args.value_rank_subshapes
 
     # create the context_graph
     # Context graph is resolving the context_url and provides just the
@@ -681,7 +686,7 @@ if __name__ == '__main__':
     bindingsg = Bindings(namespace_prefix, basens)
     bindingsg.bind('base', basens)
     bindingsg.bind('binding', binding_namespace)
-    shaclg = Shacl(g, namespace_prefix, basens, opcuans)
+    shaclg = Shacl(g, namespace_prefix, basens, opcuans, value_rank_subshapes_enabled=value_rank_subshapes_enabled)
     shaclg.bind('shacl', shacl_namespace)
     shaclg.bind('ngsi-ld', ngsildns)
     shaclg.bind('sh', SH)

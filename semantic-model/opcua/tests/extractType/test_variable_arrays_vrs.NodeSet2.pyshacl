@@ -1,0 +1,166 @@
+@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+@prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/> .
+@prefix opcua: <http://opcfoundation.org/UA/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix shacl: <http://my.test/shacl/> .
+@prefix test: <http://my.test/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+[] a sh:ValidationReport ;
+    sh:conforms false ;
+    sh:result [ a sh:ValidationResult ;
+            sh:detail [ a sh:ValidationResult ;
+                    sh:focusNode ( 99 ) ;
+                    sh:resultMessage "Less than 2 values on ( Literal(\"99\", datatype=xsd:integer) )->( [ sh:zeroOrMorePath rdf:rest ] rdf:first )" ;
+                    sh:resultPath _:n31706d49d34148b084f4b0c470e5cd0fb112 ;
+                    sh:resultSeverity sh:Violation ;
+                    sh:sourceConstraintComponent sh:MinCountConstraintComponent ;
+                    sh:sourceShape _:n31706d49d34148b084f4b0c470e5cd0fb110 ] ;
+            sh:focusNode <http://my.test/testid:i2012> ;
+            sh:resultMessage "Value does not conform to Shape shacl:ValueRankShape_OneDimension_integer_2. See details for more information." ;
+            sh:resultPath test:hasMyVariable12 ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:NodeConstraintComponent ;
+            sh:sourceShape [ sh:maxCount 1 ;
+                    sh:minCount 0 ;
+                    sh:node shacl:ValueRankShape_OneDimension_integer_2 ;
+                    sh:nodeKind sh:BlankNode ;
+                    sh:path test:hasMyVariable12 ;
+                    base:hasReferenceType opcua:HasComponent ] ;
+            sh:value [ a ngsi-ld:ListProperty ;
+                    ngsi-ld:hasValueList ( 99 ) ] ],
+        [ a sh:ValidationResult ;
+            sh:detail [ a sh:ValidationResult ;
+                    sh:focusNode ( "x" "y" "z" ) ;
+                    sh:resultMessage "More than 2 values on ( Literal(\"x\") Literal(\"y\") Literal(\"z\") )->( [ sh:zeroOrMorePath rdf:rest ] rdf:first )" ;
+                    sh:resultPath ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+                    sh:resultSeverity sh:Violation ;
+                    sh:sourceConstraintComponent sh:MaxCountConstraintComponent ;
+                    sh:sourceShape [ sh:datatype xsd:string ;
+                            sh:maxCount 2 ;
+                            sh:minCount 2 ;
+                            sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] ;
+            sh:focusNode <http://my.test/testid:i2012> ;
+            sh:resultMessage "Value does not conform to Shape shacl:ValueRankShape_OneDimension_string_2. See details for more information." ;
+            sh:resultPath test:hasMyVariable11 ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:NodeConstraintComponent ;
+            sh:sourceShape [ sh:maxCount 1 ;
+                    sh:minCount 0 ;
+                    sh:node shacl:ValueRankShape_OneDimension_string_2 ;
+                    sh:nodeKind sh:BlankNode ;
+                    sh:path test:hasMyVariable11 ;
+                    base:hasReferenceType opcua:HasComponent ] ;
+            sh:value [ a ngsi-ld:ListProperty ;
+                    ngsi-ld:hasValueList ( "x" "y" "z" ) ] ],
+        [ a sh:ValidationResult ;
+            sh:detail [ a sh:ValidationResult ;
+                    sh:focusNode _:N26abcc5540c44a338e4429cdddce5e18 ;
+                    sh:resultMessage "Node ( Literal(\"0.0\", datatype=xsd:double) Literal(\"1.0\", datatype=xsd:double) ) does not conform to one or more shapes in [ sh:nodeKind sh:BlankNode ; sh:property [ sh:datatype xsd:integer ; sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] , [ sh:hasValue rdf:nil ]" ;
+                    sh:resultPath ngsi-ld:hasValueList ;
+                    sh:resultSeverity sh:Violation ;
+                    sh:sourceConstraintComponent sh:OrConstraintComponent ;
+                    sh:sourceShape [ sh:maxCount 1 ;
+                            sh:minCount 1 ;
+                            sh:or ( [ sh:nodeKind sh:BlankNode ;
+                                        sh:property [ sh:datatype xsd:integer ;
+                                                sh:path ( [ ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
+                            sh:path ngsi-ld:hasValueList ] ;
+                    sh:value ( 0e+00 1e+00 ) ] ;
+            sh:focusNode <http://my.test/testid:i2012> ;
+            sh:resultMessage "Value does not conform to Shape shacl:ValueRankShape_OneDimension_integer. See details for more information." ;
+            sh:resultPath test:hasMyVariable9 ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:NodeConstraintComponent ;
+            sh:sourceShape [ sh:maxCount 1 ;
+                    sh:minCount 0 ;
+                    sh:node shacl:ValueRankShape_OneDimension_integer ;
+                    sh:nodeKind sh:BlankNode ;
+                    sh:path test:hasMyVariable9 ;
+                    base:hasReferenceType opcua:HasComponent ] ;
+            sh:value _:N26abcc5540c44a338e4429cdddce5e18 ],
+        [ a sh:ValidationResult ;
+            sh:detail [ a sh:ValidationResult ;
+                    sh:focusNode _:N9aafbaf143b54c3aa3ee5f3c9db4d84a ;
+                    sh:resultMessage "Value is not of Node Kind sh:BlankNode" ;
+                    sh:resultPath ngsi-ld:hasValueList ;
+                    sh:resultSeverity sh:Violation ;
+                    sh:sourceConstraintComponent sh:NodeKindConstraintComponent ;
+                    sh:sourceShape [ sh:maxCount 1 ;
+                            sh:minCount 1 ;
+                            sh:nodeKind sh:BlankNode ;
+                            sh:path ngsi-ld:hasValueList ;
+                            sh:property [ sh:datatype xsd:integer ;
+                                    sh:maxCount 2 ;
+                                    sh:minCount 2 ;
+                                    sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] ;
+                    sh:value () ],
+                [ a sh:ValidationResult ;
+                    sh:focusNode () ;
+                    sh:resultMessage "Less than 2 values on rdf:nil->( [ sh:zeroOrMorePath rdf:rest ] rdf:first )" ;
+                    sh:resultPath _:n31706d49d34148b084f4b0c470e5cd0fb112 ;
+                    sh:resultSeverity sh:Violation ;
+                    sh:sourceConstraintComponent sh:MinCountConstraintComponent ;
+                    sh:sourceShape _:n31706d49d34148b084f4b0c470e5cd0fb110 ] ;
+            sh:focusNode <http://my.test/testid:i2012> ;
+            sh:resultMessage "Value does not conform to Shape shacl:ValueRankShape_OneDimension_integer_2. See details for more information." ;
+            sh:resultPath test:hasMyVariable14 ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:NodeConstraintComponent ;
+            sh:sourceShape [ sh:maxCount 1 ;
+                    sh:minCount 0 ;
+                    sh:node shacl:ValueRankShape_OneDimension_integer_2 ;
+                    sh:nodeKind sh:BlankNode ;
+                    sh:path test:hasMyVariable14 ;
+                    base:hasReferenceType opcua:HasComponent ] ;
+            sh:value _:N9aafbaf143b54c3aa3ee5f3c9db4d84a ],
+        [ a sh:ValidationResult ;
+            sh:detail [ a sh:ValidationResult ;
+                    sh:focusNode _:Nda681d85da9f4ce494ff4b2d4f92b25e ;
+                    sh:resultMessage "ValueRank constraint for valuerank=Any(-2) with datatype=double." ;
+                    sh:resultSeverity sh:Violation ;
+                    sh:sourceConstraintComponent sh:OrConstraintComponent ;
+                    sh:sourceShape shacl:ValueRankShape_Any_double ;
+                    sh:value _:Nda681d85da9f4ce494ff4b2d4f92b25e ] ;
+            sh:focusNode <http://my.test/testid:i2012> ;
+            sh:resultMessage "Value does not conform to Shape shacl:ValueRankShape_Any_double. See details for more information." ;
+            sh:resultPath test:hasMyVariable10 ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:NodeConstraintComponent ;
+            sh:sourceShape [ sh:maxCount 1 ;
+                    sh:minCount 0 ;
+                    sh:node shacl:ValueRankShape_Any_double ;
+                    sh:nodeKind sh:BlankNode ;
+                    sh:path test:hasMyVariable10 ;
+                    base:hasReferenceType opcua:HasComponent ] ;
+            sh:value _:Nda681d85da9f4ce494ff4b2d4f92b25e ] .
+
+_:N48662e009c18422591aa18244f4afcac rdf:first [ sh:zeroOrMorePath rdf:rest ] ;
+    rdf:rest ( rdf:first ) .
+
+_:N4b70e8ca32f9458083b270d4d8fd4118 rdf:first 0e+00 ;
+    rdf:rest ( 1e+00 ) .
+
+_:N84f1926d936145a1912ed7974c404e9d sh:zeroOrMorePath rdf:rest .
+
+_:Nb3258189862f42c1b655a5acd3af9965 rdf:first rdf:first ;
+    rdf:rest () .
+
+_:N26abcc5540c44a338e4429cdddce5e18 a ngsi-ld:ListProperty ;
+    ngsi-ld:hasValueList _:N4b70e8ca32f9458083b270d4d8fd4118 .
+
+_:N9aafbaf143b54c3aa3ee5f3c9db4d84a a ngsi-ld:ListProperty ;
+    ngsi-ld:hasValueList () .
+
+_:n31706d49d34148b084f4b0c470e5cd0fb110 sh:datatype xsd:integer ;
+    sh:maxCount 2 ;
+    sh:minCount 2 ;
+    sh:path _:N48662e009c18422591aa18244f4afcac .
+
+_:n31706d49d34148b084f4b0c470e5cd0fb112 rdf:first _:N84f1926d936145a1912ed7974c404e9d ;
+    rdf:rest _:Nb3258189862f42c1b655a5acd3af9965 .
+
+_:Nda681d85da9f4ce494ff4b2d4f92b25e a ngsi-ld:Property ;
+    ngsi-ld:hasValue 1 .
+

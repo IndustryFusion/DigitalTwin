@@ -1,0 +1,270 @@
+@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+@prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/> .
+@prefix opcua: <http://opcfoundation.org/UA/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix shacl: <http://my.test/shacl/> .
+@prefix test: <http://my.test/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+shacl:AlphaTypeShape a sh:NodeShape ;
+    sh:property [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:node shacl:ValueRankShape_Any_double ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasC ;
+            sh:property [ sh:maxCount 1 ;
+                    sh:minCount 0 ;
+                    sh:node shacl:ValueRankShape_Any_double ;
+                    sh:nodeKind sh:BlankNode ;
+                    sh:path test:hasE ;
+                    base:hasReferenceType opcua:HasComponent ] ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ a base:SubComponentRelationship ;
+            sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasB ;
+            sh:property [ sh:class test:BType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ a base:PeerRelationship ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:X ;
+            sh:property [ sh:class test:BType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasReferenceType test:X ] ;
+    sh:targetClass test:AlphaType .
+
+shacl:BTypeShape a sh:NodeShape ;
+    sh:property [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:node shacl:ValueRankShape_Scalar_string ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasMyVariable6 ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:node shacl:ValueRankShape_2Dimensions_double_6 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasMyVariable2 ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:node shacl:ValueRankShape_OneDimension_integer ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasMyVariable9 ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:node shacl:ValueRankShape_Any_string ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasMyVariable7 ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:node shacl:ValueRankShape_Any_JSON ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasMyVariable16 ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:node shacl:ValueRankShape_OneOrMoreDimensions_boolean_2 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasMyVariable3 ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:node shacl:ValueRankShape_OneDimension_integer_2 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasMyVariable14 ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:node shacl:ValueRankShape_OneDimension_string_2 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasMyVariable11 ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:node shacl:ValueRankShape_OneDimension_string ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasMyVariable8 ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:node shacl:ValueRankShape_Any_double ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasMyVariable10 ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:node shacl:ValueRankShape_Any_JSON ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasMyVariable15 ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:node shacl:ValueRankShape_OneOrMoreDimensions_integer ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasMyVariable13 ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:node shacl:ValueRankShape_OneDimension_integer_2 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasMyVariable12 ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:node shacl:ValueRankShape_Scalar_integer ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasMyVariable4 ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:node shacl:ValueRankShape_OneDimension_integer_2 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasMyVariable ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:node shacl:ValueRankShape_OneDimension_string ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasMyVariable5 ;
+            base:hasReferenceType opcua:HasComponent ] ;
+    sh:targetClass test:BType .
+
+shacl:ValueRankShape_2Dimensions_double_6 a sh:NodeShape ;
+    sh:message "ValueRank constraint for valuerank=2Dimensions(2) with datatype=double and multiplied arraydimensions=6." ;
+    sh:property [ sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path ngsi-ld:hasValueList ;
+            sh:property [ sh:datatype xsd:double ;
+                    sh:maxCount 6 ;
+                    sh:minCount 6 ;
+                    sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] .
+
+shacl:ValueRankShape_Any_string a sh:NodeShape ;
+    sh:message "ValueRank constraint for valuerank=Any(-2) with datatype=string." ;
+    sh:or ( [ sh:property [ sh:datatype xsd:string ;
+                        sh:maxCount 1 ;
+                        sh:minCount 1 ;
+                        sh:nodeKind sh:Literal ;
+                        sh:path ngsi-ld:hasValue ] ] [ sh:property [ sh:maxCount 1 ;
+                        sh:minCount 1 ;
+                        sh:or ( [ sh:nodeKind sh:BlankNode ;
+                                    sh:property [ sh:datatype xsd:string ;
+                                            sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
+                        sh:path ngsi-ld:hasValueList ] ] ) .
+
+shacl:ValueRankShape_OneDimension_integer a sh:NodeShape ;
+    sh:message "ValueRank constraint for valuerank=OneDimension(1) with datatype=integer." ;
+    sh:property [ sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:or ( [ sh:nodeKind sh:BlankNode ;
+                        sh:property [ sh:datatype xsd:integer ;
+                                sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
+            sh:path ngsi-ld:hasValueList ] .
+
+shacl:ValueRankShape_OneDimension_string_2 a sh:NodeShape ;
+    sh:message "ValueRank constraint for valuerank=OneDimension(1) with datatype=string and multiplied arraydimensions=2." ;
+    sh:property [ sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path ngsi-ld:hasValueList ;
+            sh:property [ sh:datatype xsd:string ;
+                    sh:maxCount 2 ;
+                    sh:minCount 2 ;
+                    sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] .
+
+shacl:ValueRankShape_OneOrMoreDimensions_boolean_2 a sh:NodeShape ;
+    sh:message "ValueRank constraint for valuerank=OneOrMoreDimensions(0) with datatype=boolean and multiplied arraydimensions=2." ;
+    sh:property [ sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path ngsi-ld:hasValueList ;
+            sh:property [ sh:datatype xsd:boolean ;
+                    sh:maxCount 2 ;
+                    sh:minCount 2 ;
+                    sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] .
+
+shacl:ValueRankShape_OneOrMoreDimensions_integer a sh:NodeShape ;
+    sh:message "ValueRank constraint for valuerank=OneOrMoreDimensions(0) with datatype=integer." ;
+    sh:property [ sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:or ( [ sh:nodeKind sh:BlankNode ;
+                        sh:property [ sh:datatype xsd:integer ;
+                                sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
+            sh:path ngsi-ld:hasValueList ] .
+
+shacl:ValueRankShape_Scalar_integer a sh:NodeShape ;
+    sh:message "ValueRank constraint for valuerank=Scalar(-1) with datatype=integer." ;
+    sh:property [ sh:datatype xsd:integer ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:path ngsi-ld:hasValue ] .
+
+shacl:ValueRankShape_Scalar_string a sh:NodeShape ;
+    sh:message "ValueRank constraint for valuerank=Scalar(-1) with datatype=string." ;
+    sh:property [ sh:datatype xsd:string ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:path ngsi-ld:hasValue ] .
+
+shacl:ValueRankShape_Any_JSON a sh:NodeShape ;
+    sh:message "ValueRank constraint for valuerank=Any(-2) with datatype=JSON." ;
+    sh:or ( [ sh:property [ sh:maxCount 1 ;
+                        sh:minCount 1 ;
+                        sh:or ( [ sh:nodeKind sh:BlankNode ;
+                                    sh:property [ sh:datatype rdf:JSON ;
+                                            sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
+                        sh:path ngsi-ld:hasValueList ] ] [ sh:property [ sh:datatype rdf:JSON ;
+                        sh:maxCount 1 ;
+                        sh:minCount 1 ;
+                        sh:nodeKind sh:Literal ;
+                        sh:path ngsi-ld:hasJSON ] ] ) .
+
+shacl:ValueRankShape_OneDimension_string a sh:NodeShape ;
+    sh:message "ValueRank constraint for valuerank=OneDimension(1) with datatype=string." ;
+    sh:property [ sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:or ( [ sh:nodeKind sh:BlankNode ;
+                        sh:property [ sh:datatype xsd:string ;
+                                sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
+            sh:path ngsi-ld:hasValueList ] .
+
+shacl:ValueRankShape_Any_double a sh:NodeShape ;
+    sh:message "ValueRank constraint for valuerank=Any(-2) with datatype=double." ;
+    sh:or ( [ sh:property [ sh:datatype xsd:double ;
+                        sh:maxCount 1 ;
+                        sh:minCount 1 ;
+                        sh:nodeKind sh:Literal ;
+                        sh:path ngsi-ld:hasValue ] ] [ sh:property [ sh:maxCount 1 ;
+                        sh:minCount 1 ;
+                        sh:or ( [ sh:nodeKind sh:BlankNode ;
+                                    sh:property [ sh:datatype xsd:double ;
+                                            sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
+                        sh:path ngsi-ld:hasValueList ] ] ) .
+
+shacl:ValueRankShape_OneDimension_integer_2 a sh:NodeShape ;
+    sh:message "ValueRank constraint for valuerank=OneDimension(1) with datatype=integer and multiplied arraydimensions=2." ;
+    sh:property [ sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path ngsi-ld:hasValueList ;
+            sh:property [ sh:datatype xsd:integer ;
+                    sh:maxCount 2 ;
+                    sh:minCount 2 ;
+                    sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] .
+

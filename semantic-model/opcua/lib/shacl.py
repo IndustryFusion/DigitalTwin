@@ -19,7 +19,7 @@ import re
 from difflib import SequenceMatcher
 from urllib.parse import urlparse
 from rdflib import Graph, Namespace, Literal, URIRef, BNode
-from rdflib.namespace import RDF, RDFS, SH
+from rdflib.namespace import RDF, RDFS, SH, split_uri
 from rdflib.collection import Collection
 from pyshacl import validate
 import lib.utils as utils
@@ -30,7 +30,7 @@ from lib.utils import NGSILD, print_warning
 
 
 class Shacl:
-    def __init__(self, data_graph, namespace_prefix, basens, opcuans):
+    def __init__(self, data_graph, namespace_prefix, basens, opcuans, value_rank_subshapes_enabled=False):
         self.shaclg = Graph()
         self.shacl_namespace = Namespace(f'{namespace_prefix}shacl/')
         self.shaclg.bind('shacl', self.shacl_namespace)
@@ -40,12 +40,49 @@ class Shacl:
         self.basens = basens
         self.opcuans = opcuans
         self.data_graph = data_graph
+        self.value_rank_subshapes_enabled = value_rank_subshapes_enabled
 
     def create_shacl_type(self, targetclass):
         name = self.get_typename(targetclass) + 'Shape'
         shapename = self.shacl_namespace[name]
         self.shaclg.add((shapename, RDF.type, SH.NodeShape))
         self.shaclg.add((shapename, SH.targetClass, URIRef(targetclass)))
+        return shapename
+
+    def create_shacl_property_name(self, value_rank, array_dimensions, datatype):
+        """
+        Generates a SHACL property name (as a URIRef) based on the provided value rank, array dimensions, and datatype.
+
+        Args:
+            value_rank (int): The value rank indicating the dimensionality of the value (e.g., scalar, array).
+            array_dimensions (RDF Collection): The dimensions of the array.
+            datatype (str or list): The datatype URI or a list containing the datatype URI.
+
+        Returns:
+            rdflib.term.URIRef: The generated SHACL property name as a URIRef within the SHACL namespace.
+
+        Notes:
+            - If `array_dimensions` is a RDF collection, its elements are joined with underscores and appended
+              to the name.
+            - If `datatype` is a list, only the first element is used.
+            - The property name is constructed in the format:
+              'ValueRankShape_{value_rank_name}_{datatype_name}_{array_dimensions}'
+        """
+        # Create a string by joining all elements with "_"
+        array_dim = utils.collection_to_list(array_dimensions, self.data_graph)
+        if isinstance(array_dim, list) and len(array_dim) > 0:
+            array_dim_str = f'_{reduce(operator.mul, array_dim)}'
+        else:
+            array_dim_str = ""
+        if isinstance(datatype, list):
+            datatype = datatype[0]
+        if datatype is not None:
+            _, datatype_name = split_uri(datatype)
+        else:
+            datatype_name = "None"
+        value_rank_name = utils.rank_value_to_string(value_rank)
+        name = f'ValueRankShape_{value_rank_name}_{datatype_name}{array_dim_str}'
+        shapename = self.shacl_namespace[name]
         return shapename
 
     def get_array_validation_shape(self, datatype, pattern, value_rank, array_dimensions):
@@ -174,14 +211,26 @@ class Shacl:
         if not is_array and maxCount is not None:
             self.shaclg.add((property, SH.maxCount, Literal(maxCount)))
         if is_property:
-            shapes = self.get_ngsild_property_constraints(value_rank,
-                                                          array_dimensions,
-                                                          datatype,
-                                                          pattern,
-                                                          is_iri,
-                                                          contentclass)
-            tuples = self.shacl_or(shapes)
-            self.shacl_add_to_shape(property, tuples)
+            # In case the rank_subshapes_enabled is activated, we need to check if shape already exists
+            # to avoid duplicate shapes
+            shape_name = self.create_shacl_property_name(value_rank, array_dimensions, datatype)
+            shape_name_is_known = (shape_name, RDF.type, SH.NodeShape) in self.shaclg
+            if not shape_name_is_known or not self.value_rank_subshapes_enabled:
+                # Only create the shape if it is not already known or if subshapes are disabled
+                shapes = self.get_ngsild_property_constraints(value_rank,
+                                                              array_dimensions,
+                                                              datatype,
+                                                              pattern,
+                                                              is_iri,
+                                                              contentclass)
+                tuples = self.shacl_or(shapes)
+                if not self.value_rank_subshapes_enabled:
+                    self.shacl_add_to_shape(property, tuples)
+            if self.value_rank_subshapes_enabled:
+                self.shaclg.add((property, SH['node'], shape_name))
+                if not shape_name_is_known:
+                    # if shape is not known, it must have been created above so, reference it
+                    self.add_value_rank_shape(shape_name, tuples, value_rank, array_dimensions, datatype)
         else:
             shapes = self.get_ngsild_relationship_constraints(is_array,
                                                               placeholder_pattern,
@@ -199,6 +248,29 @@ class Shacl:
             else:
                 self.shaclg.add((property, RDF.type, self.basens['PeerRelationship']))
         return property
+
+    def add_value_rank_shape(self, shape_name, tuples, value_rank, array_dimensions, datatype):
+        """Add standalone value_rank shape to the SHACL graph
+
+        This property shape can later be referenced from other shapes. This helps
+        to simplify shapes which are too nested
+        Args:
+            property (URIRef): The property shape to add the standalone sh:node to
+            tuples (list): A list of tuples representing the shape constraints
+        """
+        if isinstance(datatype, list):
+            datatype = datatype[0]
+
+        self.shaclg.add((shape_name, RDF.type, SH.NodeShape))
+        self.shacl_add_to_shape(shape_name, tuples)
+        _, datatype_name = split_uri(datatype)
+        array_dim_str = ""
+        array_dim = utils.collection_to_list(array_dimensions, self.data_graph)
+        if isinstance(array_dim, list):
+            array_dim_str = f' and multiplied arraydimensions={reduce(operator.mul, array_dim)}'
+        message = f"ValueRank constraint for valuerank={utils.rank_value_to_string(value_rank)}\
+({value_rank}) with datatype={datatype_name}{array_dim_str}."
+        self.shaclg.add((shape_name, SH.message, Literal(message)))
 
     def get_ngsild_relationship_constraints(self, is_array, placeholder_pattern, is_subcomponent, is_iri, contentclass):
         """Create constraints for ngsi-ld Relationship

@@ -1013,5 +1013,154 @@ class TestValidation(unittest.TestCase):
         self.assertEqual(predicates, [predicate1, predicate2])
 
 
+class TestShaclCreateShaclPropertyName(unittest.TestCase):
+    def setUp(self):
+        # Minimal setup for Shacl instance
+        self.namespace_prefix = "http://example.org/"
+        self.basens = Namespace("http://base/")
+        self.opcuans = Namespace("http://opcuans/")
+        self.data_graph = Graph()
+        self.shacl = Shacl(self.data_graph, self.namespace_prefix, self.basens, self.opcuans)
+
+    @patch("lib.shacl.split_uri")
+    @patch("lib.shacl.utils")
+    def test_scalar_value(self, mock_utils, mock_split_uri):
+        # Setup mocks
+        mock_utils.rank_value_to_string.return_value = "Scalar"
+        mock_split_uri.return_value = ("http://xsd/", "integer")
+        value_rank = 0
+        array_dimensions = None
+        datatype = "http://www.w3.org/2001/XMLSchema#integer"
+        result = self.shacl.create_shacl_property_name(value_rank, array_dimensions, datatype)
+        expected_uri = URIRef(f"{self.namespace_prefix}shacl/ValueRankShape_Scalar_integer")
+        self.assertEqual(result, expected_uri)
+        mock_utils.rank_value_to_string.assert_called_with(value_rank)
+        mock_split_uri.assert_called_with(datatype)
+    @patch("lib.shacl.split_uri")
+    @patch("lib.shacl.utils")
+    def test_array_value(self, mock_utils, mock_split_uri):
+        mock_utils.rank_value_to_string.return_value = "Array"
+        mock_utils.collection_to_list.return_value = [2, 3]
+        mock_split_uri.return_value = ("http://xsd/", "float")
+        value_rank = 1
+        array_dimensions = BNode()
+        datatype = "http://www.w3.org/2001/XMLSchema#float"
+        result = self.shacl.create_shacl_property_name(value_rank, array_dimensions, datatype)
+        expected_uri = URIRef(f"{self.namespace_prefix}shacl/ValueRankShape_Array_float_6")
+        self.assertEqual(result, expected_uri)
+        mock_utils.rank_value_to_string.assert_called_with(value_rank)
+        mock_split_uri.assert_called_with(datatype)
+
+    @patch("lib.shacl.split_uri")
+    @patch("lib.shacl.utils")
+    def test_datatype_as_list(self, mock_utils, mock_split_uri):
+        mock_utils.rank_value_to_string.return_value = "Scalar"
+        mock_split_uri.return_value = ("http://xsd/", "string")
+        value_rank = 0
+        array_dimensions = None
+        datatype = ["http://www.w3.org/2001/XMLSchema#string", "http://other"]
+        result = self.shacl.create_shacl_property_name(value_rank, array_dimensions, datatype)
+        expected_uri = URIRef(f"{self.namespace_prefix}shacl/ValueRankShape_Scalar_string")
+        self.assertEqual(result, expected_uri)
+        mock_utils.rank_value_to_string.assert_called_with(value_rank)
+        mock_split_uri.assert_called_with(datatype[0])
+
+    @patch("lib.shacl.split_uri")
+    @patch("lib.shacl.utils")
+    def test_array_dimensions_empty_list(self, mock_utils, mock_split_uri):
+        mock_utils.rank_value_to_string.return_value = "Array"
+        mock_split_uri.return_value = ("http://xsd/", "boolean")
+        mock_utils.collection_to_list.return_value = []
+        value_rank = 1
+        datatype = "http://www.w3.org/2001/XMLSchema#boolean"
+        array_dimensions = BNode()
+        result = self.shacl.create_shacl_property_name(value_rank, array_dimensions, datatype)
+        expected_uri = URIRef(f"{self.namespace_prefix}shacl/ValueRankShape_Array_boolean")
+        self.assertEqual(result, expected_uri)
+
+    @patch("lib.shacl.split_uri")
+    @patch("lib.shacl.utils")
+    def test_add_value_rank_shape_adds_shape_and_message(self, mock_utils, mock_split_uri):
+        # Setup
+        mock_utils.rank_value_to_string.return_value = "Array"
+        mock_utils.collection_to_list.return_value = [2, 3]
+        mock_split_uri.return_value = ("http://xsd/", "float")
+        shape_name = URIRef(f"{self.namespace_prefix}shacl/ValueRankShape_Array_float_6")
+        property_bnode = MagicMock()
+        tuples = [(SH.datatype, URIRef("http://www.w3.org/2001/XMLSchema#float"))]
+        value_rank = 1
+        array_dimensions = BNode()
+        datatype = "http://www.w3.org/2001/XMLSchema#float"
+
+        # Patch shaclg to be a MagicMock so we can inspect calls
+        self.shacl.shaclg = MagicMock()
+
+        self.shacl.shacl_add_to_shape = MagicMock()
+
+        # Simulate that the shape does not exist yet
+        self.shacl.shaclg.__contains__.return_value = False
+
+        # Call method
+        self.shacl.add_value_rank_shape(shape_name, tuples, value_rank, array_dimensions, datatype)
+
+        # Check that NodeShape triple was added
+        self.shacl.shaclg.add.assert_any_call(
+            (shape_name, RDF.type, SH.NodeShape)
+        )
+        # Check that shacl_add_to_shape was called
+        self.shacl.shacl_add_to_shape.assert_called_with(
+            shape_name, tuples
+        )
+        # Check that split_uri was called with the correct datatype
+        mock_split_uri.assert_called_with(datatype)
+        # Check that rank_value_to_string was called
+        mock_utils.rank_value_to_string.assert_called_with(value_rank)
+        # Check that SH.message triple was added
+        expected_message = (
+            f"ValueRank constraint for valuerank=Array"
+            f"({value_rank}) with datatype=float and multiplied arraydimensions=6."
+        )
+        self.shacl.shaclg.add.assert_any_call(
+            (URIRef(f"{self.namespace_prefix}shacl/ValueRankShape_Array_float_6"), SH.message, Literal(expected_message))
+        )
+
+    @patch("lib.shacl.split_uri")
+    @patch("lib.shacl.utils")
+    def test_add_value_rank_shape_with_datatype_list(self, mock_utils, mock_split_uri):
+        # Setup
+        mock_utils.rank_value_to_string.return_value = "Scalar"
+        mock_split_uri.return_value = ("http://xsd/", "string")
+        property_bnode = MagicMock()
+        tuples = [(SH.datatype, URIRef("http://www.w3.org/2001/XMLSchema#string"))]
+        value_rank = 0
+        array_dimensions = None
+        datatype = ["http://www.w3.org/2001/XMLSchema#string", "http://other"]
+        shape_name = URIRef(f"{self.namespace_prefix}shacl/ValueRankShape_Scalar_string")
+
+        self.shacl.shaclg = MagicMock()
+        self.shacl.create_shacl_property_name = MagicMock(
+            return_value=shape_name
+        )
+        self.shacl.shacl_add_to_shape = MagicMock()
+        self.shacl.shaclg.__contains__.return_value = False
+
+        self.shacl.add_value_rank_shape(shape_name, tuples, value_rank, array_dimensions, datatype)
+
+        self.shacl.shaclg.add.assert_any_call(
+            (shape_name, RDF.type, SH.NodeShape)
+        )
+        self.shacl.shacl_add_to_shape.assert_called_with(
+            shape_name, tuples
+        )
+        mock_split_uri.assert_called_with(datatype[0])
+        mock_utils.rank_value_to_string.assert_called_with(value_rank)
+        expected_message = (
+            f"ValueRank constraint for valuerank=Scalar"
+            f"({value_rank}) with datatype=string."
+        )
+        self.shacl.shaclg.add.assert_any_call(
+            (shape_name, SH.message, Literal(expected_message))
+        )
+
 if __name__ == "__main__":
     unittest.main()
