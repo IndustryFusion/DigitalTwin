@@ -157,6 +157,10 @@ parse nodeset instance and create ngsi-ld model')
                         'the whole expression).',
                         required=False, default=False,
                         action='store_true')
+    parser.add_argument('-sb', '--semantic-bridge', help='Add Semantic Bridge in JSON-LD to allow convenient '
+                        'mapping back to OWL',
+                        required=False, default=False,
+                        action='store_true')
 
     parsed_args = parser.parse_args(args)
     return parsed_args
@@ -429,6 +433,10 @@ def scan_entity(node, instancetype, id, optional=False):
     prefixed_type = utils.get_prefixed(context_graph, instancetype)
     instance['type'] = prefixed_type
     instance['id'] = node_id
+    if semantic_bridge_enabled:
+        noderef_key = utils.get_prefixed(context_graph, basens['hasNodeRef'])
+        noderef_value = utils.get_prefixed(context_graph, node)
+        instance[noderef_key] = jsonld.get_ngsild_vocab(noderef_value)
     instance['@context'] = [
         context_url
     ]
@@ -645,6 +653,7 @@ if __name__ == '__main__':
     entity_namespace = args.entity_namespace
     parse_properties = args.properties
     value_rank_subshapes_enabled = args.value_rank_subshapes
+    semantic_bridge_enabled = args.semantic_bridge
 
     # create the context_graph
     # Context graph is resolving the context_url and provides just the

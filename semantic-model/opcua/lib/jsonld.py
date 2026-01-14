@@ -270,6 +270,13 @@ class JsonLd:
         }
 
     @staticmethod
+    def get_ngsild_vocab(vocabulary_term):
+        return {
+            'type': 'VocabProperty',
+            'vocab': vocabulary_term
+        }
+
+    @staticmethod
     def get_default_value(datatypes, orig_datatype=None, value_rank=None, array_dimensions=None, g=Graph()):
         datatype = None
         if isinstance(datatypes, list) and len(datatypes) > 0:
