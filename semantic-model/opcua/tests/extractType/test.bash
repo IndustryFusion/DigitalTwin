@@ -36,6 +36,7 @@ if [ "$DEBUG" = "true" ]; then
     DEBUG_CMDLINE="-m debugpy --listen 5678"
 fi
 TESTNODESETS=(
+    test_semantic_bridge.Nodeset2,${EXURI}AlphaType,,,-sb,,${EXURI}
     test_variable_arrays_vrs.NodeSet2,${TESTURI}AlphaType,,,-vrs
     test_variable_arrays.NodeSet2,${TESTURI}AlphaType
     test_pumps_instanceexample,http://opcfoundation.org/UA/Pumps/PumpType,http://yourorganisation.org/InstanceExample/,pumps

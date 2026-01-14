@@ -1,0 +1,38 @@
+[
+    {
+        "type": "http://example.org/BSubType",
+        "id": "http://example.org/testid:i2012",
+        "base:hasNodeRef": {
+            "type": "VocabProperty",
+            "vocab": "http://example.org/nodei2012"
+        },
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "http://example.org/hasMyVariable": {
+            "type": "Property",
+            "value": false
+        }
+    },
+    {
+        "type": "http://example.org/AlphaType",
+        "id": "http://example.org/testid:i2010",
+        "base:hasNodeRef": {
+            "type": "VocabProperty",
+            "vocab": "http://example.org/nodei2010"
+        },
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "http://example.org/hasC": {
+            "type": "Property",
+            "value": 0.0
+        },
+        "http://example.org/hasB": [
+            {
+                "type": "Relationship",
+                "object": "http://example.org/testid:i2012"
+            }
+        ]
+    }
+]

@@ -113,6 +113,11 @@ class TestJsonLd(unittest.TestCase):
         rel = JsonLd.get_ngsild_relationship(rel_obj)
         self.assertEqual(rel, {'type': 'Relationship', 'object': rel_obj})
 
+    def test_get_ngsild_vocab(self):
+        vocab_term = "someTerm"
+        vocab = JsonLd.get_ngsild_vocab(vocab_term)
+        self.assertEqual(vocab, {'type': 'VocabProperty', 'vocab': vocab_term})
+
     def test_get_default_value_scalars(self):
         # integer
         self.assertEqual(JsonLd.get_default_value([XSD.integer]), 0)
