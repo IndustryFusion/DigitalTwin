@@ -393,7 +393,7 @@
             {
                 "type": "Relationship",
                 "object": "http://yourorganisation.org/InstanceExample/testid:i5019",
-                "datasetId": "urn:iff:datasetId:Sensor1"
+                "datasetId": "http://yourorganisation.org/InstanceExample/hasSensor1"
             }
         ],
         "pumps:hasSpeed": {
