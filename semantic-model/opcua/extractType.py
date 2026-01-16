@@ -527,7 +527,7 @@ def scan_entity_recursive(node, id, instance, node_id, o, type=None, is_property
 will flag this.")
             datasetId = "@none"
         else:
-            datasetId = f'{datasetid_urn}:{original_attributename}'
+            datasetId = rdfutils.get_semantic_bridge(g, node, o)
 
     if rdfutils.isObjectNodeClass(nodeclass):
         shacl_rule['is_property'] = False
