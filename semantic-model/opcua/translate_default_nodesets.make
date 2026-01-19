@@ -212,4 +212,5 @@ $(foreach t, $(TARGET_NAMES), \
 # -----------------------------------------------------------------------------
 clean:
 	@echo "Cleaning generated .ttl files..."
-	rm -f *.ttl
+	@echo deleting $(ALL_TARGETS)
+	rm -f $(ALL_TARGETS)
