@@ -49,7 +49,7 @@ Now, having `core.ttl` and `example.ttl` finally the instance description in `NG
 `-i` the prefix for the object URNs (must start with urn, e.g. `urn:test)
 
 ```
-python3 ./extractType.py -t http://my.test/AlphaType -n http://demo.machine/  example.ttl
+python3 ./extractType.py -t http://example.org/AlphaType -n http://demo.machine/  example.ttl
 ```
 
 As a result, the following files are created:
