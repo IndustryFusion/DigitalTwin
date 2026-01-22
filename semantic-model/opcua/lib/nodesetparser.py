@@ -498,7 +498,9 @@ Did you forget to import it?")
         elif idt == 's':
             identifierType = self.rdf_ns['base']['stringID']
         elif idt == 'b':
-            identifierType = self.rdf_ns['base']['opqueID']
+            identifierType = self.rdf_ns['base']['opaqueID']
+        else:
+            raise ValueError(f'Unknown identifier type in NodeId: {nodeid}')
         identifier = str(i_part.split('=', 1)[1])
         return ns_index, identifier, identifierType
 
@@ -578,62 +580,66 @@ Did you forget to import it?")
             self.g.add((classiri, self.rdf_ns['base']['hasArrayDimensions'], list_start))
 
     def get_value(self, node, classiri, xml_ns):
+        def get_single_value(item_node):
+            tag = item_node.tag
+            basic_type_found = bool([ele for ele in basic_types if (ele in tag)])
+            basic_json_type = None
+            if basic_type_found:
+                basic_json_type = [value for key, value in basic_types_map.items() if key in tag][0]
+            if basic_type_found:
+                data = self.data_schema.to_dict(item_node, namespaces=xml_ns, indent=4)
+                if '$' in data:
+                    result = data["$"]
+                    result = utils.convert_to_json_type(result, basic_json_type)
+                    return Literal(result)
+                else:
+                    return None
+            else:  # does it contain a complex structure
+                data = self.data_schema.to_dict(item_node, namespaces=xml_ns, indent=4)
+                if "}LocalizedText" in tag:
+                    text = data.get('xsd:Text')
+                    locale = data.get('xsd:Locale')
+                    if text is not None:
+                        result = Literal(text, lang=locale)
+                        return Literal(result)
+                elif "}NodeId" in tag:
+                    identifier = data['xsd:Identifier']
+                    ns_index, node_id, idtype = self.parse_nodeid(identifier)
+                    ns = Namespace(self.opcua_ns[ns_index])
+                    result = self.nodeId_to_iri(ns, node_id, idtype)
+                    return result
+                else:
+                    json_obj = {}
+                    for k, v in data.items():
+                        if "xsd:" in k:
+                            json_obj[k] = v
+                    if len(json_obj.keys()) > 0:
+                        result = Literal(json.dumps(json_obj), datatype=RDF.JSON)
+                        return Literal(result)
         result = None
         value = node.find('opcua:Value', xml_ns)
         if value is not None:
             for children in value:
                 tag = children.tag
-                basic_type_found = bool([ele for ele in basic_types if (ele in tag)])
-                basic_json_type = None
-                if basic_type_found:
-                    basic_json_type = [value for key, value in basic_types_map.items() if key in tag][0]
                 if 'ListOf' in tag:
                     # figure out the element tag (e.g. 'ListOfString' → 'String')
                     items = []
                     for item_node in children:
                         # if it's a primitive type, extract its literal value
-                        if any(bt in item_node.tag for bt in basic_types):
-                            # reuse your existing basic logic
-                            basic_json_type = next(v for k, v in basic_types_map.items() if k in item_node.tag)
-                            data = self.data_schema.to_dict(item_node, namespaces=xml_ns, indent=4)
-                            raw = data.get('$', None)
-                            if raw is not None:
-                                items.append(utils.convert_to_json_type(raw, basic_json_type))
-                        else:
-                            # complex type: turn it into a JSON object
-                            data = self.data_schema.to_dict(item_node, namespaces=xml_ns, indent=4)
-                            # strip off any attributes, only keep child elements
-                            obj = {k: v for k, v in data.items() if not k.startswith('@')}
-                            items.append(obj)
+                        result = get_single_value(item_node)
+                        if result is not None:
+                            items.append(result)
                     # create an RDF list of Python objects (literals or JSON-serialized)
                     created_list = utils.create_list(
                         self.g,
-                        [Literal(json.dumps(elem)) if isinstance(elem, dict) else Literal(elem) for elem in items],
-                        lambda x: x
+                        [Literal(json.dumps(elem)) if isinstance(elem, dict) else elem for elem in items],
+                        None
                     )
                     self.g.add((classiri, self.rdf_ns['base']['hasValueList'], created_list))
-                elif basic_type_found:
-                    data = self.data_schema.to_dict(children, namespaces=xml_ns, indent=4)
-                    if '$' in data:
-                        result = data["$"]
-                        result = utils.convert_to_json_type(result, basic_json_type)
-                        self.g.add((classiri, self.rdf_ns['base']['hasValue'], Literal(result)))
-                else:  # does it contain a complex structure
-                    data = self.data_schema.to_dict(children, namespaces=xml_ns, indent=4)
-                    if "LocalizedText" in tag:
-                        text = data.get('xsd:Text')
-                        locale = data.get('xsd:Locale')
-                        if text is not None:
-                            result = Literal(text, lang=locale)
-                            self.g.add((classiri, self.rdf_ns['base']['hasValue'], Literal(result)))
-                    else:
-                        json_obj = {}
-                        for k, v in data.items():
-                            if "xsd:" in k:
-                                json_obj[k] = v
-                        if len(json_obj.keys()) > 0:
-                            result = Literal(json.dumps(json_obj), datatype=RDF.JSON)
-                            self.g.add((classiri, self.rdf_ns['base']['hasValue'], Literal(result)))
+                else:
+                    result = get_single_value(children)
+                    if result is not None:
+                        self.g.add((classiri, self.rdf_ns['base']['hasValue'], result))
 
     def references_ignore(self, id, ns):
         ignored_components = [

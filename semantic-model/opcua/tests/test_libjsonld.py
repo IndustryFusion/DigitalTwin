@@ -102,7 +102,7 @@ class TestJsonLd(unittest.TestCase):
 
     def test_get_ngsild_property_iri_and_literal(self):
         iri_value = URIRef("http://example.org/iri")
-        prop = JsonLd.get_ngsild_property(iri_value, isiri=True)
+        prop = JsonLd.get_ngsild_property(iri_value)
         self.assertEqual(prop, {'type': 'Property', 'value': {'@id': str(iri_value)}})
         literal_value = "some string"
         prop2 = JsonLd.get_ngsild_property(literal_value)

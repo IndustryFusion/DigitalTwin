@@ -154,17 +154,6 @@ class JsonLd:
         with open(filename, 'w') as f:
             json.dump(self.instances, f, ensure_ascii=False, indent=4)
 
-    # def extract_namespaces(self, graph):
-    #     return {
-    #         str(prefix): {
-    #             '@id': str(namespace),
-    #             '@prefix': True
-    #         } for prefix, namespace in graph.namespaces()
-    #     }
-
-    # def append(self, instance):
-    #     self.instances.append(instance)
-
     def dump_context(self, filename, namespaces):
         jsonld_context = {
             "@context": [
@@ -200,7 +189,8 @@ class JsonLd:
                         opcuans['DecimalString'],
                         opcuans['NormalizedString'],
                         opcuans['SemanticVersionString'],
-                        opcuans['UriString']]
+                        opcuans['UriString'],
+                        opcuans['UtcTime']]
         mixed_numeric_types = [opcuans['Number']]
         if data_type in boolean_types:
             return [XSD.boolean], None
@@ -216,10 +206,12 @@ class JsonLd:
             return [XSD.dateTime], None
         if is_subclass(g, data_type, opcuans['Enumeration']):
             return [XSD.enumeration], None
+        if data_type == opcuans['NodeId']:
+            return [opcuans['BaseNodeClass']], None
         return [RDF.JSON], None
 
     @staticmethod
-    def get_ngsild_property(value, isiri=False, datatype=None):
+    def get_ngsild_property(value, datatype=None):
         is_list = False
         if value == RDF.nil:
             value = []
@@ -234,6 +226,15 @@ class JsonLd:
                     'json': value
                 }
         if isinstance(value, list) or is_list:
+            new_list = []
+            for item in value:
+                if isinstance(item, URIRef):
+                    new_list.append({'@id': str(item)})
+                elif isinstance(item, Literal):
+                    new_list.append(item.toPython())
+                else:
+                    new_list.append(item)
+            value = new_list
             if datatype and RDF.JSON in datatype:
                 return {
                     str(NGSILD['hasValueList']): {
@@ -248,19 +249,14 @@ class JsonLd:
                     'type': 'ListProperty',
                     "valueList": value
                 }
-
-        if isiri:
-            return {
-                'type': 'Property',
-                'value': {
-                    '@id': str(value)
-                }
-            }
-        else:
-            return {
-                'type': 'Property',
-                'value': value
-            }
+        if isinstance(value, Literal):
+            value = value.toPython()
+        if isinstance(value, URIRef):
+            value = {'@id': str(value)}
+        return {
+            'type': 'Property',
+            'value': value
+        }
 
     @staticmethod
     def get_ngsild_relationship(relationship):

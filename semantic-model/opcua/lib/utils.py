@@ -103,14 +103,17 @@ def isNodeId(nodeId):
     return 'i=' in nodeId or 'g=' in nodeId or 's=' in nodeId
 
 
-def collection_to_list(collection, datagraph: Graph):
+def collection_to_list(collection, datagraph: Graph, scalar_conversion=True):
     """Convert an RDF collection to a Python list."""
     if collection is None:
         return None
     ad = Collection(datagraph, collection)
     col_list = []
     if len(ad) > 0:
-        col_list = [item.toPython() for item in ad]
+        if scalar_conversion:
+            col_list = [item.toPython() for item in ad]
+        else:
+            col_list = [item for item in ad]
     return col_list
 
 
@@ -362,7 +365,10 @@ def file_path_to_uri(file_path):
 def create_list(g, arr, datatype):
     if len(arr) == 0:
         return RDF.nil
-    literal_list = [Literal(datatype(item)) for item in arr]
+    if datatype is None:
+        literal_list = arr
+    else:
+        literal_list = [Literal(datatype(item)) for item in arr]
     list_start = BNode()
     Collection(g, list_start, literal_list)
     return list_start

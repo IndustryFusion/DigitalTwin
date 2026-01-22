@@ -451,12 +451,17 @@ class Shacl:
             shacl_rule['isAbstract'] = is_abstract
             shacl_rule['datatype'] = shacl_type
             shacl_rule['pattern'] = shacl_pattern
-            if base_data_type != self.opcuans['Enumeration']:
-                shacl_rule['is_iri'] = False
-                shacl_rule['contentclass'] = None
-            else:
+
+            if data_type == self.opcuans['NodeId']:
+                shacl_rule['is_iri'] = True
+                shacl_rule['contentclass'] = shacl_type[0]
+                shacl_rule['datatype'] = data_type
+            elif base_data_type == self.opcuans['Enumeration']:
                 shacl_rule['is_iri'] = True
                 shacl_rule['contentclass'] = data_type
+            else:
+                shacl_rule['is_iri'] = False
+                shacl_rule['contentclass'] = None
         else:
             shacl_rule['is_iri'] = False
             shacl_rule['contentclass'] = None

@@ -19,7 +19,7 @@ import urllib
 import lib.jsonld as libjsonld
 from lib.utils import warnings, print_warning
 from collections import defaultdict
-from rdflib import Graph, Namespace, URIRef
+from rdflib import Graph, Namespace, URIRef, BNode
 from rdflib.namespace import OWL, RDF, SH
 import argparse
 import lib.utils as utils
@@ -352,7 +352,8 @@ a loop.")
                                                   value_rank=shacl_rule.get('value_rank'),
                                                   array_dimensions=shacl_rule.get('array_dimensions'),
                                                   reftype=reftype)
-        e.add_enum_class(g, shacl_rule['contentclass'])
+        if shacl_rule['datatype'] != opcuans['NodeId']:
+            e.add_enum_class(g, shacl_rule['contentclass'])
         components_found = scan_type(o, classtype, shacl_node)
     return has_components
 
@@ -561,8 +562,16 @@ will flag this.")
                 if not shacl_rule['is_iri']:
                     value = jsonld.get_value(g, value, shacl_rule['datatype'])
                 else:
-                    value = e.get_contentclass(shacl_rule['contentclass'], value)
-                    value = value.toPython()
+                    # IRI but no Relationship
+                    # Currently this means two types: ENUMS and NodeIds
+                    # ENUMs need to be queried to translated to IRIs
+                    # NodeIDs take directly the IRI from value
+                    if shacl_rule['datatype'] == opcuans['NodeId']:
+                        e.add_all_objects_of_type(g, value)
+                    else:
+                        value = e.get_contentclass(shacl_rule['contentclass'], value)
+                    if isinstance(value, BNode):
+                        value = utils.collection_to_list(value, g, scalar_conversion=False)
             else:
                 if not shacl_rule['is_iri']:
                     if shacl_rule['isAbstract']:
@@ -588,7 +597,7 @@ will flag this.")
                 warnmsg = f"IRI value is not found for {full_attribute_name} in node {node}. \
 Check whether it has a proper type definition. Most likely this attribute is not defined in the type definition."
                 print_warning('no_iri_value', warnmsg)
-            instance[f'{full_attribute_name}'] = jsonld.get_ngsild_property(value, isiri=True)
+            instance[f'{full_attribute_name}'] = jsonld.get_ngsild_property(value)
         if type is not None:
             minshaclg.copy_property_from_shacl(shaclg, type, full_attribute_name)
         if debug:
@@ -781,6 +790,7 @@ added. This will potentially create validation issues."
     if entitiesname is not None:
         result = g.query(query_subclasses)
         e.add_subclasses(result)
+        e.add_subclasses_recursive(g, opcuans['BaseNodeClass'])
         e.serialize(destination=entitiesname)
     if shaclname is not None:
         shaclg.serialize(destination=shaclname)
