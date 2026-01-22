@@ -109,11 +109,6 @@ class TestEntity(unittest.TestCase):
         # Verify that the result is None.
         self.assertIsNone(result)
 
-        # Verify that the warning message was printed.
-        mock_print.assert_called_once_with(
-            f'Warning: no instance found for class {contentclass} with value {value}'
-        )
-
     def test_get_default_contentclass_found(self):
         """Test get_default_contentclass when a default instance is found."""
         dummy_instance = URIRef("http://example.org/default_instance")
@@ -210,6 +205,49 @@ class TestEntity(unittest.TestCase):
         entity_triples = list(self.entity_instance.get_graph())
         self.assertIn(triple1, entity_triples)
         self.assertIn(triple2, entity_triples)
+
+    def test_add_subclasses_recursive(self):
+        """Test that add_subclasses_recursive correctly adds subclasses to the RDF graph."""
+        # Create a temporary graph with subclass relationships.
+        temp_graph = Graph()
+        parent_class = URIRef("http://example.org/parentClass")
+        subclass1 = URIRef("http://example.org/subclass1")
+        subclass2 = URIRef("http://example.org/subclass2")
+
+        temp_graph.add((subclass1, RDFS.subClassOf, parent_class))
+        temp_graph.add((subclass2, RDFS.subClassOf, subclass1))
+
+        # Call add_subclasses_recursive to add subclasses of parent_class.
+        self.entity_instance.add_subclasses_recursive(temp_graph, parent_class)
+
+        # Retrieve the triples from the internal RDF graph.
+        entity_triples = list(self.entity_instance.get_graph())
+        self.assertIn((subclass1, RDF.type, OWL.Class), entity_triples)
+        self.assertIn((subclass1, RDF.type, OWL.NamedIndividual), entity_triples)
+        self.assertIn((subclass1, RDFS.subClassOf, parent_class), entity_triples)
+        self.assertIn((subclass2, RDF.type, OWL.Class), entity_triples)
+        self.assertIn((subclass2, RDF.type, OWL.NamedIndividual), entity_triples)
+        self.assertIn((subclass2, RDFS.subClassOf, subclass1), entity_triples)
+
+    def test_add_all_objects_of_type(self):
+        """Test that add_all_objects_of_type correctly adds objects of a given type to the RDF graph."""
+        # Create a temporary graph with objects of a specific type.
+        temp_graph = Graph()
+        obj_type = URIRef("http://example.org/SomeType")
+        obj1 = URIRef("http://example.org/obj1")
+        obj2 = URIRef("http://example.org/obj2")
+        self.entity_instance.opcuans = Namespace("http://example.org/opcua/")
+
+        temp_graph.add((obj1, RDF.type, obj_type))
+        temp_graph.add((obj2, RDF.type, obj_type))
+
+        # Call add_all_objects_of_type to add objects of obj_type.
+        self.entity_instance.add_all_objects_of_type(temp_graph, obj1)
+
+        # Retrieve the triples from the internal RDF graph.
+        entity_triples = list(self.entity_instance.get_graph())
+        self.assertIn((obj1, RDF.type, obj_type), entity_triples)
+        self.assertIn((obj2, RDF.type, obj_type), entity_triples)
 
 if __name__ == "__main__":
     unittest.main()

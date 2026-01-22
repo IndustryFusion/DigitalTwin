@@ -1,6 +1,6 @@
 [
     {
-        "type": "http://my.test/BType",
+        "type": "test:BType",
         "id": "http://my.test/testid:i2012",
         "@context": [
             "http://localhost:8099/context.jsonld"
@@ -23,12 +23,8 @@
             ]
         },
         "test:hasMyVariable15": {
-            "https://uri.etsi.org/ngsi-ld/hasValueList": {
-                "@list": {
-                    "@value": [],
-                    "@type": "@json"
-                }
-            }
+            "type": "ListProperty",
+            "valueList": []
         },
         "test:hasMyVariable14": {
             "type": "ListProperty",
@@ -79,24 +75,26 @@
             "valueList": []
         },
         "test:hasMyVariable16": {
-            "https://uri.etsi.org/ngsi-ld/hasValueList": {
-                "@list": {
-                    "@value": [
-                        {
-                            "xsd:Identifier": "ns=1;i=1001"
-                        },
-                        {
-                            "xsd:Identifier": "ns=2;s=TemperatureSensor"
-                        },
-                        {
-                            "xsd:Identifier": "ns=3;g=123e4567-e89b-12d3-a456-426614174000"
-                        },
-                        {
-                            "xsd:Identifier": "ns=4;x=0A0B0C0D"
-                        }
-                    ],
-                    "@type": "@json"
+            "type": "ListProperty",
+            "valueList": [
+                {
+                    "@id": "http://my.test/nodei1001"
+                },
+                {
+                    "@id": "http://my.test/nodesTemperatureSensor"
+                },
+                {
+                    "@id": "http://my.test/nodeg123e4567-e89b-12d3-a456-426614174000"
+                },
+                {
+                    "@id": "http://my.test/nodeb0A0B0C0D"
                 }
+            ]
+        },
+        "test:hasMyVariable17": {
+            "type": "Property",
+            "value": {
+                "@id": "http://my.test/nodei1003"
             }
         },
         "test:hasMyVariable3": {
@@ -116,7 +114,7 @@
         }
     },
     {
-        "type": "http://my.test/AlphaType",
+        "type": "test:AlphaType",
         "id": "http://my.test/testid:i2010",
         "@context": [
             "http://localhost:8099/context.jsonld"

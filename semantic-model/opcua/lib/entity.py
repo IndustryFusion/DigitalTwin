@@ -14,10 +14,14 @@
 # limitations under the License.
 #
 
-from rdflib import Graph, Namespace, Literal, URIRef
+import os
+from rdflib import Graph, Namespace, Literal, URIRef, BNode
 from rdflib.namespace import OWL, RDF, RDFS
-from lib.utils import NGSILD
+from lib.utils import NGSILD, collection_to_list
+import logging
 
+logging.basicConfig(level=os.getenv('LOG_LEVEL', 'INFO').upper())
+logger = logging.getLogger(__name__)
 
 query_enumclass = """
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
@@ -95,6 +99,52 @@ class Entity:
         self.e.add((type, RDF.type, OWL.NamedIndividual))
         self.e.add((type, RDFS.subClassOf, self.opcuans['BaseObjectType']))
 
+    def add_subclasses_recursive(self, g, type):
+        bindings = {'c': type}
+        result = g.query("""
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        SELECT ?subclass ?parent WHERE {
+            ?subclass rdfs:subClassOf+ ?c .
+            ?subclass rdfs:subClassOf ?parent .
+        }""", initBindings=bindings,
+                         initNs={'base': self.basens, 'opcua': self.opcuans})
+        for row in result:
+            self.e.add((row.subclass, RDF.type, OWL.Class))
+            self.e.add((row.subclass, RDF.type, OWL.NamedIndividual))
+            self.e.add((row.subclass, RDFS.subClassOf, row.parent))
+
+    def add_all_objects_of_type(self, g, obj):
+        if obj == RDF.nil:
+            return
+        if isinstance(obj, BNode):
+            objects = collection_to_list(obj, g, scalar_conversion=False)
+        else:
+            objects = [obj]
+        # Iterate over all objects in the list
+        # collect all potential target nodes for NodeId references
+        # after the loop, add them to the entity graph
+        unique_onc = set()
+        for o in objects:
+            unique_onc.add(o)
+            logger.info(f"Adding all potential target nodes for NodeId reference of type {o}")
+            bindings = {'nodeclass': o}
+            result = g.query("""
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            SELECT ?onc ?type WHERE {
+                ?nodeclass a ?type .
+                FILTER NOT EXISTS {?type rdfs:subClassOf+ opcua:BaseNodeClass . }
+                ?onc a ?type .
+                FILTER(?nodeclass != ?onc) .
+            }""", initBindings=bindings, initNs={'base': self.basens, 'opcua': self.opcuans})
+            # Collect all unique rows in a set to avoid duplicates
+
+            for row in result:
+                unique_onc.add(row.onc)
+            # Add all triples for each unique onc after collecting
+        for onc in unique_onc:
+            for (s, p, o) in g.triples((onc, None, None)):
+                self.e.add((s, p, o))
+
     def add_subclasses(self, classes):
         self.e += classes
 
@@ -117,7 +167,7 @@ class Entity:
         if contentclass is None or not isinstance(contentclass, URIRef):
             return
         bindings = {'c': contentclass}
-        print(f'Adding type {contentclass} to knowledge.')
+        logger.info(f'Adding type {contentclass} to knowledge.')
         result = graph.query(query_enumclass, initBindings=bindings,
                              initNs={'base': self.basens, 'opcua': self.opcuans})
         self.e += result
@@ -130,7 +180,7 @@ class Entity:
         if len(result) > 0:
             foundclass = list(result)[0].instance
         if foundclass is None:
-            print(f'Warning: no instance found for class {contentclass} with value {value}')
+            logger.warning(f'Warning: no instance found for class {contentclass} with value {value}')
         return foundclass
 
     def get_default_contentclass(self, contentclass):

@@ -115,6 +115,7 @@
       <Reference ReferenceType="HasComponent">ns=1;i=1017</Reference>
       <Reference ReferenceType="HasComponent">ns=1;i=1018</Reference>
       <Reference ReferenceType="HasComponent">ns=1;i=1019</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1020</Reference>
     </References>
   </UAObject>
   <UAVariable NodeId="ns=1;i=1004" BrowseName="1:MyVariable" DataType="Int32" ValueRank="1" ArrayDimensions="2">
@@ -213,6 +214,12 @@
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
     </References>
   </UAVariable>
+  <UAVariable NodeId="ns=1;i=1020" BrowseName="1:MyVariable17" DataType="NodeId" ValueRank="-2">
+    <DisplayName>Variable17 of B-object</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+    </References>
+  </UAVariable>
 
   <UAVariable NodeId="ns=1;i=2001" BrowseName="1:C" DataType="i=11">
     <DisplayName>Variable of AlphaType</DisplayName>
@@ -271,6 +278,7 @@
       <Reference ReferenceType="HasComponent">ns=1;i=2026</Reference>
       <Reference ReferenceType="HasComponent">ns=1;i=2027</Reference>
       <Reference ReferenceType="HasComponent">ns=1;i=2028</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2029</Reference>
     </References>
   </UAObject>
   <UAVariable NodeId="ns=1;i=2013" BrowseName="1:MyVariable" DataType="Int32">
@@ -446,15 +454,44 @@
         <uax:Identifier>ns=1;i=1001</uax:Identifier>
       </uax:NodeId>
       <uax:NodeId>
-        <uax:Identifier>ns=2;s=TemperatureSensor</uax:Identifier>
+        <uax:Identifier>ns=1;s=TemperatureSensor</uax:Identifier>
       </uax:NodeId>
       <uax:NodeId>
-        <uax:Identifier>ns=3;g=123e4567-e89b-12d3-a456-426614174000</uax:Identifier>
+        <uax:Identifier>ns=1;g=123e4567-e89b-12d3-a456-426614174000</uax:Identifier>
       </uax:NodeId>
       <uax:NodeId>
-        <uax:Identifier>ns=4;x=0A0B0C0D</uax:Identifier>
+        <uax:Identifier>ns=1;b=0A0B0C0D</uax:Identifier>
       </uax:NodeId>
     </uax:ListOfNodeIds>
     </Value>
+  </UAVariable>
+    <UAVariable NodeId="ns=1;i=2029" BrowseName="1:MyVariable17" DataType="NodeId">
+    <DisplayName>Scalar or array Variable</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=200</Reference>
+    </References>
+    <Value>
+      <uax:NodeId>
+        <uax:Identifier>ns=1;i=1003</uax:Identifier>
+      </uax:NodeId>
+    </Value>
+  </UAVariable>
+  <UAVariable NodeId="ns=1;s=TemperatureSensor" BrowseName="1:MyStringTestNode">
+    <DisplayName>Scalar or array Variable</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=200</Reference>
+    </References>
+  </UAVariable>
+  <UAVariable NodeId="ns=1;g=123e4567-e89b-12d3-a456-426614174000" BrowseName="1:MyGuidTestNode">
+    <DisplayName>Scalar or array Variable</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=200</Reference>
+    </References>
+  </UAVariable>
+  <UAVariable NodeId="ns=1;b=0A0B0C0D" BrowseName="1:MyOpaqueTestNode">
+    <DisplayName>Scalar or array Variable</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=200</Reference>
+    </References>
   </UAVariable>
 </UANodeSet>
