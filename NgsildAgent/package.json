@@ -19,7 +19,6 @@
     "mqtt": "^5.3.4",
     "node-gyp": "^12.1.0",
     "sqlite3": "npm:@appthreat/sqlite3@^6.0.9",
-    "tar": "^7.5.3",
     "validate-iri": "^1.0.1",
     "winston": "^3.7.2"
   },
