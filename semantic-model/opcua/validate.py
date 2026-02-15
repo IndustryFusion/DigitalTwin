@@ -53,6 +53,7 @@ data-file name (.jsonld, .ttl).")
                         help='Only apply sparql-rules')
     parser.add_argument('-ns', '--no_sparql', required=False, action='store_true',
                         help='Only apply sparql-rules')
+    parser.add_argument('-me', '--merge-entity', required=False, help="Merge entity graph into the data graph (experimental)", action='store_true')
 
     args = parser.parse_args()
     # Load RDF data (Data Graph)
@@ -80,7 +81,14 @@ data-file name (.jsonld, .ttl).")
         # instance validation must be strict
         # There should be no mix between ontologies and instances
         args.strict = True
-        # Dataformat is json-ld if
+        # Experimental: load all owl imports of the entity files
+        if args.merge_entity is True:
+            entityontology = next(extra_graph.subjects(RDF.type, OWL.Ontology), None)
+            if entityontology is not None:
+                imports = extra_graph.objects(entityontology, OWL.imports)
+                ontology_loader = OntologyLoader(True)
+            ontology_loader.init_imports(imports)
+            extra_graph += ontology_loader.get_graph()
     elif args.mode == 'ontology':
         mainontology = next(data_graph.subjects(RDF.type, OWL.Ontology), None)
         if mainontology and not args.no_imports:
@@ -93,6 +101,9 @@ data-file name (.jsonld, .ttl).")
         print("No valid mode selected.")
         sys.exit(1)
 
+    if args.merge_entity is True:
+        data_graph += extra_graph
+        extra_graph = None
     validation = Validation(shapes_graph, data_graph, extra_graph, args.strict,
                             args.sparql_only, args.no_sparql, args.debug)
     # Run SHACL validation
