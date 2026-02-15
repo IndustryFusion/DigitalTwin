@@ -18,20 +18,28 @@ if [ -z "${SELF_HOSTED_RUNNER}" ]; then
     SUDO=sudo
 fi
 
-# Patch Coredns to add keyloak.local
+# Create custom CoreDNS ConfigMap
 # ----------------------------------
-kubectl -n kube-system get cm/coredns -o jsonpath=\{".data.Corefile"\} > /tmp/Corefile || exit 1
-kubectl -n kube-system get cm/coredns -o jsonpath=\{".data.NodeHosts"\} > /tmp/NodeHosts || exit 1
-
 while [ -z "$INGRESS_IP" ]; do
     INGRESS_IP=$(kubectl -n iff get ingress/keycloak-iff-ingress -o jsonpath=\{".status.loadBalancer.ingress[0].ip"\})
     echo waiting for ingress to provide IP-Address
     sleep 1
 done
-echo "$INGRESS_IP" keycloak.local >> /tmp/NodeHosts || exit 1
 
-kubectl -n kube-system create cm coredns  --from-file=/tmp/NodeHosts --from-file=/tmp/Corefile --dry-run=client -o yaml | kubectl replace -f -
-kubectl -n kube-system patch cm coredns -p '{"immutable":true}'
+kubectl apply -f - <<EOF
+apiVersion: v1
+data:
+  customhosts.override: |
+    template IN A {
+      match (keycloak|ngsild|mqtt|alerta|pgrest)\.local\.$
+      answer "{{ .Name }} 60 IN A $INGRESS_IP"
+      fallthrough
+    }
+kind: ConfigMap
+metadata:  
+  name: coredns-custom
+  namespace: kube-system
+EOF
 # Restart coredns
 # ---------------
 COREDNS_POD=$(kubectl -n kube-system get pod --selector=k8s-app=kube-dns -o jsonpath=\{".items[0].metadata.name"\})
