@@ -179,10 +179,10 @@ if [ "$LOCAL" = "true" ]; then
   echo selected local image for flink operator: ${FLINK_OPERATOR_IMAGE_REGISTRY}
 fi
 if [ "$OFFLINE" = "true" ]; then
-  ( cd ${OFFLINE_DIR}/flink-kubernetes-operator && helm -n ${NAMESPACE} upgrade --install flink-kubernetes-operator flink-kubernetes-operator-1.11.0-helm.tgz \
+  ( cd ${OFFLINE_DIR}/flink-kubernetes-operator && helm -n ${NAMESPACE} upgrade --install flink-kubernetes-operator flink-kubernetes-operator-1.12.1-helm.tgz \
       --set image.repository="${FLINK_OPERATOR_IMAGE_REGISTRY}/flink-operator" --set image.tag="${DOCKER_TAG}" )
 else
-  helm repo add flink-kubernetes-operator https://downloads.apache.org/flink/flink-kubernetes-operator-1.11.0
+  helm repo add flink-kubernetes-operator https://downloads.apache.org/flink/flink-kubernetes-operator-1.12.1
   helm repo update
   helm -n ${NAMESPACE} install flink-kubernetes-operator flink-kubernetes-operator/flink-kubernetes-operator --set image.repository="${FLINK_OPERATOR_IMAGE_REGISTRY}/flink-operator" --set image.tag="${DOCKER_TAG}"
 
