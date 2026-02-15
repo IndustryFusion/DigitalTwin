@@ -114,5 +114,5 @@ wget -O- https://github.com/strimzi/strimzi-kafka-operator/releases/download/${S
 ( cd ${OFFLINE_DIR} && rm -rf postgres-operator && git clone https://github.com/zalando/postgres-operator.git && cd postgres-operator && git checkout ${POSTGRES_OPERATOR_VERSION} )
 ( cd ${OFFLINE_DIR} && rm -rf helm-charts && git clone https://github.com/vmware-tanzu/helm-charts.git && cd helm-charts && git checkout ${VELERO_HELM_VERSION})
 ( cd ${OFFLINE_DIR} && rm -rf Reloader && git clone https://github.com/stakater/Reloader.git && cd Reloader && git checkout ${RELOADER_HELM_VERSION})
-( cd ${OFFLINE_DIR} && rm -rf kubernetes-flink-operator && wget -r --no-parent -e robots=off https://downloads.apache.org/flink/flink-kubernetes-operator-1.11.0/ && 
+( cd ${OFFLINE_DIR} && rm -rf kubernetes-flink-operator && wget -r --no-parent -e robots=off https://downloads.apache.org/flink/flink-kubernetes-operator-1.14.0/ && 
   mv downloads.apache.org/flink/flink-kubernetes-operator-* flink-kubernetes-operator)

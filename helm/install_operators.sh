@@ -119,6 +119,7 @@ printf -- "------------------------\033[0m\n"
 if [ "$OFFLINE" = "true" ]; then
   ( cd ${OFFLINE_DIR}/postgres-operator && helm -n iff upgrade --install postgres-operator ./charts/postgres-operator --set image.registry=${EXT_REGISTRY3} --set configGeneral.docker_image=${EXT_REGISTRY4}/zalando/spilo-15:2.1-p9)
 else
+  rm -rf postgres-operator
   git clone https://github.com/zalando/postgres-operator.git
   ( cd postgres-operator && git fetch && git checkout ${POSTGRES_OPERATOR_VERSION} && helm -n iff upgrade --install postgres-operator ./charts/postgres-operator )
 fi
@@ -179,10 +180,10 @@ if [ "$LOCAL" = "true" ]; then
   echo selected local image for flink operator: ${FLINK_OPERATOR_IMAGE_REGISTRY}
 fi
 if [ "$OFFLINE" = "true" ]; then
-  ( cd ${OFFLINE_DIR}/flink-kubernetes-operator && helm -n ${NAMESPACE} upgrade --install flink-kubernetes-operator flink-kubernetes-operator-1.11.0-helm.tgz \
+  ( cd ${OFFLINE_DIR}/flink-kubernetes-operator && helm -n ${NAMESPACE} upgrade --install flink-kubernetes-operator flink-kubernetes-operator-1.14.0-helm.tgz \
       --set image.repository="${FLINK_OPERATOR_IMAGE_REGISTRY}/flink-operator" --set image.tag="${DOCKER_TAG}" )
 else
-  helm repo add flink-kubernetes-operator https://downloads.apache.org/flink/flink-kubernetes-operator-1.11.0
+  helm repo add flink-kubernetes-operator https://downloads.apache.org/flink/flink-kubernetes-operator-1.14.0
   helm repo update
   helm -n ${NAMESPACE} install flink-kubernetes-operator flink-kubernetes-operator/flink-kubernetes-operator --set image.repository="${FLINK_OPERATOR_IMAGE_REGISTRY}/flink-operator" --set image.tag="${DOCKER_TAG}"
 
