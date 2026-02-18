@@ -53,6 +53,7 @@
     </Value>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference> <!-- i=63 is the NodeId for BaseDataVariableType -->
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAVariable>
 </UANodeSet>

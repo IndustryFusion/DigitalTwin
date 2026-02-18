@@ -15,6 +15,7 @@
 # limitations under the License.
 #
 import sys
+import os
 import urllib
 import lib.jsonld as libjsonld
 from lib.utils import warnings, print_warning
@@ -28,6 +29,11 @@ from lib.bindings import Bindings
 from lib.jsonld import JsonLd
 from lib.entity import Entity
 from lib.shacl import Shacl
+import logging
+
+logging.basicConfig(level=os.getenv('LOG_LEVEL', 'INFO').upper())
+logger = logging.getLogger(__name__)
+
 
 warnings.filterwarnings("ignore", message=".*anyType is not defined in namespace XSD.*")
 attribute_prefix = utils.ATTRIBUTE_PREFIX
@@ -100,8 +106,12 @@ parse nodeset instance and create ngsi-ld model')
 
     parser.add_argument('instance', help='Path to the instance nodeset2 file.')
     parser.add_argument('-t', '--type',
-                        help='Type of root object, e.g. http://opcfoundation.org/UA/Pumps/',
+                        help='Type of root object to be extracted, e.g. http://opcfoundation.org/UA/Pumps/',
                         required=False)
+    parser.add_argument('-so', '--shacl-only', help='Only create SHACL shapes without JSON-LD instances.',
+                        required=False, action='store_true')
+    parser.add_argument('-ta', '--type-all', help='Extract all found ObjectTypes of the mainontologies namespace',
+                        required=False, action='store_true')
     parser.add_argument('-j', '--jsonld',
                         help='Filename of jsonld output file',
                         required=False,
@@ -235,7 +245,7 @@ def check_variable_consistency(shapenode, attribute_path, classtype):
 
 
 def scan_type(node, instancetype, shape_node=None):
-
+    logger.debug('Scanning type: %s with node %s', instancetype, node)
     # Loop through all supertypes
     supertypes = rdfutils.get_all_supertypes_and_interfaces(g, instancetype, node)
     # Loop through all components
@@ -268,7 +278,8 @@ def scan_type(node, instancetype, shape_node=None):
 
 
 def scan_type_recursive(o, node, instancetype, shapename, reftype):
-
+    logger.debug(f"Scanning type recursively: {instancetype} with node {node} and reference {reftype} and shape"
+                 f"{shapename}")
     shacl_rule = {}
     browse_name = next(g.objects(o, basens['hasBrowseName']))
     nodeclass, classtype = rdfutils.get_type(g, o)
@@ -276,7 +287,6 @@ def scan_type_recursive(o, node, instancetype, shapename, reftype):
         return False
     attributename = rdfutils.get_semantic_bridge(g, node, o)
     rdfutils.get_modelling_rule(g, o, shacl_rule, instancetype)
-
     placeholder_pattern = None
     decoded_attributename = urllib.parse.unquote(attributename)
     if utils.contains_both_angle_brackets(decoded_attributename):
@@ -299,23 +309,31 @@ a loop.")
             scanned_types.add((instancetype, node, o))
         has_components = False
         shacl_rule['is_property'] = False
-        _, use_instance_declaration = rdfutils.get_modelling_rule(g, o, None, instancetype)
-        if use_instance_declaration:
-            # This information mixes two details
-            # 1. Use the instance declaration and not the object for instantiation
-            # 2. It could be zero or more instances (i.e. and array)
+        _, is_placeholder_array = rdfutils.get_modelling_rule(g, o, None, instancetype)
+        if is_placeholder_array:
+            # This indicates a placeholder
             shacl_rule['array'] = True
-            _, typeiri = rdfutils.get_type(g, o)
-            try:
-                typenode = next(g.subjects(basens['definesType'], typeiri))
-                o = typenode
-            except:
-                pass
+        if not is_placeholder_array and placeholder_pattern is not None:
+            logger.warning(f"Placeholder pattern with non matching modelling rule found for node {o}.")
+        if is_placeholder_array and placeholder_pattern is None:
+            logger.warning(f"Array modelling rule found for node {o} but no placeholder pattern in Browsename"
+                           f"{attributename}.")
+        # Now, get the type node. Do not recurse on the instance declaration
+        # instance declarations might contain references which are not normative
+        # for the type node
+        _, typeiri = rdfutils.get_type(g, o)
+        try:
+            typenode = next(g.subjects(basens['definesType'], typeiri))
+            o = typenode
+        except:
+            pass
         components_found = scan_type(o, classtype)
         if maximal_shacl:
             components_found = True
         if components_found:
             has_components = True
+            # only if modelling rule is defined (otherwise we assume that this is just
+            # an instance declaration which contains references which are not normative
             shacl_rule['contentclass'] = classtype
             shaclg.create_shacl_property(shapename,
                                          shacl_rule['path'],
@@ -352,9 +370,10 @@ a loop.")
                                                   value_rank=shacl_rule.get('value_rank'),
                                                   array_dimensions=shacl_rule.get('array_dimensions'),
                                                   reftype=reftype)
-        if shacl_rule['datatype'] != opcuans['NodeId']:
-            e.add_enum_class(g, shacl_rule['contentclass'])
-        components_found = scan_type(o, classtype, shacl_node)
+        if shacl_node is not None:
+            if shacl_rule['datatype'] != opcuans['NodeId']:
+                e.add_enum_class(g, shacl_rule['contentclass'])
+            components_found = scan_type(o, classtype, shacl_node)
     return has_components
 
 
@@ -372,6 +391,8 @@ def scan_type_non_hierachical(target, node, instancetype, shapename, reftype):
     Returns:
         _type_: _description_
     """
+    logger.debug(f"Scanning non-hierarchical reference: {reftype} with target {target} in node {node} for type"
+                 f"{instancetype} and shape {shapename}")
     shacl_rule = {}
     # check if at least one object nodeclass is found
     full_attribute_name = reftype
@@ -425,6 +446,7 @@ non-owning or non-hierarchical reference {reftype} This will be ignored."
 
 
 def scan_entity(node, instancetype, id, optional=False):
+    logger.debug(f"Scanning entity: {node} for type {instancetype} with id {id}")
     node_id = rdfutils.generate_node_id(g, rootentity, node, id)
     # detect recursion
     if node_id in scanned_entities:
@@ -468,6 +490,7 @@ def scan_entity(node, instancetype, id, optional=False):
 
 
 def scan_entity_variable(node, instancetype, id, optional=False):
+    logger.debug(f"Scanning variable entity: {node} for type {instancetype} with id {id}")
     node_id = rdfutils.generate_node_id(g, rootentity, node, id)
     # detect recursion
     if node_id in scanned_entities:
@@ -497,6 +520,7 @@ def scan_entity_variable(node, instancetype, id, optional=False):
 
 
 def scan_entity_recursive(node, id, instance, node_id, o, type=None, is_property=False):
+    logger.debug(f"Scanning entity recursively: {node} for type {type} with id {id}")
     has_components = False
     shacl_rule = {}
     browse_name = next(g.objects(o, basens['hasBrowseName']))
@@ -615,6 +639,7 @@ Check whether it has a proper type definition. Most likely this attribute is not
 
 
 def scan_entity_nonrecursive(node, id, instance, node_id, o, generic_reference=None):
+    logger.debug(f"Scanning entity non-recursively: {node} for id {id} with generic reference {generic_reference}")
     has_components = False
     shacl_rule = {}
     nodeclass, classtype = rdfutils.get_type(g, o)
@@ -663,6 +688,12 @@ if __name__ == '__main__':
     parse_properties = args.properties
     value_rank_subshapes_enabled = args.value_rank_subshapes
     semantic_bridge_enabled = args.semantic_bridge
+    shacl_only = args.shacl_only
+    type_all = args.type_all
+    if rootinstancetype is not None and type_all:
+        print("Error: root-instance and type-all are mutual exclusive. Please either provide a root-instance or use"
+              "type-all to extract all types.")
+        exit(1)
 
     # create the context_graph
     # Context graph is resolving the context_url and provides just the
@@ -691,7 +722,7 @@ if __name__ == '__main__':
     else:
         for imprt in imports:
             h = Graph(store="Oxigraph")
-            print(f'Importing ontology {imprt}')
+            logger.info(f'Importing ontology {imprt}')
             h.parse(imprt)
             g += h
             for k, v in list(h.namespaces()):
@@ -738,10 +769,10 @@ if __name__ == '__main__':
     # check if there is a machinery folder
     rootentity = None
     instancetypes = None
-    if rootinstancetype is None:
+    if rootinstancetype is None and not type_all:
         machinery_nodes_and_types = rdfutils.get_machinery_nodes(g)
         if machinery_nodes_and_types is None:
-            print("Error: root-instance could not be determined. Neither type given explicitly (via -t) nor a \
+            logger.error("Error: root-instance could not be determined. Neither type given explicitly (via -t) nor a \
 Machinery Folder was found in instance ontology.")
             exit(1)
         rootentity = machinery_nodes_and_types[0][0]
@@ -751,6 +782,8 @@ Machinery Folder was found in instance ontology.")
             instancetypes = rdfutils.get_object_types_from_namespace(g, mainontology)
         else:
             instancetypes = [rootinstancetype]
+    elif type_all:
+        instancetypes = utils.get_all_types_in_namespace(g, opcuans["BaseObjectType"], mainontology, basens, opcuans)
     if rootinstancetype is not None:
         try:
             root = next(g.subjects(basens['definesType'], URIRef(rootinstancetype)))
@@ -760,19 +793,29 @@ Machinery Folder was found in instance ontology.")
         if instancetypes is None:
             instancetypes = [URIRef(rootinstancetype)]
     for instancetype in instancetypes:
-        print(f"Scanning type: {instancetype}")
-        root = next(g.subjects(basens['definesType'], URIRef(instancetype)))
+        logger.debug(f"Scanning type: {instancetype}")
+        root = next(g.subjects(basens['definesType'], URIRef(str(instancetype))))
         scan_type(root, instancetype)
+    if shaclname is not None:
+        shaclg.serialize(destination=shaclname)
+        minshaclg.serialize(destination=f'min_{shaclname}')
+    if shacl_only:
+        # If only SHACL shapes are to be created, skip the entity scanning
+        exit(0)
     # Then scan the entity with the real values
-    if rootentity is None:
-        rootentity = next(g.subjects(RDF.type, URIRef(rootinstancetype)), None)
-    if rootentity is None:
-        print(f"The provided type {rootinstancetype} could not be found in this ontology.")
-        exit(1)
+    rootentities = None
+    if type_all:
+        rootentities = utils.get_all_objects_in_namespace(g, mainontology, basens, opcuans)
+    elif rootentity is None:
+        rootentities = [next(g.subjects(RDF.type, URIRef(rootinstancetype)), None)]
+    else:
+        rootentities = [rootentity]
     entity_id = f'{entity_id}' if entity_id is not None else None
     non_followed_nodes = set()
     followed_nodes = set()
-    scan_entity(rootentity, URIRef(rootinstancetype), entity_id)
+    for rootentity in rootentities:
+        _, type = rdfutils.get_type(g, rootentity)
+        scan_entity(rootentity, type, entity_id)
     # Check if nodes from non-hierarchical references are left-out
     for node_id in non_followed_nodes.difference(followed_nodes):
         _, type = rdfutils.get_type(g, node_id)
@@ -792,9 +835,6 @@ added. This will potentially create validation issues."
         e.add_subclasses(result)
         e.add_subclasses_recursive(g, opcuans['BaseNodeClass'])
         e.serialize(destination=entitiesname)
-    if shaclname is not None:
-        shaclg.serialize(destination=shaclname)
-        minshaclg.serialize(destination=f'min_{shaclname}')
     entities_ns = utils.extract_namespaces(e.get_graph())
     shacl_ns = utils.extract_namespaces(shaclg.get_graph())
     combined_namespaces = {**entities_ns, **shacl_ns}

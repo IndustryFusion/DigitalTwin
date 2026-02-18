@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
+<!-- This is a test nodeset for checking object subtypes inheritance.
+There is a type AlphaType and its subtype AlphaSubType. Both have component A. But
+AlphaType=>A is of type BaseA, while AlphaSubType=>A is of type SubA. This should lead to a
+subclass inconsistency error, because SubA should be subtype of BaseA. But it isnt.-->
 <UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
            xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
            LastModified="2024-07-15T00:00:00Z" 
@@ -68,6 +72,7 @@
     <References>
       <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
       <Reference ReferenceType="HasComponent">ns=1;i=2002</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAObjectType>
   
@@ -76,6 +81,7 @@
     <DisplayName>A (BaseA)</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition">ns=1;i=3000</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAObject>
   
@@ -85,6 +91,7 @@
     <References>
       <Reference ReferenceType="HasTypeDefinition">ns=1;i=3001</Reference>
       <Reference ReferenceType="HasComponent">ns=1;i=5001</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAObject>
   
@@ -93,6 +100,7 @@
     <DisplayName>DataVariable_SubA_Instance</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
     <Value>1.0</Value>
   </UAVariable>

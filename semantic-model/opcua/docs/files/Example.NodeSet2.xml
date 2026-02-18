@@ -79,7 +79,9 @@
     <DisplayName>Object B</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1002</Reference>
-       <Reference ReferenceType="HasComponent">ns=1;i=1004</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1004</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1008</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAObject>
   <UAVariable NodeId="ns=1;i=1004" BrowseName="1:MyVariable" DataType="Boolean" ValueRank="-1">
@@ -100,6 +102,28 @@
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
       <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1001</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
+    </References>
+  </UAVariable>
+  <UAVariable NodeId="ns=1;i=1007" BrowseName="1:C" DataType="i=11">
+    <DisplayName>C Variable of AlphaType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+      <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=2010</Reference>
+    </References>
+  </UAVariable>
+  <UAVariable NodeId="ns=1;i=1008" BrowseName="1:MyVariable" DataType="Boolean" ValueRank="-1">
+    <DisplayName>Variable of B-object</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+    </References>
+  </UAVariable>
+  <UAVariable NodeId="ns=1;i=1009" BrowseName="1:MyVariable" DataType="Boolean" ValueRank="-1">
+    <DisplayName>Variable of B-object</DisplayName>
+    <References>
+    <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+    <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1002</Reference>
+    <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAVariable>
 

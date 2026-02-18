@@ -23,7 +23,7 @@ shacl:AlphaSubTypeShape a sh:NodeShape ;
 
 shacl:SubAShape a sh:NodeShape ;
     sh:property [ sh:maxCount 1 ;
-            sh:minCount 0 ;
+            sh:minCount 1 ;
             sh:nodeKind sh:BlankNode ;
             sh:or ( [ sh:property [ sh:datatype xsd:double ;
                                 sh:maxCount 1 ;

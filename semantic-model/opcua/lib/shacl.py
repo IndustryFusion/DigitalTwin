@@ -198,6 +198,10 @@ class Shacl:
                               reftype=None,
                               maxCount=1
                               ):
+        if optional is None:
+            # No modeeling rule provided
+            # So igore the property
+            return None
         property = BNode()
         minCount = 1
         if optional:

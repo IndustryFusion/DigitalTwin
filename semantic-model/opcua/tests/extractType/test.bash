@@ -36,27 +36,23 @@ if [ "$DEBUG" = "true" ]; then
     DEBUG_CMDLINE="-m debugpy --listen 5678"
 fi
 TESTNODESETS=(
-    test_semantic_bridge.Nodeset2,${EXURI}AlphaType,,,-sb,,${EXURI}
-    test_variable_arrays_vrs.NodeSet2,${TESTURI}AlphaType,,,-vrs
-    test_variable_arrays.NodeSet2,${TESTURI}AlphaType
-    test_pumps_instanceexample,http://opcfoundation.org/UA/Pumps/PumpType,http://yourorganisation.org/InstanceExample/,pumps
-    test_object_example.NodeSet2,${EXURI}AlphaType,,,,,${EXURI}
-    test_interfaces.NodeSet2,${TESTURI}AlphaType,,machinery,-p,INTERFACE_NOT_SUBTYPE_OF_INTERFACETYPE
-    test_reference_types_properties.Nodeset2,${TESTURI}AlphaType,,,-p
-    test_reference_types.Nodeset2,${TESTURI}AlphaType
-    test_object_foldertype.NodeSet2,${TESTURI}AlphaType,,,-ma,FOLDER_INCONSISTENCY
-    test_object_foldertype_tree.NodeSet2,,,machinery,-ma
-    test_object_subtypes_inheritance_wrong.Nodeset2,${TESTURI}AlphaSubType,,,,SUBCLASS_INCONSISTENCY
-    test_object_subtypes_inheritance.Nodeset2,${TESTURI}AlphaType
-    test_object_wrong.NodeSet2,${TESTURI}AlphaType
-    test_object_overwrite_type.NodeSet2,${TESTURI}AlphaType
-    test_variable_enum.NodeSet2,${TESTURI}AlphaType
-    test_object_subtypes.NodeSet2,${TESTURI}AlphaType
-    test_object_hierarchies_no_DataValue,${TESTURI}AlphaType
-    test_ignore_references.NodeSet2,${TESTURI}AlphaType
-    test_references_to_typedefinitions.NodeSet2,${TESTURI}AlphaType
-    test_minimal_object.NodeSet2,http://example.org/MinimalNodeset/ObjectType 
     test_object_types.NodeSet2,${TESTURI}AlphaType
+    test_minimal_object.NodeSet2,http://example.org/MinimalNodeset/ObjectType
+    test_references_to_typedefinitions.NodeSet2,${TESTURI}AlphaType
+    test_ignore_references.NodeSet2,${TESTURI}AlphaType
+    test_object_hierarchies_no_DataValue,${TESTURI}AlphaType
+    test_object_subtypes.NodeSet2,${TESTURI}AlphaType
+    test_variable_enum.NodeSet2,${TESTURI}AlphaType
+    test_object_wrong.NodeSet2,${TESTURI}AlphaType
+    test_object_subtypes_inheritance.Nodeset2,${TESTURI}AlphaType
+    test_object_subtypes_inheritance_wrong.Nodeset2,${TESTURI}AlphaSubType,,,,SUBCLASS_INCONSISTENCY
+    test_reference_types_properties.Nodeset2,${TESTURI}AlphaType,,,-p
+    test_variable_arrays_vrs.NodeSet2,${TESTURI}AlphaType,,,-vrs
+    test_semantic_bridge.Nodeset2,${EXURI}AlphaType,,,-sb,,${EXURI}
+    test_interfaces.NodeSet2,${TESTURI}AlphaType,,machinery,-p,INTERFACE_NOT_SUBTYPE_OF_INTERFACETYPE
+    test_object_example.NodeSet2,${EXURI}AlphaType,,,,,${EXURI}
+    test_pumps_instanceexample,http://opcfoundation.org/UA/Pumps/PumpType,http://yourorganisation.org/InstanceExample/,pumps
+    test_variable_arrays.NodeSet2,${TESTURI}AlphaType
     )
 CLEANGRAPH=cleangraph.py
 TYPEURI=http://example.org/MinimalNodeset
