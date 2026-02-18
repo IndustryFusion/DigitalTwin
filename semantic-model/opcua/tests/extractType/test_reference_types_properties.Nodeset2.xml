@@ -80,6 +80,8 @@
       <Reference ReferenceType="HasProperty" IsForward="true">ns=1;i=1009</Reference>
       <Reference ReferenceType="ns=1;i=100" IsForward="true">ns=1;i=1011</Reference>
       <Reference ReferenceType="ns=1;i=100" IsForward="true">ns=1;i=1007</Reference>
+      <Reference ReferenceType="HasComponent" IsForward="true">ns=1;i=2410</Reference>
+      <Reference ReferenceType="HasComponent" IsForward="true">ns=1;i=2411</Reference>
     </References>
   </UAObjectType>
   <UAObjectType NodeId="ns=1;i=1002" BrowseName="1:BType">
@@ -94,54 +96,63 @@
     <DisplayName>Object B</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1002</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAObject>
   <UAVariable NodeId="ns=1;i=1004" BrowseName="1:MyVariable" DataType="i=11">
     <DisplayName>Variable of B-object</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAVariable>
     <UAObject NodeId="ns=1;i=1005" BrowseName="1:B2">
     <DisplayName>Object B</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1002</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAObject>
   <UAVariable NodeId="ns=1;i=1006" BrowseName="1:MyVariable" DataType="i=11">
     <DisplayName>Variable of B-object</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAVariable>
   <UAObject NodeId="ns=1;i=1007" BrowseName="1:B3">
     <DisplayName>Object B</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1002</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAObject>
   <UAVariable NodeId="ns=1;i=1008" BrowseName="1:MyVariable" DataType="i=11">
     <DisplayName>Variable of B-object</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAVariable>
   <UAObject NodeId="ns=1;i=1011" BrowseName="1:B4">
     <DisplayName>Object B</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1002</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAObject>
   <UAVariable NodeId="ns=1;i=1012" BrowseName="1:MyVariable" DataType="i=11">
     <DisplayName>Variable of B-object</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAVariable>
   <UAVariable NodeId="ns=1;i=1009" BrowseName="1:MyProperty" DataType="i=11">
     <DisplayName>Property Variable</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=68</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAVariable>
     <UAVariable NodeId="ns=1;i=1013" BrowseName="1:MySubVariable" DataType="i=11">
@@ -149,12 +160,14 @@
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
       <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1004</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAVariable>
   <UAObject NodeId="ns=1;i=1014" BrowseName="1:B4">
     <DisplayName>Object B</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1002</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAObject>
     <UAVariable NodeId="ns=1;i=1015" BrowseName="1:MyProperty" DataType="i=11">
@@ -162,6 +175,7 @@
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=68</Reference>
       <Reference ReferenceType="HasProperty" IsForward="false">ns=1;i=1004</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAVariable>
 
@@ -176,6 +190,8 @@
       <Reference ReferenceType="HasProperty" IsForward="true">ns=1;i=1009</Reference>
       <Reference ReferenceType="ns=1;i=100" IsForward="true">ns=1;i=1011</Reference>
       <Reference ReferenceType="ns=1;i=100" IsForward="true">ns=1;i=1507</Reference>
+      <Reference ReferenceType="HasComponent" IsForward="true">ns=1;i=2410</Reference>
+  
     </References>
   </UAObjectType>
   <UAObjectType NodeId="ns=1;i=1402" BrowseName="1:AlphaSubType2">
@@ -189,6 +205,7 @@
       <Reference ReferenceType="HasProperty" IsForward="true">ns=1;i=1009</Reference>
       <Reference ReferenceType="ns=1;i=100" IsForward="true">ns=1;i=1507</Reference>
       <Reference ReferenceType="ns=1;i=100" IsForward="true">ns=1;i=1507</Reference>
+      <Reference ReferenceType="HasComponent" IsForward="true">ns=1;i=2413</Reference>
     </References>
   </UAObjectType>
   <UAObjectType NodeId="ns=1;i=1502" BrowseName="1:BSubType">
@@ -204,16 +221,17 @@
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1502</Reference>
        <Reference ReferenceType="HasComponent">ns=1;i=1008</Reference>
+       <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAObject>
 
 
-  <UAObject NodeId="ns=1;i=2003" BrowseName="1:B">
+  <!-- <UAObject NodeId="ns=1;i=2003" BrowseName="1:B">
     <DisplayName>Object B</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1002</Reference>
     </References>
-  </UAObject>
+  </UAObject> -->
  <UAObject NodeId="ns=1;i=2010" BrowseName="1:AlphaInstance">
     <DisplayName>Alpha Instance</DisplayName>
     <References>
@@ -234,6 +252,7 @@
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1002</Reference>
        <Reference ReferenceType="HasComponent">ns=1;i=2016</Reference>
+       <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAObject>
   <UAObject NodeId="ns=1;i=2012" BrowseName="1:B2">
@@ -241,6 +260,7 @@
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1002</Reference>
        <Reference ReferenceType="HasComponent">ns=1;i=2017</Reference>
+       <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAObject>
   <UAObject NodeId="ns=1;i=2013" BrowseName="1:B3">
@@ -248,12 +268,14 @@
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1002</Reference>
        <Reference ReferenceType="HasComponent">ns=1;i=2018</Reference>
+       <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAObject>
   <UAVariable NodeId="ns=1;i=2014" BrowseName="1:MyProperty" DataType="i=11">
     <DisplayName>Property Variable</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=68</Reference>
+       <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAVariable>
   <UAObject NodeId="ns=1;i=2015" BrowseName="1:B4">
@@ -261,30 +283,35 @@
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1002</Reference>
        <Reference ReferenceType="HasComponent">ns=1;i=2019</Reference>
+       <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAObject>
   <UAVariable NodeId="ns=1;i=2016" BrowseName="1:MyVariable" DataType="i=11">
     <DisplayName>MyVariable</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+       <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAVariable>
   <UAVariable NodeId="ns=1;i=2017" BrowseName="1:MyVariable" DataType="i=11">
     <DisplayName>MyVariable</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+       <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAVariable>
     <UAVariable NodeId="ns=1;i=2018" BrowseName="1:MyVariable" DataType="i=11">
     <DisplayName>MyVariable</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+       <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAVariable>
   <UAVariable NodeId="ns=1;i=2019" BrowseName="1:MyVariable" DataType="i=11">
     <DisplayName>MyVariable</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+       <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAVariable>
   <UAVariable NodeId="ns=1;i=2020" BrowseName="1:MyProperty" DataType="i=11">
@@ -292,6 +319,7 @@
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
        <Reference ReferenceType="HasProperty" IsForward="false">ns=1;i=2019</Reference>
+        <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAVariable>
   <UAVariable NodeId="ns=1;i=2021" BrowseName="1:MySubvariable" DataType="i=11">
@@ -299,6 +327,7 @@
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
        <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=2019</Reference>
+        <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAVariable>
   <UAObject NodeId="ns=1;i=2022" BrowseName="1:B4">
@@ -306,6 +335,7 @@
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1002</Reference>
        <Reference ReferenceType="HasComponent">ns=1;i=2019</Reference>
+       <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAObject>
 
@@ -319,6 +349,8 @@
       <Reference ReferenceType="HasProperty" IsForward="true">ns=1;i=2014</Reference>
       <Reference ReferenceType="ns=1;i=100" IsForward="true">ns=1;i=2011</Reference>
       <Reference ReferenceType="ns=1;i=100" IsForward="true">ns=1;i=2412</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
+
     </References>
   </UAObject>
    <UAObject NodeId="ns=1;i=2411" BrowseName="1:SubAlphaInstance2">
@@ -331,6 +363,7 @@
       <Reference ReferenceType="HasProperty" IsForward="true">ns=1;i=2014</Reference>
       <Reference ReferenceType="ns=1;i=100" IsForward="true">ns=1;i=2412</Reference>
       <Reference ReferenceType="ns=1;i=100" IsForward="true">ns=1;i=2413</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAObject>
   <UAObject NodeId="ns=1;i=2412" BrowseName="1:SubB2">
@@ -338,6 +371,7 @@
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1502</Reference>
        <Reference ReferenceType="HasComponent">ns=1;i=2017</Reference>
+        <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAObject>
   <UAObject NodeId="ns=1;i=2413" BrowseName="1:SubB3">
@@ -345,6 +379,7 @@
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1502</Reference>
        <Reference ReferenceType="HasComponent">ns=1;i=2017</Reference>
+       <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAObject>
 

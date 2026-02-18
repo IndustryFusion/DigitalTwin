@@ -69,6 +69,7 @@
       <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
       <Reference ReferenceType="HasComponent">ns=1;i=1003</Reference>
       <Reference ReferenceType="HasComponent">ns=1;i=1006</Reference>
+      <Reference ReferenceType="HasInterface">ns=1;i=1007</Reference>
     </References>
   </UAObjectType>
   <UAObjectType NodeId="ns=1;i=1002" BrowseName="1:BType">
@@ -76,6 +77,7 @@
     <Description>A custom object type B</Description>
     <References>
       <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1009</Reference>
       <Reference ReferenceType="HasInterface">ns=3;i=15051</Reference>
     </References>
   </UAObjectType>
@@ -84,13 +86,14 @@
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1002</Reference>
        <Reference ReferenceType="HasComponent">ns=1;i=1004</Reference>
-      <Reference ReferenceType="HasInterface">ns=1;i=1007</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAObject>
   <UAVariable NodeId="ns=1;i=1004" BrowseName="1:MyVariable" DataType="Boolean">
     <DisplayName>Variable of B-object</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAVariable>
  <UAObjectType NodeId="ns=1;i=1005" BrowseName="1:BSubType">
@@ -106,6 +109,7 @@
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1005</Reference>
        <Reference ReferenceType="HasComponent">ns=1;i=1004</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAObject>
   <UAObjectType NodeId="ns=1;i=1007" BrowseName="1:MyWrongInterface">
@@ -115,13 +119,27 @@
       <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
     </References>
   </UAObjectType>
-
+    <UAObjectType NodeId="ns=1;i=1008" BrowseName="1:MyWrongInterface">
+    <DisplayName>MyWrongInterface</DisplayName>
+    <Description>An Interface which is not derived from BaseInterfaceType</Description>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+    </References>
+  </UAObjectType>
+  <UAVariable NodeId="ns=1;i=1009" BrowseName="1:MyVariable" DataType="Boolean">
+    <DisplayName>Variable of B-object</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
+    </References>
+  </UAVariable>
 
   <UAVariable NodeId="ns=1;i=2001" BrowseName="1:C" DataType="i=11">
     <DisplayName>Variable of AlphaType</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
       <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1001</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAVariable>  
  <UAObject NodeId="ns=1;i=2010" BrowseName="1:AlphaInstance">

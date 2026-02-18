@@ -75,7 +75,8 @@ SELECT ?nodeclass ?realtype WHERE {
 
 modelling_nodeid_optional = 80
 modelling_nodeid_mandatory = 78
-modelling_nodeid_optional_array = 11508
+modelling_nodeid_optional_placeholder = 11508
+modelling_nodeid_mandatory_placeholder = 11510
 workaround_instances = ['http://opcfoundation.org/UA/DI/FunctionalGroupType', 'http://opcfoundation.org/UA/FolderType']
 NGSILD = Namespace('https://uri.etsi.org/ngsi-ld/')
 MACHINERY = Namespace('http://opcfoundation.org/UA/Machinery/')
@@ -374,6 +375,59 @@ def create_list(g, arr, datatype):
     return list_start
 
 
+def get_all_types_in_namespace(g, opcua_type, namespace, basens, opcuans):
+    """Derives all opcua types in a namespace
+
+    Args:
+        g (RDF Graph): graph to search in
+        opcua_type (RDFURIRef): opcua type to derive (e.g. opcua:ObjectType)
+        namespace (RDFURIRef): namespace to search in
+    """
+    query = """
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    SELECT ?subclass WHERE {{
+        BIND(<{opcuatype}> as ?opcuatype)
+        BIND(<{namespace}> as ?namespace)
+        ?subclass rdfs:subClassOf+ ?opcuatype .
+        FILTER(
+            STRSTARTS(STR(?subclass), STR(?namespace)) &&
+                !REGEX(
+                SUBSTR(STR(?subclass), STRLEN(STR(?namespace)) + 1),
+                  "[/#]"
+            )
+        )
+    }}
+    """.format(opcuatype=opcua_type, namespace=namespace)
+    result = g.query(query, initNs={'base': basens, 'opcua': opcuans})
+    # Transform result in list of URIRefs
+    return [URIRef(str(r['subclass'])) for r in result]
+
+
+def get_all_objects_in_namespace(g, namespace, basens, opcuans):
+    """Derives all opcua objects in a namespace
+
+    Args:
+        g (RDF Graph): graph to search in
+        namespace (RDFURIRef): namespace to search in
+    """
+    query = """
+    SELECT ?object WHERE {{
+        BIND(<{namespace}> as ?namespace)
+        opcua:nodei85 opcua:Organizes ?object .
+        FILTER(
+            STRSTARTS(STR(?object), STR(?namespace)) &&
+                !REGEX(
+                SUBSTR(STR(?object), STRLEN(STR(?namespace)) + 1),
+                  "[/#]"
+            )
+        )
+    }}
+    """.format(namespace=namespace)
+    result = g.query(query, initNs={'base': basens, 'opcua': opcuans})
+    # Transform result in list of URIRefs
+    return [URIRef(str(r['object'])) for r in result]
+
+
 def get_type_and_template(g, node, parentnode, basens, opcuans):
     """Derives the type definition and potential template definition
 
@@ -646,8 +700,8 @@ class RdfUtils:
         return supertypes
 
     def get_modelling_rule(self, graph, node, shacl_rule, instancetype):
-        use_instance_declaration = False
-        is_optional = True
+        use_generic_placeholder = False
+        is_optional = None
         try:
             modelling_node = next(graph.objects(node, self.opcuans['HasModellingRule']))
             modelling_rule = next(graph.objects(modelling_node, self.basens['hasNodeId']))
@@ -655,15 +709,18 @@ class RdfUtils:
                 is_optional = True
             elif int(modelling_rule) == modelling_nodeid_mandatory:
                 is_optional = False
-            elif int(modelling_rule) == modelling_nodeid_optional_array:
+            elif int(modelling_rule) == modelling_nodeid_optional_placeholder:
                 is_optional = True
-                use_instance_declaration = True
+                use_generic_placeholder = True
+            elif int(modelling_rule) == modelling_nodeid_mandatory_placeholder:
+                is_optional = False
+                use_generic_placeholder = True
         except:
             pass
         if shacl_rule is not None:
             shacl_rule['optional'] = is_optional
-            shacl_rule['array'] = use_instance_declaration
-        return is_optional, use_instance_declaration
+            shacl_rule['array'] = use_generic_placeholder
+        return is_optional, use_generic_placeholder
 
     def get_all_subreferences(self, graph, node, reference):
         """Get non-hierarchical references

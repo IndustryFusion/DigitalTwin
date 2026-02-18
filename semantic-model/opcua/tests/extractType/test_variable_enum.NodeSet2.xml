@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!--
-
+TEST enum mapping to class. In this test, the variable MyVariable must be a member of the class
+opcua:Duplex. The concrete value is an IRI "http://opcfoundation.org/UA/Full"
 -->
 
 <UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:uax="http://opcfoundation.org/UA/2008/02/Types.xsd" xmlns:xsd="http://www.w3.org/2001/XMLSchema" LastModified="2024-07-15T00:00:00Z" xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
@@ -86,19 +87,22 @@
     <Description>A custom object type B</Description>
     <References>
       <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1004</Reference>
     </References>
   </UAObjectType>
   <UAObject NodeId="ns=1;i=1003" BrowseName="1:B">
     <DisplayName>Object B</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1002</Reference>
-       <Reference ReferenceType="HasComponent">ns=1;i=1004</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1004</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAObject>
   <UAVariable NodeId="ns=1;i=1004" BrowseName="1:MyVariable" DataType="i=24210">
     <DisplayName>Variable of B-object</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAVariable>
 
@@ -109,6 +113,7 @@
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
       <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1001</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAVariable>  
   <UAObject NodeId="ns=1;i=2003" BrowseName="1:B">

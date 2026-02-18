@@ -1,6 +1,6 @@
 [
     {
-        "type": "http://opcfoundation.org/UA/Pumps/DriveMeasurementsType",
+        "type": "pumps:DriveMeasurementsType",
         "id": "http://yourorganisation.org/InstanceExample/testid:i5006",
         "@context": [
             "http://localhost:8099/context.jsonld"
@@ -31,7 +31,7 @@
         }
     },
     {
-        "type": "http://opcfoundation.org/UA/Pumps/DrivePortType",
+        "type": "pumps:DrivePortType",
         "id": "http://yourorganisation.org/InstanceExample/testid:i5004",
         "@context": [
             "http://localhost:8099/context.jsonld"
@@ -44,7 +44,7 @@
         ]
     },
     {
-        "type": "http://opcfoundation.org/UA/Pumps/PortsGroupType",
+        "type": "pumps:PortsGroupType",
         "id": "http://yourorganisation.org/InstanceExample/testid:i5003",
         "@context": [
             "http://localhost:8099/context.jsonld"
@@ -52,12 +52,13 @@
         "pumps:has%3CDrive%3E": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:i5004"
+                "object": "http://yourorganisation.org/InstanceExample/testid:i5004",
+                "datasetId": "http://opcfoundation.org/UA/Pumps/has%3CDrive%3E"
             }
         ]
     },
     {
-        "type": "http://opcfoundation.org/UA/Pumps/DesignType",
+        "type": "pumps:DesignType",
         "id": "http://yourorganisation.org/InstanceExample/testid:i5021",
         "@context": [
             "http://localhost:8099/context.jsonld"
@@ -134,7 +135,7 @@
         }
     },
     {
-        "type": "http://opcfoundation.org/UA/Pumps/SystemRequirementsType",
+        "type": "pumps:SystemRequirementsType",
         "id": "http://yourorganisation.org/InstanceExample/testid:i5022",
         "@context": [
             "http://localhost:8099/context.jsonld"
@@ -147,7 +148,7 @@
         }
     },
     {
-        "type": "http://opcfoundation.org/UA/Pumps/ConfigurationGroupType",
+        "type": "pumps:ConfigurationGroupType",
         "id": "http://yourorganisation.org/InstanceExample/testid:i5020",
         "@context": [
             "http://localhost:8099/context.jsonld"
@@ -166,7 +167,7 @@
         ]
     },
     {
-        "type": "http://opcfoundation.org/UA/Pumps/SupervisionProcessFluidType",
+        "type": "pumps:SupervisionProcessFluidType",
         "id": "http://yourorganisation.org/InstanceExample/testid:i5010",
         "@context": [
             "http://localhost:8099/context.jsonld"
@@ -181,7 +182,7 @@
         }
     },
     {
-        "type": "http://opcfoundation.org/UA/Pumps/SupervisionPumpOperationType",
+        "type": "pumps:SupervisionPumpOperationType",
         "id": "http://yourorganisation.org/InstanceExample/testid:i5011",
         "@context": [
             "http://localhost:8099/context.jsonld"
@@ -196,7 +197,7 @@
         }
     },
     {
-        "type": "http://opcfoundation.org/UA/Pumps/SupervisionMechanicsType",
+        "type": "pumps:SupervisionMechanicsType",
         "id": "http://yourorganisation.org/InstanceExample/testid:i5009",
         "@context": [
             "http://localhost:8099/context.jsonld"
@@ -215,7 +216,7 @@
         }
     },
     {
-        "type": "http://opcfoundation.org/UA/Pumps/SupervisionType",
+        "type": "pumps:SupervisionType",
         "id": "http://yourorganisation.org/InstanceExample/testid:i5008",
         "@context": [
             "http://localhost:8099/context.jsonld"
@@ -240,7 +241,7 @@
         ]
     },
     {
-        "type": "http://opcfoundation.org/UA/Pumps/DocumentationType",
+        "type": "pumps:DocumentationType",
         "id": "http://yourorganisation.org/InstanceExample/testid:i5005",
         "@context": [
             "http://localhost:8099/context.jsonld"
@@ -251,7 +252,7 @@
         }
     },
     {
-        "type": "http://opcfoundation.org/UA/Pumps/PreventiveMaintenanceType",
+        "type": "pumps:PreventiveMaintenanceType",
         "id": "http://yourorganisation.org/InstanceExample/testid:i5015",
         "@context": [
             "http://localhost:8099/context.jsonld"
@@ -293,7 +294,7 @@
         }
     },
     {
-        "type": "http://opcfoundation.org/UA/Pumps/GeneralMaintenanceType",
+        "type": "pumps:GeneralMaintenanceType",
         "id": "http://yourorganisation.org/InstanceExample/testid:i5014",
         "@context": [
             "http://localhost:8099/context.jsonld"
@@ -308,7 +309,7 @@
         }
     },
     {
-        "type": "http://opcfoundation.org/UA/Pumps/BreakdownMaintenanceType",
+        "type": "pumps:BreakdownMaintenanceType",
         "id": "http://yourorganisation.org/InstanceExample/testid:i5013",
         "@context": [
             "http://localhost:8099/context.jsonld"
@@ -323,7 +324,7 @@
         }
     },
     {
-        "type": "http://opcfoundation.org/UA/Pumps/MaintenanceGroupType",
+        "type": "pumps:MaintenanceGroupType",
         "id": "http://yourorganisation.org/InstanceExample/testid:i5012",
         "@context": [
             "http://localhost:8099/context.jsonld"
@@ -348,7 +349,7 @@
         ]
     },
     {
-        "type": "http://opcfoundation.org/UA/Pumps/PumpActuationType",
+        "type": "pumps:PumpActuationType",
         "id": "http://yourorganisation.org/InstanceExample/testid:i5017",
         "@context": [
             "http://localhost:8099/context.jsonld"
@@ -365,7 +366,7 @@
         }
     },
     {
-        "type": "http://opcfoundation.org/UA/Pumps/VibrationMeasurementType",
+        "type": "pumps:VibrationMeasurementType",
         "id": "http://yourorganisation.org/InstanceExample/testid:i5019",
         "@context": [
             "http://localhost:8099/context.jsonld"
@@ -384,7 +385,7 @@
         }
     },
     {
-        "type": "http://opcfoundation.org/UA/Pumps/MeasurementsType",
+        "type": "pumps:MeasurementsType",
         "id": "http://yourorganisation.org/InstanceExample/testid:i5018",
         "@context": [
             "http://localhost:8099/context.jsonld"
@@ -418,7 +419,7 @@
         }
     },
     {
-        "type": "http://opcfoundation.org/UA/Pumps/OperationalGroupType",
+        "type": "pumps:OperationalGroupType",
         "id": "http://yourorganisation.org/InstanceExample/testid:i5016",
         "@context": [
             "http://localhost:8099/context.jsonld"
@@ -437,7 +438,7 @@
         ]
     },
     {
-        "type": "http://opcfoundation.org/UA/Pumps/PumpType",
+        "type": "pumps:PumpType",
         "id": "http://yourorganisation.org/InstanceExample/testid:i5002",
         "@context": [
             "http://localhost:8099/context.jsonld"

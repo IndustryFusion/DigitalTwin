@@ -524,7 +524,7 @@ class TestUtils(unittest.TestCase):
         # Set up the mocked return values for objects
         mock_objects.side_effect = [
             iter([URIRef("http://example.org/ModellingNode")]),
-            iter([Literal(1)])  # Assuming modelling_nodeid_optional or similar value
+            iter([Literal(80)])  # Assuming modelling_nodeid_optional or similar value
         ]
 
         # Call the function under test
@@ -535,6 +535,46 @@ class TestUtils(unittest.TestCase):
         self.assertFalse(use_instance_declaration)
         self.assertTrue(self.shacl_rule['optional'])
         self.assertFalse(self.shacl_rule['array'])
+        
+        mock_objects.side_effect = [
+        iter([URIRef("http://example.org/ModellingNode")]),
+        iter([Literal(78)])  # Assuming modelling_nodeid_optional or similar value
+        ]
+        # Call the function under test
+        is_optional, use_instance_declaration = self.rdf_utils.get_modelling_rule(self.graph, self.node, self.shacl_rule, self.instancetype)
+
+        # Check if the results are as expected
+        self.assertFalse(is_optional)
+        self.assertFalse(use_instance_declaration)
+        self.assertFalse(self.shacl_rule['optional'])
+        self.assertFalse(self.shacl_rule['array'])
+
+        mock_objects.side_effect = [
+        iter([URIRef("http://example.org/ModellingNode")]),
+        iter([Literal(11510)])  # Assuming modelling_nodeid_optional or similar value
+        ]
+        # Call the function under test
+        is_optional, use_instance_declaration = self.rdf_utils.get_modelling_rule(self.graph, self.node, self.shacl_rule, self.instancetype)
+
+        # Check if the results are as expected
+        self.assertFalse(is_optional)
+        self.assertTrue(use_instance_declaration)
+        self.assertFalse(self.shacl_rule['optional'])
+        self.assertTrue(self.shacl_rule['array'])
+
+
+        mock_objects.side_effect = [
+        iter([URIRef("http://example.org/ModellingNode")]),
+        iter([Literal(11508)])  # Assuming modelling_nodeid_optional or similar value
+        ]
+        # Call the function under test
+        is_optional, use_instance_declaration = self.rdf_utils.get_modelling_rule(self.graph, self.node, self.shacl_rule, self.instancetype)
+
+        # Check if the results are as expected
+        self.assertTrue(is_optional)
+        self.assertTrue(use_instance_declaration)
+        self.assertTrue(self.shacl_rule['optional'])
+        self.assertTrue(self.shacl_rule['array'])
 
     @patch.object(Graph, 'objects', side_effect=StopIteration)
     def test_get_modelling_rule_no_modelling_node(self, mock_objects):
@@ -543,9 +583,9 @@ class TestUtils(unittest.TestCase):
         is_optional, use_instance_declaration = self.rdf_utils.get_modelling_rule(self.graph, self.node, self.shacl_rule, self.instancetype)
 
         # Ensure the default values are returned when no modelling node is found
-        self.assertTrue(is_optional)
+        self.assertIsNone(is_optional)
         self.assertFalse(use_instance_declaration)
-        self.assertTrue(self.shacl_rule['optional'])
+        self.assertIsNone(self.shacl_rule['optional'])
         self.assertFalse(self.shacl_rule['array'])
 
     def test_isNodeclass(self):

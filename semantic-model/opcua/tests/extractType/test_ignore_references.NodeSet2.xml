@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!--
-
+Some references are ignored when the instance model is built. This tests checks
+that the ignored references do not cause validation errors.
+The reference tested is "GeneratesEvent".
 -->
 
 <UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" LastModified="2024-07-15T00:00:00Z" xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
@@ -81,6 +83,7 @@
     <Description>A custom object type B</Description>
     <References>
       <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+       <Reference ReferenceType="HasComponent">ns=1;i=1004</Reference>
     </References>
   </UAObjectType>
   <UAObject NodeId="ns=1;i=1003" BrowseName="1:B">
@@ -88,30 +91,26 @@
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1002</Reference>
        <Reference ReferenceType="HasComponent">ns=1;i=1004</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAObject>
   <UAVariable NodeId="ns=1;i=1004" BrowseName="1:MyVariable" DataType="Boolean">
     <DisplayName>Variable of B-object</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAVariable>
-
-
-
-  <UAVariable NodeId="ns=1;i=2001" BrowseName="1:C" DataType="i=11">
-    <DisplayName>Variable of AlphaType</DisplayName>
+  <UAVariable NodeId="ns=1;i=1005" BrowseName="1:C" DataType="i=11">
+    <DisplayName>C Variable of AlphaType</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
       <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1001</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAVariable>
-  <UAObject NodeId="ns=1;i=2003" BrowseName="1:B">
-    <DisplayName>Object B</DisplayName>
-    <References>
-      <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1002</Reference>
-    </References>
-  </UAObject>
+
+
  <UAObject NodeId="ns=1;i=2010" BrowseName="1:AlphaInstance">
     <DisplayName>Alpha Instance</DisplayName>
     <References>

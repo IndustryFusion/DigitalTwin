@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!--
-
+This tests references to components in the parent hierarchy. This is forbidden for 
+hasChild hierarchical referenes but with other non-hierachical references there can be loops.
 -->
 
 <UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" LastModified="2024-07-15T00:00:00Z" xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
@@ -76,8 +77,6 @@
     <Description>A custom object type Alpha</Description>
     <References>
       <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
-      <Reference ReferenceType="ns=1;i=101" IsForward="false">ns=1;i=2001</Reference>
-      <Reference ReferenceType="ns=1;i=100" IsForward="false">ns=1;i=1003</Reference>
       <Reference ReferenceType="HasComponent">ns=1;i=1003</Reference>
     </References>
   </UAObjectType>
@@ -86,22 +85,34 @@
     <Description>A custom object type B</Description>
     <References>
       <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1004</Reference>
     </References>
   </UAObjectType>
   <UAObject NodeId="ns=1;i=1003" BrowseName="1:B">
     <DisplayName>Object B</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1002</Reference>
-       <Reference ReferenceType="HasComponent">ns=1;i=1004</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1004</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAObject>
   <UAVariable NodeId="ns=1;i=1004" BrowseName="1:MyVariable" DataType="Boolean">
     <DisplayName>Variable of B-object</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAVariable>
-
+ <UAObject NodeId="ns=1;i=1005" BrowseName="1:AlphaInstance">
+    <DisplayName>Alpha Instance</DisplayName>
+    <References>
+      <Reference ReferenceType="HasComponent" IsForward="true">ns=1;i=2011</Reference>
+       <Reference ReferenceType="HasComponent" IsForward="true">ns=1;i=2012</Reference>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1001</Reference>
+      <Reference ReferenceType="ns=1;i=100" IsForward="false">ns=1;i=1002</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
+    </References>
+  </UAObject>
 
 
   <UAVariable NodeId="ns=1;i=2001" BrowseName="1:C" DataType="i=11">
@@ -109,14 +120,10 @@
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
       <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1001</Reference>
+      <Reference ReferenceType="ns=1;i=101">ns=1;i=1005</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAVariable>  
-  <UAObject NodeId="ns=1;i=2003" BrowseName="1:B">
-    <DisplayName>Object B</DisplayName>
-    <References>
-      <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1002</Reference>
-    </References>
-  </UAObject>
  <UAObject NodeId="ns=1;i=2010" BrowseName="1:AlphaInstance">
     <DisplayName>Alpha Instance</DisplayName>
     <References>
@@ -131,6 +138,7 @@
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
       <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=2010</Reference>
+      <Reference ReferenceType="ns=1;i=101">ns=1;i=2010</Reference>
     </References>
   </UAVariable>
   <UAObject NodeId="ns=1;i=2012" BrowseName="1:B">
