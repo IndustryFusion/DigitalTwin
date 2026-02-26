@@ -138,7 +138,6 @@ opcua:nodei62 a opcua:VariableTypeNodeClass ;
     base:hasValueRank -2 .
 
 test: a owl:Ontology ;
-    owl:imports <https://industryfusion.github.io/contexts/staging/ontology/v0/base.ttl> ;
     owl:versionIRI <http://example.com/v0.1/UA/> ;
     owl:versionInfo 1e-01 .
 

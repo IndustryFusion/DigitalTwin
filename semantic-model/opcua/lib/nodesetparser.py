@@ -806,7 +806,7 @@ Did you forget to import it?")
             subtype = reference.text
             if subtype is not None:
                 nodeid = self.resolve_alias(subtype)
-                subtype_index, subtype_id, _ = self.parse_nodeid(subtype)
+                subtype_index, subtype_id, _ = self.parse_nodeid(nodeid)
                 typeiri = self.typeIds[subtype_index][subtype_id]
                 if (isforward == 'false'):
                     if not node.tag.endswith("UAReferenceType"):
