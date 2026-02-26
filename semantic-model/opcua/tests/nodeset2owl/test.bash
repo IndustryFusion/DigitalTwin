@@ -48,6 +48,7 @@ CLEANED=cleaned.ttl
 #     DEBUG_CMDLINE="-m debugpy --listen 5678"
 # fi
 TESTNODESETS=(
+    test_aliases_in_hasSubtype.NodeSet2,test,core_cleaned
     test_semantic_bridge.NodeSet2,opcua 
     test_object_types.NodeSet2,test
     test_objects.NodeSet2,test
@@ -63,13 +64,19 @@ for tuple in "${TESTNODESETS[@]}"; do  IFS=","
     set -- $tuple;
     nodeset=$1
     prefix=$2
+    dependency=$3
+    DEPENDENT_CS=""
+    if [ -n "$dependency" ]; then
+        DEPENDENT_CS="${dependency}.ttl"
+    fi
     echo test $nodeset with prefix $prefix
     if [ "$DEBUG"="true" ]; then
-        echo DEBUG: python3 -m debugpy --listen 5678 --wait-for-client ${NODESET2OWL} ${nodeset}.xml -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p $prefix -o ${RESULT}
+        echo DEBUG: python3 -m debugpy --listen 5678 --wait-for-client ${NODESET2OWL} ${nodeset}.xml -i ${BASE_ONTOLOGY} ${DEPENDENT_CS} -v http://example.com/v0.1/UA/ -p $prefix -o ${RESULT}
     fi
-    python3 ${NODESET2OWL} ${nodeset}.xml -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p $prefix -o ${RESULT}
-    echo "Comparing expected=${nodeset}.ttl <=> result=${RESULT}"
-    diff ${nodeset}.ttl ${RESULT} >$DIFFRESULT || { echo "Diff failed, result can be found in $DIFFRESULT" && exit 1; }
+    python3 ${NODESET2OWL} ${nodeset}.xml -i ${BASE_ONTOLOGY} ${DEPENDENT_CS} -v http://example.com/v0.1/UA/ -p $prefix -o ${RESULT}
+    python3 $CLEANGRAPH $RESULT $CLEANED
+    echo "Comparing expected=${nodeset}.ttl <=> result=${CLEANED}"
+    diff ${nodeset}.ttl ${CLEANED} >$DIFFRESULT || { echo "Diff failed, result can be found in $DIFFRESULT" && exit 1; }
 done
 echo Starting E2E specification tests
 echo -------------------------------- 
