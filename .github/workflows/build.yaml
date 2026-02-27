@@ -51,3 +51,6 @@ jobs:
       run: |
         (cd NgsildAgent/config && cp config.json.template config.json)  
         cd NgsildAgent && npm install && npm run lint && npm run test && npm audit --production --audit-level high
+    - name: Setup tmate session
+      if: ${{ failure() }}
+      uses: mxschmitt/action-tmate@v3
