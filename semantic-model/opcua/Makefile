@@ -34,6 +34,7 @@ setup-dev: requirements-dev.txt
 
 test:
 	${PYTEST} tests --cov=lib . --cov-fail-under=80
+	make -f translate_default_nodesets.make
 	(cd tests/nodeset2owl; bash ./test.bash)
 	(cd tests/extractType; bash ./test.bash)
 	(cd tests/nodeset-dump; bash ./test.bash)
