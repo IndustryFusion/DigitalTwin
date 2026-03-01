@@ -45,6 +45,7 @@ PUMP_EXAMPLE_NODESET      := https://raw.githubusercontent.com/OPCFoundation/UA-
 MACHINETOOL_EXAMPLE_NODESET := https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/$(NODESET_VERSION)/MachineTool/Machinetool-Example.xml
 LASERSYSTEMS_EXAMPLE_NODESET := https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/$(NODESET_VERSION)/LaserSystems/LaserSystem-Example.NodeSet2.xml
 PACKML_NODESET            := https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/$(NODESET_VERSION)/PackML/Opc.Ua.PackML.NodeSet2.xml
+TMC_NODESET               := https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/$(NODESET_VERSION)/TMC/Opc.Ua.TMC.NodeSet2.xml
 
 # -----------------------------------------------------------------------------
 # Base Ontology URL and Remote Mode
@@ -170,10 +171,16 @@ PACKML_ONTOLOGY      = packml.ttl
 PACKML_DEPENDENCIES  = $(BASE_ONTOLOGY) $(CORE_ONTOLOGY)
 PACKML_OPTS          = -p packml
 
+# TMC target
+TMC_NODESET_URL   = $(TMC_NODESET)
+TMC_ONTOLOGY      = tmc.ttl
+TMC_DEPENDENCIES  = $(BASE_ONTOLOGY) $(CORE_ONTOLOGY) $(DEVICES_ONTOLOGY) $(PACKML_ONTOLOGY)
+TMC_OPTS          = -p tmc
+
 # -----------------------------------------------------------------------------
 # List of all target files to be built.
 # -----------------------------------------------------------------------------
-TARGET_NAMES = CORE DEVICES IA MACHINERY PUMPS PUMPEXAMPLE MACHINETOOL LASERSYSTEMS LASERSYSTEMSEXAMPLE MACHINETOOL_EXAMPLE MACHINERYEXAMPLE DICTIONARY_IRDI PADIM MACHINERY_PROCESSVALUES MACHINERY_JOBS PACKML MACHINERY_RESULT ISA95_JOBCONTROL
+TARGET_NAMES = CORE DEVICES IA MACHINERY PUMPS PUMPEXAMPLE MACHINETOOL LASERSYSTEMS LASERSYSTEMSEXAMPLE MACHINETOOLEXAMPLE MACHINERYEXAMPLE DICTIONARY_IRDI PADIM MACHINERY_PROCESSVALUES MACHINERY_JOBS PACKML MACHINERY_RESULT ISA95_JOBCONTROL TMC
 
 ALL_TARGETS = $(foreach t, $(TARGET_NAMES), $($(t)_ONTOLOGY))
 
