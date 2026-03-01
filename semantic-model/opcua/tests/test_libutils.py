@@ -10,12 +10,43 @@ from rdflib import Graph, Namespace, URIRef, Literal, BNode
 from rdflib.namespace import RDFS, XSD, OWL, RDF
 from rdflib.collection import Collection
 from lib.utils import RdfUtils, downcase_string, isNodeId, convert_to_json_type, idtype2String, extract_namespaces, \
-                                get_datatype, attributename_from_type, normalize_angle_bracket_name, \
+                                get_datatype, attributename_from_type, normalize_angle_bracket_name, normalize_namespaceuri, \
                                 contains_both_angle_brackets, get_typename, get_common_supertype, rdfStringToPythonBool, \
                                 get_rank_dimensions, get_type_and_template, OntologyLoader, file_path_to_uri, create_list, \
                                 extract_subgraph, dump_without_prefixes, get_contentclass, quote_url, merge_attributes, dump_graph, \
                                 is_subclass, create_list, get_contentclass, expand_term, RdfUtils, rank_value_to_string
 
+
+class TestNormalizeNamespaceUri(unittest.TestCase):
+    def test_http_without_trailing_slash_or_hash(self):
+        uri = "http://example.org/ns"
+        result = normalize_namespaceuri(uri)
+        self.assertEqual(result, URIRef("http://example.org/ns/"))
+
+    def test_http_with_trailing_slash(self):
+        uri = "http://example.org/ns/"
+        result = normalize_namespaceuri(uri)
+        self.assertEqual(result, URIRef("http://example.org/ns/"))
+
+    def test_http_with_trailing_hash(self):
+        uri = "http://example.org/ns#"
+        result = normalize_namespaceuri(uri)
+        self.assertEqual(result, URIRef("http://example.org/ns#"))
+
+    def test_urn_without_trailing_colon(self):
+        uri = "urn:example:namespace"
+        result = normalize_namespaceuri(uri)
+        self.assertEqual(result, URIRef("urn:example:namespace:"))
+
+    def test_urn_with_trailing_colon(self):
+        uri = "urn:example:namespace:"
+        result = normalize_namespaceuri(uri)
+        self.assertEqual(result, URIRef("urn:example:namespace:"))
+
+    def test_non_http_non_urn(self):
+        uri = "ftp://example.org/resource"
+        result = normalize_namespaceuri(uri)
+        self.assertEqual(result, URIRef("ftp://example.org/resource"))
 class TestIsSubclass(unittest.TestCase):
     def test_direct_subclass(self):
         graph = Graph()
@@ -619,7 +650,7 @@ class TestUtils(unittest.TestCase):
         
         result1 = self.rdf_utils.generate_node_id(graph, rootentity, node, "testID")
         # Expected: "ns://example" + "testID" + ":" + "i" + "12345" => "ns://exampletestID:i12345"
-        self.assertEqual(result1, "ns://exampletestID:i12345")
+        self.assertEqual(str(result1), "ns://exampletestID:i12345")
         
         # Scenario 2: id is None, so the extra id value is not included.
         graph2 = Graph()
@@ -634,8 +665,8 @@ class TestUtils(unittest.TestCase):
         
         result2 = self.rdf_utils.generate_node_id(graph2, rootentity2, node2, None)
         # Expected: "ns://another" + "g" + "67890" => "ns://anotherg67890"
-        self.assertEqual(result2, "ns://anotherg67890")
-        
+        self.assertEqual(str(result2), "ns://anotherg67890")
+
         # Scenario 3: id provided but node namespace differs from root entity namespace.
         graph3 = Graph()
         node3 = URIRef("http://example.org/node3")
@@ -652,7 +683,7 @@ class TestUtils(unittest.TestCase):
         
         result3 = self.rdf_utils.generate_node_id(graph3, rootentity3, node3, "whatever")
         # Expected: "ns://node" + "b" + "abcde" => "ns://nodebabcde"
-        self.assertEqual(result3, "ns://nodebabcde")
+        self.assertEqual(str(result3), "ns://nodebabcde")
 
     def test_get_object_types_from_namespace(self):
         """Test retrieving object types from the RDF graph within a specific namespace."""

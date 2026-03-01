@@ -91,6 +91,15 @@ def print_warning(dictid, message):
     warnings.warn(warnstr)
 
 
+def normalize_namespaceuri(uri):
+    struri = str(uri)
+    if (not struri.endswith('/') and not struri.endswith('#')) and struri.startswith('http'):
+        struri += '/'
+    elif not struri.endswith(':') and struri.startswith('urn'):
+        struri += ':'
+    return URIRef(struri)
+
+
 def dump_graph(g):
     for s, p, o in g:
         print(s, p, o)
@@ -809,22 +818,21 @@ class RdfUtils:
         return foundtypes
 
     def generate_node_id(self, graph, rootentity, node, id):
-        try:
-            node_id = next(graph.objects(node, self.basens['hasNodeId']))
-            idtype = next(graph.objects(node, self.basens['hasIdentifierType']))
-            rootns = next(graph.objects(rootentity, self.basens['hasNamespace']))
-            rootnsuri = next(graph.objects(rootns, self.basens['hasUri']))
-            ns = next(graph.objects(node, self.basens['hasNamespace']))
-            nsuri = next(graph.objects(ns, self.basens['hasUri']))
-        except:
-            node_id = 'unknown'
+        node_id = next(graph.objects(node, self.basens['hasNodeId']), 'unknown')
+        idtype = next(graph.objects(node, self.basens['hasIdentifierType']), 'unknown')
+        rootns = next(graph.objects(rootentity, self.basens['hasNamespace']), 'unknown')
+        rootnsuri = next(graph.objects(rootns, self.basens['hasUri']), 'unknown')
+        ns = next(graph.objects(node, self.basens['hasNamespace']), 'unknown')
+        nsuri = next(graph.objects(ns, self.basens['hasUri']), 'unknown')
+
         idt = idtype2String(idtype, self.basens)
         quoted_node_id = urllib.parse.quote(node_id)
+        nsurins = Namespace(nsuri)
         if id is not None and str(nsuri) == str(rootnsuri):
             quoted_id = urllib.parse.quote(id, safe='/:')
-            result = f'{nsuri}{quoted_id}:{idt}{quoted_node_id}'
+            result = nsurins[f'{quoted_id}:{idt}{quoted_node_id}']
         else:
-            result = f'{nsuri}{idt}{quoted_node_id}'
+            result = nsurins[f'{idt}{quoted_node_id}']
         return result
 
     def get_semantic_bridge(self, g, subject, object):

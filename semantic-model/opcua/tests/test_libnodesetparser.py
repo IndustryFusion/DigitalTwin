@@ -293,7 +293,7 @@ class TestNodesetParser(unittest.TestCase):
             'http://testnamespace.org/': 'myprefix',
             'http://example.com/ns1': 'prefix1',
             'http://example.com/ns2': 'prefix2',
-            'http://example.com/baseOntology': 'base'
+            'http://example.com/baseOntology/': 'base'
         }
 
         expected_known_ns_classes = {
@@ -301,7 +301,7 @@ class TestNodesetParser(unittest.TestCase):
             'http://example.com/ns1#': URIRef('http://example.com/ns1/Namespace'),
             'http://example.com/ns1': URIRef('http://example.com/ns_class1'),
             'http://example.com/ns2': URIRef('http://example.com/ns_class2'),
-            'http://example.com/baseOntology': URIRef('http://example.com/baseOntologyBaseNamespace')
+            'http://example.com/baseOntology/': URIRef('http://example.com/baseOntology/BaseNamespace')
         }
 
         # Assert that the known_opcua_ns dictionary matches the expected output
@@ -1462,10 +1462,8 @@ class TestCreatePrefixesWithXmlNode(unittest.TestCase):
         parser.opcua_ns = []
         base = 'http://base#'
         opcua_namespace = 'http://opcua#'
-        xml_node = ET.Element('NamespaceUris')
-        child = ET.SubElement(xml_node, 'Uri')
-        child.text = 'http://uri1/'
-        parser.create_prefixes(xml_node, base, opcua_namespace)
+        namespaces = [URIRef('http://uri1/')]
+        parser.create_prefixes(namespaces, base, opcua_namespace)
         self.assertEqual(str(parser.rdf_ns['base']), base)
         self.assertEqual(str(parser.rdf_ns['opcua']), opcua_namespace)
         self.assertIn('http://uri1/', parser.opcua_ns)

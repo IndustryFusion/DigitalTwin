@@ -170,15 +170,12 @@ Please set it explictly.")
                 exit(1)
             model = models.find('opcua:Model', self.xml_ns)
             self.ontology_name = URIRef(model.get('ModelUri'))
-            if not str(self.ontology_name).endswith('/'):
-                self.ontology_name += '/'
+            self.ontology_name = utils.normalize_namespaceuri(self.ontology_name)
         else:
-            self.ontology_name = URIRef(args.namespace) if args.namespace is not None else None
+            self.ontology_name = utils.normalize_namespaceuri(args.namespace) if args.namespace is not None else None
         self.namespace_uris = self.root.find('opcua:NamespaceUris', self.xml_ns)
         if self.namespace_uris is not None:
-            for uri in self.namespace_uris:
-                if not uri.text.endswith('/'):
-                    uri.text += '/'
+            self.namespace_uris = [utils.normalize_namespaceuri(uri.text) for uri in self.namespace_uris]
         self.base_ontology = args.baseOntology
         self.opcua_namespace = args.opcuaNamespace
         self.ontology_prefix = args.prefix
@@ -337,6 +334,7 @@ Please set it explictly.")
                 self.known_ns_classes[str(uri)] = ns
                 self.rdf_ns[str(prefix)] = Namespace(str(uri))
                 self.g.bind(str(prefix), Namespace(str(uri)))
+        ontology_name = utils.normalize_namespaceuri(ontology_name)
         self.rdf_ns[ontology_prefix] = Namespace(str(ontology_name))
         self.g.bind(ontology_prefix, Namespace(str(ontology_name)))
         self.known_ns_classes[str(ontology_name)] = self.rdf_ns[ontology_prefix][namespaceclass]
@@ -345,7 +343,7 @@ Please set it explictly.")
     def add_ontology_namespace(self, ontology_prefix, namespaceclass, ontology_name):
         self.g.add((self.rdf_ns[ontology_prefix][namespaceclass], RDF.type, self.rdf_ns['base']['Namespace']))
         self.g.add((self.rdf_ns[ontology_prefix][namespaceclass], self.rdf_ns['base']['hasUri'],
-                    Literal(ontology_name.toPython())))
+                    Literal(str(utils.normalize_namespaceuri(ontology_name)))))
         self.g.add((self.rdf_ns[ontology_prefix][namespaceclass], self.rdf_ns['base']['hasPrefix'],
                     Literal(ontology_prefix)))
 
@@ -366,15 +364,15 @@ Please set it explictly.")
         for ontology in self.imported_ontologies:
             self.g.add((self.ontology_name, OWL.imports, utils.file_path_to_uri(ontology)))
 
-    def create_prefixes(self, xml_node, base, opcua_namespace):
+    def create_prefixes(self, ns_uris, base, opcua_namespace):
         self.rdf_ns['base'] = Namespace(base)
         self.rdf_ns['opcua'] = Namespace(opcua_namespace)
         self.g.bind('opcua', self.rdf_ns['opcua'])
         self.g.bind('base', self.rdf_ns['base'])
-        if xml_node is None:
+        if ns_uris is None:
             return
-        for ns in xml_node:
-            self.opcua_ns.append(ns.text)
+        for ns in ns_uris:
+            self.opcua_ns.append(str(ns))
 
     def get_rdf_ns_from_ua_index(self, index):
         namespace_uri = self.opcua_ns[int(index)]
@@ -445,9 +443,11 @@ Did you forget to import it?")
         self.g.add((classiri, self.rdf_ns['base']['hasNodeId'], Literal(nid)))
         self.g.add((classiri, self.rdf_ns['base']['hasIdentifierType'], idtype))
         self.g.add((classiri, self.rdf_ns['base']['hasBrowseName'], Literal(bn_name)))
-        self.g.add((classiri, self.rdf_ns['base']['hasBrowseNameNamespace'], self.known_ns_classes[bn_namespace]))
+        self.g.add((classiri, self.rdf_ns['base']['hasBrowseNameNamespace'],
+                    self.known_ns_classes[str(utils.normalize_namespaceuri(bn_namespace))]))
         namespace = self.opcua_ns[index]
-        self.g.add((classiri, self.rdf_ns['base']['hasNamespace'], self.known_ns_classes[namespace]))
+        self.g.add((classiri, self.rdf_ns['base']['hasNamespace'],
+                    self.known_ns_classes[str(utils.normalize_namespaceuri(namespace))]))
         self.g.add((classiri, RDF.type, self.rdf_ns['opcua'][nodeclasstype]))
         self.nodeIds[index][nid] = classiri
         displayname_node = node.find('opcua:DisplayName', xml_ns)
