@@ -109,6 +109,7 @@
       <Reference ReferenceType="HasComponent">ns=1;i=1018</Reference>
       <Reference ReferenceType="HasComponent">ns=1;i=1019</Reference>
       <Reference ReferenceType="HasComponent">ns=1;i=1020</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1021</Reference>
     </References>
   </UAObjectType>
   <UAObject NodeId="ns=1;i=1003" BrowseName="1:B">
@@ -130,6 +131,7 @@
       <Reference ReferenceType="HasComponent">ns=1;i=1018</Reference>
       <Reference ReferenceType="HasComponent">ns=1;i=1019</Reference>
       <Reference ReferenceType="HasComponent">ns=1;i=1020</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1021</Reference>
       <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAObject>
@@ -252,6 +254,13 @@
       <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAVariable>
+  <UAVariable NodeId="ns=1;i=1021" BrowseName="1:MyVariable18" DataType="NodeId" ValueRank="1" ArrayDimensions="0">
+    <DisplayName>Variable18 of B-object</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
+    </References>
+  </UAVariable>
 
   <UAVariable NodeId="ns=1;i=2001" BrowseName="1:C" DataType="i=11">
     <DisplayName>Variable of AlphaType</DisplayName>
@@ -313,6 +322,7 @@
       <Reference ReferenceType="HasComponent">ns=1;i=2027</Reference>
       <Reference ReferenceType="HasComponent">ns=1;i=2028</Reference>
       <Reference ReferenceType="HasComponent">ns=1;i=2029</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2030</Reference>
     </References>
   </UAObject>
   <UAVariable NodeId="ns=1;i=2013" BrowseName="1:MyVariable" DataType="Int32">
@@ -477,7 +487,7 @@
     </uax:ListOfNodeIds>
     </Value>
   </UAVariable>
-  <UAVariable NodeId="ns=1;i=2028" BrowseName="1:MyVariable16" DataType="NodeId">
+  <UAVariable NodeId="ns=1;i=2028" BrowseName="1:MyVariable16" DataType="NodeId" ValueRank="1" ArrayDimension="0">
     <DisplayName>Scalar or array Variable</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=200</Reference>
@@ -508,6 +518,16 @@
       <uax:NodeId>
         <uax:Identifier>ns=1;i=1003</uax:Identifier>
       </uax:NodeId>
+    </Value>
+  </UAVariable>
+  <UAVariable NodeId="ns=1;i=2030" BrowseName="1:MyVariable18" DataType="NodeId" ValueRank="1" ArrayDimension="0">
+    <DisplayName>Array of min length 0</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+    </References>
+    <Value>
+    <uax:ListOfNodeIds>
+    </uax:ListOfNodeIds>
     </Value>
   </UAVariable>
   <UAVariable NodeId="ns=1;s=TemperatureSensor" BrowseName="1:MyStringTestNode">
