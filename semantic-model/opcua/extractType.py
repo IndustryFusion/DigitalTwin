@@ -24,7 +24,7 @@ from rdflib import Graph, Namespace, URIRef, BNode
 from rdflib.namespace import OWL, RDF, SH
 import argparse
 import lib.utils as utils
-from lib.utils import RdfUtils, OntologyLoader, NULL_IRI
+from lib.utils import RdfUtils, OntologyLoader
 from lib.bindings import Bindings
 from lib.jsonld import JsonLd
 from lib.entity import Entity
@@ -617,10 +617,13 @@ will flag this.")
                 jsonld.get_ngsild_property(value, datatype=shacl_rule['datatype'])
         else:
             if value is None:
-                value = NULL_IRI
-                warnmsg = f"IRI value is not found for {full_attribute_name} in node {node}. \
-Check whether it has a proper type definition. Most likely this attribute is not defined in the type definition."
-                print_warning('no_iri_value', warnmsg)
+                value = jsonld.get_default_iri(shacl_rule.get('value_rank'),
+                                               shacl_rule.get('array_dimensions'), g=g)
+                if value != []:
+                    # Only "valid" case is allowed empty list.
+                    warnmsg = f"IRI value is not found for {full_attribute_name} in node {node}." \
+                        f"Will use default '{value}' but this might trigger validation problems."
+                    print_warning('no_iri_value', warnmsg)
             instance[f'{full_attribute_name}'] = jsonld.get_ngsild_property(value)
         if type is not None:
             minshaclg.copy_property_from_shacl(shaclg, type, full_attribute_name)

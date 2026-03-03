@@ -77,7 +77,7 @@ for tuple in "${TESTNODESETS[@]}"; do  IFS=","
         ns_args=(-n "$namespace")
     fi
     echo test $nodeset with prefix $prefix dependency $dependency and namespace $namespace
-    if [ "$DEBUG"="true" ]; then
+    if [ "$DEBUG" = "true" ]; then
         echo DEBUG: python3 -m debugpy --listen 5678 --wait-for-client ${NODESET2OWL} ${nodeset}.xml "${ns_args[@]}" -i ${BASE_ONTOLOGY} ${DEPENDENT_CS} -v http://example.com/v0.1/UA/ -p $prefix -o ${RESULT}
     fi
     python3 ${NODESET2OWL} ${nodeset}.xml "${ns_args[@]}" -i ${BASE_ONTOLOGY} ${DEPENDENT_CS} -v http://example.com/v0.1/UA/ -p $prefix -o ${RESULT}

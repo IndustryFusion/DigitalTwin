@@ -20,7 +20,7 @@ from rdflib.namespace import XSD, RDF
 from rdflib.collection import Collection
 import operator
 from functools import reduce
-from lib.utils import is_subclass, ngsild_context, NGSILD
+from lib.utils import is_subclass, ngsild_context, NGSILD, NULL_IRI
 
 
 from pyld import jsonld
@@ -291,10 +291,25 @@ class JsonLd:
         elif datatype == RDF.JSON:
             data_value = {}
         elif datatype == XSD.dateTime:
-            data_value = {'@value': '1970-1-1T00:00:00', '@type': 'xsd:dateTime'}
+            data_value = {'@value': '1970-01-01T00:00:00', '@type': 'xsd:dateTime'}
         else:
             print(f'Warning: unknown default value for datatype {datatype}')
             data_value = 'null'
+        if value_rank is None or int(value_rank) < 0:
+            return data_value
+        data_array_value = []
+        if array_dimensions is not None:
+            array_length = 0
+            ad = Collection(g, array_dimensions)
+            if len(ad) > 0:
+                array_length = reduce(operator.mul, (item.toPython() for item in ad), 1)
+            if array_length > 0:
+                data_array_value = [data_value] * array_length
+        return data_array_value
+
+    @staticmethod
+    def get_default_iri(value_rank=None, array_dimensions=None, g=Graph()):
+        data_value = NULL_IRI
         if value_rank is None or int(value_rank) < 0:
             return data_value
         data_array_value = []

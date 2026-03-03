@@ -7,6 +7,7 @@ from rdflib.collection import Collection
 import json
 
 from lib.jsonld import JsonLd, nested_json_from_graph
+from lib.utils import NULL_IRI
 
 class TestJsonLd(unittest.TestCase):
     def setUp(self):
@@ -18,6 +19,47 @@ class TestJsonLd(unittest.TestCase):
         instance = {"id": "testId", "type": "TestType"}
         self.jsonld_instance.add_instance(instance)
         self.assertIn(instance, self.jsonld_instance.instances)
+
+    def test_get_default_iri_scalar(self):
+        result = JsonLd.get_default_iri()
+        self.assertEqual(result, NULL_IRI)
+
+    def test_get_default_iri_negative_value_rank(self):
+        result = JsonLd.get_default_iri(value_rank=-1)
+        self.assertEqual(result, NULL_IRI)
+
+    def test_get_default_iri_none_value_rank(self):
+        result = JsonLd.get_default_iri(value_rank=None)
+        self.assertEqual(result, NULL_IRI)
+
+    def test_get_default_iri_zero_value_rank(self):
+        result = JsonLd.get_default_iri(value_rank=0)
+        self.assertEqual(result, [])
+
+    def test_get_default_iri_positive_value_rank_no_dimensions(self):
+        result = JsonLd.get_default_iri(value_rank=1)
+        self.assertEqual(result, [])
+
+    def test_get_default_iri_array_with_dimensions(self):
+        g = Graph()
+        bnode = BNode()
+        Collection(g, bnode, [Literal(2), Literal(3)])
+        result = JsonLd.get_default_iri(value_rank=1, array_dimensions=bnode, g=g)
+        self.assertEqual(result, [NULL_IRI] * 6)
+
+    def test_get_default_iri_array_empty_dimensions(self):
+        g = Graph()
+        bnode = BNode()
+        Collection(g, bnode, [])
+        result = JsonLd.get_default_iri(value_rank=1, array_dimensions=bnode, g=g)
+        self.assertEqual(result, [])
+
+    def test_get_default_iri_array_single_dimension(self):
+        g = Graph()
+        bnode = BNode()
+        Collection(g, bnode, [Literal(5)])
+        result = JsonLd.get_default_iri(value_rank=1, array_dimensions=bnode, g=g)
+        self.assertEqual(result, [NULL_IRI] * 5)
 
     @patch("builtins.open", new_callable=mock_open)
     @patch("json.dump")
@@ -132,7 +174,7 @@ class TestJsonLd(unittest.TestCase):
         # dateTime: check fields individually
         dt_val = JsonLd.get_default_value([XSD.dateTime])
         self.assertIsInstance(dt_val, dict)
-        self.assertEqual(dt_val.get('@value'), '1970-1-1T00:00:00')
+        self.assertEqual(dt_val.get('@value'), '1970-01-01T00:00:00')
         self.assertEqual(dt_val.get('@type'), 'xsd:dateTime')
         # unknown
         self.assertEqual(JsonLd.get_default_value([]), 'null')

@@ -8,18 +8,16 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 shacl:AlphaTypeShape a sh:NodeShape ;
-    sh:property [ sh:maxCount 1 ;
+    sh:property [ a base:PeerRelationship ;
             sh:minCount 0 ;
-            sh:node shacl:ValueRankShape_Any_double ;
             sh:nodeKind sh:BlankNode ;
-            sh:path test:hasC ;
-            sh:property [ sh:maxCount 1 ;
-                    sh:minCount 0 ;
-                    sh:node shacl:ValueRankShape_Any_double ;
-                    sh:nodeKind sh:BlankNode ;
-                    sh:path test:hasE ;
-                    base:hasReferenceType opcua:HasComponent ] ;
-            base:hasReferenceType opcua:HasComponent ],
+            sh:path test:X ;
+            sh:property [ sh:class test:BType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasReferenceType test:X ],
         [ a base:SubComponentRelationship ;
             sh:maxCount 1 ;
             sh:minCount 0 ;
@@ -31,20 +29,28 @@ shacl:AlphaTypeShape a sh:NodeShape ;
                     sh:nodeKind sh:IRI ;
                     sh:path ngsi-ld:hasObject ] ;
             base:hasReferenceType opcua:HasComponent ],
-        [ a base:PeerRelationship ;
+        [ sh:maxCount 1 ;
             sh:minCount 0 ;
+            sh:node shacl:ValueRankShape_Any_double ;
             sh:nodeKind sh:BlankNode ;
-            sh:path test:X ;
-            sh:property [ sh:class test:BType ;
-                    sh:maxCount 1 ;
-                    sh:minCount 1 ;
-                    sh:nodeKind sh:IRI ;
-                    sh:path ngsi-ld:hasObject ] ;
-            base:hasReferenceType test:X ] ;
+            sh:path test:hasC ;
+            sh:property [ sh:maxCount 1 ;
+                    sh:minCount 0 ;
+                    sh:node shacl:ValueRankShape_Any_double ;
+                    sh:nodeKind sh:BlankNode ;
+                    sh:path test:hasE ;
+                    base:hasReferenceType opcua:HasComponent ] ;
+            base:hasReferenceType opcua:HasComponent ] ;
     sh:targetClass test:AlphaType .
 
 shacl:BTypeShape a sh:NodeShape ;
     sh:property [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:node shacl:ValueRankShape_OneDimension_string ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasMyVariable8 ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ sh:maxCount 1 ;
             sh:minCount 0 ;
             sh:node shacl:ValueRankShape_OneDimension_integer_2 ;
             sh:nodeKind sh:BlankNode ;
@@ -52,39 +58,9 @@ shacl:BTypeShape a sh:NodeShape ;
             base:hasReferenceType opcua:HasComponent ],
         [ sh:maxCount 1 ;
             sh:minCount 0 ;
-            sh:node shacl:ValueRankShape_2Dimensions_double_6 ;
+            sh:node shacl:ValueRankShape_OneDimension_NodeId_0 ;
             sh:nodeKind sh:BlankNode ;
-            sh:path test:hasMyVariable2 ;
-            base:hasReferenceType opcua:HasComponent ],
-        [ sh:maxCount 1 ;
-            sh:minCount 0 ;
-            sh:node shacl:ValueRankShape_OneDimension_integer_2 ;
-            sh:nodeKind sh:BlankNode ;
-            sh:path test:hasMyVariable ;
-            base:hasReferenceType opcua:HasComponent ],
-        [ sh:maxCount 1 ;
-            sh:minCount 0 ;
-            sh:node shacl:ValueRankShape_Any_NodeId ;
-            sh:nodeKind sh:BlankNode ;
-            sh:path test:hasMyVariable15 ;
-            base:hasReferenceType opcua:HasComponent ],
-        [ sh:maxCount 1 ;
-            sh:minCount 0 ;
-            sh:node shacl:ValueRankShape_OneDimension_integer_2 ;
-            sh:nodeKind sh:BlankNode ;
-            sh:path test:hasMyVariable14 ;
-            base:hasReferenceType opcua:HasComponent ],
-        [ sh:maxCount 1 ;
-            sh:minCount 0 ;
-            sh:node shacl:ValueRankShape_Any_double ;
-            sh:nodeKind sh:BlankNode ;
-            sh:path test:hasMyVariable10 ;
-            base:hasReferenceType opcua:HasComponent ],
-        [ sh:maxCount 1 ;
-            sh:minCount 0 ;
-            sh:node shacl:ValueRankShape_OneOrMoreDimensions_integer ;
-            sh:nodeKind sh:BlankNode ;
-            sh:path test:hasMyVariable13 ;
+            sh:path test:hasMyVariable18 ;
             base:hasReferenceType opcua:HasComponent ],
         [ sh:maxCount 1 ;
             sh:minCount 0 ;
@@ -94,33 +70,21 @@ shacl:BTypeShape a sh:NodeShape ;
             base:hasReferenceType opcua:HasComponent ],
         [ sh:maxCount 1 ;
             sh:minCount 0 ;
-            sh:node shacl:ValueRankShape_Scalar_string ;
+            sh:node shacl:ValueRankShape_OneDimension_integer_2 ;
             sh:nodeKind sh:BlankNode ;
-            sh:path test:hasMyVariable6 ;
-            base:hasReferenceType opcua:HasComponent ],
-        [ sh:maxCount 1 ;
-            sh:minCount 0 ;
-            sh:node shacl:ValueRankShape_OneDimension_string ;
-            sh:nodeKind sh:BlankNode ;
-            sh:path test:hasMyVariable8 ;
-            base:hasReferenceType opcua:HasComponent ],
-        [ sh:maxCount 1 ;
-            sh:minCount 0 ;
-            sh:node shacl:ValueRankShape_Any_NodeId ;
-            sh:nodeKind sh:BlankNode ;
-            sh:path test:hasMyVariable17 ;
-            base:hasReferenceType opcua:HasComponent ],
-        [ sh:maxCount 1 ;
-            sh:minCount 0 ;
-            sh:node shacl:ValueRankShape_OneDimension_string ;
-            sh:nodeKind sh:BlankNode ;
-            sh:path test:hasMyVariable5 ;
+            sh:path test:hasMyVariable ;
             base:hasReferenceType opcua:HasComponent ],
         [ sh:maxCount 1 ;
             sh:minCount 0 ;
             sh:node shacl:ValueRankShape_OneDimension_integer ;
             sh:nodeKind sh:BlankNode ;
             sh:path test:hasMyVariable9 ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:node shacl:ValueRankShape_OneOrMoreDimensions_boolean_2 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasMyVariable3 ;
             base:hasReferenceType opcua:HasComponent ],
         [ sh:maxCount 1 ;
             sh:minCount 0 ;
@@ -136,15 +100,57 @@ shacl:BTypeShape a sh:NodeShape ;
             base:hasReferenceType opcua:HasComponent ],
         [ sh:maxCount 1 ;
             sh:minCount 0 ;
-            sh:node shacl:ValueRankShape_OneOrMoreDimensions_boolean_2 ;
+            sh:node shacl:ValueRankShape_Scalar_string ;
             sh:nodeKind sh:BlankNode ;
-            sh:path test:hasMyVariable3 ;
+            sh:path test:hasMyVariable6 ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:node shacl:ValueRankShape_OneOrMoreDimensions_integer ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasMyVariable13 ;
             base:hasReferenceType opcua:HasComponent ],
         [ sh:maxCount 1 ;
             sh:minCount 0 ;
             sh:node shacl:ValueRankShape_OneDimension_string_2 ;
             sh:nodeKind sh:BlankNode ;
             sh:path test:hasMyVariable11 ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:node shacl:ValueRankShape_OneDimension_string ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasMyVariable5 ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:node shacl:ValueRankShape_2Dimensions_double_6 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasMyVariable2 ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:node shacl:ValueRankShape_OneDimension_integer_2 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasMyVariable14 ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:node shacl:ValueRankShape_Any_double ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasMyVariable10 ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:node shacl:ValueRankShape_Any_NodeId ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasMyVariable15 ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:node shacl:ValueRankShape_Any_NodeId ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasMyVariable17 ;
             base:hasReferenceType opcua:HasComponent ] ;
     sh:targetClass test:BType .
 
@@ -171,6 +177,15 @@ shacl:ValueRankShape_Any_string a sh:NodeShape ;
                                     sh:property [ sh:datatype xsd:string ;
                                             sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
                         sh:path ngsi-ld:hasValueList ] ] ) .
+
+shacl:ValueRankShape_OneDimension_NodeId_0 a sh:NodeShape ;
+    sh:message "ValueRank constraint for valuerank=OneDimension(1) with datatype=NodeId and multiplied arraydimensions=0." ;
+    sh:property [ sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:or ( [ sh:nodeKind sh:BlankNode ;
+                        sh:property [ sh:class opcua:BaseNodeClass ;
+                                sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
+            sh:path ngsi-ld:hasValueList ] .
 
 shacl:ValueRankShape_OneDimension_integer a sh:NodeShape ;
     sh:message "ValueRank constraint for valuerank=OneDimension(1) with datatype=integer." ;
