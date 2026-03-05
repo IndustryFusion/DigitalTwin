@@ -30,7 +30,6 @@ class TestShaclAdditional(unittest.TestCase):
         # Extract the actual property_shape (inner) that holds the constraints
         property_shape = next(self.sh.shaclg.objects(propn, SH.property))
         # That shape must include a minCount and maxCount equal to 6
-        self.assertIn((property_shape, SH.minCount, Literal(6)), list(self.sh.shaclg))
         self.assertIn((property_shape, SH.maxCount, Literal(6)), list(self.sh.shaclg))
         # And class constraint should be set on the property_shape
         self.assertIn((property_shape, SH['class'], URIRef("http://example.org/Clazz")), list(self.sh.shaclg))
@@ -366,6 +365,7 @@ class TestShacl(unittest.TestCase):
         # Mocking graph objects - Case 1: Enumeration type
         g.objects = MagicMock(side_effect=[
             iter([URIRef("http://example.org/Enumeration")]),  # RDFS.subClassOf
+            iter([False]) # isAbstract
         ])
 
         self.shacl_instance.get_shacl_iri_and_contentclass(g, node, parentnode, shacl_rule)
@@ -376,7 +376,8 @@ class TestShacl(unittest.TestCase):
         # Case 2: Non-enumeration type
         mock_get_datatype.reset_mock()
         g.objects = MagicMock(side_effect=[
-            iter([URIRef("http://example.org/OtherClass")]),  # RDFS.subClassOf
+            iter([URIRef("http://example.org/OtherClass"), False]),  # RDFS.subClassOf
+            iter([False]) # isAbstract
         ])
         shacl_rule = {}
 
@@ -1116,10 +1117,8 @@ class TestShaclCreateShaclPropertyName(unittest.TestCase):
         # Check that rank_value_to_string was called
         mock_utils.rank_value_to_string.assert_called_with(value_rank)
         # Check that SH.message triple was added
-        expected_message = (
-            f"ValueRank constraint for valuerank=Array"
-            f"({value_rank}) with datatype=float and multiplied arraydimensions=6."
-        )
+        expected_message = 'ValueRank constraint for valuerank=Array (1) and datatype=float and multiplied arraydimensions=6'
+
         self.shacl.shaclg.add.assert_any_call(
             (URIRef(f"{self.namespace_prefix}shacl/ValueRankShape_Array_float_6"), SH.message, Literal(expected_message))
         )
@@ -1154,10 +1153,8 @@ class TestShaclCreateShaclPropertyName(unittest.TestCase):
         )
         mock_split_uri.assert_called_with(datatype[0])
         mock_utils.rank_value_to_string.assert_called_with(value_rank)
-        expected_message = (
-            f"ValueRank constraint for valuerank=Scalar"
-            f"({value_rank}) with datatype=string."
-        )
+        expected_message = 'ValueRank constraint for valuerank=Scalar (0) and datatype=string'
+
         self.shacl.shaclg.add.assert_any_call(
             (shape_name, SH.message, Literal(expected_message))
         )

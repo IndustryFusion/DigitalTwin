@@ -349,7 +349,7 @@
           <uax:Float>2</uax:Float>
           <uax:Float>3</uax:Float>
           <uax:Float>4</uax:Float>
-          <uax:Float>5</uax:Float>
+          <uax:Float>1</uax:Float>
         </uax:ListOfFloat>
       </Value>
   </UAVariable>
@@ -454,6 +454,8 @@
     <Value>
       <uax:ListOfInt32>
       <uax:Int32>99</uax:Int32>
+      <uax:Int32>98</uax:Int32>
+      <uax:Int32>97</uax:Int32>
       </uax:ListOfInt32>
     </Value>
   </UAVariable>

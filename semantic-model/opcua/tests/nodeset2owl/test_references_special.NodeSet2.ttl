@@ -240,8 +240,7 @@ opcua:Number a owl:Class ;
     rdfs:subClassOf opcua:BaseDataType ;
     base:isAbstract "true" .
 
-opcua:nodei78 a opcua:ModellingRuleType,
-        opcua:ObjectNodeClass ;
+opcua:nodei78 a opcua:ObjectNodeClass ;
     base:hasBrowseName "Mandatory" ;
     base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDescription "Specifies that an instance with the attributes and references of the instance declaration must appear when a type is instantiated." ;
@@ -249,7 +248,8 @@ opcua:nodei78 a opcua:ModellingRuleType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "78" ;
-    base:hasSymbolicName "ModellingRule_Mandatory" .
+    base:hasSymbolicName "ModellingRule_Mandatory" ;
+    base:instanceOf opcua:ModellingRuleType .
 
 opcua:Aggregates a owl:ObjectProperty ;
     rdfs:subPropertyOf opcua:HasChild ;
@@ -262,14 +262,14 @@ opcua:NonHierarchicalReferences a owl:ObjectProperty ;
 opcua:References a owl:ObjectProperty ;
     base:isAbstract "true" .
 
-opcua:nodei47112 a opcua:BaseObjectType,
-        opcua:ObjectNodeClass ;
+opcua:nodei47112 a opcua:ObjectNodeClass ;
     base:hasBrowseName "MyObject" ;
     base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDisplayName "MyObject" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "47112" .
+    base:hasNodeId "47112" ;
+    base:instanceOf opcua:BaseObjectType .
 
 opcua:BaseObjectType a owl:Class .
 

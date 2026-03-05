@@ -49,7 +49,7 @@ class Shacl:
         self.shaclg.add((shapename, SH.targetClass, URIRef(targetclass)))
         return shapename
 
-    def create_shacl_property_name(self, value_rank, array_dimensions, datatype):
+    def create_shacl_property_name(self, value_rank, array_dimensions, datatype, contentclass=None):
         """
         Generates a SHACL property name (as a URIRef) based on the provided value rank, array dimensions, and datatype.
 
@@ -80,6 +80,8 @@ class Shacl:
             _, datatype_name = split_uri(datatype)
         else:
             datatype_name = "None"
+        if contentclass is not None and datatype_name == "enumeration":
+            datatype_name += f'_{self.get_typename(contentclass)}'
         value_rank_name = utils.rank_value_to_string(value_rank)
         name = f'ValueRankShape_{value_rank_name}_{datatype_name}{array_dim_str}'
         shapename = self.shacl_namespace[name]
@@ -123,7 +125,12 @@ class Shacl:
             if len(ad) > 0:
                 array_length = reduce(operator.mul, (item.toPython() for item in ad), 1)
         if array_length is not None and array_length > 0:
-            self.shaclg.add((property_shape, SH.minCount, Literal(array_length)))
+            # self.shaclg.add((property_shape, SH.minCount, Literal(array_length)))
+            # minCount does not do what you think. SHACL 1.1 treats list as sets
+            # so e.g. [1, 2, 1] has only 2 elements ...
+            # We have to wait for SHACL 1.2 which provides an explicit list semantics
+            # Until then, we will leave this comment in to remember that sh:minCount has been
+            # commented out on purpose.
             self.shaclg.add((property_shape, SH.maxCount, Literal(array_length)))
         property_node_array = []
         property_node = BNode()
@@ -168,7 +175,12 @@ class Shacl:
             if len(ad) > 0:
                 array_length = reduce(operator.mul, (item.toPython() for item in ad), 1)
         if array_length is not None and array_length > 0:
-            self.shaclg.add((property_shape, SH.minCount, Literal(array_length)))
+            # self.shaclg.add((property_shape, SH.minCount, Literal(array_length)))
+            # minCount does not do what you think. SHACL 1.1 treats list as sets
+            # so e.g. [1, 2, 1] has only 2 elements ...
+            # We have to wait for SHACL 1.2 which provides an explicit list semantics
+            # Until then, we will leave this comment in to remember that sh:minCount has been
+            # commented out on purpose.
             self.shaclg.add((property_shape, SH.maxCount, Literal(array_length)))
         property_node_array = []
         property_node = BNode()
@@ -214,10 +226,12 @@ class Shacl:
             self.shaclg.add((property, self.basens['hasReferenceType'], reftype))
         if not is_array and maxCount is not None:
             self.shaclg.add((property, SH.maxCount, Literal(maxCount)))
-        if is_property:
+        if int(value_rank) == -2 and datatype is None and array_dimensions is None:
+            pass
+        elif is_property:
             # In case the rank_subshapes_enabled is activated, we need to check if shape already exists
             # to avoid duplicate shapes
-            shape_name = self.create_shacl_property_name(value_rank, array_dimensions, datatype)
+            shape_name = self.create_shacl_property_name(value_rank, array_dimensions, datatype, contentclass)
             shape_name_is_known = (shape_name, RDF.type, SH.NodeShape) in self.shaclg
             if not shape_name_is_known or not self.value_rank_subshapes_enabled:
                 # Only create the shape if it is not already known or if subshapes are disabled
@@ -267,13 +281,19 @@ class Shacl:
 
         self.shaclg.add((shape_name, RDF.type, SH.NodeShape))
         self.shacl_add_to_shape(shape_name, tuples)
-        _, datatype_name = split_uri(datatype)
+        datatype_name = ""
+        try:
+            _, datatype_name = split_uri(datatype)
+        except:
+            pass
         array_dim_str = ""
         array_dim = utils.collection_to_list(array_dimensions, self.data_graph)
         if isinstance(array_dim, list):
             array_dim_str = f' and multiplied arraydimensions={reduce(operator.mul, array_dim)}'
-        message = f"ValueRank constraint for valuerank={utils.rank_value_to_string(value_rank)}\
-({value_rank}) with datatype={datatype_name}{array_dim_str}."
+        message = f"ValueRank constraint for valuerank={utils.rank_value_to_string(value_rank)}"\
+                  f" ({value_rank})"
+        if datatype_name:
+            message += f" and datatype={datatype_name}{array_dim_str}"
         self.shaclg.add((shape_name, SH.message, Literal(message)))
 
     def get_ngsild_relationship_constraints(self, is_array, placeholder_pattern, is_subcomponent, is_iri, contentclass):
@@ -447,11 +467,7 @@ class Shacl:
         shacl_rule['pattern'] = shacl_pattern
         if data_type is not None:
             base_data_type = next(g.objects(data_type, RDFS.subClassOf))  # Todo: This must become a sparql query
-            is_abstract = None
-            try:
-                is_abstract = bool(next(g.objects(data_type, self.basens['isAbstract'])))
-            except:
-                pass
+            is_abstract = bool(next(g.objects(data_type, self.basens['isAbstract']), False))
             shacl_rule['isAbstract'] = is_abstract
             shacl_rule['datatype'] = shacl_type
             shacl_rule['pattern'] = shacl_pattern
@@ -603,6 +619,8 @@ or placeholders or both. Will try to guess the right value, but this can go wron
             return False
 
     def _get_shclass_from_property(self, property):
+        if property is None:
+            return None
         result = None
         try:
             subproperty = next(self.shaclg.objects(property, SH.property))

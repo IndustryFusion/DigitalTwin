@@ -88,6 +88,12 @@ opcua:Duplex. The concrete value is an IRI "http://opcfoundation.org/UA/Full"
     <References>
       <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
       <Reference ReferenceType="HasComponent">ns=1;i=1004</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1005</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1006</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1007</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1008</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1009</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1010</Reference>
     </References>
   </UAObjectType>
   <UAObject NodeId="ns=1;i=1003" BrowseName="1:B">
@@ -105,7 +111,48 @@ opcua:Duplex. The concrete value is an IRI "http://opcfoundation.org/UA/Full"
       <Reference ReferenceType="HasModellingRule">i=80</Reference>
     </References>
   </UAVariable>
-
+  <UAVariable NodeId="ns=1;i=1005" BrowseName="1:MyVariable2" DataType="i=24210" ValueRank="1" ArrayDimensions="2">
+    <DisplayName>Variable of B-object</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
+    </References>
+  </UAVariable>
+  <UAVariable NodeId="ns=1;i=1006" BrowseName="1:MyVariable3" DataType="i=24210" ValueRank="1" ArrayDimensions="0">
+    <DisplayName>Variable of B-object</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
+    </References>
+  </UAVariable>
+  <UAVariable NodeId="ns=1;i=1007" BrowseName="1:MyVariable4" DataType="i=24210" ValueRank="1" ArrayDimensions="0">
+    <DisplayName>Variable of B-object</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
+    </References>
+  </UAVariable>
+  <UAVariable NodeId="ns=1;i=1008" BrowseName="1:MyVariable5" DataType="i=24210">
+    <DisplayName>Variable of B-object</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
+    </References>
+  </UAVariable>
+  <UAVariable NodeId="ns=1;i=1009" BrowseName="1:MyVariable6" DataType="i=24210" ValueRank="1" ArrayDimensions="0">
+    <DisplayName>Variable of B-object</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
+    </References>
+  </UAVariable>
+  <UAVariable NodeId="ns=1;i=1010" BrowseName="1:MyVariable7" DataType="i=24210" ValueRank="1" ArrayDimensions="2">
+    <DisplayName>Variable of B-object</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
+    </References>
+  </UAVariable>
 
 
   <UAVariable NodeId="ns=1;i=2001" BrowseName="1:C" DataType="i=11">
@@ -143,7 +190,13 @@ opcua:Duplex. The concrete value is an IRI "http://opcfoundation.org/UA/Full"
     <DisplayName>Object B</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition" IsForward="true">ns=1;i=1002</Reference>
-       <Reference ReferenceType="HasComponent">ns=1;i=2013</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2013</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2014</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2015</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2016</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2017</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2018</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2019</Reference>
     </References>
   </UAObject>
   <UAVariable NodeId="ns=1;i=2013" BrowseName="1:MyVariable" DataType="i=24210">
@@ -154,6 +207,62 @@ opcua:Duplex. The concrete value is an IRI "http://opcfoundation.org/UA/Full"
     <Value>
       <uax:Int32>0</uax:Int32>
     </Value>
-
+  </UAVariable>
+  <UAVariable NodeId="ns=1;i=2014" BrowseName="1:MyVariable2" DataType="i=24210" ValueRank="1" ArrayDimensions="2">
+    <DisplayName>Variable of B-object</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
+    </References>
+    <Value>
+       <uax:ListOfInt32>
+        <uax:Int32>0</uax:Int32>
+        <uax:Int32>1</uax:Int32>
+       </uax:ListOfInt32>
+    </Value>
+  </UAVariable>
+  <UAVariable NodeId="ns=1;i=2015" BrowseName="1:MyVariable3" DataType="i=24210" ValueRank="1" ArrayDimensions="0">
+    <DisplayName>Variable of B-object</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
+    </References>
+    <Value>
+       <uax:ListOfInt32>
+        <uax:Int32>0</uax:Int32>
+       </uax:ListOfInt32>
+    </Value>
+  </UAVariable>
+  <UAVariable NodeId="ns=1;i=2016" BrowseName="1:MyVariable4" DataType="i=24210" ValueRank="1" ArrayDimensions="0">
+    <DisplayName>Variable of B-object</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
+    </References>
+    <Value>
+       <uax:ListOfInt32>
+       </uax:ListOfInt32>
+    </Value>
+  </UAVariable>
+  <UAVariable NodeId="ns=1;i=2017" BrowseName="1:MyVariable5" DataType="i=24210">
+    <DisplayName>Variable of B-object</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
+    </References>
+  </UAVariable>
+  <UAVariable NodeId="ns=1;i=2018" BrowseName="1:MyVariable6" DataType="i=24210" ValueRank="1" ArrayDimensions="0">
+    <DisplayName>Variable of B-object</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
+    </References>
+  </UAVariable>
+  <UAVariable NodeId="ns=1;i=2019" BrowseName="1:MyVariable7" DataType="i=24210" ValueRank="1" ArrayDimensions="2">
+    <DisplayName>Variable of B-object</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition" IsForward="true">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
+    </References>
   </UAVariable>
 </UANodeSet>

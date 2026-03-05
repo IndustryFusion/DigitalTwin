@@ -108,15 +108,15 @@ opcua:nodei4711 a opcua:ObjectTypeNodeClass ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "4711" .
 
-opcua:nodei47112 a opcua:BaseObjectType,
-        opcua:ObjectNodeClass ;
+opcua:nodei47112 a opcua:ObjectNodeClass ;
     opcua:HasComponent opcua:nodei16363 ;
     base:hasBrowseName "MyObject" ;
     base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDisplayName "MyObject" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "47112" .
+    base:hasNodeId "47112" ;
+    base:instanceOf opcua:BaseObjectType .
 
 opcua:nodei58 a opcua:ObjectTypeNodeClass ;
     base:definesType opcua:BaseObjectType ;

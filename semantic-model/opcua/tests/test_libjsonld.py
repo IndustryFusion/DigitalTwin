@@ -9,6 +9,10 @@ import json
 from lib.jsonld import JsonLd, nested_json_from_graph
 from lib.utils import NULL_IRI
 
+g = Graph()
+datatype = URIRef("http://type.de/type")
+
+
 class TestJsonLd(unittest.TestCase):
     def setUp(self):
         self.basens = Namespace("http://example.org/base/")
@@ -21,44 +25,44 @@ class TestJsonLd(unittest.TestCase):
         self.assertIn(instance, self.jsonld_instance.instances)
 
     def test_get_default_iri_scalar(self):
-        result = JsonLd.get_default_iri()
+        result = self.jsonld_instance.get_default_iri(datatype=datatype, g=g)
         self.assertEqual(result, NULL_IRI)
 
     def test_get_default_iri_negative_value_rank(self):
-        result = JsonLd.get_default_iri(value_rank=-1)
+        result = self.jsonld_instance.get_default_iri(datatype=datatype, value_rank=-1)
         self.assertEqual(result, NULL_IRI)
 
     def test_get_default_iri_none_value_rank(self):
-        result = JsonLd.get_default_iri(value_rank=None)
+        result = self.jsonld_instance.get_default_iri(datatype=datatype, value_rank=None, g=g)
         self.assertEqual(result, NULL_IRI)
 
     def test_get_default_iri_zero_value_rank(self):
-        result = JsonLd.get_default_iri(value_rank=0)
+        result = self.jsonld_instance.get_default_iri(datatype=datatype, value_rank=0, g=g)
         self.assertEqual(result, [])
 
     def test_get_default_iri_positive_value_rank_no_dimensions(self):
-        result = JsonLd.get_default_iri(value_rank=1)
+        result = self.jsonld_instance.get_default_iri(datatype=datatype, value_rank=1, g=g)
         self.assertEqual(result, [])
 
     def test_get_default_iri_array_with_dimensions(self):
         g = Graph()
         bnode = BNode()
         Collection(g, bnode, [Literal(2), Literal(3)])
-        result = JsonLd.get_default_iri(value_rank=1, array_dimensions=bnode, g=g)
+        result = self.jsonld_instance.get_default_iri(datatype=datatype, value_rank=1, array_dimensions=bnode, g=g)
         self.assertEqual(result, [NULL_IRI] * 6)
 
     def test_get_default_iri_array_empty_dimensions(self):
         g = Graph()
         bnode = BNode()
         Collection(g, bnode, [])
-        result = JsonLd.get_default_iri(value_rank=1, array_dimensions=bnode, g=g)
+        result = self.jsonld_instance.get_default_iri(datatype=datatype, value_rank=1, array_dimensions=bnode, g=g)
         self.assertEqual(result, [])
 
     def test_get_default_iri_array_single_dimension(self):
         g = Graph()
         bnode = BNode()
         Collection(g, bnode, [Literal(5)])
-        result = JsonLd.get_default_iri(value_rank=1, array_dimensions=bnode, g=g)
+        result = self.jsonld_instance.get_default_iri(datatype=datatype, value_rank=1, array_dimensions=bnode, g=g)
         self.assertEqual(result, [NULL_IRI] * 5)
 
     @patch("builtins.open", new_callable=mock_open)

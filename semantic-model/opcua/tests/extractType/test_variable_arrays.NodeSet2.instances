@@ -13,7 +13,7 @@
                 2.0,
                 3.0,
                 4.0,
-                5.0
+                1.0
             ]
         },
         "test:hasMyVariable18": {
@@ -56,7 +56,9 @@
         "test:hasMyVariable12": {
             "type": "ListProperty",
             "valueList": [
-                99
+                99,
+                98,
+                97
             ]
         },
         "test:hasMyVariable8": {

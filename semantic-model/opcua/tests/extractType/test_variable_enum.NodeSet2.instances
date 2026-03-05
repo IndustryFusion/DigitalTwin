@@ -1,19 +1,63 @@
 [
     {
-        "type": "http://my.test/BType",
+        "type": "test:BType",
         "id": "http://my.test/testid:i2012",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
+        "test:hasMyVariable2": {
+            "type": "ListProperty",
+            "valueList": [
+                {
+                    "@id": "http://opcfoundation.org/UA/Full"
+                },
+                {
+                    "@id": "http://opcfoundation.org/UA/Half"
+                }
+            ]
+        },
+        "test:hasMyVariable5": {
+            "type": "Property",
+            "value": {
+                "@id": "http://opcfoundation.org/UA/Full"
+            }
+        },
+        "test:hasMyVariable4": {
+            "type": "ListProperty",
+            "valueList": []
+        },
         "test:hasMyVariable": {
             "type": "Property",
             "value": {
                 "@id": "http://opcfoundation.org/UA/Full"
             }
+        },
+        "test:hasMyVariable6": {
+            "type": "ListProperty",
+            "valueList": []
+        },
+        "test:hasMyVariable3": {
+            "type": "ListProperty",
+            "valueList": [
+                {
+                    "@id": "http://opcfoundation.org/UA/Full"
+                }
+            ]
+        },
+        "test:hasMyVariable7": {
+            "type": "ListProperty",
+            "valueList": [
+                {
+                    "@id": "http://opcfoundation.org/UA/Full"
+                },
+                {
+                    "@id": "http://opcfoundation.org/UA/Full"
+                }
+            ]
         }
     },
     {
-        "type": "http://my.test/AlphaType",
+        "type": "test:AlphaType",
         "id": "http://my.test/testid:i2010",
         "@context": [
             "http://localhost:8099/context.jsonld"

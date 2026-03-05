@@ -17,7 +17,7 @@
 import os
 from rdflib import Graph, Namespace, Literal, URIRef, BNode
 from rdflib.namespace import OWL, RDF, RDFS
-from lib.utils import NGSILD, collection_to_list
+from lib.utils import NGSILD, collection_to_list, calculate_array_dimensions
 import logging
 
 logging.basicConfig(level=os.getenv('LOG_LEVEL', 'INFO').upper())
@@ -172,6 +172,23 @@ class Entity:
                              initNs={'base': self.basens, 'opcua': self.opcuans})
         self.e += result
 
+    def get_contentclasses(self, g, contentclass, value):
+        if value == RDF.nil:
+            return value
+        objects = value
+        if isinstance(value, BNode):
+            objects = collection_to_list(value, g, scalar_conversion=False)
+        result = None
+        if isinstance(objects, list):
+            result = []
+            for v in objects:
+                foundclass = self.get_contentclass(contentclass, v)
+                if foundclass is not None:
+                    result.append(foundclass)
+        else:
+            result = self.get_contentclass(contentclass, value)
+        return result
+
     def get_contentclass(self, contentclass, value):
         bindings = {'c': contentclass, 'value': value}
         result = self.e.query(query_instance, initBindings=bindings,
@@ -183,6 +200,19 @@ class Entity:
             logger.warning(f'Warning: no instance found for class {contentclass} with value {value}')
         return foundclass
 
+    def get_default_contentclasses(self, g, contentclass, rank, array_dimensions):
+        array_length = calculate_array_dimensions(g, array_dimensions)
+        foundclass = self.get_default_contentclass(contentclass)
+        try:
+            if int(rank) > 0 and int(array_length) == 0:
+                return []
+            if foundclass is not None:
+                if int(rank) > 0:
+                    return [foundclass] * int(array_length)
+        except:
+            pass
+        return foundclass
+
     def get_default_contentclass(self, contentclass):
         bindings = {'c': contentclass}
         result = self.e.query(query_default_instance, initBindings=bindings,
@@ -191,3 +221,7 @@ class Entity:
         if len(result) > 0:
             foundclass = list(result)[0].instance
         return foundclass
+
+    def add_contentclass_if_missing(self, g, contentclass):
+        if g.value(contentclass, RDF.type) is not None and self.e.value(contentclass, RDF.type) is None:
+            self.add_enum_class(g, contentclass)

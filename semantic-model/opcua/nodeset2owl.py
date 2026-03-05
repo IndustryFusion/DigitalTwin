@@ -53,6 +53,9 @@ Schema/Opc.Ua.Types.xsd')
                         default=False, help='Import not only direct dependencies but also indirect dependencies.')
     parser.add_argument('--disable-semantic-bridge', required=False, action='store_true',
                         help='Disable adding semantic bridge between OPC UA and Containment/Domain ontology terms.')
+    parser.add_argument('--enforce-opcua-type-semantic', required=False, action='store_true',
+                        help='Enforce OPC UA type semantics, instead of instanceOf. This can create instance'
+                             ' validation problems.')
     parsed_args = parser.parse_args(args)
     return parsed_args
 
@@ -73,8 +76,8 @@ imported_ontologies = []
 aliases = {}
 nodeIds = [{}]
 typeIds = [{}]
-ig = Graph()  # graph from inputs
-g = Graph()  # graph wich is currently created
+ig = Graph(store="Oxigraph")  # graph from inputs
+g = Graph(store="Oxigraph")  # graph wich is currently created
 known_references = []  # triples of all references (id, namespace, name)
 
 
@@ -110,6 +113,12 @@ if __name__ == '__main__':
     if not args.disable_semantic_bridge:
         print("Adding semantic relationships...")
         nodesetparser.add_semantic_bridge()
+    if not args.enforce_opcua_type_semantic:
+        print("Cleaning up types of nodeIds ...")
+        utils.replace_type_of_node_iris(nodesetparser.g,
+                                        nodesetparser.rdf_ns['opcua'],
+                                        nodesetparser.rdf_ns['base'],
+                                        ig=nodesetparser.ig)
     print("Writing graph to file ...")
     nodesetparser.write_graph(opcua_output)
     print(f"Done. Output written to: {opcua_output}")

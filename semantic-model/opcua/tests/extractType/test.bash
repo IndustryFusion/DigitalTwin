@@ -36,6 +36,8 @@ if [ "$DEBUG" = "true" ]; then
     DEBUG_CMDLINE="-m debugpy --listen 5678"
 fi
 TESTNODESETS=(
+    test_eid_switch.NodeSet2,,,,"--type-all;-eid"
+    test_type_all_switch.NodeSet2,,,,--type-all
     test_object_types.NodeSet2,${TESTURI}AlphaType
     test_minimal_object.NodeSet2,http://example.org/MinimalNodeset/ObjectType
     test_references_to_typedefinitions.NodeSet2,${TESTURI}AlphaType
@@ -170,6 +172,12 @@ for tuple in "${TESTNODESETS[@]}"; do IFS=","
     testuri=$7
 
 
+    if [ -n "$options" ]; then
+    IFS=';' read -r -a OPTIONS_ARR <<< "$options"
+    else
+    OPTIONS_ARR=()
+    fi
+
     if [ -n "$testuri" ]; then
         echo "Test URI defined: '$testuri'"
         THETESTURI="$testuri"
@@ -177,7 +185,7 @@ for tuple in "${TESTNODESETS[@]}"; do IFS=","
         THETESTURI=${TESTURI} # Default
     fi
     if [ "$DEBUG" = "true" ]; then
-        echo "Found parameters: nodeset=$nodeset, instancetype=$instancetype, instancenamespace=$instancenamespace, imports=$imports, options=$options, warning=$warning"
+        echo "Found parameters: nodeset=$nodeset, instancetype=$instancetype, instancenamespace=$instancenamespace, imports=$imports, options=${OPTIONS_ARR[@]}, warning=$warning"
     fi
     if [ -n "$instancenamespace" ]; then
         echo "Insancenamespace defined: '$instancenamespace'"
@@ -202,7 +210,7 @@ for tuple in "${TESTNODESETS[@]}"; do IFS=","
     fi
     if [ "$DEBUG" = "true" ]; then
         echo DEBUG: python3 ${NODESET2OWL} ${nodeset}.xml -i ${IMPORTS[@]} ${INSTANCENAMESPACE[@]} -v http://example.com/v0.1/UA/ -p test -o ${NODESET2OWL_RESULT}
-        echo DEBUG: python3 ${EXTRACTTYPE} ${INSTANCETYPEOPTION} -n ${THETESTURI} ${NODESET2OWL_RESULT} -i ${TESTID} -xc ${LOCAL_CONTEXT} ${options}
+        echo DEBUG: python3 ${EXTRACTTYPE} ${INSTANCETYPEOPTION} -n ${THETESTURI} ${NODESET2OWL_RESULT} -i ${TESTID} -xc ${LOCAL_CONTEXT} ${OPTIONS_ARR[@]}
     fi
     echo Create owl nodesets
     echo -------------------
@@ -211,9 +219,9 @@ for tuple in "${TESTNODESETS[@]}"; do IFS=","
     echo Extract types and instances
     echo ---------------------------
     if [ -z "$instancetype" ]; then
-        python3 ${EXTRACTTYPE}  -n ${TESTURI} ${NODESET2OWL_RESULT} -i ${TESTID} -xc ${LOCAL_CONTEXT} ${options} 2>&1 | tee output.log
+        python3 ${EXTRACTTYPE}  -n ${TESTURI} ${NODESET2OWL_RESULT} -i ${TESTID} -xc ${LOCAL_CONTEXT} ${OPTIONS_ARR[@]} 2>&1 | tee output.log
     else
-        python3 ${EXTRACTTYPE} -t ${instancetype} -n ${THETESTURI} ${NODESET2OWL_RESULT} -i ${TESTID} -xc ${LOCAL_CONTEXT} ${options} 2>&1 | tee output.log
+        python3 ${EXTRACTTYPE} -t ${instancetype} -n ${THETESTURI} ${NODESET2OWL_RESULT} -i ${TESTID} -xc ${LOCAL_CONTEXT} ${OPTIONS_ARR[@]} 2>&1 | tee output.log
     fi
     if [ ! -z "$warning" ]; then
         if ! grep -q $warning output.log; then

@@ -131,6 +131,27 @@ echo ----------
 python3 ${NODESET2OWL}  ${PUMPS_NODESET} -i ${BASE_ONTOLOGY} core.ttl devices.ttl machinery.ttl -v http://example.com/v0.1/Pumps/ -p pumps -o ${RESULT}
 python3 $CLEANGRAPH $RESULT $CLEANED
 mydiff $CLEANED $comparewith
+
+# Test enforced type semantics with core.ttl and devices.ttl
+# Triggered by  --enforce-opcua-type-semantic
+comparewith=core_cleaned_type.ttl
+echo Test ${CORE_NODESET} with enforced type semantics
+echo --------------------------------------------------
+python3 ${NODESET2OWL} ${CORE_NODESET} -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p opcua -o ${RESULT} --enforce-opcua-type-semantic
+python3 $CLEANGRAPH $RESULT $CLEANED 
+mydiff $comparewith $CLEANED
+nodeset=$DI_NODESET
+comparewith=devices_cleaned_type.ttl
+echo Test $DI_NODESET with enforced type semantics
+echo -------------------------------------------------
+echo Prepare core.ttl
+python3 ${NODESET2OWL} ${CORE_NODESET} -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p opcua -o core.ttl  --enforce-opcua-type-semantic
+echo test devices
+python3 ${NODESET2OWL}  ${DI_NODESET} -i ${BASE_ONTOLOGY} core.ttl -v http://example.com/v0.1/DI/ -p devices -o ${RESULT}  --enforce-opcua-type-semantic
+python3 $CLEANGRAPH $RESULT $CLEANED 
+mydiff $comparewith $CLEANED
+rm -f core.ttl
+
 rm -f core.ttl device.ttl machinery.ttl
 
 if [ "$DEBUG" != "true" ]; then
