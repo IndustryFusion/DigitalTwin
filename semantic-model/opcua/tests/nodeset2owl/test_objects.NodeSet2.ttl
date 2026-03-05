@@ -17,8 +17,7 @@ opcua:nodei21145 a opcua:ObjectTypeNodeClass ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "21145" .
 
-opcua:nodei3062 a opcua:BaseObjectType,
-        opcua:ObjectNodeClass ;
+opcua:nodei3062 a opcua:ObjectNodeClass ;
     base:hasBrowseName "Default Binary" ;
     base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDescription "The default binary encoding for a data type." ;
@@ -26,10 +25,10 @@ opcua:nodei3062 a opcua:BaseObjectType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "3062" ;
-    base:hasSymbolicName "DefaultBinary" .
+    base:hasSymbolicName "DefaultBinary" ;
+    base:instanceOf opcua:BaseObjectType .
 
-opcua:nodei3063 a opcua:BaseObjectType,
-        opcua:ObjectNodeClass ;
+opcua:nodei3063 a opcua:ObjectNodeClass ;
     base:hasBrowseName "Default XML" ;
     base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasDescription "The default XML encoding for a data type." ;
@@ -37,7 +36,8 @@ opcua:nodei3063 a opcua:BaseObjectType,
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "3063" ;
-    base:hasSymbolicName "DefaultXml" .
+    base:hasSymbolicName "DefaultXml" ;
+    base:instanceOf opcua:BaseObjectType .
 
 opcua:nodei31 a opcua:ReferenceTypeNodeClass ;
     base:definesType opcua:References ;
@@ -127,8 +127,7 @@ opcua:HasComponent a owl:ObjectProperty ;
 opcua:HasModellingRule a owl:ObjectProperty ;
     rdfs:subPropertyOf opcua:NonHierarchicalReferences .
 
-opcua:nodei14221 a opcua:NetworkAddressType,
-        opcua:ObjectNodeClass ;
+opcua:nodei14221 a opcua:ObjectNodeClass ;
     opcua:HasComponent opcua:nodei17202 ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasBrowseName "Address" ;
@@ -136,7 +135,8 @@ opcua:nodei14221 a opcua:NetworkAddressType,
     base:hasDisplayName "Address" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "14221" .
+    base:hasNodeId "14221" ;
+    base:instanceOf opcua:NetworkAddressType .
 
 opcua:Aggregates a owl:ObjectProperty ;
     rdfs:subPropertyOf opcua:HasChild ;

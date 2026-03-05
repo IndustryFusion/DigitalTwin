@@ -15,6 +15,7 @@
 # limitations under the License.
 #
 
+from asyncio.log import logger
 import sys
 import argparse
 import json
@@ -53,7 +54,8 @@ data-file name (.jsonld, .ttl).")
                         help='Only apply sparql-rules')
     parser.add_argument('-ns', '--no_sparql', required=False, action='store_true',
                         help='Only apply sparql-rules')
-    parser.add_argument('-me', '--merge-entity', required=False, help="Merge entity graph into the data graph (experimental)", action='store_true')
+    parser.add_argument('-me', '--merge-entity', required=False, help="Merge entity graph into the data graph"
+                        " (experimental)", action='store_true')
 
     args = parser.parse_args()
     # Load RDF data (Data Graph)
@@ -87,8 +89,10 @@ data-file name (.jsonld, .ttl).")
             if entityontology is not None:
                 imports = extra_graph.objects(entityontology, OWL.imports)
                 ontology_loader = OntologyLoader(True)
-            ontology_loader.init_imports(imports)
-            extra_graph += ontology_loader.get_graph()
+                ontology_loader.init_imports(imports)
+                extra_graph += ontology_loader.get_graph()
+            else:
+                logger.warning(f'No ontology found in entity file {args.extra}. No imports will be loaded.')
     elif args.mode == 'ontology':
         mainontology = next(data_graph.subjects(RDF.type, OWL.Ontology), None)
         if mainontology and not args.no_imports:

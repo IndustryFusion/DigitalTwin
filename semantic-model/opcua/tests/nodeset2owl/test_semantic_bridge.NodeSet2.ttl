@@ -85,8 +85,7 @@ opcua:nodei47 a opcua:ReferenceTypeNodeClass ;
     base:hasNamespace opcua:OPCUANamespace ;
     base:hasNodeId "47" .
 
-opcua:nodei47112 a opcua:BaseObjectType,
-        opcua:ObjectNodeClass ;
+opcua:nodei47112 a opcua:ObjectNodeClass ;
     opcua:HasComponent opcua:nodei16363 ;
     opcua:hasMyTestVar opcua:nodei16363 ;
     base:hasBrowseName "MyObject" ;
@@ -94,7 +93,8 @@ opcua:nodei47112 a opcua:BaseObjectType,
     base:hasDisplayName "MyObject" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "47112" .
+    base:hasNodeId "47112" ;
+    base:instanceOf opcua:BaseObjectType .
 
 opcua:nodei58 a opcua:ObjectTypeNodeClass ;
     base:definesType opcua:BaseObjectType ;

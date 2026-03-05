@@ -23,8 +23,7 @@ test:nodei1001 a opcua:ObjectTypeNodeClass ;
     base:hasNamespace test:TESTNamespace ;
     base:hasNodeId "1001" .
 
-test:nodei1002 a test:ObjectType,
-        opcua:ObjectNodeClass ;
+test:nodei1002 a opcua:ObjectNodeClass ;
     test:hasVariable test:nodei2001 ;
     opcua:HasComponent test:nodei2001 ;
     base:hasBrowseName "Object" ;
@@ -32,7 +31,8 @@ test:nodei1002 a test:ObjectType,
     base:hasDisplayName "Object" ;
     base:hasIdentifierType base:numericID ;
     base:hasNamespace test:TESTNamespace ;
-    base:hasNodeId "1002" .
+    base:hasNodeId "1002" ;
+    base:instanceOf test:ObjectType .
 
 test:ObjectType a owl:Class ;
     rdfs:subClassOf opcua:BaseObjectType .

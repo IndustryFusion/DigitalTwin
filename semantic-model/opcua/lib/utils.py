@@ -25,6 +25,9 @@ import json
 from pyld import jsonld
 import urllib
 import warnings
+import operator
+from functools import reduce
+import traceback
 
 EX = Namespace("http://example.org/")
 _V_SEG_REGEX = re.compile(r"/v(?P<maj>\d+)(?:\.\d+)?(?=/|$)")
@@ -44,6 +47,7 @@ WARNSTR = {
 }
 
 NULL_IRI = URIRef('urn:ngsi-ld:null')
+DEFAULT_NODEID = URIRef('http://opcfoundation.org/UA/nodei1')
 query_realtype = """
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 
@@ -77,7 +81,6 @@ modelling_nodeid_optional = 80
 modelling_nodeid_mandatory = 78
 modelling_nodeid_optional_placeholder = 11508
 modelling_nodeid_mandatory_placeholder = 11510
-workaround_instances = ['http://opcfoundation.org/UA/DI/FunctionalGroupType', 'http://opcfoundation.org/UA/FolderType']
 NGSILD = Namespace('https://uri.etsi.org/ngsi-ld/')
 MACHINERY = Namespace('http://opcfoundation.org/UA/Machinery/')
 ngsild_context = "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld"
@@ -89,6 +92,16 @@ def print_warning(dictid, message):
         warnlabel = "GENERAL_WARNING"
     warnstr = f"{warnlabel}: {message}"
     warnings.warn(warnstr)
+
+
+def calculate_array_dimensions(g, array_dimensions):
+    array_length = None
+    if array_dimensions is not None:
+        array_length = 0
+        ad = Collection(g, array_dimensions)
+        if len(ad) > 0:
+            array_length = reduce(operator.mul, (item.toPython() for item in ad), 1)
+    return array_length
 
 
 def normalize_namespaceuri(uri):
@@ -361,6 +374,7 @@ def get_common_supertype(graph, class1, class2):
         superclass = list(result)[0]['commonSuperclass']
     except Exception as e:
         print(f"Error: {e}")
+        traceback.print_exc()
         pass
     return superclass
 
@@ -412,7 +426,7 @@ def get_all_types_in_namespace(g, opcua_type, namespace, basens, opcuans):
     return [URIRef(str(r['subclass'])) for r in result]
 
 
-def get_all_objects_in_namespace(g, namespace, basens, opcuans):
+def get_all_objects_from_object_folder_in_namespace(g, namespace, basens, opcuans):
     """Derives all opcua objects in a namespace
 
     Args:
@@ -423,6 +437,31 @@ def get_all_objects_in_namespace(g, namespace, basens, opcuans):
     SELECT ?object WHERE {{
         BIND(<{namespace}> as ?namespace)
         opcua:nodei85 opcua:Organizes ?object .
+        FILTER(
+            STRSTARTS(STR(?object), STR(?namespace)) &&
+                !REGEX(
+                SUBSTR(STR(?object), STRLEN(STR(?namespace)) + 1),
+                  "[/#]"
+            )
+        )
+    }}
+    """.format(namespace=namespace)
+    result = g.query(query, initNs={'base': basens, 'opcua': opcuans})
+    # Transform result in list of URIRefs
+    return [URIRef(str(r['object'])) for r in result]
+
+
+def get_all_objects_in_namespace(g, namespace, basens, opcuans):
+    """Derives all opcua objects in a namespace
+
+    Args:
+        g (RDF Graph): graph to search in
+        namespace (RDFURIRef): namespace to search in
+    """
+    query = """
+    SELECT ?object WHERE {{
+        BIND(<{namespace}> as ?namespace)
+        ?object a opcua:ObjectNodeClass .
         FILTER(
             STRSTARTS(STR(?object), STR(?namespace)) &&
                 !REGEX(
@@ -602,6 +641,80 @@ def extract_major_version(url: str) -> int | None:
     return int(m.group('maj')) if m else None
 
 
+def replace_type_of_node_iris(g: Graph, opcuans: Namespace, basens: Namespace, ig: Graph = None):
+    """
+    Replace the type of node IRIs with their respective type IRIs.
+    Why is that needed? The OPC UA nodeset iris e.g. http://opcfoundation.org/UA/nodei1
+    are not really types in the ontology sense. The real types are used in the JSON-LD instantiation.
+    However, when the nodeids also containt the type definition, i.e. <node> a <type>, then the
+    validator which combines the knowledge graph with the instance graph will get confused and validating
+    the wrong structures.
+    This is why all OPC UA nodes must not be typed other than being node-classes. In addition the nodes
+    are describing types. That is why the instance will declare <node> base:instanceOf <type>.
+    """
+    query = """
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+        SELECT ?s ?o WHERE {
+            ?s a ?o .
+            ?o rdfs:subClassOf* opcua:BaseObjectType .
+        }
+    """
+    construct_subClass = """
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        PREFIX owl:  <http://www.w3.org/2002/07/owl#>
+
+        CONSTRUCT {
+          ?s rdfs:subClassOf ?o .
+          ?s rdf:type owl:Class .
+        }
+        WHERE {
+          { ?s rdfs:subClassOf ?o . }
+          UNION
+          { ?s a owl:Class . }
+        }
+    """
+
+    # First, all classes and subclasses of the imported graph are retrieved because we
+    # need to included them in the query.
+    combined = Graph(store="Oxigraph")
+    combined += g
+
+    if ig is not None:
+        subclasses = ig.query(construct_subClass).graph
+        combined += subclasses
+
+    query_result = combined.query(query, initNs={'opcua': opcuans, 'base': basens})
+    for s, o in query_result:
+        g.remove((s, RDF.type, o))
+        g.add((s, basens['instanceOf'], o))
+
+
+def restore_type_of_node_iris(ig: Graph, opcuans: Namespace, basens: Namespace):
+    """
+    Inverse of the replace_type_of_node_iris.
+    This is transforming imported ontologies from the insntaceOf back to rdf:type.
+    Note that this, in contrast to the replace function is applied to the imported
+    ontologies in ig graph.
+    """
+    query = """
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+                PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+                PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+                SELECT ?s ?o WHERE {
+                    ?s base:instanceOf ?o .
+                }
+    """
+    query_result = ig.query(query, initNs={'opcua': opcuans, 'base': basens})
+    for s, o in query_result:
+        ig.remove((s, basens['instanceOf'], o))
+        ig.add((s, RDF.type, o))
+
+
 class RdfUtils:
     def __init__(self, basens, opcuans):
         self.basens = basens
@@ -714,7 +827,7 @@ class RdfUtils:
         try:
             modelling_node = next(graph.objects(node, self.opcuans['HasModellingRule']))
             modelling_rule = next(graph.objects(modelling_node, self.basens['hasNodeId']))
-            if int(modelling_rule) == modelling_nodeid_optional or str(instancetype) in workaround_instances:
+            if int(modelling_rule) == modelling_nodeid_optional:
                 is_optional = True
             elif int(modelling_rule) == modelling_nodeid_mandatory:
                 is_optional = False

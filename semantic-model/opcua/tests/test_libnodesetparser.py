@@ -1393,13 +1393,17 @@ class TestNodesetParser(unittest.TestCase):
 
 class TestInitImportsNonStrict(unittest.TestCase):
     @patch('lib.nodesetparser.utils.OntologyLoader')
-    def test_init_imports_non_strict(self, mock_loader_cls):
+    @patch('lib.nodesetparser.utils.restore_type_of_node_iris')
+    def test_init_imports_non_strict(self,  mock_restore, mock_loader_cls):
         parser = NodesetParser.__new__(NodesetParser)
         parser.isstrict = False
         parser.ig = Graph()
         loader = mock_loader_cls.return_value
         loader.get_graph.return_value = Graph()
         base_ontologies = ['foo', 'bar']
+        parser.rdf_ns = {}
+        parser.rdf_ns['opcua'] = None
+        parser.rdf_ns['base'] = None
         parser.init_imports(base_ontologies)
         mock_loader_cls.assert_called_once_with(verbose=True)
         loader.init_imports.assert_called_once_with(base_ontologies)
@@ -1407,11 +1411,15 @@ class TestInitImportsNonStrict(unittest.TestCase):
 
 class TestInitImportsStrict(unittest.TestCase):
     @patch('lib.nodesetparser.Graph.parse')
-    def test_init_imports_strict(self, mock_parse):
+    @patch('lib.nodesetparser.utils.restore_type_of_node_iris')
+    def test_init_imports_strict(self, mock_restore,  mock_parse):
         parser = NodesetParser.__new__(NodesetParser)
         parser.isstrict = True
         parser.ig = Graph()
         base_ontologies = ['file1', 'file2']
+        parser.rdf_ns = {}
+        parser.rdf_ns['opcua'] = None
+        parser.rdf_ns['base'] = None
         parser.init_imports(base_ontologies)
         self.assertEqual(mock_parse.call_count, len(base_ontologies))
 

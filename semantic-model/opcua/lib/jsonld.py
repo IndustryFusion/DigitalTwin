@@ -20,7 +20,7 @@ from rdflib.namespace import XSD, RDF
 from rdflib.collection import Collection
 import operator
 from functools import reduce
-from lib.utils import is_subclass, ngsild_context, NGSILD, NULL_IRI
+from lib.utils import is_subclass, ngsild_context, NGSILD, NULL_IRI, RdfUtils, DEFAULT_NODEID
 
 
 from pyld import jsonld
@@ -146,6 +146,7 @@ class JsonLd:
         self.instances = []
         self.opcuans = opcuans
         self.basens = basens
+        self.rdfutils = RdfUtils(basens=basens, opcuans=opcuans)
 
     def add_instance(self, instance):
         self.instances.append(instance)
@@ -293,7 +294,8 @@ class JsonLd:
         elif datatype == XSD.dateTime:
             data_value = {'@value': '1970-01-01T00:00:00', '@type': 'xsd:dateTime'}
         else:
-            print(f'Warning: unknown default value for datatype {datatype}')
+            if datatype is not None:
+                print(f'Warning: unknown default value for datatype {datatype}')
             data_value = 'null'
         if value_rank is None or int(value_rank) < 0:
             return data_value
@@ -307,9 +309,11 @@ class JsonLd:
                 data_array_value = [data_value] * array_length
         return data_array_value
 
-    @staticmethod
-    def get_default_iri(value_rank=None, array_dimensions=None, g=Graph()):
-        data_value = NULL_IRI
+    def get_default_iri(self, datatype, value_rank=None, array_dimensions=None, g=Graph()):
+        if datatype == self.opcuans['NodeId']:
+            data_value = DEFAULT_NODEID
+        else:
+            data_value = NULL_IRI
         if value_rank is None or int(value_rank) < 0:
             return data_value
         data_array_value = []

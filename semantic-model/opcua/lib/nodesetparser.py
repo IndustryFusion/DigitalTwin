@@ -289,6 +289,7 @@ Please set it explictly.")
                 hgraph = Graph()
                 hgraph.parse(file)
                 self.ig += hgraph
+        utils.restore_type_of_node_iris(self.ig, self.rdf_ns['opcua'], self.rdf_ns['base'])
 
     def get_all_node_ids(self):
         query_result = self.ig.query(query_nodeIds, initNs=self.rdf_ns)

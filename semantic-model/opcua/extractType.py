@@ -110,7 +110,11 @@ parse nodeset instance and create ngsi-ld model')
                         required=False)
     parser.add_argument('-so', '--shacl-only', help='Only create SHACL shapes without JSON-LD instances.',
                         required=False, action='store_true')
-    parser.add_argument('-ta', '--type-all', help='Extract all found ObjectTypes of the mainontologies namespace',
+    parser.add_argument('-ta', '--type-all', help='Extract all ObjectTypes of the mainontologies namespace.'
+                        ' In additiion, extract all well known instances (i.e. referenced by the "objects" folder)',
+                        required=False, action='store_true')
+    parser.add_argument('-eid', '--extract-instance-declarations', help='Extract all instance declarations'
+                        ' in order to validate them. This option only works with -ta option enabled.',
                         required=False, action='store_true')
     parser.add_argument('-j', '--jsonld',
                         help='Filename of jsonld output file',
@@ -410,7 +414,8 @@ def scan_type_non_hierachical(target, node, instancetype, shapename, reftype):
             if rdfutils.isVariableNodeClass(t_nodeclass):
                 warnmsg = f"Warning: Variable node {t} is target of \
 non-owning or non-hierarchical reference {reftype} This will be ignored."
-                print_warning('ignored_variable_reference', warnmsg)
+                if type_all is False:
+                    print_warning('ignored_variable_reference', warnmsg)
                 continue
             if shclass is None:
                 shclass = t_classtype
@@ -430,7 +435,7 @@ non-owning or non-hierarchical reference {reftype} This will be ignored."
         shacl_rule['contentclass'] = shclass
         shaclg.create_shacl_property(shapename,
                                      shacl_rule['path'],
-                                     shacl_rule['optional'],
+                                     True,
                                      False,
                                      False,
                                      True,
@@ -438,7 +443,7 @@ non-owning or non-hierarchical reference {reftype} This will be ignored."
                                      None,
                                      reftype=reftype,
                                      maxCount=maxcount)
-    elif rdfutils.isVariableNodeClass(nodeclass):
+    elif rdfutils.isVariableNodeClass(nodeclass) and type_all is False:
         warnmsg = f"Warning: Variable node {target} is target of \
 non-owning or non-hierarchical reference {reftype} This will be ignored."
         print_warning('ignored_variable_reference', warnmsg)
@@ -593,7 +598,8 @@ will flag this.")
                     if shacl_rule['datatype'] == opcuans['NodeId']:
                         e.add_all_objects_of_type(g, value)
                     else:
-                        value = e.get_contentclass(shacl_rule['contentclass'], value)
+                        e.add_contentclass_if_missing(g, shacl_rule['contentclass'])
+                        value = e.get_contentclasses(g, shacl_rule['contentclass'], value)
                     if isinstance(value, BNode):
                         value = utils.collection_to_list(value, g, scalar_conversion=False)
             else:
@@ -608,16 +614,19 @@ will flag this.")
                                                      shacl_rule.get('value_rank'),
                                                      shacl_rule.get('array_dimensions'), g=g)
                 else:
-                    value = e.get_default_contentclass(shacl_rule['contentclass'])
+                    value = e.get_default_contentclasses(g,
+                                                         shacl_rule['contentclass'],
+                                                         shacl_rule.get('value_rank'),
+                                                         shacl_rule.get('array_dimensions'))
         except Exception as error:
-            print("Error:", error)
+            logger.error(f"Error processing variable entity: {error}", exc_info=True)
         has_components = True
         if not shacl_rule['is_iri']:
             instance[f'{full_attribute_name}'] = \
                 jsonld.get_ngsild_property(value, datatype=shacl_rule['datatype'])
         else:
             if value is None:
-                value = jsonld.get_default_iri(shacl_rule.get('value_rank'),
+                value = jsonld.get_default_iri(shacl_rule['datatype'], shacl_rule.get('value_rank'),
                                                shacl_rule.get('array_dimensions'), g=g)
                 if value != []:
                     # Only "valid" case is allowed empty list.
@@ -666,8 +675,10 @@ def scan_entity_nonrecursive(node, id, instance, node_id, o, generic_reference=N
             instance[prefixed_attribute_name].append(toappend)
             shacl_rule['contentclass'] = classtype
     elif rdfutils.isVariableNodeClass(nodeclass):
-        print(f"Warning: Variable node {o} is target of non-owning reference {prefixed_attribute_name}. \
-This will be ignored.")
+        if type_all is False:
+            warnmsg = f"Warning: Variable node {o} is target of non-owning reference {prefixed_attribute_name}."\
+                      " This will be ignored."
+            print_warning('ignored_variable_reference', warnmsg)
     return has_components
 
 
@@ -693,11 +704,16 @@ if __name__ == '__main__':
     semantic_bridge_enabled = args.semantic_bridge
     shacl_only = args.shacl_only
     type_all = args.type_all
+    extract_instance_declarations = args.extract_instance_declarations
     if rootinstancetype is not None and type_all:
-        print("Error: root-instance and type-all are mutual exclusive. Please either provide a root-instance or use"
+        print("Error: root-instance and type-all are mutually exclusive. Please either provide a root-instance or use"
               "type-all to extract all types.")
         exit(1)
 
+    if extract_instance_declarations and not type_all:
+        print("Error: extract-instance-declarations only works in combination with type-all. Please use type-all to"
+              " extract all types and then extract instance declarations.")
+        exit(1)
     # create the context_graph
     # Context graph is resolving the context_url and provides just the
     # namespace manager
@@ -735,6 +751,7 @@ if __name__ == '__main__':
     types = []
     basens = next(Namespace(uri) for prefix, uri in list(g.namespaces()) if prefix == 'base')
     opcuans = next(Namespace(uri) for prefix, uri in list(g.namespaces()) if prefix == 'opcua')
+    utils.restore_type_of_node_iris(g, opcuans, basens)
     bindingsg = Bindings(namespace_prefix, basens)
     bindingsg.bind('base', basens)
     bindingsg.bind('binding', binding_namespace)
@@ -807,8 +824,10 @@ Machinery Folder was found in instance ontology.")
         exit(0)
     # Then scan the entity with the real values
     rootentities = None
-    if type_all:
+    if extract_instance_declarations:
         rootentities = utils.get_all_objects_in_namespace(g, mainontology, basens, opcuans)
+    elif type_all:
+        rootentities = utils.get_all_objects_from_object_folder_in_namespace(g, mainontology, basens, opcuans)
     elif rootentity is None:
         rootentities = [next(g.subjects(RDF.type, URIRef(rootinstancetype)), None)]
     else:
