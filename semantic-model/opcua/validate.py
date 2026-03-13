@@ -16,6 +16,7 @@
 #
 
 from asyncio.log import logger
+import os
 import sys
 import argparse
 import json
@@ -23,7 +24,6 @@ from rdflib import Graph
 from rdflib.namespace import RDF, SH, OWL
 import lib.utils as utils
 from lib.utils import OntologyLoader
-from lib.shacl import Validation
 from lib.jsonld import nested_json_from_graph
 
 generic_nodes = [RDF.nil]
@@ -106,8 +106,8 @@ data-file name (.jsonld, .ttl).")
         sys.exit(1)
 
     if args.merge_entity is True:
-        data_graph += extra_graph
-        extra_graph = None
+        os.environ["PYSHACL_USE_FULL_MIXIN"] = "true"
+    from lib.shacl import Validation #  late import needed to respect the environment variable for pySHACL full mixin
     validation = Validation(shapes_graph, data_graph, extra_graph, args.strict,
                             args.sparql_only, args.no_sparql, args.debug)
     # Run SHACL validation
@@ -153,6 +153,7 @@ data-file name (.jsonld, .ttl).")
             else:
                 print(f'Focus Node (Entity which triggered the validation error): {entity_id}. More details \
 cannot be determined. Check Source Shape for detailed path.')
+    sys.exit(1)
 
 
 if __name__ == "__main__":
