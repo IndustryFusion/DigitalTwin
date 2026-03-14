@@ -44,10 +44,10 @@ INSTANCE_NODESET          	:=   ${NODESET_DIR}/Example.NodeSet2.xml
 
 # Dependent Ontology URLs (or local files if not in remote mode)
 CORE_ONTOLOGY                       := $(OPCUA_PREFIX)core.ttl
-DEVICES_ONTOLOGY                    := $(OPCUA_PREFIX)devices.ttl
+DI_ONTOLOGY                    		:= $(OPCUA_PREFIX)di.ttl
 MACHINERY_ONTOLOGY                  := $(OPCUA_PREFIX)machinery.ttl
 MACHINERY_JOBS_ONTOLOGY             := $(OPCUA_PREFIX)machinery_jobs.ttl
-MACHINERY_RESULT_ONTOLOGY             := $(OPCUA_PREFIX)machinery_result.ttl
+MACHINERY_RESULT_ONTOLOGY           := $(OPCUA_PREFIX)machinery_result.ttl
 MACHINERY_PROCESSVALUES_ONTOLOGY    := $(OPCUA_PREFIX)machinery_processvalues.ttl
 PUMPS_ONTOLOGY                      := $(OPCUA_PREFIX)pumps.ttl
 IA_ONTOLOGY                         := $(OPCUA_PREFIX)ia.ttl
@@ -87,7 +87,7 @@ $(INSTANCE_DEPENDENCIES):
 # -----------------------------------------------------------------------------
 
 
-all: $(INSTANCE)
+all: shacl.ttl instances.jsonld entities.ttl
 
 # Clean target to remove generated TTL files
 clean:

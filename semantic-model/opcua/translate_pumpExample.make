@@ -44,7 +44,7 @@ INSTANCE_NODESET          	:=   https://raw.githubusercontent.com/OPCFoundation/
 
 # Dependent Ontology URLs (or local files if not in remote mode)
 CORE_ONTOLOGY                       := $(OPCUA_PREFIX)core.ttl
-DEVICES_ONTOLOGY                    := $(OPCUA_PREFIX)devices.ttl
+DI_ONTOLOGY                         := $(OPCUA_PREFIX)di.ttl
 MACHINERY_ONTOLOGY                  := $(OPCUA_PREFIX)machinery.ttl
 MACHINERY_JOBS_ONTOLOGY             := $(OPCUA_PREFIX)machinery_jobs.ttl
 MACHINERY_RESULT_ONTOLOGY             := $(OPCUA_PREFIX)machinery_result.ttl
@@ -64,7 +64,7 @@ INSTANCE_ONTOLOGY          		:=  instanceexample.ttl
 INSTANCE_OPTS					:= -p instanceexample -n $(ONTOLOGY_NS)
 INSTANCE_JSONLD_OPTS			:= -n $(INSTANCE_IRI)
 INSTANCE_TYPE					:= $(INSTANCE_TYPE)
-INSTANCE_DEPENDENCIES      		= $(CORE_ONTOLOGY) $(MACHINERY_ONTOLOGY) $(DEVICES_ONTOLOGY) $(PUMPS_ONTOLOGY)
+INSTANCE_DEPENDENCIES      		= $(CORE_ONTOLOGY) $(MACHINERY_ONTOLOGY) $(DI_ONTOLOGY) $(PUMPS_ONTOLOGY)
 
 
 # -----------------------------------------------------------------------------
@@ -87,7 +87,7 @@ $(INSTANCE_DEPENDENCIES):
 # -----------------------------------------------------------------------------
 
 
-all: $(INSTANCE)
+all: shacl.ttl instances.jsonld entities.ttl
 
 # Clean target to remove generated TTL files
 clean:
