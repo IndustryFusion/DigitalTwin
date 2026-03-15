@@ -476,7 +476,7 @@ class Shacl:
                 shacl_rule['is_iri'] = True
                 shacl_rule['contentclass'] = shacl_type[0]
                 shacl_rule['datatype'] = data_type
-            elif base_data_type == self.opcuans['Enumeration']:
+            elif base_data_type == self.opcuans['Enumeration'] or data_type == self.opcuans['Enumeration']:
                 shacl_rule['is_iri'] = True
                 shacl_rule['contentclass'] = data_type
             else:

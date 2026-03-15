@@ -36,6 +36,7 @@ if [ "$DEBUG" = "true" ]; then
     DEBUG_CMDLINE="-m debugpy --listen 5678"
 fi
 TESTNODESETS=(
+    test_full_id.Nodeset2,http://example.org/MinimalNodeset/ObjectType,,,,,,http://example.org/FullId/
     test_eid_switch.NodeSet2,,,,"--type-all;-eid"
     test_type_all_switch.NodeSet2,,,,--type-all
     test_object_types.NodeSet2,${TESTURI}AlphaType
@@ -170,8 +171,14 @@ for tuple in "${TESTNODESETS[@]}"; do IFS=","
     options=$5
     warning=$6
     testuri=$7
+    testid=$8
 
-
+    if [ -n "$testid" ]; then
+        echo "Test ID defined: '$testid'"
+        TESTID="$testid"
+    else
+        TESTID="testid:" # Default
+    fi
     if [ -n "$options" ]; then
     IFS=';' read -r -a OPTIONS_ARR <<< "$options"
     else
@@ -185,7 +192,7 @@ for tuple in "${TESTNODESETS[@]}"; do IFS=","
         THETESTURI=${TESTURI} # Default
     fi
     if [ "$DEBUG" = "true" ]; then
-        echo "Found parameters: nodeset=$nodeset, instancetype=$instancetype, instancenamespace=$instancenamespace, imports=$imports, options=${OPTIONS_ARR[@]}, warning=$warning"
+        echo "Found parameters: nodeset=$nodeset, instancetype=$instancetype, instancenamespace=$instancenamespace, imports=$imports, options=${OPTIONS_ARR[@]}, warning=$warning, testid=$testid, testuri=$testuri "
     fi
     if [ -n "$instancenamespace" ]; then
         echo "Insancenamespace defined: '$instancenamespace'"

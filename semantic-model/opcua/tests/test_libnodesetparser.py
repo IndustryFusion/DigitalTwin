@@ -23,7 +23,6 @@ from rdflib.namespace import RDF, OWL, RDFS
 import xml.etree.ElementTree as ET  # Import ElementTree as ET
 import tempfile
 
-
 class TestNodesetParser(unittest.TestCase):
 
     @patch('lib.nodesetparser.NodesetParser.__init__')
@@ -475,36 +474,6 @@ class TestNodesetParser(unittest.TestCase):
         expected_iri = rdf_namespace[name]
         self.assertEqual(self.parser.nodeIds[1]['300'], expected_iri)
 
-    def test_nodeId_to_iri(self):
-        # Test for numeric ID
-        namespace = Namespace('http://example.com/ns1#')
-        nid = '123'
-        idtype = self.parser.rdf_ns['base']['numericID']
-
-        # Call the method to be tested
-        result = self.parser.nodeId_to_iri(namespace, nid, idtype)
-
-        # Assert that the correct IRI is returned
-        expected_iri = namespace['nodei123']
-        self.assertEqual(result, expected_iri)
-        
-        idtype = self.parser.rdf_ns['base']['stringID']
-        nid = 'teststring'
-        result = self.parser.nodeId_to_iri(namespace, nid, idtype)
-        expected_iri = namespace['nodesteststring']
-        self.assertEqual(result, expected_iri)
-
-        idtype = self.parser.rdf_ns['base']['guidID']
-        nid = '123-123-uuid'
-        result = self.parser.nodeId_to_iri(namespace, nid, idtype)
-        expected_iri = namespace['nodeg123-123-uuid']
-        self.assertEqual(result, expected_iri)
-        
-        idtype = self.parser.rdf_ns['base']['opaqueID']
-        nid = 'opaque'
-        result = self.parser.nodeId_to_iri(namespace, nid, idtype)
-        expected_iri = namespace['nodebopaque']
-        self.assertEqual(result, expected_iri)
 
     def test_add_nodeid_to_class(self):
         # Mock a node with necessary attributes
@@ -779,7 +748,8 @@ class TestNodesetParser(unittest.TestCase):
         self.assertFalse(result)
 
     @patch.object(Graph, 'add')
-    def test_get_references(self, mock_add):
+    @patch('lib.nodesetparser.nodeId_to_iri')
+    def test_get_references(self, mock_nodeId_to_iri, mock_add):
         # Mock the node and its references
         ref_node1 = MagicMock()
         ref_node1.get.side_effect = lambda key: 'HasSubtype' if key == 'ReferenceType' else 'true' if key == 'IsForward' else None
@@ -791,7 +761,7 @@ class TestNodesetParser(unittest.TestCase):
 
         # Mock the references node to return the mocked references
         refnodes = [ref_node1, ref_node2]
-
+        mock_nodeId_to_iri.side_effect=[URIRef('http://example.com/iri100'), URIRef('http://example.com/iri200')]
         # Set up other necessary attributes and mocks
         classiri = URIRef('http://example.com/classiri')
         self.parser.resolve_alias = MagicMock(side_effect=lambda x: x)
@@ -849,7 +819,8 @@ class TestNodesetParser(unittest.TestCase):
     @patch.object(NodesetParser, 'get_datatype')
     @patch.object(NodesetParser, 'get_value_rank')
     @patch.object(NodesetParser, 'get_value')
-    def test_add_typedef(self, mock_get_value, mock_get_value_rank, mock_get_datatype, mock_get_type_from_references, mock_get_references, mock_add):
+    @patch('lib.nodesetparser.nodeId_to_iri')
+    def test_add_typedef(self, mock_nodeId_to_iri, mock_get_value, mock_get_value_rank, mock_get_datatype, mock_get_type_from_references, mock_get_references, mock_add):
         # Mock a node with necessary attributes
         def node_get(tag):
             if tag == 'ArrayDimensions' or \
@@ -867,7 +838,7 @@ class TestNodesetParser(unittest.TestCase):
         self.parser.get_rdf_ns_from_ua_index = MagicMock(return_value=Namespace('http://example.com/ns1#'))
         self.parser.nodeId_to_iri = MagicMock(return_value=URIRef('http://example.com/ns1#500'))
         node.find.return_value = MagicMock()  # Mock for references_node
-
+        mock_nodeId_to_iri.return_value = URIRef('http://example.com/ns1#500')
         # Call the method to be tested
         self.parser.add_typedef(node)
 

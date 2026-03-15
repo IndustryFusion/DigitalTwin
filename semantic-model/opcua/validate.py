@@ -107,7 +107,7 @@ data-file name (.jsonld, .ttl).")
 
     if args.merge_entity is True:
         os.environ["PYSHACL_USE_FULL_MIXIN"] = "true"
-    from lib.shacl import Validation #  late import needed to respect the environment variable for pySHACL full mixin
+    from lib.shacl import Validation  # late import needed to respect the environment variable for pySHACL full mixin
     validation = Validation(shapes_graph, data_graph, extra_graph, args.strict,
                             args.sparql_only, args.no_sparql, args.debug)
     # Run SHACL validation

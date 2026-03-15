@@ -41,7 +41,7 @@
                     sh:maxCount 2 ;
                     sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ],
         [ a sh:ValidationResult ;
-            sh:focusNode <http://my.test/testid:i2012> ;
+            sh:focusNode <http://my.test/testid:nodei2012> ;
             sh:resultMessage "Node [ <https://uri.etsi.org/ngsi-ld/hasValue> Literal(\"1\", datatype=xsd:integer) ; rdf:type <https://uri.etsi.org/ngsi-ld/Property> ] does not conform to one or more shapes in [ sh:property [ sh:datatype xsd:double ; sh:maxCount Literal(\"1\", datatype=xsd:integer) ; sh:minCount Literal(\"1\", datatype=xsd:integer) ; sh:nodeKind sh:Literal ; sh:path ngsi-ld:hasValue ] ] , [ sh:property [ sh:maxCount Literal(\"1\", datatype=xsd:integer) ; sh:minCount Literal(\"1\", datatype=xsd:integer) ; sh:or ( [ sh:nodeKind sh:BlankNode ; sh:property [ sh:datatype xsd:double ; sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue rdf:nil ] ) ; sh:path ngsi-ld:hasValueList ] ]" ;
             sh:resultPath test:hasMyVariable10 ;
             sh:resultSeverity sh:Violation ;

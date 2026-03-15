@@ -1,7 +1,7 @@
 [
     {
         "type": "test:BType",
-        "id": "http://my.test/testid:i2012",
+        "id": "http://my.test/testid:nodei2012",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -58,7 +58,7 @@
     },
     {
         "type": "test:AlphaType",
-        "id": "http://my.test/testid:i2010",
+        "id": "http://my.test/testid:nodei2010",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -69,13 +69,13 @@
         "test:hasB": [
             {
                 "type": "Relationship",
-                "object": "http://my.test/testid:i2012"
+                "object": "http://my.test/testid:nodei2012"
             }
         ],
         "test:Y": [
             {
                 "type": "Relationship",
-                "object": "http://my.test/testid:i2012"
+                "object": "http://my.test/testid:nodei2012"
             }
         ]
     }
