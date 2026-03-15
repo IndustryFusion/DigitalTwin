@@ -19,7 +19,7 @@ from rdflib.namespace import OWL, RDF, RDFS
 import xml.etree.ElementTree as ET
 import urllib
 import lib.utils as utils
-from lib.utils import RdfUtils
+from lib.utils import RdfUtils, nodeId_to_iri
 import json
 
 
@@ -421,26 +421,11 @@ Did you forget to import it?")
         # prefix = self.known_opcua_ns[str(rdf_namespace)]
         self.nodeIds[ni_index][ni_id] = rdf_namespace[name]
 
-    def nodeId_to_iri(self, namespace, nid, idtype):
-        if idtype == self.rdf_ns['base']['numericID']:
-            idt = 'i'
-        elif idtype == self.rdf_ns['base']['stringID']:
-            idt = 's'
-            nid = urllib.parse.quote(nid)
-        elif idtype == self.rdf_ns['base']['guidID']:
-            idt = 'g'
-        elif idtype == self.rdf_ns['base']['opaqueID']:
-            idt = 'b'
-        else:
-            idt = 'x'
-            print(f'Warning: No valid identifier found in {nid}')
-        return namespace[f'node{idt}{nid}']
-
     def add_nodeid_to_class(self, node, nodeclasstype, xml_ns):
         nid, index, bn_name, bn_index, idtype = self.get_nid_ns_and_name(node)
         rdf_namespace = self.get_rdf_ns_from_ua_index(index)
         bn_namespace = self.get_rdf_ns_from_ua_index(bn_index)
-        classiri = self.nodeId_to_iri(rdf_namespace, nid, idtype)
+        classiri = nodeId_to_iri(rdf_namespace, self.rdf_ns['base'], nid, idtype)
         self.g.add((classiri, self.rdf_ns['base']['hasNodeId'], Literal(nid)))
         self.g.add((classiri, self.rdf_ns['base']['hasIdentifierType'], idtype))
         self.g.add((classiri, self.rdf_ns['base']['hasBrowseName'], Literal(bn_name)))
@@ -511,7 +496,6 @@ Did you forget to import it?")
         bn_namespace = self.get_rdf_ns_from_ua_index(bn_index)
         if bn_namespace != rdf_namespace:
             print(f'Warning: BrowseName namespace differs from NodeId namespace for datatype {name}')
-        # classiri = self.nodeId_to_iri(rdf_namespace, nid, idtype)
         typeIri = rdf_namespace[name]
         definition = node.find('opcua:Definition', self.xml_ns)
         if definition is not None:
@@ -607,7 +591,7 @@ Did you forget to import it?")
                     identifier = data['xsd:Identifier']
                     ns_index, node_id, idtype = self.parse_nodeid(identifier)
                     ns = Namespace(self.opcua_ns[ns_index])
-                    result = self.nodeId_to_iri(ns, node_id, idtype)
+                    result = nodeId_to_iri(ns, self.rdf_ns['base'], node_id, idtype)
                     return result
                 else:
                     json_obj = {}
@@ -668,7 +652,7 @@ Did you forget to import it?")
                 componentId = self.resolve_alias(reference.text)
                 index, id, idtype = self.parse_nodeid(componentId)
                 namespace = self.get_rdf_ns_from_ua_index(index)
-                targetclassiri = self.nodeId_to_iri(namespace, id, idtype)
+                targetclassiri = nodeId_to_iri(namespace, self.rdf_ns['base'], id, idtype)
                 if isforward != 'false':
                     self.g.add((classiri, reftype_ns[found_component], targetclassiri))
                 else:
@@ -710,7 +694,7 @@ Did you forget to import it?")
         nodeid = node.get('NodeId')
         index, id, idtype = self.parse_nodeid(nodeid)
         namespace = self.get_rdf_ns_from_ua_index(index)
-        classiri = self.nodeId_to_iri(namespace, id, idtype)
+        classiri = nodeId_to_iri(namespace, self.rdf_ns['base'], id, idtype)
         references_node = node.find('opcua:References', self.xml_ns)
         references = references_node.findall('opcua:Reference', self.xml_ns)
         self.get_references(references, classiri)
@@ -725,7 +709,7 @@ Did you forget to import it?")
         nodeid = node.get('NodeId')
         index, id, idtype = self.parse_nodeid(nodeid)
         namespace = self.get_rdf_ns_from_ua_index(index)
-        classiri = self.nodeId_to_iri(namespace, id, idtype)
+        classiri = nodeId_to_iri(namespace, self.rdf_ns['base'], id, idtype)
         self.get_user_access(node, classiri)
         self.get_event_notifier(node, classiri)
 
@@ -841,7 +825,7 @@ Did you forget to import it?")
         nodeid = node.get('NodeId')
         ref_index, ref_id, idtype = self.parse_nodeid(nodeid)
         ref_namespace = self.get_rdf_ns_from_ua_index(ref_index)
-        ref_classiri = self.nodeId_to_iri(ref_namespace, ref_id, idtype)
+        ref_classiri = nodeId_to_iri(ref_namespace, self.rdf_ns['base'], ref_id, idtype)
         try:
             references_node = node.find('opcua:References', self.xml_ns)
             references = references_node.findall('opcua:Reference', self.xml_ns)

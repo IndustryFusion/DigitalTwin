@@ -1,7 +1,7 @@
 [
     {
         "type": "http://example.org/BSubType",
-        "id": "http://example.org/testid:i2012",
+        "id": "http://example.org/testid:nodei2012",
         "base:hasNodeRef": {
             "type": "VocabProperty",
             "vocab": "http://example.org/nodei2012"
@@ -16,7 +16,7 @@
     },
     {
         "type": "http://example.org/AlphaType",
-        "id": "http://example.org/testid:i2010",
+        "id": "http://example.org/testid:nodei2010",
         "base:hasNodeRef": {
             "type": "VocabProperty",
             "vocab": "http://example.org/nodei2010"
@@ -31,7 +31,7 @@
         "http://example.org/hasB": [
             {
                 "type": "Relationship",
-                "object": "http://example.org/testid:i2012"
+                "object": "http://example.org/testid:nodei2012"
             }
         ]
     }

@@ -14,7 +14,7 @@ from lib.utils import RdfUtils, downcase_string, isNodeId, convert_to_json_type,
                                 contains_both_angle_brackets, get_typename, get_common_supertype, rdfStringToPythonBool, \
                                 get_rank_dimensions, get_type_and_template, OntologyLoader, file_path_to_uri, create_list, \
                                 extract_subgraph, dump_without_prefixes, get_contentclass, quote_url, merge_attributes, dump_graph, \
-                                is_subclass, create_list, get_contentclass, expand_term, RdfUtils, rank_value_to_string
+                                is_subclass, expand_term, rank_value_to_string, nodeId_to_iri
 
 
 class TestNormalizeNamespaceUri(unittest.TestCase):
@@ -280,6 +280,7 @@ class TestUtils(unittest.TestCase):
         self.node = URIRef(self.ns['Node'])
         self.shacl_rule = {}
         self.instancetype = URIRef(self.ns['InstanceType'])
+        self.rdf_ns = {'base': self.basens, 'opcua': self.opcuans}
 
     def test_downcase_string(self):
         """Test downcasing the first character of a string."""
@@ -648,9 +649,9 @@ class TestUtils(unittest.TestCase):
         # Set rootentity with matching namespace
         graph.add((rootentity, self.basens['hasNamespace'], ns))
         
-        result1 = self.rdf_utils.generate_node_id(graph, rootentity, node, "testID")
+        result1 = self.rdf_utils.generate_node_id(graph, rootentity, node, "testID:")
         # Expected: "ns://example" + "testID" + ":" + "i" + "12345" => "ns://exampletestID:i12345"
-        self.assertEqual(str(result1), "ns://exampletestID:i12345")
+        self.assertEqual(str(result1), "ns://exampletestID:nodei12345")
         
         # Scenario 2: id is None, so the extra id value is not included.
         graph2 = Graph()
@@ -665,7 +666,7 @@ class TestUtils(unittest.TestCase):
         
         result2 = self.rdf_utils.generate_node_id(graph2, rootentity2, node2, None)
         # Expected: "ns://another" + "g" + "67890" => "ns://anotherg67890"
-        self.assertEqual(str(result2), "ns://anotherg67890")
+        self.assertEqual(str(result2), "ns://anothernodeg67890")
 
         # Scenario 3: id provided but node namespace differs from root entity namespace.
         graph3 = Graph()
@@ -676,14 +677,31 @@ class TestUtils(unittest.TestCase):
         graph3.add((node3, self.basens['hasNodeId'], Literal("abcde")))
         graph3.add((node3, self.basens['hasIdentifierType'], self.basens['opaqueID']))  # Expect idtype 'b'
         graph3.add((node3, self.basens['hasNamespace'], ns3_node))
-        graph3.add((ns3_node, self.basens['hasUri'], Literal("ns://node")))
+        graph3.add((ns3_node, self.basens['hasUri'], Literal("ns://node:")))
         # Root entity with a different namespace
         graph3.add((rootentity3, self.basens['hasNamespace'], ns3_root))
         graph3.add((ns3_root, self.basens['hasUri'], Literal("ns://root")))
         
         result3 = self.rdf_utils.generate_node_id(graph3, rootentity3, node3, "whatever")
         # Expected: "ns://node" + "b" + "abcde" => "ns://nodebabcde"
-        self.assertEqual(str(result3), "ns://nodebabcde")
+        self.assertEqual(str(result3), "ns://node:nodebabcde")
+        # Scenario 4: root entity is created and id contains a full IRI.
+        graph3 = Graph()
+        node3 = URIRef("http://example.org/node3")
+        rootentity3 = URIRef("http://example.org/root3")
+        ns3_node = URIRef("http://example.org/nsnode")
+        ns3_root = URIRef("http://example.org/nsroot")
+        graph3.add((node3, self.basens['hasNodeId'], Literal("abcde")))
+        graph3.add((node3, self.basens['hasIdentifierType'], self.basens['opaqueID']))  # Expect idtype 'b'
+        graph3.add((node3, self.basens['hasNamespace'], ns3_node))
+        graph3.add((ns3_node, self.basens['hasUri'], Literal("ns://root")))
+        # Root entity with a different namespace
+        graph3.add((rootentity3, self.basens['hasNamespace'], ns3_root))
+        graph3.add((ns3_root, self.basens['hasUri'], Literal("ns://root")))
+        
+        result3 = self.rdf_utils.generate_node_id(graph3, rootentity3, node3, "http://whatever:")
+        # Expected: "http://whatever:" + "b" + "abcde" => "http://whatever:nodebabcde"
+        self.assertEqual(str(result3), "http://whatever:nodebabcde")
 
     def test_get_object_types_from_namespace(self):
         """Test retrieving object types from the RDF graph within a specific namespace."""
@@ -733,6 +751,51 @@ class TestUtils(unittest.TestCase):
         # The SPARQL query returns rows with two columns: machine and type.
         # Check that the tuple (machine, custom_type) is present in the result.
         self.assertIn((machine, custom_type), result)
+
+    def test_nodeId_to_iri(self):
+        # Test for numeric ID
+        namespace = Namespace('http://example.com/ns1#')
+        nid = '123'
+        idtype = self.rdf_ns['base']['numericID']
+
+        # Call the method to be tested
+        result = nodeId_to_iri(namespace, self.basens, nid, idtype)
+
+        # Assert that the correct IRI is returned
+        expected_iri = namespace['nodei123']
+        self.assertEqual(result, expected_iri)
+        
+        idtype = self.rdf_ns['base']['stringID']
+        nid = 'teststring'
+        result = nodeId_to_iri(namespace, self.basens, nid, idtype)
+        expected_iri = namespace['nodesteststring']
+        self.assertEqual(result, expected_iri)
+
+        idtype = self.rdf_ns['base']['guidID']
+        nid = '123-123-uuid'
+        result = nodeId_to_iri(namespace, self.basens, nid, idtype)
+        expected_iri = namespace['nodeg123-123-uuid']
+        self.assertEqual(result, expected_iri)
+        
+        idtype = self.rdf_ns['base']['opaqueID']
+        nid = 'opaque'
+        result = nodeId_to_iri(namespace, self.basens, nid, idtype)
+        expected_iri = namespace['nodebopaque']
+        self.assertEqual(result, expected_iri)
+
+        # Case: when there is an additional id but this is no IRI
+        idtype = self.rdf_ns['base']['stringID']
+        nid = 'teststring'
+        result = nodeId_to_iri(namespace, self.basens, nid, idtype, 'testID:', True)
+        expected_iri = namespace['testID:nodesteststring']
+        self.assertEqual(result, expected_iri)
+
+        # Case: additional id but this is full IRI and it is root-ns
+        idtype = self.rdf_ns['base']['stringID']
+        nid = 'teststring'
+        result = nodeId_to_iri(namespace, self.basens, nid, idtype, "https://fulliri:", True)
+        expected_iri = URIRef('https://fulliri:nodesteststring')
+        self.assertEqual(result, expected_iri)
 
 class TestGetRankDimensions(unittest.TestCase):
 

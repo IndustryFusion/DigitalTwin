@@ -1,7 +1,7 @@
 [
     {
         "type": "pumps:DriveMeasurementsType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:i5006",
+        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5006",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -32,34 +32,34 @@
     },
     {
         "type": "pumps:DrivePortType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:i5004",
+        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5004",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
         "pumps:hasMeasurements": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:i5006"
+                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5006"
             }
         ]
     },
     {
         "type": "pumps:PortsGroupType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:i5003",
+        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5003",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
         "pumps:has%3CDrive%3E": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:i5004",
+                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5004",
                 "datasetId": "http://opcfoundation.org/UA/Pumps/has%3CDrive%3E"
             }
         ]
     },
     {
         "type": "pumps:DesignType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:i5021",
+        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5021",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -136,7 +136,7 @@
     },
     {
         "type": "pumps:SystemRequirementsType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:i5022",
+        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5022",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -149,26 +149,26 @@
     },
     {
         "type": "pumps:ConfigurationGroupType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:i5020",
+        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5020",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
         "pumps:hasDesign": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:i5021"
+                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5021"
             }
         ],
         "pumps:hasSystemRequirements": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:i5022"
+                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5022"
             }
         ]
     },
     {
         "type": "pumps:SupervisionProcessFluidType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:i5010",
+        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5010",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -183,7 +183,7 @@
     },
     {
         "type": "pumps:SupervisionPumpOperationType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:i5011",
+        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5011",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -198,7 +198,7 @@
     },
     {
         "type": "pumps:SupervisionMechanicsType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:i5009",
+        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5009",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -217,32 +217,32 @@
     },
     {
         "type": "pumps:SupervisionType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:i5008",
+        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5008",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
         "pumps:hasSupervisionProcessFluid": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:i5010"
+                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5010"
             }
         ],
         "pumps:hasSupervisionPumpOperation": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:i5011"
+                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5011"
             }
         ],
         "pumps:hasSupervisionMechanics": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:i5009"
+                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5009"
             }
         ]
     },
     {
         "type": "pumps:DocumentationType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:i5005",
+        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5005",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -253,7 +253,7 @@
     },
     {
         "type": "pumps:PreventiveMaintenanceType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:i5015",
+        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5015",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -295,7 +295,7 @@
     },
     {
         "type": "pumps:GeneralMaintenanceType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:i5014",
+        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5014",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -310,7 +310,7 @@
     },
     {
         "type": "pumps:BreakdownMaintenanceType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:i5013",
+        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5013",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -325,32 +325,32 @@
     },
     {
         "type": "pumps:MaintenanceGroupType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:i5012",
+        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5012",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
         "pumps:hasPreventiveMaintenance": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:i5015"
+                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5015"
             }
         ],
         "pumps:hasGeneralMaintenance": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:i5014"
+                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5014"
             }
         ],
         "pumps:hasBreakdownMaintenance": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:i5013"
+                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5013"
             }
         ]
     },
     {
         "type": "pumps:PumpActuationType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:i5017",
+        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5017",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -367,7 +367,7 @@
     },
     {
         "type": "pumps:VibrationMeasurementType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:i5019",
+        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5019",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -386,14 +386,14 @@
     },
     {
         "type": "pumps:MeasurementsType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:i5018",
+        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5018",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
         "pumps:has%3CVibration%3E": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:i5019",
+                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5019",
                 "datasetId": "http://yourorganisation.org/InstanceExample/hasSensor1"
             }
         ],
@@ -420,63 +420,63 @@
     },
     {
         "type": "pumps:OperationalGroupType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:i5016",
+        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5016",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
         "pumps:hasPumpActuation": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:i5017"
+                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5017"
             }
         ],
         "pumps:hasMeasurements": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:i5018"
+                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5018"
             }
         ]
     },
     {
         "type": "pumps:PumpType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:i5002",
+        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5002",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
         "pumps:hasPorts": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:i5003"
+                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5003"
             }
         ],
         "devices:hasConfiguration": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:i5020"
+                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5020"
             }
         ],
         "pumps:hasEvents": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:i5008"
+                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5008"
             }
         ],
         "pumps:hasDocumentation": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:i5005"
+                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5005"
             }
         ],
         "devices:hasMaintenance": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:i5012"
+                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5012"
             }
         ],
         "devices:hasOperational": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:i5016"
+                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5016"
             }
         ]
     }

@@ -9,9 +9,9 @@
 [] a sh:ValidationReport ;
     sh:conforms false ;
     sh:result [ a sh:ValidationResult ;
-            sh:focusNode <http://my.test/testid:i2012> ;
-            sh:resultMessage "Less than 1 values on <http://my.test/testid:i2012>->devices:hasManufacturer" ;
-            sh:resultPath devices:hasManufacturer ;
+            sh:focusNode <http://my.test/testid:nodei2012> ;
+            sh:resultMessage "Less than 1 values on <http://my.test/testid:nodei2012>->devices:hasProductInstanceUri" ;
+            sh:resultPath devices:hasProductInstanceUri ;
             sh:resultSeverity sh:Violation ;
             sh:sourceConstraintComponent sh:MinCountConstraintComponent ;
             sh:sourceShape [ sh:maxCount 1 ;
@@ -25,11 +25,11 @@
                                         sh:minCount 1 ;
                                         sh:or ( [ ] [ ] ) ;
                                         sh:path ngsi-ld:hasValueList ] ] ) ;
-                    sh:path devices:hasManufacturer ;
+                    sh:path devices:hasProductInstanceUri ;
                     base:hasReferenceType opcua:HasProperty ] ],
         [ a sh:ValidationResult ;
-            sh:focusNode <http://my.test/testid:i2012> ;
-            sh:resultMessage "Less than 1 values on <http://my.test/testid:i2012>->devices:hasSerialNumber" ;
+            sh:focusNode <http://my.test/testid:nodei2012> ;
+            sh:resultMessage "Less than 1 values on <http://my.test/testid:nodei2012>->devices:hasSerialNumber" ;
             sh:resultPath devices:hasSerialNumber ;
             sh:resultSeverity sh:Violation ;
             sh:sourceConstraintComponent sh:MinCountConstraintComponent ;
@@ -47,9 +47,9 @@
                     sh:path devices:hasSerialNumber ;
                     base:hasReferenceType opcua:HasProperty ] ],
         [ a sh:ValidationResult ;
-            sh:focusNode <http://my.test/testid:i2012> ;
-            sh:resultMessage "Less than 1 values on <http://my.test/testid:i2012>->devices:hasProductInstanceUri" ;
-            sh:resultPath devices:hasProductInstanceUri ;
+            sh:focusNode <http://my.test/testid:nodei2012> ;
+            sh:resultMessage "Less than 1 values on <http://my.test/testid:nodei2012>->devices:hasManufacturer" ;
+            sh:resultPath devices:hasManufacturer ;
             sh:resultSeverity sh:Violation ;
             sh:sourceConstraintComponent sh:MinCountConstraintComponent ;
             sh:sourceShape [ sh:maxCount 1 ;
@@ -63,6 +63,6 @@
                                         sh:minCount 1 ;
                                         sh:or ( [ ] [ ] ) ;
                                         sh:path ngsi-ld:hasValueList ] ] ) ;
-                    sh:path devices:hasProductInstanceUri ;
+                    sh:path devices:hasManufacturer ;
                     base:hasReferenceType opcua:HasProperty ] ] .
 

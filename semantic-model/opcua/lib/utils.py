@@ -48,6 +48,7 @@ WARNSTR = {
 
 NULL_IRI = URIRef('urn:ngsi-ld:null')
 DEFAULT_NODEID = URIRef('http://opcfoundation.org/UA/nodei1')
+DEFAULT_ENUMERATION_INSTANCE = URIRef('http://opcfoundation.org/UA/Unknown')
 query_realtype = """
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 
@@ -84,6 +85,26 @@ modelling_nodeid_mandatory_placeholder = 11510
 NGSILD = Namespace('https://uri.etsi.org/ngsi-ld/')
 MACHINERY = Namespace('http://opcfoundation.org/UA/Machinery/')
 ngsild_context = "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld"
+
+
+def nodeId_to_iri(namespace, basens, nid, idtype, instance_id='', is_entityns=False):
+    if instance_id is None:
+        instance_id = ''
+    quoted_node_id = urllib.parse.quote(nid, safe='')
+    idt = idtype2String(idtype, basens)
+    if instance_id != '' and is_entityns:
+        instance_id = urllib.parse.quote(instance_id, safe='/:')
+        if is_iri(instance_id):
+            return URIRef(f'{instance_id}node{idt}{quoted_node_id}')
+        else:
+            return namespace[f'{instance_id}node{idt}{quoted_node_id}']
+    return namespace[f'node{idt}{quoted_node_id}']
+
+
+def is_iri(iri):
+    # Accepts only if the string starts with 'urn:', 'http://', or 'https://'
+    iri_str = str(iri)
+    return iri_str.startswith("urn:") or iri_str.startswith("http://") or iri_str.startswith("https://")
 
 
 def print_warning(dictid, message):
@@ -937,15 +958,8 @@ class RdfUtils:
         rootnsuri = next(graph.objects(rootns, self.basens['hasUri']), 'unknown')
         ns = next(graph.objects(node, self.basens['hasNamespace']), 'unknown')
         nsuri = next(graph.objects(ns, self.basens['hasUri']), 'unknown')
-
-        idt = idtype2String(idtype, self.basens)
-        quoted_node_id = urllib.parse.quote(node_id)
         nsurins = Namespace(nsuri)
-        if id is not None and str(nsuri) == str(rootnsuri):
-            quoted_id = urllib.parse.quote(id, safe='/:')
-            result = nsurins[f'{quoted_id}:{idt}{quoted_node_id}']
-        else:
-            result = nsurins[f'{idt}{quoted_node_id}']
+        result = nodeId_to_iri(nsurins, self.basens, node_id, idtype, id, is_entityns=(str(nsuri) == str(rootnsuri)))
         return result
 
     def get_semantic_bridge(self, g, subject, object):

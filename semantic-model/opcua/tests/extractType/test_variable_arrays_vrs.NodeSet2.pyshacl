@@ -23,7 +23,7 @@
                                                 sh:path ( [ ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
                             sh:path ngsi-ld:hasValueList ] ;
                     sh:value ( 0e+00 1e+00 ) ] ;
-            sh:focusNode <http://my.test/testid:i2012> ;
+            sh:focusNode <http://my.test/testid:nodei2012> ;
             sh:resultMessage "Value does not conform to Shape shacl:ValueRankShape_OneDimension_integer. See details for more information." ;
             sh:resultPath test:hasMyVariable9 ;
             sh:resultSeverity sh:Violation ;
@@ -45,7 +45,7 @@
                     sh:sourceShape [ sh:datatype xsd:integer ;
                             sh:maxCount 2 ;
                             sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] ;
-            sh:focusNode <http://my.test/testid:i2012> ;
+            sh:focusNode <http://my.test/testid:nodei2012> ;
             sh:resultMessage "Value does not conform to Shape shacl:ValueRankShape_OneDimension_integer_2. See details for more information." ;
             sh:resultPath test:hasMyVariable12 ;
             sh:resultSeverity sh:Violation ;
@@ -68,7 +68,7 @@
                     sh:sourceShape [ sh:datatype xsd:string ;
                             sh:maxCount 2 ;
                             sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] ;
-            sh:focusNode <http://my.test/testid:i2012> ;
+            sh:focusNode <http://my.test/testid:nodei2012> ;
             sh:resultMessage "Value does not conform to Shape shacl:ValueRankShape_OneDimension_string_2. See details for more information." ;
             sh:resultPath test:hasMyVariable11 ;
             sh:resultSeverity sh:Violation ;
@@ -96,7 +96,7 @@
                                     sh:maxCount 2 ;
                                     sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] ;
                     sh:value () ] ;
-            sh:focusNode <http://my.test/testid:i2012> ;
+            sh:focusNode <http://my.test/testid:nodei2012> ;
             sh:resultMessage "Value does not conform to Shape shacl:ValueRankShape_OneDimension_integer_2. See details for more information." ;
             sh:resultPath test:hasMyVariable14 ;
             sh:resultSeverity sh:Violation ;
@@ -116,7 +116,7 @@
                     sh:sourceConstraintComponent sh:OrConstraintComponent ;
                     sh:sourceShape shacl:ValueRankShape_Any_double ;
                     sh:value _:N19b8a1222a80479793518521047f0ae8 ] ;
-            sh:focusNode <http://my.test/testid:i2012> ;
+            sh:focusNode <http://my.test/testid:nodei2012> ;
             sh:resultMessage "Value does not conform to Shape shacl:ValueRankShape_Any_double. See details for more information." ;
             sh:resultPath test:hasMyVariable10 ;
             sh:resultSeverity sh:Violation ;

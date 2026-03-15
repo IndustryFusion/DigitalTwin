@@ -20,7 +20,8 @@ from rdflib.namespace import XSD, RDF
 from rdflib.collection import Collection
 import operator
 from functools import reduce
-from lib.utils import is_subclass, ngsild_context, NGSILD, NULL_IRI, RdfUtils, DEFAULT_NODEID
+from lib.utils import is_subclass, ngsild_context, NGSILD, NULL_IRI, RdfUtils, \
+    DEFAULT_NODEID, DEFAULT_ENUMERATION_INSTANCE
 
 
 from pyld import jsonld
@@ -312,6 +313,9 @@ class JsonLd:
     def get_default_iri(self, datatype, value_rank=None, array_dimensions=None, g=Graph()):
         if datatype == self.opcuans['NodeId']:
             data_value = DEFAULT_NODEID
+        elif isinstance(datatype, list) and \
+                (self.opcuans['Enumeration'] in datatype or XSD.enumeration in datatype):
+            data_value = DEFAULT_ENUMERATION_INSTANCE
         else:
             data_value = NULL_IRI
         if value_rank is None or int(value_rank) < 0:
