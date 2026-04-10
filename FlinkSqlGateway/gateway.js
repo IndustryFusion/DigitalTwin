@@ -142,6 +142,11 @@ function apppost (request, response) {
 
 function udfget (req, res) {
   const filename = req.params.filename;
+  if (!isValidUdfFilename(filename)) {
+    res.status(400).send('Invalid filename');
+    logger.info('Rejected invalid python_udf get filename: ' + filename);
+    return;
+  }
   logger.debug('python_udf get was requested for: ' + filename);
   const fullname = `${udfdir}/${filename}.py`;
   try {
@@ -156,6 +161,11 @@ function udfget (req, res) {
 
 function udfpost (req, res) {
   const filename = req.params.filename;
+  if (!isValidUdfFilename(filename)) {
+    res.status(400).send('Invalid filename');
+    logger.info('Rejected invalid python_udf post filename: ' + filename);
+    return;
+  }
   const body = req.body;
   if (body === undefined || body === null) {
     res.status(500);
@@ -185,6 +195,11 @@ function getLocalPythonUdfs () {
   files.forEach(x => { verfiles[x[0]] = x[1]; });
   const result = Object.keys(verfiles).map(x => `${x}_v${verfiles[x]}.py`).map(x => `${udfdir}/${x}`);
   return result;
+}
+
+function isValidUdfFilename (name) {
+  // Allow only letters, digits, underscores, and hyphens to avoid path traversal and unsafe filenames.
+  return typeof name === 'string' && /^[A-Za-z0-9_-]+$/.test(name);
 }
 
 app.use(express.json({ limit: '10mb' }));
