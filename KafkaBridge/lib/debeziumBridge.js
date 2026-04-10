@@ -23,6 +23,19 @@ module.exports = function DebeziumBridge (conf) {
   const logger = new Logger(config);
   const syncOnAttribute = config.bridgeCommon.kafkaSyncOnAttribute;
 
+  function hasType(typeField, expectedType) {
+    if (!typeField) {
+      return false;
+    }
+    if (Array.isArray(typeField)) {
+      return typeField.includes(expectedType);
+    }
+    if (typeof typeField === 'string') {
+      return typeField === expectedType;
+    }
+    return false;
+  }
+
   /**
    *
    * @param {object} body - object from stateUpdate
@@ -218,7 +231,7 @@ module.exports = function DebeziumBridge (conf) {
               attribute.type = 'https://uri.etsi.org/ngsi-ld/JsonProperty';
               attribute.nodeType = '@list';
             }
-          } else if (refObj['@type'].includes('https://uri.etsi.org/ngsi-ld/Relationship')) {
+          } else if (hasType(refObj['@type'], 'https://uri.etsi.org/ngsi-ld/Relationship')) {
             if ('https://uri.etsi.org/ngsi-ld/hasObject' in refObj && refObj['https://uri.etsi.org/ngsi-ld/hasObject'].length > 0) {
               attribute.type = 'https://uri.etsi.org/ngsi-ld/Relationship';
               attribute.attributeValue = refObj['https://uri.etsi.org/ngsi-ld/hasObject'][0]['@id'];
