@@ -143,7 +143,12 @@ function apppost (request, response) {
 function udfget (req, res) {
   const filename = req.params.filename;
   logger.debug('python_udf get was requested for: ' + filename);
-  const fullname = `${udfdir}/${filename}.py`;
+  const fullname = path.resolve(udfdir, `${filename}.py`);
+  if (!fullname.startsWith(udfdir)) {
+    res.status(400).send('Invalid filename');
+    logger.error(`Invalid filename: ${filename}`);
+    return;
+  }
   try {
     fs.readFileSync(fullname);
   } catch (err) {
@@ -163,7 +168,12 @@ function udfpost (req, res) {
     return;
   }
   logger.debug(`python_udf with name ${filename}`);
-  const fullname = `${udfdir}/${filename}.py`;
+  const fullname = path.resolve(udfdir, `${filename}.py`);
+  if (!fullname.startsWith(udfdir)) {
+    res.status(400).send('Invalid filename');
+    logger.error(`Invalid filename: ${filename}`);
+    return;
+  }
   try {
     fs.writeFileSync(fullname, body);
   } catch (err) {
