@@ -52,29 +52,30 @@ describe('Test health path', function () {
 });
 describe('Test statement path', function () {
   it('Test exec command for sqlclient', function () {
-    let fsWriteFilename;
     const statement = 'select *;';
-    const flinkSqlCommand = `./flink-${flinkVersion}/bin/sql-client.sh -l ./jars -f `;
-
     const response = {
-      status: function (val) {
-      }
+      status: function (val) {}
     };
     const body = {
       sqlstatementset: statement
     };
-
     const request = {
       body: body
     };
-    const spawn = function (command, args, output) {
-      const fullcommand = flinkSqlCommand + fsWriteFilename + ' --pyExecutable /usr/local/bin/python3 --pyFiles testfile';
-      command.should.equal(fullcommand.split(' ')[0]);
-      args.should.equal(fullcommand.split(' ').slice(1));
+    const spawn = function (command, args) {
+      command.should.equal('/opt/flink/bin/flink');
+      args[0].should.equal('run');
+      args[1].should.equal('--python');
+      args[2].startsWith('/tmp/gateway_').should.equal(true);
+      args[2].endsWith('/job.py').should.equal(true);
+      return {
+        stdout: { on: function () {} },
+        stderr: { on: function () {} },
+        on: function () {}
+      };
     };
     const fs = {
       writeFileSync: function (filename, data) {
-        fsWriteFilename = filename;
         data.should.equal(JSON.stringify(body));
       },
       mkdirSync: function (dirname, mode) {
@@ -160,9 +161,7 @@ describe('Test apppost', function () {
         val.should.equal('Wrong format! No sqlstatementset field in body');
       }
     };
-    const uuid = {
-      v4: () => 'uuid'
-    };
+    const randomUUID = () => 'uuid';
     const fs = {
       unlinkSync: function (filename) {
         filename.should.equal('/tmp/script_uuid.sql');
@@ -188,7 +187,7 @@ describe('Test apppost', function () {
     const revert = toTest.__set__({
       logger: logger,
       spawn: spawn,
-      uuid: uuid,
+      randomUUID: randomUUID,
       fs: fs,
       getLocalPythonUdfs: getLocalPythonUdfs
     });
@@ -212,9 +211,7 @@ describe('Test apppost', function () {
         val.should.equal('Error while executing sql-client: ');
       }
     };
-    const uuid = {
-      v4: () => 'uuid'
-    };
+    const randomUUID = () => 'uuid';
     const fs = {
       unlinkSync: function (filename) {
         filename.should.equal('/tmp/script_uuid.sql');
@@ -242,7 +239,7 @@ describe('Test apppost', function () {
     const revert = toTest.__set__({
       logger: logger,
       spawn: exec,
-      uuid: uuid,
+      randomUUID: randomUUID,
       fs: fs,
       getLocalPythonUdfs: getLocalPythonUdfs
     });
@@ -262,9 +259,7 @@ describe('Test apppost', function () {
       }
 
     };
-    const uuid = {
-      v4: () => 'uuid'
-    };
+    const randomUUID = () => 'uuid';
     const fs = {
       unlinkSync: function (filename) {
         filename.should.equal('/tmp/script_uuid.sql');
@@ -290,7 +285,7 @@ describe('Test apppost', function () {
     const revert = toTest.__set__({
       logger: logger,
       spawn: exec,
-      uuid: uuid,
+      randomUUID: randomUUID,
       fs: fs,
       getLocalPythonUdfs: getLocalPythonUdfs
     });
