@@ -2,7 +2,7 @@ FROM python:3.8 as plint
 ADD submitjob/ submitjob
 RUN pip3 install flake8 && flake8 submitjob/job.py
 
-FROM node:16 as nodelint
+FROM node:20 as nodelint
 ADD gateway.js gateway.js
 ADD package.json package.json
 ADD lib/ lib
@@ -16,7 +16,7 @@ FROM flink:1.19.1
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
 ENV NVM_DIR="$HOME/.nvm"
 RUN NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-RUN . $HOME/.nvm/nvm.sh && nvm install 16 && node --version
+RUN . $HOME/.nvm/nvm.sh && nvm install 20 && node --version
 RUN mkdir -p /opt/gateway
 ENV SIMPLE_FLINK_SQL_GATEWAY_ROOT=/opt/flink
 ENV NODE_ENV=production
