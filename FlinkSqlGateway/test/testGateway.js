@@ -21,7 +21,6 @@ const expect = chai.expect;
 
 const rewire = require('rewire');
 const toTest = rewire('../gateway.js');
-const flinkVersion = '1.14.3';
 
 const logger = {
   debug: function () {},
