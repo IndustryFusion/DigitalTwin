@@ -10,7 +10,6 @@
     "child-process": "^1.0.2",
     "express": "^4.22.1",
     "jszip": "^3.10.1",
-    "uuid": "^14.0.0",
     "winston": "^3.8.1",
     "express-rate-limit": "^7.4.1"
   },

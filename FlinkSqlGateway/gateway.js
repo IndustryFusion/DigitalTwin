@@ -16,7 +16,7 @@
 'use strict';
 const express = require('express');
 const { spawn } = require('child_process');
-const uuid = require('uuid');
+const { randomUUID } = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const app = express();
@@ -99,7 +99,7 @@ function apppost (request, response) {
     response.send('Wrong format! No sqlstatementset field in body');
     return;
   }
-  const id = uuid.v4();
+  const id = randomUUID();
   const dirname = '/tmp/gateway_' + id;
   const datatargetdir = dirname + '/' + localdata;
   const udftargetdir = dirname + '/' + localudf;
