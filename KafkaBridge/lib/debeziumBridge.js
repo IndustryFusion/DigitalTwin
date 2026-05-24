@@ -179,7 +179,7 @@ module.exports = function DebeziumBridge (conf) {
             }
           } else if (
             (Array.isArray(refObj['@type']) &&
-              refObj['@type'].includes('https://uri.etsi.org/ngsi-ld/GeoProperty')) ||
+              refObj['@type'].some(t => t === 'https://uri.etsi.org/ngsi-ld/GeoProperty')) ||
             (!Array.isArray(refObj['@type']) &&
               refObj['@type'] === 'https://uri.etsi.org/ngsi-ld/GeoProperty')
           ) {
@@ -202,7 +202,7 @@ module.exports = function DebeziumBridge (conf) {
             }
           } else if (
             (Array.isArray(refObj['@type']) &&
-              refObj['@type'].includes('https://uri.etsi.org/ngsi-ld/JsonProperty')) ||
+              refObj['@type'].some(t => t === 'https://uri.etsi.org/ngsi-ld/JsonProperty')) ||
             (!Array.isArray(refObj['@type']) &&
               refObj['@type'] === 'https://uri.etsi.org/ngsi-ld/JsonProperty')
           ) {
@@ -218,7 +218,7 @@ module.exports = function DebeziumBridge (conf) {
             }
           } else if (
             (Array.isArray(refObj['@type']) &&
-              refObj['@type'].includes('https://uri.etsi.org/ngsi-ld/ListProperty')) ||
+              refObj['@type'].some(t => t === 'https://uri.etsi.org/ngsi-ld/ListProperty')) ||
             (!Array.isArray(refObj['@type']) &&
               refObj['@type'] === 'https://uri.etsi.org/ngsi-ld/ListProperty')
           ) {
@@ -235,7 +235,7 @@ module.exports = function DebeziumBridge (conf) {
             }
           } else if (
             (Array.isArray(refObj['@type']) &&
-              refObj['@type'].includes('https://uri.etsi.org/ngsi-ld/Relationship')) ||
+              refObj['@type'].some(t => t === 'https://uri.etsi.org/ngsi-ld/Relationship')) ||
             (!Array.isArray(refObj['@type']) &&
               refObj['@type'] === 'https://uri.etsi.org/ngsi-ld/Relationship')
           ) {
