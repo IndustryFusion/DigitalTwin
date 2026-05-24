@@ -23,7 +23,8 @@ echo ----------------------
 ## k3d cluster with 2 nodes
 k3d registry create iff.localhost -p 12345
 k3d cluster list | grep iff-cluster > /dev/null && k3d cluster delete iff-cluster
-k3d cluster create --image ${K3S_IMAGE} -a 2 --registry-use k3d-iff.localhost:12345 iff-cluster
+k3d cluster create --image ${K3S_IMAGE} -a 2 --registry-use k3d-iff.localhost:12345 iff-cluster \
+  --k3s-arg "--kubelet-arg=eviction-hard=imagefs.available<2%,nodefs.available<2%,nodefs.inodesFree<2%@all"
 
 echo Install Helm diff plugin
 echo ------------------------ 
