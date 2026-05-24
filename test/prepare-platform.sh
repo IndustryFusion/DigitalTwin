@@ -67,7 +67,8 @@ echo ----------------------
 ## k3d cluster with 2 nodes
 curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | TAG=v5.8.3 bash
 k3d registry create iff.localhost -p 12345
-k3d cluster create --image ${K3S_IMAGE} -a 2 --registry-use k3d-iff.localhost:12345 iff-cluster
+k3d cluster create --image ${K3S_IMAGE} -a 2 --registry-use k3d-iff.localhost:12345 iff-cluster \
+  --k3s-arg "--kubelet-arg=eviction-hard=imagefs.available<2%,nodefs.available<2%,nodefs.inodesFree<2%@all"
 
 if [ -z "$BUILDONLY" ];then
     echo Install Helm v3.10.3

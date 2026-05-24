@@ -11,7 +11,11 @@ env:
   SELF_HOSTED_RUNNER: true
 
 jobs:
+  clean-docker:
+    uses: ./.github/workflows/docker-clean.yaml
+
   build:
+    needs: clean-docker
     runs-on: private
     steps:
     - uses: actions/checkout@v2
