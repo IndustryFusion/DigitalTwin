@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "child-process": "^1.0.2",
-    "express": "^4.22.1",
+    "express": "^4.22.2",
     "jszip": "^3.10.1",
     "winston": "^3.8.1",
     "express-rate-limit": "^7.4.1"
