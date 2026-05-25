@@ -35,5 +35,8 @@
     "nyc": "^15.1.0",
     "rewire": "^6.0.0",
     "sinon": "^13.0.2"
+  },
+  "overrides": {
+    "serialize-javascript": ">=7.0.3"
   }
 }
