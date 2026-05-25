@@ -24,5 +24,8 @@
     "mocha": "^10.2.0",
     "nyc": "^15.1.0",
     "rewire": "^7.0.0"
+  },
+  "overrides": {
+    "serialize-javascript": ">=7.0.3"
   }
 }
