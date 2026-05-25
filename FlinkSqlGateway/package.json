@@ -30,5 +30,8 @@
     "lint": "./node_modules/.bin/eslint *.js ./lib/*.js ./test/*.js"
   },
   "author": "Marcel Wagner",
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "overrides": {
+    "serialize-javascript": ">=7.0.3"
+  }
 }
