@@ -12,6 +12,13 @@ KEYCLOAK_URL=http://keycloak.local/auth/realms
 MQTT_URL=emqx-listeners:1883
 MQTT_TOPIC_NAME="scorpio-test"
 MQTT_SUB=/tmp/MQTT_SUB
+MQTT_FACTORY_SUB=/tmp/MQTT_FACTORY_SUB
+MQTT_SPB_TOPIC="spBv1.0/${NAMESPACE}/DDATA/testgateway/testdevice"
+MQTT_WRONG_REALM_TOPIC="spBv1.0/wrong-realm/DDATA/testgateway/testdevice"
+MQTT_FACTORY_MSG='{"factory_test":true,"timestamp":1655974018778}'
+DEVICE_CLIENT_ID=device
+DEVICE_ID=testdevice
+GATEWAY_ID=testgateway
 PLASMACUTTER_ID=urn:plasmacutter-test:12345
 SUB_ID=urn:subscription-test:1
 CUTTER=/tmp/CUTTER
@@ -34,6 +41,25 @@ get_password() {
 
 get_token() {
     curl -d "client_id=${CLIENT_ID}" -d "username=${USER}" -d "password=$password" -d 'grant_type=password' "${KEYCLOAK_URL}/${NAMESPACE}/protocol/openid-connect/token" | jq ".access_token" | tr -d '"'
+}
+
+get_vanilla_refresh_and_access_token() {
+    curl -X POST "${KEYCLOAK_URL}/${NAMESPACE}/protocol/openid-connect/token" \
+        -d "client_id=${DEVICE_CLIENT_ID}" \
+        -d "grant_type=password" \
+        -d "username=${USER}" \
+        -d "password=${password}"
+}
+
+get_refreshed_device_token() {
+    curl -X POST "${KEYCLOAK_URL}/${NAMESPACE}/protocol/openid-connect/token" \
+        -d "client_id=${DEVICE_CLIENT_ID}" \
+        -d "grant_type=refresh_token" \
+        -d "refresh_token=$1" \
+        -d "orig_token=$2" \
+        -H "X-DeviceID: ${DEVICE_ID}" \
+        -H "X-GatewayID: ${GATEWAY_ID}" \
+        | jq ".access_token" | tr -d '"'
 }
 
 create_subscription() {
@@ -245,4 +271,90 @@ check_no_delete_notification() {
 
     run check_no_delete_notification ${MQTT_SUB}
     [ "$status" -eq 0 ]
+}
+
+@test "verify factory user can subscribe to arbitrary SparkplugB topic" {
+    $SKIP
+    admin_password=$(get_adminPassword | tr -d '"')
+    admin_username=$(get_adminUsername | tr -d '"')
+    password=$(get_password)
+    token=$(get_token)
+    : > "${MQTT_FACTORY_SUB}"
+    (exec stdbuf -oL mosquitto_sub -L "mqtt://${USER}:${token}@${MQTT_URL}/${MQTT_SPB_TOPIC}" >"${MQTT_FACTORY_SUB}") &
+    sleep 2
+    mosquitto_pub -L "mqtt://${admin_username}:${admin_password}@${MQTT_URL}/${MQTT_SPB_TOPIC}" -m "${MQTT_FACTORY_MSG}"
+    sleep 2
+    killall mosquitto_sub
+
+    run grep -q "factory_test" "${MQTT_FACTORY_SUB}"
+    [ "$status" -eq 0 ]
+}
+
+@test "verify factory user publish to SparkplugB topic is silently dropped" {
+    $SKIP
+    password=$(get_password)
+    token=$(get_token)
+    : > "${MQTT_FACTORY_SUB}"
+    (exec stdbuf -oL mosquitto_sub -L "mqtt://${USER}:${token}@${MQTT_URL}/${MQTT_SPB_TOPIC}" >"${MQTT_FACTORY_SUB}") &
+    sleep 2
+    mosquitto_pub -L "mqtt://${USER}:${token}@${MQTT_URL}/${MQTT_SPB_TOPIC}" -m "${MQTT_FACTORY_MSG}"
+    sleep 2
+    killall mosquitto_sub
+
+    # EMQX deny_action=ignore silently drops the publish; factory subscriber receives nothing
+    [ ! -s "${MQTT_FACTORY_SUB}" ]
+}
+
+@test "verify factory user can subscribe to non-SparkplugB topic" {
+    $SKIP
+    admin_password=$(get_adminPassword | tr -d '"')
+    admin_username=$(get_adminUsername | tr -d '"')
+    password=$(get_password)
+    token=$(get_token)
+    : > "${MQTT_FACTORY_SUB}"
+    (exec stdbuf -oL mosquitto_sub -L "mqtt://${USER}:${token}@${MQTT_URL}/${MQTT_TOPIC_NAME}" >"${MQTT_FACTORY_SUB}") &
+    sleep 2
+    mosquitto_pub -L "mqtt://${admin_username}:${admin_password}@${MQTT_URL}/${MQTT_TOPIC_NAME}" -m "${MQTT_FACTORY_MSG}"
+    sleep 2
+    killall mosquitto_sub
+
+    run grep -q "factory_test" "${MQTT_FACTORY_SUB}"
+    [ "$status" -eq 0 ]
+}
+
+@test "verify factory user cannot subscribe to SparkplugB topic with wrong realm" {
+    $SKIP
+    admin_password=$(get_adminPassword | tr -d '"')
+    admin_username=$(get_adminUsername | tr -d '"')
+    password=$(get_password)
+    token=$(get_token)
+    : > "${MQTT_FACTORY_SUB}"
+    (exec stdbuf -oL mosquitto_sub -L "mqtt://${USER}:${token}@${MQTT_URL}/${MQTT_WRONG_REALM_TOPIC}" >"${MQTT_FACTORY_SUB}") &
+    sleep 2
+    mosquitto_pub -L "mqtt://${admin_username}:${admin_password}@${MQTT_URL}/${MQTT_WRONG_REALM_TOPIC}" -m "${MQTT_FACTORY_MSG}"
+    sleep 2
+    killall mosquitto_sub
+
+    # subscription to wrong-realm SparkplugB is denied; no message received
+    [ ! -s "${MQTT_FACTORY_SUB}" ]
+}
+
+@test "verify device cannot subscribe to non-SparkplugB topic" {
+    $SKIP
+    admin_password=$(get_adminPassword | tr -d '"')
+    admin_username=$(get_adminUsername | tr -d '"')
+    password=$(get_password)
+    device_tokens=$(get_vanilla_refresh_and_access_token)
+    refresh_token=$(echo "$device_tokens" | jq ".refresh_token" | tr -d '"')
+    access_token=$(echo "$device_tokens" | jq ".access_token" | tr -d '"')
+    device_token=$(get_refreshed_device_token "${refresh_token}" "${access_token}")
+    : > "${MQTT_FACTORY_SUB}"
+    (exec stdbuf -oL mosquitto_sub -L "mqtt://${DEVICE_ID}:${device_token}@${MQTT_URL}/${MQTT_TOPIC_NAME}" >"${MQTT_FACTORY_SUB}") &
+    sleep 2
+    mosquitto_pub -L "mqtt://${admin_username}:${admin_password}@${MQTT_URL}/${MQTT_TOPIC_NAME}" -m "${MQTT_FACTORY_MSG}"
+    sleep 2
+    killall mosquitto_sub
+
+    # device subscription to non-SparkplugB topic is denied; no message received
+    [ ! -s "${MQTT_FACTORY_SUB}" ]
 }
