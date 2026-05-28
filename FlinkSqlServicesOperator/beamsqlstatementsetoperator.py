@@ -86,6 +86,8 @@ UPDATE_STRATEGY = "updateStrategy"
 UPDATE_STRATEGY_SAVEPOINT = "savepoint"
 UPDATE_STRATEGY_NONE = "none"
 UPDATEDON = "updatedOn"
+FAILED_RETRIES = "failed_retries"
+MAX_FAILED_RETRIES = 2
 
 @kopf.on.create("industry-fusion.com", "v1alpha4", "beamsqlstatementsets")
 # pylint: disable=unused-argument
@@ -101,6 +103,7 @@ def create(body, spec, patch, logger, **kwargs):
         f"Created beamsqlstatementsets {name} in namespace {namespace}")
     patch.status[STATE] = States.INITIALIZED.name
     patch.status[JOB_ID] = None
+    patch.status[FAILED_RETRIES] = 0
     return {"createdOn": str(time.time())}
 
 
@@ -437,6 +440,9 @@ needs either sqlstatements or sqlstatementmaps.")
     # the state is monitored
     if state not in [States.CANCELING.name, States.SAVEPOINTING.name, States.UPDATING.name]:
         refresh_state(body, patch, logger)
+        if patch.status[STATE] == States.RUNNING.name:
+            if body['status'].get(FAILED_RETRIES, 0) > 0:
+                patch.status[FAILED_RETRIES] = 0
         if patch.status[STATE] == States.NOT_FOUND.name:
             logger.info("Job seems to be lost. Will re-initialize")
             patch.status[STATE] = States.INITIALIZED.name
@@ -446,9 +452,15 @@ needs either sqlstatements or sqlstatementmaps.")
             patch.status[STATE] = States.INITIALIZED.name
             patch.status[JOB_ID] = None
         if patch.status[STATE] == States.FAILED.name:
-            logger.info("Job has failed. Will re-initialize")
-            patch.status[STATE] = States.INITIALIZED.name
-            patch.status[JOB_ID] = None
+            retries = body['status'].get(FAILED_RETRIES, 0)
+            if retries >= MAX_FAILED_RETRIES:
+                logger.error(f"Job has failed {retries} times. Giving up.")
+            else:
+                logger.info(f"Job has failed. Will re-initialize "
+                            f"(attempt {retries + 1}/{MAX_FAILED_RETRIES})")
+                patch.status[FAILED_RETRIES] = retries + 1
+                patch.status[STATE] = States.INITIALIZED.name
+                patch.status[JOB_ID] = None
 
 # pylint: disable=too-many-arguments unused-argument redefined-outer-name
 # kopf is ingesting too many parameters, this is inherite by subroutine
