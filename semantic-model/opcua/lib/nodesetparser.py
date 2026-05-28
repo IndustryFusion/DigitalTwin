@@ -218,15 +218,12 @@ Please set it explictly.")
         # Create Type Hierarchy
         for tag_name, _ in type_nodeclasses:
             uanodes = self.root.findall(tag_name, self.xml_ns)
-            firstpass = True
+            # Pre-register all type names so forward references don't raise KeyError in add_type.
             for uanode in uanodes:
-                try:
-                    self.add_type(uanode)
-                except:
-                    firstpass = False
-            if not firstpass:
-                for uanode in uanodes:
-                    self.add_type(uanode)
+                self.add_type_name_only(uanode)
+            # Now add full type definitions; all type names are pre-registered so forward references resolve.
+            for uanode in uanodes:
+                self.add_type(uanode)
         # Type objects and varialbes
         for tag_name, _ in typed_nodeclasses:
             uanodes = self.root.findall(tag_name, self.xml_ns)
@@ -804,21 +801,28 @@ Did you forget to import it?")
                         self.g.add((typeiri, RDFS.subClassOf, br_namespace[browsename]))
                     else:
                         self.g.add((typeiri, RDFS.subPropertyOf, br_namespace[browsename]))
-                isAbstract = node.get('IsAbstract')
-                if isAbstract is not None:
-                    self.g.add((br_namespace[browsename], self.rdf_ns['base']['isAbstract'], Literal(isAbstract)))
-                self.typeIds[ref_index][ref_id] = br_namespace[browsename]
-                self.g.add((ref_classiri, self.rdf_ns['base']['definesType'], br_namespace[browsename]))
-        if ref_id == baseObjectTypeId or ref_id == referencesId or ref_id == baseDataTypeId or\
-                ref_id == baseVariableType:
-            isAbstract = node.get('IsAbstract')
-            if isAbstract is not None:
-                self.g.add((br_namespace[browsename], self.rdf_ns['base']['isAbstract'], Literal(isAbstract)))
-            self.typeIds[ref_index][ref_id] = br_namespace[browsename]
-            self.g.add((ref_classiri, self.rdf_ns['base']['definesType'], br_namespace[browsename]))
-        elif not mandatory_typedef_found:
+        if not mandatory_typedef_found and ref_id != baseObjectTypeId and ref_id != referencesId and \
+                ref_id != baseDataTypeId and ref_id != baseVariableType:
             print(f"Error: Objecttype {ref_classiri} has no supertype and is not the base object type.")
             exit(1)
+
+    def add_type_name_only(self, node):
+        _, browsename = self.getBrowsename(node)
+        nodeid = node.get('NodeId')
+        ref_index, ref_id, idtype = self.parse_nodeid(nodeid)
+        ref_namespace = self.get_rdf_ns_from_ua_index(ref_index)
+        ref_classiri = nodeId_to_iri(ref_namespace, self.rdf_ns['base'], ref_id, idtype)
+        isAbstract = node.get('IsAbstract')
+        br_namespace = ref_namespace
+        if isAbstract is not None:
+            self.g.add((br_namespace[browsename], self.rdf_ns['base']['isAbstract'], Literal(isAbstract)))
+        self.typeIds[ref_index][ref_id] = br_namespace[browsename]
+        self.g.add((ref_classiri, self.rdf_ns['base']['definesType'], br_namespace[browsename]))
+        if not node.tag.endswith("UAReferenceType"):
+            self.g.add((ref_namespace[browsename], RDF.type, OWL.Class))
+        else:
+            self.known_references.append((Literal(ref_id), ref_namespace, Literal(browsename)))
+            self.g.add((ref_namespace[browsename], RDF.type, OWL.ObjectProperty))
 
     def add_type(self, node):
         _, browsename = self.getBrowsename(node)

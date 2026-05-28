@@ -130,6 +130,7 @@ class TestNodesetParser(unittest.TestCase):
     @patch('lib.nodesetparser.urllib.request.urlopen')
     @patch('lib.nodesetparser.NodesetParser.add_uadatatype')
     @patch('lib.nodesetparser.NodesetParser.add_typedef')
+    @patch('lib.nodesetparser.NodesetParser.add_type_name_only')
     @patch('lib.nodesetparser.NodesetParser.add_type')
     @patch('lib.nodesetparser.NodesetParser.add_uanode')
     @patch('lib.nodesetparser.NodesetParser.scan_aliases')
@@ -138,7 +139,7 @@ class TestNodesetParser(unittest.TestCase):
     @patch('lib.nodesetparser.NodesetParser.create_prefixes')
     @patch('lib.nodesetparser.NodesetParser.add_datatype_dependent')
     def test_parse(self, mock_add_datatype_dependent, mock_create_prefixes, mock_init_nodeids, mock_create_header, mock_scan_aliases,
-                   mock_add_uanode, mock_add_type, mock_add_typedef, mock_add_uadatatype,
+                   mock_add_uanode, mock_add_type, mock_add_type_name_only, mock_add_typedef, mock_add_uadatatype,
                    mock_urlopen, mock_et_parse):
         
         # Mock the XML parsing
@@ -190,9 +191,10 @@ class TestNodesetParser(unittest.TestCase):
         expected_calls = len(mock_uadatatype_nodes) + len(mock_uaobject_nodes) + len(mock_uavariable_nodes) + len(mock_uamethod_nodes)
         self.assertEqual(mock_add_uanode.call_count, expected_calls)
 
-        # Verify that add_type was called for each type node class in type_nodeclasses
+        # Verify that add_type and add_type_name_only were called for each type node class in type_nodeclasses
         expected_type_calls = len(mock_uadatatype_nodes)
         self.assertEqual(mock_add_type.call_count, expected_type_calls)
+        self.assertEqual(mock_add_type_name_only.call_count, expected_type_calls)
 
         # Verify that add_typedef was called for typed node classes
         expected_typed_calls = len(mock_uavariable_nodes) + len(mock_uaobject_nodes)
@@ -910,14 +912,10 @@ class TestNodesetParser(unittest.TestCase):
         # Call the method to be tested
         self.parser.get_typedefinition_from_references([ref_node], ref_classiri, node)
 
-        # Assert that the correct triples were added to the graph
-        expected_triples = [
-            (URIRef('http://example.com/ns1#TestBrowseName'), RDFS.subPropertyOf, URIRef('http://example.com/type/500')),
-            (URIRef('http://example.com/ns1#TestBrowseName'), self.parser.rdf_ns['base']['isAbstract'], Literal('true')),
-            (ref_classiri, self.parser.rdf_ns['base']['definesType'], URIRef('http://example.com/ns1#TestBrowseName'))
-        ]
-        for triple in expected_triples:
-            mock_add.assert_any_call(triple)
+        # isAbstract and definesType are now handled by add_type_name_only, not here.
+        mock_add.assert_any_call(
+            (URIRef('http://example.com/ns1#TestBrowseName'), RDFS.subPropertyOf, URIRef('http://example.com/type/500'))
+        )
 
     @patch.object(Graph, 'add')
     def test_add_type(self, mock_add):
