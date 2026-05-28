@@ -1,5 +1,5 @@
 FROM python:3.12 as precheck
-RUN pip3 install kubernetes==35.0.0 kopf==1.37.3 oisp pycodestyle pylint coverage aiounittest pytimeparse
+RUN pip3 install kubernetes==35.0.0 kopf==1.37.1 oisp pycodestyle pylint coverage aiounittest pytimeparse
 ADD test/requirements.txt /opt/test/
 RUN cd /opt/test && pip3 install -r requirements.txt
 ADD *.py /opt/
@@ -14,7 +14,7 @@ PYTHONPATH=/opt coverage run -a  /opt/test/test_util.py
 RUN coverage report --omit "*/test*" -m --fail-under 80
 
 FROM python:3.12
-RUN pip3 install kubernetes==35.0.0 python-json-logger==2.0.7 kopf==1.37.3 oisp pytimeparse
+RUN pip3 install kubernetes==35.0.0 python-json-logger==2.0.7 kopf==1.37.1 oisp pytimeparse
 COPY --from=precheck /opt/*.py /opt/
 WORKDIR /opt
 RUN groupadd -r bsoperator && useradd -r -g bsoperator bsoperator
