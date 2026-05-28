@@ -445,6 +445,10 @@ needs either sqlstatements or sqlstatementmaps.")
             logger.info("Job is cancelled. Will re-initialize")
             patch.status[STATE] = States.INITIALIZED.name
             patch.status[JOB_ID] = None
+        if patch.status[STATE] == States.FAILED.name:
+            logger.info("Job has failed. Will re-initialize")
+            patch.status[STATE] = States.INITIALIZED.name
+            patch.status[JOB_ID] = None
 
 # pylint: disable=too-many-arguments unused-argument redefined-outer-name
 # kopf is ingesting too many parameters, this is inherite by subroutine

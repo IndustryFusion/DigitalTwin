@@ -128,8 +128,8 @@ flink-deploy: clean
 	make helm
 	make disable-strimzi || echo "Can fail"
 	# make build || make enable-strimzi
-	kubectl -n $(NAMESPACE) delete -f output/ngsild-kafka.yaml --ignore-not-found || make enable-strimzi
-	kubectl -n $(NAMESPACE) delete -f output/rdf-kafka.yaml --ignore-not-found || make enable-strimzi
+	kubectl -n $(NAMESPACE) delete -f output/ngsild-kafka.yaml --ignore-not-found --wait=false || make enable-strimzi
+	kubectl -n $(NAMESPACE) delete -f output/rdf-kafka.yaml --ignore-not-found --wait=false || make enable-strimzi
 	cd ../../helm && ./helmfile -f helmfile-shacl.yaml apply || make enable-strimzi
 	make enable-strimzi
 	make test-flink-is-deployed
