@@ -39,7 +39,6 @@ class Acl {
     }
     const topic = req.query.topic;
     const clientid = req.query.clientid;
-    const action = req.query.action;
     this.logger.debug('ACL request for username ' + username + ' and topic ' + topic);
     // allow all $SYS topics
     if (topic.startsWith('$SYS/')) {
@@ -64,25 +63,14 @@ class Acl {
           this.logger.warn('Gateway id not permitted for this token/session. Use a token which has device_id==gateway_id.');
         }
       }
-      if (allowed !== undefined && allowed === clientid) {
+      if (allowed === undefined || allowed !== clientid) {
+        this.logger.info('Connection rejected for realm ' + spBAccountId + ' and device ' + spBdevId);
+        return res.status(200).json({ result: 'deny' });
+      } else {
         return res.status(200).json({ result: 'allow' });
       }
-      if (action === 'subscribe') {
-        const factoryRealm = await this.cache.getValue(`_factory_reader/${clientid}`, 'realm');
-        if (factoryRealm !== undefined && factoryRealm === spBAccountId) {
-          return res.status(200).json({ result: 'allow' });
-        }
-      }
-      this.logger.info('Connection rejected for realm ' + spBAccountId + ' and device ' + spBdevId);
-      return res.status(200).json({ result: 'deny' });
     } else {
-      if (action === 'subscribe') {
-        const factoryRealm = await this.cache.getValue(`_factory_reader/${clientid}`, 'realm');
-        if (factoryRealm !== undefined) {
-          return res.status(200).json({ result: 'allow' });
-        }
-      }
-      this.logger.warn('Topic structure not valid.');
+      this.logger.warn('Topic sructure not valid.');
       return res.status(200).json({ result: 'deny' });
     }
   }

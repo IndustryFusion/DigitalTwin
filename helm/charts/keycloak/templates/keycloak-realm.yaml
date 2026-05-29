@@ -578,14 +578,6 @@ spec:
         {{- range .Values.keycloak.alerta.defaultClientScopes}}
         - {{.}}
         {{- end }}
-        protocolMappers:
-        - name: mqtt-broker-audience
-          protocol: openid-connect
-          protocolMapper: oidc-audience-mapper
-          config:
-            included.client.audience: {{ .Values.keycloak.oisp.mqttBroker.client }}
-            access.token.claim: "true"
-            id.token.claim: "false"
       - id: 2057e003-9e81-44fb-929d-4511ce2c7e33
         clientId: {{ .Values.keycloak.ngsildUpdates.client }}
         publicClient: False

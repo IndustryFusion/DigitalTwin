@@ -39,12 +39,6 @@ function validate (token, username) {
   return true;
 }
 
-function isFactoryUser (token) {
-  const roles = token.resource_access?.scorpio?.roles;
-  if (!Array.isArray(roles)) return false;
-  return roles.includes('Factory-Admin') || roles.includes('Factory-Reader');
-}
-
 class Authenticate {
   constructor (config) {
     this.config = config;
@@ -93,19 +87,6 @@ class Authenticate {
     if (decodedToken === null) {
       this.logger.info('Could not decode token.');
       res.status(200).json({ result: 'deny' });
-      return;
-    }
-    if (isFactoryUser(decodedToken)) {
-      const realm = getRealm(decodedToken);
-      if (!realm) {
-        this.logger.warn('Validation failed: realm not found in factory user token.');
-        res.status(200).json({ result: 'deny' });
-        return;
-      }
-      await this.cache.deleteKeysWithValue('acl', clientid);
-      await this.cache.setValue(`_factory_reader/${clientid}`, 'acl', clientid);
-      await this.cache.setValue(`_factory_reader/${clientid}`, 'realm', realm);
-      res.status(200).json({ result: 'allow', is_superuser: 'false' });
       return;
     }
     if (!validate(decodedToken, username)) {
