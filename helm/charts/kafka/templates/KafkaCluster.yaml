@@ -51,20 +51,20 @@ spec:
       #image: {{ .Values.externalRegistry2 }}/strimzi/operator:0.45.0
       resources:
         requests:
-          cpu: 150m
-          memory: 128Mi
-        limits:
           cpu: 300m
           memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
     userOperator:
       #image: {{ .Values.externalRegistry2 }}/strimzi/operator:0.45.0
       resources:
         requests:
-          cpu: 150m
-          memory: 128Mi
-        limits:
           cpu: 300m
           memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
 ---
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaNodePool
