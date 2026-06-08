@@ -91,7 +91,7 @@ class Authenticate {
     const decodedToken = await this.verifyAndDecodeToken(token);
     this.logger.debug('token decoded: ' + JSON.stringify(decodedToken));
     if (decodedToken === null) {
-      this.logger.info('Could not decode token.');
+      this.logger.warn(`Could not decode token for username ${username} and clientid ${clientid}.`);
       res.status(200).json({ result: 'deny' });
       return;
     }
@@ -140,7 +140,7 @@ class Authenticate {
       .createGrant({ access_token: token })
       .then(grant => grant.access_token.content)
       .catch(err => {
-        this.logger.debug('Token decoding error: ' + err);
+        this.logger.warn(`Token decoding error for token ${maskedToken}: ${err.message || err}`);
         return null;
       });
   }

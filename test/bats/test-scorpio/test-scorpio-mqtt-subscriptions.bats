@@ -322,6 +322,23 @@ check_no_delete_notification() {
     [ "$status" -eq 0 ]
 }
 
+@test "verify factory user can publish to non-SparkplugB topic" {
+    $SKIP
+    admin_password=$(get_adminPassword | tr -d '"')
+    admin_username=$(get_adminUsername | tr -d '"')
+    password=$(get_password)
+    token=$(get_token)
+    : > "${MQTT_FACTORY_SUB}"
+    (exec stdbuf -oL mosquitto_sub -L "mqtt://${admin_username}:${admin_password}@${MQTT_URL}/${MQTT_TOPIC_NAME}" >"${MQTT_FACTORY_SUB}") &
+    sleep 2
+    mosquitto_pub -L "mqtt://${USER}:${token}@${MQTT_URL}/${MQTT_TOPIC_NAME}" -m "${MQTT_FACTORY_MSG}"
+    sleep 2
+    killall mosquitto_sub 2>/dev/null || true
+
+    run grep -q "factory_test" "${MQTT_FACTORY_SUB}"
+    [ "$status" -eq 0 ]
+}
+
 @test "verify factory user cannot subscribe to SparkplugB topic with wrong realm" {
     $SKIP
     admin_password=$(get_adminPassword | tr -d '"')
