@@ -817,6 +817,41 @@ describe(fileToTest, function () {
     acl.acl(req, res);
   });
 
+  it('Factory user shall be allowed to publish to non-SparkplugB topic', function (done) {
+    const Cache = class {
+      constructor () {}
+      async getValue (key, valueKey) {
+        if (key === '_factory_reader/clientid' && valueKey === 'realm') return 'iff';
+        return undefined;
+      }
+    };
+    ToTest.__set__('Cache', Cache);
+    const config = {
+      mqtt: { adminUsername: 'superuser', adminPassword: 'password' }
+    };
+    const Acl = ToTest.__get__('Acl');
+    const acl = new Acl(config);
+    const req = {
+      query: {
+        username: 'realm_user',
+        clientid: 'clientid',
+        action: 'publish',
+        topic: 'scorpio-test'
+      }
+    };
+    const res = {
+      status: function (status) {
+        assert.equal(status, 200, 'Received wrong status');
+        return this;
+      },
+      json: function (resultObj) {
+        resultObj.should.deep.equal({ result: 'allow' });
+        done();
+      }
+    };
+    acl.acl(req, res);
+  });
+
   it('Non-factory user shall be denied on non-SparkplugB topic', function (done) {
     const Cache = class {
       constructor () {}

@@ -76,7 +76,7 @@ class Acl {
       this.logger.info('Connection rejected for realm ' + spBAccountId + ' and device ' + spBdevId);
       return res.status(200).json({ result: 'deny' });
     } else {
-      if (action === 'subscribe') {
+      if (action === 'subscribe' || action === 'publish') {
         const factoryRealm = await this.cache.getValue(`_factory_reader/${clientid}`, 'realm');
         if (factoryRealm !== undefined) {
           return res.status(200).json({ result: 'allow' });
