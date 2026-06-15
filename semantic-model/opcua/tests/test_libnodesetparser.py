@@ -730,6 +730,45 @@ class TestNodesetParser(unittest.TestCase):
         # Since there's no value, nothing should be added to the graph
         mock_add.assert_not_called()
 
+    @patch('lib.nodesetparser.utils.create_list')
+    @patch.object(Graph, 'add')
+    def test_get_value_localized_text_whitespace_locale(self, mock_add, mock_create_list):
+        # Regression test for issue #845: ISA-95 NodeSet has <Locale> elements
+        # containing only whitespace/newlines, which rdflib rejects as invalid language tags.
+        opcua_ns = 'http://opcfoundation.org/UA/2011/03/UANodeSet.xsd'
+        types_ns = 'http://opcfoundation.org/UA/2008/02/Types.xsd'
+        xml_ns = {'opcua': opcua_ns, 'xsd': types_ns}
+
+        item_node = MagicMock()
+        item_node.tag = f'{{{types_ns}}}LocalizedText'
+
+        list_node = MagicMock()
+        list_node.tag = f'{{{types_ns}}}ListOfLocalizedText'
+        list_node.__iter__ = MagicMock(return_value=iter([item_node]))
+
+        value_elem = MagicMock()
+        value_elem.__iter__ = MagicMock(return_value=iter([list_node]))
+
+        node = MagicMock()
+        node.find.return_value = value_elem
+
+        mock_create_list.return_value = BNode()
+
+        classiri = URIRef('http://example.com/classiri')
+        self.parser.data_schema = MagicMock()
+        self.parser.data_schema.to_dict.return_value = {
+            'xsd:Locale': '\n          ',
+            'xsd:Text': 'Enterprise'
+        }
+
+        # Should not raise ValueError for invalid language tag (issue #845)
+        self.parser.get_value(node, classiri, xml_ns)
+
+        # The literal passed to create_list must have no language tag
+        literals_in_list = mock_create_list.call_args[0][1]
+        self.assertEqual(len(literals_in_list), 1)
+        self.assertEqual(str(literals_in_list[0]), 'Enterprise')
+        self.assertIsNone(literals_in_list[0].language)
 
     def test_references_ignore(self):
         # Test when the reference should be ignored

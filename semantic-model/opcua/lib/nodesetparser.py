@@ -581,6 +581,8 @@ Did you forget to import it?")
                 if "}LocalizedText" in tag:
                     text = data.get('xsd:Text')
                     locale = data.get('xsd:Locale')
+                    if locale is not None:
+                        locale = locale.strip() or None
                     if text is not None:
                         result = Literal(text, lang=locale)
                         return Literal(result)
