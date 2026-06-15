@@ -47,6 +47,7 @@ LASERSYSTEMS_EXAMPLE_NODESET := https://raw.githubusercontent.com/OPCFoundation/
 PACKML_NODESET            := https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/$(NODESET_VERSION)/PackML/Opc.Ua.PackML.NodeSet2.xml
 TMC_NODESET               := https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/$(NODESET_VERSION)/TMC/Opc.Ua.TMC.NodeSet2.xml
 DEXPI_NODESET             := https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/$(NODESET_VERSION)/DEXPI/Opc.Ua.DEXPI.NodeSet2.xml
+ISA95_NODESET             := https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/$(NODESET_VERSION)/ISA-95/Opc.ISA95.NodeSet2.xml
 
 # -----------------------------------------------------------------------------
 # Base Ontology URL and Remote Mode
@@ -124,11 +125,11 @@ LASERSYSTEMSEXAMPLE_ONTOLOGY      = lasersystemsexample.ttl
 LASERSYSTEMSEXAMPLE_DEPENDENCIES  = $(BASE_ONTOLOGY) $(CORE_ONTOLOGY) $(DI_ONTOLOGY) $(MACHINERY_ONTOLOGY) $(IA_ONTOLOGY) $(MACHINETOOL_ONTOLOGY) $(LASERSYSTEMS_ONTOLOGY)
 LASERSYSTEMSEXAMPLE_OPTS          = -v http://example.com/v0.1/LaserSystems/ -p lasersystemsexample
 
-# MACHINETOOLSEXAMPLE target
-MACHINETOOLSEXAMPLE_NODESET_URL   = $(MACHINETOOL_EXAMPLE_NODESET)
-MACHINETOOLSEXAMPLE_ONTOLOGY      = machinetoolexample.ttl
-MACHINETOOLSEXAMPLE_DEPENDENCIES  = $(BASE_ONTOLOGY) $(CORE_ONTOLOGY) $(DI_ONTOLOGY) $(MACHINERY_ONTOLOGY) $(MACHINETOOL_ONTOLOGY) $(IA_ONTOLOGY)
-MACHINETOOLSEXAMPLE_OPTS          = -n http://yourorganisation.org/MachineTool-Example/ -v http://example.com/MachineToolExample/v0.1/pumpexample/ -p machinetoolexample
+# MACHINETOOLEXAMPLE target
+MACHINETOOLEXAMPLE_NODESET_URL   = $(MACHINETOOL_EXAMPLE_NODESET)
+MACHINETOOLEXAMPLE_ONTOLOGY      = machinetoolexample.ttl
+MACHINETOOLEXAMPLE_DEPENDENCIES  = $(BASE_ONTOLOGY) $(CORE_ONTOLOGY) $(DI_ONTOLOGY) $(MACHINERY_ONTOLOGY) $(MACHINETOOL_ONTOLOGY) $(IA_ONTOLOGY)
+MACHINETOOLEXAMPLE_OPTS          = -n http://yourorganisation.org/MachineTool-Example/ -v http://example.com/MachineToolExample/v0.1/pumpexample/ -p machinetoolexample
 
 # MACHINERYEXAMPLE target
 MACHINERYEXAMPLE_NODESET_URL   = $(MACHINERY_EXAMPLE_NODESET)
@@ -184,10 +185,16 @@ DEXPI_ONTOLOGY      = dexpi.ttl
 DEXPI_DEPENDENCIES  = $(BASE_ONTOLOGY) $(CORE_ONTOLOGY)
 DEXPI_OPTS          = -p dexpi
 
+# ISA95 target (IEC 62264 / ISA-95 companion specification)
+ISA95_NODESET_URL   = $(ISA95_NODESET)
+ISA95_ONTOLOGY      = isa95.ttl
+ISA95_DEPENDENCIES  = $(BASE_ONTOLOGY) $(CORE_ONTOLOGY)
+ISA95_OPTS          = -p isa95
+
 # -----------------------------------------------------------------------------
 # List of all target files to be built.
 # -----------------------------------------------------------------------------
-TARGET_NAMES = CORE DI IA MACHINERY PUMPS PUMPEXAMPLE MACHINETOOL LASERSYSTEMS LASERSYSTEMSEXAMPLE MACHINETOOLEXAMPLE MACHINERYEXAMPLE DICTIONARY_IRDI PADIM MACHINERY_PROCESSVALUES MACHINERY_JOBS PACKML MACHINERY_RESULT ISA95_JOBCONTROL TMC DEXPI
+TARGET_NAMES = CORE DI IA MACHINERY PUMPS PUMPEXAMPLE MACHINETOOL LASERSYSTEMS LASERSYSTEMSEXAMPLE MACHINETOOLEXAMPLE MACHINERYEXAMPLE DICTIONARY_IRDI PADIM MACHINERY_PROCESSVALUES MACHINERY_JOBS PACKML MACHINERY_RESULT TMC DEXPI ISA95
 
 ALL_TARGETS = $(foreach t, $(TARGET_NAMES), $($(t)_ONTOLOGY))
 
