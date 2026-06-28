@@ -1,0 +1,6 @@
+apiVersion: v2
+name: fuseki
+description: Apache Jena Fuseki SPARQL server with Keycloak realm/role auth proxy
+type: application
+version: 0.1.0
+appVersion: "4.9.0"

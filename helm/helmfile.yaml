@@ -153,4 +153,14 @@ releases:
   values:
   - values.yaml.gotmpl
   needs:
-  - postgres  
+  - postgres
+- name: fuseki
+  labels:
+    app: fuseki
+    order: third
+  chart: ./charts/fuseki
+  namespace: {{ .Values.namespace }}
+  needs:
+  - keycloak
+  values:
+  - values.yaml.gotmpl

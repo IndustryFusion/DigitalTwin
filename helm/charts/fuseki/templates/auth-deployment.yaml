@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fuseki-auth
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: fuseki-auth
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fuseki-auth
+  template:
+    metadata:
+      labels:
+        app: fuseki-auth
+    spec:
+      initContainers:
+        - name: pip-install
+          image: "{{ .Values.fusekiAuth.image.repository }}:{{ .Values.fusekiAuth.image.tag }}"
+          command:
+            - pip
+            - install
+            - --target=/packages
+            - --requirement=/app/requirements.txt
+          volumeMounts:
+            - name: app-script
+              mountPath: /app
+            - name: packages
+              mountPath: /packages
+      containers:
+        - name: fuseki-auth
+          image: "{{ .Values.fusekiAuth.image.repository }}:{{ .Values.fusekiAuth.image.tag }}"
+          command: ["python", "/app/main.py"]
+          env:
+            - name: PYTHONPATH
+              value: /packages
+            - name: KEYCLOAK_INTERNAL_URL
+              value: "http://{{ .Values.keycloak.internalAuthService.name }}:{{ .Values.keycloak.internalAuthService.port }}{{ .Values.keycloak.internalAuthService.path }}"
+            - name: FUSEKI_CLIENT_ID
+              value: {{ .Values.fuseki.auth.clientId }}
+          ports:
+            - containerPort: 8080
+              name: http
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 5
+          volumeMounts:
+            - name: app-script
+              mountPath: /app
+            - name: packages
+              mountPath: /packages
+      volumes:
+        - name: app-script
+          configMap:
+            name: fuseki-auth-script
+        - name: packages
+          emptyDir: {}

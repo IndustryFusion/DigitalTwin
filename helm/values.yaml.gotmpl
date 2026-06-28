@@ -309,6 +309,9 @@ keycloak:
   realmTestUser:
     username: "realm_user"
     password: {{ .StateValues.keycloakRealmTestUser }}
+  fuseki:
+    client: fuseki
+    clientSecret: {{ .StateValues.fusekiClientSecret }}
 keycloak_db:
   stringData:
     POSTGRES_DATABASE: keycloakdb
@@ -419,3 +422,14 @@ pgrest:
   externalHostname: {{ .StateValues.pgrest.externalHostname }}
   externalPath: {{ .StateValues.pgrest.externalPath }}
   dbPool: {{ .StateValues.pgrest.dbPool }}
+
+fuseki:
+  externalHostname: {{ .StateValues.fuseki.externalHostname }}
+  externalPath: /
+  storage:
+    size: {{ .StateValues.fuseki.storage.size }}
+  realms:
+{{ .StateValues.fuseki.realms | toYaml | indent 4 }}
+  auth:
+    clientId: fuseki
+    clientSecret: {{ .StateValues.fusekiClientSecret }}

@@ -1,0 +1,34 @@
+fuseki:
+  externalHostname: ""
+  externalPath: /
+  storage:
+    size: 5Gi
+  realms: []
+  auth:
+    clientId: fuseki
+    clientSecret: ""
+
+fusekiAuth:
+  image:
+    repository: python
+    tag: "3.11-slim"
+
+keycloak:
+  internalAuthService:
+    name: keycloak-service
+    port: 8080
+    path: /auth
+  alerta:
+    realm: iff
+  fuseki:
+    client: fuseki
+    clientSecret: ""
+
+mainRegistry: docker.io
+mainRepo: ibn40
+mainVersion: v0.7.0-latest
+
+ingressType: traefik
+certmanager:
+  secret: selfsigned-cert-tls
+  issuer: letsencrypt-self
