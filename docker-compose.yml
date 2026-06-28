@@ -40,3 +40,7 @@ services:
     image: ${DOCKER_PREFIX:-ibn40}/flink-operator:${DOCKER_TAG}
     build:
       context: ./FlinkOperatorWithCoreServices
+  fuseki:
+    image: ${DOCKER_PREFIX:-ibn40}/fuseki:${DOCKER_TAG}
+    build:
+      context: ./Fuseki

@@ -3,6 +3,7 @@
 {{- $fusionbackendsecret := (lookup "v1" "Secret" .Release.Namespace "keycloak-client-secret-fusion-backend") -}}
 {{- $ngsildupdatessecret := (lookup "v1" "Secret" .Release.Namespace "keycloak-client-secret-ngsild-updates") -}}
 {{- $realmusersecret := (lookup "v1" "Secret" .Release.Namespace "credential-iff-realm-user-iff") -}}
+{{- $fusekisecret := (lookup "v1" "Secret" .Release.Namespace "keycloak-client-secret-fuseki") -}}
 apiVersion: k8s.keycloak.org/v2alpha1
 kind: KeycloakRealmImport
 metadata:
@@ -670,6 +671,19 @@ spec:
           - offline_access
         optionalClientScopes:
           - gateway
+      - id: fa4e9a3b-1c2d-4e5f-8a7b-6c5d4e3f2a1b
+        clientId: {{ .Values.keycloak.fuseki.client }}
+        publicClient: false
+        serviceAccountsEnabled: true
+        directAccessGrantsEnabled: true
+        defaultClientScopes:
+          - roles
+          - offline_access
+        {{ if $fusekisecret }}
+        secret: {{ $fusekisecret.data.CLIENT_SECRET | b64dec }}
+        {{ else }}
+        secret: {{ .Values.keycloak.fuseki.clientSecret }}
+        {{ end }}
     roles:
       realm:
       
@@ -697,6 +711,13 @@ spec:
           - id: 617d3f63-7067-4da6-b8aa-8cfe8a9a926f
             name: uma_protection
             clientRole: true
+        {{ .Values.keycloak.fuseki.client }}:
+          - id: fd1a2b3c-4d5e-6f7a-8b9c-0d1e2f3a4b5c
+            name: "Factory-Admin"
+            clientRole: true
+          - id: fe2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d
+            name: "Factory-Reader"
+            clientRole: true
     defaultRoles:
       - uma_authorization
       - offline_access
@@ -723,6 +744,24 @@ spec:
           realm-management:
             - "manage-users"
           {{ .Values.keycloak.scorpio.client }}:
+            - Factory-Admin
+          {{ .Values.keycloak.fuseki.client }}:
+            - Factory-Admin
+      - id: fd4e5f6a-7b8c-9def-0123-456789abcdef
+        username: service-account-fuseki
+        enabled: true
+        totp: false
+        emailVerified: false
+        serviceAccountClientId: {{ .Values.keycloak.fuseki.client }}
+        credentials: []
+        realmRoles:
+          - uma_authorization
+          - offline_access
+        clientRoles:
+          account:
+            - view-profile
+            - manage-account
+          {{ .Values.keycloak.fuseki.client }}:
             - Factory-Admin
       - id: 8a561605-7b80-44b8-aa65-4368e292a60f
         username: service-account-fusion-backend

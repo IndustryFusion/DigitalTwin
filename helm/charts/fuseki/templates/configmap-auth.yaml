@@ -1,0 +1,94 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fuseki-auth-script
+  namespace: {{ .Release.Namespace }}
+data:
+  main.py: |
+    import os, re, time, threading
+    from urllib.parse import urlparse
+    from fastapi import FastAPI, Request
+    from fastapi.responses import Response
+    import httpx
+    from jose import jwt
+
+    app = FastAPI()
+
+    KEYCLOAK_URL  = os.environ["KEYCLOAK_INTERNAL_URL"]
+    FUSEKI_CLIENT = os.environ.get("FUSEKI_CLIENT_ID", "fuseki")
+
+    WRITE_METHODS   = {"PUT", "POST", "DELETE", "PATCH"}
+    WRITE_ENDPOINTS = {"data", "update"}
+    READ_ROLES      = {"Factory-Admin", "Factory-Reader"}
+    WRITE_ROLES     = {"Factory-Admin"}
+
+    _cache: dict = {}
+    _lock = threading.Lock()
+    JWKS_TTL = 300
+
+    def _get_jwks(realm: str) -> dict:
+        now = time.monotonic()
+        with _lock:
+            entry = _cache.get(realm)
+            if entry and entry[1] > now:
+                return entry[0]
+        url = f"{KEYCLOAK_URL}/realms/{realm}/protocol/openid-connect/certs"
+        r = httpx.get(url, timeout=5)
+        r.raise_for_status()
+        keys = r.json()
+        with _lock:
+            _cache[realm] = (keys, now + JWKS_TTL)
+        return keys
+
+    @app.get("/health")
+    def health():
+        return {"ok": True}
+
+    @app.api_route("/auth", methods=["GET", "HEAD", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"])
+    async def auth(request: Request):
+        uri    = request.headers.get("x-forwarded-uri", "")
+        method = request.headers.get("x-forwarded-method", request.method).upper()
+        auth_h = request.headers.get("authorization", "")
+
+        if not auth_h.startswith("Bearer "):
+            return Response(status_code=401)
+        token = auth_h[7:]
+
+        segments = urlparse(uri).path.lstrip("/").split("/")
+        if not segments[0]:
+            return Response(status_code=403)
+        path_realm = segments[0]
+        endpoint   = segments[1].split("?")[0] if len(segments) > 1 else ""
+
+        try:
+            jwks   = _get_jwks(path_realm)
+            claims = jwt.decode(token, jwks, algorithms=["RS256"],
+                                options={"verify_aud": False})
+        except Exception:
+            return Response(status_code=401)
+
+        iss_match = re.search(r"/realms/([^/]+)$", claims.get("iss", ""))
+        if not iss_match or iss_match.group(1) != path_realm:
+            return Response(status_code=403)
+
+        roles = set(
+            claims.get("resource_access", {})
+                  .get(FUSEKI_CLIENT, {})
+                  .get("roles", [])
+        )
+
+        if endpoint in WRITE_ENDPOINTS and method in WRITE_METHODS:
+            allowed = bool(WRITE_ROLES & roles)
+        else:
+            allowed = bool(READ_ROLES & roles)
+
+        return Response(status_code=200 if allowed else 403)
+
+    if __name__ == "__main__":
+        import uvicorn
+        uvicorn.run(app, host="0.0.0.0", port=8080)
+  requirements.txt: |
+    fastapi==0.104.1
+    uvicorn[standard]==0.24.0
+    python-jose[cryptography]==3.3.0
+    httpx==0.25.2

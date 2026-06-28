@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fuseki
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: fuseki
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fuseki
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: fuseki
+    spec:
+      containers:
+        - name: fuseki
+          image: '{{ .Values.mainRegistry }}/{{ .Values.mainRepo }}/fuseki:{{ .Values.mainVersion }}'
+          ports:
+            - containerPort: 3030
+              name: http
+          env:
+            - name: JVM_ARGS
+              value: "-Xmx2048m -Xms512m"
+            - name: FUSEKI_REALMS
+              value: {{ .Values.fuseki.realms | join " " | quote }}
+          volumeMounts:
+            - name: fuseki-data
+              mountPath: /fuseki/databases
+          livenessProbe:
+            httpGet:
+              path: /$/ping
+              port: 3030
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /$/ping
+              port: 3030
+            initialDelaySeconds: 15
+            periodSeconds: 5
+      volumes:
+        - name: fuseki-data
+          persistentVolumeClaim:
+            claimName: fuseki-data

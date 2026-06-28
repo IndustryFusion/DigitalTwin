@@ -1,0 +1,54 @@
+{{- if and (ne .Values.ingressType "traefik") (ne .Values.ingressType "nginx") }}
+{{- fail "ingressType must either be \"traefik\" or \"nginx\"" }}
+{{- end }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: fuseki-ingress
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    kubernetes.io/ingress.class: {{ .Values.ingressType | quote }}
+    {{- if eq .Values.ingressType "traefik" }}
+    traefik.ingress.kubernetes.io/router.middlewares: {{ .Release.Namespace }}-fuseki-realm-auth@kubernetescrd
+    {{- else }}
+    nginx.ingress.kubernetes.io/auth-url: "http://fuseki-auth.{{ .Release.Namespace }}.svc.cluster.local:8080/auth"
+    nginx.ingress.kubernetes.io/auth-method: "GET"
+    nginx.ingress.kubernetes.io/auth-snippet: |
+      proxy_set_header X-Forwarded-Method $request_method;
+      proxy_set_header X-Forwarded-Uri $request_uri;
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    {{- end }}
+    cert-manager.io/cluster-issuer: {{ .Values.certmanager.issuer }}
+spec:
+  tls:
+    - hosts:
+        - {{ .Values.fuseki.externalHostname }}
+      secretName: {{ .Values.certmanager.secret }}-fuseki
+  rules:
+    - host: {{ .Values.fuseki.externalHostname }}
+      http:
+        paths:
+          - backend:
+              service:
+                name: fuseki
+                port:
+                  number: 3030
+            {{- if eq .Values.ingressType "nginx" }}
+            path: /(.*)
+            {{- else }}
+            path: /
+            {{- end }}
+            pathType: ImplementationSpecific
+---
+{{- if eq .Values.ingressType "traefik" }}
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: fuseki-realm-auth
+  namespace: {{ .Release.Namespace }}
+spec:
+  forwardAuth:
+    address: "http://fuseki-auth.{{ .Release.Namespace }}.svc.cluster.local:8080/auth"
+    authRequestHeaders:
+      - "Authorization"
+{{- end }}
