@@ -149,8 +149,8 @@ sparql_query_status() {
 
     echo "${body}" | grep -q "cutterTemperatureWithMinMaxShape" \
         || { echo "FAIL: 'cutterTemperatureWithMinMaxShape' not found in response body"; false; }
-    echo "${body}" | grep -q "shacl#NodeShape" \
-        || { echo "FAIL: 'shacl#NodeShape' not found — body may use unexpected serialization"; false; }
+    echo "${body}" | grep -qE "(shacl#NodeShape|sh:NodeShape)" \
+        || { echo "FAIL: NodeShape not found — body may use unexpected serialization"; false; }
 }
 
 @test "retrieve knowledge.ttl from iff realm and verify content" {
