@@ -26,7 +26,7 @@ keycloak:
 
 mainRegistry: docker.io
 mainRepo: ibn40
-mainVersion: v0.7.0-latest
+mainVersion: v0.7.1
 
 ingressType: traefik
 certmanager:
