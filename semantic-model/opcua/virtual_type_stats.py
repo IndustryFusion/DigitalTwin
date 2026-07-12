@@ -21,11 +21,14 @@ For every *.ttl file that Makefile is set up to produce (TARGET_NAMES / the
 matching <NAME>_ONTOLOGY variables -- parsed directly from the Makefile so
 this never drifts out of sync with it) and that actually exists on disk, this
 reports how many of its own ObjectType/VariableType classes it declares
-("original") and how many Virtual Types semanticbridge2owl.py's OwlBuilder
-generates for them ("virtual") -- i.e. exactly the incremental contribution of
-that one companion spec, the same way `semanticbridge2owl.py <file>.ttl` would
-process it on its own, with dependencies (core.ttl for di.ttl, etc.) resolved
-via each file's own owl:imports but not recounted.
+("original"), how many physically-declared Instance Declaration nodes it
+introduces ("instances" -- the raw, un-expanded nodes Virtual Type generation
+replaces, one per type: no inheritance or recursive unrolling), and how many
+Virtual Types semanticbridge2owl.py's OwlBuilder generates from them
+("virtual") -- i.e. exactly the incremental contribution of that one companion
+spec, the same way `semanticbridge2owl.py <file>.ttl` would process it on its
+own, with dependencies (core.ttl for di.ttl, etc.) resolved via each file's
+own owl:imports but not recounted.
 
 Usage:
     python3 virtual_type_stats.py [-o stats.csv]
@@ -126,27 +129,30 @@ def main():
         ig = resolve_dependencies(g)
         builder = OwlBuilder(g, BASENS, OPCUANS, ig=ig)
         own_classes = builder.all_target_classes()
+        instance_count = builder.count_own_instance_declarations()
         out = builder.run(own_classes)
         vt_count = sum(1 for c in out.subjects(RDF.type, OWL.Class)
                        if str(c).split('/')[-1].startswith('VT_'))
         elapsed = time.monotonic() - start
         ratio = vt_count / len(own_classes) if own_classes else 0.0
-        rows.append((name, len(own_classes), vt_count, ratio, elapsed))
-        print(f'{name:30s} original={len(own_classes):5d}  virtual={vt_count:6d}  '
-              f'ratio={ratio:6.1f}x  ({elapsed:.1f}s)')
+        rows.append((name, len(own_classes), instance_count, vt_count, ratio, elapsed))
+        print(f'{name:30s} original={len(own_classes):5d}  instances={instance_count:5d}  '
+              f'virtual={vt_count:6d}  ratio={ratio:6.1f}x  ({elapsed:.1f}s)')
 
     total_orig = sum(r[1] for r in rows)
-    total_vt = sum(r[2] for r in rows)
+    total_instances = sum(r[2] for r in rows)
+    total_vt = sum(r[3] for r in rows)
     print()
-    print(f'{"TOTAL":30s} original={total_orig:5d}  virtual={total_vt:6d}  '
-          f'ratio={(total_vt / total_orig if total_orig else 0):6.1f}x')
+    print(f'{"TOTAL":30s} original={total_orig:5d}  instances={total_instances:5d}  '
+          f'virtual={total_vt:6d}  ratio={(total_vt / total_orig if total_orig else 0):6.1f}x')
 
     if args.output:
         with open(args.output, 'w', newline='') as f:
             writer = csv.writer(f)
-            writer.writerow(['file', 'original_types', 'virtual_types', 'ratio', 'seconds'])
-            for name, orig, vt, ratio, elapsed in rows:
-                writer.writerow([name, orig, vt, f'{ratio:.2f}', f'{elapsed:.1f}'])
+            writer.writerow(['file', 'original_types', 'instance_declarations', 'virtual_types',
+                             'ratio', 'seconds'])
+            for name, orig, instances, vt, ratio, elapsed in rows:
+                writer.writerow([name, orig, instances, vt, f'{ratio:.2f}', f'{elapsed:.1f}'])
         print(f'\nWrote {args.output}')
 
 

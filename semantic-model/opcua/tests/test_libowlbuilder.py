@@ -77,6 +77,14 @@ class TestEffectiveDeclarationTree(unittest.TestCase):
     def test_resolve_path_missing_returns_none(self):
         self.assertIsNone(self.builder.resolve_path(OPCUA['BaseObjectType'], [self.key('Drive')]))
 
+    def test_count_own_instance_declarations(self):
+        # One physically-declared child each on BaseType (Drive), DriveType
+        # (Motor), MotorType (Temperature), AdvancedDriveType (Motor
+        # override), PumpType (Drive override) and DictionaryEntryType
+        # (Entry) = 6. AdvancedMotorType/AdvancedPumpType have no own definer
+        # node (pure inheritance) and contribute 0.
+        self.assertEqual(self.builder.count_own_instance_declarations(), 6)
+
 
 class TestVirtualTypeEmission(unittest.TestCase):
     def setUp(self):
@@ -123,16 +131,31 @@ class TestVirtualTypeEmission(unittest.TestCase):
         self.assertEqual(int(self.out.value(card, OWL.minQualifiedCardinality)), 1)
         self.assertIn((OPCUA['BaseType'], RDFS.subClassOf, card), self.out)
 
-    def test_some_and_all_values_from_on_owner(self):
+    def test_all_values_from_on_owner_no_some_values_from(self):
+        # someValuesFrom is deliberately never emitted: it's logically
+        # equivalent to minQualifiedCardinality(1, ...) for Mandatory (pure
+        # redundancy) and would be outright wrong for Optional (wrongly
+        # forcing every instance to have the relationship). See
+        # OwlBuilder._add_all_values_from's docstring.
         vt_drive = self.vt('BaseType', ['Drive'])
-        some = [r for r in self.out.subjects(OWL.someValuesFrom, vt_drive)
-                if (r, OWL.onProperty, OPCUA['hasDrive']) in self.out]
         allv = [r for r in self.out.subjects(OWL.allValuesFrom, vt_drive)
                 if (r, OWL.onProperty, OPCUA['hasDrive']) in self.out]
-        self.assertEqual(len(some), 1)
         self.assertEqual(len(allv), 1)
-        self.assertIn((OPCUA['BaseType'], RDFS.subClassOf, some[0]), self.out)
         self.assertIn((OPCUA['BaseType'], RDFS.subClassOf, allv[0]), self.out)
+        self.assertEqual(len(list(self.out.subjects(OWL.someValuesFrom, None))), 0)
+
+    def test_optional_declaration_has_no_cardinality_restriction(self):
+        # Temperature is Optional in the fixture: allValuesFrom must exist,
+        # but no minQualifiedCardinality restriction should target its VT.
+        vt_temp = self.vt('BaseType', ['Drive', 'Motor', 'Temperature'])
+        owner = self.vt('BaseType', ['Drive', 'Motor'])
+        allv = [r for r in self.out.subjects(OWL.allValuesFrom, vt_temp)
+                if (r, OWL.onProperty, OPCUA['hasTemperature']) in self.out]
+        card = [r for r in self.out.subjects(RDF.type, OWL.Restriction)
+                if (r, OWL.onClass, vt_temp) in self.out]
+        self.assertEqual(len(allv), 1)
+        self.assertIn((owner, RDFS.subClassOf, allv[0]), self.out)
+        self.assertEqual(card, [])
 
     def test_temperature_valuerank_and_datatype(self):
         vt_temp = self.vt('BaseType', ['Drive', 'Motor', 'Temperature'])
@@ -140,6 +163,13 @@ class TestVirtualTypeEmission(unittest.TestCase):
         datatype_restrictions = [r for r in self.out.subjects(RDF.type, OWL.Restriction)
                                  if (r, OWL.allValuesFrom, OPCUA['Double']) in self.out]
         self.assertTrue(any((vt_temp, RDFS.subClassOf, r) in self.out for r in datatype_restrictions))
+
+    def test_sibling_datatypes_are_disjoint(self):
+        # Double and String are both direct children of BaseDataType in the
+        # fixture -- a value can't be both, so they must be disjoint (the
+        # same mechanism catching a Datatype override to an incompatible
+        # sibling type, analogous to the ValueRank leaves).
+        self.assertIn({OPCUA['Double'], OPCUA['String']}, self.all_disjoint_sets())
 
     def test_virtual_types_are_explicitly_typed_owl_class(self):
         # Regression test: a Virtual Type must be an asserted owl:Class, not
@@ -156,17 +186,19 @@ class TestVirtualTypeEmission(unittest.TestCase):
         path = self.out.value(vt_temp, self.builder.SB['originalBrowsePath'])
         self.assertEqual(str(path), f'{OPCUA}Drive/{OPCUA}Motor/{OPCUA}Temperature')
 
+    def all_disjoint_sets(self):
+        return [set(Collection(self.out, self.out.value(node, OWL.members)))
+                for node in self.out.subjects(RDF.type, OWL.AllDisjointClasses)]
+
     def test_only_the_three_leaf_valuerank_classes_are_disjoint(self):
         # Scalar, OneDimension and MoreDimensions are mutually exclusive and must
         # be disjoint. Any, ScalarOrOneDimension and OneOrMoreDimensions are
         # composite/union categories that legitimately overlap with their own
         # subclasses (and, in OneDimension's case, with each other) and must NOT
         # be asserted disjoint.
-        disjoint_nodes = list(self.out.subjects(RDF.type, OWL.AllDisjointClasses))
-        self.assertEqual(len(disjoint_nodes), 1)
-        members = set(Collection(self.out, self.out.value(disjoint_nodes[0], OWL.members)))
-        self.assertEqual(members, {OPCUA['ValueRank_Scalar'], OPCUA['ValueRank_OneDimension'],
-                                   OPCUA['ValueRank_MoreDimensions']})
+        expected = {OPCUA['ValueRank_Scalar'], OPCUA['ValueRank_OneDimension'],
+                    OPCUA['ValueRank_MoreDimensions']}
+        self.assertIn(expected, self.all_disjoint_sets())
 
     def test_valuerank_hierarchy_matches_opcua_semantics(self):
         # Any is the root (-2: scalar or an array of any rank).
@@ -280,6 +312,12 @@ class TestCompanionSpecIncrementalVirtualTypes(unittest.TestCase):
         self.builder = OwlBuilder(g, BASE, OPCUA, ig=ig)
         self.out = self.builder.run()
 
+    def test_count_own_instance_declarations_excludes_imported_dependency(self):
+        # Only comp:SpecialPumpType's own new "Extra" declaration should
+        # count -- PumpType/BaseType/.../DictionaryEntryType's declarations
+        # belong to pump_example.ttl's own (separately counted) contribution.
+        self.assertEqual(self.builder.count_own_instance_declarations(), 1)
+
     def test_all_target_classes_excludes_the_imported_dependencys_own_types(self):
         roots = self.builder.all_target_classes()
         self.assertIn(COMP['SpecialPumpType'], roots)
@@ -311,6 +349,17 @@ class TestCompanionSpecIncrementalVirtualTypes(unittest.TestCase):
         self.assertNotIn((OPCUA['PumpType'], RDF.type, OWL.Class), self.out)
         self.assertNotIn((OPCUA['BaseType'], RDF.type, OWL.Class), self.out)
         self.assertIn((COMP['SpecialPumpType'], RDF.type, OWL.Class), self.out)
+
+    def test_new_datatype_sibling_picks_up_full_disjoint_set(self):
+        # comp:CompanionEnum is a NEW child of opcua:BaseDataType, which
+        # pump_example.ttl's own Double/String already extend. The companion
+        # file's disjointness must include the full sibling set (old members
+        # it doesn't own plus the new one it does), not just its own new
+        # member in isolation.
+        disjoint_sets = [set(Collection(self.out, self.out.value(node, OWL.members)))
+                         for node in self.out.subjects(RDF.type, OWL.AllDisjointClasses)]
+        expected = {OPCUA['Double'], OPCUA['String'], COMP['CompanionEnum']}
+        self.assertIn(expected, disjoint_sets)
 
 
 if __name__ == '__main__':

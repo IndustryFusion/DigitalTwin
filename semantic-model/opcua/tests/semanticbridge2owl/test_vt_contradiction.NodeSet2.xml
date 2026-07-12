@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Part 14 e2e scenario 5/5 (most complex, and the actual point of the whole
+     exercise): a genuinely CONTRADICTORY override that a DL reasoner (HermiT)
+     should be able to flag as unsatisfiable.
+
+     BaseType declares Mandatory "Signal" : PropertyType/Double with
+     ValueRank=1 (OneDimension, a 1-D array). SubType <: BaseType overrides
+     "Signal" with ValueRank=2 (2-D array, collapsed into the
+     ValueRank_MoreDimensions symbolic class).
+
+     ValueRank_OneDimension and ValueRank_MoreDimensions are declared pairwise
+     disjoint (semantic_bridge_to_owl.md §17, plus the disjointness added in
+     lib/owlbuilder.py precisely so a reasoner can catch exactly this).
+     VT(SubType, "Signal") ends up asserted as BOTH:
+       - rdfs:subClassOf ValueRank_MoreDimensions  (§8/§17, its own overridden ValueRank)
+       - rdfs:subClassOf VT(BaseType, "Signal")     (§9, itself subClassOf ValueRank_OneDimension)
+     i.e. simultaneously OneDimension and MoreDimensions, unsatisfiable.
+     This test only checks the structural precondition (both disjoint
+     ancestors are reachable) since no OWL DL reasoner is available in this
+     environment; see semanticbridge2owl.py's module docstring for how to
+     confirm it with Protégé/HermiT. -->
+<UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+           LastModified="2024-07-15T00:00:00Z"
+           xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
+  <Models>
+    <Model ModelUri="http://my.test/"
+           XmlSchemaUri="http://opcfoundation.org/UA/2008/02/Types.xsd"
+           Version="1.05.03"
+           PublicationDate="2024-07-29T00:00:00Z"
+           ModelVersion="1.5.3" />
+  </Models>
+  <NamespaceUris>
+    <Uri>http://my.test/</Uri>
+  </NamespaceUris>
+  <Aliases>
+    <Alias Alias="HasProperty">i=46</Alias>
+    <Alias Alias="HasSubtype">i=45</Alias>
+    <Alias Alias="HasTypeDefinition">i=40</Alias>
+    <Alias Alias="HasModellingRule">i=37</Alias>
+    <Alias Alias="PropertyType">i=68</Alias>
+    <Alias Alias="Double">i=11</Alias>
+  </Aliases>
+
+  <!-- BaseType: Mandatory "Signal" : PropertyType/Double, ValueRank=1 (OneDimension) -->
+  <UAObjectType NodeId="ns=1;i=2000" BrowseName="1:BaseType">
+    <DisplayName>BaseType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+      <Reference ReferenceType="HasProperty">ns=1;i=2001</Reference>
+    </References>
+  </UAObjectType>
+
+  <UAVariable NodeId="ns=1;i=2001" BrowseName="1:Signal" DataType="Double" ValueRank="1" ArrayDimensions="0">
+    <DisplayName>Signal</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=68</Reference>
+      <Reference ReferenceType="HasModellingRule">i=78</Reference>
+    </References>
+  </UAVariable>
+
+  <!-- SubType <: BaseType, OVERRIDES "Signal" ValueRank to 2 (MoreDimensions) -->
+  <UAObjectType NodeId="ns=1;i=2100" BrowseName="1:SubType">
+    <DisplayName>SubType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">ns=1;i=2000</Reference>
+      <Reference ReferenceType="HasProperty">ns=1;i=2101</Reference>
+    </References>
+  </UAObjectType>
+
+  <UAVariable NodeId="ns=1;i=2101" BrowseName="1:Signal" DataType="Double" ValueRank="2" ArrayDimensions="0,0">
+    <DisplayName>Signal</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=68</Reference>
+      <Reference ReferenceType="HasModellingRule">i=78</Reference>
+    </References>
+  </UAVariable>
+</UANodeSet>

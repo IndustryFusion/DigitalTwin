@@ -37,8 +37,10 @@ What this actually does, in order:
    (which may live in an imported dependency), with local overrides taking
    precedence -- and generates one "Virtual Type" class per (owning type,
    BrowsePath) pair, per semantic_bridge_to_owl.md sections 6-11.
-4. Attaches someValuesFrom / allValuesFrom / minQualifiedCardinality
-   restrictions wherever a declaration occurs (sections 13-16), a symbolic
+4. Attaches an allValuesFrom restriction wherever a declaration occurs, plus
+   a minQualifiedCardinality restriction for Mandatory declarations (sections
+   13-16; someValuesFrom is deliberately not used -- see lib/owlbuilder.py),
+   a symbolic
    ValueRank class and a Datatype restriction on Variable declarations
    (sections 17-18), and drops every Instance Declaration node from the
    output (section 19).

@@ -14,7 +14,7 @@
 # Shape of the model:
 #   BaseType          -- Drive:DriveType (Mandatory)
 #     DriveType       -- Motor:MotorType (Mandatory)
-#       MotorType     -- Temperature:PropertyType/Double (Mandatory, scalar)
+#       MotorType     -- Temperature:PropertyType/Double (Optional, scalar)
 #   PumpType <: BaseType, overrides Drive:AdvancedDriveType
 #     AdvancedDriveType <: DriveType, overrides Motor:AdvancedMotorType
 #       AdvancedMotorType <: MotorType (no own definer node -- pure inheritance)
@@ -45,6 +45,12 @@ opcua:nodei78 a opcua:ObjectNodeClass ;
     base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasNodeId "78" ;
     base:hasSymbolicName "ModellingRule_Mandatory" .
+
+opcua:nodei80 a opcua:ObjectNodeClass ;
+    base:hasBrowseName "Optional" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "80" ;
+    base:hasSymbolicName "ModellingRule_Optional" .
 
 # --- Class layer -------------------------------------------------------------
 
@@ -111,7 +117,7 @@ opcua:nodei1004 a opcua:ObjectNodeClass ;
     base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasNodeId "1004" .
 
-# MotorType: Temperature : PropertyType / Double (Mandatory, scalar by omission)
+# MotorType: Temperature : PropertyType / Double (Optional, scalar by omission)
 
 opcua:nodei1005 a opcua:ObjectTypeNodeClass ;
     opcua:HasProperty opcua:nodei1006 ;
@@ -123,7 +129,7 @@ opcua:nodei1005 a opcua:ObjectTypeNodeClass ;
 
 opcua:nodei1006 a opcua:PropertyType,
         opcua:VariableNodeClass ;
-    opcua:HasModellingRule opcua:nodei78 ;
+    opcua:HasModellingRule opcua:nodei80 ;
     base:hasDatatype opcua:Double ;
     base:hasBrowseName "Temperature" ;
     base:hasBrowseNameNamespace opcua:OPCUANamespace ;

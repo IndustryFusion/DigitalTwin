@@ -38,3 +38,10 @@ comp:nodei2 a opcua:ObjectNodeClass ;
     base:hasBrowseName "Extra" ;
     base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasNodeId "2" .
+
+# A new DataType introduced by the companion spec, under the SAME
+# opcua:BaseDataType parent that pump_example.ttl's own Double/String already
+# extend. Tests that DataType disjointness picks up the full sibling set
+# (old + new) when the companion file introduces a new one.
+comp:CompanionEnum a owl:Class ;
+    rdfs:subClassOf opcua:BaseDataType .

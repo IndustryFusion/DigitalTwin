@@ -191,6 +191,31 @@ class OwlBuilder:
         own_classes = set(self.g.subjects(RDF.type, OWL.Class))
         return sorted({row[0] for row in result if row[0] in own_classes}, key=str)
 
+    def count_own_instance_declarations(self):
+        """Total number of physically-declared Instance Declaration nodes
+        (Object/Variable children directly on a type's own definer node,
+        Methods excluded) that `g` itself introduces -- i.e. the raw nodes
+        Virtual Type generation is replacing, one level per type. This is
+        deliberately the *un*-expanded count: it does not follow inheritance
+        or recurse into nested declarations' own children (that recursive
+        unrolling, done separately per root by emit_vt_tree, is exactly what
+        makes the Virtual Type count larger than this). Filtering mirrors
+        get_cdt's own loop exactly, just counting instead of building
+        DeclEntry objects."""
+        count = 0
+        for class_iri in self.all_target_classes():
+            definer_node = self._definer_node(class_iri)
+            if definer_node is None:
+                continue
+            children = self.rdfutils.get_all_subreferences(
+                self.combined, definer_node, self.opcuans['HasChild'])
+            for _refprop, child in children:
+                nodeclass, base_type = self.rdfutils.get_type(self.combined, child)
+                if nodeclass == self.opcuans['MethodNodeClass'] or base_type is None:
+                    continue
+                count += 1
+        return count
+
     # ------------------------------------------------------------------
     # Effective Declaration Tree (§4)
     # ------------------------------------------------------------------
@@ -306,14 +331,22 @@ class OwlBuilder:
         if (prop, RDF.type, OWL.ObjectProperty) not in self.out:
             self.out.add((prop, RDF.type, OWL.ObjectProperty))
 
-    def _add_restriction(self, owner, prop, target_class):
+    def _add_all_values_from(self, owner, prop, target_class):
+        # §14 universal restriction, applied unconditionally regardless of
+        # ModellingRule -- correct for both Mandatory and Optional, since it
+        # vacuously holds when the property has zero values.
+        #
+        # Deliberately NOT also asserting owl:someValuesFrom here: it is
+        # logically equivalent to owl:minQualifiedCardinality(1, ...) under
+        # OWL 2 semantics (existsP.C == >=1 P.C without the unique name
+        # assumption), so for Mandatory it would be pure redundancy with
+        # _add_cardinality below -- and for Optional it would be outright
+        # wrong, wrongly forcing every instance to have the relationship,
+        # contradicting "optional" (which must permit zero occurrences). §16
+        # confirms this: Optional "does not require a minimum-cardinality
+        # restriction... may still generate allValuesFrom constraints" --
+        # someValuesFrom was never meant to apply there either.
         self._ensure_object_property(prop)
-        some = BNode()
-        self.out.add((some, RDF.type, OWL.Restriction))
-        self.out.add((some, OWL.onProperty, prop))
-        self.out.add((some, OWL.someValuesFrom, target_class))
-        self.out.add((owner, RDFS.subClassOf, some))
-
         allv = BNode()
         self.out.add((allv, RDF.type, OWL.Restriction))
         self.out.add((allv, OWL.onProperty, prop))
@@ -399,7 +432,7 @@ class OwlBuilder:
 
             owner = self._mint_vt_iri(root_iri, path_prefix) if path_prefix else root_iri
             if entry.semantic_property is not None:
-                self._add_restriction(owner, entry.semantic_property, vt)
+                self._add_all_values_from(owner, entry.semantic_property, vt)
                 if entry.is_optional is False:  # Mandatory or MandatoryPlaceholder
                     self._add_cardinality(owner, entry.semantic_property, vt)
 
@@ -451,6 +484,52 @@ class OwlBuilder:
             self.out.add((s, RDF.type, OWL.ObjectProperty))
             self.out.add((s, RDFS.subPropertyOf, sup))
 
+    def _add_datatype_disjointness(self):
+        """For every DataType (rooted at opcua:BaseDataType) with 2+ direct
+        subtypes, assert those subtypes pairwise disjoint: a value cannot
+        simultaneously be of two different sibling DataTypes (e.g. Int32 and
+        Double are both children of Number's descendants; two distinct custom
+        Structures or Enumerations are equally mutually exclusive). This is
+        what lets a reasoner catch a subtype overriding a Variable's Datatype
+        to an incompatible sibling type, the same way ValueRank's disjoint
+        leaves catch a ValueRank override.
+
+        Verified against core.ttl before implementing this: zero classes
+        anywhere in the ontology have more than one direct rdfs:subClassOf
+        (no multi-inheritance), so treating every sibling group as a true
+        partition is safe.
+
+        Scoped like everything else here: a disjointness group is only
+        emitted if at least one of its members is newly declared in `g` (the
+        rdfs:subClassOf edge to the shared parent lives in `g`, not only in
+        `ig`). A companion spec that adds one new subtype under an existing
+        core DataType therefore asserts disjointness for that whole sibling
+        set (old members plus the new one), but doesn't re-emit disjointness
+        for every *other* DataType parent it didn't touch -- that was already
+        asserted by the dependency's own output."""
+        base_datatype = self.opcuans['BaseDataType']
+        descendants = set()
+        stack = [base_datatype]
+        while stack:
+            current = stack.pop()
+            for child in self.combined.subjects(RDFS.subClassOf, current):
+                if child not in descendants:
+                    descendants.add(child)
+                    stack.append(child)
+
+        for parent in descendants | {base_datatype}:
+            children = list(self.combined.subjects(RDFS.subClassOf, parent))
+            if len(children) < 2:
+                continue
+            has_new_member = any((child, RDFS.subClassOf, parent) in self.g for child in children)
+            if not has_new_member:
+                continue
+            disjoint_node = BNode()
+            self.out.add((disjoint_node, RDF.type, OWL.AllDisjointClasses))
+            members = BNode()
+            Collection(self.out, members, children)
+            self.out.add((disjoint_node, OWL.members, members))
+
     def run(self, roots=None, progress=None):
         """Build the pure-OWL ontology. `progress`, if given, is called as
         progress(index, total, root_iri) right before each root type is
@@ -458,6 +537,7 @@ class OwlBuilder:
         generates Virtual Types for hundreds of types with no other visible
         output in between."""
         self._copy_class_and_property_layer()
+        self._add_datatype_disjointness()
         targets = roots if roots is not None else self.all_target_classes()
         total = len(targets)
         for index, root in enumerate(targets, start=1):
