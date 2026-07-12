@@ -1,0 +1,208 @@
+@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+@prefix opcua: <http://opcfoundation.org/UA/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Minimal synthetic Semantic Bridge fixture reproducing the semantic_bridge_to_owl.md
+# examples: plain inheritance (§9), depth-1 override (§10, BaseType/PumpType Drive),
+# nested override reached only through the declared type's own inheritance
+# (AdvancedDriveType overriding DriveType's Motor), and 3-level recursion down to a
+# Variable declaration with a Datatype (§11, §17, §18).
+#
+# Shape of the model:
+#   BaseType          -- Drive:DriveType (Mandatory)
+#     DriveType       -- Motor:MotorType (Mandatory)
+#       MotorType     -- Temperature:PropertyType/Double (Mandatory, scalar)
+#   PumpType <: BaseType, overrides Drive:AdvancedDriveType
+#     AdvancedDriveType <: DriveType, overrides Motor:AdvancedMotorType
+#       AdvancedMotorType <: MotorType (no own definer node -- pure inheritance)
+#   AdvancedPumpType <: PumpType (no own definer node -- pure inheritance)
+
+opcua:OPCUANamespace a base:Namespace ;
+    base:hasPrefix "opcua" ;
+    base:hasUri "http://opcfoundation.org/UA/" .
+
+# --- Reference type / semantic bridge property scaffolding -----------------
+
+opcua:HasChild a owl:ObjectProperty .
+opcua:Aggregates a owl:ObjectProperty ;
+    rdfs:subPropertyOf opcua:HasChild .
+opcua:HasComponent a owl:ObjectProperty ;
+    rdfs:subPropertyOf opcua:Aggregates .
+opcua:HasProperty a owl:ObjectProperty ;
+    rdfs:subPropertyOf opcua:Aggregates .
+
+opcua:hasDrive rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+opcua:hasMotor rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+opcua:hasTemperature rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+# --- ModellingRule individuals ----------------------------------------------
+
+opcua:nodei78 a opcua:ObjectNodeClass ;
+    base:hasBrowseName "Mandatory" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "78" ;
+    base:hasSymbolicName "ModellingRule_Mandatory" .
+
+# --- Class layer -------------------------------------------------------------
+
+opcua:BaseDataType a owl:Class .
+opcua:Double a owl:Class ;
+    rdfs:subClassOf opcua:BaseDataType .
+opcua:String a owl:Class ;
+    rdfs:subClassOf opcua:BaseDataType .
+
+opcua:BaseObjectType a owl:Class .
+opcua:BaseVariableType a owl:Class .
+opcua:PropertyType a owl:Class ;
+    rdfs:subClassOf opcua:BaseVariableType .
+
+opcua:DriveType a owl:Class ;
+    rdfs:subClassOf opcua:BaseObjectType .
+opcua:AdvancedDriveType a owl:Class ;
+    rdfs:subClassOf opcua:DriveType .
+
+opcua:MotorType a owl:Class ;
+    rdfs:subClassOf opcua:BaseObjectType .
+opcua:AdvancedMotorType a owl:Class ;
+    rdfs:subClassOf opcua:MotorType .
+
+opcua:BaseType a owl:Class ;
+    rdfs:subClassOf opcua:BaseObjectType .
+opcua:PumpType a owl:Class ;
+    rdfs:subClassOf opcua:BaseType .
+opcua:AdvancedPumpType a owl:Class ;
+    rdfs:subClassOf opcua:PumpType .
+
+# --- Declaration layer ---------------------------------------------------
+# BaseType: Drive : DriveType (Mandatory)
+
+opcua:nodei1001 a opcua:ObjectTypeNodeClass ;
+    opcua:HasComponent opcua:nodei1002 ;
+    opcua:hasDrive opcua:nodei1002 ;
+    base:definesType opcua:BaseType ;
+    base:hasBrowseName "BaseType" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "1001" .
+
+opcua:nodei1002 a opcua:ObjectNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
+    base:instanceOf opcua:DriveType ;
+    base:hasBrowseName "Drive" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "1002" .
+
+# DriveType: Motor : MotorType (Mandatory)
+
+opcua:nodei1003 a opcua:ObjectTypeNodeClass ;
+    opcua:HasComponent opcua:nodei1004 ;
+    opcua:hasMotor opcua:nodei1004 ;
+    base:definesType opcua:DriveType ;
+    base:hasBrowseName "DriveType" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "1003" .
+
+opcua:nodei1004 a opcua:ObjectNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
+    base:instanceOf opcua:MotorType ;
+    base:hasBrowseName "Motor" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "1004" .
+
+# MotorType: Temperature : PropertyType / Double (Mandatory, scalar by omission)
+
+opcua:nodei1005 a opcua:ObjectTypeNodeClass ;
+    opcua:HasProperty opcua:nodei1006 ;
+    opcua:hasTemperature opcua:nodei1006 ;
+    base:definesType opcua:MotorType ;
+    base:hasBrowseName "MotorType" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "1005" .
+
+opcua:nodei1006 a opcua:PropertyType,
+        opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
+    base:hasDatatype opcua:Double ;
+    base:hasBrowseName "Temperature" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "1006" .
+
+# AdvancedDriveType: overrides Motor : AdvancedMotorType (Mandatory)
+
+opcua:nodei1007 a opcua:ObjectTypeNodeClass ;
+    opcua:HasComponent opcua:nodei1008 ;
+    opcua:hasMotor opcua:nodei1008 ;
+    base:definesType opcua:AdvancedDriveType ;
+    base:hasBrowseName "AdvancedDriveType" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "1007" .
+
+opcua:nodei1008 a opcua:ObjectNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
+    base:instanceOf opcua:AdvancedMotorType ;
+    base:hasBrowseName "Motor" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "1008" .
+
+# PumpType: overrides Drive : AdvancedDriveType (Mandatory)
+
+opcua:nodei1009 a opcua:ObjectTypeNodeClass ;
+    opcua:HasComponent opcua:nodei1010 ;
+    opcua:hasDrive opcua:nodei1010 ;
+    base:definesType opcua:PumpType ;
+    base:hasBrowseName "PumpType" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "1009" .
+
+opcua:nodei1010 a opcua:ObjectNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
+    base:instanceOf opcua:AdvancedDriveType ;
+    base:hasBrowseName "Drive" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "1010" .
+
+# AdvancedMotorType and AdvancedPumpType have no own definer node: pure inheritance,
+# no local override -- exercises the "class with no own declarations" edge case.
+
+# --- Self-referential type (regression case) --------------------------------
+# Mirrors a real pattern found in the actual OPC UA core nodeset: DictionaryEntryType
+# declares an OptionalPlaceholder child "<DictionaryEntryName>" typed as
+# DictionaryEntryType itself (an arbitrarily nested dictionary/tree of entries).
+# Dimension-2 recursion in emit_vt_tree has no natural base case for this, so it
+# must be guarded against infinite recursion (see the `_visited` parameter).
+
+opcua:nodei11508 a opcua:ObjectNodeClass ;
+    base:hasBrowseName "OptionalPlaceholder" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "11508" ;
+    base:hasSymbolicName "ModellingRule_OptionalPlaceholder" .
+
+opcua:hasEntry rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+opcua:DictionaryEntryType a owl:Class ;
+    rdfs:subClassOf opcua:BaseObjectType .
+
+opcua:nodei2001 a opcua:ObjectTypeNodeClass ;
+    opcua:HasComponent opcua:nodei2002 ;
+    opcua:hasEntry opcua:nodei2002 ;
+    base:definesType opcua:DictionaryEntryType ;
+    base:hasBrowseName "DictionaryEntryType" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "2001" .
+
+opcua:nodei2002 a opcua:ObjectNodeClass ;
+    opcua:HasModellingRule opcua:nodei11508 ;
+    base:instanceOf opcua:DictionaryEntryType ;
+    base:hasBrowseName "Entry" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "2002" .
+
+# Subclass with no own definer node (pure inheritance), mirroring the real
+# core.ttl case (IrdiDictionaryEntryType etc.) that first exposed the dangling
+# forward-reference bug: scanning THIS type as root reaches DictionaryEntryType's
+# own two-level self-reference one step further than DictionaryEntryType's own
+# root-scan ever does, so DictionaryEntryType's deeper VT must still get typed.
+opcua:SpecialDictionaryEntryType a owl:Class ;
+    rdfs:subClassOf opcua:DictionaryEntryType .

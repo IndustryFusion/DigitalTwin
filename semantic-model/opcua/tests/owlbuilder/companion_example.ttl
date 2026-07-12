@@ -1,0 +1,40 @@
+@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+@prefix opcua: <http://opcfoundation.org/UA/> .
+@prefix comp: <http://example.org/Companion/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# Minimal companion-spec fixture mirroring the real di.ttl/core.ttl relationship
+# at small scale: comp:SpecialPumpType is declared HERE, importing pump_example.ttl
+# (loaded separately as `ig` in tests), and subclasses opcua:PumpType directly --
+# so it both inherits PumpType's declarations (which must resolve to bare
+# references pointing at pump_example.ttl's own already-generated Virtual Types,
+# not be re-derived here) and declares one brand-new component of its own.
+
+comp: a owl:Ontology ;
+    owl:imports <file:///pump_example.ttl> .
+
+comp:COMPNamespace a base:Namespace ;
+    base:hasPrefix "comp" ;
+    base:hasUri "http://example.org/Companion/" .
+
+comp:hasExtra rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+comp:SpecialPumpType a owl:Class ;
+    rdfs:subClassOf opcua:PumpType .
+
+comp:nodei1 a opcua:ObjectTypeNodeClass ;
+    opcua:HasComponent comp:nodei2 ;
+    comp:hasExtra comp:nodei2 ;
+    base:definesType comp:SpecialPumpType ;
+    base:hasBrowseName "SpecialPumpType" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "1" .
+
+comp:nodei2 a opcua:ObjectNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
+    base:instanceOf opcua:MotorType ;
+    base:hasBrowseName "Extra" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "2" .
