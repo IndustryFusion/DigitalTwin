@@ -5,3 +5,4 @@ pytest==9.0.3
 pytest-cov==4.0.0
 pyshacl==0.26.0
 owlready2==0.51
+matplotlib==3.11.0

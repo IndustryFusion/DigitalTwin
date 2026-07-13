@@ -76,6 +76,7 @@ except ImportError:
              'pip install owlready2')
 
 _HERMIT_DIR = os.path.join(os.path.dirname(owlready2.__file__), 'hermit')
+print(f'Using HermiT.jar from {os.path.abspath(_HERMIT_DIR)}')
 _HERMIT_CLASSPATH = os.pathsep.join([_HERMIT_DIR, os.path.join(_HERMIT_DIR, 'HermiT.jar')])
 _JAVA_MEMORY_MB = 2000
 

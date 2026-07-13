@@ -21,17 +21,26 @@ For every *.ttl file that Makefile is set up to produce (TARGET_NAMES / the
 matching <NAME>_ONTOLOGY variables -- parsed directly from the Makefile so
 this never drifts out of sync with it) and that actually exists on disk, this
 reports how many of its own ObjectType/VariableType classes it declares
-("original"), how many physically-declared Instance Declaration nodes it
-introduces ("instances" -- the raw, un-expanded nodes Virtual Type generation
-replaces, one per type: no inheritance or recursive unrolling), and how many
-Virtual Types semanticbridge2owl.py's OwlBuilder generates from them
-("virtual") -- i.e. exactly the incremental contribution of that one companion
-spec, the same way `semanticbridge2owl.py <file>.ttl` would process it on its
-own, with dependencies (core.ttl for di.ttl, etc.) resolved via each file's
-own owl:imports but not recounted.
+("types"), how many physically-declared Instance Declarations it introduces
+("instance declarations" -- a child with a recognized ModellingRule
+[Mandatory/Optional/(Mandatory|Optional)Placeholder]; the raw, un-expanded
+nodes Virtual Type generation replaces, one per type: no inheritance or
+recursive unrolling), and how many Virtual Types semanticbridge2owl.py's
+OwlBuilder generates from them ("virtual") -- i.e. exactly the incremental
+contribution of that one companion spec, the same way
+`semanticbridge2owl.py <file>.ttl` would process it on its own, with
+dependencies (core.ttl for di.ttl, etc.) resolved via each file's own
+owl:imports but not recounted.
+
+Two ratios are reported per file: Virtual Types per type declared
+(vt_per_type), and Virtual Types per Instance Declaration (vt_per_instance_decl)
+-- the latter is the more meaningful growth figure, since it's relative to the
+actual un-expanded declarations Virtual Type generation is replacing, not to
+the (much smaller, and somewhat arbitrary) count of types that happen to
+introduce them.
 
 Usage:
-    python3 virtual_type_stats.py [-o stats.csv]
+    python3 virtual_type_stats.py [-o stats.csv] [-p chart.pdf]
 """
 
 import argparse
@@ -141,10 +150,60 @@ def resolve_dependencies(g):
     return ig
 
 
+def write_pdf_chart(rows, pdf_path):
+    """Render a two-panel bar chart (counts on a log scale, then both ratios
+    on a linear scale) to a single PDF page, suitable for dropping straight
+    into a slide. Only files that actually introduce Virtual Types are
+    plotted -- an all-zero file (e.g. a pure instance-example nodeset with no
+    own ObjectType/VariableType declarations) contributes nothing readable to
+    either panel."""
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+
+    plotted = [r for r in rows if r[3] > 0]
+    plotted.sort(key=lambda r: r[3], reverse=True)
+    names = [r[0].removesuffix('.ttl') for r in plotted]
+    types = [r[1] for r in plotted]
+    instance_decls = [r[2] for r in plotted]
+    virtual = [r[3] for r in plotted]
+    vt_per_type = [r[4] for r in plotted]
+    vt_per_decl = [r[5] for r in plotted]
+
+    x = range(len(plotted))
+    width = 0.27
+
+    fig, (ax_counts, ax_ratios) = plt.subplots(2, 1, figsize=(14, 9))
+
+    ax_counts.bar([i - width for i in x], types, width, label='Types declared')
+    ax_counts.bar(list(x), instance_decls, width, label='Instance Declarations')
+    ax_counts.bar([i + width for i in x], virtual, width, label='Virtual Types')
+    ax_counts.set_yscale('log')
+    ax_counts.set_ylabel('count (log scale)')
+    ax_counts.set_title('Virtual Type growth across the OPC UA companion-spec corpus')
+    ax_counts.legend()
+    ax_counts.set_xticks(list(x))
+    ax_counts.set_xticklabels(names, rotation=45, ha='right')
+
+    ax_ratios.bar([i - width / 2 for i in x], vt_per_type, width, label='Virtual Types per type')
+    ax_ratios.bar([i + width / 2 for i in x], vt_per_decl, width,
+                  label='Virtual Types per Instance Declaration')
+    ax_ratios.set_ylabel('ratio (x)')
+    ax_ratios.set_xticks(list(x))
+    ax_ratios.set_xticklabels(names, rotation=45, ha='right')
+    ax_ratios.legend()
+
+    fig.tight_layout()
+    fig.savefig(pdf_path, format='pdf')
+    plt.close(fig)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('-o', '--output', help='Optional CSV file to also write the results to.',
+                        default=None)
+    parser.add_argument('-p', '--pdf', help='Optional PDF file to render a summary chart to.',
                         default=None)
     args = parser.parse_args()
 
@@ -161,31 +220,41 @@ def main():
         ig = resolve_dependencies(g)
         builder = OwlBuilder(g, basens, opcuans, ig=ig)
         own_classes = builder.all_target_classes()
-        instance_count = builder.count_own_instance_declarations()
+        instance_decl_count = builder.count_own_instance_declarations()
         out = builder.run(own_classes)
         vt_count = sum(1 for c in out.subjects(RDF.type, OWL.Class)
                        if str(c).split('/')[-1].startswith('VT_'))
         elapsed = time.monotonic() - start
-        ratio = vt_count / len(own_classes) if own_classes else 0.0
-        rows.append((name, len(own_classes), instance_count, vt_count, ratio, elapsed))
-        print(f'{name:30s} original={len(own_classes):5d}  instances={instance_count:5d}  '
-              f'virtual={vt_count:6d}  ratio={ratio:6.1f}x  ({elapsed:.1f}s)')
+        vt_per_type = vt_count / len(own_classes) if own_classes else 0.0
+        vt_per_decl = vt_count / instance_decl_count if instance_decl_count else 0.0
+        rows.append((name, len(own_classes), instance_decl_count, vt_count,
+                     vt_per_type, vt_per_decl, elapsed))
+        print(f'{name:30s} types={len(own_classes):5d}  instance_decls={instance_decl_count:5d}  '
+              f'virtual={vt_count:6d}  vt/type={vt_per_type:6.1f}x  vt/decl={vt_per_decl:6.1f}x  '
+              f'({elapsed:.1f}s)')
 
-    total_orig = sum(r[1] for r in rows)
-    total_instances = sum(r[2] for r in rows)
+    total_types = sum(r[1] for r in rows)
+    total_decls = sum(r[2] for r in rows)
     total_vt = sum(r[3] for r in rows)
     print()
-    print(f'{"TOTAL":30s} original={total_orig:5d}  instances={total_instances:5d}  '
-          f'virtual={total_vt:6d}  ratio={(total_vt / total_orig if total_orig else 0):6.1f}x')
+    print(f'{"TOTAL":30s} types={total_types:5d}  instance_decls={total_decls:5d}  '
+          f'virtual={total_vt:6d}  '
+          f'vt/type={(total_vt / total_types if total_types else 0):6.1f}x  '
+          f'vt/decl={(total_vt / total_decls if total_decls else 0):6.1f}x')
 
     if args.output:
         with open(args.output, 'w', newline='') as f:
             writer = csv.writer(f)
-            writer.writerow(['file', 'original_types', 'instance_declarations', 'virtual_types',
-                             'ratio', 'seconds'])
-            for name, orig, instances, vt, ratio, elapsed in rows:
-                writer.writerow([name, orig, instances, vt, f'{ratio:.2f}', f'{elapsed:.1f}'])
+            writer.writerow(['file', 'types', 'instance_declarations', 'virtual_types',
+                             'vt_per_type', 'vt_per_instance_declaration', 'seconds'])
+            for name, types, decls, vt, vt_per_type, vt_per_decl, elapsed in rows:
+                writer.writerow([name, types, decls, vt, f'{vt_per_type:.2f}',
+                                 f'{vt_per_decl:.2f}', f'{elapsed:.1f}'])
         print(f'\nWrote {args.output}')
+
+    if args.pdf:
+        write_pdf_chart(rows, args.pdf)
+        print(f'Wrote {args.pdf}')
 
 
 if __name__ == '__main__':
