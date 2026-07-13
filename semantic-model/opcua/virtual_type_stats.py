@@ -49,10 +49,19 @@ from lib.owlbuilder import OwlBuilder
 
 REPO_ROOT = Path(__file__).parent
 MAKEFILE = REPO_ROOT / 'translate_default_nodesets.make'
+# Fallback only, used solely if a file's own @prefix declarations can't be
+# found (see detect_namespaces) -- do not rely on these being current. The
+# base ontology URI has already changed once in practice (from .../ontology/
+# v0/base/ to .../staging/ontology/v0.3/base.ttl), and rdflib namespace
+# lookups fail *silently* on a mismatch (every base:*-predicate query just
+# finds zero results, no exception raised), so a stale hardcoded guess here
+# previously caused every base:definesType/base:instanceOf/etc. lookup to
+# silently find nothing -- not a crash, just near-empty output.
 BASENS = Namespace('https://industryfusion.github.io/contexts/ontology/v0/base/')
 OPCUANS = Namespace('http://opcfoundation.org/UA/')
 
 _graph_cache = {}
+_namespace_cache = {}
 
 
 def parse_target_files(makefile_path):
@@ -72,17 +81,39 @@ def parse_target_files(makefile_path):
     return files
 
 
+def detect_namespaces(g):
+    """Auto-detect this file's own 'base'/'opcua' @prefix declarations
+    instead of trusting a hardcoded guess -- see the BASENS/OPCUANS comment
+    above for why a stale guess is dangerous here (silent, not a crash)."""
+    prefixes = dict(g.namespaces())
+    base = prefixes.get('base')
+    opcua = prefixes.get('opcua')
+    if base is None or opcua is None:
+        raise ValueError("Could not find 'base'/'opcua' @prefix declarations in this file")
+    return Namespace(str(base)), Namespace(str(opcua))
+
+
 def load_fixed_graph(path):
     """Parse + restore_type_of_node_iris exactly once per file, cached, so a
     dependency shared by several companion specs (core.ttl, di.ttl, ...) isn't
-    reparsed once per downstream file that imports it."""
+    reparsed once per downstream file that imports it. The namespaces used
+    for restore_type_of_node_iris (and for any later OwlBuilder call on this
+    graph) are this file's own, auto-detected -- see get_namespaces."""
     key = str(path)
     if key not in _graph_cache:
         g = Graph()
         g.parse(path)
-        utils.restore_type_of_node_iris(g, OPCUANS, BASENS)
+        basens, opcuans = detect_namespaces(g)
+        utils.restore_type_of_node_iris(g, opcuans, basens)
         _graph_cache[key] = g
+        _namespace_cache[key] = (basens, opcuans)
     return _graph_cache[key]
+
+
+def get_namespaces(path):
+    """This file's own auto-detected (basens, opcuans) pair -- call
+    load_fixed_graph(path) first to populate the cache."""
+    return _namespace_cache[str(path)]
 
 
 def resolve_dependencies(g):
@@ -126,8 +157,9 @@ def main():
             continue
         start = time.monotonic()
         g = load_fixed_graph(path)
+        basens, opcuans = get_namespaces(path)
         ig = resolve_dependencies(g)
-        builder = OwlBuilder(g, BASENS, OPCUANS, ig=ig)
+        builder = OwlBuilder(g, basens, opcuans, ig=ig)
         own_classes = builder.all_target_classes()
         instance_count = builder.count_own_instance_declarations()
         out = builder.run(own_classes)
