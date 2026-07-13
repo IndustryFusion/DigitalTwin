@@ -60,8 +60,13 @@ component to an incompatible type or datatype).
 Caveat: the real OPC UA core nodeset contains a small number of genuinely
 self-referential types (e.g. DictionaryEntryType declares a placeholder child
 typed as DictionaryEntryType itself, for arbitrarily nested dictionaries).
-Those are detected and truncated after one level so generation always
-terminates; see the `_visited` guard in lib/owlbuilder.py.
+Virtual Types are now only minted where a declaration's own content actually
+changes (a type override, ValueRank/Datatype change, or local structural
+extension beyond the nominal type -- see get_cdt's docstring in
+lib/owlbuilder.py), so self-reference is naturally a non-issue in the common
+case (the placeholder's declared type doesn't change anything, so no new VT
+-- and no recursion -- is ever needed for it); a `_cdt_computing` guard in
+get_cdt still exists as a safety net against pathological cycles.
 
 Example:
 

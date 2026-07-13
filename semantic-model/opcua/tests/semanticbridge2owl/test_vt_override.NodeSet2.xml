@@ -4,13 +4,17 @@
      PartType. SubType <: BaseType overrides "Part" : AdvancedPartType (a
      genuine subtype of PartType).
 
-     Expect VT(SubType, "Part") to carry BOTH edges simultaneously:
-       - rdfs:subClassOf opcua:AdvancedPartType   (§8, the override)
-       - rdfs:subClassOf VT(BaseType, "Part")     (§9, which is itself
-         rdfs:subClassOf opcua:PartType)
-     This dual-edge pattern is what lets a DL reasoner flag a *contradictory*
-     override (see test_vt_contradiction) while leaving a *consistent* one
-     (this file, since AdvancedPartType really is a PartType) satisfiable. -->
+     Expect no Virtual Type at all: a plain Object override with no local
+     structural extension needs no synthetic wrapper: the real declared
+     type already fully specifies itself, so the restriction on SubType
+     targets opcua:AdvancedPartType directly. Consistency with BaseType's own
+     "Part" : PartType restriction is guaranteed by the real class hierarchy
+     alone (AdvancedPartType rdfs:subClassOf PartType), with no VT machinery
+     involved. OPC UA itself only allows overriding a component with a
+     genuine subtype of the original TypeDefinition, so a plain Object
+     override can never be structurally contradictory the way a ValueRank or
+     Datatype override can; see test_vt_contradiction for the case that
+     actually needs the ValueRank disjointness machinery to be caught. -->
 <UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
            LastModified="2024-07-15T00:00:00Z"

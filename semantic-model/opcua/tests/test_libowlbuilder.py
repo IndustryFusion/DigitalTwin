@@ -2,7 +2,7 @@
 import unittest
 from pathlib import Path
 
-from rdflib import Graph, Namespace, URIRef
+from rdflib import Graph, Namespace
 from rdflib.collection import Collection
 from rdflib.namespace import OWL, RDF, RDFS
 
@@ -22,67 +22,92 @@ def load_builder(**kwargs):
     return OwlBuilder(g, BASE, OPCUA, **kwargs)
 
 
+def key(name, ns=OPCUA):
+    return f'{ns}{name}'
+
+
 class TestEffectiveDeclarationTree(unittest.TestCase):
+    """Fixture recap (see tests/owlbuilder/pump_example.ttl):
+        BaseType          -- Drive:DriveType (Mandatory)
+          DriveType       -- Motor:MotorType (Mandatory)
+            MotorType     -- Temperature:PropertyType/Double (Optional, scalar)
+        PumpType <: BaseType, overrides Drive:AdvancedDriveType
+          AdvancedDriveType <: DriveType, overrides Motor:AdvancedMotorType
+            AdvancedMotorType <: MotorType (no own definer node)
+        AdvancedPumpType <: PumpType (no own definer node)
+    """
+
     def setUp(self):
         self.builder = load_builder()
 
-    def key(self, name):
-        return f'{OPCUA}{name}'
-
     def test_base_type_declares_drive(self):
         cdt = self.builder.get_cdt(OPCUA['BaseType'])
-        self.assertEqual(set(cdt.keys()), {self.key('Drive')})
-        self.assertEqual(cdt[self.key('Drive')].base_type, OPCUA['DriveType'])
-        self.assertFalse(cdt[self.key('Drive')].is_optional)
+        self.assertEqual(set(cdt.keys()), {key('Drive')})
+        self.assertEqual(cdt[key('Drive')].base_type, OPCUA['DriveType'])
+        self.assertFalse(cdt[key('Drive')].is_optional)
 
     def test_drive_type_declares_motor(self):
         cdt = self.builder.get_cdt(OPCUA['DriveType'])
-        self.assertEqual(cdt[self.key('Motor')].base_type, OPCUA['MotorType'])
+        self.assertEqual(cdt[key('Motor')].base_type, OPCUA['MotorType'])
 
     def test_advanced_drive_type_overrides_motor(self):
         cdt = self.builder.get_cdt(OPCUA['AdvancedDriveType'])
-        self.assertEqual(cdt[self.key('Motor')].base_type, OPCUA['AdvancedMotorType'])
+        self.assertEqual(cdt[key('Motor')].base_type, OPCUA['AdvancedMotorType'])
 
     def test_motor_type_declares_temperature(self):
         cdt = self.builder.get_cdt(OPCUA['MotorType'])
-        entry = cdt[self.key('Temperature')]
+        entry = cdt[key('Temperature')]
         self.assertEqual(entry.base_type, OPCUA['PropertyType'])
         self.assertEqual(entry.nodeclass, OPCUA['VariableNodeClass'])
         self.assertEqual(entry.value_rank, -1)  # default: no explicit hasValueRank => Scalar
         self.assertEqual(entry.datatype, OPCUA['Double'])
 
     def test_advanced_motor_type_inherits_temperature_unchanged(self):
-        # AdvancedMotorType has no own definer node in the fixture: pure inheritance.
+        # AdvancedMotorType has no own definer node in the fixture: pure
+        # inheritance, reusing the exact same entries (same DeclEntry objects,
+        # same .target) as MotorType -- no new axioms generated for it.
         self.assertEqual(self.builder.get_cdt(OPCUA['AdvancedMotorType']),
                          self.builder.get_cdt(OPCUA['MotorType']))
 
     def test_pump_type_overrides_drive(self):
         cdt = self.builder.get_cdt(OPCUA['PumpType'])
-        self.assertEqual(cdt[self.key('Drive')].base_type, OPCUA['AdvancedDriveType'])
+        self.assertEqual(cdt[key('Drive')].base_type, OPCUA['AdvancedDriveType'])
 
     def test_advanced_pump_type_inherits_pump_type_unchanged(self):
         self.assertEqual(self.builder.get_cdt(OPCUA['AdvancedPumpType']),
                          self.builder.get_cdt(OPCUA['PumpType']))
 
-    def test_resolve_path_follows_dimension_2_override(self):
-        # Under BaseType, Drive/Motor is MotorType; under PumpType, the same
-        # relative path is AdvancedMotorType because PumpType's Drive is
-        # AdvancedDriveType, whose own Motor is overridden.
-        path = [self.key('Drive'), self.key('Motor')]
-        base_entry = self.builder.resolve_path(OPCUA['BaseType'], path)
-        pump_entry = self.builder.resolve_path(OPCUA['PumpType'], path)
-        self.assertEqual(base_entry.base_type, OPCUA['MotorType'])
-        self.assertEqual(pump_entry.base_type, OPCUA['AdvancedMotorType'])
+    def test_object_override_targets_the_real_type_directly_no_vt(self):
+        # A plain Object override/new-declaration with no local extension
+        # needs no synthetic Virtual Type: the real declared type already
+        # fully specifies itself. Traced through the whole Drive/Motor chain.
+        self.assertEqual(self.builder.get_cdt(OPCUA['BaseType'])[key('Drive')].target,
+                         OPCUA['DriveType'])
+        self.assertEqual(self.builder.get_cdt(OPCUA['DriveType'])[key('Motor')].target,
+                         OPCUA['MotorType'])
+        self.assertEqual(self.builder.get_cdt(OPCUA['AdvancedDriveType'])[key('Motor')].target,
+                         OPCUA['AdvancedMotorType'])
+        self.assertEqual(self.builder.get_cdt(OPCUA['PumpType'])[key('Drive')].target,
+                         OPCUA['AdvancedDriveType'])
 
-    def test_resolve_path_missing_returns_none(self):
-        self.assertIsNone(self.builder.resolve_path(OPCUA['BaseObjectType'], [self.key('Drive')]))
+    def test_variable_declaration_always_gets_its_own_target_vt(self):
+        # Variables always need their own Virtual Type (to carry
+        # ValueRank/Datatype), even with no override at all.
+        temp_entry = self.builder.get_cdt(OPCUA['MotorType'])[key('Temperature')]
+        self.assertTrue(str(temp_entry.target).split('/')[-1].startswith('VT_'))
 
     def test_count_own_instance_declarations(self):
         # One physically-declared child each on BaseType (Drive), DriveType
         # (Motor), MotorType (Temperature), AdvancedDriveType (Motor
-        # override), PumpType (Drive override) and DictionaryEntryType
-        # (Entry) = 6. AdvancedMotorType/AdvancedPumpType have no own definer
-        # node (pure inheritance) and contribute 0.
+        # override), PumpType (Drive override), DictionaryEntryType (Entry)
+        # and its own nested Label = 7. AdvancedMotorType/AdvancedPumpType/
+        # SpecialDictionaryEntryType have no own definer node (pure
+        # inheritance) and contribute 0. (Label is counted here because
+        # count_own_instance_declarations only looks at direct definer-node
+        # children per *type*, and DictionaryEntryType's own definer node's
+        # only direct child is "Entry" -- Label is nested *inside* the Entry
+        # declaration, not a second direct child of DictionaryEntryType's own
+        # definer node, so it is NOT separately counted here.)
         self.assertEqual(self.builder.count_own_instance_declarations(), 6)
 
 
@@ -91,74 +116,63 @@ class TestVirtualTypeEmission(unittest.TestCase):
         self.builder = load_builder()
         self.out = self.builder.run()
 
-    def vt(self, root, path):
-        return self.builder._mint_vt_iri(OPCUA[root], [f'{OPCUA}{seg}' for seg in path])
+    def vt(self, owner, local_name, ns=OPCUA):
+        """Look up an already-minted VT from the cache (populated by run())."""
+        return self.builder._vt_cache[(str(OPCUA[owner]), key(local_name, ns))]
 
-    def type_supers(self, vt):
-        """subClassOf targets that are real types/VTs, excluding this VT's own
-        restriction blank nodes for whatever it in turn owns as a nested owner."""
-        return {o for o in self.out.objects(vt, RDFS.subClassOf) if isinstance(o, URIRef)}
+    def test_base_type_drive_restriction_targets_drive_type_directly(self):
+        allv = [r for r in self.out.subjects(OWL.allValuesFrom, OPCUA['DriveType'])
+                if (r, OWL.onProperty, OPCUA['hasDrive']) in self.out]
+        self.assertEqual(len(allv), 1)
+        self.assertIn((OPCUA['BaseType'], RDFS.subClassOf, allv[0]), self.out)
 
-    def test_base_type_drive_has_no_supertype_link(self):
-        vt_drive = self.vt('BaseType', ['Drive'])
-        self.assertEqual(self.type_supers(vt_drive), {OPCUA['DriveType']})
+    def test_pump_type_drive_restriction_targets_advanced_drive_type_directly(self):
+        allv = [r for r in self.out.subjects(OWL.allValuesFrom, OPCUA['AdvancedDriveType'])
+                if (r, OWL.onProperty, OPCUA['hasDrive']) in self.out]
+        self.assertEqual(len(allv), 1)
+        self.assertIn((OPCUA['PumpType'], RDFS.subClassOf, allv[0]), self.out)
 
-    def test_pump_type_drive_has_both_override_and_inheritance_edges(self):
-        vt_pump_drive = self.vt('PumpType', ['Drive'])
-        vt_base_drive = self.vt('BaseType', ['Drive'])
-        self.assertEqual(self.type_supers(vt_pump_drive), {OPCUA['AdvancedDriveType'], vt_base_drive})
-
-    def test_pump_type_drive_motor_reflects_nested_override_and_links_to_base(self):
-        vt_pump_drive_motor = self.vt('PumpType', ['Drive', 'Motor'])
-        vt_base_drive_motor = self.vt('BaseType', ['Drive', 'Motor'])
-        self.assertEqual(self.type_supers(vt_pump_drive_motor),
-                         {OPCUA['AdvancedMotorType'], vt_base_drive_motor})
-
-    def test_advanced_pump_type_drive_has_single_inheritance_edge_no_override(self):
-        vt_adv = self.vt('AdvancedPumpType', ['Drive'])
-        vt_pump = self.vt('PumpType', ['Drive'])
-        # Same base_type as PumpType's Drive (no override at this level) => exactly
-        # one rule-8 edge (AdvancedDriveType) and one rule-9 edge (vt_pump).
-        self.assertEqual(self.type_supers(vt_adv), {OPCUA['AdvancedDriveType'], vt_pump})
+    def test_advanced_pump_type_gets_no_new_restrictions_at_all(self):
+        # Pure pass-through (no own definer node): zero new axioms, relies
+        # entirely on the class-level rdfs:subClassOf PumpType edge.
+        restrictions_owned = [s for s in self.out.subjects(RDFS.subClassOf, None)
+                              if s == OPCUA['AdvancedPumpType']]
+        # AdvancedPumpType still has its one class-layer subClassOf(PumpType)
+        # edge; it must NOT additionally own any owl:Restriction blank nodes.
+        owned_restrictions = [o for _, o in self.out.predicate_objects(OPCUA['AdvancedPumpType'])
+                              if (o, RDF.type, OWL.Restriction) in self.out]
+        self.assertEqual(owned_restrictions, [])
+        self.assertTrue(restrictions_owned)  # sanity: the class itself is in the graph
 
     def test_mandatory_cardinality_on_owner(self):
-        vt_drive = self.vt('BaseType', ['Drive'])
         card_restrictions = [r for r in self.out.subjects(RDF.type, OWL.Restriction)
                              if (r, OWL.onProperty, OPCUA['hasDrive']) in self.out and
-                             (r, OWL.onClass, vt_drive) in self.out]
+                             (r, OWL.onClass, OPCUA['DriveType']) in self.out]
         self.assertEqual(len(card_restrictions), 1)
         card = card_restrictions[0]
         self.assertEqual(int(self.out.value(card, OWL.minQualifiedCardinality)), 1)
         self.assertIn((OPCUA['BaseType'], RDFS.subClassOf, card), self.out)
 
-    def test_all_values_from_on_owner_no_some_values_from(self):
-        # someValuesFrom is deliberately never emitted: it's logically
-        # equivalent to minQualifiedCardinality(1, ...) for Mandatory (pure
-        # redundancy) and would be outright wrong for Optional (wrongly
-        # forcing every instance to have the relationship). See
-        # OwlBuilder._add_all_values_from's docstring.
-        vt_drive = self.vt('BaseType', ['Drive'])
-        allv = [r for r in self.out.subjects(OWL.allValuesFrom, vt_drive)
-                if (r, OWL.onProperty, OPCUA['hasDrive']) in self.out]
-        self.assertEqual(len(allv), 1)
-        self.assertIn((OPCUA['BaseType'], RDFS.subClassOf, allv[0]), self.out)
+    def test_no_some_values_from_anywhere(self):
+        # someValuesFrom is deliberately never emitted: logically equivalent
+        # to minQualifiedCardinality(1, ...) for Mandatory (redundant), and
+        # outright wrong for Optional (wrongly forces existence).
         self.assertEqual(len(list(self.out.subjects(OWL.someValuesFrom, None))), 0)
 
-    def test_optional_declaration_has_no_cardinality_restriction(self):
-        # Temperature is Optional in the fixture: allValuesFrom must exist,
-        # but no minQualifiedCardinality restriction should target its VT.
-        vt_temp = self.vt('BaseType', ['Drive', 'Motor', 'Temperature'])
-        owner = self.vt('BaseType', ['Drive', 'Motor'])
+    def test_optional_variable_has_no_cardinality_restriction(self):
+        # Temperature is Optional: allValuesFrom must exist on MotorType, but
+        # no minQualifiedCardinality restriction should target its VT.
+        vt_temp = self.vt('MotorType', 'Temperature')
         allv = [r for r in self.out.subjects(OWL.allValuesFrom, vt_temp)
                 if (r, OWL.onProperty, OPCUA['hasTemperature']) in self.out]
         card = [r for r in self.out.subjects(RDF.type, OWL.Restriction)
                 if (r, OWL.onClass, vt_temp) in self.out]
         self.assertEqual(len(allv), 1)
-        self.assertIn((owner, RDFS.subClassOf, allv[0]), self.out)
+        self.assertIn((OPCUA['MotorType'], RDFS.subClassOf, allv[0]), self.out)
         self.assertEqual(card, [])
 
     def test_temperature_valuerank_and_datatype(self):
-        vt_temp = self.vt('BaseType', ['Drive', 'Motor', 'Temperature'])
+        vt_temp = self.vt('MotorType', 'Temperature')
         self.assertIn((vt_temp, RDFS.subClassOf, OPCUA[VALUE_RANK_CLASSES[-1]]), self.out)
         datatype_restrictions = [r for r in self.out.subjects(RDF.type, OWL.Restriction)
                                  if (r, OWL.allValuesFrom, OPCUA['Double']) in self.out]
@@ -173,18 +187,21 @@ class TestVirtualTypeEmission(unittest.TestCase):
 
     def test_virtual_types_are_explicitly_typed_owl_class(self):
         # Regression test: a Virtual Type must be an asserted owl:Class, not
-        # merely implied by appearing as the object of rdfs:subClassOf/
-        # someValuesFrom/etc. Protege's own OWL-API parser infers class-hood
-        # from that usage context and renders the tree fine either way, but a
-        # literal SPARQL query against the raw triples (e.g. `?c a owl:Class`)
-        # only sees what's actually asserted, and found nothing without this.
-        vt_drive = self.vt('BaseType', ['Drive'])
-        self.assertIn((vt_drive, RDF.type, OWL.Class), self.out)
+        # merely implied by appearing as the object of rdfs:subClassOf/etc.
+        # Protege's own OWL-API parser infers class-hood from usage context
+        # and renders the tree fine either way, but a literal SPARQL query
+        # against the raw triples (e.g. `?c a owl:Class`) only sees what's
+        # actually asserted.
+        vt_temp = self.vt('MotorType', 'Temperature')
+        self.assertIn((vt_temp, RDF.type, OWL.Class), self.out)
 
-    def test_original_browsepath_annotation(self):
-        vt_temp = self.vt('BaseType', ['Drive', 'Motor', 'Temperature'])
+    def test_original_browsepath_annotation_is_the_local_key(self):
+        # Annotation is now just the local BrowsePath segment where the VT is
+        # minted, not a full multi-level path from some "root" -- there is no
+        # more "root" concept driving generation.
+        vt_temp = self.vt('MotorType', 'Temperature')
         path = self.out.value(vt_temp, self.builder.SB['originalBrowsePath'])
-        self.assertEqual(str(path), f'{OPCUA}Drive/{OPCUA}Motor/{OPCUA}Temperature')
+        self.assertEqual(str(path), key('Temperature'))
 
     def all_disjoint_sets(self):
         return [set(Collection(self.out, self.out.value(node, OWL.members)))
@@ -207,16 +224,15 @@ class TestVirtualTypeEmission(unittest.TestCase):
         self.assertIn((OPCUA['ValueRank_OneOrMoreDimensions'], RDFS.subClassOf, OPCUA['ValueRank_Any']),
                       self.out)
         # ScalarOrOneDimension = Scalar or OneDimension.
-        self.assertIn((OPCUA['ValueRank_Scalar'], RDFS.subClassOf, OPCUA['ValueRank_ScalarOrOneDimension']),
-                      self.out)
-        self.assertIn((OPCUA['ValueRank_OneDimension'], RDFS.subClassOf, OPCUA['ValueRank_ScalarOrOneDimension']),
-                      self.out)
+        one_dim = OPCUA['ValueRank_OneDimension']
+        scalar_or_one_dim = OPCUA['ValueRank_ScalarOrOneDimension']
+        one_or_more_dims = OPCUA['ValueRank_OneOrMoreDimensions']
+        self.assertIn((OPCUA['ValueRank_Scalar'], RDFS.subClassOf, scalar_or_one_dim), self.out)
+        self.assertIn((one_dim, RDFS.subClassOf, scalar_or_one_dim), self.out)
         # OneOrMoreDimensions = OneDimension or MoreDimensions -- OneDimension is
         # thus legitimately a subclass of BOTH composite categories.
-        self.assertIn((OPCUA['ValueRank_OneDimension'], RDFS.subClassOf, OPCUA['ValueRank_OneOrMoreDimensions']),
-                      self.out)
-        self.assertIn((OPCUA['ValueRank_MoreDimensions'], RDFS.subClassOf, OPCUA['ValueRank_OneOrMoreDimensions']),
-                      self.out)
+        self.assertIn((one_dim, RDFS.subClassOf, one_or_more_dims), self.out)
+        self.assertIn((OPCUA['ValueRank_MoreDimensions'], RDFS.subClassOf, one_or_more_dims), self.out)
 
     def test_no_instance_declaration_nodes_leak_into_output(self):
         leaked = list(self.out.subjects(RDF.type, OPCUA['ObjectNodeClass']))
@@ -248,42 +264,47 @@ class TestVirtualTypeEmission(unittest.TestCase):
 class TestSelfReferentialTypeTerminates(unittest.TestCase):
     """Regression test for a real pattern in the OPC UA core nodeset: a type
     (e.g. DictionaryEntryType) declaring a placeholder child typed as itself.
-    Without the `_visited` guard in emit_vt_tree, this recurses forever."""
+    In the fixture, that declaration ("Entry") also has its own local extra
+    child ("Label"), which forces a Virtual Type to be minted (a plain
+    self-reference with no local extension needs no VT at all) -- and minting
+    it recurses into get_cdt(DictionaryEntryType) while that very call is
+    still being computed, exactly the cycle the `_cdt_computing` guard in
+    get_cdt exists to break."""
 
     def setUp(self):
         self.builder = load_builder()
 
-    def key(self, name):
-        return f'{OPCUA}{name}'
-
     def test_cdt_contains_self_reference_without_hanging(self):
         cdt = self.builder.get_cdt(OPCUA['DictionaryEntryType'])
-        self.assertEqual(cdt[self.key('Entry')].base_type, OPCUA['DictionaryEntryType'])
+        self.assertEqual(cdt[key('Entry')].base_type, OPCUA['DictionaryEntryType'])
 
-    def test_run_terminates_and_stops_expanding_at_first_repetition(self):
-        self.builder.run(roots=[OPCUA['DictionaryEntryType']])
-        # Only the one-level-deep VT should ever have been minted; a second,
-        # nested "Entry/Entry" level must never have been generated.
-        minted_paths = {path for (_root, path) in self.builder._vt_iri_cache}
-        self.assertIn((self.key('Entry'),), minted_paths)
-        self.assertNotIn((self.key('Entry'), self.key('Entry')), minted_paths)
+    def test_entry_gets_its_own_vt_because_of_local_extension(self):
+        out = self.builder.run(roots=[OPCUA['DictionaryEntryType']])
+        entry_vt = self.builder._vt_cache[(str(OPCUA['DictionaryEntryType']), key('Entry'))]
+        self.assertTrue(str(entry_vt).split('/')[-1].startswith('VT_'))
+        self.assertIn((entry_vt, RDFS.subClassOf, OPCUA['DictionaryEntryType']), out)
 
-    def test_forward_referenced_supertype_vt_is_not_dangling(self):
-        # Regression test: scanning SpecialDictionaryEntryType (a subclass of
-        # DictionaryEntryType with no own definer node) as root reaches
-        # DictionaryEntryType's own two-level self-reference ("Entry/Entry") one
-        # step further than DictionaryEntryType's own root-scan ever does (its
-        # cycle cutoff kicks in a level earlier, since DictionaryEntryType is
-        # "already visited" as soon as it's its own root). The rule-9 link then
-        # mints DictionaryEntryType's "Entry/Entry" VT purely as a forward
-        # reference. It must still end up with its own rdfs:subClassOf edge
-        # (to DictionaryEntryType), not just rdf:type owl:Class + the
-        # originalBrowsePath annotation and nothing else.
-        out = self.builder.run(roots=[OPCUA['SpecialDictionaryEntryType']])
-        path = (self.key('Entry'), self.key('Entry'))
-        dangling_vt = self.builder._vt_iri_cache[(str(OPCUA['DictionaryEntryType']), path)]
-        supers = {o for o in out.objects(dangling_vt, RDFS.subClassOf) if isinstance(o, URIRef)}
-        self.assertIn(OPCUA['DictionaryEntryType'], supers)
+    def test_entrys_own_local_label_child_still_gets_processed(self):
+        # Despite the cycle guard truncating the ancestor side of the merge,
+        # the VT's OWN local children (from the "Entry" node itself, not from
+        # walking back into DictionaryEntryType) must still be picked up.
+        out = self.builder.run(roots=[OPCUA['DictionaryEntryType']])
+        entry_vt = self.builder._vt_cache[(str(OPCUA['DictionaryEntryType']), key('Entry'))]
+        label_vt = self.builder._vt_cache[(str(entry_vt), key('Label'))]
+        allv = [r for r in out.subjects(OWL.allValuesFrom, label_vt)
+                if (r, OWL.onProperty, OPCUA['hasLabel']) in out]
+        self.assertEqual(len(allv), 1)
+        self.assertIn((entry_vt, RDFS.subClassOf, allv[0]), out)
+        self.assertIn((label_vt, RDFS.subClassOf, OPCUA['PropertyType']), out)
+
+    def test_special_dictionary_entry_type_reuses_the_same_entry_no_redundant_vt(self):
+        # SpecialDictionaryEntryType <: DictionaryEntryType has no own definer
+        # node: pure pass-through, reusing the exact same (cached) entry/target
+        # -- no separate re-derivation happens just because a different class
+        # is used as the processing root.
+        self.builder.run(roots=[OPCUA['DictionaryEntryType'], OPCUA['SpecialDictionaryEntryType']])
+        self.assertEqual(self.builder.get_cdt(OPCUA['SpecialDictionaryEntryType']),
+                         self.builder.get_cdt(OPCUA['DictionaryEntryType']))
 
 
 class TestMethodsAreIgnored(unittest.TestCase):
@@ -299,10 +320,14 @@ class TestMethodsAreIgnored(unittest.TestCase):
 
 
 class TestCompanionSpecIncrementalVirtualTypes(unittest.TestCase):
-    """Mirrors the real di.ttl (imports core.ttl) scenario at small scale:
-    companion_example.ttl declares comp:SpecialPumpType, a subclass of
-    pump_example.ttl's opcua:PumpType, loaded here as an imported (`ig`)
-    dependency rather than as the main graph."""
+    """Mirrors the real di.ttl (imports core.ttl) scenario at small scale
+    (see tests/owlbuilder/companion_example.ttl):
+        comp:SpecialPumpType <: opcua:PumpType
+          declares a brand-new Variable "Extra" of its own.
+        comp:SpecialMotorType <: opcua:MotorType
+          overrides "Temperature"'s ValueRank (Scalar -> OneDimension, same
+          Datatype), which must link back to pump_example.ttl's own already-
+          generated VT(MotorType, "Temperature") as a bare reference."""
 
     def setUp(self):
         ig = Graph()
@@ -313,34 +338,36 @@ class TestCompanionSpecIncrementalVirtualTypes(unittest.TestCase):
         self.out = self.builder.run()
 
     def test_count_own_instance_declarations_excludes_imported_dependency(self):
-        # Only comp:SpecialPumpType's own new "Extra" declaration should
-        # count -- PumpType/BaseType/.../DictionaryEntryType's declarations
-        # belong to pump_example.ttl's own (separately counted) contribution.
-        self.assertEqual(self.builder.count_own_instance_declarations(), 1)
+        # Only the companion's own new "Extra" and "Temperature" (override)
+        # declarations should count -- PumpType/BaseType/... belong to
+        # pump_example.ttl's own (separately counted) contribution.
+        self.assertEqual(self.builder.count_own_instance_declarations(), 2)
 
     def test_all_target_classes_excludes_the_imported_dependencys_own_types(self):
         roots = self.builder.all_target_classes()
         self.assertIn(COMP['SpecialPumpType'], roots)
+        self.assertIn(COMP['SpecialMotorType'], roots)
         self.assertNotIn(OPCUA['PumpType'], roots)
-        self.assertNotIn(OPCUA['BaseType'], roots)
+        self.assertNotIn(OPCUA['MotorType'], roots)
 
-    def test_new_component_gets_a_fully_populated_vt_in_the_companion_namespace(self):
-        key = f'{OPCUA}Extra'
-        vt = self.builder._mint_vt_iri(COMP['SpecialPumpType'], [key])
+    def test_new_variable_gets_a_fully_populated_vt_in_the_companion_namespace(self):
+        vt = self.builder._vt_cache[(str(COMP['SpecialPumpType']), key('Extra'))]
         self.assertTrue(str(vt).startswith(str(COMP)), f'expected companion namespace, got {vt}')
-        self.assertIn((vt, RDFS.subClassOf, OPCUA['MotorType']), self.out)
+        self.assertIn((vt, RDFS.subClassOf, OPCUA['PropertyType']), self.out)
 
-    def test_inherited_declaration_links_to_a_bare_reference_not_a_duplicate(self):
-        # SpecialPumpType inherits "Drive" from PumpType (an imported-dependency
-        # type). Rule 9 must link to PumpType's own Virtual Type for that path,
-        # but must NOT re-populate its content here -- pump_example.ttl's own
-        # separate processing run already fully defines it, and this file's
-        # ontology header is assumed to owl:import that output.
-        drive_key = f'{OPCUA}Drive'
-        pump_vt = self.builder._mint_vt_iri(OPCUA['PumpType'], [drive_key])
-        self.assertTrue(str(pump_vt).startswith(str(OPCUA)))
-        self.assertEqual(list(self.out.predicate_objects(pump_vt)), [],
-                         'imported dependency\'s own VT must be a bare reference, not duplicated content')
+    def test_valuerank_override_mints_new_vt_linking_to_foreign_vt_as_bare_reference(self):
+        # SpecialMotorType's own new VT for "Temperature" (ValueRank
+        # overridden to OneDimension) must link back to MotorType's own
+        # "Temperature" VT (from the dependency, ValueRank Scalar) -- but
+        # that foreign VT must be a bare reference, no duplicated content.
+        new_vt = self.builder._vt_cache[(str(COMP['SpecialMotorType']), key('Temperature'))]
+        foreign_vt = self.builder._vt_cache[(str(OPCUA['MotorType']), key('Temperature'))]
+        self.assertTrue(str(new_vt).startswith(str(COMP)))
+        self.assertTrue(str(foreign_vt).startswith(str(OPCUA)))
+        self.assertIn((new_vt, RDFS.subClassOf, OPCUA['ValueRank_OneDimension']), self.out)
+        self.assertIn((new_vt, RDFS.subClassOf, foreign_vt), self.out)
+        self.assertEqual(list(self.out.predicate_objects(foreign_vt)), [],
+                         "dependency's own VT must be a bare reference, not duplicated content")
 
     def test_no_pump_example_classes_or_properties_are_copied_into_the_output(self):
         # _copy_class_and_property_layer must stay scoped to the companion

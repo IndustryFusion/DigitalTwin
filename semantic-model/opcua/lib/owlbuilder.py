@@ -70,12 +70,22 @@ SEMANTIC_BRIDGE_NS = Namespace('https://industryfusion.github.io/contexts/ontolo
 class DeclEntry:
     """One entry of an Effective Declaration Tree: a single declared child at a
     given BrowsePath segment, already merged with whatever the direct supertype
-    inherited at the same segment."""
+    inherited at the same segment.
+
+    `target` is what a restriction on this declaration should actually point
+    at, resolved need-based (see OwlBuilder._resolve_target): the inherited
+    target unchanged (pure pass-through -- nothing new to say), the real
+    declared type directly (a plain Object override/new declaration with no
+    extra local content -- the real type already fully specifies itself, no
+    synthetic wrapper needed), or a freshly minted Virtual Type (needed
+    whenever the declaration itself carries content beyond a bare type
+    reference)."""
     base_type: URIRef
     nodeclass: URIRef
     semantic_property: Optional[URIRef]
     is_optional: Optional[bool]
     is_placeholder: bool
+    target: Optional[URIRef] = None
     value_rank: Optional[int] = None
     datatype: Optional[URIRef] = None
 
@@ -110,9 +120,11 @@ class OwlBuilder:
         self.out.bind('base', basens)
         self.out.bind('sb', self.SB)
         self._cdt_cache = {}
+        self._cdt_computing = set()
         self._definer_node_cache = {}
-        self._vt_iri_cache = {}
+        self._vt_cache = {}
         self._valuerank_vocabulary_emitted = False
+        self._own_classes = set(g.subjects(RDF.type, OWL.Class))
         # Part 5 (nodeset2owl.py) rewrites `?instance a ?type` into
         # `?instance base:instanceOf ?type` for Object instance declarations right
         # before serializing core.ttl (see utils.replace_type_of_node_iris), so that
@@ -129,6 +141,55 @@ class OwlBuilder:
         # *write*-side scans (all_target_classes, _copy_class_and_property_layer)
         # are deliberately scoped to `g` alone.
         self.combined = self.g + self.ig
+        # get_all_subreferences() re-parses and re-plans a SPARQL query (with a
+        # transitive rdfs:subPropertyOf* property path) on every single call. The
+        # need-based design calls the HasChild lookup once per *declaration entry*
+        # (via _has_local_children), not once per *type* as the old exhaustive
+        # design did, so that per-call overhead now dominates runtime on any file
+        # with many instance declarations. The set of HasChild subproperties is
+        # small and static (an ontology-level fact, independent of instance data),
+        # so compute it once here and use plain triple matching everywhere else.
+        self._haschild_properties = self._compute_haschild_properties()
+
+    def _compute_haschild_properties(self):
+        query = """
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        SELECT DISTINCT ?p WHERE { ?p rdfs:subPropertyOf* ?haschild }
+        """
+        result = self.combined.query(query, initBindings={'haschild': self.opcuans['HasChild']})
+        return frozenset(row[0] for row in result)
+
+    def _get_children(self, node):
+        """Equivalent to RdfUtils.get_all_subreferences(combined, node,
+        HasChild), but via a cached property set and plain triple matching
+        instead of a fresh SPARQL query per call (see _compute_haschild_properties)."""
+        return [(p, o) for p, o in self.combined.predicate_objects(node) if p in self._haschild_properties]
+
+    def _get_type(self, node):
+        """Equivalent to RdfUtils.get_type(combined, node) -- (nodeclass,
+        declared-type) -- but via plain triple matching instead of a fresh
+        SPARQL query per call. query_realtype has no transitive property
+        path at all (unlike get_all_subreferences' rdfs:subPropertyOf*), so
+        it never needed SPARQL in the first place; it's just as hot a call
+        site (once per declaration entry via _merge_local/_has_local_children)
+        and dominates runtime on large files the same way get_all_subreferences
+        did (see _compute_haschild_properties's docstring)."""
+        opcua_prefix = str(self.opcuans)
+        nodeclass = None
+        realtype = None
+        for t in self.combined.objects(node, RDF.type):
+            if t == OWL.NamedIndividual:
+                continue
+            ts = str(t)
+            if ts.startswith(opcua_prefix) and ts.endswith('NodeClass'):
+                nodeclass = t
+            else:
+                realtype = t
+        if realtype is None:
+            defines = next(self.combined.objects(node, self.basens['definesType']), None)
+            if defines is not None and (node, RDF.type, self.opcuans['ObjectTypeNodeClass']) in self.combined:
+                realtype = defines
+        return nodeclass, realtype
 
     # ------------------------------------------------------------------
     # Graph primitives
@@ -197,9 +258,7 @@ class OwlBuilder:
         Methods excluded) that `g` itself introduces -- i.e. the raw nodes
         Virtual Type generation is replacing, one level per type. This is
         deliberately the *un*-expanded count: it does not follow inheritance
-        or recurse into nested declarations' own children (that recursive
-        unrolling, done separately per root by emit_vt_tree, is exactly what
-        makes the Virtual Type count larger than this). Filtering mirrors
+        or recurse into nested declarations' own children. Filtering mirrors
         get_cdt's own loop exactly, just counting instead of building
         DeclEntry objects."""
         count = 0
@@ -207,120 +266,186 @@ class OwlBuilder:
             definer_node = self._definer_node(class_iri)
             if definer_node is None:
                 continue
-            children = self.rdfutils.get_all_subreferences(
-                self.combined, definer_node, self.opcuans['HasChild'])
+            children = self._get_children(definer_node)
             for _refprop, child in children:
-                nodeclass, base_type = self.rdfutils.get_type(self.combined, child)
+                nodeclass, base_type = self._get_type(child)
                 if nodeclass == self.opcuans['MethodNodeClass'] or base_type is None:
                     continue
                 count += 1
         return count
 
     # ------------------------------------------------------------------
-    # Effective Declaration Tree (§4)
+    # Effective Declaration Tree (§4) -- need-based Virtual Type minting
     # ------------------------------------------------------------------
+    #
+    # A Virtual Type is only minted where a declaration's own content actually
+    # differs from what's already established further up the inheritance
+    # chain: a type override, a ValueRank/Datatype change (Variables), or the
+    # declaration node having its own local children beyond what its nominal
+    # type provides (OPC UA lets a declaration retype-by-addition, not just
+    # retype-by-substitution -- e.g. a component typed as the bare, empty
+    # opcua:BaseObjectType that locally adds its own specific sub-properties;
+    # see the "LiveValues" example in PubSubDiagnosticsDataSetWriterType).
+    # Pure pass-through (inherited, nothing changed) needs nothing at all:
+    # ordinary rdfs:subClassOf already propagates the ancestor's restriction
+    # for free. A ModellingRule-only change (same target, different
+    # cardinality) doesn't need a new Virtual Type either, just a new
+    # cardinality restriction on the owner targeting whatever's already
+    # established -- cardinality is a property of the *edge*, not the target.
 
     def get_cdt(self, class_iri):
+        """Effective Declaration Tree of class_iri: dict[qualified_browsename
+        -> DeclEntry], merged with the direct supertype's own tree (local
+        wins on key collision). Each entry's `.target` is resolved need-based
+        by _resolve_target, and writes whatever axioms it requires as a side
+        effect (only if class_iri belongs to `g` -- see `is_own` throughout)."""
         if class_iri in self._cdt_cache:
             return self._cdt_cache[class_iri]
-        super_iri = self._direct_supertype(class_iri)
-        result = dict(self.get_cdt(super_iri)) if super_iri is not None else {}
-        definer_node = self._definer_node(class_iri)
-        if definer_node is not None:
-            children = self.rdfutils.get_all_subreferences(self.combined, definer_node, self.opcuans['HasChild'])
-            for _refprop, child in children:
-                nodeclass, base_type = self.rdfutils.get_type(self.combined, child)
-                if nodeclass == self.opcuans['MethodNodeClass']:
-                    continue  # Methods are out of scope for this phase.
-                if base_type is None:
-                    continue
-                key = self._qualified_browsename(child)
-                semantic_property = self.rdfutils.get_semantic_bridge(self.combined, definer_node, child)
-                is_optional, is_placeholder = self.rdfutils.get_modelling_rule(self.combined, child, None, class_iri)
-                entry = DeclEntry(
-                    base_type=base_type,
-                    nodeclass=nodeclass,
-                    semantic_property=semantic_property,
-                    is_optional=is_optional,
-                    is_placeholder=is_placeholder,
-                )
-                if nodeclass == self.opcuans['VariableNodeClass']:
-                    entry.value_rank = self._value_rank(child)
-                    entry.datatype = self._datatype(child)
-                result[key] = entry
+        if class_iri in self._cdt_computing:
+            # Self-referential type (e.g. DictionaryEntryType declares a
+            # placeholder child typed as itself): break the cycle by treating
+            # the not-yet-resolved ancestor tree as empty at this point.
+            return {}
+        self._cdt_computing.add(class_iri)
+        try:
+            super_iri = self._direct_supertype(class_iri)
+            parent_tree = self.get_cdt(super_iri) if super_iri is not None else {}
+            is_own = class_iri in self._own_classes
+            result = self._merge_local(parent_tree, self._definer_node(class_iri), class_iri, is_own)
+        finally:
+            self._cdt_computing.discard(class_iri)
         self._cdt_cache[class_iri] = result
         return result
 
-    def resolve_path(self, class_iri, path):
-        """Dimension-1 helper (§9): does `path` exist in class_iri's Effective
-        Declaration Tree? Used to decide whether a Virtual Type should link back
-        to the corresponding Virtual Type of the root type's direct supertype."""
-        if class_iri is None:
-            return None
-        entry = self.get_cdt(class_iri).get(path[0])
-        if entry is None:
-            return None
-        return entry if len(path) == 1 else self.resolve_path(entry.base_type, path[1:])
+    def _merge_local(self, parent_tree, source_node, owner, is_own):
+        """Merge source_node's own direct HasChild children into parent_tree
+        (local declarations override/extend on key collision, otherwise
+        pure inheritance pass-through). `owner` is whatever the resulting
+        restrictions should be attached to: a real class (from get_cdt) or a
+        freshly minted Virtual Type (from _mint_vt's own nested recursion)."""
+        result = dict(parent_tree)
+        if source_node is None:
+            return result
+        children = self._get_children(source_node)
+        for _refprop, child in children:
+            nodeclass, base_type = self._get_type(child)
+            if nodeclass == self.opcuans['MethodNodeClass'] or base_type is None:
+                continue  # Methods are out of scope for this phase.
+            key = self._qualified_browsename(child)
+            inherited_entry = parent_tree.get(key)
+            semantic_property = self.rdfutils.get_semantic_bridge(self.combined, source_node, child)
+            is_optional, is_placeholder = self.rdfutils.get_modelling_rule(self.combined, child, None, owner)
+            entry = DeclEntry(
+                base_type=base_type,
+                nodeclass=nodeclass,
+                semantic_property=semantic_property,
+                is_optional=is_optional,
+                is_placeholder=is_placeholder,
+            )
+            if nodeclass == self.opcuans['VariableNodeClass']:
+                entry.value_rank = self._value_rank(child)
+                entry.datatype = self._datatype(child)
+            entry.target = self._resolve_target(owner, key, entry, inherited_entry, child, is_own)
+            result[key] = entry
+            if is_own and self._needs_owner_restriction(entry, inherited_entry):
+                self._write_owner_restriction(owner, entry)
+        return result
+
+    def _has_local_children(self, node):
+        """Does this specific declaration node have its own direct HasChild
+        children (Methods excluded), beyond whatever its nominal type alone
+        provides? True only for the rare "retype-by-addition" pattern."""
+        children = self._get_children(node)
+        for _ref, child in children:
+            nodeclass, base_type = self._get_type(child)
+            if nodeclass == self.opcuans['MethodNodeClass'] or base_type is None:
+                continue
+            return True
+        return False
+
+    def _resolve_target(self, owner, key, entry, inherited_entry, node, is_own):
+        """What should a restriction on this declaration point at? See the
+        module-level rationale above this class's Effective Declaration Tree
+        section for the full reasoning."""
+        own_local_children = self._has_local_children(node)
+
+        if entry.nodeclass == self.opcuans['VariableNodeClass']:
+            type_changed = inherited_entry is None or inherited_entry.base_type != entry.base_type
+            valuerank_changed = inherited_entry is None or inherited_entry.value_rank != entry.value_rank
+            datatype_changed = inherited_entry is None or inherited_entry.datatype != entry.datatype
+            needs_vt = type_changed or valuerank_changed or datatype_changed or own_local_children
+            if not needs_vt:
+                return inherited_entry.target  # nothing changed at all: reuse
+            return self._mint_vt(owner, key, entry, inherited_entry, node, is_own)
+
+        # Object declaration: a plain type override or brand-new declaration,
+        # with no local extension, needs no synthetic wrapper -- the real
+        # declared type already fully specifies itself (it's independently
+        # processed, like every other class in `all_target_classes()`).
+        if own_local_children:
+            return self._mint_vt(owner, key, entry, inherited_entry, node, is_own)
+        return entry.base_type
+
+    def _needs_owner_restriction(self, entry, inherited_entry):
+        if entry.semantic_property is None:
+            return False
+        if inherited_entry is None:
+            return True
+        return entry.target != inherited_entry.target or entry.is_optional != inherited_entry.is_optional
+
+    def _write_owner_restriction(self, owner, entry):
+        self._add_all_values_from(owner, entry.semantic_property, entry.target)
+        if entry.is_optional is False:  # Mandatory or MandatoryPlaceholder
+            self._add_cardinality(owner, entry.semantic_property, entry.target)
 
     # ------------------------------------------------------------------
     # Virtual Type identity (§6-7)
     # ------------------------------------------------------------------
 
-    def _mint_vt_iri(self, root_iri, path):
-        """Mint (or fetch) the Virtual Type IRI for (root_iri, path), and fully
-        self-type it -- base typing rule (§8), ValueRank/Datatype (§17-18), and
-        the supertype-VT link (§9) -- right here, at first creation.
+    def _mint_vt(self, owner, key, entry, inherited_entry, node, is_own):
+        """Mint (or fetch) the Virtual Type for (owner, key) -- only reached
+        when the declaration genuinely needs its own identity (see
+        _resolve_target). Namespaced under `owner`'s own namespace (`owner`
+        may be a real class or a previously minted VT, both are URIRefs).
 
-        This must be self-contained rather than relying on emit_vt_tree's
-        top-down walk to "happen to visit" this exact (root, path) pair: rule 9
-        mints a VT for the *supertype's own* root as a forward reference, and
-        for self-referential types (see the `_visited` guard in emit_vt_tree)
-        that supertype's own top-down walk may never actually reach the same
-        depth -- its cycle cutoff kicks in one level earlier, since from its
-        own root the self-reference is "already visited" immediately, whereas
-        a subtype reaches the same class one level later. Without this, such a
-        forward-referenced VT would be minted (typed owl:Class, annotated) but
-        never get a subClassOf axiom of its own -- a dangling Virtual Type with
-        no relation to any original class.
-
-        Companion-spec case: `root_iri` may belong to an *imported* dependency
-        rather than to the file this OwlBuilder is generating output for (e.g.
-        di.ttl's rule-9 link to a supertype VT rooted at a core.ttl type). Such
-        a VT's IRI must still be namespaced under its *own* root (not always
-        `opcuans`, which was a bug -- every companion spec's Virtual Types were
-        landing under opcua: regardless of the spec's own namespace), but its
-        content must NOT be (re-)populated here: that root's own dependency was
-        already processed on its own and fully defines this exact VT (the hash
-        is deterministic, so the IRI matches) in its own output file, which
-        this file's ontology header owl:imports. Populating it again here would
-        just duplicate that entire file's worth of axioms."""
-        key = (str(root_iri), tuple(path))
-        if key in self._vt_iri_cache:
-            return self._vt_iri_cache[key]
-        qualified_path = '/'.join(path)
-        digest = hashlib.sha256(f'{root_iri}|{qualified_path}'.encode('utf-8')).hexdigest()[:24]
-        vt_namespace = Namespace(split_uri(root_iri)[0])
+        Companion-spec case: `is_own` is False when `owner` belongs to an
+        *imported* dependency rather than to the file this OwlBuilder is
+        generating output for (e.g. di.ttl reading core.ttl's own
+        AnalogUnitType to correctly link/inherit from it). The VT's IRI is
+        still computed (deterministically, so our own references match it),
+        but its content must NOT be (re-)populated here: that dependency was
+        already processed on its own and fully defines this exact VT in its
+        own output file, which this file's ontology header owl:imports.
+        Populating it again here would just duplicate that file's axioms."""
+        cache_key = (str(owner), key)
+        if cache_key in self._vt_cache:
+            return self._vt_cache[cache_key]
+        digest = hashlib.sha256(f'{owner}|{key}'.encode('utf-8')).hexdigest()[:24]
+        vt_namespace = Namespace(split_uri(owner)[0])
         vt_iri = vt_namespace[f'VT_{digest}']
-        self._vt_iri_cache[key] = vt_iri
+        self._vt_cache[cache_key] = vt_iri
 
-        if (root_iri, RDF.type, OWL.Class) not in self.g:
-            return vt_iri  # foreign root: bare reference only, see docstring
+        if not is_own:
+            return vt_iri  # foreign: bare reference only, see docstring
 
         self.out.add((vt_iri, RDF.type, OWL.Class))
-        self.out.add((vt_iri, self.SB['originalBrowsePath'], Literal(qualified_path)))
+        self.out.add((vt_iri, self.SB['originalBrowsePath'], Literal(key)))
+        self.out.add((vt_iri, RDFS.subClassOf, entry.base_type))  # §8 base typing rule
 
-        entry = self.resolve_path(root_iri, path)
-        if entry is not None:
-            self.out.add((vt_iri, RDFS.subClassOf, entry.base_type))  # §8 base typing rule
+        if entry.nodeclass == self.opcuans['VariableNodeClass']:
+            self.out.add((vt_iri, RDFS.subClassOf, self._valuerank_class(entry.value_rank)))
+            self._add_datatype_restriction(vt_iri, entry.datatype)
 
-            if entry.nodeclass == self.opcuans['VariableNodeClass']:
-                self.out.add((vt_iri, RDFS.subClassOf, self._valuerank_class(entry.value_rank)))
-                self._add_datatype_restriction(vt_iri, entry.datatype)
+        if inherited_entry is not None:
+            # §9/§10: narrow relative to whatever was already established --
+            # both edges land on vt_iri, so a reasoner can catch a genuinely
+            # incompatible narrowing.
+            self.out.add((vt_iri, RDFS.subClassOf, inherited_entry.target))
 
-            super_root = self._direct_supertype(root_iri)
-            if super_root is not None and self.resolve_path(super_root, path) is not None:
-                super_vt = self._mint_vt_iri(super_root, path)  # §9 inheritance (covers §10 override too)
-                self.out.add((vt_iri, RDFS.subClassOf, super_vt))
+        # Recurse: this VT's own nested declarations = merge(the nominal
+        # type's own effective tree, this specific node's own local
+        # children) -- exactly what made the "LiveValues" example work.
+        self._merge_local(self.get_cdt(entry.base_type), node, vt_iri, is_own)
         return vt_iri
 
     # ------------------------------------------------------------------
@@ -408,36 +533,6 @@ class OwlBuilder:
         self.out.add((r, OWL.onProperty, prop))
         self.out.add((r, OWL.allValuesFrom, datatype_iri))
         self.out.add((vt_iri, RDFS.subClassOf, r))
-
-    # ------------------------------------------------------------------
-    # Virtual Type + restriction emission (§8-16)
-    # ------------------------------------------------------------------
-
-    def emit_vt_tree(self, root_iri, current_class, path_prefix, _visited=frozenset()):
-        # `_visited` guards against genuinely self-referential OPC UA types.
-        # The standard core nodeset itself contains these: e.g. DictionaryEntryType
-        # declares an OptionalPlaceholder child "<DictionaryEntryName>" typed as
-        # DictionaryEntryType itself (a dictionary/tree of arbitrarily many named
-        # entries), and DictionaryFolderType does the same. Dimension-2 recursion
-        # (recursing into entry.base_type) has no natural base case for such types,
-        # so without this guard emit_vt_tree recurses forever. The fix: once we'd
-        # revisit a class already on the current root-to-here recursion path, still
-        # emit that level's Virtual Type and restriction (so the recursive
-        # BrowsePath is representable at least one level deep), but stop descending
-        # further into its children.
-        visited = _visited | {current_class}
-        for key, entry in self.get_cdt(current_class).items():
-            full_path = path_prefix + [key]
-            vt = self._mint_vt_iri(root_iri, full_path)  # self-typing: §8, §9, §17-18
-
-            owner = self._mint_vt_iri(root_iri, path_prefix) if path_prefix else root_iri
-            if entry.semantic_property is not None:
-                self._add_all_values_from(owner, entry.semantic_property, vt)
-                if entry.is_optional is False:  # Mandatory or MandatoryPlaceholder
-                    self._add_cardinality(owner, entry.semantic_property, vt)
-
-            if entry.base_type not in visited:
-                self.emit_vt_tree(root_iri, entry.base_type, full_path, visited)  # dimension-2 recursion
 
     # ------------------------------------------------------------------
     # Pure-OWL class/property layer passthrough (§19-20)
@@ -543,5 +638,5 @@ class OwlBuilder:
         for index, root in enumerate(targets, start=1):
             if progress is not None:
                 progress(index, total, root)
-            self.emit_vt_tree(root, root, [])
+            self.get_cdt(root)  # triggers processing; writes root's own restrictions as a side effect
         return self.out

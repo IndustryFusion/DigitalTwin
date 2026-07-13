@@ -3,13 +3,12 @@
      case). BaseType declares a Mandatory component "Drive" : DriveType.
      SubType <: BaseType declares nothing of its own.
 
-     Expect:
-       VT(BaseType, "Drive") rdfs:subClassOf opcua:DriveType only.
-       VT(SubType, "Drive")  rdfs:subClassOf opcua:DriveType (§8, unchanged)
-                             AND rdfs:subClassOf VT(BaseType, "Drive") (§9).
-     DriveType itself has no declarations of its own (a leaf type), and
-     SubType has no own definer node at all, both edge cases exercised by
-     the unit tests, now proven through the real nodeset2owl.py pipeline too. -->
+     Expect: no Virtual Type at all. A plain Object declaration/override with
+     no local structural extension needs no synthetic wrapper: the
+     restriction on BaseType targets opcua:DriveType directly. SubType has no
+     own definer node (pure inheritance) and gets no new axioms whatsoever:
+     it relies entirely on rdfs:subClassOf BaseType (proven through the real
+     nodeset2owl.py pipeline, not just the unit tests). -->
 <UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
            LastModified="2024-07-15T00:00:00Z"

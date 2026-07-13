@@ -176,8 +176,13 @@ opcua:nodei1010 a opcua:ObjectNodeClass ;
 # Mirrors a real pattern found in the actual OPC UA core nodeset: DictionaryEntryType
 # declares an OptionalPlaceholder child "<DictionaryEntryName>" typed as
 # DictionaryEntryType itself (an arbitrarily nested dictionary/tree of entries).
-# Dimension-2 recursion in emit_vt_tree has no natural base case for this, so it
-# must be guarded against infinite recursion (see the `_visited` parameter).
+# The "Entry" declaration also has its own local extra child "Label" (beyond
+# what DictionaryEntryType itself provides), which forces a Virtual Type to be
+# minted here (a plain self-reference with no local extension needs no VT at
+# all under the need-based design -- it just targets DictionaryEntryType
+# directly). Minting that VT recurses into get_cdt(DictionaryEntryType) while
+# that same call is still on the stack computing "Entry" itself -- exactly
+# the cycle the `_cdt_computing` guard in get_cdt exists to break.
 
 opcua:nodei11508 a opcua:ObjectNodeClass ;
     base:hasBrowseName "OptionalPlaceholder" ;
@@ -186,6 +191,7 @@ opcua:nodei11508 a opcua:ObjectNodeClass ;
     base:hasSymbolicName "ModellingRule_OptionalPlaceholder" .
 
 opcua:hasEntry rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+opcua:hasLabel rdfs:subPropertyOf base:SemanticBridgeReferenceType .
 
 opcua:DictionaryEntryType a owl:Class ;
     rdfs:subClassOf opcua:BaseObjectType .
@@ -200,10 +206,20 @@ opcua:nodei2001 a opcua:ObjectTypeNodeClass ;
 
 opcua:nodei2002 a opcua:ObjectNodeClass ;
     opcua:HasModellingRule opcua:nodei11508 ;
+    opcua:HasProperty opcua:nodei2003 ;
+    opcua:hasLabel opcua:nodei2003 ;
     base:instanceOf opcua:DictionaryEntryType ;
     base:hasBrowseName "Entry" ;
     base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasNodeId "2002" .
+
+opcua:nodei2003 a opcua:PropertyType,
+        opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei80 ;
+    base:hasDatatype opcua:String ;
+    base:hasBrowseName "Label" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "2003" .
 
 # Subclass with no own definer node (pure inheritance), mirroring the real
 # core.ttl case (IrdiDictionaryEntryType etc.) that first exposed the dangling

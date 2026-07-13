@@ -1,16 +1,23 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!-- Part 14 e2e scenario 4/5: three-level recursive containment
      (PumpType -> Drive -> Motor -> {Temperature, Readings}) with mixed
-     ModellingRules and a non-default ValueRank, exercising §11's recursive
-     expansion together with §16-18 in combination.
+     ModellingRules and a non-default ValueRank, exercising recursive
+     Effective Declaration Tree traversal together with §16-18 in
+     combination, and the need-based design's central point: Drive/Motor
+     are plain Object declarations with no local extension of their own, so
+     neither gets a Virtual Type at all.
 
      Expect:
-       VT(PumpType, "Drive")                      subClassOf DriveType, Mandatory cardinality on PumpType
-       VT(PumpType, "Drive/Motor")                 subClassOf MotorType, Mandatory cardinality on VT(PumpType,"Drive")
-       VT(PumpType, "Drive/Motor/Temperature")     subClassOf PropertyType, ValueRank_Scalar (default),
-                                                    Datatype->Double, NO cardinality restriction (Optional)
-       VT(PumpType, "Drive/Motor/Readings")        subClassOf PropertyType, ValueRank_OneDimension (explicit),
-                                                    Datatype->Int32, Mandatory cardinality (array Property) -->
+       PumpType   : hasDrive allValuesFrom/minQualifiedCardinality(1) DriveType directly (no VT)
+       DriveType  : hasMotor allValuesFrom/minQualifiedCardinality(1) MotorType directly (no VT)
+       MotorType  : hasTemperature allValuesFrom VT(MotorType,"Temperature"), no cardinality (Optional):
+                     VT subClassOf PropertyType, ValueRank_Scalar (default), Datatype->Double
+                  : hasReadings allValuesFrom/minQualifiedCardinality(1) VT(MotorType,"Readings")
+                     (array Property, Mandatory): VT subClassOf PropertyType,
+                     ValueRank_OneDimension (explicit), Datatype->Int32
+     Temperature/Readings are Variables, so they always get their own VT (to
+     carry ValueRank/Datatype), unlike the purely-structural Drive/Motor
+     Object declarations above them. -->
 <UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
            LastModified="2024-07-15T00:00:00Z"
