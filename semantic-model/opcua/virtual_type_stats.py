@@ -150,19 +150,29 @@ def resolve_dependencies(g):
     return ig
 
 
-def write_pdf_chart(rows, pdf_path):
-    """Render a two-panel bar chart (counts on a log scale, then both ratios
-    on a linear scale) to a single PDF page, suitable for dropping straight
-    into a slide. Only files that actually introduce Virtual Types are
-    plotted -- an all-zero file (e.g. a pure instance-example nodeset with no
-    own ObjectType/VariableType declarations) contributes nothing readable to
-    either panel."""
+def filter_for_presentation(rows, min_types):
+    """Drop files with a very low or zero own-type count (pure instance
+    examples like pumpexample.ttl declare none at all, and contribute
+    nothing readable to a chart or summary table) and sort by Virtual Type
+    count descending, for consistent presentation ordering across both the
+    chart and the table."""
+    filtered = [r for r in rows if r[1] >= min_types]
+    filtered.sort(key=lambda r: r[3], reverse=True)
+    return filtered
+
+
+def write_pdf_report(rows, pdf_path, min_types):
+    """Render a two-page PDF suitable for dropping straight into a slide
+    deck: page 1 is a two-panel bar chart (counts on a log scale, both
+    ratios on a linear scale), page 2 is the same data as a plain summary
+    table with a TOTAL row. Both pages use the same filtered/sorted file
+    list (see filter_for_presentation)."""
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
+    from matplotlib.backends.backend_pdf import PdfPages
 
-    plotted = [r for r in rows if r[3] > 0]
-    plotted.sort(key=lambda r: r[3], reverse=True)
+    plotted = filter_for_presentation(rows, min_types)
     names = [r[0].removesuffix('.ttl') for r in plotted]
     types = [r[1] for r in plotted]
     instance_decls = [r[2] for r in plotted]
@@ -170,32 +180,56 @@ def write_pdf_chart(rows, pdf_path):
     vt_per_type = [r[4] for r in plotted]
     vt_per_decl = [r[5] for r in plotted]
 
-    x = range(len(plotted))
-    width = 0.27
+    with PdfPages(pdf_path) as pdf:
+        x = range(len(plotted))
+        width = 0.27
 
-    fig, (ax_counts, ax_ratios) = plt.subplots(2, 1, figsize=(14, 9))
+        fig, (ax_counts, ax_ratios) = plt.subplots(2, 1, figsize=(14, 9))
 
-    ax_counts.bar([i - width for i in x], types, width, label='Types declared')
-    ax_counts.bar(list(x), instance_decls, width, label='Instance Declarations')
-    ax_counts.bar([i + width for i in x], virtual, width, label='Virtual Types')
-    ax_counts.set_yscale('log')
-    ax_counts.set_ylabel('count (log scale)')
-    ax_counts.set_title('Virtual Type growth across the OPC UA companion-spec corpus')
-    ax_counts.legend()
-    ax_counts.set_xticks(list(x))
-    ax_counts.set_xticklabels(names, rotation=45, ha='right')
+        ax_counts.bar([i - width for i in x], types, width, label='Types declared')
+        ax_counts.bar(list(x), instance_decls, width, label='Instance Declarations')
+        ax_counts.bar([i + width for i in x], virtual, width, label='Virtual Types')
+        ax_counts.set_yscale('log')
+        ax_counts.set_ylabel('count (log scale)')
+        ax_counts.set_title('Virtual Type growth across the OPC UA companion-spec corpus')
+        ax_counts.legend()
+        ax_counts.set_xticks(list(x))
+        ax_counts.set_xticklabels(names, rotation=45, ha='right')
 
-    ax_ratios.bar([i - width / 2 for i in x], vt_per_type, width, label='Virtual Types per type')
-    ax_ratios.bar([i + width / 2 for i in x], vt_per_decl, width,
-                  label='Virtual Types per Instance Declaration')
-    ax_ratios.set_ylabel('ratio (x)')
-    ax_ratios.set_xticks(list(x))
-    ax_ratios.set_xticklabels(names, rotation=45, ha='right')
-    ax_ratios.legend()
+        ax_ratios.bar([i - width / 2 for i in x], vt_per_type, width, label='Virtual Types per type')
+        ax_ratios.bar([i + width / 2 for i in x], vt_per_decl, width,
+                      label='Virtual Types per Instance Declaration')
+        ax_ratios.set_ylabel('ratio (x)')
+        ax_ratios.set_xticks(list(x))
+        ax_ratios.set_xticklabels(names, rotation=45, ha='right')
+        ax_ratios.legend()
 
-    fig.tight_layout()
-    fig.savefig(pdf_path, format='pdf')
-    plt.close(fig)
+        fig.tight_layout()
+        pdf.savefig(fig)
+        plt.close(fig)
+
+        col_labels = ['File', 'Types', 'Instance Decls', 'Virtual Types', 'VT/Type', 'VT/Decl']
+        cell_text = [[name, str(t), str(d), str(v), f'{vpt:.1f}x', f'{vpd:.1f}x']
+                     for name, t, d, v, vpt, vpd
+                     in zip(names, types, instance_decls, virtual, vt_per_type, vt_per_decl)]
+        total_types, total_decls, total_vt = sum(types), sum(instance_decls), sum(virtual)
+        cell_text.append(['TOTAL', str(total_types), str(total_decls), str(total_vt),
+                          f'{(total_vt / total_types if total_types else 0):.1f}x',
+                          f'{(total_vt / total_decls if total_decls else 0):.1f}x'])
+
+        fig2, ax2 = plt.subplots(figsize=(11, 0.4 * len(cell_text) + 1.5))
+        ax2.axis('off')
+        ax2.set_title('Virtual Type growth summary', pad=20)
+        table = ax2.table(cellText=cell_text, colLabels=col_labels, loc='center', cellLoc='center')
+        table.auto_set_font_size(False)
+        table.set_fontsize(10)
+        table.scale(1, 1.5)
+        for (row, _col), cell in table.get_celld().items():
+            if row == 0 or row == len(cell_text):
+                cell.set_text_props(weight='bold')
+        fig2.tight_layout()
+        pdf.savefig(fig2)
+        plt.close(fig2)
 
 
 def main():
@@ -203,8 +237,12 @@ def main():
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('-o', '--output', help='Optional CSV file to also write the results to.',
                         default=None)
-    parser.add_argument('-p', '--pdf', help='Optional PDF file to render a summary chart to.',
+    parser.add_argument('-p', '--pdf', help='Optional PDF file to render a summary chart+table to '
+                                            '(page 1: chart, page 2: table).',
                         default=None)
+    parser.add_argument('--min-types', type=int, default=3,
+                        help='Minimum own-type count a file needs to appear in the PDF chart/table '
+                             '(default: 3) -- the CSV/console output always includes every file.')
     args = parser.parse_args()
 
     target_files = parse_target_files(MAKEFILE)
@@ -253,7 +291,7 @@ def main():
         print(f'\nWrote {args.output}')
 
     if args.pdf:
-        write_pdf_chart(rows, args.pdf)
+        write_pdf_report(rows, args.pdf, args.min_types)
         print(f'Wrote {args.pdf}')
 
 
