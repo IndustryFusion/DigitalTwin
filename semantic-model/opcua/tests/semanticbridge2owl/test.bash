@@ -26,7 +26,23 @@
 #
 set -e
 
-BASE_ONTOLOGY=https://industryfusion.github.io/contexts/staging/ontology/v0/base.ttl
+MAKEFILE=../../translate_default_nodesets.make
+# Read straight from the Makefile's own BASE_ONTOLOGY(_NS), so this can't
+# silently drift out of sync with it again (it already has once: this file
+# hardcoded .../v0/base.ttl while the Makefile had moved on to
+# .../v0.3/base.ttl, which breaks nodeset2owl.py's reference-type/alias
+# resolution against a core.ttl built with the newer base ontology).
+#
+# BASE_ONTOLOGY (-i/-burl) is the fetchable *document*; BASE_ONTOLOGY_NS
+# (-b) is the *term namespace* those base:xxx IRIs are minted under -- the
+# v0.3 document is a patched version of the base ontology (fixing
+# inconsistencies like isAbstract boolean/string mismatches) but still
+# declares its own terms under the original, unchanged v0 namespace. These
+# must NOT be conflated into the same value: doing so once already made
+# every base:xxx term in the generated output a malformed, separator-less
+# run-on IRI (see translate_default_nodesets.make's own comment on this).
+BASE_ONTOLOGY=$(grep -oP '^BASE_ONTOLOGY\s*:?=\s*\K\S+' "${MAKEFILE}")
+BASE_ONTOLOGY_NS=$(grep -oP '^BASE_ONTOLOGY_NS\s*:?=\s*\K\S+' "${MAKEFILE}")
 CORE_ONTOLOGY=../../core.ttl
 NODESET2OWL=../../nodeset2owl.py
 SEMANTICBRIDGE2OWL=../../semanticbridge2owl.py
@@ -63,10 +79,11 @@ for tuple in "${SCENARIOS[@]}"; do IFS=","
 
     echo "--- nodeset2owl.py: ${name}.xml -> ${sb}"
     python3 ${NODESET2OWL} ${name}.xml -i ${BASE_ONTOLOGY} ${CORE_ONTOLOGY} \
+        -b ${BASE_ONTOLOGY_NS} -burl ${BASE_ONTOLOGY} \
         -v http://example.com/v0.1/test/ -p test -o ${sb} || exit 1
 
     echo "--- semanticbridge2owl.py: ${sb} -> ${owl}"
-    python3 ${SEMANTICBRIDGE2OWL} ${sb} -o ${owl} -q || exit 1
+    python3 ${SEMANTICBRIDGE2OWL} ${sb} -b ${BASE_ONTOLOGY_NS} -o ${owl} -q || exit 1
 
     echo "--- compare against ${expected}"
     ${COMPARE} ${expected} ${owl} || exit 1
