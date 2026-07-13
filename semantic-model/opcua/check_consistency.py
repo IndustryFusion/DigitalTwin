@@ -42,12 +42,25 @@ files given on the command line, this:
      any class HermiT infers equivalent to owl:Nothing (i.e. unsatisfiable),
      or an outright "Inconsistent ontology" verdict.
 
+By default each file (and its own transitive dependencies) is checked on its
+own -- but pass -c/--combine to instead merge ALL given files, plus
+everything each one transitively imports, into ONE ontology and run HermiT
+once over the union. This validates a specific *combination* of specs
+together (e.g. tmc.ttl + pumps.ttl), which matters because two specs that
+don't import each other (they may only share a common ancestor like
+core.ttl/di.ttl) are never otherwise loaded into the same reasoning pass --
+an interaction only visible once both are actually loaded together would
+never surface from checking either spec individually. With no explicit
+files, --combine merges the entire translate_default_nodesets.make corpus
+into one ontology.
+
 Requires `pip install owlready2` (used solely to locate the bundled
 HermiT.jar; the actual reasoning is a plain `java -cp ... HermiT ...`
 subprocess, not owlready2's own ontology/world API) and a `java` on PATH.
 
 Usage:
     python3 check_consistency.py [-o report.csv] [-q] [name.ttl ...]
+    python3 check_consistency.py -c tmc.ttl pumps.ttl
 """
 
 import argparse
@@ -148,6 +161,26 @@ def check_file(name, path):
     return status, unsatisfiable, elapsed, len(full_out)
 
 
+def check_combined(targets):
+    """Merge every given file's own full pure-OWL output (each already
+    including its own transitive dependencies, via build_full_owl_output's
+    cache) into a single graph and run HermiT once over the union. This is
+    a materially different check than validating each file on its own: two
+    specs that never import each other (e.g. tmc.ttl and pumps.ttl only
+    share core.ttl/di.ttl as a common ancestor, neither one imports the
+    other) are never combined into one reasoning pass otherwise, so an
+    interaction only visible once both are loaded together -- exactly the
+    kind of thing a single spec's own local review can't see -- would
+    never surface from checking them individually."""
+    start = time.monotonic()
+    combined = Graph()
+    for _name, path in targets:
+        combined += build_full_owl_output(path)
+    status, unsatisfiable, _output = run_hermit(combined)
+    elapsed = time.monotonic() - start
+    return status, unsatisfiable, elapsed, len(combined)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -158,6 +191,15 @@ def main():
                         default=None)
     parser.add_argument('-q', '--quiet', action='store_true', default=False,
                         help='Only print files with issues and the final summary.')
+    parser.add_argument('-c', '--combine', action='store_true', default=False,
+                        help='Instead of checking each file (and its own transitive dependencies) '
+                             'separately, merge ALL given files -- plus everything each one '
+                             'transitively imports -- into a single ontology and run HermiT once '
+                             'over the union. Use this to validate a specific combination of specs '
+                             '(e.g. tmc.ttl + pumps.ttl) together, catching interactions between '
+                             'specs that never import each other and so are never otherwise loaded '
+                             'into the same reasoning pass. With no explicit files, combines the '
+                             'whole translate_default_nodesets.make corpus into one ontology.')
     args = parser.parse_args()
 
     if args.files:
@@ -165,31 +207,52 @@ def main():
     else:
         targets = [(name, REPO_ROOT / name) for name in parse_target_files(MAKEFILE)]
 
-    rows = []
+    present_targets = []
     for name, path in targets:
         if not path.exists():
             if not args.quiet:
                 print(f'{name:30s} -- not present on disk, skipping')
             continue
-        status, unsatisfiable, elapsed, size = check_file(name, path)
-        rows.append((name, status, unsatisfiable, elapsed, size))
+        present_targets.append((name, path))
+
+    if args.combine:
+        combined_name = '+'.join(name for name, _ in present_targets)
+        print(f'Combining {len(present_targets)} file(s): {combined_name}')
+        status, unsatisfiable, elapsed, size = check_combined(present_targets)
+        rows = [(combined_name, status, unsatisfiable, elapsed, size)]
         if status == 'consistent':
-            if not args.quiet:
-                print(f'{name:30s} OK  consistent  ({size} triples, {elapsed:.1f}s)')
+            print(f'{combined_name}  OK  consistent  ({size} triples, {elapsed:.1f}s)')
         elif status == 'unsatisfiable':
-            print(f'{name:30s} FAIL  {len(unsatisfiable)} unsatisfiable class(es)  '
+            print(f'{combined_name}  FAIL  {len(unsatisfiable)} unsatisfiable class(es)  '
                   f'({size} triples, {elapsed:.1f}s)')
             for cls in unsatisfiable:
                 print(f'    {cls}')
         elif status == 'inconsistent':
-            print(f'{name:30s} FAIL  globally inconsistent ontology  ({size} triples, {elapsed:.1f}s)')
+            print(f'{combined_name}  FAIL  globally inconsistent ontology  ({size} triples, {elapsed:.1f}s)')
         else:
-            print(f'{name:30s} ERROR  HermiT failed to run -- see output above')
+            print(f'{combined_name}  ERROR  HermiT failed to run -- see output above')
+    else:
+        rows = []
+        for name, path in present_targets:
+            status, unsatisfiable, elapsed, size = check_file(name, path)
+            rows.append((name, status, unsatisfiable, elapsed, size))
+            if status == 'consistent':
+                if not args.quiet:
+                    print(f'{name:30s} OK  consistent  ({size} triples, {elapsed:.1f}s)')
+            elif status == 'unsatisfiable':
+                print(f'{name:30s} FAIL  {len(unsatisfiable)} unsatisfiable class(es)  '
+                      f'({size} triples, {elapsed:.1f}s)')
+                for cls in unsatisfiable:
+                    print(f'    {cls}')
+            elif status == 'inconsistent':
+                print(f'{name:30s} FAIL  globally inconsistent ontology  ({size} triples, {elapsed:.1f}s)')
+            else:
+                print(f'{name:30s} ERROR  HermiT failed to run -- see output above')
 
     print()
     ok = sum(1 for r in rows if r[1] == 'consistent')
     bad = [r for r in rows if r[1] != 'consistent']
-    print(f'{ok}/{len(rows)} ontologies consistent.')
+    print(f'{ok}/{len(rows)} ontolog{"y" if len(rows) == 1 else "ies"} consistent.')
     if bad:
         print('Ontologies with issues: ' + ', '.join(r[0] for r in bad))
 
