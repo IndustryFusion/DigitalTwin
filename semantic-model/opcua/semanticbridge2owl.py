@@ -125,6 +125,17 @@ def parse_args(args=sys.argv[1:]):
     parser.add_argument('--no-disjoint-valuerank', dest='disjoint_valuerank', action='store_false',
                         default=True,
                         help='Do not declare the ValueRank symbolic classes pairwise disjoint.')
+    parser.add_argument('--require-modelling-rule', action='store_true', default=False,
+                        help='Skip a declaration entirely (no Virtual Type, no restriction, nothing '
+                             'nested inside it visited either) unless it carries a recognized '
+                             'ModellingRule (Mandatory/Optional/(Mandatory|Optional)Placeholder) -- '
+                             'the strict OPC UA sense of "Instance Declaration". Default off: every '
+                             'Object/Variable child is processed regardless, including e.g. named '
+                             'States/Transitions inside a StateMachineType-derived type, which OPC UA '
+                             'aggregates via HasComponent/HasProperty with no ModellingRule at all. '
+                             'Use this to get a Virtual Type count that lines up 1:1 with a strict '
+                             'Instance Declaration count -- see virtual_type_stats.py\'s own '
+                             '--include-unruled, which is this flag\'s inverse.')
     parser.add_argument('-q', '--quiet', action='store_true', default=False,
                         help='Suppress per-root progress output.')
     return parser.parse_args(args)
@@ -170,7 +181,8 @@ if __name__ == '__main__':
         loader.init_imports(all_imports)
     ig = loader.get_graph()
 
-    builder = OwlBuilder(g, basens, opcuans, disjoint_valuerank=args.disjoint_valuerank, ig=ig)
+    builder = OwlBuilder(g, basens, opcuans, disjoint_valuerank=args.disjoint_valuerank, ig=ig,
+                         require_modelling_rule=args.require_modelling_rule)
     roots = None
     if args.roots is not None:
         roots = [opcuans[name.strip()] for name in args.roots.split(',') if name.strip()]

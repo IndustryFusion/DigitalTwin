@@ -1,0 +1,119 @@
+@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+@prefix opcua: <http://opcfoundation.org/UA/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sb: <https://industryfusion.github.io/contexts/ontology/v0/semanticbridge/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://my.test/> a owl:Ontology ;
+    owl:imports <file:///home/marcel/src/DigitalTwin/semantic-model/opcua/core.owl.ttl>,
+        rdf:,
+        rdfs:,
+        <https://industryfusion.github.io/contexts/staging/ontology/v0.3/base.ttl>,
+        <https://industryfusion.github.io/contexts/staging/ontology/v0/ngsild.ttl> ;
+    owl:versionIRI <http://example.com/v0.1/test/> ;
+    owl:versionInfo 1e-01 .
+
+<http://my.test/MiniMachineType> a owl:Class ;
+    rdfs:subClassOf [ a owl:Restriction ;
+            owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+            owl:onClass <http://my.test/VT_6eea88f316afe2afc2bde8e7> ;
+            owl:onProperty <http://my.test/hasCurrentState> ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom <http://my.test/SubMachineAType> ;
+            owl:onProperty <http://my.test/hasSubStateA> ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom <http://my.test/SubMachineBType> ;
+            owl:onProperty <http://my.test/hasSubStateB> ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom <http://my.test/VT_6eea88f316afe2afc2bde8e7> ;
+            owl:onProperty <http://my.test/hasCurrentState> ],
+        [ a owl:Restriction ;
+            owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+            owl:onClass <http://my.test/SubMachineAType> ;
+            owl:onProperty <http://my.test/hasSubStateA> ],
+        [ a owl:Restriction ;
+            owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+            owl:onClass <http://my.test/SubMachineBType> ;
+            owl:onProperty <http://my.test/hasSubStateB> ],
+        opcua:BaseObjectType .
+
+opcua:ValueRank_MoreDimensions a owl:Class ;
+    rdfs:subClassOf opcua:ValueRank_OneOrMoreDimensions .
+
+opcua:ValueRank_OneDimension a owl:Class ;
+    rdfs:subClassOf opcua:ValueRank_OneOrMoreDimensions,
+        opcua:ValueRank_ScalarOrOneDimension .
+
+<http://my.test/SubMachineAType> a owl:Class ;
+    rdfs:subClassOf [ a owl:Restriction ;
+            owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+            owl:onClass <http://my.test/VT_f931e187f8e2ac1724c9802e> ;
+            owl:onProperty <http://my.test/hasCurrentState> ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom <http://my.test/VT_f931e187f8e2ac1724c9802e> ;
+            owl:onProperty <http://my.test/hasCurrentState> ],
+        opcua:BaseObjectType .
+
+<http://my.test/SubMachineBType> a owl:Class ;
+    rdfs:subClassOf [ a owl:Restriction ;
+            owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+            owl:onClass <http://my.test/VT_f21bf6f17863b27ce4bd05b0> ;
+            owl:onProperty <http://my.test/hasCurrentState> ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom <http://my.test/VT_f21bf6f17863b27ce4bd05b0> ;
+            owl:onProperty <http://my.test/hasCurrentState> ],
+        opcua:BaseObjectType .
+
+<http://my.test/VT_6eea88f316afe2afc2bde8e7> a owl:Class ;
+    rdfs:subClassOf [ a owl:Restriction ;
+            owl:allValuesFrom opcua:String ;
+            owl:onProperty sb:hasDataType ],
+        opcua:PropertyType,
+        opcua:ValueRank_Scalar ;
+    sb:originalBrowsePath "http://my.test/CurrentState" .
+
+<http://my.test/VT_f21bf6f17863b27ce4bd05b0> a owl:Class ;
+    rdfs:subClassOf [ a owl:Restriction ;
+            owl:allValuesFrom opcua:Int32 ;
+            owl:onProperty sb:hasDataType ],
+        opcua:PropertyType,
+        opcua:ValueRank_Scalar ;
+    sb:originalBrowsePath "http://my.test/CurrentState" .
+
+<http://my.test/VT_f931e187f8e2ac1724c9802e> a owl:Class ;
+    rdfs:subClassOf [ a owl:Restriction ;
+            owl:allValuesFrom opcua:String ;
+            owl:onProperty sb:hasDataType ],
+        opcua:PropertyType,
+        opcua:ValueRank_Scalar ;
+    sb:originalBrowsePath "http://my.test/CurrentState" .
+
+<http://my.test/hasSubStateA> a owl:ObjectProperty ;
+    rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+<http://my.test/hasSubStateB> a owl:ObjectProperty ;
+    rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+opcua:ValueRank_Any a owl:Class .
+
+opcua:ValueRank_OneOrMoreDimensions a owl:Class ;
+    rdfs:subClassOf opcua:ValueRank_Any .
+
+opcua:ValueRank_ScalarOrOneDimension a owl:Class ;
+    rdfs:subClassOf opcua:ValueRank_Any .
+
+base:SemanticBridgeReferenceType a owl:ObjectProperty .
+
+sb:hasDataType a owl:ObjectProperty .
+
+opcua:ValueRank_Scalar a owl:Class ;
+    rdfs:subClassOf opcua:ValueRank_ScalarOrOneDimension .
+
+<http://my.test/hasCurrentState> a owl:ObjectProperty ;
+    rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+[] a owl:AllDisjointClasses ;
+    owl:members ( opcua:ValueRank_Scalar opcua:ValueRank_OneDimension opcua:ValueRank_MoreDimensions ) .
+

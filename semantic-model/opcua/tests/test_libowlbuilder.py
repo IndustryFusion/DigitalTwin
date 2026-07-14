@@ -99,16 +99,22 @@ class TestEffectiveDeclarationTree(unittest.TestCase):
     def test_count_own_instance_declarations(self):
         # One physically-declared child each on BaseType (Drive), DriveType
         # (Motor), MotorType (Temperature), AdvancedDriveType (Motor
-        # override), PumpType (Drive override), DictionaryEntryType (Entry)
-        # and its own nested Label = 7. AdvancedMotorType/AdvancedPumpType/
-        # SpecialDictionaryEntryType have no own definer node (pure
-        # inheritance) and contribute 0. (Label is counted here because
-        # count_own_instance_declarations only looks at direct definer-node
-        # children per *type*, and DictionaryEntryType's own definer node's
-        # only direct child is "Entry" -- Label is nested *inside* the Entry
-        # declaration, not a second direct child of DictionaryEntryType's own
-        # definer node, so it is NOT separately counted here.)
-        self.assertEqual(self.builder.count_own_instance_declarations(), 6)
+        # override), PumpType (Drive override) = 5, plus DictionaryEntryType's
+        # own "Entry" and Entry's own nested "Label" = 2 more, for 7 total.
+        # AdvancedMotorType/AdvancedPumpType/SpecialDictionaryEntryType have
+        # no own definer node (pure inheritance) and contribute 0. Label is
+        # counted here because counting is recursive (it walks into every
+        # declaration's own children, not just the type's own direct ones) --
+        # DictionaryEntryType's own "Revision" (no ModellingRule at all) is
+        # NOT counted by the default, strict definition; see the next test.
+        self.assertEqual(self.builder.count_own_instance_declarations(), 7)
+
+    def test_count_own_instance_declarations_include_unruled(self):
+        # Same tree, but now also counting DictionaryEntryType's own
+        # "Revision" -- a child with no ModellingRule at all, mirroring the
+        # real core.ttl pattern of named States/Transitions inside a
+        # StateMachineType-derived type. 7 + 1 = 8.
+        self.assertEqual(self.builder.count_own_instance_declarations(include_unruled=True), 8)
 
 
 class TestVirtualTypeEmission(unittest.TestCase):
@@ -305,6 +311,53 @@ class TestSelfReferentialTypeTerminates(unittest.TestCase):
         self.builder.run(roots=[OPCUA['DictionaryEntryType'], OPCUA['SpecialDictionaryEntryType']])
         self.assertEqual(self.builder.get_cdt(OPCUA['SpecialDictionaryEntryType']),
                          self.builder.get_cdt(OPCUA['DictionaryEntryType']))
+
+
+class TestRequireModellingRule(unittest.TestCase):
+    """DictionaryEntryType's own definer node directly aggregates "Revision"
+    (nodei2005) with no opcua:HasModellingRule triple at all, mirroring the
+    real core.ttl pattern of named States/Transitions inside a
+    StateMachineType-derived type. Default behavior (require_modelling_rule=
+    False) processes it like any other declaration; require_modelling_rule=
+    True must exclude it -- and everything nested inside it, though this
+    fixture's Revision is a leaf -- entirely: no entry in the Effective
+    Declaration Tree, no Virtual Type, no restriction on the owner."""
+
+    def test_default_processes_the_unruled_child(self):
+        builder = load_builder()
+        cdt = builder.get_cdt(OPCUA['DictionaryEntryType'])
+        self.assertIn(key('Revision'), cdt)
+        out = builder.run(roots=[OPCUA['DictionaryEntryType']])
+        # No ModellingRule at all means is_optional is None: allValuesFrom is
+        # still written (unconditional, §14), but no cardinality restriction
+        # (that only fires for is_optional is False, i.e. Mandatory).
+        allv = [r for r in out.subjects(OWL.onProperty, OPCUA['hasRevision'])
+                if (r, RDF.type, OWL.Restriction) in out]
+        self.assertEqual(len(allv), 1)
+        self.assertIn(OWL.allValuesFrom, [p for p in out.predicates(allv[0], None)])
+
+    def test_require_modelling_rule_excludes_the_unruled_child(self):
+        builder = load_builder(require_modelling_rule=True)
+        cdt = builder.get_cdt(OPCUA['DictionaryEntryType'])
+        self.assertNotIn(key('Revision'), cdt)
+        self.assertIn(key('Entry'), cdt)  # Entry has a real ModellingRule, still processed
+        out = builder.run(roots=[OPCUA['DictionaryEntryType']])
+        self.assertEqual(list(out.subjects(OWL.onProperty, OPCUA['hasRevision'])), [])
+
+    def test_require_modelling_rule_matches_strict_declaration_count(self):
+        # The whole point: with require_modelling_rule=True, the number of
+        # Virtual Types minted for DictionaryEntryType's own declarations
+        # should be derivable from the strict (ModellingRule-only) count,
+        # not the broader one that also counts Revision.
+        builder = load_builder(require_modelling_rule=True)
+        strict_count = builder.count_own_instance_declarations(include_unruled=False)
+        broad_count = builder.count_own_instance_declarations(include_unruled=True)
+        self.assertEqual(strict_count, 7)
+        self.assertEqual(broad_count, 8)
+        out = builder.run()
+        vt_count = sum(1 for c in out.subjects(RDF.type, OWL.Class)
+                       if str(c).split('/')[-1].startswith('VT_'))
+        self.assertLessEqual(vt_count, strict_count)
 
 
 class TestMethodsAreIgnored(unittest.TestCase):

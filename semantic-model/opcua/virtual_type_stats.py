@@ -21,26 +21,39 @@ For every *.ttl file that Makefile is set up to produce (TARGET_NAMES / the
 matching <NAME>_ONTOLOGY variables -- parsed directly from the Makefile so
 this never drifts out of sync with it) and that actually exists on disk, this
 reports how many of its own ObjectType/VariableType classes it declares
-("types"), how many physically-declared Instance Declarations it introduces
-("instance declarations" -- a child with a recognized ModellingRule
-[Mandatory/Optional/(Mandatory|Optional)Placeholder]; the raw, un-expanded
-nodes Virtual Type generation replaces, one per type: no inheritance or
-recursive unrolling), and how many Virtual Types semanticbridge2owl.py's
-OwlBuilder generates from them ("virtual") -- i.e. exactly the incremental
-contribution of that one companion spec, the same way
-`semanticbridge2owl.py <file>.ttl` would process it on its own, with
-dependencies (core.ttl for di.ttl, etc.) resolved via each file's own
-owl:imports but not recounted.
+("types"), how many Instance Declarations it introduces ("instance
+declarations" -- counted *recursively* at every nesting depth, not just a
+type's own direct children: see OwlBuilder.count_own_instance_declarations's
+own docstring), and how many Virtual Types semanticbridge2owl.py's OwlBuilder
+generates from them ("virtual") -- i.e. exactly the incremental contribution
+of that one companion spec, the same way `semanticbridge2owl.py <file>.ttl`
+would process it on its own, with dependencies (core.ttl for di.ttl, etc.)
+resolved via each file's own owl:imports but not recounted.
+
+By default, both sides of the ratio use the strict, ModellingRule-required
+sense of "Instance Declaration": OwlBuilder itself is built with
+require_modelling_rule=True, so it never mints a Virtual Type for a
+declaration with no recognized ModellingRule (Mandatory/Optional/
+(Mandatory|Optional)Placeholder) -- e.g. a named State/Transition inside a
+StateMachineType, which OPC UA aggregates via HasComponent/HasProperty with
+no ModellingRule at all -- and the count excludes them too. Pass
+--include-unruled to switch BOTH sides to the broader definition instead
+(OwlBuilder processes those declarations and the count includes them).
+Either way, Virtual Type count is a provable upper bound on whichever
+Instance Declaration count is active (see
+count_own_instance_declarations's own docstring), so seeing it exceeded is
+always a genuine algorithm bug now, never a legitimate ModellingRule-less-
+children case -- that case is handled identically on both sides of the
+ratio, not just the counting side.
 
 Two ratios are reported per file: Virtual Types per type declared
 (vt_per_type), and Virtual Types per Instance Declaration (vt_per_instance_decl)
 -- the latter is the more meaningful growth figure, since it's relative to the
-actual un-expanded declarations Virtual Type generation is replacing, not to
-the (much smaller, and somewhat arbitrary) count of types that happen to
-introduce them.
+actual declarations Virtual Type generation is replacing, not to the (much
+smaller, and somewhat arbitrary) count of types that happen to introduce them.
 
 Usage:
-    python3 virtual_type_stats.py [-o stats.csv] [-p chart.pdf]
+    python3 virtual_type_stats.py [-o stats.csv] [-p chart.pdf] [--include-unruled]
 """
 
 import argparse
@@ -243,6 +256,20 @@ def main():
     parser.add_argument('--min-types', type=int, default=3,
                         help='Minimum own-type count a file needs to appear in the PDF chart/table '
                              '(default: 3) -- the CSV/console output always includes every file.')
+    parser.add_argument('--include-unruled', action='store_true', default=False,
+                        help='Use the broader definition of "Instance Declaration" on BOTH sides of the '
+                             'ratio: OwlBuilder itself also mints Virtual Types for children OPC UA '
+                             'aggregates via HasComponent/HasProperty with no ModellingRule at all '
+                             '(commonly named States/Transitions inside a StateMachineType-derived '
+                             'type), and the count includes them too -- see OwlBuilder\'s own '
+                             'require_modelling_rule parameter (this flag is its inverse) and '
+                             'count_own_instance_declarations\'s docstring. Default off: both sides use '
+                             'the strict, ModellingRule-required definition instead -- the literal OPC '
+                             'UA sense of "Instance Declaration". Either way, Virtual Type count is a '
+                             'provable upper bound on whichever Instance Declaration count is active, '
+                             'so if it is ever exceeded, that is a genuine algorithm bug, not a '
+                             'legitimate ModellingRule-less-children case (that case is now handled '
+                             'identically on both sides of the ratio, not just the counting side).')
     args = parser.parse_args()
 
     target_files = parse_target_files(MAKEFILE)
@@ -256,9 +283,10 @@ def main():
         g = load_fixed_graph(path)
         basens, opcuans = get_namespaces(path)
         ig = resolve_dependencies(g)
-        builder = OwlBuilder(g, basens, opcuans, ig=ig)
+        builder = OwlBuilder(g, basens, opcuans, ig=ig,
+                             require_modelling_rule=not args.include_unruled)
         own_classes = builder.all_target_classes()
-        instance_decl_count = builder.count_own_instance_declarations()
+        instance_decl_count = builder.count_own_instance_declarations(include_unruled=args.include_unruled)
         out = builder.run(own_classes)
         vt_count = sum(1 for c in out.subjects(RDF.type, OWL.Class)
                        if str(c).split('/')[-1].startswith('VT_'))
@@ -270,6 +298,17 @@ def main():
         print(f'{name:30s} types={len(own_classes):5d}  instance_decls={instance_decl_count:5d}  '
               f'virtual={vt_count:6d}  vt/type={vt_per_type:6.1f}x  vt/decl={vt_per_decl:6.1f}x  '
               f'({elapsed:.1f}s)')
+        if vt_count > instance_decl_count:
+            # Both sides now use the same definition of "Instance Declaration"
+            # (OwlBuilder's own require_modelling_rule matches this count's
+            # include_unruled), so this can no longer be explained away by
+            # ModellingRule-less structural children -- it is a genuine
+            # algorithm bug: some declaration produced more than one Virtual
+            # Type, which should be structurally impossible (see
+            # count_own_instance_declarations's docstring for the proof).
+            print(f'    ⚠ WARNING: virtual_types ({vt_count}) > instance_declarations '
+                  f'({instance_decl_count}) -- this should be structurally impossible; '
+                  f'investigate as an algorithm bug')
 
     total_types = sum(r[1] for r in rows)
     total_decls = sum(r[2] for r in rows)
@@ -279,6 +318,10 @@ def main():
           f'virtual={total_vt:6d}  '
           f'vt/type={(total_vt / total_types if total_types else 0):6.1f}x  '
           f'vt/decl={(total_vt / total_decls if total_decls else 0):6.1f}x')
+    if total_vt > total_decls:
+        print(f'⚠ WARNING: total virtual_types ({total_vt}) > total instance_declarations '
+              f'({total_decls}) -- this should be structurally impossible; investigate as an '
+              f'algorithm bug')
 
     if args.output:
         with open(args.output, 'w', newline='') as f:

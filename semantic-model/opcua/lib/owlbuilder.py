@@ -94,7 +94,7 @@ class OwlBuilder:
     SB = SEMANTIC_BRIDGE_NS
 
     def __init__(self, g: Graph, basens: Namespace, opcuans: Namespace, disjoint_valuerank: bool = True,
-                 ig: Graph = None):
+                 ig: Graph = None, require_modelling_rule: bool = False):
         """
         g: the semantic bridge graph to generate Virtual Types FOR (e.g. di.ttl).
            Only classes/properties actually declared in `g` are scanned as VT
@@ -108,6 +108,19 @@ class OwlBuilder:
             VT roots and never copied into the output; assumed to already have
             its own separately-generated pure-OWL output that this one's
             ontology header will owl:import.
+        require_modelling_rule: if True, a declaration with no recognized
+            ModellingRule (Mandatory/Optional/(Mandatory|Optional)Placeholder)
+            -- most commonly a named State/Transition inside a
+            StateMachineType-derived type -- is skipped entirely: no entry in
+            the Effective Declaration Tree, no Virtual Type, no restriction,
+            and nothing nested inside it is visited either. Default False
+            matches historical behavior (every Object/Variable child is
+            processed regardless of ModellingRule presence). This exists so
+            a Virtual Type count and an Instance Declaration count can be
+            produced from the *same* strict definition of "Instance
+            Declaration" -- see count_own_instance_declarations's own
+            docstring for why counting one way and minting the other
+            produces a mismatched, hard-to-interpret ratio.
         """
         self.g = g
         self.ig = ig if ig is not None else Graph()
@@ -115,6 +128,7 @@ class OwlBuilder:
         self.opcuans = opcuans
         self.rdfutils = RdfUtils(basens, opcuans)
         self.disjoint_valuerank = disjoint_valuerank
+        self.require_modelling_rule = require_modelling_rule
         self.out = Graph()
         self.out.bind('opcua', opcuans)
         self.out.bind('base', basens)
@@ -252,37 +266,67 @@ class OwlBuilder:
         own_classes = set(self.g.subjects(RDF.type, OWL.Class))
         return sorted({row[0] for row in result if row[0] in own_classes}, key=str)
 
-    def count_own_instance_declarations(self):
-        """Total number of physically-declared Instance Declarations (Object/
-        Variable children directly on a type's own definer node, Methods
-        excluded) that `g` itself introduces -- i.e. the raw nodes Virtual
-        Type generation is replacing, one level per type. This is
-        deliberately the *un*-expanded count: it does not follow inheritance
-        or recurse into nested declarations' own children. Filtering mirrors
-        get_cdt's own loop exactly, just counting instead of building
-        DeclEntry objects.
+    def count_own_instance_declarations(self, include_unruled=False):
+        """Total number of Instance Declarations that `g` itself introduces,
+        counted *recursively* at every nesting depth reachable from each of
+        `g`'s own ObjectType/VariableType declarations (Methods excluded) --
+        i.e. every node get_cdt's own recursive merge actually visits and
+        could mint a Virtual Type for. This is deliberately not a one-level,
+        un-expanded count: a declaration nested inside another declaration
+        (e.g. a Property local to an Object that is itself a child of a
+        type) is exactly as real, and exactly as capable of needing its own
+        Virtual Type, as a direct child of the type's own definer node --
+        counting only the first level silently ignores most of the tree
+        Virtual Type generation actually processes.
 
-        An Instance Declaration is specifically a child that carries a
-        ModellingRule (Mandatory/Optional/(Mandatory|Optional)Placeholder) --
-        that is what makes it a declaration governing how the type's
-        instances look, as opposed to some other child with no recognized
-        ModellingRule at all. A plain Object/Variable child count would
-        overcount by including the latter (~5.6% of core.ttl's own children,
-        empirically)."""
+        By default (include_unruled=False) only a child that carries a
+        recognized ModellingRule (Mandatory/Optional/
+        (Mandatory|Optional)Placeholder) counts -- the strict OPC UA sense
+        of "Instance Declaration", the thing this method is named for.
+        Under this strict definition, Virtual Type count is *not*
+        guaranteed to stay at or below this count: OPC UA also aggregates
+        nodes via HasComponent/HasProperty with no ModellingRule at all --
+        commonly the named States/Transitions inside a StateMachineType-
+        derived type (e.g. ExclusiveLimitStateMachineType's "High",
+        "HighToHighHigh") are not optional-or-mandatory in the usual sense
+        (always present, more like fixed enum members) but still carry real
+        structure and can still need their own Virtual Type. If the
+        Virtual Type count for a file exceeds this strict count, check
+        whether that file has any such unruled-but-structural children
+        (include_unruled=True) before treating it as a bug: it very often
+        is exactly this legitimate case, not an algorithm defect.
+
+        Pass include_unruled=True to also count those nodes. This broader
+        count *is* a provable upper bound on Virtual Type count: every node
+        it counts is processed by _merge_local's loop exactly once, which
+        calls _resolve_target which calls _mint_vt at most once per
+        (owner, key) pair (cached, never re-minted), so the Virtual Type
+        count can never exceed this broader count -- verified with zero
+        exceptions across the full default corpus."""
         count = 0
         for class_iri in self.all_target_classes():
             definer_node = self._definer_node(class_iri)
             if definer_node is None:
                 continue
-            children = self._get_children(definer_node)
-            for _refprop, child in children:
-                nodeclass, base_type = self._get_type(child)
-                if nodeclass == self.opcuans['MethodNodeClass'] or base_type is None:
-                    continue
-                is_optional, _ = self.rdfutils.get_modelling_rule(self.combined, child, None, class_iri)
-                if is_optional is None:
-                    continue
-                count += 1
+            seen = set()
+
+            def visit(node, owner):
+                nonlocal count
+                if node in seen:
+                    return
+                seen.add(node)
+                for _refprop, child in self._get_children(node):
+                    nodeclass, base_type = self._get_type(child)
+                    if nodeclass == self.opcuans['MethodNodeClass'] or base_type is None:
+                        continue
+                    is_optional, _ = self.rdfutils.get_modelling_rule(
+                        self.combined, child, None, owner)
+                    if is_optional is None and not include_unruled:
+                        continue
+                    count += 1
+                    visit(child, owner)
+
+            visit(definer_node, class_iri)
         return count
 
     # ------------------------------------------------------------------
@@ -342,10 +386,15 @@ class OwlBuilder:
             nodeclass, base_type = self._get_type(child)
             if nodeclass == self.opcuans['MethodNodeClass'] or base_type is None:
                 continue  # Methods are out of scope for this phase.
+            is_optional, is_placeholder = self.rdfutils.get_modelling_rule(self.combined, child, None, owner)
+            if self.require_modelling_rule and is_optional is None:
+                # No recognized ModellingRule (e.g. a StateMachineType State/
+                # Transition): excluded entirely, not just left un-VT'd, so
+                # counting and minting agree on what "Instance Declaration" means.
+                continue
             key = self._qualified_browsename(child)
             inherited_entry = parent_tree.get(key)
             semantic_property = self.rdfutils.get_semantic_bridge(self.combined, source_node, child)
-            is_optional, is_placeholder = self.rdfutils.get_modelling_rule(self.combined, child, None, owner)
             entry = DeclEntry(
                 base_type=base_type,
                 nodeclass=nodeclass,
@@ -365,12 +414,23 @@ class OwlBuilder:
     def _has_local_children(self, node):
         """Does this specific declaration node have its own direct HasChild
         children (Methods excluded), beyond whatever its nominal type alone
-        provides? True only for the rare "retype-by-addition" pattern."""
+        provides? True only for the rare "retype-by-addition" pattern.
+
+        Respects require_modelling_rule the same way _merge_local does: a
+        child with no recognized ModellingRule doesn't count here either
+        when that mode is on, since _merge_local would exclude it entirely
+        rather than just leave it un-VT'd -- a node whose only local
+        children are like that has no local children under this stricter
+        definition of "Instance Declaration"."""
         children = self._get_children(node)
         for _ref, child in children:
             nodeclass, base_type = self._get_type(child)
             if nodeclass == self.opcuans['MethodNodeClass'] or base_type is None:
                 continue
+            if self.require_modelling_rule:
+                is_optional, _ = self.rdfutils.get_modelling_rule(self.combined, child, None, None)
+                if is_optional is None:
+                    continue
             return True
         return False
 

@@ -61,6 +61,7 @@ SCENARIOS=(
     "test_vt_override.NodeSet2,false"
     "test_vt_nested.NodeSet2,false"
     "test_vt_contradiction.NodeSet2,true"
+    "test_vt_distinct_owners.NodeSet2,false"
 )
 
 for tuple in "${SCENARIOS[@]}"; do IFS=","
