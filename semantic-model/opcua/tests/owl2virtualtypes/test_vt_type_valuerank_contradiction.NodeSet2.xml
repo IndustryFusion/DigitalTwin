@@ -21,14 +21,16 @@
      Before _add_own_variable_type_restrictions existed, a VariableType's
      own ValueRank/DataType were never modeled as OWL axioms at all (only
      an *instance declaration's* ValueRank/DataType were), so
-     VariableSubType carried no ValueRank restriction whatsoever, and this
+     VariableSubType carried no ValueRank relationship whatsoever, and this
      scenario was NOT caught: VT(BSubType,"Var2") was subClassOf
-     VariableSubType and ValueRank_Scalar (its own instance-level rank),
-     but VariableSubType itself asserted nothing for a reasoner to conflict
-     with. Now VariableSubType is also asserted rdfs:subClassOf
-     ValueRank_OneDimension (its own explicit rank), so
-     VT(BSubType,"Var2") is subClassOf both ValueRank_Scalar (direct) and
-     ValueRank_OneDimension (via VariableSubType): disjoint, unsatisfiable,
+     VariableSubType and had its own hasValueRank someValuesFrom/
+     allValuesFrom ValueRank_Scalar (its own instance-level rank), but
+     VariableSubType itself asserted nothing for a reasoner to conflict
+     with. Now VariableSubType also carries hasValueRank someValuesFrom/
+     allValuesFrom ValueRank_OneDimension (its own explicit rank); since
+     hasValueRank is Functional, VT(BSubType,"Var2")'s single permitted
+     value would have to be simultaneously Scalar (its own) and
+     OneDimension (inherited via VariableSubType): disjoint, unsatisfiable,
      confirmed by real HermiT. -->
 <UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xmlns:xsd="http://www.w3.org/2001/XMLSchema"

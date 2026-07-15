@@ -49,7 +49,7 @@ Now, having `core.ttl` and `example.ttl` finally the instance description in `NG
 `-i` the prefix for the object URNs (must start with urn, e.g. `urn:test)
 
 ```
-python3 ./extractType.py -t http://example.org/AlphaType -n http://demo.machine/  example.ttl
+python3 ./owl2instances.py -t http://example.org/AlphaType -n http://demo.machine/  example.ttl
 ```
 
 As a result, the following files are created:
@@ -145,7 +145,7 @@ This list suggests that the dependencies are `core.ttl`, `devices.ttl`, `machine
 
 The extraction of the resulting SHACL, NGSI-LD and OWL we need again determine the root object type, which is http://opcfoundation.org/UA/Pumps/PumpType, and the ontology containing the pump example `pumpexample.ttl`. The other parameters  for `-n` and `-i` stay the same, compared to the simple example above.
 
-    python3 ./extractType.py -t http://opcfoundation.org/UA/Pumps/PumpType -n http://demo.machine/ pumpexample.ttl -i urn:test
+    python3 ./owl2instances.py -t http://opcfoundation.org/UA/Pumps/PumpType -n http://demo.machine/ pumpexample.ttl -i urn:test
 
 
 Again the resulting `instances.jsonld`, `shacl.ttl` and `entities.ttl` can be validated by `pyshacl`:

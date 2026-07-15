@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!-- Part 14 e2e scenario 3/5: the canonical override example from
-     semantic_bridge_to_owl.md §10. BaseType declares Mandatory "Part" :
+     owl_to_virtualtypes.md §10. BaseType declares Mandatory "Part" :
      PartType. SubType <: BaseType overrides "Part" : AdvancedPartType (a
      genuine subtype of PartType).
 

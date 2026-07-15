@@ -13,10 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-"""Transform an OPC UA Semantic Bridge graph (Part 5 output) into a pure OWL
-ontology (Part 14 of semantic_bridge_to_owl.md): every Instance Declaration
-becomes a generated "Virtual Type" class, and the Instance Declaration nodes
-themselves are dropped from the output.
+"""Transform an OPC UA Semantic Bridge graph (Part 5 output) into an OWL
+ontology of Virtual Types (Part 14 of owl_to_virtualtypes.md): every Instance
+Declaration becomes a generated "Virtual Type" class, and the Instance
+Declaration nodes themselves are dropped from the output.
 """
 
 import hashlib
@@ -106,7 +106,7 @@ class OwlBuilder:
             types routinely subclass or aggregate core types directly
             (di:SomeType rdfs:subClassOf opcua:BaseObjectType). Never scanned as
             VT roots and never copied into the output; assumed to already have
-            its own separately-generated pure-OWL output that this one's
+            its own separately-generated Virtual-Types output that this one's
             ontology header will owl:import.
         require_modelling_rule: if True, a declaration with no recognized
             ModellingRule (Mandatory/Optional/(Mandatory|Optional)Placeholder)
@@ -672,8 +672,8 @@ class OwlBuilder:
         # is simply true, not an overreach the way it would be for an
         # Optional component. Combined with FunctionalProperty, this is what
         # makes an illegal sibling-DataType override (e.g. see
-        # tests/semanticbridge2owl/test_vt_datatype_sibling_override.
-        # NodeSet2) a genuine, HermiT-detectable contradiction instead of a
+        # tests/owl2virtualtypes/test_vt_datatype_contradiction.NodeSet2) a
+        # genuine, HermiT-detectable contradiction instead of a
         # vacuously-satisfiable no-op: without forcing existence, two
         # disjoint allValuesFrom fillers on the same VT are trivially
         # satisfied by an instance with zero hasDataType edges.
@@ -815,7 +815,7 @@ class OwlBuilder:
             self.out.add((disjoint_node, OWL.members, members))
 
     def run(self, roots=None, progress=None):
-        """Build the pure-OWL ontology. `progress`, if given, is called as
+        """Build the OWL ontology of Virtual Types. `progress`, if given, is called as
         progress(index, total, root_iri) right before each root type is
         processed -- useful for CLI feedback, since a full core.ttl run
         generates Virtual Types for hundreds of types with no other visible

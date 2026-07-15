@@ -14,19 +14,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-"""Run the HermiT DL reasoner against every pure-OWL ontology this repo's
-semanticbridge2owl.py/OwlBuilder produces, to check for genuinely
+"""Run the HermiT DL reasoner against every OWL ontology of Virtual Types
+this repo's owl2virtualtypes.py/OwlBuilder produces, to check for genuinely
 contradictory OPC UA type constructions -- the actual point of the whole
-Part 14 transformation (see semantic_bridge_to_owl.md section 1).
+Part 14 transformation (see owl_to_virtualtypes.md section 1).
 
 For every *.ttl file translate_default_nodesets.make is set up to produce
 (reusing virtual_type_stats.py's own Makefile parsing, so this never drifts
 out of sync with it) and that exists on disk, or for an explicit list of ttl
 files given on the command line, this:
 
-  1. builds that file's own pure-OWL output via OwlBuilder, exactly as
-     semanticbridge2owl.py would, but in-memory (no temp .owl.ttl file needed);
-  2. merges in the full, already-computed pure-OWL output of every local
+  1. builds that file's own Virtual-Types output via OwlBuilder, exactly as
+     owl2virtualtypes.py would, but in-memory (no temp .owl.ttl file needed);
+  2. merges in the full, already-computed Virtual-Types output of every local
      (file://) dependency it transitively imports -- recursively, cached so a
      dependency shared by several companion specs (core.ttl, di.ttl, ...) is
      classified only once for its own sake and reused thereafter -- giving
@@ -102,8 +102,8 @@ _owl_output_cache = {}
 
 
 def build_full_owl_output(path):
-    """This file's own pure-OWL output, merged with the already-computed full
-    output of every local dependency it transitively imports -- recursively,
+    """This file's own Virtual-Types output, merged with the already-computed
+    full output of every local dependency it transitively imports -- recursively,
     cached by path so a shared dependency is only ever built once. This is
     the same picture Protege would see after resolving owl:imports, without
     any of it actually touching the network."""
@@ -164,11 +164,11 @@ def check_file(name, path):
 
 def check_expectation(file_arg, expect_contradiction):
     """Run HermiT against a single file and assert the expected verdict --
-    used by e2e test.bash scenarios, mirroring
-    tests/semanticbridge2owl/check_unsatisfiable_precondition.py's own
-    --expect-contradiction/--expect-none interface, but backed by a real
-    reasoner run instead of a structural approximation. Prints an OK/FAIL
-    line and returns 0/1 accordingly."""
+    used by e2e test.bash scenarios, mirroring the --expect-contradiction/
+    --expect-none interface of tests/owl2virtualtypes/
+    check_unsatisfiable_precondition.py (a structural, no-reasoner
+    approximation, since retired in favor of this real reasoner run).
+    Prints an OK/FAIL line and returns 0/1 accordingly."""
     path = Path(file_arg).resolve()
     name = Path(file_arg).name
     if not path.exists():
@@ -215,7 +215,7 @@ def check_expectation(file_arg, expect_contradiction):
 
 
 def check_combined(targets):
-    """Merge every given file's own full pure-OWL output (each already
+    """Merge every given file's own full Virtual-Types output (each already
     including its own transitive dependencies, via build_full_owl_output's
     cache) into a single graph and run HermiT once over the union. This is
     a materially different check than validating each file on its own: two
