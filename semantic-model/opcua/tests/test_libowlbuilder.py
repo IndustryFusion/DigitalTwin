@@ -164,12 +164,13 @@ class TestVirtualTypeEmission(unittest.TestCase):
         # deliberately never emitted: logically equivalent to
         # minQualifiedCardinality(1, ...) for Mandatory (redundant), and
         # outright wrong for Optional (wrongly forces existence). This does
-        # NOT apply to sb:hasDataType (see test_libowlbuilder's DataType
-        # tests below): DataType is a Mandatory, single-valued Attribute of
-        # every real Variable, so someValuesFrom is correct there.
-        datatype_prop = OwlBuilder.SB['hasDataType']
+        # NOT apply to sb:hasDataType/sb:hasValueRank (see the DataType/
+        # ValueRank tests below): both are Mandatory, single-valued
+        # Attributes of every real Variable, so someValuesFrom is correct
+        # there.
+        exempt_props = {OwlBuilder.SB['hasDataType'], OwlBuilder.SB['hasValueRank']}
         offenders = [r for r in self.out.subjects(OWL.someValuesFrom, None)
-                     if (r, OWL.onProperty, datatype_prop) not in self.out]
+                     if not any((r, OWL.onProperty, p) in self.out for p in exempt_props)]
         self.assertEqual(offenders, [])
 
     def test_optional_variable_has_no_cardinality_restriction(self):
@@ -185,8 +186,17 @@ class TestVirtualTypeEmission(unittest.TestCase):
         self.assertEqual(card, [])
 
     def test_temperature_valuerank_and_datatype(self):
+        # ValueRank/Datatype are relationships (sb:hasValueRank/
+        # sb:hasDataType), not direct rdfs:subClassOf onto the symbolic
+        # class: a Virtual Type HAS a ValueRank, it isn't a member of the
+        # ValueRank_X category the way it genuinely is a member of its own
+        # TypeDefinition's category (§8).
         vt_temp = self.vt('MotorType', 'Temperature')
-        self.assertIn((vt_temp, RDFS.subClassOf, OPCUA[VALUE_RANK_CLASSES[-1]]), self.out)
+        valuerank_prop = OwlBuilder.SB['hasValueRank']
+        valuerank_restrictions = [r for r in self.out.subjects(RDF.type, OWL.Restriction)
+                                  if (r, OWL.onProperty, valuerank_prop) in self.out and
+                                  (r, OWL.allValuesFrom, OPCUA[VALUE_RANK_CLASSES[-1]]) in self.out]
+        self.assertTrue(any((vt_temp, RDFS.subClassOf, r) in self.out for r in valuerank_restrictions))
         datatype_restrictions = [r for r in self.out.subjects(RDF.type, OWL.Restriction)
                                  if (r, OWL.allValuesFrom, OPCUA['Double']) in self.out]
         self.assertTrue(any((vt_temp, RDFS.subClassOf, r) in self.out for r in datatype_restrictions))
@@ -424,7 +434,11 @@ class TestCompanionSpecIncrementalVirtualTypes(unittest.TestCase):
         foreign_vt = self.builder._vt_cache[(str(OPCUA['MotorType']), key('Temperature'))]
         self.assertTrue(str(new_vt).startswith(str(COMP)))
         self.assertTrue(str(foreign_vt).startswith(str(OPCUA)))
-        self.assertIn((new_vt, RDFS.subClassOf, OPCUA['ValueRank_OneDimension']), self.out)
+        valuerank_prop = OwlBuilder.SB['hasValueRank']
+        valuerank_restrictions = [r for r in self.out.subjects(RDF.type, OWL.Restriction)
+                                  if (r, OWL.onProperty, valuerank_prop) in self.out and
+                                  (r, OWL.allValuesFrom, OPCUA['ValueRank_OneDimension']) in self.out]
+        self.assertTrue(any((new_vt, RDFS.subClassOf, r) in self.out for r in valuerank_restrictions))
         self.assertIn((new_vt, RDFS.subClassOf, foreign_vt), self.out)
         self.assertEqual(list(self.out.predicate_objects(foreign_vt)), [],
                          "dependency's own VT must be a bare reference, not duplicated content")

@@ -67,6 +67,7 @@ SCENARIOS=(
     "test_vt_modellingrule_narrowing.NodeSet2,false"
     "test_vt_deep_type_hierarchy.NodeSet2,false"
     "test_vt_array_modellingrule_placeholder.NodeSet2,false"
+    "test_vt_type_valuerank_contradiction.NodeSet2,true"
 )
 
 for tuple in "${SCENARIOS[@]}"; do IFS=","

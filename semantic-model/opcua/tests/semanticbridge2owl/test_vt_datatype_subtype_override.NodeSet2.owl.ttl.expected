@@ -27,11 +27,11 @@
 
 <http://my.test/BaseType> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
-            owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
-            owl:onClass <http://my.test/VT_28951feba74e0688d6fd985a> ;
+            owl:allValuesFrom <http://my.test/VT_28951feba74e0688d6fd985a> ;
             owl:onProperty <http://my.test/hasCode> ],
         [ a owl:Restriction ;
-            owl:allValuesFrom <http://my.test/VT_28951feba74e0688d6fd985a> ;
+            owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+            owl:onClass <http://my.test/VT_28951feba74e0688d6fd985a> ;
             owl:onProperty <http://my.test/hasCode> ],
         opcua:BaseObjectType .
 
@@ -49,14 +49,19 @@ base:SemanticBridgeReferenceType a owl:ObjectProperty .
 
 <http://my.test/VT_ba2a0c29e16ec7e465fcc8c3> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
-            owl:onProperty sb:hasDataType ;
-            owl:someValuesFrom <http://my.test/SpecificCodeType> ],
+            owl:allValuesFrom opcua:ValueRank_Scalar ;
+            owl:onProperty sb:hasValueRank ],
         [ a owl:Restriction ;
             owl:allValuesFrom <http://my.test/SpecificCodeType> ;
             owl:onProperty sb:hasDataType ],
+        [ a owl:Restriction ;
+            owl:onProperty sb:hasDataType ;
+            owl:someValuesFrom <http://my.test/SpecificCodeType> ],
+        [ a owl:Restriction ;
+            owl:onProperty sb:hasValueRank ;
+            owl:someValuesFrom opcua:ValueRank_Scalar ],
         <http://my.test/VT_28951feba74e0688d6fd985a>,
-        opcua:PropertyType,
-        opcua:ValueRank_Scalar ;
+        opcua:PropertyType ;
     sb:originalBrowsePath "http://my.test/Code" .
 
 opcua:ValueRank_Any a owl:Class .
@@ -69,17 +74,19 @@ opcua:ValueRank_ScalarOrOneDimension a owl:Class ;
 
 <http://my.test/VT_28951feba74e0688d6fd985a> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
+            owl:onProperty sb:hasDataType ;
+            owl:someValuesFrom <http://my.test/GenericCodeType> ],
+        [ a owl:Restriction ;
+            owl:onProperty sb:hasValueRank ;
+            owl:someValuesFrom opcua:ValueRank_Scalar ],
+        [ a owl:Restriction ;
             owl:allValuesFrom <http://my.test/GenericCodeType> ;
             owl:onProperty sb:hasDataType ],
         [ a owl:Restriction ;
-            owl:onProperty sb:hasDataType ;
-            owl:someValuesFrom <http://my.test/GenericCodeType> ],
-        opcua:PropertyType,
-        opcua:ValueRank_Scalar ;
+            owl:allValuesFrom opcua:ValueRank_Scalar ;
+            owl:onProperty sb:hasValueRank ],
+        opcua:PropertyType ;
     sb:originalBrowsePath "http://my.test/Code" .
-
-opcua:ValueRank_Scalar a owl:Class ;
-    rdfs:subClassOf opcua:ValueRank_ScalarOrOneDimension .
 
 <http://my.test/GenericCodeType> a owl:Class ;
     rdfs:subClassOf opcua:Enumeration .
@@ -89,6 +96,12 @@ opcua:ValueRank_Scalar a owl:Class ;
 
 sb:hasDataType a owl:FunctionalProperty,
         owl:ObjectProperty .
+
+sb:hasValueRank a owl:FunctionalProperty,
+        owl:ObjectProperty .
+
+opcua:ValueRank_Scalar a owl:Class ;
+    rdfs:subClassOf opcua:ValueRank_ScalarOrOneDimension .
 
 [] a owl:AllDisjointClasses ;
     owl:members ( opcua:ValueRank_Scalar opcua:ValueRank_OneDimension opcua:ValueRank_MoreDimensions ) .

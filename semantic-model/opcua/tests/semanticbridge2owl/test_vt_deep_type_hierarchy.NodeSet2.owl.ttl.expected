@@ -17,11 +17,11 @@
 
 <http://my.test/ChildType> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
-            owl:allValuesFrom <http://my.test/VT_3952e7987cf04387f51331f5> ;
-            owl:onProperty <http://my.test/hasUnit> ],
-        [ a owl:Restriction ;
             owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
             owl:onClass <http://my.test/VT_3952e7987cf04387f51331f5> ;
+            owl:onProperty <http://my.test/hasUnit> ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom <http://my.test/VT_3952e7987cf04387f51331f5> ;
             owl:onProperty <http://my.test/hasUnit> ],
         <http://my.test/ParentType> .
 
@@ -40,24 +40,34 @@
 
 <http://my.test/VT_e8c82b57d3c774a64cb05fc3> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
+            owl:onProperty sb:hasValueRank ;
+            owl:someValuesFrom opcua:ValueRank_Scalar ],
+        [ a owl:Restriction ;
             owl:onProperty sb:hasDataType ;
             owl:someValuesFrom opcua:Boolean ],
         [ a owl:Restriction ;
+            owl:allValuesFrom opcua:ValueRank_Scalar ;
+            owl:onProperty sb:hasValueRank ],
+        [ a owl:Restriction ;
             owl:allValuesFrom opcua:Boolean ;
             owl:onProperty sb:hasDataType ],
-        opcua:PropertyType,
-        opcua:ValueRank_Scalar ;
+        opcua:PropertyType ;
     sb:originalBrowsePath "http://my.test/Calibrated" .
 
 <http://my.test/VT_ea84800550041b0d7b256a90> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
-            owl:allValuesFrom opcua:Double ;
-            owl:onProperty sb:hasDataType ],
+            owl:onProperty sb:hasValueRank ;
+            owl:someValuesFrom opcua:ValueRank_Scalar ],
         [ a owl:Restriction ;
             owl:onProperty sb:hasDataType ;
             owl:someValuesFrom opcua:Double ],
-        opcua:PropertyType,
-        opcua:ValueRank_Scalar ;
+        [ a owl:Restriction ;
+            owl:allValuesFrom opcua:Double ;
+            owl:onProperty sb:hasDataType ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom opcua:ValueRank_Scalar ;
+            owl:onProperty sb:hasValueRank ],
+        opcua:PropertyType ;
     sb:originalBrowsePath "http://my.test/Value" .
 
 <http://my.test/hasCalibrated> a owl:ObjectProperty ;
@@ -94,9 +104,6 @@ opcua:ValueRank_ScalarOrOneDimension a owl:Class ;
             owl:onProperty <http://my.test/hasValue> ],
         opcua:BaseObjectType .
 
-opcua:ValueRank_Scalar a owl:Class ;
-    rdfs:subClassOf opcua:ValueRank_ScalarOrOneDimension .
-
 base:SemanticBridgeReferenceType a owl:ObjectProperty .
 
 <http://my.test/hasUnit> a owl:ObjectProperty ;
@@ -104,6 +111,12 @@ base:SemanticBridgeReferenceType a owl:ObjectProperty .
 
 sb:hasDataType a owl:FunctionalProperty,
         owl:ObjectProperty .
+
+sb:hasValueRank a owl:FunctionalProperty,
+        owl:ObjectProperty .
+
+opcua:ValueRank_Scalar a owl:Class ;
+    rdfs:subClassOf opcua:ValueRank_ScalarOrOneDimension .
 
 [] a owl:AllDisjointClasses ;
     owl:members ( opcua:ValueRank_Scalar opcua:ValueRank_OneDimension opcua:ValueRank_MoreDimensions ) .

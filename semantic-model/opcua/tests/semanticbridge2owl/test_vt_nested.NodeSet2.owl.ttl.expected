@@ -27,13 +27,18 @@
 
 <http://my.test/VT_4f5bff7f174326377fa63ffb> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
+            owl:allValuesFrom opcua:ValueRank_Scalar ;
+            owl:onProperty sb:hasValueRank ],
+        [ a owl:Restriction ;
             owl:allValuesFrom opcua:Double ;
             owl:onProperty sb:hasDataType ],
         [ a owl:Restriction ;
+            owl:onProperty sb:hasValueRank ;
+            owl:someValuesFrom opcua:ValueRank_Scalar ],
+        [ a owl:Restriction ;
             owl:onProperty sb:hasDataType ;
             owl:someValuesFrom opcua:Double ],
-        opcua:PropertyType,
-        opcua:ValueRank_Scalar ;
+        opcua:PropertyType ;
     sb:originalBrowsePath "http://my.test/Temperature" .
 
 <http://my.test/hasTemperature> a owl:ObjectProperty ;
@@ -54,26 +59,31 @@ opcua:ValueRank_MoreDimensions a owl:Class ;
 
 <http://my.test/MotorType> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
-            owl:allValuesFrom <http://my.test/VT_0d9b5c6ec65404a374532517> ;
-            owl:onProperty <http://my.test/hasReadings> ],
-        [ a owl:Restriction ;
             owl:allValuesFrom <http://my.test/VT_4f5bff7f174326377fa63ffb> ;
             owl:onProperty <http://my.test/hasTemperature> ],
         [ a owl:Restriction ;
             owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
             owl:onClass <http://my.test/VT_0d9b5c6ec65404a374532517> ;
             owl:onProperty <http://my.test/hasReadings> ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom <http://my.test/VT_0d9b5c6ec65404a374532517> ;
+            owl:onProperty <http://my.test/hasReadings> ],
         opcua:BaseObjectType .
 
 <http://my.test/VT_0d9b5c6ec65404a374532517> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
-            owl:onProperty sb:hasDataType ;
-            owl:someValuesFrom opcua:Int32 ],
+            owl:allValuesFrom opcua:ValueRank_OneDimension ;
+            owl:onProperty sb:hasValueRank ],
         [ a owl:Restriction ;
             owl:allValuesFrom opcua:Int32 ;
             owl:onProperty sb:hasDataType ],
-        opcua:PropertyType,
-        opcua:ValueRank_OneDimension ;
+        [ a owl:Restriction ;
+            owl:onProperty sb:hasDataType ;
+            owl:someValuesFrom opcua:Int32 ],
+        [ a owl:Restriction ;
+            owl:onProperty sb:hasValueRank ;
+            owl:someValuesFrom opcua:ValueRank_OneDimension ],
+        opcua:PropertyType ;
     sb:originalBrowsePath "http://my.test/Readings" .
 
 <http://my.test/hasDrive> a owl:ObjectProperty ;
@@ -87,22 +97,25 @@ opcua:ValueRank_MoreDimensions a owl:Class ;
 
 opcua:ValueRank_Any a owl:Class .
 
-opcua:ValueRank_OneDimension a owl:Class ;
-    rdfs:subClassOf opcua:ValueRank_OneOrMoreDimensions,
-        opcua:ValueRank_ScalarOrOneDimension .
-
 opcua:ValueRank_OneOrMoreDimensions a owl:Class ;
     rdfs:subClassOf opcua:ValueRank_Any .
-
-opcua:ValueRank_Scalar a owl:Class ;
-    rdfs:subClassOf opcua:ValueRank_ScalarOrOneDimension .
 
 opcua:ValueRank_ScalarOrOneDimension a owl:Class ;
     rdfs:subClassOf opcua:ValueRank_Any .
 
+opcua:ValueRank_OneDimension a owl:Class ;
+    rdfs:subClassOf opcua:ValueRank_OneOrMoreDimensions,
+        opcua:ValueRank_ScalarOrOneDimension .
+
+opcua:ValueRank_Scalar a owl:Class ;
+    rdfs:subClassOf opcua:ValueRank_ScalarOrOneDimension .
+
 base:SemanticBridgeReferenceType a owl:ObjectProperty .
 
 sb:hasDataType a owl:FunctionalProperty,
+        owl:ObjectProperty .
+
+sb:hasValueRank a owl:FunctionalProperty,
         owl:ObjectProperty .
 
 [] a owl:AllDisjointClasses ;

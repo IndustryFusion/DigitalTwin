@@ -17,11 +17,11 @@
 
 <http://my.test/SubType> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
-            owl:allValuesFrom <http://my.test/VT_94a7e0c776ffeeb0f0b3040b> ;
-            owl:onProperty <http://my.test/hasSetting> ],
-        [ a owl:Restriction ;
             owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
             owl:onClass <http://my.test/VT_94a7e0c776ffeeb0f0b3040b> ;
+            owl:onProperty <http://my.test/hasSetting> ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom <http://my.test/VT_94a7e0c776ffeeb0f0b3040b> ;
             owl:onProperty <http://my.test/hasSetting> ],
         <http://my.test/BaseType> .
 
@@ -45,28 +45,36 @@ opcua:ValueRank_Any a owl:Class .
 opcua:ValueRank_OneOrMoreDimensions a owl:Class ;
     rdfs:subClassOf opcua:ValueRank_Any .
 
-opcua:ValueRank_Scalar a owl:Class ;
-    rdfs:subClassOf opcua:ValueRank_ScalarOrOneDimension .
-
 opcua:ValueRank_ScalarOrOneDimension a owl:Class ;
     rdfs:subClassOf opcua:ValueRank_Any .
 
 sb:hasDataType a owl:FunctionalProperty,
         owl:ObjectProperty .
 
+sb:hasValueRank a owl:FunctionalProperty,
+        owl:ObjectProperty .
+
 <http://my.test/VT_94a7e0c776ffeeb0f0b3040b> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
-            owl:onProperty sb:hasDataType ;
-            owl:someValuesFrom opcua:Int32 ],
+            owl:allValuesFrom opcua:ValueRank_Scalar ;
+            owl:onProperty sb:hasValueRank ],
         [ a owl:Restriction ;
             owl:allValuesFrom opcua:Int32 ;
             owl:onProperty sb:hasDataType ],
-        opcua:PropertyType,
-        opcua:ValueRank_Scalar ;
+        [ a owl:Restriction ;
+            owl:onProperty sb:hasValueRank ;
+            owl:someValuesFrom opcua:ValueRank_Scalar ],
+        [ a owl:Restriction ;
+            owl:onProperty sb:hasDataType ;
+            owl:someValuesFrom opcua:Int32 ],
+        opcua:PropertyType ;
     sb:originalBrowsePath "http://my.test/Setting" .
 
 <http://my.test/hasSetting> a owl:ObjectProperty ;
     rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+opcua:ValueRank_Scalar a owl:Class ;
+    rdfs:subClassOf opcua:ValueRank_ScalarOrOneDimension .
 
 [] a owl:AllDisjointClasses ;
     owl:members ( opcua:ValueRank_Scalar opcua:ValueRank_OneDimension opcua:ValueRank_MoreDimensions ) .

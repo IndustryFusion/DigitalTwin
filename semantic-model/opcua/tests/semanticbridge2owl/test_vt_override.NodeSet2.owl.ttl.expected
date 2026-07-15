@@ -16,21 +16,21 @@
 
 <http://my.test/SubType> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
-            owl:allValuesFrom <http://my.test/AdvancedPartType> ;
-            owl:onProperty <http://my.test/hasPart> ],
-        [ a owl:Restriction ;
             owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
             owl:onClass <http://my.test/AdvancedPartType> ;
+            owl:onProperty <http://my.test/hasPart> ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom <http://my.test/AdvancedPartType> ;
             owl:onProperty <http://my.test/hasPart> ],
         <http://my.test/BaseType> .
 
 <http://my.test/BaseType> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
-            owl:allValuesFrom <http://my.test/PartType> ;
-            owl:onProperty <http://my.test/hasPart> ],
-        [ a owl:Restriction ;
             owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
             owl:onClass <http://my.test/PartType> ;
+            owl:onProperty <http://my.test/hasPart> ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom <http://my.test/PartType> ;
             owl:onProperty <http://my.test/hasPart> ],
         opcua:BaseObjectType .
 

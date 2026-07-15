@@ -370,6 +370,36 @@ class OwlBuilder:
     # cardinality restriction on the owner targeting whatever's already
     # established -- cardinality is a property of the *edge*, not the target.
 
+    def _add_own_variable_type_restrictions(self, class_iri, definer_node):
+        """A VariableType (or Variable) can explicitly declare its OWN
+        ValueRank/DataType on its own definer node -- an attribute of the
+        type itself, distinct from and orthogonal to an *instance
+        declaration*'s own ValueRank/DataType where this class happens to
+        be the TypeDefinition (see _merge_local/_resolve_target). OPC UA
+        requires an instance's ValueRank/DataType to be compatible with its
+        own TypeDefinition's, so without asserting this class's own
+        explicitly-declared ValueRank/DataType here too, an incompatible
+        instance-level override could never surface as a contradiction: the
+        instance's Virtual Type would be subClassOf this class (its nominal
+        type) but this class itself would carry no ValueRank/DataType
+        restriction at all for a reasoner to conflict with.
+
+        Deliberately scoped to only fire when a ValueRank/DataType is
+        *explicitly* declared on the type's own definer node, not the
+        default-when-absent case (Scalar): only a handful of real
+        VariableTypes in core.ttl ever do this (verified: 4, out of ~600
+        types), so this is a narrow, low-risk addition, not a blanket new
+        axiom asserted on every VariableType regardless of whether it says
+        anything about ValueRank/DataType at all."""
+        if definer_node is None:
+            return
+        rank = next(self.combined.objects(definer_node, self.basens['hasValueRank']), None)
+        if rank is not None:
+            self._add_valuerank_restriction(class_iri, int(rank))
+        datatype = next(self.combined.objects(definer_node, self.basens['hasDatatype']), None)
+        if datatype is not None:
+            self._add_datatype_restriction(class_iri, datatype)
+
     def get_cdt(self, class_iri):
         """Effective Declaration Tree of class_iri: dict[qualified_browsename
         -> DeclEntry], merged with the direct supertype's own tree (local
@@ -388,7 +418,10 @@ class OwlBuilder:
             super_iri = self._direct_supertype(class_iri)
             parent_tree = self.get_cdt(super_iri) if super_iri is not None else {}
             is_own = class_iri in self._own_classes
-            result = self._merge_local(parent_tree, self._definer_node(class_iri), class_iri, is_own)
+            definer_node = self._definer_node(class_iri)
+            if is_own:
+                self._add_own_variable_type_restrictions(class_iri, definer_node)
+            result = self._merge_local(parent_tree, definer_node, class_iri, is_own)
         finally:
             self._cdt_computing.discard(class_iri)
         self._cdt_cache[class_iri] = result
@@ -526,7 +559,7 @@ class OwlBuilder:
         self.out.add((vt_iri, RDFS.subClassOf, entry.base_type))  # §8 base typing rule
 
         if entry.nodeclass == self.opcuans['VariableNodeClass']:
-            self.out.add((vt_iri, RDFS.subClassOf, self._valuerank_class(entry.value_rank)))
+            self._add_valuerank_restriction(vt_iri, entry.value_rank)
             self._add_datatype_restriction(vt_iri, entry.datatype)
 
         if inherited_entry is not None:
@@ -649,6 +682,46 @@ class OwlBuilder:
         self.out.add((somev, OWL.onProperty, prop))
         self.out.add((somev, OWL.someValuesFrom, datatype_iri))
         self.out.add((vt_iri, RDFS.subClassOf, somev))
+
+    def _valuerank_property(self):
+        prop = self.SB['hasValueRank']
+        if (prop, RDF.type, OWL.ObjectProperty) not in self.out:
+            self.out.add((prop, RDF.type, OWL.ObjectProperty))
+            # ValueRank, like DataType (see _datatype_property), is a
+            # Mandatory, single-valued Attribute of every real OPC UA
+            # Variable/VariableType -- not a category the thing itself IS
+            # a member of. FunctionalProperty here mirrors that fact.
+            self.out.add((prop, RDF.type, OWL.FunctionalProperty))
+        return prop
+
+    def _add_valuerank_restriction(self, subject, rank):
+        """Attach ValueRank as a relationship to a symbolic class via
+        sb:hasValueRank, not as a direct rdfs:subClassOf onto the symbolic
+        class itself. `subject` is a Virtual Type (an instance
+        declaration's own ValueRank) or a real VariableType class (its own
+        declared ValueRank, see _add_own_variable_type_restrictions) --
+        either way it HAS a ValueRank, it does not become a member of the
+        ValueRank_X category the same way it might genuinely be a member of
+        its own TypeDefinition's category (§8's rdfs:subClassOf is correct
+        there: it really is one). Mirrors _add_datatype_restriction exactly
+        (allValuesFrom + someValuesFrom, with hasValueRank Functional): the
+        same reasoning applies -- ValueRank is Mandatory and single-valued,
+        so someValuesFrom is simply true, and Functional + two disjoint
+        someValuesFrom fillers is what makes an incompatible override a
+        genuine, HermiT-detectable contradiction rather than a vacuously-
+        satisfiable no-op."""
+        prop = self._valuerank_property()
+        target = self._valuerank_class(rank)
+        allv = BNode()
+        self.out.add((allv, RDF.type, OWL.Restriction))
+        self.out.add((allv, OWL.onProperty, prop))
+        self.out.add((allv, OWL.allValuesFrom, target))
+        self.out.add((subject, RDFS.subClassOf, allv))
+        somev = BNode()
+        self.out.add((somev, RDF.type, OWL.Restriction))
+        self.out.add((somev, OWL.onProperty, prop))
+        self.out.add((somev, OWL.someValuesFrom, target))
+        self.out.add((subject, RDFS.subClassOf, somev))
 
     # ------------------------------------------------------------------
     # Pure-OWL class/property layer passthrough (§19-20)

@@ -17,21 +17,21 @@
 
 <http://my.test/SubType> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
-            owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
-            owl:onClass <http://my.test/VT_785e8afd2dbfb8041e9beca4> ;
+            owl:allValuesFrom <http://my.test/VT_785e8afd2dbfb8041e9beca4> ;
             owl:onProperty <http://my.test/hasSignal> ],
         [ a owl:Restriction ;
-            owl:allValuesFrom <http://my.test/VT_785e8afd2dbfb8041e9beca4> ;
+            owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+            owl:onClass <http://my.test/VT_785e8afd2dbfb8041e9beca4> ;
             owl:onProperty <http://my.test/hasSignal> ],
         <http://my.test/BaseType> .
 
 <http://my.test/BaseType> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
-            owl:allValuesFrom <http://my.test/VT_0d94b86d0fb80fa6be1b3122> ;
-            owl:onProperty <http://my.test/hasSignal> ],
-        [ a owl:Restriction ;
             owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
             owl:onClass <http://my.test/VT_0d94b86d0fb80fa6be1b3122> ;
+            owl:onProperty <http://my.test/hasSignal> ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom <http://my.test/VT_0d94b86d0fb80fa6be1b3122> ;
             owl:onProperty <http://my.test/hasSignal> ],
         opcua:BaseObjectType .
 
@@ -45,21 +45,19 @@ base:SemanticBridgeReferenceType a owl:ObjectProperty .
             owl:onProperty sb:hasDataType ;
             owl:someValuesFrom opcua:Double ],
         [ a owl:Restriction ;
+            owl:allValuesFrom opcua:ValueRank_MoreDimensions ;
+            owl:onProperty sb:hasValueRank ],
+        [ a owl:Restriction ;
+            owl:onProperty sb:hasValueRank ;
+            owl:someValuesFrom opcua:ValueRank_MoreDimensions ],
+        [ a owl:Restriction ;
             owl:allValuesFrom opcua:Double ;
             owl:onProperty sb:hasDataType ],
         <http://my.test/VT_0d94b86d0fb80fa6be1b3122>,
-        opcua:PropertyType,
-        opcua:ValueRank_MoreDimensions ;
+        opcua:PropertyType ;
     sb:originalBrowsePath "http://my.test/Signal" .
 
 opcua:ValueRank_Any a owl:Class .
-
-opcua:ValueRank_MoreDimensions a owl:Class ;
-    rdfs:subClassOf opcua:ValueRank_OneOrMoreDimensions .
-
-opcua:ValueRank_OneDimension a owl:Class ;
-    rdfs:subClassOf opcua:ValueRank_OneOrMoreDimensions,
-        opcua:ValueRank_ScalarOrOneDimension .
 
 opcua:ValueRank_OneOrMoreDimensions a owl:Class ;
     rdfs:subClassOf opcua:ValueRank_Any .
@@ -69,19 +67,34 @@ opcua:ValueRank_ScalarOrOneDimension a owl:Class ;
 
 <http://my.test/VT_0d94b86d0fb80fa6be1b3122> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
+            owl:allValuesFrom opcua:ValueRank_OneDimension ;
+            owl:onProperty sb:hasValueRank ],
+        [ a owl:Restriction ;
             owl:allValuesFrom opcua:Double ;
             owl:onProperty sb:hasDataType ],
         [ a owl:Restriction ;
             owl:onProperty sb:hasDataType ;
             owl:someValuesFrom opcua:Double ],
-        opcua:PropertyType,
-        opcua:ValueRank_OneDimension ;
+        [ a owl:Restriction ;
+            owl:onProperty sb:hasValueRank ;
+            owl:someValuesFrom opcua:ValueRank_OneDimension ],
+        opcua:PropertyType ;
     sb:originalBrowsePath "http://my.test/Signal" .
+
+opcua:ValueRank_MoreDimensions a owl:Class ;
+    rdfs:subClassOf opcua:ValueRank_OneOrMoreDimensions .
+
+opcua:ValueRank_OneDimension a owl:Class ;
+    rdfs:subClassOf opcua:ValueRank_OneOrMoreDimensions,
+        opcua:ValueRank_ScalarOrOneDimension .
 
 <http://my.test/hasSignal> a owl:ObjectProperty ;
     rdfs:subPropertyOf base:SemanticBridgeReferenceType .
 
 sb:hasDataType a owl:FunctionalProperty,
+        owl:ObjectProperty .
+
+sb:hasValueRank a owl:FunctionalProperty,
         owl:ObjectProperty .
 
 [] a owl:AllDisjointClasses ;

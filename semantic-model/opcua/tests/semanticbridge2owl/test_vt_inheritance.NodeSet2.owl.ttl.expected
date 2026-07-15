@@ -19,11 +19,11 @@
 
 <http://my.test/BaseType> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
-            owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
-            owl:onClass <http://my.test/DriveType> ;
+            owl:allValuesFrom <http://my.test/DriveType> ;
             owl:onProperty <http://my.test/hasDrive> ],
         [ a owl:Restriction ;
-            owl:allValuesFrom <http://my.test/DriveType> ;
+            owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+            owl:onClass <http://my.test/DriveType> ;
             owl:onProperty <http://my.test/hasDrive> ],
         opcua:BaseObjectType .
 

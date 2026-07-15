@@ -36,13 +36,18 @@ base:SemanticBridgeReferenceType a owl:ObjectProperty .
 
 <http://my.test/VT_94fd5d290f6b118c6c41778d> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
+            owl:onProperty sb:hasDataType ;
+            owl:someValuesFrom opcua:Double ],
+        [ a owl:Restriction ;
+            owl:onProperty sb:hasValueRank ;
+            owl:someValuesFrom opcua:ValueRank_Scalar ],
+        [ a owl:Restriction ;
             owl:allValuesFrom opcua:Double ;
             owl:onProperty sb:hasDataType ],
         [ a owl:Restriction ;
-            owl:onProperty sb:hasDataType ;
-            owl:someValuesFrom opcua:Double ],
-        opcua:PropertyType,
-        opcua:ValueRank_Scalar ;
+            owl:allValuesFrom opcua:ValueRank_Scalar ;
+            owl:onProperty sb:hasValueRank ],
+        opcua:PropertyType ;
     sb:originalBrowsePath "http://my.test/Value" .
 
 <http://my.test/hasValue> a owl:ObjectProperty ;
@@ -53,14 +58,17 @@ opcua:ValueRank_Any a owl:Class .
 opcua:ValueRank_OneOrMoreDimensions a owl:Class ;
     rdfs:subClassOf opcua:ValueRank_Any .
 
-opcua:ValueRank_Scalar a owl:Class ;
-    rdfs:subClassOf opcua:ValueRank_ScalarOrOneDimension .
-
 opcua:ValueRank_ScalarOrOneDimension a owl:Class ;
     rdfs:subClassOf opcua:ValueRank_Any .
 
 sb:hasDataType a owl:FunctionalProperty,
         owl:ObjectProperty .
+
+sb:hasValueRank a owl:FunctionalProperty,
+        owl:ObjectProperty .
+
+opcua:ValueRank_Scalar a owl:Class ;
+    rdfs:subClassOf opcua:ValueRank_ScalarOrOneDimension .
 
 [] a owl:AllDisjointClasses ;
     owl:members ( opcua:ValueRank_Scalar opcua:ValueRank_OneDimension opcua:ValueRank_MoreDimensions ) .
