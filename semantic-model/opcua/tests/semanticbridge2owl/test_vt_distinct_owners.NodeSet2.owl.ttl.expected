@@ -18,20 +18,20 @@
 <http://my.test/MiniMachineType> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
             owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
-            owl:onClass <http://my.test/VT_6eea88f316afe2afc2bde8e7> ;
-            owl:onProperty <http://my.test/hasCurrentState> ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom <http://my.test/SubMachineAType> ;
+            owl:onClass <http://my.test/SubMachineAType> ;
             owl:onProperty <http://my.test/hasSubStateA> ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom <http://my.test/SubMachineBType> ;
-            owl:onProperty <http://my.test/hasSubStateB> ],
         [ a owl:Restriction ;
             owl:allValuesFrom <http://my.test/VT_6eea88f316afe2afc2bde8e7> ;
             owl:onProperty <http://my.test/hasCurrentState> ],
         [ a owl:Restriction ;
             owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
-            owl:onClass <http://my.test/SubMachineAType> ;
+            owl:onClass <http://my.test/VT_6eea88f316afe2afc2bde8e7> ;
+            owl:onProperty <http://my.test/hasCurrentState> ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom <http://my.test/SubMachineBType> ;
+            owl:onProperty <http://my.test/hasSubStateB> ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom <http://my.test/SubMachineAType> ;
             owl:onProperty <http://my.test/hasSubStateA> ],
         [ a owl:Restriction ;
             owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
@@ -58,16 +58,19 @@ opcua:ValueRank_OneDimension a owl:Class ;
 
 <http://my.test/SubMachineBType> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
-            owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
-            owl:onClass <http://my.test/VT_f21bf6f17863b27ce4bd05b0> ;
+            owl:allValuesFrom <http://my.test/VT_f21bf6f17863b27ce4bd05b0> ;
             owl:onProperty <http://my.test/hasCurrentState> ],
         [ a owl:Restriction ;
-            owl:allValuesFrom <http://my.test/VT_f21bf6f17863b27ce4bd05b0> ;
+            owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+            owl:onClass <http://my.test/VT_f21bf6f17863b27ce4bd05b0> ;
             owl:onProperty <http://my.test/hasCurrentState> ],
         opcua:BaseObjectType .
 
 <http://my.test/VT_6eea88f316afe2afc2bde8e7> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
+            owl:onProperty sb:hasDataType ;
+            owl:someValuesFrom opcua:String ],
+        [ a owl:Restriction ;
             owl:allValuesFrom opcua:String ;
             owl:onProperty sb:hasDataType ],
         opcua:PropertyType,
@@ -76,6 +79,9 @@ opcua:ValueRank_OneDimension a owl:Class ;
 
 <http://my.test/VT_f21bf6f17863b27ce4bd05b0> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
+            owl:onProperty sb:hasDataType ;
+            owl:someValuesFrom opcua:Int32 ],
+        [ a owl:Restriction ;
             owl:allValuesFrom opcua:Int32 ;
             owl:onProperty sb:hasDataType ],
         opcua:PropertyType,
@@ -86,6 +92,9 @@ opcua:ValueRank_OneDimension a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
             owl:allValuesFrom opcua:String ;
             owl:onProperty sb:hasDataType ],
+        [ a owl:Restriction ;
+            owl:onProperty sb:hasDataType ;
+            owl:someValuesFrom opcua:String ],
         opcua:PropertyType,
         opcua:ValueRank_Scalar ;
     sb:originalBrowsePath "http://my.test/CurrentState" .
@@ -106,13 +115,14 @@ opcua:ValueRank_ScalarOrOneDimension a owl:Class ;
 
 base:SemanticBridgeReferenceType a owl:ObjectProperty .
 
-sb:hasDataType a owl:ObjectProperty .
-
 opcua:ValueRank_Scalar a owl:Class ;
     rdfs:subClassOf opcua:ValueRank_ScalarOrOneDimension .
 
 <http://my.test/hasCurrentState> a owl:ObjectProperty ;
     rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+sb:hasDataType a owl:FunctionalProperty,
+        owl:ObjectProperty .
 
 [] a owl:AllDisjointClasses ;
     owl:members ( opcua:ValueRank_Scalar opcua:ValueRank_OneDimension opcua:ValueRank_MoreDimensions ) .

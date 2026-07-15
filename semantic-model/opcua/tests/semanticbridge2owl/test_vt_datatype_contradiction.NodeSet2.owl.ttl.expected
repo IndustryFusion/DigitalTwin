@@ -1,0 +1,98 @@
+@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+@prefix opcua: <http://opcfoundation.org/UA/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sb: <https://industryfusion.github.io/contexts/ontology/v0/semanticbridge/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://my.test/> a owl:Ontology ;
+    owl:imports <file:///home/marcel/src/DigitalTwin/semantic-model/opcua/core.owl.ttl>,
+        rdf:,
+        rdfs:,
+        <https://industryfusion.github.io/contexts/staging/ontology/v0.3/base.ttl>,
+        <https://industryfusion.github.io/contexts/staging/ontology/v0/ngsild.ttl> ;
+    owl:versionIRI <http://example.com/v0.1/test/> ;
+    owl:versionInfo 1e-01 .
+
+<http://my.test/SubType> a owl:Class ;
+    rdfs:subClassOf [ a owl:Restriction ;
+            owl:allValuesFrom <http://my.test/VT_ba2a0c29e16ec7e465fcc8c3> ;
+            owl:onProperty <http://my.test/hasCode> ],
+        [ a owl:Restriction ;
+            owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+            owl:onClass <http://my.test/VT_ba2a0c29e16ec7e465fcc8c3> ;
+            owl:onProperty <http://my.test/hasCode> ],
+        <http://my.test/BaseType> .
+
+<http://my.test/BaseType> a owl:Class ;
+    rdfs:subClassOf [ a owl:Restriction ;
+            owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+            owl:onClass <http://my.test/VT_28951feba74e0688d6fd985a> ;
+            owl:onProperty <http://my.test/hasCode> ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom <http://my.test/VT_28951feba74e0688d6fd985a> ;
+            owl:onProperty <http://my.test/hasCode> ],
+        opcua:BaseObjectType .
+
+opcua:ValueRank_MoreDimensions a owl:Class ;
+    rdfs:subClassOf opcua:ValueRank_OneOrMoreDimensions .
+
+opcua:ValueRank_OneDimension a owl:Class ;
+    rdfs:subClassOf opcua:ValueRank_OneOrMoreDimensions,
+        opcua:ValueRank_ScalarOrOneDimension .
+
+base:SemanticBridgeReferenceType a owl:ObjectProperty .
+
+<http://my.test/VT_ba2a0c29e16ec7e465fcc8c3> a owl:Class ;
+    rdfs:subClassOf [ a owl:Restriction ;
+            owl:onProperty sb:hasDataType ;
+            owl:someValuesFrom <http://my.test/CodeBType> ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom <http://my.test/CodeBType> ;
+            owl:onProperty sb:hasDataType ],
+        <http://my.test/VT_28951feba74e0688d6fd985a>,
+        opcua:PropertyType,
+        opcua:ValueRank_Scalar ;
+    sb:originalBrowsePath "http://my.test/Code" .
+
+opcua:ValueRank_Any a owl:Class .
+
+opcua:ValueRank_OneOrMoreDimensions a owl:Class ;
+    rdfs:subClassOf opcua:ValueRank_Any .
+
+opcua:ValueRank_ScalarOrOneDimension a owl:Class ;
+    rdfs:subClassOf opcua:ValueRank_Any .
+
+<http://my.test/CodeAType> a owl:Class ;
+    rdfs:subClassOf opcua:Enumeration .
+
+<http://my.test/CodeBType> a owl:Class ;
+    rdfs:subClassOf opcua:Enumeration .
+
+<http://my.test/VT_28951feba74e0688d6fd985a> a owl:Class ;
+    rdfs:subClassOf [ a owl:Restriction ;
+            owl:allValuesFrom <http://my.test/CodeAType> ;
+            owl:onProperty sb:hasDataType ],
+        [ a owl:Restriction ;
+            owl:onProperty sb:hasDataType ;
+            owl:someValuesFrom <http://my.test/CodeAType> ],
+        opcua:PropertyType,
+        opcua:ValueRank_Scalar ;
+    sb:originalBrowsePath "http://my.test/Code" .
+
+opcua:ValueRank_Scalar a owl:Class ;
+    rdfs:subClassOf opcua:ValueRank_ScalarOrOneDimension .
+
+<http://my.test/hasCode> a owl:ObjectProperty ;
+    rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+sb:hasDataType a owl:FunctionalProperty,
+        owl:ObjectProperty .
+
+[] a owl:AllDisjointClasses ;
+    owl:members ( opcua:ValueRank_Scalar opcua:ValueRank_OneDimension opcua:ValueRank_MoreDimensions ) .
+
+[] a owl:AllDisjointClasses ;
+    owl:members ( <http://my.test/CodeAType> <http://my.test/CodeBType> opcua:ApplicationType opcua:AxisScaleEnumeration opcua:BrokerTransportQualityOfService opcua:ConversionLimitEnum opcua:DataSetOrderingType opcua:DiagnosticsLevel opcua:Duplex opcua:ExceptionDeviationFormat opcua:FilterOperator opcua:HistoryUpdateType opcua:IdType opcua:IdentityCriteriaType opcua:InterfaceAdminStatus opcua:InterfaceOperStatus opcua:MessageSecurityMode opcua:NamingRuleType opcua:NegotiationStatus opcua:NodeAttributesMask opcua:NodeClass opcua:OpenFileMode opcua:OverrideValueHandling opcua:PerformUpdateType opcua:PubSubDiagnosticsCounterClassification opcua:PubSubState opcua:RedundancySupport opcua:RedundantServerMode opcua:SecurityTokenRequestType opcua:ServerState opcua:StructureType opcua:TrustListMasks opcua:TsnFailureCode opcua:TsnListenerStatus opcua:TsnStreamState opcua:TsnTalkerStatus opcua:UserTokenType ) .
+

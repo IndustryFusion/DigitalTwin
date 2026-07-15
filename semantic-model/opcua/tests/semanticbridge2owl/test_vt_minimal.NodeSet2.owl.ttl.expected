@@ -10,18 +10,18 @@
     owl:imports <file:///home/marcel/src/DigitalTwin/semantic-model/opcua/core.owl.ttl>,
         rdf:,
         rdfs:,
-        <https://industryfusion.github.io/contexts/staging/ontology/v0/base.ttl>,
+        <https://industryfusion.github.io/contexts/staging/ontology/v0.3/base.ttl>,
         <https://industryfusion.github.io/contexts/staging/ontology/v0/ngsild.ttl> ;
     owl:versionIRI <http://example.com/v0.1/test/> ;
     owl:versionInfo 1e-01 .
 
 <http://my.test/AlphaType> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
-            owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
-            owl:onClass <http://my.test/VT_94fd5d290f6b118c6c41778d> ;
+            owl:allValuesFrom <http://my.test/VT_94fd5d290f6b118c6c41778d> ;
             owl:onProperty <http://my.test/hasValue> ],
         [ a owl:Restriction ;
-            owl:allValuesFrom <http://my.test/VT_94fd5d290f6b118c6c41778d> ;
+            owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+            owl:onClass <http://my.test/VT_94fd5d290f6b118c6c41778d> ;
             owl:onProperty <http://my.test/hasValue> ],
         opcua:BaseObjectType .
 
@@ -34,12 +34,13 @@ opcua:ValueRank_OneDimension a owl:Class ;
 
 base:SemanticBridgeReferenceType a owl:ObjectProperty .
 
-sb:hasDataType a owl:ObjectProperty .
-
 <http://my.test/VT_94fd5d290f6b118c6c41778d> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
             owl:allValuesFrom opcua:Double ;
             owl:onProperty sb:hasDataType ],
+        [ a owl:Restriction ;
+            owl:onProperty sb:hasDataType ;
+            owl:someValuesFrom opcua:Double ],
         opcua:PropertyType,
         opcua:ValueRank_Scalar ;
     sb:originalBrowsePath "http://my.test/Value" .
@@ -57,6 +58,9 @@ opcua:ValueRank_Scalar a owl:Class ;
 
 opcua:ValueRank_ScalarOrOneDimension a owl:Class ;
     rdfs:subClassOf opcua:ValueRank_Any .
+
+sb:hasDataType a owl:FunctionalProperty,
+        owl:ObjectProperty .
 
 [] a owl:AllDisjointClasses ;
     owl:members ( opcua:ValueRank_Scalar opcua:ValueRank_OneDimension opcua:ValueRank_MoreDimensions ) .

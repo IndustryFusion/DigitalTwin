@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Part 14 e2e scenario: MandatoryPlaceholder (NodeId 11510), the one
+     recognized ModellingRule no prior e2e scenario uses (all others use
+     plain Optional/Mandatory, NodeId 80/78), combined with an explicit
+     ValueRank=3 array (3 dimensions, collapsing into the same
+     ValueRank_MoreDimensions symbolic leaf as ValueRank=2 does in
+     test_vt_contradiction.NodeSet2, auditing that collapsing at a
+     different concrete rank).
+
+     DeviceType declares a MandatoryPlaceholder Variable "Channel" :
+     PropertyType/Double, ValueRank=3. get_modelling_rule maps
+     MandatoryPlaceholder to (is_optional=False, is_placeholder=True): the
+     same cardinality treatment as plain Mandatory (a
+     minQualifiedCardinality(1) restriction, since instances still must
+     provide at least one actual node under this placeholder), on top of
+     the array ValueRank handling. Expect DeviceType's own Virtual Type for
+     "Channel" to be subClassOf PropertyType, ValueRank_MoreDimensions, and
+     a Double Datatype restriction, with both allValuesFrom and
+     minQualifiedCardinality(1) written on DeviceType itself. No
+     contradiction expected: this just confirms the placeholder and array
+     mechanisms compose correctly together. -->
+<UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+           LastModified="2024-07-15T00:00:00Z"
+           xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
+  <Models>
+    <Model ModelUri="http://my.test/"
+           XmlSchemaUri="http://opcfoundation.org/UA/2008/02/Types.xsd"
+           Version="1.05.03"
+           PublicationDate="2024-07-29T00:00:00Z"
+           ModelVersion="1.5.3" />
+  </Models>
+  <NamespaceUris>
+    <Uri>http://my.test/</Uri>
+  </NamespaceUris>
+  <Aliases>
+    <Alias Alias="HasProperty">i=46</Alias>
+    <Alias Alias="HasSubtype">i=45</Alias>
+    <Alias Alias="HasTypeDefinition">i=40</Alias>
+    <Alias Alias="HasModellingRule">i=37</Alias>
+    <Alias Alias="PropertyType">i=68</Alias>
+    <Alias Alias="Double">i=11</Alias>
+  </Aliases>
+
+  <!-- DeviceType: MandatoryPlaceholder "Channel" : PropertyType/Double, ValueRank=3 -->
+  <UAObjectType NodeId="ns=1;i=2000" BrowseName="1:DeviceType">
+    <DisplayName>DeviceType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+      <Reference ReferenceType="HasProperty">ns=1;i=2001</Reference>
+    </References>
+  </UAObjectType>
+
+  <UAVariable NodeId="ns=1;i=2001" BrowseName="1:Channel" DataType="Double" ValueRank="3" ArrayDimensions="0,0,0">
+    <DisplayName>Channel</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=68</Reference>
+      <Reference ReferenceType="HasModellingRule">i=11510</Reference>
+    </References>
+  </UAVariable>
+</UANodeSet>

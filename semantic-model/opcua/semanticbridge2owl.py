@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright (c) 2024 Intel Corporation
+# Copyright (c) 2026 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -39,11 +39,14 @@ What this actually does, in order:
    BrowsePath) pair, per semantic_bridge_to_owl.md sections 6-11.
 4. Attaches an allValuesFrom restriction wherever a declaration occurs, plus
    a minQualifiedCardinality restriction for Mandatory declarations (sections
-   13-16; someValuesFrom is deliberately not used -- see lib/owlbuilder.py),
-   a symbolic
+   13-16; someValuesFrom is deliberately not used on this containment
+   property -- see lib/owlbuilder.py's _add_all_values_from), a symbolic
    ValueRank class and a Datatype restriction on Variable declarations
-   (sections 17-18), and drops every Instance Declaration node from the
-   output (section 19).
+   (sections 17-18 -- the Datatype restriction is someValuesFrom+
+   allValuesFrom and the property is Functional, since DataType is a
+   Mandatory, single-valued Attribute of every real Variable, unlike the
+   containment property above; see _add_datatype_restriction), and drops
+   every Instance Declaration node from the output (section 19).
 5. Copies over the class hierarchy (owl:Class/rdfs:subClassOf) and
    semantic-bridge property declarations (owl:ObjectProperty/
    rdfs:subPropertyOf) that the input file itself introduces (not its

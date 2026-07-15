@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Part 14 e2e scenario: the DataType-axis counterpart to
+     test_vt_contradiction.NodeSet2 (which exercises the ValueRank axis).
+
+     Declares two new custom DataTypes, CodeAType and CodeBType, as direct
+     siblings under the real opcua:Enumeration (both rdfs:subClassOf
+     Enumeration, neither a subtype of the other), so
+     _add_datatype_disjointness asserts them pairwise disjoint. BaseType
+     declares Mandatory "Code" : PropertyType/CodeAType. SubType overrides
+     "Code" to PropertyType/CodeBType, a sibling, not a subtype, exactly
+     the illegal move OPC UA's own DataType-override rule forbids (may only
+     narrow to the same type or a subtype).
+
+     VT(SubType, "Code") ends up subClassOf both:
+       - [ onProperty sb:hasDataType; allValuesFrom CodeBType ] and
+         [ onProperty sb:hasDataType; someValuesFrom CodeBType ]
+       - VT(BaseType, "Code"), itself subClassOf the allValuesFrom/
+         someValuesFrom pair for CodeAType
+
+     sb:hasDataType is declared owl:FunctionalProperty (DataType is a
+     Mandatory, single-valued Attribute of every real OPC UA Variable,
+     per Part 3's Attributes table: not optional and not per-declaration
+     like a ModellingRule), so someValuesFrom is correct here even though
+     it would be wrong on the containment property (see
+     _add_all_values_from's own comment). Functional + someValuesFrom(A)
+     + someValuesFrom(B) with A/B disjoint forces a genuine contradiction:
+     the (at most one) hasDataType value would have to be simultaneously
+     in CodeAType and CodeBType. Before this fix, only allValuesFrom was
+     asserted, which is vacuously satisfiable by zero hasDataType edges,
+     confirmed consistent by real HermiT: a genuine detection gap relative
+     to the ValueRank axis (whose symbolic classes are asserted via a
+     direct, unconditional rdfs:subClassOf edge, not a property
+     restriction). Now confirmed UNSATISFIABLE by real HermiT
+     (check_consistency.py), matching the ValueRank case. -->
+<UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+           LastModified="2024-07-15T00:00:00Z"
+           xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
+  <Models>
+    <Model ModelUri="http://my.test/"
+           XmlSchemaUri="http://opcfoundation.org/UA/2008/02/Types.xsd"
+           Version="1.05.03"
+           PublicationDate="2024-07-29T00:00:00Z"
+           ModelVersion="1.5.3" />
+  </Models>
+  <NamespaceUris>
+    <Uri>http://my.test/</Uri>
+  </NamespaceUris>
+  <Aliases>
+    <Alias Alias="HasProperty">i=46</Alias>
+    <Alias Alias="HasSubtype">i=45</Alias>
+    <Alias Alias="HasTypeDefinition">i=40</Alias>
+    <Alias Alias="HasModellingRule">i=37</Alias>
+    <Alias Alias="PropertyType">i=68</Alias>
+    <Alias Alias="Enumeration">i=29</Alias>
+  </Aliases>
+
+  <!-- Two new sibling DataTypes under Enumeration -->
+  <UADataType NodeId="ns=1;i=3000" BrowseName="1:CodeAType">
+    <DisplayName>CodeAType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=29</Reference>
+    </References>
+  </UADataType>
+
+  <UADataType NodeId="ns=1;i=3001" BrowseName="1:CodeBType">
+    <DisplayName>CodeBType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=29</Reference>
+    </References>
+  </UADataType>
+
+  <!-- BaseType: Mandatory "Code" : PropertyType/CodeAType -->
+  <UAObjectType NodeId="ns=1;i=2000" BrowseName="1:BaseType">
+    <DisplayName>BaseType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+      <Reference ReferenceType="HasProperty">ns=1;i=2001</Reference>
+    </References>
+  </UAObjectType>
+
+  <UAVariable NodeId="ns=1;i=2001" BrowseName="1:Code" DataType="ns=1;i=3000">
+    <DisplayName>Code</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=68</Reference>
+      <Reference ReferenceType="HasModellingRule">i=78</Reference>
+    </References>
+  </UAVariable>
+
+  <!-- SubType <: BaseType, OVERRIDES "Code" DataType to the SIBLING CodeBType -->
+  <UAObjectType NodeId="ns=1;i=2100" BrowseName="1:SubType">
+    <DisplayName>SubType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">ns=1;i=2000</Reference>
+      <Reference ReferenceType="HasProperty">ns=1;i=2101</Reference>
+    </References>
+  </UAObjectType>
+
+  <UAVariable NodeId="ns=1;i=2101" BrowseName="1:Code" DataType="ns=1;i=3001">
+    <DisplayName>Code</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=68</Reference>
+      <Reference ReferenceType="HasModellingRule">i=78</Reference>
+    </References>
+  </UAVariable>
+</UANodeSet>

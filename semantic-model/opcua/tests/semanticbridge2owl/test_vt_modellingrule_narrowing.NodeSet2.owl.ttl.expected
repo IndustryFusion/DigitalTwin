@@ -17,42 +17,19 @@
 
 <http://my.test/SubType> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
-            owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
-            owl:onClass <http://my.test/VT_785e8afd2dbfb8041e9beca4> ;
-            owl:onProperty <http://my.test/hasSignal> ],
+            owl:allValuesFrom <http://my.test/VT_94a7e0c776ffeeb0f0b3040b> ;
+            owl:onProperty <http://my.test/hasSetting> ],
         [ a owl:Restriction ;
-            owl:allValuesFrom <http://my.test/VT_785e8afd2dbfb8041e9beca4> ;
-            owl:onProperty <http://my.test/hasSignal> ],
+            owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+            owl:onClass <http://my.test/VT_94a7e0c776ffeeb0f0b3040b> ;
+            owl:onProperty <http://my.test/hasSetting> ],
         <http://my.test/BaseType> .
 
 <http://my.test/BaseType> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
-            owl:allValuesFrom <http://my.test/VT_0d94b86d0fb80fa6be1b3122> ;
-            owl:onProperty <http://my.test/hasSignal> ],
-        [ a owl:Restriction ;
-            owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
-            owl:onClass <http://my.test/VT_0d94b86d0fb80fa6be1b3122> ;
-            owl:onProperty <http://my.test/hasSignal> ],
+            owl:allValuesFrom <http://my.test/VT_94a7e0c776ffeeb0f0b3040b> ;
+            owl:onProperty <http://my.test/hasSetting> ],
         opcua:BaseObjectType .
-
-opcua:ValueRank_Scalar a owl:Class ;
-    rdfs:subClassOf opcua:ValueRank_ScalarOrOneDimension .
-
-base:SemanticBridgeReferenceType a owl:ObjectProperty .
-
-<http://my.test/VT_785e8afd2dbfb8041e9beca4> a owl:Class ;
-    rdfs:subClassOf [ a owl:Restriction ;
-            owl:onProperty sb:hasDataType ;
-            owl:someValuesFrom opcua:Double ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom opcua:Double ;
-            owl:onProperty sb:hasDataType ],
-        <http://my.test/VT_0d94b86d0fb80fa6be1b3122>,
-        opcua:PropertyType,
-        opcua:ValueRank_MoreDimensions ;
-    sb:originalBrowsePath "http://my.test/Signal" .
-
-opcua:ValueRank_Any a owl:Class .
 
 opcua:ValueRank_MoreDimensions a owl:Class ;
     rdfs:subClassOf opcua:ValueRank_OneOrMoreDimensions .
@@ -61,28 +38,35 @@ opcua:ValueRank_OneDimension a owl:Class ;
     rdfs:subClassOf opcua:ValueRank_OneOrMoreDimensions,
         opcua:ValueRank_ScalarOrOneDimension .
 
+base:SemanticBridgeReferenceType a owl:ObjectProperty .
+
+opcua:ValueRank_Any a owl:Class .
+
 opcua:ValueRank_OneOrMoreDimensions a owl:Class ;
     rdfs:subClassOf opcua:ValueRank_Any .
+
+opcua:ValueRank_Scalar a owl:Class ;
+    rdfs:subClassOf opcua:ValueRank_ScalarOrOneDimension .
 
 opcua:ValueRank_ScalarOrOneDimension a owl:Class ;
     rdfs:subClassOf opcua:ValueRank_Any .
 
-<http://my.test/VT_0d94b86d0fb80fa6be1b3122> a owl:Class ;
-    rdfs:subClassOf [ a owl:Restriction ;
-            owl:allValuesFrom opcua:Double ;
-            owl:onProperty sb:hasDataType ],
-        [ a owl:Restriction ;
-            owl:onProperty sb:hasDataType ;
-            owl:someValuesFrom opcua:Double ],
-        opcua:PropertyType,
-        opcua:ValueRank_OneDimension ;
-    sb:originalBrowsePath "http://my.test/Signal" .
-
-<http://my.test/hasSignal> a owl:ObjectProperty ;
-    rdfs:subPropertyOf base:SemanticBridgeReferenceType .
-
 sb:hasDataType a owl:FunctionalProperty,
         owl:ObjectProperty .
+
+<http://my.test/VT_94a7e0c776ffeeb0f0b3040b> a owl:Class ;
+    rdfs:subClassOf [ a owl:Restriction ;
+            owl:onProperty sb:hasDataType ;
+            owl:someValuesFrom opcua:Int32 ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom opcua:Int32 ;
+            owl:onProperty sb:hasDataType ],
+        opcua:PropertyType,
+        opcua:ValueRank_Scalar ;
+    sb:originalBrowsePath "http://my.test/Setting" .
+
+<http://my.test/hasSetting> a owl:ObjectProperty ;
+    rdfs:subPropertyOf base:SemanticBridgeReferenceType .
 
 [] a owl:AllDisjointClasses ;
     owl:members ( opcua:ValueRank_Scalar opcua:ValueRank_OneDimension opcua:ValueRank_MoreDimensions ) .

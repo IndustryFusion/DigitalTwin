@@ -9,7 +9,7 @@
     owl:imports <file:///home/marcel/src/DigitalTwin/semantic-model/opcua/core.owl.ttl>,
         rdf:,
         rdfs:,
-        <https://industryfusion.github.io/contexts/staging/ontology/v0/base.ttl>,
+        <https://industryfusion.github.io/contexts/staging/ontology/v0.3/base.ttl>,
         <https://industryfusion.github.io/contexts/staging/ontology/v0/ngsild.ttl> ;
     owl:versionIRI <http://example.com/v0.1/test/> ;
     owl:versionInfo 1e-01 .
@@ -19,11 +19,11 @@
 
 <http://my.test/BaseType> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
-            owl:allValuesFrom <http://my.test/DriveType> ;
-            owl:onProperty <http://my.test/hasDrive> ],
-        [ a owl:Restriction ;
             owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
             owl:onClass <http://my.test/DriveType> ;
+            owl:onProperty <http://my.test/hasDrive> ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom <http://my.test/DriveType> ;
             owl:onProperty <http://my.test/hasDrive> ],
         opcua:BaseObjectType .
 

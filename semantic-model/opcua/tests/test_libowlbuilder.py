@@ -159,11 +159,18 @@ class TestVirtualTypeEmission(unittest.TestCase):
         self.assertEqual(int(self.out.value(card, OWL.minQualifiedCardinality)), 1)
         self.assertIn((OPCUA['BaseType'], RDFS.subClassOf, card), self.out)
 
-    def test_no_some_values_from_anywhere(self):
-        # someValuesFrom is deliberately never emitted: logically equivalent
-        # to minQualifiedCardinality(1, ...) for Mandatory (redundant), and
-        # outright wrong for Optional (wrongly forces existence).
-        self.assertEqual(len(list(self.out.subjects(OWL.someValuesFrom, None))), 0)
+    def test_no_some_values_from_on_containment_properties(self):
+        # On the containment property (owner -> child), someValuesFrom is
+        # deliberately never emitted: logically equivalent to
+        # minQualifiedCardinality(1, ...) for Mandatory (redundant), and
+        # outright wrong for Optional (wrongly forces existence). This does
+        # NOT apply to sb:hasDataType (see test_libowlbuilder's DataType
+        # tests below): DataType is a Mandatory, single-valued Attribute of
+        # every real Variable, so someValuesFrom is correct there.
+        datatype_prop = OwlBuilder.SB['hasDataType']
+        offenders = [r for r in self.out.subjects(OWL.someValuesFrom, None)
+                     if (r, OWL.onProperty, datatype_prop) not in self.out]
+        self.assertEqual(offenders, [])
 
     def test_optional_variable_has_no_cardinality_restriction(self):
         # Temperature is Optional: allValuesFrom must exist on MotorType, but

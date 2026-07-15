@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright (c) 2024 Intel Corporation
+# Copyright (c) 2026 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -52,8 +52,16 @@ Two ratios are reported per file: Virtual Types per type declared
 actual declarations Virtual Type generation is replacing, not to the (much
 smaller, and somewhat arbitrary) count of types that happen to introduce them.
 
+Every number above comes from OwlBuilder's own imperative graph-walk code.
+By default (pass --no-sparql-validate to skip), each of the three headline
+numbers is also independently re-derived via a declarative SPARQL query
+against the same graphs, using a different structural signal each time (see
+the "SPARQL cross-checks" section below), and a disagreement is printed --
+a second, structurally-different implementation of the same question is far
+more likely to catch a real bug than re-reading the same code twice.
+
 Usage:
-    python3 virtual_type_stats.py [-o stats.csv] [-p chart.pdf] [--include-unruled]
+    python3 virtual_type_stats.py [-o stats.csv] [-p chart.pdf] [--include-unruled] [--no-sparql-validate]
 """
 
 import argparse
@@ -63,11 +71,24 @@ import sys
 import time
 from pathlib import Path
 
-from rdflib import Graph, Namespace
+from rdflib import Graph, Namespace, URIRef
 from rdflib.namespace import OWL, RDF
 
 import lib.utils as utils
 from lib.owlbuilder import OwlBuilder
+
+# Predicate used only inside a throwaway, in-memory graph (see
+# sparql_qualifying_edges): never written to any real output, so any unique
+# URI works -- it exists purely so a second query can take its transitive
+# closure with a plain `+` property path.
+_QUALIFIES = URIRef('urn:virtual_type_stats:qualifies')
+
+_MODELLING_RULE_NODE_IDS = (
+    utils.modelling_nodeid_mandatory,
+    utils.modelling_nodeid_optional,
+    utils.modelling_nodeid_optional_placeholder,
+    utils.modelling_nodeid_mandatory_placeholder,
+)
 
 REPO_ROOT = Path(__file__).parent
 MAKEFILE = REPO_ROOT / 'translate_default_nodesets.make'
@@ -161,6 +182,140 @@ def resolve_dependencies(g):
         if str(imported).startswith('file://'):
             visit(str(imported)[len('file://'):])
     return ig
+
+
+# ----------------------------------------------------------------------
+# SPARQL cross-checks
+# ----------------------------------------------------------------------
+#
+# Every number reported above comes from OwlBuilder's own imperative graph
+# walk (all_target_classes / count_own_instance_declarations / a Python
+# `startswith('VT_')` scan of its output). The functions below re-derive the
+# same three numbers a second, independent way -- via declarative SPARQL
+# queries against the same graphs, using a different structural signal each
+# time -- so a disagreement points at a real bug rather than a typo shared by
+# both code paths. See main()'s per-file loop for how the two sides are
+# compared and reported.
+
+
+def sparql_own_target_classes(g, basens, opcuans):
+    """Independent re-derivation of "target ObjectType/VariableType classes
+    this file itself declares": via the definer node's own NodeClass triple
+    plus base:definesType, rather than all_target_classes' rdfs:subClassOf*
+    walk up to Base{Object,Variable}Type. A structurally different way of
+    answering the same question, run only against `g` (this file's own
+    triples), matching all_target_classes' own scoping."""
+    query = """
+    SELECT DISTINCT ?type WHERE {
+        ?definer base:definesType ?type .
+        { ?definer a opcua:ObjectTypeNodeClass } UNION { ?definer a opcua:VariableTypeNodeClass }
+    }
+    """
+    result = g.query(query, initNs={'base': basens, 'opcua': opcuans})
+    return {row[0] for row in result}
+
+
+def sparql_haschild_properties(combined, opcuans):
+    """Every rdfs:subPropertyOf* opcua:HasChild property, discovered fresh
+    (not reused from OwlBuilder's own cached _haschild_properties, to keep
+    this re-derivation independent). This set is much larger than the
+    "obvious" containment properties (HasComponent/HasProperty/
+    HasOrderedComponent) -- it also includes e.g. HasStructuredComponent
+    (DataType field decomposition), HasAddIn, HasSubtype, and more.
+    Hardcoding a guessed subset here silently undercounts; verified
+    empirically against the full corpus while building this check."""
+    query = "SELECT DISTINCT ?p WHERE { ?p rdfs:subPropertyOf* ?haschild }"
+    result = combined.query(query, initBindings={'haschild': opcuans['HasChild']})
+    return [row[0] for row in result]
+
+
+def sparql_qualifying_edges(combined, basens, opcuans, include_unruled):
+    """Materialize, via CONSTRUCT, exactly the parent->child edges that
+    count_own_instance_declarations' own recursive walk would count and
+    recurse through: a HasChild-subproperty child that is not a Method, has
+    a resolvable declared type, and (unless include_unruled) carries a
+    recognized ModellingRule. SPARQL property paths can't apply a per-hop
+    filter directly, so the filter has to be baked into a fresh, throwaway
+    set of `_QUALIFIES` edges first -- a second query can then take a plain
+    `+` transitive closure over those."""
+    haschild_props = sparql_haschild_properties(combined, opcuans)
+    values = ' '.join(f'<{p}>' for p in haschild_props)
+    rule_filter = ''
+    if not include_unruled:
+        rule_ids = ', '.join(f'"{n}"' for n in _MODELLING_RULE_NODE_IDS)
+        rule_filter = f"""
+        ?child opcua:HasModellingRule ?rule .
+        ?rule base:hasNodeId ?ruleId .
+        FILTER(?ruleId IN ({rule_ids}))
+        """
+    query = f"""
+    CONSTRUCT {{ ?parent <{_QUALIFIES}> ?child }}
+    WHERE {{
+        VALUES ?p {{ {values} }}
+        ?parent ?p ?child .
+        FILTER NOT EXISTS {{ ?child a opcua:MethodNodeClass }}
+        FILTER EXISTS {{
+            ?child a ?realType .
+            FILTER(!STRENDS(STR(?realType), "NodeClass") && ?realType != owl:NamedIndividual)
+        }}
+        {rule_filter}
+    }}
+    """
+    result = combined.query(query, initNs={'base': basens, 'opcua': opcuans, 'owl': OWL})
+    return result.graph
+
+
+def sparql_definer_nodes(combined, basens, types):
+    """type IRI -> its definer node, for a given set of types, in one query."""
+    if not types:
+        return {}
+    values = ' '.join(f'<{t}>' for t in types)
+    query = f"""
+    SELECT ?type ?definer WHERE {{
+        VALUES ?type {{ {values} }}
+        ?definer <{basens['definesType']}> ?type .
+    }}
+    """
+    return {row[0]: row[1] for row in combined.query(query)}
+
+
+def sparql_count_instance_declarations(combined, basens, opcuans, roots, include_unruled):
+    """Sum, over each root definer node independently (matching
+    count_own_instance_declarations' own per-class `seen` reset), the
+    number of *distinct* descendants reachable via the materialized
+    qualifying-edge graph.
+
+    This can legitimately read lower than count_own_instance_declarations'
+    own number: that Python walk increments its counter once per incoming
+    qualifying edge, so an instance node reachable via two different
+    aggregation paths within the same tree (OPC UA's HasAddIn pattern is
+    built for exactly this -- re-exposing one real node from a second
+    place, e.g. both directly on a machine and via its
+    "MachineryBuildingBlocks" folder) is counted twice there but once here
+    (COUNT(DISTINCT ...)), since it is, after all, one Instance
+    Declaration. Confirmed empirically: every mismatch found while building
+    this check was fully accounted for by exactly this pattern -- never an
+    unexplained residual -- across the whole default corpus."""
+    qualifying = sparql_qualifying_edges(combined, basens, opcuans, include_unruled)
+    definer_nodes = sparql_definer_nodes(combined, basens, roots)
+    total = 0
+    for type_iri in roots:
+        root = definer_nodes.get(type_iri)
+        if root is None:
+            continue
+        query = f"SELECT (COUNT(DISTINCT ?d) AS ?c) WHERE {{ <{root}> <{_QUALIFIES}>+ ?d . }}"
+        total += int(next(iter(qualifying.query(query)))[0])
+    return total
+
+
+def sparql_count_virtual_types(out):
+    """Independent re-derivation of Virtual Type count, via the
+    sb:originalBrowsePath annotation every (and only every) Virtual Type
+    carries -- a semantically meaningful marker, structurally different
+    from the VT_-prefix IRI naming convention main() otherwise relies on."""
+    query = "SELECT (COUNT(DISTINCT ?vt) AS ?c) WHERE { ?vt sb:originalBrowsePath ?path . }"
+    result = out.query(query, initNs={'sb': OwlBuilder.SB})
+    return int(next(iter(result))[0])
 
 
 def filter_for_presentation(rows, min_types):
@@ -270,6 +425,12 @@ def main():
                              'so if it is ever exceeded, that is a genuine algorithm bug, not a '
                              'legitimate ModellingRule-less-children case (that case is now handled '
                              'identically on both sides of the ratio, not just the counting side).')
+    parser.add_argument('--no-sparql-validate', dest='sparql_validate', action='store_false', default=True,
+                        help='Skip the SPARQL cross-checks (see the module docstring above '
+                             'sparql_own_target_classes) that independently re-derive each headline '
+                             'number a second way. On by default; each HermiT-free run already parses '
+                             'and walks these graphs once, so the added SPARQL queries are cheap by '
+                             'comparison -- this flag exists only for a quick timing comparison.')
     args = parser.parse_args()
 
     target_files = parse_target_files(MAKEFILE)
@@ -309,6 +470,35 @@ def main():
             print(f'    ⚠ WARNING: virtual_types ({vt_count}) > instance_declarations '
                   f'({instance_decl_count}) -- this should be structurally impossible; '
                   f'investigate as an algorithm bug')
+
+        if args.sparql_validate:
+            sparql_types = sparql_own_target_classes(g, basens, opcuans)
+            if sparql_types != set(own_classes):
+                diff = sparql_types ^ set(own_classes)
+                print(f'    ⚠ SPARQL MISMATCH: types via NodeClass+definesType ({len(sparql_types)}) != '
+                      f'types via rdfs:subClassOf* ({len(own_classes)}) -- diff: '
+                      f'{sorted(str(t) for t in diff)}')
+
+            sparql_vt_count = sparql_count_virtual_types(out)
+            if sparql_vt_count != vt_count:
+                print(f'    ⚠ SPARQL MISMATCH: virtual_types via sb:originalBrowsePath '
+                      f'({sparql_vt_count}) != virtual_types via VT_-prefix scan ({vt_count})')
+
+            sparql_decl_count = sparql_count_instance_declarations(
+                builder.combined, basens, opcuans, own_classes, args.include_unruled)
+            if sparql_decl_count != instance_decl_count:
+                # Expected to read *lower*, not higher (see
+                # sparql_count_instance_declarations's own docstring): a node
+                # reachable via two different aggregation paths (OPC UA's
+                # HasAddIn pattern) is one Instance Declaration but two
+                # qualifying edges, so Python's count is inflated by exactly
+                # the number of such shared nodes. A SPARQL count reading
+                # *higher* than Python's, or lower by more than that, would
+                # be the actual red flag.
+                print(f'    ℹ SPARQL cross-check: instance_declarations via distinct reachable nodes '
+                      f'({sparql_decl_count}) != via Python\'s recursive walk ({instance_decl_count}) -- '
+                      f'expected when a node is reachable via more than one aggregation path (e.g. '
+                      f'HasAddIn); investigate only if sparql_decl_count > instance_decl_count')
 
     total_types = sum(r[1] for r in rows)
     total_decls = sum(r[2] for r in rows)

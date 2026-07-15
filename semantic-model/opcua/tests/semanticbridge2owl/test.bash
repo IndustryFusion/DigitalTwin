@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2024 Intel Corporation
+# Copyright (c) 2026 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ CORE_ONTOLOGY=../../core.ttl
 NODESET2OWL=../../nodeset2owl.py
 SEMANTICBRIDGE2OWL=../../semanticbridge2owl.py
 COMPARE="python3 ./compare_vt_output.py"
-CHECK_CONTRADICTION="python3 ./check_unsatisfiable_precondition.py"
+CHECK_CONTRADICTION="python3 ../../check_consistency.py"
 
 if [ ! -f "${CORE_ONTOLOGY}" ]; then
     echo "Missing ${CORE_ONTOLOGY}. Run 'make -f translate_default_nodesets.make' at the repo root first."
@@ -62,6 +62,11 @@ SCENARIOS=(
     "test_vt_nested.NodeSet2,false"
     "test_vt_contradiction.NodeSet2,true"
     "test_vt_distinct_owners.NodeSet2,false"
+    "test_vt_datatype_contradiction.NodeSet2,true"
+    "test_vt_datatype_subtype_override.NodeSet2,false"
+    "test_vt_modellingrule_narrowing.NodeSet2,false"
+    "test_vt_deep_type_hierarchy.NodeSet2,false"
+    "test_vt_array_modellingrule_placeholder.NodeSet2,false"
 )
 
 for tuple in "${SCENARIOS[@]}"; do IFS=","
@@ -90,11 +95,11 @@ for tuple in "${SCENARIOS[@]}"; do IFS=","
     ${COMPARE} ${expected} ${owl} || exit 1
 
     if [ "${expect_contradiction}" = "true" ]; then
-        echo "--- checking the override IS structurally unsatisfiable"
-        ${CHECK_CONTRADICTION} --expect-contradiction ${owl} || exit 1
+        echo "--- checking with HermiT that the override IS unsatisfiable"
+        ${CHECK_CONTRADICTION} --expect-contradiction ${sb} || exit 1
     else
-        echo "--- checking no false-positive contradiction was introduced"
-        ${CHECK_CONTRADICTION} --expect-none ${owl} || exit 1
+        echo "--- checking with HermiT that no false-positive contradiction was introduced"
+        ${CHECK_CONTRADICTION} --expect-none ${sb} || exit 1
     fi
 
     rm -f ${sb} ${owl}

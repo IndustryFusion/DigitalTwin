@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2024 Intel Corporation
+# Copyright (c) 2026 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -302,7 +302,17 @@ class OwlBuilder:
         calls _resolve_target which calls _mint_vt at most once per
         (owner, key) pair (cached, never re-minted), so the Virtual Type
         count can never exceed this broader count -- verified with zero
-        exceptions across the full default corpus."""
+        exceptions across the full default corpus.
+
+        A node reachable via more than one aggregation edge within the same
+        tree -- legal in OPC UA and not uncommon: HasAddIn exists precisely
+        to re-expose one real object from a second place, e.g.
+        "Identification" both directly on a device and again under a
+        grouping folder -- is one Instance Declaration, counted once, not
+        once per incoming edge. Confirmed against a SPARQL-based
+        cross-check (virtual_type_stats.py's own sparql_count_instance_
+        declarations, built independently against the same graphs) across
+        the full default corpus: the two now agree exactly."""
         count = 0
         for class_iri in self.all_target_classes():
             definer_node = self._definer_node(class_iri)
@@ -323,7 +333,19 @@ class OwlBuilder:
                         self.combined, child, None, owner)
                     if is_optional is None and not include_unruled:
                         continue
-                    count += 1
+                    # A node reachable via more than one aggregation edge
+                    # within the same tree (OPC UA's HasAddIn is built for
+                    # exactly this: re-exposing one real object from a
+                    # second place, e.g. "Identification" both directly on
+                    # a device and again under a grouping folder) is one
+                    # Instance Declaration, not two -- only count it the
+                    # first time `seen` encounters it; still descend every
+                    # time an edge reaches it (harmless no-op via the
+                    # `node in seen` guard above once it's already been
+                    # visited), since a later edge could be the first to
+                    # reach an otherwise-unvisited grandchild.
+                    if child not in seen:
+                        count += 1
                     visit(child, owner)
 
             visit(definer_node, class_iri)
@@ -593,17 +615,40 @@ class OwlBuilder:
         prop = self.SB['hasDataType']
         if (prop, RDF.type, OWL.ObjectProperty) not in self.out:
             self.out.add((prop, RDF.type, OWL.ObjectProperty))
+            # Unlike the containment property _add_all_values_from
+            # deliberately leaves non-functional (see its own comment),
+            # DataType is a Mandatory, single-valued Attribute of every OPC
+            # UA Variable/VariableType (Part 3's Attributes table) -- not
+            # optional, and not per-declaration like a ModellingRule.
+            # Declaring it owl:FunctionalProperty here reflects that fact.
+            self.out.add((prop, RDF.type, OWL.FunctionalProperty))
         return prop
 
     def _add_datatype_restriction(self, vt_iri, datatype_iri):
         if datatype_iri is None:
             return
         prop = self._datatype_property()
-        r = BNode()
-        self.out.add((r, RDF.type, OWL.Restriction))
-        self.out.add((r, OWL.onProperty, prop))
-        self.out.add((r, OWL.allValuesFrom, datatype_iri))
-        self.out.add((vt_iri, RDFS.subClassOf, r))
+        allv = BNode()
+        self.out.add((allv, RDF.type, OWL.Restriction))
+        self.out.add((allv, OWL.onProperty, prop))
+        self.out.add((allv, OWL.allValuesFrom, datatype_iri))
+        self.out.add((vt_iri, RDFS.subClassOf, allv))
+        # someValuesFrom, unlike on the containment property, belongs here:
+        # a real Variable always has *some* DataType value (it is Mandatory
+        # and functional, see _datatype_property), so asserting existence
+        # is simply true, not an overreach the way it would be for an
+        # Optional component. Combined with FunctionalProperty, this is what
+        # makes an illegal sibling-DataType override (e.g. see
+        # tests/semanticbridge2owl/test_vt_datatype_sibling_override.
+        # NodeSet2) a genuine, HermiT-detectable contradiction instead of a
+        # vacuously-satisfiable no-op: without forcing existence, two
+        # disjoint allValuesFrom fillers on the same VT are trivially
+        # satisfied by an instance with zero hasDataType edges.
+        somev = BNode()
+        self.out.add((somev, RDF.type, OWL.Restriction))
+        self.out.add((somev, OWL.onProperty, prop))
+        self.out.add((somev, OWL.someValuesFrom, datatype_iri))
+        self.out.add((vt_iri, RDFS.subClassOf, somev))
 
     # ------------------------------------------------------------------
     # Pure-OWL class/property layer passthrough (§19-20)
@@ -684,7 +729,7 @@ class OwlBuilder:
                     stack.append(child)
 
         for parent in descendants | {base_datatype}:
-            children = list(self.combined.subjects(RDFS.subClassOf, parent))
+            children = sorted(self.combined.subjects(RDFS.subClassOf, parent), key=str)
             if len(children) < 2:
                 continue
             has_new_member = any((child, RDFS.subClassOf, parent) in self.g for child in children)

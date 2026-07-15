@@ -10,7 +10,7 @@
     owl:imports <file:///home/marcel/src/DigitalTwin/semantic-model/opcua/core.owl.ttl>,
         rdf:,
         rdfs:,
-        <https://industryfusion.github.io/contexts/staging/ontology/v0/base.ttl>,
+        <https://industryfusion.github.io/contexts/staging/ontology/v0.3/base.ttl>,
         <https://industryfusion.github.io/contexts/staging/ontology/v0/ngsild.ttl> ;
     owl:versionIRI <http://example.com/v0.1/test/> ;
     owl:versionInfo 1e-01 .
@@ -29,6 +29,9 @@
     rdfs:subClassOf [ a owl:Restriction ;
             owl:allValuesFrom opcua:Double ;
             owl:onProperty sb:hasDataType ],
+        [ a owl:Restriction ;
+            owl:onProperty sb:hasDataType ;
+            owl:someValuesFrom opcua:Double ],
         opcua:PropertyType,
         opcua:ValueRank_Scalar ;
     sb:originalBrowsePath "http://my.test/Temperature" .
@@ -54,16 +57,19 @@ opcua:ValueRank_MoreDimensions a owl:Class ;
             owl:allValuesFrom <http://my.test/VT_0d9b5c6ec65404a374532517> ;
             owl:onProperty <http://my.test/hasReadings> ],
         [ a owl:Restriction ;
+            owl:allValuesFrom <http://my.test/VT_4f5bff7f174326377fa63ffb> ;
+            owl:onProperty <http://my.test/hasTemperature> ],
+        [ a owl:Restriction ;
             owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
             owl:onClass <http://my.test/VT_0d9b5c6ec65404a374532517> ;
             owl:onProperty <http://my.test/hasReadings> ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom <http://my.test/VT_4f5bff7f174326377fa63ffb> ;
-            owl:onProperty <http://my.test/hasTemperature> ],
         opcua:BaseObjectType .
 
 <http://my.test/VT_0d9b5c6ec65404a374532517> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
+            owl:onProperty sb:hasDataType ;
+            owl:someValuesFrom opcua:Int32 ],
+        [ a owl:Restriction ;
             owl:allValuesFrom opcua:Int32 ;
             owl:onProperty sb:hasDataType ],
         opcua:PropertyType,
@@ -94,9 +100,10 @@ opcua:ValueRank_Scalar a owl:Class ;
 opcua:ValueRank_ScalarOrOneDimension a owl:Class ;
     rdfs:subClassOf opcua:ValueRank_Any .
 
-sb:hasDataType a owl:ObjectProperty .
-
 base:SemanticBridgeReferenceType a owl:ObjectProperty .
+
+sb:hasDataType a owl:FunctionalProperty,
+        owl:ObjectProperty .
 
 [] a owl:AllDisjointClasses ;
     owl:members ( opcua:ValueRank_Scalar opcua:ValueRank_OneDimension opcua:ValueRank_MoreDimensions ) .
