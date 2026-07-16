@@ -54,9 +54,14 @@ never surface from checking either spec individually. With no explicit
 files, --combine merges the entire translate_default_nodesets.make corpus
 into one ontology.
 
-Requires `pip install owlready2` (used solely to locate the bundled
+Requires `pip install owlready2==0.51` (used solely to locate the bundled
 HermiT.jar; the actual reasoning is a plain `java -cp ... HermiT ...`
 subprocess, not owlready2's own ontology/world API) and a `java` on PATH.
+
+owlready2 is deliberately NOT in requirements.txt/requirements-dev.txt: it is
+LGPL-3.0-or-later (and bundles HermiT.jar, also LGPL-3.0), incompatible with
+this repo's default Apache-2.0 dependency set, so it must be installed as an
+explicit, separate opt-in step -- see requirements-dev.txt's own comment.
 
 Usage:
     python3 check_consistency.py [-o report.csv] [-q] [name.ttl ...]
@@ -86,8 +91,11 @@ from virtual_type_stats import (
 try:
     import owlready2
 except ImportError:
-    sys.exit('check_consistency.py requires owlready2 (used only to locate the bundled HermiT.jar): '
-             'pip install owlready2')
+    sys.exit('check_consistency.py requires owlready2 (used only to locate the bundled HermiT.jar). '
+             'It is deliberately not installed by default: owlready2 is LGPL-3.0-or-later (and '
+             'bundles HermiT.jar, also LGPL-3.0), incompatible with this repo\'s default Apache-2.0 '
+             'dependency set, so it is a separate, manual, opt-in install:\n'
+             '    pip install owlready2==0.51')
 
 _HERMIT_DIR = os.path.join(os.path.dirname(owlready2.__file__), 'hermit')
 print(f'Using HermiT.jar from {os.path.abspath(_HERMIT_DIR)}')

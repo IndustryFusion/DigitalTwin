@@ -46,6 +46,12 @@ jobs:
         source $CONDA/bin/activate
         conda activate py310
         pip3 install asyncua
+        # owlready2 is LGPL-3.0-or-later (incompatible with this repo's
+        # default Apache-2.0 dependency set), so it's deliberately excluded
+        # from requirements-dev.txt -- see semantic-model/opcua/README.md.
+        # Installed here explicitly, as a one-off, only so CI can exercise
+        # check_consistency.py's HermiT-based e2e tests.
+        pip3 install owlready2==0.51
         cd semantic-model/opcua && make setup && make lint test
     - name: Build iff-agent
       run: |
