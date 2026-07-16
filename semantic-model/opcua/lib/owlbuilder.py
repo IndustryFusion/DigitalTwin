@@ -766,34 +766,67 @@ class OwlBuilder:
         """
         for s, sup in self.g.query(query, initBindings={'root': semantic_bridge_root}):
             self.out.add((s, RDF.type, OWL.ObjectProperty))
+            # Each `s` here is one specific has<BrowseName> leaf property (e.g.
+            # opcua:hasMotor), minted per (namespace URI, BrowseName) pair by
+            # nodesetparser.add_semantic_bridge -- never an intermediate
+            # supertype (every one of them is asserted rdfs:subPropertyOf the
+            # SemanticBridgeReferenceType root directly, one flat level, see
+            # that function). OPC UA's own uniqueness rule (Part 3: no two
+            # forward References of a Node may share a BrowseName) means a
+            # given owner can only ever have at most one filler for a specific
+            # BrowseName's property, so owl:FunctionalProperty here is simply
+            # true, not an approximation -- and it's what makes an OPC UA
+            # nodeset that (illegally) declares two same-named children under
+            # one node a genuine, HermiT-detectable contradiction rather than
+            # a silently-accepted no-op. (semantic_bridge_root itself is
+            # deliberately NOT made functional two lines up: it is the shared
+            # supertype of *all* has<BrowseName> properties, and a real owner
+            # legitimately has many differently-named children at once.)
+            self.out.add((s, RDF.type, OWL.FunctionalProperty))
             self.out.add((s, RDFS.subPropertyOf, sup))
 
-    def _add_datatype_disjointness(self):
-        """For every DataType (rooted at opcua:BaseDataType) with 2+ direct
-        subtypes, assert those subtypes pairwise disjoint: a value cannot
-        simultaneously be of two different sibling DataTypes (e.g. Int32 and
-        Double are both children of Number's descendants; two distinct custom
-        Structures or Enumerations are equally mutually exclusive). This is
-        what lets a reasoner catch a subtype overriding a Variable's Datatype
-        to an incompatible sibling type, the same way ValueRank's disjoint
-        leaves catch a ValueRank override.
+    def _add_sibling_type_disjointness(self, base_root):
+        """For every class under `base_root` with 2+ direct subtypes, assert
+        those subtypes pairwise disjoint: an OPC UA instance's TypeDefinition
+        (for opcua:BaseObjectType/BaseVariableType) or a value's DataType
+        (for opcua:BaseDataType) is always exactly one concrete type, so two
+        subtypes that are not in an ancestor/descendant relationship with
+        each other are always mutually exclusive (e.g. Int32 and Double are
+        both children of Number's descendants; two distinct sibling
+        ObjectTypes are equally mutually exclusive TypeDefinitions). This is
+        what lets a reasoner catch a subtype overriding a declaration's
+        nominal type (or a Variable's Datatype) to an incompatible, unrelated
+        type -- the same mechanism ValueRank's disjoint leaves already rely
+        on, applied here directly at the class level instead of via a
+        Functional-property trick (see _mint_vt's §8/§9 rdfs:subClassOf
+        edges: an override's Virtual Type already lands subClassOf both its
+        own declared type and the inherited VT, so once the two are asserted
+        disjoint the VT itself becomes unsatisfiable, no restriction
+        indirection needed).
 
         Verified against core.ttl before implementing this: zero classes
         anywhere in the ontology have more than one direct rdfs:subClassOf
         (no multi-inheritance), so treating every sibling group as a true
-        partition is safe.
+        partition is safe -- this holds for Object/VariableTypes exactly as
+        it does for DataTypes.
+
+        OPC UA Interfaces (HasInterface / BaseInterfaceType) are a distinct
+        mechanism -- an Interface reference, not a TypeDefinition subtype
+        relationship -- and Interface types live in their own tree rooted at
+        BaseInterfaceType, never under BaseObjectType, so they never enter
+        these sibling groups: an object implementing several Interfaces at
+        once is unaffected by this disjointness assertion.
 
         Scoped like everything else here: a disjointness group is only
         emitted if at least one of its members is newly declared in `g` (the
         rdfs:subClassOf edge to the shared parent lives in `g`, not only in
         `ig`). A companion spec that adds one new subtype under an existing
-        core DataType therefore asserts disjointness for that whole sibling
-        set (old members plus the new one), but doesn't re-emit disjointness
-        for every *other* DataType parent it didn't touch -- that was already
-        asserted by the dependency's own output."""
-        base_datatype = self.opcuans['BaseDataType']
+        core type therefore asserts disjointness for that whole sibling set
+        (old members plus the new one), but doesn't re-emit disjointness for
+        every *other* parent it didn't touch -- that was already asserted by
+        the dependency's own output."""
         descendants = set()
-        stack = [base_datatype]
+        stack = [base_root]
         while stack:
             current = stack.pop()
             for child in self.combined.subjects(RDFS.subClassOf, current):
@@ -801,7 +834,7 @@ class OwlBuilder:
                     descendants.add(child)
                     stack.append(child)
 
-        for parent in descendants | {base_datatype}:
+        for parent in descendants | {base_root}:
             children = sorted(self.combined.subjects(RDFS.subClassOf, parent), key=str)
             if len(children) < 2:
                 continue
@@ -821,7 +854,9 @@ class OwlBuilder:
         generates Virtual Types for hundreds of types with no other visible
         output in between."""
         self._copy_class_and_property_layer()
-        self._add_datatype_disjointness()
+        self._add_sibling_type_disjointness(self.opcuans['BaseDataType'])
+        self._add_sibling_type_disjointness(self.opcuans['BaseObjectType'])
+        self._add_sibling_type_disjointness(self.opcuans['BaseVariableType'])
         targets = roots if roots is not None else self.all_target_classes()
         total = len(targets)
         for index, root in enumerate(targets, start=1):

@@ -17,82 +17,63 @@
 
 <http://my.test/PumpType> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
-            owl:allValuesFrom <http://my.test/DriveType> ;
-            owl:onProperty <http://my.test/hasDrive> ],
-        [ a owl:Restriction ;
             owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
             owl:onClass <http://my.test/DriveType> ;
+            owl:onProperty <http://my.test/hasDrive> ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom <http://my.test/DriveType> ;
             owl:onProperty <http://my.test/hasDrive> ],
         opcua:BaseObjectType .
 
 <http://my.test/VT_4f5bff7f174326377fa63ffb> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
-            owl:allValuesFrom opcua:ValueRank_Scalar ;
-            owl:onProperty sb:hasValueRank ],
+            owl:onProperty sb:hasValueRank ;
+            owl:someValuesFrom opcua:ValueRank_Scalar ],
         [ a owl:Restriction ;
             owl:allValuesFrom opcua:Double ;
             owl:onProperty sb:hasDataType ],
         [ a owl:Restriction ;
-            owl:onProperty sb:hasValueRank ;
-            owl:someValuesFrom opcua:ValueRank_Scalar ],
+            owl:allValuesFrom opcua:ValueRank_Scalar ;
+            owl:onProperty sb:hasValueRank ],
         [ a owl:Restriction ;
             owl:onProperty sb:hasDataType ;
             owl:someValuesFrom opcua:Double ],
         opcua:PropertyType ;
     sb:originalBrowsePath "http://my.test/Temperature" .
 
-<http://my.test/hasTemperature> a owl:ObjectProperty ;
+<http://my.test/hasTemperature> a owl:FunctionalProperty,
+        owl:ObjectProperty ;
     rdfs:subPropertyOf base:SemanticBridgeReferenceType .
 
 opcua:ValueRank_MoreDimensions a owl:Class ;
     rdfs:subClassOf opcua:ValueRank_OneOrMoreDimensions .
-
-<http://my.test/DriveType> a owl:Class ;
-    rdfs:subClassOf [ a owl:Restriction ;
-            owl:allValuesFrom <http://my.test/MotorType> ;
-            owl:onProperty <http://my.test/hasMotor> ],
-        [ a owl:Restriction ;
-            owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
-            owl:onClass <http://my.test/MotorType> ;
-            owl:onProperty <http://my.test/hasMotor> ],
-        opcua:BaseObjectType .
-
-<http://my.test/MotorType> a owl:Class ;
-    rdfs:subClassOf [ a owl:Restriction ;
-            owl:allValuesFrom <http://my.test/VT_4f5bff7f174326377fa63ffb> ;
-            owl:onProperty <http://my.test/hasTemperature> ],
-        [ a owl:Restriction ;
-            owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
-            owl:onClass <http://my.test/VT_0d9b5c6ec65404a374532517> ;
-            owl:onProperty <http://my.test/hasReadings> ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom <http://my.test/VT_0d9b5c6ec65404a374532517> ;
-            owl:onProperty <http://my.test/hasReadings> ],
-        opcua:BaseObjectType .
 
 <http://my.test/VT_0d9b5c6ec65404a374532517> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
             owl:allValuesFrom opcua:ValueRank_OneDimension ;
             owl:onProperty sb:hasValueRank ],
         [ a owl:Restriction ;
-            owl:allValuesFrom opcua:Int32 ;
-            owl:onProperty sb:hasDataType ],
+            owl:onProperty sb:hasValueRank ;
+            owl:someValuesFrom opcua:ValueRank_OneDimension ],
         [ a owl:Restriction ;
             owl:onProperty sb:hasDataType ;
             owl:someValuesFrom opcua:Int32 ],
         [ a owl:Restriction ;
-            owl:onProperty sb:hasValueRank ;
-            owl:someValuesFrom opcua:ValueRank_OneDimension ],
+            owl:allValuesFrom opcua:Int32 ;
+            owl:onProperty sb:hasDataType ],
         opcua:PropertyType ;
     sb:originalBrowsePath "http://my.test/Readings" .
 
-<http://my.test/hasDrive> a owl:ObjectProperty ;
+<http://my.test/hasDrive> a owl:FunctionalProperty,
+        owl:ObjectProperty ;
     rdfs:subPropertyOf base:SemanticBridgeReferenceType .
 
-<http://my.test/hasMotor> a owl:ObjectProperty ;
+<http://my.test/hasMotor> a owl:FunctionalProperty,
+        owl:ObjectProperty ;
     rdfs:subPropertyOf base:SemanticBridgeReferenceType .
 
-<http://my.test/hasReadings> a owl:ObjectProperty ;
+<http://my.test/hasReadings> a owl:FunctionalProperty,
+        owl:ObjectProperty ;
     rdfs:subPropertyOf base:SemanticBridgeReferenceType .
 
 opcua:ValueRank_Any a owl:Class .
@@ -102,6 +83,29 @@ opcua:ValueRank_OneOrMoreDimensions a owl:Class ;
 
 opcua:ValueRank_ScalarOrOneDimension a owl:Class ;
     rdfs:subClassOf opcua:ValueRank_Any .
+
+<http://my.test/DriveType> a owl:Class ;
+    rdfs:subClassOf [ a owl:Restriction ;
+            owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+            owl:onClass <http://my.test/MotorType> ;
+            owl:onProperty <http://my.test/hasMotor> ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom <http://my.test/MotorType> ;
+            owl:onProperty <http://my.test/hasMotor> ],
+        opcua:BaseObjectType .
+
+<http://my.test/MotorType> a owl:Class ;
+    rdfs:subClassOf [ a owl:Restriction ;
+            owl:allValuesFrom <http://my.test/VT_4f5bff7f174326377fa63ffb> ;
+            owl:onProperty <http://my.test/hasTemperature> ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom <http://my.test/VT_0d9b5c6ec65404a374532517> ;
+            owl:onProperty <http://my.test/hasReadings> ],
+        [ a owl:Restriction ;
+            owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+            owl:onClass <http://my.test/VT_0d9b5c6ec65404a374532517> ;
+            owl:onProperty <http://my.test/hasReadings> ],
+        opcua:BaseObjectType .
 
 opcua:ValueRank_OneDimension a owl:Class ;
     rdfs:subClassOf opcua:ValueRank_OneOrMoreDimensions,
@@ -117,6 +121,9 @@ sb:hasDataType a owl:FunctionalProperty,
 
 sb:hasValueRank a owl:FunctionalProperty,
         owl:ObjectProperty .
+
+[] a owl:AllDisjointClasses ;
+    owl:members ( <http://my.test/DriveType> <http://my.test/MotorType> <http://my.test/PumpType> opcua:AggregateConfigurationType opcua:AggregateFunctionType opcua:AlarmMetricsType opcua:AliasNameType opcua:AuthorizationServiceConfigurationType opcua:BaseConditionClassType opcua:BaseEventType opcua:BaseInterfaceType opcua:CertificateGroupType opcua:CertificateType opcua:ConnectionTransportType opcua:DataSetReaderMessageType opcua:DataSetReaderTransportType opcua:DataSetReaderType opcua:DataSetWriterMessageType opcua:DataSetWriterTransportType opcua:DataSetWriterType opcua:DataTypeEncodingType opcua:DataTypeSystemType opcua:DictionaryEntryType opcua:ExtensionFieldsType opcua:FileType opcua:FolderType opcua:HistoricalDataConfigurationType opcua:HistoricalEventConfigurationType opcua:HistoricalExternalEventSourceType opcua:HistoryServerCapabilitiesType opcua:IetfBaseNetworkInterfaceType opcua:KeyCredentialConfigurationType opcua:ModellingRuleType opcua:NamespaceMetadataType opcua:NamespacesType opcua:NetworkAddressType opcua:OrderedListType opcua:PriorityMappingTableType opcua:ProvisionableDeviceType opcua:PubSubCapabilitiesType opcua:PubSubConnectionType opcua:PubSubDiagnosticsType opcua:PubSubGroupType opcua:PubSubKeyPushTargetType opcua:PubSubKeyServiceType opcua:PubSubStatusType opcua:PublishedDataSetType opcua:QuantityType opcua:ReaderGroupMessageType opcua:ReaderGroupTransportType opcua:RoleSetType opcua:RoleType opcua:SecurityGroupType opcua:ServerCapabilitiesType opcua:ServerConfigurationType opcua:ServerDiagnosticsType opcua:ServerRedundancyType opcua:ServerType opcua:SessionDiagnosticsObjectType opcua:SessionsDiagnosticsSummaryType opcua:StandaloneSubscribedDataSetType opcua:StateMachineType opcua:StateType opcua:SubscribedDataSetType opcua:TemporaryFileTransferType opcua:TransactionDiagnosticsType opcua:TransitionType opcua:UnitType opcua:UserManagementType opcua:VendorServerInfoType opcua:WriterGroupMessageType opcua:WriterGroupTransportType ) .
 
 [] a owl:AllDisjointClasses ;
     owl:members ( opcua:ValueRank_Scalar opcua:ValueRank_OneDimension opcua:ValueRank_MoreDimensions ) .

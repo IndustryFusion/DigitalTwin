@@ -4,5 +4,12 @@ black==26.3.1
 pytest==9.0.3
 pytest-cov==4.0.0
 pyshacl==0.26.0
-owlready2==0.51
 matplotlib==3.11.0
+
+# owlready2 is deliberately NOT listed here: it is LGPL-3.0-or-later (and
+# bundles the HermiT.jar reasoner, also LGPL-3.0), incompatible with this
+# repo's default Apache-2.0 dependency set. Only check_consistency.py needs
+# it, and only to locate the bundled HermiT.jar (see that file's own
+# docstring) -- but `make test`'s final step runs that script, so it must be
+# installed separately before `make test` will pass:
+#     pip install owlready2==0.51

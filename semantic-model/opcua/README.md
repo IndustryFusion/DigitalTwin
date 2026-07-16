@@ -6,6 +6,31 @@ To setup the python environment start a python3 virtual environment with `Python
 
 `make setup`
 
+### HermiT-based consistency checking (`check_consistency.py`)
+
+`make test` runs `check_consistency.py` with no arguments at the end, which
+runs the real HermiT DL reasoner against the Virtual-Types ontology of every
+default nodeset `translate_default_nodesets.make` builds (core, di, ia,
+pumps, ...), checking each one for contradictory OPC UA type constructions
+(an override that narrows a component/DataType/ValueRank to something
+incompatible with its supertype's declaration). It also backs the
+`tests/owl2virtualtypes/test.bash` e2e scenarios that assert a *specific*
+override IS (or is NOT) flagged as unsatisfiable.
+
+Due to license conflicts, `owlready2` (needed by `check_consistency.py` to
+locate the bundled HermiT.jar) is NOT installed automatically and NOT
+listed in requirements.txt/requirements-dev.txt: it is LGPL-3.0-or-later (and
+bundles the HermiT.jar reasoner, also LGPL-3.0), incompatible with this
+repo's default Apache-2.0 dependency set. `check_consistency.py` detects its
+absence at import time and exits with instructions; `make test` will fail at
+that step until you install it yourself:
+
+    pip install owlready2==0.51
+
+A `java` runtime on PATH is also required (HermiT itself runs as a `java`
+subprocess). To check a single file instead of the whole corpus, pass it
+explicitly: `python3 check_consistency.py core.ttl`.
+
 ## nodeset2owl.py
 
 This script translates OPCUA nodeset files to OWL (in ttl format).
