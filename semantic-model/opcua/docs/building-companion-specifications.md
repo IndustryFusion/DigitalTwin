@@ -8,7 +8,7 @@ In OWL, dependencies are managed by `owl:imports` triples. A *global* import con
 
 In contrast, a *local* import is referencing the local directories in a File URI, for instance:
 
-     owl:imports </home/user/src/IndustryFusion/DigitalTwin/semantic-model/opcua/core.ttl>
+     owl:imports </home/user/src/IndustryFusion/DigitalTwin/semantic-model/opcua/core.owl.ttl>
 
 For convenience, a script is provided to create the "usual suspect" companion specifications (note nodeset version: `NODESET_VERSION=UA-1.05.03-2023-12-15`):
 
@@ -33,15 +33,15 @@ For instance, converting the core OPCUA specification looks as follows:
     NODESET_VERSION=UA-1.05.03-2023-12-15
     CORE_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/${NODESET_VERSION}/Schema/Opc.Ua.NodeSet2.xml
     BASE_ONTOLOGY=https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl
-    python3 nodeset2owl.py ${CORE_NODESET} -i ${BASE_ONTOLOGY} -p opcua -o core.ttl
+    python3 nodeset2owl.py ${CORE_NODESET} -i ${BASE_ONTOLOGY} -p opcua -o core.owl.ttl
 
 The `DI` specification is translated as follows:
 
     NODESET_VERSION=UA-1.05.03-2023-12-15
     CORE_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/${NODESET_VERSION}/Schema/Opc.Ua.NodeSet2.xml
     BASE_ONTOLOGY=https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl
-    CORE_ONTOLOGY=core.ttl
-    python3 nodeset2owl.py  ${DI_NODESET} -i ${BASE_ONTOLOGY} ${CORE_ONTOLOGY} -p devices -o devices.ttl
+    CORE_ONTOLOGY=core.owl.ttl
+    python3 nodeset2owl.py  ${DI_NODESET} -i ${BASE_ONTOLOGY} ${CORE_ONTOLOGY} -p devices -o devices.owl.ttl
 
 And the `Machinery` specification is converted like so:
 
@@ -49,9 +49,9 @@ And the `Machinery` specification is converted like so:
     CORE_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/${NODESET_VERSION}/Schema/Opc.Ua.NodeSet2.xml
     BASE_ONTOLOGY=https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl
     MACHINERY_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/${NODESET_VERSION}/Machinery/Opc.Ua.Machinery.NodeSet2.xml
-    CORE_ONTOLOGY=core.ttl
-    DEVICES_ONTOLOGY=devices.ttl
-    python3 nodeset2owl.py ${MACHINERY_NODESET} -i ${BASE_ONTOLOGY} ${CORE_ONTOLOGY} ${DEVICES_ONTOLOGY} -p machinery -o machinery.ttl
+    CORE_ONTOLOGY=core.owl.ttl
+    DEVICES_ONTOLOGY=devices.owl.ttl
+    python3 nodeset2owl.py ${MACHINERY_NODESET} -i ${BASE_ONTOLOGY} ${CORE_ONTOLOGY} ${DEVICES_ONTOLOGY} -p machinery -o machinery.owl.ttl
 
 In general, to determine the dependencies, the `<Models>` section of the target Nodeset must be analyzed. In the Pumps specification it looks e.g. like this
 
@@ -65,13 +65,13 @@ In general, to determine the dependencies, the `<Models>` section of the target 
   </Models>
 
 ```
-and this suggest that the nodeset is (besides the base specification) dependends on `core.ttl`, `devices.ttl` and `machinery.ttl`. The conversation would then look like:
+and this suggest that the nodeset is (besides the base specification) dependends on `core.owl.ttl`, `devices.owl.ttl` and `machinery.owl.ttl`. The conversation would then look like:
 
 ```
 NODESET_VERSION=UA-1.05.03-2023-12-15
 PUMPS_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/${NODESET_VERSION}/Pumps/Opc.Ua.Pumps.NodeSet2.xml
 BASE_ONTOLOGY=https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl
-python3 nodeset2owl.py  ${PUMPS_NODESET} -i ${BASE_ONTOLOGY} core.ttl devices.ttl machinery.ttl -p pumps -o pumps.ttl
+python3 nodeset2owl.py  ${PUMPS_NODESET} -i ${BASE_ONTOLOGY} core.owl.ttl devices.owl.ttl machinery.owl.ttl -p pumps -o pumps.owl.ttl
 
 ```
 

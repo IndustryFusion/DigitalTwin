@@ -30,7 +30,7 @@ parse nodeset and create RDF-graph <nodeset2.xml>')
 
     parser.add_argument('nodeset2', help='Path to the nodeset2 file')
     parser.add_argument('-i', '--inputs', nargs='*', help='<Required> add dependent nodesets as ttl')
-    parser.add_argument('-o', '--output', help='Resulting file.', default="result.ttl")
+    parser.add_argument('-o', '--output', help='Resulting file.', default="result.owl.ttl")
     parser.add_argument('-n', '--namespace', help='Overwriting namespace of target ontology, e.g. \
                         http://opcfoundation.org/UA/Pumps/', required=False)
     parser.add_argument('-v', '--versionIRI', help='VersionIRI of ouput ontology, e.g. http://example.com/v0.1/UA/ ',

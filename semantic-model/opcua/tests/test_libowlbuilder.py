@@ -112,7 +112,7 @@ class TestEffectiveDeclarationTree(unittest.TestCase):
     def test_count_own_instance_declarations_include_unruled(self):
         # Same tree, but now also counting DictionaryEntryType's own
         # "Revision" -- a child with no ModellingRule at all, mirroring the
-        # real core.ttl pattern of named States/Transitions inside a
+        # real core.owl.ttl pattern of named States/Transitions inside a
         # StateMachineType-derived type. 7 + 1 = 8.
         self.assertEqual(self.builder.count_own_instance_declarations(include_unruled=True), 8)
 
@@ -268,7 +268,7 @@ class TestVirtualTypeEmission(unittest.TestCase):
         self.assertIn((OPCUA['PumpType'], RDFS.subClassOf, OPCUA['BaseType']), self.out)
 
     def test_semantic_bridge_properties_are_declared_object_properties(self):
-        # Regression test: core.ttl only ever asserts
+        # Regression test: core.owl.ttl only ever asserts
         # `opcua:hasX rdfs:subPropertyOf base:SemanticBridgeReferenceType` for
         # these properties, never `a owl:ObjectProperty` -- and never types
         # base:SemanticBridgeReferenceType itself either. Any property used as
@@ -333,7 +333,7 @@ class TestSelfReferentialTypeTerminates(unittest.TestCase):
 class TestRequireModellingRule(unittest.TestCase):
     """DictionaryEntryType's own definer node directly aggregates "Revision"
     (nodei2005) with no opcua:HasModellingRule triple at all, mirroring the
-    real core.ttl pattern of named States/Transitions inside a
+    real core.owl.ttl pattern of named States/Transitions inside a
     StateMachineType-derived type. Default behavior (require_modelling_rule=
     False) processes it like any other declaration; require_modelling_rule=
     True must exclude it -- and everything nested inside it, though this
@@ -390,7 +390,7 @@ class TestMethodsAreIgnored(unittest.TestCase):
 
 
 class TestCompanionSpecIncrementalVirtualTypes(unittest.TestCase):
-    """Mirrors the real di.ttl (imports core.ttl) scenario at small scale
+    """Mirrors the real di.owl.ttl (imports core.owl.ttl) scenario at small scale
     (see tests/owlbuilder/companion_example.ttl):
         comp:SpecialPumpType <: opcua:PumpType
           declares a brand-new Variable "Extra" of its own.

@@ -19,7 +19,7 @@ LINTER := python3 -m flake8
 PIP := pip
 HELM_DIR := ../../helm/charts/shacl
 NAMESPACE := iff
-TOLINT := nodeset2owl.py owl2instances.py nodeset-dump.py validate.py start_fuseki.py extractIffBindings.py owl2virtualtypes.py virtual_type_stats.py check_consistency.py lib/nodesetparser.py lib/utils.py lib/shacl.py lib/entity.py lib/jsonld.py lib/bindings.py lib/owlbuilder.py
+TOLINT := nodeset2owl.py owl2instances.py nodeset-dump.py validate.py start_fuseki.py extractIffBindings.py owl2vt.py virtual_type_stats.py check_consistency.py lib/nodesetparser.py lib/utils.py lib/shacl.py lib/entity.py lib/jsonld.py lib/bindings.py lib/owlbuilder.py
 PYTEST := python3 -m pytest
 
 
@@ -40,5 +40,5 @@ test:
 	(cd tests/nodeset-dump; bash ./test.bash)
 	(cd tests/validation; bash ./test.bash)
 	(cd tests/extractIffBindings; bash ./test.bash)
-	(cd tests/owl2virtualtypes; bash ./test.bash)
+	(cd tests/owl2vt; bash ./test.bash)
 	$(PYTHON) check_consistency.py

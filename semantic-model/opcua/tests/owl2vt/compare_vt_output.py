@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-"""Compare two owl2virtualtypes.py outputs for isomorphism, ignoring the
+"""Compare two owl2vt.py outputs for isomorphism, ignoring the
 ontology header (owl:Ontology/owl:imports/owl:versionIRI/owl:versionInfo).
 
 The header is deliberately excluded: OntologyLoader resolves owl:imports

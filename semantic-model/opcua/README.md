@@ -10,23 +10,24 @@ To setup the python environment start a python3 virtual environment with `Python
 
 `make test` runs `check_consistency.py` with no arguments at the end, which
 runs the real HermiT DL reasoner against the already-built Virtual-Types
-ontology of every default nodeset (`core.owl.ttl`, `di.owl.ttl`, `ia.owl.ttl`,
-`pumps.owl.ttl`, ...) that `translate_default_nodesets.make` produces earlier
-in the same `make test` run, checking each one for contradictory OPC UA type
-constructions (an override that narrows a component/DataType/ValueRank/
-VariableType to something incompatible with its supertype's declaration). It
-also backs the `tests/owl2virtualtypes/test.bash` e2e scenarios that assert a
-*specific* override IS (or is NOT) flagged as unsatisfiable.
+ontology of every default nodeset (`core.vt.owl.ttl`, `di.vt.owl.ttl`,
+`ia.vt.owl.ttl`, `pumps.vt.owl.ttl`, ...) that `translate_default_nodesets.make`
+produces earlier in the same `make test` run, checking each one for
+contradictory OPC UA type constructions (an override that narrows a
+component/DataType/ValueRank/VariableType to something incompatible with its
+supertype's declaration). It also backs the `tests/owl2vt/test.bash`
+e2e scenarios that assert a *specific* override IS (or is NOT) flagged as
+unsatisfiable.
 
-`check_consistency.py` takes the already-built `*.owl.ttl` file(s), not the
-semantic-bridge `*.ttl` they were generated from: it only loads and merges
-(following each file's own `owl:imports`), it does not regenerate anything.
-It rejects a semantic-bridge `*.ttl` (e.g. `core.ttl`) with a clear error if
-passed one instead of the pure-OWL `*.owl.ttl` it was built into
-(`core.owl.ttl`) -- a semantic-bridge file has none of the Virtual Type
-classes/restrictions HermiT actually needs to reason over, and would
-otherwise silently report a meaningless "consistent" verdict rather than
-actually validating anything.
+`check_consistency.py` takes the already-built `*.vt.owl.ttl` file(s), not the
+semantic-bridge `*.owl.ttl` (nodeset2owl.py output) they were generated from:
+it only loads and merges (following each file's own `owl:imports`), it does
+not regenerate anything. It rejects a semantic-bridge `*.owl.ttl` (e.g.
+`core.owl.ttl`) with a clear error if passed one instead of the pure-OWL
+`*.vt.owl.ttl` it was built into (`core.vt.owl.ttl`) -- a semantic-bridge file
+has none of the Virtual Type classes/restrictions HermiT actually needs to
+reason over, and would otherwise silently report a meaningless "consistent"
+verdict rather than actually validating anything.
 
 Due to license conflicts, `owlready2` (needed by `check_consistency.py` to
 locate the bundled HermiT.jar) is NOT installed automatically and NOT
@@ -40,7 +41,7 @@ that step until you install it yourself:
 
 A `java` runtime on PATH is also required (HermiT itself runs as a `java`
 subprocess). To check a single file instead of the whole corpus, pass it
-explicitly: `python3 check_consistency.py core.ttl`.
+explicitly: `python3 check_consistency.py core.vt.owl.ttl`.
 
 ## nodeset2owl.py
 
@@ -82,31 +83,31 @@ For local testing
 
 ### Examples
 
-Create core.ttl:
+Create core.owl.ttl:
 
-    python3 nodeset2owl.py ${CORE_NODESET} -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p opcua -o core.ttl
-
-
-Create devices.ttl:
-
-    python3 nodeset2owl.py  ${DI_NODESET} -i ${BASE_ONTOLOGY} core.ttl -v http://example.com/v0.1/DI/ -p devices -o devices.ttl
-
-Create ia.ttl:
-
-    python3 nodeset2owl.py  ${IA_NODESET} -i ${BASE_ONTOLOGY} core.ttl devices.ttl -v http://example.com/v0.1/IA/ -p ia -o ia.ttl
-
-Create machinery.ttl:
-
-    python3 nodeset2owl.py ${MACHINERY_NODESET} -i ${BASE_ONTOLOGY} core.ttl devices.ttl -v http://example.com/v0.1/Machinery/ -p machinery -o machinery.ttl
+    python3 nodeset2owl.py ${CORE_NODESET} -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p opcua -o core.owl.ttl
 
 
-Create pumps.ttl:
+Create devices.owl.ttl:
 
-    python3 nodeset2owl.py  ${PUMPS_NODESET} -i ${BASE_ONTOLOGY} core.ttl devices.ttl machinery.ttl -v http://example.com/v0.1/Pumps/ -p pumps -o pumps.ttl
+    python3 nodeset2owl.py  ${DI_NODESET} -i ${BASE_ONTOLOGY} core.owl.ttl -v http://example.com/v0.1/DI/ -p devices -o devices.owl.ttl
 
-create pumpexample.ttl:
+Create ia.owl.ttl:
 
-    python3 nodeset2owl.py  ${PUMP_EXAMPLE_NODESET} -i ${BASE_ONTOLOGY} core.ttl devices.ttl machinery.ttl pumps.ttl -n http://yourorganisation.org/InstanceExample/ -v http://example.com/v0.1/pumpexample/ -p pumpexample -o pumpexample.ttl
+    python3 nodeset2owl.py  ${IA_NODESET} -i ${BASE_ONTOLOGY} core.owl.ttl devices.owl.ttl -v http://example.com/v0.1/IA/ -p ia -o ia.owl.ttl
+
+Create machinery.owl.ttl:
+
+    python3 nodeset2owl.py ${MACHINERY_NODESET} -i ${BASE_ONTOLOGY} core.owl.ttl devices.owl.ttl -v http://example.com/v0.1/Machinery/ -p machinery -o machinery.owl.ttl
+
+
+Create pumps.owl.ttl:
+
+    python3 nodeset2owl.py  ${PUMPS_NODESET} -i ${BASE_ONTOLOGY} core.owl.ttl devices.owl.ttl machinery.owl.ttl -v http://example.com/v0.1/Pumps/ -p pumps -o pumps.owl.ttl
+
+create pumpexample.owl.ttl:
+
+    python3 nodeset2owl.py  ${PUMP_EXAMPLE_NODESET} -i ${BASE_ONTOLOGY} core.owl.ttl devices.owl.ttl machinery.owl.ttl pumps.owl.ttl -n http://yourorganisation.org/InstanceExample/ -v http://example.com/v0.1/pumpexample/ -p pumpexample -o pumpexample.owl.ttl
 
 
 
@@ -152,7 +153,7 @@ optional arguments:
 
 Extract ngsi-ld prototype:
 
-    python3 ./owl2instances.py -t http://opcfoundation.org/UA/Pumps/PumpType -n http://yourorganisation.org/InstanceExample/ pumpexample.ttl
+    python3 ./owl2instances.py -t http://opcfoundation.org/UA/Pumps/PumpType -n http://yourorganisation.org/InstanceExample/ pumpexample.owl.ttl
 
 
 Check the SHACL compliance:

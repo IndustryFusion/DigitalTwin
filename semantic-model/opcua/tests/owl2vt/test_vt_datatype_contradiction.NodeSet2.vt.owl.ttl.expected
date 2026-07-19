@@ -7,7 +7,7 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 <http://my.test/> a owl:Ontology ;
-    owl:imports <file:///home/marcel/src/DigitalTwin/semantic-model/opcua/core.owl.ttl>,
+    owl:imports <file:///home/marcel/src/DigitalTwin/semantic-model/opcua/core.vt.owl.ttl>,
         rdf:,
         rdfs:,
         <https://industryfusion.github.io/contexts/staging/ontology/v0.3/base.ttl>,
@@ -46,17 +46,17 @@ base:SemanticBridgeReferenceType a owl:ObjectProperty .
 
 <http://my.test/VT_ba2a0c29e16ec7e465fcc8c3> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
-            owl:allValuesFrom opcua:ValueRank_Scalar ;
-            owl:onProperty sb:hasValueRank ],
-        [ a owl:Restriction ;
             owl:allValuesFrom <http://my.test/CodeBType> ;
             owl:onProperty sb:hasDataType ],
+        [ a owl:Restriction ;
+            owl:onProperty sb:hasValueRank ;
+            owl:someValuesFrom opcua:ValueRank_Scalar ],
         [ a owl:Restriction ;
             owl:onProperty sb:hasDataType ;
             owl:someValuesFrom <http://my.test/CodeBType> ],
         [ a owl:Restriction ;
-            owl:onProperty sb:hasValueRank ;
-            owl:someValuesFrom opcua:ValueRank_Scalar ],
+            owl:allValuesFrom opcua:ValueRank_Scalar ;
+            owl:onProperty sb:hasValueRank ],
         <http://my.test/VT_28951feba74e0688d6fd985a>,
         opcua:PropertyType ;
     sb:originalBrowsePath "http://my.test/Code" .
@@ -77,14 +77,14 @@ opcua:ValueRank_ScalarOrOneDimension a owl:Class ;
 
 <http://my.test/VT_28951feba74e0688d6fd985a> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
+            owl:onProperty sb:hasDataType ;
+            owl:someValuesFrom <http://my.test/CodeAType> ],
+        [ a owl:Restriction ;
             owl:onProperty sb:hasValueRank ;
             owl:someValuesFrom opcua:ValueRank_Scalar ],
         [ a owl:Restriction ;
             owl:allValuesFrom <http://my.test/CodeAType> ;
             owl:onProperty sb:hasDataType ],
-        [ a owl:Restriction ;
-            owl:onProperty sb:hasDataType ;
-            owl:someValuesFrom <http://my.test/CodeAType> ],
         [ a owl:Restriction ;
             owl:allValuesFrom opcua:ValueRank_Scalar ;
             owl:onProperty sb:hasValueRank ],
@@ -105,11 +105,11 @@ opcua:ValueRank_Scalar a owl:Class ;
     rdfs:subClassOf opcua:ValueRank_ScalarOrOneDimension .
 
 [] a owl:AllDisjointClasses ;
-    owl:members ( <http://my.test/BaseType> opcua:AggregateConfigurationType opcua:AggregateFunctionType opcua:AlarmMetricsType opcua:AliasNameType opcua:AuthorizationServiceConfigurationType opcua:BaseConditionClassType opcua:BaseEventType opcua:BaseInterfaceType opcua:CertificateGroupType opcua:CertificateType opcua:ConnectionTransportType opcua:DataSetReaderMessageType opcua:DataSetReaderTransportType opcua:DataSetReaderType opcua:DataSetWriterMessageType opcua:DataSetWriterTransportType opcua:DataSetWriterType opcua:DataTypeEncodingType opcua:DataTypeSystemType opcua:DictionaryEntryType opcua:ExtensionFieldsType opcua:FileType opcua:FolderType opcua:HistoricalDataConfigurationType opcua:HistoricalEventConfigurationType opcua:HistoricalExternalEventSourceType opcua:HistoryServerCapabilitiesType opcua:IetfBaseNetworkInterfaceType opcua:KeyCredentialConfigurationType opcua:ModellingRuleType opcua:NamespaceMetadataType opcua:NamespacesType opcua:NetworkAddressType opcua:OrderedListType opcua:PriorityMappingTableType opcua:ProvisionableDeviceType opcua:PubSubCapabilitiesType opcua:PubSubConnectionType opcua:PubSubDiagnosticsType opcua:PubSubGroupType opcua:PubSubKeyPushTargetType opcua:PubSubKeyServiceType opcua:PubSubStatusType opcua:PublishedDataSetType opcua:QuantityType opcua:ReaderGroupMessageType opcua:ReaderGroupTransportType opcua:RoleSetType opcua:RoleType opcua:SecurityGroupType opcua:ServerCapabilitiesType opcua:ServerConfigurationType opcua:ServerDiagnosticsType opcua:ServerRedundancyType opcua:ServerType opcua:SessionDiagnosticsObjectType opcua:SessionsDiagnosticsSummaryType opcua:StandaloneSubscribedDataSetType opcua:StateMachineType opcua:StateType opcua:SubscribedDataSetType opcua:TemporaryFileTransferType opcua:TransactionDiagnosticsType opcua:TransitionType opcua:UnitType opcua:UserManagementType opcua:VendorServerInfoType opcua:WriterGroupMessageType opcua:WriterGroupTransportType ) .
-
-[] a owl:AllDisjointClasses ;
     owl:members ( <http://my.test/CodeAType> <http://my.test/CodeBType> opcua:ApplicationType opcua:AxisScaleEnumeration opcua:BrokerTransportQualityOfService opcua:ConversionLimitEnum opcua:DataSetOrderingType opcua:DiagnosticsLevel opcua:Duplex opcua:ExceptionDeviationFormat opcua:FilterOperator opcua:HistoryUpdateType opcua:IdType opcua:IdentityCriteriaType opcua:InterfaceAdminStatus opcua:InterfaceOperStatus opcua:MessageSecurityMode opcua:NamingRuleType opcua:NegotiationStatus opcua:NodeAttributesMask opcua:NodeClass opcua:OpenFileMode opcua:OverrideValueHandling opcua:PerformUpdateType opcua:PubSubDiagnosticsCounterClassification opcua:PubSubState opcua:RedundancySupport opcua:RedundantServerMode opcua:SecurityTokenRequestType opcua:ServerState opcua:StructureType opcua:TrustListMasks opcua:TsnFailureCode opcua:TsnListenerStatus opcua:TsnStreamState opcua:TsnTalkerStatus opcua:UserTokenType ) .
 
 [] a owl:AllDisjointClasses ;
     owl:members ( opcua:ValueRank_Scalar opcua:ValueRank_OneDimension opcua:ValueRank_MoreDimensions ) .
+
+[] a owl:AllDisjointClasses ;
+    owl:members ( <http://my.test/BaseType> opcua:AggregateConfigurationType opcua:AggregateFunctionType opcua:AlarmMetricsType opcua:AliasNameType opcua:AuthorizationServiceConfigurationType opcua:BaseConditionClassType opcua:BaseEventType opcua:BaseInterfaceType opcua:CertificateGroupType opcua:CertificateType opcua:ConnectionTransportType opcua:DataSetReaderMessageType opcua:DataSetReaderTransportType opcua:DataSetReaderType opcua:DataSetWriterMessageType opcua:DataSetWriterTransportType opcua:DataSetWriterType opcua:DataTypeEncodingType opcua:DataTypeSystemType opcua:DictionaryEntryType opcua:ExtensionFieldsType opcua:FileType opcua:FolderType opcua:HistoricalDataConfigurationType opcua:HistoricalEventConfigurationType opcua:HistoricalExternalEventSourceType opcua:HistoryServerCapabilitiesType opcua:IetfBaseNetworkInterfaceType opcua:KeyCredentialConfigurationType opcua:ModellingRuleType opcua:NamespaceMetadataType opcua:NamespacesType opcua:NetworkAddressType opcua:OrderedListType opcua:PriorityMappingTableType opcua:ProvisionableDeviceType opcua:PubSubCapabilitiesType opcua:PubSubConnectionType opcua:PubSubDiagnosticsType opcua:PubSubGroupType opcua:PubSubKeyPushTargetType opcua:PubSubKeyServiceType opcua:PubSubStatusType opcua:PublishedDataSetType opcua:QuantityType opcua:ReaderGroupMessageType opcua:ReaderGroupTransportType opcua:RoleSetType opcua:RoleType opcua:SecurityGroupType opcua:ServerCapabilitiesType opcua:ServerConfigurationType opcua:ServerDiagnosticsType opcua:ServerRedundancyType opcua:ServerType opcua:SessionDiagnosticsObjectType opcua:SessionsDiagnosticsSummaryType opcua:StandaloneSubscribedDataSetType opcua:StateMachineType opcua:StateType opcua:SubscribedDataSetType opcua:TemporaryFileTransferType opcua:TransactionDiagnosticsType opcua:TransitionType opcua:UnitType opcua:UserManagementType opcua:VendorServerInfoType opcua:WriterGroupMessageType opcua:WriterGroupTransportType ) .
 
