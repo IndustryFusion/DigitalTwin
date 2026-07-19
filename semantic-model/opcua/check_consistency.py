@@ -19,19 +19,27 @@ this repo's owl2virtualtypes.py/OwlBuilder produces, to check for genuinely
 contradictory OPC UA type constructions -- the actual point of the whole
 Part 14 transformation (see owl_to_virtualtypes.md section 1).
 
-For every *.ttl file translate_default_nodesets.make is set up to produce
-(reusing virtual_type_stats.py's own Makefile parsing, so this never drifts
-out of sync with it) and that exists on disk, or for an explicit list of ttl
-files given on the command line, this:
+For every *.owl.ttl file translate_default_nodesets.make is set up to
+produce (reusing virtual_type_stats.py's own Makefile parsing, so this never
+drifts out of sync with it) and that exists on disk, or for an explicit list
+of *.owl.ttl files given on the command line, this:
 
-  1. builds that file's own Virtual-Types output via OwlBuilder, exactly as
-     owl2virtualtypes.py would, but in-memory (no temp .owl.ttl file needed);
-  2. merges in the full, already-computed Virtual-Types output of every local
-     (file://) dependency it transitively imports -- recursively, cached so a
-     dependency shared by several companion specs (core.ttl, di.ttl, ...) is
-     classified only once for its own sake and reused thereafter -- giving
-     HermiT the same complete picture Protege would see after resolving
-     owl:imports, entirely offline;
+  1. loads that file's own already-built Virtual-Types output directly (it
+     does NOT regenerate it via OwlBuilder -- translate_default_nodesets.make
+     already builds every *.owl.ttl alongside its *.ttl, and `make test` runs
+     that Makefile before this script, so by the time this runs the files are
+     already there and up to date; feeding the *original* semantic-bridge
+     *.ttl back through OwlBuilder here would be redundant, and feeding an
+     already-built *.owl.ttl INTO OwlBuilder, as this script briefly did, is
+     actively wrong: OwlBuilder rejects that input itself now -- see its own
+     __init__ -- because Virtual Types would be swept up as if they were real
+     declared subtypes, producing spurious disjointness contradictions that
+     have nothing to do with the actual OPC UA model);
+  2. merges in the full content of every local (file://) dependency it
+     transitively imports -- recursively, cached so a dependency shared by
+     several companion specs (core.owl.ttl, di.owl.ttl, ...) is only parsed
+     once and reused thereafter -- giving HermiT the same complete picture
+     Protege would see after resolving owl:imports, entirely offline;
   3. serializes the merged, header-free result to a temp N-Triples file (NOT
      Turtle: the OWL-API 3.4.3 bundled inside owlready2's HermiT.jar has a
      Turtle parser bug with percent-encoded IRI segments, e.g. the very real
@@ -46,11 +54,11 @@ By default each file (and its own transitive dependencies) is checked on its
 own -- but pass -c/--combine to instead merge ALL given files, plus
 everything each one transitively imports, into ONE ontology and run HermiT
 once over the union. This validates a specific *combination* of specs
-together (e.g. tmc.ttl + pumps.ttl), which matters because two specs that
-don't import each other (they may only share a common ancestor like
-core.ttl/di.ttl) are never otherwise loaded into the same reasoning pass --
-an interaction only visible once both are actually loaded together would
-never surface from checking either spec individually. With no explicit
+together (e.g. tmc.owl.ttl + pumps.owl.ttl), which matters because two specs
+that don't import each other (they may only share a common ancestor like
+core.owl.ttl/di.owl.ttl) are never otherwise loaded into the same reasoning
+pass -- an interaction only visible once both are actually loaded together
+would never surface from checking either spec individually. With no explicit
 files, --combine merges the entire translate_default_nodesets.make corpus
 into one ontology.
 
@@ -64,9 +72,9 @@ this repo's default Apache-2.0 dependency set, so it must be installed as an
 explicit, separate opt-in step -- see requirements-dev.txt's own comment.
 
 Usage:
-    python3 check_consistency.py [-o report.csv] [-q] [name.ttl ...]
-    python3 check_consistency.py -c tmc.ttl pumps.ttl
-    python3 check_consistency.py --expect-contradiction|--expect-none name.ttl
+    python3 check_consistency.py [-o report.csv] [-q] [name.owl.ttl ...]
+    python3 check_consistency.py -c tmc.owl.ttl pumps.owl.ttl
+    python3 check_consistency.py --expect-contradiction|--expect-none name.owl.ttl
 """
 
 import argparse
@@ -80,13 +88,9 @@ import time
 from pathlib import Path
 
 from rdflib import Graph
-from rdflib.namespace import OWL
+from rdflib.namespace import OWL, RDF
 
-from lib.owlbuilder import OwlBuilder
-from virtual_type_stats import (
-    MAKEFILE, REPO_ROOT,
-    get_namespaces, load_fixed_graph, parse_target_files, resolve_dependencies,
-)
+from virtual_type_stats import MAKEFILE, REPO_ROOT, parse_owl_target_files
 
 try:
     import owlready2
@@ -106,28 +110,80 @@ _EQUIVALENT_CLASSES_RE = re.compile(r'^EquivalentClasses\(\s*(.+?)\s*\)$', re.MU
 _IRI_RE = re.compile(r'<([^>]+)>')
 _OWL_NOTHING = 'http://www.w3.org/2002/07/owl#Nothing'
 
+_graph_cache = {}
 _owl_output_cache = {}
 
 
+def _looks_like_semantic_bridge(g):
+    """True if `g` still has the raw instance-declaration layer (base:
+    definesType, on every ObjectType/VariableType's definer node) that Part
+    14's cleanup step always strips from a real *.owl.ttl output -- i.e. `g`
+    is a semantic-bridge *.ttl (core.ttl, di.ttl, ...), not the Virtual-Types
+    ontology built from it. Matched by predicate local name rather than a
+    hardcoded namespace, since the 'base' prefix's URI has moved before (see
+    tests/owl2virtualtypes/test.bash's own BASE_ONTOLOGY_NS comment)."""
+    return any(str(p).endswith('definesType') for p in g.predicates())
+
+
+def load_owl_graph(path):
+    """Parse one already-built *.owl.ttl file, cached by path so a shared
+    dependency (core.owl.ttl, imported by every companion spec) is only ever
+    parsed once."""
+    key = str(path)
+    if key not in _graph_cache:
+        g = Graph()
+        g.parse(path)
+        if _looks_like_semantic_bridge(g):
+            raise ValueError(
+                f'{path} looks like a semantic-bridge ttl (it has base:definesType '
+                'triples), not a generated Virtual-Types ontology. check_consistency.py '
+                'loads and reasons over the already-built *.owl.ttl file directly -- it '
+                'does not regenerate one from the semantic-bridge ttl (see this module\'s '
+                'own docstring). Pass the *.owl.ttl file instead (e.g. core.owl.ttl, not '
+                'core.ttl); if it does not exist yet, build it first with '
+                "'make -f translate_default_nodesets.make' or 'python3 owl2virtualtypes.py "
+                f"{path.stem}.ttl'.")
+        _graph_cache[key] = g
+    return _graph_cache[key]
+
+
+def _strip_ontology_header(g):
+    """Drop every triple whose subject is this file's own owl:Ontology
+    individual (rdf:type owl:Ontology, owl:imports, owl:versionIRI,
+    owl:versionInfo, ...). Necessary once we merge several *.owl.ttl files'
+    raw content together: HermiT's underlying OWL API actively tries to
+    fetch and parse each owl:imports target itself (including the bare
+    rdf:/rdfs: namespace URIs owl2virtualtypes.py's ontology header always
+    includes), which fails outright since those URLs serve HTML, not OWL --
+    the header's imports already got followed structurally above, in
+    build_full_owl_output's own recursion, so the header itself is pure
+    noise (and, left in, actively breaks HermiT) once merged."""
+    ontologies = set(g.subjects(RDF.type, OWL.Ontology))
+    out = Graph()
+    for s, p, o in g:
+        if s not in ontologies:
+            out.add((s, p, o))
+    return out
+
+
 def build_full_owl_output(path):
-    """This file's own Virtual-Types output, merged with the already-computed
-    full output of every local dependency it transitively imports -- recursively,
-    cached by path so a shared dependency is only ever built once. This is
-    the same picture Protege would see after resolving owl:imports, without
-    any of it actually touching the network."""
+    """This file's own already-built Virtual-Types content (header stripped,
+    see _strip_ontology_header), merged with the full content of every local
+    dependency it transitively imports (via its own owl:imports header,
+    which owl2virtualtypes.py points at each dependency's *.owl.ttl) --
+    recursively, cached by path so a shared dependency is only ever merged
+    once. This is the same picture Protege would see after resolving
+    owl:imports, without any of it touching the network, and without
+    regenerating anything: translate_default_nodesets.make already built
+    every *.owl.ttl this needs before this script runs."""
     key = str(path)
     if key in _owl_output_cache:
         return _owl_output_cache[key]
-    g = load_fixed_graph(path)
-    basens, opcuans = get_namespaces(path)
-    ig = resolve_dependencies(g)
-    builder = OwlBuilder(g, basens, opcuans, ig=ig)
-    own_out = builder.run(builder.all_target_classes())
-    full_out = Graph()
-    full_out += own_out
-    for imported in g.objects(None, OWL.imports):
-        if str(imported).startswith('file://'):
-            full_out += build_full_owl_output(Path(str(imported)[len('file://'):]))
+    g = load_owl_graph(path)
+    imports = [o for o in g.objects(None, OWL.imports) if str(o).startswith('file://')]
+    full_out = _strip_ontology_header(g)
+    for imported in imports:
+        full_out += build_full_owl_output(Path(str(imported)[len('file://'):]))
     _owl_output_cache[key] = full_out
     return full_out
 
@@ -246,8 +302,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('files', nargs='*',
-                        help='Explicit semantic bridge ttl file(s) to check instead of the whole '
-                             'translate_default_nodesets.make corpus.')
+                        help='Explicit already-built *.owl.ttl file(s) to check instead of the '
+                             'whole translate_default_nodesets.make corpus.')
     parser.add_argument('-o', '--output', help='Optional CSV file to also write the results to.',
                         default=None)
     parser.add_argument('-q', '--quiet', action='store_true', default=False,
@@ -257,34 +313,34 @@ def main():
                              'separately, merge ALL given files -- plus everything each one '
                              'transitively imports -- into a single ontology and run HermiT once '
                              'over the union. Use this to validate a specific combination of specs '
-                             '(e.g. tmc.ttl + pumps.ttl) together, catching interactions between '
-                             'specs that never import each other and so are never otherwise loaded '
-                             'into the same reasoning pass. With no explicit files, combines the '
-                             'whole translate_default_nodesets.make corpus into one ontology.')
+                             '(e.g. tmc.owl.ttl + pumps.owl.ttl) together, catching interactions '
+                             'between specs that never import each other and so are never otherwise '
+                             'loaded into the same reasoning pass. With no explicit files, combines '
+                             'the whole translate_default_nodesets.make corpus into one ontology.')
     expect_group = parser.add_mutually_exclusive_group()
     expect_group.add_argument('--expect-contradiction', action='store_true', default=False,
-                              help='Assert that HermiT finds exactly the given single ttl file '
+                              help='Assert that HermiT finds exactly the given single *.owl.ttl file '
                                    'unsatisfiable (or globally inconsistent), instead of reporting '
                                    'on every file. Exits 0 if so, 1 otherwise. Requires exactly one '
                                    'file argument. For e2e scenarios that deliberately construct a '
                                    'contradictory OPC UA type.')
     expect_group.add_argument('--expect-none', action='store_true', default=False,
-                              help='Assert that HermiT finds the given single ttl file consistent, '
-                                   'instead of reporting on every file. Exits 0 if so, 1 otherwise '
-                                   '(a false-positive contradiction). Requires exactly one file '
-                                   'argument. For e2e scenarios that must NOT introduce a spurious '
-                                   'contradiction.')
+                              help='Assert that HermiT finds the given single *.owl.ttl file '
+                                   'consistent, instead of reporting on every file. Exits 0 if so, 1 '
+                                   'otherwise (a false-positive contradiction). Requires exactly one '
+                                   'file argument. For e2e scenarios that must NOT introduce a '
+                                   'spurious contradiction.')
     args = parser.parse_args()
 
     if args.expect_contradiction or args.expect_none:
         if len(args.files) != 1:
-            parser.error('--expect-contradiction/--expect-none require exactly one ttl file')
+            parser.error('--expect-contradiction/--expect-none require exactly one *.owl.ttl file')
         return check_expectation(args.files[0], expect_contradiction=args.expect_contradiction)
 
     if args.files:
         targets = [(Path(f).name, Path(f).resolve()) for f in args.files]
     else:
-        targets = [(name, REPO_ROOT / name) for name in parse_target_files(MAKEFILE)]
+        targets = [(name, REPO_ROOT / name) for name in parse_owl_target_files(MAKEFILE)]
 
     present_targets = []
     for name, path in targets:

@@ -17,12 +17,20 @@
 # End-to-end tests for owl2virtualtypes.py (Part 14): for each NodeSet2.xml
 # scenario below, run the full real pipeline --
 #   NodeSet2.xml --[nodeset2owl.py]--> Semantic Bridge ttl --[owl2virtualtypes.py]--> OWL ontology of Virtual Types
-# -- and compare the result against a golden ttl (isomorphism-aware, ignoring
-# the ontology header since owl:imports resolution touches the network).
+# -- compare the result against a golden ttl (isomorphism-aware, ignoring the
+# ontology header since owl:imports resolution touches the network), and for
+# scenarios that construct a deliberate (or deliberately absent) contradiction,
+# feed that OWL ontology of Virtual Types straight into check_consistency.py,
+# which loads it directly (no regeneration -- see that module's own docstring
+# for why reprocessing an already-built *.owl.ttl through OwlBuilder itself
+# would be wrong) and runs the real HermiT reasoner over it.
 #
-# Requires ../../core.ttl to already exist (built by
-# `make -f translate_default_nodesets.make` at the repo root, which `make test`
-# already runs before invoking any tests/*/test.bash).
+# Requires ../../core.ttl AND ../../core.owl.ttl to already exist (both built
+# by `make -f translate_default_nodesets.make` at the repo root, which `make
+# test` already runs before invoking any tests/*/test.bash): the former is
+# this suite's own -i dependency for nodeset2owl.py, the latter is what every
+# generated *.owl.ttl here transitively owl:imports and check_consistency.py
+# must be able to resolve.
 #
 set -e
 
@@ -51,6 +59,10 @@ CHECK_CONTRADICTION="python3 ../../check_consistency.py"
 
 if [ ! -f "${CORE_ONTOLOGY}" ]; then
     echo "Missing ${CORE_ONTOLOGY}. Run 'make -f translate_default_nodesets.make' at the repo root first."
+    exit 1
+fi
+if [ ! -f "../../core.owl.ttl" ]; then
+    echo "Missing ../../core.owl.ttl. Run 'make -f translate_default_nodesets.make' at the repo root first."
     exit 1
 fi
 
@@ -100,10 +112,10 @@ for tuple in "${SCENARIOS[@]}"; do IFS=","
 
     if [ "${expect_contradiction}" = "true" ]; then
         echo "--- checking with HermiT that the override IS unsatisfiable"
-        ${CHECK_CONTRADICTION} --expect-contradiction ${sb} || exit 1
+        ${CHECK_CONTRADICTION} --expect-contradiction ${owl} || exit 1
     else
         echo "--- checking with HermiT that no false-positive contradiction was introduced"
-        ${CHECK_CONTRADICTION} --expect-none ${sb} || exit 1
+        ${CHECK_CONTRADICTION} --expect-none ${owl} || exit 1
     fi
 
     rm -f ${sb} ${owl}

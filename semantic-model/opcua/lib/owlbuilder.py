@@ -124,6 +124,21 @@ class OwlBuilder:
         """
         self.g = g
         self.ig = ig if ig is not None else Graph()
+        for label, graph in (('g', self.g), ('ig', self.ig)):
+            if (None, self.SB['originalBrowsePath'], None) in graph:
+                raise ValueError(
+                    f'This input ({label}) already looks like a generated Virtual-Types '
+                    'ontology: it contains sb:originalBrowsePath annotations, which '
+                    'OwlBuilder only ever writes to its own *output*, never reads from '
+                    'input. Feeding an already-generated *.owl.ttl file back in as input '
+                    '(instead of the original semantic-bridge ttl, e.g. core.ttl rather '
+                    'than core.owl.ttl) silently reprocesses Virtual Types as if they were '
+                    'real declared OPC UA subtypes -- in particular, '
+                    '_add_sibling_type_disjointness sweeps them into spurious '
+                    '"mutually exclusive siblings" groups with every other Virtual Type '
+                    'that happens to share the same nominal type, producing a false, '
+                    'misleading HermiT contradiction that has nothing to do with the '
+                    'actual OPC UA model. Pass the semantic-bridge ttl instead.')
         self.basens = basens
         self.opcuans = opcuans
         self.rdfutils = RdfUtils(basens, opcuans)
