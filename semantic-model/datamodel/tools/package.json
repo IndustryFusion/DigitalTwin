@@ -69,6 +69,7 @@
     },
     "@comunica/core": {
       "immutable": "4.3.9"
-    }
+    },
+    "@hono/node-server": "2.0.5"
   }
 }
