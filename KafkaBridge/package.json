@@ -15,7 +15,7 @@
     "express-rate-limit": "^7.4.1",
     "jsonschema": "^1.4.1",
     "kafkajs": "^1.16.0",
-    "keycloak-connect": "^17.0.1",
+    "keycloak-connect": "^21.1.2",
     "mqtt": "^5.3.0",
     "openid-client": "^5.1.2",
     "pg": "^8.2.1",
@@ -32,11 +32,35 @@
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^5.2.0",
     "mocha": "^11.7.5",
-    "nyc": "^15.1.0",
+    "nyc": "^18.0.0",
     "rewire": "^6.0.0",
     "sinon": "^13.0.2"
   },
   "overrides": {
-    "serialize-javascript": ">=7.0.3"
+    "serialize-javascript": ">=7.0.3",
+    "@eslint/eslintrc": {
+      "js-yaml": "3.15.0"
+    },
+    "@istanbuljs/load-nyc-config": {
+      "js-yaml": "3.15.0"
+    },
+    "eslint": {
+      "js-yaml": "3.15.0"
+    },
+    "mocha": {
+      "js-yaml": "4.3.0",
+      "minimatch": {
+        "brace-expansion": "2.1.2"
+      }
+    },
+    "minimatch": {
+      "brace-expansion": "1.1.16"
+    },
+    "fast-uri": "3.1.4",
+    "adm-zip": "0.6.0",
+    "sequelize": {
+      "uuid": "11.1.1"
+    },
+    "@babel/core": "7.29.6"
   }
 }
