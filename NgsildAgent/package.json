@@ -23,7 +23,8 @@
     "winston": "^3.7.2"
   },
   "overrides": {
-    "node-gyp": "^12.1.0"
+    "node-gyp": "^12.1.0",
+    "serialize-javascript": ">=7.0.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.11.0",
