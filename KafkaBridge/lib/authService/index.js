@@ -30,13 +30,14 @@ const init = async function (conf) {
   await acl.init();
   const config = conf;
   app.use(express.json());
+  app.use(express.urlencoded({ extended: false }));
 
   const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 100 // limit each IP to 100 requests per windowMs
   });
 
-  app.get('/auth', authLimiter, (req, res) => {
+  app.post('/auth', authLimiter, (req, res) => {
     auth.authenticate(req, res);
   });
 

@@ -119,7 +119,7 @@ describe(fileToTest, function () {
     const auth = new Authenticate(config);
 
     const req = {
-      query: {
+      body: {
         username: 'username',
         password: 'password'
       }
@@ -150,7 +150,7 @@ describe(fileToTest, function () {
       }
     };
     const req = {
-      query: {
+      body: {
         username: 'deviceId',
         password: 'token'
       }
@@ -204,7 +204,7 @@ describe(fileToTest, function () {
     const auth = new Authenticate(config);
 
     const req = {
-      query: {
+      body: {
         username: 'username',
         password: 'password'
       }
@@ -234,7 +234,7 @@ describe(fileToTest, function () {
       }
     };
     const req = {
-      query: {
+      body: {
         username: 'username',
         password: 'token'
       }
@@ -283,7 +283,7 @@ describe(fileToTest, function () {
       }
     };
     const req = {
-      query: {
+      body: {
         username: 'wrongDeviceId',
         password: 'password'
       }
@@ -379,7 +379,7 @@ describe(fileToTest, function () {
       }
     };
     const req = {
-      query: { username: 'realm_user', password: 'token', clientid: 'clientid-factory' }
+      body: { username: 'realm_user', password: 'token', clientid: 'clientid-factory' }
     };
     const res = {
       status: function (status) {
@@ -425,7 +425,7 @@ describe(fileToTest, function () {
       }
     };
     const req = {
-      query: { username: 'realm_user', password: 'token', clientid: 'clientid-factory' }
+      body: { username: 'realm_user', password: 'token', clientid: 'clientid-factory' }
     };
     const res = {
       status: function (status) {
@@ -469,7 +469,7 @@ describe(fileToTest, function () {
       }
     };
     const req = {
-      query: { username: 'realm_user', password: 'token', clientid: 'clientid-1' }
+      body: { username: 'realm_user', password: 'token', clientid: 'clientid-1' }
     };
     const res = {
       status: function (status) {

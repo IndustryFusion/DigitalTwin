@@ -38,7 +38,7 @@ spec:
                 backend = http
                 enable = true
 
-                method = get
+                method = post
                 url = "http://{{ .Values.mqtt.bridge.url }}:{{ .Values.mqtt.bridge.port }}/auth"
                 body {
                     username = "${username}"
