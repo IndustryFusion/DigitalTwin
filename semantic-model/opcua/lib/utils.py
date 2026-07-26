@@ -774,7 +774,7 @@ class RdfUtils:
                 elif result[1] is not None:
                     type = result[1]
             return (nodeclass, type)
-        except:
+        except Exception:
             print(f"Warning: Could not find nodeclass of class node {node}. This should not happen")
             return None, None
 
@@ -858,7 +858,7 @@ class RdfUtils:
             elif int(modelling_rule) == modelling_nodeid_mandatory_placeholder:
                 is_optional = False
                 use_generic_placeholder = True
-        except:
+        except Exception:
             pass
         if shacl_rule is not None:
             shacl_rule['optional'] = is_optional

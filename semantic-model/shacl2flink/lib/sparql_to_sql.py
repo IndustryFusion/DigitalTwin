@@ -124,7 +124,7 @@ def translate_sparql(shaclfile, knowledgefile, sparql_query, target_class, lg):
     parsed_query = None
     try:
         parsed_query = translateQuery(parseQuery(sparql_query))
-    except:
+    except Exception:
         raise utils.SparqlValidationFailed('Failed to parse: ' + sparql_query)
     ctx = translate_query(parsed_query, target_class, sparql_query)
     return ctx['target_sql'], ctx['sql_tables']
@@ -281,7 +281,7 @@ def translate_aggregate_join(ctx, elem):
     vars = utils.get_aggregate_vars(ctx)
     try:
         elem['target_sql'] = bgp_translation_utils.replace_attributes_table_expression(elem.p['target_sql'], vars)
-    except:
+    except Exception:
         raise utils.SparqlValidationFailed('Group by aggregation defined but no aggregated variables found.')
     elem['where'] = elem.p['where']
 
@@ -535,7 +535,7 @@ def wrap_sql_projection(ctx, node):
         try:
             column = bounds[utils.create_varname(var)]
             expression += f'{column} AS `{utils.create_varname(var)}` '
-        except:
+        except Exception:
             # variable could not be bound, bind it with NULL
             expression += f'NULL AS `{utils.create_varname(var)}`'
 

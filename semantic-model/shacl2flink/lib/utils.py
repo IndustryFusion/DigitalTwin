@@ -98,7 +98,7 @@ def get_common_data():
         with open(os.path.join(os.path.dirname(__file__), commonyamlfile), "r") as file:
             yaml_dict = commonyaml.load(file)
         return yaml_dict
-    except:
+    except Exception:
         raise Exception("Could not read common.yaml file.")
 
 

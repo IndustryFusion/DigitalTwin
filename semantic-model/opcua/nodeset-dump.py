@@ -18,7 +18,7 @@ try:
     ua = asyncua.ua
 except ImportError:
     print("The 'asyncua' library is not installed. Please install it separately to use this tool.")
-    exit(1)
+    sys.exit(1)
 
 sys.setrecursionlimit(1500)  # Increase the recursion limit to avoid maximum recursion depth error
 
@@ -125,7 +125,7 @@ async def main():
 
         if args.namespaces is None:
             print(f"Please provide a namespace, e.g. one of {namespace_uris}.")
-            exit(1)
+            sys.exit(1)
         for index, uri in enumerate(namespace_uris):
             # Only resolve requested namespaces and add "dummy" nodes for the other NSs
             nsidx = await client.get_namespace_index(uri)
@@ -158,7 +158,7 @@ async def main():
                 # Check if the node is a Variable type
                 if args.values and node_class == ua.NodeClass.Variable:
                     await node.read_value()
-            except:
+            except Exception:
                 exported_nodes.remove(node)
                 print(f"Removing node {node.nodeid} since it cannot export values.")
                 # remove the node since this will create exceptions later

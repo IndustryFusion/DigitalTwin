@@ -21,6 +21,7 @@ import urllib
 import lib.utils as utils
 from lib.utils import RdfUtils, nodeId_to_iri
 import json
+import sys
 
 
 attribute_prefix = utils.ATTRIBUTE_PREFIX
@@ -153,7 +154,7 @@ class NodesetParser:
         try:
             with urllib.request.urlopen(opcua_nodeset) as response:
                 tree = ET.parse(response)
-        except:
+        except Exception:
             tree = ET.parse(opcua_nodeset)
         # calling the root element
         self.root = tree.getroot()
@@ -162,12 +163,12 @@ class NodesetParser:
             models = self.root.find('opcua:Models', self.xml_ns)
             if models is None:
                 print("Error: Namespace cannot be retrieved, please set it explicitly.")
-                exit(1)
+                sys.exit(1)
             model_count = len(models.findall('opcua:Model', self.xml_ns))
             if model_count != 1:
                 print("Error: Target Namespace cannot be retrieved, there is more than one <Model> definition. \
 Please set it explictly.")
-                exit(1)
+                sys.exit(1)
             model = models.find('opcua:Model', self.xml_ns)
             self.ontology_name = URIRef(model.get('ModelUri'))
             self.ontology_name = utils.normalize_namespaceuri(self.ontology_name)
@@ -189,7 +190,7 @@ Please set it explictly.")
             aliases_node = self.root.find('opcua:Aliases', self.xml_ns)
             alias_nodes = aliases_node.findall('opcua:Alias', self.xml_ns)
             self.scan_aliases(alias_nodes)
-        except:
+        except Exception:
             pass
         all_nodeclasses = [
             ('opcua:UADataType', 'DataTypeNodeClass'),
@@ -303,9 +304,9 @@ Please set it explictly.")
                 continue
             try:
                 self.nodeIds[ns][str(nodeId)] = nodeIri
-            except:
+            except Exception:
                 print(f"Warning: Did not find namespace {uri}. Did you import the respective companion specification?")
-                exit(1)
+                sys.exit(1)
         self.urimap = urimap
 
     def get_all_types(self):
@@ -376,10 +377,10 @@ Please set it explictly.")
         namespace_uri = self.opcua_ns[int(index)]
         try:
             prefix = self.known_opcua_ns[namespace_uri]
-        except:
+        except Exception:
             print(f"Warning: Namespace {namespace_uri} not found in imported companion specifications. \
 Did you forget to import it?")
-            exit(1)
+            sys.exit(1)
         namespace = self.rdf_ns[prefix]
         return namespace
 
@@ -394,7 +395,7 @@ Did you forget to import it?")
                 nsid, id = self.parse_nodeid(ref.text)
                 try:
                     subtype = self.nodeIds[nsid][id]
-                except:
+                except Exception:
                     print(f"Warning: Could not find type ns={nsid};i={id}")
                     subtype = None
         return subtype
@@ -406,7 +407,7 @@ Did you forget to import it?")
         index, id = self.parse_nodeid(datatype)
         try:
             typeiri = self.nodeIds[index][id]
-        except:
+        except Exception:
             print(f'Warning: Cannot find nodeId ns={index};i={id}')
             return
         if datatype is not None:
@@ -468,7 +469,7 @@ Did you forget to import it?")
         ns_index = 0
         try:
             ns_part, i_part = nodeid.split(';', 1)
-        except:
+        except Exception:
             ns_part = None
             i_part = nodeid
         if ns_part is not None:
@@ -645,7 +646,7 @@ Did you forget to import it?")
             try:
                 found_component = [ele[2] for ele in self.known_references if (int(ele[0]) == int(reftype_id) and
                                    str(ele[1]) == str(reftype_ns))][0]
-            except:
+            except Exception:
                 found_component = None
             if found_component is not None:
                 componentId = self.resolve_alias(reference.text)
@@ -721,7 +722,7 @@ Did you forget to import it?")
                         content_class = utils.get_contentclass(self.rdf_ns['opcua']['EventNotifierType'],
                                                                bit, self.ig, self.rdf_ns['base'])
                         self.g.add((classiri, self.rdf_ns['base']['hasEventNotifier'], content_class))
-                    except:
+                    except Exception:
                         print(f"Warning: Cannot read all defined event in event_notifier value \
 {event_notifier} in node {classiri}")
 
@@ -737,7 +738,7 @@ Did you forget to import it?")
                             content_class = utils.get_contentclass(self.rdf_ns['opcua']['AccessLevelType'],
                                                                    int(bit), self.g, self.rdf_ns['base'])
                         self.g.add((classiri, self.rdf_ns['base']['hasAccessLevel'], content_class))
-                    except:
+                    except Exception:
                         print(f"Warning: Cannot read access_level value {access_level} in node {classiri}")
         user_access_level = node.get('UserAccessLevel')
         if user_access_level is not None:
@@ -750,7 +751,7 @@ Did you forget to import it?")
                             content_class = utils.get_contentclass(self.rdf_ns['opcua']['AccessLevelType'],
                                                                    int(bit), self.g, self.rdf_ns['base'])
                         self.g.add((classiri, self.rdf_ns['base']['hasUserAccessLevel'], content_class))
-                    except:
+                    except Exception:
                         print(f"Warning: Cannot read access_level value {user_access_level} in node {classiri}")
         access_level_ex = node.get('AccessLevelEx')
         if access_level_ex is not None:
@@ -763,7 +764,7 @@ Did you forget to import it?")
                             content_class = utils.get_contentclass(self.rdf_ns['opcua']['AccessLevelExType'],
                                                                    int(bit), self.g, self.rdf_ns['base'])
                         self.g.add((classiri, self.rdf_ns['base']['hasAccessLevelEx'], content_class))
-                    except:
+                    except Exception:
                         print(f"Warning: Cannot read access_level value {access_level_ex} in node {classiri}")
 
     def is_objecttype_nodeset_node(node):
@@ -806,7 +807,7 @@ Did you forget to import it?")
         if not mandatory_typedef_found and ref_id != baseObjectTypeId and ref_id != referencesId and \
                 ref_id != baseDataTypeId and ref_id != baseVariableType:
             print(f"Error: Objecttype {ref_classiri} has no supertype and is not the base object type.")
-            exit(1)
+            sys.exit(1)
 
     def add_type_name_only(self, node):
         _, browsename = self.getBrowsename(node)
@@ -835,7 +836,7 @@ Did you forget to import it?")
         try:
             references_node = node.find('opcua:References', self.xml_ns)
             references = references_node.findall('opcua:Reference', self.xml_ns)
-        except:
+        except Exception:
             references = []
         if not node.tag.endswith("UAReferenceType"):
             self.g.add((ref_namespace[browsename], RDF.type, OWL.Class))
