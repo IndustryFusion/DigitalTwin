@@ -8,6 +8,9 @@ on:
   workflow_dispatch:
   workflow_call:
 
+permissions:
+  contents: none
+
 jobs:
   clean-docker:
     runs-on: [self-hosted]  # <-- use your runner's labels
