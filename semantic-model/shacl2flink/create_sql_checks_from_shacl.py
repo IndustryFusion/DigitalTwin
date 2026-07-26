@@ -57,10 +57,10 @@ def main(shaclfile, knowledgefile, context, maps_namespace, output_folder='outpu
             with open(commonyamlfile, "r") as file:
                 yaml_dict = commonyaml.load(file)
                 context = yaml_dict['ontology']['baseUri'] + 'context.jsonld'
-        except:
+        except Exception:
             print("Could neither derive context file implicitly, nor by commandline. Check if common.yaml \
 is accessible.")
-            exit(1)
+            sys.exit(1)
     try:
         context_graph = rdflib.Graph()
         context_graph.parse(context, format="json-ld")
@@ -69,10 +69,10 @@ is accessible.")
     except Exception as e:
         print(f"Could not derive prefixes from context file. Check if contextfile {context} is valid and \
 accessible: {e}")
-        exit(1)
+        sys.exit(1)
     if 'base' not in prefixes.keys():
         print(f"No prefix 'base:' is found in your given context {context}. This is needed!")
-        exit(1)
+        sys.exit(1)
     utils.create_output_folder(output_folder)
 
     yaml = ruamel.yaml.YAML()

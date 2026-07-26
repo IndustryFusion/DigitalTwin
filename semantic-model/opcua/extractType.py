@@ -329,7 +329,7 @@ a loop.")
         try:
             typenode = next(g.subjects(basens['definesType'], typeiri))
             o = typenode
-        except:
+        except Exception:
             pass
         components_found = scan_type(o, classtype)
         if maximal_shacl:
@@ -357,7 +357,7 @@ a loop.")
         has_components = True
         try:
             isAbstract = utils.rdfStringToPythonBool(next(g.objects(classtype, basens['isAbstract'])))
-        except:
+        except Exception:
             isAbstract = False
         if isAbstract:
             return False
@@ -548,7 +548,7 @@ def scan_entity_recursive(node, id, instance, node_id, o, type=None, is_property
     try:
         expanded_type = utils.expand_term(context_graph, instance['type'])
         is_placeholder = shaclg.is_placeholder(expanded_type, attributename)
-    except:
+    except Exception:
         is_placeholder = False
     if is_placeholder:
         if original_attributename is None:
@@ -641,7 +641,7 @@ will flag this.")
                 f'{full_attribute_name}, {str(node)}'
         try:
             is_updating = bool(next(g.objects(o, basens['isUpdating'])))
-        except:
+        except Exception:
             is_updating = False
         if (is_updating or not minimal_shacl) and not is_property:
             bindingsg.create_binding(g, URIRef(node_id), o, attributename)
@@ -708,12 +708,12 @@ if __name__ == '__main__':
     if rootinstancetype is not None and type_all:
         print("Error: root-instance and type-all are mutually exclusive. Please either provide a root-instance or use"
               "type-all to extract all types.")
-        exit(1)
+        sys.exit(1)
 
     if extract_instance_declarations and not type_all:
         print("Error: extract-instance-declarations only works in combination with type-all. Please use type-all to"
               " extract all types and then extract instance declarations.")
-        exit(1)
+        sys.exit(1)
     # create the context_graph
     # Context graph is resolving the context_url and provides just the
     # namespace manager
@@ -725,7 +725,7 @@ if __name__ == '__main__':
         warnings.filterwarnings("ignore", message=message)
     if minimal_shacl and maximal_shacl:
         print("--minimalshacl and --maximalshacl are mutual exclusive")
-        exit(1)
+        sys.exit(1)
     entity_namespace = Namespace(f'{namespace_prefix}entity/') if entity_namespace is None else entity_namespace
     shacl_namespace = Namespace(f'{namespace_prefix}shacl/')
     binding_namespace = Namespace(f'{namespace_prefix}bindings/')
@@ -794,7 +794,7 @@ if __name__ == '__main__':
         if machinery_nodes_and_types is None:
             logger.error("Error: root-instance could not be determined. Neither type given explicitly (via -t) nor a \
 Machinery Folder was found in instance ontology.")
-            exit(1)
+            sys.exit(1)
         rootentity = machinery_nodes_and_types[0][0]
         rootinstancetype = machinery_nodes_and_types[0][1]
         if maximal_shacl:
@@ -807,9 +807,9 @@ Machinery Folder was found in instance ontology.")
     if rootinstancetype is not None:
         try:
             root = next(g.subjects(basens['definesType'], URIRef(rootinstancetype)))
-        except:
+        except Exception:
             print(f"Error: root-instance with type {rootinstancetype} not found. Please review the type parameter.")
-            exit(1)
+            sys.exit(1)
         if instancetypes is None:
             instancetypes = [URIRef(rootinstancetype)]
     for instancetype in instancetypes:
@@ -821,7 +821,7 @@ Machinery Folder was found in instance ontology.")
         minshaclg.serialize(destination=f'min_{shaclname}')
     if shacl_only:
         # If only SHACL shapes are to be created, skip the entity scanning
-        exit(0)
+        sys.exit(0)
     # Then scan the entity with the real values
     rootentities = None
     if extract_instance_declarations:

@@ -209,7 +209,7 @@ class Entity:
             if foundclass is not None:
                 if int(rank) > 0:
                     return [foundclass] * int(array_length)
-        except:
+        except Exception:
             pass
         return foundclass
 

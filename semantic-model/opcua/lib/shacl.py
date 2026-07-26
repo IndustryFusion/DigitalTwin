@@ -284,7 +284,7 @@ class Shacl:
         datatype_name = ""
         try:
             _, datatype_name = split_uri(datatype)
-        except:
+        except Exception:
             pass
         array_dim_str = ""
         array_dim = utils.collection_to_list(array_dimensions, self.data_graph)
@@ -556,7 +556,7 @@ or placeholders or both. Will try to guess the right value, but this can go wron
                 if similarity[target_index] < 0.5:
                     confidence = "with low confidence"
                 warn_message += f" Guessed to use {path} for {name} and class {target_class} {confidence}."
-        except:
+        except Exception:
             pass
         if warn_message is not None:
             print_warning('ambiguous path match', warn_message)
@@ -605,7 +605,7 @@ or placeholders or both. Will try to guess the right value, but this can go wron
                 if str(path) == str(propertypath):
                     result = property
                     break
-        except:
+        except Exception:
             pass
         return result
 
@@ -615,7 +615,7 @@ or placeholders or both. Will try to guess the right value, but this can go wron
             return False
         try:
             return bool(next(self.shaclg.objects(property, self.basens['isPlaceHolder'])))
-        except:
+        except Exception:
             return False
 
     def _get_shclass_from_property(self, property):
@@ -625,7 +625,7 @@ or placeholders or both. Will try to guess the right value, but this can go wron
         try:
             subproperty = next(self.shaclg.objects(property, SH.property))
             result = next(self.shaclg.objects(subproperty, SH['class']))
-        except:
+        except Exception:
             pass
         return result
 
@@ -634,7 +634,7 @@ or placeholders or both. Will try to guess the right value, but this can go wron
             subproperty = next(self.shaclg.objects(property, SH.property))
             self.shaclg.remove((subproperty, SH['class'], None))
             self.shaclg.add((subproperty, SH['class'], shclass))
-        except:
+        except Exception:
             pass
 
     def copy_property_from_shacl(self, source_graph, targetclass, propertypath):
@@ -664,10 +664,10 @@ or placeholders or both. Will try to guess the right value, but this can go wron
         try:
             shape = next(self.shaclg.subjects(SH.targetClass, targetclass))
             return shape
-        except:
+        except Exception:
             try:
                 shape = next(source_graph.get_graph().subjects(SH.targetClass, targetclass))
-            except:
+            except Exception:
                 return None
             for s, p, o in source_graph.get_graph().triples((shape, None, None)):
                 if not isinstance(o, BNode):

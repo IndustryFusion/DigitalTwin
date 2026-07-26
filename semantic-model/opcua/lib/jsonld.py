@@ -339,7 +339,7 @@ class JsonLd:
             # which do not have a datatype
             try:
                 value = json.loads(value)
-            except:
+            except Exception:
                 pass
             if isinstance(value, Literal):
                 value = value.toPython()
@@ -373,10 +373,10 @@ Is there a data mismatch?")
                 try:
                     if datatype == RDF.JSON:
                         json_list = [json.loads(item) for item in json_list]
-                except:
+                except Exception:
                     pass
                 return json_list
-            except:
+            except Exception:
                 print("Warning: BNode which is not an rdf:List cannot be converted into a value")
                 return None
         elif value == RDF.nil:
@@ -386,7 +386,7 @@ Is there a data mismatch?")
         if datatype == RDF.JSON:
             try:
                 value = json.loads(value)
-            except:
+            except Exception:
                 pass
             return value
         if datatype == XSD.dateTime:

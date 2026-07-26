@@ -68,7 +68,7 @@ data-file name (.jsonld, .ttl).")
             args.data_format = 'ttl'
         else:
             print(f"Error: No default data-format given and cannot infer it from filename {args.data}")
-            exit(1)
+            sys.exit(1)
     data_graph.parse(args.data, format=args.data_format)
     # Load SHACL shapes (Shapes Graph)
     shapes_graph = Graph(store='Oxigraph')
@@ -103,7 +103,7 @@ data-file name (.jsonld, .ttl).")
 
     else:
         print("No valid mode selected.")
-        sys.exit(1)
+        sys.sys.exit(1)
 
     if args.merge_entity is True:
         os.environ["PYSHACL_USE_FULL_MIXIN"] = "true"
@@ -153,7 +153,7 @@ data-file name (.jsonld, .ttl).")
             else:
                 print(f'Focus Node (Entity which triggered the validation error): {entity_id}. More details \
 cannot be determined. Check Source Shape for detailed path.')
-    sys.exit(1)
+    sys.sys.exit(1)
 
 
 if __name__ == "__main__":

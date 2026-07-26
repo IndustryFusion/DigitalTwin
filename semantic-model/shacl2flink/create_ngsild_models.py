@@ -142,7 +142,7 @@ def get_entity_id_and_parentId(node, name, target_datasetId, g):
             uptriples = next(g.triples((None, None, entityId)))
             entityId = uptriples[0]
             id = f'\\{uptriples[1]}\\{datasetId}{id}'
-        except:
+        except Exception:
             entityId = None
             break
     if id != '':
