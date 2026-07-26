@@ -69,12 +69,13 @@ class Authenticate {
     }
   }
 
-  // expects "username" and "password" as url-query-parameters
+  // expects "username" and "password" as POST body parameters
   async authenticate (req, res) {
-    this.logger.debug('Auth request ' + JSON.stringify(req.query));
-    const username = req.query.username;
-    const token = req.query.password;
-    const clientid = req.query.clientid;
+    const safeBody = Object.assign({}, req.body, { password: req.body.password ? '[REDACTED]' : undefined });
+    this.logger.debug('Auth request ' + JSON.stringify(safeBody));
+    const username = req.body.username;
+    const token = req.body.password;
+    const clientid = req.body.clientid;
     if (username === this.config.mqtt.adminUsername) {
       if (token === this.config.mqtt.adminPassword) {
         // superuser
@@ -89,7 +90,6 @@ class Authenticate {
       }
     }
     const decodedToken = await this.verifyAndDecodeToken(token);
-    this.logger.debug('token decoded: ' + JSON.stringify(decodedToken));
     if (decodedToken === null) {
       this.logger.warn(`Could not decode token for username ${username} and clientid ${clientid}.`);
       res.status(200).json({ result: 'deny' });
