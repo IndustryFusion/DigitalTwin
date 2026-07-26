@@ -21,7 +21,7 @@ jobs:
     needs: clean-docker
     runs-on: private
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Prepare K3d cluster
       run: |
         if [ -z "${SELF_HOSTED_RUNNER}" ]; then

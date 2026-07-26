@@ -17,7 +17,7 @@ jobs:
       DOCKER_PREFIX: ${{ secrets.DOCKER_PREFIX }}
       BUILDONLY: true
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Prepare K3d cluster
         run: |
           cd ./test && bash ./prepare-platform.sh

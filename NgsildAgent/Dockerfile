@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM node:21
+FROM node:22
 
 ADD . /app
 
