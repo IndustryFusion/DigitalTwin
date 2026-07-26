@@ -483,6 +483,165 @@ describe(fileToTest, function () {
     };
     auth.authenticate(req, res);
   });
+
+  it('Null/invalid token shall be rejected with deny', function (done) {
+    const config = {
+      mqtt: { adminUsername: 'admin', adminPassword: 'password' }
+    };
+    const Cache = class {
+      init () {}
+    };
+    ToTest.__set__('Cache', Cache);
+    const Authenticate = ToTest.__get__('Authenticate');
+    const auth = new Authenticate(config);
+    auth.keycloakAdapter = {
+      grantManager: {
+        createGrant: () => Promise.reject(new Error('invalid token'))
+      }
+    };
+    const req = {
+      body: { username: 'deviceId', password: 'bad-token', clientid: 'clientid-1' }
+    };
+    const res = {
+      status: function (status) {
+        assert.equal(status, 200, 'Received wrong status');
+        return this;
+      },
+      json: function (resultObj) {
+        resultObj.should.deep.equal({ result: 'deny' });
+        done();
+      }
+    };
+    auth.authenticate(req, res);
+  });
+
+  it('Factory user with empty iss shall be denied (no realm derivable)', function (done) {
+    const decodedToken = {
+      iss: '',
+      resource_access: { scorpio: { roles: ['Factory-Admin'] } }
+    };
+    const config = {
+      mqtt: { adminUsername: 'admin', adminPassword: 'password' }
+    };
+    const Cache = class {
+      init () {}
+      async deleteKeysWithValue () {}
+      async setValue () {}
+    };
+    ToTest.__set__('Cache', Cache);
+    const Authenticate = ToTest.__get__('Authenticate');
+    const auth = new Authenticate(config);
+    auth.keycloakAdapter = {
+      grantManager: {
+        createGrant: () => Promise.resolve({ access_token: { content: decodedToken } })
+      }
+    };
+    const req = {
+      body: { username: 'realm_user', password: 'token', clientid: 'clientid-1' }
+    };
+    const res = {
+      status: function (status) {
+        assert.equal(status, 200, 'Received wrong status');
+        return this;
+      },
+      json: function (resultObj) {
+        resultObj.should.deep.equal({ result: 'deny' });
+        done();
+      }
+    };
+    auth.authenticate(req, res);
+  });
+
+  it('Device with tainted device_id shall be denied', function (done) {
+    const decodedToken = {
+      iss: 'http://keycloak-url/auth/realms/iff',
+      device_id: 'tainted-device',
+      gateway: 'someGateway'
+    };
+    const config = {
+      mqtt: {
+        adminUsername: 'admin',
+        adminPassword: 'password',
+        tainted: 'tainted-device'
+      }
+    };
+    const Cache = class {
+      init () {}
+      async deleteKeysWithValue () {}
+      async setValue () {}
+    };
+    ToTest.__set__('Cache', Cache);
+    const Authenticate = ToTest.__get__('Authenticate');
+    const auth = new Authenticate(config);
+    auth.keycloakAdapter = {
+      grantManager: {
+        createGrant: () => Promise.resolve({ access_token: { content: decodedToken } })
+      }
+    };
+    const req = {
+      body: { username: 'tainted-device', password: 'token', clientid: 'clientid-1' }
+    };
+    const res = {
+      status: function (status) {
+        assert.equal(status, 200, 'Received wrong status');
+        return this;
+      },
+      json: function (resultObj) {
+        resultObj.should.deep.equal({ result: 'deny' });
+        done();
+      }
+    };
+    auth.authenticate(req, res);
+  });
+
+  it('Valid device with subdevice_ids shall be authenticated and subdevices cached', function (done) {
+    const decodedToken = {
+      iss: 'http://keycloak-url/auth/realms/iff',
+      device_id: 'deviceId',
+      gateway: 'gatewayId',
+      subdevice_ids: JSON.stringify(['subdevice1', 'subdevice2'])
+    };
+    const config = {
+      mqtt: {
+        adminUsername: 'admin',
+        adminPassword: 'password',
+        tainted: 'tainted-device'
+      }
+    };
+    const cachedKeys = {};
+    const Cache = class {
+      init () {}
+      async deleteKeysWithValue () {}
+      async setValue (key, valueKey, value) {
+        cachedKeys[key] = { valueKey, value };
+      }
+    };
+    ToTest.__set__('Cache', Cache);
+    const Authenticate = ToTest.__get__('Authenticate');
+    const auth = new Authenticate(config);
+    auth.keycloakAdapter = {
+      grantManager: {
+        createGrant: () => Promise.resolve({ access_token: { content: decodedToken } })
+      }
+    };
+    const req = {
+      body: { username: 'deviceId', password: 'token', clientid: 'clientid-1' }
+    };
+    const res = {
+      status: function (status) {
+        assert.equal(status, 200, 'Received wrong status');
+        return this;
+      },
+      json: function (resultObj) {
+        resultObj.should.deep.equal({ result: 'allow', is_superuser: 'false' });
+        assert.ok(cachedKeys['iff/subdevice1'], 'subdevice1 should be in cache');
+        assert.ok(cachedKeys['iff/subdevice2'], 'subdevice2 should be in cache');
+        assert.ok(cachedKeys['iff/deviceId'], 'main device should be in cache');
+        done();
+      }
+    };
+    auth.authenticate(req, res);
+  });
 });
 
 fileToTest = '../lib/authService/acl.js';

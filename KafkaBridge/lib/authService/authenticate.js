@@ -125,6 +125,7 @@ class Authenticate {
     if (did === this.config.mqtt.tainted || gateway === this.config.mqtt.tainted) {
       this.logger.warn('This token is tained! Rejecting.');
       res.status(200).json({ result: 'deny' });
+      return;
     }
     // put realm/device into the list of accepted topics
     await this.cache.deleteKeysWithValue('acl', clientid);
