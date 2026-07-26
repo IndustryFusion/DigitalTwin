@@ -85,12 +85,14 @@ class TestInit(TestCase):
 
 class TestMonitoring(TestCase):
     """Unit test class for monitoring"""
-    # pylint: disable=no-self-use, unused-argument, no-self-argument
+    @staticmethod
+    # pylint: disable=unused-argument
     def create_ddl_from_beamsqltables(beamsqltable, logger):
         """mock successful DDL creation"""
         return "DDL;"
 
-    # pylint: disable=no-self-use, unused-argument, no-self-argument
+    @staticmethod
+    # pylint: disable=unused-argument
     def submit_statementset_successful(fullname, statementset, logger):
         """mock successful statementset creation"""
         # Keeping normal assert statement as this does not seem to
@@ -102,12 +104,14 @@ class TestMonitoring(TestCase):
                                 'sqlstatementset': ['select;']}
         return "job_id"
 
-    # pylint: disable=no-self-use, unused-argument, no-self-argument
+    @staticmethod
+    # pylint: disable=unused-argument
     def submit_statementset_failed(fullname, statementset, logger):
         """mock submission failed"""
         raise target.DeploymentFailedException("Mock submission failed")
 
-    # pylint: disable=no-self-use, unused-argument, no-self-argument
+    @staticmethod
+    # pylint: disable=unused-argument
     def update_status_not_found(body, patchx, logger):
         """mock status not found"""
         patchx.status["state"] = "NOT_FOUND"
@@ -269,12 +273,14 @@ class TestMonitoring(TestCase):
         self.assertEqual(patchx.status["state"], "INITIALIZED")
         self.assertIsNone(patchx.status["job_id"])
 
-    # pylint: disable=no-self-use, unused-argument, no-self-argument
+    @staticmethod
+    # pylint: disable=unused-argument
     def create_sets(spec, body, namespace, name, logger):
         """mock create sets"""
         return "sets"
 
-    # pylint: disable=no-self-use, unused-argument, no-self-argument, too-many-arguments
+    @staticmethod
+    # pylint: disable=unused-argument, too-many-arguments
     def create_tables(beamsqltables, spec, body, namespace, name, logger):
         """mock creation of tables"""
         return "tables"
@@ -316,20 +322,24 @@ class TestMonitoring(TestCase):
 
 class TestDeletion(TestCase):
     """Unit test class for job deletion tests"""
-    # pylint: disable=no-self-use, unused-argument, no-self-argument
+    @staticmethod
+    # pylint: disable=unused-argument
     def update_status_nochange(body, patchx, logger):
         """mock update with no status change"""
 
-    # pylint: disable=no-self-use, unused-argument, no-self-argument
+    @staticmethod
+    # pylint: disable=unused-argument
     def update_status_change(body, patchx, logger):
         """mock job status change"""
         patchx.status["state"] = "CANCELED"
 
-    # pylint: disable=no-self-use, unused-argument, no-self-argument
+    @staticmethod
+    # pylint: disable=unused-argument
     def cancel_job(logger, job_id):
         """mock cancel job successful"""
 
-    # pylint: disable=no-self-use, unused-argument, no-self-argument
+    @staticmethod
+    # pylint: disable=unused-argument
     def cancel_job_error(logger, job_id):
         """mock cancel_job with error"""
         raise kopf.TemporaryError("Could not cancel job")
@@ -487,41 +497,48 @@ JOB_CANCELED = False
 class TestUpdate(TestCase):
     """unit test class to test updates"""
 
-    # pylint: disable=no-self-use, unused-argument, no-self-argument, global-statement
+    @staticmethod
+    # pylint: disable=unused-argument, global-statement
     def cancel_job(logger, job_id):
         """mock cancel_job"""
         global JOB_CANCELED
         JOB_CANCELED = True
 
-    # pylint: disable=no-self-use, unused-argument, no-self-argument
+    @staticmethod
+    # pylint: disable=unused-argument
     def get_job_status(logger, job_id):
         """mock get_job_status running"""
         return {
             "state": "RUNNING"
         }
 
-    # pylint: disable=no-self-use, unused-argument, no-self-argument
+    @staticmethod
+    # pylint: disable=unused-argument
     def get_job_status_not_running(logger, job_id):
         """mock get job_status unknown"""
         return {
             "state": "UNKNOWN"
         }
 
-    # pylint: disable=no-self-use, unused-argument, no-self-argument
+    @staticmethod
+    # pylint: disable=unused-argument
     def cancel_job_and_get_state(logger, body, patchx):
         """mock cancel_job_and_get state successful"""
 
-    # pylint: disable=no-self-use, unused-argument, no-self-argument
+    @staticmethod
+    # pylint: disable=unused-argument
     def cancel_job_and_get_state_fail(logger, body, patchx):
         """mock cancel_job with state fail"""
         raise requests.exceptions.RequestException("Error")
 
-    # pylint: disable=no-self-use, unused-argument, no-self-argument
+    @staticmethod
+    # pylint: disable=unused-argument
     def stop_job(logger, job_id, savepoint_dir):
         """mock stop_job"""
         return "savepoint_id"
 
-    # pylint: disable=no-self-use, unused-argument, no-self-argument
+    @staticmethod
+    # pylint: disable=unused-argument
     def get_savepoint_state_successful(logger, job_id, savepoint_id):
         """mock get savepoint_state return successful"""
         return {
@@ -529,7 +546,8 @@ class TestUpdate(TestCase):
             "location": "location"
         }
 
-    # pylint: disable=no-self-use, unused-argument, no-self-argument
+    @staticmethod
+    # pylint: disable=unused-argument
     def get_savepoint_state_in_progress(logger, job_id, savepoint_id):
         """mock get_savepoint_state is in progress"""
         return {
@@ -537,7 +555,8 @@ class TestUpdate(TestCase):
             "location": "location"
         }
 
-    # pylint: disable=no-self-use, unused-argument, no-self-argument
+    @staticmethod
+    # pylint: disable=unused-argument
     def get_savepoint_state_not_found(logger, job_id, savepoint_id):
         """mock savepoint_state_not_found"""
         return {
@@ -545,7 +564,8 @@ class TestUpdate(TestCase):
             "location": "location"
         }
 
-    # pylint: disable=no-self-use, unused-argument, no-self-argument
+    @staticmethod
+    # pylint: disable=unused-argument
     def add_message(logger, body, patchx, reason, mtype):
         """mock add_message"""
 
@@ -739,7 +759,7 @@ class TestUpdate(TestCase):
 
 class TestHelpers(TestCase):
     """unit test class for helpers"""
-    # pylint: disable=no-self-use, no-self-argument
+    @staticmethod
     def send_successful(test, json, timeout=0):
         """mock send job successful"""
         def jsonp():
@@ -751,7 +771,7 @@ class TestHelpers(TestCase):
         response.json = jsonp
         return response
 
-    # pylint: disable=no-self-use, no-self-argument
+    @staticmethod
     def send_unsuccessful(test, json, timeout=0):
         """mock send job unsuccessful"""
         def jsonp():
@@ -763,27 +783,27 @@ class TestHelpers(TestCase):
         response.json = jsonp
         return response
 
-    # pylint: disable=no-self-use, no-self-argument
+    @staticmethod
     def get_job_status(logger, jobid):
         """mock get job status"""
         return {
             "state": "ok"
         }
-    # pylint: disable=no-self-use, no-self-argument
+    @staticmethod
     def get_job_status_none(logger, jobid):
         """mock no job_status found"""
         return None
 
-    # pylint: disable=no-self-use, no-self-argument
+    @staticmethod
     def send_exception(test, json, timeout=0):
         """mock send_exception"""
         raise requests.RequestException("Error")
 
-    # pylint: disable=no-self-use, no-self-argument
+    @staticmethod
     def get_job_from_name(logger, jobname):
         """mock get_job_from_name"""
         return "jobid"
-    # pylint: disable=no-self-use, no-self-argument
+    @staticmethod
     def get_no_job_from_name(logger, jobname):
         """mock get_job_from_name"""
         return None

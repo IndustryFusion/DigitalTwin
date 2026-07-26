@@ -767,6 +767,7 @@ Did you forget to import it?")
                     except Exception:
                         print(f"Warning: Cannot read access_level value {access_level_ex} in node {classiri}")
 
+    @staticmethod
     def is_objecttype_nodeset_node(node):
         return node.tag.endswith('UAObjectType')
 

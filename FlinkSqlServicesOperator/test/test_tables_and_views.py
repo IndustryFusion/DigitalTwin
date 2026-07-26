@@ -55,7 +55,8 @@ class TestDdlCreation(TestCase):
     create_kafka_ddl_used = False
     create_upsert_kafka_ddl_used = False
 
-   # pylint: disable=global-statement, no-self-use, no-self-argument
+    @staticmethod
+    # pylint: disable=global-statement
     def create_kafka_ddl(beamsqltable, logger):
         """
         mock for create_kafka_ddl
@@ -82,7 +83,8 @@ class TestDdlCreation(TestCase):
         target.create_ddl_from_beamsqltables(beamsqltable, Logger())
         self.assertEqual(TestDdlCreation.create_kafka_ddl_used, True)
 
-   # pylint: disable=global-statement, no-self-use, no-self-argument
+    @staticmethod
+    # pylint: disable=global-statement
     def create_upsert_kafka_ddl(beamsqltable, logger):
         """
         mock for create_upsert_kafka_ddl
@@ -132,7 +134,7 @@ class TestcreateKafkaDdl(TestCase):
     """
     tests for create_kafka_ddl
     """
-       # pylint: disable=global-statement, no-self-argument
+    # pylint: disable=global-statement
     def test_create_ddl_from_beamsqltable(self):
         """
         test successful kafka_ddl creation

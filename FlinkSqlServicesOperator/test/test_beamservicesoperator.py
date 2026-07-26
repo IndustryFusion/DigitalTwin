@@ -97,10 +97,12 @@ class TestUpdates(aiounittest.AsyncTestCase):
         response = await target.updates(None, patchx, Logger(), body, body["spec"], body["status"])
         self.assertEqual(response, {'deployed': False, 'jobCreated': False})
 
-    # pylint: disable=no-self-use, unused-argument, no-self-argument
+    @staticmethod
+    # pylint: disable=unused-argument
     def delete_jar(body, jarfile):
         """mock delete jar"""
-    # pylint: disable=no-self-use, unused-argument, no-self-argument
+    @staticmethod
+    # pylint: disable=unused-argument
     def deploy(body, spec, patchx):
         """mock deploy"""
         return "deploy"
@@ -132,12 +134,14 @@ class TestUpdates(aiounittest.AsyncTestCase):
         response = await target.updates(None, patchx, Logger(), body, body["spec"], body["status"])
         self.assertEqual(response, {'deployed': True, 'jarId': 'deploy'})
 
-    # pylint: disable=no-self-use, unused-argument, no-self-argument
+    @staticmethod
+    # pylint: disable=unused-argument
     def check_readiness(body):
         """mock readiness of 1 slot"""
         return 1
 
-    # pylint: disable=no-self-use, unused-argument, no-self-argument
+    @staticmethod
+    # pylint: disable=unused-argument
     def create_job(body, spec, update_status):
         """mock create job successful"""
         return "job_id"
@@ -169,7 +173,8 @@ class TestUpdates(aiounittest.AsyncTestCase):
         response = await target.updates(None, patchx, Logger(), body, body["spec"], body["status"])
         self.assertEqual(response, {'jobCreated': True, 'jobId': 'job_id'})
 
-    # pylint: disable=no-self-use, unused-argument, no-self-argument
+    @staticmethod
+    # pylint: disable=unused-argument
     def check_readiness_0(body):
         """mock no ready task slots"""
         return 0
@@ -200,7 +205,8 @@ class TestUpdates(aiounittest.AsyncTestCase):
         response = await target.updates(None, patchx, Logger(), body, body["spec"], body["status"])
         self.assertEqual(response, None)
 
-    # pylint: disable=no-self-use, unused-argument, no-self-argument
+    @staticmethod
+    # pylint: disable=unused-argument
     def create_job_none(body, spec, update_status):
         """mock create job unsuccessful"""
         return None
@@ -232,7 +238,8 @@ class TestUpdates(aiounittest.AsyncTestCase):
         response = await target.updates(None, patchx, Logger(), body, body["spec"], body["status"])
         self.assertEqual(response, {'deployed': False, 'jobCreated': False})
 
-    # pylint: disable=no-self-use, unused-argument, no-self-argument
+    @staticmethod
+    # pylint: disable=unused-argument
     def requestsget(url, timeout=0):
         """mock get jobs"""
         result = Bunch()
@@ -266,7 +273,7 @@ class TestUpdates(aiounittest.AsyncTestCase):
         await target.updates(None, patchx, Logger(), body, body["spec"], body["status"])
         self.assertEqual(patchx["status"].get("state"), "RUNNING")
 
-    # pylint: disable=no-self-use, no-self-argument
+    @staticmethod
     def requestsget_fail(url, timeout=0):
         """mock get jobs fail"""
         result = Bunch()
@@ -300,7 +307,7 @@ class TestUpdates(aiounittest.AsyncTestCase):
         await target.updates(None, patchx, Logger(), body, body["spec"], body["status"])
         self.assertEqual(patchx["status"].get("state"), None)
 
-    # pylint: disable=no-self-argument
+    @staticmethod
     def requestsget_good(url, timeout=0):
         """mock get jobs"""
         result = Bunch()
@@ -312,11 +319,12 @@ class TestUpdates(aiounittest.AsyncTestCase):
             result.json = getjson_put
         return result
 
-    # pylint: disable=no-self-use, unused-argument, no-self-argument
+    @staticmethod
+    # pylint: disable=unused-argument
     def get_jobname_prefix(body, spec):
         """mock get jobname prefix"""
         return "nam"
-    # pylint: disable=no-self-argument
+    @staticmethod
     def cancel_job(job_id):
         """mock cancel job successful"""
 
@@ -407,7 +415,7 @@ class TestDelete(TestCase):
 
 class TestHelpers(TestCase):
     """Unit test class for helpers"""
-    # pylint: disable=no-self-argument
+    @staticmethod
     def requestget(url, timeout=0):
         """mock get content"""
         assert url == 'url'
@@ -415,7 +423,8 @@ class TestHelpers(TestCase):
         result.content = b'content'
         return result
 
-    # pylint: disable=no-self-use, unused-argument, no-self-argument
+    @staticmethod
+    # pylint: disable=unused-argument
     def download_file_via_ftp(url, username, password):
         """mock downloaded file with path"""
         return "jarfilepath"
@@ -441,7 +450,8 @@ class TestHelpers(TestCase):
         mock_ftp_constructor.assert_called_with('url', 'username', 'password')
         self.assertRegex(response, r"/tmp/[a-f0-9-]*\.jar")
 
-    # pylint: disable=no-self-use, unused-argument, no-self-argument
+    @staticmethod
+    # pylint: disable=unused-argument
     def requestpost(url, files, timeout=0):
         """mock successful post of job"""
         response = Bunch()
@@ -477,7 +487,8 @@ class TestHelpers(TestCase):
                 response = target.deploy(body, body["spec"], patchx)
         self.assertEqual(response, "filename")
 
-    # pylint: disable=no-self-use, unused-argument, no-self-argument
+    @staticmethod
+    # pylint: disable=unused-argument
     def util_format_template(string, tokens, encode):
         """mock format template"""
         return "format"
@@ -515,19 +526,20 @@ class TestHelpers(TestCase):
         }
         response = target.get_jobname_prefix(body, body["spec"])
         self.assertEqual(response, 'entryclass')
-    # pylint: disable=no-self-argument
+    @staticmethod
     # pylint: disable=E1136
     def get_tokens(users):
         """mock get_tokens"""
         THAT.assertDictEqual(users[0], {"user": "user", "password": "password"})
         return {"user1": "token1", "user2": "token2"}
-    # pylint: disable=no-self-argument
+    @staticmethod
     def build_args(args_dict, tokens):
         """mock build_args"""
         THAT.assertDictEqual(args_dict, {"runner": "runner"})
         THAT.assertDictEqual(tokens, {"user1": "token1", "user2": "token2"})
 
-    # pylint: disable=no-self-use, unused-argument, no-self-argument
+    @staticmethod
+    # pylint: disable=unused-argument
     def request_post_run(url, json, timeout=0):
         """mock post to create job successfully"""
         def json_run():
@@ -567,7 +579,7 @@ class TestHelpers(TestCase):
         response = target.create_job(body, body['spec'], 'jar_id')
         self.assertEqual(response, 'jobid')
 
-    # pylint: disable=no-self-use, no-self-argument
+    @staticmethod
     def request_get_overview(url, timeout=0):
         """mock get overview path of flink"""
         def json_get():
