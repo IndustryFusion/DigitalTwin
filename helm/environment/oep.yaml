@@ -5,11 +5,14 @@ alerta:
   externalHostname: oep-testing.industry-fusion.com
 keycloak:
   adminName: admin
-  externalAuthService:   # put here the *external* keycloak name, i.e. through ingress 
+  externalAuthService:   # put here the *external* keycloak name, i.e. through ingress
     protocol: "http:"   # use https in production, use http if use self signed certificate or ignoring certificate validation
     domainname: oep-testing.industry-fusion.com
     path: /auth/ # keycloak internal do not change
     # pathPrefix: /keycloak-iff/ # for ingress, must end with /
+  ifric:
+    companyId: ""
+    factoryId: ""
 
 db:
   pvSize: 1Gi

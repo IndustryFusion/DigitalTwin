@@ -301,6 +301,9 @@ keycloak:
   scorpio:
     realm: iff
     client: scorpio
+  ifric:
+    companyId: {{ .StateValues.keycloak.ifric.companyId | default "" | quote }}
+    factoryId: {{ .StateValues.keycloak.ifric.factoryId | default "" | quote }}
   ngsildUpdates:
     clientSecret: {{ .StateValues.ngsildUpdatesClientSecret }}
     realm: iff

@@ -587,6 +587,32 @@ spec:
             included.client.audience: {{ .Values.keycloak.oisp.mqttBroker.client }}
             access.token.claim: "true"
             id.token.claim: "false"
+        {{- if .Values.keycloak.ifric.companyId }}
+        - name: ifric_company_id
+          protocol: openid-connect
+          protocolMapper: oidc-hardcoded-claim-mapper
+          config:
+            claim.value: {{ .Values.keycloak.ifric.companyId | quote }}
+            userinfo.token.claim: "true"
+            id.token.claim: "true"
+            access.token.claim: "true"
+            claim.name: ifric_company_id
+            jsonType.label: String
+            access.tokenResponse.claim: "false"
+        {{- end }}
+        {{- if .Values.keycloak.ifric.factoryId }}
+        - name: ifric_factory_id
+          protocol: openid-connect
+          protocolMapper: oidc-hardcoded-claim-mapper
+          config:
+            claim.value: {{ .Values.keycloak.ifric.factoryId | quote }}
+            userinfo.token.claim: "true"
+            id.token.claim: "true"
+            access.token.claim: "true"
+            claim.name: ifric_factory_id
+            jsonType.label: String
+            access.tokenResponse.claim: "false"
+        {{- end }}
       - id: 2057e003-9e81-44fb-929d-4511ce2c7e33
         clientId: {{ .Values.keycloak.ngsildUpdates.client }}
         publicClient: False

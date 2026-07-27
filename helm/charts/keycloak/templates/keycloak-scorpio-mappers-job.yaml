@@ -1,0 +1,112 @@
+{{- if or .Values.keycloak.ifric.companyId .Values.keycloak.ifric.factoryId }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: keycloak-scorpio-mappers
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": post-upgrade
+    "helm.sh/hook-weight": "10"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: update-mappers
+        image: {{ .Values.externalRegistry }}/curlimages/curl:8.11.1
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          set -e
+
+          KEYCLOAK_URL="http://{{ .Values.keycloak.internalAuthService.name }}:{{ .Values.keycloak.internalAuthService.port }}{{ .Values.keycloak.internalAuthService.path }}"
+          REALM="{{ .Values.keycloak.scorpio.realm }}"
+          CLIENT_ID="{{ .Values.keycloak.scorpio.client }}"
+
+          # Wait for Keycloak to be ready
+          until curl -sf "${KEYCLOAK_URL}/realms/master" > /dev/null 2>&1; do
+            echo "Waiting for Keycloak at ${KEYCLOAK_URL} ..."
+            sleep 10
+          done
+          echo "Keycloak is ready"
+
+          # Obtain admin access token from master realm
+          TOKEN_RESPONSE=$(curl -sf -X POST \
+            "${KEYCLOAK_URL}/realms/master/protocol/openid-connect/token" \
+            --data-urlencode "grant_type=password" \
+            --data-urlencode "client_id=admin-cli" \
+            --data-urlencode "username=${ADMIN_USER}" \
+            --data-urlencode "password=${ADMIN_PASSWORD}")
+
+          TOKEN=$(echo "$TOKEN_RESPONSE" | grep -oE '"access_token":"[^"]*"' | cut -d'"' -f4)
+          [ -z "$TOKEN" ] && echo "ERROR: Failed to get admin token" && exit 1
+
+          # Look up the scorpio client UUID
+          CLIENTS=$(curl -sf \
+            -H "Authorization: Bearer ${TOKEN}" \
+            "${KEYCLOAK_URL}/admin/realms/${REALM}/clients?clientId=${CLIENT_ID}")
+
+          CLIENT_UUID=$(echo "$CLIENTS" | grep -oE '"id":"[^"]*"' | head -1 | cut -d'"' -f4)
+          [ -z "$CLIENT_UUID" ] && echo "ERROR: Client '${CLIENT_ID}' not found in realm '${REALM}'" && exit 1
+          echo "Client ${CLIENT_ID}: UUID=${CLIENT_UUID}"
+
+          # Fetch all existing protocol mappers for the client
+          MAPPERS=$(curl -sf \
+            -H "Authorization: Bearer ${TOKEN}" \
+            "${KEYCLOAK_URL}/admin/realms/${REALM}/clients/${CLIENT_UUID}/protocol-mappers/models")
+
+          # Upsert a hardcoded-claim mapper.
+          # Keycloak always serialises "id" immediately before "name" in each mapper object,
+          # which lets us correlate the two fields with a single grep pattern.
+          upsert_mapper() {
+            local name="$1"
+            local value="$2"
+
+            local existing_id
+            existing_id=$(echo "$MAPPERS" | \
+              grep -oE '"id":"[^"]*","name":"'"${name}"'"' | \
+              grep -oE '"id":"[^"]*"' | cut -d'"' -f4)
+
+            local payload
+            if [ -n "$existing_id" ]; then
+              payload="{\"id\":\"${existing_id}\",\"name\":\"${name}\",\"protocol\":\"openid-connect\",\"protocolMapper\":\"oidc-hardcoded-claim-mapper\",\"config\":{\"claim.value\":\"${value}\",\"userinfo.token.claim\":\"true\",\"id.token.claim\":\"true\",\"access.token.claim\":\"true\",\"claim.name\":\"${name}\",\"jsonType.label\":\"String\",\"access.tokenResponse.claim\":\"false\"}}"
+              echo "Updating mapper '${name}' (${existing_id})"
+              curl -sf -X PUT \
+                -H "Authorization: Bearer ${TOKEN}" \
+                -H "Content-Type: application/json" \
+                "${KEYCLOAK_URL}/admin/realms/${REALM}/clients/${CLIENT_UUID}/protocol-mappers/models/${existing_id}" \
+                -d "${payload}"
+            else
+              payload="{\"name\":\"${name}\",\"protocol\":\"openid-connect\",\"protocolMapper\":\"oidc-hardcoded-claim-mapper\",\"config\":{\"claim.value\":\"${value}\",\"userinfo.token.claim\":\"true\",\"id.token.claim\":\"true\",\"access.token.claim\":\"true\",\"claim.name\":\"${name}\",\"jsonType.label\":\"String\",\"access.tokenResponse.claim\":\"false\"}}"
+              echo "Creating mapper '${name}'"
+              curl -sf -X POST \
+                -H "Authorization: Bearer ${TOKEN}" \
+                -H "Content-Type: application/json" \
+                "${KEYCLOAK_URL}/admin/realms/${REALM}/clients/${CLIENT_UUID}/protocol-mappers/models" \
+                -d "${payload}"
+            fi
+            echo "Done: ${name}=${value}"
+          }
+
+          [ -n "$IFRIC_COMPANY_ID" ] && upsert_mapper "ifric_company_id" "$IFRIC_COMPANY_ID"
+          [ -n "$IFRIC_FACTORY_ID" ] && upsert_mapper "ifric_factory_id" "$IFRIC_FACTORY_ID"
+
+          echo "Protocol mappers updated successfully"
+        env:
+        - name: ADMIN_USER
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-initial-admin
+              key: username
+        - name: ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-initial-admin
+              key: password
+        - name: IFRIC_COMPANY_ID
+          value: {{ .Values.keycloak.ifric.companyId | quote }}
+        - name: IFRIC_FACTORY_ID
+          value: {{ .Values.keycloak.ifric.factoryId | quote }}
+{{- end }}

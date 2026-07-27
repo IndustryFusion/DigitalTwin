@@ -54,6 +54,7 @@ if [ "${REGISTRY}" = "docker.io" ]; then
       docker.io/ibn40/keycloak:${DOCKER_TAG}
       docker.io/ibn40/flink-sql-gateway:${DOCKER_TAG}
       docker.io/ibn40/debezium-postgresql-connector:${DOCKER_TAG}
+      docker.io/curlimages/curl:8.11.1
  )
 else
   IMAGES=(
@@ -85,6 +86,7 @@ else
       docker.io/rancher/klipper-lb:v0.4.9
       docker.io/rancher/mirrored-library-traefik:2.11.18
       docker.io/rancher/mirrored-library-busybox:1.36.1
+      docker.io/curlimages/curl:8.11.1
   )
 fi
 for image in ${IMAGES[@]}; do 
