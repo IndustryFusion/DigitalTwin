@@ -141,7 +141,7 @@ class Authenticate {
       .createGrant({ access_token: token })
       .then(grant => grant.access_token.content)
       .catch(err => {
-        this.logger.warn(`Token decoding error for token ${maskedToken}`);
+        this.logger.warn(`Token decoding error for token ${maskedToken}: ${err.name || 'Error'}`);
         return null;
       });
   }
