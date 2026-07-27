@@ -5,10 +5,13 @@ alerta:
   externalHostname: alerta.local
 keycloak:
   adminName: admin
-  externalAuthService:   # put here the *external* keycloak name, i.e. through ingress 
+  externalAuthService:   # put here the *external* keycloak name, i.e. through ingress
     protocol: "http:"
     domainname: keycloak.local
     path: /auth/ # keycloak internal, do not change
+  ifric:
+    companyId: "urn:ifric:ifx-eur-com-own-42ced491-b35d-41f7-9949-fcbb5fa4dcd9"
+    factoryId: "urn:ifric:ifx-eur-loc-fac-bd063b72-8748-461f-888d-3ea75058f205"
 
 db:
   pvSize: 1Gi
