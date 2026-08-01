@@ -158,8 +158,24 @@ class NodesetParser:
         # calling the root element
         self.root = tree.getroot()
         self.data_schema = data_schema
+        models = self.root.find('opcua:Models', self.xml_ns)
+        # RequiredModel entries are only used to annotate a missing-dependency error with the
+        # version the nodeset itself expects (see check_namespace_dependencies); they are not
+        # authoritative for *which* namespaces are actually needed. Some companion specs (e.g.
+        # Machinery/ProcessValues) declare a RequiredModel for a namespace they never reference
+        # by index (it's needed transitively by another direct dependency, e.g. PADIM), so
+        # treating RequiredModel as required-coverage would demand ttls that aren't actually
+        # dereferenced and currently aren't (and shouldn't need to be) passed via -i.
+        self.required_models = {}
+        if models is not None:
+            for model in models.findall('opcua:Model', self.xml_ns):
+                for required_model in model.findall('opcua:RequiredModel', self.xml_ns):
+                    required_uri = required_model.get('ModelUri')
+                    if required_uri is None:
+                        continue
+                    required_uri = str(utils.normalize_namespaceuri(required_uri))
+                    self.required_models[required_uri] = required_model.get('Version')
         if args.namespace is None:
-            models = self.root.find('opcua:Models', self.xml_ns)
             if models is None:
                 print("Error: Namespace cannot be retrieved, please set it explicitly.")
                 exit(1)
@@ -349,10 +365,37 @@ Please set it explictly.")
         self.init_imports(base_ontologies)
         namespaceclass = f"{ontology_prefix.upper()}Namespace"
         self.get_all_namespaces(ontology_prefix, ontology_name, namespaceclass)
+        self.check_namespace_dependencies()
         self.get_all_node_ids()
         self.get_all_types()
         self.get_all_references()
         self.add_ontology_namespace(ontology_prefix, namespaceclass, ontology_name)
+
+    def check_namespace_dependencies(self):
+        """Fail fast, with one consolidated error, if a namespace this file can reference by
+        index (ns=X, per its own <NamespaceUris>) isn't covered by the provided --inputs
+        (directly, or transitively via their owl:imports under --import-indirect-dependencies).
+
+        self.opcua_ns (core + <NamespaceUris>) is the authoritative index table -- every ns=X
+        in this file resolves through it, so it's exactly what needs to be covered. This file's
+        own target namespace is never reported missing: get_all_namespaces() always registers it
+        in known_opcua_ns before this runs, since it's what this run is producing, not something
+        that needs to be imported.
+        """
+        required = {str(utils.normalize_namespaceuri(uri)) for uri in self.opcua_ns}
+        covered = set(self.known_opcua_ns.keys())
+        missing = sorted(required - covered)
+        if not missing:
+            return
+        print("Error: The following namespace(s) are referenced by this NodeSet2 file (via its "
+              "<NamespaceUris>) but are not covered by any of the provided --inputs, whether "
+              "directly or via their transitive owl:imports:")
+        for uri in missing:
+            version = self.required_models.get(uri)
+            hint = f" (RequiredModel version {version})" if version else ""
+            print(f"  - {uri}{hint}")
+        print("Did you forget to pass the corresponding companion specification ttl via -i/--inputs?")
+        exit(1)
 
     def create_header(self):
         self.g.add((self.ontology_name, RDF.type, OWL.Ontology))
