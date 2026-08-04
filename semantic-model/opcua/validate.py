@@ -20,6 +20,7 @@ import os
 import sys
 import argparse
 import json
+from pathlib import Path
 from rdflib import Graph
 from rdflib.namespace import RDF, SH, OWL
 import lib.utils as utils
@@ -46,7 +47,6 @@ def validate_virtual_types(data_path):
     incompatible with this repo's default Apache-2.0 dependency set), so
     "instance"/"ontology" mode users must not be forced to have it installed.
     """
-    from pathlib import Path
     from check_consistency import build_full_owl_output, run_hermit
 
     path = Path(data_path).resolve()
@@ -72,9 +72,49 @@ def validate_virtual_types(data_path):
     sys.exit(1)
 
 
+def load_shapes(path):
+    """Load a SHACL shapes graph from `path`. If it's a directory, every *.shacl.ttl
+    file directly within it (non-recursive) is parsed and merged -- SHACL NodeShapes
+    are additive (each targets its own classes/properties), so merging can't produce
+    spurious conflicts. If it's a single file, it's parsed directly. `*.shacl.ttl` is
+    a filename convention, not content-sniffed: every shape file in this repo already
+    follows it, matching how `*.owl.ttl`/`*.vt.owl.ttl` are also filename-conventions
+    for other pipeline stages, and content-sniffing every .ttl in a directory just to
+    decide whether to parse it would cost more (parse-to-decide-whether-to-parse) for
+    no real benefit in a directory this project fully curates.
+
+    This is what gives -m ontology a real default: unlike -m instance's shacl.ttl (a
+    single file purpose-built for one specific instance document by extractType.py),
+    there's no single canonical "the" ontology shapes file -- just a fixed, small set
+    of independent structural rules (hasComponent, hasProperty, historizing,
+    modellingRule, rankValue, ...) that all apply to any ontology equally. -s can
+    still point at one specific file to scope a check to a single rule, or at any
+    other directory of *.shacl.ttl files.
+    """
+    path = Path(path)
+    graph = Graph(store='Oxigraph')
+    if path.is_dir():
+        shape_files = sorted(path.glob('*.shacl.ttl'))
+        if not shape_files:
+            print(f"Error: no *.shacl.ttl files found under {path}")
+            sys.exit(1)
+        print(f"Using SHACL shapes from {path}: {', '.join(f.name for f in shape_files)}")
+        for shape_file in shape_files:
+            graph.parse(shape_file, format="turtle")
+    else:
+        graph.parse(path, format="turtle")
+    return graph
+
+
 def main():
     parser = argparse.ArgumentParser(description="SHACL Validation with Shape and Focus Context")
-    parser.add_argument("-s", "--shacl", required=False, help="Path to SHACL shapes file", default='shacl.ttl')
+    parser.add_argument("-s", "--shacl", required=False,
+                        help="Path to a SHACL shapes file, or a directory of *.shacl.ttl files "
+                             "to merge. Defaults to shacl.ttl for -m instance (extractType.py's "
+                             "per-instance-type output); for -m ontology, defaults to the "
+                             "validation/ontology/ directory (every structural rule file, merged). "
+                             "Pass a single file explicitly to scope -m ontology to one rule.",
+                        default=None)
     parser.add_argument("-e", "--extra", required=False, help="Path to extra ontology file")
     parser.add_argument("-df", "--data-format", required=False,
                         help="Data file format (e.g., turtle, json-ld, xml). If not provided infered from \
@@ -108,6 +148,16 @@ data-file name (.jsonld, .ttl).")
         validate_virtual_types(args.data)
         return
 
+    if args.mode not in ('instance', 'ontology'):
+        print("No valid mode selected.")
+        sys.exit(1)
+
+    if args.shacl is None:
+        if args.mode == 'instance':
+            args.shacl = 'shacl.ttl'
+        else:  # ontology
+            args.shacl = Path(__file__).resolve().parent / 'validation' / 'ontology'
+
     # Load RDF data (Data Graph)
 
     data_graph = Graph(store='Oxigraph')
@@ -121,8 +171,7 @@ data-file name (.jsonld, .ttl).")
             exit(1)
     data_graph.parse(args.data, format=args.data_format)
     # Load SHACL shapes (Shapes Graph)
-    shapes_graph = Graph(store='Oxigraph')
-    shapes_graph.parse(args.shacl, format="turtle")
+    shapes_graph = load_shapes(args.shacl)
     extra_graph = Graph(store='Oxigraph')
     if args.mode == 'instance':
         # Load extra ontology if provided
@@ -143,17 +192,13 @@ data-file name (.jsonld, .ttl).")
                 extra_graph += ontology_loader.get_graph()
             else:
                 logger.warning(f'No ontology found in entity file {args.extra}. No imports will be loaded.')
-    elif args.mode == 'ontology':
+    else:  # args.mode == 'ontology', the only remaining possibility -- checked above
         mainontology = next(data_graph.subjects(RDF.type, OWL.Ontology), None)
         if mainontology and not args.no_imports:
             imports = data_graph.objects(mainontology, OWL.imports)
             ontology_loader = OntologyLoader(True)
             ontology_loader.init_imports(imports)
             extra_graph = ontology_loader.get_graph()
-
-    else:
-        print("No valid mode selected.")
-        sys.exit(1)
 
     if args.merge_entity is True:
         os.environ["PYSHACL_USE_FULL_MIXIN"] = "true"
