@@ -5,7 +5,6 @@
 3. [Building Companion Specifications](./building-companion-specifications.md)
 3. [Mapping concept](./mapping-concept.md)
 5. [Tools](./tools.md)
-6. [Validation Rule Catalog — Part 3 (Address Space Model)](./validation-rules-part3.md)
 
 
 # References

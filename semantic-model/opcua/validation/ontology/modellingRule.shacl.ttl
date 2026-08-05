@@ -4,22 +4,6 @@
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-# KNOWN GAP (not implemented here): OPC UA Part 3 §6.4.4.2 requires that when a subtype
-# overrides an InstanceDeclaration (or reuses another type's instance as its own
-# InstanceDeclaration, per §6.4.4.3), its ModellingRule may only be a *narrowing* of the
-# original -- Mandatory stays Mandatory; Optional may become Mandatory or stay Optional;
-# MandatoryPlaceholder stays MandatoryPlaceholder; OptionalPlaceholder may become
-# MandatoryPlaceholder or stay OptionalPlaceholder. Loosening (e.g. Mandatory->Optional)
-# is never permitted ("constraints shall only be tightened, not loosened").
-#
-# The shape below only checks hasModellingRule's cardinality (<=1) and that its value is
-# one of the 5 known ModellingRule nodes -- it does NOT compare a node's ModellingRule
-# against the one on the InstanceDeclaration it overrides/derives from, so an illegal
-# loosening is not currently caught. See docs/validation-rules-part3.md, rule AS-046, for
-# the full rule statement, spec citations, and rationale. This is the same shape of
-# problem as the ValueRank-narrowing check below in rankValue.shacl.ttl (which *is*
-# implemented) -- would need supertype/seed lookup logic that doesn't exist here yet.
-
 # Main shape for OPC UA nodes (Properties and Variables)
 base:OPCUAModellingRuleShape a sh:NodeShape ;
     sh:targetClass opcua:BaseNodeClass;
