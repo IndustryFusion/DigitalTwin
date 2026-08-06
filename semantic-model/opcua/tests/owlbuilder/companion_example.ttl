@@ -1,0 +1,77 @@
+@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+@prefix opcua: <http://opcfoundation.org/UA/> .
+@prefix comp: <http://example.org/Companion/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# Minimal companion-spec fixture mirroring the real di.ttl/core.ttl relationship
+# at small scale: two new types are declared HERE, importing pump_example.ttl
+# (loaded separately as `ig` in tests):
+#
+#   comp:SpecialPumpType <: opcua:PumpType
+#     declares a brand-new Variable "Extra" of its own -- Variables always
+#     need their own Virtual Type (to carry ValueRank/Datatype), even with no
+#     override, so this is what exercises "companion mints its own new VT in
+#     its own namespace".
+#
+#   comp:SpecialMotorType <: opcua:MotorType
+#     overrides "Temperature" 's ValueRank (Scalar -> OneDimension, same
+#     Datatype) -- this exercises linking a freshly minted companion VT back
+#     to the dependency's own already-generated VT(MotorType, "Temperature")
+#     as a bare reference, not a duplicate.
+
+comp: a owl:Ontology ;
+    owl:imports <file:///pump_example.ttl> .
+
+comp:COMPNamespace a base:Namespace ;
+    base:hasPrefix "comp" ;
+    base:hasUri "http://example.org/Companion/" .
+
+comp:hasExtra rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+
+comp:SpecialPumpType a owl:Class ;
+    rdfs:subClassOf opcua:PumpType .
+
+comp:nodei1 a opcua:ObjectTypeNodeClass ;
+    opcua:HasProperty comp:nodei2 ;
+    comp:hasExtra comp:nodei2 ;
+    base:definesType comp:SpecialPumpType ;
+    base:hasBrowseName "SpecialPumpType" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "1" .
+
+comp:nodei2 a opcua:PropertyType,
+        opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
+    base:hasDatatype opcua:Double ;
+    base:hasBrowseName "Extra" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "2" .
+
+comp:SpecialMotorType a owl:Class ;
+    rdfs:subClassOf opcua:MotorType .
+
+comp:nodei3 a opcua:ObjectTypeNodeClass ;
+    opcua:HasProperty comp:nodei4 ;
+    opcua:hasTemperature comp:nodei4 ;
+    base:definesType comp:SpecialMotorType ;
+    base:hasBrowseName "SpecialMotorType" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "3" .
+
+comp:nodei4 a opcua:PropertyType,
+        opcua:VariableNodeClass ;
+    opcua:HasModellingRule opcua:nodei78 ;
+    base:hasDatatype opcua:Double ;
+    base:hasValueRank 1 ;
+    base:hasBrowseName "Temperature" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "4" .
+
+# A new DataType introduced by the companion spec, under the SAME
+# opcua:BaseDataType parent that pump_example.ttl's own Double/String already
+# extend. Tests that DataType disjointness picks up the full sibling set
+# (old + new) when the companion file introduces a new one.
+comp:CompanionEnum a owl:Class ;
+    rdfs:subClassOf opcua:BaseDataType .

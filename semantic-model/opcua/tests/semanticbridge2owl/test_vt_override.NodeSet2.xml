@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Part 14 e2e scenario 3/5: the canonical override example from
+     semantic_bridge_to_owl.md §10. BaseType declares Mandatory "Part" :
+     PartType. SubType <: BaseType overrides "Part" : AdvancedPartType (a
+     genuine subtype of PartType).
+
+     Expect no Virtual Type at all: a plain Object override with no local
+     structural extension needs no synthetic wrapper: the real declared
+     type already fully specifies itself, so the restriction on SubType
+     targets opcua:AdvancedPartType directly. Consistency with BaseType's own
+     "Part" : PartType restriction is guaranteed by the real class hierarchy
+     alone (AdvancedPartType rdfs:subClassOf PartType), with no VT machinery
+     involved. OPC UA itself only allows overriding a component with a
+     genuine subtype of the original TypeDefinition, so a plain Object
+     override can never be structurally contradictory the way a ValueRank or
+     Datatype override can; see test_vt_contradiction for the case that
+     actually needs the ValueRank disjointness machinery to be caught. -->
+<UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+           LastModified="2024-07-15T00:00:00Z"
+           xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
+  <Models>
+    <Model ModelUri="http://my.test/"
+           XmlSchemaUri="http://opcfoundation.org/UA/2008/02/Types.xsd"
+           Version="1.05.03"
+           PublicationDate="2024-07-29T00:00:00Z"
+           ModelVersion="1.5.3" />
+  </Models>
+  <NamespaceUris>
+    <Uri>http://my.test/</Uri>
+  </NamespaceUris>
+  <Aliases>
+    <Alias Alias="HasComponent">i=47</Alias>
+    <Alias Alias="HasSubtype">i=45</Alias>
+    <Alias Alias="HasTypeDefinition">i=40</Alias>
+    <Alias Alias="HasModellingRule">i=37</Alias>
+  </Aliases>
+
+  <!-- PartType and its subtype AdvancedPartType -->
+  <UAObjectType NodeId="ns=1;i=3000" BrowseName="1:PartType">
+    <DisplayName>PartType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+    </References>
+  </UAObjectType>
+
+  <UAObjectType NodeId="ns=1;i=3001" BrowseName="1:AdvancedPartType">
+    <DisplayName>AdvancedPartType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">ns=1;i=3000</Reference>
+    </References>
+  </UAObjectType>
+
+  <!-- BaseType: Mandatory "Part" : PartType -->
+  <UAObjectType NodeId="ns=1;i=2000" BrowseName="1:BaseType">
+    <DisplayName>BaseType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2001</Reference>
+    </References>
+  </UAObjectType>
+
+  <UAObject NodeId="ns=1;i=2001" BrowseName="1:Part">
+    <DisplayName>Part</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=3000</Reference>
+      <Reference ReferenceType="HasModellingRule">i=78</Reference>
+    </References>
+  </UAObject>
+
+  <!-- SubType <: BaseType, OVERRIDES "Part" : AdvancedPartType -->
+  <UAObjectType NodeId="ns=1;i=2100" BrowseName="1:SubType">
+    <DisplayName>SubType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">ns=1;i=2000</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2101</Reference>
+    </References>
+  </UAObjectType>
+
+  <UAObject NodeId="ns=1;i=2101" BrowseName="1:Part">
+    <DisplayName>Part</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=3001</Reference>
+      <Reference ReferenceType="HasModellingRule">i=78</Reference>
+    </References>
+  </UAObject>
+</UANodeSet>
