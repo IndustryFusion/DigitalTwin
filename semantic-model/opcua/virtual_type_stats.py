@@ -111,6 +111,19 @@ def parse_target_files(makefile_path):
     """Extract the ordered list of *.ttl output filenames this Makefile
     produces, straight from its own TARGET_NAMES and <NAME>_ONTOLOGY
     variables, so this script can't drift out of sync with the Makefile."""
+    return _parse_target_files(makefile_path, '_ONTOLOGY')
+
+
+def parse_owl_target_files(makefile_path):
+    """Same as parse_target_files, but the *.owl.ttl Virtual-Types output
+    filenames (<NAME>_OWL) translate_default_nodesets.make builds for each
+    target alongside its semantic-bridge *.ttl -- what check_consistency.py
+    validates, since it reasons over the already-built pure-OWL ontology
+    rather than regenerating it (see that module's own docstring)."""
+    return _parse_target_files(makefile_path, '_OWL')
+
+
+def _parse_target_files(makefile_path, suffix):
     text = makefile_path.read_text()
     names_match = re.search(r'^TARGET_NAMES\s*=\s*(.+)$', text, re.MULTILINE)
     if names_match is None:
@@ -118,9 +131,9 @@ def parse_target_files(makefile_path):
     names = names_match.group(1).split()
     files = []
     for name in names:
-        ontology_match = re.search(rf'^{re.escape(name)}_ONTOLOGY\s*=\s*(\S+)$', text, re.MULTILINE)
-        if ontology_match:
-            files.append(ontology_match.group(1))
+        match = re.search(rf'^{re.escape(name)}{suffix}\s*=\s*(\S+)$', text, re.MULTILINE)
+        if match:
+            files.append(match.group(1))
     return files
 
 

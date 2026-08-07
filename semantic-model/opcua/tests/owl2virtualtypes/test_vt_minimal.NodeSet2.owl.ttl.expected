@@ -17,11 +17,11 @@
 
 <http://my.test/AlphaType> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
-            owl:allValuesFrom <http://my.test/VT_94fd5d290f6b118c6c41778d> ;
-            owl:onProperty <http://my.test/hasValue> ],
-        [ a owl:Restriction ;
             owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
             owl:onClass <http://my.test/VT_94fd5d290f6b118c6c41778d> ;
+            owl:onProperty <http://my.test/hasValue> ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom <http://my.test/VT_94fd5d290f6b118c6c41778d> ;
             owl:onProperty <http://my.test/hasValue> ],
         opcua:BaseObjectType .
 
@@ -36,9 +36,6 @@ base:SemanticBridgeReferenceType a owl:ObjectProperty .
 
 <http://my.test/VT_94fd5d290f6b118c6c41778d> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
-            owl:onProperty sb:hasDataType ;
-            owl:someValuesFrom opcua:Double ],
-        [ a owl:Restriction ;
             owl:onProperty sb:hasValueRank ;
             owl:someValuesFrom opcua:ValueRank_Scalar ],
         [ a owl:Restriction ;
@@ -47,10 +44,14 @@ base:SemanticBridgeReferenceType a owl:ObjectProperty .
         [ a owl:Restriction ;
             owl:allValuesFrom opcua:ValueRank_Scalar ;
             owl:onProperty sb:hasValueRank ],
+        [ a owl:Restriction ;
+            owl:onProperty sb:hasDataType ;
+            owl:someValuesFrom opcua:Double ],
         opcua:PropertyType ;
     sb:originalBrowsePath "http://my.test/Value" .
 
-<http://my.test/hasValue> a owl:ObjectProperty ;
+<http://my.test/hasValue> a owl:FunctionalProperty,
+        owl:ObjectProperty ;
     rdfs:subPropertyOf base:SemanticBridgeReferenceType .
 
 opcua:ValueRank_Any a owl:Class .
@@ -69,6 +70,9 @@ sb:hasValueRank a owl:FunctionalProperty,
 
 opcua:ValueRank_Scalar a owl:Class ;
     rdfs:subClassOf opcua:ValueRank_ScalarOrOneDimension .
+
+[] a owl:AllDisjointClasses ;
+    owl:members ( <http://my.test/AlphaType> opcua:AggregateConfigurationType opcua:AggregateFunctionType opcua:AlarmMetricsType opcua:AliasNameType opcua:AuthorizationServiceConfigurationType opcua:BaseConditionClassType opcua:BaseEventType opcua:BaseInterfaceType opcua:CertificateGroupType opcua:CertificateType opcua:ConnectionTransportType opcua:DataSetReaderMessageType opcua:DataSetReaderTransportType opcua:DataSetReaderType opcua:DataSetWriterMessageType opcua:DataSetWriterTransportType opcua:DataSetWriterType opcua:DataTypeEncodingType opcua:DataTypeSystemType opcua:DictionaryEntryType opcua:ExtensionFieldsType opcua:FileType opcua:FolderType opcua:HistoricalDataConfigurationType opcua:HistoricalEventConfigurationType opcua:HistoricalExternalEventSourceType opcua:HistoryServerCapabilitiesType opcua:IetfBaseNetworkInterfaceType opcua:KeyCredentialConfigurationType opcua:ModellingRuleType opcua:NamespaceMetadataType opcua:NamespacesType opcua:NetworkAddressType opcua:OrderedListType opcua:PriorityMappingTableType opcua:ProvisionableDeviceType opcua:PubSubCapabilitiesType opcua:PubSubConnectionType opcua:PubSubDiagnosticsType opcua:PubSubGroupType opcua:PubSubKeyPushTargetType opcua:PubSubKeyServiceType opcua:PubSubStatusType opcua:PublishedDataSetType opcua:QuantityType opcua:ReaderGroupMessageType opcua:ReaderGroupTransportType opcua:RoleSetType opcua:RoleType opcua:SecurityGroupType opcua:ServerCapabilitiesType opcua:ServerConfigurationType opcua:ServerDiagnosticsType opcua:ServerRedundancyType opcua:ServerType opcua:SessionDiagnosticsObjectType opcua:SessionsDiagnosticsSummaryType opcua:StandaloneSubscribedDataSetType opcua:StateMachineType opcua:StateType opcua:SubscribedDataSetType opcua:TemporaryFileTransferType opcua:TransactionDiagnosticsType opcua:TransitionType opcua:UnitType opcua:UserManagementType opcua:VendorServerInfoType opcua:WriterGroupMessageType opcua:WriterGroupTransportType ) .
 
 [] a owl:AllDisjointClasses ;
     owl:members ( opcua:ValueRank_Scalar opcua:ValueRank_OneDimension opcua:ValueRank_MoreDimensions ) .
