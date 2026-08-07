@@ -45,4 +45,35 @@ for test in "${tests[@]}"; do
   echo "Test passed"
 done
 
+# -m vt validates a *.vt.owl.ttl Virtual-Types ontology's logical consistency via
+# the HermiT DL reasoner (see check_consistency.py, which validate.py's vt mode
+# wraps for a single file) -- a different mechanism than the SHACL-shape checks
+# above, so it gets its own pair of positive/negative fixtures rather than fitting
+# the "tests" table's SHACLFILE/TESTFILE/result-diff shape. Reuses two fixtures
+# tests/owl2vt/test.bash already maintains and validates via check_consistency.py
+# directly, so this only asserts validate.py's own CLI wiring, not the underlying
+# HermiT logic (already covered there). Assumes core.vt.owl.ttl already exists at
+# the repo root, as it does by this point in `make test` (translate_default_nodesets.make
+# runs before this script).
+VT_CONTRADICTION=../owl2vt/test_vt_contradiction.NodeSet2.vt.owl.ttl.expected
+VT_NO_CONTRADICTION=../owl2vt/test_vt_objecttype_optional_no_contradiction.NodeSet2.vt.owl.ttl.expected
+
+echo "-----------------------"
+echo "Executing VirtualTypesContradictionTest"
+echo "${PYTHON} ${VALIDATE} -m vt ${VT_CONTRADICTION}"
+if ${PYTHON} ${VALIDATE} -m vt ${VT_CONTRADICTION} > ${RESULTFILE} 2>&1; then
+  echo "Expected validate.py -m vt to report a contradiction, but it exited 0:" && cat ${RESULTFILE} && exit 1
+fi
+grep -q "Validation Conforms: False" ${RESULTFILE} || \
+  { echo "Expected 'Validation Conforms: False':" && cat ${RESULTFILE} && exit 1; }
+echo "Test passed"
+
+echo "-----------------------"
+echo "Executing VirtualTypesNoContradictionTest"
+echo "${PYTHON} ${VALIDATE} -m vt ${VT_NO_CONTRADICTION}"
+${PYTHON} ${VALIDATE} -m vt ${VT_NO_CONTRADICTION} > ${RESULTFILE} 2>&1
+grep -q "Validation Conforms: True" ${RESULTFILE} || \
+  { echo "Expected 'Validation Conforms: True':" && cat ${RESULTFILE} && exit 1; }
+echo "Test passed"
+
 

@@ -29,6 +29,49 @@ from lib.jsonld import nested_json_from_graph
 generic_nodes = [RDF.nil]
 
 
+def validate_virtual_types(data_path):
+    """DL-reasoner (HermiT) consistency check for a *.vt.owl.ttl Virtual-Types
+    ontology. This is a fundamentally different validation than modes
+    "instance"/"ontology": those ask whether a SHACL shape holds over a data
+    or ontology graph; this asks whether the OPC UA type restrictions the
+    file encodes are jointly satisfiable, which is what check_consistency.py
+    already checks with the real HermiT reasoner (not SHACL). Reuses that
+    module's own file-loading/local-owl:imports-merging/HermiT-invocation
+    logic directly instead of duplicating it -- that module (not this one)
+    is what `make test`'s corpus-wide consistency sweep and
+    tests/owl2vt/test.bash's e2e scenarios call directly, so this only ever
+    wraps it for a single file, it never reimplements it. The import is
+    local/lazy because check_consistency imports owlready2, which -- per its
+    own module docstring -- is a deliberate opt-in (LGPL-3.0-or-later,
+    incompatible with this repo's default Apache-2.0 dependency set), so
+    "instance"/"ontology" mode users must not be forced to have it installed.
+    """
+    from pathlib import Path
+    from check_consistency import build_full_owl_output, run_hermit
+
+    path = Path(data_path).resolve()
+    if not path.exists():
+        print(f"Error: {path} does not exist.")
+        sys.exit(1)
+    full_out = build_full_owl_output(path)
+    status, unsatisfiable, output = run_hermit(full_out)
+    conforms = status == 'consistent'
+    print("Validation Conforms:", conforms)
+    if conforms:
+        print("No validation errors found.")
+        return
+    print("\n=== HermiT DL Consistency Report ===")
+    if status == 'unsatisfiable':
+        print(f'{len(unsatisfiable)} unsatisfiable class(es) in {path.name}:')
+        for cls in unsatisfiable:
+            print(f'  {cls}')
+    elif status == 'inconsistent':
+        print(f'{path.name} is globally inconsistent.')
+    else:
+        print(f'HermiT failed to run against {path.name} -- raw output:\n{output}')
+    sys.exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser(description="SHACL Validation with Shape and Focus Context")
     parser.add_argument("-s", "--shacl", required=False, help="Path to SHACL shapes file", default='shacl.ttl')
@@ -41,7 +84,9 @@ data-file name (.jsonld, .ttl).")
                         required=False,
                         action='store_true')
     parser.add_argument('-m', '--mode', required=False, default='instance',
-                        help='Modes: "instance" to validate instance, "ontology" to validate ontology files.')
+                        help='Modes: "instance" to validate instance, "ontology" to validate ontology '
+                             'files, "vt" to check a *.vt.owl.ttl Virtual-Types ontology for logical '
+                             'consistency via the HermiT DL reasoner.')
 
     parser.add_argument("data", help="Path to RDF data file to validate")
     parser.add_argument('-st', '--strict', required=False, action='store_true',
@@ -58,6 +103,11 @@ data-file name (.jsonld, .ttl).")
                         " (experimental)", action='store_true')
 
     args = parser.parse_args()
+
+    if args.mode == 'vt':
+        validate_virtual_types(args.data)
+        return
+
     # Load RDF data (Data Graph)
 
     data_graph = Graph(store='Oxigraph')
