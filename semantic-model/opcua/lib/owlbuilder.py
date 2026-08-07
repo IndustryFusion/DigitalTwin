@@ -32,7 +32,7 @@ from lib.utils import RdfUtils, restore_type_of_node_iris
 # Numeric OPC UA ValueRank -> symbolic class name (Part 14 §17).
 # -3 ScalarOrOneDimension, -2 Any, -1 Scalar, 0 OneOrMoreDimensions, 1 OneDimension,
 # >=2 collapse into MoreDimensions. Missing ValueRank triple defaults to Scalar (-1),
-# which is how core.ttl actually encodes the (very common) scalar case.
+# which is how core.owl.ttl actually encodes the (very common) scalar case.
 VALUE_RANK_CLASSES = {
     -3: 'ValueRank_ScalarOrOneDimension',
     -2: 'ValueRank_Any',
@@ -96,12 +96,12 @@ class OwlBuilder:
     def __init__(self, g: Graph, basens: Namespace, opcuans: Namespace, disjoint_valuerank: bool = True,
                  ig: Graph = None, require_modelling_rule: bool = False):
         """
-        g: the semantic bridge graph to generate Virtual Types FOR (e.g. di.ttl).
+        g: the semantic bridge graph to generate Virtual Types FOR (e.g. di.owl.ttl).
            Only classes/properties actually declared in `g` are scanned as VT
            roots or copied into the output -- this is what makes companion-spec
-           processing incremental rather than re-deriving core.ttl's own Virtual
+           processing incremental rather than re-deriving core.owl.ttl's own Virtual
            Types every time.
-        ig: already-processed *imported* dependency graph(s) (e.g. core.ttl),
+        ig: already-processed *imported* dependency graph(s) (e.g. core.owl.ttl),
             needed only to resolve cross-file references -- a companion spec's
             types routinely subclass or aggregate core types directly
             (di:SomeType rdfs:subClassOf opcua:BaseObjectType). Never scanned as
@@ -130,9 +130,9 @@ class OwlBuilder:
                     f'This input ({label}) already looks like a generated Virtual-Types '
                     'ontology: it contains sb:originalBrowsePath annotations, which '
                     'OwlBuilder only ever writes to its own *output*, never reads from '
-                    'input. Feeding an already-generated *.owl.ttl file back in as input '
-                    '(instead of the original semantic-bridge ttl, e.g. core.ttl rather '
-                    'than core.owl.ttl) silently reprocesses Virtual Types as if they were '
+                    'input. Feeding an already-generated *.vt.owl.ttl file back in as input '
+                    '(instead of the original semantic-bridge ttl, e.g. core.owl.ttl rather '
+                    'than core.vt.owl.ttl) silently reprocesses Virtual Types as if they were '
                     'real declared OPC UA subtypes -- in particular, '
                     '_add_sibling_type_disjointness sweeps them into spurious '
                     '"mutually exclusive siblings" groups with every other Virtual Type '
@@ -156,7 +156,7 @@ class OwlBuilder:
         self._own_classes = set(g.subjects(RDF.type, OWL.Class))
         # Part 5 (nodeset2owl.py) rewrites `?instance a ?type` into
         # `?instance base:instanceOf ?type` for Object instance declarations right
-        # before serializing core.ttl (see utils.replace_type_of_node_iris), so that
+        # before serializing core.owl.ttl (see utils.replace_type_of_node_iris), so that
         # downstream JSON-LD validation doesn't confuse declarations with real
         # classes. Undo that here so RdfUtils.get_type() works uniformly for Object
         # and Variable declarations, exactly as it does inside the Part-5/SHACL code.
@@ -263,8 +263,8 @@ class OwlBuilder:
         `ig`) -- Part 14 requires a Virtual Type generation pass over *every*
         type, not just leaf/concrete ones, since supertype VTs must exist for
         subtypes to link against, but only for types this graph itself
-        introduces. An imported dependency's own types (e.g. core.ttl's, when
-        processing di.ttl) were already fully virtualized when that dependency
+        introduces. An imported dependency's own types (e.g. core.owl.ttl's, when
+        processing di.owl.ttl) were already fully virtualized when that dependency
         was processed on its own; re-deriving them here would just duplicate
         that earlier output. The subClassOf* chain is walked over the combined
         graph, since a companion spec's types routinely subclass a core type
@@ -402,7 +402,7 @@ class OwlBuilder:
         Deliberately scoped to only fire when a ValueRank/DataType is
         *explicitly* declared on the type's own definer node, not the
         default-when-absent case (Scalar): only a handful of real
-        VariableTypes in core.ttl ever do this (verified: 4, out of ~600
+        VariableTypes in core.owl.ttl ever do this (verified: 4, out of ~600
         types), so this is a narrow, low-risk addition, not a blanket new
         axiom asserted on every VariableType regardless of whether it says
         anything about ValueRank/DataType at all."""
@@ -551,7 +551,7 @@ class OwlBuilder:
 
         Companion-spec case: `is_own` is False when `owner` belongs to an
         *imported* dependency rather than to the file this OwlBuilder is
-        generating output for (e.g. di.ttl reading core.ttl's own
+        generating output for (e.g. di.owl.ttl reading core.owl.ttl's own
         AnalogUnitType to correctly link/inherit from it). The VT's IRI is
         still computed (deterministically, so our own references match it),
         but its content must NOT be (re-)populated here: that dependency was
@@ -687,7 +687,7 @@ class OwlBuilder:
         # is simply true, not an overreach the way it would be for an
         # Optional component. Combined with FunctionalProperty, this is what
         # makes an illegal sibling-DataType override (e.g. see
-        # tests/owl2virtualtypes/test_vt_datatype_contradiction.NodeSet2) a
+        # tests/owl2vt/test_vt_datatype_contradiction.NodeSet2) a
         # genuine, HermiT-detectable contradiction instead of a
         # vacuously-satisfiable no-op: without forcing existence, two
         # disjoint allValuesFrom fillers on the same VT are trivially
@@ -819,7 +819,7 @@ class OwlBuilder:
         disjoint the VT itself becomes unsatisfiable, no restriction
         indirection needed).
 
-        Verified against core.ttl before implementing this: zero classes
+        Verified against core.owl.ttl before implementing this: zero classes
         anywhere in the ontology have more than one direct rdfs:subClassOf
         (no multi-inheritance), so treating every sibling group as a true
         partition is safe -- this holds for Object/VariableTypes exactly as
@@ -865,7 +865,7 @@ class OwlBuilder:
     def run(self, roots=None, progress=None):
         """Build the OWL ontology of Virtual Types. `progress`, if given, is called as
         progress(index, total, root_iri) right before each root type is
-        processed -- useful for CLI feedback, since a full core.ttl run
+        processed -- useful for CLI feedback, since a full core.owl.ttl run
         generates Virtual Types for hundreds of types with no other visible
         output in between."""
         self._copy_class_and_property_layer()

@@ -7,7 +7,7 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 <http://my.test/> a owl:Ontology ;
-    owl:imports <file:///home/marcel/src/DigitalTwin/semantic-model/opcua/core.owl.ttl>,
+    owl:imports <file:///home/marcel/src/DigitalTwin/semantic-model/opcua/core.vt.owl.ttl>,
         rdf:,
         rdfs:,
         <https://industryfusion.github.io/contexts/staging/ontology/v0.3/base.ttl>,
@@ -36,17 +36,17 @@ base:SemanticBridgeReferenceType a owl:ObjectProperty .
 
 <http://my.test/VT_94fd5d290f6b118c6c41778d> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
-            owl:onProperty sb:hasValueRank ;
-            owl:someValuesFrom opcua:ValueRank_Scalar ],
+            owl:onProperty sb:hasDataType ;
+            owl:someValuesFrom opcua:Double ],
         [ a owl:Restriction ;
             owl:allValuesFrom opcua:Double ;
             owl:onProperty sb:hasDataType ],
         [ a owl:Restriction ;
+            owl:onProperty sb:hasValueRank ;
+            owl:someValuesFrom opcua:ValueRank_Scalar ],
+        [ a owl:Restriction ;
             owl:allValuesFrom opcua:ValueRank_Scalar ;
             owl:onProperty sb:hasValueRank ],
-        [ a owl:Restriction ;
-            owl:onProperty sb:hasDataType ;
-            owl:someValuesFrom opcua:Double ],
         opcua:PropertyType ;
     sb:originalBrowsePath "http://my.test/Value" .
 

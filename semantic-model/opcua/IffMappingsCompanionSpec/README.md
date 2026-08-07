@@ -185,10 +185,10 @@ make all
 
 As a result, when the make jobs are executed successfully there are newly created files:
 
-* [iffmapping.ttl](./example/iffmapping.ttl) OWL version of `iffmapping.nodeset2.xml`
-* [company_proprietarymodel.ttl](./example/company_proprietarymodel.ttl) OWL version of `company_proprietarymodel.nodeset2.xml`
-* [company_iffbindings.ttl](./example/company_iffbindings.ttl) OWL version of `company_iffbindings.nodeset2.xml`
-* [core.ttl](./example/core.ttl) OWL version of core OPC UA specification
+* [iffmapping.owl.ttl](./example/iffmapping.owl.ttl) OWL version of `iffmapping.nodeset2.xml`
+* [company_proprietarymodel.owl.ttl](./example/company_proprietarymodel.owl.ttl) OWL version of `company_proprietarymodel.nodeset2.xml`
+* [company_iffbindings.owl.ttl](./example/company_iffbindings.owl.ttl) OWL version of `company_iffbindings.nodeset2.xml`
+* [core.owl.ttl](./example/core.owl.ttl) OWL version of core OPC UA specification
 * [instances.jsonld](./example/instances.jsonld) The JSON-LD representation of the *Proprietary Model*
 * [shacl.ttl](./example/shacl.ttl) Derived SHACL rules for the *Proprietary Model*
 * [entities.ttl](./example/entities.ttl) Derived OWL ontology from the *Proprietary Model*

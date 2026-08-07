@@ -17,17 +17,17 @@
 """Statistics on Virtual Type growth across the OPC UA companion-spec chain
 built by translate_default_nodesets.make.
 
-For every *.ttl file that Makefile is set up to produce (TARGET_NAMES / the
+For every *.owl.ttl file that Makefile is set up to produce (TARGET_NAMES / the
 matching <NAME>_ONTOLOGY variables -- parsed directly from the Makefile so
 this never drifts out of sync with it) and that actually exists on disk, this
 reports how many of its own ObjectType/VariableType classes it declares
 ("types"), how many Instance Declarations it introduces ("instance
 declarations" -- counted *recursively* at every nesting depth, not just a
 type's own direct children: see OwlBuilder.count_own_instance_declarations's
-own docstring), and how many Virtual Types owl2virtualtypes.py's OwlBuilder
+own docstring), and how many Virtual Types owl2vt.py's OwlBuilder
 generates from them ("virtual") -- i.e. exactly the incremental contribution
-of that one companion spec, the same way `owl2virtualtypes.py <file>.ttl`
-would process it on its own, with dependencies (core.ttl for di.ttl, etc.)
+of that one companion spec, the same way `owl2vt.py <file>.owl.ttl`
+would process it on its own, with dependencies (core.owl.ttl for di.owl.ttl, etc.)
 resolved via each file's own owl:imports but not recounted.
 
 By default, both sides of the ratio use the strict, ModellingRule-required
@@ -108,16 +108,16 @@ _namespace_cache = {}
 
 
 def parse_target_files(makefile_path):
-    """Extract the ordered list of *.ttl output filenames this Makefile
+    """Extract the ordered list of *.owl.ttl output filenames this Makefile
     produces, straight from its own TARGET_NAMES and <NAME>_ONTOLOGY
     variables, so this script can't drift out of sync with the Makefile."""
     return _parse_target_files(makefile_path, '_ONTOLOGY')
 
 
 def parse_owl_target_files(makefile_path):
-    """Same as parse_target_files, but the *.owl.ttl Virtual-Types output
+    """Same as parse_target_files, but the *.vt.owl.ttl Virtual-Types output
     filenames (<NAME>_OWL) translate_default_nodesets.make builds for each
-    target alongside its semantic-bridge *.ttl -- what check_consistency.py
+    target alongside its semantic-bridge *.owl.ttl -- what check_consistency.py
     validates, since it reasons over the already-built pure-OWL ontology
     rather than regenerating it (see that module's own docstring)."""
     return _parse_target_files(makefile_path, '_OWL')
@@ -151,7 +151,7 @@ def detect_namespaces(g):
 
 def load_fixed_graph(path):
     """Parse + restore_type_of_node_iris exactly once per file, cached, so a
-    dependency shared by several companion specs (core.ttl, di.ttl, ...) isn't
+    dependency shared by several companion specs (core.owl.ttl, di.owl.ttl, ...) isn't
     reparsed once per downstream file that imports it. The namespaces used
     for restore_type_of_node_iris (and for any later OwlBuilder call on this
     graph) are this file's own, auto-detected -- see get_namespaces."""
@@ -333,7 +333,7 @@ def sparql_count_virtual_types(out):
 
 def filter_for_presentation(rows, min_types):
     """Drop files with a very low or zero own-type count (pure instance
-    examples like pumpexample.ttl declare none at all, and contribute
+    examples like pumpexample.owl.ttl declare none at all, and contribute
     nothing readable to a chart or summary table) and sort by Virtual Type
     count descending, for consistent presentation ordering across both the
     chart and the table."""
@@ -354,7 +354,7 @@ def write_pdf_report(rows, pdf_path, min_types):
     from matplotlib.backends.backend_pdf import PdfPages
 
     plotted = filter_for_presentation(rows, min_types)
-    names = [r[0].removesuffix('.ttl') for r in plotted]
+    names = [r[0].removesuffix('.owl.ttl') for r in plotted]
     types = [r[1] for r in plotted]
     instance_decls = [r[2] for r in plotted]
     virtual = [r[3] for r in plotted]

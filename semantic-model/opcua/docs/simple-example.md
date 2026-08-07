@@ -21,10 +21,10 @@ export NODESET_VERSION=UA-1.05.03-2023-12-15
 export BASE_ONTOLOGY=https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl
 export CORE_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/${NODESET_VERSION}/Schema/Opc.Ua.NodeSet2.xml
 
-python3 nodeset2owl.py ${CORE_NODESET} -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p opcua -o core.ttl
+python3 nodeset2owl.py ${CORE_NODESET} -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p opcua -o core.owl.ttl
 
 ```
-The result of this step is the file `core.ttl` which contains all the base 
+The result of this step is the file `core.owl.ttl` which contains all the base 
 definitions of OPCUA translated to OWL. 
 
 ## Convert the Target Nodeset to OWL
@@ -35,21 +35,21 @@ This file can now be used to transform the example nodeset into a semantic repre
 export NODESET_VERSION=UA-1.05.03-2023-12-15
 export BASE_ONTOLOGY=https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl
 export CORE_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/${NODESET_VERSION}/Schema/Opc.Ua.NodeSet2.xml
-python3 ./nodeset2owl.py docs/files/Example.NodeSet2.xml -i ${BASE_ONTOLOGY} core.ttl -v http://example.com/v0.1/UA/ -p example -o example.ttl
+python3 ./nodeset2owl.py docs/files/Example.NodeSet2.xml -i ${BASE_ONTOLOGY} core.owl.ttl -v http://example.com/v0.1/UA/ -p example -o example.owl.ttl
 
 ```
-The result of this step is the file `example.ttl` which contains the OWL representation of the [Example.Nodeset2.xml](./files/Example.NodeSet2.xml) file.
+The result of this step is the file `example.owl.ttl` which contains the OWL representation of the [Example.Nodeset2.xml](./files/Example.NodeSet2.xml) file.
 
 ## Extract SHACL and NGSI-LD files from OWL
 
-Now, having `core.ttl` and `example.ttl` finally the instance description in `NGSI-LD` and the `SHACL` constraints can be extracted. The following parameters have to be added:
+Now, having `core.owl.ttl` and `example.owl.ttl` finally the instance description in `NGSI-LD` and the `SHACL` constraints can be extracted. The following parameters have to be added:
 
 `-t` The type of the root Object which should be extracted (in this case `http://my.test/AlphaType`)
 `-n` The namespace of the NGSI-LD objects (use `http://demo.machine/` if the default @context is used)
 `-i` the prefix for the object URNs (must start with urn, e.g. `urn:test)
 
 ```
-python3 ./owl2instances.py -t http://example.org/AlphaType -n http://demo.machine/  example.ttl
+python3 ./owl2instances.py -t http://example.org/AlphaType -n http://demo.machine/  example.owl.ttl
 ```
 
 As a result, the following files are created:
@@ -125,7 +125,7 @@ Looking at the raw file, it can be determined that there is no `<Models>` descri
         <Uri>http://opcfoundation.org/UA/DI/</Uri>
     </NamespaceUris>
 
-This list suggests that the dependencies are `core.ttl`, `devices.ttl`, `machinery.ttl` and `pump.ttl`.
+This list suggests that the dependencies are `core.owl.ttl`, `devices.owl.ttl`, `machinery.owl.ttl` and `pump.owl.ttl`.
 
     NODESET_VERSION=UA-1.05.03-2023-12-15
     CORE_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/${NODESET_VERSION}/Schema/Opc.Ua.NodeSet2.xml
@@ -135,17 +135,17 @@ This list suggests that the dependencies are `core.ttl`, `devices.ttl`, `machine
     BASE_ONTOLOGY=https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl
     PUMP_EXAMPLE_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/${NODESET_VERSION}/Pumps/instanceexample.xml
 
-    python3 nodeset2owl.py ${CORE_NODESET} -i ${BASE_ONTOLOGY} -p opcua -o core.ttl
-    python3 nodeset2owl.py  ${DI_NODESET} -i ${BASE_ONTOLOGY} core.ttl  -p devices -o devices.ttl
-    python3 nodeset2owl.py ${MACHINERY_NODESET} -i ${BASE_ONTOLOGY} core.ttl devices.ttl -p machinery -o machinery.ttl
-    python3 nodeset2owl.py  ${PUMPS_NODESET} -i ${BASE_ONTOLOGY} core.ttl devices.ttl machinery.ttl -p pumps -o pumps.ttl
-    python3 nodeset2owl.py  ${PUMP_EXAMPLE_NODESET} -i ${BASE_ONTOLOGY} core.ttl devices.ttl machinery.ttl pumps.ttl -n http://yourorganisation.org/InstanceExample/  -p pumpexample -o pumpexample.ttl
+    python3 nodeset2owl.py ${CORE_NODESET} -i ${BASE_ONTOLOGY} -p opcua -o core.owl.ttl
+    python3 nodeset2owl.py  ${DI_NODESET} -i ${BASE_ONTOLOGY} core.owl.ttl  -p devices -o devices.owl.ttl
+    python3 nodeset2owl.py ${MACHINERY_NODESET} -i ${BASE_ONTOLOGY} core.owl.ttl devices.owl.ttl -p machinery -o machinery.owl.ttl
+    python3 nodeset2owl.py  ${PUMPS_NODESET} -i ${BASE_ONTOLOGY} core.owl.ttl devices.owl.ttl machinery.owl.ttl -p pumps -o pumps.owl.ttl
+    python3 nodeset2owl.py  ${PUMP_EXAMPLE_NODESET} -i ${BASE_ONTOLOGY} core.owl.ttl devices.owl.ttl machinery.owl.ttl pumps.owl.ttl -n http://yourorganisation.org/InstanceExample/  -p pumpexample -o pumpexample.owl.ttl
 
 
 
-The extraction of the resulting SHACL, NGSI-LD and OWL we need again determine the root object type, which is http://opcfoundation.org/UA/Pumps/PumpType, and the ontology containing the pump example `pumpexample.ttl`. The other parameters  for `-n` and `-i` stay the same, compared to the simple example above.
+The extraction of the resulting SHACL, NGSI-LD and OWL we need again determine the root object type, which is http://opcfoundation.org/UA/Pumps/PumpType, and the ontology containing the pump example `pumpexample.owl.ttl`. The other parameters  for `-n` and `-i` stay the same, compared to the simple example above.
 
-    python3 ./owl2instances.py -t http://opcfoundation.org/UA/Pumps/PumpType -n http://demo.machine/ pumpexample.ttl -i urn:test
+    python3 ./owl2instances.py -t http://opcfoundation.org/UA/Pumps/PumpType -n http://demo.machine/ pumpexample.owl.ttl -i urn:test
 
 
 Again the resulting `instances.jsonld`, `shacl.ttl` and `entities.ttl` can be validated by `pyshacl`:

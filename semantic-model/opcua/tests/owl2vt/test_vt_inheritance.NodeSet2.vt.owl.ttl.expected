@@ -6,7 +6,7 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 <http://my.test/> a owl:Ontology ;
-    owl:imports <file:///home/marcel/src/DigitalTwin/semantic-model/opcua/core.owl.ttl>,
+    owl:imports <file:///home/marcel/src/DigitalTwin/semantic-model/opcua/core.vt.owl.ttl>,
         rdf:,
         rdfs:,
         <https://industryfusion.github.io/contexts/staging/ontology/v0.3/base.ttl>,
@@ -21,11 +21,11 @@ base:SemanticBridgeReferenceType a owl:ObjectProperty .
 
 <http://my.test/BaseType> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
-            owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
-            owl:onClass <http://my.test/DriveType> ;
+            owl:allValuesFrom <http://my.test/DriveType> ;
             owl:onProperty <http://my.test/hasDrive> ],
         [ a owl:Restriction ;
-            owl:allValuesFrom <http://my.test/DriveType> ;
+            owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+            owl:onClass <http://my.test/DriveType> ;
             owl:onProperty <http://my.test/hasDrive> ],
         opcua:BaseObjectType .
 
