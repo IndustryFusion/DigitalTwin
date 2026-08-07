@@ -238,8 +238,20 @@ TARGET_NAMES = CORE DI IA MACHINERY PUMPS PUMPEXAMPLE MACHINETOOL LASERSYSTEMS L
 ALL_TARGETS = $(foreach t, $(TARGET_NAMES), $($(t)_ONTOLOGY) $($(t)_OWL))
 
 
-.PHONY: all clean
+.PHONY: all clean print-nodesets
 all: $(ALL_TARGETS)
+
+# -----------------------------------------------------------------------------
+# Print `export VAR=value` lines for every nodeset's source URL (and the base
+# ontology), so you can source them into your shell instead of reconstructing
+# a raw.githubusercontent.com path by hand:
+#
+#   source <(make -f translate_default_nodesets.make -s print-nodesets)
+#   curl -s "$PUMPS_NODESET_URL" | less
+# -----------------------------------------------------------------------------
+print-nodesets:
+	@echo export BASE_ONTOLOGY=\"$(BASE_ONTOLOGY)\"
+	@$(foreach t,$(TARGET_NAMES),echo export $(t)_NODESET_URL=\"$($(t)_NODESET_URL)\";)
 
 # -----------------------------------------------------------------------------
 # Generic rule to build a *.owl.ttl file (nodeset2owl.py's Semantic Bridge

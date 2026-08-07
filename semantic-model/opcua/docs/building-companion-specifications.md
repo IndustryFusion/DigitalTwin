@@ -10,20 +10,21 @@ In contrast, a *local* import is referencing the local directories in a File URI
 
      owl:imports </home/user/src/IndustryFusion/DigitalTwin/semantic-model/opcua/core.owl.ttl>
 
-For convenience, a script is provided to create the "usual suspect" companion specifications (note nodeset version: `NODESET_VERSION=UA-1.05.03-2023-12-15`):
+For convenience, a Makefile is provided to create the "usual suspect" companion specifications (note nodeset version: `NODESET_VERSION=UA-1.05.03-2023-12-15`):
 
-    bash ./translate_default_specs.bash
+    make -f translate_default_nodesets.make
 
 creates the *local* version of the specifications.
 
-The *global* version of the specifications can be created as follows:
-
-    bash ./translate_default_specs.bash remote
-
-
 ## Convert Specific Companion Specifications
 
-Currently there is no autdetection of dependencies. Therefore, a conversion must add the depenencies manually. Every specification is dependend on the base ontology:
+Rather than reconstructing a NodeSet2.xml's raw.githubusercontent.com URL by hand, `translate_default_nodesets.make` can print `export VAR=value` lines for all of them (and the base ontology), which you source directly into your shell:
+
+    source <(make -f translate_default_nodesets.make -s print-nodesets)
+
+This defines `BASE_ONTOLOGY` and one `<NAME>_NODESET_URL` variable per companion spec (`CORE_NODESET_URL`, `DI_NODESET_URL`, `MACHINERY_NODESET_URL`, ...) -- see the README's [nodeset2owl.py section](../README.md#get-the-nodeset-source-urls-into-your-shell) for details.
+
+`nodeset2owl.py` cannot yet auto-detect dependencies for you, but it does refuse to proceed with a clear, upfront error if a namespace referenced by the target NodeSet2.xml isn't covered by the ttls passed via `-i`, rather than failing obscurely partway through parsing -- see its usage below. A conversion must still add the dependencies manually, though. Every specification is dependend on the base ontology:
 
     <https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl>
 
@@ -38,7 +39,7 @@ For instance, converting the core OPCUA specification looks as follows:
 The `DI` specification is translated as follows:
 
     NODESET_VERSION=UA-1.05.03-2023-12-15
-    CORE_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/${NODESET_VERSION}/Schema/Opc.Ua.NodeSet2.xml
+    DI_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/${NODESET_VERSION}/DI/Opc.Ua.Di.NodeSet2.xml
     BASE_ONTOLOGY=https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl
     CORE_ONTOLOGY=core.owl.ttl
     python3 nodeset2owl.py  ${DI_NODESET} -i ${BASE_ONTOLOGY} ${CORE_ONTOLOGY} -p devices -o devices.owl.ttl
