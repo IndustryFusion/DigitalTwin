@@ -11,10 +11,10 @@
        PumpType   : hasDrive allValuesFrom/minQualifiedCardinality(1) DriveType directly (no VT)
        DriveType  : hasMotor allValuesFrom/minQualifiedCardinality(1) MotorType directly (no VT)
        MotorType  : hasTemperature allValuesFrom VT(MotorType,"Temperature"), no cardinality (Optional):
-                     VT subClassOf PropertyType, ValueRank_Scalar (default), Datatype->Double
+                     VT subClassOf PropertyType, hasValueRank->ValueRank_Scalar (default), hasDataType->Double
                   : hasReadings allValuesFrom/minQualifiedCardinality(1) VT(MotorType,"Readings")
                      (array Property, Mandatory): VT subClassOf PropertyType,
-                     ValueRank_OneDimension (explicit), Datatype->Int32
+                     hasValueRank->ValueRank_OneDimension (explicit), hasDataType->Int32
      Temperature/Readings are Variables, so they always get their own VT (to
      carry ValueRank/Datatype), unlike the purely-structural Drive/Motor
      Object declarations above them. -->

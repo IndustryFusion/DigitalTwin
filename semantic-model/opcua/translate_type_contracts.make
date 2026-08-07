@@ -228,7 +228,7 @@ all: $(ALL_TARGETS)
 %.shacl.ttl: %.ttl
 	@echo "Creating $@"
 	$(eval NAME := $(shell echo $* | tr a-z A-Z))
-	python3 extractType.py $(EID) -ta -n $($(NAME)_SHACL_NS) $($(NAME)_ONTOLOGY) -p -s $@ -sw  NO_IRI_VALUE ABSTRACT_DATATYPE -i "x" -j $(@:.shacl.ttl=.instances.jsonld)
+	python3 owl2instances.py $(EID) -ta -n $($(NAME)_SHACL_NS) $($(NAME)_ONTOLOGY) -p -s $@ -sw  NO_IRI_VALUE ABSTRACT_DATATYPE -i "x" -j $(@:.shacl.ttl=.instances.jsonld)
 	python3 validate.py -me $(@:.shacl.ttl=.instances.jsonld) -x -e $($(NAME)_ONTOLOGY) -s $@
 
 %.ttl:

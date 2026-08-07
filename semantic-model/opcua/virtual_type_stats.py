@@ -24,9 +24,9 @@ reports how many of its own ObjectType/VariableType classes it declares
 ("types"), how many Instance Declarations it introduces ("instance
 declarations" -- counted *recursively* at every nesting depth, not just a
 type's own direct children: see OwlBuilder.count_own_instance_declarations's
-own docstring), and how many Virtual Types semanticbridge2owl.py's OwlBuilder
+own docstring), and how many Virtual Types owl2virtualtypes.py's OwlBuilder
 generates from them ("virtual") -- i.e. exactly the incremental contribution
-of that one companion spec, the same way `semanticbridge2owl.py <file>.ttl`
+of that one companion spec, the same way `owl2virtualtypes.py <file>.ttl`
 would process it on its own, with dependencies (core.ttl for di.ttl, etc.)
 resolved via each file's own owl:imports but not recounted.
 

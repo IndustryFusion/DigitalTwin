@@ -1,2 +1,2 @@
 [run]
-omit = extractType.py,nodeset2owl.py
+omit = owl2instances.py,nodeset2owl.py

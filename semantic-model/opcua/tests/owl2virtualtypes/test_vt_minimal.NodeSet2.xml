@@ -4,8 +4,8 @@
 
      Expect exactly one Virtual Type, VT(AlphaType, "Value"):
        - rdfs:subClassOf opcua:PropertyType                  (base typing, §8)
-       - rdfs:subClassOf ValueRank_Scalar                     (default ValueRank, §17)
-       - rdfs:subClassOf [ allValuesFrom Double ] (via sb:hasDataType)  (§18)
+       - someValuesFrom/allValuesFrom ValueRank_Scalar (via sb:hasValueRank)  (default ValueRank, §17)
+       - someValuesFrom/allValuesFrom Double (via sb:hasDataType)  (§18)
      and on AlphaType itself: someValuesFrom/allValuesFrom/minQualifiedCardinality(1)
      restrictions on the "hasValue" semantic bridge property (§13-16, Mandatory). -->
 <UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
