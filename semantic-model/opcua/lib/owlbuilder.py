@@ -253,14 +253,22 @@ class OwlBuilder:
         return sorted({row[0] for row in result if row[0] in own_classes}, key=str)
 
     def count_own_instance_declarations(self):
-        """Total number of physically-declared Instance Declaration nodes
-        (Object/Variable children directly on a type's own definer node,
-        Methods excluded) that `g` itself introduces -- i.e. the raw nodes
-        Virtual Type generation is replacing, one level per type. This is
+        """Total number of physically-declared Instance Declarations (Object/
+        Variable children directly on a type's own definer node, Methods
+        excluded) that `g` itself introduces -- i.e. the raw nodes Virtual
+        Type generation is replacing, one level per type. This is
         deliberately the *un*-expanded count: it does not follow inheritance
         or recurse into nested declarations' own children. Filtering mirrors
         get_cdt's own loop exactly, just counting instead of building
-        DeclEntry objects."""
+        DeclEntry objects.
+
+        An Instance Declaration is specifically a child that carries a
+        ModellingRule (Mandatory/Optional/(Mandatory|Optional)Placeholder) --
+        that is what makes it a declaration governing how the type's
+        instances look, as opposed to some other child with no recognized
+        ModellingRule at all. A plain Object/Variable child count would
+        overcount by including the latter (~5.6% of core.ttl's own children,
+        empirically)."""
         count = 0
         for class_iri in self.all_target_classes():
             definer_node = self._definer_node(class_iri)
@@ -270,6 +278,9 @@ class OwlBuilder:
             for _refprop, child in children:
                 nodeclass, base_type = self._get_type(child)
                 if nodeclass == self.opcuans['MethodNodeClass'] or base_type is None:
+                    continue
+                is_optional, _ = self.rdfutils.get_modelling_rule(self.combined, child, None, class_iri)
+                if is_optional is None:
                     continue
                 count += 1
         return count

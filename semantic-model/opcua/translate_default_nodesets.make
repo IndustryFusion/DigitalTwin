@@ -52,7 +52,26 @@ ISA95_NODESET             := https://raw.githubusercontent.com/OPCFoundation/UA-
 # -----------------------------------------------------------------------------
 # Base Ontology URL and Remote Mode
 # -----------------------------------------------------------------------------
-BASE_ONTOLOGY := https://industryfusion.github.io/contexts/staging/ontology/v0/base.ttl
+# BASE_ONTOLOGY is the fetchable *document* (passed to -i/-burl): the v0.3
+# document is a patched version of the base ontology (fixing inconsistencies
+# such as isAbstract boolean/string mismatches and overly-strict datatype
+# property ranges), but it still declares its own terms under the original,
+# unchanged v0 namespace -- verified directly against the hosted document,
+# which itself declares `@prefix base: <.../ontology/v0/base/> .`. So
+# BASE_ONTOLOGY_NS (passed to -b, the *term namespace* used to mint every
+# base:xxx IRI throughout the pipeline) must stay at v0/base/, NOT be bumped
+# to the v0.3 document URL: -b and -burl are a different kind of thing (a
+# namespace vs. a document location) and must not be conflated. Doing so
+# previously caused two bugs: (1) owl:imports rendering as a bare "base:"
+# token instead of a visible IRI, since Turtle collapses a URIRef that
+# exactly equals a bound namespace's value into a prefix-only token; (2) far
+# more seriously, every generated base:xxx term becoming a malformed,
+# separator-less run-on IRI (e.g. ".../base.ttlSemanticBridgeReferenceType"
+# instead of ".../base/SemanticBridgeReferenceType"), silently disconnecting
+# every base:* reference in the whole corpus from the real base ontology's
+# own term definitions.
+BASE_ONTOLOGY_NS := https://industryfusion.github.io/contexts/ontology/v0/base/
+BASE_ONTOLOGY := https://industryfusion.github.io/contexts/staging/ontology/v0.3/base.ttl
 
 # When REMOTE is defined the dependencies (ontologies) come from remote URLs.
 ifdef REMOTE
@@ -217,7 +236,7 @@ all: $(ALL_TARGETS)
 %.ttl:
 	@echo "Creating $@"
 	$(eval NAME := $(shell echo $* | tr a-z A-Z))
-	python3 nodeset2owl.py $($(NAME)_NODESET_URL) -i $($(NAME)_DEPENDENCIES) $($(NAME)_OPTS) -o $@ $(DSB)
+	python3 nodeset2owl.py $($(NAME)_NODESET_URL) -i $($(NAME)_DEPENDENCIES) $($(NAME)_OPTS) -burl $(BASE_ONTOLOGY) -b $(BASE_ONTOLOGY_NS) -o $@ $(DSB)
 
 # -----------------------------------------------------------------------------
 # Inter-target dependencies (if you need to ensure that some ontologies are built
