@@ -93,120 +93,140 @@ endif
 # CORE target
 CORE_NODESET_URL      = $(CORE_NODESET)
 CORE_ONTOLOGY         = core.ttl
+CORE_OWL              = core.owl.ttl
 CORE_DEPENDENCIES     = $(BASE_ONTOLOGY)
 CORE_OPTS             = -v http://example.com/v0.1/UA/ -p opcua
 
 # DI target
 DI_NODESET_URL   = $(DI_NODESET)
 DI_ONTOLOGY      = di.ttl
+DI_OWL           = di.owl.ttl
 DI_DEPENDENCIES  = $(BASE_ONTOLOGY) $(CORE_ONTOLOGY)
 DI_OPTS          = -v http://example.com/v0.1/DI/ -p di
 
 # IA target (Industrial Automation)
 IA_NODESET_URL        = $(IA_NODESET)
 IA_ONTOLOGY           = ia.ttl
+IA_OWL                = ia.owl.ttl
 IA_DEPENDENCIES       = $(BASE_ONTOLOGY) $(CORE_ONTOLOGY) $(DI_ONTOLOGY)
 IA_OPTS               = -v http://example.com/v0.1/IA/ -p ia
 
 # MACHINERY target
 MACHINERY_NODESET_URL = $(MACHINERY_NODESET)
 MACHINERY_ONTOLOGY    = machinery.ttl
+MACHINERY_OWL         = machinery.owl.ttl
 MACHINERY_DEPENDENCIES = $(BASE_ONTOLOGY) $(CORE_ONTOLOGY) $(DI_ONTOLOGY)
 MACHINERY_OPTS        = -v http://example.com/v0.1/Machinery/ -p machinery
 
 # PUMPS target
 PUMPS_NODESET_URL     = $(PUMPS_NODESET)
 PUMPS_ONTOLOGY        = pumps.ttl
+PUMPS_OWL             = pumps.owl.ttl
 PUMPS_DEPENDENCIES    = $(BASE_ONTOLOGY) $(CORE_ONTOLOGY) $(DI_ONTOLOGY) $(MACHINERY_ONTOLOGY)
 PUMPS_OPTS            = -v http://example.com/v0.1/Pumps/ -p pumps
 
 # PUMPEXAMPLE target
 PUMPEXAMPLE_NODESET_URL  = $(PUMP_EXAMPLE_NODESET)
 PUMPEXAMPLE_ONTOLOGY     = pumpexample.ttl
+PUMPEXAMPLE_OWL          = pumpexample.owl.ttl
 PUMPEXAMPLE_DEPENDENCIES = $(BASE_ONTOLOGY) $(CORE_ONTOLOGY) $(DI_ONTOLOGY) $(MACHINERY_ONTOLOGY) $(PUMPS_ONTOLOGY)
 PUMPEXAMPLE_OPTS         = -n http://yourorganisation.org/InstanceExample/ -v http://example.com/v0.1/pumpexample/ -p pumpexample
 
 # MACHINETOOL target
 MACHINETOOL_NODESET_URL   = $(MACHINETOOL_NODESET)
 MACHINETOOL_ONTOLOGY      = machinetool.ttl
+MACHINETOOL_OWL           = machinetool.owl.ttl
 MACHINETOOL_DEPENDENCIES  = $(BASE_ONTOLOGY) $(CORE_ONTOLOGY) $(DI_ONTOLOGY) $(MACHINERY_ONTOLOGY) $(IA_ONTOLOGY)
 MACHINETOOL_OPTS          = -v http://example.com/v0.1/MachineTool/ -p machinetool
 
 # LASERSYSTEMS target
 LASERSYSTEMS_NODESET_URL   = $(LASERSYSTEMS_NODESET)
 LASERSYSTEMS_ONTOLOGY      = lasersystems.ttl
+LASERSYSTEMS_OWL           = lasersystems.owl.ttl
 LASERSYSTEMS_DEPENDENCIES  = $(BASE_ONTOLOGY) $(CORE_ONTOLOGY) $(DI_ONTOLOGY) $(MACHINERY_ONTOLOGY) $(IA_ONTOLOGY) $(MACHINETOOL_ONTOLOGY)
 LASERSYSTEMS_OPTS          = -v http://example.com/v0.1/LaserSystems/ -p lasersystems
 
 # LASERSYSTEMSEXAMPLE target
 LASERSYSTEMSEXAMPLE_NODESET_URL   = $(LASERSYSTEMS_EXAMPLE_NODESET)
 LASERSYSTEMSEXAMPLE_ONTOLOGY      = lasersystemsexample.ttl
+LASERSYSTEMSEXAMPLE_OWL           = lasersystemsexample.owl.ttl
 LASERSYSTEMSEXAMPLE_DEPENDENCIES  = $(BASE_ONTOLOGY) $(CORE_ONTOLOGY) $(DI_ONTOLOGY) $(MACHINERY_ONTOLOGY) $(IA_ONTOLOGY) $(MACHINETOOL_ONTOLOGY) $(LASERSYSTEMS_ONTOLOGY)
 LASERSYSTEMSEXAMPLE_OPTS          = -v http://example.com/v0.1/LaserSystems/ -p lasersystemsexample
 
 # MACHINETOOLEXAMPLE target
 MACHINETOOLEXAMPLE_NODESET_URL   = $(MACHINETOOL_EXAMPLE_NODESET)
 MACHINETOOLEXAMPLE_ONTOLOGY      = machinetoolexample.ttl
+MACHINETOOLEXAMPLE_OWL           = machinetoolexample.owl.ttl
 MACHINETOOLEXAMPLE_DEPENDENCIES  = $(BASE_ONTOLOGY) $(CORE_ONTOLOGY) $(DI_ONTOLOGY) $(MACHINERY_ONTOLOGY) $(MACHINETOOL_ONTOLOGY) $(IA_ONTOLOGY)
 MACHINETOOLEXAMPLE_OPTS          = -n http://yourorganisation.org/MachineTool-Example/ -v http://example.com/MachineToolExample/v0.1/pumpexample/ -p machinetoolexample
 
 # MACHINERYEXAMPLE target
 MACHINERYEXAMPLE_NODESET_URL   = $(MACHINERY_EXAMPLE_NODESET)
 MACHINERYEXAMPLE_ONTOLOGY      = machineryexample.ttl
+MACHINERYEXAMPLE_OWL           = machineryexample.owl.ttl
 MACHINERYEXAMPLE_DEPENDENCIES  = $(BASE_ONTOLOGY) $(CORE_ONTOLOGY) $(DI_ONTOLOGY) $(MACHINERY_ONTOLOGY)
 MACHINERYEXAMPLE_OPTS          = -v http://example.com/MachineryExample/v0.1/pumpexample/ -p machineryexample
 
 # DICTIONARY_IRDI target
 DICTIONARY_IRDI_NODESET_URL   = $(DICTIONARY_IRDI)
 DICTIONARY_IRDI_ONTOLOGY      = dictionary_irdi.ttl
+DICTIONARY_IRDI_OWL           = dictionary_irdi.owl.ttl
 DICTIONARY_IRDI_DEPENDENCIES  = $(BASE_ONTOLOGY) $(CORE_ONTOLOGY)
 DICTIONARY_IRDI_OPTS          = -v http://example.com/v0.1/Dictionary/IRDI -p dictionary_irdi
 
 # PADIM target
 PADIM_NODESET_URL   = $(PADIM_NODESET)
 PADIM_ONTOLOGY      = padim.ttl
+PADIM_OWL           = padim.owl.ttl
 PADIM_DEPENDENCIES  = $(BASE_ONTOLOGY) $(CORE_ONTOLOGY) $(DICTIONARY_IRDI_ONTOLOGY) $(DI_ONTOLOGY)
 PADIM_OPTS          = -v http://example.com/v0.1/PADIM -p padim
 
 # MACHINERY_PROCESSVALUES target
 MACHINERY_PROCESSVALUES_NODESET_URL   = $(MACHINERY_PROCESSVALUES_NODESET)
 MACHINERY_PROCESSVALUES_ONTOLOGY      = machinery_processvalues.ttl
+MACHINERY_PROCESSVALUES_OWL           = machinery_processvalues.owl.ttl
 MACHINERY_PROCESSVALUES_DEPENDENCIES  = $(BASE_ONTOLOGY) $(CORE_ONTOLOGY) $(PADIM_ONTOLOGY)
 MACHINERY_PROCESSVALUES_OPTS          = -v http://example.com/v0.1/Machinery/ProcessValues -p machinery_processvalues
 
 # MACHINERY_JOBS target
 MACHINERY_JOBS_NODESET_URL   = $(MACHINERY_JOBS_NODESET)
 MACHINERY_JOBS_ONTOLOGY      = machinery_jobs.ttl
+MACHINERY_JOBS_OWL           = machinery_jobs.owl.ttl
 MACHINERY_JOBS_DEPENDENCIES  = $(BASE_ONTOLOGY) $(CORE_ONTOLOGY)
 MACHINERY_JOBS_OPTS          = -v http://example.com/v0.1/Machinery/Jobs -p machinery_jobs
 
 # MACHINERY_RESULT target
 MACHINERY_RESULT_NODESET_URL   = $(MACHINERY_RESULT_NODESET)
 MACHINERY_RESULT_ONTOLOGY      = machinery_result.ttl
+MACHINERY_RESULT_OWL           = machinery_result.owl.ttl
 MACHINERY_RESULT_DEPENDENCIES  = $(BASE_ONTOLOGY) $(CORE_ONTOLOGY)
 MACHINERY_RESULT_OPTS          = -v http://example.com/v0.1/Machinery/Result -p machinery_result
 
 # PACKML target
 PACKML_NODESET_URL   = $(PACKML_NODESET)
 PACKML_ONTOLOGY      = packml.ttl
+PACKML_OWL           = packml.owl.ttl
 PACKML_DEPENDENCIES  = $(BASE_ONTOLOGY) $(CORE_ONTOLOGY)
 PACKML_OPTS          = -p packml
 
 # TMC target
 TMC_NODESET_URL   = $(TMC_NODESET)
 TMC_ONTOLOGY      = tmc.ttl
+TMC_OWL           = tmc.owl.ttl
 TMC_DEPENDENCIES  = $(BASE_ONTOLOGY) $(CORE_ONTOLOGY) $(DI_ONTOLOGY) $(PACKML_ONTOLOGY)
 TMC_OPTS          = -p tmc
 
 # DEXPI target
 DEXPI_NODESET_URL   = $(DEXPI_NODESET)
 DEXPI_ONTOLOGY      = dexpi.ttl
+DEXPI_OWL           = dexpi.owl.ttl
 DEXPI_DEPENDENCIES  = $(BASE_ONTOLOGY) $(CORE_ONTOLOGY)
 DEXPI_OPTS          = -p dexpi
 
 # ISA95 target (IEC 62264 / ISA-95 companion specification)
 ISA95_NODESET_URL   = $(ISA95_NODESET)
 ISA95_ONTOLOGY      = isa95.ttl
+ISA95_OWL           = isa95.owl.ttl
 ISA95_DEPENDENCIES  = $(BASE_ONTOLOGY) $(CORE_ONTOLOGY)
 ISA95_OPTS          = -p isa95
 
@@ -215,7 +235,7 @@ ISA95_OPTS          = -p isa95
 # -----------------------------------------------------------------------------
 TARGET_NAMES = CORE DI IA MACHINERY PUMPS PUMPEXAMPLE MACHINETOOL LASERSYSTEMS LASERSYSTEMSEXAMPLE MACHINETOOLEXAMPLE MACHINERYEXAMPLE DICTIONARY_IRDI PADIM MACHINERY_PROCESSVALUES MACHINERY_JOBS PACKML MACHINERY_RESULT TMC DEXPI ISA95
 
-ALL_TARGETS = $(foreach t, $(TARGET_NAMES), $($(t)_ONTOLOGY))
+ALL_TARGETS = $(foreach t, $(TARGET_NAMES), $($(t)_ONTOLOGY) $($(t)_OWL))
 
 
 .PHONY: all clean
@@ -238,6 +258,11 @@ all: $(ALL_TARGETS)
 	$(eval NAME := $(shell echo $* | tr a-z A-Z))
 	python3 nodeset2owl.py $($(NAME)_NODESET_URL) -i $($(NAME)_DEPENDENCIES) $($(NAME)_OPTS) -burl $(BASE_ONTOLOGY) -b $(BASE_ONTOLOGY_NS) -o $@ $(DSB)
 
+
+%.owl.ttl:
+	@echo "Creating $@"
+	$(eval NAME := $(shell echo $* | tr a-z A-Z))
+	python3 semanticbridge2owl.py $*.ttl
 # -----------------------------------------------------------------------------
 # Inter-target dependencies (if you need to ensure that some ontologies are built
 # before others, list them here)

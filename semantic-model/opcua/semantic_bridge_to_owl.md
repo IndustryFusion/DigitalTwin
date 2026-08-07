@@ -205,12 +205,12 @@ BrowseName segment (key)
 
 where Owner is the real class or enclosing Virtual Type this declaration was found on (section 5), and key is the single, namespace-qualified BrowseName segment -- not the full multi-level BrowsePath.
 
-The Owner+key pair may be replaced by a stable hash.
+The Owner+key pair may be replaced by a stable hash. The implementation hashes exactly the `Owner|key` string (SHA-256, first 96 bits / 24 hex digits) and namespaces the result under Owner's own namespace -- but does not additionally prefix the hash with Owner's own local name, only with the fixed literal `VT_`.
 
 Example:
 
 ```text
-PumpType_f8a92d1c519f7a2e20f31b6d
+VT_f8a92d1c519f7a2e20f31b6d
 ```
 
 A minimum of 96 bits (24 hexadecimal digits) is recommended.
@@ -434,7 +434,9 @@ This expresses:
 PumpType hasMotor only PumpType_Motor
 ```
 
-`owl:someValuesFrom` is deliberately never generated: under OWL 2 semantics `hasMotor some C` is logically equivalent to `owl:minQualifiedCardinality(1, hasMotor, C)` without the unique name assumption, so for a Mandatory declaration it would be pure redundancy with the cardinality restriction (section 16); for an Optional declaration it would be outright wrong, since it would wrongly force every instance to have the relationship, contradicting "optional" (which must permit zero occurrences).
+`owl:someValuesFrom` is deliberately never generated **on this containment property**: under OWL 2 semantics `hasMotor some C` is logically equivalent to `owl:minQualifiedCardinality(1, hasMotor, C)` without the unique name assumption, so for a Mandatory declaration it would be pure redundancy with the cardinality restriction (section 16); for an Optional declaration it would be outright wrong, since it would wrongly force every instance to have the relationship, contradicting "optional" (which must permit zero occurrences).
+
+This reasoning is specific to containment properties, where "the relationship exists at all" genuinely varies by ModellingRule. It does **not** extend to the ValueRank/Datatype relationships (sections 17/18): those describe OPC UA Attributes that are Mandatory and single-valued for every real Variable/VariableType regardless of ModellingRule, so `someValuesFrom` is simply true there, not an overreach -- see sections 17/18 for why it is required precisely to make an incompatible override detectable as a genuine contradiction.
 
 ---
 
@@ -510,6 +512,33 @@ constraints.
 
 ---
 
+## Mandatory Placeholder / Optional Placeholder
+
+OPC UA also defines two Placeholder variants of the same two ModellingRules, used where a declaration is a naming *template* rather than a single fixed BrowseName (e.g. an array of like-typed children whose actual names are only fixed at instantiation time).
+
+For the purposes of this transformation, `MandatoryPlaceholder` is treated identically to `Mandatory` (cardinality restriction generated) and `OptionalPlaceholder` identically to `Optional` (no cardinality restriction) -- the placeholder aspect itself (that the declaration serves as a template rather than a single fixed instance) is recorded but does not otherwise change the restrictions generated for it.
+
+---
+
+# 16a. Declarations Without a Recognized ModellingRule
+
+**Status: unresolved -- documents current behavior, not a settled rule.**
+
+OPC UA permits a child to be aggregated (via `HasComponent`/`HasProperty` or another `HasChild` subproperty) with no ModellingRule reference at all. The most common real occurrence is the set of named States/Transitions inside a StateMachineType-derived type (e.g. `ExclusiveLimitStateMachineType`'s `"High"`, `"HighToHighHigh"`, ...): these are fixed, always-present members of the state machine's structure, closer in spirit to enum members than to an Optional-or-Mandatory instantiation choice, but OPC UA gives them no formal ModellingRule to hang that distinction on.
+
+## Current Behavior
+
+Two modes exist, selected by `require_modelling_rule` (`semanticbridge2owl.py --require-modelling-rule`; `virtual_type_stats.py`'s `--include-unruled` is its inverse):
+
+- **Default (`require_modelling_rule=False`)**: an unruled child is processed exactly like any other declaration -- Virtual Type minted if section 6's criteria are met, `allValuesFrom` restriction generated (section 13/14). Since it has no ModellingRule, it can never be classified `is_optional=False`, so it never receives a cardinality restriction (section 16) either -- cardinality-wise it is treated exactly like `Optional`, even though conceptually it is always present, unconditionally, in every instance of the type.
+- **`require_modelling_rule=True`**: an unruled child is skipped entirely -- no Virtual Type, no restriction, and nothing nested inside it is visited either (the whole subtree beneath it is pruned). This is the strict, ModellingRule-literal reading of "Instance Declaration."
+
+## Open Question
+
+Neither mode is a considered, correct representation of what these children actually are: the default mode under-constrains them (silently equivalent to Optional, when they are in fact never absent), and the strict mode drops them from the model entirely (losing real structure, e.g. a StateMachineType's actual states). A more faithful treatment would likely need a third category -- "always present, no ModellingRule choice involved" -- with its own cardinality treatment (closer to Mandatory than to Optional), but this has not been designed or agreed yet. Flagged here for further discussion rather than resolved.
+
+---
+
 # 17. ValueRank Transformation
 
 Numeric ValueRank values shall be replaced by symbolic class representations.
@@ -525,25 +554,47 @@ ValueRank_OneOrMoreDimensions
 ValueRank_MoreDimensions
 ```
 
+`ValueRank_Scalar`, `ValueRank_OneDimension` and `ValueRank_MoreDimensions` are the only three *leaves* of this vocabulary and shall be declared pairwise disjoint (`owl:AllDisjointClasses`). The others (`ValueRank_Any`, `ValueRank_ScalarOrOneDimension`, `ValueRank_OneOrMoreDimensions`) are common ancestors of one or more leaves, not disjoint from anything -- they exist only to express OPC UA's own wildcard ValueRank codes (-3/-2/0). Without the leaf disjointness axiom, no OWL reasoner has anything to derive a contradiction from in the first place; this is what makes a ValueRank-axis override the primary practical source of genuinely detectable contradictions (section 10).
+
 ---
 
 ## Rule
 
-Attach ValueRank constraints to the Virtual Type.
+ValueRank is a Mandatory, single-valued OPC UA Attribute of every Variable and VariableType -- something a declaration *has*, not a category it *is a member of*. It is therefore attached via a relationship, `sb:hasValueRank`, declared `owl:FunctionalProperty` (at most one value), exactly mirroring how Datatype is attached (section 18) -- **not** via a direct `rdfs:subClassOf` onto the symbolic class itself.
+
+Both `owl:allValuesFrom` and `owl:someValuesFrom` are generated on `sb:hasValueRank`, unlike the containment property (section 13): `someValuesFrom` is simply true here (a real Variable always has a ValueRank), and it is exactly what makes an incompatible override actually unsatisfiable -- `FunctionalProperty` plus two disjoint `someValuesFrom` fillers (this declaration's own, and an inherited/ancestor one, section 9/10) forces the single permitted value to belong to both disjoint leaves at once.
 
 Example:
 
 ```ttl
 PumpType_Temperature
     rdfs:subClassOf
-        opcua:ValueRank_Scalar .
+        [ a owl:Restriction ; owl:onProperty sb:hasValueRank ; owl:allValuesFrom opcua:ValueRank_Scalar ] ,
+        [ a owl:Restriction ; owl:onProperty sb:hasValueRank ; owl:someValuesFrom opcua:ValueRank_Scalar ] .
 ```
+
+---
+
+## Own-Type ValueRank
+
+A VariableType (not only an instance declaration typed by it) may itself explicitly declare a ValueRank on its own definer node -- an attribute of the type itself, orthogonal to any instance declaration's own ValueRank where this type happens to be the TypeDefinition. Where explicitly present, this rule attaches the same relationship directly to the VariableType class:
+
+```ttl
+SomeVariableType
+    rdfs:subClassOf
+        [ a owl:Restriction ; owl:onProperty sb:hasValueRank ; owl:allValuesFrom opcua:ValueRank_OneDimension ] ,
+        [ a owl:Restriction ; owl:onProperty sb:hasValueRank ; owl:someValuesFrom opcua:ValueRank_OneDimension ] .
+```
+
+Without this, an instance declaration whose explicit ValueRank is incompatible with its own TypeDefinition's explicitly-declared ValueRank could never surface as a contradiction: the instance's Virtual Type would be `rdfs:subClassOf` that VariableType (section 8), but the VariableType itself would carry no ValueRank relationship at all for a reasoner to conflict with. Only fires where the type's own definer node explicitly declares a ValueRank -- not the default-when-absent case (Scalar) -- since asserting it unconditionally on every VariableType regardless of whether it says anything about ValueRank would be a much larger, unverified change in scope.
 
 ---
 
 # 18. Datatype Constraints
 
-Datatype information is preserved on Variable Virtual Types.
+Datatype is likewise a Mandatory, single-valued OPC UA Attribute of every Variable and VariableType, attached via a relationship, `sb:hasDataType`, declared `owl:FunctionalProperty`, with both `owl:allValuesFrom` and `owl:someValuesFrom` generated -- for the same reason as section 17's ValueRank case: a real Variable always has a Datatype, and `someValuesFrom` is what makes an incompatible override (e.g. narrowing to an unrelated sibling Datatype instead of a genuine subtype) actually unsatisfiable rather than vacuously satisfiable by a Datatype-less instance.
+
+Datatypes are OPC UA classes already present in the type hierarchy (section 3); sibling Datatypes under a common parent (2 or more direct subtypes of the same DataType, where at least one is newly declared) shall be declared pairwise disjoint (`owl:AllDisjointClasses`), the same role section 17's ValueRank leaves play, and for the same reason: without it, there is nothing for a Datatype override to conflict with.
 
 Example:
 
@@ -551,13 +602,20 @@ Example:
 Temperature : Double
 ```
 
-becomes a datatype restriction associated with:
+becomes, associated with `PumpType_Temperature`:
 
 ```ttl
 PumpType_Temperature
+    rdfs:subClassOf
+        [ a owl:Restriction ; owl:onProperty sb:hasDataType ; owl:allValuesFrom opcua:Double ] ,
+        [ a owl:Restriction ; owl:onProperty sb:hasDataType ; owl:someValuesFrom opcua:Double ] .
 ```
 
 Datatype handling is orthogonal to Virtual Type generation.
+
+## Own-Type Datatype
+
+As with ValueRank (section 17), a VariableType may itself explicitly declare a Datatype on its own definer node, attached the same way, directly on the VariableType class, subject to the same explicit-only scoping.
 
 ---
 
@@ -585,9 +643,10 @@ The output ontology consists of:
 - Virtual Types
 - Subclass hierarchies
 - Semantic Bridge properties
-- universal restrictions (`allValuesFrom`) -- see section 13 for why `someValuesFrom` is deliberately not used
-- cardinality restrictions
-- datatype constraints
-- symbolic ValueRank classes
+- universal restrictions (`allValuesFrom`) on containment properties -- `someValuesFrom` is deliberately not used there (section 13)
+- cardinality restrictions on containment properties
+- ValueRank/Datatype relationships (`sb:hasValueRank`/`sb:hasDataType`, both `owl:FunctionalProperty`), each with both `allValuesFrom` and `someValuesFrom` (sections 17/18) -- unlike containment, `someValuesFrom` is required here to make an incompatible override actually unsatisfiable
+- symbolic ValueRank classes, with the three leaves pairwise disjoint
+- sibling Datatypes pairwise disjoint, the Datatype-axis counterpart of the ValueRank leaves
 
 The ontology contains no Instance Declarations and can be processed by standard OWL DL reasoners for consistency and satisfiability checking.

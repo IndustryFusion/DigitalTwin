@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Part 14 e2e scenario: a ModellingRule-only override, the negative space
+     around test_vt_override.NodeSet2 (which changes the TypeDefinition) and
+     test_vt_contradiction.NodeSet2 (which changes ValueRank). Here NOTHING
+     about the declaration's own content changes: BaseType declares Optional
+     "Setting" : PropertyType/Int32 (scalar, default ValueRank). SubType, a
+     subtype of BaseType, redeclares "Setting" with the exact same
+     TypeDefinition/DataType/ValueRank, only tightening the ModellingRule
+     from Optional to Mandatory.
+
+     Per _resolve_target's needs_vt test (type/valuerank/datatype/local-
+     children), none of those changed, so SubType's "Setting" is expected to
+     resolve to the SAME Virtual Type as BaseType's, not mint a second one:
+     the need-based design's central claim is that a Virtual Type is only
+     minted when a declaration's own content is genuinely new, and a
+     ModellingRule is not "content" in that sense. What DOES have to change
+     is the restriction written on SubType itself: _needs_owner_restriction
+     checks is_optional too, so SubType gets its own
+     minQualifiedCardinality(1) restriction pointing at that same shared
+     Virtual Type, on top of the allValuesFrom restriction both types share.
+     Expect no contradiction: this is a legal, common OPC UA pattern
+     (a subtype promising a component the base type only offered). -->
+<UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+           LastModified="2024-07-15T00:00:00Z"
+           xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
+  <Models>
+    <Model ModelUri="http://my.test/"
+           XmlSchemaUri="http://opcfoundation.org/UA/2008/02/Types.xsd"
+           Version="1.05.03"
+           PublicationDate="2024-07-29T00:00:00Z"
+           ModelVersion="1.5.3" />
+  </Models>
+  <NamespaceUris>
+    <Uri>http://my.test/</Uri>
+  </NamespaceUris>
+  <Aliases>
+    <Alias Alias="HasProperty">i=46</Alias>
+    <Alias Alias="HasSubtype">i=45</Alias>
+    <Alias Alias="HasTypeDefinition">i=40</Alias>
+    <Alias Alias="HasModellingRule">i=37</Alias>
+    <Alias Alias="PropertyType">i=68</Alias>
+    <Alias Alias="Int32">i=6</Alias>
+  </Aliases>
+
+  <!-- BaseType: Optional "Setting" : PropertyType/Int32 -->
+  <UAObjectType NodeId="ns=1;i=2000" BrowseName="1:BaseType">
+    <DisplayName>BaseType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+      <Reference ReferenceType="HasProperty">ns=1;i=2001</Reference>
+    </References>
+  </UAObjectType>
+
+  <UAVariable NodeId="ns=1;i=2001" BrowseName="1:Setting" DataType="Int32">
+    <DisplayName>Setting</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=68</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
+    </References>
+  </UAVariable>
+
+  <!-- SubType <: BaseType, tightens "Setting" ModellingRule to Mandatory only -->
+  <UAObjectType NodeId="ns=1;i=2100" BrowseName="1:SubType">
+    <DisplayName>SubType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">ns=1;i=2000</Reference>
+      <Reference ReferenceType="HasProperty">ns=1;i=2101</Reference>
+    </References>
+  </UAObjectType>
+
+  <UAVariable NodeId="ns=1;i=2101" BrowseName="1:Setting" DataType="Int32">
+    <DisplayName>Setting</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=68</Reference>
+      <Reference ReferenceType="HasModellingRule">i=78</Reference>
+    </References>
+  </UAVariable>
+</UANodeSet>

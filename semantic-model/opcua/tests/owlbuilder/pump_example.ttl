@@ -192,17 +192,36 @@ opcua:nodei11508 a opcua:ObjectNodeClass ;
 
 opcua:hasEntry rdfs:subPropertyOf base:SemanticBridgeReferenceType .
 opcua:hasLabel rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+opcua:hasRevision rdfs:subPropertyOf base:SemanticBridgeReferenceType .
 
 opcua:DictionaryEntryType a owl:Class ;
     rdfs:subClassOf opcua:BaseObjectType .
 
+# nodei2001 also directly aggregates "Revision" (nodei2005) with NO
+# opcua:HasModellingRule triple at all -- mirroring the real core.ttl
+# pattern of named States/Transitions inside a StateMachineType-derived
+# type (e.g. ExclusiveLimitStateMachineType's "High"/"HighToHighHigh"):
+# not optional-or-mandatory in the usual sense, always present, more like
+# a fixed enum member, yet still a real declaration that count_own_
+# instance_declarations(include_unruled=True) must count and that
+# get_cdt/_merge_local still processes and can still mint a Virtual Type
+# for regardless of ModellingRule presence.
 opcua:nodei2001 a opcua:ObjectTypeNodeClass ;
     opcua:HasComponent opcua:nodei2002 ;
     opcua:hasEntry opcua:nodei2002 ;
+    opcua:HasProperty opcua:nodei2005 ;
+    opcua:hasRevision opcua:nodei2005 ;
     base:definesType opcua:DictionaryEntryType ;
     base:hasBrowseName "DictionaryEntryType" ;
     base:hasBrowseNameNamespace opcua:OPCUANamespace ;
     base:hasNodeId "2001" .
+
+opcua:nodei2005 a opcua:PropertyType,
+        opcua:VariableNodeClass ;
+    base:hasDatatype opcua:Int32 ;
+    base:hasBrowseName "Revision" ;
+    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
+    base:hasNodeId "2005" .
 
 opcua:nodei2002 a opcua:ObjectNodeClass ;
     opcua:HasModellingRule opcua:nodei11508 ;

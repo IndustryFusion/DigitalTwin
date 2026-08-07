@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Part 14 e2e scenario: combines two axes neither existing scenario
+     exercises together: a genuine THREE-LEVEL type hierarchy
+     (GrandparentType -> ParentType -> ChildType, vs. every other scenario's
+     two-level BaseType/SubType) and the "retype-by-addition" local-
+     extension pattern (test_vt_nested.NodeSet2's Drive/Motor never locally
+     extend their nominal type), applied at the DEEPEST level only.
+
+     UnitType: Optional "Value" : PropertyType/Double.
+     GrandparentType: Mandatory "Unit" : UnitType.
+     ParentType <: GrandparentType, declares nothing of its own: "Unit" is
+       purely inherited, expected to produce zero new Virtual Types and no
+       restriction of its own (ParentType just rdfs:subClassOf
+       GrandparentType, structurally identical to it).
+     ChildType <: ParentType, redeclares its OWN "Unit" instance still typed
+       UnitType, but this specific instance node has a LOCAL child of its
+       own, "Calibrated" : PropertyType/Boolean (Optional), that UnitType
+       itself does not declare, so own_local_children is true and a Virtual
+       Type IS minted here even though the TypeDefinition didn't change.
+
+     Expect VT(ChildType, "Unit") to merge UnitType's own effective tree
+     ("Value") with ChildType's local addition ("Calibrated"), i.e. recurse
+     two dimensions deep from the third level of a type-inheritance chain:
+     confirms get_cdt's recursive merge is correct across combined type-
+     hierarchy depth and containment depth, not just one or the other. No
+     contradiction expected. -->
+<UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+           LastModified="2024-07-15T00:00:00Z"
+           xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
+  <Models>
+    <Model ModelUri="http://my.test/"
+           XmlSchemaUri="http://opcfoundation.org/UA/2008/02/Types.xsd"
+           Version="1.05.03"
+           PublicationDate="2024-07-29T00:00:00Z"
+           ModelVersion="1.5.3" />
+  </Models>
+  <NamespaceUris>
+    <Uri>http://my.test/</Uri>
+  </NamespaceUris>
+  <Aliases>
+    <Alias Alias="HasComponent">i=47</Alias>
+    <Alias Alias="HasProperty">i=46</Alias>
+    <Alias Alias="HasSubtype">i=45</Alias>
+    <Alias Alias="HasTypeDefinition">i=40</Alias>
+    <Alias Alias="HasModellingRule">i=37</Alias>
+    <Alias Alias="PropertyType">i=68</Alias>
+    <Alias Alias="Double">i=11</Alias>
+    <Alias Alias="Boolean">i=1</Alias>
+  </Aliases>
+
+  <!-- UnitType: Optional "Value" : PropertyType/Double -->
+  <UAObjectType NodeId="ns=1;i=3000" BrowseName="1:UnitType">
+    <DisplayName>UnitType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+      <Reference ReferenceType="HasProperty">ns=1;i=3001</Reference>
+    </References>
+  </UAObjectType>
+
+  <UAVariable NodeId="ns=1;i=3001" BrowseName="1:Value" DataType="Double">
+    <DisplayName>Value</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=68</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
+    </References>
+  </UAVariable>
+
+  <!-- GrandparentType: Mandatory "Unit" : UnitType -->
+  <UAObjectType NodeId="ns=1;i=2000" BrowseName="1:GrandparentType">
+    <DisplayName>GrandparentType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2001</Reference>
+    </References>
+  </UAObjectType>
+
+  <UAObject NodeId="ns=1;i=2001" BrowseName="1:Unit">
+    <DisplayName>Unit</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=3000</Reference>
+      <Reference ReferenceType="HasModellingRule">i=78</Reference>
+    </References>
+  </UAObject>
+
+  <!-- ParentType <: GrandparentType, no own declarations at all -->
+  <UAObjectType NodeId="ns=1;i=2100" BrowseName="1:ParentType">
+    <DisplayName>ParentType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">ns=1;i=2000</Reference>
+    </References>
+  </UAObjectType>
+
+  <!-- ChildType <: ParentType, redeclares "Unit" (still UnitType) but this
+       instance locally adds "Calibrated" : PropertyType/Boolean -->
+  <UAObjectType NodeId="ns=1;i=2200" BrowseName="1:ChildType">
+    <DisplayName>ChildType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">ns=1;i=2100</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2201</Reference>
+    </References>
+  </UAObjectType>
+
+  <UAObject NodeId="ns=1;i=2201" BrowseName="1:Unit">
+    <DisplayName>Unit</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=3000</Reference>
+      <Reference ReferenceType="HasModellingRule">i=78</Reference>
+      <Reference ReferenceType="HasProperty">ns=1;i=2202</Reference>
+    </References>
+  </UAObject>
+
+  <UAVariable NodeId="ns=1;i=2202" BrowseName="1:Calibrated" DataType="Boolean">
+    <DisplayName>Calibrated</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=68</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
+    </References>
+  </UAVariable>
+</UANodeSet>
