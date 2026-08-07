@@ -83,10 +83,11 @@ class TestNodesetParser(unittest.TestCase):
         mock_models_element = MagicMock()
         mock_model_element = MagicMock()
         mock_model_element.get.return_value = 'http://example.com/modelUri'
-        
+        mock_model_element.findall.return_value = []  # no RequiredModel children
+
         mock_root.find.return_value = mock_models_element
         mock_models_element.find.return_value = mock_model_element
-        mock_models_element.findall.return_value = [1]
+        mock_models_element.findall.return_value = [mock_model_element]
         
         mock_et_parse.return_value.getroot.return_value = mock_root
 
@@ -345,11 +346,13 @@ class TestNodesetParser(unittest.TestCase):
 
     @patch('lib.nodesetparser.NodesetParser.init_imports')
     @patch('lib.nodesetparser.NodesetParser.get_all_namespaces')
+    @patch('lib.nodesetparser.NodesetParser.check_namespace_dependencies')
     @patch('lib.nodesetparser.NodesetParser.get_all_node_ids')
     @patch('lib.nodesetparser.NodesetParser.get_all_types')
     @patch('lib.nodesetparser.NodesetParser.get_all_references')
     @patch('lib.nodesetparser.NodesetParser.add_ontology_namespace')
-    def test_init_nodeids(self, mock_ontology_namespace, mock_references, mock_types, mock_node_ids, mock_namespaces, mock_imports):
+    def test_init_nodeids(self, mock_ontology_namespace, mock_references, mock_types, mock_node_ids,
+                          mock_check_deps, mock_namespaces, mock_imports):
         base_ontologies = ['base_ontology1', 'base_ontology2']
         ontology_name = URIRef('http://example.com/ontology')
         ontology_prefix = 'example'
@@ -362,6 +365,9 @@ class TestNodesetParser(unittest.TestCase):
 
         # Assert that get_all_namespaces was called with the correct arguments
         mock_namespaces.assert_called_once_with(ontology_prefix, ontology_name, f"{ontology_prefix.upper()}Namespace")
+
+        # Assert that check_namespace_dependencies was called
+        mock_check_deps.assert_called_once()
 
         # Assert that get_all_node_ids was called
         mock_node_ids.assert_called_once()

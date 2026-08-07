@@ -80,34 +80,53 @@ For local testing
 
     make -f translate_default_nodesets.make
 
+### Get the NodeSet Source URLs Into Your Shell
+
+`translate_default_nodesets.make` knows the raw.githubusercontent.com URL of every
+companion spec NodeSet2.xml it can build, plus the base ontology URL. Rather than
+reconstructing one of these paths by hand, source them straight into your shell with
+the `print-nodesets` target:
+
+    source <(make -f translate_default_nodesets.make -s print-nodesets)
+
+This exports `BASE_ONTOLOGY` and one `<NAME>_NODESET_URL` variable per companion spec
+(`CORE_NODESET_URL`, `DI_NODESET_URL`, `PUMPS_NODESET_URL`, ...). For example, to fetch
+the raw Pumps NodeSet2.xml:
+
+    curl -s "$PUMPS_NODESET_URL" | less
+
+Run `make -f translate_default_nodesets.make -s print-nodesets` on its own (without
+`source <(...)`) to see the full list of variable names it defines.
 
 ### Examples
 
+The commands below assume you've sourced `print-nodesets` as shown above.
+
 Create core.owl.ttl:
 
-    python3 nodeset2owl.py ${CORE_NODESET} -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p opcua -o core.owl.ttl
+    python3 nodeset2owl.py ${CORE_NODESET_URL} -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p opcua -o core.owl.ttl
 
 
 Create devices.owl.ttl:
 
-    python3 nodeset2owl.py  ${DI_NODESET} -i ${BASE_ONTOLOGY} core.owl.ttl -v http://example.com/v0.1/DI/ -p devices -o devices.owl.ttl
+    python3 nodeset2owl.py  ${DI_NODESET_URL} -i ${BASE_ONTOLOGY} core.owl.ttl -v http://example.com/v0.1/DI/ -p devices -o devices.owl.ttl
 
 Create ia.owl.ttl:
 
-    python3 nodeset2owl.py  ${IA_NODESET} -i ${BASE_ONTOLOGY} core.owl.ttl devices.owl.ttl -v http://example.com/v0.1/IA/ -p ia -o ia.owl.ttl
+    python3 nodeset2owl.py  ${IA_NODESET_URL} -i ${BASE_ONTOLOGY} core.owl.ttl devices.owl.ttl -v http://example.com/v0.1/IA/ -p ia -o ia.owl.ttl
 
 Create machinery.owl.ttl:
 
-    python3 nodeset2owl.py ${MACHINERY_NODESET} -i ${BASE_ONTOLOGY} core.owl.ttl devices.owl.ttl -v http://example.com/v0.1/Machinery/ -p machinery -o machinery.owl.ttl
+    python3 nodeset2owl.py ${MACHINERY_NODESET_URL} -i ${BASE_ONTOLOGY} core.owl.ttl devices.owl.ttl -v http://example.com/v0.1/Machinery/ -p machinery -o machinery.owl.ttl
 
 
 Create pumps.owl.ttl:
 
-    python3 nodeset2owl.py  ${PUMPS_NODESET} -i ${BASE_ONTOLOGY} core.owl.ttl devices.owl.ttl machinery.owl.ttl -v http://example.com/v0.1/Pumps/ -p pumps -o pumps.owl.ttl
+    python3 nodeset2owl.py  ${PUMPS_NODESET_URL} -i ${BASE_ONTOLOGY} core.owl.ttl devices.owl.ttl machinery.owl.ttl -v http://example.com/v0.1/Pumps/ -p pumps -o pumps.owl.ttl
 
 create pumpexample.owl.ttl:
 
-    python3 nodeset2owl.py  ${PUMP_EXAMPLE_NODESET} -i ${BASE_ONTOLOGY} core.owl.ttl devices.owl.ttl machinery.owl.ttl pumps.owl.ttl -n http://yourorganisation.org/InstanceExample/ -v http://example.com/v0.1/pumpexample/ -p pumpexample -o pumpexample.owl.ttl
+    python3 nodeset2owl.py  ${PUMPEXAMPLE_NODESET_URL} -i ${BASE_ONTOLOGY} core.owl.ttl devices.owl.ttl machinery.owl.ttl pumps.owl.ttl -n http://yourorganisation.org/InstanceExample/ -v http://example.com/v0.1/pumpexample/ -p pumpexample -o pumpexample.owl.ttl
 
 
 

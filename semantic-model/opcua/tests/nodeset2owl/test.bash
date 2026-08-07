@@ -86,7 +86,12 @@ for tuple in "${TESTNODESETS[@]}"; do  IFS=","
     diff ${nodeset}.ttl ${CLEANED} >$DIFFRESULT || { echo "Diff failed, result can be found in $DIFFRESULT" && exit 1; }
 done
 echo Starting E2E specification tests
-echo -------------------------------- 
+echo --------------------------------
+echo "Test invocation with no -i/--inputs at all (regression: used to crash with NameError: name 'opcua_inputs' is not defined)"
+echo -----------------------------------------------------------------------------
+python3 ${NODESET2OWL} ${CORE_NODESET} -v http://example.com/v0.1/UA/ -p opcua -o ${RESULT}
+python3 $CLEANGRAPH $RESULT $CLEANED
+mydiff core_cleaned.ttl $CLEANED
 comparewith=core_cleaned.ttl
 echo Test ${CORE_NODESET}
 echo --------------------
@@ -131,6 +136,20 @@ echo ----------
 python3 ${NODESET2OWL}  ${PUMPS_NODESET} -i ${BASE_ONTOLOGY} core.ttl devices.ttl machinery.ttl -v http://example.com/v0.1/Pumps/ -p pumps -o ${RESULT}
 python3 $CLEANGRAPH $RESULT $CLEANED
 mydiff $CLEANED $comparewith
+
+# Test missing-dependency detection: Pumps requires DI (devices.ttl), but core.ttl and
+# machinery.ttl alone are not sufficient. This must be reported as a single clear, upfront
+# error naming the missing DI namespace -- not an obscure failure deep in parsing.
+echo Test missing-dependency detection: Pumps without DI
+echo -----------------------------------------------------
+MISSING_DEP_LOG=missing_dep.log
+if python3 ${NODESET2OWL} ${PUMPS_NODESET} -i ${BASE_ONTOLOGY} core.ttl machinery.ttl -v http://example.com/v0.1/Pumps/ -p pumps -o ${RESULT} >${MISSING_DEP_LOG} 2>&1; then
+    echo "Expected nodeset2owl.py to fail when the DI dependency is missing, but it succeeded" && cat ${MISSING_DEP_LOG} && exit 1
+fi
+grep -q "http://opcfoundation.org/UA/DI/" ${MISSING_DEP_LOG} || \
+    { echo "Missing-dependency error did not mention the DI namespace:" && cat ${MISSING_DEP_LOG} && exit 1; }
+echo "OK: missing DI dependency was correctly detected"
+rm -f ${MISSING_DEP_LOG} ${RESULT}
 
 # Test enforced type semantics with core.ttl and devices.ttl
 # Triggered by  --enforce-opcua-type-semantic

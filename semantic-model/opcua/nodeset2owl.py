@@ -84,12 +84,11 @@ known_references = []  # triples of all references (id, namespace, name)
 if __name__ == '__main__':
     args = parse_args()
     opcua_nodeset = args.nodeset2
-    if args.inputs is not None:
-        opcua_inputs = args.inputs
-        for input in args.inputs:
-            if os.path.basename(input) == input:
-                input = f'{os.getcwd()}/{input}'
-            imported_ontologies.append(URIRef(input))
+    opcua_inputs = args.inputs if args.inputs is not None else []
+    for input in opcua_inputs:
+        if os.path.basename(input) == input:
+            input = f'{os.getcwd()}/{input}'
+        imported_ontologies.append(URIRef(input))
     base_ontology_found = False
     for ontology in imported_ontologies:
         if utils.v_major_equivalent(str(ontology), args.baseOntologyURL):
