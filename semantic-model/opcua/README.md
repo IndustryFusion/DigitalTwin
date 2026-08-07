@@ -225,7 +225,11 @@ positional arguments:
 options:
   -h, --help            show this help message and exit
   -s SHACL, --shacl SHACL
-                        Path to SHACL shapes file
+                        Path to a SHACL shapes file, or a directory of *.shacl.ttl files
+                        to merge. Defaults to shacl.ttl for -m instance (extractType.py's
+                        per-instance-type output); for -m ontology, defaults to the
+                        validation/ontology/ directory (every structural rule file, merged).
+                        Pass a single file explicitly to scope -m ontology to one rule.
   -e EXTRA, --extra EXTRA
                         Path to extra ontology file
   -df DATA_FORMAT, --data-format DATA_FORMAT
@@ -247,9 +251,14 @@ This tool operates in three modes:
 1) **instance** (default) takes shacl.ttl, instances.ttl and entities.ttl and executes a shacl evaluation equivalent to
 `pyshacl -s shacl.ttl -e entities.ttl -df json-ld instances.jsonld`
 
-2) **ontology** takes a semantic-bridge `*.owl.ttl` file (e.g. `core.owl.ttl`) and shacl.ttl and checks
-it against structural SHACL constraints (see `validation/ontology/*.shacl.ttl`) -- things like
-`hasComponent`/`hasProperty`/`ValueRank`/`historizing`/`modellingRule` being used consistently.
+2) **ontology** takes a semantic-bridge `*.owl.ttl` file (e.g. `core.owl.ttl`) and checks it against
+structural SHACL constraints -- things like `hasComponent`/`hasProperty`/`ValueRank`/`historizing`/
+`modellingRule` being used consistently. `-s` accepts either a single shapes file or a directory,
+in which case every `*.shacl.ttl` file directly within it is merged (SHACL shapes are additive, so
+this is safe -- each file targets different classes/properties). By default (no `-s` given) it
+checks against the whole `validation/ontology/` directory; pass a single file explicitly to scope
+the check to just one rule, e.g. `-s validation/ontology/rankValue.shacl.ttl` (this is what
+`tests/validation/test.bash` does, to isolate which specific rule fired in each test case).
 
 3) **vt** takes a Virtual-Types `*.vt.owl.ttl` file (owl2vt.py's output) and checks it for logical
 consistency with the real HermiT DL reasoner instead of SHACL: whether the OPC UA type restrictions
@@ -267,6 +276,15 @@ The tool will provide more context information when used with `-x` switch (insta
 Validate `instances.jsonld` against entities.ttl` and `shacl.ttl` with extended output:
 
         python3 validate.py -x instances.jsonld
+
+Validate a semantic-bridge ontology against every structural rule (equivalent to
+`-s validation/ontology`, the default):
+
+        python3 validate.py -m ontology core.owl.ttl
+
+Validate a semantic-bridge ontology against just its ValueRank consistency:
+
+        python3 validate.py -m ontology -s validation/ontology/rankValue.shacl.ttl core.owl.ttl
 
 Check a Virtual-Types ontology for logical consistency:
 
