@@ -210,7 +210,8 @@ Dump OPC UA server nodeset to XML-File
 
 ## validate.py
 
-Validate shacl.ttl, entities.ttl, instances.jsonld combination or single ontology.
+Validate a shacl.ttl/entities.ttl/instances.jsonld combination, a single semantic-bridge
+ontology, or a Virtual-Types `*.vt.owl.ttl` ontology's logical consistency.
 
 
 ```console
@@ -230,7 +231,9 @@ options:
   -df DATA_FORMAT, --data-format DATA_FORMAT
                         Data file format (e.g., turtle, json-ld, xml). If not provided infered from data-file name (.jsonld, .ttl).
   -d, --debug           Debug output
-  -m MODE, --mode MODE  Modes: "instance" to validate instance, "ontology" to validate ontology files.
+  -m MODE, --mode MODE  Modes: "instance" to validate instance, "ontology" to validate ontology
+                        files, "vt" to check a *.vt.owl.ttl Virtual-Types ontology for logical
+                        consistency via the HermiT DL reasoner.
   -st, --strict         Use strict, non accelerated SPARQL query.
   -x, --extended        Use eXtended output with detailed context.
   -ni, --no-imports     No imports of dependent ontologies.
@@ -239,18 +242,33 @@ options:
 
 ```
 
-This tool is operating in two modes:
+This tool operates in three modes:
 
 1) **instance** (default) takes shacl.ttl, instances.ttl and entities.ttl and executes a shacl evaluation equivalent to
 `pyshacl -s shacl.ttl -e entities.ttl -df json-ld instances.jsonld`
 
-2) **ontology** takes an ontology file and shacl.ttl and checks it against shacl constraints.
+2) **ontology** takes a semantic-bridge `*.owl.ttl` file (e.g. `core.owl.ttl`) and shacl.ttl and checks
+it against structural SHACL constraints (see `validation/ontology/*.shacl.ttl`) -- things like
+`hasComponent`/`hasProperty`/`ValueRank`/`historizing`/`modellingRule` being used consistently.
+
+3) **vt** takes a Virtual-Types `*.vt.owl.ttl` file (owl2vt.py's output) and checks it for logical
+consistency with the real HermiT DL reasoner instead of SHACL: whether the OPC UA type restrictions
+it encodes are jointly satisfiable, i.e. free of contradictory overrides. This is a thin wrapper
+around `check_consistency.py` (see there for the full picture: multi-file batch mode, `--combine`,
+CSV export) for validating one file through the same CLI as the other two modes. Requires
+`owlready2` (`pip install owlready2==0.51`) and a `java` runtime on PATH -- see `check_consistency.py`'s
+own module docstring for why it isn't a default dependency. `-s`/`-e`/`-st`/`-x`/`-so`/`-ns`/`-ni` are
+SHACL-specific and ignored in this mode.
 
 
-The tool will provide more context information when used with `-x` switch.
+The tool will provide more context information when used with `-x` switch (instance mode only).
 ### Example
 
 Validate `instances.jsonld` against entities.ttl` and `shacl.ttl` with extended output:
 
         python3 validate.py -x instances.jsonld
+
+Check a Virtual-Types ontology for logical consistency:
+
+        python3 validate.py -m vt pumps.vt.owl.ttl
 
