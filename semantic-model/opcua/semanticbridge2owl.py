@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright (c) 2024 Intel Corporation
+# Copyright (c) 2026 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -39,11 +39,14 @@ What this actually does, in order:
    BrowsePath) pair, per semantic_bridge_to_owl.md sections 6-11.
 4. Attaches an allValuesFrom restriction wherever a declaration occurs, plus
    a minQualifiedCardinality restriction for Mandatory declarations (sections
-   13-16; someValuesFrom is deliberately not used -- see lib/owlbuilder.py),
-   a symbolic
+   13-16; someValuesFrom is deliberately not used on this containment
+   property -- see lib/owlbuilder.py's _add_all_values_from), a symbolic
    ValueRank class and a Datatype restriction on Variable declarations
-   (sections 17-18), and drops every Instance Declaration node from the
-   output (section 19).
+   (sections 17-18 -- the Datatype restriction is someValuesFrom+
+   allValuesFrom and the property is Functional, since DataType is a
+   Mandatory, single-valued Attribute of every real Variable, unlike the
+   containment property above; see _add_datatype_restriction), and drops
+   every Instance Declaration node from the output (section 19).
 5. Copies over the class hierarchy (owl:Class/rdfs:subClassOf) and
    semantic-bridge property declarations (owl:ObjectProperty/
    rdfs:subPropertyOf) that the input file itself introduces (not its
@@ -125,6 +128,17 @@ def parse_args(args=sys.argv[1:]):
     parser.add_argument('--no-disjoint-valuerank', dest='disjoint_valuerank', action='store_false',
                         default=True,
                         help='Do not declare the ValueRank symbolic classes pairwise disjoint.')
+    parser.add_argument('--require-modelling-rule', action='store_true', default=False,
+                        help='Skip a declaration entirely (no Virtual Type, no restriction, nothing '
+                             'nested inside it visited either) unless it carries a recognized '
+                             'ModellingRule (Mandatory/Optional/(Mandatory|Optional)Placeholder) -- '
+                             'the strict OPC UA sense of "Instance Declaration". Default off: every '
+                             'Object/Variable child is processed regardless, including e.g. named '
+                             'States/Transitions inside a StateMachineType-derived type, which OPC UA '
+                             'aggregates via HasComponent/HasProperty with no ModellingRule at all. '
+                             'Use this to get a Virtual Type count that lines up 1:1 with a strict '
+                             'Instance Declaration count -- see virtual_type_stats.py\'s own '
+                             '--include-unruled, which is this flag\'s inverse.')
     parser.add_argument('-q', '--quiet', action='store_true', default=False,
                         help='Suppress per-root progress output.')
     return parser.parse_args(args)
@@ -170,7 +184,8 @@ if __name__ == '__main__':
         loader.init_imports(all_imports)
     ig = loader.get_graph()
 
-    builder = OwlBuilder(g, basens, opcuans, disjoint_valuerank=args.disjoint_valuerank, ig=ig)
+    builder = OwlBuilder(g, basens, opcuans, disjoint_valuerank=args.disjoint_valuerank, ig=ig,
+                         require_modelling_rule=args.require_modelling_rule)
     roots = None
     if args.roots is not None:
         roots = [opcuans[name.strip()] for name in args.roots.split(',') if name.strip()]

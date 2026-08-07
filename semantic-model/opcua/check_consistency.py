@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright (c) 2024 Intel Corporation
+# Copyright (c) 2026 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -61,6 +61,7 @@ subprocess, not owlready2's own ontology/world API) and a `java` on PATH.
 Usage:
     python3 check_consistency.py [-o report.csv] [-q] [name.ttl ...]
     python3 check_consistency.py -c tmc.ttl pumps.ttl
+    python3 check_consistency.py --expect-contradiction|--expect-none name.ttl
 """
 
 import argparse
@@ -161,6 +162,58 @@ def check_file(name, path):
     return status, unsatisfiable, elapsed, len(full_out)
 
 
+def check_expectation(file_arg, expect_contradiction):
+    """Run HermiT against a single file and assert the expected verdict --
+    used by e2e test.bash scenarios, mirroring
+    tests/semanticbridge2owl/check_unsatisfiable_precondition.py's own
+    --expect-contradiction/--expect-none interface, but backed by a real
+    reasoner run instead of a structural approximation. Prints an OK/FAIL
+    line and returns 0/1 accordingly."""
+    path = Path(file_arg).resolve()
+    name = Path(file_arg).name
+    if not path.exists():
+        print(f'FAIL: {path} does not exist.')
+        return 1
+
+    status, unsatisfiable, elapsed, size = check_file(name, path)
+
+    if expect_contradiction:
+        if status == 'unsatisfiable':
+            print(f'OK: HermiT confirms {len(unsatisfiable)} unsatisfiable class(es) in {name} '
+                  f'({size} triples, {elapsed:.1f}s):')
+            for cls in unsatisfiable:
+                print(f'    {cls}')
+            return 0
+        if status == 'inconsistent':
+            print(f'OK: HermiT confirms {name} is globally inconsistent ({size} triples, '
+                  f'{elapsed:.1f}s).')
+            return 0
+        if status == 'consistent':
+            print(f'FAIL: expected an unsatisfiable class in {name}, HermiT found the ontology '
+                  f'consistent ({size} triples, {elapsed:.1f}s).')
+            return 1
+        print(f'FAIL: HermiT failed to run against {name} -- see output above.')
+        return 1
+
+    # expect_none
+    if status == 'consistent':
+        print(f'OK: HermiT confirms {name} is consistent, no unsatisfiable classes '
+              f'({size} triples, {elapsed:.1f}s).')
+        return 0
+    if status == 'unsatisfiable':
+        print(f'FAIL: HermiT found {name} unexpectedly unsatisfiable ({size} triples, '
+              f'{elapsed:.1f}s) -- false-positive contradiction:')
+        for cls in unsatisfiable:
+            print(f'    {cls}')
+        return 1
+    if status == 'inconsistent':
+        print(f'FAIL: HermiT found {name} unexpectedly globally inconsistent ({size} triples, '
+              f'{elapsed:.1f}s).')
+        return 1
+    print(f'FAIL: HermiT failed to run against {name} -- see output above.')
+    return 1
+
+
 def check_combined(targets):
     """Merge every given file's own full pure-OWL output (each already
     including its own transitive dependencies, via build_full_owl_output's
@@ -200,7 +253,25 @@ def main():
                              'specs that never import each other and so are never otherwise loaded '
                              'into the same reasoning pass. With no explicit files, combines the '
                              'whole translate_default_nodesets.make corpus into one ontology.')
+    expect_group = parser.add_mutually_exclusive_group()
+    expect_group.add_argument('--expect-contradiction', action='store_true', default=False,
+                              help='Assert that HermiT finds exactly the given single ttl file '
+                                   'unsatisfiable (or globally inconsistent), instead of reporting '
+                                   'on every file. Exits 0 if so, 1 otherwise. Requires exactly one '
+                                   'file argument. For e2e scenarios that deliberately construct a '
+                                   'contradictory OPC UA type.')
+    expect_group.add_argument('--expect-none', action='store_true', default=False,
+                              help='Assert that HermiT finds the given single ttl file consistent, '
+                                   'instead of reporting on every file. Exits 0 if so, 1 otherwise '
+                                   '(a false-positive contradiction). Requires exactly one file '
+                                   'argument. For e2e scenarios that must NOT introduce a spurious '
+                                   'contradiction.')
     args = parser.parse_args()
+
+    if args.expect_contradiction or args.expect_none:
+        if len(args.files) != 1:
+            parser.error('--expect-contradiction/--expect-none require exactly one ttl file')
+        return check_expectation(args.files[0], expect_contradiction=args.expect_contradiction)
 
     if args.files:
         targets = [(Path(f).name, Path(f).resolve()) for f in args.files]

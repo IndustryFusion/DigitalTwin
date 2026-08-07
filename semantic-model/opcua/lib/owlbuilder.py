@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2024 Intel Corporation
+# Copyright (c) 2026 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -94,7 +94,7 @@ class OwlBuilder:
     SB = SEMANTIC_BRIDGE_NS
 
     def __init__(self, g: Graph, basens: Namespace, opcuans: Namespace, disjoint_valuerank: bool = True,
-                 ig: Graph = None):
+                 ig: Graph = None, require_modelling_rule: bool = False):
         """
         g: the semantic bridge graph to generate Virtual Types FOR (e.g. di.ttl).
            Only classes/properties actually declared in `g` are scanned as VT
@@ -108,6 +108,19 @@ class OwlBuilder:
             VT roots and never copied into the output; assumed to already have
             its own separately-generated pure-OWL output that this one's
             ontology header will owl:import.
+        require_modelling_rule: if True, a declaration with no recognized
+            ModellingRule (Mandatory/Optional/(Mandatory|Optional)Placeholder)
+            -- most commonly a named State/Transition inside a
+            StateMachineType-derived type -- is skipped entirely: no entry in
+            the Effective Declaration Tree, no Virtual Type, no restriction,
+            and nothing nested inside it is visited either. Default False
+            matches historical behavior (every Object/Variable child is
+            processed regardless of ModellingRule presence). This exists so
+            a Virtual Type count and an Instance Declaration count can be
+            produced from the *same* strict definition of "Instance
+            Declaration" -- see count_own_instance_declarations's own
+            docstring for why counting one way and minting the other
+            produces a mismatched, hard-to-interpret ratio.
         """
         self.g = g
         self.ig = ig if ig is not None else Graph()
@@ -115,6 +128,7 @@ class OwlBuilder:
         self.opcuans = opcuans
         self.rdfutils = RdfUtils(basens, opcuans)
         self.disjoint_valuerank = disjoint_valuerank
+        self.require_modelling_rule = require_modelling_rule
         self.out = Graph()
         self.out.bind('opcua', opcuans)
         self.out.bind('base', basens)
@@ -252,37 +266,89 @@ class OwlBuilder:
         own_classes = set(self.g.subjects(RDF.type, OWL.Class))
         return sorted({row[0] for row in result if row[0] in own_classes}, key=str)
 
-    def count_own_instance_declarations(self):
-        """Total number of physically-declared Instance Declarations (Object/
-        Variable children directly on a type's own definer node, Methods
-        excluded) that `g` itself introduces -- i.e. the raw nodes Virtual
-        Type generation is replacing, one level per type. This is
-        deliberately the *un*-expanded count: it does not follow inheritance
-        or recurse into nested declarations' own children. Filtering mirrors
-        get_cdt's own loop exactly, just counting instead of building
-        DeclEntry objects.
+    def count_own_instance_declarations(self, include_unruled=False):
+        """Total number of Instance Declarations that `g` itself introduces,
+        counted *recursively* at every nesting depth reachable from each of
+        `g`'s own ObjectType/VariableType declarations (Methods excluded) --
+        i.e. every node get_cdt's own recursive merge actually visits and
+        could mint a Virtual Type for. This is deliberately not a one-level,
+        un-expanded count: a declaration nested inside another declaration
+        (e.g. a Property local to an Object that is itself a child of a
+        type) is exactly as real, and exactly as capable of needing its own
+        Virtual Type, as a direct child of the type's own definer node --
+        counting only the first level silently ignores most of the tree
+        Virtual Type generation actually processes.
 
-        An Instance Declaration is specifically a child that carries a
-        ModellingRule (Mandatory/Optional/(Mandatory|Optional)Placeholder) --
-        that is what makes it a declaration governing how the type's
-        instances look, as opposed to some other child with no recognized
-        ModellingRule at all. A plain Object/Variable child count would
-        overcount by including the latter (~5.6% of core.ttl's own children,
-        empirically)."""
+        By default (include_unruled=False) only a child that carries a
+        recognized ModellingRule (Mandatory/Optional/
+        (Mandatory|Optional)Placeholder) counts -- the strict OPC UA sense
+        of "Instance Declaration", the thing this method is named for.
+        Under this strict definition, Virtual Type count is *not*
+        guaranteed to stay at or below this count: OPC UA also aggregates
+        nodes via HasComponent/HasProperty with no ModellingRule at all --
+        commonly the named States/Transitions inside a StateMachineType-
+        derived type (e.g. ExclusiveLimitStateMachineType's "High",
+        "HighToHighHigh") are not optional-or-mandatory in the usual sense
+        (always present, more like fixed enum members) but still carry real
+        structure and can still need their own Virtual Type. If the
+        Virtual Type count for a file exceeds this strict count, check
+        whether that file has any such unruled-but-structural children
+        (include_unruled=True) before treating it as a bug: it very often
+        is exactly this legitimate case, not an algorithm defect.
+
+        Pass include_unruled=True to also count those nodes. This broader
+        count *is* a provable upper bound on Virtual Type count: every node
+        it counts is processed by _merge_local's loop exactly once, which
+        calls _resolve_target which calls _mint_vt at most once per
+        (owner, key) pair (cached, never re-minted), so the Virtual Type
+        count can never exceed this broader count -- verified with zero
+        exceptions across the full default corpus.
+
+        A node reachable via more than one aggregation edge within the same
+        tree -- legal in OPC UA and not uncommon: HasAddIn exists precisely
+        to re-expose one real object from a second place, e.g.
+        "Identification" both directly on a device and again under a
+        grouping folder -- is one Instance Declaration, counted once, not
+        once per incoming edge. Confirmed against a SPARQL-based
+        cross-check (virtual_type_stats.py's own sparql_count_instance_
+        declarations, built independently against the same graphs) across
+        the full default corpus: the two now agree exactly."""
         count = 0
         for class_iri in self.all_target_classes():
             definer_node = self._definer_node(class_iri)
             if definer_node is None:
                 continue
-            children = self._get_children(definer_node)
-            for _refprop, child in children:
-                nodeclass, base_type = self._get_type(child)
-                if nodeclass == self.opcuans['MethodNodeClass'] or base_type is None:
-                    continue
-                is_optional, _ = self.rdfutils.get_modelling_rule(self.combined, child, None, class_iri)
-                if is_optional is None:
-                    continue
-                count += 1
+            seen = set()
+
+            def visit(node, owner):
+                nonlocal count
+                if node in seen:
+                    return
+                seen.add(node)
+                for _refprop, child in self._get_children(node):
+                    nodeclass, base_type = self._get_type(child)
+                    if nodeclass == self.opcuans['MethodNodeClass'] or base_type is None:
+                        continue
+                    is_optional, _ = self.rdfutils.get_modelling_rule(
+                        self.combined, child, None, owner)
+                    if is_optional is None and not include_unruled:
+                        continue
+                    # A node reachable via more than one aggregation edge
+                    # within the same tree (OPC UA's HasAddIn is built for
+                    # exactly this: re-exposing one real object from a
+                    # second place, e.g. "Identification" both directly on
+                    # a device and again under a grouping folder) is one
+                    # Instance Declaration, not two -- only count it the
+                    # first time `seen` encounters it; still descend every
+                    # time an edge reaches it (harmless no-op via the
+                    # `node in seen` guard above once it's already been
+                    # visited), since a later edge could be the first to
+                    # reach an otherwise-unvisited grandchild.
+                    if child not in seen:
+                        count += 1
+                    visit(child, owner)
+
+            visit(definer_node, class_iri)
         return count
 
     # ------------------------------------------------------------------
@@ -304,6 +370,36 @@ class OwlBuilder:
     # cardinality restriction on the owner targeting whatever's already
     # established -- cardinality is a property of the *edge*, not the target.
 
+    def _add_own_variable_type_restrictions(self, class_iri, definer_node):
+        """A VariableType (or Variable) can explicitly declare its OWN
+        ValueRank/DataType on its own definer node -- an attribute of the
+        type itself, distinct from and orthogonal to an *instance
+        declaration*'s own ValueRank/DataType where this class happens to
+        be the TypeDefinition (see _merge_local/_resolve_target). OPC UA
+        requires an instance's ValueRank/DataType to be compatible with its
+        own TypeDefinition's, so without asserting this class's own
+        explicitly-declared ValueRank/DataType here too, an incompatible
+        instance-level override could never surface as a contradiction: the
+        instance's Virtual Type would be subClassOf this class (its nominal
+        type) but this class itself would carry no ValueRank/DataType
+        restriction at all for a reasoner to conflict with.
+
+        Deliberately scoped to only fire when a ValueRank/DataType is
+        *explicitly* declared on the type's own definer node, not the
+        default-when-absent case (Scalar): only a handful of real
+        VariableTypes in core.ttl ever do this (verified: 4, out of ~600
+        types), so this is a narrow, low-risk addition, not a blanket new
+        axiom asserted on every VariableType regardless of whether it says
+        anything about ValueRank/DataType at all."""
+        if definer_node is None:
+            return
+        rank = next(self.combined.objects(definer_node, self.basens['hasValueRank']), None)
+        if rank is not None:
+            self._add_valuerank_restriction(class_iri, int(rank))
+        datatype = next(self.combined.objects(definer_node, self.basens['hasDatatype']), None)
+        if datatype is not None:
+            self._add_datatype_restriction(class_iri, datatype)
+
     def get_cdt(self, class_iri):
         """Effective Declaration Tree of class_iri: dict[qualified_browsename
         -> DeclEntry], merged with the direct supertype's own tree (local
@@ -322,7 +418,10 @@ class OwlBuilder:
             super_iri = self._direct_supertype(class_iri)
             parent_tree = self.get_cdt(super_iri) if super_iri is not None else {}
             is_own = class_iri in self._own_classes
-            result = self._merge_local(parent_tree, self._definer_node(class_iri), class_iri, is_own)
+            definer_node = self._definer_node(class_iri)
+            if is_own:
+                self._add_own_variable_type_restrictions(class_iri, definer_node)
+            result = self._merge_local(parent_tree, definer_node, class_iri, is_own)
         finally:
             self._cdt_computing.discard(class_iri)
         self._cdt_cache[class_iri] = result
@@ -342,10 +441,15 @@ class OwlBuilder:
             nodeclass, base_type = self._get_type(child)
             if nodeclass == self.opcuans['MethodNodeClass'] or base_type is None:
                 continue  # Methods are out of scope for this phase.
+            is_optional, is_placeholder = self.rdfutils.get_modelling_rule(self.combined, child, None, owner)
+            if self.require_modelling_rule and is_optional is None:
+                # No recognized ModellingRule (e.g. a StateMachineType State/
+                # Transition): excluded entirely, not just left un-VT'd, so
+                # counting and minting agree on what "Instance Declaration" means.
+                continue
             key = self._qualified_browsename(child)
             inherited_entry = parent_tree.get(key)
             semantic_property = self.rdfutils.get_semantic_bridge(self.combined, source_node, child)
-            is_optional, is_placeholder = self.rdfutils.get_modelling_rule(self.combined, child, None, owner)
             entry = DeclEntry(
                 base_type=base_type,
                 nodeclass=nodeclass,
@@ -365,12 +469,23 @@ class OwlBuilder:
     def _has_local_children(self, node):
         """Does this specific declaration node have its own direct HasChild
         children (Methods excluded), beyond whatever its nominal type alone
-        provides? True only for the rare "retype-by-addition" pattern."""
+        provides? True only for the rare "retype-by-addition" pattern.
+
+        Respects require_modelling_rule the same way _merge_local does: a
+        child with no recognized ModellingRule doesn't count here either
+        when that mode is on, since _merge_local would exclude it entirely
+        rather than just leave it un-VT'd -- a node whose only local
+        children are like that has no local children under this stricter
+        definition of "Instance Declaration"."""
         children = self._get_children(node)
         for _ref, child in children:
             nodeclass, base_type = self._get_type(child)
             if nodeclass == self.opcuans['MethodNodeClass'] or base_type is None:
                 continue
+            if self.require_modelling_rule:
+                is_optional, _ = self.rdfutils.get_modelling_rule(self.combined, child, None, None)
+                if is_optional is None:
+                    continue
             return True
         return False
 
@@ -444,7 +559,7 @@ class OwlBuilder:
         self.out.add((vt_iri, RDFS.subClassOf, entry.base_type))  # §8 base typing rule
 
         if entry.nodeclass == self.opcuans['VariableNodeClass']:
-            self.out.add((vt_iri, RDFS.subClassOf, self._valuerank_class(entry.value_rank)))
+            self._add_valuerank_restriction(vt_iri, entry.value_rank)
             self._add_datatype_restriction(vt_iri, entry.datatype)
 
         if inherited_entry is not None:
@@ -533,17 +648,80 @@ class OwlBuilder:
         prop = self.SB['hasDataType']
         if (prop, RDF.type, OWL.ObjectProperty) not in self.out:
             self.out.add((prop, RDF.type, OWL.ObjectProperty))
+            # Unlike the containment property _add_all_values_from
+            # deliberately leaves non-functional (see its own comment),
+            # DataType is a Mandatory, single-valued Attribute of every OPC
+            # UA Variable/VariableType (Part 3's Attributes table) -- not
+            # optional, and not per-declaration like a ModellingRule.
+            # Declaring it owl:FunctionalProperty here reflects that fact.
+            self.out.add((prop, RDF.type, OWL.FunctionalProperty))
         return prop
 
     def _add_datatype_restriction(self, vt_iri, datatype_iri):
         if datatype_iri is None:
             return
         prop = self._datatype_property()
-        r = BNode()
-        self.out.add((r, RDF.type, OWL.Restriction))
-        self.out.add((r, OWL.onProperty, prop))
-        self.out.add((r, OWL.allValuesFrom, datatype_iri))
-        self.out.add((vt_iri, RDFS.subClassOf, r))
+        allv = BNode()
+        self.out.add((allv, RDF.type, OWL.Restriction))
+        self.out.add((allv, OWL.onProperty, prop))
+        self.out.add((allv, OWL.allValuesFrom, datatype_iri))
+        self.out.add((vt_iri, RDFS.subClassOf, allv))
+        # someValuesFrom, unlike on the containment property, belongs here:
+        # a real Variable always has *some* DataType value (it is Mandatory
+        # and functional, see _datatype_property), so asserting existence
+        # is simply true, not an overreach the way it would be for an
+        # Optional component. Combined with FunctionalProperty, this is what
+        # makes an illegal sibling-DataType override (e.g. see
+        # tests/semanticbridge2owl/test_vt_datatype_sibling_override.
+        # NodeSet2) a genuine, HermiT-detectable contradiction instead of a
+        # vacuously-satisfiable no-op: without forcing existence, two
+        # disjoint allValuesFrom fillers on the same VT are trivially
+        # satisfied by an instance with zero hasDataType edges.
+        somev = BNode()
+        self.out.add((somev, RDF.type, OWL.Restriction))
+        self.out.add((somev, OWL.onProperty, prop))
+        self.out.add((somev, OWL.someValuesFrom, datatype_iri))
+        self.out.add((vt_iri, RDFS.subClassOf, somev))
+
+    def _valuerank_property(self):
+        prop = self.SB['hasValueRank']
+        if (prop, RDF.type, OWL.ObjectProperty) not in self.out:
+            self.out.add((prop, RDF.type, OWL.ObjectProperty))
+            # ValueRank, like DataType (see _datatype_property), is a
+            # Mandatory, single-valued Attribute of every real OPC UA
+            # Variable/VariableType -- not a category the thing itself IS
+            # a member of. FunctionalProperty here mirrors that fact.
+            self.out.add((prop, RDF.type, OWL.FunctionalProperty))
+        return prop
+
+    def _add_valuerank_restriction(self, subject, rank):
+        """Attach ValueRank as a relationship to a symbolic class via
+        sb:hasValueRank, not as a direct rdfs:subClassOf onto the symbolic
+        class itself. `subject` is a Virtual Type (an instance
+        declaration's own ValueRank) or a real VariableType class (its own
+        declared ValueRank, see _add_own_variable_type_restrictions) --
+        either way it HAS a ValueRank, it does not become a member of the
+        ValueRank_X category the same way it might genuinely be a member of
+        its own TypeDefinition's category (§8's rdfs:subClassOf is correct
+        there: it really is one). Mirrors _add_datatype_restriction exactly
+        (allValuesFrom + someValuesFrom, with hasValueRank Functional): the
+        same reasoning applies -- ValueRank is Mandatory and single-valued,
+        so someValuesFrom is simply true, and Functional + two disjoint
+        someValuesFrom fillers is what makes an incompatible override a
+        genuine, HermiT-detectable contradiction rather than a vacuously-
+        satisfiable no-op."""
+        prop = self._valuerank_property()
+        target = self._valuerank_class(rank)
+        allv = BNode()
+        self.out.add((allv, RDF.type, OWL.Restriction))
+        self.out.add((allv, OWL.onProperty, prop))
+        self.out.add((allv, OWL.allValuesFrom, target))
+        self.out.add((subject, RDFS.subClassOf, allv))
+        somev = BNode()
+        self.out.add((somev, RDF.type, OWL.Restriction))
+        self.out.add((somev, OWL.onProperty, prop))
+        self.out.add((somev, OWL.someValuesFrom, target))
+        self.out.add((subject, RDFS.subClassOf, somev))
 
     # ------------------------------------------------------------------
     # Pure-OWL class/property layer passthrough (§19-20)
@@ -624,7 +802,7 @@ class OwlBuilder:
                     stack.append(child)
 
         for parent in descendants | {base_datatype}:
-            children = list(self.combined.subjects(RDFS.subClassOf, parent))
+            children = sorted(self.combined.subjects(RDFS.subClassOf, parent), key=str)
             if len(children) < 2:
                 continue
             has_new_member = any((child, RDFS.subClassOf, parent) in self.g for child in children)
