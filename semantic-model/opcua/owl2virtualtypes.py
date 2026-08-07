@@ -15,8 +15,8 @@
 # limitations under the License.
 #
 """Transform a Semantic Bridge ttl (Part 5 / nodeset2owl.py output, e.g.
-core.ttl or a companion spec like di.ttl) into a pure OWL ontology (Part 14 of
-semantic_bridge_to_owl.md).
+core.ttl or a companion spec like di.ttl) into an OWL ontology of Virtual
+Types (Part 14 of owl_to_virtualtypes.md).
 
 What this actually does, in order:
 
@@ -30,28 +30,29 @@ What this actually does, in order:
    rescanned for Virtual Types and never copied into the output: if core.ttl
    was already processed into core.owl.ttl, this run only derives Virtual
    Types for di.ttl's *own* new types, and the output owl:imports the
-   dependency's own already-generated pure-OWL file instead of duplicating it.
+   dependency's own already-generated Virtual-Types file instead of duplicating it.
 3. For every ObjectType/VariableType class the input file itself declares (or
    only the ones named via --roots), walks its Effective Declaration Tree --
    its own declared children plus everything inherited from its supertype
    (which may live in an imported dependency), with local overrides taking
    precedence -- and generates one "Virtual Type" class per (owning type,
-   BrowsePath) pair, per semantic_bridge_to_owl.md sections 6-11.
+   BrowsePath) pair, per owl_to_virtualtypes.md sections 6-11.
 4. Attaches an allValuesFrom restriction wherever a declaration occurs, plus
    a minQualifiedCardinality restriction for Mandatory declarations (sections
    13-16; someValuesFrom is deliberately not used on this containment
-   property -- see lib/owlbuilder.py's _add_all_values_from), a symbolic
-   ValueRank class and a Datatype restriction on Variable declarations
-   (sections 17-18 -- the Datatype restriction is someValuesFrom+
-   allValuesFrom and the property is Functional, since DataType is a
-   Mandatory, single-valued Attribute of every real Variable, unlike the
-   containment property above; see _add_datatype_restriction), and drops
-   every Instance Declaration node from the output (section 19).
+   property -- see lib/owlbuilder.py's _add_all_values_from), a ValueRank
+   relationship (sb:hasValueRank) and a Datatype relationship
+   (sb:hasDataType) on Variable declarations (sections 17-18 -- both are
+   someValuesFrom+allValuesFrom and both properties are Functional, since
+   ValueRank/DataType are Mandatory, single-valued Attributes of every real
+   Variable, unlike the containment property above; see
+   _add_valuerank_restriction/_add_datatype_restriction), and drops every
+   Instance Declaration node from the output (section 19).
 5. Copies over the class hierarchy (owl:Class/rdfs:subClassOf) and
    semantic-bridge property declarations (owl:ObjectProperty/
    rdfs:subPropertyOf) that the input file itself introduces (not its
    dependencies') unchanged, and writes an ontology header whose owl:imports
-   point at each dependency's own pure-OWL sibling file.
+   point at each dependency's own Virtual-Types sibling file.
 
 The result contains no opcua:nodei*/di:nodei* declaration nodes at all -- only
 classes, subclass edges, object properties and restrictions -- and is meant to
@@ -75,16 +76,16 @@ Example:
 
     # Full core.ttl (~600 types): takes roughly 10s and produces on the
     # order of 10k Virtual Type classes / ~10MB of ttl.
-    python3 semanticbridge2owl.py core.ttl -o core.owl.ttl
+    python3 owl2virtualtypes.py core.ttl -o core.owl.ttl
 
     # di.ttl declares `owl:imports <file:///.../core.ttl>` itself, so this
     # auto-loads core.ttl for cross-referencing, but only derives Virtual
     # Types for di.ttl's own new types, and its output owl:imports
     # core.owl.ttl (run the line above first so that file actually exists):
-    python3 semanticbridge2owl.py di.ttl -o di.owl.ttl
+    python3 owl2virtualtypes.py di.ttl -o di.owl.ttl
 
     # Fast first look, scoped to just the types you care about:
-    python3 semanticbridge2owl.py core.ttl --roots PumpType,MotorType \\
+    python3 owl2virtualtypes.py core.ttl --roots PumpType,MotorType \\
         -o /tmp/pump.owl.ttl
 """
 
@@ -102,7 +103,7 @@ from lib.owlbuilder import OwlBuilder
 
 def parse_args(args=sys.argv[1:]):
     parser = argparse.ArgumentParser(
-        description='Transform a Semantic Bridge ttl into a pure OWL ontology.',
+        description='Transform a Semantic Bridge ttl into an OWL ontology of Virtual Types.',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__)
     parser.add_argument('input', help='Path to the Semantic Bridge ttl file, e.g. core.ttl or di.ttl')
@@ -208,10 +209,10 @@ if __name__ == '__main__':
     out = builder.run(roots, progress=report_progress)
 
     # Ontology header: same IRI/versionIRI/versionInfo as the input, but with
-    # owl:imports rewritten to point at each dependency's own pure-OWL sibling
-    # file (e.g. core.ttl -> core.owl.ttl) instead of the raw semantic bridge
-    # file, and non-file:// imports (e.g. the generic base.ttl) carried over
-    # unchanged since those aren't Part-14-processed dependencies.
+    # owl:imports rewritten to point at each dependency's own Virtual-Types
+    # sibling file (e.g. core.ttl -> core.owl.ttl) instead of the raw semantic
+    # bridge file, and non-file:// imports (e.g. the generic base.ttl) carried
+    # over unchanged since those aren't Part-14-processed dependencies.
     ontology_iri = next(g.subjects(RDF.type, OWL.Ontology), None)
     if ontology_iri is not None:
         out.add((ontology_iri, RDF.type, OWL.Ontology))
@@ -226,7 +227,7 @@ if __name__ == '__main__':
             sibling = owl_sibling_path(local_path)
             if not os.path.exists(sibling):
                 print(f'Warning: dependency {local_path} has not been processed into {sibling} yet -- '
-                      f'run semanticbridge2owl.py on it first, or this owl:imports will 404.')
+                      f'run owl2virtualtypes.py on it first, or this owl:imports will 404.')
             out.add((ontology_iri, OWL.imports, URIRef(f'file://{sibling}')))
 
     elapsed = time.monotonic() - start

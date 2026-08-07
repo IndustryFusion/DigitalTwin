@@ -14,9 +14,11 @@
      minQualifiedCardinality(1) restriction, since instances still must
      provide at least one actual node under this placeholder), on top of
      the array ValueRank handling. Expect DeviceType's own Virtual Type for
-     "Channel" to be subClassOf PropertyType, ValueRank_MoreDimensions, and
-     a Double Datatype restriction, with both allValuesFrom and
-     minQualifiedCardinality(1) written on DeviceType itself. No
+     "Channel" to be subClassOf PropertyType, with a hasValueRank
+     someValuesFrom/allValuesFrom ValueRank_MoreDimensions relationship and
+     a hasDataType someValuesFrom/allValuesFrom Double relationship, while
+     DeviceType itself gets both an allValuesFrom and a
+     minQualifiedCardinality(1) restriction on the containment property. No
      contradiction expected: this just confirms the placeholder and array
      mechanisms compose correctly together. -->
 <UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"

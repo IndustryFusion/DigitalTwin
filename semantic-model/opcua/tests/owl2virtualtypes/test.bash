@@ -14,9 +14,9 @@
 # limitations under the License.
 #
 #
-# End-to-end tests for semanticbridge2owl.py (Part 14): for each NodeSet2.xml
+# End-to-end tests for owl2virtualtypes.py (Part 14): for each NodeSet2.xml
 # scenario below, run the full real pipeline --
-#   NodeSet2.xml --[nodeset2owl.py]--> Semantic Bridge ttl --[semanticbridge2owl.py]--> pure OWL ttl
+#   NodeSet2.xml --[nodeset2owl.py]--> Semantic Bridge ttl --[owl2virtualtypes.py]--> OWL ontology of Virtual Types
 # -- and compare the result against a golden ttl (isomorphism-aware, ignoring
 # the ontology header since owl:imports resolution touches the network).
 #
@@ -45,7 +45,7 @@ BASE_ONTOLOGY=$(grep -oP '^BASE_ONTOLOGY\s*:?=\s*\K\S+' "${MAKEFILE}")
 BASE_ONTOLOGY_NS=$(grep -oP '^BASE_ONTOLOGY_NS\s*:?=\s*\K\S+' "${MAKEFILE}")
 CORE_ONTOLOGY=../../core.ttl
 NODESET2OWL=../../nodeset2owl.py
-SEMANTICBRIDGE2OWL=../../semanticbridge2owl.py
+OWL2VIRTUALTYPES=../../owl2virtualtypes.py
 COMPARE="python3 ./compare_vt_output.py"
 CHECK_CONTRADICTION="python3 ../../check_consistency.py"
 
@@ -89,8 +89,8 @@ for tuple in "${SCENARIOS[@]}"; do IFS=","
         -b ${BASE_ONTOLOGY_NS} -burl ${BASE_ONTOLOGY} \
         -v http://example.com/v0.1/test/ -p test -o ${sb} || exit 1
 
-    echo "--- semanticbridge2owl.py: ${sb} -> ${owl}"
-    python3 ${SEMANTICBRIDGE2OWL} ${sb} -b ${BASE_ONTOLOGY_NS} -o ${owl} -q || exit 1
+    echo "--- owl2virtualtypes.py: ${sb} -> ${owl}"
+    python3 ${OWL2VIRTUALTYPES} ${sb} -b ${BASE_ONTOLOGY_NS} -o ${owl} -q || exit 1
 
     echo "--- compare against ${expected}"
     ${COMPARE} ${expected} ${owl} || exit 1
@@ -108,4 +108,4 @@ for tuple in "${SCENARIOS[@]}"; do IFS=","
     echo
 done
 
-echo "All semanticbridge2owl.py e2e tests passed."
+echo "All owl2virtualtypes.py e2e tests passed."

@@ -70,7 +70,7 @@ TEST_CONTEXT_FILE=context.jsonld.test
 CONTEXT_FILE=context.jsonld
 LOCAL_CONTEXT=http://localhost:${SERVE_CONTEXT_PORT}/${CONTEXT_FILE}
 PYSHACL_RESULT=pyshacl.ttl
-EXTRACTTYPE="../../extractType.py"
+OWL2INSTANCES="../../owl2instances.py"
 COMPARE_GRAPHS="./compare_graphs.py"
 
 
@@ -217,7 +217,7 @@ for tuple in "${TESTNODESETS[@]}"; do IFS=","
     fi
     if [ "$DEBUG" = "true" ]; then
         echo DEBUG: python3 ${NODESET2OWL} ${nodeset}.xml -i ${IMPORTS[@]} ${INSTANCENAMESPACE[@]} -v http://example.com/v0.1/UA/ -p test -o ${NODESET2OWL_RESULT}
-        echo DEBUG: python3 ${EXTRACTTYPE} ${INSTANCETYPEOPTION} -n ${THETESTURI} ${NODESET2OWL_RESULT} -i ${TESTID} -xc ${LOCAL_CONTEXT} ${OPTIONS_ARR[@]}
+        echo DEBUG: python3 ${OWL2INSTANCES} ${INSTANCETYPEOPTION} -n ${THETESTURI} ${NODESET2OWL_RESULT} -i ${TESTID} -xc ${LOCAL_CONTEXT} ${OPTIONS_ARR[@]}
     fi
     echo Create owl nodesets
     echo -------------------
@@ -226,9 +226,9 @@ for tuple in "${TESTNODESETS[@]}"; do IFS=","
     echo Extract types and instances
     echo ---------------------------
     if [ -z "$instancetype" ]; then
-        python3 ${EXTRACTTYPE}  -n ${TESTURI} ${NODESET2OWL_RESULT} -i ${TESTID} -xc ${LOCAL_CONTEXT} ${OPTIONS_ARR[@]} 2>&1 | tee output.log
+        python3 ${OWL2INSTANCES}  -n ${TESTURI} ${NODESET2OWL_RESULT} -i ${TESTID} -xc ${LOCAL_CONTEXT} ${OPTIONS_ARR[@]} 2>&1 | tee output.log
     else
-        python3 ${EXTRACTTYPE} -t ${instancetype} -n ${THETESTURI} ${NODESET2OWL_RESULT} -i ${TESTID} -xc ${LOCAL_CONTEXT} ${OPTIONS_ARR[@]} 2>&1 | tee output.log
+        python3 ${OWL2INSTANCES} -t ${instancetype} -n ${THETESTURI} ${NODESET2OWL_RESULT} -i ${TESTID} -xc ${LOCAL_CONTEXT} ${OPTIONS_ARR[@]} 2>&1 | tee output.log
     fi
     if [ ! -z "$warning" ]; then
         if ! grep -q $warning output.log; then

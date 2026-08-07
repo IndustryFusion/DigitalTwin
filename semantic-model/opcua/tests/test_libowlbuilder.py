@@ -380,7 +380,7 @@ class TestRequireModellingRule(unittest.TestCase):
 class TestMethodsAreIgnored(unittest.TestCase):
     def test_method_declaration_produces_no_children_in_cdt(self):
         # No Method declarations in the fixture at all; this documents the
-        # intended behaviour (see semantic_bridge_to_owl.md discussion): Methods
+        # intended behaviour (see owl_to_virtualtypes.md discussion): Methods
         # are skipped entirely for this phase, verified functionally by the
         # `nodeclass == MethodNodeClass: continue` guard in get_cdt.
         builder = load_builder()

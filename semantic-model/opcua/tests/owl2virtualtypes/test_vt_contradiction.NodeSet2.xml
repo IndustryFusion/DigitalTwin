@@ -9,16 +9,17 @@
      ValueRank_MoreDimensions symbolic class).
 
      ValueRank_OneDimension and ValueRank_MoreDimensions are declared pairwise
-     disjoint (semantic_bridge_to_owl.md §17, plus the disjointness added in
+     disjoint (owl_to_virtualtypes.md §17, plus the disjointness added in
      lib/owlbuilder.py precisely so a reasoner can catch exactly this).
      VT(SubType, "Signal") ends up asserted as BOTH:
-       - rdfs:subClassOf ValueRank_MoreDimensions  (§8/§17, its own overridden ValueRank)
-       - rdfs:subClassOf VT(BaseType, "Signal")     (§9, itself subClassOf ValueRank_OneDimension)
-     i.e. simultaneously OneDimension and MoreDimensions, unsatisfiable.
-     This test only checks the structural precondition (both disjoint
-     ancestors are reachable) since no OWL DL reasoner is available in this
-     environment; see semanticbridge2owl.py's module docstring for how to
-     confirm it with Protégé/HermiT. -->
+       - hasValueRank someValuesFrom/allValuesFrom ValueRank_MoreDimensions
+         (§8/§17, its own overridden ValueRank)
+       - rdfs:subClassOf VT(BaseType, "Signal")     (§9, itself carrying the
+         same someValuesFrom/allValuesFrom pair for ValueRank_OneDimension)
+     hasValueRank is Functional, so the (at most one) permitted value would
+     have to be simultaneously OneDimension and MoreDimensions: unsatisfiable.
+     Confirmed with the real HermiT reasoner (check_consistency.py's
+     expect-contradiction mode), not just a structural precondition check. -->
 <UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
            LastModified="2024-07-15T00:00:00Z"

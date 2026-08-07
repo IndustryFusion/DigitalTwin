@@ -74,12 +74,12 @@ create pumpexample.ttl:
 
 
 
-## extractType.py
+## owl2instances.py
 
 Create SHACL, entities.ttl, json-ld and bindings.ttl from an OPCUA instance model.
 
 ```console
-usage: extractType.py [-h] -t TYPE [-j JSONLD] [-e ENTITIES] [-s SHACL] [-k KNOWLEDGE] [-b BINDINGS] [-c CONTEXT] [-d] [-m] -n NAMESPACE [-i ID] [-xe ENTITY_NAMESPACE] [-xc CONTEXT_URL] [-xp ENTITY_PREFIX] instance
+usage: owl2instances.py [-h] -t TYPE [-j JSONLD] [-e ENTITIES] [-s SHACL] [-k KNOWLEDGE] [-b BINDINGS] [-c CONTEXT] [-d] [-m] -n NAMESPACE [-i ID] [-xe ENTITY_NAMESPACE] [-xc CONTEXT_URL] [-xp ENTITY_PREFIX] instance
 
 parse nodeset instance and create ngsi-ld model
 
@@ -116,7 +116,7 @@ optional arguments:
 
 Extract ngsi-ld prototype:
 
-    python3 ./extractType.py -t http://opcfoundation.org/UA/Pumps/PumpType -n http://yourorganisation.org/InstanceExample/ pumpexample.ttl
+    python3 ./owl2instances.py -t http://opcfoundation.org/UA/Pumps/PumpType -n http://yourorganisation.org/InstanceExample/ pumpexample.ttl
 
 
 Check the SHACL compliance:

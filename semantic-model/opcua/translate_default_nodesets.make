@@ -262,7 +262,7 @@ all: $(ALL_TARGETS)
 %.owl.ttl:
 	@echo "Creating $@"
 	$(eval NAME := $(shell echo $* | tr a-z A-Z))
-	python3 semanticbridge2owl.py $*.ttl
+	python3 owl2virtualtypes.py $*.ttl
 # -----------------------------------------------------------------------------
 # Inter-target dependencies (if you need to ensure that some ontologies are built
 # before others, list them here)

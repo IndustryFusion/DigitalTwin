@@ -27,7 +27,7 @@ endif
 # -----------------------------------------------------------------------------
 NODESET_VERSION := UA-1.05.03-2023-12-15
 NODESET2OWL = ../../../opcua/nodeset2owl.py
-EXTRACTTYPE = ../../../opcua/extractType.py
+OWL2INSTANCES = ../../../opcua/owl2instances.py
 EXTRACTIFFBINDINGS = ../../../opcua/extractIffBindings.py
 
 INSTANCE_TYPE           := http://mycompany.com/UA/ProprietaryModel/ProprietaryDataObjectType
@@ -235,7 +235,7 @@ all: ontology instances iffbindings
 INSTANCE_ONTOLOGY = $(COMPANY_PROPRIETARYMODEL_ONTOLOGY)
 shacl.ttl instances.jsonld entities.ttl context.jsonld: $(COMPANY_PROPRIETARYMODEL_ONTOLOGY) ontology
 	echo "Creating shacl.ttl, instances.jsonld, context.jsonld and entities.ttl"
-	python3 $(EXTRACTTYPE) -t $(INSTANCE_TYPE) -n $(INSTANCE_NS_PREFIX) $(INSTANCE_ONTOLOGY)
+	python3 $(OWL2INSTANCES) -t $(INSTANCE_TYPE) -n $(INSTANCE_NS_PREFIX) $(INSTANCE_ONTOLOGY)
 
 iffbindings: ontology
 	@echo "Extracting IFF Bindings"

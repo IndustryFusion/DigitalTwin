@@ -170,7 +170,7 @@ one per position, each a physically distinct node in the original nodeset.
 This is not seven copies of one thing; it's seven genuinely distinct
 declarations that happen to share a name, each correctly getting its own
 class. A minimal, hand-reviewable version of exactly this point is in
-`tests/semanticbridge2owl/test_vt_distinct_owners.NodeSet2.xml`.
+`tests/owl2virtualtypes/test_vt_distinct_owners.NodeSet2.xml`.
 
 ## 5. Counting it correctly
 
