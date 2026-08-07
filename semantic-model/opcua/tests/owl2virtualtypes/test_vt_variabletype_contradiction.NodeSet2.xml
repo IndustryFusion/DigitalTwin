@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Part 14 e2e scenario: the VariableType-sibling counterpart to
+     test_vt_objecttype_contradiction.NodeSet2 (ObjectType axis): this one
+     overrides a Variable component's own nominal VariableType (not its
+     DataType, see test_vt_datatype_contradiction, and not its ValueRank,
+     see test_vt_contradiction) to an unrelated sibling VariableType.
+
+     Declares two new VariableTypes, SensorAType and SensorBType, as direct
+     siblings under opcua:BaseVariableType (neither a subtype of the
+     other), so _add_sibling_type_disjointness(BaseVariableType) asserts
+     them pairwise disjoint. BaseType declares Mandatory "Reading" :
+     SensorAType. SubType <: BaseType overrides "Reading" to SensorBType, a
+     sibling, not a subtype.
+
+     Unlike the ObjectType-axis scenario, a Variable declaration's own type
+     change always mints a Virtual Type regardless of local extension (see
+     _resolve_target's VariableNodeClass branch: type_changed alone sets
+     needs_vt), so this scenario exercises the direct §8/§9 rdfs:subClassOf
+     mechanism (VT(SubType, "Reading") ends up subClassOf both SensorBType
+     and VT(BaseType, "Reading"), itself subClassOf SensorAType), the same
+     mechanism test_vt_contradiction/test_vt_datatype_contradiction rely on,
+     not the Functional-property-only mechanism
+     test_vt_objecttype_contradiction needs (see that file's own comment).
+     Confirmed with the real HermiT reasoner (check_consistency.py's
+     expect-contradiction mode). -->
+<UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+           LastModified="2024-07-15T00:00:00Z"
+           xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
+  <Models>
+    <Model ModelUri="http://my.test/"
+           XmlSchemaUri="http://opcfoundation.org/UA/2008/02/Types.xsd"
+           Version="1.05.03"
+           PublicationDate="2024-07-29T00:00:00Z"
+           ModelVersion="1.5.3" />
+  </Models>
+  <NamespaceUris>
+    <Uri>http://my.test/</Uri>
+  </NamespaceUris>
+  <Aliases>
+    <Alias Alias="HasProperty">i=46</Alias>
+    <Alias Alias="HasSubtype">i=45</Alias>
+    <Alias Alias="HasTypeDefinition">i=40</Alias>
+    <Alias Alias="HasModellingRule">i=37</Alias>
+    <Alias Alias="BaseVariableType">i=62</Alias>
+    <Alias Alias="Double">i=11</Alias>
+  </Aliases>
+
+  <!-- SensorAType and SensorBType: siblings, both direct children of BaseVariableType -->
+  <UAVariableType NodeId="ns=1;i=3000" BrowseName="1:SensorAType" DataType="Double" ValueRank="-1">
+    <DisplayName>SensorAType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">BaseVariableType</Reference>
+    </References>
+  </UAVariableType>
+
+  <UAVariableType NodeId="ns=1;i=3001" BrowseName="1:SensorBType" DataType="Double" ValueRank="-1">
+    <DisplayName>SensorBType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">BaseVariableType</Reference>
+    </References>
+  </UAVariableType>
+
+  <!-- BaseType: Mandatory "Reading" : SensorAType -->
+  <UAObjectType NodeId="ns=1;i=2000" BrowseName="1:BaseType">
+    <DisplayName>BaseType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+      <Reference ReferenceType="HasProperty">ns=1;i=2001</Reference>
+    </References>
+  </UAObjectType>
+
+  <UAVariable NodeId="ns=1;i=2001" BrowseName="1:Reading" DataType="Double" ValueRank="-1">
+    <DisplayName>Reading</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=3000</Reference>
+      <Reference ReferenceType="HasModellingRule">i=78</Reference>
+    </References>
+  </UAVariable>
+
+  <!-- SubType <: BaseType, OVERRIDES "Reading" : SensorBType (sibling, not subtype) -->
+  <UAObjectType NodeId="ns=1;i=2100" BrowseName="1:SubType">
+    <DisplayName>SubType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">ns=1;i=2000</Reference>
+      <Reference ReferenceType="HasProperty">ns=1;i=2101</Reference>
+    </References>
+  </UAObjectType>
+
+  <UAVariable NodeId="ns=1;i=2101" BrowseName="1:Reading" DataType="Double" ValueRank="-1">
+    <DisplayName>Reading</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=3001</Reference>
+      <Reference ReferenceType="HasModellingRule">i=78</Reference>
+    </References>
+  </UAVariable>
+</UANodeSet>

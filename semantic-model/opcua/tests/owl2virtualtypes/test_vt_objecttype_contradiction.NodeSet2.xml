@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Part 14 e2e scenario: the ObjectType-sibling counterpart to
+     test_vt_datatype_contradiction.NodeSet2 (DataType axis) and
+     test_vt_contradiction.NodeSet2 (ValueRank axis): this one exercises a
+     plain Object-component override to an unrelated ObjectType, with NO
+     Virtual Type involved at all (see test_vt_override.NodeSet2's own
+     comment: a plain Object override with no local extension needs no
+     synthetic wrapper, the real declared type fully specifies itself).
+
+     Declares two new ObjectTypes, MotorAType and MotorBType, as direct
+     siblings under opcua:BaseObjectType (neither a subtype of the other),
+     so _add_sibling_type_disjointness(BaseObjectType) asserts them pairwise
+     disjoint. BaseType declares Mandatory "Drive" : MotorAType. SubType <:
+     BaseType overrides "Drive" to MotorBType, a sibling, not a subtype:
+     exactly the illegal move OPC UA's own component-override rule forbids
+     (may only narrow to the same type or a genuine subtype; contrast with
+     test_vt_override, the *legal* form of this same move).
+
+     Because there is no local extension, no Virtual Type is minted; the
+     restriction on SubType targets MotorBType directly:
+       SubType rdfs:subClassOf BaseType,
+           [ onProperty hasDrive; minQualifiedCardinality 1; onClass MotorBType ]
+       BaseType rdfs:subClassOf
+           [ onProperty hasDrive; minQualifiedCardinality 1; onClass MotorAType ]
+     minQualifiedCardinality(1, C) is logically equivalent to someValuesFrom(C)
+     under OWL 2 semantics (see _add_all_values_from's own comment), so with
+     hasDrive now declared owl:FunctionalProperty (every has<BrowseName>
+     property is, see _copy_class_and_property_layer: OPC UA's own
+     BrowseName-uniqueness rule guarantees at most one filler per property
+     per owner), the single permitted hasDrive filler on a SubType instance
+     would have to be simultaneously in MotorAType and MotorBType:
+     unsatisfiable once those two are disjoint. Neither fix alone catches
+     this: without Functional, two different fillers could satisfy the two
+     cardinality restrictions with no contradiction; without sibling
+     disjointness, being in both classes is not itself contradictory.
+     Confirmed with the real HermiT reasoner (check_consistency.py's
+     expect-contradiction mode). -->
+<UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+           LastModified="2024-07-15T00:00:00Z"
+           xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
+  <Models>
+    <Model ModelUri="http://my.test/"
+           XmlSchemaUri="http://opcfoundation.org/UA/2008/02/Types.xsd"
+           Version="1.05.03"
+           PublicationDate="2024-07-29T00:00:00Z"
+           ModelVersion="1.5.3" />
+  </Models>
+  <NamespaceUris>
+    <Uri>http://my.test/</Uri>
+  </NamespaceUris>
+  <Aliases>
+    <Alias Alias="HasComponent">i=47</Alias>
+    <Alias Alias="HasSubtype">i=45</Alias>
+    <Alias Alias="HasTypeDefinition">i=40</Alias>
+    <Alias Alias="HasModellingRule">i=37</Alias>
+  </Aliases>
+
+  <!-- MotorAType and MotorBType: siblings, both direct children of BaseObjectType -->
+  <UAObjectType NodeId="ns=1;i=3000" BrowseName="1:MotorAType">
+    <DisplayName>MotorAType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+    </References>
+  </UAObjectType>
+
+  <UAObjectType NodeId="ns=1;i=3001" BrowseName="1:MotorBType">
+    <DisplayName>MotorBType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+    </References>
+  </UAObjectType>
+
+  <!-- BaseType: Mandatory "Drive" : MotorAType -->
+  <UAObjectType NodeId="ns=1;i=2000" BrowseName="1:BaseType">
+    <DisplayName>BaseType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2001</Reference>
+    </References>
+  </UAObjectType>
+
+  <UAObject NodeId="ns=1;i=2001" BrowseName="1:Drive">
+    <DisplayName>Drive</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=3000</Reference>
+      <Reference ReferenceType="HasModellingRule">i=78</Reference>
+    </References>
+  </UAObject>
+
+  <!-- SubType <: BaseType, OVERRIDES "Drive" : MotorBType (sibling, not subtype) -->
+  <UAObjectType NodeId="ns=1;i=2100" BrowseName="1:SubType">
+    <DisplayName>SubType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">ns=1;i=2000</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2101</Reference>
+    </References>
+  </UAObjectType>
+
+  <UAObject NodeId="ns=1;i=2101" BrowseName="1:Drive">
+    <DisplayName>Drive</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=3001</Reference>
+      <Reference ReferenceType="HasModellingRule">i=78</Reference>
+    </References>
+  </UAObject>
+</UANodeSet>

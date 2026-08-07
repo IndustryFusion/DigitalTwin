@@ -41,3 +41,4 @@ test:
 	(cd tests/validation; bash ./test.bash)
 	(cd tests/extractIffBindings; bash ./test.bash)
 	(cd tests/owl2virtualtypes; bash ./test.bash)
+	$(PYTHON) check_consistency.py

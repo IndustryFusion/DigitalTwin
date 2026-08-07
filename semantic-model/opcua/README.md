@@ -6,6 +6,42 @@ To setup the python environment start a python3 virtual environment with `Python
 
 `make setup`
 
+### HermiT-based consistency checking (`check_consistency.py`)
+
+`make test` runs `check_consistency.py` with no arguments at the end, which
+runs the real HermiT DL reasoner against the already-built Virtual-Types
+ontology of every default nodeset (`core.owl.ttl`, `di.owl.ttl`, `ia.owl.ttl`,
+`pumps.owl.ttl`, ...) that `translate_default_nodesets.make` produces earlier
+in the same `make test` run, checking each one for contradictory OPC UA type
+constructions (an override that narrows a component/DataType/ValueRank/
+VariableType to something incompatible with its supertype's declaration). It
+also backs the `tests/owl2virtualtypes/test.bash` e2e scenarios that assert a
+*specific* override IS (or is NOT) flagged as unsatisfiable.
+
+`check_consistency.py` takes the already-built `*.owl.ttl` file(s), not the
+semantic-bridge `*.ttl` they were generated from: it only loads and merges
+(following each file's own `owl:imports`), it does not regenerate anything.
+It rejects a semantic-bridge `*.ttl` (e.g. `core.ttl`) with a clear error if
+passed one instead of the pure-OWL `*.owl.ttl` it was built into
+(`core.owl.ttl`) -- a semantic-bridge file has none of the Virtual Type
+classes/restrictions HermiT actually needs to reason over, and would
+otherwise silently report a meaningless "consistent" verdict rather than
+actually validating anything.
+
+Due to license conflicts, `owlready2` (needed by `check_consistency.py` to
+locate the bundled HermiT.jar) is NOT installed automatically and NOT
+listed in requirements.txt/requirements-dev.txt: it is LGPL-3.0-or-later (and
+bundles the HermiT.jar reasoner, also LGPL-3.0), incompatible with this
+repo's default Apache-2.0 dependency set. `check_consistency.py` detects its
+absence at import time and exits with instructions; `make test` will fail at
+that step until you install it yourself:
+
+    pip install owlready2==0.51
+
+A `java` runtime on PATH is also required (HermiT itself runs as a `java`
+subprocess). To check a single file instead of the whole corpus, pass it
+explicitly: `python3 check_consistency.py core.ttl`.
+
 ## nodeset2owl.py
 
 This script translates OPCUA nodeset files to OWL (in ttl format).

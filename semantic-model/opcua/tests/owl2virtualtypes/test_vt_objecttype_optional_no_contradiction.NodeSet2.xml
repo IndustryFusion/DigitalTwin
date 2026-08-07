@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Part 14 e2e scenario: the Optional counterpart to
+     test_vt_objecttype_contradiction.NodeSet2, structurally identical
+     (same MotorAType/MotorBType sibling ObjectTypes, same BaseType/SubType
+     override of "Drive"), except the ModellingRule is Optional instead of
+     Mandatory. Deliberately expected to find NO contradiction: this locks
+     in a real, understood limitation of the encoding, not a bug.
+
+     _add_all_values_from asserts allValuesFrom unconditionally for both
+     Mandatory and Optional (see its own comment), but the existence-forcing
+     restriction (_add_cardinality's minQualifiedCardinality) is only added
+     for Mandatory/MandatoryPlaceholder. Without it, BaseType/SubType only
+     carry:
+       BaseType rdfs:subClassOf [ onProperty hasDrive; allValuesFrom MotorAType ]
+       SubType  rdfs:subClassOf BaseType,
+                    [ onProperty hasDrive; allValuesFrom MotorBType ]
+     allValuesFrom is vacuously satisfied by an instance with zero hasDrive
+     edges, so hasDrive being Functional and MotorAType/MotorBType being
+     disjoint (both true here, exactly as in the Mandatory scenario) still
+     can't force a contradiction: "the component may simply be absent" is
+     the correct reading of Optional, and remains a valid model of SubType.
+     This is inherent to what Optional means in OPC UA, not something a
+     smarter axiom could fix without wrongly forcing every optional slot to
+     be filled (which is exactly why _add_all_values_from's own comment
+     forbids adding someValuesFrom there). Confirmed with the real HermiT
+     reasoner (check_consistency.py's expect-none mode): the ontology stays
+     consistent. -->
+<UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+           LastModified="2024-07-15T00:00:00Z"
+           xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
+  <Models>
+    <Model ModelUri="http://my.test/"
+           XmlSchemaUri="http://opcfoundation.org/UA/2008/02/Types.xsd"
+           Version="1.05.03"
+           PublicationDate="2024-07-29T00:00:00Z"
+           ModelVersion="1.5.3" />
+  </Models>
+  <NamespaceUris>
+    <Uri>http://my.test/</Uri>
+  </NamespaceUris>
+  <Aliases>
+    <Alias Alias="HasComponent">i=47</Alias>
+    <Alias Alias="HasSubtype">i=45</Alias>
+    <Alias Alias="HasTypeDefinition">i=40</Alias>
+    <Alias Alias="HasModellingRule">i=37</Alias>
+  </Aliases>
+
+  <!-- MotorAType and MotorBType: siblings, both direct children of BaseObjectType -->
+  <UAObjectType NodeId="ns=1;i=3000" BrowseName="1:MotorAType">
+    <DisplayName>MotorAType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+    </References>
+  </UAObjectType>
+
+  <UAObjectType NodeId="ns=1;i=3001" BrowseName="1:MotorBType">
+    <DisplayName>MotorBType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+    </References>
+  </UAObjectType>
+
+  <!-- BaseType: Optional "Drive" : MotorAType -->
+  <UAObjectType NodeId="ns=1;i=2000" BrowseName="1:BaseType">
+    <DisplayName>BaseType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2001</Reference>
+    </References>
+  </UAObjectType>
+
+  <UAObject NodeId="ns=1;i=2001" BrowseName="1:Drive">
+    <DisplayName>Drive</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=3000</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
+    </References>
+  </UAObject>
+
+  <!-- SubType <: BaseType, OVERRIDES "Drive" : MotorBType (sibling, not subtype) -->
+  <UAObjectType NodeId="ns=1;i=2100" BrowseName="1:SubType">
+    <DisplayName>SubType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">ns=1;i=2000</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2101</Reference>
+    </References>
+  </UAObjectType>
+
+  <UAObject NodeId="ns=1;i=2101" BrowseName="1:Drive">
+    <DisplayName>Drive</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=3001</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
+    </References>
+  </UAObject>
+</UANodeSet>
