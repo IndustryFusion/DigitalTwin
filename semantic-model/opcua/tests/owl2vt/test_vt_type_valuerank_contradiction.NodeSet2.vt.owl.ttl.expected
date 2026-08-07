@@ -7,7 +7,7 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 <http://my.test/> a owl:Ontology ;
-    owl:imports <file:///home/marcel/src/DigitalTwin/semantic-model/opcua/core.owl.ttl>,
+    owl:imports <file:///home/marcel/src/DigitalTwin/semantic-model/opcua/core.vt.owl.ttl>,
         rdf:,
         rdfs:,
         <https://industryfusion.github.io/contexts/staging/ontology/v0.3/base.ttl>,
@@ -32,44 +32,44 @@ base:SemanticBridgeReferenceType a owl:ObjectProperty .
 
 <http://my.test/BType> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
-            owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
-            owl:onClass <http://my.test/VT_cb2d0a323fc9989264216cae> ;
+            owl:allValuesFrom <http://my.test/VT_cb2d0a323fc9989264216cae> ;
             owl:onProperty <http://my.test/hasVar2> ],
         [ a owl:Restriction ;
-            owl:allValuesFrom <http://my.test/VT_cb2d0a323fc9989264216cae> ;
+            owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+            owl:onClass <http://my.test/VT_cb2d0a323fc9989264216cae> ;
             owl:onProperty <http://my.test/hasVar2> ],
         opcua:BaseObjectType .
 
 <http://my.test/VT_e6a06de6ac97901070cf0aa9> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
-            owl:onProperty sb:hasValueRank ;
-            owl:someValuesFrom opcua:ValueRank_Scalar ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom opcua:Double ;
-            owl:onProperty sb:hasDataType ],
+            owl:onProperty sb:hasDataType ;
+            owl:someValuesFrom opcua:Double ],
         [ a owl:Restriction ;
             owl:allValuesFrom opcua:ValueRank_Scalar ;
             owl:onProperty sb:hasValueRank ],
         [ a owl:Restriction ;
-            owl:onProperty sb:hasDataType ;
-            owl:someValuesFrom opcua:Double ],
+            owl:allValuesFrom opcua:Double ;
+            owl:onProperty sb:hasDataType ],
+        [ a owl:Restriction ;
+            owl:onProperty sb:hasValueRank ;
+            owl:someValuesFrom opcua:ValueRank_Scalar ],
         <http://my.test/VT_cb2d0a323fc9989264216cae>,
         <http://my.test/VariableSubType> ;
     sb:originalBrowsePath "http://my.test/Var2" .
 
 <http://my.test/VariableSubType> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
+            owl:allValuesFrom opcua:ValueRank_OneDimension ;
+            owl:onProperty sb:hasValueRank ],
+        [ a owl:Restriction ;
+            owl:allValuesFrom opcua:Double ;
+            owl:onProperty sb:hasDataType ],
+        [ a owl:Restriction ;
             owl:onProperty sb:hasValueRank ;
             owl:someValuesFrom opcua:ValueRank_OneDimension ],
         [ a owl:Restriction ;
             owl:onProperty sb:hasDataType ;
             owl:someValuesFrom opcua:Double ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom opcua:Double ;
-            owl:onProperty sb:hasDataType ],
-        [ a owl:Restriction ;
-            owl:allValuesFrom opcua:ValueRank_OneDimension ;
-            owl:onProperty sb:hasValueRank ],
         opcua:BaseDataVariableType .
 
 opcua:ValueRank_Any a owl:Class .
@@ -82,17 +82,17 @@ opcua:ValueRank_ScalarOrOneDimension a owl:Class ;
 
 <http://my.test/VT_cb2d0a323fc9989264216cae> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
-            owl:onProperty sb:hasValueRank ;
-            owl:someValuesFrom opcua:ValueRank_Scalar ],
+            owl:allValuesFrom opcua:ValueRank_Scalar ;
+            owl:onProperty sb:hasValueRank ],
         [ a owl:Restriction ;
             owl:onProperty sb:hasDataType ;
             owl:someValuesFrom opcua:Double ],
         [ a owl:Restriction ;
-            owl:allValuesFrom opcua:ValueRank_Scalar ;
-            owl:onProperty sb:hasValueRank ],
-        [ a owl:Restriction ;
             owl:allValuesFrom opcua:Double ;
             owl:onProperty sb:hasDataType ],
+        [ a owl:Restriction ;
+            owl:onProperty sb:hasValueRank ;
+            owl:someValuesFrom opcua:ValueRank_Scalar ],
         opcua:BaseDataVariableType ;
     sb:originalBrowsePath "http://my.test/Var2" .
 
@@ -114,11 +114,11 @@ sb:hasValueRank a owl:FunctionalProperty,
         owl:ObjectProperty .
 
 [] a owl:AllDisjointClasses ;
-    owl:members ( <http://my.test/VariableSubType> opcua:AlarmRateVariableType opcua:AlarmStateVariableType opcua:AudioVariableType opcua:BitFieldType opcua:BuildInfoType opcua:CartesianCoordinatesType opcua:ConditionVariableType opcua:DataItemType opcua:DataTypeDescriptionType opcua:DataTypeDictionaryType opcua:FrameType opcua:GuardVariableType opcua:OptionSetType opcua:OrientationType opcua:ProgramDiagnostic2Type opcua:ProgramDiagnosticType opcua:PubSubDiagnosticsCounterType opcua:RationalNumberType opcua:ReferenceDescriptionVariableType opcua:SamplingIntervalDiagnosticsArrayType opcua:SamplingIntervalDiagnosticsType opcua:SelectionListType opcua:ServerDiagnosticsSummaryType opcua:ServerStatusType opcua:ServerVendorCapabilityType opcua:SessionDiagnosticsArrayType opcua:SessionDiagnosticsVariableType opcua:SessionSecurityDiagnosticsArrayType opcua:SessionSecurityDiagnosticsType opcua:StateVariableType opcua:SubscriptionDiagnosticsArrayType opcua:SubscriptionDiagnosticsType opcua:TransitionVariableType opcua:VectorType ) .
-
-[] a owl:AllDisjointClasses ;
     owl:members ( <http://my.test/BType> opcua:AggregateConfigurationType opcua:AggregateFunctionType opcua:AlarmMetricsType opcua:AliasNameType opcua:AuthorizationServiceConfigurationType opcua:BaseConditionClassType opcua:BaseEventType opcua:BaseInterfaceType opcua:CertificateGroupType opcua:CertificateType opcua:ConnectionTransportType opcua:DataSetReaderMessageType opcua:DataSetReaderTransportType opcua:DataSetReaderType opcua:DataSetWriterMessageType opcua:DataSetWriterTransportType opcua:DataSetWriterType opcua:DataTypeEncodingType opcua:DataTypeSystemType opcua:DictionaryEntryType opcua:ExtensionFieldsType opcua:FileType opcua:FolderType opcua:HistoricalDataConfigurationType opcua:HistoricalEventConfigurationType opcua:HistoricalExternalEventSourceType opcua:HistoryServerCapabilitiesType opcua:IetfBaseNetworkInterfaceType opcua:KeyCredentialConfigurationType opcua:ModellingRuleType opcua:NamespaceMetadataType opcua:NamespacesType opcua:NetworkAddressType opcua:OrderedListType opcua:PriorityMappingTableType opcua:ProvisionableDeviceType opcua:PubSubCapabilitiesType opcua:PubSubConnectionType opcua:PubSubDiagnosticsType opcua:PubSubGroupType opcua:PubSubKeyPushTargetType opcua:PubSubKeyServiceType opcua:PubSubStatusType opcua:PublishedDataSetType opcua:QuantityType opcua:ReaderGroupMessageType opcua:ReaderGroupTransportType opcua:RoleSetType opcua:RoleType opcua:SecurityGroupType opcua:ServerCapabilitiesType opcua:ServerConfigurationType opcua:ServerDiagnosticsType opcua:ServerRedundancyType opcua:ServerType opcua:SessionDiagnosticsObjectType opcua:SessionsDiagnosticsSummaryType opcua:StandaloneSubscribedDataSetType opcua:StateMachineType opcua:StateType opcua:SubscribedDataSetType opcua:TemporaryFileTransferType opcua:TransactionDiagnosticsType opcua:TransitionType opcua:UnitType opcua:UserManagementType opcua:VendorServerInfoType opcua:WriterGroupMessageType opcua:WriterGroupTransportType ) .
 
 [] a owl:AllDisjointClasses ;
     owl:members ( opcua:ValueRank_Scalar opcua:ValueRank_OneDimension opcua:ValueRank_MoreDimensions ) .
+
+[] a owl:AllDisjointClasses ;
+    owl:members ( <http://my.test/VariableSubType> opcua:AlarmRateVariableType opcua:AlarmStateVariableType opcua:AudioVariableType opcua:BitFieldType opcua:BuildInfoType opcua:CartesianCoordinatesType opcua:ConditionVariableType opcua:DataItemType opcua:DataTypeDescriptionType opcua:DataTypeDictionaryType opcua:FrameType opcua:GuardVariableType opcua:OptionSetType opcua:OrientationType opcua:ProgramDiagnostic2Type opcua:ProgramDiagnosticType opcua:PubSubDiagnosticsCounterType opcua:RationalNumberType opcua:ReferenceDescriptionVariableType opcua:SamplingIntervalDiagnosticsArrayType opcua:SamplingIntervalDiagnosticsType opcua:SelectionListType opcua:ServerDiagnosticsSummaryType opcua:ServerStatusType opcua:ServerVendorCapabilityType opcua:SessionDiagnosticsArrayType opcua:SessionDiagnosticsVariableType opcua:SessionSecurityDiagnosticsArrayType opcua:SessionSecurityDiagnosticsType opcua:StateVariableType opcua:SubscriptionDiagnosticsArrayType opcua:SubscriptionDiagnosticsType opcua:TransitionVariableType opcua:VectorType ) .
 

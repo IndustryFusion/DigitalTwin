@@ -43,24 +43,24 @@ NODESET_DIR := .
 INSTANCE_NODESET          	:=   https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15/Pumps/instanceexample.xml
 
 # Dependent Ontology URLs (or local files if not in remote mode)
-CORE_ONTOLOGY                       := $(OPCUA_PREFIX)core.ttl
-DI_ONTOLOGY                         := $(OPCUA_PREFIX)di.ttl
-MACHINERY_ONTOLOGY                  := $(OPCUA_PREFIX)machinery.ttl
-MACHINERY_JOBS_ONTOLOGY             := $(OPCUA_PREFIX)machinery_jobs.ttl
-MACHINERY_RESULT_ONTOLOGY             := $(OPCUA_PREFIX)machinery_result.ttl
-MACHINERY_PROCESSVALUES_ONTOLOGY    := $(OPCUA_PREFIX)machinery_processvalues.ttl
-PUMPS_ONTOLOGY                      := $(OPCUA_PREFIX)pumps.ttl
-IA_ONTOLOGY                         := $(OPCUA_PREFIX)ia.ttl
-MACHINETOOL_ONTOLOGY                := $(OPCUA_PREFIX)machinetool.ttl
-LASERSYSTEMS_ONTOLOGY               := $(OPCUA_PREFIX)lasersystems.ttl
-DICTIONARY_IRDI_ONTOLOGY            := $(OPCUA_PREFIX)dictionary_irdi.ttl
-PADIM_ONTOLOGY                      := $(OPCUA_PREFIX)padim.ttl
-PACKML_ONTOLOGY                     := $(OPCUA_PREFIX)packml.ttl
+CORE_ONTOLOGY                       := $(OPCUA_PREFIX)core.owl.ttl
+DI_ONTOLOGY                         := $(OPCUA_PREFIX)di.owl.ttl
+MACHINERY_ONTOLOGY                  := $(OPCUA_PREFIX)machinery.owl.ttl
+MACHINERY_JOBS_ONTOLOGY             := $(OPCUA_PREFIX)machinery_jobs.owl.ttl
+MACHINERY_RESULT_ONTOLOGY             := $(OPCUA_PREFIX)machinery_result.owl.ttl
+MACHINERY_PROCESSVALUES_ONTOLOGY    := $(OPCUA_PREFIX)machinery_processvalues.owl.ttl
+PUMPS_ONTOLOGY                      := $(OPCUA_PREFIX)pumps.owl.ttl
+IA_ONTOLOGY                         := $(OPCUA_PREFIX)ia.owl.ttl
+MACHINETOOL_ONTOLOGY                := $(OPCUA_PREFIX)machinetool.owl.ttl
+LASERSYSTEMS_ONTOLOGY               := $(OPCUA_PREFIX)lasersystems.owl.ttl
+DICTIONARY_IRDI_ONTOLOGY            := $(OPCUA_PREFIX)dictionary_irdi.owl.ttl
+PADIM_ONTOLOGY                      := $(OPCUA_PREFIX)padim.owl.ttl
+PACKML_ONTOLOGY                     := $(OPCUA_PREFIX)packml.owl.ttl
 
 
 # Instance Definition and dependencies
 INSTANCE_URL           			:= $(INSTANCE_NODESET)
-INSTANCE_ONTOLOGY          		:=  instanceexample.ttl
+INSTANCE_ONTOLOGY          		:=  instanceexample.owl.ttl
 INSTANCE_OPTS					:= -p instanceexample -n $(ONTOLOGY_NS)
 INSTANCE_JSONLD_OPTS			:= -n $(INSTANCE_IRI)
 INSTANCE_TYPE					:= $(INSTANCE_TYPE)

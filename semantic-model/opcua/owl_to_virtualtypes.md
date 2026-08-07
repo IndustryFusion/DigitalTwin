@@ -1,6 +1,6 @@
 # Part 14 Specification: Semantic Bridge to OWL Virtual Types Transformation
 
-Implemented by `owl2virtualtypes.py` (`lib/owlbuilder.py`'s `OwlBuilder`).
+Implemented by `owl2vt.py` (`lib/owlbuilder.py`'s `OwlBuilder`).
 
 ## 1. Purpose
 
@@ -530,7 +530,7 @@ OPC UA permits a child to be aggregated (via `HasComponent`/`HasProperty` or ano
 
 ## Current Behavior
 
-Two modes exist, selected by `require_modelling_rule` (`owl2virtualtypes.py --require-modelling-rule`; `virtual_type_stats.py`'s `--include-unruled` is its inverse):
+Two modes exist, selected by `require_modelling_rule` (`owl2vt.py --require-modelling-rule`; `virtual_type_stats.py`'s `--include-unruled` is its inverse):
 
 - **Default (`require_modelling_rule=False`)**: an unruled child is processed exactly like any other declaration -- Virtual Type minted if section 6's criteria are met, `allValuesFrom` restriction generated (section 13/14). Since it has no ModellingRule, it can never be classified `is_optional=False`, so it never receives a cardinality restriction (section 16) either -- cardinality-wise it is treated exactly like `Optional`, even though conceptually it is always present, unconditionally, in every instance of the type.
 - **`require_modelling_rule=True`**: an unruled child is skipped entirely -- no Virtual Type, no restriction, and nothing nested inside it is visited either (the whole subtree beneath it is pruned). This is the strict, ModellingRule-literal reading of "Instance Declaration."

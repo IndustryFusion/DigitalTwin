@@ -15,22 +15,23 @@
 # limitations under the License.
 #
 """Transform a Semantic Bridge ttl (Part 5 / nodeset2owl.py output, e.g.
-core.ttl or a companion spec like di.ttl) into an OWL ontology of Virtual
-Types (Part 14 of owl_to_virtualtypes.md).
+core.owl.ttl or a companion spec like di.owl.ttl) into an OWL ontology of
+Virtual Types (Part 14 of owl_to_virtualtypes.md).
 
 What this actually does, in order:
 
 1. Parses the input ttl and undoes the base:instanceOf rewrite that Part 5
    applies to Object instance declarations, so Object and Variable
    declarations can be read uniformly.
-2. Resolves the input's own owl:imports (e.g. di.ttl importing core.ttl) by
-   loading each imported dependency into a *separate* graph, used only to
-   resolve cross-file references -- a companion spec's types routinely
-   subclass or aggregate a core type directly. Dependencies are never
-   rescanned for Virtual Types and never copied into the output: if core.ttl
-   was already processed into core.owl.ttl, this run only derives Virtual
-   Types for di.ttl's *own* new types, and the output owl:imports the
-   dependency's own already-generated Virtual-Types file instead of duplicating it.
+2. Resolves the input's own owl:imports (e.g. di.owl.ttl importing
+   core.owl.ttl) by loading each imported dependency into a *separate*
+   graph, used only to resolve cross-file references -- a companion spec's
+   types routinely subclass or aggregate a core type directly. Dependencies
+   are never rescanned for Virtual Types and never copied into the output:
+   if core.owl.ttl was already processed into core.vt.owl.ttl, this run only
+   derives Virtual Types for di.owl.ttl's *own* new types, and the output
+   owl:imports the dependency's own already-generated Virtual-Types file
+   instead of duplicating it.
 3. For every ObjectType/VariableType class the input file itself declares (or
    only the ones named via --roots), walks its Effective Declaration Tree --
    its own declared children plus everything inherited from its supertype
@@ -74,19 +75,20 @@ get_cdt still exists as a safety net against pathological cycles.
 
 Example:
 
-    # Full core.ttl (~600 types): takes roughly 10s and produces on the
+    # Full core.owl.ttl (~600 types): takes roughly 10s and produces on the
     # order of 10k Virtual Type classes / ~10MB of ttl.
-    python3 owl2virtualtypes.py core.ttl -o core.owl.ttl
+    python3 owl2vt.py core.owl.ttl -o core.vt.owl.ttl
 
-    # di.ttl declares `owl:imports <file:///.../core.ttl>` itself, so this
-    # auto-loads core.ttl for cross-referencing, but only derives Virtual
-    # Types for di.ttl's own new types, and its output owl:imports
-    # core.owl.ttl (run the line above first so that file actually exists):
-    python3 owl2virtualtypes.py di.ttl -o di.owl.ttl
+    # di.owl.ttl declares `owl:imports <file:///.../core.owl.ttl>` itself, so
+    # this auto-loads core.owl.ttl for cross-referencing, but only derives
+    # Virtual Types for di.owl.ttl's own new types, and its output
+    # owl:imports core.vt.owl.ttl (run the line above first so that file
+    # actually exists):
+    python3 owl2vt.py di.owl.ttl -o di.vt.owl.ttl
 
     # Fast first look, scoped to just the types you care about:
-    python3 owl2virtualtypes.py core.ttl --roots PumpType,MotorType \\
-        -o /tmp/pump.owl.ttl
+    python3 owl2vt.py core.owl.ttl --roots PumpType,MotorType \\
+        -o /tmp/pump.vt.owl.ttl
 """
 
 import os
@@ -106,7 +108,7 @@ def parse_args(args=sys.argv[1:]):
         description='Transform a Semantic Bridge ttl into an OWL ontology of Virtual Types.',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__)
-    parser.add_argument('input', help='Path to the Semantic Bridge ttl file, e.g. core.ttl or di.ttl')
+    parser.add_argument('input', help='Path to the Semantic Bridge ttl file, e.g. core.owl.ttl or di.owl.ttl')
     parser.add_argument('-o', '--output', help='Resulting file.', default=None)
     parser.add_argument('-i', '--inputs', nargs='*', default=None,
                         help='Additional already-processed dependency ttl file(s)/URL(s) to import, on '
@@ -145,9 +147,17 @@ def parse_args(args=sys.argv[1:]):
     return parser.parse_args(args)
 
 
-def owl_sibling_path(ttl_path):
-    stem = ttl_path[:-len('.ttl')] if ttl_path.endswith('.ttl') else ttl_path
-    return f'{stem}.owl.ttl'
+def vt_owl_sibling_path(owl_path):
+    """The Virtual-Types sibling of a Semantic Bridge *.owl.ttl path, e.g.
+    core.owl.ttl -> core.vt.owl.ttl. Falls back to stripping a bare .ttl for
+    any not-yet-renamed input."""
+    if owl_path.endswith('.owl.ttl'):
+        stem = owl_path[:-len('.owl.ttl')]
+    elif owl_path.endswith('.ttl'):
+        stem = owl_path[:-len('.ttl')]
+    else:
+        stem = owl_path
+    return f'{stem}.vt.owl.ttl'
 
 
 def file_uri_to_path(uri):
@@ -161,7 +171,7 @@ if __name__ == '__main__':
     input_path = args.input
     output_path = args.output
     if output_path is None:
-        output_path = owl_sibling_path(input_path)
+        output_path = vt_owl_sibling_path(input_path)
 
     basens = Namespace(args.baseOntology)
     opcuans = Namespace(args.opcuaNamespace)
@@ -171,8 +181,8 @@ if __name__ == '__main__':
     g = Graph(store='Oxigraph')
     g.parse(input_path)
 
-    # Auto-discover this file's own owl:imports (e.g. di.ttl declaring
-    # `owl:imports <file:///.../core.ttl>`), plus anything explicitly given via
+    # Auto-discover this file's own owl:imports (e.g. di.owl.ttl declaring
+    # `owl:imports <file:///.../core.owl.ttl>`), plus anything explicitly given via
     # -i/--inputs, and load them all (recursively, following *their* own
     # owl:imports too) into a separate dependency graph via the existing
     # OntologyLoader used by the Part-5 pipeline.
@@ -195,7 +205,7 @@ if __name__ == '__main__':
         own_count = len(builder.all_target_classes())
         print(f'No --roots given: generating Virtual Types for all {own_count} '
               'ObjectType/VariableType classes this file itself declares (not its imports). '
-              'This can take a while on the full core.ttl (~600 types); pass --roots to scope '
+              'This can take a while on the full core.owl.ttl (~600 types); pass --roots to scope '
               'a faster first look.')
 
     def report_progress(index, total, root):
@@ -210,7 +220,7 @@ if __name__ == '__main__':
 
     # Ontology header: same IRI/versionIRI/versionInfo as the input, but with
     # owl:imports rewritten to point at each dependency's own Virtual-Types
-    # sibling file (e.g. core.ttl -> core.owl.ttl) instead of the raw semantic
+    # sibling file (e.g. core.owl.ttl -> core.vt.owl.ttl) instead of the raw semantic
     # bridge file, and non-file:// imports (e.g. the generic base.ttl) carried
     # over unchanged since those aren't Part-14-processed dependencies.
     ontology_iri = next(g.subjects(RDF.type, OWL.Ontology), None)
@@ -224,10 +234,10 @@ if __name__ == '__main__':
             if local_path is None:
                 out.add((ontology_iri, OWL.imports, URIRef(imported)))
                 continue
-            sibling = owl_sibling_path(local_path)
+            sibling = vt_owl_sibling_path(local_path)
             if not os.path.exists(sibling):
                 print(f'Warning: dependency {local_path} has not been processed into {sibling} yet -- '
-                      f'run owl2virtualtypes.py on it first, or this owl:imports will 404.')
+                      f'run owl2vt.py on it first, or this owl:imports will 404.')
             out.add((ontology_iri, OWL.imports, URIRef(f'file://{sibling}')))
 
     elapsed = time.monotonic() - start
