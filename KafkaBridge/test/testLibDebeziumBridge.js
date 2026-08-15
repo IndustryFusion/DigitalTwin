@@ -514,7 +514,7 @@ describe('Test parseBeforeAfterEntity', function () {
           id: 'id\\8e35d5b0ad8ef2eadef775d2',
           name: 'https://example/hasList',
           nodeType: '@list',
-          type: 'https://uri.etsi.org/ngsi-ld/JsonProperty'
+          type: 'https://uri.etsi.org/ngsi-ld/ListProperty'
         }
       ],
       'https://example/hasRel': [{

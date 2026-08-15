@@ -230,7 +230,16 @@ module.exports = function DebeziumBridge (conf) {
               }
               lst = lst.map(item => item['@value']); // remove '@values' from expanded list
               attribute.attributeValue = JSON.stringify(lst);
-              attribute.type = 'https://uri.etsi.org/ngsi-ld/JsonProperty';
+              // A ListProperty is a ListProperty. This said JsonProperty --
+              // carried over from the branch above -- while nodeType correctly
+              // said '@list', so every list arrived mistyped. Two things read
+              // this field and both got it wrong: SHACL validation compares it
+              // against a shape's attributeType, so any constraint on a
+              // ListProperty raised a spurious NodeKind violation in Flink but
+              // not in the SQLite oracle; and CoreServices rebuilds NGSI-LD
+              // from it, emitting '"json":' instead of '"valueList":' and
+              // leaving its ListProperty branch unreachable.
+              attribute.type = 'https://uri.etsi.org/ngsi-ld/ListProperty';
               attribute.nodeType = '@list';
             }
           } else if (
