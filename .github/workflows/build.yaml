@@ -35,7 +35,7 @@ jobs:
         cd ../ && rm -rf sqlite3-pcre2
         source $CONDA/bin/activate
         conda activate py310
-        cd semantic-model/shacl2flink && make setup && make lint test build test-kms
+        cd semantic-model/shacl2flink && make setup && make lint test build test-kms test-opcua-shapes test-pyshacl-compare
     - name: Build Dataservice
       run: |
         source $CONDA/bin/activate
