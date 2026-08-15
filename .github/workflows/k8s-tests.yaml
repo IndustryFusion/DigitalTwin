@@ -59,5 +59,11 @@ jobs:
         source ./miniconda3/etc/profile.d/conda.sh
         conda activate py310
         ( cd semantic-model/shacl2flink && make setup && make lint test test-kms )
-        ( cd semantic-model/shacl2flink && make test-full-flink-deployment )
+        # Deploys a throwaway KMS, asserts real alerts on Kafka, tears it down.
+        # This replaces test-full-flink-deployment, which only proved the helm
+        # package deploys and undeploys: that is a strict subset of what this
+        # target does, so running both cost a second full deploy cycle for no
+        # extra coverage. The production ../kms is still compiled on every
+        # build by the Build workflow (make build), just not deployed here.
+        ( cd semantic-model/shacl2flink && make test-flink-e2e )
 
