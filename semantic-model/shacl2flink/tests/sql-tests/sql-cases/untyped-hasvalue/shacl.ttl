@@ -1,0 +1,16 @@
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix iff:    <https://industry-fusion.com/types/v0.9/> .
+@prefix ngsild: <https://uri.etsi.org/ngsi-ld/> .
+
+iff:GaugeShape
+    a sh:NodeShape ;
+    sh:targetClass iff:gauge ;
+    sh:property [
+        sh:path iff:setting ;
+        sh:nodeKind sh:BlankNode ;
+        sh:property [
+            sh:path ngsild:hasValue ;
+            sh:nodeKind sh:Literal ;
+            sh:hasValue "1.0" ;
+        ] ;
+    ] .

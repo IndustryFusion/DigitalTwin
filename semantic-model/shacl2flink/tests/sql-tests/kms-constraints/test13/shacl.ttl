@@ -1,0 +1,20 @@
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix iff:  <https://industry-fusion.com/types/v0.9/> .
+
+# A sub-attribute hanging off a RELATIONSHIP, which is the common NGSI-LD
+# pattern (a relationship carrying metadata such as trust or confidence).
+# The parent attribute is a Relationship; the sub-attribute is a Property, so
+# the constraint travels the property extraction path with the relationship as
+# its parent.
+iff:RelationSubAttrShape
+    a sh:NodeShape ;
+    sh:targetClass iff:depthtest ;
+    sh:property [
+        sh:path iff:hasPart ;
+        sh:property [
+            sh:path iff:trust ;
+            sh:property [ sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
+                          sh:nodeKind sh:Literal ;
+                          sh:maxInclusive 5 ] ;
+        ] ;
+    ] .

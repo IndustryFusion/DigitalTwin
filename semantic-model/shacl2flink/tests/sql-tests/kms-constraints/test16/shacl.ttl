@@ -1,0 +1,39 @@
+@prefix shacl: <http://my.test/shacl/> .
+@prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix test: <http://example.org/MinimalNodeset/> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+@prefix opcua: <http://opcfoundation.org/UA/> .
+
+# The sh:node form of test15, taken from the OPC UA generator's ValueRank
+# output (semantic-model/opcua/tests/owl2instances/
+# test_variable_arrays_vrs.NodeSet2.shacl). Instead of inlining the
+# scalar-or-array constraint at every variable, the generator factors it into a
+# named shape and points at it with sh:node.
+#
+# The models here are test15's, unchanged, and so are the expected results: the
+# indirection must not change what is validated. If these two directories ever
+# disagree, sh:node has stopped meaning "the same constraints, written once".
+shacl:ObjectTypeShape a sh:NodeShape ;
+    sh:property [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:node shacl:ValueRankShape_Any_double ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasVariable ;
+            base:hasReferenceType opcua:HasComponent ] ;
+    sh:targetClass test:ObjectType .
+
+shacl:ValueRankShape_Any_double a sh:NodeShape ;
+    sh:message "ValueRank constraint for valuerank=Any (-2) and datatype=double" ;
+    sh:or ( [ sh:property [ sh:datatype xsd:double ;
+                        sh:maxCount 1 ;
+                        sh:minCount 1 ;
+                        sh:nodeKind sh:Literal ;
+                        sh:path ngsi-ld:hasValue ] ] [ sh:property [ sh:maxCount 1 ;
+                        sh:minCount 1 ;
+                        sh:or ( [ sh:nodeKind sh:BlankNode ;
+                                    sh:property [ sh:datatype xsd:double ;
+                                            sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
+                        sh:path ngsi-ld:hasValueList ] ] ) .

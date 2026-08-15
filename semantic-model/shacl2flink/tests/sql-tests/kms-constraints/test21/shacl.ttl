@@ -1,0 +1,27 @@
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix iff:  <https://industry-fusion.com/types/v0.9/> .
+@prefix ngsild: <https://uri.etsi.org/ngsi-ld/> .
+
+# Zero as a constraint value.
+#
+# rdflib.Literal(0) is falsy, so parameters extracted with `if row.x` rather
+# than `if row.x is not None` treated a bound of 0 as "no bound given" and
+# dropped the constraint from the build. "at most zero errors" and "must not
+# be present" are ordinary things to write, and neither was enforced -- with
+# nothing said at build time, which makes it indistinguishable from a model
+# that conforms.
+#
+# Each zero-valued parameter is paired with a non-zero one of the same kind,
+# so a regression shows up as an asymmetry rather than as silence.
+iff:ZeroShape a sh:NodeShape ; sh:targetClass iff:depthtest ;
+    sh:property [ sh:path iff:errors ;
+        sh:property [ sh:path ngsild:hasValue ; sh:nodeKind sh:Literal ;
+                      sh:maxInclusive 0 ] ] ;
+    sh:property [ sh:path iff:temp ;
+        sh:property [ sh:path ngsild:hasValue ; sh:nodeKind sh:Literal ;
+                      sh:maxInclusive 50 ] ] ;
+    sh:property [ sh:path iff:drift ;
+        sh:property [ sh:path ngsild:hasValue ; sh:nodeKind sh:Literal ;
+                      sh:maxExclusive 0 ] ] ;
+    sh:property [ sh:path iff:banned ; sh:maxCount 0 ;
+        sh:property [ sh:path ngsild:hasValue ; sh:nodeKind sh:Literal ] ] .

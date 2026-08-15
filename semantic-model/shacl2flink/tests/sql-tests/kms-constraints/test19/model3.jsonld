@@ -1,0 +1,10 @@
+[
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld",
+    "id": "urn:opc:1",
+    "type": "http://example.org/MinimalNodeset/ObjectType",
+    "http://example.org/MinimalNodeset/hasDirect": { "type": "Property", "value": 50 },
+    "http://example.org/MinimalNodeset/hasReferenced": { "type": "Property", "value": "text" },
+    "http://example.org/MinimalNodeset/hasPlain": { "type": "Property", "value": 50 }
+  }
+]

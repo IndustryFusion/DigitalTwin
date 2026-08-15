@@ -80,14 +80,24 @@ accessible: {e}")
     sqlite3, (statementsets3, tables3, views3) = \
         translate_construct(shaclfile, knowledgefile)
 
-    sqlite, (statementsets, tables, views, constraints, postgres_constraints) = \
-        translate_properties(shaclfile, knowledgefile, prefixes)
+    try:
+        sqlite, (statementsets, tables, views, constraints, postgres_constraints) = \
+            translate_properties(shaclfile, knowledgefile, prefixes)
+    except utils.UnsupportedShape as unsupported:
+        # A build error, not a crash: print it plainly and stop. Compiling the
+        # rest would produce a deployable pipeline that quietly validates less
+        # than the shapes say it does.
+        print(f'ERROR: {unsupported}', file=sys.stderr)
+        sys.exit(1)
 
     sqlite2, (statementsets2, tables2, views2) = \
         translate_sparql(shaclfile, knowledgefile, prefixes)
 
-    tables = list(set(tables2).union(set(tables)).union(set(tables3)))  # deduplication
-    views = list(set(views2).union(set(views)).union(set(views3)))  # deduplication
+    # sorted, not just deduplicated: set iteration order varies per process, so
+    # an unsorted list here reshuffles the tables/views of every generated
+    # statement set from one build to the next
+    tables = sorted(set(tables2).union(set(tables)).union(set(tables3)))
+    views = sorted(set(views2).union(set(views)).union(set(views3)))
 
     split_statementsets = utils.split_statementsets(statementsets + statementsets2 + statementsets3,
                                                     configs.max_sql_configmap_size)

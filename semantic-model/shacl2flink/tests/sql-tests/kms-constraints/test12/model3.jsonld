@@ -1,0 +1,27 @@
+[
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "id": "urn:dt:1",
+    "type": "https://industry-fusion.com/types/v0.9/depthtest",
+    "https://industry-fusion.com/types/v0.9/temperature": {
+      "type": "Property",
+      "value": 30
+    },
+    "https://industry-fusion.com/types/v0.9/coolant": {
+      "type": "Property",
+      "value": "water"
+    },
+    "https://industry-fusion.com/types/v0.9/mode": {
+      "type": "Property",
+      "value": "FORBIDDEN"
+    },
+    "https://industry-fusion.com/types/v0.9/assembly": {
+      "type": "Property",
+      "value": "asm-1",
+      "https://industry-fusion.com/types/v0.9/torque": {
+        "type": "Property",
+        "value": 50
+      }
+    }
+  }
+]

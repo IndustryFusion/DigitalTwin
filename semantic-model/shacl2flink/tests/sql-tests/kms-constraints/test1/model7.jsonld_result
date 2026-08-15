@@ -1,3 +1,4 @@
 'urn:filter:2','ClassConstraintComponent(https://industry-fusion.com/types/v0.9/hasCartridge[0])','warning'
 'urn:lasercutter:1','ClassConstraintComponent(https://industry-fusion.com/types/v0.9/hasWorkpiece[0])','warning'
+'urn:workpiece:1','DatatypeConstraintComponent(https://industry-fusion.com/types/v0.9/material[0])','warning'
 'urn:workpiece:1','MaxInclusiveConstraintComponent(https://schema.org/depth[0])','warning'

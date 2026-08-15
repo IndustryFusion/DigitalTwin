@@ -1,0 +1,21 @@
+@prefix shacl: <http://my.test/shacl/> .
+@prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix test: <http://example.org/MinimalNodeset/> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+# sh:hasValue () -- the empty RDF list -- on its own, so the empty-list branch
+# is the only way to conform. In the OPC UA generator it always appears as one
+# arm of an sh:or beside "a list of the right datatype", where a passing model
+# says nothing about which arm carried it.
+shacl:ObjectTypeShape a sh:NodeShape ;
+    # the ordinary literal form, for comparison
+    sh:property [ sh:path test:hasGreeting ;
+        sh:property [ sh:path ngsi-ld:hasValue ;
+                      sh:nodeKind sh:Literal ;
+                      sh:hasValue "Hello World" ] ] ;
+    sh:property [ sh:path test:hasEmpty ;
+        sh:property [ sh:path ngsi-ld:hasValueList ;
+                      sh:hasValue () ] ] ;
+    sh:targetClass test:ObjectType .

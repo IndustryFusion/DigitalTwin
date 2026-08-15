@@ -34,6 +34,8 @@ def test_lib_shacl_prroperties_to_sql(mock_utils, mock_configs, mock_yaml,
     mock_utils.class_to_obj_name = identity
     mock_utils.camelcase_to_snake_case = identity
     mock_utils.init_constraint_check = utils.init_constraint_check
+    mock_utils.circuit_level_of = utils.circuit_level_of
+    mock_utils.in_stable_order = utils.in_stable_order
     mock_utils.add_table_values.return_value = ['value']
 
     mock_configs.attributes_table_obj_name = 'attributes'

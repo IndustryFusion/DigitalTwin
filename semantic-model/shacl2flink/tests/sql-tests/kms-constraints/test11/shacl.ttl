@@ -1,0 +1,55 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix iff:  <https://industry-fusion.com/types/v0.9/> .
+
+# Logical connectives. Every shape here used to extract to NOTHING and be
+# silently unvalidated, so these fixtures exist to pin down the behaviour, not
+# just the structure.
+
+iff:ConnectiveShape
+    a sh:NodeShape ;
+    sh:targetClass iff:connectivetest ;
+
+    # AND: both bounds must hold. Violated iff EITHER member is violated.
+    sh:property [
+        sh:path iff:andValue ;
+        sh:and (
+            [ sh:property [ sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
+                            sh:nodeKind sh:Literal ;
+                            sh:minInclusive 5 ] ]
+            [ sh:property [ sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
+                            sh:nodeKind sh:Literal ;
+                            sh:maxInclusive 50 ] ]
+        ) ;
+    ] ;
+
+    # XONE: exactly one branch must be satisfied. Violated when BOTH hold or
+    # NEITHER holds -- the case a plain OR cannot express.
+    sh:property [
+        sh:path iff:xoneValue ;
+        sh:xone (
+            [ sh:property [ sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
+                            sh:nodeKind sh:Literal ;
+                            sh:minInclusive 100 ] ]
+            [ sh:property [ sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
+                            sh:nodeKind sh:Literal ;
+                            sh:maxInclusive 10 ] ]
+        ) ;
+    ] ;
+
+    # Second XONE with OVERLAPPING branches, so the "both satisfied" position is
+    # reachable. With >=100 / <=10 above only "neither" can occur, and "both" is
+    # exactly what distinguishes XONE from OR.
+    sh:property [
+        sh:path iff:xoneBoth ;
+        sh:xone (
+            [ sh:property [ sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
+                            sh:nodeKind sh:Literal ;
+                            sh:minInclusive 10 ] ]
+            [ sh:property [ sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
+                            sh:nodeKind sh:Literal ;
+                            sh:maxInclusive 100 ] ]
+        ) ;
+    ] .

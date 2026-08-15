@@ -1,0 +1,10 @@
+
+# Python bytecode caches
+__pycache__/
+*.py[cod]
+
+# Compile artifacts from the opcua shape check
+tests/opcua-shapes/output/
+
+# Fixture build artifacts
+tests/sql-tests/*/*/output/

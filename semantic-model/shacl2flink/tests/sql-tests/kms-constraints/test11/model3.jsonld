@@ -1,0 +1,19 @@
+[
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "id": "urn:ct:1",
+    "type": "https://industry-fusion.com/types/v0.9/connectivetest",
+    "https://industry-fusion.com/types/v0.9/andValue": {
+      "type": "Property",
+      "value": 20
+    },
+    "https://industry-fusion.com/types/v0.9/xoneValue": {
+      "type": "Property",
+      "value": 50
+    },
+    "https://industry-fusion.com/types/v0.9/xoneBoth": {
+      "type": "Property",
+      "value": 5
+    }
+  }
+]

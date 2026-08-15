@@ -22,9 +22,21 @@ const path = require('path');
 const app = express();
 const bodyParser = require('body-parser');
 const RateLimit = require('express-rate-limit');
+// Strict budget for the endpoints that actually cost something: submitting a
+// job spawns a flink run, uploading a UDF writes to disk.
 const limiter = RateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100 // max 100 requests per windowMs
+});
+// The UDF GET endpoint is polled by the operator every few seconds for every
+// registered UDF, which is ~24 requests/minute with two of them. Sharing the
+// strict budget above exhausted the whole window within ~4 minutes and then
+// returned 429 to job submission for the remaining ~11, so a deploy could only
+// succeed if it happened to start just after a window rolled over. Reads are
+// cheap, so they get their own generous budget.
+const pollLimiter = RateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10000
 });
 
 const logger = require('./lib/logger.js');
@@ -215,7 +227,7 @@ function isValidUdfFilename (name) {
 app.use(express.json({ limit: '10mb' }));
 
 app.get('/health', appget);
-app.get('/v1/python_udf/:filename', limiter, udfget);
+app.get('/v1/python_udf/:filename', pollLimiter, udfget);
 
 app.post('/v1/sessions/:session_id/statements', limiter, apppost);
 app.post('/v1/python_udf/:filename', limiter, bodyParser.text(), udfpost);

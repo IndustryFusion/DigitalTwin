@@ -15,6 +15,7 @@
 #
 
 from unittest.mock import MagicMock, patch
+import json
 import os
 from rdflib import BNode, URIRef, XSD
 import unittest
@@ -168,3 +169,83 @@ class TestCreateNgsildModels(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+# An entity row must be emitted for a shape whose constraints live inside
+# connectives, not only for one with a property written directly on the node
+# shape. Without the row there is nothing for validation to join against, so
+# every constraint on that shape silently never fires -- the shapes compile,
+# the constraint tables are correct, and no alert ever comes.
+# tests/sql-tests/kms-constraints/test20 is the end-to-end case.
+ENTITY_MODEL = """
+@prefix iff: <https://industry-fusion.com/types/v0.9/> .
+<urn:dt:1> a iff:depthtest .
+"""
+
+CONNECTIVE_ONLY = """
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix iff: <https://industry-fusion.com/types/v0.9/> .
+@prefix ngsild: <https://uri.etsi.org/ngsi-ld/> .
+iff:S a sh:NodeShape ; sh:targetClass iff:depthtest ;
+    sh:or ( [ sh:xone ( [ sh:property [ sh:path iff:a ] ]
+                        [ sh:property [ sh:path iff:b ] ] ) ]
+            [ sh:property [ sh:path iff:c ] ] ) .
+"""
+
+DIRECT_PROPERTY = """
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix iff: <https://industry-fusion.com/types/v0.9/> .
+iff:S a sh:NodeShape ; sh:targetClass iff:depthtest ;
+    sh:property [ sh:path iff:a ] .
+"""
+
+
+def entities_found(shapes):
+    import rdflib
+    graph = rdflib.Graph()
+    graph.parse(data=shapes, format='turtle')
+    graph.parse(data=ENTITY_MODEL, format='turtle')
+    return {str(row[0]) for row in
+            graph.query(create_ngsild_models.ngsild_tables_query_noinference)}
+
+
+def test_connective_only_shape_yields_an_entity():
+    assert 'urn:dt:1' in entities_found(CONNECTIVE_ONLY), \
+        'a shape with all constraints inside connectives produced no entity, ' \
+        'so nothing it constrains would ever be validated'
+
+
+def test_direct_property_shape_still_yields_an_entity():
+    assert 'urn:dt:1' in entities_found(DIRECT_PROPERTY)
+
+
+# A list is serialised as JSON, not as a Python repr. str([1, 2]) is '[1, 2]'
+# while the KafkaBridge writes JSON.stringify -> '[1,2]', so the SQLite oracle
+# and Flink compared different strings for the same list. Worse, str(['a']) is
+# "['a']": not JSON, so `val IS JSON ARRAY` was false, and -- because the
+# single quotes closed the SQL string early -- the entire attributes INSERT
+# failed to parse. sqlite3 reports that on stderr, which the build never
+# checks, so every attribute of that model vanished and validation had nothing
+# left to check.
+def test_a_list_is_serialised_as_compact_json():
+    from rdflib import Literal
+    assert create_ngsild_models.nullify(Literal(json.dumps([1, 2], separators=(',', ':')))) \
+        == "'[1,2]'"
+
+
+def test_quotes_in_a_value_are_escaped():
+    from rdflib import Literal
+    assert create_ngsild_models.nullify(Literal("it's")) == "'it''s'"
+
+
+def test_a_list_of_strings_survives_as_valid_sql():
+    from rdflib import Literal
+    rendered = create_ngsild_models.nullify(
+        Literal(json.dumps(['abc', 'def'], separators=(',', ':'))))
+    assert rendered == '\'["abc","def"]\''
+    # what actually mattered: it parses
+    import sqlite3
+    conn = sqlite3.connect(':memory:')
+    conn.execute('CREATE TABLE t (v TEXT)')
+    conn.execute(f'INSERT INTO t VALUES ({rendered})')
+    assert conn.execute('SELECT v FROM t').fetchone()[0] == '["abc","def"]'

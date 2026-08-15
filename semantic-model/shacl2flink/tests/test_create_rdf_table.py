@@ -17,6 +17,7 @@
 import os.path
 from unittest.mock import patch, MagicMock
 import create_rdf_table
+import lib.utils as utils
 
 
 @patch('create_rdf_table.argparse')
@@ -51,6 +52,7 @@ def test_create_statementset(mock_utils, mock_configs, mock_hashlib):
     max_per_set = 1
     mock_configs.rdf_max_per_set = max_per_set
     mock_utils.format_node_type = format_node_type
+    mock_utils.in_stable_order = utils.in_stable_order
     graph.triples.return_value = [(s, p, o)]
     graph.__len__.return_value = max_per_set
     statementset = create_rdf_table.create_statementset(graph)

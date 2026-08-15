@@ -1,0 +1,27 @@
+[
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "id": "urn:dt:1",
+    "type": "https://industry-fusion.com/types/v0.9/depthtest",
+    "https://industry-fusion.com/types/v0.9/assembly": {
+      "type": "Property",
+      "value": "asm-1",
+      "https://industry-fusion.com/types/v0.9/torque": {
+        "type": "Property",
+        "value": "tq-1",
+        "https://industry-fusion.com/types/v0.9/bolt": {
+          "type": "Property",
+          "value": 50
+        }
+      }
+    },
+    "https://industry-fusion.com/types/v0.9/housing": {
+      "type": "Property",
+      "value": "hs-1",
+      "https://industry-fusion.com/types/v0.9/temperature": {
+        "type": "Property",
+        "value": 90
+      }
+    }
+  }
+]

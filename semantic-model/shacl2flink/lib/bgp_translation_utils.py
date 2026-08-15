@@ -13,13 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import sys
-import os
 import re
-import random
+import itertools
 from rdflib import Namespace, URIRef, Variable, BNode, Literal
 from rdflib.namespace import RDF
 import copy
+import lib.utils as utils
+import lib.configs as configs
 
 
 basequery = """
@@ -33,10 +33,6 @@ SELECT DISTINCT
 
 ngsild = Namespace("https://uri.etsi.org/ngsi-ld/")
 
-file_dir = os.path.dirname(__file__)
-sys.path.append(file_dir)
-import utils  # noqa: E402
-import configs  # noqa: E402
 
 replace_attributes_prefix = 'REPLACE_ATTRIBUTES_TABLE_FOR_'
 replace_attributes_postfix = 'POSTFIX'
@@ -271,8 +267,26 @@ of triples {str(triples)}")
     return result
 
 
-def get_random_string(num):
-    return ''.join(random.choice('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789') for _ in range(num))
+ALIAS_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+_alias_counter = itertools.count()
+
+
+def get_unique_suffix(num):
+    """
+    A suffix that makes a generated SQL alias unique.
+
+    This used to be random, which meant the same shapes compiled to different
+    SQL on every build -- so every rebuild looked like a change to helm even
+    when nothing had. Uniqueness within one translation is all that is needed,
+    and a counter gives that without the churn. Rendered in the same alphabet
+    and width so aliases keep their shape.
+    """
+    value = next(_alias_counter)
+    digits = []
+    for _ in range(num):
+        value, remainder = divmod(value, len(ALIAS_ALPHABET))
+        digits.append(ALIAS_ALPHABET[remainder])
+    return ''.join(reversed(digits))
 
 
 def create_ngsild_mappings(ctx, sorted_graph):
@@ -498,7 +512,7 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
     # ?var a ?type is allowed an the only connection between the knowledge and the model
     # if a new variable is found, which is neither property, nor entity, it will be bound
     # by RDF query
-    rdftable_name = create_tablename(s, p, ctx['namespace_manager']) + get_random_string(10)
+    rdftable_name = create_tablename(s, p, ctx['namespace_manager']) + get_unique_suffix(10)
 
     # Process Subject.
     # If subject is variable AND NGSI-LD Entity, there is a few special cases which are allowed.
@@ -629,7 +643,7 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
                                                 'join_condition': f'{join_condition}'})
 
         for (bs, bp, bo) in local_ctx['h'].triples((o, None, None)):
-            bo_rdftable_name = create_tablename(bo, bp, ctx['namespace_manager']) + get_random_string(10)
+            bo_rdftable_name = create_tablename(bo, bp, ctx['namespace_manager']) + get_unique_suffix(10)
             bo_predicate_join_condition = f'{bo_rdftable_name}.predicate = {utils.format_node_type(bp)} and \
 {rdftable_name}.object = {bo_rdftable_name}.subject'
             object_join_bound = get_rdf_join_condition(bo, ctx['property_variables'],

@@ -1,0 +1,21 @@
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix iff:  <https://industry-fusion.com/types/v0.9/> .
+@prefix ngsild: <https://uri.etsi.org/ngsi-ld/> .
+
+# sh:datatype on LIST ELEMENTS -- the shape the OPC UA generator puts on every
+# array-valued variable.
+#
+# The element datatype used to be dropped during extraction, so "a list of
+# integers" compiled to "is a JSON array" and a list of strings satisfied it.
+# Checking it needs two things that were also wrong: both dialects must
+# serialise the list identically (they now emit compact JSON), and REGEXP must
+# be called with the argument order each dialect actually uses -- SQLite's is
+# (pattern, subject), Flink's is (subject, pattern).
+iff:ListShape a sh:NodeShape ; sh:targetClass iff:depthtest ;
+    sh:property [ sh:path iff:nums ;
+        sh:property [ sh:path ngsild:hasValueList ;
+            sh:nodeKind sh:BlankNode ;
+            sh:property [ sh:datatype xsd:integer ;
+                          sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] ] .

@@ -1,0 +1,37 @@
+# A four-layer constraint circuit: leaves -> AND -> XONE -> OR -> publish.
+#
+# Levels matter because the evaluator is unrolled one SQL statement per level,
+# and in SQLite those statements run once, in file order -- there is no
+# incremental propagation the way Flink gives for free. That is sound only
+# because the circuit is a DAG (recursive shapes are rejected at build time)
+# and a node's level is 1 + max(level of its members), so every edge points
+# strictly upwards and one pass in ascending level order suffices. Nothing
+# needs to iterate to a fixpoint.
+#
+# The other fixtures only reach level 2, so this is what actually exercises
+# that reasoning: model2 violates all four leaves, and the alert it must raise
+# is the root OR at level 3 -- which is only reachable if level 1's rows were
+# visible to level 2 and level 2's to level 3.
+#
+# This shape also carries NO direct sh:property -- every constraint sits inside
+# a connective. create_ngsild_models used to require a direct one before it
+# would emit an entity row at all, so a shape like this produced no entity,
+# nothing for validation to join against, and every constraint on it silently
+# never fired. The circuit compiled perfectly and was simply never evaluated.
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix iff:  <https://industry-fusion.com/types/v0.9/> .
+@prefix ngsild: <https://uri.etsi.org/ngsi-ld/> .
+
+iff:DeepShape a sh:NodeShape ; sh:targetClass iff:depthtest ;
+    sh:or (
+        [ sh:xone (
+            [ sh:and (
+                [ sh:property [ sh:path iff:a ;
+                    sh:property [ sh:path ngsild:hasValue ; sh:nodeKind sh:Literal ; sh:maxInclusive 50 ] ] ]
+                [ sh:property [ sh:path iff:b ;
+                    sh:property [ sh:path ngsild:hasValue ; sh:nodeKind sh:Literal ; sh:maxInclusive 50 ] ] ] ) ]
+            [ sh:property [ sh:path iff:c ;
+                sh:property [ sh:path ngsild:hasValue ; sh:nodeKind sh:Literal ; sh:maxInclusive 50 ] ] ] ) ]
+        [ sh:property [ sh:path iff:d ;
+            sh:property [ sh:path ngsild:hasValue ; sh:nodeKind sh:Literal ; sh:maxInclusive 50 ] ] ]
+    ) .

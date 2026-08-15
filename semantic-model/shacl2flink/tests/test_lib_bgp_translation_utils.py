@@ -149,12 +149,11 @@ def test_create_ngsild_mappings_reverse(monkeypatch):
     assert time_variables == {}
 
 
-@patch('lib.bgp_translation_utils.get_random_string')
-@patch('lib.utils.create_varname')
+@patch('lib.bgp_translation_utils.get_unique_suffix')
 @patch('lib.bgp_translation_utils.create_tablename')
 @patch('lib.bgp_translation_utils.isentity')
 def test_process_rdf_spo_predicate_is_rdftype_object_is_iri(mock_isentity, mock_create_table_name,
-                                                            mock_create_varname, mock_get_random_string, monkeypatch):
+                                                            mock_get_unique_suffix, monkeypatch):
     relationships = {
         "https://industry-fusion.com/types/v0.9/hasFilter": True
     }
@@ -163,8 +162,7 @@ def test_process_rdf_spo_predicate_is_rdftype_object_is_iri(mock_isentity, mock_
     }
     mock_create_table_name.return_value = 'testtable'
     mock_isentity.return_value = True
-    mock_create_varname.return_value = 'f'
-    mock_get_random_string.return_value = ''
+    mock_get_unique_suffix.return_value = ''
     ctx = {
         'namespace_manager': None,
         'bounds': {'this': 'THISTABLE.id'},
@@ -192,11 +190,11 @@ def test_process_rdf_spo_predicate_is_rdftype_object_is_iri(mock_isentity, mock_
 
 
 @patch('lib.bgp_translation_utils.get_rdf_join_condition')
-@patch('lib.bgp_translation_utils.get_random_string')
+@patch('lib.bgp_translation_utils.get_unique_suffix')
 @patch('lib.bgp_translation_utils.create_tablename')
 @patch('lib.bgp_translation_utils.isentity')
 def test_process_rdf_spo_predicate_is_rdf_type_object_is_variable(mock_isentity, mock_create_table_name,
-                                                                  mock_get_random_string, mock_get_rdf_join_condiion,
+                                                                  mock_get_unique_suffix, mock_get_rdf_join_condiion,
                                                                   monkeypatch):
     def create_varname(var):
         if var == term.Variable('f'):
@@ -213,7 +211,7 @@ def test_process_rdf_spo_predicate_is_rdf_type_object_is_variable(mock_isentity,
     monkeypatch.setattr(lib.utils, "create_varname", create_varname)
     mock_create_table_name.return_value = 'testtable'
     mock_isentity.return_value = True
-    mock_get_random_string.return_value = ''
+    mock_get_unique_suffix.return_value = ''
     mock_get_rdf_join_condiion.return_value = 'condition'
     ctx = {
         'namespace_manager': None,
@@ -269,13 +267,12 @@ def test_process_rdf_spo_predicate_is_rdf_type_object_is_variable(mock_isentity,
 
 
 @patch('lib.bgp_translation_utils.get_rdf_join_condition')
-@patch('lib.bgp_translation_utils.get_random_string')
-@patch('lib.utils.create_varname')
+@patch('lib.bgp_translation_utils.get_unique_suffix')
 @patch('lib.bgp_translation_utils.create_tablename')
 @patch('lib.bgp_translation_utils.isentity')
-def test_process_rdf_spo_subject_is_no_entity(mock_isentity, mock_create_table_name, mock_create_varname,
-                                              mock_get_random_string, mock_get_rdf_join_condition,
-                                              monkeypatch):
+def test_process_rdf_spo_subject_is_no_entity(mock_isentity, mock_create_table_name,
+                                              mock_get_unique_suffix,
+                                              mock_get_rdf_join_condition, monkeypatch):
     relationships = {
         "https://industry-fusion.com/types/v0.9/hasFilter": True
     }
@@ -284,8 +281,7 @@ def test_process_rdf_spo_subject_is_no_entity(mock_isentity, mock_create_table_n
     }
     mock_create_table_name.return_value = 'testtable'
     mock_isentity.return_value = False
-    mock_create_varname.return_value = 'f'
-    mock_get_random_string.return_value = ''
+    mock_get_unique_suffix.return_value = ''
     mock_get_rdf_join_condition.return_value = 'condition'
     ctx = {
         'namespace_manager': None,
@@ -346,12 +342,11 @@ testtable.predicate = '<predicate>' and testtable.object = condition"}]
 
 @patch('lib.bgp_translation_utils.utils')
 @patch('lib.bgp_translation_utils.get_rdf_join_condition')
-@patch('lib.bgp_translation_utils.get_random_string')
-@patch('lib.utils.create_varname')
+@patch('lib.bgp_translation_utils.get_unique_suffix')
 @patch('lib.bgp_translation_utils.create_tablename')
 @patch('lib.bgp_translation_utils.isentity')
 def test_process_rdf_spo_subject_is_no_entity_and_predicate_is_type(mock_isentity, mock_create_table_name,
-                                                                    mock_create_varname, mock_get_random_string,
+                                                                    mock_get_unique_suffix,
                                                                     mock_get_rdf_join_condition, mock_utils,
                                                                     monkeypatch):
     relationships = {
@@ -362,8 +357,7 @@ def test_process_rdf_spo_subject_is_no_entity_and_predicate_is_type(mock_isentit
     }
     mock_create_table_name.return_value = 'testtable'
     mock_isentity.return_value = True
-    mock_create_varname.return_value = 'f'
-    mock_get_random_string.return_value = ''
+    mock_get_unique_suffix.return_value = ''
     mock_get_rdf_join_condition.return_value = 'condition'
     ctx = {
         'namespace_manager': None,
@@ -398,12 +392,11 @@ def test_process_rdf_spo_subject_is_no_entity_and_predicate_is_type(mock_isentit
 
 
 @patch('lib.bgp_translation_utils.get_rdf_join_condition')
-@patch('lib.bgp_translation_utils.get_random_string')
-@patch('lib.utils.create_varname')
+@patch('lib.bgp_translation_utils.get_unique_suffix')
 @patch('lib.bgp_translation_utils.create_tablename')
 @patch('lib.bgp_translation_utils.isentity')
 def test_process_rdf_spo_subject_is_entity_and_predicate_is_type(mock_isentity, mock_create_table_name,
-                                                                 mock_create_varname, mock_get_random_string,
+                                                                 mock_get_unique_suffix,
                                                                  mock_get_rdf_join_condition, monkeypatch):
     relationships = {
         "https://industry-fusion.com/types/v0.9/hasFilter": True
@@ -413,8 +406,7 @@ def test_process_rdf_spo_subject_is_entity_and_predicate_is_type(mock_isentity, 
     }
     mock_create_table_name.return_value = 'testtable'
     mock_isentity.return_value = False
-    mock_create_varname.return_value = 'f'
-    mock_get_random_string.return_value = ''
+    mock_get_unique_suffix.return_value = ''
     mock_get_rdf_join_condition.return_value = 'condition'
 
     ctx = {
@@ -444,12 +436,12 @@ def test_process_rdf_spo_subject_is_entity_and_predicate_is_type(mock_isentity, 
 
 
 @patch('lib.bgp_translation_utils.get_rdf_join_condition')
-@patch('lib.bgp_translation_utils.get_random_string')
-@patch('lib.utils.create_varname')
+@patch('lib.bgp_translation_utils.get_unique_suffix')
 @patch('lib.bgp_translation_utils.create_tablename')
 @patch('lib.bgp_translation_utils.isentity')
-def test_process_rdf_spo_blank_node(mock_isentity, mock_create_table_name, mock_create_varname,
-                                    mock_get_random_string, mock_get_rdf_join_condition, monkeypatch):
+def test_process_rdf_spo_blank_node(mock_isentity, mock_create_table_name,
+                                    mock_get_unique_suffix,
+                                    mock_get_rdf_join_condition, monkeypatch):
     relationships = {
         "https://industry-fusion.com/types/v0.9/hasFilter": True
     }
@@ -458,8 +450,7 @@ def test_process_rdf_spo_blank_node(mock_isentity, mock_create_table_name, mock_
     }
     mock_create_table_name.side_effect = ['testtable', 'testtable2']
     mock_isentity.return_value = False
-    mock_create_varname.return_value = 'f'
-    mock_get_random_string.return_value = ''
+    mock_get_unique_suffix.return_value = ''
     mock_get_rdf_join_condition.return_value = 'condition'
     h = rGraph()
     h.add((term.BNode('1'), term.URIRef('predicate2'), term.Variable('x')))
@@ -494,12 +485,10 @@ testtable.predicate = '<predicate>' and testtable.object LIKE '_:%'"}
 testtable2.predicate = '<predicate2>' and testtable.object = testtable2.subject and testtable2.object = condition"}
 
 
-@patch('lib.bgp_translation_utils.get_random_string')
-@patch('lib.utils.create_varname')
+@patch('lib.bgp_translation_utils.get_unique_suffix')
 @patch('lib.bgp_translation_utils.create_tablename')
 @patch('lib.bgp_translation_utils.isentity')
-def test_process_ngsild_spo_hasValue(mock_isentity, mock_create_table_name, mock_create_varname,
-                                     mock_get_random_string, monkeypatch):
+def test_process_ngsild_spo_hasValue(mock_isentity, mock_create_table_name, mock_get_unique_suffix, monkeypatch):
     relationships = {
         "https://industry-fusion.com/types/v0.9/hasFilter": True
     }
@@ -508,8 +497,7 @@ def test_process_ngsild_spo_hasValue(mock_isentity, mock_create_table_name, mock
     }
     mock_create_table_name.return_value = 'testtable'
     mock_isentity.return_value = True
-    mock_create_varname.return_value = 'f'
-    mock_get_random_string.return_value = ''
+    mock_get_unique_suffix.return_value = ''
     mock_h = MagicMock()
     mock_h.predicates.return_value = [hasValueURI]
     mock_h.objects.return_value = [term.Variable('v1')]
@@ -546,7 +534,6 @@ and FTABLE.id = FSTATETABLE.entityId and FSTATETABLE.type = 'https://uri.etsi.or
 IFNULL(FSTATETABLE.`deleted`, FALSE) IS FALSE and FSTATETABLE.parentId IS NULL"}]
 
     # Test with bound v1
-    mock_create_varname.return_value = 'v1'
 
     ctx = {
         'namespace_manager': None,
@@ -581,12 +568,10 @@ IFNULL(FSTATETABLE.`deleted`, FALSE) IS FALSE and FSTATETABLE.parentId IS NULL"}
 FSTATETABLE.parentId IS NULL"}]
 
 
-@patch('lib.bgp_translation_utils.get_random_string')
-@patch('lib.utils.create_varname')
+@patch('lib.bgp_translation_utils.get_unique_suffix')
 @patch('lib.bgp_translation_utils.create_tablename')
 @patch('lib.bgp_translation_utils.isentity')
-def test_process_ngsild_spo_hasObject(mock_isentity, mock_create_table_name, mock_create_varname,
-                                      mock_get_random_string, monkeypatch):
+def test_process_ngsild_spo_hasObject(mock_isentity, mock_create_table_name, mock_get_unique_suffix, monkeypatch):
     relationships = {
         "https://industry-fusion.com/types/v0.9/hasFilter": True
     }
@@ -595,8 +580,7 @@ def test_process_ngsild_spo_hasObject(mock_isentity, mock_create_table_name, moc
     }
     mock_create_table_name.return_value = 'testtable'
     mock_isentity.return_value = True
-    mock_create_varname.return_value = 'f'
-    mock_get_random_string.return_value = ''
+    mock_get_unique_suffix.return_value = ''
     mock_h = MagicMock()
     mock_h.predicates.return_value = [hasObjectURI]
     mock_h.objects.return_value = [term.Variable('f')]
@@ -636,7 +620,6 @@ and FHAS_FILTERTABLE.type = 'https://uri.etsi.org/ngsi-ld/Relationship' and \
 IFNULL(FTABLE.`deleted`, FALSE) IS FALSE"}]
 
     # Test with bound v1
-    mock_create_varname.return_value = 'v1'
 
     ctx = {
         'namespace_manager': None,
@@ -674,12 +657,10 @@ CHAS_FILTERTABLE.`attributeValue` and CHAS_FILTERTABLE.type = \
 'https://uri.etsi.org/ngsi-ld/Relationship' and IFNULL(FTABLE.`deleted`, FALSE) IS FALSE"}]
 
 
-@patch('lib.bgp_translation_utils.get_random_string')
-@patch('lib.utils.create_varname')
+@patch('lib.bgp_translation_utils.get_unique_suffix')
 @patch('lib.bgp_translation_utils.create_tablename')
 @patch('lib.bgp_translation_utils.isentity')
-def test_process_ngsild_spo_obj_defined(mock_isentity, mock_create_table_name, mock_create_varname,
-                                        mock_get_random_string, monkeypatch):
+def test_process_ngsild_spo_obj_defined(mock_isentity, mock_create_table_name, mock_get_unique_suffix, monkeypatch):
     relationships = {
         "https://industry-fusion.com/types/v0.9/hasFilter": True
     }
@@ -688,8 +669,7 @@ def test_process_ngsild_spo_obj_defined(mock_isentity, mock_create_table_name, m
     }
     mock_create_table_name.return_value = 'testtable'
     mock_isentity.return_value = True
-    mock_create_varname.return_value = 'f'
-    mock_get_random_string.return_value = ''
+    mock_get_unique_suffix.return_value = ''
     mock_h = MagicMock()
     mock_h.predicates.return_value = [hasObjectURI]
     mock_h.objects.return_value = [term.Variable('f')]
@@ -730,20 +710,17 @@ IFNULL(FHAS_FILTERTABLE.`deleted`, FALSE) IS FALSE"},
 AND IFNULL(FTABLE.`deleted`, FALSE) IS FALSE and FHAS_FILTERTABLE.parentId IS NULL"}]
 
 
-@patch('lib.bgp_translation_utils.get_random_string')
-@patch('lib.utils.create_varname')
+@patch('lib.bgp_translation_utils.get_unique_suffix')
 @patch('lib.bgp_translation_utils.create_tablename')
 @patch('lib.bgp_translation_utils.isentity')
-def test_process_ngsild_spo_time_vars(mock_isentity, mock_create_table_name, mock_create_varname,
-                                      mock_get_random_string, monkeypatch):
+def test_process_ngsild_spo_time_vars(mock_isentity, mock_create_table_name, mock_get_unique_suffix, monkeypatch):
     relationships = {
     }
     properties = {
     }
     mock_create_table_name.return_value = 'testtable'
     mock_isentity.return_value = True
-    mock_create_varname.return_value = 'f'
-    mock_get_random_string.return_value = ''
+    mock_get_unique_suffix.return_value = ''
     mock_h = MagicMock()
     mock_h.predicates.return_value = [observedAtURI]
     mock_h.objects.return_value = [term.Variable('f')]

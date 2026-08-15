@@ -15,6 +15,7 @@
 #
 
 from rdflib import Graph, BNode, XSD, Literal
+import json
 import os
 import sys
 import argparse
@@ -82,6 +83,7 @@ order by ?observedAt
 
 ngsild_tables_query_noinference = """
 PREFIX iff: <https://industry-fusion.com/types/v0.9/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
@@ -95,7 +97,12 @@ where {
     ?type rdfs:subClassOf* ?basetype .
     ?tabletype rdfs:subClassOf* ?basetype .
     ?type rdfs:subClassOf* ?tabletype .
-    ?nodeshape sh:property [ sh:path ?field ;] .
+    # A property shape reached through any number of connectives counts, not
+    # only one written directly on the node shape. A shape that puts all of
+    # its constraints inside sh:or/sh:and/sh:xone/sh:not otherwise produced no
+    # entity row at all -- and with no entity there is nothing for validation
+    # to join against, so every constraint on it silently never fired.
+    ?nodeshape (((sh:or|sh:and|sh:xone)/rdf:rest*/rdf:first)|sh:not)*/sh:property [ sh:path ?field ;] .
     FILTER(?tabletype != rdfs:Resource && ?tabletype != owl:Thing && ?tabletype != owl:Nothing )
     }
     ORDER BY ?id STR(?field)
@@ -103,11 +110,19 @@ where {
 
 
 def nullify(field):
+    """
+    Render a value as a SQL literal, or NULL.
+
+    The quote doubling is not decoration. Without it a value containing an
+    apostrophe -- or a list of strings, which used to be rendered with Python
+    repr and so arrived full of single quotes -- closed the string early and
+    the whole INSERT failed to parse. sqlite3 reports that on stderr and the
+    build does not check it, so every attribute of that model silently
+    vanished and validation then had nothing to check.
+    """
     if field is None:
-        field = 'NULL'
-    else:
-        field = "'" + str(field.toPython()) + "'"
-    return field
+        return 'NULL'
+    return "'" + str(field.toPython()).replace("'", "''") + "'"
 
 
 class StringIndexer:
@@ -167,10 +182,11 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
         attributes_model = model + g + knowledge
         entity_table_name = configs.kafka_topic_ngsi_prefix_name
         qres = attributes_model.query(attributes_query)
-        first = True
-        if len(qres) > 0:
-            print(f'INSERT INTO `{configs.attributes_table_name}` VALUES',
-                  file=sqlitef)
+        # Collect the rows and sort the finished text. Sorting the query result
+        # is not enough: two rows can share every binding this query projects
+        # and still differ once the id and parentId are derived, and a stable
+        # sort then just preserves whatever order the store happened to yield.
+        attribute_rows = []
         for entityId, name, type, nodeType, valueType, hasValue, \
                 hasObject, hasValueList, hasJSON, observedAt, index, unitCode in qres:
             id, entityId, parentId = get_entity_id_and_parentId(entityId, name, index, attributes_model)
@@ -197,26 +213,34 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
                         valueType = XSD.string
             elif str(type) == 'https://uri.etsi.org/ngsi-ld/ListProperty':
                 py_list = utils.rdf_list_to_pylist(attributes_model, hasValueList)
-                attributeValue = nullify(Literal(str(py_list)))
+                # JSON, not Python repr. str([1, 2]) is '[1, 2]' and
+                # str(['a']) is "['a']" -- the first disagrees with the
+                # KafkaBridge's JSON.stringify ('[1,2]') so the SQLite oracle
+                # and Flink compared different strings, and the second is not
+                # JSON at all, so `val IS JSON ARRAY` was false and a valid
+                # list of strings was reported as a datatype violation.
+                # separators=(',', ':') matches JSON.stringify exactly.
+                attributeValue = nullify(Literal(json.dumps(py_list, separators=(',', ':'))))
                 nodeType = '@list'
             elif str(type) == 'https://uri.etsi.org/ngsi-ld/JsonProperty':
                 attributeValue = nullify(hasJSON)
                 nodeType = '@json'
-            if first:
-                first = False
-            else:
-                print(',', file=sqlitef)
             current_timestamp = "CURRENT_TIMESTAMP"
             if observedAt is not None:
                 current_timestamp = f"'{str(observedAt)}'"
-            print("('" + id + "', " + parentId + ", '" + entityId.toPython() + "', '" +
-                  name.toPython() +
-                  "', '" + nodeType + "', " + valueType + ", '" + type.toPython() + "', " + attributeValue +
-                  ", " + str(current_dataset_id) +
-                  ", " + unitCode +
-                  ", CAST(NULL AS STRING), CAST(NULL AS BOOLEAN), CAST(NULL AS BOOLEAN), " + current_timestamp +
-                  ")", end='',
+            attribute_rows.append(
+                "('" + id + "', " + parentId + ", '" + entityId.toPython() + "', '" +
+                name.toPython() +
+                "', '" + nodeType + "', " + valueType + ", '" + type.toPython() + "', " + attributeValue +
+                ", " + str(current_dataset_id) +
+                ", " + unitCode +
+                ", CAST(NULL AS STRING), CAST(NULL AS BOOLEAN), CAST(NULL AS BOOLEAN), " + current_timestamp +
+                ")")
+        if attribute_rows:
+            print(f'INSERT INTO `{configs.attributes_table_name}` VALUES',
                   file=sqlitef)
+            print(',\n'.join(str(row) for row in sorted(attribute_rows, key=str)),
+                  end='', file=sqlitef)
         print(";", file=sqlitef)
 
         # Create ngsild tables by sparql
@@ -239,8 +263,8 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
                 tables[key][idstr].append(type.toPython())
                 tables[key][idstr].append('CAST(NULL as BOOLEAN)')
                 tables[key][idstr].append('CURRENT_TIMESTAMP')
-        for type, ids in tables.items():
-            for id, table in ids.items():
+        for type, ids in sorted(tables.items(), key=str):
+            for id, table in sorted(ids.items(), key=str):
                 print(f'INSERT INTO `{entity_table_name}` VALUES',
                       file=sqlitef)
                 first = True

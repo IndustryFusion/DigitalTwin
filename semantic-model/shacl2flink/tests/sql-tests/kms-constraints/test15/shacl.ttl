@@ -1,0 +1,33 @@
+@prefix shacl: <http://my.test/shacl/> .
+@prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix test: <http://example.org/MinimalNodeset/> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+@prefix opcua: <http://opcfoundation.org/UA/> .
+
+# Taken verbatim from the OPC UA generator's output
+# (semantic-model/opcua/tests/owl2instances/test_minimal_object.NodeSet2.shacl).
+# This is the dominant shape it emits: an OPC UA variable is either a scalar or
+# an array, so every variable becomes sh:or(hasValue, hasValueList), with the
+# array branch itself an sh:or of "a list of the right datatype" and the empty
+# list. base:hasReferenceType is a non-SHACL annotation the generator attaches,
+# and must simply be ignored.
+shacl:ObjectTypeShape a sh:NodeShape ;
+    sh:property [ sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:or ( [ sh:property [ sh:datatype xsd:double ;
+                                sh:maxCount 1 ;
+                                sh:minCount 1 ;
+                                sh:nodeKind sh:Literal ;
+                                sh:path ngsi-ld:hasValue ] ] [ sh:property [ sh:maxCount 1 ;
+                                sh:minCount 1 ;
+                                sh:or ( [ sh:nodeKind sh:BlankNode ;
+                                            sh:property [ sh:datatype xsd:double ;
+                                                    sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
+                                sh:path ngsi-ld:hasValueList ] ] ) ;
+            sh:path test:hasVariable ;
+            base:hasReferenceType opcua:HasComponent ] ;
+    sh:targetClass test:ObjectType .

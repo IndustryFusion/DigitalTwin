@@ -1,0 +1,63 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix iff:  <https://industry-fusion.com/types/v0.9/> .
+
+# Three capabilities that previously extracted to nothing and were silently
+# unvalidated, or are depth-limited:
+#   * a connective attached to the NODE shape, whose branches constrain
+#     DIFFERENT properties -- inexpressible at property level
+#   * sh:not
+#   * a sub-attribute (one level of sh:property nesting below the attribute)
+
+iff:NodeLevelShape
+    a sh:NodeShape ;
+    sh:targetClass iff:depthtest ;
+
+    # "Either the temperature is at most 50, OR a coolant is present."
+    # No single sh:path covers both, so this can only be a node-level OR.
+    # Violated only when BOTH branches are violated.
+    sh:or (
+        [ sh:property [
+            sh:path iff:temperature ;
+            sh:property [ sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
+                          sh:nodeKind sh:Literal ;
+                          sh:maxInclusive 50 ] ] ]
+        [ sh:property [
+            sh:path iff:coolant ;
+            sh:property [ sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
+                          sh:nodeKind sh:Literal ;
+                          sh:minLength 1 ] ] ]
+    ) ;
+
+    # sh:not -- the value must NOT be "FORBIDDEN".
+    sh:property [
+        sh:path iff:mode ;
+        sh:not [
+            sh:property [ sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
+                          sh:nodeKind sh:Literal ;
+                          sh:in ( "FORBIDDEN" ) ]
+        ] ;
+    ] .
+
+# Depth: a constraint on a SUB-attribute, i.e. an attribute hanging off another
+# attribute. This is the propertyPath/subpropertyPath split, and it is the
+# deepest nesting MAX_SUBPROPERTY_DEPTH currently allows.
+iff:DepthShape
+    a sh:NodeShape ;
+    sh:targetClass iff:depthtest ;
+    sh:property [
+        sh:path iff:assembly ;
+        sh:property [
+            sh:path iff:torque ;
+            # The sub-attribute must be PRESENT. A1 used to require the
+            # sub-attribute's join to match before a constraint on it produced
+            # any row at all, so a missing torque produced no row, no count,
+            # and no alert -- the one case this constraint exists to catch.
+            sh:minCount 1 ;
+            sh:property [ sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
+                          sh:nodeKind sh:Literal ;
+                          sh:maxInclusive 100 ] ;
+        ] ;
+    ] .
