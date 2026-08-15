@@ -1,0 +1,7 @@
+PREFIX rdfs:  <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX iff:   <https://industry-fusion.com/types/v0.9/>
+
+iff:entity a iff:class ;
+    a rdfs:Class .
+iff:valueconntest a iff:class ;
+    a rdfs:Class .

@@ -1,0 +1,112 @@
+# Divergences between this compiler and pyshacl that are deliberate.
+#
+# Format, one per line:   DIRECTION | test/model | resource | component | path
+#   MISSED  pyshacl reported it and we did not
+#   EXTRA   we reported it and pyshacl did not
+#
+# The model is part of the key on purpose. An entry without it would silence
+# the same resource and component in every fixture that happens to share the
+# names, and fixtures reuse urn:filter:1 freely.
+#
+# Every line here is a claim that a difference is CORRECT, and it needs a
+# comment saying why. An unexplained entry is indistinguishable from a bug
+# somebody silenced -- which is the failure mode this harness exists to catch.
+# Anything not listed is a finding and fails the comparison.
+
+
+# --- RDF multiplicity is not NGSI-LD cardinality -------------------------
+#
+# The hasStrength entries that used to be listed here are gone: rather than
+# accept the divergence, compare.py now hands pyshacl the attribute the broker
+# would have kept, so counts mean the same on both sides and a real count bug
+# still shows up. See collapse_updates().
+#
+# This one cannot be normalised away. A sh:rule constructs a second
+# hasWasteclass value: in RDF that is an added triple and the attribute now
+# has two values, while as an NGSI-LD update it replaces the one that was
+# there. There is no observedAt to order them by and no update to keep -- the
+# difference is in what a rule DOES, not in how many values are written.
+MISSED | test8/model3.jsonld | urn:cartridge:1 | CountConstraintComponent | hasWasteclass
+
+
+# --- a value is read by its lexical form, not by its declared type --------
+#
+# SHACL compares with the SPARQL operators, where a string and a number are
+# incomparable and the bound counts as violated. We parse the value instead:
+# '550' is compared as 550.
+#
+# NGSI-LD payloads carry numbers as JSON strings constantly -- height "100"
+# and weight "10000" in these very fixtures -- so reading the declared type
+# strictly would raise a range violation on ordinary, correct data. The bound
+# still guards the value; it just does not also police how the value was
+# typed. This is the one place we deliberately stay more relaxed than SHACL.
+MISSED | test5/model1.jsonld | urn:oee:1       | MaxInclusiveConstraintComponent | activeState
+MISSED | test5/model1.jsonld | urn:oee:1       | MinInclusiveConstraintComponent | activeState
+MISSED | test5/model1.jsonld | urn:workpiece:1 | MaxInclusiveConstraintComponent | depth
+MISSED | test5/model1.jsonld | urn:workpiece:1 | MinExclusiveConstraintComponent | depth
+MISSED | test5/model2.jsonld | urn:oee:1       | MaxInclusiveConstraintComponent | activeState
+MISSED | test5/model2.jsonld | urn:oee:1       | MinInclusiveConstraintComponent | activeState
+MISSED | test5/model2.jsonld | urn:workpiece:1 | MaxInclusiveConstraintComponent | depth
+MISSED | test5/model2.jsonld | urn:workpiece:1 | MinExclusiveConstraintComponent | depth
+
+
+# --- we name the check that decides, SHACL names the wrapper -------------
+#
+# The shape tree is flattened before it becomes SQL: an sh:or over sh:datatype
+# collapses into one datatype check whose `datatypes` column holds both types,
+# and an sh:node is inlined into the shape that referenced it. So the node
+# left to name the alert is the one that actually performed the check, while
+# SHACL names the connective or the sh:node wrapper enclosing it.
+#
+# Same attribute, same failure, and ours is the more specific of the two:
+# "the datatype is wrong" says more than "one of the branches failed", and
+# neither Or nor Node tells you anything about what is wrong with the value.
+# Both directions of the mismatch come from this one rule.
+#
+# Reversible if the report structure matters more than the specificity --
+# it costs a wrapper node kept solely for naming.
+MISSED | test9/model2.jsonld  | urn:filter:2 | OrConstraintComponent       | hasIntegerOrDouble
+EXTRA  | test9/model2.jsonld  | urn:filter:2 | DatatypeConstraintComponent | hasIntegerOrDouble
+MISSED | test9/model6.jsonld  | urn:filter:2 | OrConstraintComponent       | hasIntegerOrDouble
+EXTRA  | test9/model6.jsonld  | urn:filter:2 | DatatypeConstraintComponent | hasIntegerOrDouble
+MISSED | test16/model2.jsonld | urn:opc:1    | NodeConstraintComponent     | hasVariable
+EXTRA  | test16/model2.jsonld | urn:opc:1    | OrConstraintComponent       | hasVariable
+MISSED | test19/model3.jsonld | urn:opc:1    | NodeConstraintComponent     | hasReferenced
+EXTRA  | test19/model3.jsonld | urn:opc:1    | OrConstraintComponent       | hasReferenced
+
+
+# --- an empty ListProperty is still a ListProperty -----------------------
+#
+# The shape asks for sh:nodeKind sh:BlankNode on hasValueList. An empty list
+# is rdf:nil in RDF, which is an IRI and not a blank node, so SHACL reports a
+# nodeKind violation -- for the sole reason that the list is empty.
+#
+# That is an artefact of how RDF spells the empty list, not something wrong
+# with the data. A ListProperty with no elements is a well-formed ListProperty
+# and the attribute row says so.
+MISSED | test22/model3.jsonld | urn:dt:1 | NodeKindConstraintComponent | nums
+
+
+# --- a Relationship has to carry a node reference ------------------------
+#
+# model13 exists for this case alone. model8 and model9 used to carry it by
+# accident -- their sibling hasFilter already spelled the key "object", so the
+# other two were an authoring slip, and they are dangling-relationship tests
+# that had no business also being malformed-payload tests. They now spell the
+# key correctly, and model13 keeps the malformed case so this check stays
+# exercised.
+#
+# model13 writes the object under the already-expanded key
+# "https://uri.etsi.org/ngsi-ld/hasObject". The core context defines the TERM
+# "object" as {"@id": ".../hasObject", "@type": "@id"}, and JSON-LD attaches
+# type coercion to the term, not to the IRI it expands to -- so an expanded
+# key finds no term definition, no coercion is applied, and the value expands
+# to a string literal instead of a node reference. The payload is malformed.
+#
+# We report it because sh:path ngsi-ld:hasObject tells us the value is a
+# Relationship and must be a node reference. SHACL infers nothing of the kind:
+# the shape never says so, so it reports only the sh:class violation, which we
+# report as well. Ours is the more useful of the two -- it names the actual
+# defect -- and dropping it would mean not noticing a relationship that points
+# at a string.
+EXTRA | test1/model13.jsonld | urn:filter:1 | NodeKindConstraintComponent | hasCartridge

@@ -1,1 +1,2 @@
 'urn:filter:1','ClassConstraintComponent(https://industry-fusion.com/types/v0.9/hasCartridge[0])','warning'
+'urn:workpiece:1','DatatypeConstraintComponent(https://industry-fusion.com/types/v0.9/material[0])','warning'

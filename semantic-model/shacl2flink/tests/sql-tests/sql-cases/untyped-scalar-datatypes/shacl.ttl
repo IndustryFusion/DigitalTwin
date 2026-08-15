@@ -1,0 +1,20 @@
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix iff:    <https://industry-fusion.com/types/v0.9/> .
+@prefix ngsild: <https://uri.etsi.org/ngsi-ld/> .
+
+iff:WorkpieceShape
+    a sh:NodeShape ;
+    sh:targetClass iff:workpiece ;
+    sh:property [ sh:path iff:aDouble ; sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasValue ; sh:nodeKind sh:Literal ;
+                      sh:datatype xsd:double ] ] ,
+    [ sh:path iff:anInteger ; sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasValue ; sh:nodeKind sh:Literal ;
+                      sh:datatype xsd:integer ] ] ,
+    [ sh:path iff:aBoolean ; sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasValue ; sh:nodeKind sh:Literal ;
+                      sh:datatype xsd:boolean ] ] ,
+    [ sh:path iff:aString ; sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasValue ; sh:nodeKind sh:Literal ;
+                      sh:datatype xsd:string ] ] .

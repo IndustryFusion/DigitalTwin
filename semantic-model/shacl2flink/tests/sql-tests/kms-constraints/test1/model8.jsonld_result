@@ -1,4 +1,2 @@
 'urn:filter:1','ClassConstraintComponent(https://industry-fusion.com/types/v0.9/hasCartridge[0])','warning'
-'urn:filter:1','NodeKindConstraintComponent(https://industry-fusion.com/types/v0.9/hasCartridge[0])','warning'
 'urn:plasmacutter:1','ClassConstraintComponent(https://industry-fusion.com/types/v0.9/hasWorkpiece[0])','warning'
-'urn:plasmacutter:1','NodeKindConstraintComponent(https://industry-fusion.com/types/v0.9/hasWorkpiece[0])','warning'

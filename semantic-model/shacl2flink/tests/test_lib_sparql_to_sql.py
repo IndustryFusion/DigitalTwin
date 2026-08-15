@@ -460,7 +460,7 @@ def test_merge_bgp_context():
     assert expression == 'statement JOIN statement2 ON join_condition2'
 
 
-@patch('utils.unwrap_variables')
+@patch('lib.utils.unwrap_variables')
 def test_translate_additive_expression(mock_unwrap_variables):
     ctx = MagicMock()
     elem = MagicMock()
@@ -483,9 +483,9 @@ def test_translate_additive_expression(mock_unwrap_variables):
     assert mock_unwrap_variables.call_count == 2
 
 
-@patch('utils.set_is_aggregate_var')
+@patch('lib.utils.set_is_aggregate_var')
 @patch('lib.sparql_to_sql.translate')
-@patch('utils.create_varname')
+@patch('lib.utils.create_varname')
 def test_process_aggregate(mock_create_varname, mock_translate, mock_set_is_aggregate_var):
     ctx = {
         'bounds': {'var': 'resolved_var'},

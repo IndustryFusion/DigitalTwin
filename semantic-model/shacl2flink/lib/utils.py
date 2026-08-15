@@ -37,6 +37,16 @@ class SparqlValidationFailed(Exception):
     pass
 
 
+class UnsupportedShape(Exception):
+    """
+    A shape the compiler cannot translate.
+
+    Raised at build time rather than skipped. A constraint that is silently not
+    compiled is worse than a build failure: validation then reports conformant
+    for something it never checked, and nothing anywhere says so.
+    """
+
+
 class SQL_DIALECT(Enum):
     SQL = 0
     SQLITE = 1
@@ -49,12 +59,56 @@ class DnsNameNotCompliant(Exception):
     """
 
 
+def in_stable_order(rows):
+    """
+    Sort query results or graph triples into a canonical order.
+
+    Neither SPARQL nor an rdflib graph defines an iteration order, and Python
+    randomises string hashing per process, so the same shapes compiled twice
+    yield the same rows in a different sequence. Everything downstream inherits
+    that: row order in the generated SQL, and -- because ids are handed out as
+    rows arrive -- which constraint gets which id.
+
+    Sorting on the stringified bindings makes a build a function of its inputs
+    alone.
+    """
+    return sorted(rows, key=lambda row: tuple(str(value) for value in row))
+
+
+# How many levels of attribute nesting a shape may use. 1 means an attribute
+# and one sub-attribute; the OPC UA generator needs 2 for its
+# hasC ==> hasE ==> hasValueList chains.
+#
+# This is a knob rather than a fact about SHACL. Every level costs one more
+# LEFT JOIN of attributes_view in the generated SQL -- and one more join's
+# worth of Flink state -- so it is deliberately not set higher than a real
+# model has needed. Raising it requires nothing but this number: the path
+# columns and the join chain are both generated from it.
+MAX_SUBPROPERTY_DEPTH = 2
+
+
+def path_columns(depth=None):
+    """
+    The constraint_table columns holding an attribute path, outermost first.
+
+    The first two keep their historical names so that raising the limit does
+    not rewrite the columns a two-level model already uses.
+    """
+    levels = (MAX_SUBPROPERTY_DEPTH if depth is None else depth) + 1
+    names = ["propertyPath", "subpropertyPath"]
+    names += [f"subpropertyPath{level}" for level in range(2, levels)]
+    return names[:levels]
+
+
 constraint_table_primary_key = ["id"]
 constraint_table = [
     {"id": "INTEGER"},
+    {"operation": "STRING"},
+    {"circuit_level": "INTEGER"},
     {"targetClass": "STRING"},
-    {"propertyPath": "STRING"},
-    {"subpropertyPath": "STRING"},
+] + [
+    {column: "STRING"} for column in path_columns()
+] + [
     {"propertyClass": "STRING"},
     {"propertyNodetype": "STRING"},
     {"attributeType": "STRING"},
@@ -70,7 +124,11 @@ constraint_table = [
     {"pattern": "STRING"},
     {"ins": "STRING"},
     {"datatypes": "STRING"},
-    {"hasValue": "STRING"}
+    {"hasValue": "STRING"},
+    {"eventName": "STRING"},
+    # sh:message, when the shape gave one. It replaces the generated
+    # explanation at publish time; NULL means "use the generated one".
+    {"message": "STRING"}
 ]
 
 constraint_trigger_table_primary_key = ["resource", "constraint_id", "event"]
@@ -102,15 +160,45 @@ def get_common_data():
         raise Exception("Could not read common.yaml file.")
 
 
+def shape_parent(g, node):
+    """
+    The enclosing shape, seen through logical connectives.
+
+    A property shape written inside a connective has that connective's list
+    element as its direct sh:property parent, not the attribute shape that owns
+    it. Stopping there loses the parent path, the constraint ends up with
+    subpropertyPath NULL, and the generated SQL then looks for the
+    sub-attribute directly on the entity (parentId IS NULL) -- where it never
+    matches, so the constraint silently never fires.
+    """
+    parent = next(g.subjects(SH.property, node), None)
+    if parent is not None:
+        return parent
+    # `node` may instead be an element of an RDF list a connective points at.
+    for cell in g.subjects(RDF.first, node):
+        head = cell
+        while True:
+            previous = next(g.subjects(RDF.rest, head), None)
+            if previous is None:
+                break
+            head = previous
+        for predicate in (SH['or'], SH['and'], SH.xone):
+            owner = next(g.subjects(predicate, head), None)
+            if owner is not None:
+                return owner
+    return next(g.subjects(SH['not'], node), None)
+
+
 def get_full_path_of_shacl_property(g, property):
     cur_property = property
     paths = []
-    while (cur_property is not None):
+    seen = set()
+    while (cur_property is not None and cur_property not in seen):
+        seen.add(cur_property)
         path = g.value(cur_property, SH.path)
         if path is not None:
             paths.append(path)
-        next_property = next(g.subjects(SH.property, cur_property), None)
-        cur_property = next_property
+        cur_property = shape_parent(g, cur_property)
     return paths
 
 
@@ -285,9 +373,18 @@ def create_sql_table(name, table, primary_key, dialect=SQL_DIALECT. SQL):
                 first = False
             else:
                 sqltable += ',\n'
+            if dialect in [SQL_DIALECT.POSTGRES, SQL_DIALECT.SQLITE]:
+                # Neither has a STRING type. Postgres rejects it outright;
+                # SQLite accepts any type name and derives affinity from the
+                # letters in it, and STRING contains no CHAR, CLOB or TEXT, so
+                # it lands in NUMERIC affinity -- silently turning '1.0' into
+                # 1, '007' into 7 and '1e3' into 1000. Flink keeps the string,
+                # so a constraint parameter that looks like a number was
+                # compared differently by the two dialects.
+                ftype = ftype.replace('STRING', 'TEXT')
             if dialect == SQL_DIALECT.POSTGRES:
-                ftype = ftype.replace('STRING', 'TEXT').replace('INTEGER', 'BIGINT')
-                # Postgres does not have INTEGER and STRING
+                ftype = ftype.replace('INTEGER', 'BIGINT')
+                # Postgres does not have INTEGER
             if dialect in [SQL_DIALECT.SQL, SQL_DIALECT.SQLITE]:
                 sqltable += f'`{fname}` {ftype}'
             elif dialect == SQL_DIALECT.POSTGRES:
@@ -422,7 +519,21 @@ def create_statementmap(object_name, table_object_names,
         spec['refreshInterval'] = refresh_interval
     spec['views'] = view_object_names
     spec['sqlsettings'] = [
-        {"table.exec.sink.upsert-materialize": "none"},
+        # AUTO inserts a SinkUpsertMaterializer that remembers the last row
+        # emitted per key and drops updates that do not change it. Without it
+        # every intermediate changelog state is written to Kafka: measured ~25
+        # msg/s reaching alerts_bulk to produce ~0.5 useful alerts/min, i.e.
+        # roughly 2900:1 write amplification that CoreServices' AlertsFilter
+        # then had to absorb downstream. Suppressing at the sink keeps those
+        # records out of Kafka entirely.
+        {"table.exec.sink.upsert-materialize": "auto"},
+        # Mini-batch buffers changelog records per key and emits once per
+        # window, collapsing the convergence churn of a multi-level constraint
+        # circuit (measured: 76% of verdict changes land within 2ms of the
+        # previous one). All three keys are required for it to take effect.
+        {"table.exec.mini-batch.enabled": "true"},
+        {"table.exec.mini-batch.allow-latency": "100 ms"},
+        {"table.exec.mini-batch.size": "1000"},
         {"execution.savepoint.ignore-unclaimed-state": "true"},
         {"pipeline.object-reuse": "true"},
         {"parallelism.default": "{{ .Values.flink.defaultParalellism }}"},
@@ -786,11 +897,31 @@ schema {table}.")
     return statements
 
 
+def circuit_level_of(constraint_checks, member_ids):
+    """
+    Level of an internal circuit node: 1 + max(level of its members).
+
+    Levels are assigned by LONGEST path from a leaf, so a node is never
+    evaluated before every one of its members has been. The evaluator is
+    unrolled once per level, which is what keeps the whole thing expressible
+    without recursion.
+    """
+    levels = [check['circuit_level'] for check in constraint_checks
+              if check.get('id') in member_ids]
+    return 1 + max(levels, default=0)
+
+
 def init_constraint_check():
     check = {}
+    # `operation` is NULL for leaf constraints and holds the boolean connective
+    # ('OR', 'AND', 'NOT', 'XONE') for internal nodes of the constraint circuit.
+    # `circuit_level` is 0 for leaves and 1 + max(level of members) for internal
+    # nodes, so the evaluator can be unrolled one statement per level.
+    check["operation"] = None
+    check["circuit_level"] = 0
     check["targetClass"] = None
-    check["propertyPath"] = None
-    check["subpropertyPath"] = None
+    for column in path_columns():
+        check[column] = None
     check["propertyClass"] = None
     check["propertyNodetype"] = None
     check["attributeType"] = None
@@ -807,6 +938,8 @@ def init_constraint_check():
     check["ins"] = None
     check["datatypes"] = None
     check["hasValue"] = None
+    check["eventName"] = None
+    check["message"] = None
     return check
 
 

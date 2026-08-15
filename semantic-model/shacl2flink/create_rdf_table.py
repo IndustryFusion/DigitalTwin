@@ -101,7 +101,7 @@ def create_statementset(graph):
         statementsets.append('')
     hash_counter = {}
     num = 0
-    for s, p, o in graph.triples((None, None, None)):
+    for s, p, o in utils.in_stable_order(graph.triples((None, None, None))):
         if isinstance(s, rdflib.Literal):
             continue
         index = math.floor(num / max_per_set)

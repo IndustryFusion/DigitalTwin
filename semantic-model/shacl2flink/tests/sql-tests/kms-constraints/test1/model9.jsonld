@@ -15,7 +15,7 @@
         },
         "https://industry-fusion.com/types/v0.9/hasWorkpiece": {
           "type": "Relationship",
-          "https://uri.etsi.org/ngsi-ld/hasObject": "urn:workpiece:1"
+          "object": "urn:workpiece:1"
         },
         "https://industry-fusion.com/types/v0.9/hasFilter": {
           "type": "Relationship",
@@ -42,7 +42,7 @@
         },
         "https://industry-fusion.com/types/v0.9/hasCartridge": {
         "type": "Relationship",
-        "https://uri.etsi.org/ngsi-ld/hasObject": "urn:filterCartridge:1"
+        "object": "urn:filterCartridge:1"
         }
     }
 ]

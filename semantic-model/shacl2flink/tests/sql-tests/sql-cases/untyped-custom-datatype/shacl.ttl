@@ -1,0 +1,19 @@
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix iff:    <https://industry-fusion.com/types/v0.9/> .
+@prefix ngsild: <https://uri.etsi.org/ngsi-ld/> .
+
+# steelGrade is not one of the four datatypes whose lexical form the compiler
+# knows how to inspect, so this shape takes the branch that can only compare
+# declared types.
+iff:WorkpieceShape
+    a sh:NodeShape ;
+    sh:targetClass iff:workpiece ;
+    sh:property [
+        sh:path iff:material ;
+        sh:nodeKind sh:BlankNode ;
+        sh:property [
+            sh:path ngsild:hasValue ;
+            sh:nodeKind sh:Literal ;
+            sh:datatype iff:steelGrade ;
+        ] ;
+    ] .

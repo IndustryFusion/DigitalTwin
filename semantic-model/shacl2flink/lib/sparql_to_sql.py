@@ -15,7 +15,6 @@
 #
 
 import sys
-import os
 import re
 from rdflib import Graph, Namespace, URIRef, Variable, BNode, Literal
 from rdflib.namespace import RDF, XSD, RDFS
@@ -26,10 +25,8 @@ from functools import reduce
 import copy
 
 
-file_dir = os.path.dirname(__file__)
-sys.path.append(file_dir)
-import utils  # noqa: E402
-import bgp_translation_utils  # noqa: E402
+import lib.utils as utils
+import lib.bgp_translation_utils as bgp_translation_utils
 
 
 sh = Namespace("http://www.w3.org/ns/shacl#")
@@ -56,13 +53,15 @@ where {
     ?nodeshape a sh:NodeShape .
     ?nodeshape sh:targetClass ?targetclass .
     ?nodeshape sh:property ?propertynode .
-    ?propertynode
-        sh:path ?property ;
-        sh:or ?outerOr .
-        ?outerOr rdf:rest*/rdf:first ?clause .
-        ?clause     sh:property    ?innerProp .
-        ?innerProp  sh:path ngsild:hasValue ;
-        (sh:or/rdf:rest*/rdf:first) [sh:nodeKind ?nodekind]
+    ?propertynode sh:path ?property .
+    ## Shapes are read as written. The '?' makes the connective step optional,
+    ## so the clause is either a branch of a connective or -- when there is none
+    ## -- the property node itself. Likewise sh:nodeKind is taken from the value
+    ## shape or from a branch beneath it, whichever carries it.
+    ?propertynode (((sh:or|sh:and|sh:xone)/rdf:rest*/rdf:first)|sh:not)? ?clause .
+    ?clause     sh:property    ?innerProp .
+    ?innerProp  sh:path ngsild:hasValue .
+    ?innerProp  (sh:or/rdf:rest*/rdf:first)?/sh:nodeKind ?nodekind .
 }
 """
 
@@ -79,12 +78,10 @@ where {
     ?nodeshape a sh:NodeShape .
     ?nodeshape sh:targetClass ?targetclass .
     ?nodeshape sh:property ?propertynode .
-    ?propertynode
-        sh:path ?relationship ;
-        sh:or ?outerOr .
-        ?outerOr rdf:rest*/rdf:first ?clause .
-        ?clause     sh:property    ?innerProp .
-        ?innerProp  sh:path ngsild:hasObject ;
+    ?propertynode sh:path ?relationship .
+    ?propertynode (((sh:or|sh:and|sh:xone)/rdf:rest*/rdf:first)|sh:not)? ?clause .
+    ?clause     sh:property    ?innerProp .
+    ?innerProp  sh:path ngsild:hasObject .
 }
 """
 
@@ -136,7 +133,7 @@ def translate_query(query, target_class, orig_query):
     query: parsed sparql object
     """
     algebra = query.algebra
-    randomstr = 'this' + bgp_translation_utils.get_random_string(16)
+    randomstr = 'this' + bgp_translation_utils.get_unique_suffix(16)
     ctx = {
         'namespace_manager': query.prologue.namespace_manager,
         'relationships': relationships,
@@ -578,7 +575,10 @@ def translate_notexists(ctx, notexists):
     translate(ctx_copy, notexists.graph)
     notexists['target_sql'] = notexists.graph['target_sql']
     notexists['where'] = notexists.graph['where']
-    ctx_copy['PV'] = notexists['_vars']
+    # _vars is a set, and wrap_sql_projection emits the projection in
+    # iteration order, so an unsorted one reorders the SELECT columns of a
+    # NOT EXISTS subquery from build to build.
+    ctx_copy['PV'] = sorted(notexists['_vars'], key=str)
     remap_join_constraint_to_where(notexists)
     wrap_sql_projection(ctx_copy, notexists)
     return f'NOT EXISTS ({notexists["target_sql"]})'
@@ -867,7 +867,7 @@ def create_subbounds(ctx, node):
             first = False
         else:
             subquery_vars += ', '
-        alias = "X" + bgp_translation_utils.get_random_string(16)
+        alias = "X" + bgp_translation_utils.get_unique_suffix(16)
         column_name = bounds[var]
         aliasmap[column_name] = alias
         subquery_vars += f'{column_name} as {alias}'

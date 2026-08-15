@@ -1,0 +1,15 @@
+[
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "id": "urn:rs:1",
+    "type": "https://industry-fusion.com/types/v0.9/depthtest",
+    "https://industry-fusion.com/types/v0.9/hasPart": {
+      "type": "Relationship",
+      "object": "urn:part:1",
+      "https://industry-fusion.com/types/v0.9/trust": {
+        "type": "Property",
+        "value": 9
+      }
+    }
+  }
+]

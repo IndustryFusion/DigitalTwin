@@ -1,0 +1,38 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix iff:  <https://industry-fusion.com/types/v0.9/> .
+@prefix ngsild: <https://uri.etsi.org/ngsi-ld/> .
+
+# Connectives INSIDE a value shape. These used to be reachable only for sh:or:
+# the other operators were never descended into, so their branches produced no
+# constraint at all. Since the value shape now folds into its own circuit node,
+# each operator also keeps its own truth table instead of inheriting the one
+# from the property above it.
+iff:ValueConnectiveShape
+    a sh:NodeShape ;
+    sh:targetClass iff:valueconntest ;
+
+    # AND: both bounds must hold. Violated iff EITHER branch is violated.
+    sh:property [
+        sh:path iff:andValue ;
+        sh:property [ sh:path ngsild:hasValue ;
+                      sh:nodeKind sh:Literal ;
+                      sh:and ( [ sh:minInclusive 5 ] [ sh:maxInclusive 50 ] ) ] ;
+    ] ;
+
+    # XONE: exactly one branch may be satisfied. The branches are disjoint, so
+    # a value between them satisfies NEITHER and is violated.
+    sh:property [
+        sh:path iff:xoneValue ;
+        sh:property [ sh:path ngsild:hasValue ;
+                      sh:nodeKind sh:Literal ;
+                      sh:xone ( [ sh:minInclusive 100 ] [ sh:maxInclusive 10 ] ) ] ;
+    ] ;
+
+    # NOT: violated exactly when the inner shape IS satisfied.
+    sh:property [
+        sh:path iff:notValue ;
+        sh:property [ sh:path ngsild:hasValue ;
+                      sh:nodeKind sh:Literal ;
+                      sh:not [ sh:in ( "FORBIDDEN" ) ] ] ;
+    ] .

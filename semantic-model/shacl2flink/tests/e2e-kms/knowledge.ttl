@@ -1,0 +1,41 @@
+@prefix : <https://industryfusion.github.io/contexts/example/v0/base_entities/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Knowledge for the Flink e2e test KMS.
+#
+# Deliberately self contained: the platform is installed WITHOUT any SHACL
+# validation, so the e2e test brings its own model, deploys it, and tears it
+# down again. Nothing here may depend on the production ../kms.
+#
+# Class names are prefixed E2E so that a leftover deployment can never be
+# confused with the production ontology, and so an accidental overlap with a
+# real entity in the cluster is impossible.
+
+: a owl:Ontology ;
+    owl:versionInfo "e2e"^^xsd:string .
+
+# Focus class carrying a mandatory attribute -- drives the minCount tests.
+:E2EMachine a owl:Class,
+        owl:NamedIndividual .
+
+# Focus class carrying a value that must satisfy exactly one of two ranges --
+# drives the sh:xone test.
+:E2ERangeMachine a owl:Class,
+        owl:NamedIndividual .
+
+# Focus class with NO shape at all -- drives the negative test that targetClass
+# is honoured.
+:E2EFreeMachine a owl:Class,
+        owl:NamedIndividual .
+
+:hasE2EState a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :E2EMachine ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
+:hasE2ERange a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :E2ERangeMachine ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .

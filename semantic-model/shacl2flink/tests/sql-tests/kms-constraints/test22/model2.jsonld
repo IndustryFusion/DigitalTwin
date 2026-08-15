@@ -1,0 +1,8 @@
+[
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld",
+    "id": "urn:dt:1",
+    "type": "https://industry-fusion.com/types/v0.9/depthtest",
+    "https://industry-fusion.com/types/v0.9/nums": { "type": "ListProperty", "valueList": ["abc","def"] }
+  }
+]

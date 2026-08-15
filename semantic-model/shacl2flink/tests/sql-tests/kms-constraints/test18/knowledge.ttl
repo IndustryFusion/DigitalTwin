@@ -1,0 +1,6 @@
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX test: <http://example.org/MinimalNodeset/>
+PREFIX iff:  <https://industry-fusion.com/types/v0.9/>
+
+test:ObjectType a iff:class ;
+    a rdfs:Class .

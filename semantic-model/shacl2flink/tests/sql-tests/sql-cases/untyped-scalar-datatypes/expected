@@ -1,0 +1,3 @@
+'urn:malformed:1','DatatypeConstraintComponent(https://industry-fusion.com/types/v0.9/aBoolean[0])','warning'
+'urn:malformed:1','DatatypeConstraintComponent(https://industry-fusion.com/types/v0.9/aDouble[0])','warning'
+'urn:malformed:1','DatatypeConstraintComponent(https://industry-fusion.com/types/v0.9/anInteger[0])','warning'

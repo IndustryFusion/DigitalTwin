@@ -1,0 +1,7 @@
+[
+  {
+    "@context": "https://industryfusion.github.io/contexts/staging/example/v0.2/context.jsonld",
+    "id": "urn:e2e-seed-free:1",
+    "type": "https://industryfusion.github.io/contexts/example/v0/base_entities/E2EFreeMachine"
+  }
+]

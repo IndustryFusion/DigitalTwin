@@ -1,0 +1,45 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix iff:  <https://industry-fusion.com/types/v0.9/> .
+
+# Attribute nesting to the full depth the compiler allows, alongside a
+# shallower constraint on the same entity.
+#
+# Nesting is resolved by one LEFT JOIN of attributes_view per level, and that
+# chain used to be written out by hand for exactly two levels -- so a third was
+# rejected at build time even though nothing about the semantics stopped there.
+# The chain is now generated, and this fixture is what shows the generated one
+# actually resolves: a constraint three levels down has to find its attribute
+# through two parents, and the depth-2 constraint beside it has to keep working
+# while the third level's path column is NULL for it.
+iff:DepthShape
+    a sh:NodeShape ;
+    sh:targetClass iff:depthtest ;
+
+    # Three levels: assembly ==> torque ==> bolt
+    sh:property [
+        sh:path iff:assembly ;
+        sh:property [
+            sh:path iff:torque ;
+            sh:property [
+                sh:path iff:bolt ;
+                sh:property [ sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
+                              sh:nodeKind sh:Literal ;
+                              sh:maxInclusive 100 ] ;
+            ] ;
+        ] ;
+    ] ;
+
+    # Two levels, on a different branch of the same entity. It must not be
+    # disturbed by the deeper one, and must not pick up its rows.
+    sh:property [
+        sh:path iff:housing ;
+        sh:property [
+            sh:path iff:temperature ;
+            sh:property [ sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ;
+                          sh:nodeKind sh:Literal ;
+                          sh:maxInclusive 50 ] ;
+        ] ;
+    ] .

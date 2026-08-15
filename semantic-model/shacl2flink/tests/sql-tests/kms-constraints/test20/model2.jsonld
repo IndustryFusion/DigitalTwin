@@ -1,0 +1,23 @@
+[
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld",
+    "id": "urn:dt:1",
+    "type": "https://industry-fusion.com/types/v0.9/depthtest",
+    "https://industry-fusion.com/types/v0.9/a": {
+      "type": "Property",
+      "value": 100
+    },
+    "https://industry-fusion.com/types/v0.9/b": {
+      "type": "Property",
+      "value": 100
+    },
+    "https://industry-fusion.com/types/v0.9/c": {
+      "type": "Property",
+      "value": 100
+    },
+    "https://industry-fusion.com/types/v0.9/d": {
+      "type": "Property",
+      "value": 100
+    }
+  }
+]

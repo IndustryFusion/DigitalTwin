@@ -1,0 +1,82 @@
+@prefix : <https://industryfusion.github.io/contexts/example/v0/base_shacl/> .
+@prefix default1: <https://industryfusion.github.io/contexts/example/v0/filter_shacl/> .
+@prefix iffBaseEntities: <https://industryfusion.github.io/contexts/example/v0/base_entities/> .
+@prefix iffBaseKnowledge: <https://industryfusion.github.io/contexts/example/v0/base_knowledge/> .
+@prefix iffFilterEntities: <https://industryfusion.github.io/contexts/example/v0/filter_entities/> .
+@prefix iffFilterKnowledge: <https://industryfusion.github.io/contexts/example/v0/filter_knowledge/> .
+@prefix material: <https://industryfusion.github.io/contexts/ontology/v0/material/> .
+@prefix ngsild: <https://uri.etsi.org/ngsi-ld/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+
+
+:FilterShape a sh:NodeShape ;
+    sh:property [ sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path iffBaseEntities:hasDouble ;
+            sh:property [ sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:datatype xsd:double;
+                    sh:nodeKind sh:Literal ;
+                    sh:path ngsild:hasValue ] ],
+            [ sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path iffBaseEntities:hasInteger ;
+            sh:property [ sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:datatype xsd:integer;
+                    sh:nodeKind sh:Literal ;
+                    sh:path ngsild:hasValue ] ],
+            [ sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path iffBaseEntities:hasIntegerOrDouble ;
+            sh:property [ sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:or ( [sh:datatype xsd:integer;] [sh:datatype xsd:double;] );
+                    sh:nodeKind sh:Literal ;
+                    sh:path ngsild:hasValue ] ],
+                [ sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path iffBaseEntities:hasBoolean ;
+            sh:property [ sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:datatype xsd:boolean;
+                    sh:nodeKind sh:Literal ;
+                    sh:path ngsild:hasValue ] ],
+            [ sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path iffBaseEntities:hasString ;
+            sh:property [ sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:datatype xsd:string;
+                    sh:nodeKind sh:Literal ;
+                    sh:path ngsild:hasValue ] ],
+            [ sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path iffBaseEntities:hasJSON ;
+            sh:property [ sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:datatype rdf:JSON;
+                    sh:nodeKind sh:Literal ;
+                    sh:path ngsild:hasJSON ] ],
+            [ sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path iffBaseEntities:hasList ;
+           sh:property [ sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:or ( [ sh:nodeKind sh:BlankNode ;
+                                sh:property [ sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
+                    sh:path ngsild:hasValueList ] ;
+                    ];
+    sh:targetClass iffBaseEntities:Filter .
+
+

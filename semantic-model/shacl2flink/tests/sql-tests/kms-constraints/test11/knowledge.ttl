@@ -1,0 +1,12 @@
+PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs:  <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX iff:   <https://industry-fusion.com/types/v0.9/>
+PREFIX owl:   <http://www.w3.org/2002/07/owl#>
+
+# Deliberately a FLAT hierarchy: subclasses multiply constraints (one row per
+# inherited target class), which would make the expected ids harder to reason
+# about without testing anything extra.
+iff:entity a iff:class ;
+    a rdfs:Class .
+iff:connectivetest a iff:class ;
+    a rdfs:Class .

@@ -1,0 +1,54 @@
+@prefix : <https://industryfusion.github.io/contexts/example/v0/e2e_shacl/> .
+@prefix iffBaseEntities: <https://industryfusion.github.io/contexts/example/v0/base_entities/> .
+@prefix ngsild: <https://uri.etsi.org/ngsi-ld/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Shapes for the Flink e2e test KMS. Kept as small as possible: every shape
+# here is asserted on by test-shacl-flink-e2e.bats, and anything extra would
+# only add alerts the test has to filter out.
+
+# --------------------------------------------------------------- minCount
+# An E2EMachine must carry hasE2EState. An entity published with no attributes
+# at all therefore alerts immediately, and the alert must be RETRACTED once the
+# attribute arrives. That covers the whole compiled pipeline in both
+# directions, which is the part a unit test cannot reach.
+:E2EMachineShape a sh:NodeShape ;
+    sh:targetClass iffBaseEntities:E2EMachine ;
+    sh:property [ sh:path iffBaseEntities:hasE2EState ;
+            sh:minCount 1 ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:order 1 ;
+            sh:property [ sh:path ngsild:hasValue ;
+                    sh:minCount 1 ;
+                    sh:maxCount 1 ;
+                    sh:nodeKind sh:Literal ] ] .
+
+# --------------------------------------------------------------- sh:xone
+# Exactly one of the two ranges must hold. The branches are disjoint, so a
+# value in between satisfies NEITHER and the constraint is violated -- a case
+# no sh:or can express, which makes this a genuine test of the circuit
+# evaluation rather than of the leaf checks.
+#
+# sh:minCount sits BESIDE the sh:xone on purpose. Those parameters are
+# conjoined with the connective, not a member of it, and they used to be lost
+# silently -- so this shape pins both halves: the count must be enforced
+# independently AND the xone truth table must stay two-branched.
+:E2ERangeMachineShape a sh:NodeShape ;
+    sh:targetClass iffBaseEntities:E2ERangeMachine ;
+    sh:property [ sh:path iffBaseEntities:hasE2ERange ;
+            sh:minCount 1 ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:order 1 ;
+            sh:xone (
+                [ sh:property [ sh:path ngsild:hasValue ;
+                        sh:nodeKind sh:Literal ;
+                        sh:minInclusive 100 ] ]
+                [ sh:property [ sh:path ngsild:hasValue ;
+                        sh:nodeKind sh:Literal ;
+                        sh:maxInclusive 10 ] ]
+            ) ] .
+
+# iffBaseEntities:E2EFreeMachine is deliberately NOT targeted by any shape.

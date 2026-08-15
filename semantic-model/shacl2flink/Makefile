@@ -1,5 +1,4 @@
 SHACL:= ../kms/shacl.ttl
-SHACL_NORMALIZED := ../kms/shacl_normalized.ttl
 KNOWLEDGE := ../kms/knowledge.ttl
 MODEL := ../kms/model-instance.jsonld
 PYTHON := python3
@@ -48,8 +47,7 @@ build: $(SHACL) $(KNOWLEDGE $(MODEL)
 	${PYTHON} create_udfs.py
 	$(PYTHON) create_ngsild_tables.py $(KAFKA_TOPICS)
 	$(PYTHON) create_ngsild_models.py $(SHACL) $(KNOWLEDGE) $(MODEL)
-	$(PYTHON) shacl_normalization.py $(SHACL) $(SHACL_NORMALIZED)
-	$(PYTHON) create_sql_checks_from_shacl.py $(CHECKPOINTSWITCH) $(NOROCKSDBSWITCH) $(SHACL_NORMALIZED) $(KNOWLEDGE)
+	$(PYTHON) create_sql_checks_from_shacl.py $(CHECKPOINTSWITCH) $(NOROCKSDBSWITCH) $(SHACL) $(KNOWLEDGE)
 
 helm: export IFF_HELM=true
 helm: build submit-postgres-tables
@@ -120,6 +118,25 @@ test-kms:
 	cd tests/sql-tests && bash tests.sh
 
 
+# Compile every shape the OPC UA generator emits. The kms-constraints fixtures
+# cover its patterns with real data; this covers its actual output, so a
+# generator that starts emitting something untranslatable fails here rather
+# than the next time somebody tries it by hand.
+# Validate every kms fixture with pyshacl as well and compare. The fixtures say
+# what we EXPECTED; only an independent implementation can say what SHACL
+# REQUIRES. Needs the fixture outputs, so it runs them with DEBUG=true first --
+# that is what keeps the per-model testout files instead of deleting them.
+test-pyshacl-compare:
+	@echo Compare kms fixture results against pyshacl
+	cd tests/sql-tests && DEBUG=true bash tests.sh > /dev/null 2>&1 || true
+	cd tests/sql-tests && $(PYTHON) ../pyshacl-compare/compare.py .
+
+
+test-opcua-shapes:
+	@echo Compile the shapes emitted by the opcua generator
+	cd tests/opcua-shapes && bash test.sh
+
+
 disable-strimzi:
 	kubectl -n $(NAMESPACE) scale deployment -l "strimzi.io/name=my-cluster-entity-operator" --replicas=0
 
@@ -163,6 +180,29 @@ test-full-flink-deployment:
 	make helm
 	make flink-deploy
 	make flink-undeploy
+
+
+# End-to-end test of the compiled pipeline against a live Flink.
+#
+# A standard platform install deploys NO shacl-validation, so this target owns
+# the whole lifecycle: it compiles and deploys its own throwaway KMS, runs the
+# bats suite against it, and undeploys again. The KMS in ../kms is never
+# touched -- SHACL/KNOWLEDGE/MODEL are overridden for the sub-makes, which
+# `make` forwards automatically because they are set on the command line.
+#
+# The teardown must run even when the tests fail, otherwise a red build leaves
+# a statementset behind and the next run inherits it.
+test-flink-e2e: E2E_KMS := $(CURDIR)/tests/e2e-kms
+test-flink-e2e:
+	@echo deploy throwaway e2e KMS
+	$(MAKE) flink-deploy SHACL=$(E2E_KMS)/shacl.ttl KNOWLEDGE=$(E2E_KMS)/knowledge.ttl \
+		MODEL=$(E2E_KMS)/model-instance.jsonld
+	ln -fs ../../../../test/bats/lib tests/bats/lib || echo 'Bats framework not installed'
+	( cd tests/bats && bats test-shacl-flink-e2e ); rc=$$?; \
+		rm -f tests/bats/lib; \
+		$(MAKE) flink-undeploy SHACL=$(E2E_KMS)/shacl.ttl KNOWLEDGE=$(E2E_KMS)/knowledge.ttl \
+			MODEL=$(E2E_KMS)/model-instance.jsonld; \
+		exit $$rc
 
 
 test-flink-is-undeployed:
@@ -262,4 +302,4 @@ fuseki-undeploy-kms:
 clean:
 	@rm -rf $(OUTPUTDIR)
 
-.PHONY: clean fuseki-deploy-kms fuseki-undeploy-kms
+.PHONY: clean fuseki-deploy-kms fuseki-undeploy-kms test-flink-e2e test-opcua-shapes test-pyshacl-compare

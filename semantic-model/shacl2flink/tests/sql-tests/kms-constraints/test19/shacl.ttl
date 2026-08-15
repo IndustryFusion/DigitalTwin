@@ -1,0 +1,39 @@
+@prefix shacl: <http://my.test/shacl/> .
+@prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix test: <http://example.org/MinimalNodeset/> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+# sh:message replaces the generated explanation.
+#
+# The generated text names the attribute and the parameter that failed, which
+# says what the compiler did rather than what the model got wrong. The OPC UA
+# generator attaches a message to every ValueRankShape for exactly that reason
+# -- "valuerank=Scalar and datatype=double" is the thing an operator can act
+# on.
+shacl:ObjectTypeShape a sh:NodeShape ;
+    # directly on the property shape
+    sh:property [ sh:path test:hasDirect ;
+        sh:message "hasDirect must not exceed 100" ;
+        sh:property [ sh:path ngsi-ld:hasValue ;
+                      sh:nodeKind sh:Literal ;
+                      sh:maxInclusive 100 ] ] ;
+
+    # reached through sh:node, which is where the generator puts it
+    sh:property [ sh:path test:hasReferenced ;
+                  sh:node shacl:ScalarDouble ] ;
+
+    # no message: the generated text must still be used
+    sh:property [ sh:path test:hasPlain ;
+        sh:property [ sh:path ngsi-ld:hasValue ;
+                      sh:nodeKind sh:Literal ;
+                      sh:maxInclusive 100 ] ] ;
+    sh:targetClass test:ObjectType .
+
+shacl:ScalarDouble a sh:NodeShape ;
+    sh:message "ValueRank constraint for valuerank=Scalar and datatype=double" ;
+    sh:or ( [ sh:property [ sh:path ngsi-ld:hasValue ; sh:nodeKind sh:Literal ;
+                            sh:datatype xsd:double ] ]
+            [ sh:property [ sh:path ngsi-ld:hasValue ; sh:nodeKind sh:Literal ;
+                            sh:datatype xsd:integer ] ] ) .

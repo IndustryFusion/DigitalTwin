@@ -1,0 +1,10 @@
+[
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld",
+    "id": "urn:dt:1",
+    "type": "https://industry-fusion.com/types/v0.9/depthtest",
+    "https://industry-fusion.com/types/v0.9/errors": { "type": "Property", "value": 0 },
+    "https://industry-fusion.com/types/v0.9/temp": { "type": "Property", "value": 10 },
+    "https://industry-fusion.com/types/v0.9/drift": { "type": "Property", "value": -1 }
+  }
+]

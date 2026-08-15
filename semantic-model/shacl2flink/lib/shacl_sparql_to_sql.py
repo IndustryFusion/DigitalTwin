@@ -1,16 +1,12 @@
 from rdflib import Graph
-import os
-import sys
 import re
 import ruamel.yaml
 from jinja2 import Template
 
 
-file_dir = os.path.dirname(__file__)
-sys.path.append(file_dir)
-import configs  # noqa: E402
-import utils  # noqa: E402
-from sparql_to_sql import translate_sparql  # noqa: E402
+import lib.configs as configs
+import lib.utils as utils
+from lib.sparql_to_sql import translate_sparql
 
 yaml = ruamel.yaml.YAML()
 alerts_bulk_table = configs.alerts_bulk_table_name

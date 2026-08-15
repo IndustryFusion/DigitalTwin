@@ -6,18 +6,21 @@ TOOLDIR=$(cd ../..; echo $PWD)
 KMS_CONSTRAINTS=kms-constraints
 KMS_RULES=kms-rules
 KMS_UDF=kms-udf
+# Cases whose input is the attributes table itself, for states no model
+# file can express. See sql-cases/*/attributes.sql for what and why.
+SQL_CASES=sql-cases
 TESTOUT=testout
 SHACLOUT=shaclout
 RESULT=result
 testdirs_constraints=${@:-"$(ls ${KMS_CONSTRAINTS})"}
 testdirs_rules=${@:-"$(ls ${KMS_RULES})"}
 testdirs_udf=${@:-"$(ls ${KMS_UDF})"}
+testdirs_sqlcases=${@:-"$(ls ${SQL_CASES})"}
 for testdir in ${testdirs_constraints}; do
     echo ----------------------------------------
     echo Entering test ${testdir} in  ${KMS_CONSTRAINTS}
     KNOWLEDGE=knowledge.ttl
     SHACL=shacl.ttl
-    SHACL_NORMALIZED=shacl_normalized.ttl
     CONTEXT=context.jsonld
     pushd .
     cd $KMS_CONSTRAINTS/$testdir || break
@@ -25,9 +28,8 @@ for testdir in ${testdirs_constraints}; do
 
     python3 $TOOLDIR/create_rdf_table.py ${KNOWLEDGE}
     python3 $TOOLDIR/create_core_tables.py
-    python3 $TOOLDIR/shacl_normalization.py ${SHACL} ${SHACL_NORMALIZED}
-    echo now executing $TOOLDIR/create_sql_checks_from_shacl.py -c ${CONTEXT} ${SHACL_NORMALIZED} ${KNOWLEDGE} 
-    python3 $TOOLDIR/create_sql_checks_from_shacl.py -c ${CONTEXT} ${SHACL_NORMALIZED} ${KNOWLEDGE}
+    echo now executing $TOOLDIR/create_sql_checks_from_shacl.py -c ${CONTEXT} ${SHACL} ${KNOWLEDGE} 
+    python3 $TOOLDIR/create_sql_checks_from_shacl.py -c ${CONTEXT} ${SHACL} ${KNOWLEDGE}
     echo Generic Setup Done, now iterating through models
     echo ------------------------------------------------
     for model in $(ls model*.jsonld); do
@@ -57,6 +59,36 @@ for testdir in ${testdirs_constraints}; do
     popd
 done;
 
+for testdir in ${testdirs_sqlcases}; do
+    echo ----------------------------------------
+    echo Entering sql case ${testdir} in ${SQL_CASES}
+    KNOWLEDGE=knowledge.ttl
+    SHACL=shacl.ttl
+    CONTEXT=context.jsonld
+    pushd .
+    cd $SQL_CASES/$testdir || break
+    mkdir -p $OUTPUTDIR
+    python3 $TOOLDIR/create_rdf_table.py ${KNOWLEDGE}
+    python3 $TOOLDIR/create_core_tables.py
+    python3 $TOOLDIR/create_sql_checks_from_shacl.py -c ${CONTEXT} ${SHACL} ${KNOWLEDGE}
+    DATABASE=$OUTPUTDIR/database.db
+    rm -f ${DATABASE}
+    echo -n "Test with attributes.sql in case ${testdir} ..."
+    # The attributes table IS the input here -- no model file is read.
+    cp attributes.sql ${OUTPUTDIR}/ngsild-models.sqlite
+    python3 $TOOLDIR/create_ngsild_tables.py
+    sqlite3 ${DATABASE} < $OUTPUTDIR/rdf.sqlite
+    sqlite3 ${DATABASE} < $OUTPUTDIR/core.sqlite
+    sqlite3 ${DATABASE} < $OUTPUTDIR/ngsild.sqlite
+    sqlite3 ${DATABASE} < $OUTPUTDIR/ngsild-models.sqlite
+    sqlite3 ${DATABASE} < $OUTPUTDIR/shacl-validation.sqlite
+    echo "select resource, event, severity from alerts_bulk_view;" | sqlite3 -quote  -noheader ${DATABASE}| sort > ${OUTPUTDIR}/${TESTOUT}
+    diff ${OUTPUTDIR}/${TESTOUT} expected || { echo "failed"; exit 1; }
+    echo " ok"
+    [ "$DEBUG" = "true" ] || rm -rf $OUTPUTDIR
+    popd
+done;
+
 for testdir in ${testdirs_rules}; do
     echo Entering test ${testdir} in ${KMS_RULES}
     KNOWLEDGE=knowledge.ttl
@@ -66,8 +98,7 @@ for testdir in ${testdirs_rules}; do
     mkdir -p $OUTPUTDIR
     python3 $TOOLDIR/create_rdf_table.py ${KNOWLEDGE}
     python3 $TOOLDIR/create_core_tables.py
-    python3 $TOOLDIR/shacl_normalization.py ${SHACL} ${SHACL_NORMALIZED}
-    python3 $TOOLDIR/create_sql_checks_from_shacl.py  -c ${CONTEXT} ${SHACL_NORMALIZED} ${KNOWLEDGE}
+    python3 $TOOLDIR/create_sql_checks_from_shacl.py  -c ${CONTEXT} ${SHACL} ${KNOWLEDGE}
 
     for model in $(ls model*.jsonld); do
         MODEL=$model
@@ -100,8 +131,7 @@ for testdir in ${testdirs_udf}; do
 
     python3 $TOOLDIR/create_rdf_table.py ${KNOWLEDGE}
     python3 $TOOLDIR/create_core_tables.py
-    python3 $TOOLDIR/shacl_normalization.py ${SHACL} ${SHACL_NORMALIZED}
-    python3 $TOOLDIR/create_sql_checks_from_shacl.py -c ${CONTEXT} ${SHACL_NORMALIZED} ${KNOWLEDGE}
+    python3 $TOOLDIR/create_sql_checks_from_shacl.py -c ${CONTEXT} ${SHACL} ${KNOWLEDGE}
 
     for model in $(ls model*.jsonld); do
         MODEL=$model
