@@ -102,7 +102,9 @@ data:
                         "retries": {{ .Values.mqtt.kafka.retries }},
                         "linger": {{ .Values.mqtt.kafka.linger }},
                         "partitioner": {{ .Values.mqtt.kafka.partitioner | quote }},
-                        "maxBufferedMessages": {{ .Values.mqtt.kafka.maxBufferedMessages | default 50000 }}
+                        "maxBufferedMessages": {{ dig "maxBufferedMessages" 50000 .Values.mqtt.kafka }},
+                        "awaitDelivery": {{ dig "awaitDelivery" true .Values.mqtt.kafka }},
+                        "maxDeliveryStallMs": {{ dig "maxDeliveryStallMs" 300000 .Values.mqtt.kafka }}
                 }
         },
         "cache": {

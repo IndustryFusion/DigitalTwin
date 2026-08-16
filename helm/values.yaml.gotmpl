@@ -447,6 +447,15 @@ mqtt:
     # Messages held while Kafka is unreachable. Past this the bridge exits
     # rather than drop measurements silently, so size it for the device count.
     maxBufferedMessages: 50000
+    # Hold the MQTT acknowledgement until the message is in Kafka, so a Kafka
+    # outage becomes backpressure on the broker instead of lost measurements.
+    # Costs throughput: mqtt.js processes one message at a time, so each one
+    # pays a Kafka round trip. Set false to acknowledge on receipt instead.
+    awaitDelivery: true
+    # How long delivery may be stuck before the bridge restarts. Restarting ends
+    # the MQTT session, which is what makes the broker redeliver what was never
+    # acknowledged.
+    maxDeliveryStallMs: 300000
   cache:
     host: redis
     port: 6379
