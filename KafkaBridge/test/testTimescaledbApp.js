@@ -455,11 +455,12 @@ describe('Test startListener', function () {
     disconnect: function () {
     }
   };
-  const fs = {
-    writeFileSync: function (file, message) {
-      assert.oneOf(file, ['/tmp/ready', '/tmp/healthy'], 'Wrong file for filesync');
-      assert.oneOf(message, ['ready', 'healthy'], 'Wrong filesync message.');
-    }
+  // The bridges now hand their liveness files to KafkaHealth, which needs a
+  // consumer that can report on its own state. Stub it out here so this test
+  // keeps exercising the app wiring rather than the watchdog -- the watchdog has
+  // its own test in lib_kafkaHealthTest.js.
+  const KafkaHealth = function () {
+    return { start: function () {}, shutdown: function () {} };
   };
   const config = {
     timescaledb: {
@@ -503,7 +504,7 @@ describe('Test startListener', function () {
     const sequelizeObj = new SequelizeClassNoQuery();
     const revert = toTest.__set__('consumer', consumer);
     toTest.__set__('sequelize', sequelizeObj);
-    toTest.__set__('fs', fs);
+    toTest.__set__('KafkaHealth', KafkaHealth);
     toTest.__set__('config', config);
     toTest.__set__('process', process);
     const startListener = toTest.__get__('startListener');
@@ -518,7 +519,7 @@ describe('Test startListener', function () {
     const processOnceSpy = sinon.spy(process, 'once');
     const revert = toTest.__set__('consumer', consumer);
     toTest.__set__('sequelize', sequelizeObj);
-    toTest.__set__('fs', fs);
+    toTest.__set__('KafkaHealth', KafkaHealth);
     toTest.__set__('config', config);
     toTest.__set__('process', process);
     const startListener = toTest.__get__('startListener');

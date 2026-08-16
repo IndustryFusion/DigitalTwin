@@ -18,10 +18,10 @@
 const GROUPID = 'alertakafkabridge';
 const CLIENTID = 'alertakafkaclient';
 const { Kafka } = require('kafkajs');
-const fs = require('fs');
 const config = require('../config/config.json');
 const Alerta = require('../lib/alerta.js');
 const Logger = require('../lib/logger.js');
+const KafkaHealth = require('../lib/kafkaHealth.js');
 
 const alerta = new Alerta(config);
 const logger = new Logger(config);
@@ -61,6 +61,7 @@ const pauseresume = function (consumer, topic) {
 };
 
 const startListener = async function () {
+  const health = new KafkaHealth(consumer, logger);
   await consumer.connect();
   await consumer.subscribe({ topic: config.alerta.topic, fromBeginning: false });
 
@@ -119,8 +120,12 @@ const startListener = async function () {
       try {
         console.log(`process.on ${type}`);
         console.error(e);
+        health.shutdown();
         await consumer.disconnect();
-        process.exit(0);
+        // Non-zero: this path is only reached on an unhandled error, and
+        // exiting 0 made a crash-looping bridge indistinguishable from a clean
+        // stop in kubectl and in any exit-code based alerting.
+        process.exit(1);
       } catch (_) {
         process.exit(1);
       }
@@ -129,14 +134,14 @@ const startListener = async function () {
   signalTraps.map(type =>
     process.once(type, async () => {
       try {
+        health.shutdown();
         await consumer.disconnect();
       } finally {
         process.kill(process.pid, type);
       }
     }));
   try {
-    fs.writeFileSync('/tmp/ready', 'ready');
-    fs.writeFileSync('/tmp/healthy', 'healthy');
+    health.start();
   } catch (err) {
     logger.error(err);
   }

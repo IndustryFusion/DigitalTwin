@@ -18,11 +18,11 @@
 const GROUPID = 'timescaledbkafkabridge';
 const CLIENTID = 'timescaledbkafkaclient';
 const { Kafka } = require('kafkajs');
-const fs = require('fs');
 const config = require('../config/config.json');
 const sequelize = require('./utils/tsdb-connect'); // Import sequelize object, Database connection pool managed by Sequelize.
 const { QueryTypes } = require('sequelize');
 const Logger = require('../lib/logger.js');
+const KafkaHealth = require('../lib/kafkaHealth.js');
 const attributeHistoryTable = require('./model/attribute_history.js'); // Import attributeHistory model/table defined
 const entityHistoryTable = require('./model/entity_history.js'); // Import entityHistory model/table defined
 const attributeHistoryTableName = config.timescaledb.attributeTablename;
@@ -142,6 +142,7 @@ const processEntityMessage = function (message) {
 };
 
 const startListener = async function () {
+  const health = new KafkaHealth(consumer, logger);
   let hypertableStatus = false;
   sequelize.authenticate().then(() => {
     logger.info('TSDB connection has been established.');
@@ -201,7 +202,13 @@ const startListener = async function () {
   await consumer.subscribe({ topic: config.timescaledb.entityTopic, fromBeginning: false });
   await consumer.run({
     eachMessage: async ({ topic, partition, message }) => processMessage({ topic, partition, message })
-  }).catch(e => console.error(`[example/consumer] ${e.message}`, e));
+  }).catch(e => {
+    // Rethrow: a consumer.run() that rejects leaves the bridge with no message
+    // loop at all, and swallowing it here let startup continue on to declare
+    // the pod ready.
+    console.error(`[example/consumer] ${e.message}`, e);
+    throw e;
+  });
 
   const errorTypes = ['unhandledRejection', 'uncaughtException'];
   const signalTraps = ['SIGTERM', 'SIGINT', 'SIGUSR2'];
@@ -211,8 +218,12 @@ const startListener = async function () {
       try {
         console.log(`process.on ${type}`);
         console.error(e);
+        health.shutdown();
         await consumer.disconnect();
-        process.exit(0);
+        // Non-zero: this path is only reached on an unhandled error, and
+        // exiting 0 made a crash-looping bridge indistinguishable from a clean
+        // stop in kubectl and in any exit-code based alerting.
+        process.exit(1);
       } catch (_) {
         process.exit(1);
       }
@@ -221,6 +232,7 @@ const startListener = async function () {
   signalTraps.map(type =>
     process.once(type, async () => {
       try {
+        health.shutdown();
         await consumer.disconnect();
       } finally {
         process.kill(process.pid, type);
@@ -228,8 +240,7 @@ const startListener = async function () {
     }));
 
   try {
-    fs.writeFileSync('/tmp/ready', 'ready');
-    fs.writeFileSync('/tmp/healthy', 'healthy');
+    health.start();
   } catch (err) {
     logger.error(err);
   }

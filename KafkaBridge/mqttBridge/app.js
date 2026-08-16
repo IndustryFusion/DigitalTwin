@@ -43,7 +43,9 @@ const startListener = async function () {
       try {
         console.log(`process.on ${type}`);
         console.error(e);
-        process.exit(0);
+        // Non-zero: exiting 0 on an unhandled error makes a crash-looping
+        // bridge look like a clean stop.
+        process.exit(1);
       } catch (_) {
         process.exit(1);
       }
