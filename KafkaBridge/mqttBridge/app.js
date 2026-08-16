@@ -20,15 +20,20 @@ const SparkplugApiData = require('./sparkplug_data_ingestion');
 const config = require('../config/config.json');
 const authService = require('../lib/authService');
 const Logger = require('../lib/logger');
-const fs = require('fs');
+const MqttHealth = require('../lib/mqttHealth');
 
 process.env.APP_ROOT = __dirname;
 const logger = Logger(config);
 const brokerConnector = Broker.singleton(config.mqtt, logger);
+const runningAsMain = require.main === module;
 
 const startListener = async function () {
   const errorTypes = ['unhandledRejection', 'uncaughtException'];
   const signalTraps = ['SIGTERM', 'SIGINT', 'SIGUSR2'];
+
+  // Armed before anything can block, so a broker that never accepts the
+  // connection ends as a restart instead of a bridge that waits forever.
+  const health = new MqttHealth(brokerConnector, logger).start();
 
   logger.info('Now starting MQTT auth service.');
   await authService.init(config);
@@ -37,7 +42,17 @@ const startListener = async function () {
   // SparkplugB connector
   const sparkplugapiDataConnector = new SparkplugApiData(config);
   sparkplugapiDataConnector.init();
-  sparkplugapiDataConnector.bind(brokerConnector, sparkplugapiDataConnector);
+  // bind() only starts connecting. Readiness has to wait for the SUBSCRIBE to
+  // be granted -- declaring it here, as this used to, made the pod Ready within
+  // milliseconds even when the broker was unreachable.
+  sparkplugapiDataConnector.bind(brokerConnector, sparkplugapiDataConnector, err => {
+    if (err) {
+      health.fail(err);
+      return;
+    }
+    health.ready();
+  });
+
   errorTypes.map(type =>
     process.on(type, async e => {
       try {
@@ -53,14 +68,19 @@ const startListener = async function () {
 
   signalTraps.map(type =>
     process.once(type, async () => {
+      health.shutdown();
       process.kill(process.pid, type);
     }));
-  try {
-    fs.writeFileSync('/tmp/ready', 'ready');
-    fs.writeFileSync('/tmp/healthy', 'healthy');
-  } catch (err) {
-    logger.error(err);
-  }
 };
 
-startListener();
+// Guarded like the other bridges: without it, requiring this module for a test
+// opens a real broker connection and arms the real startup deadline.
+if (runningAsMain) {
+  // Explicit: startup happens before the uncaughtException handler above is
+  // registered, so without this a failing authService.init would rely on Node's
+  // default unhandled-rejection behaviour to be noticed at all.
+  startListener().catch(e => {
+    logger.error('Could not start MQTT bridge: ' + e);
+    process.exit(1);
+  });
+}

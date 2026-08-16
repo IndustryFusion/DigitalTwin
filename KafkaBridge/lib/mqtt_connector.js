@@ -190,7 +190,15 @@ function Broker (conf, logger) {
       me.logger.debug('Subscribing to: ' + topic);
       me.client.subscribe(topic, { qos: 1 }, function (err, granted) {
         if (err) {
-          throw new Error('Cannot bind handler.');
+          // Report it instead of throwing out of an mqtt.js callback. Throwing
+          // here surfaced as an uncaughtException with no indication of which
+          // topic failed, and callers that passed a callback never learned that
+          // their subscription does not exist.
+          me.logger.error('Cannot bind handler for topic ' + topic + ': ' + err);
+          if (toCallBack) {
+            toCallBack(err);
+          }
+          return;
         }
         me.logger.debug('grant ' + JSON.stringify(granted));
         const topicAsPattern = granted[0].topic.replace(/\+/g, '[^<>]*');

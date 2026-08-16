@@ -328,8 +328,8 @@ module.exports = class SparkplugHandler {
     }
   };
 
-  connectTopics (context) {
-    this.broker.bind(this.topics_subscribe.sparkplugb_data_ingestion, this.processDataIngestion, context);
+  connectTopics (context, callback) {
+    this.broker.bind(this.topics_subscribe.sparkplugb_data_ingestion, this.processDataIngestion, context, callback);
     return true;
   };
 
@@ -355,10 +355,14 @@ module.exports = class SparkplugHandler {
   /**
     * @description It's bind to the MQTT topics
     * @param broker
+    * @param context
+    * @param callback called with no argument once the subscription is granted,
+    *        or with the error if the broker connection or the SUBSCRIBE failed.
+    *        Without it a failure to subscribe is only visible in the log.
     */
-  bind (broker, context) {
+  bind (broker, context, callback) {
     this.broker = broker;
     this.handshake();
-    this.connectTopics(context);
+    this.connectTopics(context, callback);
   };
 };
