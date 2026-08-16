@@ -91,7 +91,8 @@
 			"maxRetryTime": 5000,
 			"retries": 10,
 			"linger": 50,
-			"partitioner": "defaultPartitioner"
+			"partitioner": "defaultPartitioner",
+			"maxBufferedMessages": 50000
 		  }
     },
 	"cache": {

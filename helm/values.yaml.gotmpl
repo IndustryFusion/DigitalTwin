@@ -444,6 +444,9 @@ mqtt:
     retries: 10
     maxRetryTime: 5000
     "requestTimeout": 20000
+    # Messages held while Kafka is unreachable. Past this the bridge exits
+    # rather than drop measurements silently, so size it for the device count.
+    maxBufferedMessages: 50000
   cache:
     host: redis
     port: 6379

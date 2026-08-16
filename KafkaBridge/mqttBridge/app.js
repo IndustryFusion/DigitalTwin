@@ -40,14 +40,17 @@ const startListener = async function () {
 
   logger.info('Now starting MQTT-Kafka bridge forwarding.');
   // SparkplugB connector
-  const sparkplugapiDataConnector = new SparkplugApiData(config);
+  // The aggregator buffers measurements when Kafka is unreachable; once that
+  // buffer is full the next thing it would do is lose them, so it fails the pod
+  // instead.
+  const sparkplugapiDataConnector = new SparkplugApiData(config, reason => health.fatal(reason));
   sparkplugapiDataConnector.init();
   // bind() only starts connecting. Readiness has to wait for the SUBSCRIBE to
   // be granted -- declaring it here, as this used to, made the pod Ready within
   // milliseconds even when the broker was unreachable.
   sparkplugapiDataConnector.bind(brokerConnector, sparkplugapiDataConnector, err => {
     if (err) {
-      health.fail(err);
+      health.fatal(`MQTT subscription failed: ${err}`);
       return;
     }
     health.ready();
