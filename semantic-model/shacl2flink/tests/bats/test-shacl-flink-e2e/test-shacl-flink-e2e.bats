@@ -572,6 +572,16 @@ else:
     run grep "${TEST_DEL_ATTR}" ${ALERTS_OUT}
     [[ "${output}" == *"hasE2EState"* ]]
 
+    # The message itself, not just the event name. hasE2EState is a Property
+    # with sh:minCount 1 and sh:maxCount 1, so deleting it must read exactly
+    # "Found 0 properties instead of [1, 1]!". This check exists because what
+    # shipped was "Found 0 relationships instead of [[1, 1]!" -- wrong noun,
+    # doubled bracket, missing bracket -- on a Property check, and no test
+    # anywhere looked at the text.
+    [[ "${output}" == *"Found 0 properties instead of [1, 1]!"* ]]
+    [[ "${output}" != *"relationships instead of"* ]]
+    [[ "${output}" != *"[["* ]]
+
     # The count must read 0. A negative one means the aggregate lost track of
     # what it had accumulated -- the defect these tests exist for.
     bad=$(negative_counts "${TEST_DEL_ATTR}")

@@ -384,7 +384,7 @@ sql_check_relationship_property_class = """
                 `constraint_id` as constraint_id,
                 true as triggered,
                 `severity` AS severity,
-                'Model validation for relationship' || `propertyPath` || 'failed for '|| this || '. Relationship not linked to existing entity of type ' ||  `propertyClass` || '.'
+                'Model validation for relationship ' || `propertyPath` || ' failed for '|| this || '. Relationship not linked to existing entity of type ' ||  `propertyClass` || '.'
                     as `text`
                 {%- if sqlite %}
                 ,CURRENT_TIMESTAMP
@@ -416,8 +416,8 @@ sql_check_relationship_property_count = """
                 `constraint_id` as constraint_id,
                 true as triggered,
                 `severity` AS severity,
-               'Model validation for relationship ' || `propertyPath` || 'failed for ' || this || ' . Found ' ||
-                            SQL_DIALECT_CAST(SUM(CASE WHEN NOT COALESCE(adeleted, FALSE) AND link IS NOT NULL THEN 1 ELSE 0 END) AS STRING) || ' relationships instead of [' || `minCount` || ', ' || `maxCount` || ']!'
+               'Model validation for relationship ' || `propertyPath` || ' failed for ' || this || '. Found ' ||
+                            SQL_DIALECT_CAST(SUM(CASE WHEN NOT COALESCE(adeleted, FALSE) AND link IS NOT NULL THEN 1 ELSE 0 END) AS STRING) || ' relationships instead of [' || IFNULL(`minCount`, '0') || ', ' || IFNULL(`maxCount`, '*') || ']!'
                     as `text`
                 {%- if sqlite %}
                 ,CURRENT_TIMESTAMP
@@ -436,7 +436,7 @@ sql_check_relationship_nodeType = """
                 `constraint_id` as constraint_id,
                 true as triggered,
                 `severity` AS severity,
-                'Model validation for relationship ' || `propertyPath` || ' failed for ' || this || ' . Either NodeType '|| nodeType || ' is not an IRI or type is not a Relationship.'
+                'Model validation for relationship ' || `propertyPath` || ' failed for ' || this || '. Either NodeType '|| nodeType || ' is not an IRI or type is not a Relationship.'
                     as `text`
                 {%- if sqlite %}
                 ,CURRENT_TIMESTAMP
@@ -489,19 +489,32 @@ WITH A1 AS (SELECT /*+ STATE_TTL('D' = '0d', 'C' = '0d') */ A.id as this,
 
 # `edeleted` is not a grouping key here either -- see
 # sql_check_relationship_property_count for what that cost.
+#
+# The count is COUNT(DISTINCT `index`) -- the number of distinct datasetIds
+# carrying a live attribute, which IS the number of instances, an NGSI-LD
+# attribute being (entity, name, datasetId).
+#
+# It used to be SUM(DISTINCT CASE WHEN ... THEN 1 ELSE 0 END). Every term of
+# that is 0 or 1, and summing the DISTINCT values of a set drawn from {0, 1}
+# is at most 1 -- so the count could never exceed one however many instances
+# existed, and sh:maxCount on a Property could never fire at all. It reported
+# the shape as satisfied, which is why nothing noticed. Counting datasetIds
+# instead also survives the join fan-out that the DISTINCT was there to
+# absorb: one attribute matched by several sub-property joins still counts
+# once.
 sql_check_property_count = """
+{%- set instance_count %}COUNT(DISTINCT CASE WHEN NOT COALESCE(adeleted, FALSE) and attr_typ IS NOT NULL THEN `index` ELSE NULL END){% endset %}
 {% set constraint_cond%}
-    (SUM(DISTINCT CASE WHEN NOT COALESCE(adeleted, FALSE) and attr_typ IS NOT NULL THEN 1 ELSE 0 END) > SQL_DIALECT_CAST(`maxCount` AS INTEGER)
-                                    OR SUM(DISTINCT CASE WHEN NOT COALESCE(adeleted, FALSE) and attr_typ is NOT NULL THEN 1 ELSE 0 END) < SQL_DIALECT_CAST(`minCount` AS INTEGER))
+    ({{ instance_count }} > SQL_DIALECT_CAST(`maxCount` AS INTEGER)
+                                    OR {{ instance_count }} < SQL_DIALECT_CAST(`minCount` AS INTEGER))
 {% endset %}
 SELECT this AS resource,
     'CountConstraintComponent(' || `parentPath` || `propertyPath` || ')' AS event,
     `constraint_id` as constraint_id,
     true as triggered,
     `severity` AS severity,
-   'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '.  Found ' ||
-                            SQL_DIALECT_CAST(SUM(DISTINCT CASE WHEN NOT COALESCE(adeleted, FALSE) and attr_typ IS NOT NULL THEN 1 ELSE 0 END) AS STRING) || ' relationships instead of [' || IFNULL('[' || `minCount`, '0')
-                            || ', ' || IFNULL(`maxCount` || ']', '[') || '!'
+   'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Found ' ||
+                            SQL_DIALECT_CAST({{ instance_count }} AS STRING) || ' properties instead of [' || IFNULL(`minCount`, '0') || ', ' || IFNULL(`maxCount`, '*') || ']!'
         as `text`
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
@@ -628,7 +641,7 @@ SELECT this AS resource,
     `constraint_id` as constraint_id,
     true as triggered,
     `severity` AS severity,
-    'Model validation for Property propertyPath failed for ' || this || '. Value ' || IFNULL(val, 'NULL') || ' is not allowed.'
+    'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Value ' || IFNULL(val, 'NULL') || ' is not allowed.'
         as `text`
         {% if sqlite %}
         ,CURRENT_TIMESTAMP

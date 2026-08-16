@@ -1,3 +1,3 @@
-'urn:malformed:1','DatatypeConstraintComponent(https://industry-fusion.com/types/v0.9/aBoolean[0])','warning'
-'urn:malformed:1','DatatypeConstraintComponent(https://industry-fusion.com/types/v0.9/aDouble[0])','warning'
-'urn:malformed:1','DatatypeConstraintComponent(https://industry-fusion.com/types/v0.9/anInteger[0])','warning'
+'urn:malformed:1','DatatypeConstraintComponent(https://industry-fusion.com/types/v0.9/aBoolean[0])','warning','Datatype check failed: value="yes", expected datatypes="http://www.w3.org/2001/XMLSchema#boolean" and found datatype="NULL" do not match!'
+'urn:malformed:1','DatatypeConstraintComponent(https://industry-fusion.com/types/v0.9/aDouble[0])','warning','Datatype check failed: value="abc", expected datatypes="http://www.w3.org/2001/XMLSchema#double" and found datatype="NULL" do not match!'
+'urn:malformed:1','DatatypeConstraintComponent(https://industry-fusion.com/types/v0.9/anInteger[0])','warning','Datatype check failed: value="1.5", expected datatypes="http://www.w3.org/2001/XMLSchema#integer" and found datatype="NULL" do not match!'

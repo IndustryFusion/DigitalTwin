@@ -1,0 +1,27 @@
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix ngsild: <https://uri.etsi.org/ngsi-ld/> .
+@prefix iff:    <https://industry-fusion.com/types/v0.9/> .
+
+# A filter carries exactly one strength. Shaped exactly as the default KMS
+# shapes a Property -- sh:nodeKind sh:BlankNode with the value constrained on a
+# nested ngsild:hasValue -- so this exercises the same compiled check.
+#
+# sh:maxCount 1 is the parameter under test. An NGSI-LD attribute is
+# (entity, name, datasetId), so two datasetIds are two instances of hasStrength
+# and must violate it.
+iff:FilterStrengthCountShape
+    a sh:NodeShape ;
+    sh:targetClass iff:filter ;
+    sh:property [
+        sh:path iff:hasStrength ;
+        sh:order 1 ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:nodeKind sh:BlankNode ;
+        sh:property [
+            sh:path ngsild:hasValue ;
+            sh:nodeKind sh:Literal ;
+            sh:minCount 1 ;
+            sh:maxCount 1 ;
+        ] ;
+    ] .

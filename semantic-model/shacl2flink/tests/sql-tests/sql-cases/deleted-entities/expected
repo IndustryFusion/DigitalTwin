@@ -1,2 +1,2 @@
-'urn:filter:3','CountConstraintComponent(https://industry-fusion.com/types/v0.9/hasCartridge)','warning'
-'urn:filter:4','ClassConstraintComponent(https://industry-fusion.com/types/v0.9/hasCartridge[0])','warning'
+'urn:filter:3','CountConstraintComponent(https://industry-fusion.com/types/v0.9/hasCartridge)','warning','Model validation for relationship https://industry-fusion.com/types/v0.9/hasCartridge failed for urn:filter:3. Found 0 relationships instead of [1, 1]!'
+'urn:filter:4','ClassConstraintComponent(https://industry-fusion.com/types/v0.9/hasCartridge[0])','warning','Model validation for relationship https://industry-fusion.com/types/v0.9/hasCartridge failed for urn:filter:4. Relationship not linked to existing entity of type https://industry-fusion.com/types/v0.9/filterCartridge.'
