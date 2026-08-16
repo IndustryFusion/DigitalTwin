@@ -438,6 +438,30 @@ def create_yaml_view(name, table, primary_key=None, ttl=None):
         else:
             sqlstatement += ', '
         sqlstatement += f'`{key}`'
+    # KNOWN DEFECT, not yet fixed: `ts` is not monotonic in the log, so this
+    # does not always keep the newest row.
+    #
+    # debeziumBridge stamps an attribute's VALUE record with its
+    # ngsi-ld:observedAt (app.js checkTimestamp) while a DELETE record takes
+    # wall-clock. Measured on a live cluster for one dedup key
+    # (urn:filter:1\c90e0d09..., @none): a delete written at offset 581438
+    # carried 2026-08-16, while the three republications of the value that
+    # FOLLOWED it -- offsets 581453, 581705, 581955 -- all carried 2024-02-28.
+    # ORDER BY ts DESC therefore keeps the delete indefinitely and the
+    # attribute is reported missing although it exists. Republishing the same
+    # value with a current timestamp made the job retract the alert 2.5s later,
+    # which is what pins the mechanism.
+    #
+    # Ordering by the Kafka offset instead was tried and reverted. It is not
+    # obviously safe: Flink compiles ROW_NUMBER() ... rownum = 1 into its
+    # Deduplicate operator only when the ORDER BY is a time attribute, and a
+    # plain BIGINT makes it a general rank. The trial was also inconclusive --
+    # the cluster showed inflated counts under BOTH orderings -- so it settled
+    # nothing and is not evidence either way.
+    #
+    # The fix most likely belongs in what the timestamp is set FROM rather than
+    # in what this orders by, but that changes event-time semantics for every
+    # consumer of the attributes topic and is not a call to make here.
     sqlstatement += "\nORDER BY ts DESC) AS rownum\n"
     sqlstatement += f'FROM `{name}` )\nWHERE rownum = 1'
     spec['sqlstatement'] = sqlstatement

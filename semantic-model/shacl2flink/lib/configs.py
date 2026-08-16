@@ -73,3 +73,14 @@ constraint_trigger_table_object_name = 'constraint-trigger-table'
 rdf_max_per_set = 1500
 max_sql_configmap_size = 200000
 flink_ttl = '{{.Values.flink.ttl}}'
+# TTL for the deduplication views ("latest row per key") and for the
+# shacl-validation job. Both default to flink_ttl; they are separate knobs only
+# so the two can be moved independently while investigating.
+#
+# Expiry here is the repair mechanism, not a leak: kafka-connect is bounced
+# every flink_ttl/2 so Debezium rebuilds every live key from Postgres before
+# its state ages out, which sweeps any state that has drifted. Setting these to
+# 0 was tried and reverted -- it does not make bad state correct, it makes it
+# permanent. See helm/values.yaml.gotmpl for the measurements.
+view_state_ttl = '{{.Values.flink.viewTtl}}'
+shacl_state_ttl = '{{.Values.flink.shaclTtl}}'

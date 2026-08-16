@@ -94,6 +94,33 @@ flink:
   idleTimeout: 1 s
   ttl: "3600 s" # Warning: if you change that value dynamically, the debezium service in kafka must be redeployed as well to fit to the Flink deployments ttl
   coreTtl: "86400 s"
+  # State TTL for the "latest row per key" deduplication views (entities,
+  # attributes) and for the shacl-validation job. Both default to `ttl` on
+  # purpose; they exist as separate knobs only so the two can be moved
+  # independently while investigating, not because they should differ.
+  #
+  # Do NOT set these to 0 ("never expire") to stop a stale alert. It was tried,
+  # and it makes things worse rather than better. Expiry is not a leak in this
+  # design, it is the repair: charts/kafka/templates/connect-restarter.yaml
+  # bounces kafka-connect every `ttl`/2, so Debezium re-snapshots and rebuilds
+  # every live key from Postgres just before its state would age out. State
+  # that has drifted -- an aggregate that lost a retraction, a dedup holding a
+  # row that later records should have replaced -- is swept within the hour and
+  # reconstructed from a source of truth.
+  #
+  # Measured with these at 0: counts that should read 1 reported "Found 2" and
+  # "Found 3" for attributes existing exactly once, and stayed wrong across
+  # redeploys, because nothing was sweeping them any more. At `ttl` the same
+  # cluster reported them correctly. Pinning the TTL does not make bad state
+  # correct, it makes it permanent.
+  #
+  # What expiry does NOT fix is a deleted entity: it is absent from the next
+  # snapshot, so its state is never rebuilt -- but expiry is silent, so the
+  # alert already written to alerts_bulk is never retracted either. That is a
+  # real defect and the fix for it is real tombstones on the attributes topic,
+  # not a TTL setting in either direction.
+  viewTtl: "3600 s"
+  shaclTtl: "3600 s"
   db:
     name: {{ .StateValues.flink.db.name }}
     schema: {{ .StateValues.flink.db.schema }}

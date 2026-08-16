@@ -21,7 +21,7 @@ import lib.configs as configs
 from lib.shacl_properties_to_sql import translate as translate_properties
 from lib.shacl_sparql_to_sql import translate as translate_sparql
 from lib.shacl_construct_to_sql import translate as translate_construct
-from lib.configs import flink_ttl
+from lib.configs import shacl_state_ttl
 import ruamel.yaml
 import rdflib
 import argparse
@@ -103,7 +103,10 @@ accessible: {e}")
                                                     configs.max_sql_configmap_size)
     split_constraints = utils.split_statementsets(constraints,
                                                   configs.max_sql_configmap_size)
-    ttl = flink_ttl
+    # Its own setting rather than the shared one, defaulting to the same value.
+    # Expiring this state is deliberate: it is what a re-snapshot rebuilds, and
+    # so what keeps drift from becoming permanent. See flink.shaclTtl.
+    ttl = shacl_state_ttl
     with open(os.path.join(output_folder, "shacl-validation.yaml"), "w") as f, \
             open(os.path.join(output_folder, "shacl-validation-maps.yaml"), "w") as fm:
 

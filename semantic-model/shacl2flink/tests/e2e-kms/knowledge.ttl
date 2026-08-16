@@ -30,6 +30,16 @@
 :E2EFreeMachine a owl:Class,
         owl:NamedIndividual .
 
+# Focus class holding a mandatory RELATIONSHIP, and the class it points at.
+# Drives the deletion tests: a relationship is the only way to reach the check
+# that fires when the entity on the far end is the one that was deleted, and
+# its count is the aggregate that was reported reading "-1".
+:E2ELinkedMachine a owl:Class,
+        owl:NamedIndividual .
+
+:E2ECartridge a owl:Class,
+        owl:NamedIndividual .
+
 :hasE2EState a owl:NamedIndividual,
         owl:ObjectProperty ;
     rdfs:domain :E2EMachine ;
@@ -39,3 +49,8 @@
         owl:ObjectProperty ;
     rdfs:domain :E2ERangeMachine ;
     rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
+:hasE2ECartridge a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :E2ELinkedMachine ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Relationship> .

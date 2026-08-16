@@ -3,6 +3,9 @@
 __pycache__/
 *.py[cod]
 
+# Everything `make build` generates
+output/
+
 # Compile artifacts from the opcua shape check
 tests/opcua-shapes/output/
 
