@@ -344,19 +344,12 @@ describe('Test startListener', function () {
     const producer = {
       connect: function () {}
     };
-    const fs = {
-      writeFileSync: function (file, message) {
-        expect(file).to.satisfy(function (str) {
-          if (str === '/tmp/ready' || str === '/tmp/healthy') {
-            return true;
-          }
-        });
-        expect(message).to.satisfy(function (str) {
-          if (str === 'ready' || str === 'healthy') {
-            return true;
-          }
-        });
-      }
+    // The bridges now hand their liveness files to KafkaHealth, which needs a
+    // consumer that can report on its own state. Stub it out here so this test
+    // keeps exercising the app wiring rather than the watchdog -- the watchdog has
+    // its own test in lib_kafkaHealthTest.js.
+    const KafkaHealth = function () {
+      return { start: function () {}, shutdown: function () {} };
     };
     const config = {
       debeziumBridge: {
@@ -385,7 +378,7 @@ describe('Test startListener', function () {
     const processOnceSpy = sinon.spy(process, 'once');
     const revert = toTest.__set__('consumer', consumer);
     toTest.__set__('producer', producer);
-    toTest.__set__('fs', fs);
+    toTest.__set__('KafkaHealth', KafkaHealth);
     toTest.__set__('config', config);
     toTest.__set__('process', process);
     const startListener = toTest.__get__('startListener');
@@ -393,7 +386,7 @@ describe('Test startListener', function () {
     consumerDisconnectSpy.callCount.should.equal(5);
     assert(consumerConnectSpy.calledOnce);
     assert(producerConnectSpy.calledOnce);
-    processExitSpy.withArgs(0).callCount.should.equal(2);
+    processExitSpy.withArgs(1).callCount.should.equal(2);
     assert(processOnceSpy.calledThrice);
     revert();
   });

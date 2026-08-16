@@ -18,10 +18,10 @@
 const GROUPID = 'statekafkabridge';
 const CLIENTID = 'statekafkaclient';
 const { Kafka } = require('kafkajs');
-const fs = require('fs');
 const config = require('../config/config.json');
 const State = require('../lib/ngsildUpdates.js');
 const Logger = require('../lib/logger.js');
+const KafkaHealth = require('../lib/kafkaHealth.js');
 
 const state = new State(config);
 const logger = new Logger(config);
@@ -34,6 +34,7 @@ const kafka = new Kafka({
 const consumer = kafka.consumer({ groupId: GROUPID, allowAutoTopicCreation: false });
 
 const startListener = async function () {
+  const health = new KafkaHealth(consumer, logger);
   await consumer.connect();
   await consumer.subscribe({ topic: config.ngsildUpdates.topic, fromBeginning: false });
 
@@ -46,7 +47,13 @@ const startListener = async function () {
         logger.error('could not process message: ' + e);
       }
     }
-  }).catch(e => logger.error(`[StateUpdater/consumer] ${e.message}`, e));
+  }).catch(e => {
+    // Rethrow: a consumer.run() that rejects leaves the bridge with no message
+    // loop at all, and swallowing it here let startup continue on to declare
+    // the pod ready.
+    logger.error(`[StateUpdater/consumer] ${e.message}`, e);
+    throw e;
+  });
 
   const errorTypes = ['unhandledRejection', 'uncaughtException'];
   const signalTraps = ['SIGTERM', 'SIGINT', 'SIGUSR2'];
@@ -56,8 +63,12 @@ const startListener = async function () {
       try {
         console.log(`process.on ${type}`);
         console.error(e);
+        health.shutdown();
         await consumer.disconnect();
-        process.exit(0);
+        // Non-zero: this path is only reached on an unhandled error, and
+        // exiting 0 made a crash-looping bridge indistinguishable from a clean
+        // stop in kubectl and in any exit-code based alerting.
+        process.exit(1);
       } catch (_) {
         process.exit(1);
       }
@@ -66,14 +77,14 @@ const startListener = async function () {
   signalTraps.map(type =>
     process.once(type, async () => {
       try {
+        health.shutdown();
         await consumer.disconnect();
       } finally {
         process.kill(process.pid, type);
       }
     }));
   try {
-    fs.writeFileSync('/tmp/ready', 'ready');
-    fs.writeFileSync('/tmp/healthy', 'healthy');
+    health.start();
   } catch (err) {
     logger.error(err);
   }
