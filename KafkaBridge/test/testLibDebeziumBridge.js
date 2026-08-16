@@ -133,6 +133,46 @@ describe('Test diffAttributes', function () {
     });
     revert();
   });
+  it('Should carry observedAt onto a deleted attribute', function () {
+    // The delete has to be stamped with the timestamp of the value it deletes,
+    // so it needs that value's observedAt. Without it the delete falls back to
+    // wall-clock while values carry their observedAt, and a delete written
+    // today then outranks every later republication of a value observed in the
+    // past -- attributes_view keeps the delete and the attribute is reported
+    // missing although it exists.
+    const config = {
+      bridgeCommon: {
+        kafkaSyncOnAttribute: 'kafkaSyncOn'
+      }
+    };
+    const Logger = function () {
+      return logger;
+    };
+    const beforeAttrs = {
+      attr1: [{
+        id: 'id1',
+        type: 'type',
+        name: 'name',
+        entityId: 'entityId',
+        value: 'value',
+        'https://uri.etsi.org/ngsi-ld/observedAt': [{ '@value': '2024-02-28T13:52:35.0Z' }]
+      }]
+    };
+    const revert = ToTest.__set__('Logger', Logger);
+    const debeziumBridge = new ToTest(config);
+    const result = debeziumBridge.diffAttributes(beforeAttrs, {});
+    assert.deepEqual(result.deletedAttrs, {
+      attr1: [{
+        id: 'id1',
+        entityId: 'entityId',
+        name: 'name',
+        type: 'type',
+        datasetId: '@none',
+        'https://uri.etsi.org/ngsi-ld/observedAt': [{ '@value': '2024-02-28T13:52:35.0Z' }]
+      }]
+    });
+    revert();
+  });
   it('Should delete higher index value and update changed value', async function () {
     const config = {
       bridgeCommon: {

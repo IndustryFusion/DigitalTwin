@@ -67,6 +67,12 @@ TEST_DEL_ENTITY="urn:e2e-flink-del-entity:${RUN_ID}"
 TEST_DEL_ATTR="urn:e2e-flink-del-attr:${RUN_ID}"
 TEST_DEL_LINKED="urn:e2e-flink-del-linked:${RUN_ID}"
 TEST_DEL_TARGET="urn:e2e-flink-del-target:${RUN_ID}"
+TEST_DEL_RECREATE="urn:e2e-flink-del-recreate:${RUN_ID}"
+# A fixed instant in the past, standing in for an ngsi-ld:observedAt. Records
+# carrying it are older than everything else on the topic, which is the whole
+# point: it cannot win on time and must win on arrival order.
+# 1709128355000 = 2024-02-28T13:52:35Z, the observedAt that exposed this.
+OBSERVED_TS=1709128355000
 
 setup() {
     # shellcheck disable=SC2086
@@ -90,10 +96,14 @@ publish_entity() {
 # Mirrors exactly what create_ngsild_models.py emits for a Property: the
 # attributes key is entityId\name\datasetId, and the literal carries an
 # explicit valueType because the range checks cast it.
-publish_property() {
+property_json() {
     local entity=$1 name=$2 value=$3 valuetype=${4:-http://www.w3.org/2001/XMLSchema#integer}
-    printf '{"id":"%s\\\\%s\\\\@none","entityId":"%s","name":"%s","nodeType":"@value","valueType":"%s","type":"https://uri.etsi.org/ngsi-ld/Property","attributeValue":"%s","datasetId":"@none","deleted":false,"synced":true}\n' \
-        "${entity}" "${name}" "${entity}" "${name}" "${valuetype}" "${value}" \
+    printf '{"id":"%s\\\\%s\\\\@none","entityId":"%s","name":"%s","nodeType":"@value","valueType":"%s","type":"https://uri.etsi.org/ngsi-ld/Property","attributeValue":"%s","datasetId":"@none","deleted":false,"synced":true}' \
+        "${entity}" "${name}" "${entity}" "${name}" "${valuetype}" "${value}"
+}
+
+publish_property() {
+    printf '%s\n' "$(property_json "$@")" \
         | kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP}
 }
 
@@ -121,12 +131,59 @@ publish_relationship() {
 # and lang are dropped. Publishing a delete that still carried its value would
 # be testing a message the bridge never sends -- and the count checks read
 # `type`, which survives, so the difference is not cosmetic.
-publish_attribute_deleted() {
+deleted_attribute_json() {
     local entity=$1 name=$2 nodetype=${3:-@value} \
           attrtype=${4:-https://uri.etsi.org/ngsi-ld/Property}
-    printf '{"id":"%s\\\\%s\\\\@none","parentId":null,"entityId":"%s","name":"%s","nodeType":"%s","type":"%s","datasetId":"@none","deleted":true,"synced":true}\n' \
-        "${entity}" "${name}" "${entity}" "${name}" "${nodetype}" "${attrtype}" \
+    printf '{"id":"%s\\\\%s\\\\@none","parentId":null,"entityId":"%s","name":"%s","nodeType":"%s","type":"%s","datasetId":"@none","deleted":true,"synced":true}' \
+        "${entity}" "${name}" "${entity}" "${name}" "${nodetype}" "${attrtype}"
+}
+
+publish_attribute_deleted() {
+    printf '%s\n' "$(deleted_attribute_json "$@")" \
         | kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP}
+}
+
+# Publish with an EXPLICIT Kafka record timestamp.
+#
+# kcat cannot set one -- consecutive publishes simply take increasing
+# wall-clock -- and a test that relies on that proves nothing here, because the
+# newer record would win on time whatever the deduplication does. What has to
+# be exercised is records that carry the SAME timestamp, which is what the
+# bridge produces once a delete is stamped from the value it deletes.
+#
+# So this borrows the kafkajs that already ships inside the debezium-bridge
+# image rather than adding a dependency to the runner. It is the one place
+# these tests reach outside kcat, and the reason is that no timestamp means no
+# test.
+publish_at() {
+    local topic=$1 key=$2 value=$3 timestamp=$4
+    kubectl -n "${NAMESPACE}" exec deploy/debezium-bridge -- env \
+        BROKER="${KAFKA_BOOTSTRAP}" TOPIC="${topic}" MKEY="${key}" \
+        MVALUE="${value}" MTIMESTAMP="${timestamp}" node -e '
+const { Kafka } = require("/opt/node_modules/kafkajs");
+const producer = new Kafka({
+  brokers: [process.env.BROKER], clientId: "shacl-e2e-timestamped"
+}).producer();
+(async () => {
+  await producer.connect();
+  await producer.send({ topic: process.env.TOPIC, messages: [{
+    key: process.env.MKEY,
+    value: process.env.MVALUE,
+    timestamp: process.env.MTIMESTAMP
+  }]});
+  await producer.disconnect();
+})().catch(err => { console.error(err.message); process.exit(1); });
+' >/dev/null
+}
+
+publish_property_at() {
+    local timestamp=$1; shift
+    publish_at "${ATTRIBUTES_TOPIC}" "$1" "$(property_json "$@")" "${timestamp}"
+}
+
+publish_attribute_deleted_at() {
+    local timestamp=$1; shift
+    publish_at "${ATTRIBUTES_TOPIC}" "$1" "$(deleted_attribute_json "$@")" "${timestamp}"
 }
 
 # "Found -1 relationships instead of [1, 1]" is what prompted these tests. The
@@ -624,6 +681,63 @@ else:
         echo "${bad}" | sed 's/^/#   /' >&3
     fi
     [ -z "${bad}" ]
+}
+
+@test "an attribute deleted and recreated at the same timestamp comes back" {
+    # The reported failure, reduced to its mechanism.
+    #
+    # attributes_view deduplicates ORDER BY ts DESC. A value record is stamped
+    # from its ngsi-ld:observedAt, which can be far in the past; a delete used
+    # to carry none and so took wall-clock. The two were then compared against
+    # each other and the delete won for good -- urn:filter:1 was reported as
+    # having no hasStrength although it has one, and the re-snapshot that
+    # republished the value every half hour could never undo it, because that
+    # value still carried its old observedAt.
+    #
+    # The bridge now stamps a delete with the timestamp of the value it
+    # deletes, so the two TIE and the tie falls to whichever arrived last. That
+    # is the property this pins: EVERY record below carries OBSERVED_TS, so the
+    # deduplication cannot fall back to "whichever is newer" and has to resolve
+    # it by arrival order.
+    start_alert_capture
+    publish_entity "${TEST_DEL_RECREATE}" "${MACHINE_TYPE}"
+    publish_property_at "${OBSERVED_TS}" "${TEST_DEL_RECREATE}" "${STATE_PROP}" \
+        "running" "http://www.w3.org/2001/XMLSchema#string"
+    wait_for_converged "${TEST_DEL_RECREATE}" CLEAR 120
+    [ "$(final_alert_state "${TEST_DEL_RECREATE}")" = "CLEAR" ]
+    echo "# ${TEST_DEL_RECREATE} satisfied by an attribute stamped ${OBSERVED_TS}" >&3
+
+    # Delete at the SAME timestamp. It arrives later, so it must take effect --
+    # if this half fails the test would pass trivially, by deletes being
+    # ignored.
+    rearm_alert_capture
+    publish_attribute_deleted_at "${OBSERVED_TS}" "${TEST_DEL_RECREATE}" "${STATE_PROP}"
+    run wait_for_alert "${TEST_DEL_RECREATE}" "CountConstraintComponent" 120
+    if [ "$status" -ne 0 ]; then
+        echo "# the delete had no effect; captured:" >&3
+        grep "${TEST_DEL_RECREATE}" ${ALERTS_OUT} >&3 || echo "# (none)" >&3
+        dump_trigger_rows "${TEST_DEL_RECREATE}" "CountConstraintComponent"
+    fi
+    [ "$status" -eq 0 ]
+    echo "# delete at the same timestamp took effect" >&3
+
+    # Recreate at the SAME timestamp again. This is the case that used to be
+    # unreachable: the value can never outrank the delete on time, so it comes
+    # back only if a tie is broken by arrival.
+    rearm_alert_capture
+    publish_property_at "${OBSERVED_TS}" "${TEST_DEL_RECREATE}" "${STATE_PROP}" \
+        "running" "http://www.w3.org/2001/XMLSchema#string"
+    wait_for_converged "${TEST_DEL_RECREATE}" CLEAR 120
+    stop_alert_capture
+
+    result=$(final_alert_state "${TEST_DEL_RECREATE}")
+    echo "# converged state after recreating at the same timestamp: ${result}" >&3
+    if [ "${result}" != "CLEAR" ]; then
+        echo "# the recreated attribute never came back -- a delete is" >&3
+        echo "# outranking a value it should only have tied with:" >&3
+        grep "${TEST_DEL_RECREATE}" ${ALERTS_OUT} >&3 || true
+    fi
+    [ "${result}" = "CLEAR" ]
 }
 
 @test "no alert produced during this run reports a negative count" {
