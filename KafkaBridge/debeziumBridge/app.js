@@ -158,11 +158,37 @@ const sendUpdates = async function ({ entity, deletedEntity, updatedAttrs, delet
 
   if (deletedAttrs !== null && deletedAttrs !== undefined && Object.keys(deletedAttrs).length > 0) {
     // Flatmap the array, i.e. {key: k, value: [m1, m2]} => [{key: k, value: m1}, {key: k, value: m2}]
+    //
+    // A delete carries the timestamp of the value it deletes, exactly as an
+    // update does -- the LAST KNOWN timestamp of that attribute.
+    //
+    // It used to carry none, so Kafka stamped it with wall-clock while value
+    // records are stamped from their observedAt. attributes_view deduplicates
+    // ORDER BY ts DESC, so a delete written today outranked every later
+    // republication of a value observed in the past and the attribute stayed
+    // invisible for good. Measured: a delete at offset 581438 carrying
+    // 2026-08-16 beat the values at 581453, 581705 and 581955, all carrying
+    // 2024-02-28, and urn:filter:1 was reported as having no hasStrength
+    // although it has one.
+    //
+    // Giving the delete the same timestamp as the value makes the two tie, and
+    // a tie is broken by arrival order -- so the delete still wins while it is
+    // the last word, and a re-creation afterwards wins again. Deliberately the
+    // SAME timestamp and not one millisecond later: later would make the
+    // delete unbeatable by a re-creation observed at the same instant, which
+    // is the case this has to get right.
     const deleteMessages = Object.entries(deletedAttrs).flatMap(([key, value]) =>
       value.map(val => {
         val.deleted = true;
         val.synced = true;
-        return { key: genKey, value: JSON.stringify(val) };
+        // Also strips observedAt from the payload, so the message on the wire
+        // is unchanged from before.
+        const timestamp = checkTimestamp(val);
+        const result = { key: genKey, value: JSON.stringify(val) };
+        if (timestamp !== null) {
+          result.timestamp = timestamp;
+        }
+        return result;
       })
     );
     topicMessages.push({

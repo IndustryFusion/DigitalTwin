@@ -100,6 +100,60 @@ describe('Test sendUpdates', function () {
     await sendUpdates({ entity, updatedAttrs, deletedAttrs });
     revert();
   });
+  it('Should stamp a deleted attribute with the timestamp of the value it deletes', async function () {
+    // A delete used to carry no timestamp, so Kafka stamped it with wall-clock
+    // while value records are stamped from their observedAt. attributes_view
+    // deduplicates ORDER BY ts DESC, so a delete written today outranked every
+    // later republication of a value observed in the past, and the attribute
+    // stayed invisible to validation for good.
+    //
+    // Carrying the value's own timestamp makes the two TIE, and a tie goes to
+    // whichever arrived last -- so a delete still wins while it is the last
+    // word, and a re-creation afterwards wins again.
+    //
+    // observedAt must not appear in the payload: checkTimestamp moves it into
+    // the record timestamp, so the message on the wire is unchanged.
+    const messages = [
+      { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
+      {
+        key: 'id',
+        value: '{"deleteValueKey":"deleteValueValue","deleted":true,"synced":true}',
+        timestamp: 1672914001456
+      }
+    ];
+    const sendUpdates = toTest.__get__('sendUpdates');
+    const config = {
+      debeziumBridge: {
+        attributesTopic: 'attributesTopic',
+        entityTopicPrefix: 'topicPrefix'
+      }
+    };
+    let seen = 0;
+    const producer = {
+      sendBatch: function ({ topicMessages }) {
+        seen++;
+        topicMessages[0].topic.should.equal('topicPrefix');
+        assert.deepEqual(topicMessages[0].messages[0], messages[0]);
+        topicMessages[1].topic.should.equal('attributesTopic');
+        assert.deepEqual(topicMessages[1].messages[0], messages[1]);
+      }
+    };
+    const entity = {
+      id: 'id',
+      type: 'http://example/type'
+    };
+    const deletedAttrs = {
+      deleteKey: [{
+        deleteValueKey: 'deleteValueValue',
+        'https://uri.etsi.org/ngsi-ld/observedAt': [{ '@value': '2023-01-05T10:20:01.456Z' }]
+      }]
+    };
+    const revert = toTest.__set__('producer', producer);
+    toTest.__set__('config', config);
+    await sendUpdates({ entity, deletedAttrs });
+    seen.should.equal(1);
+    revert();
+  });
   it('Should delete entity', async function () {
     const messages = [
       { key: 'id', value: '{"id":"id","type":"http://example/type","deleted":true}' }
