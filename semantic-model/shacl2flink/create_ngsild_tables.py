@@ -93,7 +93,17 @@ def main(output_folder='output'):
               file=sqlitef)
         print('---', file=f)
         base_entity_view_primary_key = ['id']
-        yaml.dump(utils.create_yaml_view(base_entity_tablename, base_entity_table, base_entity_view_primary_key), f)
+        # The dedup keeping the latest row per entity id had no STATE_TTL hint
+        # at all, so it silently inherited whatever the job was set to. It now
+        # names its own setting, which DEFAULTS to the same value -- the point
+        # is that the choice is visible here, not that it differs.
+        #
+        # Do not set it to never-expire. Expiry is what lets a rebuild repair
+        # drifted state: kafka-connect is bounced every ttl/2 and Debezium
+        # re-snapshots every live entity from Postgres before its state ages
+        # out. Pinning it was tried and made bad state permanent instead.
+        yaml.dump(utils.create_yaml_view(base_entity_tablename, base_entity_table, base_entity_view_primary_key,
+                                         ttl=configs.view_state_ttl), f)
         print(utils.create_sql_view(base_entity_tablename, base_entity_table, base_entity_view_primary_key),
               file=sqlitef)
         print('---', file=fk)

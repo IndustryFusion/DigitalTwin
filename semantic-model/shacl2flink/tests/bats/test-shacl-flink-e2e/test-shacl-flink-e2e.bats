@@ -45,8 +45,11 @@ E2E=https://industryfusion.github.io/contexts/example/v0/base_entities
 MACHINE_TYPE=${E2E}/E2EMachine
 RANGE_TYPE=${E2E}/E2ERangeMachine
 FREE_TYPE=${E2E}/E2EFreeMachine
+LINKED_TYPE=${E2E}/E2ELinkedMachine
+CARTRIDGE_TYPE=${E2E}/E2ECartridge
 STATE_PROP=${E2E}/hasE2EState
 RANGE_PROP=${E2E}/hasE2ERange
+CARTRIDGE_REL=${E2E}/hasE2ECartridge
 
 ALERTS_OUT=/tmp/SHACL_FLINK_ALERTS
 TRIGGER_ERR=/tmp/SHACL_FLINK_TRIGGER_ERR
@@ -60,6 +63,10 @@ TEST_XONE_BAD="urn:e2e-flink-xone-bad:${RUN_ID}"
 TEST_XONE_COUNT="urn:e2e-flink-xone-count:${RUN_ID}"
 TEST_XONE_OK="urn:e2e-flink-xone-ok:${RUN_ID}"
 TEST_UNKNOWN="urn:e2e-flink-unknown:${RUN_ID}"
+TEST_DEL_ENTITY="urn:e2e-flink-del-entity:${RUN_ID}"
+TEST_DEL_ATTR="urn:e2e-flink-del-attr:${RUN_ID}"
+TEST_DEL_LINKED="urn:e2e-flink-del-linked:${RUN_ID}"
+TEST_DEL_TARGET="urn:e2e-flink-del-target:${RUN_ID}"
 
 setup() {
     # shellcheck disable=SC2086
@@ -90,6 +97,51 @@ publish_property() {
         | kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP}
 }
 
+# Deleting an entity in Scorpio does NOT produce a Kafka tombstone. The
+# debezium bridge republishes the entity with deleted=true (app.js, the
+# removeType branch), so a delete is an ordinary row that happens to carry a
+# flag. Anything downstream that treats "the key went away" as the delete
+# signal will never see one.
+publish_entity_deleted() {
+    local id=$1 type=$2
+    echo "{\"id\":\"${id}\",\"type\":\"${type}\",\"deleted\":true}" \
+        | kafkacat -P -t ${ENTITY_TOPIC} -b ${KAFKA_BOOTSTRAP}
+}
+
+publish_relationship() {
+    local entity=$1 name=$2 target=$3
+    printf '{"id":"%s\\\\%s\\\\@none","entityId":"%s","name":"%s","nodeType":"@id","type":"https://uri.etsi.org/ngsi-ld/Relationship","attributeValue":"%s","datasetId":"@none","deleted":false,"synced":true}\n' \
+        "${entity}" "${name}" "${entity}" "${name}" "${target}" \
+        | kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP}
+}
+
+# A deleted attribute arrives STRIPPED. debeziumBridge.js keeps only id,
+# parentId, name, entityId, type, datasetId and nodeType (diffAttributes, the
+# pickFields call) and adds deleted/synced; attributeValue, valueType, unitCode
+# and lang are dropped. Publishing a delete that still carried its value would
+# be testing a message the bridge never sends -- and the count checks read
+# `type`, which survives, so the difference is not cosmetic.
+publish_attribute_deleted() {
+    local entity=$1 name=$2 nodetype=${3:-@value} \
+          attrtype=${4:-https://uri.etsi.org/ngsi-ld/Property}
+    printf '{"id":"%s\\\\%s\\\\@none","parentId":null,"entityId":"%s","name":"%s","nodeType":"%s","type":"%s","datasetId":"@none","deleted":true,"synced":true}\n' \
+        "${entity}" "${name}" "${entity}" "${name}" "${nodetype}" "${attrtype}" \
+        | kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP}
+}
+
+# "Found -1 relationships instead of [1, 1]" is what prompted these tests. The
+# count is SUM(CASE WHEN ... THEN 1 ELSE 0 END), so in batch it cannot go below
+# zero -- which is why the SQLite oracle agreed while Flink was wrong. On Flink
+# it reads negative when the aggregate has applied more retractions than
+# accumulations for the group, the signature of state expiring underneath it.
+#
+# Match any negative count rather than -1 specifically: the number depends on
+# how much state was lost, and every one of them is the same defect.
+negative_counts() {
+    local resource=$1
+    awk -v r="${resource}" 'index($0,r) && /Found -[0-9]/' "${ALERTS_OUT}" 2>/dev/null
+}
+
 # Tail alerts into a file so the consumer is already attached before the entity
 # is published -- otherwise the alert can be produced before we start listening.
 start_alert_capture() {
@@ -102,6 +154,20 @@ start_alert_capture() {
 
 stop_alert_capture() {
     killall kafkacat 2>/dev/null || true
+}
+
+# Throw away what has been captured and start listening again.
+#
+# A test that waits for an alert to APPEAR after some change must not be
+# allowed to match one raised before it. Publishing an entity and its attribute
+# are two separate records, so the entity spends a moment violating minCount
+# and alerts for it -- and a later wait_for_alert would find that transient
+# immediately and report success without the change under test having done
+# anything at all.
+rearm_alert_capture() {
+    stop_alert_capture
+    : >${ALERTS_OUT}
+    start_alert_capture
 }
 
 # Poll rather than sleep a fixed amount: validation normally lands in a couple
@@ -435,6 +501,142 @@ else:
     # a real transient must have existed for the convergence to mean anything
     [ "${records}" -ge 2 ]
     [ "${result}" = "CLEAR" ]
+}
+
+## --------------------------------------------------------------- deletion
+##
+## Nothing in this suite -- or in the 101 kms fixtures, or anywhere else in
+## shacl2flink -- ever set deleted=true before these tests. The delete path was
+## entirely uncovered, in an engine whose whole job is to decide when an alert
+## should stop.
+##
+## What these can and cannot catch. They run minutes after a deploy, so no
+## state has expired yet; they cannot reproduce the hour of TTL that made the
+## reported symptom appear. What they do pin is that the delete path WORKS at
+## all -- that a deletion reaches Flink, is understood as a deletion, and
+## retracts what it should. The settings that stop state expiring underneath it
+## are pinned separately, and cheaply, in tests/test_delete_semantics.py.
+
+@test "deleting an entity retracts the alert it raised" {
+    start_alert_capture
+    # An E2EMachine with no attribute violates minCount, so it alerts.
+    run publish_entity_until_alert "${TEST_DEL_ENTITY}" "${MACHINE_TYPE}" \
+        "CountConstraintComponent" 180
+    if [ "$status" -ne 0 ]; then
+        echo "# no alert to retract; captured:" >&3
+        grep "${TEST_DEL_ENTITY}" ${ALERTS_OUT} >&3 || echo "# (none)" >&3
+        dump_entity_records "${TEST_DEL_ENTITY}"
+    fi
+    [ "$status" -eq 0 ]
+    echo "# alert raised for ${TEST_DEL_ENTITY}, now deleting it" >&3
+
+    # The entity is gone: the alert is about something that no longer exists
+    # and must be retracted. This is the reported symptom -- alerts outliving
+    # the entity they were raised against.
+    publish_entity_deleted "${TEST_DEL_ENTITY}" "${MACHINE_TYPE}"
+    wait_for_converged "${TEST_DEL_ENTITY}" CLEAR 90
+    stop_alert_capture
+
+    result=$(final_alert_state "${TEST_DEL_ENTITY}")
+    echo "# converged state after deleting the entity: ${result}" >&3
+    if [ "${result}" != "CLEAR" ]; then
+        echo "# alert survived the entity; records were:" >&3
+        grep "${TEST_DEL_ENTITY}" ${ALERTS_OUT} >&3 || true
+    fi
+    [ "${result}" = "CLEAR" ]
+}
+
+@test "deleting a mandatory attribute reports zero, never a negative count" {
+    start_alert_capture
+    publish_entity "${TEST_DEL_ATTR}" "${MACHINE_TYPE}"
+    publish_property "${TEST_DEL_ATTR}" "${STATE_PROP}" "running" \
+        "http://www.w3.org/2001/XMLSchema#string"
+    # Satisfied first, so the alert that follows is caused by the deletion
+    # rather than by the attribute never having arrived.
+    wait_for_converged "${TEST_DEL_ATTR}" CLEAR 90
+    [ "$(final_alert_state "${TEST_DEL_ATTR}")" = "CLEAR" ]
+    echo "# ${TEST_DEL_ATTR} satisfied, now deleting its attribute" >&3
+
+    # Only alerts raised AFTER the deletion count -- see rearm_alert_capture.
+    rearm_alert_capture
+    publish_attribute_deleted "${TEST_DEL_ATTR}" "${STATE_PROP}"
+    run wait_for_alert "${TEST_DEL_ATTR}" "CountConstraintComponent" 90
+    if [ "$status" -ne 0 ]; then
+        echo "# deleting the attribute raised no count alert; captured:" >&3
+        grep "${TEST_DEL_ATTR}" ${ALERTS_OUT} >&3 || echo "# (none)" >&3
+        dump_trigger_rows "${TEST_DEL_ATTR}" "CountConstraintComponent"
+    fi
+    [ "$status" -eq 0 ]
+    stop_alert_capture
+
+    run grep "${TEST_DEL_ATTR}" ${ALERTS_OUT}
+    [[ "${output}" == *"hasE2EState"* ]]
+
+    # The count must read 0. A negative one means the aggregate lost track of
+    # what it had accumulated -- the defect these tests exist for.
+    bad=$(negative_counts "${TEST_DEL_ATTR}")
+    if [ -n "${bad}" ]; then
+        echo "# NEGATIVE COUNT reported after a deletion:" >&3
+        echo "${bad}" | sed 's/^/#   /' >&3
+    fi
+    [ -z "${bad}" ]
+}
+
+@test "deleting the entity a relationship points at is reported as a dangling link" {
+    start_alert_capture
+    # The far end first, so the link resolves and the machine starts clean.
+    publish_entity "${TEST_DEL_TARGET}" "${CARTRIDGE_TYPE}"
+    publish_entity "${TEST_DEL_LINKED}" "${LINKED_TYPE}"
+    publish_relationship "${TEST_DEL_LINKED}" "${CARTRIDGE_REL}" "${TEST_DEL_TARGET}"
+    wait_for_converged "${TEST_DEL_LINKED}" CLEAR 120
+    [ "$(final_alert_state "${TEST_DEL_LINKED}")" = "CLEAR" ]
+    echo "# ${TEST_DEL_LINKED} links to ${TEST_DEL_TARGET} and is clean" >&3
+
+    # Delete the CARTRIDGE. Nothing about the linking machine changes -- it
+    # still has exactly one relationship -- so the count must stay satisfied
+    # and the class check must report that the link no longer resolves. This is
+    # the reported case: deleting the object, not the subject.
+    rearm_alert_capture
+    publish_entity_deleted "${TEST_DEL_TARGET}" "${CARTRIDGE_TYPE}"
+    run wait_for_alert "${TEST_DEL_LINKED}" "ClassConstraintComponent" 120
+    if [ "$status" -ne 0 ]; then
+        echo "# deleting the target raised no class alert; captured:" >&3
+        grep "${TEST_DEL_LINKED}" ${ALERTS_OUT} >&3 || echo "# (none)" >&3
+        dump_trigger_rows "${TEST_DEL_LINKED}" "ClassConstraintComponent"
+    fi
+    [ "$status" -eq 0 ]
+    stop_alert_capture
+
+    # And it must be reported as a dangling link, not as a miscounted one.
+    bad=$(negative_counts "${TEST_DEL_LINKED}")
+    if [ -n "${bad}" ]; then
+        echo "# NEGATIVE COUNT after deleting the relationship target:" >&3
+        echo "${bad}" | sed 's/^/#   /' >&3
+    fi
+    [ -z "${bad}" ]
+}
+
+@test "no alert produced during this run reports a negative count" {
+    # A backstop over everything the suite published, not just the resources
+    # the deletion tests own: the count expression is shared by every shape, so
+    # a regression could surface first on any of them.
+    #
+    # Read BACK over the topic rather than tailing it. The alerts this is
+    # judging were written by the tests above, so a consumer starting at the
+    # end would see an empty stream and pass without having looked at anything.
+    local rows rc
+    rows=$(timeout 60 kafkacat -C -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} \
+        -o -5000 -e -f '%s\n' 2>/dev/null); rc=$?
+    # A consumer that failed must not read as "nothing negative found".
+    [ "${rc}" -eq 0 ]
+    [ -n "${rows}" ]
+
+    bad=$(echo "${rows}" | awk -v r="${RUN_ID}" 'index($0,r) && /Found -[0-9]/')
+    if [ -n "${bad}" ]; then
+        echo "# negative counts seen in this run:" >&3
+        echo "${bad}" | sed 's/^/#   /' >&3
+    fi
+    [ -z "${bad}" ]
 }
 
 @test "an entity of an unconstrained type raises no shacl alerts" {

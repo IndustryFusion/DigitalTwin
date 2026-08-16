@@ -1,0 +1,2 @@
+'urn:filter:3','CountConstraintComponent(https://industry-fusion.com/types/v0.9/hasCartridge)','warning'
+'urn:filter:4','ClassConstraintComponent(https://industry-fusion.com/types/v0.9/hasCartridge[0])','warning'

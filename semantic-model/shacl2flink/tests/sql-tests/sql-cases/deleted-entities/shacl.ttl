@@ -1,0 +1,30 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix sh:  <http://www.w3.org/ns/shacl#> .
+@prefix iff: <https://industry-fusion.com/types/v0.9/> .
+
+# A filter links to exactly one cartridge, and that cartridge must exist.
+#
+# Both parameters are here on purpose. The COUNT is the check whose SUM went
+# negative on Flink, and the CLASS is the one that fires when the entity on the
+# FAR END of the relationship is the one that was deleted -- which is the case
+# that prompted this fixture.
+iff:FilterShape
+    a sh:NodeShape ;
+    sh:targetClass iff:filter ;
+    sh:property [
+        sh:path iff:hasCartridge ;
+        sh:order 1 ;
+        sh:nodeKind sh:BlankNode ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+
+        sh:property [
+            sh:path <https://uri.etsi.org/ngsi-ld/hasObject> ;
+            sh:class iff:filterCartridge ;
+        ] ;
+        sh:property [
+            sh:path rdf:type ;
+            sh:hasValue <https://uri.etsi.org/ngsi-ld/Relationship> ;
+            sh:minCount 1 ;
+        ] ;
+    ] .

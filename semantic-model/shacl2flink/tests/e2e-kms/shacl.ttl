@@ -1,6 +1,7 @@
 @prefix : <https://industryfusion.github.io/contexts/example/v0/e2e_shacl/> .
 @prefix iffBaseEntities: <https://industryfusion.github.io/contexts/example/v0/base_entities/> .
 @prefix ngsild: <https://uri.etsi.org/ngsi-ld/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
@@ -50,5 +51,30 @@
                         sh:nodeKind sh:Literal ;
                         sh:maxInclusive 10 ] ]
             ) ] .
+
+# --------------------------------------------------------- deletion
+# An E2ELinkedMachine must link to exactly one cartridge, and that cartridge
+# must exist. Both parameters are load-bearing for the deletion tests:
+#
+#   sh:minCount/sh:maxCount is the aggregate that was reported reading
+#   "Found -1 relationships instead of [1, 1]" -- a value it cannot produce
+#   unless the count applied more retractions than accumulations, which is what
+#   deleting an entity used to do to it.
+#
+#   sh:class is the check that fires when the entity on the FAR END of the
+#   relationship is the one deleted. Nothing about the linking entity changes
+#   in that case, so no other shape here can reach it.
+:E2ELinkedMachineShape a sh:NodeShape ;
+    sh:targetClass iffBaseEntities:E2ELinkedMachine ;
+    sh:property [ sh:path iffBaseEntities:hasE2ECartridge ;
+            sh:minCount 1 ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:order 1 ;
+            sh:property [ sh:path ngsild:hasObject ;
+                    sh:class iffBaseEntities:E2ECartridge ] ;
+            sh:property [ sh:path rdf:type ;
+                    sh:hasValue ngsild:Relationship ;
+                    sh:minCount 1 ] ] .
 
 # iffBaseEntities:E2EFreeMachine is deliberately NOT targeted by any shape.

@@ -195,8 +195,11 @@ def main():
     print(utils.create_sql_table(table_name, sqlite_table, primary_key,
                                  utils.SQL_DIALECT.SQLITE), file=sqlitef)
     print('---', file=f)
-    yaml.dump(utils.create_yaml_view(table_name, table, ['id',
-                                                         'datasetId']), f)
+    # Names its own TTL setting for the same reason as entities_view, and
+    # defaults to the same value. Not to be set to never-expire -- see
+    # lib/configs.py.
+    yaml.dump(utils.create_yaml_view(table_name, table, ['id', 'datasetId'],
+                                     ttl=configs.view_state_ttl), f)
     print(utils.create_sql_view(table_name, sqlite_table, ['id', 'datasetId']),
           file=sqlitef)
     # attributes_insert upsert-table

@@ -157,7 +157,14 @@ spec:
             `synced`,
            `ts`
     FROM (
-      SELECT /*+ STATE_TTL('attributes' = '{{.Values.flink.ttl}}') */ *,
+      -- viewTtl, not ttl. This dedup holds one row per live attribute and is
+      -- what turns a stream of attribute rows into a changelog. Expiring a
+      -- key makes the next row for it an INSERT rather than an update, so the
+      -- -U that would have withdrawn the previous value is never emitted and
+      -- every consumer keeps counting an attribute that is gone. A delete
+      -- arrives as an ordinary row carrying deleted=true, so it is exactly
+      -- the case this breaks.
+      SELECT /*+ STATE_TTL('attributes' = '{{.Values.flink.viewTtl}}') */ *,
       ROW_NUMBER() OVER (PARTITION BY `id`, `datasetId`
          ORDER BY ts DESC) AS rownum
       FROM `attributes`)
