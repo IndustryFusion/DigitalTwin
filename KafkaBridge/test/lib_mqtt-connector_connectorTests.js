@@ -657,4 +657,35 @@ describe(fileToTest, function () {
     };
     myBroker.publish(myTopic, myMessage, {}, callback);
   });
+  it('Shall report a failed subscription through the callback', function (done) {
+    toTest.__set__('mqtt', mqtt);
+    const config = {
+      host: 'myHosttest',
+      port: 9090909,
+      secure: false,
+      retries: 2
+    };
+    const client = new mqtt.MqttClient();
+    client.on = function () {};
+    const myBroker = toTest.singleton(config, logger);
+    myBroker.pingActivate = false;
+    mqtt.connect = function () {
+      client.connected = true;
+      return client;
+    };
+    // A refused SUBSCRIBE used to throw out of this callback, which surfaced as
+    // an uncaughtException naming no topic and left callers believing they were
+    // subscribed. It has to come back as an error instead.
+    client.subscribe = function (vtopic, option, cb) {
+      cb(new Error('not authorized'), null);
+    };
+    myBroker.connect(function (err) {
+      assert.isNull(err, 'None error shall returned');
+      myBroker.bind('dev/+/act', function () {}, null, function (bindErr) {
+        assert.instanceOf(bindErr, Error, 'The subscribe error shall reach the caller');
+        assert.equal(bindErr.message, 'not authorized');
+        done();
+      });
+    });
+  });
 });

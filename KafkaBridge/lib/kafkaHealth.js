@@ -15,10 +15,7 @@
 */
 'use strict';
 
-const fs = require('fs');
-
-const READY_FILE = '/tmp/ready';
-const HEALTHY_FILE = '/tmp/healthy';
+const HealthState = require('./healthState.js');
 
 /**
  * Ties a bridge's liveness file to its Kafka consumer actually consuming.
@@ -37,10 +34,8 @@ const HEALTHY_FILE = '/tmp/healthy';
  *   - a watchdog over the consumer's own loop, for stalls it does not report at
  *     all (a lost `resume` timer, a rebalance that never completes).
  *
- * Both end the process with a non-zero exit so the pod restarts, and remove
- * /tmp/healthy first so the liveness probe also fails if the exit is somehow
- * swallowed. Keeping the staleness logic here rather than in the probe command
- * means the existing `cat /tmp/healthy` charts need no change.
+ * Keeping the staleness logic here rather than in the probe command means the
+ * existing `cat /tmp/healthy` charts need no change.
  *
  * @param {object} consumer - a kafkajs consumer
  * @param {object} logger - winston-style logger
@@ -54,34 +49,12 @@ module.exports = function KafkaHealth (consumer, logger, options) {
   // traffic (maxWaitTimeInMs defaults to 5s), so 90s is ~18 missed cycles.
   const staleAfterMs = opts.staleAfterMs || 90000;
   const checkIntervalMs = opts.checkIntervalMs || 10000;
-  const readyFile = opts.readyFile || READY_FILE;
-  const healthyFile = opts.healthyFile || HEALTHY_FILE;
-  const exit = opts.exit || function (code) { process.exit(code); };
+  const state = new HealthState(logger, opts);
 
   let lastAlive = Date.now();
-  let watchdog = null;
-  let shuttingDown = false;
 
   const markAlive = function () {
     lastAlive = Date.now();
-  };
-
-  const unhealthy = function (reason) {
-    if (shuttingDown) {
-      return;
-    }
-    shuttingDown = true;
-    logger.error(`Kafka consumer unhealthy: ${reason}. Exiting to force a restart.`);
-    if (watchdog !== null) {
-      clearInterval(watchdog);
-      watchdog = null;
-    }
-    try {
-      fs.unlinkSync(healthyFile);
-    } catch (err) {
-      logger.error(`Could not remove ${healthyFile}: ${err}`);
-    }
-    exit(1);
   };
 
   // Every sign of life from the consumer's own loop. FETCH and HEARTBEAT keep
@@ -106,15 +79,15 @@ module.exports = function KafkaHealth (consumer, logger, options) {
       logger.error(`Kafka consumer crashed, kafkajs will restart it: ${payload.error}`);
       return;
     }
-    unhealthy(`consumer crashed and will not restart: ${payload.error}`);
+    state.fail(`Kafka consumer crashed and will not restart: ${payload.error}`);
   });
 
   consumer.on(consumer.events.STOP, function () {
-    unhealthy('consumer stopped');
+    state.fail('Kafka consumer stopped');
   });
 
   consumer.on(consumer.events.DISCONNECT, function () {
-    unhealthy('consumer disconnected');
+    state.fail('Kafka consumer disconnected');
   });
 
   return {
@@ -123,28 +96,22 @@ module.exports = function KafkaHealth (consumer, logger, options) {
      * running, i.e. where the bridges used to write the two files.
      */
     start: function () {
-      fs.writeFileSync(readyFile, 'ready');
-      fs.writeFileSync(healthyFile, 'healthy');
+      state.up();
       markAlive();
-      watchdog = setInterval(function () {
+      const watchdog = setInterval(function () {
         const age = Date.now() - lastAlive;
         if (age > staleAfterMs) {
-          unhealthy(`no consumer activity for ${Math.round(age / 1000)}s`);
+          state.fail(`no Kafka consumer activity for ${Math.round(age / 1000)}s`);
         }
       }, checkIntervalMs);
+      state.addCleanup(function () {
+        clearInterval(watchdog);
+      });
       return this;
     },
 
-    /**
-     * Mark an intentional shutdown, so the STOP/DISCONNECT that a graceful
-     * `consumer.disconnect()` emits is not reported as a failure.
-     */
     shutdown: function () {
-      shuttingDown = true;
-      if (watchdog !== null) {
-        clearInterval(watchdog);
-        watchdog = null;
-      }
+      state.shutdown();
     }
   };
 };
