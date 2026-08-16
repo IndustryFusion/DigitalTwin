@@ -55,6 +55,12 @@ const RoundRobinPartitioner = () => {
 // Reaching it is a hard failure rather than a drop -- see enforceLimit.
 const DEFAULT_MAX_BUFFERED_MESSAGES = 50000;
 
+// How long delivery may be stuck before the bridge gives up and restarts. With
+// awaitDelivery the buffer stays tiny, so a count limit alone would never
+// notice a Kafka outage -- the bridge would just stop acknowledging and sit
+// there looking healthy, which is the failure this whole branch is about.
+const DEFAULT_MAX_DELIVERY_STALL_MS = 300000;
+
 // @brief Aggregates messages for periodic executed Kafka producer
 class KafkaAggregator {
   /**
@@ -68,10 +74,20 @@ class KafkaAggregator {
     this.config = config;
     this.spbMessageArray = [];
     this.ngsildMessageArray = [];
+    // Resolved when the batch a message went out in was acknowledged by Kafka.
+    // This is what lets the MQTT side withhold its PUBACK until then.
+    this.waiters = { spbMessageArray: [], ngsildMessageArray: [] };
+    // When the oldest still-undelivered message in each buffer arrived.
+    this.pendingSince = { spbMessageArray: null, ngsildMessageArray: null };
     this.running = false;
+    this.flushing = false;
     this.flushTimer = null;
-    this.maxBufferedMessages = (config.mqtt.kafka && config.mqtt.kafka.maxBufferedMessages) ||
-      DEFAULT_MAX_BUFFERED_MESSAGES;
+    const kafkaConfig = config.mqtt.kafka || {};
+    this.maxBufferedMessages = kafkaConfig.maxBufferedMessages || DEFAULT_MAX_BUFFERED_MESSAGES;
+    this.maxDeliveryStallMs = kafkaConfig.maxDeliveryStallMs || DEFAULT_MAX_DELIVERY_STALL_MS;
+    // Withhold the MQTT acknowledgement until Kafka has the message. Set false
+    // to go back to acknowledging on receipt, which is faster and lossy.
+    this.awaitDelivery = kafkaConfig.awaitDelivery !== false;
     this.onFatal = onFatal || (reason => {
       this.logger.error(`Kafka aggregator cannot guarantee delivery: ${reason}`);
       process.exit(1);
@@ -131,19 +147,55 @@ class KafkaAggregator {
       return;
     }
     this.flushTimer = setTimeout(() => {
-      // The catch is what keeps the loop alive: an unexpected throw in here
-      // would otherwise break the chain and stop every future flush, silently.
-      this.flush()
-        .catch(err => this.logger.error('Unexpected error while flushing to Kafka: ' + err))
-        .then(() => this.scheduleFlush());
+      this.flushTimer = null;
+      this.runFlushCycle();
     }, this.flushIntervalMs);
+  }
+
+  runFlushCycle () {
+    this.flushing = true;
+    this.checkStall();
+    // The catch is what keeps the loop alive: an unexpected throw in here
+    // would otherwise break the chain and stop every future flush, silently.
+    this.flush()
+      .catch(err => {
+        this.logger.error('Unexpected error while flushing to Kafka: ' + err);
+        return false;
+      })
+      .then(delivered => {
+        this.flushing = false;
+        // Straight on to the next batch when there is more and the last send
+        // worked; wait a linger when it did not, so a broker outage does not
+        // become a hot retry loop.
+        if (delivered && this.hasPending()) {
+          this.runFlushCycle();
+        } else {
+          this.scheduleFlush();
+        }
+      });
+  }
+
+  // With awaitDelivery the sender is blocked on us, so waiting out the linger
+  // would add it to every single message's latency.
+  requestImmediateFlush () {
+    if (!this.running || this.flushing || this.flushTimer === null) {
+      return;
+    }
+    clearTimeout(this.flushTimer);
+    this.flushTimer = null;
+    this.runFlushCycle();
+  }
+
+  hasPending () {
+    return this.spbMessageArray.length > 0 || this.ngsildMessageArray.length > 0;
   }
 
   async flush () {
     // If config enabled for producing kafka message on SparkPlugB topic
-    await this.sendBuffer('spbMessageArray', this.config.mqtt.sparkplug.spBkafKaTopic);
+    const spb = await this.sendBuffer('spbMessageArray', this.config.mqtt.sparkplug.spBkafKaTopic);
     // If config enabled for producing kafka message on NGSI-LDSpB topic
-    await this.sendBuffer('ngsildMessageArray', this.config.mqtt.sparkplug.ngsildKafkaTopic);
+    const ngsild = await this.sendBuffer('ngsildMessageArray', this.config.mqtt.sparkplug.ngsildKafkaTopic);
+    return spb && ngsild;
   }
 
   /**
@@ -151,23 +203,33 @@ class KafkaAggregator {
    *
    * The buffer used to be cleared in the same tick the send was started, so a
    * rejected send lost the whole batch with nothing but a log line.
+   *
+   * @returns false if the send failed, so the caller can back off
    */
   async sendBuffer (bufferName, topic) {
     const messages = this[bufferName];
     if (messages.length === 0) {
-      return;
+      return true;
     }
+    const waiters = this.waiters[bufferName];
     this[bufferName] = [];
+    this.waiters[bufferName] = [];
     this.logger.debug('will now deliver Kafka message  on topic :  ' + topic + ' with ' + messages.length + ' messages');
     try {
       await this.kafkaProducer.send({ topic, messages });
     } catch (err) {
       this.logger.error('Could not send message to Kafka on topic: ' + topic + ' with error msg:  ' + err);
       // In front of whatever arrived while this batch was in flight, so a retry
-      // does not reorder the stream.
+      // does not reorder the stream. The waiters stay unresolved, which is what
+      // keeps the MQTT acknowledgement withheld.
       this[bufferName] = messages.concat(this[bufferName]);
+      this.waiters[bufferName] = waiters.concat(this.waiters[bufferName]);
       this.enforceLimit(bufferName, topic);
+      return false;
     }
+    this.pendingSince[bufferName] = this[bufferName].length === 0 ? null : Date.now();
+    waiters.forEach(resolve => resolve());
+    return true;
   }
 
   // Holding messages forever is its own silent failure: memory grows without
@@ -179,6 +241,24 @@ class KafkaAggregator {
     }
   }
 
+  // A bridge that has stopped acknowledging is not losing anything, but it is
+  // also not doing its job, and it would otherwise sit there indefinitely with
+  // a healthy pod. Restarting also ends the MQTT session, which is what makes
+  // the broker redeliver everything we never acknowledged.
+  checkStall () {
+    ['spbMessageArray', 'ngsildMessageArray'].forEach(bufferName => {
+      const since = this.pendingSince[bufferName];
+      if (since === null) {
+        return;
+      }
+      const stalled = Date.now() - since;
+      if (stalled > this.maxDeliveryStallMs) {
+        this.onFatal(`nothing delivered to Kafka for ${Math.round(stalled / 1000)}s ` +
+          `with ${this[bufferName].length} messages waiting`);
+      }
+    });
+  }
+
   stop () {
     this.running = false;
     if (this.flushTimer !== null) {
@@ -187,14 +267,32 @@ class KafkaAggregator {
     }
   }
 
+  /**
+   * @returns a promise that settles when this message is in Kafka. Callers that
+   *          do not care can ignore it; the MQTT side awaits it before
+   *          acknowledging, which is what makes a Kafka outage backpressure
+   *          rather than data loss.
+   */
   addMessage (message, topic) {
+    let bufferName = null;
     if (topic === this.config.mqtt.sparkplug.spBkafKaTopic) {
-      this.spbMessageArray.push(message);
-      this.enforceLimit('spbMessageArray', topic);
+      bufferName = 'spbMessageArray';
     } else if (topic === this.config.mqtt.sparkplug.ngsildKafkaTopic) {
-      this.ngsildMessageArray.push(message);
-      this.enforceLimit('ngsildMessageArray', topic);
+      bufferName = 'ngsildMessageArray';
+    } else {
+      return Promise.resolve();
     }
+    this[bufferName].push(message);
+    if (this.pendingSince[bufferName] === null) {
+      this.pendingSince[bufferName] = Date.now();
+    }
+    this.enforceLimit(bufferName, topic);
+    if (!this.awaitDelivery) {
+      return Promise.resolve();
+    }
+    const delivered = new Promise(resolve => this.waiters[bufferName].push(resolve));
+    this.requestImmediateFlush();
+    return delivered;
   }
 }
 
@@ -287,12 +385,17 @@ module.exports = class SparkplugHandler {
     }
   };
 
+  /**
+   * @returns a promise resolved once every message this produced is in Kafka.
+   *          The MQTT side withholds its acknowledgement until then.
+   */
   createKafakaPubData (topic, bodyMessage) {
     /** * For forwarding sparkplugB data directly without kafka metrics format
         * @param ngsildKafkaProduce is set in the config file
         *  */
     const subTopic = topic.split('/');
     const devID = subTopic[4];
+    const delivered = [];
 
     if (this.config.mqtt.sparkplug.spBKafkaProduce) {
       /* Validating each component of metric payload if they are valid or not
@@ -304,7 +407,7 @@ module.exports = class SparkplugHandler {
           const key = topic;
           const message = { key, value: JSON.stringify(kafkaMessage) };
           this.logger.debug('Selecting kafka message topic SparkplugB with spB format payload for data type: ' + subTopic[2]);
-          this.kafkaAggregator.addMessage(message, this.config.mqtt.sparkplug.spBkafKaTopic);
+          delivered.push(this.kafkaAggregator.addMessage(message, this.config.mqtt.sparkplug.spBkafKaTopic));
           return true;
         }
       });
@@ -328,27 +431,27 @@ module.exports = class SparkplugHandler {
             ngsiMappedKafkaMessage = ngsildMapper.mapSpbRelationshipToKafka(devID, kafkaMessage);
             this.logger.debug(' Mapped SpB Relationship data to NGSI-LD relationship type:  ' + JSON.stringify(ngsiMappedKafkaMessage));
             const message = { key, value: JSON.stringify(ngsiMappedKafkaMessage) };
-            this.kafkaAggregator.addMessage(message, this.config.mqtt.sparkplug.ngsildKafkaTopic);
+            delivered.push(this.kafkaAggregator.addMessage(message, this.config.mqtt.sparkplug.ngsildKafkaTopic));
           } else if (metricType === 'Property' || metricType === 'LiteralProperty') {
             ngsiMappedKafkaMessage = ngsildMapper.mapSpbPropertyToKafka(devID, kafkaMessage);
             this.logger.debug(' Mapped SpB Properties data to NGSI-LD properties type:  ' + JSON.stringify(ngsiMappedKafkaMessage));
             const message = { key, value: JSON.stringify(ngsiMappedKafkaMessage) };
-            this.kafkaAggregator.addMessage(message, this.config.mqtt.sparkplug.ngsildKafkaTopic);
+            delivered.push(this.kafkaAggregator.addMessage(message, this.config.mqtt.sparkplug.ngsildKafkaTopic));
           } else if (metricType === 'IriProperty') {
             ngsiMappedKafkaMessage = ngsildMapper.mapSpbPropertyIriToKafka(devID, kafkaMessage);
             this.logger.debug(' Mapped SpB IriProperty data to NGSI-LD IRI type:  ' + JSON.stringify(ngsiMappedKafkaMessage));
             const message = { key, value: JSON.stringify(ngsiMappedKafkaMessage) };
-            this.kafkaAggregator.addMessage(message, this.config.mqtt.sparkplug.ngsildKafkaTopic);
+            delivered.push(this.kafkaAggregator.addMessage(message, this.config.mqtt.sparkplug.ngsildKafkaTopic));
           } else if (metricType === 'JsonProperty') {
             ngsiMappedKafkaMessage = ngsildMapper.mapSpbPropertyJsonToKafka(devID, kafkaMessage);
             this.logger.debug(' Mapped SpB JsonProperty data to NGSI-LD IRI type:  ' + JSON.stringify(ngsiMappedKafkaMessage));
             const message = { key, value: JSON.stringify(ngsiMappedKafkaMessage) };
-            this.kafkaAggregator.addMessage(message, this.config.mqtt.sparkplug.ngsildKafkaTopic);
+            delivered.push(this.kafkaAggregator.addMessage(message, this.config.mqtt.sparkplug.ngsildKafkaTopic));
           } else if (metricType === 'ListProperty') {
             ngsiMappedKafkaMessage = ngsildMapper.mapSpbPropertyListToKafka(devID, kafkaMessage);
             this.logger.debug(' Mapped SpB ListProperty data to NGSI-LD IRI type:  ' + JSON.stringify(ngsiMappedKafkaMessage));
             const message = { key, value: JSON.stringify(ngsiMappedKafkaMessage) };
-            this.kafkaAggregator.addMessage(message, this.config.mqtt.sparkplug.ngsildKafkaTopic);
+            delivered.push(this.kafkaAggregator.addMessage(message, this.config.mqtt.sparkplug.ngsildKafkaTopic));
           } else {
             this.logger.debug(' Unable to create kafka message topic for SpBNGSI-LD topic for Metric Name: ' + kafkaMessage.name + " ,doesn't match NGSI-LD Name type: ");
           }
@@ -356,20 +459,28 @@ module.exports = class SparkplugHandler {
         }
       });
     }
+    return Promise.all(delivered);
   };
 
+  /**
+   * @returns a promise resolved once everything this message produced is in
+   *          Kafka. The broker's acknowledgement waits on it, so every path
+   *          that forwards nothing has to resolve rather than return undefined
+   *          -- a path that never settles would wedge the MQTT queue.
+   */
   processDataIngestion (topic, message) {
     /*  It will be checked if the ttl exist, if it exits the package need to be discarded
         */
     const subTopic = topic.split('/');
     if (subTopic[2] !== 'DDATA') {
-      return;
+      return Promise.resolve();
     }
     this.logger.debug('Data Submission Detected : ' + topic + ' Message: ' + JSON.stringify(message));
     if (Object.values(MESSAGE_TYPE.WITHSEQ).includes(subTopic[2])) {
       const validationResult = this.validator.validate(message, dataSchema.SPARKPLUGB);
       if (validationResult.errors.length > 0) {
         this.logger.warn('Schema rejected message! Message will be discarded: ' + JSON.stringify(message) + ' with validation result: ' + validationResult);
+        return Promise.resolve();
       } else {
         /* Validating SpB seq number if it is alligned with previous or not
             *  To Do: If seq number is incorrect, send command to device for resend Birth Message
@@ -385,12 +496,12 @@ module.exports = class SparkplugHandler {
           this.logger.warn('Invalid SpB Sequance number, still moving forward to create Kafka pub data ' + err);
           //        return null;
         });
-        this.createKafakaPubData(topic, message);
-        return true;
+        return this.createKafakaPubData(topic, message);
       }
     } else {
       this.logger.warn('Invalid SparkplugB topic');
     }
+    return Promise.resolve();
   };
 
   connectTopics (context, callback) {

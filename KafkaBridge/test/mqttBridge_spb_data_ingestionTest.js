@@ -370,9 +370,11 @@ describe(fileToTest, function () {
     spbdataIngestion.sendErrorOverChannel = sendErrorOverChannel;
 
     const kafkaPubReturn = spbdataIngestion.createKafakaPubData('spBv1.0/accountId/DBIRTH/eonID/deviceId', DataMessage);
-    assert.oneOf(kafkaPubReturn, [false, undefined], ' Possible to produce kafka message for wrong alias/CID id: ' + kafkaPubReturn);
-    revert();
-    done();
+    kafkaPubReturn.then(forwarded => {
+      assert.deepEqual(forwarded, [], ' Possible to produce kafka message for wrong alias/CID id: ' + JSON.stringify(forwarded));
+      revert();
+      done();
+    }).catch(done);
   });
 
   it('KafkaProduce for SparkplugB metric fails for only ngsild topic due to empty sparkplugB message', function (done) {
@@ -402,9 +404,11 @@ describe(fileToTest, function () {
     spbdataIngestion.sendErrorOverChannel = sendErrorOverChannel;
 
     const kafkaPubReturn = spbdataIngestion.createKafakaPubData('spBv1.0/accountId/DBIRTH/eonID/deviceId', DataMessage);
-    assert.oneOf(kafkaPubReturn, [false, undefined], ' Possible to produce kafka message for wrong alias/CID id: ' + kafkaPubReturn);
-    revert();
-    done();
+    kafkaPubReturn.then(forwarded => {
+      assert.deepEqual(forwarded, [], ' Possible to produce kafka message for wrong alias/CID id: ' + JSON.stringify(forwarded));
+      revert();
+      done();
+    }).catch(done);
   });
 
   it('Create Kafka  publish data on Spb topic', function (done) {
@@ -679,9 +683,11 @@ describe(fileToTest, function () {
       seq: 0
     };
     const processDataIngestReturn = spbdataIngestion.processDataIngestion('spBv1.0/accountId/MATA/eonID/deviceId', message);
-    assert.deepEqual(processDataIngestReturn, undefined, 'Unable to validate SParkplugB schema');
-    revert();
-    done();
+    Promise.resolve(processDataIngestReturn).then(result => {
+      assert.deepEqual(result, undefined, 'Unable to validate SParkplugB schema');
+      revert();
+      done();
+    }).catch(done);
   });
 
   it('Process data Ingestion with 2nd array component of SparkplugB Metric empty', function (done) {
@@ -714,9 +720,11 @@ describe(fileToTest, function () {
       seq: 0
     };
     const processDataIngestReturn = spbdataIngestion.processDataIngestion('spBv1.0/accountId/DDATA/eonID/deviceId', message);
-    assert.deepEqual(processDataIngestReturn, undefined, 'Unable to validate SParkplugB schema');
-    revert();
-    done();
+    Promise.resolve(processDataIngestReturn).then(result => {
+      assert.deepEqual(result, undefined, 'Unable to validate SParkplugB schema');
+      revert();
+      done();
+    }).catch(done);
   });
 
   it('Process data Ingestion with wrong type for SparkplugB Metric', function (done) {
@@ -749,9 +757,11 @@ describe(fileToTest, function () {
       seq: 0
     };
     const processDataIngestReturn = spbdataIngestion.processDataIngestion('spBv1.0/accountId/DDATA/eonID/deviceId', message);
-    assert.deepEqual(processDataIngestReturn, undefined, 'Unable to validate SParkplugB schema');
-    revert();
-    done();
+    Promise.resolve(processDataIngestReturn).then(result => {
+      assert.deepEqual(result, undefined, 'Unable to validate SParkplugB schema');
+      revert();
+      done();
+    }).catch(done);
   });
 
   it('Process data Ingestion with wrong format SparkplugB Metric', function (done) {
@@ -778,9 +788,11 @@ describe(fileToTest, function () {
       seq: 0
     };
     const processDataIngestReturn = spbdataIngestion.processDataIngestion('spBv1.0/accountId/DDATA/eonID/deviceId', message);
-    assert.deepEqual(processDataIngestReturn, undefined, 'Unable to validate SParkplugB schema');
-    revert();
-    done();
+    Promise.resolve(processDataIngestReturn).then(result => {
+      assert.deepEqual(result, undefined, 'Unable to validate SParkplugB schema');
+      revert();
+      done();
+    }).catch(done);
   });
   it('Process data Ingestion with missing metric in SparkplugB payload', function (done) {
     const revert = ToTest.__set__({
@@ -804,9 +816,11 @@ describe(fileToTest, function () {
       seq: 0
     };
     const processDataIngestReturn = spbdataIngestion.processDataIngestion('spBv1.0/accountId/DDATA/eonID/deviceId', message);
-    assert.deepEqual(processDataIngestReturn, undefined, 'Unable to validate SParkplugB schema');
-    revert();
-    done();
+    Promise.resolve(processDataIngestReturn).then(result => {
+      assert.deepEqual(result, undefined, 'Unable to validate SParkplugB schema');
+      revert();
+      done();
+    }).catch(done);
   });
 
   it('Process data Ingestion with INVALID seq of SparkplugB Metric', function (done) {
@@ -839,9 +853,11 @@ describe(fileToTest, function () {
       seq: 290
     };
     const processDataIngestReturn = spbdataIngestion.processDataIngestion('spBv1.0/accountId/DDATA/eonID/deviceId', message);
-    assert.deepEqual(processDataIngestReturn, true, 'Unable to validate SParkplugB schema');
-    revert();
-    done();
+    Promise.resolve(processDataIngestReturn).then(result => {
+      assert.deepEqual(result, true, 'Unable to validate SParkplugB schema');
+      revert();
+      done();
+    }).catch(done);
   });
 
   it('Shall check mqtt bind to topic', function (done) {

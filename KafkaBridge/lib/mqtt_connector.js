@@ -70,17 +70,47 @@ function Broker (conf, logger) {
   };
   me.setCredential();
 
+  /**
+   * Dispatch incoming messages from handleMessage rather than from the
+   * 'message' event.
+   *
+   * mqtt.js sends the PUBACK only once handleMessage calls back (see
+   * handlers/publish.js), so this is the hook that lets the bridge hold the
+   * acknowledgement until the message is safely forwarded. Not acknowledging
+   * also stops the packet queue, which is the backpressure: the broker keeps
+   * the message and stops handing us more.
+   *
+   * The dispatch has to live here and not in an 'message' listener, because
+   * mqtt.js emits 'message' *and* calls handleMessage for the same packet --
+   * doing both would forward every message twice.
+   */
   me.listen = function () {
-    me.client.on('message', function (topic, message) {
+    me.client.handleMessage = function (packet, callback) {
+      let message;
       try {
-        message = JSON.parse(message);
+        message = JSON.parse(packet.payload);
       } catch (e) {
         me.logger.error('Invalid Message: %s', e);
-        return;
+        // Acknowledge anyway: a payload that does not parse will not parse on
+        // redelivery either, and refusing it would wedge the queue for good.
+        return callback();
       }
-      me.logger.info('STATUS: %s', topic, message);
-      me.onMessage(topic, message);
-    });
+      me.logger.info('STATUS: %s', packet.topic, message);
+      let handled;
+      try {
+        handled = me.onMessage(packet.topic, message);
+      } catch (e) {
+        me.logger.error('Could not handle message on ' + packet.topic + ': ' + e);
+        return callback();
+      }
+      Promise.resolve(handled).then(function () {
+        callback();
+      }, function (err) {
+        // Deliberately unacknowledged, so the broker still owns the message.
+        me.logger.error('Not acknowledging message on ' + packet.topic + ': ' + err);
+        callback(err);
+      });
+    };
   };
   me.connect = function (done) {
     let retries = 0;
@@ -165,9 +195,15 @@ function Broker (conf, logger) {
       return !tryPattern(obj.t, topic);
     });
   };
+  /**
+   * @returns a promise settling when every matching handler has finished with
+   *          the message. Handlers that return nothing settle immediately, so
+   *          this stays compatible with synchronous ones.
+   */
   me.onMessage = function (topic, message) {
     let i;
     const length = me.messageHandler.length;
+    const handled = [];
     /**
          * Iterate over the messageHandler to match topic patter,
          * and dispatch message to only proper handler
@@ -176,9 +212,10 @@ function Broker (conf, logger) {
       const obj = me.messageHandler[i];
       if (tryPattern(obj.t, topic)) {
         me.logger.debug('Fired STATUS: ' + topic + JSON.stringify(message));
-        obj.h.call(obj.c, topic, message);
+        handled.push(obj.h.call(obj.c, topic, message));
       }
     }
+    return Promise.all(handled);
   };
   me.bind = function (topic, handler, context, callback) {
     /**

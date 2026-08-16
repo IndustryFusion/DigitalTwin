@@ -19,6 +19,14 @@ const rewire = require('rewire');
 
 const fileToTest = '../lib/mqtt_connector';
 
+// mqtt.js calls handleMessage for every incoming PUBLISH and only sends the
+// PUBACK once its callback fires. The connector dispatches from there so it can
+// hold the acknowledgement until the message has been forwarded, so that is
+// what these tests have to drive.
+const deliver = function (client, topic, payload, cb) {
+  client.handleMessage({ topic, payload }, cb || function () {});
+};
+
 describe(fileToTest, function () {
   const toTest = rewire(fileToTest);
 
@@ -283,12 +291,7 @@ describe(fileToTest, function () {
     const myBroker = toTest.singleton(config, logger);
     const client = new mqtt.MqttClient();
     myBroker.pingActivate = false;
-    let callHandler = null;
-    client.on = function (event, handler) {
-      assert.isFunction(handler, 'The handle shall be a function');
-      assert.isString(event, 'The event shall be string');
-      callHandler = handler;
-    };
+    client.on = function () {};
 
     mqtt.connect = function () {
       client.connected = true;
@@ -297,7 +300,7 @@ describe(fileToTest, function () {
 
     myBroker.connect(function (err) {
       assert.isNull(err, 'None error shall returned');
-      callHandler('conmector', JSON.stringify(msg));
+      deliver(client, 'conmector', JSON.stringify(msg));
       done();
     });
   });
@@ -315,15 +318,9 @@ describe(fileToTest, function () {
       a: 1,
       c: 2
     };
-    let callHandler = null;
     const client = new mqtt.MqttClient();
 
-    client.on = function (event, handler) {
-      assert.isFunction(handler, 'The handle shall be a function');
-      assert.isString(event, 'The event shall be string');
-      // assert.equal(event, "message", "Invalid event listeneter");
-      callHandler = handler;
-    };
+    client.on = function () {};
 
     const myBroker = toTest.singleton(config, logger);
     myBroker.pingActivate = false;
@@ -345,7 +342,7 @@ describe(fileToTest, function () {
     myBroker.connect(function (err) {
       assert.isNull(err, 'None error shall returned');
       myBroker.bind(topicPattern, topicHandler);
-      callHandler('dev/' + id + '/act', JSON.stringify(msg));
+      deliver(client, 'dev/' + id + '/act', JSON.stringify(msg));
     });
   });
   it('Shall Listen to on Message > discard improper message format >', function (done) {
@@ -357,13 +354,8 @@ describe(fileToTest, function () {
       retries: 2
     };
     const id = '0a-03-12-22';
-    let callHandler = null;
     const client = new mqtt.MqttClient();
-    client.on = function (event, handler) {
-      assert.isFunction(handler, 'The handle shall be a function');
-      assert.isString(event, 'The event shall be string');
-      callHandler = handler;
-    };
+    client.on = function () {};
     const crd = {
       username: 'TuUser',
       password: 'tuPassword'
@@ -387,7 +379,7 @@ describe(fileToTest, function () {
     myBroker.connect(function (err) {
       assert.isNull(err, 'None error shall returned');
       myBroker.bind(topicPattern, topicHandler);
-      callHandler('dev/' + id + '/act', 'pepep');
+      deliver(client, 'dev/' + id + '/act', 'pepep');
       // myBroker.onMessage(realTopic, msg);
       done();
     });
@@ -406,13 +398,8 @@ describe(fileToTest, function () {
       a: 1,
       c: 2
     };
-    let callHandler = null;
     const client = new mqtt.MqttClient();
-    client.on = function (event, handler) {
-      assert.isFunction(handler, 'The handle shall be a function');
-      assert.isString(event, 'The event shall be string');
-      callHandler = handler;
-    };
+    client.on = function () {};
 
     const myBroker = toTest.singleton(config, logger);
     myBroker.pingActivate = false;
@@ -434,7 +421,7 @@ describe(fileToTest, function () {
     myBroker.connect(function (err) {
       assert.isNull(err, 'None error shall returned');
       myBroker.bind(topicPattern, topicHandler, null, function () {
-        callHandler('dev/' + id + '/act', JSON.stringify(msg));
+        deliver(client, 'dev/' + id + '/act', JSON.stringify(msg));
       });
       // myBroker.onMessage(realTopic, msg);
     });
@@ -684,6 +671,73 @@ describe(fileToTest, function () {
       myBroker.bind('dev/+/act', function () {}, null, function (bindErr) {
         assert.instanceOf(bindErr, Error, 'The subscribe error shall reach the caller');
         assert.equal(bindErr.message, 'not authorized');
+        done();
+      });
+    });
+  });
+  it('Shall withhold the acknowledgement until the handler has forwarded the message', function (done) {
+    toTest.__set__('mqtt', mqtt);
+    const config = { host: 'myHosttest', port: 9090909, secure: false, retries: 2 };
+    const client = new mqtt.MqttClient();
+    client.on = function () {};
+    const myBroker = toTest.singleton(config, logger);
+    myBroker.pingActivate = false;
+    mqtt.connect = function () {
+      client.connected = true;
+      return client;
+    };
+    client.subscribe = function (vtopic, option, cb) {
+      cb(null, [{ topic: vtopic }]);
+    };
+
+    // The handler stays unfinished until the test lets it finish, standing in
+    // for a Kafka send that has not been acknowledged yet.
+    let finishForwarding = null;
+    const topicHandler = function () {
+      return new Promise(resolve => { finishForwarding = resolve; });
+    };
+
+    myBroker.connect(function (err) {
+      assert.isNull(err, 'None error shall returned');
+      myBroker.bind('dev/+/act', topicHandler);
+      let acknowledged = false;
+      deliver(client, 'dev/1/act', JSON.stringify({ a: 1 }), function () {
+        acknowledged = true;
+      });
+      setTimeout(function () {
+        assert.isFalse(acknowledged,
+          'acknowledging before the message is forwarded is what loses messages on a Kafka outage');
+        finishForwarding();
+        setTimeout(function () {
+          assert.isTrue(acknowledged, 'the message must be acknowledged once it is safely forwarded');
+          done();
+        }, 5);
+      }, 20);
+    });
+  });
+
+  it('Shall acknowledge a malformed payload rather than wedge the queue', function (done) {
+    toTest.__set__('mqtt', mqtt);
+    const config = { host: 'myHosttest', port: 9090909, secure: false, retries: 2 };
+    const client = new mqtt.MqttClient();
+    client.on = function () {};
+    const myBroker = toTest.singleton(config, logger);
+    myBroker.pingActivate = false;
+    mqtt.connect = function () {
+      client.connected = true;
+      return client;
+    };
+    client.subscribe = function (vtopic, option, cb) {
+      cb(null, [{ topic: vtopic }]);
+    };
+    myBroker.connect(function (err) {
+      assert.isNull(err, 'None error shall returned');
+      myBroker.bind('dev/+/act', function () {
+        assert.fail('a payload that does not parse must not reach the handler');
+      });
+      // Not acknowledging this one would stop the packet queue for good, since
+      // it will never parse on redelivery either.
+      deliver(client, 'dev/1/act', 'not json', function () {
         done();
       });
     });

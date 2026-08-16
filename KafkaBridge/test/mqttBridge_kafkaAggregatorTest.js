@@ -198,4 +198,78 @@ describe('Test KafkaAggregator delivery', function () {
     await new Promise(resolve => setTimeout(resolve, 30));
     assert.equal(producer.sent.length, 0);
   });
+  it('Should resolve a message only once Kafka has it', async function () {
+    const aggregator = buildAggregator(producer, () => {});
+    aggregator.start(5);
+    let delivered = false;
+    let releaseSend = null;
+    producer.send = function (payload) {
+      this.sent.push(payload);
+      return new Promise(resolve => { releaseSend = resolve; });
+    };
+
+    const promise = aggregator.addMessage({ key: 'k', value: 'v' }, NGSILD_TOPIC)
+      .then(() => { delivered = true; });
+
+    await new Promise(resolve => setTimeout(resolve, 30));
+    assert.isFalse(delivered, 'resolving before the broker acknowledged would let the MQTT side ack too early');
+    releaseSend();
+    await promise;
+    assert.isTrue(delivered);
+    aggregator.stop();
+  });
+
+  it('Should leave a message unresolved while the send keeps failing', async function () {
+    const aggregator = buildAggregator(producer, () => {});
+    aggregator.start(5);
+    producer.failing = true;
+    let delivered = false;
+    aggregator.addMessage({ key: 'k', value: 'v' }, NGSILD_TOPIC).then(() => { delivered = true; });
+
+    await new Promise(resolve => setTimeout(resolve, 40));
+    assert.isFalse(delivered, 'an unresolved message is what keeps the broker holding it');
+
+    producer.failing = false;
+    await new Promise(resolve => setTimeout(resolve, 40));
+    assert.isTrue(delivered, 'and it must resolve once the broker recovers');
+    assert.equal(producer.sent.length, 1);
+    aggregator.stop();
+  });
+
+  it('Should resolve immediately when awaitDelivery is off', async function () {
+    const aggregator = buildAggregator(producer, () => {}, { awaitDelivery: false });
+    let delivered = false;
+    producer.send = function () { return new Promise(() => {}); };
+    aggregator.addMessage({ key: 'k', value: 'v' }, NGSILD_TOPIC).then(() => { delivered = true; });
+    await new Promise(resolve => setTimeout(resolve, 10));
+    assert.isTrue(delivered, 'the opt-out has to stay non-blocking');
+  });
+
+  it('Should fail the bridge when delivery stays stuck', async function () {
+    const fatals = [];
+    const aggregator = buildAggregator(producer, r => fatals.push(r), { maxDeliveryStallMs: 30 });
+    producer.failing = true;
+    aggregator.addMessage({ key: 'k', value: 'v' }, NGSILD_TOPIC);
+    aggregator.start(5);
+
+    await new Promise(resolve => setTimeout(resolve, 20));
+    assert.deepEqual(fatals, [], 'a short outage is not a reason to restart');
+
+    await new Promise(resolve => setTimeout(resolve, 40));
+    assert.isAbove(fatals.length, 0, 'a bridge that stopped acknowledging must not sit there looking healthy');
+    assert.include(fatals[0], 'nothing delivered to Kafka');
+    aggregator.stop();
+  });
+
+  it('Should clear the stall clock once delivery succeeds', async function () {
+    const fatals = [];
+    const aggregator = buildAggregator(producer, r => fatals.push(r), { maxDeliveryStallMs: 40 });
+    aggregator.start(5);
+    for (let i = 0; i < 6; i++) {
+      aggregator.addMessage({ key: String(i), value: 'v' }, NGSILD_TOPIC);
+      await new Promise(resolve => setTimeout(resolve, 15));
+    }
+    assert.deepEqual(fatals, [], 'a bridge that keeps delivering must never be called stalled');
+    aggregator.stop();
+  });
 });

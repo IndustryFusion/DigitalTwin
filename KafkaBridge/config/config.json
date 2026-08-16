@@ -92,7 +92,9 @@
 			"retries": 10,
 			"linger": 50,
 			"partitioner": "defaultPartitioner",
-			"maxBufferedMessages": 50000
+			"maxBufferedMessages": 50000,
+			"awaitDelivery": true,
+			"maxDeliveryStallMs": 300000
 		  }
     },
 	"cache": {
