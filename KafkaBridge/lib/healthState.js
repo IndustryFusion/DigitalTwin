@@ -89,10 +89,6 @@ module.exports = function HealthState (logger, options) {
     shutdown: function () {
       shuttingDown = true;
       runCleanups();
-    },
-
-    isShuttingDown: function () {
-      return shuttingDown;
     }
   };
 };

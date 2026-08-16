@@ -37,6 +37,9 @@ load "lib/linter"
 	run lint "test-bridges/test-ngsild-updates-bridge.bats"
 	[ "$status" -eq 0 ]
 
+	run lint "test-bridges/test-bridge-health.bats"
+	[ "$status" -eq 0 ]
+
 	run lint ./*/*.bats
 	[ "$status" -eq 0 ]
 }

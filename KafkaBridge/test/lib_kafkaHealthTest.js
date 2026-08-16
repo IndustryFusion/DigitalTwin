@@ -180,4 +180,27 @@ describe('Test KafkaHealth', function () {
     consumer.emit(EVENTS.DISCONNECT);
     assert.deepEqual(exits, [1], 'the cascade of stop/disconnect is one failure');
   });
+  it('Should survive a crash event that carries no payload', function () {
+    const files = tmpFiles('nopayload');
+    const consumer = fakeConsumer();
+    const logger = fakeLogger();
+    const exits = [];
+    const health = new KafkaHealth(consumer, logger,
+      Object.assign({ exit: code => exits.push(code) }, files));
+    health.start();
+    // kafkajs normally supplies one, but a malformed event must not turn into a
+    // TypeError inside the very handler that is supposed to report failures.
+    consumer.emit(consumer.events.CRASH, undefined);
+    assert.deepEqual(exits, [1]);
+  });
+
+  it('Should work without any options, which is how the bridges construct it', function () {
+    const consumer = fakeConsumer();
+    // No options at all: the real bridges pass only consumer and logger, so the
+    // default file names and windows have to hold up.
+    const health = new KafkaHealth(consumer, fakeLogger());
+    assert.isFunction(health.start);
+    assert.isFunction(health.shutdown);
+    health.shutdown();
+  });
 });
