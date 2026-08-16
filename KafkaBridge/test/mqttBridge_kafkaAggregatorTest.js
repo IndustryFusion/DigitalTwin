@@ -272,4 +272,18 @@ describe('Test KafkaAggregator delivery', function () {
     assert.deepEqual(fatals, [], 'a bridge that keeps delivering must never be called stalled');
     aggregator.stop();
   });
+  it('Should exit by itself when no onFatal was supplied', function () {
+    const aggregator = buildAggregator(producer, undefined, { maxBufferedMessages: 1 });
+    const realExit = process.exit;
+    const exits = [];
+    process.exit = code => exits.push(code);
+    try {
+      aggregator.addMessage({ key: 'a', value: 'v' }, NGSILD_TOPIC);
+      aggregator.addMessage({ key: 'b', value: 'v' }, NGSILD_TOPIC);
+    } finally {
+      process.exit = realExit;
+    }
+    assert.deepEqual(exits, [1],
+      'the default has to be as loud as the wired-up one, or a caller that forgets it loses messages quietly');
+  });
 });

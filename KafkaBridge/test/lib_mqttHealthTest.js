@@ -149,4 +149,18 @@ describe('Test MqttHealth', function () {
       done();
     }, 60);
   });
+  it('Should ignore a second ready(), so a resubscribe does not stack watchdogs', function (done) {
+    const files = tmpFiles('twice');
+    const broker = fakeBroker(true);
+    const exits = [];
+    const health = new MqttHealth(broker, fakeLogger(),
+      Object.assign({ graceMs: 20, checkIntervalMs: 5, exit: code => exits.push(code) }, files));
+    health.start().ready().ready();
+    broker.state = false;
+    setTimeout(function () {
+      // One watchdog means one report, not one per ready() call.
+      assert.equal(exits.length, 1, 'a second ready() must not start a second watchdog');
+      done();
+    }, 60);
+  });
 });
