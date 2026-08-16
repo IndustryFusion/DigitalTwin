@@ -1,1 +1,1 @@
-'urn:workpiece:2','DatatypeConstraintComponent(https://industry-fusion.com/types/v0.9/material[0])','warning'
+'urn:workpiece:2','DatatypeConstraintComponent(https://industry-fusion.com/types/v0.9/material[0])','warning','Datatype check failed: value="1.4301", expected datatypes="https://industry-fusion.com/types/v0.9/steelGrade" and found datatype="http://www.w3.org/2001/XMLSchema#string" do not match!'

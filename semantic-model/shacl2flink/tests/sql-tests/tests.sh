@@ -82,7 +82,12 @@ for testdir in ${testdirs_sqlcases}; do
     sqlite3 ${DATABASE} < $OUTPUTDIR/ngsild.sqlite
     sqlite3 ${DATABASE} < $OUTPUTDIR/ngsild-models.sqlite
     sqlite3 ${DATABASE} < $OUTPUTDIR/shacl-validation.sqlite
-    echo "select resource, event, severity from alerts_bulk_view;" | sqlite3 -quote  -noheader ${DATABASE}| sort > ${OUTPUTDIR}/${TESTOUT}
+    # `text` is compared, not just the event. The message is the only part of
+    # an alert an operator actually reads, and nothing anywhere asserted it --
+    # so `Found 0 relationships instead of [[1, 1]!` shipped on a Property
+    # check, with the wrong noun, a doubled bracket and a missing one, and
+    # every test stayed green. A message is a product surface; pin it.
+    echo "select resource, event, severity, text from alerts_bulk_view;" | sqlite3 -quote  -noheader ${DATABASE}| sort > ${OUTPUTDIR}/${TESTOUT}
     diff ${OUTPUTDIR}/${TESTOUT} expected || { echo "failed"; exit 1; }
     echo " ok"
     [ "$DEBUG" = "true" ] || rm -rf $OUTPUTDIR

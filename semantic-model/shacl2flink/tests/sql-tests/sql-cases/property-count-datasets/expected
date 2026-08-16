@@ -1,0 +1,2 @@
+'urn:filter:11','CountConstraintComponent(https://industry-fusion.com/types/v0.9/hasStrength)','warning','Model validation for Property https://industry-fusion.com/types/v0.9/hasStrength failed for urn:filter:11. Found 2 properties instead of [1, 1]!'
+'urn:filter:12','CountConstraintComponent(https://industry-fusion.com/types/v0.9/hasStrength)','warning','Model validation for Property https://industry-fusion.com/types/v0.9/hasStrength failed for urn:filter:12. Found 0 properties instead of [1, 1]!'
