@@ -51,13 +51,31 @@ const RoundRobinPartitioner = () => {
   };
 };
 
+// Bound on how many messages the bridge will hold while Kafka is unavailable.
+// Reaching it is a hard failure rather than a drop -- see enforceLimit.
+const DEFAULT_MAX_BUFFERED_MESSAGES = 50000;
+
 // @brief Aggregates messages for periodic executed Kafka producer
 class KafkaAggregator {
-  constructor (config) {
+  /**
+   * @param config
+   * @param onFatal called when the bridge can no longer guarantee delivery.
+   *        app.js routes this into MqttHealth so it removes /tmp/healthy and
+   *        exits, the same way a dead consumer or a dead broker connection does.
+   */
+  constructor (config, onFatal) {
     this.logger = new Logger(config);
     this.config = config;
     this.spbMessageArray = [];
     this.ngsildMessageArray = [];
+    this.running = false;
+    this.flushTimer = null;
+    this.maxBufferedMessages = (config.mqtt.kafka && config.mqtt.kafka.maxBufferedMessages) ||
+      DEFAULT_MAX_BUFFERED_MESSAGES;
+    this.onFatal = onFatal || (reason => {
+      this.logger.error(`Kafka aggregator cannot guarantee delivery: ${reason}`);
+      process.exit(1);
+    });
     try {
       const kafka = new Kafka({
         logLevel: logLevel.INFO,
@@ -69,84 +87,131 @@ class KafkaAggregator {
           retries: config.mqtt.kafka.retries
         }
       });
+      // idempotent pins maxInFlightRequests to 1 and acks to -1. Without it a
+      // retried batch can be appended after the batch behind it, and since these
+      // messages carry no explicit timestamp the record timestamp is assigned on
+      // append -- so a reordered retry makes a stale value win the
+      // ROW_NUMBER() ... ORDER BY ts DESC dedup that reads this topic.
+      const producerOptions = { idempotent: true };
       if (config.mqtt.kafka.partitioner === 'roundRobinPartitioner') {
-        this.kafkaProducer = kafka.producer({ createPartitioner: RoundRobinPartitioner });
+        producerOptions.createPartitioner = RoundRobinPartitioner;
+        this.kafkaProducer = kafka.producer(producerOptions);
         this.logger.info('Round Robin partitioner enforced');
       } else {
-        this.kafkaProducer = kafka.producer({ createPartitioner: Partitioners.DefaultPartitioner });
+        producerOptions.createPartitioner = Partitioners.DefaultPartitioner;
+        this.kafkaProducer = kafka.producer(producerOptions);
         this.logger.info('Default partitioner is used');
       }
       const { CONNECT, DISCONNECT } = this.kafkaProducer.events;
       this.kafkaProducer.on(DISCONNECT, e => {
         this.logger.warn(`SparkplugB Metric producer disconnected!: ${e.timestamp}`);
-        this.kafkaProducer.connect();
+        this.kafkaProducer.connect().catch(err =>
+          this.logger.error('Could not reconnect Kafka producer: ' + err));
       });
       this.kafkaProducer.on(CONNECT, e => this.logger.info('Kafka SparkplugB metric producer connected: ' + e));
-      this.kafkaProducer.connect();
+      this.kafkaProducer.connect().catch(err =>
+        this.logger.error('Could not connect Kafka producer: ' + err));
     } catch (e) {
       this.logger.error('Exception occured while creating Kafka SparkplugB Producer: ' + e);
     }
   }
 
   start (timer) {
-    this.intervalObj = setInterval(() => {
-      if (this.spbMessageArray.length === 0 && this.ngsildMessageArray.length === 0) {
-        return;
-      }
-      let spbKafkaPayloads, ngsildKafkaPayloads;
-      // If config enabled for producing kafka message on SparkPlugB topic
-      if (this.spbMessageArray.length !== 0) {
-        spbKafkaPayloads = {
-          topic: this.config.mqtt.sparkplug.spBkafKaTopic,
-          messages: this.spbMessageArray
-        };
-        this.logger.info('will now deliver Kafka message  on topic :  ' + spbKafkaPayloads.topic + ' with message: ' + JSON.stringify(spbKafkaPayloads));
-        this.kafkaProducer.send(spbKafkaPayloads)
-          .catch((err) => {
-            return this.logger.error('Could not send message to Kafka on topic: ' + spbKafkaPayloads.topic + ' with error msg:  ' + err);
-          }
-          );
-      }
-      // If config enabled for producing kafka message on NGSI-LDSpB topic
-      if (this.ngsildMessageArray.length !== 0) {
-        ngsildKafkaPayloads = {
-          topic: this.config.mqtt.sparkplug.ngsildKafkaTopic,
-          messages: this.ngsildMessageArray
-        };
-        this.logger.debug('will now deliver Kafka message  on topic :  ' + ngsildKafkaPayloads.topic + ' with message:  ' + JSON.stringify(ngsildKafkaPayloads));
-        this.kafkaProducer.send(ngsildKafkaPayloads)
-          .catch((err) => {
-            return this.logger.error('Could not send message to Kafka on topic: ' + ngsildKafkaPayloads.topic + ' with error msg:  ' + err);
-          }
-          );
-      }
-      this.spbMessageArray = [];
-      this.ngsildMessageArray = [];
-    }, timer);
+    this.running = true;
+    this.flushIntervalMs = timer;
+    this.scheduleFlush();
+  }
+
+  // Self-scheduling rather than setInterval: the previous flush has to settle
+  // before the next one starts. With setInterval a send that took its full
+  // requestTimeout piled up hundreds of concurrent flushes behind it, and the
+  // buffer below could never bound anything because nothing waited for it.
+  scheduleFlush () {
+    if (!this.running) {
+      return;
+    }
+    this.flushTimer = setTimeout(() => {
+      // The catch is what keeps the loop alive: an unexpected throw in here
+      // would otherwise break the chain and stop every future flush, silently.
+      this.flush()
+        .catch(err => this.logger.error('Unexpected error while flushing to Kafka: ' + err))
+        .then(() => this.scheduleFlush());
+    }, this.flushIntervalMs);
+  }
+
+  async flush () {
+    // If config enabled for producing kafka message on SparkPlugB topic
+    await this.sendBuffer('spbMessageArray', this.config.mqtt.sparkplug.spBkafKaTopic);
+    // If config enabled for producing kafka message on NGSI-LDSpB topic
+    await this.sendBuffer('ngsildMessageArray', this.config.mqtt.sparkplug.ngsildKafkaTopic);
+  }
+
+  /**
+   * Send one buffer, and keep its messages if the send fails.
+   *
+   * The buffer used to be cleared in the same tick the send was started, so a
+   * rejected send lost the whole batch with nothing but a log line.
+   */
+  async sendBuffer (bufferName, topic) {
+    const messages = this[bufferName];
+    if (messages.length === 0) {
+      return;
+    }
+    this[bufferName] = [];
+    this.logger.debug('will now deliver Kafka message  on topic :  ' + topic + ' with ' + messages.length + ' messages');
+    try {
+      await this.kafkaProducer.send({ topic, messages });
+    } catch (err) {
+      this.logger.error('Could not send message to Kafka on topic: ' + topic + ' with error msg:  ' + err);
+      // In front of whatever arrived while this batch was in flight, so a retry
+      // does not reorder the stream.
+      this[bufferName] = messages.concat(this[bufferName]);
+      this.enforceLimit(bufferName, topic);
+    }
+  }
+
+  // Holding messages forever is its own silent failure: memory grows without
+  // bound and nothing observes it. Past the cap, say so and let the pod restart.
+  enforceLimit (bufferName, topic) {
+    if (this[bufferName].length > this.maxBufferedMessages) {
+      this.onFatal(`Kafka unreachable and ${this[bufferName].length} messages are buffered for ${topic} ` +
+        `(limit ${this.maxBufferedMessages}); undelivered messages will be lost`);
+    }
   }
 
   stop () {
-    clearInterval(this.intervalObj);
+    this.running = false;
+    if (this.flushTimer !== null) {
+      clearTimeout(this.flushTimer);
+      this.flushTimer = null;
+    }
   }
 
   addMessage (message, topic) {
     if (topic === this.config.mqtt.sparkplug.spBkafKaTopic) {
       this.spbMessageArray.push(message);
+      this.enforceLimit('spbMessageArray', topic);
     } else if (topic === this.config.mqtt.sparkplug.ngsildKafkaTopic) {
       this.ngsildMessageArray.push(message);
+      this.enforceLimit('ngsildMessageArray', topic);
     }
   }
 }
 
 module.exports = class SparkplugHandler {
-  constructor (config) {
+  /**
+   * @param config
+   * @param onFatal called when delivery to Kafka can no longer be guaranteed,
+   *        so the caller can fail the pod rather than drop measurements quietly.
+   */
+  constructor (config, onFatal) {
     const logger = new Logger(config);
     this.topics_subscribe = config.mqtt.sparkplug.topics.subscribe;
     this.topics_publish = config.mqtt.sparkplug.topics.publish;
 
     const validator = new Validator();
     const cache = new Cache(config);
-    this.kafkaAggregator = new KafkaAggregator(config);
+    this.kafkaAggregator = new KafkaAggregator(config, onFatal);
     this.kafkaAggregator.start(config.mqtt.kafka.linger);
 
     this.logger = logger;

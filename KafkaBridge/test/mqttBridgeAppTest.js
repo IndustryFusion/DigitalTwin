@@ -32,7 +32,7 @@ const stubHealth = function () {
     calls,
     start: function () { calls.push('start'); return health; },
     ready: function () { calls.push('ready'); return health; },
-    fail: function (reason) { calls.push('fail:' + reason); },
+    fatal: function (reason) { calls.push('fatal:' + reason); },
     shutdown: function () { calls.push('shutdown'); }
   };
   return health;
@@ -83,12 +83,12 @@ describe('Test mqttBridge app wiring', function () {
   it('Should become ready when the subscription is granted', async function () {
     const health = await runApp(function (callback) { callback(); });
     assert.include(health.calls, 'ready');
-    assert.notInclude(health.calls.join(','), 'fail');
+    assert.notInclude(health.calls.join(','), 'fatal');
   });
 
   it('Should report a failure when the subscription errors', async function () {
     const health = await runApp(function (callback) { callback(new Error('Maximal connection tries reached')); });
-    assert.include(health.calls.join(','), 'fail:');
+    assert.include(health.calls.join(','), 'fatal:');
     assert.include(health.calls.join(','), 'Maximal connection tries reached');
     assert.notInclude(health.calls, 'ready');
   });

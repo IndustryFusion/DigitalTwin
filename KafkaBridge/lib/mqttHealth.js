@@ -105,9 +105,13 @@ module.exports = function MqttHealth (broker, logger, options) {
       return this;
     },
 
-    /** The subscription could not be established at all. */
-    fail: function (reason) {
-      state.fail(`MQTT subscription failed: ${reason}`);
+    /**
+     * Anything that means the bridge can no longer do its job -- the
+     * subscription never came up, or the Kafka side can no longer guarantee
+     * delivery. Reported the same way as a dead broker connection.
+     */
+    fatal: function (reason) {
+      state.fail(reason);
     },
 
     shutdown: function () {

@@ -130,7 +130,7 @@ describe('Test MqttHealth', function () {
     const health = new MqttHealth(fakeBroker(false), logger,
       Object.assign({ exit: code => exits.push(code) }, files));
     health.start();
-    health.fail(new Error('Maximal connection tries reached'));
+    health.fatal('MQTT subscription failed: ' + new Error('Maximal connection tries reached'));
     assert.deepEqual(exits, [1]);
     assert.include(logger.errors[0], 'Maximal connection tries reached');
   });
