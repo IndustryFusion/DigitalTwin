@@ -51,14 +51,37 @@ const tmpFiles = function (name) {
 };
 
 describe('Test MqttHealth', function () {
-  it('Should not declare the bridge ready merely because bind was called', function () {
+  it('Should claim neither probe merely because bind was called', function () {
     const files = tmpFiles('notready');
     const health = new MqttHealth(fakeBroker(false), fakeLogger(),
       Object.assign({ exit: () => {} }, files));
     health.start();
+    assert.isFalse(fs.existsSync(files.healthyFile),
+      'liveness must wait for the subscription, not for bind() to return');
     assert.isFalse(fs.existsSync(files.readyFile),
-      'readiness must wait for the subscription, not for bind() to return');
+      'readiness follows the auth API listening, which start() says nothing about');
     health.shutdown();
+  });
+
+  // Readiness is what lets EMQX reach the auth API over the mqtt-bridge
+  // Service, and the subscription cannot be authorised until it can. So
+  // serving() has to be able to run first, and must not imply liveness.
+  it('Should become ready on serving() without claiming to be healthy', function () {
+    const files = tmpFiles('serving');
+    const health = new MqttHealth(fakeBroker(false), fakeLogger(),
+      Object.assign({ exit: () => {} }, files));
+    health.start().serving();
+    assert.equal(fs.readFileSync(files.readyFile, 'utf8'), 'ready');
+    assert.isFalse(fs.existsSync(files.healthyFile),
+      'a bridge that is merely serving auth has not proven its input works');
+    health.shutdown();
+  });
+
+  it('Should still exit when the subscription never arrives after serving', function (done) {
+    const files = tmpFiles('serving-then-dead');
+    const health = new MqttHealth(fakeBroker(false), fakeLogger(),
+      Object.assign({ startupTimeoutMs: 20, exit: () => { done(); } }, files));
+    health.start().serving();
   });
 
   it('Should become ready once the subscription is granted', function () {

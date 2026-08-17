@@ -75,8 +75,29 @@ module.exports = function MqttHealth (broker, logger, options) {
     },
 
     /**
+     * The auth/ACL API is listening, so the pod can join its Service.
+     *
+     * This has to happen before the subscription rather than with it: EMQX
+     * resolves every authn/authz callback through the mqtt-bridge Service, and
+     * a Service drops endpoints that are not Ready. Gating /tmp/ready on the
+     * subscription made the bridge wait for an authorisation that could only
+     * arrive once it was already Ready, so the pod never came up and EMQX
+     * rejected every client -- the bridge's own subscription included.
+     *
+     * Readiness therefore answers "can I serve this Service?" and liveness
+     * answers "is my input working?", which is what the two probes are for.
+     * Never subscribing is still a failure; it is now caught by the startup
+     * deadline below, which removes /tmp/healthy and exits.
+     */
+    serving: function () {
+      state.serving();
+      logger.info('MQTT bridge is serving auth/ACL requests.');
+      return this;
+    },
+
+    /**
      * The subscription is granted and messages can flow. This -- not the call
-     * to bind() -- is what makes the bridge ready.
+     * to bind() -- is what makes the bridge healthy.
      */
     ready: function () {
       if (subscribed) {

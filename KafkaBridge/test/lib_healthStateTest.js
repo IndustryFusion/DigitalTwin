@@ -62,6 +62,22 @@ describe('Test HealthState', function () {
       'readiness is left alone: the pod is going away, not being taken out of service');
   });
 
+  // serving() exists so the MQTT bridge can join its Service before its own
+  // input works -- EMQX's auth callbacks arrive over that Service, so gating it
+  // on the subscription deadlocks the subscription.
+  it('Should write only the ready file on serving, leaving liveness unclaimed', function () {
+    const files = tmpFiles('serving');
+    const state = new HealthState(fakeLogger(),
+      Object.assign({ exit: () => {} }, files));
+    state.serving();
+    assert.isTrue(fs.existsSync(files.readyFile), 'the Service may route to it');
+    assert.isFalse(fs.existsSync(files.healthyFile),
+      'liveness must stay unclaimed until the input is proven, or never subscribing looks healthy');
+
+    state.up();
+    assert.isTrue(fs.existsSync(files.healthyFile), 'up() still claims both');
+  });
+
   it('Should not complain that the healthy file is missing when it never became healthy', function () {
     const files = tmpFiles('never-up');
     const logger = fakeLogger();

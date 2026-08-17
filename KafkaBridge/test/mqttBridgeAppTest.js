@@ -31,6 +31,7 @@ const stubHealth = function () {
   const health = {
     calls,
     start: function () { calls.push('start'); return health; },
+    serving: function () { calls.push('serving'); return health; },
     ready: function () { calls.push('ready'); return health; },
     fatal: function (reason) { calls.push('fatal:' + reason); },
     shutdown: function () { calls.push('shutdown'); }
@@ -74,10 +75,30 @@ describe('Test mqttBridge app wiring', function () {
       'the startup deadline must be armed first, or a broker that never answers is never noticed');
   });
 
-  it('Should not become ready until the subscription callback succeeds', async function () {
+  it('Should not become healthy until the subscription callback succeeds', async function () {
     const health = await runApp(function () {});
     assert.notInclude(health.calls, 'ready',
       'returning from bind() is not evidence of a subscription');
+  });
+
+  // The deadlock this guards against: EMQX resolves its authn/authz callbacks
+  // through the mqtt-bridge Service, and a Service drops endpoints that are not
+  // Ready. If readiness waits for the subscription, the subscription waits for
+  // an authorisation that can never arrive, and EMQX rejects every client.
+  it('Should serve the Service as soon as the auth API listens, before subscribing', async function () {
+    const health = await runApp(function () {});
+    assert.include(health.calls, 'serving',
+      'readiness must not wait for the subscription -- EMQX cannot authorise it until the pod is Ready');
+    assert.isBelow(health.calls.indexOf('serving'), health.calls.indexOf('ready') === -1
+      ? Infinity
+      : health.calls.indexOf('ready'),
+    'readiness has to be declared before the subscription is awaited');
+  });
+
+  it('Should stay ready-but-unhealthy while the subscription is still pending', async function () {
+    const health = await runApp(function () {});
+    assert.include(health.calls, 'serving', 'the auth API is up, so the Service can route to it');
+    assert.notInclude(health.calls, 'ready', 'but the input is not working yet, so liveness must not pass');
   });
 
   it('Should become ready when the subscription is granted', async function () {

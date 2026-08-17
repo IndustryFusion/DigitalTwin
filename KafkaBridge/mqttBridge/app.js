@@ -37,6 +37,11 @@ const startListener = async function () {
 
   logger.info('Now starting MQTT auth service.');
   await authService.init(config);
+  // Ready as soon as the auth API is listening, because that API is the only
+  // thing the mqtt-bridge Service carries and EMQX cannot authorise anyone --
+  // this bridge included -- until the Service has an endpoint to send the
+  // callbacks to. Whether the subscription then works is a liveness question.
+  health.serving();
 
   logger.info('Now starting MQTT-Kafka bridge forwarding.');
   // SparkplugB connector
