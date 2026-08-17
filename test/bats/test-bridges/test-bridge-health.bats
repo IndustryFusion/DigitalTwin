@@ -154,29 +154,48 @@ restart_count() {
     # with "Not authorized" for the one reason it was meant to catch.
     ready=$(pod_is_ready mqtt-bridge)
     [ "$ready" = "true" ] || { echo "# mqtt-bridge is not Ready, so EMQX has no auth backend"; false; }
-    emqx=$(get_pod ${EMQX_LABEL})
-    [ -n "$emqx" ] || skip "no emqx pod found"
 
-    # Readiness means the auth API is serving; the subscription is what liveness
-    # covers. Both have to have happened by now: the bridge writes /tmp/healthy
-    # from the SUBSCRIBE callback, so a Ready bridge with no client on the broker
-    # is the silent failure this suite exists to catch.
-    clients=$(kubectl -n ${NAMESPACE} exec "$emqx" -- emqx ctl clients list 2>/dev/null)
+    # The hard gate, and it is entirely ours: /tmp/healthy is written from the
+    # SUBSCRIBE callback and from nowhere else, so the file existing *is* the
+    # broker having granted the subscription. Readiness only says the auth API
+    # is listening -- a bridge that served auth but never subscribed would be
+    # Ready with no /tmp/healthy, which is exactly the silent failure this suite
+    # exists to catch, and it is caught here without asking the broker anything.
+    pod_has_file mqtt-bridge /tmp/healthy || {
+        echo "# mqtt-bridge is Ready but never wrote /tmp/healthy: it is serving auth without a subscription"
+        false
+    }
+
+    # Everything below cross-checks the same fact from the broker's side. It is
+    # deliberately not a gate: `emqx ctl` is an operator-image detail, and when
+    # it fails it says so on stderr, which the previous version sent to
+    # /dev/null -- so a broken CLI failed the test with no way to tell why.
+    emqx=$(get_pod ${EMQX_LABEL})
+    if [ -z "$emqx" ]; then
+        echo "# no emqx pod found; the /tmp/healthy assertion above stands on its own"
+        return 0
+    fi
+
+    clients=$(kubectl -n ${NAMESPACE} exec "$emqx" -- emqx ctl clients list 2>&1) || {
+        echo "# 'emqx ctl clients list' failed on ${emqx}: ${clients}"
+        return 0
+    }
     echo "# emqx clients: $clients"
     # Deliberately not `grep -v`: with a single "No clients." line an inverted
     # match happens to fail for the right reason, but any banner line the broker
     # prints would make it pass while nothing is connected.
     if echo "$clients" | grep -q "No clients"; then
-        echo "# mqtt-bridge reports Ready but the broker has no client connected"
+        echo "# mqtt-bridge holds a subscription but the broker reports no client connected"
         false
     fi
 
-    # The connected client above is the hard gate, because that is unambiguous.
-    # The subscription listing is only checked when the broker actually reports
-    # subscriptions: the bridge subscribes as $share/kafka/spBv1.0/+/+/+/+, and
-    # whether a shared subscription shows up here is an EMQX detail we should
-    # not turn into a false red.
-    subs=$(kubectl -n ${NAMESPACE} exec "$emqx" -- emqx ctl subscriptions list 2>/dev/null)
+    # The bridge subscribes as $share/kafka/spBv1.0/+/+/+/+, and whether a shared
+    # subscription is listed here is an EMQX detail we should not turn into a
+    # false red -- so this only asserts when the broker lists subscriptions.
+    subs=$(kubectl -n ${NAMESPACE} exec "$emqx" -- emqx ctl subscriptions list 2>&1) || {
+        echo "# 'emqx ctl subscriptions list' failed on ${emqx}: ${subs}"
+        return 0
+    }
     echo "# emqx subscriptions: $subs"
     if echo "$subs" | grep -q "No subscriptions"; then
         echo "# broker lists no subscriptions; connected client is the only assertion here"
