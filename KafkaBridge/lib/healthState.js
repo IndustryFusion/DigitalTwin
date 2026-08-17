@@ -52,6 +52,24 @@ module.exports = function HealthState (logger, options) {
       cleanups.push(fn);
     },
 
+    /**
+     * Declare the bridge able to serve traffic on its Service, without claiming
+     * its input works yet.
+     *
+     * Only the MQTT bridge needs this, and it needs it because its readiness
+     * gates something its own input depends on: the mqtt-bridge Service carries
+     * EMQX's authn/authz callbacks, and a Service skips endpoints that are not
+     * Ready. Withholding /tmp/ready until the subscription exists therefore
+     * deadlocks -- the subscription cannot be authorised until EMQX can reach
+     * the auth API, and it cannot reach it until the pod is Ready.
+     *
+     * A bridge whose readiness gates nothing it depends on should call up()
+     * instead and keep the two signals together.
+     */
+    serving: function () {
+      fs.writeFileSync(readyFile, 'ready');
+    },
+
     /** Declare the bridge up. Only call once the input is genuinely working. */
     up: function () {
       fs.writeFileSync(readyFile, 'ready');

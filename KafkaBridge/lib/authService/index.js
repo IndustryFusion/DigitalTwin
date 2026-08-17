@@ -48,8 +48,16 @@ const init = async function (conf) {
     res.sendStatus(200);
   });
 
-  app.listen(config.mqtt.authServicePort, () => {
-    console.log(`Auth/ACL Service started and listening on port ${config.mqtt.authServicePort}`);
+  // Resolve on 'listening', not on the call: the caller declares readiness off
+  // the back of this promise, and a pod that is Ready before its socket accepts
+  // sends EMQX's auth callbacks to a closed port. A failed bind (port taken)
+  // rejects here instead of surfacing as an unhandled 'error' event.
+  return new Promise((resolve, reject) => {
+    const server = app.listen(config.mqtt.authServicePort, () => {
+      console.log(`Auth/ACL Service started and listening on port ${config.mqtt.authServicePort}`);
+      resolve(server);
+    });
+    server.once('error', reject);
   });
 };
 module.exports.init = init;

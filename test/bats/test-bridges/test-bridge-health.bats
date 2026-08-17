@@ -145,16 +145,22 @@ restart_count() {
     [ "$before" = "$after" ] || echo "# note: $app restarted during the test ($before -> $after)"
 }
 
-@test "a Ready mqtt bridge is connected to the broker and subscribed" {
+@test "the mqtt bridge is Ready and connected to the broker and subscribed" {
     $SKIP
+    # Not a skip: mqtt-bridge is always deployed, and EMQX resolves every
+    # authn/authz callback through its Service, so a not-Ready mqtt-bridge takes
+    # MQTT down for every client. Skipping here once hid exactly that -- this
+    # test reported "ok (skipped)" while 23 device and subscription tests failed
+    # with "Not authorized" for the one reason it was meant to catch.
     ready=$(pod_is_ready mqtt-bridge)
-    [ "$ready" = "true" ] || skip "mqtt-bridge is not Ready"
+    [ "$ready" = "true" ] || { echo "# mqtt-bridge is not Ready, so EMQX has no auth backend"; false; }
     emqx=$(get_pod ${EMQX_LABEL})
     [ -n "$emqx" ] || skip "no emqx pod found"
 
-    # Readiness is supposed to mean the subscription exists. It used to be
-    # written milliseconds after bind() was called, before the broker had even
-    # answered, so a bridge that never connected still looked Ready.
+    # Readiness means the auth API is serving; the subscription is what liveness
+    # covers. Both have to have happened by now: the bridge writes /tmp/healthy
+    # from the SUBSCRIBE callback, so a Ready bridge with no client on the broker
+    # is the silent failure this suite exists to catch.
     clients=$(kubectl -n ${NAMESPACE} exec "$emqx" -- emqx ctl clients list 2>/dev/null)
     echo "# emqx clients: $clients"
     # Deliberately not `grep -v`: with a single "No clients." line an inverted
