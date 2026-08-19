@@ -440,6 +440,10 @@ def wrap_sql_construct(ctx, node):
     first = True
     construct_query = "SQL_DIALECT_INSERT_ATTRIBUTES\n"
     bounds = ctx['bounds']
+    # Every UNION ALL branch below reads the same FROM, so the same knowledge
+    # has to be pinned in each of them. A rule whose rdf join expires stops
+    # writing its attributes back, silently.
+    select_hint = rdf_state_ttl_hint(node['target_sql'])
 
     for (entityId_var, name, attribute_type, value_var, node_type) in columns:
         if first:
@@ -449,7 +453,7 @@ def wrap_sql_construct(ctx, node):
         entityId_varname = entityId_var.toPython()[1:]
         entityId = bounds[entityId_varname]
         id = f"{entityId} || '\\{name}'"
-        construct_query += "SELECT DISTINCT "
+        construct_query += f"SELECT {select_hint}DISTINCT "
         construct_query += f'{id} as id,\n'
         construct_query += 'CAST(NULL as STRING) as parentId,\n'
         construct_query += f'{bounds[entityId_varname]} as entityId,\n'  # entityId
@@ -515,6 +519,40 @@ def get_attribute_columns(ctx, node):
     return result
 
 
+def rdf_state_ttl_hint(target_sql):
+    """Pin the knowledge in place for the query block that reads it.
+
+    `rdf` holds the ontology. It is written once when the KMS is deployed and
+    never again, so unlike entities_view and attributes_view -- which the
+    debezium connector re-snapshots every flink.ttl/2 -- nothing refreshes it.
+    In Flink a join keeps its right side as STATE, not as a table that is
+    simply there, so under the job's table.exec.state.ttl the knowledge expires
+    an hour after deployment and the join stops matching.
+
+    What that does to a constraint depends on how it reads the knowledge, and
+    both directions are wrong. An inner join yields no rows, so the constraint
+    goes silent and a real violation is never reported. A FILTER NOT EXISTS
+    compiles to LEFT JOIN ... IS NULL, which then holds vacuously, so the
+    constraint fires against data that is perfectly valid. Measured on a live
+    cluster: the same violating entity raised its alert 100 s after the job
+    started and raised nothing at all 531 s in, with a 300 s ttl.
+
+    Nothing catches it. The SQLite oracle has no state and no ttl, so it keeps
+    answering correctly and agreeing with itself, and the divergence only shows
+    up against a Flink job that has been running for an hour.
+
+    The aliases are read back out of the FROM clause rather than threaded
+    through the translator, so a hint is emitted for exactly the rdf tables
+    visible in THIS query block. Hints are query-block scoped: naming an alias
+    from an inner sub-select here would be silently ignored, which would look
+    fixed without being fixed.
+    """
+    aliases = re.findall(r'\brdf\s+AS\s+(\w+)', target_sql, re.IGNORECASE)
+    if not aliases:
+        return ''
+    return utils.get_state_ttl_metadata(sorted(set(aliases))) + ' '
+
+
 def wrap_sql_projection(ctx, node):
     bounds = ctx['bounds']
     expression = 'SELECT '
@@ -544,6 +582,12 @@ def wrap_sql_projection(ctx, node):
         group_by_term = f' GROUP BY {group_by}'
     else:
         group_by_term = ''
+    # The hint goes immediately after SELECT and BEFORE any DISTINCT: Flink
+    # parses anything following DISTINCT as a select item, so a hint placed
+    # there is a syntax error and the whole statement set fails to deploy.
+    expression = re.sub(r'^SELECT ',
+                        lambda m: m.group(0) + rdf_state_ttl_hint(target_sql),
+                        expression, count=1)
     node['target_sql'] = f'{expression} FROM {target_sql}'
     node['target_sql'] = node['target_sql'] + f' WHERE {target_where}' if \
         target_where != '' else node['target_sql']
