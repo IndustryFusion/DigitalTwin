@@ -1,0 +1,39 @@
+[
+  {
+    "@context": "https://industryfusion.github.io/contexts/staging/example/v0.2/context.jsonld",
+    "id": "urn:e2e-cycle-good:1",
+    "type": "https://industryfusion.github.io/contexts/example/v0/base_entities/E2EMachine",
+    "https://industryfusion.github.io/contexts/example/v0/base_entities/hasE2EState": {
+      "type": "Property",
+      "value": "ON"
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/staging/example/v0.2/context.jsonld",
+    "id": "urn:e2e-cycle-nostate:1",
+    "type": "https://industryfusion.github.io/contexts/example/v0/base_entities/E2EMachine"
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/staging/example/v0.2/context.jsonld",
+    "id": "urn:e2e-cycle-cartridge:1",
+    "type": "https://industryfusion.github.io/contexts/example/v0/base_entities/E2ECartridge"
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/staging/example/v0.2/context.jsonld",
+    "id": "urn:e2e-cycle-linked:1",
+    "type": "https://industryfusion.github.io/contexts/example/v0/base_entities/E2ELinkedMachine",
+    "https://industryfusion.github.io/contexts/example/v0/base_entities/hasE2ECartridge": {
+      "type": "Relationship",
+      "object": "urn:e2e-cycle-cartridge:1"
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/staging/example/v0.2/context.jsonld",
+    "id": "urn:e2e-cycle-dangling:1",
+    "type": "https://industryfusion.github.io/contexts/example/v0/base_entities/E2ELinkedMachine",
+    "https://industryfusion.github.io/contexts/example/v0/base_entities/hasE2ECartridge": {
+      "type": "Relationship",
+      "object": "urn:e2e-cycle-absent:1"
+    }
+  }
+]
