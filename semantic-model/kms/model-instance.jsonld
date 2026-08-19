@@ -75,22 +75,22 @@
       {
         "type": "Property",
         "value": 0.9,
-        "observedAt": "2024-02-28 13:52:32.0" 
+        "observedAt": "2024-02-28T13:52:32.000Z"
       },
       {
         "type": "Property",
         "value": 0.8,
-        "observedAt": "2024-02-28 13:52:33.0" 
+        "observedAt": "2024-02-28T13:52:33.000Z"
       },
       {
         "type": "Property",
         "value": 0.7,
-        "observedAt": "2024-02-28 13:52:34.0" 
+        "observedAt": "2024-02-28T13:52:34.000Z"
       },
       {
         "type": "Property",
         "value": 0.6,
-        "observedAt": "2024-02-28 13:52:35.0" 
+        "observedAt": "2024-02-28T13:52:35.000Z"
       }
     ]
   },
