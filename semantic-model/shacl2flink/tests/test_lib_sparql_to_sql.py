@@ -592,3 +592,124 @@ def test_get_bound_trim_string_variable_in_both_collections():
     result = lib.sparql_to_sql.get_bound_trim_string(ctx, Variable('foo'))
     # Property variables should take precedence
     assert result == "SQL_DIALECT_STRIP_IRI{bar}"
+
+
+# The knowledge in `rdf` is written once when the KMS is deployed and never
+# again -- unlike entities_view and attributes_view, which the debezium
+# connector re-snapshots every flink.ttl/2 -- so nothing refreshes it. A join
+# keeps its right side as STATE rather than as a table that is simply there, so
+# under table.exec.state.ttl the ontology expires an hour after deployment and
+# the join stops matching.
+#
+# Both directions are wrong and neither is loud. An inner join yields no rows,
+# so a constraint goes silent and misses a real violation. A FILTER NOT EXISTS
+# compiles to LEFT JOIN ... IS NULL, which then holds vacuously and fires
+# against valid data. Measured on a live cluster with a 300 s ttl: the same
+# violating entity alerted 100 s after the job started and not at all 531 s in.
+# The SQLite oracle has no state and no ttl, so it answers correctly throughout
+# and the divergence is invisible to the comparison.
+@patch('lib.sparql_to_sql.utils.create_varname')
+def test_wrap_sql_projection_pins_the_knowledge(mock_create_varname):
+    ctx = {
+        'bounds': {
+            'var': 'bound'
+        },
+        'target_modifiers': [],
+        'PV': ['varx']
+    }
+    node = {
+        'where': '',
+        'target_sql': 'entities_view AS A JOIN rdf AS KNOWTABLE ON KNOWTABLE.subject = A.id'
+    }
+    mock_create_varname.return_value = 'var'
+    lib.sparql_to_sql.wrap_sql_projection(ctx, node)
+    assert "STATE_TTL('KNOWTABLE' = '0d')" in node['target_sql'], \
+        'a sparql query joins the knowledge without pinning it, so those rows ' \
+        'expire at table.exec.state.ttl and the check stops seeing the ontology'
+    # Position, not just presence. A hint anywhere other than immediately after
+    # SELECT is parsed as a select item -- "Encountered \"/*+\"" -- and the whole
+    # statement set fails to deploy. Asserting only that the hint exists let
+    # exactly that ship: it sat after DISTINCT, the unit tests were green, and
+    # Flink refused the SQL.
+    assert node['target_sql'].startswith('SELECT /*+ STATE_TTL'), \
+        f"the hint must follow SELECT immediately, got: {node['target_sql'][:60]}"
+
+
+@patch('lib.sparql_to_sql.utils.create_varname')
+def test_wrap_sql_projection_hints_only_what_it_joins(mock_create_varname):
+    """No rdf in this block, no hint: STATE_TTL is query-block scoped, and an
+    alias named in a block that does not join it is silently ignored by Flink,
+    which would look like a fix without being one."""
+    ctx = {
+        'bounds': {
+            'var': 'bound'
+        },
+        'target_modifiers': [],
+        'PV': ['varx']
+    }
+    node = {
+        'where': '',
+        'target_sql': 'entities_view AS A JOIN attributes_view AS B ON B.entityId = A.id'
+    }
+    mock_create_varname.return_value = 'var'
+    lib.sparql_to_sql.wrap_sql_projection(ctx, node)
+    assert 'STATE_TTL' not in node['target_sql']
+
+
+@patch('lib.sparql_to_sql.get_bound_trim_string')
+@patch('lib.sparql_to_sql.get_attribute_columns')
+def test_wrap_sql_construct_pins_the_knowledge(attribute_column_mock, get_bound_trim_string_mock):
+    """A rule whose rdf join expires stops writing its attributes back, just as
+    silently as a constraint stops reporting."""
+    ctx = {
+        'bounds': {
+            'varx': 'bound'
+        },
+        'property_variables': {},
+        'target_modifiers': [],
+        'PV': ['varx']
+    }
+    node = {
+        'where': '',
+        'target_sql': 'entities_view AS A JOIN rdf AS RULETABLE ON RULETABLE.subject = A.id'
+    }
+    attribute_column_mock.return_value = [(Variable('varx'), 'name', 'type', Variable('varx'), '@id')]
+    get_bound_trim_string_mock.return_value = 'bound'
+    lib.sparql_to_sql.wrap_sql_construct(ctx, node)
+    assert "STATE_TTL('RULETABLE' = '0d')" in node['target_sql']
+    # A construct branch is SELECT DISTINCT, and the hint still belongs between
+    # SELECT and DISTINCT rather than after both.
+    assert 'SELECT /*+ STATE_TTL' in node['target_sql'], \
+        'hint is not immediately after SELECT'
+    assert 'SELECT DISTINCT /*+' not in node['target_sql'], \
+        'hint sits after DISTINCT, which flink parses as a select item'
+
+
+@patch('lib.sparql_to_sql.utils.create_varname')
+def test_wrap_sql_projection_pins_the_knowledge_with_distinct(mock_create_varname):
+    """The DISTINCT case specifically, because that is the one that broke.
+
+    Without DISTINCT the hint lands after SELECT whether the splice is right or
+    wrong, so a fixture with no modifiers cannot tell the two apart -- and did
+    not: the bad version shipped and Flink rejected it with
+    'Encountered "/*+" at line 2, column 17', column 17 being exactly the width
+    of "SELECT DISTINCT ".
+    """
+    ctx = {
+        'bounds': {
+            'var': 'bound'
+        },
+        'target_modifiers': ['Distinct'],
+        'PV': ['varx']
+    }
+    node = {
+        'where': '',
+        'target_sql': 'entities_view AS A JOIN rdf AS KNOWTABLE ON KNOWTABLE.subject = A.id'
+    }
+    mock_create_varname.return_value = 'var'
+    lib.sparql_to_sql.wrap_sql_projection(ctx, node)
+    assert node['target_sql'].startswith('SELECT /*+ STATE_TTL'), \
+        f"the hint must sit between SELECT and DISTINCT, got: {node['target_sql'][:60]}"
+    assert 'SELECT DISTINCT /*+' not in node['target_sql'], \
+        'hint sits after DISTINCT, which flink parses as a select item'
+    assert 'DISTINCT' in node['target_sql'], 'the DISTINCT modifier was dropped'
