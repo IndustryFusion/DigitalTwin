@@ -190,6 +190,13 @@ test-full-flink-deployment:
 # touched -- SHACL/KNOWLEDGE/MODEL are overridden for the sub-makes, which
 # `make` forwards automatically because they are set on the command line.
 #
+# Both suites run against the one deployment. test-shacl-flink-e2e drives
+# Kafka directly, so a failure there is Flink's or the generated SQL's;
+# test-shacl-flink-scorpio-e2e drives the NGSI-LD API and reads Alerta, so a
+# failure there is somewhere in Postgres, the bridges or the alert path. Run
+# together they say not just "the SQL is right" but "deleting an entity closes
+# its alert", which is the property operators depend on.
+#
 # The teardown must run even when the tests fail, otherwise a red build leaves
 # a statementset behind and the next run inherits it.
 test-flink-e2e: E2E_KMS := $(CURDIR)/tests/e2e-kms
@@ -198,7 +205,7 @@ test-flink-e2e:
 	$(MAKE) flink-deploy SHACL=$(E2E_KMS)/shacl.ttl KNOWLEDGE=$(E2E_KMS)/knowledge.ttl \
 		MODEL=$(E2E_KMS)/model-instance.jsonld
 	ln -fs ../../../../test/bats/lib tests/bats/lib || echo 'Bats framework not installed'
-	( cd tests/bats && bats test-shacl-flink-e2e ); rc=$$?; \
+	( cd tests/bats && bats test-shacl-flink-e2e test-shacl-flink-scorpio-e2e ); rc=$$?; \
 		rm -f tests/bats/lib; \
 		$(MAKE) flink-undeploy SHACL=$(E2E_KMS)/shacl.ttl KNOWLEDGE=$(E2E_KMS)/knowledge.ttl \
 			MODEL=$(E2E_KMS)/model-instance.jsonld; \

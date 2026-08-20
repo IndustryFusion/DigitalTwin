@@ -81,7 +81,10 @@ def main(output_folder='output'):
         base_entity_table.append({sq("type"): "STRING"})
         base_entity_table.append({sq("deleted"): "BOOLEAN"})
         base_entity_table.append({sq("ts"): "TIMESTAMP(3) METADATA FROM 'timestamp'"})
-        base_entity_table.append({"watermark": "FOR `ts` AS `ts`"})
+        # No WATERMARK, for the same reason as the attributes table: `ts` is an
+        # event time taken from the data, so declaring it a rowtime makes the
+        # entities_view dedup drop as late anything whose timestamp predates the
+        # newest record already seen. See create_core_tables.py.
 
         base_entity_tablename = configs.kafka_topic_ngsi_prefix_name
         base_entity_primary_key = None

@@ -348,9 +348,12 @@ sql_check_relationship_base = """
             WITH A1 as (
                     SELECT /*+ STATE_TTL('D' = '0d') */ A.id AS this,
                         A.`type` as typ,
-                        -- Always false: deleted entities are filtered out
-                        -- below. Kept as a row-level guard for the value
-                        -- checks; it must never become a grouping key again.
+                        -- Deleted entities stay in A1 and carry the flag, so
+                        -- that a count of zero can be told apart from an
+                        -- entity that is gone. Read it in the value checks
+                        -- directly and in the counts as an aggregate -- never
+                        -- as a grouping key. See
+                        -- sql_check_relationship_property_count.
                         IFNULL(A.`deleted`, false) as edeleted,
                         C.`type` AS entity,
                         {{ deepest('type') }} AS link,
@@ -371,7 +374,6 @@ sql_check_relationship_base = """
             {{ attribute_joins }}
                     LEFT JOIN {{target_class}}_view AS C ON {{ deepest('attributeValue') }} = C.id and COALESCE(C.`deleted`, false) = false
                     WHERE {{ level_guard }} and D.attributeType = 'https://uri.etsi.org/ngsi-ld/Relationship'
-                      and COALESCE(A.`deleted`, false) = false
             )
 """  # noqa: E501
 
@@ -392,24 +394,38 @@ sql_check_relationship_property_class = """
             FROM A1 WHERE A1.propertyClass IS NOT NULL and `index` IS NOT NULL and {{ constraint_cond }}
 """  # noqa: E501
 
-# `edeleted` must never be a grouping key. It used to be one, with the deleted
-# case muted by `NOT edeleted` in the HAVING -- which on Flink means a deleted
-# entity MIGRATES its rows from group (id, false) to group (id, true) rather
-# than emptying the first. Muting the new group says nothing about the old one:
-# that is only retracted once every row it holds is retracted, and an hour of
-# state TTL is enough for those retractions to stop arriving. The alert then
-# outlives the entity it is about. Worse, a retraction landing in a group whose
-# accumulator was rebuilt from fewer rows drives the SUM NEGATIVE, and the
-# entity is reported as having "-1 relationships" -- a value this expression
-# cannot produce in batch, which is why the SQLite oracle agreed throughout.
+# A count of zero means two different things and the count alone cannot tell
+# them apart: an entity that is alive and has lost its mandatory attribute MUST
+# alert, and an entity that has been deleted MUST NOT. Only `edeleted`
+# separates them, so the check has to read it.
 #
-# Deleted entities are filtered out of A1 instead, so deleting one EMPTIES the
-# group and Flink retracts the alert as it does for any group that ceases to
-# exist.
+# It must not be a GROUPING KEY, which is how it was written originally: on
+# Flink a deleted entity then MIGRATES its rows from group (id, false) to group
+# (id, true) rather than emptying the first, and muting the new group says
+# nothing about the old one. That group is only retracted once every row it
+# holds is retracted, and an hour of state TTL is enough for those retractions
+# to stop arriving, so the alert outlives the entity. Worse, a retraction
+# landing in a group whose accumulator was rebuilt from fewer rows drives the
+# SUM NEGATIVE and the entity is reported as having "-1 relationships" -- a
+# value this expression cannot produce in batch, which is why the SQLite oracle
+# agreed throughout.
+#
+# Filtering deleted entities out of A1 instead was worse still, because it made
+# correctness depend on the rows DISAPPEARING and a retraction propagating
+# through a LEFT JOIN and a COUNT(DISTINCT). Measured: deleting the kms model in
+# Scorpio raised thirteen CountConstraint alerts that never cleared, with every
+# row-level check -- all of which carry `NOT edeleted` -- correctly silent. The
+# attributes were gone and the count went on being evaluated for the entity.
+#
+# So: read `edeleted`, but as an AGGREGATE in the HAVING. The group is keyed the
+# same whether the entity is alive or deleted, so nothing migrates and no
+# accumulator is rebuilt; and the alert is suppressed by re-evaluating the same
+# group rather than by waiting for its rows to vanish.
 sql_check_relationship_property_count = """
             {% set constraint_cond %}
+            (MAX(CASE WHEN edeleted THEN 1 ELSE 0 END) = 0 AND
             (SUM(CASE WHEN NOT COALESCE(adeleted, FALSE) AND link IS NOT NULL THEN 1 ELSE 0 END) > SQL_DIALECT_CAST(`maxCount` AS INTEGER)
-                                            OR SUM(CASE WHEN NOT COALESCE(adeleted, FALSE) AND link IS NOT NULL THEN 1 ELSE 0 END) < SQL_DIALECT_CAST(`minCount` AS INTEGER))
+                                            OR SUM(CASE WHEN NOT COALESCE(adeleted, FALSE) AND link IS NOT NULL THEN 1 ELSE 0 END) < SQL_DIALECT_CAST(`minCount` AS INTEGER)))
             {% endset %}
             SELECT this AS resource,
                 'CountConstraintComponent(' || `parentPath` || `propertyPath` || ')' AS event,
@@ -448,7 +464,7 @@ sql_check_property_iri_base = """
 INSERT {% if sqlite %} OR REPlACE{% endif %} INTO {{alerts_bulk_table}}
 WITH A1 AS (SELECT /*+ STATE_TTL('D' = '0d', 'C' = '0d') */ A.id as this,
                    A.`type` as typ,
-                   -- Always false; see sql_check_relationship_base.
+                   -- Carried, not filtered; see sql_check_relationship_base.
                    IFNULL(A.`deleted`, false) as edeleted,
                    {{ deepest('attributeValue') }} as val,
                    {{ deepest('nodeType') }} as nodeType,
@@ -483,12 +499,11 @@ WITH A1 AS (SELECT /*+ STATE_TTL('D' = '0d', 'C' = '0d') */ A.id as this,
             LEFT JOIN {{rdf_table_name}} as C ON C.subject = '<' || {{ deepest('attributeValue') }} || '>'
                 and C.predicate = '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>' and C.object = '<' || D.propertyClass || '>'
              WHERE {{ level_guard }} and (attributeType IS NULL or attributeType IN ('https://uri.etsi.org/ngsi-ld/Property', 'https://uri.etsi.org/ngsi-ld/ListProperty', 'https://uri.etsi.org/ngsi-ld/JsonProperty'))
-               and COALESCE(A.`deleted`, false) = false
             )
 """  # noqa: E501
 
-# `edeleted` is not a grouping key here either -- see
-# sql_check_relationship_property_count for what that cost.
+# `edeleted` is read as an aggregate here too, and is not a grouping key -- see
+# sql_check_relationship_property_count for what both alternatives cost.
 #
 # The count is COUNT(DISTINCT `index`) -- the number of distinct datasetIds
 # carrying a live attribute, which IS the number of instances, an NGSI-LD
@@ -505,8 +520,9 @@ WITH A1 AS (SELECT /*+ STATE_TTL('D' = '0d', 'C' = '0d') */ A.id as this,
 sql_check_property_count = """
 {%- set instance_count %}COUNT(DISTINCT CASE WHEN NOT COALESCE(adeleted, FALSE) and attr_typ IS NOT NULL THEN `index` ELSE NULL END){% endset %}
 {% set constraint_cond%}
+    (MAX(CASE WHEN edeleted THEN 1 ELSE 0 END) = 0 AND
     ({{ instance_count }} > SQL_DIALECT_CAST(`maxCount` AS INTEGER)
-                                    OR {{ instance_count }} < SQL_DIALECT_CAST(`minCount` AS INTEGER))
+                                    OR {{ instance_count }} < SQL_DIALECT_CAST(`minCount` AS INTEGER)))
 {% endset %}
 SELECT this AS resource,
     'CountConstraintComponent(' || `parentPath` || `propertyPath` || ')' AS event,

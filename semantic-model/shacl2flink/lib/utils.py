@@ -428,6 +428,7 @@ def create_yaml_view(name, table, primary_key=None, ttl=None):
         for field_name, field_type in field.items():
             if ('metadata' not in field_name.lower() and
                     field_name.lower() != "watermark" and
+                    field_name.lower() != "offset" and
                     field_name.lower() != "type"):
                 sqlstatement += f',\n `{field_name}`'
     sqlstatement += f" FROM (\n  SELECT {ttl_expression}*,\nROW_NUMBER() OVER (PARTITION BY "
@@ -438,31 +439,35 @@ def create_yaml_view(name, table, primary_key=None, ttl=None):
         else:
             sqlstatement += ', '
         sqlstatement += f'`{key}`'
-    # KNOWN DEFECT, not yet fixed: `ts` is not monotonic in the log, so this
-    # does not always keep the newest row.
+    # Kafka offset breaks the tie, where the table offers one.
     #
-    # debeziumBridge stamps an attribute's VALUE record with its
-    # ngsi-ld:observedAt (app.js checkTimestamp) while a DELETE record takes
-    # wall-clock. Measured on a live cluster for one dedup key
-    # (urn:filter:1\c90e0d09..., @none): a delete written at offset 581438
-    # carried 2026-08-16, while the three republications of the value that
-    # FOLLOWED it -- offsets 581453, 581705, 581955 -- all carried 2024-02-28.
-    # ORDER BY ts DESC therefore keeps the delete indefinitely and the
-    # attribute is reported missing although it exists. Republishing the same
-    # value with a current timestamp made the job retract the alert 2.5s later,
-    # which is what pins the mechanism.
+    # debeziumBridge stamps a DELETE with the timestamp of the value it deletes
+    # -- deliberately the SAME timestamp, so that a later re-creation observed
+    # at the same instant can still win. That design relies on the tie being
+    # broken by ARRIVAL, which held while `ts` was a rowtime and this compiled
+    # into Flink's Deduplicate (keep-last-row). Without the watermark it
+    # compiles into a general Rank, and Rank keeps the INCUMBENT on a tie: it
+    # replaces only on a strictly greater sort key. The delete therefore ties,
+    # loses, and is discarded, leaving the attribute live for good.
     #
-    # Ordering by the Kafka offset instead was tried and reverted. It is not
-    # obviously safe: Flink compiles ROW_NUMBER() ... rownum = 1 into its
-    # Deduplicate operator only when the ORDER BY is a time attribute, and a
-    # plain BIGINT makes it a general rank. The trial was also inconclusive --
-    # the cluster showed inflated counts under BOTH orderings -- so it settled
-    # nothing and is not evidence either way.
+    # Measured: urn:filter:1's hasXXXWorkpiece was deleted in Scorpio and the
+    # delete published, yet the job went on counting it -- reporting a
+    # ClassConstraint violation ("not linked to existing entity of type
+    # Workpiece"), which only fires when a non-deleted row with a datasetId is
+    # present. Republishing the same delete with a CURRENT timestamp cleared it
+    # within seconds, and the alert became the correct CountConstraint. Only a
+    # strictly greater key displaced the row.
     #
-    # The fix most likely belongs in what the timestamp is set FROM rather than
-    # in what this orders by, but that changes event-time semantics for every
-    # consumer of the attributes topic and is not a call to make here.
-    sqlstatement += "\nORDER BY ts DESC) AS rownum\n"
+    # The offset is strictly monotonic per partition, so it IS arrival order,
+    # stated explicitly rather than inherited from whichever operator Flink
+    # happens to choose. The earlier objection to ordering by it -- that a plain
+    # BIGINT downgrades Deduplicate to a general rank -- no longer applies:
+    # `ts` is no longer a rowtime, so this is a general rank either way.
+    order_by = "ts DESC"
+    if any(field_name.lower() == 'offset'
+           for field in table for field_name in field):
+        order_by += ", `offset` DESC"
+    sqlstatement += f"\nORDER BY {order_by}) AS rownum\n"
     sqlstatement += f'FROM `{name}` )\nWHERE rownum = 1'
     spec['sqlstatement'] = sqlstatement
     return yaml_view
@@ -501,7 +506,11 @@ def create_sql_view(table_name, table, primary_key=None,
         else:
             sqlstatement += ','
         sqlstatement += f'`{key}`'
-    sqlstatement += "\nORDER BY ts DESC) AS rownum\n"
+    # rowid is SQLite's insertion order, so this mirrors the Kafka offset the
+    # streaming view orders by: on equal ts the later-inserted row wins. Without
+    # it a tie is resolved arbitrarily and the oracle could disagree with Flink
+    # on exactly the delete-vs-value case the tie-break exists for.
+    sqlstatement += "\nORDER BY ts DESC, rowid DESC) AS rownum\n"
     sqlstatement += f'FROM `{table_name}` )\nWHERE rownum = 1;\n'
     return sqlstatement
 

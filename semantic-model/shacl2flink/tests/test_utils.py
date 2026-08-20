@@ -147,7 +147,7 @@ def test_create_sql_view():
 \n`fieldname` FROM (\
 \n  SELECT *,\
 \nROW_NUMBER() OVER (PARTITION BY \
-\nORDER BY ts DESC) AS rownum\
+\nORDER BY ts DESC, rowid DESC) AS rownum\
 \nFROM `table_name` )\
 \nWHERE rownum = 1;\n'
 
@@ -160,7 +160,7 @@ def test_create_sql_view():
 \n`id` FROM (\
 \n  SELECT *,\
 \nROW_NUMBER() OVER (PARTITION BY \
-\nORDER BY ts DESC) AS rownum\
+\nORDER BY ts DESC, rowid DESC) AS rownum\
 \nFROM `table_name` )\
 \nWHERE rownum = 1;\n'
 

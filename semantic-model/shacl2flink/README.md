@@ -90,6 +90,43 @@ There are three files expected in the `../kms` directory:
 - knowledge.ttl
 - model-instance.ttl
 
+`../kms` carries two model instances, and which one to use depends on whether
+the model is being compiled or deployed.
+
+`model-instance.jsonld` gives `urn:filter:1` four `hasStrength` values observed
+a second apart, all with the same `datasetId`. That is deliberate and is what
+you want when compiling: it is a stream of observations of one attribute, so it
+exercises the dedup and the aggregations built on it -- resolving many
+observations of one `(id, datasetId)` down to the current value. That is what
+`attributes_view` does and what the SQLite oracle checks, and it resolves to
+`0.6` at `13:52:35`.
+
+`model-instance.scorpio.jsonld` is the same model with that attribute reduced
+to exactly that one value, for loading into a live broker. Two clauses of
+NGSI-LD ([ETSI GS CIM 009][cim009]) explain why it has to be a separate file:
+
+- **4.5.5.1** -- "If no datasetId is provided, or `"datasetId": "@none"` is
+  supplied, it is considered as the default Attribute instance. […] There can
+  only be one default Attribute instance for an Attribute with a given
+  Attribute name **in any request or response**." The same clause adds that
+  there is no multi-attribute support for `observedAt`, so differing timestamps
+  do not make the four into distinct instances. As an NGSI-LD *request*, then,
+  the four-instance form is not conformant -- which costs nothing offline,
+  where nothing is being sent to a broker, and matters only on deployment.
+- **4.5.5.3** -- where a `datasetId` is duplicated, "the one with the most
+  recent observedAt DateTime […] **shall be provided**". So a broker receiving
+  the four is required to resolve them to `0.6`, exactly as the dedup does.
+
+Scorpio does neither: it accepts the payload and returns all four, so the
+entity reads back with four values where one was sent. It is not consistent
+about it either -- appending those four over an existing `hasStrength` discards
+the existing value, so instances sharing a `datasetId` do replace each other
+between writes, just not within a single payload.
+
+So: compile from `model-instance.jsonld`, deploy `model-instance.scorpio.jsonld`.
+
+[cim009]: https://www.etsi.org/deliver/etsi_gs/CIM/001_099/009/01.09.01_60/gs_CIM009v010901p.pdf
+
 To build:
 
 ```bash

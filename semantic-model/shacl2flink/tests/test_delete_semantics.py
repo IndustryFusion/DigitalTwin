@@ -156,12 +156,42 @@ def test_count_checks_do_not_group_by_edeleted():
                 f'{name}: edeleted is a grouping key again in {group_by.strip()}'
 
 
-def test_deleted_entities_never_reach_the_checks():
+def test_count_checks_read_edeleted():
     """
-    Deleted entities are filtered out of A1, so deleting one EMPTIES its groups
-    and Flink retracts their alerts the way it does for any group that ceases
-    to exist. This is what replaces the muting the GROUP BY used to do.
+    A count of zero means two different things and the count cannot tell them
+    apart: an entity that is alive and has lost its mandatory attribute must
+    alert, and an entity that has been deleted must not. Only `edeleted`
+    separates them, so every counting HAVING has to read it.
+
+    Filtering deleted entities out of A1 was tried instead, and made
+    correctness depend on the rows disappearing and a retraction propagating
+    through a LEFT JOIN and a COUNT(DISTINCT). Deleting the kms model in
+    Scorpio then raised thirteen CountConstraint alerts that never cleared,
+    while every row-level check -- each carrying `NOT edeleted` -- stayed
+    correctly silent.
     """
     for name, sql in _generated_checks().items():
-        assert 'COALESCE(A.`deleted`, false) = false' in sql, \
-            f'{name}: A1 admits deleted entities, so their alerts are never retracted'
+        clauses = re.findall(r'HAVING\s(.*?)(?:UNION\s+ALL|$)', sql,
+                             re.IGNORECASE | re.DOTALL)
+        assert clauses, f'{name}: no HAVING found to check'
+        for having in clauses:
+            assert 'edeleted' in having.lower(), \
+                f'{name}: a counting HAVING ignores edeleted, so it cannot ' \
+                f'tell "attribute gone" from "entity gone": {having.strip()[:120]}'
+
+
+def test_edeleted_is_aggregated_not_filtered_in_counts():
+    """
+    Reading `edeleted` in a HAVING only works if it is aggregated. A bare
+    column reference there would have to be a grouping key, which is the
+    migration bug test_count_checks_do_not_group_by_edeleted exists to prevent.
+    """
+    for name, sql in _generated_checks().items():
+        for having in re.findall(r'HAVING\s(.*?)(?:UNION\s+ALL|$)', sql,
+                                 re.IGNORECASE | re.DOTALL):
+            if 'edeleted' not in having.lower():
+                continue
+            assert re.search(r'(MAX|MIN|SUM|COUNT)\s*\([^)]*edeleted',
+                             having, re.IGNORECASE), \
+                f'{name}: edeleted appears unaggregated in a HAVING, which ' \
+                f'forces it into the GROUP BY: {having.strip()[:120]}'
