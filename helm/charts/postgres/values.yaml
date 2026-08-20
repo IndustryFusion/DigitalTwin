@@ -60,6 +60,8 @@ databases:
   keycloakdb: ngb # keycloak
   monitoring: ngb # alerta
   tsdb: ngb # timescaledb ngsild timeseries data
+  rag: ngb # pgvector database used by RAG application
 
 preparedTimescaleDatabases: tsdb
 preparedPostgisDatabases: ngb
+preparedVectorDatabases: rag # database(s) with pgvector extension enabled
