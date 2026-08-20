@@ -1,0 +1,34 @@
+[
+    {
+        "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+        "id": "urn:plasmacutter:1",
+        "type": "https://industry-fusion.com/types/v0.9/plasmacutter",
+        "https://industry-fusion.com/types/v0.9/state": {
+          "type": "Property",
+          "value": {
+            "@id": "https://industry-fusion.com/types/v0.9/state_OFF"
+          }
+        },
+        "https://industry-fusion.com/types/v0.9/hasFilter": {
+          "type": "Relationship",
+          "object": "urn:workpiece:1"
+        }
+    },
+    {
+        "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+        "id": "urn:workpiece:1",
+        "type": "https://industry-fusion.com/types/v0.9/workpiece",
+        "https://industry-fusion.com/types/v0.9/material": {
+            "type": "Property",
+            "value": {
+                "@value": "1.4301",
+                "@type": "https://industry-fusion.com/types/v0.9/steelGrade"
+            }
+        },
+        "https://schema.org/depth": {
+            "type": "Property",
+            "unitCode": "MMT",
+            "value": 99
+        }
+    }
+]

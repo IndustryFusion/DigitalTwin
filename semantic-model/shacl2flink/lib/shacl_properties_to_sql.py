@@ -356,6 +356,7 @@ sql_check_relationship_base = """
                         -- sql_check_relationship_property_count.
                         IFNULL(A.`deleted`, false) as edeleted,
                         C.`type` AS entity,
+                        G.subject AS foundClass,
                         {{ deepest('type') }} AS link,
                         {{ deepest('nodeType') }} as nodeType,
                         {{ deepest('deleted') }} as `adeleted`,
@@ -373,13 +374,26 @@ sql_check_relationship_base = """
                     FROM {{target_class}}_view AS A JOIN {{constraint_table}} as D ON A.`type` = D.targetClass
             {{ attribute_joins }}
                     LEFT JOIN {{target_class}}_view AS C ON {{ deepest('attributeValue') }} = C.id and COALESCE(C.`deleted`, false) = false
+                    -- The target's CLASS, not merely its existence. C alone
+                    -- answers "does the referenced entity exist", which is a
+                    -- weaker question than sh:class asks: a relationship
+                    -- pointing at an entity that exists but is of the wrong
+                    -- class satisfied the check, because `entity` was
+                    -- non-null. The knowledge closure materialises
+                    -- rdfs:subClassOf transitively, so one lookup decides
+                    -- whether the target's type IS the required class or a
+                    -- subclass of it, and inheritance keeps working.
+                    LEFT JOIN {{rdf_table_name}} as G ON G.subject = '<' || C.`type` || '>'
+                        and G.predicate = '<http://www.w3.org/2000/01/rdf-schema#subClassOf>'
+                        and G.object = '<' || D.propertyClass || '>'
                     WHERE {{ level_guard }} and D.attributeType = 'https://uri.etsi.org/ngsi-ld/Relationship'
             )
 """  # noqa: E501
 
 sql_check_relationship_property_class = """
             {% set constraint_cond%}
-            NOT edeleted AND NOT IFNULL(adeleted, false) AND link IS NOT NULL AND entity IS NULL
+            NOT edeleted AND NOT IFNULL(adeleted, false) AND link IS NOT NULL
+            AND (entity IS NULL OR (entity <> propertyClass AND foundClass IS NULL))
             {% endset %}
             SELECT this AS resource,
                 'ClassConstraintComponent(' || `parentPath` || `printPath` || ')' AS event,
@@ -1044,11 +1058,13 @@ def create_relationship_sql():
         alerts_bulk_table=constraint_trigger_table_name,
         constraint_table=constraint_table_name,
         target_class="entities",
+        rdf_table_name=configs.rdf_table_name,
         sqlite=False, **levels)
     sql_command_sqlite = Template(sql_check_relationship_base).render(
         alerts_bulk_table=constraint_trigger_table_name,
         constraint_table=constraint_table_name,
         target_class="entities",
+        rdf_table_name=configs.rdf_table_name,
         sqlite=True, **levels)
     sql_command_yaml += \
         Template(sql_check_relationship_property_class).render(
