@@ -62,6 +62,12 @@ spec:
       schemas:
         public:
           defaultRoles: false
+{{ toYaml .Values.preparedVectorDatabases | indent 4 }}:
+      extensions:
+        vector: public
+      schemas:
+        public:
+          defaultRoles: false
     {{ .Values.flink.db.name}}:
       defaultUsers: true
       schemas:
