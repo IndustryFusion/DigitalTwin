@@ -421,11 +421,20 @@ sql_check_relationship_property_class = """
 # same whether the entity is alive or deleted, so nothing migrates and no
 # accumulator is rebuilt; and the alert is suppressed by re-evaluating the same
 # group rather than by waiting for its rows to vanish.
+#
+# It has to be read INSIDE the counted expression as well, not only in the
+# HAVING. The HAVING decides whether to report; the CASE decides what is
+# counted. With rows for a deleted incarnation left in A1 and only `adeleted`
+# tested, those rows went on contributing to the SUM, and deleting a model and
+# reinstalling it under the same ids reported "Found 2 relationships" for
+# relationships that exist exactly once -- measured on hasCartridge, hasFilter
+# and hasXXXWorkpiece, where tsdb held a single row per attribute. A count must
+# count live data only.
 sql_check_relationship_property_count = """
             {% set constraint_cond %}
             (MAX(CASE WHEN edeleted THEN 1 ELSE 0 END) = 0 AND
-            (SUM(CASE WHEN NOT COALESCE(adeleted, FALSE) AND link IS NOT NULL THEN 1 ELSE 0 END) > SQL_DIALECT_CAST(`maxCount` AS INTEGER)
-                                            OR SUM(CASE WHEN NOT COALESCE(adeleted, FALSE) AND link IS NOT NULL THEN 1 ELSE 0 END) < SQL_DIALECT_CAST(`minCount` AS INTEGER)))
+            (SUM(CASE WHEN NOT edeleted AND NOT COALESCE(adeleted, FALSE) AND link IS NOT NULL THEN 1 ELSE 0 END) > SQL_DIALECT_CAST(`maxCount` AS INTEGER)
+                                            OR SUM(CASE WHEN NOT edeleted AND NOT COALESCE(adeleted, FALSE) AND link IS NOT NULL THEN 1 ELSE 0 END) < SQL_DIALECT_CAST(`minCount` AS INTEGER)))
             {% endset %}
             SELECT this AS resource,
                 'CountConstraintComponent(' || `parentPath` || `propertyPath` || ')' AS event,
@@ -433,7 +442,7 @@ sql_check_relationship_property_count = """
                 true as triggered,
                 `severity` AS severity,
                'Model validation for relationship ' || `propertyPath` || ' failed for ' || this || '. Found ' ||
-                            SQL_DIALECT_CAST(SUM(CASE WHEN NOT COALESCE(adeleted, FALSE) AND link IS NOT NULL THEN 1 ELSE 0 END) AS STRING) || ' relationships instead of [' || IFNULL(`minCount`, '0') || ', ' || IFNULL(`maxCount`, '*') || ']!'
+                            SQL_DIALECT_CAST(SUM(CASE WHEN NOT edeleted AND NOT COALESCE(adeleted, FALSE) AND link IS NOT NULL THEN 1 ELSE 0 END) AS STRING) || ' relationships instead of [' || IFNULL(`minCount`, '0') || ', ' || IFNULL(`maxCount`, '*') || ']!'
                     as `text`
                 {%- if sqlite %}
                 ,CURRENT_TIMESTAMP
@@ -518,7 +527,7 @@ WITH A1 AS (SELECT /*+ STATE_TTL('D' = '0d', 'C' = '0d') */ A.id as this,
 # absorb: one attribute matched by several sub-property joins still counts
 # once.
 sql_check_property_count = """
-{%- set instance_count %}COUNT(DISTINCT CASE WHEN NOT COALESCE(adeleted, FALSE) and attr_typ IS NOT NULL THEN `index` ELSE NULL END){% endset %}
+{%- set instance_count %}COUNT(DISTINCT CASE WHEN NOT edeleted AND NOT COALESCE(adeleted, FALSE) and attr_typ IS NOT NULL THEN `index` ELSE NULL END){% endset %}
 {% set constraint_cond%}
     (MAX(CASE WHEN edeleted THEN 1 ELSE 0 END) = 0 AND
     ({{ instance_count }} > SQL_DIALECT_CAST(`maxCount` AS INTEGER)

@@ -195,3 +195,30 @@ def test_edeleted_is_aggregated_not_filtered_in_counts():
                              having, re.IGNORECASE), \
                 f'{name}: edeleted appears unaggregated in a HAVING, which ' \
                 f'forces it into the GROUP BY: {having.strip()[:120]}'
+
+
+def test_counted_expressions_exclude_deleted_entities():
+    """A count must count live data, not merely decline to report.
+
+    `edeleted` in the HAVING decides whether to raise the alert; it does not
+    change what was counted. With rows for a deleted incarnation left in A1 --
+    which is deliberate, so the flag is there to read -- and only `adeleted`
+    tested inside the CASE, those rows kept contributing. Deleting a model and
+    reinstalling it under the same ids then reported "Found 2 relationships"
+    for hasCartridge, hasFilter and hasXXXWorkpiece, each of which had exactly
+    one row in tsdb. The duplicate was in the accumulator, not in the data.
+
+    So every SUM/COUNT that counts attribute rows has to exclude deleted
+    entities in the counted expression itself.
+    """
+    for name, sql in _generated_checks().items():
+        counted = re.findall(r'(?:SUM|COUNT)\s*\(\s*(?:DISTINCT\s+)?CASE\s+WHEN(.*?)THEN',
+                             sql, re.IGNORECASE | re.DOTALL)
+        assert counted, f'{name}: no counted CASE expression found to check'
+        for cond in counted:
+            # Only the ones that count attributes; other CASEs may exist.
+            if 'adeleted' not in cond.lower():
+                continue
+            assert 'edeleted' in cond.lower(), \
+                f'{name}: a counted expression tests adeleted but not edeleted, so ' \
+                f'rows of a deleted entity still contribute: {" ".join(cond.split())[:110]}'
