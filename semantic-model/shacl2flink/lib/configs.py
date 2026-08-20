@@ -84,3 +84,17 @@ flink_ttl = '{{.Values.flink.ttl}}'
 # permanent. See helm/values.yaml.gotmpl for the measurements.
 view_state_ttl = '{{.Values.flink.viewTtl}}'
 shacl_state_ttl = '{{.Values.flink.shaclTtl}}'
+
+
+# debeziumBridge.js truncates its attribute-id hash to kafkaBridge.hashlength.
+# Read from the chart rather than hardcoded, because a rule that hashes to a
+# different width writes an attribute the platform does not recognise as the
+# one it already has. Resolved while generating -- the hash cannot be computed
+# from an unexpanded helm placeholder -- so a chart change needs a recompile.
+attribute_hash_length = 24
+try:
+    import ruamel.yaml as _ry
+    with open('../../helm/common.yaml') as _f:
+        attribute_hash_length = int(_ry.YAML().load(_f)['kafkaBridge']['hashlength'])
+except Exception:
+    pass
