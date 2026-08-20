@@ -15,6 +15,7 @@
 #
 
 import os
+import hashlib
 import re
 import rdflib
 import ruamel.yaml
@@ -24,6 +25,7 @@ from rdflib import Graph, RDFS, RDF, OWL, XSD, Literal, SH, Namespace, BNode
 from rdflib.collection import Collection
 from collections import deque
 from lib.configs import constraint_table_name, constraint_trigger_table_name, constraint_combination_table_name
+from lib.configs import attribute_hash_length
 
 NGSILD = Namespace('https://uri.etsi.org/ngsi-ld/')
 commonyamlfile = '../../../helm/common.yaml'
@@ -693,7 +695,8 @@ def format_node_type(node):
 def process_sql_dialect(expression, isSqlite):
     result_expression = expression
     max_recursion = 10
-    while "SQL_DIALECT_STRIP" in result_expression or "SQL_DIALECT_CAST" in result_expression:
+    while "SQL_DIALECT_STRIP" in result_expression or "SQL_DIALECT_CAST" in result_expression \
+            or "SQL_DIALECT_ATTRIBUTE_ID" in result_expression:
         max_recursion = max_recursion - 1
         if max_recursion == 0:
             raise WrongSparqlStructure("Unexpected problem with SQL_DIALECT macros.")
@@ -711,6 +714,9 @@ def process_sql_dialect(expression, isSqlite):
             result_expression = result_expression.replace('SQL_DIALECT_INSERT_ATTRIBUTES',
                                                           'INSERT OR REPLACE INTO attributes_insert_filter')
             result_expression = result_expression.replace('SQL_DIALECT_SQLITE_TIMESTAMP', 'CURRENT_TIMESTAMP')
+            result_expression = re.sub(r'SQL_DIALECT_ATTRIBUTE_ID{([^{}]*)}',
+                                       lambda m: "'" + attribute_id_suffix(m.group(1), sqlite=True) + "'",
+                                       result_expression)
             result_expression = result_expression.replace('SQL_DIALECT_CAST', 'CAST')
         else:
             result_expression = re.sub(r'SQL_DIALECT_STRIP_IRI{([^{}]*)}',
@@ -728,6 +734,9 @@ def process_sql_dialect(expression, isSqlite):
             result_expression = result_expression.replace('SQL_DIALECT_INSERT_ATTRIBUTES',
                                                           'INSERT into attributes_insert')
             result_expression = result_expression.replace(',SQL_DIALECT_SQLITE_TIMESTAMP', '')
+            result_expression = re.sub(r'SQL_DIALECT_ATTRIBUTE_ID{([^{}]*)}',
+                                       lambda m: "'" + attribute_id_suffix(m.group(1)) + "'",
+                                       result_expression)
             result_expression = result_expression.replace('SQL_DIALECT_CAST', 'TRY_CAST')
     return result_expression
 
@@ -1070,6 +1079,30 @@ def rdf_list_to_pylist(graph, head):
                 # you can choose .n3(), .toPython(), or str(item) for URIs
                 py_list.append(str(item))
     return py_list
+
+
+def attribute_id_suffix(name, datasetId='@none', sqlite=False):
+    """The id an attribute must carry to BE the attribute the platform already
+    knows, rather than a second one beside it.
+
+    A rule writing an attribute back has to name it exactly as its other writer
+    does. attributes_view partitions on (id, datasetId), so two spellings land
+    as two rows and a [1,1] property is reported as "Found 2" for a value that
+    exists once. Measured: the rule wrote urn:cartridge:1\\<full IRI> while the
+    bridge wrote urn:cartridge:1\\6fb7b362d0a8eebcf7344a43, and isUsedUntil was
+    counted twice.
+
+    The two readers spell it differently, so this does too. Flink reads what
+    debeziumBridge.js wrote, which hashes everything after the urn prefix --
+    sha256("<name>\\<datasetId>") truncated to kafkaBridge.hashlength. The
+    SQLite oracle reads what create_ngsild_models.py wrote, which keeps the
+    parts verbatim. Both are computed here rather than in SQL, because name and
+    datasetId are known while generating and neither dialect needs a hash.
+    """
+    if sqlite:
+        return f'\\{name}\\{datasetId}'
+    hashed = hashlib.sha256(f'{name}\\{datasetId}'.encode()).hexdigest()
+    return '\\' + hashed[:attribute_hash_length]
 
 
 def get_state_ttl_metadata(tablenames):

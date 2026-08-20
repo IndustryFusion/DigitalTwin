@@ -452,7 +452,10 @@ def wrap_sql_construct(ctx, node):
             construct_query += "\nUNION ALL\n"
         entityId_varname = entityId_var.toPython()[1:]
         entityId = bounds[entityId_varname]
-        id = f"{entityId} || '\\{name}'"
+        # Name the attribute the way its other writer does, so the rule
+        # updates the existing instance instead of adding a second one beside
+        # it. See utils.attribute_id_suffix.
+        id = f"{entityId} || SQL_DIALECT_ATTRIBUTE_ID{{{name}}}"
         construct_query += f"SELECT {select_hint}DISTINCT "
         construct_query += f'{id} as id,\n'
         construct_query += 'CAST(NULL as STRING) as parentId,\n'

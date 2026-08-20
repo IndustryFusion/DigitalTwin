@@ -1,3 +1,5 @@
+import lib.configs as configs
+import hashlib
 #
 # Copyright (c) 2022 Intel Corporation
 #
@@ -407,7 +409,7 @@ def test_wrap_sql_construct(attribute_column_mock, get_bound_trim_string_mock):
     }
     lib.sparql_to_sql.wrap_sql_construct(ctx, node)
     assert node['target_sql'] == "SQL_DIALECT_INSERT_ATTRIBUTES\
-\nSELECT DISTINCT TABLE.`id` || '\\name' as id,\
+\nSELECT DISTINCT TABLE.`id` || SQL_DIALECT_ATTRIBUTE_ID{name} as id,\
 \nCAST(NULL as STRING) as parentId,\
 \nTABLE.`id` as entityId,\
 \n'name' as name,\
@@ -713,3 +715,34 @@ def test_wrap_sql_projection_pins_the_knowledge_with_distinct(mock_create_varnam
     assert 'SELECT DISTINCT /*+' not in node['target_sql'], \
         'hint sits after DISTINCT, which flink parses as a select item'
     assert 'DISTINCT' in node['target_sql'], 'the DISTINCT modifier was dropped'
+
+
+def test_attribute_id_matches_what_the_bridge_writes():
+    """A rule must name an attribute exactly as debeziumBridge.js does.
+
+    The bridge hashes everything after the urn prefix --
+    sha256("<name>\\<datasetId>") truncated to kafkaBridge.hashlength -- and
+    attributes_view partitions on (id, datasetId). Two spellings therefore land
+    as two rows, and a [1,1] property is reported as "Found 2" for a value that
+    exists once. Measured on a live cluster: the rule wrote
+    urn:cartridge:1\\<full IRI>, the bridge wrote
+    urn:cartridge:1\\6fb7b362d0a8eebcf7344a43, and isUsedUntil was counted twice.
+
+    The expected value here is computed the way the bridge computes it rather
+    than copied, so changing kafkaBridge.hashlength without recompiling the KMS
+    shows up as a failure instead of as a duplicate attribute.
+    """
+    name = 'https://industryfusion.github.io/contexts/example/v0/base_entities/isUsedUntil'
+    expected = hashlib.sha256(f'{name}\\@none'.encode()).hexdigest()[:configs.attribute_hash_length]
+    assert lib.utils.attribute_id_suffix(name) == f'\\{expected}'
+    # The one observed on the cluster, so the algorithm is pinned to reality
+    # and not merely to itself.
+    assert lib.utils.attribute_id_suffix(name) == '\\6fb7b362d0a8eebcf7344a43'
+
+
+def test_attribute_id_keeps_the_parts_for_sqlite():
+    """The oracle loads its attributes from create_ngsild_models, which writes
+    the parts verbatim, so the sqlite spelling must stay unhashed -- matching
+    its own loader rather than the bridge's."""
+    name = 'https://industryfusion.github.io/contexts/example/v0/base_entities/isUsedUntil'
+    assert lib.utils.attribute_id_suffix(name, sqlite=True) == f'\\{name}\\@none'
