@@ -12,6 +12,11 @@ rules:
 - apiGroups: [""]
   resources: ["pods"]
   verbs: ["delete", "list", "get", "watch"]
+# the refresh period is derived from the LIVE Flink state TTL, so the script
+# must be able to read the statementset
+- apiGroups: ["industry-fusion.com"]
+  resources: ["beamsqlstatementsets"]
+  verbs: ["get", "list"]
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -20,9 +25,15 @@ metadata:
 data:
   my-script.sh: |
     #!/bin/bash
+    #
+    # Restart kafka-connect periodically so the Debezium re-snapshot re-feeds
+    # every Flink join before its state TTL expires. The refresh period is
+    # derived from the TTL that is ACTUALLY DEPLOYED on the shacl-validation
+    # statementset -- a hardcoded copy of the TTL is exactly how the two
+    # drifted apart and validations went silent between resyncs.
 
-    # usage: parse_duration_half "10d" -> 432000 ; parse_duration_half "5m" -> 150 ; parse_duration_half "3" -> 1
-    parse_duration_half() {
+    # usage: parse_duration "10d" -> 864000 ; parse_duration "5m" -> 300 ; parse_duration "3600 s" -> 3600
+    parse_duration() {
       local input="$1" value unit seconds
       if [[ $input =~ ^[[:space:]]*([0-9]+)[[:space:]]*([dDhHmMsS])?[[:space:]]*$ ]]; then
         value="${BASH_REMATCH[1]}"
@@ -34,17 +45,34 @@ data:
           s|'') seconds=$(( value )) ;;
           *) echo "error: unit must be d/h/m/s" >&2; return 1 ;;
         esac
-        echo $(( seconds / 2 ))   # integer division (floor)
+        echo "$seconds"
       else
         echo "error: expected <int>[unit] with unit in {d,h,m,s}, e.g. 10m or 42" >&2
         return 1
       fi
     }
     LABEL_SELECTOR="app.kubernetes.io/instance=kafka-connect"
-    TEST_TIME_TTL="{{ .Values.flink.ttl }}"
-    TEST_TIME=$(parse_duration_half "$TEST_TIME_TTL")
     NAMESPACE="{{.Release.Namespace}}"
-    echo "Test time is $TEST_TIME seconds (half of $TEST_TIME_TTL)"
+
+    # 1. the deployed TTL wins; the helm value is only the fallback
+    TTL_RAW=$(kubectl -n "$NAMESPACE" get beamsqlstatementsets shacl-validation \
+        -o jsonpath='{.spec.sqlsettings}' 2>/dev/null \
+      | grep -o '"table.exec.state.ttl":"[^"]*"' | head -1 | cut -d'"' -f4)
+    if [ -z "$TTL_RAW" ]; then
+      TTL_RAW="{{ .Values.flink.ttl }}"
+      echo "statementset not readable, falling back to helm value $TTL_RAW"
+    fi
+    TTL_SECONDS=$(parse_duration "$TTL_RAW") || exit 1
+
+    # 2. refresh threshold: ttl/2 minus a safety net of max(1m, ttl/100).
+    #    The margin covers the cron granularity plus the restart-to-snapshot
+    #    latency, so records always land again before anything expires.
+    SAFETY=$(( TTL_SECONDS / 100 ))
+    [ "$SAFETY" -lt 60 ] && SAFETY=60
+    TEST_TIME=$(( TTL_SECONDS / 2 - SAFETY ))
+    [ "$TEST_TIME" -lt 60 ] && TEST_TIME=60
+    echo "deployed ttl ${TTL_SECONDS}s -> restart pods older than ${TEST_TIME}s (safety ${SAFETY}s)"
+
     # Get the pod names matching the label selector
     POD_NAMES=$(kubectl get pods -n $NAMESPACE -l "$LABEL_SELECTOR" -o jsonpath='{.items[*].metadata.name}')
     # Flag to track if any pod is smaller than test_time
@@ -70,9 +98,10 @@ data:
     if [ "$at_least_one_pod_smaller" = true ]; then
       echo "Nothing to do"
     else
-      echo "deleteting pod"
-      kubectl -n {{.Release.Namespace}} -l app.kubernetes.io/instance=kafka-connect delete pod
-      kubectl delete pod -n "$NAMESPACE" -l "$LABEL_SELECTOR" --sort-by=.metadata.creationTimestamp --field-selector status.phase!=Pending --force=true
+      echo "deleting pod"
+      # one idempotent delete; a second forced delete used to race the first,
+      # fail the job attempt and trigger a pointless retry
+      kubectl delete pod -n "$NAMESPACE" -l "$LABEL_SELECTOR" --wait=false || true
     fi
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -93,7 +122,11 @@ kind: CronJob
 metadata:
   name: kafka-connect-restart
 spec:
-  schedule: "*/10 * * * *"
+  # every 2 minutes: the check is a cheap no-op when no pod is due, and a
+  # coarser schedule than TEST_TIME would silently stretch small TTLs --
+  # the effective refresh period is TEST_TIME plus this granularity plus
+  # the restart-to-snapshot latency
+  schedule: "*/2 * * * *"
   jobTemplate:
     spec:
       template:
@@ -111,4 +144,3 @@ spec:
               - name: script-volume
                 mountPath: /scripts
               command: ["/bin/bash", "/scripts/my-script.sh"]
-
