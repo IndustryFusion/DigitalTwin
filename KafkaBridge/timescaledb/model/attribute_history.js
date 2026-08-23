@@ -28,10 +28,13 @@ const attributeHistoryTable = sequelize.define(config.timescaledb.attributeTable
 
   id: { type: Sequelize.TEXT, allowNull: false, primaryKey: true },
   parentId: { type: Sequelize.TEXT, allowNull: true, primaryKey: false },
-  // Column-1, observedAt is an object with kafka timestamp to date Data_Type UTC timestamp
+  // Column-1, the EVENT time from the record payload (falls back to the
+  // kafka timestamp for records carrying none). Part of the primary key, so
+  // re-emissions of the same event (debezium re-snapshots) upsert onto the
+  // same row instead of growing the history.
   observedAt: { type: Sequelize.DATE, allowNull: false, primaryKey: true },
 
-  // Same as observedAt for now-> Later we modify
+  // Arrival time: when this row was learned (kafka record timestamp).
   modifiedAt: { type: Sequelize.DATE, allowNull: false },
 
   // Column-2, entityId

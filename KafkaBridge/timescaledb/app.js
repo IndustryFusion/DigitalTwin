@@ -54,9 +54,29 @@ const processAttributeMessage = function (message) {
     const epochDate = new Date(kafkaTimestamp);
     const utcTime = epochDate.toISOString();
 
+    // The record's EVENT time travels in the payload (see debeziumBridge's
+    // carryObservedAt): 'YYYY-MM-DD HH:MM:SS.mmm' in UTC. The Kafka record
+    // timestamp is only the WRITE time. Stamping the history with arrival
+    // time misplaced every historical record: a value re-created from a 2024
+    // observation sorted AFTER the deletion that preceded it, so the "most
+    // recent" row claimed the attribute was alive while event time says it
+    // is deleted -- and every debezium re-snapshot added another arrival-
+    // stamped duplicate. With the event time as the hypertable key, an
+    // identical re-emission upserts onto the same (id, observedAt,
+    // datasetId) row instead of growing the history. The Kafka timestamp
+    // stays as the fallback for records carrying no observedAt.
+    let eventTime = utcTime;
+    if (typeof body.observedAt === 'string') {
+      const parsed = new Date(body.observedAt.replace(' ', 'T') + 'Z');
+      if (!isNaN(parsed.getTime())) {
+        eventTime = parsed.toISOString();
+      }
+    }
+
     // Creating datapoint which will be inserted to tsdb
     datapoint.id = body.id;
-    datapoint.observedAt = utcTime;
+    datapoint.observedAt = eventTime;
+    // Arrival time: when this row was learned, kept separate from the event.
     datapoint.modifiedAt = utcTime;
     datapoint.entityId = body.entityId;
     datapoint.attributeId = body.name;
