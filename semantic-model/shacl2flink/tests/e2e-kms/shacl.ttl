@@ -78,3 +78,53 @@
                     sh:minCount 1 ] ] .
 
 # iffBaseEntities:E2EFreeMachine is deliberately NOT targeted by any shape.
+
+# ------------------------------------------------- knowledge-backed state
+# Declares hasE2EKnownState so the SPARQL translator can resolve it: a property
+# named only in an sh:sparql query and nowhere in the shapes is rejected with
+# "Unexpected property structure". The value is an IRI because the constraint
+# below looks it up in the knowledge, which a literal could never match.
+:E2EKnowledgeMachineShape a sh:NodeShape ;
+    sh:targetClass iffBaseEntities:E2EKnowledgeMachine ;
+    sh:property [ sh:path iffBaseEntities:hasE2EKnownState ;
+            sh:minCount 1 ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:order 1 ;
+            sh:property [ sh:path ngsild:hasValue ;
+                    sh:minCount 1 ;
+                    sh:maxCount 1 ;
+                    sh:nodeKind sh:IRI ] ] .
+
+# --------------------------------------------------------------- sh:sparql
+# The production KMS carries four sh:sparql constraints and this KMS carried
+# none, so no e2e test ever ran one against Flink -- they were exercised only
+# offline against the SQLite oracle. That is a blind spot with teeth: a SPARQL
+# constraint reaches the knowledge through the `rdf` table, and in Flink that
+# is join STATE rather than a table that is simply there, so it can expire and
+# take the constraint's answers with it while the oracle keeps agreeing with
+# itself.
+#
+# rdfs:subClassOf* is what makes this a knowledge query rather than an
+# attribute one: E2ESpecialMachine is a subclass of E2EKnowledgeMachine, so a
+# state valid for the parent must remain valid for the child, and answering
+# that requires the rdf join to still be there.
+:E2EStateValueShape a sh:NodeShape ;
+    sh:sparql [ a sh:SPARQLConstraints ;
+            sh:message "State value {?value} is not valid for {$this} of type {?type}" ;
+            sh:select """
+PREFIX iffBaseEntities: <https://industryfusion.github.io/contexts/example/v0/base_entities/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
+
+SELECT $this ?value ?type
+        where {
+             ?this a ?type .
+             ?this iffBaseEntities:hasE2EKnownState [ ngsild:hasValue ?value ] .
+           FILTER NOT EXISTS{
+                ?value iffBaseEntities:isValidForE2E ?subtype .
+                ?type rdfs:subClassOf* ?subtype .
+            }
+        }
+        """ ] ;
+    sh:targetClass iffBaseEntities:E2EKnowledgeMachine .
