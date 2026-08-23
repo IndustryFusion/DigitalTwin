@@ -203,31 +203,33 @@ const sendUpdates = async function ({ entity, deletedEntity, updatedAttrs, delet
   if (deletedAttrs !== null && deletedAttrs !== undefined && Object.keys(deletedAttrs).length > 0) {
     // Flatmap the array, i.e. {key: k, value: [m1, m2]} => [{key: k, value: m1}, {key: k, value: m2}]
     //
-    // A delete carries the timestamp of the value it deletes, exactly as an
-    // update does -- the LAST KNOWN timestamp of that attribute.
+    // A delete is an event of its own: it is observed when the deleter acts,
+    // not when the deleted value was. The tombstone therefore carries the
+    // DELETION time, and the ordinary event-time ordering applies to it like
+    // to any other record -- a value observed after the deletion wins, a
+    // value observed before it stays deleted.
     //
-    // It used to carry none, so Kafka stamped it with wall-clock while value
-    // records are stamped from their observedAt. attributes_view deduplicates
-    // ORDER BY ts DESC, so a delete written today outranked every later
-    // republication of a value observed in the past and the attribute stayed
-    // invisible for good. Measured: a delete at offset 581438 carrying
-    // 2026-08-16 beat the values at 581453, 581705 and 581955, all carrying
-    // 2024-02-28, and urn:filter:1 was reported as having no hasStrength
-    // although it has one.
-    //
-    // Giving the delete the same timestamp as the value makes the two tie, and
-    // a tie is broken by arrival order -- so the delete still wins while it is
-    // the last word, and a re-creation afterwards wins again. Deliberately the
-    // SAME timestamp and not one millisecond later: later would make the
-    // delete unbeatable by a re-creation observed at the same instant, which
-    // is the case this has to get right.
+    // The tombstone briefly carried the deleted value's own observedAt
+    // instead, so that re-publishing a historical value could resurrect the
+    // attribute. That made the tombstone lie about when the deletion
+    // happened, and it broke as soon as the store's latest-written value
+    // differed from the event-time incumbent: the tombstone then carried a
+    // timestamp that out- or under-ranked in surprising ways, and a
+    // measured delete+recreate left the attribute reported as absent while
+    // the broker showed it present. The consequence of deletion-time
+    // stamping is deliberate: restoring an attribute after a deletion
+    // requires a value observed at or after the deletion -- re-publication
+    // of history does not undo a deletion.
+    const deletionMillis = nowMillis();
     const deleteMessages = Object.entries(deletedAttrs).flatMap(([key, value]) =>
       value.map(val => {
         val.deleted = true;
         val.synced = true;
-        // Also strips observedAt from the payload, so the message on the wire
-        // is unchanged from before.
-        carryObservedAt(val);
+        // Drop the deleted value's own observedAt: the tombstone must carry
+        // the deletion time, and every instance of the attribute is deleted
+        // at the same instant.
+        delete (val['https://uri.etsi.org/ngsi-ld/observedAt']);
+        val.observedAt = asSqlTimestamp(deletionMillis);
         return { key: genKey, value: JSON.stringify(val) };
       })
     );

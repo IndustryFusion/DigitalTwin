@@ -134,12 +134,10 @@ describe('Test diffAttributes', function () {
     revert();
   });
   it('Should carry observedAt onto a deleted attribute', function () {
-    // The delete has to be stamped with the timestamp of the value it deletes,
-    // so it needs that value's observedAt. Without it the delete falls back to
-    // wall-clock while values carry their observedAt, and a delete written
-    // today then outranks every later republication of a value observed in the
-    // past -- attributes_view keeps the delete and the attribute is reported
-    // missing although it exists.
+    // The lib forwards the deleted value's full before-image, observedAt
+    // included. The app layer (sendUpdates) then strips it and stamps the
+    // tombstone with the DELETION time -- a delete is an event of its own --
+    // but what the lib hands over is the unmodified before-image.
     const config = {
       bridgeCommon: {
         kafkaSyncOnAttribute: 'kafkaSyncOn'
