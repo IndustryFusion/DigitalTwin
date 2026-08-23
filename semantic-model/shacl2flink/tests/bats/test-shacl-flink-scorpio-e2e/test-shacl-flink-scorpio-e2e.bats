@@ -99,6 +99,35 @@ TEST_SPARQL="urn:e2e-scorpio-sparql:${RUN_ID}"
 TIMEOUT=${TIMEOUT:-180}
 POLL=5
 
+# The CI runner has been observed to lack these /etc/hosts entries by the
+# time this suite runs, although setup-local-ingress.sh appended them during
+# installation -- the main e2e step's kubefwd rewrites /etc/hosts and its
+# restore has eaten them deterministically (curl exit 6 on every Scorpio
+# call, two consecutive runs). prepare-platform.sh makes /etc/hosts
+# group-writable on the runner for exactly this kind of repair; on a
+# developer box the entries exist and this is a no-op. The derivation
+# mirrors setup-local-ingress.sh.
+setup_file() {
+    if ! getent hosts ngsild.local > /dev/null; then
+        echo "# ngsild.local does not resolve; repairing /etc/hosts" >&3
+        local ingress_ip=""
+        for _ in $(seq 1 30); do
+            ingress_ip=$(kubectl -n "${NAMESPACE}" get ingress/keycloak-iff-ingress \
+                -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+            [ -n "${ingress_ip}" ] && break
+            sleep 1
+        done
+        [ -n "${ingress_ip}" ]
+        local entry="${ingress_ip} keycloak.local alerta.local ngsild.local pgrest.local fuseki.local"
+        if [ -w /etc/hosts ]; then
+            echo "${entry}" >> /etc/hosts
+        else
+            sudo bash -c "echo ${entry} >> /etc/hosts"
+        fi
+        getent hosts ngsild.local > /dev/null
+    fi
+}
+
 setup() {
     ALERTA_KEY=$(kubectl -n "${NAMESPACE}" get secret alerta \
         -o jsonpath='{.data.alerta-admin-key}' | base64 -d)
