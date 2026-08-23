@@ -234,13 +234,24 @@ cat << EOF > ${GEOCUTTER_ATTRIBUTES}
 }
 EOF
 
-compare_create_attributes_timestamps() {
+# The EVENT time travels in the payload since the bridge's carryObservedAt:
+# the Kafka record timestamp is only the write time (retention must never be
+# applied to an event time). These are the four observedAt values of
+# CUTTER_TIMESTAMPED in the bridge's SQL wire format.
+compare_create_attributes_observedat() {
     cat << EOF | diff "$1" - >&3
-1673140235555
-1673140295100
-1673140295990
-1684459175000
+2023-01-08 01:10:35.555
+2023-01-08 01:11:35.100
+2023-01-08 01:11:35.990
+2023-05-19 01:19:35.000
 EOF
+}
+
+# Every attribute record must carry its event time in the payload; the exact
+# value is arrival-dependent for records whose source has no observedAt, so
+# the payload compares strip it after this presence check.
+assert_observedat_present() {
+    [ "$(jq -s 'all(has("observedAt"))' "$1")" = "true" ]
 }
 
 compare_create_attributes() {
@@ -368,7 +379,9 @@ teardown(){
     killall kafkacat
     LC_ALL="en_US.UTF-8" sort -o ${KAFKACAT_ATTRIBUTES} ${KAFKACAT_ATTRIBUTES}
     jq -S < ${KAFKACAT_ENTITY_PLASMACUTTER} > ${KAFKACAT_ENTITY_PLASMACUTTER_SORTED}
-    jq -c 'to_entries | sort_by(.key) | from_entries' ${KAFKACAT_ATTRIBUTES} > ${KAFKACAT_ATTRIBUTES_SORTED}
+    run assert_observedat_present ${KAFKACAT_ATTRIBUTES}
+    [ "$status" -eq 0 ]
+    jq -c 'del(.observedAt) | to_entries | sort_by(.key) | from_entries' ${KAFKACAT_ATTRIBUTES} > ${KAFKACAT_ATTRIBUTES_SORTED}
     echo "# Compare ATTRIBUTES"
     run compare_create_attributes ${KAFKACAT_ATTRIBUTES_SORTED}
     [ "$status" -eq 0 ]
@@ -396,21 +409,24 @@ teardown(){
     sleep 2
     LC_ALL="en_US.UTF-8" sort -o ${KAFKACAT_ATTRIBUTES} ${KAFKACAT_ATTRIBUTES}
     jq -S < ${KAFKACAT_ENTITY_PLASMACUTTER} > ${KAFKACAT_ENTITY_PLASMACUTTER_SORTED}
-    run compare_delete_attributes ${KAFKACAT_ATTRIBUTES}
+    run assert_observedat_present ${KAFKACAT_ATTRIBUTES}
+    [ "$status" -eq 0 ]
+    jq -c 'del(.observedAt)' ${KAFKACAT_ATTRIBUTES} > ${KAFKACAT_ATTRIBUTES_SORTED}
+    run compare_delete_attributes ${KAFKACAT_ATTRIBUTES_SORTED}
     [ "$status" -eq 0 ]
 
     run compare_delete_plasmacutter ${KAFKACAT_ENTITY_PLASMACUTTER_SORTED}
     [ "$status" -eq 0 ]
 }
 
-@test "verify debezium bridge sends updates to attributes with correct Kafka timestamps" {
+@test "verify debezium bridge sends the event time in the payload, not the record timestamp" {
     $SKIP
     password=$(get_password)
     token=$(get_token)
     echo "# token: $token"
     delete_ngsild "$token" "$PLASMACUTTER_ID" || echo "Could not delete $PLASMACUTTER_ID. But that is okay."
     sleep 2
-    (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} -f '%T\n' -o end >${KAFKACAT_ATTRIBUTES}) &
+    (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ATTRIBUTES}) &
     echo "# launched kafkacat for debezium updates, wait some time to let it connect"
     sleep 2
     create_ngsild "$token" "$CUTTER_TIMESTAMPED"
@@ -418,10 +434,13 @@ teardown(){
     sleep 2
     echo "# now killing kafkacat and evaluate result"
     killall kafkacat
-    LC_ALL="en_US.UTF-8" sort -o ${KAFKACAT_ATTRIBUTES} ${KAFKACAT_ATTRIBUTES}
-    jq -S < ${KAFKACAT_ENTITY_PLASMACUTTER} > ${KAFKACAT_ENTITY_PLASMACUTTER_SORTED}
-    echo "# Compare ATTRIBUTES"
-    run compare_create_attributes_timestamps ${KAFKACAT_ATTRIBUTES}
+    # observedAt used to ride the Kafka record timestamp, which let broker
+    # retention -- a wall-clock storage policy -- erase event time. It now
+    # travels in the payload; assert the four observedAt values of
+    # CUTTER_TIMESTAMPED arrive there, in the bridge's SQL wire format.
+    jq -r '.observedAt' ${KAFKACAT_ATTRIBUTES} | LC_ALL="en_US.UTF-8" sort > ${KAFKACAT_ATTRIBUTES_SORTED}
+    echo "# Compare ATTRIBUTES observedAt"
+    run compare_create_attributes_observedat ${KAFKACAT_ATTRIBUTES_SORTED}
     [ "$status" -eq 0 ]
 
 }
@@ -441,7 +460,9 @@ teardown(){
     echo "# now killing kafkacat and evaluate result"
     killall kafkacat
     LC_ALL="en_US.UTF-8" sort -o ${KAFKACAT_ATTRIBUTES} ${KAFKACAT_ATTRIBUTES}
-    jq -c 'to_entries | sort_by(.key) | from_entries' ${KAFKACAT_ATTRIBUTES} > ${KAFKACAT_ATTRIBUTES_SORTED}
+    run assert_observedat_present ${KAFKACAT_ATTRIBUTES}
+    [ "$status" -eq 0 ]
+    jq -c 'del(.observedAt) | to_entries | sort_by(.key) | from_entries' ${KAFKACAT_ATTRIBUTES} > ${KAFKACAT_ATTRIBUTES_SORTED}
     echo "# Compare ATTRIBUTES"
     run compare_subattributes ${KAFKACAT_ATTRIBUTES_SORTED}
     [ "$status" -eq 0 ]
@@ -462,7 +483,9 @@ teardown(){
     echo "# now killing kafkacat and evaluate result"
     killall kafkacat
     LC_ALL="en_US.UTF-8" sort -o ${KAFKACAT_ATTRIBUTES} ${KAFKACAT_ATTRIBUTES}
-    jq -c 'to_entries | sort_by(.key) | from_entries' ${KAFKACAT_ATTRIBUTES} > ${KAFKACAT_ATTRIBUTES_SORTED}
+    run assert_observedat_present ${KAFKACAT_ATTRIBUTES}
+    [ "$status" -eq 0 ]
+    jq -c 'del(.observedAt) | to_entries | sort_by(.key) | from_entries' ${KAFKACAT_ATTRIBUTES} > ${KAFKACAT_ATTRIBUTES_SORTED}
     echo "# Compare ATTRIBUTES"
     run compare_geoattributes ${KAFKACAT_ATTRIBUTES_SORTED}
     [ "$status" -eq 0 ]
