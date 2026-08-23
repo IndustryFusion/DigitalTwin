@@ -27,17 +27,17 @@
 
 INSERT INTO `attributes` VALUES
 -- urn:filter:1 -- healthy: live filter, live cartridge. Silent.
-('urn:filter:1\https://industry-fusion.com/types/v0.9/hasCartridge\@none', CAST(NULL as STRING), 'urn:filter:1', 'https://industry-fusion.com/types/v0.9/hasCartridge', '@id', NULL, 'https://uri.etsi.org/ngsi-ld/Relationship', 'urn:filterCartridge:1', '@none', NULL, CAST(NULL AS STRING), false, true, CURRENT_TIMESTAMP),
+('urn:filter:1\https://industry-fusion.com/types/v0.9/hasCartridge\@none', CAST(NULL as STRING), 'urn:filter:1', 'https://industry-fusion.com/types/v0.9/hasCartridge', '@id', NULL, 'https://uri.etsi.org/ngsi-ld/Relationship', 'urn:filterCartridge:1', '@none', NULL, CAST(NULL AS STRING), false, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 -- urn:filter:2 -- the entity itself is deleted, so the bridge also deletes its
 -- attributes. Nothing about it may be reported: it is gone.
-('urn:filter:2\https://industry-fusion.com/types/v0.9/hasCartridge\@none', CAST(NULL as STRING), 'urn:filter:2', 'https://industry-fusion.com/types/v0.9/hasCartridge', '@id', NULL, 'https://uri.etsi.org/ngsi-ld/Relationship', CAST(NULL AS STRING), '@none', NULL, CAST(NULL AS STRING), true, true, CURRENT_TIMESTAMP),
+('urn:filter:2\https://industry-fusion.com/types/v0.9/hasCartridge\@none', CAST(NULL as STRING), 'urn:filter:2', 'https://industry-fusion.com/types/v0.9/hasCartridge', '@id', NULL, 'https://uri.etsi.org/ngsi-ld/Relationship', CAST(NULL AS STRING), '@none', NULL, CAST(NULL AS STRING), true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 -- urn:filter:3 -- the filter lives, its mandatory relationship was deleted.
 -- The attribute must stop counting, leaving 0 against sh:minCount 1.
-('urn:filter:3\https://industry-fusion.com/types/v0.9/hasCartridge\@none', CAST(NULL as STRING), 'urn:filter:3', 'https://industry-fusion.com/types/v0.9/hasCartridge', '@id', NULL, 'https://uri.etsi.org/ngsi-ld/Relationship', CAST(NULL AS STRING), '@none', NULL, CAST(NULL AS STRING), true, true, CURRENT_TIMESTAMP),
+('urn:filter:3\https://industry-fusion.com/types/v0.9/hasCartridge\@none', CAST(NULL as STRING), 'urn:filter:3', 'https://industry-fusion.com/types/v0.9/hasCartridge', '@id', NULL, 'https://uri.etsi.org/ngsi-ld/Relationship', CAST(NULL AS STRING), '@none', NULL, CAST(NULL AS STRING), true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 -- urn:filter:4 -- the filter and its relationship both live; the CARTRIDGE at
 -- the far end was deleted. This is the reported case: the relationship still
 -- counts (so no count violation) but it no longer resolves to an entity.
-('urn:filter:4\https://industry-fusion.com/types/v0.9/hasCartridge\@none', CAST(NULL as STRING), 'urn:filter:4', 'https://industry-fusion.com/types/v0.9/hasCartridge', '@id', NULL, 'https://uri.etsi.org/ngsi-ld/Relationship', 'urn:filterCartridge:9', '@none', NULL, CAST(NULL AS STRING), false, true, CURRENT_TIMESTAMP);
+('urn:filter:4\https://industry-fusion.com/types/v0.9/hasCartridge\@none', CAST(NULL as STRING), 'urn:filter:4', 'https://industry-fusion.com/types/v0.9/hasCartridge', '@id', NULL, 'https://uri.etsi.org/ngsi-ld/Relationship', 'urn:filterCartridge:9', '@none', NULL, CAST(NULL AS STRING), false, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 INSERT INTO `entities` VALUES
 ('urn:filter:1', 'https://industry-fusion.com/types/v0.9/filter', false, CURRENT_TIMESTAMP);

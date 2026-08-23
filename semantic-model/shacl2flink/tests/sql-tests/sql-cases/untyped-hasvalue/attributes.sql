@@ -16,8 +16,8 @@
 -- looked like a number.
 
 INSERT INTO `attributes` VALUES
-('urn:gauge:1\https://industry-fusion.com/types/v0.9/setting\@none', CAST(NULL as STRING), 'urn:gauge:1', 'https://industry-fusion.com/types/v0.9/setting', '@value', NULL, 'https://uri.etsi.org/ngsi-ld/Property', '1.0', '@none', NULL, CAST(NULL AS STRING), CAST(NULL AS BOOLEAN), CAST(NULL AS BOOLEAN), CURRENT_TIMESTAMP),
-('urn:gauge:2\https://industry-fusion.com/types/v0.9/setting\@none', CAST(NULL as STRING), 'urn:gauge:2', 'https://industry-fusion.com/types/v0.9/setting', '@value', NULL, 'https://uri.etsi.org/ngsi-ld/Property', '1', '@none', NULL, CAST(NULL AS STRING), CAST(NULL AS BOOLEAN), CAST(NULL AS BOOLEAN), CURRENT_TIMESTAMP);
+('urn:gauge:1\https://industry-fusion.com/types/v0.9/setting\@none', CAST(NULL as STRING), 'urn:gauge:1', 'https://industry-fusion.com/types/v0.9/setting', '@value', NULL, 'https://uri.etsi.org/ngsi-ld/Property', '1.0', '@none', NULL, CAST(NULL AS STRING), CAST(NULL AS BOOLEAN), CAST(NULL AS BOOLEAN), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('urn:gauge:2\https://industry-fusion.com/types/v0.9/setting\@none', CAST(NULL as STRING), 'urn:gauge:2', 'https://industry-fusion.com/types/v0.9/setting', '@value', NULL, 'https://uri.etsi.org/ngsi-ld/Property', '1', '@none', NULL, CAST(NULL AS STRING), CAST(NULL AS BOOLEAN), CAST(NULL AS BOOLEAN), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 INSERT INTO `entities` VALUES
 ('urn:gauge:1', 'https://industry-fusion.com/types/v0.9/gauge', CAST(NULL as BOOLEAN), CURRENT_TIMESTAMP);
 INSERT INTO `entities` VALUES

@@ -154,7 +154,7 @@ def test_attributes_view_breaks_ties_by_offset():
     """
     create_core_tables.main()
     statement = _view_statements(pathlib.Path('output/core.yaml').read_text())['attributes_view']
-    assert 'ORDER BY ts DESC, `offset` DESC' in statement
+    assert 'ORDER BY COALESCE(`observedAt`, `ts`) DESC, `offset` DESC' in statement
 
 
 def test_a_view_without_an_offset_column_still_orders_by_ts_alone(tmp_path):
@@ -174,3 +174,29 @@ def test_the_offset_is_not_exposed_by_the_view():
     statement = _view_statements(pathlib.Path('output/core.yaml').read_text())['attributes_view']
     header = statement.split('FROM (')[0]
     assert '`offset`' not in header
+
+
+def test_the_view_orders_by_the_payload_observedAt_not_the_record_stamp():
+    """Event time is DATA; the record stamp is transport metadata.
+
+    They used to be the same field: debeziumBridge put observedAt into the Kafka
+    record timestamp, so retention.ms -- a wall-clock STORAGE policy -- was being
+    applied to an event time. The kms model observes at 2024-02-28, so every
+    attribute record was born older than any sane retention and Kafka deleted it
+    on contact. Measured on the cluster: three snapshot bursts of 249 records
+    each, and iff.ngsild.attributes read back with logStart == logEnd every time.
+    The pipeline still looked healthy, because the job consumes records in
+    flight -- but there was no replay, no restart recovery and no observability.
+
+    observedAt now travels in the payload and the dedup orders by it, so the
+    event-time semantics are unchanged while `ts` reverts to write time.
+    """
+    create_core_tables.main()
+    core = pathlib.Path('output/core.yaml').read_text()
+    statement = _view_statements(core)['attributes_view']
+    assert 'COALESCE(`observedAt`, `ts`)' in statement, \
+        'the dedup no longer orders on the event time'
+    assert 'ORDER BY ts' not in statement, \
+        'the dedup still orders on the Kafka record timestamp alone'
+    assert 'observedAt' in _field_names(_tables(core)['attributes']), \
+        'the attributes table does not carry the payload observedAt'

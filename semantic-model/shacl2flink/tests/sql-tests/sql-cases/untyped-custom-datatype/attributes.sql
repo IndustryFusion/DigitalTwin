@@ -26,8 +26,8 @@
 -- always fires still passes.
 
 INSERT INTO `attributes` VALUES
-('urn:workpiece:1\https://industry-fusion.com/types/v0.9/material\@none', CAST(NULL as STRING), 'urn:workpiece:1', 'https://industry-fusion.com/types/v0.9/material', '@value', NULL, 'https://uri.etsi.org/ngsi-ld/Property', '1.4301', '@none', NULL, CAST(NULL AS STRING), CAST(NULL AS BOOLEAN), CAST(NULL AS BOOLEAN), CURRENT_TIMESTAMP),
-('urn:workpiece:2\https://industry-fusion.com/types/v0.9/material\@none', CAST(NULL as STRING), 'urn:workpiece:2', 'https://industry-fusion.com/types/v0.9/material', '@value', 'http://www.w3.org/2001/XMLSchema#string', 'https://uri.etsi.org/ngsi-ld/Property', '1.4301', '@none', NULL, CAST(NULL AS STRING), CAST(NULL AS BOOLEAN), CAST(NULL AS BOOLEAN), CURRENT_TIMESTAMP);
+('urn:workpiece:1\https://industry-fusion.com/types/v0.9/material\@none', CAST(NULL as STRING), 'urn:workpiece:1', 'https://industry-fusion.com/types/v0.9/material', '@value', NULL, 'https://uri.etsi.org/ngsi-ld/Property', '1.4301', '@none', NULL, CAST(NULL AS STRING), CAST(NULL AS BOOLEAN), CAST(NULL AS BOOLEAN), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('urn:workpiece:2\https://industry-fusion.com/types/v0.9/material\@none', CAST(NULL as STRING), 'urn:workpiece:2', 'https://industry-fusion.com/types/v0.9/material', '@value', 'http://www.w3.org/2001/XMLSchema#string', 'https://uri.etsi.org/ngsi-ld/Property', '1.4301', '@none', NULL, CAST(NULL AS STRING), CAST(NULL AS BOOLEAN), CAST(NULL AS BOOLEAN), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 INSERT INTO `entities` VALUES
 ('urn:workpiece:1', 'https://industry-fusion.com/types/v0.9/workpiece', CAST(NULL as BOOLEAN), CURRENT_TIMESTAMP);
 INSERT INTO `entities` VALUES

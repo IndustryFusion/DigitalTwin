@@ -24,11 +24,19 @@ const rewire = require('rewire');
 const toTest = rewire('../debeziumBridge/app.js');
 
 describe('Test sendUpdates', function () {
+  // carryObservedAt now puts observedAt IN the payload, falling back to the
+  // time of receipt when the attribute carries none. Pin that fallback so it is
+  // a fixed value rather than differing on every run.
+  const FIXED_NOW = 1700000000000;
+  beforeEach(function () {
+    toTest.__set__('nowMillis', () => FIXED_NOW);
+  });
+
   it('Should update and delete attributes', async function () {
     const messages = [
       { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
-      { key: 'id', value: '{"deleteValueKey":"deleteValueValue","deleted":true,"synced":true}' },
-      { key: 'id', value: '{"updateValueKey":"updateValueValue","synced":true}' }
+      { key: 'id', value: '{"deleteValueKey":"deleteValueValue","deleted":true,"synced":true,"observedAt":"2023-11-14 22:13:20.000"}' },
+      { key: 'id', value: '{"updateValueKey":"updateValueValue","synced":true,"observedAt":"2023-11-14 22:13:20.000"}' }
     ];
     const sendUpdates = toTest.__get__('sendUpdates');
     const config = {
@@ -65,8 +73,8 @@ describe('Test sendUpdates', function () {
   it('Should update and delete attributes with timestamp', async function () {
     const messages = [
       { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
-      { key: 'id', value: '{"deleteValueKey":"deleteValueValue","deleted":true,"synced":true}' },
-      { key: 'id', value: '{"updateValueKey":"updateValueValue","synced":true}', timestamp: 1672914001456 }
+      { key: 'id', value: '{"deleteValueKey":"deleteValueValue","deleted":true,"synced":true,"observedAt":"2023-11-14 22:13:20.000"}' },
+      { key: 'id', value: '{"updateValueKey":"updateValueValue","synced":true,"observedAt":"2023-01-05 10:20:01.456"}' }
     ];
     const sendUpdates = toTest.__get__('sendUpdates');
     const config = {
@@ -111,14 +119,15 @@ describe('Test sendUpdates', function () {
     // whichever arrived last -- so a delete still wins while it is the last
     // word, and a re-creation afterwards wins again.
     //
-    // observedAt must not appear in the payload: checkTimestamp moves it into
-    // the record timestamp, so the message on the wire is unchanged.
+    // observedAt now stays IN the payload and the record keeps its write-time
+    // stamp, so retention -- a wall-clock storage policy -- is no longer applied
+    // to an event time. The delete still carries the value's OWN observedAt, so
+    // the tie described above is unchanged.
     const messages = [
       { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
       {
         key: 'id',
-        value: '{"deleteValueKey":"deleteValueValue","deleted":true,"synced":true}',
-        timestamp: 1672914001456
+        value: '{"deleteValueKey":"deleteValueValue","deleted":true,"synced":true,"observedAt":"2023-01-05 10:20:01.456"}'
       }
     ];
     const sendUpdates = toTest.__get__('sendUpdates');
@@ -184,8 +193,8 @@ describe('Test sendUpdates', function () {
   it('Should flatten input arrays of attributes', async function () {
     const messages = [
       { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
-      [{ key: 'id', value: '{"deleteValueKey":"deleteValueValue","deleted":true,"synced":true}' }, { key: 'id', value: '{"deleteValueKey":"deleteValueValue2","deleted":true,"synced":true}' }],
-      [{ key: 'id', value: '{"updateValueKey":"updateValueValue","synced":true}' }, { key: 'id', value: '{"updateValueKey":"updateValueValue2","synced":true}' }]
+      [{ key: 'id', value: '{"deleteValueKey":"deleteValueValue","deleted":true,"synced":true,"observedAt":"2023-11-14 22:13:20.000"}' }, { key: 'id', value: '{"deleteValueKey":"deleteValueValue2","deleted":true,"synced":true,"observedAt":"2023-11-14 22:13:20.000"}' }],
+      [{ key: 'id', value: '{"updateValueKey":"updateValueValue","synced":true,"observedAt":"2023-11-14 22:13:20.000"}' }, { key: 'id', value: '{"updateValueKey":"updateValueValue2","synced":true,"observedAt":"2023-11-14 22:13:20.000"}' }]
     ];
     const sendUpdates = toTest.__get__('sendUpdates');
     const config = {
@@ -222,8 +231,8 @@ describe('Test sendUpdates', function () {
   it('Should work without subclasses ', async function () {
     const messages = [
       { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
-      { key: 'id', value: '{"deleteValueKey":"deleteValueValue","deleted":true,"synced":true}' },
-      { key: 'id', value: '{"updateValueKey":"updateValueValue","synced":true}' }
+      { key: 'id', value: '{"deleteValueKey":"deleteValueValue","deleted":true,"synced":true,"observedAt":"2023-11-14 22:13:20.000"}' },
+      { key: 'id', value: '{"updateValueKey":"updateValueValue","synced":true,"observedAt":"2023-11-14 22:13:20.000"}' }
     ];
     const sendUpdates = toTest.__get__('sendUpdates');
     const config = {
@@ -260,7 +269,7 @@ describe('Test sendUpdates', function () {
   it('Should insert attributes with timestamp', async function () {
     const messages = [
       { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
-      { key: 'id', value: '{"insertValueKey":"insertValueValue","synced":true}', timestamp: 1704460984123 }
+      { key: 'id', value: '{"insertValueKey":"insertValueValue","synced":true,"observedAt":"2024-01-05 13:23:04.123"}' }
     ];
     const sendUpdates = toTest.__get__('sendUpdates');
     const config = {
@@ -293,7 +302,7 @@ describe('Test sendUpdates', function () {
   it('Should insert attributes', async function () {
     const messages = [
       { key: 'id', value: '{"id":"id","type":"http://example/type"}' },
-      { key: 'id', value: '{"insertValueKey":"insertValueValue","synced":true}' }
+      { key: 'id', value: '{"insertValueKey":"insertValueValue","synced":true,"observedAt":"2023-11-14 22:13:20.000"}' }
     ];
     const sendUpdates = toTest.__get__('sendUpdates');
     const config = {

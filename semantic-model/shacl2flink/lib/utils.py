@@ -465,9 +465,27 @@ def create_yaml_view(name, table, primary_key=None, ttl=None):
     # happens to choose. The earlier objection to ordering by it -- that a plain
     # BIGINT downgrades Deduplicate to a general rank -- no longer applies:
     # `ts` is no longer a rowtime, so this is a general rank either way.
-    order_by = "ts DESC"
-    if any(field_name.lower() == 'offset'
-           for field in table for field_name in field):
+    # Order on the EVENT time, which now travels in the payload. It used to be
+    # read from `ts`, the Kafka record timestamp, because the bridge put
+    # observedAt there -- which meant retention.ms, a wall-clock STORAGE policy,
+    # was being applied to an event time. The kms model observes at 2024-02-28,
+    # so every attribute record was born older than any sane retention and Kafka
+    # deleted it on contact: measured, three snapshot bursts of 249 records and
+    # logStart == logEnd every time. `ts` is now write time and observedAt is
+    # data. The ordering means exactly what it meant before.
+
+    def has(field_name):
+        return any(fn.lower() == field_name
+                   for field in table for fn in field)
+
+    # COALESCE, not observedAt alone: any writer that does not set it -- the
+    # writeback that stamps `synced`, for one -- would otherwise produce NULL,
+    # lose every comparison, never win the dedup, and leave the attribute
+    # looking unsynced for ever. Falling back to the write time is exactly
+    # the behaviour those rows had before.
+    order_by = ("COALESCE(`observedAt`, `ts`) DESC"
+                if has('observedat') else "ts DESC")
+    if has('offset'):
         order_by += ", `offset` DESC"
     sqlstatement += f"\nORDER BY {order_by}) AS rownum\n"
     sqlstatement += f'FROM `{name}` )\nWHERE rownum = 1'
@@ -512,7 +530,11 @@ def create_sql_view(table_name, table, primary_key=None,
     # streaming view orders by: on equal ts the later-inserted row wins. Without
     # it a tie is resolved arbitrarily and the oracle could disagree with Flink
     # on exactly the delete-vs-value case the tie-break exists for.
-    sqlstatement += "\nORDER BY ts DESC, rowid DESC) AS rownum\n"
+    order_col = ('COALESCE(`observedAt`, `ts`)'
+                 if any(fn.lower() == 'observedat'
+                        for field in table for fn in field)
+                 else 'ts')
+    sqlstatement += f"\nORDER BY {order_col} DESC, rowid DESC) AS rownum\n"
     sqlstatement += f'FROM `{table_name}` )\nWHERE rownum = 1;\n'
     return sqlstatement
 

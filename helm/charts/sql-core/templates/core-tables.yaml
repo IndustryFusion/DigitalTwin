@@ -95,8 +95,22 @@ spec:
     - lang: STRING
     - deleted: BOOLEAN
     - synced: BOOLEAN
-    - 'ts': TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL
-    - 'watermark': FOR ts AS ts
+    # No WATERMARK. Nothing windows over this table, and only time-based
+    # operators consume a watermark. What the declaration would change is which
+    # operator backs the attributes_view dedup -- a rowtime Deduplicate accepts
+    # a later row of EQUAL ts, a general Rank keeps the incumbent -- and a
+    # delete is stamped with the observedAt of the value it deletes, so those two
+    # tie exactly. The `offset` column below settles that explicitly rather than
+    # leaving it to operator choice. Mirrors create_core_tables.py.
+    #
+    # The EVENT time, carried in the payload by debeziumBridge. `ts` is now the
+    # WRITE time and nothing orders by it: putting observedAt in the record
+    # stamp meant retention.ms, a wall-clock storage policy, was applied to an
+    # event time, and every record for a historical observation was deleted on
+    # contact. Mirrors create_core_tables.py.
+    - 'observedAt': TIMESTAMP(3)
+    - 'ts': TIMESTAMP(3) METADATA FROM 'timestamp'
+    - 'offset': BIGINT METADATA VIRTUAL
   kafka:
     topic: {{.Values.kafkaBridge.debezium.attributesTopic}}
     properties:
@@ -155,6 +169,7 @@ spec:
             `lang`,
             `deleted`,
             `synced`,
+           `observedAt`,
            `ts`
     FROM (
       -- viewTtl, not ttl. This dedup holds one row per live attribute and is
@@ -164,9 +179,27 @@ spec:
       -- every consumer keeps counting an attribute that is gone. A delete
       -- arrives as an ordinary row carrying deleted=true, so it is exactly
       -- the case this breaks.
+      -- The Kafka offset breaks the tie. debeziumBridge stamps a DELETE with
+      -- the timestamp of the value it deletes -- deliberately the SAME
+      -- timestamp -- so a value and its delete tie on `observedAt`. Without a rowtime
+      -- this compiles into a general Rank, and Rank keeps the INCUMBENT on a
+      -- tie, replacing only on a strictly greater key. Whichever row arrives
+      -- first is then frozen in: re-publishing the value cannot dislodge a
+      -- delete, and re-publishing a delete cannot dislodge a value, because
+      -- every copy carries the same observedAt.
+      --
+      -- Measured on urn:filter:1 hasStrength (observedAt 2024-02-28T13:52:35):
+      -- the view latched a deleted=true row, four later re-emissions of the
+      -- live value all tied and lost, and the count constraint reported
+      -- "Found 0 properties instead of [1, 1]" against an attribute that
+      -- plainly existed. Writing one value with a CURRENT observedAt was
+      -- strictly greater, displaced it, and cleared the alert in 15 seconds.
+      --
+      -- The offset is strictly monotonic per partition, so it is arrival
+      -- order stated explicitly. Must mirror lib/utils.py create_yaml_view.
       SELECT /*+ STATE_TTL('attributes' = '{{.Values.flink.viewTtl}}') */ *,
       ROW_NUMBER() OVER (PARTITION BY `id`, `datasetId`
-         ORDER BY ts DESC) AS rownum
+         ORDER BY COALESCE(`observedAt`, `ts`) DESC, `offset` DESC) AS rownum
       FROM `attributes`)
       WHERE rownum = 1;
 ---
