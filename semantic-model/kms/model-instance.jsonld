@@ -56,6 +56,75 @@
   },
   {
     "@context": "https://industryfusion.github.io/contexts/staging/example/v0.2/context.jsonld",
+    "id": "urn:plasmacutter:2",
+    "type": "iffBaseEntities:Plasmacutter",
+    "iffBaseEntities:hasState": [
+      {
+      "iffBaseEntities:hasXXXWorkpiece": {
+        "type": "Relationship",
+        "object": "urn:workpiece:1"
+      },
+      "type": "Property",
+      "value": {
+        "@id": "base:state_PROCESSING"
+      }}],
+      "iffBaseEntities:hasList": {
+        "type": "ListProperty",
+        "valueList": []
+      },
+      "iffBaseEntities:hasJSON": {
+        "type": "JsonProperty",
+        "json": {}
+      },
+      "iffBaseEntities:hasFilter": [
+        {
+          "type": "Relationship",
+          "object": "urn:filter:2",
+          "iffBaseEntities:hasTrust": [{
+            "value": 2.1,
+            "type": "Property",
+            "iffBaseEntities:hasOutWorkpiecexx": {
+              "type": "Property",
+              "value": 2.0,
+              "datasetId": "urn:index:1"
+            }
+          }]
+        }
+      ],
+      "iffBaseEntities:hasInWorkpiece": [
+        {
+          "type": "Relationship",
+          "object": "urn:workpiece:1"
+        }
+      ]
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/staging/example/v0.2/context.jsonld",
+    "id": "urn:filter:2",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasState": [
+    {
+      "type": "Property",
+      "value": {
+        "@id": "base:state_ON"
+      }
+    }],
+    "iffBaseEntities:hasCartridge": [
+      {
+          "type": "Relationship",
+          "object": "urn:cartridge:1"
+      }
+    ],
+    "iffBaseEntities:hasStrength": [
+      {
+        "type": "Property",
+        "value": 0.6,
+        "observedAt": "2024-02-28T13:52:35.000Z"
+      }
+    ]
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/staging/example/v0.2/context.jsonld",
     "id": "urn:filter:1",
     "type": "iffBaseEntities:Filter",
     "iffBaseEntities:hasState": [

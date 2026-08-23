@@ -66,7 +66,7 @@
       },
       "type": "Property",
       "value": {
-        "@id": "base:state_PROCESSING"
+        "@id": "base:state_ON"
       }}],
       "iffBaseEntities:hasList": {
         "type": "ListProperty",
@@ -131,7 +131,7 @@
     {
       "type": "Property",
       "value": {
-        "@id": "base:state_OFF"
+        "@id": "base:state_ON"
       }
     }],
     "iffBaseEntities:hasCartridge": [
