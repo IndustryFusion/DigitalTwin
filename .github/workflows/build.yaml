@@ -55,7 +55,21 @@ jobs:
         # Installed here explicitly, as a one-off, only so CI can exercise
         # check_consistency.py's HermiT-based e2e tests.
         pip3 install owlready2==0.51
-        cd semantic-model/opcua && make setup && make lint test
+        cd semantic-model/opcua && make setup && make lint
+        # `make test` downloads ontologies from industryfusion.github.io and
+        # opcfoundation.org at build time, and GitHub Pages intermittently
+        # serves 503 to Actions runners while answering 200 elsewhere --
+        # measured five consecutive failures over four hours, each a 503 on
+        # an owl:imports fetch. Retry with spacing instead of failing the
+        # whole build on the first throttled edge; a genuine test failure
+        # still fails all three attempts. Vendoring the ontologies would
+        # remove this failure class entirely.
+        for attempt in 1 2 3; do
+          make test && break
+          [ "$attempt" = "3" ] && exit 1
+          echo "make test failed (attempt $attempt), retrying in 90s"
+          sleep 90
+        done
     - name: Build iff-agent
       run: |
         (cd NgsildAgent/config && cp config.json.template config.json)  
