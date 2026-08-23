@@ -186,6 +186,89 @@ describe('Test timescaledb processAttributeMessage', function () {
     sinon.assert.calledOnce(upsertSpy);
     upsertSpy.threw().should.equal(false);
   });
+  it('Should stamp the datapoint with the payload observedAt, not the arrival time', function () {
+    // The event time travels IN the payload since debeziumBridge's
+    // carryObservedAt; the kafka record timestamp is only the write time.
+    // Stamping the history with arrival time misplaced historical records: a
+    // value re-created from a 2024 observation sorted AFTER the deletion that
+    // preceded it, and the "most recent" row claimed the attribute was alive
+    // while event time says it is deleted.
+    const upsertSpy = sinon.spy(function (datapoint) {
+      assert.equal(datapoint.observedAt, '2024-02-28T13:52:35.000Z');
+      assert.equal(datapoint.modifiedAt, '2023-07-14T14:29:13.110Z');
+      return Promise.resolve(datapoint);
+    });
+    const attributeHistoryTable = { upsert: upsertSpy };
+    const message = {
+      value: JSON.stringify({
+        id: 'id',
+        entityId: 'entityId',
+        name: 'name',
+        type: 'https://uri.etsi.org/ngsi-ld/Property',
+        attributeValue: 123,
+        nodeType: '@value',
+        observedAt: '2024-02-28 13:52:35.000'
+      }),
+      timestamp: '1689344953110'
+    };
+    toTest.__set__('attributeHistoryTable', attributeHistoryTable);
+    toTest.__set__('Logger', Logger);
+    toTest.__get__('processAttributeMessage')(message);
+    sinon.assert.calledOnce(upsertSpy);
+    upsertSpy.threw().should.equal(false);
+  });
+  it('Should stamp a tombstone with its payload observedAt too', function () {
+    // A delete carries the DELETION time in its payload; the history must
+    // record that event time so the tombstone sorts where the deletion
+    // happened, after every value it deletes and before any later restore.
+    const upsertSpy = sinon.spy(function (datapoint) {
+      assert.equal(datapoint.deleted, true);
+      assert.equal(datapoint.observedAt, '2026-08-23T10:41:16.000Z');
+      assert.equal(datapoint.modifiedAt, '2023-07-14T14:29:13.110Z');
+      return Promise.resolve(datapoint);
+    });
+    const attributeHistoryTable = { upsert: upsertSpy };
+    const message = {
+      value: JSON.stringify({
+        id: 'id',
+        entityId: 'entityId',
+        name: 'name',
+        type: 'https://uri.etsi.org/ngsi-ld/Property',
+        deleted: true,
+        observedAt: '2026-08-23 10:41:16.000'
+      }),
+      timestamp: '1689344953110'
+    };
+    toTest.__set__('attributeHistoryTable', attributeHistoryTable);
+    toTest.__set__('Logger', Logger);
+    toTest.__get__('processAttributeMessage')(message);
+    sinon.assert.calledOnce(upsertSpy);
+    upsertSpy.threw().should.equal(false);
+  });
+  it('Should fall back to the arrival time for a malformed observedAt', function () {
+    const upsertSpy = sinon.spy(function (datapoint) {
+      assert.equal(datapoint.observedAt, '2023-07-14T14:29:13.110Z');
+      return Promise.resolve(datapoint);
+    });
+    const attributeHistoryTable = { upsert: upsertSpy };
+    const message = {
+      value: JSON.stringify({
+        id: 'id',
+        entityId: 'entityId',
+        name: 'name',
+        type: 'https://uri.etsi.org/ngsi-ld/Property',
+        attributeValue: 123,
+        nodeType: '@value',
+        observedAt: 'not-a-timestamp'
+      }),
+      timestamp: '1689344953110'
+    };
+    toTest.__set__('attributeHistoryTable', attributeHistoryTable);
+    toTest.__set__('Logger', Logger);
+    toTest.__get__('processAttributeMessage')(message);
+    sinon.assert.calledOnce(upsertSpy);
+    upsertSpy.threw().should.equal(false);
+  });
   it('Should send a Relationship', async function () {
     const upsertSpy = sinon.spy(async function (datapoint) {
       assert.equal(datapoint.observedAt, '2023-07-14T14:29:13.110Z');
