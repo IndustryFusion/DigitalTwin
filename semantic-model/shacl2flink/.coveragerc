@@ -1,2 +1,5 @@
 [run]
-omit = tests/*
+# tools/ are release-test drivers for a live cluster (loadgen.py,
+# ttl_test.py); their code cannot execute under pytest and would only
+# dilute the coverage gate.
+omit = tests/*,tools/*
