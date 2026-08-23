@@ -54,3 +54,38 @@
         owl:ObjectProperty ;
     rdfs:domain :E2ELinkedMachine ;
     rdfs:range <https://uri.etsi.org/ngsi-ld/Relationship> .
+
+# Focus class for the SPARQL constraint, plus a subclass so the constraint's
+# rdfs:subClassOf* walk has something to walk. That walk is a join against the
+# `rdf` table -- the knowledge -- which no e2e test reached before, and which
+# behaves differently in Flink than in the SQLite oracle because it is state
+# that can expire rather than a table that is simply there.
+:E2EKnowledgeMachine a owl:Class,
+        owl:NamedIndividual .
+
+:E2ESpecialMachine a owl:Class,
+        owl:NamedIndividual ;
+    rdfs:subClassOf :E2EKnowledgeMachine .
+
+:hasE2EKnownState a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :E2EKnowledgeMachine ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
+:isValidForE2E a owl:NamedIndividual,
+        owl:ObjectProperty .
+
+# Valid for the focus class itself.
+:e2e_state_GOOD a owl:NamedIndividual,
+        :E2EState ;
+    rdfs:label "GOOD" ;
+    :isValidForE2E :E2EKnowledgeMachine .
+
+# Valid only for a class the focus class is NOT a subclass of, so a machine
+# carrying it violates the constraint while still being a known state.
+:e2e_state_ELSEWHERE a owl:NamedIndividual,
+        :E2EState ;
+    rdfs:label "ELSEWHERE" ;
+    :isValidForE2E :E2ECartridge .
+
+:E2EState a owl:Class .
