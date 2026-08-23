@@ -204,10 +204,11 @@ PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
 SELECT $this ?v1 ?pc ?v2
     where {
         $this iffBaseEntities:hasState [ ngsild:hasValue ?v1 ] .
-        ?pc rdf:type iffBaseEntities:Plasmacutter .
+        ?pc a ?pcType .
+        ?pcType rdfs:subClassOf* iffBaseEntities:Cutter .
         ?pc iffBaseEntities:hasFilter [ ngsild:hasObject $this ] .
         ?pc  iffBaseEntities:hasState [ ngsild:hasValue ?v2 ] .
-        FILTER(?v1 = iffBaseKnowledge:state_ON && ?v2 != iffBaseEntities:state_PROCESSING)
+        FILTER(?v1 = iffBaseKnowledge:state_ON && ?v2 != iffBaseKnowledge:state_PROCESSING)
     }
         """ ;
             sh:severity iffBaseKnowledge:severityWarning ] ;
