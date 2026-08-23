@@ -242,15 +242,18 @@ delete_model() {
 # a deployment that alerts on everything would satisfy a one-sided check.
 assert_model_alerting() {
     assert_alert "${CYCLE_NOSTATE}" "${COUNT_CONSTRAINT}"
-    # A count, not a class violation. Those are two different situations and
-    # only one of them is this one: a link whose target existed and was then
-    # DELETED still counts as one relationship and fails the class check, which
-    # is what the test above asserts. A link to an id that never existed
-    # resolves to nothing at all, so the count is 0 and it is minCount that
-    # fails. Asserting the class component here passed locally only because the
-    # fixture uses fixed ids and an earlier run had left a stale class alert on
-    # this resource; a clean cluster reported the count, correctly.
-    assert_alert "${CYCLE_DANGLING}" "${COUNT_CONSTRAINT}"
+    # A CLASS violation, not a count. The relationship INSTANCE exists --
+    # whether its target does is the class check's question -- so minCount
+    # sees one value node and is satisfied, while sh:class fails for a
+    # target that is missing exactly as for one of the wrong type: since the
+    # sh:class fix, a NULL-resolving target fires the class check instead of
+    # slipping through as "no entity, nothing to compare". SHACL agrees with
+    # this split: sh:minCount counts value nodes, sh:class validates them,
+    # and the SQLite oracle reports the same component. An earlier version
+    # asserted the count here, reasoning a never-created id "resolves to
+    # nothing"; measured on a clean cluster after the fix, the class
+    # component is what actually raises -- within seconds.
+    assert_alert "${CYCLE_DANGLING}" "${CLASS_CONSTRAINT}"
     assert_no_alert "${CYCLE_GOOD}"
     assert_no_alert "${CYCLE_LINKED}"
     assert_no_alert "${CYCLE_CARTRIDGE}"
