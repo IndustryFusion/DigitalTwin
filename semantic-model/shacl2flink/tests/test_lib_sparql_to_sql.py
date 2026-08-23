@@ -625,9 +625,12 @@ def test_wrap_sql_projection_pins_the_knowledge(mock_create_varname):
     }
     mock_create_varname.return_value = 'var'
     lib.sparql_to_sql.wrap_sql_projection(ctx, node)
-    assert "STATE_TTL('KNOWTABLE' = '0d')" in node['target_sql'], \
+    assert "'KNOWTABLE' = '0d'" in node['target_sql'], \
         'a sparql query joins the knowledge without pinning it, so those rows ' \
         'expire at table.exec.state.ttl and the check stops seeing the ontology'
+    assert "'A' = '0d'" in node['target_sql'], \
+        'the entity side of the join must be pinned too: once its state has ' \
+        'expired, re-publication flows through the join without reviving it'
     # Position, not just presence. A hint anywhere other than immediately after
     # SELECT is parsed as a select item -- "Encountered \"/*+\"" -- and the whole
     # statement set fails to deploy. Asserting only that the hint exists let
@@ -638,10 +641,11 @@ def test_wrap_sql_projection_pins_the_knowledge(mock_create_varname):
 
 
 @patch('lib.sparql_to_sql.utils.create_varname')
-def test_wrap_sql_projection_hints_only_what_it_joins(mock_create_varname):
-    """No rdf in this block, no hint: STATE_TTL is query-block scoped, and an
-    alias named in a block that does not join it is silently ignored by Flink,
-    which would look like a fix without being one."""
+def test_wrap_sql_projection_pins_the_view_joins(mock_create_varname):
+    """entities_view and attributes_view joins are pinned like the knowledge:
+    their state is one live row per key, and an expired join is dead for good
+    -- re-publication is folded to a no-op by the dedup rank and never
+    refreshes it."""
     ctx = {
         'bounds': {
             'var': 'bound'
@@ -652,6 +656,29 @@ def test_wrap_sql_projection_hints_only_what_it_joins(mock_create_varname):
     node = {
         'where': '',
         'target_sql': 'entities_view AS A JOIN attributes_view AS B ON B.entityId = A.id'
+    }
+    mock_create_varname.return_value = 'var'
+    lib.sparql_to_sql.wrap_sql_projection(ctx, node)
+    assert "'A' = '0d'" in node['target_sql']
+    assert "'B' = '0d'" in node['target_sql']
+
+
+@patch('lib.sparql_to_sql.utils.create_varname')
+def test_wrap_sql_projection_hints_only_what_it_joins(mock_create_varname):
+    """A block joining none of rdf/entities_view/attributes_view gets no hint:
+    STATE_TTL is query-block scoped, and an alias named in a block that does
+    not join it is silently ignored by Flink, which would look like a fix
+    without being one."""
+    ctx = {
+        'bounds': {
+            'var': 'bound'
+        },
+        'target_modifiers': [],
+        'PV': ['varx']
+    }
+    node = {
+        'where': '',
+        'target_sql': 'constraint_table AS D JOIN alerts_bulk AS X ON X.id = D.id'
     }
     mock_create_varname.return_value = 'var'
     lib.sparql_to_sql.wrap_sql_projection(ctx, node)
@@ -678,7 +705,8 @@ def test_wrap_sql_construct_pins_the_knowledge(attribute_column_mock, get_bound_
     attribute_column_mock.return_value = [(Variable('varx'), 'name', 'type', Variable('varx'), '@id')]
     get_bound_trim_string_mock.return_value = 'bound'
     lib.sparql_to_sql.wrap_sql_construct(ctx, node)
-    assert "STATE_TTL('RULETABLE' = '0d')" in node['target_sql']
+    assert "'RULETABLE' = '0d'" in node['target_sql']
+    assert "'A' = '0d'" in node['target_sql']
     # A construct branch is SELECT DISTINCT, and the hint still belongs between
     # SELECT and DISTINCT rather than after both.
     assert 'SELECT /*+ STATE_TTL' in node['target_sql'], \

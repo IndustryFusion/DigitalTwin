@@ -197,7 +197,7 @@ def test_create_statementmap():
             'views': 'view',
             'sqlsettings': [
                 {"table.exec.sink.upsert-materialize": "auto"},
-                {"table.exec.mini-batch.enabled": "true"},
+                {"table.exec.mini-batch.enabled": "false"},  # FLINK-36417: assigner drops STATE_TTL hints
                 {"table.exec.mini-batch.allow-latency": "100 ms"},
                 {"table.exec.mini-batch.size": "1000"},
                 {"execution.savepoint.ignore-unclaimed-state": "true"},
@@ -228,7 +228,7 @@ def test_create_statementmap():
             'views': 'view',
             'sqlsettings': [
                 {"table.exec.sink.upsert-materialize": "auto"},
-                {"table.exec.mini-batch.enabled": "true"},
+                {"table.exec.mini-batch.enabled": "false"},  # FLINK-36417: assigner drops STATE_TTL hints
                 {"table.exec.mini-batch.allow-latency": "100 ms"},
                 {"table.exec.mini-batch.size": "1000"},
                 {"execution.savepoint.ignore-unclaimed-state": "true"},
@@ -261,7 +261,7 @@ def test_create_statementmap():
             'views': 'view',
             'sqlsettings': [
                 {"table.exec.sink.upsert-materialize": "auto"},
-                {"table.exec.mini-batch.enabled": "true"},
+                {"table.exec.mini-batch.enabled": "false"},  # FLINK-36417: assigner drops STATE_TTL hints
                 {"table.exec.mini-batch.allow-latency": "100 ms"},
                 {"table.exec.mini-batch.size": "1000"},
                 {"execution.savepoint.ignore-unclaimed-state": "true"},
