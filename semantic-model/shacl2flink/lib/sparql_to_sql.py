@@ -544,13 +544,23 @@ def rdf_state_ttl_hint(target_sql):
     answering correctly and agreeing with itself, and the divergence only shows
     up against a Flink job that has been running for an hour.
 
+    entities_view and attributes_view joins are pinned for the same reason,
+    and the resync does NOT save them: once a join's state has expired, a
+    full re-snapshot flowing through it produces nothing, because the dedup
+    rank in front folds identical re-publications into no-ops that never
+    refresh downstream state (measured: ~560 resynced records entered the
+    expired joins of every SPARQL rule, zero came out). The pinned state is
+    bounded -- the views are deduplicated changelogs, one live row per key.
+
     The aliases are read back out of the FROM clause rather than threaded
-    through the translator, so a hint is emitted for exactly the rdf tables
+    through the translator, so a hint is emitted for exactly the tables
     visible in THIS query block. Hints are query-block scoped: naming an alias
     from an inner sub-select here would be silently ignored, which would look
     fixed without being fixed.
     """
-    aliases = re.findall(r'\brdf\s+AS\s+(\w+)', target_sql, re.IGNORECASE)
+    aliases = re.findall(
+        r'\b(?:rdf|entities_view|attributes_view)\s+AS\s+(\w+)',
+        target_sql, re.IGNORECASE)
     if not aliases:
         return ''
     return utils.get_state_ttl_metadata(sorted(set(aliases))) + ' '
