@@ -140,16 +140,18 @@ def test_attributes_table_exposes_the_kafka_offset():
 
 
 def test_attributes_view_breaks_ties_by_offset():
-    """The regression: a delete that ties on ts must still win.
+    """The regression: a record that ties on the event time must still win.
 
-    debeziumBridge stamps a delete with the timestamp of the value it deletes,
-    deliberately the same one, so the two tie. That relied on the tie being
-    broken by arrival, which held while this compiled into Flink's Deduplicate.
-    Without the watermark it is a general Rank, and Rank keeps the INCUMBENT on
-    a tie -- so the delete lost and the attribute stayed live indefinitely.
+    Same-instant records are real: the bridge stamps records lacking an
+    observedAt with its receive time, and a snapshot re-emission repeats its
+    record's timestamp exactly. Ties must go to arrival, which held while
+    this compiled into Flink's Deduplicate. Without the watermark it is a
+    general Rank, and Rank keeps the INCUMBENT on a tie -- so the later
+    record lost and a stale row stayed live indefinitely.
 
-    Measured: urn:filter:1's hasXXXWorkpiece was deleted in Scorpio, the delete
-    published, and the job went on counting it until the same delete was
+    Measured (under the earlier delete-stamping scheme): urn:filter:1's
+    hasXXXWorkpiece was deleted in Scorpio, the tombstone tied with the value
+    and lost, and the job went on counting the attribute until the delete was
     republished with a strictly greater timestamp.
     """
     create_core_tables.main()

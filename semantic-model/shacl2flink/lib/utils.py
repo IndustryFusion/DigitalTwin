@@ -443,14 +443,14 @@ def create_yaml_view(name, table, primary_key=None, ttl=None):
         sqlstatement += f'`{key}`'
     # Kafka offset breaks the tie, where the table offers one.
     #
-    # debeziumBridge stamps a DELETE with the timestamp of the value it deletes
-    # -- deliberately the SAME timestamp, so that a later re-creation observed
-    # at the same instant can still win. That design relies on the tie being
-    # broken by ARRIVAL, which held while `ts` was a rowtime and this compiled
-    # into Flink's Deduplicate (keep-last-row). Without the watermark it
-    # compiles into a general Rank, and Rank keeps the INCUMBENT on a tie: it
-    # replaces only on a strictly greater sort key. The delete therefore ties,
-    # loses, and is discarded, leaving the attribute live for good.
+    # Ties are real: two writes can carry the same observedAt (debeziumBridge
+    # stamps every record lacking one with its own receive time, and a delete
+    # with its deletion time, so same-instant events happen). The tie must go
+    # to ARRIVAL, which held while `ts` was a rowtime and this compiled into
+    # Flink's Deduplicate (keep-last-row). Without the watermark it compiles
+    # into a general Rank, and Rank keeps the INCUMBENT on a tie: it replaces
+    # only on a strictly greater sort key -- so the later same-instant write
+    # ties, loses, and is discarded.
     #
     # Measured: urn:filter:1's hasXXXWorkpiece was deleted in Scorpio and the
     # delete published, yet the job went on counting it -- reporting a

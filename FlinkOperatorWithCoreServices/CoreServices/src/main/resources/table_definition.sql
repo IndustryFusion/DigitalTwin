@@ -19,14 +19,13 @@ CREATE TABLE attributes (
     -- retention and was deleted on contact. `ts` is the write time now.
     `observedAt` TIMESTAMP(3),
     `ts` TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
-    -- Arrival order, to break ties on the event time. debeziumBridge stamps a DELETE
-    -- with the timestamp of the value it deletes -- deliberately the same one,
-    -- so that a re-creation observed at the same instant can still win. Event
-    -- time therefore cannot separate a value from its own delete, and neither
-    -- can it separate the two re-emissions a snapshot produces. The offset is
+    -- Arrival order, to break ties on the event time. Same-instant events are
+    -- real -- debeziumBridge stamps records lacking an observedAt with its
+    -- receive time, and every snapshot re-emission repeats its record's
+    -- timestamp exactly -- and event time cannot separate them. The offset is
     -- strictly monotonic per partition, so it settles exactly those ties and
-    -- nothing else: `ts` stays the primary ordering, this is only the
-    -- tiebreaker beneath it.
+    -- nothing else: the event time stays the primary ordering, this is only
+    -- the tiebreaker beneath it.
     `offset` BIGINT METADATA VIRTUAL,
     -- The WATERMARK stays. Unlike the shacl tables, this one IS windowed:
     -- sql_statements.sql tumbles over it, and a window needs a rowtime.

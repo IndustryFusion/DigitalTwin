@@ -98,10 +98,10 @@ spec:
     # No WATERMARK. Nothing windows over this table, and only time-based
     # operators consume a watermark. What the declaration would change is which
     # operator backs the attributes_view dedup -- a rowtime Deduplicate accepts
-    # a later row of EQUAL ts, a general Rank keeps the incumbent -- and a
-    # delete is stamped with the observedAt of the value it deletes, so those two
-    # tie exactly. The `offset` column below settles that explicitly rather than
-    # leaving it to operator choice. Mirrors create_core_tables.py.
+    # a later row of EQUAL ts, a general Rank keeps the incumbent -- and
+    # same-instant records are real (bridge-stamped receive times, snapshot
+    # re-emissions). The `offset` column below settles that explicitly rather
+    # than leaving it to operator choice. Mirrors create_core_tables.py.
     #
     # The EVENT time, carried in the payload by debeziumBridge. `ts` is now the
     # WRITE time and nothing orders by it: putting observedAt in the record
@@ -179,14 +179,12 @@ spec:
       -- every consumer keeps counting an attribute that is gone. A delete
       -- arrives as an ordinary row carrying deleted=true, so it is exactly
       -- the case this breaks.
-      -- The Kafka offset breaks the tie. debeziumBridge stamps a DELETE with
-      -- the timestamp of the value it deletes -- deliberately the SAME
-      -- timestamp -- so a value and its delete tie on `observedAt`. Without a rowtime
-      -- this compiles into a general Rank, and Rank keeps the INCUMBENT on a
-      -- tie, replacing only on a strictly greater key. Whichever row arrives
-      -- first is then frozen in: re-publishing the value cannot dislodge a
-      -- delete, and re-publishing a delete cannot dislodge a value, because
-      -- every copy carries the same observedAt.
+      -- The Kafka offset breaks the tie. Same-instant records are real:
+      -- the bridge stamps records lacking an observedAt with its receive
+      -- time, and snapshot re-emissions repeat their record's timestamp
+      -- exactly. Without a rowtime this compiles into a general Rank, and
+      -- Rank keeps the INCUMBENT on a tie, replacing only on a strictly
+      -- greater key -- whichever copy arrived first would be frozen in.
       --
       -- Measured on urn:filter:1 hasStrength (observedAt 2024-02-28T13:52:35):
       -- the view latched a deleted=true row, four later re-emissions of the

@@ -496,11 +496,10 @@ module.exports = function DebeziumBridge (conf) {
         'type',
         'datasetId',
         'nodeType',
-        // Carried so the delete can be stamped with the timestamp of the
-        // value it deletes -- see sendUpdates in debeziumBridge/app.js. It
-        // does not reach the topic: checkTimestamp() moves it out of the
-        // payload and into the Kafka record timestamp, so the message on the
-        // wire keeps exactly the shape it had before.
+        // Part of the deleted value's before-image, carried for completeness.
+        // sendUpdates in debeziumBridge/app.js strips it and stamps the
+        // tombstone with the DELETION time instead: a delete is an event of
+        // its own, and re-publishing history must not undo it.
         'https://uri.etsi.org/ngsi-ld/observedAt'
       ];
       const deletedAttrObj = pickFields(attrObj, fields);

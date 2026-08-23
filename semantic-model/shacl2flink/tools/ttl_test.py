@@ -36,8 +36,9 @@ Kafka -> Flink -> Alerta), and checks:
   * Event time        -- observedAt governs, not arrival time: a newer-2024
                          value beats an older-2024 one regardless of arrival
                          order; a stale re-send does not overwrite; a delete
-                         carries the timestamp of the value it deletes (so a
-                         same-timestamp re-creation wins by arrival order);
+                         is stamped with the DELETION time, so re-publishing
+                         history does not undo it and only a value observed
+                         at or after the deletion restores the attribute;
                          once a 2026 value is in, no 2024 write can win again.
   * TTL survival      -- the tool reads the deployed table.exec.state.ttl
                          from the shacl-validation BeamSqlStatementSet and,
@@ -529,21 +530,26 @@ def event_time_check(stats, token, key, fam, phase):
     ok, det = wait_alert(key, flt, ev, 'open')
     record(phase, 'et.newer-2024-wins', ok, det)
 
-    # delete carries the timestamp of the value it deletes (00:00:01).
-    # This step must run while Scorpio's stored value IS the event-time
-    # incumbent: Scorpio keeps the last WRITTEN value, so a stale write
-    # first would make the delete carry the stale timestamp and the
-    # incumbent would out-rank it -- a documented semantic hole
-    # (stale-write-then-delete leaves the incumbent standing), not a
-    # sequencing accident this test should trip over.
+    # a delete is an event of its own, stamped with the DELETION time; the
+    # standing 2024 violation must retract
     del_attr(token, flt, 'hasStrength')
     ok, det = wait_alert(key, flt, ev, 'gone')
     record(phase, 'et.delete-retracts', ok, det)
 
-    # same event time as the delete -> tie, later arrival (the value) wins
+    # re-publication of history does not undo a deletion: the recreated 2024
+    # value is older than the tombstone and must stay deleted
     set_strength(token, flt, 0.3, '2024-03-01T00:00:01.000Z')
+    time.sleep(90)
+    hits = sorted((a for a in alerta_alerts(key, flt) if ev in a['event']),
+                  key=lambda a: a['lastReceiveTime'])
+    gone = not hits or hits[-1]['status'] != 'open'
+    record(phase, 'et.historical-recreate-stays-deleted', gone,
+           hits[-1]['status'] + '/' + hits[-1]['severity'] if hits else 'absent')
+
+    # a value observed AFTER the deletion restores the attribute
+    set_strength(token, flt, 0.3, now_observed_at())
     ok, det = wait_alert(key, flt, ev, 'open')
-    record(phase, 'et.tie-recreate-wins', ok, det)
+    record(phase, 'et.recreate-after-delete-wins', ok, det)
 
     # stale write: older event time must NOT overwrite the newer value
     set_strength(token, flt, 0.55, '2024-03-01T00:00:00.000Z')

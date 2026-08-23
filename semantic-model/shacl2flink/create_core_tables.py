@@ -172,9 +172,10 @@ def main():
         #   without        -> a general Rank, which keeps the INCUMBENT and
         #                     replaces only on a strictly greater sort key
         #
-        # That matters because the bridge stamps a delete with the timestamp of
-        # the value it deletes, so a value and its delete tie on ts exactly.
-        # Dropping the watermark therefore silently changed delete semantics,
+        # That matters because same-instant records are real -- the bridge
+        # stamps records lacking an observedAt with its receive time, and a
+        # snapshot re-emission repeats its record's timestamp exactly.
+        # Dropping the watermark therefore silently changed tie semantics,
         # which is why the `offset` column below exists -- it restores
         # tie-by-arrival explicitly instead of depending on operator choice.
         #
@@ -188,11 +189,11 @@ def main():
         # two were separated.
         {'observedAt': 'TIMESTAMP(3)'},
         {'ts': "TIMESTAMP(3) METADATA FROM 'timestamp'"},
-        # Arrival order, for attributes_view to break ties on. A delete carries
-        # the timestamp of the value it deletes -- deliberately the same one --
-        # so the two tie on `ts` and the dedup needs something else to separate
-        # them. Declared on the Flink table only: SQLite has no such metadata
-        # and orders by rowid, which is its equivalent.
+        # Arrival order, for attributes_view to break ties on: same-instant
+        # records (bridge-stamped receive times, snapshot re-emissions) tie on
+        # the event time and the dedup needs something else to separate them.
+        # Declared on the Flink table only: SQLite has no such metadata and
+        # orders by rowid, which is its equivalent.
         {'offset': 'BIGINT METADATA VIRTUAL'}
     ]
     sqlite_table = [
