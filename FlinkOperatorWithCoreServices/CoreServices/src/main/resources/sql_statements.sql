@@ -19,9 +19,13 @@ FROM (
 
       /* build the JSON fragment for this attribute */
       '{'
+      /* The EVENT time. This used to read `ts`, which was observedAt only
+         because the bridge put it in the record stamp. `ts` is the write time
+         now, so reading it here would stamp every attribute written back to
+         Scorpio with the moment we happened to forward it. */
       || '"observedAt":"' 
-         || DATE_FORMAT(ts, 'yyyy-MM-dd''T''HH:mm:ss.') 
-         || CAST(EXTRACT(MILLISECOND FROM ts) AS STRING) || 'Z",'
+         || DATE_FORMAT(COALESCE(`observedAt`, `ts`), 'yyyy-MM-dd''T''HH:mm:ss.') 
+         || CAST(EXTRACT(MILLISECOND FROM COALESCE(`observedAt`, `ts`)) AS STRING) || 'Z",'
       || '"type":"' || type || '",'
       || '"datasetId":"' 
          || IF(datasetId IS NOT NULL, datasetId, '@none') || '"'
@@ -58,7 +62,16 @@ FROM (
         *,
         ROW_NUMBER() OVER (
           PARTITION BY entityId, name, datasetId, window_start, window_end
-          ORDER BY ts DESC
+          /* The window is one millisecond and `ts` is its descriptor, so every
+             row in a window shares the same ts and ORDER BY ts alone is a
+             TOTAL tie for a key -- the winner was whichever row the operator
+             happened to hold. That matters most for the case this pipeline
+             exists to carry: a value and its delete are stamped with the same
+             timestamp on purpose, so they land in the SAME window and the
+             writeback picked between them arbitrarily. The offset is strictly
+             monotonic per partition, so it resolves the tie by arrival without
+             disturbing the event-time ordering above it. */
+          ORDER BY COALESCE(`observedAt`, `ts`) DESC, `offset` DESC
         ) AS row_num
       FROM TABLE(
         TUMBLE(

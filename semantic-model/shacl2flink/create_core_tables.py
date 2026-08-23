@@ -158,24 +158,35 @@ def main():
         {'lang': 'STRING'},
         {'deleted': 'BOOLEAN'},
         {'synced': 'BOOLEAN'},
-        # No WATERMARK. `ts` is the Kafka record timestamp, and the bridge
-        # stamps attribute records with their observedAt -- event times that
-        # span years, not arrival times. Declaring ts a rowtime turns the
-        # attributes_view dedup into an EVENT-TIME Deduplicate, and with zero
-        # lateness the first record of a snapshot burst carrying a recent
-        # observedAt drives the watermark to now; every remaining record in the
-        # burst with an older observedAt is then late and silently dropped.
-        # Measured: 753 records into the dedup, 4 out, joins downstream starved,
-        # and every constraint over them reporting "Found 0" for attributes that
-        # demonstrably exist. Republishing one value with a CURRENT timestamp
-        # made it visible within seconds, which is the same effect seen from the
-        # other side.
+        # No WATERMARK. Nothing here windows, so a rowtime buys nothing: only
+        # time-based operators -- windows, interval and temporal joins, windowed
+        # TopN, CEP -- actually consume a watermark. These are entity-state
+        # tables, not windowed analytics, and alerts_bulk keeps its own
+        # watermark for the alerting path, which does window.
         #
-        # Without the declaration ts is an ordinary column: ORDER BY ts DESC
-        # still picks the right winner, but nothing is discarded for being late.
-        # These are entity-state tables, not windowed analytics -- nothing in
-        # the circuit windows over them, and alerts_bulk keeps its own watermark
-        # for the alerting path.
+        # What the declaration DOES change here is which operator the planner
+        # picks for the attributes_view dedup, and the two disagree on ties:
+        #
+        #   with a rowtime -> event-time Deduplicate (keep-last-row), which
+        #                     accepts a later row of EQUAL ts
+        #   without        -> a general Rank, which keeps the INCUMBENT and
+        #                     replaces only on a strictly greater sort key
+        #
+        # That matters because the bridge stamps a delete with the timestamp of
+        # the value it deletes, so a value and its delete tie on ts exactly.
+        # Dropping the watermark therefore silently changed delete semantics,
+        # which is why the `offset` column below exists -- it restores
+        # tie-by-arrival explicitly instead of depending on operator choice.
+        #
+        # NOTE: an earlier version of this comment claimed the watermark caused
+        # old-observedAt records to be "dropped as late". That was wrong. A
+        # keyed dedup discards an older-rowtime row for a key because of
+        # ORDERING, not lateness, and it does so with or without a watermark.
+        # The EVENT time, carried in the payload by debeziumBridge as epoch
+        # millis. `ts` below is now the WRITE time -- kept for debugging, and
+        # nothing orders by it. See lib/utils.py create_yaml_view for why the
+        # two were separated.
+        {'observedAt': 'TIMESTAMP(3)'},
         {'ts': "TIMESTAMP(3) METADATA FROM 'timestamp'"},
         # Arrival order, for attributes_view to break ties on. A delete carries
         # the timestamp of the value it deletes -- deliberately the same one --
@@ -198,6 +209,7 @@ def main():
         {'lang': 'TEXT'},
         {'deleted': 'BOOLEAN'},
         {'synced': 'BOOLEAN'},
+        {'observedAt': 'TIMESTAMP(3)'},
         {'ts': "TIMESTAMP(3) METADATA FROM 'timestamp'"}
     ]
     primary_key = None

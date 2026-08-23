@@ -102,15 +102,48 @@ const startListener = async function () {
   }
 };
 
-const checkTimestamp = function (val) {
-  let isotimestamp = null;
-  let timestamp = null;
+// observedAt is DATA; the Kafka record timestamp is TRANSPORT metadata. They
+// used to be the same field, which meant retention.ms -- a storage policy
+// measured against the record timestamp -- was being applied to an event time.
+// The kms model observes at 2024-02-28, so every attribute record was born two
+// and a half years older than any sane retention and Kafka deleted it on
+// contact. Measured: three snapshot bursts of 249 records each, and
+// iff.ngsild.attributes read back with logStart == logEnd every time. The
+// pipeline still looked healthy because the job consumes records in flight --
+// but there was no replay, no restart recovery and no way to observe anything.
+//
+// So observedAt now travels IN the payload and the record keeps its write-time
+// stamp. Event-time semantics are unchanged: attributes_view still orders by
+// observedAt, so which value wins is still decided by when it was observed and
+// never by when it arrived.
+//
+// The wire format is a SQL timestamp -- 'YYYY-MM-DD HH:MM:SS.mmm' in UTC --
+// because that is what Flink's json format parses by default, and what SQLite
+// compares lexicographically in the oracle. An ISO string with 'T' and 'Z'
+// would fail Flink's parse and, with json.ignore-parse-errors, become NULL
+// without a word. Epoch millis would parse, but the SPARQL rules compare
+// observedAt against xsd:dateTime literals, so it has to be a timestamp.
+// A seam for the fallback below, so tests can pin it rather than mock the
+// global clock -- the same rewire pattern the tests already use for config and
+// producer.
+const nowMillis = function () { return Date.now(); };
+
+const asSqlTimestamp = function (millis) {
+  return new Date(millis).toISOString().replace('T', ' ').replace('Z', '');
+};
+
+const carryObservedAt = function (val) {
+  let observedAt = null;
   try {
-    isotimestamp = val['https://uri.etsi.org/ngsi-ld/observedAt'][0]['@value'];
-    timestamp = new Date(isotimestamp).getTime();
+    observedAt = new Date(val['https://uri.etsi.org/ngsi-ld/observedAt'][0]['@value']).getTime();
     delete (val['https://uri.etsi.org/ngsi-ld/observedAt']);
   } catch (err) {}
-  return timestamp;
+  // An attribute carrying no observedAt is observed when it is received. That
+  // is what Kafka's own stamp meant before, so the ordering is unchanged.
+  // Leaving it null instead would make such an attribute lose every comparison
+  // in the dedup and disappear.
+  val.observedAt = asSqlTimestamp(
+    (observedAt !== null && !isNaN(observedAt)) ? observedAt : nowMillis());
 };
 
 /**
@@ -194,12 +227,8 @@ const sendUpdates = async function ({ entity, deletedEntity, updatedAttrs, delet
         val.synced = true;
         // Also strips observedAt from the payload, so the message on the wire
         // is unchanged from before.
-        const timestamp = checkTimestamp(val);
-        const result = { key: genKey, value: JSON.stringify(val) };
-        if (timestamp !== null) {
-          result.timestamp = timestamp;
-        }
-        return result;
+        carryObservedAt(val);
+        return { key: genKey, value: JSON.stringify(val) };
       })
     );
     topicMessages.push({
@@ -212,12 +241,8 @@ const sendUpdates = async function ({ entity, deletedEntity, updatedAttrs, delet
     const updateMessages = Object.entries(updatedAttrs).flatMap(([key, value]) => {
       return value.map(val => {
         val.synced = true;
-        const timestamp = checkTimestamp(val);
-        const result = { key: genKey, value: JSON.stringify(val) };
-        if (timestamp !== null) {
-          result.timestamp = timestamp;
-        }
-        return result;
+        carryObservedAt(val);
+        return { key: genKey, value: JSON.stringify(val) };
       });
     });
     topicMessages.push({
@@ -230,12 +255,8 @@ const sendUpdates = async function ({ entity, deletedEntity, updatedAttrs, delet
     const insertMessages = Object.entries(insertedAttrs).flatMap(([key, value]) => {
       return value.map(val => {
         val.synced = true;
-        const timestamp = checkTimestamp(val);
-        const result = { key: genKey, value: JSON.stringify(val) };
-        if (timestamp !== null) {
-          result.timestamp = timestamp;
-        }
-        return result;
+        carryObservedAt(val);
+        return { key: genKey, value: JSON.stringify(val) };
       });
     });
     topicMessages.push({

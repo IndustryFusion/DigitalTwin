@@ -473,7 +473,12 @@ and IFNULL({object_tablename}.`deleted`, FALSE) IS FALSE'})
             raise utils.SparqlValidationFailed(f"Internal implementation error. Found unexpected NGSI-LD \
 property {ngsildtype[0]} in {ctx['query']}")
         if utils.create_varname(ngsildvar[0]) not in local_ctx['bounds']:
-            local_ctx['bounds'][ngsildvar[0].toPython()[1:]] = f'`{attribute_tablename}`.`ts`'
+            # observedAt is a column of its own now. It used to be read from `ts`,
+            # the Kafka record timestamp, because the bridge wrote it there --
+            # which put a wall-clock retention policy in charge of an event
+            # time. `ts` is the write time now and would silently make every
+            # rule that filters on observedAt compare against the wrong clock.
+            local_ctx['bounds'][ngsildvar[0].toPython()[1:]] = f'`{attribute_tablename}`.`observedAt`'
         if attribute_tablename not in local_ctx['bgp_tables'] and attribute_tablename not in ctx['tables']:
             raise utils.SparqlValidationFailed(f"observedAt attributes can currently only be retrieved in \
 conjunction with the respective hasValue/hasObject attribues/relationships. \

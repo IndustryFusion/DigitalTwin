@@ -225,17 +225,20 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
             elif str(type) == 'https://uri.etsi.org/ngsi-ld/JsonProperty':
                 attributeValue = nullify(hasJSON)
                 nodeType = '@json'
-            current_timestamp = "CURRENT_TIMESTAMP"
+            # observedAt is the EVENT time and now has a column of its own,
+            # mirroring the payload field debeziumBridge writes. `ts` is the
+            # write time on both sides, and nothing orders by it.
+            observed_at = "CURRENT_TIMESTAMP"
             if observedAt is not None:
-                current_timestamp = f"'{str(observedAt)}'"
+                observed_at = f"'{str(observedAt)}'"
             attribute_rows.append(
                 "('" + id + "', " + parentId + ", '" + entityId.toPython() + "', '" +
                 name.toPython() +
                 "', '" + nodeType + "', " + valueType + ", '" + type.toPython() + "', " + attributeValue +
                 ", " + str(current_dataset_id) +
                 ", " + unitCode +
-                ", CAST(NULL AS STRING), CAST(NULL AS BOOLEAN), CAST(NULL AS BOOLEAN), " + current_timestamp +
-                ")")
+                ", CAST(NULL AS STRING), CAST(NULL AS BOOLEAN), CAST(NULL AS BOOLEAN), " + observed_at +
+                ", CURRENT_TIMESTAMP)")
         if attribute_rows:
             print(f'INSERT INTO `{configs.attributes_table_name}` VALUES',
                   file=sqlitef)
