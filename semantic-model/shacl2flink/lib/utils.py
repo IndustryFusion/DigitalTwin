@@ -587,18 +587,26 @@ def create_statementmap(object_name, table_object_names,
         # Mini-batch buffers changelog records per key and emits once per
         # window, collapsing the convergence churn of a multi-level constraint
         # circuit (measured: 76% of verdict changes land within 2ms of the
-        # previous one). All three keys are required for it to take effect.
+        # previous one, and the trigger topic took ~670 writes/s without it).
+        # All three keys are required for it to take effect.
         #
-        # DISABLED until Flink >= 1.19.2: on 1.19.1 the MiniBatchAssigner
-        # nodes drop the alias-keyed STATE_TTL hints on their way to the
-        # joins (FLINK-36238 / FLINK-36417, fixed in 1.19.2/1.20.1), so the
-        # '0d' pins on the validation joins never reach the operators and
-        # every join-based rule dies for good once its state passes
-        # table.exec.state.ttl. Measured with tools/ttl_test.py at a 600 s
-        # TTL: with mini-batch on, all four SPARQL rules were silent after a
-        # 3x TTL idle (11/11 checks pass with it off, identical SQL). The
-        # sink-side upsert materializer above stays on and remains the main
-        # defense against write amplification.
+        # DISABLED until Flink >= 2.0.3 / 2.1.3 / 2.2.2 / 2.3.0. Two
+        # independent bugs killed it on 1.x, and neither has a 1.x backport:
+        #
+        #  * 1.19.1: the MiniBatchAssigner nodes dropped the alias-keyed
+        #    STATE_TTL hints on their way to the joins (FLINK-36238 /
+        #    FLINK-36417), so the '0d' pins never reached the operators and
+        #    every join-based rule died for good once its state passed
+        #    table.exec.state.ttl.
+        #  * 1.20.4: mini-batch bundles that contain retraction-only keys
+        #    silently drop records (FLINK-35661 and related mini-batch
+        #    operator bugs, fixed only in the 2.x line) -- measured with
+        #    tools/ttl_test.py: verdict retractions were lost under
+        #    delete/insert churn and event-time overrides (alerts stuck
+        #    open), while the same suite passes with mini-batch off.
+        #
+        # Rerun tools/ttl_test.py --phase all after any Flink version bump
+        # before flipping this back on.
         {"table.exec.mini-batch.enabled": "false"},
         {"table.exec.mini-batch.allow-latency": "100 ms"},
         {"table.exec.mini-batch.size": "1000"},

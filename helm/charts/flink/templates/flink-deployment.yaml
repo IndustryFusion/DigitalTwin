@@ -8,7 +8,7 @@ metadata:
   name: flink-deployment
 spec:
   image: {{ .Values.mainRegistry }}/{{ .Values.mainRepo }}/flink-sql-gateway:{{ .Values.mainVersion }}
-  flinkVersion: v1_19
+  flinkVersion: v1_20
   flinkConfiguration:
     env.java.opts.jobmanager: "-DKAFKA_BOOTSTRAP={{.Values.kafka.bootstrapServer}}"
     env.java.opts.taskmanager: "-DKAFKA_BOOTSTRAP={{.Values.kafka.bootstrapServer}}"
