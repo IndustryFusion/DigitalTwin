@@ -255,6 +255,69 @@ class PlanStats:
                 out.append((din, name))
         return sorted(out, reverse=True)
 
+    def _post(self, path, payload='{}'):
+        req = urllib.request.Request(self.rest + path, method='POST',
+                                     data=payload.encode(),
+                                     headers={'Content-Type': 'application/json'})
+        try:
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                return json.loads(resp.read() or b'{}')
+        except Exception:
+            pod = sh(f"kubectl -n {self.namespace} get pods --no-headers"
+                     " -o custom-columns=:metadata.name | grep -m1 -E 'flink-deployment-[0-9a-f]'")
+            out = sh(f"kubectl -n {self.namespace} exec {pod} -c flink-main-container --"
+                     f" curl -s -X POST -H 'Content-Type: application/json'"
+                     f" -d '{payload}' http://localhost:8081{path}")
+            return json.loads(out) if out else {}
+
+    def running_jobs(self):
+        return [(j['jid'], j['name']) for j in self._get('/jobs/overview').get('jobs', [])
+                if j['state'] == 'RUNNING']
+
+    def checkpoint_counts(self, jid):
+        return self._get(f'/jobs/{jid}/checkpoints').get('counts', {})
+
+
+def checkpoint_phase(stats, timeout=180):
+    """Prove the checkpointing machinery works: trigger an on-demand
+    checkpoint on every RUNNING job (REST POST /jobs/<jid>/checkpoints,
+    available since Flink 1.17) and require counts.completed to advance.
+
+    The platform's recovery model does not rely on periodic checkpoints
+    (Kafka is transport, Scorpio is truth), so the deployed jobs run with
+    checkpointing off -- but the state backend + S3 + HA plumbing must
+    still be able to take one, especially across Flink version bumps
+    where the config keys were renamed.
+    """
+    log('=== phase CHECKPOINT: on-demand checkpoint per running job ===')
+    jobs = stats.running_jobs()
+    if not jobs:
+        record('checkpoint', 'jobs-running', False, 'no RUNNING jobs found')
+        return
+    for jid, name in jobs:
+        short = name.replace('iff/', '')[:28]
+        before = stats.checkpoint_counts(jid)
+        resp = stats._post(f'/jobs/{jid}/checkpoints')
+        if not resp:
+            record('checkpoint', short, False, 'trigger request failed')
+            continue
+        deadline = time.time() + timeout
+        ok, detail = False, ''
+        while time.time() < deadline:
+            time.sleep(5)
+            counts = stats.checkpoint_counts(jid)
+            if counts.get('completed', 0) > before.get('completed', 0):
+                ok = True
+                detail = (f"completed {before.get('completed', 0)} -> "
+                          f"{counts.get('completed', 0)}, failed {counts.get('failed', 0)}")
+                break
+            if counts.get('failed', 0) > before.get('failed', 0):
+                detail = f"checkpoint FAILED (failed count {counts.get('failed', 0)})"
+                break
+        if not ok and not detail:
+            detail = f'no completed checkpoint within {timeout}s'
+        record('checkpoint', short, ok, detail)
+
 
 # --------------------------------------------------------------------------- family
 
@@ -885,7 +948,8 @@ def main():
     ap.add_argument('--client-id', default='scorpio')
     ap.add_argument('--password', default=None)
     ap.add_argument('--flink-rest', default='http://localhost:8081')
-    ap.add_argument('--phase', choices=['all', 'fresh', 'ttl', 'growth', 'latency'],
+    ap.add_argument('--phase',
+                    choices=['all', 'fresh', 'ttl', 'growth', 'latency', 'checkpoint'],
                     default='all')
     ap.add_argument('--latency-samples', type=int, default=10)
     ap.add_argument('--latency-target', type=float, default=2.0,
@@ -924,6 +988,17 @@ def main():
         log('could not discover the TTL; aborting')
         return 2
 
+    # the checkpoint phase needs no entities at all
+    if args.phase == 'checkpoint':
+        checkpoint_phase(stats)
+        log('=== RESULTS ===')
+        fails = 0
+        for r in RESULTS:
+            fails += 0 if r['ok'] else 1
+            log(f"  {'PASS' if r['ok'] else 'FAIL'}  {r['phase']:>8}/{r['name']:<28} {r['detail'][:100]}")
+        log(f"{len(RESULTS) - fails}/{len(RESULTS)} checks passed")
+        return 1 if fails else 0
+
     # the growth phase drives its own loadgen entities; no family needed
     if args.phase == 'growth':
         growth_phase(args, token)
@@ -955,6 +1030,7 @@ def main():
         count_churn(stats, token, key, fam, args.namespace, 'fresh')
         event_time_check(stats, token, key, fam, 'fresh')
         latency_phase(args, token, key, fam)
+        checkpoint_phase(stats)
         last_write = time.time()
 
     if args.phase in ('all', 'ttl'):
