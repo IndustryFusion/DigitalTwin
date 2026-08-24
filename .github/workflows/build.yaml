@@ -62,13 +62,15 @@ jobs:
         # measured five consecutive failures over four hours, each a 503 on
         # an owl:imports fetch. Retry with spacing instead of failing the
         # whole build on the first throttled edge; a genuine test failure
-        # still fails all three attempts. Vendoring the ontologies would
-        # remove this failure class entirely.
-        for attempt in 1 2 3; do
+        # still fails every attempt. 3x90s proved too short against a
+        # sustained throttle window (two consecutive builds died on the same
+        # fetch), so the loop now rides out ~25 minutes. Vendoring the
+        # ontologies would remove this failure class entirely.
+        for attempt in 1 2 3 4 5 6; do
           make test && break
-          [ "$attempt" = "3" ] && exit 1
-          echo "make test failed (attempt $attempt), retrying in 90s"
-          sleep 90
+          [ "$attempt" = "6" ] && exit 1
+          echo "make test failed (attempt $attempt), retrying in 300s"
+          sleep 300
         done
     - name: Build iff-agent
       run: |
