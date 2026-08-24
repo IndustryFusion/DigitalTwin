@@ -405,10 +405,17 @@ wait_for_retraction() {
 }
 
 @test "shacl-validation statementset is deployed and running" {
-    run kubectl -n "${NAMESPACE}" get beamsqlstatementsets "${STATEMENTSET}" -o jsonpath='{.status.state}'
-    [ "$status" -eq 0 ]
-    echo "# statementset state: ${output}" >&3
-    [ "$output" = "RUNNING" ]
+    # The operator briefly reports RESTARTING/DEPLOYING right after a deploy
+    # while the job settles -- a one-shot check races that window, so poll.
+    local waited=0 state=""
+    while [ "$waited" -lt 180 ]; do
+        state=$(kubectl -n "${NAMESPACE}" get beamsqlstatementsets "${STATEMENTSET}" -o jsonpath='{.status.state}')
+        [ "$state" = "RUNNING" ] && break
+        sleep 5
+        waited=$((waited + 5))
+    done
+    echo "# statementset state after ${waited}s: ${state}" >&3
+    [ "$state" = "RUNNING" ]
 }
 
 @test "flink job for shacl-validation has every task running" {
