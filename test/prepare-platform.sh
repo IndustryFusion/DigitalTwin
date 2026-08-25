@@ -15,9 +15,30 @@
 #
 
 # use specific k3s image to avoid surprises with k8s api changes
-K3S_IMAGE=rancher/k3s:v1.31.5-k3s1-amd64
+K3S_IMAGE=rancher/k3s:v1.33.13-k3s2
 CURR_DIR=$(pwd)
 SCRIPT_PATH=$(realpath $0)
+
+# Optional corporate proxy support.
+# Build (this script) and deploy (install-platform.sh/helm/env.sh, run
+# possibly on a different host or CI runner) may sit behind different
+# proxies, or no proxy at all - so the proxy value itself is intentionally
+# NOT stored in a shared, git-tracked file. Each host's own OS-level
+# environment (e.g. HTTP_PROXY/HTTPS_PROXY/NO_PROXY exported via
+# /etc/environment on Ubuntu) is the single source of truth for that host,
+# and is propagated consistently from here to: the Docker daemon, the
+# Docker client (so `docker build`/`docker run` inject them into
+# containers), Maven, and the k3d cluster nodes (which run their own
+# containerd and don't inherit host env vars). If no proxy is set, none of
+# this runs and behavior is unchanged.
+PROXY_HTTP="${HTTP_PROXY:-${http_proxy:-}}"
+PROXY_HTTPS="${HTTPS_PROXY:-${https_proxy:-}}"
+PROXY_NO="${NO_PROXY:-${no_proxy:-}}"
+USE_PROXY=false
+if [ -n "$PROXY_HTTP" ] || [ -n "$PROXY_HTTPS" ]; then
+    USE_PROXY=true
+    echo "Detected proxy configuration (from environment or helm/common.yaml) - will configure Docker, Maven and k3d to use it."
+fi
 
 printf "\033[1mInstalling docker\n"
 printf -- "-----------------\033[0m\n"
@@ -35,12 +56,53 @@ sudo apt-get install -y docker-ce=5:27.2.1-1~ubuntu.$(lsb_release -sr)~$(lsb_rel
 printf "\033[1mSuccessfully installed %s\033[0m\n" "$(docker --version)"
 printf "\n"
 
+if [ "$USE_PROXY" = true ]; then
+    printf "\033[1mConfiguring Docker proxy (daemon + client)\n"
+    printf -- "-------------------------------------------\033[0m\n"
+
+    # Docker daemon proxy: needed so `docker pull`/`docker build` base image
+    # pulls go through the proxy.
+    sudo mkdir -p /etc/systemd/system/docker.service.d
+    {
+        echo "[Service]"
+        [ -n "$PROXY_HTTP" ] && echo "Environment=\"HTTP_PROXY=${PROXY_HTTP}\""
+        [ -n "$PROXY_HTTPS" ] && echo "Environment=\"HTTPS_PROXY=${PROXY_HTTPS}\""
+        [ -n "$PROXY_NO" ] && echo "Environment=\"NO_PROXY=${PROXY_NO}\""
+    } | sudo tee /etc/systemd/system/docker.service.d/http-proxy.conf > /dev/null
+    sudo systemctl daemon-reload
+    sudo systemctl restart docker
+
+    # Docker client proxy: needed so `docker build`/`docker run` inject
+    # HTTP_PROXY/HTTPS_PROXY/NO_PROXY into the containers themselves (e.g.
+    # for npm install/pip install/apt-get running inside RUN steps).
+    mkdir -p "$HOME/.docker"
+    python3 - "$PROXY_HTTP" "$PROXY_HTTPS" "$PROXY_NO" <<'PYEOF'
+import json, os, sys
+http_proxy, https_proxy, no_proxy = sys.argv[1], sys.argv[2], sys.argv[3]
+cfg_path = os.path.expanduser("~/.docker/config.json")
+cfg = {}
+if os.path.exists(cfg_path):
+    with open(cfg_path) as f:
+        cfg = json.load(f)
+proxies = {}
+if http_proxy:
+    proxies["httpProxy"] = http_proxy
+if https_proxy:
+    proxies["httpsProxy"] = https_proxy
+if no_proxy:
+    proxies["noProxy"] = no_proxy
+cfg.setdefault("proxies", {})["default"] = proxies
+with open(cfg_path, "w") as f:
+    json.dump(cfg, f, indent=2)
+PYEOF
+fi
+
 if [[ -z $(groups | grep docker) ]];
 then
     sudo usermod -a -G docker $USER;
     echo "$USER has been added to the docker group.";
     echo "Script is being restarted for changes to take effect.";
-    sudo -u $USER /bin/bash $SCRIPT_PATH;
+    sudo -u $USER HTTP_PROXY="$PROXY_HTTP" HTTPS_PROXY="$PROXY_HTTPS" NO_PROXY="$PROXY_NO" /bin/bash $SCRIPT_PATH;
     exit;
 fi;
 
@@ -65,10 +127,29 @@ sudo snap install yq --classic
 echo Installing K3d cluster
 echo ----------------------
 ## k3d cluster with 2 nodes
-curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | TAG=v5.8.3 bash
+curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | TAG=v5.9.0 bash
 k3d registry create iff.localhost -p 12345
+
+# k3d node containers run their own containerd and do NOT inherit the host's
+# proxy env vars, so image pulls (e.g. rancher/mirrored-pause) would hang/fail
+# on proxy-only networks unless we inject the proxy explicitly into the nodes.
+K3D_PROXY_ARGS=()
+if [ "$USE_PROXY" = true ]; then
+    echo "Configuring k3d node proxy"
+    echo "--------------------------"
+    K3D_NO_PROXY="${PROXY_NO:-127.0.0.1,localhost,0.0.0.0}"
+    case "$K3D_NO_PROXY" in
+        *cluster.local*) ;;
+        *) K3D_NO_PROXY="${K3D_NO_PROXY},10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,.svc,.cluster.local" ;;
+    esac
+    [ -n "$PROXY_HTTP" ] && K3D_PROXY_ARGS+=(-e "HTTP_PROXY=${PROXY_HTTP}@server:*;agent:*")
+    [ -n "$PROXY_HTTPS" ] && K3D_PROXY_ARGS+=(-e "HTTPS_PROXY=${PROXY_HTTPS}@server:*;agent:*")
+    K3D_PROXY_ARGS+=(-e "NO_PROXY=${K3D_NO_PROXY}@server:*;agent:*")
+fi
+
 k3d cluster create --image ${K3S_IMAGE} -a 2 --registry-use k3d-iff.localhost:12345 iff-cluster \
-  --k3s-arg "--kubelet-arg=eviction-hard=imagefs.available<2%,nodefs.available<2%,nodefs.inodesFree<2%@all"
+  --k3s-arg "--kubelet-arg=eviction-hard=imagefs.available<2%,nodefs.available<2%,nodefs.inodesFree<2%@all" \
+  "${K3D_PROXY_ARGS[@]}"
 
 if [ -z "$BUILDONLY" ];then
     echo Install Helm v3.10.3
@@ -121,6 +202,39 @@ sudo mv maven.sh /etc/profile.d/
 source /etc/profile.d/maven.sh
 mvn --version
 
+if [ "$USE_PROXY" = true ]; then
+    echo Configuring Maven proxy
+    echo -----------------------
+    # Maven does NOT read HTTP_PROXY/HTTPS_PROXY env vars, so it needs an
+    # explicit <proxies> entry in settings.xml.
+    mkdir -p "$HOME/.m2"
+    PROXY_URL="${PROXY_HTTPS:-$PROXY_HTTP}"
+    PROXY_HOST=$(echo "$PROXY_URL" | sed -E 's#^https?://##' | cut -d: -f1)
+    PROXY_PORT=$(echo "$PROXY_URL" | sed -E 's#^https?://##' | cut -d: -f2)
+    cat > "$HOME/.m2/settings.xml" <<EOF
+<settings>
+  <proxies>
+    <proxy>
+      <id>build-proxy-http</id>
+      <active>true</active>
+      <protocol>http</protocol>
+      <host>${PROXY_HOST}</host>
+      <port>${PROXY_PORT}</port>
+      <nonProxyHosts>localhost|127.0.0.1</nonProxyHosts>
+    </proxy>
+    <proxy>
+      <id>build-proxy-https</id>
+      <active>true</active>
+      <protocol>https</protocol>
+      <host>${PROXY_HOST}</host>
+      <port>${PROXY_PORT}</port>
+      <nonProxyHosts>localhost|127.0.0.1</nonProxyHosts>
+    </proxy>
+  </proxies>
+</settings>
+EOF
+fi
+
 if [ -z "$BUILDONLY" ];then
     echo Install shellcheck
     echo ------------------
@@ -170,7 +284,7 @@ if [ -z "$BUILDONLY" ];then
     echo -------------------
     sudo apt remove -y nodejs libnode-dev libnode72
     sudo apt purge -y nodejs
-    curl -sL https://deb.nodesource.com/setup_18.x -o /tmp/nodesource_setup.sh
+    curl -sL https://deb.nodesource.com/setup_22.x -o /tmp/nodesource_setup.sh
     sudo bash /tmp/nodesource_setup.sh
     sudo apt install -y nodejs
 
