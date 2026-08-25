@@ -63,6 +63,23 @@ const removeDefaultDatasetID = function (entities) {
   });
 };
 
+/**
+ * True when any attribute of the entity carries an IRI value ({"@id": ...}).
+ * Scorpio's batchMerge rejects those with 400/22023 while the per-entity
+ * attrs endpoint accepts them, so they must take the other route.
+ */
+const hasIriValue = function (entity) {
+  return Object.keys(entity).some(function (key) {
+    if (key === 'id' || key === 'type') {
+      return false;
+    }
+    const attrs = Array.isArray(entity[key]) ? entity[key] : [entity[key]];
+    return attrs.some(attr => attr !== null && typeof attr === 'object' &&
+      attr.value !== null && typeof attr.value === 'object' &&
+      (attr.value['@id'] !== undefined || attr.value.id !== undefined));
+  });
+};
+
 module.exports = function NgsildUpdates (conf) {
   const config = conf;
   const ngsild = new NgsiLd(config);
@@ -112,6 +129,10 @@ module.exports = function NgsildUpdates (conf) {
         entities = JSON.parse(body.entities);
       } catch (e) {
         logger.error('Could not parse entities field. Ignoring record.' + body.entities);
+        // without this return the undefined entities crashed the caller's
+        // batch loop, so one malformed record silenced every valid update
+        // behind it
+        return;
       }
     } else {
       entities = body.entities;
@@ -133,9 +154,31 @@ module.exports = function NgsildUpdates (conf) {
           logger.error('Unhealthy entities - ignoring it:' + JSON.stringify(entities));
         } else {
           logger.debug('Updating: ' + JSON.stringify(entities));
-          result = await ngsild.batchMerge(entities, { headers });
-          if (result.statusCode !== 204 && result.statusCode !== 207) {
-            logger.error('Entity cannot run merge:' + JSON.stringify(result.body) + ' and status code ' + result.statusCode); // throw no error, log it and ignore it, repeating would probably not solve it
+          // Scorpio's batchMerge cannot digest IRI-valued properties
+          // (value: {"@id": ...} answers 400/22023), which is exactly what
+          // a rule writing e.g. a waste class produces. Those entities go
+          // through the per-entity attrs endpoint, which accepts them; the
+          // rest keeps the batch path.
+          const mergeable = entities.filter(entity => !hasIriValue(entity));
+          const iriValued = entities.filter(hasIriValue);
+          if (mergeable.length > 0) {
+            result = await ngsild.batchMerge(mergeable, { headers });
+            if (result.statusCode !== 204 && result.statusCode !== 207) {
+              logger.error('Entity cannot run merge:' + JSON.stringify(result.body) + ' and status code ' + result.statusCode); // throw no error, log it and ignore it, repeating would probably not solve it
+            }
+          }
+          for (const entity of iriValued) {
+            const attrs = {};
+            Object.keys(entity).forEach(function (key) {
+              if (key !== 'id' && key !== 'type') {
+                attrs[key] = entity[key];
+              }
+            });
+            result = await ngsild.updateProperties(
+              { id: entity.id, body: attrs, isOverwrite: true }, { headers });
+            if (result.statusCode !== 204 && result.statusCode !== 207) {
+              logger.error('Entity cannot update properties:' + JSON.stringify(result.body) + ' and status code ' + result.statusCode);
+            }
           }
         }
       } else if (op === 'upsert') {

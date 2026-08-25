@@ -23,9 +23,12 @@ FROM (
          because the bridge put it in the record stamp. `ts` is the write time
          now, so reading it here would stamp every attribute written back to
          Scorpio with the moment we happened to forward it. */
-      || '"observedAt":"' 
-         || DATE_FORMAT(COALESCE(`observedAt`, `ts`), 'yyyy-MM-dd''T''HH:mm:ss.') 
-         || CAST(EXTRACT(MILLISECOND FROM COALESCE(`observedAt`, `ts`)) AS STRING) || 'Z",'
+      || '"observedAt":"'
+         || DATE_FORMAT(COALESCE(`observedAt`, `ts`), 'yyyy-MM-dd''T''HH:mm:ss.')
+         /* zero-padded: '.10Z' would mean 10ms rendered as if it were 100ms,
+            and unpadded fractions break the fixed-width ISO form that makes
+            lexical comparison equal chronological comparison */
+         || LPAD(CAST(EXTRACT(MILLISECOND FROM COALESCE(`observedAt`, `ts`)) AS STRING), 3, '0') || 'Z",'
       || '"type":"' || type || '",'
       || '"datasetId":"' 
          || IF(datasetId IS NOT NULL, datasetId, '@none') || '"'
@@ -46,7 +49,18 @@ FROM (
                WHEN nodeType = '@json' THEN
                  ',"value":' || attributeValue
                WHEN nodeType = '@value' THEN
-                 ',"value":' || attributeValue
+                 /* a bare @value is only valid unquoted JSON when it IS a
+                    JSON literal (number, boolean, null). A string value --
+                    an ISO timestamp a rule copied from an observedAt, for
+                    instance -- must be quoted, or the whole ngsild_updates
+                    record is unparseable and the bridge drops it. */
+                 CASE
+                   WHEN REGEXP(attributeValue, '^-?[0-9]+(\.[0-9]+)?([eE][-+]?[0-9]+)?$')
+                        OR attributeValue IN ('true', 'false', 'null') THEN
+                     ',"value":' || attributeValue
+                   ELSE
+                     ',"value":"' || attributeValue || '"'
+                 END
                ELSE
                  ',"value":"' || attributeValue || '"'
              END
