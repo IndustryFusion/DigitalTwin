@@ -346,7 +346,11 @@ def translate_function(ctx, function):
             else:
                 result = f'SQL_DIALECT_CAST(SQL_DIALECT_STRIP_IRI{{{expression}}} as {cast})'
         else:
-            result = f'SQL_DIALECT_TIME_TO_MILLISECONDS{{SQL_DIALECT_STRIP_LITERAL{{{expression}}}}}'
+            # xsd:dateTime() normalizes its argument into the canonical
+            # ISO 8601 UTC string, the same quoted form wrap_ngsild_variable
+            # gives observedAt-bound variables -- so FILTER(?ts > xsd:dateTime(
+            # ?value)) compares ISO against ISO, lexically == chronologically.
+            result = f"'\"' || SQL_DIALECT_ISO_TIMESTAMP{{SQL_DIALECT_STRIP_LITERAL{{{expression}}}}} || '\"'"
     elif iri in IFA:
         udf = utils.strip_class(iri)
         result = f'{udf}('
@@ -354,8 +358,7 @@ def translate_function(ctx, function):
         for i in range(0, numargs):
             if i != 0:
                 result += ', '
-            expression = translate(ctx, expr[i])
-            result += expression
+            result += translate_udf_argument(ctx, expr[i])
         utils.set_is_aggregate_var(ctx, False)
         result += ')'
     elif iri in IFN:
@@ -364,13 +367,22 @@ def translate_function(ctx, function):
         for i in range(0, numargs):
             if i != 0:
                 result += ', '
-            expression = translate(ctx, expr[i])
-            result += expression
+            result += translate_udf_argument(ctx, expr[i])
         utils.set_is_aggregate_var(ctx, False)
         result += ')'
     else:
         raise utils.WrongSparqlStructure(f'Function {iri.toPython()} not supported!')
     return result
+
+
+def translate_udf_argument(ctx, arg):
+    """UDF arguments live in the numeric domain: a time-bound variable is
+    handed to the UDF as epoch milliseconds (the UDFs' contract, e.g.
+    statetime subtracts its inputs), not as the quoted ISO string the
+    serialization/comparison domain uses."""
+    if isinstance(arg, Variable) and arg in ctx.get('time_variables', {}):
+        return utils.unwrap_variables(ctx, arg)
+    return translate(ctx, arg)
 
 
 def translate_builtin_now(ctx, builtin_now):

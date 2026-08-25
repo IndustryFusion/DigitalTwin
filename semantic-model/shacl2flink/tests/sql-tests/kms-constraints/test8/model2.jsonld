@@ -57,12 +57,12 @@
     "iffBaseEntities:isUsedFrom": [
     {
       "type": "Property",
-      "value": "2021-10-25 13:54:55.4"
+      "value": "2021-10-25T13:54:55.400Z"
     }],
     "iffBaseEntities:isUsedUntil": [
       {
         "type": "Property",
-        "value": "2024-02-27 13:54:55.4"
+        "value": "2024-02-27T13:54:55.400Z"
       }],
     "iffFilterEntities:hasWasteclass": [
       {

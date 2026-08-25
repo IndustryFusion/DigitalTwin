@@ -364,7 +364,8 @@ zzSQL_DIALECT_CURRENT_TIMESTAMP, SQL_DIALECT_INSERT_ATTRIBUTES,SQL_DIALECT_SQLIT
     result_expression = utils.process_sql_dialect(expression, isSqlite)
     assert result_expression == "REGEXP_REPLACE(CAST(stripme as STRING), '>|<', '')\
 xxREGEXP_REPLACE(CAST(literal as STRING), '\\\"', '')\
-yy1000 * UNIX_TIMESTAMP(TRY_CAST(time AS STRING)) + EXTRACT(MILLISECOND FROM TRY_CAST(time as TIMESTAMP))\
+yy1000 * UNIX_TIMESTAMP(REPLACE(REPLACE(TRY_CAST(time AS STRING), 'T', ' '), 'Z', '')) + \
+EXTRACT(MILLISECOND FROM TRY_CAST(REPLACE(REPLACE(TRY_CAST(time AS STRING), 'T', ' '), 'Z', '') as TIMESTAMP))\
 zzCURRENT_TIMESTAMP, INSERT into attributes_insert, TRY_CAST"
 
     isSqlite = True
@@ -387,9 +388,12 @@ zzCURRENT_TIMESTAMP, INSERT into attributes_insert, TRY_CAST"
     isSqlite = False
     expression = "SQL_DIALECT_STRIP_LITERAL{SQL_DIALECT_TIME_TO_MILLISECONDS{SQL_DIALECT_STRIP_IRI{test}}}"
     result_expression = utils.process_sql_dialect(expression, isSqlite)
-    assert result_expression == 'REGEXP_REPLACE(CAST(1000 * UNIX_TIMESTAMP(TRY_CAST(REGEXP_REPLACE(CAST(test \
-as STRING), \'>|<\', \'\') AS STRING)) + EXTRACT(MILLISECOND FROM TRY_CAST(REGEXP_REPLACE(CAST(test as STRING), \
-\'>|<\', \'\') as TIMESTAMP)) as STRING), \'\\"\', \'\')'
+    assert result_expression == (
+        "REGEXP_REPLACE(CAST(1000 * UNIX_TIMESTAMP(REPLACE(REPLACE(TRY_CAST("
+        "REGEXP_REPLACE(CAST(test as STRING), '>|<', '') AS STRING), 'T', ' '), 'Z', '')) + "
+        "EXTRACT(MILLISECOND FROM TRY_CAST(REPLACE(REPLACE(TRY_CAST("
+        "REGEXP_REPLACE(CAST(test as STRING), '>|<', '') AS STRING), 'T', ' '), 'Z', '') "
+        "as TIMESTAMP)) as STRING), '\\\"', '')")
 
     isSqlite = True
     result_expression = utils.process_sql_dialect(expression, isSqlite)
@@ -602,3 +606,29 @@ def test_add_table_values():
         sqlsettings = result['spec']['sqlsettings']
         assert not any("state.backend" in s for s in sqlsettings)
         assert not any("execution.checkpointing.interval" in s for s in sqlsettings)
+
+
+def test_iso_timestamp_dialect():
+    expression = "SQL_DIALECT_ISO_TIMESTAMP{ts}"
+    sqlite = utils.process_sql_dialect(expression, True)
+    assert sqlite == "(strftime('%Y-%m-%dT%H:%M:%f', ts) || 'Z')"
+    flink = utils.process_sql_dialect(expression, False)
+    assert flink == (
+        "(DATE_FORMAT(TRY_CAST(REPLACE(REPLACE(TRY_CAST(ts AS STRING), 'T', ' '), 'Z', '') "
+        "AS TIMESTAMP), 'yyyy-MM-dd''T''HH:mm:ss.') || "
+        "LPAD(CAST(EXTRACT(MILLISECOND FROM TRY_CAST(REPLACE(REPLACE(TRY_CAST(ts AS STRING), "
+        "'T', ' '), 'Z', '') AS TIMESTAMP)) AS STRING), 3, '0') || 'Z')"
+    )
+
+
+def test_wrap_time_variable_serializes_iso():
+    var = rdflib.Variable('ts')
+    ctx = {
+        'bounds': {'ts': 'TABLE.`observedAt`'},
+        'property_variables': {},
+        'entity_variables': {},
+        'time_variables': {var: True},
+        'query': 'test',
+    }
+    result = utils.wrap_ngsild_variable(ctx, var)
+    assert result == "'\"' || SQL_DIALECT_ISO_TIMESTAMP{TABLE.`observedAt`} || '\"'"
