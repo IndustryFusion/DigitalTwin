@@ -44,6 +44,28 @@ After that, the following steps have to be executed (note the round brackets):
 
 ---
 
+## Building and Installing Behind a Corporate Proxy
+
+If your build/install host requires a proxy for outbound internet access (e.g. a corporate network), export the standard proxy environment variables **before** running any of the scripts above:
+
+```
+export HTTP_PROXY=http://your-proxy-host:port
+export HTTPS_PROXY=http://your-proxy-host:port
+export NO_PROXY=127.0.0.1,localhost,::1,0.0.0.0,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,.svc,.cluster.local
+```
+
+For a persistent setup, it's recommended to add these to `/etc/environment` on Ubuntu so they apply to every shell session without needing to be re-exported.
+
+**Why this is not a config file setting:** Proxy configuration is intentionally **not** stored in a shared, git-tracked file such as `common.yaml`. The build (docker images, Maven, npm) and deploy (k3d cluster, Helm/helmfile) steps can run on different hosts or networks - each with a different proxy, or no proxy at all - so a single committed value would be wrong for at least one of them. Instead, each host's own OS-level environment is treated as the single source of truth for that host.
+
+**What picks this up automatically:**
+* `test/prepare-platform.sh` reads `HTTP_PROXY`/`HTTPS_PROXY`/`NO_PROXY` from the environment and configures: the Docker daemon (`/etc/systemd/system/docker.service.d/http-proxy.conf`), the Docker client (`~/.docker/config.json`, so `docker build`/`docker run` inject the proxy into containers automatically), a generated Maven `~/.m2/settings.xml` (Maven does not honor `HTTP_PROXY` env vars on its own), and the k3d cluster nodes (`k3d cluster create -e HTTP_PROXY=...@server:*;agent:*`, since k3d nodes run their own containerd and don't inherit host env vars).
+* `helm/env.sh` normalizes the same variables and is sourced by `build-local-platform.sh`, `install-platform.sh`, `install_operators.sh`, `uninstall_operators.sh` and `prepare-airgap.bash`. Since these scripts invoke `docker`, `helm`/`helmfile` (Go binaries that honor `HTTP_PROXY`/`HTTPS_PROXY`/`NO_PROXY` automatically for chart repo/registry fetches), and `docker-compose build` as subprocesses, the proxy is inherited consistently without any extra per-tool configuration.
+* If `FlinkOperatorWithCoreServices/Dockerfile`'s Maven build steps run behind a proxy, they derive `~/.m2/settings.xml` at build time directly from the `HTTP_PROXY`/`HTTPS_PROXY` build args that Docker automatically forwards once `~/.docker/config.json` is configured as above.
+
+If no proxy environment variables are set, none of the above proxy configuration is applied and behavior is unchanged.
+
+
 
 # Accessing Keycloak and Scorpio
 

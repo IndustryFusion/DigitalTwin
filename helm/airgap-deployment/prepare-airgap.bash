@@ -26,7 +26,7 @@ if [ "${REGISTRY}" = "docker.io" ]; then
       docker.io/emqx/emqx-operator-controller:${EMQX_OPERATOR_VERSION}
       docker.io/minio/minio:RELEASE.2023-01-12T02-06-16Z
       docker.io/redis:7.2
-      ghcr.io/zalando/spilo-15:2.1-p9
+      ghcr.io/zalando/spilo-15:3.2-p1
       docker.io/velero/velero:${VELERO_VERSION}
       docker.io/alerta/alerta-web:${ALERTA_VERSION}
       docker.io/busybox:1.28
@@ -64,7 +64,7 @@ else
       docker.io/emqx/emqx-operator-controller:${EMQX_OPERATOR_VERSION}
       docker.io/minio/minio:RELEASE.2023-01-12T02-06-16Z
       docker.io/redis:7.2
-      ghcr.io/zalando/spilo-15:2.1-p9
+      ghcr.io/zalando/spilo-15:3.2-p1
       docker.io/velero/velero:${VELERO_VERSION}
       docker.io/alerta/alerta-web:${ALERTA_VERSION}
       docker.io/busybox:1.28
