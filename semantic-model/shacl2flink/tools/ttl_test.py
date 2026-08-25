@@ -33,6 +33,12 @@ Kafka -> Flink -> Alerta), and checks:
                          relationship; count 0 and count 1 must both be
                          reported correctly and "Found 2" must never appear
                          in the verdict history.
+  * Waste class       -- ChangeWasteClassRulesShape through the full
+                         writeback loop (rule -> attributes_insert ->
+                         CoreServices -> Scorpio): the material escalates
+                         the cartridge's class, a lower-hazard material
+                         never downgrades it, and the escalation still
+                         works after the TTL idle.
   * Event time        -- observedAt governs, not arrival time: a newer-2024
                          value beats an older-2024 one regardless of arrival
                          order; a stale re-send does not overwrite; a delete
@@ -107,7 +113,9 @@ ALERTA = 'http://alerta.local/api'
 
 ENT = 'https://industryfusion.github.io/contexts/example/v0/base_entities'
 KNOW = 'https://industryfusion.github.io/contexts/example/v0/base_knowledge'
-MATERIAL = 'https://industryfusion.github.io/contexts/ontology/v0/material/EN_1.4301'
+MATERIALS = 'https://industryfusion.github.io/contexts/ontology/v0/material'
+# the default kms maps: EN_1.3401 -> WC1, EN_1.4301 -> WC2, EN_1.5301 -> WC3
+MATERIAL = f'{MATERIALS}/EN_1.4301'
 
 RESULTS = []
 
@@ -123,13 +131,17 @@ def record(phase, name, ok, detail=''):
 
 # --------------------------------------------------------------------------- plumbing
 
-def _req(url, method='GET', token=None, body=None, ctype='application/ld+json'):
+def _req(url, method='GET', token=None, body=None, ctype='application/ld+json',
+         accept=None):
     data = json.dumps(body).encode() if body is not None else None
     req = urllib.request.Request(url, data=data, method=method)
     if token:
         req.add_header('Authorization', f'Bearer {token}')
     if data:
         req.add_header('Content-Type', ctype)
+    if accept:
+        # Scorpio answers 406 to urllib's default Accept on entity reads
+        req.add_header('Accept', accept)
     try:
         with urllib.request.urlopen(req, timeout=30) as resp:
             return resp.status, resp.read()
@@ -330,6 +342,10 @@ class Family:
         self.filter = f'urn:rt:{run}:filter'
         self.workpiece = f'urn:rt:{run}:workpiece'
         self.cartridge = f'urn:rt:{run}:cartridge'
+        # one cartridge per filter: a shared instance would let filter2's
+        # permanently-active chain change the class while THE filter is off,
+        # which is exactly the confusion the kms example used to produce
+        self.cartridge2 = f'urn:rt:{run}:cartridge2'
         # a second cutter/filter pair reserved for the event-time check: its
         # hasStrength timeline must stay pristine 2024, and the other checks
         # restore with wall-clock (2026) observedAt -- which would correctly
@@ -337,7 +353,7 @@ class Family:
         self.cutter2 = f'urn:rt:{run}:cutter2'
         self.filter2 = f'urn:rt:{run}:filter2'
         self.all = [self.cutter, self.filter, self.cutter2, self.filter2,
-                    self.workpiece, self.cartridge]
+                    self.workpiece, self.cartridge, self.cartridge2]
 
     def entities(self):
         return [
@@ -382,7 +398,7 @@ class Family:
              'iffBaseEntities:hasState': [{'type': 'Property',
                                            'value': {'@id': 'base:state_ON'}}],
              'iffBaseEntities:hasCartridge': [{'type': 'Relationship',
-                                               'object': self.cartridge}],
+                                               'object': self.cartridge2}],
              'iffBaseEntities:hasStrength': [{'type': 'Property', 'value': 0.6,
                                               'observedAt': '2024-03-01T00:00:00.000Z'}]},
             {'@context': CONTEXT, 'id': self.workpiece, 'type': 'iffBaseEntities:Workpiece',
@@ -394,9 +410,23 @@ class Family:
             {'@context': CONTEXT, 'id': self.cartridge,
              'type': 'iffBaseEntities:FilterCartridge',
              'iffBaseEntities:isUsedFrom': [{'type': 'Property',
-                                             'value': '2024-02-27 13:54:55.4'}],
+                                             'value': '2024-02-27T13:54:55.400Z'}],
              'iffBaseEntities:isUsedUntil': [{'type': 'Property',
-                                              'value': '2024-02-27 13:54:55.4'}]},
+                                              'value': '2024-02-27T13:54:55.400Z'}],
+             # start at WC1 so the escalation to the material's WC2 is a real
+             # transition (and CartridgeShape's minCount is satisfied)
+             'iffFilterEntities:hasWasteclass': [{
+                 'type': 'Property',
+                 'value': {'@id': 'iffFilterKnowledge:WC1'}}]},
+            {'@context': CONTEXT, 'id': self.cartridge2,
+             'type': 'iffBaseEntities:FilterCartridge',
+             'iffBaseEntities:isUsedFrom': [{'type': 'Property',
+                                             'value': '2024-02-27T13:54:55.400Z'}],
+             'iffBaseEntities:isUsedUntil': [{'type': 'Property',
+                                              'value': '2024-02-27T13:54:55.400Z'}],
+             'iffFilterEntities:hasWasteclass': [{
+                 'type': 'Property',
+                 'value': {'@id': 'iffFilterKnowledge:WC1'}}]},
         ]
 
 
@@ -439,6 +469,67 @@ def set_state(token, eid, state):
 def set_strength(token, eid, value, observed_at):
     return post_attr(token, eid, 'hasStrength',
                      {'type': 'Property', 'value': value, 'observedAt': observed_at})
+
+
+def set_material(token, eid, material_iri):
+    return post_attr(token, eid, 'hasMaterial',
+                     {'type': 'Property', 'value': {'@id': material_iri}})
+
+
+def get_wasteclass(token, eid):
+    """The cartridge's hasWasteclass value ('WC1'..'WC3'), or None.
+
+    Read back from Scorpio, because that is where the rule's writeback
+    lands: SPARQL rule -> attributes_insert -> CoreServices ->
+    ngsild_updates -> Scorpio. Asserting here covers the entire loop.
+    """
+    code, body = _req(f'{NGSILD}/entities/{eid}', token=token.get(),
+                      accept='application/ld+json')
+    if code != 200:
+        return None
+    entity = json.loads(body)
+    for key, value in entity.items():
+        if key.split('/')[-1].split(':')[-1] != 'hasWasteclass':
+            continue
+        attr = value[0] if isinstance(value, list) else value
+        inner = attr.get('value', attr.get('object'))
+        if isinstance(inner, dict):
+            # Scorpio serializes the IRI value as {"id": ...} ("@id" pre-1.5)
+            inner = inner.get('@id') or inner.get('id') or ''
+        return str(inner).split('/')[-1].split(':')[-1]
+    return None
+
+
+def wasteclass_check(token, key, fam, phase, material_iri, want_wc,
+                     lower_material=None, timeout=120):
+    """ChangeWasteClassRulesShape end to end: setting the workpiece material
+    escalates the cartridge's waste class through the writeback loop, and a
+    lower-hazard material never downgrades it (a replaced cartridge is a NEW
+    entity, so there deliberately is no reset path)."""
+    set_material(token, fam.workpiece, material_iri)
+    deadline = time.time() + timeout
+    current = None
+    while time.time() < deadline:
+        current = get_wasteclass(token, fam.cartridge)
+        if current == want_wc:
+            break
+        time.sleep(5)
+    record(phase, f'wasteclass.escalate-{want_wc}', current == want_wc,
+           f'cartridge wasteclass: {current} (want {want_wc})')
+    if lower_material is None or current != want_wc:
+        return
+    set_material(token, fam.workpiece, lower_material)
+    held = True
+    settle = time.time() + 30
+    while time.time() < settle:
+        current = get_wasteclass(token, fam.cartridge)
+        if current != want_wc:
+            held = False
+            break
+        time.sleep(5)
+    record(phase, 'wasteclass.no-downgrade', held,
+           f'cartridge wasteclass after lower-hazard material: {current}')
+    set_material(token, fam.workpiece, material_iri)
 
 
 def now_observed_at():
@@ -1029,6 +1120,11 @@ def main():
         class_check(stats, token, key, fam, 'fresh')
         count_churn(stats, token, key, fam, args.namespace, 'fresh')
         event_time_check(stats, token, key, fam, 'fresh')
+        # the family starts at WC1 with an EN_1.4301 (WC2) workpiece, so the
+        # escalation is observed as a real transition; EN_1.3401 (WC1) then
+        # proves the ratchet never downgrades
+        wasteclass_check(token, key, fam, 'fresh', f'{MATERIALS}/EN_1.4301',
+                         'WC2', lower_material=f'{MATERIALS}/EN_1.3401')
         latency_phase(args, token, key, fam)
         checkpoint_phase(stats)
         last_write = time.time()
@@ -1042,6 +1138,10 @@ def main():
         stats.snap('postttl:baseline')
         sparql_checks(stats, token, key, fam, 'postttl')
         class_check(stats, token, key, fam, 'postttl')
+        # a writeback rule must also survive the idle: escalating to WC3
+        # proves the ChangeWasteClass joins are still alive after 3x TTL
+        wasteclass_check(token, key, fam, 'postttl', f'{MATERIALS}/EN_1.5301',
+                         'WC3')
 
         failed = [r for r in RESULTS if r['phase'] == 'postttl' and not r['ok']]
         if failed:
