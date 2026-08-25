@@ -533,6 +533,165 @@ describe('Test libNgsildUpdates', function () {
     batchMergeCalled.should.equal(true);
     revert();
   });
+
+  it('Should ignore an unparseable entities string without throwing', async function () {
+    let batchMergeCalled = false;
+    const config = {
+      ngsildUpdates: {
+        clientSecretVariable: 'CLIENT_SECRET',
+        refreshIntervalInSeconds: 200
+      },
+      keycloak: {
+        ngsildUpdatesAuthService: {
+        }
+      },
+      bridgeCommon: {
+        kafkaSyncOnAttribute: 'kafkaSyncOn'
+      }
+    };
+    const Logger = function () {
+      return logger;
+    };
+    const process = {
+      env: {
+        CLIENT_SECRET: 'client_secret'
+      }
+    };
+    // an unquoted ISO timestamp made a rule-written record unparseable, and
+    // the bridge then crashed its whole batch instead of skipping the record
+    const body = {
+      op: 'update',
+      entities: '[{"id":"id","value":2026-08-24T19:19:43.588Z}]',
+      overwriteOrReplace: false
+    };
+    const Ngsild = function () {
+      return {
+        batchMerge: function (entities, { headers }) {
+          batchMergeCalled = true;
+          return new Promise(function (resolve) {
+            resolve({ statusCode: 204 });
+          });
+        },
+        replaceEntities: function () {
+        }
+      };
+    };
+    const setInterval = function (fun, interv) {
+    };
+    const Keycloak = function () {
+      return {
+        grantManager: {
+          obtainFromClientCredentials: async function () {
+            return new Promise(function (resolve, reject) {
+              resolve({
+                access_token: {
+                  token: 'token'
+                }
+              });
+            });
+          }
+        }
+      };
+    };
+    const revert = ToTest.__set__('Logger', Logger);
+    ToTest.__set__('process', process);
+    ToTest.__set__('NgsiLd', Ngsild);
+    ToTest.__set__('setInterval', setInterval);
+    ToTest.__set__('Keycloak', Keycloak);
+    ToTest.__set__('addSyncOnAttribute', addSyncOnAttribute);
+    const ngsildUpdates = new ToTest(config);
+    await ngsildUpdates.ngsildUpdates(body);
+    batchMergeCalled.should.equal(false);
+    revert();
+  });
+
+  it('Should route IRI-valued properties to updateProperties, not batchMerge', async function () {
+    let batchMergeCalled = false;
+    let updatePropertiesId = null;
+    let updatePropertiesBody = null;
+    const config = {
+      ngsildUpdates: {
+        clientSecretVariable: 'CLIENT_SECRET',
+        refreshIntervalInSeconds: 200
+      },
+      keycloak: {
+        ngsildUpdatesAuthService: {
+        }
+      },
+      bridgeCommon: {
+        kafkaSyncOnAttribute: 'kafkaSyncOn'
+      }
+    };
+    const Logger = function () {
+      return logger;
+    };
+    const process = {
+      env: {
+        CLIENT_SECRET: 'client_secret'
+      }
+    };
+    const wasteclass = {
+      type: 'Property',
+      value: { '@id': 'https://example.com/WC2' }
+    };
+    const body = {
+      op: 'update',
+      entities: [{
+        id: 'urn:cartridge',
+        'https://example.com/hasWasteclass': [wasteclass]
+      }],
+      overwriteOrReplace: false
+    };
+    const Ngsild = function () {
+      return {
+        batchMerge: function (entities, { headers }) {
+          batchMergeCalled = true;
+          return new Promise(function (resolve) {
+            resolve({ statusCode: 204 });
+          });
+        },
+        updateProperties: function ({ id, body, isOverwrite }, { headers }) {
+          updatePropertiesId = id;
+          updatePropertiesBody = body;
+          return new Promise(function (resolve) {
+            resolve({ statusCode: 204 });
+          });
+        },
+        replaceEntities: function () {
+        }
+      };
+    };
+    const setInterval = function (fun, interv) {
+    };
+    const Keycloak = function () {
+      return {
+        grantManager: {
+          obtainFromClientCredentials: async function () {
+            return new Promise(function (resolve, reject) {
+              resolve({
+                access_token: {
+                  token: 'token'
+                }
+              });
+            });
+          }
+        }
+      };
+    };
+    const revert = ToTest.__set__('Logger', Logger);
+    ToTest.__set__('process', process);
+    ToTest.__set__('NgsiLd', Ngsild);
+    ToTest.__set__('setInterval', setInterval);
+    ToTest.__set__('Keycloak', Keycloak);
+    ToTest.__set__('addSyncOnAttribute', addSyncOnAttribute);
+    const ngsildUpdates = new ToTest(config);
+    await ngsildUpdates.ngsildUpdates(body);
+    batchMergeCalled.should.equal(false);
+    updatePropertiesId.should.equal('urn:cartridge');
+    updatePropertiesBody['https://example.com/hasWasteclass'][0]
+      .value['@id'].should.equal('https://example.com/WC2');
+    revert();
+  });
 });
 describe('Test getFlag', function () {
   it('Should get true', async function () {
