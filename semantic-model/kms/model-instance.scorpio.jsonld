@@ -123,7 +123,7 @@
     "iffBaseEntities:hasCartridge": [
       {
         "type": "Relationship",
-        "object": "urn:cartridge:1"
+        "object": "urn:cartridge:2"
       }
     ],
     "iffBaseEntities:hasStrength": [
@@ -167,13 +167,38 @@
     "iffBaseEntities:isUsedUntil": [
       {
         "type": "Property",
-        "value": "2024-02-27 13:54:55.4"
+        "value": "2024-02-27T13:54:55.400Z"
       }
     ],
     "iffBaseEntities:isUsedFrom": [
       {
         "type": "Property",
-        "value": "2024-02-27 13:54:55.4"
+        "value": "2024-02-27T13:54:55.400Z"
+      }
+    ],
+    "iffFilterEntities:hasWasteclass": [
+      {
+        "type": "Property",
+        "value": {
+          "@id": "iffFilterKnowledge:WC1"
+        }
+      }
+    ]
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/staging/example/v0.2/context.jsonld",
+    "id": "urn:cartridge:2",
+    "type": "iffBaseEntities:FilterCartridge",
+    "iffBaseEntities:isUsedUntil": [
+      {
+        "type": "Property",
+        "value": "2024-02-27T13:54:55.400Z"
+      }
+    ],
+    "iffBaseEntities:isUsedFrom": [
+      {
+        "type": "Property",
+        "value": "2024-02-27T13:54:55.400Z"
       }
     ],
     "iffFilterEntities:hasWasteclass": [
