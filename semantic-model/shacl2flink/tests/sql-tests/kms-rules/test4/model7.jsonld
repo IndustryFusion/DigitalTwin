@@ -5,7 +5,7 @@
     "type": "https://industry-fusion.com/types/v0.9/cutter",
     "https://industry-fusion.com/types/v0.9/state": {
       "type": "Property",
-      "observedAt": "2023-03-24 13:42:32.0",
+      "observedAt": "2023-03-24T13:42:32.000Z",
       "value": {
         "@id": "https://industry-fusion.com/types/v0.9/state_PROCESSING"
       }
@@ -18,22 +18,22 @@
       {
       "type": "Relationship",
       "object": "urn:workpiece:1",
-      "observedAt": "2023-03-24 13:42:32.0"
+      "observedAt": "2023-03-24T13:42:32.000Z"
       },
       {
         "type": "Relationship",
         "object": "urn:workpiece:2",
-        "observedAt": "2023-03-24 14:42:32.0"
+        "observedAt": "2023-03-24T14:42:32.000Z"
       },
       {
         "type": "Relationship",
         "object": "urn:workpiece:3",
-        "observedAt": "2023-03-24 15:42:32.0"
+        "observedAt": "2023-03-24T15:42:32.000Z"
       },
       {
         "type": "Relationship",
         "object": "urn:workpiece:4",
-        "observedAt": "2023-03-24 16:42:32.0"
+        "observedAt": "2023-03-24T16:42:32.000Z"
       }
     ],
     "https://industry-fusion.com/types/v0.9/hasFilter": {
@@ -81,13 +81,13 @@
       {
         "type": "Property",
         "value": "1",
-        "observedAt": "2023-03-24 14:42:32.0",
+        "observedAt": "2023-03-24T14:42:32.000Z",
         "datasetId": 0
       },
       {
         "type": "Property",
         "value": "0",
-        "observedAt": "2023-03-24 14:42:33.0",
+        "observedAt": "2023-03-24T14:42:33.000Z",
         "datasetId": 0
       }
     ],
@@ -152,11 +152,11 @@
     "type": "https://industry-fusion.com/types/v0.9/oeeTemplate",
     "https://industry-fusion.com/types/v0.9/startTime": {
       "type": "Property",
-      "value": "2000-01-01 00:00:00"
+      "value": "2000-01-01T00:00:00.000Z"
     },
     "https://industry-fusion.com/types/v0.9/endTime": {
       "type": "Property",
-      "value": "2099-03-24 23:59:59"
+      "value": "2099-03-24T23:59:59.000Z"
     },
     "https://industry-fusion.com/oee/v0.9/availabilityTimeAgg": {
       "type": "Property",

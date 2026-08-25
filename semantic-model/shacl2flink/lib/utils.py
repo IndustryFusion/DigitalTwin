@@ -737,7 +737,9 @@ def process_sql_dialect(expression, isSqlite):
     result_expression = expression
     max_recursion = 10
     while "SQL_DIALECT_STRIP" in result_expression or "SQL_DIALECT_CAST" in result_expression \
-            or "SQL_DIALECT_ATTRIBUTE_ID" in result_expression:
+            or "SQL_DIALECT_ATTRIBUTE_ID" in result_expression \
+            or "SQL_DIALECT_TIME_TO_MILLISECONDS" in result_expression \
+            or "SQL_DIALECT_ISO_TIMESTAMP" in result_expression:
         max_recursion = max_recursion - 1
         if max_recursion == 0:
             raise WrongSparqlStructure("Unexpected problem with SQL_DIALECT macros.")
@@ -750,6 +752,14 @@ def process_sql_dialect(expression, isSqlite):
                                        result_expression)
             result_expression = re.sub(r'SQL_DIALECT_TIME_TO_MILLISECONDS{([^{}]*)}',
                                        r"CAST(julianday(\1) * 86400000 as INTEGER)",
+                                       result_expression)
+            # Canonical time serialization: ISO 8601 UTC with milliseconds and
+            # 'Z'. Fixed-width, so lexical order equals chronological order --
+            # which is what makes ISO strings a valid comparison domain.
+            # julianday/strftime accept both the SQL (' ') and ISO ('T'/'Z')
+            # input forms, so the macro is format-tolerant on the way in.
+            result_expression = re.sub(r'SQL_DIALECT_ISO_TIMESTAMP{([^{}]*)}',
+                                       r"(strftime('%Y-%m-%dT%H:%M:%f', \1) || 'Z')",
                                        result_expression)
             result_expression = result_expression.replace('SQL_DIALECT_CURRENT_TIMESTAMP', 'datetime()')
             result_expression = result_expression.replace('SQL_DIALECT_INSERT_ATTRIBUTES',
@@ -766,9 +776,29 @@ def process_sql_dialect(expression, isSqlite):
             result_expression = re.sub(r'SQL_DIALECT_STRIP_LITERAL{([^{}]*)}',
                                        r"REGEXP_REPLACE(CAST(\1 as STRING), '\"', '')",
                                        result_expression)
+            # The REPLACE pair normalizes ISO 8601 input ('T' separator,
+            # trailing 'Z') to the SQL form Flink's UNIX_TIMESTAMP and
+            # TIMESTAMP cast understand; a TIMESTAMP column casts to the SQL
+            # form already, so the pair is a no-op there.
+            # normalizes ISO 8601 input ('T' separator, trailing 'Z') to the
+            # SQL form Flink's time functions parse; no-op for the string
+            # form a TIMESTAMP column casts to.
+            flink_norm = r"REPLACE(REPLACE(TRY_CAST(\1 AS STRING), 'T', ' '), 'Z', '')"
             result_expression = re.sub(r'SQL_DIALECT_TIME_TO_MILLISECONDS{([^{}]*)}',
-                                       r"1000 * UNIX_TIMESTAMP(TRY_CAST(\1 AS STRING)) + " +
-                                       r"EXTRACT(MILLISECOND FROM TRY_CAST(\1 as TIMESTAMP))",
+                                       r"1000 * UNIX_TIMESTAMP(" + flink_norm + r") + " +
+                                       r"EXTRACT(MILLISECOND FROM TRY_CAST(" +
+                                       flink_norm + r" as TIMESTAMP))",
+                                       result_expression)
+            # Canonical time serialization: ISO 8601 UTC with milliseconds and
+            # 'Z' (see the sqlite branch). DATE_FORMAT has no reliable
+            # millisecond pattern, so the milliseconds are appended from
+            # EXTRACT, zero-padded.
+            result_expression = re.sub(r'SQL_DIALECT_ISO_TIMESTAMP{([^{}]*)}',
+                                       r"(DATE_FORMAT(TRY_CAST(" + flink_norm +
+                                       r" AS TIMESTAMP), 'yyyy-MM-dd''T''HH:mm:ss.') || " +
+                                       r"LPAD(CAST(EXTRACT(MILLISECOND FROM TRY_CAST(" +
+                                       flink_norm +
+                                       r" AS TIMESTAMP)) AS STRING), 3, '0') || 'Z')",
                                        result_expression)
             result_expression = result_expression.replace('SQL_DIALECT_CURRENT_TIMESTAMP',
                                                           'CURRENT_TIMESTAMP')
@@ -827,7 +857,13 @@ def wrap_ngsild_variable(ctx, var):
             return "'\"' || " + bounds[varname] + " || '\"'"
     elif var in time_variables:
         if varname in bounds:
-            return f"SQL_DIALECT_TIME_TO_MILLISECONDS{{{bounds[varname]}}}"
+            # Times serialize and compare as ISO 8601 UTC strings
+            # ('YYYY-MM-DDTHH:mm:ss.SSSZ'). The form is fixed-width, so
+            # lexical comparison equals chronological comparison, and the
+            # same representation lands in written attribute values --
+            # one canonical time format from model to writeback. Millis
+            # remain the domain of arithmetic only (unwrap_variables).
+            return f"'\"' || SQL_DIALECT_ISO_TIMESTAMP{{{bounds[varname]}}} || '\"'"
     else:  # plain RDF variable
         return bounds[varname]
 

@@ -43,7 +43,7 @@
       "value": {
         "@id": "base:state_ON"
       },
-      "observedAt": "2024-02-29 13:52:32.0"
+      "observedAt": "2024-02-29T13:52:32.000Z"
     }],
     "iffBaseEntities:hasCartridge": [
       {
@@ -55,22 +55,22 @@
       {
         "type": "Property",
         "value": 0.9,
-        "observedAt": "2024-02-28 13:52:32.0"
+        "observedAt": "2024-02-28T13:52:32.000Z"
       },
       {
         "type": "Property",
         "value": 0.8,
-        "observedAt": "2024-02-28 13:52:33.0" 
+        "observedAt": "2024-02-28T13:52:33.000Z" 
       },
       {
         "type": "Property",
         "value": 0.7,
-        "observedAt": "2024-02-28 13:52:34.0" 
+        "observedAt": "2024-02-28T13:52:34.000Z" 
       },
       {
         "type": "Property",
         "value": 0.6,
-        "observedAt": "2024-02-28 13:52:35.0" 
+        "observedAt": "2024-02-28T13:52:35.000Z" 
       }
     ]
   },
@@ -82,12 +82,12 @@
     "iffBaseEntities:isUsedUntil": [
       {
         "type": "Property",
-        "value": "2024-02-27 13:54:55.4"
+        "value": "2024-02-27T13:54:55.400Z"
       }],
       "iffBaseEntities:isUsedFrom": [
         {
           "type": "Property",
-          "value": "2024-02-27 13:54:55.4"
+          "value": "2024-02-27T13:54:55.400Z"
         }],
       "iffFilterEntities:hasWasteclass":[
         {

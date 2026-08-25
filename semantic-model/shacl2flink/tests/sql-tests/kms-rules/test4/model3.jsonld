@@ -5,7 +5,7 @@
     "type": "https://industry-fusion.com/types/v0.9/cutter",
     "https://industry-fusion.com/types/v0.9/state": {
       "type": "Property",
-      "observedAt": "2023-03-24 13:42:32.0",
+      "observedAt": "2023-03-24T13:42:32.000Z",
       "value": {
         "@id": "https://industry-fusion.com/types/v0.9/state_PROCESSING"
       }
@@ -22,27 +22,27 @@
       {
         "type": "Property",
         "value": "1",
-        "observedAt": "2023-03-24 13:42:31.2"
+        "observedAt": "2023-03-24T13:42:31.200Z"
       },
       {
         "type": "Property",
         "value": "1",
-        "observedAt": "2023-03-24 13:42:36.2"
+        "observedAt": "2023-03-24T13:42:36.200Z"
       },
       {
         "type": "Property",
         "value": "1",
-        "observedAt": "2023-03-24 13:42:41.2"
+        "observedAt": "2023-03-24T13:42:41.200Z"
       },
       {
         "type": "Property",
         "value": "0",
-        "observedAt": "2023-03-24 13:42:46.2"
+        "observedAt": "2023-03-24T13:42:46.200Z"
       },
       {
         "type": "Property",
         "value": "1",
-        "observedAt": "2023-03-24 13:47:46.2"
+        "observedAt": "2023-03-24T13:47:46.200Z"
       }
 
   ]
@@ -101,17 +101,17 @@
       {
         "type": "Property",
         "value": "1",
-        "observedAt": "2023-03-24 13:42:31.2"
+        "observedAt": "2023-03-24T13:42:31.200Z"
       },
       {
         "type": "Property",
         "value": "0",
-        "observedAt": "2023-03-24 13:42:36.2"
+        "observedAt": "2023-03-24T13:42:36.200Z"
       },
       {
         "type": "Property",
         "value": "1",
-        "observedAt": "2023-03-24 13:42:41.2"
+        "observedAt": "2023-03-24T13:42:41.200Z"
       }
   ]
   },
@@ -121,11 +121,11 @@
     "type": "https://industry-fusion.com/types/v0.9/oeeTemplate",
     "https://industry-fusion.com/types/v0.9/startTime": {
       "type": "Property",
-      "value": "2000-01-01 00:00:00"
+      "value": "2000-01-01T00:00:00.000Z"
     },
     "https://industry-fusion.com/types/v0.9/endTime": {
       "type": "Property",
-      "value": "2099-03-24 23:59:59"
+      "value": "2099-03-24T23:59:59.000Z"
     },
     "https://industry-fusion.com/oee/v0.9/availabilityTimeAgg": {
       "type": "Property",
@@ -150,11 +150,11 @@
     "type": "https://industry-fusion.com/types/v0.9/oeeTemplate",
     "https://industry-fusion.com/types/v0.9/startTime": {
       "type": "Property",
-      "value": "2000-01-01 00:00:00"
+      "value": "2000-01-01T00:00:00.000Z"
     },
     "https://industry-fusion.com/types/v0.9/endTime": {
       "type": "Property",
-      "value": "2099-03-24 23:59:59"
+      "value": "2099-03-24T23:59:59.000Z"
     },
     "https://industry-fusion.com/oee/v0.9/availabilityTimeAgg": {
       "type": "Property",
