@@ -52,7 +52,7 @@ fi
 
 printf "\n"
 printf "\033[1mNOT removing MinIO Operator v${MINIO_OPERATOR_VERSION}\n"
-printf "\033[1mDo it manually with 'kubectl minio delete'\n"
+printf "\033[1mDo it manually with 'helm -n minio-operator uninstall operator'\n"
 
 printf -- "------------------------\033[0m\n"
 

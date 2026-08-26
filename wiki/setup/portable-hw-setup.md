@@ -68,7 +68,7 @@ Install K3S on each edge device, binding it to the `tailscale0` interface and it
 
 ```bash
 curl -sfL https://get.k3s.io | \
-  INSTALL_K3S_VERSION="v1.31.0+k3s1" \
+  INSTALL_K3S_VERSION="v1.33.5+k3s1" \
   sh -s - server \
     --cluster-init \
     --node-name "iff-edge-device-1" \

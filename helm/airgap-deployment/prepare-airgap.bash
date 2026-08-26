@@ -20,7 +20,7 @@ set -e
 
 if [ "${REGISTRY}" = "docker.io" ]; then
   IMAGES=(
-      registry.opensource.zalan.do/acid/postgres-operator:v1.9.0 
+      ghcr.io/zalando/postgres-operator:${POSTGRES_OPERATOR_VERSION} 
       docker.io/minio/operator:v${MINIO_OPERATOR_VERSION}
       docker.io/minio/mc:RELEASE.2023-06-28T21-54-17Z
       docker.io/emqx/emqx-operator-controller:${EMQX_OPERATOR_VERSION}
@@ -33,9 +33,9 @@ if [ "${REGISTRY}" = "docker.io" ]; then
       docker.io/postgrest/postgrest:v12.0.0
       quay.io/strimzi/kafka:${STRIMZI_VERSION}-kafka-3.9.0
       quay.io/strimzi/operator:${STRIMZI_VERSION}
-      quay.io/jetstack/cert-manager-controller:v1.9.1
-      quay.io/jetstack/cert-manager-webhook:v1.9.1
-      quay.io/jetstack/cert-manager-cainjector:v1.9.1
+      quay.io/jetstack/cert-manager-controller:v${CERT_MANAGER_VERSION}
+      quay.io/jetstack/cert-manager-webhook:v${CERT_MANAGER_VERSION}
+      quay.io/jetstack/cert-manager-cainjector:v${CERT_MANAGER_VERSION}
       docker.io/emqx:${EMQX_VERSION}
       quay.io/keycloak/keycloak-operator:${KEYCLOAK_VERSION}
       docker.io/bitnamilegacy/kubectl:${KUBECTL_VERSION}
@@ -58,7 +58,7 @@ if [ "${REGISTRY}" = "docker.io" ]; then
  )
 else
   IMAGES=(
-      registry.opensource.zalan.do/acid/postgres-operator:v1.9.0 
+      ghcr.io/zalando/postgres-operator:${POSTGRES_OPERATOR_VERSION} 
       docker.io/minio/operator:v${MINIO_OPERATOR_VERSION}
       docker.io/minio/mc:RELEASE.2023-06-28T21-54-17Z
       docker.io/emqx/emqx-operator-controller:${EMQX_OPERATOR_VERSION}
@@ -71,9 +71,9 @@ else
       docker.io/postgrest/postgrest:v12.0.0
       quay.io/strimzi/kafka:${STRIMZI_VERSION}-kafka-3.9.0
       quay.io/strimzi/operator:${STRIMZI_VERSION}
-      quay.io/jetstack/cert-manager-controller:v1.9.1
-      quay.io/jetstack/cert-manager-webhook:v1.9.1
-      quay.io/jetstack/cert-manager-cainjector:v1.9.1
+      quay.io/jetstack/cert-manager-controller:v${CERT_MANAGER_VERSION}
+      quay.io/jetstack/cert-manager-webhook:v${CERT_MANAGER_VERSION}
+      quay.io/jetstack/cert-manager-cainjector:v${CERT_MANAGER_VERSION}
       docker.io/emqx:${EMQX_VERSION}
       quay.io/keycloak/keycloak-operator:${KEYCLOAK_VERSION}
       docker.io/bitnamilegacy/kubectl:${KUBECTL_VERSION}
@@ -105,7 +105,6 @@ for image in ${IMAGES[@]}; do
     fi
 done
 
-wget --no-clobber --directory-prefix ${OFFLINE_DIR} https://github.com/minio/operator/releases/download/v${MINIO_OPERATOR_VERSION}/kubectl-minio_${MINIO_OPERATOR_VERSION}_linux_amd64
 wget --no-clobber --directory-prefix ${OFFLINE_DIR} https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/${KEYCLOAK_VERSION}/kubernetes/keycloaks.k8s.keycloak.org-v1.yml
 wget --no-clobber --directory-prefix ${OFFLINE_DIR} https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/${KEYCLOAK_VERSION}/kubernetes/keycloakrealmimports.k8s.keycloak.org-v1.yml
 wget -O- https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/${KEYCLOAK_VERSION}/kubernetes/kubernetes.yml 2>/dev/null | sed "s/quay\.io/$LOCAL_REGISTRY/g" > ${OFFLINE_DIR}/kubernetes.yml
@@ -113,8 +112,9 @@ wget -O- https://github.com/cert-manager/cert-manager/releases/download/v${CERT_
 wget -O- https://github.com/strimzi/strimzi-kafka-operator/releases/download/${STRIMZI_VERSION}/strimzi-cluster-operator-${STRIMZI_VERSION}.yaml 2>/dev/null \
   | sed "s/quay\.io/$LOCAL_REGISTRY/g" | sed "s/namespace: myproject/namespace: ${NAMESPACE}/g" > ${OFFLINE_DIR}/strimzi-cluster-operator-${STRIMZI_VERSION}.yaml
 ( cd ${OFFLINE_DIR} && rm -rf emqx-operator && git clone https://github.com/emqx/emqx-operator.git && cd emqx-operator && git checkout ${EMQX_OPERATOR_VERSION} )
+( cd ${OFFLINE_DIR} && rm -rf operator && git clone https://github.com/minio/operator.git && cd operator && git checkout v${MINIO_OPERATOR_VERSION} )
 ( cd ${OFFLINE_DIR} && rm -rf postgres-operator && git clone https://github.com/zalando/postgres-operator.git && cd postgres-operator && git checkout ${POSTGRES_OPERATOR_VERSION} )
 ( cd ${OFFLINE_DIR} && rm -rf helm-charts && git clone https://github.com/vmware-tanzu/helm-charts.git && cd helm-charts && git checkout ${VELERO_HELM_VERSION})
-( cd ${OFFLINE_DIR} && rm -rf Reloader && git clone https://github.com/stakater/Reloader.git && cd Reloader && git checkout ${RELOADER_HELM_VERSION})
-( cd ${OFFLINE_DIR} && rm -rf kubernetes-flink-operator && wget -r --no-parent -e robots=off https://downloads.apache.org/flink/flink-kubernetes-operator-1.14.0/ && 
+( cd ${OFFLINE_DIR} && rm -rf Reloader && git clone https://github.com/stakater/Reloader.git && cd Reloader && git checkout chart-v${RELOADER_HELM_VERSION})
+( cd ${OFFLINE_DIR} && rm -rf kubernetes-flink-operator && wget -r --no-parent -e robots=off https://downloads.apache.org/flink/flink-kubernetes-operator-1.15.0/ && 
   mv downloads.apache.org/flink/flink-kubernetes-operator-* flink-kubernetes-operator)

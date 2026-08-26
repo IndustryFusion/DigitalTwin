@@ -59,52 +59,53 @@ fi
 
 
 printf "\n"
-printf "\033[1mInititating MinIO Operator v${MINIO_OPERATOR_VERSION}\n"
+printf "\033[1mInstalling MinIO Operator v${MINIO_OPERATOR_VERSION}\n"
 echo ------------------
+# MinIO Operator 6.x removed the `kubectl minio` krew plugin (and the embedded
+# Operator Console), so the operator is now installed via its official Helm chart.
 if [ "$OFFLINE" = "true" ]; then
-  cp ${OFFLINE_DIR}/kubectl-minio_${MINIO_OPERATOR_VERSION}_linux_amd64 .
-  mv kubectl-minio_${MINIO_OPERATOR_VERSION}_linux_amd64 kubectl-minio
-  chmod +x kubectl-minio
-  export PATH="$(pwd):$PATH"
-  kubectl minio version
-  kubectl minio init --image=${REGISTRY}/minio/operator:v${MINIO_OPERATOR_VERSION} --console-image=${REGISTRY}/minio/operator:v${MINIO_OPERATOR_VERSION}
+  ( cd ${OFFLINE_DIR}/operator && helm -n minio-operator upgrade --install --create-namespace operator ./helm/operator \
+      --set operator.image.repository=${REGISTRY}/minio/operator --set operator.image.tag=v${MINIO_OPERATOR_VERSION} )
 else
-  wget https://github.com/minio/operator/releases/download/v${MINIO_OPERATOR_VERSION}/kubectl-minio_${MINIO_OPERATOR_VERSION}_linux_amd64
-  mv kubectl-minio_${MINIO_OPERATOR_VERSION}_linux_amd64 kubectl-minio
-  chmod +x kubectl-minio
-  export PATH="$(pwd):$PATH"
-  kubectl minio version
-  kubectl minio init
-  # Step 3: Apply preferred anti-affinity patch
-  echo "Patching MinIO Operator deployment with preferred anti-affinity..."
-  kubectl -n minio-operator patch deployment minio-operator \
-  --type='json' \
-  -p='[
-    {
-      "op": "replace",
-      "path": "/spec/template/spec/affinity/podAntiAffinity",
-      "value": {
-        "preferredDuringSchedulingIgnoredDuringExecution": [
-          {
-            "weight": 100,
-            "podAffinityTerm": {
-              "labelSelector": {
-                "matchExpressions": [
-                  {
-                    "key": "name",
-                    "operator": "In",
-                    "values": ["minio-operator"]
+  helm repo add minio-operator https://operator.min.io
+  helm repo update
+  helm -n minio-operator upgrade --install --create-namespace operator minio-operator/operator --version ${MINIO_OPERATOR_VERSION}
+fi
+# Apply preferred anti-affinity patch (strategic merge; idempotent). Wait for the
+# deployment to be created by Helm first.
+echo "Patching MinIO Operator deployment with preferred anti-affinity..."
+kubectl -n minio-operator rollout status deployment/minio-operator --timeout=120s || true
+kubectl -n minio-operator patch deployment minio-operator \
+  --type='merge' \
+  -p='{
+    "spec": {
+      "template": {
+        "spec": {
+          "affinity": {
+            "podAntiAffinity": {
+              "preferredDuringSchedulingIgnoredDuringExecution": [
+                {
+                  "weight": 100,
+                  "podAffinityTerm": {
+                    "labelSelector": {
+                      "matchExpressions": [
+                        {
+                          "key": "name",
+                          "operator": "In",
+                          "values": ["minio-operator"]
+                        }
+                      ]
+                    },
+                    "topologyKey": "kubernetes.io/hostname"
                   }
-                ]
-              },
-              "topologyKey": "kubernetes.io/hostname"
+                }
+              ]
             }
           }
-        ]
+        }
       }
     }
-  ]'
-fi
+  }'
 printf -- "------------------------\033[0m\n"
 
 
@@ -117,7 +118,7 @@ printf "\n"
 printf "\033[1mInstalling Postgres-operator ${POSTGRES_OPERATOR_VERSION}\n"
 printf -- "------------------------\033[0m\n"
 if [ "$OFFLINE" = "true" ]; then
-  ( cd ${OFFLINE_DIR}/postgres-operator && helm -n iff upgrade --install postgres-operator ./charts/postgres-operator --set image.registry=${EXT_REGISTRY3} --set configGeneral.docker_image=${EXT_REGISTRY4}/zalando/spilo-15:2.1-p9)
+  ( cd ${OFFLINE_DIR}/postgres-operator && helm -n iff upgrade --install postgres-operator ./charts/postgres-operator --set image.registry=${EXT_REGISTRY4} --set configGeneral.docker_image=${EXT_REGISTRY4}/zalando/spilo-15:2.1-p9)
 else
   rm -rf postgres-operator
   git clone https://github.com/zalando/postgres-operator.git
@@ -180,10 +181,10 @@ if [ "$LOCAL" = "true" ]; then
   echo selected local image for flink operator: ${FLINK_OPERATOR_IMAGE_REGISTRY}
 fi
 if [ "$OFFLINE" = "true" ]; then
-  ( cd ${OFFLINE_DIR}/flink-kubernetes-operator && helm -n ${NAMESPACE} upgrade --install flink-kubernetes-operator flink-kubernetes-operator-1.14.0-helm.tgz \
+  ( cd ${OFFLINE_DIR}/flink-kubernetes-operator && helm -n ${NAMESPACE} upgrade --install flink-kubernetes-operator flink-kubernetes-operator-1.15.0-helm.tgz \
       --set image.repository="${FLINK_OPERATOR_IMAGE_REGISTRY}/flink-operator" --set image.tag="${DOCKER_TAG}" )
 else
-  helm repo add flink-kubernetes-operator https://downloads.apache.org/flink/flink-kubernetes-operator-1.14.0
+  helm repo add flink-kubernetes-operator https://downloads.apache.org/flink/flink-kubernetes-operator-1.15.0
   helm repo update
   helm -n ${NAMESPACE} install flink-kubernetes-operator flink-kubernetes-operator/flink-kubernetes-operator --set image.repository="${FLINK_OPERATOR_IMAGE_REGISTRY}/flink-operator" --set image.tag="${DOCKER_TAG}"
 

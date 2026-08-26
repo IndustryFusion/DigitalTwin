@@ -82,7 +82,7 @@ spec:
           ALTER DEFAULT PRIVILEGES FOR ROLE flink_writer_user IN SCHEMA public
             GRANT USAGE, SELECT ON SEQUENCES TO {{ .Values.flink.db.replicationUser }};
   postgresql:
-    version: "14"
+    version: "15"
     parameters:
       wal_level: logical
   patroni:
