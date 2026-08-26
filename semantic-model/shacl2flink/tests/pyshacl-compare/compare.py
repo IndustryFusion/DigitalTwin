@@ -37,6 +37,7 @@ import sys
 
 import pyshacl
 from rdflib import BNode, Graph, URIRef
+from rdflib.collection import Collection
 from rdflib.namespace import RDF, SH
 
 NGSILD = 'https://uri.etsi.org/ngsi-ld/'
@@ -53,6 +54,34 @@ DATASET_ID = URIRef(NGSILD + 'datasetId')
 # min/max are one CountConstraintComponent here, two components in SHACL.
 COMPONENT_ALIASES = {'MinCountConstraintComponent': 'CountConstraintComponent',
                      'MaxCountConstraintComponent': 'CountConstraintComponent'}
+
+
+def inverse_predicate(path, *graphs):
+    """
+    The relationship predicate of an NGSI-LD inverse path, or None.
+
+    The path is the two-hop sequence that walks back out of the blank node a
+    relationship is stored in -- ( [^ngsi-ld:hasObject] [^predicate] ) -- and
+    pyshacl reports it as an unnamed blank node. The compiler names the alert
+    after the predicate, so this recovers the same name. The path expression
+    may live in the report or in the shapes graph depending on how much
+    pyshacl copies, so both are searched.
+    """
+    if not isinstance(path, BNode):
+        return None
+    for g in graphs:
+        try:
+            steps = list(Collection(g, path))
+        except Exception:
+            continue
+        if len(steps) != 2:
+            continue
+        if g.value(steps[0], SH.inversePath) != URIRef(NGSILD + 'hasObject'):
+            continue
+        predicate = g.value(steps[1], SH.inversePath)
+        if isinstance(predicate, URIRef):
+            return predicate
+    return None
 
 
 def local(iri):
@@ -173,8 +202,16 @@ def pyshacl_findings(shapes, knowledge, model):
         # blank node in sh:resultPath is a path expression rather than a
         # predicate -- the ([sh:zeroOrMorePath rdf:rest] rdf:first) that walks
         # a list -- and has no name of its own, so it resolves the same way.
+        # An INVERSE relationship path is a blank node too, but it must not
+        # resolve to the focus node's own edge: the constraint is about who
+        # points AT the focus node, and its name is the predicate they point
+        # with. Read it out of the path expression, the way the compiler
+        # names the alert.
+        inverse = inverse_predicate(path, report, shape_graph)
         indirect = str(path) in VALUE_PATHS or isinstance(path, BNode)
-        if path is not None and indirect:
+        if path is not None and inverse is not None:
+            path = inverse
+        elif path is not None and indirect:
             path = edge
         label = local(path) if path is not None else ''
         if not label:

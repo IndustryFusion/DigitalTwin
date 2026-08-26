@@ -213,6 +213,14 @@ def connective_operation(connective):
 
 yaml = ruamel.yaml.YAML()
 
+# Marker stored in constraint_table.attributeType for sh:inversePath count
+# constraints. It is deliberately NOT an NGSI-LD attribute type IRI: the focus
+# node of an inverse constraint has no attribute of its own -- the counted
+# rows belong to OTHER entities -- so none of the attribute-shaped templates
+# may ever pick these rows up, and each of them selects on a genuine NGSI-LD
+# type IRI.
+INVERSE_RELATIONSHIP_TYPE = 'inverse-relationship'
+
 alerts_bulk_table = configs.alerts_bulk_table_name
 alerts_bulk_table_object = configs.alerts_bulk_table_object_name
 constraint_table_name = configs.constraint_table_name
@@ -259,6 +267,49 @@ where {
         OPTIONAL { ?innerclause sh:class ?attributeclass ; }
 }
 order by ?inhertiedTargetclass
+"""  # noqa: E501
+
+# The inverse of an NGSI-LD relationship: which entities point AT this one.
+#
+# NGSI-LD does not store a relationship as one triple. `filter hasCartridge
+# cartridge` is really `filter hasCartridge _:b` plus `_:b hasObject
+# cartridge`, so a bare `[ sh:inversePath hasCartridge ]` matches nothing --
+# nothing points at the cartridge with that predicate. The spelling that
+# means what the author intends, and that the reference engine agrees with,
+# walks both hops back:
+#
+#     sh:path ( [ sh:inversePath ngsi-ld:hasObject ]
+#               [ sh:inversePath iff:hasCartridge ] )
+#
+# which is the same explicitness the FORWARD relationship shapes already
+# require of a value shape. The bare form is rejected by unsupported_shapes
+# rather than quietly given the meaning it does not have.
+#
+# The focus node is the REFERENCED entity and the value nodes are the
+# referring entities, so none of the attribute-walking machinery above
+# applies: matched at the top level of the node shape, no connectives
+# descended -- an inverse count is a statement about the focus node, not a
+# branch of an attribute shape.
+sparql_get_all_inverse_relationships = """
+SELECT ?nodeshape ?targetclass ?inheritedTargetclass ?inversepath ?mincount ?maxcount ?severitycode ?property
+where {
+    ?nodeshape a sh:NodeShape .
+    ?nodeshape sh:targetClass ?targetclass .
+    ?inheritedTargetclass rdfs:subClassOf* ?targetclass .
+    ?nodeshape sh:property ?property .
+    ?property sh:path ?pathlist .
+    ?pathlist rdf:first ?objectstep .
+    ?objectstep sh:inversePath ngsi-ld:hasObject .
+    ?pathlist rdf:rest ?rest .
+    ?rest rdf:first ?attributestep .
+    ?rest rdf:rest rdf:nil .
+    ?attributestep sh:inversePath ?inversepath .
+    FILTER(isIRI(?inversepath))
+    OPTIONAL { ?property sh:maxCount ?maxcount . }
+    OPTIONAL { ?property sh:minCount ?mincount . }
+    OPTIONAL { ?property sh:severity ?severity . ?severity rdfs:label ?severitycode . }
+}
+order by ?inheritedTargetclass
 """  # noqa: E501
 
 sparql_get_all_properties = """
@@ -499,6 +550,70 @@ sql_check_relationship_property_count = """
             FROM A1 WHERE `minCount` is NOT NULL or `maxCount` is NOT NULL
             GROUP BY this, propertyPath, maxCount, minCount, severity, constraint_id, parentPath
             HAVING {{ constraint_cond }}
+"""  # noqa: E501
+
+# The inverse count: for each focus entity, the number of DISTINCT live
+# entities referring to it through the forward relationship. DISTINCT is
+# SHACL semantics, not fan-out hygiene -- the value nodes of an inverse path
+# are a SET of referring nodes, so a referrer carrying two attribute
+# instances of the relationship still counts once.
+#
+# Everything the forward count learned the hard way applies unchanged (see
+# sql_check_relationship_property_count): `edeleted` is read as an AGGREGATE,
+# never a grouping key; deletion flags are read INSIDE the counted expression
+# as well, so only live references are counted -- with one more liveness flag
+# than the forward count, `redeleted`, because a reference here has two
+# owners: the attribute row (adeleted) and the REFERRING entity (redeleted),
+# and a deleted referrer whose attribute rows have not been swept must not
+# keep a violation alive. STATE_TTL('A1' = '0d') pins the accumulator, and
+# the join inputs are pinned in the inner hint, both load-bearing for
+# retraction.
+#
+# One streaming property is unique to the inverse form: the GROUP KEY is the
+# attribute VALUE, so re-pointing a reference MIGRATES rows between groups.
+# That migration is the intended semantics -- the retraction of the old row
+# lands in the old focus node's group and clears its violation, the insert
+# lands in the new one's -- and it is exactly the case the pinned accumulator
+# exists for: an expired accumulator would drop that retraction in silence
+# and freeze the violation on the old focus node forever.
+sql_check_inverse_relationship_count = """
+            INSERT {% if sqlite %}OR REPlACE{% endif %} INTO {{alerts_bulk_table}}
+            WITH A1 as (
+                    SELECT /*+ STATE_TTL('A' = '0d', 'D' = '0d', 'R' = '0d', 'RE' = '0d') */
+                        A.id AS this,
+                        IFNULL(A.`deleted`, false) as edeleted,
+                        R.`entityId` as referrer,
+                        COALESCE(R.`deleted`, false) as adeleted,
+                        IFNULL(RE.`deleted`, false) as redeleted,
+                        D.propertyPath as propertyPath,
+                        D.maxCount as maxCount,
+                        D.minCount as minCount,
+                        D.severity as severity,
+                        D.id as constraint_id
+                    FROM {{target_class}}_view AS A JOIN {{constraint_table}} as D ON A.`type` = D.targetClass
+                    LEFT JOIN attributes_view AS R ON R.name = D.propertyPath
+                        and R.`attributeValue` = A.id and R.parentId IS NULL
+                        and R.`type` = 'https://uri.etsi.org/ngsi-ld/Relationship'
+                    LEFT JOIN {{target_class}}_view AS RE ON RE.id = R.`entityId`
+                    WHERE D.attributeType = '{{ inverse_marker }}'
+            )
+            {%- set live_referrers %}COUNT(DISTINCT CASE WHEN NOT edeleted AND NOT adeleted AND NOT redeleted THEN referrer ELSE NULL END){% endset %}
+            SELECT /*+ STATE_TTL('A1' = '0d') */ this AS resource,
+                'CountConstraintComponent(^' || `propertyPath` || ')' AS event,
+                `constraint_id` as constraint_id,
+                true as triggered,
+                `severity` AS severity,
+                'Model validation for inverse relationship ^' || `propertyPath` || ' failed for ' || this || '. Found ' ||
+                    SQL_DIALECT_CAST({{ live_referrers }} AS STRING) || ' referring entities instead of [' || IFNULL(`minCount`, '0') || ', ' || IFNULL(`maxCount`, '*') || ']!'
+                    as `text`
+                {%- if sqlite %}
+                ,CURRENT_TIMESTAMP
+                {%- endif %}
+            FROM A1 WHERE `minCount` is NOT NULL or `maxCount` is NOT NULL
+            GROUP BY this, propertyPath, maxCount, minCount, severity, constraint_id
+            HAVING MAX(CASE WHEN edeleted THEN 1 ELSE 0 END) = 0 AND
+                ({{ live_referrers }} > SQL_DIALECT_CAST(`maxCount` AS INTEGER)
+                 OR {{ live_referrers }} < SQL_DIALECT_CAST(`minCount` AS INTEGER));
 """  # noqa: E501
 
 sql_check_relationship_nodeType = """
@@ -1145,6 +1260,20 @@ def create_relationship_sql():
     )
     sql_command_sqlite += ";"
     sql_command_yaml += ";"
+    sql_command_sqlite = utils.process_sql_dialect(sql_command_sqlite, True)
+    sql_command_yaml = utils.process_sql_dialect(sql_command_yaml, False)
+    return sql_command_sqlite, sql_command_yaml
+
+
+def create_inverse_relationship_sql():
+    render = dict(alerts_bulk_table=constraint_trigger_table_name,
+                  constraint_table=constraint_table_name,
+                  target_class="entities",
+                  inverse_marker=INVERSE_RELATIONSHIP_TYPE)
+    sql_command_yaml = Template(sql_check_inverse_relationship_count).render(
+        sqlite=False, **render)
+    sql_command_sqlite = Template(sql_check_inverse_relationship_count).render(
+        sqlite=True, **render)
     sql_command_sqlite = utils.process_sql_dialect(sql_command_sqlite, True)
     sql_command_yaml = utils.process_sql_dialect(sql_command_yaml, False)
     return sql_command_sqlite, sql_command_yaml
@@ -1839,6 +1968,33 @@ def expand_node_shapes(g):
             remove_shape(g, shape)
 
 
+def inverse_relationship_predicate(g, path):
+    """
+    The predicate of a canonical NGSI-LD inverse path, or None.
+
+    Canonical is the two-hop sequence that walks back out of the blank node
+    NGSI-LD stores a relationship in:
+
+        sh:path ( [ sh:inversePath ngsi-ld:hasObject ]
+                  [ sh:inversePath <predicate> ] )
+
+    Anything else -- a bare inverse, a longer sequence, a nested expression
+    in the second hop -- returns None and is reported by unsupported_shapes.
+    """
+    try:
+        steps = list(Collection(g, path))
+    except Exception:
+        return None
+    if len(steps) != 2:
+        return None
+    if g.value(steps[0], SH.inversePath) != NGSILD.hasObject:
+        return None
+    predicate = g.value(steps[1], SH.inversePath)
+    if predicate is None or isinstance(predicate, BNode):
+        return None
+    return predicate
+
+
 def unsupported_shapes(g, compiled):
     """
     Shapes the extractor will not compile, as a list of messages.
@@ -1848,6 +2004,63 @@ def unsupported_shapes(g, compiled):
     """
     problems = []
     seen_messages = set()
+
+    # Inverse paths. Two things are checked here, and both exist because the
+    # alternative is a shape that is accepted and never checked.
+    #
+    # First the SPELLING. NGSI-LD stores `filter hasCartridge cartridge` as
+    # two triples through a blank node, so a bare `[ sh:inversePath
+    # hasCartridge ]` has no matches at all -- pyshacl reports nothing for it,
+    # and giving it the meaning the author clearly wanted would make this
+    # compiler disagree with the reference engine about what a shape MEANS.
+    # It is refused, with the spelling that works.
+    #
+    # Then the PARAMETERS. Only count bounds are evaluated, so sh:class on the
+    # referrers, a nodeKind or a value shape would be silently ignored.
+    canonical = ('sh:path ( [ sh:inversePath ngsi-ld:hasObject ] '
+                 '[ sh:inversePath <predicate> ] )')
+    for prop in sorted(g.subjects(SH.path, None), key=str):
+        for path in g.objects(prop, SH.path):
+            bare = g.value(path, SH.inversePath)
+            if bare is not None:
+                problems.append(
+                    f'<{prop}> uses sh:inversePath directly. An NGSI-LD '
+                    f'relationship reaches its target through '
+                    f'ngsi-ld:hasObject, so this path matches nothing and the '
+                    f'shape would never be checked -- by this compiler or by '
+                    f'a standard SHACL engine. Write both hops: {canonical}.')
+                continue
+            steps = [step for step in g.objects(path, RDF.first)]
+            if not steps or not any(g.value(step, SH.inversePath) is not None
+                                    for step in steps):
+                continue
+            inverse = inverse_relationship_predicate(g, path)
+            if inverse is None:
+                problems.append(
+                    f'the inverse path in <{prop}> is not a supported NGSI-LD '
+                    f'inverse relationship. Exactly two hops are compiled, '
+                    f'the second naming a plain predicate: {canonical}.')
+                continue
+            supported = {SH.path, SH.minCount, SH.maxCount, SH.severity,
+                         SH.message, SH.order, SH.name, SH.description,
+                         SH.group, RDF.type}
+            written = {str(p) for p in g.predicates(prop, None)}
+            extra = sorted(written - {str(s) for s in supported})
+            if extra:
+                names = ', '.join(p.rsplit('#', 1)[-1] for p in extra)
+                problems.append(
+                    f'the inverse path shape for <{inverse}> carries '
+                    f'parameters the inverse check does not evaluate: {names}. '
+                    f'Only sh:minCount/sh:maxCount are compiled on an inverse '
+                    f'path, so those parameters would be accepted and never '
+                    f'checked.')
+            if g.value(prop, SH.minCount) is None and \
+                    g.value(prop, SH.maxCount) is None:
+                problems.append(
+                    f'the inverse path shape for <{inverse}> has no '
+                    f'sh:minCount or sh:maxCount. An inverse path constrains '
+                    f'nothing but the number of referring entities, so it '
+                    f'would be accepted and never checked.')
 
     # NGSI-LD value predicates the data path cannot represent. create_ngsild_
     # models builds the attributes table from hasValue/hasObject/hasValueList/
@@ -2157,6 +2370,48 @@ string elements in list are supported.")
         clause_nodes.setdefault(clause_key, []).append(constraint_id_counter)
         constraint_id_counter += 1
 
+    # Inverse relationship counts. Appended AFTER every forward loop on
+    # purpose: constraint ids are positional, and appending keeps the ids of
+    # every existing constraint stable across this feature's introduction.
+    qres = utils.in_stable_order(
+        g.query(sparql_get_all_inverse_relationships, initNs=prefixes))
+    for row in qres:
+        inversepath = getattr(row, 'inversepath', None)
+        if inversepath is None:
+            continue
+        mincount = row.mincount.toPython() if row.mincount is not None else None
+        maxcount = row.maxcount.toPython() if row.maxcount is not None else None
+        if mincount is None and maxcount is None:
+            # An inverse path constrains nothing but the count of its
+            # referrers; without a bound there is nothing to compile.
+            continue
+        target_class = row.inheritedTargetclass.toPython() \
+            if row.targetclass else None
+        inverse_path = inversepath.toPython()
+        property = row.property.toPython()
+        check = utils.init_constraint_check()
+        node_key = (property + OWN_PARAMS_SUFFIX, target_class)
+        clause_key = (node_key, 'inversecount')
+        clause_connectives[clause_key] = 'OR'
+        if node_key not in property_nodes.keys():
+            property_nodes[node_key] = []
+        if clause_key not in property_nodes[node_key]:
+            property_nodes[node_key].append(clause_key)
+        property_connectives[node_key] = 'OR'
+        focus_paths[node_key] = '^' + inverse_path
+        check['targetClass'] = target_class
+        check['propertyPath'] = inverse_path
+        check['message'] = shape_message(g, row.property)
+        check['attributeType'] = INVERSE_RELATIONSHIP_TYPE
+        check['maxCount'] = maxcount
+        check['minCount'] = mincount
+        check['severity'] = row.severitycode.toPython() \
+            if row.severitycode else 'warning'
+        check['id'] = constraint_id_counter
+        constraint_checks.append(check)
+        clause_nodes.setdefault(clause_key, []).append(constraint_id_counter)
+        constraint_id_counter += 1
+
     def fold(members, operation, target_class, focus):
         """
         Collapse members into one circuit node, or pass a lone member through.
@@ -2281,6 +2536,15 @@ string elements in list are supported.")
     sql_command_sqlite, sql_command_yaml = create_property_sql()
     sqlite += sql_command_sqlite
     statementsets.append(sql_command_yaml)
+    # Only when an inverse constraint exists: the check is a whole extra job
+    # vertex with pinned state, and a model without inverse shapes should not
+    # pay for it.
+    if any(check['attributeType'] == INVERSE_RELATIONSHIP_TYPE
+           for check in constraint_checks):
+        sqlite += '\n'
+        sql_command_sqlite, sql_command_yaml = create_inverse_relationship_sql()
+        sqlite += sql_command_sqlite
+        statementsets.append(sql_command_yaml)
 
     # Evaluate the constraint circuit bottom up, one statement per level. The
     # levels are known at build time, so no recursion is needed at runtime.

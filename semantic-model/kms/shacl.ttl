@@ -29,7 +29,18 @@
             sh:property [ sh:maxCount 1 ;
                     sh:minCount 1 ;
                     sh:nodeKind sh:Literal ;
-                    sh:path ngsild:hasValue ] ] ;
+                    sh:path ngsild:hasValue ] ],
+        # A cartridge is physically installed in ONE filter. Two filters
+        # sharing a cartridge is the modelling mistake that lets one filter's
+        # waste-class escalation leak into another filter's cartridge, so it
+        # must raise a standing alert rather than wait to be noticed in the
+        # data. Both hops are spelled out because an NGSI-LD relationship
+        # reaches its target through ngsild:hasObject -- a bare inverse of
+        # hasCartridge matches nothing at all.
+        [ sh:maxCount 1 ;
+            sh:order 30 ;
+            sh:path ( [ sh:inversePath ngsild:hasObject ]
+                      [ sh:inversePath iffBaseEntities:hasCartridge ] ) ] ;
     sh:targetClass iffBaseEntities:FilterCartridge .
 
 :CutterShape a sh:NodeShape ;

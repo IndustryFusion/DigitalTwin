@@ -1,0 +1,28 @@
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix iff:  <https://industry-fusion.com/types/v0.9/> .
+@prefix ngsild: <https://uri.etsi.org/ngsi-ld/> .
+
+# Inverse property paths: a constraint on who points AT the focus node.
+#
+# Both hops are spelled out -- an NGSI-LD relationship reaches its target
+# through ngsild:hasObject, so a bare inverse of hasCartridge matches nothing.
+# This is the spelling a standard SHACL engine agrees with, which is what the
+# pyshacl comparison checks.
+#
+# Two bounds are exercised together because they fail in different ways.
+# sh:maxCount 1 is exclusivity ("installed in at most one filter"), and
+# sh:maxCount 0 is a prohibition ("this decommissioned part must not be
+# installed anywhere") -- the latter only compiles if the extractor tests
+# `is not None` rather than truthiness, since rdflib.Literal(0) is FALSY and a
+# truthiness test reads the bound as "none given" and drops the constraint.
+iff:CartridgeShape a sh:NodeShape ; sh:targetClass iff:cartridge ;
+    sh:property [ sh:path ( [ sh:inversePath ngsild:hasObject ]
+                            [ sh:inversePath iff:hasCartridge ] ) ;
+        sh:maxCount 1 ] .
+
+iff:ScrappedShape a sh:NodeShape ; sh:targetClass iff:scrapped ;
+    sh:property [ sh:path ( [ sh:inversePath ngsild:hasObject ]
+                            [ sh:inversePath iff:hasCartridge ] ) ;
+        sh:maxCount 0 ] .

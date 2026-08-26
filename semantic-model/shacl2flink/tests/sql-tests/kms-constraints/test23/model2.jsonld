@@ -1,0 +1,19 @@
+[
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld",
+    "id": "urn:cart:1",
+    "type": "https://industry-fusion.com/types/v0.9/cartridge"
+  },
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld",
+    "id": "urn:filter:1",
+    "type": "https://industry-fusion.com/types/v0.9/filter",
+    "https://industry-fusion.com/types/v0.9/hasCartridge": { "type": "Relationship", "object": "urn:cart:1" }
+  },
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld",
+    "id": "urn:filter:2",
+    "type": "https://industry-fusion.com/types/v0.9/filter",
+    "https://industry-fusion.com/types/v0.9/hasCartridge": { "type": "Relationship", "object": "urn:cart:1" }
+  }
+]
