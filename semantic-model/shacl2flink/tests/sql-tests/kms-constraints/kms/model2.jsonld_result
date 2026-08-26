@@ -1,3 +1,4 @@
+'urn:cartridge:1','CountConstraintComponent(^https://industryfusion.github.io/contexts/example/v0/base_entities/hasCartridge)','warning'
 'urn:cutter:1','CountConstraintComponent(https://industryfusion.github.io/contexts/example/v0/base_entities/hasState[0] ==> https://industryfusion.github.io/contexts/example/v0/base_entities/hasXXXWorkpiece)','warning'
 'urn:cutter:1','SPARQLConstraintComponent(StateValueShape)','ok'
 'urn:filter:1','CountConstraintComponent(https://industryfusion.github.io/contexts/example/v0/base_entities/hasState[0] ==> https://industryfusion.github.io/contexts/example/v0/base_entities/hasXXXWorkpiece)','warning'

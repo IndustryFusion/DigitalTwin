@@ -885,7 +885,68 @@ Supporting them means deciding what their value *is* for comparison -- a
 language map is not a scalar -- and adding them to both `attributes_query` and
 `VALUE_PATH_ATTRIBUTE_TYPES`. Until then the answer is an error, not a guess.
 
-## sh:message
+## Inverse property paths
+
+An inverse path with `sh:minCount`/`sh:maxCount` is supported. The focus node
+is the *referenced* entity and the counted value nodes are the entities
+referring to it -- a statement no forward path can express:
+
+```turtle
+:CartridgeShape a sh:NodeShape ;
+    sh:targetClass iffBaseEntities:FilterCartridge ;
+    # a cartridge is physically installed in at most ONE filter
+    sh:property [ sh:path ( [ sh:inversePath ngsild:hasObject ]
+                            [ sh:inversePath iffBaseEntities:hasCartridge ] ) ;
+                  sh:maxCount 1 ] .
+```
+
+**Both hops are required, and a bare `[ sh:inversePath P ]` is rejected.**
+NGSI-LD does not store a relationship as one triple: `filter hasCartridge
+cartridge` is `filter hasCartridge _:b` plus `_:b hasObject cartridge`. So an
+inverse of `hasCartridge` alone matches *nothing* -- a standard SHACL engine
+reports no violation for it, whatever the data. Reading it as "who references
+me" would make this compiler disagree with the reference engine about what a
+shape means, so the build fails and names the spelling that works. It is the
+same explicitness the forward relationship shapes already require, where the
+value shape names `ngsild:hasObject` in so many words.
+
+A violation is reported on the referenced entity as
+`CountConstraintComponent(^P)` -- the `^` is SPARQL's inverse-path syntax and
+keeps the event distinct from a forward count on the same predicate.
+
+Semantics and scope:
+
+- Referrers are counted **DISTINCT**, which is SHACL rather than hygiene: the
+  value nodes of an inverse path are a *set* of referring entities, so a
+  referrer carrying several attribute instances of the relationship counts
+  once.
+- Only *live* references count: the attribute row, the referring entity and
+  the focus node each carry their own deletion flag, and all three are
+  honoured.
+- `sh:maxCount 0` is a *prohibition* -- "this decommissioned part must not be
+  installed anywhere" -- and compiles like any other bound.
+- Plain-IRI inverse paths on a top-level property shape only -- no nesting,
+  no connectives, no value shape (the referring entities are not attribute
+  values, so none of the value machinery applies).
+
+Count bounds are the only supported parameters, and **the build rejects
+anything else on an inverse shape** rather than accepting it unchecked:
+
+| written on an inverse shape | outcome |
+|---|---|
+| `sh:minCount` / `sh:maxCount` | compiled |
+| no bound at all | **build fails** -- constrains nothing |
+| `sh:class`, `sh:nodeKind`, `sh:property`, … | **build fails** -- not evaluated here |
+| a bare `[ sh:inversePath P ]` | **build fails** -- matches nothing in NGSI-LD |
+| a path expression in the second hop | **build fails** -- only a plain predicate matches |
+
+`sh:class` on an inverse shape is the notable one: it would read "every
+referring entity must be a Filter", which is a meaningful and implementable
+constraint -- the forward `sh:class` check's subclass-closure join transplants
+onto the referrer's type -- but it is *not* evaluated today, so it is refused
+rather than silently dropped. Likewise `sh:qualifiedValueShape` ("at least one
+referrer of class C") is unsupported: qualified shapes are not compiled
+anywhere yet.
 
 `sh:message` replaces the generated explanation in the alert's `text`. The
 generated one names the attribute and the parameter that failed, which says
