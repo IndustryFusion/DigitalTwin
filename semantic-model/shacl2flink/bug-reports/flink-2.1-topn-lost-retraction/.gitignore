@@ -1,0 +1,6 @@
+# downloaded by run-minimal.sh
+*.jar
+# generated per run: the DDL is prepended to each script, since every
+# sql-client invocation is a fresh session
+_query.sql
+_step*.sql

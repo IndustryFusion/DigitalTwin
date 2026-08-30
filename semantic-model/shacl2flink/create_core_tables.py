@@ -182,7 +182,7 @@ def main():
         #               and its retractions are silently dropped: alerts raise
         #               and never clear. A two-column key hit that; a rowtime
         #               single-column key does not. See
-        #               docs/flink-2.3-retraction-bug.md.
+        #               bug-reports/flink-2.1-topn-lost-retraction/README.md.
         #
         # COALESCE, not observedAt alone: a writer that sets no observedAt --
         # the writeback stamping `synced`, for one -- would otherwise produce

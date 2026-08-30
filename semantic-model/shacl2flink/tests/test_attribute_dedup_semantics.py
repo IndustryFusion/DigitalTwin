@@ -36,7 +36,7 @@ Soundness. From Flink 2.1, a top-1 ROW_NUMBER whose ORDER BY is not a single
 time attribute is wrongly declared INSERT_ONLY and its retractions are silently
 dropped -- alerts raise and never clear, with a healthy job and no error. The
 two-column key hit exactly that. This is why a tie-break column must NOT come
-back. See docs/flink-2.3-retraction-bug.md.
+back. See bug-reports/flink-2.1-topn-lost-retraction/README.md.
 
 A NOTE ON LATENESS, because an earlier version of this file asserted the
 opposite. Declaring the rowtime does NOT make old records "late" and discarded.
@@ -132,23 +132,16 @@ def test_the_kafka_offset_tie_break_is_gone():
 
 
 def test_entities_declares_a_rowtime_too(tmp_path):
-    """Every source feeding a rule needs one, for two reasons.
-
-    Ties: without it entities_view is a general Rank, which keeps the incumbent
-    -- the same latent defect that made a deleted attribute go on being counted.
-
-    Mini-batch: a rowtime anywhere puts mini-batch into RowTime mode, where a
-    batch is flushed by watermark advance. A source without a watermark never
-    flushes its side. Measured on 2.3.0: with attributes watermarked and
-    entities not, a new entity carrying no attributes never produced a verdict.
-    """
+    """Without it entities_view is a general Rank, which keeps the incumbent
+    on a tie -- the same latent defect that made a deleted attribute go on
+    being counted, and entity deletes had it too."""
     create_ngsild_tables.main(output_folder=str(tmp_path))
     tables = _tables((tmp_path / 'ngsild.yaml').read_text())
     entities = [name for name in tables if name and 'entities' in name]
     assert entities, 'create_ngsild_tables.py emitted no entities table'
     for name in entities:
         assert 'watermark' in _field_names(tables[name]), \
-            f'{name} lost its watermark; mini-batch would stop flushing it'
+            f'{name} lost its rowtime; ties would go to the incumbent again'
 
 
 def test_alerts_bulk_keeps_its_watermark():

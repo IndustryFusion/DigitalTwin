@@ -491,7 +491,7 @@ def create_yaml_view(name, table, primary_key=None, ttl=None):
     # ORDER BY is not a single time attribute is wrongly declared INSERT_ONLY
     # and its retractions are dropped -- alerts raise and never clear. So do
     # NOT add a second sort column here; a tie-break column is exactly what
-    # trips it. See docs/flink-2.3-retraction-bug.md.
+    # trips it. See bug-reports/flink-2.1-topn-lost-retraction/README.md.
     #
     # `eventTime` is COALESCE(observedAt, ts) declared on the table, so a
     # writer that sets no observedAt falls back to the write time instead of

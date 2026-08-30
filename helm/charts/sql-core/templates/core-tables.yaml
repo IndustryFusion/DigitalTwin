@@ -198,7 +198,7 @@ spec:
       -- single time attribute is wrongly declared INSERT_ONLY and its
       -- retractions are silently dropped -- alerts raise and never clear. The
       -- two-column key hit exactly that. Do NOT add a second sort column.
-      -- See semantic-model/shacl2flink/docs/flink-2.3-retraction-bug.md.
+      -- See semantic-model/shacl2flink/bug-reports/flink-2.1-topn-lost-retraction/README.md.
       --
       -- Must mirror lib/utils.py create_yaml_view.
       SELECT /*+ STATE_TTL('attributes' = '{{.Values.flink.viewTtl}}') */ *,
