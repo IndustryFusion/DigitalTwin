@@ -158,43 +158,43 @@ def main():
         {'lang': 'STRING'},
         {'deleted': 'BOOLEAN'},
         {'synced': 'BOOLEAN'},
-        # No WATERMARK. Nothing here windows, so a rowtime buys nothing: only
-        # time-based operators -- windows, interval and temporal joins, windowed
-        # TopN, CEP -- actually consume a watermark. These are entity-state
-        # tables, not windowed analytics, and alerts_bulk keeps its own
-        # watermark for the alerting path, which does window.
-        #
-        # What the declaration DOES change here is which operator the planner
-        # picks for the attributes_view dedup, and the two disagree on ties:
-        #
-        #   with a rowtime -> event-time Deduplicate (keep-last-row), which
-        #                     accepts a later row of EQUAL ts
-        #   without        -> a general Rank, which keeps the INCUMBENT and
-        #                     replaces only on a strictly greater sort key
-        #
-        # That matters because same-instant records are real -- the bridge
-        # stamps records lacking an observedAt with its receive time, and a
-        # snapshot re-emission repeats its record's timestamp exactly.
-        # Dropping the watermark therefore silently changed tie semantics,
-        # which is why the `offset` column below exists -- it restores
-        # tie-by-arrival explicitly instead of depending on operator choice.
-        #
-        # NOTE: an earlier version of this comment claimed the watermark caused
-        # old-observedAt records to be "dropped as late". That was wrong. A
-        # keyed dedup discards an older-rowtime row for a key because of
-        # ORDERING, not lateness, and it does so with or without a watermark.
         # The EVENT time, carried in the payload by debeziumBridge as epoch
-        # millis. `ts` below is now the WRITE time -- kept for debugging, and
-        # nothing orders by it. See lib/utils.py create_yaml_view for why the
-        # two were separated.
+        # millis. `ts` is the WRITE time (the Kafka record timestamp), which is
+        # what retention.ms -- a wall-clock STORAGE policy -- must act on: while
+        # observedAt lived there, the kms model's 2024 observations were born
+        # older than any sane retention and Kafka deleted them on contact.
+        # The two are separated for that reason; `eventTime` below is what the
+        # dedup orders by.
         {'observedAt': 'TIMESTAMP(3)'},
         {'ts': "TIMESTAMP(3) METADATA FROM 'timestamp'"},
-        # Arrival order, for attributes_view to break ties on: same-instant
-        # records (bridge-stamped receive times, snapshot re-emissions) tie on
-        # the event time and the dedup needs something else to separate them.
-        # Declared on the Flink table only: SQLite has no such metadata and
-        # orders by rowid, which is its equivalent.
-        {'offset': 'BIGINT METADATA VIRTUAL'}
+        # The event time as a ROWTIME attribute, which is what makes the
+        # attributes_view dedup compile into Flink's Deduplicate (keep-last-row)
+        # instead of a general Rank. That matters twice:
+        #
+        #   ties     -- Deduplicate accepts a later row of EQUAL eventTime,
+        #               a Rank keeps the incumbent. Same-instant records are
+        #               real (bridge-stamped receive times, snapshot
+        #               re-emissions), which is why a tie-break was needed at
+        #               all. Deduplicate breaks them by arrival for free, so the
+        #               `offset` column this table used to carry is gone.
+        #   soundness -- from Flink 2.1 a top-1 ROW_NUMBER whose ORDER BY is not
+        #               a single time attribute is wrongly declared INSERT_ONLY
+        #               and its retractions are silently dropped: alerts raise
+        #               and never clear. A two-column key hit that; a rowtime
+        #               single-column key does not. See
+        #               docs/flink-2.3-retraction-bug.md.
+        #
+        # COALESCE, not observedAt alone: a writer that sets no observedAt --
+        # the writeback stamping `synced`, for one -- would otherwise produce
+        # NULL, lose every comparison and never win the dedup. Falling back to
+        # the write time is what those rows did before.
+        {'eventTime': "AS COALESCE(`observedAt`, `ts`)"},
+        # Nothing windows over this table, so the watermark is not consumed by
+        # any operator here; declaring it is what promotes eventTime to a
+        # rowtime. Deduplicate compares rowtimes, it does not drop late rows,
+        # so out-of-order event times (a 2024 model observation arriving after
+        # live data) are ordered, not discarded.
+        {'watermark': "FOR `eventTime` AS `eventTime`"}
     ]
     sqlite_table = [
         {'id': 'TEXT'},

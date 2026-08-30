@@ -197,8 +197,8 @@ def test_create_statementmap():
             'views': 'view',
             'sqlsettings': [
                 {"table.exec.sink.upsert-materialize": "auto"},
-                {"table.exec.mini-batch.enabled": "false"},  # FLINK-35661: minibatch drops retractions on 1.x
-                {"table.exec.mini-batch.allow-latency": "100 ms"},
+                {"table.exec.mini-batch.enabled": "false"},
+                {"table.exec.mini-batch.allow-latency": "500 ms"},
                 {"table.exec.mini-batch.size": "1000"},
                 {"execution.savepoint.ignore-unclaimed-state": "true"},
                 {"pipeline.object-reuse": "true"},
@@ -228,8 +228,8 @@ def test_create_statementmap():
             'views': 'view',
             'sqlsettings': [
                 {"table.exec.sink.upsert-materialize": "auto"},
-                {"table.exec.mini-batch.enabled": "false"},  # FLINK-35661: minibatch drops retractions on 1.x
-                {"table.exec.mini-batch.allow-latency": "100 ms"},
+                {"table.exec.mini-batch.enabled": "false"},
+                {"table.exec.mini-batch.allow-latency": "500 ms"},
                 {"table.exec.mini-batch.size": "1000"},
                 {"execution.savepoint.ignore-unclaimed-state": "true"},
                 {"pipeline.object-reuse": "true"},
@@ -261,8 +261,8 @@ def test_create_statementmap():
             'views': 'view',
             'sqlsettings': [
                 {"table.exec.sink.upsert-materialize": "auto"},
-                {"table.exec.mini-batch.enabled": "false"},  # FLINK-35661: minibatch drops retractions on 1.x
-                {"table.exec.mini-batch.allow-latency": "100 ms"},
+                {"table.exec.mini-batch.enabled": "false"},
+                {"table.exec.mini-batch.allow-latency": "500 ms"},
                 {"table.exec.mini-batch.size": "1000"},
                 {"execution.savepoint.ignore-unclaimed-state": "true"},
                 {"pipeline.object-reuse": "true"},

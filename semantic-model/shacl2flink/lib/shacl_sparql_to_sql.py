@@ -50,18 +50,19 @@ sql_check_sparql_base = """
                 {% else %}
                 ARRAY ['SHACL Validator'] AS service,
                 {% endif %}
-                CASE WHEN this IS NOT NULL
+                CASE WHEN MAX(CASE WHEN this IS NOT NULL THEN 1 ELSE 0 END) = 1
                     THEN '{{severity}}'
                     ELSE 'ok' END AS severity,
                 'customer'  customer,
-                CASE WHEN this IS NOT NULL
+                MAX(CASE WHEN this IS NOT NULL
                 THEN '{{message}}'
-                ELSE 'All ok' END  as `text`
+                ELSE 'All ok' END)  as `text`
                 {%- if sqlite %}
                 ,CURRENT_TIMESTAMP
                 {%- endif %}
 
             FROM (SELECT A.this as this_left, B.this as this, * FROM (SELECT id as this, `type` from {{targetclass}}_view {{types_constraints}}) as A LEFT JOIN ({{sql_expression}}) as B ON A.this = B.this)
+            GROUP BY this_left
 """  # noqa E501
 
 

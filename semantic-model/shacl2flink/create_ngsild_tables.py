@@ -81,11 +81,14 @@ def main(output_folder='output'):
         base_entity_table.append({sq("type"): "STRING"})
         base_entity_table.append({sq("deleted"): "BOOLEAN"})
         base_entity_table.append({sq("ts"): "TIMESTAMP(3) METADATA FROM 'timestamp'"})
-        # No WATERMARK, for the same reason as the attributes table: nothing
-        # windows over this, and only time-based operators consume a watermark.
-        # What it would change is the operator behind the entities_view dedup --
-        # rowtime Deduplicate versus a general Rank -- and those disagree on how
-        # a tie in `ts` is resolved. See create_core_tables.py.
+        # Entities carry no observedAt, so their event time IS the write time.
+        # Declaring the rowtime makes entities_view a Deduplicate
+        # (keep-last-row) instead of a general Rank, so a tie in `ts` goes to
+        # the later ARRIVAL. A Rank keeps the incumbent, which is the same
+        # latent defect that made a deleted ATTRIBUTE go on being counted;
+        # entity deletes had it too. Zero delay, so each record advances the
+        # watermark past itself.
+        base_entity_table.append({sq("watermark"): "FOR `ts` AS `ts`"})
 
         base_entity_tablename = configs.kafka_topic_ngsi_prefix_name
         base_entity_primary_key = None
