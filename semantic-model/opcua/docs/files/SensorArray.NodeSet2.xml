@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Tutorial nodeset for docs/ontology-validation.md.
+
+     SampleArrayType is a VariableType for a one-dimensional array of Doubles
+     (ValueRank="1", ArrayDimensions="0" meaning "one dimension, length not
+     fixed"). SensorType declares a Mandatory component "Samples" that is
+     typed by SampleArrayType and is likewise an array.
+
+     This nodeset is CONSISTENT. Its deliberately broken twin,
+     SensorArrayBroken.NodeSet2.xml, changes exactly one attribute. -->
+<UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+           LastModified="2024-07-15T00:00:00Z"
+           xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
+  <Models>
+    <Model ModelUri="http://example.org/sensor/"
+           XmlSchemaUri="http://opcfoundation.org/UA/2008/02/Types.xsd"
+           Version="1.05.03"
+           PublicationDate="2024-07-29T00:00:00Z"
+           ModelVersion="1.5.3" />
+  </Models>
+  <NamespaceUris>
+    <Uri>http://example.org/sensor/</Uri>
+  </NamespaceUris>
+  <Aliases>
+    <Alias Alias="Double">i=11</Alias>
+    <Alias Alias="HasComponent">i=47</Alias>
+    <Alias Alias="HasSubtype">i=45</Alias>
+    <Alias Alias="HasTypeDefinition">i=40</Alias>
+    <Alias Alias="HasModellingRule">i=37</Alias>
+    <Alias Alias="BaseDataVariableType">i=63</Alias>
+    <Alias Alias="BaseObjectType">i=58</Alias>
+    <Alias Alias="Mandatory">i=78</Alias>
+  </Aliases>
+
+  <!-- A VariableType for a 1-dimensional array of Doubles. -->
+  <UAVariableType NodeId="ns=1;i=3000" BrowseName="1:SampleArrayType"
+                  DataType="Double" ValueRank="1" ArrayDimensions="0">
+    <DisplayName>SampleArrayType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">BaseDataVariableType</Reference>
+    </References>
+  </UAVariableType>
+
+  <!-- SensorType has a Mandatory component "Samples" of SampleArrayType. -->
+  <UAObjectType NodeId="ns=1;i=2000" BrowseName="1:SensorType">
+    <DisplayName>SensorType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">BaseObjectType</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2001</Reference>
+    </References>
+  </UAObjectType>
+
+  <!-- ValueRank="1" and ArrayDimensions="0" agree with SampleArrayType. -->
+  <UAVariable NodeId="ns=1;i=2001" BrowseName="1:Samples"
+              DataType="Double" ValueRank="1" ArrayDimensions="0">
+    <DisplayName>Samples</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=3000</Reference>
+      <Reference ReferenceType="HasModellingRule">Mandatory</Reference>
+    </References>
+  </UAVariable>
+</UANodeSet>
