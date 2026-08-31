@@ -1,0 +1,36 @@
+diff --git a/flink-table/flink-table-planner/src/main/scala/org/apache/flink/table/planner/plan/optimize/program/FlinkChangelogModeInferenceProgram.scala b/flink-table/flink-table-planner/src/main/scala/org/apache/flink/table/planner/plan/optimize/program/FlinkChangelogModeInferenceProgram.scala
+index b6767e68..ae768201 100644
+--- a/flink-table/flink-table-planner/src/main/scala/org/apache/flink/table/planner/plan/optimize/program/FlinkChangelogModeInferenceProgram.scala
++++ b/flink-table/flink-table-planner/src/main/scala/org/apache/flink/table/planner/plan/optimize/program/FlinkChangelogModeInferenceProgram.scala
+@@ -263,9 +263,17 @@ class FlinkChangelogModeInferenceProgram extends FlinkOptimizeProgram[StreamOpti
+         // if the rank is deduplication and can be executed as insert-only, forward that information
+         val insertOnly = children.forall(ChangelogPlanUtils.isInsertOnly)
+ 
++        // Only a rank that is really executed as StreamExecDeduplicate may claim to be
++        // insert-only. That requires the sort to be on a single time attribute; any other
++        // order key stays a Rank, whose top-1 row can be displaced later and therefore has
++        // to retract. Without this check, e.g. ORDER BY ts DESC, seq DESC is silently
++        // declared insert-only and its retractions are dropped.
++        val sortOnTimeAttributeOnly =
++          RankUtil.sortOnTimeAttributeOnly(rank.orderKey, rank.getInput.getRowType)
++
+         val providedTrait = {
+           if (
+-            insertOnly && RankUtil.outputInsertOnlyInDeduplicate(
++            insertOnly && sortOnTimeAttributeOnly && RankUtil.outputInsertOnlyInDeduplicate(
+               tableConfig,
+               RankUtil.keepLastDeduplicateRow(rank.orderKey))
+           ) {
+diff --git a/flink-table/flink-table-planner/src/main/scala/org/apache/flink/table/planner/plan/utils/RankUtil.scala b/flink-table/flink-table-planner/src/main/scala/org/apache/flink/table/planner/plan/utils/RankUtil.scala
+index 2314eb5a..534c7f58 100644
+--- a/flink-table/flink-table-planner/src/main/scala/org/apache/flink/table/planner/plan/utils/RankUtil.scala
++++ b/flink-table/flink-table-planner/src/main/scala/org/apache/flink/table/planner/plan/utils/RankUtil.scala
+@@ -357,7 +357,7 @@ object RankUtil {
+     !rank.outputRankNumber && isLimit1 && isSortOnTimeAttribute && isRowNumberType
+   }
+ 
+-  private def sortOnTimeAttributeOnly(
++  def sortOnTimeAttributeOnly(
+       sortCollation: RelCollation,
+       inputRowType: RelDataType): Boolean = {
+     if (sortCollation.getFieldCollations.size() != 1) {

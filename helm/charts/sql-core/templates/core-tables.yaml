@@ -95,22 +95,22 @@ spec:
     - lang: STRING
     - deleted: BOOLEAN
     - synced: BOOLEAN
-    # No WATERMARK. Nothing windows over this table, and only time-based
-    # operators consume a watermark. What the declaration would change is which
-    # operator backs the attributes_view dedup -- a rowtime Deduplicate accepts
-    # a later row of EQUAL ts, a general Rank keeps the incumbent -- and
-    # same-instant records are real (bridge-stamped receive times, snapshot
-    # re-emissions). The `offset` column below settles that explicitly rather
-    # than leaving it to operator choice. Mirrors create_core_tables.py.
-    #
-    # The EVENT time, carried in the payload by debeziumBridge. `ts` is now the
-    # WRITE time and nothing orders by it: putting observedAt in the record
-    # stamp meant retention.ms, a wall-clock storage policy, was applied to an
-    # event time, and every record for a historical observation was deleted on
-    # contact. Mirrors create_core_tables.py.
+    # The EVENT time, carried in the payload by debeziumBridge. `ts` is the
+    # WRITE time: putting observedAt in the record stamp meant retention.ms, a
+    # wall-clock storage policy, was applied to an event time, and every record
+    # for a historical observation was deleted on contact.
     - 'observedAt': TIMESTAMP(3)
     - 'ts': TIMESTAMP(3) METADATA FROM 'timestamp'
-    - 'offset': BIGINT METADATA VIRTUAL
+    # Declaring the watermark promotes eventTime to a ROWTIME, which is what
+    # makes attributes_view compile into Deduplicate (keep-last-row) rather
+    # than a general Rank: ties go to arrival, and the changelog is declared
+    # correctly on Flink 2.1+. Nothing windows over this table, so no operator
+    # here consumes the watermark; Deduplicate compares rowtimes and does not
+    # drop late rows, so an out-of-order event time is ordered, not discarded.
+    # COALESCE so a writer setting no observedAt (the `synced` writeback) falls
+    # back to write time instead of NULL. Mirrors create_core_tables.py.
+    - 'eventTime': AS COALESCE(`observedAt`, `ts`)
+    - 'watermark': FOR `eventTime` AS `eventTime`
   kafka:
     topic: {{.Values.kafkaBridge.debezium.attributesTopic}}
     properties:
@@ -179,25 +179,31 @@ spec:
       -- every consumer keeps counting an attribute that is gone. A delete
       -- arrives as an ordinary row carrying deleted=true, so it is exactly
       -- the case this breaks.
-      -- The Kafka offset breaks the tie. Same-instant records are real:
-      -- the bridge stamps records lacking an observedAt with its receive
-      -- time, and snapshot re-emissions repeat their record's timestamp
-      -- exactly. Without a rowtime this compiles into a general Rank, and
-      -- Rank keeps the INCUMBENT on a tie, replacing only on a strictly
-      -- greater key -- whichever copy arrived first would be frozen in.
+      -- ONE sort column, and it is the ROWTIME `eventTime`. That compiles
+      -- into Flink's Deduplicate (keep-last-row) instead of a general Rank,
+      -- which matters twice.
       --
+      -- Ties: same-instant records are real -- the bridge stamps records
+      -- lacking an observedAt with its receive time, and snapshot
+      -- re-emissions repeat their record's timestamp exactly. A Rank keeps
+      -- the INCUMBENT on a tie; Deduplicate takes the later arrival.
       -- Measured on urn:filter:1 hasStrength (observedAt 2024-02-28T13:52:35):
       -- the view latched a deleted=true row, four later re-emissions of the
       -- live value all tied and lost, and the count constraint reported
       -- "Found 0 properties instead of [1, 1]" against an attribute that
-      -- plainly existed. Writing one value with a CURRENT observedAt was
-      -- strictly greater, displaced it, and cleared the alert in 15 seconds.
+      -- plainly existed. A Kafka-offset tie-break column used to restore this
+      -- explicitly; the rowtime gives it for free, so that column is gone.
       --
-      -- The offset is strictly monotonic per partition, so it is arrival
-      -- order stated explicitly. Must mirror lib/utils.py create_yaml_view.
+      -- Soundness: from Flink 2.1 a top-1 ROW_NUMBER whose ORDER BY is not a
+      -- single time attribute is wrongly declared INSERT_ONLY and its
+      -- retractions are silently dropped -- alerts raise and never clear. The
+      -- two-column key hit exactly that. Do NOT add a second sort column.
+      -- See semantic-model/shacl2flink/bug-reports/flink-2.1-topn-lost-retraction/README.md.
+      --
+      -- Must mirror lib/utils.py create_yaml_view.
       SELECT /*+ STATE_TTL('attributes' = '{{.Values.flink.viewTtl}}') */ *,
       ROW_NUMBER() OVER (PARTITION BY `id`, `datasetId`
-         ORDER BY COALESCE(`observedAt`, `ts`) DESC, `offset` DESC) AS rownum
+         ORDER BY `eventTime` DESC) AS rownum
       FROM `attributes`)
       WHERE rownum = 1;
 ---

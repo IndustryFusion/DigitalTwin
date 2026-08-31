@@ -431,6 +431,10 @@ def create_yaml_view(name, table, primary_key=None, ttl=None):
             if ('metadata' not in field_name.lower() and
                     field_name.lower() != "watermark" and
                     field_name.lower() != "offset" and
+                    # the dedup's rowtime: ordering input, not view output.
+                    # Projecting it would carry a time attribute into the
+                    # downstream joins, which is not what they are.
+                    field_name.lower() != "eventtime" and
                     field_name.lower() != "type"):
                 sqlstatement += f',\n `{field_name}`'
     sqlstatement += f" FROM (\n  SELECT {ttl_expression}*,\nROW_NUMBER() OVER (PARTITION BY "
@@ -478,15 +482,26 @@ def create_yaml_view(name, table, primary_key=None, ttl=None):
         return any(fn.lower() == field_name
                    for field in table for fn in field)
 
-    # COALESCE, not observedAt alone: any writer that does not set it -- the
-    # writeback that stamps `synced`, for one -- would otherwise produce NULL,
-    # lose every comparison, never win the dedup, and leave the attribute
-    # looking unsynced for ever. Falling back to the write time is exactly
-    # the behaviour those rows had before.
-    order_by = ("COALESCE(`observedAt`, `ts`) DESC"
-                if has('observedat') else "ts DESC")
-    if has('offset'):
-        order_by += ", `offset` DESC"
+    # ONE sort column, and where the table declares it, a ROWTIME one. That is
+    # what compiles this into Flink's Deduplicate (keep-last-row) rather than a
+    # general Rank, which buys two things: ties go to ARRIVAL for free (a Rank
+    # keeps the incumbent, so a later same-instant write would be discarded --
+    # measured, it made a deleted attribute go on being counted), and the
+    # changelog is declared correctly. From Flink 2.1 a top-1 ROW_NUMBER whose
+    # ORDER BY is not a single time attribute is wrongly declared INSERT_ONLY
+    # and its retractions are dropped -- alerts raise and never clear. So do
+    # NOT add a second sort column here; a tie-break column is exactly what
+    # trips it. See bug-reports/flink-2.1-topn-lost-retraction/README.md.
+    #
+    # `eventTime` is COALESCE(observedAt, ts) declared on the table, so a
+    # writer that sets no observedAt falls back to the write time instead of
+    # producing NULL and losing every comparison.
+    if has('eventtime'):
+        order_by = "`eventTime` DESC"
+    elif has('observedat'):
+        order_by = "COALESCE(`observedAt`, `ts`) DESC"
+    else:
+        order_by = "ts DESC"
     sqlstatement += f"\nORDER BY {order_by}) AS rownum\n"
     sqlstatement += f'FROM `{name}` )\nWHERE rownum = 1'
     spec['sqlstatement'] = sqlstatement
@@ -590,25 +605,9 @@ def create_statementmap(object_name, table_object_names,
         # previous one, and the trigger topic took ~670 writes/s without it).
         # All three keys are required for it to take effect.
         #
-        # DISABLED until Flink >= 2.0.3 / 2.1.3 / 2.2.2 / 2.3.0. Two
-        # independent bugs killed it on 1.x, and neither has a 1.x backport:
-        #
-        #  * 1.19.1: the MiniBatchAssigner nodes dropped the alias-keyed
-        #    STATE_TTL hints on their way to the joins (FLINK-36238 /
-        #    FLINK-36417), so the '0d' pins never reached the operators and
-        #    every join-based rule died for good once its state passed
-        #    table.exec.state.ttl.
-        #  * 1.20.4: mini-batch bundles that contain retraction-only keys
-        #    silently drop records (FLINK-35661 and related mini-batch
-        #    operator bugs, fixed only in the 2.x line) -- measured with
-        #    tools/ttl_test.py: verdict retractions were lost under
-        #    delete/insert churn and event-time overrides (alerts stuck
-        #    open), while the same suite passes with mini-batch off.
-        #
-        # Rerun tools/ttl_test.py --phase all after any Flink version bump
-        # before flipping this back on.
+        # Next step: run with mini-batch to optimize Flink operation.
         {"table.exec.mini-batch.enabled": "false"},
-        {"table.exec.mini-batch.allow-latency": "100 ms"},
+        {"table.exec.mini-batch.allow-latency": "500 ms"},
         {"table.exec.mini-batch.size": "1000"},
         {"execution.savepoint.ignore-unclaimed-state": "true"},
         {"pipeline.object-reuse": "true"},

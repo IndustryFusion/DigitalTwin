@@ -11,3 +11,6 @@ tests/opcua-shapes/output/
 
 # Fixture build artifacts
 tests/sql-tests/*/*/output/
+
+# pytest-cov data file
+.coverage

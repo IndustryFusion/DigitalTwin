@@ -47,15 +47,38 @@ def _chart_text():
 def test_chart_attributes_view_matches_generator_ordering():
     """The dedup ordering is the event-time contract; the chart copy must
     carry the same clause the generator emits (see
-    test_no_late_record_dropping for the generator side)."""
+    test_attribute_dedup_semantics for the generator side)."""
     text = _chart_text()
-    assert 'ORDER BY COALESCE(`observedAt`, `ts`) DESC, `offset` DESC' in text
+    assert 'ORDER BY `eventTime` DESC' in text
 
 
-def test_chart_attributes_table_carries_event_time_and_offset():
-    text = _chart_text()
-    assert "'observedAt': TIMESTAMP(3)" in text
-    assert "'offset': BIGINT METADATA VIRTUAL" in text
-    assert 'WATERMARK' not in text.split('name: attributes\n')[1].split('---')[0], \
-        'the attributes table regained a watermark; only windowed operators ' \
-        'need one and it changes which dedup operator Flink selects'
+def _chart_attributes_table():
+    """The `attributes` BeamSqlTable body.
+
+    `name: attributes` appears twice per document -- once under metadata, once
+    under spec -- and str.split splits on EVERY occurrence, so [1] is the
+    eight-character gap between them. The fields live after the second one.
+    An earlier version of this guard read that gap and asserted against it,
+    which passed no matter what the chart said.
+    """
+    return _chart_text().split('name: attributes\n')[2].split('---')[0]
+
+
+def test_chart_attributes_view_sorts_on_one_column():
+    """A second sort column makes Flink 2.1+ declare the dedup INSERT_ONLY and
+    silently drop its retractions. The chart is what actually deploys, so it
+    needs the guard as much as the generator does."""
+    assert '`offset`' not in _chart_attributes_table(), \
+        'the attributes table regained the offset tie-break column'
+    assert 'COALESCE(`observedAt`, `ts`) DESC,' not in _chart_text(), \
+        'the two-column dedup ordering is back'
+
+
+def test_chart_attributes_table_declares_the_event_time_rowtime():
+    attributes = _chart_attributes_table()
+    assert "'observedAt': TIMESTAMP(3)" in attributes
+    assert "'eventTime': AS COALESCE(`observedAt`, `ts`)" in attributes, \
+        'the chart does not declare the eventTime computed column'
+    assert 'watermark' in attributes.lower(), \
+        'without the watermark the dedup compiles to a general Rank, which ' \
+        'keeps the incumbent on a tie and is declared INSERT_ONLY on 2.1+'
