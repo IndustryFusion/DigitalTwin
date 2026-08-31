@@ -49,7 +49,8 @@ opcua:nodei4 a opcua:PropertyType,
     base:hasNodeId "4" ;
     base:hasValueRank -4 .
 
-# not allowed ArrayDimensions
+# OK - ValueRank -2 (Any) permits "a scalar or an array with any number of
+# dimensions", so no ArrayDimensions length contradicts it.
 opcua:nodei5 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     base:hasBrowseName "Annotations5" ;
@@ -61,7 +62,8 @@ opcua:nodei5 a opcua:PropertyType,
     base:hasArrayDimensions ( 1 ) ;
     base:hasValueRank -2 .
 
-# not allowed ArrayDimensions
+# OK - ValueRank 0 (OneOrMoreDimensions) means the Value IS an array, so it has
+# ArrayDimensions; the declaration does not fix how many, so no length is wrong.
 opcua:nodei6 a opcua:PropertyType,
         opcua:VariableNodeClass ;
     base:hasBrowseName "Annotations6" ;
@@ -245,3 +247,57 @@ base:hasNamespace opcua:OPCUANamespace ;
 base:hasNodeId "21" ;
 base:hasArrayDimensions ( 0 1 );
 base:hasValueRank 1 .
+
+# OK - ValueRank -3 (ScalarOrOneDimension) with a single ArrayDimensions entry.
+# This is the exact shape of OPC UA DI's WarningValues (ns=1;i=472), which is
+# compliant: Part 3 5.6.2 lets the Value of a -3 Variable be a one-dimensional
+# array, and one element of 0 means "maximum length unknown". Must NOT be flagged.
+opcua:nodei22 a opcua:PropertyType,
+    opcua:VariableNodeClass ;
+base:hasBrowseName "Annotations22" ;
+base:hasDatatype opcua:Annotation ;
+base:hasDisplayName "Annotations22" ;
+base:hasIdentifierType base:numericID ;
+base:hasNamespace opcua:OPCUANamespace ;
+base:hasNodeId "22" ;
+base:hasArrayDimensions ( 0 );
+base:hasValueRank -3 .
+
+# Not OK - ValueRank -3 permits at most ONE dimension, so two is still a violation.
+opcua:nodei23 a opcua:PropertyType,
+    opcua:VariableNodeClass ;
+base:hasBrowseName "Annotations23" ;
+base:hasDatatype opcua:Annotation ;
+base:hasDisplayName "Annotations23" ;
+base:hasIdentifierType base:numericID ;
+base:hasNamespace opcua:OPCUANamespace ;
+base:hasNodeId "23" ;
+base:hasArrayDimensions ( 0 2 );
+base:hasValueRank -3 .
+
+# Not OK - ValueRank -1 is Scalar, "The value is not an array", so ArrayDimensions
+# shall be null. This is the one rank below 1 that does constrain the length, and
+# it is what keeps the relaxations for -2/0/-3 from emptying the rule.
+opcua:nodei24 a opcua:PropertyType,
+    opcua:VariableNodeClass ;
+base:hasBrowseName "Annotations24" ;
+base:hasDatatype opcua:Annotation ;
+base:hasDisplayName "Annotations24" ;
+base:hasIdentifierType base:numericID ;
+base:hasNamespace opcua:OPCUANamespace ;
+base:hasNodeId "24" ;
+base:hasArrayDimensions ( 1 );
+base:hasValueRank -1 .
+
+# OK - ValueRank -2 with a multi-dimensional ArrayDimensions: "any number of
+# dimensions" includes this one.
+opcua:nodei25 a opcua:PropertyType,
+    opcua:VariableNodeClass ;
+base:hasBrowseName "Annotations25" ;
+base:hasDatatype opcua:Annotation ;
+base:hasDisplayName "Annotations25" ;
+base:hasIdentifierType base:numericID ;
+base:hasNamespace opcua:OPCUANamespace ;
+base:hasNodeId "25" ;
+base:hasArrayDimensions ( 2 2 );
+base:hasValueRank -2 .

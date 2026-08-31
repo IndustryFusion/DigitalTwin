@@ -1,5 +1,13 @@
 # Tools to translate from OPC/UA Information Model to Semantic Web standards
 
+This file is the CLI reference. For step-by-step tutorials see [docs/](./docs/README.md),
+in particular the three validations:
+
+- [Validation Overview](./docs/validation-overview.md) — which of the three to run when
+- [Ontology (Graph) Validation](./docs/ontology-validation.md) — `validate.py -m ontology`
+- [Instance Validation](./docs/simple-example.md#validation-of-instances) — `validate.py` (default mode)
+- [Virtual Type (Logical) Validation](./docs/virtual-type-validation.md) — `validate.py -m vt` / `check_consistency.py`
+
 ## Setup
 
 To setup the python environment start a python3 virtual environment with `Python 3.11` and install the dependencies with:
@@ -289,4 +297,8 @@ Validate a semantic-bridge ontology against just its ValueRank consistency:
 Check a Virtual-Types ontology for logical consistency:
 
         python3 validate.py -m vt pumps.vt.owl.ttl
+
+Worked examples for all three modes, including deliberately broken nodesets and
+how to read each report, are in
+[docs/validation-overview.md](./docs/validation-overview.md).
 

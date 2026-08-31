@@ -124,7 +124,34 @@ base:OPCUANodeShape a sh:NodeShape ;
               GROUP BY $this
             }
             # Trigger a violation if the number of dimensions does not match valueRank.
-  			    FILTER ( (?valueRank > 0 && ?count != ?valueRank) || (?valueRank <= 0 && ?count > 0) )
+            #
+            # Each ValueRank constrains the ArrayDimensions length differently, because
+            # Part 3 5.6.2 ties ArrayDimensions to the Value, not to ValueRank: "The
+            # number of elements shall be equal to the number of dimensions of the
+            # Value. This Attribute shall be null if the Value is not an array."
+            # Combined with the ValueRank definitions in the same clause, the only
+            # statically checkable constraints are:
+            #
+            #   n >= 1  the Value is an array of n dimensions  -> exactly n
+            #   -1      "The value is not an array"            -> none (must be null)
+            #   -3      scalar or a one dimensional array      -> at most 1
+            #   -2      "scalar or an array with any number
+            #            of dimensions"                        -> unconstrained
+            #    0      "an array with one or more dimensions" -> unconstrained (>= 1,
+            #                                                     and n is not fixed by
+            #                                                     the declaration)
+            #
+            # So -2 and 0 impose no length this rule can test, and must not be folded in
+            # with -1: for -2 an array Value of any rank is legal, and for 0 the Value
+            # IS an array, so rejecting its ArrayDimensions rejects what the spec asks
+            # for. Likewise do not fold -3 back in -- that rejects the legal
+            # ValueRank="-3" ArrayDimensions="0" form used by OPC UA DI's WarningValues
+            # (ns=1;i=472). tests/validation/rankValueTest.ttl pins every branch:
+            # nodei24 (-1, must be flagged), nodei22/nodei23 (-3, one legal / two not),
+            # nodei5 and nodei25 (-2) and nodei6 (0), which must all pass.
+  			    FILTER ( (?valueRank > 0 && ?count != ?valueRank)
+                     || (?valueRank = -1 && ?count > 0)
+                     || (?valueRank = -3 && ?count > 1) )
           }
         """ ;
     ] ;

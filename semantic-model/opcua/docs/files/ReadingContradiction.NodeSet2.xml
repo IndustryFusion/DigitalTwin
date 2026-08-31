@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Tutorial nodeset for docs/virtual-type-validation.md.
+
+     Every declaration below is legal OPC UA on its own. The contradiction only
+     exists in the interaction between two independent inheritance chains.
+
+     SensorValueType is a VariableType under BaseDataVariableType, whose
+     ValueRank is -2 (Any): its value may be a scalar or an array of any
+     dimensionality.
+
+     1. DeviceType declares a Mandatory component "Reading" of SensorValueType
+        and pins its ValueRank to -1 (Scalar). Legal: -2 narrowed to -1.
+
+     2. ArraySensorValueType derives from SensorValueType and pins its OWN
+        ValueRank to 1 (OneDimension). Legal: -2 narrowed to 1. Nothing in
+        step 1 constrains this; it happens in the VariableType hierarchy.
+
+     3. ArrayDeviceType derives from DeviceType and re-declares "Reading",
+        narrowing its TypeDefinition to ArraySensorValueType. Legal on its
+        face, and locally self-consistent: the re-declared Reading carries
+        ValueRank 1, matching its new nominal type.
+
+     The contradiction: "Reading" in ArrayDeviceType inherits the ValueRank -1
+     decision DeviceType already made, because a subtype may restrict an
+     inherited declaration but never widen it, and -1 admits no further
+     restriction. Its TypeDefinition simultaneously forces ValueRank 1.
+     Scalar and OneDimension are disjoint, so no instance of ArrayDeviceType
+     can ever exist.
+
+     No single node is malformed, and every node passes ontology validation. -->
+<UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+           LastModified="2024-07-15T00:00:00Z"
+           xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
+  <Models>
+    <Model ModelUri="http://example.org/reading/"
+           XmlSchemaUri="http://opcfoundation.org/UA/2008/02/Types.xsd"
+           Version="1.05.03"
+           PublicationDate="2024-07-29T00:00:00Z"
+           ModelVersion="1.5.3" />
+  </Models>
+  <NamespaceUris>
+    <Uri>http://example.org/reading/</Uri>
+  </NamespaceUris>
+  <Aliases>
+    <Alias Alias="HasComponent">i=47</Alias>
+    <Alias Alias="HasSubtype">i=45</Alias>
+    <Alias Alias="HasTypeDefinition">i=40</Alias>
+    <Alias Alias="HasModellingRule">i=37</Alias>
+    <Alias Alias="BaseDataVariableType">i=63</Alias>
+    <Alias Alias="BaseObjectType">i=58</Alias>
+    <Alias Alias="Mandatory">i=78</Alias>
+    <Alias Alias="Double">i=11</Alias>
+  </Aliases>
+
+  <!-- ValueRank -2 (Any), the same rank BaseDataVariableType declares. -->
+  <UAVariableType NodeId="ns=1;i=3000" BrowseName="1:SensorValueType"
+                  DataType="Double" ValueRank="-2">
+    <DisplayName>SensorValueType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">BaseDataVariableType</Reference>
+    </References>
+  </UAVariableType>
+
+  <!-- Step 2: narrows Any to OneDimension, on the VariableType itself. -->
+  <UAVariableType NodeId="ns=1;i=3001" BrowseName="1:ArraySensorValueType"
+                  DataType="Double" ValueRank="1" ArrayDimensions="0">
+    <DisplayName>ArraySensorValueType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">ns=1;i=3000</Reference>
+    </References>
+  </UAVariableType>
+
+  <!-- Step 1: "Reading" : SensorValueType, pinned to Scalar. -->
+  <UAObjectType NodeId="ns=1;i=2000" BrowseName="1:DeviceType">
+    <DisplayName>DeviceType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">BaseObjectType</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2001</Reference>
+    </References>
+  </UAObjectType>
+
+  <UAVariable NodeId="ns=1;i=2001" BrowseName="1:Reading"
+              DataType="Double" ValueRank="-1">
+    <DisplayName>Reading</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=3000</Reference>
+      <Reference ReferenceType="HasModellingRule">Mandatory</Reference>
+    </References>
+  </UAVariable>
+
+  <!-- Step 3: re-declares "Reading", retyped to the array VariableType. -->
+  <UAObjectType NodeId="ns=1;i=2100" BrowseName="1:ArrayDeviceType">
+    <DisplayName>ArrayDeviceType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">ns=1;i=2000</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2101</Reference>
+    </References>
+  </UAObjectType>
+
+  <UAVariable NodeId="ns=1;i=2101" BrowseName="1:Reading"
+              DataType="Double" ValueRank="1" ArrayDimensions="0">
+    <DisplayName>Reading</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=3001</Reference>
+      <Reference ReferenceType="HasModellingRule">Mandatory</Reference>
+    </References>
+  </UAVariable>
+</UANodeSet>
