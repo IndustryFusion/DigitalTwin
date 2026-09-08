@@ -1,0 +1,244 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: platform-watchdog
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: platform-watchdog
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list"]
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list"]
+- apiGroups: ["industry-fusion.com"]
+  resources: ["beamsqlstatementsets"]
+  verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: platform-watchdog
+subjects:
+- kind: ServiceAccount
+  name: platform-watchdog
+  namespace: {{.Release.Namespace}}
+roleRef:
+  kind: Role
+  name: platform-watchdog
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: platform-watchdog-script
+data:
+  watchdog.sh: |
+    #!/bin/bash
+    #
+    # Watch the conditions under which the streaming validation pipeline can
+    # silently produce WRONG results, and raise them as Alerta alerts. The
+    # bridges heartbeat through Kafka, so this watchdog deliberately posts
+    # straight to the Alerta HTTP service instead -- it must not depend on
+    # any component it watches (kubectl image ships no curl, hence /dev/tcp).
+    #
+    # The resync check is a CORRECTNESS condition, not hygiene: once the
+    # Debezium resync has been missing for longer than the deployed Flink
+    # state TTL, dedup state may have expired unrefreshed and any write in
+    # that window leaves an unretractable ghost row in the pinned join
+    # state. A resumed resync only refreshes current rows -- it can never
+    # remove a ghost. The alert therefore demands a restart (statementset
+    # redeploy + re-snapshot); nothing short of a state rebuild restores
+    # consistency.
+
+    LC_ALL=C
+    NAMESPACE="${NAMESPACE:?}"
+    ALERTA_HOST="${ALERTA_HOST:?}"
+    ALERTA_PORT="${ALERTA_PORT:?}"
+    ALERTA_API_KEY="${ALERTA_API_KEY:?}"
+    ENVIRONMENT="${ENVIRONMENT:-Development}"
+    FALLBACK_TTL="${FALLBACK_TTL:-3600 s}"
+    STATEMENTSET="${STATEMENTSET:-shacl-validation}"
+    BRIDGES="${BRIDGES:-mqtt-bridge alerta-bridge ngsild-updates-bridge debezium-bridge timescaledb-bridge}"
+
+    # usage: parse_duration "10d" -> 864000 ; parse_duration "3600 s" -> 3600
+    parse_duration() {
+      local input="$1" value unit seconds
+      if [[ $input =~ ^[[:space:]]*([0-9]+)[[:space:]]*([dDhHmMsS])?[[:space:]]*$ ]]; then
+        value="${BASH_REMATCH[1]}"
+        unit="${BASH_REMATCH[2],,}"  # may be empty
+        case "${unit:-s}" in
+          d) seconds=$(( value * 86400 )) ;;
+          h) seconds=$(( value * 3600 )) ;;
+          m) seconds=$(( value * 60 )) ;;
+          s|'') seconds=$(( value )) ;;
+          *) echo "error: unit must be d/h/m/s" >&2; return 1 ;;
+        esac
+        echo "$seconds"
+      else
+        echo "error: expected <int>[unit] with unit in {d,h,m,s}, e.g. 10m or 42" >&2
+        return 1
+      fi
+    }
+
+    alerta_send() {
+      local payload="$1" status
+      local req
+      req=$(printf 'POST /api/alert HTTP/1.1\r\nHost: %s\r\nAuthorization: Key %s\r\nContent-Type: application/json\r\nContent-Length: %s\r\nConnection: close\r\n\r\n%s' \
+            "$ALERTA_HOST" "$ALERTA_API_KEY" "${#payload}" "$payload")
+      status=$(timeout 10 bash -c \
+        'exec 3<>"/dev/tcp/$1/$2" || exit 1; printf "%s" "$3" >&3; read -r _ code _ <&3; echo "$code"' \
+        _ "$ALERTA_HOST" "$ALERTA_PORT" "$req" 2>/dev/null)
+      if [ -z "$status" ]; then
+        echo "WARN: alerta unreachable at ${ALERTA_HOST}:${ALERTA_PORT}" >&2
+        return 1
+      fi
+      case "$status" in
+        2*) return 0 ;;
+        *) echo "WARN: alerta returned HTTP $status" >&2; return 1 ;;
+      esac
+    }
+
+    # post_alert <severity> <resource> <event> <value> <text>
+    # severity "normal" clears an earlier alert with the same resource+event.
+    post_alert() {
+      local sev="$1" res="$2" event="$3" value="$4" text="$5" payload
+      payload=$(printf '{"resource":"%s","event":"%s","environment":"%s","severity":"%s","service":["System"],"origin":"platform-watchdog","value":"%s","text":"%s"}' \
+        "$res" "$event" "$ENVIRONMENT" "$sev" "$value" "$text")
+      echo "[$sev] $res/$event: $value"
+      alerta_send "$payload" || true
+    }
+
+    # --- check 1: Debezium resync recency vs the DEPLOYED Flink state TTL.
+    TTL_RAW=$(kubectl -n "$NAMESPACE" get beamsqlstatementsets "$STATEMENTSET" \
+        -o jsonpath='{.spec.sqlsettings}' 2>/dev/null \
+      | grep -o '"table.exec.state.ttl":"[^"]*"' | head -1 | cut -d'"' -f4)
+    if [ -z "$TTL_RAW" ]; then
+      TTL_RAW="$FALLBACK_TTL"
+      echo "statementset not readable, falling back to helm value $TTL_RAW"
+    fi
+    TTL_SECONDS=$(parse_duration "$TTL_RAW") || exit 1
+
+    NEWEST_AGE=""
+    NOW=$(date +%s)
+    for ts in $(kubectl -n "$NAMESPACE" get pods -l app.kubernetes.io/instance=kafka-connect \
+        -o jsonpath='{range .items[*]}{.metadata.creationTimestamp}{"\n"}{end}' 2>/dev/null); do
+      age=$(( NOW - $(date -d "$ts" +%s) ))
+      if [ -z "$NEWEST_AGE" ] || [ "$age" -lt "$NEWEST_AGE" ]; then
+        NEWEST_AGE=$age
+      fi
+    done
+
+    # the restarter must have bounced kafka-connect by ttl/2. Two scheduler
+    # slots of grace keep a healthy cadence from flapping at the boundary
+    # (the restarter triggers at ttl/2 minus its safety margin, plus up to
+    # one 2-minute cron slot and the pod restart itself). Past ttl/2+grace
+    # the refresh was NOT triggered (warning); past the full ttl the
+    # refresh window was missed entirely and only a restart repairs it.
+    LATE=$(( TTL_SECONDS / 2 + 240 ))
+    if [ -z "$NEWEST_AGE" ]; then
+      post_alert critical kafka-connect ResyncRecency "no pods" \
+        "kafka-connect has no pods: the Debezium resync that keeps Flink dedup state alive is not running. If this persists beyond the state TTL (${TTL_SECONDS}s), streaming state consistency can no longer be guaranteed and the validation system must be restarted (redeploy the ${STATEMENTSET} statementset)."
+    elif [ "$NEWEST_AGE" -gt "$TTL_SECONDS" ]; then
+      post_alert critical kafka-connect ResyncRecency "${NEWEST_AGE}s > ttl ${TTL_SECONDS}s" \
+        "Debezium resync overdue: kafka-connect has not been refreshed within the deployed Flink state TTL, so dedup state may have expired unrefreshed and ghost rows may be lodged in pinned join state. Consistency cannot be guaranteed. RESTART REQUIRED: redeploy the ${STATEMENTSET} statementset to rebuild state and re-snapshot. Resuming the resync alone cannot repair this."
+    elif [ "$NEWEST_AGE" -gt "$LATE" ]; then
+      post_alert warning kafka-connect ResyncRecency "${NEWEST_AGE}s > ${LATE}s" \
+        "Debezium resync was not triggered by ttl/2: the kafka-connect-restart cron should have refreshed kafka-connect by $(( TTL_SECONDS / 2 ))s but the newest pod is ${NEWEST_AGE}s old. Check the kafka-connect-restart cronjob now -- if no refresh happens within the full ttl (${TTL_SECONDS}s) the validation system must be restarted."
+    else
+      post_alert normal kafka-connect ResyncRecency "${NEWEST_AGE}s <= ttl ${TTL_SECONDS}s" \
+        "Debezium resync is on schedule."
+    fi
+
+    # --- check 2: the validation statementset itself must be RUNNING.
+    SS_STATE=$(kubectl -n "$NAMESPACE" get beamsqlstatementsets "$STATEMENTSET" \
+        -o jsonpath='{.status.state}' 2>/dev/null)
+    if [ -z "$SS_STATE" ]; then
+      post_alert critical "$STATEMENTSET" StatementsetState "not found" \
+        "The ${STATEMENTSET} statementset is missing or reports no state: no SHACL validation is running."
+    elif [ "$SS_STATE" != "RUNNING" ]; then
+      post_alert critical "$STATEMENTSET" StatementsetState "$SS_STATE" \
+        "The ${STATEMENTSET} statementset is in state ${SS_STATE}: SHACL validation is not running and constraint alerts are not being produced."
+    else
+      post_alert normal "$STATEMENTSET" StatementsetState "RUNNING" \
+        "The ${STATEMENTSET} statementset is running."
+    fi
+
+    # --- check 3: bridge deployments must be Ready. A bridge pod can stay
+    # Running while its Kafka consumer is dead, but every incident so far
+    # (mqtt auth outage, alerta silent consumer) surfaced as not-Ready.
+    for d in $BRIDGES; do
+      REPL=$(kubectl -n "$NAMESPACE" get deployment "$d" \
+          -o jsonpath='{.spec.replicas} {.status.readyReplicas}' 2>/dev/null)
+      if [ -z "$REPL" ]; then
+        post_alert warning "$d" BridgeHealth "not found" \
+          "Deployment ${d} was not found."
+        continue
+      fi
+      desired=${REPL%% *}
+      ready=${REPL#* }
+      [ "$ready" = "$REPL" ] && ready=""
+      ready=${ready:-0}
+      if [ "$desired" -eq 0 ]; then
+        post_alert warning "$d" BridgeHealth "scaled to zero" \
+          "Bridge ${d} is scaled to zero replicas: deliberate, but its data path is down until it is scaled back up."
+      elif [ "$ready" -eq 0 ]; then
+        post_alert critical "$d" BridgeHealth "0/${desired} ready" \
+          "Bridge ${d} has no ready pods: its data path is down."
+      elif [ "$ready" -lt "$desired" ]; then
+        post_alert warning "$d" BridgeHealth "${ready}/${desired} ready" \
+          "Bridge ${d} is degraded (${ready}/${desired} pods ready)."
+      else
+        post_alert normal "$d" BridgeHealth "${ready}/${desired} ready" \
+          "Bridge ${d} is healthy."
+      fi
+    done
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: platform-watchdog
+spec:
+  # same cadence as the kafka-connect restarter: cheap when healthy, and a
+  # resync overdue by a full TTL must not wait long to become visible.
+  schedule: "*/2 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          volumes:
+          - name: script-volume
+            configMap:
+              name: platform-watchdog-script
+          serviceAccountName: platform-watchdog
+          restartPolicy: OnFailure
+          containers:
+            - name: watchdog
+              image: {{ .Values.externalRegistry }}/bitnamilegacy/kubectl:1.28-debian-11
+              volumeMounts:
+              - name: script-volume
+                mountPath: /scripts
+              command: ["/bin/bash", "/scripts/watchdog.sh"]
+              env:
+              - name: NAMESPACE
+                value: {{ .Release.Namespace }}
+              - name: ALERTA_HOST
+                value: {{ .Values.alerta.internalService | quote }}
+              - name: ALERTA_PORT
+                value: {{ .Values.alerta.internalPort | quote }}
+              - name: ENVIRONMENT
+                value: {{ .Values.alerta.alertEnvironment | default "Development" | quote }}
+              - name: FALLBACK_TTL
+                value: {{ .Values.flink.ttl | quote }}
+              - name: ALERTA_API_KEY
+                valueFrom:
+                  secretKeyRef:
+                    name: alerta
+                    key: alerta-admin-key
