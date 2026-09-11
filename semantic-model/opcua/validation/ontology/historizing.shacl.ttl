@@ -16,9 +16,9 @@ base:OPCUAHistorizingRuleShape a sh:NodeShape ;
     ] ;
 
 
-    # SPARQL constraint: ModellingRule only for Object, Variable or Method
+    # SPARQL constraint: Historizing only for Variables
     sh:sparql [
-        sh:message "The node {$this} should not have a ModellingRule." ;
+        sh:message "The node {$this} is not a Variable and must not be Historizing." ;
         sh:select """
           PREFIX base: <https://industryfusion.github.io/contexts/ontology/v0/base/>
           PREFIX opcua: <http://opcfoundation.org/UA/>
@@ -27,9 +27,14 @@ base:OPCUAHistorizingRuleShape a sh:NodeShape ;
           PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
           PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
-          SELECT $this WHERE { 
+          SELECT $this WHERE {
             $this base:isHistorizing ?ml .
-              FILTER($this != opcua:VariableNodeClass)
+            # Only a Variable may be Historizing. Test the node's rdf:type --
+            # comparing $this itself against a class IRI is always true and so
+            # would flag every historizing node, Variables included.
+            FILTER NOT EXISTS {
+              $this rdf:type/rdfs:subClassOf* opcua:VariableNodeClass .
+            }
           }
         """ ;
     ] ;

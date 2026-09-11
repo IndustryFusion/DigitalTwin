@@ -116,7 +116,7 @@ base:HasComponentTargetSourceConstraint a sh:NodeShape ;
                         ?source a ?stype .
     				?source a ?stype .
     				?stype rdfs:subClassOf* opcua:BaseNodeClass .
-      				FILTER(?stype != opcua:ObjectNodeClass || ?stype != opcua:ObjectTypeNodeClass )
+      				FILTER(?stype != opcua:ObjectNodeClass && ?stype != opcua:ObjectTypeNodeClass )
     				
             	}
             }

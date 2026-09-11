@@ -747,8 +747,20 @@ class Validation:
 
     def add_term_to_query(self, query: str, target_class: URIRef) -> str:
         """
-        Adds the term '$this a <target_class> .' immediately after the first occurrence
-        of the 'WHERE { ' clause in the given SPARQL query, accommodating variable whitespace.
+        Binds $this to the targets of sh:targetClass <target_class>, immediately after
+        the first occurrence of the 'WHERE { ' clause in the given SPARQL query,
+        accommodating variable whitespace.
+
+        The binding follows rdfs:subClassOf*, because that is what SHACL means by
+        sh:targetClass: "node is a target if node rdf:type/rdfs:subClassOf* C". An
+        exact `$this a <target_class>` match instead silently produces no targets at
+        all whenever the shape targets a class that is only ever instantiated through
+        its subclasses -- nodeset2owl types nodes as opcua:VariableNodeClass,
+        opcua:ObjectNodeClass and friends, never as opcua:BaseNodeClass directly, so
+        every SPARQL constraint targeting opcua:BaseNodeClass used to be dead code.
+
+        rdf:type and rdfs:subClassOf are written out in full so that the rewrite does
+        not depend on which prefixes the constraint happens to declare.
 
         Args:
             query: A SPARQL query string.
@@ -767,7 +779,9 @@ class Validation:
         if not match:
             raise ValueError("The query does not contain a valid 'WHERE' clause.")
 
-        insertion = f"$this a <{target_class}> . "
+        rdf_type = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
+        subclass_of = "<http://www.w3.org/2000/01/rdf-schema#subClassOf>"
+        insertion = f"$this {rdf_type}/{subclass_of}* <{target_class}> . "
         insertion_point = match.end()
         new_query = query[:insertion_point] + insertion + query[insertion_point:]
         return new_query

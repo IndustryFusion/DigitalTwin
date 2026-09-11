@@ -1,0 +1,8 @@
+Focus Node: <http://opcfoundation.org/UA/nodei5>
+Focus Node: <http://opcfoundation.org/UA/nodei6>
+Focus Node: http://opcfoundation.org/UA/nodei3
+Focus Node: http://opcfoundation.org/UA/nodei4
+Message: The node http://opcfoundation.org/UA/nodei3 is not a Variable and must not be Historizing.
+Message: The node http://opcfoundation.org/UA/nodei4 is not a Variable and must not be Historizing.
+Message: isHistorizing must have xsd:boolean domain and shall appear at most once.
+Message: isHistorizing must have xsd:boolean domain and shall appear at most once.

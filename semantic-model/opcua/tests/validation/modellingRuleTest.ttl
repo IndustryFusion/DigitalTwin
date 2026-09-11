@@ -1,0 +1,73 @@
+@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+@prefix opcua: <http://opcfoundation.org/UA/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+opcua: a owl:Ontology ;
+    owl:versionInfo 1e-01 .
+
+# The shape targets opcua:BaseNodeClass, and SHACL reaches its targets through
+# rdfs:subClassOf*. The tests run with -ni, so no import supplies that hierarchy
+# and it has to be stated here.
+opcua:ObjectNodeClass        rdfs:subClassOf opcua:BaseNodeClass .
+opcua:VariableNodeClass      rdfs:subClassOf opcua:BaseNodeClass .
+opcua:MethodNodeClass        rdfs:subClassOf opcua:BaseNodeClass .
+opcua:ReferenceTypeNodeClass rdfs:subClassOf opcua:BaseNodeClass .
+opcua:DataTypeNodeClass      rdfs:subClassOf opcua:BaseNodeClass .
+
+
+# Not OK: two ModellingRules on one node violates sh:maxCount 1.
+opcua:nodei1 a opcua:VariableNodeClass ;
+    base:hasBrowseName "TwoRules" ;
+    base:hasModellingRule opcua:nodei78, opcua:nodei80 .
+
+# Not OK: nodei9999 is not one of the five real ModellingRules (sh:in).
+opcua:nodei2 a opcua:VariableNodeClass ;
+    base:hasBrowseName "BogusRule" ;
+    base:hasModellingRule opcua:nodei9999 .
+
+# Not OK: a ReferenceType may not carry a ModellingRule at all. Exactly one
+# legal rule, so sh:in and sh:maxCount stay silent and only the SPARQL
+# constraint can report this node.
+opcua:nodei3 a opcua:ReferenceTypeNodeClass ;
+    base:hasBrowseName "ReferenceTypeWithRule" ;
+    base:hasModellingRule opcua:nodei78 .
+
+# Not OK: same for a DataType.
+opcua:nodei4 a opcua:DataTypeNodeClass ;
+    base:hasBrowseName "DataTypeWithRule" ;
+    base:hasModellingRule opcua:nodei80 .
+
+# OK: Object, Variable and Method are the three node classes that may carry a
+# ModellingRule. None of these may be reported.
+opcua:nodei5 a opcua:ObjectNodeClass ;
+    base:hasBrowseName "MandatoryObject" ;
+    base:hasModellingRule opcua:nodei78 .
+
+opcua:nodei6 a opcua:VariableNodeClass ;
+    base:hasBrowseName "OptionalVariable" ;
+    base:hasModellingRule opcua:nodei80 .
+
+opcua:nodei7 a opcua:MethodNodeClass ;
+    base:hasBrowseName "MandatoryMethod" ;
+    base:hasModellingRule opcua:nodei78 .
+
+# OK: ExposesItsArray, OptionalPlaceholder and MandatoryPlaceholder are the
+# remaining three legal values of sh:in.
+opcua:nodei8 a opcua:VariableNodeClass ;
+    base:hasBrowseName "ExposesItsArray" ;
+    base:hasModellingRule opcua:nodei83 .
+
+opcua:nodei9 a opcua:ObjectNodeClass ;
+    base:hasBrowseName "OptionalPlaceholder" ;
+    base:hasModellingRule opcua:nodei11508 .
+
+opcua:nodei10 a opcua:ObjectNodeClass ;
+    base:hasBrowseName "MandatoryPlaceholder" ;
+    base:hasModellingRule opcua:nodei11510 .
+
+# OK: carrying no ModellingRule at all is always fine.
+opcua:nodei11 a opcua:ReferenceTypeNodeClass ;
+    base:hasBrowseName "PlainReferenceType" .

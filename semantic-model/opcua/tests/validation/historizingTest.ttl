@@ -1,0 +1,52 @@
+@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+@prefix opcua: <http://opcfoundation.org/UA/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+opcua: a owl:Ontology ;
+    owl:versionInfo 1e-01 .
+
+# The shape targets opcua:BaseNodeClass, and SHACL reaches its targets through
+# rdfs:subClassOf*. The tests run with -ni, so no import supplies that hierarchy
+# and it has to be stated here.
+opcua:ObjectNodeClass        rdfs:subClassOf opcua:BaseNodeClass .
+opcua:VariableNodeClass      rdfs:subClassOf opcua:BaseNodeClass .
+opcua:MethodNodeClass        rdfs:subClassOf opcua:BaseNodeClass .
+opcua:ReferenceTypeNodeClass rdfs:subClassOf opcua:BaseNodeClass .
+
+
+# OK: Historizing is exactly what a Variable is allowed to declare. Neither of
+# these may be reported -- a filter that compares the node against a class IRI
+# instead of its rdf:type flags every historizing node, so these two guard
+# against a constraint that is "working" only by over-reporting.
+opcua:nodei1 a opcua:VariableNodeClass ;
+    base:hasBrowseName "HistorizingVariable" ;
+    base:isHistorizing true .
+
+opcua:nodei2 a opcua:VariableNodeClass ;
+    base:hasBrowseName "NonHistorizingVariable" ;
+    base:isHistorizing false .
+
+# Not OK: only a Variable may be Historizing.
+opcua:nodei3 a opcua:ObjectNodeClass ;
+    base:hasBrowseName "HistorizingObject" ;
+    base:isHistorizing true .
+
+opcua:nodei4 a opcua:MethodNodeClass ;
+    base:hasBrowseName "HistorizingMethod" ;
+    base:isHistorizing false .
+
+# Not OK: isHistorizing is xsd:boolean, occurring at most once.
+opcua:nodei5 a opcua:VariableNodeClass ;
+    base:hasBrowseName "NotABoolean" ;
+    base:isHistorizing "yes" .
+
+opcua:nodei6 a opcua:VariableNodeClass ;
+    base:hasBrowseName "TwiceHistorizing" ;
+    base:isHistorizing true, false .
+
+# OK: carrying no isHistorizing at all is always fine.
+opcua:nodei7 a opcua:ObjectNodeClass ;
+    base:hasBrowseName "PlainObject" .

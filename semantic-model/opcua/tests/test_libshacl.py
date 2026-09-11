@@ -653,7 +653,12 @@ class TestValidation(unittest.TestCase):
         # Create a sample query with a valid WHERE clause (with variable whitespace)
         query = "SELECT ?s WHERE { ?s ?p ?o . }"
         target_class = URIRef("http://example.org/TargetClass")
-        expected_insertion = f"$this a <{target_class}> . "
+        # $this is bound through rdfs:subClassOf*, which is what SHACL means by
+        # sh:targetClass. An exact `$this a <target_class>` match would silently
+        # select nothing for a class only ever instantiated via its subclasses.
+        rdf_type = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
+        subclass_of = "<http://www.w3.org/2000/01/rdf-schema#subClassOf>"
+        expected_insertion = f"$this {rdf_type}/{subclass_of}* <{target_class}> . "
         
         # Instantiate Validation with dummy graphs (these are not used by the method)
         validation_instance = Validation(Graph(), Graph())

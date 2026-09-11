@@ -28,9 +28,17 @@ base:OPCUAModellingRuleShape a sh:NodeShape ;
           PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
           PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
-          SELECT $this WHERE { 
+          SELECT $this WHERE {
             $this base:hasModellingRule ?ml .
-              FILTER($this != opcua:ObjectNodeClass && $this && opcua:VariableNodeClass && $this != opcua:MethodNodeClass)
+            # Only an Object, a Variable or a Method may carry a ModellingRule.
+            # Test the node's rdf:type -- comparing $this itself against a class
+            # IRI can never hold, so the node class has to be bound and filtered.
+            FILTER NOT EXISTS {
+              $this rdf:type/rdfs:subClassOf* ?nodeClass .
+              FILTER(?nodeClass = opcua:ObjectNodeClass
+                     || ?nodeClass = opcua:VariableNodeClass
+                     || ?nodeClass = opcua:MethodNodeClass)
+            }
           }
         """ ;
     ] ;

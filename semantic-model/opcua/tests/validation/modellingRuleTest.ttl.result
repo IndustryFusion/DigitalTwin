@@ -1,0 +1,8 @@
+Focus Node: <http://opcfoundation.org/UA/nodei1>
+Focus Node: <http://opcfoundation.org/UA/nodei2>
+Focus Node: http://opcfoundation.org/UA/nodei3
+Focus Node: http://opcfoundation.org/UA/nodei4
+Message: The node http://opcfoundation.org/UA/nodei3 should not have a ModellingRule.
+Message: The node http://opcfoundation.org/UA/nodei4 should not have a ModellingRule.
+Message: hasModellingRule must reference a modelling rule node and shall appear at most once.
+Message: hasModellingRule must reference a modelling rule node and shall appear at most once.

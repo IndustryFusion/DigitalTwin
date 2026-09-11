@@ -25,6 +25,8 @@ RESULTFILE=result.txt
 tests=(
   "RankValueTest ../../validation/ontology/rankValue.shacl.ttl ./rankValueTest.ttl -ni -m ontology"
   "HasComponentTest ../../validation/ontology/hasComponent.shacl.ttl ./hasComponentTest.ttl -m ontology -ni"
+  "ModellingRuleTest ../../validation/ontology/modellingRule.shacl.ttl ./modellingRuleTest.ttl -m ontology -ni"
+  "HistorizingTest ../../validation/ontology/historizing.shacl.ttl ./historizingTest.ttl -m ontology -ni"
 )
 
 for test in "${tests[@]}"; do
