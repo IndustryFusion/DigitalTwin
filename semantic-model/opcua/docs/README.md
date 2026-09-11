@@ -3,8 +3,15 @@
 1. [Overview & Setup](./overview.md)
 2. [Example & Tutorial](./simple-example.md)
 3. [Building Companion Specifications](./building-companion-specifications.md)
-3. [Mapping concept](./mapping-concept.md)
+4. [Mapping concept](./mapping-concept.md)
 5. [Tools](./tools.md)
+
+## Validation
+
+6. [Validation Overview](./validation-overview.md) — the three validations and when to use which
+7. [Ontology (Graph) Validation](./ontology-validation.md) — is the nodeset itself well formed?
+8. [Instance Validation](./simple-example.md#validation-of-instances) — does an object conform to its type?
+9. [Virtual Type (Logical) Validation](./virtual-type-validation.md) — are the type declarations satisfiable at all?
 
 
 # References
@@ -22,3 +29,5 @@
 [6] Berners-Lee, T., Hendler, J., & Lassila, O. (2001). The Semantic Web. Scientific American, 284(5), 34-43.
 
 [7] Protege, https://protege.stanford.edu/
+
+[8] Glimm, B., Horrocks, I., Motik, B., Stoilos, G., & Wang, Z. (2014). HermiT: An OWL 2 Reasoner. Journal of Automated Reasoning, 53(3), 245-269. Available at: http://www.hermit-reasoner.com/

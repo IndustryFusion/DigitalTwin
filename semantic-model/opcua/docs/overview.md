@@ -7,6 +7,12 @@ This document describes how to map OPCUA data into Semantic Web [6] data, more s
 
 The files are all represented in Resource Description Format[6] serialized in the Turtle[5] or JSON-LD.
 
+Each of these artefacts can be wrong in a different way, so there are three
+separate validations: **ontology** (is the nodeset itself well formed?),
+**instance** (does an object conform to its type?) and **Virtual Type** (are the
+type declarations logically satisfiable at all?). See the
+[Validation Overview](./validation-overview.md).
+
 
 # Setup for Linux
 

@@ -1,5 +1,10 @@
 # Simple Example
 
+This tutorial ends in **instance validation**, which is validation type 2 of 3.
+See the [Validation Overview](./validation-overview.md) for how it relates to
+[ontology validation](./ontology-validation.md) and
+[Virtual Type validation](./virtual-type-validation.md).
+
 An example nodeset can be found [here](./files/Example.NodeSet2.xml). It describes the following OPCUA Model:
 ![Image](./images/opcua-simple-model.PNG)
 
@@ -18,38 +23,47 @@ To transform the data, first the relevant OPCUA companion specifications must be
 
 ```
 export NODESET_VERSION=UA-1.05.03-2023-12-15
-export BASE_ONTOLOGY=https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl
+export BASE_ONTOLOGY=https://industryfusion.github.io/contexts/staging/ontology/v0.3/base.ttl
+export BASE_ONTOLOGY_NS=https://industryfusion.github.io/contexts/ontology/v0/base/
 export CORE_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/${NODESET_VERSION}/Schema/Opc.Ua.NodeSet2.xml
 
-python3 nodeset2owl.py ${CORE_NODESET} -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p opcua -o core.owl.ttl
+python3 nodeset2owl.py ${CORE_NODESET} -i ${BASE_ONTOLOGY} -b ${BASE_ONTOLOGY_NS} -burl ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p opcua -o core.owl.ttl
 
 ```
 The result of this step is the file `core.owl.ttl` which contains all the base 
 definitions of OPCUA translated to OWL. 
+
+`BASE_ONTOLOGY` and `BASE_ONTOLOGY_NS` are two different strings and both are
+needed: the first is the fetchable base ontology *document*, the second is the
+*term namespace* the `base:` IRIs inside it are minted under. These are the same
+values `translate_default_nodesets.make` uses, so
+`make -f translate_default_nodesets.make core.owl.ttl` is an equivalent
+shortcut for this step.
 
 ## Convert the Target Nodeset to OWL
 
 This file can now be used to transform the example nodeset into a semantic representation:
 
 ```
-export NODESET_VERSION=UA-1.05.03-2023-12-15
-export BASE_ONTOLOGY=https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl
-export CORE_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/${NODESET_VERSION}/Schema/Opc.Ua.NodeSet2.xml
-python3 ./nodeset2owl.py docs/files/Example.NodeSet2.xml -i ${BASE_ONTOLOGY} core.owl.ttl -v http://example.com/v0.1/UA/ -p example -o example.owl.ttl
+python3 ./nodeset2owl.py docs/files/Example.NodeSet2.xml -i ${BASE_ONTOLOGY} core.owl.ttl -b ${BASE_ONTOLOGY_NS} -burl ${BASE_ONTOLOGY} -v http://example.com/v0.1/example/ -p example -o example.owl.ttl
 
 ```
 The result of this step is the file `example.owl.ttl` which contains the OWL representation of the [Example.Nodeset2.xml](./files/Example.NodeSet2.xml) file.
+
+A nodeset and every nodeset it depends on must be built against the *same* base
+ontology, so keep using the `BASE_ONTOLOGY`/`BASE_ONTOLOGY_NS` exported above
+for the rest of this tutorial.
 
 ## Extract SHACL and NGSI-LD files from OWL
 
 Now, having `core.owl.ttl` and `example.owl.ttl` finally the instance description in `NGSI-LD` and the `SHACL` constraints can be extracted. The following parameters have to be added:
 
-`-t` The type of the root Object which should be extracted (in this case `http://my.test/AlphaType`)
+`-t` The type of the root Object which should be extracted (in this case `http://example.org/AlphaType`)
 `-n` The namespace of the NGSI-LD objects (use `http://demo.machine/` if the default @context is used)
-`-i` the prefix for the object URNs (must start with urn, e.g. `urn:test)
+`-i` the prefix for the object URNs (must start with urn, e.g. `urn:test`)
 
 ```
-python3 ./owl2instances.py -t http://example.org/AlphaType -n http://demo.machine/  example.owl.ttl
+python3 ./owl2instances.py -t http://example.org/AlphaType -n http://demo.machine/ example.owl.ttl -i urn:test
 ```
 
 As a result, the following files are created:
@@ -82,8 +96,8 @@ Results (1):
 Constraint Violation in ClassConstraintComponent (http://www.w3.org/ns/shacl#ClassConstraintComponent):
         Severity: sh:Violation
         Source Shape: [ sh:class example:BType ; sh:maxCount Literal("1", datatype=xsd:integer) ; sh:minCount Literal("1", datatype=xsd:integer) ; sh:nodeKind sh:IRI ; sh:path ngsi-ld:hasObject ]
-        Focus Node: [ <https://uri.etsi.org/ngsi-ld/hasObject> <urn:test:AlphaInstance:sub:i2012> ; rdf:type <https://uri.etsi.org/ngsi-ld/Relationship> ]
-        Value Node: <urn:test:AlphaInstance:sub:i2012>
+        Focus Node: [ <https://uri.etsi.org/ngsi-ld/hasObject> <urn:testnodei2012> ; rdf:type <https://uri.etsi.org/ngsi-ld/Relationship> ]
+        Value Node: <urn:testnodei2012>
         Result Path: ngsi-ld:hasObject
         Message: Value does not have class example:BType
 ```
@@ -106,6 +120,48 @@ Conforms: True
 This is explained in the picture below.
 ![Image](./images/validation-success.PNG)
 
+### Using validate.py instead
+
+`pyshacl` is invoked directly above so that it is clear what is actually being
+checked against what. This repository also ships `validate.py`, which wraps the
+same evaluation and defaults `-s` to `shacl.ttl` and `-e` to `entities.ttl`, so
+the successful run above is simply:
+
+```
+python3 validate.py instances.jsonld
+```
+
+```
+Validation Conforms: True
+No validation errors found.
+```
+
+`-m instance` is the default mode, so it does not have to be given. Adding `-x`
+prints an extended report: for every violation it also resolves the failing
+shape back to its name and path, and dumps the offending entity as nested JSON.
+On a large model that context is usually what makes a report actionable:
+
+```
+python3 validate.py -x instances.jsonld
+```
+
+`validate.py` exits with status `1` when validation fails, which makes it usable
+in a CI pipeline.
+
+## The other two validations
+
+Instance validation answers "does *this object* conform to the type it claims to
+be?". It does not tell you whether the nodeset that produced the shapes is itself
+well formed, nor whether the type hierarchy is logically satisfiable at all.
+Those are separate checks:
+
+- [Ontology Validation](./ontology-validation.md) checks the nodeset itself —
+  `HasComponent`, `HasProperty`, `ValueRank`, `ModellingRule` usage.
+- [Virtual Type Validation](./virtual-type-validation.md) uses a DL reasoner to
+  find type declarations that no instance could ever satisfy.
+
+See the [Validation Overview](./validation-overview.md) for how the three relate.
+
 
 # Advanced Example: Build the Pump Example
 
@@ -125,21 +181,30 @@ Looking at the raw file, it can be determined that there is no `<Models>` descri
         <Uri>http://opcfoundation.org/UA/DI/</Uri>
     </NamespaceUris>
 
-This list suggests that the dependencies are `core.owl.ttl`, `devices.owl.ttl`, `machinery.owl.ttl` and `pump.owl.ttl`.
+This list suggests that the dependencies are `core.owl.ttl`, `di.owl.ttl`, `machinery.owl.ttl` and `pumps.owl.ttl`.
 
     NODESET_VERSION=UA-1.05.03-2023-12-15
     CORE_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/${NODESET_VERSION}/Schema/Opc.Ua.NodeSet2.xml
     DI_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/${NODESET_VERSION}/DI/Opc.Ua.Di.NodeSet2.xml
     MACHINERY_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/${NODESET_VERSION}/Machinery/Opc.Ua.Machinery.NodeSet2.xml
     PUMPS_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/${NODESET_VERSION}/Pumps/Opc.Ua.Pumps.NodeSet2.xml
-    BASE_ONTOLOGY=https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl
+    BASE_ONTOLOGY=https://industryfusion.github.io/contexts/staging/ontology/v0.3/base.ttl
+    BASE_ONTOLOGY_NS=https://industryfusion.github.io/contexts/ontology/v0/base/
     PUMP_EXAMPLE_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/${NODESET_VERSION}/Pumps/instanceexample.xml
 
-    python3 nodeset2owl.py ${CORE_NODESET} -i ${BASE_ONTOLOGY} -p opcua -o core.owl.ttl
-    python3 nodeset2owl.py  ${DI_NODESET} -i ${BASE_ONTOLOGY} core.owl.ttl  -p devices -o devices.owl.ttl
-    python3 nodeset2owl.py ${MACHINERY_NODESET} -i ${BASE_ONTOLOGY} core.owl.ttl devices.owl.ttl -p machinery -o machinery.owl.ttl
-    python3 nodeset2owl.py  ${PUMPS_NODESET} -i ${BASE_ONTOLOGY} core.owl.ttl devices.owl.ttl machinery.owl.ttl -p pumps -o pumps.owl.ttl
-    python3 nodeset2owl.py  ${PUMP_EXAMPLE_NODESET} -i ${BASE_ONTOLOGY} core.owl.ttl devices.owl.ttl machinery.owl.ttl pumps.owl.ttl -n http://yourorganisation.org/InstanceExample/  -p pumpexample -o pumpexample.owl.ttl
+    python3 nodeset2owl.py ${CORE_NODESET} -i ${BASE_ONTOLOGY} -b ${BASE_ONTOLOGY_NS} -burl ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p opcua -o core.owl.ttl
+    python3 nodeset2owl.py ${DI_NODESET} -i ${BASE_ONTOLOGY} core.owl.ttl -b ${BASE_ONTOLOGY_NS} -burl ${BASE_ONTOLOGY} -v http://example.com/v0.1/DI/ -p di -o di.owl.ttl
+    python3 nodeset2owl.py ${MACHINERY_NODESET} -i ${BASE_ONTOLOGY} core.owl.ttl di.owl.ttl -b ${BASE_ONTOLOGY_NS} -burl ${BASE_ONTOLOGY} -v http://example.com/v0.1/Machinery/ -p machinery -o machinery.owl.ttl
+    python3 nodeset2owl.py ${PUMPS_NODESET} -i ${BASE_ONTOLOGY} core.owl.ttl di.owl.ttl machinery.owl.ttl -b ${BASE_ONTOLOGY_NS} -burl ${BASE_ONTOLOGY} -v http://example.com/v0.1/Pumps/ -p pumps -o pumps.owl.ttl
+    python3 nodeset2owl.py ${PUMP_EXAMPLE_NODESET} -i ${BASE_ONTOLOGY} core.owl.ttl di.owl.ttl machinery.owl.ttl pumps.owl.ttl -b ${BASE_ONTOLOGY_NS} -burl ${BASE_ONTOLOGY} -n http://yourorganisation.org/InstanceExample/ -v http://example.com/v0.1/pumpexample/ -p pumpexample -o pumpexample.owl.ttl
+
+The whole chain, including the dependency order, is also encoded in
+`translate_default_nodesets.make`, so
+
+    make -f translate_default_nodesets.make pumpexample.owl.ttl
+
+builds exactly the same five files. Expect a few minutes: `pumps.owl.ttl` alone
+is several megabytes of Turtle.
 
 
 
@@ -157,5 +222,24 @@ which will be successful:
     Validation Report
     Conforms: True
 
+The intermediate files this chain produced are also good inputs for the other
+two validations, now on a real companion specification rather than a toy one:
+
+    python3 validate.py -m ontology -ni di.owl.ttl
+
+    make -f translate_default_nodesets.make core.vt.owl.ttl di.vt.owl.ttl machinery.vt.owl.ttl pumps.vt.owl.ttl
+    python3 validate.py -m vt pumps.vt.owl.ttl
+
+The ontology check is shown on `di.owl.ttl` because it is small enough to finish
+in seconds; the same command works on `machinery.owl.ttl` or `pumps.owl.ttl`,
+just far more slowly.
+
+Note that the Virtual-Types targets have to be listed in dependency order:
+`pumps.vt.owl.ttl` `owl:imports` `machinery.vt.owl.ttl`, which imports
+`di.vt.owl.ttl` and `core.vt.owl.ttl`, and the Makefile does not chain the
+`*.vt.owl.ttl` targets for you.
+
+See [Ontology Validation](./ontology-validation.md) and
+[Virtual Type Validation](./virtual-type-validation.md).
 
 
