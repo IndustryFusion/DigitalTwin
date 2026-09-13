@@ -463,3 +463,51 @@ def test_the_outline_symbols_obey_the_clients_containment_rule(session):
         assert position(whole['start']) <= position(subject['start'])
         assert position(subject['end']) <= position(whole['end']), symbol
         assert position(whole['start']) <= position(whole['end'])
+
+
+def test_a_package_can_be_created_over_the_protocol(tmp_path, corpus):
+    """The editor asks the SDK for the scaffold rather than shelling out.
+
+    A package created by a second code path would drift from the one
+    `semforge init` produces, and the drift would show up as "it works from the
+    CLI but not from the editor".
+    """
+    import json as _json
+
+    document = str(corpus.sources['shapes'])
+    target = str(tmp_path / 'fresh')
+
+    live = Session(document)
+    try:
+        live.send({'jsonrpc': '2.0', 'id': 1, 'method': 'initialize',
+                   'params': {'processId': os.getpid(),
+                              'rootUri': 'file://' + str(tmp_path),
+                              'capabilities': {}}})
+        assert live.wait_for(lambda m: m.get('id') == 1)
+        live.send({'jsonrpc': '2.0', 'method': 'initialized', 'params': {}})
+
+        live.send({'jsonrpc': '2.0', 'id': 40, 'method': 'semforge/init',
+                   'params': {'path': target, 'name': 'Fresh Start',
+                              'layout': 'grouped'}})
+        made = live.wait_for(lambda m: m.get('id') == 40)[0]['result']
+        assert made['ok'], made.get('error')
+        assert made['violations'] == 0 and made['constraints'] > 0
+        assert made['open'].endswith('shacl.ttl')
+        assert len(made['files']) >= 8
+
+        # And the server can immediately answer about it, which is the point.
+        live.send({'jsonrpc': '2.0', 'id': 41, 'method': 'semforge/tree',
+                   'params': {'uri': 'file://' + made['open']}})
+        tree = live.wait_for(lambda m: m.get('id') == 41)[0]['result']
+        assert tree['roots'], tree.get('error')
+        assert any('Machine' in root['label'] for root in tree['roots'])
+
+        live.send({'jsonrpc': '2.0', 'id': 42, 'method': 'semforge/model',
+                   'params': {'uri': 'file://' + made['open']}})
+        model = live.wait_for(lambda m: m.get('id') == 42)[0]['result']
+        labels = [root['label'] for root in model['roots']]
+        assert any('test_MachineShape' in label for label in labels), labels
+
+        _json.loads(open(made['files'][1], encoding='utf-8').read())
+    finally:
+        live.close()

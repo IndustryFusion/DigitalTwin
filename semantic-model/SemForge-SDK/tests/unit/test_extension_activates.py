@@ -30,6 +30,7 @@ EXPECTED = {
     'semforge.editValue', 'semforge.refreshModel', 'semforge.addAttribute',
     'semforge.addEntity', 'semforge.addObservation', 'semforge.goToShape',
     'semforge.refreshKnowledge', 'semforge.showShapeForClass',
+    'semforge.initPackage',
 }
 
 
@@ -195,3 +196,26 @@ def test_all_three_views_are_wired(corpus_path):
                         'semforgeKnowledge']
     # Every declared view got a provider and a selection handler at activation.
     assert set(declared) == set(result['views'])
+
+
+def test_an_empty_view_offers_to_create_a_package():
+    """A folder that is not a package needs an answer other than three empty
+    trees, and it has to be reachable without knowing a command name."""
+    with open(os.path.join(SDK, 'vscode', 'package.json')) as handle:
+        manifest = json.load(handle)
+
+    welcome = manifest['contributes'].get('viewsWelcome') or []
+    views = {entry['view'] for entry in welcome}
+    declared = {v['id'] for v in manifest['contributes']['views']['semforge']}
+    assert views == declared, 'a view can still be empty with nothing to do'
+    for entry in welcome:
+        assert 'command:semforge.initPackage' in entry['contents']
+        assert 'command:semforge.doctor' in entry['contents']
+
+
+def test_the_packaged_sources_include_the_new_module():
+    """A required file missing from the vsix is a MODULE_NOT_FOUND at load."""
+    with open(os.path.join(SDK, 'vscode', 'src', 'extension.js')) as handle:
+        source = handle.read()
+    assert "require('./init')" in source
+    assert os.path.exists(os.path.join(SDK, 'vscode', 'src', 'init.js'))

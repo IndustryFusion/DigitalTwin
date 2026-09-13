@@ -24,7 +24,7 @@ import pytest
 HERE = os.path.dirname(os.path.abspath(__file__))
 SDK = os.path.dirname(os.path.dirname(HERE))
 VSCODE = os.path.join(SDK, 'vscode')
-SOURCES = ('extension.js', 'tree.js', 'model.js')
+SOURCES = ('extension.js', 'tree.js', 'model.js', 'init.js')
 
 REQUIRE = re.compile(r"require\(\s*['\"]([^'\"]+)['\"]\s*\)")
 BUILTIN = set(sys.builtin_module_names) | {

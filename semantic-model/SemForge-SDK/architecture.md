@@ -558,6 +558,30 @@ document of a directory regardless of which one declares the shape. So:
 one `shacl.ttl` and one `knowledge.ttl`, because how a package is organised is
 the author's business and what a compiler is handed is the target's.
 
+#### Creating one: `semforge init`
+
+A package is created by the SDK (`semforge/package/scaffold.py`), from the CLI
+or from the editor over `semforge/init` — one code path, because a package made
+by the editor that differs from one made by the CLI is a bug waiting to be
+reported as "works on the command line".
+
+What it writes is deliberately small and deliberately complete: the entity root
+and one type, one vocabulary class with individuals, a node shape in the
+**two-layer NGSI-LD encoding** (the outer `sh:property` asserts the attribute
+blank node, the inner one constrains `ngsild:hasValue`), a scratchpad instance,
+and a suite with a good case *and* a bad one whose `asserts` names the
+constraint it must make fire.
+
+The last part is the point. A skeleton with only a passing example would teach
+the habit this architecture exists to break: a constraint with no firing example
+is indistinguishable from one that is satisfied (§7.4, §7.5). `semforge test
+--coverage` on a fresh package therefore reports one `two-sided` constraint and
+is honest that the rest are `no-firing-example`.
+
+The scaffold refuses a directory that already holds an artifact rather than
+merging into it, and `init` proves its own output by loading and validating it
+before reporting success.
+
 #### The model instance is the scratchpad; `examples/` is the suite
 
 Both live under `model/` when a package groups them, and they stay disjoint

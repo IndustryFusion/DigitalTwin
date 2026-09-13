@@ -187,6 +187,56 @@ def _examples_and_reports(package, expectations):
     return paired
 
 
+@cli.command('init')
+@click.argument('path', type=click.Path(), default='.')
+@click.option('--name', help='the package name; defaults to the directory name')
+@click.option('--namespace',
+              help='base IRI for this package, e.g. https://example.org/plant/')
+@click.option('--published',
+              help='where the context will be published; defaults to '
+                   '<namespace>context.jsonld')
+@click.option('--layout', type=click.Choice(['grouped', 'flat']),
+              default='grouped', show_default=True,
+              help='grouped puts the instance and examples under model/')
+def init_command(path, name, namespace, published, layout):
+    """Create a package that already works.
+
+    Not three empty files: a package that loads, validates clean, and has an
+    example on each side of one constraint -- which is the shape every later
+    addition copies.
+    """
+    from ..package.scaffold import create_package
+
+    os.makedirs(path, exist_ok=True)
+    try:
+        written = create_package(path, name=name, namespace=namespace,
+                                 published=published, layout=layout)
+    except PackageError as exc:
+        click.echo(str(exc), err=True)
+        sys.exit(2)
+
+    for created in written:
+        click.echo(f'  {os.path.relpath(created, path)}')
+
+    # Prove it rather than claim it: a scaffold that does not pass its own
+    # checks is worse than none, because the first run blames the author.
+    try:
+        package = load(path)
+        report = validate_package(package, strict=False)
+    except (PackageError, CapabilityError) as exc:
+        click.echo(f'\nwritten, but it does not load: {exc}', err=True)
+        sys.exit(2)
+
+    click.echo(f'\n{len(written)} file(s) in {os.path.abspath(path)}')
+    click.echo(f'{len(report.results)} constraint(s) evaluated, '
+               f'{len(report.violations)} violation(s)')
+    click.echo('\nNext:')
+    click.echo(f'  semforge test {path}             the declared cases')
+    click.echo(f'  semforge test {path} --coverage  what no example makes fire')
+    click.echo('  open the folder in VS Code for the Constraints, Model and '
+               'Knowledge views')
+
+
 @cli.command()
 @click.argument('path', type=click.Path(exists=True), default='.')
 @click.option('--coverage', 'want_coverage', is_flag=True,

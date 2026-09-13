@@ -18,6 +18,7 @@ const { findPackageUri } = require('./locate');
 const cookedTree = require('./tree');
 const modelTree = require('./model');
 const knowledgeTree = require('./knowledge');
+const initPackage = require('./init');
 
 // Shared so the tree provider always talks to the CURRENT client: restarting
 // the server must not leave the view wired to a dead one.
@@ -190,21 +191,30 @@ function startClient(context) {
 
 function activate(context) {
   startClient(context);
-  // The constraint view and the example view are two halves of one loop:
-  // editing data should refresh the shapes' verdicts and vice versa.
+  // The constraint view and the model view are two halves of one loop: editing
+  // data should refresh the shapes' verdicts and vice versa.
   const constraints = cookedTree.register(context, clientHolder);
-  const examples = modelTree.register(context, clientHolder, () =>
+  const model = modelTree.register(context, clientHolder, () =>
     constraints.refresh()
   );
   // The third ingredient, joined to the other two: the shape icon on a class
   // row opens shacl.ttl and shows that shape in the constraint tree, and a
-  // usage row shows the entity doing the using in the examples tree.
-  knowledgeTree.register(
+  // usage row shows the entity doing the using in the model tree.
+  const knowledge = knowledgeTree.register(
     context,
     clientHolder,
     (shape) => constraints.revealShape(shape),
-    (entity, file) => examples.revealEntity(entity, file)
+    (entity, file) => model.revealEntity(entity, file)
   );
+
+  // A folder that is not a package yet needs an answer other than three empty
+  // trees. Creating one refreshes all three, because it is the first thing
+  // they have to show.
+  initPackage.register(context, clientHolder, () => {
+    constraints.refresh();
+    model.refresh();
+    knowledge.refresh();
+  });
 
   context.subscriptions.push(
     vscode.commands.registerCommand('semforge.doctor', async () => {

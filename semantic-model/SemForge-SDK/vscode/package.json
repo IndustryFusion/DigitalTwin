@@ -57,6 +57,11 @@
     },
     "commands": [
       {
+        "command": "semforge.initPackage",
+        "title": "SemForge: Create a package here",
+        "icon": "$(new-folder)"
+      },
+      {
         "command": "semforge.restart",
         "title": "SemForge: Restart Language Server"
       },
@@ -178,6 +183,11 @@
           "command": "semforge.refreshKnowledge",
           "when": "view == semforgeKnowledge",
           "group": "navigation"
+        },
+        {
+          "command": "semforge.initPackage",
+          "when": "view == semforgeModel",
+          "group": "navigation@9"
         }
       ],
       "view/item/context": [
@@ -247,7 +257,21 @@
           "group": "inline@2"
         }
       ]
-    }
+    },
+    "viewsWelcome": [
+      {
+        "view": "semforgeConstraints",
+        "contents": "No SemForge package in this folder.\n\nA package is knowledge (the ontology), constraints (SHACL over the NGSI-LD encoding) and the model (a scratchpad plus the example suite).\n[Create a package here](command:semforge.initPackage)\n[Run the doctor](command:semforge.doctor)"
+      },
+      {
+        "view": "semforgeModel",
+        "contents": "No SemForge package in this folder.\n\nA package is knowledge (the ontology), constraints (SHACL over the NGSI-LD encoding) and the model (a scratchpad plus the example suite).\n[Create a package here](command:semforge.initPackage)\n[Run the doctor](command:semforge.doctor)"
+      },
+      {
+        "view": "semforgeKnowledge",
+        "contents": "No SemForge package in this folder.\n\nA package is knowledge (the ontology), constraints (SHACL over the NGSI-LD encoding) and the model (a scratchpad plus the example suite).\n[Create a package here](command:semforge.initPackage)\n[Run the doctor](command:semforge.doctor)"
+      }
+    ]
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1"

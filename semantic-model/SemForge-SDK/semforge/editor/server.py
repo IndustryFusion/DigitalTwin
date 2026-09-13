@@ -17,6 +17,7 @@ from pygls.lsp.server import LanguageServer
 
 from .. import __version__
 from .analysis import analyse, definition_at, hover_at, package_root
+from ..validate import validate_package
 
 SEVERITY = {
     'error': types.DiagnosticSeverity.Error,
@@ -300,6 +301,36 @@ def _serialise_knowledge(node):
         'severity': node.severity, 'messages': list(node.messages),
         'children': [_serialise_knowledge(child) for child in node.children],
     }
+
+
+@server.feature('semforge/init')
+def init_package(ls, params):
+    """Create a package in a directory, and say what was written.
+
+    The editor asks for this rather than shelling out to the CLI: the scaffold
+    is the SDK's business, and a package created by a different code path would
+    drift from the one `semforge init` produces.
+    """
+    from ..package.scaffold import create_package
+
+    target = _uri_to_path(_field(params, 'uri', '')) or _field(params, 'path')
+    if not target:
+        return {'ok': False, 'error': 'no directory given'}
+    try:
+        os.makedirs(target, exist_ok=True)
+        written = create_package(
+            target, name=_field(params, 'name'),
+            namespace=_field(params, 'namespace'),
+            layout=_field(params, 'layout') or 'grouped')
+        package = _package_for(target)
+        report = validate_package(package, strict=False)
+    except Exception as exc:                       # noqa: BLE001
+        return {'ok': False, 'error': str(exc)}
+    _packages.pop(target, None)
+    return {'ok': True, 'root': target, 'files': written,
+            'open': package.sources['shapes'],
+            'constraints': len(report.results),
+            'violations': len(report.violations)}
 
 
 @server.feature('semforge/methods')
