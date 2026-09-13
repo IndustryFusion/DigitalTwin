@@ -204,7 +204,7 @@ def test_editing_survives_a_server_without_the_choices_method(tmp_path):
 # --- the trees ---------------------------------------------------------------
 
 @pytest.mark.parametrize('target,provider,method', [
-    ('examples.js', 'ExampleTreeProvider', 'semforge/examples'),
+    ('model.js', 'ModelTreeProvider', 'semforge/model'),
     ('knowledge.js', 'KnowledgeTreeProvider', 'semforge/knowledge'),
     ('tree.js', 'CookedTreeProvider', 'semforge/tree'),
 ])
@@ -223,7 +223,7 @@ def test_a_server_error_reaches_the_panel(tmp_path, target, provider, method):
 
 
 @pytest.mark.parametrize('target,provider,method', [
-    ('examples.js', 'ExampleTreeProvider', 'semforge/examples'),
+    ('model.js', 'ModelTreeProvider', 'semforge/model'),
     ('knowledge.js', 'KnowledgeTreeProvider', 'semforge/knowledge'),
 ])
 def test_a_node_keeps_its_identity_across_a_refetch(tmp_path, target, provider,
@@ -316,7 +316,7 @@ def test_clicking_a_usage_row_opens_the_file_and_shows_the_entity(tmp_path):
             'definedAt': f'{tmp_path}/model-instance.jsonld:141',
             'children': []}},
         'replies': {
-            'semforge/examples': {'roots': [
+            'semforge/model': {'roots': [
                 {'kind': 'example', 'label': 'a case', 'children': [entity]}]},
             'semforge/knowledge': {'roots': []},
             'semforge/tree': {'roots': []},
@@ -325,13 +325,13 @@ def test_clicking_a_usage_row_opens_the_file_and_shows_the_entity(tmp_path):
     assert seen['shown'] == [{'file': f'{tmp_path}/model-instance.jsonld',
                               'line': 140, 'preserveFocus': True}]
     shown_in_examples = [r for r in seen['revealed']
-                         if r['view'] == 'semforgeExamples']
+                         if r['view'] == 'semforgeModel']
     assert shown_in_examples, \
         f'the entity was never shown in the examples tree: {seen["revealed"]}'
     assert shown_in_examples[0]['options'].get('select') is True
     # And it does not re-fetch the tree per level: the root fetch re-validates
     # the whole package, so one click would cost several seconds.
-    fetches = [r for r in seen['requests'] if r['method'] == 'semforge/examples']
+    fetches = [r for r in seen['requests'] if r['method'] == 'semforge/model']
     assert len(fetches) <= 2, f'{len(fetches)} tree fetches for one click'
     # Nothing may refresh a tree before the reveal. VS Code drops its element
     # handles when a tree fires onDidChangeTreeData, so a reveal afterwards
@@ -359,7 +359,7 @@ def test_clicking_an_instance_row_opens_the_entity_too(tmp_path):
             'entity': 'urn:filter:1', 'detail': 'model-instance.jsonld',
             'definedAt': '/pkg/model-instance.jsonld:100', 'children': []}},
         'replies': {
-            'semforge/examples': {'roots': [
+            'semforge/model': {'roots': [
                 {'kind': 'example', 'label': 'a case', 'children': [entity]}]},
             'semforge/knowledge': {'roots': []},
             'semforge/tree': {'roots': []},
@@ -367,7 +367,7 @@ def test_clicking_an_instance_row_opens_the_entity_too(tmp_path):
     })
     assert seen['shown'] == [{'file': '/pkg/model-instance.jsonld', 'line': 99,
                               'preserveFocus': True}]
-    assert [r for r in seen['revealed'] if r['view'] == 'semforgeExamples'], \
+    assert [r for r in seen['revealed'] if r['view'] == 'semforgeModel'], \
         f'the entity was never shown in the examples tree: {seen["revealed"]}'
 
 
@@ -385,7 +385,7 @@ def test_clicking_a_class_row_does_not_chase_an_entity(tmp_path):
     assert seen['shown'] == [{'file': '/pkg/knowledge.ttl', 'line': 624,
                               'preserveFocus': True}]
     assert [r for r in seen['requests']
-            if r['method'] == 'semforge/examples'] == []
+            if r['method'] == 'semforge/model'] == []
 
 
 def test_the_revealed_row_is_the_one_in_the_file_that_was_clicked(tmp_path):
@@ -408,7 +408,7 @@ def test_the_revealed_row_is_the_one_in_the_file_that_was_clicked(tmp_path):
             'entity': 'urn:cartridge:1', 'file': '/pkg/cartridge-fresh.jsonld',
             'definedAt': '/pkg/cartridge-fresh.jsonld:2', 'children': []}},
         'replies': {
-            'semforge/examples': {'roots': [
+            'semforge/model': {'roots': [
                 {'kind': 'example', 'label': 'shipped',
                  'children': [entity('/pkg/model-instance.jsonld')]},
                 {'kind': 'example', 'label': 'subobject',
@@ -417,7 +417,7 @@ def test_the_revealed_row_is_the_one_in_the_file_that_was_clicked(tmp_path):
             'semforge/tree': {'roots': []},
         },
     })
-    revealed = [r for r in seen['revealed'] if r['view'] == 'semforgeExamples']
+    revealed = [r for r in seen['revealed'] if r['view'] == 'semforgeModel']
     assert revealed, 'nothing was revealed'
     # Key carries the position, so the second root is the one that was shown.
     assert revealed[0]['key'].startswith('/1:'), revealed[0]['key']
@@ -442,7 +442,7 @@ def test_opening_a_file_in_the_package_already_shown_refreshes_nothing(tmp_path)
             'definedAt': f'{tmp_path}/model-instance.jsonld:100',
             'children': []}},
         'replies': {
-            'semforge/examples': {'roots': [
+            'semforge/model': {'roots': [
                 {'kind': 'example', 'label': 'shipped', 'children': [entity]}]},
             'semforge/knowledge': {'roots': []},
             'semforge/tree': {'roots': []},
@@ -474,7 +474,7 @@ def test_the_reveal_lands_before_any_refresh_the_click_causes(tmp_path):
             'definedAt': f'{elsewhere}/model-instance.jsonld:7',
             'children': []}},
         'replies': {
-            'semforge/examples': {'roots': [
+            'semforge/model': {'roots': [
                 {'kind': 'example', 'label': 'case', 'children': [entity]}]},
             'semforge/knowledge': {'roots': []},
             'semforge/tree': {'roots': []},
@@ -492,10 +492,10 @@ def test_the_reveal_lands_before_any_refresh_the_click_causes(tmp_path):
 def _rows_for(tmp_path, roots):
     """Every rendered row of the examples tree, with its contextValue."""
     return _drive(tmp_path, {
-        'mode': 'items', 'provider': 'ExampleTreeProvider',
+        'mode': 'items', 'provider': 'ModelTreeProvider',
         'uri': 'file:///pkg/shacl.ttl',
-        'replies': {'semforge/examples': {'roots': roots}},
-    }, target='examples.js')['rows']
+        'replies': {'semforge/model': {'roots': roots}},
+    }, target='model.js')['rows']
 
 
 def _menu(command):
@@ -505,7 +505,7 @@ def _menu(command):
 
     values = set()
     for entry in menus:
-        if entry['command'] != command or 'semforgeExamples' not in entry['when']:
+        if entry['command'] != command or 'semforgeModel' not in entry['when']:
             continue
         values |= set(re.findall(r"viewItem\s*==\s*(\w+)", entry['when']))
         for group in re.findall(r"viewItem\s*=~\s*/([^/]+)/", entry['when']):

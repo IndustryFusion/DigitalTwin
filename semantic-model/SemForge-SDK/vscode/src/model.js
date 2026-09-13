@@ -1,8 +1,9 @@
 /*
- * The example instances, as a tree.
+ * The model, as a tree: the data the constraints judge.
  *
- * The constraint view shows the shapes; this shows the data they judge. What
- * makes it worth a view of its own rather than the JSON outline VS Code
+ * Two kinds of it, at the same level, because that is what `model/` holds -- the
+ * declared cases of the suite, and the model instance as the scratchpad. What
+ * makes this worth a view of its own rather than the JSON outline VS Code
  * already gives you is the verdicts: an entity says how many violations it
  * carries, and editing a value re-validates, so the effect of a change is
  * visible where the change was made.
@@ -28,7 +29,7 @@ const CONTEXT_BY_KIND = {
   meta: 'meta'
 };
 
-class ExampleTreeNode {
+class ModelTreeNode {
   constructor(key, raw, packageUri) {
     this.key = key;
     this.raw = raw;
@@ -64,7 +65,7 @@ function attributeOf(raw) {
   return names.length ? names[names.length - 1] : undefined;
 }
 
-class ExampleTreeProvider {
+class ModelTreeProvider {
   constructor(clientHolder) {
     this.clientHolder = clientHolder;
     this._onDidChangeTreeData = new vscode.EventEmitter();
@@ -93,7 +94,7 @@ class ExampleTreeProvider {
       existing.packageUri = this.uri;
       return existing;
     }
-    const made = new ExampleTreeNode(key, raw, this.uri);
+    const made = new ModelTreeNode(key, raw, this.uri);
     this.nodes.set(key, made);
     return made;
   }
@@ -316,7 +317,7 @@ class ExampleTreeProvider {
     }
     let result;
     try {
-      result = await client.sendRequest('semforge/examples', {
+      result = await client.sendRequest('semforge/model', {
         uri: this.uri
       });
     } catch (error) {
@@ -423,8 +424,8 @@ async function askForValue(clientHolder, node, raw) {
 }
 
 function register(context, clientHolder, onChanged) {
-  const provider = new ExampleTreeProvider(clientHolder);
-  const view = vscode.window.createTreeView('semforgeExamples', {
+  const provider = new ModelTreeProvider(clientHolder);
+  const view = vscode.window.createTreeView('semforgeModel', {
     treeDataProvider: provider
   });
   provider.view = view;
@@ -581,7 +582,7 @@ function register(context, clientHolder, onChanged) {
       }
     }),
 
-    vscode.commands.registerCommand('semforge.refreshExamples', () =>
+    vscode.commands.registerCommand('semforge.refreshModel', () =>
       provider.refresh()
     ),
 
@@ -736,4 +737,4 @@ function register(context, clientHolder, onChanged) {
   return provider;
 }
 
-module.exports = { register, ExampleTreeProvider, CONTEXT_BY_KIND };
+module.exports = { register, ModelTreeProvider, CONTEXT_BY_KIND };

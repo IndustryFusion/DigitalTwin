@@ -1080,10 +1080,12 @@ namespace. Manifest §8.3 explicitly allows this, and forcing them into
 #### 12.2.1 Three views, and the joins between them
 
 The cooked side presents the package as the three artifacts it is made of —
-shapes (`semforge/tree`), examples (`semforge/examples`) and knowledge
+constraints (`semforge/tree`), model (`semforge/model`) and knowledge
 (`semforge/knowledge`) — because those are the three things an author edits and
 each answers a question the others cannot: what must hold, what holds, what
-exists.
+exists. The views carry those names: **Constraints**, **Model**, **Knowledge**.
+The model view holds both kinds of data `model/` holds — the declared cases and
+the scratchpad — because "examples" named only half of what it showed.
 
 Showing them separately is not the point; the point is that **each row carries
 the locations of its joins**, which is where authoring actually goes wrong:

@@ -340,8 +340,9 @@ are structure rather than a parameter, and a SPARQL body is not a form. They
 appear so the tree does not lie about what the shape contains; edit them in the
 `.ttl`.
 
-**The Examples view** — the second tree in the SemForge container. It shows
-every declared example, what it is for, and whether it did it:
+**The Model view** — the second tree in the SemForge container. It shows the
+data the constraints judge: every declared case, what it is for and whether it
+did it, and the model instance as the scratchpad beside them.
 
 The tree shows two different things, and they are not interchangeable. The
 cases under `examples/` are the **suite**: each says what it is for and
@@ -527,8 +528,8 @@ nothing reports today:
 | `FilterShape + 2 more` | which shapes judge instances of this class. The ⚖ icon opens the shape |
 | `checked by an inherited shape` | no shape of its own, but `sh:targetClass` reaches subclasses — `CutterShape` judges a `Plasmacutter` |
 | ⚠ `no shape` | nothing targets this type or anything above it, so nothing about it is ever checked |
-| `7 instance(s)` | how many examples instantiate it, counted across every suite — not only `model-instance.jsonld`. **Clicking one opens it and shows it in the Examples tree** |
-| `used in 7 place(s)` | an example gives this term as a value. Expand for which entity, attribute and file — **clicking one opens that file at that attribute and shows the entity in the Examples tree** |
+| `7 instance(s)` | how many examples instantiate it, counted across every suite — not only `model-instance.jsonld`. **Clicking one opens it and shows it in the Model tree** |
+| `used in 7 place(s)` | an example gives this term as a value. Expand for which entity, attribute and file — **clicking one opens that file at that attribute and shows the entity in the Model tree** |
 | ⚠ `unused` | no case gives this value, so nothing exercises the constraint that allows it |
 | ⚠ `no members` | a shape uses this class as `sh:class` and it has no individuals: no value can ever satisfy it |
 

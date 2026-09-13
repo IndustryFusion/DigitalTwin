@@ -376,7 +376,7 @@ def test_value_choices_arrive_over_the_protocol(session):
 def test_the_examples_tree_carries_the_entity_type_over_the_protocol(session):
     """Serialised or not, this is the difference between the icon working and
     the icon doing nothing."""
-    session.send({'jsonrpc': '2.0', 'id': 36, 'method': 'semforge/examples',
+    session.send({'jsonrpc': '2.0', 'id': 36, 'method': 'semforge/model',
                   'params': {'uri': 'file://' + session.document}})
     tree = session.wait_for(lambda m: m.get('id') == 36)[0]['result']
 
@@ -433,7 +433,7 @@ def test_the_server_says_which_methods_it_has(session):
     session.send({'jsonrpc': '2.0', 'id': 38, 'method': 'semforge/methods',
                   'params': {}})
     reported = session.wait_for(lambda m: m.get('id') == 38)[0]['result']
-    for expected in ('semforge/tree', 'semforge/examples', 'semforge/knowledge',
+    for expected in ('semforge/tree', 'semforge/model', 'semforge/knowledge',
                      'semforge/shapeFor', 'semforge/valueChoices'):
         assert expected in reported['methods'], expected
     assert reported['module'].endswith('semforge')

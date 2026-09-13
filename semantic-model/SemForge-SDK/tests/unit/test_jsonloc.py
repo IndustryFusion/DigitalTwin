@@ -109,7 +109,7 @@ def test_the_location_names_the_file_the_node_came_from(corpus):
             assert node.defined_at.startswith(node.file)
 
 
-@pytest.mark.parametrize('source', ['tree.js', 'examples.js'])
+@pytest.mark.parametrize('source', ['tree.js', 'model.js'])
 def test_clicking_a_row_does_not_open_an_editor_prompt(source):
     """A single click should show you the row, not pop an input box.
 

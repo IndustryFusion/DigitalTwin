@@ -14,7 +14,7 @@
   ],
   "activationEvents": [
     "onView:semforgeConstraints",
-    "onView:semforgeExamples",
+    "onView:semforgeModel",
     "onView:semforgeKnowledge",
     "workspaceContains:**/shacl.ttl",
     "workspaceContains:**/model-instance.jsonld",
@@ -95,8 +95,8 @@
         "icon": "$(edit)"
       },
       {
-        "command": "semforge.refreshExamples",
-        "title": "SemForge: Refresh Examples",
+        "command": "semforge.refreshModel",
+        "title": "SemForge: Refresh the model tree",
         "icon": "$(refresh)"
       },
       {
@@ -151,8 +151,8 @@
           "contextualTitle": "SemForge"
         },
         {
-          "id": "semforgeExamples",
-          "name": "Examples",
+          "id": "semforgeModel",
+          "name": "Model",
           "contextualTitle": "SemForge"
         },
         {
@@ -170,8 +170,8 @@
           "group": "navigation"
         },
         {
-          "command": "semforge.refreshExamples",
-          "when": "view == semforgeExamples",
+          "command": "semforge.refreshModel",
+          "when": "view == semforgeModel",
           "group": "navigation"
         },
         {
@@ -203,17 +203,17 @@
         },
         {
           "command": "semforge.addAttribute",
-          "when": "view == semforgeExamples && viewItem == entity",
+          "when": "view == semforgeModel && viewItem == entity",
           "group": "inline"
         },
         {
           "command": "semforge.addEntity",
-          "when": "view == semforgeExamples && viewItem == example",
+          "when": "view == semforgeModel && viewItem == example",
           "group": "inline"
         },
         {
           "command": "semforge.goToShape",
-          "when": "view == semforgeExamples && viewItem =~ /^(exampleEditable|exampleDataset|exampleSeries|attributeReadOnly)$/",
+          "when": "view == semforgeModel && viewItem =~ /^(exampleEditable|exampleDataset|exampleSeries|attributeReadOnly)$/",
           "group": "inline@0"
         },
         {
@@ -223,27 +223,27 @@
         },
         {
           "command": "semforge.editValue",
-          "when": "view == semforgeExamples && viewItem == exampleEditable",
+          "when": "view == semforgeModel && viewItem == exampleEditable",
           "group": "inline@1"
         },
         {
           "command": "semforge.editValue",
-          "when": "view == semforgeExamples && viewItem == exampleDataset",
+          "when": "view == semforgeModel && viewItem == exampleDataset",
           "group": "inline@1"
         },
         {
           "command": "semforge.editValue",
-          "when": "view == semforgeExamples && viewItem == exampleSeries",
+          "when": "view == semforgeModel && viewItem == exampleSeries",
           "group": "inline@1"
         },
         {
           "command": "semforge.addObservation",
-          "when": "view == semforgeExamples && viewItem == exampleDataset",
+          "when": "view == semforgeModel && viewItem == exampleDataset",
           "group": "inline@2"
         },
         {
           "command": "semforge.addObservation",
-          "when": "view == semforgeExamples && viewItem == exampleSeries",
+          "when": "view == semforgeModel && viewItem == exampleSeries",
           "group": "inline@2"
         }
       ]

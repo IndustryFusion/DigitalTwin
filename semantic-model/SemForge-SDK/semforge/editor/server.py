@@ -271,9 +271,10 @@ def _serialise_example(node):
     }
 
 
-@server.feature('semforge/examples')
-def examples(ls, params):
-    """The example entities, annotated with what validation says about them."""
+@server.feature('semforge/model')
+def model(ls, params):
+    """The model as a tree: the declared cases and the scratchpad, annotated
+    with what validation says about them."""
     from ..cooked.examples import build_suite
 
     root = package_root(_uri_to_path(_field(params, 'uri', '')))

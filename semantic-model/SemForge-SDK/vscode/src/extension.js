@@ -16,7 +16,7 @@ const { LanguageClient, TransportKind } = require('vscode-languageclient/node');
 
 const { findPackageUri } = require('./locate');
 const cookedTree = require('./tree');
-const exampleTree = require('./examples');
+const modelTree = require('./model');
 const knowledgeTree = require('./knowledge');
 
 // Shared so the tree provider always talks to the CURRENT client: restarting
@@ -193,7 +193,7 @@ function activate(context) {
   // The constraint view and the example view are two halves of one loop:
   // editing data should refresh the shapes' verdicts and vice versa.
   const constraints = cookedTree.register(context, clientHolder);
-  const examples = exampleTree.register(context, clientHolder, () =>
+  const examples = modelTree.register(context, clientHolder, () =>
     constraints.refresh()
   );
   // The third ingredient, joined to the other two: the shape icon on a class

@@ -27,7 +27,7 @@ EXPECTED = {
     'semforge.restart', 'semforge.revalidate', 'semforge.doctor',
     'semforge.editConstraint', 'semforge.removeConstraint',
     'semforge.refreshTree', 'semforge.goToDefinition', 'semforge.overrideHere',
-    'semforge.editValue', 'semforge.refreshExamples', 'semforge.addAttribute',
+    'semforge.editValue', 'semforge.refreshModel', 'semforge.addAttribute',
     'semforge.addEntity', 'semforge.addObservation', 'semforge.goToShape',
     'semforge.refreshKnowledge', 'semforge.showShapeForClass',
 }
@@ -99,7 +99,7 @@ def test_the_trees_anchor_to_the_folder_not_only_the_editor(corpus_path):
     Anchoring only to the active editor left the tree empty in exactly that
     case, with nothing to say why.
     """
-    for name in ('tree.js', 'examples.js', 'knowledge.js'):
+    for name in ('tree.js', 'model.js', 'knowledge.js'):
         source = open(os.path.join(SDK, 'vscode', 'src', name)).read()
         # All three share one resolver now: each had its own copy, and the one
         # in knowledge.js searched the folder root only -- which is empty when
@@ -117,10 +117,10 @@ def test_clicking_a_row_unfolds_it(corpus_path):
     code parses either way.
     """
     result = _activate(corpus_path)
-    assert 'semforgeExamples' in result['views'], \
+    assert 'semforgeModel' in result['views'], \
         'the examples view registered no selection handler'
     expanded = [r for r in result['revealed']
-                if r['view'] == 'semforgeExamples'
+                if r['view'] == 'semforgeModel'
                 and r['options'].get('expand')]
     assert expanded, (
         'selecting a row with children did not reveal it with expand; '
@@ -145,7 +145,7 @@ def test_every_menu_when_clause_names_a_context_value_that_exists():
     # menu is matched against the tree named in the same `when`.
     sources = {}
     for view, name in (('semforgeConstraints', 'tree.js'),
-                       ('semforgeExamples', 'examples.js'),
+                       ('semforgeModel', 'model.js'),
                        ('semforgeKnowledge', 'knowledge.js')):
         with open(os.path.join(SDK, 'vscode', 'src', name)) as handle:
             sources[view] = handle.read()
@@ -173,7 +173,7 @@ def test_the_context_value_table_covers_every_kind_the_server_sends(corpus):
 
     from semforge.cooked.examples import build_examples, flatten
 
-    with open(os.path.join(SDK, 'vscode', 'src', 'examples.js')) as handle:
+    with open(os.path.join(SDK, 'vscode', 'src', 'model.js')) as handle:
         table = handle.read().split('CONTEXT_BY_KIND = {', 1)[1].split('};', 1)[0]
     known = set(re.findall(r"(\w+):", table))
 
@@ -191,7 +191,7 @@ def test_all_three_views_are_wired(corpus_path):
     with open(os.path.join(SDK, 'vscode', 'package.json')) as handle:
         declared = [v['id']
                     for v in json.load(handle)['contributes']['views']['semforge']]
-    assert declared == ['semforgeConstraints', 'semforgeExamples',
+    assert declared == ['semforgeConstraints', 'semforgeModel',
                         'semforgeKnowledge']
     # Every declared view got a provider and a selection handler at activation.
     assert set(declared) == set(result['views'])
