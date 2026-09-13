@@ -88,10 +88,8 @@ def _entity_lines(path):
 
 def example_files(package):
     """Every JSON-LD document of the package: its model and its examples."""
-    files = []
-    model = package.sources.get('model')
-    if model and os.path.exists(model):
-        files.append(os.path.abspath(model))
+    files = [os.path.abspath(document) for document in package.files('model')
+             if os.path.exists(document)]
     root = os.path.join(package.path, 'examples')
     if os.path.isdir(root):
         for relative in discover(package.path):

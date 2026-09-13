@@ -120,12 +120,10 @@ def kind_for_shape(package, entity_type, attribute_name):
     """
     from rdflib.namespace import SH
 
-    from ..rdfio import index_file, property_blocks
+    from ..rdfio import property_blocks
     from ..validate.shapes import node_shapes
 
-    with open(package.sources['shapes'], encoding='utf-8') as handle:
-        text = handle.read()
-    index = index_file(package.sources['shapes'])
+    index = package.index('shapes')
 
     wanted = attribute_name.rsplit('/', 1)[-1].split(':')[-1]
     for shape in node_shapes(package.shapes):
@@ -133,10 +131,10 @@ def kind_for_shape(package, entity_type, attribute_name):
                    for t in package.shapes.objects(shape, SH.targetClass)]
         if entity_type and entity_type.split(':')[-1] not in targets:
             continue
-        block = index.block_for(shape)
+        path, block = index.block_for(shape)
         if block is None:
             continue
-        for group in property_blocks(text, block):
+        for group in property_blocks(index.source_of(path), block):
             if group.path.split(':')[-1] != wanted:
                 continue
             for child in group.children:

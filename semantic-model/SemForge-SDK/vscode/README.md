@@ -49,7 +49,11 @@ window.
 
 ### What counts as a package
 
-Any directory holding `knowledge.ttl`, `shacl.ttl` and `model-instance.jsonld`.
+Any directory holding `knowledge.ttl`, `shacl.ttl` and `model-instance.jsonld`
+— **or a directory in place of any of them**: `shacl/` of `.ttl` files,
+`knowledge/` of `.ttl` files, `model-instance/` of `.jsonld` files. The graph is
+the union; an edit lands in the document that declares the thing being edited,
+and the shape jump names that file. A file wins if both are present.
 `semantic-model/kms` is one. Open the package itself or the folder above it —
 the trees look in each workspace folder and one level below it, so opening
 `semantic-model/` finds `kms/`. Open higher than that and they wait until you
@@ -327,6 +331,13 @@ appear so the tree does not lie about what the shape contains; edit them in the
 
 **The Examples view** — the second tree in the SemForge container. It shows
 every declared example, what it is for, and whether it did it:
+
+The tree shows two different things, and they are not interchangeable. The
+cases under `examples/` are the **suite**: each says what it is for and
+`semforge test` passes or fails on it. `model-instance` is the **scratchpad** —
+where you try a violation to see what a constraint does. It carries no
+expectation and cannot fail a run, and each of its documents gets its own root
+marked *a scratchpad, not a declared example*.
 
 ```
 🧪 cutter-processing-with-filter-on.jsonld   good · valid · ok · 3 include(s)

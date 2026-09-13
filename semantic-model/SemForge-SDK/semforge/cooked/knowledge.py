@@ -27,7 +27,6 @@ from dataclasses import dataclass, field
 from rdflib import URIRef
 from rdflib.namespace import OWL, RDF, RDFS, SH
 
-from ..rdfio import index_file
 from ..validate.normalise import curie, local, owner_and_edge
 from ..validate.shapes import node_shapes
 # The NGSI-LD keys that are not attributes; one definition, two trees.
@@ -409,8 +408,8 @@ def build_knowledge(package):
             c for c in classes
             if not any(package.knowledge.predicate_objects(c))},
         'usages': _usages(_data_graph(package), places),
-        'knowledge_index': index_file(package.sources['knowledge']),
-        'shapes_index': index_file(package.sources['shapes']),
+        'knowledge_index': package.index('knowledge'),
+        'shapes_index': package.index('shapes'),
         'is_entity': lambda cls: cls in entity_family,
         # sh:targetClass traverses rdfs:subClassOf*, so a type with no shape of
         # its own is still checked when an ancestor has one.

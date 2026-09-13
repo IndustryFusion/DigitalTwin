@@ -129,10 +129,17 @@ def export(package, out_dir, mode=EmissionMode.COMPILE, target_context=None):
     os.makedirs(out_dir, exist_ok=True)
     written = {}
 
+    # A role may be several files. They are concatenated into the single
+    # artifact the target expects -- shacl2flink reads one shapes file -- rather
+    # than exported as a directory: how a package is ORGANISED is the author's
+    # business, and what a compiler is handed is the target's.
     for role, name in (('knowledge', 'knowledge.ttl'), ('shapes', 'shacl.ttl')):
         destination = os.path.join(out_dir, name)
-        with open(package.sources[role], encoding='utf-8') as source:
-            text = source.read()
+        parts = []
+        for source_path in package.files(role):
+            with open(source_path, encoding='utf-8') as source:
+                parts.append(source.read())
+        text = '\n'.join(parts) if len(parts) > 1 else parts[0]
         if role == 'shapes':
             text, added = complete_node_kinds(text)
             if added:
@@ -140,11 +147,14 @@ def export(package, out_dir, mode=EmissionMode.COMPILE, target_context=None):
         with open(destination, 'w', encoding='utf-8') as handle:
             handle.write(text)
         written[role] = destination
+        if len(parts) > 1:
+            written.setdefault('merged', {})[role] = len(parts)
 
-    with open(package.sources['model'], encoding='utf-8') as handle:
-        entities = json.load(handle)
-    if not isinstance(entities, list):
-        entities = [entities]
+    entities = []
+    for source_path in package.files('model'):
+        with open(source_path, encoding='utf-8') as handle:
+            document = json.load(handle)
+        entities.extend(document if isinstance(document, list) else [document])
     if mode is EmissionMode.BROKER:
         written['collapsed'] = collapse_for_broker(entities)
 

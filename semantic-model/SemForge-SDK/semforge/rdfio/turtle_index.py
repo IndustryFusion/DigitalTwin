@@ -183,3 +183,58 @@ class TurtleIndex:
 def index_file(path):
     with open(path, encoding='utf-8') as handle:
         return TurtleIndex(handle.read(), path=path)
+
+
+class PackageIndex:
+    """One locator over every Turtle file of a role.
+
+    A role may be one file or a directory of them, and the difference has to
+    stop at this boundary: a caller asks where a subject IS, not which file to
+    guess. Everything that edits a shape needs the same answer -- writing a
+    constraint into `shacl.ttl` because that is the role's first file would put
+    it in the wrong document as soon as there are two.
+
+    A subject declared in two files is reported once, at its first occurrence in
+    load order, and `files_for` gives all of them: splitting a subject across
+    files is legal Turtle and the writer has to know it is not the whole story.
+    """
+
+    def __init__(self, paths):
+        self.paths = list(paths)
+        self.indexes = {}
+        for path in self.paths:
+            self.indexes[path] = index_file(path)
+
+    def block_for(self, subject):
+        """(path, block) for a subject, or (None, None)."""
+        for path in self.paths:
+            block = self.indexes[path].block_for(subject)
+            if block is not None:
+                return path, block
+        return None, None
+
+    def files_for(self, subject):
+        """Every file with a statement about this subject."""
+        return [path for path in self.paths
+                if self.indexes[path].block_for(subject) is not None]
+
+    def file_for(self, subject):
+        """The file an edit to this subject belongs in, or None."""
+        return self.block_for(subject)[0]
+
+    def locator(self, subject):
+        path, block = self.block_for(subject)
+        return f'{path}:{block.start_line}' if block is not None else ''
+
+    def text_for(self, subject):
+        """(path, source) of the file holding this subject, or (None, '')."""
+        path = self.file_for(subject)
+        if path is None:
+            return None, ''
+        return path, self.indexes[path].source
+
+    def source_of(self, path):
+        return self.indexes[path].source
+
+    def __len__(self):
+        return sum(len(index) for index in self.indexes.values())

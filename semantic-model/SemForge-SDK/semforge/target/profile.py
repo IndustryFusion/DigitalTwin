@@ -94,11 +94,10 @@ def check_package(package, profile, index=None):
 
     Reports all of them; the caller decides whether to stop.
     """
-    from ..rdfio import index_file
     from ..validate import shapes as shape_views
 
     shapes_graph = package.shapes
-    index = index or index_file(package.sources['shapes'])
+    index = index or package.index('shapes')
     found = []
 
     for shape in shape_views.node_shapes(shapes_graph):

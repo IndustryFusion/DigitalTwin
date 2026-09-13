@@ -77,18 +77,17 @@ def build_provenance(package):
     at this tier: their output arrives as `proposed` and needs an explicit
     acceptance step, which is diff-visible.
     """
-    from ..rdfio import index_file
     from ..validate.shapes import node_shapes
 
     store = Provenance()
-    shapes_index = index_file(package.sources['shapes'])
+    shapes_index = package.index('shapes')
     for shape in node_shapes(package.shapes):
         store.record(Origin(
             subject=str(shape), kind='imported-shacl',
             tier=Tier.DECLARED.value,
             locator=shapes_index.locator(shape)))
 
-    knowledge_index = index_file(package.sources['knowledge'])
+    knowledge_index = package.index('knowledge')
     for subject in set(package.knowledge.subjects(None, None)):
         locator = knowledge_index.locator(subject)
         if locator:

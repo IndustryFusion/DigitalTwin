@@ -210,7 +210,11 @@ def check_export_readiness(package, config=None, cache_dir=None):
                            severity='warning', message=error)]
 
     findings = []
-    for name, count in sorted(model_prefixes(package.sources['model']).items()):
+    used = {}
+    for document in package.files('model'):
+        for name, count in model_prefixes(document).items():
+            used[name] = used.get(name, 0) + count
+    for name, count in sorted(used.items()):
         if name not in upstream:
             findings.append(Diagnostic(
                 code='SF-CTX-002', category='package', severity='error',

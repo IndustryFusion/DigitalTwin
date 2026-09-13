@@ -146,11 +146,12 @@ def check(package):
     """Findings for every disagreement between the artifacts and the context."""
     by_namespace = names_by_namespace(package.path)
 
-    artifacts = {role: package.sources[role] for role in ('shapes', 'knowledge')}
+    artifacts = [(role, path) for role in ('shapes', 'knowledge')
+                 for path in package.files(role)]
     seen = {}
     findings = []
 
-    for role, path in artifacts.items():
+    for role, path in artifacts:
         prefixes, _ = file_prefixes(path)
         for name, namespace in prefixes.items():
             seen.setdefault(name, {}).setdefault(namespace, []).append(role)
@@ -166,7 +167,7 @@ def check(package):
                          + '. A term copied between them changes meaning.'),
                 files=[role for roles in namespaces.values() for role in roles]))
 
-    for role, path in sorted(artifacts.items()):
+    for role, path in sorted(artifacts):
         prefixes, _ = file_prefixes(path)
         for name, namespace in sorted(prefixes.items()):
             agreed = by_namespace.get(namespace)
@@ -199,7 +200,11 @@ def _check_model(package, by_namespace):
     """
     context = context_prefixes(package.path)
     findings = []
-    for name, count in sorted(model_prefixes(package.sources['model']).items()):
+    used = {}
+    for document in package.files('model'):
+        for name, count in model_prefixes(document).items():
+            used[name] = used.get(name, 0) + count
+    for name, count in sorted(used.items()):
         namespace = context.get(name)
         if namespace is None:
             findings.append(PrefixFinding(
@@ -269,8 +274,8 @@ def align(package, dry_run=False):
     by_namespace = names_by_namespace(package.path)
 
     applied = {}
-    for role in ('shapes', 'knowledge'):
-        path = package.sources[role]
+    for role, path in [(role, path) for role in ('shapes', 'knowledge')
+                       for path in package.files(role)]:
         prefixes, text = file_prefixes(path)
         renames = {name: by_namespace[namespace]
                    for name, namespace in prefixes.items()

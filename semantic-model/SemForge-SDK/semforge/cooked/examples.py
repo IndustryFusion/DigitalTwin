@@ -293,7 +293,7 @@ def build_suite(package, expectations=None):
         roots.append(node)
 
     roots.extend(loose)
-    roots.append(_model_root(package, notes))
+    roots.extend(_model_roots(package, notes))
     return roots
 
 
@@ -342,16 +342,30 @@ def _example_root(package, example, report, notes=None, shared=None):
     return node
 
 
-def _model_root(package, notes=None):
+def _model_roots(package, notes=None):
+    """The model instance, as one root per document.
+
+    It is the scratchpad, not a test: violations here are how somebody finds out
+    what a constraint does, so it carries no expectation and cannot fail a run.
+    A directory of documents gets a root each, named by its path relative to the
+    package, because that is what tells two of them apart.
+    """
+    import os
+
     from ..validate import validate_package
 
-    node = ExampleNode(
-        kind='example', label=package.sources['model'].rsplit('/', 1)[-1],
-        detail='the model as shipped — not a declared example')
-    node.children.extend(
-        _entity_nodes(package.sources['model'], validate_package(
-            package, strict=False), notes=notes))
-    return node
+    report = validate_package(package, strict=False)
+    roots = []
+    documents = package.files('model')
+    for document in documents:
+        label = os.path.relpath(document, package.path) if len(documents) > 1 \
+            else os.path.basename(document)
+        node = ExampleNode(
+            kind='example', label=label,
+            detail='the model as shipped — a scratchpad, not a declared example')
+        node.children.extend(_entity_nodes(document, report, notes=notes))
+        roots.append(node)
+    return roots
 
 
 def _stamp_file(node, path):
@@ -535,12 +549,15 @@ def build_examples(package, report=None):
         by_entity.setdefault(result.resource, 0)
         by_entity[result.resource] += 1
 
+    documents = package.files('model')
+    entities = [e for document in documents for e in _entities(document)]
     root = ExampleNode(
         kind='example',
-        label=package.sources['model'].rsplit('/', 1)[-1],
-        detail=f'{len(_entities(package.sources["model"]))} entities')
+        label=package.sources['model'].rsplit('/', 1)[-1]
+        + (f' + {len(documents) - 1} more' if len(documents) > 1 else ''),
+        detail=f'{len(entities)} entities')
 
-    for entity in _entities(package.sources['model']):
+    for entity in entities:
         if not isinstance(entity, dict):
             continue
         identifier = str(entity.get('id') or entity.get('@id') or '(no id)')

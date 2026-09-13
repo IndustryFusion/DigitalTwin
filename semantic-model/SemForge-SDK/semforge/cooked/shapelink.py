@@ -22,7 +22,7 @@ from rdflib import URIRef
 from rdflib.namespace import RDF, RDFS, SH
 
 from ..errors import PackageError
-from ..rdfio import index_file, property_blocks
+from ..rdfio import property_blocks
 from ..validate.normalise import curie, local
 from ..validate.shapes import node_shapes
 
@@ -76,11 +76,7 @@ def find_property_shape(package, entity_type, attribute):
     Returns a dict with the shape, its file:line, whether the shape targets the
     type directly or an ancestor, and the value slot it constrains.
     """
-    path = package.sources['shapes']
-    with open(path, encoding='utf-8') as handle:
-        text = handle.read()
-    index = index_file(path)
-
+    index = package.index('shapes')
     wanted = attribute.rsplit('/', 1)[-1].split(':')[-1]
     names = _type_names(package, entity_type)
     own = (entity_type or '').split(':')[-1]
@@ -90,9 +86,12 @@ def find_property_shape(package, entity_type, attribute):
         targets = _targets(package, shape)
         if not (targets & names):
             continue
-        block = index.block_for(shape)
+        # Which FILE holds it matters as much as which line: a role may be a
+        # directory, and the jump has to open the document the shape is in.
+        path, block = index.block_for(shape)
         if block is None:
             continue
+        text = index.source_of(path)
         for group in property_blocks(text, block):
             if group.path.split(':')[-1] != wanted:
                 continue
@@ -150,9 +149,11 @@ def ensure_property_shape(package, entity_type, attribute):
             f'on, and guessing which shape you meant would be worse than '
             f'asking.)')
 
-    updated = add_property_constraint(
-        package.sources['shapes'], str(target), attribute, [])
-    with open(package.sources['shapes'], 'w', encoding='utf-8') as handle:
+    holder = package.index('shapes').file_for(target)
+    if holder is None:
+        raise PackageError(f'{target} is not in any shapes file')
+    updated = add_property_constraint(holder, str(target), attribute, [])
+    with open(holder, 'w', encoding='utf-8') as handle:
         handle.write(updated)
 
     from ..package import load
@@ -176,16 +177,14 @@ def value_choices(package, entity_type, attribute, limit=None, search=None):
     if found is None:
         return [], 'no shape constrains this attribute'
 
-    path = package.sources['shapes']
-    with open(path, encoding='utf-8') as handle:
-        text = handle.read()
-    index = index_file(path)
+    index = package.index('shapes')
     shape = URIRef(found['shape'])
     wanted = attribute.rsplit('/', 1)[-1].split(':')[-1]
 
     declared = None
     slot = ''
-    block = index.block_for(shape)
+    path, block = index.block_for(shape)
+    text = index.source_of(path) if path else ''
     for group in property_blocks(text, block or []):
         if group.path.split(':')[-1] != wanted:
             continue

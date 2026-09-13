@@ -172,8 +172,10 @@ def _examples_and_reports(package, expectations):
     single example, so `semforge test` works before anything is declared.
     """
     if not expectations.examples:
-        default = Example(path=os.path.relpath(package.sources['model'], package.path))
-        return [(default, validate_package(package))]
+        # No declared cases: the model documents ARE the examples, one each.
+        report = validate_package(package)
+        return [(Example(path=os.path.relpath(document, package.path)), report)
+                for document in package.files('model')]
 
     from ..expect.store import compose
 
@@ -352,7 +354,8 @@ def retarget_command(path, to):
             sys.exit(2)
         value = os.path.relpath(local, path)
 
-    changed = retarget_model(package.sources['model'], value)
+    changed = sum(retarget_model(document, value)
+                  for document in package.files('model'))
     click.echo(f'{changed} entity/entities now name {value}')
 
 
@@ -465,7 +468,8 @@ def diff_command(before, after, impact):
     report = regression_report(
         (old.model, old.shapes, old.knowledge),
         (new.model, new.shapes, new.knowledge),
-        [(os.path.basename(new.sources['model']), new.model)],
+        [(os.path.basename(document), new.model)
+         for document in new.files('model')],
         changes=changes)
     lines = format_regression(report)
     if lines:

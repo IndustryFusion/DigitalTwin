@@ -18,16 +18,46 @@ const vscode = require('vscode');
 
 const ARTIFACTS = ['shacl.ttl', 'knowledge.ttl', 'model-instance.jsonld'];
 
-/** True when this directory holds all three artifacts. */
+// A role may be a directory of documents instead of one file, and the loader
+// reads either. Recognising only the files would leave such a package invisible
+// here -- three empty trees over a package the server can read perfectly well.
+const FOLDERS = {
+  'shacl.ttl': ['shacl', 'shapes'],
+  'knowledge.ttl': ['knowledge'],
+  'model-instance.jsonld': ['model-instance', 'model']
+};
+
+function roleFile(directory, name) {
+  const file = path.join(directory, name);
+  if (fs.existsSync(file) && fs.statSync(file).isFile()) {
+    return file;
+  }
+  for (const folder of FOLDERS[name] || []) {
+    const candidate = path.join(directory, folder);
+    if (!fs.existsSync(candidate) || !fs.statSync(candidate).isDirectory()) {
+      continue;
+    }
+    // Any document inside will do: the server resolves the package from any
+    // file in it.
+    const inside = fs.readdirSync(candidate).sort()
+      .filter((entry) => /\.(ttl|jsonld|json)$/.test(entry));
+    if (inside.length) {
+      return path.join(candidate, inside[0]);
+    }
+  }
+  return undefined;
+}
+
+/** True when this directory holds all three artifacts, as files or folders. */
 function isPackage(directory) {
-  return ARTIFACTS.every((name) => fs.existsSync(path.join(directory, name)));
+  return ARTIFACTS.every((name) => roleFile(directory, name) !== undefined);
 }
 
 function firstArtifact(directory) {
   for (const name of ARTIFACTS) {
-    const candidate = path.join(directory, name);
-    if (fs.existsSync(candidate)) {
-      return vscode.Uri.file(candidate).toString();
+    const found = roleFile(directory, name);
+    if (found) {
+      return vscode.Uri.file(found).toString();
     }
   }
   return undefined;
@@ -105,7 +135,9 @@ function noPackageMessage() {
   return (
     'No SemForge package found in ' + (folders || 'this window') +
     ' or one level below it. A package is a directory holding ' +
-    ARTIFACTS.join(', ') + '. Open one, or run "SemForge: Doctor".'
+    ARTIFACTS.join(', ') + ' — each of which may be a directory of documents ' +
+    'instead (shacl/, knowledge/, model-instance/). Open one, or run ' +
+    '"SemForge: Doctor".'
   );
 }
 

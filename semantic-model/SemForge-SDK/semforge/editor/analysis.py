@@ -34,6 +34,22 @@ from ..validate.normalise import curie, local
 from ..validate.shapes import check_declarations, node_shapes
 
 ARTIFACTS = ('knowledge.ttl', 'shacl.ttl', 'model-instance.jsonld')
+# Each role may also be a directory of documents, so a directory holding
+# `shacl/` and `knowledge/` and `model-instance/` is a package too. Recognising
+# only the files would leave such a package invisible to the editor -- the
+# trees empty, with the loader perfectly able to read it.
+ALTERNATIVES = {
+    'knowledge.ttl': ('knowledge',),
+    'shacl.ttl': ('shacl', 'shapes'),
+    'model-instance.jsonld': ('model-instance', 'model'),
+}
+
+
+def _has_role(directory, name):
+    if os.path.isfile(os.path.join(directory, name)):
+        return True
+    return any(os.path.isdir(os.path.join(directory, folder))
+               for folder in ALTERNATIVES.get(name, ()))
 
 
 @dataclass(frozen=True)
@@ -55,7 +71,7 @@ def package_root(path):
     if os.path.isfile(here):
         here = os.path.dirname(here)
     while True:
-        if all(os.path.exists(os.path.join(here, name)) for name in ARTIFACTS):
+        if all(_has_role(here, name) for name in ARTIFACTS):
             return here
         parent = os.path.dirname(here)
         if parent == here:
@@ -66,19 +82,21 @@ def package_root(path):
 def analyse(root, profile_name='shacl2flink'):
     """Findings for a package, keyed by absolute file path.
 
-    Returns (findings, package). Diagnostics land on shacl.ttl, because that is
-    where the shapes are and where a locator exists; a violation is attributed
-    to the shape that raised it rather than to the data, so the author sees it
-    against the constraint they are editing.
+    Returns (findings, package). A finding about a shape lands on the file that
+    DECLARES that shape -- the role may be a directory, and putting every
+    finding on the first file would annotate a document that has nothing to do
+    with it. A violation is attributed to the shape that raised it rather than
+    to the data, so the author sees it against the constraint they are editing.
     """
     package = load(root)
-    index = index_file(package.sources['shapes'])
-    shapes_file = os.path.abspath(package.sources['shapes'])
-    findings = {shapes_file: []}
+    index = package.index('shapes')
+    findings = {os.path.abspath(path): [] for path in index.paths}
+    primary = os.path.abspath(package.sources['shapes'])
 
     def at(subject, severity, kind, message):
-        block = index.block_for(subject)
-        findings[shapes_file].append(EditorFinding(
+        path, block = index.block_for(subject)
+        where = os.path.abspath(path) if path else primary
+        findings.setdefault(where, []).append(EditorFinding(
             line=block.start_line if block else 1,
             severity=severity, kind=kind, message=message,
             subject=str(subject)))
@@ -188,8 +206,9 @@ def definition_at(package, word):
     if not word:
         return None
     for role in ('shapes', 'knowledge'):
-        index = index_file(package.sources[role])
-        for block in index.blocks:
-            if local(block.subject) == word or block.raw_subject == word:
-                return os.path.abspath(package.sources[role]), block.start_line
+        for path in package.files(role):
+            index = index_file(path)
+            for block in index.blocks:
+                if local(block.subject) == word or block.raw_subject == word:
+                    return os.path.abspath(path), block.start_line
     return None

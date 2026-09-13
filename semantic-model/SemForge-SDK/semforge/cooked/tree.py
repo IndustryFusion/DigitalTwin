@@ -23,12 +23,13 @@ lie about what a shape contains -- invariant S2: content the cooked view cannot
 project is preserved and marked, never hidden and never dropped.
 """
 
+import os
 from dataclasses import dataclass, field
 
 from rdflib.namespace import SH
 
 from ..errors import PackageError
-from ..rdfio import (find_block, index_file, property_blocks, remove_parameter,
+from ..rdfio import (find_block, property_blocks, remove_parameter,
                      set_parameter)
 from ..validate.normalise import curie, local
 from ..validate.shapes import node_shapes
@@ -260,11 +261,18 @@ def build_tree(package):
     there would be a lie of a different kind: SHACL CONJOINS, so a constraint
     added to the subtype cannot relax the one above it (see override_effect).
     """
-    source_path = package.sources['shapes']
-    with open(source_path, encoding='utf-8') as handle:
-        text = handle.read()
-    index = index_file(source_path)
-    line_of = _line_counter(text)
+    # Per file, because a role may be a directory: the text a shape is read
+    # from has to be the text it was WRITTEN in, or the spans address the wrong
+    # document.
+    index = package.index('shapes')
+    texts = {path: index.source_of(path) for path in index.paths}
+    counters = {path: _line_counter(text) for path, text in texts.items()}
+
+    def source_of(shape):
+        path = index.file_for(shape)
+        if path is None:
+            return None, '', None
+        return path, texts[path], counters[path]
 
     by_class = {}
     for shape in node_shapes(package.shapes):
@@ -276,7 +284,11 @@ def build_tree(package):
         node = CookedNode(kind='type', label=local(cls), target_class=str(cls))
         own = 0
         for shape in by_class[cls]:
-            child = _shape_node(package, shape, text, index, line_of)
+            path, text, line_of = source_of(shape)
+            if path is None:
+                continue
+            child = _shape_node(package, shape, text, index.indexes[path],
+                                line_of)
             if child is not None:
                 node.children.append(child)
                 own += 1
@@ -284,7 +296,11 @@ def build_tree(package):
         inherited = 0
         for ancestor in _ancestors(package.knowledge, cls)[1:]:
             for shape in by_class.get(ancestor, []):
-                child = _shape_node(package, shape, text, index, line_of)
+                path, text, line_of = source_of(shape)
+                if path is None:
+                    continue
+                child = _shape_node(package, shape, text, index.indexes[path],
+                                    line_of)
                 if child is None:
                     continue
                 _mark_inherited(child, shape, ancestor, index.locator(shape))
@@ -300,12 +316,13 @@ def build_tree(package):
 
 
 def _locate(package, shape, path_chain):
-    source_path = package.sources['shapes']
-    with open(source_path, encoding='utf-8') as handle:
-        text = handle.read()
-    block = index_file(source_path).block_for(shape)
+    index = package.index('shapes')
+    source_path, block = index.block_for(shape)
     if block is None:
-        raise PackageError(f'{shape} is not a statement in {source_path}')
+        raise PackageError(
+            f'{shape} is not a statement in '
+            + ', '.join(os.path.basename(p) for p in index.paths))
+    text = index.source_of(source_path)
     target = find_block(property_blocks(text, block), path_chain)
     if target is None:
         raise PackageError(
@@ -408,10 +425,15 @@ def override_constraint(package, shape, path_chain, parameter, value):
     attribute = path_chain[0] if path_chain else None
     if attribute is None:
         raise PackageError('cannot override without an attribute path')
+    # Again the file that holds the shape: adding a property to FilterShape has
+    # to land where FilterShape is, whichever document that is.
+    holder = package.index('shapes').file_for(shape)
+    if holder is None:
+        raise PackageError(f'{shape} is not in any shapes file')
     updated = add_property_constraint(
-        package.sources['shapes'], shape, attribute, [(parameter, value)])
-    _write_verified(package.sources['shapes'], updated)
-    return package.sources['shapes'], 'added-attribute'
+        holder, shape, attribute, [(parameter, value)])
+    _write_verified(holder, updated)
+    return holder, 'added-attribute'
 
 
 def flatten(nodes, depth=0):

@@ -509,6 +509,49 @@ The `ontology/` + `constraints/` + `rules/` split reproduces the
 *addressable modules with a manifest* rather than as a filename convention
 resolved by `rdfpipe` and shell globbing.
 
+#### What the loader reads today: a file **or** a directory, per role
+
+The modular layout above is where this goes; what M1 reads is the KMS triple —
+and each of its three roles may now be **one file or a directory of them**:
+
+| Role | File | Directory | Documents |
+|---|---|---|---|
+| knowledge | `knowledge.ttl` | `knowledge/` | `*.ttl` |
+| shapes | `shacl.ttl` | `shacl/` or `shapes/` | `*.ttl` |
+| model | `model-instance.jsonld` | `model-instance/` or `model/` | `*.jsonld` |
+
+A file wins when both are present: that is the older, explicit answer, and two
+sources for one role would otherwise be ambiguous. The directory is read
+non-recursively — a nested directory is somebody's own structure, and walking
+into it would quietly adopt whatever is there, including an examples suite.
+
+The graph is the **union** either way, so nothing downstream changes: the same
+triples, the same verdicts, isomorphic graphs (`test_multifile.py`). What does
+change is **where an edit lands**, and that is the whole risk of the feature. A
+writer that reached for "the role's file" would put a constraint into the first
+document of a directory regardless of which one declares the shape. So:
+
+* `Package.files(role)` — every document, in load order;
+* `Package.index(role)` — a `PackageIndex` over all of them, answering
+  `file_for(subject)`, `block_for`, `locator` and `text_for`;
+* every writer (cooked edits, `ensure_property_shape`, value edits) targets the
+  file the subject is IN, and every diagnostic is attributed to the file that
+  declares the shape it is about.
+
+`semforge export` goes the other way and **concatenates**: shacl2flink is handed
+one `shacl.ttl` and one `knowledge.ttl`, because how a package is organised is
+the author's business and what a compiler is handed is the target's.
+
+#### The model instance is the scratchpad; `examples/` is the suite
+
+Both are needed and they answer different questions. The examples under
+`examples/` are the test suite: each declares what it is for, `semforge test`
+passes or fails on it, and coverage is measured over it (§7.5). The model
+instance is the **scratchpad** — the place to try a violation and watch what a
+constraint does. It carries no expectation, it cannot fail a run, and the
+examples tree shows it as such: one root per model document, labelled *a
+scratchpad, not a declared example*.
+
 ### 6.2 `semforge.yaml`
 
 ```yaml
