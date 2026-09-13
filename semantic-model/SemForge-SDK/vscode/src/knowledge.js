@@ -10,7 +10,7 @@
 
 const vscode = require('vscode');
 
-const { findPackageUri, noPackageMessage } = require('./locate');
+const { noPackageMessage } = require('./locate');
 const { showLocation } = require('./reveal');
 
 class KnowledgeTreeNode {
@@ -154,7 +154,7 @@ class KnowledgeTreeProvider {
   }
 }
 
-function register(context, clientHolder, onShape, onEntity) {
+function register(context, clientHolder, session, onShape, onEntity) {
   const provider = new KnowledgeTreeProvider(clientHolder);
   const view = vscode.window.createTreeView('semforgeKnowledge', {
     treeDataProvider: provider
@@ -201,25 +201,14 @@ function register(context, clientHolder, onShape, onEntity) {
     })
   );
 
-  // Anchor on the package, and follow the editor as the other two trees do.
-  // Without the second half, opening a file inside a package did not help this
-  // tree at all -- and without the first, a window opened one level above the
-  // package showed nothing until a file happened to be opened.
-  const track = (editor) => {
-    if (editor && /\.(ttl|jsonld)$/.test(editor.document.uri.fsPath)) {
-      provider.refresh(editor.document.uri.toString());
-    }
-  };
-  provider.refresh(findPackageUri());
-  if (!provider.uri) {
-    track(vscode.window.activeTextEditor);
-  }
+  // Which package this view shows is decided ONCE, for all three views, by the
+  // session in packages.js -- including following the active editor. Each view
+  // used to decide for itself, with a different rule in the knowledge view, so
+  // the three could be showing three different packages with nothing on screen
+  // naming any of them.
+  provider.refresh(session.uri);
   context.subscriptions.push(
-    vscode.window.onDidChangeActiveTextEditor((editor) => {
-      if (!provider.uri) {
-        track(editor);
-      }
-    }),
+    session.onDidChange((uri) => provider.refresh(uri)),
     vscode.workspace.onDidSaveTextDocument(() => provider.refresh())
   );
 

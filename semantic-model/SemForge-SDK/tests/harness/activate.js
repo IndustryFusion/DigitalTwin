@@ -15,6 +15,9 @@ const registered = [];
 // that only counts commands.
 const selectionHandlers = [];
 const revealed = [];
+// The status bar is where the active package is named, so activation has to be
+// able to show what it painted there.
+const statusBar = [];
 
 const noop = () => undefined;
 const stub = {
@@ -45,7 +48,13 @@ const stub = {
     showErrorMessage: (m) => { registered.push('ERROR: ' + m); return Promise.resolve(); },
     showInformationMessage: noop,
     createOutputChannel: () => ({ appendLine: noop, show: noop }),
-    setStatusBarMessage: noop
+    setStatusBarMessage: noop,
+    createStatusBarItem: () => {
+      const item = { text: '', tooltip: '', command: undefined,
+                     show: () => statusBar.push(item.text),
+                     hide: noop, dispose: noop };
+      return item;
+    }
   },
   commands: { registerCommand: (id) => { registered.push(id); return { dispose: noop }; },
               executeCommand: noop },
@@ -55,6 +64,7 @@ const stub = {
   TreeItemCollapsibleState: { None: 0, Collapsed: 1, Expanded: 2 },
   Position: class {}, Selection: class {}, Range: class {},
   TextEditorRevealType: { InCenter: 2 }, SymbolKind: { Class: 4 },
+  StatusBarAlignment: { Left: 1, Right: 2 },
   MarkupKind: { Markdown: 'markdown' },
   Uri: { file: (p) => ({ fsPath: p, toString: () => 'file://' + p }) }
 };
@@ -90,7 +100,8 @@ async function main() {
     commands: registered.filter((r) => !r.startsWith('ERROR')),
     errors: registered.filter((r) => r.startsWith('ERROR')),
     views: selectionHandlers.map((s) => s.view),
-    revealed
+    revealed,
+    statusBar
   }));
 }
 

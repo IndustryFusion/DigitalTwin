@@ -650,3 +650,73 @@ def test_an_included_row_offers_the_pencil(tmp_path, corpus):
     # read-only rows left are rows with no value of their own.
     locked = [r for r in rows if r['contextValue'] == 'attributeReadOnly']
     assert all(not r['editable'] for r in locked)
+
+
+# --- which package am I on ---------------------------------------------------
+
+def _bare_package(directory, name):
+    """The three roles, empty. Enough to be FOUND, which is what is under test."""
+    root = directory / name
+    root.mkdir(parents=True)
+    (root / 'knowledge.ttl').write_text('')
+    (root / 'shacl.ttl').write_text('')
+    (root / 'model-instance.jsonld').write_text('{"@graph": []}')
+    return root
+
+
+def test_the_status_bar_names_the_package_the_views_are_showing(tmp_path):
+    """A window with two packages picked one silently, and said which nowhere."""
+    _bare_package(tmp_path, 'alpha')
+    _bare_package(tmp_path, 'beta')
+    seen = _drive(tmp_path, {'command': 'semforge.doctor'})
+    assert seen['statusBar'], 'nothing was painted in the status bar'
+    assert 'alpha' in seen['statusBar'][-1]
+
+
+def test_the_package_can_be_switched_and_the_choice_sticks(tmp_path):
+    """Switching is the point: reading a second package must not need a window.
+
+    And once chosen it PINS -- following the active editor is right when there
+    is one package and exactly wrong while you are reading a second one.
+    """
+    _bare_package(tmp_path, 'alpha')
+    _bare_package(tmp_path, 'beta')
+    seen = _drive(tmp_path, {'command': 'semforge.selectPackage', 'pick': 'beta'})
+
+    offered = [item['label'] for item in seen['quickPicks'][0]['items']]
+    assert 'alpha' in offered and 'beta' in offered
+    assert 'Follow the active editor' in offered, \
+        'there is no way back to following the editor'
+    assert 'beta (pinned)' in seen['statusBar'][-1], seen['statusBar']
+
+
+def test_every_view_says_which_package_it_is_showing(tmp_path):
+    """The three views used to each resolve a package of their own.
+
+    Nothing on screen named any of them, so a view quietly showing a different
+    package than the one beside it looked like a wrong answer.
+    """
+    _bare_package(tmp_path, 'alpha')
+    _bare_package(tmp_path, 'beta')
+    seen = _drive(tmp_path, {'command': 'semforge.selectPackage', 'pick': 'beta'})
+
+    subtitles = {view: state.get('description')
+                 for view, state in seen['views'].items()}
+    assert set(subtitles) == {'semforgeConstraints', 'semforgeModel',
+                              'semforgeKnowledge'}
+    for view, subtitle in subtitles.items():
+        assert subtitle and 'beta' in subtitle, f'{view} says {subtitle!r}'
+
+
+def test_a_package_nested_inside_another_is_offered_too(tmp_path):
+    """A scaffolded project sits beside the model it is testing.
+
+    `kms/test` is inside `kms`, so a search that stopped at the first package
+    it found never offered it -- and it is exactly the one you just made.
+    """
+    _bare_package(tmp_path, 'kms')
+    _bare_package(tmp_path / 'kms', 'test')
+    seen = _drive(tmp_path, {'command': 'semforge.selectPackage', 'pick': 'test'})
+    offered = [item['description'] for item in seen['quickPicks'][0]['items']]
+    assert any(str(tmp_path / 'kms' / 'test') in (text or '')
+               for text in offered), offered

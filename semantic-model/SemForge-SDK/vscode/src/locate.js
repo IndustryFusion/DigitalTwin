@@ -81,6 +81,60 @@ function firstArtifact(directory) {
 }
 
 /**
+ * Every package in the opened folders, down to `depth` levels.
+ *
+ * More than one is normal -- a repository that holds a model and a test project
+ * beside it has two -- and when there is more than one, *which* one a view is
+ * showing stops being obvious. So the list exists to be shown and chosen from,
+ * not just to pick a winner from silently.
+ */
+// Directories that are never a package and are expensive to walk into. The
+// role folders are here because they belong to the package above them: a
+// package nested inside another one is ordinary (a scaffolded test project
+// beside the model), but `kms/shacl/` is not a second package.
+const SKIP = new Set(['node_modules', 'venv', '__pycache__', 'target', 'dist',
+                      'out', 'build', 'examples', 'shacl', 'shapes',
+                      'knowledge', 'model', 'main', 'model-instance']);
+
+function listPackages(depth = 2) {
+  const found = [];
+  const add = (directory) => {
+    const artifact = isPackage(directory) ? firstArtifact(directory) : undefined;
+    if (artifact && !found.some((entry) => entry.directory === directory)) {
+      found.push({ directory, uri: artifact, name: path.basename(directory) });
+      return true;
+    }
+    return false;
+  };
+  const walk = (directory, left) => {
+    // Keep going after a match: a package nested inside another one is how a
+    // scaffolded test project sits beside the model it is testing.
+    add(directory);
+    if (left <= 0) {
+      return;
+    }
+    let names = [];
+    try {
+      names = fs.readdirSync(directory, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory() && !entry.name.startsWith('.') &&
+                           !SKIP.has(entry.name))
+        .map((entry) => entry.name)
+        .sort();
+    } catch (error) {
+      return;                           // unreadable; nothing to find
+    }
+    for (const name of names) {
+      walk(path.join(directory, name), left - 1);
+    }
+  };
+  for (const folder of vscode.workspace.workspaceFolders || []) {
+    walk(folder.uri.fsPath, depth);
+  }
+  return found;
+}
+
+
+/**
  * A URI inside a package in the opened folders, or undefined.
  *
  * The URI is a file rather than the directory because that is what the server
@@ -158,5 +212,24 @@ function noPackageMessage() {
   );
 }
 
-module.exports = { ARTIFACTS, isPackage, findPackageUri, noPackageMessage,
-                   samePackage };
+/** The package directory a URI lies in, for display. */
+function packageDirectory(uri) {
+  if (!uri) {
+    return undefined;
+  }
+  const file = uri.startsWith('file://') ? uri.slice('file://'.length) : uri;
+  let here = path.dirname(decodeURIComponent(file));
+  for (;;) {
+    if (isPackage(here)) {
+      return here;
+    }
+    const parent = path.dirname(here);
+    if (parent === here) {
+      return undefined;
+    }
+    here = parent;
+  }
+}
+
+module.exports = { ARTIFACTS, isPackage, findPackageUri, listPackages,
+                   noPackageMessage, packageDirectory, samePackage };

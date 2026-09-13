@@ -11,7 +11,7 @@
 
 const vscode = require('vscode');
 
-const { findPackageUri, noPackageMessage, samePackage } = require('./locate');
+const { noPackageMessage } = require('./locate');
 const { showLocation } = require('./reveal');
 
 // The contextValue vocabulary, spelled out. `when: viewItem == x` matches a
@@ -429,7 +429,7 @@ async function askForValue(clientHolder, node, raw) {
   return picked.value === undefined ? typeIt() : picked.value;
 }
 
-function register(context, clientHolder, onChanged) {
+function register(context, clientHolder, session, onChanged) {
   const provider = new ModelTreeProvider(clientHolder);
   const view = vscode.window.createTreeView('semforgeModel', {
     treeDataProvider: provider
@@ -463,26 +463,14 @@ function register(context, clientHolder, onChanged) {
     })
   );
 
-  const track = (editor) => {
-    if (!editor || !/\.(ttl|jsonld)$/.test(editor.document.uri.fsPath)) {
-      return;
-    }
-    const opened = editor.document.uri.toString();
-    // Only when it is a DIFFERENT package. Re-validating because somebody
-    // opened a file we are already showing is wasted work, and the refresh it
-    // fires invalidates any reveal in flight -- including the one the click
-    // that opened the file is waiting on.
-    if (samePackage(provider.uri, opened)) {
-      return;
-    }
-    provider.refresh(opened);
-  };
-  provider.refresh(findPackageUri());
-  if (!provider.uri) {
-    track(vscode.window.activeTextEditor);
-  }
+  // Which package this view shows is decided ONCE, for all three views, by the
+  // session in packages.js -- including following the active editor. Each view
+  // used to decide for itself, with a different rule in the knowledge view, so
+  // the three could be showing three different packages with nothing on screen
+  // naming any of them.
+  provider.refresh(session.uri);
   context.subscriptions.push(
-    vscode.window.onDidChangeActiveTextEditor(track),
+    session.onDidChange((uri) => provider.refresh(uri)),
     vscode.workspace.onDidSaveTextDocument(() => provider.refresh())
   );
 

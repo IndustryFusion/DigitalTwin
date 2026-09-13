@@ -88,6 +88,25 @@ the trees look in each workspace folder and one level below it, so opening
 `semantic-model/` finds `kms/`. Open higher than that and they wait until you
 open a file inside a package.
 
+### Which package am I on
+
+The **status bar** says, bottom left: `$(package) kms`. All three views show
+that one package — they used to each resolve one of their own, with a different
+rule in the Knowledge view, so they could disagree with nothing on screen
+naming either. Each view now carries the package name as its subtitle too.
+
+Click the status bar item, or the 📦 icon in any view's title bar, to switch.
+The menu lists every package in the window and ends with **Follow the active
+editor**:
+
+* **following** (the default) — opening a file in another package moves all
+  three views there. Right when you have one package.
+* **pinned** (after you choose one) — the views stay put whatever you open.
+  Right while you are reading a second package.
+
+On the command line the same question is `semforge where`, and every command
+that reads a package prints the one it resolved.
+
 **If a tree is empty it now says why** in the panel itself: no package found (and
 what it looked for), the server not running, or whatever the server reported.
 An empty panel with no message was indistinguishable from a broken extension,
@@ -612,8 +631,11 @@ found nothing to report, which is why the first row is the first row.
 ## How it decides what to analyse
 
 A *package* is any directory containing `knowledge.ttl`, `shacl.ttl` and
-`model-instance.jsonld`. Opening any file inside one activates the service,
-which walks up to find the root — an editor hands you a file, not a project.
+`model-instance.jsonld` — or one holding `semforge.yaml`, which declares itself
+one. Opening any file inside one activates the service, which walks up to find
+the root — an editor hands you a file, not a project. The command line walks up
+by the same rule, in the same code (`semforge.package.discover`), so the editor
+and CI cannot disagree about which package a file belongs to.
 
 Analysis runs on open and on save, over the whole package, because a constraint
 in `shacl.ttl` is meaningless without the ontology and the examples.
@@ -628,7 +650,8 @@ in `shacl.ttl` is meaningless without the ontology and the examples.
 | `SemForge: Revalidate Package` | saves the active file, which re-runs analysis |
 | `SemForge: New project…` | creates a project folder and scaffolds it, then offers to open it |
 | `SemForge: Create a package in this folder` | scaffolds a directory you already have |
-| `SemForge: Doctor` | what it sees: folder, interpreter, whether `semforge` imports |
+| `SemForge: Select Package` | which package the three views show; pins your choice |
+| `SemForge: Doctor` | what it sees: folder, interpreter, active package, every other package in the window, whether `semforge` imports |
 | `SemForge: Go to the SHACL rule for this attribute` | the ⚖ icon on an example attribute; creates an empty `sh:property` when none exists |
 | `SemForge: Go to the shape for this class` | the ⚖ icon on a knowledge class |
 

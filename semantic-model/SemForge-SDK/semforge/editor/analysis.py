@@ -26,6 +26,7 @@ from ..expect import coverage
 from ..expect.runner import constraint_ref
 from ..expect.store import Example
 from ..package import load
+from ..package.discover import find
 from ..provenance import build_provenance
 from ..rdfio import index_file
 from ..target import builtin_profile, check_package
@@ -33,28 +34,10 @@ from ..validate import validate_package
 from ..validate.normalise import curie, local
 from ..validate.shapes import check_declarations, node_shapes
 
-ARTIFACTS = ('knowledge.ttl', 'shacl.ttl', 'model-instance.jsonld')
-# `main.jsonld` says the same thing as `model-instance.jsonld`.
-FILE_ALIASES = {'model-instance.jsonld': ('main.jsonld', 'model.jsonld')}
-# Each role may also be a directory of documents, so a directory holding
-# `shacl/` and `knowledge/` and `model-instance/` is a package too. Recognising
-# only the files would leave such a package invisible to the editor -- the
-# trees empty, with the loader perfectly able to read it.
-ALTERNATIVES = {
-    'knowledge.ttl': ('knowledge',),
-    'shacl.ttl': ('shacl', 'shapes'),
-    # `model/` may be the instance documents or the grouping that holds them
-    # beside examples/ -- either way, its presence means the role is here.
-    'model-instance.jsonld': ('main', 'model-instance', 'model'),
-}
-
-
-def _has_role(directory, name):
-    for candidate in (name,) + FILE_ALIASES.get(name, ()):
-        if os.path.isfile(os.path.join(directory, candidate)):
-            return True
-    return any(os.path.isdir(os.path.join(directory, folder))
-               for folder in ALTERNATIVES.get(name, ()))
+# Which package a file belongs to is one question with one answer, and it lives
+# in semforge.package.discover so that the editor, the CLI and CI cannot drift
+# apart about it. This module used to keep a private copy of the role names --
+# a third one, after the loader's and the extension's.
 
 
 @dataclass(frozen=True)
@@ -70,18 +53,10 @@ def package_root(path):
     """The package directory containing this file, or None.
 
     Walks up so that opening any artifact of a package activates the service --
-    an editor gives you a file, not a project.
+    an editor gives you a file, not a project. Same rule as the command line:
+    see semforge.package.discover.
     """
-    here = os.path.abspath(path)
-    if os.path.isfile(here):
-        here = os.path.dirname(here)
-    while True:
-        if all(_has_role(here, name) for name in ARTIFACTS):
-            return here
-        parent = os.path.dirname(here)
-        if parent == here:
-            return None
-        here = parent
+    return find(path)[0]
 
 
 def analyse(root, profile_name='shacl2flink'):

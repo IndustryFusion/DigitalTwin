@@ -57,6 +57,12 @@
     },
     "commands": [
       {
+        "command": "semforge.selectPackage",
+        "title": "Select Package",
+        "category": "SemForge",
+        "icon": "$(package)"
+      },
+      {
         "command": "semforge.newProject",
         "title": "SemForge: New project\u2026",
         "icon": "$(file-directory-create)"
@@ -203,6 +209,21 @@
           "submenu": "semforge.project",
           "when": "view == semforgeKnowledge",
           "group": "navigation@9"
+        },
+        {
+          "command": "semforge.selectPackage",
+          "when": "view == semforgeConstraints",
+          "group": "navigation@0"
+        },
+        {
+          "command": "semforge.selectPackage",
+          "when": "view == semforgeModel",
+          "group": "navigation@0"
+        },
+        {
+          "command": "semforge.selectPackage",
+          "when": "view == semforgeKnowledge",
+          "group": "navigation@0"
         }
       ],
       "view/item/context": [

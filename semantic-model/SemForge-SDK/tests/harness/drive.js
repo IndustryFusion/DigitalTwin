@@ -26,6 +26,10 @@ const seen = {
   errors: [],
   revealed: [],
   messages: [],
+  statusBar: [],
+  // Each view's own state -- its subtitle says which package it is showing,
+  // and its message is what an empty panel tells you instead of nothing.
+  views: {},
   // In order, because the order is the bug: VS Code drops its element handles
   // when a tree fires onDidChangeTreeData, so a reveal after a refresh resolves
   // nothing and logs "Failed to resolve tree node".
@@ -54,7 +58,7 @@ const stub = {
       Promise.resolve({ uri: stub.Uri.file(file), lineCount: 10000 })
   },
   window: {
-    createTreeView: (id) => ({
+    createTreeView: (id) => (seen.views[id] = {
       dispose: noop,
       reveal: (node, options) => {
         seen.events.push({ type: 'reveal', view: id, key: node.key });
@@ -124,7 +128,16 @@ const stub = {
       return Promise.resolve(undefined);
     },
     createOutputChannel: () => ({ appendLine: noop, show: noop }),
-    setStatusBarMessage: (message) => seen.messages.push(message)
+    setStatusBarMessage: (message) => seen.messages.push(message),
+    // The status bar is where "which package am I on" is answered, so a test
+    // has to be able to read it.
+    createStatusBarItem: () => {
+      const item = { text: '', tooltip: '', command: undefined,
+                     show: () => seen.statusBar.push(item.text),
+                     hide: noop, dispose: noop };
+      seen.statusBarItem = item;
+      return item;
+    }
   },
   commands: {
     registerCommand: (id, handler) => {
@@ -135,8 +148,24 @@ const stub = {
     executeCommand: noop
   },
   EventEmitter: class {
-    constructor() { this.event = noop; }
-    fire() { seen.events.push({ type: 'refresh' }); }
+    // Subscribing used to be a no-op, so nothing an emitter fired ever
+    // arrived. That is fine for a tree's own onDidChangeTreeData, which VS
+    // Code consumes -- and wrong for the package session, whose whole job is
+    // to tell the three views that the package changed.
+    constructor() {
+      this.listeners = [];
+      this.event = (listener) => {
+        this.listeners.push(listener);
+        return { dispose: noop };
+      };
+    }
+
+    fire(value) {
+      seen.events.push({ type: 'refresh' });
+      for (const listener of this.listeners.slice()) {
+        listener(value);
+      }
+    }
   },
   ThemeIcon: class { constructor(i) { this.id = i; } },
   TreeItem: class { constructor(l, c) { this.label = l; this.collapsibleState = c; } },
@@ -145,6 +174,7 @@ const stub = {
   Selection: class { constructor(a) { this.start = a; } },
   Range: class { constructor(a, b) { this.start = a; this.end = b; } },
   TextEditorRevealType: { InCenter: 2 }, SymbolKind: { Class: 4 },
+  StatusBarAlignment: { Left: 1, Right: 2 },
   MarkupKind: { Markdown: 'markdown' },
   Uri: { file: (p) => ({ fsPath: p, toString: () => 'file://' + p }) }
 };
@@ -228,7 +258,8 @@ async function runLocate() {
   const locate = require(path.resolve(process.argv[3]));
   seen.locate = {
     uri: locate.findPackageUri() || null,
-    message: locate.noPackageMessage()
+    message: locate.noPackageMessage(),
+    packages: locate.listPackages().map((entry) => entry.directory)
   };
 }
 

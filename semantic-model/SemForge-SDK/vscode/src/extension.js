@@ -15,6 +15,7 @@ const vscode = require('vscode');
 const { LanguageClient, TransportKind } = require('vscode-languageclient/node');
 
 const { findPackageUri } = require('./locate');
+const packages = require('./packages');
 const cookedTree = require('./tree');
 const modelTree = require('./model');
 const knowledgeTree = require('./knowledge');
@@ -191,10 +192,20 @@ function startClient(context) {
 
 function activate(context) {
   startClient(context);
+
+  // One answer to "which package is this?", shared by all three views and
+  // shown in the status bar. Settled BEFORE the views are built, so each one
+  // opens on the same package rather than discovering its own.
+  const session = new packages.PackageSession();
+  session.discover();
+  if (!session.uri) {
+    session.follow(vscode.window.activeTextEditor);
+  }
+
   // The constraint view and the model view are two halves of one loop: editing
   // data should refresh the shapes' verdicts and vice versa.
-  const constraints = cookedTree.register(context, clientHolder);
-  const model = modelTree.register(context, clientHolder, () =>
+  const constraints = cookedTree.register(context, clientHolder, session);
+  const model = modelTree.register(context, clientHolder, session, () =>
     constraints.refresh()
   );
   // The third ingredient, joined to the other two: the shape icon on a class
@@ -203,17 +214,28 @@ function activate(context) {
   const knowledge = knowledgeTree.register(
     context,
     clientHolder,
+    session,
     (shape) => constraints.revealShape(shape),
     (entity, file) => model.revealEntity(entity, file)
+  );
+
+  const refreshAll = () => {
+    constraints.refresh();
+    model.refresh();
+    knowledge.refresh();
+  };
+  packages.register(
+    context, session,
+    [constraints.view, model.view, knowledge.view],
+    refreshAll
   );
 
   // A folder that is not a package yet needs an answer other than three empty
   // trees. Creating one refreshes all three, because it is the first thing
   // they have to show.
   initPackage.register(context, clientHolder, () => {
-    constraints.refresh();
-    model.refresh();
-    knowledge.refresh();
+    session.discover();
+    refreshAll();
   });
 
   context.subscriptions.push(
@@ -235,8 +257,12 @@ function activate(context) {
       channel.appendLine(`  imports semforge: ${importable ? 'yes' : 'NO'}`);
       channel.appendLine(`SDK directory   ${sdk || '(not found)'}`);
       channel.appendLine(`language client ${client ? 'started' : 'not started'}`);
-      const found = findPackageUri();
+      const found = session.uri || findPackageUri();
       channel.appendLine(`package         ${found || '(none found in this folder or one level below)'}`);
+      channel.appendLine(`  chosen by     ${session.pinned ? 'you (pinned)' : 'the opened folder / active editor'}`);
+      for (const entry of require('./locate').listPackages()) {
+        channel.appendLine(`  also here     ${entry.directory}`);
+      }
 
       // What the RUNNING server can answer. An extension newer than the server
       // shows its new icons and its new view, and every one of them does

@@ -37,6 +37,7 @@ venv/bin/python -m semforge explain tests/corpus/kms StateOnFilterShape
 venv/bin/python -m semforge accept tests/corpus/kms
 venv/bin/python -m semforge export tests/corpus/kms -o /tmp/kms --mode broker
 venv/bin/python -m semforge validate tests/corpus/kms --cross-check sqlite
+venv/bin/python -m semforge where                 # which package applies here
 venv/bin/python -m semforge diff <before> <after>
 venv/bin/python -m semforge observe tests/corpus/kms
 venv/bin/python -m semforge import schema.json --as jsonschema --namespace https://x/v1
@@ -45,6 +46,20 @@ venv/bin/python -m semforge prefixes <package> [--fix]
 venv/bin/python -m semforge retarget <package> --to local|published
 venv/bin/python -m semforge serve-context <package>
 ```
+
+Every command that reads a package **walks up** to find it, the way `cargo`,
+`npm` and `git` do: stand anywhere inside a package and the command means that
+package. Each one says which one it resolved, on stderr, so a report stays a
+report:
+
+```
+$ cd kms/examples/test_FilterShape && semforge validate
+package: /home/you/kms  (knowledge, shapes and model beside each other)
+...
+```
+
+`semforge where` is the same question asked on its own — the root, how it was
+found, and which file or directory holds each role.
 
 A package declares a **local** and a **published** context. Work resolves the
 local one, so a term is usable as soon as it is agreed and no build needs the

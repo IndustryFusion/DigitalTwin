@@ -13,8 +13,9 @@ from .. import __version__
 from ..errors import CapabilityError, PackageError
 from ..expect import (coverage, load_expectations, run_tests,
                       save_expectations)
-from ..expect.store import Example
+from ..expect.store import Example, examples_root
 from ..package import load
+from ..package.discover import describe
 from ..provenance import build_provenance
 from ..target import EmissionMode, builtin_profile, check_package, export as export_package
 from ..target.crosscheck import cross_check
@@ -27,6 +28,33 @@ from ..validate import validate_package
 from ..validate.orchestrator import validate_graphs
 
 
+class PackageArgument(click.Path):
+    """A path that resolves to the package it lies in.
+
+    `cargo`, `npm` and `git` all let you stand anywhere inside a project.
+    SemForge did not: it read the given directory and only that one, so running
+    a command one level inside a package reported all three roles missing, and
+    running it one level above reported the same. Both are the normal place to
+    be standing, and the error told you nothing about where to stand instead.
+    """
+
+    name = 'package'
+
+    def convert(self, value, param, ctx):
+        given = super().convert(value, param, ctx)
+        found, why, _ = describe(given)
+        if found is None:
+            self.fail('package error: ' + why, param, ctx)
+        # Say which package was resolved, on stderr so that piping a report
+        # stays a report. This one line is the answer to "which directory does
+        # this apply to?", and you are usually not standing in it.
+        click.echo(f'package: {found}  ({why})', err=True)
+        return found
+
+
+PACKAGE = PackageArgument(exists=True)
+
+
 @click.group()
 @click.version_option(__version__)
 def cli():
@@ -34,7 +62,7 @@ def cli():
 
 
 @cli.command()
-@click.argument('path', type=click.Path(exists=True), default='.')
+@click.argument('path', type=PACKAGE, default='.')
 @click.option('--no-strict', is_flag=True,
               help='report view-declaration problems instead of failing on them')
 @click.option('--cross-check', type=click.Choice(['sqlite']), default=None,
@@ -105,7 +133,7 @@ def cross_check_sqlite(package, report, shacl2flink_dir):
 
 
 @cli.command('export')
-@click.argument('path', type=click.Path(exists=True), default='.')
+@click.argument('path', type=PACKAGE, default='.')
 @click.option('-o', '--out', 'out_dir', required=True, type=click.Path(),
               help='directory to write the KMS triple into')
 @click.option('--target', type=click.Choice(['kms']), default='kms')
@@ -266,8 +294,46 @@ def init_command(path, name, namespace, published, layout):
                'Knowledge views')
 
 
-@cli.command()
+@cli.command('where')
 @click.argument('path', type=click.Path(exists=True), default='.')
+def where_command(path):
+    """Which package applies here, and what it is made of.
+
+    `git rev-parse --show-toplevel` for semantic packages. Every other command
+    resolves the same way, so this is how you check what they will read before
+    one of them writes something.
+    """
+    found, why, roles = describe(path)
+    click.echo(f'here     {os.path.abspath(path)}')
+    if found is None:
+        click.echo(f'package  (none)\n\n{why}')
+        sys.exit(2)
+    click.echo(f'package  {found}')
+    click.echo(f'  found by {why}')
+
+    try:
+        package = load(found)
+    except (PackageError, CapabilityError) as exc:
+        click.echo(f'\nit does not load: {exc}', err=True)
+        sys.exit(2)
+
+    for role, where_ in roles.items():
+        files = package.files(role)
+        listing = ', '.join(os.path.relpath(f, found) for f in files[:4])
+        if len(files) > 4:
+            listing += f', ... ({len(files)} files)'
+        click.echo(f'  {role:<10} {where_ or "?":<22} {listing}')
+
+    examples = examples_root(found)
+    if examples and os.path.isdir(examples):
+        cases = sorted(entry for entry in os.listdir(examples)
+                       if os.path.isdir(os.path.join(examples, entry)))
+        click.echo(f'  {"tests":<10} {os.path.relpath(examples, found) + os.sep:<22} '
+                   f'{", ".join(cases) if cases else "(no cases)"}')
+
+
+@cli.command()
+@click.argument('path', type=PACKAGE, default='.')
 @click.option('--coverage', 'want_coverage', is_flag=True,
               help='report which constraints are exercised, and on which side')
 @click.option('--fail-on', type=click.Choice(['no-firing-example',
@@ -334,7 +400,7 @@ def test(path, want_coverage, fail_on):
 @click.argument('source', type=click.Path(exists=True))
 @click.option('--as', 'kind', type=click.Choice(['jsonschema', 'ontology']),
               required=True)
-@click.option('--into', 'path', type=click.Path(exists=True), default='.')
+@click.option('--into', 'path', type=PACKAGE, default='.')
 @click.option('--namespace', required=True,
               help='namespace for the proposed classes and shapes')
 def import_command(source, kind, path, namespace):
@@ -355,7 +421,7 @@ def import_command(source, kind, path, namespace):
 
 
 @cli.command('observe')
-@click.argument('path', type=click.Path(exists=True), default='.')
+@click.argument('path', type=PACKAGE, default='.')
 def observe_command(path):
     """Report the structure the examples contain, and propose nothing.
 
@@ -379,7 +445,7 @@ def observe_command(path):
 
 
 @cli.command('serve-context')
-@click.argument('path', type=click.Path(exists=True), default='.')
+@click.argument('path', type=PACKAGE, default='.')
 @click.option('--port', default=0, help='0 picks a free port')
 def serve_context_command(path, port):
     """Serve the package's local context over HTTP.
@@ -404,7 +470,7 @@ def serve_context_command(path, port):
 
 
 @cli.command('retarget')
-@click.argument('path', type=click.Path(exists=True), default='.')
+@click.argument('path', type=PACKAGE, default='.')
 @click.option('--to', type=click.Choice(['local', 'published']), required=True)
 def retarget_command(path, to):
     """Point a model instance's @context at the local file or the published url.
@@ -439,7 +505,7 @@ def retarget_command(path, to):
 
 
 @cli.command('prefixes')
-@click.argument('path', type=click.Path(exists=True), default='.')
+@click.argument('path', type=PACKAGE, default='.')
 @click.option('--fix', is_flag=True, help='rewrite the artifacts to the agreed names')
 def prefixes_command(path, fix):
     """Check that every namespace has one agreed name, and optionally align.
@@ -475,7 +541,7 @@ def prefixes_command(path, fix):
 
 
 @cli.command('resolve')
-@click.argument('path', type=click.Path(exists=True), default='.')
+@click.argument('path', type=PACKAGE, default='.')
 @click.option('--out', type=click.Path(), default=None,
               help='write the assembled knowledge file here')
 @click.option('--require-pinned', is_flag=True,
@@ -514,8 +580,8 @@ def resolve_command(path, out, require_pinned):
 
 
 @cli.command('diff')
-@click.argument('before', type=click.Path(exists=True))
-@click.argument('after', type=click.Path(exists=True))
+@click.argument('before', type=PACKAGE)
+@click.argument('after', type=PACKAGE)
 @click.option('--impact/--no-impact', default=True,
               help='also run the examples under both versions')
 def diff_command(before, after, impact):
@@ -563,7 +629,7 @@ def diff_command(before, after, impact):
 
 
 @cli.command()
-@click.argument('path', type=click.Path(exists=True), default='.')
+@click.argument('path', type=PACKAGE, default='.')
 @click.argument('subject', required=False)
 def explain(path, subject):
     """Say why a shape exists: where it came from, and what exercises it.
@@ -609,7 +675,7 @@ def explain(path, subject):
 
 
 @cli.command()
-@click.argument('path', type=click.Path(exists=True), default='.')
+@click.argument('path', type=PACKAGE, default='.')
 def accept(path):
     """Record the current residue of every example as expected."""
     try:

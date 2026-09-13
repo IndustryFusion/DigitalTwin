@@ -30,7 +30,7 @@ EXPECTED = {
     'semforge.editValue', 'semforge.refreshModel', 'semforge.addAttribute',
     'semforge.addEntity', 'semforge.addObservation', 'semforge.goToShape',
     'semforge.refreshKnowledge', 'semforge.showShapeForClass',
-    'semforge.initPackage', 'semforge.newProject',
+    'semforge.initPackage', 'semforge.newProject', 'semforge.selectPackage',
 }
 
 
@@ -100,14 +100,36 @@ def test_the_trees_anchor_to_the_folder_not_only_the_editor(corpus_path):
     Anchoring only to the active editor left the tree empty in exactly that
     case, with nothing to say why.
     """
+    extension = open(os.path.join(SDK, 'vscode', 'src', 'extension.js')).read()
+    # The session settles on a package BEFORE the views are built, so the
+    # folder is the anchor and the editor is only the fallback.
+    assert 'session.discover()' in extension
+    assert extension.index('session.discover()') < extension.index('cookedTree.register')
+
     for name in ('tree.js', 'model.js', 'knowledge.js'):
         source = open(os.path.join(SDK, 'vscode', 'src', name)).read()
-        # All three share one resolver now: each had its own copy, and the one
-        # in knowledge.js searched the folder root only -- which is empty when
-        # the window is opened one level above the package.
-        assert 'findPackageUri()' in source, f'{name} has no folder fallback'
+        # One resolver for all three. Each used to have its own copy, with a
+        # different rule in knowledge.js -- so the three views could be showing
+        # three different packages, and nothing on screen named any of them.
+        assert 'provider.refresh(session.uri)' in source, \
+            f'{name} does not take its package from the session'
+        assert 'findPackageUri' not in source, \
+            f'{name} still resolves a package of its own'
+
     shared = open(os.path.join(SDK, 'vscode', 'src', 'locate.js')).read()
     assert 'workspaceFolders' in shared
+
+
+def test_the_active_package_is_shown_and_can_be_chosen(corpus_path):
+    """"Which package is this?" must have an answer on screen.
+
+    A window can hold several packages -- a model and a test project beside it
+    is the ordinary case -- and the views picked one silently.
+    """
+    result = _activate(corpus_path)
+    assert 'semforge.selectPackage' in result['commands']
+    shown = ' '.join(result.get('statusBar', []))
+    assert 'kms' in shown, f'the status bar does not name the package: {shown!r}'
 
 
 def test_clicking_a_row_unfolds_it(corpus_path):

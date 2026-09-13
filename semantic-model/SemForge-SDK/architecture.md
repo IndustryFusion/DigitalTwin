@@ -1090,13 +1090,29 @@ the package resolver.
 ### 12.1 CLI
 
 ```bash
-semforge init | inspect | derive | validate | test | explain | diff | export
+semforge where | init | inspect | derive | validate | test | explain | diff | export
 ```
 
 The CLI is a thin argument-parsing shell over Core. CI uses the same binary; the
 exit code is the contract (`0` conformant, `1` violations, `2` package invalid,
 `3` internal). Machine-readable output (`--format json`) for every command that
 reports.
+
+**Which package a command applies to is resolved by walking up**, the way
+`cargo` finds `Cargo.toml` and `git` finds `.git`: the nearest ancestor holding
+`semforge.yaml`, else the nearest holding the three roles. A path argument names
+a *position*, not a root. Reading the given directory and only that one meant
+that running a command one level inside a package reported all three roles
+missing, and one level above reported the same — both being the ordinary place
+to be standing.
+
+The resolved root is echoed on **stderr** by every command that reads one, so a
+piped report stays a report while the question "which directory does this apply
+to?" still has an answer on screen. `semforge where` asks it on its own.
+
+One rule, one implementation (`semforge.package.discover`): the editor service
+resolves a file's package through the same function, so the editor, the command
+line and CI cannot drift apart about what a package is.
 
 ### 12.2 Editor service
 
