@@ -200,3 +200,15 @@ def test_new_and_init_produce_the_same_package(tmp_path):
             for base, _, names in os.walk(root) for name in names)
 
     assert layout(str(tmp_path / 'twinned')) == layout(str(second))
+
+
+def test_a_new_project_declares_its_own_name(tmp_path):
+    """`test` can be two projects; a scaffold should not leave that to the folder."""
+    from semforge.package import config
+    from semforge.package.scaffold import create_package
+
+    target = tmp_path / 'test'
+    target.mkdir()
+    create_package(str(target), name='Cutting cell',
+                   namespace='https://example.org/cell/')
+    assert config.read(str(target))['name'] == 'Cutting cell'

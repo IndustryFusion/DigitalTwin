@@ -13,6 +13,7 @@
     "Linters"
   ],
   "activationEvents": [
+    "onView:semforgeProject",
     "onView:semforgeConstraints",
     "onView:semforgeModel",
     "onView:semforgeKnowledge",
@@ -148,6 +149,24 @@
         "command": "semforge.showShapeForClass",
         "title": "SemForge: Go to the shape for this class",
         "icon": "$(law)"
+      },
+      {
+        "command": "semforge.menu",
+        "title": "Menu",
+        "category": "SemForge",
+        "icon": "$(package)"
+      },
+      {
+        "command": "semforge.editSetting",
+        "title": "Change this setting",
+        "category": "SemForge",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "semforge.refreshProject",
+        "title": "Refresh Project",
+        "category": "SemForge",
+        "icon": "$(refresh)"
       }
     ],
     "viewsContainers": {
@@ -161,6 +180,11 @@
     },
     "views": {
       "semforge": [
+        {
+          "id": "semforgeProject",
+          "name": "Project",
+          "contextualTitle": "SemForge"
+        },
         {
           "id": "semforgeConstraints",
           "name": "Constraints",
@@ -211,19 +235,19 @@
           "group": "navigation@9"
         },
         {
-          "command": "semforge.selectPackage",
-          "when": "view == semforgeConstraints",
-          "group": "navigation@0"
+          "command": "semforge.refreshProject",
+          "when": "view == semforgeProject",
+          "group": "navigation"
         },
         {
           "command": "semforge.selectPackage",
-          "when": "view == semforgeModel",
+          "when": "view == semforgeProject",
           "group": "navigation@0"
         },
         {
-          "command": "semforge.selectPackage",
-          "when": "view == semforgeKnowledge",
-          "group": "navigation@0"
+          "submenu": "semforge.project",
+          "when": "view == semforgeProject",
+          "group": "navigation@9"
         }
       ],
       "view/item/context": [
@@ -291,6 +315,11 @@
           "command": "semforge.addObservation",
           "when": "view == semforgeModel && viewItem == exampleSeries",
           "group": "inline@2"
+        },
+        {
+          "command": "semforge.editSetting",
+          "when": "view == semforgeProject && viewItem == setting",
+          "group": "inline"
         }
       ],
       "semforge.project": [
@@ -316,6 +345,10 @@
       ]
     },
     "viewsWelcome": [
+      {
+        "view": "semforgeProject",
+        "contents": "No SemForge package in this folder.\n\nA package is knowledge (the ontology), constraints (SHACL over the NGSI-LD encoding) and the model (a scratchpad plus the example suite).\n[New project\u2026](command:semforge.newProject)\n[Create a package here](command:semforge.initPackage)\n[Run the doctor](command:semforge.doctor)"
+      },
       {
         "view": "semforgeConstraints",
         "contents": "No SemForge package in this folder.\n\nA package is knowledge (the ontology), constraints (SHACL over the NGSI-LD encoding) and the model (a scratchpad plus the example suite).\n[Create a package here](command:semforge.initPackage)\n[Run the doctor](command:semforge.doctor)"

@@ -308,7 +308,12 @@ def where_command(path):
     if found is None:
         click.echo(f'package  (none)\n\n{why}')
         sys.exit(2)
+    from ..package import config
+
+    declared = config.read(found)
     click.echo(f'package  {found}')
+    click.echo(f'  name     {declared.get("name") or os.path.basename(found)}'
+               f'{"" if declared.get("name") else "  (the directory name)"}')
     click.echo(f'  found by {why}')
 
     try:

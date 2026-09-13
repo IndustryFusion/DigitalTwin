@@ -515,3 +515,65 @@ def test_a_package_can_be_created_over_the_protocol(tmp_path, corpus):
         _json.loads(open(made['files'][1], encoding='utf-8').read())
     finally:
         live.close()
+
+
+def test_the_project_is_answered_and_a_setting_can_be_written(tmp_path, corpus):
+    """The fourth view, over the wire: what the package IS, and changing it.
+
+    The settings are read and written by the SDK, not by the extension: a
+    second writer would drift from the one `semforge init` produces, and the
+    comments in semforge.yaml are the documentation -- a YAML round-trip in the
+    editor layer would quietly delete them.
+    """
+    import shutil
+
+    target = tmp_path / 'pkg'
+    shutil.copytree(os.path.dirname(str(corpus.sources['shapes'])), str(target))
+    document = str(target / 'shacl.ttl')
+
+    live = Session(document)
+    try:
+        live.send({'jsonrpc': '2.0', 'id': 1, 'method': 'initialize',
+                   'params': {'processId': os.getpid(),
+                              'rootUri': 'file://' + str(tmp_path),
+                              'capabilities': {}}})
+        assert live.wait_for(lambda m: m.get('id') == 1)
+        live.send({'jsonrpc': '2.0', 'method': 'initialized', 'params': {}})
+
+        live.send({'jsonrpc': '2.0', 'id': 50, 'method': 'semforge/project',
+                   'params': {'uri': 'file://' + document}})
+        card = live.wait_for(lambda m: m.get('id') == 50)[0]['result']
+        assert not card.get('error'), card
+        sections = {root['label']: root for root in card['roots']}
+        assert set(sections) == {'Project', 'Settings', 'Contents'}
+
+        rows = {row['label']: row for row in sections['Project']['children']}
+        assert rows['path']['value'] == str(target)
+        assert rows['name']['editable']
+
+        live.send({'jsonrpc': '2.0', 'id': 51, 'method': 'semforge/setSetting',
+                   'params': {'uri': 'file://' + document,
+                              'key': 'name', 'value': 'Cutting cell'}})
+        written = live.wait_for(lambda m: m.get('id') == 51)[0]['result']
+        assert written['ok'], written.get('error')
+        assert written['file'].endswith('semforge.yaml')
+        assert written['line'] > 0
+
+        # Asked again, the answer has changed -- the server must not be serving
+        # a package it loaded before the write.
+        live.send({'jsonrpc': '2.0', 'id': 52, 'method': 'semforge/project',
+                   'params': {'uri': 'file://' + document}})
+        again = live.wait_for(lambda m: m.get('id') == 52)[0]['result']
+        name = {row['label']: row
+                for root in again['roots'] if root['label'] == 'Project'
+                for row in root['children']}['name']
+        assert name['value'] == 'Cutting cell'
+
+        # A key that is not a setting is refused rather than written.
+        live.send({'jsonrpc': '2.0', 'id': 53, 'method': 'semforge/setSetting',
+                   'params': {'uri': 'file://' + document,
+                              'key': 'anything', 'value': 'x'}})
+        refused = live.wait_for(lambda m: m.get('id') == 53)[0]['result']
+        assert not refused['ok']
+    finally:
+        live.close()

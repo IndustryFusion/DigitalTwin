@@ -702,8 +702,8 @@ def test_every_view_says_which_package_it_is_showing(tmp_path):
 
     subtitles = {view: state.get('description')
                  for view, state in seen['views'].items()}
-    assert set(subtitles) == {'semforgeConstraints', 'semforgeModel',
-                              'semforgeKnowledge'}
+    assert set(subtitles) == {'semforgeProject', 'semforgeConstraints',
+                              'semforgeModel', 'semforgeKnowledge'}
     for view, subtitle in subtitles.items():
         assert subtitle and 'beta' in subtitle, f'{view} says {subtitle!r}'
 
@@ -720,3 +720,74 @@ def test_a_package_nested_inside_another_is_offered_too(tmp_path):
     offered = [item['description'] for item in seen['quickPicks'][0]['items']]
     assert any(str(tmp_path / 'kms' / 'test') in (text or '')
                for text in offered), offered
+
+
+# --- the project view --------------------------------------------------------
+
+def _setting(**overrides):
+    raw = {
+        'kind': 'setting', 'label': 'published context', 'key': 'context.published',
+        'value': 'https://example.org/v0/context.jsonld', 'editable': True,
+        'doc': 'Where the context will be served.', 'detail': '', 'children': [],
+    }
+    raw.update(overrides)
+    return {'raw': raw, 'packageUri': 'file:///pkg/shacl.ttl'}
+
+
+def test_editing_a_setting_writes_it_and_opens_the_line(tmp_path):
+    seen = _drive(tmp_path, {
+        'command': 'semforge.editSetting', 'node': _setting(),
+        'input': 'https://example.org/v1/context.jsonld',
+        'replies': {'semforge/setSetting': {
+            'ok': True, 'file': '/pkg/semforge.yaml', 'line': 11}},
+    })
+    wrote = [r for r in seen['requests'] if r['method'] == 'semforge/setSetting']
+    assert wrote, seen['requests']
+    assert wrote[0]['params']['key'] == 'context.published'
+    assert wrote[0]['params']['value'] == 'https://example.org/v1/context.jsonld'
+    # The current value is offered for editing rather than an empty box.
+    assert seen['inputs'][0]['value'] == 'https://example.org/v0/context.jsonld'
+    assert seen['shown'] and seen['shown'][-1]['line'] == 10
+
+
+def test_cancelling_the_edit_writes_nothing(tmp_path):
+    seen = _drive(tmp_path, {
+        'command': 'semforge.editSetting', 'node': _setting(),
+        'replies': {'semforge/setSetting': {'ok': True}},
+    })
+    assert not [r for r in seen['requests']
+                if r['method'] == 'semforge/setSetting']
+
+
+def test_a_refused_write_is_reported_rather_than_swallowed(tmp_path):
+    seen = _drive(tmp_path, {
+        'command': 'semforge.editSetting', 'node': _setting(), 'input': 'x',
+        'replies': {'semforge/setSetting': {
+            'ok': False, 'error': 'anything is not an editable setting'}},
+    })
+    assert any('not an editable setting' in message
+               for message in seen['errors']), seen['errors']
+
+
+def test_a_row_that_is_not_editable_offers_no_write(tmp_path):
+    seen = _drive(tmp_path, {
+        'command': 'semforge.editSetting',
+        'node': _setting(kind='fact', editable=False, key=''),
+        'replies': {'semforge/setSetting': {'ok': True}},
+    })
+    assert not seen['inputs'] and not seen['requests']
+
+
+def test_the_menu_gathers_what_there_is_no_menu_bar_for(tmp_path):
+    """VS Code has no contribution point for a menu beside File and Edit.
+
+    So the status bar item is the one place everything hangs off, and it has to
+    hold more than the package switcher.
+    """
+    _bare_package(tmp_path, 'alpha')
+    seen = _drive(tmp_path, {'command': 'semforge.menu'})
+    offered = ' '.join(item['label'] for item in seen['quickPicks'][0]['items'])
+    for wanted in ('Switch package', 'Project settings', 'New project',
+                   'Doctor'):
+        assert wanted in offered, offered
+    assert 'alpha' in seen['quickPicks'][0]['placeHolder']

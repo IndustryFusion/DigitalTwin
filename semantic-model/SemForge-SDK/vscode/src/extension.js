@@ -16,6 +16,7 @@ const { LanguageClient, TransportKind } = require('vscode-languageclient/node');
 
 const { findPackageUri } = require('./locate');
 const packages = require('./packages');
+const projectTree = require('./project');
 const cookedTree = require('./tree');
 const modelTree = require('./model');
 const knowledgeTree = require('./knowledge');
@@ -219,14 +220,24 @@ function activate(context) {
     (entity, file) => model.revealEntity(entity, file)
   );
 
+  // What the package IS, above what it says. A setting here changes what the
+  // other three mean -- the context decides how a term expands, the entity
+  // root decides what counts as an entity -- so a write re-reads them.
+  const project = projectTree.register(context, clientHolder, session, () => {
+    constraints.refresh();
+    model.refresh();
+    knowledge.refresh();
+  });
+
   const refreshAll = () => {
+    project.refresh();
     constraints.refresh();
     model.refresh();
     knowledge.refresh();
   };
   packages.register(
     context, session,
-    [constraints.view, model.view, knowledge.view],
+    [project.view, constraints.view, model.view, knowledge.view],
     refreshAll
   );
 

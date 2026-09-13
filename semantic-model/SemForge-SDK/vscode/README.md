@@ -90,14 +90,28 @@ open a file inside a package.
 
 ### Which package am I on
 
-The **status bar** says, bottom left: `$(package) kms`. All three views show
-that one package — they used to each resolve one of their own, with a different
-rule in the Knowledge view, so they could disagree with nothing on screen
-naming either. Each view now carries the package name as its subtitle too.
+The **status bar** says, bottom left: `📦 kms` — or `📦 kms/test`, because the
+label is the path relative to the folder you opened and two directories called
+`test` are not the same project. All four views show that one package; the
+package is a property of the window, not of a view.
 
-Click the status bar item, or the 📦 icon in any view's title bar, to switch.
-The menu lists every package in the window and ends with **Follow the active
-editor**:
+Clicking it opens the **SemForge menu**. VS Code gives an extension no way to
+add a menu beside File and Edit — there is no contribution point for the menu
+bar — so the status bar item is the one place everything hangs off, the same
+answer the Python interpreter and the active Docker context use. Everything in
+it is in the command palette under `SemForge:` as well.
+
+| | |
+|---|---|
+| 📦 Switch package… | which package all four views show |
+| ⚙ Project settings | name, contexts, namespaces — focuses the Project view |
+| ✓ Revalidate | re-run analysis over the package |
+| 📁 New project… / Create a package in this folder | scaffold |
+| ◎ Doctor · ⟳ Restart language server | when something is wrong |
+
+**Switch package…** lists every package in the window — nested ones included,
+which is where a scaffolded test project lives — and ends with **Follow the
+active editor**:
 
 * **following** (the default) — opening a file in another package moves all
   three views there. Right when you have one package.
@@ -106,6 +120,44 @@ editor**:
 
 On the command line the same question is `semforge where`, and every command
 that reads a package prints the one it resolved.
+
+### The Project view
+
+The first of the four views, and the one that says what the package *is*
+rather than what it says:
+
+```text
+Project      Cutting cell
+  name       Cutting cell          ✎
+  path       /home/you/kms/test
+  recognised by  semforge.yaml
+  manifest   semforge.yaml
+Settings     semforge.yaml — click the pencil to change one
+  local context      context.jsonld            ✎
+  published context  https://…/context.jsonld  ✎
+  entity root        —  not declared           ✎
+  namespaces         4
+  dependencies       0
+Contents     13 shape(s) · 44 entity(s) · 6 case(s)
+  knowledge / shapes / model   which file or directory, and how many documents
+  test cases  6   4 suite(s): test_CartridgeShape, …
+```
+
+Every row that names a place carries `file:line`: clicking a setting opens its
+line in `semforge.yaml`, so the paragraph explaining it is right there.
+
+The pencil edits it. The write is **line-based**: it replaces the value on that
+one line and leaves the rest of the file byte-for-byte, because the comments in
+`semforge.yaml` are the documentation and a YAML round-trip deletes all of
+them. A package with no `semforge.yaml` at all — the kms layout — gets one on
+the first edit.
+
+Two rows carry a warning rather than a blank: a **published context** that is
+not declared (`semforge export` has nowhere to point the model) and **no test
+cases** (nothing proves a constraint can fire). A setting that is simply not
+set says so and names what applies instead — a list of whatever happens to be
+in the file cannot show what you have *not* set, which is most of what you need
+to know about a package you did not write.
 
 **If a tree is empty it now says why** in the panel itself: no package found (and
 what it looked for), the server not running, or whatever the server reported.
@@ -650,7 +702,9 @@ in `shacl.ttl` is meaningless without the ontology and the examples.
 | `SemForge: Revalidate Package` | saves the active file, which re-runs analysis |
 | `SemForge: New project…` | creates a project folder and scaffolds it, then offers to open it |
 | `SemForge: Create a package in this folder` | scaffolds a directory you already have |
-| `SemForge: Select Package` | which package the three views show; pins your choice |
+| `SemForge: Menu` | everything below, from the status bar item |
+| `SemForge: Select Package` | which package the four views show; pins your choice |
+| `SemForge: Change this setting` | the ✎ on a Project row; writes one line of semforge.yaml |
 | `SemForge: Doctor` | what it sees: folder, interpreter, active package, every other package in the window, whether `semforge` imports |
 | `SemForge: Go to the SHACL rule for this attribute` | the ⚖ icon on an example attribute; creates an empty `sh:property` when none exists |
 | `SemForge: Go to the shape for this class` | the ⚖ icon on a knowledge class |

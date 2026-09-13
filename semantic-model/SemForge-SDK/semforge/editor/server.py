@@ -376,6 +376,62 @@ def knowledge(ls, params):
         return {'roots': [], 'error': str(exc)}
 
 
+def _serialise_project(node):
+    return {
+        'kind': node.kind, 'label': node.label, 'detail': node.detail,
+        'value': node.value, 'key': node.key, 'doc': node.doc,
+        'editable': node.editable, 'definedAt': node.defined_at,
+        'severity': node.severity,
+        'children': [_serialise_project(child) for child in node.children],
+    }
+
+
+@server.feature('semforge/project')
+def project(ls, params):
+    """What this package IS: its identity, its settings, what it holds.
+
+    The other three views answer what the package SAYS. Two directories called
+    `test` are not the same project, and until this there was nowhere to see
+    which one you had open, nor to change anything about it.
+    """
+    from ..cooked.project import build_project
+
+    root = package_root(_uri_to_path(_field(params, 'uri', '')))
+    if root is None:
+        return {'roots': [], 'error': 'not a SemForge package'}
+    try:
+        package = _package_for(root)
+        return {'root': root,
+                'roots': [_serialise_project(n) for n in build_project(package)]}
+    except Exception as exc:                       # noqa: BLE001
+        return {'roots': [], 'error': str(exc)}
+
+
+@server.feature('semforge/setSetting')
+def set_setting(ls, params):
+    """Write one setting into semforge.yaml, keeping the file's comments.
+
+    Line-based rather than a YAML round-trip: the comments are most of that
+    file -- a paragraph above each key saying what it decides -- and a
+    round-trip drops every one of them.
+    """
+    from ..package import config
+
+    root = package_root(_uri_to_path(_field(params, 'uri', '')))
+    if root is None:
+        return {'ok': False, 'error': 'not a SemForge package'}
+    key = _field(params, 'key', '')
+    if key not in {entry[0] for entry in config.SPEC}:
+        return {'ok': False, 'error': f'{key} is not an editable setting'}
+    try:
+        where, line = config.set_value(root, key, _field(params, 'value', ''))
+    except OSError as exc:
+        return {'ok': False, 'error': str(exc)}
+    _packages.pop(root, None)                      # it must be re-read
+    return {'ok': True, 'file': where, 'line': line,
+            'uri': _path_to_uri(where)}
+
+
 @server.feature('semforge/shapeFor')
 def shape_for_attribute(ls, params):
     """Where the shape that judges this attribute is declared.

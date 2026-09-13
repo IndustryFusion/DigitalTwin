@@ -611,6 +611,23 @@ scratchpad, not a declared example*.
 
 ### 6.2 `semforge.yaml`
 
+Read by four modules -- the context, the prefixes, the dependency list, the
+entity root -- and until `semforge.package.config` none of them could say what
+a package's settings *are*. A settings list that is whatever happens to be in
+the file cannot show what has NOT been set, which is most of what a reader
+needs about a package they did not write; so the settings are **declared**
+(`config.SPEC`), and each one reports its value, its line, and what applies in
+its absence.
+
+Writing is **line-based, never a YAML round-trip**. The comments in this file
+are its documentation -- the scaffold writes a paragraph above every key saying
+what it decides -- and a round-trip through a parser deletes all of them. A
+write finds the key's line, replaces the value on it, and leaves the rest of
+the file byte-for-byte; a key that is absent is appended with its paragraph.
+A package with no `semforge.yaml` (the kms layout) acquires one on the first
+edit.
+
+
 ```yaml
 name: machine-semforge
 version: 1.3.0
@@ -1114,6 +1131,11 @@ One rule, one implementation (`semforge.package.discover`): the editor service
 resolves a file's package through the same function, so the editor, the command
 line and CI cannot drift apart about what a package is.
 
+`semforge where` also reports the package's **declared name**. A package that
+does not declare one is named by its directory, and two directories called
+`test` are not the same project -- which is why `name:` is a first-class
+setting and why `semforge init` writes it.
+
 ### 12.2 Editor service
 
 LSP where the operation is an LSP operation — diagnostics, hover, completion,
@@ -1129,7 +1151,7 @@ editing, scoped test execution, regression views, provenance queries — use a
 namespace. Manifest §8.3 explicitly allows this, and forcing them into
 `workspace/executeCommand` would make them opaque to any client.
 
-#### 12.2.1 Three views, and the joins between them
+#### 12.2.1 Four views, and the joins between them
 
 The cooked side presents the package as the three artifacts it is made of —
 constraints (`semforge/tree`), model (`semforge/model`) and knowledge
@@ -1138,6 +1160,21 @@ each answers a question the others cannot: what must hold, what holds, what
 exists. The views carry those names: **Constraints**, **Model**, **Knowledge**.
 The model view holds both kinds of data `model/` holds — the declared cases and
 the scratchpad — because "examples" named only half of what it showed.
+
+Above them sits **Project** (`semforge/project`, `semforge/setSetting`), which
+answers what the package *is* rather than what it says: the name it declares,
+the path it is at, why that directory counted as a package, each setting with
+its value and its line, and what it holds. The three artifact views cannot
+answer any of that, and without it a window showed a name and nothing else —
+two directories called `test` being indistinguishable. Settings are written by
+the server, not the editor: a second writer would drift from what `semforge
+init` produces, and the editor layer deciding how to edit YAML is exactly the
+boundary §8.4 draws.
+
+The active package is a property of the **window**, not of a view. All four
+views take it from one session, so they cannot disagree, and it is named in the
+status bar and in each view's subtitle. VS Code offers no contribution point
+for the menu bar, so that status bar item is also the SemForge menu.
 
 Showing them separately is not the point; the point is that **each row carries
 the locations of its joins**, which is where authoring actually goes wrong:

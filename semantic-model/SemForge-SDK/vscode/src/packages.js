@@ -86,12 +86,28 @@ class PackageSession {
   }
 }
 
-/** `kms`, or `kms (pinned)`, or what to do when there is none. */
+/**
+ * What to call the active package.
+ *
+ * Its path relative to the opened folder, not its basename: two directories
+ * called `test` are not the same project, and `kms/test` says which one this
+ * is where `test` does not.
+ */
 function label(session) {
   if (!session.uri) {
     return 'no package';
   }
-  return session.name + (session.pinned ? ' (pinned)' : '');
+  const directory = session.directory;
+  let name = session.name;
+  for (const folder of vscode.workspace.workspaceFolders || []) {
+    const root = folder.uri.fsPath;
+    if (directory === root) {
+      name = path.basename(root);
+    } else if (directory && directory.startsWith(root + path.sep)) {
+      name = directory.slice(root.length + 1);
+    }
+  }
+  return name + (session.pinned ? ' (pinned)' : '');
 }
 
 function tooltip(session) {
@@ -100,9 +116,39 @@ function tooltip(session) {
   lines.push(session.pinned
     ? 'Pinned — the views stay here whatever you open.'
     : 'Following the active editor.');
-  lines.push('Click to switch.');
+  lines.push('Click for the SemForge menu.');
   return lines.join('\n');
 }
+
+
+/**
+ * The SemForge menu.
+ *
+ * VS Code does not let an extension add a menu beside File and Edit -- there
+ * is no contribution point for the menu bar, only for the menus inside the
+ * workbench. So the one place everything hangs off is the status bar item,
+ * which is where an editor integration that can face several projects puts it
+ * (the Python interpreter, the Java project, the active Docker context).
+ * Everything here is in the command palette under `SemForge:` as well.
+ */
+const MENU = [
+  { label: '$(package) Switch package…', command: 'semforge.selectPackage',
+    description: 'which package all three views show' },
+  { label: '$(settings-gear) Project settings',
+    command: 'semforgeProject.focus',
+    description: 'name, contexts, namespaces — in the Project view' },
+  { label: '$(check) Revalidate', command: 'semforge.revalidate',
+    description: 're-run analysis over the package' },
+  { label: '$(new-folder) New project…', command: 'semforge.newProject',
+    description: 'create a folder with the basic structure' },
+  { label: '$(file-directory) Create a package in this folder',
+    command: 'semforge.initPackage',
+    description: 'scaffold a directory you already have' },
+  { label: '$(pulse) Doctor', command: 'semforge.doctor',
+    description: 'what it sees: interpreter, package, server' },
+  { label: '$(debug-restart) Restart language server',
+    command: 'semforge.restart' }
+];
 
 /**
  * Wire the session to the window: a status bar item, a switcher, and the
@@ -118,7 +164,7 @@ function register(context, session, views, refreshAll) {
     if (item) {
       item.text = `$(package) ${text}`;
       item.tooltip = tooltip(session);
-      item.command = 'semforge.selectPackage';
+      item.command = 'semforge.menu';
       item.show();
     }
     for (const view of views || []) {
@@ -137,6 +183,15 @@ function register(context, session, views, refreshAll) {
   }
 
   context.subscriptions.push(
+    vscode.commands.registerCommand('semforge.menu', async () => {
+      const chosen = await vscode.window.showQuickPick(MENU, {
+        placeHolder: `SemForge — ${label(session)}`
+      });
+      if (chosen) {
+        await vscode.commands.executeCommand(chosen.command);
+      }
+    }),
+
     vscode.commands.registerCommand('semforge.selectPackage', async () => {
       const found = listPackages();
       const here = session.directory;
