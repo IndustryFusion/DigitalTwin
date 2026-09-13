@@ -38,7 +38,7 @@ import json
 import os
 from dataclasses import dataclass, field
 
-from .store import discover, load_expectations
+from .store import discover, examples_root, load_expectations
 
 
 @dataclass
@@ -90,7 +90,7 @@ def example_files(package):
     """Every JSON-LD document of the package: its model and its examples."""
     files = [os.path.abspath(document) for document in package.files('model')
              if os.path.exists(document)]
-    root = os.path.join(package.path, 'examples')
+    root = examples_root(package.path)
     if os.path.isdir(root):
         for relative in discover(package.path):
             files.append(os.path.abspath(os.path.join(root, relative)))
@@ -103,7 +103,8 @@ def _case_groups(package, expectations):
     for example in expectations.examples:
         members = set()
         for relative in list(example.include) + [example.path]:
-            for candidate in (os.path.join(package.path, 'examples', relative),
+            for candidate in (os.path.join(examples_root(package.path),
+                                           relative),
                               os.path.join(package.path, relative), relative):
                 if os.path.exists(candidate):
                     members.add(os.path.abspath(candidate))

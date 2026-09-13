@@ -14,6 +14,16 @@ mean inventing a second package or a build step that concatenates. The graph is
 the union either way; what changes is where an edit lands, so every artifact
 keeps its own path and the index knows which file holds which subject.
 
+**The data may be grouped under `model/`.** The scratchpad and the suite are two
+kinds of data about the same model, so they sit at the same level:
+
+    model/
+    ├── model-instance.jsonld   (or model-instance/, or bare *.jsonld)
+    └── examples/
+
+Both layouts are read: `model/` when a package groups them, and the flat
+`model-instance.jsonld` + `examples/` the kms already has.
+
 Loading is read-only and executes no code from the package.
 """
 
@@ -36,8 +46,12 @@ DEFAULTS = {
 FOLDERS = {
     'knowledge': (['knowledge'], ('.ttl',)),
     'shapes': (['shacl', 'shapes'], ('.ttl',)),
-    'model': (['model-instance', 'model'], ('.jsonld', '.json')),
+    'model': (['model-instance'], ('.jsonld', '.json')),
 }
+# `model/` groups the data: the instance beside the suite. What it holds decides
+# whether it is that grouping or simply a directory of instance documents.
+MODEL_FOLDER = 'model'
+MODEL_SUFFIXES = ('.jsonld', '.json')
 
 
 @dataclass
@@ -66,6 +80,13 @@ class Package:
         found = self.sources.get(role)
         return [found] if found else []
 
+    @property
+    def examples_dir(self):
+        """Where the declared cases live: `model/examples` or `examples`."""
+        from ..expect.store import examples_root
+
+        return examples_root(self.path)
+
     def index(self, role):
         """A locator over every Turtle file of a role."""
         from ..rdfio import PackageIndex
@@ -93,8 +114,57 @@ def _documents_of(directory, suffixes):
     return found
 
 
+def _model_documents(path):
+    """The instance documents, wherever the package keeps them.
+
+    In order: a file at the root, `model-instance/` at the root, then `model/` --
+    which may hold the instance as a file, as `model-instance/`, or as bare
+    documents beside `examples/`. The last case is why this is not just the
+    generic directory rule: `model/examples` is a sibling of the instance, not
+    part of it, and a recursive scan would swallow the whole suite.
+    """
+    for name in DEFAULTS['model']:
+        candidate = os.path.join(path, name)
+        if os.path.isfile(candidate):
+            return [candidate]
+
+    instance_dir = os.path.join(path, 'model-instance')
+    if os.path.isdir(instance_dir):
+        found = _documents_of(instance_dir, MODEL_SUFFIXES)
+        if found:
+            return found
+        raise PackageError(
+            f'{instance_dir} is the model directory but holds no '
+            f'{" or ".join(MODEL_SUFFIXES)} file')
+
+    umbrella = os.path.join(path, MODEL_FOLDER)
+    if not os.path.isdir(umbrella):
+        return []
+
+    for name in DEFAULTS['model'] + ['instance.jsonld']:
+        candidate = os.path.join(umbrella, name)
+        if os.path.isfile(candidate):
+            return [candidate]
+    for name in ('model-instance', 'instance'):
+        candidate = os.path.join(umbrella, name)
+        if os.path.isdir(candidate):
+            found = _documents_of(candidate, MODEL_SUFFIXES)
+            if found:
+                return found
+    found = _documents_of(umbrella, MODEL_SUFFIXES)
+    if found:
+        return found
+    raise PackageError(
+        f'{umbrella} holds no instance documents. It should contain '
+        f'model-instance.jsonld (or model-instance/, or .jsonld files) beside '
+        f'examples/.')
+
+
 def _documents_for(path, role, names):
     """Every file of a role: the single file, or the directory's contents."""
+    if role == 'model':
+        return _model_documents(path)
+
     for name in names:
         candidate = os.path.join(path, name)
         if os.path.isfile(candidate):
@@ -124,7 +194,9 @@ def load(path):
     for role, names in DEFAULTS.items():
         found = _documents_for(path, role, names)
         if not found:
-            folders = FOLDERS.get(role, ([], ()))[0]
+            folders = list(FOLDERS.get(role, ([], ()))[0])
+            if role == 'model':
+                folders.append('model (holding the instance beside examples/)')
             missing.append(
                 f'{role} (looked for {", ".join(names)}, or a directory named '
                 f'{" or ".join(folders)})')

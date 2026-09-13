@@ -518,7 +518,23 @@ and each of its three roles may now be **one file or a directory of them**:
 |---|---|---|---|
 | knowledge | `knowledge.ttl` | `knowledge/` | `*.ttl` |
 | shapes | `shacl.ttl` | `shacl/` or `shapes/` | `*.ttl` |
-| model | `model-instance.jsonld` | `model-instance/` or `model/` | `*.jsonld` |
+| model | `model-instance.jsonld` | `model-instance/` | `*.jsonld` |
+
+**`model/` groups the data.** The scratchpad and the suite are two kinds of data
+about the same model, so they belong at the same level under one name:
+
+```text
+model/
+├── model-instance.jsonld     the scratchpad — or model-instance/, or bare *.jsonld
+└── examples/                 the suite: test_<Shape>/{good,bad}/ + expectations.yaml
+```
+
+Both layouts are read, and they compose: `model/model-instance/` beside
+`model/examples/` is as valid as the flat `model-instance.jsonld` + `examples/`
+the kms has. `model/examples` is a **sibling** of the instance, never part of it
+— the instance scan is non-recursive precisely so a suite cannot leak into the
+model graph (`test_multifile.py` asserts an entity that exists only in a case
+stays out of `package.model`).
 
 A file wins when both are present: that is the older, explicit answer, and two
 sources for one role would otherwise be ambiguous. The directory is read
@@ -543,6 +559,11 @@ one `shacl.ttl` and one `knowledge.ttl`, because how a package is organised is
 the author's business and what a compiler is handed is the target's.
 
 #### The model instance is the scratchpad; `examples/` is the suite
+
+Both live under `model/` when a package groups them, and they stay disjoint
+either way: `package.model` is the union of the instance documents only, while a
+case is composed into its own graph from its file plus its declared includes.
+What they share is `knowledge` and `shapes` — the same constraints judge both.
 
 Both are needed and they answer different questions. The examples under
 `examples/` are the test suite: each declares what it is for, `semforge test`

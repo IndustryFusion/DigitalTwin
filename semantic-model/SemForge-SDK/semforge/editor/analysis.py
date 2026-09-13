@@ -41,6 +41,8 @@ ARTIFACTS = ('knowledge.ttl', 'shacl.ttl', 'model-instance.jsonld')
 ALTERNATIVES = {
     'knowledge.ttl': ('knowledge',),
     'shacl.ttl': ('shacl', 'shapes'),
+    # `model/` may be the instance documents or the grouping that holds them
+    # beside examples/ -- either way, its presence means the role is here.
     'model-instance.jsonld': ('model-instance', 'model'),
 }
 

@@ -22,6 +22,22 @@ EXPECTATIONS = 'expectations.yaml'
 EXAMPLES = 'examples'
 
 
+def examples_root(package_path):
+    """Where the cases live.
+
+    `model/examples/` if the package groups its data under `model/`, else
+    `examples/` beside the artifacts. Both are the same thing said twice: the
+    suite and the scratchpad are two kinds of data about the same model, so they
+    belong at the same level -- under `model/` when a package says so, and at
+    the root for the layout the kms already has.
+    """
+    for candidate in (os.path.join(package_path, 'model', EXAMPLES),
+                      os.path.join(package_path, EXAMPLES)):
+        if os.path.isdir(candidate):
+            return candidate
+    return os.path.join(package_path, EXAMPLES)
+
+
 def _yaml():
     yaml = YAML()
     yaml.preserve_quotes = True
@@ -76,7 +92,7 @@ class Expectations:
 
 def expectation_files(package_path):
     """Every expectations.yaml under examples/, deepest path first."""
-    root = os.path.join(package_path, EXAMPLES)
+    root = examples_root(package_path)
     found = []
     for current, _, names in os.walk(root):
         if EXPECTATIONS in names:
@@ -92,7 +108,7 @@ def load_expectations(package_path):
     to examples/, because a subobject is shared and does not belong to the
     suite that happens to use it.
     """
-    root = os.path.join(package_path, EXAMPLES)
+    root = examples_root(package_path)
     examples = []
     raw_by_file = {}
 
@@ -198,7 +214,7 @@ def compose(package, example):
     config = context_config(package.path)
     graph = Graph()
     for relative in list(example.include) + [example.path]:
-        path = os.path.join(package.path, 'examples', relative) \
+        path = os.path.join(examples_root(package.path), relative) \
             if not os.path.isabs(relative) else relative
         if not os.path.exists(path):
             path = os.path.join(package.path, relative)
@@ -210,7 +226,7 @@ def compose(package, example):
     return graph
 
 
-def discover(package_path, folder='examples'):
+def discover(package_path, folder=None):
     """Every .jsonld under examples/, as relative paths.
 
     Used to notice a file nobody declared -- an example that exists and is
@@ -219,7 +235,8 @@ def discover(package_path, folder='examples'):
     """
     import os
 
-    root = os.path.join(package_path, folder)
+    root = os.path.join(package_path, folder) if folder \
+        else examples_root(package_path)
     found = []
     for current, _, names in os.walk(root):
         for name in sorted(names):

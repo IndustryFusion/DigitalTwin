@@ -321,11 +321,11 @@ def _example_root(package, example, report, notes=None, shared=None):
                        messages=[example.description] if example.description
                        else [])
 
-    own = os.path.join(package.path, 'examples', example.path)
+    own = os.path.join(package.examples_dir, example.path)
     node.children.extend(_entity_nodes(own, report, notes=notes))
 
     for included in example.include:
-        path = os.path.join(package.path, 'examples', included)
+        path = os.path.join(package.examples_dir, included)
         cases = list(shared.get(included, [])) if shared else []
         detail = 'included'
         if len(cases) > 1:
@@ -629,7 +629,7 @@ def _target_file(package, file=None):
         return package.sources['model']
     if os.path.isabs(file):
         return file
-    for base in (package.path, os.path.join(package.path, 'examples')):
+    for base in (package.path, package.examples_dir):
         candidate = os.path.join(base, file)
         if os.path.exists(candidate):
             return candidate

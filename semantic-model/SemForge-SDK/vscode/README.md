@@ -54,6 +54,17 @@ Any directory holding `knowledge.ttl`, `shacl.ttl` and `model-instance.jsonld`
 `knowledge/` of `.ttl` files, `model-instance/` of `.jsonld` files. The graph is
 the union; an edit lands in the document that declares the thing being edited,
 and the shape jump names that file. A file wins if both are present.
+
+The data can also be grouped under **`model/`**, with the scratchpad and the
+suite at the same level:
+
+```text
+model/
+├── model-instance.jsonld   (or model-instance/, or bare *.jsonld)
+└── examples/
+```
+
+The trees look identical either way.
 `semantic-model/kms` is one. Open the package itself or the folder above it —
 the trees look in each workspace folder and one level below it, so opening
 `semantic-model/` finds `kms/`. Open higher than that and they wait until you

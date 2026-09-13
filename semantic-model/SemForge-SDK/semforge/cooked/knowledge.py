@@ -129,7 +129,7 @@ def _example_files(package):
         expectations = None
     for example in (expectations.examples if expectations else []):
         for relative in list(example.include) + [example.path]:
-            for candidate in (os.path.join(package.path, 'examples', relative),
+            for candidate in (os.path.join(package.examples_dir, relative),
                               os.path.join(package.path, relative), relative):
                 if os.path.exists(candidate):
                     files.append(os.path.abspath(candidate))

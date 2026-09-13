@@ -27,6 +27,15 @@ const FOLDERS = {
   'model-instance.jsonld': ['model-instance', 'model']
 };
 
+function documentIn(directory) {
+  if (!fs.existsSync(directory) || !fs.statSync(directory).isDirectory()) {
+    return undefined;
+  }
+  const inside = fs.readdirSync(directory).sort()
+    .filter((entry) => /\.(ttl|jsonld|json)$/.test(entry));
+  return inside.length ? path.join(directory, inside[0]) : undefined;
+}
+
 function roleFile(directory, name) {
   const file = path.join(directory, name);
   if (fs.existsSync(file) && fs.statSync(file).isFile()) {
@@ -38,11 +47,13 @@ function roleFile(directory, name) {
       continue;
     }
     // Any document inside will do: the server resolves the package from any
-    // file in it.
-    const inside = fs.readdirSync(candidate).sort()
-      .filter((entry) => /\.(ttl|jsonld|json)$/.test(entry));
-    if (inside.length) {
-      return path.join(candidate, inside[0]);
+    // file in it. `model/` may group the instance beside examples/, so look one
+    // level down as well -- otherwise a grouped package looks like no package.
+    const found = documentIn(candidate) ||
+      documentIn(path.join(candidate, 'model-instance')) ||
+      documentIn(path.join(candidate, 'instance'));
+    if (found) {
+      return found;
     }
   }
   return undefined;

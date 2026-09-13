@@ -275,3 +275,124 @@ def package_of(uri):
     from semforge.editor.analysis import package_root
 
     return package_root(uri[len('file://'):])
+
+
+# --- the data grouped under model/ ---------------------------------------------
+
+def _regroup(source, target, instance_as_directory=False):
+    """`model/` holding the instance beside the suite."""
+    shutil.copytree(source, target, symlinks=False)
+    model = os.path.join(target, 'model')
+    os.makedirs(model)
+    shutil.move(os.path.join(target, 'examples'),
+                os.path.join(model, 'examples'))
+    instance = os.path.join(target, 'model-instance.jsonld')
+    if not instance_as_directory:
+        shutil.move(instance, os.path.join(model, 'model-instance.jsonld'))
+        return target
+
+    entities = json.load(open(instance, encoding='utf-8'))
+    os.remove(instance)
+    inside = os.path.join(model, 'model-instance')
+    os.makedirs(inside)
+    for position, entity in enumerate(entities):
+        name = str(entity.get('id', f'e{position}')).replace(':', '_') + '.jsonld'
+        with open(os.path.join(inside, name), 'w', encoding='utf-8') as handle:
+            json.dump([entity], handle, indent=2)
+    return target
+
+
+@pytest.fixture
+def grouped(tmp_path, corpus):
+    return load(_regroup(corpus.path, str(tmp_path / 'pkg')))
+
+
+def test_the_instance_and_the_suite_can_sit_under_model(grouped, corpus):
+    """Two kinds of data about one model, at the same level."""
+    assert [os.path.relpath(f, grouped.path) for f in grouped.files('model')] \
+        == ['model/model-instance.jsonld']
+    assert os.path.relpath(grouped.examples_dir, grouped.path) == 'model/examples'
+
+    for role in ('shapes', 'knowledge', 'model'):
+        assert to_isomorphic(getattr(grouped, role)) == \
+            to_isomorphic(getattr(corpus, role)), role
+
+
+def test_the_cases_are_found_under_model_examples(grouped, corpus):
+    from semforge.expect.store import discover, load_expectations
+
+    assert len(load_expectations(grouped.path).examples) == \
+        len(load_expectations(corpus.path).examples)
+    assert discover(grouped.path) == discover(corpus.path)
+
+
+def test_a_grouped_package_runs_the_same_suite(grouped, corpus):
+    from semforge.expect.store import load_expectations
+    from semforge.expect.runner import run_tests
+    from semforge.cli.main import _examples_and_reports
+
+    def outcomes(package):
+        paired = _examples_and_reports(package, load_expectations(package.path))
+        return sorted((o.example, o.passed) for o in run_tests(paired))
+
+    assert outcomes(grouped) == outcomes(corpus)
+
+
+def test_the_tree_looks_the_same_grouped_or_flat(grouped, corpus):
+    from semforge.cooked.examples import build_suite
+
+    def shape(package):
+        return [(n.kind, n.label, 'scratchpad' in n.detail)
+                for n in build_suite(package)]
+
+    assert shape(grouped) == shape(corpus)
+
+
+def test_an_edit_to_a_case_under_model_examples_lands_there(grouped):
+    from semforge.cooked.examples import build_suite, flatten, set_value
+
+    row = next(n for _, n in flatten(build_suite(grouped))
+               if n.kind == 'attribute' and n.editable
+               and 'model/examples/' in n.file)
+    where, _, new = set_value(grouped, row.entity, row.path, '0.44',
+                              file=row.file)
+    assert 'model/examples/' in where and new == '0.44'
+
+
+def test_model_may_group_a_directory_of_instances(tmp_path, corpus):
+    """The two layouts compose: `model/model-instance/` beside `model/examples/`."""
+    package = load(_regroup(corpus.path, str(tmp_path / 'pkg'),
+                            instance_as_directory=True))
+    assert len(package.files('model')) > 1
+    assert all('model/model-instance/' in os.path.relpath(f, package.path)
+               for f in package.files('model'))
+    assert os.path.relpath(package.examples_dir, package.path) == 'model/examples'
+    assert to_isomorphic(package.model) == to_isomorphic(corpus.model)
+
+
+def test_an_empty_model_group_says_what_to_put_there(tmp_path, corpus):
+    target = _regroup(corpus.path, str(tmp_path / 'pkg'))
+    os.remove(os.path.join(target, 'model', 'model-instance.jsonld'))
+    with pytest.raises(PackageError) as raised:
+        load(target)
+    assert 'model-instance.jsonld' in str(raised.value)
+    assert 'beside examples/' in str(raised.value)
+
+
+def test_examples_are_never_read_as_instance_documents(grouped):
+    """`model/examples` is a sibling of the instance, not part of it."""
+    for document in grouped.files('model'):
+        assert 'examples' not in os.path.relpath(document, grouped.path)
+    entities = {str(s) for s in grouped.model.subjects()
+                if str(s).startswith('urn:')}
+    assert 'urn:filter:8' not in entities, \
+        'an entity that exists only in a case leaked into the model'
+
+
+def test_a_grouped_package_is_still_recognised_as_one(grouped):
+    from semforge.editor.analysis import package_root
+
+    assert package_root(grouped.files('model')[0]) == os.path.abspath(
+        grouped.path)
+    assert package_root(os.path.join(grouped.path, 'model', 'examples')) == \
+        os.path.abspath(grouped.path)
