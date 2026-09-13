@@ -18,6 +18,7 @@ const { showLocation } = require('./reveal');
 // string and nothing else: a row whose contextValue drifts from what
 // package.json says loses its icons silently -- no error, no log line.
 const CONTEXT_BY_KIND = {
+  group: 'group',
   suite: 'suite',
   type: 'type',
   example: 'example',
@@ -218,7 +219,12 @@ class ModelTreeProvider {
       item.contextValue = 'exampleEditable';
     }
 
-    if (raw.kind === 'suite') {
+    if (raw.kind === 'group') {
+      // Tests and Main: the two kinds of data, judged by different rules.
+      item.iconPath = new vscode.ThemeIcon(
+        raw.label === 'Main' ? 'edit' : 'beaker'
+      );
+    } else if (raw.kind === 'suite') {
       // One test_<Shape> directory: its cases pass or they do not.
       item.iconPath = new vscode.ThemeIcon(
         raw.severity ? 'testing-failed-icon' : 'folder-library'

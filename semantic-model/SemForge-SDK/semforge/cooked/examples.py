@@ -293,8 +293,35 @@ def build_suite(package, expectations=None):
         roots.append(node)
 
     roots.extend(loose)
-    roots.extend(_model_roots(package, notes))
-    return roots
+
+    # Two sections, because they answer different questions and are judged by
+    # different rules. A case declares what it is for and passes or fails; the
+    # main model declares nothing and cannot fail -- it is where you try a
+    # violation to see what a constraint does.
+    cases = ExampleNode(
+        kind='group', label='Tests',
+        detail=_suite_summary(roots) if roots
+        else 'no cases yet — add one under examples/')
+    cases.children = roots
+    cases.severity = 'violation' if any(n.severity for n in roots) else ''
+
+    documents = _model_roots(package, notes)
+    main = ExampleNode(
+        kind='group', label='Main',
+        detail=' · '.join(p for p in (
+            f'{len(documents)} document(s)' if len(documents) > 1 else '',
+            'the scratchpad — violations here are information, not failures')
+            if p))
+    main.children = documents
+    return [cases, main]
+
+
+def _suite_summary(roots):
+    cases = [n for _, n in flatten(roots) if n.kind == 'example']
+    failing = [n for n in cases if n.severity]
+    return ' · '.join(p for p in (
+        f'{len(cases)} case(s)',
+        f'{len(failing)} failing' if failing else 'all ok') if p)
 
 
 def _expected_shape(example, report):
@@ -360,9 +387,8 @@ def _model_roots(package, notes=None):
     for document in documents:
         label = os.path.relpath(document, package.path) if len(documents) > 1 \
             else os.path.basename(document)
-        node = ExampleNode(
-            kind='example', label=label,
-            detail='the model as shipped — a scratchpad, not a declared example')
+        node = ExampleNode(kind='example', label=label,
+                           detail='the model as shipped')
         node.children.extend(_entity_nodes(document, report, notes=notes))
         roots.append(node)
     return roots

@@ -178,14 +178,15 @@ def test_the_shape_jump_names_the_file_it_is_in(split):
     assert 'sh:property' in line
 
 
-def test_every_model_document_is_its_own_scratchpad_root(split):
+def test_every_model_document_is_its_own_row_under_main(split):
     from semforge.cooked.examples import build_suite
 
-    roots = [n for n in build_suite(split) if 'scratchpad' in n.detail]
-    assert len(roots) == len(split.files('model'))
-    assert all(n.label.startswith('model-instance/') for n in roots)
-    # And the declared examples are still there beside them.
-    assert [n for n in build_suite(split) if n.kind == 'suite']
+    tests, main = build_suite(split)
+    assert (tests.label, main.label) == ('Tests', 'Main')
+    assert len(main.children) == len(split.files('model'))
+    assert all(n.label.startswith('model-instance/') for n in main.children)
+    # And the declared cases are still there, in the other section.
+    assert [n for n in tests.children if n.kind == 'suite']
 
 
 def test_a_finding_lands_on_the_file_that_declares_the_shape(split):
@@ -342,7 +343,7 @@ def test_the_tree_looks_the_same_grouped_or_flat(grouped, corpus):
     from semforge.cooked.examples import build_suite
 
     def shape(package):
-        return [(n.kind, n.label, 'scratchpad' in n.detail)
+        return [(n.kind, n.label, [c.label for c in n.children])
                 for n in build_suite(package)]
 
     assert shape(grouped) == shape(corpus)

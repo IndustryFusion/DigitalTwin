@@ -33,7 +33,7 @@ def made(tmp_path):
 
 def test_what_it_writes_loads(made):
     assert len(made.shapes) and len(made.knowledge) and len(made.model)
-    assert os.path.basename(made.sources['model']) == 'model-instance.jsonld'
+    assert os.path.basename(made.sources['model']) == 'main.jsonld'
     assert 'model/' in os.path.relpath(made.sources['model'], made.path)
 
 
@@ -133,7 +133,7 @@ def test_the_flat_layout_is_available(tmp_path):
     create_package(str(target), name='Flat', layout='flat')
     package = load(str(target))
     assert os.path.relpath(package.sources['model'], package.path) == \
-        'model-instance.jsonld'
+        'main.jsonld'
     assert os.path.isdir(os.path.join(package.path, 'examples'))
     assert validate_package(package, strict=False).violations == []
 

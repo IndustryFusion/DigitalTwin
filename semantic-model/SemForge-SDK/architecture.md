@@ -590,6 +590,12 @@ before reporting success.
 
 #### The model instance is the scratchpad; `examples/` is the suite
 
+The Model view says so in its shape: two sections, **Tests** and **Main**. A
+case under Tests declares what it is for and passes or fails; Main declares
+nothing and cannot fail. The instance file is read as `main.jsonld` or
+`model-instance.jsonld` — the same role under the name the tree uses and the
+name the kms has.
+
 Both live under `model/` when a package groups them, and they stay disjoint
 either way: `package.model` is the union of the instance documents only, while a
 case is composed into its own graph from its file plus its declared includes.

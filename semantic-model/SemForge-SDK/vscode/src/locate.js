@@ -24,8 +24,11 @@ const ARTIFACTS = ['shacl.ttl', 'knowledge.ttl', 'model-instance.jsonld'];
 const FOLDERS = {
   'shacl.ttl': ['shacl', 'shapes'],
   'knowledge.ttl': ['knowledge'],
-  'model-instance.jsonld': ['model-instance', 'model']
+  'model-instance.jsonld': ['main', 'model-instance', 'model']
 };
+
+// `main.jsonld` and `model-instance.jsonld` name the same role.
+const FILE_ALIASES = { 'model-instance.jsonld': ['main.jsonld', 'model.jsonld'] };
 
 function documentIn(directory) {
   if (!fs.existsSync(directory) || !fs.statSync(directory).isDirectory()) {
@@ -37,9 +40,11 @@ function documentIn(directory) {
 }
 
 function roleFile(directory, name) {
-  const file = path.join(directory, name);
-  if (fs.existsSync(file) && fs.statSync(file).isFile()) {
-    return file;
+  for (const candidate of [name].concat(FILE_ALIASES[name] || [])) {
+    const file = path.join(directory, candidate);
+    if (fs.existsSync(file) && fs.statSync(file).isFile()) {
+      return file;
+    }
   }
   for (const folder of FOLDERS[name] || []) {
     const candidate = path.join(directory, folder);
@@ -50,6 +55,7 @@ function roleFile(directory, name) {
     // file in it. `model/` may group the instance beside examples/, so look one
     // level down as well -- otherwise a grouped package looks like no package.
     const found = documentIn(candidate) ||
+      documentIn(path.join(candidate, 'main')) ||
       documentIn(path.join(candidate, 'model-instance')) ||
       documentIn(path.join(candidate, 'instance'));
     if (found) {

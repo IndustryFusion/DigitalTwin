@@ -392,23 +392,44 @@ def test_a_new_observation_can_move_the_verdict(package):
 
 # --- the declared suite ------------------------------------------------------
 
+def test_the_tree_has_two_sections(corpus):
+    """Tests and Main are judged by different rules, so they are separate.
+
+    A case declares what it is for and passes or fails; the main model declares
+    nothing and cannot fail -- it is where a violation is tried on purpose.
+    """
+    from semforge.cooked.examples import build_suite
+
+    sections = build_suite(corpus)
+    assert [n.label for n in sections] == ['Tests', 'Main']
+    assert all(n.kind == 'group' for n in sections)
+
+    tests, main = sections
+    assert '6 case(s)' in tests.detail and 'all ok' in tests.detail
+    assert 'not failures' in main.detail
+    assert {n.kind for n in main.children} == {'example'}
+
+
 def test_cases_are_grouped_by_suite(corpus):
     from semforge.cooked.examples import build_suite
 
-    roots = {n.label: n for n in build_suite(corpus)}
+    tests = build_suite(corpus)[0]
+    suites = {n.label: n for n in tests.children}
     assert {'test_StateOnCutterShape', 'test_WorkpieceShape',
-            'test_FilterShape', 'test_CartridgeShape'} <= set(roots)
-    assert roots['test_StateOnCutterShape'].kind == 'suite'
-    assert '2 case(s)' in roots['test_StateOnCutterShape'].detail
-    assert {c.label for c in roots['test_StateOnCutterShape'].children} == \
+            'test_FilterShape', 'test_CartridgeShape'} <= set(suites)
+    assert suites['test_StateOnCutterShape'].kind == 'suite'
+    assert '2 case(s)' in suites['test_StateOnCutterShape'].detail
+    assert {c.label for c in suites['test_StateOnCutterShape'].children} == \
         {'filter-on.jsonld', 'filter-off.jsonld'}
 
 
-def test_the_shipped_model_is_still_a_root(corpus):
+def test_the_shipped_model_is_under_main(corpus):
     from semforge.cooked.examples import build_suite
 
-    roots = {n.label: n for n in build_suite(corpus)}
-    assert 'not a declared example' in roots['model-instance.jsonld'].detail
+    main = build_suite(corpus)[1]
+    documents = {n.label: n for n in main.children}
+    assert 'model-instance.jsonld' in documents
+    assert 'the model as shipped' in documents['model-instance.jsonld'].detail
 
 
 def test_a_root_says_what_the_example_is_for_and_how_it_did(corpus):

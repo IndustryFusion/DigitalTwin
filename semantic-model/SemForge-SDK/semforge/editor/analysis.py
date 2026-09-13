@@ -34,6 +34,8 @@ from ..validate.normalise import curie, local
 from ..validate.shapes import check_declarations, node_shapes
 
 ARTIFACTS = ('knowledge.ttl', 'shacl.ttl', 'model-instance.jsonld')
+# `main.jsonld` says the same thing as `model-instance.jsonld`.
+FILE_ALIASES = {'model-instance.jsonld': ('main.jsonld', 'model.jsonld')}
 # Each role may also be a directory of documents, so a directory holding
 # `shacl/` and `knowledge/` and `model-instance/` is a package too. Recognising
 # only the files would leave such a package invisible to the editor -- the
@@ -43,13 +45,14 @@ ALTERNATIVES = {
     'shacl.ttl': ('shacl', 'shapes'),
     # `model/` may be the instance documents or the grouping that holds them
     # beside examples/ -- either way, its presence means the role is here.
-    'model-instance.jsonld': ('model-instance', 'model'),
+    'model-instance.jsonld': ('main', 'model-instance', 'model'),
 }
 
 
 def _has_role(directory, name):
-    if os.path.isfile(os.path.join(directory, name)):
-        return True
+    for candidate in (name,) + FILE_ALIASES.get(name, ()):
+        if os.path.isfile(os.path.join(directory, candidate)):
+            return True
     return any(os.path.isdir(os.path.join(directory, folder))
                for folder in ALTERNATIVES.get(name, ()))
 

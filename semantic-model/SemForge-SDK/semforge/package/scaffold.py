@@ -216,7 +216,8 @@ def create_package(path, name=None, namespace=None, published=None,
     published = published or f'{namespace}context.jsonld'
 
     existing = [n for n in ('knowledge.ttl', 'shacl.ttl', 'model-instance.jsonld',
-                            'knowledge', 'shacl', 'model', 'model-instance',
+                            'main.jsonld', 'knowledge', 'shacl', 'model',
+                            'model-instance', 'main',
                             'semforge.yaml', 'context.jsonld')
                 if os.path.exists(os.path.join(path, n))]
     if existing:
@@ -231,11 +232,13 @@ def create_package(path, name=None, namespace=None, published=None,
     prefixes = {entities[0]: entities[1], knowledge[0]: knowledge[1],
                 shapes[0]: shapes[1]}
 
+    # `main` is what the tree calls it, so that is what a new package gets.
+    # `model-instance.jsonld` still loads -- the kms uses it.
     if layout == 'grouped':
-        instance = os.path.join(path, 'model', 'model-instance.jsonld')
+        instance = os.path.join(path, 'model', 'main.jsonld')
         examples = os.path.join(path, 'model', 'examples')
     else:
-        instance = os.path.join(path, 'model-instance.jsonld')
+        instance = os.path.join(path, 'main.jsonld')
         examples = os.path.join(path, 'examples')
 
     written = [
@@ -289,11 +292,11 @@ def create_package(path, name=None, namespace=None, published=None,
 
     grouped_tree = (
         'model/\n'
-        '├── model-instance.jsonld   the scratchpad: try a violation here\n'
-        '└── examples/               the suite: each case says what it is for')
+        '├── main.jsonld   the scratchpad: try a violation here\n'
+        '└── examples/     the suite: each case says what it is for')
     flat_tree = (
-        'model-instance.jsonld   the scratchpad: try a violation here\n'
-        'examples/               the suite: each case says what it is for')
+        'main.jsonld   the scratchpad: try a violation here\n'
+        'examples/     the suite: each case says what it is for')
     layout_tree = grouped_tree if layout == 'grouped' else flat_tree
     written.append(_write(os.path.join(path, 'README.md'), f'''# {name}
 

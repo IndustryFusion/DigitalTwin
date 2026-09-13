@@ -359,8 +359,24 @@ appear so the tree does not lie about what the shape contains; edit them in the
 `.ttl`.
 
 **The Model view** — the second tree in the SemForge container. It shows the
-data the constraints judge: every declared case, what it is for and whether it
-did it, and the model instance as the scratchpad beside them.
+data the constraints judge, in two sections, because they are judged by
+different rules:
+
+```
+🧪 Tests   6 case(s) · all ok
+   ├── test_CartridgeShape          1 case(s) · all ok
+   └── test_StateOnCutterShape      2 case(s) · all ok
+✎ Main    the scratchpad — violations here are information, not failures
+   └── main.jsonld                  the model as shipped
+```
+
+**Tests** are the declared cases: each says what it is for, and `semforge test`
+passes or fails on it. **Main** is the scratchpad — where you try a violation to
+see what a constraint does. It declares nothing and cannot fail a run.
+
+The scratchpad's file is `main.jsonld` (`model-instance.jsonld` still loads —
+the kms uses that name), and it may be a directory of documents like any other
+role.
 
 The tree shows two different things, and they are not interchangeable. The
 cases under `examples/` are the **suite**: each says what it is for and

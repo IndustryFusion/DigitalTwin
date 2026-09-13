@@ -38,7 +38,9 @@ from .context import context_config, model_context, resolve_model_document
 DEFAULTS = {
     'knowledge': ['knowledge.ttl'],
     'shapes': ['shacl.ttl'],
-    'model': ['model-instance.jsonld', 'model.jsonld'],
+    # `main` is the name the tree uses for it; `model-instance` is what the kms
+    # has. Both are read, so the vocabulary can move without a migration.
+    'model': ['main.jsonld', 'model-instance.jsonld', 'model.jsonld'],
 }
 
 # A directory standing in for the file of the same role, and what counts as one
@@ -46,7 +48,7 @@ DEFAULTS = {
 FOLDERS = {
     'knowledge': (['knowledge'], ('.ttl',)),
     'shapes': (['shacl', 'shapes'], ('.ttl',)),
-    'model': (['model-instance'], ('.jsonld', '.json')),
+    'model': (['main', 'model-instance'], ('.jsonld', '.json')),
 }
 # `model/` groups the data: the instance beside the suite. What it holds decides
 # whether it is that grouping or simply a directory of instance documents.
@@ -128,8 +130,10 @@ def _model_documents(path):
         if os.path.isfile(candidate):
             return [candidate]
 
-    instance_dir = os.path.join(path, 'model-instance')
-    if os.path.isdir(instance_dir):
+    for name in ('main', 'model-instance'):
+        instance_dir = os.path.join(path, name)
+        if not os.path.isdir(instance_dir):
+            continue
         found = _documents_of(instance_dir, MODEL_SUFFIXES)
         if found:
             return found
@@ -145,7 +149,7 @@ def _model_documents(path):
         candidate = os.path.join(umbrella, name)
         if os.path.isfile(candidate):
             return [candidate]
-    for name in ('model-instance', 'instance'):
+    for name in ('main', 'model-instance', 'instance'):
         candidate = os.path.join(umbrella, name)
         if os.path.isdir(candidate):
             found = _documents_of(candidate, MODEL_SUFFIXES)
@@ -156,8 +160,8 @@ def _model_documents(path):
         return found
     raise PackageError(
         f'{umbrella} holds no instance documents. It should contain '
-        f'model-instance.jsonld (or model-instance/, or .jsonld files) beside '
-        f'examples/.')
+        f'main.jsonld (or main/, or model-instance.jsonld, or .jsonld files) '
+        f'beside examples/.')
 
 
 def _documents_for(path, role, names):

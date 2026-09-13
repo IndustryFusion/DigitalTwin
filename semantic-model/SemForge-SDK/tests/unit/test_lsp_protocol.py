@@ -505,8 +505,12 @@ def test_a_package_can_be_created_over_the_protocol(tmp_path, corpus):
         live.send({'jsonrpc': '2.0', 'id': 42, 'method': 'semforge/model',
                    'params': {'uri': 'file://' + made['open']}})
         model = live.wait_for(lambda m: m.get('id') == 42)[0]['result']
-        labels = [root['label'] for root in model['roots']]
-        assert any('test_MachineShape' in label for label in labels), labels
+        sections = {root['label']: root for root in model['roots']}
+        assert set(sections) == {'Tests', 'Main'}, list(sections)
+        suites = [n['label'] for n in sections['Tests']['children']]
+        assert any('test_MachineShape' in label for label in suites), suites
+        assert [n['label'] for n in sections['Main']['children']] == \
+            ['main.jsonld']
 
         _json.loads(open(made['files'][1], encoding='utf-8').read())
     finally:
