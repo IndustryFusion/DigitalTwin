@@ -57,8 +57,13 @@
     },
     "commands": [
       {
+        "command": "semforge.newProject",
+        "title": "SemForge: New project\u2026",
+        "icon": "$(file-directory-create)"
+      },
+      {
         "command": "semforge.initPackage",
-        "title": "SemForge: Create a package here",
+        "title": "SemForge: Create a package in this folder",
         "icon": "$(new-folder)"
       },
       {
@@ -185,8 +190,18 @@
           "group": "navigation"
         },
         {
-          "command": "semforge.initPackage",
+          "submenu": "semforge.project",
+          "when": "view == semforgeConstraints",
+          "group": "navigation@9"
+        },
+        {
+          "submenu": "semforge.project",
           "when": "view == semforgeModel",
+          "group": "navigation@9"
+        },
+        {
+          "submenu": "semforge.project",
+          "when": "view == semforgeKnowledge",
           "group": "navigation@9"
         }
       ],
@@ -256,6 +271,27 @@
           "when": "view == semforgeModel && viewItem == exampleSeries",
           "group": "inline@2"
         }
+      ],
+      "semforge.project": [
+        {
+          "command": "semforge.newProject",
+          "group": "1_new@1"
+        },
+        {
+          "command": "semforge.initPackage",
+          "group": "1_new@2"
+        },
+        {
+          "command": "semforge.doctor",
+          "group": "9_help@1"
+        }
+      ],
+      "explorer/context": [
+        {
+          "submenu": "semforge.project",
+          "when": "explorerResourceIsFolder",
+          "group": "navigation@30"
+        }
       ]
     },
     "viewsWelcome": [
@@ -270,6 +306,13 @@
       {
         "view": "semforgeKnowledge",
         "contents": "No SemForge package in this folder.\n\nA package is knowledge (the ontology), constraints (SHACL over the NGSI-LD encoding) and the model (a scratchpad plus the example suite).\n[Create a package here](command:semforge.initPackage)\n[Run the doctor](command:semforge.doctor)"
+      }
+    ],
+    "submenus": [
+      {
+        "id": "semforge.project",
+        "label": "SemForge",
+        "icon": "$(file-directory-create)"
       }
     ]
   },

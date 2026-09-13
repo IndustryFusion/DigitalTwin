@@ -159,3 +159,44 @@ def test_init_into_an_occupied_directory_exits_2(tmp_path):
     again = CliRunner().invoke(cli, ['init', str(target)])
     assert again.exit_code == 2
     assert 'already holds' in again.output
+
+
+# --- a project is a directory --------------------------------------------------
+
+def test_new_creates_the_directory_and_scaffolds_it(tmp_path):
+    """The classical gesture: `semforge new plant-line` makes ./plant-line."""
+    result = CliRunner().invoke(
+        cli, ['new', 'Plant Line', '--in', str(tmp_path)])
+    assert result.exit_code == 0, result.output
+
+    created = tmp_path / 'plant-line'
+    assert created.is_dir(), 'no project directory was made'
+    package = load(str(created))
+    assert validate_package(package, strict=False).violations == []
+    assert 'plantLineShacl' in {name for name, _ in package.shapes.namespaces()}
+
+
+def test_new_refuses_a_directory_that_is_already_occupied(tmp_path):
+    occupied = tmp_path / 'taken'
+    occupied.mkdir()
+    (occupied / 'something.txt').write_text('hello')
+
+    result = CliRunner().invoke(cli, ['new', 'taken', '--in', str(tmp_path)])
+    assert result.exit_code == 2
+    assert 'not empty' in result.output
+    assert (occupied / 'something.txt').read_text() == 'hello'
+
+
+def test_new_and_init_produce_the_same_package(tmp_path):
+    """Two gestures, one scaffold. A project made one way that differs from the
+    other is a bug waiting to be reported as "works on the command line"."""
+    CliRunner().invoke(cli, ['new', 'twinned', '--in', str(tmp_path)])
+    second = tmp_path / 'by-init'
+    CliRunner().invoke(cli, ['init', str(second), '--name', 'twinned'])
+
+    def layout(root):
+        return sorted(
+            os.path.relpath(os.path.join(base, name), root)
+            for base, _, names in os.walk(root) for name in names)
+
+    assert layout(str(tmp_path / 'twinned')) == layout(str(second))

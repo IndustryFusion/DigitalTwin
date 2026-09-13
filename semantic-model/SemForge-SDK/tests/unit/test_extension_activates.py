@@ -30,7 +30,7 @@ EXPECTED = {
     'semforge.editValue', 'semforge.refreshModel', 'semforge.addAttribute',
     'semforge.addEntity', 'semforge.addObservation', 'semforge.goToShape',
     'semforge.refreshKnowledge', 'semforge.showShapeForClass',
-    'semforge.initPackage',
+    'semforge.initPackage', 'semforge.newProject',
 }
 
 
@@ -219,3 +219,40 @@ def test_the_packaged_sources_include_the_new_module():
         source = handle.read()
     assert "require('./init')" in source
     assert os.path.exists(os.path.join(SDK, 'vscode', 'src', 'init.js'))
+
+
+def test_the_project_actions_live_in_one_submenu():
+    """Classical gesture, classical place: a SemForge menu on a folder and in
+    each view's title bar, holding New project, Create a package here, Doctor."""
+    with open(os.path.join(SDK, 'vscode', 'package.json')) as handle:
+        contributes = json.load(handle)['contributes']
+
+    submenus = {entry['id'] for entry in contributes.get('submenus', [])}
+    assert 'semforge.project' in submenus
+
+    items = contributes['menus']['semforge.project']
+    assert [entry['command'] for entry in items] == [
+        'semforge.newProject', 'semforge.initPackage', 'semforge.doctor']
+    declared = {c['command'] for c in contributes['commands']}
+    assert {entry['command'] for entry in items} <= declared
+
+    # Reachable from a folder in the Explorer, and from every view.
+    explorer = contributes['menus'].get('explorer/context', [])
+    assert any(entry.get('submenu') == 'semforge.project'
+               and 'explorerResourceIsFolder' in entry['when']
+               for entry in explorer)
+    hosting = {entry['when'] for entry in contributes['menus']['view/title']
+               if entry.get('submenu') == 'semforge.project'}
+    for view in ('semforgeConstraints', 'semforgeModel', 'semforgeKnowledge'):
+        assert f'view == {view}' in hosting
+
+
+def test_every_submenu_entry_is_a_real_command(corpus_path):
+    """A menu item whose command is not registered does nothing when clicked."""
+    with open(os.path.join(SDK, 'vscode', 'package.json')) as handle:
+        menus = json.load(handle)['contributes']['menus']
+    registered = set(_activate(corpus_path)['commands'])
+    for group, entries in menus.items():
+        for entry in entries:
+            if 'command' in entry:
+                assert entry['command'] in registered, (group, entry['command'])

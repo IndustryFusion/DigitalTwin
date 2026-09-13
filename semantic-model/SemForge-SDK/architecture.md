@@ -565,6 +565,12 @@ or from the editor over `semforge/init` — one code path, because a package mad
 by the editor that differs from one made by the CLI is a bug waiting to be
 reported as "works on the command line".
 
+Two gestures reach it, and they are different things. **New project** creates
+the *directory* and offers to open it (`semforge new <name>`, or the SemForge
+submenu on a folder in the Explorer); **create a package here** scaffolds a
+directory that already exists (`semforge init <path>`). Both end in
+`create_package`, and a test asserts the two produce identical trees.
+
 What it writes is deliberately small and deliberately complete: the entity root
 and one type, one vocabulary class with individuals, a node shape in the
 **two-layer NGSI-LD encoding** (the outer `sh:property` asserts the attribute

@@ -23,9 +23,19 @@ its own — it searches upward from whatever folder you opened.
 **Then, every time:** open a folder in VS Code and click the SemForge icon in
 the activity bar. Nothing else. No flags, no launch configuration, no terminal.
 
-**No package yet?** Every view offers **Create a package here** when the folder
-holds none (also `SemForge: Create a package here` in the palette, and
-`semforge init` on the command line). It writes a package that already works —
+**Starting a new one?** There is a **SemForge** menu in each view's title bar
+and on any folder in the Explorer (right-click ▸ SemForge):
+
+| | does |
+|---|---|
+| **New project…** | makes a *folder* and scaffolds it, then offers to open it, open it in a new window, or add it to this workspace — the classical File ▸ New Project |
+| **Create a package in this folder** | scaffolds the folder you already have |
+| **Doctor** | what the extension sees and which server answers |
+
+On the command line: `semforge new "Plant Line"` creates `./plant-line`;
+`semforge init <path>` scaffolds a directory you already have. Same scaffold
+either way. An empty view also shows the buttons directly. It writes a package
+that already works —
 knowledge with one entity type and one vocabulary, shapes in the NGSI-LD
 two-layer encoding, a scratchpad instance, and an example on *each side* of one
 constraint so the suite proves the constraint can fire as well as be satisfied.
@@ -600,7 +610,8 @@ in `shacl.ttl` is meaningless without the ontology and the examples.
 |---|---|
 | `SemForge: Restart Language Server` | after changing `semforge.pythonPath`, or if the server dies |
 | `SemForge: Revalidate Package` | saves the active file, which re-runs analysis |
-| `SemForge: Create a package here` | writes a working package: artifacts, a scratchpad and a two-sided example suite |
+| `SemForge: New project…` | creates a project folder and scaffolds it, then offers to open it |
+| `SemForge: Create a package in this folder` | scaffolds a directory you already have |
 | `SemForge: Doctor` | what it sees: folder, interpreter, whether `semforge` imports |
 | `SemForge: Go to the SHACL rule for this attribute` | the ⚖ icon on an example attribute; creates an empty `sh:property` when none exists |
 | `SemForge: Go to the shape for this class` | the ⚖ icon on a knowledge class |

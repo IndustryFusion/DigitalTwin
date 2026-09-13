@@ -187,6 +187,35 @@ def _examples_and_reports(package, expectations):
     return paired
 
 
+@cli.command('new')
+@click.argument('name')
+@click.option('--in', 'parent', type=click.Path(), default='.',
+              help='where to create the project directory')
+@click.option('--namespace',
+              help='base IRI for this package, e.g. https://example.org/plant/')
+@click.option('--layout', type=click.Choice(['grouped', 'flat']),
+              default='grouped', show_default=True)
+@click.pass_context
+def new_command(ctx, name, parent, namespace, layout):
+    """Create a project DIRECTORY and scaffold a package in it.
+
+    The classical gesture: `semforge new plant-line` makes ./plant-line. To
+    scaffold a directory you already have, use `semforge init`.
+    """
+    import re
+
+    slug = re.sub(r'[^A-Za-z0-9]+', '-', name).strip('-').lower()
+    if not slug:
+        click.echo('a name needs letters or digits in it', err=True)
+        sys.exit(2)
+    directory = os.path.join(parent, slug)
+    if os.path.isdir(directory) and os.listdir(directory):
+        click.echo(f'{directory} already exists and is not empty', err=True)
+        sys.exit(2)
+    ctx.invoke(init_command, path=directory, name=name, namespace=namespace,
+               published=None, layout=layout)
+
+
 @cli.command('init')
 @click.argument('path', type=click.Path(), default='.')
 @click.option('--name', help='the package name; defaults to the directory name')
