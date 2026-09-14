@@ -72,7 +72,7 @@ async function deleteProject(client, uri, refreshAll) {
   }
 
   if (refreshAll) {
-    refreshAll();
+    refreshAll(plan.path);
   }
   vscode.window.showInformationMessage(
     `SemForge: ${plan.name} moved to the trash.`
@@ -93,15 +93,17 @@ function register(context, clientHolder, session, refreshAll) {
         );
         return;
       }
-      const gone = await deleteProject(clientHolder.client, target, () => {
+      const gone = await deleteProject(clientHolder.client, target, (path) => {
+        // Let go of it FIRST. Re-discovering while the session still points
+        // into the deleted directory leaves every view asking about a package
+        // that is not there -- which is what "it is still shown" was.
+        session.forget(path);
         session.discover();
         if (refreshAll) {
           refreshAll();
         }
       });
-      if (gone) {
-        session.discover();
-      }
+      return gone;
     })
   );
 }

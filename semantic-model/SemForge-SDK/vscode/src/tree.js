@@ -41,6 +41,26 @@ class CookedTreeProvider {
   }
 
   /**
+   * Point at another package, or at none.
+   *
+   * Separate from `refresh`, which means "ask again about the package you
+   * already have" and therefore ignores a falsy uri. Nothing could clear a
+   * provider, so a deleted package went on being displayed.
+   */
+  setPackage(uri) {
+    this.uri = uri || undefined;
+    // The wrappers are keyed by address within a package; carrying them across
+    // means a row of the old one answering for a row of the new.
+    if (this.nodes && this.nodes.clear) {
+      this.nodes.clear();
+    }
+    if (this.parents && this.parents.clear) {
+      this.parents.clear();
+    }
+    this._onDidChangeTreeData.fire();
+  }
+
+  /**
    * Index the whole tree in one pass.
    *
    * The server returns every node in a single reply, so the wrappers can be
@@ -367,7 +387,7 @@ function register(context, clientHolder, session) {
   // naming any of them.
   provider.refresh(session.uri);
   context.subscriptions.push(
-    session.onDidChange((uri) => provider.refresh(uri)),
+    session.onDidChange((uri) => provider.setPackage(uri)),
     vscode.workspace.onDidSaveTextDocument(() => provider.refresh())
   );
 

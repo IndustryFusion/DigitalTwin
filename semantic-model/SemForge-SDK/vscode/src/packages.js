@@ -42,18 +42,38 @@ class PackageSession {
     return directory ? path.basename(directory) : undefined;
   }
 
-  /** Take the package found in the opened folders. */
+  /**
+   * Take the package found in the opened folders -- or none, if there is none.
+   *
+   * It used to set only when it found something, so after the active package
+   * was deleted the session went on pointing at it: the status bar kept its
+   * name and all four views kept asking about a directory that was gone.
+   * "Nothing here" is an answer and has to be settable.
+   */
   discover() {
-    const found = findPackageUri();
-    if (found) {
-      this.set(found, { pinned: false });
-    }
+    this.set(findPackageUri(), { pinned: false });
     return this.uri;
+  }
+
+  /** Let go of a package under `directory`, if that is the one we are on. */
+  forget(directory) {
+    if (!this.uri || !directory) {
+      return false;
+    }
+    const here = this.directory;
+    if (here !== directory && !(here || '').startsWith(directory + path.sep)) {
+      return false;                   // a different package; leave it alone
+    }
+    this.pinned = false;              // whatever pinned it is not there now
+    return this.set(undefined, { pinned: false });
   }
 
   set(uri, options) {
     const pinned = !!(options || {}).pinned;
-    if (samePackage(this.uri, uri) && this.pinned === pinned) {
+    if (!uri && !this.uri && this.pinned === pinned) {
+      return false;                   // nothing, and nothing before it
+    }
+    if (uri && samePackage(this.uri, uri) && this.pinned === pinned) {
       return false;
     }
     this.uri = uri;
@@ -94,10 +114,10 @@ class PackageSession {
  * is where `test` does not.
  */
 function label(session) {
-  if (!session.uri) {
+  const directory = session.directory;
+  if (!session.uri || !directory) {
     return 'no package';
   }
-  const directory = session.directory;
   let name = session.name;
   for (const folder of vscode.workspace.workspaceFolders || []) {
     const root = folder.uri.fsPath;

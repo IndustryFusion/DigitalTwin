@@ -1260,3 +1260,65 @@ def test_the_project_row_carries_the_delete_action(tmp_path):
                and 'viewItem == project' in entry['when']
                and entry['group'] == 'inline'
                for entry in menus), menus
+
+
+def test_after_deleting_the_views_stop_showing_it(tmp_path):
+    """"The project I am in is still shown."
+
+    The session could only be SET, never cleared, and a provider's refresh
+    ignored a falsy uri -- so a deleted package went on being displayed by all
+    four views and named in the status bar.
+    """
+    _bare_package(tmp_path, 'alpha')
+    _bare_package(tmp_path, 'beta')
+    seen = _drive(tmp_path, {
+        'command': 'semforge.deleteProject',
+        'node': {'packageUri': f'file://{tmp_path}/alpha/shacl.ttl'},
+        'answer': 'Move to Trash', 'input': 'alpha',
+        'replies': {'semforge/deletionPlan': {
+            'ok': True, 'name': 'alpha', 'path': f'{tmp_path}/alpha',
+            'files': 3, 'bytes': 100, 'strangers': [], 'nested': [],
+            'inGit': False, 'tracked': 0, 'untracked': 3,
+            'warnings': ['not in a git repository']}},
+    })
+    assert seen['deleted'], 'nothing was deleted'
+    assert not (tmp_path / 'alpha').exists()
+
+    # It moved to the one that is left, rather than staying on the one that
+    # is gone.
+    assert 'beta' in seen['statusBar'][-1], seen['statusBar']
+    assert 'alpha' not in seen['statusBar'][-1]
+    for view, state in seen['views'].items():
+        assert 'alpha' not in (state.get('description') or ''), view
+
+
+def test_deleting_the_only_package_leaves_no_package(tmp_path):
+    _bare_package(tmp_path, 'only')
+    seen = _drive(tmp_path, {
+        'command': 'semforge.deleteProject',
+        'node': {'packageUri': f'file://{tmp_path}/only/shacl.ttl'},
+        'answer': 'Move to Trash', 'input': 'only',
+        'replies': {'semforge/deletionPlan': {
+            'ok': True, 'name': 'only', 'path': f'{tmp_path}/only',
+            'files': 3, 'bytes': 100, 'strangers': [], 'nested': [],
+            'inGit': False, 'tracked': 0, 'untracked': 3, 'warnings': []}},
+    })
+    assert not (tmp_path / 'only').exists()
+    assert 'no package' in seen['statusBar'][-1], seen['statusBar']
+
+
+def test_deleting_another_package_leaves_the_current_one_alone(tmp_path):
+    """Only the package you are on is let go of."""
+    _bare_package(tmp_path, 'alpha')
+    _bare_package(tmp_path, 'beta')
+    seen = _drive(tmp_path, {
+        'command': 'semforge.deleteProject',
+        'node': {'packageUri': f'file://{tmp_path}/beta/shacl.ttl'},
+        'answer': 'Move to Trash', 'input': 'beta',
+        'replies': {'semforge/deletionPlan': {
+            'ok': True, 'name': 'beta', 'path': f'{tmp_path}/beta',
+            'files': 3, 'bytes': 100, 'strangers': [], 'nested': [],
+            'inGit': False, 'tracked': 0, 'untracked': 3, 'warnings': []}},
+    })
+    assert not (tmp_path / 'beta').exists()
+    assert 'alpha' in seen['statusBar'][-1], seen['statusBar']

@@ -52,11 +52,18 @@ const stub = {
     createFileSystemWatcher: () => ({ dispose: noop }),
     onDidChangeConfiguration: noop,
     onDidSaveTextDocument: noop,
-    // Recorded, never performed: a test that actually deleted a directory
-    // would be a test you could only run once.
+    // Recorded AND performed, but only inside the workspace the test built --
+    // which is a pytest tmp_path. Recording alone was not enough: what happens
+    // after a deletion is that the package is gone, and a stub that leaves it
+    // on disk cannot show the views noticing.
     fs: {
       delete: (uri, options) => {
         seen.deleted.push({ path: uri.fsPath, options: options || {} });
+        const root = path.resolve(process.argv[2]);
+        const target = path.resolve(uri.fsPath);
+        if (target !== root && target.startsWith(root + path.sep)) {
+          require('fs').rmSync(target, { recursive: true, force: true });
+        }
         return Promise.resolve();
       }
     },
