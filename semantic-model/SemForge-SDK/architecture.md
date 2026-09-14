@@ -1161,6 +1161,16 @@ exists. The views carry those names: **Constraints**, **Model**, **Knowledge**.
 The model view holds both kinds of data `model/` holds — the declared cases and
 the scratchpad — because "examples" named only half of what it showed.
 
+The knowledge view shows the three things `knowledge.ttl` declares, not two:
+entity types, vocabularies, and the **attributes** — under whatever carries
+them (`rdfs:domain`, shown where declared because it is inherited), with
+sub-attributes under the attribute they nest inside and `rdfs:subPropertyOf`
+where a package has it. The file also declares the ontology's own relations,
+which are never document keys; they are separated by the same test that decides
+whether an attribute is an NGSI-LD one at all (an explicit `ngsild:` range, or
+a shape naming it) and judged by their own rule, because "unused and
+unchecked" is a statement about a document and says nothing about an ontology.
+
 Above them sits **Project** (`semforge/project`, `semforge/setSetting`), which
 answers what the package *is* rather than what it says: the name it declares,
 the path it is at, why that directory counted as a package, each setting with

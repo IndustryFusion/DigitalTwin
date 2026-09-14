@@ -25,8 +25,10 @@ def _all(tree, kind):
 
 # --- the hierarchy ------------------------------------------------------------
 
-def test_the_two_groups_are_the_hierarchy_and_the_vocabularies(tree):
-    assert [n.label for n in tree] == ['Entity types', 'Vocabulary classes']
+def test_the_groups_are_the_three_things_the_knowledge_declares(tree):
+    """Types, vocabularies, and the attributes -- which nothing showed."""
+    assert [n.label for n in tree] == [
+        'Entity types', 'Vocabulary classes', 'Attributes']
 
 
 def test_entity_types_nest_by_subclass(tree):
@@ -227,3 +229,96 @@ def test_the_count_and_the_rows_agree(tree):
         rows = [n for n in node.children if n.kind == 'usage']
         assert f'used in {len(rows)} place(s)' in node.detail, \
             f'{label}: {node.detail} but {len(rows)} rows'
+
+
+# --- the attribute hierarchy -------------------------------------------------
+
+def _attributes(package):
+    from semforge.cooked.knowledge import build_knowledge
+
+    return next((root for root in build_knowledge(package)
+                 if root.label == 'Attributes'), None)
+
+
+def _rows(node):
+    from semforge.cooked.knowledge import flatten
+
+    return {row.label: row for _, row in flatten([node])}
+
+
+def test_the_attributes_are_shown_under_what_carries_them(corpus):
+    """The third thing knowledge.ttl declares, and the one nothing showed."""
+    group = _attributes(corpus)
+    assert group is not None
+    carriers = {row.label for row in group.children}
+    assert 'iffBaseEntities:Machine' in carriers
+    assert 'iffBaseEntities:Workpiece' in carriers
+
+    machine = next(row for row in group.children
+                   if row.label == 'iffBaseEntities:Machine')
+    assert 'iffBaseEntities:hasState' in {row.label for row in machine.children}
+
+
+def test_a_sub_attribute_is_shown_under_its_parent_not_at_the_top(corpus):
+    group = _attributes(corpus)
+    state = _rows(group)['iffBaseEntities:hasState']
+    assert [row.label for row in state.children] == \
+        ['iffBaseEntities:hasXXXWorkpiece']
+    # And it is not repeated as something an entity type carries.
+    for carrier in group.children:
+        assert 'iffBaseEntities:hasXXXWorkpiece' not in \
+            {row.label for row in carrier.children}
+
+
+def test_each_attribute_reaches_the_shape_that_constrains_it(corpus):
+    """The join the view exists for: a row that cannot reach its property
+    shape leaves you to find it by hand."""
+    rows = _rows(_attributes(corpus))
+    state = rows['iffBaseEntities:hasState']
+    assert state.shape_name == 'iffBaseShacl:MachineShape'
+    assert state.shape_at and ':' in state.shape_at
+
+
+def test_an_attribute_constrained_inside_sh_or_is_still_found(corpus):
+    """`_read_token` closed a `(` at the FIRST `)`, so a collection nested in
+    an sh:or ended the token early and the group's sh:path became whatever
+    came last -- pointing every such attribute at the wrong shape."""
+    rows = _rows(_attributes(corpus))
+    assert rows['iffBaseEntities:hasList'].shape_name == \
+        'iffBaseShacl:CutterShape'
+
+
+def test_the_ontology_own_relations_are_judged_apart(corpus):
+    """knowledge.ttl also declares relations that are never document keys.
+
+    Reporting `material:contains` as unused and unchecked is true of a document
+    and meaningless of an ontology.
+    """
+    group = _attributes(corpus)
+    relations = next(row for row in group.children
+                     if row.label == 'Ontology relations')
+    labels = {row.label for row in relations.children}
+    assert 'material:contains' in labels
+    assert 'iffBaseEntities:hasState' not in labels
+
+    contains = next(row for row in relations.children
+                    if row.label == 'material:contains')
+    assert not contains.severity            # used within the ontology
+    assert 'statement(s)' in contains.detail
+
+
+def test_an_attribute_nothing_carries_is_flagged(corpus):
+    """`hasOutWorkpiece` is declared and constrained and used by nothing --
+    while `hasOutWorkpiecexx`, two letters away, is what the data carries."""
+    rows = _rows(_attributes(corpus))
+    unused = rows['iffBaseEntities:hasOutWorkpiece']
+    assert unused.severity == 'warning'
+    assert 'used by nothing' in unused.detail
+    assert any('no constraint about it can fire' in message
+               for message in unused.messages)
+
+
+def test_a_well_formed_attribute_is_not_flagged(corpus):
+    rows = _rows(_attributes(corpus))
+    assert not rows['iffBaseEntities:hasStrength'].severity
+    assert not rows['iffBaseEntities:hasState'].severity

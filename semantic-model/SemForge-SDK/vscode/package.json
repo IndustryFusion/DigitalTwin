@@ -305,6 +305,11 @@
           "command": "semforge.editSetting",
           "when": "view == semforgeProject && viewItem == setting",
           "group": "inline"
+        },
+        {
+          "command": "semforge.showShapeForClass",
+          "when": "view == semforgeKnowledge && viewItem == attributeWithShape",
+          "group": "inline"
         }
       ],
       "semforge.project": [

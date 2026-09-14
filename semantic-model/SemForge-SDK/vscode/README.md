@@ -282,6 +282,41 @@ If you keep your interpreter somewhere the search will not find, set
 
 ---
 
+### The Knowledge view
+
+Three groups, for the three things `knowledge.ttl` declares:
+
+```text
+Entity types         8 type(s) under Entity
+Vocabulary classes   …
+Attributes           17 attribute(s) · 21 ontology relation(s)
+  iffBaseEntities:Machine                1 attribute(s)
+    iffBaseEntities:hasState             Property · 12 use(s)          ⚖
+      iffBaseEntities:hasXXXWorkpiece    Relationship · inside hasState · 6 use(s)
+  iffBaseEntities:Cutter                 5 attribute(s)
+    iffBaseEntities:hasOutWorkpiece      Relationship · used by nothing   ⚠
+  Ontology relations   used within the ontology, never as a document key
+    material:contains                    22 statement(s)
+```
+
+Attributes sit under whatever **carries** them — the entity type from
+`rdfs:domain`, shown where it is *declared* since it is inherited from there
+down — and a sub-attribute sits under the attribute it nests inside, never at
+the top. `rdfs:subPropertyOf` nests too, where a package uses it. The ⚖ on a
+row opens the property shape that constrains it.
+
+`knowledge.ttl` also declares the ontology's **own** relations —
+`base:bindsFirmware`, `material:contains` — which are never keys in a document
+and which no shape should constrain. They are shown apart and judged apart:
+calling them unused and unchecked is true of a document and meaningless of an
+ontology. They are flagged only when nothing uses them at all, data or
+ontology.
+
+An attribute is flagged when no shape constrains it (nothing is ever checked
+against it), when no document carries it (no constraint about it can fire), or
+when it has no `rdfs:range` (nothing says whether it is a Property or a
+Relationship, and the two carry their payload under different keys).
+
 ## Working on the extension itself
 
 Only needed if you are changing the extension's own code:

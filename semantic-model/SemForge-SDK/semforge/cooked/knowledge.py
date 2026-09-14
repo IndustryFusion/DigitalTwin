@@ -446,7 +446,217 @@ def build_knowledge(package):
         if any(n.severity for _, n in flatten(vocabulary.children)):
             vocabulary.severity = 'warning'
         roots.append(vocabulary)
+
+    attributes = _attributes_group(package, context)
+    if attributes is not None:
+        roots.append(attributes)
     return roots
+
+
+def _attributes_group(package, context):
+    """The attribute hierarchy: what carries what, and what nests in it.
+
+    The third thing knowledge.ttl declares, and the one the view could not
+    show. Entity types were there and vocabularies were there, but the
+    attributes -- the terms every shape's `sh:path` names and every document's
+    keys are -- had to be read out of the file.
+
+    Three nestings, in the order they mean something:
+
+      * `rdfs:subPropertyOf`, where a package has it -- a real hierarchy;
+      * `rdfs:domain`, which says which entity type carries it, and is
+        inherited, so it is shown under the type that DECLARES it;
+      * the shapes' nesting, which puts a sub-attribute under the attribute it
+        hangs off -- the only thing that names one specific parent.
+
+    knowledge.ttl also declares the ontology's OWN relations --
+    `base:bindsFirmware`, `material:contains` -- which are never keys in a
+    document and which no shape should constrain. They are shown apart, and
+    judged apart: reporting them as unused and unchecked is true of a document
+    and meaningless of an ontology.
+
+    Flags only where absence is a defect. For an attribute: no shape constrains
+    it, so nothing is ever checked against it; no document carries it, so no
+    constraint about it can fire; no `rdfs:range`, so nothing says which half
+    of the encoding it is. For an ontology relation: nothing uses it, in the
+    data or in the ontology itself.
+    """
+    from .choices import attribute_terms, model_term
+    from .shapelink import find_property_shape
+
+    declared = attribute_terms(package)
+    if not declared:
+        return None
+
+    by_term = {entry.term: entry for entry in declared}
+    used = _attribute_usage(package)
+    in_ontology = _ontology_usage(package)
+    index = package.index('knowledge')
+
+    # A sub-attribute is shown under its parent, never at the top.
+    nested = {}
+    for entry in declared:
+        for parent in entry.parents:
+            nested.setdefault(parent, []).append(entry)
+
+    # rdfs:subPropertyOf, when a package declares it.
+    below = {}
+    for child, parent in package.knowledge.subject_objects(RDFS.subPropertyOf):
+        if isinstance(child, URIRef) and isinstance(parent, URIRef):
+            below.setdefault(model_term(package, parent), []).append(
+                model_term(package, child))
+
+    placed = {child for children in nested.values() for child in children}
+    placed |= {by_term[t] for terms in below.values() for t in terms
+               if t in by_term}
+
+    def node_for(entry, seen, carrier=''):
+        if entry.term in seen:
+            return None                     # a cycle in subPropertyOf
+        seen = seen | {entry.term}
+        uses = used.get(entry.iri, 0)
+        ontology_uses = in_ontology.get(entry.iri, 0)
+        node = KnowledgeNode(
+            kind='attribute' if entry.ngsild else 'relation',
+            label=entry.term, iri=entry.iri,
+            detail=_attribute_detail(entry, uses, ontology_uses),
+            defined_at=index.locator(URIRef(entry.iri)))
+        # The join the view exists for: where this attribute is CONSTRAINED.
+        # An attribute row that cannot reach its property shape leaves you to
+        # find it by hand, which is the work the view removes.
+        if carrier and entry.ngsild:
+            found = find_property_shape(package, carrier, entry.term)
+            if found:
+                node.shape = found['shape']
+                node.shape_name = found['shapeName']
+                node.shape_at = f"{found['file']}:{found['line']}"
+        node.messages = _attribute_notes(entry, uses, ontology_uses)
+        node.severity = 'warning' if node.messages else ''
+        for child in sorted(nested.get(entry.term, []), key=lambda e: e.term):
+            made = node_for(child, seen, carrier)
+            if made is not None:
+                node.children.append(made)
+        for term in sorted(below.get(entry.term, [])):
+            if term in by_term:
+                made = node_for(by_term[term], seen, carrier)
+                if made is not None:
+                    node.children.append(made)
+        return node
+
+    carriers = {}
+    homeless = []
+    relations = []
+    for entry in declared:
+        if entry in placed:
+            continue                        # shown under its parent
+        if not entry.ngsild:
+            relations.append(entry)
+        elif entry.domain and not entry.carrier_kind:
+            carriers.setdefault(entry.domain, []).append(entry)
+        elif entry.carrier_kind:
+            carriers.setdefault(f'any {entry.carrier_kind}', []).append(entry)
+        else:
+            homeless.append(entry)
+
+    group = KnowledgeNode(
+        kind='group', label='Attributes',
+        detail=f'{len(declared) - len(relations)} attribute(s)' +
+               (f' · {len(relations)} ontology relation(s)' if relations else ''))
+    for carrier in sorted(carriers):
+        holder = KnowledgeNode(
+            kind='carrier', label=carrier,
+            iri=by_term[carrier].iri if carrier in by_term else '',
+            detail=f'{len(carriers[carrier])} attribute(s)')
+        for entry in sorted(carriers[carrier], key=lambda e: e.term):
+            made = node_for(entry, frozenset(), carrier)
+            if made is not None:
+                holder.children.append(made)
+        group.children.append(holder)
+    if homeless:
+        holder = KnowledgeNode(
+            kind='carrier', label='carried by nothing declared',
+            detail='no rdfs:domain, and no shape nests them', severity='warning')
+        for entry in sorted(homeless, key=lambda e: e.term):
+            made = node_for(entry, frozenset())
+            if made is not None:
+                holder.children.append(made)
+        group.children.append(holder)
+
+    if relations:
+        # The ontology's own relations: declared here, used here, and never a
+        # key in a document. Apart, so the attributes above stay readable.
+        holder = KnowledgeNode(
+            kind='carrier', label='Ontology relations',
+            detail='used within the ontology, never as a document key')
+        for entry in sorted(relations, key=lambda e: e.term):
+            made = node_for(entry, frozenset())
+            if made is not None:
+                holder.children.append(made)
+        if any(n.severity for _, n in flatten(holder.children)):
+            holder.severity = 'warning'
+        group.children.append(holder)
+
+    if any(n.severity for _, n in flatten(group.children)):
+        group.severity = 'warning'
+    return group
+
+
+def _attribute_usage(package):
+    """{attribute IRI: how many times a document carries it}."""
+    counts = {}
+    for _, predicate, _ in _data_graph(package):
+        if isinstance(predicate, URIRef):
+            counts[str(predicate)] = counts.get(str(predicate), 0) + 1
+    return counts
+
+
+def _ontology_usage(package):
+    """{IRI: how many statements in the KNOWLEDGE use it as a predicate}."""
+    counts = {}
+    for _, predicate, _ in package.knowledge:
+        if isinstance(predicate, URIRef):
+            counts[str(predicate)] = counts.get(str(predicate), 0) + 1
+    return counts
+
+
+def _attribute_detail(entry, uses, ontology_uses):
+    if not entry.ngsild:
+        return ' · '.join(filter(None, [
+            f'{ontology_uses} statement(s)' if ontology_uses
+            else 'used by nothing',
+            entry.comment]))
+    parts = [entry.kind or 'kind not declared']
+    if entry.parents:
+        parts.append('inside ' + ', '.join(entry.parents))
+    elif entry.carrier_kind:
+        parts.append(f'on any {entry.carrier_kind}')
+    parts.append(f'{uses} use(s)' if uses else 'used by nothing')
+    if not entry.constrained:
+        parts.append('unconstrained')
+    if entry.comment:
+        parts.append(entry.comment)
+    return ' · '.join(parts)
+
+
+def _attribute_notes(entry, uses, ontology_uses):
+    if not entry.ngsild:
+        if uses or ontology_uses:
+            return []
+        return ['Nothing uses this -- not a document, not the ontology '
+                'itself. It is a term the package declares and never says '
+                'anything with.']
+    notes = []
+    if not entry.kind:
+        notes.append('No rdfs:range, so nothing says whether this is a '
+                     'Property or a Relationship -- the two carry their '
+                     'payload under different keys.')
+    if not entry.constrained:
+        notes.append('No sh:path names it, so no constraint is ever checked '
+                     'against it.')
+    if not uses:
+        notes.append('No document carries it, so no constraint about it can '
+                     'fire.')
+    return notes
 
 
 def add_entity_type(package, name, parent):

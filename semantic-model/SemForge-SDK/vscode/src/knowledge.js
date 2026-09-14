@@ -78,15 +78,30 @@ class KnowledgeTreeProvider {
     item.description = raw.detail || '';
     // Spelled out, because `when: viewItem == x` matches a string and a row
     // whose contextValue drifts from package.json silently loses its icons.
-    item.contextValue =
-      raw.kind === 'class'
-        ? raw.shapeAt
-          ? 'classWithShape'
-          : 'class'
-        : raw.kind;
+    // Spelled out, because `when: viewItem == x` matches a string and a row
+    // whose contextValue drifts from package.json silently loses its icons.
+    if (raw.kind === 'class') {
+      item.contextValue = raw.shapeAt ? 'classWithShape' : 'class';
+    } else if (raw.kind === 'attribute') {
+      item.contextValue = raw.shapeAt ? 'attributeWithShape' : 'attribute';
+    } else {
+      item.contextValue = raw.kind;
+    }
 
     if (raw.kind === 'group') {
       item.iconPath = new vscode.ThemeIcon('library');
+    } else if (raw.kind === 'carrier') {
+      item.iconPath = new vscode.ThemeIcon(
+        raw.severity ? 'warning' : 'symbol-class'
+      );
+    } else if (raw.kind === 'attribute') {
+      item.iconPath = new vscode.ThemeIcon(
+        raw.severity ? 'warning' : 'symbol-field'
+      );
+    } else if (raw.kind === 'relation') {
+      item.iconPath = new vscode.ThemeIcon(
+        raw.severity ? 'warning' : 'symbol-property'
+      );
     } else if (raw.kind === 'class') {
       item.iconPath = new vscode.ThemeIcon(
         raw.severity ? 'warning' : 'symbol-class'

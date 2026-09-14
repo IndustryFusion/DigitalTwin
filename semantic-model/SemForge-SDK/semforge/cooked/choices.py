@@ -267,6 +267,12 @@ class AttributeTerm:
     # of node carries it is rdfs:domain's, and that is `carrier_kind`.
     parents: tuple = ()
     carrier_kind: str = ''    # Property | Relationship | ... when it nests
+    # Is this an NGSI-LD attribute at all? knowledge.ttl also declares the
+    # ontology's own relations -- `base:bindsFirmware`, `material:contains` --
+    # which are never keys in a document and which no shape should constrain.
+    # Treating them as attributes reported every one of them as unused and
+    # unchecked, which is true of a document and meaningless of an ontology.
+    ngsild: bool = False
 
 
 # rdfs:range on an NGSI-LD attribute says which kind of attribute it is, and
@@ -380,7 +386,10 @@ def attribute_terms(package):
         domains = [d for d in package.knowledge.objects(iri, RDFS.domain)
                    if isinstance(d, URIRef)]
         kind = next((RANGE_KIND[r] for r in ranges if r in RANGE_KIND), '')
-        if not kind and ranges:
+        # An explicit ngsild range settles it; otherwise a shape naming it is
+        # what makes it an attribute of the data rather than of the ontology.
+        is_ngsild = bool(kind) or str(iri) in constrained
+        if not kind and is_ngsild and ranges:
             # A package may name the VALUE class instead of the NGSI-LD half --
             # `semforge init` used to. A class in the entity hierarchy can only
             # be the target of a Relationship; anything else is a value, so a
@@ -393,7 +402,7 @@ def attribute_terms(package):
                              if str(d) in sub_domains), '')
         found.append(AttributeTerm(
             iri=str(iri), term=model_term(package, iri), label=local(iri),
-            kind=kind, carrier_kind=carrier_kind,
+            kind=kind, carrier_kind=carrier_kind, ngsild=is_ngsild,
             domain=model_term(package, domains[0]) if domains else '',
             domain_iri=str(domains[0]) if domains else '',
             comment=comment,

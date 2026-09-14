@@ -64,8 +64,17 @@ def _skip_noise(text, i, limit):
     return i
 
 
-def _match_bracket(text, start, limit):
-    """Index just past the ']' closing the '[' at start."""
+def _match_bracket(text, start, limit, pair='[]'):
+    """Index just past the bracket closing the one at start.
+
+    Counts BOTH kinds on the way, because a Turtle collection and a blank node
+    interleave: `sh:or ( [ … sh:path ( [ … ] rdf:first ) ] … )`. Closing a `(`
+    at the first `)` ended the token in the middle of that, and the scanner
+    then read the rest of the collection as if it were the group's own
+    parameters -- so the group's `sh:path` was whatever came last. Every
+    attribute constrained with `sh:or` pointed at the wrong shape, or at none.
+    """
+    opening, closing_char = pair
     depth = 0
     i = start
     while i < limit:
@@ -83,9 +92,9 @@ def _match_bracket(text, start, limit):
             if closing != -1 and (newline == -1 or closing < newline):
                 i = closing + 1
                 continue
-        if char == '[':
+        if char == opening:
             depth += 1
-        elif char == ']':
+        elif char == closing_char:
             depth -= 1
             if depth == 0:
                 return i + 1
@@ -106,8 +115,8 @@ def _read_token(text, i, limit):
         end = _skip_string(text, i)
         return text[i:end], start, end
     if text[i] in '([':
-        end = _match_bracket(text, i, limit) if text[i] == '[' \
-            else text.find(')', i) + 1
+        end = _match_bracket(text, i, limit,
+                             '[]' if text[i] == '[' else '()')
         return text[i:end], start, end
     while i < limit and not text[i].isspace() and text[i] not in ';,]':
         i += 1

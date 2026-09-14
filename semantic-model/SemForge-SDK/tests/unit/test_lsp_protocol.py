@@ -395,14 +395,15 @@ def test_the_examples_tree_carries_the_entity_type_over_the_protocol(session):
 
 
 def test_the_knowledge_tree_arrives_over_the_protocol(session):
-    """The third view: hierarchy, vocabularies, and the locations that connect
-    them to the other two."""
+    """The third view: hierarchy, vocabularies, attributes, and the locations
+    that connect them to the other two."""
     session.send({'jsonrpc': '2.0', 'id': 37, 'method': 'semforge/knowledge',
                   'params': {'uri': 'file://' + session.document}})
     tree = session.wait_for(lambda m: m.get('id') == 37)[0]['result']
     assert not tree.get('error'), tree.get('error')
     assert [r['label'] for r in tree['roots']] == ['Entity types',
-                                                   'Vocabulary classes']
+                                                   'Vocabulary classes',
+                                                   'Attributes']
 
     rows = []
 
