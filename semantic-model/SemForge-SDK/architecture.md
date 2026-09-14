@@ -1183,6 +1183,7 @@ the locations of its joins**, which is where authoring actually goes wrong:
 |---|---|---|
 | datum → the shape judging it | `semforge/shapeFor` | the declaring `sh:property`'s `file:line`, plus whether it is inherited |
 | datum → the values its shape allows | `semforge/valueChoices` | individuals of the `sh:class`, or entity ids for a relationship slot |
+| entity → the types it may have | `semforge/entityTypes` | the entity hierarchy, each with the nearest shape that judges it |
 | class → the shape targeting it | `semforge/knowledge` | `shapeAt`, the node shape's `file:line` |
 | class → the examples instantiating it | `semforge/knowledge` | instance rows with their `.jsonld` `file:line` |
 | vocabulary term → the data using it | `semforge/knowledge` | usage rows, `(entity, attribute)` |
@@ -1197,6 +1198,18 @@ its ancestors too — `sh:targetClass` traverses `rdfs:subClassOf*`), a
 `sh:class` on a vocabulary with no individuals, a value no case exercises. An
 abstract root with no shape and a vocabulary no shape draws from are not
 defects, and flagging them would bury the ones that are.
+
+**A type is chosen, never typed.** An entity's `type` decides which shapes
+judge it, so it is the one field where a typo produces *silence* rather than an
+error: nothing rejects an undeclared class, no `sh:targetClass` matches it, and
+every constraint stays quiet while the entity reads as validated.
+`semforge/entityTypes` therefore answers with the entity hierarchy — the
+descendants of the entity root (§ declared `entityRoot:`, else derived as the
+common ancestor of the shapes' targets) — and the editor offers that and
+nothing else. A type that is genuinely missing is declared in the knowledge
+first (`semforge/addEntityType`), beneath a parent, in the file that declares
+that parent and in its namespace. The rule is enforced in `add_entity`, not in
+the editor, so no client can route around it.
 
 **`semforge/shapeFor` may create.** When nothing constrains an attribute there
 is nothing to navigate to, so with `create` it writes an empty `sh:property`

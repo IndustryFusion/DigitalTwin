@@ -20,6 +20,7 @@ reported as unavailable rather than filled with everything.
 """
 
 import os
+from dataclasses import dataclass
 
 from rdflib import OWL, RDF, RDFS, URIRef
 
@@ -46,7 +47,15 @@ COMMON_DATATYPES = ['xsd:string', 'xsd:integer', 'xsd:double', 'xsd:decimal',
 
 
 def declared_entity_root(package_path):
-    """`entityRoot:` from semforge.yaml, if the package declares one."""
+    """`entityRoot:` from semforge.yaml, if the package declares one.
+
+    It may be a full IRI or a prefixed name, and a prefixed name is what a
+    human writes -- `semforge init` writes one. Taking it literally made
+    `URIRef('testEntities:Entity')`, which matches nothing in the knowledge, so
+    every scaffolded package reported an entity hierarchy of exactly one class:
+    the root, with no descendants. Silently, because a hierarchy of one is a
+    legal answer.
+    """
     config = os.path.join(package_path, 'semforge.yaml')
     if not os.path.exists(config):
         return None
@@ -55,7 +64,22 @@ def declared_entity_root(package_path):
     with open(config) as handle:
         data = YAML().load(handle) or {}
     root = data.get('entityRoot')
-    return URIRef(root) if root else None
+    if not root:
+        return None
+    return URIRef(expand(package_path, str(root)))
+
+
+def expand(package_path, term):
+    """A prefixed name against the package's agreed names, or the term itself."""
+    from ..package.prefixes import canonical_map
+
+    if '://' in term or term.startswith('urn:'):
+        return term
+    prefix, sep, rest = term.partition(':')
+    if not sep:
+        return term
+    namespace = canonical_map(package_path).get(prefix)
+    return namespace + rest if namespace else term
 
 
 def entity_root(package):
@@ -100,6 +124,24 @@ def _ancestors(graph, cls):
     return found
 
 
+def _ancestor_chain(graph, cls):
+    """`cls`, then its superclasses, nearest first and in a fixed order.
+
+    `_ancestors` answers a set, which is the right answer to "is this above
+    that" and the wrong one to "which shape judges this": several may, and the
+    nearest is the one to name.
+    """
+    order, seen, pending = [], {cls}, [cls]
+    while pending:
+        current = pending.pop(0)
+        order.append(current)
+        for parent in sorted(graph.objects(current, RDFS.subClassOf), key=str):
+            if isinstance(parent, URIRef) and parent not in seen:
+                seen.add(parent)
+                pending.append(parent)
+    return order
+
+
 def _descendants(graph, cls):
     found = {cls}
     pending = [cls]
@@ -130,6 +172,82 @@ def classify_classes(package):
     entities.add(root)
     knowledge = declared - entities
     return sorted(entities, key=str), sorted(knowledge, key=str), root
+
+
+@dataclass(frozen=True)
+class EntityType:
+    """A type an entity may be given, as the knowledge declares it."""
+    iri: str
+    term: str                 # what to write in the .jsonld
+    label: str                # the local name
+    parent: str = ''          # the term of its superclass, '' at the root
+    shape: str = ''           # the node shape that will judge it, '' when none
+    instances: int = 0        # entities of this type in the shipped model
+    is_root: bool = False
+
+
+def model_term(package, iri):
+    """A term valid in the MODEL, whose @context decides what names mean.
+
+    Not `term_for`, which answers for the shapes file: an entity type is
+    written into a .jsonld and read back through the context, so the name has
+    to be the one the context (or semforge.yaml, which overrides it) agreed.
+    A full IRI is always valid, and is what a namespace with no agreed name
+    gets.
+    """
+    from ..package.prefixes import names_by_namespace
+
+    text = str(iri)
+    names = names_by_namespace(package.path)
+    for namespace in sorted(names, key=len, reverse=True):
+        if text.startswith(namespace) and len(text) > len(namespace):
+            return f'{names[namespace]}:{text[len(namespace):]}'
+    return text
+
+
+def entity_types(package):
+    """(every type an entity may have, the root), from the knowledge.
+
+    Typing a type by hand is how a model acquires a class the ontology has
+    never heard of: nothing rejects it, no shape targets it, so every
+    constraint stays silent and the entity reads as validated. The editor
+    therefore offers these and nothing else -- a type that is genuinely
+    missing is added to the knowledge first, which is where a type belongs.
+    """
+    from rdflib.namespace import SH
+
+    from ..validate.shapes import node_shapes
+
+    entities, _, root = classify_classes(package)
+    if root is None:
+        return [], None
+
+    by_target = {}
+    for shape in node_shapes(package.shapes):
+        for target in package.shapes.objects(shape, SH.targetClass):
+            by_target.setdefault(target, []).append(shape)
+
+    found = []
+    for cls in entities:
+        parents = [p for p in package.knowledge.objects(cls, RDFS.subClassOf)
+                   if isinstance(p, URIRef)]
+        # sh:targetClass traverses rdfs:subClassOf*, so an inherited shape
+        # judges this type just as its own would. Nearest first, because a
+        # Plasmacutter is judged by CutterShape AND MachineShape and naming
+        # whichever a set happened to yield made the row flicker.
+        judging = [shape
+                   for ancestor in _ancestor_chain(package.knowledge, cls)
+                   for shape in sorted(by_target.get(ancestor, []), key=str)]
+        found.append(EntityType(
+            iri=str(cls),
+            term=model_term(package, cls),
+            label=local(cls),
+            parent=model_term(package, parents[0]) if parents else '',
+            shape=term_for(package.shapes, judging[0]) if judging else '',
+            instances=len(set(package.model.subjects(RDF.type, cls))),
+            is_root=(cls == root)))
+    found.sort(key=lambda entry: entry.label)
+    return found, str(root)
 
 
 def term_for(shapes_graph, iri):

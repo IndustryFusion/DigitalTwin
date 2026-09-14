@@ -577,3 +577,62 @@ def test_the_project_is_answered_and_a_setting_can_be_written(tmp_path, corpus):
         assert not refused['ok']
     finally:
         live.close()
+
+
+def test_the_entity_types_come_from_the_knowledge_over_the_protocol(tmp_path,
+                                                                    corpus):
+    """The editor offers what the ontology declares, and can extend it.
+
+    A type typed into the data is the quietest way to break a model: nothing
+    targets an undeclared class, so every constraint stays silent.
+    """
+    import shutil
+
+    target = tmp_path / 'pkg'
+    shutil.copytree(os.path.dirname(str(corpus.sources['shapes'])), str(target))
+    document = str(target / 'shacl.ttl')
+
+    live = Session(document)
+    try:
+        live.send({'jsonrpc': '2.0', 'id': 1, 'method': 'initialize',
+                   'params': {'processId': os.getpid(),
+                              'rootUri': 'file://' + str(tmp_path),
+                              'capabilities': {}}})
+        assert live.wait_for(lambda m: m.get('id') == 1)
+        live.send({'jsonrpc': '2.0', 'method': 'initialized', 'params': {}})
+
+        live.send({'jsonrpc': '2.0', 'id': 60, 'method': 'semforge/entityTypes',
+                   'params': {'uri': 'file://' + document}})
+        answer = live.wait_for(lambda m: m.get('id') == 60)[0]['result']
+        assert not answer.get('error'), answer
+        terms = {entry['term'] for entry in answer['types']}
+        assert 'iffBaseEntities:Filter' in terms
+        assert not any('MachineState' in term for term in terms)
+
+        live.send({'jsonrpc': '2.0', 'id': 61,
+                   'method': 'semforge/addEntityType',
+                   'params': {'uri': 'file://' + document,
+                              'name': 'Waterjetcutter',
+                              'parent': 'iffBaseEntities:Cutter'}})
+        made = live.wait_for(lambda m: m.get('id') == 61)[0]['result']
+        assert made['ok'], made.get('error')
+        assert made['term'] == 'iffBaseEntities:Waterjetcutter'
+        assert made['file'].endswith('knowledge.ttl')
+
+        # And it is immediately offerable -- the server must have re-read.
+        live.send({'jsonrpc': '2.0', 'id': 62, 'method': 'semforge/entityTypes',
+                   'params': {'uri': 'file://' + document}})
+        again = live.wait_for(lambda m: m.get('id') == 62)[0]['result']
+        assert 'iffBaseEntities:Waterjetcutter' in \
+            {entry['term'] for entry in again['types']}
+
+        live.send({'jsonrpc': '2.0', 'id': 63, 'method': 'semforge/addEntity',
+                   'params': {'uri': 'file://' + document,
+                              'file': str(target / 'model-instance.jsonld'),
+                              'id': 'urn:invented:1',
+                              'entityType': 'iffBaseEntities:Nonesuch'}})
+        refused = live.wait_for(lambda m: m.get('id') == 63)[0]['result']
+        assert not refused['ok']
+        assert 'not an entity type' in refused['error']
+    finally:
+        live.close()

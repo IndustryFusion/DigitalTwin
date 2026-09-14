@@ -284,7 +284,8 @@ function activate(context) {
           channel.appendLine(`server code     ${reported.module}`);
           channel.appendLine(`server methods  ${(reported.methods || []).join(', ')}`);
           const missing = ['semforge/knowledge', 'semforge/shapeFor',
-                           'semforge/valueChoices']
+                           'semforge/valueChoices', 'semforge/project',
+                           'semforge/entityTypes']
             .filter((name) => !(reported.methods || []).includes(name));
           if (missing.length) {
             channel.appendLine('');

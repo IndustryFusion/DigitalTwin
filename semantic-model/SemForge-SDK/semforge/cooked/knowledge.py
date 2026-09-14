@@ -22,10 +22,13 @@ need to fix is next to the thing it is about.
 
 import json
 import os
+import re
 from dataclasses import dataclass, field
 
 from rdflib import URIRef
 from rdflib.namespace import OWL, RDF, RDFS, SH
+
+from ..errors import PackageError
 
 from ..validate.normalise import curie, local, owner_and_edge
 from ..validate.shapes import node_shapes
@@ -444,3 +447,93 @@ def build_knowledge(package):
             vocabulary.severity = 'warning'
         roots.append(vocabulary)
     return roots
+
+
+def add_entity_type(package, name, parent):
+    """Declare a new entity type in the knowledge, beneath `parent`.
+
+    The editor offers only the types the knowledge declares, so this is the way
+    a type that is genuinely missing gets used: it is added HERE first, and the
+    entity is typed with it afterwards. A type introduced the other way round
+    -- typed into a .jsonld and never declared -- is the failure this exists to
+    prevent: no shape targets it, so every constraint stays silent and the
+    entity reads as validated.
+
+    It lands in the file that declares its parent, which is where a reader will
+    look for it, and it takes its parent's namespace: a subclass of
+    `base_entities:Machine` belongs in base_entities.
+    """
+    from .choices import entity_types
+
+    local_name = (name or '').strip()
+    if not local_name:
+        raise PackageError('an entity type needs a name')
+    if not re.match(r'^[A-Za-z][\w-]*$', local_name):
+        raise PackageError(
+            f'{local_name!r} is not usable as a class name: a letter, then '
+            'letters, digits, underscores or hyphens')
+
+    known, root = entity_types(package)
+    if root is None:
+        raise PackageError(
+            'this package has no entity hierarchy to add to. Declare '
+            '`entityRoot:` in semforge.yaml, or give one shape an '
+            'sh:targetClass.')
+    chosen = next((entry for entry in known
+                   if parent in (entry.term, entry.iri, entry.label)), None)
+    if chosen is None:
+        raise PackageError(
+            f'{parent} is not an entity type in this package. '
+            f'Known: {", ".join(entry.term for entry in known)}')
+
+    namespace = _namespace_of(chosen.iri)
+    iri = URIRef(namespace + local_name)
+    if (iri, None, None) in package.knowledge:
+        raise PackageError(f'{local_name} is already declared')
+
+    index = package.index('knowledge')
+    path = index.file_for(URIRef(chosen.iri)) or package.sources['knowledge']
+    with open(path, encoding='utf-8') as handle:
+        text = handle.read()
+
+    subject = _turtle_name(text, iri)
+    superclass = _turtle_name(text, URIRef(chosen.iri))
+    kind = _turtle_name(text, OWL.Class)
+    edge = _turtle_name(text, RDFS.subClassOf)
+
+    addition = (f'\n{subject} a {kind} ;\n'
+                f'    {edge} {superclass} .\n')
+    with open(path, 'a', encoding='utf-8') as handle:
+        handle.write(addition)
+
+    line = len(text.splitlines()) + 2
+    from .choices import model_term
+    return {'iri': str(iri), 'term': model_term(package, iri),
+            'label': local_name, 'parent': chosen.term,
+            'file': path, 'line': line}
+
+
+def _namespace_of(iri):
+    text = str(iri)
+    cut = max(text.rfind('#'), text.rfind('/'))
+    return text[:cut + 1] if cut >= 0 else text
+
+
+def _turtle_name(text, iri):
+    """A prefixed name valid in THIS file, or the IRI in angle brackets.
+
+    A full IRI always parses, so a file that binds no prefix for the namespace
+    still gets a legal statement rather than a broken one.
+    """
+    from ..package.prefixes import PREFIX_LINE
+
+    text_iri = str(iri)
+    best = None
+    for match in PREFIX_LINE.finditer(text):
+        prefix, namespace = match.group(2) or '', match.group(3)
+        if text_iri.startswith(namespace) and len(text_iri) > len(namespace):
+            rest = text_iri[len(namespace):]
+            if re.match(r'^[\w-]+$', rest) and \
+                    (best is None or len(namespace) > best[0]):
+                best = (len(namespace), f'{prefix}:{rest}')
+    return best[1] if best else f'<{text_iri}>'

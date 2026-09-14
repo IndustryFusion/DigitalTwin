@@ -123,6 +123,32 @@ active editor**:
 On the command line the same question is `semforge where`, and every command
 that reads a package prints the one it resolved.
 
+### Adding an entity
+
+The **+** on a case or a model file asks for the type **first**, and offers
+only what the knowledge declares — the entity hierarchy, each row saying which
+shape will judge it and how many instances the model already has:
+
+```text
+Type — from the knowledge
+  iffBaseEntities:Filter          judged by iffBaseShacl:FilterShape
+                                  under iffBaseEntities:Machine · 2 in the model
+  iffBaseEntities:Plasmacutter    judged by iffBaseShacl:CutterShape
+                                  under iffBaseEntities:Cutter · 1 in the model
+  ➕ New entity type…             declare it in the knowledge, then use it
+```
+
+There is no free-text box for the type, and that is the point: nothing rejects
+an undeclared class, no shape targets it, so every constraint stays silent and
+the entity reads as *validated*. A type that is genuinely missing is declared
+first — the last entry writes the class into `knowledge.ttl` beneath a parent
+you pick, opens the line it wrote, and then types the new entity with it.
+
+The rule lives in the SDK, not in the extension: `add_entity` refuses a type
+the knowledge does not declare, so no client can route around it.
+
+Only the id is typed, and it is prefilled from the type (`urn:filter:3`).
+
 ### The Project view
 
 The first of the four views, and the one that says what the package *is*
@@ -710,6 +736,7 @@ in `shacl.ttl` is meaningless without the ontology and the examples.
 | `SemForge: Doctor` | what it sees: folder, interpreter, active package, every other package in the window, whether `semforge` imports |
 | `SemForge: Go to the SHACL rule for this attribute` | the ⚖ icon on an example attribute; creates an empty `sh:property` when none exists |
 | `SemForge: Go to the shape for this class` | the ⚖ icon on a knowledge class |
+| `SemForge: Add an entity` | the + on a case or file; the type is picked from the knowledge, never typed |
 
 ## Settings
 

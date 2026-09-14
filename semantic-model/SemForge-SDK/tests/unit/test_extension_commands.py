@@ -791,3 +791,96 @@ def test_the_menu_gathers_what_there_is_no_menu_bar_for(tmp_path):
                    'Doctor'):
         assert wanted in offered, offered
     assert 'alpha' in seen['quickPicks'][0]['placeHolder']
+
+
+# --- a type comes from the knowledge, not from a text box --------------------
+
+TYPES_REPLY = {
+    'root': 'https://example.org/e/Entity',
+    'types': [
+        {'iri': 'https://example.org/e/Entity', 'term': 'e:Entity',
+         'label': 'Entity', 'parent': '', 'shape': '', 'instances': 0,
+         'isRoot': True},
+        {'iri': 'https://example.org/e/Filter', 'term': 'e:Filter',
+         'label': 'Filter', 'parent': 'e:Entity', 'shape': 's:FilterShape',
+         'instances': 2, 'isRoot': False},
+    ],
+}
+
+ENTITY_ROW = {'raw': {'kind': 'case', 'label': 'good', 'file': '/pkg/good.jsonld',
+                      'children': []},
+              'packageUri': 'file:///pkg/shacl.ttl'}
+
+
+def test_the_type_is_chosen_from_the_knowledge(tmp_path):
+    """A typed-in type is the quietest way to break a model.
+
+    No shape targets an undeclared class, so every constraint stays silent and
+    the entity reads as validated.
+    """
+    seen = _drive(tmp_path, {
+        'command': 'semforge.addEntity', 'node': ENTITY_ROW,
+        'pick': 'e:Filter', 'input': 'urn:filter:3',
+        'replies': {'semforge/entityTypes': TYPES_REPLY,
+                    'semforge/addEntity': {'ok': True, 'file': '/pkg/good.jsonld',
+                                           'count': 2}},
+    })
+    offered = [item['label'] for item in seen['quickPicks'][0]['items']]
+    assert 'e:Filter' in offered and 'e:Entity' in offered
+    # What each type means, where it sits, and whether anything judges it.
+    filter_row = next(i for i in seen['quickPicks'][0]['items']
+                      if i['label'] == 'e:Filter')
+    assert 'FilterShape' in filter_row['description']
+    assert 'under e:Entity' in filter_row['detail']
+
+    # Exactly one text box, and it is the id -- the type is never typed.
+    assert len(seen['inputs']) == 1
+    assert 'id' in seen['inputs'][0]['prompt']
+    wrote = [r for r in seen['requests'] if r['method'] == 'semforge/addEntity']
+    assert wrote[0]['params']['entityType'] == 'e:Filter'
+
+
+def test_the_suggested_id_follows_the_type(tmp_path):
+    seen = _drive(tmp_path, {
+        'command': 'semforge.addEntity', 'node': ENTITY_ROW,
+        'pick': 'e:Filter',
+        'replies': {'semforge/entityTypes': TYPES_REPLY},
+    })
+    assert seen['inputs'][0]['value'] == 'urn:filter:3'
+
+
+def test_a_missing_type_is_declared_in_the_knowledge_first(tmp_path):
+    """The way out is to add the class, not to type a name into the data."""
+    seen = _drive(tmp_path, {
+        'command': 'semforge.addEntity', 'node': ENTITY_ROW,
+        # the last row of the type list, then its parent
+        'picks': [2, 'e:Filter'],
+        'inputs': ['Waterjetcutter', 'urn:waterjetcutter:1'],
+        'replies': {
+            'semforge/entityTypes': TYPES_REPLY,
+            'semforge/addEntityType': {
+                'ok': True, 'term': 'e:Waterjetcutter', 'label': 'Waterjetcutter',
+                'file': '/pkg/knowledge.ttl', 'line': 42},
+            'semforge/addEntity': {'ok': True, 'file': '/pkg/good.jsonld',
+                                   'count': 2}},
+    })
+    declared = [r for r in seen['requests']
+                if r['method'] == 'semforge/addEntityType']
+    assert declared, seen['requests']
+    assert declared[0]['params'] == {'uri': 'file:///pkg/shacl.ttl',
+                                     'name': 'Waterjetcutter',
+                                     'parent': 'e:Filter'}
+    # The new class is shown: one added out of sight is one nobody reviews.
+    assert seen['shown'][0]['file'] == '/pkg/knowledge.ttl'
+    used = [r for r in seen['requests'] if r['method'] == 'semforge/addEntity']
+    assert used[0]['params']['entityType'] == 'e:Waterjetcutter'
+
+
+def test_no_entity_hierarchy_is_reported_rather_than_guessed(tmp_path):
+    seen = _drive(tmp_path, {
+        'command': 'semforge.addEntity', 'node': ENTITY_ROW,
+        'replies': {'semforge/entityTypes': {
+            'types': [], 'error': 'this package has no entity hierarchy'}},
+    })
+    assert any('entity hierarchy' in message for message in seen['errors'])
+    assert not seen['inputs'], 'it fell back to typing a type'

@@ -587,6 +587,59 @@ def add_entity_feature(ls, params):
         return {'ok': False, 'error': str(exc)}
 
 
+@server.feature('semforge/entityTypes')
+def entity_types_feature(ls, params):
+    """Every type an entity may be given, as the KNOWLEDGE declares it.
+
+    The editor offers these and nothing else. A type typed by hand is the
+    quietest way to break a model -- no shape targets it, so every constraint
+    stays silent and the entity reads as validated.
+    """
+    from ..cooked.choices import entity_types
+
+    root = package_root(_uri_to_path(_field(params, 'uri', '')))
+    if root is None:
+        return {'types': [], 'error': 'not a SemForge package'}
+    try:
+        package = _package_for(root)
+        found, hierarchy = entity_types(package)
+        if hierarchy is None:
+            return {'types': [], 'root': '',
+                    'error': 'this package has no entity hierarchy: no shape '
+                             'declares an sh:targetClass and semforge.yaml '
+                             'declares no entityRoot.'}
+        return {'root': hierarchy,
+                'types': [{'iri': t.iri, 'term': t.term, 'label': t.label,
+                           'parent': t.parent, 'shape': t.shape,
+                           'instances': t.instances, 'isRoot': t.is_root}
+                          for t in found]}
+    except Exception as exc:                       # noqa: BLE001
+        return {'types': [], 'error': str(exc)}
+
+
+@server.feature('semforge/addEntityType')
+def add_entity_type_feature(ls, params):
+    """Declare a new entity type in the knowledge, beneath an existing one.
+
+    The way a missing type becomes usable: it is added to the ontology first,
+    and the entity is typed with it afterwards.
+    """
+    from ..cooked.knowledge import add_entity_type
+
+    root = package_root(_uri_to_path(_field(params, 'uri', '')))
+    if root is None:
+        return {'ok': False, 'error': 'not a SemForge package'}
+    try:
+        package = _package_for(root)
+        made = add_entity_type(package, _field(params, 'name'),
+                               _field(params, 'parent'))
+        _packages.pop(root, None)
+        _publish(ls, _path_to_uri(package.sources['shapes']))
+        return dict(made, ok=True, uri=_path_to_uri(made['file']))
+    except Exception as exc:                       # noqa: BLE001
+        return {'ok': False, 'error': str(exc)}
+
+
 @server.feature('semforge/kinds')
 def kinds(ls, params):
     from ..ngsild.build import KINDS

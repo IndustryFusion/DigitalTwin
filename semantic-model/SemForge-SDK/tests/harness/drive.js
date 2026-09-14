@@ -95,22 +95,33 @@ const stub = {
     },
     showQuickPick: (items, options) => {
       const offered = (items || []).map((item) => ({
-        label: item.label, description: item.description, value: item.value
+        label: item.label, description: item.description,
+        detail: item.detail, value: item.value
       }));
       seen.quickPicks.push({ items: offered,
                              placeHolder: (options || {}).placeHolder });
-      if (scenario.pick === undefined) {
+      // A flow can ask more than once -- pick a type, then pick its parent --
+      // and answering both with one value cannot drive it. `picks` is consumed
+      // in order; `pick` still answers every prompt, which most scenarios want.
+      const answer = Array.isArray(scenario.picks)
+        ? scenario.picks[seen.quickPicks.length - 1]
+        : scenario.pick;
+      if (answer === undefined) {
         return Promise.resolve(undefined);
       }
-      const chosen = typeof scenario.pick === 'number'
-        ? items[scenario.pick]
-        : items.find((item) => item.label === scenario.pick);
+      const chosen = typeof answer === 'number'
+        ? items[answer]
+        : items.find((item) => item.label === answer);
       return Promise.resolve(chosen);
     },
     showInputBox: (options) => {
       seen.inputs.push({ title: (options || {}).title,
+                         prompt: (options || {}).prompt,
                          value: (options || {}).value });
-      return Promise.resolve(scenario.input);
+      const answer = Array.isArray(scenario.inputs)
+        ? scenario.inputs[seen.inputs.length - 1]
+        : scenario.input;
+      return Promise.resolve(answer);
     },
     showInformationMessage: (message, ...rest) => {
       seen.info.push(message);

@@ -805,9 +805,25 @@ def add_attribute(package, entity_id, name, kind=None, value=None,
 
 
 def add_entity(package, identifier, entity_type, file=None, context=None):
-    """Append a legal NGSI-LD entity to an example file."""
+    """Append a legal NGSI-LD entity to an example file.
+
+    The type must be one the KNOWLEDGE declares. A type invented here is the
+    quietest way to break a model: no shape targets it, so every constraint
+    stays silent and the entity reads as validated. A genuinely missing type is
+    declared first -- `knowledge.add_entity_type` -- and used afterwards.
+    """
     from ..ngsild.build import entity as build_entity
     from ..package.context import context_config
+    from .choices import entity_types
+
+    known, root = entity_types(package)
+    if root is not None:
+        allowed = {t.term for t in known} | {t.iri for t in known}
+        if entity_type not in allowed:
+            raise PackageError(
+                f'{entity_type} is not an entity type in this package. '
+                f'Declare it in the knowledge first. '
+                f'Known: {", ".join(sorted(t.term for t in known))}')
 
     source = _target_file(package, file)
     with open(source, encoding='utf-8') as handle:

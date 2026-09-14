@@ -429,6 +429,95 @@ async function askForValue(clientHolder, node, raw) {
   return picked.value === undefined ? typeIt() : picked.value;
 }
 
+/**
+ * Which type? Only what the knowledge declares.
+ *
+ * An entity's type decides which shapes judge it, so a free-text box is not a
+ * convenience -- it is the one field where a typo produces silence instead of
+ * an error. The list is the entity hierarchy; the way out when a type really
+ * is missing is to declare it, which is the last entry.
+ */
+async function pickEntityType(client, packageUri) {
+  const answer = await client.sendRequest('semforge/entityTypes', {
+    uri: packageUri
+  });
+  if (!answer || answer.error) {
+    vscode.window.showErrorMessage(
+      `SemForge: ${(answer && answer.error) || 'the types could not be read'}`
+    );
+    return undefined;
+  }
+  const types = answer.types || [];
+  const items = types.map((type) => ({
+    label: type.term,
+    description: type.shape
+      ? `judged by ${type.shape}`
+      : 'no shape judges this type',
+    detail: [type.isRoot ? 'the root of the hierarchy' : `under ${type.parent}`,
+             `${type.instances} in the model`].join(' · '),
+    type
+  }));
+  items.push({
+    label: '$(add) New entity type…',
+    description: 'declare it in the knowledge, then use it',
+    create: true
+  });
+
+  const chosen = await vscode.window.showQuickPick(items, {
+    placeHolder: 'Type — from the knowledge',
+    matchOnDescription: true
+  });
+  if (!chosen) {
+    return undefined;
+  }
+  if (!chosen.create) {
+    return chosen.type;
+  }
+  return declareEntityType(client, packageUri, types);
+}
+
+/** Add a class to knowledge.ttl, and return it ready to use. */
+async function declareEntityType(client, packageUri, types) {
+  const name = await vscode.window.showInputBox({
+    title: 'New entity type',
+    prompt: 'Class name, e.g. Waterjetcutter — it is declared in the knowledge',
+    validateInput: (text) =>
+      /^[A-Za-z][\w-]*$/.test(text || '')
+        ? undefined
+        : 'A letter, then letters, digits, underscores or hyphens.'
+  });
+  if (!name) {
+    return undefined;
+  }
+  const parent = await vscode.window.showQuickPick(
+    types.map((type) => ({
+      label: type.term,
+      description: type.isRoot ? 'the root of the hierarchy' : '',
+      type
+    })),
+    { placeHolder: `${name} is a kind of…` }
+  );
+  if (!parent) {
+    return undefined;
+  }
+  const made = await client.sendRequest('semforge/addEntityType', {
+    uri: packageUri,
+    name,
+    parent: parent.type.term
+  });
+  if (!made || !made.ok) {
+    vscode.window.showErrorMessage(
+      `SemForge: ${(made && made.error) || 'the type was not declared'}`
+    );
+    return undefined;
+  }
+  // Show what was written: a class added out of sight is a class nobody
+  // reviews, and this one is now part of the ontology.
+  await showLocation(`${made.file}:${made.line}`, false);
+  return { term: made.term, label: made.label, instances: 0 };
+}
+
+
 function register(context, clientHolder, session, onChanged) {
   const provider = new ModelTreeProvider(clientHolder);
   const view = vscode.window.createTreeView('semforgeModel', {
@@ -644,26 +733,28 @@ function register(context, clientHolder, session, onChanged) {
       if (!file) {
         return;
       }
-      const id = await vscode.window.showInputBox({
-        title: 'New entity',
-        prompt: 'id, e.g. urn:filter:9',
-        value: 'urn:'
-      });
-      if (!id) {
+      // The type comes FIRST, and it comes from the knowledge. Typing one by
+      // hand is the quietest way to break a model: no shape targets an
+      // undeclared class, so every constraint stays silent and the entity
+      // reads as validated. A type that is genuinely missing is added to the
+      // ontology here, and used afterwards.
+      const entityType = await pickEntityType(clientHolder.client, node.packageUri);
+      if (!entityType) {
         return;
       }
-      const entityType = await vscode.window.showInputBox({
-        title: `Type of ${id}`,
-        prompt: 'e.g. iffBaseEntities:Filter'
+      const id = await vscode.window.showInputBox({
+        title: `New ${entityType.label}`,
+        prompt: 'id — a urn, unique within this file',
+        value: `urn:${entityType.label.toLowerCase()}:${entityType.instances + 1}`
       });
-      if (!entityType) {
+      if (!id) {
         return;
       }
       const result = await clientHolder.client.sendRequest('semforge/addEntity', {
         uri: node.packageUri,
         file,
         id,
-        entityType
+        entityType: entityType.term
       });
       if (result.ok) {
         provider.refresh();
