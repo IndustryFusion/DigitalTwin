@@ -85,7 +85,10 @@ def _identity(package):
                         'setting creates one',
             defined_at=_at(manifest, 1) if os.path.isfile(manifest) else ''),
     ]
-    node = ProjectNode(kind='group', label='Project', detail=str(name))
+    # Its own kind, not `group`: it is the row that NAMES the project, so it
+    # is where a project-level action belongs. Buried in a submenu behind a
+    # "new folder" icon, Delete project was a button nobody could find.
+    node = ProjectNode(kind='project', label='Project', detail=str(name))
     node.children = rows
     return node
 

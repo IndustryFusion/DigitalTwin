@@ -1231,3 +1231,32 @@ def test_a_directory_that_is_not_a_package_is_refused(tmp_path):
     })
     assert not seen['deleted']
     assert any('not a SemForge package' in message for message in seen['errors'])
+
+
+def test_the_project_row_carries_the_delete_action(tmp_path):
+    """Buried in a submenu behind a "new folder" icon, it was a button nobody
+    could find. It belongs on the row that names the project."""
+    import json as _json
+
+    from semforge.cooked.project import build_project
+    from semforge.editor.server import _serialise_project
+    from semforge.package import load
+
+    corpus = os.path.join(SDK, 'tests', 'corpus', 'kms')
+    roots = [_serialise_project(node) for node in build_project(load(corpus))]
+    seen = _drive(tmp_path, {
+        'mode': 'items', 'provider': 'ProjectTreeProvider',
+        'uri': 'file:///pkg/shacl.ttl',
+        'replies': {'semforge/project': {'roots': roots}},
+    }, target='project.js')
+
+    first = seen['rows'][0]
+    assert first['label'] == 'Project'
+    assert first['contextValue'] == 'project'
+
+    with open(os.path.join(SDK, 'vscode', 'package.json')) as handle:
+        menus = _json.load(handle)['contributes']['menus']['view/item/context']
+    assert any(entry['command'] == 'semforge.deleteProject'
+               and 'viewItem == project' in entry['when']
+               and entry['group'] == 'inline'
+               for entry in menus), menus

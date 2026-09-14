@@ -238,8 +238,9 @@ carrier, and the declaration comes out as above. Placing the nested
 ### Deleting a project
 
 The one gesture no other gesture undoes, so it says the most before it happens.
-**SemForge ▸ Delete project…** — from the menu, the Project view's title, or a
-folder in the Explorer — shows what the directory actually holds:
+The 🗑 sits on the **Project** row itself — the row that names the project — and
+the same action is in the SemForge menu, in the Project view's title submenu,
+and on a folder in the Explorer. It shows what the directory actually holds:
 
 ```text
 Delete the project "test"?

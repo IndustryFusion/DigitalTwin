@@ -67,7 +67,7 @@ class ProjectTreeProvider {
     const item = new vscode.TreeItem(
       raw.label || raw.kind,
       children.length
-        ? raw.kind === 'group'
+        ? raw.kind === 'group' || raw.kind === 'project'
           ? vscode.TreeItemCollapsibleState.Expanded
           : vscode.TreeItemCollapsibleState.Collapsed
         : vscode.TreeItemCollapsibleState.None
@@ -79,7 +79,7 @@ class ProjectTreeProvider {
     // the pencil off rows that carry a value -- twice.
     item.contextValue = raw.editable ? 'setting' : raw.kind;
 
-    if (raw.kind === 'group') {
+    if (raw.kind === 'group' || raw.kind === 'project') {
       item.iconPath = new vscode.ThemeIcon('project');
     } else if (raw.severity) {
       item.iconPath = new vscode.ThemeIcon('warning');

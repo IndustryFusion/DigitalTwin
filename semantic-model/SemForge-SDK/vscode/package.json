@@ -338,6 +338,11 @@
           "command": "semforge.removeNamespace",
           "when": "view == semforgeProject && viewItem == namespaceEntry",
           "group": "inline"
+        },
+        {
+          "command": "semforge.deleteProject",
+          "when": "view == semforgeProject && viewItem == project",
+          "group": "inline"
         }
       ],
       "semforge.project": [
