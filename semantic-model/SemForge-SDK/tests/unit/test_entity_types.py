@@ -162,3 +162,36 @@ def test_a_prefixed_entity_root_is_expanded(tmp_path):
     machine = next(entry for entry in found if entry.label == 'Machine')
     assert machine.shape.endswith('MachineShape')
     assert machine.instances == 1
+
+
+def test_a_brand_new_subtype_inherits_attributes_and_their_value_choices(tmp_path):
+    """The whole chain, for the case that exposed the gap.
+
+    Declare a subtype, and everything its parent has must reach it: the
+    attributes it may carry (rdfs:domain is inherited), the shape that judges
+    them (sh:targetClass traverses rdfs:subClassOf*), and the values that shape
+    allows (the individuals of its sh:class).
+    """
+    from semforge.cooked.choices import attributes_for
+    from semforge.cooked.knowledge import add_entity_type
+    from semforge.cooked.shapelink import find_property_shape, value_choices
+    from semforge.package.scaffold import create_package
+
+    target = tmp_path / 'fresh'
+    target.mkdir()
+    create_package(str(target), name='fresh',
+                   namespace='https://example.org/fresh/')
+
+    package = load(str(target))
+    add_entity_type(package, 'Lathe', 'freshEntities:Machine')
+    package = load(str(target))
+
+    attribute = 'freshEntities:hasState'
+    assert attribute in {entry.term for entry in
+                         attributes_for(package, 'freshEntities:Lathe')[0]}
+
+    found = find_property_shape(package, 'freshEntities:Lathe', attribute)
+    assert found and found['inherited']
+
+    choices, _ = value_choices(package, 'freshEntities:Lathe', attribute)
+    assert {choice['label'] for choice in choices} == {'state_ON', 'state_OFF'}

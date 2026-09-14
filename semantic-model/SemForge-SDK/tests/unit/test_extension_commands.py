@@ -1012,3 +1012,53 @@ def test_an_unplaced_sub_attribute_says_which_kind_carries_it(tmp_path):
     detail = seen['quickPicks'][0]['items'][0]['detail']
     assert 'carried by any Relationship' in detail
     assert 'not placed in a shape yet' in detail
+
+
+def test_adding_an_attribute_offers_the_values_its_shape_allows(tmp_path):
+    """The case where a text box is worst: a new entity, an inherited attribute.
+
+    Adding used to ask for the value with a bare input box while editing an
+    existing one offered the shape's individuals -- so the one flow where you
+    are least likely to know the vocabulary was the one with no help.
+    """
+    seen = _drive(tmp_path, {
+        'command': 'semforge.addAttribute', 'node': ENTITY_NODE,
+        'picks': ['e:hasState', 'state_ON'],
+        'replies': {
+            'semforge/attributes': ATTRIBUTES_REPLY,
+            'semforge/valueChoices': {'choices': [
+                {'label': 'state_ON', 'value': {'@id': 'base:state_ON'},
+                 'detail': 'base:MachineState'},
+                {'label': 'state_OFF', 'value': {'@id': 'base:state_OFF'},
+                 'detail': 'base:MachineState'}]},
+            'semforge/addAttribute': {'ok': True, 'kind': 'Property'}},
+    })
+    asked = [r for r in seen['requests']
+             if r['method'] == 'semforge/valueChoices']
+    assert asked, seen['requests']
+    # The ENTITY's type, so an inherited shape is found by walking its
+    # ancestors -- that is what makes hasState offerable on a new subtype.
+    assert asked[0]['params']['entityType'] == 'e:Filter'
+    assert asked[0]['params']['attribute'] == 'e:hasState'
+
+    offered = [item['label'] for item in seen['quickPicks'][1]['items']]
+    assert 'state_ON' in offered and 'state_OFF' in offered
+    assert '$(edit) Type a value' in offered      # a way out is always there
+
+    wrote = [r for r in seen['requests'] if r['method'] == 'semforge/addAttribute']
+    assert wrote[0]['params']['value'] == {'@id': 'base:state_ON'}
+
+
+def test_an_unconstrained_value_is_still_typed(tmp_path):
+    """No sh:class means no list; a text box is the right answer then."""
+    seen = _drive(tmp_path, {
+        'command': 'semforge.addAttribute', 'node': ENTITY_NODE,
+        'pick': 'e:hasState', 'input': '21.5',
+        'replies': {'semforge/attributes': ATTRIBUTES_REPLY,
+                    'semforge/valueChoices': {'choices': []},
+                    'semforge/addAttribute': {'ok': True, 'kind': 'Property'}},
+    })
+    assert len(seen['quickPicks']) == 1          # only the attribute picker
+    assert seen['inputs'], 'nothing asked for the value'
+    wrote = [r for r in seen['requests'] if r['method'] == 'semforge/addAttribute']
+    assert wrote[0]['params']['value'] == '21.5'

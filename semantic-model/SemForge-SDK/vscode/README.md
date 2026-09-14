@@ -166,6 +166,13 @@ Attribute for urn:plasmacutter:1 — from the knowledge
   ➕ New attribute…            declare it in the knowledge, then use it
 ```
 
+Then the **value** is picked the same way, from what the attribute's shape
+allows — `hasState` on anything descending from Machine takes an individual of
+`base:MachineState`, so the states are listed rather than typed. The shape is
+found by walking the entity type's ancestors, so a type you declared a minute
+ago gets its parent's constraints. *Type a value* is always the last entry, for
+anything the shape does not constrain.
+
 An attribute spelled wrong is not a broken document — it is an **invisible**
 one. No `sh:path` selects it, so the constraint that should have judged the
 value never fires and the entity reads as validated. The shipped kms has had

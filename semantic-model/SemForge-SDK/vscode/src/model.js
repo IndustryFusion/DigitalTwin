@@ -369,31 +369,37 @@ async function confirmShared(raw, what) {
 }
 
 /**
- * The new value for an attribute: picked from the shape's classes, or typed.
+ * The value for an attribute: picked from the shape's classes, or typed.
  *
  * `semforge/choices` answers "what may this SHACL parameter say"; this asks the
  * other question, "what may this datum be", and the answer is a list only when
  * the shape constrains the value to a class.
+ *
+ * Shared by editing an existing value and by adding a new attribute. Adding
+ * used to be a bare text box, so the one flow where you are LEAST likely to
+ * know the vocabulary -- a brand-new entity, an attribute you have just
+ * inherited -- was the one that offered no help. The shape knows: hasState on
+ * anything descending from Machine is an individual of base:MachineState.
  */
-async function askForValue(clientHolder, node, raw) {
+async function chooseValue(client, packageUri, entityType, attribute, options) {
+  const settings = options || {};
   const typeIt = () =>
     vscode.window.showInputBox({
-      title: `${raw.label} on ${raw.entity}`,
-      prompt:
+      title: settings.title,
+      prompt: settings.prompt ||
         'JSON is parsed, so 42 is a number and {"@id": "..."} a node ' +
         'reference. Anything else is taken as a string.',
-      value: raw.value
+      value: settings.current
     });
 
-  const attribute = attributeOf(raw);
-  if (!raw.entityType || !attribute) {
+  if (!entityType || !attribute) {
     return typeIt();
   }
   let answer;
   try {
-    answer = await clientHolder.client.sendRequest('semforge/valueChoices', {
-      uri: node.packageUri,
-      entityType: raw.entityType,
+    answer = await client.sendRequest('semforge/valueChoices', {
+      uri: packageUri,
+      entityType,
       attribute
     });
   } catch (error) {
@@ -408,7 +414,7 @@ async function askForValue(clientHolder, node, raw) {
       .map((choice) => ({
         label: choice.label,
         description: choice.detail,
-        detail: choice.value === raw.value ? 'current value' : undefined,
+        detail: choice.value === settings.current ? 'current value' : undefined,
         value: choice.value
       }))
       .concat([
@@ -419,7 +425,7 @@ async function askForValue(clientHolder, node, raw) {
         }
       ]),
     {
-      title: `${raw.label} on ${raw.entity}`,
+      title: settings.title,
       placeHolder: answer.note || 'the values this attribute\'s shape allows'
     }
   );
@@ -427,6 +433,15 @@ async function askForValue(clientHolder, node, raw) {
     return undefined;
   }
   return picked.value === undefined ? typeIt() : picked.value;
+}
+
+/** The new value for an attribute row that already exists. */
+async function askForValue(clientHolder, node, raw) {
+  return chooseValue(clientHolder.client, node.packageUri, raw.entityType,
+                     attributeOf(raw), {
+                       title: `${raw.label} on ${raw.entity}`,
+                       current: raw.value
+                     });
 }
 
 /**
@@ -801,12 +816,19 @@ function register(context, clientHolder, session, onChanged) {
       if (!attribute) {
         return;
       }
-      const value = await vscode.window.showInputBox({
-        title: `Value for ${attribute.term}`,
-        prompt: attribute.kind === 'Relationship'
-          ? 'An entity IRI — a Relationship points at another entity.'
-          : 'JSON is parsed. A literal, or {"@id": "…"} for a vocabulary term.'
-      });
+      // The shape decides what this may be, and it is inherited -- hasState
+      // on anything descending from Machine takes an individual of
+      // base:MachineState. Asking the server for those beats a text box in
+      // exactly the case where a text box is worst: a new entity carrying an
+      // attribute you have just inherited.
+      const value = await chooseValue(
+        clientHolder.client, node.packageUri, raw.entityType, attribute.term,
+        {
+          title: `${attribute.term} on ${raw.entity}`,
+          prompt: attribute.kind === 'Relationship'
+            ? 'An entity IRI — a Relationship points at another entity.'
+            : 'JSON is parsed. A literal, or {"@id": "…"} for a vocabulary term.'
+        });
       if (value === undefined) {
         return;
       }
