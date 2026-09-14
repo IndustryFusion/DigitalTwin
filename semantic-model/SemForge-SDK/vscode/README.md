@@ -23,8 +23,10 @@ its own — it searches upward from whatever folder you opened.
 **Then, every time:** open a folder in VS Code and click the SemForge icon in
 the activity bar. Nothing else. No flags, no launch configuration, no terminal.
 
-**Starting a new one?** There is a **SemForge** menu in each view's title bar
-and on any folder in the Explorer (right-click ▸ SemForge):
+**Starting a new one?** Creating a project is a SemForge-level gesture, not a
+constraint one, so it lives one layer above the artifact views: in the
+**SemForge menu** on the status bar, in the **Project** view's title bar, and
+on any folder in the Explorer (right-click ▸ SemForge):
 
 | | does |
 |---|---|
@@ -106,7 +108,7 @@ it is in the command palette under `SemForge:` as well.
 | 📦 Switch package… | which package all four views show |
 | ⚙ Project settings | name, contexts, namespaces — focuses the Project view |
 | ✓ Revalidate | re-run analysis over the package |
-| 📁 New project… / Create a package in this folder | scaffold |
+| 📁 New project… / Create a package in this folder | scaffold — the level above the views, which is where a project belongs |
 | ◎ Doctor · ⟳ Restart language server | when something is wrong |
 
 **Switch package…** lists every package in the window — nested ones included,

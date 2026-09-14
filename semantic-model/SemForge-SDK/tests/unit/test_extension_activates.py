@@ -246,8 +246,13 @@ def test_the_packaged_sources_include_the_new_module():
 
 
 def test_the_project_actions_live_in_one_submenu():
-    """Classical gesture, classical place: a SemForge menu on a folder and in
-    each view's title bar, holding New project, Create a package here, Doctor."""
+    """Creating a project is not a constraint action.
+
+    The submenu sat in all four view title bars, so "New project" appeared
+    inside Constraints -- one layer down from where it belongs. A project is a
+    SemForge-level thing: it belongs to the Project view, to a folder in the
+    Explorer, and to the SemForge menu, and to nothing below those.
+    """
     with open(os.path.join(SDK, 'vscode', 'package.json')) as handle:
         contributes = json.load(handle)['contributes']
 
@@ -260,15 +265,28 @@ def test_the_project_actions_live_in_one_submenu():
     declared = {c['command'] for c in contributes['commands']}
     assert {entry['command'] for entry in items} <= declared
 
-    # Reachable from a folder in the Explorer, and from every view.
+    # A folder in the Explorer -- the classical gesture -- and the Project view.
     explorer = contributes['menus'].get('explorer/context', [])
     assert any(entry.get('submenu') == 'semforge.project'
                and 'explorerResourceIsFolder' in entry['when']
                for entry in explorer)
     hosting = {entry['when'] for entry in contributes['menus']['view/title']
                if entry.get('submenu') == 'semforge.project'}
-    for view in ('semforgeConstraints', 'semforgeModel', 'semforgeKnowledge'):
-        assert f'view == {view}' in hosting
+    assert hosting == {'view == semforgeProject'}, hosting
+
+
+def test_the_semforge_menu_is_the_level_above_the_views():
+    """VS Code contributes no menu for a view container's header.
+
+    Only per-view title bars exist, so the status bar item is the one place
+    that is ABOVE all four views -- and project creation has to be reachable
+    from it, not only from a view.
+    """
+    with open(os.path.join(SDK, 'vscode', 'src', 'packages.js')) as handle:
+        source = handle.read()
+    for command in ('semforge.newProject', 'semforge.initPackage',
+                    'semforge.selectPackage'):
+        assert command in source, f'{command} is not in the SemForge menu'
 
 
 def test_every_submenu_entry_is_a_real_command(corpus_path):

@@ -220,21 +220,6 @@
           "group": "navigation"
         },
         {
-          "submenu": "semforge.project",
-          "when": "view == semforgeConstraints",
-          "group": "navigation@9"
-        },
-        {
-          "submenu": "semforge.project",
-          "when": "view == semforgeModel",
-          "group": "navigation@9"
-        },
-        {
-          "submenu": "semforge.project",
-          "when": "view == semforgeKnowledge",
-          "group": "navigation@9"
-        },
-        {
           "command": "semforge.refreshProject",
           "when": "view == semforgeProject",
           "group": "navigation"
