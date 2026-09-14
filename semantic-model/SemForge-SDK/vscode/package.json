@@ -173,6 +173,12 @@
         "title": "Define a namespace prefix",
         "category": "SemForge",
         "icon": "$(add)"
+      },
+      {
+        "command": "semforge.removeNamespace",
+        "title": "Remove this namespace prefix",
+        "category": "SemForge",
+        "icon": "$(trash)"
       }
     ],
     "viewsContainers": {
@@ -320,6 +326,11 @@
         {
           "command": "semforge.addNamespace",
           "when": "view == semforgeProject && viewItem == namespaces",
+          "group": "inline"
+        },
+        {
+          "command": "semforge.removeNamespace",
+          "when": "view == semforgeProject && viewItem == namespaceEntry",
           "group": "inline"
         }
       ],

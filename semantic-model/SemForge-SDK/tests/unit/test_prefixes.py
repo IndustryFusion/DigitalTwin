@@ -377,7 +377,7 @@ def test_a_new_project_does_not_carry_them_as_boilerplate(tmp_path):
 
 def test_a_declared_standard_name_is_not_listed_twice(tmp_path):
     """`ngsild:` in a package's own table AND under the standard names read as
-    two definitions of one prefix."""
+    two definitions of one prefix. It appears once, under the standard ones."""
     from semforge.cooked.project import build_project
     from semforge.package.prefixes import STANDARD
 
@@ -393,19 +393,19 @@ def test_a_declared_standard_name_is_not_listed_twice(tmp_path):
 
     row = next(child
                for root in build_project(load(str(target)))
-               for child in root.children if child.label == 'namespaces')
-    mine = [entry for entry in row.children if entry.label != 'standard names']
-    assert [entry.label for entry in mine] == ['ngsild', 'plant']
-
+               for child in row_children(root) if child.label == 'namespaces')
+    everywhere = [entry.label for entry in row.children
+                  if entry.label != 'standard names']
     standard = next(entry for entry in row.children
                     if entry.label == 'standard names')
-    assert 'ngsild' not in {entry.label for entry in standard.children}
-    assert len(standard.children) == len(STANDARD) - 1
+    everywhere += [entry.label for entry in standard.children]
 
-    # And the one the package repeats says so, rather than leaving the reader
-    # to compare two lists.
-    declared = next(entry for entry in mine if entry.label == 'ngsild')
-    assert 'this line can go' in declared.detail
+    assert len(everywhere) == len(set(everywhere)), everywhere
+    assert set(everywhere) == set(STANDARD) | {'plant'}
+
+
+def row_children(root):
+    return root.children
 
 
 def test_a_name_the_package_redefines_says_what_it_overrides(tmp_path):
@@ -425,3 +425,98 @@ def test_a_name_the_package_redefines_says_what_it_overrides(tmp_path):
     declared = next(entry for entry in row.children if entry.label == 'sh')
     assert 'overrides the standard name' in declared.detail
     assert 'w3.org/ns/shacl#' in declared.detail
+
+
+# --- removing one ------------------------------------------------------------
+
+def _bare(tmp_path, namespaces=''):
+    target = tmp_path / 'pkg'
+    target.mkdir()
+    (target / 'knowledge.ttl').write_text('')
+    (target / 'shacl.ttl').write_text('')
+    (target / 'model-instance.jsonld').write_text('{"@graph": []}')
+    (target / 'semforge.yaml').write_text('namespaces:\n' + namespaces)
+    return target
+
+
+def test_an_unused_name_can_be_removed(tmp_path):
+    from semforge.package.prefixes import canonical_map, remove_namespace
+
+    target = _bare(tmp_path, '  plant: https://example.org/plant/\n')
+    gone = remove_namespace(str(target), 'plant')
+    assert gone['prefix'] == 'plant'
+    assert 'plant' not in canonical_map(str(target))
+    assert 'plant' not in (target / 'semforge.yaml').read_text()
+
+
+def test_a_redundant_standard_name_can_always_be_removed(tmp_path):
+    """Nothing changes: the SDK knows that name anyway."""
+    from semforge.package.prefixes import canonical_map, remove_namespace
+
+    target = _bare(tmp_path, '  ngsild: https://uri.etsi.org/ngsi-ld/\n')
+    (target / 'shacl.ttl').write_text(
+        '@prefix ngsild: <https://uri.etsi.org/ngsi-ld/> .\n')
+
+    gone = remove_namespace(str(target), 'ngsild')
+    assert gone['survives_as'] == 'ngsild'
+    assert canonical_map(str(target))['ngsild'] == 'https://uri.etsi.org/ngsi-ld/'
+    assert check(load(str(target))) == []
+
+
+def test_a_name_in_use_is_refused_and_says_why(tmp_path, corpus):
+    """Taking it out would leave every file that binds it having invented one."""
+    import shutil
+
+    from semforge.errors import PackageError
+    from semforge.package.prefixes import remove_namespace
+
+    target = tmp_path / 'pkg'
+    target.mkdir()
+    for role, name in (('knowledge', 'knowledge.ttl'), ('shapes', 'shacl.ttl'),
+                       ('model', 'model-instance.jsonld')):
+        shutil.copy(corpus.sources[role], target / name)
+    shutil.copy(f'{corpus.path}/context.jsonld', target / 'context.jsonld')
+    shutil.copy(f'{corpus.path}/semforge.yaml', target / 'semforge.yaml')
+
+    with pytest.raises(PackageError) as raised:
+        remove_namespace(str(target), 'iffBaseShacl')
+    message = str(raised.value)
+    assert 'cannot be removed' in message and 'in use' in message
+    assert 'shacl.ttl' in message and 'term(s)' in message
+    # And it is still there.
+    assert 'iffBaseShacl' in (target / 'semforge.yaml').read_text()
+
+
+def test_a_name_the_package_does_not_own_is_not_its_to_remove(tmp_path):
+    from semforge.errors import PackageError
+    from semforge.package.prefixes import remove_namespace
+
+    target = _bare(tmp_path, '  plant: https://example.org/plant/\n')
+    with pytest.raises(PackageError) as raised:
+        remove_namespace(str(target), 'sh')
+    assert 'not declared in semforge.yaml' in str(raised.value)
+
+
+def test_a_declared_standard_name_is_shown_with_the_standard_ones(tmp_path):
+    """It is the same name. Listing it as the package's vocabulary is what
+    made `ngsild` look like two definitions."""
+    from semforge.cooked.project import build_project
+
+    target = _bare(tmp_path,
+                   '  ngsild: https://uri.etsi.org/ngsi-ld/\n'
+                   '  plant: https://example.org/plant/\n')
+    row = next(child
+               for root in build_project(load(str(target)))
+               for child in root.children if child.label == 'namespaces')
+
+    own = [entry for entry in row.children if entry.label != 'standard names']
+    assert [entry.label for entry in own] == ['plant']
+
+    standard = next(entry for entry in row.children
+                    if entry.label == 'standard names')
+    declared = next(entry for entry in standard.children
+                    if entry.label == 'ngsild')
+    # Removable from there: the line is still in the file.
+    assert declared.kind == 'namespaceEntry'
+    assert declared.defined_at
+    assert 'the line can go' in declared.detail

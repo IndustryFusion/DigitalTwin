@@ -83,7 +83,7 @@ class ProjectTreeProvider {
       item.iconPath = new vscode.ThemeIcon('project');
     } else if (raw.severity) {
       item.iconPath = new vscode.ThemeIcon('warning');
-    } else if (raw.kind === 'namespaces') {
+    } else if (raw.kind === 'namespaces' || raw.kind === 'namespaceEntry') {
       item.iconPath = new vscode.ThemeIcon('symbol-namespace');
     } else if (raw.editable) {
       item.iconPath = new vscode.ThemeIcon('settings-gear');
@@ -241,6 +241,36 @@ function register(context, clientHolder, session, onChanged) {
         onChanged();
       }
       await showLocation(`${made.file}:${made.line}`, false);
+    }),
+
+    vscode.commands.registerCommand('semforge.removeNamespace', async (node) => {
+      const raw = node && node.raw;
+      if (!raw || !raw.label) {
+        return;
+      }
+      // The server decides, not this: a name is removable when the namespace
+      // keeps a name without it, or when nothing uses it. Anything else is
+      // load-bearing, and the refusal says which files and how many terms.
+      const gone = await clientHolder.client.sendRequest(
+        'semforge/removeNamespace',
+        { uri: node.packageUri || provider.uri, prefix: raw.label }
+      );
+      if (!gone || !gone.ok) {
+        vscode.window.showWarningMessage(
+          `SemForge: ${(gone && gone.error) || 'the prefix was not removed'}`
+        );
+        return;
+      }
+      provider.refresh();
+      if (onChanged) {
+        onChanged();
+      }
+      vscode.window.setStatusBarMessage(
+        gone.survivesAs || gone.survives_as
+          ? `SemForge: ${raw.label}: removed — it is a standard name anyway`
+          : `SemForge: ${raw.label}: removed`,
+        5000
+      );
     }),
 
     vscode.commands.registerCommand('semforge.refreshProject', () =>

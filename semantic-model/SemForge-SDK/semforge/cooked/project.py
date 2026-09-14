@@ -136,37 +136,51 @@ def _settings(package):
             defined_at=_at(manifest, config.locate(root, collection.key)))
         from ..package.prefixes import STANDARD
 
-        group.children = [
-            ProjectNode(kind='entry', label=name, value=value,
-                        detail=_namespace_note(collection.key, name, value),
-                        defined_at=_at(manifest, line))
-            for name, value, line in collection.entries]
-        if collection.key == 'namespaces':
-            # The names every package uses and none should have to write down.
-            # Shown, because a reader who cannot see where `sh:` comes from
-            # will eventually declare it again -- and a second name for one
-            # namespace evicts the first.
-            #
-            # Minus the ones this package declares: they are listed above, and
-            # a name appearing twice on one screen reads as two definitions.
-            mine = {name for name, _, _ in collection.entries}
-            rest = {name: namespace for name, namespace in STANDARD.items()
-                    if name not in mine}
-            if rest:
-                standard = ProjectNode(
-                    kind='fact', label='standard names', value=str(len(rest)),
-                    detail='known to every package. Declare one in '
-                           'semforge.yaml only to call it something else.')
-                standard.children = [
-                    ProjectNode(kind='entry', label=name, value=namespace)
-                    for name, namespace in sorted(rest.items())]
-                group.children.append(standard)
+        if collection.key != 'namespaces':
+            group.children = [
+                ProjectNode(kind='entry', label=name, value=value,
+                            defined_at=_at(manifest, line))
+                for name, value, line in collection.entries]
+        else:
+            group.children = _namespace_rows(collection, manifest, STANDARD)
         rows.append(group)
 
     node = ProjectNode(kind='group', label='Settings',
                        detail=f'{config.CONFIG} — click the pencil to change one')
     node.children = rows
     return node
+
+
+def _namespace_rows(collection, manifest, standard):
+    """The package's own names, then the ones every package has.
+
+    A name the package declares with the STANDARD IRI belongs with the
+    standard ones -- it is the same name, and listing it above as if it were
+    this package's vocabulary is what made `ngsild` look like two definitions.
+    It keeps its file:line, because the line is still there and can go.
+    """
+    mine, restated = [], []
+    for name, value, line in collection.entries:
+        row = ProjectNode(
+            kind='namespaceEntry', label=name, value=value,
+            detail=_namespace_note('namespaces', name, value),
+            defined_at=_at(manifest, line))
+        (restated if standard.get(name) == value else mine).append(row)
+
+    declared = {row.label for row in mine} | {row.label for row in restated}
+    rest = [ProjectNode(kind='entry', label=name, value=namespace)
+            for name, namespace in sorted(standard.items())
+            if name not in declared]
+
+    known = restated + rest
+    if not known:
+        return mine
+    group = ProjectNode(
+        kind='fact', label='standard names', value=str(len(known)),
+        detail='known to every package. Declare one in semforge.yaml only to '
+               'call it something else.')
+    group.children = sorted(known, key=lambda row: row.label)
+    return mine + [group]
 
 
 def _namespace_note(key, name, value):
@@ -181,8 +195,7 @@ def _namespace_note(key, name, value):
     from ..package.prefixes import STANDARD
 
     if STANDARD.get(name) == value:
-        return 'a standard name — every package knows this one, so this line ' \
-               'can go'
+        return 'declared here as well, which changes nothing — the line can go'
     if name in STANDARD:
         return f'overrides the standard name, which is <{STANDARD[name]}>'
     return ''

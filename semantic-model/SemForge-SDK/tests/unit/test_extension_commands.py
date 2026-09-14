@@ -1096,3 +1096,35 @@ def test_a_refused_prefix_is_reported(tmp_path):
             'ok': False, 'error': 'ngsild: already means <...>'}},
     })
     assert any('already means' in message for message in seen['errors'])
+
+
+def test_a_namespace_can_be_removed_from_the_project_view(tmp_path):
+    seen = _drive(tmp_path, {
+        'command': 'semforge.removeNamespace',
+        'node': {'raw': {'kind': 'namespaceEntry', 'label': 'plant'},
+                 'packageUri': 'file:///pkg/shacl.ttl'},
+        'replies': {'semforge/removeNamespace': {
+            'ok': True, 'prefix': 'plant', 'survives_as': '',
+            'file': '/pkg/semforge.yaml', 'line': 12}},
+    })
+    asked = [r for r in seen['requests']
+             if r['method'] == 'semforge/removeNamespace']
+    assert asked[0]['params'] == {'uri': 'file:///pkg/shacl.ttl',
+                                  'prefix': 'plant'}
+    assert any('plant' in message for message in seen['messages'])
+
+
+def test_removing_a_name_in_use_warns_rather_than_failing_silently(tmp_path):
+    """"It is in use" is an answer, not an error: the row is still there."""
+    seen = _drive(tmp_path, {
+        'command': 'semforge.removeNamespace',
+        'node': {'raw': {'kind': 'namespaceEntry', 'label': 'iffBaseShacl'},
+                 'packageUri': 'file:///pkg/shacl.ttl'},
+        'replies': {'semforge/removeNamespace': {
+            'ok': False,
+            'error': 'iffBaseShacl: cannot be removed -- it is in use. '
+                     '<...> is bound in shacl.ttl and names 42 term(s)'}},
+    })
+    assert any('cannot be removed' in message and 'in use' in message
+               for message in seen['warnings']), seen['warnings']
+    assert not seen['errors']

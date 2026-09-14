@@ -278,6 +278,79 @@ def add_namespace(package_path, prefix, namespace):
     return {'prefix': name, 'namespace': target, 'file': where, 'line': line}
 
 
+def namespace_usage(package, namespace):
+    """Where a namespace is actually used: files that bind it, terms in it.
+
+    Both halves matter. A file's `@prefix` says this artifact speaks the name;
+    a term in the namespace says something would stop resolving. Either one
+    makes the declaration load-bearing.
+    """
+    from rdflib import URIRef
+
+    files, terms = [], 0
+    for role in ('shapes', 'knowledge'):
+        for path in package.files(role):
+            bound, _ = file_prefixes(path)
+            if namespace in bound.values():
+                files.append(os.path.relpath(path, package.path))
+    for graph in (package.knowledge, package.shapes, package.model):
+        for triple in graph:
+            for node in triple:
+                if isinstance(node, URIRef) and str(node).startswith(namespace):
+                    terms += 1
+    return {'files': sorted(set(files)), 'terms': terms}
+
+
+def remove_namespace(package_path, prefix, package=None):
+    """Drop a name from the package's table, unless something needs it.
+
+    Removable in two cases, and they are different: the namespace still has a
+    name without this line -- the context names it, or it is one the SDK knows,
+    so nothing changes -- or nothing in the package uses it at all.
+
+    Otherwise the declaration is load-bearing: taking it out leaves every file
+    that binds the prefix having invented a name, and the model unable to
+    expand a term. So it is refused, and the refusal says which files and how
+    many terms.
+    """
+    from . import config
+    from ..errors import PackageError
+
+    name = (prefix or '').strip().rstrip(':')
+    declared = declared_prefixes(package_path)
+    if name not in declared:
+        raise PackageError(
+            f'{name}: is not declared in semforge.yaml. The package\'s table '
+            f'is the only one it owns -- a name from the context or from the '
+            f'standard set is not this package\'s to remove.')
+    namespace = declared[name]
+
+    # What would name this namespace if the line went away.
+    remaining = {}
+    for other, target in context_prefixes(package_path).items():
+        remaining.setdefault(target, other)
+    for other, target in STANDARD.items():
+        remaining.setdefault(target, other)
+    survives = remaining.get(namespace)
+
+    if survives is None:
+        if package is None:
+            from . import load
+            package = load(package_path)
+        usage = namespace_usage(package, namespace)
+        if usage['files'] or usage['terms']:
+            where = ', '.join(usage['files']) or 'the model'
+            raise PackageError(
+                f'{name}: cannot be removed -- it is in use. <{namespace}> is '
+                f'bound in {where} and names {usage["terms"]} term(s), and '
+                f'nothing else in the package gives it a name. Removing it '
+                f'would leave every one of them undefined.')
+
+    path, line = config.remove_value(package_path, f'namespaces.{name}')
+    return {'prefix': name, 'namespace': namespace, 'file': path, 'line': line,
+            'survives_as': survives or ''}
+
+
 def _check_model(package, by_namespace):
     """The model instance has to speak the same language as the shapes.
 

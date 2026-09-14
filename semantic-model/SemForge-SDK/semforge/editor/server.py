@@ -662,6 +662,24 @@ def add_namespace_feature(ls, params):
         return {'ok': False, 'error': str(exc)}
 
 
+@server.feature('semforge/removeNamespace')
+def remove_namespace_feature(ls, params):
+    """Drop a name from the package's table, unless something needs it."""
+    from ..package.prefixes import remove_namespace
+
+    root = package_root(_uri_to_path(_field(params, 'uri', '')))
+    if root is None:
+        return {'ok': False, 'error': 'not a SemForge package'}
+    try:
+        package = _package_for(root)
+        gone = remove_namespace(root, _field(params, 'prefix'), package=package)
+        _packages.pop(root, None)
+        _publish(ls, _path_to_uri(package.sources['shapes']))
+        return dict(gone, ok=True, uri=_path_to_uri(gone['file']))
+    except Exception as exc:                       # noqa: BLE001
+        return {'ok': False, 'error': str(exc)}
+
+
 @server.feature('semforge/attributes')
 def attributes_feature(ls, params):
     """The attributes an entity of this type may carry, as the knowledge says.

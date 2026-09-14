@@ -272,11 +272,23 @@ and one that forgot would be told its own `shacl.ttl` had invented `sh:`.
 They sit at the lowest precedence, so a package that has a reason to call one
 of them something else declares it in `semforge.yaml` and that wins.
 
-A name the package declares itself is listed once, in its own table, and not
-repeated under *standard names* — the same prefix on one screen twice reads as
-two definitions. If what it declares is the standard IRI the row says so (*a
-standard name — this line can go*); if it is a different one, it says what it
-overrides.
+Every name appears **once**. A package that declares one of the standard names
+with the standard IRI sees it under *standard names*, not in its own table — it
+is the same name, and listing it above as this package's vocabulary is what
+made `ngsild` look like two definitions. The row still carries its `file:line`
+and says the line can go. Declaring one with a *different* IRI is a deliberate
+override, so that one stays in the package's table and says what it overrides.
+
+🗑 on a name **removes** it — but only when removing it changes nothing:
+
+* the namespace still has a name without that line (the context names it, or
+  it is one of the standard set), or
+* nothing in the package uses it at all.
+
+Otherwise the declaration is load-bearing and the removal is refused with what
+depends on it: *"iffBaseShacl: cannot be removed — it is in use. <…> is bound
+in shacl.ttl and names 42 term(s), and nothing else in the package gives it a
+name."* Taking it out would leave every one of those terms undefined.
 
 The **namespaces** row is where that table lives. ➕ on it defines a new one —
 it asks for the name and the IRI, refuses one that would collide with an
@@ -923,6 +935,7 @@ in `shacl.ttl` is meaningless without the ontology and the examples.
 | `SemForge: Select Package` | which package the four views show; pins your choice |
 | `SemForge: Change this setting` | the ✎ on a Project row; writes one line of semforge.yaml |
 | `SemForge: Define a namespace prefix` | the ➕ on the Project view's namespaces row |
+| `SemForge: Remove this namespace prefix` | the 🗑 on a name; refused while anything uses it |
 | `SemForge: Doctor` | what it sees: folder, interpreter, active package, every other package in the window, whether `semforge` imports |
 | `SemForge: Go to the SHACL rule for this attribute` | the ⚖ icon on an example attribute; creates an empty `sh:property` when none exists |
 | `SemForge: Go to the shape for this class` | the ⚖ icon on a knowledge class |

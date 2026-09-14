@@ -1191,6 +1191,13 @@ another form. It is reachable from the editor (the Project view's namespaces
 row), from `semforge prefixes --define`, and nowhere else, so there is one
 writer.
 
+`prefixes.remove_namespace` is the other direction, and removable means one of
+two things: the namespace still has a name without that line -- the context
+names it, or it is standard -- or nothing in the package uses it. Anything else
+is load-bearing: taking it out leaves every file that binds the prefix having
+invented a name and the model unable to expand a term, so it is refused with
+the files and the term count that depend on it.
+
 A fourth group holds the **NGSI-LD vocabulary** — the terms of the encoding,
 which are not the package's. Until it existed, *declared before used* was the
 one rule this project did not apply to itself: `rdfs:range ngsild:Property`

@@ -221,6 +221,25 @@ def set_value(package_path, key, value):
     return where, written + 1
 
 
+def remove_value(package_path, key):
+    """Delete one setting's line. Returns (path, the line it was on).
+
+    The line and nothing else: a comment above it explains the block, not the
+    entry, and taking it too would delete the paragraph that tells the next
+    reader what the block is for.
+    """
+    where = path_for(package_path)
+    at = locate(package_path, key)
+    if not at:
+        raise KeyError(key)
+    with open(where, encoding='utf-8') as handle:
+        lines = handle.read().splitlines()
+    del lines[at - 1]
+    with open(where, 'w', encoding='utf-8') as handle:
+        handle.write('\n'.join(lines).rstrip('\n') + '\n')
+    return where, at
+
+
 def _block_end(lines, opened_at):
     """The index just past the block whose heading is at `opened_at`."""
     indent = _indent(lines[opened_at])
