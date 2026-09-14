@@ -18,6 +18,7 @@ const revealed = [];
 // The status bar is where the active package is named, so activation has to be
 // able to show what it painted there.
 const statusBar = [];
+const seen = { deleted: [] };
 
 const noop = () => undefined;
 const stub = {
@@ -27,6 +28,14 @@ const stub = {
     createFileSystemWatcher: () => ({ dispose: noop }),
     onDidChangeConfiguration: noop,
     onDidSaveTextDocument: noop,
+    // Recorded, never performed: a test that actually deleted a directory
+    // would be a test you could only run once.
+    fs: {
+      delete: (uri, options) => {
+        seen.deleted.push({ path: uri.fsPath, options: options || {} });
+        return Promise.resolve();
+      }
+    },
     openTextDocument: noop
   },
   window: {
@@ -101,7 +110,8 @@ async function main() {
     errors: registered.filter((r) => r.startsWith('ERROR')),
     views: selectionHandlers.map((s) => s.view),
     revealed,
-    statusBar
+    statusBar,
+    deleted: seen.deleted
   }));
 }
 

@@ -179,6 +179,12 @@
         "title": "Remove this namespace prefix",
         "category": "SemForge",
         "icon": "$(trash)"
+      },
+      {
+        "command": "semforge.deleteProject",
+        "title": "Delete project\u2026",
+        "category": "SemForge",
+        "icon": "$(trash)"
       }
     ],
     "viewsContainers": {
@@ -346,6 +352,10 @@
         {
           "command": "semforge.doctor",
           "group": "9_help@1"
+        },
+        {
+          "command": "semforge.deleteProject",
+          "group": "8_danger@1"
         }
       ],
       "explorer/context": [

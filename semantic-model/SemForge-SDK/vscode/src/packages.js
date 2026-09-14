@@ -147,7 +147,9 @@ const MENU = [
   { label: '$(pulse) Doctor', command: 'semforge.doctor',
     description: 'what it sees: interpreter, package, server' },
   { label: '$(debug-restart) Restart language server',
-    command: 'semforge.restart' }
+    command: 'semforge.restart' },
+  { label: '$(trash) Delete project…', command: 'semforge.deleteProject',
+    description: 'moves the whole directory to the trash' }
 ];
 
 /**

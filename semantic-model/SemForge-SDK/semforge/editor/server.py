@@ -699,6 +699,29 @@ def remove_namespace_feature(ls, params):
         return {'ok': False, 'error': str(exc)}
 
 
+@server.feature('semforge/deletionPlan')
+def deletion_plan_feature(ls, params):
+    """What deleting this package would take with it. Deletes nothing.
+
+    The editor does the deleting, because it can move a directory to the trash
+    rather than unlinking it. What it cannot do is read the package: which of
+    those files are the package, which are somebody's, and whether git has any
+    of them.
+    """
+    from ..package.removal import plan_deletion
+
+    target = _uri_to_path(_field(params, 'uri', '')) or _field(params, 'path', '')
+    root = package_root(target) or target
+    plan = plan_deletion(root)
+    return {
+        'ok': not plan.error, 'error': plan.error, 'path': plan.path,
+        'name': plan.name, 'files': plan.files, 'bytes': plan.bytes,
+        'strangers': plan.strangers, 'nested': plan.nested,
+        'inGit': plan.in_git, 'tracked': plan.tracked,
+        'untracked': plan.untracked, 'warnings': plan.warnings,
+    }
+
+
 @server.feature('semforge/attributes')
 def attributes_feature(ls, params):
     """The attributes an entity of this type may carry, as the knowledge says.

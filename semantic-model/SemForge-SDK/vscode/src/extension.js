@@ -21,6 +21,7 @@ const cookedTree = require('./tree');
 const modelTree = require('./model');
 const knowledgeTree = require('./knowledge');
 const initPackage = require('./init');
+const deleteProject = require('./delete');
 
 // Shared so the tree provider always talks to the CURRENT client: restarting
 // the server must not leave the view wired to a dead one.
@@ -248,6 +249,8 @@ function activate(context) {
     session.discover();
     refreshAll();
   });
+  // The one gesture that cannot be undone by another gesture.
+  deleteProject.register(context, clientHolder, session, refreshAll);
 
   context.subscriptions.push(
     vscode.commands.registerCommand('semforge.doctor', async () => {

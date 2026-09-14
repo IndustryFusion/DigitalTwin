@@ -33,6 +33,7 @@ on any folder in the Explorer (right-click ▸ SemForge):
 | **New project…** | makes a *folder* and scaffolds it, then offers to open it, open it in a new window, or add it to this workspace — the classical File ▸ New Project |
 | **Create a package in this folder** | scaffolds the folder you already have |
 | **Doctor** | what the extension sees and which server answers |
+| **Delete project…** | moves the whole directory to the trash, after telling you what is in it |
 
 On the command line: `semforge new "Plant Line"` creates `./plant-line`;
 `semforge init <path>` scaffolds a directory you already have. Same scaffold
@@ -233,6 +234,39 @@ putting `hasTrust` on a Filter would put it where no shape looks.
 ➕ **New attribute…** on a nested row names the parent attribute as the
 carrier, and the declaration comes out as above. Placing the nested
 `sh:property` in the shapes is still yours to do.
+
+### Deleting a project
+
+The one gesture no other gesture undoes, so it says the most before it happens.
+**SemForge ▸ Delete project…** — from the menu, the Project view's title, or a
+folder in the Explorer — shows what the directory actually holds:
+
+```text
+Delete the project "test"?
+
+/home/you/kms/test
+
+10 file(s), 8 KB.
+
+1 item(s) here are not part of the package: notes.md. Nothing else knows
+what they are.
+Nothing here is tracked by git, so nothing can bring it back.
+```
+
+Three things you cannot see from a tree row, and the reason the server is asked
+first: what in there is **not** the package (a README somebody wrote, a scratch
+file, a vendored copy — that is what a deletion actually costs), whether it
+holds **packages of its own**, and whether **git has any of it**. Tracked files
+come back with one command; untracked ones do not come back at all, and the
+warning says which you have.
+
+Then it asks again: type the folder name. A modal is dismissed by the same
+reflex that opened it, and this is the wrong place for a reflex.
+
+It goes to the **trash**, not to `unlink`. A confirmation is a guess about what
+somebody meant; the trash is the thing that forgives being wrong. Nothing in
+the SDK deletes — `semforge.package.removal` only plans, and has no `rmtree` in
+it.
 
 ### The Project view
 

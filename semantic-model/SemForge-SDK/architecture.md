@@ -1171,6 +1171,15 @@ whether an attribute is an NGSI-LD one at all (an explicit `ngsild:` range, or
 a shape naming it) and judged by their own rule, because "unused and
 unchecked" is a statement about a document and says nothing about an ontology.
 
+**Deleting a project is planned in the SDK and performed by the editor.**
+`package.removal.plan_deletion` answers what the directory holds — what of it
+is not the package, whether it contains packages of its own, and what git
+tracks — and deletes nothing; there is no `rmtree` in it. The editor does the
+deleting because it can move a directory to the trash rather than unlinking it,
+which is the only part of this that forgives being wrong. The split is the same
+one §8.4 draws everywhere else: the semantic question (what is this directory,
+and what would be lost) is the SDK's, the gesture is the editor's.
+
 **Namespace names are package-wide.** One name per namespace, agreed once, and
 every artifact bound to it — rdflib binds a single prefix per namespace, so a
 second name evicts the first and a term copied between artifacts changes

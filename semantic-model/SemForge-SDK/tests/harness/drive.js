@@ -27,6 +27,7 @@ const seen = {
   revealed: [],
   messages: [],
   statusBar: [],
+  deleted: [],
   // Each view's own state -- its subtitle says which package it is showing,
   // and its message is what an empty panel tells you instead of nothing.
   views: {},
@@ -51,6 +52,14 @@ const stub = {
     createFileSystemWatcher: () => ({ dispose: noop }),
     onDidChangeConfiguration: noop,
     onDidSaveTextDocument: noop,
+    // Recorded, never performed: a test that actually deleted a directory
+    // would be a test you could only run once.
+    fs: {
+      delete: (uri, options) => {
+        seen.deleted.push({ path: uri.fsPath, options: options || {} });
+        return Promise.resolve();
+      }
+    },
     // A real document's uri answers both fsPath and toString; the trees use
     // one to filter and the other to compare packages, so a stub with only
     // fsPath made every opened file look like a different package.

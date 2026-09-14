@@ -1167,3 +1167,67 @@ def test_removing_a_name_in_use_warns_rather_than_failing_silently(tmp_path):
     assert any('cannot be removed' in message and 'in use' in message
                for message in seen['warnings']), seen['warnings']
     assert not seen['errors']
+
+
+# --- deleting a project ------------------------------------------------------
+
+PLAN_REPLY = {
+    'ok': True, 'name': 'test', 'path': '/pkg/test', 'files': 10,
+    'bytes': 8192, 'strangers': ['notes.md'], 'nested': [],
+    'inGit': True, 'tracked': 0, 'untracked': 10,
+    'warnings': ['1 item(s) here are not part of the package: notes.md.',
+                 'Nothing here is tracked by git, so nothing can bring it back.'],
+}
+
+
+def test_deleting_asks_twice_and_says_what_goes(tmp_path):
+    """The one gesture no other gesture undoes, so it says the most."""
+    seen = _drive(tmp_path, {
+        'command': 'semforge.deleteProject',
+        'node': {'packageUri': 'file:///pkg/test/shacl.ttl'},
+        'answer': 'Move to Trash', 'input': 'test',
+        'replies': {'semforge/deletionPlan': PLAN_REPLY},
+    })
+    shown = ' '.join(seen['warnings'])
+    assert 'Delete the project "test"?' in shown
+    assert '10 file(s)' in shown
+    assert 'nothing can bring it back' in shown, shown
+    assert 'not part of the package' in shown
+
+    # The second ask is typing the folder name.
+    assert 'Type test' in seen['inputs'][0]['prompt']
+    assert seen['deleted'] == [{'path': '/pkg/test',
+                                'options': {'recursive': True,
+                                            'useTrash': True}}]
+
+
+def test_dismissing_the_dialog_deletes_nothing(tmp_path):
+    seen = _drive(tmp_path, {
+        'command': 'semforge.deleteProject',
+        'node': {'packageUri': 'file:///pkg/test/shacl.ttl'},
+        'replies': {'semforge/deletionPlan': PLAN_REPLY},
+    })
+    assert not seen['deleted']
+    assert not seen['inputs'], 'it asked for the name before the confirmation'
+
+
+def test_typing_the_wrong_name_deletes_nothing(tmp_path):
+    seen = _drive(tmp_path, {
+        'command': 'semforge.deleteProject',
+        'node': {'packageUri': 'file:///pkg/test/shacl.ttl'},
+        'answer': 'Move to Trash', 'input': 'something else',
+        'replies': {'semforge/deletionPlan': PLAN_REPLY},
+    })
+    assert not seen['deleted']
+
+
+def test_a_directory_that_is_not_a_package_is_refused(tmp_path):
+    seen = _drive(tmp_path, {
+        'command': 'semforge.deleteProject',
+        'node': {'packageUri': 'file:///elsewhere/x.ttl'},
+        'answer': 'Move to Trash', 'input': 'elsewhere',
+        'replies': {'semforge/deletionPlan': {
+            'ok': False, 'error': '/elsewhere is not a SemForge package'}},
+    })
+    assert not seen['deleted']
+    assert any('not a SemForge package' in message for message in seen['errors'])

@@ -33,6 +33,7 @@ EXPECTED = {
     'semforge.initPackage', 'semforge.newProject', 'semforge.selectPackage',
     'semforge.menu', 'semforge.editSetting', 'semforge.refreshProject',
     'semforge.addNamespace', 'semforge.removeNamespace',
+    'semforge.deleteProject',
 }
 
 
@@ -262,7 +263,15 @@ def test_the_project_actions_live_in_one_submenu():
 
     items = contributes['menus']['semforge.project']
     assert [entry['command'] for entry in items] == [
-        'semforge.newProject', 'semforge.initPackage', 'semforge.doctor']
+        'semforge.newProject', 'semforge.initPackage', 'semforge.doctor',
+        'semforge.deleteProject']
+    # The one that cannot be undone sits in its own group, at the bottom,
+    # away from the one above it.
+    danger = next(entry for entry in items
+                  if entry['command'] == 'semforge.deleteProject')
+    assert danger['group'].startswith('8_')
+    assert items[items.index(danger) - 1]['group'].split('@')[0] != \
+        danger['group'].split('@')[0]
     declared = {c['command'] for c in contributes['commands']}
     assert {entry['command'] for entry in items} <= declared
 
