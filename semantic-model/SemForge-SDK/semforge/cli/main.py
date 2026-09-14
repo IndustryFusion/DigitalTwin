@@ -543,14 +543,26 @@ def retarget_command(path, to):
 @cli.command('prefixes')
 @click.argument('path', type=PACKAGE, default='.')
 @click.option('--fix', is_flag=True, help='rewrite the artifacts to the agreed names')
-def prefixes_command(path, fix):
+@click.option('--define', 'definitions', multiple=True, metavar='PREFIX=IRI',
+              help='define a name for the whole package, in semforge.yaml')
+def prefixes_command(path, fix, definitions):
     """Check that every namespace has one agreed name, and optionally align.
 
     The context is the source of truth: it is the artifact all three already
     share. semforge.yaml `namespaces:` adds what the context does not declare
     and overrides it where the package has a reason to.
     """
-    from ..package.prefixes import align, check
+    from ..package.prefixes import add_namespace, align, check
+
+    for definition in definitions:
+        name, _, namespace = definition.partition('=')
+        try:
+            made = add_namespace(path, name, namespace)
+        except PackageError as exc:
+            click.echo(f'{exc}', err=True)
+            sys.exit(2)
+        click.echo(f'defined {made["prefix"]}: {made["namespace"]}  '
+                   f'({os.path.relpath(made["file"], path)}:{made["line"]})')
 
     try:
         package = load(path)

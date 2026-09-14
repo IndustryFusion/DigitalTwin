@@ -1171,6 +1171,20 @@ whether an attribute is an NGSI-LD one at all (an explicit `ngsild:` range, or
 a shape naming it) and judged by their own rule, because "unused and
 unchecked" is a statement about a document and says nothing about an ontology.
 
+**Namespace names are package-wide.** One name per namespace, agreed once, and
+every artifact bound to it — rdflib binds a single prefix per namespace, so a
+second name evicts the first and a term copied between artifacts changes
+meaning. A file that binds a name the package has not defined has therefore
+invented one, which `prefixes.check` reports as an **error** (SF-PFX-003) and
+not a matter of taste. `prefixes.add_namespace` is how the table grows:
+validated (a usable name, a namespace IRI that ends in a separator, no
+collision in either direction) and written to `namespaces:` in semforge.yaml,
+which is the half a package owns — context.jsonld is a snapshot of a published
+url, and diverging from what that url serves is the reproducibility problem in
+another form. It is reachable from the editor (the Project view's namespaces
+row), from `semforge prefixes --define`, and nowhere else, so there is one
+writer.
+
 A fourth group holds the **NGSI-LD vocabulary** — the terms of the encoding,
 which are not the package's. Until it existed, *declared before used* was the
 one rule this project did not apply to itself: `rdfs:range ngsild:Property`

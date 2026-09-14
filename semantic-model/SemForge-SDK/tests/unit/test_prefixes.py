@@ -148,14 +148,20 @@ def test_alignment_reports_a_namespace_nobody_named(tmp_path, corpus):
                                                         'model-instance.jsonld')):
         shutil.copy(corpus.sources[role], target / name)
     shutil.copy(f'{corpus.path}/context.jsonld', target / 'context.jsonld')
+    # The package's own half of the table comes with it: without semforge.yaml
+    # this is not a package missing ONE name, it is a package missing four.
+    shutil.copy(f'{corpus.path}/semforge.yaml', target / 'semforge.yaml')
     (target / 'shacl.ttl').write_text(
         '@prefix odd: <https://nobody.example/named/> .\n'
         '@prefix sh: <http://www.w3.org/ns/shacl#> .\n')
 
     findings = check(load(str(target)))
     unnamed = [f for f in findings if f.code == 'SF-PFX-003']
-    assert any('nobody.example' in f.namespace for f in unnamed)
-    assert 'context.jsonld or semforge.yaml' in unnamed[0].message
+    assert [f.namespace for f in unnamed] == ['https://nobody.example/named/']
+    # Names are package-wide, so inventing one in a file is an error: nothing
+    # else in the package knows it.
+    assert unnamed[0].severity == 'error'
+    assert 'defined once, for the whole package' in unnamed[0].message
 
 
 def test_an_ambiguous_prefix_is_an_error_not_a_warning(tmp_path, corpus):
@@ -206,6 +212,7 @@ def test_prefixes_fix_rewrites_and_then_reports_clean(tmp_path, corpus):
                        ('model', 'model-instance.jsonld')):
         shutil.copy(corpus.sources[role], target / name)
     shutil.copy(f'{corpus.path}/context.jsonld', target / 'context.jsonld')
+    shutil.copy(f'{corpus.path}/semforge.yaml', target / 'semforge.yaml')
 
     source = (target / 'knowledge.ttl').read_text()
     (target / 'knowledge.ttl').write_text(

@@ -167,6 +167,12 @@
         "title": "Refresh Project",
         "category": "SemForge",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "semforge.addNamespace",
+        "title": "Define a namespace prefix",
+        "category": "SemForge",
+        "icon": "$(add)"
       }
     ],
     "viewsContainers": {
@@ -309,6 +315,11 @@
         {
           "command": "semforge.showShapeForClass",
           "when": "view == semforgeKnowledge && viewItem == attributeWithShape",
+          "group": "inline"
+        },
+        {
+          "command": "semforge.addNamespace",
+          "when": "view == semforgeProject && viewItem == namespaces",
           "group": "inline"
         }
       ],

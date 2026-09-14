@@ -1062,3 +1062,37 @@ def test_an_unconstrained_value_is_still_typed(tmp_path):
     assert seen['inputs'], 'nothing asked for the value'
     wrote = [r for r in seen['requests'] if r['method'] == 'semforge/addAttribute']
     assert wrote[0]['params']['value'] == '21.5'
+
+
+def test_a_prefix_can_be_defined_from_the_project_view(tmp_path):
+    """There was no way to add to the namespace table from the editor at all.
+
+    You found semforge.yaml and typed -- and the table is package-wide, so
+    getting it wrong there is wrong everywhere.
+    """
+    seen = _drive(tmp_path, {
+        'command': 'semforge.addNamespace',
+        'node': {'raw': {'kind': 'namespaces', 'label': 'namespaces'},
+                 'packageUri': 'file:///pkg/shacl.ttl'},
+        'inputs': ['plant', 'https://example.org/plant/'],
+        'replies': {'semforge/addNamespace': {
+            'ok': True, 'prefix': 'plant',
+            'namespace': 'https://example.org/plant/',
+            'file': '/pkg/semforge.yaml', 'line': 29}},
+    })
+    asked = [r for r in seen['requests'] if r['method'] == 'semforge/addNamespace']
+    assert asked[0]['params'] == {'uri': 'file:///pkg/shacl.ttl',
+                                  'prefix': 'plant',
+                                  'namespace': 'https://example.org/plant/'}
+    assert seen['shown'][0]['file'] == '/pkg/semforge.yaml'
+
+
+def test_a_refused_prefix_is_reported(tmp_path):
+    seen = _drive(tmp_path, {
+        'command': 'semforge.addNamespace',
+        'node': {'raw': {'kind': 'namespaces'}, 'packageUri': 'file:///pkg/shacl.ttl'},
+        'inputs': ['ngsild', 'https://example.org/x/'],
+        'replies': {'semforge/addNamespace': {
+            'ok': False, 'error': 'ngsild: already means <...>'}},
+    })
+    assert any('already means' in message for message in seen['errors'])

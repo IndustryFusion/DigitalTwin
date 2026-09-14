@@ -640,6 +640,28 @@ def add_entity_type_feature(ls, params):
         return {'ok': False, 'error': str(exc)}
 
 
+@server.feature('semforge/addNamespace')
+def add_namespace_feature(ls, params):
+    """Define a namespace name for the whole package.
+
+    Prefixes are a package-wide table, agreed once. Until this there was no way
+    to add to it from the editor at all -- you found semforge.yaml and typed.
+    """
+    from ..package.prefixes import add_namespace
+
+    root = package_root(_uri_to_path(_field(params, 'uri', '')))
+    if root is None:
+        return {'ok': False, 'error': 'not a SemForge package'}
+    try:
+        made = add_namespace(root, _field(params, 'prefix'),
+                             _field(params, 'namespace'))
+        _packages.pop(root, None)
+        _publish(ls, _path_to_uri(_package_for(root).sources['shapes']))
+        return dict(made, ok=True, uri=_path_to_uri(made['file']))
+    except Exception as exc:                       # noqa: BLE001
+        return {'ok': False, 'error': str(exc)}
+
+
 @server.feature('semforge/attributes')
 def attributes_feature(ls, params):
     """The attributes an entity of this type may carry, as the knowledge says.

@@ -370,3 +370,86 @@ def test_a_settings_key_never_matches_a_nested_line(package):
     declared = config.read(package.path)
     assert declared['ngsild'] == './vendor/ngsild.ttl'
     assert declared['namespaces']['ngsild'] == 'https://uri.etsi.org/ngsi-ld/'
+
+
+# --- namespace prefixes are a package-wide table -----------------------------
+
+def test_a_prefix_a_file_invents_is_an_error(package, tmp_path):
+    """Names are agreed once, for the whole package.
+
+    A file that binds one the package has not defined has invented a name:
+    nothing else knows it, the model cannot expand it, and a term copied out of
+    that file means nothing where it lands.
+    """
+    from semforge.package.prefixes import check
+
+    shapes = package.sources['shapes']
+    text = open(shapes, encoding='utf-8').read()
+    open(shapes, 'w', encoding='utf-8').write(
+        '@prefix invented: <https://example.org/invented/> .\n' + text +
+        '\ninvented:Thing a <http://www.w3.org/2002/07/owl#Class> .\n')
+
+    findings = {finding.code: finding for finding in check(load(package.path))}
+    assert 'SF-PFX-003' in findings
+    assert findings['SF-PFX-003'].severity == 'error'
+    assert 'defined once, for the whole package' in findings['SF-PFX-003'].message
+
+
+def test_a_prefix_can_be_defined_for_the_package(package):
+    from semforge.package.prefixes import add_namespace, canonical_map
+
+    made = add_namespace(package.path, 'plant', 'https://example.org/plant/')
+    assert made['prefix'] == 'plant'
+    assert made['file'].endswith('semforge.yaml')
+    assert canonical_map(package.path)['plant'] == 'https://example.org/plant/'
+
+
+def test_defining_one_does_not_disturb_the_others(package):
+    from semforge.package.prefixes import add_namespace, canonical_map
+
+    before = canonical_map(package.path)
+    add_namespace(package.path, 'plant', 'https://example.org/plant/')
+    after = canonical_map(package.path)
+    assert before.items() <= after.items()
+    assert set(after) - set(before) == {'plant'}
+
+
+@pytest.mark.parametrize('prefix,namespace,complaint', [
+    ('9bad', 'https://example.org/a/', 'not usable as a prefix'),
+    ('ok', 'nonsense', 'not a namespace IRI'),
+    ('ok', 'https://example.org/a', 'does not end in'),
+    ('ngsild', 'https://example.org/a/', 'already means'),
+])
+def test_a_definition_that_would_break_the_table_is_refused(
+        package, prefix, namespace, complaint):
+    from semforge.package.prefixes import add_namespace
+
+    with pytest.raises(PackageError) as raised:
+        add_namespace(package.path, prefix, namespace)
+    assert complaint in str(raised.value)
+
+
+def test_a_second_name_for_one_namespace_is_refused(package):
+    """rdflib binds one prefix per namespace: a second evicts the first."""
+    from semforge.package.prefixes import add_namespace
+
+    with pytest.raises(PackageError) as raised:
+        add_namespace(package.path, 'etsi', 'https://uri.etsi.org/ngsi-ld/')
+    assert 'already named' in str(raised.value)
+
+
+def test_the_prefix_table_is_reported_where_it_is_shown(package, tmp_path):
+    """The Project view's namespaces row carries what the artifacts say."""
+    from semforge.cooked.project import build_project
+
+    shapes = package.sources['shapes']
+    text = open(shapes, encoding='utf-8').read()
+    open(shapes, 'w', encoding='utf-8').write(
+        '@prefix invented: <https://example.org/invented/> .\n' + text +
+        '\ninvented:Thing a <http://www.w3.org/2002/07/owl#Class> .\n')
+
+    rows = {row.label: row
+            for root in build_project(load(package.path))
+            for row in root.children}
+    assert rows['namespaces'].severity == 'error'
+    assert 'disagreement' in rows['namespaces'].detail

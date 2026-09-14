@@ -259,6 +259,21 @@ Contents     13 shape(s) · 44 entity(s) · 6 case(s)
 Every row that names a place carries `file:line`: clicking a setting opens its
 line in `semforge.yaml`, so the paragraph explaining it is right there.
 
+**Namespace prefixes are a package-wide table**, agreed once and binding on
+every artifact: `knowledge.ttl`'s `@prefix`, `shacl.ttl`'s, and the model's
+context all have to mean the same thing by the same name. rdflib binds one
+prefix per namespace, so a second name evicts the first and a term copied
+between artifacts changes meaning.
+
+The **namespaces** row is where that table lives. ➕ on it defines a new one —
+it asks for the name and the IRI, refuses one that would collide with an
+existing name or give a namespace a second name, and writes it to
+`namespaces:` in `semforge.yaml`. The row itself turns red when an artifact
+disagrees with the table, and the disagreement shows on the offending
+`@prefix` line as a diagnostic. On the command line that is `semforge prefixes`
+(`--define plant=https://example.org/plant/` to add one, `--fix` to align the
+artifacts).
+
 The pencil edits it. The write is **line-based**: it replaces the value on that
 one line and leaves the rest of the file byte-for-byte, because the comments in
 `semforge.yaml` are the documentation and a YAML round-trip deletes all of
@@ -894,6 +909,7 @@ in `shacl.ttl` is meaningless without the ontology and the examples.
 | `SemForge: Menu` | everything below, from the status bar item |
 | `SemForge: Select Package` | which package the four views show; pins your choice |
 | `SemForge: Change this setting` | the ✎ on a Project row; writes one line of semforge.yaml |
+| `SemForge: Define a namespace prefix` | the ➕ on the Project view's namespaces row |
 | `SemForge: Doctor` | what it sees: folder, interpreter, active package, every other package in the window, whether `semforge` imports |
 | `SemForge: Go to the SHACL rule for this attribute` | the ⚖ icon on an example attribute; creates an empty `sh:property` when none exists |
 | `SemForge: Go to the shape for this class` | the ⚖ icon on a knowledge class |

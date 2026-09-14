@@ -117,11 +117,22 @@ def _settings(package):
             severity=severity,
             defined_at=_at(manifest, setting.line)))
 
+    # Prefixes are a package-wide table, so what the artifacts say about it
+    # belongs on the row that shows it -- not in a command nobody runs.
+    trouble = _prefix_findings(package)
+
     for collection in config.collections(root):
+        detail = collection.doc
+        severity = ''
+        if collection.key == 'namespaces' and trouble:
+            severity = 'error' if any(f.severity == 'error' for f in trouble) \
+                else 'warning'
+            detail = f'{len(trouble)} disagreement(s) — ' + trouble[0].message
         group = ProjectNode(
-            kind='fact', label=collection.label,
+            kind='namespaces' if collection.key == 'namespaces' else 'fact',
+            label=collection.label,
             value=f'{len(collection.entries)}', doc=collection.doc,
-            detail=collection.doc,
+            detail=detail, severity=severity,
             defined_at=_at(manifest, config.locate(root, collection.key)))
         group.children = [
             ProjectNode(kind='entry', label=name, value=value,
@@ -133,6 +144,16 @@ def _settings(package):
                        detail=f'{config.CONFIG} — click the pencil to change one')
     node.children = rows
     return node
+
+
+def _prefix_findings(package):
+    """What the artifacts say about the package's namespace table."""
+    from ..package.prefixes import check
+
+    try:
+        return check(package)
+    except Exception:                              # noqa: BLE001
+        return []                                  # `semforge prefixes` tells it better
 
 
 def _contents(package):

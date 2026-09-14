@@ -83,6 +83,8 @@ class ProjectTreeProvider {
       item.iconPath = new vscode.ThemeIcon('project');
     } else if (raw.severity) {
       item.iconPath = new vscode.ThemeIcon('warning');
+    } else if (raw.kind === 'namespaces') {
+      item.iconPath = new vscode.ThemeIcon('symbol-namespace');
     } else if (raw.editable) {
       item.iconPath = new vscode.ThemeIcon('settings-gear');
     } else {
@@ -198,6 +200,47 @@ function register(context, clientHolder, session, onChanged) {
         onChanged();
       }
       await showLocation(`${result.file}:${result.line}`, false);
+    }),
+
+    vscode.commands.registerCommand('semforge.addNamespace', async (node) => {
+      // Prefixes are a package-wide table, agreed once. There was no way to
+      // add to it from the editor at all -- you found semforge.yaml and typed.
+      const prefix = await vscode.window.showInputBox({
+        title: 'New namespace prefix',
+        prompt: 'The name this package uses for it, e.g. plant',
+        validateInput: (text) =>
+          /^[A-Za-z_][\w.-]*$/.test((text || '').replace(/:$/, ''))
+            ? undefined
+            : 'A letter or underscore, then letters, digits, dots, ' +
+              'underscores or hyphens.'
+      });
+      if (!prefix) {
+        return;
+      }
+      const namespace = await vscode.window.showInputBox({
+        title: `What does ${prefix}: mean?`,
+        prompt: 'The namespace IRI. It has to end in "/", "#" or ":", or a ' +
+          'term appended to it runs into the last segment.',
+        value: 'https://'
+      });
+      if (!namespace) {
+        return;
+      }
+      const made = await clientHolder.client.sendRequest(
+        'semforge/addNamespace',
+        { uri: (node && node.packageUri) || provider.uri, prefix, namespace }
+      );
+      if (!made || !made.ok) {
+        vscode.window.showErrorMessage(
+          `SemForge: ${(made && made.error) || 'the prefix was not defined'}`
+        );
+        return;
+      }
+      provider.refresh();
+      if (onChanged) {
+        onChanged();
+      }
+      await showLocation(`${made.file}:${made.line}`, false);
     }),
 
     vscode.commands.registerCommand('semforge.refreshProject', () =>

@@ -205,8 +205,12 @@ def set_value(package_path, key, value):
     else:
         parent = locate(package_path, '.'.join(parts[:-1]))
         if parent:
-            lines.insert(parent, f'  {parts[-1]}: {rendered}')
-            written = parent
+            # At the END of the parent's block, not immediately after its
+            # heading: the scaffold writes a paragraph under each heading, and
+            # inserting above it separates a comment from what it explains.
+            at = _block_end(lines, parent - 1)
+            lines.insert(at, f'  {parts[-1]}: {rendered}')
+            written = at
         else:
             lines = _append(lines, f'{parts[0]}:', key)
             lines.append(f'  {parts[-1]}: {rendered}')
@@ -215,6 +219,20 @@ def set_value(package_path, key, value):
     with open(where, 'w', encoding='utf-8') as handle:
         handle.write('\n'.join(lines).rstrip('\n') + '\n')
     return where, written + 1
+
+
+def _block_end(lines, opened_at):
+    """The index just past the block whose heading is at `opened_at`."""
+    indent = _indent(lines[opened_at])
+    last = opened_at + 1
+    for at in range(opened_at + 1, len(lines)):
+        stripped = lines[at].strip()
+        if not stripped or stripped.startswith('#'):
+            continue
+        if _indent(lines[at]) <= indent:
+            return last
+        last = at + 1
+    return last
 
 
 def _append(lines, text, key):

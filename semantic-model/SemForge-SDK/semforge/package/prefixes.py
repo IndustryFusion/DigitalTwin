@@ -172,11 +172,18 @@ def check(package):
         for name, namespace in sorted(prefixes.items()):
             agreed = by_namespace.get(namespace)
             if agreed is None:
+                # Names are a PACKAGE-wide table, not a per-file convenience.
+                # A file that binds a prefix the package has not defined has
+                # invented a name: nothing else in the package knows it, the
+                # model cannot expand it, and a term copied out of that file
+                # means nothing where it lands. So it is an error, not taste.
                 findings.append(PrefixFinding(
-                    code='SF-PFX-003', severity='warning', namespace=namespace,
+                    code='SF-PFX-003', severity='error', namespace=namespace,
                     message=(f'{role}: <{namespace}> is used as "{name or "(default)"}:" '
-                             f'but the context declares no name for it. Add one '
-                             f'to context.jsonld or semforge.yaml.'),
+                             f'but the package defines no name for it. Prefixes '
+                             f'are defined once, for the whole package: add it '
+                             f'to context.jsonld or to `namespaces:` in '
+                             f'semforge.yaml.'),
                     files=[role]))
             elif agreed != name:
                 findings.append(PrefixFinding(
@@ -187,6 +194,56 @@ def check(package):
 
     findings.extend(_check_model(package, by_namespace))
     return findings
+
+
+PREFIX_NAME = re.compile(r'^[A-Za-z_][\w.-]*$')
+
+
+def add_namespace(package_path, prefix, namespace):
+    """Define a namespace name for the whole package.
+
+    The table is global on purpose: one name per namespace, agreed once, and
+    every artifact bound to it. A file that invents its own is the failure
+    `check` reports -- rdflib binds a single prefix per namespace, so a second
+    name evicts the first and a term copied between artifacts changes meaning.
+
+    Writes `namespaces:` in semforge.yaml, which is the half a package owns;
+    context.jsonld is a snapshot of a published url and diverging from what
+    that url serves is the reproducibility problem in another form.
+    """
+    from . import config
+    from ..errors import PackageError
+
+    name = (prefix or '').strip().rstrip(':')
+    target = (namespace or '').strip()
+    if not PREFIX_NAME.match(name):
+        raise PackageError(
+            f'{prefix!r} is not usable as a prefix: a letter or underscore, '
+            f'then letters, digits, dots, underscores or hyphens')
+    if not target.startswith(('http://', 'https://', 'urn:')):
+        raise PackageError(
+            f'{target!r} is not a namespace IRI: it should be an http(s) url '
+            f'or a urn')
+    if not target.endswith(('/', '#', ':')):
+        raise PackageError(
+            f'{target!r} does not end in "/", "#" or ":", so a term appended '
+            f'to it would run into the last segment')
+
+    declared = canonical_map(package_path)
+    if declared.get(name) == target:
+        raise PackageError(f'{name}: is already {target}')
+    if name in declared:
+        raise PackageError(
+            f'{name}: already means <{declared[name]}> in this package. One '
+            f'name per namespace, and one namespace per name.')
+    existing = names_by_namespace(package_path).get(target)
+    if existing:
+        raise PackageError(
+            f'<{target}> is already named "{existing}:". rdflib binds one '
+            f'prefix per namespace, so a second name would evict the first.')
+
+    where, line = config.set_value(package_path, f'namespaces.{name}', target)
+    return {'prefix': name, 'namespace': target, 'file': where, 'line': line}
 
 
 def _check_model(package, by_namespace):

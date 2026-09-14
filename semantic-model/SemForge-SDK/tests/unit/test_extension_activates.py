@@ -32,6 +32,7 @@ EXPECTED = {
     'semforge.refreshKnowledge', 'semforge.showShapeForClass',
     'semforge.initPackage', 'semforge.newProject', 'semforge.selectPackage',
     'semforge.menu', 'semforge.editSetting', 'semforge.refreshProject',
+    'semforge.addNamespace',
 }
 
 

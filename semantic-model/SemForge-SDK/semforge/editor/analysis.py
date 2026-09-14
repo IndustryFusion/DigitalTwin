@@ -45,7 +45,7 @@ class EditorFinding:
     line: int                 # 1-based
     severity: str             # error | warning | info | hint
     kind: str                 # capability | view | unexercised | fires |
-    #                           identity | vocabulary
+    #                           identity | vocabulary | prefix
     message: str
     subject: str = ''
 
@@ -120,6 +120,30 @@ def analyse(root, profile_name='shacl2flink'):
                                   subject=entry.term))
     except Exception:                              # noqa: BLE001
         pass
+
+    # The namespace table is package-wide, and a file that binds a name the
+    # package has not defined has invented one: nothing else knows it, and a
+    # term copied out of that file means nothing where it lands.
+    from ..package.prefixes import PREFIX_LINE, check as check_prefixes
+
+    try:
+        for finding in check_prefixes(package):
+            for role in set(finding.files):
+                for path in package.files(role):
+                    line = 1
+                    if finding.namespace:
+                        with open(path, encoding='utf-8') as handle:
+                            text = handle.read()
+                        for match in PREFIX_LINE.finditer(text):
+                            if match.group(3) == finding.namespace:
+                                line = text[:match.start()].count('\n') + 1
+                                break
+                    findings.setdefault(os.path.abspath(path), []).append(
+                        EditorFinding(line=line, severity=finding.severity,
+                                      kind='prefix', message=finding.message,
+                                      subject=finding.namespace))
+    except Exception:                              # noqa: BLE001
+        pass            # `semforge prefixes` tells this better than a squiggle
 
     report = validate_package(package, strict=False)
 
