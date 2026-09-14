@@ -317,6 +317,47 @@ against it), when no document carries it (no constraint about it can fire), or
 when it has no `rdfs:range` (nothing says whether it is a Property or a
 Relationship, and the two carry their payload under different keys).
 
+### The NGSI-LD vocabulary
+
+A fourth group, last, and not the package's: the terms of the **encoding**.
+
+```text
+NGSI-LD vocabulary   12 term(s) · shipped with the SDK
+  Attribute kinds    what an attribute's `type` may say
+    ngsild:Property        64 use(s) · a value: a literal, or an IRI naming a term
+    ngsild:JsonProperty     3 use(s)
+    ngsild:GeoProperty     not used here
+  Slots and metadata  where the payload hangs, and what is recorded beside it
+    ngsild:hasValue        62 use(s) · `value` in JSON-LD
+    ngsild:observedAt       7 use(s) · orders the instances; the latest is validated
+```
+
+Until now this was the one rule the project did not apply to itself. Everything
+else must be declared before it is used — but `rdfs:range ngsild:Property`
+pointed at a class no file declared, so `ngsild:Propery` was not an error
+anywhere: the attribute simply had no kind, and nothing said why. A term the
+package uses and the vocabulary does not declare is now reported, in this group
+and under `semforge test`.
+
+It is **not an ordinary dependency**. A domain vocabulary is the package's
+business and goes in `dependencies:`; the encoding is what makes it an NGSI-LD
+package at all, every one needs it, and a package that forgot to declare it
+would silently lose the terms every `sh:path` names. So the SDK ships it and
+always loads it. To use your own copy:
+
+```yaml
+ngsild: ./vendor/ngsild.ttl        # or an http(s) url, fetched and cached
+```
+
+Upstream is
+[`ngsild.ttl`](https://industryfusion.github.io/contexts/staging/ontology/v0/ngsild.ttl),
+which declares `Property` and `Relationship`. The shipped kms uses **ten**
+NGSI-LD terms, so what ships here is that file extended — the five attribute
+kinds, the four payload slots, and the three metadata keys. Nothing is
+invented: every class is a value of an attribute's `type` in the NGSI-LD API and
+every predicate is what the NGSI-LD `@context` maps a payload or metadata key
+to. The additions are marked in the Turtle so they can go back upstream.
+
 ## Working on the extension itself
 
 Only needed if you are changing the extension's own code:

@@ -294,3 +294,79 @@ def test_placed_sub_attributes_come_before_merely_allowed_ones(package):
     assert found[0].parents == ('iffBaseEntities:hasState',)
     assert any(entry.parents == () and entry.carrier_kind == 'Property'
                for entry in found[1:]), [e.term for e in found]
+
+
+# --- the NGSI-LD vocabulary itself -------------------------------------------
+
+def test_every_package_gets_the_ngsild_vocabulary(package):
+    """The one rule the encoding did not follow: declared before used.
+
+    `rdfs:range ngsild:Property` pointed at a class no file declared.
+    """
+    from rdflib import RDF, URIRef
+    from rdflib.namespace import OWL
+
+    assert len(package.vocabulary)
+    ngsild = 'https://uri.etsi.org/ngsi-ld/'
+    classes = {str(s)[len(ngsild):]
+               for s in package.vocabulary.subjects(RDF.type, OWL.Class)}
+    assert {'Property', 'Relationship', 'JsonProperty', 'ListProperty'} <= classes
+    assert (URIRef(ngsild + 'hasValue'), None, None) in package.vocabulary
+
+
+def test_it_is_kept_apart_from_what_the_package_declares(package):
+    """Nothing may mistake the encoding for something this package owns."""
+    from rdflib import URIRef
+
+    assert (URIRef('https://uri.etsi.org/ngsi-ld/hasValue'), None, None) \
+        not in package.knowledge
+    assert 'ngsild:hasValue' not in {entry.term
+                                     for entry in attribute_terms(package)}
+
+
+def test_the_shipped_vocabulary_covers_what_the_kms_uses(package):
+    from semforge.expect.vocabulary import unknown_ngsild_terms
+
+    assert unknown_ngsild_terms(package) == []
+
+
+def test_a_term_no_vocabulary_declares_is_reported(tmp_path, package):
+    """Which is how the upstream ontology's gap is visible at all.
+
+    It declares two classes. The shipped kms uses ten terms.
+    """
+    from semforge.expect.vocabulary import unknown_ngsild_terms
+    from semforge.package import config
+
+    upstream = tmp_path / 'upstream.ttl'
+    upstream.write_text(
+        '@prefix : <https://uri.etsi.org/ngsi-ld/> .\n'
+        '@prefix owl: <http://www.w3.org/2002/07/owl#> .\n'
+        ':Property a owl:Class .\n'
+        ':Relationship a owl:Class .\n')
+    config.set_value(package.path, 'ngsild', str(upstream))
+
+    found = {entry.term: entry for entry in unknown_ngsild_terms(load(package.path))}
+    assert 'hasValue' in found and 'JsonProperty' in found
+    assert 'shapes' in found['hasValue'].where
+    assert 'vocabulary needs extending' in found['hasValue'].message
+    # The ones it does declare are not reported.
+    assert 'Property' not in found
+
+
+def test_a_settings_key_never_matches_a_nested_line(package):
+    """The kms declares a NAMESPACE called `ngsild` inside `namespaces:`.
+
+    Looking for a top-level `ngsild:` without checking the indent found that
+    line, so writing the setting overwrote the namespace and broke every
+    prefixed name in the package.
+    """
+    from semforge.package import config
+
+    assert config.locate(package.path, 'ngsild') == 0
+    assert config.locate(package.path, 'namespaces.ngsild') > 0
+
+    config.set_value(package.path, 'ngsild', './vendor/ngsild.ttl')
+    declared = config.read(package.path)
+    assert declared['ngsild'] == './vendor/ngsild.ttl'
+    assert declared['namespaces']['ngsild'] == 'https://uri.etsi.org/ngsi-ld/'

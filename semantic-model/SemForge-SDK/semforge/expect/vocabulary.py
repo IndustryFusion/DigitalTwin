@@ -127,3 +127,61 @@ def _message(entry):
             f'selects it, so every constraint about it stays silent and the '
             f'document reads as validated. Declare it in the knowledge, or '
             f'correct the spelling.')
+
+
+@dataclass
+class UnknownTerm:
+    """An `ngsild:` term used by the package and declared by no vocabulary."""
+    term: str                                   # the local name
+    iri: str
+    where: list = field(default_factory=list)   # knowledge | shapes | data
+    message: str = ''
+
+
+def unknown_ngsild_terms(package):
+    """Every `ngsild:` IRI the package uses that the vocabulary does not declare.
+
+    The same rule as everywhere else, turned on the encoding itself. An
+    attribute declared `rdfs:range ngsild:Propery` is not an error anywhere:
+    the range is a term, terms are IRIs, and rdflib will hold it happily. What
+    it is NOT is a kind -- so the attribute has no kind, no picker offers the
+    right payload key, and nothing says why.
+
+    Upstream declares two classes. The shipped kms uses ten terms. That gap is
+    what this reports, and it is why the SDK ships an extended copy.
+    """
+    from rdflib import URIRef
+
+    from ..cooked.knowledge import _data_graph
+
+    NGSILD = 'https://uri.etsi.org/ngsi-ld/'
+    declared = {str(subject) for subject in package.vocabulary.subjects(None, None)
+                if isinstance(subject, URIRef)}
+
+    found = {}
+    sources = [('knowledge', package.knowledge), ('shapes', package.shapes)]
+    try:
+        sources.append(('data', _data_graph(package)))
+    except Exception:                              # noqa: BLE001
+        pass            # a malformed example is the validator's story to tell
+
+    for name, graph in sources:
+        for triple in graph:
+            for node in triple:
+                text = str(node)
+                if not isinstance(node, URIRef) or not text.startswith(NGSILD):
+                    continue
+                if text in declared or len(text) == len(NGSILD):
+                    continue
+                entry = found.setdefault(
+                    text, UnknownTerm(term=text[len(NGSILD):], iri=text))
+                if name not in entry.where:
+                    entry.where.append(name)
+
+    for entry in found.values():
+        entry.message = (
+            f'ngsild:{entry.term} is used in the {", ".join(entry.where)} and '
+            f'declared by no NGSI-LD vocabulary. Either it is a typo, or the '
+            f'vocabulary needs extending -- `ngsild:` in semforge.yaml points '
+            f'at the copy this package uses.')
+    return sorted(found.values(), key=lambda entry: entry.term)

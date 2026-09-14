@@ -98,6 +98,10 @@ class KnowledgeTreeProvider {
       item.iconPath = new vscode.ThemeIcon(
         raw.severity ? 'warning' : 'symbol-field'
       );
+    } else if (raw.kind === 'term') {
+      item.iconPath = new vscode.ThemeIcon(
+        raw.severity ? 'warning' : 'symbol-constant'
+      );
     } else if (raw.kind === 'relation') {
       item.iconPath = new vscode.ThemeIcon(
         raw.severity ? 'warning' : 'symbol-property'

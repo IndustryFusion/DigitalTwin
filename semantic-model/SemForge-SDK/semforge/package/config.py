@@ -83,8 +83,12 @@ def _indent(line):
 def locate(package_path, key):
     """The 1-based line declaring `key`, or 0.
 
-    A dotted key is found by its parent: `context.published` is the `published:`
-    line indented under `context:`, not the first `published:` in the file.
+    Indentation decides, because the same name lives at both levels: the kms
+    declares a NAMESPACE called `ngsild` inside `namespaces:`, and looking for
+    a top-level `ngsild:` without checking the indent found that line -- so
+    writing the setting overwrote the namespace and broke every prefixed name
+    in the package. A top-level key is at indent 0; a nested one is inside its
+    parent's block, and the search ends where that block does.
     """
     where = path_for(package_path)
     if not os.path.isfile(where):
@@ -92,32 +96,29 @@ def locate(package_path, key):
     with open(where, encoding='utf-8') as handle:
         lines = handle.read().splitlines()
 
-    parts = key.split('.')
-    start, depth = 0, 0
-    for part in parts[:-1]:
-        found = _find(lines, part, start, depth, nested=True)
+    start, limit, parent_indent = 0, len(lines), -1
+    found = None
+    for depth, part in enumerate(key.split('.')):
+        found = None
+        for at in range(start, limit):
+            line = lines[at]
+            stripped = line.strip()
+            if not stripped or stripped.startswith('#'):
+                continue
+            indent = _indent(line)
+            if depth == 0:
+                if indent != 0:
+                    continue                    # inside some other block
+            elif indent <= parent_indent:
+                break                           # the parent's block ended
+            if ':' in stripped and stripped.split(':')[0].strip() == part:
+                found = at
+                break
         if found is None:
             return 0
-        start, depth = found + 1, depth + 1
-    found = _find(lines, parts[-1], start, depth)
+        parent_indent = _indent(lines[found])
+        start = found + 1
     return 0 if found is None else found + 1
-
-
-def _find(lines, name, start, depth, nested=False):
-    """The index of `name:` at the expected nesting, searching from `start`."""
-    for at in range(start, len(lines)):
-        line = lines[at]
-        stripped = line.strip()
-        if not stripped or stripped.startswith('#'):
-            continue
-        indent = _indent(line)
-        if depth and indent == 0 and not nested:
-            return None            # left the block this key lives in
-        if depth and indent == 0 and at > start:
-            return None
-        if stripped.split(':')[0].strip() == name and ':' in stripped:
-            return at
-    return None
 
 
 def settings(package_path):

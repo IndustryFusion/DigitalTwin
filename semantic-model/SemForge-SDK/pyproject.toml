@@ -28,3 +28,8 @@ crosscheck = ["oxrdflib==0.4.0", "Jinja2==3.1.6"]
 
 [tool.setuptools.packages.find]
 include = ["semforge*"]
+
+# The NGSI-LD vocabulary ships with the code: every package needs it, and an
+# install without it loses the terms every shape's sh:path names.
+[tool.setuptools.package-data]
+semforge = ["ngsild/*.ttl"]

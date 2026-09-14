@@ -25,10 +25,15 @@ def _all(tree, kind):
 
 # --- the hierarchy ------------------------------------------------------------
 
-def test_the_groups_are_the_three_things_the_knowledge_declares(tree):
-    """Types, vocabularies, and the attributes -- which nothing showed."""
+def test_the_groups_are_what_the_knowledge_declares_and_what_it_assumes(tree):
+    """Types, vocabularies and attributes are the package's.
+
+    The NGSI-LD vocabulary is not: it is the encoding every package is written
+    against, so it comes last and nothing in it is the package's to change.
+    """
     assert [n.label for n in tree] == [
-        'Entity types', 'Vocabulary classes', 'Attributes']
+        'Entity types', 'Vocabulary classes', 'Attributes',
+        'NGSI-LD vocabulary']
 
 
 def test_entity_types_nest_by_subclass(tree):
@@ -322,3 +327,27 @@ def test_a_well_formed_attribute_is_not_flagged(corpus):
     rows = _rows(_attributes(corpus))
     assert not rows['iffBaseEntities:hasStrength'].severity
     assert not rows['iffBaseEntities:hasState'].severity
+
+
+def test_the_ngsild_vocabulary_is_a_group_of_its_own(corpus):
+    """The encoding's terms, declared at last -- and not the package's."""
+    from semforge.cooked.knowledge import build_knowledge
+
+    group = next((root for root in build_knowledge(corpus)
+                  if root.label == 'NGSI-LD vocabulary'), None)
+    assert group is not None
+    sections = {row.label: row for row in group.children}
+    assert 'Attribute kinds' in sections and 'Slots and metadata' in sections
+
+    kinds = {row.label for row in sections['Attribute kinds'].children}
+    assert {'ngsild:Property', 'ngsild:Relationship',
+            'ngsild:JsonProperty'} <= kinds
+
+    # Counted against what the package actually does with them.
+    value = next(row for row in sections['Slots and metadata'].children
+                 if row.label == 'ngsild:hasValue')
+    assert 'use(s)' in value.detail
+    unused = next(row for row in sections['Attribute kinds'].children
+                  if row.label == 'ngsild:GeoProperty')
+    assert 'not used here' in unused.detail
+    assert not unused.severity        # a term the encoding has and you do not

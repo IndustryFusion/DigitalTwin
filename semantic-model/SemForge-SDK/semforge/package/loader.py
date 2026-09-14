@@ -62,6 +62,10 @@ class Package:
     context_url: str = ''      # what the model names on disk
     context_resolved_locally: bool = False
     knowledge: Graph = field(default_factory=Graph)
+    # The NGSI-LD vocabulary: not the package's, but what every term of the
+    # encoding means. Kept apart from `knowledge` so nothing mistakes it for
+    # something this package declares, owns, or may write to.
+    vocabulary: Graph = field(default_factory=Graph)
     shapes: Graph = field(default_factory=Graph)
     model: Graph = field(default_factory=Graph)
     sources: dict = field(default_factory=dict)    # role -> primary file
@@ -212,6 +216,12 @@ def load(path):
             f'{path} is missing:\n' + '\n'.join(f'  - {m}' for m in missing))
 
     package = Package(path=path, sources=sources, documents=documents)
+    from ..ngsild.vocabulary import for_package
+
+    try:
+        package.vocabulary = for_package(path)
+    except Exception:                              # noqa: BLE001
+        pass            # a declared copy that will not load is `doctor`'s story
     for document in documents['knowledge']:
         package.knowledge.parse(document, format='turtle')
     for document in documents['shapes']:

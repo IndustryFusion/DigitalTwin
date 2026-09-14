@@ -371,7 +371,8 @@ def test(path, want_coverage, fail_on):
     # An attribute the knowledge never declared. In a CASE that is an error:
     # no sh:path selects it, so the case proves nothing while passing. In the
     # scratchpad it is reported and left alone -- the scratchpad cannot fail.
-    from ..expect.vocabulary import undeclared_attributes
+    from ..expect.vocabulary import (undeclared_attributes,
+                                     unknown_ngsild_terms)
 
     unknown = undeclared_attributes(package)
     if unknown:
@@ -381,6 +382,15 @@ def test(path, want_coverage, fail_on):
             where = ', '.join(sorted({os.path.relpath(place, path)
                                       for place, _ in entry.places})[:3])
             click.echo(f'{marker}{entry.term}  [{where}]')
+            click.echo(f'        {entry.message}')
+        click.echo('')
+
+    # And the encoding's own terms, judged by the same rule.
+    strangers = unknown_ngsild_terms(package)
+    if strangers:
+        click.echo('NGSI-LD vocabulary')
+        for entry in strangers:
+            click.echo(f'  ..  ngsild:{entry.term}  [{", ".join(entry.where)}]')
             click.echo(f'        {entry.message}')
         click.echo('')
 

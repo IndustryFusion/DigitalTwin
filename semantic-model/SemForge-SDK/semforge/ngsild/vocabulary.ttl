@@ -1,0 +1,113 @@
+# The NGSI-LD vocabulary, as SemForge needs it.
+#
+# Upstream is
+# <https://industryfusion.github.io/contexts/staging/ontology/v0/ngsild.ttl>,
+# which declares two classes: Property and Relationship. Everything a package
+# actually writes needs more than that -- the shipped kms alone uses ten NGSI-LD
+# terms -- and a term nothing declares is a term nothing can check, which is the
+# failure this SDK spends most of its effort on.
+#
+# So this file is that ontology, extended. Nothing here is invented: every class
+# is a value of an attribute's `type` in the NGSI-LD API, and every predicate is
+# what the NGSI-LD @context maps a payload or metadata key to. The additions are
+# marked, so they can go upstream.
+#
+# A package may point at its own copy with `ngsild:` in semforge.yaml.
+
+@prefix : <https://uri.etsi.org/ngsi-ld/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@base <https://uri.etsi.org/ngsi-ld/> .
+
+<https://uri.etsi.org/ngsi-ld/> rdf:type owl:Ontology ;
+    owl:versionInfo "v0.1+semforge"^^xsd:string ;
+    rdfs:comment "NGSI-LD terms, as used by the NGSI-LD-in-RDF encoding." .
+
+#################################################################
+#    Classes -- the kinds an attribute's `type` may take
+#################################################################
+
+###  https://uri.etsi.org/ngsi-ld/Property
+:Property rdf:type owl:Class ;
+    rdfs:label "Property" ;
+    rdfs:comment "An attribute carrying a value: a literal, or an IRI naming a vocabulary term." .
+
+###  https://uri.etsi.org/ngsi-ld/Relationship
+:Relationship rdf:type owl:Class ;
+    rdfs:label "Relationship" ;
+    rdfs:comment "An attribute carrying the id of another entity." .
+
+###  added: in the API since NGSI-LD 1.4, not yet upstream
+:GeoProperty rdf:type owl:Class ;
+    rdfs:label "GeoProperty" ;
+    rdfs:comment "A Property whose value is a GeoJSON geometry." .
+
+###  added: in the API since NGSI-LD 1.6, not yet upstream
+:JsonProperty rdf:type owl:Class ;
+    rdfs:label "JsonProperty" ;
+    rdfs:comment "An attribute carrying an arbitrary JSON document." .
+
+###  added: in the API since NGSI-LD 1.6, not yet upstream
+:ListProperty rdf:type owl:Class ;
+    rdfs:label "ListProperty" ;
+    rdfs:comment "An attribute carrying an ordered list of values." .
+
+#################################################################
+#    The payload slots -- which key carries the attribute's content
+#
+#    This is the second layer of the encoding: an attribute is a blank node,
+#    and one of these predicates hangs the content off it. Which one is
+#    decided by the class above, and getting the pairing wrong produces
+#    something that parses, looks plausible and means nothing.
+#################################################################
+
+###  added, not yet upstream
+:hasValue rdf:type owl:ObjectProperty ;
+    rdfs:domain :Property ;
+    rdfs:label "hasValue" ;
+    rdfs:comment "The content of a Property. `value` in JSON-LD." .
+
+###  added, not yet upstream
+:hasObject rdf:type owl:ObjectProperty ;
+    rdfs:domain :Relationship ;
+    rdfs:label "hasObject" ;
+    rdfs:comment "The entity a Relationship points at. `object` in JSON-LD." .
+
+###  added, not yet upstream
+:hasJSON rdf:type owl:ObjectProperty ;
+    rdfs:domain :JsonProperty ;
+    rdfs:label "hasJSON" ;
+    rdfs:comment "The document a JsonProperty carries. `json` in JSON-LD." .
+
+###  added, not yet upstream
+:hasValueList rdf:type owl:ObjectProperty ;
+    rdfs:domain :ListProperty ;
+    rdfs:label "hasValueList" ;
+    rdfs:comment "The list a ListProperty carries. `valueList` in JSON-LD." .
+
+#################################################################
+#    Attribute metadata
+#
+#    Carried on the attribute node beside its payload. `observedAt` is the one
+#    that decides which instance validation reads, so a package that gets it
+#    wrong is validating a value it is not looking at.
+#################################################################
+
+###  added, not yet upstream
+:observedAt rdf:type owl:DatatypeProperty ;
+    rdfs:range xsd:dateTime ;
+    rdfs:label "observedAt" ;
+    rdfs:comment "When the value was observed. Orders the instances of one attribute; the latest is the one validation reads." .
+
+###  added, not yet upstream
+:datasetId rdf:type owl:ObjectProperty ;
+    rdfs:label "datasetId" ;
+    rdfs:comment "Which instance of a multi-valued attribute this is. Absent means the default instance." .
+
+###  added, not yet upstream
+:unitCode rdf:type owl:DatatypeProperty ;
+    rdfs:range xsd:string ;
+    rdfs:label "unitCode" ;
+    rdfs:comment "The unit of a Property's value, as a UN/CEFACT code." .

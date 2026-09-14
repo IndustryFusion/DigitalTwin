@@ -403,7 +403,8 @@ def test_the_knowledge_tree_arrives_over_the_protocol(session):
     assert not tree.get('error'), tree.get('error')
     assert [r['label'] for r in tree['roots']] == ['Entity types',
                                                    'Vocabulary classes',
-                                                   'Attributes']
+                                                   'Attributes',
+                                                   'NGSI-LD vocabulary']
 
     rows = []
 

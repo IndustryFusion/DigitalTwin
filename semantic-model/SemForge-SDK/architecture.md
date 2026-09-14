@@ -1171,6 +1171,18 @@ whether an attribute is an NGSI-LD one at all (an explicit `ngsild:` range, or
 a shape naming it) and judged by their own rule, because "unused and
 unchecked" is a statement about a document and says nothing about an ontology.
 
+A fourth group holds the **NGSI-LD vocabulary** — the terms of the encoding,
+which are not the package's. Until it existed, *declared before used* was the
+one rule this project did not apply to itself: `rdfs:range ngsild:Property`
+pointed at a class no file declared, so a typo in it yielded an attribute with
+no kind and no complaint. It is not an ordinary dependency (§6.2): a domain
+vocabulary is the package's business, while the encoding is what makes it an
+NGSI-LD package at all, so the SDK ships it and always loads it into
+`Package.vocabulary` — kept apart from `knowledge` so nothing mistakes it for
+something the package declares or may write. `ngsild:` in semforge.yaml points
+at another copy, local or remote; a remote one goes through the dependency
+machinery, so it is cached and verifiable rather than fetched on every load.
+
 Above them sits **Project** (`semforge/project`, `semforge/setSetting`), which
 answers what the package *is* rather than what it says: the name it declares,
 the path it is at, why that directory counted as a package, each setting with

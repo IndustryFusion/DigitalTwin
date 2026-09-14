@@ -450,7 +450,102 @@ def build_knowledge(package):
     attributes = _attributes_group(package, context)
     if attributes is not None:
         roots.append(attributes)
+    encoding = _ngsild_group(package)
+    if encoding is not None:
+        roots.append(encoding)
     return roots
+
+
+def _ngsild_group(package):
+    """The NGSI-LD vocabulary: what the terms of the ENCODING mean.
+
+    Not the package's, which is why it is last and why nothing here is
+    editable. It is here because the rule this project applies to everything
+    else -- declared before used -- was the one rule the encoding itself did
+    not follow: `rdfs:range ngsild:Property` pointed at a class no file
+    declared, and a typo in it produced an attribute with no kind and no
+    complaint.
+
+    A term the package uses and the vocabulary does not declare is reported
+    here, which is the same finding from the other side.
+    """
+    from rdflib.namespace import OWL
+
+    from ..expect.vocabulary import unknown_ngsild_terms
+    from ..ngsild.vocabulary import SHIPPED, declared_source
+
+    if not len(package.vocabulary):
+        return None
+
+    NGSILD = 'https://uri.etsi.org/ngsi-ld/'
+    used = _ngsild_usage(package)
+    source = declared_source(package.path)
+    classes, slots = [], []
+    for subject in sorted({s for s in package.vocabulary.subjects(None, None)
+                           if isinstance(s, URIRef)
+                           and str(s).startswith(NGSILD)
+                           and len(str(s)) > len(NGSILD)}, key=str):
+        name = str(subject)[len(NGSILD):]
+        uses = used.get(str(subject), 0)
+        comment = next((str(c) for c in
+                        package.vocabulary.objects(subject, RDFS.comment)), '')
+        node = KnowledgeNode(
+            kind='term', label=f'ngsild:{name}', iri=str(subject),
+            detail=' · '.join(filter(None, [
+                f'{uses} use(s)' if uses else 'not used here', comment])))
+        target = classes if (subject, RDF.type, OWL.Class) in package.vocabulary \
+            else slots
+        target.append(node)
+
+    group = KnowledgeNode(
+        kind='group', label='NGSI-LD vocabulary',
+        detail=f'{len(classes) + len(slots)} term(s) · '
+               f'{source if source else "shipped with the SDK"}')
+    if classes:
+        kinds = KnowledgeNode(
+            kind='carrier', label='Attribute kinds',
+            detail="what an attribute's `type` may say")
+        kinds.children = classes
+        group.children.append(kinds)
+    if slots:
+        holder = KnowledgeNode(
+            kind='carrier', label='Slots and metadata',
+            detail='where the payload hangs, and what is recorded beside it')
+        holder.children = slots
+        group.children.append(holder)
+
+    missing = unknown_ngsild_terms(package)
+    if missing:
+        holder = KnowledgeNode(
+            kind='carrier', label='Used but not declared',
+            detail=f'{len(missing)} term(s) this vocabulary does not have',
+            severity='warning')
+        for entry in missing:
+            holder.children.append(KnowledgeNode(
+                kind='term', label=f'ngsild:{entry.term}', iri=entry.iri,
+                detail='in the ' + ', '.join(entry.where),
+                severity='warning', messages=[entry.message]))
+        group.children.append(holder)
+        group.severity = 'warning'
+    del SHIPPED
+    return group
+
+
+def _ngsild_usage(package):
+    """{IRI: how many times the package mentions this NGSI-LD term}."""
+    NGSILD = 'https://uri.etsi.org/ngsi-ld/'
+    counts = {}
+    graphs = [package.knowledge, package.shapes]
+    try:
+        graphs.append(_data_graph(package))
+    except Exception:                              # noqa: BLE001
+        pass
+    for graph in graphs:
+        for triple in graph:
+            for node in triple:
+                if isinstance(node, URIRef) and str(node).startswith(NGSILD):
+                    counts[str(node)] = counts.get(str(node), 0) + 1
+    return counts
 
 
 def _attributes_group(package, context):
