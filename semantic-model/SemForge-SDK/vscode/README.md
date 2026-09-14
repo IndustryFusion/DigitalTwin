@@ -279,16 +279,23 @@ made `ngsild` look like two definitions. The row still carries its `file:line`
 and says the line can go. Declaring one with a *different* IRI is a deliberate
 override, so that one stays in the package's table and says what it overrides.
 
-🗑 on a name **removes** it — but only when removing it changes nothing:
+🗑 on a name **removes** it, in three steps depending on what the name is doing:
 
-* the namespace still has a name without that line (the context names it, or
-  it is one of the standard set), or
-* nothing in the package uses it at all.
+* **nothing uses it** — removed, no question;
+* **in use, but removing it changes nothing** — because `context.jsonld` names
+  it too, or it is one of the standard set — you are asked first, with what
+  binds it and why it is safe: *"ngsild: is in use — <…> is bound in shacl.ttl
+  and names 121 term(s). Removing this line is safe anyway: the standard set
+  names it "ngsild:", so the table does not change."*;
+* **in use and load-bearing** — refused: *"iffBaseShacl: cannot be removed — it
+  is in use. <…> is bound in shacl.ttl and names 42 term(s), and nothing else
+  in the package gives it a name."* Taking it out would leave every one of
+  those terms undefined.
 
-Otherwise the declaration is load-bearing and the removal is refused with what
-depends on it: *"iffBaseShacl: cannot be removed — it is in use. <…> is bound
-in shacl.ttl and names 42 term(s), and nothing else in the package gives it a
-name."* Taking it out would leave every one of those terms undefined.
+Usage is measured from both halves that matter: files whose `@prefix` binds the
+namespace, and terms actually in it. A line that merely restates
+`context.jsonld` says so on its row before you click — it reads as this
+package's own vocabulary and is not.
 
 The **namespaces** row is where that table lives. ➕ on it defines a new one —
 it asks for the name and the IRI, refuses one that would collide with an

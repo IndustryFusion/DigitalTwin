@@ -301,54 +301,95 @@ def namespace_usage(package, namespace):
     return {'files': sorted(set(files)), 'terms': terms}
 
 
-def remove_namespace(package_path, prefix, package=None):
+def plan_removal(package_path, prefix, package=None):
+    """What removing this name would do, before anything is written.
+
+    Three answers, and they are not the same thing:
+
+      * not removable -- the package does not declare it, so it is not the
+        package's to remove;
+      * removable and load-bearing -- the namespace loses its only name and
+        every term in it becomes undefined;
+      * removable and safe -- the name survives, because the context declares
+        it too or it is one the SDK knows.
+
+    The last one is still worth asking about when the namespace is IN USE. A
+    line that changes nothing is still a line somebody wrote on purpose, and
+    "it is used in three files" is what the person clicking is thinking about.
+    """
+    name = (prefix or '').strip().rstrip(':')
+    declared = declared_prefixes(package_path)
+    if name not in declared:
+        return {'prefix': name, 'removable': False, 'in_use': False,
+                'reason': (f'{name}: is not declared in semforge.yaml. The '
+                           f'package\'s table is the only one it owns -- a '
+                           f'name from the context or from the standard set '
+                           f'is not this package\'s to remove.')}
+    namespace = declared[name]
+
+    survives_as, survives_via = '', ''
+    from_context = context_prefixes(package_path)
+    for other, target in from_context.items():
+        if target == namespace:
+            survives_as, survives_via = other, 'context.jsonld'
+            break
+    if not survives_as:
+        for other, target in STANDARD.items():
+            if target == namespace:
+                survives_as, survives_via = other, 'the standard set'
+                break
+
+    if package is None:
+        from . import load
+        package = load(package_path)
+    usage = namespace_usage(package, namespace)
+    in_use = bool(usage['files'] or usage['terms'])
+    where = ', '.join(usage['files']) or 'the model'
+
+    if not survives_as:
+        if in_use:
+            return {
+                'prefix': name, 'namespace': namespace, 'removable': False,
+                'in_use': True, 'usage': usage,
+                'reason': (f'{name}: cannot be removed -- it is in use. '
+                           f'<{namespace}> is bound in {where} and names '
+                           f'{usage["terms"]} term(s), and nothing else in the '
+                           f'package gives it a name. Removing it would leave '
+                           f'every one of them undefined.')}
+        return {'prefix': name, 'namespace': namespace, 'removable': True,
+                'in_use': False, 'usage': usage, 'survives_as': '',
+                'survives_via': '', 'reason': 'nothing uses it'}
+
+    return {
+        'prefix': name, 'namespace': namespace, 'removable': True,
+        'in_use': in_use, 'usage': usage, 'survives_as': survives_as,
+        'survives_via': survives_via,
+        'reason': (f'{name}: is in use -- <{namespace}> is bound in {where} '
+                   f'and names {usage["terms"]} term(s). Removing this line is '
+                   f'safe anyway: {survives_via} names it "{survives_as}:", so '
+                   f'the table does not change.') if in_use else
+                  (f'{survives_via} names it "{survives_as}:" as well, so this '
+                   f'line changes nothing.')}
+
+
+def remove_namespace(package_path, prefix, package=None, force=False):
     """Drop a name from the package's table, unless something needs it.
 
-    Removable in two cases, and they are different: the namespace still has a
-    name without this line -- the context names it, or it is one the SDK knows,
-    so nothing changes -- or nothing in the package uses it at all.
-
-    Otherwise the declaration is load-bearing: taking it out leaves every file
-    that binds the prefix having invented a name, and the model unable to
-    expand a term. So it is refused, and the refusal says which files and how
-    many terms.
+    `force` only covers the case the plan calls safe-but-in-use: a name that
+    would actually lose its definition is never removed, whatever is passed.
     """
     from . import config
     from ..errors import PackageError
 
-    name = (prefix or '').strip().rstrip(':')
-    declared = declared_prefixes(package_path)
-    if name not in declared:
-        raise PackageError(
-            f'{name}: is not declared in semforge.yaml. The package\'s table '
-            f'is the only one it owns -- a name from the context or from the '
-            f'standard set is not this package\'s to remove.')
-    namespace = declared[name]
+    plan = plan_removal(package_path, prefix, package=package)
+    if not plan['removable']:
+        raise PackageError(plan['reason'])
+    if plan['in_use'] and not force:
+        raise PackageError(plan['reason'])
 
-    # What would name this namespace if the line went away.
-    remaining = {}
-    for other, target in context_prefixes(package_path).items():
-        remaining.setdefault(target, other)
-    for other, target in STANDARD.items():
-        remaining.setdefault(target, other)
-    survives = remaining.get(namespace)
-
-    if survives is None:
-        if package is None:
-            from . import load
-            package = load(package_path)
-        usage = namespace_usage(package, namespace)
-        if usage['files'] or usage['terms']:
-            where = ', '.join(usage['files']) or 'the model'
-            raise PackageError(
-                f'{name}: cannot be removed -- it is in use. <{namespace}> is '
-                f'bound in {where} and names {usage["terms"]} term(s), and '
-                f'nothing else in the package gives it a name. Removing it '
-                f'would leave every one of them undefined.')
-
-    path, line = config.remove_value(package_path, f'namespaces.{name}')
-    return {'prefix': name, 'namespace': namespace, 'file': path, 'line': line,
-            'survives_as': survives or ''}
+    path, line = config.remove_value(package_path,
+                                     f'namespaces.{plan["prefix"]}')
+    return dict(plan, file=path, line=line)
 
 
 def _check_model(package, by_namespace):

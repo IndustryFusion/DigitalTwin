@@ -1191,12 +1191,20 @@ another form. It is reachable from the editor (the Project view's namespaces
 row), from `semforge prefixes --define`, and nowhere else, so there is one
 writer.
 
-`prefixes.remove_namespace` is the other direction, and removable means one of
-two things: the namespace still has a name without that line -- the context
-names it, or it is standard -- or nothing in the package uses it. Anything else
-is load-bearing: taking it out leaves every file that binds the prefix having
-invented a name and the model unable to expand a term, so it is refused with
-the files and the term count that depend on it.
+`prefixes.plan_removal` answers the other direction before anything is
+written, and it has three outcomes rather than two. Not the package's to remove
+(it does not declare it). Load-bearing -- the namespace loses its only name, so
+every file that binds the prefix has invented one and the model cannot expand a
+term; refused, with the files and the term count. Or removable, because the
+name survives (the context declares it too, or it is standard) or because
+nothing uses it.
+
+The last case splits again, and this is what `force` is for: a removable name
+that is nonetheless IN USE is not removed on the first ask. A line that changes
+nothing is still a line somebody wrote on purpose, and what the person clicking
+is thinking about is that three files bind it -- so the answer comes back as a
+question carrying the usage and the reason it is safe. `force` covers only that
+case; a name that would actually be lost is never removed, whatever is passed.
 
 A fourth group holds the **NGSI-LD vocabulary** — the terms of the encoding,
 which are not the package's. Until it existed, *declared before used* was the

@@ -127,8 +127,12 @@ const stub = {
       seen.info.push(message);
       return Promise.resolve(scenario.answer);
     },
-    showWarningMessage: (message) => {
-      seen.warnings.push(message);
+    showWarningMessage: (message, options) => {
+      // A modal's `detail` is where the reasoning goes -- "it is in use, and
+      // removing it is safe anyway because ..." -- so a test that can only see
+      // the title cannot check what the person was actually told.
+      const detail = (options || {}).detail;
+      seen.warnings.push(detail ? `${message}\n${detail}` : message);
       // A warning can be a question too -- "Edit anyway" lives on one -- so it
       // answers with `answer` like the information messages. Without this a
       // confirmation flow could only ever be declined in a test.
@@ -192,6 +196,7 @@ const stub = {
 
 // The server, canned: method -> result. Anything not listed rejects, which is
 // itself a case worth driving.
+const pending = new Map();
 const client = {
   sendRequest: (method, params) => {
     seen.requests.push({ method, params });
@@ -199,7 +204,16 @@ const client = {
     if (!(method in replies)) {
       return Promise.reject(new Error(`Unhandled method ${method}`));
     }
-    const reply = replies[method];
+    let reply = replies[method];
+    // A method may legitimately answer differently on successive calls -- the
+    // first ask to remove a namespace comes back as a question, the forced
+    // retry removes it. One canned answer per method could not drive that: the
+    // retry got the question again, or never happened at all.
+    if (Array.isArray(reply)) {
+      const queue = pending.get(method) || reply.slice();
+      reply = queue.length > 1 ? queue.shift() : queue[0];
+      pending.set(method, queue);
+    }
     if (reply && reply.__reject) {
       return Promise.reject(new Error(reply.__reject));
     }

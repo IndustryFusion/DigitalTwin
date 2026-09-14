@@ -449,15 +449,19 @@ def test_an_unused_name_can_be_removed(tmp_path):
     assert 'plant' not in (target / 'semforge.yaml').read_text()
 
 
-def test_a_redundant_standard_name_can_always_be_removed(tmp_path):
-    """Nothing changes: the SDK knows that name anyway."""
+def test_a_redundant_standard_name_survives_its_own_removal(tmp_path):
+    """Nothing changes: the SDK knows that name anyway.
+
+    It is still in use, so it takes a confirmed removal -- see
+    test_a_name_in_use_is_not_removed_on_the_first_ask.
+    """
     from semforge.package.prefixes import canonical_map, remove_namespace
 
     target = _bare(tmp_path, '  ngsild: https://uri.etsi.org/ngsi-ld/\n')
     (target / 'shacl.ttl').write_text(
         '@prefix ngsild: <https://uri.etsi.org/ngsi-ld/> .\n')
 
-    gone = remove_namespace(str(target), 'ngsild')
+    gone = remove_namespace(str(target), 'ngsild', force=True)
     assert gone['survives_as'] == 'ngsild'
     assert canonical_map(str(target))['ngsild'] == 'https://uri.etsi.org/ngsi-ld/'
     assert check(load(str(target))) == []
@@ -520,3 +524,71 @@ def test_a_declared_standard_name_is_shown_with_the_standard_ones(tmp_path):
     assert declared.kind == 'namespaceEntry'
     assert declared.defined_at
     assert 'the line can go' in declared.detail
+
+
+def test_a_name_in_use_is_not_removed_on_the_first_ask(tmp_path):
+    """Even when removing it is safe.
+
+    A line that changes nothing is still a line somebody wrote on purpose, and
+    what the person clicking is thinking about is that three files bind it.
+    """
+    from semforge.errors import PackageError
+    from semforge.package.prefixes import plan_removal, remove_namespace
+
+    target = _bare(tmp_path, '  ngsild: https://uri.etsi.org/ngsi-ld/\n')
+    (target / 'shacl.ttl').write_text(
+        '@prefix ngsild: <https://uri.etsi.org/ngsi-ld/> .\n'
+        '@prefix owl: <http://www.w3.org/2002/07/owl#> .\n'
+        'ngsild:Property a owl:Class .\n')
+
+    plan = plan_removal(str(target), 'ngsild')
+    assert plan['removable'] and plan['in_use']
+    assert 'safe anyway' in plan['reason']
+    assert plan['survives_via'] == 'the standard set'
+
+    with pytest.raises(PackageError):
+        remove_namespace(str(target), 'ngsild')
+    assert 'ngsild' in (target / 'semforge.yaml').read_text()
+
+    gone = remove_namespace(str(target), 'ngsild', force=True)
+    assert gone['survives_as'] == 'ngsild'
+    assert 'ngsild' not in (target / 'semforge.yaml').read_text()
+
+
+def test_force_never_removes_a_name_that_would_be_lost(tmp_path, corpus):
+    """`force` covers the safe-but-in-use case and nothing else."""
+    import shutil
+
+    from semforge.errors import PackageError
+    from semforge.package.prefixes import remove_namespace
+
+    target = tmp_path / 'pkg'
+    target.mkdir()
+    for role, name in (('knowledge', 'knowledge.ttl'), ('shapes', 'shacl.ttl'),
+                       ('model', 'model-instance.jsonld')):
+        shutil.copy(corpus.sources[role], target / name)
+    shutil.copy(f'{corpus.path}/context.jsonld', target / 'context.jsonld')
+    (target / 'semforge.yaml').write_text(
+        'namespaces:\n  iffBindingsBaseTest: '
+        'https://industryfusion.github.io/contexts/example/v0/bindings/base_test/\n')
+
+    with pytest.raises(PackageError) as raised:
+        remove_namespace(str(target), 'iffBindingsBaseTest', force=True)
+    assert 'cannot be removed' in str(raised.value)
+    assert 'iffBindingsBaseTest' in (target / 'semforge.yaml').read_text()
+
+
+def test_a_line_that_restates_the_context_says_so(tmp_path):
+    """It reads as the package's own vocabulary and is not."""
+    from semforge.cooked.project import build_project
+
+    target = _bare(tmp_path, '  plant: https://example.org/plant/\n')
+    (target / 'context.jsonld').write_text(
+        '{"@context": {"plant": "https://example.org/plant/"}}')
+
+    row = next(child
+               for root in build_project(load(str(target)))
+               for child in root.children if child.label == 'namespaces')
+    plant = next(entry for entry in row.children if entry.label == 'plant')
+    assert 'context.jsonld names it too' in plant.detail
+    assert 'changes nothing' in plant.detail

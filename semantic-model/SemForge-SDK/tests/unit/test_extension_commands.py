@@ -1098,20 +1098,59 @@ def test_a_refused_prefix_is_reported(tmp_path):
     assert any('already means' in message for message in seen['errors'])
 
 
-def test_a_namespace_can_be_removed_from_the_project_view(tmp_path):
+def test_an_unused_namespace_is_removed_without_asking(tmp_path):
     seen = _drive(tmp_path, {
         'command': 'semforge.removeNamespace',
         'node': {'raw': {'kind': 'namespaceEntry', 'label': 'plant'},
                  'packageUri': 'file:///pkg/shacl.ttl'},
         'replies': {'semforge/removeNamespace': {
-            'ok': True, 'prefix': 'plant', 'survives_as': '',
+            'ok': True, 'prefix': 'plant', 'survivesAs': '',
             'file': '/pkg/semforge.yaml', 'line': 12}},
     })
     asked = [r for r in seen['requests']
              if r['method'] == 'semforge/removeNamespace']
     assert asked[0]['params'] == {'uri': 'file:///pkg/shacl.ttl',
-                                  'prefix': 'plant'}
+                                  'prefix': 'plant', 'force': False}
+    assert not seen['warnings'], 'it asked about a name nothing uses'
     assert any('plant' in message for message in seen['messages'])
+
+
+def test_a_namespace_in_use_is_not_removed_without_being_asked_about(tmp_path):
+    """Even when removal is safe. The first ask comes back as a question."""
+    seen = _drive(tmp_path, {
+        'command': 'semforge.removeNamespace',
+        'node': {'raw': {'kind': 'namespaceEntry', 'label': 'ngsild'},
+                 'packageUri': 'file:///pkg/shacl.ttl'},
+        'answer': None,                    # the dialog is dismissed
+        'replies': {'semforge/removeNamespace': {
+            'ok': False, 'confirm': True, 'prefix': 'ngsild',
+            'detail': 'ngsild: is in use -- bound in shacl.ttl and names 121 '
+                      'term(s). Removing this line is safe anyway.'}},
+    })
+    assert any('in use' in message for message in seen['warnings'])
+    asked = [r for r in seen['requests']
+             if r['method'] == 'semforge/removeNamespace']
+    # Asked once, not forced, and nothing followed the dismissal.
+    assert [r['params']['force'] for r in asked] == [False]
+
+
+def test_confirming_removes_it(tmp_path):
+    seen = _drive(tmp_path, {
+        'command': 'semforge.removeNamespace',
+        'node': {'raw': {'kind': 'namespaceEntry', 'label': 'ngsild'},
+                 'packageUri': 'file:///pkg/shacl.ttl'},
+        'answer': 'Remove',
+        # Asked, then asked again with force -- two answers, in order.
+        'replies': {'semforge/removeNamespace': [
+            {'ok': False, 'confirm': True, 'prefix': 'ngsild',
+             'detail': 'ngsild: is in use -- bound in shacl.ttl.'},
+            {'ok': True, 'prefix': 'ngsild', 'survivesVia': 'the standard set',
+             'file': '/pkg/semforge.yaml', 'line': 12}]},
+    })
+    asked = [r for r in seen['requests']
+             if r['method'] == 'semforge/removeNamespace']
+    assert [r['params']['force'] for r in asked] == [False, True]
+    assert any('still names it' in message for message in seen['messages'])
 
 
 def test_removing_a_name_in_use_warns_rather_than_failing_silently(tmp_path):

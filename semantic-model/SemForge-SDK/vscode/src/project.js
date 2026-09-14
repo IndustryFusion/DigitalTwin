@@ -248,13 +248,27 @@ function register(context, clientHolder, session, onChanged) {
       if (!raw || !raw.label) {
         return;
       }
-      // The server decides, not this: a name is removable when the namespace
-      // keeps a name without it, or when nothing uses it. Anything else is
-      // load-bearing, and the refusal says which files and how many terms.
-      const gone = await clientHolder.client.sendRequest(
-        'semforge/removeNamespace',
-        { uri: node.packageUri || provider.uri, prefix: raw.label }
-      );
+      const uri = node.packageUri || provider.uri;
+      // The server decides whether it CAN go; it also answers "it is in use"
+      // as a question rather than doing it. A line that changes nothing is
+      // still a line somebody wrote on purpose, and what the person clicking
+      // is thinking about is that three files bind it.
+      const ask = async (force) =>
+        clientHolder.client.sendRequest('semforge/removeNamespace',
+                                        { uri, prefix: raw.label, force });
+
+      let gone = await ask(false);
+      if (gone && gone.confirm) {
+        const answer = await vscode.window.showWarningMessage(
+          `Remove ${raw.label}: ?`,
+          { modal: true, detail: gone.detail },
+          'Remove'
+        );
+        if (answer !== 'Remove') {
+          return;
+        }
+        gone = await ask(true);
+      }
       if (!gone || !gone.ok) {
         vscode.window.showWarningMessage(
           `SemForge: ${(gone && gone.error) || 'the prefix was not removed'}`
@@ -266,8 +280,8 @@ function register(context, clientHolder, session, onChanged) {
         onChanged();
       }
       vscode.window.setStatusBarMessage(
-        gone.survivesAs || gone.survives_as
-          ? `SemForge: ${raw.label}: removed — it is a standard name anyway`
+        gone.survivesVia
+          ? `SemForge: ${raw.label}: removed — ${gone.survivesVia} still names it`
           : `SemForge: ${raw.label}: removed`,
         5000
       );

@@ -142,7 +142,10 @@ def _settings(package):
                             defined_at=_at(manifest, line))
                 for name, value, line in collection.entries]
         else:
-            group.children = _namespace_rows(collection, manifest, STANDARD)
+            from ..package.prefixes import context_prefixes
+
+            group.children = _namespace_rows(
+                collection, manifest, STANDARD, context_prefixes(root))
         rows.append(group)
 
     node = ProjectNode(kind='group', label='Settings',
@@ -151,7 +154,7 @@ def _settings(package):
     return node
 
 
-def _namespace_rows(collection, manifest, standard):
+def _namespace_rows(collection, manifest, standard, from_context=None):
     """The package's own names, then the ones every package has.
 
     A name the package declares with the STANDARD IRI belongs with the
@@ -159,11 +162,12 @@ def _namespace_rows(collection, manifest, standard):
     this package's vocabulary is what made `ngsild` look like two definitions.
     It keeps its file:line, because the line is still there and can go.
     """
+    context = from_context or {}
     mine, restated = [], []
     for name, value, line in collection.entries:
         row = ProjectNode(
             kind='namespaceEntry', label=name, value=value,
-            detail=_namespace_note('namespaces', name, value),
+            detail=_namespace_note('namespaces', name, value, context),
             defined_at=_at(manifest, line))
         (restated if standard.get(name) == value else mine).append(row)
 
@@ -183,7 +187,7 @@ def _namespace_rows(collection, manifest, standard):
     return mine + [group]
 
 
-def _namespace_note(key, name, value):
+def _namespace_note(key, name, value, from_context=None):
     """What is worth saying about one declared name.
 
     A package that declares a standard name with the standard IRI is saying
@@ -198,6 +202,11 @@ def _namespace_note(key, name, value):
         return 'declared here as well, which changes nothing — the line can go'
     if name in STANDARD:
         return f'overrides the standard name, which is <{STANDARD[name]}>'
+    # The other half of the table. A line that restates context.jsonld reads
+    # as this package's own vocabulary and is not: removing it changes
+    # nothing, and knowing that before clicking is the point.
+    if (from_context or {}).get(name) == value:
+        return 'context.jsonld names it too — this line changes nothing'
     return ''
 
 

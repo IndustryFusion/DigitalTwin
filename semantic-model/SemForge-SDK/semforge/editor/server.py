@@ -664,18 +664,37 @@ def add_namespace_feature(ls, params):
 
 @server.feature('semforge/removeNamespace')
 def remove_namespace_feature(ls, params):
-    """Drop a name from the package's table, unless something needs it."""
-    from ..package.prefixes import remove_namespace
+    """Drop a name from the package's table, unless something needs it.
+
+    A name that is IN USE is not removed on the first ask, even when removing
+    it is safe: the answer comes back as a question, with what binds it and
+    why it is safe, and the editor asks before trying again with `force`.
+    """
+    from ..package.prefixes import plan_removal, remove_namespace
 
     root = package_root(_uri_to_path(_field(params, 'uri', '')))
     if root is None:
         return {'ok': False, 'error': 'not a SemForge package'}
     try:
         package = _package_for(root)
-        gone = remove_namespace(root, _field(params, 'prefix'), package=package)
+        force = bool(_field(params, 'force', False))
+        plan = plan_removal(root, _field(params, 'prefix'), package=package)
+        if not plan['removable']:
+            return {'ok': False, 'error': plan['reason']}
+        if plan['in_use'] and not force:
+            return {'ok': False, 'confirm': True, 'detail': plan['reason'],
+                    'prefix': plan['prefix'],
+                    'files': plan.get('usage', {}).get('files', []),
+                    'terms': plan.get('usage', {}).get('terms', 0)}
+        gone = remove_namespace(root, _field(params, 'prefix'),
+                                package=package, force=True)
         _packages.pop(root, None)
         _publish(ls, _path_to_uri(package.sources['shapes']))
-        return dict(gone, ok=True, uri=_path_to_uri(gone['file']))
+        return {'ok': True, 'prefix': gone['prefix'],
+                'namespace': gone['namespace'], 'file': gone['file'],
+                'line': gone['line'], 'survivesAs': gone.get('survives_as', ''),
+                'survivesVia': gone.get('survives_via', ''),
+                'uri': _path_to_uri(gone['file'])}
     except Exception as exc:                       # noqa: BLE001
         return {'ok': False, 'error': str(exc)}
 
