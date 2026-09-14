@@ -1211,6 +1211,53 @@ first (`semforge/addEntityType`), beneath a parent, in the file that declares
 that parent and in its namespace. The rule is enforced in `add_entity`, not in
 the editor, so no client can route around it.
 
+**An attribute is chosen too, and must be declared first.** The same argument
+one level down: a type decides which shapes judge an entity, an attribute's
+*name* decides which `sh:path` matches it. A name the knowledge has never heard
+of therefore produces silence rather than an error — no property shape selects
+it, the constraint that should have judged the value never fires, the document
+reads as validated. `semforge/attributes` answers with what the knowledge
+declares for a type (`rdfs:domain`, inherited down the hierarchy; attributes
+declared without one come back separately rather than hidden, because a
+sub-attribute hangs off an attribute and has no entity type), and
+`semforge/addAttributeTerm` declares a missing one — `rdfs:domain` for the
+carrier, `rdfs:range` for the NGSI-LD kind, which decides which key holds the
+payload. *Which values* are allowed stays in the shapes, where `sh:class` says
+it.
+
+**A nested attribute is declared like any other, and placed by the shapes.**
+A sub-attribute's subject is the parent's attribute NODE, and the NGSI-LD-in-RDF
+encoding types that node — `hasFilter` expands to a node `a ngsild:Relationship`
+carrying `ngsild:hasObject`. So `rdfs:domain` applies unchanged: it is that
+node's class (`ngsild:Relationship`, `ngsild:Property`, …), an ordinary class,
+with nothing invented and no punning. The shipped kms already declares
+`base:boundBy` this way.
+
+What domain constrains is the KIND of carrier. WHICH attribute it nests inside
+is the shapes', and only the shapes', to say: a `sh:property` nested inside the
+parent's property shape. The two-layer encoding makes the distinction exact —
+an inner `sh:property` whose path is `ngsild:hasValue`/`hasObject`/`hasJSON`/
+`hasValueList` is the value, anything else is a sub-attribute
+(`choices.nesting`). Same division of labour as values: the knowledge says what
+a term IS and what may carry it, the shapes say where it APPEARS and what it
+may hold.
+
+Together the two answer the authoring question — **which sub-attributes to
+offer inside a given attribute**: those a shape has placed there, then those
+the knowledge allows on anything of that kind (`choices.sub_attributes_for`,
+placed first). Sub-attributes are excluded from an entity's attribute list,
+because an entity carries none. Either half alone identifies one, which matters
+for a sub-attribute declared but not yet placed: reading only the shapes made
+it indistinguishable from an attribute nobody had given a domain.
+
+`add_attribute` enforces it, and `semforge.expect.vocabulary` reports what is
+already in the data: an undeclared attribute used by a **case** is an error —
+the case proves nothing — while one in the **scratchpad** is reported and left,
+the rule §6.1 already draws between the suite and the scratchpad. Applied to
+the shipped kms it found five, four of them terms that a shape constrains and
+no knowledge file declares, and one — `hasOutWorkpiecexx` — two letters from a
+real attribute.
+
 **`semforge/shapeFor` may create.** When nothing constrains an attribute there
 is nothing to navigate to, so with `create` it writes an empty `sh:property`
 carrying only `sh:path`. That shape is deliberately incomplete and the

@@ -368,6 +368,22 @@ def test(path, want_coverage, fail_on):
             click.echo(f'        {duplicate.message}')
         click.echo('')
 
+    # An attribute the knowledge never declared. In a CASE that is an error:
+    # no sh:path selects it, so the case proves nothing while passing. In the
+    # scratchpad it is reported and left alone -- the scratchpad cannot fail.
+    from ..expect.vocabulary import undeclared_attributes
+
+    unknown = undeclared_attributes(package)
+    if unknown:
+        click.echo('Vocabulary')
+        for entry in unknown:
+            marker = '  !!  ' if entry.severity == 'error' else '  ..  '
+            where = ', '.join(sorted({os.path.relpath(place, path)
+                                      for place, _ in entry.places})[:3])
+            click.echo(f'{marker}{entry.term}  [{where}]')
+            click.echo(f'        {entry.message}')
+        click.echo('')
+
     failed = 0
     for outcome in run_tests(paired):
         if outcome.passed:
@@ -398,7 +414,12 @@ def test(path, want_coverage, fail_on):
         click.echo(f'{len(broken)} id(s) name more than one entity in the same '
                    f'case', err=True)
 
-    sys.exit(1 if failed or broken else 0)
+    invisible = [entry for entry in unknown if entry.severity == 'error']
+    if invisible:
+        click.echo(f'{len(invisible)} attribute(s) used by a case are declared '
+                   f'nowhere, so nothing constrains them', err=True)
+
+    sys.exit(1 if failed or broken or invisible else 0)
 
 
 @cli.command('import')

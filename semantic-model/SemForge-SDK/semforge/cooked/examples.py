@@ -775,6 +775,19 @@ def add_attribute(package, entity_id, name, kind=None, value=None,
     produces something that parses, looks plausible and means nothing.
     """
     from ..ngsild.build import attribute, kind_for_shape
+    from .choices import attribute_terms
+
+    # Declared before used, for the same reason a type is: the NAME is what a
+    # shape's sh:path matches, so one the knowledge has never heard of is not
+    # a broken document but an invisible one -- no constraint selects it, and
+    # the entity reads as validated.
+    declared = attribute_terms(package)
+    if declared and name not in ({entry.term for entry in declared}
+                                 | {entry.iri for entry in declared}):
+        raise PackageError(
+            f'{name} is not an attribute this package declares. Declare it in '
+            f'the knowledge first -- it needs a domain (which entity type '
+            f'carries it) and a range (Property or Relationship).')
 
     source = _target_file(package, file)
     with open(source, encoding='utf-8') as handle:

@@ -640,6 +640,74 @@ def add_entity_type_feature(ls, params):
         return {'ok': False, 'error': str(exc)}
 
 
+@server.feature('semforge/attributes')
+def attributes_feature(ls, params):
+    """The attributes an entity of this type may carry, as the knowledge says.
+
+    `rdfs:domain` is the join, and it is inherited: a Plasmacutter carries what
+    a Cutter carries and what a Machine carries. Attributes the package
+    declares without a domain come back separately rather than being hidden --
+    a package may simply not have said.
+
+    With `parent`, it answers the other question instead: which attributes may
+    nest INSIDE that one. Sub-attributes are excluded from the entity answer,
+    because an entity does not carry them -- `hasTrust` belongs inside
+    `hasFilter`, and offering it on a Filter would put it where no shape looks.
+    """
+    from ..cooked.choices import attributes_for, sub_attributes_for
+
+    root = package_root(_uri_to_path(_field(params, 'uri', '')))
+    if root is None:
+        return {'attributes': [], 'error': 'not a SemForge package'}
+    try:
+        package = _package_for(root)
+
+        def out(entry, scoped):
+            return {'iri': entry.iri, 'term': entry.term, 'label': entry.label,
+                    'kind': entry.kind, 'domain': entry.domain,
+                    'parents': list(entry.parents),
+                    'carrierKind': entry.carrier_kind,
+                    'comment': entry.comment, 'constrained': entry.constrained,
+                    'definedAt': entry.defined_at, 'scoped': scoped}
+
+        # A sub-attribute hangs off an ATTRIBUTE, so it is asked for by naming
+        # that attribute rather than an entity type -- and where it may appear
+        # is read from the shapes, which is the only place that says it.
+        parent = _field(params, 'parent', '')
+        if parent:
+            return {'parent': parent,
+                    'attributes': [out(e, True)
+                                   for e in sub_attributes_for(package, parent)]}
+
+        mine, open_ended = attributes_for(package,
+                                          _field(params, 'entityType', ''))
+        return {'attributes': [out(e, True) for e in mine] +
+                              [out(e, False) for e in open_ended]}
+    except Exception as exc:                       # noqa: BLE001
+        return {'attributes': [], 'error': str(exc)}
+
+
+@server.feature('semforge/addAttributeTerm')
+def add_attribute_term_feature(ls, params):
+    """Declare a new attribute in the knowledge, carried by an entity type."""
+    from ..cooked.knowledge import add_attribute_term
+
+    root = package_root(_uri_to_path(_field(params, 'uri', '')))
+    if root is None:
+        return {'ok': False, 'error': 'not a SemForge package'}
+    try:
+        package = _package_for(root)
+        made = add_attribute_term(package, _field(params, 'name'),
+                                  _field(params, 'kind'),
+                                  _field(params, 'domain'),
+                                  label=_field(params, 'label', ''))
+        _packages.pop(root, None)
+        _publish(ls, _path_to_uri(package.sources['shapes']))
+        return dict(made, ok=True, uri=_path_to_uri(made['file']))
+    except Exception as exc:                       # noqa: BLE001
+        return {'ok': False, 'error': str(exc)}
+
+
 @server.feature('semforge/kinds')
 def kinds(ls, params):
     from ..ngsild.build import KINDS

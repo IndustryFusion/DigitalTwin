@@ -817,9 +817,16 @@ def test_an_edit_lands_in_the_file_it_came_from(tmp_path, corpus):
     import shutil
 
     from semforge.cooked.examples import add_attribute
+    from semforge.cooked.knowledge import add_attribute_term
 
     target = tmp_path / 'pkg'
     shutil.copytree(corpus.path, target, symlinks=False)
+    package = load(str(target))
+
+    # Declared before used: an attribute the knowledge has never heard of is
+    # refused now, which is test_vocabulary.py's story.
+    add_attribute_term(package, 'hasDepth', 'Property',
+                       'iffBaseEntities:Workpiece')
     package = load(str(target))
 
     before = open(package.sources['model']).read()

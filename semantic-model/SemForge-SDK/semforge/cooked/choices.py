@@ -250,6 +250,216 @@ def entity_types(package):
     return found, str(root)
 
 
+@dataclass(frozen=True)
+class AttributeTerm:
+    """An attribute the knowledge declares, and what it says about it."""
+    iri: str
+    term: str                 # what to write as the key in the .jsonld
+    label: str
+    kind: str = ''            # the NGSI-LD kind, from rdfs:range
+    domain: str = ''          # the entity type that carries it, '' when none
+    domain_iri: str = ''
+    comment: str = ''         # rdfs:label, which is where the kms puts the gloss
+    constrained: bool = False  # a shape has sh:path on it
+    defined_at: str = ''      # knowledge.ttl:line
+    # The attributes this one nests INSIDE, read from the shapes -- see
+    # `nesting`. Which SPECIFIC attribute is the shapes' business; which KIND
+    # of node carries it is rdfs:domain's, and that is `carrier_kind`.
+    parents: tuple = ()
+    carrier_kind: str = ''    # Property | Relationship | ... when it nests
+
+
+# rdfs:range on an NGSI-LD attribute says which kind of attribute it is, and
+# the kind decides which key carries the payload: a Relationship has `object`,
+# a Property `value`, a JsonProperty `json`, a ListProperty `valueList`. The
+# kms declares exactly this, so the kind is read rather than asked.
+def _range_kinds():
+    from ..ngsild.build import KINDS
+
+    return {NGSILD + kind: kind for kind in KINDS}
+
+
+RANGE_KIND = _range_kinds()
+
+ATTRIBUTE_TYPES = (OWL.ObjectProperty, OWL.DatatypeProperty, RDF.Property,
+                   OWL.AnnotationProperty)
+
+
+# The encoding's own predicates. A nested sh:property on one of these is the
+# VALUE of the attribute; a nested sh:property on anything else is a
+# sub-attribute of it.
+PAYLOAD_PATHS = {NGSILD + name for name in
+                 ('hasValue', 'hasObject', 'hasJSON', 'hasValueList')}
+
+
+def sub_attribute_domains():
+    """The classes an attribute NODE has, which is what carries a sub-attribute.
+
+    In the NGSI-LD-in-RDF encoding an attribute is a blank node, and that node
+    is typed: `hasFilter` expands to a node `a ngsild:Relationship` carrying
+    `ngsild:hasObject`. A sub-attribute hangs off THAT node, so its rdfs:domain
+    is an ordinary class after all -- `ngsild:Relationship` for `hasTrust`,
+    `ngsild:Property` for `hasXXXWorkpiece`, both measured against the shipped
+    kms. No punning and nothing invented.
+
+    What domain cannot say is WHICH attribute: it constrains the kind of node,
+    not the one attribute. That half stays in the shapes, where the nesting is
+    already spelled out.
+    """
+    from ..ngsild.build import KINDS
+
+    return {NGSILD + kind: kind for kind in KINDS}
+
+
+def nesting(package):
+    """{attribute: the attributes it nests inside}, read from the SHAPES.
+
+    A sub-attribute hangs off an ATTRIBUTE, not off an entity, so `rdfs:domain`
+    cannot say where it belongs: domain takes a class, and an attribute is not
+    one. Declaring `rdfs:domain hasFilter` would be punning -- it would make
+    rdflib and any OWL tool treat `hasFilter` as a class as well as a property.
+
+    The shapes say it already, and exactly. The NGSI-LD encoding is two-layer,
+    so a property shape's inner `sh:property` is either the value
+    (`ngsild:hasValue`, `hasObject`, `hasJSON`, `hasValueList`) or a
+    sub-attribute. The kms's `hasTrust` sits inside `hasFilter` and its
+    `hasXXXWorkpiece` inside `hasState`, both spelled out in shacl.ttl.
+
+    So the knowledge says what a term IS -- its kind, its meaning -- and the
+    shapes say where it may APPEAR. Which is the division this architecture
+    already draws for values: `sh:class` is the shapes' business, not the
+    ontology's.
+    """
+    from rdflib.namespace import SH
+
+    found = {}
+
+    def walk(shape, parent):
+        for child in package.shapes.objects(shape, SH.property):
+            paths = [str(p) for p in package.shapes.objects(child, SH.path)]
+            path = paths[0] if paths else ''
+            if path and path not in PAYLOAD_PATHS:
+                if parent:
+                    found.setdefault(path, set()).add(parent)
+                walk(child, path)
+            else:
+                # The value layer: its own sh:property constrains the literal,
+                # and nothing below it is an attribute.
+                continue
+
+    from ..validate.shapes import node_shapes
+
+    for shape in node_shapes(package.shapes):
+        walk(shape, '')
+    return {child: sorted(parents) for child, parents in found.items()}
+
+
+def attribute_terms(package):
+    """Every attribute the knowledge declares.
+
+    An attribute typed by hand is the same silent failure as a type typed by
+    hand, one level down: nothing rejects an undeclared term, no `sh:path`
+    matches it, so the constraint that should have judged it never fires and
+    the entity reads as validated. `iffBaseEntities:hasOutWorkpiecexx` is in
+    the shipped kms today, one letter pair away from a real attribute, and
+    nothing has ever said so.
+    """
+    from rdflib.namespace import SH
+
+    index = package.index('knowledge')
+    constrained = {str(path) for path in package.shapes.objects(None, SH.path)}
+    entity_family = {entry.iri for entry in entity_types(package)[0]}
+    inside = nesting(package)
+    sub_domains = sub_attribute_domains()
+
+    found = []
+    for iri in sorted({s for s, o in package.knowledge.subject_objects(RDF.type)
+                       if o in ATTRIBUTE_TYPES and isinstance(s, URIRef)},
+                      key=str):
+        ranges = [str(r) for r in package.knowledge.objects(iri, RDFS.range)]
+        domains = [d for d in package.knowledge.objects(iri, RDFS.domain)
+                   if isinstance(d, URIRef)]
+        kind = next((RANGE_KIND[r] for r in ranges if r in RANGE_KIND), '')
+        if not kind and ranges:
+            # A package may name the VALUE class instead of the NGSI-LD half --
+            # `semforge init` used to. A class in the entity hierarchy can only
+            # be the target of a Relationship; anything else is a value, so a
+            # Property.
+            kind = 'Relationship' if any(r in entity_family for r in ranges) \
+                else 'Property'
+        comment = next((str(t) for t in package.knowledge.objects(iri, RDFS.label)),
+                       '')
+        carrier_kind = next((sub_domains[str(d)] for d in domains
+                             if str(d) in sub_domains), '')
+        found.append(AttributeTerm(
+            iri=str(iri), term=model_term(package, iri), label=local(iri),
+            kind=kind, carrier_kind=carrier_kind,
+            domain=model_term(package, domains[0]) if domains else '',
+            domain_iri=str(domains[0]) if domains else '',
+            comment=comment,
+            constrained=str(iri) in constrained,
+            defined_at=index.locator(iri),
+            parents=tuple(model_term(package, parent)
+                          for parent in inside.get(str(iri), ()))))
+    return found
+
+
+def attributes_for(package, entity_type):
+    """The declared attributes an entity of this type may carry.
+
+    `rdfs:domain` is the join: it says which entity type an attribute belongs
+    to, and it is inherited, because a Plasmacutter is a Cutter is a Machine.
+    An attribute with no domain is not filtered out -- a package may simply not
+    have said -- but it is reported as open so the picker can rank it below the
+    ones that name this type.
+    """
+    wanted = entity_type
+    for entry in entity_types(package)[0]:
+        if entity_type in (entry.term, entry.iri, entry.label):
+            wanted = entry.iri
+            break
+    family = {str(c) for c in _ancestor_chain(package.knowledge, URIRef(wanted))}
+
+    mine, open_ended = [], []
+    for attribute in attribute_terms(package):
+        if attribute.parents or attribute.carrier_kind:
+            # A sub-attribute is not something an ENTITY carries: its subject
+            # is an attribute NODE. Offering it here would invite `hasTrust`
+            # onto a Filter, where no shape constrains it and nothing would
+            # ever say so. Either half is enough to know -- the declaration
+            # (rdfs:domain ngsild:Relationship) or the shapes' nesting.
+            continue
+        if not attribute.domain_iri:
+            open_ended.append(attribute)
+        elif attribute.domain_iri in family:
+            mine.append(attribute)
+    return mine, open_ended
+
+
+def sub_attributes_for(package, parent):
+    """The attributes that may nest inside this one.
+
+    Two sources, and they answer different questions. The shapes say this
+    sub-attribute is PLACED here -- a nested `sh:property`, which is the only
+    thing that names one specific parent. The knowledge says it is ALLOWED
+    here -- `rdfs:domain ngsild:Relationship` carries over to every
+    Relationship. Placed ones come first, because a shape that mentions it is
+    a stronger statement than a kind that permits it.
+    """
+    declared = attribute_terms(package)
+    carrier = next((entry for entry in declared
+                    if parent in (entry.term, entry.iri, entry.label)), None)
+    if carrier is None:
+        return []
+
+    placed = [entry for entry in declared if carrier.term in entry.parents]
+    seen = {entry.iri for entry in placed}
+    allowed = [entry for entry in declared
+               if entry.carrier_kind and entry.carrier_kind == carrier.kind
+               and entry.iri not in seen]
+    return placed + allowed
+
+
 def term_for(shapes_graph, iri):
     """A term that is valid IN THE SHAPES FILE.
 

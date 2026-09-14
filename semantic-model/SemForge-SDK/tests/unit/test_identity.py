@@ -323,10 +323,15 @@ def test_a_clean_package_publishes_no_identity_diagnostics(corpus_path):
     findings, _ = analyse(corpus_path)
     assert not [f for items in findings.values() for f in items
                 if f.kind == 'identity']
-    # Which also restores the older invariant: everything lands on shacl.ttl
-    # until something is actually wrong with a document.
-    assert [path for path in findings] == [
-        path for path in findings if path.endswith('shacl.ttl')]
+    # Everything lands on shacl.ttl until something is actually wrong with a
+    # document. The corpus's model instance uses one attribute the knowledge
+    # does not declare -- `hasOutWorkpiecexx`, two letters from a real one --
+    # so that file carries a vocabulary finding and nothing else.
+    for path, items in findings.items():
+        if path.endswith('shacl.ttl'):
+            continue
+        assert path.endswith('model-instance.jsonld'), path
+        assert {f.kind for f in items} == {'vocabulary'}
 
 
 def test_no_entity_row_is_marked_for_a_reused_id(corpus):

@@ -107,6 +107,7 @@ def _knowledge(entities, knowledge):
 @prefix {knowledge[0]}: <{knowledge[1]}> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ngsild: <https://uri.etsi.org/ngsi-ld/> .
 
 # The entity hierarchy. Everything a shape targets descends from Entity, which
 # is what tells an entity type from a vocabulary class.
@@ -116,15 +117,24 @@ def _knowledge(entities, knowledge):
     rdfs:subClassOf {entities[0]}:Entity ;
     rdfs:label "Machine" .
 
-# The attributes. Declaring them is what makes go-to-definition work from a
-# shape's sh:path, and what a reader consults to find out what an attribute is.
+# The attributes. An attribute must be declared BEFORE it is used: the name is
+# what a shape's sh:path matches, so one spelled wrong is not a broken document
+# but an invisible one -- no constraint selects it and the entity reads as
+# validated. Declaring it is also what makes go-to-definition work, and what a
+# reader consults to find out what the attribute is.
+#
+# `rdfs:domain` says which entity type carries it, and is inherited down the
+# hierarchy. `rdfs:range` says which HALF of the NGSI-LD encoding it is: a
+# Property carries ngsild:hasValue, a Relationship ngsild:hasObject. Which
+# VALUES are allowed is the shapes' business (sh:class), not this file's.
 {entities[0]}:hasState a owl:ObjectProperty ;
     rdfs:domain {entities[0]}:Machine ;
-    rdfs:range {knowledge[0]}:MachineState ;
+    rdfs:range ngsild:Property ;
     rdfs:label "the state the machine reports" .
 
 {entities[0]}:hasTemperature a owl:DatatypeProperty ;
     rdfs:domain {entities[0]}:Machine ;
+    rdfs:range ngsild:Property ;
     rdfs:label "degrees Celsius" .
 
 # A vocabulary: a class whose INDIVIDUALS are the allowed values. A Property

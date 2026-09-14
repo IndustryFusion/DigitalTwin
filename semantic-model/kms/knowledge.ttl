@@ -645,3 +645,33 @@ base:BoundMap a owl:Class .
 
 material:_ElementOccurance a owl:Class .
 
+
+# Declared late: these four are used by the model and three of them are
+# constrained by a shape, but nothing said what they are. An attribute's name
+# is what `sh:path` matches, so an undeclared one is not a broken document but
+# an invisible one -- and `semforge test` reports them now.
+#
+# `hasTrust` and `hasXXXWorkpiece` are SUB-attributes: their subject is the
+# parent's attribute NODE, which the encoding types -- `hasFilter` expands to a
+# node `a ngsild:Relationship`, `hasState` to one `a ngsild:Property`. So their
+# rdfs:domain is that node's class. It constrains the KIND of carrier; WHICH
+# attribute they nest inside is said by the shapes, which already nest them.
+iffBaseEntities:hasJSON a owl:DatatypeProperty ;
+    rdfs:domain iffBaseEntities:Cutter ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/JsonProperty> ;
+    rdfs:label "an arbitrary JSON payload, carried as a JsonProperty" .
+
+iffBaseEntities:hasList a owl:DatatypeProperty ;
+    rdfs:domain iffBaseEntities:Cutter ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/ListProperty> ;
+    rdfs:label "an ordered list of values, carried as a ListProperty" .
+
+iffBaseEntities:hasTrust a owl:DatatypeProperty ;
+    rdfs:domain <https://uri.etsi.org/ngsi-ld/Relationship> ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> ;
+    rdfs:label "a sub-attribute of hasFilter: how far the reading is trusted" .
+
+iffBaseEntities:hasXXXWorkpiece a owl:ObjectProperty ;
+    rdfs:domain <https://uri.etsi.org/ngsi-ld/Property> ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Relationship> ;
+    rdfs:label "a sub-attribute of hasState: the workpiece the state is about" .

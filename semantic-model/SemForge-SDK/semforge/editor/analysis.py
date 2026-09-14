@@ -44,7 +44,8 @@ from ..validate.shapes import check_declarations, node_shapes
 class EditorFinding:
     line: int                 # 1-based
     severity: str             # error | warning | info | hint
-    kind: str                 # capability | view | unexercised | fires | identity
+    kind: str                 # capability | view | unexercised | fires |
+    #                           identity | vocabulary
     message: str
     subject: str = ''
 
@@ -104,6 +105,21 @@ def analyse(root, profile_name='shacl2flink'):
                                   subject=duplicate.entity))
     except Exception:                              # noqa: BLE001
         pass            # a malformed example is the validator's story to tell
+
+    # An attribute the knowledge does not declare. Same silence as an
+    # undeclared type, one level down: no sh:path selects it, so the constraint
+    # that should have judged the value never fires.
+    from ..expect.vocabulary import undeclared_attributes
+
+    try:
+        for entry in undeclared_attributes(package):
+            for where, line in entry.places:
+                findings.setdefault(os.path.abspath(where), []).append(
+                    EditorFinding(line=line, severity=entry.severity,
+                                  kind='vocabulary', message=entry.message,
+                                  subject=entry.term))
+    except Exception:                              # noqa: BLE001
+        pass
 
     report = validate_package(package, strict=False)
 

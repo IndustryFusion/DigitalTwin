@@ -149,6 +149,84 @@ the knowledge does not declare, so no client can route around it.
 
 Only the id is typed, and it is prefilled from the type (`urn:filter:3`).
 
+### Adding an attribute
+
+Same rule, one level down. The **+** on an entity offers the attributes the
+knowledge declares *for that type* — `rdfs:domain` is the join, and it is
+inherited, so a Plasmacutter is offered what a Cutter and a Machine carry:
+
+```text
+Attribute for urn:plasmacutter:1 — from the knowledge
+  iffBaseEntities:hasState     Property · constrained
+                               carried by iffBaseEntities:Machine
+  iffBaseEntities:hasFilter    Relationship · constrained
+                               carried by iffBaseEntities:Cutter
+  iffBaseEntities:hasTrust     Property · constrained
+                               no domain declared — carried by anything
+  ➕ New attribute…            declare it in the knowledge, then use it
+```
+
+An attribute spelled wrong is not a broken document — it is an **invisible**
+one. No `sh:path` selects it, so the constraint that should have judged the
+value never fires and the entity reads as validated. The shipped kms has had
+`iffBaseEntities:hasOutWorkpiecexx` in its model instance all along, two
+letters from `hasOutWorkpiece`, and nothing ever said so.
+
+**➕ New attribute…** asks for the name, whether it carries a *Property* (a
+value) or a *Relationship* (another entity) — that decides which key holds the
+payload and which half of the encoding a shape must constrain — and one line of
+prose. It writes the declaration into `knowledge.ttl` with `rdfs:domain` (this
+entity type) and `rdfs:range` (the NGSI-LD kind), and opens the line.
+
+#### Nested attributes
+
+A sub-attribute's subject is the parent's **attribute node**, and the encoding
+types that node: `hasFilter` expands to a node `a ngsild:Relationship` carrying
+`ngsild:hasObject`. So `rdfs:domain` works perfectly well — it is that node's
+class:
+
+```turtle
+iffBaseEntities:hasTrust a owl:DatatypeProperty ;
+    rdfs:domain <https://uri.etsi.org/ngsi-ld/Relationship> ;   # what carries it
+    rdfs:range  <https://uri.etsi.org/ngsi-ld/Property> ;       # what it is
+    rdfs:label  "a sub-attribute of hasFilter: how far the reading is trusted" .
+```
+
+An ordinary class, nothing invented, no punning — and the kms was already doing
+it for `base:boundBy`. What domain constrains is the **kind** of carrier: this
+may hang off any Relationship.
+
+**Which** attribute it nests inside is the shapes', and only the shapes', to
+say — a `sh:property` nested inside the parent's own property shape. The
+two-layer encoding makes it exact: an inner `sh:property` on
+`ngsild:hasValue`/`hasObject`/`hasJSON`/`hasValueList` is the *value*, and on
+anything else a *sub-attribute*:
+
+```turtle
+sh:property [ sh:path iffBaseEntities:hasState ;
+        sh:property [ sh:path ngsild:hasValue ; sh:class base:MachineState ] ,
+                    [ sh:path iffBaseEntities:hasXXXWorkpiece ;      # ← nested
+                      sh:property [ sh:path ngsild:hasObject ;
+                                    sh:class iffBaseEntities:Workpiece ] ] ]
+```
+
+So the two halves answer different questions, and together they answer **which
+attributes to offer when you nest one**:
+
+| | says | used for |
+|---|---|---|
+| `rdfs:domain ngsild:Relationship` | may hang off any Relationship | the candidates |
+| a nested `sh:property` | is placed inside *this* attribute | the ones already there |
+
+Asking for the sub-attributes of `hasFilter` returns the placed ones first,
+then the ones a Relationship is allowed to carry. Sub-attributes are **not**
+offered among an entity's attributes — an entity does not carry one, and
+putting `hasTrust` on a Filter would put it where no shape looks.
+
+➕ **New attribute…** on a nested row names the parent attribute as the
+carrier, and the declaration comes out as above. Placing the nested
+`sh:property` in the shapes is still yours to do.
+
 ### The Project view
 
 The first of the four views, and the one that says what the package *is*
@@ -737,6 +815,7 @@ in `shacl.ttl` is meaningless without the ontology and the examples.
 | `SemForge: Go to the SHACL rule for this attribute` | the ⚖ icon on an example attribute; creates an empty `sh:property` when none exists |
 | `SemForge: Go to the shape for this class` | the ⚖ icon on a knowledge class |
 | `SemForge: Add an entity` | the + on a case or file; the type is picked from the knowledge, never typed |
+| `SemForge: Add an attribute` | the + on an entity; the attribute is picked from the knowledge, filtered by `rdfs:domain` |
 
 ## Settings
 

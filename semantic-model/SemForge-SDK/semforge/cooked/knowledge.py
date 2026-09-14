@@ -537,3 +537,106 @@ def _turtle_name(text, iri):
                     (best is None or len(namespace) > best[0]):
                 best = (len(namespace), f'{prefix}:{rest}')
     return best[1] if best else f'<{text_iri}>'
+
+
+def add_attribute_term(package, name, kind, domain, label=''):
+    """Declare a new attribute in the knowledge, carried by `domain`.
+
+    The counterpart of `add_entity_type`, one level down and for the same
+    reason: an attribute's NAME is what a shape's `sh:path` matches, so one
+    that is never declared is not a broken document but an invisible one.
+
+    `domain` names what CARRIES it, and there are two kinds of carrier:
+
+      * an entity type -- an ordinary attribute, `rdfs:domain` the class,
+        inherited down the hierarchy;
+      * another attribute -- a sub-attribute. Its subject is the parent's
+        attribute NODE, and that node is typed, so `rdfs:domain` is the node's
+        class: `ngsild:Relationship` for something nested in a Relationship,
+        `ngsild:Property` for something nested in a Property. An ordinary
+        class, nothing invented, no punning.
+
+    Domain constrains the KIND of carrier, not the one attribute. Which
+    specific attribute it nests inside is the shapes' business, spelled out by
+    a nested `sh:property` -- the same division that puts `sh:class` there.
+
+    `rdfs:range` says which half of the encoding the attribute itself is.
+    """
+    from .choices import NGSILD, attribute_terms, entity_types
+
+    local_name = (name or '').split(':')[-1].strip()
+    if not local_name:
+        raise PackageError('an attribute needs a name')
+    if not re.match(r'^[A-Za-z][\w-]*$', local_name):
+        raise PackageError(
+            f'{local_name!r} is not usable as an attribute name: a letter, '
+            'then letters, digits, underscores or hyphens')
+    from ..ngsild.build import KINDS
+
+    if kind not in KINDS:
+        raise PackageError(
+            f'{kind!r} is not an NGSI-LD attribute kind. '
+            f'Expected one of: {", ".join(KINDS)}')
+
+    known, root = entity_types(package)
+    carrier = next((entry for entry in known
+                    if domain in (entry.term, entry.iri, entry.label)), None)
+    # A carrier may be another ATTRIBUTE: then this is a sub-attribute, and the
+    # domain is the class of that attribute's node.
+    parent = None
+    if carrier is None and domain:
+        parent = next((entry for entry in attribute_terms(package)
+                       if domain in (entry.term, entry.iri, entry.label)), None)
+        if parent is None:
+            raise PackageError(
+                f'{domain} is neither an entity type nor an attribute in this '
+                f'package, so nothing can carry {local_name}. Declare it '
+                f'first.')
+        if not parent.kind:
+            raise PackageError(
+                f'{parent.term} does not say which kind of attribute it is '
+                f'(no rdfs:range), so there is no class to carry '
+                f'{local_name}. Give it a range first.')
+    if carrier is None and parent is None and root is None:
+        raise PackageError(
+            'this package has no entity hierarchy, so there is no namespace '
+            'to declare an attribute in. Declare `entityRoot:` in '
+            'semforge.yaml, or give one shape an sh:targetClass.')
+
+    # A sub-attribute hangs off an ATTRIBUTE, not off an entity, so it has no
+    # entity type to be its domain -- the kms's `hasTrust`, which sits inside
+    # `hasFilter`, is one. An empty domain declares it without one.
+    home = carrier.iri if carrier is not None else \
+        (parent.iri if parent is not None else root)
+    iri = URIRef(_namespace_of(home) + local_name)
+    if any(entry.iri == str(iri) for entry in attribute_terms(package)):
+        raise PackageError(f'{local_name} is already declared')
+
+    index = package.index('knowledge')
+    path = index.file_for(URIRef(home)) or package.sources['knowledge']
+    with open(path, encoding='utf-8') as handle:
+        text = handle.read()
+
+    declaration = OWL.ObjectProperty if kind == 'Relationship' \
+        else OWL.DatatypeProperty
+    lines = [f'{_turtle_name(text, iri)} a {_turtle_name(text, declaration)}']
+    if carrier is not None:
+        lines.append(f'    {_turtle_name(text, RDFS.domain)} '
+                     f'{_turtle_name(text, URIRef(carrier.iri))}')
+    elif parent is not None:
+        lines.append(f'    {_turtle_name(text, RDFS.domain)} '
+                     f'{_turtle_name(text, URIRef(NGSILD + parent.kind))}')
+    lines.append(f'    {_turtle_name(text, RDFS.range)} '
+                 f'{_turtle_name(text, URIRef(NGSILD + kind))}')
+    if label:
+        lines.append(f'    {_turtle_name(text, RDFS.label)} '
+                     f'{json.dumps(label)}')
+    with open(path, 'a', encoding='utf-8') as handle:
+        handle.write('\n' + ' ;\n'.join(lines) + ' .\n')
+
+    from .choices import model_term
+    return {'iri': str(iri), 'term': model_term(package, iri),
+            'label': local_name, 'kind': kind,
+            'domain': carrier.term if carrier is not None else
+                      (parent.term if parent is not None else ''),
+            'file': path, 'line': len(text.splitlines()) + 2}

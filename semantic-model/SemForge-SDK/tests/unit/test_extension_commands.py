@@ -884,3 +884,131 @@ def test_no_entity_hierarchy_is_reported_rather_than_guessed(tmp_path):
     })
     assert any('entity hierarchy' in message for message in seen['errors'])
     assert not seen['inputs'], 'it fell back to typing a type'
+
+
+# --- an attribute comes from the knowledge too --------------------------------
+
+ATTRIBUTES_REPLY = {
+    'attributes': [
+        {'iri': 'https://example.org/e/hasState', 'term': 'e:hasState',
+         'label': 'hasState', 'kind': 'Property', 'domain': 'e:Machine',
+         'comment': 'the state it reports', 'constrained': True,
+         'definedAt': '/pkg/knowledge.ttl:12', 'scoped': True},
+        {'iri': 'https://example.org/e/hasTrust', 'term': 'e:hasTrust',
+         'label': 'hasTrust', 'kind': 'Property', 'domain': '',
+         'comment': '', 'constrained': False,
+         'definedAt': '/pkg/knowledge.ttl:20', 'scoped': False},
+    ],
+}
+
+ENTITY_NODE = {'raw': {'kind': 'entity', 'entity': 'urn:filter:1',
+                       'entityType': 'e:Filter', 'file': '/pkg/good.jsonld',
+                       'children': []},
+               'packageUri': 'file:///pkg/shacl.ttl'}
+
+
+def test_the_attribute_is_chosen_from_the_knowledge(tmp_path):
+    """An attribute typed by hand is invisible, not wrong: no sh:path selects it."""
+    seen = _drive(tmp_path, {
+        'command': 'semforge.addAttribute', 'node': ENTITY_NODE,
+        'pick': 'e:hasState', 'input': '"ON"',
+        'replies': {'semforge/attributes': ATTRIBUTES_REPLY,
+                    'semforge/addAttribute': {'ok': True, 'kind': 'Property'}},
+    })
+    asked = [r for r in seen['requests'] if r['method'] == 'semforge/attributes']
+    assert asked[0]['params']['entityType'] == 'e:Filter'
+
+    offered = {i['label']: i for i in seen['quickPicks'][0]['items']}
+    assert 'e:hasState' in offered
+    assert 'Property' in offered['e:hasState']['description']
+    assert 'carried by e:Machine' in offered['e:hasState']['detail']
+    # One with no domain is offered, and says so rather than claiming a carrier.
+    assert 'no domain declared' in offered['e:hasTrust']['detail']
+
+    # Only the value is typed.
+    assert len(seen['inputs']) == 1
+    wrote = [r for r in seen['requests'] if r['method'] == 'semforge/addAttribute']
+    assert wrote[0]['params']['name'] == 'e:hasState'
+    assert wrote[0]['params']['kind'] == 'Property'
+
+
+def test_a_relationship_says_it_wants_an_entity(tmp_path):
+    seen = _drive(tmp_path, {
+        'command': 'semforge.addAttribute', 'node': ENTITY_NODE,
+        'pick': 'e:hasState',
+        'replies': {'semforge/attributes': {'attributes': [
+            dict(ATTRIBUTES_REPLY['attributes'][0], kind='Relationship')]}},
+    })
+    assert 'entity' in seen['inputs'][0]['prompt']
+
+
+def test_a_missing_attribute_is_declared_in_the_knowledge_first(tmp_path):
+    seen = _drive(tmp_path, {
+        'command': 'semforge.addAttribute', 'node': ENTITY_NODE,
+        'picks': [2, 'Property'],
+        'inputs': ['hasPressure', 'bar at the inlet', '1.0'],
+        'replies': {
+            'semforge/attributes': ATTRIBUTES_REPLY,
+            'semforge/addAttributeTerm': {
+                'ok': True, 'term': 'e:hasPressure', 'label': 'hasPressure',
+                'kind': 'Property', 'domain': 'e:Filter',
+                'file': '/pkg/knowledge.ttl', 'line': 42},
+            'semforge/addAttribute': {'ok': True, 'kind': 'Property'}},
+    })
+    declared = [r for r in seen['requests']
+                if r['method'] == 'semforge/addAttributeTerm']
+    assert declared, seen['requests']
+    assert declared[0]['params'] == {
+        'uri': 'file:///pkg/shacl.ttl', 'name': 'hasPressure',
+        'kind': 'Property', 'domain': 'e:Filter', 'label': 'bar at the inlet'}
+    assert seen['shown'][0]['file'] == '/pkg/knowledge.ttl'
+    used = [r for r in seen['requests'] if r['method'] == 'semforge/addAttribute']
+    assert used[0]['params']['name'] == 'e:hasPressure'
+
+
+def test_the_kind_is_asked_because_it_decides_the_encoding(tmp_path):
+    """Property carries `value`, Relationship carries `object`."""
+    seen = _drive(tmp_path, {
+        'command': 'semforge.addAttribute', 'node': ENTITY_NODE,
+        'picks': [2, 'Relationship'], 'inputs': ['hasFilter', ''],
+        'replies': {'semforge/attributes': ATTRIBUTES_REPLY,
+                    'semforge/addAttributeTerm': {'ok': False, 'error': 'no'}},
+    })
+    kinds = [i['label'] for i in seen['quickPicks'][1]['items']]
+    assert kinds == ['Property', 'Relationship']
+
+
+def test_a_sub_attribute_says_what_it_hangs_off(tmp_path):
+    """Not "carried by anything": it belongs inside one attribute."""
+    seen = _drive(tmp_path, {
+        'command': 'semforge.addAttribute', 'node': ENTITY_NODE,
+        'replies': {'semforge/attributes': {'attributes': [
+            {'iri': 'https://example.org/e/hasTrust', 'term': 'e:hasTrust',
+             'label': 'hasTrust', 'kind': 'Property',
+             'domain': 'ngsild:Relationship', 'carrierKind': 'Relationship',
+             'parents': ['e:hasFilter'], 'comment': 'how far it is trusted',
+             'constrained': True, 'definedAt': '', 'scoped': False}]}},
+    })
+    row = seen['quickPicks'][0]['items'][0]
+    assert 'a sub-attribute of e:hasFilter' in row['detail']
+    assert 'carried by anything' not in row['detail']
+
+
+def test_an_unplaced_sub_attribute_says_which_kind_carries_it(tmp_path):
+    """Declared but not yet nested in a shape: still a sub-attribute.
+
+    `rdfs:domain ngsild:Relationship` says so on its own, which is why it is
+    not mistaken for an attribute nobody gave a domain.
+    """
+    seen = _drive(tmp_path, {
+        'command': 'semforge.addAttribute', 'node': ENTITY_NODE,
+        'replies': {'semforge/attributes': {'attributes': [
+            {'iri': 'https://example.org/e/hasConfidence',
+             'term': 'e:hasConfidence', 'label': 'hasConfidence',
+             'kind': 'Property', 'domain': 'ngsild:Relationship',
+             'carrierKind': 'Relationship', 'parents': [], 'comment': '',
+             'constrained': False, 'definedAt': '', 'scoped': False}]}},
+    })
+    detail = seen['quickPicks'][0]['items'][0]['detail']
+    assert 'carried by any Relationship' in detail
+    assert 'not placed in a shape yet' in detail

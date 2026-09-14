@@ -518,6 +518,124 @@ async function declareEntityType(client, packageUri, types) {
 }
 
 
+/**
+ * Where an attribute belongs, in the words of whatever says it.
+ *
+ * Two statements, and they say different things. `rdfs:domain` says which KIND
+ * of node carries it: an entity class for an ordinary attribute, and for a
+ * sub-attribute the class of the parent's attribute node -- `ngsild:Property`
+ * or `ngsild:Relationship`, because the encoding types those nodes. The shapes
+ * say WHICH attribute it nests inside, which domain cannot express.
+ */
+function whereItBelongs(attribute) {
+  if ((attribute.parents || []).length) {
+    return `a sub-attribute of ${attribute.parents.join(', ')}`;
+  }
+  if (attribute.carrierKind) {
+    return `a sub-attribute — carried by any ${attribute.carrierKind}, ` +
+      'not placed in a shape yet';
+  }
+  return attribute.scoped
+    ? `carried by ${attribute.domain}`
+    : 'no domain declared — carried by anything';
+}
+
+/**
+ * Which attribute? Only what the knowledge declares for this type.
+ *
+ * `rdfs:domain` says which entity type carries an attribute and is inherited,
+ * so a Plasmacutter is offered what a Cutter and a Machine carry. Attributes
+ * declared without a domain come last rather than being hidden -- a package may
+ * simply not have said.
+ */
+async function pickAttribute(client, packageUri, entityType, entity) {
+  const answer = await client.sendRequest('semforge/attributes', {
+    uri: packageUri,
+    entityType: entityType || ''
+  });
+  if (!answer || answer.error) {
+    vscode.window.showErrorMessage(
+      `SemForge: ${(answer && answer.error) || 'the attributes could not be read'}`
+    );
+    return undefined;
+  }
+  const declared = answer.attributes || [];
+  const items = declared.map((attribute) => ({
+    label: attribute.term,
+    description: [attribute.kind || 'kind from the shapes',
+                  attribute.constrained ? 'constrained' : 'no shape constrains it']
+      .join(' · '),
+    detail: [attribute.comment, whereItBelongs(attribute)]
+      .filter(Boolean).join(' — '),
+    attribute
+  }));
+  items.push({
+    label: '$(add) New attribute…',
+    description: 'declare it in the knowledge, then use it',
+    create: true
+  });
+
+  const chosen = await vscode.window.showQuickPick(items, {
+    placeHolder: `Attribute for ${entity} — from the knowledge`,
+    matchOnDescription: true
+  });
+  if (!chosen) {
+    return undefined;
+  }
+  if (!chosen.create) {
+    return chosen.attribute;
+  }
+  return declareAttribute(client, packageUri, entityType);
+}
+
+/** Declare an attribute in knowledge.ttl, and return it ready to use. */
+async function declareAttribute(client, packageUri, entityType) {
+  const name = await vscode.window.showInputBox({
+    title: 'New attribute',
+    prompt: 'Name, e.g. hasPressure — it is declared in the knowledge',
+    validateInput: (text) =>
+      /^[A-Za-z][\w-]*$/.test((text || '').split(':').pop())
+        ? undefined
+        : 'A letter, then letters, digits, underscores or hyphens.'
+  });
+  if (!name) {
+    return undefined;
+  }
+  // Property or Relationship is not a style choice: it decides which key
+  // carries the payload and which half of the encoding a shape must constrain.
+  const kind = await vscode.window.showQuickPick(
+    [{ label: 'Property', description: 'a value — a literal, or a vocabulary term as {"@id": …}' },
+     { label: 'Relationship', description: 'another entity, by its id' }],
+    { placeHolder: `${name} carries…` }
+  );
+  if (!kind) {
+    return undefined;
+  }
+  const label = await vscode.window.showInputBox({
+    title: `What is ${name}?`,
+    prompt: 'One line, for whoever reads the ontology next. Optional.'
+  });
+  if (label === undefined) {
+    return undefined;
+  }
+  const made = await client.sendRequest('semforge/addAttributeTerm', {
+    uri: packageUri,
+    name,
+    kind: kind.label,
+    domain: entityType,
+    label
+  });
+  if (!made || !made.ok) {
+    vscode.window.showErrorMessage(
+      `SemForge: ${(made && made.error) || 'the attribute was not declared'}`
+    );
+    return undefined;
+  }
+  await showLocation(`${made.file}:${made.line}`, false);
+  return { term: made.term, kind: made.kind, label: made.label };
+}
+
+
 function register(context, clientHolder, session, onChanged) {
   const provider = new ModelTreeProvider(clientHolder);
   const view = vscode.window.createTreeView('semforgeModel', {
@@ -674,30 +792,20 @@ function register(context, clientHolder, session, onChanged) {
       if (!raw || raw.kind !== 'entity') {
         return;
       }
-      const name = await vscode.window.showInputBox({
-        title: `New attribute on ${raw.entity}`,
-        prompt: 'Prefixed name, e.g. iffBaseEntities:hasStrength'
-      });
-      if (!name) {
-        return;
-      }
-      // Blank lets the server read the kind off the shapes, which is better
-      // than asking the person the model is supposed to be helping.
-      const { kinds } = await clientHolder.client.sendRequest('semforge/kinds', {});
-      const picked = await vscode.window.showQuickPick(
-        [{ label: 'From the shapes', description: 'let the model decide', value: '' }].concat(
-          kinds.map((k) => ({ label: k, value: k }))
-        ),
-        { title: 'Attribute type' }
-      );
-      if (picked === undefined) {
+      // Same rule as the type, one level down: the attribute's NAME is what a
+      // shape's sh:path matches, so one the knowledge has never heard of is
+      // not a broken document but an invisible one. So it is chosen, not
+      // typed -- and a missing one is declared in the knowledge first.
+      const attribute = await pickAttribute(
+        clientHolder.client, node.packageUri, raw.entityType, raw.entity);
+      if (!attribute) {
         return;
       }
       const value = await vscode.window.showInputBox({
-        title: `Value for ${name}`,
-        prompt:
-          'JSON is parsed. A Relationship takes an entity IRI; a Property ' +
-          'takes a literal or {"@id": "…"}.'
+        title: `Value for ${attribute.term}`,
+        prompt: attribute.kind === 'Relationship'
+          ? 'An entity IRI — a Relationship points at another entity.'
+          : 'JSON is parsed. A literal, or {"@id": "…"} for a vocabulary term.'
       });
       if (value === undefined) {
         return;
@@ -708,14 +816,14 @@ function register(context, clientHolder, session, onChanged) {
           uri: node.packageUri,
           entity: raw.entity,
           file: raw.file,
-          name,
-          kind: picked.value,
+          name: attribute.term,
+          kind: attribute.kind || '',
           value
         }
       );
       if (result.ok) {
         vscode.window.setStatusBarMessage(
-          `SemForge: ${name} added as ${result.kind}`,
+          `SemForge: ${attribute.term} added as ${result.kind}`,
           5000
         );
         provider.refresh();
