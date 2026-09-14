@@ -134,8 +134,11 @@ def _settings(package):
             value=f'{len(collection.entries)}', doc=collection.doc,
             detail=detail, severity=severity,
             defined_at=_at(manifest, config.locate(root, collection.key)))
+        from ..package.prefixes import STANDARD
+
         group.children = [
             ProjectNode(kind='entry', label=name, value=value,
+                        detail=_namespace_note(collection.key, name, value),
                         defined_at=_at(manifest, line))
             for name, value, line in collection.entries]
         if collection.key == 'namespaces':
@@ -143,22 +146,46 @@ def _settings(package):
             # Shown, because a reader who cannot see where `sh:` comes from
             # will eventually declare it again -- and a second name for one
             # namespace evicts the first.
-            from ..package.prefixes import STANDARD
-
-            standard = ProjectNode(
-                kind='fact', label='standard names', value=str(len(STANDARD)),
-                detail='known to every package. Declare one in semforge.yaml '
-                       'only to call it something else.')
-            standard.children = [
-                ProjectNode(kind='entry', label=name, value=namespace)
-                for name, namespace in sorted(STANDARD.items())]
-            group.children.append(standard)
+            #
+            # Minus the ones this package declares: they are listed above, and
+            # a name appearing twice on one screen reads as two definitions.
+            mine = {name for name, _, _ in collection.entries}
+            rest = {name: namespace for name, namespace in STANDARD.items()
+                    if name not in mine}
+            if rest:
+                standard = ProjectNode(
+                    kind='fact', label='standard names', value=str(len(rest)),
+                    detail='known to every package. Declare one in '
+                           'semforge.yaml only to call it something else.')
+                standard.children = [
+                    ProjectNode(kind='entry', label=name, value=namespace)
+                    for name, namespace in sorted(rest.items())]
+                group.children.append(standard)
         rows.append(group)
 
     node = ProjectNode(kind='group', label='Settings',
                        detail=f'{config.CONFIG} — click the pencil to change one')
     node.children = rows
     return node
+
+
+def _namespace_note(key, name, value):
+    """What is worth saying about one declared name.
+
+    A package that declares a standard name with the standard IRI is saying
+    what the SDK already knows -- harmless, and a line that can go. Saying so
+    beats leaving the reader to compare two lists.
+    """
+    if key != 'namespaces':
+        return ''
+    from ..package.prefixes import STANDARD
+
+    if STANDARD.get(name) == value:
+        return 'a standard name — every package knows this one, so this line ' \
+               'can go'
+    if name in STANDARD:
+        return f'overrides the standard name, which is <{STANDARD[name]}>'
+    return ''
 
 
 def _prefix_findings(package):

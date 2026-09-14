@@ -373,3 +373,55 @@ def test_a_new_project_does_not_carry_them_as_boilerplate(tmp_path):
     declared = (target / 'semforge.yaml').read_text()
     assert 'ngsild: https://uri.etsi.org/ngsi-ld/' not in declared
     assert check(load(str(target))) == []
+
+
+def test_a_declared_standard_name_is_not_listed_twice(tmp_path):
+    """`ngsild:` in a package's own table AND under the standard names read as
+    two definitions of one prefix."""
+    from semforge.cooked.project import build_project
+    from semforge.package.prefixes import STANDARD
+
+    target = tmp_path / 'own'
+    target.mkdir()
+    (target / 'knowledge.ttl').write_text('')
+    (target / 'shacl.ttl').write_text('')
+    (target / 'model-instance.jsonld').write_text('{"@graph": []}')
+    (target / 'semforge.yaml').write_text(
+        'namespaces:\n'
+        '  ngsild: https://uri.etsi.org/ngsi-ld/\n'
+        '  plant: https://example.org/plant/\n')
+
+    row = next(child
+               for root in build_project(load(str(target)))
+               for child in root.children if child.label == 'namespaces')
+    mine = [entry for entry in row.children if entry.label != 'standard names']
+    assert [entry.label for entry in mine] == ['ngsild', 'plant']
+
+    standard = next(entry for entry in row.children
+                    if entry.label == 'standard names')
+    assert 'ngsild' not in {entry.label for entry in standard.children}
+    assert len(standard.children) == len(STANDARD) - 1
+
+    # And the one the package repeats says so, rather than leaving the reader
+    # to compare two lists.
+    declared = next(entry for entry in mine if entry.label == 'ngsild')
+    assert 'this line can go' in declared.detail
+
+
+def test_a_name_the_package_redefines_says_what_it_overrides(tmp_path):
+    from semforge.cooked.project import build_project
+
+    target = tmp_path / 'own'
+    target.mkdir()
+    (target / 'knowledge.ttl').write_text('')
+    (target / 'shacl.ttl').write_text('')
+    (target / 'model-instance.jsonld').write_text('{"@graph": []}')
+    (target / 'semforge.yaml').write_text(
+        'namespaces:\n  sh: https://example.org/shapes/\n')
+
+    row = next(child
+               for root in build_project(load(str(target)))
+               for child in root.children if child.label == 'namespaces')
+    declared = next(entry for entry in row.children if entry.label == 'sh')
+    assert 'overrides the standard name' in declared.detail
+    assert 'w3.org/ns/shacl#' in declared.detail

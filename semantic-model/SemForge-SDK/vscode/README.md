@@ -272,6 +272,12 @@ and one that forgot would be told its own `shacl.ttl` had invented `sh:`.
 They sit at the lowest precedence, so a package that has a reason to call one
 of them something else declares it in `semforge.yaml` and that wins.
 
+A name the package declares itself is listed once, in its own table, and not
+repeated under *standard names* — the same prefix on one screen twice reads as
+two definitions. If what it declares is the standard IRI the row says so (*a
+standard name — this line can go*); if it is a different one, it says what it
+overrides.
+
 The **namespaces** row is where that table lives. ➕ on it defines a new one —
 it asks for the name and the IRI, refuses one that would collide with an
 existing name or give a namespace a second name, and writes it to
