@@ -82,15 +82,19 @@ def _config(name, prefixes, published, layout):
         '  local: context.jsonld',
         f'  published: {published}',
         '',
-        '# The package\'s agreed name for each namespace. One name per namespace:',
-        '# rdflib binds a single prefix per namespace, so a second name evicts',
-        '# the first and a term copied between artifacts changes meaning.',
+        '# The package\'s agreed name for each namespace. One name per',
+        '# namespace: rdflib binds a single prefix per namespace, so a second',
+        '# name evicts the first and a term copied between artifacts changes',
+        '# meaning. The table is package-wide -- every artifact is bound to it.',
         'namespaces:',
     ]
     for prefix, namespace in prefixes.items():
         lines.append(f'  {prefix}: {namespace}')
     lines += [
-        '  ngsild: https://uri.etsi.org/ngsi-ld/',
+        '',
+        '# rdf, rdfs, owl, xsd, sh and ngsild are known to every package and',
+        '# are not listed here. Name one of them yourself only to call it',
+        '# something else.',
         '',
         '# The class every entity type descends from. Declared rather than',
         '# guessed, so a value picker can tell an entity type (the target of a',

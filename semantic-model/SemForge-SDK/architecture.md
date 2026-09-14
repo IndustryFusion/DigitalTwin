@@ -1176,7 +1176,13 @@ every artifact bound to it — rdflib binds a single prefix per namespace, so a
 second name evicts the first and a term copied between artifacts changes
 meaning. A file that binds a name the package has not defined has therefore
 invented one, which `prefixes.check` reports as an **error** (SF-PFX-003) and
-not a matter of taste. `prefixes.add_namespace` is how the table grows:
+not a matter of taste. `prefixes.STANDARD` holds the names every package uses and none should have to
+declare — rdf, rdfs, owl, xsd, sh, and ngsild, whose vocabulary the SDK now
+ships. They apply at the lowest precedence, under the context and under
+`namespaces:`, so a package may still call one of them something else, and
+`semforge init` no longer writes any of them into a new project.
+
+`prefixes.add_namespace` is how the table grows:
 validated (a usable name, a namespace IRI that ends in a separator, no
 collision in either direction) and written to `namespaces:` in semforge.yaml,
 which is the half a package owns — context.jsonld is a snapshot of a published

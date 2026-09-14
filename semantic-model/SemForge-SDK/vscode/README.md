@@ -265,6 +265,13 @@ context all have to mean the same thing by the same name. rdflib binds one
 prefix per namespace, so a second name evicts the first and a term copied
 between artifacts changes meaning.
 
+`rdf`, `rdfs`, `owl`, `xsd`, `sh` and `ngsild` are **known to every package**
+and appear under *standard names* on that row. Nobody should have to write them
+down: a package that listed them would carry boilerplate that can only drift,
+and one that forgot would be told its own `shacl.ttl` had invented `sh:`.
+They sit at the lowest precedence, so a package that has a reason to call one
+of them something else declares it in `semforge.yaml` and that wins.
+
 The **namespaces** row is where that table lives. ➕ on it defines a new one —
 it asks for the name and the IRI, refuses one that would collide with an
 existing name or give a namespace a second name, and writes it to

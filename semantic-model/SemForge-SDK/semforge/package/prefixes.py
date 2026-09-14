@@ -42,6 +42,26 @@ class PrefixFinding:
     files: list = field(default_factory=list)
 
 
+# The names nobody should have to declare.
+#
+# rdf, rdfs, owl, xsd and sh are the vocabularies every Turtle file in this
+# world binds, and ngsild is the encoding the SDK ships a vocabulary for. They
+# are not a package's business: a package that had to list them would carry
+# five lines of boilerplate that can only drift, and one that forgot would be
+# told its shapes file had invented "sh:".
+#
+# Lowest precedence. A package that has a reason to call one of these something
+# else says so in semforge.yaml and that wins.
+STANDARD = {
+    'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+    'rdfs': 'http://www.w3.org/2000/01/rdf-schema#',
+    'owl': 'http://www.w3.org/2002/07/owl#',
+    'xsd': 'http://www.w3.org/2001/XMLSchema#',
+    'sh': 'http://www.w3.org/ns/shacl#',
+    'ngsild': 'https://uri.etsi.org/ngsi-ld/',
+}
+
+
 def context_prefixes(package_path, filename='context.jsonld'):
     """{prefix: namespace} declared by the package's JSON-LD context."""
     path = os.path.join(package_path, filename)
@@ -78,8 +98,14 @@ def declared_prefixes(package_path):
 
 
 def canonical_map(package_path):
-    """The agreed name for each namespace. semforge.yaml wins over the context."""
-    found = context_prefixes(package_path)
+    """The agreed name for each namespace.
+
+    Three layers, narrowest first: what the package declares in semforge.yaml,
+    then what its context says, then the standard names every package uses and
+    none should have to write down.
+    """
+    found = dict(STANDARD)
+    found.update(context_prefixes(package_path))
     found.update(declared_prefixes(package_path))
     return found
 
@@ -97,6 +123,10 @@ def names_by_namespace(package_path):
     for name, namespace in declared.items():
         by_namespace.setdefault(namespace, name)
     for name, namespace in context_prefixes(package_path).items():
+        by_namespace.setdefault(namespace, name)
+    # Last, so anything the package or its context says about one of these
+    # wins -- and so a package never has to say anything about them at all.
+    for name, namespace in STANDARD.items():
         by_namespace.setdefault(namespace, name)
     return by_namespace
 
@@ -233,9 +263,11 @@ def add_namespace(package_path, prefix, namespace):
     if declared.get(name) == target:
         raise PackageError(f'{name}: is already {target}')
     if name in declared:
+        whose = ' (a standard name the SDK knows)' if STANDARD.get(name) == \
+            declared[name] else ''
         raise PackageError(
-            f'{name}: already means <{declared[name]}> in this package. One '
-            f'name per namespace, and one namespace per name.')
+            f'{name}: already means <{declared[name]}>{whose}. One name per '
+            f'namespace, and one namespace per name.')
     existing = names_by_namespace(package_path).get(target)
     if existing:
         raise PackageError(

@@ -303,3 +303,73 @@ def test_the_context_matches_what_is_published(corpus):
     found = context_prefixes(corpus.path)
     assert 'base' in found
     assert 'iffBaseKnowledge' not in found
+
+
+# --- the names nobody should have to declare ---------------------------------
+
+def test_the_standard_names_are_known_without_being_declared(tmp_path, corpus):
+    """A shapes file binds `sh:`. No package should have to say so.
+
+    Raising "used but not defined" to an error made every scaffolded project
+    report its own shacl.ttl as having invented "sh:".
+    """
+    from semforge.package.prefixes import STANDARD, canonical_map
+
+    target = tmp_path / 'bare'
+    target.mkdir()
+    (target / 'knowledge.ttl').write_text('')
+    (target / 'shacl.ttl').write_text(
+        '@prefix sh: <http://www.w3.org/ns/shacl#> .\n'
+        '@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n')
+    (target / 'model-instance.jsonld').write_text('{"@graph": []}')
+
+    known = canonical_map(str(target))
+    assert {'rdf', 'rdfs', 'owl', 'xsd', 'sh', 'ngsild'} <= set(known)
+    assert known['sh'] == STANDARD['sh']
+
+    findings = check(load(str(target)))
+    assert not [f for f in findings if f.code == 'SF-PFX-003'], \
+        [f.message for f in findings]
+
+
+def test_a_package_may_still_call_one_of_them_something_else(tmp_path, corpus):
+    """Lowest precedence: what the package declares wins."""
+    from semforge.package.prefixes import canonical_map
+
+    target = tmp_path / 'own'
+    target.mkdir()
+    (target / 'knowledge.ttl').write_text('')
+    (target / 'shacl.ttl').write_text('')
+    (target / 'model-instance.jsonld').write_text('{"@graph": []}')
+    (target / 'semforge.yaml').write_text(
+        'namespaces:\n  shacl: http://www.w3.org/ns/shacl#\n')
+
+    by_namespace = canonical_map(str(target))
+    assert by_namespace['shacl'] == 'http://www.w3.org/ns/shacl#'
+
+
+def test_a_standard_name_cannot_be_redefined_by_accident(tmp_path, corpus):
+    from semforge.package.prefixes import add_namespace
+    from semforge.errors import PackageError
+
+    target = tmp_path / 'bare'
+    target.mkdir()
+    (target / 'knowledge.ttl').write_text('')
+    (target / 'shacl.ttl').write_text('')
+    (target / 'model-instance.jsonld').write_text('{"@graph": []}')
+
+    with pytest.raises(PackageError) as raised:
+        add_namespace(str(target), 'sh', 'https://example.org/mine/')
+    assert 'a standard name the SDK knows' in str(raised.value)
+
+
+def test_a_new_project_does_not_carry_them_as_boilerplate(tmp_path):
+    from semforge.package.scaffold import create_package
+
+    target = tmp_path / 'fresh'
+    target.mkdir()
+    create_package(str(target), name='fresh',
+                   namespace='https://example.org/fresh/')
+    declared = (target / 'semforge.yaml').read_text()
+    assert 'ngsild: https://uri.etsi.org/ngsi-ld/' not in declared
+    assert check(load(str(target))) == []

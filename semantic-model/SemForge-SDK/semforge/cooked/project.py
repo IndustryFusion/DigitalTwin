@@ -138,6 +138,21 @@ def _settings(package):
             ProjectNode(kind='entry', label=name, value=value,
                         defined_at=_at(manifest, line))
             for name, value, line in collection.entries]
+        if collection.key == 'namespaces':
+            # The names every package uses and none should have to write down.
+            # Shown, because a reader who cannot see where `sh:` comes from
+            # will eventually declare it again -- and a second name for one
+            # namespace evicts the first.
+            from ..package.prefixes import STANDARD
+
+            standard = ProjectNode(
+                kind='fact', label='standard names', value=str(len(STANDARD)),
+                detail='known to every package. Declare one in semforge.yaml '
+                       'only to call it something else.')
+            standard.children = [
+                ProjectNode(kind='entry', label=name, value=namespace)
+                for name, namespace in sorted(STANDARD.items())]
+            group.children.append(standard)
         rows.append(group)
 
     node = ProjectNode(kind='group', label='Settings',
