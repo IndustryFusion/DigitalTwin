@@ -74,7 +74,9 @@ else
   chmod +x kubectl-minio
   export PATH="$(pwd):$PATH"
   kubectl minio version
-  kubectl minio init
+  # Pin the operator image explicitly: the plugin defaults to Docker Hub, and
+  # MinIO deleted its Docker Hub repositories. quay.io/minio serves the same tags.
+  kubectl minio init --image=quay.io/minio/operator:v${MINIO_OPERATOR_VERSION} --console-image=quay.io/minio/operator:v${MINIO_OPERATOR_VERSION}
   # Step 3: Apply preferred anti-affinity patch
   echo "Patching MinIO Operator deployment with preferred anti-affinity..."
   kubectl -n minio-operator patch deployment minio-operator \

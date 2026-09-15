@@ -7,6 +7,7 @@ externalRegistry: docker.io
 externalRegistry2: quay.io
 externalRegistry3: registry.opensource.zalan.do
 externalRegistry4: ghcr.io
+minioRegistry: quay.io
 
 db:
   teamId: acid

@@ -100,7 +100,7 @@ spec:
             command: ['sh', '-c', "until wget -S {{ printf "%s://%s" .Values.s3.protocol .Values.s3.endpoint }}{{ .Values.minio.healthPath }} 2>&1 | awk '/^  HTTP/{print $2}' | grep 200; do echo waiting for minio; sleep 1; done"]
           {{- end }}
           - name: create-bucket
-            image: {{ .Values.externalRegistry }}/{{ .Values.minio.mcImage }}
+            image: {{ .Values.minioRegistry }}/{{ .Values.minio.mcImage }}
             env:
             - name: MC_HOST_iff
               {{- if $secret }}
