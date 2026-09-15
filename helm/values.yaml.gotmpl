@@ -7,6 +7,13 @@ externalRegistry: {{ .StateValues.externalRegistry }}
 externalRegistry2: {{ .StateValues.externalRegistry2 }}
 externalRegistry3: {{ .StateValues.externalRegistry3 }}
 externalRegistry4: {{ .StateValues.externalRegistry4 }}
+# MinIO deleted the minio/minio and minio/mc repositories from Docker Hub on
+# 2026-09-11, so those images cannot be pulled through externalRegistry
+# (docker.io) any more. quay.io/minio still serves the identical tags and
+# digests. This is a separate knob from externalRegistry* so that offline
+# installs can redirect it at the local mirror on its own - see
+# install-platform.sh, which overrides it exactly like the other registries.
+minioRegistry: {{ .StateValues.minioRegistry }}
 
 ingressType: {{ .StateValues.ingressType }}
 dbpassword: {{ .StateValues.dbpassword }}

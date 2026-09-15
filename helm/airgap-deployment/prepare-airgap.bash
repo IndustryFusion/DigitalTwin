@@ -21,10 +21,10 @@ set -e
 if [ "${REGISTRY}" = "docker.io" ]; then
   IMAGES=(
       registry.opensource.zalan.do/acid/postgres-operator:v1.9.0 
-      docker.io/minio/operator:v${MINIO_OPERATOR_VERSION}
-      docker.io/minio/mc:RELEASE.2023-06-28T21-54-17Z
+      quay.io/minio/operator:v${MINIO_OPERATOR_VERSION}
+      quay.io/minio/mc:RELEASE.2023-06-28T21-54-17Z
       docker.io/emqx/emqx-operator-controller:${EMQX_OPERATOR_VERSION}
-      docker.io/minio/minio:RELEASE.2023-01-12T02-06-16Z
+      quay.io/minio/minio:RELEASE.2023-01-12T02-06-16Z
       docker.io/redis:7.2
       ghcr.io/zalando/spilo-15:3.2-p1
       docker.io/velero/velero:${VELERO_VERSION}
@@ -59,10 +59,10 @@ if [ "${REGISTRY}" = "docker.io" ]; then
 else
   IMAGES=(
       registry.opensource.zalan.do/acid/postgres-operator:v1.9.0 
-      docker.io/minio/operator:v${MINIO_OPERATOR_VERSION}
-      docker.io/minio/mc:RELEASE.2023-06-28T21-54-17Z
+      quay.io/minio/operator:v${MINIO_OPERATOR_VERSION}
+      quay.io/minio/mc:RELEASE.2023-06-28T21-54-17Z
       docker.io/emqx/emqx-operator-controller:${EMQX_OPERATOR_VERSION}
-      docker.io/minio/minio:RELEASE.2023-01-12T02-06-16Z
+      quay.io/minio/minio:RELEASE.2023-01-12T02-06-16Z
       docker.io/redis:7.2
       ghcr.io/zalando/spilo-15:3.2-p1
       docker.io/velero/velero:${VELERO_VERSION}

@@ -22,12 +22,14 @@ COMMON_EXTERNAL_REGISTRY=$(yq ".externalRegistry" < $DIRNAME/common.yaml)
 COMMON_EXTERNAL_REGISTRY2=$(yq ".externalRegistry2" < $DIRNAME/common.yaml)
 COMMON_EXTERNAL_REGISTRY3=$(yq ".externalRegistry3" < $DIRNAME/common.yaml)
 COMMON_EXTERNAL_REGISTRY4=$(yq ".externalRegistry4" < $DIRNAME/common.yaml)
+COMMON_MINIO_REGISTRY=$(yq ".minioRegistry" < $DIRNAME/common.yaml)
 export MAIN_REPO=$(yq ".mainRepo" < $DIRNAME/common.yaml)
 export REGISTRY=${REGISTRY:-${COMMON_MAIN_REGISTRY}}
 export EXT_REGISTRY=${EXT_REGISTRY:-${COMMON_EXTERNAL_REGISTRY}}
 export EXT_REGISTRY2=${EXT_REGISTRY2:-${COMMON_EXTERNAL_REGISTRY2}}
 export EXT_REGISTRY3=${EXT_REGISTRY3:-${COMMON_EXTERNAL_REGISTRY3}}
 export EXT_REGISTRY4=${EXT_REGISTRY4:-${COMMON_EXTERNAL_REGISTRY4}}
+export MINIO_REGISTRY=${MINIO_REGISTRY:-${COMMON_MINIO_REGISTRY}}
 export KUBECTL_VERSION=1.28-debian-11
 
 # Optional corporate/network proxy configuration.
