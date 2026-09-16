@@ -58,56 +58,6 @@ else
 fi
 
 
-printf "\n"
-printf "\033[1mInititating MinIO Operator v${MINIO_OPERATOR_VERSION}\n"
-echo ------------------
-if [ "$OFFLINE" = "true" ]; then
-  cp ${OFFLINE_DIR}/kubectl-minio_${MINIO_OPERATOR_VERSION}_linux_amd64 .
-  mv kubectl-minio_${MINIO_OPERATOR_VERSION}_linux_amd64 kubectl-minio
-  chmod +x kubectl-minio
-  export PATH="$(pwd):$PATH"
-  kubectl minio version
-  kubectl minio init --image=${REGISTRY}/minio/operator:v${MINIO_OPERATOR_VERSION} --console-image=${REGISTRY}/minio/operator:v${MINIO_OPERATOR_VERSION}
-else
-  wget https://github.com/minio/operator/releases/download/v${MINIO_OPERATOR_VERSION}/kubectl-minio_${MINIO_OPERATOR_VERSION}_linux_amd64
-  mv kubectl-minio_${MINIO_OPERATOR_VERSION}_linux_amd64 kubectl-minio
-  chmod +x kubectl-minio
-  export PATH="$(pwd):$PATH"
-  kubectl minio version
-  # Pin the operator image explicitly: the plugin defaults to Docker Hub, and
-  # MinIO deleted its Docker Hub repositories. quay.io/minio serves the same tags.
-  kubectl minio init --image=quay.io/minio/operator:v${MINIO_OPERATOR_VERSION} --console-image=quay.io/minio/operator:v${MINIO_OPERATOR_VERSION}
-  # Step 3: Apply preferred anti-affinity patch
-  echo "Patching MinIO Operator deployment with preferred anti-affinity..."
-  kubectl -n minio-operator patch deployment minio-operator \
-  --type='json' \
-  -p='[
-    {
-      "op": "replace",
-      "path": "/spec/template/spec/affinity/podAntiAffinity",
-      "value": {
-        "preferredDuringSchedulingIgnoredDuringExecution": [
-          {
-            "weight": 100,
-            "podAffinityTerm": {
-              "labelSelector": {
-                "matchExpressions": [
-                  {
-                    "key": "name",
-                    "operator": "In",
-                    "values": ["minio-operator"]
-                  }
-                ]
-              },
-              "topologyKey": "kubernetes.io/hostname"
-            }
-          }
-        ]
-      }
-    }
-  ]'
-fi
-printf -- "------------------------\033[0m\n"
 
 
 printf "\n"

@@ -18,7 +18,7 @@ releases:
   chart: ./charts/postgres
   namespace: {{ .Values.namespace }}
   needs:
-  - minio
+  - seaweedfs
   values:
   - values.yaml.gotmpl
 - name: kafka
@@ -82,12 +82,12 @@ releases:
   - values.yaml.gotmpl
   needs:
   - kafka
-  - minio
-- name: minio
+  - seaweedfs
+- name: seaweedfs
   labels:
     order: first
-    app: minio
-  chart: ./charts/minio
+    app: seaweedfs
+  chart: ./charts/seaweedfs
   namespace: {{ .Values.namespace }}
   values:
   - values.yaml.gotmpl
@@ -125,7 +125,7 @@ releases:
   values:
   - values.yaml.gotmpl
   needs:
-  - {{ .Values.namespace }}/minio
+  - {{ .Values.namespace }}/seaweedfs
 - name: redis
   labels:
     app: redis

@@ -25,8 +25,8 @@ DETIK_CLIENT_NAMESPACE="iff"
 DETIK_DEBUG="true"
 
 
-@test "verify that minio-tenant is up and running" {
-    run try "at most 30 times every 60s to find 1 pod named 'iff-minio-tenant' with 'status.containerStatuses[0].ready' being 'true'"
+@test "verify that the object store is up and running" {
+    run try "at most 30 times every 60s to find 1 pod named 'seaweedfs-0' with 'status.containerStatuses[0].ready' being 'true'"
     [ "$status" -eq 0 ]
 
 }

@@ -21,10 +21,8 @@ set -e
 if [ "${REGISTRY}" = "docker.io" ]; then
   IMAGES=(
       registry.opensource.zalan.do/acid/postgres-operator:v1.9.0 
-      quay.io/minio/operator:v${MINIO_OPERATOR_VERSION}
-      quay.io/minio/mc:RELEASE.2023-06-28T21-54-17Z
       docker.io/emqx/emqx-operator-controller:${EMQX_OPERATOR_VERSION}
-      quay.io/minio/minio:RELEASE.2023-01-12T02-06-16Z
+      docker.io/chrislusf/seaweedfs:4.46
       docker.io/redis:7.2
       ghcr.io/zalando/spilo-15:3.2-p1
       docker.io/velero/velero:${VELERO_VERSION}
@@ -59,10 +57,8 @@ if [ "${REGISTRY}" = "docker.io" ]; then
 else
   IMAGES=(
       registry.opensource.zalan.do/acid/postgres-operator:v1.9.0 
-      quay.io/minio/operator:v${MINIO_OPERATOR_VERSION}
-      quay.io/minio/mc:RELEASE.2023-06-28T21-54-17Z
       docker.io/emqx/emqx-operator-controller:${EMQX_OPERATOR_VERSION}
-      quay.io/minio/minio:RELEASE.2023-01-12T02-06-16Z
+      docker.io/chrislusf/seaweedfs:4.46
       docker.io/redis:7.2
       ghcr.io/zalando/spilo-15:3.2-p1
       docker.io/velero/velero:${VELERO_VERSION}
@@ -105,7 +101,6 @@ for image in ${IMAGES[@]}; do
     fi
 done
 
-wget --no-clobber --directory-prefix ${OFFLINE_DIR} https://github.com/minio/operator/releases/download/v${MINIO_OPERATOR_VERSION}/kubectl-minio_${MINIO_OPERATOR_VERSION}_linux_amd64
 wget --no-clobber --directory-prefix ${OFFLINE_DIR} https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/${KEYCLOAK_VERSION}/kubernetes/keycloaks.k8s.keycloak.org-v1.yml
 wget --no-clobber --directory-prefix ${OFFLINE_DIR} https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/${KEYCLOAK_VERSION}/kubernetes/keycloakrealmimports.k8s.keycloak.org-v1.yml
 wget -O- https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/${KEYCLOAK_VERSION}/kubernetes/kubernetes.yml 2>/dev/null | sed "s/quay\.io/$LOCAL_REGISTRY/g" > ${OFFLINE_DIR}/kubernetes.yml

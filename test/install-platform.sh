@@ -86,7 +86,6 @@ if [ "$OFFLINE" = "true" ]; then
     export EXT_REGISTRY2=${LOCAL_REGISTRY}
     export EXT_REGISTRY3=${LOCAL_REGISTRY}
     export EXT_REGISTRY4=${LOCAL_REGISTRY}
-    export MINIO_REGISTRY=${LOCAL_REGISTRY}
 fi
 
 
@@ -96,7 +95,6 @@ set_helm_params(){
     --set externalRegistry2=$EXT_REGISTRY2 \
     --set externalRegistry3=$EXT_REGISTRY3 \
     --set externalRegistry4=$EXT_REGISTRY4 \
-    --set minioRegistry=$MINIO_REGISTRY \
     --set mainVersion=$DOCKER_TAG
 }
 
@@ -109,7 +107,7 @@ install_operators(){
 }
 
 uninstall_operators(){
-    echo "Uninstall operators (except minio)"
+    echo "Uninstall operators"
     ( cd ../helm && bash ./uninstall_operators.sh )
 
 }
@@ -180,9 +178,9 @@ if [ -n "$destroy" ] && [ -z "$labels" ]; then
     exit 1
 fi
 
-# Protect minio :-)
+# Protect the object store :-)
 if [ -n "$label" ] && [ -n "$destroy" ]; then
-  label=$label",app!=minio"
+  label=$label",app!=seaweedfs"
 fi
 
 

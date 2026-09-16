@@ -7,21 +7,13 @@ externalRegistry: {{ .StateValues.externalRegistry }}
 externalRegistry2: {{ .StateValues.externalRegistry2 }}
 externalRegistry3: {{ .StateValues.externalRegistry3 }}
 externalRegistry4: {{ .StateValues.externalRegistry4 }}
-# MinIO deleted the minio/minio and minio/mc repositories from Docker Hub on
-# 2026-09-11, so those images cannot be pulled through externalRegistry
-# (docker.io) any more. quay.io/minio still serves the identical tags and
-# digests. This is a separate knob from externalRegistry* so that offline
-# installs can redirect it at the local mirror on its own - see
-# install-platform.sh, which overrides it exactly like the other registries.
-minioRegistry: {{ .StateValues.minioRegistry }}
 
 ingressType: {{ .StateValues.ingressType }}
 dbpassword: {{ .StateValues.dbpassword }}
 dbReaderPassword: {{ .StateValues.dbReaderPassword }}
 clusterSvcName: {{ .StateValues.db.teamId -}}-{{- .StateValues.db.clusterSvcPostfix }}
 clusterExternalSvcName: {{ .StateValues.db.teamId -}}-{{- .StateValues.db.clusterSvcPostfix }}.{{ .StateValues.namespace }}.svc.cluster.local
-minioAdminSecretKey: {{ .StateValues.minioAdminSecretKey }}
-minioUserSecretKey: {{ .StateValues.minioUserSecretKey }}
+objectStoreSecretKey: {{ .StateValues.objectStoreSecretKey }}
 alertaClientSecret: {{ .StateValues.alertaClientSecret }}
 
 
@@ -139,13 +131,36 @@ flink:
     constraintCombinationSlotName: {{ .StateValues.flink.db.constraintCombinationSlotName }}
 
 
-minio:
-  enabled: {{ .StateValues.minio.enabled }}
-  storageSize: {{ .StateValues.minio.storageSize }}
-  healthPath: /minio/health/live
-  adminAccessKey: console
-  mcImage: minio/mc:RELEASE.2023-06-28T21-54-17Z
-  minioImage: minio/minio:RELEASE.2023-01-12T02-06-16Z
+# The platform's built-in S3 object store (SeaweedFS, see charts/seaweedfs).
+# `enabled: false` removes it entirely and points every S3 client at whatever
+# external endpoint the s3 block below describes.
+objectStore:
+  enabled: {{ .StateValues.objectStore.enabled }}
+  storageSize: {{ .StateValues.objectStore.storageSize }}
+  serviceName: seaweedfs
+  # SeaweedFS answers /healthz with 200 on the S3 port without credentials,
+  # which is what the wait-for-objectstore init containers probe.
+  healthPath: /healthz
+  # chrislusf/ is the project's own Docker Hub namespace, not a third-party
+  # rebuild: it is described as "official seaweedfs docker builds", has ~24M
+  # pulls, and is pushed by the SeaweedFS author on every release. There is no
+  # seaweedfs/seaweedfs on Docker Hub (404) - the personal namespace is a
+  # historical artifact of the repo being registered in 2016. ghcr.io's
+  # seaweedfs/seaweedfs is the OCI-packaged Helm chart
+  # (application/vnd.cncf.helm.config.v1+json), not a container image, so it is
+  # not an alternative source. This tag is also the only multi-arch one
+  # (386/amd64/arm64/arm-v7), which the arm64 edge nodes need.
+  image: chrislusf/seaweedfs:4.46
+  # Created by SeaweedFS itself at startup via -bucket, so no chart needs a
+  # bucket-creation job.
+  buckets:
+    - {{ .StateValues.flink.bucket }}
+    - {{ .StateValues.db.backupBucket }}
+    - {{ .StateValues.velero.backupBucket }}
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
 
 
 s3:
@@ -153,9 +168,13 @@ s3:
   {{- $protocol := "http" }}
   {{- if (hasKey .StateValues "s3") }}{{- $s3 = .StateValues.s3 }}{{- end }}
   protocol: {{ if (hasKey $s3 "protocol") }}{{ quote $s3.protocol }}{{- else }} http {{- end }}
-  endpoint: {{ if (hasKey $s3 "endpoint") }}{{ quote $s3.endpoint }}{{- else }} minio.{{ .StateValues.namespace}}.svc.cluster.local {{- end }}
-  userAccessKey: {{ if (hasKey $s3 "userAccessKey") }}{{ quote $s3.userAccessKey }}{{- else }} minio {{- end }}
-  userSecretKey: {{ if (hasKey $s3 "userSecretKey") }}{{ quote $s3.userSecretKey }}{{- else }} "{{ .StateValues.minioUserSecretKey }}" {{- end }}
+  endpoint: {{ if (hasKey $s3 "endpoint") }}{{ quote $s3.endpoint }}{{- else }} seaweedfs.{{ .StateValues.namespace}}.svc.cluster.local {{- end }}
+  userAccessKey: {{ if (hasKey $s3 "userAccessKey") }}{{ quote $s3.userAccessKey }}{{- else }} iff {{- end }}
+  userSecretKey: {{ if (hasKey $s3 "userSecretKey") }}{{ quote $s3.userSecretKey }}{{- else }} "{{ .StateValues.objectStoreSecretKey }}" {{- end }}
+  # Self-hosted S3 is addressed path-style; real AWS is not. This used to be
+  # derived from "is the built-in store enabled", which silently forced the
+  # wrong mode on anyone pointing the platform at another self-hosted endpoint.
+  pathStyle: {{ if (hasKey $s3 "pathStyle") }}{{ $s3.pathStyle }}{{- else }}{{ .StateValues.objectStore.enabled }}{{- end }}
 
 alerta:
   externalHostname: {{ .StateValues.alerta.externalHostname }}
@@ -380,15 +399,15 @@ velero:
           name: plugins
   configuration:
     backupStorageLocation:
-    - name: minio
+    - name: objectstore
       bucket: {{ .StateValues.velero.backupBucket }}
       provider: aws
       default: true
       accessMode: ReadWrite
       config:
         region: {{ .StateValues.velero.region }}
-        s3Url: {{ if (hasKey $s3 "protocol") }} {{ $s3.protocol }} {{- else }} http{{- end }}://{{ if (hasKey $s3 "endpoint") }}{{ $s3.endpoint }}{{- else }}minio.{{ .StateValues.namespace }}.svc.cluster.local{{- end }}
-        s3ForcePathStyle: {{- if .StateValues.minio.enabled }} true {{- else }} false {{- end }}
+        s3Url: {{ if (hasKey $s3 "protocol") }} {{ $s3.protocol }} {{- else }} http{{- end }}://{{ if (hasKey $s3 "endpoint") }}{{ $s3.endpoint }}{{- else }}seaweedfs.{{ .StateValues.namespace }}.svc.cluster.local{{- end }}
+        s3ForcePathStyle: {{ if (hasKey $s3 "pathStyle") }}{{ $s3.pathStyle }}{{- else }}{{ .StateValues.objectStore.enabled }}{{- end }}
       defaultVolumesToRestic: true
   credentials:
     useSecret: true

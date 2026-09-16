@@ -1,0 +1,85 @@
+{{/*
+SeaweedFS in "mini" mode: master, volume server, filer and the S3 gateway all
+inside one process. That is the whole point of choosing it here - the platform
+needs a single-node S3 endpoint for three buckets, and this replaces an
+operator, a CRD and a four-PVC erasure-coded tenant with one pod.
+
+-bucket creates the platform's buckets at startup, which is why no chart needs
+an `mc mb` job any more.
+
+-master.telemetry=false stops the master phoning home to
+telemetry.seaweedfs.com; an airgapped edge node must not try to reach it.
+*/}}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: seaweedfs
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: seaweedfs
+spec:
+  serviceName: {{ .Values.objectStore.serviceName }}
+  replicas: 1
+  selector:
+    matchLabels:
+      app: seaweedfs
+  template:
+    metadata:
+      labels:
+        app: seaweedfs
+    spec:
+      containers:
+        - name: seaweedfs
+          image: {{ .Values.externalRegistry }}/{{ .Values.objectStore.image }}
+          args:
+            - mini
+            - -dir=/data
+            - -s3.config=/etc/seaweedfs/s3.json
+            - -bucket={{ join "," .Values.objectStore.buckets }}
+            - -master.telemetry=false
+            - -ip.bind=0.0.0.0
+          ports:
+            - name: s3
+              containerPort: 8333
+            - name: master
+              containerPort: 9333
+            - name: filer
+              containerPort: 8888
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.objectStore.healthPath }}
+              port: s3
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.objectStore.healthPath }}
+              port: s3
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            failureThreshold: 6
+          resources:
+{{ toYaml .Values.objectStore.resources | indent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: s3-config
+              mountPath: /etc/seaweedfs
+              readOnly: true
+      volumes:
+        - name: s3-config
+          secret:
+            secretName: objectstore-credentials
+            items:
+              - key: s3.json
+                path: s3.json
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: {{ .Values.objectStore.storageSize }}
