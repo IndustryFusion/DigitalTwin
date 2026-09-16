@@ -5,7 +5,6 @@ The Services consist of
 
 * Zalando Postgres Operator
 * Strimzi Kafka Operator
-* Minio Operator
 * Keycloak Operator
 * Scorpio NGSI-LD Context broker with Keycloak integration
 * Alerta with Keycloak integration
@@ -238,7 +237,7 @@ PING keycloak.local (172.27.0.2): 56 data bytes
 
 # S3 Backups and (Database) Recovery
 
-By default, the database backups once per day to the internal Minio S3 storage. It can be configured to backup to another S3 by configuring the s3 object in the `environment/default.yaml` or `environment/production.yaml` profiles like so:
+By default, the database backups once per day to the internal SeaweedFS S3 storage. It can be configured to backup to another S3 by configuring the s3 object in the `environment/default.yaml` or `environment/production.yaml` profiles like so:
 
 ```
 s3:
@@ -248,10 +247,10 @@ s3:
    userSecretKey: <secret key>
 ```
 
-The selection of the environment files is dependent to the selected helmfile profile, if no profile is set, the `environment/default.yaml` file is used. In addition, when external S3 storage is used, Minio should be disabled in the profile, create the buckets in external S3 and then update the S3 bucket names in the following sections:
+The selection of the environment files is dependent to the selected helmfile profile, if no profile is set, the `environment/default.yaml` file is used. In addition, when external S3 storage is used, the built-in object store should be disabled in the profile, create the buckets in external S3 and then update the S3 bucket names in the following sections:
 
 ```
-minio:
+objectStore:
    enabled: false
 ```
 

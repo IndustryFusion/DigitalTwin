@@ -1,0 +1,29 @@
+{{/*
+The S3 endpoint. Port 80 so that s3.endpoint stays a bare host name and every
+client (Flink, wal-g, Velero, the wait-for-objectstore probes) can keep using
+plain http:// without carrying a port around.
+*/}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.objectStore.serviceName }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: seaweedfs
+spec:
+  type: ClusterIP
+  selector:
+    app: seaweedfs
+  ports:
+    - name: s3
+      port: 80
+      targetPort: s3
+      protocol: TCP
+    - name: master
+      port: 9333
+      targetPort: master
+      protocol: TCP
+    - name: filer
+      port: 8888
+      targetPort: filer
+      protocol: TCP

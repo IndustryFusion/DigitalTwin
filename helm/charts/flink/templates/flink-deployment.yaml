@@ -1,6 +1,6 @@
 {{- $secret := "" }}
-{{- if .Values.minio.enabled }}
-  {{- $secret = (lookup "v1" "Secret" .Release.Namespace "minio-user") -}}
+{{- if .Values.objectStore.enabled }}
+  {{- $secret = (lookup "v1" "Secret" .Release.Namespace "objectstore-credentials") -}}
 {{- end }}
 apiVersion: flink.apache.org/v1beta1
 kind: FlinkDeployment
@@ -26,12 +26,12 @@ spec:
     taskmanager.memory.process.size: 2500m
 
     s3.endpoint: {{ printf "%s://%s" .Values.s3.protocol .Values.s3.endpoint }}
-    {{- if .Values.minio.enabled }}
+    {{- if .Values.s3.pathStyle }}
     s3.path.style.access: true
     {{- end }}
     s3.access-key: {{ .Values.s3.userAccessKey }}
     {{ if $secret }}
-    s3.secret-key: {{ $secret.data.CONSOLE_SECRET_KEY | b64dec }}
+    s3.secret-key: {{ $secret.data.SECRET_KEY | b64dec }}
     {{ else }}
     s3.secret-key: {{ .Values.s3.userSecretKey }}
     {{ end }}
@@ -94,21 +94,11 @@ spec:
     podTemplate:
       spec:
         initContainers:
-          {{- if .Values.minio.enabled }}
-          - name: wait-for-minio
+          {{- if .Values.objectStore.enabled }}
+          - name: wait-for-objectstore
             image: {{ .Values.externalRegistry }}/busybox:1.28
-            command: ['sh', '-c', "until wget -S {{ printf "%s://%s" .Values.s3.protocol .Values.s3.endpoint }}{{ .Values.minio.healthPath }} 2>&1 | awk '/^  HTTP/{print $2}' | grep 200; do echo waiting for minio; sleep 1; done"]
+            command: ['sh', '-c', "until wget -S {{ printf "%s://%s" .Values.s3.protocol .Values.s3.endpoint }}{{ .Values.objectStore.healthPath }} 2>&1 | awk '/^  HTTP/{print $2}' | grep 200; do echo waiting for object store; sleep 1; done"]
           {{- end }}
-          - name: create-bucket
-            image: {{ .Values.minioRegistry }}/{{ .Values.minio.mcImage }}
-            env:
-            - name: MC_HOST_iff
-              {{- if $secret }}
-              value: {{ printf "%s://%s:%s@%s" .Values.s3.protocol .Values.s3.userAccessKey ($secret.data.CONSOLE_SECRET_KEY | b64dec) .Values.s3.endpoint }}
-              {{- else }}
-              value: {{ printf "%s://%s:%s@%s" .Values.s3.protocol .Values.s3.userAccessKey .Values.s3.userSecretKey .Values.s3.endpoint }}
-              {{- end }}
-            command: ["/bin/bash", "-c", "mc mb -p iff/{{ .Values.flink.bucket }}"]
         containers:
           - name: flink-main-container
             workingDir: /opt/flink

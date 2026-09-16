@@ -57,7 +57,7 @@ flink:
   defaultParalellism: 1
   bucket: flink
 
-minio:
+objectStore:
   enabled: true
   storageSize: 10G
 
