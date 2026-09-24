@@ -41,6 +41,8 @@ public class CoreServices {
             windowSize = "200"; // Default value if environment variable is not set
         }
         LOG.info("windowSize is: {}", windowSize);
+        final Integer alertTimeout = AlertTimeout.parse(System.getenv(AlertTimeout.ENV_VARIABLE));
+        LOG.info("alertTimeout is: {}", alertTimeout == null ? "Alerta default" : alertTimeout);
 
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
@@ -111,6 +113,8 @@ public class CoreServices {
         .reduce((e1, e2) -> e2)
         .keyBy(KeyValueRecord::getStringKey)
         .filter(new AlertsFilter())
+        // After the filter, so the timeout never takes part in change detection.
+        .map(new AlertTimeout(alertTimeout))
                 .sinkTo(kafkaSink);
 
         LOG.info("Attaching Statements to DataStream Pipeline: {}", stmtSet);

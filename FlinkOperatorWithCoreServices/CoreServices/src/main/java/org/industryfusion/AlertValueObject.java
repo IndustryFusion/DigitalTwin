@@ -3,7 +3,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({ "resource", "event", "environment", "service", "severity", "customer", "text" })
+@JsonPropertyOrder({ "resource", "event", "environment", "service", "severity", "customer", "text", "timeout" })
 public class AlertValueObject {
     public String resource;
     public String event;
@@ -12,6 +12,9 @@ public class AlertValueObject {
     public String text;
     public String[] service;
     public String customer;
+    // Seconds until Alerta expires the alert; 0 means never. Omitted when
+    // null, so Alerta falls back to its own default. See AlertTimeout.
+    public Integer timeout;
     public AlertValueObject() {} // required for Jackson
   
     public AlertValueObject(final String resource, final String event, final String environment) {
@@ -68,6 +71,12 @@ public class AlertValueObject {
     }
     public void setCustomer(final String customer) {
         this.customer = customer;
+    }
+    public Integer getTimeout() {
+        return timeout;
+    }
+    public void setTimeout(final Integer timeout) {
+        this.timeout = timeout;
     }
     public byte[] serialize() {
         try {
