@@ -112,11 +112,11 @@ EOF
 
 compare_attributes1() {
     cat << EOF | diff "$1" - >&3
-{"resource":"urn:plasmacutter-test:12345","event":"Test event","environment":"Development","service":["E2E test"],"severity":"ok","customer":"test","text":"OK"}
-{"resource":"urn:plasmacutter-test:12345","event":"Test event","environment":"Development","service":["E2E test"],"severity":"warning","customer":"test","text":"Warning"}
-{"resource":"urn:plasmacutter-test:12345","event":"Test event","environment":"Development","service":["E2E test"],"severity":"ok","customer":"test","text":"OK"}
-{"resource":"urn:plasmacutter-test:12345","event":"Test event","environment":"Development","service":["E2E test"],"severity":"critical","customer":"test","text":"critical"}
-{"resource":"urn:plasmacutter-test:12345","event":"Test event","environment":"Development","service":["E2E test"],"severity":"ok","customer":"test","text":"OK"}
+{"resource":"urn:plasmacutter-test:12345","event":"Test event","environment":"Development","service":["E2E test"],"severity":"ok","customer":"test","text":"OK","timeout":0}
+{"resource":"urn:plasmacutter-test:12345","event":"Test event","environment":"Development","service":["E2E test"],"severity":"warning","customer":"test","text":"Warning","timeout":0}
+{"resource":"urn:plasmacutter-test:12345","event":"Test event","environment":"Development","service":["E2E test"],"severity":"ok","customer":"test","text":"OK","timeout":0}
+{"resource":"urn:plasmacutter-test:12345","event":"Test event","environment":"Development","service":["E2E test"],"severity":"critical","customer":"test","text":"critical","timeout":0}
+{"resource":"urn:plasmacutter-test:12345","event":"Test event","environment":"Development","service":["E2E test"],"severity":"ok","customer":"test","text":"OK","timeout":0}
 EOF
 }
 
