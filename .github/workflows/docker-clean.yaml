@@ -30,3 +30,52 @@ jobs:
           docker ps -a
           docker images
           docker volume ls || true
+
+      - name: Inspect open ports and cleanup lingering processes
+        run: |
+          echo "=== Open ports before cleanup ==="
+          netstat -tulpn 2>/dev/null || ss -tulpn 2>/dev/null || echo "No netstat/ss available"
+          
+          echo ""
+          echo "=== Killing all lingering test/service processes ==="
+          
+          # Kill any lingering processes that might be holding ports
+          pkill -f "mqtt" 2>/dev/null || echo "No MQTT processes found"
+          pkill -f "mosquitto" 2>/dev/null || echo "No mosquitto processes found"
+          pkill -f "iff-agent" 2>/dev/null || echo "No iff-agent processes found"
+          pkill -f "k3d" 2>/dev/null || echo "No k3d processes found"
+          pkill -f "kubectl" 2>/dev/null || echo "No kubectl processes found"
+          pkill -f "kubefwd" 2>/dev/null || echo "No kubefwd processes found"
+          pkill -f "send_data" 2>/dev/null || echo "No send_data processes found"
+          pkill -f "bats" 2>/dev/null || echo "No bats processes found"
+          
+          # Give OS time to release resources
+          sleep 3
+          
+          echo ""
+          echo "=== Open ports after cleanup ==="
+          netstat -tulpn 2>/dev/null || ss -tulpn 2>/dev/null || echo "No netstat/ss available"
+          
+          echo ""
+          echo "✓ Port cleanup completed"
+
+      - name: Clean up stray network resources
+        run: |
+          echo "=== Cleaning up k3d clusters and kubectl contexts ==="
+          
+          # Remove any lingering k3d clusters
+          if command -v k3d &> /dev/null; then
+            k3d cluster list 2>/dev/null | tail -n +2 | awk '{print $1}' | xargs -I {} k3d cluster delete {} 2>/dev/null || echo "No k3d clusters to clean"
+            sleep 2
+          else
+            echo "k3d not found, skipping k3d cleanup"
+          fi
+          
+          # Clean up kubectl config contexts related to k3d
+          if command -v kubectl &> /dev/null; then
+            kubectl config get-contexts -o name 2>/dev/null | grep k3d | xargs -I {} kubectl config delete-context {} 2>/dev/null || echo "No k3d contexts to clean"
+          else
+            echo "kubectl not found, skipping kubectl cleanup"
+          fi
+          
+          echo "✓ Network resource cleanup completed"
