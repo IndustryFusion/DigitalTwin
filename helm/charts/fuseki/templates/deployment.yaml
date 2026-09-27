@@ -17,6 +17,13 @@ spec:
       labels:
         app: fuseki
     spec:
+      # The image runs as the non-root fuseki user (uid 100, gid 101); fsGroup
+      # makes the PVC mounted at /fuseki/databases writable for it.
+      securityContext:
+        runAsUser: 100
+        runAsGroup: 101
+        fsGroup: 101
+        fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: fuseki
           image: '{{ .Values.mainRegistry }}/{{ .Values.mainRepo }}/fuseki:{{ .Values.mainVersion }}'
