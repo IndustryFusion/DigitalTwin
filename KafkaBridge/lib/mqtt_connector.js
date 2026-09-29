@@ -114,13 +114,22 @@ function Broker (conf, logger) {
   };
   me.connect = function (done) {
     let retries = 0;
+    // Keep reconnecting after a refused CONNACK. This bridge is EMQX's auth
+    // backend, and on a fresh start EMQX's HTTP auth pool is still marked down
+    // when the bridge first connects, so that first CONNECT is refused as "Not
+    // authorized". mqtt.js reconnected after that until 5.16.0; since 5.16.0 a
+    // refused CONNACK closes the socket and, with this option at its default of
+    // false, never retries -- the bridge then waits out its 120 s subscription
+    // deadline, restarts and hits the same race again.
+    const reconnectOnConnackError = true;
     try {
       if ((me.client instanceof mqtt.MqttClient) === false) {
         if (me.secure === false) {
           me.logger.info('Non Secure Connection to ' + me.host + ':' + me.port);
           me.client = mqtt.connect('mqtt://' + me.host + ':' + me.port, {
             username: me.crd.username,
-            password: me.crd.password
+            password: me.crd.password,
+            reconnectOnConnackError
           });
         } else {
           me.logger.debug('Trying with Secure Connection to' + me.host + ':' + me.port);
@@ -129,7 +138,8 @@ function Broker (conf, logger) {
             username: me.crd.username,
             password: me.crd.password,
             rejectUnauthorized: false,
-            protocolVersion: 5
+            protocolVersion: 5,
+            reconnectOnConnackError
           });
         }
         me.client.on('error', function (err) {

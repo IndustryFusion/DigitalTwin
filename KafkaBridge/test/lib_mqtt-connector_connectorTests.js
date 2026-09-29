@@ -82,6 +82,7 @@ describe(fileToTest, function () {
       assert.equal(options.username, config.adminUsername, 'The port has override');
       assert.equal(options.password, config.adminPassword, 'The host has override');
       assert.equal(url, 'mqtt://' + config.host + ':' + config.port);
+      assert.isTrue(options.reconnectOnConnackError, 'A refused CONNACK must not end reconnecting');
       client.connected = true;
       return client;
     };
@@ -107,6 +108,7 @@ describe(fileToTest, function () {
       assert.equal(options.username, config.username, 'The port has override');
       assert.equal(options.password, config.password, 'The host has override');
       assert.equal(url, 'mqtts://' + config.host + ':' + config.port);
+      assert.isTrue(options.reconnectOnConnackError, 'A refused CONNACK must not end reconnecting');
       client.connected = true;
       return client;
     };
