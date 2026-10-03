@@ -39,22 +39,23 @@
   "overrides": {
     "serialize-javascript": ">=7.0.3",
     "@eslint/eslintrc": {
-      "js-yaml": "3.15.0"
+      "js-yaml": "3.15.2"
     },
     "@istanbuljs/load-nyc-config": {
-      "js-yaml": "3.15.0"
+      "js-yaml": "3.15.2"
     },
     "eslint": {
-      "js-yaml": "3.15.0"
+      "js-yaml": "3.15.2"
     },
     "mocha": {
-      "js-yaml": "4.3.0"
+      "js-yaml": "4.3.2"
     },
-    "fast-uri": "3.1.4",
-    "adm-zip": "0.6.0",
+    "fast-uri": "3.1.7",
+    "adm-zip": "0.6.1",
     "sequelize": {
       "uuid": "11.1.1"
     },
-    "@babel/core": "7.29.6"
+    "@babel/core": "7.29.6",
+    "basic-ftp": "6.2.1"
   }
 }
