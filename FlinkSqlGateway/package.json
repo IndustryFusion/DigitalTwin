@@ -34,22 +34,24 @@
   "overrides": {
     "serialize-javascript": ">=7.0.3",
     "@eslint/eslintrc": {
-      "js-yaml": "3.15.0"
+      "js-yaml": "3.15.2"
     },
     "@istanbuljs/load-nyc-config": {
-      "js-yaml": "3.15.0"
+      "js-yaml": "3.15.2"
     },
     "eslint": {
-      "js-yaml": "3.15.0"
+      "js-yaml": "3.15.2"
     },
     "mocha": {
-      "js-yaml": "4.3.0",
+      "js-yaml": "4.3.2",
       "minimatch": {
-        "brace-expansion": "2.1.2"
+        "brace-expansion": "2.1.7"
       }
     },
     "minimatch": {
-      "brace-expansion": "1.1.16"
-    }
+      "brace-expansion": "1.1.21"
+    },
+    "fast-uri": "3.1.7",
+    "qs": "6.16.0"
   }
 }
