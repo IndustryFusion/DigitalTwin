@@ -4,6 +4,7 @@ COPY debeziumBridge/ /opt/debeziumBridge/
 COPY ngsildUpdates/ /opt/ngsildUpdates/
 COPY mqttBridge /opt/mqttBridge
 COPY timescaledb/ /opt/timescaledb/
+COPY shims/ /opt/shims/
 ADD package.json /opt/package.json
 ADD package-lock.json /opt/package-lock.json
 COPY lib/ /opt/lib/

@@ -1,0 +1,10 @@
+{
+  "name": "jwk-to-pem",
+  "version": "2.0.7-node-crypto",
+  "description": "Drop-in replacement for jwk-to-pem built on node:crypto, so keycloak-connect no longer pulls in elliptic",
+  "main": "index.js",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=16"
+  }
+}
