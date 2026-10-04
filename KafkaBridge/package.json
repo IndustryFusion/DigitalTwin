@@ -14,8 +14,9 @@
     "express": "^4.18.2",
     "express-rate-limit": "^7.4.1",
     "jsonschema": "^1.4.1",
+    "jwk-to-pem": "file:shims/jwk-to-pem",
     "kafkajs": "^1.16.0",
-    "keycloak-connect": "^21.1.2",
+    "keycloak-connect": "^26.1.1",
     "mqtt": "^5.3.0",
     "openid-client": "^5.1.2",
     "pg": "^8.2.1",
@@ -50,12 +51,13 @@
     "mocha": {
       "js-yaml": "4.3.2"
     },
-    "fast-uri": "3.1.7",
-    "adm-zip": "0.6.1",
+    "fast-uri": "3.1.8",
     "sequelize": {
       "uuid": "11.1.1"
     },
     "@babel/core": "7.29.6",
+    "jwk-to-pem": "$jwk-to-pem",
+    "adm-zip": "0.6.1",
     "basic-ftp": "6.2.1"
   }
 }

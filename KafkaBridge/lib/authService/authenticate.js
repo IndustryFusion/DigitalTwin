@@ -135,13 +135,12 @@ class Authenticate {
   }
 
   verifyAndDecodeToken (token) {
-    const maskedToken = token ? token.substring(0, 4) + '...' : 'null';
-    this.logger.debug('decode token: ' + maskedToken);
+    this.logger.debug('decode token');
     return this.keycloakAdapter.grantManager
       .createGrant({ access_token: token })
       .then(grant => grant.access_token.content)
       .catch(err => {
-        this.logger.warn(`Token decoding error for token ${maskedToken}: ${err.name || 'Error'}`);
+        this.logger.warn(`Token decoding error: ${err.name || 'Error'}`);
         return null;
       });
   }
