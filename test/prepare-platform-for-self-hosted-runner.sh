@@ -26,9 +26,12 @@ k3d cluster list | grep iff-cluster > /dev/null && k3d cluster delete iff-cluste
 k3d cluster create --image ${K3S_IMAGE} -a 2 --registry-use k3d-iff.localhost:12345 iff-cluster \
   --k3s-arg "--kubelet-arg=eviction-hard=imagefs.available<2%,nodefs.available<2%,nodefs.inodesFree<2%@all"
 
-echo Install Helm diff plugin
-echo ------------------------ 
-helm plugin install https://github.com/databus23/helm-diff
+echo Install Helm diff plugin v3.15.9
+echo --------------------------------
+# pin helm-diff to a known-good version instead of always installing latest,
+# for a reproducible, tested combination with the Helm version used in
+# prepare-platform.sh (helm v3.20.2)
+helm plugin install https://github.com/databus23/helm-diff --version v3.15.9
 
 echo Install Helmfile 0.149.0
 echo ----------------

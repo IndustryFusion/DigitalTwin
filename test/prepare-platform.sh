@@ -152,17 +152,22 @@ k3d cluster create --image ${K3S_IMAGE} -a 2 --registry-use k3d-iff.localhost:12
   "${K3D_PROXY_ARGS[@]}"
 
 if [ -z "$BUILDONLY" ];then
-    echo Install Helm v3.10.3
+    echo Install Helm v3.20.2
     echo ---------------
-    # helm v3.10.3
-    wget https://get.helm.sh/helm-v3.10.3-linux-amd64.tar.gz
-    tar -zxvf helm-v3.10.3-linux-amd64.tar.gz
+    # helm v3.20.2 - per Helm's version-skew policy, the 3.20.x line supports
+    # Kubernetes 1.32-1.35, comfortably covering the v1.33 k3s cluster used
+    # here with headroom for future k8s upgrades
+    wget https://get.helm.sh/helm-v3.20.2-linux-amd64.tar.gz
+    tar -zxvf helm-v3.20.2-linux-amd64.tar.gz
     sudo mv linux-amd64/helm /usr/bin/helm
-    rm helm-v3.10.3-linux-amd64.tar.gz
+    rm helm-v3.20.2-linux-amd64.tar.gz
 
-    echo Install Helm diff plugin
-    echo ------------------------ 
-    helm plugin install https://github.com/databus23/helm-diff
+    echo Install Helm diff plugin v3.15.9
+    echo --------------------------------
+    # pin helm-diff to a known-good version instead of always installing latest,
+    # for a reproducible, tested combination with the Helm version above
+    # (helm-diff v3.15.x explicitly declares support for recent Helm releases)
+    helm plugin install https://github.com/databus23/helm-diff --version v3.15.9
 
     echo Install Helmfile 0.149.0
     echo ----------------
