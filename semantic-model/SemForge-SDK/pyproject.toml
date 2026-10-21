@@ -1,0 +1,35 @@
+# Makes `semforge` importable from anywhere, which the editor service needs:
+# the language server is started with the folder YOU opened as its working
+# directory, not the SDK folder, so relying on the package happening to sit in
+# the current directory works from a terminal and fails from an editor.
+[build-system]
+requires = ["setuptools>=65"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "semforge"
+version = "0.1.0"
+description = "Offline authoring and validation of semantic packages (NGSI-LD, OWL, SHACL)"
+requires-python = ">=3.10"
+license = {text = "Apache-2.0"}
+dependencies = [
+    "rdflib==7.1.1",
+    "pyshacl==0.29.0",
+    "ruamel.yaml==0.17.21",
+    "click==8.1.3",
+    "pygls==2.1.1",
+]
+
+[project.scripts]
+semforge = "semforge.cli:cli"
+
+[project.optional-dependencies]
+crosscheck = ["oxrdflib==0.4.0", "Jinja2==3.1.6"]
+
+[tool.setuptools.packages.find]
+include = ["semforge*"]
+
+# The NGSI-LD vocabulary ships with the code: every package needs it, and an
+# install without it loses the terms every shape's sh:path names.
+[tool.setuptools.package-data]
+semforge = ["ngsild/*.ttl"]

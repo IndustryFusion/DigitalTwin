@@ -1,0 +1,8 @@
+# Optional: only needed for `semforge validate --cross-check sqlite`, which runs
+# the package through shacl2flink's SQLite build and compares. Deliberately NOT
+# in requirements.txt -- the cross-check is a courtesy check that CI may skip,
+# and the core SDK should not carry a compiler's dependencies to offer it.
+#
+# Versions match shacl2flink/requirements.txt.
+oxrdflib==0.4.0
+Jinja2==3.1.6
