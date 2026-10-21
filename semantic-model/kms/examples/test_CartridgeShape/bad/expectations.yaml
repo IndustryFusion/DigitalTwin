@@ -1,0 +1,13 @@
+examples:
+  - path: shared-by-two-filters.jsonld
+    description: >-
+      Two filters pointing at one cartridge. Until this case existed nothing
+      proved the inverse-path exclusivity rule could fire at all --
+      `semforge test --coverage` reported it no-firing-example.
+    include:
+      - subobjects/workpiece-steel.jsonld
+      - subobjects/cartridge-fresh.jsonld
+    expect: invalid
+    asserts:
+      - constraint: iffBaseShacl:CartridgeShape/hasCartridge/MaxCountConstraintComponent
+        resource: urn:cartridge:1

@@ -1,0 +1,25 @@
+[
+  {
+    "id": "urn:workpiece:1",
+    "type": "iffBaseEntities:Workpiece",
+    "iffBaseEntities:hasMaterial": {
+      "type": "Property",
+      "value": {
+        "@id": "material:EN_1.4301"
+      }
+    },
+    "iffBaseEntities:hasHeight": {
+      "type": "Property",
+      "value": 5.0
+    },
+    "iffBaseEntities:hasWidth": {
+      "type": "Property",
+      "value": 100.0
+    },
+    "iffBaseEntities:hasLength": {
+      "type": "Property",
+      "value": 200.0
+    },
+    "@context": "https://industryfusion.github.io/contexts/staging/example/v0.2/context.jsonld"
+  }
+]

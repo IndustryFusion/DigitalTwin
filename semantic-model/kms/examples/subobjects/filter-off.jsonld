@@ -1,0 +1,26 @@
+[
+  {
+    "id": "urn:filter:1",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasState": {
+      "type": "Property",
+      "value": {
+        "@id": "base:state_OFF"
+      },
+      "iffBaseEntities:hasXXXWorkpiece": {
+        "type": "Relationship",
+        "object": "urn:workpiece:1"
+      }
+    },
+    "iffBaseEntities:hasCartridge": {
+      "type": "Relationship",
+      "object": "urn:cartridge:1"
+    },
+    "iffBaseEntities:hasStrength": {
+      "type": "Property",
+      "value": 0.6,
+      "observedAt": "2024-02-28T13:52:35.000Z"
+    },
+    "@context": "https://industryfusion.github.io/contexts/staging/example/v0.2/context.jsonld"
+  }
+]

@@ -1,0 +1,14 @@
+# Cases in this directory are expected to VIOLATE, and to say which constraint.
+examples:
+  - path: filter-off.jsonld
+    description: >-
+      The same scene with the filter OFF. This is what StateOnCutterShape
+      exists for.
+    include:
+      - subobjects/workpiece-steel.jsonld
+      - subobjects/cartridge-fresh.jsonld
+      - subobjects/filter-off.jsonld
+    expect: invalid
+    asserts:
+      - constraint: iffBaseShacl:StateOnCutterShape/SPARQLConstraintComponent
+        resource: urn:plasmacutter:1
