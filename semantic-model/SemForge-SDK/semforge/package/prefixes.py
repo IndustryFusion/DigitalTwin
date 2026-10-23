@@ -45,7 +45,7 @@ class PrefixFinding:
 # The names nobody should have to declare.
 #
 # rdf, rdfs, owl, xsd and sh are the vocabularies every Turtle file in this
-# world binds, and ngsild is the encoding the SDK ships a vocabulary for. They
+# world binds, and ngsild is the encoding every package is written in. They
 # are not a package's business: a package that had to list them would carry
 # five lines of boilerplate that can only drift, and one that forgot would be
 # told its shapes file had invented "sh:".

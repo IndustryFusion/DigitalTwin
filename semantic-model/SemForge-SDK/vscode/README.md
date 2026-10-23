@@ -438,7 +438,7 @@ Relationship, and the two carry their payload under different keys).
 A fourth group, last, and not the package's: the terms of the **encoding**.
 
 ```text
-NGSI-LD vocabulary   12 term(s) · shipped with the SDK
+NGSI-LD vocabulary   12 term(s) · ../ontology/ngsild.ttl
   Attribute kinds    what an attribute's `type` may say
     ngsild:Property        64 use(s) · a value: a literal, or an IRI naming a term
     ngsild:JsonProperty     3 use(s)
@@ -455,24 +455,43 @@ anywhere: the attribute simply had no kind, and nothing said why. A term the
 package uses and the vocabulary does not declare is now reported, in this group
 and under `semforge test`.
 
-It is **not an ordinary dependency**. A domain vocabulary is the package's
-business and goes in `dependencies:`; the encoding is what makes it an NGSI-LD
-package at all, every one needs it, and a package that forgot to declare it
-would silently lose the terms every `sh:path` names. So the SDK ships it and
-always loads it. To use your own copy:
+The SDK does not ship it: the package **declares** it in `semforge.yaml`,
+like any other knowledge it depends on.
 
 ```yaml
-ngsild: ./vendor/ngsild.ttl        # or an http(s) url, fetched and cached
+ngsild:
+  source: ../ontology/ngsild.ttl     # a local file, relative to the package
+
+ngsild:                              # or the shared, official version, pinned
+  source: https://industryfusion.github.io/contexts/staging/ontology/v0/ngsild.ttl
+  sha256: sha256:…
 ```
 
-Upstream is
-[`ngsild.ttl`](https://industryfusion.github.io/contexts/staging/ontology/v0/ngsild.ttl),
-which declares `Property` and `Relationship`. The shipped kms uses **ten**
-NGSI-LD terms, so what ships here is that file extended — the five attribute
-kinds, the four payload slots, and the three metadata keys. Nothing is
-invented: every class is a value of an attribute's `type` in the NGSI-LD API and
-every predicate is what the NGSI-LD `@context` maps a payload or metadata key
-to. The additions are marked in the Turtle so they can go back upstream.
+A local file is where a repo works on the vocabulary before it is published;
+the url is the version everybody shares. Moving from one to the other is
+changing `source` and adding the `sha256` — a remote source is fetched once,
+cached in the package and verified against it.
+
+A package that declares none gets the **default**: the official url, or what
+the `SEMFORGE_NGSILD` environment variable names instead (a path or a url — a
+machine or a CI job can point every undeclared package at one copy).
+`semforge init` writes the default into a new package, pinned. The Knowledge
+view says which source applies, and the Problems panel says when it matters:
+`ngsild-unavailable` (it did not load: missing, offline, wrong hash),
+`ngsild-unpinned` (a url without a sha256), `ngsild-undeclared` (the default
+applies).
+
+In this repo the shared local copy is
+[`semantic-model/ontology/ngsild.ttl`](../../ontology/ngsild.ttl), and the kms
+points at it. The official
+[`ngsild.ttl`](https://industryfusion.github.io/contexts/staging/ontology/v0/ngsild.ttl)
+declares only `Property` and `Relationship`, while the kms uses **ten** NGSI-LD
+terms; the local copy is that file extended — the five attribute kinds, the
+four payload slots, and the three metadata keys. Nothing is invented: every
+class is a value of an attribute's `type` in the NGSI-LD API and every
+predicate is what the NGSI-LD `@context` maps a payload or metadata key to. The
+additions are marked in the Turtle so they can go upstream, after which the kms
+moves to the url.
 
 ## Working on the extension itself
 

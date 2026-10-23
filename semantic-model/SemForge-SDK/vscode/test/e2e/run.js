@@ -27,12 +27,18 @@ async function main() {
   // A copy: the tests edit data, shapes and knowledge. The corpus files are
   // SYMLINKS into semantic-model/kms, so the copy must follow them -- a copy
   // of the links let the tests write into the real kms package.
-  const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'semforge-e2e-'));
-  fs.cpSync(path.join(sdk, 'tests', 'corpus', 'kms'), workspace, {
-    recursive: true,
-    dereference: true,
-    filter: (source) => !source.split(path.sep).includes('.semforge')
-  });
+  // Laid out as in the repo: the kms names its NGSI-LD vocabulary as
+  // ../ontology/ngsild.ttl, so the shared copy sits beside it.
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'semforge-e2e-'));
+  const workspace = path.join(root, 'kms');
+  for (const part of ['kms', 'ontology']) {
+    fs.cpSync(path.join(sdk, 'tests', 'corpus', part), path.join(root, part), {
+      recursive: true,
+      dereference: true,
+      filter: (source) => !source.split(path.sep).includes('.semforge')
+    });
+  }
+  const ngsild = path.join(root, 'ontology', 'ngsild.ttl');
   const linked = [];
   const walk = (directory) => fs.readdirSync(directory, { withFileTypes: true })
     .forEach((entry) => {
@@ -43,7 +49,7 @@ async function main() {
         walk(full);
       }
     });
-  walk(workspace);
+  walk(root);
   if (linked.length) {
     throw new Error(`the test workspace still links outside itself: ${linked.join(', ')}`);
   }
@@ -64,13 +70,15 @@ async function main() {
       extensionDevelopmentPath,
       extensionTestsPath: path.join(__dirname, 'suite', 'index.js'),
       cachePath: path.join(extensionDevelopmentPath, '.vscode-test'),
-      extensionTestsEnv: { SEMFORGE_E2E_WORKSPACE: workspace },
+      // Packages a test creates declare the default vocabulary: the shared
+      // copy, never the network.
+      extensionTestsEnv: { SEMFORGE_E2E_WORKSPACE: workspace, SEMFORGE_NGSILD: ngsild },
       launchArgs: [workspace, '--disable-extensions', '--disable-workspace-trust',
         '--skip-welcome', '--skip-release-notes', '--disable-gpu']
     });
   } finally {
     if (!process.env.SEMFORGE_E2E_KEEP) {
-      fs.rmSync(workspace, { recursive: true, force: true });
+      fs.rmSync(root, { recursive: true, force: true });
     }
     const after = fingerprint(source);
     const changed = Object.keys(before).filter((file) => before[file] !== after[file]);

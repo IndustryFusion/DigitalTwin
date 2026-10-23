@@ -60,7 +60,37 @@ def _context(prefixes, published):
     return json.dumps(document, indent=4) + '\n'
 
 
-def _config(name, prefixes, published, layout):
+def _ngsild(path):
+    """The `ngsild:` lines: the default vocabulary, pinned when it is remote.
+
+    A remote source is fetched once here to record its sha256, so the package
+    means the same thing tomorrow; offline, it is written unpinned and `check`
+    says so. A local one is written relative to the package.
+    """
+    from ..ngsild.vocabulary import Source, default_source, locate
+    from .registry import digest
+
+    source = default_source()
+    lines = [
+        '',
+        '# The NGSI-LD vocabulary: what ngsild:Property, hasValue, observedAt',
+        '# ... mean. A local file (relative to this package) while you work on',
+        '# it, the official url once it is published -- pinned by its sha256.',
+        'ngsild:',
+    ]
+    if not Source(source).is_remote:
+        where = os.path.abspath(os.path.expanduser(source))
+        return lines + [f'  source: {os.path.relpath(where, os.path.abspath(path))}']
+    lines.append(f'  source: {source}')
+    try:
+        with open(locate(Source(source), path), 'rb') as handle:
+            lines.append(f'  sha256: {digest(handle.read())}')
+    except Exception:                              # noqa: BLE001
+        lines.append('  # sha256: not fetched (offline?) -- add it to pin the source')
+    return lines
+
+
+def _config(name, prefixes, published, layout, ngsild=()):
     lines = [
         f'# {name}',
         '#',
@@ -100,6 +130,7 @@ def _config(name, prefixes, published, layout):
         '# guessed, so a value picker can tell an entity type (the target of a',
         '# Relationship) from a vocabulary class (the value of a Property).',
         f'entityRoot: {list(prefixes)[0]}:Entity',
+        *ngsild,
         '',
         f'# Layout: {layout}.',
     ]
@@ -261,7 +292,7 @@ def create_package(path, name=None, namespace=None, published=None,
 
     written = [
         _write(os.path.join(path, 'semforge.yaml'),
-               _config(name, prefixes, published, layout)),
+               _config(name, prefixes, published, layout, _ngsild(path))),
         _write(os.path.join(path, 'context.jsonld'),
                _context(prefixes, published)),
         _write(os.path.join(path, 'knowledge.ttl'),

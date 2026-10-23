@@ -1219,13 +1219,13 @@ A fourth group holds the **NGSI-LD vocabulary** — the terms of the encoding,
 which are not the package's. Until it existed, *declared before used* was the
 one rule this project did not apply to itself: `rdfs:range ngsild:Property`
 pointed at a class no file declared, so a typo in it yielded an attribute with
-no kind and no complaint. It is not an ordinary dependency (§6.2): a domain
-vocabulary is the package's business, while the encoding is what makes it an
-NGSI-LD package at all, so the SDK ships it and always loads it into
-`Package.vocabulary` — kept apart from `knowledge` so nothing mistakes it for
-something the package declares or may write. `ngsild:` in semforge.yaml points
-at another copy, local or remote; a remote one goes through the dependency
-machinery, so it is cached and verifiable rather than fetched on every load.
+no kind and no complaint. The package declares it (`ngsild: {source, sha256}`
+in semforge.yaml) and the SDK ships no copy: a local file while it is worked
+on, the official url once published, which goes through the dependency
+machinery (§6.2) — cached and verified rather than fetched on every load. An
+undeclared package gets the official url, or what `SEMFORGE_NGSILD` names. It
+is loaded into `Package.vocabulary`, kept apart from `knowledge` so nothing
+mistakes it for something the package declares or may write.
 
 Above them sits **Project** (`semforge/project`, `semforge/setSetting`), which
 answers what the package *is* rather than what it says: the name it declares,

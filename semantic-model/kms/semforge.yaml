@@ -32,3 +32,12 @@ namespaces:
   # that name stays: rdflib binds one prefix per namespace, so a second name
   # evicts the first, and shacl2flink requires the survivor to be literally
   # `base`. See kms/README.md.
+
+# The NGSI-LD vocabulary: the repo's shared local copy for now. The official
+# version (contexts/staging/ontology/v0/ngsild.ttl) declares only Property
+# and Relationship; once it carries the terms this package uses, move here
+# by naming its url, pinned:
+#   source: https://industryfusion.github.io/contexts/staging/ontology/v0/ngsild.ttl
+#   sha256: sha256:...
+ngsild:
+  source: ../ontology/ngsild.ttl

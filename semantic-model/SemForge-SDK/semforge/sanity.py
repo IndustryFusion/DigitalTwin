@@ -589,6 +589,49 @@ def _stamp_findings(source, lines, entity, path, trail, name, members):
     return out
 
 
+def _vocabulary_checks(package):
+    """Where the NGSI-LD vocabulary comes from, when that needs saying.
+
+    ngsild-unavailable: it did not load (missing file, offline, hash mismatch),
+    so no NGSI-LD term is declared. ngsild-unpinned: a remote one without a
+    sha256 is whatever the url serves today. ngsild-undeclared: semforge.yaml
+    names none, so the default applies (said only where a semforge.yaml exists
+    to name one in).
+    """
+    from .ngsild.vocabulary import source_for
+    from .package.config import locate, path_for
+
+    source = source_for(package.path)
+    config = path_for(package.path)
+    configured = os.path.isfile(config)
+    if configured:
+        where, line = os.path.abspath(config), locate(package.path, 'ngsild') or 1
+    else:
+        where, line = os.path.abspath(package.artifact('knowledge') or config), 1
+
+    def finding(severity, code, message):
+        return SanityFinding(file=where, line=line, severity=severity, code=code,
+                             subject=source.source, message=message)
+
+    if package.vocabulary_error:
+        return [finding('error', 'ngsild-unavailable',
+                        f'The NGSI-LD vocabulary did not load, so no NGSI-LD term '
+                        f'is declared: {package.vocabulary_error}')]
+    if not source.declared:
+        if not configured:
+            return []           # no semforge.yaml to declare it in: ad hoc
+        return [finding('information', 'ngsild-undeclared',
+                        f'semforge.yaml names no NGSI-LD vocabulary; the default '
+                        f'applies: {source.source}. Declare `ngsild: {{source: …}}` '
+                        f'to choose a local copy or pin the official one.')]
+    if source.is_remote and not source.sha256:
+        return [finding('warning', 'ngsild-unpinned',
+                        f'The NGSI-LD vocabulary {source.source} is not pinned: '
+                        f'add its sha256 so the package means the same thing '
+                        f'tomorrow.')]
+    return []
+
+
 def sanity(package):
     """Every finding, sorted by file and line. Reads only; writes nothing."""
     declared = _declared(package)
@@ -598,6 +641,7 @@ def sanity(package):
                   lambda: _severity_checks(package),
                   lambda: _dataset_checks(package),
                   lambda: _count_checks(package),
+                  lambda: _vocabulary_checks(package),
                   lambda: _unused_attributes(package)):
         try:
             found += check()

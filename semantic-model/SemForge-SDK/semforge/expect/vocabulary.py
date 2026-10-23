@@ -147,8 +147,9 @@ def unknown_ngsild_terms(package):
     it is NOT is a kind -- so the attribute has no kind, no picker offers the
     right payload key, and nothing says why.
 
-    Upstream declares two classes. The shipped kms uses ten terms. That gap is
-    what this reports, and it is why the SDK ships an extended copy.
+    The official vocabulary declares two classes; the kms uses ten terms. That
+    gap is what this reports, and it is why the repo keeps an extended local
+    copy (semantic-model/ontology/ngsild.ttl) until upstream has them.
     """
     from rdflib import URIRef
 

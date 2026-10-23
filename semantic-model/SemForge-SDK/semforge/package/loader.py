@@ -66,6 +66,7 @@ class Package:
     # encoding means. Kept apart from `knowledge` so nothing mistakes it for
     # something this package declares, owns, or may write to.
     vocabulary: Graph = field(default_factory=Graph)
+    vocabulary_error: str = ''   # why the declared vocabulary did not load
     shapes: Graph = field(default_factory=Graph)
     model: Graph = field(default_factory=Graph)
     sources: dict = field(default_factory=dict)    # role -> primary file
@@ -220,8 +221,10 @@ def load(path):
 
     try:
         package.vocabulary = for_package(path)
-    except Exception:                              # noqa: BLE001
-        pass            # a declared copy that will not load is `doctor`'s story
+    except Exception as exc:                       # noqa: BLE001
+        # The package still loads: a vocabulary that is offline, missing or
+        # fails its hash is reported (ngsild-unavailable), not fatal.
+        package.vocabulary_error = str(exc).strip() or type(exc).__name__
     for document in documents['knowledge']:
         package.knowledge.parse(document, format='turtle')
     for document in documents['shapes']:

@@ -1,18 +1,27 @@
-# The NGSI-LD vocabulary, as SemForge needs it.
+# The NGSI-LD vocabulary: the local copy every package in this repo shares.
 #
-# Upstream is
+# The official version is
 # <https://industryfusion.github.io/contexts/staging/ontology/v0/ngsild.ttl>,
 # which declares two classes: Property and Relationship. Everything a package
-# actually writes needs more than that -- the shipped kms alone uses ten NGSI-LD
-# terms -- and a term nothing declares is a term nothing can check, which is the
-# failure this SDK spends most of its effort on.
+# actually writes needs more than that -- the kms alone uses ten NGSI-LD terms
+# -- and a term nothing declares is a term nothing can check.
 #
 # So this file is that ontology, extended. Nothing here is invented: every class
 # is a value of an attribute's `type` in the NGSI-LD API, and every predicate is
 # what the NGSI-LD @context maps a payload or metadata key to. The additions are
 # marked, so they can go upstream.
 #
-# A package may point at its own copy with `ngsild:` in semforge.yaml.
+# A package names its copy in semforge.yaml:
+#
+#   ngsild:
+#     source: ../ontology/ngsild.ttl
+#
+# Once the official version carries these terms, a package moves to it by
+# naming the url instead, pinned:
+#
+#   ngsild:
+#     source: https://industryfusion.github.io/contexts/staging/ontology/v0/ngsild.ttl
+#     sha256: sha256:...
 
 @prefix : <https://uri.etsi.org/ngsi-ld/> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .

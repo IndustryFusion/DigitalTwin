@@ -61,6 +61,10 @@ def _fetch(dependency, package_path):
 
     cache = os.path.join(package_path, CACHE)
     os.makedirs(cache, exist_ok=True)
+    ignore = os.path.join(cache, '.gitignore')
+    if not os.path.exists(ignore):
+        with open(ignore, 'w', encoding='utf-8') as handle:
+            handle.write('# Fetched dependencies: derived, never committed.\n*\n')
     cached = os.path.join(cache, hashlib.sha256(
         dependency.source.encode()).hexdigest() + '.ttl')
     if os.path.exists(cached):

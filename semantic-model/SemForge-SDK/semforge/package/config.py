@@ -47,7 +47,14 @@ SPEC = [
      'The class every entity type descends from -- what separates an entity '
      '(the target of a Relationship) from a vocabulary term (the value of a '
      'Property).'),
+    ('ngsild.source', 'NGSI-LD vocabulary',
+     'What ngsild:Property, hasValue, observedAt ... mean: a local file while '
+     'it is worked on, the official url (with its sha256) once published.'),
 ]
+
+# Edited in the file: a new source and its sha256 change together, and a row
+# editing one of them would leave the other stale.
+READ_ONLY = {'ngsild.source'}
 
 DEFAULTS = {
     'context.local': 'context.jsonld',
@@ -134,11 +141,20 @@ def settings(package_path):
             out.append(Setting(key=key, label=label, value=str(value), doc=doc,
                                line=0, default='the directory name'))
             continue
+        if key == 'ngsild.source':
+            from ..ngsild.vocabulary import source_for
+
+            source = source_for(package_path)
+            value = source.source if source.declared else None
+            default = source.source if not source.declared else ''
+        else:
+            default = DEFAULTS.get(key, '')
         out.append(Setting(
             key=key, label=label,
             value='' if value is None else str(value), doc=doc,
-            line=locate(package_path, key),
-            default=DEFAULTS.get(key, '')))
+            line=locate(package_path, key) or (
+                locate(package_path, 'ngsild') if key == 'ngsild.source' else 0),
+            editable=key not in READ_ONLY, default=default))
     return out
 
 

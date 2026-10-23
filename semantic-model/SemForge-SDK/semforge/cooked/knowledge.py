@@ -546,14 +546,14 @@ def _ngsild_group(package):
     from rdflib.namespace import OWL
 
     from ..expect.vocabulary import unknown_ngsild_terms
-    from ..ngsild.vocabulary import SHIPPED, declared_source
+    from ..ngsild.vocabulary import source_for
 
     if not len(package.vocabulary):
         return None
 
     NGSILD = 'https://uri.etsi.org/ngsi-ld/'
     used = _ngsild_usage(package)
-    source = declared_source(package.path)
+    source = source_for(package.path)
     classes, slots = [], []
     for subject in sorted({s for s in package.vocabulary.subjects(None, None)
                            if isinstance(s, URIRef)
@@ -574,7 +574,8 @@ def _ngsild_group(package):
     group = KnowledgeNode(
         kind='group', label='NGSI-LD vocabulary',
         detail=f'{len(classes) + len(slots)} term(s) · '
-               f'{source if source else "shipped with the SDK"}')
+               f'{source.source}'
+               f'{"" if source.declared else " (the default; semforge.yaml names none)"}')
     if classes:
         kinds = KnowledgeNode(
             kind='carrier', label='Attribute kinds',
@@ -601,7 +602,6 @@ def _ngsild_group(package):
                 severity='warning', messages=[entry.message]))
         group.children.append(holder)
         group.severity = 'warning'
-    del SHIPPED
     return group
 
 

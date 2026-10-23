@@ -324,7 +324,7 @@ def test_it_is_kept_apart_from_what_the_package_declares(package):
                                      for entry in attribute_terms(package)}
 
 
-def test_the_shipped_vocabulary_covers_what_the_kms_uses(package):
+def test_the_shared_vocabulary_covers_what_the_kms_uses(package):
     from semforge.expect.vocabulary import unknown_ngsild_terms
 
     assert unknown_ngsild_terms(package) == []
@@ -333,7 +333,7 @@ def test_the_shipped_vocabulary_covers_what_the_kms_uses(package):
 def test_a_term_no_vocabulary_declares_is_reported(tmp_path, package):
     """Which is how the upstream ontology's gap is visible at all.
 
-    It declares two classes. The shipped kms uses ten terms.
+    It declares two classes. The kms uses ten terms.
     """
     from semforge.expect.vocabulary import unknown_ngsild_terms
     from semforge.package import config
@@ -344,7 +344,7 @@ def test_a_term_no_vocabulary_declares_is_reported(tmp_path, package):
         '@prefix owl: <http://www.w3.org/2002/07/owl#> .\n'
         ':Property a owl:Class .\n'
         ':Relationship a owl:Class .\n')
-    config.set_value(package.path, 'ngsild', str(upstream))
+    config.set_value(package.path, 'ngsild.source', str(upstream))
 
     found = {entry.term: entry for entry in unknown_ngsild_terms(load(package.path))}
     assert 'hasValue' in found and 'JsonProperty' in found
@@ -363,12 +363,13 @@ def test_a_settings_key_never_matches_a_nested_line(package):
     """
     from semforge.package import config
 
-    assert config.locate(package.path, 'ngsild') == 0
-    assert config.locate(package.path, 'namespaces.ngsild') > 0
+    top = config.locate(package.path, 'ngsild')
+    nested = config.locate(package.path, 'namespaces.ngsild')
+    assert top > 0 and nested > 0 and top != nested
 
-    config.set_value(package.path, 'ngsild', './vendor/ngsild.ttl')
+    config.set_value(package.path, 'ngsild.source', './vendor/ngsild.ttl')
     declared = config.read(package.path)
-    assert declared['ngsild'] == './vendor/ngsild.ttl'
+    assert declared['ngsild'] == {'source': './vendor/ngsild.ttl'}
     assert declared['namespaces']['ngsild'] == 'https://uri.etsi.org/ngsi-ld/'
 
 
