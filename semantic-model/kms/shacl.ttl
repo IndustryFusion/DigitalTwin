@@ -1,7 +1,7 @@
-@prefix : <https://industryfusion.github.io/contexts/example/v0/base_shacl/> .
-@prefix default1: <https://industryfusion.github.io/contexts/example/v0/filter_shacl/> .
+@prefix iffBaseShacl: <https://industryfusion.github.io/contexts/example/v0/base_shacl/> .
+@prefix iffFilterShacl: <https://industryfusion.github.io/contexts/example/v0/filter_shacl/> .
 @prefix iffBaseEntities: <https://industryfusion.github.io/contexts/example/v0/base_entities/> .
-@prefix iffBaseKnowledge: <https://industryfusion.github.io/contexts/example/v0/base_knowledge/> .
+@prefix base: <https://industryfusion.github.io/contexts/example/v0/base_knowledge/> .
 @prefix iffFilterEntities: <https://industryfusion.github.io/contexts/example/v0/filter_entities/> .
 @prefix iffFilterKnowledge: <https://industryfusion.github.io/contexts/example/v0/filter_knowledge/> .
 @prefix material: <https://industryfusion.github.io/contexts/ontology/v0/material/> .
@@ -11,7 +11,7 @@
 @prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 
 
-:CartridgeShape a sh:NodeShape ;
+iffBaseShacl:CartridgeShape a sh:NodeShape ;
     sh:property [ sh:maxCount 1 ;
             sh:minCount 1 ;
             sh:nodeKind sh:BlankNode ;
@@ -43,7 +43,7 @@
                       [ sh:inversePath iffBaseEntities:hasCartridge ] ) ] ;
     sh:targetClass iffBaseEntities:FilterCartridge .
 
-:CutterShape a sh:NodeShape ;
+iffBaseShacl:CutterShape a sh:NodeShape ;
     sh:property [ sh:maxCount 1 ;
             sh:minCount 1 ;
             sh:nodeKind sh:BlankNode ;
@@ -101,7 +101,7 @@
                                 sh:path ngsild:hasValueList ] ] ) ;] ;
     sh:targetClass iffBaseEntities:Cutter .
 
-:FilterShape a sh:NodeShape ;
+iffBaseShacl:FilterShape a sh:NodeShape ;
     sh:property [ sh:maxCount 1 ;
             sh:minCount 1 ;
             sh:nodeKind sh:BlankNode ;
@@ -126,12 +126,12 @@
                     sh:path ngsild:hasObject ] ] ;
     sh:targetClass iffBaseEntities:Filter .
 
-:FilterStrengthShape a sh:NodeShape ;
+iffBaseShacl:FilterStrengthShape a sh:NodeShape ;
     sh:sparql [ a sh:SPARQLConstraints ;
             sh:message "Check Filter strength as function of workpiece: {?value}" ;
             sh:select """
 PREFIX iffBaseEntities: <https://industryfusion.github.io/contexts/example/v0/base_entities/>
-PREFIX iffBaseKnowledge: <https://industryfusion.github.io/contexts/example/v0/base_knowledge/>
+PREFIX base: <https://industryfusion.github.io/contexts/example/v0/base_knowledge/>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX schema: <https://schema.org/>
@@ -152,18 +152,18 @@ SELECT ?this ?value
                     IF(xsd:float(?strength) < 0.5, "Filter strength too low, should be at least 0.5", "ok")
                 )
             ) as ?value) .
-        FILTER(?pcstate = iffBaseKnowledge:state_PROCESSING && ?filterstate = iffBaseKnowledge:state_ON && ?value != "ok") .
+        FILTER(?pcstate = base:state_PROCESSING && ?filterstate = base:state_ON && ?value != "ok") .
     }
         """ ] ;
     sh:targetClass iffBaseEntities:Filter .
 
-:MachineShape a sh:NodeShape ;
+iffBaseShacl:MachineShape a sh:NodeShape ;
     sh:property [ sh:maxCount 1 ;
             sh:minCount 1 ;
             sh:nodeKind sh:BlankNode ;
             sh:order 1 ;
             sh:path iffBaseEntities:hasState ;
-            sh:property [ sh:class iffBaseKnowledge:MachineState ;
+            sh:property [ sh:class base:MachineState ;
                     sh:maxCount 1 ;
                     sh:minCount 1 ;
                     sh:nodeKind sh:IRI ;
@@ -181,12 +181,12 @@ SELECT ?this ?value
                     ] ;
     sh:targetClass iffBaseEntities:Machine .
 
-:StateOnCutterShape a sh:NodeShape ;
+iffBaseShacl:StateOnCutterShape a sh:NodeShape ;
     sh:sparql [ a sh:SPARQLConstraints ;
             sh:message "Cutter running without running filter" ;
             sh:select """
 PREFIX iffBaseEntities: <https://industryfusion.github.io/contexts/example/v0/base_entities/>
-PREFIX iffBaseKnowledge: <https://industryfusion.github.io/contexts/example/v0/base_knowledge/>
+PREFIX base: <https://industryfusion.github.io/contexts/example/v0/base_knowledge/>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
@@ -196,18 +196,18 @@ SELECT $this ?v1 ?f ?v2
         $this iffBaseEntities:hasState [ ngsild:hasValue ?v1 ] .
         $this iffBaseEntities:hasFilter [ ngsild:hasObject ?f ] .
         ?f iffBaseEntities:hasState [ ngsild:hasValue ?v2 ] .
-        FILTER(?v1 = iffBaseKnowledge:state_PROCESSING && ?v2 != iffBaseKnowledge:state_ON)
+        FILTER(?v1 = base:state_PROCESSING && ?v2 != base:state_ON)
     }
         """ ;
-            sh:severity iffBaseKnowledge:severityCritical ] ;
+            sh:severity base:severityCritical ] ;
     sh:targetClass iffBaseEntities:Cutter .
 
-:StateOnFilterShape a sh:NodeShape ;
+iffBaseShacl:StateOnFilterShape a sh:NodeShape ;
     sh:sparql [ a sh:SPARQLConstraints ;
             sh:message "Filter running without running assigned machine" ;
             sh:select """
 PREFIX iffBaseEntities: <https://industryfusion.github.io/contexts/example/v0/base_entities/>
-PREFIX iffBaseKnowledge: <https://industryfusion.github.io/contexts/example/v0/base_knowledge/>
+PREFIX base: <https://industryfusion.github.io/contexts/example/v0/base_knowledge/>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
@@ -219,18 +219,18 @@ SELECT $this ?v1 ?pc ?v2
         ?pcType rdfs:subClassOf* iffBaseEntities:Cutter .
         ?pc iffBaseEntities:hasFilter [ ngsild:hasObject $this ] .
         ?pc  iffBaseEntities:hasState [ ngsild:hasValue ?v2 ] .
-        FILTER(?v1 = iffBaseKnowledge:state_ON && ?v2 != iffBaseKnowledge:state_PROCESSING)
+        FILTER(?v1 = base:state_ON && ?v2 != base:state_PROCESSING)
     }
         """ ;
-            sh:severity iffBaseKnowledge:severityWarning ] ;
+            sh:severity base:severityWarning ] ;
     sh:targetClass iffBaseEntities:Filter .
 
-:StateValueShape a sh:NodeShape ;
+iffBaseShacl:StateValueShape a sh:NodeShape ;
     sh:sparql [ a sh:SPARQLConstraints ;
             sh:message "State value {?value} are not a valid machineState for machine {$this} of type {?type}" ;
             sh:select """
 PREFIX iffBaseEntities: <https://industryfusion.github.io/contexts/example/v0/base_entities/>
-PREFIX iffBaseKnowledge: <https://industryfusion.github.io/contexts/example/v0/base_knowledge/>
+PREFIX base: <https://industryfusion.github.io/contexts/example/v0/base_knowledge/>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
@@ -240,18 +240,18 @@ SELECT $this ?value ?type
              ?this a ?type .
              ?this  iffBaseEntities:hasState [ ngsild:hasValue ?value ] .
            FILTER NOT EXISTS{
-                ?value iffBaseKnowledge:isValidFor ?subtype .
+                ?value base:isValidFor ?subtype .
                 ?type rdfs:subClassOf* ?subtype .
             }
         }
         """ ] ;
     sh:targetClass iffBaseEntities:Machine .
 
-:TimestampCartridgeFromRulesShape a sh:NodeShape ;
+iffBaseShacl:TimestampCartridgeFromRulesShape a sh:NodeShape ;
     sh:rule [ a sh:SPARQLRule ;
             sh:construct """
 PREFIX iffBaseEntities: <https://industryfusion.github.io/contexts/example/v0/base_entities/>
-PREFIX iffBaseKnowledge: <https://industryfusion.github.io/contexts/example/v0/base_knowledge/>
+PREFIX base: <https://industryfusion.github.io/contexts/example/v0/base_knowledge/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX rdf:	<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
@@ -266,16 +266,16 @@ WHERE {
     FILTER NOT EXISTS {
 		$this  iffBaseEntities:isUsedFrom [ ngsild:hasValue ?oldertimestamp ] .
 	}
-    FILTER(?fstate = iffBaseKnowledge:state_ON)
+    FILTER(?fstate = base:state_ON)
 }
 """ ] ;
     sh:targetClass iffBaseEntities:FilterCartridge .
 
-:TimestampCartridgeUntilRulesShape a sh:NodeShape ;
+iffBaseShacl:TimestampCartridgeUntilRulesShape a sh:NodeShape ;
     sh:rule [ a sh:SPARQLRule ;
             sh:construct """
 PREFIX iffBaseEntities: <https://industryfusion.github.io/contexts/example/v0/base_entities/>
-PREFIX iffBaseKnowledge: <https://industryfusion.github.io/contexts/example/v0/base_knowledge/>
+PREFIX base: <https://industryfusion.github.io/contexts/example/v0/base_knowledge/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX rdf:	<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
@@ -287,12 +287,12 @@ WHERE {
     ?filter iffBaseEntities:hasState [ ngsild:hasValue ?fstate ] .
     ?filter iffBaseEntities:hasState [ ngsild:observedAt ?fstateTs ] .
     bind(?fstateTs as ?ts)
-    FILTER(?fstate = iffBaseKnowledge:state_ON)
+    FILTER(?fstate = base:state_ON)
 }
 """ ] ;
     sh:targetClass iffBaseEntities:FilterCartridge .
 
-:WorkpieceShape a sh:NodeShape ;
+iffBaseShacl:WorkpieceShape a sh:NodeShape ;
     sh:property [ sh:maxCount 1 ;
             sh:minCount 1 ;
             sh:nodeKind sh:BlankNode ;
@@ -338,7 +338,7 @@ WHERE {
                     sh:path ngsild:hasValue ] ] ;
     sh:targetClass iffBaseEntities:Workpiece .
 
-default1:CartridgeShape a sh:NodeShape ;
+iffFilterShacl:CartridgeShape a sh:NodeShape ;
     sh:property [ sh:maxCount 1 ;
             sh:minCount 1 ;
             sh:nodeKind sh:BlankNode ;
@@ -351,11 +351,11 @@ default1:CartridgeShape a sh:NodeShape ;
                     sh:path ngsild:hasValue ] ] ;
     sh:targetClass iffBaseEntities:FilterCartridge .
 
-default1:ChangeWasteClassRulesShape a sh:NodeShape ;
+iffFilterShacl:ChangeWasteClassRulesShape a sh:NodeShape ;
     sh:rule [ a sh:SPARQLRule ;
             sh:construct """
 PREFIX iffBaseEntities: <https://industryfusion.github.io/contexts/example/v0/base_entities/>
-PREFIX iffBaseKnowledge: <https://industryfusion.github.io/contexts/example/v0/base_knowledge/>
+PREFIX base: <https://industryfusion.github.io/contexts/example/v0/base_knowledge/>
 PREFIX iffFilterEntities: <https://industryfusion.github.io/contexts/example/v0/filter_entities/>
 PREFIX iffFilterKnowledge: <https://industryfusion.github.io/contexts/example/v0/filter_knowledge/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -376,7 +376,7 @@ WHERE {
     ?material iffFilterKnowledge:hasWasteclass ?new_wasteclass .
     #?cur_wasteclass iffFilterKnowledge:higherHazardLevel ?new_wasteclass .
     BIND(IF(bound(?cur_wasteclass), ?cur_wasteclass, iffFilterKnowledge:WC0) as ?wasteclass)
-    FILTER(?filter_state = iffBaseKnowledge:state_ON && ?cutter_state = iffBaseKnowledge:state_PROCESSING && ?wasteclass != ?new_wasteclass)
+    FILTER(?filter_state = base:state_ON && ?cutter_state = base:state_PROCESSING && ?wasteclass != ?new_wasteclass)
       FILTER NOT EXISTS {
           ?wasteclass iffFilterKnowledge:higherHazardLevel ?new_wasteclass .
       }

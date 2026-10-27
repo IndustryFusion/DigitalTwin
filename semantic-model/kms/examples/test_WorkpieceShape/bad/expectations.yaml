@@ -1,0 +1,7 @@
+examples:
+  - path: too-high.jsonld
+    description: A height of 50 against a maximum of 5.0.
+    expect: invalid
+    asserts:
+      - constraint: iffBaseShacl:WorkpieceShape/hasHeight/MaxInclusiveConstraintComponent
+        resource: urn:workpiece:1

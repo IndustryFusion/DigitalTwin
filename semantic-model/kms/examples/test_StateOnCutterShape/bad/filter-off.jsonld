@@ -1,0 +1,25 @@
+[
+  {
+    "id": "urn:plasmacutter:1",
+    "type": "iffBaseEntities:Plasmacutter",
+    "iffBaseEntities:hasState": {
+      "type": "Property",
+      "value": {
+        "@id": "base:state_PROCESSING"
+      },
+      "iffBaseEntities:hasXXXWorkpiece": {
+        "type": "Relationship",
+        "object": "urn:workpiece:1"
+      }
+    },
+    "iffBaseEntities:hasFilter": {
+      "type": "Relationship",
+      "object": "urn:filter:1"
+    },
+    "iffBaseEntities:hasInWorkpiece": {
+      "type": "Relationship",
+      "object": "urn:workpiece:1"
+    },
+    "@context": "https://industryfusion.github.io/contexts/staging/example/v0.2/context.jsonld"
+  }
+]

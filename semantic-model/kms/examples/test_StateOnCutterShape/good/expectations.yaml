@@ -1,0 +1,15 @@
+# Cases in this directory are expected to CONFORM.
+#
+# Paths are relative to this file; includes are relative to examples/.
+examples:
+  - path: filter-on.jsonld
+    description: >-
+      The healthy baseline: a cutter PROCESSING while the filter it drives is
+      ON. It differs from ../bad/filter-off.jsonld by one included file, which
+      is the whole point of the pair.
+    include:
+      - subobjects/workpiece-steel.jsonld
+      - subobjects/cartridge-fresh.jsonld
+      - subobjects/filter-on.jsonld
+    expect: valid
+    conformance: full

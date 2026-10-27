@@ -1,0 +1,7 @@
+examples:
+  - path: without-cartridge.jsonld
+    description: FilterShape requires exactly one cartridge.
+    expect: invalid
+    asserts:
+      - constraint: iffBaseShacl:FilterShape/hasCartridge/MinCountConstraintComponent
+        resource: urn:filter:9
