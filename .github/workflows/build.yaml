@@ -41,6 +41,11 @@ jobs:
         source $CONDA/bin/activate
         conda activate py310
         cd semantic-model/dataservice && make setup && make lint test
+    - name: Build SemForge SDK
+      run: |
+        source $CONDA/bin/activate
+        conda activate py310
+        cd semantic-model/SemForge-SDK && make setup && make lint test
     - name: Build datamodel tools
       run: |
         cd semantic-model/datamodel/tools && make setup && make lint test
