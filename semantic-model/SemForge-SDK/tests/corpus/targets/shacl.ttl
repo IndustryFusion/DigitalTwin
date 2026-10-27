@@ -1,0 +1,55 @@
+@prefix ex: <https://example.org/targets/> .
+@prefix ngsild: <https://uri.etsi.org/ngsi-ld/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# sh:targetClass: every Pump (and subclass).
+ex:PumpShape a sh:NodeShape ;
+    sh:targetClass ex:Pump ;
+    sh:property [ sh:path ex:hasPressure ;
+            sh:minCount 1 ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:property [ sh:path ngsild:hasValue ;
+                    sh:maxInclusive 10 ] ] .
+
+# sh:targetNode: one named entity. Its constraints live in PositionShape.
+ex:ValveNodeShape a sh:NodeShape ;
+    sh:targetNode <urn:valve:1> ;
+    sh:node ex:PositionShape .
+
+# No target of its own: reached only through sh:node.
+ex:PositionShape a sh:NodeShape ;
+    sh:property [ sh:path ex:hasPosition ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:BlankNode ] .
+
+# sh:targetSubjectsOf: whatever HAS a valve.
+ex:HasValveShape a sh:NodeShape ;
+    sh:targetSubjectsOf ex:hasValve ;
+    sh:property [ sh:path ex:hasPressure ;
+            sh:property [ sh:path ngsild:hasValue ;
+                    sh:maxInclusive 5 ] ] .
+
+# sh:targetObjectsOf: whatever a relationship points at.
+ex:PointedAtShape a sh:NodeShape ;
+    sh:targetObjectsOf ngsild:hasObject ;
+    sh:property [ sh:path ex:hasPosition ;
+            sh:minCount 1 ] .
+
+# A SPARQL target (SHACL-AF): pumps above 5 bar must have a valve.
+ex:HighPressureShape a sh:NodeShape ;
+    sh:target [ a sh:SPARQLTarget ;
+            sh:select """
+PREFIX ex: <https://example.org/targets/>
+PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
+SELECT ?this WHERE { ?this ex:hasPressure [ ngsild:hasValue ?p ] . FILTER(?p > 5) }
+""" ] ;
+    sh:property [ sh:path ex:hasValve ;
+            sh:minCount 1 ] .
+
+# An implicit class target: the shape IS the class, so it targets Gauges.
+ex:Gauge a rdfs:Class, sh:NodeShape ;
+    sh:property [ sh:path ex:hasReading ;
+            sh:minCount 1 ] .

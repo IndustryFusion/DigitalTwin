@@ -1,0 +1,20 @@
+[
+  {
+    "id": "urn:opcua-kms:driveporttype:test",
+    "type": "http://opcfoundation.org/UA/Pumps/DrivePortType",
+    "http://opcfoundation.org/UA/Pumps/hasMeasurements": [
+      {
+        "type": "Property",
+        "value": "text"
+      },
+      {
+        "type": "Property",
+        "value": "text",
+        "datasetId": "https://example.com/index/2"
+      }
+    ],
+    "@context": [
+      "https://industryfusion.github.io/contexts/staging/opcua/v0.2/context.jsonld"
+    ]
+  }
+]

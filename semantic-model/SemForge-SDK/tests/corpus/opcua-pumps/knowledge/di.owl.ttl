@@ -1,0 +1,14 @@
+@prefix di: <http://opcfoundation.org/UA/DI/> .
+@prefix opcua: <http://opcfoundation.org/UA/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+di:FunctionalGroupType a owl:Class ;
+    rdfs:subClassOf opcua:FolderType .
+
+di:LockingServicesType a owl:Class ;
+    rdfs:subClassOf opcua:BaseObjectType .
+
+di:TopologyElementType a owl:Class ;
+    rdfs:subClassOf opcua:BaseObjectType .
+

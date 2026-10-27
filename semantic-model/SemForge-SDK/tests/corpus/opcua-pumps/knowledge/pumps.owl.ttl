@@ -1,0 +1,2551 @@
+@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+@prefix di: <http://opcfoundation.org/UA/DI/> .
+@prefix machinery: <http://opcfoundation.org/UA/Machinery/> .
+@prefix opcua: <http://opcfoundation.org/UA/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix pumps: <http://opcfoundation.org/UA/Pumps/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix uardf: <http://opcfoundation.org/rdf/uacore#> .
+
+di:hasConfiguration a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+di:hasMaintenance a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+di:hasOperational a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:ARCNET a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "ARCNET" ;
+    base:hasValueNode base:_N138b5721e615493f9e7e26084ce7c79b,
+        base:_N644962c9fe01440c9e555994c5e0cbad .
+
+pumps:AS_Interface a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "AS_Interface" ;
+    base:hasValueNode base:_N7d027ef1c7454c028aa5743662d03671,
+        base:_Ne168afe7af4743f28e956baebe96d541 .
+
+pumps:AdditionOperation a pumps:MultiPumpOperationModeEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "AdditionOperation" ;
+    base:hasValueNode base:_N4d1bb7e3c446452d9b68816d03b5c788 .
+
+pumps:Advanced a pumps:OperationModeEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "Advanced" ;
+    base:hasValueNode base:_Nae8af7d334254fa3ad65c387e7499076 .
+
+pumps:AutoControl a pumps:OperationModeEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "AutoControl" ;
+    base:hasValueNode base:_N4e165078f1f84d9586860317fe56e9ff .
+
+pumps:Automatic a pumps:ControlModeEnum,
+        pumps:OfferedControlModesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "Automatic" ;
+    base:hasValueNode base:_N379bf823cdb4480db6dca4a82938eb7b,
+        base:_N99157106fd5647ea951987d164a66d6e .
+
+pumps:BACnet_IP a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "BACnet_IP" ;
+    base:hasValueNode base:_N5a060a4eab7d442786837dc4fb2e9022,
+        base:_N7e68db962bec42d8a16e1b58bb0060a2 .
+
+pumps:BACnet_MSTP a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "BACnet_MSTP" ;
+    base:hasValueNode base:_N0578b324b5104ee8be2cf818edd7c4ba,
+        base:_N1bb66d8c2a2646f6a726e769206d9dab .
+
+pumps:Bluetooth a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "Bluetooth" ;
+    base:hasValueNode base:_N461b0a12d5aa498a92bda60020d31f22,
+        base:_Nf491002a331347f69df1ff26d9c8bb1d .
+
+pumps:BluetoothLowEnergy a pumps:FieldbusEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "BluetoothLowEnergy" ;
+    base:hasValueNode base:_N87bda8bed685402398e2e514fd389033 .
+
+pumps:BreakdownMaintenanceType a owl:Class ;
+    rdfs:subClassOf di:FunctionalGroupType .
+
+pumps:CAN a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "CAN" ;
+    base:hasValueNode base:_N2d8b3f949d674ccea7ec35b29554ce4d,
+        base:_N441acbec0fd34c30ac91fa203f4c2785 .
+
+pumps:CANopen a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "CANopen" ;
+    base:hasValueNode base:_N4be1388174494643b8c956d6787d3f55,
+        base:_N8d2a6361eac5494ebb40181d7dc1627f .
+
+pumps:CC_Link a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "CC_Link" ;
+    base:hasValueNode base:_N84f91cb5eb004d848f7e77aa6781ca0e,
+        base:_Nd8806b2bbc2743b598c202b83c1e2755 .
+
+pumps:Calibration a pumps:OperationModeEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "Calibration" ;
+    base:hasValueNode base:_Nf28c855ef6ae4bd7b0bdeb4316e3bc47 .
+
+pumps:ClosedLoopMax a pumps:OperationModeEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "ClosedLoopMax" ;
+    base:hasValueNode base:_N099b4cb85b544088beb5b61644edc8db .
+
+pumps:ClosedLoopMin a pumps:OperationModeEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "ClosedLoopMin" ;
+    base:hasValueNode base:_N3b011281f9cb4f60ac85777637e1d659 .
+
+pumps:ClosedLoopStandardPID a pumps:OperationModeEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "ClosedLoopStandardPID" ;
+    base:hasValueNode base:_N5711d88f19be49fd823b63500f9f2fe4 .
+
+pumps:ConcerningLoadDistribution a pumps:DistributionTypeEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "ConcerningLoadDistribution" ;
+    base:hasValueNode base:_N362eaed3fd994f46aa95eaba84c8cb75 .
+
+pumps:ConcerningTimeDistribution a pumps:DistributionTypeEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "ConcerningTimeDistribution" ;
+    base:hasValueNode base:_N3a657313e40c47638307cbd4eefabe7d .
+
+pumps:ConditionBasedMaintenanceType a owl:Class ;
+    rdfs:subClassOf di:FunctionalGroupType .
+
+pumps:ConfigurationGroupType a owl:Class ;
+    rdfs:subClassOf di:FunctionalGroupType .
+
+pumps:ConstantDifferentialPressureControl a pumps:ControlModeEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "ConstantDifferentialPressureControl" ;
+    base:hasValueNode base:_N2ace06122d314d5ca9977070f062ce73 .
+
+pumps:ConstantPressureControl a pumps:ControlModeEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "ConstantPressureControl" ;
+    base:hasValueNode base:_Na0f73891376e4bc3b18ca25062d2f010 .
+
+pumps:ConstantTemperatureControl a pumps:ControlModeEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "ConstantTemperatureControl" ;
+    base:hasValueNode base:_N7c38f2c22363482ebdefc0e00f9fda00 .
+
+pumps:ControlNet a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "ControlNet" ;
+    base:hasValueNode base:_Nbdc34d9647a34b6c8aceaec6a93fe43b,
+        base:_Nf30f8ce8c91e4e9f84f0f4f5eea92926 .
+
+pumps:ControlType a owl:Class ;
+    rdfs:subClassOf di:FunctionalGroupType .
+
+pumps:DALI a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "DALI" ;
+    base:hasValueNode base:_N25d05dfb51f04564aecfa3700c35bdda,
+        base:_Necbd307edb1a40b49564d0c163084d65 .
+
+pumps:DECTULE a pumps:FieldbusEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "DECTULE" ;
+    base:hasValueNode base:_N3c9145fec8c249158d8d83da9ec15293 .
+
+pumps:DMX a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "DMX" ;
+    base:hasValueNode base:_N6914974871344dd886a17791c6a73269,
+        base:_N8cfebe45e2174ac1bd4504681af63cb6 .
+
+pumps:DesignType a owl:Class ;
+    rdfs:subClassOf di:FunctionalGroupType .
+
+pumps:DeviceNet a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "DeviceNet" ;
+    base:hasValueNode base:_N648206ed043847c1a028e3cc30faaf15,
+        base:_N9eb304242b084de6aa052be860bdb20d .
+
+pumps:DifferentialPressureControl a pumps:ControlModeEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "DifferentialPressureControl" ;
+    base:hasValueNode base:_N0e57d4139d16454d974bb302d43e5920 .
+
+pumps:Disabled a pumps:PumpKickModeEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "Disabled" ;
+    base:hasValueNode base:_N9bd09bf28607465a930e9a7fbdcc30af .
+
+pumps:DiscreteInputObjectType a owl:Class ;
+    rdfs:subClassOf pumps:DiscreteObjectType .
+
+pumps:DocumentationType a owl:Class ;
+    rdfs:subClassOf di:FunctionalGroupType .
+
+pumps:DownState a pumps:StateOfTheItemEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "DownState" ;
+    base:hasValueNode base:_N1978e2f0c1994a5b95daebf2500bc656 .
+
+pumps:DriveDesignType a owl:Class ;
+    rdfs:subClassOf di:FunctionalGroupType .
+
+pumps:DriveMeasurementsType a owl:Class ;
+    rdfs:subClassOf di:FunctionalGroupType .
+
+pumps:EnOcean a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "EnOcean" ;
+    base:hasValueNode base:_N21bc30267b4646b58ff10a2af1bb56a3,
+        base:_Ne1d83c5ce582455f94d865e86c190da8 .
+
+pumps:EtherCAT a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "EtherCAT" ;
+    base:hasValueNode base:_N0cafa87b7a0a4ac6a21d9a064e3d0c70,
+        base:_N6378c17d95ed4b36b0d4be2212050420 .
+
+pumps:EthernetTCP_IP a pumps:FieldbusEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "EthernetTCP_IP" ;
+    base:hasValueNode base:_Nd2aace2c6a224648a55ab2f568a57afd .
+
+pumps:Ethernet_IP a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "Ethernet_IP" ;
+    base:hasValueNode base:_N72f2b16aa1b84fcd885cbcb0495e0933,
+        base:_Nad592d27d9d3400293dd11e3b1adef35 .
+
+pumps:ExchangeDisabled a pumps:ExchangeModeEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "ExchangeDisabled" ;
+    base:hasValueNode base:_N467d30ed96d84918b8ffb01311597181 .
+
+pumps:ExternalDisabledState a pumps:StateOfTheItemEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "ExternalDisabledState" ;
+    base:hasValueNode base:_N77d9b915b6df4c6dbf8928124850f65f .
+
+pumps:FlowDependentDifferentialPressureControl a pumps:ControlModeEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "FlowDependentDifferentialPressureControl" ;
+    base:hasValueNode base:_Nce296f4d376d4e61a575fee0ca718c14 .
+
+pumps:FlowRateControl a pumps:ControlModeEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "FlowRateControl" ;
+    base:hasValueNode base:_Nf8b9e61c17904ca892c7aae132cd27d6 .
+
+pumps:FlowTemperatureControl a pumps:ControlModeEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "FlowTemperatureControl" ;
+    base:hasValueNode base:_N81ec456036b64ce79cf46a4b57b054b7 .
+
+pumps:GSM a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "GSM" ;
+    base:hasValueNode base:_N3e3b244b6ed34069b99fc57219b88a93,
+        base:_N8d809b61f060450b8bef16bb6eedb929 .
+
+pumps:GeneralMaintenanceType a owl:Class ;
+    rdfs:subClassOf di:FunctionalGroupType .
+
+pumps:HART a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "HART" ;
+    base:hasValueNode base:_N9f6f14dada0544bebe7a4bf6d79cf554,
+        base:_Na5d3d560282d47eb8c5a861c71b6a57b .
+
+pumps:IEEE1588 a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "IEEE1588" ;
+    base:hasValueNode base:_N628bf7e833614765823791fad3479b79,
+        base:_N9497f57b506349dbb1623d10b4254f8c .
+
+pumps:IO_Link a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "IO_Link" ;
+    base:hasValueNode base:_N211cac89b8184a8fb89177872f292c29,
+        base:_N3bde034ddfbf466db29cc19f7a08b0c1 .
+
+pumps:IdleState a pumps:StateOfTheItemEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "IdleState" ;
+    base:hasValueNode base:_N241f9796f4374155bbfc9622bc733019 .
+
+pumps:ImplementationType a owl:Class ;
+    rdfs:subClassOf di:FunctionalGroupType .
+
+pumps:In a pumps:PortDirectionEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "In" ;
+    base:hasValueNode base:_Nffe637cc5df44e78ba23c5c997944db3 .
+
+pumps:InOut a pumps:PortDirectionEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "InOut" ;
+    base:hasValueNode base:_Naaf8570266e9421f9d856f7b851035de .
+
+pumps:InletConnectionDesignType a owl:Class ;
+    rdfs:subClassOf pumps:ConnectionDesignType .
+
+pumps:InletConnectionImplementationType a owl:Class ;
+    rdfs:subClassOf pumps:ConnectionImplementationType .
+
+pumps:InletConnectionMeasurementsType a owl:Class ;
+    rdfs:subClassOf di:FunctionalGroupType .
+
+pumps:InletConnectionPortType a owl:Class ;
+    rdfs:subClassOf pumps:PortType .
+
+pumps:InletConnectionSystemRequirementsType a owl:Class ;
+    rdfs:subClassOf di:FunctionalGroupType .
+
+pumps:Interbus a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "Interbus" ;
+    base:hasValueNode base:_N3d4e3dd9fe154d9f86015d2e5a662e39,
+        base:_N86884f9d09b048f29b4f5495dc9e53c4 .
+
+pumps:KNX a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "KNX" ;
+    base:hasValueNode base:_N1a23abf9620241b1a6f137d1bdf07cd9,
+        base:_N935afe77ba3e47d78144ed9864afd03f .
+
+pumps:LIN_Bus a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "LIN_Bus" ;
+    base:hasValueNode base:_N16fbee5ac81742aea192dcbdc5a26619,
+        base:_N632adbf7fea24396affc6d6436f19735 .
+
+pumps:LON a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "LON" ;
+    base:hasValueNode base:_N451a6a29cb9c4a26b64257cd1fcf4416,
+        base:_Nc5b3d7a29883496d9f428eafb3db3ce0 .
+
+pumps:LTE a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "LTE" ;
+    base:hasValueNode base:_N19fbc9e6f1434b88b58a22c5be61ff11,
+        base:_Neba6f6feacf64b9387606d7314f9f8b2 .
+
+pumps:LTE_M a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "LTE_M" ;
+    base:hasValueNode base:_N9553c012f669413ab012bd51e9dc785d,
+        base:_Nbb4b6b424bdc4cd48702ccde3a27cbc2 .
+
+pumps:Level1 a pumps:MaintenanceLevelEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "Level1" ;
+    base:hasValueNode base:_N67955516e02c4e258e60aba38c20deb3 .
+
+pumps:Level2 a pumps:MaintenanceLevelEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "Level2" ;
+    base:hasValueNode base:_Nd29ae87457844e5a94fc96e733b45b5e .
+
+pumps:Level3 a pumps:MaintenanceLevelEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "Level3" ;
+    base:hasValueNode base:_Ne2e300183a5d4745bc58a7cd57ae0659 .
+
+pumps:Level4 a pumps:MaintenanceLevelEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "Level4" ;
+    base:hasValueNode base:_N725509c5285e453da82f40fe8f6bf7f3 .
+
+pumps:Level5 a pumps:MaintenanceLevelEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "Level5" ;
+    base:hasValueNode base:_N90f9d9f184ff4f0e983d8d3998cbbd09 .
+
+pumps:LiquidPump a pumps:PumpClassEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "LiquidPump" ;
+    base:hasValueNode base:_Ned4251fd700241f1ae2b0396d05ab0ba .
+
+pumps:LoRaWAN a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "LoRaWAN" ;
+    base:hasValueNode base:_N5951ea55e72e40a587c0b8bdc44b8145,
+        base:_Nd4f6e5850ab54cc7a725d9ecf56b4c31 .
+
+pumps:MP_Bus a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "MP_Bus" ;
+    base:hasValueNode base:_N1ea1b9ee3f384caba19dd8633b295823,
+        base:_Nbfe1ec9a33144825919c5139e24e8989 .
+
+pumps:M_Bus a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "M_Bus" ;
+    base:hasValueNode base:_N97a153c9b539411caec32c7b0a98ae53,
+        base:_Nda18edb009ed47c4958c995ce8608a2f .
+
+pumps:MaintenanceGroupType a owl:Class ;
+    rdfs:subClassOf di:FunctionalGroupType .
+
+pumps:ManufacturerSpecific a pumps:DistributionTypeEnum,
+        pumps:ExchangeModeEnum,
+        pumps:PumpKickModeEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "ManufacturerSpecific" ;
+    base:hasValueNode base:_N0a11bfb020fa45eca8b328a7c5cf21b1,
+        base:_N6347fae7af5848899c4a809917af406a,
+        base:_Nb2c804d18db940a186ce49ca740e0b2a .
+
+pumps:MarkingsType a owl:Class ;
+    rdfs:subClassOf opcua:FolderType .
+
+pumps:Master a pumps:PumpRoleEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "Master" ;
+    base:hasValueNode base:_Nb40a154448a2474e82e23aee680c9b0c .
+
+pumps:MeasurementsType a owl:Class ;
+    rdfs:subClassOf di:FunctionalGroupType .
+
+pumps:MixedRedundancy a pumps:MultiPumpOperationModeEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "MixedRedundancy" ;
+    base:hasValueNode base:_N40dab504975c404585851e1462c130bf .
+
+pumps:ModbusRTU a pumps:FieldbusEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "ModbusRTU" ;
+    base:hasValueNode base:_N701e5d23b7b541ee865deb97a49a493c .
+
+pumps:ModbusTCP a pumps:FieldbusEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "ModbusTCP" ;
+    base:hasValueNode base:_Nfeb7f5e1c34743c08a141bc1af9702ae .
+
+pumps:MultiPumpType a owl:Class ;
+    rdfs:subClassOf di:FunctionalGroupType .
+
+pumps:NB_IOT a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "NB_IOT" ;
+    base:hasValueNode base:_N92dbfd6acdb84c38aa985fb009aa28ac,
+        base:_Nfa2f1fb7a3ef4474bb77e82f4bc42d29 .
+
+pumps:NFC a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "NFC" ;
+    base:hasValueNode base:_Nc05f9d6f6ff045cba4abb2530181f92f,
+        base:_Ne6a9ae459d264aafbea484d6a3a55bde .
+
+pumps:OPCDA a pumps:FieldbusEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "OPCDA" ;
+    base:hasValueNode base:_Na2192b1b19cf48308427a6f0a5353113 .
+
+pumps:OPCUA a pumps:FieldbusEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "OPCUA" ;
+    base:hasValueNode base:_N668e411cfd6c4e14bbe47ce12033b74a .
+
+pumps:OpenLoopMax a pumps:OperationModeEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "OpenLoopMax" ;
+    base:hasValueNode base:_N3aa336da76e64d469a11e45760f98550 .
+
+pumps:OpenLoopMin a pumps:OperationModeEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "OpenLoopMin" ;
+    base:hasValueNode base:_Ne766383186f9427dbec6c3f006e81629 .
+
+pumps:OpenLoopValue a pumps:OperationModeEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "OpenLoopValue" ;
+    base:hasValueNode base:_N12452fdbae324c1090819921e48f98ff .
+
+pumps:OperatingState a pumps:StateOfTheItemEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "OperatingState" ;
+    base:hasValueNode base:_N182c30babf9442c88c50be9c53da2c36 .
+
+pumps:OperationalGroupType a owl:Class ;
+    rdfs:subClassOf di:FunctionalGroupType .
+
+pumps:OperatorSpecific a pumps:DistributionTypeEnum,
+        pumps:ExchangeModeEnum,
+        pumps:PumpKickModeEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "OperatorSpecific" ;
+    base:hasValueNode base:_N228a5eec1e1f443cbae5637622d68ecb,
+        base:_N585fb58502144db583354bc35fbc5fc6,
+        base:_Nc3632d1889e5421a9bdea571baf9c33d .
+
+pumps:Other a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "Other" ;
+    base:hasValueNode base:_N6a3b714a40b444ebabc234e692ac215c,
+        base:_N78e84af73e284e7ba2e6098bd5446834 .
+
+pumps:Out a pumps:PortDirectionEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "Out" ;
+    base:hasValueNode base:_Ne1fe74ce72cf4d3aad73f88b0e470d7f .
+
+pumps:OutletConnectionDesignType a owl:Class ;
+    rdfs:subClassOf pumps:ConnectionDesignType .
+
+pumps:OutletConnectionImplementationType a owl:Class ;
+    rdfs:subClassOf pumps:ConnectionImplementationType .
+
+pumps:OutletConnectionMeasurementsType a owl:Class ;
+    rdfs:subClassOf di:FunctionalGroupType .
+
+pumps:OutletConnectionPortType a owl:Class ;
+    rdfs:subClassOf pumps:PortType .
+
+pumps:OutletConnectionSystemRequirementsType a owl:Class ;
+    rdfs:subClassOf di:FunctionalGroupType .
+
+pumps:PROFIBUSDP a pumps:FieldbusEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "PROFIBUSDP" ;
+    base:hasValueNode base:_N322dee0d5c194bc1800e970f56f68c50 .
+
+pumps:PROFINETRT a pumps:FieldbusEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "PROFINETRT" ;
+    base:hasValueNode base:_N78f350de10b44ab9b963c888cdf1f43e .
+
+pumps:ParallelOperation a pumps:OperatingModeEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "ParallelOperation" ;
+    base:hasValueNode base:_N283d59526af04be3b5b25419cd1875f4 .
+
+pumps:PortsGroupType a owl:Class ;
+    rdfs:subClassOf di:FunctionalGroupType .
+
+pumps:PositiveDisplacementPump a pumps:PumpClassEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "PositiveDisplacementPump" ;
+    base:hasValueNode base:_N63fea864d36849d0adb2b5c34c934bfb .
+
+pumps:Powerlink a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "Powerlink" ;
+    base:hasValueNode base:_N274bb989974d49458950a1ad98fb610e,
+        base:_N4d50a99885fe45a8b5ca38ebaea31fab .
+
+pumps:PreventiveMaintenanceType a owl:Class ;
+    rdfs:subClassOf di:FunctionalGroupType .
+
+pumps:ProcessVacuumPump a pumps:PumpClassEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "ProcessVacuumPump" ;
+    base:hasValueNode base:_Naa060b8c3f1447f9a0fd8efa003987f1 .
+
+pumps:Pump a pumps:PumpClassEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "Pump" ;
+    base:hasValueNode base:_Nedeefa5a89fe4329918fb321e46dacc0 .
+
+pumps:PumpActuationType a owl:Class ;
+    rdfs:subClassOf pumps:ActuationType .
+
+pumps:PumpIdentificationType a owl:Class ;
+    rdfs:subClassOf machinery:MachineIdentificationType .
+
+pumps:PumpKickObjectType a owl:Class ;
+    rdfs:subClassOf pumps:DiscreteOutputObjectType .
+
+pumps:PumpType a owl:Class ;
+    rdfs:subClassOf di:TopologyElementType .
+
+pumps:RedundancyOperation a pumps:MultiPumpOperationModeEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "RedundancyOperation" ;
+    base:hasValueNode base:_Ne1ee6f8ad6b044d4998fbd8e5d291d0a .
+
+pumps:ReturnFlowTemperatureControl a pumps:ControlModeEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "ReturnFlowTemperatureControl" ;
+    base:hasValueNode base:_N90ae1c81faea43f1bb237012876d1f9c .
+
+pumps:RotodynamicPump a pumps:PumpClassEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "RotodynamicPump" ;
+    base:hasValueNode base:_Nef256d055b494b8abe397bda3f886f84 .
+
+pumps:SERCOS a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "SERCOS" ;
+    base:hasValueNode base:_N1f550c1b50994f6cbde26c554c7ddcf8,
+        base:_Nb90372803b0040998062c80e065c44cc .
+
+pumps:SMI a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "SMI" ;
+    base:hasValueNode base:_N4be1b3b3ba9242eaba0b0cd8744dec21,
+        base:_N7431511e364b4ea2894b0e56aa49cd26 .
+
+pumps:SeriesOperation a pumps:OperatingModeEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "SeriesOperation" ;
+    base:hasValueNode base:_N741457d29d23484e9860aee8cb8293b2 .
+
+pumps:SignalsType a owl:Class ;
+    rdfs:subClassOf di:FunctionalGroupType .
+
+pumps:SingleOperation a pumps:OperatingModeEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "SingleOperation" ;
+    base:hasValueNode base:_N0305ac356e6943f48851a79bc362d2a3 .
+
+pumps:Slave a pumps:PumpRoleEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "Slave" ;
+    base:hasValueNode base:_N9676bae8c3684e89b79f883d27cf1fff .
+
+pumps:SlaveAndAuxiliaryMaster a pumps:PumpRoleEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "SlaveAndAuxiliaryMaster" ;
+    base:hasValueNode base:_N32b3e9869a55499cbf8ee55fcaed222e .
+
+pumps:SpeedControl a pumps:ControlModeEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "SpeedControl" ;
+    base:hasValueNode base:_Nfbca5f185e1e44ecad70763cf5e8efa3 .
+
+pumps:StandBy a pumps:OperationModeEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "StandBy" ;
+    base:hasValueNode base:_N2ada52c507784467a72e44af87fdf8fc .
+
+pumps:StandByState a pumps:StateOfTheItemEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "StandByState" ;
+    base:hasValueNode base:_N4f131275511840dfba81fac452ee61e7 .
+
+pumps:Standalone a pumps:MultiPumpOperationModeEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "Standalone" ;
+    base:hasValueNode base:_Nbe1fc5de2b3d4e00af6f8dc6bc7c9fea .
+
+pumps:SupervisionAuxiliaryDeviceType a owl:Class ;
+    rdfs:subClassOf di:FunctionalGroupType .
+
+pumps:SupervisionElectronicsType a owl:Class ;
+    rdfs:subClassOf di:FunctionalGroupType .
+
+pumps:SupervisionHardwareType a owl:Class ;
+    rdfs:subClassOf di:FunctionalGroupType .
+
+pumps:SupervisionMechanicsType a owl:Class ;
+    rdfs:subClassOf di:FunctionalGroupType .
+
+pumps:SupervisionProcessFluidType a owl:Class ;
+    rdfs:subClassOf di:FunctionalGroupType .
+
+pumps:SupervisionPumpOperationType a owl:Class ;
+    rdfs:subClassOf di:FunctionalGroupType .
+
+pumps:SupervisionSoftwareType a owl:Class ;
+    rdfs:subClassOf di:FunctionalGroupType .
+
+pumps:SupervisionType a owl:Class ;
+    rdfs:subClassOf di:FunctionalGroupType .
+
+pumps:SystemRequirementsType a owl:Class ;
+    rdfs:subClassOf di:FunctionalGroupType .
+
+pumps:Test a pumps:OperationModeEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "Test" ;
+    base:hasValueNode base:_Nd4dfd1efb3fb4d56a8c1d20e0daa0c9a .
+
+pumps:Thread a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "Thread" ;
+    base:hasValueNode base:_N05788ddb1a6944a5afa85c42614575e5,
+        base:_N54e3084145d3418082aa4d54749ad750 .
+
+pumps:TurboVacuumPump a pumps:PumpClassEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "TurboVacuumPump" ;
+    base:hasValueNode base:_Na80a12caec584fb9a3720cd03466d932 .
+
+pumps:UMTS a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "UMTS" ;
+    base:hasValueNode base:_N6caaceed1579413a98911ef1178bff3c,
+        base:_N781a938f90db4d2a8542c41c3609c47b .
+
+pumps:Uncontrolled a pumps:ControlModeEnum,
+        pumps:OfferedControlModesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "Uncontrolled" ;
+    base:hasValueNode base:_N21e04badf39a4a2c8401fe91aeb60b42,
+        base:_N873e173169c2495fa90f603307d4e5be .
+
+pumps:VARAN a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "VARAN" ;
+    base:hasValueNode base:_N82f0dd5c31444891a518bcffd2592e2f,
+        base:_Neee4fbe103fe4165837012d4fb2be708 .
+
+pumps:VacuumPump a pumps:PumpClassEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "VacuumPump" ;
+    base:hasValueNode base:_N18fa28edcdc147c986f2ea5346778641 .
+
+pumps:VariableDifferentialPressureControl a pumps:ControlModeEnum,
+        owl:NamedIndividual ;
+    base:hasFieldName "VariableDifferentialPressureControl" ;
+    base:hasValueNode base:_Nb12d8397838e43d0ac585a0d80f2e8b7 .
+
+pumps:VibrationMeasurementType a owl:Class ;
+    rdfs:subClassOf di:FunctionalGroupType .
+
+pumps:WIFI a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "WIFI" ;
+    base:hasValueNode base:_Nd613ebaf5c0c4f01b586de1fddac2d2e,
+        base:_Nfd6a93b06d534f1b9b46e694d07cea51 .
+
+pumps:X2X_Link a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "X2X_Link" ;
+    base:hasValueNode base:_N5419e42aba7b4b8d8f372c073d56b023,
+        base:_N5ed3e37514af4cb0aecba44c04faa8ba .
+
+pumps:Z_Wave a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "Z_Wave" ;
+    base:hasValueNode base:_N87426da75e3b4b2cb66b8b2662e082ae,
+        base:_Nbc6d590a5a2b4230b6b2ddf0a0d6e570 .
+
+pumps:ZigBee a pumps:FieldbusEnum,
+        pumps:OfferedFieldbusesOptionSet,
+        owl:NamedIndividual ;
+    base:hasFieldName "ZigBee" ;
+    base:hasValueNode base:_N94b4ded06a0944c08048d05abce82d2f,
+        base:_Nbbbc7cee25864a419503d6567d6c9c99 .
+
+pumps:has%3CDrive%3E a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:has%3CInletConnection%3E a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:has%3COutletConnection%3E a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:has%3CVibration%3E a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:has1XPhase a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:has1XRelativeShaftVibrationP_P a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:has2XPhase a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:has2XRelativeShaftVibrationP_P a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasAcceleration a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasAccessoryLiquidFlow a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasAccessoryLiquidHigh a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasAccessoryLiquidLow a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasAccessoryLiquidOverheat a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasAccessoryLiquidPressure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasActiveMaintenanceTime a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasActivePreventiveMaintenanceTime a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasActualControlMode a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasActualOperationMode a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasActuatorElement a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasAdditionalFieldbuses a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasAmbientHumidity a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasAmbientTemperature a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasApplication a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasArmatureCircuit a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasArrangementsLink a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasAtmosphericPressure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasAuxiliaryDeviceFault a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasAuxiliaryMediumAbsence a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasAuxiliaryMediumInsufficiency a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasAuxiliaryPowerPole a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasAuxiliaryPowerRange a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasAvailability a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasAxialBearingAbrasion a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasAxialBearingFault a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasAxialBearingOverheat a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasAxialLoadOfPumpRotor a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasAxialRotorPosition a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasBackPressure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasBackingPressure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasBalancingRateOfFlow a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasBasePressure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasBearingFault a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasBearingIndex a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasBearingIndexPerG a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasBearingTemperature a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasBlockage a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasBrakeChopper a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasBrakeOverheat a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasBreakdownMaintenance a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasBroadbandCavitationAccelerationPerG_RMS a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasBroadbandCavitationAccelerationRMS a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasBypassActuation a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasCaseOverheat a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasCategory a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasCavitation a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasCertificatesLink a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasCircuitDiagramLink a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasCleanValveOpen a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasCleanValveRequest a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasClearanceFlow a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasClearanceVolume a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasClockwiseRotation a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasCommandVariable a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasCommunication a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasCommunicationError a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasComponentsListLink a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasCompressionRatio a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasComputingCircuit a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasCondensation a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasConditionBasedMaintenance a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasControl a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasControlCircuit a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasControlDifferenceVariable a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasControlInversion a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasControllable a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasControlledVariable a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasControllerOutputVariable a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasControllerOverheat a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasConverterOverheat a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasCool_DownTimeForAVaporJetPumpOrADiffusionPump a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasCoolantFlow a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasCoolantHigh a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasCoolantLow a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasCoolantOverheat a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasCoolantTemperature a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasCorrectiveMaintenanceTime a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasCorrosion a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasCounter_ClockwiseRotation a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasCriticalBackingPressure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasCriticalSpeed a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasCriticality a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasCurrent a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasCurrentInsideDevice a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasDCLinkCurrent a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasDCLinkSupply a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasDCLinkVoltage a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasDeadTime a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasDeceleration a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasDeclarationOfConformity a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasDeclarationOfConformityAvailable a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasDensity a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasDerivativeActionCoefficient a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasDesign a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasDesignAxialLoad a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasDesignRadialLoad a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasDetailLink a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasDeviation a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasDifferentialPressure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasDirection a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasDirectivesOfEUDeclarationOfConformity a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasDirtyImpeller a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasDiscreteInputValue a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasDiscreteOutputValue a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasDistributionPriority a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasDistributionType a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasDocumentation a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasDownTime a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasDriveOverheat a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasDriverPowerInput a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasDry a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasDryCriticalSpeed a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasDurability a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasDuringMaintenanceServicesRenderedLink a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasDynamicViscosity a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasElectricalFault a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasElectromagneticInterference a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasElectronicFault a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasElectronicTemperature a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasEnable a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasEnergyConsumption a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasEnergyEfficiencyClassOfMotor a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasEnergySupply a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasEprom a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasEvaluationElectronics a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasEvents a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasExcessVibration a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasExchangeMode a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasExchangeTime a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasExchangeTimeDifference a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasExciterError a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasExpectedReliability a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasExplosionProtection a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasExplosionZone a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasExternalDisabledTime a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasExternalSignal a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasFailure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasFailureRate a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasFaultAction a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasFaultValue a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasFeedbackVariable a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasFieldCircuit a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasFieldbus a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasFinalControlledVariable a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasFlow a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasFluid a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasFluidTemperature a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasFlushValveOpen a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasFlushValveRequest a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasFouling a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasFrequency a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasGapVoltage a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasGapWear a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasGas a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasGasContent a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasGasDilValveOpen a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasGasDilValveRequest a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasGeneralMaintenance a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasGeneratorOperation a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasGeometricDisplacementVolume a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasGeometricalFlow a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasHardwareFault a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasHeadAtPeakPoint a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasHeightOfTheInletConnection a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasHeightOfTheInletManometer a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasHeightOfTheInletSideOfTheInstallation a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasHeightOfTheNpshDatumPlane a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasHeightOfTheOutletConnection a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasHeightOfTheOutletManometer a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasHeightOfTheOutletSideOfTheInstallation a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasHeightOfThePump a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasHousingTemperature a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasHumidityElectronics a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasHydraulicEfficiency a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasIONA a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasIdCarrier a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasIdleTime a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasImplementation a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasImplementationDescriptionLink a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasInletAreaOfThePump a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasInletPressure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasInletPressureOfTheInstallation a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasInletTemperatureOfThePump a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasInletValveOpen a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasInletValveRequest a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasInstallation a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasInstallationDate a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasInstallationFault a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasInstallationTotalHead a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasInstantaneousAvailability a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasInsulationResistance a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasIntegralActionCoefficient a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasInterruption a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasIntrinsicMaintainability a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasIntrinsicReliability a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasKinematicViscosity a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasLastInspectionDate a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasLastServicingDate a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasLayoutLink a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasLeakage a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasLeakageRateOfFlow a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasLevel a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasLineLength a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasLiquid a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasLocationLink a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasLogicDiagramLink a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasLubricant a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasLubricatingOilConsumption a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasLubricatingOilPressure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasLubricationMapLink a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMaintainability a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMaintenanceLevel a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMaintenanceManualLink a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMaintenanceTime a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasManipulatedValue a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasManipulatedVariable a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMassFlow a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMaterialElectronics a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMaxNominalFrequency a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMaximumAllowableAmbientTemperature a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMaximumAllowableCasingWorkingPressure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMaximumAllowableContinuousSpeed a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMaximumAllowableFlow a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMaximumAllowableHead a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMaximumAllowableInletPressure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMaximumAllowableOutletPressure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMaximumAllowableRelativeHumidity a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMaximumAllowableTemperature a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMaximumAllowableThroughput a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMaximumAllowableWorkingPressure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMaximumAmbientTemperature a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMaximumAxialLoad a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMaximumDynamicSealingPressure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMaximumFlow a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMaximumHead a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMaximumInletPressure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMaximumNumberOfPumpsInOperation a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMaximumNumberStarts a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMaximumOperationTime a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMaximumOutletPressure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMaximumPumpPowerInput a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMaximumRadialLoad a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMaximumRelativeHumidity a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMaximumStartsAtTime a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMaximumStaticSealingPressure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMaximumTemperature a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMaximumTolerableWaterVaporInletPressure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMaximumWorkingPressure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMeanOperatingTimeBetweenFailures a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMeanRatedVelocityAtInlet a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMeanRatedVelocityAtOutlet a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMeanRepairTime a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMeanTimeBetweenFailures a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMeanTimeToRestauration a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMeanTimebetweenFailures a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMeanVelocityAtInlet a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMeanVelocityAtOutlet a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMeanVelocityAtThroat a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMeasureCircuit a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMeasuredMaterialElectronics a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMeasurements a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMechanicalDamage a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMechanicalEfficiency a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMechanicalFault a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMemory a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMicroProcessor a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMinNominalFrequency a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMinimumAllowableAmbientTemperature a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMinimumAllowableContinuousSpeed a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMinimumAllowableFlow a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMinimumAllowableHead a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMinimumAllowableInletPressure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMinimumAllowableOutetPressure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMinimumAllowableRelativeHumidity a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMinimumAllowableStableFlow a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMinimumAllowableTemperature a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMinimumAllowableThermalFlow a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMinimumAmbientTemperature a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMinimumContinuousStableFlow a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMinimumContinuousThermalFlow a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMinimumFlow a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMinimumHead a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMinimumInletPressure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMinimumOutletPressure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMinimumRelativeHumidity a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMinimumTemperature a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMisalignment a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMotorCurrent a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMotorEfficiency a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMotorHumidity a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMotorOverheat a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMotorTemperature a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMotorVoltage a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMultiPump a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMultiPumpOperationMode a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasMulti_Phase a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasNetPositiveInletPressure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasNetPositiveInletPressureAvailable a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasNetPositiveInletPressureRequired a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasNetPositiveSuctionHead a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasNetPositiveSuctionHeadAvailable a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasNetPositiveSuctionHeadRequired a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasNetPositiveSuctionHeadRequiredForADropOf3Percent a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasNetworkNA a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasNextInspectionDate a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasNextServicingDate a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasNoRotation a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasNominalFrequency a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasNominalPowerConsumption a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasNominalPressure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasNominalSize a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasNominalVoltage a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasNormalFlow a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasNot1XRelativeShaftVibrationP_P a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasNpshDatumPlane a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasNumberOfFailures a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasNumberOfPumps a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasNumberOfStarts a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasOS a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasObsolescence a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasOfferedControlModes a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasOfferedFieldbuses a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasOnOff a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasOnOffCycle a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasOperatingConditions a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasOperatingMode a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasOperatingTime a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasOperatingTimeBetweenFailures a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasOperatingTimeToFailure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasOperationFault a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasOperationManualLink a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasOperationalReliability a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasOptimumHead a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasOptimumPumpPowerInput a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasOptimumRateOfFlow a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasOther a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasOutletAreaOfThePump a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasOutletPressureOfTheInstallation a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasOutletTemperatureOfThePump a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasOutletValveOpen a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasOutletValveRequest a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasOverLoad a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasOverSpeed a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasOverallEfficiency a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasOverallVibrationAcceleration0_P a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasOverallVibrationAccelerationP_P a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasOverallVibrationAccelerationPerG0_P a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasOverallVibrationAccelerationPerGP_P a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasOverallVibrationAccelerationPerG_RMS a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasOverallVibrationAccelerationRMS a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasOverallVibrationDisplacementP_P a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasOverallVibrationDisplacementRMS a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasOverallVibrationVelocity0_P a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasOverallVibrationVelocityP_P a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasOverallVibrationVelocityRMS a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasOverloading a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasParameter a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasParameterSetting a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPartialLoad a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPeripheral a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPersonnelRecordingLink a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPhaseFailure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPipeAndInstrumentDiagramLink a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPistonVelocity a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPorts a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPossibleFluids a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPowerFactor a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPowerLossDueToInternalLeakage a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPowerSupply a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPre_ChargePressure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPressure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPreventiveMaintenance a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPreventiveMaintenanceTime a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasProcessFault a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasProcessInfluence a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasProcessIsActive a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasProcessPressure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasProductionBasedAvailability a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasProportionalActionCoefficient a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasProtectionClass a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPumpActivation a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPumpActuation a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPumpBestEfficiency a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPumpClass a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPumpCollectiveIDs a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPumpDirection a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPumpEfficiency a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPumpHumidity a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPumpKick a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPumpKickMode a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPumpKickTime a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPumpKickTimeDifference a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPumpMechanicalPowerLosses a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPumpOperation a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPumpPowerInput a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPumpPowerMax a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPumpPowerOutput a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPumpRatedPowerInput a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPumpRole a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPumpSpeedMax a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPumpSpeedMin a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPumpStandByRequest a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPumpTemperature a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPumpTotalHead a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPurgeValveOpen a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasPurgeValveRequest a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasRadialBearingAbrasion a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasRadialBearingFault a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasRadialBearingOverheat a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasRadialLoadOfPumpRotor a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasRam a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasRatedCurrent a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasRatedDifferentialPressure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasRatedFlow a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasRatedInletPressure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasRatedInletPressureOfTheInstallation a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasRatedMeanVelocityAtInletAreaOfTheInstallation a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasRatedMeanVelocityAtOutletAreaOfTheInstallation a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasRatedOutletPressure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasRatedPumpUnitTotalHead a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasRatedSpeed a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasRedundantPumpIDs a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasReferencePlane a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasReferenceStandardForVibrationMeasurement a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasReferenceVariable a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasReliability a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasReliefValveAccumulationPressure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasReliefValveBackPressure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasReliefValveReseatPressure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasReliefValveSetPressure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasRepairTime a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasRequiredControlMode a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasRequiredTime a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasReverseRotatingDirection a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasRotationalPhase1X a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasRotationalPhase2X a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasRotorBlocked a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasRotorStationRubbing a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasScopeOfWorkLink a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSensorElement a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSetControlMode a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSetOperationMode a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSeverity a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasShortCircuit a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasShortToEarth a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasShut_OffHead a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasShut_OffPumpPowerInput a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSignals a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSingleLineDiagramLink a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSlipFlow a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSoftwareFault a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSoftwareReset a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSolid a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSolidContent a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSoundEnergy a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSoundEnergyLevel a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSoundPower a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSoundPowerLevel a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSoundPressure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSoundPressureLevel a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSparePartReferenceLink a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSpecificSpeed a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSpeed a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSpeedOfRotation a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasStaffLink a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasStall a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasStandBy a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasStandBySpeed a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasStandardGasFlowrate a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasStandbyTime a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasStartUp a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasStartingPressure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasStateOfTheItem a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasStatus a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSuction_SpecificSpeed a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSupervisionAuxiliaryDevice a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSupervisionElectronics a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSupervisionHardware a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSupervisionMechanics a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSupervisionProcessFluid a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSupervisionPumpOperation a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSupervisionSoftware a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSupplyCurrent a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSupplyCurrentHigh a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSupplyCurrentLow a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSupplyFrequency a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSupplyFrequencyHigh a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSupplyFrequencyLow a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSupplyVoltage a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSupplyVoltageHigh a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSupplyVoltageLow a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSweptVolume a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSynchronisation a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasSystemRequirements a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasTMSFailure a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasTargetSpeed a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasTechnicalDataLink a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasTemperature a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasTemperatureFault a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasTemperatureShock a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasTestAttribute a owl:DatatypeProperty ;
+    rdfs:domain pumps:DrivePortType ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
+pumps:hasTestProgramReportLink a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasThrottleValveActuation a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasThroughput a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasThrustPosition a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasTimeBasedAvailability a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasTimeBetweenFailures a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasTimeOut a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasTimeToRestoration a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasTorque a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasTorqueAtNominalSpeedOfDrive a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasTorqueLimit a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasTotalHeadAtInletAreaOfTheInstallation a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasTotalHeadAtInletAreaOfThePump a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasTotalHeadAtOutletAreaOfTheInstallation a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasTotalHeadAtOutletAreaOfThePump a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasTripSpeed a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasTurbineOperation a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasTypeNumber a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasUltimatePressureOfAVacuumPump a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasUnbalance a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasUnderSpeed a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasUnitMaintenanceReportLink a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasUpTime a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasUsefulLife a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasValveSeatVelocity a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasValveSpillVelocity a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasVaporPressureOfThePumpedLiquid a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasVelocityLimit a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasVentValveOpen a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasVentValveRequest a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasVibration a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasVibrationAmplitudeAtTheBearingDefectFrequencies a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasVibrationAmplitudeAtTheBearingDefectFrequenciesPerG a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasVibrationAmplitudeAtTheBladePassFrequency a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasVibrationAmplitudeAtTheFirstHarmonicOfTheRotationFrequency2X a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasVibrationAmplitudeAtTheGearMeshingFrequency a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasVibrationAmplitudeAtTheGearMeshingFrequencyPerG a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasVibrationAmplitudeAtTheHarmonicsOfTheRotationFrequencyNx a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasVibrationAmplitudeAtTheRotationFrequency1X a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasVibrationAmplitudeAtTheSidebandsOfTheGearMeshingFrequency a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasVibrationAmplitudeAtTheSidebandsOfTheGearMeshingFrequencyPerG a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasViscosity a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasVoltage a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasVoltageInsideDevice a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasVolumeFlowRate a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasVolumeFlowRateOfBackingPump a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasVolumetricEfficiency a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasWarmUpTimeForAVaporJetPumpOrADiffusionPump a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasWaterVaporCapacity a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasWaterVaporTolerableLoad a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasWearReserveExhausted a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasWearReserveOperation a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasWearReserveWear a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasWetCriticalSpeed a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasWindingTemperature a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:hasWorkingTemperature a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumps:ActuationType a owl:Class ;
+    rdfs:subClassOf di:FunctionalGroupType .
+
+pumps:DiscreteOutputObjectType a owl:Class ;
+    rdfs:subClassOf pumps:DiscreteObjectType .
+
+pumps:DrivePortType a owl:Class ;
+    rdfs:subClassOf pumps:PortType .
+
+pumps:ConnectionDesignType a owl:Class ;
+    rdfs:subClassOf di:FunctionalGroupType .
+
+pumps:ConnectionImplementationType a owl:Class ;
+    rdfs:subClassOf di:FunctionalGroupType .
+
+pumps:DiscreteObjectType a owl:Class ;
+    rdfs:subClassOf opcua:BaseObjectType .
+
+pumps:OfferedControlModesOptionSet a owl:Class ;
+    rdfs:subClassOf opcua:OptionSet .
+
+pumps:ExchangeModeEnum a owl:Class ;
+    rdfs:subClassOf opcua:Enumeration .
+
+pumps:OperatingModeEnum a owl:Class ;
+    rdfs:subClassOf opcua:Enumeration .
+
+pumps:PortDirectionEnum a owl:Class ;
+    rdfs:subClassOf opcua:Enumeration .
+
+pumps:PortType a owl:Class ;
+    rdfs:subClassOf opcua:BaseObjectType .
+
+pumps:PumpKickModeEnum a owl:Class ;
+    rdfs:subClassOf opcua:Enumeration .
+
+pumps:PumpRoleEnum a owl:Class ;
+    rdfs:subClassOf opcua:Enumeration .
+
+pumps:DistributionTypeEnum a owl:Class ;
+    rdfs:subClassOf opcua:Enumeration .
+
+pumps:MultiPumpOperationModeEnum a owl:Class ;
+    rdfs:subClassOf opcua:Enumeration .
+
+pumps:MaintenanceLevelEnum a owl:Class ;
+    rdfs:subClassOf opcua:Enumeration .
+
+pumps:StateOfTheItemEnum a owl:Class ;
+    rdfs:subClassOf opcua:Enumeration .
+
+pumps:PumpClassEnum a owl:Class ;
+    rdfs:subClassOf opcua:Enumeration .
+
+pumps:OperationModeEnum a owl:Class ;
+    rdfs:subClassOf opcua:Enumeration .
+
+pumps:ControlModeEnum a owl:Class ;
+    rdfs:subClassOf opcua:Enumeration .
+
+pumps:OfferedFieldbusesOptionSet a owl:Class ;
+    rdfs:subClassOf opcua:OptionSet .
+
+pumps:FieldbusEnum a owl:Class ;
+    rdfs:subClassOf opcua:Enumeration .
+

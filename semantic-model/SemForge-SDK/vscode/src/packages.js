@@ -1,0 +1,301 @@
+/**
+* Copyright (c) 2026 IndustryFusion Foundation
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*    http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
+
+/*
+ * Which package am I working on?
+ *
+ * The three views used to answer this separately: each one called
+ * findPackageUri() on activation and each one followed the active editor with
+ * its own rule -- and the knowledge view's rule was different from the other
+ * two's. So the Entity Types & Constraints view could be showing one package while Knowledge
+ * showed another, with nothing on screen naming either. Opening a file quietly
+ * moved a view to a different package; nothing said so.
+ *
+ * One session owns the answer instead. It is shown in the status bar, it is
+ * shown as each view's subtitle, and it can be chosen -- which is what every
+ * editor integration that can face several projects does (the Python
+ * interpreter, the Java project, the active Docker context).
+ *
+ * Choosing PINS. Following the active editor is the right default when you
+ * have one package, and exactly wrong when you are reading a second one and
+ * do not want your views to move.
+ */
+
+const path = require('path');
+const vscode = require('vscode');
+
+const { findPackageUri, listPackages, packageDirectory,
+        samePackage } = require('./locate');
+
+class PackageSession {
+  constructor() {
+    this.uri = undefined;
+    this.pinned = false;
+    this.emitter = new vscode.EventEmitter();
+    this.onDidChange = this.emitter.event;
+  }
+
+  /** The package directory, for display. */
+  get directory() {
+    return packageDirectory(this.uri);
+  }
+
+  get name() {
+    const directory = this.directory;
+    return directory ? path.basename(directory) : undefined;
+  }
+
+  /**
+   * Take the package found in the opened folders -- or none, if there is none.
+   *
+   * It used to set only when it found something, so after the active package
+   * was deleted the session went on pointing at it: the status bar kept its
+   * name and all four views kept asking about a directory that was gone.
+   * "Nothing here" is an answer and has to be settable.
+   */
+  discover() {
+    this.set(findPackageUri(), { pinned: false });
+    return this.uri;
+  }
+
+  /** Let go of a package under `directory`, if that is the one we are on. */
+  forget(directory) {
+    if (!this.uri || !directory) {
+      return false;
+    }
+    const here = this.directory;
+    if (here !== directory && !(here || '').startsWith(directory + path.sep)) {
+      return false;                   // a different package; leave it alone
+    }
+    this.pinned = false;              // whatever pinned it is not there now
+    return this.set(undefined, { pinned: false });
+  }
+
+  set(uri, options) {
+    const pinned = !!(options || {}).pinned;
+    if (!uri && !this.uri && this.pinned === pinned) {
+      return false;                   // nothing, and nothing before it
+    }
+    if (uri && samePackage(this.uri, uri) && this.pinned === pinned) {
+      return false;
+    }
+    this.uri = uri;
+    this.pinned = pinned;
+    this.emitter.fire(this.uri);
+    return true;
+  }
+
+  /**
+   * Follow an editor into its package.
+   *
+   * Only when it is a DIFFERENT package: re-validating because somebody opened
+   * a file we are already showing is wasted work, and the refresh it fires
+   * invalidates any reveal in flight -- including the one the click that opened
+   * the file is waiting on.
+   */
+  follow(editor) {
+    if (this.pinned || !editor) {
+      return false;
+    }
+    const file = editor.document && editor.document.uri;
+    if (!file || !/\.(ttl|jsonld)$/.test(file.fsPath)) {
+      return false;
+    }
+    const opened = file.toString();
+    if (samePackage(this.uri, opened)) {
+      return false;
+    }
+    return this.set(opened, { pinned: false });
+  }
+}
+
+/**
+ * What to call the active package.
+ *
+ * Its path relative to the opened folder, not its basename: two directories
+ * called `test` are not the same project, and `kms/test` says which one this
+ * is where `test` does not.
+ */
+function label(session) {
+  const directory = session.directory;
+  if (!session.uri || !directory) {
+    return 'no package';
+  }
+  let name = session.name;
+  for (const folder of vscode.workspace.workspaceFolders || []) {
+    const root = folder.uri.fsPath;
+    if (directory === root) {
+      name = path.basename(root);
+    } else if (directory && directory.startsWith(root + path.sep)) {
+      name = directory.slice(root.length + 1);
+    }
+  }
+  return name + (session.pinned ? ' (pinned)' : '');
+}
+
+function tooltip(session) {
+  const lines = ['SemForge package'];
+  lines.push(session.directory || '(none found in this window)');
+  lines.push(session.pinned
+    ? 'Pinned — the views stay here whatever you open.'
+    : 'Following the active editor.');
+  lines.push('Click for the SemForge menu.');
+  return lines.join('\n');
+}
+
+
+/**
+ * The SemForge menu.
+ *
+ * VS Code does not let an extension add a menu beside File and Edit -- there
+ * is no contribution point for the menu bar, only for the menus inside the
+ * workbench. So the one place everything hangs off is the status bar item,
+ * which is where an editor integration that can face several projects puts it
+ * (the Python interpreter, the Java project, the active Docker context).
+ * Everything here is in the command palette under `SemForge:` as well.
+ */
+const MENU = [
+  { label: '$(pulse) Package health', command: 'semforge.openHealthPage',
+    description: 'is it in good shape, and what needs attention first' },
+  { label: '$(package) Switch package…', command: 'semforge.selectPackage',
+    description: 'which package all the views show' },
+  { label: '$(settings-gear) Project settings',
+    command: 'semforgeProject.focus',
+    description: 'name, contexts, namespaces — in the Package view' },
+  { label: '$(symbol-field) New attribute…', command: 'semforge.newAttribute',
+    description: 'declare it in the knowledge, then constrain it on its shape' },
+  { label: '$(trash) Delete attribute…', command: 'semforge.deleteAttribute',
+    description: 'with everything that depends on it, shown first' },
+  { label: '$(beaker) New test case…', command: 'semforge.newTestCase',
+    description: 'a test file in a suite: copied, from the model, a new entity, or empty' },
+  { label: '$(symbol-interface) New shape…', command: 'semforge.newShape',
+    description: 'for an entity type, one entity, or whatever has an attribute' },
+  { label: '$(symbol-enum) Vocabulary…', command: 'semforge.openVocabularyPage',
+    description: 'a value list: its values, where each is used, add, label, delete' },
+  { label: '$(symbol-enum) New vocabulary class…', command: 'semforge.newVocabularyClass',
+    description: 'a new value list, on its own or under another' },
+  { label: '$(refresh) Rescan', command: 'semforge.rescan',
+    description: 'ignore the cache and analyse the package from scratch' },
+  { label: '$(database) Delete cache…', command: 'semforge.deleteCache',
+    description: 'what the views show, stored per package; rebuilt on the next scan' },
+  { label: '$(check) Revalidate', command: 'semforge.revalidate',
+    description: 're-run analysis over the package' },
+  { label: '$(new-folder) New project…', command: 'semforge.newProject',
+    description: 'create a folder with the basic structure' },
+  { label: '$(file-directory) Create a package in this folder',
+    command: 'semforge.initPackage',
+    description: 'scaffold a directory you already have' },
+  { label: '$(pulse) Doctor', command: 'semforge.doctor',
+    description: 'what it sees: interpreter, package, server' },
+  { label: '$(debug-restart) Restart language server',
+    command: 'semforge.restart' },
+  { label: '$(trash) Delete project…', command: 'semforge.deleteProject',
+    description: 'moves the whole directory to the trash' }
+];
+
+/**
+ * Wire the session to the window: a status bar item, a switcher, and the
+ * subtitle on each view.
+ */
+function register(context, session, views, refreshAll) {
+  const item = vscode.window.createStatusBarItem
+    ? vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100)
+    : undefined;
+
+  const paint = () => {
+    const text = label(session);
+    if (item) {
+      item.text = `$(package) ${text}`;
+      item.tooltip = tooltip(session);
+      item.command = 'semforge.menu';
+      item.show();
+    }
+    for (const view of views || []) {
+      if (view) {
+        // The subtitle sits beside the view's name, so each of the three says
+        // which package it is showing without being asked.
+        view.description = session.uri ? text : undefined;
+      }
+    }
+  };
+
+  paint();
+  context.subscriptions.push(session.onDidChange(() => paint()));
+  if (item) {
+    context.subscriptions.push(item);
+  }
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('semforge.menu', async () => {
+      const chosen = await vscode.window.showQuickPick(MENU, {
+        placeHolder: `SemForge — ${label(session)}`
+      });
+      if (chosen) {
+        await vscode.commands.executeCommand(chosen.command);
+      }
+    }),
+
+    vscode.commands.registerCommand('semforge.selectPackage', async () => {
+      const found = listPackages();
+      const here = session.directory;
+      const items = found.map((entry) => ({
+        label: entry.name,
+        description: entry.directory === here ? entry.directory + '  (current)'
+                                              : entry.directory,
+        uri: entry.uri
+      }));
+      // The action on top, like every picker's.
+      items.unshift({
+        label: 'Follow the active editor',
+        description: 'unpin — the views move to whatever package you open',
+        uri: undefined,
+        follow: true
+      }, { label: 'Packages', kind: vscode.QuickPickItemKind.Separator });
+      if (!found.length) {
+        // Nothing to choose between is not a menu; it is a diagnosis.
+        vscode.window.showWarningMessage(
+          'No SemForge package in this window. Run "SemForge: New Project" ' +
+          'to create one, or open a folder that holds one.');
+        return;
+      }
+      const chosen = await vscode.window.showQuickPick(items, {
+        placeHolder: 'Which package should the SemForge views show?'
+      });
+      if (!chosen) {
+        return;
+      }
+      if (chosen.follow) {
+        session.pinned = false;
+        session.set(findPackageUri(), { pinned: false });
+      } else {
+        session.set(chosen.uri, { pinned: true });
+      }
+      paint();
+      if (refreshAll) {
+        refreshAll();
+      }
+    })
+  );
+
+  // One listener for the window, not one per view.
+  context.subscriptions.push(
+    vscode.window.onDidChangeActiveTextEditor((editor) => session.follow(editor))
+  );
+
+  return { paint };
+}
+
+module.exports = { PackageSession, register, label };

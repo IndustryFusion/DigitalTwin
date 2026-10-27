@@ -1,0 +1,10 @@
+venv/
+__pycache__/
+*.pyc
+.coverage
+.coverage.*
+.pytest_cache/
+vscode/node_modules/
+vscode/*.vsix
+*.egg-info/
+vscode/.vscode-test/

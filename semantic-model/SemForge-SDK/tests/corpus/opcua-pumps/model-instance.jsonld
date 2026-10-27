@@ -1,0 +1,563 @@
+[
+    {
+        "type": "pumps:DriveMeasurementsType",
+        "id": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA2",
+        "base:hasNodeRef": {
+            "type": "VocabProperty",
+            "vocab": "http://yourorganisation.org/InstanceExample/c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA2"
+        },
+        "@context": [
+            "https://industryfusion.github.io/contexts/staging/opcua/v0.2/context.jsonld"
+        ],
+        "pumps:hasMotorTemperature": {
+            "type": "Property",
+            "value": 0.0
+        },
+        "pumps:hasMotorVoltage": {
+            "type": "Property",
+            "value": 0.0
+        },
+        "pumps:hasDriverPowerInput": {
+            "type": "Property",
+            "value": 0.0
+        },
+        "pumps:hasFrequency": {
+            "type": "Property",
+            "value": 0.0
+        },
+        "pumps:hasEnergyConsumption": {
+            "type": "Property",
+            "value": 0.0
+        },
+        "pumps:hasMotorCurrent": {
+            "type": "Property",
+            "value": 0.0
+        }
+    },
+    {
+        "type": "pumps:DrivePortType",
+        "id": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA0",
+        "base:hasNodeRef": {
+            "type": "VocabProperty",
+            "vocab": "http://yourorganisation.org/InstanceExample/c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA0"
+        },
+        "@context": [
+            "https://industryfusion.github.io/contexts/staging/opcua/v0.2/context.jsonld"
+        ],
+        "pumps:hasMeasurements": [
+            {
+                "type": "Relationship",
+                "object": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA2"
+            }
+        ]
+    },
+    {
+        "type": "pumps:PortsGroupType",
+        "id": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDAz",
+        "base:hasNodeRef": {
+            "type": "VocabProperty",
+            "vocab": "http://yourorganisation.org/InstanceExample/c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDAz"
+        },
+        "@context": [
+            "https://industryfusion.github.io/contexts/staging/opcua/v0.2/context.jsonld"
+        ],
+        "pumps:has%3CDrive%3E": [
+            {
+                "type": "Relationship",
+                "object": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA0",
+                "datasetId": "http://opcfoundation.org/UA/Pumps/has%3CDrive%3E"
+            }
+        ]
+    },
+    {
+        "type": "pumps:SystemRequirementsType",
+        "id": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDIy",
+        "base:hasNodeRef": {
+            "type": "VocabProperty",
+            "vocab": "http://yourorganisation.org/InstanceExample/c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDIy"
+        },
+        "@context": [
+            "https://industryfusion.github.io/contexts/staging/opcua/v0.2/context.jsonld"
+        ],
+        "pumps:hasFieldbus": {
+            "type": "Property",
+            "value": {
+                "@id": "http://opcfoundation.org/UA/Pumps/BACnet_MSTP"
+            }
+        }
+    },
+    {
+        "type": "pumps:DesignType",
+        "id": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDIx",
+        "base:hasNodeRef": {
+            "type": "VocabProperty",
+            "vocab": "http://yourorganisation.org/InstanceExample/c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDIx"
+        },
+        "@context": [
+            "https://industryfusion.github.io/contexts/staging/opcua/v0.2/context.jsonld"
+        ],
+        "pumps:hasMinimumAllowableAmbientTemperature": {
+            "type": "Property",
+            "value": 278.15
+        },
+        "pumps:hasMaximumAllowableContinuousSpeed": {
+            "type": "Property",
+            "value": 56.67
+        },
+        "pumps:hasMinimumAllowableContinuousSpeed": {
+            "type": "Property",
+            "value": 23.33
+        },
+        "pumps:hasControllable": {
+            "type": "Property",
+            "value": false
+        },
+        "pumps:hasClockwiseRotation": {
+            "type": "Property",
+            "value": true
+        },
+        "pumps:hasOfferedControlModes": {
+            "type": "JsonProperty",
+            "json": {
+                "xsd:TypeId": {
+                    "xsd:Identifier": "ns=2;i=5008"
+                },
+                "xsd:Body": {
+                    "xsd:OptionSet": {
+                        "xsd:Value": "AAA=",
+                        "xsd:ValidBits": "gA8="
+                    }
+                }
+            }
+        },
+        "pumps:hasMaximumAllowableAmbientTemperature": {
+            "type": "Property",
+            "value": 343.15
+        },
+        "pumps:hasOfferedFieldbuses": {
+            "type": "JsonProperty",
+            "json": {
+                "xsd:TypeId": {
+                    "xsd:Identifier": "ns=2;i=5011"
+                },
+                "xsd:Body": {
+                    "xsd:OptionSet": {
+                        "xsd:Value": "AAAAAAAAAA==",
+                        "xsd:ValidBits": "gICAgICAAw=="
+                    }
+                }
+            }
+        },
+        "pumps:hasPumpClass": {
+            "type": "Property",
+            "value": {
+                "@id": "http://opcfoundation.org/UA/Pumps/LiquidPump"
+            }
+        },
+        "pumps:hasMaximumAllowableHead": {
+            "type": "Property",
+            "value": 6.3
+        },
+        "pumps:hasMaximumAllowableRelativeHumidity": {
+            "type": "Property",
+            "value": 80.0
+        },
+        "pumps:hasMaximumPumpPowerInput": {
+            "type": "Property",
+            "value": 85.0
+        }
+    },
+    {
+        "type": "pumps:ConfigurationGroupType",
+        "id": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDIw",
+        "base:hasNodeRef": {
+            "type": "VocabProperty",
+            "vocab": "http://yourorganisation.org/InstanceExample/c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDIw"
+        },
+        "@context": [
+            "https://industryfusion.github.io/contexts/staging/opcua/v0.2/context.jsonld"
+        ],
+        "pumps:hasSystemRequirements": [
+            {
+                "type": "Relationship",
+                "object": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDIy"
+            }
+        ],
+        "pumps:hasDesign": [
+            {
+                "type": "Relationship",
+                "object": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDIx"
+            }
+        ]
+    },
+    {
+        "type": "pumps:SupervisionMechanicsType",
+        "id": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA5",
+        "base:hasNodeRef": {
+            "type": "VocabProperty",
+            "vocab": "http://yourorganisation.org/InstanceExample/c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA5"
+        },
+        "@context": [
+            "https://industryfusion.github.io/contexts/staging/opcua/v0.2/context.jsonld"
+        ],
+        "pumps:hasUnbalance": {
+            "type": "Property",
+            "value": false
+        },
+        "pumps:hasExcessVibration": {
+            "type": "Property",
+            "value": false
+        },
+        "pumps:hasRotorBlocked": {
+            "type": "Property",
+            "value": false
+        }
+    },
+    {
+        "type": "pumps:SupervisionProcessFluidType",
+        "id": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDEw",
+        "base:hasNodeRef": {
+            "type": "VocabProperty",
+            "vocab": "http://yourorganisation.org/InstanceExample/c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDEw"
+        },
+        "@context": [
+            "https://industryfusion.github.io/contexts/staging/opcua/v0.2/context.jsonld"
+        ],
+        "pumps:hasTemperature": {
+            "type": "Property",
+            "value": false
+        },
+        "pumps:hasBlockage": {
+            "type": "Property",
+            "value": false
+        }
+    },
+    {
+        "type": "pumps:SupervisionPumpOperationType",
+        "id": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDEx",
+        "base:hasNodeRef": {
+            "type": "VocabProperty",
+            "vocab": "http://yourorganisation.org/InstanceExample/c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDEx"
+        },
+        "@context": [
+            "https://industryfusion.github.io/contexts/staging/opcua/v0.2/context.jsonld"
+        ],
+        "pumps:hasMaximumNumberStarts": {
+            "type": "Property",
+            "value": false
+        },
+        "pumps:hasMaximumOperationTime": {
+            "type": "Property",
+            "value": false
+        }
+    },
+    {
+        "type": "pumps:SupervisionType",
+        "id": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA4",
+        "base:hasNodeRef": {
+            "type": "VocabProperty",
+            "vocab": "http://yourorganisation.org/InstanceExample/c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA4"
+        },
+        "@context": [
+            "https://industryfusion.github.io/contexts/staging/opcua/v0.2/context.jsonld"
+        ],
+        "pumps:hasSupervisionMechanics": [
+            {
+                "type": "Relationship",
+                "object": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA5"
+            }
+        ],
+        "pumps:hasSupervisionProcessFluid": [
+            {
+                "type": "Relationship",
+                "object": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDEw"
+            }
+        ],
+        "pumps:hasSupervisionPumpOperation": [
+            {
+                "type": "Relationship",
+                "object": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDEx"
+            }
+        ]
+    },
+    {
+        "type": "pumps:PumpActuationType",
+        "id": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE3",
+        "base:hasNodeRef": {
+            "type": "VocabProperty",
+            "vocab": "http://yourorganisation.org/InstanceExample/c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE3"
+        },
+        "@context": [
+            "https://industryfusion.github.io/contexts/staging/opcua/v0.2/context.jsonld"
+        ],
+        "pumps:hasActualControlMode": {
+            "type": "Property",
+            "value": {
+                "@id": "http://opcfoundation.org/UA/Pumps/ConstantPressureControl"
+            }
+        },
+        "pumps:hasOnOff": {
+            "type": "Property",
+            "value": false
+        }
+    },
+    {
+        "type": "pumps:VibrationMeasurementType",
+        "id": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE5",
+        "base:hasNodeRef": {
+            "type": "VocabProperty",
+            "vocab": "http://yourorganisation.org/InstanceExample/c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE5"
+        },
+        "@context": [
+            "https://industryfusion.github.io/contexts/staging/opcua/v0.2/context.jsonld"
+        ],
+        "pumps:hasOverallVibrationAcceleration0_P": {
+            "type": "Property",
+            "value": 0.0
+        },
+        "pumps:hasOverallVibrationAccelerationPerG0_P": {
+            "type": "Property",
+            "value": 0.0
+        },
+        "pumps:hasOverallVibrationAccelerationP_P": {
+            "type": "Property",
+            "value": 0.0
+        }
+    },
+    {
+        "type": "pumps:MeasurementsType",
+        "id": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE4",
+        "base:hasNodeRef": {
+            "type": "VocabProperty",
+            "vocab": "http://yourorganisation.org/InstanceExample/c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE4"
+        },
+        "@context": [
+            "https://industryfusion.github.io/contexts/staging/opcua/v0.2/context.jsonld"
+        ],
+        "pumps:hasFluidTemperature": {
+            "type": "Property",
+            "value": 0.0
+        },
+        "pumps:hasPumpPowerInput": {
+            "type": "Property",
+            "value": 0.0
+        },
+        "pumps:hasDifferentialPressure": {
+            "type": "Property",
+            "value": 0.0
+        },
+        "pumps:has%3CVibration%3E": [
+            {
+                "type": "Relationship",
+                "object": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE5",
+                "datasetId": "http://yourorganisation.org/InstanceExample/hasSensor1"
+            }
+        ],
+        "pumps:hasSpeed": {
+            "type": "Property",
+            "value": 0.0
+        },
+        "pumps:hasNumberOfStarts": {
+            "type": "Property",
+            "value": 0
+        }
+    },
+    {
+        "type": "pumps:OperationalGroupType",
+        "id": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE2",
+        "base:hasNodeRef": {
+            "type": "VocabProperty",
+            "vocab": "http://yourorganisation.org/InstanceExample/c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE2"
+        },
+        "@context": [
+            "https://industryfusion.github.io/contexts/staging/opcua/v0.2/context.jsonld"
+        ],
+        "pumps:hasPumpActuation": [
+            {
+                "type": "Relationship",
+                "object": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE3"
+            }
+        ],
+        "pumps:hasMeasurements": [
+            {
+                "type": "Relationship",
+                "object": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE4"
+            }
+        ]
+    },
+    {
+        "type": "pumps:DocumentationType",
+        "id": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA1",
+        "base:hasNodeRef": {
+            "type": "VocabProperty",
+            "vocab": "http://yourorganisation.org/InstanceExample/c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA1"
+        },
+        "@context": [
+            "https://industryfusion.github.io/contexts/staging/opcua/v0.2/context.jsonld"
+        ],
+        "pumps:hasTechnicalDataLink": {
+            "type": "Property",
+            "value": "www.LinkToTechnicalData.com/example"
+        }
+    },
+    {
+        "type": "pumps:GeneralMaintenanceType",
+        "id": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE0",
+        "base:hasNodeRef": {
+            "type": "VocabProperty",
+            "vocab": "http://yourorganisation.org/InstanceExample/c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE0"
+        },
+        "@context": [
+            "https://industryfusion.github.io/contexts/staging/opcua/v0.2/context.jsonld"
+        ],
+        "pumps:hasOperatingTime": {
+            "type": "Property",
+            "value": 0.0
+        },
+        "pumps:hasActiveMaintenanceTime": {
+            "type": "Property",
+            "value": 0.0
+        }
+    },
+    {
+        "type": "pumps:PreventiveMaintenanceType",
+        "id": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE1",
+        "base:hasNodeRef": {
+            "type": "VocabProperty",
+            "vocab": "http://yourorganisation.org/InstanceExample/c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE1"
+        },
+        "@context": [
+            "https://industryfusion.github.io/contexts/staging/opcua/v0.2/context.jsonld"
+        ],
+        "pumps:hasLastInspectionDate": {
+            "type": "Property",
+            "value": {
+                "@value": "2021-05-01T10:00:00Z",
+                "@type": "xsd:dateTime"
+            }
+        },
+        "pumps:hasLastServicingDate": {
+            "type": "Property",
+            "value": {
+                "@value": "2021-05-01T10:00:00Z",
+                "@type": "xsd:dateTime"
+            }
+        },
+        "pumps:hasNextServicingDate": {
+            "type": "Property",
+            "value": {
+                "@value": "2022-05-01T10:00:00Z",
+                "@type": "xsd:dateTime"
+            }
+        },
+        "pumps:hasNextInspectionDate": {
+            "type": "Property",
+            "value": {
+                "@value": "2022-05-01T10:00:00Z",
+                "@type": "xsd:dateTime"
+            }
+        },
+        "pumps:hasInstallationDate": {
+            "type": "Property",
+            "value": {
+                "@value": "2021-05-01T10:00:00Z",
+                "@type": "xsd:dateTime"
+            }
+        }
+    },
+    {
+        "type": "pumps:BreakdownMaintenanceType",
+        "id": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDEz",
+        "base:hasNodeRef": {
+            "type": "VocabProperty",
+            "vocab": "http://yourorganisation.org/InstanceExample/c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDEz"
+        },
+        "@context": [
+            "https://industryfusion.github.io/contexts/staging/opcua/v0.2/context.jsonld"
+        ],
+        "pumps:hasFailure": {
+            "type": "Property",
+            "value": false
+        },
+        "pumps:hasNumberOfFailures": {
+            "type": "Property",
+            "value": 0
+        }
+    },
+    {
+        "type": "pumps:MaintenanceGroupType",
+        "id": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDEy",
+        "base:hasNodeRef": {
+            "type": "VocabProperty",
+            "vocab": "http://yourorganisation.org/InstanceExample/c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDEy"
+        },
+        "@context": [
+            "https://industryfusion.github.io/contexts/staging/opcua/v0.2/context.jsonld"
+        ],
+        "pumps:hasGeneralMaintenance": [
+            {
+                "type": "Relationship",
+                "object": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE0"
+            }
+        ],
+        "pumps:hasPreventiveMaintenance": [
+            {
+                "type": "Relationship",
+                "object": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE1"
+            }
+        ],
+        "pumps:hasBreakdownMaintenance": [
+            {
+                "type": "Relationship",
+                "object": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDEz"
+            }
+        ]
+    },
+    {
+        "type": "pumps:PumpType",
+        "id": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDAy",
+        "base:hasNodeRef": {
+            "type": "VocabProperty",
+            "vocab": "http://yourorganisation.org/InstanceExample/c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDAy"
+        },
+        "@context": [
+            "https://industryfusion.github.io/contexts/staging/opcua/v0.2/context.jsonld"
+        ],
+        "pumps:hasPorts": [
+            {
+                "type": "Relationship",
+                "object": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDAz"
+            }
+        ],
+        "devices:hasConfiguration": [
+            {
+                "type": "Relationship",
+                "object": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDIw"
+            }
+        ],
+        "pumps:hasEvents": [
+            {
+                "type": "Relationship",
+                "object": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA4"
+            }
+        ],
+        "devices:hasOperational": [
+            {
+                "type": "Relationship",
+                "object": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE2"
+            }
+        ],
+        "pumps:hasDocumentation": [
+            {
+                "type": "Relationship",
+                "object": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA1"
+            }
+        ],
+        "devices:hasMaintenance": [
+            {
+                "type": "Relationship",
+                "object": "sn1234c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDEy"
+            }
+        ]
+    }
+]

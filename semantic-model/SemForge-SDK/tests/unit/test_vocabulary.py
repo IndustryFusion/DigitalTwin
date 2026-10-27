@@ -1,0 +1,490 @@
+#
+# Copyright (c) 2026 IndustryFusion Foundation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+"""An attribute must be declared before it is used.
+
+The same rule as an entity's type, one level down and for the same reason. A
+type decides which shapes judge an entity; an attribute's NAME decides which
+`sh:path` matches it. So a name the knowledge has never heard of does not
+produce an error -- it produces silence: no property shape selects it, the
+constraint that should have judged the value never fires, and the document
+reads as validated.
+"""
+
+import os
+import shutil
+
+import pytest
+
+from semforge.cooked.choices import attribute_terms, attributes_for
+from semforge.cooked.examples import add_attribute
+from semforge.cooked.knowledge import add_attribute_term
+from semforge.errors import PackageError
+from semforge.expect.vocabulary import undeclared_attributes
+from semforge.package import load
+
+
+@pytest.fixture
+def package(tmp_path, corpus_path):
+    copy = tmp_path / 'pkg'
+    shutil.copytree(corpus_path, copy)
+    return load(str(copy))
+
+
+# --- what the knowledge declares ---------------------------------------------
+
+def test_an_attribute_carries_its_kind_and_its_carrier(package):
+    by_term = {entry.term: entry for entry in attribute_terms(package)}
+    state = by_term['iffBaseEntities:hasState']
+    assert state.kind == 'Property'
+    assert state.domain == 'iffBaseEntities:Machine'
+    assert state.constrained
+    assert state.defined_at.endswith(('knowledge.ttl:62', 'knowledge.ttl:63'))
+
+    relation = by_term['iffBaseEntities:hasFilter']
+    assert relation.kind == 'Relationship'
+
+
+def test_every_ngsi_ld_kind_is_recognised(package):
+    """Property and Relationship are not the only two: the kms uses four."""
+    kinds = {entry.kind for entry in attribute_terms(package)}
+    assert {'Property', 'Relationship', 'JsonProperty', 'ListProperty'} <= kinds
+
+
+def test_the_domain_is_inherited_down_the_hierarchy(package):
+    """A Plasmacutter carries what a Cutter carries and what a Machine does."""
+    mine, _ = attributes_for(package, 'iffBaseEntities:Plasmacutter')
+    terms = {entry.term for entry in mine}
+    assert 'iffBaseEntities:hasFilter' in terms       # declared on Cutter
+    assert 'iffBaseEntities:hasState' in terms        # declared on Machine
+    assert 'iffBaseEntities:hasHeight' not in terms   # a Workpiece's
+
+
+def test_an_attribute_with_no_domain_is_offered_separately(package):
+    """A package may simply not have said which type carries it.
+
+    Hiding it would be wrong; mixing it in with the ones that name this type
+    would claim a carrier nobody declared. (A SUB-attribute is a different
+    case and is not offered here at all -- see below.)
+    """
+    mine, open_ended = attributes_for(package, 'iffBaseEntities:Filter')
+    assert open_ended, 'the corpus has attributes with no rdfs:domain'
+    assert not [entry for entry in open_ended if entry.domain]
+    assert all(entry.domain for entry in mine)
+
+
+# --- what the documents use --------------------------------------------------
+
+def test_the_corpus_typo_is_reported(package):
+    """`hasOutWorkpiecexx` is two letters from a real attribute.
+
+    It has been in the shipped model instance all along: no shape constrains
+    it, no knowledge file declares it, and nothing ever said so.
+    """
+    found = {entry.term: entry for entry in undeclared_attributes(package)}
+    assert 'iffBaseEntities:hasOutWorkpiecexx' in found
+    typo = found['iffBaseEntities:hasOutWorkpiecexx']
+    assert not typo.constrained
+    assert all(place.endswith('model-instance.jsonld')
+               for place, _ in typo.places)
+    assert all(line > 1 for _, line in typo.places)
+
+
+def test_the_scratchpad_is_reported_but_does_not_fail(package):
+    """The same rule the Model view draws: Main cannot fail, Tests can."""
+    found = {entry.term: entry for entry in undeclared_attributes(package)}
+    assert found['iffBaseEntities:hasOutWorkpiecexx'].severity == 'info'
+
+
+def test_a_case_using_an_undeclared_attribute_is_an_error(package, tmp_path):
+    case = os.path.join(package.path, 'examples', 'test_FilterShape', 'bad',
+                        'without-cartridge.jsonld')
+    text = open(case, encoding='utf-8').read()
+    open(case, 'w', encoding='utf-8').write(
+        text.replace('"iffBaseEntities:hasState"',
+                     '"iffBaseEntities:hasStatex"', 1))
+
+    found = {entry.term: entry for entry in undeclared_attributes(load(package.path))}
+    assert 'iffBaseEntities:hasStatex' in found
+    assert found['iffBaseEntities:hasStatex'].severity == 'error'
+
+
+def test_the_encoding_keys_are_not_attributes(package):
+    """`value`, `object`, `observedAt` are the encoding, not the vocabulary."""
+    terms = {entry.term for entry in undeclared_attributes(package)}
+    for reserved in ('value', 'object', 'type', 'id', 'observedAt', 'datasetId'):
+        assert reserved not in terms
+
+
+# --- writing -----------------------------------------------------------------
+
+def test_an_undeclared_attribute_cannot_be_written(package):
+    with pytest.raises(PackageError) as raised:
+        add_attribute(package, 'urn:filter:1', 'iffBaseEntities:hasPressure',
+                      value='1.0')
+    assert 'not an attribute this package declares' in str(raised.value)
+
+
+def test_declaring_it_first_makes_it_usable(package):
+    add_attribute_term(package, 'hasPressure', 'Property',
+                       'iffBaseEntities:Filter', label='bar, at the inlet')
+    again = load(package.path)
+    source, kind = add_attribute(again, 'urn:filter:1',
+                                 'iffBaseEntities:hasPressure', value='1.0')
+    assert kind == 'Property'
+    assert 'hasPressure' in open(source, encoding='utf-8').read()
+
+
+def test_a_new_attribute_records_its_carrier_and_its_kind(package):
+    made = add_attribute_term(package, 'hasPressure', 'Relationship',
+                              'iffBaseEntities:Filter')
+    text = open(made['file'], encoding='utf-8').read()
+    assert 'rdfs:domain iffBaseEntities:Filter' in text
+    assert 'ngsi-ld/Relationship' in text
+    entry = next(e for e in attribute_terms(load(package.path))
+                 if e.label == 'hasPressure')
+    assert entry.kind == 'Relationship'
+
+
+def test_a_sub_attribute_is_declared_without_a_carrier(package):
+    made = add_attribute_term(package, 'hasConfidence', 'Property', '')
+    assert made['domain'] == ''
+    text = open(made['file'], encoding='utf-8').read()
+    assert 'hasConfidence a owl:DatatypeProperty ;\n    rdfs:range' in text
+
+
+def test_a_carrier_that_carries_nothing_is_refused(package):
+    """A vocabulary class is neither an entity type nor an attribute."""
+    with pytest.raises(PackageError) as raised:
+        add_attribute_term(package, 'hasThing', 'Property',
+                           'iffBaseKnowledge:MachineState')
+    assert 'neither an entity type nor an attribute' in str(raised.value)
+
+
+def test_a_kind_that_is_not_ngsi_ld_is_refused(package):
+    with pytest.raises(PackageError) as raised:
+        add_attribute_term(package, 'hasThing', 'Thing',
+                           'iffBaseEntities:Filter')
+    assert 'not an NGSI-LD attribute kind' in str(raised.value)
+
+
+def test_a_duplicate_attribute_is_refused(package):
+    with pytest.raises(PackageError) as raised:
+        add_attribute_term(package, 'hasState', 'Property',
+                           'iffBaseEntities:Machine')
+    assert 'already declared' in str(raised.value)
+
+
+# --- nested attributes -------------------------------------------------------
+
+def test_a_sub_attribute_gets_its_parent_from_the_shapes(package):
+    """Which SPECIFIC attribute it nests inside is only the shapes' to say.
+
+    `rdfs:domain` says which KIND of node carries it (see below), which is a
+    real statement but a weaker one: it permits every Relationship, not this
+    one attribute. Naming the attribute in a domain would be punning --
+    `rdfs:domain hasFilter` makes hasFilter a class as well as a property.
+    """
+    from semforge.cooked.choices import nesting
+
+    inside = nesting(package)
+    trust = 'https://industryfusion.github.io/contexts/example/v0/base_entities/hasTrust'
+    assert inside[trust] == [
+        'https://industryfusion.github.io/contexts/example/v0/base_entities/hasFilter']
+
+
+def test_the_value_layer_is_not_a_sub_attribute(package):
+    """The encoding is two-layer: the inner sh:property on ngsild:hasValue is
+    the VALUE, not an attribute of the attribute."""
+    from semforge.cooked.choices import nesting
+
+    assert not [child for child in nesting(package)
+                if 'ngsi-ld/has' in child]
+
+
+def test_a_sub_attribute_is_not_offered_as_an_entity_attribute(package):
+    """Offering `hasTrust` on a Filter would put it where no shape looks."""
+    mine, open_ended = attributes_for(package, 'iffBaseEntities:Filter')
+    offered = {entry.term for entry in mine} | {entry.term for entry in open_ended}
+    assert 'iffBaseEntities:hasTrust' not in offered
+    assert 'iffBaseEntities:hasXXXWorkpiece' not in offered
+
+
+def test_an_attribute_declared_on_both_kinds_nests_in_either(package):
+    """base:boundBy has rdfs:domain ngsild:Property AND ngsild:Relationship.
+
+    Taking the first domain the graph yielded offered it under one kind or the
+    other at random -- which showed only once loading stopped yielding the
+    triples in the same order every time.
+    """
+    from semforge.cooked.choices import attribute_terms, sub_attributes_for
+
+    bound = next(e for e in attribute_terms(package) if e.label == 'boundBy')
+    assert bound.carrier_kinds == ('Property', 'Relationship')
+    assert bound.carrier_kind == 'Property or Relationship'
+    on_property = {e.label for e in sub_attributes_for(package, 'iffBaseEntities:hasState')}
+    on_relationship = {e.label for e in sub_attributes_for(package, 'iffBaseEntities:hasFilter')}
+    assert 'boundBy' in on_property and 'boundBy' in on_relationship
+
+
+def test_the_sub_attributes_of_an_attribute_can_be_asked_for(package):
+    """Which is the question a nested picker asks.
+
+    Two answers, in order: what a shape has PLACED inside this attribute, then
+    what the knowledge ALLOWS inside anything of its kind.
+    """
+    from semforge.cooked.choices import sub_attributes_for
+
+    found = sub_attributes_for(package, 'iffBaseEntities:hasFilter')
+    assert found[0].term == 'iffBaseEntities:hasTrust'
+    assert found[0].kind == 'Property'
+    assert found[0].parents == ('iffBaseEntities:hasFilter',)
+    # hasFilter is a Relationship, so only things declared to hang off one.
+    assert all(not entry.carrier_kinds or 'Relationship' in entry.carrier_kinds
+               for entry in found)
+
+    on_state = sub_attributes_for(package, 'iffBaseEntities:hasState')
+    assert 'iffBaseEntities:hasXXXWorkpiece' in {e.term for e in on_state}
+    # A Property's sub-attributes are not offered on a Relationship.
+    assert 'iffBaseEntities:hasXXXWorkpiece' not in {e.term for e in found}
+
+
+def test_an_attribute_nobody_nests_has_no_parents(package):
+    by_term = {entry.term: entry for entry in attribute_terms(package)}
+    assert by_term['iffBaseEntities:hasState'].parents == ()
+
+
+def test_the_domain_of_a_sub_attribute_is_the_attribute_node_class(package):
+    """The encoding types the attribute node, so domain IS an ordinary class.
+
+    `hasFilter` expands to a node `a ngsild:Relationship` carrying
+    `ngsild:hasObject`; `hasTrust` hangs off that node. So
+    `rdfs:domain ngsild:Relationship` is literally true -- nothing invented and
+    no punning. The shipped kms already does this for `base:boundBy`.
+    """
+    by_term = {entry.term: entry for entry in attribute_terms(package)}
+    assert by_term['iffBaseEntities:hasTrust'].carrier_kind == 'Relationship'
+    assert by_term['iffBaseEntities:hasXXXWorkpiece'].carrier_kind == 'Property'
+    assert by_term['iffBaseEntities:hasState'].carrier_kind == ''
+
+
+def test_the_declaration_alone_is_enough_to_know_it_nests(package):
+    """A sub-attribute declared but not yet placed in a shape is still one.
+
+    Reading it only from the shapes made an unplaced sub-attribute
+    indistinguishable from an attribute nobody had given a domain.
+    """
+    from semforge.cooked.knowledge import add_attribute_term
+
+    add_attribute_term(package, 'hasConfidence', 'Property',
+                       'iffBaseEntities:hasFilter')
+    again = load(package.path)
+    entry = next(e for e in attribute_terms(again) if e.label == 'hasConfidence')
+    assert entry.carrier_kind == 'Relationship'
+    assert entry.parents == ()          # no shape places it yet
+
+    mine, open_ended = attributes_for(again, 'iffBaseEntities:Filter')
+    offered = {e.term for e in mine} | {e.term for e in open_ended}
+    assert 'iffBaseEntities:hasConfidence' not in offered
+
+
+def test_a_carrier_attribute_writes_the_node_class_as_the_domain(package):
+    from semforge.cooked.knowledge import add_attribute_term
+
+    made = add_attribute_term(package, 'hasConfidence', 'Property',
+                              'iffBaseEntities:hasFilter')
+    assert made['domain'] == 'iffBaseEntities:hasFilter'
+    text = open(made['file'], encoding='utf-8').read()
+    assert 'rdfs:domain <https://uri.etsi.org/ngsi-ld/Relationship>' in text
+
+
+def test_a_carrier_that_is_neither_a_type_nor_an_attribute_is_refused(package):
+    from semforge.cooked.knowledge import add_attribute_term
+
+    with pytest.raises(PackageError) as raised:
+        add_attribute_term(package, 'hasThing', 'Property', 'iffBaseEntities:Nope')
+    assert 'neither an entity type nor an attribute' in str(raised.value)
+
+
+def test_placed_sub_attributes_come_before_merely_allowed_ones(package):
+    """A shape that nests it names one parent; a domain permits a whole kind."""
+    from semforge.cooked.choices import sub_attributes_for
+
+    found = sub_attributes_for(package, 'iffBaseEntities:hasState')
+    assert found[0].term == 'iffBaseEntities:hasXXXWorkpiece'
+    assert found[0].parents == ('iffBaseEntities:hasState',)
+    assert any(entry.parents == () and 'Property' in entry.carrier_kinds
+               for entry in found[1:]), [e.term for e in found]
+
+
+# --- the NGSI-LD vocabulary itself -------------------------------------------
+
+def test_every_package_gets_the_ngsild_vocabulary(package):
+    """The one rule the encoding did not follow: declared before used.
+
+    `rdfs:range ngsild:Property` pointed at a class no file declared.
+    """
+    from rdflib import RDF, URIRef
+    from rdflib.namespace import OWL
+
+    assert len(package.vocabulary)
+    ngsild = 'https://uri.etsi.org/ngsi-ld/'
+    classes = {str(s)[len(ngsild):]
+               for s in package.vocabulary.subjects(RDF.type, OWL.Class)}
+    assert {'Property', 'Relationship', 'JsonProperty', 'ListProperty'} <= classes
+    assert (URIRef(ngsild + 'hasValue'), None, None) in package.vocabulary
+
+
+def test_it_is_kept_apart_from_what_the_package_declares(package):
+    """Nothing may mistake the encoding for something this package owns."""
+    from rdflib import URIRef
+
+    assert (URIRef('https://uri.etsi.org/ngsi-ld/hasValue'), None, None) \
+        not in package.knowledge
+    assert 'ngsild:hasValue' not in {entry.term
+                                     for entry in attribute_terms(package)}
+
+
+def test_the_shared_vocabulary_covers_what_the_kms_uses(package):
+    from semforge.expect.vocabulary import unknown_ngsild_terms
+
+    assert unknown_ngsild_terms(package) == []
+
+
+def test_a_term_no_vocabulary_declares_is_reported(tmp_path, package):
+    """Which is how the upstream ontology's gap is visible at all.
+
+    It declares two classes. The kms uses ten terms.
+    """
+    from semforge.expect.vocabulary import unknown_ngsild_terms
+    from semforge.package import config
+
+    upstream = tmp_path / 'upstream.ttl'
+    upstream.write_text(
+        '@prefix : <https://uri.etsi.org/ngsi-ld/> .\n'
+        '@prefix owl: <http://www.w3.org/2002/07/owl#> .\n'
+        ':Property a owl:Class .\n'
+        ':Relationship a owl:Class .\n')
+    config.set_value(package.path, 'ngsild.source', str(upstream))
+
+    found = {entry.term: entry for entry in unknown_ngsild_terms(load(package.path))}
+    assert 'hasValue' in found and 'JsonProperty' in found
+    assert 'shapes' in found['hasValue'].where
+    assert 'vocabulary needs extending' in found['hasValue'].message
+    # The ones it does declare are not reported.
+    assert 'Property' not in found
+
+
+def test_a_settings_key_never_matches_a_nested_line(package):
+    """The kms declares a NAMESPACE called `ngsild` inside `namespaces:`.
+
+    Looking for a top-level `ngsild:` without checking the indent found that
+    line, so writing the setting overwrote the namespace and broke every
+    prefixed name in the package.
+    """
+    from semforge.package import config
+
+    top = config.locate(package.path, 'ngsild')
+    nested = config.locate(package.path, 'namespaces.ngsild')
+    assert top > 0 and nested > 0 and top != nested
+
+    config.set_value(package.path, 'ngsild.source', './vendor/ngsild.ttl')
+    declared = config.read(package.path)
+    assert declared['ngsild'] == {'source': './vendor/ngsild.ttl'}
+    assert declared['namespaces']['ngsild'] == 'https://uri.etsi.org/ngsi-ld/'
+
+
+# --- namespace prefixes are a package-wide table -----------------------------
+
+def test_a_prefix_a_file_invents_is_an_error(package, tmp_path):
+    """Names are agreed once, for the whole package.
+
+    A file that binds one the package has not defined has invented a name:
+    nothing else knows it, the model cannot expand it, and a term copied out of
+    that file means nothing where it lands.
+    """
+    from semforge.package.prefixes import check
+
+    shapes = package.sources['shapes']
+    text = open(shapes, encoding='utf-8').read()
+    open(shapes, 'w', encoding='utf-8').write(
+        '@prefix invented: <https://example.org/invented/> .\n' + text +
+        '\ninvented:Thing a <http://www.w3.org/2002/07/owl#Class> .\n')
+
+    findings = {finding.code: finding for finding in check(load(package.path))}
+    assert 'SF-PFX-003' in findings
+    assert findings['SF-PFX-003'].severity == 'error'
+    assert 'defined once, for the whole package' in findings['SF-PFX-003'].message
+
+
+def test_a_prefix_can_be_defined_for_the_package(package):
+    from semforge.package.prefixes import add_namespace, canonical_map
+
+    made = add_namespace(package.path, 'plant', 'https://example.org/plant/')
+    assert made['prefix'] == 'plant'
+    assert made['file'].endswith('semforge.yaml')
+    assert canonical_map(package.path)['plant'] == 'https://example.org/plant/'
+
+
+def test_defining_one_does_not_disturb_the_others(package):
+    from semforge.package.prefixes import add_namespace, canonical_map
+
+    before = canonical_map(package.path)
+    add_namespace(package.path, 'plant', 'https://example.org/plant/')
+    after = canonical_map(package.path)
+    assert before.items() <= after.items()
+    assert set(after) - set(before) == {'plant'}
+
+
+@pytest.mark.parametrize('prefix,namespace,complaint', [
+    ('9bad', 'https://example.org/a/', 'not usable as a prefix'),
+    ('ok', 'nonsense', 'not a namespace IRI'),
+    ('ok', 'https://example.org/a', 'does not end in'),
+    ('ngsild', 'https://example.org/a/', 'already means'),
+])
+def test_a_definition_that_would_break_the_table_is_refused(
+        package, prefix, namespace, complaint):
+    from semforge.package.prefixes import add_namespace
+
+    with pytest.raises(PackageError) as raised:
+        add_namespace(package.path, prefix, namespace)
+    assert complaint in str(raised.value)
+
+
+def test_a_second_name_for_one_namespace_is_refused(package):
+    """rdflib binds one prefix per namespace: a second evicts the first."""
+    from semforge.package.prefixes import add_namespace
+
+    with pytest.raises(PackageError) as raised:
+        add_namespace(package.path, 'etsi', 'https://uri.etsi.org/ngsi-ld/')
+    assert 'already named' in str(raised.value)
+
+
+def test_the_prefix_table_is_reported_where_it_is_shown(package, tmp_path):
+    """The Project view's namespaces row carries what the artifacts say."""
+    from semforge.cooked.project import build_project
+
+    shapes = package.sources['shapes']
+    text = open(shapes, encoding='utf-8').read()
+    open(shapes, 'w', encoding='utf-8').write(
+        '@prefix invented: <https://example.org/invented/> .\n' + text +
+        '\ninvented:Thing a <http://www.w3.org/2002/07/owl#Class> .\n')
+
+    rows = {row.label: row
+            for root in build_project(load(package.path))
+            for row in root.children}
+    assert rows['namespaces'].severity == 'error'
+    assert 'disagreement' in rows['namespaces'].detail

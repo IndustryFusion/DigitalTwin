@@ -1,0 +1,11 @@
+# Pinned to shacl2flink's versions on purpose: a second RDF stack in one repo
+# is a support burden with no upside. See implementation-plan.md section 2.
+rdflib==7.1.1
+pyshacl==0.29.0
+ruamel.yaml==0.17.21
+click==8.1.3
+
+# The editor service. LSP is an implementation option, not a conceptual
+# requirement (architecture.md section 8.3) -- nothing below the editor layer
+# imports it.
+pygls==2.1.1
