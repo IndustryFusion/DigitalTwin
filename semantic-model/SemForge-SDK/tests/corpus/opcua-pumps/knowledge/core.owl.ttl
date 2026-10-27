@@ -1,0 +1,55 @@
+@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+@prefix opcua: <http://opcfoundation.org/UA/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+opcua:FileType a owl:Class ;
+    rdfs:subClassOf opcua:BaseObjectType .
+
+opcua:FolderType a owl:Class ;
+    rdfs:subClassOf opcua:BaseObjectType .
+
+opcua:HasComponent a owl:ObjectProperty ;
+    rdfs:subPropertyOf opcua:Aggregates .
+
+opcua:OptionSet a owl:Class ;
+    rdfs:subClassOf opcua:Structure ;
+    base:hasField opcua:ValidBits,
+        opcua:Value .
+
+opcua:Aggregates a owl:ObjectProperty ;
+    rdfs:subPropertyOf opcua:HasChild .
+
+opcua:Enumeration a owl:Class ;
+    rdfs:subClassOf opcua:BaseDataType .
+
+opcua:HasChild a owl:ObjectProperty ;
+    rdfs:subPropertyOf opcua:HierarchicalReferences .
+
+opcua:HierarchicalReferences a owl:ObjectProperty ;
+    rdfs:subPropertyOf opcua:References .
+
+opcua:References a owl:ObjectProperty .
+
+opcua:Structure a opcua:StructureType,
+        owl:Class,
+        owl:NamedIndividual ;
+    rdfs:subClassOf opcua:BaseDataType ;
+    base:hasFieldName "Structure" ;
+    base:hasValueNode base:_N98626991e0434811acde9747723f63c1 .
+
+opcua:BaseDataType a owl:Class,
+        owl:NamedIndividual,
+        base:Field ;
+    base:hasDatatype opcua:NodeId ;
+    base:hasFieldName "BaseDataType" .
+
+opcua:BaseObjectType a owl:Class .
+
+opcua:StructureType a owl:Class,
+        owl:NamedIndividual,
+        base:Field ;
+    rdfs:subClassOf opcua:Enumeration ;
+    base:hasDatatype opcua:StructureType ;
+    base:hasFieldName "StructureType" .
+

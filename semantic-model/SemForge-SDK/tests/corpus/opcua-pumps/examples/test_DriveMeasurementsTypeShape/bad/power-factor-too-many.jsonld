@@ -1,0 +1,31 @@
+[
+  {
+    "id": "urn:opcua-kms:drivemeasurementstype:test",
+    "type": "http://opcfoundation.org/UA/Pumps/DriveMeasurementsType",
+    "http://opcfoundation.org/UA/Pumps/hasVoltage": [
+      {
+        "type": "Property",
+        "value": 10.0
+      },
+      {
+        "type": "Property",
+        "value": 10.1,
+        "datasetId": "urn:opcua-kms:dataset:2"
+      }
+    ],
+    "http://opcfoundation.org/UA/Pumps/hasPowerFactor": [
+      {
+        "type": "Property",
+        "value": 10.0
+      },
+      {
+        "type": "Property",
+        "value": 10.0,
+        "datasetId": "https://example.com/index/2"
+      }
+    ],
+    "@context": [
+      "https://industryfusion.github.io/contexts/staging/opcua/v0.2/context.jsonld"
+    ]
+  }
+]

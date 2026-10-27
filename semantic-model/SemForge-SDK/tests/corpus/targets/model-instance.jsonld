@@ -1,0 +1,44 @@
+[
+  {
+    "@context": ["https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld",
+                 {"ex": "https://example.org/targets/"}],
+    "id": "urn:pump:1",
+    "type": "ex:Pump",
+    "ex:hasPressure": {"type": "Property", "value": 3},
+    "ex:hasValve": {"type": "Relationship", "object": "urn:valve:1"}
+  },
+  {
+    "@context": ["https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld",
+                 {"ex": "https://example.org/targets/"}],
+    "id": "urn:pump:2",
+    "type": "ex:Pump",
+    "ex:hasPressure": {"type": "Property", "value": 7}
+  },
+  {
+    "@context": ["https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld",
+                 {"ex": "https://example.org/targets/"}],
+    "id": "urn:pump:3",
+    "type": "ex:Pump",
+    "ex:hasPressure": {"type": "Property", "value": 2},
+    "ex:hasValve": {"type": "Relationship", "object": "urn:valve:2"}
+  },
+  {
+    "@context": ["https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld",
+                 {"ex": "https://example.org/targets/"}],
+    "id": "urn:valve:1",
+    "type": "ex:Valve",
+    "ex:hasPosition": {"type": "Property", "value": "open"}
+  },
+  {
+    "@context": ["https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld",
+                 {"ex": "https://example.org/targets/"}],
+    "id": "urn:valve:2",
+    "type": "ex:Valve"
+  },
+  {
+    "@context": ["https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld",
+                 {"ex": "https://example.org/targets/"}],
+    "id": "urn:gauge:1",
+    "type": "ex:Gauge"
+  }
+]

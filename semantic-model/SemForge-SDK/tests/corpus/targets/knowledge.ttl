@@ -1,0 +1,34 @@
+@prefix ex: <https://example.org/targets/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# A package whose shapes use every SHACL target kind, one each. The kms uses
+# only sh:targetClass, which is how navigation and validation came to assume
+# that every shape belongs to one entity type.
+
+ex:Thing a owl:Class .
+
+ex:Pump a owl:Class ;
+    rdfs:subClassOf ex:Thing .
+
+ex:Valve a owl:Class ;
+    rdfs:subClassOf ex:Thing .
+
+ex:Gauge a owl:Class ;
+    rdfs:subClassOf ex:Thing .
+
+ex:hasPressure a owl:ObjectProperty ;
+    rdfs:domain ex:Pump ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
+ex:hasValve a owl:ObjectProperty ;
+    rdfs:domain ex:Pump ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Relationship> .
+
+ex:hasPosition a owl:ObjectProperty ;
+    rdfs:domain ex:Valve ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
+ex:hasReading a owl:ObjectProperty ;
+    rdfs:domain ex:Gauge ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .

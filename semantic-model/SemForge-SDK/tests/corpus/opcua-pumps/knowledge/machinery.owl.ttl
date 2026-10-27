@@ -1,0 +1,11 @@
+@prefix di: <http://opcfoundation.org/UA/DI/> .
+@prefix machinery: <http://opcfoundation.org/UA/Machinery/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+machinery:MachineIdentificationType a owl:Class ;
+    rdfs:subClassOf machinery:MachineryItemIdentificationType .
+
+machinery:MachineryItemIdentificationType a owl:Class ;
+    rdfs:subClassOf di:FunctionalGroupType .
+

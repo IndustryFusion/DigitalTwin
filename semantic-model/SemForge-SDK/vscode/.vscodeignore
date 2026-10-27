@@ -1,0 +1,11 @@
+# node_modules is NOT ignored. A VS Code extension must ship its runtime
+# dependencies: extension.js requires vscode-languageclient at module load, so
+# excluding them made the module throw MODULE_NOT_FOUND before a single line
+# ran -- no commands, no views, and no log entry to say why. vsce packages only
+# production dependencies, so devDependencies stay out.
+.vscode/**
+tests/**
+**/*.map
+**/.DS_Store
+.vscode-test/
+test/**

@@ -1,0 +1,3 @@
+namespaces:
+  opcuaKmsDataset: 'urn:opcua-kms:dataset:'
+  index: https://example.com/index/

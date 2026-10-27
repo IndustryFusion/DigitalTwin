@@ -1,0 +1,13 @@
+# Cases in this directory are expected to VIOLATE, and to say which constraint.
+examples:
+  - path: measurements-too-many.jsonld
+    description: 'hasMeasurements more than 1: 2 instances, each its own datasetId.
+      A new entity, its required attributes given valid values.'
+    expect: invalid
+    asserts:
+      - constraint: shacl:DrivePortTypeShape/hasMeasurements/MaxCountConstraintComponent
+        resource: urn:opcua-kms:driveporttype:test
+      - constraint: shacl:DrivePortTypeShape/hasMeasurements.hasObject/MinCountConstraintComponent
+        resource: urn:opcua-kms:driveporttype:test
+      - constraint: shacl:DrivePortTypeShape/hasTestAttribute/MinCountConstraintComponent
+        resource: urn:opcua-kms:driveporttype:test

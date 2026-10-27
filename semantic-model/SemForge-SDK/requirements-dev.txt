@@ -1,0 +1,8 @@
+# Deliberately AHEAD of shacl2flink's flake8==5.0.4. That pin predates PEP 701
+# (Python 3.12 f-string tokenization), so on 3.12 it parses the inside of every
+# f-string as code and reports dozens of phantom E231/E221. shacl2flink runs on
+# 3.10 where the pin is fine. A linter version is not a runtime dependency, so
+# this deviation costs nothing the rdflib/pyshacl pins are protecting.
+flake8==7.1.1
+pytest==9.0.3
+pytest-cov==4.0.0

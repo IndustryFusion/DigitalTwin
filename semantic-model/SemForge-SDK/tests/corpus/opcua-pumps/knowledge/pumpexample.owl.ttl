@@ -1,0 +1,382 @@
+@prefix di: <http://opcfoundation.org/UA/DI/> .
+@prefix opcua: <http://opcfoundation.org/UA/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix pumpexample: <http://yourorganisation.org/InstanceExample/> .
+@prefix pumps: <http://opcfoundation.org/UA/Pumps/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix uardf: <http://opcfoundation.org/rdf/uacore#> .
+
+pumpexample:hasSensor1 a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA1 a uardf:Object ;
+    opcua:HasComponent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA3,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDIz ;
+    pumps:hasTechnicalData pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA3 ;
+    pumps:hasTechnicalDataLink pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDIz ;
+    uardf:browseName "nsu=http://opcfoundation.org/UA/Pumps/;Documentation" ;
+    uardf:description "Static documentation files of a pump."@en ;
+    uardf:displayName "Documentation"@en ;
+    uardf:hasTypeDefinition pumps:DocumentationType ;
+    uardf:name "Documentation" ;
+    uardf:namespaceUri "http://yourorganisation.org/InstanceExample/" ;
+    uardf:nodeId "svu=urn:example:opcua-server;nsu=http://yourorganisation.org/InstanceExample/;i=5005" ;
+    uardf:parent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDAy ;
+    uardf:serverUri "urn:example:opcua-server" ;
+    uardf:symbolicName "Documentation" .
+
+pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA2 a uardf:Object ;
+    opcua:HasComponent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDE2,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDE3,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDE4,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDE5,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDIw,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDIx ;
+    pumps:hasDriverPowerInput pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDE2 ;
+    pumps:hasEnergyConsumption pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDE3 ;
+    pumps:hasFrequency pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDE4 ;
+    pumps:hasMotorCurrent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDE5 ;
+    pumps:hasMotorTemperature pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDIw ;
+    pumps:hasMotorVoltage pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDIx ;
+    uardf:browseName "nsu=http://opcfoundation.org/UA/Pumps/;Measurements" ;
+    uardf:description "All operation measurements that describe the drive."@en ;
+    uardf:displayName "Measurements"@en ;
+    uardf:hasTypeDefinition pumps:DriveMeasurementsType ;
+    uardf:name "Measurements" ;
+    uardf:namespaceUri "http://yourorganisation.org/InstanceExample/" ;
+    uardf:nodeId "svu=urn:example:opcua-server;nsu=http://yourorganisation.org/InstanceExample/;i=5006" ;
+    uardf:parent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA0 ;
+    uardf:serverUri "urn:example:opcua-server" ;
+    uardf:symbolicName "Measurements" .
+
+pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA5 a uardf:Object ;
+    opcua:HasComponent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDI2,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDI5,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDMy ;
+    pumps:hasExcessVibration pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDI2 ;
+    pumps:hasRotorBlocked pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDI5 ;
+    pumps:hasUnbalance pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDMy ;
+    uardf:browseName "nsu=http://opcfoundation.org/UA/Pumps/;SupervisionMechanics" ;
+    uardf:description "Supervision mechanics specifies supervising information related to device mechanics."@en ;
+    uardf:displayName "SupervisionMechanics"@en ;
+    uardf:hasTypeDefinition pumps:SupervisionMechanicsType ;
+    uardf:name "SupervisionMechanics" ;
+    uardf:namespaceUri "http://yourorganisation.org/InstanceExample/" ;
+    uardf:nodeId "svu=urn:example:opcua-server;nsu=http://yourorganisation.org/InstanceExample/;i=5009" ;
+    uardf:parent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA4 ;
+    uardf:serverUri "urn:example:opcua-server" ;
+    uardf:symbolicName "SupervisionMechanics" .
+
+pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE0 a uardf:Object ;
+    opcua:HasComponent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDg1,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDg4 ;
+    pumps:hasActiveMaintenanceTime pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDg1 ;
+    pumps:hasOperatingTime pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDg4 ;
+    uardf:browseName "nsu=http://opcfoundation.org/UA/Pumps/;GeneralMaintenance" ;
+    uardf:description "General maintenance properties."@en ;
+    uardf:displayName "GeneralMaintenance"@en ;
+    uardf:hasTypeDefinition pumps:GeneralMaintenanceType ;
+    uardf:name "GeneralMaintenance" ;
+    uardf:namespaceUri "http://yourorganisation.org/InstanceExample/" ;
+    uardf:nodeId "svu=urn:example:opcua-server;nsu=http://yourorganisation.org/InstanceExample/;i=5014" ;
+    uardf:parent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDEy ;
+    uardf:serverUri "urn:example:opcua-server" ;
+    uardf:symbolicName "GeneralMaintenance" .
+
+pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE1 a uardf:Object ;
+    opcua:HasComponent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MTA0,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MTA1,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MTAx,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MTAy,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MTAz ;
+    pumps:hasInstallationDate pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MTAx ;
+    pumps:hasLastInspectionDate pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MTAy ;
+    pumps:hasLastServicingDate pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MTAz ;
+    pumps:hasNextInspectionDate pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MTA0 ;
+    pumps:hasNextServicingDate pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MTA1 ;
+    uardf:browseName "nsu=http://opcfoundation.org/UA/Pumps/;PreventiveMaintenance" ;
+    uardf:description "Properties for preventive maintenance."@en ;
+    uardf:displayName "PreventiveMaintenance"@en ;
+    uardf:hasTypeDefinition pumps:PreventiveMaintenanceType ;
+    uardf:name "PreventiveMaintenance" ;
+    uardf:namespaceUri "http://yourorganisation.org/InstanceExample/" ;
+    uardf:nodeId "svu=urn:example:opcua-server;nsu=http://yourorganisation.org/InstanceExample/;i=5015" ;
+    uardf:parent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDEy ;
+    uardf:serverUri "urn:example:opcua-server" ;
+    uardf:symbolicName "PreventiveMaintenance" .
+
+pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE3 a uardf:Object ;
+    opcua:HasComponent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MTEx,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MTEy ;
+    pumps:hasActualControlMode pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MTEx ;
+    pumps:hasOnOff pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MTEy ;
+    uardf:browseName "nsu=http://opcfoundation.org/UA/Pumps/;PumpActuation" ;
+    uardf:description "Actuation parameters for a pump."@en ;
+    uardf:displayName "PumpActuation"@en ;
+    uardf:hasTypeDefinition pumps:PumpActuationType ;
+    uardf:name "PumpActuation" ;
+    uardf:namespaceUri "http://yourorganisation.org/InstanceExample/" ;
+    uardf:nodeId "svu=urn:example:opcua-server;nsu=http://yourorganisation.org/InstanceExample/;i=5017" ;
+    uardf:parent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE2 ;
+    uardf:serverUri "urn:example:opcua-server" ;
+    uardf:symbolicName "PumpActuation" .
+
+pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE5 a uardf:Object ;
+    opcua:HasComponent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MTQ0,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MTQy,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MTQz ;
+    pumps:hasOverallVibrationAcceleration0_P pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MTQy ;
+    pumps:hasOverallVibrationAccelerationP_P pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MTQz ;
+    pumps:hasOverallVibrationAccelerationPerG0_P pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MTQ0 ;
+    uardf:browseName "nsu=http://yourorganisation.org/InstanceExample/;Sensor1" ;
+    uardf:displayName "Sensor1"@en ;
+    uardf:hasTypeDefinition pumps:VibrationMeasurementType ;
+    uardf:name "Sensor1" ;
+    uardf:namespaceUri "http://yourorganisation.org/InstanceExample/" ;
+    uardf:nodeId "svu=urn:example:opcua-server;nsu=http://yourorganisation.org/InstanceExample/;i=5019" ;
+    uardf:parent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE4 ;
+    uardf:serverUri "urn:example:opcua-server" ;
+    uardf:symbolicName "Sensor1" .
+
+pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDEw a uardf:Object ;
+    opcua:HasComponent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDM1,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDM4 ;
+    pumps:hasBlockage pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDM1 ;
+    pumps:hasTemperature pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDM4 ;
+    uardf:browseName "nsu=http://opcfoundation.org/UA/Pumps/;SupervisionProcessFluid" ;
+    uardf:description "Supervision process fluid specifies information for monitoring the fluid of a pump."@en ;
+    uardf:displayName "SupervisionProcessFluid"@en ;
+    uardf:hasTypeDefinition pumps:SupervisionProcessFluidType ;
+    uardf:name "SupervisionProcessFluid" ;
+    uardf:namespaceUri "http://yourorganisation.org/InstanceExample/" ;
+    uardf:nodeId "svu=urn:example:opcua-server;nsu=http://yourorganisation.org/InstanceExample/;i=5010" ;
+    uardf:parent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA4 ;
+    uardf:serverUri "urn:example:opcua-server" ;
+    uardf:symbolicName "SupervisionProcessFluid" .
+
+pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDEx a uardf:Object ;
+    opcua:HasComponent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDQ0,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDQx ;
+    pumps:hasMaximumNumberStarts pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDQx ;
+    pumps:hasMaximumOperationTime pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDQ0 ;
+    uardf:browseName "nsu=http://opcfoundation.org/UA/Pumps/;SupervisionPumpOperation" ;
+    uardf:description "Supervision pump operation specifies information for monitoring the pump operation."@en ;
+    uardf:displayName "SupervisionPumpOperation"@en ;
+    uardf:hasTypeDefinition pumps:SupervisionPumpOperationType ;
+    uardf:name "SupervisionPumpOperation" ;
+    uardf:namespaceUri "http://yourorganisation.org/InstanceExample/" ;
+    uardf:nodeId "svu=urn:example:opcua-server;nsu=http://yourorganisation.org/InstanceExample/;i=5011" ;
+    uardf:parent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA4 ;
+    uardf:serverUri "urn:example:opcua-server" ;
+    uardf:symbolicName "SupervisionPumpOperation" .
+
+pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDEz a uardf:Object ;
+    opcua:HasComponent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDc4,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDgx ;
+    pumps:hasFailure pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDc4 ;
+    pumps:hasNumberOfFailures pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDgx ;
+    uardf:browseName "nsu=http://opcfoundation.org/UA/Pumps/;BreakdownMaintenance" ;
+    uardf:description "Properties for breakdown maintenance."@en ;
+    uardf:displayName "BreakdownMaintenance"@en ;
+    uardf:hasTypeDefinition pumps:BreakdownMaintenanceType ;
+    uardf:name "BreakdownMaintenance" ;
+    uardf:namespaceUri "http://yourorganisation.org/InstanceExample/" ;
+    uardf:nodeId "svu=urn:example:opcua-server;nsu=http://yourorganisation.org/InstanceExample/;i=5013" ;
+    uardf:parent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDEy ;
+    uardf:serverUri "urn:example:opcua-server" ;
+    uardf:symbolicName "BreakdownMaintenance" .
+
+pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDIx a uardf:Object ;
+    opcua:HasComponent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDI1,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDQ5,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDUy,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDUz,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDg2,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDg3,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDk0,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDk1,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDk2,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDk3,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDky,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDkz ;
+    pumps:hasClockwiseRotation pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDI1 ;
+    pumps:hasControllable pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDQ5 ;
+    pumps:hasMaximumAllowableAmbientTemperature pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDUy ;
+    pumps:hasMaximumAllowableContinuousSpeed pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDUz ;
+    pumps:hasMaximumAllowableHead pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDg2 ;
+    pumps:hasMaximumAllowableRelativeHumidity pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDg3 ;
+    pumps:hasMaximumPumpPowerInput pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDky ;
+    pumps:hasMinimumAllowableAmbientTemperature pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDkz ;
+    pumps:hasMinimumAllowableContinuousSpeed pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDk0 ;
+    pumps:hasOfferedControlModes pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDk1 ;
+    pumps:hasOfferedFieldbuses pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDk2 ;
+    pumps:hasPumpClass pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MDk3 ;
+    uardf:browseName "nsu=http://opcfoundation.org/UA/Pumps/;Design" ;
+    uardf:description "Static design properties for a pump."@en ;
+    uardf:displayName "Design"@en ;
+    uardf:hasTypeDefinition pumps:DesignType ;
+    uardf:name "Design" ;
+    uardf:namespaceUri "http://yourorganisation.org/InstanceExample/" ;
+    uardf:nodeId "svu=urn:example:opcua-server;nsu=http://yourorganisation.org/InstanceExample/;i=5021" ;
+    uardf:parent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDIw ;
+    uardf:serverUri "urn:example:opcua-server" ;
+    uardf:symbolicName "Design" .
+
+pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDIy a uardf:Object ;
+    opcua:HasComponent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MTY4 ;
+    pumps:hasFieldbus pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MTY4 ;
+    uardf:browseName "nsu=http://opcfoundation.org/UA/Pumps/;SystemRequirements" ;
+    uardf:description "Static system requirement properties for a pump."@en ;
+    uardf:displayName "SystemRequirements"@en ;
+    uardf:hasTypeDefinition pumps:SystemRequirementsType ;
+    uardf:name "SystemRequirements" ;
+    uardf:namespaceUri "http://yourorganisation.org/InstanceExample/" ;
+    uardf:nodeId "svu=urn:example:opcua-server;nsu=http://yourorganisation.org/InstanceExample/;i=5022" ;
+    uardf:parent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDIw ;
+    uardf:serverUri "urn:example:opcua-server" ;
+    uardf:symbolicName "SystemRequirements" .
+
+pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA0 a uardf:Object ;
+    opcua:HasComponent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA2 ;
+    pumps:hasMeasurements pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA2 ;
+    uardf:browseName "nsu=http://opcfoundation.org/UA/Pumps/;<Drive>" ;
+    uardf:description "Port for the connection of the drive."@en ;
+    uardf:displayName "<Drive>"@en ;
+    uardf:hasTypeDefinition pumps:DrivePortType ;
+    uardf:name "<Drive>" ;
+    uardf:namespaceUri "http://yourorganisation.org/InstanceExample/" ;
+    uardf:nodeId "svu=urn:example:opcua-server;nsu=http://yourorganisation.org/InstanceExample/;i=5004" ;
+    uardf:parent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDAz ;
+    uardf:serverUri "urn:example:opcua-server" ;
+    uardf:symbolicName "Drive" .
+
+pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDAz a uardf:Object ;
+    opcua:HasComponent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA0 ;
+    pumps:has%3CDrive%3E pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA0 ;
+    uardf:browseName "nsu=http://opcfoundation.org/UA/Pumps/;Ports" ;
+    uardf:description "Connection points of the pump."@en ;
+    uardf:displayName "Ports"@en ;
+    uardf:hasTypeDefinition pumps:PortsGroupType ;
+    uardf:name "Ports" ;
+    uardf:namespaceUri "http://yourorganisation.org/InstanceExample/" ;
+    uardf:nodeId "svu=urn:example:opcua-server;nsu=http://yourorganisation.org/InstanceExample/;i=5003" ;
+    uardf:parent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDAy ;
+    uardf:serverUri "urn:example:opcua-server" ;
+    uardf:symbolicName "Ports" .
+
+pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE4 a uardf:Object ;
+    opcua:HasComponent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE5,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MTE3,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MTE4,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MTE5,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MTIw,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MTIx ;
+    pumps:hasDifferentialPressure pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MTE3 ;
+    pumps:hasFluidTemperature pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MTE4 ;
+    pumps:hasNumberOfStarts pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MTE5 ;
+    pumps:hasPumpPowerInput pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MTIw ;
+    pumps:hasSpeed pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT02MTIx ;
+    uardf:browseName "nsu=http://opcfoundation.org/UA/Pumps/;Measurements" ;
+    uardf:description "Measurements at a pump."@en ;
+    uardf:displayName "Measurements"@en ;
+    uardf:hasTypeDefinition pumps:MeasurementsType ;
+    uardf:name "Measurements" ;
+    uardf:namespaceUri "http://yourorganisation.org/InstanceExample/" ;
+    uardf:nodeId "svu=urn:example:opcua-server;nsu=http://yourorganisation.org/InstanceExample/;i=5018" ;
+    uardf:parent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE2 ;
+    uardf:serverUri "urn:example:opcua-server" ;
+    uardf:symbolicName "Measurements" ;
+    pumpexample:hasSensor1 pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE5 .
+
+pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE2 a uardf:Object ;
+    opcua:HasComponent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE3,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE4 ;
+    pumps:hasMeasurements pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE4 ;
+    pumps:hasPumpActuation pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE3 ;
+    uardf:browseName "nsu=http://opcfoundation.org/UA/DI/;Operational" ;
+    uardf:description "Process data for control, actuation, signals, and measurements of the pump."@en ;
+    uardf:displayName "Operational"@en ;
+    uardf:hasTypeDefinition pumps:OperationalGroupType ;
+    uardf:name "Operational" ;
+    uardf:namespaceUri "http://yourorganisation.org/InstanceExample/" ;
+    uardf:nodeId "svu=urn:example:opcua-server;nsu=http://yourorganisation.org/InstanceExample/;i=5016" ;
+    uardf:parent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDAy ;
+    uardf:serverUri "urn:example:opcua-server" ;
+    uardf:symbolicName "Operational" .
+
+pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDIw a uardf:Object ;
+    opcua:HasComponent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDIx,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDIy ;
+    pumps:hasDesign pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDIx ;
+    pumps:hasSystemRequirements pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDIy ;
+    uardf:browseName "nsu=http://opcfoundation.org/UA/DI/;Configuration" ;
+    uardf:description "Static design, system requirements, and implementation data of the pump."@en ;
+    uardf:displayName "Configuration"@en ;
+    uardf:hasTypeDefinition pumps:ConfigurationGroupType ;
+    uardf:name "Configuration" ;
+    uardf:namespaceUri "http://yourorganisation.org/InstanceExample/" ;
+    uardf:nodeId "svu=urn:example:opcua-server;nsu=http://yourorganisation.org/InstanceExample/;i=5020" ;
+    uardf:parent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDAy ;
+    uardf:serverUri "urn:example:opcua-server" ;
+    uardf:symbolicName "Configuration" .
+
+pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA4 a uardf:Object ;
+    opcua:HasComponent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA5,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDEw,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDEx ;
+    pumps:hasSupervisionMechanics pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA5 ;
+    pumps:hasSupervisionProcessFluid pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDEw ;
+    pumps:hasSupervisionPumpOperation pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDEx ;
+    uardf:browseName "nsu=http://opcfoundation.org/UA/Pumps/;Events" ;
+    uardf:description "States, alarms, and conditions of a pump."@en ;
+    uardf:displayName "Events"@en ;
+    uardf:hasTypeDefinition pumps:SupervisionType ;
+    uardf:name "Events" ;
+    uardf:namespaceUri "http://yourorganisation.org/InstanceExample/" ;
+    uardf:nodeId "svu=urn:example:opcua-server;nsu=http://yourorganisation.org/InstanceExample/;i=5008" ;
+    uardf:parent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDAy ;
+    uardf:serverUri "urn:example:opcua-server" ;
+    uardf:symbolicName "Events" .
+
+pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDEy a uardf:Object ;
+    opcua:HasComponent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE0,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE1,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDEz ;
+    pumps:hasBreakdownMaintenance pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDEz ;
+    pumps:hasGeneralMaintenance pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE0 ;
+    pumps:hasPreventiveMaintenance pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE1 ;
+    uardf:browseName "nsu=http://opcfoundation.org/UA/DI/;Maintenance" ;
+    uardf:description "Maintenance data of a pump."@en ;
+    uardf:displayName "Maintenance"@en ;
+    uardf:hasTypeDefinition pumps:MaintenanceGroupType ;
+    uardf:name "Maintenance" ;
+    uardf:namespaceUri "http://yourorganisation.org/InstanceExample/" ;
+    uardf:nodeId "svu=urn:example:opcua-server;nsu=http://yourorganisation.org/InstanceExample/;i=5012" ;
+    uardf:parent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDAy ;
+    uardf:serverUri "urn:example:opcua-server" ;
+    uardf:symbolicName "Maintenance" .
+
+pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDAy a uardf:Object ;
+    di:hasConfiguration pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDIw ;
+    di:hasIdentification pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDAx ;
+    di:hasMaintenance pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDEy ;
+    di:hasOperational pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE2 ;
+    opcua:HasComponent pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA1,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA4,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDAx,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDAz,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE2,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDEy,
+        pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDIw ;
+    pumps:hasDocumentation pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA1 ;
+    pumps:hasEvents pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA4 ;
+    pumps:hasPorts pumpexample:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDAz ;
+    uardf:browseName "nsu=http://yourorganisation.org/InstanceExample/;ExamplePump" ;
+    uardf:displayName "ExamplePump"@en ;
+    uardf:hasTypeDefinition pumps:PumpType ;
+    uardf:name "ExamplePump" ;
+    uardf:namespaceUri "http://yourorganisation.org/InstanceExample/" ;
+    uardf:nodeId "svu=urn:example:opcua-server;nsu=http://yourorganisation.org/InstanceExample/;i=5002" ;
+    uardf:serverUri "urn:example:opcua-server" ;
+    uardf:symbolicName "ExamplePump" .
+
