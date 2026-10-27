@@ -1,0 +1,40 @@
+[
+  {
+    "id": "urn:filter:1",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasState": {
+      "type": "Property",
+      "value": {
+        "@id": "base:state_ON"
+      }
+    },
+    "iffBaseEntities:hasCartridge": {
+      "type": "Relationship",
+      "object": "urn:cartridge:1"
+    },
+    "iffBaseEntities:hasStrength": {
+      "type": "Property",
+      "value": 0.6
+    },
+    "@context": "https://industryfusion.github.io/contexts/staging/example/v0.2/context.jsonld"
+  },
+  {
+    "id": "urn:filter:8",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasState": {
+      "type": "Property",
+      "value": {
+        "@id": "base:state_ON"
+      }
+    },
+    "iffBaseEntities:hasCartridge": {
+      "type": "Relationship",
+      "object": "urn:cartridge:1"
+    },
+    "iffBaseEntities:hasStrength": {
+      "type": "Property",
+      "value": 0.6
+    },
+    "@context": "https://industryfusion.github.io/contexts/staging/example/v0.2/context.jsonld"
+  }
+]

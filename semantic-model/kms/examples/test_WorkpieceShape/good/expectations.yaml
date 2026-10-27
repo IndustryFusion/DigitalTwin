@@ -1,0 +1,7 @@
+examples:
+  - path: at-the-limits.jsonld
+    description: >-
+      Height 5.0, width 100.0, length 200.0 -- every bound at its inclusive
+      maximum. Guards an off-by-one turning maxInclusive into maxExclusive.
+    expect: valid
+    conformance: full

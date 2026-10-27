@@ -1,0 +1,43 @@
+# The context this package resolves against.
+#
+# Locally the LOCAL file answers, so a term can be used the moment it is agreed
+# rather than after it is published, and no build depends on the network. On
+# export the model is pointed at the PUBLISHED url, because the broker and the
+# compiler resolve it themselves -- and export checks that the published context
+# actually declares everything the model uses, rather than shipping values that
+# will not expand.
+context:
+  local: context.jsonld
+  published: https://industryfusion.github.io/contexts/staging/example/v0.2/context.jsonld
+
+# The package's agreed names for namespaces.
+#
+# context.jsonld is the source of truth and most of these come from it. This
+# file adds the ones it does not declare, and overrides it in exactly one place.
+#
+# It is a separate file rather than an edit to context.jsonld on purpose:
+# context.jsonld is a snapshot of a published URL, and diverging from what that
+# URL serves is the reproducibility problem in another form. Names that belong
+# to everybody go upstream; names that are this package's business live here.
+namespaces:
+  # Not declared by the context: the two shapes namespaces, the test bindings,
+  # and NGSI-LD itself. Named for the iff* family already in the context.
+  iffBaseShacl: https://industryfusion.github.io/contexts/example/v0/base_shacl/
+  iffFilterShacl: https://industryfusion.github.io/contexts/example/v0/filter_shacl/
+  iffBindingsBaseTest: https://industryfusion.github.io/contexts/example/v0/bindings/base_test/
+  ngsild: https://uri.etsi.org/ngsi-ld/
+  index: 'urn:index:'
+
+  # base_knowledge/ is deliberately NOT listed. The context calls it `base` and
+  # that name stays: rdflib binds one prefix per namespace, so a second name
+  # evicts the first, and shacl2flink requires the survivor to be literally
+  # `base`. See kms/README.md.
+
+# The NGSI-LD vocabulary: the repo's shared local copy for now. The official
+# version (contexts/staging/ontology/v0/ngsild.ttl) declares only Property
+# and Relationship; once it carries the terms this package uses, move here
+# by naming its url, pinned:
+#   source: https://industryfusion.github.io/contexts/staging/ontology/v0/ngsild.ttl
+#   sha256: sha256:...
+ngsild:
+  source: ../ontology/ngsild.ttl
