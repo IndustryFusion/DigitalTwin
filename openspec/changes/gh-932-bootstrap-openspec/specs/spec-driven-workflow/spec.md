@@ -123,6 +123,21 @@ Every Pull Request that modifies files under `openspec/` SHALL run `openspec val
 - **WHEN** a Pull Request modifies no files under `openspec/` and not the validation workflow
 - **THEN** the OpenSpec validation check is not triggered
 
+### Requirement: Specification-only contributions run only the validation
+A push or Pull Request that changes only files under `openspec/` SHALL NOT trigger the `Build` and `K8s tests` workflows. Every other push or Pull Request, and scheduled runs of these workflows, SHALL run them as before.
+
+#### Scenario: Specification-only Pull Request
+- **WHEN** a Pull Request changes only files under `openspec/`
+- **THEN** the OpenSpec validation check runs, and `Build` and `K8s tests` are not triggered
+
+#### Scenario: Pull Request with specification and code
+- **WHEN** a Pull Request changes files under `openspec/` and at least one other file
+- **THEN** `Build` and `K8s tests` run
+
+#### Scenario: Nightly run
+- **WHEN** the nightly workflow calls `Build` and `K8s tests`
+- **THEN** they run regardless of which files changed
+
 ### Requirement: OpenSpec is not a dependency of the components
 No component's build, image or deployment SHALL depend on OpenSpec.
 
