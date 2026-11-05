@@ -1,0 +1,51 @@
+schema: spec-driven
+
+context: |
+  The IndustryFusion Process Data Twin streams factory data through MQTT and Kafka
+  into NGSI-LD (Scorpio) and TimescaleDB, and applies SHACL rules in real time by
+  translating them to StreamingSQL on Apache Flink. Purpose and architecture are in
+  README.md; deployment is in helm/README.md and the end-to-end tests in
+  test/README.md. There is no central architecture document: read the README of the
+  affected components before proposing a change.
+  Components have their own README, build and tests: KafkaBridge, NgsildAgent,
+  FlinkSqlGateway, FlinkSqlServicesOperator, helm and, under semantic-model/,
+  shacl2flink, opcua, dataservice, datamodel, kms and SemForge-SDK. Do not assume
+  one convention for all of them; .github/workflows/build.yaml shows how each one is
+  linted and tested, .github/workflows/k8s-tests.yaml the end-to-end tests.
+  Not every change needs a specification. See the table in CONTRIBUTING.md.
+  Capability paths: contracts/<name> for contracts between components, such as
+  message formats, topics and attribute forms; <component>/<name> for one component.
+  Existing components are mostly unspecified. Specify what a change touches, and do
+  not specify existing behaviour up front.
+  Governance: specs in openspec/specs/ are authoritative once approved.
+  Implementation starts only after a maintainer adds the `spec-approved` label to
+  the change's Pull Request. See AGENTS.md and CONTRIBUTING.md.
+  Change IDs use the form gh-<issue>-<kebab-summary>.
+
+rules:
+  proposal:
+    - "Start with a line `Issue: #<number>` naming the originating GitHub Issue"
+    - Include an "Out of Scope" section
+    - Name the affected components under Impact, and whether a contract between components changes
+  specs:
+    - Every requirement must have at least one testable WHEN/THEN scenario that serves as an acceptance criterion
+    - Describe observable behavior only; no library, class or function names
+    - A delta for a new capability must include a `## Purpose` section
+  design:
+    - Describe architectural implications and any conflict with existing specs or component documentation
+    - List alternatives considered for each decision
+  tasks:
+    - Every task states how its completion is verified
+    - Include creating or updating the tests that cover the delta spec scenarios
+
+operations:
+  apply:
+    guidance:
+      - Confirm the Pull Request carries the `spec-approved` label before changing source code
+      - Never edit approved requirements to fit the implementation; stop and report the conflict instead
+      - "Reference the issue with `Refs #<issue>` in commits and Pull Requests, never with a closing keyword: the issue stays open until the archive"
+  archive:
+    guidance:
+      - Archive only after the change's Pull Request is merged
+      - "If no other change for the issue is open or planned, the archive commit message must contain `Closes #<issue>`, so that the issue closes when the commit reaches the default branch"
+      - "If another change for the issue is open or planned, use `Refs #<issue>` in the archive commit message, so that the issue stays open"
