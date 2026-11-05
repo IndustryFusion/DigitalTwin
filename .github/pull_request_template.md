@@ -15,7 +15,7 @@ OpenSpec change: <!-- `openspec/changes/gh-<issue>-<summary>/`, or "none" -->
 
 ## Checked automatically (CI)
 
-- [ ] `Build` and `K8s tests` pass
+- [ ] `Build` and `K8s tests` pass (they don't run if only `openspec/` changed)
 - [ ] `openspec validate --all --strict` passes, if `openspec/` changed
 
 ## Requires human review

@@ -85,8 +85,9 @@ one cannot be met, it stops and the specification goes back to review.
 
 - **Automated:** the `OpenSpec validate` workflow runs `openspec validate --all --strict`
   on every Pull Request touching `openspec/`. It checks the structure of artifacts, for
-  example that every requirement has a scenario, not whether the code is correct. The
-  `Build` and `K8s tests` workflows run as on any other Pull Request.
+  example that every requirement has a scenario, not whether the code is correct. A Pull
+  Request which changes only `openspec/` runs nothing else. As soon as it also changes
+  other files, the `Build` and `K8s tests` workflows run as on any other Pull Request.
 - **Human review:** maintainers check that each spec scenario is met, that tests cover
   them, and that security constraints hold. The Pull Request lists verification results
   per scenario.
@@ -149,6 +150,5 @@ Keep personal skills outside the repository, in `~/.claude/skills/`.
 
 - Proposal creation, implementation and archiving are started manually by a maintainer; nothing runs automatically from issues.
 - Who may add `spec-approved` is not enforced (`CODEOWNERS` and branch protection are open decisions).
-- `Build` and `K8s tests` also run on specification-only Pull Requests, about 50 minutes each.
 - The rule for closing the issue is advisory for agents and is not checked by CI. If an issue stays open by mistake, a maintainer closes it.
 - CI checks artifact structure only. Functional correctness and security require human review.

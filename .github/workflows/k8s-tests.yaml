@@ -3,8 +3,12 @@ name: K8s tests
 on:
   push:
     branches: [ main ]
+    paths-ignore:
+      - 'openspec/**'
   pull_request:
     branches: [ main ]
+    paths-ignore:
+      - 'openspec/**'
   workflow_call:
 
 permissions:
