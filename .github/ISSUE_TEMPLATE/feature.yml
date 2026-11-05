@@ -1,0 +1,38 @@
+name: Feature request
+description: Propose a feature. A maintainer will have an agent turn it into an OpenSpec change proposal.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        No code or local tooling needed. Describe the problem and the outcome; the
+        specification is written from this issue. See CONTRIBUTING.md.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is missing or not working, and for whom?
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: What should be possible once this is done?
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance ideas
+      description: Observable checks that would show the feature works (e.g. "When X happens, attribute Y in the context broker shows Z").
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints and context
+      description: Affected components and contracts between them, compatibility, security concerns.
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Out of scope
+      description: What this request deliberately does not cover.

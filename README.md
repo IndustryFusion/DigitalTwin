@@ -112,6 +112,7 @@ The detailed flow of data is shown below.
 * [E2E tests](test/README.md)
 * [Kafka Bridges](KafkaBridge/README.md)
 * [Helm Deployment](helm/README.md)
+* [Contributing](CONTRIBUTING.md)
 
 
 ## License
