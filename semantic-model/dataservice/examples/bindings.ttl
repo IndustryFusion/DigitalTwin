@@ -89,7 +89,7 @@ binding:map_machineState rdf:type owl:NamedIndividual ,
                                   base:BoundMap ;
                          base:bindsConnector base:TestConnector ;
                          base:bindsMapDatatype xsd:integer ;
-                         base:bindsConnectorAttribute "0,3" ;
+                         base:bindsConnectorParameter "0,3" ;
                          base:bindsLogicVar "var1" .
 
 
@@ -98,7 +98,7 @@ binding:map_strength rdf:type owl:NamedIndividual ,
                               base:BoundMap ;
                      base:bindsConnector base:TestConnector ;
                      base:bindsMapDatatype xsd:double ;
-                     base:bindsConnectorAttribute "0,100" ;
+                     base:bindsConnectorParameter "0,100" ;
                      base:bindsLogicVar "var1" .
 
 
@@ -107,7 +107,7 @@ binding:map_wasteclass rdf:type owl:NamedIndividual ,
                                 base:BoundMap ;
                        base:bindsConnector base:TestConnector ;
                        base:bindsMapDatatype xsd:integer ;
-                       base:bindsConnectorAttribute "0,2" ;
+                       base:bindsConnectorParameter "0,2" ;
                        base:bindsLogicVar "var1" .
 
 
