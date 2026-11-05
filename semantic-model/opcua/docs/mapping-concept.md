@@ -18,20 +18,37 @@ ParentObject (NodeId: ns=2;i=99)
  ├── PropertyZ (NodeId: ns=2;i=103, value="test")
 ```
 
+## Entity Ids
+
+Every entity is created from an OPC UA node and its id is derived from the node's
+canonical ExpandedNodeId (`uardf:nodeId`, see the README's
+[Node Identification](../README.md#node-identification-uardf)):
+
+    urn:uaentity:<base64url(ExpandedNodeId) without padding>
+
+The instances of a machine are dynamic nodes, so their ExpandedNodeId contains the
+server URI (from `uardf:serverUri`, `uardf:nodeId` has none), e.g.
+`svu=urn:example:opcua-server;nsu=http://example.org/;i=99`. The prefix
+`urn:uaentity:` can be changed with `owl2instances.py -i`. The id is related to, but
+different from the IRI of the node; with `-nr` every entity gets a `base:hasNodeRef` to it.
+
+For readability the examples below abbreviate the ids as `urn:uaentity:<i=99>`, which
+stands for `urn:uaentity:` + base64url(`svu=urn:example:opcua-server;nsu=http://example.org/;i=99`).
+
 ## Conversion of OPCUA Objects to NGSI-LD:
-The id and type are assumed to be `urn:mainid:nodei101` and type `ParentObjectType`
+The type is assumed to be `ParentObjectType`
 
 ```
  {
-    "id": "urn:mainid:nodei99",
+    "id": "urn:uaentity:<i=99>",
     "type": "ParentObjectType",
     "hasChildObjectX":{
             "type": "Relationship",
-            "object": "urn:mainid:sub:nodei101"
+            "object": "urn:uaentity:<i=101>"
     },
     "hasChildObjectY":{
             "type": "Relationship",
-            "object": "urn:mainid:sub:nodei102"
+            "object": "urn:uaentity:<i=102>"
     }
  }
  ```
@@ -41,7 +58,7 @@ The id and type are assumed to be `urn:mainid:nodei101` and type `ParentObjectTy
 
 ```
  {
-    "id": "urn:mainid:nodei99",
+    "id": "urn:uaentity:<i=99>",
     "type": "ParentObjectType",
     "hasDataVariableX":{
             "type": "Property",
@@ -63,7 +80,7 @@ Properties of Objects are only differentiable from Datavariables by metadata pro
 
 ```
  {
-    "id": "urn:mainid:nodei99",
+    "id": "urn:uaentity:<i=99>",
     "type": "ParentObjectType",
     "hasDataVariableX":{
             "type": "Property",
@@ -90,24 +107,24 @@ The problem of this is that the name convention is not exactly specified, so obj
 ```
  {
 
-    "id": "urn:mainid:nodei99",
+    "id": "urn:uaentity:<i=99>",
     "type": "ParentObjectType",
     "ArrayObject": [
         {
             "type": "Relationship",
-            "object": "urn:mainid:sub:nodei100",
-            "datasetId": "urn:iff:datasetId:ArrayObject_01"
+            "object": "urn:uaentity:<i=100>",
+            "datasetId": "http://example.org/hasArrayObject_01"
         },
         {
             "type": "Relationship",
-            "object": "urn:mainid:sub:nodei200",
-            "datasetId": "urn:iff:datasetId:ArrayObject_02"
+            "object": "urn:uaentity:<i=200>",
+            "datasetId": "http://example.org/hasArrayObject_02"
         }
     ]
  }
  ```
 
- Node that you can now access all objects at once, e.g. with a SHACL expression but still you can select one specific object by using the respective `datasetId` reference or the `id` of the specific object. 
+ Node that you can now access all objects at once, e.g. with a SHACL expression but still you can select one specific object by using the respective `datasetId` reference or the `id` of the specific object. The `datasetId` is the semantic bridge property of the element (derived from its BrowseName, e.g. `http://example.org/hasArrayObject_01` for `ArrayObject_01` in namespace `http://example.org/`).
 
 ## Input to the semantic conversion
 Besides the companion specifications, there are two files needed:
@@ -130,25 +147,31 @@ Contains all generic semantic information related to the entities which could be
 
 
 ```
+uaentity:ParentObjectSubType a owl:Class ;
+    rdfs:subClassOf uaentity:ParentObjectType .
+
 uaentity:hasDataVariableX a owl:NamedIndividual,
         owl:ObjectProperty ;
-    rdfs:domain uaentity:ParentObjectType ;
-    rdfs:range ngsi-ld:Property ;
-    base:hasOPCUADatatype opcua:String .
+    rdfs:domain uaentity:ParentObjectType .
 
 uaentity:hasChildObjectX a owl:NamedIndividual,
-        owl:ObjectProperty,
-        base:SubComponentRelationship ;
-    rdfs:domain uaentity:RootObjectType ;
-    rdfs:range ngsi-ld:Relationship ;
+        owl:ObjectProperty ;
+    rdfs:domain uaentity:ParentObjectType .
+```
 
-uaentity:hasArrayObject a owl:NamedIndividual,
-        owl:ObjectProperty,
-        base:SubComponentRelationship ;
-    rdfs:domain uaentity:RootObjectType ;
-    rdfs:range ngsi-ld:Relationship ;
-    base:isPlaceHolder true .
+The kind of a Relationship and the placeholder information are part of the property
+shapes in `shacl.ttl`:
 
+```
+shacl:ParentObjectTypeShape a sh:NodeShape ;
+    sh:property [ a base:SubComponentRelationship ;
+            sh:path uaentity:hasArrayObject ;
+            sh:property [ sh:class uaentity:ArrayObjectType ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasReferenceType opcua:HasComponent ;
+            base:isPlaceHolder true ] ;
+    sh:targetClass uaentity:ParentObjectType .
 ```
 
 ## `knowledge.ttl`

@@ -98,7 +98,7 @@ MAKEFILE = REPO_ROOT / 'translate_default_nodesets.make'
 # v0/base/ to .../staging/ontology/v0.3/base.ttl), and rdflib namespace
 # lookups fail *silently* on a mismatch (every base:*-predicate query just
 # finds zero results, no exception raised), so a stale hardcoded guess here
-# previously caused every base:definesType/base:instanceOf/etc. lookup to
+# previously caused every uardf:definesType/uardf:hasTypeDefinition/etc. lookup to
 # silently find nothing -- not a crash, just near-empty output.
 BASENS = Namespace('https://industryfusion.github.io/contexts/ontology/v0/base/')
 OPCUANS = Namespace('http://opcfoundation.org/UA/')
@@ -150,17 +150,17 @@ def detect_namespaces(g):
 
 
 def load_fixed_graph(path):
-    """Parse + restore_type_of_node_iris exactly once per file, cached, so a
-    dependency shared by several companion specs (core.owl.ttl, di.owl.ttl, ...) isn't
-    reparsed once per downstream file that imports it. The namespaces used
-    for restore_type_of_node_iris (and for any later OwlBuilder call on this
-    graph) are this file's own, auto-detected -- see get_namespaces."""
+    """Parse exactly once per file, cached, so a dependency shared by several
+    companion specs (core.owl.ttl, di.owl.ttl, ...) isn't reparsed once per
+    downstream file that imports it. The namespaces used for any later
+    OwlBuilder call on this graph are this file's own, auto-detected -- see
+    get_namespaces. Type definitions are read as uardf:hasTypeDefinition,
+    never turned into rdf:type."""
     key = str(path)
     if key not in _graph_cache:
         g = Graph()
         g.parse(path)
         basens, opcuans = detect_namespaces(g)
-        utils.restore_type_of_node_iris(g, opcuans, basens)
         _graph_cache[key] = g
         _namespace_cache[key] = (basens, opcuans)
     return _graph_cache[key]
@@ -213,18 +213,18 @@ def resolve_dependencies(g):
 
 def sparql_own_target_classes(g, basens, opcuans):
     """Independent re-derivation of "target ObjectType/VariableType classes
-    this file itself declares": via the definer node's own NodeClass triple
-    plus base:definesType, rather than all_target_classes' rdfs:subClassOf*
+    this file itself declares": via the definer node's own uardf node class
+    plus uardf:definesType, rather than all_target_classes' rdfs:subClassOf*
     walk up to Base{Object,Variable}Type. A structurally different way of
     answering the same question, run only against `g` (this file's own
     triples), matching all_target_classes' own scoping."""
     query = """
     SELECT DISTINCT ?type WHERE {
-        ?definer base:definesType ?type .
-        { ?definer a opcua:ObjectTypeNodeClass } UNION { ?definer a opcua:VariableTypeNodeClass }
+        ?definer uardf:definesType ?type .
+        { ?definer a uardf:ObjectType } UNION { ?definer a uardf:VariableType }
     }
     """
-    result = g.query(query, initNs={'base': basens, 'opcua': opcuans})
+    result = g.query(query, initNs={'base': basens, 'opcua': opcuans, 'uardf': utils.UARDF})
     return {row[0] for row in result}
 
 
@@ -255,10 +255,10 @@ def sparql_qualifying_edges(combined, basens, opcuans, include_unruled):
     values = ' '.join(f'<{p}>' for p in haschild_props)
     rule_filter = ''
     if not include_unruled:
-        rule_ids = ', '.join(f'"{n}"' for n in _MODELLING_RULE_NODE_IDS)
+        rule_ids = ', '.join(f'"i={n}"' for n in _MODELLING_RULE_NODE_IDS)  # core nodes: no nsu
         rule_filter = f"""
         ?child opcua:HasModellingRule ?rule .
-        ?rule base:hasNodeId ?ruleId .
+        ?rule uardf:nodeId ?ruleId .
         FILTER(?ruleId IN ({rule_ids}))
         """
     query = f"""
@@ -266,15 +266,17 @@ def sparql_qualifying_edges(combined, basens, opcuans, include_unruled):
     WHERE {{
         VALUES ?p {{ {values} }}
         ?parent ?p ?child .
-        FILTER NOT EXISTS {{ ?child a opcua:MethodNodeClass }}
+        FILTER NOT EXISTS {{ ?child a uardf:Method }}
         FILTER EXISTS {{
-            ?child a ?realType .
-            FILTER(!STRENDS(STR(?realType), "NodeClass") && ?realType != owl:NamedIndividual)
+            {{ ?child uardf:hasTypeDefinition ?realType . }}
+            UNION
+            {{ ?child a ?realType .
+               FILTER(!STRSTARTS(STR(?realType), STR(uardf:)) && ?realType != owl:NamedIndividual) }}
         }}
         {rule_filter}
     }}
     """
-    result = combined.query(query, initNs={'base': basens, 'opcua': opcuans, 'owl': OWL})
+    result = combined.query(query, initNs={'base': basens, 'opcua': opcuans, 'owl': OWL, 'uardf': utils.UARDF})
     return result.graph
 
 
@@ -286,7 +288,7 @@ def sparql_definer_nodes(combined, basens, types):
     query = f"""
     SELECT ?type ?definer WHERE {{
         VALUES ?type {{ {values} }}
-        ?definer <{basens['definesType']}> ?type .
+        ?definer <{utils.UARDF['definesType']}> ?type .
     }}
     """
     return {row[0]: row[1] for row in combined.query(query)}

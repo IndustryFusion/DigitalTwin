@@ -1,3 +1,4 @@
+@prefix uardf: <http://opcfoundation.org/rdf/uacore#> .
 @prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
 @prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/> .
 @prefix opcua: <http://opcfoundation.org/UA/> .
@@ -182,7 +183,7 @@ shacl:ValueRankShape_OneDimension_NodeId_0 a sh:NodeShape ;
     sh:property [ sh:maxCount 1 ;
             sh:minCount 1 ;
             sh:or ( [ sh:nodeKind sh:BlankNode ;
-                        sh:property [ sh:class opcua:BaseNodeClass ;
+                        sh:property [ sh:class uardf:Node ;
                                 sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
             sh:path ngsi-ld:hasValueList ] .
 
@@ -251,14 +252,14 @@ shacl:ValueRankShape_OneDimension_string a sh:NodeShape ;
 
 shacl:ValueRankShape_Any_NodeId a sh:NodeShape ;
     sh:message "ValueRank constraint for valuerank=Any (-2) and datatype=NodeId" ;
-    sh:or ( [ sh:property [ sh:class opcua:BaseNodeClass ;
+    sh:or ( [ sh:property [ sh:class uardf:Node ;
                         sh:maxCount 1 ;
                         sh:minCount 1 ;
                         sh:nodeKind sh:IRI ;
                         sh:path ngsi-ld:hasValue ] ] [ sh:property [ sh:maxCount 1 ;
                         sh:minCount 1 ;
                         sh:or ( [ sh:nodeKind sh:BlankNode ;
-                                    sh:property [ sh:class opcua:BaseNodeClass ;
+                                    sh:property [ sh:class uardf:Node ;
                                             sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
                         sh:path ngsi-ld:hasValueList ] ] ) .
 

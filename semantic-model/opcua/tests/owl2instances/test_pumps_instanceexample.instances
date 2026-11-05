@@ -1,7 +1,7 @@
 [
     {
         "type": "pumps:DriveMeasurementsType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5006",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA2",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -32,34 +32,34 @@
     },
     {
         "type": "pumps:DrivePortType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5004",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA0",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
         "pumps:hasMeasurements": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5006"
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA2"
             }
         ]
     },
     {
         "type": "pumps:PortsGroupType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5003",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDAz",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
         "pumps:has%3CDrive%3E": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5004",
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA0",
                 "datasetId": "http://opcfoundation.org/UA/Pumps/has%3CDrive%3E"
             }
         ]
     },
     {
         "type": "pumps:DesignType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5021",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDIx",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -136,7 +136,7 @@
     },
     {
         "type": "pumps:SystemRequirementsType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5022",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDIy",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -149,26 +149,26 @@
     },
     {
         "type": "pumps:ConfigurationGroupType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5020",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDIw",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
         "pumps:hasDesign": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5021"
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDIx"
             }
         ],
         "pumps:hasSystemRequirements": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5022"
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDIy"
             }
         ]
     },
     {
         "type": "pumps:SupervisionProcessFluidType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5010",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDEw",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -183,7 +183,7 @@
     },
     {
         "type": "pumps:SupervisionPumpOperationType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5011",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDEx",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -198,7 +198,7 @@
     },
     {
         "type": "pumps:SupervisionMechanicsType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5009",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA5",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -217,32 +217,32 @@
     },
     {
         "type": "pumps:SupervisionType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5008",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA4",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
         "pumps:hasSupervisionProcessFluid": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5010"
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDEw"
             }
         ],
         "pumps:hasSupervisionPumpOperation": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5011"
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDEx"
             }
         ],
         "pumps:hasSupervisionMechanics": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5009"
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA5"
             }
         ]
     },
     {
         "type": "pumps:DocumentationType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5005",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA1",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -253,7 +253,7 @@
     },
     {
         "type": "pumps:PreventiveMaintenanceType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5015",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE1",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -295,7 +295,7 @@
     },
     {
         "type": "pumps:GeneralMaintenanceType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5014",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE0",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -310,7 +310,7 @@
     },
     {
         "type": "pumps:BreakdownMaintenanceType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5013",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDEz",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -325,32 +325,32 @@
     },
     {
         "type": "pumps:MaintenanceGroupType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5012",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDEy",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
         "pumps:hasPreventiveMaintenance": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5015"
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE1"
             }
         ],
         "pumps:hasGeneralMaintenance": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5014"
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE0"
             }
         ],
         "pumps:hasBreakdownMaintenance": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5013"
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDEz"
             }
         ]
     },
     {
         "type": "pumps:PumpActuationType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5017",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE3",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -367,7 +367,7 @@
     },
     {
         "type": "pumps:VibrationMeasurementType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5019",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE5",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -386,14 +386,14 @@
     },
     {
         "type": "pumps:MeasurementsType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5018",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE4",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
         "pumps:has%3CVibration%3E": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5019",
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE5",
                 "datasetId": "http://yourorganisation.org/InstanceExample/hasSensor1"
             }
         ],
@@ -420,63 +420,63 @@
     },
     {
         "type": "pumps:OperationalGroupType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5016",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE2",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
         "pumps:hasPumpActuation": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5017"
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE3"
             }
         ],
         "pumps:hasMeasurements": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5018"
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE4"
             }
         ]
     },
     {
         "type": "pumps:PumpType",
-        "id": "http://yourorganisation.org/InstanceExample/testid:nodei5002",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDAy",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
         "pumps:hasPorts": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5003"
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDAz"
             }
         ],
         "devices:hasConfiguration": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5020"
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDIw"
             }
         ],
         "pumps:hasEvents": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5008"
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA4"
             }
         ],
         "pumps:hasDocumentation": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5005"
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA1"
             }
         ],
         "devices:hasMaintenance": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5012"
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDEy"
             }
         ],
         "devices:hasOperational": [
             {
                 "type": "Relationship",
-                "object": "http://yourorganisation.org/InstanceExample/testid:nodei5016"
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDE2"
             }
         ]
     }

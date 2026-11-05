@@ -20,9 +20,9 @@ Virtual Types (Part 14 of owl_to_virtualtypes.md).
 
 What this actually does, in order:
 
-1. Parses the input ttl and undoes the base:instanceOf rewrite that Part 5
-   applies to Object instance declarations, so Object and Variable
-   declarations can be read uniformly.
+1. Parses the input ttl. Object and Variable declarations are read uniformly
+   by their node class (uardf:Object/uardf:Variable) and TypeDefinition
+   (uardf:hasTypeDefinition), see the README's Node Identification section.
 2. Resolves the input's own owl:imports (e.g. di.owl.ttl importing
    core.owl.ttl) by loading each imported dependency into a *separate*
    graph, used only to resolve cross-file references -- a companion spec's
@@ -101,6 +101,9 @@ from rdflib.namespace import OWL, RDF
 
 import lib.utils as utils
 from lib.owlbuilder import OwlBuilder
+
+# the uardf meta ontology (local file for now) is imported as it is, it has no Virtual Types sibling
+UARDF_ONTOLOGY_FILENAME = "uardf.ttl"
 
 
 def parse_args(args=sys.argv[1:]):
@@ -231,7 +234,8 @@ if __name__ == '__main__':
                 out.add((ontology_iri, p, o))
         for imported in loader.visited_files:
             local_path = file_uri_to_path(imported)
-            if local_path is None:
+            if local_path is None or os.path.basename(local_path) == UARDF_ONTOLOGY_FILENAME:
+                # not a Part-14-processed dependency, e.g. base.ttl or the uardf meta ontology
                 out.add((ontology_iri, OWL.imports, URIRef(imported)))
                 continue
             sibling = vt_owl_sibling_path(local_path)

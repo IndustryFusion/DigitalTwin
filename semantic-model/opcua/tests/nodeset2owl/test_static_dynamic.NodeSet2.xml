@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  Static and dynamic nodes (built on the core nodeset).
+  NamespaceMetadata: numeric NodeIds 1000..1999, 7000 and 9000..9010 are static; string NodeIds are not
+  decided by it (no StaticStringNodeIdPattern), so the fallback rule applies to them.
+    static:  TestDeviceType (type), its instance declaration Temperature, the global Devices folder (7000),
+             the NamespaceMetadata object and its properties
+    dynamic: Device1 (5001) and its Temperature (5002) - outside of the static ranges
+             Device2 (s=Device2) - string id, fallback rule: instance -> dynamic
+  References between static and dynamic nodes: Devices organizes Device1/Device2, the NamespaceMetadata
+  object is a component of the dynamic core node Server.Namespaces (i=11715).
+-->
+<UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" LastModified="2026-10-11T00:00:00Z" xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
+  <NamespaceUris>
+    <Uri>http://test/StaticDynamic/</Uri>
+  </NamespaceUris>
+  <Models>
+    <Model ModelUri="http://test/StaticDynamic/" Version="1.0.0" PublicationDate="2026-10-11T00:00:00Z">
+      <RequiredModel ModelUri="http://opcfoundation.org/UA/" Version="1.05.03" PublicationDate="2023-12-15T00:00:00Z" />
+    </Model>
+  </Models>
+  <Aliases>
+    <Alias Alias="Double">i=11</Alias>
+    <Alias Alias="String">i=12</Alias>
+    <Alias Alias="Organizes">i=35</Alias>
+    <Alias Alias="HasModellingRule">i=37</Alias>
+    <Alias Alias="HasTypeDefinition">i=40</Alias>
+    <Alias Alias="HasSubtype">i=45</Alias>
+    <Alias Alias="HasProperty">i=46</Alias>
+    <Alias Alias="HasComponent">i=47</Alias>
+  </Aliases>
+  <UAObjectType NodeId="ns=1;i=1001" BrowseName="1:TestDeviceType">
+    <DisplayName>TestDeviceType</DisplayName>
+    <Description>A device type with a temperature.</Description>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1002</Reference>
+    </References>
+  </UAObjectType>
+  <UAVariable NodeId="ns=1;i=1002" BrowseName="1:Temperature" ParentNodeId="ns=1;i=1001" DataType="Double">
+    <DisplayName>Temperature</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=78</Reference>
+      <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=1001</Reference>
+    </References>
+  </UAVariable>
+  <UAObject NodeId="ns=1;i=7000" BrowseName="1:Devices">
+    <DisplayName Locale="en">Devices</DisplayName>
+    <Description Locale="de">Alle Geräte</Description>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=61</Reference>
+      <Reference ReferenceType="Organizes" IsForward="false">i=85</Reference>
+      <Reference ReferenceType="Organizes">ns=1;i=5001</Reference>
+      <Reference ReferenceType="Organizes">ns=1;s=Device2</Reference>
+    </References>
+  </UAObject>
+  <UAObject NodeId="ns=1;i=5001" BrowseName="1:Device1">
+    <DisplayName>Device1</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=1001</Reference>
+      <Reference ReferenceType="Organizes" IsForward="false">ns=1;i=7000</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=5002</Reference>
+    </References>
+  </UAObject>
+  <UAVariable NodeId="ns=1;i=5002" BrowseName="1:Temperature" ParentNodeId="ns=1;i=5001" DataType="Double">
+    <DisplayName>Temperature</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+      <Reference ReferenceType="HasComponent" IsForward="false">ns=1;i=5001</Reference>
+    </References>
+    <Value>
+      <Double xmlns="http://opcfoundation.org/UA/2008/02/Types.xsd">21.5</Double>
+    </Value>
+  </UAVariable>
+  <UAObject NodeId="ns=1;s=Device2" BrowseName="1:Device2">
+    <DisplayName>Device2</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=1001</Reference>
+      <Reference ReferenceType="Organizes" IsForward="false">ns=1;i=7000</Reference>
+    </References>
+  </UAObject>
+  <UAObject NodeId="ns=1;i=9000" BrowseName="1:http://test/StaticDynamic/" SymbolicName="TestStaticDynamicNamespaceMetadata" ParentNodeId="i=11715">
+    <DisplayName>http://test/StaticDynamic/</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=11616</Reference>
+      <Reference ReferenceType="HasComponent" IsForward="false">i=11715</Reference>
+      <Reference ReferenceType="HasProperty">ns=1;i=9001</Reference>
+      <Reference ReferenceType="HasProperty">ns=1;i=9002</Reference>
+      <Reference ReferenceType="HasProperty">ns=1;i=9003</Reference>
+    </References>
+  </UAObject>
+  <UAVariable NodeId="ns=1;i=9001" BrowseName="NamespaceUri" ParentNodeId="ns=1;i=9000" DataType="String">
+    <DisplayName>NamespaceUri</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=68</Reference>
+      <Reference ReferenceType="HasProperty" IsForward="false">ns=1;i=9000</Reference>
+    </References>
+    <Value>
+      <String xmlns="http://opcfoundation.org/UA/2008/02/Types.xsd">http://test/StaticDynamic/</String>
+    </Value>
+  </UAVariable>
+  <UAVariable NodeId="ns=1;i=9002" BrowseName="StaticNodeIdTypes" ParentNodeId="ns=1;i=9000" DataType="i=256" ValueRank="1" ArrayDimensions="0">
+    <DisplayName>StaticNodeIdTypes</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=68</Reference>
+      <Reference ReferenceType="HasProperty" IsForward="false">ns=1;i=9000</Reference>
+    </References>
+    <Value>
+      <ListOfInt32 xmlns="http://opcfoundation.org/UA/2008/02/Types.xsd">
+        <Int32>0</Int32>
+      </ListOfInt32>
+    </Value>
+  </UAVariable>
+  <UAVariable NodeId="ns=1;i=9003" BrowseName="StaticNumericNodeIdRange" ParentNodeId="ns=1;i=9000" DataType="i=291" ValueRank="1" ArrayDimensions="0">
+    <DisplayName>StaticNumericNodeIdRange</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=68</Reference>
+      <Reference ReferenceType="HasProperty" IsForward="false">ns=1;i=9000</Reference>
+    </References>
+    <Value>
+      <ListOfString xmlns="http://opcfoundation.org/UA/2008/02/Types.xsd">
+        <String>1000:1999</String>
+        <String>7000</String>
+        <String>9000:9010</String>
+      </ListOfString>
+    </Value>
+  </UAVariable>
+</UANodeSet>

@@ -1,22 +1,22 @@
-Focus Node: <http://opcfoundation.org/UA/nodei4>
-Focus Node: <http://opcfoundation.org/UA/nodei9>
-Focus Node: http://opcfoundation.org/UA/nodei11
-Focus Node: http://opcfoundation.org/UA/nodei14
-Focus Node: http://opcfoundation.org/UA/nodei16
-Focus Node: http://opcfoundation.org/UA/nodei16
-Focus Node: http://opcfoundation.org/UA/nodei18
-Focus Node: http://opcfoundation.org/UA/nodei19
-Focus Node: http://opcfoundation.org/UA/nodei21
-Focus Node: http://opcfoundation.org/UA/nodei23
-Focus Node: http://opcfoundation.org/UA/nodei24
+Focus Node: <http://opcfoundation.org/UA/aT00>
+Focus Node: <http://opcfoundation.org/UA/aT05>
+Focus Node: http://opcfoundation.org/UA/aT0xMQ
+Focus Node: http://opcfoundation.org/UA/aT0xNA
+Focus Node: http://opcfoundation.org/UA/aT0xNg
+Focus Node: http://opcfoundation.org/UA/aT0xNg
+Focus Node: http://opcfoundation.org/UA/aT0xOA
+Focus Node: http://opcfoundation.org/UA/aT0xOQ
+Focus Node: http://opcfoundation.org/UA/aT0yMQ
+Focus Node: http://opcfoundation.org/UA/aT0yMw
+Focus Node: http://opcfoundation.org/UA/aT0yNA
 Message: ArrayDimension must be null or a List of integers > 0.
-Message: The node http://opcfoundation.org/UA/nodei11 has a valueRank 1 which does not match its type definition's valueRank -1.
-Message: The node http://opcfoundation.org/UA/nodei14 has valueRank 2 without arrayDimension.
-Message: The node http://opcfoundation.org/UA/nodei16 has a valueRank 2 which does not match its type definition's valueRank -3.
-Message: The node http://opcfoundation.org/UA/nodei16 has valueRank 2 without arrayDimension.
-Message: The node http://opcfoundation.org/UA/nodei18 has valueRank 1 without arrayDimension.
-Message: The node http://opcfoundation.org/UA/nodei21 hasArrayDimensions length of 2 but this does not match the valueRank 1.
-Message: The node http://opcfoundation.org/UA/nodei23 hasArrayDimensions length of 2 but this does not match the valueRank -3.
-Message: The node http://opcfoundation.org/UA/nodei24 hasArrayDimensions length of 1 but this does not match the valueRank -1.
-Message: The variable type node http://opcfoundation.org/UA/nodei19 has a valueRank -1 which does not match its super type definition's valueRank 0.
+Message: The node http://opcfoundation.org/UA/aT0xMQ has a valueRank 1 which does not match its type definition's valueRank -1.
+Message: The node http://opcfoundation.org/UA/aT0xNA has valueRank 2 without arrayDimension.
+Message: The node http://opcfoundation.org/UA/aT0xNg has a valueRank 2 which does not match its type definition's valueRank -3.
+Message: The node http://opcfoundation.org/UA/aT0xNg has valueRank 2 without arrayDimension.
+Message: The node http://opcfoundation.org/UA/aT0xOA has valueRank 1 without arrayDimension.
+Message: The node http://opcfoundation.org/UA/aT0yMQ hasArrayDimensions length of 2 but this does not match the valueRank 1.
+Message: The node http://opcfoundation.org/UA/aT0yMw hasArrayDimensions length of 2 but this does not match the valueRank -3.
+Message: The node http://opcfoundation.org/UA/aT0yNA hasArrayDimensions length of 1 but this does not match the valueRank -1.
+Message: The variable type node http://opcfoundation.org/UA/aT0xOQ has a valueRank -1 which does not match its super type definition's valueRank 0.
 Message: ValueRank can apopear at most once, must be xsd:integer and >= -3.

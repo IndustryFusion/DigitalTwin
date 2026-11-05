@@ -133,6 +133,10 @@
         "@id": "http://example.org/",
         "@prefix": true
       },
+      "uardf": {
+        "@id": "http://opcfoundation.org/rdf/uacore#",
+        "@prefix": true
+      },
       "opcua": {
         "@id": "http://opcfoundation.org/UA/",
         "@prefix": true

@@ -7,7 +7,7 @@
     sh:conforms false ;
     sh:result [ a sh:ValidationResult ;
             sh:focusNode [ a ngsi-ld:Relationship ;
-                    ngsi-ld:hasObject <http://my.test/testid:nodei2012> ] ;
+                    ngsi-ld:hasObject <urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAxMg> ] ;
             sh:resultMessage "Value does not have class test:BType" ;
             sh:resultPath ngsi-ld:hasObject ;
             sh:resultSeverity sh:Violation ;
@@ -17,5 +17,5 @@
                     sh:minCount 1 ;
                     sh:nodeKind sh:IRI ;
                     sh:path ngsi-ld:hasObject ] ;
-            sh:value <http://my.test/testid:nodei2012> ] .
+            sh:value <urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAxMg> ] .
 

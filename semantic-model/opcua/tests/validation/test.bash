@@ -47,6 +47,21 @@ for test in "${tests[@]}"; do
   echo "Test passed"
 done
 
+# The rules have to work on what nodeset2owl.py generates, not only on the test files above.
+GENERATED=../../machinery.owl.ttl
+INJECTED=injected.owl.ttl
+echo "-----------------------"
+echo "Executing GeneratedOntologyTest"
+${PYTHON} ${VALIDATE} -m ontology -ni ${GENERATED} > ${RESULTFILE} 2>&1 || true
+grep -q "Validation Conforms: True" ${RESULTFILE} || \
+  { echo "Expected the generated ontology to conform:" && cat ${RESULTFILE} && exit 1; }
+${PYTHON} inject_violation.py ${GENERATED} ${INJECTED}
+${PYTHON} ${VALIDATE} -m ontology -ni ${INJECTED} > ${RESULTFILE} 2>&1 || true
+rm -f ${INJECTED}
+grep -q "A node reached via HasComponent must be a Variable, Object, or Method." ${RESULTFILE} || \
+  { echo "Expected a violation of the HasComponent rule:" && cat ${RESULTFILE} && exit 1; }
+echo "Test passed"
+
 # -m vt validates a *.vt.owl.ttl Virtual-Types ontology's logical consistency via
 # the HermiT DL reasoner (see check_consistency.py, which validate.py's vt mode
 # wraps for a single file) -- a different mechanism than the SHACL-shape checks

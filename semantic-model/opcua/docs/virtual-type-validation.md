@@ -190,7 +190,7 @@ No --roots given: generating Virtual Types for all 2 ObjectType/VariableType cla
 Building Virtual Types and restrictions ...
   [1/2] (5.1s elapsed) http://my.test/BaseType
   [2/2] (5.1s elapsed) http://my.test/SubType
-Writing 239 triples to signal.vt.owl.ttl (5.1s elapsed) ...
+Writing 240 triples to signal.vt.owl.ttl (5.1s elapsed) ...
 Done in 5.1s.
 ```
 
@@ -355,8 +355,8 @@ python3 check_consistency.py core.vt.owl.ttl signal.vt.owl.ttl
 ```
 
 ```
-core.vt.owl.ttl                OK  consistent  (33340 triples, 2.9s)
-signal.vt.owl.ttl              FAIL  2 unsatisfiable class(es)  (33554 triples, 2.1s)
+core.vt.owl.ttl                OK  consistent  (33367 triples, 2.8s)
+signal.vt.owl.ttl              FAIL  2 unsatisfiable class(es)  (33581 triples, 2.2s)
     http://my.test/SubType
     http://my.test/VT_785e8afd2dbfb8041e9beca4
 
@@ -397,7 +397,7 @@ python3 validate.py -m vt signal.owl.ttl
 fails with
 
 ```
-ValueError: .../signal.owl.ttl looks like a semantic-bridge ttl (it has base:definesType triples),
+ValueError: .../signal.owl.ttl looks like a semantic-bridge ttl (it has uardf:definesType triples),
 not a generated Virtual-Types ontology. ... Pass its Virtual-Types sibling instead (signal.vt.owl.ttl);
 if it does not exist yet, build it first with 'make -f translate_default_nodesets.make' or
 'python3 owl2vt.py signal.owl.ttl'.

@@ -1,28 +1,35 @@
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
 @prefix opcua: <http://opcfoundation.org/UA/> .
+@prefix uardf: <http://opcfoundation.org/rdf/uacore#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 base:HasComponentVariableTypeConstraint a sh:NodeShape ;
-    sh:targetClass opcua:VariableNodeClass ;
+    sh:targetClass uardf:Variable ;
     sh:sparql [
         a sh:SPARQLConstraint ;
-        sh:message "Variable node {$this} reached by hasComponent reference must be (or inherit from) opcua:BaseDataVariableType." ;
+        sh:message "Variable node {$this} reached by HasComponent reference must be (or inherit from) opcua:BaseDataVariableType." ;
         sh:select """
             PREFIX base: <https://industryfusion.github.io/contexts/ontology/v0/base/>
             PREFIX opcua: <http://opcfoundation.org/UA/>
+            PREFIX uardf: <http://opcfoundation.org/rdf/uacore#>
             PREFIX owl: <http://www.w3.org/2002/07/owl#>
             PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-            SELECT $this
+            SELECT DISTINCT $this
             WHERE {
                 # Ensure that $this is reached by a hasComponent relation:
-                ?source  base:hasComponent $this.
-                # Now check for the proper type:
+                ?source  opcua:HasComponent $this.
+                # Now check for the proper type. Only report what the graph proves: the
+                # TypeDefinition is known to be (a subtype of) BaseVariableType or PropertyType,
+                # but not of BaseDataVariableType. A type whose hierarchy is not loaded (e.g.
+                # a core VariableType when validating with -ni) is not reported.
+                $this uardf:hasTypeDefinition|rdf:type ?t .
+                ?t rdfs:subClassOf* ?root .
+                FILTER(?root = opcua:BaseVariableType || ?root = opcua:PropertyType)
                 FILTER NOT EXISTS {
-                    $this rdf:type ?t .
                     ?t rdfs:subClassOf* opcua:BaseDataVariableType .
                 }
             }
@@ -30,25 +37,26 @@ base:HasComponentVariableTypeConstraint a sh:NodeShape ;
     ] .
 
 base:VariableComponentDependencyShape a sh:NodeShape ;
-    sh:targetClass opcua:VariableNodeClass ;
+    sh:targetClass uardf:Variable ;
     sh:sparql [
         a sh:SPARQLConstraint ;
-        sh:message "The VariableNodeClass has a base:hasComponent reference to another VariableNodeClass, but is not a DataVariable because it lacks an incoming base:hasComponent reference." ;
+        sh:message "The Variable has a HasComponent reference to another Variable, but is not a DataVariable because it lacks an incoming HasComponent reference." ;
         sh:select """
             PREFIX base: <https://industryfusion.github.io/contexts/ontology/v0/base/>
              PREFIX opcua: <http://opcfoundation.org/UA/>
+             PREFIX uardf: <http://opcfoundation.org/rdf/uacore#>
              PREFIX owl: <http://www.w3.org/2002/07/owl#>
              PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
              PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
              PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
                     SELECT $this
             WHERE {
-                # $this is the node A of type VariableNodeClass.
+                # $this is the Variable node A.
                 # Check if A has an outgoing hasComponent to a variable node B.
-                $this base:hasComponent ?component .
-                ?component rdf:type opcua:VariableNodeClass .
+                $this opcua:HasComponent ?component .
+                ?component rdf:type uardf:Variable .
                 # If A is not referenced by any other node via hasComponent, then it is not a DataVariable.
-                FILTER NOT EXISTS { ?parent base:hasComponent $this . }
+                FILTER NOT EXISTS { ?parent opcua:HasComponent $this . }
 }
         """
     ] .
@@ -56,67 +64,70 @@ base:VariableComponentDependencyShape a sh:NodeShape ;
 
 
 base:HasComponentTargetConstraint a sh:NodeShape ;
-    sh:targetClass opcua:BaseNodeClass ;
+    sh:targetClass uardf:Object, uardf:ObjectType, uardf:Variable, uardf:VariableType, uardf:Method, uardf:DataType, uardf:ReferenceType, uardf:View ;
     sh:sparql [
          a sh:SPARQLConstraint ;
-         sh:message "A node reached via base:hasComponent must be a Variable, Object, or Method." ;
+         sh:message "A node reached via HasComponent must be a Variable, Object, or Method." ;
          sh:select """
             PREFIX base: <https://industryfusion.github.io/contexts/ontology/v0/base/>
              PREFIX opcua: <http://opcfoundation.org/UA/>
+             PREFIX uardf: <http://opcfoundation.org/rdf/uacore#>
              PREFIX owl: <http://www.w3.org/2002/07/owl#>
              PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
              PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
              PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
              SELECT $this
            WHERE {
-             # Consider only nodes reached via base:hasComponent.
-             $this ^base:hasComponent ?source .
+             # Consider only nodes reached via HasComponent.
+             $this ^opcua:HasComponent ?source .
              $this a ?type .
-             FILTER(?type != opcua:VariableNodeClass  && ?type != opcua:ObjectNodeClass && ?type != opcua:MethodNodeClass)
+             FILTER(STRSTARTS(STR(?type), STR(uardf:)))
+             FILTER(?type != uardf:Variable && ?type != uardf:Object && ?type != uardf:Method)
            }
          """
     ] .
 
 base:HasComponentTargetSourceConstraint a sh:NodeShape ;
-    sh:targetClass opcua:VariableNodeClass ;
-    sh:targetClass opcua:ObjectNodeClass ;
-    sh:targetClass opcua:MethodNodeClass ;
+    sh:targetClass uardf:Variable ;
+    sh:targetClass uardf:Object ;
+    sh:targetClass uardf:Method ;
     sh:sparql [
         a sh:SPARQLConstraint ;
-        sh:message "For a hasComponent reference from {$source} to {$this}: if the target is a Variable then its source must be an Object, ObjectType, DataVariable or VariableType; if the target is an Object or a Method then its source must be an Object or ObjectType." ;
+        sh:message "For a HasComponent reference from {$source} to {$this}: if the target is a Variable then its source must be an Object, ObjectType, DataVariable or VariableType; if the target is an Object or a Method then its source must be an Object or ObjectType." ;
         sh:select """
             PREFIX base: <https://industryfusion.github.io/contexts/ontology/v0/base/>
             PREFIX opcua: <http://opcfoundation.org/UA/>
+            PREFIX uardf: <http://opcfoundation.org/rdf/uacore#>
             PREFIX owl: <http://www.w3.org/2002/07/owl#>
             PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
              SELECT $this ?source ?stype
             WHERE {
-  				$this a opcua:VariableNodeClass .
+  				$this a uardf:Variable .
                 # Find the source node that points to this target via hasComponent.
-                #$this ^base:hasComponent ?source .
+                #$this ^opcua:HasComponent ?source .
                 {
-    				 $this ^base:hasComponent ?source .
+    				 $this ^opcua:HasComponent ?source .
                     # Case 1: The target is a Variable.
-                    $this a opcua:VariableNodeClass .
+                    $this a uardf:Variable .
     				?source a ?stype .
-    				?stype rdfs:subClassOf* opcua:BaseNodeClass .
-    				OPTIONAL{?grand_source base:hasComponent ?source}
-      				FILTER(?stype != opcua:ObjectNodeClass && 
-      					   ?stype != opcua:ObjectTypeNodeClass && 
-      						(?stype != opcua:VariableNodeClass || !bound(?grand_source)) && 
-                           ?stype != opcua:VariableTypeNodeClass)
+    				FILTER(STRSTARTS(STR(?stype), STR(uardf:)))
+    				OPTIONAL{?grand_source opcua:HasComponent ?source}
+      				FILTER(?stype != uardf:Object && 
+      					   ?stype != uardf:ObjectType && 
+      						(?stype != uardf:Variable || !bound(?grand_source)) && 
+                           ?stype != uardf:VariableType)
                 }
   				UNION {
-     				$this ^base:hasComponent ?source .
+     				$this ^opcua:HasComponent ?source .
                         # Case 2: The target is an Object or a Method.
                     $this a ?t .
-                    FILTER(?t = opcua:ObjectNodeClass || ?t = opcua:MethodNodeClass) .
+                    FILTER(?t = uardf:Object || ?t = uardf:Method) .
                         ?source a ?stype .
     				?source a ?stype .
-    				?stype rdfs:subClassOf* opcua:BaseNodeClass .
-      				FILTER(?stype != opcua:ObjectNodeClass && ?stype != opcua:ObjectTypeNodeClass )
+    				FILTER(STRSTARTS(STR(?stype), STR(uardf:)))
+      				FILTER(?stype != uardf:Object && ?stype != uardf:ObjectType )
     				
             	}
             }

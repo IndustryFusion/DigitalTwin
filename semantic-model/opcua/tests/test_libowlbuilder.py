@@ -12,6 +12,7 @@ FIXTURE = Path(__file__).parent / 'owlbuilder' / 'pump_example.ttl'
 COMPANION_FIXTURE = Path(__file__).parent / 'owlbuilder' / 'companion_example.ttl'
 
 BASE = Namespace('https://industryfusion.github.io/contexts/ontology/v0/base/')
+UARDF = Namespace('http://opcfoundation.org/rdf/uacore#')
 OPCUA = Namespace('http://opcfoundation.org/UA/')
 COMP = Namespace('http://example.org/Companion/')
 
@@ -58,7 +59,7 @@ class TestEffectiveDeclarationTree(unittest.TestCase):
         cdt = self.builder.get_cdt(OPCUA['MotorType'])
         entry = cdt[key('Temperature')]
         self.assertEqual(entry.base_type, OPCUA['PropertyType'])
-        self.assertEqual(entry.nodeclass, OPCUA['VariableNodeClass'])
+        self.assertEqual(entry.nodeclass, UARDF['Variable'])
         self.assertEqual(entry.value_rank, -1)  # default: no explicit hasValueRank => Scalar
         self.assertEqual(entry.datatype, OPCUA['Double'])
 
@@ -258,9 +259,9 @@ class TestVirtualTypeEmission(unittest.TestCase):
         self.assertIn((OPCUA['ValueRank_MoreDimensions'], RDFS.subClassOf, one_or_more_dims), self.out)
 
     def test_no_instance_declaration_nodes_leak_into_output(self):
-        leaked = list(self.out.subjects(RDF.type, OPCUA['ObjectNodeClass']))
+        leaked = list(self.out.subjects(RDF.type, UARDF['Object']))
         self.assertEqual(leaked, [])
-        leaked_definer = list(self.out.subjects(self.builder.basens['definesType'], None))
+        leaked_definer = list(self.out.subjects(UARDF['definesType'], None))
         self.assertEqual(leaked_definer, [])
 
     def test_class_layer_is_preserved(self):
@@ -268,20 +269,18 @@ class TestVirtualTypeEmission(unittest.TestCase):
         self.assertIn((OPCUA['PumpType'], RDFS.subClassOf, OPCUA['BaseType']), self.out)
 
     def test_semantic_bridge_properties_are_declared_object_properties(self):
-        # Regression test: core.owl.ttl only ever asserts
-        # `opcua:hasX rdfs:subPropertyOf base:SemanticBridgeReferenceType` for
-        # these properties, never `a owl:ObjectProperty` -- and never types
-        # base:SemanticBridgeReferenceType itself either. Any property used as
+        # Regression test: older core.owl.ttl only asserted
+        # `opcua:hasX rdfs:subPropertyOf uardf:semanticBridgeReferenceType` for
+        # these properties, never `a owl:ObjectProperty` -- and never typed
+        # the root itself either. Any property used as
         # owl:onProperty in a restriction without being declared a property
         # causes Protege/OWL-API to substitute a synthetic "ErrorN" placeholder
         # class instead, so this must hold for every semantic bridge property
         # actually used in the output.
         for prop in (OPCUA['hasDrive'], OPCUA['hasMotor'], OPCUA['hasTemperature']):
             self.assertIn((prop, RDF.type, OWL.ObjectProperty), self.out)
-            self.assertIn((prop, RDFS.subPropertyOf, self.builder.basens['SemanticBridgeReferenceType']),
-                          self.out)
-        self.assertIn((self.builder.basens['SemanticBridgeReferenceType'], RDF.type, OWL.ObjectProperty),
-                      self.out)
+            self.assertIn((prop, RDFS.subPropertyOf, UARDF['semanticBridgeReferenceType']), self.out)
+        self.assertIn((UARDF['semanticBridgeReferenceType'], RDF.type, OWL.ObjectProperty), self.out)
 
 
 class TestSelfReferentialTypeTerminates(unittest.TestCase):
@@ -386,7 +385,7 @@ class TestMethodsAreIgnored(unittest.TestCase):
         builder = load_builder()
         cdt = builder.get_cdt(OPCUA['MotorType'])
         for entry in cdt.values():
-            self.assertNotEqual(entry.nodeclass, OPCUA['MethodNodeClass'])
+            self.assertNotEqual(entry.nodeclass, UARDF['Method'])
 
 
 class TestCompanionSpecIncrementalVirtualTypes(unittest.TestCase):

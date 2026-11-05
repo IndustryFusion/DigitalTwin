@@ -19,8 +19,9 @@ from rdflib.namespace import OWL, RDF, RDFS
 import xml.etree.ElementTree as ET
 import urllib
 import lib.utils as utils
-from lib.utils import RdfUtils, nodeId_to_iri
+from lib.utils import RdfUtils
 import json
+import re
 import sys
 
 
@@ -34,47 +35,30 @@ SELECT ?uri ?prefix ?ns WHERE {
     ?ns base:hasPrefix ?prefix .
 }
 """
+# Nodes of the imported ontologies are read via their uardf: identification.
+# ?nodeId is the canonical ExpandedNodeId string (e.g. "i=31", "nsu=...;i=1001").
 query_nodeIds = """
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 SELECT ?nodeId ?uri ?node WHERE {
-    ?node rdf:type/rdfs:subClassOf opcua:BaseNodeClass .
-    ?node base:hasNodeId ?nodeId .
-    ?node base:hasNamespace ?ns .
-    ?ns base:hasUri ?uri .
+    VALUES ?nodeclass { uardf:DataType uardf:ReferenceType uardf:ObjectType uardf:VariableType
+                        uardf:Object uardf:Variable uardf:Method uardf:View }
+    ?node a ?nodeclass ;
+          uardf:nodeId ?nodeId ;
+          uardf:namespaceUri ?uri .
 }
 """
 query_types = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 SELECT ?nodeId ?uri ?type WHERE {
-  {?type rdfs:subClassOf* opcua:BaseDataType .
-   ?node base:definesType ?type .
-   ?node base:hasNodeId ?nodeId .
-   ?node base:hasNamespace ?ns .
-   ?ns base:hasUri ?uri .
-  }
+  {?type rdfs:subClassOf* opcua:BaseDataType . }
   UNION
-  {?type rdfs:subClassOf* opcua:BaseObjectType .
-   ?node base:definesType ?type .
-   ?node base:hasNodeId ?nodeId .
-   ?node base:hasNamespace ?ns .
-   ?ns base:hasUri ?uri .
-  }
-   UNION
-  {?type rdfs:subClassOf* opcua:BaseVariableType .
-   ?node base:definesType ?type .
-   ?node base:hasNodeId ?nodeId .
-   ?node base:hasNamespace ?ns .
-   ?ns base:hasUri ?uri .
-  }
-   UNION
-  {?type rdfs:subPropertyOf* opcua:References .
-   ?node base:definesType ?type .
-   ?node base:hasNodeId ?nodeId .
-   ?node base:hasNamespace ?ns .
-   ?ns base:hasUri ?uri .
-  }
+  {?type rdfs:subClassOf* opcua:BaseObjectType . }
+  UNION
+  {?type rdfs:subClassOf* opcua:BaseVariableType . }
+  UNION
+  {?type rdfs:subPropertyOf* opcua:References . }
+  ?node uardf:definesType ?type ;
+        uardf:nodeId ?nodeId ;
+        uardf:namespaceUri ?uri .
 }
 """
 query_references = """
@@ -83,11 +67,10 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 SELECT ?id ?namespaceUri ?name
 WHERE {
   ?subclass rdfs:subPropertyOf* <http://opcfoundation.org/UA/References> .
-  ?node base:definesType ?subclass .
-  ?node base:hasNodeId ?id .
-  ?node base:hasNamespace ?ns .
-  ?ns base:hasUri ?namespaceUri .
-  ?node base:hasBrowseName ?name .
+  ?node uardf:definesType ?subclass ;
+        uardf:nodeId ?id ;
+        uardf:namespaceUri ?namespaceUri ;
+        uardf:name ?name .
 }
 """
 basic_types = ['String', 'Boolean', 'Byte', 'SByte', 'Int16', 'UInt16', 'Int32', 'UInt32', 'Uin64', 'Int64', 'Float',
@@ -121,6 +104,26 @@ baseObjectTypeId = '58'
 referencesId = '31'
 baseDataTypeId = '24'
 baseVariableType = '62'
+hasOrderedComponentId = '49'
+namespaceMetadataTypeId = '11616'
+hasChildId = '34'
+# HasChild and its subtypes of core, used until the reference type hierarchy is resolved (haschild_reference_types)
+core_haschild_ids = ('34', '44', '45', '46', '47', '49', '17604', '24136')
+
+UARDF = utils.UARDF
+# IdType enumeration (i=256) as used in NamespaceMetadataType.StaticNodeIdTypes
+idtype_enum = {'i': 0, 's': 1, 'g': 2, 'b': 3}
+instance_tags = ('UAObject', 'UAVariable', 'UAMethod', 'UAView')
+type_tags = ('UAObjectType', 'UAVariableType', 'UADataType', 'UAReferenceType')
+# Definition types (rule R4): their instances are definitions rather than data, which types and data types refer to
+# by NodeId (HasEncoding, HasDictionaryEntry, HasModellingRule, HasDescription): DataType encodings, dictionary
+# entries, ModellingRules and the legacy type dictionaries. Where the NamespaceMetadata (R3) does not decide, R4 makes
+# them static; the heuristic rule R1 never makes them dynamic (e.g. every ModellingRule has a NamingRule
+# property).
+definition_types = {'77': 'ModellingRuleType', '75': 'DataTypeSystemType', '72': 'DataTypeDictionaryType',
+                    '69': 'DataTypeDescriptionType', '76': 'DataTypeEncodingType', '17589': 'DictionaryEntryType'}
+# Variables of the (legacy) type dictionaries: definitions as well (R4)
+typesystem_variable_types = ('72', '69')
 
 
 class NodesetParser:
@@ -147,6 +150,19 @@ class NodesetParser:
         self.opcua_inputs = opcua_inputs
         self.versionIRI = version_iri
         self.isstrict = isstrict
+        # Server URI (svu) used to identify dynamic nodes. Without it, dynamic nodes are not exported.
+        self.server_uri = getattr(args, 'serverUri', None)
+        self.default_locale = getattr(args, 'defaultLocale', 'en')
+        self.enforce_opcua_type_semantic = getattr(args, 'enforce_opcua_type_semantic', False)
+        # strict: only the standard rules R3 (NamespaceMetadata) and R5 (default fallback) decide
+        self.strict_classification = getattr(args, 'strict_classification', False)
+        self.heuristic_overrides = {}  # key -> reason, nodes which only the heuristic classifies dynamic
+        self.node_iris = {}  # (ns index, canonical nodeid) -> IRI, or None for not exported dynamic nodes
+        self.expanded_nodeids = {}  # (ns index, canonical nodeid) -> canonical ExpandedNodeId string (encoded in IRI)
+        self.skipped_dynamic_nodes = []
+        self.unknown_nodes = set()
+        self.foreign_dynamic_iris = set()  # dynamic nodes of other nodesets which are referenced
+        self.imported_namespace_indices = set()  # namespaces (index) exported by the imported ontologies
         self.xml_ns = {
             'opcua': 'http://opcfoundation.org/UA/2011/03/UANodeSet.xsd',
             'xsd': 'http://opcfoundation.org/UA/2008/02/Types.xsd'
@@ -191,7 +207,10 @@ Please set it explictly.")
         else:
             self.ontology_name = utils.normalize_namespaceuri(args.namespace) if args.namespace is not None else None
         self.namespace_uris = self.root.find('opcua:NamespaceUris', self.xml_ns)
+        # Namespace URIs exactly as defined in the nodeset (index aligned with self.opcua_ns)
+        self.opcua_ns_raw = ['http://opcfoundation.org/UA/']
         if self.namespace_uris is not None:
+            self.opcua_ns_raw += [uri.text.strip() for uri in self.namespace_uris]
             self.namespace_uris = [utils.normalize_namespaceuri(uri.text) for uri in self.namespace_uris]
         self.base_ontology = args.baseOntology
         self.opcua_namespace = args.opcuaNamespace
@@ -208,6 +227,7 @@ Please set it explictly.")
             self.scan_aliases(alias_nodes)
         except Exception:
             pass
+        self.classify_nodes()
         all_nodeclasses = [
             ('opcua:UADataType', 'DataTypeNodeClass'),
             ('opcua:UAReferenceType', 'ReferenceTypeNodeClass'),
@@ -268,29 +288,36 @@ Please set it explictly.")
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
-        SELECT ?s ?sbc ?o ?bn ?nsuri WHERE {
+        SELECT ?s ?sbc ?o ?bn ?qualifiedname WHERE {
             ?sbc rdfs:subPropertyOf* opcua:Aggregates .
             ?s ?sbc ?o .
-            ?o base:hasBrowseName ?bn .
-            ?o base:hasBrowseNameNamespace ?bnn .
-            ?bnn base:hasUri ?nsuri .
+            ?o uardf:name ?bn ;
+               uardf:browseName ?qualifiedname .
         }
         """
         joint_graph = self.g + self.ig
         root_property = self.rdf_utils.get_root_property_of_semantic_bridge()
         bindings = {'root_property': root_property}
         query_result = joint_graph.query(not_needed_property_query, initNs=self.rdf_ns, initBindings=bindings)
-        for s, sbc, o, bn, nsuri in query_result:
+        for s, sbc, o, bn, qualifiedname in query_result:
             if ((s, sbc, o) in self.g) is False:
                 continue
-            targetns = Namespace(str(nsuri))
+            targetns = self.rdf_ns_for_uri(utils.parse_qualified_name(qualifiedname)[0])
             targetreference = targetns[urllib.parse.quote(f'{attribute_prefix}{bn}')]
             self.g.add((s, targetreference, o))
             self.add_semantic_relationship(targetreference)
 
+    def rdf_ns_for_uri(self, namespace_uri):
+        """RDF namespace of an OPC UA namespace URI (as used for the nodes of that namespace)."""
+        normalized = str(utils.normalize_namespaceuri(namespace_uri))
+        if normalized in self.opcua_ns:
+            return self.get_rdf_ns_from_ua_index(self.opcua_ns.index(normalized))
+        return Namespace(normalized)
+
     def add_semantic_relationship(self, targetreference):
-        semantic_bridge_property = self.rdf_utils.get_semantic_relationship_type()
+        semantic_bridge_property = UARDF['semanticBridgeReferenceType']
         if (targetreference, RDFS.subPropertyOf, semantic_bridge_property) not in self.ig:
+            self.g.add((targetreference, RDF.type, OWL.ObjectProperty))
             self.g.add((targetreference, RDFS.subPropertyOf, semantic_bridge_property))
 
     def init_imports(self, base_ontologies):
@@ -303,7 +330,6 @@ Please set it explictly.")
                 hgraph = Graph()
                 hgraph.parse(file)
                 self.ig += hgraph
-        utils.restore_type_of_node_iris(self.ig, self.rdf_ns['opcua'], self.rdf_ns['base'])
 
     def get_all_node_ids(self):
         query_result = self.ig.query(query_nodeIds, initNs=self.rdf_ns)
@@ -314,12 +340,14 @@ Please set it explictly.")
             self.nodeIds.append({})
             self.typeIds.append({})
         for nodeId, uri, nodeIri in query_result:
-            if str(uri) in urimap.keys():
-                ns = urimap[str(uri)]
+            uri = str(utils.normalize_namespaceuri(uri))
+            if uri in urimap.keys():
+                ns = urimap[uri]
             else:
                 continue
             try:
-                self.nodeIds[ns][str(nodeId)] = nodeIri
+                self.nodeIds[ns][utils.parse_expanded_nodeid(nodeId)[3]] = nodeIri
+                self.imported_namespace_indices.add(ns)
             except Exception:
                 print(f"Warning: Did not find namespace {uri}. Did you import the respective companion specification?")
                 sys.exit(1)
@@ -328,16 +356,18 @@ Please set it explictly.")
     def get_all_types(self):
         query_result = self.ig.query(query_types, initNs=self.rdf_ns)
         for nodeId, uri, type in query_result:
-            if str(uri) in self.urimap.keys():
-                ns = self.urimap[str(uri)]
+            uri = str(utils.normalize_namespaceuri(uri))
+            if uri in self.urimap.keys():
+                ns = self.urimap[uri]
             else:
                 continue
-            self.typeIds[ns][str(nodeId)] = type
+            self.typeIds[ns][utils.parse_expanded_nodeid(nodeId)[3]] = type
 
     def get_all_references(self):
         query_result = self.ig.query(query_references, initNs=self.rdf_ns)
         for id, namespace_uri, name in query_result:
-            self.known_references.append((id, namespace_uri, name))
+            self.known_references.append((Literal(utils.parse_expanded_nodeid(id)[3]),
+                                          utils.normalize_namespaceuri(namespace_uri), name))
 
     def get_all_namespaces(self, ontology_prefix, ontology_name, namespaceclass):
         query_result = self.ig.query(query_namespaces, initNs=self.rdf_ns)
@@ -411,6 +441,8 @@ Please set it explictly.")
         self.rdf_ns['opcua'] = Namespace(opcua_namespace)
         self.g.bind('opcua', self.rdf_ns['opcua'])
         self.g.bind('base', self.rdf_ns['base'])
+        self.rdf_ns['uardf'] = UARDF
+        self.g.bind('uardf', UARDF)
         if ns_uris is None:
             return
         for ns in ns_uris:
@@ -465,27 +497,21 @@ Did you forget to import it?")
     def add_nodeid_to_class(self, node, nodeclasstype, xml_ns):
         nid, index, bn_name, bn_index, idtype = self.get_nid_ns_and_name(node)
         rdf_namespace = self.get_rdf_ns_from_ua_index(index)
-        bn_namespace = self.get_rdf_ns_from_ua_index(bn_index)
-        classiri = nodeId_to_iri(rdf_namespace, self.rdf_ns['base'], nid, idtype)
-        self.g.add((classiri, self.rdf_ns['base']['hasNodeId'], Literal(nid)))
-        self.g.add((classiri, self.rdf_ns['base']['hasIdentifierType'], idtype))
-        self.g.add((classiri, self.rdf_ns['base']['hasBrowseName'], Literal(bn_name)))
-        self.g.add((classiri, self.rdf_ns['base']['hasBrowseNameNamespace'],
-                    self.known_ns_classes[str(utils.normalize_namespaceuri(bn_namespace))]))
-        namespace = self.opcua_ns[index]
-        self.g.add((classiri, self.rdf_ns['base']['hasNamespace'],
-                    self.known_ns_classes[str(utils.normalize_namespaceuri(namespace))]))
-        self.g.add((classiri, RDF.type, self.rdf_ns['opcua'][nodeclasstype]))
+        classiri = self.node_iri(index, nid, idtype)
+        if classiri is None:
+            return rdf_namespace, None
+        # Node class, NodeId, namespace, BrowseName, SymbolicName, DisplayName and Description are
+        # described by uardf: only.
+        # The base: attributes below have no uardf: counterpart yet.
+        self.add_uardf_identification(node, nodeclasstype, index, nid, idtype, bn_name, bn_index, classiri)
+        self.add_uardf_parent(node, classiri)
         self.nodeIds[index][nid] = classiri
-        displayname_node = node.find('opcua:DisplayName', xml_ns)
-        self.g.add((classiri, self.rdf_ns['base']['hasDisplayName'], Literal(displayname_node.text)))
-        symbolic_name = node.get('SymbolicName')
-        if symbolic_name is not None:
-            self.g.add((classiri, self.rdf_ns['base']['hasSymbolicName'], Literal(symbolic_name)))
-        description_node = node.find('opcua:Description', xml_ns)
-        if description_node is not None:
-            description = description_node.text
-            self.g.add((classiri, self.rdf_ns['base']['hasDescription'], Literal(description)))
+        displayname = self.localized_text(node.find('opcua:DisplayName', xml_ns))
+        if displayname is not None:
+            self.g.add((classiri, UARDF['displayName'], displayname))
+        description = self.localized_text(node.find('opcua:Description', xml_ns))
+        if description is not None:
+            self.g.add((classiri, UARDF['description'], description))
         isSymmetric = node.get('Symmetric')
         if isSymmetric is not None:
             self.g.add((classiri, self.rdf_ns['base']['isSymmetric'], Literal(isSymmetric)))
@@ -498,6 +524,43 @@ Did you forget to import it?")
         if historizing is not None:
             self.g.add((classiri, self.rdf_ns['base']['isHistorizing'], Literal(bool(historizing))))
         return rdf_namespace, classiri
+
+    def localized_text(self, element):
+        """LocalizedText element (e.g. DisplayName, Description) as rdf:langString, None if empty.
+
+        Elements without Locale get the default locale.
+        """
+        if element is None or element.text is None or element.text.strip() == '':
+            return None
+        locale = (element.get('Locale') or '').strip() or self.default_locale
+        return Literal(element.text, lang=locale)
+
+    def add_uardf_parent(self, node, classiri):
+        """Preserve the ParentNodeId structure of the nodeset."""
+        parent = node.get('ParentNodeId')
+        if parent is None:
+            return
+        parent_index, parent_id, parent_idtype = self.parse_nodeid(self.resolve_alias(parent))
+        parent_iri = self.node_iri(parent_index, parent_id, parent_idtype)
+        if parent_iri is not None:  # None: not exported dynamic node
+            self.g.add((classiri, UARDF['parent'], parent_iri))
+
+    def add_uardf_identification(self, node, nodeclasstype, index, nid, idtype, bn_name, bn_index, classiri):
+        key = self.node_key(index, nid, idtype)
+        self.g.add((classiri, RDF.type, UARDF[nodeclasstype.removesuffix('NodeClass')]))
+        # the canonical ExpandedNodeId string without server URI; for static nodes exactly what is encoded in the IRI,
+        # dynamic nodes have their server URI in the IRI (svu=) and in uardf:serverUri
+        self.g.add((classiri, UARDF['nodeId'], Literal(utils.expanded_nodeid_string(key[1], self.opcua_ns_raw[index]))))
+        self.g.add((classiri, UARDF['namespaceUri'], Literal(self.opcua_ns_raw[index])))
+        if key not in self.static_nodes:
+            self.g.add((classiri, UARDF['serverUri'], Literal(self.server_uri)))
+        # browseName is the canonical QualifiedName (nsu=<uri>;<name>), name is just its name part
+        self.g.add((classiri, UARDF['browseName'],
+                    Literal(utils.canonical_qualified_name(bn_name, self.opcua_ns_raw[bn_index]))))
+        self.g.add((classiri, UARDF['name'], Literal(bn_name)))
+        # SymbolicName defaults to the BrowseName
+        symbolic_name = node.get('SymbolicName')
+        self.g.add((classiri, UARDF['symbolicName'], Literal(symbolic_name if symbolic_name is not None else bn_name)))
 
     def parse_nodeid(self, nodeid):
         """
@@ -627,15 +690,15 @@ Did you forget to import it?")
                     locale = data.get('xsd:Locale')
                     if locale is not None:
                         locale = locale.strip() or None
+                    if locale is None:
+                        locale = self.default_locale
                     if text is not None:
                         result = Literal(text, lang=locale)
                         return Literal(result)
                 elif "}NodeId" in tag:
                     identifier = data['xsd:Identifier']
                     ns_index, node_id, idtype = self.parse_nodeid(identifier)
-                    ns = Namespace(self.opcua_ns[ns_index])
-                    result = nodeId_to_iri(ns, self.rdf_ns['base'], node_id, idtype)
-                    return result
+                    return self.node_iri(ns_index, node_id, idtype)
                 else:
                     json_obj = {}
                     for k, v in data.items():
@@ -694,8 +757,9 @@ Did you forget to import it?")
             if found_component is not None:
                 componentId = self.resolve_alias(reference.text)
                 index, id, idtype = self.parse_nodeid(componentId)
-                namespace = self.get_rdf_ns_from_ua_index(index)
-                targetclassiri = nodeId_to_iri(namespace, self.rdf_ns['base'], id, idtype)
+                targetclassiri = self.node_iri(index, id, idtype)
+                if targetclassiri is None:  # not exported dynamic node
+                    continue
                 if isforward != 'false':
                     self.g.add((classiri, reftype_ns[found_component], targetclassiri))
                 else:
@@ -724,7 +788,10 @@ Did you forget to import it?")
                 print(f"Warning: IsForward=false makes not sense here: {classiri}")
             else:
                 try:
-                    self.g.add((classiri, RDF.type, self.typeIds[typedef_index][typedef_id]))
+                    # uardf:hasTypeDefinition is the instantiation intent of OPC UA, not the real
+                    # instantiation (rdf:type) of e.g. JSON-LD instances
+                    type_predicate = RDF.type if self.enforce_opcua_type_semantic else UARDF['hasTypeDefinition']
+                    self.g.add((classiri, type_predicate, self.typeIds[typedef_index][typedef_id]))
                 except IndexError as e:
                     print(f"Could not find namespace with id {typedef_index}")
                     raise e
@@ -736,8 +803,9 @@ Did you forget to import it?")
         _, browsename = self.getBrowsename(node)
         nodeid = node.get('NodeId')
         index, id, idtype = self.parse_nodeid(nodeid)
-        namespace = self.get_rdf_ns_from_ua_index(index)
-        classiri = nodeId_to_iri(namespace, self.rdf_ns['base'], id, idtype)
+        classiri = self.node_iri(index, id, idtype)
+        if classiri is None:  # not exported dynamic node
+            return
         references_node = node.find('opcua:References', self.xml_ns)
         references = references_node.findall('opcua:Reference', self.xml_ns)
         self.get_references(references, classiri)
@@ -751,8 +819,9 @@ Did you forget to import it?")
     def add_datatype_dependent(self, node):
         nodeid = node.get('NodeId')
         index, id, idtype = self.parse_nodeid(nodeid)
-        namespace = self.get_rdf_ns_from_ua_index(index)
-        classiri = nodeId_to_iri(namespace, self.rdf_ns['base'], id, idtype)
+        classiri = self.node_iri(index, id, idtype)
+        if classiri is None:  # not exported dynamic node
+            return
         self.get_user_access(node, classiri)
         self.get_event_notifier(node, classiri)
 
@@ -858,13 +927,14 @@ Did you forget to import it?")
         nodeid = node.get('NodeId')
         ref_index, ref_id, idtype = self.parse_nodeid(nodeid)
         ref_namespace = self.get_rdf_ns_from_ua_index(ref_index)
-        ref_classiri = nodeId_to_iri(ref_namespace, self.rdf_ns['base'], ref_id, idtype)
+        ref_classiri = self.node_iri(ref_index, ref_id, idtype)
         isAbstract = node.get('IsAbstract')
         br_namespace = ref_namespace
-        if isAbstract is not None:
-            self.g.add((br_namespace[browsename], self.rdf_ns['base']['isAbstract'], Literal(isAbstract)))
+        if isAbstract is not None and ref_classiri is not None:
+            self.g.add((ref_classiri, UARDF['isAbstract'], Literal(isAbstract.strip().lower() == 'true')))
         self.typeIds[ref_index][ref_id] = br_namespace[browsename]
-        self.g.add((ref_classiri, self.rdf_ns['base']['definesType'], br_namespace[browsename]))
+        if ref_classiri is not None:
+            self.g.add((ref_classiri, UARDF['definesType'], br_namespace[browsename]))
         if not node.tag.endswith("UAReferenceType"):
             self.g.add((ref_namespace[browsename], RDF.type, OWL.Class))
         else:
@@ -876,7 +946,7 @@ Did you forget to import it?")
         nodeid = node.get('NodeId')
         ref_index, ref_id, idtype = self.parse_nodeid(nodeid)
         ref_namespace = self.get_rdf_ns_from_ua_index(ref_index)
-        ref_classiri = nodeId_to_iri(ref_namespace, self.rdf_ns['base'], ref_id, idtype)
+        ref_classiri = self.node_iri(ref_index, ref_id, idtype)
         try:
             references_node = node.find('opcua:References', self.xml_ns)
             references = references_node.findall('opcua:Reference', self.xml_ns)
@@ -887,8 +957,10 @@ Did you forget to import it?")
         else:
             self.known_references.append((Literal(ref_id), ref_namespace, Literal(browsename)))
             self.g.add((ref_namespace[browsename], RDF.type, OWL.ObjectProperty))
-        self.get_references(references, ref_classiri)
         self.get_typedefinition_from_references(references, ref_classiri, node)
+        if ref_classiri is None:  # type node declared dynamic but no server URI given
+            return
+        self.get_references(references, ref_classiri)
         self.get_datatype(node, ref_classiri)
         self.get_value_rank(node, ref_classiri)
         self.get_array_dimensions(node, ref_classiri)
@@ -916,6 +988,537 @@ Did you forget to import it?")
             name = result[1]
             index = int(result[0])
         return index, name
+
+    # Identification of nodes
+    #
+    # Every node is identified by its namespace URI as IRI prefix plus the base64url encoded
+    # canonical ExpandedNodeId, e.g. i=31 in http://opcfoundation.org/UA/ => opcua:aT0zMQ,
+    # ns=1;i=1001 in http://opcfoundation.org/UA/DI/ =>
+    #     di:<base64url(nsu=http://opcfoundation.org/UA/DI/;i=1001)>.
+    # Static nodes are server independent. Dynamic nodes only exist in a specific server, so their
+    # ExpandedNodeId additionally contains the server URI (svu=<uri>;nsu=<uri>;i=...).
+    # Whether a node is static is decided by
+    # 1. the NamespaceMetadataType object of its namespace (StaticNodeIdTypes,
+    #    StaticNumericNodeIdRange, StaticStringNodeIdPattern), if it decides the node's IdType,
+    # 2. otherwise the general rule: type nodes and instance declarations are static,
+    #    all other instance nodes are dynamic.
+
+    def node_key(self, index, identifier, idtype):
+        idt = utils.idtype2String(idtype, self.rdf_ns['base'])
+        return (int(index), utils.canonical_nodeid(idt, identifier))
+
+    def key_from_nodeid_string(self, nodeid):
+        index, identifier, idtype = self.parse_nodeid(self.resolve_alias(nodeid.strip()))
+        return self.node_key(index, identifier, idtype)
+
+    def get_node_references(self, node):
+        references = node.find('opcua:References', self.xml_ns)
+        if references is None:
+            return []
+        return references.findall('opcua:Reference', self.xml_ns)
+
+    def is_reference_of_type(self, reference, reftype_id, forward=True):
+        reftype = self.resolve_alias(reference.get('ReferenceType'))
+        index, id, _ = self.parse_nodeid(reftype)
+        isforward = reference.get('IsForward') != 'false'
+        return index == 0 and id == reftype_id and isforward == forward
+
+    def get_value_texts(self, node):
+        value = node.find('opcua:Value', self.xml_ns)
+        if value is None:
+            return []
+        texts = []
+        for child in value:
+            if 'ListOf' in child.tag:
+                texts += [item.text for item in child if item.text is not None]
+            elif child.text is not None:
+                texts.append(child.text)
+        return [text.strip() for text in texts]
+
+    def scan_namespace_metadata(self, xml_nodes):
+        """Collect the static node rules of all NamespaceMetadataType objects in the nodeset."""
+        self.static_node_rules = {}
+        for key, obj in xml_nodes.items():
+            if not obj.tag.endswith('}UAObject'):
+                continue
+            references = self.get_node_references(obj)
+            typedef = next((ref.text for ref in references
+                            if self.is_reference_of_type(ref, hasTypeDefinitionId)), None)
+            if typedef is None or self.key_from_nodeid_string(typedef) != (0, f'i={namespaceMetadataTypeId}'):
+                continue
+            property_keys = {self.key_from_nodeid_string(ref.text) for ref in references
+                             if self.is_reference_of_type(ref, hasPropertyId)}
+            properties = {}
+            for prop_key, prop in xml_nodes.items():
+                if not prop.tag.endswith('}UAVariable'):
+                    continue
+                parent = prop.get('ParentNodeId')
+                if prop_key in property_keys or (parent is not None and self.key_from_nodeid_string(parent) == key):
+                    _, browsename = self.getBrowsename(prop)
+                    properties[browsename] = self.get_value_texts(prop)
+            namespace_uri = properties.get('NamespaceUri')
+            if not namespace_uri:  # e.g. the <NamespaceIdentifier> placeholder
+                continue
+            pattern = properties.get('StaticStringNodeIdPattern')
+            rule = {
+                'types': {int(idtype) for idtype in properties.get('StaticNodeIdTypes', [])},
+                'ranges': [utils.parse_numeric_range(r) for r in properties.get('StaticNumericNodeIdRange', [])],
+                'pattern': re.compile(pattern[0]) if pattern and pattern[0] else None
+            }
+            namespace_uri = str(utils.normalize_namespaceuri(namespace_uri[0]))
+            self.static_node_rules[namespace_uri] = rule
+            print(f"Found NamespaceMetadata for {namespace_uri}: StaticNodeIdTypes={sorted(rule['types'])}, "
+                  f"{len(rule['ranges'])} StaticNumericNodeIdRange(s), "
+                  f"StaticStringNodeIdPattern={rule['pattern'].pattern if rule['pattern'] else None}")
+
+    def explicit_static(self, namespace_uri, idt, identifier):
+        """True/False if the NamespaceMetadata decides about the node, None otherwise."""
+        rule = self.static_node_rules.get(str(utils.normalize_namespaceuri(namespace_uri)))
+        if rule is None:
+            return None
+        if idt == 'i' and rule['ranges']:
+            return any(lo <= int(identifier) <= hi for lo, hi in rule['ranges'])
+        if idt == 's' and rule['pattern'] is not None:
+            return rule['pattern'].fullmatch(identifier) is not None
+        if idtype_enum[idt] in rule['types']:
+            return True
+        return None
+
+    def haschild_reference_types(self):
+        """Keys of HasChild and all its subtypes: core's, the ones of the imported ontologies (rdfs:subPropertyOf
+        of the semantic bridge properties) and the ReferenceTypes of this nodeset (HasSubtype)."""
+        keys = {(0, f'i={i}') for i in core_haschild_ids}
+        if 'opcua' not in self.rdf_ns:
+            return keys
+        haschild = self.rdf_ns['opcua']['HasChild']
+        for node, prop in self.ig.subject_objects(UARDF['definesType']):
+            if (node, RDF.type, UARDF['ReferenceType']) not in self.ig or \
+                    haschild not in set(self.ig.transitive_objects(prop, RDFS.subPropertyOf)):
+                continue
+            nodeid = self.ig.value(node, UARDF['nodeId'])
+            if nodeid is None:
+                continue
+            _, nsu, idt, identifier = utils.parse_expanded_nodeid(nodeid)
+            index = self.namespace_index(nsu or self.opcua_ns_raw[0])
+            if index is not None:
+                keys.add((index, utils.canonical_nodeid(idt, identifier)))
+        supertypes = {}
+        for node in self.root:
+            if node.tag.endswith('}UAReferenceType'):
+                key = self.key_from_nodeid_string(node.get('NodeId'))
+                for ref in self.get_node_references(node):
+                    if self.is_reference_of_type(ref, hasSubtypeId, forward=False):
+                        supertypes[key] = self.key_from_nodeid_string(ref.text)
+        changed = True
+        while changed:
+            changed = False
+            for key, supertype in supertypes.items():
+                if key not in keys and supertype in keys:
+                    keys.add(key)
+                    changed = True
+        return keys
+
+    def namespace_index(self, namespace_uri):
+        normalized = str(utils.normalize_namespaceuri(namespace_uri))
+        for index, uri in enumerate(self.opcua_ns_raw):
+            if str(utils.normalize_namespaceuri(uri)) == normalized:
+                return index
+        return None
+
+    def is_haschild_reference(self, reference, forward=True):
+        """True if the reference is a HasChild (or subtype) reference in the given direction."""
+        if (reference.get('IsForward') != 'false') != forward:
+            return False
+        keys = getattr(self, 'haschild_keys', None) or {(0, f'i={i}') for i in core_haschild_ids}
+        return self.key_from_nodeid_string(reference.get('ReferenceType')) in keys
+
+    def get_parent_key(self, node):
+        """HasChild parent of a node: ParentNodeId, otherwise the source of an inverse HasChild reference."""
+        parent = node.get('ParentNodeId')
+        if parent is not None:
+            return self.key_from_nodeid_string(parent)
+        for ref in self.get_node_references(node):
+            if self.is_haschild_reference(ref, forward=False) and \
+                    not self.is_reference_of_type(ref, hasSubtypeId, forward=False):
+                return self.key_from_nodeid_string(ref.text)
+        return None
+
+    def children_of_nodes(self, xml_nodes):
+        """Parent key -> keys of its HasChild children of this nodeset (ParentNodeId or HasChild references in
+        either direction, without HasSubtype). The parent may be a node of another nodeset."""
+        children = {}
+        for key, node in xml_nodes.items():
+            parent = self.get_parent_key(node)
+            if parent is not None:
+                children.setdefault(parent, set()).add(key)
+            for ref in self.get_node_references(node):
+                if self.is_haschild_reference(ref) and not self.is_reference_of_type(ref, hasSubtypeId):
+                    target = self.key_from_nodeid_string(ref.text)
+                    if target in xml_nodes:
+                        children.setdefault(key, set()).add(target)
+        return children
+
+    def is_type_node(self, key, xml_nodes):
+        node = xml_nodes.get(key)
+        if node is not None:
+            return node.tag.split('}')[-1] in type_tags
+        index, canonical = key
+        try:
+            return canonical.split('=', 1)[1] in self.typeIds[index]  # type of an imported namespace
+        except IndexError:
+            return False
+
+    def is_instance_declaration(self, key, xml_nodes):
+        """Instance node which is part of a type definition: it has a ModellingRule or its parent
+        is a type or an instance declaration."""
+        visited = set()
+        while key is not None and key not in visited:
+            visited.add(key)
+            node = xml_nodes.get(key)
+            if node is None or node.tag.split('}')[-1] not in instance_tags:
+                return False
+            if any(self.is_reference_of_type(ref, hasModellingRuleId) for ref in self.get_node_references(node)):
+                return True
+            key = self.get_parent_key(node)
+            if key is not None and self.is_type_node(key, xml_nodes):
+                return True
+        return False
+
+    def get_typedefinition_id(self, node):
+        """Numeric identifier of the core TypeDefinition of an xml node, None if it has none in namespace 0."""
+        typedef = next((ref.text for ref in self.get_node_references(node)
+                        if self.is_reference_of_type(ref, hasTypeDefinitionId)), None)
+        if typedef is None:
+            return None
+        index, canonical = self.key_from_nodeid_string(typedef)
+        return canonical.split('=', 1)[1] if index == 0 and canonical.startswith('i=') else None
+
+    def variables_of_nodes(self, xml_nodes):
+        """Parent key -> keys of its HasChild children which are Variables. The parent may be a node of another
+        nodeset."""
+        result = {}
+        for parent, children in self.children_of_nodes(xml_nodes).items():
+            variables = {c for c in children if xml_nodes[c].tag.endswith('}UAVariable')}
+            if variables:
+                result[parent] = variables
+        return result
+
+    def is_foreign_instance(self, key):
+        """True if a node of another nodeset is an instance (no type, no instance declaration, no definition
+        node). Nodes which the static export of an imported namespace does not contain are dynamic instances."""
+        index, canonical = key
+        if index >= len(self.nodeIds) or index not in self.imported_namespace_indices:
+            return False  # nothing known about it
+        iri = self.nodeIds[index].get(canonical.split('=', 1)[1])
+        if iri is None:
+            return True
+        if not any((iri, RDF.type, UARDF[nodeclass]) in self.ig for nodeclass in ('Object', 'Variable')):
+            return False
+        typedef = self.ig.value(iri, UARDF['hasTypeDefinition'])
+        if typedef is not None and str(typedef) in {str(self.rdf_ns['opcua'][name])
+                                                    for name in definition_types.values()}:
+            return False
+        node, visited = iri, set()
+        while node is not None and node not in visited:  # instance declaration: below a type or with rule
+            visited.add(node)
+            if (node, UARDF['definesType'], None) in self.ig or \
+                    (node, self.rdf_ns['opcua']['HasModellingRule'], None) in self.ig:
+                return False
+            node = self.ig.value(node, UARDF['parent'])
+        return True
+
+    def typedef_key(self, node):
+        """Key of the TypeDefinition of an xml node, None if it has none."""
+        typedef = next((ref.text for ref in self.get_node_references(node)
+                        if self.is_reference_of_type(ref, hasTypeDefinitionId)), None)
+        return self.key_from_nodeid_string(typedef) if typedef is not None else None
+
+    def is_definition_type(self, key, xml_nodes):
+        """True if the type (key) is or derives from a definition type (definition_types),
+        resolved via the supertypes of this nodeset (HasSubtype) and of the imported ontologies (rdfs:subClassOf)."""
+        cache = self.__dict__.setdefault('_definition_type_cache', {})
+        if key is None:
+            return False
+        if key not in cache:
+            cache[key] = False  # cycle guard
+            index, canonical = key
+            if index == 0 and canonical[2:] in definition_types:
+                cache[key] = True
+            elif key in xml_nodes:
+                supertype = next((self.key_from_nodeid_string(ref.text)
+                                  for ref in self.get_node_references(xml_nodes[key])
+                                  if self.is_reference_of_type(ref, hasSubtypeId, forward=False)), None)
+                cache[key] = self.is_definition_type(supertype, xml_nodes)
+            elif index < len(self.nodeIds):
+                node = self.nodeIds[index].get(canonical.split('=', 1)[1])
+                cls = self.ig.value(node, UARDF['definesType']) if node is not None else None
+                for supertype in (self.ig.objects(cls, RDFS.subClassOf) if cls is not None else ()):
+                    supernode = self.ig.value(predicate=UARDF['definesType'], object=supertype)
+                    nodeid = self.ig.value(supernode, UARDF['nodeId']) if supernode is not None else None
+                    if nodeid is None:
+                        continue
+                    _, nsu, idt, identifier = utils.parse_expanded_nodeid(nodeid)
+                    superindex = self.namespace_index(nsu or self.opcua_ns_raw[0])
+                    if superindex is not None and \
+                            self.is_definition_type((superindex, utils.canonical_nodeid(idt, identifier)), xml_nodes):
+                        cache[key] = True
+        return cache[key]
+
+    def node_label(self, key, xml_nodes):
+        node = xml_nodes.get(key)
+        nodeid = f'nsu={self.opcua_ns_raw[key[0]]};{key[1]}'
+        return f'{self.getBrowsename(node)[1]} ({nodeid})' if node is not None else nodeid
+
+    def instances_with_variables(self, xml_nodes):
+        """R1 (instance-with-Variables override): an instance which has Variables is server specific, so the instance
+        and its Variables are dynamic (adding Variables to an instance expresses the intention of server specific
+        data).
+
+        Instances are Objects and Variables which are neither types nor instance declarations; instances of the
+        definition types are excluded. The parent may be an instance of another nodeset (e.g. DI's
+        MaxInactiveLockTime below core's ServerCapabilities), then only its Variables of this nodeset are classified.
+        Returns key -> reason.
+        """
+        result = {}
+        for parent, variables in self.variables_of_nodes(xml_nodes).items():
+            node = xml_nodes.get(parent)
+            if node is not None:
+                if node.tag.split('}')[-1] not in ('UAObject', 'UAVariable') or \
+                        self.is_instance_declaration(parent, xml_nodes) or \
+                        self.is_definition_type(self.typedef_key(node), xml_nodes):
+                    continue
+                result.setdefault(parent, 'R1: instance with Variables')
+            elif not self.is_foreign_instance(parent):
+                continue
+            for variable in variables:
+                # a Variable of an instance belongs to the instance, even if it (wrongly) has a ModellingRule
+                if self.is_definition_type(self.typedef_key(xml_nodes[variable]), xml_nodes):
+                    continue
+                result.setdefault(variable, f'R1: Variable of instance {self.node_label(parent, xml_nodes)}')
+        return result
+
+    def classify_with_heuristics(self, xml_nodes):
+        """key -> (static, formally static, reason of a difference).
+
+        The first matching rule decides, in the order R1, R3, R4, R5:
+          override (heuristic, it overrules R3):
+          R1 instance-with-Variables override: an instance which has Variables is dynamic together with its
+             Variables, except definition nodes.
+          standard rule:
+          R3 NamespaceMetadata rule: the NamespaceMetadata of the namespace decides.
+          fallbacks (only where R3 does not decide):
+          R4 definition fallback (heuristic): definition nodes - instances of the definition types (definition_types
+             and their subtypes) and the Variables of the type dictionaries - are static.
+          R5 default fallback (standard): types and instance declarations are static, instances dynamic.
+        --strict-classification keeps the standard rules R3 and R5 only. R1 considers HasChild (and its subtypes):
+        Organizes (or any other reference which is not HasChild) never influences the classification.
+        """
+        formal = {key: self.is_static_node(key, node, xml_nodes) for key, node in xml_nodes.items()}
+        if self.strict_classification:
+            return {key: (static, static, None) for key, static in formal.items()}
+        rule1 = self.instances_with_variables(xml_nodes)
+        result = {}
+
+        def tag(key):
+            return xml_nodes[key].tag.split('}')[-1]
+
+        def is_definition(key):
+            return self.is_definition_type(self.typedef_key(xml_nodes[key]), xml_nodes)
+
+        def is_typesystem_variable(key, seen=()):
+            node = xml_nodes[key]
+            if self.get_typedefinition_id(node) in typesystem_variable_types:
+                return True
+            parent = self.get_parent_key(node)
+            return parent in xml_nodes and parent not in seen and tag(parent) == 'UAVariable' and \
+                is_typesystem_variable(parent, set(seen) | {key})
+
+        for key in xml_nodes:
+            static = formal[key]
+            reason = None
+            index, canonical = key
+            idt, identifier = canonical.split('=', 1)
+            undecided = self.explicit_static(self.opcua_ns[index], idt, identifier) is None
+            if key in rule1:
+                static, reason = False, rule1[key]
+            elif undecided and not static and tag(key) in instance_tags:
+                if tag(key) in ('UAObject', 'UAView') and is_definition(key):
+                    static, reason = True, 'R4: definition node (fallback)'
+                elif tag(key) == 'UAVariable' and is_typesystem_variable(key):
+                    static, reason = True, 'R4: Variable of a type dictionary (fallback)'
+            result[key] = (static, formal[key], reason if static != formal[key] else None)
+        return result
+
+    def is_static_node(self, key, node, xml_nodes):
+        index, canonical = key
+        idt, identifier = canonical.split('=', 1)
+        explicit = self.explicit_static(self.opcua_ns[index], idt, identifier)
+        if explicit is not None:
+            return explicit
+        if node.tag.split('}')[-1] in type_tags:
+            return True
+        return self.is_instance_declaration(key, xml_nodes)
+
+    def classify_nodes(self):
+        """Decide for all nodes of the nodeset whether they are static or dynamic and assign their IRIs.
+
+        Dynamic nodes are not exported when no server URI is given.
+        """
+        xml_nodes = {}
+        for node in self.root:
+            if node.tag.split('}')[-1] in instance_tags + type_tags:
+                xml_nodes[self.key_from_nodeid_string(node.get('NodeId'))] = node
+        self.scan_namespace_metadata(xml_nodes)
+        self.haschild_keys = self.haschild_reference_types()
+        self.static_nodes = set()
+        self.heuristic_overrides = {}
+        classification = self.classify_with_heuristics(xml_nodes)
+        for key, node in xml_nodes.items():
+            index, canonical = key
+            prefix = self.get_rdf_ns_from_ua_index(index)
+            static, formal, reason = classification[key]
+            if static != formal:
+                self.heuristic_overrides[key] = reason
+            if static:
+                self.static_nodes.add(key)
+                expanded_nodeid = utils.expanded_nodeid_string(canonical, self.opcua_ns_raw[index])
+            elif self.server_uri is not None:
+                expanded_nodeid = utils.expanded_nodeid_string(canonical, self.opcua_ns_raw[index], self.server_uri)
+            else:
+                expanded_nodeid = None
+            if expanded_nodeid is not None:
+                self.expanded_nodeids[key] = expanded_nodeid
+                self.node_iris[key] = utils.expanded_nodeid_to_iri(prefix, expanded_nodeid)
+            else:
+                self.node_iris[key] = None
+                self.skipped_dynamic_nodes.append((self.opcua_ns_raw[index], canonical, node.get('BrowseName')))
+        dynamic_count = len(xml_nodes) - len(self.static_nodes)
+        print(f"Identified {len(self.static_nodes)} static and {dynamic_count} dynamic nodes.")
+        if self.heuristic_overrides:
+            to_dynamic = sum(1 for k in self.heuristic_overrides if k not in self.static_nodes)
+            print(f"Heuristics: {len(self.heuristic_overrides)} node(s) classified differently than the standard "
+                  f"rules: {to_dynamic} static -> dynamic, {len(self.heuristic_overrides) - to_dynamic} dynamic -> "
+                  "static (--strict-classification disables the heuristics).")
+        self.xml_nodes = xml_nodes
+        if self.skipped_dynamic_nodes:
+            print(f"Warning: No server URI given (--serverUri). {len(self.skipped_dynamic_nodes)} dynamic node(s) "
+                  "and references to them are not exported:")
+            for namespace_uri, canonical, browsename in self.skipped_dynamic_nodes[:20]:
+                print(f"  - nsu={namespace_uri};{canonical} ({browsename})")
+            if len(self.skipped_dynamic_nodes) > 20:
+                print(f"  ... and {len(self.skipped_dynamic_nodes) - 20} more")
+
+    def write_classification_report(self, filename):
+        """TSV of the nodes which the heuristics classify differently than the standard rules (NamespaceMetadata,
+        otherwise types and instance declarations static, instances dynamic)."""
+        with open(filename, 'w') as f:
+            f.write('NodeId\tBrowseName\tNodeClass\tTypeDefinition\tStandard\tClassification\tReason\n')
+
+            def order(item):
+                idt, identifier = item[0][1].split('=', 1)
+                return (item[0][0], idt, int(identifier) if idt == 'i' else 0, identifier)
+            for key, reason in sorted(self.heuristic_overrides.items(), key=order):
+                node = self.xml_nodes[key]
+                _, browsename = self.getBrowsename(node)
+                typedef = next((ref.text for ref in self.get_node_references(node)
+                                if self.is_reference_of_type(ref, hasTypeDefinitionId)), '')
+                classification = 'static' if key in self.static_nodes else 'dynamic'
+                standard = 'dynamic' if classification == 'static' else 'static'
+                f.write(f'nsu={self.opcua_ns_raw[key[0]]};{key[1]}\t{browsename}\t'
+                        f'{node.tag.split("}")[-1][2:]}\t{self.resolve_alias(typedef) if typedef else ""}\t'
+                        f'{standard}\t{classification}\t{reason}\n')
+
+    def node_iri(self, index, identifier, idtype):
+        """IRI of a node, None if it is a dynamic node which is not exported."""
+        key = self.node_key(index, identifier, idtype)
+        if key in self.node_iris:
+            return self.node_iris[key]
+        try:
+            imported = self.nodeIds[key[0]].get(str(identifier))
+        except IndexError:
+            imported = None
+        if imported is not None:
+            if (imported, UARDF['serverUri'], None) in self.ig:  # imported ontology was built with server URI
+                self.foreign_dynamic_iris.add(imported)
+            return imported
+        if key[0] not in self.imported_namespace_indices:
+            # Its namespace is not exported by any imported ontology (e.g. a nodeset which defines only a
+            # part of a namespace): nothing is known about the node, it is assumed to be static.
+            return utils.expanded_nodeid_to_iri(self.get_rdf_ns_from_ua_index(key[0]),
+                                                utils.expanded_nodeid_string(key[1], self.opcua_ns_raw[key[0]]))
+        # Neither defined here nor exported by the imported ontology of its namespace. That (static) export
+        # contains all static nodes, so it is a dynamic node (or missing). With a server URI it can be
+        # identified as dynamic node of this server, otherwise references to it cannot be exported.
+        if self.server_uri is not None:
+            iri = utils.expanded_nodeid_to_iri(
+                self.get_rdf_ns_from_ua_index(key[0]),
+                utils.expanded_nodeid_string(key[1], self.opcua_ns_raw[key[0]], self.server_uri))
+            if key not in self.unknown_nodes:
+                self.unknown_nodes.add(key)
+                self.foreign_dynamic_iris.add(iri)
+                print(f"Note: Node nsu={self.opcua_ns_raw[key[0]]};{key[1]} is not exported by the imported "
+                      "ontologies, it is referenced as dynamic node of the given server URI.")
+            return iri
+        if key not in self.unknown_nodes:
+            self.unknown_nodes.add(key)
+            print(f"Warning: Node nsu={self.opcua_ns_raw[key[0]]};{key[1]} is neither defined in the nodeset nor "
+                  "exported by the imported ontologies (dynamic node?). References to it are not exported.")
+        return None
+
+    @staticmethod
+    def dynamic_ontology_iri(iri, server_uri):
+        """IRI of the dynamic export of the ontology iri for one server: the (normalized) iri plus the base64url
+        encoding of 'svu=<server_uri>', like a node IRI. It cannot collide with a node IRI, since 'svu=<server>'
+        alone is no NodeId, and the dynamic exports of different servers get different IRIs."""
+        return utils.expanded_nodeid_to_iri(utils.normalize_namespaceuri(iri), f'svu={server_uri}')
+
+    def restrict_to_dynamic_nodes(self, dynamic_imports=()):
+        """Keep only the server specific part of the graph.
+
+        Kept are all triples about dynamic nodes, including references between static and dynamic nodes,
+        the RDF lists they use, the declarations of the properties they need and the ontology header.
+        The export without server URI contains exactly the rest, so both together compose the full export.
+        The header gets its own ontology IRI (and versionIRI) of the server, so that the static export and the
+        dynamic exports of one or more servers can be loaded together; dynamic_imports are added as owl:imports
+        (e.g. the static export of the same nodeset and the dynamic exports of its dependencies).
+        """
+        dynamic = {iri for key, iri in self.node_iris.items() if iri is not None and key not in self.static_nodes}
+        dynamic |= self.foreign_dynamic_iris
+        keep = {(s, p, o) for s, p, o in self.g if s in dynamic or o in dynamic}
+        # RDF lists and other blank node structures used by the kept triples
+        frontier = [o for _, _, o in keep if isinstance(o, BNode)]
+        while frontier:
+            bnode = frontier.pop()
+            for s, p, o in self.g.triples((bnode, None, None)):
+                if (s, p, o) not in keep:
+                    keep.add((s, p, o))
+                    if isinstance(o, BNode):
+                        frontier.append(o)
+        # e.g. semantic bridge properties which are only used by references of dynamic nodes
+        for p in {p for _, p, _ in keep}:
+            keep.update(self.g.triples((p, RDFS.subPropertyOf, None)))
+            keep.update(self.g.triples((p, RDF.type, None)))
+        # ontology header and namespace declaration
+        keep.update(self.g.triples((self.ontology_name, None, None)))
+        for namespace in self.g.subjects(RDF.type, self.rdf_ns['base']['Namespace']):
+            keep.update(self.g.triples((namespace, None, None)))
+        removed = 0
+        for triple in list(self.g):
+            if triple not in keep:
+                self.g.remove(triple)
+                removed += 1
+        dynamic_ontology = self.dynamic_ontology_iri(self.ontology_name, self.server_uri)
+        for _, p, o in list(self.g.triples((self.ontology_name, None, None))):
+            self.g.remove((self.ontology_name, p, o))
+            if p == OWL.versionIRI:
+                o = self.dynamic_ontology_iri(o, self.server_uri)
+            self.g.add((dynamic_ontology, p, o))
+        self.g.add((dynamic_ontology, RDFS.comment,
+                    Literal(f'Server specific (dynamic) part of {self.ontology_name} for server {self.server_uri}')))
+        for ontology in dynamic_imports:
+            self.g.add((dynamic_ontology, OWL.imports, utils.file_path_to_uri(ontology)))
+        print(f"Dynamic only: kept {len(keep)} triples of {len(dynamic)} dynamic nodes "
+              f"({len(self.foreign_dynamic_iris)} of other nodesets), removed {removed} triples.")
 
     def write_graph(self, filename):
         self.g.serialize(destination=filename)

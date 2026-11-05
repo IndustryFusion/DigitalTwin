@@ -21,7 +21,8 @@ from collections import defaultdict
 from rdflib import Graph, Namespace
 from rdflib.namespace import OWL, RDF
 import argparse
-from lib.utils import OntologyLoader, NGSILD
+from lib.utils import OntologyLoader, NGSILD, UARDF, OPCUA_CORE_NAMESPACE, parse_expanded_nodeid, \
+    normalize_namespaceuri
 from lib.bindings import Bindings
 
 warnings.filterwarnings("ignore", message=".*anyType is not defined in namespace XSD.*")
@@ -65,6 +66,20 @@ parse nodeset instance and create ngsi-ld model')
     return parsed_args
 
 
+def get_folder(graph, iffmappingns, iffmappingfolder_id):
+    """The IFFMappingsFolder node: the node of the IFF mapping namespace with the numeric identifier
+    iffmappingfolder_id, identified by its uardf:nodeId (static, or dynamic with server URI)."""
+    namespace = str(normalize_namespaceuri(iffmappingns))
+    for node, expanded_nodeid in graph.subject_objects(UARDF['nodeId']):
+        _, nsu, idt, identifier = parse_expanded_nodeid(expanded_nodeid)
+        if idt == 'i' and identifier == str(iffmappingfolder_id) and \
+                str(normalize_namespaceuri(nsu or OPCUA_CORE_NAMESPACE)) == namespace:
+            return node
+    print_warning("warning", f"IFFMappingsFolder i={iffmappingfolder_id} not found in namespace {namespace}. "
+                  "Is it a dynamic node and the nodesets were created without --serverUri?")
+    sys.exit(1)
+
+
 def get_bindings(graph, iffmappingns, basens, opcuans, iffmappingfolder_id):
     """
     Get a list of all attribute bindings from the IFF Mappings ontology.
@@ -90,39 +105,35 @@ def get_bindings(graph, iffmappingns, basens, opcuans, iffmappingfolder_id):
     query = """
   SELECT
   ?attributebinding ?name ?type ?logicExpression ?entitySelector
-  where {{
-    BIND("{folderid}" as ?folderid)
-    ?folder base:hasNodeId ?nodeid .
-    ?folder base:hasNamespace ?namespace .
-    ?namespace base:hasUri ?iffmappingns .
-    FILTER(?nodeid = ?folderid && ?iffmappingns = STR(iffmappingns:))
+  where {
     ?folder opcua:HasComponent ?attributebinding .
     ?attributebinding opcua:HasComponent ?namenode .
-    ?namenode base:hasBrowseName "AttributeName" .
+    ?namenode uardf:name "AttributeName" .
     ?namenode base:hasValue ?namestr .
-     OPTIONAL{{
+     OPTIONAL{
       ?attributebinding opcua:HasComponent ?typenode .
-      ?typenode base:hasBrowseName "NGSILDAttributeType" .
+      ?typenode uardf:name "NGSILDAttributeType" .
       ?typenode base:hasValue ?typeenum .
       ?type a iffmappingns:NGSILDAttribute .
       ?type base:hasValueNode ?typevaluenode .
       ?typevaluenode base:hasEnumValue ?typeenum .
-    }}
-    OPTIONAL{{
+    }
+    OPTIONAL{
       ?attributebinding opcua:HasComponent ?lenode .
-      ?lenode base:hasBrowseName "LogicExpression" .
+      ?lenode uardf:name "LogicExpression" .
       ?lenode base:hasValue ?logicExpression .
-    }}
-    OPTIONAL{{
+    }
+    OPTIONAL{
       ?attributebinding opcua:HasComponent ?esnode .
-      ?esnode base:hasBrowseName "EntitySelector" .
+      ?esnode uardf:name "EntitySelector" .
       ?esnode base:hasValue ?entitySelector .
-    }}
+    }
     BIND(IRI(?namestr) as ?name)
-}}
-    """.format(folderid=iffmappingfolder_id)
-    initNs = {"iffmappingns": iffmappingns, "base": basens, "opcua": opcuans}
-    result = graph.query(query, initNs=initNs)
+}
+    """
+    initNs = {"iffmappingns": iffmappingns, "base": basens, "opcua": opcuans, "uardf": UARDF}
+    folder = get_folder(graph, iffmappingns, iffmappingfolder_id)
+    result = graph.query(query, initNs=initNs, initBindings={'folder': folder})
     return list(result)
 
 
@@ -152,34 +163,28 @@ def get_attribute_parameter(graph, iffmappingns, basens, opcuans, iffmappingfold
     """
     query = """
   SELECT
-  ?attributebinding ?logicVariable ?varnode ?varidtype ?varid ?varns ?datatype
-  where {{
-    BIND( "{folderid}" as ?folderid)
-    ?folder base:hasNodeId ?nodeid .
-    ?folder base:hasNamespace ?namespace .
-    ?namespace base:hasUri ?iffmappingns .
-    FILTER(?nodeid = ?folderid && ?iffmappingns = STR(iffmappingns:))
+  ?attributebinding ?logicVariable ?varnode ?varid ?varns ?datatype
+  where {
     ?folder opcua:HasComponent ?attributebinding .
     ?attributebinding opcua:HasComponent ?attributeParameter .
-    ?attributeParameter base:hasBrowseName ?attributeParameter_bn .
+    ?attributeParameter uardf:name ?attributeParameter_bn .
     FILTER(STRSTARTS(?attributeParameter_bn, "AttributeParameter_")) .
       ?attributeParameter opcua:HasComponent ?lvnode .
-      ?lvnode base:hasBrowseName "LogicVariable" .
+      ?lvnode uardf:name "LogicVariable" .
       ?lvnode base:hasValue ?logicVariable .
-     OPTIONAL{{
+     OPTIONAL{
       ?attributeParameter iffmappingns:HasVariable ?varnode .
-      ?varnode base:hasIdentifierType ?varidtype .
-      ?varnode base:hasNamespace ?varnsnode .
-      ?varnsnode base:hasUri ?varnamespace .
-      ?varnode base:hasNodeId ?varid .
+      ?varnode uardf:nodeId ?varid .
+      ?varnode uardf:namespaceUri ?varnamespace .
       ?varnode base:hasDatatype ?datatype .
-    }}
+    }
   BIND(IRI(?varnamespace) as ?varns)
-}}
+}
 
-    """.format(folderid=iffmappingfolder_id)
-    initNs = {"iffmappingns": iffmappingns, "base": basens, "opcua": opcuans}
-    result = graph.query(query, initNs=initNs)
+    """
+    initNs = {"iffmappingns": iffmappingns, "base": basens, "opcua": opcuans, "uardf": UARDF}
+    folder = get_folder(graph, iffmappingns, iffmappingfolder_id)
+    result = graph.query(query, initNs=initNs, initBindings={'folder': folder})
     result = list(result)
     # Convert the reult to a dictionary with first element as key
     result_dict = defaultdict(list)
@@ -195,22 +200,18 @@ def get_entity_type(graph, iffmappingns, basens, opcuans, iffmappingfolder_id):
     query = """
    SELECT
    ?entityType
-   where {{
-    BIND( "{folderid}" as ?folderid)
-    ?folder base:hasNodeId ?nodeid .
-    ?folder base:hasNamespace ?namespace .
-    ?namespace base:hasUri ?iffmappingns .
-    FILTER(?nodeid = ?folderid && ?iffmappingns = STR(iffmappingns:))
+   where {
     ?folder opcua:HasComponent ?modelInfo .
-    ?modelInfo base:hasBrowseName "ModelInfo" .
+    ?modelInfo uardf:name "ModelInfo" .
     ?modelInfo opcua:HasComponent ?typenode .
-    ?typenode base:hasBrowseName "EntityType" .
+    ?typenode uardf:name "EntityType" .
     ?typenode base:hasValue ?entityTpe .
   BIND(IRI(?entityTpe) as ?entityType)
-  }}
-    """.format(folderid=iffmappingfolder_id)
-    initNs = {"iffmappingns": iffmappingns, "base": basens, "opcua": opcuans}
-    result = graph.query(query, initNs=initNs)
+  }
+    """
+    initNs = {"iffmappingns": iffmappingns, "base": basens, "opcua": opcuans, "uardf": UARDF}
+    folder = get_folder(graph, iffmappingns, iffmappingfolder_id)
+    result = graph.query(query, initNs=initNs, initBindings={'folder': folder})
     if len(result) == 0:
         warnings.warning("EntityType not found in the IFFMappingFolder.")
     elif len(result) > 1:

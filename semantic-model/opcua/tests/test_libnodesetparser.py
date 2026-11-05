@@ -19,6 +19,7 @@ import os
 from unittest.mock import patch, MagicMock
 from rdflib import Graph, URIRef, Literal, Namespace, BNode
 from lib.nodesetparser import NodesetParser
+from lib.utils import UARDF
 from rdflib.namespace import RDF, OWL, RDFS
 import xml.etree.ElementTree as ET  # Import ElementTree as ET
 import tempfile
@@ -60,6 +61,31 @@ class TestNodesetParser(unittest.TestCase):
             'http://example.com/ns1#': URIRef('http://example.com/ns1/Namespace'),
         }
         self.parser.imported_ontologies = [URIRef('http://example.com/importedOntology')]
+        # identification state (normally set by __init__ and classify_nodes)
+        self.parser.opcua_ns_raw = ['http://opcfoundation.org/UA/', 'http://example.com/ns1',
+                                    'http://example.com/ns2']
+        self.parser.server_uri = None
+        self.parser.default_locale = 'en'
+        self.parser.enforce_opcua_type_semantic = False
+        self.parser.node_iris = {}
+        self.parser.expanded_nodeids = {}
+        self.parser.static_nodes = set()
+        self.parser.skipped_dynamic_nodes = []
+        self.parser.unknown_nodes = set()
+        self.parser.foreign_dynamic_iris = set()
+        self.parser.imported_namespace_indices = set()
+        self.parser.aliases = {}
+
+    def register_node(self, index, identifier, iri, server_uri=None):
+        """Register a node as classify_nodes would (static without server_uri, dynamic with)."""
+        key = self.parser.node_key(index, identifier, self.parser.rdf_ns['base']['numericID'])
+        self.parser.node_iris[key] = URIRef(iri)
+        if server_uri is None:
+            self.parser.static_nodes.add(key)
+            self.parser.expanded_nodeids[key] = key[1]
+        else:
+            self.parser.expanded_nodeids[key] = f'svu={server_uri};{key[1]}'
+        return key
 
     @patch('urllib.request.urlopen')
     @patch('xml.etree.ElementTree.parse')
@@ -211,32 +237,39 @@ class TestNodesetParser(unittest.TestCase):
     def test_get_all_node_ids(self, mock_query):
         # Mock the RDF query result
         query_result = [
-            (Literal('node1'), URIRef('http://example.com/ns1'), URIRef('http://example.com/device1')),
-            (Literal('node2'), URIRef('http://example.com/ns2'), URIRef('http://example.com/device2'))
+            (Literal('nsu=http://example.com/ns1;i=1'), Literal('http://example.com/ns1'),
+             URIRef('http://example.com/device1')),
+            (Literal('nsu=http://example.com/ns2;s=node2'), Literal('http://example.com/ns2'),
+             URIRef('http://example.com/device2'))
         ]
         mock_query.return_value = query_result
+        self.parser.opcua_ns = ['http://example.com/ns1/', 'http://example.com/ns2/']
 
         # Call the method to be tested
         self.parser.get_all_node_ids()
 
         # Check if nodeIds were correctly populated
         expected_node_ids = [
-            {'node1': URIRef('http://example.com/device1')},
+            {'1': URIRef('http://example.com/device1')},
             {'node2': URIRef('http://example.com/device2')},
             {}
         ]
 
         # Assert that the nodeIds list matches the expected output
         self.assertEqual(self.parser.nodeIds, expected_node_ids)
+        self.assertEqual(self.parser.imported_namespace_indices, {0, 1})
 
     @patch('lib.nodesetparser.Graph.query')
     def test_get_all_types(self, mock_query):
         # Mock the RDF query result for get_all_types
         query_result = [
-            (Literal('type1'), URIRef('http://example.com/ns1'), URIRef('http://example.com/type1')),
-            (Literal('type2'), URIRef('http://example.com/ns2'), URIRef('http://example.com/type2'))
+            (Literal('nsu=http://example.com/ns1;i=11'), Literal('http://example.com/ns1'),
+             URIRef('http://example.com/type1')),
+            (Literal('nsu=http://example.com/ns2;i=12'), Literal('http://example.com/ns2'),
+             URIRef('http://example.com/type2'))
         ]
         mock_query.return_value = query_result
+        self.parser.urimap = {'http://example.com/ns1/': 1, 'http://example.com/ns2/': 2}
         self.parser.typeIds.append({})
         self.parser.typeIds.append({})
         # Call the method to be tested
@@ -245,8 +278,8 @@ class TestNodesetParser(unittest.TestCase):
         # Check if typeIds were correctly populated
         expected_type_ids = [
             {},
-            {'type1': URIRef('http://example.com/type1')},
-            {'type2': URIRef('http://example.com/type2')},
+            {'11': URIRef('http://example.com/type1')},
+            {'12': URIRef('http://example.com/type2')},
         ]
 
         # Assert that the typeIds list matches the expected output
@@ -256,18 +289,18 @@ class TestNodesetParser(unittest.TestCase):
     def test_get_all_references(self, mock_query):
         # Mock the RDF query result for get_all_references
         query_result = [
-            (Literal('ref1'), URIRef('http://example.com/ns1'), Literal('name1')),
-            (Literal('ref2'), URIRef('http://example.com/ns2'), Literal('name2'))
+            (Literal('i=31'), Literal('http://opcfoundation.org/UA/'), Literal('name1')),
+            (Literal('nsu=http://example.com/ns2;i=4001'), Literal('http://example.com/ns2'), Literal('name2'))
         ]
         mock_query.return_value = query_result
 
         # Call the method to be tested
         self.parser.get_all_references()
 
-        # Check if known_references were correctly populated
+        # Check if known_references were correctly populated: bare identifier and normalized namespace
         expected_references = [
-            (Literal('ref1'), URIRef('http://example.com/ns1'), Literal('name1')),
-            (Literal('ref2'), URIRef('http://example.com/ns2'), Literal('name2'))
+            (Literal('31'), URIRef('http://opcfoundation.org/UA/'), Literal('name1')),
+            (Literal('4001'), URIRef('http://example.com/ns2/'), Literal('name2'))
         ]
 
         # Assert that the known_references list matches the expected output
@@ -487,8 +520,10 @@ class TestNodesetParser(unittest.TestCase):
         # Mock a node with necessary attributes
         node = MagicMock()
         node.get.side_effect = lambda x: 'ns=1;i=400' if x == 'NodeId' else 'TestSymbolicName' if x == 'SymbolicName' else None
+        node.find.return_value = None  # no DisplayName/Description
         self.parser.opcua_ns = ['http://not.selected.org/', 'http://testnamespace.org/']
         self.parser.nodeIds.append({})
+        self.register_node(1, '400', 'http://example.com/ns1#node400')
         # Mock other necessary method returns
         self.parser.get_nid_ns_and_name = MagicMock(return_value=('400', 1, 'TestBrowseName', 1, self.parser.rdf_ns['base']['numericID']))
         self.parser.get_rdf_ns_from_ua_index = MagicMock(return_value=Namespace('http://example.com/ns1#'))
@@ -497,18 +532,28 @@ class TestNodesetParser(unittest.TestCase):
         rdf_namespace, classiri = self.parser.add_nodeid_to_class(node, 'ObjectTypeNodeClass', self.parser.xml_ns)
 
         # Assert that the correct triples were added to the graph
+        self.assertEqual(classiri, URIRef('http://example.com/ns1#node400'))
         expected_triples = [
-            (classiri, self.parser.rdf_ns['base']['hasNodeId'], Literal('400')),
-            (classiri, self.parser.rdf_ns['base']['hasBrowseName'], Literal('TestBrowseName')),
-            (classiri, self.parser.rdf_ns['base']['hasSymbolicName'], Literal('TestSymbolicName')),
-            (classiri, self.parser.rdf_ns['base']['hasBrowseNameNamespace'], URIRef('http://example.com/ns1/Namespace'))
+            (classiri, RDF.type, UARDF['ObjectType']),
+            (classiri, UARDF['nodeId'], Literal('nsu=http://example.com/ns1;i=400')),
+            (classiri, UARDF['namespaceUri'], Literal('http://example.com/ns1')),
+            (classiri, UARDF['name'], Literal('TestBrowseName')),
+            (classiri, UARDF['browseName'], Literal('nsu=http://example.com/ns1;TestBrowseName')),
+            (classiri, UARDF['symbolicName'], Literal('TestSymbolicName')),
         ]
         for triple in expected_triples:
             self.assertIn(triple, self.parser.g)
+        # identification is described by uardf only
+        for predicate in ('hasNodeId', 'hasIdentifierType', 'hasBrowseName', 'hasBrowseNameNamespace',
+                          'hasNamespace', 'hasSymbolicName', 'hasDisplayName', 'hasDescription'):
+            self.assertNotIn((classiri, self.parser.rdf_ns['base'][predicate], None), self.parser.g)
+        self.assertNotIn((classiri, RDF.type, self.parser.rdf_ns['opcua']['ObjectTypeNodeClass']), self.parser.g)
+        self.assertNotIn((classiri, UARDF['serverUri'], None), self.parser.g)
 
     def test_add_nodeid_to_class_historizing_and_minimumsamplinginterval(self):
         # Set up mocks for get_nid_ns_and_name, get_rdf_ns_from_ua_index, and nodeId_to_iri.
         self.parser.get_nid_ns_and_name = MagicMock(return_value=('500', 1, 'TestBrowseName', 1, self.parser.rdf_ns['base']['numericID']))
+        self.register_node(1, '500', 'http://example.com/ns1#500')
         self.parser.get_rdf_ns_from_ua_index = MagicMock(return_value=Namespace('http://example.com/ns1#'))
         self.parser.nodeId_to_iri = MagicMock(return_value=URIRef('http://example.com/ns1#500'))
 
@@ -524,8 +569,10 @@ class TestNodesetParser(unittest.TestCase):
         # Simulate the XML find for DisplayName and Description.
         display_node = MagicMock()
         display_node.text = 'DisplayNameValue'
+        display_node.get.return_value = None  # no Locale
         description_node = MagicMock()
         description_node.text = 'TestDescription'
+        description_node.get.return_value = None
         def find_side_effect(tag, ns):
             if tag == 'opcua:DisplayName':
                 return display_node
@@ -551,6 +598,10 @@ class TestNodesetParser(unittest.TestCase):
         )
         self.assertIn(expected_triple_msi, self.parser.g)
 
+        # LocalizedText without Locale gets the default locale
+        self.assertIn((classiri, UARDF['displayName'], Literal('DisplayNameValue', lang='en')), self.parser.g)
+        self.assertIn((classiri, UARDF['description'], Literal('TestDescription', lang='en')), self.parser.g)
+
         # Verify that the triple for Historizing is added.
         # Note: bool('true') evaluates to True in Python.
         expected_triple_hist = (
@@ -563,6 +614,7 @@ class TestNodesetParser(unittest.TestCase):
     def test_add_nodeid_to_class_no_historizing_no_minimumsamplinginterval(self):
         # Set up mocks for get_nid_ns_and_name, get_rdf_ns_from_ua_index, and nodeId_to_iri.
         self.parser.get_nid_ns_and_name = MagicMock(return_value=('600', 1, 'TestBrowseName', 1, self.parser.rdf_ns['base']['numericID']))
+        self.register_node(1, '600', 'http://example.com/ns1#600')
         self.parser.get_rdf_ns_from_ua_index = MagicMock(return_value=Namespace('http://example.com/ns1#'))
         self.parser.nodeId_to_iri = MagicMock(return_value=URIRef('http://example.com/ns1#600'))
 
@@ -578,8 +630,10 @@ class TestNodesetParser(unittest.TestCase):
         # Simulate the XML find for DisplayName and Description.
         display_node = MagicMock()
         display_node.text = 'DisplayNameValue'
+        display_node.get.return_value = None  # no Locale
         description_node = MagicMock()
         description_node.text = 'TestDescription'
+        description_node.get.return_value = None
         def find_side_effect(tag, ns):
             if tag == 'opcua:DisplayName':
                 return display_node
@@ -770,11 +824,11 @@ class TestNodesetParser(unittest.TestCase):
         # Should not raise ValueError for invalid language tag (issue #845)
         self.parser.get_value(node, classiri, xml_ns)
 
-        # The literal passed to create_list must have no language tag
+        # A whitespace-only locale counts as no locale: the literal gets the default locale
         literals_in_list = mock_create_list.call_args[0][1]
         self.assertEqual(len(literals_in_list), 1)
         self.assertEqual(str(literals_in_list[0]), 'Enterprise')
-        self.assertIsNone(literals_in_list[0].language)
+        self.assertEqual(literals_in_list[0].language, 'en')
 
     def test_references_ignore(self):
         # Test when the reference should be ignored
@@ -795,7 +849,7 @@ class TestNodesetParser(unittest.TestCase):
         self.assertFalse(result)
 
     @patch.object(Graph, 'add')
-    @patch('lib.nodesetparser.nodeId_to_iri')
+    @patch.object(NodesetParser, 'node_iri')
     def test_get_references(self, mock_nodeId_to_iri, mock_add):
         # Mock the node and its references
         ref_node1 = MagicMock()
@@ -813,7 +867,8 @@ class TestNodesetParser(unittest.TestCase):
         classiri = URIRef('http://example.com/classiri')
         self.parser.resolve_alias = MagicMock(side_effect=lambda x: x)
         self.parser.parse_nodeid = MagicMock(side_effect=[(1, '100', None), (1, '100', None), (2, '200', None), (2, '200', None)])
-        self.parser.get_rdf_ns_from_ua_index = MagicMock(side_effect=[Namespace('http://example.com/ns1#'), Namespace('http://example.com/ns1#'), Namespace('http://example.com/ns2#'), Namespace('http://example.com/ns2#')])
+        self.parser.get_rdf_ns_from_ua_index = MagicMock(
+            side_effect=lambda index: {1: Namespace('http://example.com/ns1#'), 2: Namespace('http://example.com/ns2#')}[index])
         self.parser.references_ignore = MagicMock(return_value=False)
         self.parser.references_get_special = MagicMock(return_value=None)
         self.parser.nodeId_to_iri = MagicMock(side_effect=[URIRef('http://example.com/iri100'), URIRef('http://example.com/iri200')])
@@ -851,13 +906,26 @@ class TestNodesetParser(unittest.TestCase):
         # Call the method to be tested
         self.parser.get_type_from_references([ref_node], classiri)
 
-        # Assert that the correct triple was added to the graph
+        # The type definition is the instantiation intent of OPC UA, not rdf:type
         expected_triple = (
             classiri,
-            RDF.type,
+            UARDF['hasTypeDefinition'],
             URIRef('http://example.com/type/400')
         )
         mock_add.assert_any_call(expected_triple)
+
+    @patch.object(Graph, 'add')
+    def test_get_type_from_references_enforced_type_semantic(self, mock_add):
+        ref_node = MagicMock()
+        ref_node.get.side_effect = lambda x: 'HasTypeDefinition' if x == 'ReferenceType' else 'true' if x == 'IsForward' else None
+        ref_node.text = 'ns=1;i=400'
+        classiri = URIRef('http://example.com/classiri')
+        self.parser.enforce_opcua_type_semantic = True
+        self.parser.resolve_alias = MagicMock(return_value='ns=1;i=400')
+        self.parser.parse_nodeid = MagicMock(side_effect=[(0, '40', None), (1, '400', None)])
+        self.parser.typeIds = [{}, {'400': URIRef('http://example.com/type/400')}]
+        self.parser.get_type_from_references([ref_node], classiri)
+        mock_add.assert_any_call((classiri, RDF.type, URIRef('http://example.com/type/400')))
 
 
     @patch.object(Graph, 'add')
@@ -866,7 +934,7 @@ class TestNodesetParser(unittest.TestCase):
     @patch.object(NodesetParser, 'get_datatype')
     @patch.object(NodesetParser, 'get_value_rank')
     @patch.object(NodesetParser, 'get_value')
-    @patch('lib.nodesetparser.nodeId_to_iri')
+    @patch.object(NodesetParser, 'node_iri')
     def test_add_typedef(self, mock_nodeId_to_iri, mock_get_value, mock_get_value_rank, mock_get_datatype, mock_get_type_from_references, mock_get_references, mock_add):
         # Mock a node with necessary attributes
         def node_get(tag):

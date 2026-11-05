@@ -27,10 +27,8 @@ class TestBindings(unittest.TestCase):
         # Mocking objects in graph g
         g.objects = MagicMock(side_effect=[
             iter([URIRef("http://example.org/dtype")]),  # hasDatatype
-            iter([Literal("node123")]),  # hasNodeId
-            iter([Literal("numericID")]),  # hasIdentifierType
-            iter([URIRef("http://example.org/ns")]),  # hasNamespace
-            iter([Literal("http://example.org/nsuri")])  # hasUri
+            iter([Literal("nsu=http://example.org/nsuri;i=node123")]),  # uardf:nodeId
+            iter([Literal("http://example.org/nsuri")])  # uardf:namespaceUri
         ])
 
         # Call the create_binding method

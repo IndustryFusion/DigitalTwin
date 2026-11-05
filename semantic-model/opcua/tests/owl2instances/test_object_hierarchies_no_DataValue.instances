@@ -1,7 +1,7 @@
 [
     {
         "type": "test:DType",
-        "id": "http://my.test/testid:nodei2020",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAyMA",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -12,20 +12,20 @@
     },
     {
         "type": "test:BType",
-        "id": "http://my.test/testid:nodei2012",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAxMg",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
         "test:hasD": [
             {
                 "type": "Relationship",
-                "object": "http://my.test/testid:nodei2020"
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAyMA"
             }
         ]
     },
     {
         "type": "test:AlphaType",
-        "id": "http://my.test/testid:nodei2010",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAxMA",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -36,7 +36,7 @@
         "test:hasB": [
             {
                 "type": "Relationship",
-                "object": "http://my.test/testid:nodei2012"
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAxMg"
             }
         ]
     }

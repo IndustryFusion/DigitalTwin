@@ -3,53 +3,27 @@
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix test: <http://example.org/MinimalNodeset/> .
+@prefix uardf: <http://opcfoundation.org/rdf/uacore#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 test: a owl:Ontology ;
     owl:versionIRI <http://example.com/v0.1/UA/> ;
     owl:versionInfo 1e-01 .
 
-test:hasVariable rdfs:subPropertyOf base:SemanticBridgeReferenceType .
-
-test:nodei1001 a opcua:ObjectTypeNodeClass ;
-    test:hasVariable test:nodei2001 ;
-    opcua:HasComponent test:nodei2001 ;
-    base:definesType test:ObjectType ;
-    base:hasBrowseName "ObjectType" ;
-    base:hasBrowseNameNamespace test:TESTNamespace ;
-    base:hasDescription "A custom Object Type" ;
-    base:hasDisplayName "ObjectType" ;
-    base:hasIdentifierType base:numericID ;
-    base:hasNamespace test:TESTNamespace ;
-    base:hasNodeId "1001" .
-
-test:nodei1002 a opcua:ObjectNodeClass ;
-    test:hasVariable test:nodei2001 ;
-    opcua:HasComponent test:nodei2001 ;
-    base:hasBrowseName "Object" ;
-    base:hasBrowseNameNamespace test:TESTNamespace ;
-    base:hasDisplayName "Object" ;
-    base:hasIdentifierType base:numericID ;
-    base:hasNamespace test:TESTNamespace ;
-    base:hasNodeId "1002" ;
-    base:instanceOf test:ObjectType .
-
-test:ObjectType a owl:Class ;
-    rdfs:subClassOf opcua:BaseObjectType .
-
-test:nodei2001 a opcua:BaseDataVariableType,
-        opcua:VariableNodeClass ;
-    base:hasBrowseName "Variable" ;
-    base:hasBrowseNameNamespace test:TESTNamespace ;
-    base:hasDatatype opcua:Double ;
-    base:hasDescription "A variable within the object" ;
-    base:hasDisplayName "Variable" ;
-    base:hasIdentifierType base:numericID ;
-    base:hasNamespace test:TESTNamespace ;
-    base:hasNodeId "2001" ;
-    base:hasValue 1.23456e+02 .
-
 test:TESTNamespace a base:Namespace ;
     base:hasPrefix "test" ;
     base:hasUri "http://example.org/MinimalNodeset/" .
+
+test:bnN1PWh0dHA6Ly9leGFtcGxlLm9yZy9NaW5pbWFsTm9kZXNldDtpPTEwMDE a uardf:ObjectType ;
+    uardf:browseName "nsu=http://example.org/MinimalNodeset;ObjectType" ;
+    uardf:definesType test:ObjectType ;
+    uardf:description "A custom Object Type"@en ;
+    uardf:displayName "ObjectType"@en ;
+    uardf:name "ObjectType" ;
+    uardf:namespaceUri "http://example.org/MinimalNodeset" ;
+    uardf:nodeId "nsu=http://example.org/MinimalNodeset;i=1001" ;
+    uardf:symbolicName "ObjectType" .
+
+test:ObjectType a owl:Class ;
+    rdfs:subClassOf opcua:BaseObjectType .
 

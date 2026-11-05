@@ -22,6 +22,7 @@ from pathlib import Path
 import re
 import os
 import json
+import base64
 from pyld import jsonld
 import urllib
 import warnings
@@ -32,7 +33,9 @@ import traceback
 EX = Namespace("http://example.org/")
 _V_SEG_REGEX = re.compile(r"/v(?P<maj>\d+)(?:\.\d+)?(?=/|$)")
 ATTRIBUTE_PREFIX = 'has'
-SEMANTIC_RELATIONSHIP_TYPE = 'SemanticBridgeReferenceType'
+OPCUA_CORE_NAMESPACE = 'http://opcfoundation.org/UA/'
+ENTITY_ID_PREFIX = 'urn:uaentity:'
+UARDF = Namespace('http://opcfoundation.org/rdf/uacore#')
 ROOT_PROPERTY_OF_SEMANTIC_BRIDGE = 'Aggregates'
 WARNSTR = {
     'subclass_inconsistency': 'SUBCLASS_INCONSISTENCY',
@@ -47,31 +50,32 @@ WARNSTR = {
 }
 
 NULL_IRI = URIRef('urn:ngsi-ld:null')
-DEFAULT_NODEID = URIRef('http://opcfoundation.org/UA/nodei1')
+DEFAULT_NODEID = URIRef('http://opcfoundation.org/UA/aT0x')  # core node i=1 (base64url of 'i=1')
 DEFAULT_ENUMERATION_INSTANCE = URIRef('http://opcfoundation.org/UA/Unknown')
 query_realtype = """
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 
 SELECT ?nodeclass ?realtype WHERE {
   {
-     ?node a ?nodeclass .
-  FILTER(?nodeclass != owl:NamedIndividual
-      && STRENDS(STR(?nodeclass), "NodeClass")
-      && STRSTARTS(STR(?nodeclass), STR(opcua:))
-    )
+    VALUES ?nodeclass { uardf:Object uardf:Variable uardf:Method uardf:View
+                        uardf:ObjectType uardf:VariableType uardf:DataType uardf:ReferenceType }
+    ?node a ?nodeclass .
   }
     UNION
   {
     {
-      ?node a ?realtype .
-      FILTER ((!STRENDS(STR(?realtype), "NodeClass") || !STRSTARTS(STR(?realtype), STR(opcua:))) &&
-        ?realtype != owl:NamedIndividual
-      )
+      ?node uardf:hasTypeDefinition ?realtype .
     }
     UNION
     {
-      ?node base:definesType ?realtype .
-      ?node a opcua:ObjectTypeNodeClass .
+      # graphs created with --enforce-opcua-type-semantic
+      ?node a ?realtype .
+      FILTER (!STRSTARTS(STR(?realtype), STR(uardf:)) && ?realtype != owl:NamedIndividual)
+    }
+    UNION
+    {
+      ?node uardf:definesType ?realtype .
+      ?node a uardf:ObjectType .
     }
   }
 }
@@ -99,6 +103,87 @@ def nodeId_to_iri(namespace, basens, nid, idtype, instance_id='', is_entityns=Fa
         else:
             return namespace[f'{instance_id}node{idt}{quoted_node_id}']
     return namespace[f'node{idt}{quoted_node_id}']
+
+
+def canonical_nodeid(idt, identifier):
+    """Canonical OPC UA NodeId string without namespace part, e.g. 'i=31', 's=Foo'.
+
+    idt is the identifier type character ('i', 's', 'g', 'b').
+    """
+    identifier = str(identifier)
+    if idt == 'i':
+        identifier = str(int(identifier))
+    elif idt == 'g':
+        identifier = identifier.strip('{}').lower()
+    return f'{idt}={identifier}'
+
+
+def expanded_nodeid_string(canonical_id, namespace_uri, server_uri=None):
+    """Canonical ExpandedNodeId string, e.g. 'i=31', 'nsu=http://opcfoundation.org/UA/DI/;i=1001'
+    or 'svu=urn:server;nsu=http://example.org/;i=5002'.
+
+    Like in the OPC UA string representation, nsu is omitted for the core namespace (index 0).
+    Static nodes are server independent and have no svu. Dynamic nodes only exist in a specific
+    server, so its server URI (svu) becomes part of the id.
+    """
+    result = canonical_id
+    if namespace_uri is not None and str(namespace_uri) != OPCUA_CORE_NAMESPACE:
+        result = f'nsu={namespace_uri};{result}'
+    if server_uri is not None:
+        result = f'svu={server_uri};{result}'
+    return result
+
+
+def parse_expanded_nodeid(expanded_nodeid):
+    """Inverse of expanded_nodeid_string: 'svu=<s>;nsu=<n>;i=5' -> (server_uri, namespace_uri, 'i', '5').
+
+    server_uri/namespace_uri are None when not contained (namespace_uri None means the core namespace).
+    """
+    server_uri = namespace_uri = None
+    rest = str(expanded_nodeid)
+    if rest.startswith('svu='):
+        server_uri, rest = rest[4:].split(';', 1)
+    if rest.startswith('nsu='):
+        namespace_uri, rest = rest[4:].split(';', 1)
+    idt, identifier = rest.split('=', 1)
+    return server_uri, namespace_uri, idt, identifier
+
+
+def parse_qualified_name(qualified_name):
+    """Inverse of canonical_qualified_name: 'nsu=<uri>;<name>' -> (uri, name), '<name>' -> (core, name)."""
+    qualified_name = str(qualified_name)
+    if qualified_name.startswith('nsu='):
+        namespace_uri, name = qualified_name[4:].split(';', 1)
+        return namespace_uri, name
+    return OPCUA_CORE_NAMESPACE, qualified_name
+
+
+def canonical_qualified_name(name, namespace_uri):
+    """Canonical QualifiedName string, e.g. 'References' or 'nsu=http://opcfoundation.org/UA/DI/;DeviceType'."""
+    if namespace_uri is None or str(namespace_uri) == OPCUA_CORE_NAMESPACE:
+        return name
+    return f'nsu={namespace_uri};{name}'
+
+
+def base64url_nopad(value):
+    return base64.urlsafe_b64encode(value.encode('utf-8')).decode('ascii').rstrip('=')
+
+
+def expanded_nodeid_to_iri(namespace_prefix, expanded_nodeid):
+    """IRI of a node: namespace URI as prefix plus base64url of the canonical ExpandedNodeId string.
+
+    e.g. i=31 in http://opcfoundation.org/UA/ => http://opcfoundation.org/UA/aT0zMQ
+    """
+    return URIRef(f'{str(namespace_prefix)}{base64url_nopad(expanded_nodeid)}')
+
+
+def parse_numeric_range(numeric_range):
+    """Parse an OPC UA NumericRange string '<lo>:<hi>' or '<value>' into (lo, hi)."""
+    numeric_range = numeric_range.strip()
+    if ':' in numeric_range:
+        lo, hi = numeric_range.split(':', 1)
+        return int(lo), int(hi)
+    return int(numeric_range), int(numeric_range)
 
 
 def is_iri(iri):
@@ -457,7 +542,8 @@ def get_all_objects_from_object_folder_in_namespace(g, namespace, basens, opcuan
     query = """
     SELECT ?object WHERE {{
         BIND(<{namespace}> as ?namespace)
-        opcua:nodei85 opcua:Organizes ?object .
+        ?objects uardf:nodeId "i=85" ;  # Objects folder
+                 opcua:Organizes ?object .
         FILTER(
             STRSTARTS(STR(?object), STR(?namespace)) &&
                 !REGEX(
@@ -467,7 +553,7 @@ def get_all_objects_from_object_folder_in_namespace(g, namespace, basens, opcuan
         )
     }}
     """.format(namespace=namespace)
-    result = g.query(query, initNs={'base': basens, 'opcua': opcuans})
+    result = g.query(query, initNs={'base': basens, 'opcua': opcuans, 'uardf': UARDF})
     # Transform result in list of URIRefs
     return [URIRef(str(r['object'])) for r in result]
 
@@ -482,7 +568,7 @@ def get_all_objects_in_namespace(g, namespace, basens, opcuans):
     query = """
     SELECT ?object WHERE {{
         BIND(<{namespace}> as ?namespace)
-        ?object a opcua:ObjectNodeClass .
+        ?object a uardf:Object .
         FILTER(
             STRSTARTS(STR(?object), STR(?namespace)) &&
                 !REGEX(
@@ -492,7 +578,7 @@ def get_all_objects_in_namespace(g, namespace, basens, opcuans):
         )
     }}
     """.format(namespace=namespace)
-    result = g.query(query, initNs={'base': basens, 'opcua': opcuans})
+    result = g.query(query, initNs={'base': basens, 'opcua': opcuans, 'uardf': UARDF})
     # Transform result in list of URIRefs
     return [URIRef(str(r['object'])) for r in result]
 
@@ -509,19 +595,18 @@ def get_type_and_template(g, node, parentnode, basens, opcuans):
     SELECT ?vartypenode ?templatenode WHERE {{
         BIND(<{node}> as ?node)
         BIND(<{parentnode}> as ?parentnode)
-        ?node a ?vartype .
-        ?vartypenode base:definesType ?vartype .
-        FILTER NOT EXISTS{{ ?vartype rdfs:subClassOf opcua:BaseNodeClass}}
-        ?node base:hasBrowseName ?browsename .
+        ?node uardf:hasTypeDefinition ?vartype .
+        ?vartypenode uardf:definesType ?vartype .
+        ?node uardf:name ?browsename .
         OPTIONAL{{
-            ?parentnode a ?parenttype .
-            ?parenttypenode base:definesType ?parenttype .
+            ?parentnode uardf:hasTypeDefinition ?parenttype .
+            ?parenttypenode uardf:definesType ?parenttype .
             ?parenttypenode opcua:HasComponent ?templatenode .
-            ?templatenode base:hasBrowseName ?browsename.
+            ?templatenode uardf:name ?browsename.
         }}
     }}
     """.format(node=node, parentnode=parentnode)
-    result = g.query(query_type_and_template, initNs={'base': basens, 'opcua': opcuans})
+    result = g.query(query_type_and_template, initNs={'base': basens, 'opcua': opcuans, 'uardf': UARDF})
     typenode, templatenode = next(iter(result), (None, None))
     return typenode, templatenode
 
@@ -671,7 +756,7 @@ def replace_type_of_node_iris(g: Graph, opcuans: Namespace, basens: Namespace, i
     validator which combines the knowledge graph with the instance graph will get confused and validating
     the wrong structures.
     This is why all OPC UA nodes must not be typed other than being node-classes. In addition the nodes
-    are describing types. That is why the instance will declare <node> base:instanceOf <type>.
+    are describing types. That is why the instance will declare <node> uardf:hasTypeDefinition <type>.
     """
     query = """
         PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -711,28 +796,29 @@ def replace_type_of_node_iris(g: Graph, opcuans: Namespace, basens: Namespace, i
     query_result = combined.query(query, initNs={'opcua': opcuans, 'base': basens})
     for s, o in query_result:
         g.remove((s, RDF.type, o))
-        g.add((s, basens['instanceOf'], o))
+        g.add((s, UARDF['hasTypeDefinition'], o))
 
 
 def restore_type_of_node_iris(ig: Graph, opcuans: Namespace, basens: Namespace):
     """
     Inverse of the replace_type_of_node_iris.
-    This is transforming imported ontologies from the insntaceOf back to rdf:type.
+    This is transforming imported ontologies from uardf:hasTypeDefinition back to rdf:type.
     Note that this, in contrast to the replace function is applied to the imported
-    ontologies in ig graph.
+    ontologies in ig graph. Ontologies created before uardf:hasTypeDefinition use base:instanceOf.
     """
     query = """
         PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
                 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
-                SELECT ?s ?o WHERE {
-                    ?s base:instanceOf ?o .
+                SELECT ?s ?p ?o WHERE {
+                    VALUES ?p { uardf:hasTypeDefinition base:instanceOf }
+                    ?s ?p ?o .
                 }
     """
-    query_result = ig.query(query, initNs={'opcua': opcuans, 'base': basens})
-    for s, o in query_result:
-        ig.remove((s, basens['instanceOf'], o))
+    query_result = ig.query(query, initNs={'opcua': opcuans, 'base': basens, 'uardf': UARDF})
+    for s, p, o in query_result:
+        ig.remove((s, p, o))
         ig.add((s, RDF.type, o))
 
 
@@ -742,30 +828,28 @@ class RdfUtils:
         self.opcuans = opcuans
 
     def isNodeclass(self, type):
-        nodeclasses = [self.opcuans['BaseNodeClass'],
-                       self.opcuans['DataTypeNodeClass'],
-                       self.opcuans['ObjectNodeClass'],
-                       self.opcuans['ObjectTypeNodeClass'],
-                       self.opcuans['ReferenceTypeNodeClass'],
-                       self.opcuans['VariableNodeClass'],
-                       self.opcuans['VariableNodeClass']]
-        result = bool([ele for ele in nodeclasses if (ele == type)])
-        return result
+        nodeclasses = [UARDF['Node'], UARDF['DataType'], UARDF['Object'], UARDF['ObjectType'],
+                       UARDF['ReferenceType'], UARDF['Variable'], UARDF['VariableType'], UARDF['Method'],
+                       UARDF['View']]
+        return type in nodeclasses
 
     def isObjectNodeClass(self, type):
-        return type == self.opcuans['ObjectNodeClass']
+        return type == UARDF['Object']
 
     def isObjectTypeNodeClass(self, type):
-        return type == self.opcuans['ObjectTypeNodeClass']
+        return type == UARDF['ObjectType']
 
     def isVariableNodeClass(self, type):
-        return type == self.opcuans['VariableNodeClass']
+        return type == UARDF['Variable']
+
+    def isMethodNodeClass(self, type):
+        return type == UARDF['Method']
 
     def get_type(self, g, node):
         try:
             bindings = {'node': node}
             results = list(g.query(query_realtype, initBindings=bindings,
-                                   initNs={'opcua': self.opcuans, 'base': self.basens}))
+                                   initNs={'opcua': self.opcuans, 'base': self.basens, 'uardf': UARDF}))
             nodeclass = None
             type = None
             for result in results:
@@ -796,7 +880,7 @@ class RdfUtils:
         supertypes = []
         curtype = None
         curnode = interface_node
-        curtype = next(g.objects(curnode, self.basens['definesType']), None)
+        curtype = next(g.objects(curnode, UARDF['definesType']), None)
         while curtype != self.opcuans['BaseInterfaceType'] and curtype is not None:
             if curtype == self.opcuans['BaseObjectType']:
                 warnmsg = f"Interface added to {node} is not subtype of BaseInterfaceType."
@@ -804,7 +888,7 @@ class RdfUtils:
                 break
             supertypes.append((curtype, curnode))
             curtype = next(g.objects(curtype, RDFS.subClassOf), None)
-            curnode = next(g.subjects(self.basens['definesType'], curtype), None)
+            curnode = next(g.subjects(UARDF['definesType'], curtype), None)
         return supertypes
 
     def get_all_supertypes_and_interfaces(self, g, instancetype, node):
@@ -823,10 +907,10 @@ class RdfUtils:
 
         curtype = URIRef(instancetype)
         curnode = node
-        cur_typenode = next(g.objects(URIRef(node), self.basens['definesType']), None)
+        cur_typenode = next(g.objects(URIRef(node), UARDF['definesType']), None)
         if cur_typenode is None:
             # node is not instancetype definition
-            cur_typenode = next(g.subjects(self.basens['definesType'], URIRef(curtype)))
+            cur_typenode = next(g.subjects(UARDF['definesType'], URIRef(curtype)))
             supertypes.append((None, curnode))
             interfaces = self.get_interfaces(g, curnode)
             supertypes += interfaces
@@ -839,7 +923,7 @@ class RdfUtils:
             curtype = next(g.objects(curtype, RDFS.subClassOf), None)
             if curtype is None:
                 continue
-            curnode = next(g.subjects(self.basens['definesType'], curtype), None)
+            curnode = next(g.subjects(UARDF['definesType'], curtype), None)
         return supertypes
 
     def get_modelling_rule(self, graph, node, shacl_rule, instancetype):
@@ -847,7 +931,7 @@ class RdfUtils:
         is_optional = None
         try:
             modelling_node = next(graph.objects(node, self.opcuans['HasModellingRule']))
-            modelling_rule = next(graph.objects(modelling_node, self.basens['hasNodeId']))
+            modelling_rule = parse_expanded_nodeid(next(graph.objects(modelling_node, UARDF['nodeId'])))[3]
             if int(modelling_rule) == modelling_nodeid_optional:
                 is_optional = True
             elif int(modelling_rule) == modelling_nodeid_mandatory:
@@ -915,17 +999,15 @@ class RdfUtils:
         PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
         PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
             SELECT ?machine ?type WHERE {
-                ?machine_folder a opcua:FolderType .
-                ?machine_folder base:hasNamespace machinery:MACHINERYNamespace .
-                ?machine_folder base:hasNodeId "1001" .
+                ?machine_folder uardf:hasTypeDefinition opcua:FolderType .
+                ?machine_folder uardf:nodeId "nsu=http://opcfoundation.org/UA/Machinery/;i=1001" .
                 OPTIONAL{?machine_folder opcua:Organizes ?machine .}
                 OPTIONAL{?machine_folder opcua:HasComponent ?machine .}
-                ?machine a ?type .
-                FILTER NOT EXISTS { ?type rdfs:subClassOf* opcua:BaseNodeClass .}
+                ?machine uardf:hasTypeDefinition ?type .
             }
         """
         result = g.query(query_machines,
-                         initNs={'base': self.basens, 'machinery': MACHINERY, 'opcua': self.opcuans})
+                         initNs={'base': self.basens, 'machinery': MACHINERY, 'opcua': self.opcuans, 'uardf': UARDF})
         foundmachines = None
         if len(result) > 0:
             foundmachines = list(result)
@@ -938,29 +1020,44 @@ class RdfUtils:
         PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         SELECT distinct ?type WHERE {{
             bind("{prefix}" as ?prefix)
-            ?x a opcua:ObjectNodeClass .
+            ?x a uardf:Object .
             FILTER(STRSTARTS(STR(?x), ?prefix))
-            ?x a ?type .
-            FILTER NOT EXISTS{{?type rdfs:subClassOf* opcua:BaseNodeClass}}
+            ?x uardf:hasTypeDefinition ?type .
         }}
         """.format(prefix=str(entity_namespace))
         result = g.query(query_instance,
-                         initNs={'opcua': self.opcuans})
+                         initNs={'opcua': self.opcuans, 'uardf': UARDF})
         foundtypes = None
         if len(result) > 0:
             foundtypes = [elem[0] for elem in list(result)]
         return foundtypes
 
     def generate_node_id(self, graph, rootentity, node, id):
-        node_id = next(graph.objects(node, self.basens['hasNodeId']), 'unknown')
-        idtype = next(graph.objects(node, self.basens['hasIdentifierType']), 'unknown')
-        rootns = next(graph.objects(rootentity, self.basens['hasNamespace']), 'unknown')
-        rootnsuri = next(graph.objects(rootns, self.basens['hasUri']), 'unknown')
-        ns = next(graph.objects(node, self.basens['hasNamespace']), 'unknown')
-        nsuri = next(graph.objects(ns, self.basens['hasUri']), 'unknown')
-        nsurins = Namespace(nsuri)
-        result = nodeId_to_iri(nsurins, self.basens, node_id, idtype, id, is_entityns=(str(nsuri) == str(rootnsuri)))
-        return result
+        """IRI of the entity (real instance) of a node: <prefix><base64url(canonical ExpandedNodeId)>.
+
+        The entity is related to, but not the same as the node: the node IRI is <namespace URI> + the same
+        encoded string. The default prefix is urn:uaentity:, id overrides it. uardf:nodeId has no server URI, the
+        ExpandedNodeId of a dynamic node gets it from uardf:serverUri (svu=), so entity ids of different servers do
+        not collide.
+        """
+        nodeid = next(graph.objects(node, UARDF['nodeId']), None)
+        if nodeid is None:
+            return None
+        server_uri, namespace_uri, idt, identifier = parse_expanded_nodeid(nodeid)
+        server_uri = server_uri or next(graph.objects(node, UARDF['serverUri']), None)
+        expanded_nodeid = expanded_nodeid_string(canonical_nodeid(idt, identifier), namespace_uri,
+                                                 str(server_uri) if server_uri is not None else None)
+        prefix = id if id is not None else ENTITY_ID_PREFIX
+        return URIRef(f'{prefix}{base64url_nopad(expanded_nodeid)}')
+
+    def get_nodeid_and_idtype(self, graph, node):
+        """Identifier and identifier type (base:numericID, ...) of a node from its uardf:nodeId"""
+        expanded_nodeid = next(graph.objects(node, UARDF['nodeId']), None)
+        if expanded_nodeid is None:
+            return 'unknown', 'unknown'
+        _, _, idt, identifier = parse_expanded_nodeid(expanded_nodeid)
+        idtypes = {'i': 'numericID', 's': 'stringID', 'g': 'guidID', 'b': 'opaqueID'}
+        return identifier, self.basens[idtypes[idt]]
 
     def get_semantic_bridge(self, g, subject, object):
         result = None
@@ -972,7 +1069,7 @@ class RdfUtils:
         return result
 
     def get_semantic_relationship_type(self):
-        return self.basens[SEMANTIC_RELATIONSHIP_TYPE]
+        return UARDF['semanticBridgeReferenceType']
 
     def get_root_property_of_semantic_bridge(self):
         return self.opcuans[ROOT_PROPERTY_OF_SEMANTIC_BRIDGE]

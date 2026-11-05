@@ -467,7 +467,11 @@ class Shacl:
         shacl_rule['pattern'] = shacl_pattern
         if data_type is not None:
             base_data_type = next(g.objects(data_type, RDFS.subClassOf))  # Todo: This must become a sparql query
-            is_abstract = bool(next(g.objects(data_type, self.basens['isAbstract']), False))
+            # IsAbstract is an attribute of the DataType node which defines the class
+            data_type_node = next(g.subjects(utils.UARDF['definesType'], data_type), None)
+            is_abstract = utils.rdfStringToPythonBool(
+                next(g.objects(data_type_node, utils.UARDF['isAbstract']), False)) \
+                if data_type_node is not None else False
             shacl_rule['isAbstract'] = is_abstract
             shacl_rule['datatype'] = shacl_type
             shacl_rule['pattern'] = shacl_pattern

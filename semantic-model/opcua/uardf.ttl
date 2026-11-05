@@ -1,0 +1,176 @@
+@prefix : <http://opcfoundation.org/rdf/uacore#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@base <http://opcfoundation.org/rdf/uacore#> .
+
+<http://opcfoundation.org/rdf/uacore#> rdf:type owl:Ontology .
+
+#################################################################
+#    Object Properties
+#################################################################
+
+###  http://opcfoundation.org/rdf/uacore#definesType
+:definesType rdf:type owl:ObjectProperty ;
+             rdfs:domain :Type .
+
+
+###  http://opcfoundation.org/rdf/uacore#hasTypeDefinition
+:hasTypeDefinition rdf:type owl:ObjectProperty ;
+                   rdfs:domain :Instance .
+
+
+###  http://opcfoundation.org/rdf/uacore#parent
+:parent rdf:type owl:ObjectProperty ;
+        rdfs:domain :Node ;
+        rdfs:range :Node .
+
+
+###  http://opcfoundation.org/rdf/uacore#semanticBridgeReferenceType
+:semanticBridgeReferenceType rdf:type owl:ObjectProperty ;
+                             rdfs:domain :Node ;
+                             rdfs:range :Node .
+
+
+#################################################################
+#    Data properties
+#################################################################
+
+###  http://opcfoundation.org/rdf/uacore#browseName
+:browseName rdf:type owl:DatatypeProperty ;
+            rdfs:domain :Node ;
+            rdfs:range xsd:string .
+
+
+###  http://opcfoundation.org/rdf/uacore#description
+:description rdf:type owl:DatatypeProperty ;
+             rdfs:domain :Node ;
+             rdfs:range rdf:langString .
+
+
+###  http://opcfoundation.org/rdf/uacore#displayName
+:displayName rdf:type owl:DatatypeProperty ;
+             rdfs:domain :Node ;
+             rdfs:range rdf:langString .
+
+
+###  http://opcfoundation.org/rdf/uacore#isAbstract
+:isAbstract rdf:type owl:DatatypeProperty ;
+            rdfs:domain :Type ;
+            rdfs:range xsd:boolean .
+
+
+###  http://opcfoundation.org/rdf/uacore#name
+:name rdf:type owl:DatatypeProperty ;
+      rdfs:domain :Node ;
+      rdfs:range xsd:string .
+
+
+###  http://opcfoundation.org/rdf/uacore#namespaceUri
+:namespaceUri rdf:type owl:DatatypeProperty ;
+              rdfs:domain :Node ;
+              rdfs:range xsd:string .
+
+
+###  http://opcfoundation.org/rdf/uacore#nodeId
+:nodeId rdf:type owl:DatatypeProperty ;
+        rdfs:domain :Node ;
+        rdfs:range xsd:string .
+
+
+###  http://opcfoundation.org/rdf/uacore#serverUri
+:serverUri rdf:type owl:DatatypeProperty ;
+           rdfs:domain :Node ;
+           rdfs:range xsd:string .
+
+
+###  http://opcfoundation.org/rdf/uacore#symbolicName
+:symbolicName rdf:type owl:DatatypeProperty ;
+              rdfs:domain :Node ;
+              rdfs:range xsd:string .
+
+
+#################################################################
+#    Classes
+#################################################################
+
+###  http://opcfoundation.org/rdf/uacore#DataType
+:DataType rdf:type owl:Class ;
+          rdfs:subClassOf :Type .
+
+
+###  http://opcfoundation.org/rdf/uacore#Instance
+:Instance rdf:type owl:Class ;
+          rdfs:subClassOf :Node ;
+          owl:disjointWith :Type .
+
+
+###  http://opcfoundation.org/rdf/uacore#Method
+:Method rdf:type owl:Class ;
+        rdfs:subClassOf :Instance .
+
+
+###  http://opcfoundation.org/rdf/uacore#Node
+:Node rdf:type owl:Class .
+
+
+###  http://opcfoundation.org/rdf/uacore#Object
+:Object rdf:type owl:Class ;
+        rdfs:subClassOf :Instance .
+
+
+###  http://opcfoundation.org/rdf/uacore#ObjectType
+:ObjectType rdf:type owl:Class ;
+            rdfs:subClassOf :Type .
+
+
+###  http://opcfoundation.org/rdf/uacore#ReferenceType
+:ReferenceType rdf:type owl:Class ;
+               rdfs:subClassOf :Type .
+
+
+###  http://opcfoundation.org/rdf/uacore#Type
+:Type rdf:type owl:Class ;
+      rdfs:subClassOf :Node .
+
+
+###  http://opcfoundation.org/rdf/uacore#Variable
+:Variable rdf:type owl:Class ;
+          rdfs:subClassOf :Instance .
+
+
+###  http://opcfoundation.org/rdf/uacore#VariableType
+:VariableType rdf:type owl:Class ;
+              rdfs:subClassOf :Type .
+
+
+###  http://opcfoundation.org/rdf/uacore#View
+:View rdf:type owl:Class ;
+      rdfs:subClassOf :Instance .
+
+
+#################################################################
+#    General axioms
+#################################################################
+
+[ rdf:type owl:AllDisjointClasses ;
+  owl:members ( :DataType
+                :ObjectType
+                :ReferenceType
+                :VariableType
+              )
+] .
+
+
+[ rdf:type owl:AllDisjointClasses ;
+  owl:members ( :Method
+                :Object
+                :Variable
+                :View
+              )
+] .
+
+
+###  Generated by the OWL API (version 4.5.29.2024-05-13T12:11:03Z) https://github.com/owlcs/owlapi

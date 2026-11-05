@@ -1,7 +1,7 @@
 [
     {
         "type": "test:SubA",
-        "id": "http://my.test/testid:nodei2001",
+        "id": "urn:uaentity:bnN1PWh0dHA6Ly9teS50ZXN0LztpPTIwMDE",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -12,14 +12,14 @@
     },
     {
         "type": "test:AlphaType",
-        "id": "http://my.test/testid:nodei2200",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjIwMA",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
         "test:hasA": [
             {
                 "type": "Relationship",
-                "object": "http://my.test/testid:nodei2001"
+                "object": "urn:uaentity:bnN1PWh0dHA6Ly9teS50ZXN0LztpPTIwMDE"
             }
         ]
     }

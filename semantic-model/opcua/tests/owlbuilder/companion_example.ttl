@@ -1,3 +1,4 @@
+@prefix uardf: <http://opcfoundation.org/rdf/uacore#> .
 @prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
 @prefix opcua: <http://opcfoundation.org/UA/> .
 @prefix comp: <http://example.org/Companion/> .
@@ -28,46 +29,47 @@ comp:COMPNamespace a base:Namespace ;
     base:hasPrefix "comp" ;
     base:hasUri "http://example.org/Companion/" .
 
-comp:hasExtra rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+comp:hasExtra a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
 
 comp:SpecialPumpType a owl:Class ;
     rdfs:subClassOf opcua:PumpType .
 
-comp:nodei1 a opcua:ObjectTypeNodeClass ;
+comp:nodei1 a uardf:ObjectType ;
     opcua:HasProperty comp:nodei2 ;
     comp:hasExtra comp:nodei2 ;
-    base:definesType comp:SpecialPumpType ;
-    base:hasBrowseName "SpecialPumpType" ;
-    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "1" .
+    uardf:definesType comp:SpecialPumpType ;
+    uardf:name "SpecialPumpType" ;
+    uardf:browseName "SpecialPumpType" ;
+    uardf:nodeId "nsu=http://example.org/Companion/;i=1" .
 
-comp:nodei2 a opcua:PropertyType,
-        opcua:VariableNodeClass ;
+comp:nodei2 a uardf:Variable ;
+    uardf:hasTypeDefinition opcua:PropertyType ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasDatatype opcua:Double ;
-    base:hasBrowseName "Extra" ;
-    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "2" .
+    uardf:name "Extra" ;
+    uardf:browseName "Extra" ;
+    uardf:nodeId "nsu=http://example.org/Companion/;i=2" .
 
 comp:SpecialMotorType a owl:Class ;
     rdfs:subClassOf opcua:MotorType .
 
-comp:nodei3 a opcua:ObjectTypeNodeClass ;
+comp:nodei3 a uardf:ObjectType ;
     opcua:HasProperty comp:nodei4 ;
     opcua:hasTemperature comp:nodei4 ;
-    base:definesType comp:SpecialMotorType ;
-    base:hasBrowseName "SpecialMotorType" ;
-    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "3" .
+    uardf:definesType comp:SpecialMotorType ;
+    uardf:name "SpecialMotorType" ;
+    uardf:browseName "SpecialMotorType" ;
+    uardf:nodeId "nsu=http://example.org/Companion/;i=3" .
 
-comp:nodei4 a opcua:PropertyType,
-        opcua:VariableNodeClass ;
+comp:nodei4 a uardf:Variable ;
+    uardf:hasTypeDefinition opcua:PropertyType ;
     opcua:HasModellingRule opcua:nodei78 ;
     base:hasDatatype opcua:Double ;
     base:hasValueRank 1 ;
-    base:hasBrowseName "Temperature" ;
-    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "4" .
+    uardf:name "Temperature" ;
+    uardf:browseName "Temperature" ;
+    uardf:nodeId "nsu=http://example.org/Companion/;i=4" .
 
 # A new DataType introduced by the companion spec, under the SAME
 # opcua:BaseDataType parent that pump_example.ttl's own Double/String already

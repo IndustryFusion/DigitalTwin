@@ -49,6 +49,12 @@ TMC_NODESET               := https://raw.githubusercontent.com/OPCFoundation/UA-
 DEXPI_NODESET             := https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/$(NODESET_VERSION)/DEXPI/Opc.Ua.DEXPI.NodeSet2.xml
 ISA95_NODESET             := https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/$(NODESET_VERSION)/ISA-95/Opc.ISA95.NodeSet2.xml
 
+# Server URI (svu) of the example instance nodesets. Instance nodes are dynamic, i.e. server
+# specific, and are only exported by nodeset2owl.py when a server URI is given.
+SERVER_URI ?= urn:example:opcua-server
+# Second server of the compose2 example (two servers with the same NodeIds in one knowledge graph).
+SERVER_URI2 ?= urn:example:opcua-server2
+
 # -----------------------------------------------------------------------------
 # Base Ontology URL and Remote Mode
 # -----------------------------------------------------------------------------
@@ -130,7 +136,7 @@ PUMPEXAMPLE_NODESET_URL  = $(PUMP_EXAMPLE_NODESET)
 PUMPEXAMPLE_ONTOLOGY     = pumpexample.owl.ttl
 PUMPEXAMPLE_OWL          = pumpexample.vt.owl.ttl
 PUMPEXAMPLE_DEPENDENCIES = $(BASE_ONTOLOGY) $(CORE_ONTOLOGY) $(DI_ONTOLOGY) $(MACHINERY_ONTOLOGY) $(PUMPS_ONTOLOGY)
-PUMPEXAMPLE_OPTS         = -n http://yourorganisation.org/InstanceExample/ -v http://example.com/v0.1/pumpexample/ -p pumpexample
+PUMPEXAMPLE_OPTS         = -n http://yourorganisation.org/InstanceExample/ -v http://example.com/v0.1/pumpexample/ -p pumpexample --serverUri $(SERVER_URI)
 
 # MACHINETOOL target
 MACHINETOOL_NODESET_URL   = $(MACHINETOOL_NODESET)
@@ -151,21 +157,21 @@ LASERSYSTEMSEXAMPLE_NODESET_URL   = $(LASERSYSTEMS_EXAMPLE_NODESET)
 LASERSYSTEMSEXAMPLE_ONTOLOGY      = lasersystemsexample.owl.ttl
 LASERSYSTEMSEXAMPLE_OWL           = lasersystemsexample.vt.owl.ttl
 LASERSYSTEMSEXAMPLE_DEPENDENCIES  = $(BASE_ONTOLOGY) $(CORE_ONTOLOGY) $(DI_ONTOLOGY) $(MACHINERY_ONTOLOGY) $(IA_ONTOLOGY) $(MACHINETOOL_ONTOLOGY) $(LASERSYSTEMS_ONTOLOGY)
-LASERSYSTEMSEXAMPLE_OPTS          = -v http://example.com/v0.1/LaserSystems/ -p lasersystemsexample
+LASERSYSTEMSEXAMPLE_OPTS          = -v http://example.com/v0.1/LaserSystems/ -p lasersystemsexample --serverUri $(SERVER_URI)
 
 # MACHINETOOLEXAMPLE target
 MACHINETOOLEXAMPLE_NODESET_URL   = $(MACHINETOOL_EXAMPLE_NODESET)
 MACHINETOOLEXAMPLE_ONTOLOGY      = machinetoolexample.owl.ttl
 MACHINETOOLEXAMPLE_OWL           = machinetoolexample.vt.owl.ttl
 MACHINETOOLEXAMPLE_DEPENDENCIES  = $(BASE_ONTOLOGY) $(CORE_ONTOLOGY) $(DI_ONTOLOGY) $(MACHINERY_ONTOLOGY) $(MACHINETOOL_ONTOLOGY) $(IA_ONTOLOGY)
-MACHINETOOLEXAMPLE_OPTS          = -n http://yourorganisation.org/MachineTool-Example/ -v http://example.com/MachineToolExample/v0.1/pumpexample/ -p machinetoolexample
+MACHINETOOLEXAMPLE_OPTS          = -n http://yourorganisation.org/MachineTool-Example/ -v http://example.com/MachineToolExample/v0.1/pumpexample/ -p machinetoolexample --serverUri $(SERVER_URI)
 
 # MACHINERYEXAMPLE target
 MACHINERYEXAMPLE_NODESET_URL   = $(MACHINERY_EXAMPLE_NODESET)
 MACHINERYEXAMPLE_ONTOLOGY      = machineryexample.owl.ttl
 MACHINERYEXAMPLE_OWL           = machineryexample.vt.owl.ttl
 MACHINERYEXAMPLE_DEPENDENCIES  = $(BASE_ONTOLOGY) $(CORE_ONTOLOGY) $(DI_ONTOLOGY) $(MACHINERY_ONTOLOGY)
-MACHINERYEXAMPLE_OPTS          = -v http://example.com/MachineryExample/v0.1/pumpexample/ -p machineryexample
+MACHINERYEXAMPLE_OPTS          = -v http://example.com/MachineryExample/v0.1/pumpexample/ -p machineryexample --serverUri $(SERVER_URI)
 
 # DICTIONARY_IRDI target
 DICTIONARY_IRDI_NODESET_URL   = $(DICTIONARY_IRDI)
@@ -237,9 +243,63 @@ TARGET_NAMES = CORE DI IA MACHINERY PUMPS PUMPEXAMPLE MACHINETOOL LASERSYSTEMS L
 
 ALL_TARGETS = $(foreach t, $(TARGET_NAMES), $($(t)_ONTOLOGY) $($(t)_OWL))
 
+# nodeset2owl.py outputs only (*.owl.ttl, without the owl2vt.py *.vt.owl.ttl), e.g.
+#   make -f translate_default_nodesets.make nodeset2owl                 (all of them)
+#   make -f translate_default_nodesets.make nodeset2owl-pumpexample     (one, plus the *.owl.ttl it depends on)
+NODESET2OWL_TARGETS = $(foreach t, $(TARGET_NAMES), $($(t)_ONTOLOGY))
+NODESET2OWL_NAMES = $(patsubst %.owl.ttl,nodeset2owl-%,$(NODESET2OWL_TARGETS))
 
-.PHONY: all clean print-nodesets
+
+# Server specific (dynamic) part of the specifications, next to the static *.owl.ttl, per server, e.g.
+#   core.owl.ttl                                   static (global) part, built without server URI
+#   core.owl.dynamic.urn_example_opcua-server.ttl  dynamic part of server urn:example:opcua-server
+# The file name carries the server URI (SERVER_SLUG: every character except A-Za-z0-9._- replaced
+# by _), so the dynamic parts of several servers can be built and loaded side by side:
+#   make -f translate_default_nodesets.make dynamic                                   (all, $(SERVER_URI))
+#   make -f translate_default_nodesets.make dynamic SERVER_URI=urn:plant:server2      (all, another server)
+#   make -f translate_default_nodesets.make core.owl.dynamic.urn_example_opcua-server.ttl   (one)
+# Static + dynamic part of a server compose the full export of that server. The instance examples are
+# already built completely with --serverUri in their OPTS and get no separate dynamic file.
+slug = $(shell printf '%s' '$(1)' | tr -c 'A-Za-z0-9._-' '_')
+SERVER_SLUG = $(call slug,$(SERVER_URI))
+DYNAMIC_NAMES = $(foreach t, $(TARGET_NAMES), $(if $(findstring --serverUri,$($(t)_OPTS)),,$(t)))
+DYNAMIC_STATIC_ONTOLOGIES = $(foreach t, $(DYNAMIC_NAMES), $($(t)_ONTOLOGY))
+DYNAMIC_TARGETS = $(DYNAMIC_STATIC_ONTOLOGIES:.owl.ttl=.owl.dynamic.$(SERVER_SLUG).ttl)
+# Composition of the static part and the dynamic parts of all servers built so far (always including
+# $(SERVER_URI)) into one file, e.g. to browse it with Protege or query it with Fuseki. It imports the
+# composed files of its dependencies instead of their static files:
+#   core.owl.all.ttl = core.owl.ttl + core.owl.dynamic.*.ttl
+#   make -f translate_default_nodesets.make composed
+# COMPOSE_SERVERS restricts the composition to the dynamic parts of these servers (default: all built so far).
+COMPOSED_TARGETS = $(DYNAMIC_STATIC_ONTOLOGIES:.owl.ttl=.owl.all.ttl)
+COMPOSE_SERVERS ?=
+COMPOSE_SLUGS = $(foreach s,$(COMPOSE_SERVERS),$(call slug,$(s)))
+# Example of several servers with the same NodeIds in one knowledge graph: builds the dynamic parts of
+# $(SERVER_URI) and $(SERVER_URI2) and composes the static part with exactly these two into *.owl.all.ttl.
+# Both servers expose e.g. the core Server object i=2253: in the composed graph these are two nodes with
+# the same uardf:nodeId "i=2253", distinguished by their IRI (base64url(svu=<server>;i=2253)) and
+# uardf:serverUri, next to the static nodes, which exist once:
+#   make -f translate_default_nodesets.make compose2
+#   make -f translate_default_nodesets.make compose2 SERVER_URI=urn:plant:a SERVER_URI2=urn:plant:b
+MAKE_SELF = $(MAKE) -f $(firstword $(MAKEFILE_LIST))
+
+
+.PHONY: all clean print-nodesets nodeset2owl dynamic composed compose2 $(NODESET2OWL_NAMES)
 all: $(ALL_TARGETS)
+
+nodeset2owl: $(NODESET2OWL_TARGETS)
+
+dynamic: $(DYNAMIC_TARGETS)
+
+composed: $(COMPOSED_TARGETS)
+
+compose2:
+	$(MAKE_SELF) dynamic SERVER_URI=$(SERVER_URI)
+	$(MAKE_SELF) dynamic SERVER_URI=$(SERVER_URI2)
+	rm -f $(COMPOSED_TARGETS)
+	$(MAKE_SELF) composed SERVER_URI=$(SERVER_URI) COMPOSE_SERVERS="$(SERVER_URI) $(SERVER_URI2)"
+
+$(NODESET2OWL_NAMES): nodeset2owl-%: %.owl.ttl
 
 # -----------------------------------------------------------------------------
 # Print `export VAR=value` lines for every nodeset's source URL (and the base
@@ -271,6 +331,28 @@ print-nodesets:
 	$(eval NAME := $(shell echo $* | tr a-z A-Z))
 	python3 nodeset2owl.py $($(NAME)_NODESET_URL) -i $($(NAME)_DEPENDENCIES) $($(NAME)_OPTS) -burl $(BASE_ONTOLOGY) -b $(BASE_ONTOLOGY_NS) -o $@ $(DSB)
 
+# Generic rule to build the dynamic part *.owl.dynamic.<server slug>.ttl of server $(SERVER_URI) next to a
+# static *.owl.ttl (see DYNAMIC_TARGETS). It has its own ontology IRI per server (<ontology> +
+# base64url(svu=<server>)) and imports the static file of the same nodeset and the dynamic files of its
+# dependencies for the same server, so that loading it brings in the full export of that server.
+%.owl.dynamic.$(SERVER_SLUG).ttl: %.owl.ttl
+	@echo "Creating $@"
+	$(eval NAME := $(shell echo $* | tr a-z A-Z))
+	$(eval DYN_DEPS := $(patsubst %.owl.ttl,%.owl.dynamic.$(SERVER_SLUG).ttl,$(filter $(DYNAMIC_STATIC_ONTOLOGIES),$($(NAME)_DEPENDENCIES))))
+	python3 nodeset2owl.py $($(NAME)_NODESET_URL) -i $($(NAME)_DEPENDENCIES) $($(NAME)_OPTS) -burl $(BASE_ONTOLOGY) -b $(BASE_ONTOLOGY_NS) --serverUri $(SERVER_URI) --dynamic-only --dynamic-imports $< $(DYN_DEPS) -o $@ $(DSB)
+
+# Generic rule to compose the static part and the dynamic parts of all servers into *.owl.all.ttl (see
+# COMPOSED_TARGETS). Prerequisites are the static file, the dynamic file of $(SERVER_URI) and every other
+# existing *.owl.dynamic.*.ttl of the nodeset (secondary expansion), or only those of $(COMPOSE_SERVERS). Its
+# ontology IRI is <ontology>all; it keeps the imports of the static file, but imports the composed files of its
+# dependencies instead of their static files.
+.SECONDEXPANSION:
+%.owl.all.ttl: %.owl.ttl %.owl.dynamic.$(SERVER_SLUG).ttl $$(if $$(COMPOSE_SLUGS),$$(foreach s,$$(COMPOSE_SLUGS),$$*.owl.dynamic.$$(s).ttl),$$(wildcard $$*.owl.dynamic.*.ttl))
+	@echo "Creating $@"
+	$(eval NAME := $(shell echo $* | tr a-z A-Z))
+	$(eval ALL_DEPS := $(filter $(DYNAMIC_STATIC_ONTOLOGIES),$($(NAME)_DEPENDENCIES)))
+	python3 compose_owl.py $< $(filter-out $<,$^) -m $(foreach d,$(ALL_DEPS),$(d)=$(d:.owl.ttl=.owl.all.ttl)) -o $@
+
 
 # Generic rule to build a *.vt.owl.ttl file (owl2vt.py's Virtual
 # Types output, derived from the *.owl.ttl above -- GNU Make's shortest-stem
@@ -295,4 +377,4 @@ $(foreach t, $(TARGET_NAMES), \
 clean:
 	@echo "Cleaning generated ontology files..."
 	@echo deleting $(ALL_TARGETS)
-	rm -f $(ALL_TARGETS)
+	rm -f $(ALL_TARGETS) $(DYNAMIC_STATIC_ONTOLOGIES:.owl.ttl=.owl.dynamic.*.ttl) $(COMPOSED_TARGETS)

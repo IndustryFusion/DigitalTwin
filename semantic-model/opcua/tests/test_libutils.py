@@ -14,7 +14,7 @@ from lib.utils import RdfUtils, downcase_string, isNodeId, convert_to_json_type,
                                 contains_both_angle_brackets, get_typename, get_common_supertype, rdfStringToPythonBool, \
                                 get_rank_dimensions, get_type_and_template, OntologyLoader, file_path_to_uri, create_list, \
                                 extract_subgraph, dump_without_prefixes, get_contentclass, quote_url, merge_attributes, dump_graph, \
-                                is_subclass, expand_term, rank_value_to_string, nodeId_to_iri
+                                is_subclass, expand_term, rank_value_to_string, nodeId_to_iri, UARDF
 
 
 class TestNormalizeNamespaceUri(unittest.TestCase):
@@ -130,15 +130,15 @@ class TestRdfUtilsNodeClassAndInterfaces(unittest.TestCase):
         self.node = URIRef("http://example.org/Node")
 
     def test_is_object_node_class(self):
-        self.assertTrue(self.rdf_utils.isObjectNodeClass(self.opcuans['ObjectNodeClass']))
+        self.assertTrue(self.rdf_utils.isObjectNodeClass(UARDF['Object']))
         self.assertFalse(self.rdf_utils.isObjectNodeClass(URIRef("http://example.org/notObjectNode")))
 
     def test_is_object_type_node_class(self):
-        self.assertTrue(self.rdf_utils.isObjectTypeNodeClass(self.opcuans['ObjectTypeNodeClass']))
+        self.assertTrue(self.rdf_utils.isObjectTypeNodeClass(UARDF['ObjectType']))
         self.assertFalse(self.rdf_utils.isObjectTypeNodeClass(URIRef("http://example.org/notObjectType")))
 
     def test_is_variable_node_class(self):
-        self.assertTrue(self.rdf_utils.isVariableNodeClass(self.opcuans['VariableNodeClass']))
+        self.assertTrue(self.rdf_utils.isVariableNodeClass(UARDF['Variable']))
         self.assertFalse(self.rdf_utils.isVariableNodeClass(URIRef("http://example.org/notVariable")))
 
     def test_get_interfaces_no_interface(self):
@@ -150,7 +150,7 @@ class TestRdfUtilsNodeClassAndInterfaces(unittest.TestCase):
         self.graph.add((self.node, self.opcuans['HasInterface'], interface_node))
         # Define a first interface type
         type1 = URIRef("http://example.org/InterfaceType1")
-        self.graph.add((interface_node, self.basens['definesType'], type1))
+        self.graph.add((interface_node, UARDF['definesType'], type1))
         # Terminate the chain by subclassing BaseInterfaceType
         self.graph.add((type1, RDFS.subClassOf, self.opcuans['BaseInterfaceType']))
         result = self.rdf_utils.get_interfaces(self.graph, self.node)
@@ -556,7 +556,7 @@ class TestUtils(unittest.TestCase):
         # Set up the mocked return values for objects
         mock_objects.side_effect = [
             iter([URIRef("http://example.org/ModellingNode")]),
-            iter([Literal(80)])  # Assuming modelling_nodeid_optional or similar value
+            iter([Literal('i=80')])  # uardf:nodeId of the modelling rule (Optional)
         ]
 
         # Call the function under test
@@ -570,7 +570,7 @@ class TestUtils(unittest.TestCase):
         
         mock_objects.side_effect = [
         iter([URIRef("http://example.org/ModellingNode")]),
-        iter([Literal(78)])  # Assuming modelling_nodeid_optional or similar value
+        iter([Literal('i=78')])  # Mandatory
         ]
         # Call the function under test
         is_optional, use_instance_declaration = self.rdf_utils.get_modelling_rule(self.graph, self.node, self.shacl_rule, self.instancetype)
@@ -583,7 +583,7 @@ class TestUtils(unittest.TestCase):
 
         mock_objects.side_effect = [
         iter([URIRef("http://example.org/ModellingNode")]),
-        iter([Literal(11510)])  # Assuming modelling_nodeid_optional or similar value
+        iter([Literal('i=11510')])  # MandatoryPlaceholder
         ]
         # Call the function under test
         is_optional, use_instance_declaration = self.rdf_utils.get_modelling_rule(self.graph, self.node, self.shacl_rule, self.instancetype)
@@ -597,7 +597,7 @@ class TestUtils(unittest.TestCase):
 
         mock_objects.side_effect = [
         iter([URIRef("http://example.org/ModellingNode")]),
-        iter([Literal(11508)])  # Assuming modelling_nodeid_optional or similar value
+        iter([Literal('i=11508')])  # OptionalPlaceholder
         ]
         # Call the function under test
         is_optional, use_instance_declaration = self.rdf_utils.get_modelling_rule(self.graph, self.node, self.shacl_rule, self.instancetype)
@@ -622,86 +622,51 @@ class TestUtils(unittest.TestCase):
 
     def test_isNodeclass(self):
         """Test checking if a given type is recognized as a node class."""
-        # These types (from the opcuans namespace) should be identified as node classes.
-        self.assertTrue(self.rdf_utils.isNodeclass(self.opcuans['BaseNodeClass']))
-        self.assertTrue(self.rdf_utils.isNodeclass(self.opcuans['DataTypeNodeClass']))
-        self.assertTrue(self.rdf_utils.isNodeclass(self.opcuans['ObjectNodeClass']))
-        self.assertTrue(self.rdf_utils.isNodeclass(self.opcuans['ObjectTypeNodeClass']))
-        self.assertTrue(self.rdf_utils.isNodeclass(self.opcuans['ReferenceTypeNodeClass']))
-        self.assertTrue(self.rdf_utils.isNodeclass(self.opcuans['VariableNodeClass']))
+        # The uardf node classes are identified as node classes.
+        for nodeclass in ('Node', 'DataType', 'Object', 'ObjectType', 'ReferenceType', 'Variable',
+                          'VariableType', 'Method', 'View'):
+            self.assertTrue(self.rdf_utils.isNodeclass(UARDF[nodeclass]))
+        self.assertFalse(self.rdf_utils.isNodeclass(self.opcuans['ObjectNodeClass']))
 
         # A type that is not in the list should return False.
         not_a_nodeclass = URIRef("http://example.org/opcua/NotANodeClass")
         self.assertFalse(self.rdf_utils.isNodeclass(not_a_nodeclass))
 
     def test_generate_node_id(self):
-        """Test the generate_node_id method with various namespace and id scenarios."""
-        # Scenario 1: id provided and node namespace equals root entity namespace.
-        graph = Graph()
-        node = URIRef("http://example.org/node")
-        rootentity = URIRef("http://example.org/root")
-        ns = URIRef("http://example.org/ns")
-        # Set required triples for node
-        graph.add((node, self.basens['hasNodeId'], Literal("12345")))
-        graph.add((node, self.basens['hasIdentifierType'], self.basens['numericID']))  # Expect idtype 'i'
-        graph.add((node, self.basens['hasNamespace'], ns))
-        graph.add((ns, self.basens['hasUri'], Literal("ns://example")))
-        # Set rootentity with matching namespace
-        graph.add((rootentity, self.basens['hasNamespace'], ns))
-        
-        result1 = self.rdf_utils.generate_node_id(graph, rootentity, node, "testID:")
-        # Expected: "ns://example" + "testID" + ":" + "i" + "12345" => "ns://exampletestID:i12345"
-        self.assertEqual(str(result1), "ns://exampletestID:nodei12345")
-        
-        # Scenario 2: id is None, so the extra id value is not included.
-        graph2 = Graph()
-        node2 = URIRef("http://example.org/node2")
-        rootentity2 = URIRef("http://example.org/root2")
-        ns2 = URIRef("http://example.org/ns2")
-        graph2.add((node2, self.basens['hasNodeId'], Literal("67890")))
-        graph2.add((node2, self.basens['hasIdentifierType'], self.basens['guidID']))  # Expect idtype 'g'
-        graph2.add((node2, self.basens['hasNamespace'], ns2))
-        graph2.add((ns2, self.basens['hasUri'], Literal("ns://another")))
-        graph2.add((rootentity2, self.basens['hasNamespace'], ns2))
-        
-        result2 = self.rdf_utils.generate_node_id(graph2, rootentity2, node2, None)
-        # Expected: "ns://another" + "g" + "67890" => "ns://anotherg67890"
-        self.assertEqual(str(result2), "ns://anothernodeg67890")
+        """Entity ids: <prefix><base64url of the canonical ExpandedNodeId>, default prefix urn:uaentity:."""
+        import base64
 
-        # Scenario 3: id provided but node namespace differs from root entity namespace.
-        graph3 = Graph()
-        node3 = URIRef("http://example.org/node3")
-        rootentity3 = URIRef("http://example.org/root3")
-        ns3_node = URIRef("http://example.org/nsnode")
-        ns3_root = URIRef("http://example.org/nsroot")
-        graph3.add((node3, self.basens['hasNodeId'], Literal("abcde")))
-        graph3.add((node3, self.basens['hasIdentifierType'], self.basens['opaqueID']))  # Expect idtype 'b'
-        graph3.add((node3, self.basens['hasNamespace'], ns3_node))
-        graph3.add((ns3_node, self.basens['hasUri'], Literal("ns://node:")))
-        # Root entity with a different namespace
-        graph3.add((rootentity3, self.basens['hasNamespace'], ns3_root))
-        graph3.add((ns3_root, self.basens['hasUri'], Literal("ns://root")))
-        
-        result3 = self.rdf_utils.generate_node_id(graph3, rootentity3, node3, "whatever")
-        # Expected: "ns://node" + "b" + "abcde" => "ns://nodebabcde"
-        self.assertEqual(str(result3), "ns://node:nodebabcde")
-        # Scenario 4: root entity is created and id contains a full IRI.
-        graph3 = Graph()
-        node3 = URIRef("http://example.org/node3")
-        rootentity3 = URIRef("http://example.org/root3")
-        ns3_node = URIRef("http://example.org/nsnode")
-        ns3_root = URIRef("http://example.org/nsroot")
-        graph3.add((node3, self.basens['hasNodeId'], Literal("abcde")))
-        graph3.add((node3, self.basens['hasIdentifierType'], self.basens['opaqueID']))  # Expect idtype 'b'
-        graph3.add((node3, self.basens['hasNamespace'], ns3_node))
-        graph3.add((ns3_node, self.basens['hasUri'], Literal("ns://root")))
-        # Root entity with a different namespace
-        graph3.add((rootentity3, self.basens['hasNamespace'], ns3_root))
-        graph3.add((ns3_root, self.basens['hasUri'], Literal("ns://root")))
-        
-        result3 = self.rdf_utils.generate_node_id(graph3, rootentity3, node3, "http://whatever:")
-        # Expected: "http://whatever:" + "b" + "abcde" => "http://whatever:nodebabcde"
-        self.assertEqual(str(result3), "http://whatever:nodebabcde")
+        def b64(value):
+            return base64.urlsafe_b64encode(value.encode()).decode().rstrip('=')
+        graph = Graph()
+        rootentity = URIRef("http://example.org/root")
+        static = URIRef("http://example.org/static")
+        dynamic = URIRef("http://example.org/dynamic")
+        graph.add((static, UARDF['nodeId'], Literal("nsu=http://example.org/;i=12345")))
+        # uardf:nodeId has no server URI, a dynamic node has it in uardf:serverUri
+        graph.add((dynamic, UARDF['nodeId'], Literal("nsu=http://example.org/;s=Pump1")))
+        graph.add((dynamic, UARDF['serverUri'], Literal("urn:server")))
+        # default prefix
+        self.assertEqual(self.rdf_utils.generate_node_id(graph, rootentity, static, None),
+                         URIRef("urn:uaentity:" + b64("nsu=http://example.org/;i=12345")))
+        # the server URI of a dynamic node is part of the id: no collisions between servers
+        self.assertEqual(self.rdf_utils.generate_node_id(graph, rootentity, dynamic, None),
+                         URIRef("urn:uaentity:" + b64("svu=urn:server;nsu=http://example.org/;s=Pump1")))
+        other_server = URIRef("http://example.org/dynamic2")
+        graph.add((other_server, UARDF['nodeId'], Literal("nsu=http://example.org/;s=Pump1")))
+        graph.add((other_server, UARDF['serverUri'], Literal("urn:other")))
+        self.assertNotEqual(self.rdf_utils.generate_node_id(graph, rootentity, other_server, None),
+                            self.rdf_utils.generate_node_id(graph, rootentity, dynamic, None))
+        # the prefix can be overridden
+        self.assertEqual(self.rdf_utils.generate_node_id(graph, rootentity, static, "http://example.org/FullId/"),
+                         URIRef("http://example.org/FullId/" + b64("nsu=http://example.org/;i=12345")))
+        # the entity id differs from, but is related to the node IRI (same encoded string)
+        node_iri = "http://example.org/" + b64("nsu=http://example.org/;i=12345")
+        entity_id = str(self.rdf_utils.generate_node_id(graph, rootentity, static, None))
+        self.assertNotEqual(entity_id, node_iri)
+        self.assertEqual(entity_id.rsplit(':', 1)[1], node_iri.rsplit('/', 1)[1])
+        # node without identification
+        self.assertIsNone(self.rdf_utils.generate_node_id(graph, rootentity, URIRef("http://example.org/x"), None))
 
     def test_get_object_types_from_namespace(self):
         """Test retrieving object types from the RDF graph within a specific namespace."""
@@ -713,9 +678,9 @@ class TestUtils(unittest.TestCase):
         # Define a custom type for this object.
         custom_type = URIRef("http://example.org/object/CustomType")
         # Add the required triple to mark the object as an instance of the OPC UA Object Node Class.
-        graph.add((test_obj, RDF.type, self.opcuans['ObjectNodeClass']))
-        # Also, add a triple indicating the object is of a custom type.
-        graph.add((test_obj, RDF.type, custom_type))
+        graph.add((test_obj, RDF.type, UARDF['Object']))
+        # Also, add a triple indicating the type definition of the object.
+        graph.add((test_obj, UARDF['hasTypeDefinition'], custom_type))
         # Call get_object_types_from_namespace to retrieve the types.
         found_types = self.rdf_utils.get_object_types_from_namespace(graph, entity_namespace)
         # Check that a list is returned and that the custom type is among the returned types.
@@ -727,22 +692,17 @@ class TestUtils(unittest.TestCase):
         graph = Graph()
         # Create a machine folder that is an instance of opcua:FolderType.
         machine_folder = URIRef("http://example.org/machine_folder")
-        graph.add((machine_folder, RDF.type, self.opcuans['FolderType']))
-        # The machine folder must have a namespace equal to machinery:MACHINERYNamespace.
-        # Use the MACHINERY constant from utils.py.
-        from lib.utils import MACHINERY
-        graph.add((machine_folder, self.basens['hasNamespace'], MACHINERY['MACHINERYNamespace']))
-        # It must have a node id "1001".
-        graph.add((machine_folder, self.basens['hasNodeId'], Literal("1001")))
+        graph.add((machine_folder, UARDF['hasTypeDefinition'], self.opcuans['FolderType']))
+        # It is the Machines folder of the Machinery namespace (i=1001).
+        graph.add((machine_folder, UARDF['nodeId'], Literal("nsu=http://opcfoundation.org/UA/Machinery/;i=1001")))
         
         # Create a machine node that is organized by the folder.
         machine = URIRef("http://example.org/machine")
         # The query uses opcua:Organizes OR opcua:HasComponent, here we use Organizes.
         graph.add((machine_folder, self.opcuans['Organizes'], machine))
-        # Give the machine a type that is not a subclass of opcua:BaseNodeClass.
+        # Give the machine a type definition.
         custom_type = URIRef("http://example.org/customType")
-        graph.add((machine, RDF.type, custom_type))
-        # (Do not add any triple that would relate custom_type to opcua:BaseNodeClass)
+        graph.add((machine, UARDF['hasTypeDefinition'], custom_type))
 
         # Call get_machinery_nodes.
         result = self.rdf_utils.get_machinery_nodes(graph)
@@ -858,19 +818,19 @@ class TestGetTypeAndTemplate(unittest.TestCase):
         self.node = URIRef("http://example.org/node")
         self.parentnode = URIRef("http://example.org/parent")
         # For the query to match, node must have a browse name.
-        self.graph.add((self.node, self.basens['hasBrowseName'], Literal("browse1")))
-        # And node must have a type.
+        self.graph.add((self.node, UARDF['name'], Literal("browse1")))
+        # And node must have a type definition.
         self.vartype = URIRef("http://example.org/vartype")
-        self.graph.add((self.node, RDF.type, self.vartype))
-        # Parent must have a type.
+        self.graph.add((self.node, UARDF['hasTypeDefinition'], self.vartype))
+        # Parent must have a type definition.
         self.parenttype = URIRef("http://example.org/parenttype")
-        self.graph.add((self.parentnode, RDF.type, self.parenttype))
+        self.graph.add((self.parentnode, UARDF['hasTypeDefinition'], self.parenttype))
         # For the node type: add a triple linking vartypenode to vartype.
         self.vartypenode = URIRef("http://example.org/vartypenode")
-        self.graph.add((self.vartypenode, self.basens['definesType'], self.vartype))
+        self.graph.add((self.vartypenode, UARDF['definesType'], self.vartype))
         # For the parent type: add a triple linking parenttypenode to parenttype.
         self.parenttypenode = URIRef("http://example.org/parenttypenode")
-        self.graph.add((self.parenttypenode, self.basens['definesType'], self.parenttype))
+        self.graph.add((self.parenttypenode, UARDF['definesType'], self.parenttype))
 
     def test_get_type_and_template_with_template(self):
         """Test that get_type_and_template returns both vartypenode and templatenode when available."""
@@ -878,7 +838,7 @@ class TestGetTypeAndTemplate(unittest.TestCase):
         templatenode = URIRef("http://example.org/templatenode")
         self.graph.add((self.parenttypenode, self.opcuans['HasComponent'], templatenode))
         # The template must also have the same browse name as the node.
-        self.graph.add((templatenode, self.basens['hasBrowseName'], Literal("browse1")))
+        self.graph.add((templatenode, UARDF['name'], Literal("browse1")))
 
         typenode, returned_templatenode = get_type_and_template(
             self.graph, self.node, self.parentnode, self.basens, self.opcuans

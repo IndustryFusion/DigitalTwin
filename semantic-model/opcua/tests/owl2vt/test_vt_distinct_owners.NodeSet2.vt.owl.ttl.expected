@@ -1,3 +1,4 @@
+@prefix uardf: <http://opcfoundation.org/rdf/uacore#> .
 @prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
 @prefix opcua: <http://opcfoundation.org/UA/> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
@@ -96,11 +97,11 @@ opcua:ValueRank_OneDimension a owl:Class ;
 
 <http://my.test/hasSubStateA> a owl:FunctionalProperty,
         owl:ObjectProperty ;
-    rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
 
 <http://my.test/hasSubStateB> a owl:FunctionalProperty,
         owl:ObjectProperty ;
-    rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
 
 opcua:ValueRank_Any a owl:Class .
 
@@ -130,11 +131,11 @@ opcua:ValueRank_ScalarOrOneDimension a owl:Class ;
             owl:onProperty <http://my.test/hasCurrentState> ],
         opcua:BaseObjectType .
 
-base:SemanticBridgeReferenceType a owl:ObjectProperty .
+uardf:semanticBridgeReferenceType a owl:ObjectProperty .
 
 <http://my.test/hasCurrentState> a owl:FunctionalProperty,
         owl:ObjectProperty ;
-    rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
 
 sb:hasDataType a owl:FunctionalProperty,
         owl:ObjectProperty .

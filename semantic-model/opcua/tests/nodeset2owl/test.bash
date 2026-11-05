@@ -85,6 +85,36 @@ for tuple in "${TESTNODESETS[@]}"; do  IFS=","
     echo "Comparing expected=${nodeset}.ttl <=> result=${CLEANED}"
     diff ${nodeset}.ttl ${CLEANED} >$DIFFRESULT || { echo "Diff failed, result can be found in $DIFFRESULT" && exit 1; }
 done
+echo Starting static/dynamic tests
+echo -----------------------------
+# test_static_dynamic.NodeSet2 has static nodes by its NamespaceMetadata (type, instance declaration, global
+# folder, the NamespaceMetadata object) and dynamic nodes (instances). The heuristic makes the NamespaceMetadata
+# object dynamic (an instance with Variables), --strict-classification keeps it static (static-strict).
+# Without --serverUri only the static part is exported, --dynamic-only exports only the server specific part;
+# both together must compose the full export with --serverUri.
+nodeset=test_static_dynamic.NodeSet2
+SD_ARGS=(-i ${BASE_ONTOLOGY} core_cleaned.ttl -v http://example.com/v0.1/UA/ -p sd)
+SERVER_URI=urn:test:server
+for mode in static full dynamic static-strict; do
+    mode_args=()
+    [ "$mode" = "full" ] || [ "$mode" = "dynamic" ] && mode_args+=(--serverUri ${SERVER_URI})
+    [ "$mode" = "dynamic" ] && mode_args+=(--dynamic-only)
+    [ "$mode" = "static-strict" ] && mode_args+=(--strict-classification)
+    echo test $nodeset $mode
+    python3 ${NODESET2OWL} ${nodeset}.xml "${SD_ARGS[@]}" "${mode_args[@]}" -o ${RESULT}
+    python3 $CLEANGRAPH $RESULT ${nodeset}.${mode}.result.ttl
+    echo "Comparing expected=${nodeset}.${mode}.ttl <=> result=${nodeset}.${mode}.result.ttl"
+    diff ${nodeset}.${mode}.ttl ${nodeset}.${mode}.result.ttl >$DIFFRESULT || { echo "Diff failed, result can be found in $DIFFRESULT" && exit 1; }
+done
+echo test composition of static and dynamic export
+python3 ../../compose_owl.py ${nodeset}.static.result.ttl ${nodeset}.dynamic.result.ttl -o ${nodeset}.all.result.ttl || exit 1
+python3 check_composition.py ${nodeset}.full.result.ttl ${nodeset}.static.result.ttl ${nodeset}.dynamic.result.ttl ${nodeset}.all.result.ttl || exit 1
+rm -f ${nodeset}.static.result.ttl ${nodeset}.full.result.ttl ${nodeset}.dynamic.result.ttl ${nodeset}.all.result.ttl \
+    ${nodeset}.static-strict.result.ttl
+echo test --dynamic-only without --serverUri is rejected
+if python3 ${NODESET2OWL} ${nodeset}.xml "${SD_ARGS[@]}" --dynamic-only -o ${RESULT} >/dev/null 2>&1; then
+    echo "Expected nodeset2owl.py to reject --dynamic-only without --serverUri" && exit 1
+fi
 echo Starting E2E specification tests
 echo --------------------------------
 echo "Test invocation with no -i/--inputs at all (regression: used to crash with NameError: name 'opcua_inputs' is not defined)"
@@ -121,7 +151,7 @@ echo --------------
 python3 ${NODESET2OWL} ${MACHINERY_NODESET} -i ${BASE_ONTOLOGY} core.ttl devices.ttl -v http://example.com/v0.1/Machinery/ -p machinery -o ${RESULT}
 python3 $CLEANGRAPH $RESULT $CLEANED 
 mydiff $comparewith $CLEANED
-rm -f core.ttl device.ttl
+rm -f core.ttl devices.ttl
 comparewith=pumps_cleaned.ttl
 echo Test $PUMPS_NODESET
 echo -------------------
@@ -171,7 +201,7 @@ python3 $CLEANGRAPH $RESULT $CLEANED
 mydiff $comparewith $CLEANED
 rm -f core.ttl
 
-rm -f core.ttl device.ttl machinery.ttl
+rm -f core.ttl devices.ttl machinery.ttl
 
 if [ "$DEBUG" != "true" ]; then
     rm -f ${CLEANED} ${RESULT}

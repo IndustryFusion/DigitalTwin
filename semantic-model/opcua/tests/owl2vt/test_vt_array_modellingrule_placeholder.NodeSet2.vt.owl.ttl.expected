@@ -1,3 +1,4 @@
+@prefix uardf: <http://opcfoundation.org/rdf/uacore#> .
 @prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
 @prefix opcua: <http://opcfoundation.org/UA/> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
@@ -32,7 +33,7 @@ opcua:ValueRank_OneDimension a owl:Class ;
 opcua:ValueRank_Scalar a owl:Class ;
     rdfs:subClassOf opcua:ValueRank_ScalarOrOneDimension .
 
-base:SemanticBridgeReferenceType a owl:ObjectProperty .
+uardf:semanticBridgeReferenceType a owl:ObjectProperty .
 
 <http://my.test/VT_956bc8bb33f9ef852d78eccf> a owl:Class ;
     rdfs:subClassOf [ a owl:Restriction ;
@@ -52,7 +53,7 @@ base:SemanticBridgeReferenceType a owl:ObjectProperty .
 
 <http://my.test/hasChannel> a owl:FunctionalProperty,
         owl:ObjectProperty ;
-    rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
 
 opcua:ValueRank_Any a owl:Class .
 

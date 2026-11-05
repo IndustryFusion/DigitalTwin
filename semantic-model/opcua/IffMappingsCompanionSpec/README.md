@@ -183,6 +183,8 @@ cd example
 make all
 ```
 
+The example Nodesets have no `NamespaceMetadata`, so their instances, including the `IFFMappingsFolder`, are dynamic nodes. Dynamic nodes are only exported with a server URI, therefore the Makefile translates them with `--serverUri urn:test:server`.
+
 As a result, when the make jobs are executed successfully there are newly created files:
 
 * [iffmapping.owl.ttl](./example/iffmapping.owl.ttl) OWL version of `iffmapping.nodeset2.xml`
@@ -201,13 +203,13 @@ In BASH2, a simple test server can be started which takes the *Proprietary Model
 
 ```shell
 # BASH2
-cd tests/servers
+cd tests/server
 python3 ./nodeset_server.py --nodeset ../../../opcua/IffMappingsCompanionSpec/example/company_proprietarymodel.nodeset2.xml
 ```
 If successful, one should see:
 
 ```shell
-[2025-05-27 18:16:09] Server initialized at endpoint: opc.tcp://0.0.0.0:4840/
+[2026-10-12 08:21:47] Server initialized at endpoint: opc.tcp://0.0.0.0:4840/
 [2025-05-27 18:16:09] Importing Nodeset file: ../../../opcua/IffMappingsCompanionSpec/example/company_proprietarymodel.nodeset2.xml (strict mode)
 [2025-05-27 18:16:09] Successfully imported Nodeset file: ../../../opcua/IffMappingsCompanionSpec/example/company_proprietarymodel.nodeset2.xml
 Endpoints other than open requested but private key and certificate are not set.
@@ -227,34 +229,37 @@ python3 startDataservice.py -d ../opcua/IffMappingsCompanionSpec/example/ ../opc
 If succesful, one should see:
 
 ```shell
+Warning: No knowledge file found.
 Parsing binding ../opcua/IffMappingsCompanionSpec/example/bindings.ttl
-Found attributes: http://demo.machine/entity/hasStatusCode, http://mycompany.com/UA/ProprietaryModel/i1101
-Found attributes: http://demo.machine/entity/hasStatusString, http://mycompany.com/UA/ProprietaryModel/i1101
-Found attributes: http://demo.machine/entity/hasTemperatureF, http://mycompany.com/UA/ProprietaryModel/i1101
-Found mappings: http://demo.machine/entity/hasStatusCode, nsu=http://mycompany.com/UA/ProprietaryModel/;i=2005, var1, https://industryfusion.github.io/contexts/ontology/v0/base/OPCUAConnector
-Found mappings: http://demo.machine/entity/hasTemperatureF, nsu=http://mycompany.com/UA/ProprietaryModel/;i=2004, var1, https://industryfusion.github.io/contexts/ontology/v0/base/OPCUAConnector
-Found mappings: http://demo.machine/entity/hasStatusString, nsu=http://mycompany.com/UA/ProprietaryModel/;i=2006, var1, https://industryfusion.github.io/contexts/ontology/v0/base/OPCUAConnector
-Start dataservice for attribute http://demo.machine/entity/hasStatusCode
-Requesting map http://demo.machine/bindings/map_1MKHPUHQJBHSVUEO from http://demo.machine/bindings/binding_23KYWJ8KU7VOY2U3
-Start dataservice for attribute http://demo.machine/entity/hasStatusString
-Requesting map http://demo.machine/bindings/map_RLNO0X2SGPRBQBW7 from http://demo.machine/bindings/binding_03XU6PQ054O61L8T
-Start dataservice for attribute http://demo.machine/entity/hasTemperatureF
-Requesting map http://demo.machine/bindings/map_YS66W8OO7GVBJZON from http://demo.machine/bindings/binding_EAVDHQTANX35BLWA
-2025-05-27 18:28:41,523 - external_services.opcuaConnector - INFO - Connection established to OPC UA server opc.tcp://localhost:4840/
-sent [{ "n": "http://demo.machine/entity/hasStatusCode","v": "1", "t": "Property", "i": "http://mycompany.com/UA/ProprietaryModel/i1101"}]
-sent [{ "n": "http://demo.machine/entity/hasStatusString","v": "RUNNING", "t": "Property", "i": "http://mycompany.com/UA/ProprietaryModel/i1101"}]
-sent [{ "n": "http://demo.machine/entity/hasTemperatureF","v": "100.0", "t": "Property", "i": "http://mycompany.com/UA/ProprietaryModel/i1101"}]
+Found attributes: http://mycompany.com/UA/ProprietaryModel/hasStatusString, urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215Y29tcGFueS5jb20vVUEvUHJvcHJpZXRhcnlNb2RlbC87aT0xMTAx
+Found attributes: http://mycompany.com/UA/ProprietaryModel/hasStatusCode, urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215Y29tcGFueS5jb20vVUEvUHJvcHJpZXRhcnlNb2RlbC87aT0xMTAx
+Found attributes: http://mycompany.com/UA/ProprietaryModel/hasTemperatureF, urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215Y29tcGFueS5jb20vVUEvUHJvcHJpZXRhcnlNb2RlbC87aT0xMTAx
+Found mappings: http://mycompany.com/UA/ProprietaryModel/hasStatusString, nsu=http://mycompany.com/UA/ProprietaryModel/;i=2006, var1, https://industryfusion.github.io/contexts/ontology/v0/base/OPCUAConnector
+Found mappings: http://mycompany.com/UA/ProprietaryModel/hasTemperatureF, nsu=http://mycompany.com/UA/ProprietaryModel/;i=2004, var1, https://industryfusion.github.io/contexts/ontology/v0/base/OPCUAConnector
+Found mappings: http://mycompany.com/UA/ProprietaryModel/hasStatusCode, nsu=http://mycompany.com/UA/ProprietaryModel/;i=2005, var1, https://industryfusion.github.io/contexts/ontology/v0/base/OPCUAConnector
+Start dataservice for attribute http://mycompany.com/UA/ProprietaryModel/hasStatusString
+Requesting map http://demo.machine/bindings/map_B9AKP7VDH448QBGS from http://demo.machine/bindings/binding_M7GTDIB6GQZ2LZVK
+Start dataservice for attribute http://mycompany.com/UA/ProprietaryModel/hasStatusCode
+Requesting map http://demo.machine/bindings/map_9OOZEZ77Q5IXZP58 from http://demo.machine/bindings/binding_AX13Z7T1PBJB3TM8
+Start dataservice for attribute http://mycompany.com/UA/ProprietaryModel/hasTemperatureF
+Requesting map http://demo.machine/bindings/map_75ABMLIP833HHMYK from http://demo.machine/bindings/binding_VC4AOWGCNU4OJR3N
+2026-10-12 08:21:54,778 - external_services.opcuaConnector - INFO - Connection established to OPC UA server opc.tcp://localhost:4840/
+sent [{ "n": "http://mycompany.com/UA/ProprietaryModel/hasStatusString","v": "RUNNING", "t": "Property", "i": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215Y29tcGFueS5jb20vVUEvUHJvcHJpZXRhcnlNb2RlbC87aT0xMTAx"}]
+sent [{ "n": "http://mycompany.com/UA/ProprietaryModel/hasStatusCode","v": "1", "t": "Property", "i": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215Y29tcGFueS5jb20vVUEvUHJvcHJpZXRhcnlNb2RlbC87aT0xMTAx"}]
+sent [{ "n": "http://mycompany.com/UA/ProprietaryModel/hasTemperatureF","v": "100.0", "t": "Property", "i": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215Y29tcGFueS5jb20vVUEvUHJvcHJpZXRhcnlNb2RlbC87aT0xMTAx"}]
 
 ```
 
-The last three lines show that the dataservice reads out the 3 defined variables defined in the *Proprietary Model*, translates them to the semantic model and tries to send it to the IFF Process Data Twin (which is excluded due to the dry-run switch `-d`)
+The last three lines show that the dataservice reads out the 3 defined variables defined in the *Proprietary Model*, translates them to the semantic model and tries to send it to the IFF Process Data Twin (which is excluded due to the dry-run switch `-d`).
+The entity id `urn:uaentity:c3Z1…` is derived by `owl2instances.py` from the ExpandedNodeId of the machine object
+(`svu=urn:test:server;nsu=http://mycompany.com/UA/ProprietaryModel/;i=1101`), which is a dynamic node with the server URI given by the Makefile.
 The DataService repeats this but since this is only a static demo server, it always get the same result.
 
-Now, we want to use the same OPC UA Server, but this time, we read out the *IFF Semantic Model Data* as described in the respective *IFF Bindings*. For this, we stop the Server and restart them with the `iff_bindings.ttl`:
+Now, we want to use the same OPC UA Server, but this time, we read out the *IFF Semantic Model Data* as described in the respective *IFF Bindings*. For this, we stop the Server and restart them with the `bindings_iffmodel.ttl`:
 
 ```shell
 # BASH3
-python3 startDataservice.py -d ../opcua/IffMappingsCompanionSpec/example/ ../opcua/IffMappingsCompanionSpec/example/iff_bindings.ttl
+python3 startDataservice.py -d ../opcua/IffMappingsCompanionSpec/example/ ../opcua/IffMappingsCompanionSpec/example/bindings_iffmodel.ttl
 ```
 If successfuly, one should see:
 

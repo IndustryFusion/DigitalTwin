@@ -1,7 +1,7 @@
 [
     {
         "type": "http://example.org/BSubType",
-        "id": "http://example.org/testid:nodei2012",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL2V4YW1wbGUub3JnLztpPTIwMTI",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -12,7 +12,7 @@
     },
     {
         "type": "http://example.org/AlphaType",
-        "id": "http://example.org/testid:nodei2010",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL2V4YW1wbGUub3JnLztpPTIwMTA",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],
@@ -23,7 +23,7 @@
         "http://example.org/hasB": [
             {
                 "type": "Relationship",
-                "object": "http://example.org/testid:nodei2012"
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL2V4YW1wbGUub3JnLztpPTIwMTI"
             }
         ]
     }
