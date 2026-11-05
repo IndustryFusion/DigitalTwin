@@ -651,10 +651,25 @@ will flag this.")
         except Exception:
             is_updating = False
         if (is_updating or not minimal_shacl) and not is_property:
-            bindingsg.create_binding(g, URIRef(node_id), o, attributename)
+            create_binding(node_id, o, attributename, shacl_rule)
         attributes = scan_entity_variable(o, classtype, id, shacl_rule['optional'])
         utils.merge_attributes(instance[f'{full_attribute_name}'], attributes)
     return has_components
+
+
+def create_binding(node_id, var_node, attributename, shacl_rule):
+    """Bind a Variable, so that the binding delivers the value in the same form as the instance has it."""
+    logic = None
+    attribute_type = None
+    is_scalar = shacl_rule.get('value_rank') is None or int(shacl_rule['value_rank']) <= 0
+    if is_scalar:
+        if shacl_rule['is_iri'] and shacl_rule['datatype'] != opcuans['NodeId']:
+            e.add_contentclass_if_missing(g, shacl_rule['contentclass'])
+            logic = bindingsg.enum_logic(shacl_rule['contentclass'])
+        elif not shacl_rule['is_iri'] and shacl_rule['datatype'] is not None and RDF.JSON in shacl_rule['datatype']:
+            attribute_type = utils.NGSILD['JsonProperty']
+    bindingsg.create_binding(g, URIRef(node_id), var_node, attributename, logic_transform=logic,
+                             attribute_type=attribute_type)
 
 
 def scan_entity_nonrecursive(node, id, instance, node_id, o, generic_reference=None):
@@ -713,6 +728,10 @@ if __name__ == '__main__':
     shacl_only = args.shacl_only
     type_all = args.type_all
     extract_instance_declarations = args.extract_instance_declarations
+    if entity_id is not None and not utils.has_iri_scheme(entity_id):
+        print(f"Error: ID prefix '{entity_id}' does not start an IRI, the entity IDs would not be valid. Please use "
+              "e.g. urn:mypump:sn1234: or leave it out to get the default urn:uaentity:.")
+        sys.exit(1)
     if rootinstancetype is not None and type_all:
         print("Error: root-instance and type-all are mutually exclusive. Please either provide a root-instance or use"
               "type-all to extract all types.")
@@ -825,7 +844,8 @@ Machinery Folder was found in instance ontology.")
         scan_type(root, instancetype)
     if shaclname is not None:
         shaclg.serialize(destination=shaclname)
-        minshaclg.serialize(destination=f'min_{shaclname}')
+        shacl_dir, shacl_file = os.path.split(shaclname)
+        minshaclg.serialize(destination=os.path.join(shacl_dir, f'min_{shacl_file}'))
     if shacl_only:
         # If only SHACL shapes are to be created, skip the entity scanning
         sys.exit(0)

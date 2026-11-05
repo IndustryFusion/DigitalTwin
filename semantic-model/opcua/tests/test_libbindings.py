@@ -53,6 +53,40 @@ class TestBindings(unittest.TestCase):
         self.assertIn((mapiri, self.basens['bindsMapDatatype'], URIRef("http://example.org/dtype")), triples)
         self.assertIn((mapiri, self.basens['bindsConnectorParameter'], Literal('nsu=http://example.org/nsuri;i=node123')), triples)
 
+    @patch('lib.utils.idtype2String', return_value='i')
+    def test_create_binding_with_logic_and_attribute_type(self, mock_idtype2string):
+        """The logic and the NGSI-LD attribute type are part of the binding, the default type is Property."""
+        g = Graph()
+        g.objects = MagicMock(side_effect=lambda *args: iter([Literal("nsu=http://example.org/nsuri;i=1")]))
+        attribute_iri = URIRef("http://example.org/attributeIri")
+        ngsild = Namespace('https://uri.etsi.org/ngsi-ld/')
+
+        self.bindings_instance.create_binding(g, URIRef("http://example.org/parentNode"),
+                                              URIRef("http://example.org/varNode"), attribute_iri,
+                                              logic_transform='WHERE { BIND(?var1 AS ?value) }',
+                                              attribute_type=ngsild['JsonProperty'])
+
+        bindings = self.bindings_instance.bindingsg
+        bindingiri = next(bindings.objects(attribute_iri, self.basens['boundBy']))
+        self.assertEqual(next(bindings.objects(bindingiri, self.basens['bindsAttributeType'])), ngsild['JsonProperty'])
+        self.assertEqual(str(next(bindings.objects(bindingiri, self.basens['bindsLogic']))),
+                         'WHERE { BIND(?var1 AS ?value) }')
+
+    def test_enum_logic_translates_number_to_iri(self):
+        """The logic of an Enumeration finds the IRI of the number in the knowledge, unknown numbers find nothing."""
+        pumps = Namespace('http://example.org/pumps/')
+        knowledge = Graph()
+        value_node = pumps['liquidValueNode']
+        knowledge.add((pumps['LiquidPump'], RDF['type'], pumps['PumpClassEnum']))
+        knowledge.add((pumps['LiquidPump'], self.basens['hasValueNode'], value_node))
+        knowledge.add((value_node, self.basens['hasEnumValue'], Literal(5)))
+        query = 'SELECT ?type ?value ' + self.bindings_instance.enum_logic(pumps['PumpClassEnum'])
+
+        found = list(knowledge.query(query, initBindings={'var1': Literal(5)}))
+        self.assertEqual([row.value for row in found], [pumps['LiquidPump']])
+        self.assertEqual(found[0].type, URIRef('https://uri.etsi.org/ngsi-ld/Property'))
+        self.assertEqual(list(knowledge.query(query, initBindings={'var1': Literal(99)})), [])
+
     def test_bind(self):
         """Test binding a prefix to a namespace in the RDF graph."""
         prefix = 'ex'

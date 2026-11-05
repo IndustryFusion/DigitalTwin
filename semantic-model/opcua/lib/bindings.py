@@ -30,7 +30,8 @@ class Bindings:
         self.binding_namespace = Namespace(f'{namespace_prefix}bindings/')
         self.bindingsg.bind('binding', self.binding_namespace)
 
-    def create_binding(self, g, parent_node_id, var_node, attribute_iri, version='0.1', firmware='firmware'):
+    def create_binding(self, g, parent_node_id, var_node, attribute_iri, version='0.1', firmware='firmware',
+                       logic_transform=None, attribute_type=None):
         """
         Create a binding for a variable node and associate it with an attribute IRI.
 
@@ -41,15 +42,20 @@ class Bindings:
             attribute_iri (rdflib.term.Identifier): The IRI of the attribute to bind.
             version (str, optional): The version of the binding. Defaults to '0.1'.
             firmware (str, optional): The firmware associated with the binding. Defaults to 'firmware'.
+            logic_transform (str, optional): WHERE part of a SPARQL query which calculates the attribute from the
+                map variable var1. Without it, the value of the variable is taken over directly.
+            attribute_type (rdflib.term.URIRef, optional): NGSI-LD attribute type. Defaults to ngsi-ld:Property.
         """
-        bindingiri = self.create_attribute_binding(parent_node_id, attribute_iri, None, version, firmware)
+        bindingiri = self.create_attribute_binding(parent_node_id, attribute_iri, logic_transform, version, firmware,
+                                                   attribute_type)
         self.add_map_to_attribute(g, bindingiri, 'var1', var_node, self.basens['OPCUAConnector'])
 
     def create_attribute_binding(self, parent_node_id,
                                  attribute_iri,
                                  logic_transform=None,
                                  version='0.1',
-                                 firmware='firmware'):
+                                 firmware='firmware',
+                                 attribute_type=None):
         """
         Create a binding for an attribute.
         This function generates a unique binding ID and associates it with the given parent node ID and attribute IRI.
@@ -58,6 +64,7 @@ class Bindings:
             attribute_iri (rdflib.term.Identifier): The IRI of the attribute to bind.
             version (str, optional): The version of the binding. Defaults to '0.1'.
             firmware (str, optional): The firmware associated with the binding. Defaults to 'firmware'.
+            attribute_type (rdflib.term.URIRef, optional): NGSI-LD attribute type. Defaults to ngsi-ld:Property.
 
         Returns:
             rdflib.term.Identifier: The IRI of the created map.
@@ -68,11 +75,35 @@ class Bindings:
         self.bindingsg.add((bindingiri, self.basens['bindsEntity'], parent_node_id))
         self.bindingsg.add((bindingiri, self.basens['bindingVersion'], Literal(version)))
         self.bindingsg.add((bindingiri, self.basens['bindsFirmware'], Literal(firmware)))
-        self.bindingsg.add((bindingiri, self.basens['bindsAttributeType'], utils.NGSILD['Property']))
+        self.bindingsg.add((bindingiri, self.basens['bindsAttributeType'],
+                            attribute_type if attribute_type is not None else utils.NGSILD['Property']))
         if logic_transform is not None:
             self.bindingsg.add((bindingiri, self.basens['bindsLogic'], Literal(logic_transform)))
         self.bindingsg.add((attribute_iri, self.basens['boundBy'], bindingiri))
         return bindingiri
+
+    def enum_logic(self, enum_class):
+        """
+        Create the logic of a binding of an OPC UA Enumeration.
+
+        An OPC UA server delivers the numeric value of an Enumeration, the model knows the IRI of the enum value. The
+        logic looks up the numeric value in the knowledge (entities.ttl), so that a binding delivers the same IRI as
+        the instance. A number which is not part of the Enumeration delivers no value.
+
+        Args:
+            enum_class (rdflib.term.URIRef): The class of the Enumeration, e.g. pumps:PumpClassEnum.
+
+        Returns:
+            str: WHERE part of the SPARQL query, as used by bindsLogic.
+        """
+        return f"""WHERE {{
+  ?value a <{enum_class}> ;
+      <{self.basens['hasValueNode']}> ?valueNode .
+  ?valueNode <{self.basens['hasEnumValue']}> ?enumValue .
+  FILTER(?enumValue = ?var1)
+  BIND(<{utils.NGSILD['Property']}> AS ?type)
+  BIND(1.0 AS ?trustLevel)
+}}"""
 
     def add_map_to_attribute(self, g, attribute_iri, varname, var_node, connector):
         """

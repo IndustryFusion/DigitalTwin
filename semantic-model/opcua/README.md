@@ -387,6 +387,10 @@ Extract ngsi-ld prototype:
 
     python3 ./owl2instances.py -t http://opcfoundation.org/UA/Pumps/PumpType -n http://yourorganisation.org/InstanceExample/ pumpexample.owl.ttl
 
+The prefix given by `-i` must start an IRI. When the entities are used as devices, it should be a URN like the default `urn:uaentity:`: Device IDs are part of the MQTT topics, a `/` in an ID breaks them.
+
+`bindings.ttl` is used by the [dataservice](../dataservice/README.md#opc-ua-example-from-the-pump-nodeset-to-ngsi-ld) to forward the values of an OPC UA server.
+
 
 Check the SHACL compliance:
 

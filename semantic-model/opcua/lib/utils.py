@@ -105,6 +105,10 @@ def nodeId_to_iri(namespace, basens, nid, idtype, instance_id='', is_entityns=Fa
     return namespace[f'node{idt}{quoted_node_id}']
 
 
+def has_iri_scheme(iri):
+    return re.match(r'^[A-Za-z][A-Za-z0-9+.-]*:', str(iri)) is not None
+
+
 def canonical_nodeid(idt, identifier):
     """Canonical OPC UA NodeId string without namespace part, e.g. 'i=31', 's=Foo'.
 

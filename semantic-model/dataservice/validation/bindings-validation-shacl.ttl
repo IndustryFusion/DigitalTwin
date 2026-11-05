@@ -18,7 +18,7 @@ ex:ns1_Binding a sh:NodeShape ;
 ex:ns1_BoundMap a sh:NodeShape ;
     sh:nodeKind sh:BlankNodeOrIRI ;
     sh:property ex:ns1_bindsConnector,
-        ex:ns1_bindsConnectorAttribute,
+        ex:ns1_bindsConnectorParameter,
         ex:ns1_bindsLogicVar,
         ex:ns1_bindsMapDatatype ;
     sh:targetClass ns1:BoundMap .
@@ -38,9 +38,9 @@ ex:ns1_bindsConnector a sh:PropertyShape ;
     sh:maxCount 1 ;
     sh:minCount 1 .
 
-ex:ns1_bindsConnectorAttribute a sh:PropertyShape ;
+ex:ns1_bindsConnectorParameter a sh:PropertyShape ;
     sh:nodeKind sh:Literal ;
-    sh:path ns1:bindsConnectorAttribute ;
+    sh:path ns1:bindsConnectorParameter ;
     sh:maxCount 1 ;
     sh:minCount 1 .
 
@@ -82,7 +82,7 @@ ex:ns1_bindsMapDatatype a sh:PropertyShape ;
 ex:ns1_bindsAttributeType a sh:PropertyShape ;
     sh:nodeKind sh:IRI ;
     sh:path ns1:bindsAttributeType ;
-    sh:in (ngsi-ld:Property ngsi-ld:Relationship);
+    sh:in (ngsi-ld:Property ngsi-ld:Relationship ngsi-ld:JsonProperty);
     sh:minCount 1 ;
     sh:maxCount 1 .
 
@@ -112,7 +112,7 @@ ex:BindingShape
                 $this ns1:bindsMap ?map .
                 ?map a ns1:BoundMap ;
                      ns1:bindsLogicVar ?var .
-                FILTER(!CONTAINS(?logic, CONCAT('?', ?var, ' ')))
+                FILTER(!REGEX(?logic, CONCAT('\\\\?', ?var, '\\\\b')))
             }
         """ ;
     ] .
