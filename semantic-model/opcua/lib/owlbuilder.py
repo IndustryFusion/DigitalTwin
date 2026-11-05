@@ -27,7 +27,7 @@ from rdflib import BNode, Graph, Literal, Namespace, URIRef
 from rdflib.collection import Collection
 from rdflib.namespace import OWL, RDF, RDFS, XSD, split_uri
 
-from lib.utils import RdfUtils, restore_type_of_node_iris
+from lib.utils import RdfUtils, UARDF, normalize_namespaceuri, parse_qualified_name
 
 # Numeric OPC UA ValueRank -> symbolic class name (Part 14 §17).
 # -3 ScalarOrOneDimension, -2 Any, -1 Scalar, 0 OneOrMoreDimensions, 1 OneDimension,
@@ -154,16 +154,10 @@ class OwlBuilder:
         self._vt_cache = {}
         self._valuerank_vocabulary_emitted = False
         self._own_classes = set(g.subjects(RDF.type, OWL.Class))
-        # Part 5 (nodeset2owl.py) rewrites `?instance a ?type` into
-        # `?instance base:instanceOf ?type` for Object instance declarations right
-        # before serializing core.owl.ttl (see utils.replace_type_of_node_iris), so that
-        # downstream JSON-LD validation doesn't confuse declarations with real
-        # classes. Undo that here so RdfUtils.get_type() works uniformly for Object
-        # and Variable declarations, exactly as it does inside the Part-5/SHACL code.
-        # Needed on both graphs independently: `g`'s own declarations and any
-        # imported dependency's declarations each went through the same rewrite.
-        restore_type_of_node_iris(self.g, self.opcuans, self.basens)
-        restore_type_of_node_iris(self.ig, self.opcuans, self.basens)
+        # Part 5 (nodeset2owl.py) declares the type of instance declarations by
+        # uardf:hasTypeDefinition (the instantiation intent of OPC UA), never by rdf:type,
+        # so that declarations are not confused with real instances. It is read as such
+        # (see _get_type), not turned back into rdf:type.
         # All *read*-side structural lookups (definer nodes, supertypes, browse
         # names, ...) query this combined view, since a companion spec's type
         # hierarchy and declaration trees routinely span both graphs. Only the
@@ -203,20 +197,19 @@ class OwlBuilder:
         site (once per declaration entry via _merge_local/_has_local_children)
         and dominates runtime on large files the same way get_all_subreferences
         did (see _compute_haschild_properties's docstring)."""
-        opcua_prefix = str(self.opcuans)
+        uardf_prefix = str(UARDF)
         nodeclass = None
-        realtype = None
+        realtype = next(self.combined.objects(node, UARDF['hasTypeDefinition']), None)
         for t in self.combined.objects(node, RDF.type):
             if t == OWL.NamedIndividual:
                 continue
-            ts = str(t)
-            if ts.startswith(opcua_prefix) and ts.endswith('NodeClass'):
+            if str(t).startswith(uardf_prefix):
                 nodeclass = t
-            else:
+            elif realtype is None:  # nodesets created with --enforce-opcua-type-semantic
                 realtype = t
         if realtype is None:
-            defines = next(self.combined.objects(node, self.basens['definesType']), None)
-            if defines is not None and (node, RDF.type, self.opcuans['ObjectTypeNodeClass']) in self.combined:
+            defines = next(self.combined.objects(node, UARDF['definesType']), None)
+            if defines is not None and (node, RDF.type, UARDF['ObjectType']) in self.combined:
                 realtype = defines
         return nodeclass, realtype
 
@@ -226,7 +219,7 @@ class OwlBuilder:
 
     def _definer_node(self, class_iri):
         if class_iri not in self._definer_node_cache:
-            node = next(self.combined.subjects(self.basens['definesType'], class_iri), None)
+            node = next(self.combined.subjects(UARDF['definesType'], class_iri), None)
             self._definer_node_cache[class_iri] = node
         return self._definer_node_cache[class_iri]
 
@@ -246,10 +239,8 @@ class OwlBuilder:
         crashes java.net.URI.create() when Protege builds the lookup URL.
         Plain concatenation still starts with the harmless prefix 'http' and
         does not crash (it just fails the bioregistry lookup silently)."""
-        browsename = next(self.combined.objects(node, self.basens['hasBrowseName']))
-        ns_node = next(self.combined.objects(node, self.basens['hasBrowseNameNamespace']))
-        ns_uri = next(self.combined.objects(ns_node, self.basens['hasUri']))
-        return f'{ns_uri}{browsename}'
+        ns_uri, browsename = parse_qualified_name(next(self.combined.objects(node, UARDF['browseName'])))
+        return f'{normalize_namespaceuri(ns_uri)}{browsename}'
 
     def _value_rank(self, node):
         rank = next(self.combined.objects(node, self.basens['hasValueRank']), None)
@@ -342,7 +333,7 @@ class OwlBuilder:
                 seen.add(node)
                 for _refprop, child in self._get_children(node):
                     nodeclass, base_type = self._get_type(child)
-                    if nodeclass == self.opcuans['MethodNodeClass'] or base_type is None:
+                    if nodeclass == UARDF['Method'] or base_type is None:
                         continue
                     is_optional, _ = self.rdfutils.get_modelling_rule(
                         self.combined, child, None, owner)
@@ -454,7 +445,7 @@ class OwlBuilder:
         children = self._get_children(source_node)
         for _refprop, child in children:
             nodeclass, base_type = self._get_type(child)
-            if nodeclass == self.opcuans['MethodNodeClass'] or base_type is None:
+            if nodeclass == UARDF['Method'] or base_type is None:
                 continue  # Methods are out of scope for this phase.
             is_optional, is_placeholder = self.rdfutils.get_modelling_rule(self.combined, child, None, owner)
             if self.require_modelling_rule and is_optional is None:
@@ -472,7 +463,7 @@ class OwlBuilder:
                 is_optional=is_optional,
                 is_placeholder=is_placeholder,
             )
-            if nodeclass == self.opcuans['VariableNodeClass']:
+            if nodeclass == UARDF['Variable']:
                 entry.value_rank = self._value_rank(child)
                 entry.datatype = self._datatype(child)
             entry.target = self._resolve_target(owner, key, entry, inherited_entry, child, is_own)
@@ -495,7 +486,7 @@ class OwlBuilder:
         children = self._get_children(node)
         for _ref, child in children:
             nodeclass, base_type = self._get_type(child)
-            if nodeclass == self.opcuans['MethodNodeClass'] or base_type is None:
+            if nodeclass == UARDF['Method'] or base_type is None:
                 continue
             if self.require_modelling_rule:
                 is_optional, _ = self.rdfutils.get_modelling_rule(self.combined, child, None, None)
@@ -510,7 +501,7 @@ class OwlBuilder:
         section for the full reasoning."""
         own_local_children = self._has_local_children(node)
 
-        if entry.nodeclass == self.opcuans['VariableNodeClass']:
+        if entry.nodeclass == UARDF['Variable']:
             type_changed = inherited_entry is None or inherited_entry.base_type != entry.base_type
             valuerank_changed = inherited_entry is None or inherited_entry.value_rank != entry.value_rank
             datatype_changed = inherited_entry is None or inherited_entry.datatype != entry.datatype
@@ -573,7 +564,7 @@ class OwlBuilder:
         self.out.add((vt_iri, self.SB['originalBrowsePath'], Literal(key)))
         self.out.add((vt_iri, RDFS.subClassOf, entry.base_type))  # §8 base typing rule
 
-        if entry.nodeclass == self.opcuans['VariableNodeClass']:
+        if entry.nodeclass == UARDF['Variable']:
             self._add_valuerank_restriction(vt_iri, entry.value_rank)
             self._add_datatype_restriction(vt_iri, entry.datatype)
 
@@ -747,7 +738,9 @@ class OwlBuilder:
             self.out.add((s, RDF.type, OWL.Class))
             for sup in self.g.objects(s, RDFS.subClassOf):
                 self.out.add((s, RDFS.subClassOf, sup))
-            for abstract in self.g.objects(s, self.basens['isAbstract']):
+            # IsAbstract is an attribute of the type node defining the class (uardf:isAbstract)
+            definer = next(self.g.subjects(UARDF['definesType'], s), None)
+            for abstract in (self.g.objects(definer, UARDF['isAbstract']) if definer is not None else []):
                 self.out.add((s, self.basens['isAbstract'], abstract))
 
         # Structural reference-type properties (HasComponent, Aggregates,
@@ -760,8 +753,8 @@ class OwlBuilder:
 
         # The derived semantic-bridge properties (opcua:has<BrowseName>, ~1047 of
         # them) are NOT: Part 5 only ever asserts
-        # `p rdfs:subPropertyOf base:SemanticBridgeReferenceType` for them, never
-        # `p a owl:ObjectProperty` -- and base:SemanticBridgeReferenceType itself
+        # `p rdfs:subPropertyOf uardf:semanticBridgeReferenceType` for them (older
+        # versions did not declare `p a owl:ObjectProperty`) -- and the root itself
         # is never declared as a property either, only ever used as an object.
         # Left alone, every owl:onProperty this module generates in a restriction
         # would reference a wholly undeclared entity. That is exactly what made
@@ -770,7 +763,7 @@ class OwlBuilder:
         # output -- OWL's punning rules require an entity used as a property to
         # actually be declared as one. Materialize the missing declarations here
         # so every property used in a restriction is properly typed.
-        semantic_bridge_root = self.basens['SemanticBridgeReferenceType']
+        semantic_bridge_root = UARDF['semanticBridgeReferenceType']
         self.out.add((semantic_bridge_root, RDF.type, OWL.ObjectProperty))
         query = """
         PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>

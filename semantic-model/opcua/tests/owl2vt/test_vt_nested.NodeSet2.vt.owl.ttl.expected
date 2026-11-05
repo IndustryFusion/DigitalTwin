@@ -1,3 +1,4 @@
+@prefix uardf: <http://opcfoundation.org/rdf/uacore#> .
 @prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
 @prefix opcua: <http://opcfoundation.org/UA/> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
@@ -43,7 +44,7 @@
 
 <http://my.test/hasTemperature> a owl:FunctionalProperty,
         owl:ObjectProperty ;
-    rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
 
 opcua:ValueRank_MoreDimensions a owl:Class ;
     rdfs:subClassOf opcua:ValueRank_OneOrMoreDimensions .
@@ -66,15 +67,15 @@ opcua:ValueRank_MoreDimensions a owl:Class ;
 
 <http://my.test/hasDrive> a owl:FunctionalProperty,
         owl:ObjectProperty ;
-    rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
 
 <http://my.test/hasMotor> a owl:FunctionalProperty,
         owl:ObjectProperty ;
-    rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
 
 <http://my.test/hasReadings> a owl:FunctionalProperty,
         owl:ObjectProperty ;
-    rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
 
 opcua:ValueRank_Any a owl:Class .
 
@@ -114,7 +115,7 @@ opcua:ValueRank_OneDimension a owl:Class ;
 opcua:ValueRank_Scalar a owl:Class ;
     rdfs:subClassOf opcua:ValueRank_ScalarOrOneDimension .
 
-base:SemanticBridgeReferenceType a owl:ObjectProperty .
+uardf:semanticBridgeReferenceType a owl:ObjectProperty .
 
 sb:hasDataType a owl:FunctionalProperty,
         owl:ObjectProperty .

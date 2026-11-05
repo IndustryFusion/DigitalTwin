@@ -1,12 +1,13 @@
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
 @prefix opcua: <http://opcfoundation.org/UA/> .
+@prefix uardf: <http://opcfoundation.org/rdf/uacore#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 # Main shape for OPC UA nodes (Properties and Variables)
 base:OPCUAHistorizingRuleShape a sh:NodeShape ;
-    sh:targetClass opcua:BaseNodeClass;
+    sh:targetClass uardf:Object, uardf:ObjectType, uardf:Variable, uardf:VariableType, uardf:Method, uardf:DataType, uardf:ReferenceType, uardf:View;
 
     sh:property [
         sh:path base:isHistorizing ;
@@ -22,6 +23,7 @@ base:OPCUAHistorizingRuleShape a sh:NodeShape ;
         sh:select """
           PREFIX base: <https://industryfusion.github.io/contexts/ontology/v0/base/>
           PREFIX opcua: <http://opcfoundation.org/UA/>
+          PREFIX uardf: <http://opcfoundation.org/rdf/uacore#>
           PREFIX owl: <http://www.w3.org/2002/07/owl#>
           PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
           PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -29,11 +31,11 @@ base:OPCUAHistorizingRuleShape a sh:NodeShape ;
 
           SELECT $this WHERE {
             $this base:isHistorizing ?ml .
-            # Only a Variable may be Historizing. Test the node's rdf:type --
+            # Only a Variable may be Historizing. Test the node's node class --
             # comparing $this itself against a class IRI is always true and so
             # would flag every historizing node, Variables included.
             FILTER NOT EXISTS {
-              $this rdf:type/rdfs:subClassOf* opcua:VariableNodeClass .
+              $this rdf:type uardf:Variable .
             }
           }
         """ ;

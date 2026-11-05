@@ -89,10 +89,9 @@ class Bindings:
         randname = ''.join(random.choices(string.ascii_uppercase + string.digits, k=randnamelength))
         mapiri = self.binding_namespace['map_' + randname]
         dtype = next(g.objects(var_node, self.basens['hasDatatype']), XSD.anyType)
-        node_id = next(g.objects(var_node, self.basens['hasNodeId']))
-        idtype = next(g.objects(var_node, self.basens['hasIdentifierType']))
-        ns = next(g.objects(var_node, self.basens['hasNamespace']))
-        nsuri = next(g.objects(ns, self.basens['hasUri']))
+        node_id, idtype = utils.RdfUtils(self.basens, None).get_nodeid_and_idtype(g, var_node)
+        # the OPC UA namespace URI as it is (not normalized), the connector addresses the server node with it
+        nsuri = next(g.objects(var_node, utils.UARDF['namespaceUri']))
         self.bindingsg.add((mapiri, RDF['type'], self.basens['BoundMap']))
         self.bindingsg.add((mapiri, self.basens['bindsConnector'], connector))
         self.bindingsg.add((mapiri, self.basens['bindsLogicVar'], Literal(varname)))

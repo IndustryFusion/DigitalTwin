@@ -4,7 +4,7 @@ Companion specifications and their dependencies must be converted to ensure that
 
 In OWL, dependencies are managed by `owl:imports` triples. A *global* import contains an IRI like so:
 
-    owl:imports <https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl> ;
+    owl:imports <https://industryfusion.github.io/contexts/staging/ontology/v0.3/base.ttl> ;
 
 In contrast, a *local* import is referencing the local directories in a File URI, for instance:
 
@@ -16,6 +16,26 @@ For convenience, a Makefile is provided to create the "usual suspect" companion 
 
 creates the *local* version of the specifications.
 
+## Static and Dynamic Nodes
+
+A nodeset can contain *static* nodes, which are the same in every server (types, instance
+declarations, well-known nodes), and *dynamic* nodes, which only exist in a specific server
+(e.g. the instances of a machine). `nodeset2owl.py` decides this per namespace with the
+`NamespaceMetadata` of the nodeset and falls back to a simple rule (types and instance
+declarations are static) when it is missing, see the README's
+[Static and Dynamic Nodes](../README.md#static-and-dynamic-nodes).
+
+Dynamic nodes are identified with the URI of their server, so they are only exported when
+`--serverUri` is given. Companion specifications are built *without* it, so their OWL
+version contains only the static part and can be shared globally. Instance nodesets (e.g.
+the `pumpexample`) are built *with* it:
+
+    python3 nodeset2owl.py ${PUMPEXAMPLE_NODESET_URL} -i ${BASE_ONTOLOGY} core.owl.ttl devices.owl.ttl machinery.owl.ttl pumps.owl.ttl \
+        -n http://yourorganisation.org/InstanceExample/ -p pumpexample --serverUri urn:example:opcua-server -o pumpexample.owl.ttl
+
+The Makefiles do this with `--serverUri $(SERVER_URI)` (default `urn:example:opcua-server`,
+e.g. `make -f translate_default_nodesets.make SERVER_URI=urn:my:server pumpexample.owl.ttl`).
+
 ## Convert Specific Companion Specifications
 
 Rather than reconstructing a NodeSet2.xml's raw.githubusercontent.com URL by hand, `translate_default_nodesets.make` can print `export VAR=value` lines for all of them (and the base ontology), which you source directly into your shell:
@@ -26,21 +46,21 @@ This defines `BASE_ONTOLOGY` and one `<NAME>_NODESET_URL` variable per companion
 
 `nodeset2owl.py` cannot yet auto-detect dependencies for you, but it does refuse to proceed with a clear, upfront error if a namespace referenced by the target NodeSet2.xml isn't covered by the ttls passed via `-i`, rather than failing obscurely partway through parsing -- see its usage below. A conversion must still add the dependencies manually, though. Every specification is dependend on the base ontology:
 
-    <https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl>
+    <https://industryfusion.github.io/contexts/staging/ontology/v0.3/base.ttl>
 
 For instance, converting the core OPCUA specification looks as follows:
 
 
     NODESET_VERSION=UA-1.05.03-2023-12-15
     CORE_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/${NODESET_VERSION}/Schema/Opc.Ua.NodeSet2.xml
-    BASE_ONTOLOGY=https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl
+    BASE_ONTOLOGY=https://industryfusion.github.io/contexts/staging/ontology/v0.3/base.ttl
     python3 nodeset2owl.py ${CORE_NODESET} -i ${BASE_ONTOLOGY} -p opcua -o core.owl.ttl
 
 The `DI` specification is translated as follows:
 
     NODESET_VERSION=UA-1.05.03-2023-12-15
     DI_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/${NODESET_VERSION}/DI/Opc.Ua.Di.NodeSet2.xml
-    BASE_ONTOLOGY=https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl
+    BASE_ONTOLOGY=https://industryfusion.github.io/contexts/staging/ontology/v0.3/base.ttl
     CORE_ONTOLOGY=core.owl.ttl
     python3 nodeset2owl.py  ${DI_NODESET} -i ${BASE_ONTOLOGY} ${CORE_ONTOLOGY} -p devices -o devices.owl.ttl
 
@@ -48,7 +68,7 @@ And the `Machinery` specification is converted like so:
 
     NODESET_VERSION=UA-1.05.03-2023-12-15
     CORE_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/${NODESET_VERSION}/Schema/Opc.Ua.NodeSet2.xml
-    BASE_ONTOLOGY=https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl
+    BASE_ONTOLOGY=https://industryfusion.github.io/contexts/staging/ontology/v0.3/base.ttl
     MACHINERY_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/${NODESET_VERSION}/Machinery/Opc.Ua.Machinery.NodeSet2.xml
     CORE_ONTOLOGY=core.owl.ttl
     DEVICES_ONTOLOGY=devices.owl.ttl
@@ -71,14 +91,16 @@ and this suggest that the nodeset is (besides the base specification) dependends
 ```
 NODESET_VERSION=UA-1.05.03-2023-12-15
 PUMPS_NODESET=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/${NODESET_VERSION}/Pumps/Opc.Ua.Pumps.NodeSet2.xml
-BASE_ONTOLOGY=https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl
+BASE_ONTOLOGY=https://industryfusion.github.io/contexts/staging/ontology/v0.3/base.ttl
 python3 nodeset2owl.py  ${PUMPS_NODESET} -i ${BASE_ONTOLOGY} core.owl.ttl devices.owl.ttl machinery.owl.ttl -p pumps -o pumps.owl.ttl
 
 ```
 
 ## Extract SHACL and JSON-LD from instances
 
-
+Once the instance nodeset is translated (with `--serverUri`), `owl2instances.py` extracts
+SHACL, the NGSI-LD instances and the entity ontology, see the
+[Simple Example](./simple-example.md#extract-shacl-and-ngsi-ld-files-from-owl).
 
 ## Global Specifications
 

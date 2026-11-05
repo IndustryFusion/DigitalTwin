@@ -30,6 +30,8 @@ CORE_RESULT=core.ttl
 CLEANED=cleaned.ttl
 NODESET2OWL=../../nodeset2owl.py
 TESTURI=http://my.test/
+# Instance nodes are dynamic, nodeset2owl exports them only with a server URI
+SERVER_URI=urn:test:server
 EXURI=http://example.org/
 DEBUG=${DEBUG:-false}
 if [ "$DEBUG" = "true" ]; then
@@ -59,7 +61,6 @@ TESTNODESETS=(
     )
 CLEANGRAPH=cleangraph.py
 TYPEURI=http://example.org/MinimalNodeset
-TESTID=testid
 SHACL=shacl.ttl
 ENTITIES_FILE=entities.ttl
 INSTANCES=instances.jsonld
@@ -175,9 +176,9 @@ for tuple in "${TESTNODESETS[@]}"; do IFS=","
 
     if [ -n "$testid" ]; then
         echo "Test ID defined: '$testid'"
-        TESTID="$testid"
+        TESTID=(-i "$testid")
     else
-        TESTID="testid:" # Default
+        TESTID=() # Default: entity ids urn:uaentity:<base64url of the canonical ExpandedNodeId>
     fi
     if [ -n "$options" ]; then
     IFS=';' read -r -a OPTIONS_ARR <<< "$options"
@@ -216,19 +217,19 @@ for tuple in "${TESTNODESETS[@]}"; do IFS=","
         echo ----------------------------------------
     fi
     if [ "$DEBUG" = "true" ]; then
-        echo DEBUG: python3 ${NODESET2OWL} ${nodeset}.xml -i ${IMPORTS[@]} ${INSTANCENAMESPACE[@]} -v http://example.com/v0.1/UA/ -p test -o ${NODESET2OWL_RESULT}
-        echo DEBUG: python3 ${OWL2INSTANCES} ${INSTANCETYPEOPTION} -n ${THETESTURI} ${NODESET2OWL_RESULT} -i ${TESTID} -xc ${LOCAL_CONTEXT} ${OPTIONS_ARR[@]}
+        echo DEBUG: python3 ${NODESET2OWL} ${nodeset}.xml -i ${IMPORTS[@]} ${INSTANCENAMESPACE[@]} -v http://example.com/v0.1/UA/ -p test --serverUri ${SERVER_URI} -o ${NODESET2OWL_RESULT}
+        echo DEBUG: python3 ${OWL2INSTANCES} ${INSTANCETYPEOPTION} -n ${THETESTURI} ${NODESET2OWL_RESULT} ${TESTID[@]} -xc ${LOCAL_CONTEXT} ${OPTIONS_ARR[@]}
     fi
     echo Create owl nodesets
     echo -------------------
-    python3 ${NODESET2OWL} ${nodeset}.xml -i ${IMPORTS[@]} ${INSTANCENAMESPACE[@]} -v http://example.com/v0.1/UA/ -p test -o ${NODESET2OWL_RESULT} || exit 1
+    python3 ${NODESET2OWL} ${nodeset}.xml -i ${IMPORTS[@]} ${INSTANCENAMESPACE[@]} -v http://example.com/v0.1/UA/ -p test --serverUri ${SERVER_URI} -o ${NODESET2OWL_RESULT} || exit 1
     startstop_context_server "Starting context server" true
     echo Extract types and instances
     echo ---------------------------
     if [ -z "$instancetype" ]; then
-        python3 ${OWL2INSTANCES}  -n ${TESTURI} ${NODESET2OWL_RESULT} -i ${TESTID} -xc ${LOCAL_CONTEXT} ${OPTIONS_ARR[@]} 2>&1 | tee output.log
+        python3 ${OWL2INSTANCES}  -n ${TESTURI} ${NODESET2OWL_RESULT} ${TESTID[@]} -xc ${LOCAL_CONTEXT} ${OPTIONS_ARR[@]} 2>&1 | tee output.log
     else
-        python3 ${OWL2INSTANCES} -t ${instancetype} -n ${THETESTURI} ${NODESET2OWL_RESULT} -i ${TESTID} -xc ${LOCAL_CONTEXT} ${OPTIONS_ARR[@]} 2>&1 | tee output.log
+        python3 ${OWL2INSTANCES} -t ${instancetype} -n ${THETESTURI} ${NODESET2OWL_RESULT} ${TESTID[@]} -xc ${LOCAL_CONTEXT} ${OPTIONS_ARR[@]} 2>&1 | tee output.log
     fi
     if [ ! -z "$warning" ]; then
         if ! grep -q $warning output.log; then

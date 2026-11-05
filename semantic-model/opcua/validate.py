@@ -84,7 +84,7 @@ def load_shapes(path):
     no real benefit in a directory this project fully curates.
 
     This is what gives -m ontology a real default: unlike -m instance's shacl.ttl (a
-    single file purpose-built for one specific instance document by extractType.py),
+    single file purpose-built for one specific instance document by owl2instances.py),
     there's no single canonical "the" ontology shapes file -- just a fixed, small set
     of independent structural rules (hasComponent, hasProperty, historizing,
     modellingRule, rankValue, ...) that all apply to any ontology equally. -s can
@@ -110,8 +110,8 @@ def main():
     parser = argparse.ArgumentParser(description="SHACL Validation with Shape and Focus Context")
     parser.add_argument("-s", "--shacl", required=False,
                         help="Path to a SHACL shapes file, or a directory of *.shacl.ttl files "
-                             "to merge. Defaults to shacl.ttl for -m instance (extractType.py's "
-                             "per-instance-type output); for -m ontology, defaults to the "
+                             "to merge. Defaults to shacl.ttl for -m instance (owl2instances.py's "
+                             "output); for -m ontology, defaults to the "
                              "validation/ontology/ directory (every structural rule file, merged). "
                              "Pass a single file explicitly to scope -m ontology to one rule.",
                         default=None)

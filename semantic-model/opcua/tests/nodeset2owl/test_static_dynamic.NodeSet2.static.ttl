@@ -1,0 +1,58 @@
+@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+@prefix opcua: <http://opcfoundation.org/UA/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sd: <http://test/StaticDynamic/> .
+@prefix uardf: <http://opcfoundation.org/rdf/uacore#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+opcua:aT04NQ opcua:Organizes sd:bnN1PWh0dHA6Ly90ZXN0L1N0YXRpY0R5bmFtaWMvO2k9NzAwMA .
+
+sd: a owl:Ontology ;
+    owl:versionIRI <http://example.com/v0.1/UA/> ;
+    owl:versionInfo 1e-01 .
+
+sd:SDNamespace a base:Namespace ;
+    base:hasPrefix "sd" ;
+    base:hasUri "http://test/StaticDynamic/" .
+
+sd:hasTemperature a owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
+
+sd:TestDeviceType a owl:Class ;
+    rdfs:subClassOf opcua:BaseObjectType .
+
+sd:bnN1PWh0dHA6Ly90ZXN0L1N0YXRpY0R5bmFtaWMvO2k9MTAwMQ a uardf:ObjectType ;
+    opcua:HasComponent sd:bnN1PWh0dHA6Ly90ZXN0L1N0YXRpY0R5bmFtaWMvO2k9MTAwMg ;
+    uardf:browseName "nsu=http://test/StaticDynamic/;TestDeviceType" ;
+    uardf:definesType sd:TestDeviceType ;
+    uardf:description "A device type with a temperature."@en ;
+    uardf:displayName "TestDeviceType"@en ;
+    uardf:name "TestDeviceType" ;
+    uardf:namespaceUri "http://test/StaticDynamic/" ;
+    uardf:nodeId "nsu=http://test/StaticDynamic/;i=1001" ;
+    uardf:symbolicName "TestDeviceType" ;
+    sd:hasTemperature sd:bnN1PWh0dHA6Ly90ZXN0L1N0YXRpY0R5bmFtaWMvO2k9MTAwMg .
+
+sd:bnN1PWh0dHA6Ly90ZXN0L1N0YXRpY0R5bmFtaWMvO2k9NzAwMA a uardf:Object ;
+    uardf:browseName "nsu=http://test/StaticDynamic/;Devices" ;
+    uardf:description "Alle Geräte"@de ;
+    uardf:displayName "Devices"@en ;
+    uardf:hasTypeDefinition opcua:FolderType ;
+    uardf:name "Devices" ;
+    uardf:namespaceUri "http://test/StaticDynamic/" ;
+    uardf:nodeId "nsu=http://test/StaticDynamic/;i=7000" ;
+    uardf:symbolicName "Devices" .
+
+sd:bnN1PWh0dHA6Ly90ZXN0L1N0YXRpY0R5bmFtaWMvO2k9MTAwMg a uardf:Variable ;
+    opcua:HasModellingRule opcua:aT03OA ;
+    uardf:browseName "nsu=http://test/StaticDynamic/;Temperature" ;
+    uardf:displayName "Temperature"@en ;
+    uardf:hasTypeDefinition opcua:BaseDataVariableType ;
+    uardf:name "Temperature" ;
+    uardf:namespaceUri "http://test/StaticDynamic/" ;
+    uardf:nodeId "nsu=http://test/StaticDynamic/;i=1002" ;
+    uardf:parent sd:bnN1PWh0dHA6Ly90ZXN0L1N0YXRpY0R5bmFtaWMvO2k9MTAwMQ ;
+    uardf:symbolicName "Temperature" ;
+    base:hasDatatype opcua:Double .
+

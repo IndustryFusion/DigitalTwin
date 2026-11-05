@@ -114,7 +114,7 @@ _owl_output_cache = {}
 
 
 def _looks_like_semantic_bridge(g):
-    """True if `g` still has the raw instance-declaration layer (base:
+    """True if `g` still has the raw instance-declaration layer (uardf:
     definesType, on every ObjectType/VariableType's definer node) that Part
     14's cleanup step always strips from a real *.vt.owl.ttl output -- i.e. `g`
     is a semantic-bridge *.owl.ttl (core.owl.ttl, di.owl.ttl, ...), not the
@@ -136,7 +136,7 @@ def load_owl_graph(path):
             vt_sibling = f'{path.name[:-len(".owl.ttl")]}.vt.owl.ttl' if path.name.endswith('.owl.ttl') \
                 else f'{path.name}.vt.owl.ttl'
             raise ValueError(
-                f'{path} looks like a semantic-bridge ttl (it has base:definesType '
+                f'{path} looks like a semantic-bridge ttl (it has uardf:definesType '
                 'triples), not a generated Virtual-Types ontology. check_consistency.py '
                 'loads and reasons over the already-built *.vt.owl.ttl file directly -- it '
                 'does not regenerate one from the semantic-bridge ttl (see this module\'s '

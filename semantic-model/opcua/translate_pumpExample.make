@@ -16,6 +16,10 @@
 
 # Makefile for generating TTL files from NodeSet XML files using nodeset2owl.py
 
+# Server URI (svu) of the example instance nodesets. Instance nodes are dynamic, i.e. server
+# specific, and are only exported by nodeset2owl.py when a server URI is given.
+SERVER_URI ?= urn:example:opcua-server
+
 # Version and source NodeSet URLs
 INSTANCE_NS_PREFIX 	:= http://demo.machine/
 ONTOLOGY_NS 		:= http://yourorganisation.org/InstanceExample/
@@ -61,7 +65,7 @@ PACKML_ONTOLOGY                     := $(OPCUA_PREFIX)packml.owl.ttl
 # Instance Definition and dependencies
 INSTANCE_URL           			:= $(INSTANCE_NODESET)
 INSTANCE_ONTOLOGY          		:=  instanceexample.owl.ttl
-INSTANCE_OPTS					:= -p instanceexample -n $(ONTOLOGY_NS)
+INSTANCE_OPTS					:= -p instanceexample -n $(ONTOLOGY_NS) --serverUri $(SERVER_URI)
 INSTANCE_JSONLD_OPTS			:= -n $(INSTANCE_IRI)
 INSTANCE_TYPE					:= $(INSTANCE_TYPE)
 INSTANCE_DEPENDENCIES      		= $(CORE_ONTOLOGY) $(MACHINERY_ONTOLOGY) $(DI_ONTOLOGY) $(PUMPS_ONTOLOGY)

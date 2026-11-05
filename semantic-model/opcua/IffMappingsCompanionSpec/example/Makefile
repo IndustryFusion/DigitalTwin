@@ -182,19 +182,19 @@ PACKML_OPTS          = -p packml
 COMPANY_PROPRIETARYMODEL_NODESET_URL	= company_proprietarymodel.nodeset2.xml
 COMPANY_PROPRIETARYMODEL_ONTOLOGY 		= company_proprietarymodel.owl.ttl
 COMPANY_PROPRIETARYMODEL_DEPENDENCIES	= $(BASE_ONTOLOGY) $(CORE_ONTOLOGY)
-COMPANY_PROPRIETARYMODEL_OPTS 			= -p company_proprietarymodel
+COMPANY_PROPRIETARYMODEL_OPTS 			= -p company_proprietarymodel --serverUri urn:test:server
 
 # IFF-Mapping
 IFFMAPPING_NODESET_URL	= iffmapping.nodeset2.xml
 IFFMAPPING_ONTOLOGY		= iffmapping.owl.ttl
 IFFMAPPING_DEPENDENCIES	= $(BASE_ONTOLOGY) $(CORE_ONTOLOGY) $(COMPANY_PROPRIETARYMODEL_ONTOLOGY)
-IFFMAPPING_OPTS			= -p iffmapping
+IFFMAPPING_OPTS			= -p iffmapping --serverUri urn:test:server
 
 # Company-Bindings
 COMPANY_IFFBINDINGS_NODESET_URL 	= company_iffbindings.nodeset2.xml
 COMPANY_IFFBINDINGS_ONTOLOGY 		= company_iffbindings.owl.ttl
 COMPANY_IFFBINDINGS_DEPENDENCIES 	= $(BASE_ONTOLOGY) $(CORE_ONTOLOGY) $(COMPANY_PROPRIETARYMODEL_ONTOLOGY) $(IFFMAPPING_ONTOLOGY)
-COMPANY_IFFBINDINGS_OPTS 			= -p company_iffbindings
+COMPANY_IFFBINDINGS_OPTS 			= -p company_iffbindings --serverUri urn:test:server
 
 # -----------------------------------------------------------------------------
 # List of all target files to be built.

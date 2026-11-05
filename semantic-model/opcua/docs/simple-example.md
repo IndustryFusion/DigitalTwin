@@ -45,10 +45,31 @@ shortcut for this step.
 This file can now be used to transform the example nodeset into a semantic representation:
 
 ```
-python3 ./nodeset2owl.py docs/files/Example.NodeSet2.xml -i ${BASE_ONTOLOGY} core.owl.ttl -b ${BASE_ONTOLOGY_NS} -burl ${BASE_ONTOLOGY} -v http://example.com/v0.1/example/ -p example -o example.owl.ttl
+python3 ./nodeset2owl.py docs/files/Example.NodeSet2.xml -i ${BASE_ONTOLOGY} core.owl.ttl -b ${BASE_ONTOLOGY_NS} -burl ${BASE_ONTOLOGY} -v http://example.com/v0.1/example/ -p example --serverUri urn:example:opcua-server -o example.owl.ttl
 
 ```
 The result of this step is the file `example.owl.ttl` which contains the OWL representation of the [Example.Nodeset2.xml](./files/Example.NodeSet2.xml) file.
+
+`--serverUri` is needed because the instance `AlphaInstance` and its children are
+*dynamic* nodes: they exist only in a specific server, so their identity contains the
+server URI. The example nodeset has no `NamespaceMetadata`, so nodeset2owl.py applies
+its fallback rule and reports
+
+```
+Identified 6 static and 7 dynamic nodes.
+```
+
+Without `--serverUri` it warns and leaves the 7 dynamic nodes out, which is what you want
+for a *global* companion specification, but not for an instance model. Note that the
+variables `MyVariable` and `C` declared for the types are counted as dynamic, too: the
+example gives them no ModellingRule and no inverse reference to their type (`C` even points
+back to `AlphaInstance`), so they are not recognized as instance declarations. See the README's
+[Static and Dynamic Nodes](../README.md#static-and-dynamic-nodes) section.
+
+Every node is identified by its canonical ExpandedNodeId, e.g. the dynamic instance `B` gets
+`uardf:nodeId "nsu=http://example.org/;i=2012"`, `uardf:serverUri "urn:example:opcua-server"`
+and the IRI `http://example.org/` + the base64url encoding of
+`svu=urn:example:opcua-server;nsu=http://example.org/;i=2012`.
 
 A nodeset and every nodeset it depends on must be built against the *same* base
 ontology, so keep using the `BASE_ONTOLOGY`/`BASE_ONTOLOGY_NS` exported above
@@ -60,11 +81,16 @@ Now, having `core.owl.ttl` and `example.owl.ttl` finally the instance descriptio
 
 `-t` The type of the root Object which should be extracted (in this case `http://example.org/AlphaType`)
 `-n` The namespace of the NGSI-LD objects (use `http://demo.machine/` if the default @context is used)
-`-i` the prefix for the object URNs (must start with urn, e.g. `urn:test`)
+`-i` optionally, the prefix of the entity ids (default `urn:uaentity:`)
 
 ```
-python3 ./owl2instances.py -t http://example.org/AlphaType -n http://demo.machine/ example.owl.ttl -i urn:test
+python3 ./owl2instances.py -t http://example.org/AlphaType -n http://demo.machine/ example.owl.ttl
 ```
+
+The id of every entity is the prefix followed by the base64url encoded ExpandedNodeId
+of its node, e.g. `B` becomes
+`urn:uaentity:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL2V4YW1wbGUub3JnLztpPTIwMTI`.
+Add `-nr` to link every entity to its OPC UA node (`base:hasNodeRef`).
 
 As a result, the following files are created:
 
@@ -96,8 +122,8 @@ Results (1):
 Constraint Violation in ClassConstraintComponent (http://www.w3.org/ns/shacl#ClassConstraintComponent):
         Severity: sh:Violation
         Source Shape: [ sh:class example:BType ; sh:maxCount Literal("1", datatype=xsd:integer) ; sh:minCount Literal("1", datatype=xsd:integer) ; sh:nodeKind sh:IRI ; sh:path ngsi-ld:hasObject ]
-        Focus Node: [ <https://uri.etsi.org/ngsi-ld/hasObject> <urn:testnodei2012> ; rdf:type <https://uri.etsi.org/ngsi-ld/Relationship> ]
-        Value Node: <urn:testnodei2012>
+        Focus Node: [ <https://uri.etsi.org/ngsi-ld/hasObject> <urn:uaentity:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL2V4YW1wbGUub3JnLztpPTIwMTI> ; rdf:type <https://uri.etsi.org/ngsi-ld/Relationship> ]
+        Value Node: <urn:uaentity:c3Z1PXVybjpleGFtcGxlOm9wY3VhLXNlcnZlcjtuc3U9aHR0cDovL2V4YW1wbGUub3JnLztpPTIwMTI>
         Result Path: ngsi-ld:hasObject
         Message: Value does not have class example:BType
 ```
@@ -196,21 +222,23 @@ This list suggests that the dependencies are `core.owl.ttl`, `di.owl.ttl`, `mach
     python3 nodeset2owl.py ${DI_NODESET} -i ${BASE_ONTOLOGY} core.owl.ttl -b ${BASE_ONTOLOGY_NS} -burl ${BASE_ONTOLOGY} -v http://example.com/v0.1/DI/ -p di -o di.owl.ttl
     python3 nodeset2owl.py ${MACHINERY_NODESET} -i ${BASE_ONTOLOGY} core.owl.ttl di.owl.ttl -b ${BASE_ONTOLOGY_NS} -burl ${BASE_ONTOLOGY} -v http://example.com/v0.1/Machinery/ -p machinery -o machinery.owl.ttl
     python3 nodeset2owl.py ${PUMPS_NODESET} -i ${BASE_ONTOLOGY} core.owl.ttl di.owl.ttl machinery.owl.ttl -b ${BASE_ONTOLOGY_NS} -burl ${BASE_ONTOLOGY} -v http://example.com/v0.1/Pumps/ -p pumps -o pumps.owl.ttl
-    python3 nodeset2owl.py ${PUMP_EXAMPLE_NODESET} -i ${BASE_ONTOLOGY} core.owl.ttl di.owl.ttl machinery.owl.ttl pumps.owl.ttl -b ${BASE_ONTOLOGY_NS} -burl ${BASE_ONTOLOGY} -n http://yourorganisation.org/InstanceExample/ -v http://example.com/v0.1/pumpexample/ -p pumpexample -o pumpexample.owl.ttl
+    python3 nodeset2owl.py ${PUMP_EXAMPLE_NODESET} -i ${BASE_ONTOLOGY} core.owl.ttl di.owl.ttl machinery.owl.ttl pumps.owl.ttl -b ${BASE_ONTOLOGY_NS} -burl ${BASE_ONTOLOGY} -n http://yourorganisation.org/InstanceExample/ -v http://example.com/v0.1/pumpexample/ -p pumpexample --serverUri urn:example:opcua-server -o pumpexample.owl.ttl
 
 The whole chain, including the dependency order, is also encoded in
 `translate_default_nodesets.make`, so
 
     make -f translate_default_nodesets.make pumpexample.owl.ttl
 
-builds exactly the same five files. Expect a few minutes: `pumps.owl.ttl` alone
+builds exactly the same five files. As in the simple example, the instance nodeset
+`pumpexample` is translated with `--serverUri` (the Makefile's `SERVER_URI`, default
+`urn:example:opcua-server`); the companion specifications are built without it. Expect a few minutes: `pumps.owl.ttl` alone
 is several megabytes of Turtle.
 
 
 
-The extraction of the resulting SHACL, NGSI-LD and OWL we need again determine the root object type, which is http://opcfoundation.org/UA/Pumps/PumpType, and the ontology containing the pump example `pumpexample.owl.ttl`. The other parameters  for `-n` and `-i` stay the same, compared to the simple example above.
+The extraction of the resulting SHACL, NGSI-LD and OWL we need again determine the root object type, which is http://opcfoundation.org/UA/Pumps/PumpType, and the ontology containing the pump example `pumpexample.owl.ttl`. The parameter `-n` stays the same, compared to the simple example above.
 
-    python3 ./owl2instances.py -t http://opcfoundation.org/UA/Pumps/PumpType -n http://demo.machine/ pumpexample.owl.ttl -i urn:test
+    python3 ./owl2instances.py -t http://opcfoundation.org/UA/Pumps/PumpType -n http://demo.machine/ pumpexample.owl.ttl
 
 
 Again the resulting `instances.jsonld`, `shacl.ttl` and `entities.ttl` can be validated by `pyshacl`:

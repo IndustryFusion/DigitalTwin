@@ -1,167 +1,142 @@
 @prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
 @prefix opcua: <http://opcfoundation.org/UA/> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
-@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix uardf: <http://opcfoundation.org/rdf/uacore#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 opcua: a owl:Ontology ;
     owl:versionIRI <http://example.com/v0.1/UA/> ;
     owl:versionInfo 1e-01 .
 
-opcua:hasMyTestVar rdfs:subPropertyOf base:SemanticBridgeReferenceType .
+opcua:OPCUANamespace a base:Namespace ;
+    base:hasPrefix "opcua" ;
+    base:hasUri "http://opcfoundation.org/UA/" .
 
-opcua:nodei24 a opcua:DataTypeNodeClass ;
-    base:definesType opcua:BaseDataType ;
-    base:hasBrowseName "BaseDataType" ;
-    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
-    base:hasDisplayName "BaseDataType" ;
-    base:hasIdentifierType base:numericID ;
-    base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "24" .
+opcua:aT00NA a uardf:ReferenceType ;
+    uardf:browseName "Aggregates" ;
+    uardf:definesType opcua:Aggregates ;
+    uardf:displayName "Aggregates"@en ;
+    uardf:isAbstract true ;
+    uardf:name "Aggregates" ;
+    uardf:namespaceUri "http://opcfoundation.org/UA/" ;
+    uardf:nodeId "i=44" ;
+    uardf:symbolicName "Aggregates" .
 
-opcua:nodei26 a opcua:DataTypeNodeClass ;
-    base:definesType opcua:Number ;
-    base:hasBrowseName "Number" ;
-    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
-    base:hasDisplayName "Number" ;
-    base:hasIdentifierType base:numericID ;
-    base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "26" .
+opcua:aT00Nw a uardf:ReferenceType ;
+    uardf:browseName "HasComponent" ;
+    uardf:definesType opcua:HasComponent ;
+    uardf:displayName "HasComponent"@en ;
+    uardf:name "HasComponent" ;
+    uardf:namespaceUri "http://opcfoundation.org/UA/" ;
+    uardf:nodeId "i=47" ;
+    uardf:symbolicName "HasComponent" .
 
-opcua:nodei31 a opcua:ReferenceTypeNodeClass ;
-    base:definesType opcua:References ;
-    base:hasBrowseName "References" ;
-    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
-    base:hasDisplayName "References" ;
-    base:hasIdentifierType base:numericID ;
-    base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "31" ;
-    base:isSymmetric "true" .
+opcua:aT01OA a uardf:ObjectType ;
+    uardf:browseName "BaseObjectType" ;
+    uardf:definesType opcua:BaseObjectType ;
+    uardf:displayName "BaseObjectType"@en ;
+    uardf:name "BaseObjectType" ;
+    uardf:namespaceUri "http://opcfoundation.org/UA/" ;
+    uardf:nodeId "i=58" ;
+    uardf:symbolicName "BaseObjectType" .
 
-opcua:nodei32 a opcua:ReferenceTypeNodeClass ;
-    base:definesType opcua:NonHierarchicalReferences ;
-    base:hasBrowseName "NonHierarchicalReferences" ;
-    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
-    base:hasDisplayName "NonHierarchicalReferences" ;
-    base:hasIdentifierType base:numericID ;
-    base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "32" ;
-    base:isSymmetric "true" .
-
-opcua:nodei33 a opcua:ReferenceTypeNodeClass ;
-    base:definesType opcua:HierarchicalReferences ;
-    base:hasBrowseName "HierarchicalReferences" ;
-    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
-    base:hasDisplayName "HierarchicalReferences" ;
-    base:hasIdentifierType base:numericID ;
-    base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "33" .
-
-opcua:nodei34 a opcua:ReferenceTypeNodeClass ;
-    base:definesType opcua:HasChild ;
-    base:hasBrowseName "HasChild" ;
-    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
-    base:hasDisplayName "HasChild" ;
-    base:hasIdentifierType base:numericID ;
-    base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "34" .
-
-opcua:nodei44 a opcua:ReferenceTypeNodeClass ;
-    base:definesType opcua:Aggregates ;
-    base:hasBrowseName "Aggregates" ;
-    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
-    base:hasDisplayName "Aggregates" ;
-    base:hasIdentifierType base:numericID ;
-    base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "44" .
-
-opcua:nodei47 a opcua:ReferenceTypeNodeClass ;
-    base:definesType opcua:HasComponent ;
-    base:hasBrowseName "HasComponent" ;
-    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
-    base:hasDisplayName "HasComponent" ;
-    base:hasIdentifierType base:numericID ;
-    base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "47" .
-
-opcua:nodei47112 a opcua:ObjectNodeClass ;
-    opcua:HasComponent opcua:nodei16363 ;
-    opcua:hasMyTestVar opcua:nodei16363 ;
-    base:hasBrowseName "MyObject" ;
-    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
-    base:hasDisplayName "MyObject" ;
-    base:hasIdentifierType base:numericID ;
-    base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "47112" ;
-    base:instanceOf opcua:BaseObjectType .
-
-opcua:nodei58 a opcua:ObjectTypeNodeClass ;
-    base:definesType opcua:BaseObjectType ;
-    base:hasBrowseName "BaseObjectType" ;
-    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
-    base:hasDisplayName "BaseObjectType" ;
-    base:hasIdentifierType base:numericID ;
-    base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "58" .
-
-opcua:nodei62 a opcua:VariableTypeNodeClass ;
-    base:definesType opcua:BaseVariableType ;
-    base:hasBrowseName "BaseVariableType" ;
-    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
-    base:hasDisplayName "BaseVariableType" ;
-    base:hasIdentifierType base:numericID ;
-    base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "62" ;
+opcua:aT02Mg a uardf:VariableType ;
+    uardf:browseName "BaseVariableType" ;
+    uardf:definesType opcua:BaseVariableType ;
+    uardf:displayName "BaseVariableType"@en ;
+    uardf:isAbstract true ;
+    uardf:name "BaseVariableType" ;
+    uardf:namespaceUri "http://opcfoundation.org/UA/" ;
+    uardf:nodeId "i=62" ;
+    uardf:symbolicName "BaseVariableType" ;
     base:hasValueRank -2 .
+
+opcua:aT0yNA a uardf:DataType ;
+    uardf:browseName "BaseDataType" ;
+    uardf:definesType opcua:BaseDataType ;
+    uardf:displayName "BaseDataType"@en ;
+    uardf:isAbstract true ;
+    uardf:name "BaseDataType" ;
+    uardf:namespaceUri "http://opcfoundation.org/UA/" ;
+    uardf:nodeId "i=24" ;
+    uardf:symbolicName "BaseDataType" .
+
+opcua:aT0yNg a uardf:DataType ;
+    uardf:browseName "Number" ;
+    uardf:definesType opcua:Number ;
+    uardf:displayName "Number"@en ;
+    uardf:isAbstract true ;
+    uardf:name "Number" ;
+    uardf:namespaceUri "http://opcfoundation.org/UA/" ;
+    uardf:nodeId "i=26" ;
+    uardf:symbolicName "Number" .
+
+opcua:aT0zMQ a uardf:ReferenceType ;
+    uardf:browseName "References" ;
+    uardf:definesType opcua:References ;
+    uardf:displayName "References"@en ;
+    uardf:isAbstract true ;
+    uardf:name "References" ;
+    uardf:namespaceUri "http://opcfoundation.org/UA/" ;
+    uardf:nodeId "i=31" ;
+    uardf:symbolicName "References" ;
+    base:isSymmetric "true" .
+
+opcua:aT0zMg a uardf:ReferenceType ;
+    uardf:browseName "NonHierarchicalReferences" ;
+    uardf:definesType opcua:NonHierarchicalReferences ;
+    uardf:displayName "NonHierarchicalReferences"@en ;
+    uardf:isAbstract true ;
+    uardf:name "NonHierarchicalReferences" ;
+    uardf:namespaceUri "http://opcfoundation.org/UA/" ;
+    uardf:nodeId "i=32" ;
+    uardf:symbolicName "NonHierarchicalReferences" ;
+    base:isSymmetric "true" .
+
+opcua:aT0zMw a uardf:ReferenceType ;
+    uardf:browseName "HierarchicalReferences" ;
+    uardf:definesType opcua:HierarchicalReferences ;
+    uardf:displayName "HierarchicalReferences"@en ;
+    uardf:isAbstract true ;
+    uardf:name "HierarchicalReferences" ;
+    uardf:namespaceUri "http://opcfoundation.org/UA/" ;
+    uardf:nodeId "i=33" ;
+    uardf:symbolicName "HierarchicalReferences" .
+
+opcua:aT0zNA a uardf:ReferenceType ;
+    uardf:browseName "HasChild" ;
+    uardf:definesType opcua:HasChild ;
+    uardf:displayName "HasChild"@en ;
+    uardf:isAbstract true ;
+    uardf:name "HasChild" ;
+    uardf:namespaceUri "http://opcfoundation.org/UA/" ;
+    uardf:nodeId "i=34" ;
+    uardf:symbolicName "HasChild" .
+
+opcua:BaseObjectType a owl:Class .
+
+opcua:BaseVariableType a owl:Class .
 
 opcua:HasComponent a owl:ObjectProperty ;
     rdfs:subPropertyOf opcua:Aggregates .
 
 opcua:NonHierarchicalReferences a owl:ObjectProperty ;
-    rdfs:subPropertyOf opcua:References ;
-    base:isAbstract "true" .
-
-opcua:Aggregates a owl:ObjectProperty ;
-    rdfs:subPropertyOf opcua:HasChild ;
-    base:isAbstract "true" .
-
-opcua:BaseDataType a owl:Class ;
-    base:isAbstract "true" .
-
-opcua:BaseObjectType a owl:Class .
-
-opcua:BaseVariableType a owl:Class ;
-    base:isAbstract "true" .
-
-opcua:HasChild a owl:ObjectProperty ;
-    rdfs:subPropertyOf opcua:HierarchicalReferences ;
-    base:isAbstract "true" .
-
-opcua:HierarchicalReferences a owl:ObjectProperty ;
-    rdfs:subPropertyOf opcua:References ;
-    base:isAbstract "true" .
+    rdfs:subPropertyOf opcua:References .
 
 opcua:Number a owl:Class ;
-    rdfs:subClassOf opcua:BaseDataType ;
-    base:isAbstract "true" .
+    rdfs:subClassOf opcua:BaseDataType .
 
-opcua:nodei16363 a opcua:BaseVariableType,
-        opcua:VariableNodeClass ;
-    base:hasArrayDimensions ( 0 ) ;
-    base:hasBrowseName "MyTestVar" ;
-    base:hasBrowseNameNamespace opcua:OPCUANamespace ;
-    base:hasDatatype opcua:Number ;
-    base:hasDisplayName "My Test Variable" ;
-    base:hasIdentifierType base:numericID ;
-    base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "16363" ;
-    base:hasValueRank 1 .
+opcua:Aggregates a owl:ObjectProperty ;
+    rdfs:subPropertyOf opcua:HasChild .
 
-opcua:References a owl:ObjectProperty ;
-    base:isAbstract "true" .
+opcua:BaseDataType a owl:Class .
 
-opcua:OPCUANamespace a base:Namespace ;
-    base:hasPrefix "opcua" ;
-    base:hasUri "http://opcfoundation.org/UA/" .
+opcua:HasChild a owl:ObjectProperty ;
+    rdfs:subPropertyOf opcua:HierarchicalReferences .
+
+opcua:HierarchicalReferences a owl:ObjectProperty ;
+    rdfs:subPropertyOf opcua:References .
+
+opcua:References a owl:ObjectProperty .
 

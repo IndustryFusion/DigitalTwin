@@ -1,7 +1,7 @@
 [
     {
         "type": "http://example.org/MinimalNodeset/ObjectType",
-        "id": "http://example.org/FullId/nodei1002",
+        "id": "http://example.org/FullId/c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL2V4YW1wbGUub3JnL01pbmltYWxOb2Rlc2V0O2k9MTAwMg",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ],

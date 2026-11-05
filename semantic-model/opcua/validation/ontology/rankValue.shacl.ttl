@@ -1,12 +1,13 @@
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
 @prefix opcua: <http://opcfoundation.org/UA/> .
+@prefix uardf: <http://opcfoundation.org/rdf/uacore#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 # Main shape for OPC UA nodes (Properties and Variables)
 base:OPCUANodeShape a sh:NodeShape ;
-    sh:targetClass opcua:VariableNodeClass, opcua:VariableTypeNodeClass ;
+    sh:targetClass uardf:Variable, uardf:VariableType ;
 
     # hasValueRank is optional; if absent, default to -1.
     sh:property [
@@ -36,14 +37,15 @@ base:OPCUANodeShape a sh:NodeShape ;
           PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
           PREFIX base: <https://industryfusion.github.io/contexts/ontology/v0/base/>
           PREFIX opcua: <http://opcfoundation.org/UA/>
+          PREFIX uardf: <http://opcfoundation.org/rdf/uacore#>
 
           SELECT $this ?valueRank ?parentValueRank WHERE {
-            $this a ?type .
-            FILTER(?type != opcua:VarialbeNodeClass)
+            # the TypeDefinition (rdf:type when built with --enforce-opcua-type-semantic)
+            $this uardf:hasTypeDefinition|rdf:type ?type .
             # When valueRank is not defined, set it to -1
             OPTIONAL { $this base:hasValueRank ?actualValueRank . }
             BIND( COALESCE(?actualValueRank, -1) AS ?valueRank ) .
-            ?parentnode base:definesType ?type .
+            ?parentnode uardf:definesType ?type .
             # When parentValueRank is not defined, set it to -1
             OPTIONAL { ?parentnode base:hasValueRank ?parentActualValueRank . }
             BIND( COALESCE(?parentActualValueRank, -1) AS ?parentValueRank ) .
@@ -71,15 +73,16 @@ base:OPCUANodeShape a sh:NodeShape ;
           PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
           PREFIX base: <https://industryfusion.github.io/contexts/ontology/v0/base/>
           PREFIX opcua: <http://opcfoundation.org/UA/>
+          PREFIX uardf: <http://opcfoundation.org/rdf/uacore#>
 
           SELECT $this ?valueRank ?parentValueRank WHERE {
-            $this a opcua:VariableTypeNodeClass .
+            $this a uardf:VariableType .
             # When valueRank is not defined, set it to -1
             OPTIONAL { $this base:hasValueRank ?actualValueRank . }
             BIND( COALESCE(?actualValueRank, -1) AS ?valueRank ) .
-            $this base:definesType ?type .
+            $this uardf:definesType ?type .
             ?type rdfs:subClassOf ?parentType .
-            ?parentnode base:definesType ?parentType .
+            ?parentnode uardf:definesType ?parentType .
             # When parentValueRank is not defined, set it to -1
             OPTIONAL { ?parentnode base:hasValueRank ?parentActualValueRank . }
             BIND( COALESCE(?parentActualValueRank, -1) AS ?parentValueRank ) .
@@ -106,6 +109,7 @@ base:OPCUANodeShape a sh:NodeShape ;
           PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
           PREFIX base: <https://industryfusion.github.io/contexts/ontology/v0/base/>
           PREFIX opcua: <http://opcfoundation.org/UA/>
+          PREFIX uardf: <http://opcfoundation.org/rdf/uacore#>
 
           SELECT $this ?valueRank ?count WHERE {
             # Retrieve the node's valueRank; default to -1 if not defined.
@@ -147,8 +151,8 @@ base:OPCUANodeShape a sh:NodeShape ;
             # for. Likewise do not fold -3 back in -- that rejects the legal
             # ValueRank="-3" ArrayDimensions="0" form used by OPC UA DI's WarningValues
             # (ns=1;i=472). tests/validation/rankValueTest.ttl pins every branch:
-            # nodei24 (-1, must be flagged), nodei22/nodei23 (-3, one legal / two not),
-            # nodei5 and nodei25 (-2) and nodei6 (0), which must all pass.
+            # i=24 (-1, must be flagged), i=22/i=23 (-3, one legal / two not),
+            # i=5 and i=25 (-2) and i=6 (0), which must all pass.
   			    FILTER ( (?valueRank > 0 && ?count != ?valueRank)
                      || (?valueRank = -1 && ?count > 0)
                      || (?valueRank = -3 && ?count > 1) )
@@ -163,6 +167,7 @@ base:OPCUANodeShape a sh:NodeShape ;
           PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
           PREFIX base: <https://industryfusion.github.io/contexts/ontology/v0/base/>
           PREFIX opcua: <http://opcfoundation.org/UA/>
+          PREFIX uardf: <http://opcfoundation.org/rdf/uacore#>
 
           SELECT $this ?valueRank WHERE {
             # Retrieve the node's valueRank; default to -1 if not defined.

@@ -1,4 +1,8 @@
-Focus Node: http://opcfoundation.org/UA/nodei1
-Focus Node: http://opcfoundation.org/UA/nodei2
-Message: The VariableNodeClass has a base:hasComponent reference to another VariableNodeClass, but is not a DataVariable because it lacks an incoming base:hasComponent reference.
-Message: Variable node http://opcfoundation.org/UA/nodei1 reached by hasComponent reference must be (or inherit from) opcua:BaseDataVariableType.
+Focus Node: http://opcfoundation.org/UA/aT02
+Focus Node: http://opcfoundation.org/UA/aT0x
+Focus Node: http://opcfoundation.org/UA/aT0x
+Focus Node: http://opcfoundation.org/UA/aT0y
+Message: A node reached via HasComponent must be a Variable, Object, or Method.
+Message: For a HasComponent reference from http://opcfoundation.org/UA/aT0y to http://opcfoundation.org/UA/aT0x: if the target is a Variable then its source must be an Object, ObjectType, DataVariable or VariableType; if the target is an Object or a Method then its source must be an Object or ObjectType.
+Message: The Variable has a HasComponent reference to another Variable, but is not a DataVariable because it lacks an incoming HasComponent reference.
+Message: Variable node http://opcfoundation.org/UA/aT0x reached by HasComponent reference must be (or inherit from) opcua:BaseDataVariableType.

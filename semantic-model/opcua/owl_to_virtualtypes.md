@@ -73,6 +73,12 @@ Declarations may contain:
 - ValueRank
 - Child declarations
 
+In the `nodeset2owl.py` output these are `uardf:name`/`uardf:browseName`,
+`uardf:hasTypeDefinition`, `opcua:HasModellingRule` and `base:hasValueRank` on the
+declaration node, whose node class is `uardf:Object` or `uardf:Variable`. The
+semantic bridge properties (`sb:hasMotor` above) start at the *type node*, which
+points to its OWL class via `uardf:definesType`.
+
 ---
 
 # 4. Effective Declaration Tree

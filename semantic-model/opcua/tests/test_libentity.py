@@ -5,6 +5,7 @@ from rdflib import Graph, Namespace, URIRef, Literal
 from rdflib.namespace import RDF, OWL, RDFS
 from lib.entity import Entity, query_instance, query_default_instance
 import lib.utils as utils
+from lib.utils import UARDF
 
 class DummyRow:
     """Helper class to simulate a query result row with an 'instance' attribute."""
@@ -238,16 +239,16 @@ class TestEntity(unittest.TestCase):
         obj2 = URIRef("http://example.org/obj2")
         self.entity_instance.opcuans = Namespace("http://example.org/opcua/")
 
-        temp_graph.add((obj1, RDF.type, obj_type))
-        temp_graph.add((obj2, RDF.type, obj_type))
+        temp_graph.add((obj1, UARDF['hasTypeDefinition'], obj_type))
+        temp_graph.add((obj2, UARDF['hasTypeDefinition'], obj_type))
 
         # Call add_all_objects_of_type to add objects of obj_type.
         self.entity_instance.add_all_objects_of_type(temp_graph, obj1)
 
         # Retrieve the triples from the internal RDF graph.
         entity_triples = list(self.entity_instance.get_graph())
-        self.assertIn((obj1, RDF.type, obj_type), entity_triples)
-        self.assertIn((obj2, RDF.type, obj_type), entity_triples)
+        self.assertIn((obj1, UARDF['hasTypeDefinition'], obj_type), entity_triples)
+        self.assertIn((obj2, UARDF['hasTypeDefinition'], obj_type), entity_triples)
 
 if __name__ == "__main__":
     unittest.main()

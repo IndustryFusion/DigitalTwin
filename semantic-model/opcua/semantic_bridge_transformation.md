@@ -60,13 +60,19 @@ PumpSubType
 
 ## Type Assignment
 
+Every node is typed by its OPC UA NodeClass, using the classes of the OPC UA RDF
+meta ontology `uardf:` (`http://opcfoundation.org/rdf/uacore#`, see `uardf.ttl`):
+
+uardf:Object, uardf:Variable, uardf:Method, uardf:View, uardf:ObjectType,
+uardf:VariableType, uardf:DataType, uardf:ReferenceType
+
 Transform:
 
 HasTypeDefinition
 
 into:
 
-rdf:type
+uardf:hasTypeDefinition
 
 Example:
 
@@ -75,7 +81,37 @@ Pump1
 
 becomes
 
-Pump1 rdf:type PumpType
+Pump1 rdf:type uardf:Object ;
+    uardf:hasTypeDefinition PumpType
+
+HasTypeDefinition is deliberately not translated into rdf:type: the TypeDefinition of an
+instance (and of an instance declaration) is OPC UA information, not an OWL class
+membership. `nodeset2owl.py --enforce-opcua-type-semantic` writes rdf:type instead.
+
+A type is represented twice: by the OWL class (e.g. PumpType) and by the type node,
+which carries the node information and points to the class:
+
+PumpTypeNode
+    rdf:type uardf:ObjectType ;
+    uardf:definesType PumpType ;
+    uardf:isAbstract false
+
+---
+
+## Node Identification
+
+The IRI of a node is the namespace URI followed by the base64url encoding (without
+padding) of its canonical ExpandedNodeId. The node keeps its identification as data:
+
+- uardf:nodeId: the canonical ExpandedNodeId, e.g. `nsu=http://opcfoundation.org/UA/Pumps/;i=1002`
+  (`i=2042` for core nodes)
+- uardf:namespaceUri, uardf:browseName (`nsu=<namespace>;<name>`), uardf:name,
+  uardf:symbolicName, uardf:displayName, uardf:description
+- uardf:parent: the ParentNodeId
+
+Nodes which are the same in every server are static. Server specific (dynamic) nodes
+are only translated when a server URI is given; their ExpandedNodeId contains it
+(`svu=<server URI>;nsu=…;i=…`) and they carry uardf:serverUri.
 
 ---
 
@@ -132,7 +168,8 @@ PumpType sb:hasMotor Motor
 
 where:
 
-sb:hasMotor rdf:type owl:ObjectProperty
+sb:hasMotor rdf:type owl:ObjectProperty ;
+    rdfs:subPropertyOf uardf:semanticBridgeReferenceType
 
 ---
 
@@ -178,7 +215,7 @@ ModellingRules remain attached to the declaration node.
 Example:
 
 MotorDeclaration
-    opcua:ModellingRule Mandatory
+    opcua:HasModellingRule Mandatory
 
 No OWL cardinalities are generated at this stage.
 
@@ -209,7 +246,9 @@ PumpType
     sb:hasMotor MotorDeclaration
 
 MotorDeclaration
-    rdf:type opcua:InstanceDeclaration
+    rdf:type uardf:Object ;
+    uardf:hasTypeDefinition MotorType ;
+    opcua:HasModellingRule Mandatory
 
 Instance declarations remain first-class nodes.
 

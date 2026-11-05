@@ -2,232 +2,193 @@
 @prefix opcua: <http://opcfoundation.org/UA/> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix uardf: <http://opcfoundation.org/rdf/uacore#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 # OK
-opcua:nodei1 a opcua:PropertyType,
-        opcua:VariableNodeClass ;
-    base:hasBrowseName "Annotations1" ;
+opcua:aT0x a uardf:Variable ;
+    uardf:hasTypeDefinition opcua:PropertyType ;
+    uardf:name "Annotations1" ;
     base:hasDatatype opcua:Annotation ;
-    base:hasDisplayName "Annotations1" ;
-    base:hasIdentifierType base:numericID ;
-    base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "1" ;
+    uardf:displayName "Annotations1"@en ;
+    uardf:nodeId "i=1" ;
     base:hasValueRank -2 .
 
 # OK
-opcua:nodei2 a opcua:PropertyType,
-        opcua:VariableNodeClass ;
-    base:hasBrowseName "Annotations2" ;
+opcua:aT0y a uardf:Variable ;
+    uardf:hasTypeDefinition opcua:PropertyType ;
+    uardf:name "Annotations2" ;
     base:hasDatatype opcua:Annotation ;
-    base:hasDisplayName "Annotations2" ;
-    base:hasIdentifierType base:numericID ;
-    base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "2" ;
+    uardf:displayName "Annotations2"@en ;
+    uardf:nodeId "i=2" ;
     base:hasValueRank -1 .
 
 # OK
-opcua:nodei3 a opcua:PropertyType,
-        opcua:VariableNodeClass ;
-    base:hasBrowseName "Annotations3" ;
+opcua:aT0z a uardf:Variable ;
+    uardf:hasTypeDefinition opcua:PropertyType ;
+    uardf:name "Annotations3" ;
     base:hasDatatype opcua:Annotation ;
-    base:hasDisplayName "Annotations3" ;
-    base:hasIdentifierType base:numericID ;
-    base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "3" ;
+    uardf:displayName "Annotations3"@en ;
+    uardf:nodeId "i=3" ;
     base:hasValueRank -3 .
 
 # not allowed Rank Value
-opcua:nodei4 a opcua:PropertyType,
-        opcua:VariableNodeClass ;
-    base:hasBrowseName "Annotations4" ;
+opcua:aT00 a uardf:Variable ;
+    uardf:hasTypeDefinition opcua:PropertyType ;
+    uardf:name "Annotations4" ;
     base:hasDatatype opcua:Annotation ;
-    base:hasDisplayName "Annotations4" ;
-    base:hasIdentifierType base:numericID ;
-    base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "4" ;
+    uardf:displayName "Annotations4"@en ;
+    uardf:nodeId "i=4" ;
     base:hasValueRank -4 .
 
 # OK - ValueRank -2 (Any) permits "a scalar or an array with any number of
 # dimensions", so no ArrayDimensions length contradicts it.
-opcua:nodei5 a opcua:PropertyType,
-        opcua:VariableNodeClass ;
-    base:hasBrowseName "Annotations5" ;
+opcua:aT01 a uardf:Variable ;
+    uardf:hasTypeDefinition opcua:PropertyType ;
+    uardf:name "Annotations5" ;
     base:hasDatatype opcua:Annotation ;
-    base:hasDisplayName "Annotations5" ;
-    base:hasIdentifierType base:numericID ;
-    base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "5" ;
+    uardf:displayName "Annotations5"@en ;
+    uardf:nodeId "i=5" ;
     base:hasArrayDimensions ( 1 ) ;
     base:hasValueRank -2 .
 
 # OK - ValueRank 0 (OneOrMoreDimensions) means the Value IS an array, so it has
 # ArrayDimensions; the declaration does not fix how many, so no length is wrong.
-opcua:nodei6 a opcua:PropertyType,
-        opcua:VariableNodeClass ;
-    base:hasBrowseName "Annotations6" ;
+opcua:aT02 a uardf:Variable ;
+    uardf:hasTypeDefinition opcua:PropertyType ;
+    uardf:name "Annotations6" ;
     base:hasDatatype opcua:Annotation ;
-    base:hasDisplayName "Annotations6" ;
-    base:hasIdentifierType base:numericID ;
-    base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "6" ;
+    uardf:displayName "Annotations6"@en ;
+    uardf:nodeId "i=6" ;
     base:hasArrayDimensions ( 1 );
     base:hasValueRank 0 .
 
 # OK
-opcua:nodei7 a opcua:PropertyType,
-        opcua:VariableNodeClass ;
-    base:hasBrowseName "Annotations7" ;
+opcua:aT03 a uardf:Variable ;
+    uardf:hasTypeDefinition opcua:PropertyType ;
+    uardf:name "Annotations7" ;
     base:hasDatatype opcua:Annotation ;
-    base:hasDisplayName "Annotations7" ;
-    base:hasIdentifierType base:numericID ;
-    base:hasNamespace opcua:OPCUANamespace ;
-    base:hasNodeId "7" ;
+    uardf:displayName "Annotations7"@en ;
+    uardf:nodeId "i=7" ;
     base:hasArrayDimensions ( 1 );
     base:hasValueRank 1 .
 
 # OK
-opcua:nodei8 a opcua:PropertyType,
-    opcua:VariableNodeClass ;
-base:hasBrowseName "Annotations8" ;
+opcua:aT04 a uardf:Variable ;
+    uardf:hasTypeDefinition opcua:PropertyType ;
+uardf:name "Annotations8" ;
 base:hasDatatype opcua:Annotation ;
-base:hasDisplayName "Annotations8" ;
-base:hasIdentifierType base:numericID ;
-base:hasNamespace opcua:OPCUANamespace ;
-base:hasNodeId "8" ;
+uardf:displayName "Annotations8"@en ;
+uardf:nodeId "i=8" ;
 base:hasArrayDimensions ( 2 2 );
 base:hasValueRank 2 .
 
 # Not OK, ArrayDimension contains negative number
-opcua:nodei9 a opcua:PropertyType,
-    opcua:VariableNodeClass ;
-base:hasBrowseName "Annotations9" ;
+opcua:aT05 a uardf:Variable ;
+    uardf:hasTypeDefinition opcua:PropertyType ;
+uardf:name "Annotations9" ;
 base:hasDatatype opcua:Annotation ;
-base:hasDisplayName "Annotations9" ;
-base:hasIdentifierType base:numericID ;
-base:hasNamespace opcua:OPCUANamespace ;
-base:hasNodeId "9" ;
+uardf:displayName "Annotations9"@en ;
+uardf:nodeId "i=9" ;
 base:hasArrayDimensions ( 2 -2 1 1);
 base:hasValueRank 4 .
 
 # OK
-opcua:nodei10 a opcua:PropertyType,
-    opcua:VariableNodeClass ;
-base:hasBrowseName "Annotations10" ;
+opcua:aT0xMA a uardf:Variable ;
+    uardf:hasTypeDefinition opcua:PropertyType ;
+uardf:name "Annotations10" ;
 base:hasDatatype opcua:Annotation ;
-base:hasDisplayName "Annotations10" ;
-base:hasIdentifierType base:numericID ;
-base:hasNamespace opcua:OPCUANamespace ;
-base:hasNodeId "10" ;
+uardf:displayName "Annotations10"@en ;
+uardf:nodeId "i=10" ;
 base:hasArrayDimensions ( 0 );
 base:hasValueRank 1 .
 
 # ValueRank contradicts type definition
-opcua:nodei11 a base:MyVariableType,
-    opcua:VariableNodeClass ;
-base:hasBrowseName "Annotations11" ;
+opcua:aT0xMQ a uardf:Variable ;
+    uardf:hasTypeDefinition base:MyVariableType ;
+uardf:name "Annotations11" ;
 base:hasDatatype opcua:Annotation ;
-base:hasDisplayName "Annotations11" ;
-base:hasIdentifierType base:numericID ;
-base:hasNamespace opcua:OPCUANamespace ;
-base:hasNodeId "11" ;
+uardf:displayName "Annotations11"@en ;
+uardf:nodeId "i=11" ;
 base:hasArrayDimensions ( 0 );
 base:hasValueRank 1 .
 
-opcua:nodei12 a opcua:VariableTypeNodeClass ;
-base:definesType base:MyVariableType;
-base:hasBrowseName "MyVariableType" ;
+opcua:aT0xMg a uardf:VariableType ;
+uardf:definesType base:MyVariableType;
+uardf:name "MyVariableType" ;
 base:hasDatatype opcua:Annotation ;
-base:hasDisplayName "MyVariableType" ;
-base:hasIdentifierType base:numericID ;
-base:hasNamespace opcua:OPCUANamespace ;
-base:hasNodeId "12" ;
+uardf:displayName "MyVariableType"@en ;
+uardf:nodeId "i=12" ;
 base:hasValueRank -1 .
 
 # OK
-opcua:nodei13 a base:MyVariableType,
-    opcua:VariableNodeClass ;
-base:hasBrowseName "Annotations13" ;
+opcua:aT0xMw a uardf:Variable ;
+    uardf:hasTypeDefinition base:MyVariableType ;
+uardf:name "Annotations13" ;
 base:hasDatatype opcua:Annotation ;
-base:hasDisplayName "Annotations13" ;
-base:hasIdentifierType base:numericID ;
-base:hasNamespace opcua:OPCUANamespace ;
-base:hasNodeId "13" ;
+uardf:displayName "Annotations13"@en ;
+uardf:nodeId "i=13" ;
 .
 
 # Not OK - missing arrayDimensions
-opcua:nodei14 a base:MyVariableType2,
-    opcua:VariableNodeClass ;
-base:hasBrowseName "Annotations14" ;
+opcua:aT0xNA a uardf:Variable ;
+    uardf:hasTypeDefinition base:MyVariableType2 ;
+uardf:name "Annotations14" ;
 base:hasDatatype opcua:Annotation ;
-base:hasDisplayName "Annotations14" ;
-base:hasIdentifierType base:numericID ;
-base:hasNamespace opcua:OPCUANamespace ;
-base:hasNodeId "14" ;
+uardf:displayName "Annotations14"@en ;
+uardf:nodeId "i=14" ;
 base:hasValueRank 2 .
 
-opcua:nodei15 a opcua:VariableTypeNodeClass ;
-base:definesType base:MyVariableType2;
-base:hasBrowseName "MyVariableType2" ;
+opcua:aT0xNQ a uardf:VariableType ;
+uardf:definesType base:MyVariableType2;
+uardf:name "MyVariableType2" ;
 base:hasDatatype opcua:Annotation ;
-base:hasDisplayName "MyVariableType2" ;
-base:hasIdentifierType base:numericID ;
-base:hasNamespace opcua:OPCUANamespace ;
-base:hasNodeId "15" ;
+uardf:displayName "MyVariableType2"@en ;
+uardf:nodeId "i=15" ;
 base:hasValueRank -2 .
 
 # Not okay, valueRank 2 is wrong
-opcua:nodei16 a base:MyVariableType3,
-    opcua:VariableNodeClass ;
-base:hasBrowseName "Annotations16" ;
+opcua:aT0xNg a uardf:Variable ;
+    uardf:hasTypeDefinition base:MyVariableType3 ;
+uardf:name "Annotations16" ;
 base:hasDatatype opcua:Annotation ;
-base:hasDisplayName "Annotations16" ;
-base:hasIdentifierType base:numericID ;
-base:hasNamespace opcua:OPCUANamespace ;
-base:hasNodeId "16" ;
+uardf:displayName "Annotations16"@en ;
+uardf:nodeId "i=16" ;
 base:hasValueRank 2 .
 
-opcua:nodei17 a opcua:VariableTypeNodeClass ;
-base:definesType base:MyVariableType3;
-base:hasBrowseName "MyVariableType3" ;
+opcua:aT0xNw a uardf:VariableType ;
+uardf:definesType base:MyVariableType3;
+uardf:name "MyVariableType3" ;
 base:hasDatatype opcua:Annotation ;
-base:hasDisplayName "MyVariableType3" ;
-base:hasIdentifierType base:numericID ;
-base:hasNamespace opcua:OPCUANamespace ;
-base:hasNodeId "17" ;
+uardf:displayName "MyVariableType3"@en ;
+uardf:nodeId "i=17" ;
 base:hasValueRank -3 .
 
 # Not OK - ArrayDimensions missing
-opcua:nodei18 a base:MyVariableType3,
-    opcua:VariableNodeClass ;
-base:hasBrowseName "Annotations18" ;
+opcua:aT0xOA a uardf:Variable ;
+    uardf:hasTypeDefinition base:MyVariableType3 ;
+uardf:name "Annotations18" ;
 base:hasDatatype opcua:Annotation ;
-base:hasDisplayName "Annotations18" ;
-base:hasIdentifierType base:numericID ;
-base:hasNamespace opcua:OPCUANamespace ;
-base:hasNodeId "18" ;
+uardf:displayName "Annotations18"@en ;
+uardf:nodeId "i=18" ;
 base:hasValueRank 1 .
 
 # Not OK  - supertype does not match subtype
-opcua:nodei19 a opcua:VariableTypeNodeClass;
-base:definesType base:MyVariableType4;
-base:hasBrowseName "MyVariableType19" ;
+opcua:aT0xOQ a uardf:VariableType ;
+uardf:definesType base:MyVariableType4;
+uardf:name "MyVariableType19" ;
 base:hasDatatype opcua:Annotation ;
-base:hasDisplayName "MyVariableType19" ;
-base:hasIdentifierType base:numericID ;
-base:hasNamespace opcua:OPCUANamespace ;
-base:hasNodeId "19" ;
+uardf:displayName "MyVariableType19"@en ;
+uardf:nodeId "i=19" ;
 base:hasValueRank -1 .
 
-opcua:nodei20 a opcua:VariableTypeNodeClass ;
-base:definesType base:MyVariableType5;
-base:hasBrowseName "MyVariableType20" ;
+opcua:aT0yMA a uardf:VariableType ;
+uardf:definesType base:MyVariableType5;
+uardf:name "MyVariableType20" ;
 base:hasDatatype opcua:Annotation ;
-base:hasDisplayName "MyVariableType20" ;
-base:hasIdentifierType base:numericID ;
-base:hasNamespace opcua:OPCUANamespace ;
-base:hasNodeId "20" ;
+uardf:displayName "MyVariableType20"@en ;
+uardf:nodeId "i=20" ;
 base:hasValueRank 0 .
 
 base:MyVariableType4 a owl:Class ;
@@ -237,14 +198,12 @@ base:MyVariableType4 a owl:Class ;
 opcua:MyVariableType5 a owl:Class .
 
 # Not ok - ValueRank and ArrayDefinitions do not match
-opcua:nodei21 a base:MyVariableType3,
-    opcua:VariableNodeClass ;
-base:hasBrowseName "Annotations21" ;
+opcua:aT0yMQ a uardf:Variable ;
+    uardf:hasTypeDefinition base:MyVariableType3 ;
+uardf:name "Annotations21" ;
 base:hasDatatype opcua:Annotation ;
-base:hasDisplayName "Annotations21" ;
-base:hasIdentifierType base:numericID ;
-base:hasNamespace opcua:OPCUANamespace ;
-base:hasNodeId "21" ;
+uardf:displayName "Annotations21"@en ;
+uardf:nodeId "i=21" ;
 base:hasArrayDimensions ( 0 1 );
 base:hasValueRank 1 .
 
@@ -252,52 +211,44 @@ base:hasValueRank 1 .
 # This is the exact shape of OPC UA DI's WarningValues (ns=1;i=472), which is
 # compliant: Part 3 5.6.2 lets the Value of a -3 Variable be a one-dimensional
 # array, and one element of 0 means "maximum length unknown". Must NOT be flagged.
-opcua:nodei22 a opcua:PropertyType,
-    opcua:VariableNodeClass ;
-base:hasBrowseName "Annotations22" ;
+opcua:aT0yMg a uardf:Variable ;
+    uardf:hasTypeDefinition opcua:PropertyType ;
+uardf:name "Annotations22" ;
 base:hasDatatype opcua:Annotation ;
-base:hasDisplayName "Annotations22" ;
-base:hasIdentifierType base:numericID ;
-base:hasNamespace opcua:OPCUANamespace ;
-base:hasNodeId "22" ;
+uardf:displayName "Annotations22"@en ;
+uardf:nodeId "i=22" ;
 base:hasArrayDimensions ( 0 );
 base:hasValueRank -3 .
 
 # Not OK - ValueRank -3 permits at most ONE dimension, so two is still a violation.
-opcua:nodei23 a opcua:PropertyType,
-    opcua:VariableNodeClass ;
-base:hasBrowseName "Annotations23" ;
+opcua:aT0yMw a uardf:Variable ;
+    uardf:hasTypeDefinition opcua:PropertyType ;
+uardf:name "Annotations23" ;
 base:hasDatatype opcua:Annotation ;
-base:hasDisplayName "Annotations23" ;
-base:hasIdentifierType base:numericID ;
-base:hasNamespace opcua:OPCUANamespace ;
-base:hasNodeId "23" ;
+uardf:displayName "Annotations23"@en ;
+uardf:nodeId "i=23" ;
 base:hasArrayDimensions ( 0 2 );
 base:hasValueRank -3 .
 
 # Not OK - ValueRank -1 is Scalar, "The value is not an array", so ArrayDimensions
 # shall be null. This is the one rank below 1 that does constrain the length, and
 # it is what keeps the relaxations for -2/0/-3 from emptying the rule.
-opcua:nodei24 a opcua:PropertyType,
-    opcua:VariableNodeClass ;
-base:hasBrowseName "Annotations24" ;
+opcua:aT0yNA a uardf:Variable ;
+    uardf:hasTypeDefinition opcua:PropertyType ;
+uardf:name "Annotations24" ;
 base:hasDatatype opcua:Annotation ;
-base:hasDisplayName "Annotations24" ;
-base:hasIdentifierType base:numericID ;
-base:hasNamespace opcua:OPCUANamespace ;
-base:hasNodeId "24" ;
+uardf:displayName "Annotations24"@en ;
+uardf:nodeId "i=24" ;
 base:hasArrayDimensions ( 1 );
 base:hasValueRank -1 .
 
 # OK - ValueRank -2 with a multi-dimensional ArrayDimensions: "any number of
 # dimensions" includes this one.
-opcua:nodei25 a opcua:PropertyType,
-    opcua:VariableNodeClass ;
-base:hasBrowseName "Annotations25" ;
+opcua:aT0yNQ a uardf:Variable ;
+    uardf:hasTypeDefinition opcua:PropertyType ;
+uardf:name "Annotations25" ;
 base:hasDatatype opcua:Annotation ;
-base:hasDisplayName "Annotations25" ;
-base:hasIdentifierType base:numericID ;
-base:hasNamespace opcua:OPCUANamespace ;
-base:hasNodeId "25" ;
+uardf:displayName "Annotations25"@en ;
+uardf:nodeId "i=25" ;
 base:hasArrayDimensions ( 2 2 );
 base:hasValueRank -2 .

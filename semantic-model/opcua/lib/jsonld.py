@@ -20,7 +20,7 @@ from rdflib.namespace import XSD, RDF
 from rdflib.collection import Collection
 import operator
 from functools import reduce
-from lib.utils import is_subclass, ngsild_context, NGSILD, NULL_IRI, RdfUtils, \
+from lib.utils import is_subclass, ngsild_context, NGSILD, NULL_IRI, UARDF, RdfUtils, \
     DEFAULT_NODEID, DEFAULT_ENUMERATION_INSTANCE
 
 
@@ -209,7 +209,7 @@ class JsonLd:
         if is_subclass(g, data_type, opcuans['Enumeration']):
             return [XSD.enumeration], None
         if data_type == opcuans['NodeId']:
-            return [opcuans['BaseNodeClass']], None
+            return [UARDF['Node']], None
         return [RDF.JSON], None
 
     @staticmethod

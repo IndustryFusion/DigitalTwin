@@ -17,7 +17,7 @@
 import os
 from rdflib import Graph, Namespace, Literal, URIRef, BNode
 from rdflib.namespace import OWL, RDF, RDFS
-from lib.utils import NGSILD, collection_to_list, calculate_array_dimensions
+from lib.utils import NGSILD, UARDF, collection_to_list, calculate_array_dimensions
 import logging
 
 logging.basicConfig(level=os.getenv('LOG_LEVEL', 'INFO').upper())
@@ -131,11 +131,10 @@ class Entity:
             result = g.query("""
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             SELECT ?onc ?type WHERE {
-                ?nodeclass a ?type .
-                FILTER NOT EXISTS {?type rdfs:subClassOf+ opcua:BaseNodeClass . }
-                ?onc a ?type .
+                ?nodeclass uardf:hasTypeDefinition ?type .
+                ?onc uardf:hasTypeDefinition ?type .
                 FILTER(?nodeclass != ?onc) .
-            }""", initBindings=bindings, initNs={'base': self.basens, 'opcua': self.opcuans})
+            }""", initBindings=bindings, initNs={'base': self.basens, 'opcua': self.opcuans, 'uardf': UARDF})
             # Collect all unique rows in a set to avoid duplicates
 
             for row in result:
