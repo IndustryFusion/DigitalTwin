@@ -14,10 +14,10 @@
 
 ## 3. GitHub integration
 
-- [ ] 3.1 Add `.github/workflows/openspec-validate.yml` running `openspec validate --all --strict` with a pinned, checksum-verified binary on Pull Requests touching `openspec/**` or the workflow; verify the check runs and passes on this Pull Request
+- [x] 3.1 Add `.github/workflows/openspec-validate.yml` running `openspec validate --all --strict` with a pinned, checksum-verified binary on Pull Requests touching `openspec/**` or the workflow; verify the check runs and passes on this Pull Request
 - [x] 3.2 Add `.github/ISSUE_TEMPLATE/feature.yml`; verify it parses as YAML and the existing templates are unchanged
 - [x] 3.3 Add `.github/pull_request_template.md` with change type, issue link, change ID and the automated-versus-human checklist, using `Refs #N` for changes with a specification and `Closes #N` otherwise; verify the fields are present
-- [ ] 3.4 Add `paths-ignore: openspec/**` to the `push` and `pull_request` triggers of `build.yaml` and `k8s-tests.yaml`; verify nothing else changes in them and `workflow_call` has no filter
+- [x] 3.4 Add `paths-ignore: openspec/**` to the `push` and `pull_request` triggers of `build.yaml` and `k8s-tests.yaml`; verify nothing else changes in them and `workflow_call` has no filter
 
 ## 4. Contributor documentation
 
