@@ -51,10 +51,14 @@ maintainer may do so. Implementation commits follow in the same Pull Request.
 Alternative: separate specification and implementation Pull Requests; rejected as
 extra overhead. Commits stay distinguishable in history.
 
-**`Build` and `K8s tests` stay unchanged.** Specification-only Pull Requests also
-run them, which costs runner time only. Alternative: `paths-ignore: openspec/**`;
-deferred, because it changes existing workflows and needs care where checks are
-required for merging. It can be added later if the cost proves relevant.
+**Specification-only contributions run only the OpenSpec validation.** Both triggers
+of `Build` and `K8s tests`, `push` and `pull_request`, get `paths-ignore: openspec/**`,
+as decided on the issue. A specification doesn't change what these workflows test, and
+they take about 50 minutes each. GitHub skips a workflow only if all changed files
+match, so an implementation Pull Request with code still runs both. `workflow_call` has
+no path filter, so the nightly run is unaffected. No status check is required on `main`,
+so a skipped workflow doesn't block a merge. Alternative: leaving the workflows
+unchanged; rejected because it costs runner time without any signal.
 
 **Traceability by naming and a proposal line.** Change IDs
 `gh-<issue>-<kebab-summary>` plus `Issue: #N` in `proposal.md`, stated in the
@@ -104,6 +108,8 @@ archiving, as seen in a trial. This is a rule in `openspec/config.yaml`.
 - [OpenSpec treats operation guidance as advisory, and the archive skill does not
   commit] → The rule is also in `AGENTS.md`, `CONTRIBUTING.md` and the pull request
   template; if an issue stays open by mistake, a maintainer closes it.
+- [If `Build` or `K8s tests` become required checks, a skipped workflow would block
+  merging specification-only Pull Requests] → Revisit the filter when adding them.
 - [Specifications drift from the code] → Tasks include tests for the scenarios, and
   verification is reported per scenario in the Pull Request.
 - [No central architecture document, so agents have less context] → Context links
@@ -115,4 +121,3 @@ archiving, as seen in a trial. This is a rule in `openspec/config.yaml`.
 ## Open Questions
 
 - Whether to enforce label permissions via `CODEOWNERS` and branch protection.
-- Whether specification-only Pull Requests should skip `Build` and `K8s tests`.

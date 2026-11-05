@@ -17,6 +17,7 @@
 - [ ] 3.1 Add `.github/workflows/openspec-validate.yml` running `openspec validate --all --strict` with a pinned, checksum-verified binary on Pull Requests touching `openspec/**` or the workflow; verify the check runs and passes on this Pull Request
 - [x] 3.2 Add `.github/ISSUE_TEMPLATE/feature.yml`; verify it parses as YAML and the existing templates are unchanged
 - [x] 3.3 Add `.github/pull_request_template.md` with change type, issue link, change ID and the automated-versus-human checklist, using `Refs #N` for changes with a specification and `Closes #N` otherwise; verify the fields are present
+- [ ] 3.4 Add `paths-ignore: openspec/**` to the `push` and `pull_request` triggers of `build.yaml` and `k8s-tests.yaml`; verify nothing else changes in them and `workflow_call` has no filter
 
 ## 4. Contributor documentation
 
@@ -27,8 +28,8 @@
 
 - [x] 5.1 Run `openspec validate --all --strict` and `openspec status --change gh-932-bootstrap-openspec`; verify validation passes and all artifacts are complete
 - [x] 5.2 Confirm a requirement without a scenario fails strict validation (temporary, not committed)
-- [ ] 5.3 Compare with `main`: only new files and the `README.md` link; verify `Build` and `K8s tests` are unchanged and pass
+- [ ] 5.3 Compare with `main`: only new files, the `README.md` link and the path filters of task 3.4; verify `Build` and `K8s tests` pass on this Pull Request, which also changes other files
 
 ## Workflow follow-up
 
-- After merge, run `/opsx:archive gh-932-bootstrap-openspec` in a follow-up Pull Request; verify `openspec/specs/spec-driven-workflow/spec.md` exists and `openspec validate --all --strict` passes. The archive commit message closes #932, as this is the issue's only change; verify the issue is closed once it reaches `main`.
+- After merge, run `/opsx:archive gh-932-bootstrap-openspec` in a follow-up Pull Request; verify `openspec/specs/spec-driven-workflow/spec.md` exists and `openspec validate --all --strict` passes. The archive commit message closes #932, as this is the issue's only change; verify the issue is closed once it reaches `main`. As this Pull Request changes only `openspec/**`, verify that it runs `OpenSpec validate` but not `Build` and `K8s tests`.

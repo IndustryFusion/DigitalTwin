@@ -32,6 +32,8 @@ against.
 - Keep an issue open until its change is archived: Pull Requests reference the
   issue without closing it, and the commit archiving the issue's last change
   closes it.
+- Contributions which change only `openspec/**` run only the OpenSpec validation,
+  not `Build` and `K8s tests`.
 - Add a workflow validating OpenSpec artifacts, a feature issue form, a pull
   request template and a contributor guide.
 
@@ -53,8 +55,9 @@ None.
 - No component's build, image or deployment changes. The new workflow downloads
   a pinned, checksum-verified OpenSpec binary and runs only when `openspec/**`
   or the workflow itself changes.
-- The `Build` and `K8s tests` workflows stay as they are, so they also run on
-  specification-only Pull Requests.
+- The `Build` and `K8s tests` workflows skip pushes and Pull Requests which change
+  only `openspec/**`. Everything else runs them as before, including the nightly
+  run.
 - A new `spec-approved` label on the repository.
 
 ## Out of Scope
@@ -67,4 +70,5 @@ None.
   limitation.
 - Requiring a specification for every change.
 - Specifying the behaviour of existing components up front.
-- Any change to application behaviour or to existing CI workflows.
+- Any change to application behaviour, and any change to existing CI workflows
+  apart from skipping them for specification-only contributions.
