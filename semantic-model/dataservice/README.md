@@ -160,3 +160,69 @@ Onboarding is done in [NgsildAgent](../../NgsildAgent). For the testsetup the on
 python3 startDataservice.py -e filter_and_cartridge_subcomponent_entities.ttl examples/ urn:iff:filter1 examples/bindings.ttl
 ```
 
+
+## OPC UA Example: From the Pump Nodeset to NGSI-LD
+
+This example builds the model and the bindings of the OPC UA pump example, serves its nodeset with a test server and forwards the values of the server to the context broker. The preconditions are those of the [Example Setup](#example-setup) and an installed `asyncua`.
+
+### Create Model and Bindings
+
+```
+(cd ../opcua; make -f translate_pumpExample.make)
+```
+
+This creates `instances.jsonld`, `entities.ttl`, `shacl.ttl`, `context.jsonld` and `bindings.ttl` in `../opcua`. Submit the instances with the `$token` from [above](#create-entity-in-ngsi-ld):
+
+```
+curl -X POST -H "Authorization: Bearer $token" -H "Content-Type: application/ld+json" -d @../opcua/instances.jsonld http://ngsild.local/ngsi-ld/v1/entityOperations/upsert
+```
+
+### Onboard the Device
+
+The pump is the device, all other entities are its subcomponents. The device IDs are part of the MQTT topics, so they must not contain a `/`. This is why the entity IDs of `owl2instances.py` are URNs (`urn:uaentity:...`) and a prefix given by `-i` should be a URN as well.
+
+```
+root=$(jq -r '.[] | select(.type == "pumps:PumpType") | .id' ../opcua/instances.jsonld)
+subcomponents=$(jq -r --arg root "$root" '.[] | select(.id != $root) | "-d " + .id' ../opcua/instances.jsonld)
+password=$(kubectl -n iff get secret/credential-iff-realm-user-iff -o jsonpath='{.data.password}'| base64 -d)
+( cd ../../NgsildAgent/util; ./init-device.sh $subcomponents $root pumpgateway; ./get-onboarding-token.sh -p $password realm_user; ./activate.sh -f )
+( cd ../../NgsildAgent; node ./iff-agent.js & )
+```
+
+### Start OPC UA Server and Dataservice
+
+There are two test servers. `tests/server/nodeset_server.py` serves the real nodesets with their values and data types. With `-w` clients can write the bound nodes, otherwise they are read-only and nothing ever changes:
+
+```
+R=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15
+for f in DI/Opc.Ua.Di.NodeSet2.xml Machinery/Opc.Ua.Machinery.NodeSet2.xml Pumps/Opc.Ua.Pumps.NodeSet2.xml Pumps/instanceexample.xml; do curl -sO $R/$f; done
+python3 tests/server/nodeset_server.py -e opc.tcp://127.0.0.1:4840/ -x Opc.Ua.Di.NodeSet2.xml -x Opc.Ua.Machinery.NodeSet2.xml -x Opc.Ua.Pumps.NodeSet2.xml -x instanceexample.xml -w ../opcua/bindings.ttl &
+```
+
+`tests/server/binding_server.py` needs no nodesets. It creates a node for every map of a binding file and changes the values randomly every 5 seconds, except for the structures, which it cannot generate. Its endpoint is `opc.tcp://localhost:4840/freeopcua/server/`:
+
+```
+python3 tests/server/binding_server.py ../opcua/bindings.ttl &
+```
+
+Then start the dataservice and tell the connector where to find the server:
+
+```
+OPCUA_TCP_CONNECT=opc.tcp://127.0.0.1:4840/ python3 startDataservice.py ../opcua ../opcua/bindings.ttl
+```
+
+Every value which is written to a node of the server arrives in the context broker within some seconds, the connector reads every 5 seconds.
+
+### How Values are Mapped
+
+The bindings deliver a value in the same form as `instances.jsonld` has it:
+
+| OPC UA | NGSI-LD | Binding |
+|---|---|---|
+| Numbers, Boolean, String, DateTime | `Property` with number, `true`/`false`, string, ISO 8601 timestamp | Value is taken over directly |
+| Enumeration | `Property` with the IRI of the enum value, e.g. `{"@id": "http://opcfoundation.org/UA/Pumps/LiquidPump"}` | `bindsLogic` looks up the number in the knowledge of `entities.ttl`. A number which is not part of the Enumeration delivers no value |
+| Structures, e.g. OptionSets | `JsonProperty` with `{"xsd:Body": {"xsd:<Type>": {"xsd:<Field>": ...}}}` and ByteStrings in base64 | `bindsAttributeType` is `ngsi-ld:JsonProperty` |
+
+Arrays are not supported by the connector yet.
+
+A node without a value and a read which fails do not deliver a value, so the context broker keeps the last known value. When the connection to the server is lost, the connector tries to connect again.

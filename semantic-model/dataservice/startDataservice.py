@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+import json
 import sys
 import urllib
 import asyncio
@@ -81,6 +82,8 @@ tasks = []
 query_prefixes = ''
 g = rdflib.Graph()
 supported_versions = ["0.1", "0.9"]
+# How often a binding looks for updates of its maps, in seconds
+update_poll_interval = 0.1
 owl_bindings = {}
 
 
@@ -282,18 +285,19 @@ async def calculate_attribute(attribute, binding, firmwareVersion, attribute_tru
         if binding_dict['logic'] is not None:
             query = 'SELECT ?type ?value ?object ?datasetId ?trustLevel ' + binding_dict['logic']
             query = re.sub(r'^PREFIX .*\n', '', query)
+            qres = []
             try:
                 qres = g.query(query, initBindings=querybindings, initNs=prefixes)
             except Exception as e:
                 print(f'Error in executing query "{query}": {e}')
-            if len(list(qres)) == 0:
+            if len(list(qres)) == 0 and connector_attribute_trust_level > 0:
                 print(f"Warning: Could not derive any value binding from connector data: {binding_dict['maps']}")
 
         else:  # if there is only one map, take this over directly
             if len(binding_dict['maps']) == 1:
                 map = next(iter(binding_dict['maps'].values()))
                 if 'value' in map:
-                    qres = [{'value': map['value'], 'type': map['logicVarType']}]
+                    qres = [{'value': map['value'], 'type': URIRef(binding_dict['attributeType'])}]
                 else:
                     qres = []
         for row in qres:
@@ -334,7 +338,7 @@ async def calculate_attribute(attribute, binding, firmwareVersion, attribute_tru
             send(results, attribute, binding_dict['entityId'], dryrun, port)
         update_found = False
         while not update_found:
-            await asyncio.sleep(0)
+            await asyncio.sleep(update_poll_interval)
             update_found = True
             for map in binding_dict['maps']:
                 update_found = binding_dict['maps'][map]['updated'] and update_found
@@ -353,16 +357,17 @@ def send(results, attribute, entityId, dryrun, port):
         prefix = "Property"
         if type == prefixes['ngsi-ld'].Relationship:
             prefix = "Relationship"
+        elif type == prefixes['ngsi-ld'].JsonProperty:
+            prefix = "JsonProperty"
         elif isinstance(value, URIRef):
-            prefix = "PropertyIri"
-        # Send over mqtt/device-agent
-        payload_build = f'{{ "n": "{attribute}",\
-"v": "{value.toPython()}", "t": "{prefix}", "i": "{entityId}"'
+            prefix = "IriProperty"
+        # Send over mqtt/device-agent. The value is sent in its RDF lexical form, not in its Python form: true instead
+        # of True and 2025-07-14T08:30:00+00:00 instead of 2025-07-14 08:30:00+00:00.
+        message = {"n": attribute, "v": str(value), "t": prefix, "i": entityId}
         if lang is not None:
-            payload_build += f', "l": "{lang}"'
-        payload_build += '}'
-        payload.append(payload_build)
-    payloads = f'[{",".join(payload)}]'
+            message["l"] = lang
+        payload.append(message)
+    payloads = json.dumps(payload)
     if not dryrun:
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client_socket.connect(("127.0.0.1", port))

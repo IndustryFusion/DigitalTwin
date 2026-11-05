@@ -19,6 +19,7 @@ import signal
 from asyncua import Server
 from asyncua.ua.uaerrors._auto import BadParentNodeIdInvalid
 from datetime import datetime
+from rdflib import Graph, Namespace
 
 
 def log(message):
@@ -26,7 +27,18 @@ def log(message):
     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {message}")
 
 
-async def run_server(endpoint, namespace_uris, nodeset_files, strict):
+async def set_bound_nodes_writable(server, bindings_file, base_ns):
+    """Nodes of a Nodeset are read-only. Allow clients to write the nodes of the bindings, e.g. to simulate changes."""
+    base = Namespace(base_ns)
+    bindings = Graph()
+    bindings.parse(bindings_file)
+    for parameter in bindings.objects(None, base.bindsConnectorParameter):
+        namespace, identifier = str(parameter).removeprefix('nsu=').split(';', 1)
+        idx = await server.get_namespace_index(namespace)
+        await server.get_node(f'ns={idx};{identifier}').set_writable()
+
+
+async def run_server(endpoint, namespace_uris, nodeset_files, strict, writable_bindings=None, base_ns=None):
     # 1. Create and initialize the server
     server = Server()
     await server.init()
@@ -58,6 +70,10 @@ async def run_server(endpoint, namespace_uris, nodeset_files, strict):
                 raise
             else:
                 log(f"Warning: Skipping import error in {xml}: {e}")
+
+    if writable_bindings:
+        await set_bound_nodes_writable(server, writable_bindings, base_ns)
+        log(f"Set nodes of {writable_bindings} writable")
 
     # 4. Run the server
     async with server:
@@ -106,6 +122,16 @@ def parse_args():
         action="store_true",
         help="Use lenient parsing mode (suppress certain import errors)"
     )
+    parser.add_argument(
+        "--writable-bindings", "-w",
+        metavar="FILE",
+        help="Bindings file (bindings.ttl), its nodes can be written by clients to simulate changes"
+    )
+    parser.add_argument(
+        "--base-ns",
+        default="https://industryfusion.github.io/contexts/ontology/v0/base/",
+        help="Base namespace of the bindings file"
+    )
     return parser.parse_args()
 
 
@@ -118,7 +144,9 @@ def main():
                 args.endpoint,
                 args.namespace,
                 args.nodeset,
-                strict=not args.lenient
+                strict=not args.lenient,
+                writable_bindings=args.writable_bindings,
+                base_ns=args.base_ns
             )
         )
     except Exception as e:

@@ -16,10 +16,10 @@
 import asyncio
 import argparse
 import importlib
+from datetime import datetime, timezone
 from rdflib import Graph, Namespace
 from rdflib.namespace import RDF
 import re
-import sys
 import random
 import string
 
@@ -38,6 +38,9 @@ except ImportError:
     exit(1)
 
 opcua_ns = Namespace('http://opcfoundation.org/UA/')
+NGSILD = Namespace('https://uri.etsi.org/ngsi-ld/')
+INTEGER_TYPES = [opcua_ns.SByte, opcua_ns.Byte, opcua_ns.Int16, opcua_ns.UInt16, opcua_ns.Int32, opcua_ns.UInt32,
+                 opcua_ns.Int64, opcua_ns.UInt64]
 
 
 def generate_random_string(length=10):
@@ -60,6 +63,8 @@ async def update_values(variables):
                 value = random.choice([True, False])
             elif datatype == int:
                 value = random.randint(0, 5)
+            elif datatype == datetime:
+                value = datetime.now(timezone.utc)
             elif datatype == str:
                 value = generate_random_string(12)  # Generate a 12 character random string
             elif datatype == LocalizedText:
@@ -108,7 +113,8 @@ async def setup_opcua_server(mapping_data):
 {data['namespace']} with namespace idx {idx}")
 
         node_id = ua.NodeId(numeric_id, idx)
-        node = await device.add_variable(node_id, f"Node_{numeric_id}", data['datatype']())
+        initial = datetime.now(timezone.utc) if data['datatype'] == datetime else data['datatype']()
+        node = await device.add_variable(node_id, f"Node_{numeric_id}", initial)
         await node.set_writable()
 
         # Add the node and its datatype to the list for updates
@@ -120,7 +126,9 @@ async def setup_opcua_server(mapping_data):
         elif data['datatype'] == bool:
             value = random.choice([True, False])
         elif data['datatype'] == int:
-            value = random.randint(0, 100)
+            value = random.randint(0, 5)
+        elif data['datatype'] == datetime:
+            value = datetime.now(timezone.utc)
         elif data['datatype'] == str:
             value = generate_random_string(12)
         elif data['datatype'] == LocalizedText:
@@ -138,27 +146,12 @@ async def setup_opcua_server(mapping_data):
         await update_values(variables)
 
 
-def parse_rdf_to_mapping(rdf_file, base_ns, binding_ns=None, uaentity_ns=None):
+def parse_rdf_to_mapping(rdf_file, base_ns):
     g = Graph()
     g.parse(rdf_file, format="turtle")
 
     # Define the base namespace for the vocabulary
     BASE = Namespace(base_ns)
-
-    # Check for binding and UA entity namespaces in RDF
-    found_binding_ns = g.namespace_manager.store.namespace("binding")
-    found_uaentity_ns = g.namespace_manager.store.namespace("uaentity")
-
-    if not binding_ns and not found_binding_ns:
-        print("Error: Binding namespace not found in RDF data, and no binding namespace provided.")
-        sys.exit(1)
-    if not uaentity_ns and not found_uaentity_ns:
-        print("Error: UA entity namespace not found in RDF data, and no UA entity namespace provided.")
-        sys.exit(1)
-
-    # Use the found namespaces if not provided
-    binding_ns = binding_ns or found_binding_ns
-    uaentity_ns = uaentity_ns or found_uaentity_ns
 
     nsu_pattern = re.compile(r'nsu=(.*?);i=(\d+)')
 
@@ -177,13 +170,22 @@ def parse_rdf_to_mapping(rdf_file, base_ns, binding_ns=None, uaentity_ns=None):
                 namespace_uri = None
                 node_id = str(connector_attribute)
 
+            binding = g.value(predicate=BASE.bindsMap, object=s)
             # Translate RDF Datatype to Python Type
-            if datatype_uri == opcua_ns.Double:
+            if g.value(binding, BASE.bindsAttributeType) == NGSILD.JsonProperty:
+                print(f"Skipping node {node_id}: This server cannot generate structures of type {datatype_uri}.")
+                continue
+            if g.value(binding, BASE.bindsLogic) is not None:
+                # The binding translates the value, so it is an Enumeration, which a server delivers as number
+                datatype = int
+            elif datatype_uri == opcua_ns.Double:
                 datatype = float
             elif datatype_uri == opcua_ns.Boolean:
                 datatype = bool
-            elif datatype_uri == opcua_ns.Int32:
+            elif datatype_uri in INTEGER_TYPES:
                 datatype = int
+            elif datatype_uri == opcua_ns.DateTime:
+                datatype = datetime
             elif datatype_uri == opcua_ns.String:
                 datatype = str
             elif datatype_uri == opcua_ns.LocalizedText:
@@ -200,9 +202,9 @@ def parse_rdf_to_mapping(rdf_file, base_ns, binding_ns=None, uaentity_ns=None):
     return mapping_data
 
 
-async def main(rdf_file, base_ns, binding_ns=None, uaentity_ns=None):
+async def main(rdf_file, base_ns):
     # Parse the RDF to extract the mapping
-    mapping_data = parse_rdf_to_mapping(rdf_file, base_ns, binding_ns, uaentity_ns)
+    mapping_data = parse_rdf_to_mapping(rdf_file, base_ns)
 
     # Setup OPC UA server based on extracted mapping
     await setup_opcua_server(mapping_data)
@@ -213,9 +215,7 @@ if __name__ == "__main__":
     parser.add_argument("--base-ns", type=str, default="https://industryfusion.github.io/contexts/ontology/v0/base/",
                         help="Base namespace for the vocabulary \
 (default: https://industryfusion.github.io/contexts/ontology/v0/base/)")
-    parser.add_argument("--binding-ns", type=str, help="Optional: Binding namespace")
-    parser.add_argument("--uaentity-ns", type=str, help="Optional: UA entity namespace")
 
     args = parser.parse_args()
 
-    asyncio.run(main(args.rdf_file, args.base_ns, args.binding_ns, args.uaentity_ns))
+    asyncio.run(main(args.rdf_file, args.base_ns))
