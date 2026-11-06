@@ -339,21 +339,6 @@ EOF
 compare_pgrest_result4() {
     cat << EOF | jq | diff "$1" - >&3
 [
-  {
-    "attributeId": "http://example.com/property1",
-    "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
-    "datasetId": "@none",
-    "deleted": false,
-    "entityId": "urn:iff:testdevice:1",
-    "id": "urn:iff:testdevice:1\\\\0c8a0d568adb7bbf749c6301",
-    "lang": null,
-    "nodeType": "@value",
-    "parentId": null,
-    "unitCode": null,
-    "value": "8",
-    "valueType": null
-  },
-
   { 
     "attributeId": "http://example.com/property2",
     "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
@@ -366,6 +351,21 @@ compare_pgrest_result4() {
     "parentId": null,
     "unitCode": null,
     "value": "9",
+    "valueType": null
+  },
+
+  {
+    "attributeId": "http://example.com/property1",
+    "attributeType": "https://uri.etsi.org/ngsi-ld/Property",
+    "datasetId": "@none",
+    "deleted": false,
+    "entityId": "urn:iff:testdevice:1",
+    "id": "urn:iff:testdevice:1\\\\0c8a0d568adb7bbf749c6301",
+    "lang": null,
+    "nodeType": "@value",
+    "parentId": null,
+    "unitCode": null,
+    "value": "8",
     "valueType": null
   },
   { 
@@ -989,6 +989,9 @@ setup() {
     echo -n '[{"n": "'$PROPERTY1'", "v": "6"},{"n": "'$PROPERTY2'", "v": "7"}]' >/dev/udp/127.0.0.1/41234
     sleep 1
     echo -n '{"n": "'$PROPERTY1'", "v": "8"}' >/dev/tcp/127.0.0.1/7070
+    # Separate messages get separate timestamps. Without a pause, their order in the
+    # result depends on whether both happen to get the same millisecond.
+    sleep 1
     echo '{"n": "'$PROPERTY2'", "v": "9"}' >/dev/udp/127.0.0.1/41234
     sleep 1
     mqtt_delete_service
