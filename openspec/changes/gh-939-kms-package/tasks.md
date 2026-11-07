@@ -21,15 +21,19 @@
 ## 4. Published versions
 
 - [ ] 4.1 Add `semforge publish` and the release record `.kms/releases.yaml`, and fail verification and packing when a published version has changed; verify the scenarios of "Published versions are immutable" and "Publish a version"
-- [ ] 4.2 Add `semforge version patch|minor|major`; verify "Minor raise", including that comments in `kms.yaml` survive
-- [ ] 4.3 Warn once per version on the first change to a published package, with the three next versions, in the editor service; verify "First edit after publishing" and "Draft version" over the editor protocol
+- [ ] 4.2 Run the suite and measure coverage in `semforge publish`, refuse below the threshold, and record the results; verify the scenarios of "Only tested versions are published", "The release record holds the test results" and "Publishing runs the tests"
+- [ ] 4.3 Implement the coverage measure of the contract (firing as asserted; SHACL-SPARQL counted; rules and the scratchpad not counted; no constraints = 100 %); verify the scenarios of "Coverage counts the constraints that fire"
+- [ ] 4.4 Add `semforge verify --tests` and the `tests.coverage` setting; verify "Re-running a published archive" and "Default threshold shown"
+- [ ] 4.5 Add `semforge version patch|minor|major`; verify "Minor raise", including that comments in `kms.yaml` survive
+- [ ] 4.6 Warn once per version on the first change to a published package, with the three next versions, in the editor service; verify "First edit after publishing" and "Draft version" over the editor protocol
 
 ## 5. semantic-model/kms
 
 - [ ] 5.1 Move the KMS to `kms/example/`, rename `semforge.yaml` to `kms.yaml` with `name: example`, `version: 1.0.0`, `format: 1`, copy the NGSI-LD vocabulary into `vocabulary/ngsild.ttl`, and add the relative link `kms/default -> example`; verify `semforge verify semantic-model/kms/default` passes and `semforge validate` and `test` give the results they gave before the move
 - [ ] 5.2 Point every path into `semantic-model/kms` at `kms/default` (shacl2flink `Makefile` defaults and `ontology2kms`, the SDK test corpus links, the VS Code end-to-end test, the READMEs); verify `git grep` finds no path to the old files, and that shacl2flink's tests and `make` without arguments pass
-- [ ] 5.3 List each package in a directory once, with `default` marked; verify "Listing the packages" and "Opening kms in the editor"
-- [ ] 5.4 Describe the package and the directory in `kms/README.md` (including that `default` is a symbolic link) and point `SemForge-SDK/architecture.md` §6 to the contract; verify the links resolve
+- [ ] 5.3 Run the tests of every package in `semantic-model/kms` in the `Build` workflow, failing on a broken example and, for published versions only, on coverage; verify both scenarios of "The tests of every package in semantic-model/kms run in CI" with a deliberately broken example on a scratch branch
+- [ ] 5.4 List each package in a directory once, with `default` marked; verify "Listing the packages" and "Opening kms in the editor"
+- [ ] 5.5 Describe the package and the directory in `kms/README.md` (including that `default` is a symbolic link) and point `SemForge-SDK/architecture.md` §6 to the contract; verify the links resolve
 
 ## 6. Integration check
 

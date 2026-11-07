@@ -4,8 +4,8 @@
 
 Defines how the SemForge SDK, which authors and manages KMS packages, creates
 packages that conform to the KMS package contract, packs and verifies them,
-publishes and versions them, warns when a published package is changed, and
-works on a packed package.
+tests and publishes them, versions them, warns when a published package is
+changed, and works on a packed package.
 
 ## ADDED Requirements
 
@@ -48,6 +48,31 @@ The SDK SHALL provide `semforge publish [PATH] [--output FILE]`. It SHALL pack t
 #### Scenario: Publishing again unchanged
 - **WHEN** `semforge publish` is run again without any change
 - **THEN** the record is unchanged and the archive is byte-identical to the first
+
+### Requirement: Publishing runs the tests
+`semforge publish` SHALL run every example of the suite and measure the coverage before it packs. When an example does not meet its expectations or the coverage is below the threshold, it SHALL write and record nothing, exit with code 2, and report the failing examples and the constraints that are not covered. Otherwise it SHALL record the test results with the version.
+
+#### Scenario: Publishing an undertested package
+- **WHEN** `semforge publish` is run on a package with a coverage of 5 % and no declared threshold
+- **THEN** no archive is written, `.kms/releases.yaml` is unchanged, the report gives 5 % against 80 % with the uncovered constraints, and the exit code is 2
+
+#### Scenario: Publishing a tested package
+- **WHEN** `semforge publish` is run on a package whose examples all meet their expectations and whose coverage is 85 %
+- **THEN** the archive is written and the release record lists the examples, 85 % and the threshold of 80 %
+
+### Requirement: Verification can run the tests again
+`semforge verify --tests TARGET` SHALL also run the tests of the package or archive. For a published version it SHALL fail when the result differs from its release record; for a draft it SHALL fail when an example does not meet its expectations, and report the coverage.
+
+#### Scenario: Re-running a published archive
+- **WHEN** `semforge verify --tests example-1.0.0.kms.zip` is run on an untampered archive
+- **THEN** it succeeds and prints the same number of examples and the same coverage as the release record
+
+### Requirement: The coverage threshold is a package setting
+`tests.coverage` SHALL be shown with the other package settings, together with the default of 80 when it is not declared, and SHALL be editable where the other settings are.
+
+#### Scenario: Default threshold shown
+- **WHEN** a package does not declare `tests.coverage`
+- **THEN** `semforge where` and the editor's project view show the threshold as 80, marked as the default
 
 ### Requirement: Raise the version
 The SDK SHALL provide `semforge version patch|minor|major [PATH]`, which raises the corresponding part of `version` in `kms.yaml`, resets the parts after it to 0, and changes nothing else in the file.

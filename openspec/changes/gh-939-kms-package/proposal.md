@@ -35,6 +35,11 @@ packages. Consumers and producers adopt the format in their own changes.
 - **Published versions are immutable**: a package records each published
   version and its digest; a package whose published version no longer has that
   digest fails verification until its version is raised.
+- **Only tested versions are published**: every example of the suite must
+  meet its expectations, and the share of constraints that some example makes
+  fire must reach the package's threshold (`tests.coverage`, default 80 %).
+  The release record keeps the results. Drafts are not gated. CI runs the
+  tests of every package in `semantic-model/kms`.
 - **`semantic-model/kms` becomes a directory of packages**: today's KMS moves to
   `kms/example/`, and `kms/default` is a link to the package used when none is
   named. Other directories in `kms/` that are not packages, such as
@@ -70,9 +75,13 @@ None.
 - `semantic-model/kms`: becomes `kms/example/` plus the link `kms/default`;
   gains `kms.yaml` (from `semforge.yaml`) and its NGSI-LD vocabulary inside the
   package (`vocabulary/ngsild.ttl`).
+- `Build` workflow: runs the tests of every package in `semantic-model/kms`.
 - shacl2flink `Makefile`: default `SHACL`, `KNOWLEDGE`, `MODEL` and the
   `ontology2kms` target point into `kms/default/`.
 - No change to any image, chart or deployment.
+- `kms/example` has 6 examples, all passing, covering 5 of its 99 constraints
+  (5 %). It stays a draft until its coverage reaches 80 %; raising it is a
+  follow-up.
 
 ## Out of Scope
 
@@ -85,6 +94,7 @@ None.
 - **Delta packages and dependencies**: packages that add to an existing setup,
   dependencies between packages, `owl:imports` of remote ontologies by URI,
   and scoped package names (e.g. `iff/opcua-pumps`).
+- Coverage of inference rules (`sh:rule`), and raising `kms/example` to 80 %.
 - Where published archives are stored (GitHub releases, a registry), and
   signatures.
 - Turning `SchweissenUndSchneiden/` into a package.

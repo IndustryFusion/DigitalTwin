@@ -125,6 +125,33 @@ deploying half a package is worse than deploying none.
 - Today's KMS becomes `kms/example`. `SchweissenUndSchneiden/` stays a
   directory of examples, not a package, and is ignored.
 
+### D10 — Only tested versions are published
+
+A published version is what others deploy and build on, so it must carry proof
+that its constraints work, not only that its files are intact.
+
+- **Chosen:** `publish` requires every example to meet its expectations and the
+  coverage to reach `tests.coverage` (default 80 %); the release record keeps
+  the results; drafts are not gated; CI fails on a broken example always and on
+  coverage only for published versions.
+- **Coverage counts constraints that fire.** A constraint that no example makes
+  fire cannot be told apart from one that is merely satisfied, so good examples
+  alone do not cover it. This is what `semforge test --coverage` reports today,
+  per shape, path and constraint component.
+- *Alternative:* coverage per attribute (an attribute is covered when any of
+  its constraints fires). Rejected: it hides untested constraints. It is
+  tempting because the two-layer NGSI-LD encoding gives each attribute about
+  seven constraints (cardinality and node kind on the attribute and on
+  `hasValue`); `kms/example` covers 5 of 99 constraints, mostly because of
+  them.
+- *Alternative:* require both a good and a bad example per constraint
+  ("two-sided"). Stronger, deferred: firing is the part that is missing today.
+- *Alternative:* gate packing too. Rejected: it would block sharing and
+  deploying drafts while tests are written.
+- *Alternative:* a fixed minimum. Rejected: a package may need a lower
+  threshold for a while, and a declared one is visible in review and in the
+  release record.
+
 ## Conflicts with existing documentation
 
 - **C1 — SemForge aliases.** `SemForge-SDK/architecture.md` §6.1 says "a file
@@ -156,5 +183,8 @@ deploying half a package is worse than deploying none.
 2. OPC UA: `owl2kms.py` assembles a package from the output of
    `nodeset2owl.py` and `owl2instances.py`, checked with `semforge verify`.
 3. SemForge suggests patch, minor or major from the semantic diff.
-4. Delta packages, dependencies (`owl:imports` by URI, packages by digest) and
+4. `kms/example` reaches 80 % coverage, so that it can be published; the
+   SDK's commands for adding test cases make most of the missing firing cases
+   mechanical.
+5. Delta packages, dependencies (`owl:imports` by URI, packages by digest) and
    scoped names.

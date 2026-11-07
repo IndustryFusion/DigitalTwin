@@ -6,8 +6,9 @@ Defines the KMS package, the unit in which knowledge (ontology), shapes (SHACL
 constraints and rules) and a model (NGSI-LD instances) are authored, handed
 between components and deployed. It fixes the package's directory form, its
 archive form with an intrinsic integrity check, the package digest that
-identifies its content, the immutability of published versions, and how
-`semantic-model/kms` holds packages.
+identifies its content, the immutability of published versions, the tests a
+version must pass before it is published, and how `semantic-model/kms` holds
+packages.
 
 ## ADDED Requirements
 
@@ -180,6 +181,58 @@ A package MAY carry a release record `.kms/releases.yaml` listing each published
 #### Scenario: Raised after a change
 - **WHEN** the version of that package is then raised to `1.0.1`, which the record does not list
 - **THEN** verification passes, and the package is a draft until `1.0.1` is published
+
+### Requirement: Only tested versions are published
+A version SHALL be published only when every example of the package's suite meets its expectations and the package's coverage is at least its threshold. The threshold SHALL be `tests.coverage` in `kms.yaml`, a percentage from 0 to 100, and SHALL default to 80. Packing, verifying and deploying a version that is not published SHALL NOT depend on its tests or coverage.
+
+#### Scenario: Failing example
+- **WHEN** one example of the suite does not meet its expectations
+- **THEN** the version is not published, and the report names the example
+
+#### Scenario: Coverage below the threshold
+- **WHEN** 70 of 100 constraints are covered and the package declares no threshold
+- **THEN** the version is not published, and the report gives the coverage of 70 % against 80 % and lists the constraints that are not covered
+
+#### Scenario: Declared lower threshold
+- **WHEN** a package declares `tests.coverage: 60`, all examples meet their expectations and 70 of 100 constraints are covered
+- **THEN** the version is published, and its release record shows the threshold of 60
+
+#### Scenario: Draft below the threshold
+- **WHEN** a package that is not published has a coverage of 5 %
+- **THEN** it can still be packed, verified and deployed
+
+### Requirement: Coverage counts the constraints that fire
+Coverage SHALL be the share, in percent, of the package's constraints for which at least one example of the suite asserts that the constraint fires, and it does. A constraint SHALL be identified by its shape, its path and its constraint component; SHACL-SPARQL constraints SHALL count like any other. Inference rules and the model-instance role SHALL NOT count. A package without constraints SHALL have a coverage of 100 %.
+
+#### Scenario: Satisfied but never fired
+- **WHEN** a `sh:maxInclusive` constraint holds in every good example and no bad example asserts it
+- **THEN** it is not covered
+
+#### Scenario: Fired as asserted
+- **WHEN** a bad example asserts that the `sh:maxInclusive` constraint fires, and it fires on that example
+- **THEN** it is covered
+
+#### Scenario: Scratchpad
+- **WHEN** an entity in `model-instance.jsonld` violates a constraint that no example asserts
+- **THEN** the constraint is not covered
+
+### Requirement: The release record holds the test results
+For each published version, the release record SHALL list, beside its digest and date, the number of examples, the number that met their expectations, the coverage and the threshold that applied. The examples are members, so anyone can run the tests of an archive again and compare the result with the record.
+
+#### Scenario: Evidence of a release
+- **WHEN** `example` 1.0.0 is published with 80 examples, all met, and 83 % coverage under the default threshold
+- **THEN** its entry in `.kms/releases.yaml` lists the digest, the date, 80 examples, 80 met, 83 % and 80 %
+
+### Requirement: The tests of every package in semantic-model/kms run in CI
+The `Build` workflow SHALL run the tests of every package in `semantic-model/kms`. An example that does not meet its expectations SHALL fail the build. Coverage below the threshold SHALL fail the build only for a package whose current version is published.
+
+#### Scenario: Broken example on a pull request
+- **WHEN** a pull request changes a shape so that an example of `kms/example` no longer meets its expectations
+- **THEN** `Build` fails and names the example
+
+#### Scenario: Draft with low coverage on a pull request
+- **WHEN** a pull request changes `kms/example`, whose version is not published, and its coverage is 5 %
+- **THEN** `Build` reports the coverage and does not fail on it
 
 ### Requirement: semantic-model/kms is a directory of packages
 `semantic-model/kms` SHALL hold KMS packages, one per subdirectory named after the package, and `default`, a relative symbolic link to one of them. A component that needs a KMS and is given none SHALL use `kms/default`. A subdirectory that is not a package SHALL be ignored, and a link to a package SHALL NOT be counted as a second package.
