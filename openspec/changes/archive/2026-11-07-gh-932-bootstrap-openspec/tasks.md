@@ -28,7 +28,7 @@
 
 - [x] 5.1 Run `openspec validate --all --strict` and `openspec status --change gh-932-bootstrap-openspec`; verify validation passes and all artifacts are complete
 - [x] 5.2 Confirm a requirement without a scenario fails strict validation (temporary, not committed)
-- [ ] 5.3 Compare with `main`: only new files, the `README.md` link and the path filters of task 3.4; verify `Build` and `K8s tests` pass on this Pull Request, which also changes other files
+- [x] 5.3 Compare with `main`: only new files, the `README.md` link and the path filters of task 3.4; verify `Build` and `K8s tests` pass on this Pull Request, which also changes other files. `Build` passed. `K8s tests` failed on `sending data without utils directly to TCP/UDP API`, a flaky test unrelated to this change; #937 fixed it, and its run passed
 
 ## Workflow follow-up
 
