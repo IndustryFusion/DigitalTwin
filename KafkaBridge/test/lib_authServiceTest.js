@@ -725,6 +725,46 @@ describe(fileToTest, function () {
     acl.acl(req, res);
   });
 
+  it('Shall deny access control to SparkPlugB device whose id contains a slash', function (done) {
+    // The device is permitted under its full id, as authenticate.js stores it. The topic splits the id at
+    // the slash, so the lookup misses it. See openspec contract opcua-live-data: entity IDs must not contain a /.
+    const Cache = class Acl {
+      constructor () {}
+      getValue (subtopic, key) {
+        assert.equal(key, 'acl', 'Wrong key value');
+        return subtopic === 'accountId/urn:device/1' ? 'clientid' : undefined;
+      }
+    };
+    ToTest.__set__('Cache', Cache);
+
+    const config = {
+      mqtt: {
+        adminUsername: 'username',
+        adminPassword: 'password'
+      }
+    };
+    const Acl = ToTest.__get__('Acl');
+    const acl = new Acl(config);
+    const req = {
+      query: {
+        username: 'urn:device/1',
+        clientid: 'clientid',
+        topic: 'spBv1.0/accountId/DDATA/eonID/urn:device/1'
+      }
+    };
+    const res = {
+      status: function (status) {
+        assert.equal(status, 200, 'Received wrong status');
+        return this;
+      },
+      json: function (resultObj) {
+        resultObj.should.deep.equal({ result: 'deny' });
+        done();
+      }
+    };
+    acl.acl(req, res);
+  });
+
   it('Shall deny access control to device with wrong access', function (done) {
     const Cache = class Acl {
       constructor () {}

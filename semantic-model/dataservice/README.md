@@ -80,138 +80,39 @@ Example:
 ```
 ### SHACL Validation of Bindings
 
-The basic structure of Bindings and Maps can be validated with SHACL. For instance the bindings in `examples/bindings.ttl` can be checkd by
+The basic structure of Bindings and Maps can be validated with SHACL. For instance the bindings in `examples/bindings.ttl` can be checked by
 
 ```
-pyshacl -s validation/bindings-validation-shacl.ttl examples/bindings.ttl 
+pyshacl -s validation/bindings-validation-shacl.ttl examples/bindings.ttl
 ```
 
-## Use Dataservice to send testdata
-Start dataservice with `startDataservice.py`:
-    python3 ./startDataservice.py \<ontology-dir\> \<type\> \<binding-name\>
+`pyshacl` isn't a requirement of the dataservice. It is installed with the requirements of the model tools, `../opcua/requirements.txt`.
 
-*\<ontology\>* is supposed to be downloadable from a directory containing different *.ttl files, *\<type\>* is the (in the ontology context) namespaced class (e.g. `ex:MyClass` if `ex:` is defined in the ontologies context) and *\<binding-name\>* is the name of a *.ttl file in the *bindings* subdirectory of the ontoloy.
+## Start the Dataservice
 
-Example (note `-d` for dry-run):
+    python3 startDataservice.py <ontology-dir> <binding-file>
 
-    python3 startDataservice.py -d -e filter_and_cartridge_subcomponent_entities.ttl examples/ examples/bindings.ttl
+*\<ontology-dir\>* is a directory containing `entities.ttl`, `knowledge.ttl` (optional) and `context.jsonld`, and *\<binding-file\>* is the `*.ttl` file with the bindings. Relative paths, also those starting with `../`, are resolved against the working directory. The dataservice forwards the values to the device agent on TCP port 7070; `-p` changes the port and `-d` only prints them, without an agent. `python3 startDataservice.py --help` lists all options.
 
-## Example Setup
+For instance, with the model of the pump example in `../opcua` (see below), as a dry run:
 
-In this example we are 
-* creating entities in the NGSI-LD context broker,
-* retrieving the subcomponents,
-* onboard a device with subcomponents, and
-* configure the dataservice to send example data to different entities in the hierarchy.
-
-Preconditions:
-
-* Local PDT deployment:
-  * Process Data Twin is reached by URL `http://ngsild.local/ngsi-ld`
-  * Keycloak can be reached by URL `http://keycloak.local`
-  * Keycloak secrets for user `realm_user` is stored in secret `
-* Installed: `kubectl`, `jq`, `nodejs` v20
-* [Telepresence](https://github.com/telepresenceio/telepresence) deployed and connected for `iff` namespace, i.e. host `emqx-listeners` can be pinged from your hostsystem.
-* [IFF Ngsild Agent]() is configured to connect to local PDT
-
-### Create Entity in NGSI-LD
-
-In order to access the NGSI-LD Context broker, we need to generate a token:
-```
-KEYCLOAKURL=http://keycloak.local/auth/realms
-NAMESPACE=iff
-USER=realm_user
-password=$(kubectl -n iff get secret/credential-iff-realm-user-iff -o jsonpath='{.data.password}'| base64 -d | xargs echo)
-token=$(curl -d "client_id=scorpio" -d "username=${USER}" -d "password=$password" -d 'grant_type=password' "${KEYCLOAKURL}/${NAMESPACE}/protocol/openid-connect/token"| jq ".access_token"| tr -d '"')
-```
-Submit `examples/filter_and_cartridge_subcomponent_data.json` to the broker:
-
-```
-curl -vv -X POST -H "Authorization: Bearer $token" -d @"examples/filter_and_cartridge_subcomponent_data.json" http://ngsild.local/ngsi-ld/v1/entityOperations/create -H "Content-Type: application/ld+json"
-```
-
-### Retrieve all subcomponents
-
-Finally, the NGSI-LD context broker is contacted and all subcomponents are derived.
-
-```
-(cd ../datamodel; node ./tools/getSubcomponents.js -e /tmp/filter_entity.ttl -e /tmp/cartridge_entity.ttl -e /tmp/identification_entity.ttl -t $token urn:iff:filter1 )
-
-#RESULT:
- -d urn:iff:cartridge1 -d urn:iff:identification1 -d urn:iff:identification2
-```
-
-### Onboard Device with subcomponents
-
-Onboarding is done in [NgsildAgent](../../NgsildAgent). For the testsetup the onboarding can be done as follows:
-
-```
-( cd ../../NgsildAgent/util; ./init-device.sh  -d urn:iff:cartridge1 -d urn:iff:identification1 -d urn:iff:identification2 urn:iff:filter1 urn:iff:filter1 )
-( cd ../../NgsildAgent/util; ./get-onboarding-token.sh -p $(kubectl -n iff get secret/credential-iff-realm-user-iff -o jsonpath='{.data.password}'| base64 -d) realm_user
-)
-( cd ../../NgsildAgent/util; ./activate.sh -f )
-( cd ../../NgsildAgent; node ./iff-agent.js & )
-
-```
-
-### Start Dataservice
-
-```
-python3 startDataservice.py -e filter_and_cartridge_subcomponent_entities.ttl examples/ urn:iff:filter1 examples/bindings.ttl
-```
-
+    python3 startDataservice.py -d ../opcua ../opcua/bindings.ttl
 
 ## OPC UA Example: From the Pump Nodeset to NGSI-LD
 
-This example builds the model and the bindings of the OPC UA pump example, serves its nodeset with a test server and forwards the values of the server to the context broker. The preconditions are those of the [Example Setup](#example-setup) and an installed `asyncua`.
+The [tutorial](opcua-pump-tutorial.md) takes the OPC UA pump example from its nodesets to live values in the context broker: building the model and the bindings, loading the entities, onboarding the device with its subcomponents, the test server, the dataservice, and reading the values over REST. It also lists what to change for another machine, and how to troubleshoot. The rules between the components on that path are specified in [contracts/opcua-live-data](../../openspec/changes/gh-934-opcua-live-data/specs/contracts/opcua-live-data/spec.md), and the [chain test](../../test/opcua-chain) runs the tutorial's commands on every Pull Request which touches them.
 
-### Create Model and Bindings
+### Test Servers
 
-```
-(cd ../opcua; make -f translate_pumpExample.make)
-```
-
-This creates `instances.jsonld`, `entities.ttl`, `shacl.ttl`, `context.jsonld` and `bindings.ttl` in `../opcua`. Submit the instances with the `$token` from [above](#create-entity-in-ngsi-ld):
-
-```
-curl -X POST -H "Authorization: Bearer $token" -H "Content-Type: application/ld+json" -d @../opcua/instances.jsonld http://ngsild.local/ngsi-ld/v1/entityOperations/upsert
-```
-
-### Onboard the Device
-
-The pump is the device, all other entities are its subcomponents. The device IDs are part of the MQTT topics, so they must not contain a `/`. This is why the entity IDs of `owl2instances.py` are URNs (`urn:uaentity:...`) and a prefix given by `-i` should be a URN as well.
-
-```
-root=$(jq -r '.[] | select(.type == "pumps:PumpType") | .id' ../opcua/instances.jsonld)
-subcomponents=$(jq -r --arg root "$root" '.[] | select(.id != $root) | "-d " + .id' ../opcua/instances.jsonld)
-password=$(kubectl -n iff get secret/credential-iff-realm-user-iff -o jsonpath='{.data.password}'| base64 -d)
-( cd ../../NgsildAgent/util; ./init-device.sh $subcomponents $root pumpgateway; ./get-onboarding-token.sh -p $password realm_user; ./activate.sh -f )
-( cd ../../NgsildAgent; node ./iff-agent.js & )
-```
-
-### Start OPC UA Server and Dataservice
-
-There are two test servers. `tests/server/nodeset_server.py` serves the real nodesets with their values and data types. With `-w` clients can write the bound nodes, otherwise they are read-only and nothing ever changes:
-
-```
-R=https://raw.githubusercontent.com/OPCFoundation/UA-Nodeset/UA-1.05.03-2023-12-15
-for f in DI/Opc.Ua.Di.NodeSet2.xml Machinery/Opc.Ua.Machinery.NodeSet2.xml Pumps/Opc.Ua.Pumps.NodeSet2.xml Pumps/instanceexample.xml; do curl -sO $R/$f; done
-python3 tests/server/nodeset_server.py -e opc.tcp://127.0.0.1:4840/ -x Opc.Ua.Di.NodeSet2.xml -x Opc.Ua.Machinery.NodeSet2.xml -x Opc.Ua.Pumps.NodeSet2.xml -x instanceexample.xml -w ../opcua/bindings.ttl &
-```
+There are two test servers. `tests/server/nodeset_server.py` serves the real nodesets with their values and data types. With `-w` clients can write the bound nodes, otherwise they are read-only and nothing ever changes. The tutorial shows how to start it.
 
 `tests/server/binding_server.py` needs no nodesets. It creates a node for every map of a binding file and changes the values randomly every 5 seconds, except for the structures, which it cannot generate. Its endpoint is `opc.tcp://localhost:4840/freeopcua/server/`:
 
 ```
-python3 tests/server/binding_server.py ../opcua/bindings.ttl &
+python3 tests/server/binding_server.py ../opcua/bindings.ttl
 ```
 
-Then start the dataservice and tell the connector where to find the server:
-
-```
-OPCUA_TCP_CONNECT=opc.tcp://127.0.0.1:4840/ python3 startDataservice.py ../opcua ../opcua/bindings.ttl
-```
-
-Every value which is written to a node of the server arrives in the context broker within some seconds, the connector reads every 5 seconds.
+Both need `asyncua`, see [OPCUA Module](#opcua-module).
 
 ### How Values are Mapped
 

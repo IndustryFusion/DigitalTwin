@@ -3,7 +3,6 @@ bandit==1.7.4
 black==26.3.1
 pytest==9.0.3
 pytest-cov==4.0.0
-pyshacl==0.26.0
 matplotlib==3.10.9
 
 # owlready2 is deliberately NOT listed here: it is LGPL-3.0-or-later (and

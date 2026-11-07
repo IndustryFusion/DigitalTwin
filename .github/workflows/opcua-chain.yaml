@@ -1,0 +1,89 @@
+#
+# Copyright (c) 2026 IndustryFusion Foundation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+# Verifies the path from an OPC UA server to the context broker, as specified in contracts/opcua-live-data,
+# without a Kubernetes cluster. It doesn't cover Core Services or MQTT authentication; see test/opcua-chain.
+name: OPC UA chain test (without Core Services and MQTT auth)
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'semantic-model/opcua/**'
+      - 'semantic-model/dataservice/**'
+      - 'KafkaBridge/**'
+      - 'NgsildAgent/**'
+      - 'test/opcua-chain/**'
+      - '.env'
+      - '.github/workflows/opcua-chain.yaml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'semantic-model/opcua/**'
+      - 'semantic-model/dataservice/**'
+      - 'KafkaBridge/**'
+      - 'NgsildAgent/**'
+      - 'test/opcua-chain/**'
+      - '.env'
+      - '.github/workflows/opcua-chain.yaml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  chain:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.10", "3.12"]
+    env:
+      OUT: ${{ github.workspace }}/.opcua-chain
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Prepare
+        run: mkdir -p "$OUT"
+      - name: Stage 1 - the model, Steps 1 to 3 of the tutorial
+        run: bash test/opcua-chain/stage1.sh
+      - name: Stage 2 - the connector with the test server, the agent replaced
+        run: bash test/opcua-chain/stage2.sh
+      - name: Stage 3 - the agent's schema and the bridge's mapping
+        run: bash test/opcua-chain/stage3.sh
+      - name: Stage 4a - the context broker of the current release
+        run: bash test/opcua-chain/stage4a.sh
+      - name: Stage 4b - the updates bridge against the broker
+        run: bash test/opcua-chain/stage4b.sh
+      - name: Logs on failure
+        if: failure()
+        run: |
+          for f in "$OUT"/*.log; do echo "=== $f"; tail -n 25 "$f" | cut -c1-200; done
+          docker logs opcua-chain-scorpio 2>&1 | tail -n 25 | cut -c1-200 || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: opcua-chain-python-${{ matrix.python }}
+          path: |
+            .opcua-chain/*.jsonl
+            .opcua-chain/*.log
+          if-no-files-found: ignore

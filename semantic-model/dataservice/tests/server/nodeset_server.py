@@ -31,7 +31,8 @@ async def set_bound_nodes_writable(server, bindings_file, base_ns):
     """Nodes of a Nodeset are read-only. Allow clients to write the nodes of the bindings, e.g. to simulate changes."""
     base = Namespace(base_ns)
     bindings = Graph()
-    bindings.parse(bindings_file)
+    # Absolute, so that rdflib doesn't resolve a relative path as a URL
+    bindings.parse(os.path.abspath(bindings_file))
     for parameter in bindings.objects(None, base.bindsConnectorParameter):
         namespace, identifier = str(parameter).removeprefix('nsu=').split(';', 1)
         idx = await server.get_namespace_index(namespace)

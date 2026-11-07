@@ -16,6 +16,7 @@
 import asyncio
 import argparse
 import importlib
+import os
 from datetime import datetime, timezone
 from rdflib import Graph, Namespace
 from rdflib.namespace import RDF
@@ -148,7 +149,8 @@ async def setup_opcua_server(mapping_data):
 
 def parse_rdf_to_mapping(rdf_file, base_ns):
     g = Graph()
-    g.parse(rdf_file, format="turtle")
+    # Absolute, so that rdflib doesn't resolve a relative path as a URL
+    g.parse(os.path.abspath(rdf_file), format="turtle")
 
     # Define the base namespace for the vocabulary
     BASE = Namespace(base_ns)

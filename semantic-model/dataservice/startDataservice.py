@@ -15,6 +15,7 @@
 #
 
 import json
+import os
 import sys
 import urllib
 import asyncio
@@ -76,6 +77,14 @@ the most recent firmware is selected.')
     return parsed_args
 
 
+def local_path(location):
+    """A local path relative to the working directory, made absolute, so that rdflib doesn't resolve it as a URL.
+    URLs are returned unchanged."""
+    if '://' in location:
+        return location
+    return os.path.abspath(location)
+
+
 attributes = {}
 prefixes = {}
 tasks = []
@@ -94,6 +103,8 @@ async def main(ontdir, entitiesfile, binding_name, resources, baseOntology,
     global query_prefixes
     global g
 
+    ontdir = local_path(ontdir)
+    binding_name = local_path(binding_name)
     if not ontdir.endswith('/'):
         ontdir += '/'
 

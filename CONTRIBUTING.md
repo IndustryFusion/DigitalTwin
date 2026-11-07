@@ -22,6 +22,19 @@ behaviour up front.
 A change without a specification is an ordinary Pull Request which closes its issue. The
 rest of this guide is about changes with a specification.
 
+### Contracts between components
+
+Some rules between components are specified, so that a change to one component finds what
+relies on it:
+
+- [contracts/opcua-live-data](openspec/changes/gh-934-opcua-live-data/specs/contracts/opcua-live-data/spec.md):
+  the path from an OPC UA server to the context broker, through `semantic-model/opcua`,
+  `semantic-model/dataservice`, `NgsildAgent` and `KafkaBridge`. Each rule names who
+  produces it and who relies on it.
+
+Changing one of these rules is a change to a contract between components, so it needs an
+approved specification change, and the consumers it names must be checked.
+
 ## Lifecycle
 
 | # | Step | Who | Automated? |
