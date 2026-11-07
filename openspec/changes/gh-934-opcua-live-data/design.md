@@ -4,7 +4,7 @@
 
 See proposal.md - Why. `K8s tests` takes about 50 minutes and needs a self-hosted runner, which is why this chain has no test of its own. A throwaway version of the test below ran on `ubuntu-24.04` runners, on [branch `spike/light-chain-test`](https://github.com/DrGarbitsch/DigitalTwin/tree/spike/light-chain-test) of a fork. The measurements are in #934. The implementation reuses it, without its bug-injection workflow.
 
-Two findings shape the fixes. `rdflib==6.2.0`, pinned by the dataservice, resolves `../opcua/bindings.ttl` to the wrong directory, because it joins the path to the working directory as a URL. And `owl2instances.py` imports `pyshacl` through `lib/shacl.py`, while only `requirements-dev.txt` lists it.
+Two findings shape the fixes. `rdflib==6.2.0`, pinned by the dataservice, reads an existing `../opcua/bindings.ttl` correctly, but names a missing one with a directory level dropped, because it then joins the path to the working directory as a URL. That misled the first validation of the tutorial, whose model hadn't been built. And `owl2instances.py` imports `pyshacl` through `lib/shacl.py`, while only `requirements-dev.txt` lists it.
 
 ## Goals / Non-Goals
 

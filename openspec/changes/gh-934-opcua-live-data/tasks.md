@@ -3,7 +3,7 @@
 ## 1. Clean install
 
 - [x] 1.1 Move `pyshacl` to `requirements.txt` of `semantic-model/opcua`; verify `owl2instances.py` creates the pump's entities in a fresh virtual environment with only that file
-- [ ] 1.2 Make the dataservice and both test servers resolve relative paths; add unit tests for `../` paths, and verify they fail without the fix
+- [x] 1.2 Make the dataservice and both test servers resolve relative paths themselves; add unit tests for `../` paths, and verify that the tests for a missing file fail without the fix
 - [x] 1.3 Check the commands of `semantic-model/dataservice/README.md`; verify they run as written from a clean install
 
 ## 2. Specification pointers and access control

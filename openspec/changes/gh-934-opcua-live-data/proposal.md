@@ -12,7 +12,7 @@ Live values from an OPC UA server pass through many components on their way to t
 - The rules between the components become a specification, naming for each who produces it and who relies on it.
 - A lightweight test verifies the chain on GitHub-hosted runners in minutes, without a Kubernetes cluster, against the real broker.
 - Fix: `owl2instances.py` works with the documented runtime requirements of the model tools.
-- Fix: the dataservice and the test servers accept relative paths such as `../opcua/bindings.ttl`.
+- Fix: the dataservice and the test servers resolve relative paths such as `../opcua/bindings.ttl` themselves, so that a missing file is reported with its real path.
 - `AGENTS.md` and `CONTRIBUTING.md` point to the specification, so that a change to a listed component finds what relies on it.
 
 ## Capabilities
