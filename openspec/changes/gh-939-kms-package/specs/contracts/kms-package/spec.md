@@ -217,18 +217,22 @@ Coverage SHALL be the share, in percent, of the package's constraints for which 
 - **THEN** the constraint is not covered
 
 ### Requirement: The release record holds the test results
-For each published version, the release record SHALL list, beside its digest and date, the number of examples, the number that met their expectations, the coverage and the threshold that applied. The examples are members, so anyone can run the tests of an archive again and compare the result with the record.
+For each published version, the release record SHALL list, beside its digest and date, the number of examples, the number that met their expectations, the coverage and the threshold that applied. The release record is not a member and is not inside the archive; the examples are, so the tests of an archive can be run again anywhere and compared with the record of the package it was published from.
 
 #### Scenario: Evidence of a release
 - **WHEN** `example` 1.0.0 is published with 80 examples, all met, and 83 % coverage under the default threshold
 - **THEN** its entry in `.kms/releases.yaml` lists the digest, the date, 80 examples, 80 met, 83 % and 80 %
 
-### Requirement: The tests of every package in semantic-model/kms run in CI
-The `Build` workflow SHALL run the tests of every package in `semantic-model/kms`. An example that does not meet its expectations SHALL fail the build. Coverage below the threshold SHALL fail the build only for a package whose current version is published.
+### Requirement: Every package in semantic-model/kms is verified and tested in CI
+The `Build` workflow SHALL verify every package in `semantic-model/kms` and run its tests. A package that fails verification, including a published version whose content has changed, SHALL fail the build, and so SHALL an example that does not meet its expectations. Coverage below the threshold SHALL fail the build only for a package whose current version is published.
 
 #### Scenario: Broken example on a pull request
 - **WHEN** a pull request changes a shape so that an example of `kms/example` no longer meets its expectations
 - **THEN** `Build` fails and names the example
+
+#### Scenario: Changed published version on a pull request
+- **WHEN** a pull request changes `shacl.ttl` of a package whose version `1.0.0` is published, without raising the version
+- **THEN** `Build` fails and reports that `1.0.0` is published and its version must be raised
 
 #### Scenario: Draft with low coverage on a pull request
 - **WHEN** a pull request changes `kms/example`, whose version is not published, and its coverage is 5 %

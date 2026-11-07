@@ -61,11 +61,15 @@ The SDK SHALL provide `semforge publish [PATH] [--output FILE]`. It SHALL pack t
 - **THEN** the archive is written and the release record lists the examples, 85 % and the threshold of 80 %
 
 ### Requirement: Verification can run the tests again
-`semforge verify --tests TARGET` SHALL also run the tests of the package or archive. For a published version it SHALL fail when the result differs from its release record; for a draft it SHALL fail when an example does not meet its expectations, and report the coverage.
+`semforge verify --tests TARGET` SHALL also run the tests of the package or archive, report the examples and the coverage, and fail when an example does not meet its expectations. It SHALL compare the result with a release record when one is available: a directory's own `.kms/releases.yaml`, or for an archive the record given with `--record FILE`. For a published version, a result that differs from its record SHALL fail.
 
-#### Scenario: Re-running a published archive
-- **WHEN** `semforge verify --tests example-1.0.0.kms.zip` is run on an untampered archive
-- **THEN** it succeeds and prints the same number of examples and the same coverage as the release record
+#### Scenario: Re-running an archive against its record
+- **WHEN** `semforge verify --tests example-1.0.0.kms.zip --record semantic-model/kms/example/.kms/releases.yaml` is run on an untampered archive
+- **THEN** it succeeds and prints the same number of examples and the same coverage as the record lists for `1.0.0`
+
+#### Scenario: Re-running an archive alone
+- **WHEN** `semforge verify --tests example-1.0.0.kms.zip` is run without a record
+- **THEN** it runs the tests, prints the examples and the coverage, and says that no release record was compared
 
 ### Requirement: The coverage threshold is a package setting
 `tests.coverage` SHALL be shown with the other package settings, together with the default of 80 when it is not declared, and SHALL be editable where the other settings are.

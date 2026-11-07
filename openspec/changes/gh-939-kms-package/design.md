@@ -34,6 +34,9 @@ that edits packages, not the format.
   read a file named after one of the tools.
 - *Alternative:* a generic name such as "semantic package". Rejected: KMS is
   already the name of the directory, the README and the convention.
+- Package names: lowercase kebab-case (`opcua-pumps`) is the convention for
+  new packages, not a rule; the contract allows the names it describes, and
+  existing directories such as `SchweissenUndSchneiden/` keep theirs.
 - The outside meaning of KMS (key management service) is a known clash. The
   README spells the term out.
 
