@@ -9,7 +9,7 @@
 ## 2. Specification pointers and access control
 
 - [ ] 2.1 Add a unit test to `KafkaBridge/test/lib_authServiceTest.js`: a device ID with a `/` in the topic is denied; verify it passes with `npm test` in `KafkaBridge`
-- [ ] 2.2 Point `AGENTS.md` and `CONTRIBUTING.md` to the contract; verify the links resolve (needs #933)
+- [ ] 2.2 Point `AGENTS.md` and `CONTRIBUTING.md` to the contract; verify the links resolve
 
 ## 3. Chain test
 
@@ -23,11 +23,11 @@
 
 ## 4. Tutorial
 
-- [ ] 4.1 Add `semantic-model/dataservice/opcua-pump-tutorial.md` with its system requirements, the optional test server, and the table for other machines; verify its links resolve
+- [ ] 4.1 Add `semantic-model/dataservice/opcua-pump-tutorial.md` with its system requirements, the hosts to reach and the platform prerequisites, the optional test server, the agent's external MQTT address and device onboarding, the clean-up, and the table for other machines; verify its links resolve
 - [ ] 4.2 Mark the blocks the test runs, and have stages 1 and 2 extract them; verify that breaking a marked command fails the test
-- [ ] 4.3 State in the tutorial which Python versions the test covers and how far; verify it matches the workflow's matrix
-- [ ] 4.4 Follow the whole tutorial on a deployed platform from a fresh clone; verify a written value is readable over REST, and report the result in the Pull Request
+- [ ] 4.3 State in the tutorial which Python and Node.js versions the test covers and how far; verify it matches the workflow's matrix- [ ] 4.4 Follow the whole tutorial on a deployed platform from a fresh clone; verify a written value is readable over REST, and report the result in the Pull Request
 - [ ] 4.5 Link the tutorial from `semantic-model/dataservice/README.md`, replacing the recipe's duplicated steps; verify the link resolves
+- [ ] 4.6 Add the troubleshooting table, with each error met while validating the tutorial and the silent failure of an entity ID with a `/`; verify each entry names a symptom, its cause and its fix
 
 ## 5. Integration check
 

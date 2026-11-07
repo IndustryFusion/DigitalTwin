@@ -8,7 +8,7 @@ Live values from an OPC UA server pass through many components on their way to t
 
 ## What Changes
 
-- A tutorial takes a newcomer from nodesets to live values over REST, using the pump example, with its system requirements and notes for other machines.
+- A tutorial takes a newcomer from nodesets to live values over REST, using the pump example, with its system requirements, troubleshooting and notes for other machines.
 - The rules between the components become a specification, naming for each who produces it and who relies on it.
 - A lightweight test verifies the chain on GitHub-hosted runners in minutes, without a Kubernetes cluster, against the real broker.
 - Fix: `owl2instances.py` works with the documented runtime requirements of the model tools.
@@ -35,7 +35,7 @@ None.
   - Read by the test, not changed: `NgsildAgent`, `KafkaBridge`, the published Scorpio image
 - **CI:** a new workflow, limited to the paths the chain depends on. `K8s tests` and `Build` are unchanged.
 - **Dependencies:** `pyshacl` moves to the runtime requirements of the model tools. `asyncua` stays optional for the components and is only installed by the test and the tutorial, because of its license.
-- **Other changes:** the test takes the Scorpio image from `DOCKER_TAG` in `.env`, so it depends on #935, which sets it to a published release. The workflow's specification check depends on #933.
+- **Other changes:** none. The test takes the Scorpio image from `DOCKER_TAG` in `.env`, which names a published release.
 
 ## Out of Scope
 

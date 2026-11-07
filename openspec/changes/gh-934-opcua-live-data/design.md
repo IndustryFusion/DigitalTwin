@@ -35,9 +35,9 @@ Alternatives: a stripped platform in Docker Compose, rejected because MQTT authe
 
 **Real MQTT authentication stays out.** The rule about `/` in device IDs gets a unit test on the access control, using the existing test suite in `KafkaBridge/test`. Alternative: running EMQX and Keycloak in the test, rejected for its weight.
 
-**Python 3.10 and 3.12.** CI's `Build` uses 3.10, and the tutorial was validated on 3.12. Node.js 22 is what the agent's image uses. Alternative: 3.12 only, rejected because it wouldn't cover what `Build` uses. This is cheap, as both runs take about 5 minutes and share nothing.
+**Python 3.10 and 3.12.** CI's `Build` uses 3.10, and the tutorial was validated on 3.12. Node.js 22 is what the agent's image uses, so the tutorial lists 22 as the version CI covers, next to the 24 it was validated with by hand. Alternative: 3.12 only, rejected because it wouldn't cover what `Build` uses. This is cheap, as both runs take about 5 minutes and share nothing.
 
-**Scorpio image from `.env`.** The test uses `ibn40/scorpio-all-in-one-runner:${DOCKER_TAG}`, so it follows the release without its own version number. It needs #935, because `.env` on `main` still names an image which isn't published. Between releases, the test uses the last published image, while `K8s tests` builds Scorpio from a pinned commit. Alternative: building Scorpio in the test, rejected because that build is much of the weight we want to avoid.
+**Scorpio image from `.env`.** The test uses `ibn40/scorpio-all-in-one-runner:${DOCKER_TAG}`, so it follows the release without its own version number. Between releases, the test uses the last published image, while `K8s tests` builds Scorpio from a pinned commit. Alternative: building Scorpio in the test, rejected because that build is much of the weight we want to avoid.
 
 **Paths.** The workflow runs on changes to `semantic-model/opcua/**`, `semantic-model/dataservice/**`, `KafkaBridge/**`, `NgsildAgent/**`, `.env` and itself, so dependency updates there trigger it. Alternative: running on every Pull Request, rejected as unnecessary.
 
