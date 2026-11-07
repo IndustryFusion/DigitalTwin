@@ -58,6 +58,10 @@ start dataservice
 sleep 12
 "$PY" "$HERE/write_values.py" all
 sleep 12
+n=$(grep -c '^Found attributes:' "$OUT/dataservice.log" || true)
+m=$(grep -c '^Found mappings:' "$OUT/dataservice.log" || true)
+[ "$n" = 46 ] && [ "$m" = 46 ] && echo "ok   the dataservice finds all 46 bindings" \
+  || { echo "FAIL the dataservice finds $n bindings with $m mappings"; exit 1; }
 python3 "$HERE/check_messages.py" "$M"
 
 : "outage: nothing is sent, and the dataservice keeps running"
