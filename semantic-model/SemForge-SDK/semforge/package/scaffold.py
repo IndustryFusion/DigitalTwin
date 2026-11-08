@@ -87,6 +87,19 @@ def _ngsild(path):
     from .registry import digest
 
     source = default_source()
+    if not Source(source).is_remote:
+        # A package is standalone: a local vocabulary outside it is copied in,
+        # so the package means the same thing wherever it is unpacked.
+        where = os.path.abspath(os.path.expanduser(source))
+        if os.path.isfile(where):
+            root = os.path.abspath(path)
+            inside = os.path.relpath(where, root)
+            if inside == '..' or inside.startswith('..' + os.sep):
+                os.makedirs(os.path.join(root, 'vocabulary'), exist_ok=True)
+                copy = os.path.join(root, 'vocabulary', os.path.basename(where))
+                with open(where, 'rb') as src, open(copy, 'wb') as dst:
+                    dst.write(src.read())
+                source = copy
     lines = [
         '',
         '# The NGSI-LD vocabulary: what ngsild:Property, hasValue, observedAt',
@@ -116,6 +129,12 @@ def _config(name, prefixes, published, layout, ngsild=()):
         '# The package\'s name. Two directories called `test` are not the same',
         '# project, so this is what the editor shows rather than the folder.',
         f'name: {name}',
+        '',
+        '# Its version, MAJOR.MINOR.PATCH, and the version of the KMS package',
+        '# format it follows. `semforge pack` names the archive after the first',
+        '# two: <name>-<version>.kms.zip.',
+        'version: 0.1.0',
+        'format: 1',
         '',
         '# The context this package resolves against.',
         '#',
@@ -282,8 +301,8 @@ def create_package(path, name=None, namespace=None, published=None,
 
     existing = [n for n in ('knowledge.ttl', 'shacl.ttl', 'model-instance.jsonld',
                             'main.jsonld', 'knowledge', 'shacl', 'model',
-                            'model-instance', 'main',
-                            'semforge.yaml', 'context.jsonld')
+                            'model-instance', 'main', 'vocabulary',
+                            'kms.yaml', 'semforge.yaml', 'context.jsonld')
                 if os.path.exists(os.path.join(path, n))]
     if existing:
         raise PackageError(
@@ -297,17 +316,17 @@ def create_package(path, name=None, namespace=None, published=None,
     prefixes = {entities[0]: entities[1], knowledge[0]: knowledge[1],
                 shapes[0]: shapes[1]}
 
-    # `main` is what the tree calls it, so that is what a new package gets.
-    # `model-instance.jsonld` still loads -- the kms uses it.
+    # The KMS package format names the role `model-instance`; `main.jsonld`
+    # still loads, but a new package conforms (gh-939-kms-package).
     if layout == 'grouped':
-        instance = os.path.join(path, 'model', 'main.jsonld')
+        instance = os.path.join(path, 'model', 'model-instance.jsonld')
         examples = os.path.join(path, 'model', 'examples')
     else:
-        instance = os.path.join(path, 'main.jsonld')
+        instance = os.path.join(path, 'model-instance.jsonld')
         examples = os.path.join(path, 'examples')
 
     written = [
-        _write(os.path.join(path, 'semforge.yaml'),
+        _write(os.path.join(path, 'kms.yaml'),
                _config(name, prefixes, published, layout, _ngsild(path))),
         _write(os.path.join(path, 'context.jsonld'),
                _context(prefixes, published)),
@@ -357,11 +376,11 @@ def create_package(path, name=None, namespace=None, published=None,
 
     grouped_tree = (
         'model/\n'
-        '├── main.jsonld   the scratchpad: try a violation here\n'
-        '└── examples/     the suite: each case says what it is for')
+        '├── model-instance.jsonld   the scratchpad: try a violation here\n'
+        '└── examples/               the suite: each case says what it is for')
     flat_tree = (
-        'main.jsonld   the scratchpad: try a violation here\n'
-        'examples/     the suite: each case says what it is for')
+        'model-instance.jsonld   the scratchpad: try a violation here\n'
+        'examples/               the suite: each case says what it is for')
     layout_tree = grouped_tree if layout == 'grouped' else flat_tree
     written.append(_write(os.path.join(path, 'README.md'), f'''# {name}
 

@@ -465,7 +465,7 @@ def test_an_attribute_is_added_to_a_shape_over_the_protocol(tmp_path, corpus):
         # "New attribute…": declare, then constrain by TYPE -- the server picks
         # the type's own shape, which for Filter is FilterShape, not the
         # MachineShape it inherits. A full IRI, because this bare copy has no
-        # semforge.yaml or context to say what `iffBaseEntities:` means.
+        # kms.yaml or context to say what `iffBaseEntities:` means.
         FILTER_IRI = ('https://industryfusion.github.io/contexts/example/v0/'
                       'base_entities/Filter')
         live.send({'jsonrpc': '2.0', 'id': 44, 'method': 'semforge/addAttributeTerm',
@@ -738,7 +738,7 @@ def test_a_package_can_be_created_over_the_protocol(tmp_path, corpus):
         suites = [n['label'] for n in sections['Tests']['children']]
         assert any('test_MachineShape' in label for label in suites), suites
         assert [n['label'] for n in sections['Main']['children']] == \
-            ['main.jsonld']
+            ['model-instance.jsonld']
 
         _json.loads(open(made['files'][1], encoding='utf-8').read())
     finally:
@@ -750,7 +750,7 @@ def test_the_project_is_answered_and_a_setting_can_be_written(tmp_path, corpus):
 
     The settings are read and written by the SDK, not by the extension: a
     second writer would drift from the one `semforge init` produces, and the
-    comments in semforge.yaml are the documentation -- a YAML round-trip in the
+    comments in kms.yaml are the documentation -- a YAML round-trip in the
     editor layer would quietly delete them.
     """
     import shutil
@@ -785,7 +785,7 @@ def test_the_project_is_answered_and_a_setting_can_be_written(tmp_path, corpus):
                               'key': 'name', 'value': 'Cutting cell'}})
         written = live.wait_for(lambda m: m.get('id') == 51)[0]['result']
         assert written['ok'], written.get('error')
-        assert written['file'].endswith('semforge.yaml')
+        assert written['file'].endswith('kms.yaml')
         assert written['line'] > 0
 
         # Asked again, the answer has changed -- the server must not be serving

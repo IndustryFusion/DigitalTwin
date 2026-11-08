@@ -244,7 +244,8 @@ function healthRow(page) {
 /** What was written, said; its line in the file one click away, not opened
  *  in front of the view it was changed from. */
 async function offerFile(said, written) {
-  const open = await vscode.window.showInformationMessage(said, 'Open semforge.yaml');
+  const label = `Open ${String(written.file || 'kms.yaml').split('/').pop()}`;
+  const open = await vscode.window.showInformationMessage(said, label);
   if (open) {
     await showLocation(`${written.file}:${written.line}`, true);
   }

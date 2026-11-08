@@ -192,7 +192,7 @@ def _plus_value(tmp_path, page, **scenario):
     replies = {'semforge/vocabularyPage': page, 'semforge/vocabularyNamespaces': SPACES,
                'semforge/addVocabularyValue': {'ok': True, 'iri': KNOW + 'x'},
                'semforge/addNamespace': {'ok': True, 'prefix': 'alerts',
-                                         'namespace': ALERTS, 'file': 'semforge.yaml',
+                                         'namespace': ALERTS, 'file': 'kms.yaml',
                                          'line': 3}}
     replies.update(scenario.pop('replies', {}))
     return _drive(tmp_path, dict({

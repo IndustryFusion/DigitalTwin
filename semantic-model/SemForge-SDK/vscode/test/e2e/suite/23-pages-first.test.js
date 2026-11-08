@@ -17,7 +17,7 @@
 // A click stays in SemForge; the file is an option, never the default. An
 // attribute on the Main page opens its type page with it marked; + Attribute
 // ends in the attribute editor; ⋯ → Open in .jsonld still opens the file; the
-// Package view opens the package page, whose Edit… writes semforge.yaml and
+// Package view opens the package page, whose Edit… writes kms.yaml and
 // keeps its comments. And every view and page says what it is.
 
 const assert = require('assert');
@@ -121,12 +121,12 @@ describe('The package page', () => {
     const focused = html.split('id="focus"')[1].split('</tr>')[0];
     assert.ok(focused.includes('published context'), focused);
     assert.deepStrictEqual(html.match(/data-open="[^"]*"/g).length, 1, 'one Open button');
-    assert.ok(html.includes('>Open semforge.yaml</button>'));
+    assert.ok(html.includes('>Open kms.yaml</button>'));
   });
 
-  it('Edit… writes semforge.yaml and keeps every comment', async () => {
+  it('Edit… writes kms.yaml and keeps every comment', async () => {
     const api = await semforge();
-    const before = read('semforge.yaml');
+    const before = read('kms.yaml');
     const comments = before.split('\n').filter((line) => line.trim().startsWith('#'));
     const original = /published: (\S+)/.exec(before)[1];
     const edit = async (value) => {
@@ -138,13 +138,13 @@ describe('The package page', () => {
     };
     const changed = 'https://example.org/contexts/v9/context.jsonld';
     await edit(changed);
-    const after = read('semforge.yaml');
+    const after = read('kms.yaml');
     assert.ok(after.includes(`published: ${changed}`), 'the new value written');
     assert.deepStrictEqual(after.split('\n').filter((line) => line.trim().startsWith('#')), comments,
       'every comment kept');
     await until(() => api.pages.package.panel.webview.html.includes(changed), 'the page to show it');
     await edit(original);
-    assert.strictEqual(read('semforge.yaml'), before, 'back as it was');
+    assert.strictEqual(read('kms.yaml'), before, 'back as it was');
     await vscode.commands.executeCommand('workbench.action.closeAllEditors');
   });
 });

@@ -34,7 +34,7 @@ def package(tmp_path, corpus):
     for role, name in (('knowledge', 'knowledge.ttl'), ('shapes', 'shacl.ttl'),
                        ('model', 'model-instance.jsonld')):
         shutil.copy(corpus.sources[role], target / name)
-    for extra in ('context.jsonld', 'semforge.yaml'):
+    for extra in ('context.jsonld', 'kms.yaml'):
         shutil.copy(f'{corpus.path}/{extra}', target / extra)
     (target / 'examples').mkdir()
     return target

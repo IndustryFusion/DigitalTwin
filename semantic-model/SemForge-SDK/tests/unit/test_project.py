@@ -17,7 +17,7 @@
 """The project view and the settings behind it.
 
 "I am missing the settings, and the current status. I just see a project name;
-`test` can be different projects." Four modules read semforge.yaml and none of
+`test` can be different projects." Four modules read kms.yaml and none of
 them could say what a package's settings ARE, so nothing could show them and
 nothing could change one.
 """
@@ -52,6 +52,13 @@ def _by_label(package_path):
 
 def test_a_package_without_a_name_says_where_its_name_came_from(package):
     """`test` can be two projects. The row has to say which is which."""
+    # The kms declares `name: kms` since it became a KMS package; this case is
+    # about a package that does not, so the copy loses that line.
+    descriptor = os.path.join(package, 'kms.yaml')
+    with open(descriptor, encoding='utf-8') as handle:
+        kept = [line for line in handle if not line.startswith('name:')]
+    with open(descriptor, 'w', encoding='utf-8') as handle:
+        handle.writelines(kept)
     rows = _by_label(package)
     assert rows['name'].value == 'pkg'
     assert 'directory' in rows['name'].detail
@@ -84,7 +91,7 @@ def test_a_missing_published_context_is_a_warning_not_a_blank(tmp_path, package)
 def test_every_setting_points_at_its_own_line(package):
     rows = _by_label(package)
     where, _, line = rows['published context'].defined_at.rpartition(':')
-    assert where.endswith('semforge.yaml')
+    assert where.endswith('kms.yaml')
     text = open(where).read().splitlines()[int(line) - 1]
     assert text.strip().startswith('published:')
 
@@ -144,7 +151,7 @@ def test_a_new_key_arrives_with_the_paragraph_that_explains_it(package):
 
 
 def test_a_package_with_no_manifest_gets_one(tmp_path):
-    """The kms layout has no semforge.yaml; editing a setting is when it needs one."""
+    """The kms layout has no kms.yaml; editing a setting is when it needs one."""
     bare = tmp_path / 'kms'
     bare.mkdir()
     for name in ('knowledge.ttl', 'shacl.ttl'):

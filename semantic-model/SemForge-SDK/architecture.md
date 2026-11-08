@@ -509,6 +509,32 @@ The `ontology/` + `constraints/` + `rules/` split reproduces the
 *addressable modules with a manifest* rather than as a filename convention
 resolved by `rdfpipe` and shell globbing.
 
+#### The KMS package contract
+
+What every OTHER tool may rely on is narrower than what this loader reads, and
+it is written down as a contract between components: `contracts/kms-package`
+(openspec change `gh-939-kms-package`). The descriptor is `kms.yaml` (`name`,
+`version`, `format`), one name per role (`knowledge`, `shacl`,
+`model-instance`), a role present as both file and directory is an error
+rather than "the file wins", a package is standalone, and its distribution
+form is a `<name>-<version>.kms.zip` carrying `SHA256SUMS`, whose hash is the
+package digest. `semforge verify` applies the contract
+(`package/conformance.py`), `semforge pack` writes the archive
+(`package/archive.py`), and every reading command accepts an archive.
+
+A published version is immutable and tested (`package/releases.py`):
+`semforge publish` requires every example to meet its expectations and the
+examples to make `tests.coverage` (default 80 %) of the constraints fire as
+asserted, and records version, digest and results in `.kms/releases.yaml`,
+which is not a member. A changed published version fails `verify` until
+`semforge version` raises it; the editor says so on the first change
+(`editor/published.py`). `semforge packages` lists a directory of packages,
+such as `semantic-model/kms`, where `default` links to the one to use.
+
+The loader stays lenient below, so existing packages -- `semforge.yaml`,
+`main.jsonld`, `shapes/` -- keep opening in the editor; `verify` names what
+does not conform.
+
 #### What the loader reads today: a file **or** a directory, per role
 
 The modular layout above is where this goes; what M1 reads is the KMS triple —

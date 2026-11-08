@@ -63,7 +63,7 @@ function chip(text, tone, title) {
 function actions(row, index) {
   const out = [];
   if (row.kind === 'setting' && row.editable) {
-    out.push(`<button data-act="edit" data-row="${index}" title="Change it in semforge.yaml, ` +
+    out.push(`<button data-act="edit" data-row="${index}" title="Change it in the package descriptor, ` +
       'its comment kept">Edit…</button>');
   }
   if (row.kind === 'namespaces') {
@@ -147,7 +147,7 @@ function renderPackagePage(payload, options) {
 <div class="dim mono">${escape(payload.root || '')}</div>
 <div class="bar">
   <button data-act="health" title="Cases, violations, untested constraints">Health</button>
-  ${manifest ? `<button data-open="${escape(manifest)}:1">Open semforge.yaml</button>` : ''}
+  ${manifest ? `<button data-open="${escape(manifest)}:1">Open ${escape(manifest.split('/').pop())}</button>` : ''}
   <button data-act="refresh">Refresh</button>
 </div>
 ${roots.map((root) => section(root, rows, focused)).join('')}

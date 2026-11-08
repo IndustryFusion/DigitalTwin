@@ -68,7 +68,7 @@ def test_a_declared_root_wins_over_detection(tmp_path, corpus):
     for role, name in (('knowledge', 'knowledge.ttl'), ('shapes', 'shacl.ttl'),
                        ('model', 'model-instance.jsonld')):
         shutil.copy(corpus.sources[role], package / name)
-    (package / 'semforge.yaml').write_text(
+    (package / 'kms.yaml').write_text(
         f'entityRoot: {ENTITIES}Machine\n')
 
     loaded = load(str(package))

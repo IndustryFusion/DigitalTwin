@@ -39,8 +39,8 @@ describe('A namespace for a new vocabulary term', () => {
     } finally {
       session.restore();
     }
-    assert.ok(/alerts:\s*https:\/\/example\.org\/alerts\//.test(read('semforge.yaml')),
-      read('semforge.yaml').slice(-300));
+    assert.ok(/alerts:\s*https:\/\/example\.org\/alerts\//.test(read('kms.yaml')),
+      read('kms.yaml').slice(-300));
     let knowledge = read('knowledge.ttl');
     assert.strictEqual(knowledge.split(`@prefix alerts: <${ALERTS}> .`).length - 1, 1);
     assert.ok(knowledge.includes('\nalerts:Leak a owl:Class'), knowledge.slice(-300));

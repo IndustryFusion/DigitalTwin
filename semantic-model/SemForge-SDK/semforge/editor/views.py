@@ -329,7 +329,7 @@ def entity_types_feature(ls, params):
         if hierarchy is None:
             return {'types': [], 'root': '',
                     'error': 'this package has no entity hierarchy: no shape '
-                             'declares an sh:targetClass and semforge.yaml '
+                             'declares an sh:targetClass and kms.yaml '
                              'declares no entityRoot.'}
         return {'root': hierarchy,
                 'types': [{'iri': t.iri, 'term': t.term, 'label': t.label,

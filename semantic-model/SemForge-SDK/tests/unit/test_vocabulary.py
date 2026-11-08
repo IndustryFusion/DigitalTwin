@@ -435,7 +435,7 @@ def test_a_prefix_can_be_defined_for_the_package(package):
 
     made = add_namespace(package.path, 'plant', 'https://example.org/plant/')
     assert made['prefix'] == 'plant'
-    assert made['file'].endswith('semforge.yaml')
+    assert made['file'].endswith('kms.yaml')
     assert canonical_map(package.path)['plant'] == 'https://example.org/plant/'
 
 

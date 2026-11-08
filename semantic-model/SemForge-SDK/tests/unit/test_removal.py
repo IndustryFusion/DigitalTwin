@@ -84,7 +84,7 @@ def test_what_is_not_the_package_is_listed_first(project):
 def test_the_package_layout_is_not_called_a_stranger(project):
     plan = plan_deletion(project)
     for known in ('knowledge.ttl', 'shacl.ttl', 'examples' + os.sep,
-                  'semforge.yaml', 'context.jsonld'):
+                  'kms.yaml', 'context.jsonld'):
         assert known not in plan.strangers
 
 

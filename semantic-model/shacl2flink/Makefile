@@ -1,6 +1,9 @@
-SHACL:= ../kms/shacl.ttl
-KNOWLEDGE := ../kms/knowledge.ttl
-MODEL := ../kms/model-instance.jsonld
+# The KMS package to build from: kms/default links to the one used when none
+# is named (openspec gh-939-kms-package). `make KMS=../kms/<name>` picks another.
+KMS ?= ../kms/default
+SHACL:= $(KMS)/shacl.ttl
+KNOWLEDGE := $(KMS)/knowledge.ttl
+MODEL := $(KMS)/model-instance.jsonld
 PYTHON := python3
 LINTER := flake8
 PIP := pip
@@ -186,7 +189,7 @@ test-full-flink-deployment:
 #
 # A standard platform install deploys NO shacl-validation, so this target owns
 # the whole lifecycle: it compiles and deploys its own throwaway KMS, runs the
-# bats suite against it, and undeploys again. The KMS in ../kms is never
+# bats suite against it, and undeploys again. The KMS in $(KMS) is never
 # touched -- SHACL/KNOWLEDGE/MODEL are overridden for the sub-makes, which
 # `make` forwards automatically because they are set on the command line.
 #
@@ -221,7 +224,7 @@ test-flink-is-undeployed:
 prepare-kms:
 ifdef KMS_DIR
 	@echo copy kms values from $(KMS_DIR)
-	cd ../kms && cp $(KMS_DIR)/* .
+	cd $(KMS) && cp $(KMS_DIR)/* .
 else
 	@echo No KMS_DIR defined, doing nothing
 endif
@@ -240,8 +243,8 @@ ontology2kms:
 		if [ -f "$${knowledgefile}" ]; then ontpattern=$${ontpattern}" $${knowledgefile}"; fi; \
 		if [ -f "$${shaclfile}" ]; then shaclpattern=$${shaclpattern}" $${shaclfile}"; fi; \
 	done; \
-	/bin/bash -O extglob -c 'echo creating knowledge.ttl with $${ontpattern} $(ONTDIR)/!(*_shacl.ttl|*.html|*.jsonld|*.txt); rdfpipe -i ttl -o ttl $${ontpattern} $(ONTDIR)/!(*_shacl.ttl|*.html|*.jsonld|*.txt) > ../kms/knowledge.ttl'; \
-	echo creating shacl.ttl with $${shaclpattern}; rdfpipe -i ttl -o ttl $${shaclpattern} > ../kms/shacl.ttl
+	/bin/bash -O extglob -c 'echo creating knowledge.ttl with $${ontpattern} $(ONTDIR)/!(*_shacl.ttl|*.html|*.jsonld|*.txt); rdfpipe -i ttl -o ttl $${ontpattern} $(ONTDIR)/!(*_shacl.ttl|*.html|*.jsonld|*.txt) > $(KMS)/knowledge.ttl'; \
+	echo creating shacl.ttl with $${shaclpattern}; rdfpipe -i ttl -o ttl $${shaclpattern} > $(KMS)/shacl.ttl
 
 # start-database-service:
 # 	POD=$$(kubectl -n $(NAMESPACE) get ep $(FLINK_DATABASE_SERVICE)   -o jsonpath='{.subsets[0].addresses[0].targetRef.name}') && \

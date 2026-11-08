@@ -41,10 +41,10 @@ async function main() {
   }
 
   // A copy: the tests edit data, shapes and knowledge. The corpus files are
-  // SYMLINKS into semantic-model/kms, so the copy must follow them -- a copy
-  // of the links let the tests write into the real kms package.
-  // Laid out as in the repo: the kms names its NGSI-LD vocabulary as
-  // ../ontology/ngsild.ttl, so the shared copy sits beside it.
+  // SYMLINKS into semantic-model/kms/example, so the copy must follow them --
+  // a copy of the links let the tests write into the real kms package.
+  // Laid out as in the repo: the kms carries its own NGSI-LD vocabulary
+  // (vocabulary/ngsild.ttl); the shared copy sits beside it for the others.
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'semforge-e2e-'));
   const workspace = path.join(root, 'kms');
   // The OPC UA pump slice beside it: a second package the server answers for

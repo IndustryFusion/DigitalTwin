@@ -84,13 +84,15 @@ make lint
 # Build and Test KMS
 ## Build KMS directory
 
-There are three files expected in the `../kms` directory:
+The build reads a KMS package (see `../kms/README.md`): `KMS ?= ../kms/default`,
+the package `kms/default` links to, and `make KMS=../kms/<name>` picks another.
+Three of its files are used:
 
 - shacl.ttl
 - knowledge.ttl
-- model-instance.ttl
+- model-instance.jsonld
 
-`../kms` carries two model instances, and which one to use depends on whether
+The default package carries two model instances, and which one to use depends on whether
 the model is being compiled or deployed.
 
 `model-instance.jsonld` gives `urn:filter:1` four `hasStrength` values observed

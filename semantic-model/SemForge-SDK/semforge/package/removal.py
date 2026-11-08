@@ -45,7 +45,7 @@ from dataclasses import dataclass, field
 # What the layout puts there. Everything else in a project directory was put
 # there by a person, and is what a deletion actually costs.
 KNOWN = {
-    'semforge.yaml', 'context.jsonld', 'knowledge.ttl', 'shacl.ttl',
+    'kms.yaml', 'semforge.yaml', 'context.jsonld', 'knowledge.ttl', 'shacl.ttl',
     'main.jsonld', 'model-instance.jsonld', 'model.jsonld', 'README.md',
 }
 KNOWN_DIRS = {

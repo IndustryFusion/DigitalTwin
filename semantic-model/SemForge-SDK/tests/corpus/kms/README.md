@@ -1,7 +1,8 @@
 # Corpus: the production KMS
 
-`knowledge.ttl`, `shacl.ttl` and `model-instance.jsonld` are **symlinks** into
-`semantic-model/kms/`, not copies. The fixture cannot drift onto last month's
+`kms.yaml`, `knowledge.ttl`, `shacl.ttl`, `model-instance.jsonld`, `examples/`
+and `vocabulary/` are **symlinks** into `semantic-model/kms/example/`, the
+package `kms/default` links to, not copies. The fixture cannot drift onto last month's
 shapes; a copy is how the sql-core chart ended up running SQL the generator had
 already fixed.
 

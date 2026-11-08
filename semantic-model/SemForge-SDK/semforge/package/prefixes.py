@@ -67,7 +67,7 @@ class PrefixFinding:
 # told its shapes file had invented "sh:".
 #
 # Lowest precedence. A package that has a reason to call one of these something
-# else says so in semforge.yaml and that wins.
+# else says so in kms.yaml and that wins.
 STANDARD = {
     'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
     'rdfs': 'http://www.w3.org/2000/01/rdf-schema#',
@@ -85,7 +85,7 @@ def _cached(path, read):
     """`read(path)`, once per version of the file.
 
     The editor asks for the prefix table once per term it names -- 5,600 times
-    in one check of a large package, each re-parsing semforge.yaml and the
+    in one check of a large package, each re-parsing kms.yaml and the
     context. Keyed on the file's mtime and size, so an edit is seen at once.
     A copy is returned: callers may change what they get.
     """
@@ -126,8 +126,9 @@ def _context_prefixes(path):
 
 
 def declared_prefixes(package_path):
-    """`namespaces:` from semforge.yaml, which overrides the context."""
-    return _cached(os.path.join(package_path, 'semforge.yaml'), _declared_prefixes)
+    """`namespaces:` from kms.yaml, which overrides the context."""
+    from .config import path_for
+    return _cached(path_for(package_path), _declared_prefixes)
 
 
 def _declared_prefixes(config):
@@ -141,7 +142,7 @@ def _declared_prefixes(config):
 def canonical_map(package_path):
     """The agreed name for each namespace.
 
-    Three layers, narrowest first: what the package declares in semforge.yaml,
+    Three layers, narrowest first: what the package declares in kms.yaml,
     then what its context says, then the standard names every package uses and
     none should have to write down.
     """
@@ -254,7 +255,7 @@ def check(package):
                              f'but the package defines no name for it. Prefixes '
                              f'are defined once, for the whole package: add it '
                              f'to context.jsonld or to `namespaces:` in '
-                             f'semforge.yaml.'),
+                             f'kms.yaml.'),
                     files=[role]))
             elif agreed != name:
                 findings.append(PrefixFinding(
@@ -278,7 +279,7 @@ def add_namespace(package_path, prefix, namespace):
     `check` reports -- rdflib binds a single prefix per namespace, so a second
     name evicts the first and a term copied between artifacts changes meaning.
 
-    Writes `namespaces:` in semforge.yaml, which is the half a package owns;
+    Writes `namespaces:` in kms.yaml, which is the half a package owns;
     context.jsonld is a snapshot of a published url and diverging from what
     that url serves is the reproducibility problem in another form.
     """
@@ -362,7 +363,7 @@ def plan_removal(package_path, prefix, package=None):
     declared = declared_prefixes(package_path)
     if name not in declared:
         return {'prefix': name, 'removable': False, 'in_use': False,
-                'reason': (f'{name}: is not declared in semforge.yaml. The '
+                'reason': (f'{name}: is not declared in kms.yaml. The '
                            f'package\'s table is the only one it owns -- a '
                            f'name from the context or from the standard set '
                            f'is not this package\'s to remove.')}

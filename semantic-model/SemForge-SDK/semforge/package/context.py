@@ -71,8 +71,9 @@ class ContextConfig:
 
 
 def context_config(package_path):
-    """`context:` from semforge.yaml, defaulting to context.jsonld."""
-    config_path = os.path.join(package_path, 'semforge.yaml')
+    """`context:` from kms.yaml, defaulting to context.jsonld."""
+    from .config import path_for
+    config_path = path_for(package_path)
     if not os.path.exists(config_path):
         return ContextConfig()
     from ruamel.yaml import YAML
@@ -311,7 +312,7 @@ def check_export_readiness(package, config=None, cache_dir=None):
     if not config.declared:
         return [Diagnostic(
             code='SF-CTX-000', category='package', severity='warning',
-            message=('no published context declared in semforge.yaml; the '
+            message=('no published context declared in kms.yaml; the '
                      'exported model will keep whatever @context it has'))]
 
     upstream, error = published_terms(config, cache_dir)

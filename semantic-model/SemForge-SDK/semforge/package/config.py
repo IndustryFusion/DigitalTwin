@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-"""Reading and editing `semforge.yaml`.
+"""Reading and editing `kms.yaml`, the package descriptor.
 
 Four modules read this file and each opened it for itself -- the context, the
 prefixes, the dependency list, the entity root. None of them could say what a
@@ -33,12 +33,17 @@ from dataclasses import dataclass, field
 
 from ruamel.yaml import YAML
 
-CONFIG = 'semforge.yaml'
+# The descriptor of a KMS package (openspec gh-939-kms-package). The SDK
+# still reads `semforge.yaml`, the name it used before the format had one, so
+# existing packages keep loading; `semforge verify` reports it.
+CONFIG = 'kms.yaml'
+LEGACY = 'semforge.yaml'
+DESCRIPTORS = (CONFIG, LEGACY)
 
 
 @dataclass(frozen=True)
 class Setting:
-    """One line of `semforge.yaml`, as the editor shows it."""
+    """One line of `kms.yaml`, as the editor shows it."""
     key: str                  # dotted: 'context.published'
     label: str
     value: str
@@ -54,6 +59,15 @@ class Setting:
 SPEC = [
     ('name', 'name', 'The package\'s name. Two directories called `test` are '
      'not the same project.'),
+    ('version', 'version',
+     'The package\'s version, MAJOR.MINOR.PATCH. With the name it is what a '
+     'packed package is called: <name>-<version>.zip.'),
+    ('format', 'package format',
+     'The version of the KMS package format this package follows. A tool '
+     'that implements an older one refuses it rather than misreading it.'),
+    ('tests.coverage', 'coverage threshold',
+     'The share of constraints, in percent, that examples must make fire '
+     'before a version can be published.'),
     ('context.local', 'local context',
      'Resolved while you work, so a term is usable the moment it is agreed.'),
     ('context.published', 'published context',
@@ -70,19 +84,32 @@ SPEC = [
 
 # Edited in the file: a new source and its sha256 change together, and a row
 # editing one of them would leave the other stale.
-READ_ONLY = {'ngsild.source'}
+READ_ONLY = {'ngsild.source', 'format'}
 
 DEFAULTS = {
     'context.local': 'context.jsonld',
+    'tests.coverage': '80',
 }
 
 
 def path_for(package_path):
+    """The package's descriptor: kms.yaml, or a legacy semforge.yaml when that
+    is the one it has. A package with neither gets kms.yaml when it is first
+    written."""
+    for name in DESCRIPTORS:
+        candidate = os.path.join(package_path, name)
+        if os.path.isfile(candidate):
+            return candidate
     return os.path.join(package_path, CONFIG)
 
 
+def name_for(package_path):
+    """The descriptor's file name, as path_for resolves it."""
+    return os.path.basename(path_for(package_path))
+
+
 def read(package_path):
-    """The mapping in `semforge.yaml`, or {} when there is none."""
+    """The mapping in the descriptor, or {} when there is none."""
     where = path_for(package_path)
     if not os.path.isfile(where):
         return {}
@@ -213,7 +240,7 @@ def locate_entry(package_path, block, name):
 def set_value(package_path, key, value):
     """Write one scalar setting, keeping every comment in the file.
 
-    Returns (path, line). Creates `semforge.yaml` when the package has none --
+    Returns (path, line). Creates `kms.yaml` when the package has none --
     a package without a manifest is the kms layout, and the first setting
     somebody edits is a reasonable moment for it to acquire one.
     """

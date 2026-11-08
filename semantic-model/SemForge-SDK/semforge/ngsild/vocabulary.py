@@ -75,7 +75,7 @@ def default_source():
 
 
 def declared_source(package_path):
-    """The `ngsild:` of semforge.yaml as a Source, or None when there is none."""
+    """The `ngsild:` of kms.yaml as a Source, or None when there is none."""
     from ..package.config import read
 
     declared = read(package_path).get('ngsild')

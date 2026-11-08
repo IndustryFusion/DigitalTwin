@@ -19,7 +19,7 @@
 M1 reads the KMS triple layout directly -- knowledge.ttl, shacl.ttl and a
 model-instance -- which is what the corpus is and what `semforge export` will
 have to reproduce byte-for-byte. The modular layout of architecture.md section
-6.1, with semforge.yaml, is read when present and otherwise defaulted from
+6.1, with kms.yaml, is read when present and otherwise defaulted from
 these names.
 
 **A role may be one file or a directory of them.** `shacl.ttl` or `shacl/`,

@@ -62,7 +62,7 @@ describe('Multi-instance attributes (datasetId)', () => {
     assert.ok(Array.isArray(workpiece[height]), JSON.stringify(workpiece[height]));
     assert.deepStrictEqual(workpiece[height].map((i) => i.datasetId),
       [undefined, 'urn:sensor:second']);
-    assert.match(read('semforge.yaml'), /sensor:\s*['"]?urn:sensor:/);
+    assert.match(read('kms.yaml'), /sensor:\s*['"]?urn:sensor:/);
     await until(() => api.pages.case.page && api.pages.case.page.files[0].cards[card].attributes
       .some((a) => a.name === 'hasHeight' && a.violations
         .some((v) => JSON.stringify(v).includes('MaxCount'))), 'MaxCount firing on hasHeight');

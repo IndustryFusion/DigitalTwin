@@ -694,7 +694,7 @@ Installed this way it loads in every window, so open the repository normally.
 
 ### 3. What you should see
 
-Open `semantic-model/kms/shacl.ttl`. The file itself looks no different — the
+Open `semantic-model/kms/example/shacl.ttl`. The file itself looks no different — the
 extension adds no syntax colouring beyond what VS Code already does for `.ttl`.
 **Everything it contributes is in three places, and none of them is the editor
 text by default:**

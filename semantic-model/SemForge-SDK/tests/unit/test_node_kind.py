@@ -159,7 +159,7 @@ def test_export_reports_what_it_completed(tmp_path, corpus):
     for role, name in (('knowledge', 'knowledge.ttl'), ('shapes', 'shacl.ttl'),
                        ('model', 'model-instance.jsonld')):
         shutil.copy(corpus.sources[role], package / name)
-    for extra in ('context.jsonld', 'semforge.yaml'):
+    for extra in ('context.jsonld', 'kms.yaml'):
         shutil.copy(f'{corpus.path}/{extra}', package / extra)
 
     shapes = package / 'shacl.ttl'

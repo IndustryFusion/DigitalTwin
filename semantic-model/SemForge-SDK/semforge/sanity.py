@@ -761,8 +761,8 @@ def _vocabulary_checks(package):
 
     ngsild-unavailable: it did not load (missing file, offline, hash mismatch),
     so no NGSI-LD term is declared. ngsild-unpinned: a remote one without a
-    sha256 is whatever the url serves today. ngsild-undeclared: semforge.yaml
-    names none, so the default applies (said only where a semforge.yaml exists
+    sha256 is whatever the url serves today. ngsild-undeclared: kms.yaml
+    names none, so the default applies (said only where a kms.yaml exists
     to name one in).
     """
     from .ngsild.vocabulary import source_for
@@ -786,9 +786,9 @@ def _vocabulary_checks(package):
                         f'is declared: {package.vocabulary_error}')]
     if not source.declared:
         if not configured:
-            return []           # no semforge.yaml to declare it in: ad hoc
+            return []           # no kms.yaml to declare it in: ad hoc
         return [finding('information', 'ngsild-undeclared',
-                        f'semforge.yaml names no NGSI-LD vocabulary; the default '
+                        f'kms.yaml names no NGSI-LD vocabulary; the default '
                         f'applies: {source.source}. Declare `ngsild: {{source: …}}` '
                         f'to choose a local copy or pin the official one.')]
     if source.is_remote and not source.sha256:

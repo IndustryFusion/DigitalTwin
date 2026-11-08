@@ -210,7 +210,7 @@ def test_a_model_directory_is_searched(tmp_path):
     target = tmp_path / 'plant'
     target.mkdir()
     create_package(str(target), name='Plant')
-    main = next(p for p in target.rglob('main.jsonld'))
+    main = next(p for p in target.rglob('model-instance.jsonld'))
     folder = main.with_suffix('')
     folder.mkdir()
     shutil.move(str(main), str(folder / 'line-a.jsonld'))

@@ -143,7 +143,7 @@ def assemble_knowledge(resolution, out_path):
 
 
 def dependencies_from_config(config):
-    """Read the `dependencies:` list of a semforge.yaml mapping."""
+    """Read the `dependencies:` list of a kms.yaml mapping."""
     found = []
     for entry in (config or {}).get('dependencies') or []:
         if 'source' not in entry or 'name' not in entry:

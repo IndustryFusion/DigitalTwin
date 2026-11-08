@@ -334,7 +334,7 @@ def checkpoint_phase(stats, timeout=180):
 # --------------------------------------------------------------------------- family
 
 class Family:
-    """A private entity family mirroring semantic-model/kms/model-instance.jsonld."""
+    """A private entity family mirroring semantic-model/kms/example/model-instance.jsonld."""
 
     def __init__(self, run):
         self.run = run

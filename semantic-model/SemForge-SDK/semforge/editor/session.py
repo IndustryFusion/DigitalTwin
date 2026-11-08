@@ -241,6 +241,9 @@ def forget(root, renames=False):
     if renames:
         _shape_prints.pop(root, None)
         _pending_renames.pop(root, None)
+    # The files changed: a published version must say so (published.py).
+    from .published import check_after_write
+    check_after_write(root)
 
 
 def take_renames(root):

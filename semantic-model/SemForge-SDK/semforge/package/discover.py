@@ -27,7 +27,7 @@ to be standing.
 So: walk up, and take the first directory that is a package. Two things make a
 directory one, in this order:
 
-  * `semforge.yaml` -- the declared anchor. It wins even when a role is
+  * `kms.yaml` (or the legacy `semforge.yaml`) -- the declared anchor. It wins even when a role is
     missing, because a package that says it is a package should be reported as
     broken rather than skipped in favour of some ancestor.
   * knowledge, shapes and model lying beside each other -- the kms layout,
@@ -43,10 +43,11 @@ import os
 
 from .loader import DEFAULTS, FOLDERS, MODEL_FOLDER
 
-MANIFEST = 'semforge.yaml'
+MANIFEST = 'kms.yaml'
+MANIFESTS = ('kms.yaml', 'semforge.yaml')    # the second is the legacy name
 
 # Why a directory counts, in the words the caller should see.
-BY_MANIFEST = 'semforge.yaml'
+BY_MANIFEST = 'kms.yaml'
 BY_LAYOUT = 'knowledge, shapes and model beside each other'
 
 
@@ -78,6 +79,31 @@ def is_package(directory):
     return not missing_roles(directory)
 
 
+def packages_below(directory):
+    """The packages in a directory of packages, one per subdirectory.
+
+    [(name, path, is_default)], sorted by name. A subdirectory is a package
+    when it holds a descriptor or the three roles; anything else (a directory
+    of examples, a download cache) is ignored. A link to a package is that
+    package, not a second one: `default` is never listed itself, it marks
+    the package it points to (openspec gh-939-kms-package).
+    """
+    directory = os.path.abspath(directory)
+    link = os.path.join(directory, 'default')
+    default = os.path.realpath(link) if os.path.islink(link) else None
+    found = []
+    for name in sorted(os.listdir(directory)):
+        candidate = os.path.join(directory, name)
+        if name.startswith('.') or os.path.islink(candidate) or \
+                not os.path.isdir(candidate):
+            continue
+        if not (any(os.path.isfile(os.path.join(candidate, m)) for m in MANIFESTS)
+                or is_package(candidate)):
+            continue
+        found.append((name, candidate, os.path.realpath(candidate) == default))
+    return found
+
+
 def ancestors(start):
     """`start` and every directory above it, nearest first."""
     here = os.path.abspath(start)
@@ -98,8 +124,9 @@ def find(start='.'):
     directory, which is what a shell does.
     """
     for directory in ancestors(start):
-        if os.path.isfile(os.path.join(directory, MANIFEST)):
-            return directory, BY_MANIFEST
+        for manifest in MANIFESTS:
+            if os.path.isfile(os.path.join(directory, manifest)):
+                return directory, manifest
         if is_package(directory):
             return directory, BY_LAYOUT
     return None, ''

@@ -16,7 +16,7 @@
 
 """The package page, and views named for what they show.
 
-A setting was the last row whose click opened a file: semforge.yaml, the
+A setting was the last row whose click opened a file: kms.yaml, the
 comment above the key as the only explanation. The page shows each setting
 with what it decides and Edit… beside it; the file is its Open button.
 """
@@ -57,7 +57,7 @@ def payload(corpus):
 
 
 def _render(tmp_path, payload, focus=None):
-    page = dict(payload, manifest=os.path.join(payload['root'], 'semforge.yaml'))
+    page = dict(payload, manifest=os.path.join(payload['root'], 'kms.yaml'))
     return _node(tmp_path, {'mode': 'render', 'function': 'renderPackagePage', 'payload': page,
                             'options': {'nonce': 'n', 'focus': focus}}, 'packagepage.js')['html']
 
@@ -92,7 +92,7 @@ def test_each_setting_says_what_it_decides_with_edit_beside_it(tmp_path, payload
 def test_the_file_is_a_button_and_nothing_else_opens_it(tmp_path, payload):
     html = _render(tmp_path, payload)
     opens = re.findall(r'<button[^>]*data-open="[^"]*"[^>]*>([^<]*)</button>', html)
-    assert opens == ['Open semforge.yaml']
+    assert opens == ['Open kms.yaml']
     assert html.count('data-open=') == 1
 
 
@@ -108,7 +108,7 @@ def test_a_click_in_the_package_view_opens_the_page(tmp_path):
         'mode': 'select', 'view': 'semforgeProject', 'config': {},
         'node': {'key': 'root/0', 'raw': {'kind': 'setting', 'label': 'published context',
                                           'key': 'context.published', 'children': [],
-                                          'definedAt': '/pkg/semforge.yaml:11'},
+                                          'definedAt': '/pkg/kms.yaml:11'},
                  'packageUri': 'file:///pkg/shacl.ttl'},
         'replies': {'semforge/project': {'roots': []}, 'semforge/health': {'ok': False}}},
         'extension.js')

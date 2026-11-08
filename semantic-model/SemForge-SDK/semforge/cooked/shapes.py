@@ -231,7 +231,7 @@ def add_shape(package, name, kind, target, namespace=None):
         else _shapes_namespace(package)
     if not space:
         raise PackageError('this package has no shape yet to take a namespace from; '
-                           'name one (a prefix from semforge.yaml)')
+                           'name one (a prefix from kms.yaml)')
     iri = URIRef(space + name)
     if (iri, None, None) in package.shapes:
         raise PackageError(f'{curie(package.shapes, iri)} already exists')

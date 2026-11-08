@@ -31,7 +31,7 @@ Telling the halves apart needs a root for the entity hierarchy. The kms already
 has one -- `base_entities:Entity`, with Machine, Cutter, Filter, Consumable,
 Workpiece and FilterCartridge all beneath it -- so this is read from the
 ontology rather than guessed. Where a package has no such root it is DECLARED,
-in semforge.yaml, and where it is neither present nor declared the choices are
+in kms.yaml, and where it is neither present nor declared the choices are
 reported as unavailable rather than filled with everything.
 """
 
@@ -67,7 +67,7 @@ DATATYPE_DETAIL = {'rdf:JSON': "JSON — a JsonProperty's json; nowhere else"}
 
 
 def declared_entity_root(package_path):
-    """`entityRoot:` from semforge.yaml, if the package declares one.
+    """`entityRoot:` from kms.yaml, if the package declares one.
 
     It may be a full IRI or a prefixed name, and a prefixed name is what a
     human writes -- `semforge init` writes one. Taking it literally made
@@ -76,7 +76,8 @@ def declared_entity_root(package_path):
     the root, with no descendants. Silently, because a hierarchy of one is a
     legal answer.
     """
-    config = os.path.join(package_path, 'semforge.yaml')
+    from ..package.config import path_for
+    config = path_for(package_path)
     if not os.path.exists(config):
         return None
     from ruamel.yaml import YAML
@@ -210,7 +211,7 @@ def model_term(package, iri):
 
     Not `term_for`, which answers for the shapes file: an entity type is
     written into a .jsonld and read back through the context, so the name has
-    to be the one the context (or semforge.yaml, which overrides it) agreed.
+    to be the one the context (or kms.yaml, which overrides it) agreed.
     A full IRI is always valid, and is what a namespace with no agreed name
     gets.
     """
@@ -632,7 +633,7 @@ def choices_for(package, path_chain, parameter, search=None, limit=None):
     entities, knowledge, root = classify_classes(package)
     if root is None:
         return [], ('no entity root: the ontology has no class every '
-                    'sh:targetClass descends from, and semforge.yaml declares '
+                    'sh:targetClass descends from, and kms.yaml declares '
                     'no entityRoot. Add one to get class suggestions.')
 
     slot = path_chain[-1] if path_chain else ''

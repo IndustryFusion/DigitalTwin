@@ -1,3 +1,13 @@
+# The KMS package (Knowledge, Model, Shapes): its name, version and the
+# package format it follows (openspec change gh-939-kms-package).
+# `semforge pack` names the archive <name>-<version>.kms.zip, `semforge
+# verify` checks the package against the format, and `semforge publish`
+# publishes a version once its examples cover tests.coverage (default 80 %)
+# of the constraints. kms/default links here.
+name: example
+version: 1.0.0
+format: 1
+
 # The context this package resolves against.
 #
 # Locally the LOCAL file answers, so a term can be used the moment it is agreed
@@ -33,11 +43,13 @@ namespaces:
   # evicts the first, and shacl2flink requires the survivor to be literally
   # `base`. See kms/README.md.
 
-# The NGSI-LD vocabulary: the repo's shared local copy for now. The official
-# version (contexts/staging/ontology/v0/ngsild.ttl) declares only Property
-# and Relationship; once it carries the terms this package uses, move here
-# by naming its url, pinned:
+# The NGSI-LD vocabulary, inside the package: a package is standalone, so it
+# means the same wherever it is unpacked. vocabulary/ngsild.ttl is a copy of
+# the repo's shared semantic-model/ontology/ngsild.ttl (a test keeps them
+# equal). The official version (contexts/staging/ontology/v0/ngsild.ttl)
+# declares only Property and Relationship; once it carries the terms this
+# package uses, move to it by naming its url, pinned:
 #   source: https://industryfusion.github.io/contexts/staging/ontology/v0/ngsild.ttl
 #   sha256: sha256:...
 ngsild:
-  source: ../ontology/ngsild.ttl
+  source: vocabulary/ngsild.ttl

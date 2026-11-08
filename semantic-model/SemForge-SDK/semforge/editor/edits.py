@@ -92,7 +92,7 @@ def clear_cache_feature(ls, params):
 
 @server.feature('semforge/setSetting')
 def set_setting(ls, params):
-    """Write one setting into semforge.yaml, keeping the file's comments.
+    """Write one setting into kms.yaml, keeping the file's comments.
 
     Line-based rather than a YAML round-trip: the comments are most of that
     file -- a paragraph above each key saying what it decides -- and a
@@ -104,7 +104,7 @@ def set_setting(ls, params):
     if root is None:
         return {'ok': False, 'error': 'not a SemForge package'}
     key = field(params, 'key', '')
-    if key not in {entry[0] for entry in config.SPEC}:
+    if key not in {entry[0] for entry in config.SPEC} or key in config.READ_ONLY:
         return {'ok': False, 'error': f'{key} is not an editable setting'}
     try:
         where, line = config.set_value(root, key, field(params, 'value', ''))
@@ -113,6 +113,23 @@ def set_setting(ls, params):
     session.forget(root)                      # it must be re-read
     return {'ok': True, 'key': key, 'file': where, 'line': line,
             'uri': path_to_uri(where)}
+
+
+@server.feature('semforge/raiseVersion')
+def raise_version(ls, params):
+    """Raise the package's version by `part` (patch, minor or major): what the
+    warning on a changed published version offers."""
+    from ..package.releases import raise_version as bump
+
+    root = package_root(uri_to_path(field(params, 'uri', '')))
+    if root is None:
+        return {'ok': False, 'error': 'not a SemForge package'}
+    try:
+        old, new = bump(root, field(params, 'part', ''))
+    except (OSError, ValueError) as exc:
+        return {'ok': False, 'error': str(exc)}
+    session.forget(root)
+    return {'ok': True, 'old': old, 'new': new}
 
 
 @server.feature('semforge/shapeFor')
@@ -333,7 +350,7 @@ def add_namespace_feature(ls, params):
     """Define a namespace name for the whole package.
 
     Prefixes are a package-wide table, agreed once. Until this there was no way
-    to add to it from the editor at all -- you found semforge.yaml and typed.
+    to add to it from the editor at all -- you found kms.yaml and typed.
     """
     from ..package.prefixes import add_namespace
 

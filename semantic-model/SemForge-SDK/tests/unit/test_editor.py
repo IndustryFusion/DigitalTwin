@@ -275,20 +275,24 @@ def test_the_launch_configuration_opens_a_real_package():
               if not a.startswith('--')][0].replace('${workspaceFolder}', _vscode_dir())
     resolved = os.path.abspath(folder)
     assert os.path.isdir(resolved)
-    assert os.path.exists(os.path.join(resolved, 'kms', 'shacl.ttl')), \
+    # semantic-model/kms is a directory of packages; default links to one.
+    assert os.path.exists(os.path.join(resolved, 'kms', 'default', 'shacl.ttl')), \
         'the extension host should open a folder containing a package'
 
 
 # --- starting from scratch ---------------------------------------------------
 
 def test_the_kms_is_a_package_on_its_own(corpus_path):
-    """Opening kms/ directly must work: it is the folder you want to edit."""
+    """Opening kms/example directly must work: it is the folder you want to
+    edit. kms/ itself is a directory of packages, not one."""
     import os
 
     # corpus/kms -> corpus -> tests -> SemForge-SDK -> semantic-model
     kms = os.path.abspath(
         os.path.join(corpus_path, '..', '..', '..', '..', 'kms'))
-    assert package_root(os.path.join(kms, 'shacl.ttl')) == kms
+    example = os.path.join(kms, 'example')
+    assert package_root(os.path.join(example, 'shacl.ttl')) == example
+    assert package_root(os.path.join(kms, 'README.md')) is None
 
 
 def test_the_extension_searches_upward_for_the_sdk():

@@ -77,7 +77,7 @@ def test_the_cache_is_bounded():
 def test_the_prefix_table_is_read_once_and_an_edit_is_seen(tmp_path):
     from semforge.package import prefixes
 
-    config = tmp_path / 'semforge.yaml'
+    config = tmp_path / 'kms.yaml'
     config.write_text('namespaces:\n  ex: https://example.org/\n')
     calls = []
     read = prefixes._declared_prefixes
@@ -104,7 +104,7 @@ def test_the_prefix_table_is_read_once_and_an_edit_is_seen(tmp_path):
 def test_a_caller_cannot_change_the_cached_table(tmp_path):
     from semforge.package.prefixes import declared_prefixes
 
-    (tmp_path / 'semforge.yaml').write_text('namespaces:\n  ex: https://example.org/\n')
+    (tmp_path / 'kms.yaml').write_text('namespaces:\n  ex: https://example.org/\n')
     declared_prefixes(str(tmp_path))['junk'] = 'x'
     assert 'junk' not in declared_prefixes(str(tmp_path))
 

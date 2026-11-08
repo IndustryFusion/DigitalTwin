@@ -67,7 +67,7 @@ jobs:
         # This replaces test-full-flink-deployment, which only proved the helm
         # package deploys and undeploys: that is a strict subset of what this
         # target does, so running both cost a second full deploy cycle for no
-        # extra coverage. The production ../kms is still compiled on every
+        # extra coverage. The production ../kms/default is still compiled on every
         # build by the Build workflow (make build), just not deployed here.
         ( cd semantic-model/shacl2flink && make test-flink-e2e )
 

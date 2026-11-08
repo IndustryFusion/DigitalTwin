@@ -166,7 +166,7 @@ def test_a_namespace_and_a_local_part_make_the_full_iri(tmp_path):
     seen = _drive(tmp_path, _entity([]), ['sensors:hasStrength-2'], ['left', '0.5'])
     assert seen['inputs'][0]['value'] == 'hasStrength-2'
     assert _sent(seen)[0]['datasetId'] == 'https://x/sensors/left', \
-        'written whole: a prefix from semforge.yaml is not in the case\'s @context'
+        'written whole: a prefix from kms.yaml is not in the case\'s @context'
 
 
 def test_a_new_namespace_is_defined_on_the_spot(tmp_path):
@@ -174,7 +174,7 @@ def test_a_new_namespace_is_defined_on_the_spot(tmp_path):
                   ['plant', 'https://example.org/plant/', 'inlet', '0.5'],
                   replies={'semforge/addNamespace': {
                       'ok': True, 'prefix': 'plant', 'namespace': 'https://example.org/plant/',
-                      'file': 'semforge.yaml', 'line': 3}})
+                      'file': 'kms.yaml', 'line': 3}})
     defined = [r['params'] for r in seen['requests'] if r['method'] == 'semforge/addNamespace']
     assert defined == [{'uri': 'file:///pkg/shacl.ttl', 'prefix': 'plant',
                         'namespace': 'https://example.org/plant/'}]

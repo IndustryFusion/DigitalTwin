@@ -162,6 +162,30 @@ function canImport(python) {
   }
 }
 
+/** The warning for a changed published version, with the versions that
+ *  would make the change legitimate. The server says it once per version. */
+async function offerVersion(clientHolder, notice) {
+  if (!notice || !notice.next) {
+    return;
+  }
+  const parts = ['patch', 'minor', 'major'];
+  const labels = parts.map((part) => notice.next[part]);
+  const picked = await vscode.window.showWarningMessage(
+    `SemForge: ${notice.message}`, ...labels);
+  const part = parts[labels.indexOf(picked)];
+  if (!part || !clientHolder.client) {
+    return;
+  }
+  const done = await clientHolder.client.sendRequest('semforge/raiseVersion',
+    { uri: notice.uri, part });
+  if (done && done.ok) {
+    vscode.window.showInformationMessage(
+      `SemForge: ${notice.name} is now ${done.new}, a draft until it is published.`);
+  } else if (done && done.error) {
+    vscode.window.showErrorMessage(`SemForge: ${done.error}`);
+  }
+}
+
 function startClient(context) {
   const folders = vscode.workspace.workspaceFolders;
   const root = folders && folders.length ? folders[0].uri.fsPath : undefined;
@@ -241,6 +265,10 @@ function startClient(context) {
   if (typeof client.onNotification === 'function') {
     client.onNotification('semforge/shapeRenamed',
       (notice) => rename.offerFollow(clientHolder, notice));
+    // A published version was changed: the edit stands, and the three
+    // versions that would make it legitimate are one click away.
+    client.onNotification('semforge/publishedChanged',
+      (notice) => offerVersion(clientHolder, notice));
     client.onNotification('semforge/verdicts', (notice) => {
       if (validating) {
         validating.notice(notice);

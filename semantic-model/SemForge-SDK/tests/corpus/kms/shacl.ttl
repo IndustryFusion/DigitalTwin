@@ -1,1 +1,1 @@
-../../../../kms/shacl.ttl
+../../../../kms/example/shacl.ttl

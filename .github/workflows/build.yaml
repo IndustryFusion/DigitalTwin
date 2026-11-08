@@ -49,7 +49,7 @@ jobs:
       run: |
         source $CONDA/bin/activate
         conda activate py310
-        cd semantic-model/SemForge-SDK && make setup && make lint test
+        cd semantic-model/SemForge-SDK && make setup && make lint test kms-check
     - name: Build datamodel tools
       run: |
         cd semantic-model/datamodel/tools && make setup && make lint test

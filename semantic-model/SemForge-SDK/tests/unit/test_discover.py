@@ -54,7 +54,7 @@ def test_the_manifest_anchors_even_when_a_role_is_missing(tmp_path):
     """
     broken = tmp_path / 'declared'
     broken.mkdir()
-    (broken / 'semforge.yaml').write_text('name: declared\n')
+    (broken / 'kms.yaml').write_text('name: declared\n')
     found, why = discover.find(broken)
     assert found == str(broken)
     assert why == discover.BY_MANIFEST
@@ -62,7 +62,7 @@ def test_the_manifest_anchors_even_when_a_role_is_missing(tmp_path):
 
 
 def test_the_layout_anchors_without_a_manifest(tmp_path):
-    """The kms predates semforge.yaml and must keep working without one."""
+    """The kms predates kms.yaml and must keep working without one."""
     package = tmp_path / 'kms'
     (package / 'shacl').mkdir(parents=True)
     (package / 'knowledge.ttl').write_text('')
@@ -74,7 +74,7 @@ def test_nothing_found_says_where_it_looked_and_what_would_count(tmp_path):
     found, why, roles = discover.describe(tmp_path)
     assert found is None and roles == {}
     assert str(tmp_path) in why            # where it looked
-    assert 'semforge.yaml' in why          # what would have counted
+    assert 'kms.yaml' in why          # what would have counted
     assert 'semforge init' in why          # what to do about it
 
 

@@ -844,9 +844,9 @@ def _setting(**overrides):
 def test_editing_a_setting_writes_it_and_offers_the_line(tmp_path):
     seen = _drive(tmp_path, {
         'command': 'semforge.editSetting', 'node': _setting(),
-        'input': 'https://example.org/v1/context.jsonld', 'answer': 'Open semforge.yaml',
+        'input': 'https://example.org/v1/context.jsonld', 'answer': 'Open kms.yaml',
         'replies': {'semforge/setSetting': {
-            'ok': True, 'key': 'context.published', 'file': '/pkg/semforge.yaml', 'line': 11}},
+            'ok': True, 'key': 'context.published', 'file': '/pkg/kms.yaml', 'line': 11}},
     })
     assert 'SemForge: context.published written.' in seen['info']
     wrote = [r for r in seen['requests'] if r['method'] == 'semforge/setSetting']
@@ -1186,25 +1186,25 @@ def test_an_unconstrained_value_is_still_typed(tmp_path):
 def test_a_prefix_can_be_defined_from_the_project_view(tmp_path):
     """There was no way to add to the namespace table from the editor at all.
 
-    You found semforge.yaml and typed -- and the table is package-wide, so
+    You found kms.yaml and typed -- and the table is package-wide, so
     getting it wrong there is wrong everywhere.
     """
     seen = _drive(tmp_path, {
         'command': 'semforge.addNamespace',
         'node': {'raw': {'kind': 'namespaces', 'label': 'namespaces'},
                  'packageUri': 'file:///pkg/shacl.ttl'},
-        'inputs': ['plant', 'https://example.org/plant/'], 'answer': 'Open semforge.yaml',
+        'inputs': ['plant', 'https://example.org/plant/'], 'answer': 'Open kms.yaml',
         'replies': {'semforge/addNamespace': {
             'ok': True, 'prefix': 'plant',
             'namespace': 'https://example.org/plant/',
-            'file': '/pkg/semforge.yaml', 'line': 29}},
+            'file': '/pkg/kms.yaml', 'line': 29}},
     })
     asked = [r for r in seen['requests'] if r['method'] == 'semforge/addNamespace']
     assert asked[0]['params'] == {'uri': 'file:///pkg/shacl.ttl',
                                   'prefix': 'plant',
                                   'namespace': 'https://example.org/plant/'}
     assert 'SemForge: plant: agreed for the package.' in seen['info']
-    assert seen['shown'][0]['file'] == '/pkg/semforge.yaml', 'opened when asked'
+    assert seen['shown'][0]['file'] == '/pkg/kms.yaml', 'opened when asked'
 
 
 def test_a_refused_prefix_is_reported(tmp_path):
@@ -1225,7 +1225,7 @@ def test_an_unused_namespace_is_removed_without_asking(tmp_path):
                  'packageUri': 'file:///pkg/shacl.ttl'},
         'replies': {'semforge/removeNamespace': {
             'ok': True, 'prefix': 'plant', 'survivesAs': '',
-            'file': '/pkg/semforge.yaml', 'line': 12}},
+            'file': '/pkg/kms.yaml', 'line': 12}},
     })
     asked = [r for r in seen['requests']
              if r['method'] == 'semforge/removeNamespace']
@@ -1265,7 +1265,7 @@ def test_confirming_removes_it(tmp_path):
             {'ok': False, 'confirm': True, 'prefix': 'ngsild',
              'detail': 'ngsild: is in use -- bound in shacl.ttl.'},
             {'ok': True, 'prefix': 'ngsild', 'survivesVia': 'the standard set',
-             'file': '/pkg/semforge.yaml', 'line': 12}]},
+             'file': '/pkg/kms.yaml', 'line': 12}]},
     })
     asked = [r for r in seen['requests']
              if r['method'] == 'semforge/removeNamespace']

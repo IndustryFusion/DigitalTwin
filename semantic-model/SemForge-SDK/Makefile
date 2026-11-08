@@ -41,7 +41,21 @@ test-e2e:
 lint:
 	$(LINTER) semforge tests
 
+# Verify and test every KMS package in semantic-model/kms (openspec
+# gh-939-kms-package): a package that fails verification -- including a
+# published version whose content changed -- fails, and so does an example
+# that does not meet its expectations. Coverage is reported for a draft and
+# enforced only for a published version.
+KMS_DIR := ../kms
+kms-check:
+	@packages=$$($(PYTHON) -m semforge packages $(KMS_DIR) --format paths); \
+	test -n "$$packages" || { echo "no KMS packages in $(KMS_DIR)"; exit 1; }; \
+	for package in $$packages; do \
+		echo "== $$package"; \
+		$(PYTHON) -m semforge verify --tests $$package || exit 1; \
+	done
+
 clean:
 	rm -rf venv .pytest_cache .coverage
 
-.PHONY: setup test test-e2e lint clean
+.PHONY: setup test test-e2e lint clean kms-check

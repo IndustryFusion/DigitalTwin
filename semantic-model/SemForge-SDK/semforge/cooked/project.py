@@ -62,6 +62,15 @@ def _at(path, line):
     return f'{path}:{line}' if path and line else ''
 
 
+def _manifest_detail(manifest):
+    """What the manifest row says about the descriptor file."""
+    if not os.path.isfile(manifest):
+        return 'this package has no kms.yaml — editing a setting creates one'
+    if os.path.basename(manifest) == config.CONFIG:
+        return ''
+    return 'the name before KMS packages had one; rename it to kms.yaml'
+
+
 def _relative(package, path):
     try:
         return os.path.relpath(path, package.path)
@@ -95,10 +104,8 @@ def _identity(package):
                     detail='what made this directory a package'),
         ProjectNode(
             kind='fact', label='manifest',
-            value=config.CONFIG if os.path.isfile(manifest) else '(none)',
-            detail='' if os.path.isfile(manifest)
-                   else 'this package has no semforge.yaml — editing a '
-                        'setting creates one',
+            value=os.path.basename(manifest) if os.path.isfile(manifest) else '(none)',
+            detail=_manifest_detail(manifest),
             defined_at=_at(manifest, 1) if os.path.isfile(manifest) else ''),
     ]
     # Its own kind, not `group`: it is the row that NAMES the project, so it
@@ -200,7 +207,7 @@ def _namespace_rows(collection, manifest, standard, from_context=None):
         return mine
     group = ProjectNode(
         kind='fact', label='standard names', value=str(len(known)),
-        detail='known to every package. Declare one in semforge.yaml only to '
+        detail='known to every package. Declare one in kms.yaml only to '
                'call it something else.')
     group.children = sorted(known, key=lambda row: row.label)
     return mine + [group]

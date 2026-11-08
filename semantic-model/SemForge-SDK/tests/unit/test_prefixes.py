@@ -40,7 +40,7 @@ def package(tmp_path, corpus):
     for role, name in (('knowledge', 'knowledge.ttl'), ('shapes', 'shacl.ttl'),
                        ('model', 'model-instance.jsonld')):
         shutil.copy(corpus.sources[role], target / name)
-    for extra in ('context.jsonld', 'semforge.yaml'):
+    for extra in ('context.jsonld', 'kms.yaml'):
         shutil.copy(f'{corpus.path}/{extra}', target / extra)
     return load(str(target))
 
@@ -53,7 +53,7 @@ def test_the_context_is_read_as_the_source_of_truth(corpus):
 
 
 def test_the_context_name_wins_where_the_package_declares_nothing(corpus):
-    """base_knowledge/ is `base`, and semforge.yaml deliberately stays quiet.
+    """base_knowledge/ is `base`, and kms.yaml deliberately stays quiet.
 
     Two names for one namespace do not survive rdflib, and shacl2flink requires
     the survivor to be `base`, so the context's name is the only workable one.
@@ -133,7 +133,7 @@ def test_alignment_leaves_sparql_bodies_alone(tmp_path, corpus):
     shutil.copy(corpus.sources['knowledge'], target / 'knowledge.ttl')
     shutil.copy(corpus.sources['model'], target / 'model-instance.jsonld')
     shutil.copy(f'{corpus.path}/context.jsonld', target / 'context.jsonld')
-    shutil.copy(f'{corpus.path}/semforge.yaml', target / 'semforge.yaml')
+    shutil.copy(f'{corpus.path}/kms.yaml', target / 'kms.yaml')
 
     # `wrong:` at the Turtle level should be renamed to the agreed name; the
     # SPARQL body names the same namespace differently and must not be touched.
@@ -164,9 +164,9 @@ def test_alignment_reports_a_namespace_nobody_named(tmp_path, corpus):
                                                         'model-instance.jsonld')):
         shutil.copy(corpus.sources[role], target / name)
     shutil.copy(f'{corpus.path}/context.jsonld', target / 'context.jsonld')
-    # The package's own half of the table comes with it: without semforge.yaml
+    # The package's own half of the table comes with it: without kms.yaml
     # this is not a package missing ONE name, it is a package missing four.
-    shutil.copy(f'{corpus.path}/semforge.yaml', target / 'semforge.yaml')
+    shutil.copy(f'{corpus.path}/kms.yaml', target / 'kms.yaml')
     (target / 'shacl.ttl').write_text(
         '@prefix odd: <https://nobody.example/named/> .\n'
         '@prefix sh: <http://www.w3.org/ns/shacl#> .\n')
@@ -198,7 +198,7 @@ def test_an_ambiguous_prefix_is_an_error_not_a_warning(tmp_path, corpus):
 
 def test_canonical_map_merges_both_sources(corpus):
     found = canonical_map(corpus.path)
-    assert 'iffBaseShacl' in found          # only in semforge.yaml
+    assert 'iffBaseShacl' in found          # only in kms.yaml
     assert 'iffBaseEntities' in found       # only in the context
 
 
@@ -228,7 +228,7 @@ def test_prefixes_fix_rewrites_and_then_reports_clean(tmp_path, corpus):
                        ('model', 'model-instance.jsonld')):
         shutil.copy(corpus.sources[role], target / name)
     shutil.copy(f'{corpus.path}/context.jsonld', target / 'context.jsonld')
-    shutil.copy(f'{corpus.path}/semforge.yaml', target / 'semforge.yaml')
+    shutil.copy(f'{corpus.path}/kms.yaml', target / 'kms.yaml')
 
     source = (target / 'knowledge.ttl').read_text()
     (target / 'knowledge.ttl').write_text(
@@ -272,7 +272,7 @@ def test_a_prefix_the_context_does_not_declare_is_an_error(tmp_path, corpus):
     for role, name in (('knowledge', 'knowledge.ttl'), ('shapes', 'shacl.ttl')):
         shutil.copy(corpus.sources[role], target / name)
     shutil.copy(f'{corpus.path}/context.jsonld', target / 'context.jsonld')
-    shutil.copy(f'{corpus.path}/semforge.yaml', target / 'semforge.yaml')
+    shutil.copy(f'{corpus.path}/kms.yaml', target / 'kms.yaml')
     with open(corpus.sources['model']) as handle:
         model = json.load(handle)
     model[0]['nosuchprefix:attr'] = {'type': 'Property', 'value': 1}
@@ -357,7 +357,7 @@ def test_a_package_may_still_call_one_of_them_something_else(tmp_path, corpus):
     (target / 'knowledge.ttl').write_text('')
     (target / 'shacl.ttl').write_text('')
     (target / 'model-instance.jsonld').write_text('{"@graph": []}')
-    (target / 'semforge.yaml').write_text(
+    (target / 'kms.yaml').write_text(
         'namespaces:\n  shacl: http://www.w3.org/ns/shacl#\n')
 
     by_namespace = canonical_map(str(target))
@@ -386,7 +386,7 @@ def test_a_new_project_does_not_carry_them_as_boilerplate(tmp_path):
     target.mkdir()
     create_package(str(target), name='fresh',
                    namespace='https://example.org/fresh/')
-    declared = (target / 'semforge.yaml').read_text()
+    declared = (target / 'kms.yaml').read_text()
     assert 'ngsild: https://uri.etsi.org/ngsi-ld/' not in declared
     assert check(load(str(target))) == []
 
@@ -402,7 +402,7 @@ def test_a_declared_standard_name_is_not_listed_twice(tmp_path):
     (target / 'knowledge.ttl').write_text('')
     (target / 'shacl.ttl').write_text('')
     (target / 'model-instance.jsonld').write_text('{"@graph": []}')
-    (target / 'semforge.yaml').write_text(
+    (target / 'kms.yaml').write_text(
         'namespaces:\n'
         '  ngsild: https://uri.etsi.org/ngsi-ld/\n'
         '  plant: https://example.org/plant/\n')
@@ -432,7 +432,7 @@ def test_a_name_the_package_redefines_says_what_it_overrides(tmp_path):
     (target / 'knowledge.ttl').write_text('')
     (target / 'shacl.ttl').write_text('')
     (target / 'model-instance.jsonld').write_text('{"@graph": []}')
-    (target / 'semforge.yaml').write_text(
+    (target / 'kms.yaml').write_text(
         'namespaces:\n  sh: https://example.org/shapes/\n')
 
     row = next(child
@@ -451,7 +451,7 @@ def _bare(tmp_path, namespaces=''):
     (target / 'knowledge.ttl').write_text('')
     (target / 'shacl.ttl').write_text('')
     (target / 'model-instance.jsonld').write_text('{"@graph": []}')
-    (target / 'semforge.yaml').write_text('namespaces:\n' + namespaces)
+    (target / 'kms.yaml').write_text('namespaces:\n' + namespaces)
     return target
 
 
@@ -462,7 +462,7 @@ def test_an_unused_name_can_be_removed(tmp_path):
     gone = remove_namespace(str(target), 'plant')
     assert gone['prefix'] == 'plant'
     assert 'plant' not in canonical_map(str(target))
-    assert 'plant' not in (target / 'semforge.yaml').read_text()
+    assert 'plant' not in (target / 'kms.yaml').read_text()
 
 
 def test_a_redundant_standard_name_survives_its_own_removal(tmp_path):
@@ -496,7 +496,7 @@ def test_a_name_in_use_is_refused_and_says_why(tmp_path, corpus):
                        ('model', 'model-instance.jsonld')):
         shutil.copy(corpus.sources[role], target / name)
     shutil.copy(f'{corpus.path}/context.jsonld', target / 'context.jsonld')
-    shutil.copy(f'{corpus.path}/semforge.yaml', target / 'semforge.yaml')
+    shutil.copy(f'{corpus.path}/kms.yaml', target / 'kms.yaml')
 
     with pytest.raises(PackageError) as raised:
         remove_namespace(str(target), 'iffBaseShacl')
@@ -504,7 +504,7 @@ def test_a_name_in_use_is_refused_and_says_why(tmp_path, corpus):
     assert 'cannot be removed' in message and 'in use' in message
     assert 'shacl.ttl' in message and 'term(s)' in message
     # And it is still there.
-    assert 'iffBaseShacl' in (target / 'semforge.yaml').read_text()
+    assert 'iffBaseShacl' in (target / 'kms.yaml').read_text()
 
 
 def test_a_name_the_package_does_not_own_is_not_its_to_remove(tmp_path):
@@ -514,7 +514,7 @@ def test_a_name_the_package_does_not_own_is_not_its_to_remove(tmp_path):
     target = _bare(tmp_path, '  plant: https://example.org/plant/\n')
     with pytest.raises(PackageError) as raised:
         remove_namespace(str(target), 'sh')
-    assert 'not declared in semforge.yaml' in str(raised.value)
+    assert 'not declared in kms.yaml' in str(raised.value)
 
 
 def test_a_declared_standard_name_is_shown_with_the_standard_ones(tmp_path):
@@ -564,11 +564,11 @@ def test_a_name_in_use_is_not_removed_on_the_first_ask(tmp_path):
 
     with pytest.raises(PackageError):
         remove_namespace(str(target), 'ngsild')
-    assert 'ngsild' in (target / 'semforge.yaml').read_text()
+    assert 'ngsild' in (target / 'kms.yaml').read_text()
 
     gone = remove_namespace(str(target), 'ngsild', force=True)
     assert gone['survives_as'] == 'ngsild'
-    assert 'ngsild' not in (target / 'semforge.yaml').read_text()
+    assert 'ngsild' not in (target / 'kms.yaml').read_text()
 
 
 def test_force_never_removes_a_name_that_would_be_lost(tmp_path, corpus):
@@ -584,14 +584,14 @@ def test_force_never_removes_a_name_that_would_be_lost(tmp_path, corpus):
                        ('model', 'model-instance.jsonld')):
         shutil.copy(corpus.sources[role], target / name)
     shutil.copy(f'{corpus.path}/context.jsonld', target / 'context.jsonld')
-    (target / 'semforge.yaml').write_text(
+    (target / 'kms.yaml').write_text(
         'namespaces:\n  iffBindingsBaseTest: '
         'https://industryfusion.github.io/contexts/example/v0/bindings/base_test/\n')
 
     with pytest.raises(PackageError) as raised:
         remove_namespace(str(target), 'iffBindingsBaseTest', force=True)
     assert 'cannot be removed' in str(raised.value)
-    assert 'iffBindingsBaseTest' in (target / 'semforge.yaml').read_text()
+    assert 'iffBindingsBaseTest' in (target / 'kms.yaml').read_text()
 
 
 def test_a_line_that_restates_the_context_says_so(tmp_path):

@@ -68,6 +68,8 @@ def publish(ls, uri):
         ls.text_document_publish_diagnostics(
             types.PublishDiagnosticsParams(uri=uri, diagnostics=[]))
         return
+    from .published import check_after_write
+    check_after_write(root, ls)
     try:
         findings = findings_of(root)
     except Exception as exc:                       # noqa: BLE001

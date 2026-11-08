@@ -259,7 +259,7 @@ def test_observe_command_concludes_nothing(workspace):
 
 def test_resolve_command_flags_unpinned(tmp_path):
     _module(tmp_path, 'a.ttl', '@prefix a: <https://a/> .\n')
-    (tmp_path / 'semforge.yaml').write_text(
+    (tmp_path / 'kms.yaml').write_text(
         'dependencies:\n  - name: a\n    source: a.ttl\n    version: "0.1"\n')
     result = CliRunner().invoke(cli, ['resolve', str(tmp_path)])
     assert 'UNPINNED' in result.output

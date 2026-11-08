@@ -31,6 +31,8 @@ from ..expect import (coverage, load_expectations, run_tests,
                       save_expectations)
 from ..expect.store import Example, examples_root
 from ..package import load
+from ..package.archive import (PackageInvalid, is_archive, pack as pack_archive,
+                               verify as verify_archive, verify_directory)
 from ..package.discover import describe
 from ..provenance import build_provenance
 from ..sanity import known_constraints
@@ -57,8 +59,23 @@ class PackageArgument(click.Path):
 
     name = 'package'
 
+    def __init__(self, *args, writes=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        # A command that changes the package cannot take an archive: its
+        # tree is a verified, throw-away extraction, and an edit to it would
+        # be lost without a word.
+        self.writes = writes
+
     def convert(self, value, param, ctx):
         given = super().convert(value, param, ctx)
+        if is_archive(given):
+            if self.writes:
+                self.fail(f'{given} is a packed package, and a packed package '
+                          f'is read-only. Unpack it, or run this on the '
+                          f'directory it was packed from.', param, ctx)
+            tree = open_archive(given, lambda message: self.fail(message, param, ctx))
+            click.echo(f'package: {given}  (verified archive, read-only)', err=True)
+            return tree
         found, why, _ = describe(given)
         if found is None:
             self.fail('package error: ' + why, param, ctx)
@@ -70,6 +87,29 @@ class PackageArgument(click.Path):
 
 
 PACKAGE = PackageArgument(exists=True)
+PACKAGE_RW = PackageArgument(exists=True, writes=True)
+
+# The extracted trees of archives given on this command line: read-only.
+ARCHIVE_TREES = set()
+
+
+def open_archive(path, fail):
+    """Verify an archive and return its extracted tree, removed at exit.
+
+    Nothing of an archive is used before all of it verified: `fail` is called
+    with every problem otherwise, and the tree never exists."""
+    import atexit
+    import shutil
+    import tempfile
+
+    holder = tempfile.mkdtemp(prefix='semforge-archive-')
+    atexit.register(shutil.rmtree, holder, True)
+    result = verify_archive(path, into=os.path.join(holder, 'package'))
+    if not result.ok:
+        fail('archive does not verify:\n' +
+             '\n'.join(f'  {problem}' for problem in result.problems))
+    ARCHIVE_TREES.add(result.tree)
+    return result.tree
 
 
 @click.group()
@@ -364,6 +404,192 @@ def check_command(path, strict):
         sys.exit(1)
 
 
+def _problems(problems):
+    for problem in problems:
+        click.echo(f'  {problem}', err=True)
+
+
+@cli.command('pack')
+@click.argument('path', type=PACKAGE, default='.')
+@click.option('--output', '-o', type=click.Path(dir_okay=False), default=None,
+              help='archive to write (default: <name>-<version>.kms.zip here)')
+@click.option('--store', is_flag=True,
+              help='do not compress; the digest is the same either way')
+def pack_command(path, output, store):
+    """Pack a package into its distribution form: a .kms.zip with SHA256SUMS.
+
+    The package must satisfy the KMS package contract; files under it that are
+    not members are listed and left out, so nothing is shipped by accident.
+    """
+    try:
+        packed = pack_archive(path, output=output, compress=not store)
+    except PackageInvalid as exc:
+        click.echo('package does not conform; nothing written:', err=True)
+        _problems(exc.problems)
+        sys.exit(2)
+    for left in packed.left_out:
+        click.echo(f'left out  {left}', err=True)
+    click.echo(f'packed   {packed.path}')
+    click.echo(f'name     {packed.name} {packed.version}')
+    click.echo(f'members  {len(packed.members)}')
+    click.echo(f'digest   {packed.digest}')
+
+
+@cli.command('verify')
+@click.argument('target', type=click.Path(exists=True))
+@click.option('--tests', 'with_tests', is_flag=True,
+              help='also run the examples and measure coverage')
+@click.option('--record', type=click.Path(exists=True, dir_okay=False), default=None,
+              help='release record to compare an archive\'s tests with')
+@click.option('--format', 'fmt', type=click.Choice(['text', 'json']),
+              default='text')
+def verify_command(target, with_tests, record, fmt):
+    """Verify a package directory or archive against the KMS package contract.
+
+    For an archive: every entry against SHA256SUMS, safe paths and sizes, then
+    the extracted tree as a package. For a directory: the package check, the
+    published-version rule, and the digest its archive would have. With
+    --tests, the examples run too, and the result is compared with a release
+    record when one is available. Exit 0 when it holds, 2 otherwise.
+    """
+    import shutil
+    import tempfile
+
+    from ..package.releases import compare_with_record, record_path, run_tests
+
+    holder = None
+    if is_archive(target):
+        if with_tests:
+            holder = tempfile.mkdtemp(prefix='semforge-verify-')
+            result = verify_archive(target, into=os.path.join(holder, 'package'))
+        else:
+            result = verify_archive(target)
+        tree = result.tree
+    elif os.path.isdir(target):
+        result = verify_directory(target)
+        tree = result.source
+        if record is None and os.path.isfile(record_path(tree)):
+            record = record_path(tree)
+    else:
+        click.echo(f'{target} is neither a package directory nor a .zip', err=True)
+        sys.exit(2)
+
+    run, compared = None, ''
+    try:
+        if with_tests and result.ok:
+            try:
+                run = run_tests(tree)
+            except (PackageError, CapabilityError) as exc:
+                from ..package.conformance import Problem
+                result.problems.append(Problem('', f'tests do not run: {exc}'))
+            else:
+                problems, compared = compare_with_record(run, result, record)
+                result.problems.extend(problems)
+            result.ok = not result.problems
+    finally:
+        if holder:
+            shutil.rmtree(holder, ignore_errors=True)
+
+    if fmt == 'json':
+        import json
+        out = result.as_dict()
+        if run is not None:
+            out['tests'] = run.as_dict()
+            out['record'] = compared
+        click.echo(json.dumps(out, indent=2))
+    else:
+        if result.ok:
+            click.echo(f'verified {result.source}')
+            click.echo(f'name     {result.name} {result.version}')
+            click.echo(f'digest   {result.digest}')
+        else:
+            click.echo(f'does not verify: {result.source}', err=True)
+            _problems(result.problems)
+        if run is not None:
+            click.echo(f'examples {run.met} of {run.examples} meet their expectations')
+            click.echo(f'coverage {run.coverage:g} % of {len(run.constraints)} '
+                       f'constraints (threshold {run.threshold:g} %)')
+            click.echo(f'record   {compared}')
+    sys.exit(0 if result.ok else 2)
+
+
+@cli.command('publish')
+@click.argument('path', type=PACKAGE_RW, default='.')
+@click.option('--output', '-o', type=click.Path(dir_okay=False), default=None,
+              help='archive to write (default: <name>-<version>.kms.zip here)')
+def publish_command(path, output):
+    """Publish the current version: test it, pack it and record it.
+
+    Every example must meet its expectations and the coverage must reach the
+    package's threshold (tests.coverage, default 80 %). Nothing is written or
+    recorded otherwise. The version is then immutable.
+    """
+    from ..package.releases import PublishRefused, publish
+
+    try:
+        published = publish(path, output=output)
+    except PublishRefused as exc:
+        click.echo('not published; nothing written:', err=True)
+        _problems(exc.problems)
+        if exc.run is not None and exc.run.uncovered:
+            click.echo('not covered:', err=True)
+            for constraint in exc.run.uncovered:
+                click.echo(f'  {constraint}', err=True)
+        sys.exit(2)
+    click.echo(f'packed   {published.path}')
+    click.echo(f'name     {published.name} {published.version}')
+    click.echo(f'digest   {published.digest}')
+    if published.unchanged:
+        click.echo('already published; the record is unchanged')
+    else:
+        run = published.run
+        click.echo(f'examples {run.met} of {run.examples}')
+        click.echo(f'coverage {run.coverage:g} % (threshold {run.threshold:g} %)')
+        click.echo('recorded in .kms/releases.yaml')
+
+
+@cli.command('version')
+@click.argument('part', type=click.Choice(['patch', 'minor', 'major']))
+@click.argument('path', type=PACKAGE_RW, default='.')
+def version_command(part, path):
+    """Raise the package's version: patch, minor or major."""
+    from ..package.releases import raise_version
+
+    try:
+        old, new = raise_version(path, part)
+    except ValueError as exc:
+        click.echo(str(exc), err=True)
+        sys.exit(2)
+    click.echo(f'version  {old} -> {new}')
+
+
+@cli.command('packages')
+@click.argument('directory', type=click.Path(exists=True, file_okay=False), default='.')
+@click.option('--format', 'fmt', type=click.Choice(['text', 'json', 'paths']),
+              default='text')
+def packages_command(directory, fmt):
+    """The packages in a directory of packages, such as semantic-model/kms.
+
+    Each once; the one `default` links to is marked. `--format paths` prints
+    one directory per line, for scripts.
+    """
+    from ..package.discover import packages_below
+
+    found = packages_below(directory)
+    if fmt == 'json':
+        import json
+        click.echo(json.dumps([{'name': n, 'path': p, 'default': d}
+                               for n, p, d in found], indent=2))
+    elif fmt == 'paths':
+        for _, where_, _ in found:
+            click.echo(where_)
+    else:
+        for name, where_, is_default in found:
+            click.echo(f'{name:<24} {where_}{"  (default)" if is_default else ""}')
+    if not found:
+        click.echo(f'no packages in {directory}', err=True)
+
+
 @cli.command('where')
 @click.argument('path', type=click.Path(exists=True), default='.')
 def where_command(path):
@@ -373,6 +599,8 @@ def where_command(path):
     resolves the same way, so this is how you check what they will read before
     one of them writes something.
     """
+    if is_archive(path):
+        path = PACKAGE.convert(path, None, click.get_current_context())
     found, why, roles = describe(path)
     click.echo(f'here     {os.path.abspath(path)}')
     if found is None:
@@ -385,6 +613,16 @@ def where_command(path):
     click.echo(f'  name     {declared.get("name") or os.path.basename(found)}'
                f'{"" if declared.get("name") else "  (the directory name)"}')
     click.echo(f'  found by {why}')
+    from ..package.releases import released
+    version = declared.get('version')
+    if version is not None:
+        state = 'published' if released(found, version) else 'draft'
+        click.echo(f'  version  {version}  ({state})')
+    tests = declared.get('tests') if isinstance(declared.get('tests'), dict) else {}
+    if tests.get('coverage') is not None:
+        click.echo(f'  coverage threshold {tests["coverage"]} %')
+    else:
+        click.echo('  coverage threshold 80 %  (the default)')
 
     try:
         package = load(found)
@@ -506,7 +744,7 @@ def test(path, want_coverage, fail_on):
 @click.argument('source', type=click.Path(exists=True))
 @click.option('--as', 'kind', type=click.Choice(['jsonschema', 'ontology']),
               required=True)
-@click.option('--into', 'path', type=PACKAGE, default='.')
+@click.option('--into', 'path', type=PACKAGE_RW, default='.')
 @click.option('--namespace', required=True,
               help='namespace for the proposed classes and shapes')
 def import_command(source, kind, path, namespace):
@@ -576,7 +814,7 @@ def serve_context_command(path, port):
 
 
 @cli.command('retarget')
-@click.argument('path', type=PACKAGE, default='.')
+@click.argument('path', type=PACKAGE_RW, default='.')
 @click.option('--to', type=click.Choice(['local', 'published']), required=True)
 def retarget_command(path, to):
     """Point a model instance's @context at the local file or the published url.
@@ -595,7 +833,7 @@ def retarget_command(path, to):
     config = context_config(path)
     if to == 'published':
         if not config.declared:
-            click.echo('semforge.yaml declares no published context', err=True)
+            click.echo('kms.yaml declares no published context', err=True)
             sys.exit(2)
         value = config.published
     else:
@@ -614,14 +852,18 @@ def retarget_command(path, to):
 @click.argument('path', type=PACKAGE, default='.')
 @click.option('--fix', is_flag=True, help='rewrite the artifacts to the agreed names')
 @click.option('--define', 'definitions', multiple=True, metavar='PREFIX=IRI',
-              help='define a name for the whole package, in semforge.yaml')
+              help='define a name for the whole package, in kms.yaml')
 def prefixes_command(path, fix, definitions):
     """Check that every namespace has one agreed name, and optionally align.
 
     The context is the source of truth: it is the artifact all three already
-    share. semforge.yaml `namespaces:` adds what the context does not declare
+    share. kms.yaml `namespaces:` adds what the context does not declare
     and overrides it where the package has a reason to.
     """
+    if (fix or definitions) and path in ARCHIVE_TREES:
+        click.echo('a packed package is read-only; run this on its directory',
+                   err=True)
+        sys.exit(2)
     from ..package.prefixes import add_namespace, align, check
 
     for definition in definitions:
@@ -670,9 +912,10 @@ def resolve_command(path, out, require_pinned):
                                     dependencies_from_config, resolve)
     from ruamel.yaml import YAML
 
-    config_path = os.path.join(path, 'semforge.yaml')
+    from ..package.config import path_for
+    config_path = path_for(path)
     if not os.path.exists(config_path):
-        click.echo(f'no semforge.yaml in {path}; nothing to resolve', err=True)
+        click.echo(f'no kms.yaml in {path}; nothing to resolve', err=True)
         sys.exit(2)
     with open(config_path) as handle:
         config = YAML().load(handle) or {}
@@ -793,7 +1036,7 @@ def explain(path, subject):
 
 
 @cli.command()
-@click.argument('path', type=PACKAGE, default='.')
+@click.argument('path', type=PACKAGE_RW, default='.')
 def accept(path):
     """Record the current residue of every example as expected."""
     try:

@@ -494,7 +494,7 @@ def _fresh(package, entry):
     from ..package.context import context_config
 
     # The @context the package's own documents use, so the new one resolves
-    # the same way; else the published one semforge.yaml names.
+    # the same way; else the published one kms.yaml names.
     context = None
     for path in package.files('model'):
         if path.endswith(('.jsonld', '.json')):
@@ -510,7 +510,7 @@ def _fresh(package, entry):
         context = context_config(package.path).published or None
     if not context:
         raise PackageError('nothing to start from: no case or model entity of this '
-                           'type, and no context in semforge.yaml to write a new one')
+                           'type, and no context in kms.yaml to write a new one')
     name = re.sub(r'[^a-z0-9]+', '-', os.path.basename(os.path.abspath(package.path)).lower())
     document = {'id': f'urn:{name}:{local(entry.iri).lower()}:test',
                 'type': model_term(package, URIRef(entry.iri))}

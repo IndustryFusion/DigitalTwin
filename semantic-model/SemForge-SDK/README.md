@@ -44,6 +44,13 @@ venv/bin/python -m semforge export tests/corpus/kms -o /tmp/kms --mode broker
 venv/bin/python -m semforge validate tests/corpus/kms --cross-check sqlite
 venv/bin/python -m semforge check tests/corpus/kms [--strict]   # links that point at nothing
 venv/bin/python -m semforge where                 # which package applies here
+venv/bin/python -m semforge packages ../kms                # the packages there, the default marked
+venv/bin/python -m semforge verify ../kms/default          # the KMS package contract; prints the digest
+venv/bin/python -m semforge pack ../kms/default -o /tmp/example-1.0.0.kms.zip   # with SHA256SUMS
+venv/bin/python -m semforge validate /tmp/example-1.0.0.kms.zip   # any reading command takes an archive
+venv/bin/python -m semforge verify --tests ../kms/default  # and the examples, with their coverage
+venv/bin/python -m semforge publish <package>              # tested, packed, recorded; then immutable
+venv/bin/python -m semforge version patch|minor|major <package>
 venv/bin/python -m semforge diff <before> <after>
 venv/bin/python -m semforge observe tests/corpus/kms
 venv/bin/python -m semforge import schema.json --as jsonschema --namespace https://x/v1

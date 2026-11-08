@@ -594,7 +594,7 @@ def _ngsild_group(package):
         kind='group', label='NGSI-LD vocabulary',
         detail=f'{len(classes) + len(slots)} term(s) · '
                f'{source.source}'
-               f'{"" if source.declared else " (the default; semforge.yaml names none)"}')
+               f'{"" if source.declared else " (the default; kms.yaml names none)"}')
     if classes:
         kinds = KnowledgeNode(
             kind='carrier', label='Attribute kinds',
@@ -884,7 +884,7 @@ def add_entity_type(package, name, parent):
     if root is None:
         raise PackageError(
             'this package has no entity hierarchy to add to. Declare '
-            '`entityRoot:` in semforge.yaml, or give one shape an '
+            '`entityRoot:` in kms.yaml, or give one shape an '
             'sh:targetClass.')
     chosen = next((entry for entry in known
                    if parent in (entry.term, entry.iri, entry.label)), None)
@@ -967,7 +967,7 @@ def _resolve_namespace(package, namespace):
     if text not in known:
         raise PackageError(
             f'{text}: is not a namespace this package knows. Define the prefix '
-            f'in the Package view (or semforge.yaml) first, or pick one of: '
+            f'in the Package view (or kms.yaml) first, or pick one of: '
             f'{", ".join(sorted(p for p in known if p))}')
     return known[text]
 
@@ -1156,7 +1156,7 @@ def add_attribute_term(package, name, kind, domain, label='', namespace=None):
         raise PackageError(
             'this package has no entity hierarchy, so there is no namespace '
             'to declare an attribute in. Declare `entityRoot:` in '
-            'semforge.yaml, or give one shape an sh:targetClass.')
+            'kms.yaml, or give one shape an sh:targetClass.')
 
     # A sub-attribute hangs off an ATTRIBUTE, not off an entity, so it has no
     # entity type to be its domain -- the kms's `hasTrust`, which sits inside

@@ -244,7 +244,7 @@ def test_a_conditional_shape_applies_before_any_data_reaches_it(tmp_path):
     # No data anywhere: neither the model nor a case has a Machine.
     import shutil
     shutil.rmtree(f'{root}/model/examples')
-    with open(f'{root}/model/main.jsonld', 'w') as handle:
+    with open(f'{root}/model/model-instance.jsonld', 'w') as handle:
         handle.write('[]')
     page = build_type_page(load(root), machine)
     from semforge.cooked.shapes import base_name

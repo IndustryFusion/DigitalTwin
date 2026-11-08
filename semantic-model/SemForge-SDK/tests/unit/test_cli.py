@@ -115,7 +115,7 @@ def test_test_fails_when_one_id_names_two_entities_in_a_case(tmp_path, corpus):
     for role, name in (('knowledge', 'knowledge.ttl'), ('shapes', 'shacl.ttl'),
                        ('model', 'model-instance.jsonld')):
         shutil.copy(corpus.sources[role], package / name)
-    for extra in ('context.jsonld', 'semforge.yaml'):
+    for extra in ('context.jsonld', 'kms.yaml'):
         shutil.copy(f'{corpus.path}/{extra}', package / extra)
     examples = package / 'examples'
     examples.mkdir()

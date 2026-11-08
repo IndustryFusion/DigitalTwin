@@ -16,7 +16,7 @@
 
 """Where the NGSI-LD vocabulary comes from: declared, never shipped.
 
-A package names it in semforge.yaml -- a local file while it is worked on, the
+A package names it in kms.yaml -- a local file while it is worked on, the
 official url, pinned, once published. One that names none gets the default:
 the official url, or SEMFORGE_NGSILD.
 """
@@ -36,19 +36,19 @@ URL = 'https://example.org/contexts/ngsild.ttl'
 
 
 def _package(tmp_path, ngsild=None, config=True):
-    """A copy of the corpus whose semforge.yaml says `ngsild` (or nothing)."""
+    """A copy of the corpus whose kms.yaml says `ngsild` (or nothing)."""
     from tests.unit.conftest import CORPUS
 
     root = tmp_path / 'pkg'
     shutil.copytree(CORPUS, root, ignore=shutil.ignore_patterns('.semforge'))
-    text = (root / 'semforge.yaml').read_text()
+    text = (root / 'kms.yaml').read_text()
     text = text[:text.index('\n# The NGSI-LD vocabulary')] + '\n'
     if ngsild:
         text += ngsild
     if config:
-        (root / 'semforge.yaml').write_text(text)
+        (root / 'kms.yaml').write_text(text)
     else:
-        (root / 'semforge.yaml').unlink()
+        (root / 'kms.yaml').unlink()
     return str(root)
 
 
@@ -84,11 +84,11 @@ def test_the_sdk_ships_no_vocabulary():
     assert shipped == []
 
 
-def test_the_kms_declares_the_shared_local_copy(corpus):
+def test_the_kms_declares_its_own_copy(corpus):
     from semforge.ngsild.vocabulary import source_for
 
     source = source_for(corpus.path)
-    assert source.declared and source.source == '../ontology/ngsild.ttl'
+    assert source.declared and source.source == 'vocabulary/ngsild.ttl'
     assert (None, None, None) in corpus.vocabulary
     assert not corpus.vocabulary_error
     assert _codes(corpus) == {}
@@ -129,7 +129,7 @@ def test_a_missing_file_is_an_error_not_a_crash(tmp_path):
     assert len(package.vocabulary) == 0
     finding = _codes(package)['ngsild-unavailable']
     assert finding.severity == 'error' and 'nowhere.ttl' in finding.message
-    assert finding.file.endswith('semforge.yaml') and finding.line > 1
+    assert finding.file.endswith('kms.yaml') and finding.line > 1
 
 
 def test_a_remote_source_is_fetched_once_and_cached(tmp_path, served):
@@ -163,7 +163,9 @@ def test_offline_a_remote_source_is_an_error_not_a_crash(tmp_path, served):
     assert 'offline' in _codes(package)['ngsild-unavailable'].message
 
 
-def test_init_writes_a_local_default_relative_to_the_package(tmp_path, monkeypatch):
+def test_init_copies_a_local_default_into_the_package(tmp_path, monkeypatch):
+    """A package is standalone (gh-939-kms-package): a local default outside
+    it is copied in, not pointed at."""
     from semforge.ngsild.vocabulary import source_for
     from semforge.package.scaffold import create_package
 
@@ -171,8 +173,9 @@ def test_init_writes_a_local_default_relative_to_the_package(tmp_path, monkeypat
     root = tmp_path / 'new'
     create_package(str(root), name='new')
     source = source_for(str(root))
-    assert source.declared and not os.path.isabs(source.source)
-    assert os.path.realpath(os.path.join(root, source.source)) == os.path.realpath(SHARED)
+    assert source.declared and source.source == 'vocabulary/ngsild.ttl'
+    with open(root / source.source, 'rb') as copy, open(SHARED, 'rb') as shared:
+        assert copy.read() == shared.read()
     package = load(str(root))
     assert len(package.vocabulary) and _codes(package) == {}
 
@@ -195,14 +198,14 @@ def test_init_offline_writes_it_unpinned_and_says_so(tmp_path, monkeypatch, serv
     monkeypatch.setenv('SEMFORGE_NGSILD', 'https://example.org/gone.ttl')
     root = tmp_path / 'new'
     create_package(str(root), name='new')
-    assert 'sha256: not fetched' in (root / 'semforge.yaml').read_text()
+    assert 'sha256: not fetched' in (root / 'kms.yaml').read_text()
 
 
 def test_the_setting_shows_the_source_or_the_default(tmp_path, corpus, monkeypatch):
     from semforge.package.config import settings
 
     row = {s.key: s for s in settings(corpus.path)}['ngsild.source']
-    assert row.value == '../ontology/ngsild.ttl' and row.line > 1
+    assert row.value == 'vocabulary/ngsild.ttl' and row.line > 1
     assert not row.editable
 
     monkeypatch.setenv('SEMFORGE_NGSILD', SHARED)

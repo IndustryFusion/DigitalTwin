@@ -31,7 +31,7 @@ package, its verdicts and a digest of every file, and compares:
 * **the knowledge** changed: nothing, if no predicate in the changed files is
   one a constraint can read (validate/readset.py) -- an OPC UA browse name --
   else everything;
-* anything else -- the context, semforge.yaml, the NGSI-LD vocabulary, a
+* anything else -- the context, kms.yaml, the NGSI-LD vocabulary, a
   file nobody can classify -- means everything. Text files (.md, .txt) mean
   nothing.
 

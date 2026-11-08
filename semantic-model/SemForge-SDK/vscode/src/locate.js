@@ -112,12 +112,37 @@ const SKIP = new Set(['node_modules', 'venv', '__pycache__', 'target', 'dist',
                       'out', 'build', 'examples', 'shacl', 'shapes',
                       'knowledge', 'model', 'main', 'model-instance']);
 
+/** The package a `default` link in this directory points to, or undefined
+ *  (openspec gh-939-kms-package: semantic-model/kms/default). */
+function defaultTarget(directory) {
+  const link = path.join(directory, 'default');
+  try {
+    if (fs.lstatSync(link).isSymbolicLink()) {
+      return fs.realpathSync(link);
+    }
+  } catch (error) {
+    // no link
+  }
+  return undefined;
+}
+
+function realpath(directory) {
+  try {
+    return fs.realpathSync(directory);
+  } catch (error) {
+    return directory;
+  }
+}
+
 function listPackages(depth = 2) {
   const found = [];
+  const defaults = new Set();
   const add = (directory) => {
     const artifact = isPackage(directory) ? firstArtifact(directory) : undefined;
-    if (artifact && !found.some((entry) => entry.directory === directory)) {
-      found.push({ directory, uri: artifact, name: path.basename(directory) });
+    // A link to a package is that package, not a second one.
+    const real = realpath(directory);
+    if (artifact && !found.some((entry) => entry.real === real)) {
+      found.push({ directory, real, uri: artifact, name: path.basename(directory) });
       return true;
     }
     return false;
@@ -126,6 +151,10 @@ function listPackages(depth = 2) {
     // Keep going after a match: a package nested inside another one is how a
     // scaffolded test project sits beside the model it is testing.
     add(directory);
+    const target = defaultTarget(directory);
+    if (target) {
+      defaults.add(target);
+    }
     if (left <= 0) {
       return;
     }
@@ -145,6 +174,9 @@ function listPackages(depth = 2) {
   };
   for (const folder of vscode.workspace.workspaceFolders || []) {
     walk(folder.uri.fsPath, depth);
+  }
+  for (const entry of found) {
+    entry.isDefault = defaults.has(entry.real);
   }
   return found;
 }
@@ -178,6 +210,11 @@ function findPackageUri() {
         .sort();
     } catch (error) {
       continue;                       // unreadable folder; nothing to find
+    }
+    // A directory of packages names the one to use: its `default` link.
+    const target = defaultTarget(root);
+    if (target && isPackage(target)) {
+      return firstArtifact(target);
     }
     for (const name of names) {
       const candidate = path.join(root, name);

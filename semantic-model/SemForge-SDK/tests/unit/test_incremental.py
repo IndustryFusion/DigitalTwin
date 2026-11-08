@@ -155,7 +155,7 @@ def test_knowledge_a_constraint_reads_reevaluates_everything(root):
 
 
 def test_the_package_settings_reevaluate_everything(root):
-    the_plan, _, _ = _edit_and_compare(root, lambda: _append(root, 'semforge.yaml', '\n# a note\n'))
+    the_plan, _, _ = _edit_and_compare(root, lambda: _append(root, 'kms.yaml', '\n# a note\n'))
     assert the_plan.full
 
 

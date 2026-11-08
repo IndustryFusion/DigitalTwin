@@ -205,6 +205,6 @@ def unknown_ngsild_terms(package):
         entry.message = (
             f'ngsild:{entry.term} is used in the {", ".join(entry.where)} and '
             f'declared by no NGSI-LD vocabulary. Either it is a typo, or the '
-            f'vocabulary needs extending -- `ngsild:` in semforge.yaml points '
+            f'vocabulary needs extending -- `ngsild:` in kms.yaml points '
             f'at the copy this package uses.')
     return sorted(found.values(), key=lambda entry: entry.term)

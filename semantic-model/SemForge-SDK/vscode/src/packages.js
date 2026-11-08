@@ -252,7 +252,7 @@ function register(context, session, views, refreshAll) {
       const found = listPackages();
       const here = session.directory;
       const items = found.map((entry) => ({
-        label: entry.name,
+        label: entry.isDefault ? `${entry.name}  (default)` : entry.name,
         description: entry.directory === here ? entry.directory + '  (current)'
                                               : entry.directory,
         uri: entry.uri
