@@ -145,8 +145,10 @@ that its constraints work, not only that its files are intact.
   its constraints fires). Rejected: it hides untested constraints. It is
   tempting because the two-layer NGSI-LD encoding gives each attribute about
   seven constraints (cardinality and node kind on the attribute and on
-  `hasValue`); `kms/example` covers 5 of 99 constraints, mostly because of
-  them.
+  `hasValue`); `kms/example` covers 4 of its 117 constraints (3.4 %), mostly
+  because of them. An earlier count of 5 of 99 came from `semforge test
+  --coverage`, which counts only constraints some example evaluates and any
+  firing, asserted or not.
 - *Alternative:* require both a good and a bad example per constraint
   ("two-sided"). Stronger, deferred: firing is the part that is missing today.
 - *Alternative:* gate packing too. Rejected: it would block sharing and

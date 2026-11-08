@@ -79,9 +79,9 @@ None.
 - shacl2flink `Makefile`: default `SHACL`, `KNOWLEDGE`, `MODEL` and the
   `ontology2kms` target point into `kms/default/`.
 - No change to any image, chart or deployment.
-- `kms/example` has 6 examples, all passing, covering 5 of its 99 constraints
-  (5 %). It stays a draft until its coverage reaches 80 %; raising it is a
-  follow-up.
+- `kms/example` has 6 examples, all passing, that make 4 of its 117
+  constraints fire as asserted (3.4 %). It stays a draft until its coverage
+  reaches 80 %; raising it is a follow-up.
 
 ## Out of Scope
 
