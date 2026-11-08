@@ -37,4 +37,4 @@
 
 ## 6. Integration check
 
-- [ ] 6.1 Run `openspec validate gh-939-kms-package --strict`, the SDK test suite and shacl2flink's tests; verify all pass, and that `Build` and `K8s tests` pass on the Pull Request
+- [x] 6.1 Run `openspec validate gh-939-kms-package --strict`, the SDK test suite and shacl2flink's tests; verify all pass, and that `Build` and `K8s tests` pass on the Pull Request
