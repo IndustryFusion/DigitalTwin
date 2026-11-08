@@ -27,7 +27,7 @@ rest of this guide is about changes with a specification.
 Some rules between components are specified, so that a change to one component finds what
 relies on it:
 
-- [contracts/opcua-live-data](openspec/changes/gh-934-opcua-live-data/specs/contracts/opcua-live-data/spec.md):
+- [contracts/opcua-live-data](openspec/specs/contracts/opcua-live-data/spec.md):
   the path from an OPC UA server to the context broker, through `semantic-model/opcua`,
   `semantic-model/dataservice`, `NgsildAgent` and `KafkaBridge`. Each rule names who
   produces it and who relies on it.

@@ -15,7 +15,7 @@ flowchart LR
     B -->|REST| U[You]
 ```
 
-The pump is only the example. [Using your own model](#using-your-own-model) lists what to change for another machine. The rules between the components on this path are specified in [contracts/opcua-live-data](../../openspec/changes/gh-934-opcua-live-data/specs/contracts/opcua-live-data/spec.md).
+The pump is only the example. [Using your own model](#using-your-own-model) lists what to change for another machine. The rules between the components on this path are specified in [contracts/opcua-live-data](../../openspec/specs/contracts/opcua-live-data/spec.md).
 
 ## What you need
 

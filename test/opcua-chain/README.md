@@ -1,7 +1,7 @@
 # OPC UA Chain Test
 
 Verifies the path from an OPC UA server to the context broker against the rules in
-[contracts/opcua-live-data](../../openspec/changes/gh-934-opcua-live-data/specs/contracts/opcua-live-data/spec.md),
+[contracts/opcua-live-data](../../openspec/specs/contracts/opcua-live-data/spec.md),
 on GitHub-hosted runners and without a Kubernetes cluster. The workflow is
 [opcua-chain.yaml](../../.github/workflows/opcua-chain.yaml). It runs on Pull Requests which change the
 components of the chain or their dependencies, with Python 3.10 and 3.12 and Node.js 22.

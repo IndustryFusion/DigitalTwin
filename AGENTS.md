@@ -16,7 +16,7 @@ specification-driven development. The human-facing version of this workflow is i
 - Contracts between components: before changing a component on the path from an
   OPC UA server to the context broker (`semantic-model/opcua`,
   `semantic-model/dataservice`, `NgsildAgent`, `KafkaBridge`), read
-  [contracts/opcua-live-data](openspec/changes/gh-934-opcua-live-data/specs/contracts/opcua-live-data/spec.md).
+  [contracts/opcua-live-data](openspec/specs/contracts/opcua-live-data/spec.md).
   A change to one of its rules needs an approved specification change, and the
   consumers it names must be checked.
 

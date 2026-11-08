@@ -100,7 +100,7 @@ For instance, with the model of the pump example in `../opcua` (see below), as a
 
 ## OPC UA Example: From the Pump Nodeset to NGSI-LD
 
-The [tutorial](opcua-pump-tutorial.md) takes the OPC UA pump example from its nodesets to live values in the context broker: building the model and the bindings, loading the entities, onboarding the device with its subcomponents, the test server, the dataservice, and reading the values over REST. It also lists what to change for another machine, and how to troubleshoot. The rules between the components on that path are specified in [contracts/opcua-live-data](../../openspec/changes/gh-934-opcua-live-data/specs/contracts/opcua-live-data/spec.md), and the [chain test](../../test/opcua-chain) runs the tutorial's commands on every Pull Request which touches them.
+The [tutorial](opcua-pump-tutorial.md) takes the OPC UA pump example from its nodesets to live values in the context broker: building the model and the bindings, loading the entities, onboarding the device with its subcomponents, the test server, the dataservice, and reading the values over REST. It also lists what to change for another machine, and how to troubleshoot. The rules between the components on that path are specified in [contracts/opcua-live-data](../../openspec/specs/contracts/opcua-live-data/spec.md), and the [chain test](../../test/opcua-chain) runs the tutorial's commands on every Pull Request which touches them.
 
 ### Test Servers
 
