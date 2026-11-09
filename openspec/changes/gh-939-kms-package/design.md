@@ -13,11 +13,6 @@ contract, narrows it where several independent implementations need one
 answer, and adds an archive form, published versions and a directory of
 packages.
 
-A prototype of the package check, packing and verification ran the scenarios
-against the real KMS before this proposal was written: the
-directory and its archive gave the same digest, `sha256sum -c` accepted the
-extracted archive, and `semforge validate` gave the same verdicts on both.
-
 ## Decisions
 
 ### D1 — The format is called KMS, and so is its descriptor
