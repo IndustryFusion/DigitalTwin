@@ -33,6 +33,7 @@ check. A caller gets a directory only when all of that held.
 
 import hashlib
 import os
+import zlib
 import re
 import shutil
 import stat
@@ -137,8 +138,8 @@ def _unsafe(name):
     if not name or name.startswith('/') or '\\' in name or \
             re.match(r'^[A-Za-z]:', name):
         return 'path must be relative, with / as separator'
-    if any(part in ('..', '') for part in name.rstrip('/').split('/')):
-        return 'path must not contain empty or .. segments'
+    if any(part in ('..', '.', '') for part in name.rstrip('/').split('/')):
+        return 'path must not contain empty, . or .. segments'
     return ''
 
 
@@ -234,18 +235,24 @@ def _extract(archive, entries, listed, target, problems):
             problems.append(Problem(name, 'would be written outside the '
                                     'extraction directory'))
             return
-        os.makedirs(os.path.dirname(destination), exist_ok=True)
         hashed = hashlib.sha256()
         written = 0
-        with archive.open(info) as source, open(destination, 'wb') as sink:
-            for chunk in iter(lambda: source.read(1 << 20), b''):
-                written += len(chunk)
-                if written > info.file_size:
-                    problems.append(Problem(name, 'holds more data than it '
-                                            'declares'))
-                    return
-                hashed.update(chunk)
-                sink.write(chunk)
+        try:
+            os.makedirs(os.path.dirname(destination), exist_ok=True)
+            with archive.open(info) as source, open(destination, 'wb') as sink:
+                for chunk in iter(lambda: source.read(1 << 20), b''):
+                    written += len(chunk)
+                    if written > info.file_size:
+                        problems.append(Problem(name, 'holds more data than it '
+                                                'declares'))
+                        return
+                    hashed.update(chunk)
+                    sink.write(chunk)
+        except (OSError, zipfile.BadZipFile, zlib.error, EOFError) as exc:
+            # A corrupted entry (bad CRC, truncated data) or a path that is a
+            # file and a directory at once: named, never a traceback.
+            problems.append(Problem(name, f'cannot be extracted: {exc}'))
+            return
         if hashed.hexdigest() != listed[name]:
             problems.append(Problem(name, f'does not match its SHA-256 in '
                                     f'{SUMS}'))
@@ -264,38 +271,49 @@ def verify(path, into=None, limit=DEFAULT_LIMIT):
         return result
 
     with archive:
-        checked = _integrity(archive, limit, problems)
+        try:
+            checked = _integrity(archive, limit, problems)
+        except (OSError, zipfile.BadZipFile, zlib.error, EOFError) as exc:
+            problems.append(Problem(SUMS, f'cannot be read: {exc}'))
+            return result
         if checked is None:
             return result
         entries, listed, sums = checked
         result.digest = digest_of(sums)
 
         if into:
-            if os.path.exists(into):
+            if os.path.lexists(into):
                 raise FileExistsError(into)
             target = into
         else:
             target = tempfile.mkdtemp(prefix='kms-package-')
-        os.makedirs(target, exist_ok=True)
-        _extract(archive, entries, listed, target, problems)
+        keep = False
+        try:
+            os.makedirs(target, exist_ok=True)
+            _extract(archive, entries, listed, target, problems)
+            if not problems:
+                report = check(target)
+                problems.extend(report.problems)
+                result.name, result.version = report.name, report.version
+                if report.ok and sorted(report.members) != sorted(listed):
+                    for name in sorted(set(listed) - set(report.members)):
+                        problems.append(Problem(name, 'is in the archive but is '
+                                                'not a member of the package'))
+                    for name in sorted(set(report.members) - set(listed)):
+                        problems.append(Problem(name, 'is a member of the package '
+                                                'but not in the archive'))
+            result.ok = not problems
+            keep = result.ok and bool(into)
+        except (OSError, zipfile.BadZipFile, zlib.error, EOFError) as exc:
+            problems.append(Problem('', f'cannot be extracted: {exc}'))
+            result.ok = False
+        finally:
+            # Never a partial tree: kept only when it verified and was asked for.
+            if keep:
+                result.tree = os.path.abspath(target)
+            else:
+                shutil.rmtree(target, ignore_errors=True)
 
-    if not problems:
-        report = check(target)
-        problems.extend(report.problems)
-        result.name, result.version = report.name, report.version
-        if report.ok and sorted(report.members) != sorted(listed):
-            for name in sorted(set(listed) - set(report.members)):
-                problems.append(Problem(name, 'is in the archive but is not '
-                                        'a member of the package'))
-            for name in sorted(set(report.members) - set(listed)):
-                problems.append(Problem(name, 'is a member of the package but '
-                                        'not in the archive'))
-
-    result.ok = not problems
-    if result.ok and into:
-        result.tree = os.path.abspath(target)
-    else:
-        shutil.rmtree(target, ignore_errors=True)
     if not result.ok:
         result.digest = ''        # a digest is only reported for a package
     return result

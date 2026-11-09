@@ -23,7 +23,7 @@
  * prefix. So the package's namespaces are offered, or a new one is defined
  * on the spot; then only the local part is typed (`left`) and the full IRI is
  * written. There is no free-form IRI: one in no registered namespace would
- * have no name to show. Full, not prefixed: a namespace from semforge.yaml is not in a
+ * have no name to show. Full, not prefixed: a namespace from kms.yaml is not in a
  * case's @context, and `sensors:left` would then be read as an IRI whose
  * scheme is "sensors" -- valid, and silently another id.
  *

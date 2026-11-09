@@ -63,7 +63,9 @@ def read_record(path):
     from ruamel.yaml import YAML
     with open(path, encoding='utf-8') as handle:
         data = YAML(typ='safe').load(handle) or {}
-    releases = data.get('releases') if isinstance(data, dict) else None
+    if not isinstance(data, dict) or not isinstance(data.get('releases', []), list):
+        raise ValueError(f'{path}: expected a mapping with a `releases:` list')
+    releases = data.get('releases')
     return [dict(r) for r in releases or [] if isinstance(r, dict)]
 
 
@@ -85,20 +87,43 @@ def _write_record(root, releases):
     yaml = YAML()
     yaml.default_flow_style = False
     yaml.dump({'releases': releases}, out)
-    with open(where, 'w', encoding='utf-8') as handle:
-        handle.write(_HEADER + '\n' + out.getvalue())
+    _replace(where, _HEADER + '\n' + out.getvalue())
     return where
+
+
+def _replace(where, text):
+    """Write `text` to `where` all at once: a temporary file, then a rename."""
+    import tempfile
+
+    handle, temporary = tempfile.mkstemp(dir=os.path.dirname(where) or '.',
+                                         prefix='.' + os.path.basename(where))
+    try:
+        with os.fdopen(handle, 'w', encoding='utf-8') as out:
+            out.write(text)
+        os.replace(temporary, where)
+    except BaseException:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+        raise
 
 
 def immutability_problems(report):
     """The contract's rule on the report's package: [] or one Problem."""
     if not report.version:
         return []
-    entry = released(report.root, report.version)
+    try:
+        entry = released(report.root, report.version)
+    except Exception as exc:                       # noqa: BLE001 -- malformed record
+        first = (str(exc).strip().splitlines() or [type(exc).__name__])[0]
+        return [Problem(RECORD.replace(os.sep, '/'), f'does not parse: {first}')]
     if entry is None:
         return []
     actual = report.content_digest
-    if actual and actual != entry.get('digest'):
+    if not actual:
+        return [Problem('', f'{report.name} {report.version} is published, and a '
+                        f'member cannot be read, so its content cannot be '
+                        f'compared with the record')]
+    if actual != entry.get('digest'):
         return [Problem(report.descriptor or 'kms.yaml',
                         f'{report.name} {report.version} is published and its '
                         f'content has changed; raise the version '
@@ -109,7 +134,11 @@ def immutability_problems(report):
 def status(root):
     """'published' or 'draft', for the package's current version."""
     report = check(root)
-    return 'published' if report.version and released(root, report.version) else 'draft'
+    try:
+        entry = released(root, report.version) if report.version else None
+    except Exception:                              # noqa: BLE001 -- malformed record
+        return 'unknown'
+    return 'published' if entry else 'draft'
 
 
 # -- the tests -------------------------------------------------------------
@@ -218,7 +247,12 @@ def compare_with_record(run, verified, record):
                         + f.split(': ', 1)[-1]) for f in run.failing]
     if not record:
         return problems, 'no release record was compared'
-    entry = released(None, verified.version, path=record)
+    try:
+        entry = released(None, verified.version, path=record)
+    except Exception as exc:                       # noqa: BLE001 -- malformed record
+        first = (str(exc).strip().splitlines() or [type(exc).__name__])[0]
+        problems.append(Problem(record, f'does not parse: {first}'))
+        return problems, f'{record} could not be read'
     if entry is None:
         return problems, f'{verified.version} is not in {record} (a draft)'
     if run.coverage < run.threshold:
@@ -282,18 +316,40 @@ def publish(root, output=None, today=None, compress=True):
         return Published(path=packed.path, name=report.name, version=report.version,
                          digest=packed.digest, unchanged=True)
 
-    run = run_tests(root)
-    problems = [Problem(f.split(': ', 1)[0], 'does not meet its expectations: '
-                        + f.split(': ', 1)[-1]) for f in run.failing]
-    if run.coverage < run.threshold:
-        problems.append(Problem('', f'coverage {run.coverage:g} % is below the '
-                                f'threshold of {run.threshold:g} %: '
-                                f'{len(run.uncovered)} of {len(run.constraints)} '
-                                f'constraints are not covered'))
-    if problems:
-        raise PublishRefused(problems, run=run, report=report)
+    # Pack first and test what was packed: the files may change while the
+    # tests run, and the record must describe the archive, not the directory.
+    import shutil
+    import tempfile
 
-    packed = pack(root, output=output, compress=compress)
+    from .archive import default_name, verify
+
+    final = os.path.abspath(output or default_name(report))
+    os.makedirs(os.path.dirname(final), exist_ok=True)
+    handle, staged = tempfile.mkstemp(dir=os.path.dirname(final), suffix='.kms.zip.part')
+    os.close(handle)
+    holder = tempfile.mkdtemp(prefix='kms-publish-')
+    try:
+        packed = pack(root, output=staged, compress=compress)
+        verified = verify(staged, into=os.path.join(holder, 'package'))
+        if not verified.ok:
+            raise PublishRefused(verified.problems, report=report)
+        run = run_tests(verified.tree)
+        problems = [Problem(f.split(': ', 1)[0], 'does not meet its expectations: '
+                            + f.split(': ', 1)[-1]) for f in run.failing]
+        if run.coverage < run.threshold:
+            problems.append(Problem('', f'coverage {run.coverage:g} % is below the '
+                                    f'threshold of {run.threshold:g} %: '
+                                    f'{len(run.uncovered)} of {len(run.constraints)} '
+                                    f'constraints are not covered'))
+        if problems:
+            raise PublishRefused(problems, run=run, report=report)
+        os.replace(staged, final)
+    finally:
+        shutil.rmtree(holder, ignore_errors=True)
+        if os.path.exists(staged):
+            os.unlink(staged)
+    packed.path = final
+
     releases = read_record(record_path(root))
     releases.append({
         'version': report.version,
@@ -346,5 +402,4 @@ def _write_version(root, new):
         lines = handle.read().splitlines(True)
     old = lines[line - 1]
     lines[line - 1] = re.sub(r'^(version:\s*)(["\']?)[^\s#"\']+\2', rf'\g<1>{new}', old)
-    with open(where, 'w', encoding='utf-8') as handle:
-        handle.writelines(lines)
+    _replace(where, ''.join(lines))

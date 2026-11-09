@@ -21,10 +21,10 @@
  * data, its vocabulary. None answered what it IS. A window showed a name and
  * nothing else, and two directories called `test` are not the same project:
  * there were no settings to read, no status to check, and no way to change
- * either without finding semforge.yaml by hand.
+ * either without finding kms.yaml by hand.
  *
  * So this view sits above the other three and holds the answers, with each
- * setting editable in place. Editing writes one line of semforge.yaml and
+ * setting editable in place. Editing writes one line of kms.yaml and
  * leaves every comment in it -- those comments are the documentation.
  */
 
@@ -261,7 +261,7 @@ function register(context, clientHolder, session, onChanged) {
   context.subscriptions.push(view);
 
   // A click opens the package page, the row marked: each setting with what
-  // it decides and Edit…. semforge.yaml is its Open button (or, with
+  // it decides and Edit…. kms.yaml is its Open button (or, with
   // semforge.trees.click = source, the click).
   context.subscriptions.push(
     rowClicks(view, provider, 'semforge.clickPackageRow', async (event) => {
@@ -319,7 +319,7 @@ function register(context, clientHolder, session, onChanged) {
 
     vscode.commands.registerCommand('semforge.addNamespace', async (node) => {
       // Prefixes are a package-wide table, agreed once. There was no way to
-      // add to it from the editor at all -- you found semforge.yaml and typed.
+      // add to it from the editor at all -- you found kms.yaml and typed.
       // The same prompts as "New namespace…" in a vocabulary dialog.
       const made = await require('./namespacepick').defineNamespace(
         clientHolder.client, (node && node.packageUri) || provider.uri,

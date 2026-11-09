@@ -86,7 +86,9 @@ make lint
 
 The build reads a KMS package (see `../kms/README.md`): `KMS ?= ../kms/default`,
 the package `kms/default` links to, and `make KMS=../kms/<name>` picks another.
-Three of its files are used:
+`make prepare-kms KMS_DIR=<dir>` copies `<dir>` (relative to `../kms`) into
+that package, which is `kms/example` unless `KMS` says otherwise. Three of its
+files are used:
 
 - shacl.ttl
 - knowledge.ttl

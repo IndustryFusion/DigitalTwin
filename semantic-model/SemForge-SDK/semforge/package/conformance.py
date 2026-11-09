@@ -91,6 +91,7 @@ class Report:
     left_out: list = field(default_factory=list)  # relative paths, sorted
     descriptor: str = ''                          # the file that was read
     coverage_threshold: float = DEFAULT_COVERAGE  # tests.coverage, percent
+    _digest: object = None                        # computed once
 
     @property
     def ok(self):
@@ -109,11 +110,13 @@ class Report:
     @property
     def content_digest(self):
         """The digest of the members as they are, valid or not: what a
-        release record is compared with."""
-        try:
-            return digest_of(sums_text(self.root, self.members))
-        except OSError:
-            return ''
+        release record is compared with. '' when a member cannot be read."""
+        if self._digest is None:
+            try:
+                self._digest = digest_of(sums_text(self.root, self.members))
+            except OSError:
+                self._digest = ''
+        return self._digest
 
     def as_dict(self):
         return {
@@ -172,6 +175,68 @@ def _inside(root, declared):
     if real != real_root and not real.startswith(real_root + os.sep):
         return None                      # a symlink pointing out
     return normal
+
+
+def _link_on_the_way(root, rel):
+    """The first component of `rel` below `root` that is a symbolic link, or
+    '' -- including the member itself, and any path that leaves the root."""
+    here = root
+    parts = rel.split('/')
+    for depth, part in enumerate(parts):
+        here = os.path.join(here, part)
+        if os.path.islink(here):
+            return '/'.join(parts[:depth + 1])
+    real_root = os.path.realpath(root)
+    if not os.path.realpath(here).startswith(real_root + os.sep):
+        return rel
+    return ''
+
+
+def _inside_root(root, path):
+    real_root = os.path.realpath(root)
+    real = os.path.realpath(path)
+    return real == real_root or real.startswith(real_root + os.sep)
+
+
+def _check_example_paths(report, root, suites):
+    """Every case and include an expectations file names lies inside the
+    package, so the tests of an archive are the tests of its members."""
+    if not suites:
+        return
+    base = os.path.join(root, *suites[0].split('/'))
+    for here, dirs, files in os.walk(base):
+        dirs[:] = sorted(d for d in dirs if not d.startswith('.'))
+        if 'expectations.yaml' not in files:
+            continue
+        source = os.path.join(here, 'expectations.yaml')
+        try:
+            from ruamel.yaml import YAML
+            with open(source, encoding='utf-8') as handle:
+                raw = YAML(typ='safe').load(handle) or {}
+        except Exception as exc:                   # noqa: BLE001
+            report.fail(_rel(root, source), f'does not parse: {exc}')
+            continue
+        entries = raw.get('examples') if isinstance(raw, dict) else None
+        for entry in entries or []:
+            if not isinstance(entry, dict):
+                continue
+            named = [('path', entry.get('path'), here)]
+            named += [('include', item, base) for item in entry.get('include') or []]
+            for key, value, relative_to in named:
+                if not isinstance(value, str) or not value:
+                    continue
+                if os.path.isabs(value) or value.startswith('\\') or '\\' in value \
+                        or re.match(r'^[A-Za-z]:', value):
+                    report.fail(_rel(root, source), f'{key} {value!r} must be a '
+                                f'relative path inside the package')
+                    continue
+                candidates = [os.path.join(relative_to, value)]
+                if key == 'include':
+                    candidates.append(os.path.join(root, value))
+                if not any(_inside_root(root, c) for c in candidates):
+                    report.fail(_rel(root, source), f'{key} {value!r} leaves the '
+                                f'package; the tests of a package use only its '
+                                f'members')
 
 
 def _parses(report, root, path, suffix):
@@ -361,6 +426,13 @@ def check(root, parse=True):
     for suite in suites[:1]:
         for here, dirs, files in os.walk(os.path.join(root, *suite.split('/'))):
             dirs[:] = sorted(d for d in dirs if not d.startswith('.'))
+            for d in dirs:
+                # A linked directory would not be walked: its cases would
+                # vanish from the package without a word.
+                if os.path.islink(os.path.join(here, d)):
+                    report.fail(_rel(root, os.path.join(here, d)),
+                                'is a symbolic link; the examples suite must '
+                                'hold its cases itself')
             members.update(_rel(root, os.path.join(here, f))
                            for f in files if not f.startswith('.'))
 
@@ -387,14 +459,22 @@ def check(root, parse=True):
             path = os.path.join(here, f)
             rel = _rel(root, path)
             if rel in members:
-                if os.path.islink(path):
-                    report.fail(rel, 'is a symbolic link; a member must be a '
-                                'regular file')
-                continue
+                continue                  # links are judged below, for all members
             left_out.append(rel)
 
     report.members = sorted(members, key=lambda m: m.encode('utf-8'))
     report.left_out = sorted(left_out)
+
+    # Every member is a regular file inside the root, reached without a link:
+    # a linked directory would ship -- and let change unnoticed -- whatever it
+    # points to (finding of the review of #940).
+    for member in report.members:
+        through = _link_on_the_way(root, member)
+        if through:
+            report.fail(member, f'is reached through the symbolic link '
+                        f'{through}; a member must be a regular file inside '
+                        f'the package')
+    _check_example_paths(report, root, suites[:1])
 
     # A published version is immutable (releases.py keeps the record).
     from .releases import immutability_problems

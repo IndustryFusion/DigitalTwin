@@ -20,7 +20,7 @@
  * The Package view's rows, read as a page: each setting with what it decides
  * and an Edit… button, the namespace table with + Namespace and Remove, the
  * contents counted. A click on a row of the view opens this page with the
- * row marked -- semforge.yaml is the "Open semforge.yaml" button, not the
+ * row marked -- kms.yaml is the "Open kms.yaml" button, not the
  * place a click lands. Every change runs the view's own command
  * (semforge.editSetting, addNamespace, removeNamespace), which keeps the
  * file's comments.
@@ -219,7 +219,7 @@ class PackagePage {
         `padding:20px"><p>SemForge: ${escape(payload.error)}</p></body></html>`;
       return;
     }
-    // The manifest's own row says where semforge.yaml is, when there is one.
+    // The manifest's own row says where kms.yaml is, when there is one.
     const manifest = numbered(payload.roots).map(({ row }) => row)
       .find((row) => row.label === 'manifest' && row.definedAt);
     this.payload = Object.assign({}, payload,

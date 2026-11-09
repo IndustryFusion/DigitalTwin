@@ -52,7 +52,7 @@ kms-check:
 	test -n "$$packages" || { echo "no KMS packages in $(KMS_DIR)"; exit 1; }; \
 	for package in $$packages; do \
 		echo "== $$package"; \
-		$(PYTHON) -m semforge verify --tests $$package || exit 1; \
+		$(PYTHON) -m semforge verify --tests "$$package" || exit 1; \
 	done
 
 clean:

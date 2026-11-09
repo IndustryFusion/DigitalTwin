@@ -61,7 +61,7 @@ SPEC = [
      'not the same project.'),
     ('version', 'version',
      'The package\'s version, MAJOR.MINOR.PATCH. With the name it is what a '
-     'packed package is called: <name>-<version>.zip.'),
+     'packed package is called: <name>-<version>.kms.zip.'),
     ('format', 'package format',
      'The version of the KMS package format this package follows. A tool '
      'that implements an older one refuses it rather than misreading it.'),

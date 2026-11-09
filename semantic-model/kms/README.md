@@ -27,6 +27,11 @@ A subdirectory that is not a package is ignored. A new package is created with
 `semforge init kms/<name>`; lowercase kebab-case (`opcua-pumps`) is the
 convention for new names.
 
+Running a package's tests (`semforge verify --tests`, `semforge publish`) is not
+a sandbox: SPARQL constraints may contact services (`SERVICE`) and JSON-LD
+contexts may be fetched. Checking a package or an archive without `--tests`
+reads nothing from outside it.
+
 ```bash
 semforge packages semantic-model/kms          # each package once, the default marked
 semforge verify semantic-model/kms/default    # the contract, and the package digest

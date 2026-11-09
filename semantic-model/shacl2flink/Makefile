@@ -223,8 +223,8 @@ test-flink-is-undeployed:
 
 prepare-kms:
 ifdef KMS_DIR
-	@echo copy kms values from $(KMS_DIR)
-	cd $(KMS) && cp $(KMS_DIR)/* .
+	@echo copy kms values from $(KMS_DIR) into $(KMS)
+	cd ../kms && cp $(KMS_DIR)/* $(abspath $(KMS))/
 else
 	@echo No KMS_DIR defined, doing nothing
 endif

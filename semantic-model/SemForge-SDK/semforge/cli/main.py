@@ -451,6 +451,10 @@ def verify_command(target, with_tests, record, fmt):
     published-version rule, and the digest its archive would have. With
     --tests, the examples run too, and the result is compared with a release
     record when one is available. Exit 0 when it holds, 2 otherwise.
+
+    Running the tests is not a sandbox: SPARQL constraints may contact
+    services (SERVICE) and JSON-LD contexts may be fetched. Verify an
+    untrusted archive without --tests, or run its tests where that is safe.
     """
     import shutil
     import tempfile
@@ -616,7 +620,10 @@ def where_command(path):
     from ..package.releases import released
     version = declared.get('version')
     if version is not None:
-        state = 'published' if released(found, version) else 'draft'
+        try:
+            state = 'published' if released(found, version) else 'draft'
+        except Exception:                          # noqa: BLE001 -- malformed record
+            state = 'release record unreadable'
         click.echo(f'  version  {version}  ({state})')
     tests = declared.get('tests') if isinstance(declared.get('tests'), dict) else {}
     if tests.get('coverage') is not None:
