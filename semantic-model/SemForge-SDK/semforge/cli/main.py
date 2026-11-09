@@ -744,7 +744,41 @@ def test(path, want_coverage, fail_on):
         click.echo(f'{len(invisible)} attribute(s) used by a case are declared '
                    f'nowhere, so nothing constrains them', err=True)
 
+    if want_coverage:
+        _coverage_summary(path, package, expectations, paired, coverage(paired),
+                          passed=not (failed or broken or invisible))
+
     sys.exit(1 if failed or broken or invisible else 0)
+
+
+def _coverage_summary(path, package, expectations, paired, entries, passed):
+    """The coverage `publish` gates on, and how the list above adds up to it.
+
+    The list counts what some example evaluates and any firing; the contract
+    counts every constraint, and a firing only where an example asserts it.
+    Both are shown, reconciled, so nobody reads one as the other.
+    """
+    from ..package.conformance import check
+    from ..package.releases import asserted_coverage
+
+    constraints = known_constraints(package)
+    declared = paired if expectations.examples else []   # the scratchpad is no test
+    covered, unasserted = asserted_coverage(declared, constraints)
+    evaluated = {entry.constraint for entry in entries} & constraints
+    percent = 100.0 if not constraints else round(100.0 * len(covered) / len(constraints), 1)
+    threshold = check(path, parse=False).coverage_threshold
+    publishable = passed and percent >= threshold
+
+    def fire(n):
+        return f'{n} fire{"s" if n == 1 else ""}'
+
+    unevaluated = len(constraints - evaluated)
+    click.echo(f'\ncoverage {percent:g} % of {len(constraints)} constraints: '
+               f'{fire(len(covered))} as asserted, {fire(len(unasserted))} without '
+               f'an example asserting it, {unevaluated} '
+               f'{"is" if unevaluated == 1 else "are"} evaluated by no example')
+    click.echo(f'threshold {threshold:g} % -- '
+               f'{"publishable" if publishable else "not publishable"}')
 
 
 @cli.command('import')

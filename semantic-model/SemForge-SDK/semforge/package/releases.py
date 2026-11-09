@@ -201,7 +201,6 @@ def run_tests(root):
     """
     from ..expect import load_expectations, run_tests as run_cases
     from ..expect.identity import dangling_references, duplicate_ids, missing_context
-    from ..expect.runner import Status, constraint_ref
     from ..expect.vocabulary import undeclared_attributes
     from ..sanity import known_constraints
     from .loader import load
@@ -226,14 +225,30 @@ def run_tests(root):
             run.failing.append(f'{entry.term}: {entry.message}')
 
     constraints = known_constraints(package)
-    covered = set()
+    covered, _ = asserted_coverage(paired, constraints)
+    run.constraints = sorted(constraints)
+    run.covered = sorted(covered)
+    return run
+
+
+def asserted_coverage(paired, constraints):
+    """(covered, unasserted) over declared examples and their reports.
+
+    `covered`: the constraints some example asserts to fire, on an example
+    where they do -- the contract's measure, the one `publish` gates on.
+    `unasserted`: those that fire somewhere without any example asserting
+    it, which a list of firings would count and this measure does not.
+    """
+    from ..expect.runner import Status, constraint_ref
+
+    constraints = set(constraints)
+    covered, fired_anywhere = set(), set()
     for example, report in paired:
         fired = {constraint_ref(r) for r in report.results if r.status is Status.VIOLATED}
         asserted = {str(a.get('constraint', '')) for a in example.asserts}
         covered |= (asserted & fired & constraints)
-    run.constraints = sorted(constraints)
-    run.covered = sorted(covered)
-    return run
+        fired_anywhere |= fired & constraints
+    return covered, fired_anywhere - covered
 
 
 def compare_with_record(run, verified, record):

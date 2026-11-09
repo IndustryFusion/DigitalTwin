@@ -313,3 +313,41 @@ def test_ci_published_below_its_threshold(publishable, tmp_path):
     with open(path, 'w', encoding='utf-8') as handle:
         handle.write(text.replace('coverage: 5', 'coverage: 50'))
     assert CliRunner().invoke(cli, ['verify', '--tests', publishable]).exit_code == 2
+
+
+# --- `semforge test --coverage` reports the coverage publish gates on ------------
+
+KMS_DEFAULT = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                           '..', '..', '..', 'kms', 'default')
+
+
+def _summary(result):
+    return [x for x in result.output.splitlines() if x.startswith('coverage ')][-1]
+
+
+@pytest.mark.parametrize('which', ['fresh', 'kms'])
+def test_test_coverage_reports_what_verify_reports(fresh, which):
+    root = fresh if which == 'fresh' else KMS_DEFAULT
+    runner = CliRunner()
+    tested = runner.invoke(cli, ['test', root, '--coverage'])
+    verified = runner.invoke(cli, ['verify', '--tests', root, '--format', 'json'])
+    data = json.loads(verified.output[verified.output.index('{'):])['tests']
+    assert _summary(tested).startswith(
+        f"coverage {data['coverage']:g} % of {data['constraints']} constraints: "
+        f"{data['covered']} fire")
+    assert 'not publishable' in tested.output
+
+
+def test_test_coverage_reconciles_with_the_list(fresh):
+    result = CliRunner().invoke(cli, ['test', fresh, '--coverage'])
+    listed = [x for x in result.output.splitlines()
+              if x.startswith('  ') and x.rstrip().endswith(']')]
+    summary = _summary(result)
+    total = int(summary.split(' of ')[1].split(' ')[0])
+    unevaluated = int(summary.split(', ')[-1].split(' ')[0])
+    assert len(listed) == total - unevaluated
+
+
+def test_test_coverage_says_publishable(publishable):
+    result = CliRunner().invoke(cli, ['test', publishable, '--coverage'])
+    assert 'threshold 5 % -- publishable' in result.output
