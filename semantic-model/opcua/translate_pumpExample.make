@@ -93,6 +93,20 @@ $(INSTANCE_DEPENDENCIES):
 
 all: shacl.ttl instances.jsonld entities.ttl
 
+# -----------------------------------------------------------------------------
+# The example as a KMS package (openspec gh-944-opcua-kms-package): the model
+# only, no examples. Generated, never committed -- semantic-model/kms ignores
+# opcua-* packages. Check it with `semforge verify $(KMS_OUT)/$(PACKAGE_NAME)`.
+# -----------------------------------------------------------------------------
+KMS_OUT ?= ../kms
+PACKAGE_NAME := opcua-pumps
+PACKAGE_VERSION ?= 0.1.0
+
+package: shacl.ttl instances.jsonld entities.ttl context.jsonld $(INSTANCE_ONTOLOGY)
+	rm -rf $(KMS_OUT)/$(PACKAGE_NAME)
+	python3 owl2kms.py $(INSTANCE_ONTOLOGY) entities.ttl -s shacl.ttl -m instances.jsonld \
+		-c context.jsonld -n $(PACKAGE_NAME) -v $(PACKAGE_VERSION) -o $(KMS_OUT)/$(PACKAGE_NAME)
+
 # Clean target to remove generated TTL files
 clean:
 	@echo "Cleaning generated files..."

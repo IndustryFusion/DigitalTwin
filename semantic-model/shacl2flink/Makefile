@@ -8,6 +8,22 @@ PYTHON := python3
 LINTER := flake8
 PIP := pip
 OUTPUTDIR := output
+# A KMS package may hold its knowledge and shapes as one file or as a directory
+# of files (contracts/kms-package); shacl2flink reads one file each, so a
+# directory is merged first. Not into $(OUTPUTDIR): `make helm` ships that.
+# One directory per package, so switching KMS never reuses another package's
+# merge.
+MERGEDDIR := merged-kms/$(subst /,_,$(abspath $(KMS)))
+ifeq ($(wildcard $(KMS)/knowledge.ttl),)
+ifneq ($(wildcard $(KMS)/knowledge/*.ttl),)
+KNOWLEDGE := $(MERGEDDIR)/knowledge.ttl
+endif
+endif
+ifeq ($(wildcard $(KMS)/shacl.ttl),)
+ifneq ($(wildcard $(KMS)/shacl/*.ttl),)
+SHACL := $(MERGEDDIR)/shacl.ttl
+endif
+endif
 SQLITEDB := $(OUTPUTDIR)/database.db
 SQLITE3 := sqlite3
 HELM_DIR := ../../helm/charts/shacl
@@ -43,7 +59,15 @@ endif
 
 sqlite_files = $(OUTPUTDIR)/core.sqlite $(OUTPUTDIR)/ngsild.sqlite $(OUTPUTDIR)/rdf.sqlite $(OUTPUTDIR)/ngsild-models.sqlite $(OUTPUTDIR)/shacl-validation.sqlite
 
-build: $(SHACL) $(KNOWLEDGE $(MODEL)
+$(MERGEDDIR)/knowledge.ttl: $(wildcard $(KMS)/knowledge/*.ttl)
+	mkdir -p $(MERGEDDIR)
+	rdfpipe -i ttl -o ttl $^ > $@
+
+$(MERGEDDIR)/shacl.ttl: $(wildcard $(KMS)/shacl/*.ttl)
+	mkdir -p $(MERGEDDIR)
+	rdfpipe -i ttl -o ttl $^ > $@
+
+build: $(SHACL) $(KNOWLEDGE) $(MODEL)
 	@echo Build tables
 	$(PYTHON) create_rdf_table.py $(KNOWLEDGE) $(KAFKA_TOPICS)
 	$(PYTHON) create_core_tables.py
@@ -310,6 +334,6 @@ fuseki-undeploy-kms:
 
 
 clean:
-	@rm -rf $(OUTPUTDIR)
+	@rm -rf $(OUTPUTDIR) merged-kms
 
 .PHONY: clean fuseki-deploy-kms fuseki-undeploy-kms test-flink-e2e test-opcua-shapes test-pyshacl-compare

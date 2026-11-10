@@ -17,6 +17,7 @@
 from rdflib import Graph, Namespace, Literal, URIRef, BNode
 from rdflib.namespace import OWL, RDF, RDFS
 import xml.etree.ElementTree as ET
+import hashlib
 import urllib
 import lib.utils as utils
 from lib.utils import RdfUtils
@@ -624,8 +625,11 @@ Did you forget to import it?")
                     self.g.add((itemname, RDF.type, typeIri))
                 self.g.add((itemname, RDF.type, OWL.NamedIndividual))
                 if value is not None:
-                    bnode = BNode()
-                    bbnode = self.rdf_ns['base']['_' + str(bnode)]
+                    # Named after the field and its value, not a random id: the
+                    # same NodeSet gives the same ontology, so a KMS package
+                    # built from it has the same digest (gh-944-opcua-kms-package).
+                    value_key = hashlib.sha256(f'{itemname}|{int(value)}'.encode()).hexdigest()[:32]
+                    bbnode = self.rdf_ns['base']['_' + value_key]
                     self.g.add((bbnode, RDF.type, self.rdf_ns['base']['ValueNode']))
                     self.g.add((itemname, self.rdf_ns['base']['hasValueNode'], bbnode))
                     self.g.add((bbnode, self.rdf_ns['base']['hasValueClass'], typeIri))

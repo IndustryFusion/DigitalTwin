@@ -19,7 +19,7 @@ LINTER := python3 -m flake8
 PIP := pip
 HELM_DIR := ../../helm/charts/shacl
 NAMESPACE := iff
-TOLINT := nodeset2owl.py owl2instances.py nodeset-dump.py validate.py start_fuseki.py extractIffBindings.py owl2vt.py virtual_type_stats.py check_consistency.py lib/nodesetparser.py lib/utils.py lib/shacl.py lib/entity.py lib/jsonld.py lib/bindings.py lib/owlbuilder.py
+TOLINT := nodeset2owl.py owl2instances.py owl2kms.py lib/kms_package.py nodeset-dump.py validate.py start_fuseki.py extractIffBindings.py owl2vt.py virtual_type_stats.py check_consistency.py lib/nodesetparser.py lib/utils.py lib/shacl.py lib/entity.py lib/jsonld.py lib/bindings.py lib/owlbuilder.py
 PYTEST := python3 -m pytest
 
 
@@ -31,6 +31,26 @@ setup: requirements.txt setup-dev
 
 setup-dev: requirements-dev.txt
 	$(PIP) install -r requirements-dev.txt
+
+# The example KMS packages (openspec gh-944-opcua-kms-package): generated, never
+# committed. Every example writes shacl.ttl, entities.ttl, ... into this
+# directory, so each starts from its own clean slate. `kms-packages` downloads
+# NodeSets and ontologies; `kms-packages-check` only verifies what it wrote.
+KMS_EXAMPLES := pumpExample:opcua-pumps laserExample:opcua-laser simpleExample:opcua-simple
+KMS_OUT ?= ../kms
+SEMFORGE ?= ../SemForge-SDK/venv/bin/semforge
+
+kms-packages:
+	for entry in $(KMS_EXAMPLES); do \
+		example=$${entry%%:*}; \
+		make -f translate_$$example.make clean && \
+		make -f translate_$$example.make package KMS_OUT=$(KMS_OUT) || exit 1; \
+	done
+
+kms-packages-check:
+	for entry in $(KMS_EXAMPLES); do \
+		$(SEMFORGE) verify "$(KMS_OUT)/$${entry##*:}" || exit 1; \
+	done
 
 test:
 	${PYTEST} tests --cov=lib . --cov-fail-under=80

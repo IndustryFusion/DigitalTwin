@@ -5,6 +5,7 @@ __pycache__/
 
 # Everything `make build` generates
 output/
+merged-kms/
 
 # Compile artifacts from the opcua shape check
 tests/opcua-shapes/output/

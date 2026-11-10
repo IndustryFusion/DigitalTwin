@@ -724,7 +724,9 @@ def format_node_type(node):
                 node.datatype == rdflib.XSD.float or node.datatype == rdflib.XSD.integer:
             return f"'{node.toPython()}'"
         else:
-            quoted_string = node.toPython().replace("'", "''")
+            # The lexical form: toPython() gives a bool, int or datetime for
+            # xsd:boolean, xsd:int or xsd:dateTime, which OPC UA knowledge has.
+            quoted_string = str(node).replace("'", "''")
             return f'\'"{quoted_string}"\''
     elif isinstance(node, rdflib.BNode):
         return f'\'_:{node.toPython()}\''

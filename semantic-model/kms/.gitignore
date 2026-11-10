@@ -1,0 +1,4 @@
+# KMS packages generated from OPC UA models (semantic-model/opcua, `make -f
+# translate_<example>.make package`): built in CI, never committed. The
+# `opcua-` prefix is reserved for them (openspec gh-944-opcua-kms-package).
+/opcua-*/

@@ -48,7 +48,7 @@ INSTANCE_NODESET          	:= https://raw.githubusercontent.com/OPCFoundation/UA
 
 # Dependent Ontology URLs (or local files if not in remote mode)
 CORE_ONTOLOGY                       := $(OPCUA_PREFIX)core.owl.ttl
-DEVICES_ONTOLOGY                    := $(OPCUA_PREFIX)devices.owl.ttl
+DEVICES_ONTOLOGY                    := $(OPCUA_PREFIX)di.owl.ttl
 MACHINERY_ONTOLOGY                  := $(OPCUA_PREFIX)machinery.owl.ttl
 MACHINERY_JOBS_ONTOLOGY             := $(OPCUA_PREFIX)machinery_jobs.owl.ttl
 MACHINERY_RESULT_ONTOLOGY             := $(OPCUA_PREFIX)machinery_result.owl.ttl
@@ -79,7 +79,7 @@ shacl.ttl instances.jsonld entities.ttl context.jsonld $(INSTANCE_ONTOLOGY): $(I
 	@echo "Creating $@"
 	python3 nodeset2owl.py  $(INSTANCE_URL) -i $(INSTANCE_DEPENDENCIES) $(INSTANCE_OPTS) -o $(INSTANCE_ONTOLOGY)
 	echo "Creating shacl.ttl, instances.jsonld, context.jsonld and entities.ttl"
-	python3 owl2instances.py -p -ma -i "sn1234" -sb -n $(INSTANCE_NS_PREFIX) $(INSTANCE_ONTOLOGY)
+	python3 owl2instances.py -p -ma -i "urn:laser:sn1234:" -sb -n $(INSTANCE_NS_PREFIX) $(INSTANCE_ONTOLOGY)
 
 
 $(INSTANCE_DEPENDENCIES):
@@ -92,6 +92,20 @@ $(INSTANCE_DEPENDENCIES):
 
 
 all: $(INSTANCE)
+
+# -----------------------------------------------------------------------------
+# The example as a KMS package (openspec gh-944-opcua-kms-package): the model
+# only, no examples. Generated, never committed -- semantic-model/kms ignores
+# opcua-* packages. Check it with `semforge verify $(KMS_OUT)/$(PACKAGE_NAME)`.
+# -----------------------------------------------------------------------------
+KMS_OUT ?= ../kms
+PACKAGE_NAME := opcua-laser
+PACKAGE_VERSION ?= 0.1.0
+
+package: shacl.ttl instances.jsonld entities.ttl context.jsonld $(INSTANCE_ONTOLOGY)
+	rm -rf $(KMS_OUT)/$(PACKAGE_NAME)
+	python3 owl2kms.py $(INSTANCE_ONTOLOGY) entities.ttl -s shacl.ttl -m instances.jsonld \
+		-c context.jsonld -n $(PACKAGE_NAME) -v $(PACKAGE_VERSION) -o $(KMS_OUT)/$(PACKAGE_NAME)
 
 # Clean target to remove generated TTL files
 clean:

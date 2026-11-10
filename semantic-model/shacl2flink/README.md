@@ -94,6 +94,12 @@ files are used:
 - knowledge.ttl
 - model-instance.jsonld
 
+A package may hold its knowledge or its shapes as a directory of files instead
+(`knowledge/`, `shacl/`), as the packages generated from OPC UA models do
+(`../opcua/README.md`, `owl2kms.py`). The build then merges the directory into
+one file under `merged-kms/` first, so `make build KMS=../kms/opcua-pumps`
+works like any other package. A `model-instance/` directory is not read yet.
+
 The default package carries two model instances, and which one to use depends on whether
 the model is being compiled or deployed.
 

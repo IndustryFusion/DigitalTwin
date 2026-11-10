@@ -632,3 +632,15 @@ def test_wrap_time_variable_serializes_iso():
     }
     result = utils.wrap_ngsild_variable(ctx, var)
     assert result == "'\"' || SQL_DIALECT_ISO_TIMESTAMP{TABLE.`observedAt`} || '\"'"
+
+
+def test_format_node_type_writes_every_literal_in_its_lexical_form():
+    """OPC UA knowledge carries xsd:boolean, xsd:int and xsd:dateTime literals;
+    toPython() turned them into bool, int and datetime, and formatting crashed
+    (openspec gh-944-opcua-kms-package)."""
+    assert utils.format_node_type(Literal(True)) == '\'"true"\''
+    assert utils.format_node_type(Literal('5', datatype=XSD.int)) == '\'"5"\''
+    moment = Literal('2026-11-10T10:00:00Z', datatype=XSD.dateTime)
+    assert utils.format_node_type(moment) == f'\'"{moment}"\''   # rdflib's lexical form
+    assert utils.format_node_type(Literal("it's")) == '\'"it\'\'s"\''
+    assert utils.format_node_type(Literal('1.5', datatype=XSD.decimal)) == "'1.5'"

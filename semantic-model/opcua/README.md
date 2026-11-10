@@ -396,6 +396,43 @@ Check the SHACL compliance:
 
     pyshacl -s shacl.ttl -e entities.ttl -df json-ld instances.jsonld
 
+## owl2kms.py
+
+Assemble the output of `nodeset2owl.py` and `owl2instances.py` into a KMS
+package (Knowledge, Model, Shapes; see [../kms/README.md](../kms/README.md)), so
+an OPC UA machine can be handed over, verified and versioned like any other
+package:
+
+```console
+python3 owl2kms.py instanceexample.owl.ttl entities.ttl -s shacl.ttl -m instances.jsonld \
+    -c context.jsonld -n opcua-pumps [-v 0.1.0] -o ../kms/opcua-pumps
+```
+
+- `knowledge/` holds the instance ontology, the entities and every ontology
+  they import (`owl:imports`), one file each, so the type system travels with
+  the package. An import of a copied file names that ontology's IRI rather than
+  its path on the building machine, and the same inputs give the same package
+  digest.
+- `shacl.ttl`, `model-instance.jsonld` (from `instances.jsonld`) and
+  `context.jsonld` come from `owl2instances.py`; the NGSI-LD vocabulary is
+  copied into `vocabulary/ngsild.ttl`.
+- `kms.yaml` declares `name`, `version` (`0.1.0` by default) and `format: 1`.
+- The package holds the model only, no examples: it is a draft, `semforge
+  verify --tests` reports 0 % coverage and `semforge publish` refuses it.
+
+Each instance example has a `package` target, writing
+`../kms/opcua-pumps`, `../kms/opcua-laser` or `../kms/opcua-simple`
+(`KMS_OUT=<dir>` writes elsewhere):
+
+```console
+make -f translate_pumpExample.make package
+../SemForge-SDK/venv/bin/semforge verify ../kms/opcua-pumps
+```
+
+`make kms-packages` builds all three and `make kms-packages-check` verifies
+them; the `Build` workflow runs both. Generated packages are never committed:
+`semantic-model/kms` ignores `opcua-*`.
+
 ## owl2vt.py
 
 Transform a semantic bridge `*.owl.ttl` (nodeset2owl.py output) into an OWL ontology of

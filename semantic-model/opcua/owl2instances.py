@@ -100,6 +100,26 @@ workaround_instances = [
 datasetid_urn = 'urn:iff:datasetId'
 
 
+def stable_graph(graph):
+    """`graph` with canonical blank-node labels and its own prefixes.
+
+    A blank node's label is random, and the Turtle serializer orders by it, so
+    the same shapes came out in a different order on every run. Canonical
+    labels make the bytes the same for the same input -- what a reproducible
+    KMS package needs (gh-944-opcua-kms-package). The triples are unchanged.
+    """
+    from rdflib.compare import to_canonical_graph
+
+    if hasattr(graph, 'get_graph'):                # a lib.shacl.Shacl
+        graph = graph.get_graph()
+    stable = Graph()
+    for prefix, namespace in graph.namespaces():
+        stable.bind(prefix, namespace, override=True, replace=True)
+    for triple in to_canonical_graph(graph):
+        stable.add(triple)
+    return stable
+
+
 def parse_args(args=sys.argv[1:]):
     parser = argparse.ArgumentParser(description='\
 parse nodeset instance and create ngsi-ld model')
@@ -843,9 +863,9 @@ Machinery Folder was found in instance ontology.")
         root = next(g.subjects(UARDF['definesType'], URIRef(str(instancetype))))
         scan_type(root, instancetype)
     if shaclname is not None:
-        shaclg.serialize(destination=shaclname)
+        stable_graph(shaclg).serialize(destination=shaclname)
         shacl_dir, shacl_file = os.path.split(shaclname)
-        minshaclg.serialize(destination=os.path.join(shacl_dir, f'min_{shacl_file}'))
+        stable_graph(minshaclg).serialize(destination=os.path.join(shacl_dir, f'min_{shacl_file}'))
     if shacl_only:
         # If only SHACL shapes are to be created, skip the entity scanning
         sys.exit(0)

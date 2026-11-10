@@ -24,8 +24,15 @@ checkout without symbolic link support (Windows without `core.symlinks`) gets
 a text file instead of the link; builds and CI run on Linux.
 
 A subdirectory that is not a package is ignored. A new package is created with
-`semforge init kms/<name>`; lowercase kebab-case (`opcua-pumps`) is the
+`semforge init kms/<name>`; lowercase kebab-case (`machine-cell`) is the
 convention for new names.
+
+Packages named `opcua-*` are generated from OPC UA models
+(`semantic-model/opcua`, `make -f translate_<example>.make package`, see
+`owl2kms.py` in [../opcua/README.md](../opcua/README.md)) and never committed:
+this directory ignores them, and the `Build` workflow generates and verifies
+`opcua-pumps`, `opcua-laser` and `opcua-simple`. The `opcua-` prefix is
+reserved for them.
 
 Running a package's tests (`semforge verify --tests`, `semforge publish`) is not
 a sandbox: SPARQL constraints may contact services (`SERVICE`) and JSON-LD
