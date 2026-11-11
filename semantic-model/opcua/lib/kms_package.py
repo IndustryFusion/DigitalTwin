@@ -180,12 +180,13 @@ def _rewrite_imports(source, data, imports, iri_of):
     return text.encode('utf-8')
 
 
-def _origin(source, inputs_dir):
-    """Where a knowledge file came from, as recorded in kms.yaml: a url, or a
-    name relative to the inputs -- never a path on the building machine."""
+def _origin(source):
+    """Where a knowledge file came from, as recorded in kms.yaml: a url, or
+    the file's name -- never a path, which would depend on the directory
+    layout of the building machine and so change the digest."""
     if _is_url(source):
         return source
-    return os.path.relpath(source, inputs_dir).replace(os.sep, '/')
+    return os.path.basename(source)
 
 
 def _config(name, version, published, origins):
@@ -259,16 +260,30 @@ def build_package(out_dir, knowledge, shacl, instances, context, published, name
     resolve = resolve or (lambda source: _imports(source, read))
 
     closure = import_closure(knowledge, resolve, exclude)
-    inputs_dir = os.path.dirname(os.path.abspath(knowledge[0])) if knowledge else os.getcwd()
 
-    data, taken, targets = {}, set(), OrderedDict()
+    data = {}
     for source in closure:
         try:
             data[source] = read(source)
         except Exception as exc:                   # noqa: BLE001
             raise PackagingError(f'cannot read {source}: {exc}') from exc
-        targets[source] = _file_name(source, taken)
     iri_of = {source: _ontology_iri(source, data[source]) for source in closure}
+    rewritten = {source: _rewrite_imports(source, data[source], closure[source], iri_of)
+                 for source in closure}
+
+    # One file per ontology. The same ontology can be reached at two paths --
+    # build outputs copied from another directory still import the originals
+    # there -- and must not become two files. Two different files claiming one
+    # ontology IRI are an error.
+    kept = OrderedDict()
+    for source in closure:
+        first = kept.setdefault(iri_of[source], source)
+        if first != source and rewritten[first] != rewritten[source]:
+            raise PackagingError(f'{first} and {source} both declare the ontology '
+                                 f'{iri_of[source]} but differ')
+    taken, targets = set(), OrderedDict()
+    for source in kept.values():
+        targets[source] = _file_name(source, taken)
 
     created = not os.path.exists(out_dir)
     try:
@@ -277,8 +292,8 @@ def build_package(out_dir, knowledge, shacl, instances, context, published, name
         for source, target in targets.items():
             where = os.path.join(out_dir, KNOWLEDGE_DIR, target)
             with open(where, 'wb') as handle:
-                handle.write(_rewrite_imports(source, data[source], closure[source], iri_of))
-            origins.append((f'{KNOWLEDGE_DIR}/{target}', _origin(source, inputs_dir)))
+                handle.write(rewritten[source])
+            origins.append((f'{KNOWLEDGE_DIR}/{target}', _origin(source)))
             written.append(where)
 
         for source, target in ((shacl, 'shacl.ttl'), (instances, 'model-instance.jsonld'),

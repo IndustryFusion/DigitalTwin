@@ -28,8 +28,8 @@ from lib.kms_package import PackagingError, build_package, import_closure
 HEADER = '@prefix owl: <http://www.w3.org/2002/07/owl#> .\n'
 
 
-def _ontology(path, *imports):
-    lines = [HEADER, f'<urn:{os.path.basename(path)}> a owl:Ontology']
+def _ontology(path, *imports, iri=None):
+    lines = [HEADER, f'<{iri or "urn:" + os.path.basename(path)}> a owl:Ontology']
     if imports:
         lines.append(' ; owl:imports ' + ', '.join(f'<{i}>' for i in imports))
     path.write_text(''.join(lines) + ' .\n')
@@ -180,8 +180,8 @@ def test_two_builds(tmp_path):
 def test_two_sources_with_one_file_name_do_not_collide(tmp_path):
     (tmp_path / 'a').mkdir()
     (tmp_path / 'b').mkdir()
-    first = _ontology(tmp_path / 'a' / 'base.ttl')
-    second = _ontology(tmp_path / 'b' / 'base.ttl', f'file://{first}')
+    first = _ontology(tmp_path / 'a' / 'base.ttl', iri='urn:a:base')
+    second = _ontology(tmp_path / 'b' / 'base.ttl', f'file://{first}', iri='urn:b:base')
     for name in ('shacl.ttl', 'm.jsonld', 'c.jsonld'):
         (tmp_path / name).write_text('{}' if name.endswith('jsonld') else HEADER)
     out = tmp_path / 'pkg'
@@ -236,3 +236,81 @@ def test_the_default_vocabulary_is_the_repository_copy(tmp_path):
     assert open(tmp_path / 'pkg' / 'vocabulary' / 'ngsild.ttl', 'rb').read() == \
         open(DEFAULT_NGSILD, 'rb').read()
     shutil.rmtree(tmp_path / 'pkg')
+
+
+# --- the review of #945: speed and layout ---------------------------------------------
+
+def test_create_list_builds_an_rdf_list_with_counter_labels():
+    """create_list must not go through rdflib's Collection, whose list nodes
+    are random; the counter labels keep shacl.ttl in a stable order."""
+    from rdflib import Graph, Literal, RDF
+    from rdflib.collection import Collection
+    from lib.utils import create_list, new_bnode
+
+    g = Graph()
+    head = create_list(g, [1, 2, 3], int)
+    assert list(Collection(g, head)) == [Literal(1), Literal(2), Literal(3)]
+    assert str(head).startswith('n')
+    first, second = new_bnode(), new_bnode()
+    assert int(str(second)[1:]) == int(str(first)[1:]) + 1
+    assert (None, RDF.rest, RDF.nil) in g
+
+
+def test_origins_do_not_depend_on_the_layout(tmp_path):
+    """An import outside the input directory: kms.yaml, and so the digest,
+    must not change with the directory depth."""
+    def chain(where):
+        deps = where / 'deps'
+        deps.mkdir(parents=True)
+        core = _ontology(deps / 'core.owl.ttl')
+        src = where / 'a' / 'b' / 'src'
+        src.mkdir(parents=True)
+        instance = _ontology(src / 'instance.owl.ttl', f'file://{core}')
+        for name in ('shacl.ttl', 'instances.jsonld', 'context.jsonld'):
+            (src / name).write_text('[]\n' if name.endswith('jsonld') else HEADER)
+        build_package(str(where / 'pkg'), [instance], str(src / 'shacl.ttl'),
+                      str(src / 'instances.jsonld'), str(src / 'context.jsonld'),
+                      'https://example.org/context.jsonld', name='x')
+        return where / 'pkg'
+
+    one = chain(tmp_path / 'one')
+    two = chain(tmp_path / 'two' / 'much' / 'deeper')
+    assert (one / 'kms.yaml').read_text() == (two / 'kms.yaml').read_text()
+    assert 'knowledge/core.owl.ttl <- core.owl.ttl' in (one / 'kms.yaml').read_text()
+    assert _digest(one) == _digest(two)
+
+
+def test_one_ontology_reached_at_two_paths_is_one_file(tmp_path):
+    """Build outputs copied from another directory still import the originals
+    there: the same ontology must not end up twice in the package."""
+    original = tmp_path / 'original'
+    original.mkdir()
+    core_there = _ontology(original / 'core.owl.ttl')
+    copy = tmp_path / 'copy'
+    copy.mkdir()
+    core_here = _ontology(copy / 'core.owl.ttl')
+    di = _ontology(copy / 'di.owl.ttl', f'file://{core_there}')
+    instance = _ontology(copy / 'instance.owl.ttl', f'file://{di}', f'file://{core_here}')
+    for name in ('shacl.ttl', 'instances.jsonld', 'context.jsonld'):
+        (copy / name).write_text('[]\n' if name.endswith('jsonld') else HEADER)
+    build_package(str(tmp_path / 'pkg'), [instance], str(copy / 'shacl.ttl'),
+                  str(copy / 'instances.jsonld'), str(copy / 'context.jsonld'),
+                  'https://example.org/context.jsonld', name='x')
+    assert sorted(os.listdir(tmp_path / 'pkg' / 'knowledge')) == \
+        ['core.owl.ttl', 'di.owl.ttl', 'instance.owl.ttl']
+
+
+def test_two_different_files_with_one_ontology_iri(tmp_path):
+    a = tmp_path / 'a'
+    a.mkdir()
+    one = _ontology(a / 'core.owl.ttl', iri='urn:core')
+    b = tmp_path / 'b'
+    b.mkdir()
+    (b / 'core.owl.ttl').write_text(HEADER + '<urn:core> a owl:Ontology .\n<urn:x> a owl:Class .\n')
+    instance = _ontology(b / 'instance.owl.ttl', f'file://{one}', f'file://{b}/core.owl.ttl')
+    for name in ('shacl.ttl', 'instances.jsonld', 'context.jsonld'):
+        (b / name).write_text('[]\n' if name.endswith('jsonld') else HEADER)
+    with pytest.raises(PackagingError, match='both declare the ontology urn:core'):
+        build_package(str(tmp_path / 'pkg'), [instance], str(b / 'shacl.ttl'),
+                      str(b / 'instances.jsonld'), str(b / 'context.jsonld'),
+                      'https://example.org/context.jsonld', name='x')

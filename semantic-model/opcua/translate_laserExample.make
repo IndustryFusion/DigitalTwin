@@ -26,7 +26,10 @@ ONTOLOGY_NS 		:= http://vdma.org/UA/LaserSystem-Example/
 INSTANCE_TYPE 		:= http://opcfoundation.org/UA/LaserSystems/LaserSystemType
 
 # Base Ontology URL
-BASE_ONTOLOGY := https://industryfusion.github.io/contexts/staging/ontology/v0.1/base.ttl
+# The base ontology the instance imports: the same document the default
+# NodeSets import (translate_default_nodesets.make), so a package built from
+# the example holds one version of it (openspec gh-944-opcua-kms-package).
+BASE_ONTOLOGY := https://industryfusion.github.io/contexts/staging/ontology/v0.3/base.ttl
 
 # Set OPCUA_PREFIX based on whether remote mode is enabled.
 # By default (local mode) the generated files are used (empty prefix).
@@ -77,7 +80,7 @@ INSTANCE_DEPENDENCIES      		= $(CORE_ONTOLOGY) $(DEVICES_ONTOLOGY) $(MACHINERY_
 # -----------------------------------------------------------------------------
 shacl.ttl instances.jsonld entities.ttl context.jsonld $(INSTANCE_ONTOLOGY): $(INSTANCE_DEPENDENCIES)
 	@echo "Creating $@"
-	python3 nodeset2owl.py  $(INSTANCE_URL) -i $(INSTANCE_DEPENDENCIES) $(INSTANCE_OPTS) -o $(INSTANCE_ONTOLOGY)
+	python3 nodeset2owl.py  $(INSTANCE_URL) -i $(INSTANCE_DEPENDENCIES) $(INSTANCE_OPTS) -burl $(BASE_ONTOLOGY) -o $(INSTANCE_ONTOLOGY)
 	echo "Creating shacl.ttl, instances.jsonld, context.jsonld and entities.ttl"
 	python3 owl2instances.py -p -ma -i "urn:laser:sn1234:" -sb -n $(INSTANCE_NS_PREFIX) $(INSTANCE_ONTOLOGY)
 
@@ -110,4 +113,4 @@ package: shacl.ttl instances.jsonld entities.ttl context.jsonld $(INSTANCE_ONTOL
 # Clean target to remove generated TTL files
 clean:
 	@echo "Cleaning generated files..."
-	rm -f  $(INSTANCE) shacl.ttl instances.jsonld entities.ttl context.jsonld
+	rm -f  $(INSTANCE_ONTOLOGY) shacl.ttl instances.jsonld entities.ttl context.jsonld

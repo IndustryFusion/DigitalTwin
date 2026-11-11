@@ -105,10 +105,10 @@ class Shacl:
         Returns:
             _type_: _description_
         """
-        property_shape = BNode()
-        zero_or_more_node = BNode()
+        property_shape = utils.new_bnode()
+        zero_or_more_node = utils.new_bnode()
         self.shaclg.add((zero_or_more_node, SH.zeroOrMorePath, RDF.rest))
-        path_list_head = BNode()
+        path_list_head = utils.new_bnode()
         # The list items: first element is zero_or_more_node, second is rdf:first.
         items = [zero_or_more_node, RDF.first]
         Collection(self.shaclg, path_list_head, items)
@@ -133,12 +133,12 @@ class Shacl:
             # commented out on purpose.
             self.shaclg.add((property_shape, SH.maxCount, Literal(array_length)))
         property_node_array = []
-        property_node = BNode()
+        property_node = utils.new_bnode()
         self.shaclg.add((property_node, SH.property, property_shape))
         self.shaclg.add((property_node, SH.nodeKind, SH.BlankNode))
         property_node_array.append(property_node)
         if array_length is None or array_length == 0:
-            property_node = BNode()
+            property_node = utils.new_bnode()
             self.shaclg.add((property_node, SH.hasValue, RDF.nil))
             property_node_array.append(property_node)
         return property_node_array
@@ -159,10 +159,10 @@ class Shacl:
         Returns:
             URIRef: SHACL shape
         """
-        property_shape = BNode()
-        zero_or_more_node = BNode()
+        property_shape = utils.new_bnode()
+        zero_or_more_node = utils.new_bnode()
         self.shaclg.add((zero_or_more_node, SH.zeroOrMorePath, RDF.rest))
-        path_list_head = BNode()
+        path_list_head = utils.new_bnode()
         # The list items: first element is zero_or_more_node, second is rdf:first.
         items = [zero_or_more_node, RDF.first]
         Collection(self.shaclg, path_list_head, items)
@@ -183,12 +183,12 @@ class Shacl:
             # commented out on purpose.
             self.shaclg.add((property_shape, SH.maxCount, Literal(array_length)))
         property_node_array = []
-        property_node = BNode()
+        property_node = utils.new_bnode()
         self.shaclg.add((property_node, SH.property, property_shape))
         self.shaclg.add((property_node, SH.nodeKind, SH.BlankNode))
         property_node_array.append(property_node)
         if array_length is None or array_length == 0:
-            property_node = BNode()
+            property_node = utils.new_bnode()
             self.shaclg.add((property_node, SH.hasValue, RDF.nil))
             property_node_array.append(property_node)
         return property_node_array
@@ -214,7 +214,7 @@ class Shacl:
             # No modeeling rule provided
             # So igore the property
             return None
-        property = BNode()
+        property = utils.new_bnode()
         minCount = 1
         if optional:
             minCount = 0
@@ -307,7 +307,7 @@ class Shacl:
             is_subcomponent (bool): True if is it part of a hierarchical information model
         """
         shapes = []
-        innerproperty = BNode()
+        innerproperty = utils.new_bnode()
         self.shaclg.add((innerproperty, SH.path, self.ngsildns['hasObject']))
         if is_iri:
             self.shaclg.add((innerproperty, SH.nodeKind, SH.IRI))
@@ -315,7 +315,7 @@ class Shacl:
                 self.shaclg.add((innerproperty, SH['class'], contentclass))
         self.shaclg.add((innerproperty, SH.minCount, Literal(1)))
         self.shaclg.add((innerproperty, SH.maxCount, Literal(1)))
-        shape_node = BNode()
+        shape_node = utils.new_bnode()
         self.shaclg.add((shape_node, SH.property, innerproperty))
         shapes.append(shape_node)
         return shapes
@@ -341,7 +341,7 @@ class Shacl:
             json_datatype = [x for x in datatype if x == RDF.JSON]
             non_json_datatypes = [x for x in datatype if x != RDF.JSON]
         if value_rank is None or (int(value_rank) < 0 and len(non_json_datatypes) > 0):
-            innerproperty = BNode()
+            innerproperty = utils.new_bnode()
             # It is a scalar!
             self.shaclg.add((innerproperty, SH.path, self.ngsildns['hasValue']))
             if is_iri:
@@ -355,12 +355,12 @@ class Shacl:
                 self.shacl_add_to_shape(innerproperty, tuples)
             self.shaclg.add((innerproperty, SH.minCount, Literal(1)))
             self.shaclg.add((innerproperty, SH.maxCount, Literal(1)))
-            shape_node = BNode()
+            shape_node = utils.new_bnode()
             self.shaclg.add((shape_node, SH.property, innerproperty))
             shapes_list.append(shape_node)
         if value_rank is not None and int(value_rank) != -1:
             # It is a list!
-            innerproperty = BNode()
+            innerproperty = utils.new_bnode()
             self.shaclg.add((innerproperty, SH.path, self.ngsildns['hasValueList']))
             if is_iri:
                 array_validation_shape = self.get_array_validation_shape_for_iri(contentclass, array_dimensions)
@@ -373,12 +373,12 @@ class Shacl:
             self.shacl_add_to_shape(innerproperty, tuples)
             self.shaclg.add((innerproperty, SH.minCount, Literal(1)))
             self.shaclg.add((innerproperty, SH.maxCount, Literal(1)))
-            shape_node = BNode()
+            shape_node = utils.new_bnode()
             self.shaclg.add((shape_node, SH.property, innerproperty))
             shapes_list.append(shape_node)
         if len(json_datatype) > 0 and (value_rank is None or int(value_rank) < 0):
             # Treat JSON separate due to NGSI-LD specification
-            innerproperty = BNode()
+            innerproperty = utils.new_bnode()
             self.shaclg.add((innerproperty, SH.path, self.ngsildns['hasJSON']))
             self.shaclg.add((innerproperty, SH.nodeKind, SH.Literal))
             shapes = self.create_datatype_shapes(json_datatype)
@@ -387,7 +387,7 @@ class Shacl:
 
             self.shaclg.add((innerproperty, SH.minCount, Literal(1)))
             self.shaclg.add((innerproperty, SH.maxCount, Literal(1)))
-            shape_node = BNode()
+            shape_node = utils.new_bnode()
             self.shaclg.add((shape_node, SH.property, innerproperty))
             shapes_list.append(shape_node)
         return shapes_list
@@ -403,14 +403,14 @@ class Shacl:
         else:
             dt_items = []
             for dt in datatypes:
-                dt_node = BNode()
+                dt_node = utils.new_bnode()
                 self.shaclg.add((dt_node, SH.datatype, dt))
                 dt_items.append(dt_node)
             return dt_items
 
     def create_iri_shape(self):
         dt_items = []
-        dt_node = BNode()
+        dt_node = utils.new_bnode()
         self.shaclg.add((dt_node, SH.nodeKind, SH.IRI))
         dt_items.append(dt_node)
         return dt_items
@@ -434,7 +434,7 @@ class Shacl:
                 # remove subject, it is expected to be relinked by the caller
                 self.shaclg.remove((s, p, o))
             return result
-        or_node = BNode()
+        or_node = utils.new_bnode()
         Collection(self.shaclg, or_node, shapes)
         return [(SH['or'], or_node)]
 
@@ -863,7 +863,7 @@ class Validation:
         results_graph = Graph()
 
         for bindings in violations:
-            report_node = BNode()
+            report_node = utils.new_bnode()
             results_graph.add((report_node, SH.conforms, Literal(conforms)))
             results_graph.add((report_node, SH.resultMessage, Literal(bindings['resultMessage'])))
             results_graph.add((report_node, SH.focusNode, bindings['this']))

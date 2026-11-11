@@ -81,17 +81,6 @@ jobs:
           echo "make test failed (attempt $attempt), retrying in 300s"
           sleep 300
         done
-        # The example KMS packages (openspec gh-944-opcua-kms-package): generated
-        # here and never committed. Generation downloads NodeSets and ontologies,
-        # so it retries like `make test`; verifying what it wrote does not, so a
-        # package that does not verify fails the build at once.
-        for attempt in 1 2 3 4 5 6; do
-          make kms-packages && break
-          [ "$attempt" = "6" ] && exit 1
-          echo "make kms-packages failed (attempt $attempt), retrying in 300s"
-          sleep 300
-        done
-        make kms-packages-check
     - name: Build iff-agent
       run: |
         (cd NgsildAgent/config && cp config.json.template config.json)  
@@ -99,3 +88,40 @@ jobs:
     - name: Setup tmate session
       if: ${{ failure() }}
       uses: mxschmitt/action-tmate@v3
+
+  # The example KMS packages built from OPC UA models (openspec
+  # gh-944-opcua-kms-package): generated and verified here, never committed. A
+  # job of its own, so it runs beside `build` instead of lengthening it.
+  opcua-kms-packages:
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup Miniconda with Python 3.10
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        python-version: "3.10"
+        auto-activate-base: false
+        use-mamba: true
+    - name: Create a new Conda environment
+      run: conda create --name py310 python=3.10 -y
+    - name: Set up the SemForge SDK
+      run: |
+        source $CONDA/bin/activate
+        conda activate py310
+        cd semantic-model/SemForge-SDK && make setup
+    - name: Generate and verify the OPC UA KMS packages
+      run: |
+        source $CONDA/bin/activate
+        conda activate py310
+        cd semantic-model/opcua && make setup
+        # Generation downloads NodeSets and ontologies, which GitHub Pages
+        # intermittently answers with 503 (see `build`); it retries like the
+        # opcua tests do. Verifying what it wrote does not retry: a package that
+        # does not verify fails the job at once.
+        for attempt in 1 2 3 4 5 6; do
+          make kms-packages && break
+          [ "$attempt" = "6" ] && exit 1
+          echo "make kms-packages failed (attempt $attempt), retrying in 300s"
+          sleep 300
+        done
+        make kms-packages-check

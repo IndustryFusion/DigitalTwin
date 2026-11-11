@@ -496,6 +496,15 @@ def file_path_to_uri(file_path):
     return URIRef(path.as_uri())
 
 
+_bnode_serial = iter(range(10 ** 12))
+
+
+def new_bnode():
+    """A blank node labelled by creation order, not by a random id: the same
+    input gives the same labels, so the serialization order is stable."""
+    return BNode(f'n{next(_bnode_serial)}')
+
+
 def create_list(g, arr, datatype):
     if len(arr) == 0:
         return RDF.nil
@@ -503,9 +512,11 @@ def create_list(g, arr, datatype):
         literal_list = arr
     else:
         literal_list = [Literal(datatype(item)) for item in arr]
-    list_start = BNode()
-    Collection(g, list_start, literal_list)
-    return list_start
+    nodes = [new_bnode() for _ in literal_list]
+    for node, item, rest in zip(nodes, literal_list, nodes[1:] + [RDF.nil]):
+        g.add((node, RDF.first, item))
+        g.add((node, RDF.rest, rest))
+    return nodes[0]
 
 
 def get_all_types_in_namespace(g, opcua_type, namespace, basens, opcuans):
