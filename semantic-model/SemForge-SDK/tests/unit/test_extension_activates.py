@@ -40,6 +40,9 @@ HARNESS = os.path.join(SDK, 'tests', 'harness', 'activate.js')
 EXTENSION = os.path.join(SDK, 'vscode', 'src', 'extension.js')
 
 EXPECTED = {
+    'semforge.showDetails', 'semforge.hideDetails', 'semforge.about.project',
+    'semforge.about.model', 'semforge.about.constraints', 'semforge.about.shapes',
+    'semforge.about.knowledge',
     'semforge.restart', 'semforge.revalidate', 'semforge.doctor',
     'semforge.editConstraint', 'semforge.removeConstraint',
     'semforge.refreshTree', 'semforge.goToDefinition', 'semforge.overrideHere',
@@ -251,17 +254,19 @@ def test_the_context_value_table_covers_every_kind_the_server_sends(corpus):
 
 
 def test_all_three_views_are_wired(corpus_path):
-    """The project, then shapes, data and knowledge.
+    """The package and its data in the main column; constraints, shapes and
+    knowledge in SemForge Details.
 
     A view contributed in package.json with no provider behind it renders "There
     is no data provider registered", which reads as the extension being broken.
     """
     result = _activate(corpus_path)
     with open(os.path.join(SDK, 'vscode', 'package.json')) as handle:
-        declared = [v['id']
-                    for v in json.load(handle)['contributes']['views']['semforge']]
-    assert declared == ['semforgeProject', 'semforgeConstraints', 'semforgeShapes',
-                        'semforgeModel', 'semforgeKnowledge']
+        views = json.load(handle)['contributes']['views']
+    assert [v['id'] for v in views['semforge']] == ['semforgeProject', 'semforgeModel']
+    assert [v['id'] for v in views['semforgeDetails']] == [
+        'semforgeConstraints', 'semforgeShapes', 'semforgeKnowledge']
+    declared = [v['id'] for group in views.values() for v in group]
     # Every declared view got a provider and a selection handler at activation.
     assert set(declared) == set(result['views'])
 
@@ -274,7 +279,8 @@ def test_an_empty_view_offers_to_create_a_package():
 
     welcome = manifest['contributes'].get('viewsWelcome') or []
     views = {entry['view'] for entry in welcome}
-    declared = {v['id'] for v in manifest['contributes']['views']['semforge']}
+    declared = {v['id'] for group in manifest['contributes']['views'].values()
+                for v in group}
     assert views == declared, 'a view can still be empty with nothing to do'
     for entry in welcome:
         assert 'command:semforge.initPackage' in entry['contents']
@@ -292,7 +298,7 @@ def test_the_packaged_sources_include_the_new_module():
 def test_new_attribute_is_reachable_wherever_a_menu_can_be():
     """VS Code gives an extension no top-level menu, so "New attribute…" goes
     everywhere it may: a SemForge submenu on .ttl/.jsonld files (editor and
-    Explorer right-click), the Constraints and Knowledge view titles, and the
+    Explorer right-click), the Knowledge view title, and the
     palette. NOT the project submenu, which stays project-level."""
     with open(os.path.join(SDK, 'vscode', 'package.json')) as handle:
         contributes = json.load(handle)['contributes']
@@ -305,7 +311,9 @@ def test_new_attribute_is_reachable_wherever_a_menu_can_be():
         assert '.ttl' in entry['when'] and '.jsonld' in entry['when']
     titled = {e['when'] for e in menus['view/title']
               if e.get('command') == 'semforge.newAttribute'}
-    assert titled == {'view == semforgeConstraints', 'view == semforgeKnowledge'}
+    # Once: an attribute is a term of the knowledge; two title bars stacked in
+    # one column offering the same thing was one too many.
+    assert titled == {'view == semforgeKnowledge'}
     assert 'semforge.newAttribute' not in [
         e.get('command') for e in menus['semforge.project']]
     # Hidden from nowhere: the palette is the one place every user has.

@@ -1948,7 +1948,11 @@ def test_remove_this_use_is_not_in_the_palette():
                       # A click on a row of a view: the row it was clicked on.
                       'semforge.clickPackageRow', 'semforge.clickTypesRow',
                       'semforge.clickShapesRow', 'semforge.clickEntitiesRow',
-                      'semforge.clickKnowledgeRow'}
+                      'semforge.clickKnowledgeRow',
+                      # What a view is: its title-bar ⓘ, nothing to run.
+                      'semforge.about.project', 'semforge.about.model',
+                      'semforge.about.constraints', 'semforge.about.shapes',
+                      'semforge.about.knowledge'}
 
 
 # --- sub-attributes ---------------------------------------------------------------

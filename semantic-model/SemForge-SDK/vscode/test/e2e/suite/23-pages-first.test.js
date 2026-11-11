@@ -150,19 +150,29 @@ describe('The package page', () => {
 });
 
 describe('Views and pages say what they are', () => {
-  it('every view opens with its heading', async () => {
+  it('every view says what it is in an ⓘ hover, not a paragraph at its top', async () => {
     const api = await semforge();
+    // Asked, as a shown view would: the rows are there, and no heading above them.
+    assert.ok((await api.trees.project.getChildren()).length > 0, 'the package view');
     const said = (tree) => tree && tree.view && tree.view.message;
-    await until(() => said(api.trees.project) && said(api.trees.knowledge), 'the headings');
-    assert.match(said(api.trees.project), /^This package:/);
-    assert.match(said(api.trees.constraints), /^Every entity type/);
-    assert.match(said(api.trees.shapes), /^The SHACL shapes as written/);
-    assert.match(said(api.trees.model), /^The data:|^⟳/);
-    assert.match(said(api.trees.knowledge), /^What the terms mean/);
-    const views = vscode.extensions.getExtension('industryfusion.semforge')
-      .packageJSON.contributes.views.semforge.map((v) => v.name);
-    assert.deepStrictEqual(views, ['Package', 'Entity Types & Constraints', 'SHACL Shapes',
-      'Entities & Test Cases', 'Knowledge (Ontology)']);
+    for (const tree of [api.trees.project, api.trees.constraints, api.trees.shapes,
+      api.trees.knowledge]) {
+      assert.ok(!said(tree), `no heading: ${said(tree)}`);
+    }
+    // The model view may say what is going on (a validation running): not what it is.
+    assert.ok(!said(api.trees.model) || /^⟳/.test(said(api.trees.model)), said(api.trees.model));
+    const manifest = vscode.extensions.getExtension('industryfusion.semforge').packageJSON;
+    const about = manifest.contributes.commands.find((c) => c.command === 'semforge.about.project');
+    assert.match(about.title, /^This package:/);
+    const views = manifest.contributes.views;
+    assert.deepStrictEqual(views.semforge.map((v) => v.name), ['Package', 'Entities & Test Cases']);
+    assert.deepStrictEqual(views.semforgeDetails.map((v) => v.name),
+      ['Constraints by Type', 'SHACL Shapes as Written', 'Knowledge (Ontology)']);
     assert.ok(WORKSPACE);
+  });
+
+  it('hides the details when asked, and shows them again', async () => {
+    await vscode.commands.executeCommand('semforge.hideDetails');
+    await vscode.commands.executeCommand('semforge.showDetails');
   });
 });

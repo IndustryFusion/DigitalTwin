@@ -25,9 +25,6 @@
 
 const vscode = require('vscode');
 
-// What this view is, at its top: its name alone left it to be guessed.
-const HEADING = 'Every entity type, with what its shapes require of each attribute — its own and inherited ones together. A type opens its type page.';
-
 const { noPackageMessage } = require('./locate');
 const { showLocation, treeDetail, treeClick, icon, rowClicks } = require('./reveal');
 const { constrainAttribute, newAttribute } = require('./attribute');
@@ -212,7 +209,7 @@ class CookedTreeProvider {
 
   message(text) {
     if (this.view) {
-      this.view.message = text || HEADING;
+      this.view.message = text || undefined;
     }
   }
 
@@ -483,7 +480,8 @@ function register(context, clientHolder, session) {
   const view = vscode.window.createTreeView('semforgeConstraints', {
     treeDataProvider: provider
   });
-  view.message = HEADING;
+  // What the view is: the ⓘ in its title bar (sidebar.js). The message is
+  // for what is wrong, and for what is going on.
   provider.view = view;
   context.subscriptions.push(view);
 

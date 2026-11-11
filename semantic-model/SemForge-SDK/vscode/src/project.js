@@ -30,9 +30,6 @@
 
 const vscode = require('vscode');
 
-// What this view is, at its top: its name alone left it to be guessed.
-const HEADING = 'This package: its settings, its health and what it is made of. A row opens the package page.';
-
 const { noPackageMessage } = require('./locate');
 const { showLocation, icon, treeClick, rowClicks } = require('./reveal');
 
@@ -108,8 +105,10 @@ class ProjectTreeProvider {
     const children = raw.children || [];
     const item = new vscode.TreeItem(
       raw.label || raw.kind,
+      // The settings are folded: the package page shows and edits them, and
+      // the main column has the entities to make room for.
       children.length
-        ? raw.kind === 'group' || raw.kind === 'project'
+        ? (raw.kind === 'group' && raw.label !== 'Settings') || raw.kind === 'project'
           ? vscode.TreeItemCollapsibleState.Expanded
           : vscode.TreeItemCollapsibleState.Collapsed
         : vscode.TreeItemCollapsibleState.None
@@ -187,7 +186,7 @@ class ProjectTreeProvider {
       this.view.message = `SemForge: ${result.error}`;
       return [];
     }
-    this.view.message = HEADING;
+    this.view.message = undefined;
     this.parents = new Map();
     const rows = (result.roots || []).map((raw, position) =>
       this.wrap(raw, keyOf(raw, '', position)));
@@ -256,7 +255,8 @@ function register(context, clientHolder, session, onChanged) {
   const view = vscode.window.createTreeView('semforgeProject', {
     treeDataProvider: provider
   });
-  view.message = HEADING;
+  // What the view is: the ⓘ in its title bar (sidebar.js). The message is
+  // for what is wrong, and for what is going on.
   provider.view = view;
   context.subscriptions.push(view);
 

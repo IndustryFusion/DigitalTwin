@@ -160,7 +160,10 @@ def test_a_page_without_violations_lists_none(tmp_path):
 
 
 def test_only_what_violates_hides_the_rest(tmp_path):
+    # In All: the page opens on the graph, whose copies of the cards are not
+    # what the filter hides.
     dom = _dom(tmp_path, '''
+document.querySelector('[data-view=cards]').click();
 document.getElementById('fbad').click();
 ''')
     shown = re.findall(r'<div class="card([^"]*)"[^>]* data-id="([^"]+)"([^>]*)>', dom)

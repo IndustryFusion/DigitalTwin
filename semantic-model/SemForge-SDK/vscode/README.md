@@ -48,18 +48,31 @@ It refuses to write into a directory that already holds artifacts.
 code semantic-model/kms        # or the repo root, or anything between
 ```
 
-### The five views
+### The views: two columns
 
-Each view is one way into the same package; its name says which, and the
-package it shows stands beside it.
+The **SemForge** column holds what a model is worked on with: the package and
+its data. The constraints, the shapes as written and the knowledge are the
+details behind them -- every page links to them -- and live in a second
+container, **SemForge Details**, that stays away until it is asked for: the
+**Show details** button in the Package view's title bar (or *SemForge: Show
+details*). Its views' `⋯` → **Hide details** puts it away again; VS Code
+remembers either per workspace. Drag its icon once onto the secondary side bar
+(*View › Appearance › Secondary Side Bar*) to have it open as a column of its
+own, on the right; VS Code keeps it there.
 
-| View | Shows | From | A click opens |
-|---|---|---|---|
-| **Package** | the package itself: name, contexts, namespaces, contents, health | `semforge.yaml` | the package page, the row marked |
-| **Entity Types & Constraints** | every entity type, inherited ones included, with what its shapes require of each attribute | the shapes, read per type | the type page, the attribute marked |
-| **SHACL Shapes** | the shapes as written, one row per named shape and rule | the shapes files | the shape page |
-| **Entities & Test Cases** | the Main model's entities, then the test suites and their cases | the model and `examples/` | the Main page or the case page, the entity marked |
-| **Knowledge (Ontology)** | entity types, attributes, value lists (vocabularies), units | the knowledge files | the type or vocabulary page |
+What each view is, is the hover of the **ⓘ** in its title bar; its top is
+left for the rows (and for what is wrong: no server, no package, an error).
+
+| View | Column | Shows | From | A click opens |
+|---|---|---|---|---|
+| **Package** | SemForge | the package itself: health, name, contents; its settings folded | `semforge.yaml` | the package page, the row marked |
+| **Entities & Test Cases** | SemForge | the Main model's entities, then the test suites and their cases | the model and `examples/` | the Main page or the case page, the entity marked |
+| **Constraints by Type** | Details | every entity type, inherited ones included, with what its shapes require of each attribute | the shapes, read per type | the type page, the attribute marked |
+| **SHACL Shapes as Written** | Details | the shapes as written, one row per named shape and rule | the shapes files | the shape page |
+| **Knowledge (Ontology)** | Details | entity types, attributes, value lists (vocabularies), units | the knowledge files | the type or vocabulary page |
+
+A title bar holds what creates (**New test case…**, **New shape…**, …) and the
+ⓘ; Refresh and the pages are in its `⋯` -- the trees refresh on every save.
 
 Every page has its file one click away — an **Open …** button or ⋯ entry —
 but a click never lands in the file by itself.
@@ -169,8 +182,8 @@ Only the id is typed, and it is prefilled from the type (`urn:filter:3`).
 ### Adding a type or a subtype
 
 A type does not need an entity to exist. **New entity type…** (the class icon
-in the Entity Types & Constraints view's title bar, or the palette) asks for a name and its parent;
-**New subtype…** (right-click a type in Entity Types & Constraints, or a type page's `⋯`)
+in the Constraints by Type view's title bar, or the palette) asks for a name and its parent;
+**New subtype…** (right-click a type in Constraints by Type, or a type page's `⋯`)
 asks only for the name — the parent is the type you started from. Every type
 has a parent: a top-level one sits under the root of the hierarchy.
 
@@ -189,7 +202,7 @@ lacks is a shape of its own, so the message offers **Create its shape**
 type page**.
 
 **+ Attribute** works on such a type anyway — on its type page and on its
-row in Entity Types & Constraints. The attribute has to live in a shape of the type's own, so when
+row in Constraints by Type. The attribute has to live in a shape of the type's own, so when
 there is none yet the shape is written first (its name asked, prefilled with
 e.g. `WatercutterShape`), and the attribute picker opens on it straight away.
 Attributes a parent's shape already constrains are marked *inherited* there:
@@ -523,7 +536,7 @@ Packaging and installing it instead:
 
 ```bash
 npx @vscode/vsce package
-code --install-extension semforge-0.1.0.vsix --force
+code --install-extension semforge-0.2.0.vsix --force
 ```
 
 Remember that VS Code loads extension JavaScript at window startup, so a change
@@ -686,8 +699,8 @@ folder. Open `kms/shacl.ttl` in it.
 
 ```bash
 npm install -g @vscode/vsce
-vsce package                       # produces semforge-0.1.0.vsix
-code --install-extension semforge-0.1.0.vsix
+vsce package                       # produces semforge-0.2.0.vsix
+code --install-extension semforge-0.2.0.vsix
 ```
 
 Installed this way it loads in every window, so open the repository normally.
@@ -873,7 +886,7 @@ the two questions above. The same flow is **SemForge: New attribute…**, which
 starts by asking for the type instead and is reachable without the tree: the
 Command Palette, the SemForge item in the status bar, right-click on a `.ttl`
 or `.jsonld` (editor or Explorer) → **SemForge**, and the **symbol** button in
-the Entity Types & Constraints and Knowledge view titles. VS Code gives an extension no menu of
+the Knowledge view title. VS Code gives an extension no menu of
 its own beside *File* and *Edit*, so these are the places one can live. Started
 that way it offers **Not now** too — declaring alone is a fine place to stop —
 and a type with no shape of its own is declared and told so, rather than having
@@ -888,7 +901,7 @@ constrains, and one a supertype's shape constrains — that is an override, and
 
 **Sub-attributes.** In NGSI-LD an attribute can carry attributes of its own —
 the kms's `hasTrust` hangs off `hasFilter`, `hasXXXWorkpiece` off `hasState`.
-The **+** on an *attribute* row in the Entity Types & Constraints view adds one: it offers what
+The **+** on an *attribute* row in the Constraints by Type view adds one: it offers what
 the knowledge allows inside that attribute (a sub-attribute's `rdfs:domain` is
 the parent's kind of node, `ngsild:Relationship` or `ngsild:Property`), ends in
 **New sub-attribute…** to declare one carried by that attribute, and writes the
@@ -914,7 +927,7 @@ inside another attribute, a sub-attribute is refused inside a parent of the
 wrong kind, and a duplicate is refused; none of them write anything.
 
 **Deleting an attribute** is a right-click on its row in the Knowledge or
-Entity Types & Constraints view (**SemForge: Delete attribute…**; from the palette it asks
+Constraints by Type view (**SemForge: Delete attribute…**; from the palette it asks
 which). An attribute is never in one place, so nothing is removed before you
 have seen all of them:
 
@@ -1034,7 +1047,7 @@ of its files, which would then point at nothing. The case page and editors
 of deleted files close.
 
 **New test… for an attribute.** A new attribute needs cases that prove its
-constraints work. Right-click it in the Entity Types & Constraints view (**SemForge: New test for
+constraints work. Right-click it in the Constraints by Type view (**SemForge: New test for
 this attribute…**), or use its row on the type page — the **Tested** cell
 ("New test…" while untested) or the row's `⋯` menu. It asks what the test
 should prove:
@@ -1081,11 +1094,13 @@ that order:
 Ids, attributes and files link to their line; an entity's type opens the
 type page.
 
-**Cards or graph, and a filter.** Above the entities, *Cards | Graph* switches
-between the cards and the **entity graph**: a tree of cards, for following a
+**Graph or all, and a filter.** Above the entities, *Graph | All* switches
+between the **entity graph** -- what the page opens on -- and all the cards,
+file by file. Opened at one entity (a tree click, a violation), the page
+shows it among all the cards. The graph is a tree of cards, for following a
 path and reviewing every entity along it. It starts at the entities nothing
 points at, each a card with its rows — the same rows, links and edits as in
-the cards view. A relationship row has a **▸**: it opens the card it points
+All. A relationship row has a **▸**: it opens the card it points
 at right under the row, so a path reads top to bottom (*Pump › hasPorts ›
 PortsGroup › has‹Drive› › DrivePort*); a relationship inside a sub-attribute
 opens the same way. Each entity is open in full once: asked for again, it is
@@ -1305,7 +1320,7 @@ thing, said once (the `semforge.trees.detail` setting, `summary`):
 | Types | the entity type hierarchy; under each type its OWN attributes (`hasCartridge — required · one · → FilterCartridge`, an inverse path as `inverse of hasCartridge`) and one **Rules** row, then its subtypes. Inherited attributes are on the type page, not repeated under every subtype | types → shapes → every SHACL parameter as a row, editable in place (192 rows for the kms) |
 | Shapes | every shape, prefixes dropped where unique | every shape, full names |
 | Instances | **Main** first (`8 entities · 3 violation(s)`), then **Tests** with its suites by shape (`FilterShape — 1 case(s) · all ok`); an entity's type in its row, each value once (`hasStrength — 0.6`) | the same two groups, suites as `test_FilterShape`, a separate `type` row, `0.6 — 0.6 · Property` |
-| Knowledge | no Entity types group (that is the Entity Types & Constraints view); a vocabulary class counts its values (`MachineState — 7 values`); `3 shape(s)` instead of a list; an id in several files is one row | every group, every file's row |
+| Knowledge | no Entity types group (that is the Constraints by Type view); a vocabulary class counts its values (`MachineState — 7 values`); `3 shape(s)` instead of a list; an id in several files is one row | every group, every file's row |
 
 Prefixes are dropped wherever the local name is unambiguous in that tree; the
 two `CartridgeShape`s keep theirs. In summary mode **Override…** and right-click
@@ -1321,7 +1336,7 @@ SHACL-AF), implicitly when the shape is itself a class — or it has no target
 and is reached from another shape through `sh:node`. So constraints have two
 views:
 
-- **Entity Types & Constraints** (formerly Types, before that Constraints) answers *what must a Filter carry*: the hierarchy, a click opening
+- **Constraints by Type** (formerly Entity Types & Constraints, Types, before that Constraints) answers *what must a Filter carry*: the hierarchy, a click opening
   the type page. The page **collects every constraint that applies** to the
   type — its own shapes', the inherited ones (`· from Machine`), and those of
   shapes that reach it by another target, in the same tables, marked with the
@@ -1353,7 +1368,7 @@ views:
     cases with theirs, one row each; a case opens its case page.
 
   *Shapes that apply under a condition* is folded at the bottom.
-- **SHACL Shapes** answers *what does this shape check and what does it reach*: one
+- **SHACL Shapes as Written** answers *what does this shape check and what does it reach*: one
   row per shape, its target in words (`targets Filter`, `targets subjects of
   hasValve`, `targets urn:valve:1`, `SPARQL target`, `no target · used by
   ValveNodeShape`). A click opens the **shape page**: the target (a SPARQL
@@ -1391,11 +1406,11 @@ views:
   scope them to); New test… there needs a type, so it says to start from the
   type page of an entity the shape reaches. A shape that is itself a class
   (`ex:Gauge a rdfs:Class, sh:NodeShape` — an implicit class target) counts
-  as that type's own shape everywhere: in the Entity Types & Constraints view, as the shape the
+  as that type's own shape everywhere: in the Constraints by Type view, as the shape the
   type page edits and **+ Attribute** writes into, never as one that applies
   "under a condition".
 
-**New shape….** The `+` in the SHACL Shapes view title (also: right-click a type in
+**New shape….** The `+` in the SHACL Shapes as Written view title (also: right-click a type in
 Types, the status bar menu) asks what the shape selects — an entity type,
 one entity, everything that has an attribute, or everything a Relationship
 points at — then the target and a name (suggested: `PumpShape`), and writes
@@ -1518,7 +1533,7 @@ are refused when typed: a level named `sh:Major` would claim to be SHACL's.
 
 **The entity type page.** The trees are for finding things; reading one type's
 whole story in them took three views and, for Filter, 39 rows. A click
-on a type or attribute in the Entity Types & Constraints view, or on an entity type in the
+on a type or attribute in the Constraints by Type view, or on an entity type in the
 Knowledge view (also: right-click an entity in the Entities & Test Cases view, or
 **SemForge: Open entity type page** in the palette) opens one page in the
 editor area — its tab reads `Filter · type` — with all of it:
@@ -1565,7 +1580,7 @@ it the others outdo. Contradictions are said in red — two datatypes no literal
 can have at once, bounds or counts that admit nothing. A shape that applies
 only under a condition is listed beneath the row but not merged into it.
 Clicking the presence or value of the combined row asks **which shape** to
-change; each shape's own line — `↳` and its name — has its own `⋯`. The Entity Types & Constraints view shows the attribute once (`2 shapes, all apply`).
+change; each shape's own line — `↳` and its name — has its own `⋯`. The Constraints by Type view shows the attribute once (`2 shapes, all apply`).
 
 **A shape's name has a random part.** The shape's IRI is its identity, and a
 bare `MachineShape` reads like a description — it gets renamed, merged or
@@ -1659,7 +1674,7 @@ redeploy — the dialog says so.
 
 **Merge into….** Two shapes selecting the same nodes can become one: the shape
 page's **Merge into…** button, `⋯ → Merge … into…` on a row, or right-click a
-shape in the SHACL Shapes view. It offers only shapes with exactly the same targets,
+shape in the SHACL Shapes as Written view. It offers only shapes with exactly the same targets,
 says what will happen before it writes — per attribute, which parameter is
 added, which replaces a weaker one, which is already there or has no effect —
 and then:
@@ -2101,7 +2116,7 @@ declares `sh:class`, the picker lists the individuals of that class — and for 
 relationship, the entity ids of that type — spelled the way the file needs them
 (`{"@id": "base:state_ON"}` for a Property with an IRI value, a bare IRI for a
 Relationship). This is a different question from the `sh:class` picker in the
-Entity Types & Constraints view: that one asks what the *constraint* may say, this one what the
+Constraints by Type view: that one asks what the *constraint* may say, this one what the
 *datum* may be. **Type a value** stays at the bottom.
 
 You can also just type into the picker: what you type becomes an entry of its
@@ -2284,8 +2299,8 @@ in `shacl.ttl` is meaningless without the ontology and the examples.
 | `SemForge: New attribute…` | declares an attribute in the knowledge, then (optionally) constrains it on its type's own shape — one flow, from the palette, the status bar menu, the SemForge submenu on a `.ttl`/`.jsonld`, or the Constraints/Knowledge view title |
 | `SemForge: Rescan (ignore the cache)` | throws away everything known about the package and analyses it from scratch; also the 🔄 on the Package view's Cache row |
 | `SemForge: Delete cache…` | removes the package's cache (optionally the downloaded JSON-LD contexts too), after saying what and where; also the 🗑 on the Cache row |
-| `SemForge: Delete attribute…` | right-click an attribute in the Knowledge or Entity Types & Constraints view (or the palette, status bar menu, SemForge submenu); shows every dependent first and removes them all, or names what must be edited by hand |
-| `SemForge: Add Attribute to Shape` | the + on a shape in the Entity Types & Constraints view; writes both NGSI-LD layers, optional or required, with the value's class or datatype |
+| `SemForge: Delete attribute…` | right-click an attribute in the Knowledge or Constraints by Type view (or the palette, status bar menu, SemForge submenu); shows every dependent first and removes them all, or names what must be edited by hand |
+| `SemForge: Add Attribute to Shape` | the + on a shape in the Constraints by Type view; writes both NGSI-LD layers, optional or required, with the value's class or datatype |
 
 ## Settings
 

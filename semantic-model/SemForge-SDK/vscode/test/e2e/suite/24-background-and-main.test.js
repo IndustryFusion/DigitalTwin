@@ -142,13 +142,16 @@ describe('Validation in the background', () => {
 });
 
 describe('The Main page with many entities', () => {
-  it('offers Cards and Graph, and a filter by type, attribute and id from the data', async () => {
+  it('offers Graph (first) and All, and a filter by type, attribute and id from the data', async () => {
     const api = await semforge();
     await vscode.commands.executeCommand('semforge.openModelPage');
     const page = await until(() => api.pages.case.page && api.pages.case.page.kind === 'model' &&
       api.pages.case.page, 'the Main page');
     const html = api.pages.case.panel.webview.html;
     assert.ok(html.includes('data-view="cards"') && html.includes('data-view="graph"'));
+    assert.ok(html.indexOf('data-view="graph"') < html.indexOf('data-view="cards"'),
+      'the graph comes first');
+    assert.ok(html.includes('<div id="cardview" hidden>'), 'and is what the page opens on');
     const cards = page.files.flatMap((f) => f.cards);
     for (const type of new Set(cards.map((c) => c.type).filter(Boolean))) {
       assert.ok(html.includes(`<option value="${type}">`), `the filter offers ${type}`);

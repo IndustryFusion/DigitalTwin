@@ -109,7 +109,9 @@ def test_the_installed_extension_carries_its_dependencies():
 
 
 def test_the_built_package_carries_them_too():
-    vsix = os.path.join(VSCODE, 'semforge-0.1.0.vsix')
+    with open(os.path.join(VSCODE, 'package.json')) as handle:
+        version = json.load(handle)['version']
+    vsix = os.path.join(VSCODE, f'semforge-{version}.vsix')
     if not os.path.exists(vsix):
         pytest.skip('no packaged vsix to inspect')
 

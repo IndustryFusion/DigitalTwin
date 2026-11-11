@@ -28,8 +28,6 @@
 const path = require('path');
 const vscode = require('vscode');
 
-// What this view is, at its top: its name alone left it to be guessed.
-const HEADING = 'The data: the Main model’s entities, then the test cases that prove the constraints. A row opens the Main page or its case page.';
 const { askDatasetId } = require('./datasetid');
 
 const { noPackageMessage } = require('./locate');
@@ -213,7 +211,7 @@ class ModelTreeProvider {
 
   message(text) {
     if (this.view) {
-      this.view.message = text || HEADING;
+      this.view.message = text || undefined;
     }
   }
 
@@ -1061,7 +1059,8 @@ function register(context, clientHolder, session, onChanged) {
   const view = vscode.window.createTreeView('semforgeModel', {
     treeDataProvider: provider
   });
-  view.message = HEADING;
+  // What the view is: the ⓘ in its title bar (sidebar.js). The message is
+  // for what is wrong, and for what is going on.
   provider.view = view;
   context.subscriptions.push(view);
 

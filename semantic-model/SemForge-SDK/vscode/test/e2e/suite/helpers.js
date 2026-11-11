@@ -57,6 +57,8 @@ async function semforge() {
     return client && (await client.sendRequest('semforge/methods', {})).methods;
   }, 'the language server');
   await until(() => api.session.uri, 'the package to be found');
+  // The suites drive every tree, so the details column is open for them.
+  await vscode.commands.executeCommand('semforge.showDetails');
   cached = api;
   return api;
 }

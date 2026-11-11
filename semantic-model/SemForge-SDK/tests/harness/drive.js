@@ -526,10 +526,16 @@ async function runCommand() {
 async function runTree() {
   const module = require(path.resolve(process.argv[3]));
   const Provider = module[scenario.provider];
-  const provider = new Provider({ client });
+  // `noClient`: the language server is not running.
+  const provider = new Provider({ client: scenario.noClient ? undefined : client });
   provider.view = {};
   provider.uri = scenario.uri;
   const first = await provider.getChildren();
+  // `states`: each root's label and whether it starts folded, as drawn.
+  const states = scenario.states ? first.map((node) => {
+    const item = provider.getTreeItem(node);
+    return { label: node.raw.label, collapsibleState: item.collapsibleState };
+  }) : undefined;
   const firstKeys = first.map((node) => node.key);
   // Again, as happens whenever the tree follows the editor: the server sends
   // fresh objects, and the wrappers must stay the same ones the view holds.
@@ -537,6 +543,7 @@ async function runTree() {
   seen.tree = {
     roots: firstKeys,
     labels: first.map((node) => node.raw.label),
+    states,
     message: provider.view.message,
     identityKept: first.length > 0 &&
       first.every((node, at) => node === second[at]),

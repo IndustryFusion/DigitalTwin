@@ -133,18 +133,37 @@ def test_edit_on_the_page_runs_the_view_s_own_command(tmp_path, payload):
 
 def test_the_views_are_named_for_what_they_show():
     with open(os.path.join(SDK, 'vscode', 'package.json')) as handle:
-        views = json.load(handle)['contributes']['views']['semforge']
-    assert {v['id']: v['name'] for v in views} == {
+        views = json.load(handle)['contributes']['views']
+    assert {v['id']: v['name'] for group in views.values() for v in group} == {
         'semforgeProject': 'Package',
-        'semforgeConstraints': 'Entity Types & Constraints',
-        'semforgeShapes': 'SHACL Shapes',
+        'semforgeConstraints': 'Constraints by Type',
+        'semforgeShapes': 'SHACL Shapes as Written',
         'semforgeModel': 'Entities & Test Cases',
         'semforgeKnowledge': 'Knowledge (Ontology)',
     }
 
 
-def test_every_view_says_what_it_is_at_its_top(tmp_path):
-    """Its name alone left it to be guessed: each view opens with a heading."""
+def test_the_details_stay_away_until_asked_for():
+    """The main column is the package and its data. The constraints, shapes
+    and knowledge are a second container shown under one context key, which
+    "Show details" sets and "Hide details" clears."""
+    with open(os.path.join(SDK, 'vscode', 'package.json')) as handle:
+        contributes = json.load(handle)['contributes']
+    details = contributes['views']['semforgeDetails']
+    assert {v.get('when') for v in details} == {'semforge.details'}
+    assert 'semforgeDetails' in {c['id'] for c in contributes['viewsContainers']['activitybar']}
+    shown = [e for e in contributes['menus']['view/title']
+             if e.get('command') == 'semforge.showDetails']
+    assert [e['when'] for e in shown] == ['view == semforgeProject && !semforge.details']
+    hidden = {e['when'] for e in contributes['menus']['view/title']
+              if e.get('command') == 'semforge.hideDetails'}
+    assert hidden == {f'view == {v["id"]}' for v in details}
+
+
+def test_what_a_view_is_is_a_hover_not_a_paragraph(tmp_path):
+    """Each view said what it is in a paragraph at its top, always, in a column
+    with little room. It is the hover of an ⓘ in its title bar now -- the
+    command's title -- and the message is left for what is wrong."""
     seen = _node(tmp_path, {
         'mode': 'select', 'view': 'semforgeProject', 'config': {},
         'node': {'key': 'root/0', 'raw': {'kind': 'health', 'label': 'Health', 'children': []},
@@ -154,8 +173,29 @@ def test_every_view_says_what_it_is_at_its_top(tmp_path):
     said = {view: (seen['views'].get(view) or {}).get('message') for view in (
         'semforgeProject', 'semforgeConstraints', 'semforgeShapes', 'semforgeModel',
         'semforgeKnowledge')}
-    assert said['semforgeProject'].startswith('This package:'), said
-    assert said['semforgeConstraints'].startswith('Every entity type'), said
-    assert said['semforgeShapes'].startswith('The SHACL shapes as written'), said
-    assert said['semforgeModel'].startswith('The data:'), said
-    assert said['semforgeKnowledge'].startswith('What the terms mean'), said
+    assert not any(said.values()), said
+
+    node = shutil.which('node')
+    if node is None:
+        pytest.skip('node is not installed')
+    stub = tmp_path / 'node_modules' / 'vscode'
+    stub.mkdir(parents=True)
+    (stub / 'index.js').write_text('module.exports = {};')
+    out = subprocess.run(
+        [node, '-e', 'const s = require(process.argv[1]); console.log(JSON.stringify('
+         'Object.entries(s.ABOUT).map(([v, t]) => [s.aboutCommand(v), v, t])))',
+         os.path.join(SRC, 'sidebar.js')],
+        capture_output=True, text=True, timeout=60,
+        env=dict(os.environ, NODE_PATH=str(tmp_path / 'node_modules')))
+    assert out.returncode == 0, out.stderr[-1500:]
+    about = json.loads(out.stdout)
+    with open(os.path.join(SDK, 'vscode', 'package.json')) as handle:
+        contributes = json.load(handle)['contributes']
+    titles = {c['command']: c['title'] for c in contributes['commands']}
+    bars = {(e.get('command'), e.get('when')) for e in contributes['menus']['view/title']}
+    assert {v for _, v, _ in about} == {v['id'] for group in contributes['views'].values()
+                                        for v in group}
+    for command, view, text in about:
+        assert titles.get(command) == text, command
+        assert (command, f'view == {view}') in bars, command
+    assert dict((v, t) for _, v, t in about)['semforgeProject'].startswith('This package:')

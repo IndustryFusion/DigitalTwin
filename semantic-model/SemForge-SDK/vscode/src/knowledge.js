@@ -26,9 +26,6 @@
 
 const vscode = require('vscode');
 
-// What this view is, at its top: its name alone left it to be guessed.
-const HEADING = 'What the terms mean: entity types, attributes, value lists and units, from the knowledge files. A row opens its type or vocabulary page.';
-
 const { noPackageMessage } = require('./locate');
 const { showLocation, treeDetail, treeClick, icon, rowClicks } = require('./reveal');
 
@@ -215,7 +212,7 @@ class KnowledgeTreeProvider {
       this.view.message = `SemForge: ${result.error}`;
       return [];
     }
-    this.view.message = HEADING;
+    this.view.message = undefined;
     this.parents = new Map();
     return (result.roots || []).map((raw, position) =>
       this.wrap(raw, keyOf(raw, '', position)));
@@ -242,7 +239,8 @@ function register(context, clientHolder, session, onShape, onEntity) {
   const view = vscode.window.createTreeView('semforgeKnowledge', {
     treeDataProvider: provider
   });
-  view.message = HEADING;
+  // What the view is: the ⓘ in its title bar (sidebar.js). The message is
+  // for what is wrong, and for what is going on.
   provider.view = view;
   context.subscriptions.push(view);
 

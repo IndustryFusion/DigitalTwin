@@ -2,7 +2,7 @@
   "name": "semforge",
   "displayName": "SemForge",
   "description": "Semantic modelling for NGSI-LD, OWL and SHACL: validation, coverage and navigation across a SemForge package.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "industryfusion",
   "license": "Apache-2.0",
   "engines": {
@@ -77,7 +77,7 @@
             "One row per attribute, said in the type page's words (\"required · one · → Filter\"); details and edits on the type page.",
             "Every SHACL parameter as its own row, editable in place."
           ],
-          "description": "How much the Constraints, Model and Knowledge trees show."
+          "description": "How much the trees show: Entities & Test Cases, and in SemForge Details, Constraints by Type and Knowledge."
         },
         "semforge.trees.click": {
           "type": "string",
@@ -90,166 +90,197 @@
             "A click opens the row's page (entity type, test case) in one reused tab; the .ttl/.jsonld is a right-click away (\"Open source\").",
             "A click moves the .ttl/.jsonld editor to the row, as before."
           ],
-          "description": "What a click on a row in the Constraints, Model and Knowledge trees opens."
+          "description": "What a click on a row in the trees opens: Entities & Test Cases, and in SemForge Details, Constraints by Type and Knowledge."
         }
       }
     },
     "commands": [
       {
         "command": "semforge.selectPackage",
-        "title": "Select Package",
+        "title": "Select package",
         "category": "SemForge",
         "icon": "$(package)"
       },
       {
         "command": "semforge.newProject",
-        "title": "SemForge: New project…",
-        "icon": "$(file-directory-create)"
+        "title": "New project…",
+        "icon": "$(file-directory-create)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.initPackage",
-        "title": "SemForge: Create a package in this folder",
-        "icon": "$(new-folder)"
+        "title": "Create a package in this folder",
+        "icon": "$(new-folder)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.restart",
-        "title": "SemForge: Restart Language Server"
+        "title": "Restart language server",
+        "category": "SemForge"
       },
       {
         "command": "semforge.revalidate",
-        "title": "SemForge: Revalidate Package"
+        "title": "Revalidate package",
+        "category": "SemForge"
       },
       {
         "command": "semforge.editConstraint",
-        "title": "SemForge: Edit Constraint",
-        "icon": "$(edit)"
+        "title": "Edit constraint",
+        "icon": "$(edit)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.removeConstraint",
-        "title": "SemForge: Remove Constraint",
-        "icon": "$(trash)"
+        "title": "Remove constraint",
+        "icon": "$(trash)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.refreshTree",
-        "title": "SemForge: Refresh types",
-        "icon": "$(refresh)"
+        "title": "Refresh constraints",
+        "icon": "$(refresh)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.newAttribute",
-        "title": "SemForge: New attribute…",
-        "icon": "$(add)"
+        "title": "New attribute…",
+        "icon": "$(add)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.newSubAttribute",
-        "title": "SemForge: New sub-attribute…",
-        "icon": "$(add)"
+        "title": "New sub-attribute…",
+        "icon": "$(add)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.deleteAttribute",
-        "title": "SemForge: Delete attribute…",
-        "icon": "$(trash)"
+        "title": "Delete attribute…",
+        "icon": "$(trash)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.addAttributeConstraint",
-        "title": "SemForge: Add Attribute to Shape",
-        "icon": "$(add)"
+        "title": "Add attribute to shape",
+        "icon": "$(add)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.goToDefinition",
-        "title": "SemForge: Go to Definition",
-        "icon": "$(go-to-file)"
+        "title": "Go to definition",
+        "icon": "$(go-to-file)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.overrideHere",
-        "title": "SemForge: Declare on This Type",
-        "icon": "$(arrow-down)"
+        "title": "Declare on this type",
+        "icon": "$(arrow-down)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.editValue",
-        "title": "SemForge: Edit Value",
-        "icon": "$(edit)"
+        "title": "Edit value",
+        "icon": "$(edit)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.refreshModel",
-        "title": "SemForge: Refresh tests",
-        "icon": "$(refresh)"
+        "title": "Refresh entities & test cases",
+        "icon": "$(refresh)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.addObservation",
-        "title": "SemForge: Add Observation",
-        "icon": "$(add)"
+        "title": "Add observation",
+        "icon": "$(add)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.addInstance",
-        "title": "SemForge: Add Instance (another datasetId)…",
-        "icon": "$(layers)"
+        "title": "Add instance (another datasetId)…",
+        "icon": "$(layers)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.findUnit",
-        "title": "SemForge: Find Unit…",
-        "icon": "$(search)"
+        "title": "Find unit…",
+        "icon": "$(search)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.newUnit",
-        "title": "SemForge: New Unit…",
-        "icon": "$(add)"
+        "title": "New unit…",
+        "icon": "$(add)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.setUnitCode",
-        "title": "SemForge: Unit…",
-        "icon": "$(symbol-ruler)"
+        "title": "Unit…",
+        "icon": "$(symbol-ruler)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.setObservedAt",
-        "title": "SemForge: Timestamp (observedAt)…",
-        "icon": "$(clock)"
+        "title": "Timestamp (observedAt)…",
+        "icon": "$(clock)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.sortObservations",
-        "title": "SemForge: Sort Observations by Time"
+        "title": "Sort observations by time",
+        "category": "SemForge"
       },
       {
         "command": "semforge.setDatasetId",
-        "title": "SemForge: Change datasetId…"
+        "title": "Change datasetId…",
+        "category": "SemForge"
       },
       {
         "command": "semforge.addAttribute",
-        "title": "SemForge: Add Attribute",
-        "icon": "$(add)"
+        "title": "Add attribute",
+        "icon": "$(add)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.addSubAttribute",
-        "title": "SemForge: Add Sub-attribute",
-        "icon": "$(add)"
+        "title": "Add sub-attribute",
+        "icon": "$(add)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.addEntity",
-        "title": "SemForge: Add Entity",
-        "icon": "$(new-file)"
+        "title": "Add entity",
+        "icon": "$(new-file)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.doctor",
-        "title": "SemForge: Doctor (diagnose setup)"
+        "title": "Doctor (diagnose setup)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.goToShape",
-        "title": "SemForge: Show the SHACL rule for this attribute",
-        "icon": "$(law)"
+        "title": "Show the SHACL rule for this attribute",
+        "icon": "$(law)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.goToShapeSource",
-        "title": "SemForge: Open the SHACL rule for this attribute in .ttl",
-        "icon": "$(go-to-file)"
+        "title": "Open the SHACL rule for this attribute in .ttl",
+        "icon": "$(go-to-file)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.refreshKnowledge",
-        "title": "SemForge: Refresh vocabulary",
-        "icon": "$(refresh)"
+        "title": "Refresh knowledge",
+        "icon": "$(refresh)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.showShapeForClass",
-        "title": "SemForge: Go to the shape for this class",
-        "icon": "$(law)"
+        "title": "Go to the shape for this class",
+        "icon": "$(law)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.menu",
@@ -289,200 +320,283 @@
       },
       {
         "command": "semforge.removeUse",
-        "title": "SemForge: Remove this use"
+        "title": "Remove this use",
+        "category": "SemForge"
       },
       {
         "command": "semforge.rescan",
-        "title": "SemForge: Rescan (ignore the cache)",
-        "icon": "$(refresh)"
+        "title": "Rescan (ignore the cache)",
+        "icon": "$(refresh)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.deleteCache",
-        "title": "SemForge: Delete cache…",
-        "icon": "$(trash)"
+        "title": "Delete cache…",
+        "icon": "$(trash)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.openTypePage",
-        "title": "SemForge: Open entity type page",
-        "icon": "$(preview)"
+        "title": "Open entity type page",
+        "icon": "$(preview)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.openCasePage",
-        "title": "SemForge: Open test case page",
-        "icon": "$(preview)"
+        "title": "Open test case page",
+        "icon": "$(preview)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.openSparqlBench",
-        "title": "SemForge: Open in SPARQL workbench",
-        "icon": "$(beaker)"
+        "title": "Open in SPARQL workbench",
+        "icon": "$(beaker)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.removeSparqlQuery",
-        "title": "SemForge: Remove SPARQL constraint…",
-        "icon": "$(trash)"
+        "title": "Remove SPARQL constraint…",
+        "icon": "$(trash)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.addSparqlConstraint",
-        "title": "SemForge: + SPARQL constraint…",
-        "icon": "$(add)"
+        "title": "Add SPARQL constraint…",
+        "icon": "$(add)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.newSuite",
-        "title": "SemForge: New suite…",
-        "icon": "$(new-folder)"
+        "title": "New suite…",
+        "icon": "$(new-folder)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.newEntityType",
-        "title": "SemForge: New entity type…",
-        "icon": "$(symbol-class)"
+        "title": "New entity type…",
+        "icon": "$(symbol-class)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.addTypeAttribute",
-        "title": "SemForge: + Attribute",
-        "icon": "$(add)"
+        "title": "Add attribute…",
+        "icon": "$(add)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.newSubtype",
-        "title": "SemForge: New subtype…",
-        "icon": "$(type-hierarchy-sub)"
+        "title": "New subtype…",
+        "icon": "$(type-hierarchy-sub)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.openModelPage",
-        "title": "SemForge: Open the Main instances page",
-        "icon": "$(preview)"
+        "title": "Open the Main model page",
+        "icon": "$(preview)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.openHealthPage",
-        "title": "SemForge: Open package health",
-        "icon": "$(pulse)"
+        "title": "Open package health",
+        "icon": "$(pulse)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.clickPackageRow",
-        "title": "SemForge: Open this row"
+        "title": "Open this row",
+        "category": "SemForge"
       },
       {
         "command": "semforge.clickTypesRow",
-        "title": "SemForge: Open this row"
+        "title": "Open this row",
+        "category": "SemForge"
       },
       {
         "command": "semforge.clickShapesRow",
-        "title": "SemForge: Open this row"
+        "title": "Open this row",
+        "category": "SemForge"
       },
       {
         "command": "semforge.clickEntitiesRow",
-        "title": "SemForge: Open this row"
+        "title": "Open this row",
+        "category": "SemForge"
       },
       {
         "command": "semforge.clickKnowledgeRow",
-        "title": "SemForge: Open this row"
+        "title": "Open this row",
+        "category": "SemForge"
       },
       {
         "command": "semforge.openPackagePage",
-        "title": "SemForge: Open package settings",
-        "icon": "$(settings-gear)"
+        "title": "Open package settings",
+        "icon": "$(settings-gear)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.openSource",
-        "title": "SemForge: Open source",
-        "icon": "$(go-to-file)"
+        "title": "Open source",
+        "icon": "$(go-to-file)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.openShapePage",
-        "title": "SemForge: Open shape page",
-        "icon": "$(preview)"
+        "title": "Open shape page",
+        "icon": "$(preview)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.openVocabularyPage",
-        "title": "SemForge: Open vocabulary page",
-        "icon": "$(preview)"
+        "title": "Open vocabulary page",
+        "icon": "$(preview)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.newVocabularyClass",
-        "title": "SemForge: New vocabulary class…",
-        "icon": "$(symbol-enum)"
+        "title": "New vocabulary class…",
+        "icon": "$(symbol-enum)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.newAttributeTest",
-        "title": "SemForge: New test for this attribute…",
-        "icon": "$(beaker)"
+        "title": "New test for this attribute…",
+        "icon": "$(beaker)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.newTestCase",
-        "title": "SemForge: New test case…",
-        "icon": "$(add)"
+        "title": "New test case…",
+        "icon": "$(add)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.refreshShapes",
-        "title": "SemForge: Refresh shapes",
-        "icon": "$(refresh)"
+        "title": "Refresh shapes",
+        "icon": "$(refresh)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.newShape",
-        "title": "SemForge: New shape…",
-        "icon": "$(add)"
+        "title": "New shape…",
+        "icon": "$(add)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.mergeShape",
-        "title": "SemForge: Merge into…",
-        "icon": "$(merge)"
+        "title": "Merge into…",
+        "icon": "$(merge)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.renameShape",
-        "title": "SemForge: Rename…",
-        "icon": "$(edit)"
+        "title": "Rename…",
+        "icon": "$(edit)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.deleteShape",
-        "title": "SemForge: Delete…",
-        "icon": "$(trash)"
+        "title": "Delete…",
+        "icon": "$(trash)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.renameTestCase",
-        "title": "SemForge: Rename…",
-        "icon": "$(edit)"
+        "title": "Rename…",
+        "icon": "$(edit)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.cloneTestCase",
-        "title": "SemForge: Clone…",
-        "icon": "$(copy)"
+        "title": "Clone…",
+        "icon": "$(copy)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.deleteTestCase",
-        "title": "SemForge: Delete…",
-        "icon": "$(trash)"
+        "title": "Delete…",
+        "icon": "$(trash)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.deleteSuite",
-        "title": "SemForge: Delete…",
-        "icon": "$(trash)"
+        "title": "Delete…",
+        "icon": "$(trash)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.removeCaseValue",
-        "title": "SemForge: Remove…",
-        "icon": "$(trash)"
+        "title": "Remove…",
+        "icon": "$(trash)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.linkSeverityClass",
-        "title": "SemForge: Declare a Kind of sh:Severity"
+        "title": "Declare a kind of sh:Severity",
+        "category": "SemForge"
       },
       {
         "command": "semforge.renameSuite",
-        "title": "SemForge: Rename…",
-        "icon": "$(edit)"
+        "title": "Rename…",
+        "icon": "$(edit)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.sparqlApply",
-        "title": "SemForge: Apply the query (SPARQL workbench)",
-        "icon": "$(play)"
+        "title": "Apply the query (SPARQL workbench)",
+        "icon": "$(play)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.sparqlInspect",
-        "title": "SemForge: Inspect the query (SPARQL workbench)",
-        "icon": "$(debug-alt)"
+        "title": "Inspect the query (SPARQL workbench)",
+        "icon": "$(debug-alt)",
+        "category": "SemForge"
       },
       {
         "command": "semforge.nestForFlink",
-        "title": "SemForge: Add a shape so shacl2flink reads the attribute as NGSI-LD"
+        "title": "Add a shape so shacl2flink reads the attribute as NGSI-LD",
+        "category": "SemForge"
+      },
+      {
+        "command": "semforge.showDetails",
+        "title": "Show details",
+        "category": "SemForge",
+        "icon": "$(layout-sidebar-right)"
+      },
+      {
+        "command": "semforge.hideDetails",
+        "title": "Hide details",
+        "category": "SemForge",
+        "icon": "$(close)"
+      },
+      {
+        "command": "semforge.about.project",
+        "title": "This package: its settings, its health and what it is made of. A row opens the package page.",
+        "category": "SemForge",
+        "icon": "$(info)"
+      },
+      {
+        "command": "semforge.about.model",
+        "title": "The data: the Main model’s entities, then the test cases that prove the constraints. A row opens the Main page or its case page.",
+        "category": "SemForge",
+        "icon": "$(info)"
+      },
+      {
+        "command": "semforge.about.constraints",
+        "title": "Every entity type, with what its shapes require of each attribute — its own and inherited ones together. A type opens its type page.",
+        "category": "SemForge",
+        "icon": "$(info)"
+      },
+      {
+        "command": "semforge.about.shapes",
+        "title": "The SHACL shapes as written, one row per shape with what it targets. A shape opens its shape page.",
+        "category": "SemForge",
+        "icon": "$(info)"
+      },
+      {
+        "command": "semforge.about.knowledge",
+        "title": "What the terms mean: entity types, attributes, value lists and units, from the knowledge files. A row opens its type or vocabulary page.",
+        "category": "SemForge",
+        "icon": "$(info)"
       }
     ],
     "viewsContainers": {
@@ -491,6 +605,11 @@
           "id": "semforge",
           "title": "SemForge",
           "icon": "resources/semforge.svg"
+        },
+        {
+          "id": "semforgeDetails",
+          "title": "SemForge Details",
+          "icon": "resources/semforge-details.svg"
         }
       ]
     },
@@ -502,24 +621,29 @@
           "contextualTitle": "SemForge"
         },
         {
-          "id": "semforgeConstraints",
-          "name": "Entity Types & Constraints",
-          "contextualTitle": "SemForge"
-        },
-        {
-          "id": "semforgeShapes",
-          "name": "SHACL Shapes",
-          "contextualTitle": "SemForge"
-        },
-        {
           "id": "semforgeModel",
           "name": "Entities & Test Cases",
           "contextualTitle": "SemForge"
+        }
+      ],
+      "semforgeDetails": [
+        {
+          "id": "semforgeConstraints",
+          "name": "Constraints by Type",
+          "contextualTitle": "SemForge Details",
+          "when": "semforge.details"
+        },
+        {
+          "id": "semforgeShapes",
+          "name": "SHACL Shapes as Written",
+          "contextualTitle": "SemForge Details",
+          "when": "semforge.details"
         },
         {
           "id": "semforgeKnowledge",
           "name": "Knowledge (Ontology)",
-          "contextualTitle": "SemForge"
+          "contextualTitle": "SemForge Details",
+          "when": "semforge.details"
         }
       ]
     },
@@ -533,12 +657,12 @@
         {
           "command": "semforge.refreshTree",
           "when": "view == semforgeConstraints",
-          "group": "navigation"
+          "group": "9_refresh@1"
         },
         {
           "command": "semforge.refreshShapes",
           "when": "view == semforgeShapes",
-          "group": "navigation"
+          "group": "9_refresh@1"
         },
         {
           "command": "semforge.newShape",
@@ -548,7 +672,7 @@
         {
           "command": "semforge.refreshModel",
           "when": "view == semforgeModel",
-          "group": "navigation"
+          "group": "9_refresh@1"
         },
         {
           "command": "semforge.newTestCase",
@@ -558,12 +682,12 @@
         {
           "command": "semforge.refreshKnowledge",
           "when": "view == semforgeKnowledge",
-          "group": "navigation"
+          "group": "9_refresh@1"
         },
         {
           "command": "semforge.refreshProject",
           "when": "view == semforgeProject",
-          "group": "navigation"
+          "group": "9_refresh@1"
         },
         {
           "command": "semforge.selectPackage",
@@ -577,28 +701,68 @@
         },
         {
           "command": "semforge.newAttribute",
-          "when": "view == semforgeConstraints",
-          "group": "navigation@1"
-        },
-        {
-          "command": "semforge.newAttribute",
           "when": "view == semforgeKnowledge",
           "group": "navigation@1"
         },
         {
           "command": "semforge.openHealthPage",
           "when": "view == semforgeProject",
-          "group": "navigation@0"
+          "group": "1_pages@1"
         },
         {
           "command": "semforge.openPackagePage",
           "when": "view == semforgeProject",
-          "group": "navigation@0"
+          "group": "1_pages@2"
         },
         {
           "command": "semforge.newVocabularyClass",
           "when": "view == semforgeKnowledge",
           "group": "1_vocabulary@1"
+        },
+        {
+          "command": "semforge.about.project",
+          "when": "view == semforgeProject",
+          "group": "navigation@8"
+        },
+        {
+          "command": "semforge.about.model",
+          "when": "view == semforgeModel",
+          "group": "navigation@8"
+        },
+        {
+          "command": "semforge.about.constraints",
+          "when": "view == semforgeConstraints",
+          "group": "navigation@8"
+        },
+        {
+          "command": "semforge.about.shapes",
+          "when": "view == semforgeShapes",
+          "group": "navigation@8"
+        },
+        {
+          "command": "semforge.about.knowledge",
+          "when": "view == semforgeKnowledge",
+          "group": "navigation@8"
+        },
+        {
+          "command": "semforge.showDetails",
+          "when": "view == semforgeProject && !semforge.details",
+          "group": "navigation@1"
+        },
+        {
+          "command": "semforge.hideDetails",
+          "when": "view == semforgeConstraints",
+          "group": "9_refresh@9"
+        },
+        {
+          "command": "semforge.hideDetails",
+          "when": "view == semforgeShapes",
+          "group": "9_refresh@9"
+        },
+        {
+          "command": "semforge.hideDetails",
+          "when": "view == semforgeKnowledge",
+          "group": "9_refresh@9"
         }
       ],
       "view/item/context": [
@@ -1200,6 +1364,26 @@
         {
           "command": "semforge.nestForFlink",
           "when": "false"
+        },
+        {
+          "command": "semforge.about.project",
+          "when": "false"
+        },
+        {
+          "command": "semforge.about.model",
+          "when": "false"
+        },
+        {
+          "command": "semforge.about.constraints",
+          "when": "false"
+        },
+        {
+          "command": "semforge.about.shapes",
+          "when": "false"
+        },
+        {
+          "command": "semforge.about.knowledge",
+          "when": "false"
         }
       ],
       "editor/title": [
@@ -1222,19 +1406,19 @@
       },
       {
         "view": "semforgeConstraints",
-        "contents": "No SemForge package in this folder.\n\nA package is knowledge (the ontology), constraints (SHACL over the NGSI-LD encoding) and the model (a scratchpad plus the example suite).\n[Create a package here](command:semforge.initPackage)\n[Run the doctor](command:semforge.doctor)"
+        "contents": "No SemForge package in this folder.\n[Create a package here](command:semforge.initPackage)\n[Run the doctor](command:semforge.doctor)"
       },
       {
         "view": "semforgeShapes",
-        "contents": "No SemForge package in this folder.\n\nA package is knowledge (the ontology), constraints (SHACL over the NGSI-LD encoding) and the model (a scratchpad plus the example suite).\n[Create a package here](command:semforge.initPackage)\n[Run the doctor](command:semforge.doctor)"
+        "contents": "No SemForge package in this folder.\n[Create a package here](command:semforge.initPackage)\n[Run the doctor](command:semforge.doctor)"
       },
       {
         "view": "semforgeModel",
-        "contents": "No SemForge package in this folder.\n\nA package is knowledge (the ontology), constraints (SHACL over the NGSI-LD encoding) and the model (a scratchpad plus the example suite).\n[Create a package here](command:semforge.initPackage)\n[Run the doctor](command:semforge.doctor)"
+        "contents": "No SemForge package in this folder.\n[Create a package here](command:semforge.initPackage)\n[Run the doctor](command:semforge.doctor)"
       },
       {
         "view": "semforgeKnowledge",
-        "contents": "No SemForge package in this folder.\n\nA package is knowledge (the ontology), constraints (SHACL over the NGSI-LD encoding) and the model (a scratchpad plus the example suite).\n[Create a package here](command:semforge.initPackage)\n[Run the doctor](command:semforge.doctor)"
+        "contents": "No SemForge package in this folder.\n[Create a package here](command:semforge.initPackage)\n[Run the doctor](command:semforge.doctor)"
       }
     ],
     "submenus": [

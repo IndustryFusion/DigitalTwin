@@ -33,6 +33,7 @@ const { LanguageClient, TransportKind } = require('vscode-languageclient/node');
 const { findPackageUri } = require('./locate');
 const packages = require('./packages');
 const projectTree = require('./project');
+const sidebar = require('./sidebar');
 const cookedTree = require('./tree');
 const modelTree = require('./model');
 const knowledgeTree = require('./knowledge');
@@ -296,6 +297,9 @@ function activate(context) {
   if (!session.uri) {
     session.follow(vscode.window.activeTextEditor);
   }
+
+  // Two columns: the package and its data, and the details behind them.
+  sidebar.register(context);
 
   // The constraint view and the model view are two halves of one loop: editing
   // data should refresh the shapes' verdicts and vice versa.

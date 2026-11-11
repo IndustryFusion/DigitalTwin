@@ -227,22 +227,23 @@ function violationList(found, model) {
     return '';
   }
   return `<h2 id="violations">Violations <span class="dim">· ${found.length}</span></h2>
-${model ? '<p class="dim">Click one to go to it. Each is also listed in VS Code\u2019s ' +
-    '<b>Problems</b> panel (Ctrl+Shift+M, or the warning count in the status bar), on its line ' +
-    'in the .jsonld: F8 steps from one to the next. ' +
+${model ? '<p class="dim"><span class="info" tabindex="0" title="Click one to go to it. Each is also ' +
+    'listed in VS Code\u2019s Problems panel (Ctrl+Shift+M, or the warning count in the status bar), ' +
+    'on its line in the .jsonld: F8 steps from one to the next.">\u24d8</span> ' +
     '<a tabindex="0" role="link" data-problems="1">Open the Problems panel</a></p>' : ''}
 <ul class="vlist">${found.map((v) => `<li data-jump="${v.at}" title="Click: go to it">` +
     `<a tabindex="0" role="link">${escape(v.entity || '(no id)')}${v.attribute ? ` · ${escape(v.attribute)}` : ''}</a> ` +
     `${escape(v.text)} <span class="dim">· ${escape(v.shape)}</span></li>`).join('')}</ul>`;
 }
 
-/** Cards | Graph, and the filter -- closed until asked for. */
+/** Graph | All, and the filter -- closed until asked for. The graph comes
+ *  first: it is how a model reads. All is every card, file by file. */
 function entityBar(entities) {
   const types = [...new Set(entities.map((e) => e.type).filter(Boolean))].sort();
   const attrs = [...new Set(entities.flatMap((e) => e.attrs || []))].sort();
   const options = (list) => list.map((v) => `<option value="${escape(v)}">${escape(v)}</option>`).join('');
   return `<div class="entitybar">
-  <span class="views"><button class="mini on" data-view="cards" title="Every entity as a card">Cards</button><button class="mini" data-view="graph" title="From the entities nothing points at, along their relationships">Graph</button></span>
+  <span class="views"><button class="mini on" data-view="graph" title="From the entities nothing points at, along their relationships">Graph</button><button class="mini" data-view="cards" title="All entities, each as a card, file by file">All</button></span>
   <details class="filter" id="filter"><summary>Filter</summary>
     <label>Type <select id="ftype"><option value="">any</option>${options(types)}</select></label>
     <label>Has attribute <select id="fattr"><option value="">any</option>${options(attrs)}</select></label>
@@ -252,7 +253,7 @@ function entityBar(entities) {
   </details>
   <span class="dim" id="fcount"></span>
 </div>
-<div class="graph" id="graph" hidden></div>`;
+<div class="graph" id="graph"></div>`;
 }
 
 function renderCasePage(page, options) {
@@ -377,6 +378,7 @@ function renderCasePage(page, options) {
        background: var(--vscode-input-background); border: 1px solid var(--vscode-input-border, transparent);
        padding: 1px 4px; max-width: 22em; }
   .card[hidden], #cardview[hidden], .graph[hidden] { display: none; }
+  .info { cursor: help; color: var(--vscode-descriptionForeground); }
   .graph .roots { margin-bottom: 6px; }
   .gid { font-family: var(--vscode-editor-font-family); font-size: 0.88em;
          color: var(--vscode-descriptionForeground); margin-left: 6px; }
@@ -450,7 +452,7 @@ ${violationList(violationsOf(files), model)}
 <h2>${model ? 'Entities' : 'Data'}</h2>
 ${entityBar(entities)}
 <script type="application/json" id="entities">${JSON.stringify(entities).replace(/</g, '\\u003c')}</script>
-<div id="cardview">
+<div id="cardview" hidden>
 ${files.map((file, f) => `<div class="file"><div class="head">
   ${chip(file.role === 'case' ? 'this case' : file.role === 'model' ? 'model' : 'included')}
   <span class="mono">${escape(file.relative)}</span>
@@ -468,12 +470,12 @@ ${BUSY_SCRIPT}
   const focused = document.getElementById('focus');
   if (focused) { focused.scrollIntoView({ block: 'center' }); }
 
-  // --- Cards | Graph, and the filter. Kept per page across refreshes. -------
+  // --- Graph | All, and the filter. Kept per page across refreshes. ---------
   const ENTITIES = JSON.parse((document.getElementById('entities') || {}).textContent || '[]');
   const byId = new Map(ENTITIES.map(function (e) { return [e.id, e]; }));
   const pageKey = (document.body && document.body.dataset.page) || '';
   const saved = (vscode.getState() || {})[pageKey] || {};
-  const ui = { view: saved.view || 'cards', type: saved.type || '', attr: saved.attr || '',
+  const ui = { view: saved.view || 'graph', type: saved.type || '', attr: saved.attr || '',
                id: saved.id || '', open: !!saved.open,
                bad: !!saved.bad,
                tree: saved.tree || { roots: {}, rels: {} }, scroll: saved.scroll || 0 };
@@ -502,7 +504,8 @@ ${BUSY_SCRIPT}
   }
   function applyFilter() {
     let shown = 0;
-    document.querySelectorAll('.card[data-card]').forEach(function (card) {
+    // The cards of All only: the graph's copies carry the same attributes.
+    cardview.querySelectorAll('.card[data-card]').forEach(function (card) {
       const ok = matches({ id: card.dataset.id || '', type: card.dataset.ftype || '',
                            attrs: (card.dataset.attrs || '').split('|'),
                            bad: card.classList.contains('bad') });
@@ -762,13 +765,19 @@ ${BUSY_SCRIPT}
     document.querySelectorAll('[data-view]').forEach(function (b) {
       b.classList.toggle('on', b.dataset.view === ui.view);
     });
-    if (ui.view === 'graph') { drawGraph(); }
+    if (ui.view === 'graph') {
+      drawGraph();
+    } else {
+      // Left, the graph goes: its copies of the cards would answer for them.
+      graph.textContent = '';
+      shown.clear();
+    }
   }
   // A violation in the list: its row (or, for a missing attribute, its
   // card) -- in the cards, whatever the filter or the view hid.
   function jumpTo(at) {
-    const node = document.querySelector('.attr[data-at="' + at + '"]') ||
-      document.querySelector('.card[data-card="' + at + '"]');
+    const node = cardview.querySelector('.attr[data-at="' + at + '"]') ||
+      cardview.querySelector('.card[data-card="' + at + '"]');
     if (!node) { return; }
     const card = node.closest('.card');
     if (card && card.hidden) {
