@@ -34,7 +34,6 @@ inputs give the same package -- the same digest -- on every machine.
 The package holds the model only: no examples suite. It is a draft.
 """
 
-import json
 import os
 import pathlib
 import re
@@ -68,7 +67,8 @@ class PackagingError(Exception):
 
 
 def _is_url(source):
-    return source.startswith(('http://', 'https://'))
+    # urlparse lowercases the scheme: HTTP:// is a url too, never a local path.
+    return urllib.parse.urlparse(source).scheme in ('http', 'https')
 
 
 def excluded(source, patterns=EXCLUDED):
@@ -98,7 +98,7 @@ def _location(iri, source):
     resolved = urllib.parse.urljoin(_base(source), iri)
     scheme = urllib.parse.urlparse(resolved).scheme
     if scheme in ('http', 'https'):
-        return resolved
+        return urllib.parse.urlunparse(urllib.parse.urlparse(resolved))   # scheme lowercased
     if scheme == 'file' and not _is_url(source):
         return os.path.normpath(urllib.parse.unquote(urllib.parse.urlparse(resolved).path))
     besides = '' if _is_url(source) else ' besides local files'
@@ -204,21 +204,25 @@ def _rewrite_imports(source, data, imports, iri_of):
     for written, location in imports:
         if location in iri_of and written != iri_of[location]:
             targets[written] = iri_of[location]   # excluded imports stay as written
-    seen = set()
     base = _base(source)
 
     def replace(match):
         resolved = urllib.parse.urljoin(base, match.group(1))
-        if resolved not in targets:
-            return match.group(0)
-        seen.add(resolved)
-        return f'<{targets[resolved]}>'
+        return f'<{targets[resolved]}>' if resolved in targets else match.group(0)
 
     text = IRIREF.sub(replace, text)
-    for written in sorted(set(targets) - seen):
-        raise PackagingError(f'{source} imports {written}, but not as an IRI <...> '
-                             f'in the text, so it cannot be rewritten')
-    return text.encode('utf-8')
+    # What counts is what the file imports once rewritten, not what the text
+    # looks like: an import written another way (a prefixed name, @base, an
+    # escape) is not rewritten, even if its IRI appears elsewhere as <...>.
+    expected = sorted({targets.get(written, written) for written, _ in imports})
+    data = text.encode('utf-8')
+    found = sorted({str(o) for o in _graph(source, data).objects(None, OWL.imports)})
+    if found != expected:
+        missing = ', '.join(sorted(set(expected) - set(found)) or found)
+        raise PackagingError(f'{source}: after rewriting, its imports are not the copied '
+                             f'ontologies ({missing}); an import not written as an IRI <...> '
+                             f'cannot be rewritten')
+    return data
 
 
 def _origin(source):
@@ -228,6 +232,23 @@ def _origin(source):
     if _is_url(source):
         return source
     return os.path.basename(source)
+
+
+def _yaml_string(value):
+    """`value` as a YAML double-quoted scalar: printable ASCII as it is, every
+    other character escaped, so no value can end the line or the string."""
+    out = []
+    for ch in str(value):
+        code = ord(ch)
+        if ch in '"\\':
+            out.append('\\' + ch)
+        elif 0x20 <= code < 0x7f:
+            out.append(ch)
+        elif code <= 0xffff:
+            out.append(f'\\u{code:04x}')
+        else:
+            out.append(f'\\U{code:08x}')
+    return '"' + ''.join(out) + '"'
 
 
 def _config(name, version, published, origins):
@@ -245,7 +266,7 @@ def _config(name, version, published, origins):
         '# copy, so nothing here depends on the network.',
         'context:',
         '  local: context.jsonld',
-        f'  published: {json.dumps(published)}',
+        f'  published: {_yaml_string(published)}',
         '',
         '# The NGSI-LD vocabulary, inside the package.',
         'ngsild:',

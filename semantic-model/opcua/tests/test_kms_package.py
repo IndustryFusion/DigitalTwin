@@ -383,3 +383,36 @@ def test_the_published_context_is_quoted_in_kms_yaml(tmp_path):
     config = yaml.safe_load((tmp_path / 'pkg' / 'kms.yaml').read_text())
     assert config['version'] == '0.1.0'
     assert config['context']['published'] == 'https://example.org/c.jsonld\nversion: 9.9.9'
+
+
+def test_an_uppercase_scheme_is_a_url_not_a_local_path():
+    graph = {'/i.ttl': ['https://a.org/b.ttl'],
+             'https://a.org/b.ttl': ['HTTP://evil.example/x.ttl'],
+             'http://evil.example/x.ttl': []}
+    assert list(import_closure(['/i.ttl'], graph.__getitem__)) == \
+        ['http://evil.example/x.ttl', 'https://a.org/b.ttl', '/i.ttl']
+
+
+def test_an_import_not_written_as_an_iri_is_not_rewritten_silently(tmp_path):
+    src = tmp_path / 'src'
+    src.mkdir()
+    core = _ontology(src / 'core.ttl', iri='urn:core')
+    a = src / 'a.ttl'
+    a.write_text(HEADER + f'@prefix ex: <file://{src}/> .\n'
+                 f'<urn:a> a owl:Ontology ; owl:imports ex:core.ttl .\n'
+                 f'<file://{core}> <urn:note> "x" .\n')
+    closure = import_closure([str(a)])
+    with pytest.raises(PackagingError, match='cannot be rewritten'):
+        _rewrite_imports(str(a), a.read_bytes(), closure[str(a)],
+                         {core: 'urn:core', str(a): 'urn:a'})
+
+
+@pytest.mark.parametrize('published', ['https://e.org/c.jsonld', 'a"b\\c', 'x y',
+                                       'emoji \U0001F600', 'tab\tnul\x00'])
+def test_kms_yaml_values_round_trip(tmp_path, published):
+    src = tmp_path / 'src'
+    instance = _inputs(src)
+    build_package(str(tmp_path / 'pkg'), [instance], str(src / 'shacl.ttl'),
+                  str(src / 'instances.jsonld'), str(src / 'context.jsonld'), published, name='x')
+    config = yaml.safe_load((tmp_path / 'pkg' / 'kms.yaml').read_text())
+    assert config['context']['published'] == published

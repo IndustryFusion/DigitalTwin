@@ -108,6 +108,7 @@ PACKAGE_VERSION ?= 0.1.0
 package: shacl.ttl instances.jsonld entities.ttl context.jsonld $(INSTANCE_ONTOLOGY)
 	$(if $(strip $(KMS_OUT)),,$(error KMS_OUT must not be empty))
 	$(if $(strip $(PACKAGE_NAME)),,$(error PACKAGE_NAME must not be empty))
+	$(if $(filter . ..,$(PACKAGE_NAME)),$(error PACKAGE_NAME must not be . or ..))
 	rm -rf -- "$(KMS_OUT)/$(PACKAGE_NAME)"
 	python3 owl2kms.py $(INSTANCE_ONTOLOGY) entities.ttl -s shacl.ttl -m instances.jsonld \
 		-c context.jsonld -n "$(PACKAGE_NAME)" -v "$(PACKAGE_VERSION)" -o "$(KMS_OUT)/$(PACKAGE_NAME)"
