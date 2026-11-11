@@ -81,6 +81,13 @@ def excluded(source, patterns=EXCLUDED):
     return False
 
 
+def _normal(iri):
+    """An http(s) IRI in the form urllib gives it (scheme lowercased), so the
+    same import compares equal however its scheme was written."""
+    parsed = urllib.parse.urlparse(iri)
+    return urllib.parse.urlunparse(parsed) if parsed.scheme in ('http', 'https') else iri
+
+
 def _base(source):
     """The IRI a source's relative IRIs resolve against: the url itself, or the
     file: URI of the local file -- never the working directory."""
@@ -98,7 +105,7 @@ def _location(iri, source):
     resolved = urllib.parse.urljoin(_base(source), iri)
     scheme = urllib.parse.urlparse(resolved).scheme
     if scheme in ('http', 'https'):
-        return urllib.parse.urlunparse(urllib.parse.urlparse(resolved))   # scheme lowercased
+        return _normal(resolved)
     if scheme == 'file' and not _is_url(source):
         return os.path.normpath(urllib.parse.unquote(urllib.parse.urlparse(resolved).path))
     besides = '' if _is_url(source) else ' besides local files'
@@ -203,18 +210,18 @@ def _rewrite_imports(source, data, imports, iri_of):
     targets = {}
     for written, location in imports:
         if location in iri_of and written != iri_of[location]:
-            targets[written] = iri_of[location]   # excluded imports stay as written
+            targets[_normal(written)] = iri_of[location]   # excluded imports stay as written
     base = _base(source)
 
     def replace(match):
-        resolved = urllib.parse.urljoin(base, match.group(1))
+        resolved = _normal(urllib.parse.urljoin(base, match.group(1)))
         return f'<{targets[resolved]}>' if resolved in targets else match.group(0)
 
     text = IRIREF.sub(replace, text)
     # What counts is what the file imports once rewritten, not what the text
     # looks like: an import written another way (a prefixed name, @base, an
     # escape) is not rewritten, even if its IRI appears elsewhere as <...>.
-    expected = sorted({targets.get(written, written) for written, _ in imports})
+    expected = sorted({targets.get(_normal(written), written) for written, _ in imports})
     data = text.encode('utf-8')
     found = sorted({str(o) for o in _graph(source, data).objects(None, OWL.imports)})
     if found != expected:

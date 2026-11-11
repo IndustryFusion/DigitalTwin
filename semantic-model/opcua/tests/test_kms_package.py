@@ -416,3 +416,27 @@ def test_kms_yaml_values_round_trip(tmp_path, published):
                   str(src / 'instances.jsonld'), str(src / 'context.jsonld'), published, name='x')
     config = yaml.safe_load((tmp_path / 'pkg' / 'kms.yaml').read_text())
     assert config['context']['published'] == published
+
+
+@pytest.mark.parametrize('written', ['HTTPS://a.org/c.ttl', 'https://a.org/c.ttl', 'c.ttl'])
+def test_an_import_of_the_same_scheme_in_any_case_is_rewritten(tmp_path, written):
+    remote = {
+        'https://a.org/b.ttl': (HEADER + '<urn:b> a owl:Ontology ; owl:imports <' + written + '> .\n').encode(),
+        'https://a.org/c.ttl': (HEADER + '<urn:c> a owl:Ontology .\n').encode(),
+    }
+
+    def read(source):
+        if source in remote:
+            return remote[source]
+        with open(source, 'rb') as handle:
+            return handle.read()
+
+    src = tmp_path / 'src'
+    src.mkdir()
+    instance = _ontology(src / 'instance.owl.ttl', 'https://a.org/b.ttl')
+    _side_files(src)
+    build_package(str(tmp_path / 'pkg'), [instance], str(src / 'shacl.ttl'),
+                  str(src / 'instances.jsonld'), str(src / 'context.jsonld'),
+                  'https://example.org/context.jsonld', name='x', read=read)
+    text = (tmp_path / 'pkg' / 'knowledge' / 'b.ttl').read_text()
+    assert 'owl:imports <urn:c>' in text
