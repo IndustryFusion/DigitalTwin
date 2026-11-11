@@ -61,11 +61,13 @@ sqlite_files = $(OUTPUTDIR)/core.sqlite $(OUTPUTDIR)/ngsild.sqlite $(OUTPUTDIR)/
 
 $(MERGEDDIR)/knowledge.ttl: $(wildcard $(KMS)/knowledge/*.ttl)
 	mkdir -p $(MERGEDDIR)
-	rdfpipe -i ttl -o ttl $^ > $@
+	rdfpipe -i ttl -o ttl $^ > $@.tmp
+	mv $@.tmp $@
 
 $(MERGEDDIR)/shacl.ttl: $(wildcard $(KMS)/shacl/*.ttl)
 	mkdir -p $(MERGEDDIR)
-	rdfpipe -i ttl -o ttl $^ > $@
+	rdfpipe -i ttl -o ttl $^ > $@.tmp
+	mv $@.tmp $@
 
 build: $(SHACL) $(KNOWLEDGE) $(MODEL)
 	@echo Build tables

@@ -43,8 +43,8 @@ SEMFORGE ?= ../SemForge-SDK/venv/bin/semforge
 kms-packages:
 	for entry in $(KMS_EXAMPLES); do \
 		example=$${entry%%:*}; \
-		make -f translate_$$example.make clean && \
-		make -f translate_$$example.make package KMS_OUT=$(KMS_OUT) || exit 1; \
+		$(MAKE) -f translate_$$example.make clean && \
+		$(MAKE) -f translate_$$example.make package KMS_OUT="$(KMS_OUT)" || exit 1; \
 	done
 
 kms-packages-check:

@@ -12,7 +12,7 @@
 
 - [x] 2.1 Add a `package` target to `translate_pumpExample.make`, `translate_laserExample.make` and `translate_simpleExample.make`, writing `semantic-model/kms/opcua-<example>` (overridable); verify "Pump package target" and that the three packages pass `semforge verify`
 - [x] 2.2 Add `semantic-model/kms/.gitignore` ignoring `opcua-*/`; verify "Nothing to commit" after generating the three packages
-- [x] 2.3 Generate and verify the three packages in the `Build opcua tools` step, inside its retry loop and after the SemForge SDK step; verify "Broken generation" with a deliberately broken assembler on a scratch branch, and that the step passes on this pull request
+- [x] 2.3 Generate and verify the three packages in the `Build` workflow's job `opcua-kms-packages` (generation inside a retry loop, verification outside it, after the SemForge SDK step); verify "Broken generation" with a deliberately broken assembler on a scratch branch, and that the step passes on this pull request
 - [x] 2.4 Verify "shacl2flink reads it" (`make build KMS=../kms/opcua-pumps`), "Offline verification", "Coverage of a generated package" and "Publishing a generated package" on the generated pump package
 
 ## 3. Documentation

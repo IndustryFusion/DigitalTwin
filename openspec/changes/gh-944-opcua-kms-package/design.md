@@ -74,8 +74,12 @@ packages would put large generated diffs into every change of the OPC UA tools.
 - **Chosen:** `package` targets write `semantic-model/kms/opcua-<example>`,
   where SemForge and shacl2flink find packages, and
   `semantic-model/kms/.gitignore` ignores `opcua-*/`. The `Build` workflow's
-  `Build opcua tools` step generates the three packages and runs `semforge
-  verify` on each, using the SemForge SDK set up in the step before it.
+  job `opcua-kms-packages` sets up the SemForge SDK, generates the three
+  packages and runs `semforge verify` on each. It runs in parallel with the
+  `build` job, so packaging adds about 6 minutes beside it, not to it.
+- *Alternative:* generate them in the `build` job's `Build opcua tools` step.
+  Rejected during review: it made that job, already the longest, about 50
+  minutes longer.
 - *Alternative:* write them under `semantic-model/opcua/build/`. Rejected:
   `semforge packages semantic-model/kms` and `make build KMS=…` would not find
   them where packages live.
@@ -84,8 +88,9 @@ packages would put large generated diffs into every change of the OPC UA tools.
   packages, and hand-written packages must not use it.
 - Generation downloads NodeSets and ontologies, which GitHub Pages
   intermittently answers with 503 in CI (see the retry loop in `build.yaml`).
-  The package step runs inside the same retry, so a throttled download is
-  retried and a real failure still fails.
+  Generation runs inside a retry loop like the `build` job's, so a throttled
+  download is retried; verification runs once, outside it, so a package that
+  does not verify fails the job at once. The job has a timeout.
 
 ### D6 — Reproducible output
 

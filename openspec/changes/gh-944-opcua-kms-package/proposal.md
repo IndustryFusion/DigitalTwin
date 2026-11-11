@@ -57,8 +57,9 @@ producer of it and does not change it.
 - OPC UA tools (`semantic-model/opcua`): new `owl2kms.py` and its library, new
   `package` targets, tests, README.
 - `semantic-model/kms`: a `.gitignore` for generated `opcua-*` packages.
-- `Build` workflow: the `Build opcua tools` step also generates and verifies
-  the example packages, after the SemForge SDK is set up.
+- `Build` workflow: a job of its own, `opcua-kms-packages`, sets up the
+  SemForge SDK, generates the example packages and verifies them, in parallel
+  with the `build` job.
 - Contract between components: no change. Consumers (shacl2flink, SemForge)
   read the generated packages like any other.
 - Depends on #940 (the format and `semforge verify`). Implementation starts

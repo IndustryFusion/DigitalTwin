@@ -628,7 +628,9 @@ Did you forget to import it?")
                     # Named after the field and its value, not a random id: the
                     # same NodeSet gives the same ontology, so a KMS package
                     # built from it has the same digest (gh-944-opcua-kms-package).
-                    value_key = hashlib.sha256(f'{itemname}|{int(value)}'.encode()).hexdigest()[:32]
+                    # The type is part of the key: equal fields of different
+                    # enums keep one value node each.
+                    value_key = hashlib.sha256(f'{typeIri}|{itemname}|{int(value)}'.encode()).hexdigest()[:32]
                     bbnode = self.rdf_ns['base']['_' + value_key]
                     self.g.add((bbnode, RDF.type, self.rdf_ns['base']['ValueNode']))
                     self.g.add((itemname, self.rdf_ns['base']['hasValueNode'], bbnode))

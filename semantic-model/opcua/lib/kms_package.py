@@ -34,7 +34,9 @@ inputs give the same package -- the same digest -- on every machine.
 The package holds the model only: no examples suite. It is a draft.
 """
 
+import json
 import os
+import pathlib
 import re
 import shutil
 import urllib.parse
@@ -79,13 +81,28 @@ def excluded(source, patterns=EXCLUDED):
     return False
 
 
-def _location(iri, base_dir):
-    """A local path for a file:/// iri or a relative name, else the url itself."""
-    if iri.startswith('file://'):
-        return urllib.parse.unquote(urllib.parse.urlparse(iri).path)
-    if _is_url(iri):
-        return iri
-    return os.path.normpath(os.path.join(base_dir, iri))
+def _base(source):
+    """The IRI a source's relative IRIs resolve against: the url itself, or the
+    file: URI of the local file -- never the working directory."""
+    return source if _is_url(source) else pathlib.Path(os.path.abspath(source)).as_uri()
+
+
+def _location(iri, source):
+    """Where an import of `source` is read from: a local path or a url.
+
+    A local source may import local files (file: or relative) and urls. A url
+    may import only other http(s) urls: an ontology fetched from the network
+    must not make the tool read a file on this machine. Every other scheme is
+    an error.
+    """
+    resolved = urllib.parse.urljoin(_base(source), iri)
+    scheme = urllib.parse.urlparse(resolved).scheme
+    if scheme in ('http', 'https'):
+        return resolved
+    if scheme == 'file' and not _is_url(source):
+        return os.path.normpath(urllib.parse.unquote(urllib.parse.urlparse(resolved).path))
+    besides = '' if _is_url(source) else ' besides local files'
+    raise PackagingError(f'{source} imports {iri}: only http(s) imports are followed{besides}')
 
 
 def _read(source):
@@ -100,7 +117,7 @@ def _read(source):
 def _graph(source, data):
     graph = Graph()
     graph.parse(data=data.decode('utf-8'), format='turtle',
-                publicID=source if _is_url(source) else None)
+                publicID=_base(source))
     return graph
 
 
@@ -122,7 +139,6 @@ def import_closure(roots, resolve=_imports, exclude=EXCLUDED):
     def visit(source, trail):
         if source in found or source in trail or excluded(source, exclude):
             return
-        base_dir = '' if _is_url(source) else os.path.dirname(source)
         try:
             iris = resolve(source)
         except PackagingError:
@@ -130,7 +146,14 @@ def import_closure(roots, resolve=_imports, exclude=EXCLUDED):
         except Exception as exc:                   # noqa: BLE001
             via = f' (imported by {sorted(trail)[-1]})' if trail else ''
             raise PackagingError(f'cannot read {source}{via}: {exc}') from exc
-        imported = [(iri, _location(iri, base_dir)) for iri in iris]
+        imported = []
+        for iri in iris:
+            try:
+                imported.append((iri, _location(iri, source)))
+            except PackagingError:
+                if not excluded(iri, exclude):
+                    raise
+                imported.append((iri, iri))         # excluded: never read
         for _, child in sorted(imported, key=lambda pair: pair[1]):
             visit(child, trail | {source})
         found[source] = imported
@@ -164,19 +187,37 @@ def _ontology_iri(source, data):
     return subjects[0]
 
 
+# An IRI reference as Turtle writes it: <...>.
+IRIREF = re.compile(r'<([^<>"{}|^`\\\x00-\x20]*)>')
+
+
 def _rewrite_imports(source, data, imports, iri_of):
-    """`data` with every import of a copied source naming that ontology's IRI."""
+    """`data` with every import of a copied source naming that ontology's IRI.
+
+    One pass over the IRI references of the text: each is resolved as rdflib
+    resolved it (against the file, so relative imports work) and replaced if
+    it is an import of a copied source. A replacement is never looked at
+    again, so the order of the imports does not matter.
+    """
     text = data.decode('utf-8')
+    targets = {}
     for written, location in imports:
-        if location not in iri_of:
-            continue                                # excluded: left as written
-        target = iri_of[location]
-        if written == target:
-            continue
-        if f'<{written}>' not in text:
-            raise PackagingError(f'{source} imports {written}, but not in the form '
-                                 f'<{written}>, so it cannot be rewritten')
-        text = text.replace(f'<{written}>', f'<{target}>')
+        if location in iri_of and written != iri_of[location]:
+            targets[written] = iri_of[location]   # excluded imports stay as written
+    seen = set()
+    base = _base(source)
+
+    def replace(match):
+        resolved = urllib.parse.urljoin(base, match.group(1))
+        if resolved not in targets:
+            return match.group(0)
+        seen.add(resolved)
+        return f'<{targets[resolved]}>'
+
+    text = IRIREF.sub(replace, text)
+    for written in sorted(set(targets) - seen):
+        raise PackagingError(f'{source} imports {written}, but not as an IRI <...> '
+                             f'in the text, so it cannot be rewritten')
     return text.encode('utf-8')
 
 
@@ -204,7 +245,7 @@ def _config(name, version, published, origins):
         '# copy, so nothing here depends on the network.',
         'context:',
         '  local: context.jsonld',
-        f'  published: {published}',
+        f'  published: {json.dumps(published)}',
         '',
         '# The NGSI-LD vocabulary, inside the package.',
         'ngsild:',

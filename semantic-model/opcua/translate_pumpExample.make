@@ -106,9 +106,11 @@ PACKAGE_NAME := opcua-pumps
 PACKAGE_VERSION ?= 0.1.0
 
 package: shacl.ttl instances.jsonld entities.ttl context.jsonld $(INSTANCE_ONTOLOGY)
-	rm -rf $(KMS_OUT)/$(PACKAGE_NAME)
+	$(if $(strip $(KMS_OUT)),,$(error KMS_OUT must not be empty))
+	$(if $(strip $(PACKAGE_NAME)),,$(error PACKAGE_NAME must not be empty))
+	rm -rf -- "$(KMS_OUT)/$(PACKAGE_NAME)"
 	python3 owl2kms.py $(INSTANCE_ONTOLOGY) entities.ttl -s shacl.ttl -m instances.jsonld \
-		-c context.jsonld -n $(PACKAGE_NAME) -v $(PACKAGE_VERSION) -o $(KMS_OUT)/$(PACKAGE_NAME)
+		-c context.jsonld -n "$(PACKAGE_NAME)" -v "$(PACKAGE_VERSION)" -o "$(KMS_OUT)/$(PACKAGE_NAME)"
 
 # Clean target to remove generated TTL files
 clean:

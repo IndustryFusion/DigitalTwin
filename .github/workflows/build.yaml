@@ -94,6 +94,7 @@ jobs:
   # job of its own, so it runs beside `build` instead of lengthening it.
   opcua-kms-packages:
     runs-on: ubuntu-24.04
+    timeout-minutes: 90
     steps:
     - uses: actions/checkout@v4
     - name: Setup Miniconda with Python 3.10

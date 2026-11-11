@@ -20,10 +20,11 @@ import os
 import shutil
 
 import pytest
+import yaml
 from rdflib import Graph, OWL
 
 import owl2kms
-from lib.kms_package import PackagingError, build_package, import_closure
+from lib.kms_package import PackagingError, _rewrite_imports, build_package, import_closure
 
 HEADER = '@prefix owl: <http://www.w3.org/2002/07/owl#> .\n'
 
@@ -128,7 +129,7 @@ def test_default_version(tmp_path):
     _build(tmp_path / 'src', tmp_path / 'pkg', name='opcua-pumps')
     text = (tmp_path / 'pkg' / 'kms.yaml').read_text()
     for line in ('name: opcua-pumps', 'version: 0.1.0', 'format: 1',
-                 'published: https://example.org/context.jsonld',
+                 'published: "https://example.org/context.jsonld"',
                  'source: vocabulary/ngsild.ttl', '  local: context.jsonld'):
         assert line in text
 
@@ -314,3 +315,71 @@ def test_two_different_files_with_one_ontology_iri(tmp_path):
         build_package(str(tmp_path / 'pkg'), [instance], str(b / 'shacl.ttl'),
                       str(b / 'instances.jsonld'), str(b / 'context.jsonld'),
                       'https://example.org/context.jsonld', name='x')
+
+
+# --- which imports are followed ----------------------------------------------------
+
+def test_a_url_cannot_make_the_tool_read_a_local_file():
+    graph = {'/i.ttl': ['https://example.org/base.ttl'],
+             'https://example.org/base.ttl': ['file:///home/someone/secret.ttl']}
+    with pytest.raises(PackagingError, match='only http'):
+        import_closure(['/i.ttl'], graph.__getitem__)
+
+
+@pytest.mark.parametrize('iri', ['ftp://example.org/x.ttl', 'urn:x', 'data:,x'])
+def test_other_schemes_are_refused(iri):
+    with pytest.raises(PackagingError, match='only http'):
+        import_closure(['/i.ttl'], {'/i.ttl': [iri]}.__getitem__)
+    graph = {'/i.ttl': ['https://example.org/base.ttl'], 'https://example.org/base.ttl': [iri]}
+    with pytest.raises(PackagingError, match='only http'):
+        import_closure(['/i.ttl'], graph.__getitem__)
+
+
+def test_an_excluded_import_of_another_scheme_is_left_alone():
+    graph = {'/i.ttl': ['urn:x']}
+    assert list(import_closure(['/i.ttl'], graph.__getitem__, exclude=('urn:',))) == ['/i.ttl']
+
+
+def _side_files(src):
+    (src / 'shacl.ttl').write_text(HEADER)
+    (src / 'instances.jsonld').write_text('[]\n')
+    (src / 'context.jsonld').write_text('{"@context": {}}\n')
+
+
+def test_a_relative_import_resolves_against_its_file(tmp_path, monkeypatch):
+    src = tmp_path / 'src'
+    src.mkdir()
+    _ontology(src / 'core.owl.ttl', iri='urn:core')
+    instance = _ontology(src / 'instance.owl.ttl', 'core.owl.ttl')
+    _side_files(src)
+    elsewhere = tmp_path / 'elsewhere'
+    elsewhere.mkdir()
+    monkeypatch.chdir(elsewhere)
+    build_package(str(tmp_path / 'pkg'), [instance], str(src / 'shacl.ttl'),
+                  str(src / 'instances.jsonld'), str(src / 'context.jsonld'),
+                  'https://example.org/context.jsonld', name='x')
+    text = (tmp_path / 'pkg' / 'knowledge' / 'instance.owl.ttl').read_text()
+    assert '<urn:core>' in text and 'core.owl.ttl>' not in text
+
+
+def test_the_rewrite_does_not_depend_on_the_order_of_the_imports(tmp_path):
+    # b's new IRI is what a writes for c: the import of c, once rewritten,
+    # must not be rewritten again, and b's must not be taken for c's.
+    c = _ontology(tmp_path / 'c.ttl')
+    b = _ontology(tmp_path / 'b.ttl')
+    a = _ontology(tmp_path / 'a.ttl', f'file://{b}', f'file://{c}')
+    closure = import_closure([a])
+    iri_of = {c: 'urn:c', b: f'file://{c}', a: 'urn:a'}
+    text = _rewrite_imports(a, open(a, 'rb').read(), closure[a], iri_of).decode()
+    assert f'owl:imports <file://{c}>, <urn:c>' in text
+
+
+def test_the_published_context_is_quoted_in_kms_yaml(tmp_path):
+    src = tmp_path / 'src'
+    instance = _inputs(src)
+    build_package(str(tmp_path / 'pkg'), [instance], str(src / 'shacl.ttl'),
+                  str(src / 'instances.jsonld'), str(src / 'context.jsonld'),
+                  'https://example.org/c.jsonld\nversion: 9.9.9', name='x')
+    config = yaml.safe_load((tmp_path / 'pkg' / 'kms.yaml').read_text())
+    assert config['version'] == '0.1.0'
+    assert config['context']['published'] == 'https://example.org/c.jsonld\nversion: 9.9.9'
