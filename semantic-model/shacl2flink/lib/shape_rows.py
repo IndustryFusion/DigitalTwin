@@ -28,8 +28,9 @@ queries' algebra directly: each pattern is evaluated with the bindings of the
 row it extends, the way rdflib evaluates OPTIONAL, and every property path is
 evaluated by rdflib's own path code. The SPARQL texts stay in
 shacl_properties_to_sql as the definition; tests/test_shape_rows.py checks the
-walk against them. One deliberate difference: the two GROUP_CONCAT columns of
-the properties query are sorted (see property_rows).
+walk against them. Two deliberate differences in the properties query: its two
+GROUP_CONCAT columns are sorted (see property_rows), and `ins` holds the sh:in
+members as in_token() writes them, not rdflib's CONCAT of them.
 """
 
 import functools
@@ -223,15 +224,31 @@ VALUE_PARAMETERS = (('minexclusive', SH.minExclusive), ('maxexclusive', SH.maxEx
 AGGREGATES = ('ins', 'datatypes')
 
 
-def _concat_in(value):
-    """CONCAT('"', ?in, '"') as rdflib 7 evaluates it inside GROUP_CONCAT: a
-    string literal is quoted; anything else is an error, and GROUP_CONCAT adds
-    the error's message (rdflib keeps errors as values)."""
-    if not isinstance(value, Literal):
-        return 'Non-literal passes as string: %r' % value
-    if value.datatype and value.datatype != XSD.string:
-        return 'Non-string datatype-literal passes as string: %r' % value
-    return f'"{value}"'
+RDF_LANGSTRING = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#langString'
+
+
+def in_token(value):
+    """An sh:in member as the generated SQL matches it: `"lexical"^^datatype`.
+
+    The SQL compares a value's lexical form and, when the attribute declares
+    one, its datatype (see sql_check_literal_in), so a member carries both: a
+    string `"ON"^^…#string`, a number `"1"^^…#integer`, a boolean
+    `"true"^^…#boolean`, an IRI `"http://…"^^@id`. A double quote in the
+    lexical form is escaped as the SQL escapes it in the value.
+
+    The query's CONCAT('"', ?in, '"') -- which rdflib only evaluates for
+    strings and replaces by its error message for anything else, so a number
+    in sh:in never matched -- is not reproduced; this is the column's value.
+    """
+    if isinstance(value, Literal):
+        if value.datatype:
+            datatype = str(value.datatype)
+        else:
+            datatype = RDF_LANGSTRING if value.language else str(XSD.string)
+    else:
+        datatype = '@id'
+    lexical = str(value).replace('"', '\\"')
+    return f'"{lexical}"^^{datatype}'
 
 
 def _in_on_value_shape(g, row):
@@ -296,7 +313,7 @@ def property_rows(g, query_text):
         if group is None:
             group = groups[key] = {'row': {v: row.get(v) for v in group_vars}, 'ins': [], 'datatypes': []}
         if row.get('in') is not None:
-            group['ins'].append(_concat_in(row['in']))
+            group['ins'].append(in_token(row['in']))
         if row.get('datatype') is not None:
             group['datatypes'].append(str(row['datatype']))
     result = []

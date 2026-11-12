@@ -22,7 +22,7 @@ import glob
 import os
 
 import pytest
-from rdflib import RDFS, Graph, Namespace, RDF
+from rdflib import RDFS, Graph, Literal, Namespace, RDF, URIRef
 
 import lib.shacl_properties_to_sql as props
 import lib.shape_rows as shape_rows
@@ -30,20 +30,56 @@ import lib.shape_rows as shape_rows
 HERE = os.path.dirname(os.path.abspath(__file__))
 NS = {'sh': Namespace('http://www.w3.org/ns/shacl#'), 'rdf': RDF, 'rdfs': RDFS,
       'ngsi-ld': Namespace('https://uri.etsi.org/ngsi-ld/')}
-QUERIES = [('relationships', props.sparql_get_all_relationships, shape_rows.relationship_rows),
-           ('properties', props.sparql_get_all_properties, shape_rows.property_rows)]
+# The walk's `ins` holds the sh:in members as shape_rows.in_token() writes
+# them, not the query's CONCAT of them (which rdflib fails on for anything but
+# a string). So the reference query aggregates the raw members instead --
+# lexical form, language, datatype -- and the test turns them into tokens;
+# everything else about the rows (which members, how often) is still rdflib's.
+FIELD, MEMBER = '\x01', '\x02'
+IN_CONCAT = "(GROUP_CONCAT(CONCAT('\"', ?in, '\"'); separator=',') as ?ins)"
+# BOUND: an unbound ?in must be skipped, as GROUP_CONCAT skips an unbound
+# CONCAT; ?unbound is never bound, so the else branch is exactly that.
+IN_RAW = ("(GROUP_CONCAT(IF(BOUND(?in), IF(isIRI(?in), CONCAT(STR(?in), '\\u0001@id'), "
+          "CONCAT(STR(?in), '\\u0001', LANG(?in), '\\u0001', STR(DATATYPE(?in)))), ?unbound); "
+          "separator='\\u0002') as ?ins)")
+assert props.sparql_get_all_properties.count(IN_CONCAT) == 1
+PROPERTIES_REFERENCE = props.sparql_get_all_properties.replace(IN_CONCAT, IN_RAW)
+
+# (name, SPARQL reference, the query text the walk is given, walk)
+QUERIES = [('relationships', props.sparql_get_all_relationships, props.sparql_get_all_relationships,
+            shape_rows.relationship_rows),
+           ('properties', PROPERTIES_REFERENCE, props.sparql_get_all_properties, shape_rows.property_rows)]
 
 
-def canonical(row):
-    """A row as a tuple, with the GROUP_CONCAT columns as sorted pieces: SPARQL
-    leaves their order undefined (rdflib's varies with string hashing), and
-    the walk sorts them."""
+def reference_ins(value):
+    """The reference query's raw sh:in members, as sorted in_token() tokens."""
+    tokens = []
+    for member in str(value).split(MEMBER) if str(value) else []:
+        fields = member.split(FIELD)
+        if len(fields) == 2:
+            term = URIRef(fields[0])
+        else:
+            assert len(fields) == 3, f'unexpected member {member!r}'
+            lexical, language, datatype = fields
+            term = Literal(lexical, lang=language) if language else Literal(lexical, datatype=datatype or None)
+        tokens.append(shape_rows.in_token(term))
+    return ','.join(sorted(tokens))
+
+
+def canonical(row, reference=False):
+    """A row as a tuple. `datatypes` as sorted pieces: SPARQL leaves the order of
+    GROUP_CONCAT undefined (rdflib's varies with string hashing), and the walk
+    sorts it. `ins` of a reference row turned into tokens (see above)."""
     values = row.asdict()
     out = []
     for var in row.labels:
         value = values.get(var)
-        if str(var) in shape_rows.AGGREGATES and value is not None:
+        if str(var) == 'ins' and value is not None and reference:
+            value = reference_ins(value)
+        elif str(var) == 'datatypes' and value is not None:
             value = ','.join(sorted(str(value).split(',')))
+        elif str(var) == 'ins' and value is not None:
+            value = str(value)
         out.append(value)
     return tuple(out)
 
@@ -63,8 +99,8 @@ def graph_of(shacl, knowledge=None):
 def assert_same_rows(g):
     """Both queries give the same rows by walk and by SPARQL; returns how many."""
     total = 0
-    for name, text, walk in QUERIES:
-        expected = collections.Counter(canonical(r) for r in g.query(text, initNs=NS))
+    for name, reference, text, walk in QUERIES:
+        expected = collections.Counter(canonical(r, reference=True) for r in g.query(reference, initNs=NS))
         actual = collections.Counter(canonical(r) for r in walk(g, text))
         assert actual == expected, f'{name}: only SPARQL {list((expected - actual).elements())[:2]}, ' \
                                    f'only walk {list((actual - expected).elements())[:2]}'
@@ -199,12 +235,13 @@ def test_the_concatenations_are_sorted():
     assert datatypes and all(d.split(',') == sorted(d.split(',')) for d in datatypes)
 
 
-def test_sh_in_values_that_are_not_strings_keep_rdflibs_text():
-    """rdflib's CONCAT fails on a non-string literal or an IRI and GROUP_CONCAT
-    keeps the error's message; the walk reproduces that text so that the
-    generated SQL does not change. (That the message reaches the SQL at all is
-    a separate defect.)"""
+def test_sh_in_members_carry_their_datatype():
+    """Strings, numbers, booleans and IRIs alike become `"lexical"^^datatype`;
+    a double quote is escaped as the SQL escapes it in a value."""
     g = graph_of(PREFIXES + EDGE_CASES['sh:in with strings, numbers, booleans and IRIs'])
     ins = {str(r.ins) for r in shape_rows.property_rows(g, props.sparql_get_all_properties)}
-    assert any('Non-string datatype-literal passes as string' in i for i in ins)
-    assert any('Non-literal passes as string' in i for i in ins)
+    xsd = 'http://www.w3.org/2001/XMLSchema#'
+    assert ins == {','.join(sorted([
+        f'"a"^^{xsd}string', f'"1"^^{xsd}integer', f'"2.5"^^{xsd}decimal', f'"true"^^{xsd}boolean',
+        '"http://example.org/iri"^^@id', '"b"^^http://www.w3.org/1999/02/22-rdf-syntax-ns#langString']))}
+    assert shape_rows.in_token(Literal('say "hi"')) == f'"say \\"hi\\""^^{xsd}string'

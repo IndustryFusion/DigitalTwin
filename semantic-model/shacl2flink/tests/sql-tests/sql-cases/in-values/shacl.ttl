@@ -1,0 +1,21 @@
+@prefix iffBaseEntities: <https://industryfusion.github.io/contexts/example/v0/base_entities/> .
+@prefix material: <https://industryfusion.github.io/contexts/ontology/v0/material/> .
+@prefix ngsild: <https://uri.etsi.org/ngsi-ld/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix : <https://industryfusion.github.io/contexts/example/v0/base_shacl/> .
+
+# sh:in with members that are not strings. Before #953 only strings matched:
+# for anything else the generated list held rdflib's error message instead of
+# the member, so every value violated sh:in ( 0 1 2 ).
+
+:FilterShape a sh:NodeShape ;
+    sh:targetClass iffBaseEntities:Filter ;
+    sh:property [ sh:path iffBaseEntities:hasLevel ; sh:maxCount 1 ;
+            sh:property [ sh:path ngsild:hasValue ; sh:in ( 0 1 2 ) ] ],
+        [ sh:path iffBaseEntities:hasFlag ; sh:maxCount 1 ;
+            sh:property [ sh:path ngsild:hasValue ; sh:in ( true ) ] ],
+        [ sh:path iffBaseEntities:hasMode ; sh:maxCount 1 ;
+            sh:property [ sh:path ngsild:hasValue ; sh:in ( "ON" "OFF" "say \"hi\"" ) ] ],
+        [ sh:path iffBaseEntities:hasMaterial ; sh:maxCount 1 ;
+            sh:property [ sh:path ngsild:hasValue ; sh:in ( material:steel material:copper ) ] ] .

@@ -2,7 +2,6 @@ from rdflib import Graph, RDF, BNode
 from rdflib.collection import Collection
 from rdflib.namespace import SH
 import os
-import re
 import ruamel.yaml
 from jinja2 import Template
 from lib.utils import get_full_path_of_shacl_property, NGSILD, UnsupportedShape
@@ -822,9 +821,22 @@ SELECT this AS resource,
 FROM A1 WHERE `pattern` IS NOT NULL and `index` IS NOT NULL AND {{ constraint_cond }}
 """  # noqa: E501
 
+# sh:in: `ins` lists the members as "lexical"^^datatype (shape_rows.in_token).
+# A value is in the list when its lexical form matches a member's and -- if
+# the attribute declares a datatype -- so does the datatype: SHACL compares
+# RDF terms, so 1, 1.0 and "1" are three different values. A value that
+# declares none is read by its lexical form alone, as sh:datatype reads it
+# (the bridge sets valueType only when the message carries an @type).
+# The test is a case-sensitive substring search -- `member` is `,"<value>"^^`
+# plus `<datatype>,` when there is one -- not LIKE: SQLite's LIKE ignores case,
+# so the SQLite checks let 'on' through where Flink rejected it.
 sql_check_literal_in = """
+{% set member %}',"' || replace(val, '"', '\\\"') || '"^^' || COALESCE(`valueType` || ',', ''){% endset -%}
 {% set constraint_cond%}
-NOT edeleted AND NOT IFNULL(adeleted, false) AND attr_typ IS NOT NULL AND NOT ',' || `ins` || ',' LIKE '%,"' || replace(val, '"', '\\\"') || '",%'
+NOT edeleted AND NOT IFNULL(adeleted, false) AND attr_typ IS NOT NULL AND NOT
+{%- if sqlite %} instr(',' || `ins` || ',', {{ member }}) > 0
+{%- else %} POSITION({{ member }} IN ',' || `ins` || ',') > 0
+{%- endif %}
 {% endset %}
 SELECT this AS resource,
  '{{constraintname}}(' || `parentPath` || `printPath` || ')' AS event,
@@ -2225,7 +2237,6 @@ def translate(shaclefile, knowledgefile, prefixes):
                 f'{MAX_SUBPROPERTY_DEPTH + 1}) in path {paths}')
             continue
         check = utils.init_constraint_check()
-        nodeshape = row.nodeshape.toPython()
         target_class = row.inheritedTargetclass.toPython() \
             if row.targetclass else None
         property_path = row.propertypath.toPython() if row.propertypath \
@@ -2322,15 +2333,10 @@ def translate(shaclefile, knowledgefile, prefixes):
         check['datatypes'] = datatypes
         check['hasValue'] = hasValue
         check['id'] = constraint_id_counter
-        ins_is_broken = False
-        quoted_string_list_pattern = r'^"[^"]*"(?:,\s*"[^"]*")*$'
-        if ins:
-            if not re.match(quoted_string_list_pattern, ins):
-                ins_is_broken = True
-        if ins_is_broken:
-            print(f"Warning: Conversion of sh:in list failed for nodeshape {nodeshape}. Please check. Currently only \
-string elements in list are supported.")
-            check['ins'] = None
+        # `ins` lists every sh:in member as "lexical"^^datatype
+        # (shape_rows.in_token), whatever its kind. A list of anything but
+        # plain strings used to be dropped here with a warning, so sh:in
+        # ( 0 1 2 ) was silently not checked at all.
         constraint_checks.append(check)
         clause_nodes.setdefault(clause_key, []).append(constraint_id_counter)
         constraint_id_counter += 1
