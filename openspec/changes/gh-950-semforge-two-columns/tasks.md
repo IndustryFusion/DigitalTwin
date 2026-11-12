@@ -3,7 +3,7 @@
 ## 1. Two columns
 
 - [x] 1.1 Contribute the SemForge Details container with Constraints by Type, SHACL Shapes as Written and Knowledge (Ontology), shown under a workspace-scoped flag; keep Package and Entities & Test Cases in the SemForge side bar; verify unit tests on the manifest for "Opening a package" and "Details hidden by default", and that every view still has its activation event
-- [ ] 1.2 Add Show details and Hide details and keep the choice per workspace; verify an end-to-end test that runs both commands, and a manual check of "The choice survives a reload"
+- [x] 1.2 Add Show details and Hide details and keep the choice per workspace; verify an end-to-end test that runs both commands, and a manual check of "The choice survives a reload"
 
 ## 2. Explanations as hovers
 
