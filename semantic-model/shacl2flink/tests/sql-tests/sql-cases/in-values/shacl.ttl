@@ -18,4 +18,11 @@
         [ sh:path iffBaseEntities:hasMode ; sh:maxCount 1 ;
             sh:property [ sh:path ngsild:hasValue ; sh:in ( "ON" "OFF" "say \"hi\"" ) ] ],
         [ sh:path iffBaseEntities:hasMaterial ; sh:maxCount 1 ;
-            sh:property [ sh:path ngsild:hasValue ; sh:in ( material:steel material:copper ) ] ] .
+            sh:property [ sh:path ngsild:hasValue ; sh:in ( material:steel material:copper ) ] ],
+        [ sh:path iffBaseEntities:hasSwitch ; sh:maxCount 1 ;
+            sh:property [ sh:path ngsild:hasValue ; sh:in ( false true ) ] ],
+        # Lists of blank nodes beside the sh:in lists: a falsy member (0,
+        # false) must not pull their members, or anyone else's, into a list.
+        [ sh:path iffBaseEntities:hasStrength ; sh:maxCount 1 ;
+            sh:property [ sh:path ngsild:hasValue ;
+                sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:double ] ) ] ] .

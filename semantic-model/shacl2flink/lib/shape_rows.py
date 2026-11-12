@@ -56,7 +56,7 @@ SUBCLASS_STAR = RDFS.subClassOf * ZeroOrMore                             # rdfs:
 _CONNECTIVE_MEMBERS = (SH['or'] | SH['and'] | SH.xone) / (RDF.rest * ZeroOrMore) / RDF.first
 # (sh:property|(sh:or|sh:and|sh:xone)/rdf:rest*/rdf:first|sh:not)+
 REACHABLE = (SH.property | _CONNECTIVE_MEMBERS | SH['not']) * OneOrMore
-IN_MEMBERS = SH['in'] / (MEMBERS * OneOrMore)                            # sh:in/(rdf:rest*/rdf:first)+
+IN_MEMBERS = SH['in'] / MEMBERS                                         # sh:in/rdf:rest*/rdf:first
 OR_MEMBERS = SH['or'] / MEMBERS                                          # sh:or/rdf:rest*/rdf:first
 PROPERTY_OR_MEMBERS = SH.property / SH['or'] / MEMBERS                   # sh:property/sh:or/rdf:rest*/rdf:first
 
@@ -233,8 +233,9 @@ def in_token(value):
     The SQL compares a value's lexical form and, when the attribute declares
     one, its datatype (see sql_check_literal_in), so a member carries both: a
     string `"ON"^^…#string`, a number `"1"^^…#integer`, a boolean
-    `"true"^^…#boolean`, an IRI `"http://…"^^@id`. A double quote in the
-    lexical form is escaped as the SQL escapes it in the value.
+    `"true"^^…#boolean`, an IRI `"http://…"^^@id`. A backslash and a double
+    quote in the lexical form are escaped (`\\`, `\"`) as the SQL escapes them
+    in the value, so a value cannot end a member early.
 
     The query's CONCAT('"', ?in, '"') -- which rdflib only evaluates for
     strings and replaces by its error message for anything else, so a number
@@ -247,22 +248,8 @@ def in_token(value):
             datatype = RDF_LANGSTRING if value.language else str(XSD.string)
     else:
         datatype = '@id'
-    lexical = str(value).replace('"', '\\"')
+    lexical = str(value).replace('\\', '\\\\').replace('"', '\\"')
     return f'"{lexical}"^^{datatype}'
-
-
-def _in_on_value_shape(g, row):
-    """OPTIONAL { ?innerProp sh:in/(rdf:rest*/rdf:first)+ ?in } as rdflib 7
-    evaluates it when the OPTIONAL before it has bound ?in: its path code tests
-    the bound object with `not obj`, so a falsy ?in (0, false, "") matches every
-    member of the value shape's sh:in and the row is repeated once per member.
-    Reproduced because rdflib's rows are the reference; it only repeats entries
-    of the ins and datatypes concatenations, which the SQL tests by membership."""
-    bound = row.get('in')
-    members = _objects(g, row['innerProp'], IN_MEMBERS)
-    if bound is not None and not bound:
-        return [{'in': bound} for _ in members]
-    return [{'in': m} for m in members]
 
 
 def _element_datatypes(g, shape):
@@ -290,10 +277,7 @@ def property_rows(g, query_text):
                             if r['valuepath'] in NGSILD_VALUE_PATHS)
                     for var, path in VALUE_PARAMETERS:
                         rows = _optional_value(rows, var, lambda r, p=path: _objects(g, r['innerclause'], p))
-                        if var == 'in':
-                            rows = _optional(rows, lambda r: _in_on_value_shape(g, r))
-                        else:
-                            rows = _optional_value(rows, var, lambda r, p=path: _objects(g, r['innerProp'], p))
+                        rows = _optional_value(rows, var, lambda r, p=path: _objects(g, r['innerProp'], p))
                     rows = _optional(rows, lambda r: [
                         {'dtShape': m, 'datatype': d} for m in _objects(g, r['innerclause'], OR_MEMBERS)
                         for d in g.objects(m, SH.datatype)])
@@ -322,7 +306,7 @@ def property_rows(g, query_text):
         # Sorted: SPARQL leaves the order of GROUP_CONCAT undefined, and
         # rdflib's depends on Python's string hashing, so the same shapes gave
         # "integer,double" in one build and "double,integer" in the next. The
-        # generated SQL only tests membership (LIKE), so the order carries no
+        # generated SQL only tests membership (INSTR), so the order carries no
         # meaning; sorting makes it a function of the shapes.
         row['ins'] = Literal(','.join(sorted(group['ins'])))
         row['datatypes'] = Literal(','.join(sorted(group['datatypes'])))

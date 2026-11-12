@@ -186,7 +186,7 @@ ex:S a sh:NodeShape ; sh:targetClass ex:C ;
     sh:property [ sh:path ngsi-ld:hasValue ; sh:in ( "x" "x" "y" ) ] ;
     sh:property [ sh:path ngsi-ld:hasValue ; sh:datatype xsd:string ] ] .
 ''',
-    # Found by an adversarial review: rdflib keeps each UNION's solutions as a
+    # rdflib keeps each UNION's solutions as a
     # set, so a list naming one shape twice, or an rdf:rest cycle, counts once.
     'one shape named twice in a connective list': '''
 ex:S a sh:NodeShape ; sh:targetClass ex:C ;
@@ -203,7 +203,8 @@ ex:P sh:path ex:hasA ; sh:or ex:L1 .
 ex:L1 rdf:first ex:Q ; rdf:rest ex:L2 . ex:L2 rdf:first ex:R ; rdf:rest ex:L1 .
 ex:R sh:property [ sh:path ngsi-ld:hasObject ; sh:xone ex:L1 ] .
 ''',
-    # rdflib's path code takes a bound falsy object for an unbound one.
+    # Falsy members (0, false, ""): a path that walks on from a member would
+    # take them for an unbound subject and collect every list in the graph.
     'falsy members of sh:in': '''
 ex:S a sh:NodeShape ; sh:targetClass ex:C ;
   sh:property [ sh:path ex:hasMode ; sh:minCount 1 ;
@@ -245,3 +246,29 @@ def test_sh_in_members_carry_their_datatype():
         f'"a"^^{xsd}string', f'"1"^^{xsd}integer', f'"2.5"^^{xsd}decimal', f'"true"^^{xsd}boolean',
         '"http://example.org/iri"^^@id', '"b"^^http://www.w3.org/1999/02/22-rdf-syntax-ns#langString']))}
     assert shape_rows.in_token(Literal('say "hi"')) == f'"say \\"hi\\""^^{xsd}string'
+
+
+def test_sh_in_holds_only_its_own_members():
+    """A falsy member (0, false) must not let the list take in the members of
+    other lists -- sh:in lists, connective lists of blank nodes -- which a path
+    walking on from each member did."""
+    g = graph_of(PREFIXES + '''
+ex:S a sh:NodeShape ; sh:targetClass ex:C ;
+  sh:property [ sh:path ex:hasLevel ; sh:maxCount 1 ;
+    sh:property [ sh:path ngsi-ld:hasValue ; sh:in ( 0 1 2 ) ] ] ;
+  sh:property [ sh:path ex:hasFlag ; sh:maxCount 1 ;
+    sh:property [ sh:path ngsi-ld:hasValue ; sh:in ( false true ) ] ] ;
+  sh:property [ sh:path ex:hasMode ; sh:maxCount 1 ;
+    sh:property [ sh:path ngsi-ld:hasValue ; sh:in ( "ON" "OFF" ) ] ] ;
+  sh:property [ sh:path ex:hasStrength ; sh:maxCount 1 ;
+    sh:property [ sh:path ngsi-ld:hasValue ;
+      sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:double ] ) ] ] .
+''')
+    xsd = 'http://www.w3.org/2001/XMLSchema#'
+    ins = {str(r.propertypath).rsplit('/', 1)[-1]: str(r.ins)
+           for r in shape_rows.property_rows(g, props.sparql_get_all_properties) if str(r.ins)}
+    assert ins == {
+        'hasLevel': ','.join(sorted(f'"{n}"^^{xsd}integer' for n in (0, 1, 2))),
+        'hasFlag': ','.join(sorted(f'"{b}"^^{xsd}boolean' for b in ('false', 'true'))),
+        'hasMode': ','.join(sorted(f'"{m}"^^{xsd}string' for m in ('ON', 'OFF'))),
+    }

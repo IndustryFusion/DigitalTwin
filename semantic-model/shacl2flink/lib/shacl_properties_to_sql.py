@@ -386,8 +386,12 @@ where {
     OPTIONAL { ?innerProp   sh:maxLength ?maxlength ; }
     OPTIONAL { ?innerclause sh:pattern ?pattern ; }
     OPTIONAL { ?innerProp   sh:pattern ?pattern ; }
-    OPTIONAL { ?innerclause sh:in/(rdf:rest*/rdf:first)+ ?in ; }
-    OPTIONAL { ?innerProp   sh:in/(rdf:rest*/rdf:first)+ ?in ; }
+    ## sh:in is one flat list. Not (rdf:rest*/rdf:first)+: that walks on from
+    ## each member, and rdflib takes a falsy one (0, false, "") for an unbound
+    ## subject -- sh:in ( 0 1 2 ) then held the members of every list in the
+    ## graph.
+    OPTIONAL { ?innerclause sh:in/rdf:rest*/rdf:first ?in ; }
+    OPTIONAL { ?innerProp   sh:in/rdf:rest*/rdf:first ?in ; }
     OPTIONAL { ?innerclause sh:hasValue ?hasValue ; }
     OPTIONAL { ?innerProp   sh:hasValue ?hasValue ; }
     OPTIONAL { ?innerclause sh:class ?attributeclass ; }
@@ -837,7 +841,7 @@ FROM A1 WHERE `pattern` IS NOT NULL and `index` IS NOT NULL AND {{ constraint_co
 sql_check_literal_in = """
 {% set constraint_cond%}
 NOT edeleted AND NOT IFNULL(adeleted, false) AND attr_typ IS NOT NULL AND NOT INSTR(',' || `ins` || ',',
-    ',"' || replace(val, '"', '\\\"') || '"^^' || COALESCE(`valueType` || ',', '')) > 0
+    ',"' || replace(replace(val, '\\', '\\\\'), '"', '\\\"') || '"^^' || COALESCE(`valueType` || ',', '')) > 0
 {% endset %}
 SELECT this AS resource,
  '{{constraintname}}(' || `parentPath` || `printPath` || ')' AS event,
