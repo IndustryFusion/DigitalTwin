@@ -827,16 +827,17 @@ FROM A1 WHERE `pattern` IS NOT NULL and `index` IS NOT NULL AND {{ constraint_co
 # RDF terms, so 1, 1.0 and "1" are three different values. A value that
 # declares none is read by its lexical form alone, as sh:datatype reads it
 # (the bridge sets valueType only when the message carries an @type).
-# The test is a case-sensitive substring search -- `member` is `,"<value>"^^`
-# plus `<datatype>,` when there is one -- not LIKE: SQLite's LIKE ignores case,
-# so the SQLite checks let 'on' through where Flink rejected it.
+# The test is a case-sensitive substring search -- `,"<value>"^^` plus
+# `<datatype>,` when there is one -- not LIKE: SQLite's LIKE ignores case, so
+# the SQLite checks let 'on' through where Flink rejected it. INSTR(haystack,
+# needle) means the same in both dialects. Not POSITION(needle IN haystack):
+# Flink's parser accepts no || concatenation (nor a parenthesised expression)
+# as its first operand, the statement set fails to deploy, and only the Flink
+# deployment notices -- SQLite has no POSITION.
 sql_check_literal_in = """
-{% set member %}',"' || replace(val, '"', '\\\"') || '"^^' || COALESCE(`valueType` || ',', ''){% endset -%}
 {% set constraint_cond%}
-NOT edeleted AND NOT IFNULL(adeleted, false) AND attr_typ IS NOT NULL AND NOT
-{%- if sqlite %} instr(',' || `ins` || ',', {{ member }}) > 0
-{%- else %} POSITION({{ member }} IN ',' || `ins` || ',') > 0
-{%- endif %}
+NOT edeleted AND NOT IFNULL(adeleted, false) AND attr_typ IS NOT NULL AND NOT INSTR(',' || `ins` || ',',
+    ',"' || replace(val, '"', '\\\"') || '"^^' || COALESCE(`valueType` || ',', '')) > 0
 {% endset %}
 SELECT this AS resource,
  '{{constraintname}}(' || `parentPath` || `printPath` || ')' AS event,
