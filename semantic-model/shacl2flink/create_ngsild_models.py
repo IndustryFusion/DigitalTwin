@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from rdflib import Graph, BNode, XSD, Literal
+from rdflib import BNode, XSD, Literal
 import json
 import os
 import sys
@@ -173,12 +173,9 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
     utils.create_output_folder(output_folder)
     with open(os.path.join(output_folder, "ngsild-models.sqlite"), "w")\
             as sqlitef:
-        g = Graph(store="Oxigraph")
-        g.parse(shaclfile)
-        model = Graph(store="Oxigraph")
-        model.parse(modelfile)
-        knowledge = Graph(store="Oxigraph")
-        knowledge.parse(knowledgefile)
+        g = utils.load_graph(shaclfile)
+        model = utils.load_graph(modelfile)
+        knowledge = utils.load_graph(knowledgefile)
         attributes_model = model + g + knowledge
         entity_table_name = configs.kafka_topic_ngsi_prefix_name
         qres = attributes_model.query(attributes_query)

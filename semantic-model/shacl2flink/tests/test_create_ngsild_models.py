@@ -33,12 +33,15 @@ def test_nullify():
 
 
 @patch('create_ngsild_models.nullify')
-@patch('create_ngsild_models.Graph')
 @patch('create_ngsild_models.configs')
 @patch('create_ngsild_models.utils')
-def test_main(mock_utils, mock_configs, mock_graph, mock_nullify, tmp_path):
+def test_main(mock_utils, mock_configs, mock_nullify, tmp_path):
     def __add__(self, other):
         return self
+
+    # The graphs come from utils.load_graph (utils is mocked here).
+    mock_graph = MagicMock()
+    mock_utils.load_graph.return_value = mock_graph
 
     mock_nullify.return_value = 'nullify'
     mock_configs.iff_namespace = 'iff_namespace'

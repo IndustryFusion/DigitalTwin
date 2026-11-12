@@ -26,8 +26,15 @@ from rdflib import Namespace
 @patch('lib.shacl_properties_to_sql.ruamel.yaml')
 @patch('lib.shacl_properties_to_sql.configs')
 @patch('lib.shacl_properties_to_sql.utils')
-def test_lib_shacl_prroperties_to_sql(mock_utils, mock_configs, mock_yaml,
+@patch('lib.shacl_properties_to_sql.shape_rows')
+def test_lib_shacl_prroperties_to_sql(mock_shape_rows, mock_utils, mock_configs, mock_yaml,
                                       mock_graph):
+    # The two big shape queries are answered by lib.shape_rows (checked
+    # against their SPARQL in test_shape_rows.py); here they return the rows
+    # this test feeds through the mocked graph's query(), like the others.
+    mock_shape_rows.relationship_rows.side_effect = lambda graph, text: graph.query(text)
+    mock_shape_rows.property_rows.side_effect = lambda graph, text: graph.query(text)
+
     def identity(klass):
         return klass
     mock_utils.strip_class = identity

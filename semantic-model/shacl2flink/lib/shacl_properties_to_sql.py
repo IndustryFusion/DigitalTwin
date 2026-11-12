@@ -9,6 +9,7 @@ from lib.utils import get_full_path_of_shacl_property, NGSILD, UnsupportedShape
 
 import lib.configs as configs
 import lib.utils as utils
+import lib.shape_rows as shape_rows
 
 
 MAX_SUBPROPERTY_DEPTH = utils.MAX_SUBPROPERTY_DEPTH
@@ -2127,10 +2128,16 @@ def translate(shaclefile, knowledgefile, prefixes):
         (statementset, tables, views): statementset in yaml format
 
     """
+    # The knowledge may come parsed: create_sql_checks_from_shacl reads it once
+    # for this and the other translation (8 s for a 12 MB file). It is only
+    # read here; g gets a copy of its triples.
     g = Graph()
-    h = Graph()
     g.parse(shaclefile)
-    h.parse(knowledgefile)
+    if isinstance(knowledgefile, (str, os.PathLike)):
+        h = Graph()
+        h.parse(knowledgefile)
+    else:
+        h = knowledgefile
     g += h
     # Resolve sh:node before anything reads the shapes, so the extractor only
     # ever sees inlined constraints.
@@ -2154,7 +2161,10 @@ def translate(shaclefile, knowledgefile, prefixes):
     clause_nodes = {}            # clause key -> the leaf constraints it holds
     clause_connectives = {}
     focus_paths = {}             # property node -> the path it constrains
-    qres = utils.in_stable_order(g.query(sparql_get_all_relationships, initNs=prefixes))
+    # The two big shape queries are answered by walking the shape tree
+    # (lib/shape_rows.py): rdflib's SPARQL engine needs most of a build for
+    # them on a large package. Their SPARQL texts above remain the definition.
+    qres = utils.in_stable_order(shape_rows.relationship_rows(g, sparql_get_all_relationships))
     for row in qres:
         paths = get_full_path_of_shacl_property(g, row.property)
         if len(paths) > MAX_SUBPROPERTY_DEPTH + 1:
@@ -2206,7 +2216,7 @@ def translate(shaclefile, knowledgefile, prefixes):
         clause_nodes.setdefault(clause_key, []).append(constraint_id_counter)
         constraint_id_counter += 1
     # Get all NGSI-LD Properties
-    qres = utils.in_stable_order(g.query(sparql_get_all_properties, initNs=prefixes))
+    qres = utils.in_stable_order(shape_rows.property_rows(g, sparql_get_all_properties))
     for row in qres:
         paths = get_full_path_of_shacl_property(g, row.property)
         if len(paths) > MAX_SUBPROPERTY_DEPTH + 1:

@@ -1,4 +1,3 @@
-from rdflib import Graph
 import re
 import ruamel.yaml
 from jinja2 import Template
@@ -92,17 +91,16 @@ def translate(shaclfile, knowledgefile, prefixes):
         (statementset, tables, views): statementset in yaml format
 
     """
-    g = Graph(store="Oxigraph")
-    h = Graph(store="Oxigraph")
-    g.parse(shaclfile)
-    h.parse(knowledgefile)
-    g += h
+    g = utils.load_graph(shaclfile, knowledgefile)
     g = utils.transitive_closure(g)
     tables_all = []
     statementsets = []
     sqlite = ''
     # Get all SHACL NODES using SPARQL
-    qres = g.query(sparql_get_all_sparql_nodes, initNs=prefixes)
+    # Both loops below are sorted: an Oxigraph query yields rows in the store's
+    # order, which depends on how the graph was loaded, and the generated SQL
+    # would follow it.
+    qres = utils.in_stable_order(g.query(sparql_get_all_sparql_nodes, initNs=prefixes))
     for row in qres:
         target_class = row.targetclass
         message = row.message.toPython() if row.message else None
@@ -117,7 +115,7 @@ def translate(shaclfile, knowledgefile, prefixes):
         initBindings = {"targetclass": target_class}
         qres_subclasses = g.query(sparql_get_all_subclasses, initNs=prefixes, initBindings=initBindings)
         types_constraints = f"WHERE (`type` = '{target_class}'"
-        for row_subclass in qres_subclasses:
+        for row_subclass in sorted(qres_subclasses, key=lambda r: str(r.subclass)):
             types_constraints += f" OR `type` = '{row_subclass.subclass}'"
         types_constraints += ')'
         sql_command_yaml = Template(sql_check_sparql_base).render(

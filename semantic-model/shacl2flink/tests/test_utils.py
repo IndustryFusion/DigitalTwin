@@ -644,3 +644,72 @@ def test_format_node_type_writes_every_literal_in_its_lexical_form():
     assert utils.format_node_type(moment) == f'\'"{moment}"\''   # rdflib's lexical form
     assert utils.format_node_type(Literal("it's")) == '\'"it\'\'s"\''
     assert utils.format_node_type(Literal('1.5', datatype=XSD.decimal)) == "'1.5'"
+
+
+# --- load_graph and with_canonical_blank_nodes ----------------------------------
+
+KNOWLEDGE_TTL = '''@prefix ex: <http://example.org/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+ex:A rdfs:subClassOf [ a owl:Restriction ; owl:onProperty ex:p ; owl:someValuesFrom ex:B ] .
+ex:B rdfs:label "B", "B"@en ; ex:n 1 ; ex:list ( 1 "two" ex:three ) .
+_:x ex:p _:y . _:y ex:p "y" .
+'''
+
+
+def _ttl(tmp_path, name, text):
+    path = tmp_path / name
+    path.write_text(text)
+    return str(path)
+
+
+def _ground(graph):
+    return {t for t in graph if not any(isinstance(x, BNode) for x in t)}
+
+
+def test_load_graph_holds_what_rdflibs_parser_reads_into_an_oxigraph_store(tmp_path):
+    path = _ttl(tmp_path, 'k.ttl', KNOWLEDGE_TTL)
+    reference = Graph(store="Oxigraph")
+    reference.parse(path)
+    loaded = utils.load_graph(path)
+    assert len(loaded) == len(reference)
+    assert _ground(loaded) == _ground(reference)
+
+
+def test_load_graph_keeps_the_blank_nodes_of_two_files_apart(tmp_path):
+    a = _ttl(tmp_path, 'a.ttl', '_:b0 <http://ex/p> "A" .\n')
+    b = _ttl(tmp_path, 'b.ttl', '_:b0 <http://ex/p> "B" .\n')
+    loaded = utils.load_graph(a, b)
+    assert len({s for s, _, _ in loaded}) == 2
+
+
+def test_load_graph_falls_back_to_rdflib_for_what_oxigraph_rejects(tmp_path):
+    """A file Oxigraph's parser refuses is read again, from scratch, by rdflib's;
+    triples it had already added are not kept."""
+    path = _ttl(tmp_path, 'k.ttl', KNOWLEDGE_TTL)
+    real_parse = Graph.parse
+
+    def strict(graph, source=None, format=None, **kwargs):
+        if format and format.startswith('ox-'):
+            graph.add((rdflib.URIRef('http://ex/partial'), RDF.type, RDFS.Class))
+            raise SyntaxError('refused')
+        return real_parse(graph, source, format=format, **kwargs)
+
+    with patch.object(Graph, 'parse', strict):
+        loaded = utils.load_graph(path)
+    reference = Graph(store="Oxigraph")
+    reference.parse(path)
+    assert len(loaded) == len(reference) and _ground(loaded) == _ground(reference)
+
+
+def test_canonical_blank_nodes_do_not_depend_on_the_parse(tmp_path):
+    path = _ttl(tmp_path, 'k.ttl', KNOWLEDGE_TTL)
+    prefixes = [line for line in KNOWLEDGE_TTL.splitlines() if line.startswith('@prefix')]
+    statements = [line for line in KNOWLEDGE_TTL.splitlines() if line and not line.startswith('@prefix')]
+    reordered = _ttl(tmp_path, 'r.ttl', '\n'.join(prefixes + statements[::-1]) + '\n')
+    first = utils.with_canonical_blank_nodes(utils.load_graph(path))
+    second = utils.with_canonical_blank_nodes(utils.load_graph(path))
+    third = utils.with_canonical_blank_nodes(utils.load_graph(reordered))
+    assert sorted(map(str, first)) == sorted(map(str, second)) == sorted(map(str, third))
+    original = utils.load_graph(path)
+    assert len(first) == len(original) and _ground(first) == _ground(original)

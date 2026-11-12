@@ -77,12 +77,15 @@ accessible: {e}")
 
     yaml = ruamel.yaml.YAML()
 
+    # Parsed once for the two translations that read it with rdflib.
+    knowledge = rdflib.Graph()
+    knowledge.parse(knowledgefile)
     sqlite3, (statementsets3, tables3, views3) = \
-        translate_construct(shaclfile, knowledgefile)
+        translate_construct(shaclfile, knowledge)
 
     try:
         sqlite, (statementsets, tables, views, constraints, postgres_constraints) = \
-            translate_properties(shaclfile, knowledgefile, prefixes)
+            translate_properties(shaclfile, knowledge, prefixes)
     except utils.UnsupportedShape as unsupported:
         # A build error, not a crash: print it plainly and stop. Compiling the
         # rest would produce a deployable pipeline that quietly validates less

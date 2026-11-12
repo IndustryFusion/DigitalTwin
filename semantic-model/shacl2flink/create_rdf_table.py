@@ -141,9 +141,9 @@ def main(knowledgefile, namespace, output_folder='output', create_yaml_statement
     primary_key = ['subject', 'predicate', 'index']
 
     # Create RDF statements to insert data
-    g = rdflib.Graph(store="Oxigraph")
-    g.parse(knowledgefile)
+    g = utils.load_graph(knowledgefile)
     g = utils.transitive_closure(g)
+    g = utils.with_canonical_blank_nodes(g)
     statementsets = create_statementset(g)
     sqlitestatements = ''
     common_data = utils.get_common_data()

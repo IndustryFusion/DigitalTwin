@@ -24,6 +24,8 @@ from enum import Enum
 from rdflib import Graph, RDFS, RDF, OWL, XSD, Literal, SH, Namespace, BNode
 from rdflib.collection import Collection
 from collections import deque
+import pyoxigraph
+from oxrdflib._converter import to_ox
 from lib.configs import constraint_table_name, constraint_trigger_table_name, constraint_combination_table_name
 from lib.configs import attribute_hash_length
 
@@ -1061,6 +1063,54 @@ def init_constraint_check():
     check["eventName"] = None
     check["message"] = None
     return check
+
+
+# Formats Oxigraph parses natively, by rdflib's name for them.
+OXIGRAPH_FORMATS = {'turtle': 'ox-turtle', 'nt': 'ox-nt', 'nt11': 'ox-nt11', 'ntriples': 'ox-ntriples',
+                    'xml': 'ox-xml', 'trig': 'ox-trig', 'nquads': 'ox-nquads'}
+
+
+def load_graph(*sources):
+    """An Oxigraph-backed graph holding the triples of `sources` (files).
+
+    Turtle and the other formats Oxigraph knows are read by its native parser:
+    on a 12 MB knowledge file 0.6 s instead of 8 s for rdflib's. The triples
+    are the same -- the Oxigraph store normalises literals ("x" is
+    "x"^^xsd:string) whichever parser feeds it, and each source gets fresh
+    blank nodes either way. Oxigraph is stricter than rdflib, so a file it
+    rejects is read again, from scratch, with rdflib's parser.
+    """
+    graph = Graph(store="Oxigraph")
+    try:
+        for source in sources:
+            fmt = rdflib.util.guess_format(str(source))
+            graph.parse(source, format=OXIGRAPH_FORMATS.get(fmt, fmt))
+    except SyntaxError:
+        graph = Graph(store="Oxigraph")
+        for source in sources:
+            graph.parse(source)
+    return graph
+
+
+def with_canonical_blank_nodes(graph):
+    """`graph` (Oxigraph-backed) with canonical blank-node labels.
+
+    A parser names blank nodes at random, so a table written from the graph --
+    the RDF table holds its labels -- differed between two builds of the same
+    knowledge, and so did every deployment of it. Oxigraph canonicalises the
+    labels in well under a second for 200,000 triples: the same triples give
+    the same labels, whatever the parser chose and in which order the files
+    came. (The labels may change with the Oxigraph version, which is pinned.)
+    """
+    # oxrdflib keeps an rdflib graph's triples in a named graph of its store,
+    # named after the graph (to_ox(graph)); read and write exactly those.
+    triples = graph.store._inner.quads_for_pattern(None, None, None, to_ox(graph))
+    dataset = pyoxigraph.Dataset(pyoxigraph.Quad(q.subject, q.predicate, q.object) for q in triples)
+    dataset.canonicalize(pyoxigraph.CanonicalizationAlgorithm.UNSTABLE)
+    result = Graph(store="Oxigraph")
+    name = to_ox(result)
+    result.store._inner.extend(pyoxigraph.Quad(q.subject, q.predicate, q.object, name) for q in dataset)
+    return result
 
 
 # This creates a transitive closure of all OWL.TransitiveProperty elements given in the ontology

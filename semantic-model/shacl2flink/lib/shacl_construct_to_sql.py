@@ -1,4 +1,5 @@
-from rdflib import Graph
+from rdflib import Graph, RDFS
+from rdflib.namespace import SH
 import owlrl
 import os
 from urllib.parse import urlparse
@@ -94,12 +95,23 @@ def translate(shaclfile, knowledgefile):
         (statementset, tables, views): statementset in yaml format
 
     """
+    # The knowledge may come parsed: create_sql_checks_from_shacl reads it once
+    # for this and the other translation (8 s for a 12 MB file). It is only
+    # read here; g gets a copy of its triples.
     g = Graph()
-    h = Graph()
     g.parse(shaclfile)
-    h.parse(knowledgefile)
+    if isinstance(knowledgefile, (str, os.PathLike)):
+        h = Graph()
+        h.parse(knowledgefile)
+    else:
+        h = knowledgefile
     g += h
-    owlrl.RDFSClosure.RDFS_Semantics(g, axioms=True, daxioms=False, rdfs=True).closure()
+    # The closure only feeds the rule query below. Without an sh:rule triple
+    # it cannot produce one -- RDFS derives sh:rule triples only through
+    # rdfs:subPropertyOf sh:rule -- so the query finds nothing either way, and
+    # on a large knowledge the closure costs minutes.
+    if (None, SH.rule, None) in g or (None, RDFS.subPropertyOf, SH.rule) in g:
+        owlrl.RDFSClosure.RDFS_Semantics(g, axioms=True, daxioms=False, rdfs=True).closure()
     tables_all = []
     views = []
     statementsets = []
