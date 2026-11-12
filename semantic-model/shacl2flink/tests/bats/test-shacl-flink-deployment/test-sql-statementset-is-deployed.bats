@@ -31,7 +31,22 @@ DEBUG_DETIK="true"
 }
 
 @test "verify that bsqls object is deployed successfully" {
-
-    run try "at most 30 times every 60s to find 1 bsqls named 'shacl-validation' with 'status.state' being 'RUNNING'"
-    [ "$status" -eq 0 ]
+    # Up to 30 minutes for RUNNING -- but not for statements Flink rejected
+    # (openspec gh-955-flink-sql-validation): those are never deployed, so
+    # fail at once with Flink's message instead of waiting it out.
+    for _ in $(seq 1 30); do
+        state=$(kubectl -n "${DETIK_CLIENT_NAMESPACE}" get bsqls shacl-validation -o jsonpath='{.status.state}')
+        if [ "${state}" = "RUNNING" ]; then
+            return 0
+        fi
+        if [ "${state}" = "VALIDATION_FAILED" ]; then
+            echo "Flink rejected the statements of shacl-validation:" >&2
+            kubectl -n "${DETIK_CLIENT_NAMESPACE}" get bsqls shacl-validation \
+                -o jsonpath='{.status.validation.kind} {.status.validation.index}: {.status.validation.message}' >&2
+            return 1
+        fi
+        sleep 60
+    done
+    echo "shacl-validation did not reach RUNNING, last state: ${state}" >&2
+    return 1
 }

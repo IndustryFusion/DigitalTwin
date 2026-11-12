@@ -75,7 +75,8 @@ for the build-time check.
 
 A shacl2flink target (`make validate-flink`) builds the package, renders the
 `shacl` chart with its default values (`helm template`; a placeholder for the
-CDC password, which the chart otherwise looks up in the cluster), composes the
+CDC password, which the chart otherwise looks up in the cluster), and the
+`sql-core` chart whose core tables the statements use, composes the
 requests with the operator's own composition functions, and runs the SQL
 Gateway image's validator on them in one container, so the JVM starts once.
 
@@ -89,8 +90,10 @@ Gateway image's validator on them in one container, so the JVM starts once.
 The operator validates a statement set before it cancels the running job (on
 an update) or submits it (on a create). A rejection sets the state
 `VALIDATION_FAILED` and a status field with Flink's message, leaves the
-running job alone, and records the statement set's generation, so the same
-statements are not validated again until the statement set changes.
+running job alone, and records a digest of the composed request, so the same
+statements are not validated again until the statement set or a ConfigMap it
+names changes (a ConfigMap change leaves the statement set's generation as
+it is).
 `flink-deploy` also runs the build-time check before it applies the chart, to
 fail before anything changes in the cluster.
 

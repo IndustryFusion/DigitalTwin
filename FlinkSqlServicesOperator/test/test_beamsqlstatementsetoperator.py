@@ -83,6 +83,9 @@ class TestInit(TestCase):
         self.assertIsNone(patchx.status['job_id'])
 
 
+# Validation (openspec gh-955-flink-sql-validation) has its own tests in
+# TestValidation; here every request is taken as valid.
+@patch('beamsqlstatementsetoperator.refuse_if_invalid', lambda *a: False)
 class TestMonitoring(TestCase):
     """Unit test class for monitoring"""
     @staticmethod
@@ -494,6 +497,8 @@ class TestDeletion(TestCase):
 
 JOB_CANCELED = False
 
+@patch('beamsqlstatementsetoperator.refuse_if_invalid', lambda *a: False)
+@patch('beamsqlstatementsetoperator.compose_statementset', lambda *a: {})
 class TestUpdate(TestCase):
     """unit test class to test updates"""
 
@@ -888,5 +893,182 @@ class TestHelpers(TestCase):
 
         target.refresh_state(body, patchx, Logger())
         self.assertEqual("UNKNOWN", patchx.status.get('state'))
+
+def never_called(*args, **kwargs):
+    """mock that must not be reached"""
+    raise AssertionError("must not be called")
+
+
+class Response():
+    """mock for requests.Response"""
+    def __init__(self, status_code, body=None):
+        self.status_code = status_code
+        self.body = body
+
+    def json(self):
+        """mock json"""
+        return self.body
+
+
+REJECTED = {'valid': False, 'kind': 'statement', 'index': 1,
+            'text': 'INSERT INTO x SELECT 1;', 'message': 'SQL parse failed.'}
+REQUEST = {'sqlsettings': [], 'tables': [], 'sqlstatementset': ['INSERT INTO x SELECT 1;']}
+
+
+def running_body(spec=None, validation=None):
+    """a running statement set"""
+    status = {"job_id": "job_id", "state": "RUNNING"}
+    if validation is not None:
+        status["validation"] = validation
+    return Bunch({"metadata": {"name": "name", "namespace": "namespace"},
+                  "spec": spec if spec is not None else {},
+                  "status": Bunch(status)})
+
+
+class TestValidation(TestCase):
+    """openspec gh-955-flink-sql-validation: validate before cancelling or submitting"""
+
+    def test_validate_statementset_answers(self):
+        """200 is valid, 422 the rejection, anything else no answer"""
+        with patch('requests.post', lambda *a, **k: Response(200, {'valid': True})):
+            self.assertIsNone(target.validate_statementset(REQUEST, Logger()))
+        with patch('requests.post', lambda *a, **k: Response(422, REJECTED)):
+            self.assertEqual(target.validate_statementset(REQUEST, Logger()), REJECTED)
+        with patch('requests.post', lambda *a, **k: Response(500)):
+            with self.assertRaises(target.ValidationUnavailableException):
+                target.validate_statementset(REQUEST, Logger())
+
+        def unreachable(*a, **k):
+            raise requests.exceptions.ConnectionError("down")
+        with patch('requests.post', unreachable):
+            with self.assertRaises(target.ValidationUnavailableException):
+                target.validate_statementset(REQUEST, Logger())
+
+    def test_refuse_if_invalid(self):
+        """a rejection is recorded with Flink's message, a valid request too"""
+        patchx = Bunch()
+        patchx.status = {}
+        with patch('beamsqlstatementsetoperator.validate_statementset', lambda s, l: REJECTED):
+            self.assertTrue(target.refuse_if_invalid(REQUEST, running_body(), patchx, Logger()))
+        self.assertEqual(patchx.status["state"], "VALIDATION_FAILED")
+        self.assertEqual(patchx.status["validation"]["message"], 'SQL parse failed.')
+        self.assertEqual(patchx.status["validation"]["digest"], target.digest_of(REQUEST))
+        self.assertFalse(patchx.status["validation"]["valid"])
+        patchx.status = {}
+        with patch('beamsqlstatementsetoperator.validate_statementset', lambda s, l: None):
+            self.assertFalse(target.refuse_if_invalid(REQUEST, running_body(), patchx, Logger()))
+        self.assertEqual(patchx.status["validation"], {'digest': target.digest_of(REQUEST), 'valid': True})
+        self.assertNotIn("state", patchx.status)
+
+    def test_long_statements_are_cut_in_the_status(self):
+        """the status holds at most MAX_VALIDATION_TEXT characters of the statement"""
+        patchx = Bunch()
+        patchx.status = {}
+        rejected = dict(REJECTED, text='x' * 5000)
+        with patch('beamsqlstatementsetoperator.validate_statementset', lambda s, l: rejected):
+            target.refuse_if_invalid(REQUEST, running_body(), patchx, Logger())
+        self.assertEqual(len(patchx.status["validation"]["text"]), target.MAX_VALIDATION_TEXT + 3)
+
+    def test_the_same_statements_are_not_validated_again(self):
+        """the recorded digest decides, without asking the gateway"""
+        digest = target.digest_of(REQUEST)
+        patchx = Bunch()
+        patchx.status = {}
+        with patch('beamsqlstatementsetoperator.validate_statementset', never_called):
+            self.assertTrue(target.refuse_if_invalid(
+                REQUEST, running_body(validation={'digest': digest, 'valid': False}), patchx, Logger()))
+            self.assertFalse(target.refuse_if_invalid(
+                REQUEST, running_body(validation={'digest': digest, 'valid': True}), patchx, Logger()))
+
+    def test_a_gateway_without_answer_is_a_temporary_error(self):
+        """nothing is cancelled while the gateway cannot be asked"""
+        def unavailable(statementset, logger):
+            raise target.ValidationUnavailableException("down")
+        patchx = Bunch()
+        patchx.status = {}
+        with patch('beamsqlstatementsetoperator.validate_statementset', unavailable):
+            with self.assertRaises(kopf.TemporaryError):
+                target.refuse_if_invalid(REQUEST, running_body(), patchx, Logger())
+
+    @patch('kopf.info', kopf_info)
+    @patch('beamsqlstatementsetoperator.compose_statementset', lambda *a: REQUEST)
+    @patch('beamsqlstatementsetoperator.validate_statementset', lambda s, l: REJECTED)
+    @patch('beamsqlstatementsetoperator.cancel_job_and_get_state', never_called)
+    @patch('flink_util.stop_job', never_called)
+    def test_an_update_flink_rejects(self):
+        """the job keeps running, nothing is submitted, the status says why"""
+        for spec in ({}, {"updateStrategy": "savepoint"}):
+            body = running_body(spec)
+            patchx = Bunch()
+            patchx.status = {}
+            target.update(body, body["spec"], patchx, Logger())
+            self.assertEqual(patchx.status["state"], "VALIDATION_FAILED")
+            self.assertEqual(patchx.status["validation"]["message"], 'SQL parse failed.')
+            self.assertNotIn("job_id", patchx.status)
+
+    @patch('kopf.info', kopf_info)
+    @patch('beamsqlstatementsetoperator.compose_statementset', lambda *a: REQUEST)
+    @patch('beamsqlstatementsetoperator.validate_statementset', lambda s, l: None)
+    @patch('beamsqlstatementsetoperator.cancel_job_and_get_state', lambda logger, body, patch: "RUNNING")
+    def test_a_valid_update(self):
+        """deployed as before: the old job is cancelled"""
+        body = running_body()
+        patchx = Bunch()
+        patchx.status = {}
+        target.update(body, body["spec"], patchx, Logger())
+        self.assertEqual(patchx.status["state"], "UPDATING")
+        self.assertTrue(patchx.status["validation"]["valid"])
+
+    @patch('beamsqlstatementsetoperator.compose_statementset', lambda *a: REQUEST)
+    @patch('beamsqlstatementsetoperator.validate_statementset', lambda s, l: REJECTED)
+    @patch('beamsqlstatementsetoperator.deploy_statementset', never_called)
+    def test_a_new_statement_set_flink_rejects(self):
+        """no job is started"""
+        body = Bunch({"metadata": {"name": "name", "namespace": "namespace"},
+                      "spec": {"sqlstatements": ["INSERT INTO x SELECT 1;"]},
+                      "status": Bunch({"state": "INITIALIZED", "job_id": None})})
+        patchx = Bunch()
+        patchx.status = {}
+        target.monitor(None, None, None, patchx, Logger(), body, body["spec"])
+        self.assertEqual(patchx.status["state"], "VALIDATION_FAILED")
+
+    @patch('beamsqlstatementsetoperator.compose_statementset', lambda *a: REQUEST)
+    @patch('beamsqlstatementsetoperator.validate_statementset', never_called)
+    @patch('beamsqlstatementsetoperator.deploy_statementset', never_called)
+    @patch('beamsqlstatementsetoperator.refresh_state', never_called)
+    def test_a_rejection_waits_for_new_statements(self):
+        """the same statements: no validation, no deployment, the state stays"""
+        body = running_body(validation={'digest': target.digest_of(REQUEST), 'valid': False})
+        body["status"]["state"] = "VALIDATION_FAILED"
+        patchx = Bunch()
+        patchx.status = {}
+        target.monitor(None, None, None, patchx, Logger(), body, body["spec"])
+        self.assertNotIn("state", patchx.status)
+
+    @patch('beamsqlstatementsetoperator.compose_statementset', lambda *a: REQUEST)
+    @patch('beamsqlstatementsetoperator.validate_statementset', lambda s, l: None)
+    @patch('beamsqlstatementsetoperator.refresh_state', never_called)
+    def test_fixed_after_a_rejection(self):
+        """changed statements that validate are deployed: an old job is replaced"""
+        cancelled = []
+        with patch('beamsqlstatementsetoperator.cancel_job_and_get_state',
+                   lambda logger, body, patch: cancelled.append(True) or "RUNNING"):
+            body = running_body(validation={'digest': 'an older request', 'valid': False})
+            body["status"]["state"] = "VALIDATION_FAILED"
+            patchx = Bunch()
+            patchx.status = {}
+            target.monitor(None, None, None, patchx, Logger(), body, body["spec"])
+            self.assertEqual(patchx.status["state"], "UPDATING")
+            self.assertEqual(cancelled, [True])
+        body = running_body(validation={'digest': 'an older request', 'valid': False})
+        body["status"]["state"] = "VALIDATION_FAILED"
+        body["status"]["job_id"] = None
+        patchx = Bunch()
+        patchx.status = {}
+        target.monitor(None, None, None, patchx, Logger(), body, body["spec"])
+        self.assertEqual(patchx.status["state"], "INITIALIZED")
+        self.assertIsNone(patchx.status["job_id"])
+
+
 if __name__ == '__main__':
     unittest.main()

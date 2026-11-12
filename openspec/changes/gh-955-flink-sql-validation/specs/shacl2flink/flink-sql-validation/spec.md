@@ -30,7 +30,7 @@ Validation SHALL have Flink parse and plan everything a statement set's deployme
 - **THEN** validation knows the function, as the deployment does, and passes
 
 ### Requirement: A package's statements are validated at build time
-shacl2flink SHALL provide a `make` target that validates the statement sets a package compiles to, rendered as they would be deployed: the resources of the `shacl` chart with its default values, composed into requests the way the operator composes them. The target SHALL exit with an error when a statement set does not validate. The `Build` workflow SHALL run it for every package it compiles, and for the package the K8s tests deploy.
+shacl2flink SHALL provide a `make` target that validates the statement sets a package compiles to, rendered as they would be deployed: the resources of the `shacl` chart with its default values, and the core tables of the `sql-core` chart they use, composed into requests the way the operator composes them. The target SHALL exit with an error when a statement set does not validate. The `Build` workflow SHALL run it for every package it compiles, and for the package the K8s tests deploy.
 
 #### Scenario: A broken template fails the build
 - **WHEN** a change makes a template render a statement that Flink rejects

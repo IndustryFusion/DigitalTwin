@@ -17,6 +17,8 @@
 
 import time
 import datetime
+import hashlib
+import json
 
 import os
 from enum import Enum
@@ -62,6 +64,9 @@ class States(Enum):
     FINISHED = "FINISHED"
     UNKNOWN = "UNKNOWN"
     NOT_FOUND = "NOT_FOUND"
+    # Flink rejected the statements (openspec gh-955-flink-sql-validation):
+    # nothing was submitted and a running job was left alone.
+    VALIDATION_FAILED = "VALIDATION_FAILED"
 
 
 class SavepointStates(Enum):
@@ -74,6 +79,16 @@ class SavepointStates(Enum):
 
 class DeploymentFailedException(Exception):
     """Deployment failed exception."""
+
+
+class ValidationUnavailableException(Exception):
+    """The SQL Gateway could not be asked to validate."""
+
+
+# status.validation: the digest of the request last validated, whether Flink
+# accepted it and, if not, the rejected item and Flink's message.
+VALIDATION = "validation"
+MAX_VALIDATION_TEXT = 2000
 
 
 JOB_ID = "job_id"
@@ -173,9 +188,11 @@ def configmaps(name: str, namespace: str, body: kopf.Body, **_):
 
 
 @kopf.on.update("industry-fusion.com", "v1alpha4", "beamsqlstatementsets")
-# pylint: disable=unused-argument
-# Kopf decorated functions match their expectations
-def update(body, spec, patch, logger, retries=20, **kwargs):
+# pylint: disable=unused-argument too-many-arguments too-many-locals redefined-outer-name
+# Kopf decorated functions match their expectations; the indexes are kopf's,
+# injected by name like monitor's.
+def update(body, spec, patch, logger, retries=20, beamsqltables=None,
+           beamsqlviews=None, configmaps=None, **kwargs):
     """
     Updates a statementset
     - Checks whether updateStrategy is defined
@@ -190,7 +207,12 @@ def update(body, spec, patch, logger, retries=20, **kwargs):
     update_strategy = spec.get(UPDATE_STRATEGY)
     logger.debug(f"update strategy is {update_strategy}")
     if update_strategy is None or update_strategy == UPDATE_STRATEGY_NONE:
-        # No update strategy. Cancel the current job and deploy it new
+        # No update strategy. Cancel the current job and deploy it new --
+        # unless Flink rejects the new statements: then the job keeps running.
+        if refuse_if_invalid(compose_statementset(
+                beamsqltables, beamsqlviews, configmaps, spec, body, namespace,
+                spec.get('name') or metadata_name, logger), body, patch, logger):
+            return
         try:
             cancel_job_and_get_state(logger, body, patch)
         except requests.exceptions.RequestException as exc:
@@ -213,6 +235,11 @@ def update(body, spec, patch, logger, retries=20, **kwargs):
         except KeyError:
             savepoint_id = None
         if state == States.RUNNING.name:
+            if refuse_if_invalid(compose_statementset(
+                    beamsqltables, beamsqlviews, configmaps, spec, body,
+                    namespace, spec.get('name') or metadata_name, logger),
+                    body, patch, logger):
+                return
             try:
                 savepoint_id = flink_util.stop_job(logger, job_id, None)
             except requests.exceptions.RequestException as exc:
@@ -342,65 +369,31 @@ def monitor(beamsqltables: kopf.Index, beamsqlviews: kopf.Index,
         message = f"No name specified in spec of {namespace}/{metadata_name}"
         logger.warning(message)
         name = metadata_name
+    if state == States.VALIDATION_FAILED.name:
+        # Flink rejected these statements: try again only when they change
+        # (the statement set or a ConfigMap it names), and then replace a job
+        # that kept running as an update would.
+        statementset = compose_statementset(beamsqltables, beamsqlviews,
+                                            configmaps, spec, body, namespace,
+                                            name, logger)
+        if refuse_if_invalid(statementset, body, patch, logger):
+            return
+        if body['status'].get(JOB_ID) is not None and \
+                cancel_job_and_get_state(logger, body, patch) is not None:
+            patch.status[STATE] = States.UPDATING.name
+        else:
+            patch.status[STATE] = States.INITIALIZED.name
+            patch.status[JOB_ID] = None
+        return
     if state in [States.INITIALIZED.name, States.DEPLOYMENT_FAILURE.name]:
         # deploying
         logger.debug(f"Deploying {namespace}/{name}")
 
-        # create the full statement in the folloing order:
-        # (1) SET statements (sqlsettings)
-        # (2) Tables
-        # (3) Views
-        statementset = {}
-        sets = create_sets(spec, body, namespace, name, logger)
-        statementset['sqlsettings'] = sets
-
-        # get first all table ddls
-        # get inputTable and outputTable
-
-        tables = create_tables(beamsqltables, spec, body, namespace, name,
-                              logger)
-        statementset['tables'] = tables
-        # Now get all views
-        try:
-            if spec.get("views") is not None:
-                views = []
-                for view_name in spec.get("views"):
-                    views.append(tables_and_views.create_view(
-                    list(beamsqlviews[(namespace, view_name)])[0]))
-                statementset['views'] = views
-
-        except (KeyError, TypeError) as exc:
-            logger.error("Views could not be created for "
-                         f"{namespace}/{name}."
-                         "Check the views definitions and table references: "
-                         f"{exc}")
-            raise kopf.TemporaryError("Views could not be created for "
-                                      f"{namespace}/{name}. Check the view"
-                                      "definitions and table references: "
-                                      f"{exc}",
-                                      timer_backoff_temp_failure_seconds)\
-                from exc
-
-        # now create statement set
-        if spec.get("sqlstatements") is not None and \
-                spec.get("sqlstatementmaps") is not None:
-            logger.error(f"The resoure {namespace}/{name} needs either \
-sqlstatements or sqlstatementmaps.")
-            raise kopf.PermanentError(f"The resoure {namespace}/{name} \
-needs either sqlstatements or sqlstatementmaps.")
-        #statementset += "BEGIN STATEMENT SET;\n"
-        sqlstatementset = []
-        if spec.get("sqlstatements"):
-            sqlstatementset = spec.get("sqlstatements")
-            # TODO: check for "insert into" prefix and terminating ";"
-            # in sqlstatement
-        if spec.get("sqlstatementmaps"):
-            sqlstatementset += create_statementmaps(configmaps,
-                                                           spec, body,
-                                                           namespace,
-                                                           name,
-                                                           logger)
-        statementset['sqlstatementset'] = sqlstatementset
+        statementset = compose_statementset(beamsqltables, beamsqlviews,
+                                            configmaps, spec, body, namespace,
+                                            name, logger)
+        if refuse_if_invalid(statementset, body, patch, logger):
+            return
         fullname = f'{namespace}/{name}'
         logger.debug(f"Now deploying statementset {statementset}")
         try:
@@ -435,7 +428,8 @@ needs either sqlstatements or sqlstatementmaps.")
             create(body, spec, patch, logger, **kwargs)
     # If state is not INITIALIZED, DEPLOYMENT_FAILURE nor CANCELED,
     # the state is monitored
-    if state not in [States.CANCELING.name, States.SAVEPOINTING.name, States.UPDATING.name]:
+    if state not in [States.CANCELING.name, States.SAVEPOINTING.name, States.UPDATING.name,
+                     States.VALIDATION_FAILED.name]:
         refresh_state(body, patch, logger)
         if patch.status[STATE] == States.NOT_FOUND.name:
             logger.info("Job seems to be lost. Will re-initialize")
@@ -529,6 +523,138 @@ def refresh_state(body, patch, logger):
         #
         patch.status[STATE] = States.UNKNOWN.name
 
+
+
+def compose_statementset(beamsqltables, beamsqlviews, configmaps, spec, body,
+                         namespace, name, logger):
+    """
+    The request the SQL Gateway gets for a statement set, in this order:
+    (1) SET statements (sqlsettings), (2) tables, (3) views, (4) the
+    statements -- for deploying it, and before that for validating it.
+    """
+    statementset = {}
+    sets = create_sets(spec, body, namespace, name, logger)
+    statementset['sqlsettings'] = sets
+
+    # get first all table ddls
+    # get inputTable and outputTable
+
+    tables = create_tables(beamsqltables, spec, body, namespace, name,
+                           logger)
+    statementset['tables'] = tables
+    # Now get all views
+    try:
+        if spec.get("views") is not None:
+            views = []
+            for view_name in spec.get("views"):
+                views.append(tables_and_views.create_view(
+                    list(beamsqlviews[(namespace, view_name)])[0]))
+            statementset['views'] = views
+
+    except (KeyError, TypeError) as exc:
+        logger.error("Views could not be created for "
+                     f"{namespace}/{name}."
+                     "Check the views definitions and table references: "
+                     f"{exc}")
+        raise kopf.TemporaryError("Views could not be created for "
+                                  f"{namespace}/{name}. Check the view"
+                                  "definitions and table references: "
+                                  f"{exc}",
+                                  timer_backoff_temp_failure_seconds)\
+            from exc
+
+    # now create statement set
+    if spec.get("sqlstatements") is not None and \
+            spec.get("sqlstatementmaps") is not None:
+        logger.error(f"The resoure {namespace}/{name} needs either \
+sqlstatements or sqlstatementmaps.")
+        raise kopf.PermanentError(f"The resoure {namespace}/{name} \
+needs either sqlstatements or sqlstatementmaps.")
+    #statementset += "BEGIN STATEMENT SET;\n"
+    sqlstatementset = []
+    if spec.get("sqlstatements"):
+        sqlstatementset = list(spec.get("sqlstatements"))
+        # TODO: check for "insert into" prefix and terminating ";"
+        # in sqlstatement
+    if spec.get("sqlstatementmaps"):
+        sqlstatementset += create_statementmaps(configmaps,
+                                                spec, body,
+                                                namespace,
+                                                name,
+                                                logger)
+    statementset['sqlstatementset'] = sqlstatementset
+    return statementset
+
+
+def digest_of(statementset):
+    """What identifies a request: the same digest means the same statements."""
+    return hashlib.sha256(json.dumps(statementset, sort_keys=True)
+                          .encode('utf-8')).hexdigest()
+
+
+def validate_statementset(statementset, logger):
+    """
+    Have the SQL Gateway's Flink parse and plan a request without running it
+    (openspec gh-955-flink-sql-validation).
+
+    returns: None if Flink accepts it, else the first rejected item
+        {kind, index, text, message}
+    raises: ValidationUnavailableException if the gateway gives no answer
+    """
+    request = f"{FLINK_SQL_GATEWAY}/v1/sessions/session/validate"
+    try:
+        response = requests.post(request, timeout=DEFAULT_TIMEOUT,
+                                 json=statementset)
+    except requests.RequestException as err:
+        raise ValidationUnavailableException(
+            f"Could not validate at {request}, server unreachable ({err})")\
+            from err
+    if response.status_code == 200:
+        return None
+    if response.status_code == 422:
+        return response.json()
+    raise ValidationUnavailableException(
+        f"Could not validate at {request}, server returned:"
+        f"{response.status_code}")
+
+
+def refuse_if_invalid(statementset, body, patch, logger):
+    """
+    True when Flink rejects the request: the state becomes VALIDATION_FAILED,
+    status.validation holds the rejected item and Flink's message, and the
+    caller must neither cancel nor submit. A request whose digest was already
+    validated is not validated again. A gateway that does not answer is a
+    temporary error: nothing is cancelled meanwhile.
+    """
+    digest = digest_of(statementset)
+    status = body.get('status') or {}
+    previous = status.get(VALIDATION) or {}
+    if previous.get('digest') == digest:
+        return not previous.get('valid', False)
+    try:
+        problem = validate_statementset(statementset, logger)
+    except ValidationUnavailableException as err:
+        logger.error(f"Could not validate statementset: {err}")
+        raise kopf.TemporaryError(f"Could not validate statementset: {err}",
+                                  timer_backoff_temp_failure_seconds) from err
+    if problem is None:
+        patch.status[VALIDATION] = {'digest': digest, 'valid': True}
+        return False
+    text = problem.get('text')
+    if isinstance(text, str) and len(text) > MAX_VALIDATION_TEXT:
+        text = text[:MAX_VALIDATION_TEXT] + '...'
+    patch.status[VALIDATION] = {'digest': digest, 'valid': False,
+                                'kind': problem.get('kind'),
+                                'index': problem.get('index'),
+                                'text': text,
+                                'message': problem.get('message')}
+    patch.status[STATE] = States.VALIDATION_FAILED.name
+    add_message(logger, body, patch,
+                f"Flink rejected {problem.get('kind')} {problem.get('index')}: "
+                f"{problem.get('message')}", "validation failure")
+    logger.error(f"Flink rejected {problem.get('kind')} "
+                 f"{problem.get('index')}: {problem.get('message')}")
+    return True
 
 
 def deploy_statementset(jobname, statementset, logger):

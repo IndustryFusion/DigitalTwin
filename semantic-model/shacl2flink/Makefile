@@ -27,6 +27,12 @@ endif
 SQLITEDB := $(OUTPUTDIR)/database.db
 SQLITE3 := sqlite3
 HELM_DIR := ../../helm/charts/shacl
+# helmfile v0.149.0, as test/prepare-platform.sh installs it; relative to ../../helm
+HELMFILE ?= ./helmfile
+DOCKER_PREFIX ?= ibn40
+DOCKER_TAG ?= $(shell sed -n 's/^DOCKER_TAG=//p' ../../.env)
+FLINK_GATEWAY_IMAGE ?= $(DOCKER_PREFIX)/flink-sql-gateway:$(DOCKER_TAG)
+FLINK_OPERATOR_IMAGE ?= $(DOCKER_PREFIX)/flink-services-operator:$(DOCKER_TAG)
 NAMESPACE := iff
 ONTDIR := ../kms/ontology
 CHECKPOINT ?= false
@@ -78,14 +84,46 @@ build: $(SHACL) $(KNOWLEDGE) $(MODEL)
 	$(PYTHON) create_ngsild_models.py $(SHACL) $(KNOWLEDGE) $(MODEL)
 	$(PYTHON) create_sql_checks_from_shacl.py $(CHECKPOINTSWITCH) $(NOROCKSDBSWITCH) $(SHACL) $(KNOWLEDGE)
 
+# The shacl chart in directory $(1): what `make build` generated, without
+# what this chart does not deploy (the core tables come from sql-core).
+define copy-chart
+	mkdir -p $(1)
+	rm -rf $(1)/templates
+	cp -rf ${OUTPUTDIR} $(1)/templates
+	rm -f $(1)/templates/*.sqlite $(1)/templates/*.postgres $(1)/templates/core.yaml $(1)/templates/knowledge.yaml $(1)/templates/rdf-maps.yaml
+	rm -f $(1)/templates/shacl-constraints*.yaml
+	cp Chart.yaml $(1)
+endef
+
 helm: export IFF_HELM=true
 helm: build submit-postgres-tables
-	mkdir -p ${HELM_DIR}
-	rm -rf ${HELM_DIR}/templates 
-	cp -rf ${OUTPUTDIR} ${HELM_DIR}/templates
-	rm -f ${HELM_DIR}/templates/*.sqlite ${HELM_DIR}/templates/*.postgres ${HELM_DIR}/templates/core.yaml ${HELM_DIR}/templates/knowledge.yaml ${HELM_DIR}/templates/rdf-maps.yaml
-	rm -f ${HELM_DIR}/templates/shacl-constraints*.yaml
-	cp Chart.yaml ${HELM_DIR}
+	$(call copy-chart,${HELM_DIR})
+
+# Let Flink validate the SQL a deployment would run, without a cluster
+# (openspec gh-955-flink-sql-validation): render the shacl chart, and the
+# sql-core chart whose core tables the statements use, with the values
+# `helmfile -f helmfile-shacl.yaml apply` deploys them with; compose the SQL
+# Gateway requests with the operator's code; validate them with the SQL
+# Gateway image's Flink, all statement sets in one run. Without a network:
+# connectors are planned, not connected. Fails with Flink's message for the
+# first statement it rejects.
+validate-flink: export IFF_HELM=true
+validate-flink: build
+	rm -rf validate-flink/out
+	$(call copy-chart,validate-flink/chart)
+	cd ../../helm && $(HELMFILE) -f helmfile-shacl.yaml write-values --output-file-template $(CURDIR)/validate-flink/values.yaml
+	helm template shacl validate-flink/chart -n $(NAMESPACE) -f validate-flink/values.yaml > validate-flink/shacl.yaml
+	helm template sql-core ../../helm/charts/sql-core -n $(NAMESPACE) -f validate-flink/values.yaml > validate-flink/sql-core.yaml
+	docker run --rm --network none -u $$(id -u):$$(id -g) \
+		-v $(abspath ../../FlinkSqlServicesOperator):/src:ro -v $(CURDIR)/validate-flink:/work -e PYTHONPATH=/src \
+		--entrypoint python3 $(FLINK_OPERATOR_IMAGE) \
+		/src/compose_requests.py /work/sql-core.yaml /work/shacl.yaml /work/out --namespace $(NAMESPACE)
+	docker run --rm --network none -u $$(id -u):$$(id -g) -e USER=flink \
+		-v $(abspath ../../FlinkSqlGateway/submitjob/job.py):/opt/gateway/submitjob/job.py:ro \
+		-v $(CURDIR)/validate-flink/out:/work:ro -w /opt/gateway/submitjob \
+		--entrypoint bash $(FLINK_GATEWAY_IMAGE) \
+		-c 'python3 job.py --validate /work/requests/*.json --udf-dir /work/udf' > validate-flink/validation.log; \
+		rc=$$?; grep '^VALIDATION ' validate-flink/validation.log; exit $$rc
 
 test: requirements-dev.txt
 	$(PYTHON) -m pytest --cov . --cov-fail-under=80
@@ -176,6 +214,8 @@ enable-strimzi:
 
 flink-deploy: clean
 
+	@echo validate the Flink SQL before anything in the cluster changes
+	make validate-flink
 	@echo deploy helm package
 	make helm
 	make disable-strimzi || echo "Can fail"
@@ -336,6 +376,6 @@ fuseki-undeploy-kms:
 
 
 clean:
-	@rm -rf $(OUTPUTDIR) merged-kms
+	@rm -rf $(OUTPUTDIR) merged-kms validate-flink
 
-.PHONY: clean fuseki-deploy-kms fuseki-undeploy-kms test-flink-e2e test-opcua-shapes test-pyshacl-compare
+.PHONY: clean validate-flink fuseki-deploy-kms fuseki-undeploy-kms test-flink-e2e test-opcua-shapes test-pyshacl-compare

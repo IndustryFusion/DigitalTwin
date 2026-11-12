@@ -509,3 +509,115 @@ describe('Test submitJob', function () {
     revert();
   });
 });
+describe('Test validation (openspec gh-955-flink-sql-validation)', function () {
+  function fakeSpawn (stdout, code, check) {
+    return function (command, args, options) {
+      if (check) {
+        check(command, args, options);
+      }
+      return {
+        stdout: { on: function (event, cb) { if (stdout !== null) { cb(Buffer.from(stdout)); } } },
+        stderr: { on: function () {} },
+        on: function (event, cb) { cb(code); }
+      };
+    };
+  }
+  function fakeResponse (expectedStatus, check) {
+    return {
+      status: function (val) {
+        val.should.equal(expectedStatus);
+        return {
+          json: function (body) { check(body); },
+          send: function (body) { check(body); }
+        };
+      }
+    };
+  }
+
+  it('A valid request (should return 200)', function (done) {
+    const revert = toTest.__set__({
+      logger: logger,
+      spawn: fakeSpawn('Flink logs\nVALIDATION {"file": "data/SQL-structures.json", "valid": true}\n', 0)
+    });
+    const validateJob = toTest.__get__('validateJob');
+    validateJob('/tmp/gateway_x', fakeResponse(200, function (body) {
+      body.should.deep.equal({ valid: true });
+    })).then(() => { revert(); done(); });
+  });
+
+  it('A rejected request (should return 422 with the item and the message)', function (done) {
+    const result = {
+      file: 'data/SQL-structures.json',
+      valid: false,
+      kind: 'statement',
+      index: 1,
+      text: 'INSERT INTO x SELECT 1;',
+      message: 'SQL parse failed.'
+    };
+    const revert = toTest.__set__({
+      logger: logger,
+      spawn: fakeSpawn('VALIDATION ' + JSON.stringify(result) + '\n', 1)
+    });
+    const validateJob = toTest.__get__('validateJob');
+    validateJob('/tmp/gateway_x', fakeResponse(422, function (body) {
+      body.should.deep.equal({
+        valid: false, kind: 'statement', index: 1, text: 'INSERT INTO x SELECT 1;', message: 'SQL parse failed.'
+      });
+    })).then(() => { revert(); done(); });
+  });
+
+  it('No result line (should return 500)', function (done) {
+    const revert = toTest.__set__({
+      logger: logger,
+      spawn: fakeSpawn('Traceback (most recent call last):\n', 1)
+    });
+    const validateJob = toTest.__get__('validateJob');
+    validateJob('/tmp/gateway_x', fakeResponse(500, function (body) {
+      body.should.equal('Validation did not complete.');
+    })).then(() => { revert(); done(); });
+  });
+
+  it('Runs job.py --validate in the request directory', function (done) {
+    const body = { sqlstatementset: ['INSERT INTO x SELECT 1;'] };
+    let written = null;
+    const fs = {
+      writeFileSync: function (filename, data) { written = data; },
+      mkdirSync: function () {},
+      cpSync: function () {},
+      copyFileSync: function () {},
+      rmSync: function (file) { file.startsWith('/tmp/gateway_').should.equal(true); }
+    };
+    const revert = toTest.__set__({
+      logger: logger,
+      fs: fs,
+      getLocalPythonUdfs: function () { return []; },
+      process: { cwd: function () { return 'cwd'; }, chdir: function () {} },
+      spawn: fakeSpawn('VALIDATION {"file": "f", "valid": true}\n', 0, function (command, args, options) {
+        command.should.equal('python3');
+        args[0].startsWith('/tmp/gateway_').should.equal(true);
+        args[0].endsWith('/job.py').should.equal(true);
+        args.slice(1).should.deep.equal(['--validate', 'data/SQL-structures.json', '--udf-dir', 'udf']);
+        options.cwd.should.equal(args[0].substring(0, args[0].lastIndexOf('/')));
+      })
+    });
+    const appvalidate = toTest.__get__('appvalidate');
+    appvalidate({ body: body }, fakeResponse(200, function (result) {
+      written.should.equal(JSON.stringify(body));
+      result.should.deep.equal({ valid: true });
+      revert();
+      done();
+    }));
+  });
+
+  it('A request without statement set (should return 500)', function () {
+    const response = {
+      status: function (val) { val.should.equal(500); },
+      send: function (val) { val.should.equal('Wrong format! No sqlstatementset field in body'); }
+    };
+    const revert = toTest.__set__({ logger: logger });
+    const appvalidate = toTest.__get__('appvalidate');
+    appvalidate({ body: {} }, response);
+    appvalidate({}, response);
+    revert();
+  });
+});

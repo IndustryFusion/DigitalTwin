@@ -160,6 +160,15 @@ data:
     if [ -z "$SS_STATE" ]; then
       post_alert critical "$STATEMENTSET" StatementsetState "not found" \
         "The ${STATEMENTSET} statementset is missing or reports no state: no SHACL validation is running."
+    elif [ "$SS_STATE" = "VALIDATION_FAILED" ]; then
+      # Flink rejected new statements (openspec gh-955-flink-sql-validation):
+      # nothing was deployed, a job that was running still runs the old ones.
+      # First line of Flink's message only, without characters that would
+      # break the JSON post_alert builds.
+      SS_REASON=$(kubectl -n "$NAMESPACE" get beamsqlstatementsets "$STATEMENTSET" \
+          -o jsonpath='{.status.validation.message}' 2>/dev/null | head -1 | tr -d '"\\' | cut -c1-300)
+      post_alert critical "$STATEMENTSET" StatementsetState "$SS_STATE" \
+        "Flink rejected the new statements of the ${STATEMENTSET} statementset, so they were not deployed: ${SS_REASON}"
     elif [ "$SS_STATE" != "RUNNING" ]; then
       post_alert critical "$STATEMENTSET" StatementsetState "$SS_STATE" \
         "The ${STATEMENTSET} statementset is in state ${SS_STATE}: SHACL validation is not running and constraint alerts are not being produced."
