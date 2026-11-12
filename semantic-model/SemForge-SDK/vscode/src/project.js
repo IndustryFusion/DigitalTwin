@@ -105,10 +105,11 @@ class ProjectTreeProvider {
     const children = raw.children || [];
     const item = new vscode.TreeItem(
       raw.label || raw.kind,
-      // The settings are folded: the package page shows and edits them, and
-      // the main column has the entities to make room for.
+      // A row the server marks folded starts folded (the settings: the package
+      // page shows and edits them, and the main column has the entities to
+      // make room for). Decided by the server, not by a label.
       children.length
-        ? (raw.kind === 'group' && raw.label !== 'Settings') || raw.kind === 'project'
+        ? (raw.kind === 'group' && !raw.folded) || raw.kind === 'project'
           ? vscode.TreeItemCollapsibleState.Expanded
           : vscode.TreeItemCollapsibleState.Collapsed
         : vscode.TreeItemCollapsibleState.None

@@ -1434,7 +1434,7 @@ function register(context, clientHolder, session) {
           !!(options && options.preserveFocus), !!(options && options.edit));
       }
     }),
-    // + Attribute on a type row in the Entity Types & Constraints view: its own shapes are the
+    // Add attribute… on a type row in the Constraints by Type view: its own shapes are the
     // children not marked inherited.
     vscode.commands.registerCommand('semforge.addTypeAttribute', async (node) => {
       const raw = node && node.raw;

@@ -56,7 +56,10 @@ function aboutCommand(view) {
 
 function register(context) {
   const state = context.workspaceState;
+  // What was last set: the context key the details views are shown under.
+  let current;
   const setShown = async (shown) => {
+    current = shown;
     await vscode.commands.executeCommand('setContext', DETAILS, shown);
     if (state && state.update) {
       await state.update(DETAILS, shown);
@@ -75,6 +78,13 @@ function register(context) {
       vscode.commands.registerCommand(aboutCommand(view), () =>
         vscode.window.showInformationMessage(ABOUT[view])))
   );
+
+  // What the details are, as the end-to-end tests read it: the context key
+  // last set, and what a reload would restore.
+  return {
+    shown: () => current,
+    stored: () => !!(state && state.get && state.get(DETAILS, false))
+  };
 }
 
 module.exports = { register, ABOUT, DETAILS, aboutCommand };

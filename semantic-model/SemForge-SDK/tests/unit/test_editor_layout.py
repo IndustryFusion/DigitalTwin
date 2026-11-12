@@ -122,7 +122,7 @@ def test_only_the_package_view_explains_what_a_package_is():
 def test_the_settings_start_folded(tmp_path):
     roots = [{'kind': 'project', 'label': 'Project', 'children': [
                  {'kind': 'setting', 'label': 'name', 'value': 'example', 'editable': True}]},
-             {'kind': 'group', 'label': 'Settings', 'children': [
+             {'kind': 'group', 'label': 'Settings', 'folded': True, 'children': [
                  {'kind': 'setting', 'label': 'version', 'value': '1.0.0', 'editable': True}]},
              {'kind': 'group', 'label': 'Contents', 'children': [
                  {'kind': 'fact', 'label': 'shapes', 'value': 'shacl.ttl'}]}]
@@ -172,3 +172,14 @@ def test_the_entity_bar_is_graph_then_all_and_opens_on_the_graph(tmp_path):
     assert 'class="mini on" data-view="graph"' in bar
     assert '<div id="cardview" hidden>' in html
     assert '<div class="graph" id="graph"></div>' in html
+
+
+def test_the_server_marks_the_settings_folded(corpus):
+    """The tree folds what the server marks, not a label it happens to show."""
+    from semforge.cooked.project import build_project
+    from semforge.editor.views import _serialise_project
+
+    roots = [_serialise_project(node) for node in build_project(corpus)]
+    folded = {root['label']: root['folded'] for root in roots}
+    assert folded['Settings'] is True
+    assert [label for label, value in folded.items() if value] == ['Settings']

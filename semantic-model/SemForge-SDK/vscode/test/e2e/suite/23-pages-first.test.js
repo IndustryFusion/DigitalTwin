@@ -172,7 +172,14 @@ describe('Views and pages say what they are', () => {
   });
 
   it('hides the details when asked, and shows them again', async () => {
+    const api = await semforge();
+    // The suites run with the details open (helpers.js).
+    assert.strictEqual(api.details.shown(), true);
     await vscode.commands.executeCommand('semforge.hideDetails');
+    assert.strictEqual(api.details.shown(), false, 'the views hidden');
+    assert.strictEqual(api.details.stored(), false, 'and a reload keeps them hidden');
     await vscode.commands.executeCommand('semforge.showDetails');
+    assert.strictEqual(api.details.shown(), true, 'the views shown');
+    assert.strictEqual(api.details.stored(), true, 'and a reload keeps them shown');
   });
 });

@@ -55,6 +55,7 @@ class ProjectNode:
     editable: bool = False
     defined_at: str = ''       # file:line
     severity: str = ''
+    folded: bool = False       # a group that starts folded in the Package view
     children: list = field(default_factory=list)
 
 
@@ -175,7 +176,8 @@ def _settings(package):
         rows.append(group)
 
     node = ProjectNode(kind='group', label='Settings',
-                       detail=f'{config.CONFIG} — click the pencil to change one')
+                       detail=f'{config.CONFIG} — click the pencil to change one',
+                       folded=True)
     node.children = rows
     return node
 

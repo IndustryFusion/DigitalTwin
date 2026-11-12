@@ -214,7 +214,7 @@ def _serialise_project(node):
         'kind': node.kind, 'label': node.label, 'detail': node.detail,
         'value': node.value, 'key': node.key, 'doc': node.doc,
         'editable': node.editable, 'definedAt': node.defined_at,
-        'severity': node.severity,
+        'severity': node.severity, 'folded': node.folded,
         'children': [_serialise_project(child) for child in node.children],
     }
 

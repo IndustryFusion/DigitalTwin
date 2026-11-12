@@ -299,7 +299,7 @@ function activate(context) {
   }
 
   // Two columns: the package and its data, and the details behind them.
-  sidebar.register(context);
+  const details = sidebar.register(context);
 
   // The constraint view and the model view are two halves of one loop: editing
   // data should refresh the shapes' verdicts and vice versa.
@@ -497,6 +497,7 @@ function activate(context) {
     clientHolder,
     session,
     trees: { project, constraints, shapes, model, knowledge },
+    details,
     pages: { type: typeViews, case: caseViews, sparql: sparqlBench, shape: shapeViews,
       vocabulary: vocabularyViews, health: healthView, package: packageView,
       // The attribute editor beside a page, while it is open.
