@@ -71,6 +71,14 @@ class TestDoubleValues(unittest.TestCase):
         Collection(g, items, [Literal(1.0), Literal(2.5)])
         self.assertEqual(JsonLd.get_value(g, items, DOUBLE), [1.0, 2.5])
 
+    def test_a_decimal_literal_is_a_declared_double_and_serialisable(self):
+        """nodeset2owl writes no xsd:decimal today; read from other RDF, a Decimal
+        would otherwise pass undeclared and json.dump could not write it."""
+        value = JsonLd.get_value(Graph(), Literal('2.5', datatype=XSD.decimal), DOUBLE)
+        self.assertEqual(value, declared(2.5))
+        self.assertIsInstance(value['@value'], float)
+        json.dumps(value)
+
     def test_the_property_carries_the_declared_value(self):
         prop = JsonLd.get_ngsild_property(declared(80), datatype=DOUBLE)
         self.assertEqual(prop, {'type': 'Property', 'value': declared(80)})

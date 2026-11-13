@@ -47,6 +47,12 @@
 
 - [x] 4.1 Reuse the Scorpio round trip of #959 (task 3.1) for the scenario "Through Scorpio and the bridge"; verify the measurement is quoted in this Pull Request with the Scorpio image it was made with
 
+## 4b. Readers (D6, after the review of the implementation)
+
+- [ ] 4.2 Read values in the OPC UA chain test (`test/opcua-chain/stage4b.js`) through a helper that accepts a plain value, a value object and a number string in a value object; verify the scenario "The chain test reads values back" by the `chain` job passing in CI, and unit-check the helper on the three forms of the scenarios
+- [ ] 4.3 Accept a `decimal.Decimal` in the OPC UA tool's typed values as a number (review note); verify a unit test that a Decimal on a double variable is declared as a float and serialises as JSON
+- [ ] 4.4 Before this change is deployed to a broker the XanaAI agent reads, confirm DrGarbitsch/XANA-AI-PDT-Agent#7 is merged; verify by naming its Pull Request here
+
 ## 5. Documentation
 
 - [x] 5.1 State the rule in the README of the OPC UA tools and of the SemForge SDK, with the reason and an example; verify by reading both against the scenario "Reading the documentation"

@@ -21,6 +21,7 @@ const path = require('path');
 const crypto = require('crypto');
 const Module = require('module');
 const { toUpdate } = require('./core_services_format.js');
+const { literalValue } = require('./literal.js');
 
 const OUT = process.env.OUT;
 const A = 'http://127.0.0.1:19090/ngsi-ld/v1';
@@ -80,7 +81,8 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
   const by = {};
   for (const a of attributes) by[a.name.replace(P, '')] = a.entityId;
   const read = async n => (await get(by[n]))[P + n];
-  const value = async n => (await read(n)).value;
+  // Declared doubles come back as value objects (contracts/typed-literals, D6).
+  const value = async n => literalValue((await read(n)).value);
   check(await value('hasMotorTemperature') === 42.5, 'a number is a JSON number, the value after the recovery');
   check(await value('hasNumberOfStarts') === 17, 'a UInt32 is a JSON number');
   check(await value('hasRotorBlocked') === true, 'a boolean is a JSON boolean');

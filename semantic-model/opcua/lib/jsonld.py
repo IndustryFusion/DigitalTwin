@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+import decimal
 import json
 from rdflib import Graph, BNode, URIRef, Literal
 from rdflib.namespace import XSD, RDF
@@ -322,6 +323,8 @@ class JsonLd:
         whole value as an integer. Anything else is returned as it is. Lists
         are not passed here: their items stay plain.
         """
+        if isinstance(value, decimal.Decimal):
+            value = float(value)   # an xsd:decimal literal; not JSON-serialisable as it is
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             return value
         if isinstance(datatypes, list) and datatypes == [XSD.double]:

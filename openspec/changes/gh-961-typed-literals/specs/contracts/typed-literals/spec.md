@@ -96,6 +96,25 @@ A component that passes an NGSI-LD document on -- Scorpio, the debezium bridge, 
 - **WHEN** the SemForge SDK exports a package whose example holds a declared `xsd:double`
 - **THEN** the exported example holds the same declared value
 
+### Requirement: Readers of the NGSI-LD API accept declared values
+A component that reads property values from the NGSI-LD API or its notifications SHALL read a value object whose `@value` is a number, or a number written as a string, as that number, whether the type is given as `@type` or, compacted by the core context, as `type`. It SHALL read a plain number as before. It SHALL NOT depend on which of these forms the broker returns for an attribute: a merge may keep a stored type, and a replacing update may drop it.
+
+#### Scenario: A declared value read back
+- **WHEN** a reader gets `{"type": "http://www.w3.org/2001/XMLSchema#double", "@value": 42.5}` as an attribute's value
+- **THEN** it reads the number 42.5
+
+#### Scenario: A live string merged onto a declared value
+- **WHEN** a reader gets `{"type": "http://www.w3.org/2001/XMLSchema#double", "@value": "42.5"}`
+- **THEN** it reads the number 42.5
+
+#### Scenario: A plain value
+- **WHEN** a reader gets the plain number `42.5`
+- **THEN** it reads the number 42.5
+
+#### Scenario: The chain test reads values back
+- **WHEN** the OPC UA chain test loads instances with declared doubles into the broker, sends live values through the updates bridge and reads them back
+- **THEN** it reads each number as that number, whatever form the broker returns it in
+
 ### Requirement: The rule is documented
 The documentation of the OPC UA tools and of the SemForge SDK SHALL state that doubles are written as declared values, and why.
 

@@ -90,6 +90,44 @@ The live-data path sends values as strings and is specified separately
   `xsd:double` (`LIST_ELEMENT_PATTERNS` in shacl2flink). A declared value
   object inside a list would serialise as an object and fail that pattern.
 
+### D6 — Readers of the API accept declared values (decided on #961: option A)
+
+The review of the implementation found that a declared double does not stay
+inside validation. Measured on Scorpio 0.10 (the platform's build) and 6.0.2
+(the newest release), which behave the same:
+
+| Write | Stored `hasValue` | GET, `Accept: application/json` |
+|---|---|---|
+| upsert, declared `0.0` | `{"@type": xsd:double, "@value": 0.0}` | `{"type": "…#double", "@value": 0}` |
+| batch merge or merge entity, plain `42.5` | `{"@type": xsd:double, "@value": 42.5}` | `{"type": "…#double", "@value": 42.5}` |
+| batch merge, string `"42.5"` | `{"@type": xsd:double, "@value": "42.5"}` | `{"type": "…#double", "@value": "42.5"}` |
+| `PATCH …/attrs`, plain `42.5` | `{"@value": 42.5}` | `42.5` |
+
+- **The read form is JSON-LD as specified.** A value object compacts to a
+  bare number only through a context term that declares its type, and the
+  core context has none.
+- **The merge keeping the stored type is Scorpio's**, in both merge
+  operations. It reads like a departure from merge-patch semantics, where a
+  plain value replaces the old one.
+
+- **Chosen (option A):** readers of the NGSI-LD API and its notifications
+  accept a declared value wherever they expect a number, through one helper
+  per language, and never depend on the form the broker returns. The data
+  stays what JSON-LD and SHACL say it is; the readers are few and ours:
+  - this repository's chain test;
+  - the XanaAI agent: its LLM context, its notification webhook, and its
+    entity browser (DrGarbitsch/XANA-AI-PDT-Agent#7).
+- *Alternative B:* keep the data plain and let the OPC UA and SemForge shapes
+  admit integers for Double-like attributes. Rejected on #961: it weakens
+  every generated shape to "double or integer", and the data stops saying
+  what it is.
+- *Alternative C:* declare only where validation reads. Rejected: the type
+  would have to come from the shapes, which is B.
+
+The readers must not rely on Scorpio's merge keeping the type: if Scorpio
+starts replacing the whole value, live values turn plain again. Each helper
+reads all three forms.
+
 ## Order with #958
 
 This change lands before #958, and instances in use are written again
@@ -107,6 +145,12 @@ The eight SemForge unit tests that fail on PR #959 pass once #959 is rebased
 onto this change, because the generator stops writing plain `60.0`.
 
 ## Risks
+
+- **Readers outside this repository and the XanaAI agent** that read values
+  from Scorpio would see value objects too. None is known.
+- **The XanaAI agent must change before typed instances reach a broker it
+  reads** (DrGarbitsch/XANA-AI-PDT-Agent#7). Until then it shows raw objects
+  for doubles.
 
 - **Instances and test cases written before this change** keep their plain
   values. With #958 deployed, a whole-valued double among them raises an
