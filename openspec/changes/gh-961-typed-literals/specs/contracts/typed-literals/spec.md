@@ -81,6 +81,10 @@ The SemForge SDK SHALL write every value it generates or edits for an attribute 
 - **WHEN** a new package is created
 - **THEN** every value of an `xsd:double` attribute in its example is a declared `xsd:double`
 
+#### Scenario: A choice between a value and a list
+- **WHEN** a valid test case is generated for an attribute whose shape says `sh:or ( [ sh:property [ sh:path ngsi-ld:hasValue ; sh:datatype xsd:double ] ] [ sh:property [ sh:path ngsi-ld:hasValueList ; … ] ] )`, as generated OPC UA packages do
+- **THEN** its value is a declared `xsd:double`: the `sh:or` chooses between a value and a list, not between datatypes, and only an `sh:or` over datatypes makes a value plain
+
 ### Requirement: Documents passed on keep their declared types
 A component that passes an NGSI-LD document on -- Scorpio, the debezium bridge, and the SemForge SDK when it copies, exports or rewrites a document -- SHALL keep a value's declared `@type`.
 

@@ -116,7 +116,7 @@
         },
         "test:hasMyVariable10": {
             "type": "Property",
-            "value": 1
+            "value": {"@value": 1.0, "@type": "http://www.w3.org/2001/XMLSchema#double"}
         }
     },
     {

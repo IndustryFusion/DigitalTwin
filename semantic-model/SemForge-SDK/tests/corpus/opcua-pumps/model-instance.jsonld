@@ -11,27 +11,45 @@
         ],
         "pumps:hasMotorTemperature": {
             "type": "Property",
-            "value": 0.0
+            "value": {
+                "@value": 0.0,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
         },
         "pumps:hasMotorVoltage": {
             "type": "Property",
-            "value": 0.0
+            "value": {
+                "@value": 0.0,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
         },
         "pumps:hasDriverPowerInput": {
             "type": "Property",
-            "value": 0.0
+            "value": {
+                "@value": 0.0,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
         },
         "pumps:hasFrequency": {
             "type": "Property",
-            "value": 0.0
+            "value": {
+                "@value": 0.0,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
         },
         "pumps:hasEnergyConsumption": {
             "type": "Property",
-            "value": 0.0
+            "value": {
+                "@value": 0.0,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
         },
         "pumps:hasMotorCurrent": {
             "type": "Property",
-            "value": 0.0
+            "value": {
+                "@value": 0.0,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
         }
     },
     {
@@ -98,15 +116,24 @@
         ],
         "pumps:hasMinimumAllowableAmbientTemperature": {
             "type": "Property",
-            "value": 278.15
+            "value": {
+                "@value": 278.15,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
         },
         "pumps:hasMaximumAllowableContinuousSpeed": {
             "type": "Property",
-            "value": 56.67
+            "value": {
+                "@value": 56.67,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
         },
         "pumps:hasMinimumAllowableContinuousSpeed": {
             "type": "Property",
-            "value": 23.33
+            "value": {
+                "@value": 23.33,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
         },
         "pumps:hasControllable": {
             "type": "Property",
@@ -132,7 +159,10 @@
         },
         "pumps:hasMaximumAllowableAmbientTemperature": {
             "type": "Property",
-            "value": 343.15
+            "value": {
+                "@value": 343.15,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
         },
         "pumps:hasOfferedFieldbuses": {
             "type": "JsonProperty",
@@ -156,15 +186,24 @@
         },
         "pumps:hasMaximumAllowableHead": {
             "type": "Property",
-            "value": 6.3
+            "value": {
+                "@value": 6.3,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
         },
         "pumps:hasMaximumAllowableRelativeHumidity": {
             "type": "Property",
-            "value": 80.0
+            "value": {
+                "@value": 80.0,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
         },
         "pumps:hasMaximumPumpPowerInput": {
             "type": "Property",
-            "value": 85.0
+            "value": {
+                "@value": 85.0,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
         }
     },
     {
@@ -313,15 +352,24 @@
         ],
         "pumps:hasOverallVibrationAcceleration0_P": {
             "type": "Property",
-            "value": 0.0
+            "value": {
+                "@value": 0.0,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
         },
         "pumps:hasOverallVibrationAccelerationPerG0_P": {
             "type": "Property",
-            "value": 0.0
+            "value": {
+                "@value": 0.0,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
         },
         "pumps:hasOverallVibrationAccelerationP_P": {
             "type": "Property",
-            "value": 0.0
+            "value": {
+                "@value": 0.0,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
         }
     },
     {
@@ -336,15 +384,24 @@
         ],
         "pumps:hasFluidTemperature": {
             "type": "Property",
-            "value": 0.0
+            "value": {
+                "@value": 0.0,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
         },
         "pumps:hasPumpPowerInput": {
             "type": "Property",
-            "value": 0.0
+            "value": {
+                "@value": 0.0,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
         },
         "pumps:hasDifferentialPressure": {
             "type": "Property",
-            "value": 0.0
+            "value": {
+                "@value": 0.0,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
         },
         "pumps:has%3CVibration%3E": [
             {
@@ -355,7 +412,10 @@
         ],
         "pumps:hasSpeed": {
             "type": "Property",
-            "value": 0.0
+            "value": {
+                "@value": 0.0,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
         },
         "pumps:hasNumberOfStarts": {
             "type": "Property",
@@ -412,11 +472,17 @@
         ],
         "pumps:hasOperatingTime": {
             "type": "Property",
-            "value": 0.0
+            "value": {
+                "@value": 0.0,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
         },
         "pumps:hasActiveMaintenanceTime": {
             "type": "Property",
-            "value": 0.0
+            "value": {
+                "@value": 0.0,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
         }
     },
     {

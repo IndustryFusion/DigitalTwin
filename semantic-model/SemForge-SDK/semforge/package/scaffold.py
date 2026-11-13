@@ -276,7 +276,10 @@ def _entity(identifier, entities, knowledge, published, state='state_ON',
         },
         f'{entities}:hasTemperature': {
             'type': 'Property',
-            'value': temperature,
+            # Declared, as every value of an xsd:double attribute is: a plain
+            # whole number is an integer to JSON-LD (#961, contracts/typed-literals).
+            'value': {'@value': float(temperature),
+                      '@type': 'http://www.w3.org/2001/XMLSchema#double'},
             'observedAt': '2026-01-01T00:00:00.000Z',
         },
         '@context': published,

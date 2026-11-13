@@ -299,7 +299,7 @@ class JsonLd:
                 print(f'Warning: unknown default value for datatype {datatype}')
             data_value = 'null'
         if value_rank is None or int(value_rank) < 0:
-            return data_value
+            return JsonLd.typed_number(data_value, datatypes)
         data_array_value = []
         if array_dimensions is not None:
             array_length = 0
@@ -309,6 +309,27 @@ class JsonLd:
             if array_length > 0:
                 data_array_value = [data_value] * array_length
         return data_array_value
+
+    @staticmethod
+    def typed_number(value, datatypes):
+        """A scalar `value` in the form contracts/typed-literals asks for (#961).
+
+        JSON-LD 1.1 makes a plain whole number an xsd:integer, 80.0 included,
+        so a variable that is an xsd:double alone -- Float, Double, Decimal,
+        Duration -- gets every value declared, with the full XSD IRI: the
+        context is chosen at deployment and need not define `xsd`. A variable
+        that admits integers too (Number: double or integer) stays plain, a
+        whole value as an integer. Anything else is returned as it is. Lists
+        are not passed here: their items stay plain.
+        """
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return value
+        if isinstance(datatypes, list) and datatypes == [XSD.double]:
+            return {'@value': float(value), '@type': str(XSD.double)}
+        if isinstance(datatypes, list) and XSD.double in datatypes and XSD.integer in datatypes:
+            if isinstance(value, float) and value.is_integer():
+                return int(value)
+        return value
 
     def get_default_iri(self, datatype, value_rank=None, array_dimensions=None, g=Graph()):
         if datatype == self.opcuans['NodeId']:
@@ -382,7 +403,7 @@ Is there a data mismatch?")
         elif value == RDF.nil:
             return []
         if cast is not None:
-            return value.toPython()
+            return JsonLd.typed_number(value.toPython(), datatypes)
         if datatype == RDF.JSON:
             try:
                 value = json.loads(value)

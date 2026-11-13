@@ -90,6 +90,9 @@ def _render(value):
     if isinstance(value, dict):
         if '@id' in value:
             return _short(value['@id'])
+        if '@value' in value:
+            # A declared value -- a double, a timestamp (#961) -- reads as its value.
+            return _render(value['@value'])
         return json.dumps(value, ensure_ascii=False)
     if isinstance(value, list):
         return '[' + ', '.join(_render(v) for v in value) + ']'

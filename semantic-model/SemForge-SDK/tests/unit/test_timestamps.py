@@ -109,6 +109,13 @@ def test_datasetids_are_never_collapsed_across():
 
 # --- a package: validation, the writes, the checks -------------------------------------
 
+
+def _double(number):
+    """A temperature as written by hand: declared, since JSON-LD makes a plain
+    whole number an integer (#961, contracts/typed-literals)."""
+    return {'@value': number, '@type': 'http://www.w3.org/2001/XMLSchema#double'}
+
+
 @pytest.fixture
 def pkg(tmp_path):
     root = str(tmp_path / 'my-model')
@@ -143,9 +150,9 @@ def _violations(root):
 
 def test_only_the_latest_observation_is_validated(pkg):
     first = _temperature(pkg)[0]
-    _set(pkg, [dict(first, value=500.0, observedAt='2025-01-01T00:00:00.000Z'), first])
+    _set(pkg, [dict(first, value=_double(500.0), observedAt='2025-01-01T00:00:00.000Z'), first])
     assert _violations(pkg) == [], 'the old, out-of-range value is filtered out'
-    _set(pkg, [first, dict(first, value=500.0, observedAt='2027-01-01T00:00:00.000Z')])
+    _set(pkg, [first, dict(first, value=_double(500.0), observedAt='2027-01-01T00:00:00.000Z')])
     assert ('hasTemperature', 'MaxInclusiveConstraintComponent') in _violations(pkg)
     assert ('hasTemperature', 'MaxCountConstraintComponent') not in _violations(pkg)
 
@@ -153,7 +160,7 @@ def test_only_the_latest_observation_is_validated(pkg):
 def test_an_unstamped_one_is_validated_over_the_stamped(pkg):
     first = _temperature(pkg)[0]
     bare = {k: v for k, v in first.items() if k != 'observedAt'}
-    _set(pkg, [first, dict(bare, value=500.0)])
+    _set(pkg, [first, dict(bare, value=_double(500.0))])
     assert _violations(pkg) == [('hasTemperature', 'MaxInclusiveConstraintComponent')]
 
 
@@ -187,9 +194,9 @@ def test_set_and_remove_one_instance_s_time(pkg):
 
 def test_sorting_puts_the_latest_last(pkg):
     first = _temperature(pkg)[0]
-    _set(pkg, [dict(first, value=2.0, observedAt='2026-03-01T00:00:00.000Z'), first])
+    _set(pkg, [dict(first, value=_double(2.0), observedAt='2026-03-01T00:00:00.000Z'), first])
     sort_observations(load(pkg), MACHINE_ID, [TEMPERATURE])
-    assert [i['value'] for i in _temperature(pkg)] == [first['value'], 2.0]
+    assert [i['value'] for i in _temperature(pkg)] == [first['value'], _double(2.0)]
 
 
 def _found(root, code):
@@ -210,7 +217,7 @@ def test_the_four_checks(pkg):
 
 def test_a_clean_series_reports_nothing(pkg):
     first = _temperature(pkg)[0]
-    _set(pkg, [first, dict(first, value=2.0, observedAt='2026-03-01T00:00:00.000Z')])
+    _set(pkg, [first, dict(first, value=_double(2.0), observedAt='2026-03-01T00:00:00.000Z')])
     assert not [f for f in sanity(load(pkg)) if f.code.startswith('observed-at')]
 
 

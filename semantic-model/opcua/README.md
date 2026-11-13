@@ -389,6 +389,12 @@ Extract ngsi-ld prototype:
 
 The prefix given by `-i` must start an IRI. When the entities are used as devices, it should be a URN like the default `urn:uaentity:`: Device IDs are part of the MQTT topics, a `/` in an ID breaks them.
 
+Values of Float, Double, Decimal and Duration Variables, and their defaults, are written as declared doubles, whatever the value:
+
+    "value": {"@value": 80.0, "@type": "http://www.w3.org/2001/XMLSchema#double"}
+
+JSON-LD 1.1 makes a plain whole number an `xsd:integer` -- `80.0` included -- so a plain `80.0` would violate the Variable's `sh:datatype xsd:double` shape. The type is the full IRI because the instances' context is chosen with `-xc` and need not define `xsd`. Number Variables admit integers too and stay plain, a whole value as an integer; items of an array stay plain numbers. This is the contract `contracts/typed-literals` (#961).
+
 `bindings.ttl` is used by the [dataservice](../dataservice/README.md#opc-ua-example-from-the-pump-nodeset-to-ngsi-ld) to forward the values of an OPC UA server.
 
 

@@ -167,8 +167,9 @@ class TestJsonLd(unittest.TestCase):
     def test_get_default_value_scalars(self):
         # integer
         self.assertEqual(JsonLd.get_default_value([XSD.integer]), 0)
-        # double
-        self.assertEqual(JsonLd.get_default_value([XSD.double]), 0.0)
+        # double: declared, a plain 0.0 would be an integer (#961, contracts/typed-literals)
+        self.assertEqual(JsonLd.get_default_value([XSD.double]),
+                         {'@value': 0.0, '@type': str(XSD.double)})
         # string
         self.assertEqual(JsonLd.get_default_value([XSD.string]), '')
         # boolean
@@ -210,7 +211,9 @@ class TestJsonLd(unittest.TestCase):
         self.assertEqual(result, 123)
         val2 = Literal('3.14', datatype=XSD.double)
         result2 = JsonLd.get_value(g, val2, [XSD.double])
-        self.assertAlmostEqual(result2, 3.14)
+        # declared, as every value of a double variable is (#961, contracts/typed-literals)
+        self.assertEqual(result2['@type'], str(XSD.double))
+        self.assertAlmostEqual(result2['@value'], 3.14)
         val3 = Literal('true', datatype=XSD.boolean)
         result3 = JsonLd.get_value(g, val3, [XSD.boolean])
         self.assertTrue(result3)

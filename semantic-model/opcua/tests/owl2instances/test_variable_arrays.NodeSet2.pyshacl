@@ -1,14 +1,20 @@
-@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
 @prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/> .
-@prefix opcua: <http://opcfoundation.org/UA/> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
-@prefix test: <http://my.test/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 [] a sh:ValidationReport ;
     sh:conforms false ;
     sh:result [ a sh:ValidationResult ;
+            sh:focusNode ( "x" "y" "z" ) ;
+            sh:resultMessage "More than 2 values on ( Literal(\"x\") Literal(\"y\") Literal(\"z\") )->( [ sh:zeroOrMorePath rdf:rest ] rdf:first )" ;
+            sh:resultPath ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:MaxCountConstraintComponent ;
+            sh:sourceShape [ sh:datatype xsd:string ;
+                    sh:maxCount 2 ;
+                    sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ],
+        [ a sh:ValidationResult ;
             sh:focusNode ( 99 98 97 ) ;
             sh:resultMessage "More than 2 values on ( Literal(\"99\", datatype=xsd:integer) Literal(\"98\", datatype=xsd:integer) Literal(\"97\", datatype=xsd:integer) )->( [ sh:zeroOrMorePath rdf:rest ] rdf:first )" ;
             sh:resultPath ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
@@ -31,36 +37,6 @@
                                         sh:path ( [ ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
                     sh:path ngsi-ld:hasValueList ] ;
             sh:value ( 0e+00 1e+00 ) ],
-        [ a sh:ValidationResult ;
-            sh:focusNode ( "x" "y" "z" ) ;
-            sh:resultMessage "More than 2 values on ( Literal(\"x\") Literal(\"y\") Literal(\"z\") )->( [ sh:zeroOrMorePath rdf:rest ] rdf:first )" ;
-            sh:resultPath ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
-            sh:resultSeverity sh:Violation ;
-            sh:sourceConstraintComponent sh:MaxCountConstraintComponent ;
-            sh:sourceShape [ sh:datatype xsd:string ;
-                    sh:maxCount 2 ;
-                    sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ],
-        [ a sh:ValidationResult ;
-            sh:focusNode <urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAxMg> ;
-            sh:resultMessage "Node [ <https://uri.etsi.org/ngsi-ld/hasValue> Literal(\"1\", datatype=xsd:integer) ; rdf:type <https://uri.etsi.org/ngsi-ld/Property> ] does not conform to one or more shapes in [ sh:property [ sh:datatype xsd:double ; sh:maxCount Literal(\"1\", datatype=xsd:integer) ; sh:minCount Literal(\"1\", datatype=xsd:integer) ; sh:nodeKind sh:Literal ; sh:path ngsi-ld:hasValue ] ] , [ sh:property [ sh:maxCount Literal(\"1\", datatype=xsd:integer) ; sh:minCount Literal(\"1\", datatype=xsd:integer) ; sh:or ( [ sh:nodeKind sh:BlankNode ; sh:property [ sh:datatype xsd:double ; sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue rdf:nil ] ) ; sh:path ngsi-ld:hasValueList ] ]" ;
-            sh:resultPath test:hasMyVariable10 ;
-            sh:resultSeverity sh:Violation ;
-            sh:sourceConstraintComponent sh:OrConstraintComponent ;
-            sh:sourceShape [ sh:maxCount 1 ;
-                    sh:minCount 0 ;
-                    sh:nodeKind sh:BlankNode ;
-                    sh:or ( [ sh:property [ sh:datatype xsd:double ;
-                                        sh:maxCount 1 ;
-                                        sh:minCount 1 ;
-                                        sh:nodeKind sh:Literal ;
-                                        sh:path ngsi-ld:hasValue ] ] [ sh:property [ sh:maxCount 1 ;
-                                        sh:minCount 1 ;
-                                        sh:or ( [ ] [ ] ) ;
-                                        sh:path ngsi-ld:hasValueList ] ] ) ;
-                    sh:path test:hasMyVariable10 ;
-                    base:hasReferenceType opcua:HasComponent ] ;
-            sh:value [ a ngsi-ld:Property ;
-                    ngsi-ld:hasValue 1 ] ],
         [ a sh:ValidationResult ;
             sh:focusNode [ a ngsi-ld:ListProperty ;
                     ngsi-ld:hasValueList () ] ;

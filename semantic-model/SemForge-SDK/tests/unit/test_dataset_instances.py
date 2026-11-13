@@ -134,7 +134,10 @@ def test_another_constraint_breaks_one_instance_and_keeps_the_count(counted):
     made = new_attribute_test(package, machine, _path(root, machine), purpose, 'pressure-text')
     instances = _written(made)
     assert len(instances) == 2
-    assert isinstance(instances[0]['value'], str) and isinstance(instances[1]['value'], float)
+    # The broken one is a text; the other keeps its valid value, a declared
+    # double (#961, contracts/typed-literals).
+    assert isinstance(instances[0]['value'], str)
+    assert instances[1]['value'] == {'@value': 1.0, '@type': 'http://www.w3.org/2001/XMLSchema#double'}
     assert made['passes'], made['failures']
 
 

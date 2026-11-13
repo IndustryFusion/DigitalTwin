@@ -65,8 +65,9 @@ def _row(package, entity_type, path):
             if node.kind == 'attribute' and list(node.path_chain) == wanted:
                 kind_of = {a.iri: a.kind for a in attribute_terms(package) if a.kind}
                 row = _attribute_rows(package, node, kind_of, 0, {}, {})[0]
-                return entry, dict(row, formConditions=_form_conditions(
-                    _value_of(package, node)))
+                value_of = _value_of(package, node)
+                return entry, dict(row, formConditions=_form_conditions(value_of),
+                                   formDatatypes=_form_datatypes(value_of))
     if len(wanted) > 1:
         raise PackageError('a test for a sub-attribute is not offered yet; write it '
                            'by hand, inside its parent attribute')
@@ -94,6 +95,58 @@ def _form_conditions(value):
         elif isinstance(node, Op) and node.op in ('or', 'xone') and node.children:
             pending.append(node.children[0])
     return found
+
+
+def _form_datatypes(value):
+    """Every sh:datatype the one value may have, read from all branches of
+    its one-value form. Unlike `_form_conditions`, a choice is not cut to its
+    first branch: `sh:or ( double integer )` admits integers, while the
+    OPC UA `sh:or ( [hasValue double] [hasValueList …] )` is a choice of form
+    whose one-value side is a double alone."""
+    from ..cooked.expression import Leaf, Op
+
+    forms = [f for f in value.forms if not f.is_list] or list(value.forms)
+    found = set()
+    pending = [forms[0].root] if forms else []
+    while pending:
+        node = pending.pop(0)
+        if isinstance(node, Leaf):
+            found.update(said for key, said in node.conditions if key == 'sh:datatype')
+        elif isinstance(node, Op):
+            pending.extend(node.children)
+    return sorted(found)
+
+
+# Datatypes whose values a writer declares (#961, contracts/typed-literals):
+# JSON-LD 1.1 makes a plain whole number an xsd:integer, 80.0 included.
+DECLARED = {'xsd:double': 'http://www.w3.org/2001/XMLSchema#double',
+            'xsd:float': 'http://www.w3.org/2001/XMLSchema#float',
+            'xsd:decimal': 'http://www.w3.org/2001/XMLSchema#decimal'}
+
+
+def declared_type(row):
+    """The full XSD IRI every value of the attribute is declared with, or None.
+
+    A number is declared when the one value may be a double, a float or a
+    decimal and nothing else: said as the value's own sh:datatype, or by all
+    branches of its form. An sh:or that admits integers too is written plain."""
+    _, value = _params(row)
+    datatypes = [value['sh:datatype']] if value.get('sh:datatype') else row.get('formDatatypes') or []
+    if len(set(datatypes)) == 1 and datatypes[0] in DECLARED:
+        return DECLARED[datatypes[0]]
+    return None
+
+
+def typed(row, number):
+    """`number` as the attribute's values are written: declared for a double
+    (float, decimal); otherwise plain, a whole value as an integer -- which is
+    what JSON-LD makes of it anyway, so `80` rather than `80.0`."""
+    iri = declared_type(row)
+    if iri is not None:
+        return {'@value': float(number), '@type': iri}
+    if isinstance(number, float) and number.is_integer():
+        return int(number)
+    return number
 
 
 def _params(row):
@@ -354,7 +407,7 @@ def _valid(package, row, scene):
             number = 1.0
         if datatype in INTEGERS:
             return 'value', int(number)
-        return 'value', float(number)
+        return 'value', typed(row, float(number))
     if datatype == 'xsd:boolean':
         return 'value', True
     if datatype in ('xsd:dateTime', 'xsd:date'):
@@ -384,9 +437,9 @@ def _break(how, row, attribute, package=None):
         broken = 1 if value.get('sh:datatype') == 'xsd:string' else 'not a number'
         return dict(attribute, **{key: broken})
     if how in ('sh:minInclusive', 'sh:minExclusive'):
-        return dict(attribute, **{key: _number(value[how]) - (1 if how.endswith('Inclusive') else 0)})
+        return dict(attribute, **{key: typed(row, _number(value[how]) - (1 if how.endswith('Inclusive') else 0))})
     if how in ('sh:maxInclusive', 'sh:maxExclusive'):
-        return dict(attribute, **{key: _number(value[how]) + (1 if how.endswith('Inclusive') else 0)})
+        return dict(attribute, **{key: typed(row, _number(value[how]) + (1 if how.endswith('Inclusive') else 0))})
     if how == 'class':
         target = 'urn:example:not-a-' + value['sh:class'].split(':')[-1].lower()
         return dict(attribute, **({'object': target} if key == 'object'

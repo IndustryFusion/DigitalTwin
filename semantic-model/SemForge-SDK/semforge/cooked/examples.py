@@ -92,6 +92,9 @@ def _entities(path):
 def _render(value):
     if isinstance(value, dict) and '@id' in value:
         return str(value['@id'])
+    if isinstance(value, dict) and '@value' in value:
+        # A declared value -- a double, a timestamp (#961) -- reads as its value.
+        return _render(value['@value'])
     if isinstance(value, (dict, list)):
         return json.dumps(value, ensure_ascii=False)[:60]
     return json.dumps(value, ensure_ascii=False) if isinstance(value, str) \
@@ -758,6 +761,38 @@ def _target_file(package, file=None):
     raise PackageError(f'no such example file: {file}')
 
 
+NGSILD_MEMBERS = {'type', 'value', 'object', 'valueList', 'json', 'vocab', 'observedAt',
+                  'datasetId', 'unitCode', 'createdAt', 'modifiedAt', 'lang'}
+
+
+def _as_written(package, entity, attribute_path, value):
+    """`value` as the attribute's values are written (#961, contracts/typed-literals):
+    a plain number for an xsd:double (float, decimal) attribute is declared with
+    the full XSD IRI, since JSON-LD makes a plain whole number an integer. The
+    attribute's shape decides, not the number's notation. A value object the
+    modeller typed, and anything that is not a plain number, is kept as it is."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return value
+    from ..expect.attributecase import _row, declared_type
+
+    chain = [step for step in attribute_path
+             if isinstance(step, str) and step not in NGSILD_MEMBERS]
+    types = entity.get('type')
+    for entity_type in (types if isinstance(types, list) else [types]):
+        try:
+            _, row = _row(package, entity_type, chain)
+        except PackageError:
+            continue
+        iri = declared_type(row)
+        return {'@value': float(value), '@type': iri} if iri else value
+    return value
+
+
+def _entity(document, entity_id):
+    return next((e for e in document if isinstance(e, dict)
+                 and str(e.get('id') or e.get('@id')) == entity_id), None)
+
+
 def set_value(package, entity_id, path, value, file=None):
     """Change one value in an example. Returns (path, old, new).
 
@@ -783,6 +818,8 @@ def set_value(package, entity_id, path, value, file=None):
         old = container[key]
     except (KeyError, IndexError, TypeError):
         raise PackageError(f'{entity_id}: no value at {"/".join(map(str, path))}')
+    if key == 'value':
+        parsed = _as_written(package, _entity(document, entity_id), path, parsed)
     container[key] = parsed
 
     rendered = json.dumps(document, indent=2, ensure_ascii=False)
@@ -834,6 +871,7 @@ def add_observation(package, entity_id, attribute_path, dataset_id=None,
         fresh['value'] = json.loads(value) if isinstance(value, str) else value
     except (TypeError, ValueError):
         fresh['value'] = value
+    fresh['value'] = _as_written(package, entity, attribute_path, fresh['value'])
     if observed_at:
         same = _group_by_dataset(instances).get(dataset_id or DEFAULT_DATASET, [])
         fresh['observedAt'] = checked_stamp(observed_at, same, f'{entity_id}: {key}')
@@ -1274,6 +1312,8 @@ def add_attribute(package, entity_id, name, kind=None, value=None,
     except (TypeError, ValueError):
         parsed = value
 
+    if kind == 'Property':
+        parsed = _as_written(package, entity, list(under or []) + [name], parsed)
     if metadata.get('observedAt') and existing is None:
         metadata['observedAt'] = checked_stamp(metadata['observedAt'])
     fresh = attribute(kind, parsed, **metadata)

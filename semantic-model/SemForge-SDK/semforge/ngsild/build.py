@@ -83,10 +83,14 @@ def coerce(kind, value):
                 f'a JsonProperty carries a JSON object or array; got {value!r}')
         return value
 
-    if isinstance(value, dict) and set(value) - {'@id'}:
+    # A literal may be a JSON-LD value object: a declared double is
+    # {"@value": 80.0, "@type": "…#double"} (#961, contracts/typed-literals).
+    is_value_object = isinstance(value, dict) and '@value' in value \
+        and not set(value) - {'@value', '@type', '@language'}
+    if isinstance(value, dict) and set(value) - {'@id'} and not is_value_object:
         raise PackageError(
-            'a Property value is a literal or a single {"@id": …} reference; '
-            f'got {value!r}')
+            'a Property value is a literal, a value object {"@value": …, "@type": …} '
+            f'or a single {{"@id": …}} reference; got {value!r}')
     return value
 
 
