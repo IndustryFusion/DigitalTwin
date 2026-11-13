@@ -53,7 +53,8 @@
   - `chain (3.10)` and `chain (3.12)` pass on `fef93220`; `node test/opcua-chain/literal.js` passes on all forms.
 - [x] 4.3 Accept a `decimal.Decimal` in the OPC UA tool's typed values as a number (review note); verify a unit test that a Decimal on a double variable is declared as a float and serialises as JSON
   - `test_a_decimal_literal_is_a_declared_double_and_serialisable`; OPC UA unit suite: 300 passed.
-- [ ] 4.4 Before this change is deployed to a broker the XanaAI agent reads, confirm IndustryFusion/XANA-AI-PDT#84 is merged; verify by naming its Pull Request here
+- [x] 4.4 Before this change is deployed to a broker the XanaAI agent reads, confirm IndustryFusion/XANA-AI-PDT#84 is merged; verify by naming its Pull Request here
+  - IndustryFusion/XANA-AI-PDT#84 is implemented by IndustryFusion/XANA-AI-PDT#85, merged on 2026-11-13 as `ec32e71` and deployed to the local cluster (release `xana-pdt`, revision 4). Its archive is IndustryFusion/XANA-AI-PDT#88.
 
 ## 5. Documentation
 
