@@ -19,7 +19,9 @@
 // and the broker returns it as an object, its @type compacted to `type`. A merge keeps the
 // stored type, so a live value -- even one sent as a string -- comes back as
 // {"type": "…#double", "@value": "42.5"}; a replacing update drops it again. Whatever the
-// form, the reader gets the plain value: the number for a declared number.
+// form, the reader gets the plain value: the number for a declared number. A number
+// string is turned into a number only inside a value object with a numeric type: a
+// value object without a type, or a plain string, keeps its text (nothing writes one).
 'use strict';
 
 const NUMERIC = /#(double|float|decimal|integer|int|long|short)$/;

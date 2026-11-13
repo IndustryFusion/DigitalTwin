@@ -115,8 +115,10 @@ inside validation. Measured on Scorpio 0.10 (the platform's build) and 6.0.2
   per language, and never depend on the form the broker returns. The data
   stays what JSON-LD and SHACL say it is; the readers are few and ours:
   - this repository's chain test;
-  - the XanaAI agent: its LLM context, its notification webhook, and its
-    entity browser (DrGarbitsch/XANA-AI-PDT-Agent#7).
+  - XANA (IndustryFusion/XANA-AI-PDT#84): its agent's signals and LLM
+    facts, its local query evaluation, its edit validation, and its Data
+    explorer's display, editing and live highlighting. Its history and
+    time-shift read TimescaleDB and are not affected.
 - *Alternative B:* keep the data plain and let the OPC UA and SemForge shapes
   admit integers for Double-like attributes. Rejected on #961: it weakens
   every generated shape to "double or integer", and the data stops saying
@@ -149,7 +151,7 @@ onto this change, because the generator stops writing plain `60.0`.
 - **Readers outside this repository and the XanaAI agent** that read values
   from Scorpio would see value objects too. None is known.
 - **The XanaAI agent must change before typed instances reach a broker it
-  reads** (DrGarbitsch/XANA-AI-PDT-Agent#7). Until then it shows raw objects
+  reads** (IndustryFusion/XANA-AI-PDT#84). Until then it shows raw objects
   for doubles.
 
 - **Instances and test cases written before this change** keep their plain
