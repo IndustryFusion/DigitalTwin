@@ -167,6 +167,33 @@ As a result, there must be a new directory `output` with the following files inc
 make test-sqlite
 ```
 
+## Validate the SQL with Flink
+
+```bash
+make validate-flink
+```
+
+lets Flink check the SQL a deployment would run, without a cluster: it builds
+the package, renders the `shacl` chart and the `sql-core` chart (whose core
+tables the statements use) with the values `helmfile -f helmfile-shacl.yaml
+apply` uses, composes the SQL Gateway requests with the operator's code and
+has the SQL Gateway image's Flink parse and plan them -- settings, table and
+view DDL, statements, UDFs -- without running them and without a network. It
+takes under a minute for `kms/default` and fails with Flink's message for the
+first item Flink rejects:
+
+```
+VALIDATION {"file": "/work/requests/iff_shacl-validation.json", "valid": false, "kind": "statement", "index": 1, "text": "INSERT INTO ...", "message": "org.apache.flink.table.api.SqlParserException: SQL parse failed. ..."}
+```
+
+It needs Docker, Helm and helmfile v0.149.0 (`HELMFILE`, by default
+`./helmfile` in `../../helm`, where `test/prepare-platform.sh` installs it),
+and the operator and SQL Gateway images (`FLINK_OPERATOR_IMAGE`,
+`FLINK_GATEWAY_IMAGE`, by default `$(DOCKER_PREFIX)/...:$(DOCKER_TAG)` as
+`docker compose build` names them). The checkout's composition and validation
+code is mounted into the images. Another package: `make validate-flink
+KMS=../kms/<name>`.
+
 # Deploy Flink Jobs
 
 ## Deploy SHACL rules to Flink
@@ -174,6 +201,10 @@ make test-sqlite
 ```bash
 make flink-deploy
 ```
+
+`flink-deploy` runs `make validate-flink` first and stops before anything in
+the cluster changes when Flink rejects the SQL. The operator validates again
+before it replaces a running job (see `FlinkSqlServicesOperator/README.md`).
 
 ## Undeploy SHACL rules to Flink
 
