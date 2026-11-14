@@ -58,6 +58,31 @@ aaio:
     pullPolicy: Always
   resources: {}
 
+  # Quarkus health endpoints (/q/health/started, /live, /ready).
+  # When the subscription manager fails on an entity change, its messaging
+  # channel stops: the API still answers, but no notification is sent any more
+  # and /q/health/live turns DOWN about a minute later. Without a liveness
+  # probe nothing restarts Scorpio, so subscriptions stay silent.
+  probes:
+    startup:
+      enabled: true
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 30  # up to 5 min to start
+    liveness:
+      enabled: true
+      periodSeconds: 20
+      timeoutSeconds: 5
+      failureThreshold: 3   # restart about 1 min after the channel failed
+    readiness:
+      # Off by default: /q/health/ready carries the same messaging checks as
+      # /live, so it would take the API out of the Service exactly while the
+      # API still works, until the liveness restart.
+      enabled: false
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+
 ################################### SpringArgs #######################################################################
 springArgs:
   overrideSpringArgs: false
