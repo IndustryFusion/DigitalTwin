@@ -26,9 +26,21 @@ numbers:
 | `0.0` | integer | `0`, none | `0.0`, `xsd:double` | double |
 | `80.5` | double | `80.5`, none | `80.5`, `xsd:double` | double |
 | `1e21` | double | `1e+21`, none | `1e+21`, `xsd:double` | double |
-| `{"@value": 80, "@type": "xsd:double"}` | double | `80`, `xsd:double` | `80`, `xsd:double` | double |
+| `{"@value": 80, "@type": "xsd:double"}` | double | `80`, `xsd:double` | `80.0`, `xsd:double` | double |
 | `{"@value": 80, "@type": "xsd:integer"}` | integer | `80`, `xsd:integer` | `80`, `xsd:integer` | integer |
-| `"80.0"` | string | `80.0`, none | `80.0`, none | string |
+| `"80.0"` | string | `80.0`, none | `80.0`, `xsd:string` | string |
+
+Measured during implementation, and different from what this table first
+said:
+- **The SQLite side stores models in Oxigraph,** which gives every plain
+  string the type `xsd:string` and writes a declared double `80` as `80.0`.
+  Strings therefore failed every numeric shape offline, while Flink accepted
+  them; the SQLite model reader now treats a string's `xsd:string` as no
+  declared type, as the bridge does. A string *declared* `xsd:string` looks
+  the same in the store and is read as a plain one; no scenario covers it.
+- **The Flink column is measured** (task 3.1, `ibn40/scorpio-all-in-one-runner:v0.10`):
+  Scorpio stores `@type` and the notation unchanged, and the bridge writes the
+  value as JavaScript prints it, `80` for a declared `80.0`.
 
 - **Flink** receives what the debezium bridge writes. JavaScript writes `80.0` as `80`, and the bridge passes a type on only when the stored value has an `@type`.
 - **SQLite** receives what rdflib (6.1.1) makes of the JSON-LD model. rdflib types a JSON number by its notation, so a plain `80.0` becomes an `xsd:double`.
@@ -63,13 +75,16 @@ A whole-valued double has to be declared. That is the writers' part, #961.
 
 - **Chosen:** before a model is handed to rdflib, a plain number that is
   whole-valued and below 10^21 in absolute value is read as that integer:
-  `80.0` as `80`, `0.0` as `0`, `1e20` as `100000000000000000000`. A value
+  `80.0` as `80`, `0.0` as `0`, `1e18` as `1000000000000000000`. A value
   with a declared `@type` is left as it is, and so is `1e21`. This happens in
   three places: the SQLite checks' model reader, the pyshacl comparison, and
   SemForge's one function in front of rdflib.
 - The bound matters: in Python `(1e21).is_integer()` is true, so "whole
   floats become integers" alone would turn `1e21` into an integer, against
   the standard.
+- Known limit: rdflib reads JSON integers beyond 64 bits as doubles, so a
+  whole number between about 1.8 × 10^19 and 10^21 (`1e20`) is still a double
+  offline. The test vectors use `1e18` instead.
 - *Alternative:* a conformant JSON-LD processor (PyLD) instead of rdflib.
   Rejected: a new dependency on the path every test, every SemForge
   validation and the cross-check take, for one rule.

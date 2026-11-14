@@ -192,6 +192,15 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
                 current_dataset_id = "'@none'"
             else:
                 current_dataset_id = f"'{index}'"
+            # A string declares no type, as the bridge sees it: it sets
+            # valueType only for an explicit @type, and a JSON string has
+            # none. The Oxigraph store gives every plain literal xsd:string,
+            # so without this a number sent as a string -- the live path's
+            # "80.0" -- failed every numeric shape here and passed on Flink
+            # (#958). A string declared xsd:string looks the same in the
+            # store and is read as a plain one.
+            if valueType == XSD.string:
+                valueType = None
             valueType = nullify(valueType)
             attributeValue = nullify(None)
             unitCode = nullify(unitCode)

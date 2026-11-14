@@ -6,7 +6,7 @@
     "iffBaseEntities:hasDouble": [
       {
         "type": "Property",
-        "value": 1.0
+        "value": {"@value": 1.0, "@type": "http://www.w3.org/2001/XMLSchema#double"}
       }
     ],
     "iffBaseEntities:hasInteger": [
@@ -67,7 +67,7 @@
     "iffBaseEntities:hasInteger": [
       {
         "type": "Property",
-        "value": 1.0
+        "value": 1.5
       }
     ],
     "iffBaseEntities:hasBoolean": [

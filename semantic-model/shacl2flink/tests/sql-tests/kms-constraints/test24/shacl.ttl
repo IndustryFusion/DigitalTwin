@@ -1,0 +1,27 @@
+@prefix iffBaseEntities: <https://industryfusion.github.io/contexts/example/v0/base_entities/> .
+@prefix ngsild: <https://uri.etsi.org/ngsi-ld/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Literal datatypes of numbers (#958, change gh-958-datatypes-follow-json-ld).
+#
+# A plain JSON number is typed as JSON-LD 1.1 types it: a double only with a
+# non-zero fractional part or an absolute value of at least 10^21, otherwise
+# an integer -- 80.0 included. A declared @type decides. A string is judged by
+# its text. model1.jsonld holds one entity per scenario of the specification
+# shacl2flink/literal-datatypes; its id says which.
+
+<https://industryfusion.github.io/contexts/example/v0/base_shacl/DatatypeShape> a sh:NodeShape ;
+    sh:targetClass iffBaseEntities:Filter ;
+    sh:property [
+        sh:path iffBaseEntities:hasDouble ;
+        sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasValue ;
+                      sh:datatype xsd:double ;
+                      sh:nodeKind sh:Literal ] ] ,
+    [
+        sh:path iffBaseEntities:hasInteger ;
+        sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasValue ;
+                      sh:datatype xsd:integer ;
+                      sh:nodeKind sh:Literal ] ] .

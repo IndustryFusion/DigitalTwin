@@ -40,6 +40,12 @@ from rdflib import BNode, Graph, URIRef
 from rdflib.collection import Collection
 from rdflib.namespace import RDF, SH
 
+# The models are read as the SQLite checks read them: plain numbers as JSON-LD
+# 1.1 types them, not as rdflib's JSON-LD parser does (#958). Otherwise pyshacl
+# would judge a plain 80.0 as the double the standard says it is not.
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
+from lib.jsonld_numbers import read_jsonld  # noqa: E402
+
 NGSILD = 'https://uri.etsi.org/ngsi-ld/'
 # How the attribute's value is reached. pyshacl reports the value path itself;
 # we name the attribute that carries it, so these resolve to the parent.
@@ -181,7 +187,8 @@ def pyshacl_findings(shapes, knowledge, model):
     # does: the rdf table it joins against is the knowledge, so the validator
     # has to see the same world.
     data = Graph()
-    data.parse(model, format='json-ld')
+    text, base = read_jsonld(model)
+    data.parse(data=text, format='json-ld', base=base, publicID=base)
     collapsed = collapse_updates(data)
     data.parse(knowledge)
     shape_graph = Graph()

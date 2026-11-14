@@ -1,0 +1,36 @@
+{
+  "description": [
+    "How JSON-LD 1.1 types a property value (Object to RDF Conversion, steps 10 and 11):",
+    "a plain number is an xsd:double only with a non-zero fractional part or an absolute",
+    "value of at least 10^21, every other plain number an xsd:integer; a declared @type",
+    "decides; a string is an xsd:string. 'json' is the value as written in the model,",
+    "'datatype' the local name of the XSD type it must have once read, 'number' its value",
+    "where it is a number. Shared by shacl2flink and the SemForge SDK (#958, design D3):",
+    "both read models with this table as the reference.",
+    "1e18 stands in for a large whole number: rdflib reads JSON integers beyond 64 bits",
+    "as doubles, so 1e20 cannot be read as the integer the standard makes of it."
+  ],
+  "vectors": [
+    {"json": "80", "datatype": "integer", "number": 80},
+    {"json": "80.0", "datatype": "integer", "number": 80},
+    {"json": "-3.0", "datatype": "integer", "number": -3},
+    {"json": "0.0", "datatype": "integer", "number": 0},
+    {"json": "-0.0", "datatype": "integer", "number": 0},
+    {"json": "1e3", "datatype": "integer", "number": 1000},
+    {"json": "1e18", "datatype": "integer", "number": 1000000000000000000},
+    {"json": "80.5", "datatype": "double", "number": 80.5},
+    {"json": "-3.5", "datatype": "double", "number": -3.5},
+    {"json": "1.5e-7", "datatype": "double", "number": 1.5e-7},
+    {"json": "1e21", "datatype": "double", "number": 1e21},
+    {"json": "-1e21", "datatype": "double", "number": -1e21},
+    {"json": "{\"@value\": 80.0}", "datatype": "integer", "number": 80},
+    {"json": "{\"@value\": 80, \"@type\": \"http://www.w3.org/2001/XMLSchema#double\"}", "datatype": "double", "number": 80},
+    {"json": "{\"@value\": 0.0, \"@type\": \"http://www.w3.org/2001/XMLSchema#double\"}", "datatype": "double", "number": 0},
+    {"json": "{\"@value\": 80.5, \"@type\": \"http://www.w3.org/2001/XMLSchema#double\"}", "datatype": "double", "number": 80.5},
+    {"json": "{\"@value\": 80, \"@type\": \"http://www.w3.org/2001/XMLSchema#integer\"}", "datatype": "integer", "number": 80},
+    {"json": "\"80.0\"", "datatype": "string"},
+    {"json": "\"80\"", "datatype": "string"},
+    {"json": "\"0\"", "datatype": "string"},
+    {"json": "true", "datatype": "boolean"}
+  ]
+}

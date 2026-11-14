@@ -128,3 +128,22 @@ SELECT $this ?value ?type
         }
         """ ] ;
     sh:targetClass iffBaseEntities:E2EKnowledgeMachine .
+
+# --------------------------------------------------------------- sh:datatype
+# Numbers as JSON-LD 1.1 types them (#958): a plain number is a double only
+# with a non-zero fractional part, 80.0 included is an integer, a declared
+# @type decides, and a string is judged by its text. On Flink every value has
+# been through the debezium bridge, which writes 80.0 as 80 even when it is
+# declared a double -- the part the SQLite checks cannot show.
+:E2ENumberMachineShape a sh:NodeShape ;
+    sh:targetClass iffBaseEntities:E2ENumberMachine ;
+    sh:property [ sh:path iffBaseEntities:hasE2EDouble ;
+            sh:nodeKind sh:BlankNode ;
+            sh:property [ sh:path ngsild:hasValue ;
+                    sh:datatype xsd:double ;
+                    sh:nodeKind sh:Literal ] ] ,
+        [ sh:path iffBaseEntities:hasE2EInteger ;
+            sh:nodeKind sh:BlankNode ;
+            sh:property [ sh:path ngsild:hasValue ;
+                    sh:datatype xsd:integer ;
+                    sh:nodeKind sh:Literal ] ] .

@@ -92,6 +92,33 @@ TEST_TARGET="urn:e2e-scorpio-target:${RUN_ID}"
 TEST_RECREATE="urn:e2e-scorpio-recreate:${RUN_ID}"
 TEST_SPARQL="urn:e2e-scorpio-sparql:${RUN_ID}"
 
+# Numbers as JSON-LD 1.1 types them (#958), one entity each:
+# name|attribute|value as written. Loud ones must raise a datatype alert,
+# silent ones must not.
+DATATYPE_CONSTRAINT=DatatypeConstraintComponent
+NUMBER_TYPE=${E2E}/E2ENumberMachine
+XSD=http://www.w3.org/2001/XMLSchema#
+NUMBER_LOUD=(
+    'double-plain-whole|hasE2EDouble|80'
+    'double-plain-whole-dot|hasE2EDouble|80.0'
+    'double-plain-zero|hasE2EDouble|0.0'
+    "double-declared-integer|hasE2EDouble|{\"@value\":80,\"@type\":\"${XSD}integer\"}"
+    'double-string-digits|hasE2EDouble|"80"'
+    'double-string-zero|hasE2EDouble|"0"'
+    'integer-plain-fraction|hasE2EInteger|80.5'
+    "integer-declared-double|hasE2EInteger|{\"@value\":80,\"@type\":\"${XSD}double\"}"
+)
+NUMBER_SILENT=(
+    'double-plain-fraction|hasE2EDouble|80.5'
+    'double-plain-1e21|hasE2EDouble|1e21'
+    'double-plain-small|hasE2EDouble|1.5e-7'
+    "double-declared-whole|hasE2EDouble|{\"@value\":80,\"@type\":\"${XSD}double\"}"
+    "double-declared-zero|hasE2EDouble|{\"@value\":0.0,\"@type\":\"${XSD}double\"}"
+    'double-string-dot|hasE2EDouble|"80.0"'
+    'integer-plain-whole-dot|hasE2EInteger|80.0'
+    'integer-string-digits|hasE2EInteger|"80"'
+)
+
 # On an idle cluster an alert appears about five seconds after the create and
 # closes about five seconds after the delete. The timeout is set two orders of
 # magnitude above that so a loaded runner cannot fail the suite, while a real
@@ -137,6 +164,10 @@ teardown() {
     for id in "${TEST_MISSING}" "${TEST_LINKED}" "${TEST_TARGET}" "${TEST_RECREATE}" \
               "${TEST_SPARQL}" ${CYCLE_IDS}; do
         delete_entity "${id}" >/dev/null 2>&1 || true
+    done
+    local spec
+    for spec in "${NUMBER_LOUD[@]}" "${NUMBER_SILENT[@]}"; do
+        delete_entity "urn:e2e-number-${spec%%|*}:${RUN_ID}" >/dev/null 2>&1 || true
     done
 }
 
@@ -442,4 +473,28 @@ assert_no_alert() {
     [ "${code}" = "201" ]
     echo "# recreated ${TEST_RECREATE} under the same id" >&3
     assert_alert "${TEST_RECREATE}" "${COUNT_CONSTRAINT}"
+}
+
+@test "numbers are typed as JSON-LD types them, through scorpio and the bridge" {
+    # The scenarios of shacl2flink/literal-datatypes (#958) where only Flink
+    # can show them: the debezium bridge writes 80.0 as 80, a declared double
+    # included, and passes a type on only for an explicit @type. The silent
+    # entities are created first and checked last, after every loud one has
+    # alerted, so that "no alert" means "checked and found valid" rather than
+    # "not processed yet".
+    local name attr value code
+    for spec in "${NUMBER_SILENT[@]}" "${NUMBER_LOUD[@]}"; do
+        IFS='|' read -r name attr value <<< "${spec}"
+        code=$(create_entity "urn:e2e-number-${name}:${RUN_ID}" "${NUMBER_TYPE}" \
+            "\"${E2E}/${attr}\":{\"type\":\"Property\",\"value\":${value}}")
+        [ "${code}" = "201" ] || { echo "# create ${name} -> HTTP ${code}" >&3; return 1; }
+    done
+    for spec in "${NUMBER_LOUD[@]}"; do
+        IFS='|' read -r name attr value <<< "${spec}"
+        assert_alert "urn:e2e-number-${name}:${RUN_ID}" "${DATATYPE_CONSTRAINT}"
+    done
+    for spec in "${NUMBER_SILENT[@]}"; do
+        IFS='|' read -r name attr value <<< "${spec}"
+        assert_no_alert "urn:e2e-number-${name}:${RUN_ID}" "${DATATYPE_CONSTRAINT}"
+    done
 }

@@ -85,6 +85,8 @@ sh:datatype
     ] .
 ```
 
+How numbers are typed: see [Datatypes of numbers](#datatypes-of-numbers).
+
 </td>
 <td style="font-size: 50px;color: green;">&#10003;</td>
 </tr>
@@ -884,6 +886,42 @@ the only behaviour that does not misinform.
 Supporting them means deciding what their value *is* for comparison -- a
 language map is not a scalar -- and adding them to both `attributes_query` and
 `VALUE_PATH_ATTRIBUTE_TYPES`. Until then the answer is an error, not a guess.
+
+## Datatypes of numbers
+
+`sh:datatype xsd:double` and `sh:datatype xsd:integer` judge a number as
+JSON-LD 1.1 types it (*Object to RDF Conversion*), which is also what a
+conformant SHACL engine sees:
+
+| value as written | is a | `xsd:double` | `xsd:integer` |
+|---|---|---|---|
+| `80.5`, `1.5e-7`, `1e21` | double | satisfied | violated |
+| `80`, `80.0`, `0.0` | integer | violated | satisfied |
+| `{"@value": 80, "@type": "xsd:double"}` | double | satisfied | violated |
+| `{"@value": 80, "@type": "xsd:integer"}` | integer | violated | satisfied |
+| `"80.0"`, `"2.5E-3"` (strings) | judged by text | satisfied | violated |
+| `"80"`, `"0"` (strings) | judged by text | violated | satisfied |
+
+- **A plain number is a double only with a non-zero fractional part** (or an
+  absolute value of at least 10^21). A plain `80.0` is an integer, however it
+  is written: the `.0` carries no meaning in JSON, and the platform's
+  JavaScript components drop it anyway.
+- **A whole-valued double has to be declared:** write
+  `{"@value": 80, "@type": "xsd:double"}`. A declared `xsd:double` is
+  satisfied by any number, whatever its notation. A declared type always
+  decides, so a declared `xsd:integer` violates `xsd:double`.
+- **Strings are judged by their text,** unlike in a conformant SHACL engine,
+  where a string is an `xsd:string` and violates every numeric datatype. The
+  live data path sends values as strings (`"80.0"`), and this is what keeps
+  them valid. A text with a decimal point or an exponent is a double, a text
+  of digits an integer.
+- If a shape accepts both, say so: `sh:or ( [ sh:datatype xsd:double ] [
+  sh:datatype xsd:integer ] )`.
+
+The SQLite checks and the pyshacl comparison read a model's plain numbers the
+same way before it becomes RDF (`lib/jsonld_numbers.py`). rdflib on its own
+reads a plain `80.0` as a double. The reference table for both, and for the
+SemForge SDK, is `tests/jsonld-number-vectors.json`.
 
 ## Inverse property paths
 

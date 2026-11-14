@@ -1,0 +1,116 @@
+[
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:datatype:double-plain-fraction",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDouble": {"type": "Property", "value": 80.5}
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:datatype:double-plain-whole",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDouble": {"type": "Property", "value": 80}
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:datatype:double-plain-whole-dot",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDouble": {"type": "Property", "value": 80.0}
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:datatype:double-plain-zero",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDouble": {"type": "Property", "value": 0.0}
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:datatype:double-plain-1e21",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDouble": {"type": "Property", "value": 1e21}
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:datatype:double-plain-small",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDouble": {"type": "Property", "value": 1.5e-7}
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:datatype:double-string-exponent",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDouble": {"type": "Property", "value": "2.5E-3"}
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:datatype:double-declared-whole",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDouble": {"type": "Property", "value": {"@value": 80, "@type": "http://www.w3.org/2001/XMLSchema#double"}}
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:datatype:double-declared-zero",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDouble": {"type": "Property", "value": {"@value": 0.0, "@type": "http://www.w3.org/2001/XMLSchema#double"}}
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:datatype:double-declared-fraction",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDouble": {"type": "Property", "value": {"@value": 80.5, "@type": "http://www.w3.org/2001/XMLSchema#double"}}
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:datatype:double-declared-integer",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDouble": {"type": "Property", "value": {"@value": 80, "@type": "http://www.w3.org/2001/XMLSchema#integer"}}
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:datatype:double-string-dot",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDouble": {"type": "Property", "value": "80.0"}
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:datatype:double-string-digits",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDouble": {"type": "Property", "value": "80"}
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:datatype:double-string-zero",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDouble": {"type": "Property", "value": "0"}
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:datatype:double-string-text",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDouble": {"type": "Property", "value": "eighty"}
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:datatype:integer-plain-whole-dot",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasInteger": {"type": "Property", "value": 80.0}
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:datatype:integer-plain-fraction",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasInteger": {"type": "Property", "value": 80.5}
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:datatype:integer-declared-double",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasInteger": {"type": "Property", "value": {"@value": 80, "@type": "http://www.w3.org/2001/XMLSchema#double"}}
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:datatype:integer-string-digits",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasInteger": {"type": "Property", "value": "80"}
+  }
+]

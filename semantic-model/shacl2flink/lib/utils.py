@@ -28,6 +28,7 @@ import pyoxigraph
 from oxrdflib._converter import to_ox
 from lib.configs import constraint_table_name, constraint_trigger_table_name, constraint_combination_table_name
 from lib.configs import attribute_hash_length
+from lib.jsonld_numbers import read_jsonld
 
 NGSILD = Namespace('https://uri.etsi.org/ngsi-ld/')
 commonyamlfile = '../../../helm/common.yaml'
@@ -1083,13 +1084,30 @@ def load_graph(*sources):
     graph = Graph(store="Oxigraph")
     try:
         for source in sources:
-            fmt = rdflib.util.guess_format(str(source))
-            graph.parse(source, format=OXIGRAPH_FORMATS.get(fmt, fmt))
+            _parse_source(graph, source, strict=True)
     except SyntaxError:
         graph = Graph(store="Oxigraph")
         for source in sources:
-            graph.parse(source)
+            _parse_source(graph, source, strict=False)
     return graph
+
+
+def _parse_source(graph, source, strict):
+    """Parse one file into `graph`.
+
+    A JSON-LD file is read with its plain numbers as JSON-LD 1.1 types them
+    (lib/jsonld_numbers.py): rdflib alone would make a plain 80.0 a double,
+    which neither the standard nor Flink does. Other files go to Oxigraph's
+    parser when `strict` and it knows the format, else to rdflib's.
+    """
+    fmt = rdflib.util.guess_format(str(source))
+    if fmt == 'json-ld':
+        data, base = read_jsonld(source)
+        graph.parse(data=data, format='json-ld', base=base, publicID=base)
+    elif strict:
+        graph.parse(source, format=OXIGRAPH_FORMATS.get(fmt, fmt))
+    else:
+        graph.parse(source)
 
 
 def with_canonical_blank_nodes(graph):

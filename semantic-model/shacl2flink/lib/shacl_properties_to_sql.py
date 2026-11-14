@@ -902,10 +902,26 @@ sql_check_literal_datatypes = r"""
 )
 {%endset%}
 
+{#- xsd:double (#958, specification shacl2flink/literal-datatypes).
+    Without a declared type the text decides, as JSON-LD 1.1 types a plain
+    number: a double has a decimal point or an exponent (1.5e-7 has both).
+    That covers both readers of a plain number -- Flink gets the bridge's
+    JavaScript text (80.0 arrives as 80, 1e21 as 1e+21), SQLite the reading
+    of lib/jsonld_numbers.py -- and strings, which are judged by their text.
+    A whole number is an integer, 0 included: there is no exception for it.
+    Declared as xsd:double, any number is one, 80 included: Flink gets the
+    bridge's text 80 for {"@value": 80.0, "@type": "xsd:double"}.
+    The type is compared through IFNULL: NULL = '...' is NULL, not false, and
+    one NULL inside NOT ( ... OR ... ) turns the whole check NULL, so a string
+    such as "80" was never reported. -#}
+{% set undeclared_double %}^[+-]?(?:\d+\.\d*(?:[eE][+-]?\d+)?|\.\d+(?:[eE][+-]?\d+)?|\d+[eE][+-]?\d+)${% endset %}
+{% set any_number %}^[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?${% endset %}
 {% set check_datatypes %}
-(datatypes LIKE '%http://www.w3.org/2001/XMLSchema#double%' AND COALESCE(`valueType`, 'http://www.w3.org/2001/XMLSchema#double') = 'http://www.w3.org/2001/XMLSchema#double'
-        AND {%- if sqlite %} `val`  REGEXP '^(?:0|[+-]?(?:\d+\.\d*|\.\d+|\d+(?:[eE][+-]?\d+)))$' {%- else %}
-        REGEXP(val, '^(?:0|[+-]?(?:\d+\.\d*|\.\d+|\d+(?:[eE][+-]?\d+)))$') {%- endif %})
+(datatypes LIKE '%http://www.w3.org/2001/XMLSchema#double%' AND (
+        (`valueType` IS NULL AND {%- if sqlite %} `val` REGEXP '{{ undeclared_double }}' {%- else %}
+        REGEXP(val, '{{ undeclared_double }}') {%- endif %})
+     OR (IFNULL(`valueType`, '') = 'http://www.w3.org/2001/XMLSchema#double' AND {%- if sqlite %} `val` REGEXP '{{ any_number }}' {%- else %}
+        REGEXP(val, '{{ any_number }}') {%- endif %})))
     OR (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#integer%' AND COALESCE(`valueType`, 'http://www.w3.org/2001/XMLSchema#integer') = 'http://www.w3.org/2001/XMLSchema#integer'
         AND {%- if sqlite %} `val` REGEXP '^[+-]?\d+$' {%- else %}
         REGEXP(val, '^[+-]?\d+$') {%- endif %})

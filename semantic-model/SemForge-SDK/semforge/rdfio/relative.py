@@ -58,6 +58,14 @@ def absolute_contexts(document, path):
     return walk(document)
 
 
+def for_rdflib(document, path):
+    """`document`, read from `path`, as rdflib has to get it: relative
+    contexts made absolute, and plain numbers as JSON-LD 1.1 types them
+    (rdfio/numbers.py). Every JSON-LD document goes to rdflib through this."""
+    from .numbers import as_jsonld_numbers
+    return as_jsonld_numbers(absolute_contexts(document, path))
+
+
 def as_written(iri):
     """The id as the data wrote it: a relative one without the base."""
     text = str(iri)

@@ -293,11 +293,11 @@ def load(path, reuse=None):
             package.context_resolved_locally or swapped
         # One base for a relative id, whatever the process's directory
         # (rdfio/relative.py).
-        from ..rdfio.relative import BASE, absolute_contexts
+        from ..rdfio.relative import BASE, for_rdflib
         if not swapped:
             with open(source, encoding='utf-8') as handle:
                 document = _json.load(handle)
-        package.model.parse(data=_json.dumps(absolute_contexts(document, source)),
+        package.model.parse(data=_json.dumps(for_rdflib(document, source)),
                             format='json-ld', base=BASE)
     # One version of its files each: read-only from here, and what is derived
     # from one is kept with it (rdfio/frozen.py).

@@ -49,6 +49,17 @@ MISSED | test5/model2.jsonld | urn:oee:1       | MinInclusiveConstraintComponent
 MISSED | test5/model2.jsonld | urn:workpiece:1 | MaxInclusiveConstraintComponent | depth
 MISSED | test5/model2.jsonld | urn:workpiece:1 | MinExclusiveConstraintComponent | depth
 
+# The same holds for sh:datatype on numbers (#958, shacl2flink/literal-datatypes:
+# "Strings are judged by their text"). To SHACL a JSON string is an
+# xsd:string and violates xsd:double and xsd:integer alike. The live data path
+# sends every value as a string ("v": "80.0"), so a strict reading would alert
+# on every live number. A text with a decimal point or an exponent is a
+# double, a text of digits an integer. Plain and declared NUMBERS are not
+# listed here: on those, pyshacl and the checks agree.
+MISSED | test24/model1.jsonld | urn:datatype:double-string-dot      | DatatypeConstraintComponent | hasDouble
+MISSED | test24/model1.jsonld | urn:datatype:double-string-exponent | DatatypeConstraintComponent | hasDouble
+MISSED | test24/model1.jsonld | urn:datatype:integer-string-digits  | DatatypeConstraintComponent | hasInteger
+
 
 # --- we name the check that decides, SHACL names the wrapper -------------
 #

@@ -89,3 +89,17 @@
     :isValidForE2E :E2ECartridge .
 
 :E2EState a owl:Class .
+
+# Numbers as JSON-LD 1.1 types them (#958): see E2ENumberMachineShape.
+:E2ENumberMachine a owl:Class,
+        owl:NamedIndividual .
+
+:hasE2EDouble a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :E2ENumberMachine ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
+:hasE2EInteger a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :E2ENumberMachine ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
