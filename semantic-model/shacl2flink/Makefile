@@ -34,9 +34,6 @@ COMMON_CONFIG_FILE = ../../helm/common.yaml
 ENVIRONMENT_CONFIG_FILE = ../../helm/environment/default.yaml
 FUSEKI_HOSTNAME = $$(cat $(ENVIRONMENT_CONFIG_FILE) | yq '.fuseki.externalHostname')
 FUSEKI_REALM = $$(cat $(ENVIRONMENT_CONFIG_FILE) | yq '.fuseki.realms[0]')
-FUSEKI_CLIENT_ID = fuseki
-FUSEKI_CLIENT_SECRET = $$(kubectl -n $(NAMESPACE) get secret/keycloak-client-secret-fuseki -o jsonpath='{.data.CLIENT_SECRET}' | base64 -d)
-KEYCLOAK_HOSTNAME = $$(cat $(ENVIRONMENT_CONFIG_FILE) | yq '.keycloak.externalAuthService.domainname')
 FLINK_DATABASE = $$(cat $(COMMON_CONFIG_FILE) | yq '.flink.db.name')
 FLINK_DATABASE_SERVICE = $$(cat $(COMMON_CONFIG_FILE) | yq '.db.teamId')-$$(cat $(COMMON_CONFIG_FILE) | yq '.db.clusterSvcPostfix')
 FLINK_DATABASE_PORT = $$(cat $(COMMON_CONFIG_FILE) | yq '.db.svcPort')
@@ -184,10 +181,11 @@ flink-deploy: clean
 	kubectl -n $(NAMESPACE) delete -f output/rdf-kafka.yaml --ignore-not-found || make enable-strimzi
 	cd ../../helm && ./helmfile -f helmfile-shacl.yaml apply || make enable-strimzi
 	make enable-strimzi
+	# Before the check: a failing check must not leave Fuseki on the old package.
+	make fuseki-deploy-kms
 	make test-flink-is-deployed
 	sleep 2
 	kubectl -n $(NAMESPACE) -l "app.kubernetes.io/instance"="kafka-connect" delete pod
-	make fuseki-deploy-kms
 
 
 flink-undeploy:
@@ -289,50 +287,20 @@ submit-postgres-tables:
 	kubectl -n $(NAMESPACE) exec -i $${POD} -- bash -c "PGPASSWORD='$${PGPASSWORD}' PGSSLMODE=require psql -h localhost -U $(FLINK_DATABASE_USER_NAME) -d $(FLINK_DATABASE)" < $(OUTPUTDIR)/ngsild.postgres && \
 	kubectl -n $(NAMESPACE) exec -i $${POD} -- bash -c "PGPASSWORD='$${PGPASSWORD}' PGSSLMODE=require psql -h localhost -U $(FLINK_DATABASE_USER_NAME) -d $(FLINK_DATABASE)" < $(OUTPUTDIR)/shacl-constraints.postgres
 
-fuseki-deploy-kms:
+# The KMS graphs go to Fuseki through the cluster (a port-forward to its
+# service), as the SQL goes to Flink and the tables to Postgres: no ingress,
+# no token. The graphs keep their names under the external hostname.
+fuseki-deploy-kms: $(SHACL) $(KNOWLEDGE)
 	@echo "Uploading shacl.ttl and knowledge.ttl to Fuseki"
 	@REALM=$(FUSEKI_REALM) && \
-	SECRET=$(FUSEKI_CLIENT_SECRET) && \
-	TOKEN=$$(curl -sf \
-	    -d "client_id=$(FUSEKI_CLIENT_ID)" \
-	    -d "client_secret=$${SECRET}" \
-	    -d "grant_type=client_credentials" \
-	    "http://$(KEYCLOAK_HOSTNAME)/auth/realms/$${REALM}/protocol/openid-connect/token" \
-	    | jq -r ".access_token") && \
-	[ -n "$${TOKEN}" ] && [ "$${TOKEN}" != "null" ] || { echo "ERROR: failed to obtain Fuseki token"; exit 1; } && \
-	GSP="http://$(FUSEKI_HOSTNAME)/$${REALM}/data" && \
-	GRAPH_BASE="http://$(FUSEKI_HOSTNAME)/$${REALM}" && \
-	CODE=$$(curl -s -o /dev/null -w "%{http_code}" \
-	    -X PUT -H "Authorization: Bearer $${TOKEN}" -H "Content-Type: text/turtle" \
-	    --data-binary @$(SHACL) "$${GSP}?graph=$${GRAPH_BASE}/shacl.ttl") && \
-	echo "shacl.ttl → $${CODE}" && \
-	{ [ "$${CODE}" = "200" ] || [ "$${CODE}" = "201" ]; } || { echo "ERROR: shacl.ttl upload failed ($${CODE})"; exit 1; } && \
-	CODE=$$(curl -s -o /dev/null -w "%{http_code}" \
-	    -X PUT -H "Authorization: Bearer $${TOKEN}" -H "Content-Type: text/turtle" \
-	    --data-binary @$(KNOWLEDGE) "$${GSP}?graph=$${GRAPH_BASE}/knowledge.ttl") && \
-	echo "knowledge.ttl → $${CODE}" && \
-	{ [ "$${CODE}" = "200" ] || [ "$${CODE}" = "201" ]; } || { echo "ERROR: knowledge.ttl upload failed ($${CODE})"; exit 1; }
+	./fuseki_kms.sh deploy $(NAMESPACE) $${REALM} "http://$(FUSEKI_HOSTNAME)/$${REALM}" $(SHACL) $(KNOWLEDGE)
 
 
 fuseki-undeploy-kms:
 	@echo "Removing shacl.ttl and knowledge.ttl from Fuseki"
 	@REALM=$(FUSEKI_REALM) && \
-	SECRET=$(FUSEKI_CLIENT_SECRET) && \
-	TOKEN=$$(curl -sf \
-	    -d "client_id=$(FUSEKI_CLIENT_ID)" \
-	    -d "client_secret=$${SECRET}" \
-	    -d "grant_type=client_credentials" \
-	    "http://$(KEYCLOAK_HOSTNAME)/auth/realms/$${REALM}/protocol/openid-connect/token" \
-	    | jq -r ".access_token") && \
-	[ -n "$${TOKEN}" ] && [ "$${TOKEN}" != "null" ] || { echo "WARNING: could not obtain Fuseki token, skipping KMS undeploy"; exit 0; } && \
-	GSP="http://$(FUSEKI_HOSTNAME)/$${REALM}/data" && \
-	GRAPH_BASE="http://$(FUSEKI_HOSTNAME)/$${REALM}" && \
-	curl -s -o /dev/null -w "shacl.ttl delete: %{http_code}\n" \
-	    -X DELETE -H "Authorization: Bearer $${TOKEN}" \
-	    "$${GSP}?graph=$${GRAPH_BASE}/shacl.ttl" || true && \
-	curl -s -o /dev/null -w "knowledge.ttl delete: %{http_code}\n" \
-	    -X DELETE -H "Authorization: Bearer $${TOKEN}" \
-	    "$${GSP}?graph=$${GRAPH_BASE}/knowledge.ttl" || true
+	./fuseki_kms.sh undeploy $(NAMESPACE) $${REALM} "http://$(FUSEKI_HOSTNAME)/$${REALM}" || \
+	echo "WARNING: the KMS graphs could not be removed from Fuseki"
 
 
 clean:
