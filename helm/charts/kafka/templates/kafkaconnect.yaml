@@ -14,8 +14,8 @@ spec:
   replicas: 1
   image: {{ .Values.mainRegistry }}/{{ .Values.mainRepo }}/{{ .Values.kafka.connect.image }}:{{ .Values.mainVersion }}
   jvmOptions:
-    "-Xms": "128M"
-    "-Xmx": "128M"
+    "-Xms": {{ .Values.kafka.connect.heap | default "128M" | quote }}
+    "-Xmx": {{ .Values.kafka.connect.heap | default "128M" | quote }}
   bootstrapServers: {{ .Values.kafka.bootstrapServer }}
   resources:
     requests:
@@ -28,6 +28,11 @@ spec:
     status.storage.replication.factor: 1
     config.providers: file
     config.providers.file.class: org.apache.kafka.common.config.provider.FileConfigProvider
+    # The connectors bound their producer's buffer.memory (see
+    # kafka.connect.producerBufferMemory); that needs client overrides.
+    # "All" is also the Kafka 3.x default -- stated here so the bound does
+    # not silently depend on it.
+    connector.client.config.override.policy: All
   template:
     pod:
       imagePullSecrets:

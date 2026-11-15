@@ -22,6 +22,10 @@ spec:
     database.dbname: {{ .Values.db.scorpioDb | quote}}
     database.server.name: {{ .Values.kafka.connect.debeziumTopicPrefix | quote }}
     table.include.list: {{ .Values.kafka.connect.tableIncludeList | quote }}
+    # Bound the snapshot's heap use; see kafka.connect.producerBufferMemory.
+    producer.override.buffer.memory: {{ .Values.kafka.connect.producerBufferMemory | default "2097152" | quote }}
+    max.queue.size: {{ .Values.kafka.connect.maxQueueSize | default "2048" | quote }}
+    max.batch.size: {{ .Values.kafka.connect.maxBatchSize | default "512" | quote }}
     key.converter: "org.apache.kafka.connect.json.JsonConverter"
     value.converter: "org.apache.kafka.connect.json.JsonConverter"
     key.converter.schemas.enable: "false"
@@ -53,6 +57,12 @@ spec:
     database.server.name: {{ .Values.kafka.connect.rdfTopicPrefix | quote }}
     table.include.list: {{ .Values.kafka.connect.rdfTable | quote }}
     slot.name : {{ .Values.kafka.connect.rdfSlotName | quote }}
+    # Bound the snapshot's heap use; see kafka.connect.producerBufferMemory.
+    # Without it a large knowledge (OPC UA pumps: 219,500 triples) runs the
+    # worker out of memory on every snapshot and is never fully re-sent.
+    producer.override.buffer.memory: {{ .Values.kafka.connect.producerBufferMemory | default "2097152" | quote }}
+    max.queue.size: {{ .Values.kafka.connect.maxQueueSize | default "2048" | quote }}
+    max.batch.size: {{ .Values.kafka.connect.maxBatchSize | default "512" | quote }}
     key.converter: "org.apache.kafka.connect.json.JsonConverter"
     value.converter: "org.apache.kafka.connect.json.JsonConverter"
     key.converter.schemas.enable: "false"

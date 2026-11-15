@@ -224,6 +224,35 @@ kafka:
     rdfTopicRetention: {{- if hasKey .StateValues.kafkaBridge.debezium "listenTopicRetention" }} {{ .StateValues.kafkaBridge.debezium.listenTopicRetention | quote}}
       {{- else }} "3600000"
       {{- end }}
+    # Heap of the kafka-connect worker, shared by both Debezium connectors.
+    heap: 128M
+    # Bound what a snapshot holds in memory, independent of the table size.
+    #
+    # Debezium streams a snapshot through a cursor; it does not load the
+    # table. What fills the heap is the stretch between reading and Kafka
+    # acknowledging: Connect keeps every record it handed to the producer
+    # (SourceRecord, Struct, offset map) until the ack arrives, and the
+    # producer bounds that only by SERIALIZED bytes (buffer.memory, 32 MB by
+    # default). A 170-byte rdf triple weighs ~10x that on the heap, so 32 MB
+    # of pending sends is ~40k records and more than the 128 MB worker has.
+    # Measured on the OPC UA pumps knowledge (219,500 triples): every rdf
+    # snapshot died with OutOfMemoryError after ~75k records, the task stayed
+    # FAILED until the next restart, and the knowledge was never fully
+    # re-snapshotted -- which the ttl/2 refresh of the Flink state relies on.
+    #
+    # Off-cluster, same image, same heap, real table (live heap after GC):
+    #   defaults                          OOM after ~76k records, 125 MB
+    #   buffer 2 MB                       complete, 51 MB (4x table: 53 MB)
+    #   buffer 2 MB + queue 2048/512      complete, 44 MB (4x table: 44 MB, 14 s)
+    # The peak no longer grows with the table, and the snapshot is faster.
+    # max.queue.size.in.bytes is NOT usable: on Debezium 1.8.1 it fails the
+    # task with a NullPointerException in ChangeEventQueue.drainRecords.
+    #
+    # buffer.memory must stay above the producer's max.request.size (1 MB),
+    # or a single large record cannot be sent at all.
+    producerBufferMemory: "2097152"
+    maxQueueSize: "2048"
+    maxBatchSize: "512"
   config:
     logRetentionHours: {{ .StateValues.kafka.config.logRetentionHours }}
 
