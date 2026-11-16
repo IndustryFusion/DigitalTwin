@@ -11,14 +11,31 @@ whole point of `architecture.md` §8.4.
 
 ## Getting started
 
-**Once, ever:**
+**Once, ever — two steps, because the server and the extension are installed
+separately:**
 
 ```bash
+# 1. The language server (Python): the venv with semforge installed into it
 cd semantic-model/SemForge-SDK && make setup
+
+# 2. The extension (JavaScript): package it and install it into VS Code
+cd vscode
+npm install
+npx @vscode/vsce package                              # writes semforge-<version>.vsix
+code --install-extension semforge-*.vsix --force
 ```
 
-That builds the venv and installs `semforge` into it. The extension finds it on
-its own — it searches upward from whatever folder you opened.
+`make setup` alone installs no extension: without step 2 VS Code shows no
+SemForge icon and lists no SemForge extension. The extension finds the venv on
+its own — it searches upward from whatever folder you opened. Reload any open
+VS Code window after installing.
+
+On **WSL**, run both steps in the WSL shell, and read [On WSL](#on-wsl) below:
+VS Code needs Microsoft's WSL extension there, and in enterprise setups the
+install and the interpreter path have to be done explicitly.
+
+After pulling a newer version, repeat step 2 (and `make setup` if the Python
+side changed) and reload the window.
 
 **Then, every time:** open a folder in VS Code and click the SemForge icon in
 the activity bar. Nothing else. No flags, no launch configuration, no terminal.
@@ -47,6 +64,66 @@ It refuses to write into a directory that already holds artifacts.
 ```bash
 code semantic-model/kms        # or the repo root, or anything between
 ```
+
+### On WSL
+
+The venv is a Linux one, so the extension has to run **on the WSL side** too.
+That takes Microsoft's **WSL** extension (`ms-vscode-remote.remote-wsl`) in the
+Windows VS Code. With it, `code .` in the WSL shell opens a *WSL window* — the
+bottom-left corner says `WSL: <distro>` — and the extension host runs inside
+WSL, next to the venv.
+
+Without it, the Windows VS Code reaches the WSL files over the UNC path
+`\\wsl.localhost\<distro>\…`. VS Code restricts UNC access, and **enterprise
+setups** often enforce that by policy, so this fails, typically as:
+
+```text
+Error [ERR_UNC_HOST_NOT_ALLOWED]: UNC host 'wsl.localhost' access is not allowed
+```
+
+`code --install-extension` in the WSL shell fails with it. And an extension
+installed some other way into the Windows VS Code runs on Windows: it cannot
+see the venv behind the UNC path, cannot run a Linux interpreter, and so never
+finds a language server. Do not work around this by allowlisting the host
+(`security.allowedUNCHosts`); use a WSL window, and do the install and the
+interpreter path explicitly:
+
+1. **Install the WSL extension** in the Windows VS Code (Extensions view, search
+   *WSL*, publisher Microsoft). If your company's extension policy blocks it,
+   ask IT to allow `ms-vscode-remote.remote-wsl`; without it VS Code cannot use
+   the WSL venv.
+2. **Open a WSL window** from the WSL shell and check the bottom-left corner
+   says `WSL: <distro>`:
+
+   ```bash
+   cd semantic-model && code .
+   ```
+
+3. **Install SemForge into the WSL side**, in that window: Extensions view ▸
+   `⋯` ▸ **Install from VSIX…** and pick
+   `SemForge-SDK/vscode/semforge-<version>.vsix`; or, in the window's terminal,
+   the WSL server's own CLI, which does not go through Windows:
+
+   ```bash
+   cd SemForge-SDK/vscode
+   ~/.vscode-server/bin/*/bin/remote-cli/code --install-extension semforge-*.vsix --force
+   # newer VS Code: ~/.vscode-server/cli/servers/Stable-*/server/bin/remote-cli/code
+   ```
+
+   The Extensions view must list SemForge under **`WSL: <distro> - Installed`**,
+   not under *Local - Installed*; uninstall a local copy.
+4. **Set the interpreter explicitly** in the **Remote [WSL: <distro>]** tab of
+   the settings (`Ctrl+,`), not the *User* tab — a User setting is synced to
+   your other machines, where the path does not exist:
+
+   ```json
+   "semforge.pythonPath": "/home/<you>/<path-to>/DigitalTwin/semantic-model/SemForge-SDK/venv/bin/python"
+   ```
+
+   `echo "$PWD/venv/bin/python"` in `SemForge-SDK` prints the value. Check it
+   works: `venv/bin/python -c "import semforge"`.
+5. **SemForge: Restart Language Server**, then **SemForge: Doctor**: it must
+   name that interpreter (`semforge.pythonPath`) and import `semforge`.
 
 ### The views: two columns
 
@@ -524,19 +601,14 @@ moves to the url.
 
 ## Working on the extension itself
 
-Only needed if you are changing the extension's own code:
+To use the extension, install the packaged build as in
+[Getting started](#getting-started). When changing the extension's own code,
+run it from source in a development window instead:
 
 ```bash
 cd semantic-model/SemForge-SDK/vscode
 npm install
 code --extensionDevelopmentPath="$PWD" ../../kms   # or press F5 in this folder
-```
-
-Packaging and installing it instead:
-
-```bash
-npx @vscode/vsce package
-code --install-extension semforge-0.2.0.vsix --force
 ```
 
 Remember that VS Code loads extension JavaScript at window startup, so a change
@@ -698,9 +770,8 @@ folder. Open `kms/shacl.ttl` in it.
 **C. Install a packaged build.**
 
 ```bash
-npm install -g @vscode/vsce
-vsce package                       # produces semforge-0.2.0.vsix
-code --install-extension semforge-0.2.0.vsix
+npx @vscode/vsce package                       # produces semforge-<version>.vsix
+code --install-extension semforge-*.vsix --force
 ```
 
 Installed this way it loads in every window, so open the repository normally.

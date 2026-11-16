@@ -82,8 +82,9 @@ write if the model uses a term that url does not declare.
 ## VS Code
 
 `vscode/` holds the extension. See [vscode/README.md](./vscode/README.md) for
-setup — in short, `make setup` here, then `npm install` there and
-`code --extensionDevelopmentPath="$PWD" ../..`.
+setup — in short, `make setup` here installs the language server only; the
+extension is installed separately, from `vscode/`:
+`npm install && npx @vscode/vsce package && code --install-extension semforge-*.vsix`.
 
 It shows validation and capability errors on the shape that causes them, and
 flags constraints no example ever makes fire — the signal a passing test run
