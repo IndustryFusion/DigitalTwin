@@ -30,7 +30,7 @@ fi
 
 check() { if eval "$2"; then echo "ok   $1"; else echo "FAIL $1"; exit 1; fi; }
 M=semantic-model/opcua
-check '20 entities' '[ "$(jq length $M/instances.jsonld)" = 20 ]'
+check '21 entities' '[ "$(jq length $M/instances.jsonld)" = 21 ]'
 check '46 bindings' '[ "$(grep -c "base:boundBy" $M/bindings.ttl)" = 46 ]'
 check 'no / in an entity id' '! jq -r ".[].id" $M/instances.jsonld | grep -q /'
 check 'bindings conform to the binding validation' \
@@ -55,6 +55,6 @@ cd "$M"
     -j "$OUT/other.jsonld" -e "$OUT/other.entities.ttl" -s "$OUT/other.shacl.ttl" -c "$OUT/other.context.jsonld" -b "$OUT/other.bindings.ttl" \
     "$OUT/other.owl.ttl" >> "$OUT/other.log" 2>&1
 cd ../..
-check 'another server URI: 20 entities' '[ "$(jq length "$OUT/other.jsonld")" = 20 ]'
+check 'another server URI: 21 entities' '[ "$(jq length "$OUT/other.jsonld")" = 21 ]'
 check 'another server URI: no id in common' \
   '[ -z "$(comm -12 <(jq -r ".[].id" $M/instances.jsonld | sort) <(jq -r ".[].id" "$OUT/other.jsonld" | sort))" ]'

@@ -1,0 +1,90 @@
+@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+@prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/> .
+@prefix opcua: <http://opcfoundation.org/UA/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix shacl: <http://my.test/shacl/> .
+@prefix test: <http://my.test/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+shacl:AlphaTypeShape a sh:NodeShape ;
+    sh:property [ a base:SubComponentRelationship ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasItems ;
+            sh:property [ sh:class test:ItemsGroupType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ a base:SubComponentRelationship ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasLink ;
+            sh:property [ sh:class test:LinkType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ a base:SubComponentRelationship ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasLinks ;
+            sh:property [ sh:class test:LinksGroupType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasReferenceType opcua:HasComponent ] ;
+    sh:targetClass test:AlphaType .
+
+shacl:ItemTypeShape a sh:NodeShape ;
+    sh:targetClass test:ItemType .
+
+shacl:ItemsGroupTypeShape a sh:NodeShape ;
+    sh:property [ a base:SubComponentRelationship ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:has%3CItem%3E ;
+            sh:property [ sh:class test:ItemType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasPlaceHolderPattern "[a-zA-Z0-9_-]+" ;
+            base:hasReferenceType opcua:HasComponent ;
+            base:isPlaceHolder true ] ;
+    sh:targetClass test:ItemsGroupType .
+
+shacl:LinkTypeShape a sh:NodeShape ;
+    sh:property [ a base:PeerRelationship ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path opcua:Organizes ;
+            sh:property [ sh:class opcua:BaseObjectType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasReferenceType opcua:Organizes ] ;
+    sh:targetClass test:LinkType .
+
+shacl:LinksGroupTypeShape a sh:NodeShape ;
+    sh:property [ a base:SubComponentRelationship ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasLink%3Cno%3E ;
+            sh:property [ sh:class test:LinkType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasPlaceHolderPattern "Link[a-zA-Z0-9_-]+" ;
+            base:hasReferenceType opcua:HasComponent ;
+            base:isPlaceHolder true ] ;
+    sh:targetClass test:LinksGroupType .
+

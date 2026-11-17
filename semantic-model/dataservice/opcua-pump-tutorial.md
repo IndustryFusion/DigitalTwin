@@ -125,7 +125,7 @@ grep -c 'base:boundBy' bindings.ttl
 cd ../..
 ```
 
-You should see `20` entities and `46` bindings. These are the files you'll use from here on:
+You should see `21` entities and `46` bindings. These are the files you'll use from here on:
 
 | File | Content |
 |---|---|
@@ -158,7 +158,7 @@ curl -s -o /dev/null -w 'HTTP %{http_code}\n' -X POST \
 
 ## Step 5: Onboard the device and start the agent
 
-The dataservice doesn't talk to the broker directly: it hands values to the device agent, which sends them over MQTT. The pump is the device, and the other 19 entities are its subcomponents.
+The dataservice doesn't talk to the broker directly: it hands values to the device agent, which sends them over MQTT. The pump is the device, and the other 20 entities are its subcomponents.
 
 ```bash
 cd NgsildAgent

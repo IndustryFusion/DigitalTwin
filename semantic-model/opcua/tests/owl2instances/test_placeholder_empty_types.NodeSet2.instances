@@ -1,0 +1,114 @@
+[
+    {
+        "type": "test:LinkType",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwNA",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "opcua:Organizes": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAzMg"
+            }
+        ]
+    },
+    {
+        "type": "test:ItemType",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAxMg",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ]
+    },
+    {
+        "type": "test:ItemType",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAxMQ",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ]
+    },
+    {
+        "type": "test:ItemsGroupType",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwMg",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "test:has%3CItem%3E": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAxMg",
+                "datasetId": "http://my.test/hasItem2"
+            },
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAxMQ",
+                "datasetId": "http://my.test/hasItem1"
+            }
+        ]
+    },
+    {
+        "type": "test:LinkType",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAyMQ",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "opcua:Organizes": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAzMQ"
+            }
+        ]
+    },
+    {
+        "type": "test:LinksGroupType",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwMw",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "test:hasLink%3Cno%3E": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAyMQ",
+                "datasetId": "http://my.test/hasLink1"
+            }
+        ]
+    },
+    {
+        "type": "test:AlphaType",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwMQ",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "test:hasLink": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwNA"
+            }
+        ],
+        "test:hasItems": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwMg"
+            }
+        ],
+        "test:hasLinks": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwMw"
+            }
+        ]
+    },
+    {
+        "type": "opcua:BaseObjectType",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAzMQ",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ]
+    },
+    {
+        "type": "opcua:BaseObjectType",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAzMg",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ]
+    }
+]

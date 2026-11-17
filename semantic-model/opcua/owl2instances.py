@@ -339,6 +339,10 @@ a loop.")
         components_found = scan_type(o, classtype)
         if maximal_shacl:
             components_found = True
+        # A placeholder is normative even if its type defines no rules of its own:
+        # without the property, the parent shape would not allow these children at all.
+        if is_placeholder_array:
+            components_found = True
         if components_found:
             has_components = True
             # only if modelling rule is defined (otherwise we assume that this is just
@@ -400,7 +404,7 @@ def scan_type_non_hierachical(target, node, instancetype, shapename, reftype):
         reftype (URIRef): Reference name
 
     Returns:
-        _type_: _description_
+        bool: True if the shape holds a rule for this reference afterwards
     """
     logger.debug(f"Scanning non-hierarchical reference: {reftype} with target {target} in node {node} for type"
                  f"{instancetype} and shape {shapename}")
@@ -431,7 +435,7 @@ non-owning or non-hierarchical reference {reftype} This will be ignored."
             check_object_consistency(shapename, full_attribute_name, shclass, not is_indomain, add_entity=False)
         if is_indomain:
             shaclg.update_shclass_in_property(full_attribute_name, shclass)
-            return
+            return True
         shacl_rule['path'] = full_attribute_name
         rdfutils.get_modelling_rule(g, t, shacl_rule, instancetype)
         e.add_instancetype(instancetype, full_attribute_name)
@@ -450,11 +454,12 @@ non-owning or non-hierarchical reference {reftype} This will be ignored."
                                      None,
                                      reftype=reftype,
                                      maxCount=maxcount)
+        return True
     elif rdfutils.isVariableNodeClass(nodeclass) and type_all is False:
         warnmsg = f"Warning: Variable node {target} is target of \
 non-owning or non-hierarchical reference {reftype} This will be ignored."
         print_warning('ignored_variable_reference', warnmsg)
-    return
+    return False
 
 
 def scan_entity(node, instancetype, id, optional=False):
@@ -568,7 +573,8 @@ will flag this.")
 
     if rdfutils.isObjectNodeClass(nodeclass):
         shacl_rule['is_property'] = False
-        relid = scan_entity(o, classtype, id, shacl_rule['optional'])
+        # A placeholder child is kept even without content, like its SHACL rule in scan_type_recursive
+        relid = scan_entity(o, classtype, id, shacl_rule['optional'] and not is_placeholder)
         if relid is not None:
             has_components = True
             full_attribute_name = utils.get_prefixed(context_graph, attributename)
