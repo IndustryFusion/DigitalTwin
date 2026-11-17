@@ -253,6 +253,14 @@ def check_variable_consistency(shapenode, attribute_path, classtype):
     return False
 
 
+def uardf_import(graph):
+    """The document the ontologies import as uardf ontology, by default the local uardf.ttl (as nodeset2owl.py)."""
+    for imported in sorted(set(graph.objects(None, OWL.imports))):
+        if str(imported).endswith('/uardf.ttl'):
+            return imported
+    return URIRef(utils.file_path_to_uri(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uardf.ttl')))
+
+
 def scan_type(node, instancetype, shape_node=None):
     logger.debug('Scanning type: %s with node %s', instancetype, node)
     # Loop through all supertypes
@@ -803,6 +811,9 @@ if __name__ == '__main__':
     e.bind('ngsi-ld', ngsildns)
     rdfutils = RdfUtils(basens, opcuans)
     e.create_ontolgoy_header(entity_namespace)
+    # entities.ttl uses uardf terms (the node classes of NodeId targets), so it imports the uardf ontology:
+    # the same document the input ontologies import, so a package built from entities.ttl carries it.
+    e.add((URIRef(entity_namespace), OWL.imports, uardf_import(g)))
     for k, v in list(g.namespaces()):
         e.bind(k, v)
         shaclg.bind(k, v)

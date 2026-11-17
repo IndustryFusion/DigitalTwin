@@ -243,6 +243,7 @@ for tuple in "${TESTNODESETS[@]}"; do IFS=","
     mydiff "Compare SHACL" "${SHACL}" "${nodeset}.shacl" "ttl"
     mydiff "Compare instances" "${nodeset}.instances" "${INSTANCES}" "json-ld"
     checkqueries "Check basic entities structure" ${nodeset}
+    ask "Check that the entities import the uardf ontology" ${ENTITIES_FILE} entities_import_uardf.query
     echo SHACL test
     echo ----------
     if [ -f ${nodeset}.pyshacl ]; then

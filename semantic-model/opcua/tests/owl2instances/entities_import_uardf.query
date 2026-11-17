@@ -1,0 +1,6 @@
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+ask where {
+  ?entities a owl:Ontology ;
+      owl:imports ?uardf .
+  FILTER(STRENDS(STR(?uardf), "/uardf.ttl"))
+}
