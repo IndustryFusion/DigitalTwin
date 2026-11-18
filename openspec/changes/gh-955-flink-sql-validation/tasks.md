@@ -21,8 +21,8 @@
 
 ## 4. CI
 
-- [ ] 4.1 Run `make validate-flink` in the `Build` workflow for the packages it compiles and for `tests/e2e-kms`, after the SQL Gateway image is built; verify that it passes on this pull request and fails on a scratch branch with a template that renders a statement Flink rejects ("A broken template fails the build")
+- [x] 4.1 Run `make validate-flink` in the `Build` workflow for the packages it compiles and for `tests/e2e-kms`, after the SQL Gateway image is built; verify that it passes on this pull request and fails on a scratch branch with a template that renders a statement Flink rejects ("A broken template fails the build")
 
 ## 5. Integration check
 
-- [ ] 5.1 Run `openspec validate gh-955-flink-sql-validation --strict`, the tests of the gateway, the operator and shacl2flink; verify all pass, that `Build` and `K8s tests` pass on the pull request, and report every scenario's result in the pull request
+- [x] 5.1 Run `openspec validate gh-955-flink-sql-validation --strict`, the tests of the gateway, the operator and shacl2flink; verify all pass, that `Build` and `K8s tests` pass on the pull request, and report every scenario's result in the pull request
