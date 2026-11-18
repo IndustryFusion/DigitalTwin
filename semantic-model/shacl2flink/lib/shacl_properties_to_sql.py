@@ -113,7 +113,7 @@ def attribute_level_context(filter_deleted=False):
         for level in range(len(columns) - 1))
 
     def ttl_pin(alias_names):
-        pins = ', '.join(f"'{a}' = '0d'" for a in alias_names)
+        pins = ', '.join(f"'{a}' = '0d'" for a in [*alias_names, 'NOSUCHALIAS'])
         return f"/*+ STATE_TTL({pins}) */"
 
     return {
@@ -840,8 +840,8 @@ FROM A1 WHERE `pattern` IS NOT NULL and `index` IS NOT NULL AND {{ constraint_co
 # deployment notices -- SQLite has no POSITION.
 sql_check_literal_in = """
 {% set constraint_cond%}
-NOT edeleted AND NOT IFNULL(adeleted, false) AND attr_typ IS NOT NULL AND NOT POSITION(',"' || replace(replace(val, '\\', '\\\\'), '"', '\\\"') || '"^^' || COALESCE(`valueType` || ',', '')
-    IN ',' || `ins` || ',') > 0
+NOT edeleted AND NOT IFNULL(adeleted, false) AND attr_typ IS NOT NULL AND NOT INSTR(',' || `ins` || ',',
+    ',"' || replace(replace(val, '\\', '\\\\'), '"', '\\\"') || '"^^' || COALESCE(`valueType` || ',', '')) > 0
 {% endset %}
 SELECT this AS resource,
  '{{constraintname}}(' || `parentPath` || `printPath` || ')' AS event,
