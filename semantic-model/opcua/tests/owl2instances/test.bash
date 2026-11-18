@@ -58,6 +58,8 @@ TESTNODESETS=(
     test_object_example.NodeSet2,${EXURI}AlphaType,,,,,${EXURI}
     test_pumps_instanceexample,http://opcfoundation.org/UA/Pumps/PumpType,http://yourorganisation.org/InstanceExample/,pumps
     test_variable_arrays.NodeSet2,${TESTURI}AlphaType
+    test_declaration_additions.NodeSet2,${TESTURI}AlphaType,,,,DEEP_DECLARATION_ADDITIONS
+    test_declaration_additions_violations.NodeSet2,${TESTURI}AlphaType,,,,DEEP_DECLARATION_ADDITIONS
     test_placeholder_empty_types.NodeSet2,${TESTURI}AlphaType
     )
 CLEANGRAPH=cleangraph.py

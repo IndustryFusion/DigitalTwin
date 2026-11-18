@@ -43,7 +43,7 @@ from dataclasses import asdict, dataclass, field
 
 from ..errors import Diagnostic
 from ..ngsild.views import DataView, ViewStats
-from ..validate.results import Report, Result, Status
+from ..validate.results import Cause, Report, Result, Status
 
 NOTIFICATION = 'semforge/verdicts'
 CACHE_KEY = 'verdicts'
@@ -76,7 +76,9 @@ def _report_out(report):
 
 def _report_in(data):
     return Report(
-        results=[Result(**dict(r, status=Status(r['status']))) for r in data['results']],
+        results=[Result(**dict(r, status=Status(r['status']),
+                               cause=tuple(Cause(**c) for c in r.get('cause', ()))))
+                 for r in data['results']],
         view_stats=[ViewStats(**dict(s, view=DataView(s['view']))) for s in data['view_stats']],
         diagnostics=[Diagnostic(**d) for d in data['diagnostics']],
         complete=data['complete'], rule_iterations=data['rule_iterations'])

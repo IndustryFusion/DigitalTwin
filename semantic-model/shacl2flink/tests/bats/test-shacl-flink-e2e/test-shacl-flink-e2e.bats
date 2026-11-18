@@ -50,6 +50,13 @@ CARTRIDGE_TYPE=${E2E}/E2ECartridge
 STATE_PROP=${E2E}/hasE2EState
 RANGE_PROP=${E2E}/hasE2ERange
 CARTRIDGE_REL=${E2E}/hasE2ECartridge
+# A node shape on a relationship's object (openspec gh-985): the owner's
+# hasE2EPart applies a node shape requiring hasE2ELevel (a double) of the part.
+OWNER_TYPE=${E2E}/E2EOwner
+PART_TYPE=${E2E}/E2EPart
+PART_REL=${E2E}/hasE2EPart
+LEVEL_PROP=${E2E}/hasE2ELevel
+NODE_EVENT="NodeConstraintComponent(${PART_REL}"
 
 ALERTS_OUT=/tmp/SHACL_FLINK_ALERTS
 TRIGGER_ERR=/tmp/SHACL_FLINK_TRIGGER_ERR
@@ -68,6 +75,17 @@ TEST_DEL_ATTR="urn:e2e-flink-del-attr:${RUN_ID}"
 TEST_DEL_LINKED="urn:e2e-flink-del-linked:${RUN_ID}"
 TEST_DEL_TARGET="urn:e2e-flink-del-target:${RUN_ID}"
 TEST_DEL_RECREATE="urn:e2e-flink-del-recreate:${RUN_ID}"
+TEST_NODE_OWNER="urn:e2e-flink-node-owner:${RUN_ID}"
+TEST_NODE_PART="urn:e2e-flink-node-part:${RUN_ID}"
+TEST_NODE_ATTR_OWNER="urn:e2e-flink-node-attr-owner:${RUN_ID}"
+TEST_NODE_ATTR_PART="urn:e2e-flink-node-attr-part:${RUN_ID}"
+TEST_NODE_MOVE_OWNER="urn:e2e-flink-node-move-owner:${RUN_ID}"
+TEST_NODE_MOVE_BAD="urn:e2e-flink-node-move-bad:${RUN_ID}"
+TEST_NODE_MOVE_GOOD="urn:e2e-flink-node-move-good:${RUN_ID}"
+TEST_NODE_DEL_OWNER="urn:e2e-flink-node-del-owner:${RUN_ID}"
+TEST_NODE_DEL_PART="urn:e2e-flink-node-del-part:${RUN_ID}"
+TEST_NODE_PH_OWNER="urn:e2e-flink-node-ph-owner:${RUN_ID}"
+TEST_NODE_PH_PART="urn:e2e-flink-node-ph-part:${RUN_ID}"
 # A fixed instant in the past, standing in for an ngsi-ld:observedAt. Records
 # carrying it are older than everything else on the topic, which is the whole
 # point: it cannot win on time and must win on arrival order.
@@ -122,6 +140,16 @@ publish_relationship() {
     local entity=$1 name=$2 target=$3
     printf '{"id":"%s\\\\%s\\\\@none","entityId":"%s","name":"%s","nodeType":"@id","type":"https://uri.etsi.org/ngsi-ld/Relationship","attributeValue":"%s","datasetId":"@none","deleted":false,"synced":true}\n' \
         "${entity}" "${name}" "${entity}" "${name}" "${target}" \
+        | kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP}
+}
+
+# A relationship instance with a datasetId: an element of a placeholder. The
+# attributes key carries the datasetId, as create_ngsild_models.py and the
+# bridge write it, so the instances are separate rows.
+publish_relationship_ds() {
+    local entity=$1 name=$2 target=$3 dataset=$4
+    printf '{"id":"%s\\\\%s\\\\%s","entityId":"%s","name":"%s","nodeType":"@id","type":"https://uri.etsi.org/ngsi-ld/Relationship","attributeValue":"%s","datasetId":"%s","deleted":false,"synced":true}\n' \
+        "${entity}" "${name}" "${dataset}" "${entity}" "${name}" "${target}" "${dataset}" \
         | kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP}
 }
 
@@ -383,6 +411,26 @@ wait_for_converged() {
     local resource=$1 expected=$2 timeout=${3:-90} waited=0
     while [ "${waited}" -lt "${timeout}" ]; do
         [ "$(final_alert_state "${resource}")" = "${expected}" ] && return 0
+        sleep 3
+        waited=$((waited + 3))
+    done
+    return 1
+}
+
+# Final state of ONE alert of a resource: the key is (resource, event), so an
+# entity can hold several alerts and a placeholder relationship one per
+# instance. final_alert_state reads the resource only and cannot tell them apart.
+final_event_state() {
+    local resource=$1 fragment=$2
+    awk -F';' -v r="${resource}" -v f="${fragment}" \
+        'index($1,r) && index($1,f) {last=$2; seen=1} END {print (seen && last!="") ? "ALERT" : "CLEAR"}' \
+        "${ALERTS_OUT}" 2>/dev/null
+}
+
+wait_for_event_converged() {
+    local resource=$1 fragment=$2 expected=$3 timeout=${4:-90} waited=0
+    while [ "${waited}" -lt "${timeout}" ]; do
+        [ "$(final_event_state "${resource}" "${fragment}")" = "${expected}" ] && return 0
         sleep 3
         waited=$((waited + 3))
     done
@@ -745,6 +793,161 @@ else:
         grep "${TEST_DEL_RECREATE}" ${ALERTS_OUT} >&3 || true
     fi
     [ "${result}" = "CLEAR" ]
+}
+
+@test "a referenced entity without the declared member raises one node alert on its owner" {
+    start_alert_capture
+    # The part has no hasE2ELevel. E2EPart has no shape of its own: only the
+    # owner's declaration requires the level, so the alert belongs to the owner.
+    publish_entity "${TEST_NODE_PART}" "${PART_TYPE}"
+    publish_entity "${TEST_NODE_OWNER}" "${OWNER_TYPE}"
+    publish_relationship "${TEST_NODE_OWNER}" "${PART_REL}" "${TEST_NODE_PART}"
+    run wait_for_alert "${TEST_NODE_OWNER}" "${NODE_EVENT}[0])" 180
+    if [ "$status" -ne 0 ]; then
+        echo "# no node alert on the owner; captured:" >&3
+        grep -e "${TEST_NODE_OWNER}" -e "${TEST_NODE_PART}" ${ALERTS_OUT} >&3 || echo "# (none)" >&3
+        dump_trigger_rows "${TEST_NODE_OWNER}" "NodeConstraintComponent"
+        dump_trigger_rows "${TEST_NODE_PART}" "CountConstraintComponent"
+    fi
+    [ "$status" -eq 0 ]
+    stop_alert_capture
+
+    # The text leads to the cause: the relationship instance, the referenced
+    # entity, the missing member and its count.
+    run grep "${TEST_NODE_OWNER}" ${ALERTS_OUT}
+    echo "# ${output}" >&3
+    [[ "${output}" == *"${PART_REL}[0] failed for ${TEST_NODE_OWNER}"* ]]
+    [[ "${output}" == *"The referenced entity ${TEST_NODE_PART} does not conform"* ]]
+    [[ "${output}" == *"${LEVEL_PROP} failed for ${TEST_NODE_PART}. Found 0 properties instead of [1, 1]!"* ]]
+    # Nothing is raised on the part itself: it conforms to its own type.
+    run awk -F';' -v r="${TEST_NODE_PART}" 'index($1,r)' ${ALERTS_OUT}
+    [ -z "${output}" ]
+}
+
+@test "the node alert follows the referenced entity's attributes" {
+    # Self-contained: bats evaluates the file header per test, so every test has
+    # its own RUN_ID and cannot continue another test's entities.
+    start_alert_capture
+    publish_entity "${TEST_NODE_ATTR_PART}" "${PART_TYPE}"
+    publish_entity "${TEST_NODE_ATTR_OWNER}" "${OWNER_TYPE}"
+    publish_relationship "${TEST_NODE_ATTR_OWNER}" "${PART_REL}" "${TEST_NODE_ATTR_PART}"
+    run wait_for_alert "${TEST_NODE_ATTR_OWNER}" "${NODE_EVENT}[0])" 180
+    [ "$status" -eq 0 ] || dump_trigger_rows "${TEST_NODE_ATTR_PART}" "CountConstraintComponent"
+    [ "$status" -eq 0 ]
+    echo "# ${TEST_NODE_ATTR_OWNER} alerts for its part's missing level" >&3
+
+    # Repair: the level arrives on the PART. Nothing about the owner changes.
+    publish_property "${TEST_NODE_ATTR_PART}" "${LEVEL_PROP}" "0.5" "http://www.w3.org/2001/XMLSchema#double"
+    run wait_for_event_converged "${TEST_NODE_ATTR_OWNER}" "${NODE_EVENT}" CLEAR 120
+    [ "$status" -eq 0 ] || grep "${TEST_NODE_ATTR_OWNER}" ${ALERTS_OUT} >&3 || true
+    [ "$status" -eq 0 ]
+    echo "# repairing the part cleared the owner's alert" >&3
+
+    # A value of the wrong datatype raises it again, naming the datatype.
+    rearm_alert_capture
+    publish_property "${TEST_NODE_ATTR_PART}" "${LEVEL_PROP}" "high" "http://www.w3.org/2001/XMLSchema#string"
+    run wait_for_alert "${TEST_NODE_ATTR_OWNER}" "${NODE_EVENT}[0])" 120
+    [ "$status" -eq 0 ] || dump_trigger_rows "${TEST_NODE_ATTR_PART}" "DatatypeConstraintComponent"
+    [ "$status" -eq 0 ]
+    # The capture holds the alert as JSON, so the quotes around the value arrive escaped.
+    run grep "${TEST_NODE_ATTR_OWNER}" ${ALERTS_OUT}
+    datatype_text=${output}
+
+    # And a double again clears it.
+    publish_property "${TEST_NODE_ATTR_PART}" "${LEVEL_PROP}" "0.7" "http://www.w3.org/2001/XMLSchema#double"
+    run wait_for_event_converged "${TEST_NODE_ATTR_OWNER}" "${NODE_EVENT}" CLEAR 120
+    # Stop the capture before asserting: a failed assertion with kafkacat still
+    # running leaves bats waiting on it until the job's timeout.
+    stop_alert_capture
+    [[ "${datatype_text}" == *"Datatype check failed: value="*"high"*"do not match"* ]]
+    [ "$status" -eq 0 ]
+}
+
+@test "re-pointing the relationship moves the verdict with it" {
+    # The alert is keyed by the relationship instance, not by the entity it refers to: pointing the same
+    # instance at another entity updates the one alert rather than leaving one behind for the old entity.
+    start_alert_capture
+    publish_entity "${TEST_NODE_MOVE_BAD}" "${PART_TYPE}"
+    publish_entity "${TEST_NODE_MOVE_GOOD}" "${PART_TYPE}"
+    publish_property "${TEST_NODE_MOVE_GOOD}" "${LEVEL_PROP}" "0.5" "http://www.w3.org/2001/XMLSchema#double"
+    publish_entity "${TEST_NODE_MOVE_OWNER}" "${OWNER_TYPE}"
+    publish_relationship "${TEST_NODE_MOVE_OWNER}" "${PART_REL}" "${TEST_NODE_MOVE_BAD}"
+    run wait_for_alert "${TEST_NODE_MOVE_OWNER}" "${NODE_EVENT}[0])" 180
+    [ "$status" -eq 0 ] || dump_trigger_rows "${TEST_NODE_MOVE_BAD}" "CountConstraintComponent"
+    [ "$status" -eq 0 ]
+    echo "# ${TEST_NODE_MOVE_OWNER} alerts while it refers to the part without a level" >&3
+
+    # The same instance (@none) now refers to the conforming part: the alert clears.
+    publish_relationship "${TEST_NODE_MOVE_OWNER}" "${PART_REL}" "${TEST_NODE_MOVE_GOOD}"
+    run wait_for_event_converged "${TEST_NODE_MOVE_OWNER}" "${NODE_EVENT}" CLEAR 120
+    [ "$status" -eq 0 ] || grep "${TEST_NODE_MOVE_OWNER}" ${ALERTS_OUT} >&3 || true
+    [ "$status" -eq 0 ]
+    echo "# re-pointed to the conforming part: cleared" >&3
+
+    # And back: it raises again, naming the part it now refers to.
+    rearm_alert_capture
+    publish_relationship "${TEST_NODE_MOVE_OWNER}" "${PART_REL}" "${TEST_NODE_MOVE_BAD}"
+    run wait_for_alert "${TEST_NODE_MOVE_OWNER}" "${NODE_EVENT}[0])" 120
+    stop_alert_capture
+    [ "$status" -eq 0 ]
+    run grep "${TEST_NODE_MOVE_OWNER}" ${ALERTS_OUT}
+    [[ "${output}" == *"The referenced entity ${TEST_NODE_MOVE_BAD} does not conform"* ]]
+}
+
+@test "deleting the referenced entity raises the node alert on its owner" {
+    start_alert_capture
+    publish_entity "${TEST_NODE_DEL_PART}" "${PART_TYPE}"
+    publish_property "${TEST_NODE_DEL_PART}" "${LEVEL_PROP}" "0.5" "http://www.w3.org/2001/XMLSchema#double"
+    publish_entity "${TEST_NODE_DEL_OWNER}" "${OWNER_TYPE}"
+    publish_relationship "${TEST_NODE_DEL_OWNER}" "${PART_REL}" "${TEST_NODE_DEL_PART}"
+    # Conforming first, so the alert that follows is caused by the deletion.
+    sleep 20
+    run wait_for_event_converged "${TEST_NODE_DEL_OWNER}" "${NODE_EVENT}" CLEAR 90
+    [ "$status" -eq 0 ]
+    echo "# ${TEST_NODE_DEL_OWNER} refers to a conforming part, now deleting the part" >&3
+
+    # As the bridge sends a deletion: the entity and every attribute deleted=true.
+    rearm_alert_capture
+    publish_attribute_deleted "${TEST_NODE_DEL_PART}" "${LEVEL_PROP}"
+    publish_entity_deleted "${TEST_NODE_DEL_PART}" "${PART_TYPE}"
+    run wait_for_alert "${TEST_NODE_DEL_OWNER}" "${NODE_EVENT}[0])" 120
+    if [ "$status" -ne 0 ]; then
+        echo "# deleting the part raised no node alert; captured:" >&3
+        grep "${TEST_NODE_DEL_OWNER}" ${ALERTS_OUT} >&3 || echo "# (none)" >&3
+        dump_trigger_rows "${TEST_NODE_DEL_PART}" "CountConstraintComponent"
+    fi
+    [ "$status" -eq 0 ]
+    stop_alert_capture
+    run grep "${TEST_NODE_DEL_OWNER}" ${ALERTS_OUT}
+    [[ "${output}" == *"Found 0 properties instead of [1, 1]!"* ]]
+    bad=$(negative_counts "${TEST_NODE_DEL_OWNER}")
+    [ -z "${bad}" ]
+}
+
+@test "a placeholder relationship raises one node alert, only for the violating instance" {
+    start_alert_capture
+    # Three instances of hasE2EPart; only the second refers to a part without a level.
+    for i in 1 2 3; do
+        publish_entity "${TEST_NODE_PH_PART}-${i}" "${PART_TYPE}"
+    done
+    publish_property "${TEST_NODE_PH_PART}-1" "${LEVEL_PROP}" "0.5" "http://www.w3.org/2001/XMLSchema#double"
+    publish_property "${TEST_NODE_PH_PART}-3" "${LEVEL_PROP}" "0.5" "http://www.w3.org/2001/XMLSchema#double"
+    publish_entity "${TEST_NODE_PH_OWNER}" "${OWNER_TYPE}"
+    for i in 1 2 3; do
+        publish_relationship_ds "${TEST_NODE_PH_OWNER}" "${PART_REL}" "${TEST_NODE_PH_PART}-${i}" "urn:e2e-ds:${i}"
+    done
+    run wait_for_alert "${TEST_NODE_PH_OWNER}" "${NODE_EVENT}[urn:e2e-ds:2])" 180
+    [ "$status" -eq 0 ] || grep "${TEST_NODE_PH_OWNER}" ${ALERTS_OUT} >&3 || true
+    [ "$status" -eq 0 ]
+    # Settle, then the other two instances must have no alert open.
+    sleep 30
+    stop_alert_capture
+    for i in 1 3; do
+        state=$(final_event_state "${TEST_NODE_PH_OWNER}" "${NODE_EVENT}[urn:e2e-ds:${i}])")
+        echo "# instance urn:e2e-ds:${i}: ${state}" >&3
+        [ "${state}" = "CLEAR" ]
+    done
+    [ "$(final_event_state "${TEST_NODE_PH_OWNER}" "${NODE_EVENT}[urn:e2e-ds:2])")" = "ALERT" ]
 }
 
 @test "no alert produced during this run reports a negative count" {

@@ -103,3 +103,22 @@
         owl:ObjectProperty ;
     rdfs:domain :E2ENumberMachine ;
     rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
+# A node shape on a relationship's object (openspec gh-985): an E2EOwner's
+# hasE2EPart refers to an E2EPart, and the declaration of that part in the
+# owner requires hasE2ELevel of the part. See E2EOwnerShape.
+:E2EOwner a owl:Class,
+        owl:NamedIndividual .
+
+:E2EPart a owl:Class,
+        owl:NamedIndividual .
+
+:hasE2EPart a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :E2EOwner ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Relationship> .
+
+:hasE2ELevel a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :E2EPart ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .

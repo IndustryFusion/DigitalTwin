@@ -190,6 +190,12 @@ opcuans = None  # dito
 ngsildns = Namespace('https://uri.etsi.org/ngsi-ld/')
 scanned_types = set()
 scanned_entities = set()
+# declaring type -> browse paths of declarations that add members more than one relationship deep
+deep_additions = defaultdict(set)
+# instance declaration node -> its declaration shape (one shape per declaration, also when several types
+# refer to the same declaration node)
+declaration_shapes = {}
+empty_declarations = set()       # declarations whose additions give no rule
 
 
 def check_object_consistency(shapenode, attribute_path, classtype, suppress_warnings=False, add_entity=True):
@@ -259,6 +265,34 @@ def uardf_import(graph):
         if str(imported).endswith('/uardf.ttl'):
             return imported
     return URIRef(utils.file_path_to_uri(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uardf.ttl')))
+
+
+def collect_deep_additions(declaration, declaring_type, path, depth=0):
+    """Record the object declarations below `declaration` which add members beyond their type. They are
+    more than one relationship away from the owning type, so their additions are not validated."""
+    if depth > 20:
+        return
+    for reference, child in rdfutils.get_all_subreferences(g, declaration, opcuans['HasChild']):
+        if reference in ignored_hierarchical_references:
+            continue
+        nodeclass, childtype = rdfutils.get_type(g, child)
+        if not rdfutils.isObjectNodeClass(nodeclass) or childtype is None:
+            continue
+        if next(g.objects(child, opcuans['HasModellingRule']), None) is None:
+            continue
+        childpath = f"{path}/{next(g.objects(child, UARDF['name']), child)}"
+        if rdfutils.get_added_children(g, child, childtype, ignored_hierarchical_references):
+            deep_additions[declaring_type].add(childpath)
+        collect_deep_additions(child, declaring_type, childpath, depth + 1)
+
+
+def report_deep_additions():
+    """Report, once per declaring type, the declarations whose additions are not validated."""
+    for declaring_type in sorted(deep_additions):
+        paths = sorted(deep_additions[declaring_type])
+        print_warning('deep_declaration_additions',
+                      f"{declaring_type}: {len(paths)} instance declaration(s) add members more than one "
+                      f"relationship deep, which are not validated: {', '.join(paths)}")
 
 
 def scan_type(node, instancetype, shape_node=None):
@@ -335,6 +369,18 @@ a loop.")
         if is_placeholder_array and placeholder_pattern is None:
             logger.warning(f"Array modelling rule found for node {o} but no placeholder pattern in Browsename"
                            f"{attributename}.")
+        # Members this declaration adds beyond its type are part of the declaring type's definition.
+        # They are validated one relationship deep, through a declaration shape (see below); deeper
+        # additions are only reported.
+        declaration = o
+        additions = []
+        declaring_type = None
+        parent_nodeclass, _ = rdfutils.get_type(g, node)
+        if rdfutils.isObjectTypeNodeClass(parent_nodeclass):
+            declaring_type = next(g.objects(node, UARDF['definesType']), None)
+            additions = rdfutils.get_added_children(g, declaration, classtype, ignored_hierarchical_references)
+            if declaring_type is not None:
+                collect_deep_additions(declaration, declaring_type, str(browse_name))
         # Now, get the type node. Do not recurse on the instance declaration
         # instance declarations might contain references which are not normative
         # for the type node
@@ -345,28 +391,46 @@ a loop.")
         except Exception:
             pass
         components_found = scan_type(o, classtype)
+        # scan_type reports the content of a type only on its first visit. A member of a declaration shape
+        # (a shape without target) gets its rule whenever its type has rules, however often it was visited.
+        if not components_found and shaclg.get_targetclass(shapename) is None and shaclg.type_has_rules(classtype):
+            components_found = True
         if maximal_shacl:
             components_found = True
         # A placeholder is normative even if its type defines no rules of its own:
         # without the property, the parent shape would not allow these children at all.
-        if is_placeholder_array:
+        if is_placeholder_array or additions:
             components_found = True
         if components_found:
             has_components = True
             # only if modelling rule is defined (otherwise we assume that this is just
             # an instance declaration which contains references which are not normative
             shacl_rule['contentclass'] = classtype
-            shaclg.create_shacl_property(shapename,
-                                         shacl_rule['path'],
-                                         shacl_rule['optional'],
-                                         shacl_rule['array'],
-                                         False,
-                                         True,
-                                         shacl_rule['contentclass'],
-                                         None,
-                                         is_subcomponent=True,
-                                         placeholder_pattern=placeholder_pattern,
-                                         reftype=reftype)
+            property = shaclg.create_shacl_property(shapename,
+                                                    shacl_rule['path'],
+                                                    shacl_rule['optional'],
+                                                    shacl_rule['array'],
+                                                    False,
+                                                    True,
+                                                    shacl_rule['contentclass'],
+                                                    None,
+                                                    is_subcomponent=True,
+                                                    placeholder_pattern=placeholder_pattern,
+                                                    reftype=reftype)
+            if additions and declaring_type is not None and property is not None:
+                declaration_shape = declaration_shapes.get(declaration)
+                if declaration_shape is None:
+                    declaration_shape = shaclg.get_declaration_shape_name(declaring_type, browse_name)
+                    declaration_shapes[declaration] = declaration_shape
+                    if shaclg.create_declaration_shape(declaration_shape):
+                        for added_reference, added_child in additions:
+                            scan_type_recursive(added_child, declaration, classtype, declaration_shape,
+                                                added_reference)
+                        if shaclg.remove_empty_declaration_shape(declaration_shape):
+                            # none of the additions gives a rule: nothing to apply
+                            empty_declarations.add(declaration)
+                if declaration not in empty_declarations:
+                    shaclg.add_node_to_relationship(property, declaration_shape)
     elif rdfutils.isVariableNodeClass(nodeclass):
         stop_scan = check_variable_consistency(shapename, attributename, classtype)
         if stop_scan:
@@ -470,7 +534,7 @@ non-owning or non-hierarchical reference {reftype} This will be ignored."
     return False
 
 
-def scan_entity(node, instancetype, id, optional=False):
+def scan_entity(node, instancetype, id, optional=False, declaration_shape=None):
     logger.debug(f"Scanning entity: {node} for type {instancetype} with id {id}")
     node_id = rdfutils.generate_node_id(g, rootentity, node, id)
     # detect recursion
@@ -495,8 +559,8 @@ def scan_entity(node, instancetype, id, optional=False):
     children = rdfutils.get_all_subreferences(g, node, opcuans['HasChild'])
     for reference, target in children:
         if reference not in ignored_hierarchical_references:
-            has_components = scan_entity_recursive(node, id, instance, node_id,
-                                                   target, type=instancetype) or has_components
+            has_components = scan_entity_recursive(node, id, instance, node_id, target, type=instancetype,
+                                                   declaration_shape=declaration_shape) or has_components
     organizes = rdfutils.get_all_subreferences(g, node, opcuans['Organizes'])
     for organizes_reference, target in organizes:
         has_components = scan_entity_nonrecursive(node, id, instance, node_id, target,
@@ -544,7 +608,10 @@ def scan_entity_variable(node, instancetype, id, optional=False):
     return attributes
 
 
-def scan_entity_recursive(node, id, instance, node_id, o, type=None, is_property=False):
+def scan_entity_recursive(node, id, instance, node_id, o, type=None, is_property=False, declaration_shape=None):
+    """Scan the child `o` of `node`. `declaration_shape` constrains the members that the instance
+    declaration of `node` adds beyond its type; they are looked up there when the type does not
+    declare them."""
     logger.debug(f"Scanning entity recursively: {node} for type {type} with id {id}")
     has_components = False
     shacl_rule = {}
@@ -558,6 +625,17 @@ def scan_entity_recursive(node, id, instance, node_id, o, type=None, is_property
                                                                    classtype, attribute_prefix)
     else:
         optional, array, path = (None, None, None)
+    if path is None and declaration_shape is not None and rdfutils.isObjectNodeClass(nodeclass):
+        # An object member the declaration adds: found in the declaration shape by its name or placeholder
+        # pattern alone, so that the shape's sh:class checks the instance's class.
+        optional, array, path = shaclg.get_modelling_rule_and_path(browse_name, None, classtype,
+                                                                   attribute_prefix, shape=declaration_shape)
+        # A fully generic placeholder (e.g. <Part>) matches every name, so the name cannot tell its instances
+        # from other children: only children of its type (or a subtype) count as instances.
+        if path is not None and shaclg.is_generic_placeholder(declaration_shape, path):
+            shclass = shaclg.get_shclass(declaration_shape, path)
+            if shclass is not None and not utils.is_subclass(g, classtype, shclass):
+                optional, array, path = (True, True, None)
     if path is not None:
         original_attributename = urllib.parse.quote(browse_name)
         attributename = path
@@ -567,7 +645,9 @@ def scan_entity_recursive(node, id, instance, node_id, o, type=None, is_property
 
     try:
         expanded_type = utils.expand_term(context_graph, instance['type'])
-        is_placeholder = shaclg.is_placeholder(expanded_type, attributename)
+        is_placeholder = shaclg.is_placeholder(expanded_type, attributename) or \
+            (declaration_shape is not None and
+             shaclg.is_placeholder(None, attributename, shape=declaration_shape))
     except Exception:
         is_placeholder = False
     if is_placeholder:
@@ -582,7 +662,10 @@ will flag this.")
     if rdfutils.isObjectNodeClass(nodeclass):
         shacl_rule['is_property'] = False
         # A placeholder child is kept even without content, like its SHACL rule in scan_type_recursive
-        relid = scan_entity(o, classtype, id, shacl_rule['optional'] and not is_placeholder)
+        child_declaration_shape = shaclg.get_declaration_shape(URIRef(type), attributename) \
+            if type is not None else None
+        relid = scan_entity(o, classtype, id, shacl_rule['optional'] and not is_placeholder,
+                            declaration_shape=child_declaration_shape)
         if relid is not None:
             has_components = True
             full_attribute_name = utils.get_prefixed(context_graph, attributename)
@@ -859,6 +942,7 @@ Machinery Folder was found in instance ontology.")
         logger.debug(f"Scanning type: {instancetype}")
         root = next(g.subjects(UARDF['definesType'], URIRef(str(instancetype))))
         scan_type(root, instancetype)
+    report_deep_additions()
     if shaclname is not None:
         shaclg.serialize(destination=shaclname)
         shacl_dir, shacl_file = os.path.split(shaclname)

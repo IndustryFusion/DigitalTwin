@@ -147,3 +147,29 @@ SELECT $this ?value ?type
             sh:property [ sh:path ngsild:hasValue ;
                     sh:datatype xsd:integer ;
                     sh:nodeKind sh:Literal ] ] .
+
+# ------------------------------------------- node shape on a relationship's object
+# The members an instance declaration adds to a child of a generic type (openspec
+# gh-985-instance-declaration-shapes): the owner's hasE2EPart applies a node shape
+# to the entity it refers to. E2EPart itself has no shape -- the requirement comes
+# from the owner's declaration, so the alert belongs to the OWNER, one per
+# relationship instance (NodeConstraintComponent(hasE2EPart[<datasetId>])), and
+# follows the part's attributes, the part's deletion and the relationship.
+# hasE2EPart has no count, so a placeholder with several datasetIds is allowed.
+:E2EOwnerShape a sh:NodeShape ;
+    sh:targetClass iffBaseEntities:E2EOwner ;
+    sh:property [ sh:path iffBaseEntities:hasE2EPart ;
+            sh:nodeKind sh:BlankNode ;
+            sh:property [ sh:path ngsild:hasObject ;
+                    sh:class iffBaseEntities:E2EPart ;
+                    sh:node :E2EOwner_PartDeclarationShape ] ] .
+
+# No target of its own: it applies where an E2EOwner's hasE2EPart refers to an entity.
+:E2EOwner_PartDeclarationShape a sh:NodeShape ;
+    sh:property [ sh:path iffBaseEntities:hasE2ELevel ;
+            sh:minCount 1 ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:property [ sh:path ngsild:hasValue ;
+                    sh:nodeKind sh:Literal ;
+                    sh:datatype xsd:double ] ] .

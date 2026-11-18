@@ -49,6 +49,54 @@ class Shacl:
         self.shaclg.add((shapename, SH.targetClass, URIRef(targetclass)))
         return shapename
 
+    def get_declaration_shape_name(self, declaring_type, declaration_name):
+        """Deterministic IRI of the shape for the members an instance declaration adds: named after the
+        type that declares it and the declaration's browse name."""
+        name = re.sub(r'[^A-Za-z0-9_-]', '_', str(declaration_name))
+        return self.shacl_namespace[f'{self.get_typename(declaring_type)}_{name}DeclarationShape']
+
+    def create_declaration_shape(self, shapename):
+        """Create the node shape for an instance declaration's additions. It has no target: it applies
+        only where a relationship's object refers to it (sh:node).
+
+        Returns:
+            bool: True if the shape was created now, False if it existed already
+        """
+        if (shapename, RDF.type, SH.NodeShape) in self.shaclg:
+            return False
+        self.shaclg.add((shapename, RDF.type, SH.NodeShape))
+        return True
+
+    def remove_empty_declaration_shape(self, shapename):
+        """Drop a declaration shape none of whose members gave a constraint, and say whether it was dropped.
+
+        Additions whose type has no rules (an object of a type without members, a variable that is not
+        checked) give no property. An empty node shape constrains nothing, and shacl2flink refuses a
+        node shape on a relationship's object that produced no constraint."""
+        if (shapename, SH.property, None) in self.shaclg:
+            return False
+        self.shaclg.remove((shapename, None, None))
+        return True
+
+    def add_node_to_relationship(self, property, shapename):
+        """Apply a node shape to the object of the relationship described by `property`."""
+        for subproperty in self.shaclg.objects(property, SH.property):
+            if (subproperty, SH.path, self.ngsildns['hasObject']) in self.shaclg:
+                self.shaclg.add((subproperty, SH['node'], shapename))
+                return True
+        return False
+
+    def get_declaration_shape(self, targetclass, attributename):
+        """The declaration shape applied to the object of the relationship `attributename` in the shape
+        of `targetclass`, or None."""
+        property = self._get_property(targetclass, attributename)
+        if property is None:
+            return None
+        for subproperty in self.shaclg.objects(property, SH.property):
+            if (subproperty, SH.path, self.ngsildns['hasObject']) in self.shaclg:
+                return next(self.shaclg.objects(subproperty, SH['node']), None)
+        return None
+
     def create_shacl_property_name(self, value_rank, array_dimensions, datatype, contentclass=None):
         """
         Generates a SHACL property name (as a URIRef) based on the provided value rank, array dimensions, and datatype.
@@ -492,16 +540,17 @@ class Shacl:
             shacl_rule['datatype'] = None
             shacl_rule['isAbstract'] = None
 
-    def get_modelling_rule_and_path(self, name, target_class, attributeclass, prefix):
+    def get_modelling_rule_and_path(self, name, target_class, attributeclass, prefix, shape=None):
+        """Modelling rule and path of the member `name` in the shape of `target_class`, or in `shape`
+        when given (a declaration shape, which has no target class)."""
         query_minmax = """
             SELECT ?path ?pattern ?mincount ?maxcount ?localName
             WHERE {
                 ?shape a sh:NodeShape ;
-                    sh:property ?property ;
-                    sh:targetClass ?targetclass .
+                    sh:property ?property .
+                TARGET_PATTERN
 
-                ?property sh:path ?path ;
-                    sh:property [ sh:class ?attributeclass ] .
+                ?property sh:path ?path CLASS_PATTERN .
                 OPTIONAL {
                     ?property base:hasPlaceHolderPattern ?pattern .
                 }
@@ -520,7 +569,7 @@ class Shacl:
                 # Conditional filtering based on whether the pattern exists
                 FILTER (
                     IF(bound(?pattern),
-                    regex(?name, ?pattern),  # If pattern exists, use regex
+                    regex(?name, PATTERN_EXPRESSION),  # If pattern exists, use regex
                     ?localName = ?prefixname        # Otherwise, match the local name
                     )
                 )
@@ -528,8 +577,22 @@ class Shacl:
             }
             ORDER BY ?order
         """
-        bindings = {'targetclass': target_class, 'name': Literal(name), 'attributeclass': attributeclass,
-                    'prefixname': Literal(f'{prefix}{name}')}
+        bindings = {'name': Literal(name), 'prefixname': Literal(f'{prefix}{name}')}
+        if shape is None:
+            query_minmax = query_minmax.replace('TARGET_PATTERN', '?shape sh:targetClass ?targetclass .')
+            query_minmax = query_minmax.replace('CLASS_PATTERN', '; sh:property [ sh:class ?attributeclass ]')
+            query_minmax = query_minmax.replace('PATTERN_EXPRESSION', '?pattern')
+            bindings['targetclass'] = target_class
+            bindings['attributeclass'] = attributeclass
+        else:
+            # In a declaration shape a relationship member is found by its name (or placeholder pattern) alone,
+            # so that its sh:class checks the instance's class instead of deciding whether the member matches.
+            query_minmax = query_minmax.replace('TARGET_PATTERN', '')
+            query_minmax = query_minmax.replace('CLASS_PATTERN',
+                                                '; sh:property [ sh:path <https://uri.etsi.org/ngsi-ld/hasObject> ]')
+            # The pattern has to match the whole browse name (Item<no> must not take in MyItem2)
+            query_minmax = query_minmax.replace('PATTERN_EXPRESSION', 'CONCAT("^", ?pattern, "$")')
+            bindings['shape'] = shape
         optional = True
         array = True
         path = None
@@ -613,14 +676,40 @@ or placeholders or both. Will try to guess the right value, but this can go wron
             pass
         return result
 
-    def is_placeholder(self, targetclass, attributename):
-        property = self._get_property(targetclass, attributename)
+    def is_placeholder(self, targetclass, attributename, shape=None):
+        """Whether the member `attributename` is a placeholder in the shape of `targetclass`, or in
+        `shape` when given."""
+        if shape is not None:
+            property = self.get_property_from_shape(shape, attributename)
+        else:
+            property = self._get_property(targetclass, attributename)
         if property is None:
             return False
         try:
             return bool(next(self.shaclg.objects(property, self.basens['isPlaceHolder'])))
         except Exception:
             return False
+
+    def type_has_rules(self, targetclass):
+        """Whether the shape of `targetclass` holds at least one property (rule)."""
+        return any(True for shape in self.shaclg.subjects(SH.targetClass, URIRef(targetclass))
+                   for _ in self.shaclg.objects(shape, SH.property))
+
+    def is_generic_placeholder(self, shape, propertypath):
+        """Whether the placeholder `propertypath` in `shape` matches any name, i.e. its whole browse name is
+        the placeholder (e.g. <Part>), so that a name cannot tell its instances apart from other children."""
+        property = self.get_property_from_shape(shape, propertypath)
+        if property is None:
+            return False
+        pattern = next(self.shaclg.objects(property, self.basens['hasPlaceHolderPattern']), None)
+        if pattern is None:
+            return False
+        _, generic_pattern = utils.normalize_angle_bracket_name('<x>')
+        return str(pattern) == generic_pattern
+
+    def get_shclass(self, shape, propertypath):
+        """sh:class required for the object of the relationship `propertypath` in `shape`, or None."""
+        return self._get_shclass_from_property(self.get_property_from_shape(shape, propertypath))
 
     def _get_shclass_from_property(self, property):
         if property is None:
@@ -663,6 +752,12 @@ or placeholders or both. Will try to guess the right value, but this can go wron
             # If the object is another blank node, recurse into it
             if isinstance(o, BNode):
                 self.copy_bnode_triples(source_graph, o, None)
+            # A declaration shape applied with sh:node is copied with the property that applies it
+            elif p == SH['node'] and (o, RDF.type, SH.NodeShape) in source_graph.get_graph() \
+                    and (o, RDF.type, SH.NodeShape) not in self.shaclg:
+                self.shaclg.add((o, RDF.type, SH.NodeShape))
+                for _, _, prop in source_graph.get_graph().triples((o, SH.property, None)):
+                    self.copy_bnode_triples(source_graph, prop, o)
 
     def create_shape_if_not_exists(self, source_graph, targetclass):
         try:

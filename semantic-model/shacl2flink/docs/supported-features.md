@@ -1124,6 +1124,73 @@ when the referring shape already has one (two `sh:or` lists on one node read as
 a single wider `sh:or`, turning an AND of disjunctions into one disjunction);
 and a parameter set to different values on both.
 
+**A `sh:node` on the object of a relationship is evaluated on the referenced
+entity.** This is the one `sh:node` that is not resolved into the referring
+shape. On the `ngsi-ld:hasObject` value shape of a relationship it constrains the
+entity the relationship refers to — the form the OPC UA generator emits for the
+members an instance declaration adds to a child of a generic type:
+
+```turtle
+shacl:AlphaTypeShape a sh:NodeShape ;
+    sh:targetClass test:AlphaType ;
+    sh:property [ sh:path test:hasLink ; sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsi-ld:hasObject ; sh:class test:LinkType ;
+                      sh:node shacl:AlphaType_LinkDeclarationShape ] ] .
+
+# No target of its own: it applies where an AlphaType's hasLink refers to an entity.
+shacl:AlphaType_LinkDeclarationShape a sh:NodeShape ;
+    sh:property [ sh:path test:hasLevel ; sh:minCount 1 ; ... ] .
+```
+
+Copied into the referring shape, its constraints would become sub-attributes of
+the relationship (`hasLink` → `hasObject` → `hasLevel`), which no attribute ever
+matches: the check compiled and never fired. Instead:
+
+* **The constraints mean what they mean on an entity's own attributes.** The
+  node shape is compiled as an ordinary shape, through the same rows, circuit and
+  checks, so every constraint supported there is supported here — including the
+  `sh:or` of the ValueRank shapes. It targets the entities an owning entity's
+  relationship refers to, per owning class (subclasses included) and
+  relationship.
+* **The alert belongs to the referring entity**, as pyshacl reports it: one
+  alert per relationship instance, with the event
+  `NodeConstraintComponent(<relationship>[<index>])`, however many of the node
+  shape's constraints are violated. The index is the relationship's
+  `datasetId`, `0` for the default instance, so each element of a placeholder
+  relationship has an alert of its own.
+* **The text leads to the cause.** It names the referring entity, the
+  relationship instance, the referenced entity and every violated constraint of
+  the node shape with its attribute, in a fixed order (the order of the
+  constraints in the build), so the text changes only when the set of violations
+  does:
+
+  ```
+  Model validation for relationship .../hasLink[0] failed for urn:owner:3. The referenced
+  entity urn:link:3 does not conform to the node shape: Model validation for Property
+  .../hasLevel failed for urn:link:3. Found 0 properties instead of [1, 1]! Model validation
+  for Property .../hasMode failed for urn:link:3. Found 0 properties instead of [1, *]!
+  ```
+* **Either entity changing re-evaluates it.** A change of the referenced
+  entity's attributes, of the relationship's object, or of either entity's
+  existence raises or clears the alert. A referenced entity that is missing or
+  deleted is evaluated as an entity without attributes, so its required members
+  are reported missing (next to the relationship's own `sh:class` violation).
+* **One relationship is followed.** A node shape that again applies `sh:node`
+  to the object of a relationship of the referenced entity fails the build; the
+  OPC UA generator reports additions deeper than one relationship once per
+  type instead (`DEEP_DECLARATION_ADDITIONS`).
+
+The state of the check is bounded by the live model like that of the other
+relationship checks: every join and accumulator is pinned, and the entities the
+check reads are one row per live relationship. That focus deliberately does not
+join the node rows to keep only relationships with a node check: Flink pushes
+the grouping below such a join and the state pin of the node rows is lost, so
+the check stopped answering once the job was older than the state TTL (measured
+on a live cluster, and covered by `tools/ttl_test.py --phase node`). A package without such a
+`sh:node` compiles exactly as before — the extra statements are emitted only
+when one exists. Pinned by `tests/sql-tests/sql-cases/relationship-node-checks`
+and `tests/test_relationship_node_checks.py`.
+
 **Constraint parameters may be written beside a connective.** They are
 conjoined with it, not made part of it:
 
@@ -1160,12 +1227,20 @@ ERROR: the following shapes cannot be compiled and would be silently unvalidated
     supported. Only sh:or is descended into at the value level, ...
 ```
 
-Two things are rejected today:
+Rejected today:
 
 * a property path deeper than the sub-attribute limit (see the depth table
   above). This used to be a warning printed to stdout, which no build step read.
 * a property shape that names an attribute and produces no constraint at all —
   usually a missing value shape, or parameters the compiler does not implement.
+* underneath a relationship's object (`ngsi-ld:hasObject`), anything but
+  `sh:class`, `sh:nodeKind` and a node shape as described in "A `sh:node` on the
+  object of a relationship" above: a property shape directly underneath it, and
+  a node shape there that applies `sh:node` to a further relationship's object,
+  holds `sh:sparql`, `sh:not`, `sh:xone` or an inverse path, produced no
+  constraint at all, or belongs to a relationship that is not a property of a
+  node shape with `sh:targetClass` (no entity would own the alert). Each of these
+  compiled before into a check that never fired.
 
 A shape whose constraint is attributed to a **sub-attribute** is not rejected:
 `iff:assembly` carrying only `iff:torque` compiles to a constraint on `torque`,

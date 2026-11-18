@@ -92,7 +92,7 @@ def _keys(path):
             for key, inner in value.items():
                 if key not in RESERVED and not key.startswith('@'):
                     found.append((key, index.get(tuple(trail + [key])) or 1))
-                if key not in PAYLOAD:
+                if key not in PAYLOAD and key != '@context':  # its keys are prefixes, not attributes
                     walk(inner, trail + [key])
         elif isinstance(value, list):
             for position, inner in enumerate(value):

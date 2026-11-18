@@ -1166,3 +1166,81 @@ class TestShaclCreateShaclPropertyName(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestDeclarationShapes(unittest.TestCase):
+    """Shapes for the members an instance declaration adds, applied with sh:node to a relationship's object."""
+    def setUp(self):
+        self.ns_prefix = "http://example.org/"
+        self.base = Namespace("http://example.org/base/")
+        self.sh = Shacl(Graph(), self.ns_prefix, self.base, Namespace("http://example.org/opcua/"))
+        self.owner = self.sh.create_shacl_type(URIRef("http://example.org/OwnerType"))
+        self.path = URIRef("http://example.org/hasLink")
+        self.relationship = self.sh.create_shacl_property(self.owner, self.path, False, False, False, True,
+                                                          URIRef("http://example.org/LinkType"), None,
+                                                          is_subcomponent=True)
+
+    def test_declaration_shape_has_a_deterministic_name_and_no_target(self):
+        name = self.sh.get_declaration_shape_name(URIRef("http://example.org/OwnerType"), "<Link>")
+        self.assertEqual(name, URIRef("http://example.org/shacl/OwnerType__Link_DeclarationShape"))
+        self.assertTrue(self.sh.create_declaration_shape(name))
+        self.assertFalse(self.sh.create_declaration_shape(name))  # exists already
+        self.assertIsNone(self.sh.get_targetclass(name))
+
+    def test_node_is_applied_to_the_relationship_object(self):
+        decl = self.sh.get_declaration_shape_name(URIRef("http://example.org/OwnerType"), "Link")
+        self.sh.create_declaration_shape(decl)
+        self.assertTrue(self.sh.add_node_to_relationship(self.relationship, decl))
+        self.assertEqual(self.sh.get_declaration_shape(URIRef("http://example.org/OwnerType"), self.path), decl)
+
+    def test_an_empty_declaration_shape_is_removed_and_a_filled_one_kept(self):
+        empty = self.sh.get_declaration_shape_name(URIRef("http://example.org/OwnerType"), "Plain")
+        self.sh.create_declaration_shape(empty)
+        self.assertTrue(self.sh.remove_empty_declaration_shape(empty))
+        self.assertNotIn((empty, None, None), self.sh.shaclg)
+        filled = self.sh.get_declaration_shape_name(URIRef("http://example.org/OwnerType"), "Link")
+        self.sh.create_declaration_shape(filled)
+        self.sh.create_shacl_property(filled, URIRef("http://example.org/hasLevel"), False, False, False, False,
+                                      None, None)
+        self.assertFalse(self.sh.remove_empty_declaration_shape(filled))
+        self.assertIn((filled, SH.property, None), self.sh.shaclg)
+
+    def test_no_declaration_shape_without_relationship_object(self):
+        decl = self.sh.get_declaration_shape_name(URIRef("http://example.org/OwnerType"), "Link")
+        self.assertFalse(self.sh.add_node_to_relationship(BNode(), decl))
+        self.assertIsNone(self.sh.get_declaration_shape(URIRef("http://example.org/OwnerType"), self.path))
+        self.assertIsNone(self.sh.get_declaration_shape(URIRef("http://example.org/OwnerType"),
+                                                        URIRef("http://example.org/hasOther")))
+
+    def test_generic_and_named_placeholders(self):
+        decl = self.sh.get_declaration_shape_name(URIRef("http://example.org/OwnerType"), "Link")
+        self.sh.create_declaration_shape(decl)
+        for path, pattern in (("hasPart", "[a-zA-Z0-9_-]+"), ("hasItem", "Item[a-zA-Z0-9_-]+")):
+            prop = self.sh.create_shacl_property(decl, URIRef(f"http://example.org/{path}"), True, True, False,
+                                                 True, URIRef("http://example.org/ItemType"), None,
+                                                 is_subcomponent=True, placeholder_pattern=pattern)
+            self.assertIsNotNone(prop)
+        self.assertTrue(self.sh.is_generic_placeholder(decl, URIRef("http://example.org/hasPart")))
+        self.assertFalse(self.sh.is_generic_placeholder(decl, URIRef("http://example.org/hasItem")))
+        self.assertFalse(self.sh.is_generic_placeholder(decl, URIRef("http://example.org/hasNothing")))
+        self.assertTrue(self.sh.is_placeholder(None, URIRef("http://example.org/hasItem"), shape=decl))
+        self.assertEqual(self.sh.get_shclass(decl, URIRef("http://example.org/hasItem")),
+                         URIRef("http://example.org/ItemType"))
+        # In a declaration shape, a relationship member is found by its whole name, whatever the class
+        _, _, path = self.sh.get_modelling_rule_and_path("Item7", None, URIRef("http://example.org/Other"), 'has',
+                                                         shape=decl)
+        self.assertEqual(path, URIRef("http://example.org/hasItem"))
+        _, _, path = self.sh.get_modelling_rule_and_path("MyItem7x", None, URIRef("http://example.org/Other"),
+                                                         'has', shape=URIRef("http://example.org/shacl/none"))
+        self.assertIsNone(path)
+
+    def test_minimal_shacl_copies_the_applied_declaration_shape(self):
+        decl = self.sh.get_declaration_shape_name(URIRef("http://example.org/OwnerType"), "Link")
+        self.sh.create_declaration_shape(decl)
+        self.sh.create_shacl_property(decl, URIRef("http://example.org/hasLevel"), False, False, True, False,
+                                      None, [XSD.double])
+        self.sh.add_node_to_relationship(self.relationship, decl)
+        minimal = Shacl(Graph(), self.ns_prefix, self.base, Namespace("http://example.org/opcua/"))
+        minimal.copy_property_from_shacl(self.sh, URIRef("http://example.org/OwnerType"), self.path)
+        self.assertIn((decl, RDF.type, SH.NodeShape), minimal.shaclg)
+        self.assertIsNotNone(minimal.get_property_from_shape(decl, URIRef("http://example.org/hasLevel")))

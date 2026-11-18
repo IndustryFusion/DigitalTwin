@@ -149,6 +149,10 @@ def validate(path, no_strict, cross_check, shacl2flink):
     for result in sorted(report.violations, key=lambda r: r.key()):
         click.echo(f'{result.severity:>9}  {result.resource}  '
                    f'{result.component}({result.attribute})  [{result.shape_name}]')
+        # Why a node constraint failed: the inner violations on the referenced entity
+        for cause in result.cause:
+            click.echo(f'{"":>9}    cause: {cause.resource}  {cause.component}({cause.attribute})'
+                       f'{"  " + cause.message if cause.message else ""}')
 
     if cross_check:
         # A courtesy check. Its findings are bug reports for the compiler, and

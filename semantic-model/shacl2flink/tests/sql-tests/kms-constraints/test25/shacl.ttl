@@ -1,0 +1,30 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.com/ns#> .
+
+# Every instance of an attribute counts once, keyed by its datasetId; the default instance (no datasetId)
+# is an instance of its own, also when another instance has an equal value.
+ex:MachineShape
+    a sh:NodeShape ;
+    sh:targetClass ex:Machine ;
+    sh:property [
+        sh:path ex:hasLevel ;
+        sh:minCount 3 ;
+        sh:property [ sh:path <https://uri.etsi.org/ngsi-ld/hasValue> ; sh:minCount 1 ; ] ;
+    ] ;
+    sh:property [
+        sh:path ex:hasLink ;
+        sh:minCount 2 ;
+        sh:property [ sh:path <https://uri.etsi.org/ngsi-ld/hasObject> ; sh:minCount 1 ; ] ;
+    ] ;
+    sh:property [
+        sh:path ex:hasList ;
+        sh:minCount 2 ;
+        sh:property [ sh:path <https://uri.etsi.org/ngsi-ld/hasValueList> ; sh:minCount 1 ; ] ;
+    ] ;
+    sh:property [
+        sh:path ex:hasJson ;
+        sh:minCount 2 ;
+        sh:property [ sh:path <https://uri.etsi.org/ngsi-ld/hasJSON> ; sh:minCount 1 ; ] ;
+    ] ;
+.

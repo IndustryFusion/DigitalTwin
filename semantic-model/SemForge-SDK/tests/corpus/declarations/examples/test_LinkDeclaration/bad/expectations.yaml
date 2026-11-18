@@ -1,0 +1,9 @@
+examples:
+  - path: without-level.jsonld
+    description: >-
+      The referenced entity lacks Level. The violation belongs to the owning entity's relationship,
+      not to the referenced entity, which conforms to its own type.
+    expect: invalid
+    asserts:
+      - constraint: ex:OwnerTypeShape/hasLink/NodeConstraintComponent
+        resource: urn:owner:1

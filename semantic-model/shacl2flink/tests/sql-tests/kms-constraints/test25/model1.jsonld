@@ -1,0 +1,71 @@
+[
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld",
+    "id": "urn:machine:1",
+    "type": "http://example.com/ns#Machine",
+    "http://example.com/ns#hasLevel": [
+      {
+        "type": "Property",
+        "datasetId": "http://example.com/ns#d1",
+        "value": 5
+      },
+      {
+        "type": "Property",
+        "value": 5
+      },
+      {
+        "type": "Property",
+        "datasetId": "http://example.com/ns#d2",
+        "value": 7
+      }
+    ],
+    "http://example.com/ns#hasLink": [
+      {
+        "type": "Relationship",
+        "datasetId": "http://example.com/ns#d1",
+        "object": "urn:part:1"
+      },
+      {
+        "type": "Relationship",
+        "object": "urn:part:1"
+      }
+    ],
+    "http://example.com/ns#hasList": [
+      {
+        "type": "ListProperty",
+        "datasetId": "http://example.com/ns#d1",
+        "valueList": [
+          1,
+          2
+        ]
+      },
+      {
+        "type": "ListProperty",
+        "valueList": [
+          1,
+          2
+        ]
+      }
+    ],
+    "http://example.com/ns#hasJson": [
+      {
+        "type": "JsonProperty",
+        "datasetId": "http://example.com/ns#d1",
+        "json": {
+          "a": 1
+        }
+      },
+      {
+        "type": "JsonProperty",
+        "json": {
+          "a": 1
+        }
+      }
+    ]
+  },
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld",
+    "id": "urn:part:1",
+    "type": "http://example.com/ns#Part"
+  }
+]

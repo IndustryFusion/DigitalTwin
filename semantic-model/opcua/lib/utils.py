@@ -46,7 +46,8 @@ WARNSTR = {
     'ignored_variable_reference': "IGNORED_VARIABLE_REFERENCE",
     'non_reached_nodes': "NON_REACHED_NODES",
     'ambiguous path match': "AMBIGUOUS_PATH_MATCH",
-    'interface_not_subtype_of_interfacetype': "INTERFACE_NOT_SUBTYPE_OF_INTERFACETYPE"
+    'interface_not_subtype_of_interfacetype': "INTERFACE_NOT_SUBTYPE_OF_INTERFACETYPE",
+    'deep_declaration_additions': "DEEP_DECLARATION_ADDITIONS"
 }
 
 NULL_IRI = URIRef('urn:ngsi-ld:null')
@@ -963,6 +964,63 @@ class RdfUtils:
             shacl_rule['optional'] = is_optional
             shacl_rule['array'] = use_generic_placeholder
         return is_optional, use_generic_placeholder
+
+    def get_declared_browse_names(self, graph, typeclass, ignored_references=()):
+        """Browse names of the instance declarations a type defines, inherited ones and those of
+        its interfaces included.
+
+        Args:
+            graph (Graph): Graph containing the types
+            typeclass (URIRef): The type (class)
+            ignored_references (iterable): Hierarchical references which are not considered
+
+        Returns:
+            set(str): The browse names (uardf:browseName) of the declarations
+        """
+        typenode = next(graph.subjects(UARDF['definesType'], URIRef(typeclass)), None)
+        if typenode is None:
+            return set()
+        names = set()
+        for _, curnode in self.get_all_supertypes_and_interfaces(graph, typeclass, typenode):
+            if curnode is None:
+                continue
+            for reference, child in self.get_all_subreferences(graph, curnode, self.opcuans['HasChild']):
+                if reference in ignored_references:
+                    continue
+                browse_name = next(graph.objects(child, UARDF['browseName']), None)
+                if browse_name is not None:
+                    names.add(str(browse_name))
+        return names
+
+    def get_added_children(self, graph, declaration, typeclass, ignored_references=()):
+        """Children which an instance declaration declares beyond what its type defines.
+
+        A child counts as added when it has a modelling rule, is no Method and its browse name is not
+        declared by the type (or its supertypes and interfaces).
+
+        Args:
+            graph (Graph): Graph containing the types and declarations
+            declaration (URIRef): The instance declaration (e.g. an object child of a type)
+            typeclass (URIRef): The type definition of the declaration
+            ignored_references (iterable): Hierarchical references which are not considered
+
+        Returns:
+            list((URIRef, URIRef)): (reference, child) of the added children, sorted by browse name
+        """
+        declared = self.get_declared_browse_names(graph, typeclass, ignored_references)
+        added = []
+        for reference, child in self.get_all_subreferences(graph, declaration, self.opcuans['HasChild']):
+            if reference in ignored_references:
+                continue
+            if next(graph.objects(child, self.opcuans['HasModellingRule']), None) is None:
+                continue
+            if (child, RDF.type, UARDF['Method']) in graph:
+                continue
+            browse_name = next(graph.objects(child, UARDF['browseName']), None)
+            if browse_name is None or str(browse_name) in declared:
+                continue
+            added.append((str(browse_name), reference, child))
+        return [(reference, child) for _, reference, child in sorted(added, key=lambda entry: entry[0])]
 
     def get_all_subreferences(self, graph, node, reference):
         """Get non-hierarchical references

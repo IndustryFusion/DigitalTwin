@@ -1,0 +1,79 @@
+[
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld",
+    "id": "urn:part:1",
+    "type": "https://example.org/node/Part"
+  },
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld",
+    "id": "urn:link:2",
+    "type": "https://example.org/node/Link",
+    "https://example.org/node/hasLevel": {
+      "type": "Property",
+      "value": 0.5
+    },
+    "https://example.org/node/hasMode": {
+      "type": "Property",
+      "value": "auto"
+    },
+    "https://example.org/node/hasPart": {
+      "type": "Relationship",
+      "object": "urn:part:1"
+    }
+  },
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld",
+    "id": "urn:link:5",
+    "type": "https://example.org/node/Link",
+    "https://example.org/node/hasItem": [
+      {
+        "type": "Property",
+        "value": 1,
+        "datasetId": "urn:d1"
+      },
+      {
+        "type": "Property",
+        "value": 1
+      },
+      {
+        "type": "Property",
+        "value": 2,
+        "datasetId": "urn:d2"
+      }
+    ]
+  },
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld",
+    "id": "urn:owner:1",
+    "type": "https://example.org/node/Owner",
+    "https://example.org/node/hasLink": {
+      "type": "Relationship",
+      "object": "urn:link:2"
+    },
+    "https://example.org/node/hasCounted": {
+      "type": "Relationship",
+      "object": "urn:link:5"
+    },
+    "https://example.org/node/hasVariable": {
+      "type": "Relationship",
+      "object": "urn:link:2"
+    }
+  },
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld",
+    "id": "urn:owner:2",
+    "type": "https://example.org/node/SpecialOwner",
+    "https://example.org/node/hasLink": [
+      {
+        "type": "Relationship",
+        "object": "urn:link:2",
+        "datasetId": "urn:d1"
+      },
+      {
+        "type": "Relationship",
+        "object": "urn:link:2",
+        "datasetId": "urn:d2"
+      }
+    ]
+  }
+]

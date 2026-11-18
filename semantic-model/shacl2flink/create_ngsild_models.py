@@ -37,6 +37,9 @@ def parse_args(args=sys.argv[1:]):
 
 
 attributes_query = """
+# Every sub-attribute (observedAt, datasetId, unitCode) is read from the attribute instance ?attr itself.
+# Correlating them through the value instead merged an instance without a datasetId into an instance with
+# a datasetId and an equal value: both then carried that datasetId and collapsed into one row.
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
@@ -44,37 +47,37 @@ SELECT DISTINCT (?a as ?entityId) (?b as ?name) (?e as ?type) (IF(bound(?g), IF(
 (datatype(?f) as ?valueType) (?f as ?hasValue) (?g as ?hasObject) (?h as ?hasValueList) (?i as ?hasJSON) ?observedAt ?index ?unitCode
 where {
     ?a a ?subclass .
-    {?a ?b [ ngsild:hasObject ?g ] .
+    {?a ?b ?attr . ?attr ngsild:hasObject ?g .
     VALUES ?e {ngsild:Relationship} .
-    OPTIONAl{?a ?b [ ngsild:observedAt ?observedAt; ngsild:hasObject ?g  ] .} .
-    OPTIONAl{?a ?b [ ngsild:datasetId ?index; ngsild:hasObject ?g  ] .} .
-    OPTIONAl{?a ?b [ ngsild:unitCode ?unitCode; ngsild:hasObject ?g  ] .} .
+    OPTIONAL{?attr ngsild:observedAt ?observedAt .} .
+    OPTIONAL{?attr ngsild:datasetId ?index .} .
+    OPTIONAL{?attr ngsild:unitCode ?unitCode .} .
     }
   UNION
   {
-    {?a ?b [ ngsild:hasValue ?f ] .
+    {?a ?b ?attr . ?attr ngsild:hasValue ?f .
     VALUES ?e {ngsild:Property} .
-    OPTIONAl{?a ?b [ ngsild:observedAt ?observedAt; ngsild:hasValue ?f  ] .} .
-    OPTIONAl{?a ?b [ ngsild:datasetId ?index; ngsild:hasValue ?f  ] .} .
-    OPTIONAl{?a ?b [ ngsild:unitCode ?unitCode; ngsild:hasValue ?f  ] .} .
+    OPTIONAL{?attr ngsild:observedAt ?observedAt .} .
+    OPTIONAL{?attr ngsild:datasetId ?index .} .
+    OPTIONAL{?attr ngsild:unitCode ?unitCode .} .
     }
   }
 UNION
   {
-    {?a ?b [ ngsild:hasValueList ?h ] .
+    {?a ?b ?attr . ?attr ngsild:hasValueList ?h .
     VALUES ?e {ngsild:ListProperty} .
-    OPTIONAl{?a ?b [ ngsild:observedAt ?observedAt; ngsild:hasValueList ?h  ] .} .
-    OPTIONAl{?a ?b [ ngsild:datasetId ?index; ngsild:hasValueList ?h  ] .} .
-    OPTIONAl{?a ?b [ ngsild:unitCode ?unitCode; ngsild:hasValueList ?h  ] .} .
+    OPTIONAL{?attr ngsild:observedAt ?observedAt .} .
+    OPTIONAL{?attr ngsild:datasetId ?index .} .
+    OPTIONAL{?attr ngsild:unitCode ?unitCode .} .
     }
   }
 UNION
   {
-    {?a ?b [ ngsild:hasJSON ?i ] .
+    {?a ?b ?attr . ?attr ngsild:hasJSON ?i .
     VALUES ?e {ngsild:JsonProperty} .
-    OPTIONAl{?a ?b [ ngsild:observedAt ?observedAt; ngsild:hasJSON ?i  ] .} .
-    OPTIONAl{?a ?b [ ngsild:datasetId ?index; ngsild:hasJSON ?i  ] .} .
-    OPTIONAl{?a ?b [ ngsild:unitCode ?unitCode; ngsild:hasJSON ?i  ] .} .
+    OPTIONAL{?attr ngsild:observedAt ?observedAt .} .
+    OPTIONAL{?attr ngsild:datasetId ?index .} .
+    OPTIONAL{?attr ngsild:unitCode ?unitCode .} .
     }
   }
 }

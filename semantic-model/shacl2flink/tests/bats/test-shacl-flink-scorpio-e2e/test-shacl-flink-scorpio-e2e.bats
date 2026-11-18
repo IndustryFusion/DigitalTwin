@@ -55,6 +55,12 @@ MACHINE_TYPE=${E2E}/E2EMachine
 LINKED_TYPE=${E2E}/E2ELinkedMachine
 CARTRIDGE_TYPE=${E2E}/E2ECartridge
 CARTRIDGE_REL=${E2E}/hasE2ECartridge
+# A node shape on a relationship's object (openspec gh-985).
+OWNER_TYPE=${E2E}/E2EOwner
+PART_TYPE=${E2E}/E2EPart
+PART_REL=${E2E}/hasE2EPart
+LEVEL_PROP=${E2E}/hasE2ELevel
+NODE_CONSTRAINT=NodeConstraintComponent
 
 # The constraint components as they appear in an alert's event field, which is
 # where a shacl alert says which check it came from.
@@ -88,6 +94,8 @@ CYCLE_IDS="${CYCLE_GOOD} ${CYCLE_NOSTATE} ${CYCLE_CARTRIDGE} ${CYCLE_LINKED} ${C
 RUN_ID=$(date +%s)
 TEST_MISSING="urn:e2e-scorpio-missing:${RUN_ID}"
 TEST_LINKED="urn:e2e-scorpio-linked:${RUN_ID}"
+TEST_NODE_OWNER="urn:e2e-scorpio-node-owner:${RUN_ID}"
+TEST_NODE_PART="urn:e2e-scorpio-node-part:${RUN_ID}"
 TEST_TARGET="urn:e2e-scorpio-target:${RUN_ID}"
 TEST_RECREATE="urn:e2e-scorpio-recreate:${RUN_ID}"
 TEST_SPARQL="urn:e2e-scorpio-sparql:${RUN_ID}"
@@ -162,7 +170,7 @@ setup() {
 
 teardown() {
     for id in "${TEST_MISSING}" "${TEST_LINKED}" "${TEST_TARGET}" "${TEST_RECREATE}" \
-              "${TEST_SPARQL}" ${CYCLE_IDS}; do
+              "${TEST_SPARQL}" "${TEST_NODE_OWNER}" "${TEST_NODE_PART}" ${CYCLE_IDS}; do
         delete_entity "${id}" >/dev/null 2>&1 || true
     done
     local spec
@@ -219,6 +227,16 @@ iri_property_json() {
 set_iri_property() {
     local id=$1 prop=$2 value=$3
     printf '{"@context":"%s",%s}' "${CONTEXT}" "$(iri_property_json "${prop}" "${value}")" \
+        | curl -s -o /dev/null -w '%{http_code}' -X POST \
+            -H "Authorization: Bearer $(get_token)" \
+            -H 'Content-Type: application/ld+json' \
+            --data-binary @- "${NGSILD_URL}/entities/${id}/attrs"
+}
+
+# Replace the default instance of a Property holding a JSON value (a number here).
+set_property() {
+    local id=$1 prop=$2 value=$3
+    printf '{"@context":"%s","%s":{"type":"Property","value":%s}}' "${CONTEXT}" "${prop}" "${value}" \
         | curl -s -o /dev/null -w '%{http_code}' -X POST \
             -H "Authorization: Bearer $(get_token)" \
             -H 'Content-Type: application/ld+json' \
@@ -394,6 +412,33 @@ assert_no_alert() {
     [ "${code}" = "201" ]
     echo "# restored ${TEST_TARGET}" >&3
     assert_no_alert "${TEST_LINKED}"
+}
+
+@test "a node shape on a relationship's object alerts on the owner through scorpio and alerta" {
+    # The part has no hasE2ELevel, which the owner's declaration of it requires.
+    code=$(create_entity "${TEST_NODE_PART}" "${PART_TYPE}")
+    [ "${code}" = "201" ]
+    code=$(create_entity "${TEST_NODE_OWNER}" "${OWNER_TYPE}" \
+        "$(relationship_json "${PART_REL}" "${TEST_NODE_PART}")")
+    [ "${code}" = "201" ]
+    echo "# ${TEST_NODE_OWNER} refers to ${TEST_NODE_PART}, which lacks its level" >&3
+    assert_alert "${TEST_NODE_OWNER}" "${NODE_CONSTRAINT}"
+    # On the owner, never on the part: the part conforms to its own type.
+    [ "$(open_alerts_for "${TEST_NODE_PART}")" -eq 0 ]
+    alert_texts_for "${TEST_NODE_OWNER}" | grep -F "${TEST_NODE_PART}" | grep -F -q "hasE2ELevel"
+
+    # The level arrives on the PART; nothing about the owner changes.
+    code=$(set_property "${TEST_NODE_PART}" "${LEVEL_PROP}" 0.5)
+    [ "${code}" = "204" ]
+    echo "# gave ${TEST_NODE_PART} its level" >&3
+    assert_no_alert "${TEST_NODE_OWNER}" "${NODE_CONSTRAINT}"
+
+    # Deleting the part leaves the owner referring to nothing: required members
+    # of a missing entity are missing.
+    code=$(delete_entity "${TEST_NODE_PART}")
+    [ "${code}" = "204" ]
+    echo "# deleted ${TEST_NODE_PART}" >&3
+    assert_alert "${TEST_NODE_OWNER}" "${NODE_CONSTRAINT}"
 }
 
 @test "a sparql constraint reads the knowledge, and clears when the value becomes valid" {

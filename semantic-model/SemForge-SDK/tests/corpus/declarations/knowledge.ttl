@@ -1,0 +1,16 @@
+@prefix ex: <https://example.org/declarations/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# An owning type whose child Link is of a generic type; the declaration of Link in OwnerType adds Level.
+
+ex:OwnerType a owl:Class .
+ex:LinkType a owl:Class .
+
+ex:hasLink a owl:ObjectProperty ;
+    rdfs:domain ex:OwnerType ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Relationship> .
+
+ex:hasLevel a owl:ObjectProperty ;
+    rdfs:domain ex:LinkType ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .

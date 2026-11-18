@@ -402,6 +402,57 @@ Check the SHACL compliance:
 
     pyshacl -s shacl.ttl -e entities.ttl -df json-ld instances.jsonld
 
+### Members an Instance Declaration Adds
+
+A type can declare a child with a generic type and add members to that child in the declaration
+itself, for example a child `Link` declared as `BaseObjectType` (or `FunctionalGroupType`) whose
+declaration adds a variable `Level`. These members are part of the owning type's definition, so they
+are validated, although the child's own type does not define them.
+
+In NGSI-LD the child is its own entity, referenced by the owning entity's relationship (`hasLink`).
+The owning type's shape therefore applies a *declaration shape* to the relationship's object, next to
+the class the child must have:
+
+```turtle
+shacl:OwnerTypeShape a sh:NodeShape ;
+    sh:targetClass ex:OwnerType ;
+    sh:property [ sh:path ex:hasLink ;
+            sh:property [ sh:path ngsi-ld:hasObject ;
+                    sh:class opcua:BaseObjectType ;
+                    sh:node shacl:OwnerType_LinkDeclarationShape ] ] .
+
+shacl:OwnerType_LinkDeclarationShape a sh:NodeShape ;     # no target of its own
+    sh:property [ sh:path ex:hasLevel ; sh:minCount 1 ; ... ] .
+```
+
+The constraints of the child's type still apply to the child entity as before; the declaration shape
+adds the declaration's members (AND). A violation belongs to the owning entity: on its own, the child
+conforms to its generic type, it is the owning type that requires `Level`. A declaration that adds
+nothing gets no declaration shape, and entity types do not change.
+
+**One relationship deep.** Only members added to a direct child object are validated. Additions
+further down (a child object of `Link` whose own declaration adds members) are not validated; the
+tool reports them once per owning type with the warning `DEEP_DECLARATION_ADDITIONS`, which names
+the browse paths. Variables and their properties do not count as a relationship.
+
+**Placeholders and their instances.** An OPC UA instance does not refer to the declaration it
+instantiates, so the tool decides from the browse name and the type which children of an entity are
+instances of a placeholder member:
+
+- A pattern with a fixed part, for example `Item<no>` (matching `Item1`, `ItemX`, but not `Inner`):
+  the whole name decides. A child named `Item2` is an instance whatever its type, so a child of the
+  wrong type is reported against the placeholder's class.
+- A fully generic placeholder, for example `<Part>`: every name matches, so the name cannot tell an
+  instance from an unrelated child. Only children of the placeholder's type, or a subtype, count as
+  instances. A child of another type is not an instance, and it is **not** reported as a wrong
+  instance: from the data it cannot be told apart from an unrelated child. Only counts can show such
+  a case, for example a mandatory placeholder without any instance of its type.
+
+Each instance of a placeholder is a separate instance of the attribute, keyed by its `datasetId`, and
+counts are counts of distinct `datasetId`s. This is a limitation of OPC UA placeholders, which stand
+in for a keyed collection of objects but carry its membership only as a naming convention; giving a
+placeholder a fixed name part, or the collection its own type, makes the model checkable.
+
 ## owl2kms.py
 
 Assemble the output of `nodeset2owl.py` and `owl2instances.py` into a KMS

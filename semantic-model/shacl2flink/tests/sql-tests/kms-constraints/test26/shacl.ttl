@@ -1,0 +1,52 @@
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix ngsild: <https://uri.etsi.org/ngsi-ld/> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:     <https://example.org/node/> .
+
+# Members an instance declaration adds to a child of a generic type (openspec
+# gh-985-instance-declaration-shapes): the owning type's relationship applies a
+# node shape to the referenced entity, next to sh:class. The node shapes have no
+# target of their own. The alert belongs to the owning entity, one per
+# relationship instance.
+ex:OwnerShape a sh:NodeShape ;
+    sh:targetClass ex:Owner ;
+    sh:property [ sh:path ex:hasLink ;
+        sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasObject ; sh:class ex:Link ; sh:node ex:LinkDeclarationShape ] ] ;
+    sh:property [ sh:path ex:hasCounted ;
+        sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasObject ; sh:class ex:Link ; sh:node ex:CountDeclarationShape ] ] ;
+    sh:property [ sh:path ex:hasVariable ;
+        sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasObject ; sh:class ex:Link ; sh:node ex:ValueRankDeclarationShape ] ] .
+
+# Two required members, the level a double.
+ex:LinkDeclarationShape a sh:NodeShape ;
+    sh:property [ sh:path ex:hasLevel ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasValue ; sh:nodeKind sh:Literal ; sh:datatype xsd:double ] ] ;
+    sh:property [ sh:path ex:hasMode ; sh:minCount 1 ; sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasValue ; sh:nodeKind sh:Literal ] ] .
+
+# A count of distinct attribute instances: the default instance is one of its own.
+ex:CountDeclarationShape a sh:NodeShape ;
+    sh:property [ sh:path ex:hasItem ; sh:minCount 3 ; sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasValue ; sh:nodeKind sh:Literal ] ] .
+
+# As the OPC UA generator writes a variable (ValueRank: a scalar or a list), and an
+# added object: an sh:or circuit and a relationship with sh:class inside the node shape.
+ex:ValueRankDeclarationShape a sh:NodeShape ;
+    sh:property [ sh:path ex:hasLevel ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:BlankNode ;
+        sh:or ( [ sh:property [ sh:path ngsild:hasValue ; sh:minCount 1 ; sh:maxCount 1 ;
+                                sh:nodeKind sh:Literal ; sh:datatype xsd:double ] ]
+                [ sh:property [ sh:path ngsild:hasValueList ; sh:minCount 1 ; sh:maxCount 1 ] ] ) ] ;
+    sh:property [ sh:path ex:hasPart ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasObject ; sh:class ex:Part ; sh:nodeKind sh:IRI ] ] .
+
+# The types the relationships refer to, so that the models load their entities.
+# (create_ngsild_models.py loads a type's entities only when its shape has a property shape.)
+ex:LinkShape a sh:NodeShape ; sh:targetClass ex:Link ;
+    sh:property [ sh:path ex:hasMode ; sh:maxCount 1 ; sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasValue ; sh:nodeKind sh:Literal ] ] .
+ex:PartShape a sh:NodeShape ; sh:targetClass ex:Part ;
+    sh:property [ sh:path ex:hasName ; sh:maxCount 1 ; sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasValue ; sh:nodeKind sh:Literal ] ] .

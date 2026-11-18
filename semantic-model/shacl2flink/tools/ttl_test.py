@@ -74,6 +74,14 @@ and falls back to kubectl exec into the jobmanager pod.
                         (write to alert record) gates against
                         --latency-target (default 2 s). Runs in 'all',
                         'fresh' and standalone as --phase latency.
+  * Node checks      -- --phase node, against the e2e KMS (tests/e2e-kms, as
+                        `make test-flink-e2e` deploys it): a node shape on a
+                        relationship's object (E2EOwnerShape). The owner's
+                        NodeConstraint alert must raise when the referenced
+                        part loses its declared level and retract when it gets
+                        it back, raise when the part is deleted and retract when
+                        it is created again -- right after creation and again
+                        after the family has been idle for 3x the TTL.
   * State growth     -- the growth phase drives tools/loadgen.py churn while
                         sampling the per-operator RocksDB directories on the
                         taskmanager: after a warmup that lets the new keys
@@ -88,6 +96,7 @@ Usage:
     python3 tools/ttl_test.py --phase ttl          # create, idle 3xTTL, retest
     python3 tools/ttl_test.py --phase growth       # loadgen churn + state plateau
     python3 tools/ttl_test.py --phase latency      # per-stage trigger latency stats
+    python3 tools/ttl_test.py --phase node         # node checks, e2e KMS: fresh + 3xTTL idle
     python3 tools/ttl_test.py --idle-factor 1      # shorten the idle wait
     python3 tools/ttl_test.py --keep               # leave the family behind
     python3 tools/ttl_test.py --teardown --run-id ab12cd34
@@ -428,6 +437,70 @@ class Family:
                  'type': 'Property',
                  'value': {'@id': 'iffFilterKnowledge:WC1'}}]},
         ]
+
+
+class NodeFamily:
+    """Owners and parts of the e2e KMS's node check (E2EOwnerShape): an E2EOwner's hasE2EPart applies a
+    node shape requiring hasE2ELevel of the part it refers to. Two pairs, so that deleting one part does
+    not disturb the other check."""
+
+    def __init__(self, run):
+        self.owner = f'urn:rt:{run}:node-owner'
+        self.part = f'urn:rt:{run}:node-part'
+        self.owner2 = f'urn:rt:{run}:node-owner2'
+        self.part2 = f'urn:rt:{run}:node-part2'
+        self.all = [self.owner, self.part, self.owner2, self.part2]
+
+    @staticmethod
+    def part_entity(eid):
+        return {'@context': CONTEXT, 'id': eid, 'type': f'{ENT}/E2EPart',
+                f'{ENT}/hasE2ELevel': [{'type': 'Property', 'value': 0.5}]}
+
+    @staticmethod
+    def owner_entity(eid, part):
+        return {'@context': CONTEXT, 'id': eid, 'type': f'{ENT}/E2EOwner',
+                f'{ENT}/hasE2EPart': [{'type': 'Relationship', 'object': part}]}
+
+    def entities(self):
+        return [self.part_entity(self.part), self.part_entity(self.part2),
+                self.owner_entity(self.owner, self.part), self.owner_entity(self.owner2, self.part2)]
+
+
+def node_checks(stats, token, key, nf, phase):
+    """The owner's alert follows the referenced part: its attribute, and its existence."""
+    event = ['NodeConstraintComponent', 'hasE2EPart']
+    run_check(stats, key, 'NodeConstraint', phase, nf.owner, event,
+              lambda: del_attr(token, nf.part, 'hasE2ELevel'),
+              lambda: post_attr(token, nf.part, 'hasE2ELevel', {'type': 'Property', 'value': 0.5}))
+    run_check(stats, key, 'NodeConstraint.deleted', phase, nf.owner2, event,
+              lambda: del_entity(token, nf.part2),
+              lambda: upsert(token, [nf.part_entity(nf.part2)]))
+
+
+def node_phase(args, token, key, stats, ttl, run):
+    """--phase node: create the node family, check, idle idle-factor x TTL, check again."""
+    nf = NodeFamily(run)
+    log('creating node family ' + ', '.join(nf.all))
+    code, body = upsert(token, nf.entities())
+    if code not in (200, 201, 204, 207):
+        log(f'node family creation failed: {code} {body[:200]}')
+        return
+    log(f'settling {args.settle:.0f}s')
+    time.sleep(args.settle)
+    ok, detail = wait_alert(key, nf.owner, 'NodeConstraintComponent', 'gone', timeout=60)
+    record('fresh', 'NodeConstraint.baseline', ok, detail)
+    stats.snap('node:baseline')
+    log('=== phase NODE/FRESH ===')
+    node_checks(stats, token, key, nf, 'fresh')
+    idle = ttl * args.idle_factor
+    log(f"=== phase NODE/TTL: idling {idle:.0f}s ({args.idle_factor:.1f} x {ttl}s TTL) ===")
+    time.sleep(idle)
+    stats.snap('node:postttl:baseline')
+    node_checks(stats, token, key, nf, 'postttl')
+    if not args.keep:
+        for eid in nf.all:
+            del_entity(token, eid)
+        log('node family deleted (use --keep to retain it)')
 
 
 def _check_write(code, what):
@@ -1040,7 +1113,7 @@ def main():
     ap.add_argument('--password', default=None)
     ap.add_argument('--flink-rest', default='http://localhost:8081')
     ap.add_argument('--phase',
-                    choices=['all', 'fresh', 'ttl', 'growth', 'latency', 'checkpoint'],
+                    choices=['all', 'fresh', 'ttl', 'growth', 'latency', 'checkpoint', 'node'],
                     default='all')
     ap.add_argument('--latency-samples', type=int, default=10)
     ap.add_argument('--latency-target', type=float, default=2.0,
@@ -1067,7 +1140,7 @@ def main():
     key = alerta_key(args.namespace)
 
     if args.teardown:
-        for eid in fam.all:
+        for eid in fam.all + NodeFamily(run).all:
             log(f"delete {eid} -> {del_entity(token, eid)}")
         return 0
 
@@ -1082,6 +1155,17 @@ def main():
     # the checkpoint phase needs no entities at all
     if args.phase == 'checkpoint':
         checkpoint_phase(stats)
+        log('=== RESULTS ===')
+        fails = 0
+        for r in RESULTS:
+            fails += 0 if r['ok'] else 1
+            log(f"  {'PASS' if r['ok'] else 'FAIL'}  {r['phase']:>8}/{r['name']:<28} {r['detail'][:100]}")
+        log(f"{len(RESULTS) - fails}/{len(RESULTS)} checks passed")
+        return 1 if fails else 0
+
+    # the node checks run on the e2e KMS with a family of their own
+    if args.phase == 'node':
+        node_phase(args, token, key, stats, ttl, run)
         log('=== RESULTS ===')
         fails = 0
         for r in RESULTS:

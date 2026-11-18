@@ -1,0 +1,8 @@
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX ex: <https://example.org/node/>
+
+ex:Owner a rdfs:Class .
+ex:SpecialOwner rdfs:subClassOf ex:Owner .
+ex:Link a rdfs:Class .
+ex:Part a rdfs:Class .
+ex:Other a rdfs:Class .

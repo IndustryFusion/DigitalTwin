@@ -41,6 +41,16 @@ class Status(Enum):
 
 
 @dataclass(frozen=True)
+class Cause:
+    """One inner violation behind a result, e.g. what a node shape applied to a relationship's object found
+    on the referenced entity. It explains the result; it is no result of its own and has no identity."""
+    resource: str            # the entity the inner constraint was evaluated on
+    attribute: str           # its attribute, or ''
+    component: str           # e.g. MinCountConstraintComponent
+    message: str = ''
+
+
+@dataclass(frozen=True)
 class Result:
     resource: str            # the owning entity IRI
     attribute: str           # the attribute the constraint is on, or ''
@@ -55,6 +65,9 @@ class Result:
     # its maxCount, datatype, value form... hold of nothing. Not evidence that
     # a constraint holds -- coverage does not count it (expect/runner.py).
     vacuous: bool = False
+    # Why a node constraint (sh:node) was violated: the inner results pyshacl reports as sh:detail.
+    # Not part of the identity (key), so expectations, coverage and counts do not change.
+    cause: tuple = ()
 
     @property
     def shape_name(self):

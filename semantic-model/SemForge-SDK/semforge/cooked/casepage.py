@@ -59,6 +59,7 @@ EXPLAIN = {
     'In': '{a} is not one of the allowed values',
     'Pattern': '{a} does not match its pattern',
     'Or': '{a} matches none of its allowed forms',
+    'Node': '{a}: the referenced entity does not conform to the declaration',
 }
 
 RESERVED = {'id', '@id', 'type', '@type', '@context'}
@@ -387,8 +388,21 @@ def _explain(result):
         text = result.message or 'a SPARQL constraint fired'
     else:
         text = EXPLAIN.get(component, '{a}: ' + component).format(a=attribute)
+    causes = [_explain_cause(cause) for cause in getattr(result, 'cause', ())]
+    if causes:
+        # The node constraint's cause, on the referenced entity: the page and the Problems panel show it
+        text += ': ' + '; '.join(f"{cause['resource']} {cause['text']}" for cause in causes)
     return {'text': text, 'shape': _short(result.shape_curie or result.shape),
-            'component': component, 'detail': result.message or ''}
+            'component': component, 'detail': result.message or '', 'causes': causes}
+
+
+def _explain_cause(cause):
+    """{'resource', 'attribute', 'component', 'text', 'detail'} for one inner violation."""
+    component = cause.component.replace('ConstraintComponent', '')
+    attribute = cause.attribute or 'the entity'
+    return {'resource': cause.resource, 'attribute': cause.attribute, 'component': component,
+            'text': EXPLAIN.get(component, '{a}: ' + component).format(a=attribute),
+            'detail': cause.message}
 
 
 def build_case_page(package, case, verdicts=None):

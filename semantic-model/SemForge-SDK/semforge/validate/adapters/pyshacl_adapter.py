@@ -34,7 +34,7 @@ from rdflib import Graph
 from rdflib.namespace import SH
 
 from .. import normalise
-from ..results import Result, Status
+from ..results import Cause, Result, Status
 
 
 def _private_copy(shapes_graph):
@@ -117,5 +117,25 @@ def run(data_graph, shapes_graph, knowledge_graph=None, view='current'):
             component=component,
             shape=shape or '',
             severity=severity, status=Status.VIOLATED,
-            message=str(message or ''), view=view, shape_curie=curie))
+            message=str(message or ''), view=view, shape_curie=curie,
+            cause=_causes(node, data, shapes, report)))
     return results
+
+
+def _causes(node, data, shapes, report, depth=0):
+    """The inner results behind a result: pyshacl attaches them with sh:detail (for sh:node, the
+    violations the node shape found on the referenced entity). Followed recursively, in a stable order."""
+    if depth > 8:
+        return ()
+    causes = []
+    for detail in report.objects(node, SH.detail):
+        focus = report.value(detail, SH.focusNode)
+        path = report.value(detail, SH.resultPath)
+        component = normalise.local(report.value(detail, SH.sourceConstraintComponent))
+        message = str(report.value(detail, SH.resultMessage) or '')
+        resource, attribute = normalise.attribute_name(focus, path, data, shapes, report)
+        attribute = normalise.layered(attribute, path, component)
+        causes.append(Cause(resource=resource or str(focus), attribute=attribute or '',
+                            component=component, message=message))
+        causes.extend(_causes(detail, data, shapes, report, depth + 1))
+    return tuple(sorted(set(causes), key=lambda c: (c.resource, c.attribute, c.component, c.message)))

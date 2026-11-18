@@ -1,0 +1,14 @@
+[
+  {
+    "@context": ["https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld", {"ex": "https://example.org/declarations/"}],
+    "id": "urn:owner:1",
+    "type": "ex:OwnerType",
+    "ex:hasLink": {"type": "Relationship", "object": "urn:link:1"}
+  },
+  {
+    "@context": ["https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld", {"ex": "https://example.org/declarations/"}],
+    "id": "urn:link:1",
+    "type": "ex:LinkType",
+    "ex:hasLevel": {"type": "Property", "value": {"@value": 5.0, "@type": "http://www.w3.org/2001/XMLSchema#double"}}
+  }
+]

@@ -1,0 +1,5 @@
+examples:
+  - path: with-level.jsonld
+    description: >-
+      The entity OwnerType's hasLink refers to has the Level that the declaration of Link adds.
+    expect: valid

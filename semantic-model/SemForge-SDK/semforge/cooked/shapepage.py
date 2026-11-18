@@ -38,6 +38,8 @@ from .shapes import is_rule_only, target_short, targets, used_by
 from .typepage import (PENDING, _attribute_rows, _cases, _coverage, _examples_root,
                        _rules, _short)
 
+NGSILD_HAS_OBJECT = URIRef('https://uri.etsi.org/ngsi-ld/hasObject')
+
 # The nodes a page lists by name; past this it says how many more.
 LISTED = 50
 
@@ -65,7 +67,30 @@ def _reach(package, shape, graph):
             if (URIRef(user), SH.node, shape) in package.shapes:
                 nodes |= set(focus_nodes(URIRef(user), package.shapes, graph,
                                          package.knowledge))
+        nodes |= _reach_through_relationships(package, shape, graph)
     return {str(node) for node in nodes}
+
+
+def _reach_through_relationships(package, shape, graph):
+    """The entities a shape reaches when a node shape applies it to the object of a relationship
+    (`sh:node` on the `ngsi-ld:hasObject` value shape of a property shape): the objects of that
+    relationship on every focus node of the applying node shape."""
+    from ..validate.applicable import focus_nodes
+
+    shapes = package.shapes
+    reached = set()
+    for value_shape in shapes.subjects(SH.node, shape):
+        if (value_shape, SH.path, NGSILD_HAS_OBJECT) not in shapes:
+            continue
+        for property_shape in shapes.subjects(SH.property, value_shape):
+            path = shapes.value(property_shape, SH.path)
+            if path is None:
+                continue
+            for owner in shapes.subjects(SH.property, property_shape):
+                for focus in focus_nodes(owner, shapes, graph, package.knowledge):
+                    for attribute in graph.objects(focus, path):
+                        reached.update(graph.objects(attribute, NGSILD_HAS_OBJECT))
+    return reached
 
 
 def _types_of(graph, nodes):

@@ -1,0 +1,135 @@
+[
+    {
+        "type": "opcua:BaseObjectType",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjA0Mw",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "test:hasCode": {
+            "type": "Property",
+            "value": 0
+        }
+    },
+    {
+        "type": "test:ItemType",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjA0MQ",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "test:hasCode": {
+            "type": "Property",
+            "value": 0
+        }
+    },
+    {
+        "type": "opcua:BaseObjectType",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwNA",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "test:hasOther": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjA0Mw"
+            }
+        ],
+        "test:has%3CPart%3E": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjA0MQ",
+                "datasetId": "http://my.test/hasPart1"
+            }
+        ]
+    },
+    {
+        "type": "test:ItemType",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAxNA",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "test:hasCode": {
+            "type": "Property",
+            "value": 0
+        }
+    },
+    {
+        "type": "opcua:BaseObjectType",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAxNQ",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "test:hasDeep": {
+            "type": "Property",
+            "value": {
+                "@value": 0.0,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
+        }
+    },
+    {
+        "type": "test:ItemType",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAxMw",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "test:hasCode": {
+            "type": "Property",
+            "value": 0
+        }
+    },
+    {
+        "type": "test:LinkType",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwMg",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "test:hasItem%3Cno%3E": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAxNA",
+                "datasetId": "http://my.test/hasItem2"
+            },
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAxMw",
+                "datasetId": "http://my.test/hasItem1"
+            }
+        ],
+        "test:hasInner": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAxNQ"
+            }
+        ],
+        "test:hasLevel": {
+            "type": "Property",
+            "value": {
+                "@value": 0.0,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
+        },
+        "test:hasStatus": {
+            "type": "Property",
+            "value": false
+        }
+    },
+    {
+        "type": "test:AlphaType",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwMQ",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "test:hasMand": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwNA"
+            }
+        ],
+        "test:hasLink": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwMg"
+            }
+        ]
+    }
+]

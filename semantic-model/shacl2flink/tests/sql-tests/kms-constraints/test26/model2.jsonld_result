@@ -1,0 +1,5 @@
+'urn:owner:1','NodeConstraintComponent(https://example.org/node/hasLink[0])','warning'
+'urn:owner:10','NodeConstraintComponent(https://example.org/node/hasCounted[0])','warning'
+'urn:owner:11','NodeConstraintComponent(https://example.org/node/hasVariable[0])','warning'
+'urn:owner:3','NodeConstraintComponent(https://example.org/node/hasLink[0])','warning'
+'urn:owner:5','NodeConstraintComponent(https://example.org/node/hasLink[urn:d2])','warning'

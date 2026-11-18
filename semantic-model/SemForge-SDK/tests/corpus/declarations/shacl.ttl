@@ -1,0 +1,24 @@
+@prefix ex: <https://example.org/declarations/> .
+@prefix ngsild: <https://uri.etsi.org/ngsi-ld/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# The owning type's relationship applies the declaration shape to the referenced entity, next to its class.
+ex:OwnerTypeShape a sh:NodeShape ;
+    sh:targetClass ex:OwnerType ;
+    sh:property [ sh:path ex:hasLink ;
+            sh:minCount 1 ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:property [ sh:path ngsild:hasObject ;
+                    sh:class ex:LinkType ;
+                    sh:node ex:OwnerType_LinkDeclarationShape ] ] .
+
+# No target of its own: it applies only where OwnerType's hasLink refers to an entity.
+ex:OwnerType_LinkDeclarationShape a sh:NodeShape ;
+    sh:property [ sh:path ex:hasLevel ;
+            sh:minCount 1 ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:property [ sh:path ngsild:hasValue ;
+                    sh:datatype xsd:double ] ] .

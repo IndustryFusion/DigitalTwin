@@ -992,3 +992,60 @@ class TestRankValueToString(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestRdfUtilsAddedChildren(unittest.TestCase):
+    """Members an instance declaration adds beyond the type (and supertypes) of the declared child."""
+    def setUp(self):
+        self.basens = Namespace("http://example.org/base/")
+        self.opcuans = Namespace("http://example.org/opcua/")
+        self.rdf_utils = RdfUtils(self.basens, self.opcuans)
+        self.ex = Namespace("http://example.org/")
+        g = self.graph = Graph()
+        g.add((self.opcuans['HasComponent'], RDFS.subPropertyOf, self.opcuans['HasChild']))
+        # ChildType (own member Own) is a subtype of SuperType (member Inherited)
+        g.add((self.ex.ChildType, RDFS.subClassOf, self.ex.SuperType))
+        g.add((self.ex.SuperType, RDFS.subClassOf, self.opcuans['BaseObjectType']))
+        g.add((self.ex.childTypeNode, UARDF['definesType'], self.ex.ChildType))
+        g.add((self.ex.superTypeNode, UARDF['definesType'], self.ex.SuperType))
+        self._child(self.ex.childTypeNode, self.ex.typeOwn, 'Own')
+        self._child(self.ex.superTypeNode, self.ex.typeInherited, 'Inherited')
+
+    def _child(self, parent, child, name, rule=True, method=False):
+        self.graph.add((parent, self.opcuans['HasComponent'], child))
+        self.graph.add((child, UARDF['browseName'], Literal(f'nsu=http://example.org/;{name}')))
+        if rule:
+            self.graph.add((child, self.opcuans['HasModellingRule'], self.ex.mandatory))
+        if method:
+            self.graph.add((child, RDF.type, UARDF['Method']))
+
+    def test_declared_and_inherited_members_are_no_additions(self):
+        self._child(self.ex.declaration, self.ex.declOwn, 'Own')
+        self._child(self.ex.declaration, self.ex.declInherited, 'Inherited')
+        self.assertEqual(self.rdf_utils.get_added_children(self.graph, self.ex.declaration, self.ex.ChildType), [])
+
+    def test_added_member_is_found(self):
+        self._child(self.ex.declaration, self.ex.declOwn, 'Own')
+        self._child(self.ex.declaration, self.ex.declAdded, 'Added')
+        added = self.rdf_utils.get_added_children(self.graph, self.ex.declaration, self.ex.ChildType)
+        self.assertEqual(added, [(self.opcuans['HasComponent'], self.ex.declAdded)])
+
+    def test_children_without_modelling_rule_and_methods_are_not_counted(self):
+        self._child(self.ex.declaration, self.ex.declNoRule, 'NoRule', rule=False)
+        self._child(self.ex.declaration, self.ex.declMethod, 'DoIt', method=True)
+        self.assertEqual(self.rdf_utils.get_added_children(self.graph, self.ex.declaration, self.ex.ChildType), [])
+
+    def test_ignored_references_are_not_counted(self):
+        self.graph.add((self.opcuans['HasProperty'], RDFS.subPropertyOf, self.opcuans['HasChild']))
+        self.graph.add((self.ex.declaration, self.opcuans['HasProperty'], self.ex.declProp))
+        self.graph.add((self.ex.declProp, UARDF['browseName'], Literal('nsu=http://example.org/;Prop')))
+        self.graph.add((self.ex.declProp, self.opcuans['HasModellingRule'], self.ex.mandatory))
+        added = self.rdf_utils.get_added_children(self.graph, self.ex.declaration, self.ex.ChildType,
+                                                  [self.opcuans['HasProperty']])
+        self.assertEqual(added, [])
+        self.assertEqual(len(self.rdf_utils.get_added_children(self.graph, self.ex.declaration, self.ex.ChildType)), 1)
+
+    def test_unknown_type_counts_every_member_as_added(self):
+        self._child(self.ex.declaration, self.ex.declAdded, 'Added')
+        added = self.rdf_utils.get_added_children(self.graph, self.ex.declaration, self.ex.UnknownType)
+        self.assertEqual(added, [(self.opcuans['HasComponent'], self.ex.declAdded)])

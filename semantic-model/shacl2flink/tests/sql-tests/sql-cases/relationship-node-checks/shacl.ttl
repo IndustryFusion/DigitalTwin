@@ -1,0 +1,52 @@
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix ngsild: <https://uri.etsi.org/ngsi-ld/> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:     <https://example.org/node/> .
+
+# Members an instance declaration adds to a child of a generic type (openspec
+# gh-985-instance-declaration-shapes): the owning type's relationship applies a
+# node shape to the referenced entity, next to sh:class. The node shapes have no
+# target of their own. The alert belongs to the owning entity, one per
+# relationship instance.
+ex:OwnerShape a sh:NodeShape ;
+    sh:targetClass ex:Owner ;
+    sh:property [ sh:path ex:hasLink ;
+        sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasObject ; sh:class ex:Link ; sh:node ex:LinkDeclarationShape ] ] ;
+    sh:property [ sh:path ex:hasCounted ;
+        sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasObject ; sh:class ex:Link ; sh:node ex:CountDeclarationShape ] ] ;
+    sh:property [ sh:path ex:hasVariable ;
+        sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasObject ; sh:class ex:Link ; sh:node ex:ValueRankDeclarationShape ] ] .
+
+# Two required members, the level a double.
+ex:LinkDeclarationShape a sh:NodeShape ;
+    sh:property [ sh:path ex:hasLevel ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasValue ; sh:nodeKind sh:Literal ; sh:datatype xsd:double ] ] ;
+    sh:property [ sh:path ex:hasMode ; sh:minCount 1 ; sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasValue ; sh:nodeKind sh:Literal ] ] .
+
+# A count of distinct attribute instances: the default instance is one of its own.
+ex:CountDeclarationShape a sh:NodeShape ;
+    sh:property [ sh:path ex:hasItem ; sh:minCount 3 ; sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasValue ; sh:nodeKind sh:Literal ] ] .
+
+# As the OPC UA generator writes a variable (ValueRank: a scalar or a list), and an
+# added object: an sh:or circuit and a relationship with sh:class inside the node shape.
+ex:ValueRankDeclarationShape a sh:NodeShape ;
+    sh:property [ sh:path ex:hasLevel ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:BlankNode ;
+        sh:or ( [ sh:property [ sh:path ngsild:hasValue ; sh:minCount 1 ; sh:maxCount 1 ;
+                                sh:nodeKind sh:Literal ; sh:datatype xsd:double ] ]
+                [ sh:property [ sh:path ngsild:hasValueList ; sh:minCount 1 ; sh:maxCount 1 ] ] ) ] ;
+    sh:property [ sh:path ex:hasPart ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasObject ; sh:class ex:Part ; sh:nodeKind sh:IRI ] ] .
+
+# An unrelated shape with sh:xone, which makes its circuit level one that evaluates against the
+# entities: the node checks' sh:or on the same level must still be evaluated (owner:11 below).
+ex:OtherShape a sh:NodeShape ;
+    sh:targetClass ex:Other ;
+    sh:xone ( [ sh:property [ sh:path ex:hasA ; sh:minCount 1 ;
+                    sh:property [ sh:path ngsild:hasValue ; sh:nodeKind sh:Literal ] ] ]
+              [ sh:property [ sh:path ex:hasB ; sh:minCount 1 ;
+                    sh:property [ sh:path ngsild:hasValue ; sh:nodeKind sh:Literal ] ] ] ) .

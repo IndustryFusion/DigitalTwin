@@ -1,0 +1,13 @@
+# A package for the members an OPC UA instance declaration adds to a child of a generic type:
+# a node shape applied to the object of a relationship, with no target of its own (#985).
+name: declarations
+version: 1.0.0
+format: 1
+
+namespaces:
+  ex: https://example.org/declarations/
+  ngsild: https://uri.etsi.org/ngsi-ld/
+
+# The NGSI-LD vocabulary, the same copy the kms corpus links to.
+ngsild:
+  source: vocabulary/ngsild.ttl

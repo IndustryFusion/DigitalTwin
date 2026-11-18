@@ -1,4 +1,4 @@
-from rdflib import Graph, RDF, BNode
+from rdflib import Graph, RDF, RDFS, BNode, URIRef
 from rdflib.collection import Collection
 from rdflib.namespace import SH
 import os
@@ -419,7 +419,7 @@ order by ?inheritedTargetclass
 """  # noqa: E501
 sql_check_relationship_base = """
             INSERT {% if sqlite %}OR REPlACE{% endif %} INTO {{alerts_bulk_table}}
-            WITH A1 as (
+            WITH {{ focus_ctes }}A1 as (
                     SELECT {{ relationship_ttl_hint }} A.id AS this,
                         A.`type` as typ,
                         -- Deleted entities stay in A1 and carry the flag, so
@@ -445,7 +445,7 @@ sql_check_relationship_base = """
                         D.minCount as minCount,
                         D.severity as severity,
                         D.id as constraint_id
-                    FROM {{target_class}}_view AS A JOIN {{constraint_table}} as D ON A.`type` = D.targetClass
+                    FROM {% if focus_view %}{{ focus_view }}{% else %}{{target_class}}_view{% endif %} AS A JOIN {{constraint_table}} as D ON A.`type` = D.targetClass
             {{ attribute_joins }}
                     LEFT JOIN {{target_class}}_view AS C ON {{ deepest('attributeValue') }} = C.id and COALESCE(C.`deleted`, false) = false
                     -- The target's CLASS, not merely its existence. C alone
@@ -639,7 +639,7 @@ sql_check_relationship_nodeType = """
 
 sql_check_property_iri_base = """
 INSERT {% if sqlite %} OR REPlACE{% endif %} INTO {{alerts_bulk_table}}
-WITH A1 AS (SELECT {{ property_ttl_hint }} A.id as this,
+WITH {{ focus_ctes }}A1 AS (SELECT {{ property_ttl_hint }} A.id as this,
                    A.`type` as typ,
                    -- Carried, not filtered; see sql_check_relationship_base.
                    IFNULL(A.`deleted`, false) as edeleted,
@@ -671,7 +671,7 @@ WITH A1 AS (SELECT {{ property_ttl_hint }} A.id as this,
                    D.datatypes as datatypes,
                    D.hasValue as hasValue,
                    D.id as constraint_id
-                   FROM `{{target_class}}_view` AS A JOIN {{constraint_table}} as D ON A.`type` = D.targetClass
+                   FROM {% if focus_view %}{{ focus_view }}{% else %}`{{target_class}}_view`{% endif %} AS A JOIN {{constraint_table}} as D ON A.`type` = D.targetClass
             {{ attribute_joins }}
             LEFT JOIN {{rdf_table_name}} as C ON C.subject = '<' || {{ deepest('attributeValue') }} || '>'
                 and C.predicate = '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>' and C.object = '<' || D.propertyClass || '>'
@@ -1032,6 +1032,131 @@ FROM A1
 WHERE hasValue IS NOT NULL AND `index` IS NOT NULL AND {{ constraint_cond }}
 """
 
+# A node shape applied to the object of a relationship (openspec
+# gh-985-instance-declaration-shapes): `sh:node` on the `ngsi-ld:hasObject`
+# value shape of an owning type's relationship. The node shape constrains the
+# REFERENCED entity, and the alert belongs to the OWNING entity.
+#
+# The node shape is compiled as an ordinary shape, through every row, circuit
+# and leaf the compiler has, so its constraints mean exactly what they mean on
+# an entity's own attributes -- including the sh:or the OPC UA ValueRank
+# shapes are made of, which only the circuit evaluates correctly. Its target is
+# a synthetic class per (owning class, relationship), and the entities it
+# targets are the ones such a relationship refers to: `node_focus` below. The
+# relationship and property statements are rendered a second time over that
+# focus. A referenced entity that is missing or deleted is still in the focus,
+# with no attributes, so its required members evaluate as absent.
+#
+# The circuit tops of the node shape feed a NODE edge instead of publishing,
+# and sql_relationship_node_check raises one alert per relationship instance
+# on the owning entity from them.
+#
+# Every input is pinned '0d' like the other bases: the state is bounded by the
+# live model (one row per live relationship), and an expired join or
+# accumulator stops the check for good -- see attribute_level_context.
+#
+# The focus types EVERY relationship's object with the synthetic class of its
+# owner's type and the relationship, and leaves it to the base's pinned
+# `A JOIN D ON A.type = D.targetClass` to keep the classes that have constraint
+# rows. Joining the node rows here instead, to keep only relationships with a
+# node check, is what it did first, and Flink defeated it: it pushes the
+# GROUP BY below that join, replacing the node rows by a GROUP BY targetClass of
+# their own, and the STATE_TTL pin of 'N' does not follow. The join state then
+# expired with table.exec.state.ttl -- measured on the local cluster, the check
+# answered nothing once the job was an hour old. Here the grouping key depends
+# on both sides of the one join, so nothing can be pushed below it.
+sql_node_focus_ctes = """node_focus_join AS (
+                SELECT /*+ STATE_TTL('O' = '0d', 'RL' = '0d') */
+                    RL.`attributeValue` AS id,
+                    '{{ class_prefix }}' || O.`type` || '{{ class_separator }}' || RL.name AS `type`
+                FROM {{target_class}}_view AS O
+                JOIN attributes_view AS RL ON RL.entityId = O.id AND RL.parentId IS NULL
+                    AND RL.`type` = 'https://uri.etsi.org/ngsi-ld/Relationship'
+                    AND COALESCE(RL.`deleted`, false) = false
+                WHERE COALESCE(O.`deleted`, false) = false
+            ),
+            node_focus AS (
+                SELECT /*+ STATE_TTL('node_focus_join' = '0d') */ id, `type`, false AS `deleted`
+                FROM node_focus_join
+                GROUP BY id, `type`
+            ),
+            """  # noqa: E501
+
+# One statement for every node check of a package. The violated circuit tops of
+# the referenced entity (trigger rows of the members of the node row) are
+# grouped per owning entity and relationship instance.
+#
+# The text has to be deterministic: an alert whose text changes is updated, and
+# Flink's LISTAGG has no ORDER BY, so a concatenation could reorder on every
+# retraction. Each member has a static position instead -- its rank among the
+# members of its node row, from the edge list -- and the text is the
+# concatenation of one slot per position, `slots` being the largest number of
+# members of a node row in the package.
+#
+# The group key is the relationship instance, not the entity it refers to: a
+# relationship pointed at another entity updates its alert instead of moving it
+# to a new group, which would race a delete against an insert on the same key.
+# `odeleted` is read as an aggregate, never as a key -- see
+# sql_check_relationship_property_count.
+# memberId/nodeId, not member/node: MEMBER is reserved in Flink's parser (MEMBER OF), and SQLite
+# does not mind, so only a Flink deployment would notice.
+sql_relationship_node_check = """
+INSERT {% if sqlite %}OR REPLACE {% endif %}INTO {{ constraint_trigger_table }}
+WITH node_member_pairs AS (
+    SELECT /*+ STATE_TTL('M' = '0d', 'M2' = '0d') */
+        M.member_constraint_id AS memberId,
+        M.target_constraint_id AS nodeId
+    FROM {{ constraint_combination_table }} AS M
+    JOIN {{ constraint_combination_table }} AS M2
+        ON M2.target_constraint_id = M.target_constraint_id
+        AND M2.operation = '{{ node_operation }}'
+        AND M2.member_constraint_id <= M.member_constraint_id
+    WHERE M.operation = '{{ node_operation }}'
+),
+node_members AS (
+    SELECT /*+ STATE_TTL('node_member_pairs' = '0d') */ memberId, nodeId, COUNT(*) AS pos
+    FROM node_member_pairs
+    GROUP BY memberId, nodeId
+),
+node_violations AS (
+    SELECT /*+ STATE_TTL('O' = '0d', 'RL' = '0d', 'N' = '0d', 'NM' = '0d', 'T' = '0d') */
+        O.id AS owner,
+        IFNULL(O.`deleted`, false) AS odeleted,
+        RL.name AS relPath,
+        CASE WHEN RL.`datasetId` = '@none' THEN '0' ELSE RL.`datasetId` END AS relIndex,
+        RL.`attributeValue` AS referenced,
+        N.id AS nodeId,
+        N.severity AS severity,
+        NM.pos AS pos,
+        T.`text` AS `text`
+    FROM {{ target_class }}_view AS O
+    JOIN attributes_view AS RL ON RL.entityId = O.id AND RL.parentId IS NULL
+        AND RL.`type` = 'https://uri.etsi.org/ngsi-ld/Relationship'
+        AND COALESCE(RL.`deleted`, false) = false
+    JOIN {{ constraint_table }} AS N
+        ON N.targetClass = '{{ class_prefix }}' || O.`type` || '{{ class_separator }}' || RL.name
+        AND N.operation = '{{ node_operation }}'
+    JOIN node_members AS NM ON NM.nodeId = N.id
+    JOIN {{ constraint_trigger_table }} AS T
+        ON T.resource = RL.`attributeValue` AND T.constraint_id = NM.memberId AND T.triggered
+)
+SELECT /*+ STATE_TTL('node_violations' = '0d') */ owner AS resource,
+    'NodeConstraintComponent(' || relPath || '[' || relIndex || '])' AS event,
+    nodeId AS constraint_id,
+    true AS triggered,
+    MAX(severity) AS severity,
+    'Model validation for relationship ' || relPath || '[' || relIndex || '] failed for ' || owner
+        || '. The referenced entity ' || MAX(referenced) || ' does not conform to the node shape:'
+{%- for slot in range(1, slots + 1) %}
+        || COALESCE(' ' || MAX(CASE WHEN pos = {{ slot }} THEN `text` END), '')
+{%- endfor %}
+        AS `text`
+    {% if sqlite %},CURRENT_TIMESTAMP{% endif %}
+FROM node_violations
+GROUP BY owner, relPath, relIndex, nodeId
+HAVING MAX(CASE WHEN odeleted THEN 1 ELSE 0 END) = 0;
+"""  # noqa: E501
+
 sql_insert_constraint_in_alerts = """
 INSERT {% if sqlite %} OR REPlACE{% endif %} INTO {{alerts_bulk_table}}
 SELECT /*+ STATE_TTL('comb' = '0d', 'ct' = '0d') */
@@ -1194,7 +1319,8 @@ WITH
     JOIN
       constraint_table AS ct
       ON ct.id = comb.target_constraint_id
-     AND ct.circuit_level = {{ level }}
+     AND ct.circuit_level = {{ level }}{% if node_checks_only %}
+     AND ct.targetClass LIKE '{{ class_prefix }}%'{% endif %}
     JOIN
       needed AS nm
       ON nm.target_constraint_id   = comb.target_constraint_id
@@ -1236,8 +1362,20 @@ FROM  fired AS f;
 """
 
 
-def create_relationship_sql():
+def node_focus(focus):
+    """The template variables that root a base at the entities relationships with a node check refer
+    to (sql_node_focus_ctes), or none: the base then reads the entities themselves."""
+    if not focus:
+        return {}
+    ctes = Template(sql_node_focus_ctes).render(
+        target_class="entities", class_prefix=NODE_CHECK_CLASS_PREFIX,
+        class_separator=NODE_CHECK_SEPARATOR)
+    return {'focus_ctes': ctes, 'focus_view': 'node_focus'}
+
+
+def create_relationship_sql(focus=False):
     levels = attribute_level_context(filter_deleted=True)
+    levels.update(node_focus(focus))
     sql_command_yaml = Template(sql_check_relationship_base).render(
         alerts_bulk_table=constraint_trigger_table_name,
         constraint_table=constraint_table_name,
@@ -1313,9 +1451,24 @@ def create_inverse_relationship_sql():
     return sql_command_sqlite, sql_command_yaml
 
 
-def create_property_sql():
+def create_relationship_node_sql(slots):
+    """The node statement (sql_relationship_node_check) with `slots` text positions."""
+    render = dict(constraint_trigger_table=constraint_trigger_table_name,
+                  constraint_combination_table=constraint_combination_table_name,
+                  constraint_table=constraint_table_name, target_class="entities",
+                  class_prefix=NODE_CHECK_CLASS_PREFIX, class_separator=NODE_CHECK_SEPARATOR,
+                  node_operation=NODE_CHECK_OPERATION, slots=slots)
+    sql_command_sqlite = utils.process_sql_dialect(
+        Template(sql_relationship_node_check).render(sqlite=True, **render), True)
+    sql_command_yaml = utils.process_sql_dialect(
+        Template(sql_relationship_node_check).render(sqlite=False, **render), False)
+    return sql_command_sqlite, sql_command_yaml
+
+
+def create_property_sql(focus=False):
 
     levels = attribute_level_context()
+    levels.update(node_focus(focus))
     sql_command_yaml = Template(
         sql_check_property_iri_base).render(
         alerts_bulk_table=constraint_trigger_table_name,
@@ -1955,6 +2108,158 @@ def inline_node_shape(g, referring, shape):
     return problems
 
 
+NODE_CHECK_OPERATION = 'NODE'
+NODE_CHECK_CLASS_PREFIX = 'urn:shacl2flink:node-check:'
+NODE_CHECK_SEPARATOR = '::'
+SUBCLASS_STAR = shape_rows.SUBCLASS_STAR
+TARGET_PREDICATES = (SH.targetClass, SH.targetNode, SH.targetSubjectsOf, SH.targetObjectsOf)
+
+
+def node_check_class(owner_class, relationship):
+    """The synthetic target class of a node shape applied to `relationship`'s object on `owner_class`."""
+    return URIRef(f'{NODE_CHECK_CLASS_PREFIX}{owner_class}{NODE_CHECK_SEPARATOR}{relationship}')
+
+
+def is_node_check_class(target_class):
+    return target_class is not None and str(target_class).startswith(NODE_CHECK_CLASS_PREFIX)
+
+
+def shape_closure(g, shape):
+    """Every node of a shape's tree: sh:property, the list connectives, sh:not and sh:node, followed."""
+    seen, todo = set(), [shape]
+    while todo:
+        node = todo.pop()
+        if node in seen:
+            continue
+        seen.add(node)
+        for predicate, obj in g.predicate_objects(node):
+            if predicate in (SH.property, SH['not'], SH.node):
+                todo.append(obj)
+            elif predicate in (SH['or'], SH['and'], SH.xone):
+                todo.extend(Collection(g, obj))
+    return seen
+
+
+def describe_property(g, prop):
+    """A property shape as a reader finds it: its node shape and path, or itself when it is named."""
+    if isinstance(prop, URIRef):
+        return f'<{prop}>'
+    owner = next(iter(sorted(g.subjects(SH.property, prop), key=str)), None)
+    path = g.value(prop, SH.path)
+    where = f'<{owner}>' if isinstance(owner, URIRef) else 'a property shape'
+    return f'{where} sh:path <{path}>' if path is not None else where
+
+
+def node_shape_problems(g, shape):
+    """Why a node shape applied to a relationship's object cannot be compiled, as messages."""
+    problems = []
+    for node in sorted(shape_closure(g, shape), key=str):
+        if (node, SH.path, NGSILD.hasObject) in g and (node, SH.node, None) in g:
+            problems.append(
+                f'<{shape}> applies sh:node to the object of a further relationship. Only one '
+                f'relationship is followed from the owning entity; a node shape on the object of a '
+                f'relationship of the referenced entity is not evaluated.')
+        if (node, SH.sparql, None) in g:
+            problems.append(f'<{shape}> holds an sh:sparql constraint, which is not evaluated on the '
+                            f'entity a relationship refers to.')
+        if (node, SH['not'], None) in g or (node, SH.xone, None) in g:
+            problems.append(f'<{shape}> uses sh:not or sh:xone, which are not evaluated on the entity a '
+                            f'relationship refers to.')
+        for path in g.objects(node, SH.path):
+            steps = list(Collection(g, path)) if (path, RDF.first, None) in g else [path]
+            if any(g.value(step, SH.inversePath) is not None for step in steps):
+                problems.append(f'<{shape}> constrains an inverse path, which is not evaluated on the '
+                                f'entity a relationship refers to.')
+    return sorted(set(problems))
+
+
+def severity_code(g, shape):
+    labels = sorted(str(label) for severity in g.objects(shape, SH.severity)
+                    for label in g.objects(severity, RDFS.label))
+    return labels[0] if labels else 'warning'
+
+
+def extract_relationship_node_checks(g):
+    """
+    Take the node shapes applied to a relationship's object out of sh:node substitution.
+
+    `sh:node` on the `ngsi-ld:hasObject` value shape of a relationship constrains the entity the
+    relationship refers to, not the referring one, so inlining it -- as expand_node_shapes does for every
+    other sh:node -- turned its constraints into sub-attributes of the relationship that never match.
+    Each such node shape is cloned instead into a shape targeting the synthetic class of its owning class
+    and relationship (node_check_class), one per owning class and subclass, and the reference is
+    removed. The declaration shape itself is removed when nothing else refers to it.
+
+    Returns (checks, problems): one check per relationship property shape -- its node shape, relationship
+    path, synthetic classes and severity -- and the messages for every form that cannot be compiled.
+    """
+    checks, problems = [], []
+    for value_shape in sorted(g.subjects(SH.path, NGSILD.hasObject), key=str):
+        if (value_shape, SH.property, None) in g:
+            referring = next(iter(sorted(g.subjects(SH.property, value_shape), key=str)), value_shape)
+            problems.append(
+                f'{describe_property(g, referring)} has a property shape directly underneath '
+                f'ngsi-ld:hasObject. The object of a relationship is an entity, not a set of attributes: '
+                f'constrain the referenced entity with sh:node on the ngsi-ld:hasObject value shape.')
+
+    references = sorted(((value_shape, shape) for value_shape, shape in g.subject_objects(SH.node)
+                         if (value_shape, SH.path, NGSILD.hasObject) in g),
+                        key=lambda pair: (str(pair[0]), str(pair[1])))
+    # Judge every declaration shape on the graph as written, before any reference is removed: removing the
+    # reference inside a declaration shape first would hide the second hop from the judgement of the outer one,
+    # and which comes first is only the order of the blank nodes. A reference that sits inside a declaration
+    # shape IS that second hop; it is not extracted on its own, the outer shape's rejection names it.
+    closures = {shape: shape_closure(g, shape) for _, shape in references}
+    found_by_shape = {shape: node_shape_problems(g, shape) for shape in closures}
+    inner = {value_shape for value_shape, _ in references
+             if any(value_shape in closure for closure in closures.values())}
+    for value_shape, shape in references:
+        g.remove((value_shape, SH.node, shape))
+        if value_shape in inner:
+            continue
+        found = found_by_shape[shape]
+        if found:
+            problems.extend(found)
+            continue
+        referring = sorted(g.subjects(SH.property, value_shape), key=str)
+        sites = [(owner, prop) for prop in referring
+                 for owner in sorted(g.subjects(SH.property, prop), key=str)
+                 if (owner, SH.targetClass, None) in g]
+        if not sites or {prop for _, prop in sites} != set(referring):
+            problems.append(
+                f'<{shape}> is applied with sh:node to the object of a relationship that is not a '
+                f'property of a node shape with sh:targetClass, so no entity owns its alert.')
+            continue
+        for owner, prop in sites:
+            relationship = g.value(prop, SH.path)
+            if not isinstance(relationship, URIRef):
+                problems.append(f'<{shape}> is applied to the object of {describe_property(g, prop)}, '
+                                f'whose path is not a single relationship.')
+                continue
+            classes = sorted({node_check_class(owner_class, relationship)
+                              for target in g.objects(owner, SH.targetClass)
+                              for owner_class, _, _ in g.triples((None, SUBCLASS_STAR, target))}, key=str)
+            clone = URIRef(f'{NODE_CHECK_CLASS_PREFIX}{owner}{NODE_CHECK_SEPARATOR}{relationship}'
+                           f'{NODE_CHECK_SEPARATOR}{shape}')
+            mapping = {}
+            g.add((clone, RDF.type, SH.NodeShape))
+            for predicate, obj in sorted(g.predicate_objects(shape), key=str):
+                if predicate == RDF.type or predicate in TARGET_PREDICATES:
+                    continue
+                g.add((clone, predicate, clone_shape_node(g, obj, mapping)))
+            for synthetic in classes:
+                g.add((clone, SH.targetClass, synthetic))
+            checks.append({'shape': str(shape), 'property': prop, 'relationship': str(relationship),
+                           'classes': [str(synthetic) for synthetic in classes],
+                           'severity': severity_code(g, prop)})
+
+    for shape in sorted({shape for _, shape in references}, key=str):
+        if not list(g.subjects(SH.node, shape)) and \
+                not any((shape, predicate, None) in g for predicate in TARGET_PREDICATES):
+            remove_shape(g, shape)
+    return checks, problems
+
+
 def expand_node_shapes(g):
     """
     Replace every sh:node reference with the constraints it points at.
@@ -2172,6 +2477,10 @@ def translate(shaclefile, knowledgefile, prefixes):
     else:
         h = knowledgefile
     g += h
+    # A node shape on a relationship's object is evaluated on the referenced
+    # entity, so it is taken out before substitution (openspec
+    # gh-985-instance-declaration-shapes).
+    node_checks, node_problems = extract_relationship_node_checks(g)
     # Resolve sh:node before anything reads the shapes, so the extractor only
     # ever sees inlined constraints.
     expand_node_shapes(g)
@@ -2511,16 +2820,53 @@ def translate(shaclefile, knowledgefile, prefixes):
         g, prefixes, constraint_checks, constraint_combination,
         property_top, constraint_id_counter)
 
-    for property_node, top_id in property_top.items():
-        if property_node in consumed:
-            continue
+    # The tops of a node shape applied to a relationship's object feed its node
+    # row instead of raising alerts on the referenced entity: one node row per
+    # synthetic class, appended after every other row so existing ids stay put.
+    node_rows = {}
+    for check in node_checks:
+        for synthetic in check['classes']:
+            if synthetic in node_rows:
+                continue
+            node_row = utils.init_constraint_check()
+            node_row['id'] = constraint_id_counter
+            node_row['operation'] = NODE_CHECK_OPERATION
+            node_row['targetClass'] = synthetic
+            node_row['severity'] = check['severity']
+            node_rows[synthetic] = constraint_id_counter
+            constraint_id_counter += 1
+            constraint_checks.append(node_row)
+    target_class_of = {check['id']: check['targetClass'] for check in constraint_checks}
+    node_members = {}
+
+    def publish(top_id):
+        target_class = target_class_of.get(top_id)
+        if is_node_check_class(target_class):
+            node_members.setdefault(target_class, []).append(top_id)
+            constraint_combination.append({'operation': NODE_CHECK_OPERATION,
+                                           'member_constraint_id': top_id,
+                                           'target_constraint_id': node_rows[target_class]})
+            return
         constraint_combination.append({'operation': 'PUBLISH',
                                        'member_constraint_id': top_id,
                                        'target_constraint_id': -1})
+
+    for property_node, top_id in property_top.items():
+        if property_node in consumed:
+            continue
+        publish(top_id)
     for root_id in node_level_roots:
+        publish(root_id)
+    for synthetic, node_id in node_rows.items():
         constraint_combination.append({'operation': 'PUBLISH',
-                                       'member_constraint_id': root_id,
+                                       'member_constraint_id': node_id,
                                        'target_constraint_id': -1})
+    for check in node_checks:
+        if not any(synthetic in node_members for synthetic in check['classes']):
+            node_problems.append(
+                f'<{check["shape"]}> is applied to the object of '
+                f'{describe_property(g, check["property"])} but produced no constraint, so the '
+                f'referenced entity would never be checked.')
 
     # Debug hook. The extractor cannot yet emit AND/NOT/XONE or a circuit deeper
     # than one level, so there is no way to exercise those code paths against a
@@ -2573,6 +2919,14 @@ def translate(shaclefile, knowledgefile, prefixes):
     sql_command_sqlite, sql_command_yaml = create_property_sql()
     sqlite += sql_command_sqlite
     statementsets.append(sql_command_yaml)
+    # Only when a node check exists: the constraints of the node shapes, over
+    # the entities relationships with a node check refer to.
+    if node_rows:
+        for create in (create_relationship_sql, create_property_sql):
+            sqlite += '\n'
+            sql_command_sqlite, sql_command_yaml = create(focus=True)
+            sqlite += sql_command_sqlite
+            statementsets.append(sql_command_yaml)
     # Only when an inverse constraint exists: the check is a whole extra job
     # vertex with pinned state, and a model without inverse shapes should not
     # pay for it.
@@ -2591,24 +2945,41 @@ def translate(shaclefile, knowledgefile, prefixes):
         needs_universe = any(check['circuit_level'] == level and
                              check['operation'] in ABSENCE_FIRING_OPERATIONS
                              for check in constraint_checks)
-        sql_command_yaml = Template(sql_combine_logic).render(
-            alerts_bulk_table=alerts_bulk_table,
-            constraint_trigger_table=constraint_trigger_table_name,
-            constraint_combination_table=constraint_combination_table_name,
-            target_class="entities",
-            level=level,
-            needs_universe=needs_universe,
-            sqlite=False)
-        sql_command_sqlite = Template(sql_combine_logic).render(
-            alerts_bulk_table=alerts_bulk_table,
-            constraint_trigger_table=constraint_trigger_table_name,
-            constraint_combination_table=constraint_combination_table_name,
-            target_class="entities",
-            level=level,
-            needs_universe=needs_universe,
-            sqlite=True)
-        statementsets.append(sql_command_yaml)
+        # A level that needs the universe joins the circuit nodes to the
+        # entities by type, and no entity has the synthetic type of a node
+        # check: the node checks' circuit nodes on such a level (the sh:or of
+        # an OPC UA ValueRank, NOT and XONE being rejected in node shapes) get
+        # a statement of their own that reads the members' verdicts. Only
+        # then -- every other package compiles as before.
+        variants = [(needs_universe, False)]
+        if needs_universe and any(check['circuit_level'] == level and
+                                  is_node_check_class(check['targetClass'])
+                                  for check in constraint_checks):
+            variants.append((False, True))
+        for universe, node_checks_only in variants:
+            for dialect in (False, True):
+                sql_command = Template(sql_combine_logic).render(
+                    alerts_bulk_table=alerts_bulk_table,
+                    constraint_trigger_table=constraint_trigger_table_name,
+                    constraint_combination_table=constraint_combination_table_name,
+                    target_class="entities",
+                    level=level,
+                    needs_universe=universe,
+                    node_checks_only=node_checks_only,
+                    class_prefix=NODE_CHECK_CLASS_PREFIX,
+                    sqlite=dialect)
+                if dialect:
+                    sqlite += sql_command
+                else:
+                    statementsets.append(sql_command)
+    # After the circuit: the node statement reads the verdicts of its members,
+    # which may be circuit nodes, and its own verdict is published below.
+    if node_rows:
+        sqlite += '\n'
+        sql_command_sqlite, sql_command_yaml = create_relationship_node_sql(
+            max(len(members) for members in node_members.values()) if node_members else 1)
         sqlite += sql_command_sqlite
+        statementsets.append(sql_command_yaml)
     tables.append(configs.constraint_combination_table_object_name)
     tables.append(configs.constraint_trigger_table_object_name)
     sqlite += '\n'
@@ -2634,7 +3005,7 @@ def translate(shaclefile, knowledgefile, prefixes):
     # them, rather than making the author rediscover them one at a time.
     compiled = {node.removesuffix(OWN_PARAMS_SUFFIX)
                 for node, _ in property_nodes if property_nodes[(node, _)]}
-    problems = sorted(depth_problems) + unsupported_shapes(g, compiled)
+    problems = sorted(depth_problems) + sorted(set(node_problems)) + unsupported_shapes(g, compiled)
     if problems:
         raise UnsupportedShape(
             'the following shapes cannot be compiled and would be silently '
