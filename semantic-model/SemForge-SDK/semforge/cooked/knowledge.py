@@ -177,12 +177,35 @@ def _scan_examples(package):
     uses this" that cannot open urn:filter:1 is a dead end -- and the same
     entity id legitimately appears in several files, a good case and a bad one,
     so one location is not enough.
+
+    Kept with the loaded model per version of the files: locating every value
+    of a 9,330-entity model took 3.6 s, on every request of the view.
     """
+    from ..rdfio.frozen import derived
+
+    files = example_files(package)
+    return derived(package.model, 'example_scan', lambda: _scan(files),
+                   key=(package.path, _file_stamps(files)))
+
+
+def _file_stamps(files):
+    """((path, mtime, size), ...); None for a file that cannot be read."""
+    stamps = []
+    for path in files:
+        try:
+            stat = os.stat(path)
+            stamps.append((path, stat.st_mtime_ns, stat.st_size))
+        except OSError:
+            stamps.append((path, None, None))
+    return tuple(stamps)
+
+
+def _scan(files):
     from .jsonloc import locate
 
     instances = {}
     places = {}
-    for path in example_files(package):
+    for path in files:
         try:
             with open(path, encoding='utf-8') as handle:
                 raw = handle.read()
@@ -226,21 +249,46 @@ def _data_graph(package):
     case under examples/bad, and calling it unused would send someone deleting
     a term the suite depends on.
     """
+    from ..rdfio.frozen import derived
+
+    # The model is loaded already: parsing it again was the whole cost of the
+    # Knowledge view on a large model (7 s at 9,330 entities). Only the
+    # example files are parsed, once per version of them.
+    model_files = {os.path.abspath(path) for path in package.files('model')}
+    files = [path for path in example_files(package)
+             if os.path.abspath(path) not in model_files]
+    if not files:
+        return package.model
+    return derived(package.model, 'data_graph',
+                   lambda: _with_examples(package, files),
+                   key=(package.path, _file_stamps(files)))
+
+
+def _with_examples(package, files):
+    """The loaded model and the example files, read as one graph -- a union,
+    not a copy: the model may be most of the package's memory."""
     from rdflib import Graph
+    from rdflib.graph import ReadOnlyGraphAggregate
 
     from ..package.context import context_config, resolve_model_document
+    from ..rdfio.frozen import freeze
 
     graph = Graph()
     config = context_config(package.path)
-    for path in example_files(package):
+    for path in files:
         try:
             document, _ = resolve_model_document(package.path, path, config)
             from ..rdfio.relative import BASE, for_rdflib
-            graph.parse(data=json.dumps(for_rdflib(document, path)), format='json-ld',
+            from ..package.loader import hoist_context
+            graph.parse(data=json.dumps(hoist_context(for_rdflib(document, path))), format='json-ld',
                         base=BASE)
         except Exception:                          # noqa: BLE001
             continue                               # reported by the examples view
-    return graph if len(graph) else package.model
+    # A union yields a triple of both graphs twice; one graph, as it was,
+    # yields it once -- and the counts of the view are counts of triples.
+    for triple in [t for t in graph if t in package.model]:
+        graph.remove(triple)
+    return ReadOnlyGraphAggregate([package.model, freeze(graph)])
 
 
 def _usages(graph, places):

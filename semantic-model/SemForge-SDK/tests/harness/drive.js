@@ -386,7 +386,11 @@ const stub = {
     }
 
     fire(value) {
-      seen.events.push({ type: 'refresh' });
+      // `from`: the source file that fired it, so a test can tell one view's
+      // refresh from another's (the caller is the stack's third line).
+      const caller = (new Error().stack || '').split('\n')[2] || '';
+      const from = (caller.match(/([\w.-]+\.js):\d+/) || [])[1] || '';
+      seen.events.push({ type: 'refresh', from });
       for (const listener of this.listeners.slice()) {
         listener(value);
       }
@@ -483,6 +487,16 @@ Module._load = function (request, parent, isMain) {
 async function runCommand() {
   const extension = require(path.resolve(process.argv[3]));
   extension.activate({ subscriptions: [] });
+  // `drawTrees`: these views are drawn once, as VS Code draws a visible view
+  // after activation -- what a view remembers of its last answer is set then.
+  for (const id of scenario.drawTrees || []) {
+    const provider = providers[id];
+    if (!provider) {
+      seen.errors.push(`no tree view ${id}`);
+      continue;
+    }
+    await provider.getChildren();
+  }
   for (const { method, params } of scenario.notify || []) {
     const target = activeClient && activeClient.handlers[method];
     if (target) {

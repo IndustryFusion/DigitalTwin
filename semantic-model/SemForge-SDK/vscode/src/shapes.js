@@ -106,7 +106,15 @@ class ShapesTreeProvider {
       return [];
     }
     const roots = result.roots || [];
-    this.message(roots.length ? undefined : 'This package declares no shapes.');
+    // The violation counts come from the background verdicts; until they
+    // are in, the view says so (they bring it back, see register).
+    this.verdictState = result.verdicts ? result.verdicts.state : 'ready';
+    this.root = result.root;
+    const counting = {
+      evaluating: '⟳ Validating in the background — violation counts follow.',
+      failed: '⚠ Validation failed — the violation counts are not current.'
+    }[this.verdictState];
+    this.message(roots.length ? counting : 'This package declares no shapes.');
     return roots.map((raw) => new ShapeNode(raw, this.uri));
   }
 }
@@ -326,6 +334,16 @@ function register(context, clientHolder, session) {
     session.onDidChange((uri) => provider.setPackage(uri)),
     vscode.workspace.onDidSaveTextDocument(() => provider.refresh()),
     vscode.commands.registerCommand('semforge.refreshShapes', () => provider.refresh()),
+    // The violation counts come from the background verdicts: drawn with the
+    // last ones while a run goes, drawn again once per run of this package --
+    // when it is in, whichever edit started it (a value edited in the Model
+    // view does not redraw this view by itself).
+    ...(clientHolder.onVerdicts ? [clientHolder.onVerdicts((notice) => {
+      if (notice && notice.state === 'ready' && provider.verdictState &&
+          (!provider.root || !notice.root || notice.root === provider.root)) {
+        provider.refresh();
+      }
+    })] : []),
     vscode.commands.registerCommand('semforge.newShape',
       (node, options) => newShape(clientHolder, session, node, options)),
     vscode.commands.registerCommand('semforge.mergeShape',

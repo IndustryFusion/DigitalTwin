@@ -239,7 +239,8 @@ def compose(package, example):
                 f'{example.path}: cannot find {relative}')
         document, _ = resolve_model_document(package.path, path, config)
         from ..rdfio.relative import BASE, for_rdflib
-        graph.parse(data=json.dumps(for_rdflib(document, path)), format='json-ld',
+        from ..package.loader import hoist_context
+        graph.parse(data=json.dumps(hoist_context(for_rdflib(document, path))), format='json-ld',
                     base=BASE)
     return graph
 

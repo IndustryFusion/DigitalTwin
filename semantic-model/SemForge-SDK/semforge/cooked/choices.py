@@ -78,16 +78,29 @@ def declared_entity_root(package_path):
     """
     from ..package.config import path_for
     config = path_for(package_path)
-    if not os.path.exists(config):
+    try:
+        stat = os.stat(config)
+    except OSError:
         return None
+    # Once per version of kms.yaml: every entity_types call asks.
+    stamp = (config, stat.st_mtime_ns, stat.st_size)
+    if _ENTITY_ROOTS.get(config, (None,))[0] != stamp:
+        _ENTITY_ROOTS[config] = (stamp, _read_entity_root(config))
+    root = _ENTITY_ROOTS[config][1]
+    if not root:
+        return None
+    return URIRef(expand(package_path, str(root)))
+
+
+_ENTITY_ROOTS = {}     # kms.yaml path -> ((path, mtime, size), entityRoot)
+
+
+def _read_entity_root(config):
     from ruamel.yaml import YAML
 
     with open(config) as handle:
         data = YAML().load(handle) or {}
-    root = data.get('entityRoot')
-    if not root:
-        return None
-    return URIRef(expand(package_path, str(root)))
+    return data.get('entityRoot')
 
 
 def expand(package_path, term):
@@ -234,11 +247,24 @@ def entity_types(package):
     therefore offers these and nothing else -- a type that is genuinely
     missing is added to the knowledge first, which is where a type belongs.
     """
+    from ..package.prefixes import names_by_namespace
+    from ..rdfio.frozen import derived
+
+    names = tuple(sorted(names_by_namespace(package.path).items()))
+    root = declared_entity_root(package.path)
+    found, hierarchy = derived(package.knowledge, 'entity_types',
+                               lambda: _entity_types(package),
+                               depends=(package.shapes, package.model),
+                               key=(package.path, names, str(root)))
+    return list(found), hierarchy
+
+
+def _entity_types(package):
     from ..validate.shapes import class_targets, node_shapes
 
     entities, _, root = classify_classes(package)
     if root is None:
-        return [], None
+        return (), None
 
     by_target = {}
     for shape in node_shapes(package.shapes):
@@ -265,7 +291,7 @@ def entity_types(package):
             instances=len(set(package.model.subjects(RDF.type, cls))),
             is_root=(cls == root)))
     found.sort(key=lambda entry: entry.label)
-    return found, str(root)
+    return tuple(found), str(root)
 
 
 def domains_of(graph, attribute):

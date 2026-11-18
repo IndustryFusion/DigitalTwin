@@ -39,6 +39,7 @@ lie about what a shape contains -- invariant S2: content the cooked view cannot
 project is preserved and marked, never hidden and never dropped.
 """
 
+import functools
 import json
 import os
 import re
@@ -119,6 +120,7 @@ class CookedNode:
                 'parameter': self.parameter}
 
 
+@functools.lru_cache(maxsize=8)
 def _line_counter(text):
     """offset -> 1-based line. Built once; the tree asks for it per node.
 

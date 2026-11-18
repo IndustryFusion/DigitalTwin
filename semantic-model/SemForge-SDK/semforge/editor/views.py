@@ -761,8 +761,26 @@ def shapes_feature(ls, params):
     if root is None:
         return {'roots': [], 'error': 'not a SemForge package'}
     try:
-        return session.view(root, 'shapes', lambda: {
-            'root': root, 'roots': build_shapes(session.package_for(root))}, params)
+        # Violation counts from the background verdicts, never a validation
+        # here: on 9,330 entities that was 20 s after every edit. Current
+        # verdicts are cached like any view; while a run is going, the last
+        # ones are shown (`verdicts.stale`), uncached, as the pages show them;
+        # with none yet, the rows come without counts. The `semforge/verdicts`
+        # notification brings the view back.
+        from ..validate.results import Report
+
+        session.warm(root)
+        verdicts, state = validation.verdicts_for(root)
+        if state.state == 'ready':
+            payload = session.view(root, 'shapes', lambda: {
+                'root': root, 'roots': build_shapes(session.package_for(root),
+                                                    report=verdicts.model)}, params)
+        else:
+            report = verdicts.model if verdicts is not None else Report()
+            payload = session.slim('shapes', {
+                'root': root, 'cached': False,
+                'roots': build_shapes(session.package_for(root), report=report)}, params)
+        return dict(payload, verdicts=state.as_dict())
     except Exception as exc:                       # noqa: BLE001
         return {'roots': [], 'error': str(exc)}
 

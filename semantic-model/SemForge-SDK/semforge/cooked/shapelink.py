@@ -93,41 +93,68 @@ def find_property_shape(package, entity_type, attribute):
     Returns a dict with the shape, its file:line, whether the shape targets the
     type directly or an ancestor, and the value slot it constrains.
     """
-    index = package.index('shapes')
     wanted = attribute.rsplit('/', 1)[-1].split(':')[-1]
-    names = _type_names(package, entity_type)
+    names = _type_names_cached(package, entity_type)
     own = (entity_type or '').split(':')[-1]
 
     best = None
-    for shape in node_shapes(package.shapes):
-        targets = _targets(package, shape)
+    for targets, groups in _shape_places(package):
         if not (targets & names):
             continue
-        # Which FILE holds it matters as much as which line: a role may be a
-        # directory, and the jump has to open the document the shape is in.
-        path, block = index.block_for(shape)
-        if block is None:
+        found = groups.get(wanted)
+        if found is None:
             continue
-        text = index.source_of(path)
-        for group in property_blocks(text, block):
-            if group.path.split(':')[-1] != wanted:
-                continue
-            slot = next((c.path for c in group.children
-                         if c.path in VALUE_PATHS), '')
-            found = {
-                'shape': str(shape),
-                'shapeName': curie(package.shapes, shape),
-                'file': path,
-                'line': _line_of(text, group.start),
-                'inherited': own not in targets,
-                'slot': slot,
-                'exists': True,
-            }
-            # A shape targeting the type itself beats one it inherits from.
-            if own in targets:
-                return found
-            best = best or found
+        found = dict(found, inherited=own not in targets)
+        # A shape targeting the type itself beats one it inherits from.
+        if own in targets:
+            return found
+        best = best or found
     return best
+
+
+def _type_names_cached(package, entity_type):
+    from ..rdfio.frozen import derived
+
+    memo = derived(package.knowledge, 'type_names', dict)
+    key = entity_type or ''
+    if key not in memo:
+        memo[key] = frozenset(_type_names(package, entity_type))
+    return memo[key]
+
+
+def _shape_places(package):
+    """[(target local names, {attribute local name: place})] in node_shapes
+    order, the first group per attribute -- once per shapes graph."""
+    from ..rdfio.frozen import derived
+
+    def compute():
+        index = package.index('shapes')
+        out = []
+        for shape in node_shapes(package.shapes):
+            # Which FILE holds it matters as much as which line: a role may be
+            # a directory, and the jump has to open the document the shape is in.
+            path, block = index.block_for(shape)
+            if block is None:
+                continue
+            text = index.source_of(path)
+            groups = {}
+            for group in property_blocks(text, block):
+                key = group.path.split(':')[-1]
+                if key in groups:
+                    continue
+                slot = next((c.path for c in group.children
+                             if c.path in VALUE_PATHS), '')
+                groups[key] = {
+                    'shape': str(shape),
+                    'shapeName': curie(package.shapes, shape),
+                    'file': path,
+                    'line': _line_of(text, group.start),
+                    'slot': slot,
+                    'exists': True,
+                }
+            out.append((frozenset(_targets(package, shape)), groups))
+        return out
+    return derived(package.shapes, 'shape_places', compute)
 
 
 def shape_for_type(package, entity_type):

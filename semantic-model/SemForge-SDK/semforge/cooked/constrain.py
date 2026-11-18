@@ -127,7 +127,6 @@ def own_shape(package, entity_type):
     of its own -- a structural one and SPARQL rule shapes, say -- the one that
     already carries sh:property groups is the one attributes go in.
     """
-    from ..validate.shapes import node_shapes
     from .choices import entity_types
 
     wanted = str(entity_type or '').strip('<>')
@@ -137,13 +136,23 @@ def own_shape(package, entity_type):
     # the comparison is on IRIs and two namespaces' `Filter` stay two.
     iri = next((entry.iri for entry in entity_types(package)[0]
                 if wanted in (entry.iri, entry.term, entry.label)), wanted)
-    candidates = [shape for shape in node_shapes(package.shapes)
-                  if iri in {str(t) for t in _shape_targets(package, shape)}]
-    if not candidates:
-        return None
-    candidates.sort(key=lambda s: (-len(list(package.shapes.objects(s, SH.property))),
-                                   str(s)))
-    return str(candidates[0])
+    return _own_shapes(package).get(iri)
+
+
+def _own_shapes(package):
+    """{target class IRI: the shape attributes go in}, once per shapes graph."""
+    from ..rdfio.frozen import derived
+    from ..validate.shapes import node_shapes
+
+    def compute():
+        by_target = {}
+        for shape in node_shapes(package.shapes):
+            for target in _shape_targets(package, shape):
+                by_target.setdefault(str(target), []).append(shape)
+        return {target: str(min(candidates, key=lambda s: (
+                    -len(list(package.shapes.objects(s, SH.property))), str(s))))
+                for target, candidates in by_target.items()}
+    return derived(package.shapes, 'own_shapes', compute)
 
 
 def attribute_options(package, shape):

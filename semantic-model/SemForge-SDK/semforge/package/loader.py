@@ -227,6 +227,48 @@ def reload_keeping_shapes(package):
                                      for role in ('knowledge', 'shapes')})
 
 
+def model_meaning_files(package):
+    """The files a loaded model graph was read from or through: its documents,
+    the local context its terms are expanded with, and the descriptor that
+    says which context that is. While none of them changes, the graph is the
+    same graph and a reload may keep it (editor/session.py,
+    editor/incremental.py).
+
+    Named whether they exist or not: a local context or a kms.yaml added
+    after the load changes what the model means just as an edit does.
+    """
+    from .config import DESCRIPTORS
+    from .context import context_config
+
+    files = [os.path.abspath(path) for path in package.files('model')]
+    files.append(os.path.abspath(os.path.join(package.path, context_config(package.path).local)))
+    files.extend(os.path.abspath(os.path.join(package.path, name)) for name in DESCRIPTORS)
+    return list(dict.fromkeys(files))
+
+
+def hoist_context(document):
+    """A list of entities that all carry the same @context, as one document
+    with that context once -- the same triples.
+
+    NGSI-LD writes the context into every entity, and rdflib processes it again
+    for each one: 10.4 s for the 9,330 entities of a replicated OPC UA demo package,
+    1.7 s with the context said once. Anything else is returned unchanged --
+    also a context that uses @propagate, whose scope moving from the entity
+    to the document would change what it applies to.
+    """
+    if not isinstance(document, list) or not document or \
+            not all(isinstance(e, dict) and '@context' in e for e in document):
+        return document
+    shared = document[0]['@context']
+    if any(e['@context'] != shared for e in document[1:]):
+        return document
+    import json as _json
+    if '"@propagate"' in _json.dumps(shared):
+        return document
+    return {'@context': shared,
+            '@graph': [{k: v for k, v in e.items() if k != '@context'} for e in document]}
+
+
 def load(path, reuse=None):
     """Load a package directory. Raises PackageError naming what is missing.
 
@@ -287,7 +329,16 @@ def load(path, reuse=None):
 
     config = context_config(path)
     package.context_url = str(model_context(sources['model']) or '')
-    for source in documents['model']:
+    kept = (reuse or {}).get('model')
+    if kept is not None and list(kept[0]) == list(documents['model']):
+        # The model's documents and the context are untouched (the caller
+        # checked): an edit to a shape must not re-parse 9,330 entities.
+        package.model = kept[1]
+        package.context_resolved_locally = kept[2]
+        documents_to_parse = []
+    else:
+        documents_to_parse = documents['model']
+    for source in documents_to_parse:
         document, swapped = resolve_model_document(path, source, config)
         package.context_resolved_locally = \
             package.context_resolved_locally or swapped
@@ -297,7 +348,7 @@ def load(path, reuse=None):
         if not swapped:
             with open(source, encoding='utf-8') as handle:
                 document = _json.load(handle)
-        package.model.parse(data=_json.dumps(for_rdflib(document, source)),
+        package.model.parse(data=_json.dumps(hoist_context(for_rdflib(document, source))),
                             format='json-ld', base=BASE)
     # One version of its files each: read-only from here, and what is derived
     # from one is kept with it (rdfio/frozen.py).

@@ -448,7 +448,7 @@ class Session:
         old = self._last.get(root)
         digests, _ = _digests(root, set())
         reuse = self._reusable(old, digests)
-        fresh = set(reuse or ()) != {'knowledge', 'shapes'}
+        fresh = not {'knowledge', 'shapes'} <= set(reuse or ())
         if fresh:
             gc.unfreeze()        # what was kept may be replaced now: collectable again
         package = self._load(root, reuse=reuse)
@@ -554,4 +554,10 @@ class Session:
             documents = old.package.files(role)
             if not changed & {os.path.abspath(d) for d in documents}:
                 reuse[role] = (documents, getattr(old.package, role))
+        # The model too, when neither its documents nor what its terms are
+        # read through changed: a shape edit must not re-parse every entity.
+        from ..package.loader import model_meaning_files
+        if not changed & set(model_meaning_files(old.package)):
+            reuse['model'] = (old.package.files('model'), old.package.model,
+                              old.package.context_resolved_locally)
         return reuse

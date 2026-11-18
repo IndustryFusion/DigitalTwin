@@ -43,11 +43,16 @@ def view(root, key, compute, params=None):
     cheap pass over it, so one entry serves both modes.
     """
     from .cache import cached
-    from .slim import SLIM
 
     warm(root)
     payload, hit = cached(root, key, compute)
-    payload = dict(payload, cached=hit)
+    return slim(key, dict(payload, cached=hit), params)
+
+
+def slim(key, payload, params):
+    """The payload slimmed when the request asks for `detail: summary`."""
+    from .slim import SLIM
+
     if params is not None and field(params, 'detail') == 'summary' \
             and key in SLIM and payload.get('roots'):
         payload['roots'] = SLIM[key](payload['roots'], payload)
@@ -75,7 +80,16 @@ def package_for(root):
         if _stamps.get(root) != stamp or root not in _packages:
             _packages[root] = load(root, reuse=_reusable(root))
             _stamps[root] = stamp
-            _previous[root] = (_packages[root], _role_stamps(_packages[root]))
+            # The stamps first, then whether the package moved: a save in
+            # between would pair the new files with the graphs of the old.
+            stamps = _role_stamps(_packages[root])
+            if fingerprint(root) == stamp:
+                _previous[root] = (_packages[root], stamps)
+            else:
+                # Saved while it was read: the stamps taken now would pair
+                # the new files with the graphs of the old ones, and every
+                # later reload would keep those. The next request reads it all.
+                _previous.pop(root, None)
             _watch_renames(root, _packages[root])
             # The package's graphs stay for every request that follows: two
             # million objects on the OPC UA pumps, which each full pass of the
@@ -118,7 +132,18 @@ def _tidy():
 _previous = {}
 
 
+def _stamp(path):
+    """(path, mtime, size); (path, None, None) for a file that is not there."""
+    try:
+        stat = os.stat(path)
+    except OSError:
+        return (path, None, None)
+    return (path, stat.st_mtime_ns, stat.st_size)
+
+
 def _role_stamps(package):
+    from ..package.loader import model_meaning_files
+
     stamps = {}
     for role in ('knowledge', 'shapes'):
         try:
@@ -126,6 +151,9 @@ def _role_stamps(package):
                             for path in package.files(role)]
         except OSError:
             stamps[role] = None
+    # What the model's terms mean is read through the context and the
+    # descriptor; one of them appearing later is a change too.
+    stamps['model'] = [_stamp(path) for path in model_meaning_files(package)]
     return stamps
 
 
@@ -139,12 +167,20 @@ def _reusable(root):
     for role, before in stamps.items():
         if before is None:
             continue
-        try:
-            now = [(path, os.stat(path).st_mtime_ns, os.stat(path).st_size)
-                   for path, _, _ in before]
-        except OSError:
-            continue
-        if now == before:
+        if role == 'model':
+            now = [_stamp(path) for path, _, _ in before]
+        else:
+            try:
+                now = [(path, os.stat(path).st_mtime_ns, os.stat(path).st_size)
+                       for path, _, _ in before]
+            except OSError:
+                continue
+        if now == before and role == 'model':
+            # (documents, graph, whether the context was answered locally):
+            # the loader keeps all three (package/loader.py).
+            reuse[role] = (list(package.files('model')), package.model,
+                           package.context_resolved_locally)
+        elif now == before:
             reuse[role] = ([path for path, _, _ in before], getattr(package, role))
         elif role == 'shapes' and len(before) == 1:
             # One shapes file a cooked edit just wrote: its graph patched
