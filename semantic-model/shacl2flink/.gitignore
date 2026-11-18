@@ -15,3 +15,6 @@ tests/sql-tests/*/*/output/
 
 # pytest-cov data file
 .coverage
+
+# make validate-flink
+validate-flink/

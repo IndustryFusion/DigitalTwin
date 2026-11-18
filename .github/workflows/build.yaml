@@ -40,6 +40,23 @@ jobs:
         source $CONDA/bin/activate
         conda activate py310
         cd semantic-model/shacl2flink && make setup && make lint test build test-kms test-opcua-shapes test-pyshacl-compare
+    # openspec gh-955-flink-sql-validation: Flink itself parses and plans the
+    # SQL the charts would deploy, with the SQL Gateway and operator images
+    # built above, so a statement Flink rejects fails here and not in a
+    # cluster.
+    - name: Validate the generated Flink SQL with Flink
+      run: |
+        wget -q https://github.com/helmfile/helmfile/releases/download/v0.149.0/helmfile_0.149.0_linux_amd64.tar.gz
+        tar -xzf helmfile_0.149.0_linux_amd64.tar.gz -C "$RUNNER_TEMP" helmfile
+        rm helmfile_0.149.0_linux_amd64.tar.gz
+        source .env
+        docker run --rm --network none --entrypoint python3 -v "$PWD/FlinkSqlGateway:/src:ro" -w /tmp \
+          ibn40/flink-sql-gateway:${DOCKER_TAG} -m unittest discover -s /src/test -p 'test_job.py'
+        source $CONDA/bin/activate
+        conda activate py310
+        cd semantic-model/shacl2flink
+        make validate-flink HELMFILE="$RUNNER_TEMP/helmfile"
+        make validate-flink HELMFILE="$RUNNER_TEMP/helmfile" KMS="$PWD/tests/e2e-kms"
     - name: Build Dataservice
       run: |
         source $CONDA/bin/activate

@@ -80,6 +80,9 @@ case "$*" in
     *"get beamsqlstatementsets"*"jsonpath={.status.state}"*)
         printf '%s' "${MOCK_SS_STATE}"
         ;;
+    *"get beamsqlstatementsets"*"jsonpath={.status.validation.message}"*)
+        printf '%s' "${MOCK_SS_VALIDATION}"
+        ;;
     *"get pods"*"kafka-connect"*)
         if [ -n "${MOCK_CONNECT_AGE_S}" ]; then
             date -u -d "-${MOCK_CONNECT_AGE_S} seconds" +%Y-%m-%dT%H:%M:%SZ
@@ -174,6 +177,17 @@ teardown() {
     [ "${status}" -eq 0 ]
     [[ "${output}" == *"[critical] shacl-validation/StatementsetState: DEPLOYMENTFAILURE"* ]]
     grep -q '"resource":"shacl-validation".*"severity":"critical".*DEPLOYMENTFAILURE' "${SINK_LOG}"
+}
+
+@test "a statementset Flink rejected is critical with Flink's message" {
+    export MOCK_SS_STATE="VALIDATION_FAILED"
+    export MOCK_SS_VALIDATION=$'SQL parse failed. Encountered "||" at line 1\nWas expecting one of:'
+    run bash "${WORK}/watchdog.sh"
+    [ "${status}" -eq 0 ]
+    [[ "${output}" == *"[critical] shacl-validation/StatementsetState: VALIDATION_FAILED"* ]]
+    grep -q '"resource":"shacl-validation".*"severity":"critical".*VALIDATION_FAILED' "${SINK_LOG}"
+    # Flink's first line, quotes removed so the alert stays valid JSON.
+    grep -q 'not deployed: SQL parse failed. Encountered || at line 1"' "${SINK_LOG}"
 }
 
 @test "a bridge with zero ready pods is critical, a degraded one warns" {

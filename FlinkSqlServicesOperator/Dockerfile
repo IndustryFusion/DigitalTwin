@@ -10,7 +10,8 @@ PYTHONPATH=/opt coverage run -a  /opt/test/test_tables_and_views.py && \
 PYTHONPATH=/opt coverage run -a  /opt/test/test_util.py && \
 PYTHONPATH=/opt coverage run -a  /opt/test/test_beamsqlstatementsetoperator.py && \
 PYTHONPATH=/opt coverage run -a  /opt/test/test_flink_util.py && \
-PYTHONPATH=/opt coverage run -a  /opt/test/test_util.py
+PYTHONPATH=/opt coverage run -a  /opt/test/test_util.py && \
+PYTHONPATH=/opt coverage run -a  /opt/test/test_compose_requests.py
 RUN coverage report --omit "*/test*" -m --fail-under 80
 
 FROM python:3.12

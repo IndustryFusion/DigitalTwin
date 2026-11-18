@@ -51,6 +51,9 @@ const localudf = 'udf';
 const localdata = 'data';
 const sqlStructures = 'SQL-structures.json';
 const submitjobscript = 'job.py';
+const python = 'python3';
+// job.py --validate prints its result on a line of its own, after this prefix.
+const validationPrefix = 'VALIDATION ';
 const cwd = process.cwd();
 
 function appget (_, response) {
@@ -103,28 +106,48 @@ const createCommand = function (dirname) {
   return command;
 };
 
+function hasStatementSet (body) {
+  return !(body === undefined || body === null || body.sqlstatementset === undefined);
+}
+
+function newJobDir () {
+  return '/tmp/gateway_' + randomUUID();
+}
+
+// Fills a request's own directory: job.py, the request as
+// data/SQL-structures.json and the newest version of every UDF in udf/.
+function prepareJobDir (dirname, body) {
+  const datatargetdir = dirname + '/' + localdata;
+  const udftargetdir = dirname + '/' + localudf;
+  const submitjobscripttargetdir = dirname + '/' + submitjobscript;
+  process.chdir(cwd);
+  fs.mkdirSync(dirname, '0744');
+  fs.mkdirSync(datatargetdir, '0744');
+  fs.cpSync(submitdir + '/' + localudf, udftargetdir, { recursive: true });
+  fs.cpSync(submitdir + '/' + submitjobscript, submitjobscripttargetdir);
+  fs.writeFileSync(datatargetdir + '/' + sqlStructures, JSON.stringify(body));
+  const udfFiles = getLocalPythonUdfs();
+  udfFiles.forEach(file => fs.copyFileSync(file, udftargetdir + '/' + path.basename(file)));
+}
+
+function removeJobDir (dirname) {
+  if (debug === 'false') {
+    logger.info('Removing ' + dirname + ': debug = ' + debug);
+    fs.rmSync(dirname, { recursive: true, force: true });
+  }
+}
+
 function apppost (request, response) {
   // for now ignore session_id
   const body = request.body;
-  if (body === undefined || body === null || body.sqlstatementset === undefined) {
+  if (!hasStatementSet(body)) {
     response.status(500);
     response.send('Wrong format! No sqlstatementset field in body');
     return;
   }
-  const id = randomUUID();
-  const dirname = '/tmp/gateway_' + id;
-  const datatargetdir = dirname + '/' + localdata;
-  const udftargetdir = dirname + '/' + localudf;
-  const submitjobscripttargetdir = dirname + '/' + submitjobscript;
+  const dirname = newJobDir();
   try {
-    process.chdir(cwd);
-    fs.mkdirSync(dirname, '0744');
-    fs.mkdirSync(datatargetdir, '0744');
-    fs.cpSync(submitdir + '/' + localudf, udftargetdir, { recursive: true });
-    fs.cpSync(submitdir + '/' + submitjobscript, submitjobscripttargetdir);
-    fs.writeFileSync(datatargetdir + '/' + sqlStructures, JSON.stringify(body));
-    const udfFiles = getLocalPythonUdfs();
-    udfFiles.forEach(file => fs.copyFileSync(file, udftargetdir + '/' + path.basename(file)));
+    prepareJobDir(dirname, body);
 
     const command = createCommand(dirname);
     submitJob(command, response).then(
@@ -145,10 +168,63 @@ function apppost (request, response) {
     );
   } catch (e) {
     logger.error('Could not submit job: ' + e.stack || e);
-    if (debug === 'false') {
-      logger.info('Removing ' + dirname + ': debug = ' + debug);
-      fs.rmSync(dirname, { recursive: true, force: true });
-    }
+    removeJobDir(dirname);
+  }
+}
+
+// Validation (openspec gh-955-flink-sql-validation): Flink parses and plans
+// the request -- settings, table and view DDL, the statement set, with the
+// UDFs -- without starting a job. 200 { valid: true }, or 422 with the first
+// rejected item (kind, index, text) and Flink's message.
+function validateJob (dirname, response) {
+  const args = [dirname + '/' + submitjobscript, '--validate',
+    localdata + '/' + sqlStructures, '--udf-dir', localudf];
+  logger.debug('Now validating with ' + python + ' ' + args.join(' '));
+  let output = '';
+  return new Promise((resolve) => {
+    const res = spawn(python, args, { cwd: dirname });
+    res.stdout.on('data', (data) => { output += data.toString(); });
+    res.stderr.on('data', (data) => {
+      logger.debug('Stderr messages from validation: ' + data);
+    });
+    res.on('close', (code) => {
+      const line = output.split('\n').find(l => l.startsWith(validationPrefix));
+      let result = null;
+      try {
+        result = line === undefined ? null : JSON.parse(line.substring(validationPrefix.length));
+      } catch (e) {
+        result = null;
+      }
+      if (result === null) {
+        logger.error(`Validation did not complete (exit code ${code})`);
+        response.status(500).send('Validation did not complete.');
+      } else if (result.valid) {
+        response.status(200).json({ valid: true });
+      } else {
+        delete result.file;
+        logger.info(`Validation rejected ${result.kind} ${result.index}: ${result.message}`);
+        response.status(422).json(result);
+      }
+      resolve();
+    });
+  });
+}
+
+function appvalidate (request, response) {
+  const body = request.body;
+  if (!hasStatementSet(body)) {
+    response.status(500);
+    response.send('Wrong format! No sqlstatementset field in body');
+    return;
+  }
+  const dirname = newJobDir();
+  try {
+    prepareJobDir(dirname, body);
+    validateJob(dirname, response).then(() => removeJobDir(dirname));
+  } catch (e) {
+    logger.error('Could not validate: ' + e.stack || e);
+    response.status(500).send('Could not validate: ' + e);
+    removeJobDir(dirname);
   }
 }
 
@@ -230,6 +306,7 @@ app.get('/health', appget);
 app.get('/v1/python_udf/:filename', pollLimiter, udfget);
 
 app.post('/v1/sessions/:session_id/statements', limiter, apppost);
+app.post('/v1/sessions/:session_id/validate', limiter, appvalidate);
 app.post('/v1/python_udf/:filename', limiter, bodyParser.text(), udfpost);
 
 if (runningAsMain) {

@@ -69,5 +69,6 @@ jobs:
         # target does, so running both cost a second full deploy cycle for no
         # extra coverage. The production ../kms/default is still compiled on every
         # build by the Build workflow (make build), just not deployed here.
-        ( cd semantic-model/shacl2flink && make test-flink-e2e )
+        # flink-deploy validates the SQL first with the images built above.
+        ( cd semantic-model/shacl2flink && make test-flink-e2e DOCKER_PREFIX=k3d-iff.localhost:12345/ibn40 )
 

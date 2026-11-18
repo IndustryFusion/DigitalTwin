@@ -59,6 +59,25 @@ data:
 
 ```
 
+## Validation before deployment
+
+Before the operator cancels a statement set's running job (on an update) or
+submits it (on a create), it has the SQL Gateway's Flink parse and plan the
+whole request -- settings, table and view DDL, the statements -- without
+running it (`POST /v1/sessions/session/validate`). When Flink rejects it:
+
+- nothing is submitted, and a running job keeps running the previous
+  statements;
+- `status.state` is `VALIDATION_FAILED`;
+- `status.validation` holds `kind` (`udf`, `setting`, `table`, `view`,
+  `statement` or `statementset`), `index`, `text` (at most 2,000 characters)
+  and Flink's `message`, plus the `digest` of the rejected request.
+
+The same request is not validated again. When the statement set or a
+ConfigMap it names changes, the new request is validated and, if Flink accepts
+it, deployed; a job that kept running is cancelled first. A gateway that
+cannot be asked is a temporary error, retried without cancelling anything.
+
 # BeamSqlTable
 
 The CRDs `BeamSqlTable`  define SQL tables and views which can be used by sql statementsets.
