@@ -840,8 +840,8 @@ FROM A1 WHERE `pattern` IS NOT NULL and `index` IS NOT NULL AND {{ constraint_co
 # deployment notices -- SQLite has no POSITION.
 sql_check_literal_in = """
 {% set constraint_cond%}
-NOT edeleted AND NOT IFNULL(adeleted, false) AND attr_typ IS NOT NULL AND NOT INSTR(',' || `ins` || ',',
-    ',"' || replace(replace(val, '\\', '\\\\'), '"', '\\\"') || '"^^' || COALESCE(`valueType` || ',', '')) > 0
+NOT edeleted AND NOT IFNULL(adeleted, false) AND attr_typ IS NOT NULL AND NOT POSITION(',"' || replace(replace(val, '\\', '\\\\'), '"', '\\\"') || '"^^' || COALESCE(`valueType` || ',', '')
+    IN ',' || `ins` || ',') > 0
 {% endset %}
 SELECT this AS resource,
  '{{constraintname}}(' || `parentPath` || `printPath` || ')' AS event,
