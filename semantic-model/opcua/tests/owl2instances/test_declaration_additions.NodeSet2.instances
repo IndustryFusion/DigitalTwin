@@ -1,6 +1,20 @@
 [
     {
         "type": "opcua:BaseObjectType",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwNQ",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "test:hasSpeed": {
+            "type": "Property",
+            "value": {
+                "@value": 0.0,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
+        }
+    },
+    {
+        "type": "opcua:BaseObjectType",
         "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjA0Mw",
         "@context": [
             "http://localhost:8099/context.jsonld"
@@ -118,6 +132,12 @@
         "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwMQ",
         "@context": [
             "http://localhost:8099/context.jsonld"
+        ],
+        "test:hasParams": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwNQ"
+            }
         ],
         "test:hasMand": [
             {

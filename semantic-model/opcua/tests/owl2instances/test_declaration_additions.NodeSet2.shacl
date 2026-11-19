@@ -42,6 +42,17 @@ shacl:AlphaTypeShape a sh:NodeShape ;
                     sh:node shacl:AlphaType_LinkDeclarationShape ;
                     sh:nodeKind sh:IRI ;
                     sh:path ngsi-ld:hasObject ] ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ a base:SubComponentRelationship ;
+            sh:maxCount 1 ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasParams ;
+            sh:property [ sh:class opcua:BaseObjectType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
             base:hasReferenceType opcua:HasComponent ] ;
     sh:targetClass test:AlphaType .
 

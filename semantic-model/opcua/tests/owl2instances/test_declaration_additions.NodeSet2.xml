@@ -9,6 +9,9 @@ Members which an instance declaration adds beyond the type of the declared child
 - AlphaType/Plain adds nothing: no declaration shape.
 - AlphaType/Mand adds the mandatory, fully generic placeholder <Part> of ItemType: any name matches, so only
   children of ItemType count as instances; the child Other (another type) is not counted.
+- AlphaType/Params adds only the mandatory placeholder variable <Param> of any value rank and data type
+  (like DI's ParameterSet/<ParameterIdentifier>): it has no value shape and its name cannot be checked,
+  so it gives no rule, Params gets no declaration shape and the parameter Speed is not checked.
 The instance conforms.
 -->
 <UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" LastModified="2024-07-15T00:00:00Z" xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
@@ -75,6 +78,7 @@ The instance conforms.
       <Reference ReferenceType="HasComponent">ns=1;i=1102</Reference>
       <Reference ReferenceType="HasComponent">ns=1;i=1103</Reference>
       <Reference ReferenceType="HasComponent">ns=1;i=1104</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1105</Reference>
     </References>
   </UAObjectType>
   <UAObject NodeId="ns=1;i=1101" BrowseName="1:Link" ParentNodeId="ns=1;i=1001">
@@ -148,6 +152,21 @@ The instance conforms.
       <Reference ReferenceType="HasModellingRule">i=78</Reference>
     </References>
   </UAObject>
+  <UAObject NodeId="ns=1;i=1105" BrowseName="1:Params" ParentNodeId="ns=1;i=1001">
+    <DisplayName>Params</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=58</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1151</Reference>
+    </References>
+  </UAObject>
+  <UAVariable NodeId="ns=1;i=1151" BrowseName="1:&lt;Param&gt;" ParentNodeId="ns=1;i=1105">
+    <DisplayName>&lt;Param&gt;</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=11510</Reference>
+    </References>
+  </UAVariable>
   <UAObject NodeId="ns=1;i=1103" BrowseName="1:Mand" ParentNodeId="ns=1;i=1001">
     <DisplayName>Mand</DisplayName>
     <References>
@@ -198,6 +217,7 @@ The instance conforms.
       <Reference ReferenceType="HasTypeDefinition">ns=1;i=1001</Reference>
       <Reference ReferenceType="HasComponent">ns=1;i=2002</Reference>
       <Reference ReferenceType="HasComponent">ns=1;i=2004</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2005</Reference>
     </References>
   </UAObject>
   <UAObject NodeId="ns=1;i=2002" BrowseName="1:Link" ParentNodeId="ns=1;i=2001">
@@ -302,5 +322,19 @@ The instance conforms.
       <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
     </References>
     <Value>1</Value>
+  </UAVariable>
+  <UAObject NodeId="ns=1;i=2005" BrowseName="1:Params" ParentNodeId="ns=1;i=2001">
+    <DisplayName>Params</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=58</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2051</Reference>
+    </References>
+  </UAObject>
+  <UAVariable NodeId="ns=1;i=2051" BrowseName="1:Speed" DataType="Double" ParentNodeId="ns=1;i=2005">
+    <DisplayName>Speed</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+    </References>
+    <Value>2.0</Value>
   </UAVariable>
 </UANodeSet>

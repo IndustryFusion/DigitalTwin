@@ -328,6 +328,15 @@ def scan_type(node, instancetype, shape_node=None):
     return has_components
 
 
+def is_unconstrained_value(shacl_rule):
+    """Whether a variable's rule gives no value shape: any value rank, no data type and no array
+    dimensions (the case Shacl.create_shacl_property writes without one)."""
+    value_rank = shacl_rule.get('value_rank')
+    if value_rank is None or int(value_rank) != -2:
+        return False
+    return shacl_rule.get('datatype') is None and shacl_rule.get('array_dimensions') is None
+
+
 def scan_type_recursive(o, node, instancetype, shapename, reftype):
     logger.debug(f"Scanning type recursively: {instancetype} with node {node} and reference {reftype} and shape"
                  f"{shapename}")
@@ -446,6 +455,12 @@ a loop.")
             return False
         shacl_rule['is_property'] = True
         shaclg.get_shacl_iri_and_contentclass(g, o, node, shacl_rule)
+        if placeholder_pattern is not None and is_unconstrained_value(shacl_rule):
+            # A placeholder variable (e.g. DI's <ParameterIdentifier>) of any value rank and data type gives
+            # no value shape, and its instances are named freely, so its name cannot be checked either: the
+            # member would require an attribute literally called has<...>. It gives no rule.
+            logger.info(f"Placeholder variable {o} has no value constraint: no rule.")
+            return False
         shacl_node = shaclg.create_shacl_property(shapename,
                                                   shacl_rule['path'],
                                                   shacl_rule['optional'],
