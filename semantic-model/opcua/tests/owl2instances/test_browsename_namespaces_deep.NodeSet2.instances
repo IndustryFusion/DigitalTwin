@@ -1,0 +1,44 @@
+[
+    {
+        "type": "test:PartType",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwNQ",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ]
+    },
+    {
+        "type": "opcua:BaseObjectType",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwMw",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "opcua:hasStatus": {
+            "type": "Property",
+            "value": false
+        }
+    },
+    {
+        "type": "test:AlphaType",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwMQ",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "test:has%3CPart%3E": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwNQ",
+                "datasetId": "http://opcfoundation.org/UA/hasPartA"
+            }
+        ],
+        "test:hasLevel": {
+            "type": "ListProperty",
+            "valueList": []
+        },
+        "test:hasLink": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwMw"
+            }
+        ]
+    }
+]

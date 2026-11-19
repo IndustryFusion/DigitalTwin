@@ -622,14 +622,17 @@ def scan_entity_recursive(node, id, instance, node_id, o, type=None, is_property
     original_attributename = None
     if type is not None:
         optional, array, path = shaclg.get_modelling_rule_and_path(browse_name, URIRef(type),
-                                                                   classtype, attribute_prefix)
+                                                                   classtype, attribute_prefix,
+                                                                   bridge=attributename)
     else:
         optional, array, path = (None, None, None)
     if path is None and declaration_shape is not None and rdfutils.isObjectNodeClass(nodeclass):
-        # An object member the declaration adds: found in the declaration shape by its name or placeholder
-        # pattern alone, so that the shape's sh:class checks the instance's class.
+        # An object member the declaration adds: found in the declaration shape by its semantic bridge (a fixed
+        # name, namespace included) or its placeholder pattern, whatever its class, so that the shape's sh:class
+        # checks the instance's class.
         optional, array, path = shaclg.get_modelling_rule_and_path(browse_name, None, classtype,
-                                                                   attribute_prefix, shape=declaration_shape)
+                                                                   attribute_prefix, shape=declaration_shape,
+                                                                   bridge=attributename)
         # A fully generic placeholder (e.g. <Part>) matches every name, so the name cannot tell its instances
         # from other children: only children of its type (or a subtype) count as instances.
         if path is not None and shaclg.is_generic_placeholder(declaration_shape, path):

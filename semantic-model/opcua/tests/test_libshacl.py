@@ -432,6 +432,14 @@ class TestShacl(unittest.TestCase):
         self.assertIsNone(shacl_rule['contentclass'])
         self.assertIsNone(shacl_rule['datatype'])
 
+    @patch.object(Graph, 'query', side_effect=Exception("query failed"))
+    def test_get_modelling_rule_and_path_query_error(self, mock_query):
+        """A failing query gives no match (and the defaults) instead of an error."""
+        optional, array, path = self.shacl_instance.get_modelling_rule_and_path(
+            "attributeName", URIRef("http://example.org/TargetClass"), URIRef("http://example.org/AttributeClass"),
+            "has", bridge=URIRef("http://example.org/hasattributeName"))
+        self.assertEqual((optional, array, path), (True, True, None))
+
     @patch.object(Graph, 'query')
     def test_get_modelling_rule_and_path(self, mock_query):
         """Test get_modelling_rule_and_path method."""
@@ -1257,6 +1265,39 @@ class TestDeclarationShapes(unittest.TestCase):
         _, _, path = self.sh.get_modelling_rule_and_path("MyItem7x", None, URIRef("http://example.org/Other"),
                                                          'has', shape=URIRef("http://example.org/shacl/none"))
         self.assertIsNone(path)
+
+    def test_a_fixed_name_matches_only_in_its_own_namespace(self):
+        """A BrowseName is a QualifiedName: Link of another namespace is not the declaration Link."""
+        owner = URIRef("http://example.org/OwnerType")
+        link_class = URIRef("http://example.org/LinkType")
+        _, _, path = self.sh.get_modelling_rule_and_path("Link", owner, link_class, 'has', bridge=self.path)
+        self.assertEqual(path, self.path)
+        _, _, path = self.sh.get_modelling_rule_and_path("Link", owner, link_class, 'has',
+                                                         bridge=URIRef("http://example.org/other/hasLink"))
+        self.assertIsNone(path)
+        # Without the bridge, the name alone decides (kept for callers that have no bridge)
+        _, _, path = self.sh.get_modelling_rule_and_path("Link", owner, link_class, 'has')
+        self.assertEqual(path, self.path)
+
+    def test_a_declaration_member_matches_only_in_its_own_namespace(self):
+        decl = self.sh.get_declaration_shape_name(URIRef("http://example.org/OwnerType"), "Link")
+        self.sh.create_declaration_shape(decl)
+        fixed = URIRef("http://example.org/hasPart")
+        self.sh.create_shacl_property(decl, fixed, False, False, False, True, URIRef("http://example.org/PartType"),
+                                      None, is_subcomponent=True)
+        self.sh.create_shacl_property(decl, URIRef("http://example.org/hasItem"), True, True, False, True,
+                                      URIRef("http://example.org/ItemType"), None, is_subcomponent=True,
+                                      placeholder_pattern="Item[a-zA-Z0-9_-]+")
+        other = URIRef("http://example.org/PartType")
+        _, _, path = self.sh.get_modelling_rule_and_path("Part", None, other, 'has', shape=decl, bridge=fixed)
+        self.assertEqual(path, fixed)
+        _, _, path = self.sh.get_modelling_rule_and_path("Part", None, other, 'has', shape=decl,
+                                                         bridge=URIRef("http://example.org/other/hasPart"))
+        self.assertIsNone(path)
+        # The instances of a placeholder may have BrowseNames in any namespace
+        _, _, path = self.sh.get_modelling_rule_and_path("Item7", None, other, 'has', shape=decl,
+                                                         bridge=URIRef("http://example.org/other/hasItem7"))
+        self.assertEqual(path, URIRef("http://example.org/hasItem"))
 
     def test_minimal_shacl_copies_the_applied_declaration_shape(self):
         decl = self.sh.get_declaration_shape_name(URIRef("http://example.org/OwnerType"), "Link")

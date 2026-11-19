@@ -1,0 +1,47 @@
+@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+@prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/> .
+@prefix opcua: <http://opcfoundation.org/UA/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix shacl: <http://my.test/shacl/> .
+@prefix test: <http://my.test/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+[] a sh:ValidationReport ;
+    sh:conforms false ;
+    sh:result [ a sh:ValidationResult ;
+            sh:focusNode <urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwMQ> ;
+            sh:resultMessage "Less than 1 values on <urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwMQ>->test:hasLink" ;
+            sh:resultPath test:hasLink ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:MinCountConstraintComponent ;
+            sh:sourceShape [ a base:SubComponentRelationship ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:BlankNode ;
+                    sh:path test:hasLink ;
+                    sh:property [ sh:class opcua:BaseObjectType ;
+                            sh:maxCount 1 ;
+                            sh:minCount 1 ;
+                            sh:node shacl:AlphaType_LinkDeclarationShape ;
+                            sh:nodeKind sh:IRI ;
+                            sh:path ngsi-ld:hasObject ] ;
+                    base:hasReferenceType opcua:HasComponent ] ],
+        [ a sh:ValidationResult ;
+            sh:focusNode <urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwMQ> ;
+            sh:resultMessage "Less than 1 values on <urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwMQ>->test:hasLevel" ;
+            sh:resultPath test:hasLevel ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:MinCountConstraintComponent ;
+            sh:sourceShape [ sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:BlankNode ;
+                    sh:path test:hasLevel ;
+                    sh:property [ sh:maxCount 1 ;
+                            sh:minCount 1 ;
+                            sh:or ( [ sh:nodeKind sh:BlankNode ;
+                                        sh:property [ sh:datatype xsd:double ;
+                                                sh:path [ ] ] ] [ sh:hasValue () ] ) ;
+                            sh:path ngsi-ld:hasValueList ] ;
+                    base:hasReferenceType opcua:HasComponent ] ] .
+

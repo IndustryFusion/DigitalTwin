@@ -832,18 +832,54 @@ class TestGetTypeAndTemplate(unittest.TestCase):
         self.parenttypenode = URIRef("http://example.org/parenttypenode")
         self.graph.add((self.parenttypenode, UARDF['definesType'], self.parenttype))
 
+    def add_bridge(self, subject, bridge, target):
+        """subject reaches target through the semantic bridge `bridge` (as nodeset2owl writes it)."""
+        self.graph.add((bridge, RDFS.subPropertyOf, UARDF['semanticBridgeReferenceType']))
+        self.graph.add((subject, bridge, target))
+
     def test_get_type_and_template_with_template(self):
         """Test that get_type_and_template returns both vartypenode and templatenode when available."""
-        # Add a template triple: parenttypenode hasComponent templatenode.
+        # The template is a component of the parent type, reached through the node's semantic bridge.
         templatenode = URIRef("http://example.org/templatenode")
         self.graph.add((self.parenttypenode, self.opcuans['HasComponent'], templatenode))
-        # The template must also have the same browse name as the node.
-        self.graph.add((templatenode, UARDF['name'], Literal("browse1")))
+        bridge = URIRef("http://example.org/A/hasbrowse1")
+        self.add_bridge(self.parenttypenode, bridge, templatenode)
+        self.add_bridge(self.parentnode, bridge, self.node)
 
         typenode, returned_templatenode = get_type_and_template(
             self.graph, self.node, self.parentnode, self.basens, self.opcuans
         )
         self.assertEqual(typenode, self.vartypenode)
+        self.assertEqual(returned_templatenode, templatenode)
+
+    def test_get_type_and_template_ignores_a_template_of_another_namespace(self):
+        """The same name in another namespace is another BrowseName (another bridge), so no template."""
+        templatenode = URIRef("http://example.org/templatenode")
+        self.graph.add((self.parenttypenode, self.opcuans['HasComponent'], templatenode))
+        self.graph.add((templatenode, UARDF['name'], Literal("browse1")))
+        self.add_bridge(self.parenttypenode, URIRef("http://example.org/A/hasbrowse1"), templatenode)
+        self.add_bridge(self.parentnode, URIRef("http://example.org/B/hasbrowse1"), self.node)
+
+        typenode, returned_templatenode = get_type_and_template(
+            self.graph, self.node, self.parentnode, self.basens, self.opcuans
+        )
+        self.assertEqual(typenode, self.vartypenode)
+        self.assertIsNone(returned_templatenode)
+
+    def test_get_type_and_template_follows_the_normalized_namespace(self):
+        """Nodesets may spell a namespace URI with or without its trailing '/'; the bridge is built from the
+        normalized URI, so the template is found although the raw browse names differ."""
+        templatenode = URIRef("http://example.org/templatenode")
+        self.graph.add((self.parenttypenode, self.opcuans['HasComponent'], templatenode))
+        self.graph.add((templatenode, UARDF['browseName'], Literal("nsu=http://example.org/A;browse1")))
+        self.graph.add((self.node, UARDF['browseName'], Literal("nsu=http://example.org/A/;browse1")))
+        bridge = URIRef("http://example.org/A/hasbrowse1")
+        self.add_bridge(self.parenttypenode, bridge, templatenode)
+        self.add_bridge(self.parentnode, bridge, self.node)
+
+        _, returned_templatenode = get_type_and_template(
+            self.graph, self.node, self.parentnode, self.basens, self.opcuans
+        )
         self.assertEqual(returned_templatenode, templatenode)
 
     def test_get_type_and_template_without_template(self):

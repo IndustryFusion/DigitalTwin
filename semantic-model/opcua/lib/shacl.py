@@ -548,9 +548,15 @@ class Shacl:
             shacl_rule['datatype'] = None
             shacl_rule['isAbstract'] = None
 
-    def get_modelling_rule_and_path(self, name, target_class, attributeclass, prefix, shape=None):
+    def get_modelling_rule_and_path(self, name, target_class, attributeclass, prefix, shape=None, bridge=None):
         """Modelling rule and path of the member `name` in the shape of `target_class`, or in `shape`
-        when given (a declaration shape, which has no target class)."""
+        when given (a declaration shape, which has no target class).
+
+        A BrowseName is a QualifiedName: its namespace is part of it. `bridge` is the member's own semantic
+        bridge (the namespace of its BrowseName plus has<name>, see nodesetparser); when given, a member
+        with a fixed name matches only the path of exactly that bridge, so a member of another namespace
+        is not taken for the declaration of the same name. A placeholder (e.g. <Pump>) is matched by its
+        pattern alone, since the BrowseNames of its instances may be in any namespace."""
         query_minmax = """
             SELECT ?path ?pattern ?mincount ?maxcount ?localName
             WHERE {
@@ -578,14 +584,19 @@ class Shacl:
                 FILTER (
                     IF(bound(?pattern),
                     regex(?name, PATTERN_EXPRESSION),  # If pattern exists, use regex
-                    ?localName = ?prefixname        # Otherwise, match the local name
+                    NAME_EXPRESSION                 # Otherwise, match the name
                     )
                 )
-            BIND(IF(?localName = ?prefixname, 0, 1) AS ?order)
+            BIND(IF(NAME_EXPRESSION, 0, 1) AS ?order)
             }
             ORDER BY ?order
         """
         bindings = {'name': Literal(name), 'prefixname': Literal(f'{prefix}{name}')}
+        if bridge is not None:
+            query_minmax = query_minmax.replace('NAME_EXPRESSION', '?path = ?bridge')
+            bindings['bridge'] = URIRef(bridge)
+        else:
+            query_minmax = query_minmax.replace('NAME_EXPRESSION', '?localName = ?prefixname')
         if shape is None:
             query_minmax = query_minmax.replace('TARGET_PATTERN', '?shape sh:targetClass ?targetclass .')
             query_minmax = query_minmax.replace('CLASS_PATTERN', '; sh:property [ sh:class ?attributeclass ]')
@@ -604,10 +615,10 @@ class Shacl:
         optional = True
         array = True
         path = None
+        warn_message = None
         try:
             results = list(self.shaclg.query(query_minmax, initBindings=bindings,
                                              initNs={'sh': SH, 'base': self.basens}))
-            warn_message = None
             if len(results) > 1:  # try similarity between options
                 warn_message = "Warning: found ambigous path match. Most likely due to use of generic FolderType \
 or placeholders or both. Will try to guess the right value, but this can go wrong."

@@ -637,14 +637,19 @@ def get_type_and_template(g, node, parentnode, basens, opcuans):
         ?vartypenode uardf:definesType ?vartype .
         ?node uardf:name ?browsename .
         OPTIONAL{{
+            # The template is the parent type's member of the same QualifiedName (namespace and name): the
+            # one the parent type reaches through the same semantic bridge as the parent reaches the node
+            ?parentnode ?bridge ?node .
+            ?bridge rdfs:subPropertyOf uardf:semanticBridgeReferenceType .
             ?parentnode uardf:hasTypeDefinition ?parenttype .
             ?parenttypenode uardf:definesType ?parenttype .
             ?parenttypenode opcua:HasComponent ?templatenode .
-            ?templatenode uardf:name ?browsename.
+            ?parenttypenode ?bridge ?templatenode .
         }}
     }}
     """.format(node=node, parentnode=parentnode)
-    result = g.query(query_type_and_template, initNs={'base': basens, 'opcua': opcuans, 'uardf': UARDF})
+    result = g.query(query_type_and_template, initNs={'base': basens, 'opcua': opcuans, 'uardf': UARDF,
+                                                      'rdfs': RDFS})
     typenode, templatenode = next(iter(result), (None, None))
     return typenode, templatenode
 

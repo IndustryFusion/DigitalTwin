@@ -61,6 +61,8 @@ TESTNODESETS=(
     test_declaration_additions.NodeSet2,${TESTURI}AlphaType,,,,DEEP_DECLARATION_ADDITIONS
     test_declaration_additions_violations.NodeSet2,${TESTURI}AlphaType,,,,DEEP_DECLARATION_ADDITIONS
     test_placeholder_empty_types.NodeSet2,${TESTURI}AlphaType
+    test_browsename_namespaces.NodeSet2,${TESTURI}AlphaType
+    test_browsename_namespaces_deep.NodeSet2,${TESTURI}AlphaType
     )
 CLEANGRAPH=cleangraph.py
 TYPEURI=http://example.org/MinimalNodeset

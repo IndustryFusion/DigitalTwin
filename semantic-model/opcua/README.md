@@ -453,6 +453,21 @@ counts are counts of distinct `datasetId`s. This is a limitation of OPC UA place
 in for a keyed collection of objects but carry its membership only as a naming convention; giving a
 placeholder a fixed name part, or the collection its own type, makes the model checkable.
 
+### Which Member a Child Is
+
+A browse name is a QualifiedName: a namespace and a name. A child of an instance is the member that
+its parent's type, or a declaration, declares with a fixed name only when both agree. `2:Level` is not
+the member `1:Level` of the type, and the type's `hasLevel` counts as missing, so validation reports
+the missing member on the entity that lacks it. This holds for variables and objects, for the members
+of a type and the members a declaration adds. A variable's data type and value rank are taken from
+the declared variable of the same QualifiedName only.
+
+The instances of a placeholder may have browse names in any namespace, as OPC UA allows: a
+placeholder such as `<Part>` defined in one namespace typically collects objects named in a vendor's
+or a server's namespace. Their membership is decided by the name and the type as described above, so
+a child that is not the fixed member of its name can still be an instance of a placeholder; otherwise
+it keeps its own attribute, named from its own namespace.
+
 ## owl2kms.py
 
 Assemble the output of `nodeset2owl.py` and `owl2instances.py` into a KMS
