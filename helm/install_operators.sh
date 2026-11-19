@@ -80,10 +80,10 @@ fi
 printf "\n"
 printf "\033[1mInstalling EMQX Operator\n"
 printf -- "------------------------\033[0m\n"
-printf "\033[1mWait 30 seconds to give cert-manager time to settle\n"
-kubectl -n cert-manager wait --for=condition=ready pod -l app=cert-manager
-kubectl -n cert-manager wait --for=condition=ready pod -l app=cainjector
-kubectl -n cert-manager wait --for=condition=ready pod -l app=webhook
+printf "\033[1mWait up to 5 minutes for cert-manager to settle\n"
+kubectl -n cert-manager wait --timeout=300s --for=condition=ready pod -l app=cert-manager
+kubectl -n cert-manager wait --timeout=300s --for=condition=ready pod -l app=cainjector
+kubectl -n cert-manager wait --timeout=300s --for=condition=ready pod -l app=webhook
 loop=0
 while [ $loop -lt 10 ]; do
   printf "\033[1mNow installing\n"
@@ -127,17 +127,20 @@ printf "\033[1mInstalling Flink Operator\n"
 printf -- "------------------------\033[0m\n"
 
 FLINK_OPERATOR_IMAGE_REGISTRY=${COMMON_MAIN_REGISTRY}/${MAIN_REPO}
+# The operator's configuration, e.g. how long it waits for a job submission
+FLINK_OPERATOR_VALUES="$(pwd)/flink-operator-values.yaml"
 if [ "$LOCAL" = "true" ]; then
   FLINK_OPERATOR_IMAGE_REGISTRY=${LOCAL_REGISTRY}/${MAIN_REPO}
   echo selected local image for flink operator: ${FLINK_OPERATOR_IMAGE_REGISTRY}
 fi
 if [ "$OFFLINE" = "true" ]; then
   ( cd ${OFFLINE_DIR}/flink-kubernetes-operator && helm -n ${NAMESPACE} upgrade --install flink-kubernetes-operator flink-kubernetes-operator-1.14.0-helm.tgz \
+      -f "${FLINK_OPERATOR_VALUES}" \
       --set image.repository="${FLINK_OPERATOR_IMAGE_REGISTRY}/flink-operator" --set image.tag="${DOCKER_TAG}" )
 else
   helm repo add flink-kubernetes-operator https://downloads.apache.org/flink/flink-kubernetes-operator-1.14.0
   helm repo update
-  helm -n ${NAMESPACE} install flink-kubernetes-operator flink-kubernetes-operator/flink-kubernetes-operator --set image.repository="${FLINK_OPERATOR_IMAGE_REGISTRY}/flink-operator" --set image.tag="${DOCKER_TAG}"
+  helm -n ${NAMESPACE} install flink-kubernetes-operator flink-kubernetes-operator/flink-kubernetes-operator -f "${FLINK_OPERATOR_VALUES}" --set image.repository="${FLINK_OPERATOR_IMAGE_REGISTRY}/flink-operator" --set image.tag="${DOCKER_TAG}"
 
 fi
 

@@ -18,7 +18,7 @@
 ## Decisions
 
 ### Shards with a full install each
-Three shards group the suite directories by the components they exercise: `device` (device connection, TimescaleDB bridge), `broker` (Scorpio, the bridges, Keycloak, Fuseki, the platform and operator checks) and `flink` (core SQL services plus shacl2flink's Flink end-to-end test). Each installs the full platform with the same `install-platform.sh -l -c all` as the self-hosted run and runs only its own suites.
+Three shards group the suite directories by the components they exercise: `device` (device connection, TimescaleDB bridge), `broker` (Scorpio, the bridges, Keycloak, Fuseki, the platform and operator checks) and `flink` (core SQL services plus shacl2flink's Flink end-to-end test). Each installs the full platform with `install-platform.sh -l -c all` and runs only its own suites. The self-hosted run installs the same releases offline (`-lo`, from the local registry the airgap preparation fills); the shards install online, pulling the external images, charts and operator manifests directly, so they also exercise the online install path while the nightly exercises the offline one.
 
 Alternatives:
 - *One hosted job with every suite:* no gain in wall time over the self-hosted run, only no queue.
@@ -43,13 +43,15 @@ Alternatives: every shard builds its own images. In the fork trial a slow Ubuntu
 ### The full run stays on the self-hosted runner
 `K8s tests` keeps its steps and runs from the nightly (`workflow_call`), by hand (`workflow_dispatch`) and for a pull request labelled `e2e-full`; it no longer runs on pushes to `main`, which the nightly covers. The label `e2e-all` runs every hosted shard instead.
 
-### Labels and concurrency
-Both workflows start on `labeled` to react to `e2e-all` and `e2e-full`, but GitHub sends that event for every label, and a workflow's concurrency group cancels the run in progress before any job condition is evaluated. So a `labeled` event for any other label gets a concurrency group of its own (the run's ID), which cancels nothing, and its jobs are skipped; only pushes and the workflow's own label share the per-pull-request group that cancels the older run.
+### Labels
+GitHub sends `labeled` for every label. Only a small dispatcher, `e2e-labels.yaml`, listens to it: it calls `K8s e2e` (as a reusable workflow) for `e2e-all` and `K8s tests` for `e2e-full`, and its jobs are skipped for any other label. So no other label starts or cancels a run of either K8s workflow, and none puts a skipped `changes`, `images` or `build` check next to the real one on the same head, where it would read as passing and could hide a failure. Pushes keep their per-pull-request concurrency group, which a run for `e2e-all` joins.
 
-Alternative: no `labeled` trigger, labels read only on the next push. Simpler, but adding `e2e-full` would do nothing until someone pushes.
+Alternatives: both K8s workflows listen to `labeled` and skip other labels (they still create skipped checks of the same names, and need a concurrency group per event to cancel nothing); no `labeled` trigger at all (adding `e2e-full` would do nothing until someone pushes).
 
 ### Build per component
-`Build` gets one job per component: docker images, shacl2flink, dataservice, SemForge SDK, datamodel tools, OPC UA tools, iff-agent, plus `test-scripts` (bats lint, shellcheck, `test/bats-unit`) and `debezium-snapshot-memory`. The sqlite3 PCRE extension, which the SemForge SDK's SQLite cross-check found only because it ran after shacl2flink in the same job, is installed by a shared script in both jobs.
+`Build` gets one job per component: docker images, shacl2flink, dataservice, SemForge SDK, datamodel tools, OPC UA tools, iff-agent, plus `test-scripts` (bats lint, shellcheck, `test/bats-unit`) and `debezium-snapshot-memory`. The shacl2flink job installs sqlite3 with the PCRE extension through a script of its own. The SemForge SDK's optional SQLite cross-check needs that and shacl2flink's Python dependencies, which its environment doesn't install; it did not run before the split either, so its job needs neither.
+
+A failed job opens a tmate shell only when asked for: the label `ci-debug` on the pull request, or the input `debug` of a manual run, for at most 30 minutes and only for the person who started the run. Before, every failed job waited for a connection until the job timed out, so a failure showed hours late. Alternative: no tmate at all; but a shell on the runner is the only way to look at some failures.
 
 ## Risks / Trade-offs
 
@@ -57,6 +59,8 @@ Alternative: no `labeled` trigger, labels read only on the next push. Simpler, b
 - [Anonymous image pulls from Docker Hub on hosted runners hit its rate limit] → not seen in the trial; a mirror of the external images can follow.
 - [Suites depended on running after another directory alphabetically] → the trial ran every shard green; a hidden order dependency would show as a shard failure.
 - [Flaky suites stay flaky] → unchanged by this change; a failed shard can be rerun alone.
+- [Startup checks that look once] → a GitHub-hosted runner starts the platform more slowly, so checks that looked once at something still starting failed there: the MQTT port-forward of the device suites, the task count of the shacl job, and the core services' tasks. Each now waits for its condition with a bound and still fails if it never holds; every shard waits for the Flink jobs to run all their tasks before its suites.
+- [A Flink job submitted twice] → on a slow startup the core services' FlinkSessionJob ran as two Flink jobs, so every output arrived twice and the core SQL suites failed. The operator's log showed why: it submits the session job and waits with its Flink client timeout, 10 s by default; a session cluster that still starts answers later, the operator takes the submission as failed while it still runs, and the retry submits the job again. That is a platform defect on any slow cluster, so the operator now waits 120 s (`helm/flink-operator-values.yaml`, used by `install_operators.sh` online and offline), and newer operators' own submission timeout is set to its default explicitly. The wait step still fails at once, naming the job and printing the operator's log, if a job runs twice.
 
 Measured in the fork trial (DrGarbitsch/DigitalTwin#1): every shard green with a full install, peak memory 10.6 of 16 GB, 73 GB disk left; images 12 min, shards 22–34 min, the K8s end-to-end result 48 min after the push; `Build` about 32 min, set by the OPC UA tools job.
 

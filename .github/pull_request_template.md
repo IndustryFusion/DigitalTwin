@@ -15,7 +15,7 @@ OpenSpec change: <!-- `openspec/changes/gh-<issue>-<summary>/`, or "none" -->
 
 ## Checked automatically (CI)
 
-- [ ] `Build` and `K8s tests` pass (they don't run if only `openspec/` changed)
+- [ ] `Build` and the `K8s e2e` shards selected by the changed paths pass (they don't run if only `openspec/` changed; label `e2e-all` for every shard, `e2e-full` for the full self-hosted run)
 - [ ] `openspec validate --all --strict` passes, if `openspec/` changed
 
 ## Requires human review

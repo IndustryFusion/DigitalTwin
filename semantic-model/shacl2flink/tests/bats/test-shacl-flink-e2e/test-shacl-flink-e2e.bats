@@ -469,12 +469,20 @@ wait_for_retraction() {
 @test "flink job for shacl-validation has every task running" {
     pod=$(kubectl -n "${NAMESPACE}" get pods -l component=jobmanager -o jsonpath='{.items[0].metadata.name}')
     [ -n "${pod}" ]
-    run kubectl -n "${NAMESPACE}" exec "${pod}" -c flink-main-container -- \
-        curl -s http://localhost:8081/jobs/overview
-    [ "$status" -eq 0 ]
     # every task of the shacl job must be running, not merely most of them:
-    # a partially deployed job silently validates only part of the model
-    result=$(echo "${output}" | python3 -c "
+    # a partially deployed job silently validates only part of the model.
+    # The job reports RUNNING while its last tasks still deploy, so give them
+    # up to two minutes; a task that never runs still fails the test.
+    result=""
+    for _ in $(seq 1 24); do
+        run kubectl -n "${NAMESPACE}" exec "${pod}" -c flink-main-container -- \
+            curl -s http://localhost:8081/jobs/overview
+        if [ "$status" -ne 0 ]; then
+            result="UNREACHABLE jobmanager REST API"
+            sleep 5
+            continue
+        fi
+        result=$(echo "${output}" | python3 -c "
 import json, sys
 jobs = [j for j in json.load(sys.stdin)['jobs']
         if 'shacl-validation' in j['name'] and j['state'] == 'RUNNING']
@@ -483,7 +491,11 @@ if not jobs:
 else:
     j = jobs[0]
     print('OK' if j['tasks']['running'] == j['tasks']['total'] else
-          f\"PARTIAL {j['tasks']['running']}/{j['tasks']['total']}\")")
+          f\"PARTIAL {j['tasks']['running']}/{j['tasks']['total']}\")") \
+            || result="UNPARSEABLE jobs overview"
+        [ "${result}" = "OK" ] && break
+        sleep 5
+    done
     echo "# flink job task state: ${result}" >&3
     [ "${result}" = "OK" ]
 }

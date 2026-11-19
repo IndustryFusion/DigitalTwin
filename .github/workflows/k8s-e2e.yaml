@@ -1,0 +1,165 @@
+#
+# Copyright (c) 2026 IndustryFusion Foundation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+# The K8s end-to-end test of a pull request, on GitHub-hosted runners: the
+# suites are split into shards (.github/scripts/e2e-shards.sh), the paths a
+# pull request changes select the shards it runs, and every shard installs the
+# full platform on a runner of its own, so the shards run side by side. The
+# nightly still runs every suite on one install on the self-hosted runner
+# (k8s-tests.yaml), which a pull request gets too with the label e2e-full.
+# The label e2e-all runs every shard here; adding it starts this workflow
+# through e2e-labels.yaml, so that no other label starts a run of it (a run
+# whose jobs are all skipped would put passing-looking checks next to the
+# real ones).
+name: K8s e2e
+
+on:
+  pull_request:
+    branches: [ main ]
+    types: [ opened, synchronize, reopened ]
+    paths-ignore:
+      - 'openspec/**'
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A new push, or adding e2e-all, supersedes the run in progress.
+concurrency:
+  group: k8s-e2e-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    runs-on: ubuntu-24.04
+    outputs:
+      shards: ${{ steps.select.outputs.shards }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 2
+    - name: Select the shards from the changed paths
+      id: select
+      env:
+        ALL: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'e2e-all') }}
+      run: |
+        # The checkout is the merge commit: its first parent is the base, so
+        # the diff is exactly what the pull request changes. --no-renames:
+        # a moved file counts for the directory it left as well.
+        if [ "$ALL" = true ]; then
+          shards=$(bash .github/scripts/e2e-shards.sh select --all < /dev/null)
+        else
+          git diff --name-only --no-renames HEAD^1 HEAD | tee changed-paths.txt
+          shards=$(bash .github/scripts/e2e-shards.sh select < changed-paths.txt)
+        fi
+        echo "shards: $shards"
+        echo "shards=$shards" >> "$GITHUB_OUTPUT"
+
+  # The platform images, built once for all shards: a slow mirror or registry
+  # then delays one build instead of every shard, and Scorpio's Maven build
+  # runs once.
+  images:
+    needs: changes
+    if: needs.changes.outputs.shards != '[]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: "17"
+    - name: Prepare the runner for the build
+      run: bash test/prepare-platform-for-github-runner.sh images
+    - name: Build Platform locally
+      run: cd test && bash build-local-platform.sh
+    - name: Save the images
+      run: bash test/platform-images.sh save "$RUNNER_TEMP/platform-images.tar.zst"
+    - uses: actions/upload-artifact@v4
+      with:
+        name: platform-images
+        path: ${{ runner.temp }}/platform-images.tar.zst
+        retention-days: 3  # a failed shard can still be rerun alone
+        compression-level: 0  # zstd already
+
+  e2e:
+    needs: [ changes, images ]
+    if: needs.changes.outputs.shards != '[]'
+    name: e2e (${{ matrix.shard }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(needs.changes.outputs.shards) }}
+    env:
+      KUBECONFIG: /home/runner/.kube/config
+    steps:
+    - uses: actions/checkout@v4
+    - name: Start the resource monitor
+      run: |
+        nohup bash -c 'while true; do
+          echo "$(date +%T) $(free -m | awk "/Mem:/{print \"mem_used=\"\$3}") $(df -m / | awk "NR==2{print \"disk_free=\"\$4}") load=$(cut -d" " -f1 /proc/loadavg)"
+          sleep 30; done' > "$RUNNER_TEMP/resources.log" 2>&1 &
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+    - name: Prepare the runner and the k3d cluster
+      run: bash test/prepare-platform-for-github-runner.sh cluster
+    - name: Prepare Bats framework
+      run: cd test/bats && bash ./prepare-test.sh
+    - uses: actions/download-artifact@v4
+      with:
+        name: platform-images
+        path: ${{ runner.temp }}
+    - name: Load the platform images into the local registry
+      run: |
+        bash test/platform-images.sh load "$RUNNER_TEMP/platform-images.tar.zst"
+        rm -f "$RUNNER_TEMP/platform-images.tar.zst"
+    - name: Install from local registry
+      run: cd test && bash ./install-platform.sh -l -c all
+    - name: Wait until the Flink jobs run every task
+      run: bash test/wait-for-flink-jobs.sh 600
+    - name: Run the suites of the shard
+      run: |
+        echo sleep 60s to let the system settle
+        sleep 60
+        (exec sudo -E kubefwd -n iff svc) &
+        sleep 10
+        cd test/bats
+        # word splitting intended: one argument per suite directory
+        # shellcheck disable=SC2046
+        DEBUG=true bats $(bash ../../.github/scripts/e2e-shards.sh suites "${{ matrix.shard }}")
+        sudo killall kubefwd || true
+    - name: Test shacl2flink against the platform
+      if: matrix.shard == 'flink'
+      run: |
+        # Deploys a throwaway KMS, asserts real alerts on Kafka, tears it down.
+        cd semantic-model/shacl2flink && make setup && make test-flink-e2e
+    - name: Resources used
+      if: always()
+      run: |
+        echo "peak memory used: $(grep -o 'mem_used=[0-9]*' "$RUNNER_TEMP/resources.log" | cut -d= -f2 | sort -n | tail -1) MB"
+        echo "lowest free disk: $(grep -o 'disk_free=[0-9]*' "$RUNNER_TEMP/resources.log" | cut -d= -f2 | sort -n | head -1) MB"
+        kubectl top pods -A --no-headers 2>/dev/null | sort -k4 -h -r | head -15 || true
+    - name: Pods on failure
+      if: failure()
+      run: |
+        kubectl get pods -A -o wide || true
+        kubectl describe pods -A --field-selector=status.phase=Pending | grep -A6 '^Events:' || true
+        kubectl describe nodes | grep -A9 'Allocated resources' || true
+        kubectl get events -A --sort-by=.lastTimestamp | tail -40 || true

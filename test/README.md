@@ -3,9 +3,13 @@
 This folder contains the needed script for the github E2E tests.
 `prepare-platform.sh`: Script to setup the Ubuntu 20.04 VM and install all needed packages and tools. This script is used to set every VM of a github hosted runner and has to be executed manually when a self-hosted github runner is used.
 `prepare-platform-for-self-hosted-runner.sh`: In case of a self-hosted github runner this is used for the local setup. Self-hosted runners cannot use `prepare-platform.sh` above because it does not allow `sudo` operations.
+`prepare-platform-for-github-runner.sh`: Prepares a GitHub-hosted runner without prompting: `images` installs what building the platform images needs, `cluster` the tools of the install and the suites plus the k3d cluster (two agents) with its local registry. Used by the `K8s e2e` workflow, which runs the suites of a Pull Request in shards (`.github/scripts/e2e-shards.sh` lists them and selects them from the changed paths).
+`platform-images.sh`: `save` writes the images `build-local-platform.sh` built into one archive, `load` loads such an archive and pushes its images to the local registry; `K8s e2e` builds the images once and every shard loads them.
+`wait-for-flink-jobs.sh`: Waits until every running Flink job runs all its tasks, and fails if a job runs twice; the core services report as deployed while their tasks still deploy, so `K8s e2e` waits for it before a shard's suites.
 `setup-local-ingress.sh`: For local testing the `/etc/hosts` file has to be changed to resolve `keycloak.local`, `alerta.local`, and `ngsild.local` to the respective K8s ingresses.
 
 [`bats/`](bats/README.md): This directory contains the [bats-detik](https://github.com/bats-core/bats-detik) and [bats-core](https://github.com/bats-core/bats-core) based tests.
+[`bats-unit/`](bats-unit): bats suites that need no cluster (scripts from the helm templates against a mocked `kubectl`, the shard selection); they run in the `Build` workflow.
 
 # Setup self-hosted runner for github
 

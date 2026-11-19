@@ -11,7 +11,9 @@ specification-driven development. The human-facing version of this workflow is i
   document; read the README of the components a change affects.
 - How each component is linted and tested:
   [build.yaml](.github/workflows/build.yaml),
-  [k8s-tests.yaml](.github/workflows/k8s-tests.yaml).
+  [k8s-e2e.yaml](.github/workflows/k8s-e2e.yaml) (the end-to-end shards of a Pull
+  Request, selected by [e2e-shards.sh](.github/scripts/e2e-shards.sh)),
+  [k8s-tests.yaml](.github/workflows/k8s-tests.yaml) (every end-to-end suite, nightly).
 - OpenSpec project context and artifact rules: `openspec/config.yaml`.
 - Contracts between components: before changing a component on the path from an
   OPC UA server to the context broker (`semantic-model/opcua`,

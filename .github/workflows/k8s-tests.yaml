@@ -1,15 +1,21 @@
 name: K8s tests
 
+# Every suite on one full install on the self-hosted runner: the nightly calls
+# this. A pull request runs its shards on GitHub-hosted runners (k8s-e2e.yaml)
+# and comes here only with the label e2e-full: adding it starts this workflow
+# through e2e-labels.yaml, so no other label starts a run of it.
 on:
-  push:
-    branches: [ main ]
-    paths-ignore:
-      - 'openspec/**'
   pull_request:
     branches: [ main ]
+    types: [ opened, synchronize, reopened ]
     paths-ignore:
       - 'openspec/**'
   workflow_call:
+  workflow_dispatch:
+
+concurrency:
+  group: k8s-tests-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -19,6 +25,7 @@ env:
 
 jobs:
   clean-docker:
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'e2e-full')
     uses: ./.github/workflows/docker-clean.yaml
 
   build:
@@ -47,6 +54,10 @@ jobs:
         cd test && bash build-local-platform.sh
     - name: Install from local registry
       run: cd test && bash ./install-platform.sh -lo -c all
+    # As in K8s e2e: the core services report as deployed while their tasks
+    # still deploy, and a job that runs twice is named here, not by the suites.
+    - name: Wait until the Flink jobs run every task
+      run: bash test/wait-for-flink-jobs.sh 600
     - name: Run all e2e tests
       run: |
         echo sleep 60s to let the system settle

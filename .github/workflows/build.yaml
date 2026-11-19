@@ -212,7 +212,9 @@ jobs:
         cd test/bats
         bash ./prepare-test.sh
         bats linting.bats
-        shellcheck *.sh *.bats test-*/*.bats ../bats-unit/*.bats ../../.github/scripts/*.sh
+        shellcheck *.sh *.bats test-*/*.bats ../bats-unit/*.bats \
+          ../../.github/scripts/*.sh ../prepare-platform-for-github-runner.sh \
+          ../platform-images.sh ../wait-for-flink-jobs.sh
     - name: Run the bats suites without a cluster
       run: bats test/bats-unit
 

@@ -21,6 +21,14 @@ MQTT_SERVICE_PORT=1883
 mqtt_setup_service() {
   pod=$(kubectl -n ${NAMESPACE} get pods -l ${EMQX_LABEL} -o jsonpath='{.items[0].metadata.name}')
   exec stdbuf -oL kubectl -n ${NAMESPACE} port-forward $pod 1883:1883 &
+  # The port-forward starts in the background: wait until it accepts
+  # connections, or an agent started right after finds the port closed.
+  for _ in $(seq 1 30); do
+    (echo > /dev/tcp/127.0.0.1/1883) 2>/dev/null && return 0
+    sleep 1
+  done
+  echo "# port-forward to ${pod}:1883 not ready after 30 s" >&3
+  return 1
 }
 
 mqtt_delete_service() {

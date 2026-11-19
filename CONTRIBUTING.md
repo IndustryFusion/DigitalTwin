@@ -100,7 +100,12 @@ one cannot be met, it stops and the specification goes back to review.
   on every Pull Request touching `openspec/`. It checks the structure of artifacts, for
   example that every requirement has a scenario, not whether the code is correct. A Pull
   Request which changes only `openspec/` runs nothing else. As soon as it also changes
-  other files, the `Build` and `K8s tests` workflows run as on any other Pull Request.
+  other files, `Build` runs as on any other Pull Request, and so does `K8s e2e`: the
+  shards of the K8s end-to-end test that the changed paths select, each on a
+  GitHub-hosted runner of its own. The label `e2e-all` runs every shard; the label
+  `e2e-full` also runs `K8s tests`, every suite on one install on the self-hosted
+  runner, which otherwise runs in the nightly. The label `ci-debug` makes a failed
+  `Build` job open a tmate shell for debugging; without it a failed job ends at once.
 - **Human review:** maintainers check that each spec scenario is met, that tests cover
   them, and that security constraints hold. The Pull Request lists verification results
   per scenario.
