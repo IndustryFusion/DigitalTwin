@@ -47,9 +47,17 @@ kms-packages:
 		$(MAKE) -f translate_$$example.make package KMS_OUT="$(KMS_OUT)" || exit 1; \
 	done
 
+# validate reads a package's model through the package's own context.jsonld, so a name the instances use but
+# that context does not define fails here. opcua-laser is not validated: its example nodeset lacks mandatory
+# members (Activity, UtilityName of the prognoses), which the shapes rightly report.
+KMS_VALIDATED := opcua-pumps opcua-simple
+
 kms-packages-check:
 	for entry in $(KMS_EXAMPLES); do \
 		$(SEMFORGE) verify "$(KMS_OUT)/$${entry##*:}" || exit 1; \
+	done
+	for package in $(KMS_VALIDATED); do \
+		$(SEMFORGE) validate "$(KMS_OUT)/$$package" || exit 1; \
 	done
 
 test:

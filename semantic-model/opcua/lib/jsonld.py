@@ -21,7 +21,7 @@ from rdflib.namespace import XSD, RDF
 from rdflib.collection import Collection
 import operator
 from functools import reduce
-from lib.utils import is_subclass, ngsild_context, NGSILD, NULL_IRI, UARDF, RdfUtils, \
+from lib.utils import is_subclass, ngsild_context, NULL_IRI, UARDF, RdfUtils, \
     DEFAULT_NODEID, DEFAULT_ENUMERATION_INSTANCE
 
 
@@ -239,13 +239,10 @@ class JsonLd:
                     new_list.append(item)
             value = new_list
             if datatype and RDF.JSON in datatype:
+                # An array of structures is one JsonProperty holding the JSON array
                 return {
-                    str(NGSILD['hasValueList']): {
-                        "@list": {
-                            "@value": value,
-                            "@type": "@json"
-                        }
-                    }
+                    'type': 'JsonProperty',
+                    'json': value
                 }
             else:
                 return {

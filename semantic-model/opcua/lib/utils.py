@@ -357,6 +357,28 @@ def extract_namespaces(graph):
         } for prefix, namespace in graph.namespaces()}
 
 
+def used_prefixes(data, namespaces):
+    """The entries of namespaces whose prefix starts a compact name ('prefix:local') among the keys and string
+    values of data, at any depth. Absolute IRIs ('http://...') are not compact names."""
+    used = set()
+
+    def visit(value):
+        if isinstance(value, dict):
+            for key, item in value.items():
+                visit(key)
+                visit(item)
+        elif isinstance(value, list):
+            for item in value:
+                visit(item)
+        elif isinstance(value, str):
+            prefix, sep, local = value.partition(':')
+            if sep and prefix in namespaces and not local.startswith('//'):
+                used.add(prefix)
+
+    visit(data)
+    return {prefix: namespaces[prefix] for prefix in sorted(used)}
+
+
 def get_datatype(graph, node, typenode, templatenode, basens):
     datatype = next(graph.objects(node, basens['hasDatatype']), None)
     if datatype is None:

@@ -759,12 +759,12 @@ def create_binding(node_id, var_node, attributename, shacl_rule):
     logic = None
     attribute_type = None
     is_scalar = shacl_rule.get('value_rank') is None or int(shacl_rule['value_rank']) <= 0
-    if is_scalar:
-        if shacl_rule['is_iri'] and shacl_rule['datatype'] != opcuans['NodeId']:
-            e.add_contentclass_if_missing(g, shacl_rule['contentclass'])
-            logic = bindingsg.enum_logic(shacl_rule['contentclass'])
-        elif not shacl_rule['is_iri'] and shacl_rule['datatype'] is not None and RDF.JSON in shacl_rule['datatype']:
-            attribute_type = utils.NGSILD['JsonProperty']
+    if not shacl_rule['is_iri'] and shacl_rule['datatype'] is not None and RDF.JSON in shacl_rule['datatype']:
+        # A structure, or an array of structures, is a JsonProperty like in the instance
+        attribute_type = utils.NGSILD['JsonProperty']
+    elif is_scalar and shacl_rule['is_iri'] and shacl_rule['datatype'] != opcuans['NodeId']:
+        e.add_contentclass_if_missing(g, shacl_rule['contentclass'])
+        logic = bindingsg.enum_logic(shacl_rule['contentclass'])
     bindingsg.create_binding(g, URIRef(node_id), var_node, attributename, logic_transform=logic,
                              attribute_type=attribute_type)
 
@@ -994,10 +994,11 @@ added. This will potentially create validation issues."
         e.serialize(destination=entitiesname)
     entities_ns = utils.extract_namespaces(e.get_graph())
     shacl_ns = utils.extract_namespaces(shaclg.get_graph())
-    combined_namespaces = {**entities_ns, **shacl_ns}
-    final_namespaces = {}
-    for key, value in combined_namespaces.items():
-        final_namespaces[key] = value
+    # The instances are compacted with the published context (--context-url), whose prefixes may differ from the
+    # ones of the ontologies (e.g. DI as 'devices' there, 'di' here). The prefixes the instances use are written
+    # into context.jsonld too, so the instances resolve through the generated context as through the published one.
+    instances_ns = utils.used_prefixes(jsonld.instances, utils.extract_namespaces(context_graph))
+    final_namespaces = {**entities_ns, **shacl_ns, **instances_ns}
     jsonld.dump_context(contextname, final_namespaces)
     if bindingsg.len() > 0:
         bindingsg.serialize(destination=bindingsname)

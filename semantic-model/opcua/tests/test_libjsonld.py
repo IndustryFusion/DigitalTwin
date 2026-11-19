@@ -146,6 +146,13 @@ class TestJsonLd(unittest.TestCase):
         self.assertEqual(prop['type'], 'JsonProperty')
         self.assertEqual(prop['json'], data_dict)
 
+    def test_get_ngsild_property_json_list(self):
+        # An array of structures is one JsonProperty holding the JSON array, not a ListProperty
+        data_list = [{"a": 1}, {"a": 2}]
+        prop = JsonLd.get_ngsild_property(data_list, datatype=[RDF.JSON])
+        self.assertEqual(prop, {'type': 'JsonProperty', 'json': data_list})
+        self.assertEqual(JsonLd.get_ngsild_property([], datatype=[RDF.JSON]), {'type': 'JsonProperty', 'json': []})
+
     def test_get_ngsild_property_iri_and_literal(self):
         iri_value = URIRef("http://example.org/iri")
         prop = JsonLd.get_ngsild_property(iri_value)

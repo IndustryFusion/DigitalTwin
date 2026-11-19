@@ -14,7 +14,7 @@ from lib.utils import RdfUtils, downcase_string, isNodeId, convert_to_json_type,
                                 contains_both_angle_brackets, get_typename, get_common_supertype, rdfStringToPythonBool, \
                                 get_rank_dimensions, get_type_and_template, OntologyLoader, file_path_to_uri, create_list, \
                                 extract_subgraph, dump_without_prefixes, get_contentclass, quote_url, merge_attributes, dump_graph, \
-                                is_subclass, expand_term, rank_value_to_string, nodeId_to_iri, UARDF
+                                is_subclass, expand_term, rank_value_to_string, nodeId_to_iri, UARDF, used_prefixes
 
 
 class TestNormalizeNamespaceUri(unittest.TestCase):
@@ -989,6 +989,26 @@ class TestRankValueToString(unittest.TestCase):
     def test_unknown_rank(self):
         self.assertEqual(rank_value_to_string(-99), 'UnknownRank')
         self.assertEqual(rank_value_to_string('-99'), 'UnknownRank')
+
+
+class TestUsedPrefixes(unittest.TestCase):
+    def test_prefixes_of_keys_types_and_values(self):
+        namespaces = {p: {'@id': f'http://example.org/{p}/', '@prefix': True}
+                      for p in ('devices', 'test', 'unused', 'http')}
+        instances = [{
+            'id': 'urn:x:1',
+            'type': 'test:AlphaType',
+            'devices:hasIdentification': [{'type': 'Relationship', 'object': 'urn:x:2'}],
+            'test:hasState': {'type': 'Property', 'value': {'@id': 'devices:Running'}},
+            'http://example.org/full/hasName': {'type': 'Property', 'value': 'not:aprefix'},
+        }]
+        result = used_prefixes(instances, namespaces)
+        self.assertEqual(list(result), ['devices', 'test'])
+        self.assertEqual(result['devices'], namespaces['devices'])
+
+    def test_nothing_used(self):
+        self.assertEqual(used_prefixes([], {'a': {}}), {})
+
 
 if __name__ == "__main__":
     unittest.main()

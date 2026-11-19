@@ -388,7 +388,15 @@ class Shacl:
         if datatype is not None:
             json_datatype = [x for x in datatype if x == RDF.JSON]
             non_json_datatypes = [x for x in datatype if x != RDF.JSON]
-        if value_rank is None or (int(value_rank) < 0 and len(non_json_datatypes) > 0):
+        # A structure (rdf:JSON) is a JsonProperty whatever its value rank: NGSI-LD carries an array of
+        # structures as the JSON array in "json", not as a ListProperty of JSON items (no data could
+        # satisfy sh:datatype rdf:JSON on list items).
+        # A datatype which also admits non-structure values (an abstract DataType) keeps its scalar and list
+        # shapes for those.
+        is_json = len(json_datatype) > 0
+        only_json = is_json and len(non_json_datatypes) == 0
+        if (value_rank is None and not only_json) or \
+                (value_rank is not None and int(value_rank) < 0 and len(non_json_datatypes) > 0):
             innerproperty = utils.new_bnode()
             # It is a scalar!
             self.shaclg.add((innerproperty, SH.path, self.ngsildns['hasValue']))
@@ -406,7 +414,7 @@ class Shacl:
             shape_node = utils.new_bnode()
             self.shaclg.add((shape_node, SH.property, innerproperty))
             shapes_list.append(shape_node)
-        if value_rank is not None and int(value_rank) != -1:
+        if value_rank is not None and int(value_rank) != -1 and not only_json:
             # It is a list!
             innerproperty = utils.new_bnode()
             self.shaclg.add((innerproperty, SH.path, self.ngsildns['hasValueList']))
@@ -424,7 +432,7 @@ class Shacl:
             shape_node = utils.new_bnode()
             self.shaclg.add((shape_node, SH.property, innerproperty))
             shapes_list.append(shape_node)
-        if len(json_datatype) > 0 and (value_rank is None or int(value_rank) < 0):
+        if is_json:
             # Treat JSON separate due to NGSI-LD specification
             innerproperty = utils.new_bnode()
             self.shaclg.add((innerproperty, SH.path, self.ngsildns['hasJSON']))

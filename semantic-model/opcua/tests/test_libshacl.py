@@ -86,6 +86,30 @@ class TestShaclAdditional(unittest.TestCase):
                 found = True
         self.assertTrue(found)
 
+    def test_ngsild_property_constraints_json_any_value_rank(self):
+        # A structure is a JsonProperty whatever its value rank: only ngsi-ld:hasJSON, never hasValue(List)
+        for value_rank in (None, Literal(-1), Literal(1), Literal(-2)):
+            self.sh.shaclg = Graph()
+            shapes = self.sh.get_ngsild_property_constraints(
+                value_rank=value_rank, array_dimensions=None,
+                datatype=[RDF.JSON], pattern=None,
+                is_iri=False, contentclass=None
+            )
+            paths = {self.sh.shaclg.value(next(self.sh.shaclg.objects(s, SH.property)), SH.path) for s in shapes}
+            self.assertEqual(paths, {self.sh.ngsildns['hasJSON']}, f'value rank {value_rank}')
+
+    def test_ngsild_property_constraints_json_and_other_datatypes(self):
+        # An abstract DataType admits structures and other values: arrays of the others keep their list shape
+        self.sh.shaclg = Graph()
+        shapes = self.sh.get_ngsild_property_constraints(
+            value_rank=Literal(-2), array_dimensions=None,
+            datatype=[RDF.JSON, XSD.double], pattern=None,
+            is_iri=False, contentclass=None
+        )
+        paths = {self.sh.shaclg.value(next(self.sh.shaclg.objects(s, SH.property)), SH.path) for s in shapes}
+        self.assertEqual(paths, {self.sh.ngsildns['hasValue'], self.sh.ngsildns['hasValueList'],
+                                 self.sh.ngsildns['hasJSON']})
+
     def test_create_datatype_and_iri_shapes_and_shacl_or(self):
         # datatype shapes
         dt_nodes = self.sh.create_datatype_shapes([XSD.boolean, XSD.double])
