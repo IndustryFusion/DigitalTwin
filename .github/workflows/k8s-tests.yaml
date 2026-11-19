@@ -33,12 +33,12 @@ jobs:
         else
           ( cd ./test && bash ./prepare-platform-for-self-hosted-runner.sh )
         fi
+    # Linting the suites and the suites that need no cluster (test/bats-unit)
+    # run in the Build workflow's test-scripts job.
     - name: Prepare Bats framework
       run: |
         cd ./test/bats
         bash ./prepare-test.sh
-        bats linting.bats
-        shellcheck *.sh *.bats test-*/*.bats
     - name: Prepare airgap deployment
       run: |
         cd helm/airgap-deployment && REGISTRY=k3d-iff.localhost:12345 bash prepare-airgap.bash
@@ -58,11 +58,13 @@ jobs:
         cd ./test/bats
         DEBUG=true bats */*.bats
         killall kubefwd
-    - name: Build and test shacl2flink
+    - name: Test shacl2flink against the platform
       run: |
         source ./miniconda3/etc/profile.d/conda.sh
         conda activate py310
-        ( cd semantic-model/shacl2flink && make setup && make lint test test-kms )
+        # lint, test and test-kms run in the Build workflow's shacl2flink job;
+        # only what needs the cluster stays here.
+        ( cd semantic-model/shacl2flink && make setup )
         # Deploys a throwaway KMS, asserts real alerts on Kafka, tears it down.
         # This replaces test-full-flink-deployment, which only proved the helm
         # package deploys and undeploys: that is a strict subset of what this

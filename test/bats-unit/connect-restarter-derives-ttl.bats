@@ -9,7 +9,7 @@
 
 bats_require_minimum_version 1.5.0
 
-TEMPLATE="${BATS_TEST_DIRNAME}/../../../helm/charts/kafka/templates/connect-restarter.yaml"
+TEMPLATE="${BATS_TEST_DIRNAME}/../../helm/charts/kafka/templates/connect-restarter.yaml"
 
 setup() {
     WORK="$(mktemp -d)"

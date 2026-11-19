@@ -10,17 +10,40 @@ on:
     paths-ignore:
       - 'openspec/**'
   workflow_call:
+  workflow_dispatch:
+    inputs:
+      debug:
+        description: Open a tmate shell in a job that fails
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
+# One job per component, so they run side by side instead of one after the
+# other: the wall time is the slowest component, not the sum of all of them.
+# No job depends on another one's output; each sets up what it needs itself.
+# A failed job opens a tmate shell only when asked for: the label ci-debug on
+# the pull request, or the input debug of a manual run. Otherwise it would
+# wait for a connection until it times out, and the failure would show late.
 jobs:
-  build:
+  docker-images:
     runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v4
     - name: Build the Docker images
       run: docker compose build
+    - name: Setup tmate session
+      if: ${{ failure() && (contains(github.event.pull_request.labels.*.name, 'ci-debug') || inputs.debug) }}
+      uses: mxschmitt/action-tmate@v3
+      timeout-minutes: 30
+      with:
+        limit-access-to-actor: true
+
+  shacl2flink:
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v4
     # Use conda-incubator to install Miniconda
     - name: Setup Miniconda with Python 3.10
       uses: conda-incubator/setup-miniconda@v2
@@ -30,29 +53,94 @@ jobs:
         use-mamba: true  # Optional: use mamba for faster environment creation
     - name: Create a new Conda environment
       run: conda create --name py310 python=3.10 -y
+    - name: Install sqlite3 with the PCRE extension
+      run: bash .github/scripts/install-sqlite-pcre.sh
     - name: Build shacl2flink
       run: |
-        sudo  apt install -y sqlite3 libsqlite3-dev libpcre2-dev
-        sudo mkdir -p /usr/lib/sqlite3
-        git clone https://github.com/christian-proust/sqlite3-pcre2.git
-        cd sqlite3-pcre2 && make && make install
-        cd ../ && rm -rf sqlite3-pcre2
         source $CONDA/bin/activate
         conda activate py310
         cd semantic-model/shacl2flink && make setup && make lint test build test-kms test-opcua-shapes test-pyshacl-compare
+    - name: Setup tmate session
+      if: ${{ failure() && (contains(github.event.pull_request.labels.*.name, 'ci-debug') || inputs.debug) }}
+      uses: mxschmitt/action-tmate@v3
+      timeout-minutes: 30
+      with:
+        limit-access-to-actor: true
+
+  dataservice:
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup Miniconda with Python 3.10
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        python-version: "3.10"
+        auto-activate-base: false
+        use-mamba: true
+    - name: Create a new Conda environment
+      run: conda create --name py310 python=3.10 -y
     - name: Build Dataservice
       run: |
         source $CONDA/bin/activate
         conda activate py310
         cd semantic-model/dataservice && make setup && make lint test
+    - name: Setup tmate session
+      if: ${{ failure() && (contains(github.event.pull_request.labels.*.name, 'ci-debug') || inputs.debug) }}
+      uses: mxschmitt/action-tmate@v3
+      timeout-minutes: 30
+      with:
+        limit-access-to-actor: true
+
+  semforge-sdk:
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup Miniconda with Python 3.10
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        python-version: "3.10"
+        auto-activate-base: false
+        use-mamba: true
+    - name: Create a new Conda environment
+      run: conda create --name py310 python=3.10 -y
     - name: Build SemForge SDK
       run: |
         source $CONDA/bin/activate
         conda activate py310
         cd semantic-model/SemForge-SDK && make setup && make lint test kms-check
+    - name: Setup tmate session
+      if: ${{ failure() && (contains(github.event.pull_request.labels.*.name, 'ci-debug') || inputs.debug) }}
+      uses: mxschmitt/action-tmate@v3
+      timeout-minutes: 30
+      with:
+        limit-access-to-actor: true
+
+  datamodel-tools:
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v4
     - name: Build datamodel tools
       run: |
         cd semantic-model/datamodel/tools && make setup && make lint test
+    - name: Setup tmate session
+      if: ${{ failure() && (contains(github.event.pull_request.labels.*.name, 'ci-debug') || inputs.debug) }}
+      uses: mxschmitt/action-tmate@v3
+      timeout-minutes: 30
+      with:
+        limit-access-to-actor: true
+
+  opcua-tools:
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup Miniconda with Python 3.10
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        python-version: "3.10"
+        auto-activate-base: false
+        use-mamba: true
+    - name: Create a new Conda environment
+      run: conda create --name py310 python=3.10 -y
     - name: Build opcua tools
       run: |
         source $CONDA/bin/activate
@@ -81,17 +169,70 @@ jobs:
           echo "make test failed (attempt $attempt), retrying in 300s"
           sleep 300
         done
+    - name: Setup tmate session
+      if: ${{ failure() && (contains(github.event.pull_request.labels.*.name, 'ci-debug') || inputs.debug) }}
+      uses: mxschmitt/action-tmate@v3
+      timeout-minutes: 30
+      with:
+        limit-access-to-actor: true
+
+  iff-agent:
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v4
     - name: Build iff-agent
       run: |
-        (cd NgsildAgent/config && cp config.json.template config.json)  
+        (cd NgsildAgent/config && cp config.json.template config.json)
         cd NgsildAgent && npm install && npm run lint && npm run test && npm audit --production --audit-level high
     - name: Setup tmate session
-      if: ${{ failure() }}
+      if: ${{ failure() && (contains(github.event.pull_request.labels.*.name, 'ci-debug') || inputs.debug) }}
       uses: mxschmitt/action-tmate@v3
+      timeout-minutes: 30
+      with:
+        limit-access-to-actor: true
+
+  # The shell side of the K8s tests that needs no cluster: linting the bats
+  # suites, and the suites that run helm-templated scripts against a mocked
+  # kubectl (test/bats-unit). Fails in a minute instead of after a platform
+  # install.
+  test-scripts:
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v4
+    # Without apt: its mirrors answer GitHub's runners with 503 at times.
+    # shellcheck is preinstalled on the runner image.
+    - name: Install bats
+      run: |
+        git clone -q --depth 1 --branch v1.10.0 https://github.com/bats-core/bats-core.git "$RUNNER_TEMP/bats-core"
+        sudo "$RUNNER_TEMP/bats-core/install.sh" /usr/local
+        bats --version
+        shellcheck --version
+    - name: Lint the bats suites
+      run: |
+        cd test/bats
+        bash ./prepare-test.sh
+        bats linting.bats
+        shellcheck *.sh *.bats test-*/*.bats ../bats-unit/*.bats ../../.github/scripts/*.sh
+    - name: Run the bats suites without a cluster
+      run: bats test/bats-unit
+
+  # Does a Debezium snapshot of the large knowledge table fit the Connect heap
+  # the chart deploys? Needs only Docker: Kafka, Postgres and the platform's
+  # own Connect image, built here from docker-compose.yml.
+  debezium-snapshot-memory:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build the Kafka Connect image
+      run: docker compose build debezium-postgresql-connector
+    - name: Snapshot the knowledge table within the chart's heap
+      run: |
+        export $(grep -v '^#' .env | xargs)
+        bash test/debezium-snapshot-memory/test.sh
 
   # The example KMS packages built from OPC UA models (openspec
-  # gh-944-opcua-kms-package): generated and verified here, never committed. A
-  # job of its own, so it runs beside `build` instead of lengthening it.
+  # gh-944-opcua-kms-package): generated and verified here, never committed.
   opcua-kms-packages:
     runs-on: ubuntu-24.04
     timeout-minutes: 90
@@ -116,9 +257,9 @@ jobs:
         conda activate py310
         cd semantic-model/opcua && make setup
         # Generation downloads NodeSets and ontologies, which GitHub Pages
-        # intermittently answers with 503 (see `build`); it retries like the
-        # opcua tests do. Verifying what it wrote does not retry: a package that
-        # does not verify fails the job at once.
+        # intermittently answers with 503 (see `opcua-tools`); it retries like
+        # the opcua tests do. Verifying what it wrote does not retry: a package
+        # that does not verify fails the job at once.
         for attempt in 1 2 3 4 5 6; do
           make kms-packages && break
           [ "$attempt" = "6" ] && exit 1

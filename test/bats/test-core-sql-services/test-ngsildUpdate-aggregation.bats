@@ -179,12 +179,6 @@ compare_attributes4() {
 EOF
 }
 
-compare_attributes4() {
-    cat << EOF | jq | diff -b "$1" - >&3
-{"op":"update","overwriteOrReplace":true,"noForward":true,"entities":"[{\"id\":\"${CUTTER_ID}\",\"https://industry-fusion.com/types/v0.9/hasWorkpiece\":[{\"type\":\"https://uri.etsi.org/ngsi-ld/Relationship\",\"datasetId\":\"@none\",\"object\":\"urn:workpiece:1\"}]}]"}
-EOF
-}
-
 compare_attributes9() {
     cat << EOF | jq | diff -b "$1" - >&3
 {"op":"update","overwriteOrReplace":true,"noForward":true,"entities":"[{\"id\":\"${CUTTER_ID}\",\"https://industry-fusion.com/types/v0.9/hasWorkpiece\":[{\"type\":\"https://uri.etsi.org/ngsi-ld/Relationship\",\"datasetId\":\"https://example.com/source4\",\"object\":\"urn:workpiece:1\"}]}]"}
