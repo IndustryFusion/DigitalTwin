@@ -141,10 +141,20 @@ jobs:
         use-mamba: true
     - name: Create a new Conda environment
       run: conda create --name py310 python=3.10 -y
+    # tests/owl2instances/e2e_shacl2flink.bash runs the instances through
+    # shacl2flink's SQLite checks: it needs sqlite3 with the PCRE extension,
+    # ~/.sqliterc and shacl2flink's Python dependencies (its make setup). Those
+    # pin other rdflib/oxrdflib versions than the opcua tools, so they live in
+    # their own venv, which the script finds through SHACL2FLINK_PYTHON.
+    - name: Install sqlite3 with the PCRE extension
+      run: bash .github/scripts/install-sqlite-pcre.sh
     - name: Build opcua tools
       run: |
         source $CONDA/bin/activate
         conda activate py310
+        python3 -m venv "$RUNNER_TEMP/shacl2flink-venv"
+        ( cd semantic-model/shacl2flink && make setup PIP="$RUNNER_TEMP/shacl2flink-venv/bin/pip" )
+        export SHACL2FLINK_PYTHON="$RUNNER_TEMP/shacl2flink-venv/bin/python3"
         pip3 install asyncua
         # owlready2 is LGPL-3.0-or-later (incompatible with this repo's
         # default Apache-2.0 dependency set), so it's deliberately excluded

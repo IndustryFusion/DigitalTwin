@@ -47,7 +47,8 @@ WARNSTR = {
     'non_reached_nodes': "NON_REACHED_NODES",
     'ambiguous path match': "AMBIGUOUS_PATH_MATCH",
     'interface_not_subtype_of_interfacetype': "INTERFACE_NOT_SUBTYPE_OF_INTERFACETYPE",
-    'deep_declaration_additions': "DEEP_DECLARATION_ADDITIONS"
+    'deep_declaration_additions': "DEEP_DECLARATION_ADDITIONS",
+    'uncovered_instance_terms': "UNCOVERED_INSTANCE_TERMS"
 }
 
 NULL_IRI = URIRef('urn:ngsi-ld:null')

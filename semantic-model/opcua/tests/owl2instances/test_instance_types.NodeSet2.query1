@@ -1,0 +1,10 @@
+ask where {
+  test:UnitSubType a owl:Class ;
+      rdfs:subClassOf test:UnitType .
+  test:ZetaType a owl:Class ;
+      rdfs:subClassOf opcua:BaseObjectType .
+  test:hasExtra a owl:ObjectProperty ;
+      rdfs:domain test:UnitSubType .
+  test:hasLevel a owl:ObjectProperty ;
+      rdfs:domain test:ZetaType .
+}
