@@ -94,6 +94,21 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
   check(modes.type === 'JsonProperty' && JSON.stringify(modes.json).includes('AQA='), 'a structure is a JsonProperty');
   check((await read('hasMotorTemperature')).observedAt !== undefined, 'observedAt is set');
 
+  // A declared double merged into an existing entity (contracts/typed-literals, #967): the broker's merge refuses
+  // it, so the bridge has to write it another way, and it comes back with its type.
+  const DOUBLE = 'http://www.w3.org/2001/XMLSchema#double';
+  const declared = { type: 'Property', value: { '@value': 80, '@type': DOUBLE }, observedAt: new Date().toISOString(), datasetId: '@none' };
+  await bridge.ngsildUpdates({
+    op: 'update',
+    overwriteOrReplace: true,
+    noForward: true,
+    entities: JSON.stringify([{ id: by.hasMotorTemperature, [P + 'hasMotorTemperature']: [declared] }])
+  }, Date.now());
+  await sleep(1000);
+  const typed = (await read('hasMotorTemperature')).value;
+  check(literalValue(typed) === 80 && typed !== null && (typed.type || typed['@type']) === DOUBLE,
+    `a declared double through the updates bridge comes back with its type: ${JSON.stringify(typed)}`);
+
   console.log('--- refusals of the broker, which the bridge has to avoid');
   const merge = async (id, attr) => fetch(`${A}/entityOperations/merge`, {
     method: 'POST',
@@ -108,5 +123,12 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
   check(onto.status === 400 && (await onto.text()).includes('SB001'), 'a Property merged onto a JsonProperty: 400 SB001');
   const iri = await merge(by.hasPumpClass, { [P + 'hasPumpClass']: [{ type: 'Property', value: { '@id': P + 'LiquidPump' } }] });
   check(iri.status === 400 && (await iri.text()).includes('22023'), 'an IRI value in a batch merge: 400 22023');
+  const value80 = { [P + 'hasMotorTemperature']: [{ type: 'Property', value: { '@value': 80, '@type': DOUBLE } }] };
+  const batch = await merge(by.hasMotorTemperature, value80);
+  check(batch.status === 400 && (await batch.text()).includes('22023'), 'a declared value in a batch merge: 400 22023');
+  const patch = await fetch(`${A}/entities/${encodeURIComponent(by.hasMotorTemperature)}`, {
+    method: 'PATCH', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify(value80)
+  });
+  check(patch.status === 500 && (await patch.text()).includes('22023'), 'a declared value in a merge entity: 500 22023');
   process.exit(0);
 })().catch(e => { console.error(e); process.exit(1); });

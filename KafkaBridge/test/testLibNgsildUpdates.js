@@ -693,6 +693,110 @@ describe('Test libNgsildUpdates', function () {
     revert();
   });
 });
+describe('Test libNgsildUpdates routing of JSON-LD values', function () {
+  // Scorpio's merge (merge entity and batch merge) fails with 22023 on a value
+  // which carries a JSON-LD keyword besides @value, like a declared double
+  // (#961, #967). Such entities go through the attrs endpoint, like IRI values.
+  const DOUBLE = 'http://www.w3.org/2001/XMLSchema#double';
+  const run = async function (entities) {
+    const calls = { batchMerge: [], updateProperties: [] };
+    const ToTest = rewire('../lib/ngsildUpdates.js');
+    ToTest.__set__('Logger', function () { return logger; });
+    ToTest.__set__('process', { env: { CLIENT_SECRET: 'client_secret' } });
+    ToTest.__set__('setInterval', function () {});
+    ToTest.__set__('addSyncOnAttribute', addSyncOnAttribute);
+    ToTest.__set__('Keycloak', function () {
+      return { grantManager: { obtainFromClientCredentials: async () => ({ access_token: { token: 'token' } }) } };
+    });
+    ToTest.__set__('NgsiLd', function () {
+      return {
+        batchMerge: async function (entities) {
+          calls.batchMerge.push(entities);
+          return { statusCode: 204 };
+        },
+        updateProperties: async function ({ id, body, isOverwrite }) {
+          calls.updateProperties.push({ id, body, isOverwrite });
+          return { statusCode: 204 };
+        }
+      };
+    });
+    const config = {
+      ngsildUpdates: { clientSecretVariable: 'CLIENT_SECRET', refreshIntervalInSeconds: 200 },
+      keycloak: { ngsildUpdatesAuthService: {} },
+      bridgeCommon: { kafkaSyncOnAttribute: 'kafkaSyncOn' }
+    };
+    const ngsildUpdates = new ToTest(config);
+    await ngsildUpdates.ngsildUpdates({ op: 'update', entities, overwriteOrReplace: false });
+    return calls;
+  };
+  const entity = (id, attribute) => ({ id, 'https://example.com/hasTemperature': [attribute] });
+
+  it('Should route a declared double to updateProperties, not batchMerge', async function () {
+    const declared = { type: 'Property', value: { '@value': 80, '@type': 'xsd:double' } };
+    const calls = await run([entity('urn:pump', declared)]);
+    calls.batchMerge.length.should.equal(0);
+    calls.updateProperties.length.should.equal(1);
+    calls.updateProperties[0].id.should.equal('urn:pump');
+    calls.updateProperties[0].isOverwrite.should.equal(true);
+    assert.deepEqual(calls.updateProperties[0].body['https://example.com/hasTemperature'], [declared]);
+  });
+
+  it('Should route a declared double given as an attribute object, not an array', async function () {
+    const calls = await run([{ id: 'urn:pump', 'https://example.com/hasTemperature': { type: 'Property', value: { '@value': 80, '@type': DOUBLE } } }]);
+    calls.batchMerge.length.should.equal(0);
+    calls.updateProperties.length.should.equal(1);
+  });
+
+  it('Should route a value object with the type alias of the core context', async function () {
+    const calls = await run([entity('urn:pump', { type: 'Property', value: { '@value': 80, type: DOUBLE } })]);
+    calls.batchMerge.length.should.equal(0);
+    calls.updateProperties.length.should.equal(1);
+  });
+
+  it('Should route a language-tagged value object', async function () {
+    const calls = await run([entity('urn:pump', { type: 'Property', value: { '@value': 'Pumpe', '@language': 'de' } })]);
+    calls.batchMerge.length.should.equal(0);
+    calls.updateProperties.length.should.equal(1);
+  });
+
+  it('Should route a declared value among several values of a Property', async function () {
+    const calls = await run([entity('urn:pump', { type: 'Property', value: [1, { '@value': 80, '@type': DOUBLE }] })]);
+    calls.batchMerge.length.should.equal(0);
+    calls.updateProperties.length.should.equal(1);
+  });
+
+  it('Should route a declared value in the valueList of a ListProperty', async function () {
+    const calls = await run([entity('urn:pump', { type: 'ListProperty', valueList: [1, { '@value': 80, '@type': DOUBLE }] })]);
+    calls.batchMerge.length.should.equal(0);
+    calls.updateProperties.length.should.equal(1);
+  });
+
+  it('Should keep plain values and a bare @value on batchMerge', async function () {
+    const calls = await run([
+      entity('urn:a', { type: 'Property', value: 80 }),
+      entity('urn:b', { type: 'Property', value: { '@value': 80 } }),
+      entity('urn:c', { type: 'Property', value: [1, 2] }),
+      entity('urn:d', { type: 'Property', value: null }),
+      entity('urn:e', { type: 'JsonProperty', json: { '@value': 1, '@type': DOUBLE, '@id': 'urn:x' } }),
+      entity('urn:f', { type: 'Relationship', object: 'urn:x' })
+    ]);
+    calls.updateProperties.length.should.equal(0);
+    calls.batchMerge.length.should.equal(1);
+    calls.batchMerge[0].map(e => e.id).should.deep.equal(['urn:a', 'urn:b', 'urn:c', 'urn:d', 'urn:e', 'urn:f']);
+  });
+
+  it('Should split a batch into merged plain entities and declared ones through attrs', async function () {
+    const calls = await run([
+      entity('urn:plain', { type: 'Property', value: 42.5 }),
+      entity('urn:declared', { type: 'Property', value: { '@value': 80, '@type': DOUBLE } }),
+      entity('urn:iri', { type: 'Property', value: { '@id': 'urn:x' } })
+    ]);
+    calls.batchMerge.length.should.equal(1);
+    calls.batchMerge[0].map(e => e.id).should.deep.equal(['urn:plain']);
+    calls.updateProperties.map(c => c.id).should.deep.equal(['urn:declared', 'urn:iri']);
+    assert.notProperty(calls.updateProperties[0].body, 'id');
+  });
+});
 describe('Test getFlag', function () {
   it('Should get true', async function () {
     const getFlag = ToTest.__get__('getFlag');

@@ -64,19 +64,36 @@ const removeDefaultDatasetID = function (entities) {
 };
 
 /**
- * True when any attribute of the entity carries an IRI value ({"@id": ...}).
- * Scorpio's batchMerge rejects those with 400/22023 while the per-entity
- * attrs endpoint accepts them, so they must take the other route.
+ * True for a value Scorpio cannot merge: an IRI ({"@id": ...}) or a value
+ * object with a keyword besides @value, like a declared double
+ * {"@value": 80, "@type": "xsd:double"} (contracts/typed-literals, #961) or a
+ * language-tagged string. Scorpio's merge recurses into every key of a value
+ * and fails on these with 22023, see #967. A bare {"@value": ...} merges.
  */
-const hasIriValue = function (entity) {
+const isUnmergeableValue = function (value) {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+  if (value['@id'] !== undefined || value.id !== undefined) {
+    return true;
+  }
+  return '@value' in value && Object.keys(value).length > 1;
+};
+
+/**
+ * True when any attribute of the entity carries a value which Scorpio's merge
+ * rejects (see isUnmergeableValue): batchMerge answers 400/22023 and merge
+ * entity 500/22023, while the per-entity attrs endpoint accepts them and
+ * keeps the declared @type, so these entities must take the other route.
+ */
+const needsAttrsRoute = function (entity) {
   return Object.keys(entity).some(function (key) {
     if (key === 'id' || key === 'type') {
       return false;
     }
     const attrs = Array.isArray(entity[key]) ? entity[key] : [entity[key]];
     return attrs.some(attr => attr !== null && typeof attr === 'object' &&
-      attr.value !== null && typeof attr.value === 'object' &&
-      (attr.value['@id'] !== undefined || attr.value.id !== undefined));
+      [].concat(attr.value, attr.valueList).some(isUnmergeableValue));
   });
 };
 
@@ -154,20 +171,20 @@ module.exports = function NgsildUpdates (conf) {
           logger.error('Unhealthy entities - ignoring it:' + JSON.stringify(entities));
         } else {
           logger.debug('Updating: ' + JSON.stringify(entities));
-          // Scorpio's batchMerge cannot digest IRI-valued properties
-          // (value: {"@id": ...} answers 400/22023), which is exactly what
-          // a rule writing e.g. a waste class produces. Those entities go
-          // through the per-entity attrs endpoint, which accepts them; the
-          // rest keeps the batch path.
-          const mergeable = entities.filter(entity => !hasIriValue(entity));
-          const iriValued = entities.filter(hasIriValue);
+          // Scorpio's batchMerge cannot digest IRI values (value: {"@id": ...},
+          // what a rule writing e.g. a waste class produces) nor declared
+          // values (value: {"@value": 80, "@type": "xsd:double"}); both answer
+          // 400/22023 (#967). Those entities go through the per-entity attrs
+          // endpoint, which accepts them; the rest keeps the batch path.
+          const mergeable = entities.filter(entity => !needsAttrsRoute(entity));
+          const unmergeable = entities.filter(needsAttrsRoute);
           if (mergeable.length > 0) {
             result = await ngsild.batchMerge(mergeable, { headers });
             if (result.statusCode !== 204 && result.statusCode !== 207) {
               logger.error('Entity cannot run merge:' + JSON.stringify(result.body) + ' and status code ' + result.statusCode); // throw no error, log it and ignore it, repeating would probably not solve it
             }
           }
-          for (const entity of iriValued) {
+          for (const entity of unmergeable) {
             const attrs = {};
             Object.keys(entity).forEach(function (key) {
               if (key !== 'id' && key !== 'type') {
