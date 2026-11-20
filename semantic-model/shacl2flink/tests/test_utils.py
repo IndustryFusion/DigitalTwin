@@ -297,7 +297,7 @@ def test_create_configmap():
 
 def test_create_kafka_topic():
     result = utils.create_kafka_topic('name', 'topic_name', ['kafka_topic_object_label',
-                                      'label'], 'config')
+                                      'label'], {'compression.type': 'lz4'})
     assert result == {
         'apiVersion': 'kafka.strimzi.io/v1beta2',
         'kind': 'KafkaTopic',
@@ -310,10 +310,37 @@ def test_create_kafka_topic():
         'spec': {
             'partitions': 1,
             'replicas': 1,
-            'config': 'config',
+            'config': {'compression.type': 'lz4'},
             'topicName': 'topic_name'
         }
     }
+
+
+def test_create_kafka_topic_rolls_segments_at_the_retention():
+    # Kafka deletes only closed segments: without segment.ms the open segment
+    # of a busy topic lives for the broker default of 7 days.
+    config = {'retention.ms': '{{.Values.retention}}'}
+    result = utils.create_kafka_topic('name', 'topic', ['label', 'value'], config)
+    assert result['spec']['config'] == {'retention.ms': '{{.Values.retention}}',
+                                        'segment.ms': '{{ max 3600000 (int64 .Values.retention) }}'}
+    # the caller's dict is shared between topics and must stay as it was
+    assert config == {'retention.ms': '{{.Values.retention}}'}
+
+
+def test_create_kafka_topic_keeps_an_explicit_segment_ms():
+    config = {'retention.ms': 3600000, 'segment.ms': 600000}
+    result = utils.create_kafka_topic('name', 'topic', ['label', 'value'], config)
+    assert result['spec']['config']['segment.ms'] == 600000
+
+
+def test_segment_ms_is_the_retention_with_a_one_hour_floor():
+    assert utils.segment_ms(86400000) == 86400000
+    assert utils.segment_ms(3600000) == 3600000
+    # a 10 s topic rolled at 10 s would lose records a restarted reader needs
+    assert utils.segment_ms(10000) == 3600000
+    assert utils.segment_ms('{{ .Values.a.b }}') == '{{ max 3600000 (int64 .Values.a.b) }}'
+    # anything else is not guessed at
+    assert utils.segment_ms('600000') == '600000'
 
 
 def test_strip_class():

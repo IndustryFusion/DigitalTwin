@@ -664,6 +664,30 @@ def create_statementset(object_name, table_object_names,
     return yaml_bsqls
 
 
+MIN_SEGMENT_MS = 3600000
+_HELM_VALUE = re.compile(r'^\{\{\s*(\.Values\.[\w.]+)\s*\}\}$')
+
+
+def segment_ms(retention_ms):
+    """segment.ms for a topic: max(retention.ms, 1 h), the rule the charts use.
+
+    Kafka deletes only whole segments, and only once the newest record in a
+    segment is older than retention.ms. A topic that is written to keeps its
+    open segment until segment.ms (broker default 7 days), so a 1 h topic kept
+    days of records. A record now goes after at most retention.ms + segment.ms
+    + log.retention.check.interval.ms. Shorter topics roll hourly: rolling a
+    10 s topic at 10 s would delete records a restarted consumer still reads.
+    A helm value placeholder becomes the same expression in sprig; any other
+    string is kept as it is.
+    """
+    if isinstance(retention_ms, int):
+        return max(MIN_SEGMENT_MS, retention_ms)
+    match = _HELM_VALUE.match(str(retention_ms))
+    if match:
+        return f'{{{{ max {MIN_SEGMENT_MS} (int64 {match.group(1)}) }}}}'
+    return retention_ms
+
+
 def create_kafka_topic(object_name, topic_name, kafka_topic_object_label,
                        config, partitions=1, replicas=1):
     yaml_kafka_topics = {}
@@ -680,6 +704,9 @@ def create_kafka_topic(object_name, topic_name, kafka_topic_object_label,
     yaml_kafka_topics['spec'] = spec
     spec['partitions'] = partitions
     spec['replicas'] = replicas
+    config = dict(config)
+    if 'retention.ms' in config:
+        config.setdefault('segment.ms', segment_ms(config['retention.ms']))
     spec['config'] = config
     spec['topicName'] = topic_name
     return yaml_kafka_topics

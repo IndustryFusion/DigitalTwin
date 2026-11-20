@@ -1,3 +1,14 @@
+{{- /*
+segment.ms is max(retention.ms, 1 h) on every topic. Kafka deletes only whole
+segments, and only once the newest record in a segment is older than
+retention.ms. While a topic is written to, its open segment rolls only after
+segment.ms (broker default 7 days), so with the default a 1 h topic kept up to
+7 days of records. A record now goes after at most retention.ms + segment.ms +
+log.retention.check.interval.ms. Topics with a shorter retention (10 s) roll
+hourly, so they keep up to about an hour instead of 7 days: rolling them at
+10 s would delete records that a restarted consumer or a test still reads back.
+test/bats-unit/kafka-topic-segments.bats checks this.
+*/}}
 {{- if .Values.aaio.enabled }}
 ---
 apiVersion: kafka.strimzi.io/v1beta2
@@ -11,6 +22,7 @@ spec:
   replicas: 1
   config:
     retention.ms: {{.Values.kafka_topic_vars.retention}}
+    segment.ms: {{ max 3600000 (int64 .Values.kafka_topic_vars.retention) }}
 ---
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
@@ -23,6 +35,7 @@ spec:
   replicas: 1
   config:
     retention.ms: {{.Values.kafka_topic_vars.retention}}
+    segment.ms: {{ max 3600000 (int64 .Values.kafka_topic_vars.retention) }}
 ---
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
@@ -35,6 +48,7 @@ spec:
   replicas: 1
   config:
     retention.ms: {{.Values.kafka_topic_vars.retention}}
+    segment.ms: {{ max 3600000 (int64 .Values.kafka_topic_vars.retention) }}
 ---
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
@@ -47,6 +61,7 @@ spec:
   replicas: 1
   config:
     retention.ms: {{.Values.kafka_topic_vars.retention}}
+    segment.ms: {{ max 3600000 (int64 .Values.kafka_topic_vars.retention) }}
 ---
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
@@ -59,6 +74,7 @@ spec:
   replicas: 1
   config:
     retention.ms: {{.Values.kafka_topic_vars.retention}}
+    segment.ms: {{ max 3600000 (int64 .Values.kafka_topic_vars.retention) }}
 ---
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
@@ -71,6 +87,7 @@ spec:
   replicas: 1
   config:
     retention.ms: {{.Values.kafka_topic_vars.retention}}
+    segment.ms: {{ max 3600000 (int64 .Values.kafka_topic_vars.retention) }}
 ---
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
@@ -83,6 +100,7 @@ spec:
   replicas: 1
   config:
     retention.ms: {{.Values.kafka_topic_vars.retention}}
+    segment.ms: {{ max 3600000 (int64 .Values.kafka_topic_vars.retention) }}
 ---
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
@@ -95,6 +113,7 @@ spec:
   replicas: 1
   config:
     retention.ms: {{.Values.kafka_topic_vars.retention}}
+    segment.ms: {{ max 3600000 (int64 .Values.kafka_topic_vars.retention) }}
 ---
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
@@ -107,4 +126,5 @@ spec:
   replicas: 1
   config:
     retention.ms: {{.Values.kafka_topic_vars.retention}}
+    segment.ms: {{ max 3600000 (int64 .Values.kafka_topic_vars.retention) }}
 {{- end }}
