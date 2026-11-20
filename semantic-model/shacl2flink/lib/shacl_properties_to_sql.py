@@ -482,6 +482,17 @@ sql_check_relationship_property_class = """
             FROM A1 WHERE A1.propertyClass IS NOT NULL and `index` IS NOT NULL and {{ constraint_cond }}
 """  # noqa: E501
 
+# The verdict columns of a count check, given the condition under which it is
+# violated: `triggered`, `severity` and the opening of the `text` CASE, which
+# the check closes with its own message and `ELSE 'All ok' END`. The condition
+# is NULL rather than false when a bound is absent, hence the explicit FALSE.
+COUNT_VERDICT = """
+{%- macro count_verdict(violated) -%}
+CASE WHEN {{ violated }} THEN TRUE ELSE FALSE END AS triggered,
+                CASE WHEN {{ violated }} THEN `severity` ELSE 'ok' END AS severity,
+                CASE WHEN {{ violated }} THEN
+{%- endmacro %}"""
+
 # A count of zero means two different things and the count alone cannot tell
 # them apart: an entity that is alive and has lost its mandatory attribute MUST
 # alert, and an entity that has been deleted MUST NOT. Only `edeleted`
@@ -505,13 +516,13 @@ sql_check_relationship_property_class = """
 # row-level check -- all of which carry `NOT edeleted` -- correctly silent. The
 # attributes were gone and the count went on being evaluated for the entity.
 #
-# So: read `edeleted`, but as an AGGREGATE in the HAVING. The group is keyed the
+# So: read `edeleted`, but as an AGGREGATE in the verdict. The group is keyed the
 # same whether the entity is alive or deleted, so nothing migrates and no
 # accumulator is rebuilt; and the alert is suppressed by re-evaluating the same
 # group rather than by waiting for its rows to vanish.
 #
 # It has to be read INSIDE the counted expression as well, not only in the
-# HAVING. The HAVING decides whether to report; the CASE decides what is
+# verdict. The verdict decides whether to report; the CASE decides what is
 # counted. With rows for a deleted incarnation left in A1 and only `adeleted`
 # tested, those rows went on contributing to the SUM, and deleting a model and
 # reinstalling it under the same ids reported "Found 2 relationships" for
@@ -534,7 +545,23 @@ sql_check_relationship_property_class = """
 # alone (D, C) does not help -- they are a different piece of state. Note the
 # aggregate is only WRITTEN on a genuine change, so the kafka-connect cron that
 # keeps entities_view and attributes_view alive cannot reach it.
-sql_check_relationship_property_count = """
+#
+# A count writes a VERDICT for every group it evaluates, not only for the
+# violated ones (issue #977): the raise, or an ok row -- triggered false,
+# severity 'ok', text 'All ok', the form the circuit levels write. With the
+# condition in a HAVING the check wrote nothing for a satisfied group, which is
+# harmless within one job, where a raise is retracted when its group stops
+# qualifying, but not across jobs: a statementset redeploy replays
+# constraint_trigger_table, the new job starts out reading the raises its
+# predecessor left there, and a key it found satisfied was never written again.
+# The replayed raise was published and nothing closed it. The ok row overwrites
+# it, and the PUBLISH statement retracts the alert, which closes it in Alerta.
+#
+# It costs no state: the accumulator of every group was kept anyway, the
+# HAVING only filtered its output. What grows is the output -- one row per
+# (entity, count constraint) on constraint_trigger_table instead of one per
+# violation -- and with it the state of the statements reading that table.
+sql_check_relationship_property_count = COUNT_VERDICT + """
             {% set constraint_cond %}
             (MAX(CASE WHEN edeleted THEN 1 ELSE 0 END) = 0 AND
             (SUM(CASE WHEN NOT edeleted AND NOT COALESCE(adeleted, FALSE) AND link IS NOT NULL THEN 1 ELSE 0 END) > SQL_DIALECT_CAST(`maxCount` AS INTEGER)
@@ -543,17 +570,15 @@ sql_check_relationship_property_count = """
             SELECT /*+ STATE_TTL('A1' = '0d') */ this AS resource,
                 'CountConstraintComponent(' || `parentPath` || `propertyPath` || ')' AS event,
                 `constraint_id` as constraint_id,
-                true as triggered,
-                `severity` AS severity,
+                {{ count_verdict(constraint_cond) }}
                'Model validation for relationship ' || `propertyPath` || ' failed for ' || this || '. Found ' ||
                             SQL_DIALECT_CAST(SUM(CASE WHEN NOT edeleted AND NOT COALESCE(adeleted, FALSE) AND link IS NOT NULL THEN 1 ELSE 0 END) AS STRING) || ' relationships instead of [' || IFNULL(`minCount`, '0') || ', ' || IFNULL(`maxCount`, '*') || ']!'
-                    as `text`
+                    ELSE 'All ok' END as `text`
                 {%- if sqlite %}
                 ,CURRENT_TIMESTAMP
                 {%- endif %}
             FROM A1 WHERE `minCount` is NOT NULL or `maxCount` is NOT NULL
             GROUP BY this, propertyPath, maxCount, minCount, severity, constraint_id, parentPath
-            HAVING {{ constraint_cond }}
 """  # noqa: E501
 
 # The inverse count: for each focus entity, the number of DISTINCT live
@@ -571,7 +596,8 @@ sql_check_relationship_property_count = """
 # and a deleted referrer whose attribute rows have not been swept must not
 # keep a violation alive. STATE_TTL('A1' = '0d') pins the accumulator, and
 # the join inputs are pinned in the inner hint, both load-bearing for
-# retraction.
+# retraction. And it writes a verdict for every group, the ok rows included,
+# so that a raise replayed after a redeploy is overwritten (issue #977).
 #
 # One streaming property is unique to the inverse form: the GROUP KEY is the
 # attribute VALUE, so re-pointing a reference MIGRATES rows between groups.
@@ -580,7 +606,7 @@ sql_check_relationship_property_count = """
 # lands in the new one's -- and it is exactly the case the pinned accumulator
 # exists for: an expired accumulator would drop that retraction in silence
 # and freeze the violation on the old focus node forever.
-sql_check_inverse_relationship_count = """
+sql_check_inverse_relationship_count = COUNT_VERDICT + """
             INSERT {% if sqlite %}OR REPlACE{% endif %} INTO {{alerts_bulk_table}}
             WITH A1 as (
                     SELECT /*+ STATE_TTL('A' = '0d', 'D' = '0d', 'R' = '0d', 'RE' = '0d') */
@@ -602,22 +628,23 @@ sql_check_inverse_relationship_count = """
                     WHERE D.attributeType = '{{ inverse_marker }}'
             )
             {%- set live_referrers %}COUNT(DISTINCT CASE WHEN NOT edeleted AND NOT adeleted AND NOT redeleted THEN referrer ELSE NULL END){% endset %}
+            {%- set constraint_cond %}
+            (MAX(CASE WHEN edeleted THEN 1 ELSE 0 END) = 0 AND
+                ({{ live_referrers }} > SQL_DIALECT_CAST(`maxCount` AS INTEGER)
+                 OR {{ live_referrers }} < SQL_DIALECT_CAST(`minCount` AS INTEGER)))
+            {%- endset %}
             SELECT /*+ STATE_TTL('A1' = '0d') */ this AS resource,
                 'CountConstraintComponent(^' || `propertyPath` || ')' AS event,
                 `constraint_id` as constraint_id,
-                true as triggered,
-                `severity` AS severity,
+                {{ count_verdict(constraint_cond) }}
                 'Model validation for inverse relationship ^' || `propertyPath` || ' failed for ' || this || '. Found ' ||
                     SQL_DIALECT_CAST({{ live_referrers }} AS STRING) || ' referring entities instead of [' || IFNULL(`minCount`, '0') || ', ' || IFNULL(`maxCount`, '*') || ']!'
-                    as `text`
+                    ELSE 'All ok' END as `text`
                 {%- if sqlite %}
                 ,CURRENT_TIMESTAMP
                 {%- endif %}
             FROM A1 WHERE `minCount` is NOT NULL or `maxCount` is NOT NULL
-            GROUP BY this, propertyPath, maxCount, minCount, severity, constraint_id
-            HAVING MAX(CASE WHEN edeleted THEN 1 ELSE 0 END) = 0 AND
-                ({{ live_referrers }} > SQL_DIALECT_CAST(`maxCount` AS INTEGER)
-                 OR {{ live_referrers }} < SQL_DIALECT_CAST(`minCount` AS INTEGER));
+            GROUP BY this, propertyPath, maxCount, minCount, severity, constraint_id;
 """  # noqa: E501
 
 sql_check_relationship_nodeType = """
@@ -680,7 +707,8 @@ WITH {{ focus_ctes }}A1 AS (SELECT {{ property_ttl_hint }} A.id as this,
 """  # noqa: E501
 
 # `edeleted` is read as an aggregate here too, and is not a grouping key -- see
-# sql_check_relationship_property_count for what both alternatives cost.
+# sql_check_relationship_property_count for what both alternatives cost. Like
+# that count, this one writes a verdict for every group (issue #977).
 #
 # The count is COUNT(DISTINCT `index`) -- the number of distinct datasetIds
 # carrying a live attribute, which IS the number of instances, an NGSI-LD
@@ -694,7 +722,7 @@ WITH {{ focus_ctes }}A1 AS (SELECT {{ property_ttl_hint }} A.id as this,
 # instead also survives the join fan-out that the DISTINCT was there to
 # absorb: one attribute matched by several sub-property joins still counts
 # once.
-sql_check_property_count = """
+sql_check_property_count = COUNT_VERDICT + """
 {%- set instance_count %}COUNT(DISTINCT CASE WHEN NOT edeleted AND NOT COALESCE(adeleted, FALSE) and attr_typ IS NOT NULL THEN `index` ELSE NULL END){% endset %}
 {% set constraint_cond%}
     (MAX(CASE WHEN edeleted THEN 1 ELSE 0 END) = 0 AND
@@ -704,17 +732,15 @@ sql_check_property_count = """
 SELECT /*+ STATE_TTL('A1' = '0d') */ this AS resource,
     'CountConstraintComponent(' || `parentPath` || `propertyPath` || ')' AS event,
     `constraint_id` as constraint_id,
-    true as triggered,
-    `severity` AS severity,
+    {{ count_verdict(constraint_cond) }}
    'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Found ' ||
                             SQL_DIALECT_CAST({{ instance_count }} AS STRING) || ' properties instead of [' || IFNULL(`minCount`, '0') || ', ' || IFNULL(`maxCount`, '*') || ']!'
-        as `text`
+        ELSE 'All ok' END as `text`
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
 FROM A1  WHERE `minCount` is NOT NULL or `maxCount` is NOT NULL
 GROUP BY this, typ, propertyPath, minCount, maxCount, severity, constraint_id, parentPath
-HAVING {{ constraint_cond }}
 """  # noqa: E501
 
 sql_check_property_iri_class = """
@@ -1169,13 +1195,19 @@ SELECT /*+ STATE_TTL('comb' = '0d', 'ct' = '0d') */
     ARRAY ['SHACL Validator'] AS service,
     {% endif %}
 
-  MAX(t.severity) AS severity,
+-- Severity and text are taken from the RAISED rows only. Constraints can share
+-- the (resource, event) an alert is keyed by -- the same count on a class and
+-- on its superclass -- and since every count writes an ok row for a satisfied
+-- group (issue #977), a raise can be grouped with an ok row of another
+-- constraint. 'ok' sorts above 'critical', 'major' and 'minor', so a plain MAX
+-- would have published the alert with severity ok.
+  MAX(CASE WHEN t.triggered THEN t.severity END) AS severity,
   'customer'                        AS customer,
 -- sh:message replaces the generated explanation. Every alert -- leaf
 -- constraint and circuit node alike -- is published by this one statement, so
 -- honouring it here covers all of them. NULL means the shape gave no message
 -- and the generated text stands.
- MAX(COALESCE(ct.`message`, t.text)) AS text
+ MAX(CASE WHEN t.triggered THEN COALESCE(ct.`message`, t.text) END) AS text
     {% if sqlite %}
     ,CURRENT_TIMESTAMP
     {% endif %}
@@ -1203,7 +1235,9 @@ per level, so an arbitrarily nested shape is evaluated by a fixed number of
 non-recursive statements known at build time.
 
 `needed_count` is always taken from the static edge list, never from observed
-triggers, which is what lets leaves stay sparse and emit only violations.
+triggers, which is what lets most leaves stay sparse and emit only violations.
+The count leaves also write ok rows (issue #977), so members are counted, and
+their texts collected, only where `triggered` is set.
 
 Connectives that fire on the ABSENCE of a violation (NOT, XONE) additionally
 need the set of focus nodes they range over, because "no member fired" is not
@@ -1256,7 +1290,7 @@ WITH
       {% if sqlite %}
       -- SQLite: GROUP_CONCAT only takes one argument when DISTINCT
       ct.`eventName` AS events,
-      'AND(' || GROUP_CONCAT(DISTINCT t.text) || ')' AS texts
+      'AND(' || GROUP_CONCAT(DISTINCT CASE WHEN t.triggered THEN t.text END) || ')' AS texts
       {% else %}
       -- Calcite: LISTAGG without DISTINCT
       ct.`eventName` AS events,
@@ -1300,7 +1334,7 @@ WITH
       {% if sqlite %}
       -- SQLite: GROUP_CONCAT only takes one argument when DISTINCT
       ct.`eventName` AS events,
-      'AND(' || GROUP_CONCAT(DISTINCT t.text) || ')' AS texts
+      'AND(' || GROUP_CONCAT(DISTINCT CASE WHEN t.triggered THEN t.text END) || ')' AS texts
       {% else %}
       -- Calcite: LISTAGG without DISTINCT
       ct.`eventName` AS events,

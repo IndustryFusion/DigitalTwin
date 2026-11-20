@@ -135,22 +135,36 @@ def _generated_checks():
     """The relationship and property checks, exactly as generated."""
     flink_relationship, _ = props.create_relationship_sql()
     flink_property, _ = props.create_property_sql()
-    return {'relationship': flink_relationship, 'property': flink_property}
+    flink_inverse, _ = props.create_inverse_relationship_sql()
+    return {'relationship': flink_relationship, 'property': flink_property,
+            'inverse': flink_inverse}
+
+
+def _count_verdicts(sql):
+    """
+    The verdict of every count statement: the expression its `triggered` column
+    is computed from. A count writes a verdict for every group rather than
+    filtering with a HAVING (issue #977), so this is where it decides between
+    raise and ok -- and where `edeleted` has to be read.
+    """
+    return [member.split('as constraint_id,', 1)[1].split('AS triggered', 1)[0]
+            for member in re.split(r'\bUNION\s+ALL\b', sql, flags=re.IGNORECASE)
+            if 'CountConstraintComponent' in member]
 
 
 def test_count_checks_do_not_group_by_edeleted():
     """
     `edeleted` as a grouping key means a deleted entity MIGRATES its rows from
     group (id, false) to group (id, true) instead of emptying the first, and
-    the `NOT edeleted` in the HAVING then mutes only the new group. The old one
+    the `NOT edeleted` in the verdict then mutes only the new group. The old one
     is retracted only if every row it holds is retracted -- which is what stops
     happening once state expires. A retraction landing in a group whose
     accumulator was rebuilt from fewer rows is what produced "-1".
     """
     for name, sql in _generated_checks().items():
-        clauses = re.findall(r'GROUP\s+BY\s(.*?)\sHAVING', sql,
+        clauses = re.findall(r'GROUP\s+BY\s(.*?)(?:\bHAVING\b|\bUNION\s+ALL\b|;|$)', sql,
                              re.IGNORECASE | re.DOTALL)
-        assert clauses, f'{name}: no GROUP BY ... HAVING found to check'
+        assert clauses, f'{name}: no GROUP BY found to check'
         for group_by in clauses:
             assert 'edeleted' not in group_by.lower(), \
                 f'{name}: edeleted is a grouping key again in {group_by.strip()}'
@@ -161,7 +175,7 @@ def test_count_checks_read_edeleted():
     A count of zero means two different things and the count cannot tell them
     apart: an entity that is alive and has lost its mandatory attribute must
     alert, and an entity that has been deleted must not. Only `edeleted`
-    separates them, so every counting HAVING has to read it.
+    separates them, so every count verdict has to read it.
 
     Filtering deleted entities out of A1 was tried instead, and made
     correctness depend on the rows disappearing and a retraction propagating
@@ -171,36 +185,34 @@ def test_count_checks_read_edeleted():
     correctly silent.
     """
     for name, sql in _generated_checks().items():
-        clauses = re.findall(r'HAVING\s(.*?)(?:UNION\s+ALL|$)', sql,
-                             re.IGNORECASE | re.DOTALL)
-        assert clauses, f'{name}: no HAVING found to check'
-        for having in clauses:
-            assert 'edeleted' in having.lower(), \
-                f'{name}: a counting HAVING ignores edeleted, so it cannot ' \
-                f'tell "attribute gone" from "entity gone": {having.strip()[:120]}'
+        verdicts = _count_verdicts(sql)
+        assert verdicts, f'{name}: no count verdict found to check'
+        for verdict in verdicts:
+            assert 'edeleted' in verdict.lower(), \
+                f'{name}: a count verdict ignores edeleted, so it cannot ' \
+                f'tell "attribute gone" from "entity gone": {verdict.strip()[:120]}'
 
 
 def test_edeleted_is_aggregated_not_filtered_in_counts():
     """
-    Reading `edeleted` in a HAVING only works if it is aggregated. A bare
-    column reference there would have to be a grouping key, which is the
+    Reading `edeleted` in a count verdict only works if it is aggregated. A
+    bare column reference there would have to be a grouping key, which is the
     migration bug test_count_checks_do_not_group_by_edeleted exists to prevent.
     """
     for name, sql in _generated_checks().items():
-        for having in re.findall(r'HAVING\s(.*?)(?:UNION\s+ALL|$)', sql,
-                                 re.IGNORECASE | re.DOTALL):
-            if 'edeleted' not in having.lower():
+        for verdict in _count_verdicts(sql):
+            if 'edeleted' not in verdict.lower():
                 continue
             assert re.search(r'(MAX|MIN|SUM|COUNT)\s*\([^)]*edeleted',
-                             having, re.IGNORECASE), \
-                f'{name}: edeleted appears unaggregated in a HAVING, which ' \
-                f'forces it into the GROUP BY: {having.strip()[:120]}'
+                             verdict, re.IGNORECASE), \
+                f'{name}: edeleted appears unaggregated in a count verdict, which ' \
+                f'forces it into the GROUP BY: {verdict.strip()[:120]}'
 
 
 def test_counted_expressions_exclude_deleted_entities():
     """A count must count live data, not merely decline to report.
 
-    `edeleted` in the HAVING decides whether to raise the alert; it does not
+    `edeleted` in the verdict decides whether to raise the alert; it does not
     change what was counted. With rows for a deleted incarnation left in A1 --
     which is deliberate, so the flag is there to read -- and only `adeleted`
     tested inside the CASE, those rows kept contributing. Deleting a model and

@@ -86,6 +86,15 @@ TEST_NODE_DEL_OWNER="urn:e2e-flink-node-del-owner:${RUN_ID}"
 TEST_NODE_DEL_PART="urn:e2e-flink-node-del-part:${RUN_ID}"
 TEST_NODE_PH_OWNER="urn:e2e-flink-node-ph-owner:${RUN_ID}"
 TEST_NODE_PH_PART="urn:e2e-flink-node-ph-part:${RUN_ID}"
+# Replayed count raises (issue #977): templates to copy a trigger record from,
+# and the entities a raise is planted for before they exist.
+TEST_REPLAY_PROP_TEMPLATE="urn:e2e-flink-replay-prop-template:${RUN_ID}"
+TEST_REPLAY_REL_TEMPLATE="urn:e2e-flink-replay-rel-template:${RUN_ID}"
+TEST_REPLAY_PROP_OK="urn:e2e-flink-replay-prop-ok:${RUN_ID}"
+TEST_REPLAY_PROP_BAD="urn:e2e-flink-replay-prop-bad:${RUN_ID}"
+TEST_REPLAY_REL_OK="urn:e2e-flink-replay-rel-ok:${RUN_ID}"
+TEST_REPLAY_REL_BAD="urn:e2e-flink-replay-rel-bad:${RUN_ID}"
+TEST_REPLAY_CARTRIDGE="urn:e2e-flink-replay-cartridge:${RUN_ID}"
 # A fixed instant in the past, standing in for an ngsi-ld:observedAt. Records
 # carrying it are older than everything else on the topic, which is the whole
 # point: it cannot win on time and must win on arrival order.
@@ -450,6 +459,38 @@ wait_for_retraction() {
         waited=$((waited + 2))
     done
     return 1
+}
+
+# The last raise the job wrote to constraint_trigger_table for a resource and
+# event, as `key<TAB>value`. Copied rather than written by hand, so that a
+# planted record carries exactly the key Flink serialises -- same fields, same
+# order, same constraint_id -- and lands on the same partition as the job's own
+# record for that key.
+trigger_raise_record() {
+    local resource=$1 fragment=$2
+    timeout 30 kafkacat -C -t ${TRIGGER_TOPIC} -b ${KAFKA_BOOTSTRAP} \
+        -o -2000 -e -f '%k\t%s\n' 2>/dev/null \
+        | awk -F'\t' -v r="${resource}" -v f="${fragment}" \
+            'index($1,r) && index($1,f) && index($2,"\"triggered\":true") {last=$0} END {if (last != "") print last}'
+}
+
+# Plant a raise for `resource` on constraint_trigger_table, copied from the
+# template's record. This is what a statementset redeploy does: the new job
+# replays the topic and so reads the raises the previous job left there, for
+# keys it may never find violated (issue #977). The text is marked, so that a
+# verdict written by the job can be told apart from the planted one.
+plant_trigger_raise() {
+    local record=$1 template=$2 resource=$3
+    printf '%s\n' "${record}" | python3 -c '
+import json, sys
+template, resource = sys.argv[1], sys.argv[2]
+key, value = sys.stdin.readline().rstrip("\n").split("\t", 1)
+value = json.loads(value)
+value["resource"] = resource
+value["text"] = "Replayed raise for " + resource + ". Found 10 instead of [1, 1]!"
+print(key.replace(template, resource) + "\t" + json.dumps(value, separators=(",", ":")))
+' "${template}" "${resource}" \
+        | kafkacat -P -t ${TRIGGER_TOPIC} -b ${KAFKA_BOOTSTRAP} -K $'\t'
 }
 
 @test "shacl-validation statementset is deployed and running" {
@@ -960,6 +1001,96 @@ else:
         [ "${state}" = "CLEAR" ]
     done
     [ "$(final_event_state "${TEST_NODE_PH_OWNER}" "${NODE_EVENT}[urn:e2e-ds:2])")" = "ALERT" ]
+}
+
+@test "a count raise replayed from an earlier job closes once the job finds it satisfied" {
+    # Issue #977. A statementset redeploy replays constraint_trigger_table, so
+    # the new job starts out reading the raises the old one left there. A count
+    # check used to emit rows only while violated (HAVING), so a key the new job
+    # found satisfied was never written again and the replayed raise reached
+    # Alerta as an open alert. Redeploying cannot be done from here, so the
+    # replay is planted instead: a raise is written to the topic for an entity
+    # that does not exist yet, and the entity then arrives satisfying it.
+    #
+    # The satisfied entities must never be violated on the way, or the
+    # transient raise and its retraction would overwrite the planted record and
+    # the test would pass without the fix. So everything they depend on is
+    # published first and allowed to land, and the entity itself last.
+    start_alert_capture
+
+    # 1) Templates: a raise of each count check, to copy the key from.
+    run publish_entity_until_alert "${TEST_REPLAY_PROP_TEMPLATE}" "${MACHINE_TYPE}" \
+        "CountConstraintComponent(${STATE_PROP})" 180
+    [ "$status" -eq 0 ]
+    run publish_entity_until_alert "${TEST_REPLAY_REL_TEMPLATE}" "${LINKED_TYPE}" \
+        "CountConstraintComponent(${CARTRIDGE_REL})" 180
+    [ "$status" -eq 0 ]
+    local prop_record rel_record waited=0
+    while [ "${waited}" -lt 60 ]; do
+        prop_record=$(trigger_raise_record "${TEST_REPLAY_PROP_TEMPLATE}" "CountConstraintComponent(${STATE_PROP})")
+        rel_record=$(trigger_raise_record "${TEST_REPLAY_REL_TEMPLATE}" "CountConstraintComponent(${CARTRIDGE_REL})")
+        [ -n "${prop_record}" ] && [ -n "${rel_record}" ] && break
+        sleep 5; waited=$((waited + 5))
+    done
+    echo "# template records: ${prop_record:-<none>} / ${rel_record:-<none>}" >&3
+    [ -n "${prop_record}" ]
+    [ -n "${rel_record}" ]
+
+    # 2) The replay: raises for entities the job has not seen.
+    plant_trigger_raise "${prop_record}" "${TEST_REPLAY_PROP_TEMPLATE}" "${TEST_REPLAY_PROP_OK}"
+    plant_trigger_raise "${prop_record}" "${TEST_REPLAY_PROP_TEMPLATE}" "${TEST_REPLAY_PROP_BAD}"
+    plant_trigger_raise "${rel_record}" "${TEST_REPLAY_REL_TEMPLATE}" "${TEST_REPLAY_REL_OK}"
+    plant_trigger_raise "${rel_record}" "${TEST_REPLAY_REL_TEMPLATE}" "${TEST_REPLAY_REL_BAD}"
+    # They are published as alerts, which is the observed symptom.
+    for resource in "${TEST_REPLAY_PROP_OK}" "${TEST_REPLAY_PROP_BAD}" \
+                    "${TEST_REPLAY_REL_OK}" "${TEST_REPLAY_REL_BAD}"; do
+        run wait_for_alert "${resource}" "Replayed raise" 90
+        if [ "$status" -ne 0 ]; then
+            echo "# the planted raise for ${resource} was never published" >&3
+            dump_trigger_rows "${resource}" "CountConstraintComponent"
+        fi
+        [ "$status" -eq 0 ]
+    done
+    echo "# planted raises are open alerts" >&3
+
+    # 3) The job evaluates them. Satisfied: dependencies first, entity last.
+    publish_property "${TEST_REPLAY_PROP_OK}" "${STATE_PROP}" "running" \
+        "http://www.w3.org/2001/XMLSchema#string"
+    publish_entity "${TEST_REPLAY_CARTRIDGE}" "${CARTRIDGE_TYPE}"
+    publish_relationship "${TEST_REPLAY_REL_OK}" "${CARTRIDGE_REL}" "${TEST_REPLAY_CARTRIDGE}"
+    sleep 10
+    publish_entity "${TEST_REPLAY_PROP_OK}" "${MACHINE_TYPE}"
+    publish_entity "${TEST_REPLAY_REL_OK}" "${LINKED_TYPE}"
+    # Still violated: no state, no cartridge.
+    publish_entity "${TEST_REPLAY_PROP_BAD}" "${MACHINE_TYPE}"
+    publish_entity "${TEST_REPLAY_REL_BAD}" "${LINKED_TYPE}"
+
+    # Satisfied now: the replayed alert must close without anyone touching it.
+    local resource fragment
+    for pair in "${TEST_REPLAY_PROP_OK}|${STATE_PROP}" "${TEST_REPLAY_REL_OK}|${CARTRIDGE_REL}"; do
+        resource=${pair%%|*}; fragment="CountConstraintComponent(${pair#*|})"
+        run wait_for_event_converged "${resource}" "${fragment}" CLEAR 120
+        if [ "$status" -ne 0 ]; then
+            echo "# the replayed raise for ${resource} never closed; records:" >&3
+            grep "${resource}" "${ALERTS_OUT}" | sed 's/^/#   /' >&3 || true
+            dump_trigger_rows "${resource}" "CountConstraintComponent"
+        fi
+        [ "$status" -eq 0 ]
+    done
+
+    # Still violated: the alert stays open, now carrying the job's own verdict
+    # rather than the replayed text.
+    sleep 20
+    stop_alert_capture
+    for pair in "${TEST_REPLAY_PROP_BAD}|${STATE_PROP}|Found 0 properties instead of [1, 1]!" \
+                "${TEST_REPLAY_REL_BAD}|${CARTRIDGE_REL}|Found 0 relationships instead of [1, 1]!"; do
+        resource=${pair%%|*}; fragment=${pair#*|}; fragment="CountConstraintComponent(${fragment%%|*})"
+        state=$(final_event_state "${resource}" "${fragment}")
+        echo "# ${resource}: ${state}" >&3
+        [ "${state}" = "ALERT" ]
+        last=$(awk -F';' -v r="${resource}" -v f="${fragment}" 'index($1,r) && index($1,f) {last=$0} END {print last}' "${ALERTS_OUT}")
+        [[ "${last}" == *"${pair##*|}"* ]]
+    done
 }
 
 @test "no alert produced during this run reports a negative count" {

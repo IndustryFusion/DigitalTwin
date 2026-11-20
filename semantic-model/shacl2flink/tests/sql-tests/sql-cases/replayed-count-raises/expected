@@ -1,0 +1,2 @@
+'urn:filter:2','CountConstraintComponent(https://industry-fusion.com/types/v0.9/hasCartridge)','warning','Model validation for relationship https://industry-fusion.com/types/v0.9/hasCartridge failed for urn:filter:2. Found 0 relationships instead of [1, 1]!'
+'urn:filter:2','CountConstraintComponent(https://industry-fusion.com/types/v0.9/hasStrength)','warning','Model validation for Property https://industry-fusion.com/types/v0.9/hasStrength failed for urn:filter:2. Found 2 properties instead of [1, 1]!'
