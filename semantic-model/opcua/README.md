@@ -436,7 +436,8 @@ the browse paths. Variables and their properties do not count as a relationship.
 
 **Placeholders and their instances.** An OPC UA instance does not refer to the declaration it
 instantiates, so the tool decides from the browse name and the type which children of an entity are
-instances of a placeholder member:
+instances of a placeholder member. The same rule holds for a placeholder that a type defines and for
+one that a declaration adds:
 
 - A pattern with a fixed part, for example `Item<no>` (matching `Item1`, `ItemX`, but not `Inner`):
   the whole name decides. A child named `Item2` is an instance whatever its type, so a child of the

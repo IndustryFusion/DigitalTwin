@@ -556,15 +556,27 @@ class Shacl:
         bridge (the namespace of its BrowseName plus has<name>, see nodesetparser); when given, a member
         with a fixed name matches only the path of exactly that bridge, so a member of another namespace
         is not taken for the declaration of the same name. A placeholder (e.g. <Pump>) is matched by its
-        pattern alone, since the BrowseNames of its instances may be in any namespace."""
+        pattern alone, since the BrowseNames of its instances may be in any namespace.
+
+        Membership of a placeholder relationship is decided as for the placeholders a declaration adds,
+        whether a type defines it or a declaration adds it: where the pattern has a fixed part (Item<no>),
+        the whole browse name decides, whatever the child's class, so that the shape's sh:class reports a
+        wrong type. Where the whole browse name is the placeholder (<Part>), every name matches, so only
+        children of its class or a subclass count as instances. A fixed-name member of the type, or of the
+        declaration, takes precedence over a placeholder."""
         query_minmax = """
-            SELECT ?path ?pattern ?mincount ?maxcount ?localName
+            SELECT ?path ?pattern ?mincount ?maxcount ?localName ?shclass
             WHERE {
                 ?shape a sh:NodeShape ;
                     sh:property ?property .
                 TARGET_PATTERN
 
-                ?property sh:path ?path CLASS_PATTERN .
+                ?property sh:path ?path ;
+                    sh:property ?object .
+                ?object sh:path <https://uri.etsi.org/ngsi-ld/hasObject> .
+                OPTIONAL {
+                    ?object sh:class ?shclass .
+                }
                 OPTIONAL {
                     ?property base:hasPlaceHolderPattern ?pattern .
                 }
@@ -583,8 +595,9 @@ class Shacl:
                 # Conditional filtering based on whether the pattern exists
                 FILTER (
                     IF(bound(?pattern),
-                    regex(?name, PATTERN_EXPRESSION),  # If pattern exists, use regex
-                    NAME_EXPRESSION                 # Otherwise, match the name
+                    # The pattern has to match the whole browse name, or the name is the placeholder's own
+                    regex(?name, CONCAT("^", ?pattern, "$")) || NAME_EXPRESSION,
+                    NAME_EXPRESSION CLASS_EXPRESSION           # Otherwise, match the name
                     )
                 )
             BIND(IF(NAME_EXPRESSION, 0, 1) AS ?order)
@@ -599,18 +612,15 @@ class Shacl:
             query_minmax = query_minmax.replace('NAME_EXPRESSION', '?localName = ?prefixname')
         if shape is None:
             query_minmax = query_minmax.replace('TARGET_PATTERN', '?shape sh:targetClass ?targetclass .')
-            query_minmax = query_minmax.replace('CLASS_PATTERN', '; sh:property [ sh:class ?attributeclass ]')
-            query_minmax = query_minmax.replace('PATTERN_EXPRESSION', '?pattern')
+            # A fixed-name member of a type still needs the child's class (Item<no> or <Part> do not)
+            query_minmax = query_minmax.replace('CLASS_EXPRESSION', '&& ?shclass = ?attributeclass')
             bindings['targetclass'] = target_class
             bindings['attributeclass'] = attributeclass
         else:
             # In a declaration shape a relationship member is found by its name (or placeholder pattern) alone,
             # so that its sh:class checks the instance's class instead of deciding whether the member matches.
             query_minmax = query_minmax.replace('TARGET_PATTERN', '')
-            query_minmax = query_minmax.replace('CLASS_PATTERN',
-                                                '; sh:property [ sh:path <https://uri.etsi.org/ngsi-ld/hasObject> ]')
-            # The pattern has to match the whole browse name (Item<no> must not take in MyItem2)
-            query_minmax = query_minmax.replace('PATTERN_EXPRESSION', 'CONCAT("^", ?pattern, "$")')
+            query_minmax = query_minmax.replace('CLASS_EXPRESSION', '')
             bindings['shape'] = shape
         optional = True
         array = True
@@ -619,6 +629,7 @@ class Shacl:
         try:
             results = list(self.shaclg.query(query_minmax, initBindings=bindings,
                                              initNs={'sh': SH, 'base': self.basens}))
+            results = self._placeholder_members(results, attributeclass)
             if len(results) > 1:  # try similarity between options
                 warn_message = "Warning: found ambigous path match. Most likely due to use of generic FolderType \
 or placeholders or both. Will try to guess the right value, but this can go wrong."
@@ -647,6 +658,37 @@ or placeholders or both. Will try to guess the right value, but this can go wron
         if warn_message is not None:
             print_warning('ambiguous path match', warn_message)
         return optional, array, path
+
+    def _placeholder_members(self, results, attributeclass):
+        """The matches of get_modelling_rule_and_path that the child of class `attributeclass` is a member of.
+
+        A fixed-name match takes precedence over placeholders. A fully generic placeholder (<Part>) takes in
+        a child only when the child's class is the placeholder's class or a subclass of it. Of several
+        placeholders that take in the child, the one of the most specific class is kept, e.g. Pumps'
+        <Vibration> of VibrationMeasurementType rather than DI's <GroupIdentifier> of FunctionalGroupType."""
+        fixed = [result for result in results if len(result) > 1 and result[1] is None]
+        if fixed:
+            return fixed
+        _, generic_pattern = utils.normalize_angle_bracket_name('<x>')
+
+        def shclass(result):
+            return result[5] if len(result) > 5 else None
+
+        members = []
+        for result in results:
+            if result[1] is not None and str(result[1]) == generic_pattern and shclass(result) is not None and \
+                    attributeclass is not None and \
+                    not utils.is_subclass(self.data_graph, attributeclass, shclass(result)):
+                continue
+            members.append(result)
+        if len(members) > 1:
+            specific = [result for result in members if shclass(result) is not None and
+                        all(shclass(other) is None or
+                            utils.is_subclass(self.data_graph, shclass(result), shclass(other))
+                            for other in members)]
+            if specific:
+                members = specific
+        return members
 
     def attribute_is_indomain(self, shapenode, attributename):
         """Check if attributename is already part of the shape

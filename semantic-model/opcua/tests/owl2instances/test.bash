@@ -63,6 +63,7 @@ TESTNODESETS=(
     test_placeholder_empty_types.NodeSet2,${TESTURI}AlphaType
     test_browsename_namespaces.NodeSet2,${TESTURI}AlphaType
     test_browsename_namespaces_deep.NodeSet2,${TESTURI}AlphaType
+    test_placeholder_membership.NodeSet2,${TESTURI}AlphaType
     )
 CLEANGRAPH=cleangraph.py
 TYPEURI=http://example.org/MinimalNodeset

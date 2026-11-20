@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+Copyright (c) 2026 IndustryFusion Foundation
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<!--
+Membership of placeholders that a type defines (#989), decided as for the placeholders an instance
+declaration adds:
+- AlphaType has the optional placeholder Item<no> of ItemType. Its pattern has a fixed part, so the name
+  decides: Item1 (ItemType), Item2 (SubItemType, a subtype) and Item3 (BaseObjectType, a wrong type) are all
+  instances of Item<no>, and Item3 is reported for its type.
+- AlphaType has the mandatory, fully generic placeholder <Part> of PartType. Any name matches, so the type
+  decides, subtypes included: PartB (SubPartType) is an instance and satisfies the mandatory placeholder;
+  Other (BaseObjectType) is not an instance and keeps its own attribute hasOther; Item3 is not taken in.
+-->
+
+<UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" LastModified="2024-07-15T00:00:00Z" xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
+  <Models>
+    <Model ModelUri="http://my.test/" XmlSchemaUri="http://opcfoundation.org/UA/2008/02/Types.xsd" Version="1.05.03" PublicationDate="2024-07-29T00:00:00Z" ModelVersion="1.5.3" />
+  </Models>
+  <NamespaceUris>
+    <Uri>http://my.test/</Uri>
+  </NamespaceUris>
+  <Aliases>
+    <Alias Alias="Boolean">i=1</Alias>
+    <Alias Alias="SByte">i=2</Alias>
+    <Alias Alias="Byte">i=3</Alias>
+    <Alias Alias="Int16">i=4</Alias>
+    <Alias Alias="UInt16">i=5</Alias>
+    <Alias Alias="Int32">i=6</Alias>
+    <Alias Alias="UInt32">i=7</Alias>
+    <Alias Alias="Int64">i=8</Alias>
+    <Alias Alias="UInt64">i=9</Alias>
+    <Alias Alias="Float">i=10</Alias>
+    <Alias Alias="Double">i=11</Alias>
+    <Alias Alias="DateTime">i=13</Alias>
+    <Alias Alias="String">i=12</Alias>
+    <Alias Alias="ByteString">i=15</Alias>
+    <Alias Alias="Guid">i=14</Alias>
+    <Alias Alias="XmlElement">i=16</Alias>
+    <Alias Alias="NodeId">i=17</Alias>
+    <Alias Alias="ExpandedNodeId">i=18</Alias>
+    <Alias Alias="QualifiedName">i=20</Alias>
+    <Alias Alias="LocalizedText">i=21</Alias>
+    <Alias Alias="StatusCode">i=19</Alias>
+    <Alias Alias="Structure">i=22</Alias>
+    <Alias Alias="Number">i=26</Alias>
+    <Alias Alias="Integer">i=27</Alias>
+    <Alias Alias="UInteger">i=28</Alias>
+    <Alias Alias="HasComponent">i=47</Alias>
+    <Alias Alias="HasProperty">i=46</Alias>
+    <Alias Alias="Organizes">i=35</Alias>
+    <Alias Alias="HasEventSource">i=36</Alias>
+    <Alias Alias="HasNotifier">i=48</Alias>
+    <Alias Alias="HasSubtype">i=45</Alias>
+    <Alias Alias="HasTypeDefinition">i=40</Alias>
+    <Alias Alias="HasModellingRule">i=37</Alias>
+    <Alias Alias="HasEncoding">i=38</Alias>
+    <Alias Alias="HasDescription">i=39</Alias>
+    <Alias Alias="HasCause">i=53</Alias>
+    <Alias Alias="ToState">i=52</Alias>
+    <Alias Alias="FromState">i=51</Alias>
+    <Alias Alias="HasEffect">i=54</Alias>
+    <Alias Alias="HasTrueSubState">i=9004</Alias>
+    <Alias Alias="HasFalseSubState">i=9005</Alias>
+    <Alias Alias="HasDictionaryEntry">i=17597</Alias>
+    <Alias Alias="HasCondition">i=9006</Alias>
+    <Alias Alias="HasGuard">i=15112</Alias>
+    <Alias Alias="HasAddIn">i=17604</Alias>
+    <Alias Alias="HasInterface">i=17603</Alias>
+  </Aliases>
+
+  <UAObjectType NodeId="ns=1;i=1001" BrowseName="1:AlphaType">
+    <DisplayName>AlphaType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1101</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1102</Reference>
+    </References>
+  </UAObjectType>
+  <UAObject SymbolicName="Item_no_" NodeId="ns=1;i=1101" BrowseName="1:Item&lt;no&gt;" ParentNodeId="ns=1;i=1001">
+    <DisplayName>Item&lt;no&gt;</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=1002</Reference>
+      <Reference ReferenceType="HasModellingRule">i=11508</Reference>
+    </References>
+  </UAObject>
+  <UAObject SymbolicName="Part_" NodeId="ns=1;i=1102" BrowseName="1:&lt;Part&gt;" ParentNodeId="ns=1;i=1001">
+    <DisplayName>&lt;Part&gt;</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=1004</Reference>
+      <Reference ReferenceType="HasModellingRule">i=11510</Reference>
+    </References>
+  </UAObject>
+  <UAObjectType NodeId="ns=1;i=1002" BrowseName="1:ItemType">
+    <DisplayName>ItemType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+    </References>
+  </UAObjectType>
+  <UAObjectType NodeId="ns=1;i=1003" BrowseName="1:SubItemType">
+    <DisplayName>SubItemType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">ns=1;i=1002</Reference>
+    </References>
+  </UAObjectType>
+  <UAObjectType NodeId="ns=1;i=1004" BrowseName="1:PartType">
+    <DisplayName>PartType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+    </References>
+  </UAObjectType>
+  <UAObjectType NodeId="ns=1;i=1005" BrowseName="1:SubPartType">
+    <DisplayName>SubPartType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">ns=1;i=1004</Reference>
+    </References>
+  </UAObjectType>
+
+  <UAObject NodeId="ns=1;i=2001" BrowseName="1:AlphaInstance">
+    <DisplayName>Alpha Instance</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=1001</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2011</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2012</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2013</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2021</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2022</Reference>
+    </References>
+  </UAObject>
+  <UAObject NodeId="ns=1;i=2011" BrowseName="1:Item1" ParentNodeId="ns=1;i=2001">
+    <DisplayName>Item1</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=1002</Reference>
+    </References>
+  </UAObject>
+  <UAObject NodeId="ns=1;i=2012" BrowseName="1:Item2" ParentNodeId="ns=1;i=2001">
+    <DisplayName>Item2</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=1003</Reference>
+    </References>
+  </UAObject>
+  <UAObject NodeId="ns=1;i=2013" BrowseName="1:Item3" ParentNodeId="ns=1;i=2001">
+    <DisplayName>Item3</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=58</Reference>
+    </References>
+  </UAObject>
+  <UAObject NodeId="ns=1;i=2021" BrowseName="1:PartB" ParentNodeId="ns=1;i=2001">
+    <DisplayName>PartB</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=1005</Reference>
+    </References>
+  </UAObject>
+  <UAObject NodeId="ns=1;i=2022" BrowseName="1:Other" ParentNodeId="ns=1;i=2001">
+    <DisplayName>Other</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=58</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2023</Reference>
+    </References>
+  </UAObject>
+  <UAVariable NodeId="ns=1;i=2023" BrowseName="1:Note" ParentNodeId="ns=1;i=2022" DataType="String">
+    <DisplayName>Note</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+    </References>
+    <Value>
+      <String xmlns="http://opcfoundation.org/UA/2008/02/Types.xsd">kept as hasOther</String>
+    </Value>
+  </UAVariable>
+</UANodeSet>

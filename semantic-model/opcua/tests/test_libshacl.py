@@ -1239,3 +1239,88 @@ class TestDeclarationShapes(unittest.TestCase):
         _, _, path = self.sh.get_modelling_rule_and_path("Item7", None, other, 'has', shape=decl,
                                                          bridge=URIRef("http://example.org/other/hasItem7"))
         self.assertEqual(path, URIRef("http://example.org/hasItem"))
+
+
+class TestTypePlaceholderMembership(unittest.TestCase):
+    """Membership of the placeholders a type defines (#989): by the whole name where the pattern has a fixed
+    part (Item<no>), by the class, subclasses included, where the whole browse name is the placeholder
+    (<Part>), as for the placeholders an instance declaration adds."""
+    EX = "http://example.org/"
+
+    def setUp(self):
+        self.sh = Shacl(Graph(), self.EX, Namespace(self.EX + "base/"), Namespace(self.EX + "opcua/"))
+        ex = self.EX
+        self.alpha = URIRef(ex + "AlphaType")
+        self.item_type = URIRef(ex + "ItemType")
+        self.part_type = URIRef(ex + "PartType")
+        self.other_type = URIRef(ex + "OtherType")
+        self.sub_item_type = URIRef(ex + "SubItemType")
+        self.sub_part_type = URIRef(ex + "SubPartType")
+        self.sh.data_graph.add((self.sub_item_type, RDFS.subClassOf, self.item_type))
+        self.sh.data_graph.add((self.sub_part_type, RDFS.subClassOf, self.part_type))
+        shape = self.sh.create_shacl_type(self.alpha)
+        self.has_item = URIRef(ex + "hasItem%3Cno%3E")
+        self.has_part = URIRef(ex + "has%3CPart%3E")
+        self.has_inner = URIRef(ex + "hasInner")
+        self.sh.create_shacl_property(shape, self.has_item, True, True, False, True, self.item_type, None,
+                                      is_subcomponent=True, placeholder_pattern="Item[a-zA-Z0-9_-]+")
+        self.sh.create_shacl_property(shape, self.has_part, False, True, False, True, self.part_type, None,
+                                      is_subcomponent=True, placeholder_pattern="[a-zA-Z0-9_-]+")
+        self.sh.create_shacl_property(shape, self.has_inner, False, False, False, True, self.part_type, None,
+                                      is_subcomponent=True)
+
+    def path_of(self, name, childclass):
+        return self.sh.get_modelling_rule_and_path(name, self.alpha, childclass, 'has',
+                                                   bridge=URIRef(f"{self.EX}has{name}"))
+
+    def test_a_named_pattern_takes_in_every_class(self):
+        for childclass in (self.item_type, self.sub_item_type, self.other_type):
+            optional, array, path = self.path_of("Item3", childclass)
+            self.assertEqual(path, self.has_item, childclass)
+            self.assertTrue(optional)
+            self.assertTrue(array)
+
+    def test_a_named_pattern_matches_the_whole_name(self):
+        _, _, path = self.path_of("MyItem3", self.item_type)
+        self.assertNotEqual(path, self.has_item)
+
+    def test_a_generic_placeholder_takes_in_its_class_and_subclasses(self):
+        for childclass in (self.part_type, self.sub_part_type):
+            optional, array, path = self.path_of("PartB", childclass)
+            self.assertEqual(path, self.has_part, childclass)
+            self.assertFalse(optional)
+        _, _, path = self.path_of("Other", self.other_type)
+        self.assertIsNone(path)
+
+    def test_a_fixed_name_member_takes_precedence_over_a_generic_placeholder(self):
+        optional, array, path = self.path_of("Inner", self.part_type)
+        self.assertEqual(path, self.has_inner)
+        self.assertFalse(array)
+
+    def test_a_generic_placeholder_in_a_declaration_shape_follows_the_same_rule(self):
+        decl = self.sh.get_declaration_shape_name(self.alpha, "Link")
+        self.sh.create_declaration_shape(decl)
+        self.sh.create_shacl_property(decl, self.has_part, True, True, False, True, self.part_type, None,
+                                      is_subcomponent=True, placeholder_pattern="[a-zA-Z0-9_-]+")
+        _, _, path = self.sh.get_modelling_rule_and_path("PartB", None, self.sub_part_type, 'has', shape=decl)
+        self.assertEqual(path, self.has_part)
+        _, _, path = self.sh.get_modelling_rule_and_path("Other", None, self.other_type, 'has', shape=decl)
+        self.assertIsNone(path)
+
+    def test_a_child_named_as_the_placeholder_is_an_instance(self):
+        """An instance may keep the placeholder's own browse name, e.g. Pumps' example child <Drive>."""
+        _, _, path = self.sh.get_modelling_rule_and_path("<Part>", self.alpha, self.part_type, 'has',
+                                                         bridge=self.has_part)
+        self.assertEqual(path, self.has_part)
+
+    def test_of_several_placeholders_the_most_specific_class_is_taken(self):
+        group_type = URIRef(self.EX + "GroupType")
+        self.sh.data_graph.add((self.part_type, RDFS.subClassOf, group_type))
+        shape = next(self.sh.shaclg.subjects(SH.targetClass, self.alpha))
+        has_group = URIRef(self.EX + "has%3CGroup%3E")
+        self.sh.create_shacl_property(shape, has_group, True, True, False, True, group_type, None,
+                                      is_subcomponent=True, placeholder_pattern="[a-zA-Z0-9_-]+")
+        _, _, path = self.path_of("Sensor1", self.sub_part_type)
+        self.assertEqual(path, self.has_part)
+        _, _, path = self.path_of("Group1", group_type)
+        self.assertEqual(path, has_group)

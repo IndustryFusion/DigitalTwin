@@ -1,0 +1,56 @@
+#
+# Copyright (c) 2026 IndustryFusion Foundation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+@prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/> .
+@prefix opcua: <http://opcfoundation.org/UA/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix shacl: <http://my.test/shacl/> .
+@prefix test: <http://my.test/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+shacl:AlphaTypeShape a sh:NodeShape ;
+    sh:property [ a base:SubComponentRelationship ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:has%3CPart%3E ;
+            sh:property [ sh:class test:PartType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasPlaceHolderPattern "[a-zA-Z0-9_-]+" ;
+            base:hasReferenceType opcua:HasComponent ;
+            base:isPlaceHolder true ],
+        [ a base:SubComponentRelationship ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasItem%3Cno%3E ;
+            sh:property [ sh:class test:ItemType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasPlaceHolderPattern "Item[a-zA-Z0-9_-]+" ;
+            base:hasReferenceType opcua:HasComponent ;
+            base:isPlaceHolder true ] ;
+    sh:targetClass test:AlphaType .
+
+shacl:ItemTypeShape a sh:NodeShape ;
+    sh:targetClass test:ItemType .
+
+shacl:PartTypeShape a sh:NodeShape ;
+    sh:targetClass test:PartType .
+
