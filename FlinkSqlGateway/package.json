@@ -32,7 +32,7 @@
   "author": "Marcel Wagner",
   "license": "Apache-2.0",
   "overrides": {
-    "serialize-javascript": ">=7.0.3",
+    "serialize-javascript": "7.1.4",
     "@eslint/eslintrc": {
       "js-yaml": "3.15.2"
     },
@@ -43,15 +43,17 @@
       "js-yaml": "3.15.2"
     },
     "mocha": {
-      "js-yaml": "4.3.2",
-      "minimatch": {
-        "brace-expansion": "2.1.7"
-      }
+      "js-yaml": "4.3.2"
     },
-    "minimatch": {
+    "fast-uri": "3.1.9",
+    "qs": "6.16.1",
+    "minimatch@>=7.0.0 <11.0.1": "11.0.9",
+    "glob@>=9.0.0 <14.0.2": "14.0.6",
+    "diff@>=6.0.0 <8.0.3": "8.0.4",
+    "body-parser": "1.20.9",
+    "minimatch@<4": {
       "brace-expansion": "1.1.21"
     },
-    "fast-uri": "3.1.7",
-    "qs": "6.16.0"
+    "ajv@<6.14.0": "6.15.0"
   }
 }
