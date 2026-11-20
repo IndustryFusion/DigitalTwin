@@ -59,9 +59,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
+      # Node 24 as in the KafkaBridge image; its npm 11 honours the
+      # version-ranged overrides of KafkaBridge's lock file, npm 10 rejects it.
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
       - name: Prepare
         run: mkdir -p "$OUT"
       - name: Stage 1 - the model, Steps 1 to 3 of the tutorial

@@ -119,6 +119,11 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v4
+    # npm 11 (Node 24): the lock file's version-ranged overrides are ignored by
+    # npm 10, which then installs another tree than the one locked.
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 24
     - name: Build datamodel tools
       run: |
         cd semantic-model/datamodel/tools && make setup && make lint test
