@@ -78,9 +78,15 @@ jobs:
           ref="${ref#refs/tags/}"
           ref="$(echo "${ref}" | sed -E 's#^refs/pull/([0-9]+)/.*#pr-\1#')"
           echo "name=${ref}" >> "$GITHUB_OUTPUT"
-      - name: FOSSA analyze and test
+      # The action runs either analyze or, with run-tests, only test; and
+      # fossa test does not take --branch. So two steps, branch on analyze.
+      - name: FOSSA analyze
         uses: fossas/fossa-action@v2.0.0
         with:
           api-key: ${{ secrets.FOSSA_API_KEY }}
           branch: ${{ steps.branch.outputs.name }}
+      - name: FOSSA test
+        uses: fossas/fossa-action@v2.0.0
+        with:
+          api-key: ${{ secrets.FOSSA_API_KEY }}
           run-tests: true
