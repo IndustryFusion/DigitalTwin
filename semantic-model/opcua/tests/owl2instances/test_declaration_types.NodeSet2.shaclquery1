@@ -1,0 +1,9 @@
+PREFIX sh: <http://www.w3.org/ns/shacl#>
+PREFIX test: <http://my.test/>
+# The type the folder's declaration adds has its shape; the member-less subtype is covered by its supertype's shape
+ask where {
+  ?beta sh:targetClass test:BetaType ;
+      sh:property/sh:path test:hasLevel .
+  ?delta sh:targetClass test:DeltaType .
+  FILTER NOT EXISTS { ?sub sh:targetClass test:DeltaSubType }
+}

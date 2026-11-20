@@ -1,0 +1,12 @@
+PREFIX sh: <http://www.w3.org/ns/shacl#>
+PREFIX test: <http://my.test/>
+PREFIX opcua: <http://opcfoundation.org/UA/>
+# The subtype the instance uses, which adds a member, and the type only an Organizes reference of the instance reaches
+# have their own shapes with the mandatory variables; a plain BaseObjectType object gets no shape
+ask where {
+  ?unitsub sh:targetClass test:UnitSubType ;
+      sh:property [ sh:path test:hasExtra ; sh:minCount 1 ] .
+  ?zeta sh:targetClass test:ZetaType ;
+      sh:property [ sh:path test:hasLevel ; sh:minCount 1 ] .
+  FILTER NOT EXISTS { ?base sh:targetClass opcua:BaseObjectType }
+}

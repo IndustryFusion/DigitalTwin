@@ -1,0 +1,6 @@
+ask where {
+  test:hasLevel a owl:ObjectProperty ;
+      rdfs:domain test:BetaType .
+  test:hasNote a owl:ObjectProperty ;
+      rdfs:domain test:BetaType .
+}
