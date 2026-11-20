@@ -14,15 +14,18 @@ contain both state machines, and nothing validates them. A package built this wa
 never checked.
 
 Since #985 (`opcua/instance-declaration-shapes`) the type walk also scans the types of the members a declaration adds,
-so those state machines have their shapes and are validated. Two gaps remain: the attributes that a declaration or
-an instance adds beyond the type (the folder's relationships to the state machines) are declared nowhere in the
-ontology, and nothing reports a part of the instances that the shapes or the ontology still do not cover.
+so those state machines have their shapes. Other types the instances use are still not reached: an instance whose
+type is a subtype of its declaration's type and adds members of its own, an object that only an `Organizes` or a
+non-hierarchical reference reaches, and the members a declaration adds more than one relationship deep. Their
+mandatory members are never checked. The attributes that a declaration or an instance adds beyond the type (the
+folder's relationships to the state machines) are declared nowhere in the ontology, and nothing reports such a gap.
 
 ## What Changes
 
-- The spec states what the type walk does since #985: every object type of which the instances contain an entity
-  has its node shape with the rules its type definition and supertypes define, wherever the type occurs in the
-  model, and the shape of a type is the same whichever way it is reached. No code changes for this; tests hold it.
+- Every object type of which the instances contain an entity gets its node shape with the rules its type
+  definition and supertypes define, and is a class with its superclasses in the ontology, wherever the type occurs in
+  the model. The shape of a type is the same whichever way it is reached. A subtype that adds no member stays covered
+  by its supertype's shape.
 - Every attribute that an entity of the instances carries is declared in the ontology, with a domain that the
   entity's type or one of its supertypes satisfies. This includes attributes that an instance declaration or the
   instance itself adds beyond the type.
@@ -45,16 +48,18 @@ None.
 
 ## Impact
 
-- **opcua**: `owl2instances.py` declares the attributes of the entities it writes and reports what is not covered.
-  Models whose instances carry such attributes gain declarations in `entities.ttl`; their shapes and instances are
-  unchanged.
-- **shacl2flink**: no change; the shapes it compiles are the same.
-- **SemForge SDK**: no code change; it shows the added declarations like any other.
+- **opcua**: `owl2instances.py` scans the types of the instance nodes, declares the attributes of the entities it
+  writes and reports what is not covered. Models whose instances use such types gain shapes and declarations; the KMS
+  packages built from them change accordingly. The instances are unchanged.
+- **shacl2flink**: no code change. A package with more shapes compiles into more validation statements, but only for
+  types the model's instances use.
+- **SemForge SDK**: no code change; it shows the added shapes and declarations like any other.
 - **Contracts**: no contract between components changes. `contracts/opcua-live-data` (attribute forms and entity
   identity) and `contracts/kms-package` (package layout) are untouched.
 - **Relation to #985** (`gh-985-instance-declaration-shapes`, merged): #985 validates the members an instance
-  declaration adds beyond its type and gives the types of those members their shapes; this change declares the added
-  attributes in the ontology, and its report counts what #985's declaration shapes constrain as covered.
+  declaration adds beyond its type and gives the types of those members their shapes; this change gives the other
+  types of the instances their shapes, declares the added attributes in the ontology, and its report counts what
+  #985's declaration shapes constrain as covered.
 
 ## Out of Scope
 
