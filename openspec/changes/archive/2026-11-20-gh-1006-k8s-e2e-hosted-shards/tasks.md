@@ -21,5 +21,5 @@
 
 ## 4. Verification
 
-- [ ] 4.1 Verify every scenario of the delta specs against the pull request's runs and tests and list the result per scenario in the pull request. The specification-only scenario is verified by the archive pull request, which runs neither `Build` nor any K8s end-to-end test.
+- [x] 4.1 Verify every scenario of the delta specs against the pull request's runs and tests and list the result per scenario in the pull request. The specification-only scenario is verified by the archive pull request, which runs neither `Build` nor any K8s end-to-end test.
 - [x] 4.2 State the coverage of the shard selection: every branch of its path rules is exercised by a bats test. Verified by the per-branch list in the pull request.
