@@ -1,0 +1,13 @@
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX base: <https://industryfusion.github.io/contexts/ontology/v0/base/>
+PREFIX opcua: <http://opcfoundation.org/UA/>
+# The node reference every entity carries (-nr) is declared once, for BaseObjectType, and for no other type
+ask where {
+  base:hasNodeRef a owl:ObjectProperty ;
+      rdfs:domain opcua:BaseObjectType .
+  FILTER NOT EXISTS {
+    base:hasNodeRef rdfs:domain ?other .
+    FILTER(?other != opcua:BaseObjectType)
+  }
+}

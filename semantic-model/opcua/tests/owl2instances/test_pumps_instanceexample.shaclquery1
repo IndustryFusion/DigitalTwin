@@ -1,0 +1,8 @@
+PREFIX sh: <http://www.w3.org/ns/shacl#>
+# No shapes for types the instances do not use: the pump imports Machinery, but uses none of its state machines
+ask where {
+  FILTER NOT EXISTS {
+    ?shape sh:targetClass ?class .
+    FILTER(STRSTARTS(STR(?class), "http://opcfoundation.org/UA/Machinery/") && CONTAINS(STR(?class), "StateMachine"))
+  }
+}
