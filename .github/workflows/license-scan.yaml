@@ -1,0 +1,86 @@
+#
+# Copyright (c) 2026 IndustryFusion Foundation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+# FOSSA licence scan (fossa analyze + fossa test). It no longer runs on every
+# pull request: it runs on release tags, in the nightly (nightly.yaml calls
+# it), and on demand. A reviewer who wants the scan for a pull request starts
+# it on the PR head:
+#   gh workflow run license-scan.yaml -f ref=refs/pull/<n>/head
+# Needs the repository secret FOSSA_API_KEY (a FOSSA push-only key is enough
+# for analyze; fossa test needs a full API key).
+name: License scan
+
+on:
+  push:
+    tags:
+      - v*
+  workflow_call:
+    inputs:
+      ref:
+        description: Git ref to scan (default the calling ref)
+        type: string
+        required: false
+        default: ''
+    secrets:
+      FOSSA_API_KEY:
+        required: false
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Git ref to scan, e.g. main, v0.8.0 or refs/pull/<n>/head (default the selected branch)
+        type: string
+        required: false
+        default: ''
+
+concurrency:
+  group: license-scan-${{ inputs.ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  fossa:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      SCAN_REF: ${{ inputs.ref || github.ref }}
+    steps:
+      - name: Check the FOSSA API key
+        env:
+          FOSSA_API_KEY: ${{ secrets.FOSSA_API_KEY }}
+        run: |
+          if [ -z "${FOSSA_API_KEY}" ]; then
+            echo "::error::The secret FOSSA_API_KEY is not set; the licence scan cannot run."
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SCAN_REF }}
+      - name: Name the FOSSA branch
+        id: branch
+        run: |
+          # refs/heads/main -> main, refs/tags/v1 -> v1, refs/pull/7/head -> pr-7
+          ref="${SCAN_REF#refs/heads/}"
+          ref="${ref#refs/tags/}"
+          ref="$(echo "${ref}" | sed -E 's#^refs/pull/([0-9]+)/.*#pr-\1#')"
+          echo "name=${ref}" >> "$GITHUB_OUTPUT"
+      - name: FOSSA analyze and test
+        uses: fossas/fossa-action@v2.0.0
+        with:
+          api-key: ${{ secrets.FOSSA_API_KEY }}
+          branch: ${{ steps.branch.outputs.name }}
+          run-tests: true

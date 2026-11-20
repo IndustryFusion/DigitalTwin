@@ -20,6 +20,10 @@ jobs:
     uses: IndustryFusion/DigitalTwin/.github/workflows/build.yaml@main
   call-test:
     uses: IndustryFusion/DigitalTwin/.github/workflows/k8s-tests.yaml@main
+  call-license-scan:
+    uses: IndustryFusion/DigitalTwin/.github/workflows/license-scan.yaml@main
+    secrets:
+      FOSSA_API_KEY: ${{ secrets.FOSSA_API_KEY }}
   push-images:
     needs: call-test
     runs-on: private
