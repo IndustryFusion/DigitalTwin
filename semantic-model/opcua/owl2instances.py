@@ -140,10 +140,6 @@ parse nodeset instance and create ngsi-ld model')
                         help='Add additional debug info to structure (e.g. for better SHACL debug)',
                         required=False,
                         action='store_true')
-    parser.add_argument('-mi', '--minimalshacl',
-                        help='Remove all not monitored/updated shacl nodes',
-                        required=False,
-                        action='store_true')
     parser.add_argument('-ma', '--maximalshacl',
                         help='Add all types from nodes in the namespace.',
                         required=False,
@@ -697,7 +693,6 @@ will flag this.")
                     f'{full_attribute_name}, {str(node)}'
             instance[full_attribute_name].append(attr_instance)
             shacl_rule['contentclass'] = classtype
-            minshaclg.copy_property_from_shacl(shaclg, instance['type'], attributename)
         if not shacl_rule['optional']:
             has_components = True
             shacl_rule['contentclass'] = classtype
@@ -756,16 +751,10 @@ will flag this.")
                         f"Will use default '{value}' but this might trigger validation problems."
                     print_warning('no_iri_value', warnmsg)
             instance[f'{full_attribute_name}'] = jsonld.get_ngsild_property(value)
-        if type is not None:
-            minshaclg.copy_property_from_shacl(shaclg, type, full_attribute_name)
         if debug:
             instance[f'{full_attribute_name}']['debug'] = \
                 f'{full_attribute_name}, {str(node)}'
-        try:
-            is_updating = bool(next(g.objects(o, basens['isUpdating'])))
-        except Exception:
-            is_updating = False
-        if (is_updating or not minimal_shacl) and not is_property:
+        if not is_property:
             create_binding(node_id, o, attributename, shacl_rule)
         attributes = scan_entity_variable(o, classtype, id, shacl_rule['optional'])
         utils.merge_attributes(instance[f'{full_attribute_name}'], attributes)
@@ -832,7 +821,6 @@ if __name__ == '__main__':
     debug = args.debug
     namespace_prefix = args.namespace
     entity_id = args.id
-    minimal_shacl = args.minimalshacl
     maximal_shacl = args.maximalshacl
     context_url = args.context_url
     entity_namespace = args.entity_namespace
@@ -865,9 +853,6 @@ if __name__ == '__main__':
     for warnstr in args.suppress_warnings or []:
         message = f"{warnstr}.*"
         warnings.filterwarnings("ignore", message=message)
-    if minimal_shacl and maximal_shacl:
-        print("--minimalshacl and --maximalshacl are mutual exclusive")
-        sys.exit(1)
     entity_namespace = Namespace(f'{namespace_prefix}entity/') if entity_namespace is None else entity_namespace
     shacl_namespace = Namespace(f'{namespace_prefix}shacl/')
     binding_namespace = Namespace(f'{namespace_prefix}bindings/')
@@ -901,11 +886,6 @@ if __name__ == '__main__':
     shaclg.bind('ngsi-ld', ngsildns)
     shaclg.bind('sh', SH)
     shaclg.bind('base', basens)
-    minshaclg = Shacl(g, namespace_prefix, basens, opcuans)
-    minshaclg.bind('shacl', shacl_namespace)
-    minshaclg.bind('ngsi-ld', ngsildns)
-    minshaclg.bind('sh', SH)
-    minshaclg.bind('base', basens)
     e = Entity(namespace_prefix, basens, opcuans)
     e.bind('base', basens)
     e.bind('example', utils.EX)
@@ -963,8 +943,6 @@ Machinery Folder was found in instance ontology.")
     report_deep_additions()
     if shaclname is not None:
         shaclg.serialize(destination=shaclname)
-        shacl_dir, shacl_file = os.path.split(shaclname)
-        minshaclg.serialize(destination=os.path.join(shacl_dir, f'min_{shacl_file}'))
     if shacl_only:
         # If only SHACL shapes are to be created, skip the entity scanning
         sys.exit(0)

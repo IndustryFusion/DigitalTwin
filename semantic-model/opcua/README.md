@@ -353,7 +353,6 @@ options:
   -c CONTEXT, --context CONTEXT
                         Filename of JSONLD context output file
   -d, --debug           Add additional debug info to structure (e.g. for better SHACL debug)
-  -mi, --minimalshacl   Remove all not monitored/updated shacl nodes
   -ma, --maximalshacl   Add all types from nodes in the namespace.
   -n NAMESPACE, --namespace NAMESPACE
                         Namespace prefix for entities, SHACL and JSON-LD

@@ -749,49 +749,6 @@ or placeholders or both. Will try to guess the right value, but this can go wron
         except Exception:
             pass
 
-    def copy_property_from_shacl(self, source_graph, targetclass, propertypath):
-        shape = self.create_shape_if_not_exists(source_graph, targetclass)
-        if shape is None:
-            return
-        property = source_graph._get_property(targetclass, propertypath)
-        if property is not None:
-            self.copy_bnode_triples(source_graph, property, shape)
-
-    def copy_bnode_triples(self, source_graph, bnode, shape):
-        """
-        Recursively copies all triples found inside a blank node (bnode)
-        from the source graph to the target graph.
-        """
-        # Iterate over all triples where the blank node is the subject
-        if shape is not None:
-            self.shaclg.add((shape, SH.property, bnode))
-        for s, p, o in source_graph.get_graph().triples((bnode, None, None)):
-            # Add the triple to the target graph
-            self.shaclg.add((s, p, o))
-            # If the object is another blank node, recurse into it
-            if isinstance(o, BNode):
-                self.copy_bnode_triples(source_graph, o, None)
-            # A declaration shape applied with sh:node is copied with the property that applies it
-            elif p == SH['node'] and (o, RDF.type, SH.NodeShape) in source_graph.get_graph() \
-                    and (o, RDF.type, SH.NodeShape) not in self.shaclg:
-                self.shaclg.add((o, RDF.type, SH.NodeShape))
-                for _, _, prop in source_graph.get_graph().triples((o, SH.property, None)):
-                    self.copy_bnode_triples(source_graph, prop, o)
-
-    def create_shape_if_not_exists(self, source_graph, targetclass):
-        try:
-            shape = next(self.shaclg.subjects(SH.targetClass, targetclass))
-            return shape
-        except Exception:
-            try:
-                shape = next(source_graph.get_graph().subjects(SH.targetClass, targetclass))
-            except Exception:
-                return None
-            for s, p, o in source_graph.get_graph().triples((shape, None, None)):
-                if not isinstance(o, BNode):
-                    self.shaclg.add((s, p, o))
-            return shape
-
 
 class Validation:
     """Stay compatible with Pyshacl - mid term replace it where possible

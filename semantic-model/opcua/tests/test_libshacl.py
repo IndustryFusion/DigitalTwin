@@ -175,25 +175,6 @@ class TestShaclAdditional(unittest.TestCase):
         self.sh.update_shclass_in_property(prop, URIRef("http://example.org/New"))
         self.assertIn((sub, SH['class'], URIRef("http://example.org/New")), self.sh.shaclg)
 
-    def test_copy_property_from_shacl(self):
-        # source Shacl
-        src = Shacl(Graph(), self.ns_prefix, self.base, self.opcua)
-        shape = src.create_shacl_type("http://example.org/Target")
-        src.create_shacl_property(
-            shape,
-            URIRef("http://example.org/pp"),
-            optional=True,
-            is_array=False,
-            is_property=True,
-            is_iri=False,
-            contentclass=None,
-            datatype=[XSD.integer]
-        )
-        # now copy into self.sh
-        self.sh.copy_property_from_shacl(src, URIRef("http://example.org/Target"), URIRef("http://example.org/pp"))
-        # ensure our shaclg has a shape for the target
-        self.assertIn(shape, list(self.sh.shaclg.subjects(RDF.type, SH.NodeShape)))
-
     def test_validation_update_results_and_exceptions(self):
         v = Validation(Graph(), Graph())
         # when not conforms and increase y
@@ -510,46 +491,6 @@ class TestShacl(unittest.TestCase):
 
         # Ensure the query was executed with the correct bindings
         mock_query.assert_called_once()
-
-    @patch.object(Graph, 'subjects', side_effect=[iter([]), iter([URIRef("http://example.org/Shape")])])
-    @patch.object(Graph, 'triples', return_value=[(URIRef("http://example.org/Shape"), RDF.type, SH.NodeShape)])
-    def test_create_shape_if_not_exists(self, mock_triples, mock_subjects):
-        """Test create_shape_if_not_exists method."""
-        source_graph = MagicMock()
-        targetclass = URIRef("http://example.org/TargetClass")
-
-        # Case 1: Shape does not exist in shaclg but exists in source_graph
-        shape = self.shacl_instance.create_shape_if_not_exists(source_graph, targetclass)
-        # self.assertEqual(shape, URIRef("http://example.org/Shape"))
-        mock_subjects.assert_called()
-        source_graph.get_graph.assert_called()
-
-        # Case 2: Shape does not exist in either graph
-        mock_subjects.side_effect = [iter([]), iter([])]
-        shape = self.shacl_instance.create_shape_if_not_exists(source_graph, targetclass)
-        mock_subjects.assert_called()
-
-    def test_copy_bnode_triples(self):
-        """Test recursively copying triples from a blank node in the source graph to the target graph."""
-        source_graph = MagicMock()
-        bnode = BNode()  # Blank node to copy
-        shape = URIRef("http://example.org/Shape")
-
-        # Mock triples that include the blank node
-        source_graph.get_graph.return_value.triples.return_value = [
-            (bnode, RDF.type, SH.NodeShape),
-            (bnode, SH.path, URIRef("http://example.org/path"))
-        ]
-
-        self.shacl_instance.copy_bnode_triples(source_graph, bnode, shape)
-
-        # Check that the shape has the property link to the bnode
-        triples = list(self.shacl_instance.get_graph())
-        self.assertIn((shape, SH.property, bnode), triples)
-
-        # Check that all triples from the source graph have been added
-        self.assertIn((bnode, RDF.type, SH.NodeShape), triples)
-        #self.assertIn((bnode, SH.path, URIRef("http://example.org/path")), triples)
 
     @patch.object(Graph, 'subjects')
     @patch.object(Graph, 'objects')
@@ -1298,14 +1239,3 @@ class TestDeclarationShapes(unittest.TestCase):
         _, _, path = self.sh.get_modelling_rule_and_path("Item7", None, other, 'has', shape=decl,
                                                          bridge=URIRef("http://example.org/other/hasItem7"))
         self.assertEqual(path, URIRef("http://example.org/hasItem"))
-
-    def test_minimal_shacl_copies_the_applied_declaration_shape(self):
-        decl = self.sh.get_declaration_shape_name(URIRef("http://example.org/OwnerType"), "Link")
-        self.sh.create_declaration_shape(decl)
-        self.sh.create_shacl_property(decl, URIRef("http://example.org/hasLevel"), False, False, True, False,
-                                      None, [XSD.double])
-        self.sh.add_node_to_relationship(self.relationship, decl)
-        minimal = Shacl(Graph(), self.ns_prefix, self.base, Namespace("http://example.org/opcua/"))
-        minimal.copy_property_from_shacl(self.sh, URIRef("http://example.org/OwnerType"), self.path)
-        self.assertIn((decl, RDF.type, SH.NodeShape), minimal.shaclg)
-        self.assertIsNotNone(minimal.get_property_from_shape(decl, URIRef("http://example.org/hasLevel")))

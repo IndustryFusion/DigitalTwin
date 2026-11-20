@@ -231,6 +231,7 @@ for tuple in "${TESTNODESETS[@]}"; do IFS=","
     startstop_context_server "Starting context server" true
     echo Extract types and instances
     echo ---------------------------
+    rm -f "min_${SHACL}"
     if [ -z "$instancetype" ]; then
         python3 ${OWL2INSTANCES}  -n ${TESTURI} ${NODESET2OWL_RESULT} ${TESTID[@]} -xc ${LOCAL_CONTEXT} ${OPTIONS_ARR[@]} 2>&1 | tee output.log
     else
@@ -245,6 +246,11 @@ for tuple in "${TESTNODESETS[@]}"; do IFS=","
         fi
     fi
     mydiff "Compare SHACL" "${SHACL}" "${nodeset}.shacl" "ttl"
+    # The minimal SHACL is gone (#990): no min_shacl.ttl next to shacl.ttl
+    if [ -e "min_${SHACL}" ]; then
+        echo "min_${SHACL} was written. Exiting with error."
+        exit 1
+    fi
     mydiff "Compare instances" "${nodeset}.instances" "${INSTANCES}" "json-ld"
     checkqueries "Check basic entities structure" ${nodeset}
     ask "Check that the entities import the uardf ontology" ${ENTITIES_FILE} entities_import_uardf.query
@@ -269,3 +275,16 @@ for tuple in "${TESTNODESETS[@]}"; do IFS=","
     startstop_context_server "Stopping context server" false
     echo "Test finished successfully"
 done
+
+echo "==> --minimalshacl is no longer an option (#990)"
+echo ----------------------------------------------------
+if MINIMAL_OUT=$(python3 ${OWL2INSTANCES} --minimalshacl -n ${TESTURI} ${NODESET2OWL_RESULT} 2>&1); then
+    echo "--minimalshacl was accepted. Exiting with error."
+    exit 1
+fi
+if ! echo "${MINIMAL_OUT}" | grep -q "unrecognized arguments: --minimalshacl"; then
+    echo "owl2instances failed, but not because --minimalshacl is unknown:"
+    echo "${MINIMAL_OUT}" | tail -5
+    exit 1
+fi
+echo "Success: --minimalshacl is rejected"
