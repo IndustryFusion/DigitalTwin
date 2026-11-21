@@ -56,6 +56,9 @@ teardown_file() {
     [[ "${output}" != *"[critical] shacl-validation/ValidationConsistency"* ]]
     [[ "${output}" == *"entity-table-connector/ConnectorState: "* ]]
     [[ "${output}" == *"rdf-table-connector/ConnectorState: "* ]]
+    # the Connect pods of the installed platform run, and the replaced check's alert is closed
+    [[ "${output}" == *"[normal] kafka-connect/ConnectPods: running"* || "${output}" == *"[normal] kafka-connect/ConnectPods: starting"* ]]
+    [[ "${output}" == *"[normal] kafka-connect/ResyncRecency: replaced"* ]]
     observing=$(kubectl -n "${NAMESPACE}" get configmap platform-watchdog-state -o jsonpath='{.data.observing_since}')
     [ -n "${observing}" ]
     if kubectl -n "${NAMESPACE}" get beamsqlstatementsets shacl-validation >/dev/null 2>&1; then
@@ -72,4 +75,6 @@ teardown_file() {
     key=$(get_alerta_api_key)
     total=$(curl -s -H "Authorization: Key ${key}" "${ALERTA_URL}/api/alerts?event=ValidationConsistency&resource=shacl-validation" | jq '.total')
     [ "${total}" -ge 1 ]
+    severity=$(curl -s -H "Authorization: Key ${key}" "${ALERTA_URL}/api/alerts?event=ConnectPods&resource=kafka-connect" | jq -r '.alerts[0].severity')
+    [ "${severity}" = "normal" ]
 }

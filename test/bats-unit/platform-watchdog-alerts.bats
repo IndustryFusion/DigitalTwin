@@ -120,6 +120,20 @@ case "$*" in
         ;;
     *"get pods"*"kafka-connect"*)
         [ "${MOCK_CONNECT_PODS}" = "ERROR" ] && exit 1
+        # name, creation and container start for the check of the pods
+        if [[ "$*" == *"creationTimestamp"* ]]; then
+            state="${MOCK_CONNECT_POD:-running}"
+            if [ "${state}" = "none-then-running" ]; then
+                if [ -f "${WORK}/connect-listed" ]; then state=running; else : > "${WORK}/connect-listed"; state=none; fi
+            fi
+            case "${state}" in
+                running) echo "kafka-connect-connect-0 2026-11-19T14:49:00Z 2026-11-19T14:50:00Z" ;;
+                young) echo "kafka-connect-connect-0 $(date -u -d "@$(( ${WATCHDOG_NOW:-$(date +%s)} - 60 ))" +%Y-%m-%dT%H:%M:%SZ) " ;;
+                crashing) echo "kafka-connect-connect-0 2026-11-19T10:00:00Z " ;;
+                none) ;;
+            esac
+            exit 0
+        fi
         # by name, or name and container start; a pod still starting has none
         if [[ "$*" == *"-o name"* ]]; then
             echo "pod/kafka-connect-connect-0"
@@ -437,6 +451,49 @@ teardown() {
     [[ "${output}" == *"[warning] platform-watchdog/WatchdogState: kept state not writable"* ]]
     run ! grep -q '"event":"WatchdogState".*"severity":"normal"' "${SINK_LOG}"
     run ! grep -q '"event":"ValidationConsistency"' "${SINK_LOG}"
+}
+
+@test "kafka-connect without a running pod is critical at the next run" {
+    export CONNECT_RECHECK_S=0
+    export MOCK_CONNECT_POD=crashing
+    run bash "${WORK}/watchdog.sh"
+    [[ "${output}" == *"[critical] kafka-connect/ConnectPods: no running pod"* ]]
+    export MOCK_CONNECT_POD=none
+    run bash "${WORK}/watchdog.sh"
+    [[ "${output}" == *"[critical] kafka-connect/ConnectPods: no running pod"* ]]
+}
+
+@test "a kafka-connect pod just replaced is starting, and a moment without a pod is looked at again" {
+    export CONNECT_RECHECK_S=0
+    export MOCK_CONNECT_POD=young
+    run bash "${WORK}/watchdog.sh"
+    [[ "${output}" == *"[normal] kafka-connect/ConnectPods: starting"* ]]
+    export MOCK_CONNECT_POD=none-then-running
+    run bash "${WORK}/watchdog.sh"
+    [[ "${output}" == *"[normal] kafka-connect/ConnectPods: running"* ]]
+}
+
+@test "kafka-connect running again closes the alert" {
+    export CONNECT_RECHECK_S=0
+    export MOCK_CONNECT_POD=crashing
+    bash "${WORK}/watchdog.sh" >/dev/null
+    grep -q '"resource":"kafka-connect","event":"ConnectPods".*"severity":"critical"' "${SINK_LOG}"
+    export MOCK_CONNECT_POD=running
+    run bash "${WORK}/watchdog.sh"
+    [[ "${output}" == *"[normal] kafka-connect/ConnectPods: running"* ]]
+    grep '"event":"ConnectPods"' "${SINK_LOG}" | tail -1 | grep -q '"severity":"normal"'
+}
+
+@test "kafka-connect pods that can't be listed post nothing" {
+    export MOCK_CONNECT_PODS=ERROR
+    run bash "${WORK}/watchdog.sh"
+    [[ "${output}" == *"kafka-connect pods not readable, ConnectPods not posted"* ]]
+    run ! grep -q '"event":"ConnectPods"' "${SINK_LOG}"
+}
+
+@test "an open ResyncRecency alert of the replaced check is closed" {
+    run bash "${WORK}/watchdog.sh"
+    grep -q '"resource":"kafka-connect","event":"ResyncRecency".*"severity":"normal"' "${SINK_LOG}"
 }
 
 @test "a KafkaConnector that does not exist warns" {

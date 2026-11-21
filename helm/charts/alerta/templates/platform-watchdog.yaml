@@ -519,6 +519,45 @@ data:
           "Debezium connector ${c} is running."
       fi
     done
+
+    # --- check 5: kafka-connect must have a running pod: without one nothing
+    # captures the platform's changes and no refresh can come. A pod the
+    # restarter has just replaced is starting, not missing, and a moment
+    # without any pod is looked at once more.
+    CONNECT_GRACE="${CONNECT_GRACE:-300}"
+    CONNECT_RECHECK_S="${CONNECT_RECHECK_S:-20}"
+    connect_state() {  # prints running, starting, none or unreadable
+      local list name created started state=none
+      list=$(kubectl -n "$NAMESPACE" get pods -l app.kubernetes.io/instance=kafka-connect \
+          -o jsonpath='{range .items[*]}{.metadata.name} {.metadata.creationTimestamp} {.status.containerStatuses[0].state.running.startedAt}{"\n"}{end}' 2>/dev/null) \
+        || { echo unreadable; return; }
+      while read -r name created started; do
+        if [ -z "$name" ]; then continue; fi
+        if [ -n "$started" ]; then echo running; return; fi
+        if [ -n "$created" ] && [ $(( NOW - $(date -u -d "$created" +%s) )) -lt "$CONNECT_GRACE" ]; then state=starting; fi
+      done <<<"$list"
+      echo "$state"
+    }
+    CONNECT=$(connect_state)
+    if [ "$CONNECT" = none ]; then
+      sleep "$CONNECT_RECHECK_S"
+      CONNECT=$(connect_state)
+    fi
+    case "$CONNECT" in
+      running|starting)
+        post_alert normal kafka-connect ConnectPods "$CONNECT" \
+          "Kafka Connect has a ${CONNECT} pod." ;;
+      none)
+        post_alert critical kafka-connect ConnectPods "no running pod" \
+          "Kafka Connect has no running pod: the Debezium connectors capture no changes and no refresh can come. Check the kafka-connect pods; if this lasts longer than the state TTL (${TTL_SECONDS}s) the validation system must be restarted." ;;
+      *)
+        echo "kafka-connect pods not readable, ConnectPods not posted" ;;
+    esac
+
+    # The pod-age check ResyncRecency is replaced by ValidationConsistency and
+    # ConnectPods; an alert of it left open from before the upgrade is closed.
+    post_alert normal kafka-connect ResyncRecency "replaced" \
+      "Replaced by ValidationConsistency and ConnectPods."
 ---
 apiVersion: batch/v1
 kind: CronJob
