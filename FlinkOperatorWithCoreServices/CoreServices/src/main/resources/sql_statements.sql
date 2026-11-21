@@ -50,13 +50,14 @@ FROM (
                  ',"value":' || attributeValue
                WHEN nodeType = '@value' THEN
                  /* a bare @value is only valid unquoted JSON when it IS a
-                    JSON literal (number, boolean, null). A string value --
-                    an ISO timestamp a rule copied from an observedAt, for
-                    instance -- must be quoted, or the whole ngsild_updates
-                    record is unparseable and the bridge drops it. */
+                    JSON literal (number, boolean). A string value -- an ISO
+                    timestamp a rule copied from an observedAt, for instance --
+                    must be quoted, or the whole ngsild_updates record is
+                    unparseable and the bridge drops it. A null never gets
+                    here: it is filtered out after the ranking below. */
                  CASE
                    WHEN REGEXP(attributeValue, '^-?[0-9]+(\.[0-9]+)?([eE][-+]?[0-9]+)?$')
-                        OR attributeValue IN ('true', 'false', 'null') THEN
+                        OR attributeValue IN ('true', 'false') THEN
                      ',"value":' || attributeValue
                    ELSE
                      ',"value":"' || attributeValue || '"'
@@ -100,6 +101,15 @@ FROM (
         AND (synced IS NULL OR synced = FALSE)
     ) AS ranked_data
     WHERE row_num = 1
+      /* NGSI-LD forbids null values (ETSI GS CIM 009 V1.9.1, clause 4.5.0)
+         and Scorpio refuses them, which loses the whole update. A null means
+         no value is known, so nothing is delivered for this instance and the
+         broker keeps its last known value. The filter sits AFTER the ranking
+         on purpose: the latest row decides, a null must never let an older
+         value of the same instance win instead. IS DISTINCT FROM keeps rows
+         whose nodeType is unset. */
+      AND (nodeType IS DISTINCT FROM '@value'
+           OR attributeValue IS DISTINCT FROM 'null')
   ) AS filtered_data
   GROUP BY window_start, window_end, entityId, name
 ) AS aggregated

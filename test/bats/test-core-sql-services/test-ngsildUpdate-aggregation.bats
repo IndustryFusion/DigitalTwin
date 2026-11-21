@@ -14,6 +14,8 @@ ATTRIBUTE6=/tmp/ATTRIBUTE6
 ATTRIBUTE7=/tmp/ATTRIBUTE7
 ATTRIBUTE8=/tmp/ATTRIBUTE8
 ATTRIBUTE9=/tmp/ATTRIBUTE9
+NULL_ATTRIBUTE=/tmp/NULL_ATTRIBUTE
+NULL_ONLY_ATTRIBUTE=/tmp/NULL_ONLY_ATTRIBUTE
 FLUSH_ATTRIBUTE=/tmp/FLUSH_ATTRIBUTE
 ATTRIBUTES_TOPIC=iff.ngsild.attributes
 KAFKACAT_ATTRIBUTES=/tmp/KAFKACAT_ATTRIBUTES
@@ -22,6 +24,7 @@ KAFKACAT_ATTRIBUTES_FROMJSON=/tmp/KAFKACAT_ATTRIBUTES_FROMJSON
 KAFKA_BOOTSTRAP=my-cluster-kafka-bootstrap:9092
 KAFKACAT_NGSILD_UPDATES_TOPIC=iff.ngsild-updates
 CUTTER_ID=urn:plasmacutter-test:12345
+NULL_ONLY_ID=urn:plasmacutter-test:null-only
 COMPARE_ATTRIBUTE7='{"op":"update","overwriteOrReplace":true,"noForward":true,"entities":"[{\"id\":\"urn:plasmacutter-test:12345\",\"https://industry-fusion.com/types/v0.9/state\":[{\"type\":\"https://uri.etsi.org/ngsi-ld/Property\",\"datasetId\":\"@none\",\"value\":\"ON\"},{\"type\":\"https://uri.etsi.org/ngsi-ld/Property\",\"datasetId\":\"http://example.com/source2\",\"value\":\"OFF\"}]}]"}'
 
 cat << EOF | tr -d '\n' > ${ATTRIBUTE1}
@@ -130,6 +133,31 @@ cat << EOF | tr -d '\n' > ${ATTRIBUTE7}
     "attributeValue": "OFF"
 }
 EOF
+
+# A null value: NGSI-LD forbids it (ETSI GS CIM 009 V1.9.1, clause 4.5.0),
+# so Core Services delivers nothing for this attribute instance.
+cat << EOF | tr -d '\n' > ${NULL_ATTRIBUTE}
+{
+    "id": "${CUTTER_ID}\\\https://industry-fusion.com/types/v0.9/temperature",
+    "entityId": "${CUTTER_ID}",
+    "name": "https://industry-fusion.com/types/v0.9/temperature",
+    "type": "https://uri.etsi.org/ngsi-ld/Property",
+    "nodeType": "@value",
+    "attributeValue": "null"
+}
+EOF
+printf '\n' >> ${NULL_ATTRIBUTE}
+cat << EOF | tr -d '\n' > ${NULL_ONLY_ATTRIBUTE}
+{
+    "id": "${NULL_ONLY_ID}\\\https://industry-fusion.com/types/v0.9/temperature",
+    "entityId": "${NULL_ONLY_ID}",
+    "name": "https://industry-fusion.com/types/v0.9/temperature",
+    "type": "https://uri.etsi.org/ngsi-ld/Property",
+    "nodeType": "@value",
+    "attributeValue": "null"
+}
+EOF
+printf '\n' >> ${NULL_ONLY_ATTRIBUTE}
 
 compare_attributes1() {
     cat << EOF | jq | diff -b "$1" - >&3
@@ -346,5 +374,57 @@ teardown(){
     killall kafkacat
     grep -v flush < ${KAFKACAT_ATTRIBUTES} | jq '.entities |= (fromjson | map(del(.. | .observedAt?)) | tojson)' > ${KAFKACAT_ATTRIBUTES_FILTERED}
     run compare_attributes7 ${KAFKACAT_ATTRIBUTES_FILTERED}
+    [ "$status" -eq 0 ]
+}
+@test "verify null attribute is not forwarded, other attributes of the entity are" {
+    $SKIP
+    (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ATTRIBUTES}) &
+    sleep 2 # wait for next aggregation window
+    cat ${NULL_ATTRIBUTE} ${ATTRIBUTE1} | kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP}
+    echo "# Sent attributes to attribute topic, wait some time for aggregation"
+    sleep 2 # wait until current window is over and send trigger
+    kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${FLUSH_ATTRIBUTE}
+    sleep 1
+    killall kafkacat
+    run grep -c null ${KAFKACAT_ATTRIBUTES}
+    [ "$output" = "0" ]
+    grep -v flush < ${KAFKACAT_ATTRIBUTES} | jq '.entities |= (fromjson | map(del(.. | .observedAt?)) | tojson)' > ${KAFKACAT_ATTRIBUTES_FILTERED}
+    run compare_attributes1 ${KAFKACAT_ATTRIBUTES_FILTERED}
+    [ "$status" -eq 0 ]
+}
+@test "verify entity with only a null attribute gets no update" {
+    $SKIP
+    (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ATTRIBUTES}) &
+    sleep 2 # wait for next aggregation window
+    kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${NULL_ONLY_ATTRIBUTE}
+    sleep 2 # wait until the window of the null attribute is over
+    # a plain attribute afterwards shows the pipeline delivered meanwhile
+    kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${ATTRIBUTE1}
+    echo "# Sent attributes to attribute topic, wait some time for aggregation"
+    sleep 2 # wait until current window is over and send trigger
+    kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${FLUSH_ATTRIBUTE}
+    sleep 1
+    killall kafkacat
+    run grep -c "${NULL_ONLY_ID}" ${KAFKACAT_ATTRIBUTES}
+    [ "$output" = "0" ]
+    grep -v flush < ${KAFKACAT_ATTRIBUTES} | jq '.entities |= (fromjson | map(del(.. | .observedAt?)) | tojson)' > ${KAFKACAT_ATTRIBUTES_FILTERED}
+    run compare_attributes1 ${KAFKACAT_ATTRIBUTES_FILTERED}
+    [ "$status" -eq 0 ]
+}
+@test "verify a latest null value does not fall back to an older value of the same attribute" {
+    $SKIP
+    (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_NGSILD_UPDATES_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ATTRIBUTES}) &
+    sleep 2 # wait for next aggregation window
+    # same instance in one batch, a value first and the null last: the null
+    # is the latest row and must not let the value win
+    sed 's/"attributeValue": *"null"/"attributeValue": "21"/' ${NULL_ATTRIBUTE} \
+        | cat - ${NULL_ATTRIBUTE} ${ATTRIBUTE1} | kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP}
+    echo "# Sent attributes to attribute topic, wait some time for aggregation"
+    sleep 2 # wait until current window is over and send trigger
+    kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} <${FLUSH_ATTRIBUTE}
+    sleep 1
+    killall kafkacat
+    grep -v flush < ${KAFKACAT_ATTRIBUTES} | jq '.entities |= (fromjson | map(del(.. | .observedAt?)) | tojson)' > ${KAFKACAT_ATTRIBUTES_FILTERED}
+    run compare_attributes1 ${KAFKACAT_ATTRIBUTES_FILTERED}
     [ "$status" -eq 0 ]
 }
