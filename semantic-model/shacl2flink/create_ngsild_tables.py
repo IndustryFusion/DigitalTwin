@@ -45,6 +45,12 @@ ALTER DEFAULT PRIVILEGES FOR ROLE {{ flink_writer_user }} IN SCHEMA public
 """
 
 
+# The KafkaTopics in this file are shared with other components and outlive
+# the release (helm.sh/resource-policy: keep).
+shared_kafka_file = "ngsild-shared-kafka.yaml"
+shared_topic_annotations = {'helm.sh/resource-policy': 'keep'}
+
+
 def parse_args(args=sys.argv[1:]):
     parser = argparse.ArgumentParser(description='create_ngsild_tables.py')
     parsed_args = parser.parse_args(args)
@@ -61,7 +67,8 @@ def main(output_folder='output'):
     with open(os.path.join(output_folder, "ngsild.yaml"), "w") as f, \
             open(os.path.join(output_folder, "ngsild.sqlite"), "w") as sqlitef, \
             open(os.path.join(output_folder, "ngsild.postgres"), "w") as pgf, \
-            open(os.path.join(output_folder, "ngsild-kafka.yaml"), "w") as fk:
+            open(os.path.join(output_folder, "ngsild-kafka.yaml"), "w") as fk, \
+            open(os.path.join(output_folder, shared_kafka_file), "w") as fs:
 
         # Create "entities"
         value = {
@@ -113,11 +120,16 @@ def main(output_folder='output'):
                                          ttl=configs.view_state_ttl), f)
         print(utils.create_sql_view(base_entity_tablename, base_entity_table, base_entity_view_primary_key),
               file=sqlitef)
-        print('---', file=fk)
+        # The bridges write and read this topic too (debezium-bridge,
+        # timescaledb-bridge), so it is not the validation's to delete: helm
+        # keeps it when the release is uninstalled, and flink-deploy, which
+        # deletes the KafkaTopics of ngsild-kafka.yaml before a deploy, does
+        # not see it in its own file.
+        print('---', file=fs)
         yaml.dump(utils.create_kafka_topic(f'{configs.kafka_topic_ngsi_prefix}',
                                            f'{configs.kafka_topic_ngsi_prefix}', configs.kafka_topic_object_label,
-                                           config),
-                  fk)
+                                           config, annotations=shared_topic_annotations),
+                  fs)
 
         # Create constraint_checks and and combination tables
         kafka_constraint_checks = {

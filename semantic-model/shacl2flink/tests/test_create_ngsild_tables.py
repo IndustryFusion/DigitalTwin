@@ -18,6 +18,7 @@ from unittest.mock import patch, MagicMock
 from rdflib import Namespace
 import create_ngsild_tables
 import os
+import ruamel.yaml
 
 ex = Namespace("http://example.com#")
 sh = Namespace("http://www.w3.org/ns/shacl#")
@@ -63,3 +64,26 @@ def test_main(mock_utils, mock_configs,
     assert os.path.exists(os.path.join(tmp_path, 'ngsild.yaml')) is True
     assert os.path.exists(os.path.join(tmp_path, 'ngsild.sqlite')) is True
     assert os.path.exists(os.path.join(tmp_path, 'ngsild-kafka.yaml')) is True
+
+
+def kafka_topics(path):
+    yaml = ruamel.yaml.YAML(typ='safe')
+    with open(path) as f:
+        return [doc for doc in yaml.load_all(f) if doc and doc.get('kind') == 'KafkaTopic']
+
+
+def test_only_the_shared_topic_is_kept(tmp_path):
+    # iff.ngsild.entities is written and read by the bridges, so undeploying
+    # the validation must leave it; the topics of the validation's own tables
+    # go with the release.
+    create_ngsild_tables.main(tmp_path)
+
+    shared = kafka_topics(os.path.join(tmp_path, create_ngsild_tables.shared_kafka_file))
+    assert [t['spec']['topicName'] for t in shared] == ['iff.ngsild.entities']
+    assert shared[0]['metadata']['annotations'] == {'helm.sh/resource-policy': 'keep'}
+
+    own = kafka_topics(os.path.join(tmp_path, 'ngsild-kafka.yaml'))
+    assert len(own) == 3
+    assert 'iff.ngsild.entities' not in [t['spec']['topicName'] for t in own]
+    for topic in own:
+        assert 'annotations' not in topic['metadata']

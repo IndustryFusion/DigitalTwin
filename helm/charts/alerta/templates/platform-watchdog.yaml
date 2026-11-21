@@ -285,7 +285,7 @@ data:
         fi
       fi
 
-      REPAIR="Repair: (1) redeploy the ${STATEMENTSET} statementset, (2) restart Core Services (${CORE_SERVICES}), (3) delete the open alerts of service SHACL Validator, (4) restart kafka-connect for a complete refresh, which raises the real violations again."
+      REPAIR="Repair: the redeploy, make flink-redeploy in semantic-model/shacl2flink, which (1) undeploys the ${STATEMENTSET} statementset and waits until its topics are deleted, (2) closes the open alerts of service SHACL Validator, (3) restarts Core Services (${CORE_SERVICES}) without state, (4) deploys the statementset with a complete refresh, which raises the real violations again."
       inconsistent() {  # inconsistent <restore note>
         post_alert critical "$STATEMENTSET" ValidationConsistency "inconsistent since $(fmt "$(sget latch_deadline)")" \
           "INCONSISTENT -- REDEPLOYMENT REQUIRED. $(sget latch_reason). Keys whose state expired were fed again as new rows, so the pinned join state holds duplicates: counts too high and alerts that never clear. No refresh can remove them. ${REPAIR} $1 This alert stays until the validation state has been emptied." 0
@@ -428,7 +428,7 @@ data:
             '[.history[]? | select(.status == "COMPLETED" and .latest_ack_timestamp < $before)] | max_by(.latest_ack_timestamp) // empty
              | "#\(.id) completed at \(.latest_ack_timestamp / 1000 | floor | todate) (\(.external_path // "not retained"))"' <<<"$CHECKPOINTS_JSON" 2>/dev/null)
           if [ -n "$CANDIDATE" ]; then
-            RESTORE_NOTE="Instead of steps 1 and 4, restoring checkpoint ${CANDIDATE}, taken before the state went stale, brings a consistent state back, if it is retained and the topics still hold the records since."
+            RESTORE_NOTE="Instead of the redeploy, restoring checkpoint ${CANDIDATE}, taken before the state went stale, brings a consistent state back, if it is retained and the topics still hold the records since."
           else
             RESTORE_NOTE="No checkpoint in Flink's recent checkpoint history was taken before the state went stale; a retained older one could still restore a consistent state."
           fi

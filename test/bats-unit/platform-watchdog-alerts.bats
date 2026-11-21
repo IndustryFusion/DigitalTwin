@@ -291,7 +291,7 @@ teardown() {
     [[ "${output}" == *"[critical] shacl-validation/ValidationConsistency: inconsistent since 2026-11-19T15:05:00Z"* ]]
     consistency | jq -e '.timeout == 0'
     consistency | grep -q 'INCONSISTENT -- REDEPLOYMENT REQUIRED. entity-table-connector: no complete refresh from 2026-11-19T14:55:00Z until 2026-11-19T15:06:00Z, 660s, longer than the state TTL of 600s'
-    consistency | grep -q 'Repair: (1) redeploy the shacl-validation statementset, (2) restart Core Services (core-services-job), (3) delete the open alerts of service SHACL Validator, (4) restart kafka-connect for a complete refresh'
+    consistency | grep -q 'Repair: the redeploy, make flink-redeploy in semantic-model/shacl2flink, which (1) undeploys the shacl-validation statementset and waits until its topics are deleted, (2) closes the open alerts of service SHACL Validator, (3) restarts Core Services (core-services-job) without state, (4) deploys the statementset with a complete refresh'
     consistency | grep -q 'No checkpoint can restore the state: checkpointing is disabled'
 }
 
@@ -330,7 +330,7 @@ teardown() {
     bash "${WORK}/watchdog.sh" >/dev/null
     export WATCHDOG_NOW=$(( B + 720 ))
     run bash "${WORK}/watchdog.sh"
-    consistency | grep -q 'restoring checkpoint #7 completed at 2026-11-19T14:58:20Z (s3://flink/checkpoints/chk-7)'
+    consistency | grep -q 'Instead of the redeploy, restoring checkpoint #7 completed at 2026-11-19T14:58:20Z (s3://flink/checkpoints/chk-7)'
 }
 
 @test "checkpoints taken only after the state went stale cannot restore it" {
