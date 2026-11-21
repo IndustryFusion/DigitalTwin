@@ -21,6 +21,11 @@ specification-driven development. The human-facing version of this workflow is i
   [contracts/opcua-live-data](openspec/specs/contracts/opcua-live-data/spec.md).
   A change to one of its rules needs an approved specification change, and the
   consumers it names must be checked.
+- Before changing the context broker, its image (`.env`,
+  `test/build-local-platform.sh`) or its chart (`helm/charts/scorpio`), or how a
+  component calls it, read
+  [contracts/context-broker](openspec/specs/contracts/context-broker/spec.md) and
+  run its contract test (`test/context-broker/run.sh`).
 
 ## Does the change need a specification?
 

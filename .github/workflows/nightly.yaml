@@ -20,6 +20,8 @@ jobs:
     uses: IndustryFusion/DigitalTwin/.github/workflows/build.yaml@main
   call-test:
     uses: IndustryFusion/DigitalTwin/.github/workflows/k8s-tests.yaml@main
+  call-context-broker:
+    uses: IndustryFusion/DigitalTwin/.github/workflows/context-broker.yaml@main
   call-license-scan:
     uses: IndustryFusion/DigitalTwin/.github/workflows/license-scan.yaml@main
     secrets:

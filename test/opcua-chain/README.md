@@ -13,7 +13,7 @@ Each stage uses the real components and feeds the next one through files in `$OU
 | 1. Model | Steps 1 to 3 of the [tutorial](../../semantic-model/dataservice/opcua-pump-tutorial.md), as written there: `nodeset2owl`, `owl2instances`, the pump nodesets | – |
 | 2. Connector | The tutorial's test server and dataservice, a plain OPC UA client writing values, an outage and the recovery | The device agent, by a TCP listener which records the messages |
 | 3. Bridge mapping | The agent's schema, the MQTT bridge's mapper and ingestion, fed with the messages of stage 2 | MQTT |
-| 4. Broker | The updates bridge code, Scorpio of the current release from `.env`, Postgres, Kafka | Keycloak, by a self-signed token; Core Services, see below |
+| 4. Broker | The updates bridge code, Scorpio as the platform pins it (`test/build-local-platform.sh`, built by `scorpio-image.sh`), Postgres, Kafka | Keycloak, by a self-signed token; Core Services, see below |
 
 Stages 1 and 2 extract the command blocks of the tutorial marked with `<!-- chain-test: NAME -->`, so a
 change which breaks one of those commands fails the test.

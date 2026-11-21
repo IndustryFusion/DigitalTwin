@@ -20,9 +20,12 @@ DEVICE_CLIENT_ID=device
 DEVICE_ID=testdevice
 GATEWAY_ID=testgateway
 PLASMACUTTER_ID=urn:plasmacutter-test:12345
+PLASMACUTTER2_ID=urn:plasmacutter-test:12346
 SUB_ID=urn:subscription-test:1
 CUTTER=/tmp/CUTTER
 CUTTER_MERGE=/tmp/CUTTER_MERGE
+CUTTER2=/tmp/CUTTER2
+CUTTERS_BATCH_MERGE=/tmp/CUTTERS_BATCH_MERGE
 SUBSCRIPTION=/tmp/SUBSCRIPTION
 TMPTMP=/tmp/tmptmp
 
@@ -82,6 +85,10 @@ update_ngsild() {
     curl -vv -X PATCH -H "Authorization: Bearer $1" -d @"$2" http://ngsild.local/ngsi-ld/v1/entities/"$3" -H "Content-Type: application/ld+json"
 }
 
+batch_merge_ngsild() {
+    curl -vv -X POST -H "Authorization: Bearer $1" -d @"$2" http://ngsild.local/ngsi-ld/v1/entityOperations/merge -H "Content-Type: application/ld+json"
+}
+
 setup() {
     if [ "$DEBUG" != "true" ]; then
         echo "This test works only in debug mode. Set DEBUG=true."
@@ -113,6 +120,23 @@ cat << EOF > ${CUTTER_MERGE}
     "datasetId": "urn:cutter:test1"
   }
 }
+EOF
+
+# A second cutter, and a batch merge of both (contracts/context-broker, Notifications of subscriptions)
+jq --arg id "${PLASMACUTTER2_ID}" '.id = $id' ${CUTTER} > ${CUTTER2}
+cat << EOF > ${CUTTERS_BATCH_MERGE}
+[
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "id": "${PLASMACUTTER_ID}",
+    "https://industry-fusion.com/types/v0.9/state": {"type": "Property", "value": "OFF", "datasetId": "urn:cutter:test1"}
+  },
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "id": "${PLASMACUTTER2_ID}",
+    "https://industry-fusion.com/types/v0.9/state": {"type": "Property", "value": "OFF", "datasetId": "urn:cutter:test1"}
+  }
+]
 EOF
 
 # Create SUBSCRIPTION file
@@ -193,6 +217,24 @@ compare_mqtt_sub_update() {
 EOF
 }
 
+# The ids of the entities notified with the state $2, one per line; the number of messages doesn't matter
+# $1: file of the MQTT messages
+notified_ids() {
+    jq -r --arg state "$2" '.body.data[] | select(."https://industry-fusion.com/types/v0.9/state".value == $state) | .id' "$1" | sort -u
+}
+
+# Waits up to $3 seconds until both cutters are notified with the state $2
+# $1: file of the MQTT messages
+wait_for_both_cutters() {
+    local expected
+    expected=$(printf '%s\n%s' "$PLASMACUTTER_ID" "$PLASMACUTTER2_ID")
+    for _ in $(seq 1 "$3"); do
+        [ "$(notified_ids "$1" "$2")" = "$expected" ] && return 0
+        sleep 1
+    done
+    return 1
+}
+
 check_no_delete_notification() {
     local message_count
     message_count=$(jq -s 'length' "$1")
@@ -248,6 +290,36 @@ check_no_delete_notification() {
 
     run compare_mqtt_sub_update ${MQTT_SUB}
     [ "$status" -eq 0 ]
+}
+
+@test "verify mqtt notifications of every entity after a batch merge" {
+    $SKIP
+    admin_password=$(get_adminPassword | tr -d '"')
+    admin_username=$(get_adminUsername | tr -d '"')
+    password=$(get_password)
+    token=$(get_token)
+    delete_ngsild "$token" "$PLASMACUTTER_ID" || echo "Could not delete $PLASMACUTTER_ID. But that is okay."
+    delete_ngsild "$token" "$PLASMACUTTER2_ID" || echo "Could not delete $PLASMACUTTER2_ID. But that is okay."
+    sleep 2
+    (exec stdbuf -oL mosquitto_sub -L "mqtt://${admin_username}:${admin_password}@${MQTT_URL}/${MQTT_TOPIC_NAME}" >${MQTT_SUB}) &
+    sleep 2
+    create_subscription "$token" "$SUBSCRIPTION"
+    sleep 2
+    create_ngsild "$token" "$CUTTER"
+    create_ngsild "$token" "$CUTTER2"
+    # A new subscription becomes active after a while: both creations notified show that it is
+    run wait_for_both_cutters ${MQTT_SUB} ON 30
+    created=$status
+    batch_merge_ngsild "$token" "$CUTTERS_BATCH_MERGE"
+    run wait_for_both_cutters ${MQTT_SUB} OFF 20
+    merged=$status
+    killall mosquitto_sub 2>/dev/null || true
+    delete_subscription "$token" "$SUB_ID"
+    delete_ngsild "$token" "$PLASMACUTTER2_ID" || true
+
+    echo "# notified with ON: $(notified_ids ${MQTT_SUB} ON | tr '\n' ' '), with OFF: $(notified_ids ${MQTT_SUB} OFF | tr '\n' ' ')" >&3
+    [ "$created" -eq 0 ]
+    [ "$merged" -eq 0 ]
 }
 
 @test "verify no mqtt notification after entity creation and deletion" {

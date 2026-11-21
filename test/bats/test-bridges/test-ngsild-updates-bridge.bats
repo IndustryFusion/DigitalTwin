@@ -776,6 +776,10 @@ teardown(){
     [ "$status" -eq 0 ]
 }
 
+# The bridge sends an upsert without overwriteOrReplace as an upsert with options=update, and this test expects
+# existing values to be kept. NGSI-LD's options=update overwrites them (CIM 009 5.6.8, 5.6.2); keeping them is the
+# fork's transitional deviation T3 of contracts/context-broker, and relying on it is platform deviation P3. This test
+# changes with P3's fix, before the platform moves to upstream 6.0.2.
 @test "verify ngsild-update bridge is upserting and non-overwriting ngsi-ld entitiy" {
     $SKIP
     password=$(get_password)

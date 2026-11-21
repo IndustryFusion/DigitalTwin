@@ -109,7 +109,7 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
   check(literalValue(typed) === 80 && typed !== null && (typed.type || typed['@type']) === DOUBLE,
     `a declared double through the updates bridge comes back with its type: ${JSON.stringify(typed)}`);
 
-  console.log('--- refusals of the broker, which the bridge has to avoid');
+  console.log('--- what the broker refuses and accepts (contracts/context-broker)');
   const merge = async (id, attr) => fetch(`${A}/entityOperations/merge`, {
     method: 'POST',
     headers: {
@@ -121,14 +121,16 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
   });
   const onto = await merge(by.hasOfferedControlModes, { [P + 'hasOfferedControlModes']: [{ type: 'Property', value: 'x' }] });
   check(onto.status === 400 && (await onto.text()).includes('SB001'), 'a Property merged onto a JsonProperty: 400 SB001');
+  // The pinned broker carries the fork's patch for merging value objects (IndustryFusion/ScorpioBroker#8), which
+  // removes the 22023 of #967 (contracts/context-broker, accepted deviation A1): merges of value objects succeed.
   const iri = await merge(by.hasPumpClass, { [P + 'hasPumpClass']: [{ type: 'Property', value: { '@id': P + 'LiquidPump' } }] });
-  check(iri.status === 400 && (await iri.text()).includes('22023'), 'an IRI value in a batch merge: 400 22023');
+  check(iri.status === 204, `an IRI value in a batch merge: 204 (${iri.status})`);
   const value80 = { [P + 'hasMotorTemperature']: [{ type: 'Property', value: { '@value': 80, '@type': DOUBLE } }] };
   const batch = await merge(by.hasMotorTemperature, value80);
-  check(batch.status === 400 && (await batch.text()).includes('22023'), 'a declared value in a batch merge: 400 22023');
+  check(batch.status === 204, `a declared value in a batch merge: 204 (${batch.status})`);
   const patch = await fetch(`${A}/entities/${encodeURIComponent(by.hasMotorTemperature)}`, {
     method: 'PATCH', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify(value80)
   });
-  check(patch.status === 500 && (await patch.text()).includes('22023'), 'a declared value in a merge entity: 500 22023');
+  check(patch.status === 204, `a declared value in a merge entity: 204 (${patch.status})`);
   process.exit(0);
 })().catch(e => { console.error(e); process.exit(1); });

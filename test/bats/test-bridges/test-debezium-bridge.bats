@@ -24,6 +24,8 @@ KAFKACAT_ENTITY_PLASMACUTTER_NAME=plasmacutter_test
 KAFKACAT_ENTITY_PLASMACUTTER_TOPIC=iff.ngsild.entities
 PLASMACUTTER_ID=urn:plasmacutter-test:12345
 GEOCUTTER_ID=urn:geocutter-test:12345
+JSONCUTTER_ID=urn:jsoncutter-test:12345
+JSONCUTTER_ATTRIBUTES=/tmp/JSONCUTTER_ATTRIBUTES
 CONTEXT=https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld
 cat << EOF > ${CUTTER}
 {
@@ -323,6 +325,43 @@ compare_geoattributes() {
 EOF
 }
 
+# A JsonProperty, a ListProperty and a declared double as attributes of their own
+# (contracts/context-broker, The entity store holds expanded JSON-LD)
+cat << EOF > ${JSONCUTTER_ATTRIBUTES}
+{
+  "@context": "${CONTEXT}",
+  "id": "${JSONCUTTER_ID}",
+  "type": "https://industry-fusion.com/types/v0.9/plasmacutter_test",
+  "http://example.com/config": {
+    "type": "JsonProperty",
+    "json": {"mode": "auto", "limits": [1, 2]}
+  },
+  "http://example.com/setpoints": {
+    "type": "ListProperty",
+    "valueList": [1, 3, 2]
+  },
+  "http://example.com/temperature": {
+    "type": "Property",
+    "value": {"@value": 80, "@type": "http://www.w3.org/2001/XMLSchema#double"}
+  }
+}
+EOF
+
+# $1: the attributes the bridge published, one JSON object per line
+check_json_list_attributes() {
+    jq -e -s '
+      (map(select(.name == "http://example.com/config"))[0]
+        | .type == "https://uri.etsi.org/ngsi-ld/JsonProperty" and .nodeType == "@json"
+          and (.attributeValue | fromjson) == {"mode": "auto", "limits": [1, 2]})
+      and (map(select(.name == "http://example.com/setpoints"))[0]
+        | .type == "https://uri.etsi.org/ngsi-ld/ListProperty" and .nodeType == "@list"
+          and (.attributeValue | fromjson) == [1, 3, 2])
+      and (map(select(.name == "http://example.com/temperature"))[0]
+        | .valueType == "http://www.w3.org/2001/XMLSchema#double" and .nodeType == "@value"
+          and (.attributeValue | tonumber) == 80)
+    ' "$1" >&3
+}
+
 get_password() {
     kubectl -n ${NAMESPACE} get ${USERSECRET} -o jsonpath='{.data.password}'| base64 -d
 }
@@ -488,5 +527,25 @@ teardown(){
     jq -c 'del(.observedAt) | to_entries | sort_by(.key) | from_entries' ${KAFKACAT_ATTRIBUTES} > ${KAFKACAT_ATTRIBUTES_SORTED}
     echo "# Compare ATTRIBUTES"
     run compare_geoattributes ${KAFKACAT_ATTRIBUTES_SORTED}
+    [ "$status" -eq 0 ]
+}
+
+@test "verify debezium bridge sends JSON, list and declared attributes" {
+    $SKIP
+    password=$(get_password)
+    token=$(get_token)
+    delete_ngsild "$token" "$JSONCUTTER_ID" || echo "Could not delete $JSONCUTTER_ID. But that is okay."
+    sleep 2
+    (exec stdbuf -oL kafkacat -C -t ${KAFKACAT_ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end >${KAFKACAT_ATTRIBUTES}) &
+    echo "# launched kafkacat for debezium updates, wait some time to let it connect"
+    sleep 2
+    create_ngsild "$token" "$JSONCUTTER_ATTRIBUTES"
+    echo "# Sent ngsild updates, sleep 2s to let debezium bridge react"
+    sleep 2
+    echo "# now killing kafkacat and evaluate result"
+    killall kafkacat
+    delete_ngsild "$token" "$JSONCUTTER_ID" || true
+    jq -c "select(.entityId == \"${JSONCUTTER_ID}\")" ${KAFKACAT_ATTRIBUTES} > ${KAFKACAT_ATTRIBUTES_SORTED}
+    run check_json_list_attributes ${KAFKACAT_ATTRIBUTES_SORTED}
     [ "$status" -eq 0 ]
 }

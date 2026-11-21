@@ -1,0 +1,118 @@
+#
+# Copyright (c) 2026 IndustryFusion Foundation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+# Checks the broker the platform pins (test/build-local-platform.sh) against contracts/context-broker, without a
+# Kubernetes cluster.
+# The requirements that need Debezium or MQTT are checked by the K8s tests; see test/context-broker.
+name: Context broker contract test
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '.env'
+      - 'test/build-local-platform.sh'
+      - 'helm/charts/scorpio/**'
+      - 'KafkaBridge/lib/ngsild*.js'
+      - 'test/context-broker/**'
+      - 'test/opcua-chain/broker.sh'
+      - 'test/opcua-chain/scorpio-image.sh'
+      - '.github/workflows/context-broker.yaml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - '.env'
+      - 'test/build-local-platform.sh'
+      - 'helm/charts/scorpio/**'
+      - 'KafkaBridge/lib/ngsild*.js'
+      - 'test/context-broker/**'
+      - 'test/opcua-chain/broker.sh'
+      - 'test/opcua-chain/scorpio-image.sh'
+      - '.github/workflows/context-broker.yaml'
+  workflow_call:
+  workflow_dispatch:
+    inputs:
+      image:
+        description: 'A broker image other than the release one, e.g. a build of the fork'
+        required: false
+      mode:
+        description: 'platform, or upstream for an upstream Scorpio image without authorisation'
+        required: false
+        type: choice
+        options: [ platform, upstream ]
+        default: platform
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      OUT: ${{ github.workspace }}/.context-broker
+      MODE: ${{ inputs.mode || 'platform' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      # The broker the platform pins, built once per commit and kept in the cache (design D7 of the change)
+      - name: The pinned broker commit
+        id: pin
+        run: echo "commit=$(sed -n 's/^SCORPIO_COMMIT=//p' test/build-local-platform.sh)" >> "$GITHUB_OUTPUT"
+      # Keyed by the commit and by the scripts that build it, so a change of the build gets a new image; restored
+      # and saved separately, so a failing test doesn't make the next run build Scorpio again
+      - uses: actions/cache/restore@v4
+        if: inputs.image == ''
+        id: broker-cache
+        with:
+          path: .scorpio-image.tar
+          key: scorpio-all-in-one-runner-${{ steps.pin.outputs.commit }}-${{ hashFiles('test/opcua-chain/scorpio-image.sh', 'test/build-local-platform.sh') }}
+      - uses: actions/setup-java@v4
+        if: inputs.image == '' && steps.broker-cache.outputs.cache-hit != 'true'
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: The pinned broker image
+        if: inputs.image == ''
+        run: |
+          [ -f .scorpio-image.tar ] && docker load -i .scorpio-image.tar
+          image=$(bash test/opcua-chain/scorpio-image.sh)
+          [ -f .scorpio-image.tar ] || docker save "$image" -o .scorpio-image.tar
+          echo "IMAGE=$image" >> "$GITHUB_ENV"
+      - uses: actions/cache/save@v4
+        if: inputs.image == '' && steps.broker-cache.outputs.cache-hit != 'true'
+        with:
+          path: .scorpio-image.tar
+          key: ${{ steps.broker-cache.outputs.cache-primary-key }}
+      - name: A broker image given to the manual run
+        if: inputs.image != ''
+        env:
+          IMAGE_IN: ${{ inputs.image }}
+        run: |
+          case "$IMAGE_IN" in *[[:space:]]*) echo "the image name must not contain white space"; exit 1;; esac
+          printf 'IMAGE=%s\n' "$IMAGE_IN" >> "$GITHUB_ENV"
+      - name: The contract test
+        run: bash test/context-broker/run.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: context-broker
+          path: |
+            .context-broker/*.json
+            .context-broker/*.log
+          if-no-files-found: ignore

@@ -16,5 +16,4 @@
 #
 
 # Removes the containers and the network of stage 4a.
-docker rm -f opcua-chain-scorpio opcua-chain-kafka opcua-chain-pg > /dev/null 2>&1 || true
-docker network rm opcua-chain > /dev/null 2>&1 || true
+bash "$(dirname "$0")/broker.sh" down opcua-chain

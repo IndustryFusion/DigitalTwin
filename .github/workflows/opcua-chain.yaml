@@ -28,6 +28,7 @@ on:
       - 'NgsildAgent/**'
       - 'test/opcua-chain/**'
       - '.env'
+      - 'test/build-local-platform.sh'
       - '.github/workflows/opcua-chain.yaml'
   pull_request:
     branches: [ main ]
@@ -38,6 +39,7 @@ on:
       - 'NgsildAgent/**'
       - 'test/opcua-chain/**'
       - '.env'
+      - 'test/build-local-platform.sh'
       - '.github/workflows/opcua-chain.yaml'
   workflow_dispatch:
 
@@ -47,7 +49,7 @@ permissions:
 jobs:
   chain:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
@@ -72,7 +74,32 @@ jobs:
         run: bash test/opcua-chain/stage2.sh
       - name: Stage 3 - the agent's schema and the bridge's mapping
         run: bash test/opcua-chain/stage3.sh
-      - name: Stage 4a - the context broker of the current release
+      # The broker the platform pins, built once per commit and kept in the cache, as in context-broker.yaml
+      - name: The pinned broker commit
+        id: pin
+        run: echo "commit=$(sed -n 's/^SCORPIO_COMMIT=//p' test/build-local-platform.sh)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache/restore@v4
+        id: broker-cache
+        with:
+          path: .scorpio-image.tar
+          key: scorpio-all-in-one-runner-${{ steps.pin.outputs.commit }}-${{ hashFiles('test/opcua-chain/scorpio-image.sh', 'test/build-local-platform.sh') }}
+      - uses: actions/setup-java@v4
+        if: steps.broker-cache.outputs.cache-hit != 'true'
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: The pinned broker image
+        run: |
+          [ -f .scorpio-image.tar ] && docker load -i .scorpio-image.tar
+          image=$(bash test/opcua-chain/scorpio-image.sh)
+          [ -f .scorpio-image.tar ] || docker save "$image" -o .scorpio-image.tar
+          echo "SCORPIO_IMAGE=$image" >> "$GITHUB_ENV"
+      - uses: actions/cache/save@v4
+        if: steps.broker-cache.outputs.cache-hit != 'true'
+        with:
+          path: .scorpio-image.tar
+          key: ${{ steps.broker-cache.outputs.cache-primary-key }}
+      - name: Stage 4a - the context broker the platform pins
         run: bash test/opcua-chain/stage4a.sh
       - name: Stage 4b - the updates bridge against the broker
         run: bash test/opcua-chain/stage4b.sh
