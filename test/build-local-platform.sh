@@ -25,13 +25,15 @@ echo Build DT containers and push to local registry
 echo Build Scorpio containers
 ( cd ../.. && rm -rf ScorpioBroker)
 
+# Scorpio is built from one pinned commit of the IndustryFusion fork (branch scorpio-v5.0.5),
+# which merges value objects with @type, @id or @language as a whole.
+SCORPIO_COMMIT=e1cea4bcc3471eed202af9317c0fefe69b94a301
+( cd ../.. && git clone https://github.com/IndustryFusion/ScorpioBroker.git )
+( cd ../../ScorpioBroker && git checkout "$SCORPIO_COMMIT" )
 if [[ $TEST -eq "true" ]]; then
-    ( cd ../.. && git clone https://github.com/IndustryFusion/ScorpioBroker.git)
-    ( cd ../../ScorpioBroker && git checkout 135b5ee ) # Checking out specific commit for CI purposes
-    ( cd ../../ScorpioBroker && source /etc/profile.d/maven.sh && mvn clean package -DskipTests -Ddocker -Ddocker-tag=$DOCKER_TAG -Dkafka -Pkafka -Dquarkus.profile=kafka)
+    ( cd ../../ScorpioBroker && source /etc/profile.d/maven.sh && mvn clean package -DskipTests -Ddocker -Ddocker-tag="$DOCKER_TAG" -Dkafka -Pkafka -Dquarkus.profile=kafka)
 else
-    ( cd ../.. && git clone https://github.com/IndustryFusion/ScorpioBroker.git )
-    ( cd ../../ScorpioBroker && mvn clean package -DskipTests -Pdocker )
+    ( cd ../../ScorpioBroker && mvn clean package -DskipTests -Ddocker -Ddocker-tag="$DOCKER_TAG" -Dkafka -Pkafka -Dquarkus.profile=kafka)
 fi
 
 # Fetch Docker images, filter them, and process accordingly
