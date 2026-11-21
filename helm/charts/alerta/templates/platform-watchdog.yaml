@@ -10,13 +10,20 @@ metadata:
   name: platform-watchdog
 rules:
 - apiGroups: [""]
-  resources: ["pods"]
+  resources: ["pods", "pods/log"]
   verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["configmaps"]
+  resourceNames: ["platform-watchdog-state"]
+  verbs: ["get", "patch"]
 - apiGroups: ["apps"]
   resources: ["deployments"]
   verbs: ["get", "list"]
 - apiGroups: ["industry-fusion.com"]
   resources: ["beamsqlstatementsets"]
+  verbs: ["get", "list"]
+- apiGroups: ["kafka.strimzi.io"]
+  resources: ["kafkaconnectors"]
   verbs: ["get", "list"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -32,6 +39,17 @@ roleRef:
   name: platform-watchdog
   apiGroup: rbac.authorization.k8s.io
 ---
+# What the watchdog has seen across runs: the last complete Debezium refresh
+# per connector, when the validation state was last emptied, and a latched
+# inconsistency. The watchdog patches its data; the chart only creates it.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: platform-watchdog-state
+  annotations:
+    helm.sh/resource-policy: keep
+data: {}
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -46,14 +64,29 @@ data:
     # straight to the Alerta HTTP service instead -- it must not depend on
     # any component it watches (kubectl image ships no curl, hence /dev/tcp).
     #
-    # The resync check is a CORRECTNESS condition, not hygiene: once the
-    # Debezium resync has been missing for longer than the deployed Flink
-    # state TTL, dedup state may have expired unrefreshed and any write in
-    # that window leaves an unretractable ghost row in the pinned join
-    # state. A resumed resync only refreshes current rows -- it can never
-    # remove a ghost. The alert therefore demands a restart (statementset
-    # redeploy + re-snapshot); nothing short of a state rebuild restores
-    # consistency.
+    # The consistency check is a CORRECTNESS condition, not hygiene. The
+    # validation dedups its views in state that expires after the deployed
+    # state TTL, ahead of joins whose state is pinned. Every key must reach
+    # the job again before its state expires; the Debezium refresh (a
+    # re-snapshot, triggered by the kafka-connect-restart cron every ttl/2)
+    # does that for all keys at once. A key that is fed again after its state
+    # expired enters the pinned join as a second row: counts too high and
+    # alerts that never clear. No refresh removes such a row.
+    #
+    # So the check follows the refreshes that COMPLETED (from the Debezium
+    # log, per connector), not the pod age: a task that failed, a snapshot
+    # that died halfway or a restarter that did not run all leave the pods
+    # young. Flink checkpointing is disabled on this platform, so every
+    # restart of the job (failover, JobManager restart, redeploy) empties the
+    # state; the first complete refresh after it rebuilds it from the truth.
+    #
+    #   INCONSISTENT  a key went longer than the TTL without a complete
+    #                 refresh while the job had state: latched (timeout 0)
+    #                 until the state is emptied; only a redeploy repairs it.
+    #   REBUILDING    the state was emptied and the first complete refresh
+    #                 has not come yet: a refresh repairs it.
+    #   LATE          a refresh is overdue, the window is still open: a
+    #                 refresh now avoids the inconsistency.
 
     LC_ALL=C
     NAMESPACE="${NAMESPACE:?}"
@@ -62,8 +95,14 @@ data:
     ALERTA_API_KEY="${ALERTA_API_KEY:?}"
     ENVIRONMENT="${ENVIRONMENT:-Development}"
     FALLBACK_TTL="${FALLBACK_TTL:-3600 s}"
+    STATE_CONFIGMAP="${STATE_CONFIGMAP:-platform-watchdog-state}"
+    CORE_SERVICES="${CORE_SERVICES:-core-services-job}"
+    NOW="${WATCHDOG_NOW:-$(date +%s)}"
     STATEMENTSET="${STATEMENTSET:-shacl-validation}"
     BRIDGES="${BRIDGES:-mqtt-bridge alerta-bridge ngsild-updates-bridge debezium-bridge timescaledb-bridge}"
+    FLINK_HOST="${FLINK_HOST:-flink-jobmanager-rest}"
+    FLINK_PORT="${FLINK_PORT:-8081}"
+    CONNECTORS="${CONNECTORS:-entity-table-connector rdf-table-connector}"
 
     # usage: parse_duration "10d" -> 864000 ; parse_duration "3600 s" -> 3600
     parse_duration() {
@@ -103,17 +142,26 @@ data:
       esac
     }
 
-    # post_alert <severity> <resource> <event> <value> <text>
+    # http_get <host> <port> <path>: the response body, empty when unreachable.
+    http_get() {
+      timeout 10 bash -c \
+        'exec 3<>"/dev/tcp/$1/$2" || exit 1; printf "GET %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n" "$3" "$1" >&3; sed "1,/^\r$/d" <&3' \
+        _ "$1" "$2" "$3" 2>/dev/null
+    }
+
+    # post_alert <severity> <resource> <event> <value> <text> [<timeout>]
     # severity "normal" clears an earlier alert with the same resource+event.
+    # A timeout of 0 keeps the alert until it is cleared.
     post_alert() {
-      local sev="$1" res="$2" event="$3" value="$4" text="$5" payload
-      payload=$(printf '{"resource":"%s","event":"%s","environment":"%s","severity":"%s","service":["System"],"origin":"platform-watchdog","value":"%s","text":"%s"}' \
-        "$res" "$event" "$ENVIRONMENT" "$sev" "$value" "$text")
+      local sev="$1" res="$2" event="$3" value="$4" text="$5" timeout="${6:-}" payload extra=""
+      [ -n "$timeout" ] && extra=$(printf ',"timeout":%d' "$timeout")
+      payload=$(printf '{"resource":"%s","event":"%s","environment":"%s","severity":"%s","service":["System"],"origin":"platform-watchdog","value":"%s","text":"%s"%s}' \
+        "$res" "$event" "$ENVIRONMENT" "$sev" "$value" "$text" "$extra")
       echo "[$sev] $res/$event: $value"
       alerta_send "$payload" || true
     }
 
-    # --- check 1: Debezium resync recency vs the DEPLOYED Flink state TTL.
+    # --- check 1: the validation state must be consistent (see the top).
     TTL_RAW=$(kubectl -n "$NAMESPACE" get beamsqlstatementsets "$STATEMENTSET" \
         -o jsonpath='{.spec.sqlsettings}' 2>/dev/null \
       | grep -o '"table.exec.state.ttl":"[^"]*"' | head -1 | cut -d'"' -f4)
@@ -122,37 +170,286 @@ data:
       echo "statementset not readable, falling back to helm value $TTL_RAW"
     fi
     TTL_SECONDS=$(parse_duration "$TTL_RAW") || exit 1
-
-    NEWEST_AGE=""
-    NOW=$(date +%s)
-    for ts in $(kubectl -n "$NAMESPACE" get pods -l app.kubernetes.io/instance=kafka-connect \
-        -o jsonpath='{range .items[*]}{.metadata.creationTimestamp}{"\n"}{end}' 2>/dev/null); do
-      age=$(( NOW - $(date -d "$ts" +%s) ))
-      if [ -z "$NEWEST_AGE" ] || [ "$age" -lt "$NEWEST_AGE" ]; then
-        NEWEST_AGE=$age
-      fi
-    done
-
-    # the restarter must have bounced kafka-connect by ttl/2. Two scheduler
-    # slots of grace keep a healthy cadence from flapping at the boundary
-    # (the restarter triggers at ttl/2 minus its safety margin, plus up to
-    # one 2-minute cron slot and the pod restart itself). Past ttl/2+grace
-    # the refresh was NOT triggered (warning); past the full ttl the
-    # refresh window was missed entirely and only a restart repairs it.
+    # Past ttl/2 plus two cron slots the restarter should have refreshed.
     LATE=$(( TTL_SECONDS / 2 + 240 ))
-    if [ -z "$NEWEST_AGE" ]; then
-      post_alert critical kafka-connect ResyncRecency "no pods" \
-        "kafka-connect has no pods: the Debezium resync that keeps Flink dedup state alive is not running. If this persists beyond the state TTL (${TTL_SECONDS}s), streaming state consistency can no longer be guaranteed and the validation system must be restarted (redeploy the ${STATEMENTSET} statementset)."
-    elif [ "$NEWEST_AGE" -gt "$TTL_SECONDS" ]; then
-      post_alert critical kafka-connect ResyncRecency "${NEWEST_AGE}s > ttl ${TTL_SECONDS}s" \
-        "Debezium resync overdue: kafka-connect has not been refreshed within the deployed Flink state TTL, so dedup state may have expired unrefreshed and ghost rows may be lodged in pinned join state. Consistency cannot be guaranteed. RESTART REQUIRED: redeploy the ${STATEMENTSET} statementset to rebuild state and re-snapshot. Resuming the resync alone cannot repair this."
-    elif [ "$NEWEST_AGE" -gt "$LATE" ]; then
-      post_alert warning kafka-connect ResyncRecency "${NEWEST_AGE}s > ${LATE}s" \
-        "Debezium resync was not triggered by ttl/2: the kafka-connect-restart cron should have refreshed kafka-connect by $(( TTL_SECONDS / 2 ))s but the newest pod is ${NEWEST_AGE}s old. Check the kafka-connect-restart cronjob now -- if no refresh happens within the full ttl (${TTL_SECONDS}s) the validation system must be restarted."
-    else
-      post_alert normal kafka-connect ResyncRecency "${NEWEST_AGE}s <= ttl ${TTL_SECONDS}s" \
-        "Debezium resync is on schedule."
-    fi
+
+    fmt() { date -u -d "@$1" +%Y-%m-%dT%H:%M:%SZ; }
+
+    # The consistency is judged only with full knowledge: the watchdog's own
+    # memory, the job from Flink, and per connector a complete refresh since
+    # it began observing. Without one of them it reports what it can't know
+    # and never raises or clears an inconsistency on a guess.
+    judge_consistency() {
+      # The watchdog's memory across runs, as a flat JSON object of strings.
+      STATE_JSON=$(kubectl -n "$NAMESPACE" get configmap "$STATE_CONFIGMAP" -o json 2>/dev/null \
+        | jq -c '.data // {}' 2>/dev/null)
+      if [ -z "$STATE_JSON" ]; then
+        echo "WARN: configmap ${STATE_CONFIGMAP} not readable: the consistency is not judged" >&2
+        post_alert warning platform-watchdog WatchdogState "kept state not readable" \
+          "The platform watchdog can't read its ConfigMap ${STATE_CONFIGMAP}, so it does not judge the consistency of the validation until it can; ValidationConsistency stays as it was."
+        return
+      fi
+      NEW_STATE="$STATE_JSON"
+      sget() { jq -r --arg k "$1" '.[$k] // empty' <<<"$NEW_STATE"; }
+      sset() { NEW_STATE=$(jq -c --arg k "$1" --arg v "$2" '.[$k] = $v' <<<"$NEW_STATE"); }
+      sdel() { NEW_STATE=$(jq -c --arg k "$1" 'del(.[$k])' <<<"$NEW_STATE"); }
+      persist() {  # keys dropped from the state go out as null: a merge patch keeps the others
+        if [ "$NEW_STATE" = "$STATE_JSON" ] || kubectl -n "$NAMESPACE" patch configmap "$STATE_CONFIGMAP" --type merge \
+            -p "$(jq -c --argjson old "$STATE_JSON" '{data: (($old | with_entries(.value = null)) + .)}' <<<"$NEW_STATE")" >/dev/null; then
+          post_alert normal platform-watchdog WatchdogState "kept state readable" \
+            "The platform watchdog reads and keeps its state."
+        else
+          # without its memory no window can be measured across runs
+          echo "WARN: could not keep the findings in ${STATE_CONFIGMAP}" >&2
+          post_alert warning platform-watchdog WatchdogState "kept state not writable" \
+            "The platform watchdog can't write its ConfigMap ${STATE_CONFIGMAP}, so it can't measure a refresh window across runs and can't raise an inconsistency until it can."
+        fi
+      }
+      observe_anew() {  # the refreshes seen so far can't be judged: start as on a first run
+        local k
+        for k in $(jq -r 'keys[] | select(endswith(".start") or endswith(".done"))' <<<"$NEW_STATE"); do sdel "$k"; done
+        sset observing_since "$NOW"
+      }
+      # The state must be writable, too: without its memory no window can be
+      # measured across runs. The run's time is written first.
+      LAST_RUN=$(sget last_run)
+      if ! kubectl -n "$NAMESPACE" patch configmap "$STATE_CONFIGMAP" --type merge \
+          -p "$(jq -nc --arg t "$NOW" '{data: {last_run: $t}}')" >/dev/null 2>&1; then
+        echo "WARN: configmap ${STATE_CONFIGMAP} not writable: the consistency is not judged" >&2
+        post_alert warning platform-watchdog WatchdogState "kept state not writable" \
+          "The platform watchdog can't write its ConfigMap ${STATE_CONFIGMAP}, so it does not judge the consistency of the validation until it can; ValidationConsistency stays as it was."
+        return
+      fi
+      STATE_JSON=$(jq -c --arg t "$NOW" '. + {last_run: $t}' <<<"$STATE_JSON")
+      NEW_STATE="$STATE_JSON"
+      [ -z "$(sget observing_since)" ] && sset observing_since "$NOW"
+      # Without a run, or without knowledge, for longer than a quarter of the
+      # TTL, a Connect pod and its log may have come and gone unseen; a
+      # shorter span is like a skipped run.
+      GAP_LIMIT="${RUN_GAP:-$(( TTL_SECONDS / 4 ))}"
+      if [ -n "$LAST_RUN" ] && [ $(( NOW - LAST_RUN )) -gt "$GAP_LIMIT" ]; then
+        echo "no run since $(fmt "$LAST_RUN"): the refreshes in between are unknown, observing anew"
+        observe_anew
+      fi
+
+      # 1a. When was the validation state last emptied? A job's start, a
+      # failover and a JobManager restart all empty it unless a checkpoint
+      # was restored. An answer counts only when it is one: an empty or an
+      # error body ({"errors": [...]}) is none.
+      RESET=""
+      RESET_CAUSE=""
+      UNKNOWN_CAUSE="the statementset reports no job"
+      JOB_ID=$(kubectl -n "$NAMESPACE" get beamsqlstatementsets "$STATEMENTSET" \
+          -o jsonpath='{.status.job_id}' 2>/dev/null)
+      if [ -n "$JOB_ID" ]; then
+        UNKNOWN_CAUSE="Flink does not answer for the job ${JOB_ID}"
+        START_MS=$(http_get "$FLINK_HOST" "$FLINK_PORT" "/jobs/$JOB_ID" | jq -r '."start-time" // empty' 2>/dev/null)
+        COMPLETED=""
+        RESTORED_MS=""
+        LAST_FAILOVER_MS=""
+        CHECKPOINTS_JSON=""
+        if [ -n "$START_MS" ]; then
+          CHECKPOINTS_JSON=$(http_get "$FLINK_HOST" "$FLINK_PORT" "/jobs/$JOB_ID/checkpoints")
+          COMPLETED=$(jq -e 'select(.counts) | .counts.completed // 0' <<<"$CHECKPOINTS_JSON" 2>/dev/null)
+          RESTORED_MS=$(jq -e 'select(.counts) | .latest.restored.restore_timestamp // 0' <<<"$CHECKPOINTS_JSON" 2>/dev/null)
+          LAST_FAILOVER_MS=$(http_get "$FLINK_HOST" "$FLINK_PORT" "/jobs/$JOB_ID/exceptions?maxExceptions=1000" \
+            | jq -e 'select(.exceptionHistory) | [.exceptionHistory.entries[]?.timestamp] | max // 0' 2>/dev/null)
+        fi
+        if [[ "$START_MS" =~ ^[0-9]+$ && "$COMPLETED" =~ ^[0-9]+$ && "$RESTORED_MS" =~ ^[0-9]+$ && "$LAST_FAILOVER_MS" =~ ^[0-9]+$ ]]; then
+          RESET=$(( START_MS / 1000 ))
+          RESET_CAUSE="the job ${JOB_ID} started"
+          # a start from a checkpoint keeps its state: the reset before stays
+          if [ "$RESTORED_MS" -ge "$START_MS" ] && [ -n "$(sget reset)" ]; then
+            RESET=$(sget reset)
+            RESET_CAUSE=$(sget reset_cause)
+          fi
+          if [ "$LAST_FAILOVER_MS" -gt "$START_MS" ] && [ "$RESTORED_MS" -lt "$LAST_FAILOVER_MS" ]; then
+            RESET=$(( LAST_FAILOVER_MS / 1000 ))
+            RESET_CAUSE="the job ${JOB_ID} failed over and restarted without a checkpoint"
+          fi
+          # A JobManager restart relaunches the job from its HA metadata,
+          # with no state but a checkpoint's.
+          # Without the JobManager's start the job is not fully known.
+          if JM_PODS=$(kubectl -n "$NAMESPACE" get pods -l app=flink-deployment,component=jobmanager \
+              -o jsonpath='{range .items[*]}{.status.containerStatuses[?(@.name=="flink-main-container")].state.running.startedAt}{"\n"}{end}' 2>/dev/null) \
+              && JM_STARTED=$(sort <<<"$JM_PODS" | tail -1) && [ -n "$JM_STARTED" ]; then
+            JM=$(date -u -d "$JM_STARTED" +%s)
+            if [ "$JM" -gt "$RESET" ] && [ $(( RESTORED_MS / 1000 )) -lt "$JM" ]; then
+              RESET=$JM
+              RESET_CAUSE="the Flink JobManager restarted and relaunched the job ${JOB_ID} without a checkpoint"
+            fi
+          else
+            RESET=""
+            UNKNOWN_CAUSE="the start of the Flink JobManager can't be read"
+          fi
+        fi
+      fi
+
+      REPAIR="Repair: (1) redeploy the ${STATEMENTSET} statementset, (2) restart Core Services (${CORE_SERVICES}), (3) delete the open alerts of service SHACL Validator, (4) restart kafka-connect for a complete refresh, which raises the real violations again."
+      inconsistent() {  # inconsistent <restore note>
+        post_alert critical "$STATEMENTSET" ValidationConsistency "inconsistent since $(fmt "$(sget latch_deadline)")" \
+          "INCONSISTENT -- REDEPLOYMENT REQUIRED. $(sget latch_reason). Keys whose state expired were fed again as new rows, so the pinned join state holds duplicates: counts too high and alerts that never clear. No refresh can remove them. ${REPAIR} $1 This alert stays until the validation state has been emptied." 0
+      }
+
+      # 1b. The complete refreshes come from the Debezium log of the Connect
+      # pods; a failed read of the pods or a log is no answer either.
+      declare -A CONNECT_LOG
+      if [ -n "$RESET" ]; then
+        if CONNECT_LIST=$(kubectl -n "$NAMESPACE" get pods -l app.kubernetes.io/instance=kafka-connect \
+            -o jsonpath='{range .items[*]}{.metadata.name} {.status.containerStatuses[0].state.running.startedAt}{"\n"}{end}' 2>/dev/null); then
+          CONNECT_PODS=""
+          while read -r name started; do
+            # a pod still starting has no log yet, and no refresh in it
+            if [ -z "$name" ] || [ -z "$started" ]; then continue; fi
+            CONNECT_PODS="${CONNECT_PODS} pod/${name}"
+            if ! CONNECT_LOG[pod/$name]=$(kubectl -n "$NAMESPACE" logs "pod/$name" 2>/dev/null); then
+              RESET=""
+              UNKNOWN_CAUSE="the log of ${name} can't be read"
+            fi
+          done <<<"$CONNECT_LIST"
+        else
+          RESET=""
+          UNKNOWN_CAUSE="the Connect pods can't be listed"
+        fi
+      fi
+
+      # Without the job nothing is judged; a kept inconsistency stays, and
+      # once the job can be read again the watchdog observes anew.
+      if [ -z "$RESET" ]; then
+        [ -z "$(sget job_unknown)" ] && sset job_unknown "$NOW"
+        if [ -n "$(sget latch_reason)" ]; then
+          inconsistent "The consistency can't be checked again now: ${UNKNOWN_CAUSE}."
+        else
+          post_alert warning "$STATEMENTSET" ValidationConsistency "unknown" \
+            "The consistency of the validation can't be assessed: ${UNKNOWN_CAUSE}. No inconsistency is raised or ended until the job can be read."
+        fi
+        persist
+        return
+      fi
+      if [ -n "$(sget job_unknown)" ]; then
+        if [ $(( NOW - $(sget job_unknown) )) -gt "$GAP_LIMIT" ]; then
+          echo "the job or the Connect logs could not be read since $(fmt "$(sget job_unknown)"): observing anew"
+          observe_anew
+        fi
+        sdel job_unknown
+      fi
+      OBSERVING_SINCE=$(sget observing_since)
+      sset reset "$RESET"
+      sset reset_cause "$RESET_CAUSE"
+      if [ "$COMPLETED" -gt 0 ]; then
+        CHECKPOINT_NOTE="The job takes checkpoints (${COMPLETED} completed)."
+      else
+        CHECKPOINT_NOTE="No checkpoint can restore the state: checkpointing is disabled for this job (none was ever completed)."
+      fi
+
+      # A latched inconsistency ends when the state is emptied after it.
+      LATCH_RESET=$(sget latch_reset)
+      if [ -n "$LATCH_RESET" ] && [ "$RESET" -gt "$LATCH_RESET" ]; then
+        echo "inconsistency of $(fmt "$(sget latch_at)") ended: state emptied at $(fmt "$RESET")"
+        for k in latch_reset latch_at latch_reason latch_deadline; do sdel "$k"; done
+      fi
+      latch() {  # latch <reason> <deadline>: the moment the state went stale
+        [ -n "$(sget latch_reset)" ] && return
+        sset latch_reset "$RESET"
+        sset latch_at "$NOW"
+        sset latch_reason "$1"
+        sset latch_deadline "$2"
+      }
+      later() { if [ "$1" -gt "$2" ]; then echo "$1"; else echo "$2"; fi; }
+
+      # "Snapshot step 1 - Preparing" starts a refresh, "Snapshot ended with
+      # SnapshotResult [status=COMPLETED" ends it; per connector by its MDC,
+      # paired within each pod's log, the latest end of all pods.
+      last_refresh() {  # last_refresh <connector>: "<start>|<end>"
+        local p
+        for p in $CONNECT_PODS; do
+          grep -F "[${1}|task-" <<<"${CONNECT_LOG[$p]}" | awk '
+            /Snapshot step 1 - Preparing/ { s = $1 " " $2 }
+            /Snapshot ended with SnapshotResult \[status=COMPLETED/ { if (s != "") last = $1 " " $2 "|" s }
+            END { if (last != "") print last }'
+        done | sed 's/,[0-9]*//g' | sort | tail -1 | awk -F'|' '{ print $2 "|" $1 }'
+      }
+      REBUILDING=""
+      UNSEEN=""
+      LATE_LIST=""
+      FRESH_LIST=""
+      for c in $CONNECTORS; do
+        PAIR=$(last_refresh "$c")
+        if [ -n "$PAIR" ]; then
+          S=$(date -u -d "${PAIR%%|*}" +%s)
+          E=$(date -u -d "${PAIR#*|}" +%s)
+          DONE=$(sget "${c}.done")
+          if [ -z "$DONE" ] || [ "$E" -gt "$DONE" ]; then
+            PREV=$(sget "${c}.start")
+            sset "${c}.start" "$S"
+            sset "${c}.done" "$E"
+            # The keys this refresh fed were last fed by the previous one, or
+            # not at all since the state was emptied; nothing before the
+            # watchdog observed is taken as a gap.
+            if [ -n "$PREV" ] && [ "$PREV" -ge "$RESET" ]; then REF=$PREV; else REF=$RESET; fi
+            REF=$(later "$REF" "$OBSERVING_SINCE")
+            if [ "$S" -gt "$RESET" ] && [ $(( E - REF )) -gt "$TTL_SECONDS" ]; then
+              latch "${c}: no complete refresh from $(fmt "$REF") until $(fmt "$E"), $(( E - REF ))s, longer than the state TTL of ${TTL_SECONDS}s" "$(( REF + TTL_SECONDS ))"
+            fi
+          fi
+        fi
+        LAST=$(sget "${c}.start")
+        if [ -n "$LAST" ] && [ "$LAST" -ge "$RESET" ]; then
+          FROM=$(later "$LAST" "$OBSERVING_SINCE")
+          if [ $(( NOW - FROM )) -gt "$TTL_SECONDS" ]; then
+            latch "${c}: no complete refresh since $(fmt "$FROM"), $(( NOW - FROM ))s, longer than the state TTL of ${TTL_SECONDS}s" "$(( FROM + TTL_SECONDS ))"
+          elif [ $(( NOW - FROM )) -gt "$LATE" ]; then
+            LATE_LIST="${LATE_LIST}${LATE_LIST:+, }${c} (last complete refresh $(fmt "$LAST"), window closes $(fmt $(( FROM + TTL_SECONDS ))))"
+          else
+            FRESH_LIST="${FRESH_LIST}${FRESH_LIST:+, }${c} $(fmt "$LAST")"
+          fi
+        elif [ "$RESET" -ge "$OBSERVING_SINCE" ]; then
+          # Nothing refreshed since the state was emptied: keys fed live in
+          # the meantime expire like any other.
+          if [ $(( NOW - RESET )) -gt "$TTL_SECONDS" ]; then
+            latch "${c}: no complete refresh since the state was emptied at $(fmt "$RESET"), longer than the state TTL of ${TTL_SECONDS}s" "$(( RESET + TTL_SECONDS ))"
+          fi
+          REBUILDING="${REBUILDING}${REBUILDING:+, }${c}"
+        else
+          # No complete refresh seen since the watchdog began observing, after
+          # the state was emptied: not assessed until a TTL has passed.
+          if [ $(( NOW - OBSERVING_SINCE )) -gt "$TTL_SECONDS" ]; then
+            latch "${c}: no complete refresh seen since $(fmt "$OBSERVING_SINCE"), $(( NOW - OBSERVING_SINCE ))s, longer than the state TTL of ${TTL_SECONDS}s" "$(( OBSERVING_SINCE + TTL_SECONDS ))"
+          fi
+          UNSEEN="${UNSEEN}${UNSEEN:+, }${c}"
+        fi
+      done
+
+      # 1c. Report, with the checkpoint that could bring a consistent state back.
+      if [ -n "$(sget latch_reason)" ]; then
+        RESTORE_NOTE="$CHECKPOINT_NOTE"
+        if [ "$COMPLETED" -gt 0 ]; then
+          CANDIDATE=$(jq -r --argjson before "$(( $(sget latch_deadline) * 1000 ))" \
+            '[.history[]? | select(.status == "COMPLETED" and .latest_ack_timestamp < $before)] | max_by(.latest_ack_timestamp) // empty
+             | "#\(.id) completed at \(.latest_ack_timestamp / 1000 | floor | todate) (\(.external_path // "not retained"))"' <<<"$CHECKPOINTS_JSON" 2>/dev/null)
+          if [ -n "$CANDIDATE" ]; then
+            RESTORE_NOTE="Instead of steps 1 and 4, restoring checkpoint ${CANDIDATE}, taken before the state went stale, brings a consistent state back, if it is retained and the topics still hold the records since."
+          else
+            RESTORE_NOTE="No checkpoint in Flink's recent checkpoint history was taken before the state went stale; a retained older one could still restore a consistent state."
+          fi
+        fi
+        inconsistent "$RESTORE_NOTE"
+      elif [ -n "$REBUILDING" ]; then
+        post_alert warning "$STATEMENTSET" ValidationConsistency "rebuilding since $(fmt "$RESET")" \
+          "REBUILDING -- REFRESH REQUIRED. The validation state was emptied at $(fmt "$RESET"): ${RESET_CAUSE}. ${CHECKPOINT_NOTE} No complete refresh of ${REBUILDING} since, so the validation is incomplete. It is consistent again after the first complete Debezium refresh; the kafka-connect-restart cron triggers one by $(fmt $(( RESET + TTL_SECONDS / 2 ))), restarting kafka-connect does it now. Without one by $(fmt $(( RESET + TTL_SECONDS ))) the state becomes inconsistent and needs a redeployment."
+      elif [ -n "$UNSEEN" ]; then
+        post_alert warning "$STATEMENTSET" ValidationConsistency "no refresh seen yet" \
+          "NOT ASSESSED YET: no complete refresh of ${UNSEEN} seen since the watchdog began observing at $(fmt "$OBSERVING_SINCE"). Restarting kafka-connect refreshes now; without a complete refresh by $(fmt $(( OBSERVING_SINCE + TTL_SECONDS ))) the state is inconsistent and needs a redeployment."
+      elif [ -n "$LATE_LIST" ]; then
+        post_alert warning "$STATEMENTSET" ValidationConsistency "refresh late" \
+          "REFRESH LATE: ${LATE_LIST}. The kafka-connect-restart cron should have refreshed by ttl/2 ($(( TTL_SECONDS / 2 ))s). Restart kafka-connect before the window closes; after that the state is inconsistent and needs a redeployment."
+      else
+        post_alert normal "$STATEMENTSET" ValidationConsistency "consistent" \
+          "The validation state is consistent: emptied at $(fmt "$RESET") (${RESET_CAUSE}), complete refreshes since: ${FRESH_LIST}."
+      fi
+      persist
+    }
+    judge_consistency
 
     # --- check 2: the validation statementset itself must be RUNNING.
     SS_STATE=$(kubectl -n "$NAMESPACE" get beamsqlstatementsets "$STATEMENTSET" \
@@ -197,6 +494,31 @@ data:
           "Bridge ${d} is healthy."
       fi
     done
+
+    # --- check 4: the Debezium connectors that feed the validation must run.
+    # Read from the KafkaConnector status, as Strimzi's network policy
+    # keeps the Connect REST API to the operator.
+    for c in $CONNECTORS; do
+      # stderr apart: a kubectl warning there must not spoil the JSON
+      CONNECTOR_ERR=$(mktemp)
+      CONNECTOR_JSON=$(kubectl -n "$NAMESPACE" get kafkaconnectors "$c" -o json 2>"$CONNECTOR_ERR")
+      CONNECTOR_STDERR=$(cat "$CONNECTOR_ERR")
+      rm -f "$CONNECTOR_ERR"
+      STATES=$(jq -r '[.status.connectorStatus.connector.state // "UNKNOWN"] + [.status.connectorStatus.tasks[]?.state] | join(" ")' <<<"$CONNECTOR_JSON" 2>/dev/null)
+      if [ -z "$STATES" ] && [[ "$CONNECTOR_STDERR" == *NotFound* ]]; then
+        post_alert warning "$c" ConnectorState "not found" \
+          "KafkaConnector ${c} was not found."
+      elif [ -z "$STATES" ]; then
+        # any other failure to read it says nothing about the connector
+        echo "KafkaConnector ${c} not readable, ConnectorState not posted"
+      elif tr ' ' '\n' <<<"$STATES" | grep -q -v '^RUNNING$' || [ "$(wc -w <<<"$STATES")" -lt 2 ]; then
+        post_alert critical "$c" ConnectorState "$STATES" \
+          "Debezium connector ${c} is not running (connector and tasks: ${STATES}): changes in the platform no longer reach the validation. The kafka-connect-restart cronjob restarts it; if it stays down longer than the state TTL (${TTL_SECONDS}s) the validation system must be restarted."
+      else
+        post_alert normal "$c" ConnectorState "$STATES" \
+          "Debezium connector ${c} is running."
+      fi
+    done
 ---
 apiVersion: batch/v1
 kind: CronJob
@@ -237,6 +559,10 @@ spec:
                 value: {{ .Values.alerta.alertEnvironment | default "Development" | quote }}
               - name: FALLBACK_TTL
                 value: {{ .Values.flink.ttl | quote }}
+              - name: FLINK_HOST
+                value: "flink-jobmanager-rest"
+              - name: FLINK_PORT
+                value: "8081"
               - name: ALERTA_API_KEY
                 valueFrom:
                   secretKeyRef:
