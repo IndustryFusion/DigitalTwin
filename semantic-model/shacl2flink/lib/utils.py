@@ -665,13 +665,15 @@ def create_statementset(object_name, table_object_names,
 
 
 def create_kafka_topic(object_name, topic_name, kafka_topic_object_label,
-                       config, partitions=1, replicas=1):
+                       config, partitions=1, replicas=1, annotations=None):
     yaml_kafka_topics = {}
     yaml_kafka_topics['apiVersion'] = 'kafka.strimzi.io/v1beta2'
     yaml_kafka_topics['kind'] = 'KafkaTopic'
 
     metadata = {}
     metadata['name'] = object_name
+    if annotations:
+        metadata['annotations'] = dict(annotations)
     labels = {}
     metadata['labels'] = labels
     labels[kafka_topic_object_label[0]] = kafka_topic_object_label[1]

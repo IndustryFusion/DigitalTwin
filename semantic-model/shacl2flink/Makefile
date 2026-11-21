@@ -188,6 +188,17 @@ flink-deploy: clean
 	kubectl -n $(NAMESPACE) -l "app.kubernetes.io/instance"="kafka-connect" delete pod
 
 
+# Redeploy the validation so that afterwards exactly the alerts of the
+# constraints violated now are open: undeploy it and wait until its topics are
+# deleted, close the open SHACL alerts, restart Core Services without state,
+# deploy it and wait for a complete snapshot (flink_redeploy.sh). The KMS is
+# chosen as for flink-deploy; the sub-makes get it through MAKEFLAGS. The
+# arguments are those a failure message tells to run it again with.
+REDEPLOY_ARGS = $(strip KMS=$(KMS) $(foreach v,SHACL KNOWLEDGE MODEL,$(if $(filter command line,$(origin $(v))),$(v)=$($(v)))))
+flink-redeploy:
+	NAMESPACE=$(NAMESPACE) MAKE="$(MAKE)" REDEPLOY_COMMAND="make flink-redeploy $(REDEPLOY_ARGS)" ./flink_redeploy.sh
+
+
 flink-undeploy:
 	@echo undeploy helm package
 	cd ../../helm && ./helmfile -f helmfile-shacl.yaml destroy
@@ -224,6 +235,10 @@ test-full-flink-deployment:
 # together they say not just "the SQL is right" but "deleting an entity closes
 # its alert", which is the property operators depend on.
 #
+# test-shacl-flink-redeploy runs last: it redeploys the validation with
+# `make flink-redeploy` and checks the alerts afterwards, so it needs the
+# deployment the other two used and leaves one behind for the teardown.
+#
 # The teardown must run even when the tests fail, otherwise a red build leaves
 # a statementset behind and the next run inherits it.
 test-flink-e2e: E2E_KMS := $(CURDIR)/tests/e2e-kms
@@ -232,7 +247,8 @@ test-flink-e2e:
 	$(MAKE) flink-deploy SHACL=$(E2E_KMS)/shacl.ttl KNOWLEDGE=$(E2E_KMS)/knowledge.ttl \
 		MODEL=$(E2E_KMS)/model-instance.jsonld
 	ln -fs ../../../../test/bats/lib tests/bats/lib || echo 'Bats framework not installed'
-	( cd tests/bats && bats test-shacl-flink-e2e test-shacl-flink-scorpio-e2e ); rc=$$?; \
+	( cd tests/bats && E2E_KMS=$(E2E_KMS) bats test-shacl-flink-e2e test-shacl-flink-scorpio-e2e \
+		test-shacl-flink-redeploy ); rc=$$?; \
 		rm -f tests/bats/lib; \
 		$(MAKE) flink-undeploy SHACL=$(E2E_KMS)/shacl.ttl KNOWLEDGE=$(E2E_KMS)/knowledge.ttl \
 			MODEL=$(E2E_KMS)/model-instance.jsonld; \
@@ -306,4 +322,4 @@ fuseki-undeploy-kms:
 clean:
 	@rm -rf $(OUTPUTDIR) merged-kms
 
-.PHONY: clean fuseki-deploy-kms fuseki-undeploy-kms test-flink-e2e test-opcua-shapes test-pyshacl-compare
+.PHONY: clean flink-redeploy fuseki-deploy-kms fuseki-undeploy-kms test-flink-e2e test-opcua-shapes test-pyshacl-compare
