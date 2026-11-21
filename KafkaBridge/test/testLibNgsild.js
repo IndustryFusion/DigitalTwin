@@ -367,6 +367,22 @@ describe('Test createEntities', function () {
     result.should.equal('created');
     revert();
   });
+  it('Should send the given headers, like the token of the updates bridge', async function () {
+    const entities = [{ id: 'urn:a', '@context': 'https://example.com/context.jsonld' }];
+    const rest = {
+      postBody: function (obj) {
+        assert.deepEqual(obj.options.headers, { Authorization: 'Bearer token', 'Content-Type': 'application/ld+json' });
+        obj.options.path.should.equal('/ngsi-ld/v1/entityOperations/create');
+        assert.deepEqual(obj.body, entities);
+        return 'created';
+      }
+    };
+    const revert = ToTest.__set__('Logger', function () { return logger; });
+    ToTest.__set__('Rest', function () { return rest; });
+    const ngsild = new ToTest(config);
+    ngsild.createEntities(entities, { headers: { Authorization: 'Bearer token' } }).should.equal('created');
+    revert();
+  });
 });
 describe('Test replaceEntities', function () {
   it('Should use correct options', async function () {

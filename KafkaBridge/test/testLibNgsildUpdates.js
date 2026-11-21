@@ -374,8 +374,8 @@ describe('Test libNgsildUpdates', function () {
     batchMergeCalled.should.equal(true);
     revert();
   });
-  it('Should post body with correct path and token for nonOverwrite upsert', async function () {
-    let replaceEntitiyCalled = false;
+  it('Should create with the token for a nonOverwrite upsert, not upsert', async function () {
+    let createEntitiesCalled = false;
     const config = {
       ngsildUpdates: {
         clientSecretVariable: 'CLIENT_SECRET',
@@ -410,14 +410,16 @@ describe('Test libNgsildUpdates', function () {
     };
     const Ngsild = function () {
       return {
-        replaceEntities: function ([entity], isReplace, { headers }) {
-          replaceEntitiyCalled = true;
+        createEntities: function ([entity], { headers }) {
+          createEntitiesCalled = true;
           assert.deepEqual(entity, { id: 'id', type: 'type' });
-          isReplace.should.equal(false);
           assert.deepEqual(headers, expHeaders);
           return {
-            statusCode: 204
+            statusCode: 201
           };
+        },
+        replaceEntities: function () {
+          throw new Error('an upsert overwrites');
         }
       };
     };
@@ -447,7 +449,7 @@ describe('Test libNgsildUpdates', function () {
 
     const ngsildUpdates = new ToTest(config);
     await ngsildUpdates.ngsildUpdates(body);
-    replaceEntitiyCalled.should.equal(true);
+    createEntitiesCalled.should.equal(true);
     revert();
   });
   it('Should post body with string entity', async function () {
@@ -949,6 +951,138 @@ describe('Test libNgsildUpdates refusals inside a 207 of a batch merge', functio
     (await run({ statusCode: 204, body: null })).length.should.equal(0);
   });
 });
+describe('Test libNgsildUpdates upsert without overwrite', function () {
+  // NGSI-LD's upsert with options=update overwrites (CIM 009 5.6.8, 5.6.2), so
+  // an upsert without overwrite is a batch create (5.6.7) of the new entities
+  // and a batch update with noOverwrite (5.6.9) of the existing ones.
+  const ALREADY = { type: 'https://uri.etsi.org/ngsi-ld/errors/AlreadyExists', title: 'Already exists.', status: 409 };
+  const BAD = { type: 'https://uri.etsi.org/ngsi-ld/errors/BadRequestData', title: 'Bad Request Data.', status: 400 };
+  const NOT_OVERWRITING = { type: 'https://uri.etsi.org/ngsi-ld/errors/InvalidRequest', title: 'Invalid request.', detail: 'Not Overwriting', status: 400 };
+  const entities = [{ id: 'urn:a', type: 'T' }, { id: 'urn:b', type: 'T' }, { id: 'urn:c', type: 'T' }];
+  const run = async function (createAnswer, updateAnswer, overwriteOrReplace = false) {
+    const calls = { create: [], update: [], replace: [], errors: [] };
+    const ToTest = rewire('../lib/ngsildUpdates.js');
+    ToTest.__set__('Logger', function () {
+      return { debug: function () {}, error: function (message) { calls.errors.push(message); } };
+    });
+    ToTest.__set__('process', { env: { CLIENT_SECRET: 'client_secret' } });
+    ToTest.__set__('setInterval', function () {});
+    ToTest.__set__('addSyncOnAttribute', addSyncOnAttribute);
+    ToTest.__set__('Keycloak', function () {
+      return { grantManager: { obtainFromClientCredentials: async () => ({ access_token: { token: 'token' } }) } };
+    });
+    ToTest.__set__('NgsiLd', function () {
+      return {
+        createEntities: async function (entities, { headers }) {
+          calls.create.push({ entities, headers: { ...headers } });
+          return createAnswer;
+        },
+        updateEntities: async function (entities, isOverwrite, { headers }) {
+          calls.update.push({ entities, isOverwrite, headers: { ...headers } });
+          return updateAnswer;
+        },
+        replaceEntities: async function (entities, isReplace) {
+          calls.replace.push({ entities, isReplace });
+          return { statusCode: 204 };
+        }
+      };
+    });
+    const config = {
+      ngsildUpdates: { clientSecretVariable: 'CLIENT_SECRET', refreshIntervalInSeconds: 200 },
+      keycloak: { ngsildUpdatesAuthService: {} },
+      bridgeCommon: { kafkaSyncOnAttribute: 'kafkaSyncOn' }
+    };
+    const ngsildUpdates = new ToTest(config);
+    await ngsildUpdates.ngsildUpdates({ op: 'upsert', entities: JSON.stringify(entities), overwriteOrReplace });
+    return calls;
+  };
+
+  it('Should only create when every entity is new', async function () {
+    const calls = await run({ statusCode: 201, body: ['urn:a', 'urn:b', 'urn:c'] });
+    calls.create.length.should.equal(1);
+    calls.create[0].entities.map(e => e.id).should.deep.equal(['urn:a', 'urn:b', 'urn:c']);
+    calls.create[0].headers.Authorization.should.equal('Bearer token');
+    calls.update.length.should.equal(0);
+    calls.replace.length.should.equal(0);
+    calls.errors.length.should.equal(0);
+  });
+
+  it('Should update the existing entities with noOverwrite, from a standard 207', async function () {
+    const calls = await run({
+      statusCode: 207,
+      body: { success: ['urn:b'], errors: [{ entityId: 'urn:a', error: ALREADY }, { entityId: 'urn:c', error: ALREADY }] }
+    }, { statusCode: 204 });
+    calls.update.length.should.equal(1);
+    calls.update[0].entities.map(e => e.id).should.deep.equal(['urn:a', 'urn:c']);
+    calls.update[0].isOverwrite.should.equal(false);
+    calls.update[0].headers.Authorization.should.equal('Bearer token');
+    calls.errors.length.should.equal(0);
+  });
+
+  it('Should update the existing entities from the fork\'s 409 with id and ProblemDetails', async function () {
+    const calls = await run({
+      statusCode: 409,
+      body: { errors: ['urn:a', 'urn:b', 'urn:c'].map(id => ({ id, ProblemDetails: ALREADY, type: 'Create' })) }
+    }, { statusCode: 204 });
+    calls.update[0].entities.map(e => e.id).should.deep.equal(['urn:a', 'urn:b', 'urn:c']);
+    calls.errors.length.should.equal(0);
+  });
+
+  it('Should log an entity the create refused for another reason and not update it', async function () {
+    const calls = await run({
+      statusCode: 400,
+      body: { errors: [{ id: 'urn:a', ProblemDetails: ALREADY }, { id: 'urn:b', ProblemDetails: BAD }] }
+    }, { statusCode: 204 });
+    calls.update[0].entities.map(e => e.id).should.deep.equal(['urn:a']);
+    calls.errors.length.should.equal(1);
+    calls.errors[0].should.match(/^Cannot upsert entity:.*urn:b.*BadRequestData.* and status code 400$/);
+  });
+
+  it('Should not update when the create refused no entity as existing', async function () {
+    const calls = await run({ statusCode: 207, body: { success: ['urn:a', 'urn:c'], errors: [{ entityId: 'urn:b', error: BAD }] } });
+    calls.update.length.should.equal(0);
+    calls.errors.length.should.equal(1);
+  });
+
+  it('Should log a create answer without a list of errors as before', async function () {
+    const calls = await run({ statusCode: 400, body: { type: 'https://uri.etsi.org/ngsi-ld/errors/BadRequestData' } });
+    calls.update.length.should.equal(0);
+    calls.errors.length.should.equal(1);
+    calls.errors[0].should.equal('Cannot upsert entity:{"type":"https://uri.etsi.org/ngsi-ld/errors/BadRequestData"} and status code 400');
+  });
+
+  it('Should log the entities the update refused, in a 207 and the fork\'s 404', async function () {
+    const existing = { statusCode: 409, body: { errors: [{ id: 'urn:a', ProblemDetails: ALREADY }, { id: 'urn:b', ProblemDetails: ALREADY }] } };
+    let calls = await run(existing, { statusCode: 207, body: { success: ['urn:a'], errors: [{ entityId: 'urn:b', error: BAD }] } });
+    calls.errors.length.should.equal(1);
+    calls.errors[0].should.include('urn:b');
+    calls.errors[0].should.include('status code 207');
+    calls = await run(existing, { statusCode: 404, body: { errors: [{ id: 'urn:a', ProblemDetails: BAD }] } });
+    calls.errors.length.should.equal(1);
+    calls.errors[0].should.include('urn:a');
+  });
+
+  it('Should not log the fork\'s refusal of an update with nothing to append', async function () {
+    const existing = { statusCode: 409, body: { errors: [{ id: 'urn:a', ProblemDetails: ALREADY }] } };
+    const calls = await run(existing, { statusCode: 404, body: { errors: [{ id: 'urn:a', ProblemDetails: NOT_OVERWRITING, type: 'Append' }] } });
+    calls.update.length.should.equal(1);
+    calls.errors.length.should.equal(0);
+  });
+
+  it('Should log an update answer without a list of errors', async function () {
+    const existing = { statusCode: 207, body: { errors: [{ entityId: 'urn:a', error: ALREADY }] } };
+    const calls = await run(existing, { statusCode: 500, body: null });
+    calls.errors.length.should.equal(1);
+    calls.errors[0].should.equal('Cannot upsert entity:null and status code 500');
+  });
+
+  it('Should replace with an upsert when overwriting', async function () {
+    const calls = await run(undefined, undefined, true);
+    calls.create.length.should.equal(0);
+    calls.replace.length.should.equal(1);
+    calls.replace[0].isReplace.should.equal(true);
+  });
+});
 describe('Test batchErrors', function () {
   const batchErrors = ToTest.__get__('batchErrors');
   it('Should read both member forms', function () {
@@ -963,5 +1097,15 @@ describe('Test batchErrors', function () {
   });
   it('Should keep an entry which is no object as the error', function () {
     assert.deepEqual(batchErrors({ errors: ['oops'] }), [{ entityId: undefined, error: 'oops' }]);
+  });
+  it('Should tell AlreadyExists and the fork\'s "Not Overwriting" only from an error object', function () {
+    const isAlreadyExists = ToTest.__get__('isAlreadyExists');
+    const isNothingToAppend = ToTest.__get__('isNothingToAppend');
+    isAlreadyExists({ error: { type: 'https://uri.etsi.org/ngsi-ld/errors/AlreadyExists' } }).should.equal(true);
+    isAlreadyExists({ error: 'https://uri.etsi.org/ngsi-ld/errors/AlreadyExists' }).should.equal(false);
+    isAlreadyExists({ error: null }).should.equal(false);
+    isNothingToAppend({ error: { detail: 'Not Overwriting' } }).should.equal(true);
+    isNothingToAppend({ error: { detail: 'Not Found' } }).should.equal(false);
+    isNothingToAppend({ error: undefined }).should.equal(false);
   });
 });

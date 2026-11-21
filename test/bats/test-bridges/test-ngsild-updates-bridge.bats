@@ -136,10 +136,6 @@ cat << EOF | tr -d '\n' > ${UPSERT_FILTER_NON_OVERWRITE}
           "type": "Property",
           "datasetId": "https://example.com/source1",
           "value": "0.1"
-          },
-          {
-            "type": "Property",
-            "value": "0.9"
           }
         ],
         "https://industry-fusion.com/types/v0.9/strength2": {
@@ -776,10 +772,11 @@ teardown(){
     [ "$status" -eq 0 ]
 }
 
-# The bridge sends an upsert without overwriteOrReplace as an upsert with options=update, and this test expects
-# existing values to be kept. NGSI-LD's options=update overwrites them (CIM 009 5.6.8, 5.6.2); keeping them is the
-# fork's transitional deviation T3 of contracts/context-broker, and relying on it is platform deviation P3. This test
-# changes with P3's fix, before the platform moves to upstream 6.0.2.
+# An upsert without overwriteOrReplace keeps what exists, by the standard's meaning of the operations the bridge
+# sends: a batch create (CIM 009 5.6.7) and, for the entities which exist, a batch update with options=noOverwrite
+# (5.6.9, 5.6.3). Existing attributes and instances are left untouched, new attributes are appended. The input names
+# no new instance of an existing attribute: the standard appends it, the pinned fork doesn't, so leaving it out lets
+# the expectation hold on both.
 @test "verify ngsild-update bridge is upserting and non-overwriting ngsi-ld entitiy" {
     $SKIP
     password=$(get_password)

@@ -120,6 +120,26 @@ const batchErrors = function (body) {
   });
 };
 
+const ALREADY_EXISTS = 'https://uri.etsi.org/ngsi-ld/errors/AlreadyExists';
+
+/**
+ * True for a refusal of a batch create because the entity exists already
+ * (CIM 009 clause 5.6.1, error type AlreadyExists).
+ */
+const isAlreadyExists = function (refused) {
+  return refused.error !== null && typeof refused.error === 'object' && refused.error.type === ALREADY_EXISTS;
+};
+
+/**
+ * True for the pinned fork's refusal of a batch update with noOverwrite of an
+ * entity of which no attribute is new: it answers "Not Overwriting" where
+ * NGSI-LD leaves the existing attributes untouched and succeeds (CIM 009
+ * clause 5.6.3). Nothing was to be written, which is what the caller asked for.
+ */
+const isNothingToAppend = function (refused) {
+  return refused.error !== null && typeof refused.error === 'object' && refused.error.detail === 'Not Overwriting';
+};
+
 module.exports = function NgsildUpdates (conf) {
   const config = conf;
   const ngsild = new NgsiLd(config);
@@ -142,6 +162,57 @@ module.exports = function NgsildUpdates (conf) {
     setInterval(this.updateToken, refreshIntervalInMs);
   }
   this.updateToken();
+
+  /**
+   * Creates the entities which don't exist and appends to the existing ones
+   * only the attributes they don't have, leaving every existing attribute
+   * untouched. An upsert with options=update would overwrite them (CIM 009
+   * clauses 5.6.8 and 5.6.2), so the standard operations meaning "keep" are
+   * used: a batch create (clause 5.6.7), which refuses the existing entities
+   * with AlreadyExists, and for those a batch update with noOverwrite
+   * (clauses 5.6.9, 6.16.3.1), which appends what is new (clause 5.6.3).
+   * Every other refusal is logged, like any refused request.
+   */
+  const upsertWithoutOverwrite = async function (entities) {
+    let result = await ngsild.createEntities(entities, { headers });
+    if (result.statusCode === 201) {
+      return;
+    }
+    // 207 as NGSI-LD states it; the fork answers 409 or 400 when none is created
+    let refused = batchErrors(result.body);
+    if (refused === null) {
+      logger.error('Cannot upsert entity:' + JSON.stringify(result.body) + ' and status code ' + result.statusCode);
+      return;
+    }
+    const existing = new Set();
+    refused.forEach(function (entry) {
+      if (isAlreadyExists(entry)) {
+        existing.add(entry.entityId);
+      } else {
+        logger.error('Cannot upsert entity:' + JSON.stringify(entry) + ' and status code ' + result.statusCode);
+      }
+    });
+    const toUpdate = entities.filter(entity => existing.has(entity.id));
+    if (toUpdate.length === 0) {
+      return;
+    }
+    result = await ngsild.updateEntities(toUpdate, false, { headers });
+    if (result.statusCode === 204) {
+      return;
+    }
+    refused = batchErrors(result.body);
+    if (refused === null) {
+      logger.error('Cannot upsert entity:' + JSON.stringify(result.body) + ' and status code ' + result.statusCode);
+      return;
+    }
+    refused.forEach(function (entry) {
+      if (isNothingToAppend(entry)) {
+        logger.debug('Nothing to append to ' + entry.entityId);
+      } else {
+        logger.error('Cannot upsert entity:' + JSON.stringify(entry) + ' and status code ' + result.statusCode);
+      }
+    });
+  };
 
   /**
    *
@@ -244,9 +315,13 @@ module.exports = function NgsildUpdates (conf) {
       } else if (op === 'upsert') {
         // in this case, entity will be created if not existing
         logger.debug('Upserting: ' + JSON.stringify(entities));
-        result = await ngsild.replaceEntities(entities, overwriteOrReplace, { headers });
-        if (result.statusCode !== 204 && result.statusCode !== 201) {
-          logger.error('Cannot upsert entity:' + JSON.stringify(result.body) + ' and status code ' + result.statusCode); // throw no error, log it and igonore it, repeating would probalby not solve it
+        if (overwriteOrReplace) {
+          result = await ngsild.replaceEntities(entities, overwriteOrReplace, { headers });
+          if (result.statusCode !== 204 && result.statusCode !== 201) {
+            logger.error('Cannot upsert entity:' + JSON.stringify(result.body) + ' and status code ' + result.statusCode); // throw no error, log it and igonore it, repeating would probalby not solve it
+          }
+        } else {
+          await upsertWithoutOverwrite(entities);
         }
       }
     } catch (e) {

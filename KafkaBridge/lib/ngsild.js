@@ -315,8 +315,9 @@ function fiwareApi (conf) {
   /**
    * Create Entities defined by array
    * @param {array[Object]} entities- Array of entities to create
+   * @param {array[Object]} headers - additional headers (optional)
    */
-  this.createEntities = function (entities) {
+  this.createEntities = function (entities, { headers } = {}) {
     const data = entities;
     let contentType = 'application/json';
     const hasJsonLdContext = entities.some(entity => entity && entity['@context'] !== undefined);
@@ -325,15 +326,14 @@ function fiwareApi (conf) {
       contentType = 'application/ld+json';
     }
 
-    // return new Promise(function(resolve, reject) {
+    headers = headers || {};
+    headers['Content-Type'] = contentType;
     const options = {
       hostname: config.ngsildServer.hostname,
       protocol: config.ngsildServer.protocol,
       port: config.ngsildServer.port,
       path: '/ngsi-ld/v1/entityOperations/create',
-      headers: {
-        'Content-Type': contentType
-      },
+      headers: headers,
       method: 'POST'
     };
     return rest.postBody({ options, body: data });
