@@ -861,3 +861,107 @@ describe('Test addSyncOnAttribute', function () {
     revert();
   });
 });
+describe('Test libNgsildUpdates refusals inside a 207 of a batch merge', function () {
+  // NGSI-LD reports the entities a batch merge refused inside a 207 as a
+  // BatchOperationResult (CIM 009 6.31.3.1, 5.2.16, 5.2.17). Each of them must
+  // be logged as refused, as a 400 is, so the OPC UA chain test sees it.
+  const SB001 = { type: 'https://uri.etsi.org/ngsi-ld/errors/InvalidRequest', title: 'Invalid request.', detail: 'SB001', status: 400 };
+  const run = async function (answer) {
+    const errors = [];
+    const ToTest = rewire('../lib/ngsildUpdates.js');
+    ToTest.__set__('Logger', function () {
+      return { debug: function () {}, error: function (message) { errors.push(message); } };
+    });
+    ToTest.__set__('process', { env: { CLIENT_SECRET: 'client_secret' } });
+    ToTest.__set__('setInterval', function () {});
+    ToTest.__set__('addSyncOnAttribute', addSyncOnAttribute);
+    ToTest.__set__('Keycloak', function () {
+      return { grantManager: { obtainFromClientCredentials: async () => ({ access_token: { token: 'token' } }) } };
+    });
+    ToTest.__set__('NgsiLd', function () {
+      return { batchMerge: async () => answer };
+    });
+    const config = {
+      ngsildUpdates: { clientSecretVariable: 'CLIENT_SECRET', refreshIntervalInSeconds: 200 },
+      keycloak: { ngsildUpdatesAuthService: {} },
+      bridgeCommon: { kafkaSyncOnAttribute: 'kafkaSyncOn' }
+    };
+    const ngsildUpdates = new ToTest(config);
+    await ngsildUpdates.ngsildUpdates({
+      op: 'update',
+      overwriteOrReplace: true,
+      entities: [{ id: 'urn:a', 'https://example.com/p': { type: 'Property', value: 1 } },
+        { id: 'urn:b', 'https://example.com/p': { type: 'Property', value: 2 } }]
+    });
+    return errors;
+  };
+
+  it('Should log an entity refused in a 207 with entityId and error, the standard form', async function () {
+    const errors = await run({ statusCode: 207, body: { success: ['urn:b'], errors: [{ entityId: 'urn:a', error: SB001 }] } });
+    errors.length.should.equal(1);
+    errors[0].should.include('urn:a');
+    errors[0].should.include('SB001');
+    errors[0].should.not.include('urn:b');
+    errors[0].should.include('status code 207');
+  });
+
+  it('Should log an entity refused in a 207 with id and ProblemDetails, the fork form', async function () {
+    const errors = await run({ statusCode: 207, body: { success: ['urn:b'], errors: [{ id: 'urn:a', ProblemDetails: SB001, type: 'Merge' }] } });
+    errors.length.should.equal(1);
+    const logged = JSON.parse(errors[0].replace('Entity cannot run merge:', '').replace(' and status code 207', ''));
+    assert.deepEqual(logged, { entityId: 'urn:a', error: SB001 });
+  });
+
+  it('Should log every refused entity of a 207 on its own', async function () {
+    const errors = await run({
+      statusCode: 207,
+      body: { success: [], errors: [{ entityId: 'urn:a', error: SB001 }, { entityId: 'urn:b', error: SB001 }] }
+    });
+    errors.length.should.equal(2);
+    errors[0].should.include('urn:a');
+    errors[1].should.include('urn:b');
+  });
+
+  it('Should count a 207 which reports every entity as merged as success', async function () {
+    (await run({ statusCode: 207, body: { success: ['urn:a', 'urn:b'], errors: [] } })).length.should.equal(0);
+  });
+
+  it('Should log a 207 without a list of errors', async function () {
+    // errors is mandatory in a BatchOperationResult (CIM 009 5.2.16)
+    for (const body of [{ success: ['urn:a', 'urn:b'] }, null, { errors: 'x' }]) {
+      const errors = await run({ statusCode: 207, body });
+      errors.length.should.equal(1);
+      errors[0].should.equal('Entity cannot run merge: a 207 without a list of errors:' + JSON.stringify(body) + ' and status code 207');
+    }
+  });
+
+  it('Should log an entity a 207 reports neither merged nor refused', async function () {
+    const errors = await run({ statusCode: 207, body: { success: ['urn:b'], errors: [] } });
+    errors.length.should.equal(1);
+    errors[0].should.equal('Entity cannot run merge: urn:a is not reported as merged and status code 207');
+  });
+
+  it('Should log a 400 and a 204 as before', async function () {
+    const body = { errors: [{ id: 'urn:a', ProblemDetails: SB001, type: 'Merge' }] };
+    const errors = await run({ statusCode: 400, body });
+    errors.length.should.equal(1);
+    errors[0].should.equal('Entity cannot run merge:' + JSON.stringify(body) + ' and status code 400');
+    (await run({ statusCode: 204, body: null })).length.should.equal(0);
+  });
+});
+describe('Test batchErrors', function () {
+  const batchErrors = ToTest.__get__('batchErrors');
+  it('Should read both member forms', function () {
+    assert.deepEqual(batchErrors({ errors: [{ entityId: 'urn:a', error: { status: 400 } }, { id: 'urn:b', ProblemDetails: { status: 409 }, type: 'Create' }] }),
+      [{ entityId: 'urn:a', error: { status: 400 } }, { entityId: 'urn:b', error: { status: 409 } }]);
+  });
+  it('Should return null without a list of errors', function () {
+    (batchErrors(null) === null).should.equal(true);
+    (batchErrors('text') === null).should.equal(true);
+    (batchErrors({ success: ['urn:a'] }) === null).should.equal(true);
+    (batchErrors({ errors: 'x' }) === null).should.equal(true);
+  });
+  it('Should keep an entry which is no object as the error', function () {
+    assert.deepEqual(batchErrors({ errors: ['oops'] }), [{ entityId: undefined, error: 'oops' }]);
+  });
+});

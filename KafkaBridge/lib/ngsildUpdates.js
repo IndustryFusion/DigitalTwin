@@ -97,6 +97,29 @@ const needsAttrsRoute = function (entity) {
   });
 };
 
+/**
+ * The entities a batch operation refused, from the body of its answer, as
+ * [{ entityId, error }], or null when the body holds no list of errors.
+ * NGSI-LD reports them in a BatchOperationResult (CIM 009 clauses 5.2.16,
+ * 5.2.17) as {"errors": [{"entityId": id, "error": ProblemDetails}]}; the
+ * pinned Scorpio fork names the members "id" and "ProblemDetails", so both
+ * forms are read.
+ */
+const batchErrors = function (body) {
+  if (body === null || typeof body !== 'object' || !Array.isArray(body.errors)) {
+    return null;
+  }
+  return body.errors.map(function (entry) {
+    if (entry === null || typeof entry !== 'object') {
+      return { entityId: undefined, error: entry };
+    }
+    return {
+      entityId: entry.entityId !== undefined ? entry.entityId : entry.id,
+      error: entry.error !== undefined ? entry.error : entry.ProblemDetails
+    };
+  });
+};
+
 module.exports = function NgsildUpdates (conf) {
   const config = conf;
   const ngsild = new NgsiLd(config);
@@ -180,7 +203,27 @@ module.exports = function NgsildUpdates (conf) {
           const unmergeable = entities.filter(needsAttrsRoute);
           if (mergeable.length > 0) {
             result = await ngsild.batchMerge(mergeable, { headers });
-            if (result.statusCode !== 204 && result.statusCode !== 207) {
+            if (result.statusCode === 207) {
+              // A 207 is a partial success: the BatchOperationResult lists
+              // the refused entities under errors (CIM 009 6.31.3.1), each
+              // logged like any other refused merge. The list is mandatory
+              // (5.2.16), so a 207 without one is logged as a refusal too,
+              // and so is every entity reported neither merged nor refused.
+              const refusedList = batchErrors(result.body);
+              if (refusedList === null) {
+                logger.error('Entity cannot run merge: a 207 without a list of errors:' + JSON.stringify(result.body) + ' and status code ' + result.statusCode);
+              } else {
+                refusedList.forEach(function (refused) {
+                  logger.error('Entity cannot run merge:' + JSON.stringify(refused) + ' and status code ' + result.statusCode);
+                });
+                if (Array.isArray(result.body.success)) {
+                  const reported = new Set(result.body.success.concat(refusedList.map(refused => refused.entityId)));
+                  mergeable.filter(entity => !reported.has(entity.id)).forEach(function (entity) {
+                    logger.error('Entity cannot run merge: ' + entity.id + ' is not reported as merged and status code ' + result.statusCode);
+                  });
+                }
+              }
+            } else if (result.statusCode !== 204) {
               logger.error('Entity cannot run merge:' + JSON.stringify(result.body) + ' and status code ' + result.statusCode); // throw no error, log it and ignore it, repeating would probably not solve it
             }
           }
