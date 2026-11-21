@@ -1,0 +1,26 @@
+@prefix iffBaseEntities: <https://industryfusion.github.io/contexts/example/v0/base_entities/> .
+@prefix ngsild: <https://uri.etsi.org/ngsi-ld/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# sh:hasValue with a number (#965). A number required by sh:hasValue is
+# compared with a value whose text is a number as a number, so 80, 80.0 and a
+# declared {"@value": 80, "@type": "xsd:double"} all equal both 80.0 (an
+# xsd:decimal in Turtle) and 80 (an xsd:integer). A string is read by its text
+# (#958): "80.0" is the number 80.0. A text that is no number is compared as
+# text. model1.jsonld holds one entity per value; its id says which.
+
+<https://industryfusion.github.io/contexts/example/v0/base_shacl/HasValueShape> a sh:NodeShape ;
+    sh:targetClass iffBaseEntities:Filter ;
+    sh:property [
+        sh:path iffBaseEntities:hasDecimalValue ;
+        sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasValue ;
+                      sh:hasValue 80.0 ;
+                      sh:nodeKind sh:Literal ] ] ,
+    [
+        sh:path iffBaseEntities:hasIntegerValue ;
+        sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasValue ;
+                      sh:hasValue 80 ;
+                      sh:nodeKind sh:Literal ] ] .

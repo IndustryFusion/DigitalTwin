@@ -359,6 +359,13 @@ sh:hasValue
     ] .
 ```
 
+A number is compared as a number: `80`, `80.0` and
+`{"@value": 80, "@type": "xsd:double"}` all satisfy `sh:hasValue 80.0` and
+`sh:hasValue 80`, and so does the string `"80.0"`, which is read by its text
+as for `sh:datatype`. A conformant SHACL engine compares RDF terms instead,
+where `80` and `80.0` are different values. A string constant such as
+`sh:hasValue "1.0"` is compared as text.
+
 The empty list `sh:hasValue ()` works too, and means the list must be empty.
 It is one arm of every array-valued OPC UA variable, beside "a list of the
 right datatype".

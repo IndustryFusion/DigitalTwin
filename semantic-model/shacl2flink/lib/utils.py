@@ -130,6 +130,8 @@ constraint_table = [
     {"ins": "STRING"},
     {"datatypes": "STRING"},
     {"hasValue": "STRING"},
+    # The datatype of the sh:hasValue constant; NULL for none (#965).
+    {"hasValueType": "STRING"},
     {"eventName": "STRING"},
     # sh:message, when the shape gave one. It replaces the generated
     # explanation at publish time; NULL means "use the generated one".
@@ -1088,6 +1090,7 @@ def init_constraint_check():
     check["ins"] = None
     check["datatypes"] = None
     check["hasValue"] = None
+    check["hasValueType"] = None
     check["eventName"] = None
     check["message"] = None
     return check

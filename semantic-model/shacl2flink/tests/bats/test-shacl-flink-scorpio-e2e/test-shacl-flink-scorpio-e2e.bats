@@ -127,6 +127,29 @@ NUMBER_SILENT=(
     'integer-string-digits|hasE2EInteger|"80"'
 )
 
+# sh:hasValue with a number (#965), one entity per value written:
+# name|value as written|attributes that must alert|attributes that must not.
+# The entity holds the value on every attribute it lists. The attributes
+# require hasE2EDecimalValue 80.0 (an xsd:decimal), hasE2EIntegerValue 80,
+# hasE2EFractionValue 80.5 and hasE2EStringValue "1.0" (a string). A plain
+# number is not written to hasE2EStringValue: a string constant against a plain
+# number is a divergence #965 leaves open.
+HASVALUE_CONSTRAINT=HasValueConstraintComponent
+HASVALUE_TYPE=${E2E}/E2EHasValueMachine
+HASVALUE_CASES=(
+    'plain-whole|80|hasE2EFractionValue|hasE2EDecimalValue hasE2EIntegerValue'
+    'plain-whole-dot|80.0|hasE2EFractionValue|hasE2EDecimalValue hasE2EIntegerValue'
+    "declared-double-whole|{\"@value\":80,\"@type\":\"${XSD}double\"}|hasE2EFractionValue|hasE2EDecimalValue hasE2EIntegerValue"
+    "declared-double-fraction|{\"@value\":80.5,\"@type\":\"${XSD}double\"}|hasE2EDecimalValue hasE2EIntegerValue|hasE2EFractionValue"
+    "declared-integer|{\"@value\":80,\"@type\":\"${XSD}integer\"}|hasE2EFractionValue|hasE2EDecimalValue hasE2EIntegerValue"
+    'plain-fraction|80.5|hasE2EDecimalValue hasE2EIntegerValue|hasE2EFractionValue'
+    'string-dot|"80.0"|hasE2EFractionValue|hasE2EDecimalValue hasE2EIntegerValue'
+    'string-digits|"80"|hasE2EFractionValue|hasE2EDecimalValue hasE2EIntegerValue'
+    'string-text|"eighty"|hasE2EDecimalValue hasE2EIntegerValue hasE2EFractionValue|'
+    'string-one-dot|"1.0"||hasE2EStringValue'
+    'string-one|"1"|hasE2EStringValue|'
+)
+
 # On an idle cluster an alert appears about five seconds after the create and
 # closes about five seconds after the delete. The timeout is set two orders of
 # magnitude above that so a loaded runner cannot fail the suite, while a real
@@ -176,6 +199,9 @@ teardown() {
     local spec
     for spec in "${NUMBER_LOUD[@]}" "${NUMBER_SILENT[@]}"; do
         delete_entity "urn:e2e-number-${spec%%|*}:${RUN_ID}" >/dev/null 2>&1 || true
+    done
+    for spec in "${HASVALUE_CASES[@]}"; do
+        delete_entity "urn:e2e-hasvalue-${spec%%|*}:${RUN_ID}" >/dev/null 2>&1 || true
     done
 }
 
@@ -541,5 +567,37 @@ assert_no_alert() {
     for spec in "${NUMBER_SILENT[@]}"; do
         IFS='|' read -r name attr value <<< "${spec}"
         assert_no_alert "urn:e2e-number-${name}:${RUN_ID}" "${DATATYPE_CONSTRAINT}"
+    done
+}
+
+@test "a number required by sh:hasValue is compared as a number, through scorpio and the bridge" {
+    # The sh:hasValue scenarios of shacl2flink/literal-datatypes (#965) where
+    # only Flink can show them: the bridge writes a plain 80.0 as 80 and passes
+    # no type on for a plain number, so comparing texts alerted on Flink where
+    # SQLite did not. Every entity is created first; then every attribute that
+    # must alert is waited for, and only after that the ones that must not are
+    # checked, so that "no alert" means "checked and found equal" rather than
+    # "not processed yet".
+    local name value loud silent attr members code
+    for spec in "${HASVALUE_CASES[@]}"; do
+        IFS='|' read -r name value loud silent <<< "${spec}"
+        members=""
+        for attr in ${loud} ${silent}; do
+            members="${members:+${members},}\"${E2E}/${attr}\":{\"type\":\"Property\",\"value\":${value}}"
+        done
+        code=$(create_entity "urn:e2e-hasvalue-${name}:${RUN_ID}" "${HASVALUE_TYPE}" "${members}")
+        [ "${code}" = "201" ] || { echo "# create ${name} -> HTTP ${code}" >&3; return 1; }
+    done
+    for spec in "${HASVALUE_CASES[@]}"; do
+        IFS='|' read -r name value loud silent <<< "${spec}"
+        for attr in ${loud}; do
+            assert_alert "urn:e2e-hasvalue-${name}:${RUN_ID}" "${HASVALUE_CONSTRAINT}(${E2E}/${attr})"
+        done
+    done
+    for spec in "${HASVALUE_CASES[@]}"; do
+        IFS='|' read -r name value loud silent <<< "${spec}"
+        for attr in ${silent}; do
+            assert_no_alert "urn:e2e-hasvalue-${name}:${RUN_ID}" "${HASVALUE_CONSTRAINT}(${E2E}/${attr})"
+        done
     done
 }

@@ -670,6 +670,7 @@ WITH {{ focus_ctes }}A1 AS (SELECT {{ property_ttl_hint }} A.id as this,
                    D.ins as ins,
                    D.datatypes as datatypes,
                    D.hasValue as hasValue,
+                   D.hasValueType as hasValueType,
                    D.id as constraint_id
                    FROM {% if focus_view %}{{ focus_view }}{% else %}`{{target_class}}_view`{% endif %} AS A JOIN {{constraint_table}} as D ON A.`type` = D.targetClass
             {{ attribute_joins }}
@@ -994,13 +995,40 @@ FROM A1 where `index` IS NOT NULL AND `propertyNodetype` IN ('@value', '@list', 
 """  # noqa: E501 W605
 
 
+# The XSD datatypes of numbers. A sh:hasValue constant of one of them is a
+# number, and so is a value that declares one of them or none at all.
+NUMERIC_XSD_TYPES = tuple(f'http://www.w3.org/2001/XMLSchema#{name}' for name in (
+    'integer', 'decimal', 'double', 'float', 'long', 'int', 'short', 'byte',
+    'nonNegativeInteger', 'positiveInteger', 'nonPositiveInteger', 'negativeInteger',
+    'unsignedLong', 'unsignedInt', 'unsignedShort', 'unsignedByte'))
+
+# sh:hasValue (#965). A constant that is a number (hasValueType, the datatype
+# of the constant in the shape) equals a value whose text is the same number,
+# whatever its notation: 80, 80.0 and a declared xsd:double 80 all equal
+# sh:hasValue 80.0 and sh:hasValue 80. Comparing texts could not work on Flink:
+# the bridge writes a plain 80.0 -- and a declared double 80.0 -- as 80, and
+# passes no type on for a plain number, so a plain 80.0 failed sh:hasValue
+# 80.0 on Flink and passed on SQLite. A string is read by its text, as
+# sh:datatype reads it (#958): "80.0" is the number 80.0. The text is matched
+# with the number pattern of sh:datatype before it is cast, and the CASE makes
+# sure nothing else is: Flink fails on a CAST of a text that is no number.
+# Casting both sides to the declared xsd:integer instead truncated a constant
+# 80.5 to 80 on SQLite. Numbers are compared as DOUBLE, so integers beyond 2^53
+# are compared approximately, as JavaScript writes them anyway.
+# Anything else is compared as before: by the declared boolean, double or
+# integer, or else as text -- a string constant "1.0" is not the value "1".
 sql_check_literal_hasvalue = """
+{% set any_number %}^[+-]?(?:\\d+\\.?\\d*|\\.\\d+)(?:[eE][+-]?\\d+)?${% endset %}
 {% set constraint_cond %}
   /* only non-deleted entities with a value present */
   NOT edeleted AND NOT IFNULL(adeleted, false)
   AND attr_typ IS NOT NULL
   /* and the actual value <> the required hasValue constant */
-  AND CASE WHEN `valueType` = 'http://www.w3.org/2001/XMLSchema#double' THEN SQL_DIALECT_CAST(val as DOUBLE) <>
+  AND CASE WHEN IFNULL(`hasValueType`, '') IN (NUMERIC_XSD_TYPES)
+        AND IFNULL(`valueType`, '') IN ('', NUMERIC_XSD_TYPES)
+        AND {%- if sqlite %} `val` REGEXP '{{ any_number }}' {%- else %} REGEXP(val, '{{ any_number }}') {%- endif %}
+      THEN SQL_DIALECT_CAST(val AS DOUBLE) <> SQL_DIALECT_CAST(hasValue AS DOUBLE)
+    WHEN `valueType` = 'http://www.w3.org/2001/XMLSchema#double' THEN SQL_DIALECT_CAST(val as DOUBLE) <>
         SQL_DIALECT_CAST(hasValue as DOUBLE)
     WHEN `valueType` = 'http://www.w3.org/2001/XMLSchema#integer' THEN SQL_DIALECT_CAST(val as INTEGER) <>
         SQL_DIALECT_CAST(hasValue as INTEGER)
@@ -1031,6 +1059,8 @@ FROM A1
 
 WHERE hasValue IS NOT NULL AND `index` IS NOT NULL AND {{ constraint_cond }}
 """
+sql_check_literal_hasvalue = sql_check_literal_hasvalue.replace(
+    'NUMERIC_XSD_TYPES', ', '.join(f"'{name}'" for name in NUMERIC_XSD_TYPES))
 
 # A node shape applied to the object of a relationship (openspec
 # gh-985-instance-declaration-shapes): `sh:node` on the `ngsi-ld:hasObject`
@@ -2638,6 +2668,9 @@ def translate(shaclefile, knowledgefile, prefixes):
         if valuepath == NGSILD['hasValue']:
             check['attributeType'] = 'https://uri.etsi.org/ngsi-ld/Property'
             if hasValue is not None:
+                # The check compares a number constant as a number (#965).
+                datatype = getattr(hasValue, 'datatype', None)
+                check['hasValueType'] = str(datatype) if datatype is not None else None
                 hasValue = hasValue.toPython()
         elif valuepath == NGSILD['hasJSON']:
             check['attributeType'] = 'https://uri.etsi.org/ngsi-ld/JsonProperty'

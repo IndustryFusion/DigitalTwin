@@ -148,6 +148,36 @@ SELECT $this ?value ?type
                     sh:datatype xsd:integer ;
                     sh:nodeKind sh:Literal ] ] .
 
+# ------------------------------------------------------- sh:hasValue a number
+# A number required by sh:hasValue is compared as a number (#965): 80, 80.0
+# and a declared double 80 equal both 80.0 (an xsd:decimal) and 80. The bridge
+# writes a plain 80.0 as 80 with no type, which a comparison of the texts
+# rejected on Flink while SQLite accepted it. A declared integer 80 does not
+# equal 80.5 (SQLite used to truncate the constant to 80), and a string
+# constant "1.0" is compared as text, so the string "1" does not equal it.
+:E2EHasValueMachineShape a sh:NodeShape ;
+    sh:targetClass iffBaseEntities:E2EHasValueMachine ;
+    sh:property [ sh:path iffBaseEntities:hasE2EDecimalValue ;
+            sh:nodeKind sh:BlankNode ;
+            sh:property [ sh:path ngsild:hasValue ;
+                    sh:hasValue 80.0 ;
+                    sh:nodeKind sh:Literal ] ] ,
+        [ sh:path iffBaseEntities:hasE2EIntegerValue ;
+            sh:nodeKind sh:BlankNode ;
+            sh:property [ sh:path ngsild:hasValue ;
+                    sh:hasValue 80 ;
+                    sh:nodeKind sh:Literal ] ] ,
+        [ sh:path iffBaseEntities:hasE2EFractionValue ;
+            sh:nodeKind sh:BlankNode ;
+            sh:property [ sh:path ngsild:hasValue ;
+                    sh:hasValue 80.5 ;
+                    sh:nodeKind sh:Literal ] ] ,
+        [ sh:path iffBaseEntities:hasE2EStringValue ;
+            sh:nodeKind sh:BlankNode ;
+            sh:property [ sh:path ngsild:hasValue ;
+                    sh:hasValue "1.0" ;
+                    sh:nodeKind sh:Literal ] ] .
+
 # ------------------------------------------- node shape on a relationship's object
 # The members an instance declaration adds to a child of a generic type (openspec
 # gh-985-instance-declaration-shapes): the owner's hasE2EPart applies a node shape

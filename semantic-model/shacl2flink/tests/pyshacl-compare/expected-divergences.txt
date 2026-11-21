@@ -61,6 +61,24 @@ MISSED | test24/model1.jsonld | urn:datatype:double-string-exponent | DatatypeCo
 MISSED | test24/model1.jsonld | urn:datatype:integer-string-digits  | DatatypeConstraintComponent | hasInteger
 
 
+# sh:hasValue with a number is compared as a number (#965). To SHACL the
+# value must be the same RDF term: 80 (xsd:integer) is not 80.0 (xsd:decimal
+# in Turtle), and neither is a declared xsd:double 80 or the string "80.0".
+# Flink cannot tell these apart -- the bridge writes a plain 80.0, and a
+# declared double 80.0, as 80, and sends a plain number without a type -- so
+# term equality would make Flink and SQLite disagree again. A value whose
+# text is the required number satisfies it; a string is read by its text as
+# for sh:datatype. 80.5 and "eighty" still alert on both sides.
+MISSED | test27/model1.jsonld | urn:hasvalue:plain-whole            | HasValueConstraintComponent | hasDecimalValue
+MISSED | test27/model1.jsonld | urn:hasvalue:plain-whole-dot        | HasValueConstraintComponent | hasDecimalValue
+MISSED | test27/model1.jsonld | urn:hasvalue:declared-integer       | HasValueConstraintComponent | hasDecimalValue
+MISSED | test27/model1.jsonld | urn:hasvalue:declared-double-whole  | HasValueConstraintComponent | hasDecimalValue
+MISSED | test27/model1.jsonld | urn:hasvalue:declared-double-whole  | HasValueConstraintComponent | hasIntegerValue
+MISSED | test27/model1.jsonld | urn:hasvalue:string-dot             | HasValueConstraintComponent | hasDecimalValue
+MISSED | test27/model1.jsonld | urn:hasvalue:string-dot             | HasValueConstraintComponent | hasIntegerValue
+MISSED | test27/model1.jsonld | urn:hasvalue:string-digits          | HasValueConstraintComponent | hasDecimalValue
+MISSED | test27/model1.jsonld | urn:hasvalue:string-digits          | HasValueConstraintComponent | hasIntegerValue
+
 # --- we name the check that decides, SHACL names the wrapper -------------
 #
 # The shape tree is flattened before it becomes SQL: an sh:or over sh:datatype

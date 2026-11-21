@@ -1,0 +1,137 @@
+[
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:hasvalue:plain-whole",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDecimalValue": {
+      "type": "Property",
+      "value": 80
+    },
+    "iffBaseEntities:hasIntegerValue": {
+      "type": "Property",
+      "value": 80
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:hasvalue:plain-whole-dot",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDecimalValue": {
+      "type": "Property",
+      "value": 80.0
+    },
+    "iffBaseEntities:hasIntegerValue": {
+      "type": "Property",
+      "value": 80.0
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:hasvalue:declared-double-whole",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDecimalValue": {
+      "type": "Property",
+      "value": {
+        "@value": 80,
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    },
+    "iffBaseEntities:hasIntegerValue": {
+      "type": "Property",
+      "value": {
+        "@value": 80,
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:hasvalue:declared-integer",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDecimalValue": {
+      "type": "Property",
+      "value": {
+        "@value": 80,
+        "@type": "http://www.w3.org/2001/XMLSchema#integer"
+      }
+    },
+    "iffBaseEntities:hasIntegerValue": {
+      "type": "Property",
+      "value": {
+        "@value": 80,
+        "@type": "http://www.w3.org/2001/XMLSchema#integer"
+      }
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:hasvalue:plain-fraction",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDecimalValue": {
+      "type": "Property",
+      "value": 80.5
+    },
+    "iffBaseEntities:hasIntegerValue": {
+      "type": "Property",
+      "value": 80.5
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:hasvalue:declared-double-fraction",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDecimalValue": {
+      "type": "Property",
+      "value": {
+        "@value": 80.5,
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    },
+    "iffBaseEntities:hasIntegerValue": {
+      "type": "Property",
+      "value": {
+        "@value": 80.5,
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:hasvalue:string-dot",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDecimalValue": {
+      "type": "Property",
+      "value": "80.0"
+    },
+    "iffBaseEntities:hasIntegerValue": {
+      "type": "Property",
+      "value": "80.0"
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:hasvalue:string-digits",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDecimalValue": {
+      "type": "Property",
+      "value": "80"
+    },
+    "iffBaseEntities:hasIntegerValue": {
+      "type": "Property",
+      "value": "80"
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:hasvalue:string-text",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDecimalValue": {
+      "type": "Property",
+      "value": "eighty"
+    },
+    "iffBaseEntities:hasIntegerValue": {
+      "type": "Property",
+      "value": "eighty"
+    }
+  }
+]

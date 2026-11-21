@@ -104,6 +104,30 @@
     rdfs:domain :E2ENumberMachine ;
     rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
 
+# sh:hasValue with a number (#965): see E2EHasValueMachineShape.
+:E2EHasValueMachine a owl:Class,
+        owl:NamedIndividual .
+
+:hasE2EDecimalValue a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :E2EHasValueMachine ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
+:hasE2EIntegerValue a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :E2EHasValueMachine ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
+:hasE2EFractionValue a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :E2EHasValueMachine ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
+:hasE2EStringValue a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :E2EHasValueMachine ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
 # A node shape on a relationship's object (openspec gh-985): an E2EOwner's
 # hasE2EPart refers to an E2EPart, and the declaration of that part in the
 # owner requires hasE2ELevel of the part. See E2EOwnerShape.

@@ -1,0 +1,6 @@
+'urn:hasvalue:declared-double-fraction','HasValueConstraintComponent(https://industryfusion.github.io/contexts/example/v0/base_entities/hasDecimalValue)','warning'
+'urn:hasvalue:declared-double-fraction','HasValueConstraintComponent(https://industryfusion.github.io/contexts/example/v0/base_entities/hasIntegerValue)','warning'
+'urn:hasvalue:plain-fraction','HasValueConstraintComponent(https://industryfusion.github.io/contexts/example/v0/base_entities/hasDecimalValue)','warning'
+'urn:hasvalue:plain-fraction','HasValueConstraintComponent(https://industryfusion.github.io/contexts/example/v0/base_entities/hasIntegerValue)','warning'
+'urn:hasvalue:string-text','HasValueConstraintComponent(https://industryfusion.github.io/contexts/example/v0/base_entities/hasDecimalValue)','warning'
+'urn:hasvalue:string-text','HasValueConstraintComponent(https://industryfusion.github.io/contexts/example/v0/base_entities/hasIntegerValue)','warning'
