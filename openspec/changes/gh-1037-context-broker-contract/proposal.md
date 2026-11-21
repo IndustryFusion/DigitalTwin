@@ -44,10 +44,15 @@ serves, and the update to the latest upstream release
   - what the platform does **not** rely on, so that an update may change it;
   - the known deviations, each with its issue and workaround and a scenario
     that fails when the broker fixes it.
+- **Who does what:** this repository specifies the expectations and checks
+  the pinned broker image with a thin black-box contract test. The broker
+  fork references the requirements, names the one each patch serves, and
+  tests its patches with its own unit tests (design, D8).
 - **Verification:** every requirement is tested against the broker image the
-  release deploys. A contract test on the GitHub-hosted light stack covers the
-  API requirements; the K8s tests cover change data capture and MQTT
-  notifications. The OPC UA chain test and the K8s tests use the same image.
+  release deploys. The contract test on the GitHub-hosted light stack covers
+  the API requirements, one check per scenario; the K8s tests cover change
+  data capture and MQTT notifications. The OPC UA chain test and the K8s tests
+  use the same image.
 - **References instead of restatements:** `contracts/opcua-live-data` and
   `contracts/typed-literals` refer to the new contract where they state
   broker behaviour. No rule of theirs changes.

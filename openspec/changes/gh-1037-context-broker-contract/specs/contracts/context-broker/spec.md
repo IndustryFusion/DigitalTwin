@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Defines what the platform requires from its NGSI-LD context broker, independent of how a broker implements it: which operations and value forms the platform's components use, what the broker stores and publishes for them, which refusals they rely on, and where the platform works around the broker today. Each requirement names the components that rely on it, so that a patch to the broker can say which requirement it serves, and an update to a newer broker has something to be checked against.
+Defines what the platform expects from its NGSI-LD context broker at its interfaces, independent of how a broker implements it: the API operations and value forms the platform's components use, the entity store that change data capture reads, the configuration and health checks the deployment relies on, the refusals components rely on, and where the platform works around the broker today. Each requirement names the components that rely on it. The platform checks a broker image against this specification with a black-box contract test; the broker fork references it, implements it and tests its patches itself.
 
 ## ADDED Requirements
 
@@ -214,17 +214,20 @@ The platform SHALL NOT depend on the broker's temporal API, tenants, `Link` cont
 - **WHEN** a change makes a component use one of these
 - **THEN** it adds a requirement to this specification in the same change
 
-### Requirement: Broker builds are checked against this specification
-Every requirement SHALL be verified by an automated test against the broker image the release deploys, and the OPC UA chain test and the K8s tests SHALL use the same image. A deviation's scenario SHALL assert the broker's current behaviour as well, so that the test fails when the broker changes it and the workaround can be removed. Each patch the platform carries on the broker SHALL name the requirement it serves. An update of the broker SHALL pass these tests before the platform moves to it.
+### Requirement: The platform checks the broker image against this specification
+The platform SHALL verify every requirement with a contract test that treats the broker as a black box: it uses only the broker's API, health checks and what the debezium bridge publishes, never the broker's code. It SHALL run against the image the release deploys, which the OPC UA chain test and the K8s tests SHALL use too. The platform SHALL move to a new broker image only after the contract test passes with it.
 
 #### Scenario: Broker image changed
 - **WHEN** a Pull Request changes the broker image or the commit it is built from
-- **THEN** the tests of this specification run against the new image
+- **THEN** the contract test runs against the new image
 
 #### Scenario: Deviation fixed
-- **WHEN** the broker fixes a known deviation
-- **THEN** the test of its scenario fails, naming the deviation and its workaround
+- **WHEN** the broker fixes a known deviation, whose scenario asserts the current behaviour as well
+- **THEN** the test of that scenario fails, naming the deviation and the workaround that can now be removed
+
+### Requirement: The broker fork implements this specification
+The platform's broker fork SHALL reference this specification: each patch it carries SHALL name the requirement it serves, and SHALL be tested by the fork's own unit tests. A patch that serves no requirement SHALL be dropped on the next upstream update. How the fork implements a requirement is not part of this specification.
 
 #### Scenario: A patch on the broker
 - **WHEN** the broker fork is updated to a new upstream release
-- **THEN** every patch it carries names a requirement of this specification, or is dropped
+- **THEN** every patch it carries names a requirement of this specification and has a unit test in the fork, or is dropped

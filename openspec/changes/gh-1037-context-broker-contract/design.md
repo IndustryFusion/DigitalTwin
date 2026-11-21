@@ -150,6 +150,28 @@ since `V20240801.1__mergepatchfix.sql`, so #967 is still there.
   tests build it from the same commit. The contract test runs when either of
   the two changes, or when the broker's chart changes.
 
+### D8 — DigitalTwin specifies and checks, the fork implements and unit-tests
+
+- **Chosen:** this repository states the platform's expectations at the
+  broker's interfaces and checks the pinned image with a thin black-box
+  contract test: one check per scenario, through the API, the health checks
+  and what the debezium bridge publishes, never the broker's code. The fork
+  (IndustryFusion/ScorpioBroker) references the requirements: each patch
+  names the one it serves and has its own unit test there. How the fork
+  implements a requirement is not specified here.
+- The contract test stays in this repository for two reasons. Only it can
+  see failures between the broker and the platform's components, such as the
+  updates bridge reading a `207`, or the stored row the debezium bridge
+  parses. And moving the platform to a new image is decided here, so the gate
+  belongs here.
+- *Alternative:* all broker tests in the fork, with DigitalTwin keeping only
+  the chain test and the K8s tests. Rejected: the fork's tests run without
+  the platform's components, and the chain test covers only the values the
+  OPC UA path writes.
+- *Alternative:* duplicate the contract test in the fork. Rejected: two
+  copies of the same checks drift. The fork can run this repository's
+  contract test against its own build instead.
+
 ## Conflicts with existing specifications
 
 - `contracts/opcua-live-data`, scenario *Refused by the broker*, says the
@@ -184,7 +206,8 @@ since `V20240801.1__mergepatchfix.sql`, so #967 is still there.
 | A merge with a sub-attribute keeps notifications working | none | contract test, last and alone (D6) |
 | Remote contexts | `test-shacl-flink-scorpio-e2e.bats` (published context) | contract test: read by short names |
 | What the platform doesn't rely on | review | none |
-| Broker builds are checked | none | the workflow trigger (D7) |
+| The platform checks the broker image against this specification | none | the workflow trigger (D7) |
+| The broker fork implements this specification | none | fork work (IndustryFusion/ScorpioBroker#9): patch list and unit tests |
 
 This change adds test code only, so there is no product code whose coverage
 could be measured. The tests themselves are measured by running each against

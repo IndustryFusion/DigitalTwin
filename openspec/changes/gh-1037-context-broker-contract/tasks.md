@@ -23,7 +23,8 @@
 ## 4. References
 
 - [ ] 4.1 Add a line to `AGENTS.md` under *Contracts between components*: a change to the broker, its image or its chart reads `contracts/context-broker`; verify `openspec validate --all --strict` passes
-- [ ] 4.2 Link `contracts/context-broker` from the fork update (IndustryFusion/ScorpioBroker#9) with the patch table of design.md, and file the subscription read by id as a fork defect; verify both links are in this Pull Request
+- [ ] 4.2 Link `contracts/context-broker` from the fork update (IndustryFusion/ScorpioBroker#9) with the patch table of design.md, asking for a patch list that names each patch's requirement and its unit test (D8), and file the subscription read by id as a fork defect; verify both links are in this Pull Request
+- [ ] 4.3 Make the contract test runnable against any image given by name, so the fork can run it on its own build before a release; verify by running it with the 6.0.2 image name (task 1.5)
 
 ## 5. Verification
 
