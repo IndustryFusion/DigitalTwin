@@ -25,7 +25,8 @@ RUN mkdir /volume && chown -R agent /volume && mkdir /app/data && chown -R agent
 
 RUN cp -rf /app/config /volume && rm -f /app/config/config.json && ln -s /volume/config/config.json /app/config/config.json && ln -s /volume/data/device.json /app/data/device.json
 
-RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+RUN KUBECTL_VERSION=$(curl -fsSL --retry 5 --retry-delay 10 --retry-all-errors https://dl.k8s.io/release/stable.txt) && \
+    curl -fsSL --retry 5 --retry-delay 10 --retry-all-errors -o kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
 
 RUN install -o agent -g agent -m 0755 kubectl /usr/local/bin/kubectl
 

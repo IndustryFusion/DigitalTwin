@@ -7,7 +7,7 @@ ARG FUSEKI_VERSION
 ARG FUSEKI_DOWNLOAD=https://archive.apache.org/dist/jena/binaries/apache-jena-fuseki-${FUSEKI_VERSION}.tar.gz
 
 RUN apk add --no-cache bash curl && \
-    curl -fsSL "${FUSEKI_DOWNLOAD}" -o /tmp/fuseki.tar.gz && \
+    curl -fsSL --retry 5 --retry-delay 10 --retry-all-errors "${FUSEKI_DOWNLOAD}" -o /tmp/fuseki.tar.gz && \
     tar -xzf /tmp/fuseki.tar.gz -C /opt && \
     mv /opt/apache-jena-fuseki-${FUSEKI_VERSION} /opt/fuseki && \
     rm /tmp/fuseki.tar.gz && \
