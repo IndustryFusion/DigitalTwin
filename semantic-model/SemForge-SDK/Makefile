@@ -46,13 +46,19 @@ lint:
 # published version whose content changed -- fails, and so does an example
 # that does not meet its expectations. Coverage is reported for a draft and
 # enforced only for a published version.
+#
+# The release record is append-only (openspec gh-942-append-only-release-record):
+# each package's .kms/releases.yaml is compared with the one at KMS_AGAINST,
+# a git ref, and removing or changing an entry published there fails. CI sets
+# it to the pull request's base branch; an empty value skips the comparison.
 KMS_DIR := ../kms
+KMS_AGAINST ?= origin/main
 kms-check:
 	@packages=$$($(PYTHON) -m semforge packages $(KMS_DIR) --format paths); \
 	test -n "$$packages" || { echo "no KMS packages in $(KMS_DIR)"; exit 1; }; \
 	for package in $$packages; do \
 		echo "== $$package"; \
-		$(PYTHON) -m semforge verify --tests "$$package" || exit 1; \
+		$(PYTHON) -m semforge verify --tests $(if $(KMS_AGAINST),--against "$(KMS_AGAINST)") "$$package" || exit 1; \
 	done
 
 clean:

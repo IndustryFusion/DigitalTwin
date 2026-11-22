@@ -49,3 +49,27 @@ fails verification, including a published version whose content has changed,
 fails the build, and so does an example that does not meet its expectations.
 Coverage below a package's threshold fails the build only for a published
 version.
+
+A package's release record `.kms/releases.yaml` is append-only. On a pull
+request, `Build` compares it with the record on the base branch: removing an
+entry, or changing its digest, date or test results, fails and names the
+version and the field; appending the entry `semforge publish` writes passes,
+and so does a package that has no record on the base branch yet. A package is
+identified by the name in its `kms.yaml`: it is compared with the record at
+its path on the base branch and with the record of every package of its name
+there, so moving a package here, or giving it a published name, keeps it held
+to that name's record. Two packages here must not declare the same name. Only
+a name the base branch does not have (a new package, or one renamed as well as
+moved) starts a new record. The record and `.kms` must not be symbolic links,
+and a record on the base branch that does not parse fails, because neither
+could be compared. Deleting a whole package with its record is left to the
+pull request's review. Locally,
+`make kms-check` in `SemForge-SDK` compares with `origin/main`
+(`KMS_AGAINST=<ref>` names another ref, `KMS_AGAINST=` skips it), and
+`semforge verify --against <ref> <package>` checks one package.
+
+The record is not part of the package or its archive, so only its git history
+protects it. A package without history has nothing to compare with: an
+archive or a directory outside a git work tree is refused by `--against`, and
+a package never committed, such as a generated `opcua-*` package, has no
+record on the base branch and passes. For those, the record is taken as it is.

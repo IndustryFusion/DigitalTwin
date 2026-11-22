@@ -114,11 +114,22 @@ jobs:
         use-mamba: true
     - name: Create a new Conda environment
       run: conda create --name py310 python=3.10 -y
+    # kms-check also keeps every release record append-only: on a pull
+    # request it compares each .kms/releases.yaml with the one on the base
+    # branch, which the shallow checkout lacks and is fetched here. Other
+    # events have no base to compare with and skip that comparison.
     - name: Build SemForge SDK
+      env:
+        BASE_REF: ${{ github.base_ref }}
       run: |
         source $CONDA/bin/activate
         conda activate py310
-        cd semantic-model/SemForge-SDK && make setup && make lint test kms-check
+        against=""
+        if [ -n "$BASE_REF" ]; then
+          git fetch --no-tags --depth=1 origin "+refs/heads/$BASE_REF:refs/remotes/origin/$BASE_REF"
+          against="origin/$BASE_REF"
+        fi
+        cd semantic-model/SemForge-SDK && make setup && make lint test kms-check KMS_AGAINST="$against"
     - name: Setup tmate session
       if: ${{ failure() && (contains(github.event.pull_request.labels.*.name, 'ci-debug') || inputs.debug) }}
       uses: mxschmitt/action-tmate@v3

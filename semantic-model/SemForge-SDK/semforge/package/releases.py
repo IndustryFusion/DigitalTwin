@@ -60,11 +60,16 @@ def read_record(path):
     """The releases listed in a record file, oldest first ([] if none)."""
     if not os.path.isfile(path):
         return []
-    from ruamel.yaml import YAML
     with open(path, encoding='utf-8') as handle:
-        data = YAML(typ='safe').load(handle) or {}
+        return parse_record(handle.read(), path)
+
+
+def parse_record(text, where):
+    """The releases listed in the text of a record, oldest first."""
+    from ruamel.yaml import YAML
+    data = YAML(typ='safe').load(text) or {}
     if not isinstance(data, dict) or not isinstance(data.get('releases', []), list):
-        raise ValueError(f'{path}: expected a mapping with a `releases:` list')
+        raise ValueError(f'{where}: expected a mapping with a `releases:` list')
     releases = data.get('releases')
     return [dict(r) for r in releases or [] if isinstance(r, dict)]
 
@@ -139,6 +144,263 @@ def status(root):
     except Exception:                              # noqa: BLE001 -- malformed record
         return 'unknown'
     return 'published' if entry else 'draft'
+
+
+# -- the record's history --------------------------------------------------
+#
+# The record is not a member, so only its history protects it: `semforge
+# verify --against REF` compares it with its earlier state at a git ref.
+
+RECORD_POSIX = RECORD.replace(os.sep, '/')
+LINK = '120000'                                 # git's mode of a symbolic link
+
+
+def record_changes(before, after):
+    """Problems for every way `after` is not `before` with entries appended.
+
+    An entry of `before` must still be in `after`, under the same version and
+    with every field present, absent and valued as it was, type included: `2`
+    and `'2'` differ. A version listed twice in `after` is reported too:
+    which of the two entries counts would depend on the reader.
+    """
+    problems, listed = [], {}
+    for entry in after:
+        listed.setdefault(str(entry.get('version')), []).append(entry)
+    for version, entries in listed.items():
+        if len(entries) > 1:
+            problems.append(Problem(RECORD_POSIX, f'{version} is listed {len(entries)} '
+                                    f'times; a version is published once'))
+    for old in before:
+        version = str(old.get('version'))
+        if version not in listed:
+            problems.append(Problem(RECORD_POSIX, f'{version} was published and its '
+                                    f'entry has been removed; a published '
+                                    f'entry cannot be removed'))
+            continue
+        new = listed[version][0]
+        for key in sorted(set(old) | set(new), key=str):
+            if _same(old, new, key):
+                continue
+            problems.append(Problem(RECORD_POSIX, f'{version}: {key} was '
+                                    f'{_shown(old, new, key)} and is now '
+                                    f'{_shown(new, old, key)}; a published '
+                                    f'entry cannot be changed'))
+    return problems
+
+
+def _same(old, new, key):
+    if (key in old) != (key in new):
+        return False
+    was, now = old.get(key), new.get(key)
+    return type(was) is type(now) and was == now
+
+
+def _shown(entry, other, key):
+    if key not in entry:
+        return '(absent)'
+    value = entry[key]
+    if value is None:
+        return 'null'
+    if key in other and other[key] is not None and type(other[key]) is not type(value):
+        return f'{value!r} ({type(value).__name__})'
+    return str(value)
+
+
+def _git(where, *arguments):
+    """(exit code, stdout) of a git command in `where`; (None, '') without git."""
+    import subprocess
+    try:
+        done = subprocess.run(('git', '-C', where) + arguments,
+                              capture_output=True, text=True, timeout=60)
+    except (OSError, subprocess.SubprocessError):
+        return None, ''
+    return done.returncode, done.stdout
+
+
+@dataclass
+class _AtRef:
+    """One package directory of the directory of packages at the ref."""
+    path: str                       # relative to the work tree's top
+    descriptor: str = ''            # its kms.yaml (or legacy semforge.yaml)
+    record_mode: str = ''           # mode of .kms/releases.yaml, '' if absent
+    kms_link: bool = False          # .kms itself is a link
+    name: str = None                # declared name; None if unread
+
+
+def _listing(top, ref, parent):
+    """The package directories under `parent` at `ref`, by directory name.
+
+    One `git ls-tree`, NUL-separated so that no name is quoted. A link
+    directly under `parent`, such as `kms/default`, is one entry, not a
+    directory, and so never a package.
+    """
+    from . import config
+
+    code, out = _git(top, 'ls-tree', '-r', '-z', ref, '--', parent + '/')
+    if code != 0:
+        return None
+    found = {}
+    for item in out.split('\0'):
+        if not item:
+            continue
+        meta, _, path = item.partition('\t')
+        mode = meta.split(' ', 1)[0]
+        parts = path[len(parent) + 1:].split('/')
+        if len(parts) < 2:
+            continue
+        here = found.setdefault(parts[0], _AtRef(f'{parent}/{parts[0]}'))
+        rest = '/'.join(parts[1:])
+        if len(parts) == 2 and parts[1] in config.DESCRIPTORS:
+            # kms.yaml wins over a legacy semforge.yaml, as when reading.
+            if parts[1] == config.CONFIG or not here.descriptor:
+                here.descriptor = path
+        elif rest == RECORD_POSIX:
+            here.record_mode = mode
+        elif rest == '.kms' and mode == LINK:
+            here.kms_link = True
+    return found
+
+
+def _read_names(top, ref, found):
+    """Fill in the declared names; the directories whose descriptor does not
+    parse."""
+    from ruamel.yaml import YAML
+
+    unread = []
+    for here in found.values():
+        if not here.descriptor:
+            continue
+        code, text = _git(top, 'show', f'{ref}:{here.descriptor}')
+        try:
+            declared = YAML(typ='safe').load(text) if code == 0 else None
+        except Exception:                          # noqa: BLE001 -- malformed there
+            declared = None
+        if isinstance(declared, dict) and declared.get('name'):
+            here.name = str(declared['name'])
+        else:
+            unread.append(here)
+    return unread
+
+
+def _siblings_named(root, name):
+    """Other package directories beside `root` that declare `name` now."""
+    from . import config
+
+    parent = os.path.dirname(root)
+    clash = []
+    for entry in sorted(os.listdir(parent)):
+        other = os.path.join(parent, entry)
+        if other == root or os.path.islink(other) or not os.path.isdir(other):
+            continue
+        if not any(os.path.isfile(os.path.join(other, d)) for d in config.DESCRIPTORS):
+            continue
+        try:
+            declared = config.read(other).get('name')
+        except Exception:                          # noqa: BLE001 -- reported by its own check
+            continue
+        if declared is not None and str(declared) == name:
+            clash.append(entry)
+    return clash
+
+
+def history_problems(root, ref):
+    """Problems, and what was compared, for the record against `ref`.
+
+    The record in the package must be the earlier record at `ref` with
+    entries appended. A package is identified by its name, so its earlier
+    records are the one at its own path at `ref` and the one of every package
+    that declares its name in the same directory of packages at `ref` --
+    moved, copied, or replaced by another package at this path. A name `ref`
+    does not have is new. A record, or `.kms`, that is a link is refused here
+    and at `ref`, and so is a record at `ref` that does not parse: either
+    would let the record change without its history showing it.
+    """
+    from . import config
+
+    root = os.path.realpath(root)
+    not_compared = f'not compared with {ref}'
+    code, top = _git(root, 'rev-parse', '--show-toplevel')
+    if code != 0:
+        return [Problem(RECORD_POSIX, f'{root} is not in a git work tree, so the '
+                        f'record has no history to compare with {ref}')], not_compared
+    top = os.path.realpath(top.strip())
+    code, _ = _git(top, 'rev-parse', '--verify', '--quiet', f'{ref}^{{commit}}')
+    if code != 0:
+        return [Problem(RECORD_POSIX, f'{ref} is not a commit in {top}; fetch it, '
+                        f'or name another one')], not_compared
+
+    for link in ('.kms', RECORD_POSIX):
+        if os.path.islink(os.path.join(root, link)):
+            return [Problem(link, 'is a symbolic link; the release record must be '
+                            'a file in the package, or its history does not '
+                            'show its changes')], not_compared
+
+    package = os.path.relpath(root, top).replace(os.sep, '/')
+    parent, directory = os.path.dirname(package), os.path.basename(package)
+    try:
+        name = str(config.read(root).get('name') or '')
+    except Exception:                              # noqa: BLE001 -- reported by check()
+        name = ''
+    problems = []
+    if name:
+        clash = _siblings_named(root, name)
+        if clash:
+            problems.append(Problem(config.name_for(root), f'declares the name {name}, '
+                                    f'and so does {", ".join(clash)} beside it; a '
+                                    f'name identifies one package'))
+
+    found = _listing(top, ref, parent) if parent else {}
+    if found is None:
+        return problems + [Problem(RECORD_POSIX, f'cannot list {parent} at {ref}')], \
+            not_compared
+    for here in _read_names(top, ref, found):
+        if here.record_mode or here.kms_link:
+            problems.append(Problem(RECORD_POSIX, f'the descriptor {here.descriptor} '
+                                    f'on {ref} does not parse, so whether its '
+                                    f'published record belongs to this package '
+                                    f'cannot be told'))
+    earlier = [here for key, here in sorted(found.items())
+               if (key == directory or (name and here.name == name))
+               and (here.record_mode or here.kms_link)]
+    if not earlier:
+        if problems:
+            return problems, not_compared
+        return [], f'no release record on {ref}; nothing to keep'
+
+    try:
+        after = read_record(record_path(root))
+    except Exception:                              # noqa: BLE001 -- reported by check()
+        return problems, f'{not_compared}: the record does not parse'
+
+    kept = []
+    for here in earlier:
+        own = here.path == package
+        suffix = '' if own else f' (published as {here.path} on {ref})'
+        source = f'{ref}:{here.path}/{RECORD_POSIX}'
+        if here.kms_link or here.record_mode == LINK:
+            problems.append(Problem(RECORD_POSIX, f'{source} is a symbolic link; '
+                                    f'its history cannot be compared{suffix}'))
+            continue
+        code, text = _git(top, 'show', source)
+        if code != 0:
+            problems.append(Problem(RECORD_POSIX, f'{source} cannot be read{suffix}'))
+            continue
+        try:
+            before = parse_record(text, source)
+        except Exception as exc:                   # noqa: BLE001 -- malformed there
+            first = (str(exc).strip().splitlines() or [type(exc).__name__])[0]
+            problems.append(Problem(RECORD_POSIX, f'{source} does not parse ({first}), '
+                                    f'so the record cannot be compared{suffix}'))
+            continue
+        changes = record_changes(before, after)
+        problems += [Problem(p.path, p.message + suffix) for p in changes]
+        if not changes:
+            kept.append(f'the {len(before)} entries published on {ref}'
+                        + ('' if own else f' at {here.path}')
+                        + f', {len(after) - len(before)} appended')
+    if problems:
+        return problems, f'does not keep the entries published on {ref}'
+    return [], f'keeps {" and ".join(kept)}'
 
 
 # -- the tests -------------------------------------------------------------

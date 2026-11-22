@@ -445,16 +445,22 @@ def pack_command(path, output, store):
               help='also run the examples and measure coverage')
 @click.option('--record', type=click.Path(exists=True, dir_okay=False), default=None,
               help='release record to compare an archive\'s tests with')
+@click.option('--against', metavar='GIT-REF', default=None,
+              help='also fail when the release record removes or changes an '
+                   'entry it has at this git ref (a directory in git only)')
 @click.option('--format', 'fmt', type=click.Choice(['text', 'json']),
               default='text')
-def verify_command(target, with_tests, record, fmt):
+def verify_command(target, with_tests, record, against, fmt):
     """Verify a package directory or archive against the KMS package contract.
 
     For an archive: every entry against SHA256SUMS, safe paths and sizes, then
     the extracted tree as a package. For a directory: the package check, the
     published-version rule, and the digest its archive would have. With
     --tests, the examples run too, and the result is compared with a release
-    record when one is available. Exit 0 when it holds, 2 otherwise.
+    record when one is available. With --against REF, the directory's
+    release record must be the one at that git ref with entries appended:
+    removing or changing a published entry fails. Exit 0 when it holds, 2
+    otherwise.
 
     Running the tests is not a sandbox: SPARQL constraints may contact
     services (SERVICE) and JSON-LD contexts may be fetched. Verify an
@@ -463,9 +469,14 @@ def verify_command(target, with_tests, record, fmt):
     import shutil
     import tempfile
 
-    from ..package.releases import compare_with_record, record_path, run_tests
+    from ..package.releases import (compare_with_record, history_problems,
+                                    record_path, run_tests)
 
     holder = None
+    if against and not os.path.isdir(target):
+        click.echo('--against compares a package directory with its git history; '
+                   'an archive has none', err=True)
+        sys.exit(2)
     if is_archive(target):
         if with_tests:
             holder = tempfile.mkdtemp(prefix='semforge-verify-')
@@ -482,7 +493,7 @@ def verify_command(target, with_tests, record, fmt):
         click.echo(f'{target} is neither a package directory nor a .zip', err=True)
         sys.exit(2)
 
-    run, compared = None, ''
+    run, compared, history = None, '', ''
     try:
         if with_tests and result.ok:
             try:
@@ -497,6 +508,11 @@ def verify_command(target, with_tests, record, fmt):
     finally:
         if holder:
             shutil.rmtree(holder, ignore_errors=True)
+    if against:
+        # After the tests, so a rewritten record does not hide their result.
+        problems, history = history_problems(tree, against)
+        result.problems.extend(problems)
+        result.ok = result.ok and not problems
 
     if fmt == 'json':
         import json
@@ -504,6 +520,8 @@ def verify_command(target, with_tests, record, fmt):
         if run is not None:
             out['tests'] = run.as_dict()
             out['record'] = compared
+        if against:
+            out['against'] = {'ref': against, 'result': history}
         click.echo(json.dumps(out, indent=2))
     else:
         if result.ok:
@@ -518,6 +536,8 @@ def verify_command(target, with_tests, record, fmt):
             click.echo(f'coverage {run.coverage:g} % of {len(run.constraints)} '
                        f'constraints (threshold {run.threshold:g} %)')
             click.echo(f'record   {compared}')
+        if against:
+            click.echo(f'history  {history}')
     sys.exit(0 if result.ok else 2)
 
 

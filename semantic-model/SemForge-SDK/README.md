@@ -58,6 +58,7 @@ venv/bin/python -m semforge pack ../kms/default -o /tmp/example-1.0.0.kms.zip   
 venv/bin/python -m semforge validate /tmp/example-1.0.0.kms.zip   # any reading command takes an archive
 venv/bin/python -m semforge verify --tests ../kms/default  # and the examples, with their coverage
 venv/bin/python -m semforge publish <package>              # tested, packed, recorded; then immutable
+venv/bin/python -m semforge verify --against origin/main <package>  # the release record only appends to the one there
 venv/bin/python -m semforge version patch|minor|major <package>
 venv/bin/python -m semforge diff <before> <after>
 venv/bin/python -m semforge observe tests/corpus/kms

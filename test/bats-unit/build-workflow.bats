@@ -131,3 +131,56 @@ assert "GITHUB_ENV" in steps[find]["run"] and find < build, (find, build)
     [[ "${output}" == *"no Chrome or Chromium"* ]]
     [ ! -s "${env_file}" ]
 }
+
+# The release record is append-only (openspec gh-942-append-only-release-record):
+# on a pull request, kms-check compares each record with the base branch, which
+# the shallow checkout does not have and the step fetches.
+semforge_step() {
+    python3 - "${WORKFLOW}" <<'EOF'
+import json, sys, yaml
+steps = yaml.safe_load(open(sys.argv[1]))['jobs']['semforge-sdk']['steps']
+print(json.dumps([s for s in steps if 'kms-check' in s.get('run', '')]))
+EOF
+}
+
+@test "kms-check takes the pull request's base branch from the environment" {
+    run semforge_step
+    [ "$status" -eq 0 ]
+    # shellcheck disable=SC2016 # the ${{ }} are GitHub expressions, not shell
+    echo "${output}" | python3 -c '
+import json, sys
+steps = json.load(sys.stdin)
+assert len(steps) == 1, steps
+step = steps[0]
+assert step["env"]["BASE_REF"] == "${{ github.base_ref }}", step.get("env")
+assert "${{" not in step["run"], "expressions go through env, not into the script"
+'
+}
+
+@test "kms-check compares with the base branch on a pull request, and with nothing otherwise" {
+    run semforge_step
+    [ "$status" -eq 0 ]
+    script=$(echo "${output}" | python3 -c '
+import json, sys
+run = json.load(sys.stdin)[0]["run"]
+print("\n".join(l for l in run.splitlines()
+                if not l.strip().startswith(("source ", "conda "))))
+')
+    stub="${BATS_TEST_TMPDIR}/bin"
+    calls="${BATS_TEST_TMPDIR}/calls"
+    mkdir -p "${stub}" "${BATS_TEST_TMPDIR}/semantic-model/SemForge-SDK"
+    for tool in git make; do
+        printf '#!/bin/sh\necho "%s $*" >> "%s"\n' "${tool}" "${calls}" > "${stub}/${tool}"
+        chmod +x "${stub}/${tool}"
+    done
+
+    (cd "${BATS_TEST_TMPDIR}" && PATH="${stub}:${PATH}" BASE_REF=main bash -e -c "${script}")
+    grep -qx 'git fetch --no-tags --depth=1 origin +refs/heads/main:refs/remotes/origin/main' "${calls}"
+    grep -qx 'make lint test kms-check KMS_AGAINST=origin/main' "${calls}"
+
+    rm "${calls}"
+    (cd "${BATS_TEST_TMPDIR}" && PATH="${stub}:${PATH}" BASE_REF='' bash -e -c "${script}")
+    run grep -c '^git ' "${calls}"
+    [ "${output}" = "0" ]
+    grep -qx 'make lint test kms-check KMS_AGAINST=' "${calls}"
+}
