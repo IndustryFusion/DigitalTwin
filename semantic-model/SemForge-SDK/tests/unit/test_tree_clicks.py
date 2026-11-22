@@ -1210,6 +1210,7 @@ CASE_OPTIONS = {'ok': True, 'root': '/pkg/examples', 'suites': ['test_MachineSha
                             'label': 'PumpShape'}],
                 'cases': [{'path': 'test_MachineShape/good/running.jsonld', 'expect': 'valid',
                            'description': ''}],
+                'modelFiles': ['model-instance.jsonld'],
                 'entities': ['urn:m:1'],
                 'types': [{'iri': 'https://x/Machine', 'label': 'Machine', 'term': 'x:Machine'}],
                 'undeclared': ['test_MachineShape/good/by-hand.jsonld']}
@@ -1336,6 +1337,93 @@ def test_an_undeclared_file_can_be_declared(tmp_path):
     asked = [r['params'] for r in seen['requests'] if r['method'] == 'semforge/addTestCase']
     assert asked[0]['start'] == 'existing'
     assert asked[0]['source'] == 'test_MachineShape/good/by-hand.jsonld'
+
+
+WHOLE_MODEL_ITEM = '$(symbol-namespace) The whole main model'
+
+
+def _whole_model(tmp_path, expect, made, options=None):
+    return _drive(tmp_path, {
+        'command': 'semforge.newTestCase',
+        'node': {'raw': {'kind': 'suite', 'label': 'MachineShape', 'term': 'test_MachineShape',
+                         'children': []}, 'packageUri': 'file:///pkg/shacl.ttl'},
+        'picks': [expect, WHOLE_MODEL_ITEM], 'inputs': ['whole-model'],
+        'replies': {'semforge/testCaseOptions': options or CASE_OPTIONS,
+                    'semforge/addTestCase': made}})
+
+
+def test_the_whole_main_model_is_a_start(tmp_path):
+    made = dict(MADE_CASE, file='/pkg/examples/test_MachineShape/bad/whole-model.jsonld',
+                case='test_MachineShape/bad/whole-model.jsonld', expect='invalid',
+                start='whole-model', passes=False, failures=['nothing fired'])
+    seen = _whole_model(tmp_path, '$(error) Should violate', made)
+    assert seen['errors'] == [], seen['errors']
+    starts = [i for i in seen['quickPicks'][1]['items']]
+    labels = [i['label'] for i in starts]
+    assert labels.index('$(copy) A copy of a case') < labels.index(WHOLE_MODEL_ITEM) < \
+        labels.index('$(symbol-object) An entity from the model'), labels
+    offered = starts[labels.index(WHOLE_MODEL_ITEM)]
+    assert 'model-instance.jsonld' in offered['description']
+    assert len(seen['quickPicks']) == 2, 'nothing more to pick: the whole model is the source'
+    assert seen['inputs'][0]['value'] == 'whole-model', 'the name is suggested'
+    asked = [r['params'] for r in seen['requests'] if r['method'] == 'semforge/addTestCase']
+    assert asked[0]['start'] == 'whole-model' and asked[0]['source'] == ''
+    assert asked[0]['suite'] == 'test_MachineShape' and asked[0]['expect'] == 'invalid'
+    assert any('Nothing fires yet' in text for text in seen['warnings'])
+    assert _opened(seen, 'semforge.openCasePage')[0][0]['raw']['file'] == made['file']
+
+
+def test_several_model_files_are_counted(tmp_path):
+    options = dict(CASE_OPTIONS, modelFiles=['main/a.jsonld', 'main/b.jsonld'])
+    seen = _whole_model(tmp_path, '$(pass) Should conform', dict(MADE_CASE, start='whole-model'),
+                        options)
+    offered = next(i for i in seen['quickPicks'][1]['items'] if i['label'] == WHOLE_MODEL_ITEM)
+    assert offered['description'].startswith('2 files')
+
+
+def test_a_good_case_from_a_violating_model_says_why_it_fails(tmp_path):
+    made = dict(MADE_CASE, start='whole-model', passes=False, violations=3,
+                failures=['expected valid, got 3 violation(s)'])
+    seen = _whole_model(tmp_path, '$(pass) Should conform', made)
+    assert any('as the main model does' in text for text in seen['warnings']), seen['warnings']
+
+
+def test_a_good_whole_model_case_failing_otherwise_says_its_failures(tmp_path):
+    made = dict(MADE_CASE, start='whole-model', passes=False, violations=0,
+                failures=['does not load: no context'])
+    seen = _whole_model(tmp_path, '$(pass) Should conform', made)
+    assert not any('as the main model does' in text for text in seen['warnings'])
+    assert any('does not pass yet: does not load: no context' in text
+               for text in seen['warnings']), seen['warnings']
+
+
+def test_ids_shared_by_model_files_are_said(tmp_path):
+    made = dict(MADE_CASE, start='whole-model', sharedIds=['urn:m:1'])
+    seen = _whole_model(tmp_path, '$(pass) Should conform', made)
+    assert any('Defined by more than one model file' in text and 'urn:m:1' in text
+               for text in seen['info']), seen['info']
+
+
+def test_the_suggested_name_is_free(tmp_path):
+    options = dict(CASE_OPTIONS, cases=CASE_OPTIONS['cases'] + [
+        {'path': 'test_MachineShape/good/whole-model.jsonld', 'expect': 'valid',
+         'description': ''}], undeclared=['test_MachineShape/good/whole-model-2.jsonld',
+                                          'test_MachineShape/bad/whole-model-3.jsonld'])
+    seen = _whole_model(tmp_path, '$(pass) Should conform', dict(MADE_CASE, start='whole-model'),
+                        options)
+    assert seen['inputs'][0]['value'] == 'whole-model-3', 'good/ has whole-model and -2'
+    bad = _whole_model(tmp_path, '$(error) Should violate',
+                       dict(MADE_CASE, start='whole-model'), options)
+    assert bad['inputs'][0]['value'] == 'whole-model', 'bad/ has none'
+
+
+def test_no_main_model_no_whole_model_start(tmp_path):
+    seen = _drive(tmp_path, {
+        'command': 'semforge.newTestCase',
+        'picks': ['$(beaker) test_MachineShape', '$(pass) Should conform'],
+        'replies': {'semforge/testCaseOptions': dict(CASE_OPTIONS, modelFiles=[]),
+                    'semforge/addTestCase': MADE_CASE}})
+    assert WHOLE_MODEL_ITEM not in [i['label'] for i in seen['quickPicks'][2]['items']]
 
 
 # --- several shapes on one attribute --------------------------------------------------------

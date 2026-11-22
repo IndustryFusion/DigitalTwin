@@ -18,15 +18,21 @@
 
 The other ways to a case are aimed at one thing -- New test… at an attribute,
 New case… at a SPARQL rule. This is the general one: a suite (an existing one
-or a new one for a shape), good or bad, and a start -- a copy of a case, an
-entity from the model, a fresh entity of a type with its required attributes
-given valid values, an empty file, or a .jsonld already under examples/ that
-no expectations file declares yet (a file nobody runs is worse than none:
+or a new one for a shape), good or bad, and a start -- a copy of a case, the
+whole main model, an entity from the model, a fresh entity of a type with its
+required attributes given valid values, an empty file, or a .jsonld already
+under examples/ that no expectations file declares yet (a file nobody runs is worse than none:
 the folder suggests coverage the suite does not have).
 
 The case is declared in the expectations.yaml beside it, `expect: valid` or
 `invalid`, and run once. A bad case is declared without asserts: what fires
 is shown on its case page, and "Assert it" turns each firing into a claim.
+
+The whole main model is written INTO the case, document by document, like a
+copied case gets its includes written in. Including the model files instead
+would not do: everything is parsed into one graph, so a case could neither
+remove an included entity nor override one of its values. The case is a
+snapshot; later edits of the model do not reach it, nor its edits the model.
 """
 
 import json
@@ -46,7 +52,8 @@ def _documents(path):
 
 def case_options(package):
     """What New test case… can offer: suites, shapes (for a new suite),
-    cases to copy, model entities, entity types, undeclared files."""
+    cases to copy, the main model's files, model entities, entity types,
+    undeclared files."""
     from rdflib import RDF, URIRef
 
     from ..validate.normalise import curie, local
@@ -72,6 +79,8 @@ def case_options(package):
                    for s in every_node_shape(package.shapes)],
         'cases': [{'path': e.path, 'expect': e.expect, 'description': e.description}
                   for e in expectations.examples],
+        'modelFiles': [os.path.relpath(p, package.path).replace('\\', '/')
+                       for p in _model_files(package)],
         'entities': entities,
         'types': [{'iri': t.iri, 'label': t.label, 'term': t.term}
                   for t in entity_types(package)[0]],
@@ -79,8 +88,47 @@ def case_options(package):
     }
 
 
-def _scene(package, start, source):
-    """The documents a new case starts with."""
+def _model_files(package):
+    """The main model's files, in load order."""
+    return [p for p in package.files('model') if p.endswith(('.jsonld', '.json'))]
+
+
+_SCHEME = re.compile(r'^[A-Za-z][A-Za-z0-9+.-]*:')
+
+
+def _moved_context(document, source, target):
+    """`document`, read from the folder `source`, to be written into the
+    folder `target`: a relative "@context" ("context.jsonld", as `semforge
+    retarget --to local` writes it) still names the same file. A URL, an
+    absolute path and an inline context object are left as they are."""
+    def moved(context):
+        if isinstance(context, str) and not _SCHEME.match(context) \
+                and not os.path.isabs(context):
+            return os.path.relpath(os.path.normpath(os.path.join(source, context)),
+                                   target).replace('\\', '/')
+        if isinstance(context, list):
+            return [moved(item) for item in context]
+        return context
+
+    if not isinstance(document, dict) or '@context' not in document:
+        return document
+    return dict(document, **{'@context': moved(document['@context'])})
+
+
+def _shared_ids(documents):
+    """Ids that more than one document defines, in order of first sight."""
+    seen, shared = set(), []
+    for document in documents:
+        identifier = document.get('id', document.get('@id')) \
+            if isinstance(document, dict) else None
+        if identifier in seen and identifier not in shared:
+            shared.append(identifier)
+        seen.add(identifier)
+    return [i for i in shared if i]
+
+
+def _scene(package, start, source, directory=''):
+    """The documents a new case starts with, for a case file in `directory`."""
     root = examples_root(package.path)
     if start == 'copy':
         example = next((e for e in load_expectations(package.path).examples
@@ -95,6 +143,17 @@ def _scene(package, start, source):
             if not os.path.exists(path):
                 path = os.path.join(package.path, relative)
             documents += _documents(path)
+        return documents
+    if start == 'whole-model':
+        # Every document of every model file, written in: the case is edited
+        # on its own, and the model stays as it is.
+        files = _model_files(package)
+        if not files:
+            raise PackageError('the package has no main model to start a case from')
+        documents = []
+        for path in files:
+            documents += [_moved_context(d, os.path.dirname(path), directory)
+                          for d in _documents(path)]
         return documents
     if start == 'model':
         from .newcase import _model_document
@@ -147,15 +206,16 @@ def _declare(directory, file_name, expect, description):
 
 
 def add_test_case(package, suite, expect, start, source='', name='', description=''):
-    """Write and declare a test case. `start` is copy | model | type | empty
-    | existing (then `source` is the undeclared file, declared where it is).
+    """Write and declare a test case. `start` is copy | whole-model | model
+    | type | empty | existing (then `source` is the undeclared file, declared
+    where it is).
 
-    Returns {'file', 'case', 'expect', 'violations', 'passes', 'failures'}.
+    Returns {'file', 'case', 'expect', 'start', 'violations', 'passes', 'failures'},
+    and for the whole model 'sharedIds': ids two of its documents define.
+    Anything that fails after the file is written removes the file and its
+    declaration again.
     """
-    from ..sanity import known_constraints
-    from ..validate.orchestrator import validate_graphs
     from .newcase import _slug
-    from .runner import run_tests
 
     if expect not in ('valid', 'invalid'):
         raise PackageError('a case either conforms (valid) or violates (invalid)')
@@ -178,38 +238,103 @@ def add_test_case(package, suite, expect, start, source='', name='', description
         path = os.path.join(directory, file_name)
         if os.path.exists(path):
             raise PackageError(f'{os.path.relpath(path, root)} already exists')
-        documents = _scene(package, start, source)
+        documents = _scene(package, start, source, directory)
         os.makedirs(directory, exist_ok=True)
-        with open(path, 'w', encoding='utf-8') as handle:
-            json.dump(documents, handle, indent=2, ensure_ascii=False)
-            handle.write('\n')
+        # Written beside and renamed: a case file is either whole or absent.
+        partial = f'{path}.partial'
+        try:
+            with open(partial, 'w', encoding='utf-8') as handle:
+                json.dump(documents, handle, indent=2, ensure_ascii=False)
+                handle.write('\n')
+            os.replace(partial, path)
+        finally:
+            if os.path.exists(partial):
+                os.remove(partial)
         written = True
+    described = bool(description)
     if not description:
         description = {'copy': f'Started from {source}.', 'model': f'{source}, from the model.',
                        'type': 'A new entity, its required attributes given valid values.',
+                       'whole-model': WHOLE_MODEL_PLACEHOLDER,
                        'empty': '', 'existing': ''}.get(start, '')
+    expectations = os.path.join(directory, EXPECTATIONS)
+    declared_before = None
+    if os.path.exists(expectations):
+        with open(expectations, encoding='utf-8') as handle:
+            declared_before = handle.read()
     try:
         _declare(directory, file_name, expect, description)
-    except PackageError:
-        if written:
+        return _first_run(package, root, path, directory, file_name, expect, start,
+                          described, documents if written else [])
+    except BaseException:
+        # Nothing half-made stays behind: the file this wrote, and its
+        # declaration, go again.
+        if written and os.path.exists(path):
             os.remove(path)
+        if declared_before is None:
+            if os.path.exists(expectations):       # this made it
+                os.remove(expectations)
+        else:
+            with open(expectations, 'w', encoding='utf-8') as handle:
+                handle.write(declared_before)
         raise
 
+
+def _first_run(package, root, path, directory, file_name, expect, start, described,
+               documents):
+    """Run a case just declared, once, and say how it went."""
     from ..package.loader import reload_keeping_shapes
+    from ..sanity import known_constraints
+    from ..validate.orchestrator import validate_graphs
+    from .runner import run_tests
 
     fresh = reload_keeping_shapes(package)
     case = os.path.relpath(path, root)
     example = next(e for e in load_expectations(fresh.path).examples if e.path == case)
+    made = {'file': path, 'case': case, 'expect': expect, 'start': start}
+    if start == 'whole-model':
+        # Two model files may define one id; the model graph merges them, and
+        # so does the case's -- but in one file it reads as a mistake.
+        made['sharedIds'] = _shared_ids(documents)
     try:
         report = validate_graphs(compose(fresh, example), fresh.shapes, fresh.knowledge,
                                  strict=False)
     except Exception as exc:                       # noqa: BLE001
-        return {'file': path, 'case': case, 'expect': expect, 'violations': 0,
-                'passes': False, 'failures': [f'does not load: {exc}']}
+        return dict(made, violations=0, passes=False, failures=[f'does not load: {exc}'])
     outcome = run_tests([(example, report)], known_constraints(fresh))[0]
-    return {'file': path, 'case': case, 'expect': expect,
-            'violations': len(report.violations), 'passes': outcome.passed,
-            'failures': list(outcome.failures)}
+    if start == 'whole-model' and not described:
+        # What the case still lacks depends on whether the model conforms,
+        # which only the run says.
+        _describe(directory, file_name,
+                  WHOLE_MODEL[(expect, 'violates' if report.violations else 'conforms')])
+    return dict(made, violations=len(report.violations), passes=outcome.passed,
+                failures=list(outcome.failures))
+
+
+# Declared before the one run, which decides the description.
+WHOLE_MODEL_PLACEHOLDER = 'Started from the whole main model.'
+WHOLE_MODEL = {
+    ('valid', 'conforms'): 'Started from the whole main model, which conforms: a snapshot, '
+                           'so editing this case never changes the model.',
+    ('valid', 'violates'): 'Started from the whole main model, which violates. It fails '
+                           'until its data is edited so it conforms.',
+    ('invalid', 'conforms'): 'Started from the whole main model, which conforms. It fails '
+                             'until its data is edited to break what it should show, and '
+                             'that is asserted.',
+    ('invalid', 'violates'): 'Started from the whole main model, which violates already: '
+                             'assert what fires on its case page.',
+}
+
+
+def _describe(directory, file_name, description):
+    """Set the description of a case declared in `directory`."""
+    expectations = os.path.join(directory, EXPECTATIONS)
+    with open(expectations, encoding='utf-8') as handle:
+        raw = _yaml().load(handle)
+    entry = next(e for e in raw['examples'] if e.get('path') == file_name)
+    entry['description'] = description
+    with open(expectations, 'w', encoding='utf-8') as handle:
+        _yaml().dump(raw, handle)
 
 
 OPPOSITE = {'valid': 'invalid', 'invalid': 'valid'}

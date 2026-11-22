@@ -19,9 +19,9 @@
  *
  * The general way in, beside New test… (one attribute) and New case… (one
  * SPARQL rule): a suite -- existing, or new for a shape -- good or bad, and a
- * start: a copy of a case, an entity from the model, a fresh entity of a
- * type, an empty file, or a .jsonld already under examples/ that nothing
- * declares. The SDK writes and declares it and runs it once; the case page
+ * start: a copy of a case, the whole main model, an entity from the model, a
+ * fresh entity of a type, an empty file, or a .jsonld already under examples/
+ * that nothing declares. The SDK writes and declares it and runs it once; the case page
  * opens, where a bad case's firings become asserts with "Assert it".
  */
 
@@ -104,11 +104,32 @@ async function pickExpect() {
   return picked && picked.expect;
 }
 
-async function pickStart(options) {
+/**
+ * `stem`, or the first of `stem-2`, `stem-3`, … that no case or file of the
+ * folder `folder` (suite/good or suite/bad) has yet.
+ */
+function freeName(options, folder, stem) {
+  const taken = new Set((options.cases || []).map((c) => c.path)
+    .concat(options.undeclared || []));
+  let name = stem;
+  for (let n = 2; taken.has(`${folder}/${name}.jsonld`); n += 1) {
+    name = `${stem}-${n}`;
+  }
+  return name;
+}
+
+async function pickStart(options, folder) {
   const items = [];
   if (options.cases.length) {
     items.push({ label: '$(copy) A copy of a case', start: 'copy',
       description: 'its includes written into the new file' });
+  }
+  const modelFiles = options.modelFiles || [];
+  if (modelFiles.length) {
+    items.push({ label: '$(symbol-namespace) The whole main model', start: 'whole-model',
+      description: `${modelFiles.length === 1 ? modelFiles[0] : `${modelFiles.length} files`} ` +
+        'written into the new file',
+      detail: 'A snapshot to vary: remove entities, change values; the model stays as it is.' });
   }
   if (options.entities.length) {
     items.push({ label: '$(symbol-object) An entity from the model', start: 'model' });
@@ -142,6 +163,9 @@ async function pickStart(options) {
     { title: 'A new entity of which type?', matchOnDescription: true });
     return chosen && { start: 'type', source: chosen.source,
       name: `${chosen.label.toLowerCase()}-case` };
+  }
+  if (picked.start === 'whole-model') {
+    return { start: 'whole-model', source: '', name: freeName(options, folder, 'whole-model') };
   }
   return { start: 'empty', source: '', name: 'new-case' };
 }
@@ -183,7 +207,8 @@ async function newTestCase(clientHolder, session, node, newSuite) {
     if (!expect) {
       return false;
     }
-    const start = await pickStart(options);
+    const start = await pickStart(options,
+      `${where.suite}/${expect === 'valid' ? 'good' : 'bad'}`);
     if (!start) {
       return false;
     }
@@ -220,9 +245,17 @@ async function announce(made, packageUri) {
       : made.expect === 'valid' && made.sourceExpect === 'invalid'
         ? `SemForge: ${made.case} written. It still violates, as the case it was cloned ` +
           'from does: edit its data until it conforms.'
-        : `SemForge: ${made.case} written; it does not pass yet: ${made.failures.join('; ')}`;
-  const open = await (made.passes ? vscode.window.showInformationMessage(said, 'Open .jsonld')
-    : vscode.window.showWarningMessage(said, 'Open .jsonld'));
+        : made.expect === 'valid' && made.start === 'whole-model' && made.violations > 0
+          ? `SemForge: ${made.case} written. It still violates, as the main model does: ` +
+            'edit its data until it conforms.'
+          : `SemForge: ${made.case} written; it does not pass yet: ${made.failures.join('; ')}`;
+  const shared = made.sharedIds || [];
+  const told = shared.length
+    ? `${said} Defined by more than one model file, so twice in it (one entity with ` +
+      `the attributes of both): ${shared.join(', ')}.`
+    : said;
+  const open = await (made.passes ? vscode.window.showInformationMessage(told, 'Open .jsonld')
+    : vscode.window.showWarningMessage(told, 'Open .jsonld'));
   if (open) {
     await showLocation(`${made.file}:1`, true);
   }

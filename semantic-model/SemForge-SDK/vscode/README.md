@@ -1064,7 +1064,13 @@ right-click a suite or the **Tests** group, the status bar menu) asks:
 - **should it conform or violate** — `good/` with `expect: valid`, or `bad/`
   with `expect: invalid`;
 - **where it starts** — a copy of a case (its includes written into the new
-  file, so editing it never changes a shared subobject), an entity from the
+  file, so editing it never changes a shared subobject), **the whole main
+  model** (the documents of all its model files written into the new file: a
+  snapshot to vary on the case page — remove entities, change values — while
+  the model stays as it is; a bad case started from a conforming model fails
+  until its data is edited, and its description says so; a relative
+  `@context` such as `context.jsonld` is rewritten to name the same file from
+  the case's folder), an entity from the
   model, a new entity of a type (its required attributes given valid values),
   or an empty file;
 - **its name** (suggested).
