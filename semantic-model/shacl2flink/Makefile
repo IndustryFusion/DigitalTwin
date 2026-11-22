@@ -233,6 +233,8 @@ test-flink-e2e:
 		MODEL=$(E2E_KMS)/model-instance.jsonld
 	ln -fs ../../../../test/bats/lib tests/bats/lib || echo 'Bats framework not installed'
 	( cd tests/bats && bats test-shacl-flink-e2e test-shacl-flink-scorpio-e2e ); rc=$$?; \
+		echo "the platform watchdog with the validation deployed"; \
+		VALIDATION_DEPLOYED=true bats $(CURDIR)/../../test/bats/test-jobs/platform-watchdog.bats || rc=1; \
 		rm -f tests/bats/lib; \
 		$(MAKE) flink-undeploy SHACL=$(E2E_KMS)/shacl.ttl KNOWLEDGE=$(E2E_KMS)/knowledge.ttl \
 			MODEL=$(E2E_KMS)/model-instance.jsonld; \

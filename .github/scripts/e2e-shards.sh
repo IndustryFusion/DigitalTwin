@@ -66,6 +66,9 @@ shards_for() {
         # the Fuseki suite uploads these files; before the shacl2flink rule
         semantic-model/shacl2flink/docs/files/*) echo broker flink ;;
         helm/charts/scorpio/*|helm/charts/alerta/*) echo broker flink ;;
+        # the watchdog's end-to-end test also runs in the flink shard, where the
+        # validation is deployed (shacl2flink's test-flink-e2e)
+        test/bats/test-jobs/platform-watchdog.bats) echo broker flink ;;
         Fuseki/*|helm/charts/fuseki/*) echo broker flink ;;
         helm/charts/redis/*|helm/charts/velero/*|\
         test/bats/test-bridges/*|test/bats/test-fuseki/*|test/bats/test-horizontal-platform/*|\

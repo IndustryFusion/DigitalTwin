@@ -114,6 +114,13 @@ select_for() {
     [ "${output}" = '["broker","flink"]' ]
 }
 
+@test "a change to the watchdog's end-to-end test runs broker and flink" {
+    run select_for test/bats/test-jobs/platform-watchdog.bats
+    [ "${output}" = '["broker","flink"]' ]
+    run select_for test/bats/test-jobs/other.bats
+    [ "${output}" = '["broker"]' ]
+}
+
 @test "a change to a suite runs the shard of that suite" {
     run select_for test/bats/test-scorpio/test-scorpio-mergepatch.bats
     [ "${output}" = '["broker"]' ]

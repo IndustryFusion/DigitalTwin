@@ -19,8 +19,14 @@
 # the KafkaConnectors, keeps its findings in its ConfigMap and posts to
 # Alerta. A freshly installed platform is consistent or still rebuilding,
 # never inconsistent. The scenarios themselves are in test/bats-unit.
+#
+# With VALIDATION_DEPLOYED=true (shacl2flink's test-flink-e2e runs it while its
+# validation is deployed) the statementset must exist, and the watchdog must
+# have read the reset from Flink and found a complete refresh of both
+# connectors; without it the test follows what the platform has.
 
 DEBUG=${DEBUG:-false}
+VALIDATION_DEPLOYED=${VALIDATION_DEPLOYED:-false}
 SKIP=
 NAMESPACE=iff
 ALERTA_URL=http://alerta.local
@@ -45,11 +51,15 @@ teardown_file() {
     kubectl -n "${NAMESPACE}" patch cronjob platform-watchdog -p '{"spec":{"suspend":false}}'
 }
 
-@test "the platform watchdog judges the validation state and the connectors of the installed platform" {
-    $SKIP
+run_watchdog() {
     kubectl -n "${NAMESPACE}" delete job "${JOB}" --ignore-not-found
     kubectl -n "${NAMESPACE}" create job "${JOB}" --from=cronjob/platform-watchdog
     kubectl -n "${NAMESPACE}" wait --for=condition=complete "job/${JOB}" --timeout=300s
+}
+
+@test "the platform watchdog judges the validation state and the connectors of the installed platform" {
+    $SKIP
+    run_watchdog
     run kubectl -n "${NAMESPACE}" logs "job/${JOB}"
     echo "${output}"
     [[ "${output}" =~ \[(normal|warning)\]\ shacl-validation/ValidationConsistency ]]
@@ -61,13 +71,35 @@ teardown_file() {
     [[ "${output}" == *"[normal] kafka-connect/ResyncRecency: replaced"* ]]
     observing=$(kubectl -n "${NAMESPACE}" get configmap platform-watchdog-state -o jsonpath='{.data.observing_since}')
     [ -n "${observing}" ]
-    if kubectl -n "${NAMESPACE}" get beamsqlstatementsets shacl-validation >/dev/null 2>&1; then
-        # With the validation deployed, the Connect log of the installed
-        # platform holds a complete snapshot of both connectors, so the
-        # watchdog must have found one of each: this fails when the Debezium
-        # log lines or their connector context change.
+    if [ "${VALIDATION_DEPLOYED}" = true ] || kubectl -n "${NAMESPACE}" get beamsqlstatementsets shacl-validation >/dev/null 2>&1; then
+        kubectl -n "${NAMESPACE}" get beamsqlstatementsets shacl-validation
+        # With the validation deployed, the watchdog read the reset from
+        # Flink (a wrong Flink host or JobManager selector leaves it unset),
+        # and the Connect log of the installed platform holds a complete
+        # snapshot of both connectors, so it found one of each: this fails
+        # when the Debezium log lines or their connector context change.
         state=$(kubectl -n "${NAMESPACE}" get configmap platform-watchdog-state -o json)
-        jq -e '.data | has("entity-table-connector.done") and has("rdf-table-connector.done")' <<<"${state}"
+        jq -e '.data.reset | tonumber > 0' <<<"${state}"
+        [[ "${output}" != *"[warning] shacl-validation/ValidationConsistency: unknown"* ]]
+        # The refreshes must come from the log of the running Connect pod,
+        # which snapshots both connectors when it starts: keys an earlier
+        # pod's log left in the state don't count. A pod restarted just
+        # before has its snapshot still running, so the watchdog runs again.
+        connect_start=$(kubectl -n "${NAMESPACE}" get pods -l app.kubernetes.io/instance=kafka-connect \
+            -o jsonpath='{.items[0].status.containerStatuses[0].state.running.startedAt}')
+        since=$(date -u -d "${connect_start}" +%s)
+        for _ in $(seq 1 10); do
+            state=$(kubectl -n "${NAMESPACE}" get configmap platform-watchdog-state -o json)
+            jq -e --argjson since "${since}" \
+                '.data | ((."entity-table-connector.done" // "0") | tonumber) >= $since and ((."rdf-table-connector.done" // "0") | tonumber) >= $since' \
+                <<<"${state}" >/dev/null && break
+            sleep 30
+            run_watchdog
+        done
+        echo "Connect pod started ${connect_start}; state: $(jq -c '.data' <<<"${state}")"
+        jq -e --argjson since "${since}" \
+            '.data | ((."entity-table-connector.done" // "0") | tonumber) >= $since and ((."rdf-table-connector.done" // "0") | tonumber) >= $since' \
+            <<<"${state}"
     else
         # Without it there is no job to judge against: the watchdog says so.
         [[ "${output}" == *"[warning] shacl-validation/ValidationConsistency: unknown"* ]]
