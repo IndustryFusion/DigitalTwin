@@ -78,3 +78,19 @@ def test_every_constraint_type_the_profile_claims_is_compiled():
     claimed = sorted(c for c in builtin_profile().components - INLINED
                      if c not in emitted and ALIASES.get(c, c) not in emitted)
     assert not claimed, f'the SDK profile claims {claimed}; shacl2flink names none of them'
+
+
+def test_strings_are_read_by_the_compiler_s_patterns():
+    """The cross-check lists a string the compiled SQL judges by its text as
+    expected (#958, design D5). It reads the text with a copy of the patterns
+    of the compiler's sh:datatype check, and the copy must be the compiler's:
+    a drifted one would list a real difference as expected."""
+    from semforge.target.crosscheck import TEXT_DATATYPES, XSD
+
+    text = _sources()[os.path.join(SHACL2FLINK, 'lib', 'shacl_properties_to_sql.py')]
+    check = text[text.index('sql_check_literal_datatypes = '):]
+    double = re.search(r'{% set undeclared_double %}(.*?){% endset %}', check).group(1)
+    integer = re.search(r"XMLSchema#integer'\)\s*=\s*'http://www.w3.org/2001/XMLSchema#integer'"
+                        r"\s*AND {%- if sqlite %} `val` REGEXP '(.*?)'", check).group(1)
+    assert {d: p.pattern for d, p in TEXT_DATATYPES} == {
+        XSD + 'double': double, XSD + 'integer': integer}

@@ -127,7 +127,7 @@ def cli():
 @click.option('--shacl2flink', type=click.Path(), default=None,
               help='path to the shacl2flink checkout (for --cross-check)')
 def validate(path, no_strict, cross_check, shacl2flink):
-    """Validate a package's examples against its shapes."""
+    """Validate a package's model (model-instance.jsonld) against its shapes; `semforge test` runs the examples."""
     try:
         package = load(path)
         report = validate_package(package, strict=not no_strict)
@@ -162,7 +162,9 @@ def validate(path, no_strict, cross_check, shacl2flink):
         click.echo(f'\ncross-check against {target or "(not found)"}')
         for diagnostic in divergences:
             click.echo(f'  {diagnostic}')
-        if not divergences:
+        # An expected difference is one the compiler makes on purpose, listed
+        # with its reason; it is no disagreement.
+        if all(d.code == 'SF-XCHK-EXPECTED' for d in divergences):
             click.echo('  cross-check: the compiled SQL agrees with pyshacl')
 
     count = len(report.violations)

@@ -30,11 +30,12 @@ shacl2flink/tests/pyshacl-compare/compare.py:
 """
 
 import pyshacl
-from rdflib import Graph
-from rdflib.namespace import SH
+from rdflib import Graph, Literal
+from rdflib.collection import Collection
+from rdflib.namespace import RDF, SH
 
 from .. import normalise
-from ..results import Cause, Result, Status
+from ..results import UNTYPED, Cause, Result, Status
 
 
 def _private_copy(shapes_graph):
@@ -112,14 +113,54 @@ def run(data_graph, shapes_graph, knowledge_graph=None, view='current'):
                 message=str(message or ''), view=view, shape_curie=curie))
             continue
 
+        value, value_datatype = _value(report.value(node, SH.value))
         results.append(Result(
             resource=resource, attribute=attribute or '',
             component=component,
             shape=shape or '',
             severity=severity, status=Status.VIOLATED,
             message=str(message or ''), view=view, shape_curie=curie,
-            cause=_causes(node, data, shapes, report)))
+            cause=_causes(node, data, shapes, report),
+            value=value, value_datatype=value_datatype,
+            datatypes=_admitted_datatypes(component, source, shapes)))
     return results
+
+
+def _value(term):
+    """(text, declared datatype IRI) of a rejected literal: UNTYPED for one that declares none, which a
+    declared xsd:string is not; rdf:langString for a tagged one. ('', '') for anything else."""
+    if not isinstance(term, Literal):
+        return '', ''
+    if term.datatype is not None:
+        return str(term), str(term.datatype)
+    return str(term), str(RDF.langString) if term.language else UNTYPED
+
+
+# What a branch of an sh:or may say besides sh:datatype and still be "a datatype": names, messages and
+# the like, which constrain nothing. Every other SHACL predicate is a constraint of its own.
+NOT_CONSTRAINTS = {SH.datatype, SH.message, SH.name, SH.description, SH.severity, SH.order, SH.group}
+
+
+def _admitted_datatypes(component, source, shapes):
+    """The datatypes a failed sh:datatype admits, or those of the branches of a failed sh:or of
+    datatypes. () for any other constraint, and for an sh:or with a branch that is not sh:datatype alone:
+    [sh:datatype xsd:integer; sh:maxInclusive 100] also rejects 500, whatever the text says."""
+    if source is None:
+        return ()
+    if component == 'DatatypeConstraintComponent':
+        return tuple(sorted(str(d) for d in shapes.objects(source, SH.datatype)))
+    if component != 'OrConstraintComponent':
+        return ()
+    found = []
+    for members in shapes.objects(source, SH['or']):
+        for branch in Collection(shapes, members):
+            datatypes = [str(d) for d in shapes.objects(branch, SH.datatype)]
+            constraints = {p for p in shapes.predicates(branch, None)
+                           if str(p).startswith(str(SH)) and p not in NOT_CONSTRAINTS}
+            if not datatypes or constraints:
+                return ()
+            found.extend(datatypes)
+    return tuple(sorted(set(found)))
 
 
 def _causes(node, data, shapes, report, depth=0):

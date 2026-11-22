@@ -6,3 +6,4 @@
 # Versions match shacl2flink/requirements.txt.
 oxrdflib==0.4.0
 Jinja2==3.1.6
+pyoxigraph==0.4.11

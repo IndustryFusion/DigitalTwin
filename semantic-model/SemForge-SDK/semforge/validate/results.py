@@ -25,6 +25,11 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 
+# value_datatype of a literal that declares no datatype: a plain JSON string. Not an IRI, so no declared
+# type -- xsd:string included -- can be taken for it.
+UNTYPED = 'untyped'
+
+
 class Status(Enum):
     """Per-constraint outcome.
 
@@ -68,6 +73,14 @@ class Result:
     # Why a node constraint (sh:node) was violated: the inner results pyshacl reports as sh:detail.
     # Not part of the identity (key), so expectations, coverage and counts do not change.
     cause: tuple = ()
+    # The value a constraint on a value rejected (pyshacl's sh:value), as its text and its declared datatype
+    # IRI -- UNTYPED for a literal that declares none, '' for no literal -- and, for sh:datatype and an sh:or
+    # of datatypes, the datatypes the constraint admits. What the SQLite cross-check needs to tell a string
+    # judged by its text from a real difference (target/crosscheck.py). Neither identity nor part of the
+    # comparison: two runs that reject the same constraint are the same verdict, whatever the value was.
+    value: str = field(default='', compare=False)
+    value_datatype: str = field(default='', compare=False)
+    datatypes: tuple = field(default=(), compare=False)
 
     @property
     def shape_name(self):

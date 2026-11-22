@@ -77,7 +77,8 @@ def _report_out(report):
 def _report_in(data):
     return Report(
         results=[Result(**dict(r, status=Status(r['status']),
-                               cause=tuple(Cause(**c) for c in r.get('cause', ()))))
+                               cause=tuple(Cause(**c) for c in r.get('cause', ())),
+                               datatypes=tuple(r.get('datatypes', ()))))
                  for r in data['results']],
         view_stats=[ViewStats(**dict(s, view=DataView(s['view']))) for s in data['view_stats']],
         diagnostics=[Diagnostic(**d) for d in data['diagnostics']],

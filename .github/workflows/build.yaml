@@ -114,6 +114,10 @@ jobs:
         use-mamba: true
     - name: Create a new Conda environment
       run: conda create --name py310 python=3.10 -y
+    # For the SQLite cross-check's tests (--cross-check sqlite), which
+    # otherwise skip: the compiler's dependencies and sqlite3 with PCRE.
+    - name: Install sqlite3 with the PCRE extension
+      run: bash .github/scripts/install-sqlite-pcre.sh
     # kms-check also keeps every release record append-only: on a pull
     # request it compares each .kms/releases.yaml with the one on the base
     # branch, which the shallow checkout lacks and is fetched here. Other
@@ -129,7 +133,7 @@ jobs:
           git fetch --no-tags --depth=1 origin "+refs/heads/$BASE_REF:refs/remotes/origin/$BASE_REF"
           against="origin/$BASE_REF"
         fi
-        cd semantic-model/SemForge-SDK && make setup && make lint test kms-check KMS_AGAINST="$against"
+        cd semantic-model/SemForge-SDK && make setup && venv/bin/pip install -q -r requirements-crosscheck.txt && make lint test kms-check KMS_AGAINST="$against"
     - name: Setup tmate session
       if: ${{ failure() && (contains(github.event.pull_request.labels.*.name, 'ci-debug') || inputs.debug) }}
       uses: mxschmitt/action-tmate@v3

@@ -173,6 +173,10 @@ print("\n".join(l for l in run.splitlines()
         printf '#!/bin/sh\necho "%s $*" >> "%s"\n' "${tool}" "${calls}" > "${stub}/${tool}"
         chmod +x "${stub}/${tool}"
     done
+    # the step installs the cross-check requirements with the SDK's own pip
+    mkdir -p "${BATS_TEST_TMPDIR}/semantic-model/SemForge-SDK/venv/bin"
+    printf '#!/bin/sh\necho "pip $*" >> "%s"\n' "${calls}" > "${BATS_TEST_TMPDIR}/semantic-model/SemForge-SDK/venv/bin/pip"
+    chmod +x "${BATS_TEST_TMPDIR}/semantic-model/SemForge-SDK/venv/bin/pip"
 
     (cd "${BATS_TEST_TMPDIR}" && PATH="${stub}:${PATH}" BASE_REF=main bash -e -c "${script}")
     grep -qx 'git fetch --no-tags --depth=1 origin +refs/heads/main:refs/remotes/origin/main' "${calls}"
