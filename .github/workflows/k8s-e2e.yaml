@@ -135,7 +135,8 @@ jobs:
         echo sleep 60s to let the system settle
         sleep 60
         (exec sudo -E kubefwd -n iff svc) &
-        sleep 10
+        # until the forwarded Kafka and MQTT answer, not a fixed sleep
+        bash test/wait-for-kubefwd.sh 180 || { sudo killall kubefwd; exit 1; }
         cd test/bats
         # word splitting intended: one argument per suite directory
         # shellcheck disable=SC2046

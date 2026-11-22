@@ -219,7 +219,7 @@ jobs:
         bats linting.bats
         shellcheck *.sh *.bats test-*/*.bats ../bats-unit/*.bats \
           ../../.github/scripts/*.sh ../prepare-platform-for-github-runner.sh \
-          ../platform-images.sh ../wait-for-flink-jobs.sh \
+          ../platform-images.sh ../wait-for-flink-jobs.sh ../wait-for-kubefwd.sh \
           ../../DebeziumPostgresConnector/fetch-verified.sh
     - name: Run the bats suites without a cluster
       run: bats test/bats-unit

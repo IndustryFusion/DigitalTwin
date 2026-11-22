@@ -96,7 +96,9 @@ setup() {
     # shellcheck disable=SC2086
     [ "$DEBUG" = "true" ] || (exec ${SUDO} kubefwd -n ${NAMESPACE} -l app.kubernetes.io/name=kafka svc >/dev/null 2>&1) &
     echo "# launched kubefwd for kafka" >&3
-    sleep 3
+    # until the forwarded Kafka answers, not a fixed sleep
+    bash "${BATS_TEST_DIRNAME}/../../../../../test/wait-for-kubefwd.sh" 60 \
+        my-cluster-kafka-bootstrap:9092
 }
 
 teardown() {

@@ -65,7 +65,9 @@ jobs:
         source ./miniconda3/etc/profile.d/conda.sh
         conda activate e2etest
         (exec kubefwd -n iff svc) &
-        sleep 10
+        # until the forwarded Kafka and MQTT answer, not a fixed sleep; a
+        # kubefwd left behind would hold the self-hosted runner's /etc/hosts
+        bash ./test/wait-for-kubefwd.sh 180 || { killall kubefwd; exit 1; }
         cd ./test/bats
         DEBUG=true bats */*.bats
         killall kubefwd
