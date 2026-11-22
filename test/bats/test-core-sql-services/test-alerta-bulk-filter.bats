@@ -1,5 +1,8 @@
 #!/usr/bin/env bats
 
+load "../lib/aggregation"  # wait_until, reached_end
+load "../lib/kafka"
+
 if [ -z "${SELF_HOSTED_RUNNER}" ]; then
     SUDO="sudo -E"
 fi
@@ -122,11 +125,13 @@ EOF
 
 setup() {
     # shellcheck disable=SC2086
-    [ $DEBUG = "true" ] || (exec ${SUDO} kubefwd -n iff -l app.kubernetes.io/name=kafka svc  >/dev/null 2>&1) &
-    echo "# launched kubefwd for kafka, wait some seconds to give kubefwd to launch the services"
-    sleep 2
+    [ $DEBUG = "true" ] || (exec ${SUDO} kubefwd -n iff -l app.kubernetes.io/name=kafka svc  >/dev/null 2>&1 3>&-) &
+    echo "# launched kubefwd for kafka, wait until Kafka answers through it"
+    wait_for_kafka ${ALERTS_TOPIC} ${BULK_ALERTS_TOPIC}
 }
 teardown(){
+    [ -n "${BATS_TEST_COMPLETED:-}" ] || print_capture ${KAFKACAT_ATTRIBUTES}
+    stop_capture
     echo "# now killing kubefwd"
     # shellcheck disable=SC2086
     [ $DEBUG = "true" ]  || ${SUDO} killall kubefwd
@@ -141,8 +146,10 @@ teardown(){
 # It seems not to update the watermark when data only with the same key is sent
 # That is there are two different keys: ALERTS1-4 and ALERTS5-6
 @test "verify only changes of alert sequence from alerts.bulk are forwarded to alerts topic" {
-    (exec stdbuf -oL kafkacat -C -t ${ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -o end -f '%s\n'>${KAFKACAT_ATTRIBUTES}) &
-    sleep 2 # wait for next aggregation window
+    start_capture ${ALERTS_TOPIC} ${KAFKACAT_ATTRIBUTES} -f '%s\n'
+    # The sleeps below are no waits: they space the records' Kafka timestamps
+    # against the 200 ms session gap of the filter, and a loaded runner only
+    # spaces them further.
     kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT4}
     sleep 0.5
     kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT5}
@@ -182,8 +189,8 @@ teardown(){
     sleep 2
     echo "# Send final alert to trigger window update in alert filter"
     kafkacat -P -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} -K';' <${ALERT1}
-    sleep 2
-    killall kafkacat
+    echo "# wait for the 5 alerts compare_attributes1 expects"
+    wait_for_records ${KAFKACAT_ATTRIBUTES} 5 2
     grep -v flush  < ${KAFKACAT_ATTRIBUTES} | grep -v '^$' > ${KAFKACAT_ATTRIBUTES_FILTERED}
     run compare_attributes1 ${KAFKACAT_ATTRIBUTES_FILTERED}
     [ "$status" -eq 0 ]
