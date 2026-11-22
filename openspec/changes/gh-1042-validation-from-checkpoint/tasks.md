@@ -79,6 +79,8 @@ Order: #1036 (#1035) is merged and archived first. Then rebase this change: add 
 
 ## 7. Platform tests
 
+- [ ] 7.0 Run the restore suites in a shard of their own, `flink-restore`, since the flink shard already takes about 57 of its 120 minutes and the restore tests add long waits (the 70-minute outage among them): add the shard to `.github/scripts/e2e-shards.sh` with the paths that select it (shacl2flink's checkpoint and resync code, the operator, the gateway, the flink and alerta charts, the watchdog) and its own make target, run it in `k8s-e2e.yaml` and in the full run of `k8s-tests.yaml`, and extend `test/bats-unit/e2e-shards.bats` for the selection; verify that a PR touching `shacl_resync.sh` selects both `flink` and `flink-restore`, that the full nightly run runs it, and that its measured duration stays below its limit
+
 - [ ] 7.1 Add cases to the e2e suite run by `test-flink-e2e`: checkpointing reported as deployed ("Deployed by default"), a completed checkpoint listed in the status with offsets, and the checkpoint still there after a cancel ("Cancelled"); verify they pass in the `flink` shard
 - [ ] 7.2 E2E restore within the computed limits. With the e2e KMS deployed with today's defaults and its known violations open:
   - wait for a recorded checkpoint that the watchdog reports `restorable until` a time at least 10 minutes ahead;
