@@ -18,6 +18,14 @@ make lint                           # flake8
 venv/bin/python -m semforge validate tests/corpus/kms
 ```
 
+Some unit tests run the scripts of the editor's pages (the entity graph, the
+violation list, the attribute panel) in headless Chromium. They use the browser
+`SEMFORGE_CHROME` names, otherwise Playwright's Chromium under
+`~/.cache/ms-playwright`, and are skipped without one (`no headless Chromium
+(set SEMFORGE_CHROME)`). With `SEMFORGE_REQUIRE_CHROME=1` they fail instead of
+skipping. The `Build` workflow sets both, `SEMFORGE_CHROME` to the runner's
+Google Chrome, so in CI the page tests always run.
+
 ## Status
 
 **Alpha.** The language, the validator and the editor are in daily use on the

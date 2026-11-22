@@ -179,14 +179,11 @@ def test_a_quick_page_does_not_flicker(tmp_path):
 
 def test_a_click_that_writes_marks_its_claim_until_the_extension_is_done(tmp_path):
     """'Assert it' marks its claim "⟳ updating…"; the extension's idle clears it."""
-    import glob
     import re
 
-    chrome = next((c for c in [os.environ.get('SEMFORGE_CHROME', '')] + sorted(glob.glob(
-        os.path.expanduser('~/.cache/ms-playwright/chromium-*/chrome-linux*/chrome')))
-        if c and os.path.exists(c)), None)
-    if chrome is None:
-        pytest.skip('no headless Chromium (set SEMFORGE_CHROME)')
+    from headless_chromium import chrome as find_chrome
+
+    chrome = find_chrome()
     node = shutil.which('node')
     if node is None:
         pytest.skip('node is not installed')

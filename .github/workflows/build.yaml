@@ -93,8 +93,19 @@ jobs:
 
   semforge-sdk:
     runs-on: ubuntu-24.04
+    # The page tests run the pages' scripts in headless Chromium. Without one
+    # they skip locally; here a missing browser fails them instead.
+    env:
+      SEMFORGE_REQUIRE_CHROME: "1"
     steps:
     - uses: actions/checkout@v4
+    # The runner image ships Google Chrome; nothing to install.
+    - name: Find headless Chromium for the page tests
+      run: |
+        chrome=$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser) \
+          || { echo "::error::no Chrome or Chromium on the runner"; exit 1; }
+        "${chrome}" --version
+        echo "SEMFORGE_CHROME=${chrome}" >> "${GITHUB_ENV}"
     - name: Setup Miniconda with Python 3.10
       uses: conda-incubator/setup-miniconda@v2
       with:

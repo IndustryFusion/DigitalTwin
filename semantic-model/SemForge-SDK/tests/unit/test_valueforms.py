@@ -20,7 +20,6 @@
 The forms need not share their conditions, and any NGSI-LD kind may be one.
 """
 
-import glob
 import html as entities
 import json
 import os
@@ -34,6 +33,8 @@ from rdflib.namespace import SH
 
 from semforge.cooked.valueforms import edit_value, read_value, say, to_payload
 from semforge.errors import PackageError
+
+import headless_chromium
 
 FILTER = 'https://industryfusion.github.io/contexts/example/v0/base_shacl/FilterShape'
 CUTTER = 'https://industryfusion.github.io/contexts/example/v0/base_shacl/CutterShape'
@@ -166,12 +167,7 @@ def _panel(tmp_path, state, after=None):
     page = (tmp_path / 'panel.html').read_text()
     if after is None:
         return page, None
-    chrome = next((c for c in [os.environ.get('SEMFORGE_CHROME', '')] + sorted(glob.glob(
-        os.path.expanduser('~/.cache/ms-playwright/chromium-*/chrome-linux*/chrome')))
-        if c and os.path.exists(c)), None)
-    if chrome is None:
-        pytest.skip('no headless Chromium (set SEMFORGE_CHROME)')
-    dom = subprocess.run([chrome, '--headless=new', '--no-sandbox', '--disable-gpu',
+    dom = subprocess.run([headless_chromium.chrome(), '--headless=new', '--no-sandbox', '--disable-gpu',
                           '--virtual-time-budget=3000', '--dump-dom',
                           'file://' + str(tmp_path / 'panel.html')],
                          capture_output=True, text=True, timeout=120).stdout

@@ -22,7 +22,6 @@ otherwise. What the page is drawn from -- the entities and their
 relationships -- is checked everywhere.
 """
 
-import glob
 import json
 import os
 import re
@@ -30,6 +29,8 @@ import shutil
 import subprocess
 
 import pytest
+
+import headless_chromium
 
 SDK = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 SRC = os.path.join(SDK, 'vscode', 'src')
@@ -100,12 +101,7 @@ def test_the_page_carries_its_entities_and_their_relationships(tmp_path):
 
 
 def _chrome():
-    candidates = [os.environ.get('SEMFORGE_CHROME', '')] + sorted(glob.glob(os.path.expanduser(
-        '~/.cache/ms-playwright/chromium-*/chrome-linux*/chrome')))
-    found = next((c for c in candidates if c and os.path.exists(c)), None)
-    if found is None:
-        pytest.skip('no headless Chromium (set SEMFORGE_CHROME)')
-    return found
+    return headless_chromium.chrome()
 
 
 def _dom(tmp_path, after):

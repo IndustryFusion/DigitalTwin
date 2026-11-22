@@ -68,3 +68,66 @@ assert on['workflow_dispatch']['inputs']['debug']['type'] == 'boolean'
 "
     [ "$status" -eq 0 ]
 }
+
+# The SemForge SDK's page tests run in headless Chromium and skip without it;
+# in Build a missing browser must fail them, not skip them (#960).
+
+semforge_job() {
+    python3 - "${WORKFLOW}" <<'EOF'
+import json, sys, yaml
+print(json.dumps(yaml.safe_load(open(sys.argv[1]))['jobs']['semforge-sdk']))
+EOF
+}
+
+browser_step() {
+    semforge_job | python3 -c '
+import json, sys
+steps = json.load(sys.stdin)["steps"]
+print(next(s["run"] for s in steps if "SEMFORGE_CHROME=" in s.get("run", "")))
+'
+}
+
+@test "the SemForge SDK job requires the browser for its page tests" {
+    run semforge_job
+    [ "$status" -eq 0 ]
+    echo "${output}" | python3 -c '
+import json, sys
+job = json.load(sys.stdin)
+assert str(job.get("env", {}).get("SEMFORGE_REQUIRE_CHROME")) == "1", job.get("env")
+'
+}
+
+@test "the SemForge SDK job sets the browser before it runs the tests" {
+    run semforge_job
+    [ "$status" -eq 0 ]
+    echo "${output}" | python3 -c '
+import json, sys
+steps = json.load(sys.stdin)["steps"]
+find = next(i for i, s in enumerate(steps) if "SEMFORGE_CHROME=" in s.get("run", ""))
+build = next(i for i, s in enumerate(steps) if "make lint test" in s.get("run", ""))
+assert "GITHUB_ENV" in steps[find]["run"] and find < build, (find, build)
+'
+}
+
+@test "the browser step hands the runner's Chrome to the page tests" {
+    script=$(browser_step)
+    bin="${BATS_TEST_TMPDIR}/bin"
+    mkdir -p "${bin}"
+    printf '#!/bin/sh\necho "Google Chrome 1.0"\n' > "${bin}/google-chrome"
+    chmod +x "${bin}/google-chrome"
+    env_file="${BATS_TEST_TMPDIR}/env"
+    GITHUB_ENV="${env_file}" PATH="${bin}:/usr/bin:/bin" run bash -e -c "${script}"
+    [ "$status" -eq 0 ]
+    grep -qx "SEMFORGE_CHROME=${bin}/google-chrome" "${env_file}"
+}
+
+@test "the browser step fails when the runner has no Chrome" {
+    script=$(browser_step)
+    empty="${BATS_TEST_TMPDIR}/empty"
+    mkdir -p "${empty}"
+    env_file="${BATS_TEST_TMPDIR}/env"
+    GITHUB_ENV="${env_file}" PATH="${empty}" run /bin/bash -e -c "${script}"
+    [ "$status" -ne 0 ]
+    [[ "${output}" == *"no Chrome or Chromium"* ]]
+    [ ! -s "${env_file}" ]
+}
