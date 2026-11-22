@@ -22,6 +22,7 @@ const config = require('../config/config.json');
 const Alerta = require('../lib/alerta.js');
 const Logger = require('../lib/logger.js');
 const KafkaHealth = require('../lib/kafkaHealth.js');
+const runningAsMain = require.main === module;
 
 const alerta = new Alerta(config);
 const logger = new Logger(config);
@@ -33,7 +34,6 @@ const kafka = new Kafka({
 
 const consumer = kafka.consumer({ groupId: GROUPID, allowAutoTopicCreation: false });
 const producer = kafka.producer();
-console.log(JSON.stringify(config));
 
 const errorIsUnrecoverable = function (body) {
   // The error code is not very expressive in Alerta. try to detect patterns in error message to filter out
@@ -48,10 +48,20 @@ const errorIsUnrecoverable = function (body) {
   return false;
 };
 
-const commitAppliedMessages = function (consumer, commitArray) {
-  logger.debug(`Commit ${commitArray.length} messages `);
-  consumer.commitOffsets(commitArray);
-  return [];
+// Commit a record once it is done with: posted to Alerta, or dropped for good.
+// Kafka keeps the offset of the next record to read, so that is offset + 1; a
+// restart then resumes after the last record posted instead of posting it, and
+// every record before it that was not yet committed, a second time -- which
+// reopens an alert that was closed in between.
+// A failed commit is only logged: throwing would make kafkajs hand the record
+// over again and post it twice. The next record's commit covers this one.
+const commitPast = async function (consumer, topic, partition, offset) {
+  const next = (BigInt(offset) + BigInt(1)).toString();
+  try {
+    await consumer.commitOffsets([{ topic, partition, offset: next }]);
+  } catch (err) {
+    logger.error(`Could not commit offset ${next} of ${topic}/${partition}: ${err}`);
+  }
 };
 
 const pauseresume = function (consumer, topic) {
@@ -65,10 +75,12 @@ const startListener = async function () {
   await consumer.connect();
   await consumer.subscribe({ topic: config.alerta.topic, fromBeginning: false });
 
-  let committedOffsets = [];
+  // Strictly in order, one record at a time: a record that cannot be posted
+  // pauses the topic and is handed back to kafkajs, so neither it nor any
+  // record after it is committed before it has been posted.
   await consumer.run({
     autoCommit: false,
-    eachMessage: async ({ topic, partition, message, pause }) => {
+    eachMessage: async ({ topic, partition, message }) => {
       let body = null;
       try {
         body = JSON.parse(message.value);
@@ -79,31 +91,22 @@ const startListener = async function () {
         const result = await alerta.sendAlert(body, config.alerta.requestTimeout)
           .catch((err) => {
             logger.error('Could not send Alert: ' + err);
-            committedOffsets = commitAppliedMessages(consumer, committedOffsets);
             pauseresume(consumer, topic);
             throw new Error('Could not send Alert ' + err);
           });
-        logger.debug(`Alerta Result ${result.statusCode}}`);
+        logger.debug(`Alerta Result ${result.statusCode}`);
         if (result.statusCode !== 201) {
           logger.error(`submission to Alerta failed with statuscode ${result.statusCode} and ${JSON.stringify(result.body)}`);
-          committedOffsets = commitAppliedMessages(consumer, committedOffsets);
           // Filter out non recoverable errors
-          if (errorIsUnrecoverable(result.body)) {
-            committedOffsets.push({ topic, partition, offset: message.offset });
-          } else {
+          if (!errorIsUnrecoverable(result.body)) {
             pauseresume(consumer, topic);
             throw new Error('Retry submission of Alert.');
           }
-        } else {
-          committedOffsets.push({ topic, partition, offset: message.offset });
         }
       } else {
         logger.debug('Ignoring ' + JSON.stringify(body));
-        committedOffsets.push({ topic, partition, offset: message.offset });
       }
-      if (committedOffsets.length > config.alerta.kafkaCommitThreshold) {
-        committedOffsets = commitAppliedMessages(consumer, committedOffsets);
-      }
+      await commitPast(consumer, topic, partition, message.offset);
     }
   }).catch(
     e => {
@@ -178,7 +181,10 @@ const startPeriodicProducer = async function () {
     }
   }, config.alerta.heartbeatInterval); // Send every second
 };
-logger.info('Now staring Kafka listener');
-startListener();
-logger.info('Now starting Kafka periodic producer');
-startPeriodicProducer();
+if (runningAsMain) {
+  console.log(JSON.stringify(config));
+  logger.info('Now starting Kafka listener');
+  startListener();
+  logger.info('Now starting Kafka periodic producer');
+  startPeriodicProducer();
+}

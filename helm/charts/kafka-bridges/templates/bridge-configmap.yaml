@@ -24,8 +24,7 @@ data:
               "kafkaResumeTimeout": {{ .Values.alerta.kafkaResumeTimeout }},
               "heartbeatInterval": {{ .Values.alerta.heartbeatInterval }},
               "heartbeatDelay": {{ .Values.alerta.heartbeatDelay }},
-              "requestTimeout": {{ .Values.alerta.requestTimeout }},
-              "kafkaCommitThreshold": {{ .Values.alerta.kafkaCommitThreshold }}
+              "requestTimeout": {{ .Values.alerta.requestTimeout }}
       },
       "logger": {
               "loglevel": "info"
