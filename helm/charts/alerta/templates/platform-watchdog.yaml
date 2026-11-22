@@ -82,11 +82,18 @@ data:
     #
     #   INCONSISTENT  a key went longer than the TTL without a complete
     #                 refresh while the job had state: latched (timeout 0)
-    #                 until the state is emptied; only a redeploy repairs it.
+    #                 until the state is emptied; only a fresh job repairs
+    #                 it (make shacl-resync REPLACE=fresh).
     #   REBUILDING    the state was emptied and the first complete refresh
     #                 has not come yet: a refresh repairs it.
     #   LATE          a refresh is overdue, the window is still open: a
     #                 refresh now avoids the inconsistency.
+    #
+    # A resync of the SHACL alerts (make shacl-resync in shacl2flink) marks
+    # itself in the watchdog's ConfigMap (resync_since, resync_step,
+    # resync_deadline, resync_failed). While it is marked, the watchdog
+    # reports it instead of rebuilding, late, unknown or consistent; only a
+    # kept inconsistency comes first. The watchdog never writes those marks.
 
     LC_ALL=C
     NAMESPACE="${NAMESPACE:?}"
@@ -193,9 +200,15 @@ data:
       sget() { jq -r --arg k "$1" '.[$k] // empty' <<<"$NEW_STATE"; }
       sset() { NEW_STATE=$(jq -c --arg k "$1" --arg v "$2" '.[$k] = $v' <<<"$NEW_STATE"); }
       sdel() { NEW_STATE=$(jq -c --arg k "$1" 'del(.[$k])' <<<"$NEW_STATE"); }
+      # The resync's marks are left out: the resync may change them while
+      # this run is in progress.
+      own() { jq -c 'with_entries(select(.key | startswith("resync_") | not))' <<<"$1"; }
       persist() {  # keys dropped from the state go out as null: a merge patch keeps the others
-        if [ "$NEW_STATE" = "$STATE_JSON" ] || kubectl -n "$NAMESPACE" patch configmap "$STATE_CONFIGMAP" --type merge \
-            -p "$(jq -c --argjson old "$STATE_JSON" '{data: (($old | with_entries(.value = null)) + .)}' <<<"$NEW_STATE")" >/dev/null; then
+        local old new
+        old=$(own "$STATE_JSON")
+        new=$(own "$NEW_STATE")
+        if [ "$new" = "$old" ] || kubectl -n "$NAMESPACE" patch configmap "$STATE_CONFIGMAP" --type merge \
+            -p "$(jq -c --argjson old "$old" '{data: (($old | with_entries(.value = null)) + .)}' <<<"$new")" >/dev/null; then
           post_alert normal platform-watchdog WatchdogState "kept state readable" \
             "The platform watchdog reads and keeps its state."
         else
@@ -285,10 +298,47 @@ data:
         fi
       fi
 
-      REPAIR="Repair: (1) redeploy the ${STATEMENTSET} statementset, (2) restart Core Services (${CORE_SERVICES}), (3) delete the open alerts of service SHACL Validator, (4) restart kafka-connect for a complete refresh, which raises the real violations again."
+      REPAIR="Repair: run make shacl-resync REPLACE=fresh in semantic-model/shacl2flink, which stops the ${STATEMENTSET} job, empties its topics, closes the open alerts of service SHACL Validator, restarts Core Services (${CORE_SERVICES}) without state, starts the job and waits until a complete refresh has been processed, which raises the real violations again."
       inconsistent() {  # inconsistent <restore note>
         post_alert critical "$STATEMENTSET" ValidationConsistency "inconsistent since $(fmt "$(sget latch_deadline)")" \
-          "INCONSISTENT -- REDEPLOYMENT REQUIRED. $(sget latch_reason). Keys whose state expired were fed again as new rows, so the pinned join state holds duplicates: counts too high and alerts that never clear. No refresh can remove them. ${REPAIR} $1 This alert stays until the validation state has been emptied." 0
+          "INCONSISTENT -- FRESH VALIDATION JOB REQUIRED. $(sget latch_reason). Keys whose state expired were fed again as new rows, so the pinned join state holds duplicates: counts too high and alerts that never clear. No refresh can remove them. ${REPAIR} $1 This alert stays until the validation state has been emptied." 0
+      }
+
+      # A resync, from its marks: critical when it failed or its time limit
+      # passed, a warning while it runs. Succeeds when it posted. The marks
+      # are read again right before the post: a resync that began while
+      # this run judged must not be overwritten by a "consistent" from the
+      # state read before it. A mark goes into the alert's JSON as text: no
+      # quotes, no backslashes, no control characters.
+      MARKS="$STATE_JSON"
+      mark() { jq -j --arg k "$1" '.[$k] // empty' <<<"$MARKS" | tr '\t\n\r"\134' "   '/" | tr -d '\000-\037\177'; }
+      resync_report() {
+        local since step deadline failed fresh
+        if fresh=$(kubectl -n "$NAMESPACE" get configmap "$STATE_CONFIGMAP" -o json 2>/dev/null | jq -ce '.data // {}' 2>/dev/null); then
+          MARKS="$fresh"
+        fi
+        since=$(mark resync_since)
+        step=$(mark resync_step)
+        deadline=$(mark resync_deadline)
+        failed=$(mark resync_failed)
+        [ -n "${since}${failed}" ] || return 1
+        step=${step:-unknown}
+        if [[ "$failed" =~ ^([0-9]+)\ (.*)$ ]]; then
+          post_alert critical "$STATEMENTSET" ValidationConsistency "resync failed" \
+            "RESYNC FAILED in step ${step} at $(fmt "${BASH_REMATCH[1]}"): ${BASH_REMATCH[2]}" 0
+        elif [ -n "$failed" ]; then
+          post_alert critical "$STATEMENTSET" ValidationConsistency "resync failed" \
+            "RESYNC FAILED in step ${step}: ${failed}" 0
+        elif [[ "$deadline" =~ ^[0-9]+$ ]] && [ "$NOW" -gt "$deadline" ]; then
+          post_alert critical "$STATEMENTSET" ValidationConsistency "resync failed" \
+            "RESYNC FAILED in step ${step}: the resync did not complete in time, its time limit passed at $(fmt "$deadline"). The SHACL alerts may be incomplete or stale; run make shacl-resync again." 0
+        elif [[ "$since" =~ ^[0-9]+$ ]]; then
+          post_alert warning "$STATEMENTSET" ValidationConsistency "resync in progress" \
+            "DEGRADED -- RESYNC IN PROGRESS since $(fmt "$since"), step ${step}: the SHACL alerts are incomplete until the resync has completed."
+        else
+          post_alert warning "$STATEMENTSET" ValidationConsistency "resync in progress" \
+            "DEGRADED -- RESYNC IN PROGRESS, step ${step}: the SHACL alerts are incomplete until the resync has completed."
+        fi
       }
 
       # 1b. The complete refreshes come from the Debezium log of the Connect
@@ -319,6 +369,8 @@ data:
         [ -z "$(sget job_unknown)" ] && sset job_unknown "$NOW"
         if [ -n "$(sget latch_reason)" ]; then
           inconsistent "The consistency can't be checked again now: ${UNKNOWN_CAUSE}."
+        elif resync_report; then
+          :
         else
           post_alert warning "$STATEMENTSET" ValidationConsistency "unknown" \
             "The consistency of the validation can't be assessed: ${UNKNOWN_CAUSE}. No inconsistency is raised or ended until the job can be read."
@@ -428,21 +480,23 @@ data:
             '[.history[]? | select(.status == "COMPLETED" and .latest_ack_timestamp < $before)] | max_by(.latest_ack_timestamp) // empty
              | "#\(.id) completed at \(.latest_ack_timestamp / 1000 | floor | todate) (\(.external_path // "not retained"))"' <<<"$CHECKPOINTS_JSON" 2>/dev/null)
           if [ -n "$CANDIDATE" ]; then
-            RESTORE_NOTE="Instead of steps 1 and 4, restoring checkpoint ${CANDIDATE}, taken before the state went stale, brings a consistent state back, if it is retained and the topics still hold the records since."
+            RESTORE_NOTE="Instead of the resync, restoring checkpoint ${CANDIDATE}, taken before the state went stale, brings a consistent state back, if it is retained and the topics still hold the records since."
           else
             RESTORE_NOTE="No checkpoint in Flink's recent checkpoint history was taken before the state went stale; a retained older one could still restore a consistent state."
           fi
         fi
         inconsistent "$RESTORE_NOTE"
+      elif resync_report; then
+        :
       elif [ -n "$REBUILDING" ]; then
         post_alert warning "$STATEMENTSET" ValidationConsistency "rebuilding since $(fmt "$RESET")" \
-          "REBUILDING -- REFRESH REQUIRED. The validation state was emptied at $(fmt "$RESET"): ${RESET_CAUSE}. ${CHECKPOINT_NOTE} No complete refresh of ${REBUILDING} since, so the validation is incomplete. It is consistent again after the first complete Debezium refresh; the kafka-connect-restart cron triggers one by $(fmt $(( RESET + TTL_SECONDS / 2 ))), restarting kafka-connect does it now. Without one by $(fmt $(( RESET + TTL_SECONDS ))) the state becomes inconsistent and needs a redeployment."
+          "REBUILDING -- REFRESH REQUIRED. The validation state was emptied at $(fmt "$RESET"): ${RESET_CAUSE}. ${CHECKPOINT_NOTE} No complete refresh of ${REBUILDING} since, so the validation is incomplete. It is consistent again after the first complete Debezium refresh; the kafka-connect-restart cron triggers one by $(fmt $(( RESET + TTL_SECONDS / 2 ))), restarting kafka-connect does it now. Without one by $(fmt $(( RESET + TTL_SECONDS ))) the state becomes inconsistent and needs a resync with a fresh job."
       elif [ -n "$UNSEEN" ]; then
         post_alert warning "$STATEMENTSET" ValidationConsistency "no refresh seen yet" \
-          "NOT ASSESSED YET: no complete refresh of ${UNSEEN} seen since the watchdog began observing at $(fmt "$OBSERVING_SINCE"). Restarting kafka-connect refreshes now; without a complete refresh by $(fmt $(( OBSERVING_SINCE + TTL_SECONDS ))) the state is inconsistent and needs a redeployment."
+          "NOT ASSESSED YET: no complete refresh of ${UNSEEN} seen since the watchdog began observing at $(fmt "$OBSERVING_SINCE"). Restarting kafka-connect refreshes now; without a complete refresh by $(fmt $(( OBSERVING_SINCE + TTL_SECONDS ))) the state is inconsistent and needs a resync with a fresh job."
       elif [ -n "$LATE_LIST" ]; then
         post_alert warning "$STATEMENTSET" ValidationConsistency "refresh late" \
-          "REFRESH LATE: ${LATE_LIST}. The kafka-connect-restart cron should have refreshed by ttl/2 ($(( TTL_SECONDS / 2 ))s). Restart kafka-connect before the window closes; after that the state is inconsistent and needs a redeployment."
+          "REFRESH LATE: ${LATE_LIST}. The kafka-connect-restart cron should have refreshed by ttl/2 ($(( TTL_SECONDS / 2 ))s). Restart kafka-connect before the window closes; after that the state is inconsistent and needs a resync with a fresh job."
       else
         post_alert normal "$STATEMENTSET" ValidationConsistency "consistent" \
           "The validation state is consistent: emptied at $(fmt "$RESET") (${RESET_CAUSE}), complete refreshes since: ${FRESH_LIST}."

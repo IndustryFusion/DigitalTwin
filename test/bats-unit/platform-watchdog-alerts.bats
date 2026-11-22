@@ -106,6 +106,12 @@ case "$*" in
         while [ $# -gt 0 ] && [ "$1" != "-p" ]; do shift; done
         jq -c --argjson p "$2" '. + $p.data | with_entries(select(.value != null))' "${WORK}/state.json" > "${WORK}/state.new"
         mv "${WORK}/state.new" "${WORK}/state.json"
+        # a resync changes its marks while the run is in progress
+        if [ -n "${MOCK_RESYNC_WRITE}" ] && [ ! -e "${WORK}/resync.written" ]; then
+            jq -c --argjson p "${MOCK_RESYNC_WRITE}" '. + $p | with_entries(select(.value != null))' "${WORK}/state.json" > "${WORK}/state.new"
+            mv "${WORK}/state.new" "${WORK}/state.json"
+            touch "${WORK}/resync.written"
+        fi
         ;;
     *"get configmap platform-watchdog-state"*)
         [ -f "${WORK}/state.json" ] || exit 1
@@ -234,6 +240,19 @@ consistency() {
     grep '"event":"ValidationConsistency"' "${SINK_LOG}" | tail -1
 }
 
+# resync_marks <json object>: the marks of a resync (make shacl-resync) in
+# the watchdog's ConfigMap, beside its own state
+resync_marks() {
+    jq -c --argjson m "$1" '. + $m | with_entries(select(.value != null))' "${WORK}/state.json" > "${WORK}/state.new"
+    mv "${WORK}/state.new" "${WORK}/state.json"
+}
+
+# running <step>: a resync marked as running since B+150, in that step
+running() {
+    resync_marks "$(jq -nc --arg step "$1" --arg since $(( B + 150 )) --arg deadline $(( B + 5000 )) \
+        '{resync_since: $since, resync_step: $step, resync_deadline: $deadline}')"
+}
+
 teardown() {
     kill "${SINK_PID}" 2>/dev/null || true
     rm -rf "${WORK}"
@@ -304,8 +323,9 @@ teardown() {
     run bash "${WORK}/watchdog.sh"
     [[ "${output}" == *"[critical] shacl-validation/ValidationConsistency: inconsistent since 2026-11-19T15:05:00Z"* ]]
     consistency | jq -e '.timeout == 0'
-    consistency | grep -q 'INCONSISTENT -- REDEPLOYMENT REQUIRED. entity-table-connector: no complete refresh from 2026-11-19T14:55:00Z until 2026-11-19T15:06:00Z, 660s, longer than the state TTL of 600s'
-    consistency | grep -q 'Repair: (1) redeploy the shacl-validation statementset, (2) restart Core Services (core-services-job), (3) delete the open alerts of service SHACL Validator, (4) restart kafka-connect for a complete refresh'
+    consistency | grep -q 'INCONSISTENT -- FRESH VALIDATION JOB REQUIRED. entity-table-connector: no complete refresh from 2026-11-19T14:55:00Z until 2026-11-19T15:06:00Z, 660s, longer than the state TTL of 600s'
+    # the repair: the resync with a fresh job, its steps in their order
+    consistency | grep -q 'Repair: run make shacl-resync REPLACE=fresh in semantic-model/shacl2flink, which stops the shacl-validation job, empties its topics, closes the open alerts of service SHACL Validator, restarts Core Services (core-services-job) without state, starts the job and waits until a complete refresh has been processed'
     consistency | grep -q 'No checkpoint can restore the state: checkpointing is disabled'
 }
 
@@ -344,7 +364,7 @@ teardown() {
     bash "${WORK}/watchdog.sh" >/dev/null
     export WATCHDOG_NOW=$(( B + 720 ))
     run bash "${WORK}/watchdog.sh"
-    consistency | grep -q 'restoring checkpoint #7 completed at 2026-11-19T14:58:20Z (s3://flink/checkpoints/chk-7)'
+    consistency | grep -q 'Instead of the resync, restoring checkpoint #7 completed at 2026-11-19T14:58:20Z (s3://flink/checkpoints/chk-7)'
 }
 
 @test "checkpoints taken only after the state went stale cannot restore it" {
@@ -686,4 +706,142 @@ teardown() {
     # shellcheck disable=SC2154  # stderr is assigned by run --separate-stderr
     [[ "${stderr}" == *"alerta unreachable"* ]]
     [[ "${output}" == *"[normal] mqtt-bridge/BridgeHealth"* ]]
+}
+
+# ---------------------------------------------------------------- a resync of the SHACL alerts
+
+@test "during a resync: a warning that names the resync, the step and its start" {
+    running "4/6 trigger a complete re-snapshot"
+    run bash "${WORK}/watchdog.sh"
+    [[ "${output}" == *"[warning] shacl-validation/ValidationConsistency: resync in progress"* ]]
+    consistency | jq -e '.text == "DEGRADED -- RESYNC IN PROGRESS since 2026-11-19T14:55:50Z, step 4/6 trigger a complete re-snapshot: the SHACL alerts are incomplete until the resync has completed."'
+    run ! grep -q '"event":"ValidationConsistency".*"severity":"normal"' "${SINK_LOG}"
+}
+
+@test "a resync with a kept inconsistency stays critical as an inconsistency" {
+    bash "${WORK}/watchdog.sh" >/dev/null
+    WATCHDOG_NOW=$(( B + 720 )) bash "${WORK}/watchdog.sh" >/dev/null
+    running "2/8 stop the validation job and empty its topics"
+    export WATCHDOG_NOW=$(( B + 740 ))
+    run bash "${WORK}/watchdog.sh"
+    [[ "${output}" == *"[critical] shacl-validation/ValidationConsistency: inconsistent since"* ]]
+    consistency | grep -q 'INCONSISTENT'
+    # also while the statementset reports no job during the stop
+    export MOCK_JOB_ID=""
+    run bash "${WORK}/watchdog.sh"
+    [[ "${output}" == *"[critical] shacl-validation/ValidationConsistency: inconsistent since"* ]]
+}
+
+@test "the watchdog leaves the marks of a resync as they are" {
+    running "3/6 reset Core Services"
+    run bash "${WORK}/watchdog.sh"
+    jq -e '.resync_step == "3/6 reset Core Services" and .resync_since == "1795100150"' "${WORK}/state.json"
+    run ! grep -q 'patch configmap.*resync_' "${MOCK_LOG}"
+}
+
+@test "marks the resync changes during a run are those it wrote last" {
+    running "3/6 reset Core Services"
+    # the resync moves on to the next step while the run is in progress
+    export MOCK_RESYNC_WRITE='{"resync_step":"4/6 trigger a complete re-snapshot"}'
+    bash "${WORK}/watchdog.sh" >/dev/null
+    jq -e '.resync_step == "4/6 trigger a complete re-snapshot"' "${WORK}/state.json"
+    # and removes its marks while another run is in progress
+    rm -f "${WORK}/resync.written"
+    export MOCK_RESYNC_WRITE='{"resync_since":null,"resync_step":null,"resync_deadline":null,"resync_failed":null}'
+    bash "${WORK}/watchdog.sh" >/dev/null
+    jq -e '[keys[] | select(startswith("resync_"))] | length == 0' "${WORK}/state.json"
+}
+
+@test "after the resync removed its marks the watchdog judges again" {
+    running "5/6 wait until the re-snapshot is processed"
+    bash "${WORK}/watchdog.sh" >/dev/null
+    resync_marks '{"resync_since":null,"resync_step":null,"resync_deadline":null}'
+    export WATCHDOG_NOW=$(( B + 320 ))
+    run bash "${WORK}/watchdog.sh"
+    [[ "${output}" == *"[normal] shacl-validation/ValidationConsistency: consistent"* ]]
+}
+
+@test "a failed resync is critical, names the step and the command, and stays" {
+    running "2/6 close the SHACL alerts"
+    resync_marks "$(jq -nc --arg f "$(( B + 180 )) Alerta not reachable through svc/alerta. The SHACL alerts may be incomplete or stale; run make shacl-resync REPLACE=none again." '{resync_failed: $f}')"
+    run bash "${WORK}/watchdog.sh"
+    [[ "${output}" == *"[critical] shacl-validation/ValidationConsistency: resync failed"* ]]
+    consistency | jq -e '.timeout == 0 and .text == "RESYNC FAILED in step 2/6 close the SHACL alerts at 2026-11-19T14:56:20Z: Alerta not reachable through svc/alerta. The SHACL alerts may be incomplete or stale; run make shacl-resync REPLACE=none again."'
+    # closed by hand: the next run raises it again
+    export WATCHDOG_NOW=$(( B + 320 ))
+    run bash "${WORK}/watchdog.sh"
+    [ "$(grep -c '"event":"ValidationConsistency".*"severity":"critical"' "${SINK_LOG}")" -eq 2 ]
+}
+
+@test "a resync still marked as running after its time limit is critical, naming the step" {
+    resync_marks "$(jq -nc --arg since $(( B + 100 )) --arg deadline $(( B + 150 )) \
+        '{resync_since: $since, resync_step: "5/6 wait until the re-snapshot is processed", resync_deadline: $deadline}')"
+    run bash "${WORK}/watchdog.sh"
+    [[ "${output}" == *"[critical] shacl-validation/ValidationConsistency: resync failed"* ]]
+    consistency | jq -e '.timeout == 0 and (.text | startswith("RESYNC FAILED in step 5/6 wait until the re-snapshot is processed: the resync did not complete in time, its time limit passed at 2026-11-19T14:55:50Z."))'
+}
+
+@test "a later resync that completes brings the watchdog's own judgement back" {
+    resync_marks "$(jq -nc --arg f "$(( B + 180 )) failed" '{resync_since: "1795100150", resync_step: "3/6 reset Core Services", resync_failed: $f}')"
+    bash "${WORK}/watchdog.sh" >/dev/null
+    consistency | jq -e '.severity == "critical"'
+    # the later resync marks itself running, then removes every mark
+    running "1/6 mark the validation degraded"
+    resync_marks '{"resync_failed":null}'
+    WATCHDOG_NOW=$(( B + 260 )) bash "${WORK}/watchdog.sh" >/dev/null
+    consistency | jq -e '.severity == "warning"'
+    resync_marks '{"resync_since":null,"resync_step":null,"resync_deadline":null}'
+    export WATCHDOG_NOW=$(( B + 320 ))
+    run bash "${WORK}/watchdog.sh"
+    [[ "${output}" == *"[normal] shacl-validation/ValidationConsistency: consistent"* ]]
+}
+
+@test "no job during a resync: the resync is reported, not unknown" {
+    running "2/8 stop the validation job and empty its topics"
+    export MOCK_JOB_ID=""
+    run bash "${WORK}/watchdog.sh"
+    [[ "${output}" == *"[warning] shacl-validation/ValidationConsistency: resync in progress"* ]]
+    [[ "${output}" != *"ValidationConsistency: unknown"* ]]
+    run ! grep -q '"event":"ValidationConsistency".*"severity":"critical"' "${SINK_LOG}"
+}
+
+@test "the refresh comes during a resync: the warning stays and reports the resync" {
+    failover $(( B + 300 ))
+    WATCHDOG_NOW=$(( B + 320 )) bash "${WORK}/watchdog.sh" >/dev/null
+    consistency | jq -e '.value | startswith("rebuilding")'
+    running "5/8 start the validation job"
+    refresh $(( B + 400 )) $(( B + 405 ))
+    export WATCHDOG_NOW=$(( B + 420 ))
+    run bash "${WORK}/watchdog.sh"
+    [[ "${output}" == *"[warning] shacl-validation/ValidationConsistency: resync in progress"* ]]
+    # the refresh is still taken into the watchdog's own state
+    jq -e '."entity-table-connector.done" == "1795100405"' "${WORK}/state.json"
+}
+
+@test "a refresh overdue during a resync: the resync is reported" {
+    WATCHDOG_NOW=$(( B + 300 )) bash "${WORK}/watchdog.sh" >/dev/null
+    running "2/6 close the SHACL alerts"
+    export WATCHDOG_NOW=$(( B + 700 ))
+    run bash "${WORK}/watchdog.sh"
+    [[ "${output}" == *"[warning] shacl-validation/ValidationConsistency: resync in progress"* ]]
+    [[ "${output}" != *"refresh late"* ]]
+}
+
+@test "a resync that marks itself while a run judges is reported, not overwritten by consistent" {
+    # the run read its state before the resync's first step
+    MOCK_RESYNC_WRITE=$(jq -nc --arg since $(( B + 190 )) --arg deadline $(( B + 5000 )) \
+        '{resync_since: $since, resync_step: "1/6 mark the validation degraded", resync_deadline: $deadline}')
+    export MOCK_RESYNC_WRITE
+    run bash "${WORK}/watchdog.sh"
+    [[ "${output}" == *"[warning] shacl-validation/ValidationConsistency: resync in progress"* ]]
+    [[ "${output}" != *"ValidationConsistency: consistent"* ]]
+}
+
+@test "control characters in a mark don't break the alert" {
+    running "2/6 close the SHACL alerts"
+    resync_marks "$(jq -nc --arg f "$(( B + 180 )) $(printf 'the bulk close answered 500: {\t"x":"a\001b \\\\ c"}')" '{resync_failed: $f}')"
+    run bash "${WORK}/watchdog.sh"
+    [[ "${output}" == *"[critical] shacl-validation/ValidationConsistency: resync failed"* ]]
+    # the sink got it as JSON, without the control characters
+    consistency | jq -e '(.text | explode | all(. >= 32 and . != 127)) and (.text | contains("ab"))'
 }

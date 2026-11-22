@@ -188,6 +188,19 @@ flink-deploy: clean
 	kubectl -n $(NAMESPACE) -l "app.kubernetes.io/instance"="kafka-connect" delete pod
 
 
+# Bring the SHACL alerts in Alerta in line with what the deployed validation
+# finds now (shacl_resync.sh): mark the validation degraded, with REPLACE=fresh
+# stop its job and empty the topics it reads back, close the SHACL alerts,
+# reset Core Services, start the job again, re-snapshot, wait until that is
+# processed and end the degraded state. REPLACE=checkpoint RESTORE_FROM=<path>
+# is refused until the statementset can start from a checkpoint (#1042). Needs
+# no KMS: it works on the deployed statementset.
+REPLACE ?= none
+RESTORE_FROM ?=
+shacl-resync:
+	NAMESPACE=$(NAMESPACE) REPLACE=$(REPLACE) RESTORE_FROM=$(RESTORE_FROM) ./shacl_resync.sh
+
+
 flink-undeploy:
 	@echo undeploy helm package
 	# A validation deployed before #1038 declares the platform's entity topic
@@ -227,6 +240,10 @@ test-full-flink-deployment:
 # together they say not just "the SQL is right" but "deleting an entity closes
 # its alert", which is the property operators depend on.
 #
+# test-shacl-flink-resync runs last: it runs `make shacl-resync` without and
+# with REPLACE=fresh against the same deployment and checks the alerts after
+# each, and leaves the deployment for the teardown.
+#
 # The teardown must run even when the tests fail, otherwise a red build leaves
 # a statementset behind and the next run inherits it.
 test-flink-e2e: E2E_KMS := $(CURDIR)/tests/e2e-kms
@@ -235,7 +252,7 @@ test-flink-e2e:
 	$(MAKE) flink-deploy SHACL=$(E2E_KMS)/shacl.ttl KNOWLEDGE=$(E2E_KMS)/knowledge.ttl \
 		MODEL=$(E2E_KMS)/model-instance.jsonld
 	ln -fs ../../../../test/bats/lib tests/bats/lib || echo 'Bats framework not installed'
-	( cd tests/bats && bats test-shacl-flink-e2e test-shacl-flink-scorpio-e2e ); rc=$$?; \
+	( cd tests/bats && bats test-shacl-flink-e2e test-shacl-flink-scorpio-e2e test-shacl-flink-resync ); rc=$$?; \
 		echo "the platform watchdog with the validation deployed"; \
 		VALIDATION_DEPLOYED=true bats $(CURDIR)/../../test/bats/test-jobs/platform-watchdog.bats || rc=1; \
 		rm -f tests/bats/lib; \
@@ -311,4 +328,4 @@ fuseki-undeploy-kms:
 clean:
 	@rm -rf $(OUTPUTDIR) merged-kms
 
-.PHONY: clean fuseki-deploy-kms fuseki-undeploy-kms test-flink-e2e test-opcua-shapes test-pyshacl-compare
+.PHONY: clean shacl-resync fuseki-deploy-kms fuseki-undeploy-kms test-flink-e2e test-opcua-shapes test-pyshacl-compare

@@ -175,6 +175,83 @@ make test-sqlite
 make flink-deploy
 ```
 
+A deploy over a running validation starts a new job without state, and that job
+replays the raises of the previous one from `constraint_trigger_table`: alerts
+whose constraint is satisfied now stay open. Follow it with
+`make shacl-resync REPLACE=fresh` (below).
+
+## Resync the SHACL alerts
+
+```bash
+make shacl-resync                  # keep the running validation job
+make shacl-resync REPLACE=fresh    # replace it with a fresh job
+```
+
+The leaf checks write only violations, so nothing closes an alert that was
+raised and not retracted although its constraint is satisfied now: after a
+redeploy, a restore, or alerts that drifted. `make shacl-resync` brings the
+alerts of service `SHACL Validator` in Alerta in line with what the deployed
+validation finds now, for every constraint type. It needs no KMS and works on
+the deployed statementset `shacl-validation`; without one it stops at once and
+says to deploy the validation first. It runs these steps in this order, each
+only after the previous one completed, and reports the start and end of each:
+
+1. mark the validation degraded: the platform watchdog's `ValidationConsistency`
+   alert becomes a warning that a resync is in progress and the SHACL alerts are
+   incomplete, naming the current step;
+2. with `REPLACE=fresh` only: stop the validation job (the statementset is deleted
+   and kept in `~/.local/state/shacl-resync` until the job runs again) and delete
+   every record of `constraint_table`, `constraint_combination_table` and
+   `constraint_trigger_table`, so the new job replays nothing. No topic, and no
+   record of another topic, is deleted;
+3. close every SHACL alert that is not closed, whatever its status, and no other
+   alert; after a stop only once no SHACL alert arrived for a settle time;
+4. reset Core Services by its restart nonce, so its alerts filter forwards raises
+   with an unchanged severity and text again;
+5. with `REPLACE=fresh` only: create the statementset again and wait for its job;
+6. trigger a complete Debezium re-snapshot by deleting the Connect pods, and wait
+   until every connector completed a snapshot that started after the resync began.
+   The `kafka-connect-restart` CronJob keeps running;
+7. wait until the re-snapshot is processed: the debezium-bridge, the validation
+   job and Core Services have read every topic they consume to its end for a
+   quiet period, and then a marker the command writes to `iff.alerts` (an alert
+   of resource `shacl-validation`, event `ResyncMarker`, service `System`,
+   severity `normal`, so it arrives closed) has reached Alerta through the
+   alerta-bridge. The resync refuses to start when `iff.alerts` has more than one
+   partition, since one marker covers one partition only;
+8. end the degraded state and start one run of the platform watchdog, whose own
+   judgement then sets `ValidationConsistency` again.
+
+A resync without a replacement doesn't end an inconsistency the watchdog
+reports, since the job keeps its state; `REPLACE=fresh` does. `REPLACE=checkpoint
+RESTORE_FROM=<path>`, a restore of the job from a checkpoint or savepoint, is
+refused before the first step until the statementset can be started from one
+(#1042): the statementset has no field for it, the validation takes no retained
+checkpoints, and the operator's savepoint path is passed in a form the submit job
+doesn't read.
+
+A failed or timed-out step stops the resync with the step's name and leaves
+`ValidationConsistency` critical, naming the step, until a later resync
+completes; if the job was stopped and not started again, the message says that
+the validation doesn't run. Every step is safe to run again: run the command
+again once the cause is removed. The time limits, the settle time
+(`RESYNC_SETTLE`, 30 s) and the quiet period (`RESYNC_QUIET`, 30 s) are set by
+environment variables, listed at the top of `shacl_resync.sh`. It needs curl 7.55
+or later, which reads Alerta's key from a file of mode 0600 instead of the command
+line. Ctrl-C or a TERM ends the running step at once and counts as a failure of it. The command needs
+an operator's rights: it patches the watchdog's ConfigMap and the Core Services
+FlinkSessionJob, with `REPLACE=fresh` deletes and creates the statementset,
+deletes the Connect pods, runs the Kafka tools in the broker pod and starts a
+Job from the watchdog's CronJob.
+
+What an operator loses: every SHACL alert is closed, and an alert that is still
+violated is opened again within a minute, its history showing the resync. Its
+acknowledgement and the time it was first opened are lost, and an alert that was
+shelved before comes back shelved. The restart of Core Services sends the
+attributes still in `iff.ngsild.attributes` to Scorpio again, as every Core
+Services restart does. With `REPLACE=fresh` the validation doesn't run between
+the stop and the start.
+
 ## Undeploy SHACL rules to Flink
 
 ```bash
