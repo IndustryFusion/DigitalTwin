@@ -139,7 +139,7 @@ select_for() {
 
 @test "paths the cluster never runs select no shard" {
     run select_for semantic-model/SemForge-SDK/semforge/cli.py semantic-model/opcua/nodeset2owl.py \
-        README.md openspec/specs/x/spec.md test/bats-unit/e2e-shards.bats DebeziumAdapter/pom.xml
+        README.md openspec/specs/x/spec.md test/bats-unit/e2e-shards.bats semantic-model/dataservice/startDataservice.py
     [ "${output}" = '[]' ]
 }
 
