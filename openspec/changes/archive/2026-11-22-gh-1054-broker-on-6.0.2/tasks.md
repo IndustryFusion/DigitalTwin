@@ -30,7 +30,7 @@
 - [x] 4.1 Give one of the two default `state` instances of the debezium fixture a `datasetId` (D3); verify the debezium suite passes on the pinned build, *sends subattributes* included (A5)
 - [x] 4.2 Compare JSON with sorted keys in the updates bridge suite (D3); verify it passes on the pinned build
 - [x] 4.3 Verify the MQTT suite passes on the pinned build
-- [ ] 4.4 Verify the K8s shards of the Pull Request pass
+- [x] 4.4 Verify the K8s shards of the Pull Request pass
 
 ## 5. Existing store
 
