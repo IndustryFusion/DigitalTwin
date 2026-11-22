@@ -85,7 +85,7 @@ The SemForge SDK SHALL write every value it generates or edits for an attribute 
 - **THEN** its value is a declared `xsd:double`: the `sh:or` chooses between a value and a list, not between datatypes, and only an `sh:or` over datatypes makes a value plain
 
 ### Requirement: Documents passed on keep their declared types
-A component that passes an NGSI-LD document on -- Scorpio, the debezium bridge, and the SemForge SDK when it copies, exports or rewrites a document -- SHALL keep a value's declared `@type`.
+A component that passes an NGSI-LD document on -- the context broker, the debezium bridge, and the SemForge SDK when it copies, exports or rewrites a document -- SHALL keep a value's declared `@type`. When the broker keeps it, and when an update replaces it, is stated in `contracts/context-broker` (*Declared types in the broker*).
 
 #### Scenario: Through Scorpio and the bridge
 - **WHEN** an entity holding `{"@value": 80, "@type": "xsd:double"}` is written to Scorpio
@@ -96,7 +96,7 @@ A component that passes an NGSI-LD document on -- Scorpio, the debezium bridge, 
 - **THEN** the exported example holds the same declared value
 
 ### Requirement: Readers of the NGSI-LD API accept declared values
-A component that reads property values from the NGSI-LD API or its notifications SHALL read a value object whose `@value` is a number, or a number written as a string, as that number, whether the type is given as `@type` or, compacted by the core context, as `type`. It SHALL read a plain number as before. It SHALL NOT depend on which of these forms the broker returns for an attribute: a merge may keep a stored type, and a replacing update may drop it.
+A component that reads property values from the NGSI-LD API or its notifications SHALL read a value object whose `@value` is a number, or a number written as a string, as that number, whether the type is given as `@type` or, compacted by the core context, as `type`. It SHALL read a plain number as before. It SHALL NOT depend on which of these forms the broker returns for an attribute; the forms are stated in `contracts/context-broker` (*Declared types in the broker*).
 
 #### Scenario: A declared value read back
 - **WHEN** a reader gets `{"type": "http://www.w3.org/2001/XMLSchema#double", "@value": 42.5}` as an attribute's value
