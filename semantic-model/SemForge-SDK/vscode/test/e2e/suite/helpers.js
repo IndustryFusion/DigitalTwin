@@ -203,6 +203,11 @@ function read(relative) {
 
 const SHAPES = 'https://industryfusion.github.io/contexts/example/v0/base_shacl/';
 
+/** `text` matched literally inside a RegExp: every metacharacter escaped. */
+function escapeRegExp(text) {
+  return text.replace(/[\\^$.*+?()[\]{}|/-]/g, '\\$&');
+}
+
 /**
  * Give a shape back its original name, by hand: Rename… keeps a shape's random
  * part (FilterShape-3f9a1c2e) and can never return it to a bare name -- but the
@@ -213,7 +218,7 @@ const SHAPES = 'https://industryfusion.github.io/contexts/example/v0/base_shacl/
 async function restoreShapeName(api, from, to, suite) {
   const file = path.join(WORKSPACE, 'shacl.ttl');
   const text = fs.readFileSync(file, 'utf-8');
-  const named = new RegExp(`iffBaseShacl:${from.replace(/[-]/g, '\\-')}(?![\\w-])`, 'g');
+  const named = new RegExp(`iffBaseShacl:${escapeRegExp(from)}(?![\\w-])`, 'g');
   fs.writeFileSync(file, text.replace(named, `iffBaseShacl:${to}`));
   const done = await request(api, 'semforge/followRename',
     { shape: SHAPES + from, newIri: SHAPES + to, suite: Boolean(suite) });

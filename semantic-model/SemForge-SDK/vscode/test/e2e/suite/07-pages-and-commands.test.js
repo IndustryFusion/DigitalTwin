@@ -27,10 +27,53 @@ const { PACKAGE_URI, WORKSPACE, semforge, request, until, answering } = require(
 const BASE = 'https://industryfusion.github.io/contexts/example/v0/base_shacl/';
 const KNOW = 'https://industryfusion.github.io/contexts/example/v0/base_knowledge/';
 
-/** The page's body text, without its markup: an error page says "SemForge:". */
+/**
+ * The page's body text, without its markup: an error page says "SemForge:".
+ * Read in one pass, as a browser does: a tag becomes a space, and a <style> or
+ * <script> is skipped up to its own end tag, whatever its case or trailing
+ * blanks (`</script >`). No markup survives into the text.
+ */
 function body(panel) {
-  return panel.webview.html.replace(/<style[\s\S]*?<\/style>|<script[\s\S]*?<\/script>/g, '')
-    .replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+  const html = panel.webview.html;
+  const lower = html.toLowerCase();
+  let text = '';
+  let at = 0;
+  while (at < html.length) {
+    const open = html.indexOf('<', at);
+    if (open < 0) {
+      text += html.slice(at);
+      break;
+    }
+    text += html.slice(at, open);
+    const close = html.indexOf('>', open);
+    if (close < 0) {
+      break;
+    }
+    const name = /^<([a-z]+)/.exec(lower.slice(open, close + 1));
+    at = close + 1;
+    if (name && (name[1] === 'script' || name[1] === 'style')) {
+      at = rawTextEnd(lower, `</${name[1]}`, at);
+    }
+    text += ' ';
+  }
+  return text.replace(/\s+/g, ' ');
+}
+
+/** Where a <script> or <style> opened before `from` ends: past `</name…>`. */
+function rawTextEnd(lower, endTag, from) {
+  let at = from;
+  for (;;) {
+    const end = lower.indexOf(endTag, at);
+    if (end < 0) {
+      return lower.length;
+    }
+    const after = lower.charAt(end + endTag.length);
+    if (after === '>' || after === '/' || /\s/.test(after)) {
+      const close = lower.indexOf('>', end);
+      return close < 0 ? lower.length : close + 1;
+    }
+    at = end + endTag.length;
+  }
 }
 
 async function rendered(pages, what) {

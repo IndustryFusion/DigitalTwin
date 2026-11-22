@@ -27,9 +27,9 @@ its scripts are handed to node to parse.
 
 import json
 import os
-import re
 import shutil
 import subprocess
+from html.parser import HTMLParser
 
 import pytest
 
@@ -63,8 +63,45 @@ def _render(tmp_path, command, raw, method, payload):
     return json.loads(out.stdout.strip().splitlines()[-1])['webviews'][0]['html'][-1]
 
 
+class _Scripts(HTMLParser):
+    """The text of every <script> element, read by an HTML parser: it ends a
+    script where a browser does (`</script >`, `</SCRIPT>` too), which no
+    regular expression gets right."""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=False)
+        self.scripts = []
+        self._inside = False
+
+    def handle_starttag(self, tag, attrs):
+        if tag == 'script':
+            self.scripts.append('')
+            self._inside = True
+
+    def handle_endtag(self, tag):
+        if tag == 'script':
+            self._inside = False
+
+    def handle_data(self, data):
+        if self._inside:
+            self.scripts[-1] += data
+
+
+def _scripts(html):
+    parser = _Scripts()
+    parser.feed(html)
+    parser.close()
+    return parser.scripts
+
+
+def test_scripts_are_cut_where_a_browser_ends_them():
+    html = ('<p>x</p><script nonce="n">let a = "<b>";</script >'
+            '<SCRIPT>let b = 1;</SCRIPT><script src="s.js"></script>')
+    assert _scripts(html) == ['let a = "<b>";', 'let b = 1;', '']
+
+
 def _scripts_parse(tmp_path, html):
-    scripts = re.findall(r'<script[^>]*>(.*?)</script>', html, re.S)
+    scripts = _scripts(html)
     assert scripts, 'the page has a script'
     for index, script in enumerate(scripts):
         file = tmp_path / f'script{index}.js'
