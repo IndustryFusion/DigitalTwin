@@ -16,7 +16,7 @@
 
 # Checks the broker the platform pins (test/build-local-platform.sh) against contracts/context-broker, without a
 # Kubernetes cluster.
-# The requirements that need Debezium or MQTT are checked by the K8s tests; see test/context-broker.
+# The requirements that need Debezium are checked by the K8s tests; see test/context-broker.
 name: Context broker contract test
 
 on:
@@ -82,11 +82,6 @@ jobs:
         with:
           path: .scorpio-image.tar
           key: scorpio-all-in-one-runner-${{ steps.pin.outputs.commit }}-${{ hashFiles('test/opcua-chain/scorpio-image.sh', 'test/build-local-platform.sh') }}
-      - uses: actions/setup-java@v4
-        if: inputs.image == '' && steps.broker-cache.outputs.cache-hit != 'true'
-        with:
-          distribution: temurin
-          java-version: 17
       - name: The pinned broker image
         if: inputs.image == ''
         run: |

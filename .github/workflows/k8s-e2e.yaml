@@ -79,10 +79,6 @@ jobs:
     timeout-minutes: 90
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-java@v4
-      with:
-        distribution: temurin
-        java-version: "17"
     - name: Prepare the runner for the build
       run: bash test/prepare-platform-for-github-runner.sh images
     - name: Build Platform locally

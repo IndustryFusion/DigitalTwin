@@ -101,9 +101,9 @@ const needsAttrsRoute = function (entity) {
  * The entities a batch operation refused, from the body of its answer, as
  * [{ entityId, error }], or null when the body holds no list of errors.
  * NGSI-LD reports them in a BatchOperationResult (CIM 009 clauses 5.2.16,
- * 5.2.17) as {"errors": [{"entityId": id, "error": ProblemDetails}]}; the
- * pinned Scorpio fork names the members "id" and "ProblemDetails", so both
- * forms are read.
+ * 5.2.17) as {"errors": [{"entityId": id, "error": ProblemDetails}]}. An
+ * entry without these members is kept as it is, so that its log names what
+ * the broker said.
  */
 const batchErrors = function (body) {
   if (body === null || typeof body !== 'object' || !Array.isArray(body.errors)) {
@@ -113,11 +113,24 @@ const batchErrors = function (body) {
     if (entry === null || typeof entry !== 'object') {
       return { entityId: undefined, error: entry };
     }
-    return {
-      entityId: entry.entityId !== undefined ? entry.entityId : entry.id,
-      error: entry.error !== undefined ? entry.error : entry.ProblemDetails
-    };
+    if (entry.entityId === undefined || entry.error === undefined) {
+      return entry;
+    }
+    return { entityId: entry.entityId, error: entry.error };
   });
+};
+
+/**
+ * The ids of the entities sent in a batch operation that its answer names
+ * neither under success nor under errors (CIM 009 clause 5.2.16), or none
+ * when the answer has no list of successes.
+ */
+const unreported = function (entities, body, refused) {
+  if (!Array.isArray(body.success)) {
+    return [];
+  }
+  const reported = new Set(body.success.concat(refused.map(entry => entry.entityId)));
+  return entities.filter(entity => !reported.has(entity.id)).map(entity => entity.id);
 };
 
 const ALREADY_EXISTS = 'https://uri.etsi.org/ngsi-ld/errors/AlreadyExists';
@@ -128,16 +141,6 @@ const ALREADY_EXISTS = 'https://uri.etsi.org/ngsi-ld/errors/AlreadyExists';
  */
 const isAlreadyExists = function (refused) {
   return refused.error !== null && typeof refused.error === 'object' && refused.error.type === ALREADY_EXISTS;
-};
-
-/**
- * True for the pinned fork's refusal of a batch update with noOverwrite of an
- * entity of which no attribute is new: it answers "Not Overwriting" where
- * NGSI-LD leaves the existing attributes untouched and succeeds (CIM 009
- * clause 5.6.3). Nothing was to be written, which is what the caller asked for.
- */
-const isNothingToAppend = function (refused) {
-  return refused.error !== null && typeof refused.error === 'object' && refused.error.detail === 'Not Overwriting';
 };
 
 module.exports = function NgsildUpdates (conf) {
@@ -171,14 +174,15 @@ module.exports = function NgsildUpdates (conf) {
    * used: a batch create (clause 5.6.7), which refuses the existing entities
    * with AlreadyExists, and for those a batch update with noOverwrite
    * (clauses 5.6.9, 6.16.3.1), which appends what is new (clause 5.6.3).
-   * Every other refusal is logged, like any refused request.
+   * AlreadyExists is the expected answer for an existing entity and is not
+   * logged; every other refusal is logged, like any refused request, and so
+   * is every entity an answer names neither as done nor as refused.
    */
   const upsertWithoutOverwrite = async function (entities) {
     let result = await ngsild.createEntities(entities, { headers });
     if (result.statusCode === 201) {
       return;
     }
-    // 207 as NGSI-LD states it; the fork answers 409 or 400 when none is created
     let refused = batchErrors(result.body);
     if (refused === null) {
       logger.error('Cannot upsert entity:' + JSON.stringify(result.body) + ' and status code ' + result.statusCode);
@@ -191,6 +195,9 @@ module.exports = function NgsildUpdates (conf) {
       } else {
         logger.error('Cannot upsert entity:' + JSON.stringify(entry) + ' and status code ' + result.statusCode);
       }
+    });
+    unreported(entities, result.body, refused).forEach(function (id) {
+      logger.error('Cannot upsert entity: ' + id + ' is not reported as created and status code ' + result.statusCode);
     });
     const toUpdate = entities.filter(entity => existing.has(entity.id));
     if (toUpdate.length === 0) {
@@ -206,11 +213,10 @@ module.exports = function NgsildUpdates (conf) {
       return;
     }
     refused.forEach(function (entry) {
-      if (isNothingToAppend(entry)) {
-        logger.debug('Nothing to append to ' + entry.entityId);
-      } else {
-        logger.error('Cannot upsert entity:' + JSON.stringify(entry) + ' and status code ' + result.statusCode);
-      }
+      logger.error('Cannot upsert entity:' + JSON.stringify(entry) + ' and status code ' + result.statusCode);
+    });
+    unreported(toUpdate, result.body, refused).forEach(function (id) {
+      logger.error('Cannot upsert entity: ' + id + ' is not reported as updated and status code ' + result.statusCode);
     });
   };
 
@@ -287,12 +293,9 @@ module.exports = function NgsildUpdates (conf) {
                 refusedList.forEach(function (refused) {
                   logger.error('Entity cannot run merge:' + JSON.stringify(refused) + ' and status code ' + result.statusCode);
                 });
-                if (Array.isArray(result.body.success)) {
-                  const reported = new Set(result.body.success.concat(refusedList.map(refused => refused.entityId)));
-                  mergeable.filter(entity => !reported.has(entity.id)).forEach(function (entity) {
-                    logger.error('Entity cannot run merge: ' + entity.id + ' is not reported as merged and status code ' + result.statusCode);
-                  });
-                }
+                unreported(mergeable, result.body, refusedList).forEach(function (id) {
+                  logger.error('Entity cannot run merge: ' + id + ' is not reported as merged and status code ' + result.statusCode);
+                });
               }
             } else if (result.statusCode !== 204) {
               logger.error('Entity cannot run merge:' + JSON.stringify(result.body) + ' and status code ' + result.statusCode); // throw no error, log it and ignore it, repeating would probably not solve it

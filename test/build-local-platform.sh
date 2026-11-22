@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-TEST="true"
 . ../.env
 . ../helm/env.sh
 
@@ -25,16 +24,21 @@ echo Build DT containers and push to local registry
 echo Build Scorpio containers
 ( cd ../.. && rm -rf ScorpioBroker)
 
-# Scorpio is built from one pinned commit of the IndustryFusion fork (branch scorpio-v5.0.5),
-# which merges value objects with @type, @id or @language as a whole.
-SCORPIO_COMMIT=e1cea4bcc3471eed202af9317c0fefe69b94a301
+# Scorpio is built from one pinned commit of the IndustryFusion fork (branch scorpio-v6.0.2): the fork's patches
+# on upstream 6.0.2.
+SCORPIO_COMMIT=505690906dfc080cee831c3819ad44f82b4d5f33
 ( cd ../.. && git clone https://github.com/IndustryFusion/ScorpioBroker.git )
-( cd ../../ScorpioBroker && git checkout "$SCORPIO_COMMIT" )
-if [[ $TEST -eq "true" ]]; then
-    ( cd ../../ScorpioBroker && source /etc/profile.d/maven.sh && mvn clean package -DskipTests -Ddocker -Ddocker-tag="$DOCKER_TAG" -Dkafka -Pkafka -Dquarkus.profile=kafka)
-else
-    ( cd ../../ScorpioBroker && mvn clean package -DskipTests -Ddocker -Ddocker-tag="$DOCKER_TAG" -Dkafka -Pkafka -Dquarkus.profile=kafka)
-fi
+( cd ../../ScorpioBroker && git checkout -q "$SCORPIO_COMMIT" ) || exit 1
+# 6.0.2 needs JDK 21 and Maven 3.9: they come from a container, so the build needs Docker only.
+# The Maven repository is the host's (~/.m2), with its settings.xml (a proxy) when there is one.
+mkdir -p "$HOME/.m2"
+MVN_SETTINGS=()
+[ -f "$HOME/.m2/settings.xml" ] && MVN_SETTINGS=(-s /m2/settings.xml)
+( cd ../../ScorpioBroker && docker run --rm -u "$(id -u):$(id -g)" -e HOME=/tmp -e MAVEN_CONFIG=/tmp/.m2 -v "$PWD:/src" -v "$HOME/.m2:/m2" -w /src \
+    maven:3.9-eclipse-temurin-21 mvn -B -Duser.name=scorpio -Dmaven.repo.local=/m2/repository "${MVN_SETTINGS[@]}" clean package -DskipTests \
+    -Dkafka -Pkafka -Dquarkus.profile=kafka -pl AllInOneRunner -am ) || exit 1
+( cd ../../ScorpioBroker && docker build -f AllInOneRunner/src/main/docker/Dockerfile.jvm \
+    -t "ibn40/scorpio-all-in-one-runner:$DOCKER_TAG" AllInOneRunner ) || exit 1
 
 # Fetch Docker images, filter them, and process accordingly
 docker images --format "{{.Repository}}:{{.Tag}}" | \

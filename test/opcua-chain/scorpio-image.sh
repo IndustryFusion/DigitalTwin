@@ -16,9 +16,10 @@
 #
 
 # Prints the image of the broker the platform pins: Scorpio built from the commit SCORPIO_COMMIT in
-# test/build-local-platform.sh, with that script's profiles, tagged with the first 8 characters of the commit.
-# Builds it when the image isn't there yet, which needs git, JDK 17, Maven and Docker and takes several minutes.
-# Runs from the repository root. Progress goes to stderr; stdout carries only the image name.
+# test/build-local-platform.sh, with that script's recipe and profiles, tagged with the first 8 characters of the
+# commit. Builds it when the image isn't there yet, which takes several minutes and needs git and Docker only:
+# JDK 21 and Maven 3.9 come from a container. Runs from the repository root. Progress goes to stderr; stdout
+# carries only the image name.
 set -euo pipefail
 COMMIT=$(sed -n 's/^SCORPIO_COMMIT=//p' test/build-local-platform.sh)
 [ -n "$COMMIT" ] || { echo "no SCORPIO_COMMIT in test/build-local-platform.sh" >&2; exit 1; }
@@ -30,7 +31,13 @@ if ! docker image inspect "$IMAGE" > /dev/null 2>&1; then
   echo "building $IMAGE from IndustryFusion/ScorpioBroker at $COMMIT" >&2
   git clone -q https://github.com/IndustryFusion/ScorpioBroker.git "$SRC"
   git -C "$SRC" checkout -q "$COMMIT"
-  ( cd "$SRC" && mvn -q -B clean package -DskipTests -Ddocker -Ddocker-tag="$TAG" -Dkafka -Pkafka -Dquarkus.profile=kafka ) >&2
+  mkdir -p "$HOME/.m2"
+  settings=()
+  [ -f "$HOME/.m2/settings.xml" ] && settings=(-s /m2/settings.xml)
+  docker run --rm -u "$(id -u):$(id -g)" -e HOME=/tmp -e MAVEN_CONFIG=/tmp/.m2 -v "$SRC:/src" -v "$HOME/.m2:/m2" -w /src maven:3.9-eclipse-temurin-21 \
+    mvn -q -B -Duser.name=scorpio -Dmaven.repo.local=/m2/repository ${settings[@]+"${settings[@]}"} clean package -DskipTests \
+    -Dkafka -Pkafka -Dquarkus.profile=kafka -pl AllInOneRunner -am >&2
+  docker build -q -f "$SRC/AllInOneRunner/src/main/docker/Dockerfile.jvm" -t "$IMAGE" "$SRC/AllInOneRunner" >&2
   docker image inspect "$IMAGE" > /dev/null || { echo "the build produced no $IMAGE" >&2; exit 1; }
 fi
 echo "$IMAGE"

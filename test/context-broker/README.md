@@ -20,11 +20,13 @@ Each line of the output is one scenario of the specification:
 | Mark | Meaning |
 |---|---|
 | `ok` | the broker meets the scenario |
-| `dev` | a known deviation still stands; the line names its issue and the workaround |
-| `FAIL` | the broker doesn't meet the scenario, or a known deviation is fixed and its workaround can go |
+| `dev` | a known deviation still stands (`MODE=upstream`); the line names its issue, what the broker answered and the workaround |
+| `FAIL` | the broker doesn't meet the scenario, a known deviation is fixed and its workaround can go, a deviation that a fork patch removes still stands in `MODE=platform` (the build lacks that patch), or the test's own setup (e.g. the MQTT subscriber) broke |
 | `skip` | not applicable to the image, e.g. authorisation on an upstream image |
 
-The sub-attribute scenario stops every notification on an image with that deviation, so it runs last, on a
-broker of its own. The requirements that need Debezium or MQTT (the entity store, notifications over MQTT) are
-checked by the K8s tests in `test/bats/test-bridges/test-debezium-bridge.bats` and
-`test/bats/test-scorpio/test-scorpio-mqtt-subscriptions.bats`.
+Notifications go to an HTTP sink and to an MQTT server (Mosquitto) that `run.sh` starts on the broker's
+network. The MQTT scenario runs as the first subscription of the freshly started broker, where upstream 6.0.2
+loses a notification without `receiverInfo`. The sub-attribute scenario stops every notification on an image
+with that deviation, so it runs last, on a broker of its own. The requirements that need Debezium (the entity
+store) are checked by the K8s tests in `test/bats/test-bridges/test-debezium-bridge.bats`; the platform's MQTT
+path by `test/bats/test-scorpio/test-scorpio-mqtt-subscriptions.bats`.

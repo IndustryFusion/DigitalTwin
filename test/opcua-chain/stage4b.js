@@ -119,8 +119,13 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
     },
     body: JSON.stringify([{ id, ...attr }])
   });
+  // A batch whose only entity is refused answers 207 and names the entity under errors (CIM 009 6.31.3.1, 5.2.17)
   const onto = await merge(by.hasOfferedControlModes, { [P + 'hasOfferedControlModes']: [{ type: 'Property', value: 'x' }] });
-  check(onto.status === 400 && (await onto.text()).includes('SB001'), 'a Property merged onto a JsonProperty: 400 SB001');
+  const ontoText = await onto.text();
+  let ontoErrors = [];
+  try { ontoErrors = JSON.parse(ontoText).errors || []; } catch (e) {}
+  const sb001 = ontoErrors.some(e => e.entityId === by.hasOfferedControlModes && JSON.stringify(e.error || {}).includes('SB001'));
+  check(onto.status === 207 && sb001, `a Property merged onto a JsonProperty: 207, the entity refused with SB001 (${onto.status} ${ontoText.slice(0, 200)})`);
   // The pinned broker carries the fork's patch for merging value objects (IndustryFusion/ScorpioBroker#8), which
   // removes the 22023 of #967 (contracts/context-broker, accepted deviation A1): merges of value objects succeed.
   const iri = await merge(by.hasPumpClass, { [P + 'hasPumpClass']: [{ type: 'Property', value: { '@id': P + 'LiquidPump' } }] });

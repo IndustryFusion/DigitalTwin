@@ -907,11 +907,13 @@ describe('Test libNgsildUpdates refusals inside a 207 of a batch merge', functio
     errors[0].should.include('status code 207');
   });
 
-  it('Should log an entity refused in a 207 with id and ProblemDetails, the fork form', async function () {
-    const errors = await run({ statusCode: 207, body: { success: ['urn:b'], errors: [{ id: 'urn:a', ProblemDetails: SB001, type: 'Merge' }] } });
-    errors.length.should.equal(1);
-    const logged = JSON.parse(errors[0].replace('Entity cannot run merge:', '').replace(' and status code 207', ''));
-    assert.deepEqual(logged, { entityId: 'urn:a', error: SB001 });
+  it('Should log an entity of a 207 whose refusal is not in the standard form as it is, and as not merged', async function () {
+    // id and ProblemDetails are no members of a BatchEntityError (CIM 009 5.2.17)
+    const entry = { id: 'urn:a', ProblemDetails: SB001, type: 'Merge' };
+    const errors = await run({ statusCode: 207, body: { success: ['urn:b'], errors: [entry] } });
+    errors.length.should.equal(2);
+    errors[0].should.equal('Entity cannot run merge:' + JSON.stringify(entry) + ' and status code 207');
+    errors[1].should.equal('Entity cannot run merge: urn:a is not reported as merged and status code 207');
   });
 
   it('Should log every refused entity of a 207 on its own', async function () {
@@ -944,7 +946,7 @@ describe('Test libNgsildUpdates refusals inside a 207 of a batch merge', functio
   });
 
   it('Should log a 400 and a 204 as before', async function () {
-    const body = { errors: [{ id: 'urn:a', ProblemDetails: SB001, type: 'Merge' }] };
+    const body = { errors: [{ entityId: 'urn:a', error: SB001 }] };
     const errors = await run({ statusCode: 400, body });
     errors.length.should.equal(1);
     errors[0].should.equal('Entity cannot run merge:' + JSON.stringify(body) + ' and status code 400');
@@ -959,6 +961,11 @@ describe('Test libNgsildUpdates upsert without overwrite', function () {
   const BAD = { type: 'https://uri.etsi.org/ngsi-ld/errors/BadRequestData', title: 'Bad Request Data.', status: 400 };
   const NOT_OVERWRITING = { type: 'https://uri.etsi.org/ngsi-ld/errors/InvalidRequest', title: 'Invalid request.', detail: 'Not Overwriting', status: 400 };
   const entities = [{ id: 'urn:a', type: 'T' }, { id: 'urn:b', type: 'T' }, { id: 'urn:c', type: 'T' }];
+  // The answer of the create when the given entities exist and the others are created
+  const existing = ids => ({
+    statusCode: 207,
+    body: { success: entities.map(e => e.id).filter(i => !ids.includes(i)), errors: ids.map(entityId => ({ entityId, error: ALREADY })) }
+  });
   const run = async function (createAnswer, updateAnswer, overwriteOrReplace = false) {
     const calls = { create: [], update: [], replace: [], errors: [] };
     const ToTest = rewire('../lib/ngsildUpdates.js');
@@ -1019,23 +1026,56 @@ describe('Test libNgsildUpdates upsert without overwrite', function () {
     calls.errors.length.should.equal(0);
   });
 
-  it('Should update the existing entities from the fork\'s 409 with id and ProblemDetails', async function () {
-    const calls = await run({
-      statusCode: 409,
-      body: { errors: ['urn:a', 'urn:b', 'urn:c'].map(id => ({ id, ProblemDetails: ALREADY, type: 'Create' })) }
-    }, { statusCode: 204 });
+  it('Should update every entity when all exist, and log nothing', async function () {
+    const calls = await run(existing(['urn:a', 'urn:b', 'urn:c']), { statusCode: 204 });
     calls.update[0].entities.map(e => e.id).should.deep.equal(['urn:a', 'urn:b', 'urn:c']);
+    calls.errors.length.should.equal(0);
+  });
+
+  it('Should log refusals with id and ProblemDetails as they are, and update nothing', async function () {
+    // id and ProblemDetails are no members of a BatchEntityError (CIM 009 5.2.17)
+    const entries = ['urn:a', 'urn:b'].map(id => ({ id, ProblemDetails: ALREADY, type: 'Create' }));
+    const calls = await run({ statusCode: 409, body: { errors: entries } }, { statusCode: 204 });
+    calls.update.length.should.equal(0);
+    calls.errors.length.should.equal(2);
+    calls.errors[0].should.equal('Cannot upsert entity:' + JSON.stringify(entries[0]) + ' and status code 409');
+    calls.errors[1].should.equal('Cannot upsert entity:' + JSON.stringify(entries[1]) + ' and status code 409');
+  });
+
+  it('Should log an entity the create names neither as created nor as refused, and not update it', async function () {
+    const calls = await run({
+      statusCode: 207,
+      body: { success: ['urn:b'], errors: [{ entityId: 'urn:a', error: ALREADY }] }
+    }, { statusCode: 204 });
+    calls.update.length.should.equal(1);
+    calls.update[0].entities.map(e => e.id).should.deep.equal(['urn:a']);
+    calls.errors.should.deep.equal(['Cannot upsert entity: urn:c is not reported as created and status code 207']);
+  });
+
+  it('Should log an entity the update names neither as updated nor as refused', async function () {
+    const calls = await run(existing(['urn:a', 'urn:b', 'urn:c']), {
+      statusCode: 207,
+      body: { success: ['urn:a'], errors: [{ entityId: 'urn:b', error: BAD }] }
+    });
+    calls.errors.length.should.equal(2);
+    calls.errors[0].should.match(/^Cannot upsert entity:.*urn:b.*BadRequestData.* and status code 207$/);
+    calls.errors[1].should.equal('Cannot upsert entity: urn:c is not reported as updated and status code 207');
+  });
+
+  it('Should log no entity as unreported when the answer has no list of successes', async function () {
+    const calls = await run(existing(['urn:a']), { statusCode: 400, body: { errors: [] } });
+    calls.update.length.should.equal(1);
     calls.errors.length.should.equal(0);
   });
 
   it('Should log an entity the create refused for another reason and not update it', async function () {
     const calls = await run({
-      statusCode: 400,
-      body: { errors: [{ id: 'urn:a', ProblemDetails: ALREADY }, { id: 'urn:b', ProblemDetails: BAD }] }
+      statusCode: 207,
+      body: { success: ['urn:c'], errors: [{ entityId: 'urn:a', error: ALREADY }, { entityId: 'urn:b', error: BAD }] }
     }, { statusCode: 204 });
     calls.update[0].entities.map(e => e.id).should.deep.equal(['urn:a']);
     calls.errors.length.should.equal(1);
-    calls.errors[0].should.match(/^Cannot upsert entity:.*urn:b.*BadRequestData.* and status code 400$/);
+    calls.errors[0].should.match(/^Cannot upsert entity:.*urn:b.*BadRequestData.* and status code 207$/);
   });
 
   it('Should not update when the create refused no entity as existing', async function () {
@@ -1051,27 +1091,27 @@ describe('Test libNgsildUpdates upsert without overwrite', function () {
     calls.errors[0].should.equal('Cannot upsert entity:{"type":"https://uri.etsi.org/ngsi-ld/errors/BadRequestData"} and status code 400');
   });
 
-  it('Should log the entities the update refused, in a 207 and the fork\'s 404', async function () {
-    const existing = { statusCode: 409, body: { errors: [{ id: 'urn:a', ProblemDetails: ALREADY }, { id: 'urn:b', ProblemDetails: ALREADY }] } };
-    let calls = await run(existing, { statusCode: 207, body: { success: ['urn:a'], errors: [{ entityId: 'urn:b', error: BAD }] } });
+  it('Should log the entities the update refused, in a 207 and in an answer of any other status', async function () {
+    let calls = await run(existing(['urn:a', 'urn:b']), { statusCode: 207, body: { success: ['urn:a'], errors: [{ entityId: 'urn:b', error: BAD }] } });
     calls.errors.length.should.equal(1);
     calls.errors[0].should.include('urn:b');
     calls.errors[0].should.include('status code 207');
-    calls = await run(existing, { statusCode: 404, body: { errors: [{ id: 'urn:a', ProblemDetails: BAD }] } });
+    calls = await run(existing(['urn:a', 'urn:b']), { statusCode: 400, body: { errors: [{ entityId: 'urn:a', error: BAD }] } });
     calls.errors.length.should.equal(1);
     calls.errors[0].should.include('urn:a');
+    calls.errors[0].should.include('status code 400');
   });
 
-  it('Should not log the fork\'s refusal of an update with nothing to append', async function () {
-    const existing = { statusCode: 409, body: { errors: [{ id: 'urn:a', ProblemDetails: ALREADY }] } };
-    const calls = await run(existing, { statusCode: 404, body: { errors: [{ id: 'urn:a', ProblemDetails: NOT_OVERWRITING, type: 'Append' }] } });
+  it('Should log a refusal of an update with nothing to append like any other', async function () {
+    // NGSI-LD answers 204 for it (CIM 009 6.16.3.1, 5.6.9), so a refusal is not what was asked for
+    const calls = await run(existing(['urn:a']), { statusCode: 404, body: { errors: [{ entityId: 'urn:a', error: NOT_OVERWRITING }] } });
     calls.update.length.should.equal(1);
-    calls.errors.length.should.equal(0);
+    calls.errors.length.should.equal(1);
+    calls.errors[0].should.include('Not Overwriting');
   });
 
   it('Should log an update answer without a list of errors', async function () {
-    const existing = { statusCode: 207, body: { errors: [{ entityId: 'urn:a', error: ALREADY }] } };
-    const calls = await run(existing, { statusCode: 500, body: null });
+    const calls = await run(existing(['urn:a']), { statusCode: 500, body: null });
     calls.errors.length.should.equal(1);
     calls.errors[0].should.equal('Cannot upsert entity:null and status code 500');
   });
@@ -1085,9 +1125,11 @@ describe('Test libNgsildUpdates upsert without overwrite', function () {
 });
 describe('Test batchErrors', function () {
   const batchErrors = ToTest.__get__('batchErrors');
-  it('Should read both member forms', function () {
-    assert.deepEqual(batchErrors({ errors: [{ entityId: 'urn:a', error: { status: 400 } }, { id: 'urn:b', ProblemDetails: { status: 409 }, type: 'Create' }] }),
-      [{ entityId: 'urn:a', error: { status: 400 } }, { entityId: 'urn:b', error: { status: 409 } }]);
+  it('Should read the members of the standard, and keep an entry without them as it is', function () {
+    const other = { id: 'urn:b', ProblemDetails: { status: 409 }, type: 'Create' };
+    const half = { entityId: 'urn:c', ProblemDetails: { status: 400 } };
+    assert.deepEqual(batchErrors({ errors: [{ entityId: 'urn:a', error: { status: 400 }, extra: 1 }, other, half] }),
+      [{ entityId: 'urn:a', error: { status: 400 } }, other, half]);
   });
   it('Should return null without a list of errors', function () {
     (batchErrors(null) === null).should.equal(true);
@@ -1098,14 +1140,11 @@ describe('Test batchErrors', function () {
   it('Should keep an entry which is no object as the error', function () {
     assert.deepEqual(batchErrors({ errors: ['oops'] }), [{ entityId: undefined, error: 'oops' }]);
   });
-  it('Should tell AlreadyExists and the fork\'s "Not Overwriting" only from an error object', function () {
+  it('Should tell AlreadyExists only from an error object', function () {
     const isAlreadyExists = ToTest.__get__('isAlreadyExists');
-    const isNothingToAppend = ToTest.__get__('isNothingToAppend');
     isAlreadyExists({ error: { type: 'https://uri.etsi.org/ngsi-ld/errors/AlreadyExists' } }).should.equal(true);
     isAlreadyExists({ error: 'https://uri.etsi.org/ngsi-ld/errors/AlreadyExists' }).should.equal(false);
     isAlreadyExists({ error: null }).should.equal(false);
-    isNothingToAppend({ error: { detail: 'Not Overwriting' } }).should.equal(true);
-    isNothingToAppend({ error: { detail: 'Not Found' } }).should.equal(false);
-    isNothingToAppend({ error: undefined }).should.equal(false);
+    isAlreadyExists({ error: undefined }).should.equal(false);
   });
 });

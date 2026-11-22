@@ -83,11 +83,6 @@ jobs:
         with:
           path: .scorpio-image.tar
           key: scorpio-all-in-one-runner-${{ steps.pin.outputs.commit }}-${{ hashFiles('test/opcua-chain/scorpio-image.sh', 'test/build-local-platform.sh') }}
-      - uses: actions/setup-java@v4
-        if: steps.broker-cache.outputs.cache-hit != 'true'
-        with:
-          distribution: temurin
-          java-version: 17
       - name: The pinned broker image
         run: |
           [ -f .scorpio-image.tar ] && docker load -i .scorpio-image.tar

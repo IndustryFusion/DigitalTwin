@@ -15,12 +15,13 @@
 # limitations under the License.
 #
 # Prepares a GitHub-hosted ubuntu-24.04 runner for the K8s e2e test. Python
-# 3.10 and Java 17 come from the workflow's setup actions. prepare-platform.sh
+# 3.10 comes from the workflow's setup actions; Scorpio is built with JDK 21
+# and Maven 3.9 in a container (build-local-platform.sh). prepare-platform.sh
 # is for an interactive machine (it reinstalls Docker and asks before
 # installing); this one never prompts.
 #
 #   prepare-platform-for-github-runner.sh images   to build the platform images:
-#                                                  docker-compose, maven and the
+#                                                  docker-compose and the
 #                                                  local registry they go to
 #   prepare-platform-for-github-runner.sh cluster  to install and test: helm,
 #                                                  helmfile, the suites' tools,
@@ -34,7 +35,6 @@ HELM_VERSION=v3.20.2
 HELM_DIFF_VERSION=v3.15.9
 HELMFILE_VERSION=0.149.0
 KUBEFWD_VERSION=1.22.0
-MAVEN_VERSION=3.8.7
 
 cd "$(dirname "$0")"
 work=$(mktemp -d)
@@ -62,13 +62,6 @@ build_tools() {
         printf '#!/bin/sh\nexec docker compose "$@"\n' | sudo tee /usr/local/bin/docker-compose >/dev/null
         sudo chmod +x /usr/local/bin/docker-compose
     fi
-    # build-local-platform.sh sources maven.sh for the Scorpio build; the $ in
-    # it expand when it is sourced, not here
-    wget -q -P "$work" "https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz"
-    sudo tar xzf "$work/apache-maven-${MAVEN_VERSION}-bin.tar.gz" -C /opt
-    # shellcheck disable=SC2016
-    printf 'export M2_HOME=/opt/apache-maven-%s\nexport PATH="$M2_HOME/bin:$PATH"\n' "${MAVEN_VERSION}" \
-        | sudo tee /etc/profile.d/maven.sh >/dev/null
 }
 
 test_tools() {

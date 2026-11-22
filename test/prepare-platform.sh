@@ -192,26 +192,12 @@ sudo apt update
 sudo apt install python3-rdflib
 
 
-echo Installing maven
-echo ----------------------
-wget https://archive.apache.org/dist/maven/maven-3/3.8.7/binaries/apache-maven-3.8.7-bin.tar.gz
-tar -xzf apache-maven-3.8.7-bin.tar.gz
-sudo mv apache-maven-3.8.7 /opt/
-rm apache-maven-3.8.7-bin.tar.gz
-touch maven.sh
-sudo chmod 775 /etc/profile.d/maven.sh
-echo 'M2_HOME='/opt/apache-maven-3.8.7'
-PATH="$M2_HOME/bin:$PATH"
-export PATH' >> maven.sh
-sudo mv maven.sh /etc/profile.d/
-source /etc/profile.d/maven.sh
-mvn --version
-
 if [ "$USE_PROXY" = true ]; then
     echo Configuring Maven proxy
     echo -----------------------
     # Maven does NOT read HTTP_PROXY/HTTPS_PROXY env vars, so it needs an
-    # explicit <proxies> entry in settings.xml.
+    # explicit <proxies> entry in settings.xml. Maven itself runs in a
+    # container (build-local-platform.sh), which mounts ~/.m2.
     mkdir -p "$HOME/.m2"
     PROXY_URL="${PROXY_HTTPS:-$PROXY_HTTP}"
     PROXY_HOST=$(echo "$PROXY_URL" | sed -E 's#^https?://##' | cut -d: -f1)

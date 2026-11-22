@@ -438,7 +438,7 @@ EOF
 # compare entity with reference
 # $1: file to compare with
 compare_inserted_entity() {
-    cat << EOF | jq | diff "$1" - >&3
+    cat << EOF | jq -S | diff <(jq -S . "$1") - >&3
 {
   "id" : "${FILTER_ID}",
   "type" : "${FILTER_TYPE}",
@@ -463,7 +463,7 @@ EOF
 # compare entity with reference
 # $1: file to compare with
 compare_inserted_entity_timestamped() {
-    cat << EOF | jq | diff "$1" - >&3
+    cat << EOF | jq -S | diff <(jq -S . "$1") - >&3
 {
   "id": "urn:filter-test:12345",
   "type": "https://industry-fusion.com/types/v0.9/filter_test",
@@ -492,7 +492,7 @@ EOF
 # compare entity with reference
 # $1: file to compare with
 compare_upserted_overwritten_entity() {
-    cat << EOF | jq | diff "$1" - >&3
+    cat << EOF | jq -S | diff <(jq -S . "$1") - >&3
 {
   "id" : "${FILTER_ID}",
   "type" : "${FILTER_TYPE}",
@@ -521,7 +521,7 @@ EOF
 # compare entity with reference
 # $1: file to compare with
 compare_upserted_non_overwritten_entity() {
-    cat << EOF | jq | diff "$1" - >&3
+    cat << EOF | jq -S | diff <(jq -S . "$1") - >&3
 {
   "id" : "${FILTER_ID}",
   "type" : "${FILTER_TYPE}",
@@ -551,7 +551,7 @@ EOF
 # compare entity with reference
 # $1: file to compare with
 compare_updated_entity() {
-    cat << EOF | jq | diff "$1" - >&3
+    cat << EOF | jq -S | diff <(jq -S . "$1") - >&3
 {
   "id" : "${FILTER_ID}",
   "type" : "${FILTER_TYPE}",
@@ -577,7 +577,7 @@ EOF
 # compare entity with reference
 # $1: file to compare with
 compare_updated_no_overwrite_entity() {
-    cat << EOF | jq | diff "$1" - >&3
+    cat << EOF | jq -S | diff <(jq -S . "$1") - >&3
 {
   "id" : "${FILTER_ID}",
   "type" : "${FILTER_TYPE}",
@@ -605,7 +605,7 @@ EOF
 # compare entity with reference
 # $1: file to compare with
 compare_cutter_entity() {
-    cat << EOF | jq | diff "$1" - >&3
+    cat << EOF | jq -S | diff <(jq -S . "$1") - >&3
 {
   "id": "${CUTTER_ID}",
   "type": "${PLASMACUTTER_TYPE}",
@@ -628,7 +628,7 @@ EOF
 # compare entity with reference
 # $1: file to compare with
 compare_update_cutter_entity() {
-    cat << EOF | jq | diff "$1" - >&3
+    cat << EOF | jq -S | diff <(jq -S . "$1") - >&3
 {
   "id": "${CUTTER_ID}",
   "type": "${PLASMACUTTER_TYPE}",
@@ -651,7 +651,7 @@ EOF
 # compare entity with reference
 # $1: file to compare with
 compare_updated_filter_entity() {
-    cat << EOF | jq | diff "$1" - >&3
+    cat << EOF | jq -S | diff <(jq -S . "$1") - >&3
 {
   "id" : "${FILTER_ID}",
   "type" : "${FILTER_TYPE}",
@@ -674,7 +674,7 @@ EOF
 }
 
 compare_merged_filter_entity() {
-    cat << EOF | jq | diff "$1" - >&3
+    cat << EOF | jq -S | diff <(jq -S . "$1") - >&3
 {
   "id":"${FILTER_ID}",
   "type":"${FILTER_TYPE}",

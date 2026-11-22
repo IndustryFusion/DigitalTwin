@@ -21,11 +21,8 @@ jobs:
       - name: Prepare K3d cluster
         run: |
           cd ./test && bash ./prepare-platform.sh
-          sudo update-alternatives --set java /usr/lib/jvm/java-17-openjdk-amd64/bin/java
-          java --version
       - name: Build Platform locally
         run: |
-          export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
           cd test && bash build-local-platform.sh
       - name: Push release images
         shell: bash

@@ -15,15 +15,18 @@
 */
 'use strict';
 
-// The black-box contract test of openspec/specs/contracts/context-broker: one check per scenario that needs neither
-// Debezium nor MQTT, through the broker's API and health checks only. A known deviation's check passes while the
+// The black-box contract test of openspec/specs/contracts/context-broker: one check per scenario that doesn't need
+// Debezium, through the broker's API, its health checks and the notifications it sends only. A known deviation's check passes while the
 // broker still shows the deviation, and fails once the broker meets the requirement, naming the workaround that can
-// then be removed. Started by run.sh, which provides the broker and a notification sink.
+// then be removed; one that a patch the platform carries removes passes on the standard's behaviour, and on the
+// platform's build fails while it stands. Every other check passes only on the standard's behaviour. Started by
+// run.sh, which provides the broker and a notification sink.
 //
 // Environment: BROKER (the broker's base URL), SINK (the sink as seen from here), SINK_IN (the sink as seen from the
-// broker), KEY (PEM key that signs tokens), MODE (platform | upstream: no authorisation, its checks are skipped),
+// broker), MQTT (the MQTT server's container on the broker's network), KEY (PEM key that signs tokens), MODE (platform | upstream: no authorisation, its checks are skipped),
 // PART (main | subattribute), OUT (directory for results.json).
 
+const childProcess = require('child_process');
 const crypto = require('crypto');
 const fs = require('fs');
 
@@ -31,6 +34,7 @@ const BROKER = process.env.BROKER;
 const A = `${BROKER}/ngsi-ld/v1`;
 const SINK = process.env.SINK;
 const SINK_IN = process.env.SINK_IN;
+const MQTT = process.env.MQTT;
 const MODE = process.env.MODE || 'platform';
 const PART = process.env.PART || 'main';
 const OUT = process.env.OUT || '.';
@@ -88,8 +92,9 @@ const typeOf = v => (v !== null && typeof v === 'object') ? (v['@type'] || v.typ
 const iriOf = v => (v !== null && typeof v === 'object') ? (v['@id'] || v.id) : undefined;
 
 // Refusals of a batch operation. NGSI-LD (CIM 009 clauses 6.31.3.1, 5.2.17) reports them in a 207 as
-// errors[{entityId, error}]; the fork on 5.0.5 answers 400 when every entity is refused (T1) and names the members
-// id and ProblemDetails (T2). Each refusal says whether its form is the standard's.
+// errors[{entityId, error}], also when every entity is refused. The fork on 5.0.5 answered 400 then and named the
+// members id and ProblemDetails; that form is still read, so that a check names what it got. Each refusal says
+// whether its form is the standard's.
 function refusals (r) {
   if (![400, 207].includes(r.status) || !r.json || !Array.isArray(r.json.errors)) return [];
   return r.json.errors.map(e => ({
@@ -113,7 +118,9 @@ function record (status, detail) {
 }
 async function check (requirement, scenario, fn, opts = {}) {
   current = { requirement, scenario };
-  if (opts.platformOnly && MODE !== 'platform') return record('skip', 'the upstream image has no authorisation');
+  if (opts.platformOnly && MODE !== 'platform') {
+    return record('skip', typeof opts.platformOnly === 'string' ? opts.platformOnly : 'the upstream image has no authorisation');
+  }
   try {
     const outcome = await fn();
     if (outcome === true || outcome === undefined) record('ok');
@@ -126,28 +133,24 @@ async function check (requirement, scenario, fn, opts = {}) {
 }
 // The outcome of a scenario with a registered deviation (design D9 of the change): the standard's behaviour fails
 // the check, so that the workaround is removed; the deviation passes it; anything else fails. A deviation that a
-// patch the platform carries removes (d.patch) passes on the standard's behaviour, since that patch is expected.
-function deviation (d, target, stillThere, observed) {
+// patch the platform carries removes (d.patch) passes on the standard's behaviour, since that patch is expected;
+// in MODE=platform it fails while it stands, since the platform's build has to carry the patch. seen, if given,
+// says what the broker answered when the deviation stands.
+function deviation (d, target, stillThere, observed, seen) {
   const label = `${d.id} ${d.kind}: ${d.name} (${d.issue})`;
+  const saw = seen ? `; saw ${seen}` : '';
   if (target && d.patch) return { removed: `${d.id} removed by ${d.patch}` };
   if (target) return `${label} is fixed: remove the workaround, ${d.workaround}`;
-  if (stillThere) return { deviation: `${label} stands; workaround: ${d.workaround}` };
+  if (stillThere && d.patch && MODE === 'platform') return `${label} stands: the platform's build lacks ${d.patch}${saw}`;
+  if (stillThere) return { deviation: `${label} stands${saw}; workaround: ${d.workaround}` };
   return `neither the standard's behaviour nor ${d.id}: ${observed}`;
 }
-const BASELINE = 'the move to upstream 6.0.2 (IndustryFusion/ScorpioBroker#9)';
 const DEV = {
   A1: { id: 'A1', kind: 'accepted', name: 'a merge of a typed value or language-tagged string fails with 22023', issue: '#967, CIM 009 3.1', workaround: 'the updates bridge writes such entities through /attrs (KafkaBridge/lib/ngsildUpdates.js)', patch: 'the fork patch for IndustryFusion/ScorpioBroker#8' },
-  A2: { id: 'A2', kind: 'accepted', name: 'a batch merge with datasetId @none answers 404', issue: 'CIM 009 4.5.5', workaround: 'the updates bridge removes @none before merging (KafkaBridge/lib/ngsildUpdates.js)' },
-  A3: { id: 'A3', kind: 'accepted', name: 'a batch merge of one entity with a null value answers 404, not 207', issue: 'CIM 009 6.31.3.1', workaround: 'none needed once Core Services writes no null values (P2)' },
-  T1: { id: 'T1', kind: 'transitional', name: 'a batch whose entities are all refused answers 400, not 207', issue: 'CIM 009 6.31.3.1', workaround: BASELINE },
-  T2: { id: 'T2', kind: 'transitional', name: 'refusals are named id and ProblemDetails, not entityId and error', issue: 'CIM 009 5.2.17', workaround: BASELINE },
-  T3: { id: 'T3', kind: 'transitional', name: 'an upsert with options=update keeps existing values', issue: 'CIM 009 5.6.8, 5.6.2', workaround: `${BASELINE}; the updates bridge's non-overwriting upsert relies on it (P3)` },
-  T4: { id: 'T4', kind: 'transitional', name: 'two default instances of one attribute in one request are accepted', issue: 'CIM 009 4.5.5', workaround: BASELINE },
-  T5: { id: 'T5', kind: 'transitional', name: 'an entity id that is not a URI answers 500, not 400', issue: 'CIM 009 6.3', workaround: BASELINE },
-  T6: { id: 'T6', kind: 'transitional', name: 'a merge with a sub-attribute stores an internal result and stops notifications', issue: '#969', workaround: `${BASELINE}; until then the liveness probe restarts the broker (helm/charts/scorpio)` },
-  T7: { id: 'T7', kind: 'transitional', name: 'a subscription read by its id is refused with 403', issue: 'CIM 009 6.11.3.1, the fork\'s @RolesAllowed', workaround: 'the fork\'s access control patch, corrected on the update; no component reads it' },
-  T8: { id: 'T8', kind: 'transitional', name: 'a batch update with noOverwrite refuses an entity with nothing new with 404 Not Overwriting', issue: 'CIM 009 6.16.3.1, 5.6.9', workaround: `${BASELINE}; until then the updates bridge treats that refusal as success (#1049)` },
-  T9: { id: 'T9', kind: 'transitional', name: 'a batch update with noOverwrite does not append a new instance of an existing attribute', issue: 'CIM 009 5.6.3', workaround: BASELINE }
+  A2: { id: 'A2', kind: 'accepted', name: 'a batch merge with datasetId @none answers 404', issue: 'CIM 009 4.5.5', workaround: 'the updates bridge removes @none before merging (KafkaBridge/lib/ngsildUpdates.js)', patch: 'the fork patch for IndustryFusion/ScorpioBroker#11' },
+  A3: { id: 'A3', kind: 'accepted', name: 'a batch merge of one entity with a null value answers 404, not 207, and a fully refused batch leaves success out', issue: 'CIM 009 6.31.3.1, 5.2.16', workaround: 'none needed once Core Services writes no null values (P2)', patch: 'the fork patch for IndustryFusion/ScorpioBroker#12' },
+  A4: { id: 'A4', kind: 'accepted', name: 'a notification to an MQTT endpoint without receiverInfo is lost', issue: 'CIM 009 5.2.15', workaround: 'none; a subscriber would have to give receiverInfo', patch: 'the fork patch "Notify over MQTT without receiverInfo"' },
+  A5: { id: 'A5', kind: 'accepted', name: 'an attribute instance with a datasetId and a sub-attribute array of instances is refused with 400', issue: 'CIM 009 4.5.2, 4.5.3, 4.5.5', workaround: 'none; such entities cannot be written', patch: 'the fork patch for IndustryFusion/ScorpioBroker#15' }
 };
 
 // The notification sink of run.sh: GET returns what it received, DELETE clears it
@@ -197,6 +200,54 @@ async function subscribe (type, subId) {
   }
   throw new Error('the subscription never notified');
 }
+// The messages on a topic of the MQTT server of run.sh, read with mosquitto_sub inside its container. failed()
+// says why the subscriber ended before stop(): a broken MQTT setup, not something the broker did
+function mqttTopic (topic) {
+  const sub = childProcess.spawn('docker', ['exec', MQTT, 'mosquitto_sub', '-t', topic], { stdio: ['ignore', 'pipe', 'inherit'] });
+  let text = '';
+  let failure;
+  let stopped = false;
+  sub.stdout.on('data', d => { text += d; });
+  sub.on('error', e => { failure = failure || `the MQTT subscriber didn't start: ${e.message}`; });
+  sub.on('exit', (code, signal) => {
+    if (!stopped) failure = failure || `the MQTT subscriber (docker exec ${MQTT} mosquitto_sub) ended with ${code !== null ? 'exit code ' + code : signal}`;
+  });
+  return { text: () => text, failed: () => failure, stop: () => { stopped = true; sub.kill(); } };
+}
+async function mqttWithoutReceiverInfo () {
+  const M = `http://example.org/contract/M${RUN}`;
+  const topic = `contract/${RUN}`;
+  const e = id('mqtt');
+  const messages = mqttTopic(topic);
+  try {
+    await sleep(1000);
+    if (messages.failed()) return messages.failed();
+    const r0 = await create({ id: e, type: M, [X + 'a']: { type: 'Property', value: 0 } });
+    if (r0.status !== 201) return `create answered ${r0.status} ${r0.text}`;
+    const subId = id('sub-mqtt');
+    const r = await call('POST', '/subscriptions', {
+      id: subId,
+      type: 'Subscription',
+      entities: [{ type: M }],
+      notification: { endpoint: { uri: `mqtt://${MQTT}:1883/${topic}`, accept: 'application/json' } },
+      '@context': CORE
+    }, { ct: 'application/ld+json' });
+    if (r.status !== 201) return `subscription not created: ${r.status} ${r.text}`;
+    // A new subscription becomes active after a while: change the entity until a change is notified, for 60 s
+    let arrived = false;
+    for (let v = 1; v <= 40 && !arrived && !messages.failed(); v++) {
+      await mergeEntity(e, { [X + 'a']: { type: PROP, value: v } });
+      await sleep(1500);
+      arrived = messages.text().includes(e);
+    }
+    await call('DELETE', `/subscriptions/${encodeURIComponent(subId)}`);
+    // Without a subscriber that ran to the end, a lost notification says nothing about the broker
+    if (!arrived && messages.failed()) return messages.failed();
+    return deviation(DEV.A4, arrived, !arrived, 'no notification', 'no notification on the topic in 60 s');
+  } finally {
+    messages.stop();
+  }
+}
 async function liveness () {
   const r = await call('GET', `${BROKER}/q/health/live`, undefined, { token: null });
   return r.json && r.json.status;
@@ -243,6 +294,20 @@ async function main () {
     const r = await call('GET', '/types', undefined, { token: TOKEN.adminRealm });
     return r.status === 200 || `answered ${r.status}`;
   }, { platformOnly: true });
+  await check("The broker runs with the platform's configuration", 'No history by default', async () => {
+    const e = id('history');
+    const c = await create({ id: e, type: T, [X + 'a']: { type: 'Property', value: 1 } });
+    const m = await mergeEntity(e, { [X + 'a']: { type: 'Property', value: 2 } });
+    if (c.status !== 201 || m.status !== 204) return `create ${c.status}, merge ${m.status} ${m.text.slice(0, 200)}`;
+    // The temporal API answers 404 for an entity without recorded history (CIM 009 6.19.3.1). With recording on,
+    // the build answers 200 with both instances within 2 s; 10 s without it is taken as "no history".
+    for (let t = 0; t < 5; t++) {
+      await sleep(2000);
+      const h = await call('GET', `/temporal/entities/${encodeURIComponent(e)}`);
+      if (h.status !== 404) return `the temporal API answered ${h.status}, not 404: ${h.text.slice(0, 300)}`;
+    }
+    return true;
+  }, { platformOnly: 'upstream records entity history by default' });
 
   // Batch operation results (CIM 009 6.14.3.1, 6.31.3.1, 5.2.16, 5.2.17)
   await check('Batch operation results', 'Every entity succeeds', async () => {
@@ -263,7 +328,7 @@ async function main () {
     const f = refusalOf(r, no);
     const success = r.json && Array.isArray(r.json.success) && r.json.success.includes(ok);
     if (!merged || r.status !== 207 || !f || !success || refused(r, ok)) return `answered ${r.status} ${r.text}, other entity merged: ${merged}`;
-    return deviation(DEV.T2, f.standard, !f.standard, r.text);
+    return f.standard || `the refusal isn't errors[{entityId, error}] in a 207 (CIM 009 5.2.17): ${r.text}`;
   });
   await check('Batch operation results', 'The only entity refused', async () => {
     const no = id('batch-only');
@@ -271,7 +336,13 @@ async function main () {
     const r = await batchMerge([{ id: no, [X + 'j']: [{ type: PROP, value: 1 }] }]);
     const f = refusalOf(r, no);
     if (!f) return `the entity isn't named as refused: ${r.status} ${r.text}`;
-    return deviation(DEV.T1, r.status === 207, r.status === 400, `answered ${r.status}`);
+    const noSuccess = Array.isArray(r.json.success) && r.json.success.length === 0;
+    if (r.status === 207 && f.standard && noSuccess) return true;
+    // Upstream 6.0.2 leaves success out (A3); the platform's build carries the patch, so there it is a failure
+    if (r.status === 207 && f.standard && !('success' in r.json)) {
+      return deviation(DEV.A3, false, true, r.text, `a 207 without success: ${r.text.slice(0, 200)}`);
+    }
+    return `answered ${r.status}, not a 207 naming the entity under errors with an empty success (CIM 009 6.31.3.1, 5.2.16): ${r.text}`;
   });
 
   // Merge keeps what it doesn't name (CIM 009 5.6.17, 5.6.20, 5.5.12)
@@ -366,7 +437,7 @@ async function main () {
     if (!(g2[X + 'a'] === undefined && g2[X + 'b'] === undefined && one(g2, X + 'c') && one(g2, X + 'c').value === 3)) {
       return `after options=replace: ${JSON.stringify(g2)}`;
     }
-    return deviation(DEV.T3, a === 2, a === 1, `after options=update the existing attribute holds ${a}`);
+    return a === 2 || `after options=update the existing attribute holds ${a}, not 2 (CIM 009 5.6.8, 5.6.2)`;
   });
 
   // Batch update without overwriting (CIM 009 6.16.3.1, 5.6.9, 5.6.3)
@@ -377,8 +448,7 @@ async function main () {
     const r = await noOverwrite([{ id: e, type: T, [X + 'a']: { type: 'Property', value: 2 } }]);
     const kept = one((await get(e)).json, X + 'a').value === 1;
     if (!kept) return `the existing value was overwritten: ${r.status} ${r.text}`;
-    return deviation(DEV.T8, r.status === 204, refused(r, e, 'Not Overwriting') || (r.status === 404 && r.text.includes('Not Overwriting')),
-      `answered ${r.status} ${r.text}`);
+    return r.status === 204 || `answered ${r.status} ${r.text}, not 204 (CIM 009 6.16.3.1, 5.6.9)`;
   });
   await check('Batch update without overwriting', 'New attribute and new instance', async () => {
     const e = id('noow-new');
@@ -392,7 +462,7 @@ async function main () {
     const appendedDefault = a.some(i => !i.datasetId && i.value === 2);
     const newAttribute = one(g, X + 'b') && one(g, X + 'b').value === 3;
     if (!keptInstance || !newAttribute) return `read back ${JSON.stringify(g)}`;
-    return deviation(DEV.T9, appendedDefault, !appendedDefault, `read back ${JSON.stringify(g)}`);
+    return appendedDefault || `the new default instance wasn't appended (CIM 009 5.6.3): read back ${JSON.stringify(g)}`;
   });
 
   // Value forms the broker stores (CIM 009 4.5.2, 4.5.3, 4.5.18, 4.5.20, 4.5.21, 4.5.24)
@@ -459,6 +529,36 @@ async function main () {
     return wrong.length === 0 || `read back differs: ${wrong.join(', ')}`;
   });
 
+  await check('Value forms the broker stores', 'Sub-attribute array on an instance with a datasetId', async () => {
+    const e = id('subarray');
+    const ds = id('subarray-ds');
+    const sx = id('subarray-sx');
+    const r = await call('POST', '/entityOperations/upsert', [{
+      id: e,
+      type: T,
+      [X + 'a']: [{
+        type: 'Property',
+        value: 'A',
+        datasetId: ds,
+        [X + 'p']: [{ type: 'Property', value: 1 }, { type: 'Property', value: 2, datasetId: sx }]
+      }]
+    }]);
+    const g = await get(e);
+    const a = g.status === 200 ? one(g.json, X + 'a') : undefined;
+    const p = a ? instances(a, X + 'p') : [];
+    const stored = !!a && a.datasetId === ds && p.length === 2 && p.some(i => !i.datasetId && i.value === 1) &&
+      p.some(i => i.datasetId === sx && i.value === 2);
+    const refusedWith400 = (r.status === 400 || refused(r, e)) && g.status === 404;
+    // Which refusal: a 400 of the request, or the entity refused inside a 207 (or a 400 naming it), in which form
+    const f = refusalOf(r, e);
+    const problem = f ? `${f.type} ${String(f.detail).slice(0, 120)}` : `${(r.json && r.json.type) || ''} ${(r.json && r.json.detail) || r.text.slice(0, 120)}`;
+    const seen = f
+      ? `the entity refused in a ${r.status}, ${f.standard ? 'as errors[{entityId, error}]' : 'not in the form errors[{entityId, error}]'}: ${problem}`
+      : `a ${r.status} of the whole request: ${problem}`;
+    return deviation(DEV.A5, [201, 204].includes(r.status) && stored, refusedWith400,
+      `upsert ${r.status} ${r.text.slice(0, 200)}, read ${g.status} ${g.text.slice(0, 300)}`, seen);
+  });
+
   // Declared types in the broker (CIM 009 5.5.12; contracts/typed-literals)
   const declaredEntity = id('declared');
   await check('Declared types in the broker', 'Declared value stored', async () => {
@@ -502,7 +602,8 @@ async function main () {
     await create({ id: e, type: T, [X + 'a']: { type: 'Property', value: 1 } });
     const r = await batchMerge([{ id: e, [X + 'a']: [{ type: PROP, value: null }] }]);
     const f = refusalOf(r, e);
-    return deviation(DEV.A3, r.status === 207 && f && f.standard && isType(f.type, 'BadRequestData'), r.status === 404, `answered ${r.status} ${r.text}`);
+    return deviation(DEV.A3, r.status === 207 && f && f.standard && isType(f.type, 'BadRequestData'), r.status === 404, `answered ${r.status} ${r.text}`,
+      `${r.status} ${r.text.slice(0, 200)}`);
   });
   await check('Refusals the platform relies on', 'Malformed observedAt', async () => {
     const good = id('obs-good');
@@ -519,11 +620,11 @@ async function main () {
     const r = await call('POST', '/entityOperations/upsert', [{ id: e, type: T, [X + 'a']: [{ type: 'Property', value: 1 }, { type: 'Property', value: 2 }] }]);
     const g = await get(e);
     const both = g.status === 200 && instances(g.json, X + 'a').length === 2;
-    return deviation(DEV.T4, refused(r, e) && g.status === 404, both, `upsert ${r.status} ${r.text.slice(0, 200)}, read ${g.status}`);
+    return (refused(r, e) && g.status === 404) || `two default instances not refused (CIM 009 4.5.5): upsert ${r.status} ${r.text.slice(0, 200)}, read ${g.status}, both stored ${both}`;
   });
   await check('Refusals the platform relies on', "Id that isn't a URI", async () => {
     const r = await create({ id: `urn:ctx:${RUN}:with space`, type: T, [X + 'a']: { type: 'Property', value: 1 } });
-    return deviation(DEV.T5, r.status === 400 && isType(r.json, 'BadRequestData'), r.status === 500, `answered ${r.status} ${r.text.slice(0, 200)}`);
+    return (r.status === 400 && isType(r.json, 'BadRequestData')) || `answered ${r.status} ${r.text.slice(0, 200)}, not 400 BadRequestData (CIM 009 6.3)`;
   });
 
   // The broker's own refusals (not stated by CIM 009)
@@ -559,6 +660,9 @@ async function main () {
     const r = await get(id('missing'));
     return (r.status === 404 && isType(r.json, 'ResourceNotFound')) || `answered ${r.status} ${r.text}`;
   });
+  // Over MQTT first: on upstream 6.0.2 a notification without receiverInfo is lost on a freshly started broker (A4)
+  await check('Subscriptions and notifications', 'MQTT endpoint without receiverInfo', mqttWithoutReceiverInfo);
+
   // Notifications, over HTTP to the sink of run.sh
   const N = `http://example.org/contract/N${RUN}`;
   const subId = id('sub');
@@ -614,7 +718,7 @@ async function main () {
   });
   await check('Subscriptions and notifications', 'A subscription read by its id', async () => {
     const r = await call('GET', `/subscriptions/${encodeURIComponent(subId)}`);
-    return deviation(DEV.T7, r.status === 200 && r.json && r.json.id === subId, r.status === 403, `answered ${r.status}`);
+    return (r.status === 200 && r.json && r.json.id === subId) || `answered ${r.status} ${r.text.slice(0, 200)}, not 200 with the subscription (CIM 009 6.11.3.1)`;
   }, { platformOnly: true });
   await call('DELETE', `/subscriptions/${encodeURIComponent(subId)}`);
 
@@ -635,7 +739,7 @@ async function main () {
   });
 }
 
-// On a broker of its own, last: on an image with the deviation it stops all notifications
+// On a broker of its own, last: on the fork on 5.0.5 it stopped all notifications (#969)
 async function subAttribute () {
   const N = `http://example.org/contract/S${RUN}`;
   await subscribe(N, id('sub-s'));
@@ -658,9 +762,8 @@ async function subAttribute () {
       live = await liveness();
       if (t >= 75 && secondNotified) break;
     }
-    return deviation(DEV.T6, r1.status === 204 && r2.status === 204 && subKept && secondNotified && live === 'UP',
-      !secondNotified && live !== 'UP',
-      `merges ${r1.status}/${r2.status}, sub-attribute kept ${subKept}, second merge notified ${secondNotified}, liveness ${live}`);
+    return (r1.status === 204 && r2.status === 204 && subKept && secondNotified && live === 'UP') ||
+      `merges ${r1.status}/${r2.status}, sub-attribute kept ${subKept}, second merge notified ${secondNotified}, liveness ${live}`;
   });
 }
 
