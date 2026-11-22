@@ -140,6 +140,10 @@ jobs:
         # word splitting intended: one argument per suite directory
         # shellcheck disable=SC2046
         DEBUG=true bats $(bash ../../.github/scripts/e2e-shards.sh suites "${{ matrix.shard }}")
+        # TEMPORARY (#1060, drop before merge): the core SQL suites 19 more times
+        if [ "${{ matrix.shard }}" = flink ]; then
+          for i in $(seq 2 20); do echo "core SQL suites, run $i of 20"; DEBUG=true bats test-core-sql-services || exit 1; done
+        fi
         sudo killall kubefwd || true
     - name: Test shacl2flink against the platform
       if: matrix.shard == 'flink'
