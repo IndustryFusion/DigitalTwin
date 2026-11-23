@@ -103,6 +103,16 @@ releases:
   - kafka
   - keycloak
   - alerta
+  # The topics of kafka-bridges, before it is synced (adopt-kafka-topics.sh):
+  # on an installed platform iff.ngsild.attributes may be owned by sql-core,
+  # iff.ngsild.entities by shacl, and a topic by no release at all. helm
+  # refuses to upgrade over a topic it doesn't own, and the former owner's
+  # upgrade deletes it.
+  hooks:
+  - events: ["presync"]
+    showlogs: true
+    command: "bash"
+    args: ["./adopt-kafka-topics.sh", "{{ .Values.namespace }}", "kafka-bridges", "iff.ngsild.public.entity", "iff.ngsild.attributes", "iff.ngsild.entities"]
 - name: sql-core
   labels:
     app: sql-core
@@ -117,6 +127,18 @@ releases:
   - alerta
   - scorpio
   - kafka-bridges
+  # the moved topics as for kafka-bridges, for when sql-core is synced alone;
+  # and sql-core's own topics: a KafkaTopic no release owns makes helm refuse
+  # the upgrade now that every topic is rendered
+  hooks:
+  - events: ["presync"]
+    showlogs: true
+    command: "bash"
+    args: ["./adopt-kafka-topics.sh", "{{ .Values.namespace }}", "kafka-bridges", "iff.ngsild.attributes", "iff.ngsild.entities"]
+  - events: ["presync"]
+    showlogs: true
+    command: "bash"
+    args: ["./adopt-kafka-topics.sh", "{{ .Values.namespace }}", "sql-core", "iff.alerts", "iff.alerts.bulk", "iff.ngsild-updates", "iff.ngsild.attributes-insert"]
 - name: velero
   labels:
     app: velero

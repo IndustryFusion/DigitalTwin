@@ -246,7 +246,8 @@ jobs:
         shellcheck *.sh *.bats test-*/*.bats ../bats-unit/*.bats \
           ../../.github/scripts/*.sh ../prepare-platform-for-github-runner.sh \
           ../platform-images.sh ../wait-for-flink-jobs.sh ../wait-for-kubefwd.sh \
-          ../../DebeziumPostgresConnector/fetch-verified.sh
+          ../../DebeziumPostgresConnector/fetch-verified.sh \
+          ../../helm/adopt-kafka-topics.sh ../../helm/check-release-keeps-topics.sh
     - name: Run the bats suites without a cluster
       run: bats test/bats-unit
 

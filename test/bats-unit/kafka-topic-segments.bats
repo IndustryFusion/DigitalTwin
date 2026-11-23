@@ -52,7 +52,7 @@ for path in sorted(pathlib.Path(sys.argv[1]).glob('*/templates/*.y*ml')):
                     for r in retention]
         if retention == [] or segment != expected:
             errors.append(f'{path.name} {name}: retention.ms {retention} segment.ms {segment}')
-assert found >= 17, f'only {found} KafkaTopic resources found'
+assert found >= 16, f'only {found} KafkaTopic resources found'
 assert not errors, '\n'.join(errors)
 EOF
     echo "${output}"
@@ -89,6 +89,7 @@ kafkaBridge:
     listenTopicCompression: uncompressed
     attributesTopic: iff.ngsild.attributes
     entitiesTopic: iff.ngsild.entities
+    entityTopicRetention: "3600006"
     attributesTopicRetention: "3600004"
     attributesTopicCompression: uncompressed
 kafka_topic_vars:
@@ -107,7 +108,7 @@ EOF
         python3 - "$1" "$2" <<'EOF'
 import sys, yaml
 topics = [d for d in yaml.safe_load_all(open(sys.argv[1])) if d and d['kind'] == 'KafkaTopic']
-assert len(topics) == 17, len(topics)
+assert len(topics) == 16, len(topics)
 for t in topics:
     config = t['spec']['config']
     retention, segment = int(config['retention.ms']), int(config['segment.ms'])

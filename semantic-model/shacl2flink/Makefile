@@ -190,6 +190,9 @@ flink-deploy: clean
 
 flink-undeploy:
 	@echo undeploy helm package
+	# A validation deployed before #1038 declares the platform's entity topic
+	# without keep, and destroying it would delete the topic: refuse instead.
+	cd ../../helm && bash ./check-release-keeps-topics.sh $(NAMESPACE) shacl iff.ngsild.entities
 	cd ../../helm && ./helmfile -f helmfile-shacl.yaml destroy
 	make test-flink-is-undeployed
 	cd ../../helm && ./helmfile -f helmfile-shacl.yaml destroy # undeploy a scnd time to make sure that there are no kafkatopics left

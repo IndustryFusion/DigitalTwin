@@ -113,11 +113,12 @@ def main(output_folder='output'):
                                          ttl=configs.view_state_ttl), f)
         print(utils.create_sql_view(base_entity_tablename, base_entity_table, base_entity_view_primary_key),
               file=sqlitef)
-        print('---', file=fk)
-        yaml.dump(utils.create_kafka_topic(f'{configs.kafka_topic_ngsi_prefix}',
-                                           f'{configs.kafka_topic_ngsi_prefix}', configs.kafka_topic_object_label,
-                                           config),
-                  fk)
+        # No KafkaTopic for the entities topic: the platform's kafka-bridges
+        # chart owns it, and the Debezium bridge writes it whether or not a
+        # validation is deployed. Declaring it here as well gave it two
+        # owning releases, so deploying or removing the validation deleted
+        # the platform's topic, and the next kafka-bridges upgrade deleted it
+        # again or failed on the foreign owner.
 
         # Create constraint_checks and and combination tables
         kafka_constraint_checks = {

@@ -8,39 +8,49 @@ log.retention.check.interval.ms. Topics with a shorter retention (10 s) roll
 hourly, so they keep up to about an hour instead of 7 days: rolling them at
 10 s would delete records that a restarted consumer or a test still reads back.
 test/bats-unit/kafka-topic-segments.bats checks this.
+
+Every topic is rendered on every install and upgrade, and each topic has one
+owning release: sql-core owns the alert topics, iff.ngsild-updates and the
+attributes insert topic; kafka-bridges owns iff.ngsild.attributes and
+iff.ngsild.entities. A topic rendered only while missing (a `lookup` guard)
+is in the manifest of the install but not of the next upgrade, and helm deletes
+what drops out of a release's manifest; Strimzi then deletes the topic in
+Kafka. Rendering it always keeps it in the manifest and lets a changed config
+reach the existing topic. helm.sh/resource-policy: keep stops helm from
+deleting a topic another component reads when this release is uninstalled or
+the topic leaves the chart. test/bats-unit/kafka-topic-ownership.bats checks
+this.
 */}}
 ---
-{{- $topicExists := (lookup "kafka.strimzi.io/v1beta2" "KafkaTopic" .Release.Namespace .Values.kafkaBridge.alerta.bulkTopic) }}
-{{- if not $topicExists }}
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
 metadata:
   name: {{.Values.kafkaBridge.alerta.bulkTopic}}
   labels:
     strimzi.io/cluster: {{ .Values.kafka.name }}
+  annotations:
+    helm.sh/resource-policy: keep
 spec:
   partitions: 1
   replicas: 1
   config:
     retention.ms: {{.Values.kafkaBridge.alerta.bulkTopicRetention}}
     segment.ms: {{ max 3600000 (int64 .Values.kafkaBridge.alerta.bulkTopicRetention) }}
-{{- end }}
 ---
-{{- $topicExists := (lookup "kafka.strimzi.io/v1beta2" "KafkaTopic" .Release.Namespace .Values.kafkaBridge.alerta.listenTopic) }}
-{{- if not $topicExists }}
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
 metadata:
   name: {{.Values.kafkaBridge.alerta.listenTopic}}
   labels:
     strimzi.io/cluster: {{ .Values.kafka.name }}
+  annotations:
+    helm.sh/resource-policy: keep
 spec:
   partitions: 1
   replicas: 1
   config:
     retention.ms: {{.Values.kafkaBridge.alerta.listenTopicRetention}}
     segment.ms: {{ max 3600000 (int64 .Values.kafkaBridge.alerta.listenTopicRetention) }}
-{{- end }}
 ---
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
@@ -48,6 +58,8 @@ metadata:
   name: {{.Values.kafkaBridge.ngsildUpdates.listenTopic}}
   labels:
     strimzi.io/cluster: {{ .Values.kafka.name }}
+  annotations:
+    helm.sh/resource-policy: keep
 spec:
   partitions: 1
   replicas: 1
@@ -55,29 +67,14 @@ spec:
     retention.ms: {{.Values.kafkaBridge.ngsildUpdates.listenTopicRetention}}
     segment.ms: {{ max 3600000 (int64 .Values.kafkaBridge.ngsildUpdates.listenTopicRetention) }}
 ---
-{{- $topicExists := (lookup "kafka.strimzi.io/v1beta2" "KafkaTopic" .Release.Namespace .Values.kafkaBridge.debezium.attributesTopic) }}
-{{- if not $topicExists }}
-apiVersion: kafka.strimzi.io/v1beta2
-kind: KafkaTopic
-metadata:
-  name: {{ .Values.kafkaBridge.debezium.attributesTopic }}
-  labels:
-    strimzi.io/cluster: {{ .Values.kafka.name }}
-spec:
-  partitions: 1
-  replicas: 1
-  config:
-    retention.ms: {{ .Values.kafkaBridge.debezium.attributesTopicRetention }}
-    segment.ms: {{ max 3600000 (int64 .Values.kafkaBridge.debezium.attributesTopicRetention) }}
-    compression.type: {{ .Values.kafkaBridge.debezium.attributesTopicCompression }}
-{{- end }}
----
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
 metadata:
   name: {{.Values.kafkaBridge.debezium.attributesTopic}}-insert
   labels:
     strimzi.io/cluster: {{ .Values.kafka.name }}
+  annotations:
+    helm.sh/resource-policy: keep
 spec:
   partitions: 1
   replicas: 1

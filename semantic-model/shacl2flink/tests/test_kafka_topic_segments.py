@@ -57,8 +57,9 @@ def test_ngsild_topics_roll_at_their_retention(tmp_path):
     create_ngsild_tables.main(str(tmp_path))
     topics = _topics(os.path.join(tmp_path, 'ngsild-kafka.yaml'))
     names = {t['spec']['topicName'] for t in topics}
-    assert names == {'iff.ngsild.entities',
-                     'iff.ngsild.flink.constraint_table',
+    # not iff.ngsild.entities: the kafka-bridges chart owns it, and a second
+    # owner deleted it on every deployment of the validation
+    assert names == {'iff.ngsild.flink.constraint_table',
                      'iff.ngsild.flink.constraint_trigger_table',
                      'iff.ngsild.flink.constraint_combination_table'}
     _assert_segments_roll_within_retention(topics)

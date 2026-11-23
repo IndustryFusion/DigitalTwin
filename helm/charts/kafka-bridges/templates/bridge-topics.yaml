@@ -8,6 +8,19 @@ log.retention.check.interval.ms. Topics with a shorter retention (10 s) roll
 hourly, so they keep up to about an hour instead of 7 days: rolling them at
 10 s would delete records that a restarted consumer or a test still reads back.
 test/bats-unit/kafka-topic-segments.bats checks this.
+
+Every topic is rendered on every install and upgrade, and kafka-bridges is the
+only release that declares these topics: neither sql-core nor the shacl chart
+does. A topic rendered only while missing (a `lookup` guard) is in the manifest
+of the install but not of the next upgrade, and helm deletes what drops out of
+a release's manifest; Strimzi then deletes the topic in Kafka. Rendering it
+always keeps it in the manifest and lets a changed config reach the existing
+topic. helm.sh/resource-policy: keep stops helm from deleting a topic another
+component reads when this release is uninstalled or the topic leaves the chart.
+test/bats-unit/kafka-topic-ownership.bats checks this.
+
+iff.ngsild.entities takes its retention from entityTopicRetention, which the
+shacl chart used when it still declared the topic.
 */}}
 ---
 apiVersion: kafka.strimzi.io/v1beta2
@@ -16,6 +29,8 @@ metadata:
   name: {{.Values.kafkaBridge.debezium.listenTopic}}
   labels:
     strimzi.io/cluster: {{ .Values.kafka.name }}
+  annotations:
+    helm.sh/resource-policy: keep
 spec:
   partitions: 1
   replicas: 1
@@ -24,14 +39,14 @@ spec:
     segment.ms: {{ max 3600000 (int64 .Values.kafkaBridge.debezium.listenTopicRetention) }}
     compression.type: {{.Values.kafkaBridge.debezium.listenTopicCompression}}
 ---
-{{- $topicExists := (lookup "kafka.strimzi.io/v1beta2" "KafkaTopic" .Release.Namespace .Values.kafkaBridge.debezium.attributesTopic) }}
-{{- if not $topicExists }}
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
 metadata:
   name: {{ .Values.kafkaBridge.debezium.attributesTopic }}
   labels:
     strimzi.io/cluster: {{ .Values.kafka.name }}
+  annotations:
+    helm.sh/resource-policy: keep
 spec:
   partitions: 1
   replicas: 1
@@ -39,21 +54,19 @@ spec:
     retention.ms: {{ .Values.kafkaBridge.debezium.attributesTopicRetention }}
     segment.ms: {{ max 3600000 (int64 .Values.kafkaBridge.debezium.attributesTopicRetention) }}
     compression.type: {{ .Values.kafkaBridge.debezium.attributesTopicCompression }}
-{{- end }}
 ---
-{{- $topicExists := (lookup "kafka.strimzi.io/v1beta2" "KafkaTopic" .Release.Namespace .Values.kafkaBridge.debezium.entitiesTopic) }}
-{{- if not $topicExists }}
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
 metadata:
   name: {{ .Values.kafkaBridge.debezium.entitiesTopic }}
   labels:
     strimzi.io/cluster: {{ .Values.kafka.name }}
+  annotations:
+    helm.sh/resource-policy: keep
 spec:
   partitions: 1
   replicas: 1
   config:
-    retention.ms: {{ .Values.kafkaBridge.debezium.attributesTopicRetention }}
-    segment.ms: {{ max 3600000 (int64 .Values.kafkaBridge.debezium.attributesTopicRetention) }}
+    retention.ms: {{ .Values.kafkaBridge.debezium.entityTopicRetention }}
+    segment.ms: {{ max 3600000 (int64 .Values.kafkaBridge.debezium.entityTopicRetention) }}
     compression.type: {{ .Values.kafkaBridge.debezium.attributesTopicCompression }}
-{{- end }}

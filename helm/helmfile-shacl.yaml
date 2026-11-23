@@ -18,4 +18,11 @@ releases:
   namespace: {{ .Values.namespace }}
   values:
   - values.yaml.gotmpl
-
+  # A validation deployed before #1038 owns iff.ngsild.entities; the chart no
+  # longer declares it. Handing it to kafka-bridges with keep stops this
+  # upgrade from deleting it (adopt-kafka-topics.sh).
+  hooks:
+  - events: ["presync"]
+    showlogs: true
+    command: "bash"
+    args: ["./adopt-kafka-topics.sh", "{{ .Values.namespace }}", "kafka-bridges", "iff.ngsild.entities"]

@@ -227,6 +227,20 @@ PING keycloak.local (172.27.0.2): 56 data bytes
 
 ```
 
+## Kafka Topics on Upgrade and Uninstall
+
+Each platform topic belongs to one release. `sql-core` owns the KafkaTopics `iff.alerts`, `iff.alerts.bulk`, `iff.ngsild-updates` and `iff.ngsild.attributes-insert` (Kafka topic `iff.ngsild.attributes_insert`). `kafka-bridges` owns `iff.ngsild.public.entity`, `iff.ngsild.attributes` and `iff.ngsild.entities`; the retention of `iff.ngsild.entities` is `kafkaBridge.debezium.entityTopicRetention`. A validation (the `shacl` release) declares only its own topics. Every upgrade renders the platform topics, so a topic config changed in the values reaches the existing topic.
+
+The platform topics carry `helm.sh/resource-policy: keep`: helm never deletes them, not even on `helmfile destroy` of their release, because other components read them. To remove them, delete the KafkaTopics by their resource name while Kafka still runs, before destroying the `kafka` release, e.g. `kubectl -n iff delete kafkatopic iff.alerts iff.alerts.bulk iff.ngsild-updates iff.ngsild.attributes-insert`. Once Kafka is gone, Strimzi can no longer remove its finalizer from them.
+
+### Platforms installed before this ownership
+
+On such a platform `iff.ngsild.attributes` may be owned by `sql-core`, `iff.ngsild.entities` by the `shacl` release, and a topic of `sql-core` by no release at all. Before it syncs `kafka-bridges`, `sql-core` or `shacl`, helmfile runs `adopt-kafka-topics.sh` (a presync hook in `helmfile.yaml` and `helmfile-shacl.yaml`): it hands each existing KafkaTopic to its owner and sets `keep` on it, so that the owner's upgrade adopts it and the former owner's upgrade doesn't delete it. `make flink-deploy` goes through that hook.
+
+helm uninstall reads the resource policy from the release's stored manifest, not from the live KafkaTopic, so uninstalling a release that still has an old manifest deletes the topic even after the hook handed it over. Upgrade `sql-core` and `kafka-bridges` with `helmfile apply` before you destroy either of them. `make flink-undeploy` refuses to destroy a validation deployed before this ownership (`check-release-keeps-topics.sh`), because its manifest still declares `iff.ngsild.entities` without `keep`: redeploy it first with `make flink-deploy`, then undeploy it. `helmfile -f helmfile-shacl.yaml destroy` alone doesn't check; run `bash ./check-release-keeps-topics.sh iff shacl iff.ngsild.entities` before it.
+
+Rolling `sql-core` or `shacl` back (`helm rollback`) to a revision from before this ownership is not supported: helm fails with `no KafkaTopic with the name … found`. To go back to older charts, run `helmfile apply` from the older checkout instead. That is an upgrade, and the `keep` on the live KafkaTopics stops it from deleting the topics the older charts leave out. A validation from an older checkout declares `iff.ngsild.entities` again: its `make flink-deploy` deletes the platform's entity topic and recreates it under the `shacl` release, as it did before this ownership.
+
 # Troubleshooting
 
 1. Keycloak instance not ready or there is no 'iff' realm. Check the keycloak realm import job, it can timeout if the postgres database does not come up on time. You can delete the job and the keycloak operator will automatically create a new one. Afterwards keycloak should come up.
