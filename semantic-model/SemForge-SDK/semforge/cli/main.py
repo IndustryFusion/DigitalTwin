@@ -450,9 +450,12 @@ def pack_command(path, output, store):
 @click.option('--against', metavar='GIT-REF', default=None,
               help='also fail when the release record removes or changes an '
                    'entry it has at this git ref (a directory in git only)')
+@click.option('--allow-network', is_flag=True,
+              help='let the tests fetch remote JSON-LD contexts and NGSI-LD '
+                   'vocabularies the package and the SDK do not hold')
 @click.option('--format', 'fmt', type=click.Choice(['text', 'json']),
               default='text')
-def verify_command(target, with_tests, record, against, fmt):
+def verify_command(target, with_tests, record, against, allow_network, fmt):
     """Verify a package directory or archive against the KMS package contract.
 
     For an archive: every entry against SHA256SUMS, safe paths and sizes, then
@@ -464,13 +467,18 @@ def verify_command(target, with_tests, record, against, fmt):
     removing or changing a published entry fails. Exit 0 when it holds, 2
     otherwise.
 
-    Running the tests is not a sandbox: SPARQL constraints may contact
-    services (SERVICE) and JSON-LD contexts may be fetched. Verify an
-    untrusted archive without --tests, or run its tests where that is safe.
+    The tests run offline: JSON-LD contexts resolve only from the package
+    (its own published context from the local file kms.yaml declares) or
+    from the contexts the SDK ships, and the NGSI-LD vocabulary from the
+    package or the official copy the SDK ships; --allow-network lets them
+    fetch any other context or vocabulary. SERVICE in any SPARQL of the package (constraint, rule or target)
+    fails, named, and opens no connection, with --allow-network too.
+    Nothing beyond the network is sandboxed.
     """
     import shutil
     import tempfile
 
+    from ..package.offline import ServiceRefused
     from ..package.releases import (compare_with_record, history_problems,
                                     record_path, run_tests)
 
@@ -499,7 +507,10 @@ def verify_command(target, with_tests, record, against, fmt):
     try:
         if with_tests and result.ok:
             try:
-                run = run_tests(tree)
+                run = run_tests(tree, allow_network=allow_network)
+            except ServiceRefused as exc:
+                from ..package.conformance import Problem
+                result.problems.extend(Problem(s, m) for s, m in exc.problems)
             except (PackageError, CapabilityError) as exc:
                 from ..package.conformance import Problem
                 result.problems.append(Problem('', f'tests do not run: {exc}'))
@@ -547,17 +558,21 @@ def verify_command(target, with_tests, record, against, fmt):
 @click.argument('path', type=PACKAGE_RW, default='.')
 @click.option('--output', '-o', type=click.Path(dir_okay=False), default=None,
               help='archive to write (default: <name>-<version>.kms.zip here)')
-def publish_command(path, output):
+@click.option('--allow-network', is_flag=True,
+              help='let the tests fetch remote JSON-LD contexts and NGSI-LD '
+                   'vocabularies the package and the SDK do not hold')
+def publish_command(path, output, allow_network):
     """Publish the current version: test it, pack it and record it.
 
     Every example must meet its expectations and the coverage must reach the
     package's threshold (tests.coverage, default 80 %). Nothing is written or
-    recorded otherwise. The version is then immutable.
+    recorded otherwise. The version is then immutable. The tests run offline
+    as with `verify --tests`, unless --allow-network.
     """
     from ..package.releases import PublishRefused, publish
 
     try:
-        published = publish(path, output=output)
+        published = publish(path, output=output, allow_network=allow_network)
     except PublishRefused as exc:
         click.echo('not published; nothing written:', err=True)
         _problems(exc.problems)

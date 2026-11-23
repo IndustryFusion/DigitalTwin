@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-"""The NGSI-LD vocabulary, as a graph: declared by the package, never shipped.
+"""The NGSI-LD vocabulary, as a graph: declared by the package, not chosen by the SDK.
 
 Every package written against this SDK uses these terms -- `ngsild:Property`,
 `ngsild:hasValue`, `ngsild:observedAt` -- and the rule this project applies to
@@ -41,7 +41,10 @@ repo's local file and never reaches the network). `semforge init` writes the
 default into the new package, pinned.
 
 A remote source is fetched through the dependency machinery: cached in the
-package, verified against its sha256 when it has one.
+package, verified against its sha256 when it has one. While a package's tests
+run (package/offline.py) the official url is read from a pinned copy the SDK
+ships instead -- the package still names it, the SDK only answers the url --
+and any other remote source is fetched only with --allow-network.
 """
 
 import os
@@ -70,7 +73,15 @@ class Source:
 
 
 def default_source():
-    """What an undeclared package uses: SEMFORGE_NGSILD, else the official url."""
+    """What an undeclared package uses: SEMFORGE_NGSILD, else the official url.
+
+    While a package's tests run, the official url: their result must not
+    depend on this machine's environment.
+    """
+    from ..package.offline import active
+
+    if active() is not None:
+        return OFFICIAL
     return os.environ.get(ENVIRONMENT, '').strip() or OFFICIAL
 
 
@@ -96,16 +107,18 @@ def source_for(package_path):
         source=default_source(), declared=False)
 
 
-def locate(source, package_path):
-    """A local file the source names: relative paths are the package's."""
+def _resolved(source, package_path):
     from ..package.registry import Dependency, resolve
 
+    return resolve([Dependency(name='ngsild', source=source.source,
+                               version=source.version, sha256=source.sha256)],
+                   package_path)
+
+
+def locate(source, package_path):
+    """A local file the source names: relative paths are the package's."""
     if source.is_remote:
-        resolution = resolve([Dependency(name='ngsild', source=source.source,
-                                         version=source.version,
-                                         sha256=source.sha256)],
-                             package_path)
-        return resolution.paths['ngsild']
+        return _resolved(source, package_path).paths['ngsild']
     where = os.path.expanduser(source.source)
     if not os.path.isabs(where):
         where = os.path.join(package_path, where)
@@ -127,7 +140,25 @@ def graph(where):
 
 def for_package(package_path):
     """The vocabulary this package uses: what it declares, or the default."""
-    return graph(locate(source_for(package_path), package_path))
+    from ..package.offline import active
+
+    source = source_for(package_path)
+    if active() is None:
+        return graph(locate(source, package_path))
+    # A test run: the bytes that were verified are the bytes that are parsed,
+    # and a local file is one inside the package.
+    parsed = Graph()
+    if source.is_remote:
+        return parsed.parse(data=_resolved(source, package_path).data['ngsild'],
+                            format='turtle', publicID=source.source)
+    where = os.path.abspath(locate(source, package_path))
+    root = os.path.abspath(package_path)
+    if os.path.commonpath([where, root]) != root:
+        from ..errors import PackageError
+        raise PackageError(f'the NGSI-LD vocabulary {source.source} is outside the '
+                           f'package')
+    with open(where, 'rb') as handle:
+        return parsed.parse(data=handle.read(), format='turtle')
 
 
 def terms(package_path):

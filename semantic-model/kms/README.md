@@ -34,10 +34,37 @@ this directory ignores them, and the `Build` workflow generates and verifies
 `opcua-pumps`, `opcua-laser` and `opcua-simple`. The `opcua-` prefix is
 reserved for them.
 
-Running a package's tests (`semforge verify --tests`, `semforge publish`) is not
-a sandbox: SPARQL constraints may contact services (`SERVICE`) and JSON-LD
-contexts may be fetched. Checking a package or an archive without `--tests`
-reads nothing from outside it.
+Running a package's tests (`semforge verify --tests`, `semforge publish`, and
+so the `kms-check` step of `Build`) is offline: nothing is fetched over the
+network.
+
+- The model keeps its published context URL. The package's own context
+  resolves from the local file `kms.yaml` declares for that URL
+  (`context: {local: context.jsonld, published: <url>}`); the file on disk is
+  not rewritten. A package whose model names a context URL that `kms.yaml`
+  does not declare fails, and the message names the URL and the line to add
+  under `context:`.
+- The NGSI-LD core context v1.8 resolves from a copy the SDK ships
+  (`SemForge-SDK/semforge/package/contexts/`, byte for byte, checked by its
+  hash; ETSI, BSD-3-Clause, see `Notice.md`). Any other remote context fails
+  the tests, named; `--allow-network` lets the tests fetch it. Only `http(s)`
+  URLs and files inside the package are read, whatever the spelling of the
+  scheme.
+- The NGSI-LD vocabulary resolves from the package (`ngsild: {source: …}`) or,
+  for the official url `semforge init` pins, from a copy the SDK ships. Any
+  other remote vocabulary is fetched only with `--allow-network`; a vocabulary
+  that does not load fails the tests, naming its source. A package that names
+  none is tested with the official one; `SEMFORGE_NGSILD` is ignored.
+- Examples and their includes are read only from inside the package.
+- `--allow-network` allows those two fetches and nothing else.
+- `SERVICE` is rejected in every SPARQL of a package (constraints, rules and
+  targets), with `--allow-network` too, naming the shape: SHACL does not
+  allow it in constraints, the platform's validation cannot run it, and a
+  package's results must not depend on a remote endpoint. SPARQL that does not
+  parse is rejected as well.
+
+Checking a package or an archive without `--tests` reads nothing from outside
+it either. Nothing beyond the network is sandboxed.
 
 ```bash
 semforge packages semantic-model/kms          # each package once, the default marked

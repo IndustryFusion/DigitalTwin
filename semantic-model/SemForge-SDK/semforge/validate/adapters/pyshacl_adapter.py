@@ -87,6 +87,12 @@ def run(data_graph, shapes_graph, knowledge_graph=None, view='current'):
     _, report, _ = pyshacl.validate(
         data, shacl_graph=shapes,
         advanced=True, inplace=True, do_owl_imports=False)
+    if not isinstance(report, Graph):
+        # pyshacl refused the shapes (a ValidationFailure, for instance a
+        # SPARQL constraint with SERVICE, MINUS or VALUES) instead of
+        # validating: say so rather than read a report that is not one.
+        from ...errors import PackageError
+        raise PackageError(f'the shapes cannot be validated: {report}')
 
     results = []
     for node in report.objects(None, SH.result):

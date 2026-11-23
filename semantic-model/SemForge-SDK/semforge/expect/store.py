@@ -237,12 +237,30 @@ def compose(package, example):
         if not os.path.exists(path):
             raise PackageError(
                 f'{example.path}: cannot find {relative}')
+        _inside_the_package(package, example, relative, path)
         document, _ = resolve_model_document(package.path, path, config)
         from ..rdfio.relative import BASE, for_rdflib
         from ..package.loader import hoist_context
         graph.parse(data=json.dumps(hoist_context(for_rdflib(document, path))), format='json-ld',
                     base=BASE)
     return graph
+
+
+def _inside_the_package(package, example, relative, path):
+    """While a package's tests run (package/offline.py), an example and its
+    includes are read only from inside the package: an absolute path or `..`
+    would make an archive's tests read what the archive does not hold."""
+    from ..package.offline import active
+
+    if active() is None:
+        return
+    # By the path as written, made absolute and normalised: `..` and absolute
+    # paths leave the package. A symbolic link inside the package is its
+    # author's (tests/corpus/kms links its examples into kms/example); an
+    # archive holds none, its integrity check refuses links.
+    root = os.path.abspath(package.path)
+    if os.path.commonpath([os.path.abspath(path), root]) != root:
+        raise PackageError(f'{example.path}: {relative} is outside the package')
 
 
 def discover(package_path, folder=None):

@@ -13,6 +13,19 @@ Date generated | Revision ID
 
 ---
 
+## Vendored Files
+
+Maintained by hand, beside the generated listing below.
+
+### NGSI-LD core context v1.8
+
+- **File**: `semantic-model/SemForge-SDK/semforge/package/contexts/ngsi-ld-core-context-v1.8.jsonld`
+- **Source**: https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld, byte for byte (sha256 `4ac48e7d00cb0378546570ab0dbc46b3717da78ca4cb0fac98b0e32665046cca`). The same JSON, with LF line endings, is `coreContext/ngsi-ld-core-context-v1.8.jsonld` in https://forge.etsi.org/rep/data/ngsi-ld-openapi at tag `v1.8.1` (commit db4324df1a2323716fab67b672bc9dec0bdd1212).
+- **Version**: NGSI-LD API 1.8.1
+- **License**: BSD-3-Clause, Copyright 2024 ETSI; the text is in `semantic-model/SemForge-SDK/semforge/package/contexts/LICENSE-ETSI-BSD-3-Clause` (the repository's `LICENSE` at that tag).
+
+---
+
 
 
 ## First Party Licenses

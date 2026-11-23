@@ -191,7 +191,9 @@ def install_context_cache():
     it on every parse: 44 downloads, 9 seconds, in one Knowledge-view build.
     Wrapping its one fetch function keeps every other behaviour -- the URL
     stays a URL, resolution and errors are rdflib's -- and removes the network
-    after the first time. Idempotent.
+    after the first time. Idempotent. Inside an offline scope (offline.py)
+    the user's cache is not read either: what a test sees must not depend on
+    what this machine happened to fetch before.
     """
     from rdflib.plugins.shared.jsonld import context as jsonld_context
 
@@ -200,6 +202,11 @@ def install_context_cache():
         return
 
     def cached(source, *args, **kwargs):
+        # Running a package's tests (offline.py): the document, or a refusal.
+        # rdflib opens nothing, and the user's cache is not read.
+        from .offline import active, resolve_context
+        if active() is not None:
+            return resolve_context(source), None
         if isinstance(source, str) and source.startswith(('http://', 'https://')):
             # rdflib does the download on a miss -- its request is the one the
             # servers already accept -- and what it gets is kept.

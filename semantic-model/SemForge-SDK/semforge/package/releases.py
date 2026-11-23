@@ -454,13 +454,45 @@ def examples_and_reports(package, expectations):
     return paired
 
 
-def run_tests(root):
+def run_tests(root, allow_network=False):
     """Run the package's declared examples and measure its coverage.
 
     The examples must pass the way `semforge test` judges them: every case
     meets its expectations, no id names two entities in one case, and no case
     uses an attribute nothing declares. The scratchpad is not a test.
+
+    A SPARQL SERVICE anywhere raises ServiceRefused naming what uses it,
+    before anything runs (offline.py). The run is offline: only the package's
+    own and the SDK's pinned JSON-LD contexts resolve, unless `allow_network`
+    lets it fetch other contexts. Nothing else reaches the network.
+
+    Whatever keeps the tests from running is a PackageError (TestsDoNotRun
+    when it is none of its own); a test that fails is in the TestRun.
     """
+    from ..errors import CapabilityError, PackageError
+    from .offline import (TestsDoNotRun, _reason, model_context_urls, offline,
+                          package_contexts)
+    try:
+        with offline(root, package_contexts(root), model_context_urls(root),
+                     fetch_contexts=allow_network) as scope:
+            try:
+                run = _run_tests(root)
+            except (PackageError, CapabilityError):
+                raise
+            except Exception:
+                if scope.refusals:
+                    raise scope.refusals[0]        # the cause, not its wrapping
+                raise
+            if scope.refusals:                     # swallowed on the way
+                raise scope.refusals[0]
+            return run
+    except (PackageError, CapabilityError):
+        raise
+    except Exception as exc:                       # noqa: BLE001 -- any: reported, not raised
+        raise TestsDoNotRun(_reason(exc)) from exc
+
+
+def _run_tests(root):
     from ..expect import load_expectations, run_tests as run_cases
     from ..expect.identity import dangling_references, duplicate_ids, missing_context
     from ..expect.vocabulary import undeclared_attributes
@@ -468,6 +500,15 @@ def run_tests(root):
     from .loader import load
 
     package = load(root)
+    if package.vocabulary_error:
+        # Elsewhere a vocabulary that did not load is a finding; the tests
+        # would run without any NGSI-LD term declared, so they do not run.
+        from ..errors import PackageError
+        from ..ngsild.vocabulary import source_for
+        raise PackageError(f'the NGSI-LD vocabulary {source_for(root).source} did '
+                           f'not load: {package.vocabulary_error}')
+    from .offline import refuse_services
+    refuse_services(package)
     expectations = load_expectations(root)
     paired = examples_and_reports(package, expectations)
     run = TestRun(examples=len(paired), threshold=check(root).coverage_threshold)
@@ -573,12 +614,12 @@ class Published:
     unchanged: bool = False       # this version was already recorded
 
 
-def publish(root, output=None, today=None, compress=True):
+def publish(root, output=None, today=None, compress=True, allow_network=False):
     """Test, pack and record the package's current version.
 
     Nothing is written or recorded unless every check passes. Publishing a
     version that is recorded with the same digest repeats the archive and
-    leaves the record alone.
+    leaves the record alone. The tests run offline unless `allow_network`.
     """
     from .archive import pack
 
@@ -610,7 +651,19 @@ def publish(root, output=None, today=None, compress=True):
         verified = verify(staged, into=os.path.join(holder, 'package'))
         if not verified.ok:
             raise PublishRefused(verified.problems, report=report)
-        run = run_tests(verified.tree)
+        from ..errors import CapabilityError, PackageError
+        from .offline import ServiceRefused
+        try:
+            run = run_tests(verified.tree, allow_network=allow_network)
+        except ServiceRefused as exc:
+            raise PublishRefused([Problem(s, m) for s, m in exc.problems],
+                                 report=report) from exc
+        except (PackageError, CapabilityError) as exc:
+            # Refused to go offline, a shipped copy that fails its hash,
+            # shapes the validator refuses: the tests do not run, so nothing
+            # is published -- the same report `verify --tests` gives.
+            raise PublishRefused([Problem('', f'tests do not run: {exc}')],
+                                 report=report) from exc
         problems = [Problem(f.split(': ', 1)[0], 'does not meet its expectations: '
                             + f.split(': ', 1)[-1]) for f in run.failing]
         if run.coverage < run.threshold:

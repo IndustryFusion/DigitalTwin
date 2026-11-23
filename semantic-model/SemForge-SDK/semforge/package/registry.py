@@ -57,6 +57,7 @@ class Resolution:
     dependencies: list = field(default_factory=list)
     paths: dict = field(default_factory=dict)
     hashes: dict = field(default_factory=dict)
+    data: dict = field(default_factory=dict)       # the verified bytes
     unpinned: list = field(default_factory=list)
 
 
@@ -74,6 +75,12 @@ def _fetch(dependency, package_path):
                 f'dependency {dependency.name!r}: {path} does not exist')
         with open(path, 'rb') as handle:
             return path, handle.read()
+
+    # A test run (offline.py): the SDK's pinned copy, a fetch --allow-network
+    # allows, or a refusal naming the source -- never this machine's cache.
+    from .offline import active, dependency_bytes
+    if active() is not None:
+        return dependency_bytes(dependency.source)
 
     cache = os.path.join(package_path, CACHE)
     os.makedirs(cache, exist_ok=True)
@@ -116,6 +123,7 @@ def resolve(dependencies, package_path, allow_unpinned=True):
                     f'unpinned dependency makes the package unreproducible')
         resolution.paths[dependency.name] = path
         resolution.hashes[dependency.name] = actual
+        resolution.data[dependency.name] = data
     return resolution
 
 

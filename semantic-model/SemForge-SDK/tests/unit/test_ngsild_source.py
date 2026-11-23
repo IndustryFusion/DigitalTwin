@@ -77,11 +77,16 @@ def served(monkeypatch):
     return fetched
 
 
-def test_the_sdk_ships_no_vocabulary():
+def test_the_sdk_ships_only_the_pinned_official_vocabulary():
+    """The package still chooses its vocabulary; the SDK only answers the
+    official url, pinned, while a package's tests run offline (openspec
+    gh-943-offline-package-tests, D6). Nothing else ships."""
+    from semforge.package.offline import PINNED_VOCABULARIES, VOCABULARY_DIR
     shipped = [os.path.join(where, name)
                for where, _, names in os.walk(os.path.join(SDK, 'semforge'))
                for name in names if name.endswith('.ttl')]
-    assert shipped == []
+    assert shipped == [os.path.join(VOCABULARY_DIR, name)
+                       for name, _ in PINNED_VOCABULARIES.values()]
 
 
 def test_the_kms_declares_its_own_copy(corpus):

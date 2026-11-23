@@ -56,8 +56,9 @@ venv/bin/python -m semforge packages ../kms                # the packages there,
 venv/bin/python -m semforge verify ../kms/default          # the KMS package contract; prints the digest
 venv/bin/python -m semforge pack ../kms/default -o /tmp/example-1.0.0.kms.zip   # with SHA256SUMS
 venv/bin/python -m semforge validate /tmp/example-1.0.0.kms.zip   # any reading command takes an archive
-venv/bin/python -m semforge verify --tests ../kms/default  # and the examples, with their coverage
-venv/bin/python -m semforge publish <package>              # tested, packed, recorded; then immutable
+venv/bin/python -m semforge verify --tests ../kms/default  # and the examples, with their coverage, offline
+venv/bin/python -m semforge publish <package>              # tested offline, packed, recorded; then immutable
+                                                           # (both: --allow-network to fetch other remote contexts)
 venv/bin/python -m semforge verify --against origin/main <package>  # the release record only appends to the one there
 venv/bin/python -m semforge version patch|minor|major <package>
 venv/bin/python -m semforge diff <before> <after>
@@ -112,7 +113,7 @@ follows immediately. [vscode/README.md](./vscode/README.md) describes it.
 | Packages, validation (pyshacl), rules, data views | implemented | the per-variable *mixed* view is refused (`SF-CAP-005`); it needs the algebra of H2 step 4 |
 | Test cases, expectations, residue, coverage, regression diff | implemented | |
 | Cooked editing (types, shapes, attributes, constraints, cases, vocabulary) | implemented | in the VS Code extension; the write layer is `semforge.rdfio` |
-| NGSI-LD vocabulary | implemented | declared by the package (`ngsild: {source, sha256}`), never shipped with the SDK: a local file while it is worked on — this repo's is `semantic-model/ontology/ngsild.ttl` — or the official url, pinned. Undeclared: the official url, or `SEMFORGE_NGSILD`. The official version still lacks the terms the local copy adds; publishing them is open |
+| NGSI-LD vocabulary | implemented | declared by the package (`ngsild: {source, sha256}`), never chosen by the SDK: a local file while it is worked on — this repo's is `semantic-model/ontology/ngsild.ttl` — or the official url, pinned. Undeclared: the official url, or `SEMFORGE_NGSILD`. The official version still lacks the terms the local copy adds; publishing them is open. A package's test run reads the official url from a pinned copy the SDK ships (`semforge/package/vocabularies/`, checked by its hash) and fetches no other remote one without `--allow-network`; `SEMFORGE_NGSILD` is ignored there |
 | NGSI-LD instances: `datasetId`, `observedAt` series, `unitCode` | implemented | only the latest observation per `datasetId` is validated, an unstamped one counting as now — the platform's rule |
 | Export | implemented | `compile` keeps every observation; `broker` keeps the one validated per `datasetId` and **refuses** a tie (two unstamped, or the same time) rather than guessing. The `sh:nodeKind sh:BlankNode` it adds to attribute shapes is listed shape by shape, and pinned to change no verdict (`test_export_contract.py`) |
 | Target profile (shacl2flink) | implemented, copied | a hand-kept copy of the compiler's facts; `test_profile_drift.py` reads shacl2flink's source and fails when they drift. A descriptor shacl2flink publishes is planned |
