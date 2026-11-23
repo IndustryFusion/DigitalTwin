@@ -128,6 +128,27 @@
     rdfs:domain :E2EHasValueMachine ;
     rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
 
+# sh:hasValue with a string or boolean constant (#1044, #1045).
+:hasE2EOneText a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :E2EHasValueMachine ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
+:hasE2ETrueValue a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :E2EHasValueMachine ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
+:hasE2EYearValue a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :E2EHasValueMachine ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
+:hasE2ENaNText a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :E2EHasValueMachine ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
 # A node shape on a relationship's object (openspec gh-985): an E2EOwner's
 # hasE2EPart refers to an E2EPart, and the declaration of that part in the
 # owner requires hasE2ELevel of the part. See E2EOwnerShape.

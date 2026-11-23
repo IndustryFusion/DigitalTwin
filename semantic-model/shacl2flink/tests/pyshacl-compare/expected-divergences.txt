@@ -79,6 +79,56 @@ MISSED | test27/model1.jsonld | urn:hasvalue:string-dot             | HasValueCo
 MISSED | test27/model1.jsonld | urn:hasvalue:string-digits          | HasValueConstraintComponent | hasDecimalValue
 MISSED | test27/model1.jsonld | urn:hasvalue:string-digits          | HasValueConstraintComponent | hasIntegerValue
 
+# sh:hasValue with a string constant is compared with the text the platform
+# sends (#1044). To SHACL a string is never a number: "1" is not 1. Flink
+# receives a plain number as the untyped text JavaScript writes for it -- 1.0
+# as 1, 1e21 as 1e+21 -- and cannot tell it from the string, so a number meets
+# a string constant that is exactly that text, on both sides. "1.0" is still
+# met only by the string "1.0", and ".5" and "1e21" do not meet "0.5" and
+# "1e+21".
+MISSED | test28/model1.jsonld | urn:hasvalue:plain-one              | HasValueConstraintComponent | hasOneText
+MISSED | test28/model1.jsonld | urn:hasvalue:plain-one-dot          | HasValueConstraintComponent | hasOneText
+MISSED | test28/model1.jsonld | urn:hasvalue:declared-double-one    | HasValueConstraintComponent | hasOneText
+MISSED | test28/model1.jsonld | urn:hasvalue:declared-integer-one   | HasValueConstraintComponent | hasOneText
+MISSED | test28/model1.jsonld | urn:hasvalue:plain-half             | HasValueConstraintComponent | hasHalfText
+MISSED | test28/model1.jsonld | urn:hasvalue:declared-double-half   | HasValueConstraintComponent | hasHalfText
+MISSED | test28/model1.jsonld | urn:hasvalue:plain-large            | HasValueConstraintComponent | hasLargeText
+# A declared number is compared by its value even when written as a string:
+# {"@value": "1.0", "@type": "xsd:double"} is the number 1.0 to the SQLite
+# side, which cannot tell it from {"@value": 1, ...}, sent as 1 (design D7).
+MISSED | test28/model1.jsonld | urn:hasvalue:declared-double-string-one-dot | HasValueConstraintComponent | hasOneText
+
+# A constant of another datatype is compared like a string constant, with its
+# text as written (design D6): to SHACL "1"^^xsd:token is neither the string
+# "1" nor the number 1, and "2020"^^xsd:gYear neither "2020" nor 2020; Flink
+# receives all of them as the same untyped text.
+MISSED | test28/model1.jsonld | urn:hasvalue:plain-one              | HasValueConstraintComponent | hasTokenText
+MISSED | test28/model1.jsonld | urn:hasvalue:plain-one-dot          | HasValueConstraintComponent | hasTokenText
+MISSED | test28/model1.jsonld | urn:hasvalue:declared-double-one    | HasValueConstraintComponent | hasTokenText
+MISSED | test28/model1.jsonld | urn:hasvalue:declared-integer-one   | HasValueConstraintComponent | hasTokenText
+MISSED | test28/model1.jsonld | urn:hasvalue:declared-double-string-one-dot | HasValueConstraintComponent | hasTokenText
+MISSED | test28/model1.jsonld | urn:hasvalue:string-one             | HasValueConstraintComponent | hasTokenText
+MISSED | test28/model1.jsonld | urn:hasvalue:plain-one              | HasValueConstraintComponent | hasCustomText
+MISSED | test28/model1.jsonld | urn:hasvalue:plain-one-dot          | HasValueConstraintComponent | hasCustomText
+MISSED | test28/model1.jsonld | urn:hasvalue:declared-double-one    | HasValueConstraintComponent | hasCustomText
+MISSED | test28/model1.jsonld | urn:hasvalue:declared-integer-one   | HasValueConstraintComponent | hasCustomText
+MISSED | test28/model1.jsonld | urn:hasvalue:declared-double-string-one-dot | HasValueConstraintComponent | hasCustomText
+MISSED | test28/model1.jsonld | urn:hasvalue:string-one             | HasValueConstraintComponent | hasCustomText
+MISSED | test28/model1.jsonld | urn:hasvalue:plain-year             | HasValueConstraintComponent | hasYearValue
+MISSED | test28/model1.jsonld | urn:hasvalue:string-year            | HasValueConstraintComponent | hasYearValue
+# The same rule for a boolean: it is sent as the text true or false, so a
+# plain true, a declared true and a declared xsd:boolean 1 meet "true".
+MISSED | test28/model1.jsonld | urn:hasvalue:plain-true             | HasValueConstraintComponent | hasTrueText
+MISSED | test28/model1.jsonld | urn:hasvalue:declared-true          | HasValueConstraintComponent | hasTrueText
+MISSED | test28/model1.jsonld | urn:hasvalue:declared-one-boolean   | HasValueConstraintComponent | hasTrueText
+
+# sh:hasValue with a boolean constant is met by the same boolean (#1045), and
+# also by the string whose text is exactly "true" or "false": Flink receives a
+# plain boolean as that untyped text and cannot tell the two apart. "True",
+# "1", "0" and numbers still alert on both sides.
+MISSED | test28/model1.jsonld | urn:hasvalue:string-true            | HasValueConstraintComponent | hasTrueValue
+MISSED | test28/model1.jsonld | urn:hasvalue:string-false           | HasValueConstraintComponent | hasFalseValue
+
 # --- we name the check that decides, SHACL names the wrapper -------------
 #
 # The shape tree is flattened before it becomes SQL: an sh:or over sh:datatype

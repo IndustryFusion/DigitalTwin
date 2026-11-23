@@ -131,9 +131,11 @@ NUMBER_SILENT=(
 # name|value as written|attributes that must alert|attributes that must not.
 # The entity holds the value on every attribute it lists. The attributes
 # require hasE2EDecimalValue 80.0 (an xsd:decimal), hasE2EIntegerValue 80,
-# hasE2EFractionValue 80.5 and hasE2EStringValue "1.0" (a string). A plain
-# number is not written to hasE2EStringValue: a string constant against a plain
-# number is a divergence #965 leaves open.
+# hasE2EFractionValue 80.5, hasE2EStringValue "1.0" and hasE2EOneText "1"
+# (strings, compared with the text the platform sends, #1044) and
+# hasE2ETrueValue true (a boolean, met by the same boolean, #1045),
+# hasE2EYearValue "2020"^^xsd:gYear (another datatype, compared like a string
+# constant) and hasE2ENaNText "NaN" (no text the platform sends for a number).
 HASVALUE_CONSTRAINT=HasValueConstraintComponent
 HASVALUE_TYPE=${E2E}/E2EHasValueMachine
 HASVALUE_CASES=(
@@ -146,8 +148,23 @@ HASVALUE_CASES=(
     'string-dot|"80.0"|hasE2EFractionValue|hasE2EDecimalValue hasE2EIntegerValue'
     'string-digits|"80"|hasE2EFractionValue|hasE2EDecimalValue hasE2EIntegerValue'
     'string-text|"eighty"|hasE2EDecimalValue hasE2EIntegerValue hasE2EFractionValue|'
-    'string-one-dot|"1.0"||hasE2EStringValue'
-    'string-one|"1"|hasE2EStringValue|'
+    'string-one-dot|"1.0"|hasE2EOneText|hasE2EStringValue'
+    'string-one|"1"|hasE2EStringValue hasE2ETrueValue|hasE2EOneText'
+    'plain-one|1|hasE2EStringValue hasE2ETrueValue|hasE2EOneText'
+    'plain-one-dot|1.0|hasE2EStringValue|hasE2EOneText'
+    "declared-double-one|{\"@value\":1,\"@type\":\"${XSD}double\"}|hasE2EStringValue|hasE2EOneText"
+    "declared-integer-one|{\"@value\":1,\"@type\":\"${XSD}integer\"}|hasE2EStringValue|hasE2EOneText"
+    'plain-true|true||hasE2ETrueValue'
+    'plain-false|false|hasE2ETrueValue|'
+    "declared-boolean-one|{\"@value\":\"1\",\"@type\":\"${XSD}boolean\"}||hasE2ETrueValue"
+    "declared-boolean-zero|{\"@value\":\"0\",\"@type\":\"${XSD}boolean\"}|hasE2ETrueValue|"
+    'string-true|"true"||hasE2ETrueValue'
+    'string-true-capital|"True"|hasE2ETrueValue|'
+    'plain-year|2020||hasE2EYearValue'
+    'string-year|"2020"||hasE2EYearValue'
+    "declared-year|{\"@value\":\"2020\",\"@type\":\"${XSD}gYear\"}||hasE2EYearValue"
+    'plain-zero|0|hasE2ENaNText|'
+    'string-nan|"NaN"||hasE2ENaNText'
 )
 
 # On an idle cluster an alert appears about five seconds after the create and
@@ -570,11 +587,12 @@ assert_no_alert() {
     done
 }
 
-@test "a number required by sh:hasValue is compared as a number, through scorpio and the bridge" {
-    # The sh:hasValue scenarios of shacl2flink/literal-datatypes (#965) where
-    # only Flink can show them: the bridge writes a plain 80.0 as 80 and passes
-    # no type on for a plain number, so comparing texts alerted on Flink where
-    # SQLite did not. Every entity is created first; then every attribute that
+@test "sh:hasValue compares numbers, strings and booleans as specified, through scorpio and the bridge" {
+    # The sh:hasValue scenarios of shacl2flink/literal-datatypes (#965, #1044,
+    # #1045) where only Flink can show them: the bridge writes a plain 80.0 as
+    # 80 and passes no type on for a plain number or boolean, so comparing
+    # texts alerted on Flink where SQLite did not, and a string constant met a
+    # plain number on one side only. Every entity is created first; then every attribute that
     # must alert is waited for, and only after that the ones that must not are
     # checked, so that "no alert" means "checked and found equal" rather than
     # "not processed yet".

@@ -1,0 +1,96 @@
+@prefix iffBaseEntities: <https://industryfusion.github.io/contexts/example/v0/base_entities/> .
+@prefix ngsild: <https://uri.etsi.org/ngsi-ld/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# sh:hasValue with a boolean or a string constant (#1044, #1045).
+#
+# A boolean constant is met by the same boolean: a plain true/false, a value
+# declared xsd:boolean (true/1, false/0), or a string whose text is exactly
+# "true"/"false". "True", "TRUE", "1", "0" and plain numbers do not meet it.
+#
+# A string constant is compared with the text the platform sends. A number
+# meets it only when the constant is the text JavaScript writes for that
+# number: plain 1, 1.0 and a declared double 1 meet "1", nothing but the
+# string "1.0" meets "1.0", and a plain 1e21 meets "1e+21". A declared number
+# is compared by its value even when it is written as a string, so
+# {"@value": "1.0", "@type": "xsd:double"} meets "1" and not "1.0": SQLite
+# cannot tell it from the number 1.0. A boolean is written true or false.
+#
+# model1.jsonld holds one entity per value, each with the value on every
+# property; its id says which value it is.
+
+<https://industryfusion.github.io/contexts/example/v0/base_shacl/HasValueShape> a sh:NodeShape ;
+    sh:targetClass iffBaseEntities:Filter ;
+    sh:property [
+        sh:path iffBaseEntities:hasTrueValue ;
+        sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasValue ;
+                      sh:hasValue true ;
+                      sh:nodeKind sh:Literal ] ] ,
+    [
+        sh:path iffBaseEntities:hasFalseValue ;
+        sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasValue ;
+                      sh:hasValue false ;
+                      sh:nodeKind sh:Literal ] ] ,
+    [
+        sh:path iffBaseEntities:hasOneText ;
+        sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasValue ;
+                      sh:hasValue "1" ;
+                      sh:nodeKind sh:Literal ] ] ,
+    [
+        sh:path iffBaseEntities:hasOneDotText ;
+        sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasValue ;
+                      sh:hasValue "1.0" ;
+                      sh:nodeKind sh:Literal ] ] ,
+    [
+        sh:path iffBaseEntities:hasHalfText ;
+        sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasValue ;
+                      sh:hasValue "0.5" ;
+                      sh:nodeKind sh:Literal ] ] ,
+    [
+        sh:path iffBaseEntities:hasLargeText ;
+        sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasValue ;
+                      sh:hasValue "1e+21" ;
+                      sh:nodeKind sh:Literal ] ] ,
+    [
+        sh:path iffBaseEntities:hasTrueText ;
+        sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasValue ;
+                      sh:hasValue "true" ;
+                      sh:nodeKind sh:Literal ] ] ,
+    # A constant of another datatype is compared like a string constant:
+    # with its text as written, and a number meets it when that text is the
+    # platform's text of the number. Plain 2020, the string "2020" and a
+    # declared xsd:gYear 2020 meet "2020"^^xsd:gYear.
+    [
+        sh:path iffBaseEntities:hasYearValue ;
+        sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasValue ;
+                      sh:hasValue "2020"^^xsd:gYear ;
+                      sh:nodeKind sh:Literal ] ] ,
+    [
+        sh:path iffBaseEntities:hasTokenText ;
+        sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasValue ;
+                      sh:hasValue "1"^^xsd:token ;
+                      sh:nodeKind sh:Literal ] ] ,
+    [
+        sh:path iffBaseEntities:hasCustomText ;
+        sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasValue ;
+                      sh:hasValue "1"^^iffBaseEntities:customDatatype ;
+                      sh:nodeKind sh:Literal ] ] ,
+    # NaN is no text the platform writes for a number (JSON.stringify writes
+    # null): only the string "NaN" meets it, not the number 0.
+    [
+        sh:path iffBaseEntities:hasNaNText ;
+        sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasValue ;
+                      sh:hasValue "NaN" ;
+                      sh:nodeKind sh:Literal ] ] .

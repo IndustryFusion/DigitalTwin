@@ -363,8 +363,37 @@ A number is compared as a number: `80`, `80.0` and
 `{"@value": 80, "@type": "xsd:double"}` all satisfy `sh:hasValue 80.0` and
 `sh:hasValue 80`, and so does the string `"80.0"`, which is read by its text
 as for `sh:datatype`. A conformant SHACL engine compares RDF terms instead,
-where `80` and `80.0` are different values. A string constant such as
-`sh:hasValue "1.0"` is compared as text.
+where `80` and `80.0` are different values.
+
+A string constant is compared with the text the platform sends. A string is
+its text. A number is written as the platform (JavaScript) writes numbers: the
+shortest digits that identify it, without a decimal point when it is whole,
+and with an exponent from `1e+21` up and below `0.000001` (`1e-7`). So a plain
+`1`, a plain `1.0` and `{"@value": 1, "@type": "xsd:double"}` all satisfy
+`sh:hasValue "1"`, while `sh:hasValue "1.0"` is satisfied only by the string
+`"1.0"`, and `sh:hasValue "1e+21"` by a plain `1e21` but not by the string
+`"1e21"`. A boolean is written `true` or `false`. A constant of any other
+datatype, such as `"2020"^^xsd:gYear` or `"1"^^xsd:token`, is compared the
+same way, with its text as written: a plain `2020` satisfies
+`"2020"^^xsd:gYear`. `"NaN"` and `"Infinity"` are only ever met by those
+strings, since no number is sent that way.
+
+One exception: a value declared with a numeric datatype is compared by its
+value, also when it is written as a string. `{"@value": "1.0", "@type":
+"xsd:double"}` satisfies `sh:hasValue "1"` and not `sh:hasValue "1.0"`,
+because the validation before the platform cannot tell it from the number
+`1.0`.
+
+A number constant that is no finite number of its datatype (`"abc"^^xsd:integer`,
+`"INF"^^xsd:double`) and a boolean constant that is none of `true`, `false`,
+`1` and `0` fail the build.
+
+A boolean constant is satisfied by the same boolean: a plain `true`, a value
+declared `xsd:boolean` with `true` or `1`, or the string `"true"` all satisfy
+`sh:hasValue true` (and `false`, `0` and `"false"` satisfy `sh:hasValue
+false`). The strings `"True"`, `"TRUE"`, `"1"` and `"0"` and the numbers `1`
+and `0` do not. A conformant SHACL engine compares RDF terms here too: to it
+neither a string nor a number is ever the boolean, and `"1"` is not `1`.
 
 The empty list `sh:hasValue ()` works too, and means the list must be empty.
 It is one arm of every array-valued OPC UA variable, beside "a list of the

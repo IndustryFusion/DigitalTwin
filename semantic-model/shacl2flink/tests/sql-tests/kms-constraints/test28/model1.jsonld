@@ -1,0 +1,1638 @@
+[
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:hasvalue:plain-true",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasTrueValue": {
+      "type": "Property",
+      "value": true
+    },
+    "iffBaseEntities:hasFalseValue": {
+      "type": "Property",
+      "value": true
+    },
+    "iffBaseEntities:hasOneText": {
+      "type": "Property",
+      "value": true
+    },
+    "iffBaseEntities:hasOneDotText": {
+      "type": "Property",
+      "value": true
+    },
+    "iffBaseEntities:hasHalfText": {
+      "type": "Property",
+      "value": true
+    },
+    "iffBaseEntities:hasLargeText": {
+      "type": "Property",
+      "value": true
+    },
+    "iffBaseEntities:hasTrueText": {
+      "type": "Property",
+      "value": true
+    },
+    "iffBaseEntities:hasYearValue": {
+      "type": "Property",
+      "value": true
+    },
+    "iffBaseEntities:hasTokenText": {
+      "type": "Property",
+      "value": true
+    },
+    "iffBaseEntities:hasCustomText": {
+      "type": "Property",
+      "value": true
+    },
+    "iffBaseEntities:hasNaNText": {
+      "type": "Property",
+      "value": true
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:hasvalue:plain-false",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasTrueValue": {
+      "type": "Property",
+      "value": false
+    },
+    "iffBaseEntities:hasFalseValue": {
+      "type": "Property",
+      "value": false
+    },
+    "iffBaseEntities:hasOneText": {
+      "type": "Property",
+      "value": false
+    },
+    "iffBaseEntities:hasOneDotText": {
+      "type": "Property",
+      "value": false
+    },
+    "iffBaseEntities:hasHalfText": {
+      "type": "Property",
+      "value": false
+    },
+    "iffBaseEntities:hasLargeText": {
+      "type": "Property",
+      "value": false
+    },
+    "iffBaseEntities:hasTrueText": {
+      "type": "Property",
+      "value": false
+    },
+    "iffBaseEntities:hasYearValue": {
+      "type": "Property",
+      "value": false
+    },
+    "iffBaseEntities:hasTokenText": {
+      "type": "Property",
+      "value": false
+    },
+    "iffBaseEntities:hasCustomText": {
+      "type": "Property",
+      "value": false
+    },
+    "iffBaseEntities:hasNaNText": {
+      "type": "Property",
+      "value": false
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:hasvalue:declared-true",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasTrueValue": {
+      "type": "Property",
+      "value": {
+        "@value": true,
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+      }
+    },
+    "iffBaseEntities:hasFalseValue": {
+      "type": "Property",
+      "value": {
+        "@value": true,
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+      }
+    },
+    "iffBaseEntities:hasOneText": {
+      "type": "Property",
+      "value": {
+        "@value": true,
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+      }
+    },
+    "iffBaseEntities:hasOneDotText": {
+      "type": "Property",
+      "value": {
+        "@value": true,
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+      }
+    },
+    "iffBaseEntities:hasHalfText": {
+      "type": "Property",
+      "value": {
+        "@value": true,
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+      }
+    },
+    "iffBaseEntities:hasLargeText": {
+      "type": "Property",
+      "value": {
+        "@value": true,
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+      }
+    },
+    "iffBaseEntities:hasTrueText": {
+      "type": "Property",
+      "value": {
+        "@value": true,
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+      }
+    },
+    "iffBaseEntities:hasYearValue": {
+      "type": "Property",
+      "value": {
+        "@value": true,
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+      }
+    },
+    "iffBaseEntities:hasTokenText": {
+      "type": "Property",
+      "value": {
+        "@value": true,
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+      }
+    },
+    "iffBaseEntities:hasCustomText": {
+      "type": "Property",
+      "value": {
+        "@value": true,
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+      }
+    },
+    "iffBaseEntities:hasNaNText": {
+      "type": "Property",
+      "value": {
+        "@value": true,
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+      }
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:hasvalue:declared-one-boolean",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasTrueValue": {
+      "type": "Property",
+      "value": {
+        "@value": "1",
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+      }
+    },
+    "iffBaseEntities:hasFalseValue": {
+      "type": "Property",
+      "value": {
+        "@value": "1",
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+      }
+    },
+    "iffBaseEntities:hasOneText": {
+      "type": "Property",
+      "value": {
+        "@value": "1",
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+      }
+    },
+    "iffBaseEntities:hasOneDotText": {
+      "type": "Property",
+      "value": {
+        "@value": "1",
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+      }
+    },
+    "iffBaseEntities:hasHalfText": {
+      "type": "Property",
+      "value": {
+        "@value": "1",
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+      }
+    },
+    "iffBaseEntities:hasLargeText": {
+      "type": "Property",
+      "value": {
+        "@value": "1",
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+      }
+    },
+    "iffBaseEntities:hasTrueText": {
+      "type": "Property",
+      "value": {
+        "@value": "1",
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+      }
+    },
+    "iffBaseEntities:hasYearValue": {
+      "type": "Property",
+      "value": {
+        "@value": "1",
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+      }
+    },
+    "iffBaseEntities:hasTokenText": {
+      "type": "Property",
+      "value": {
+        "@value": "1",
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+      }
+    },
+    "iffBaseEntities:hasCustomText": {
+      "type": "Property",
+      "value": {
+        "@value": "1",
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+      }
+    },
+    "iffBaseEntities:hasNaNText": {
+      "type": "Property",
+      "value": {
+        "@value": "1",
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+      }
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:hasvalue:declared-zero-boolean",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasTrueValue": {
+      "type": "Property",
+      "value": {
+        "@value": "0",
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+      }
+    },
+    "iffBaseEntities:hasFalseValue": {
+      "type": "Property",
+      "value": {
+        "@value": "0",
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+      }
+    },
+    "iffBaseEntities:hasOneText": {
+      "type": "Property",
+      "value": {
+        "@value": "0",
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+      }
+    },
+    "iffBaseEntities:hasOneDotText": {
+      "type": "Property",
+      "value": {
+        "@value": "0",
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+      }
+    },
+    "iffBaseEntities:hasHalfText": {
+      "type": "Property",
+      "value": {
+        "@value": "0",
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+      }
+    },
+    "iffBaseEntities:hasLargeText": {
+      "type": "Property",
+      "value": {
+        "@value": "0",
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+      }
+    },
+    "iffBaseEntities:hasTrueText": {
+      "type": "Property",
+      "value": {
+        "@value": "0",
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+      }
+    },
+    "iffBaseEntities:hasYearValue": {
+      "type": "Property",
+      "value": {
+        "@value": "0",
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+      }
+    },
+    "iffBaseEntities:hasTokenText": {
+      "type": "Property",
+      "value": {
+        "@value": "0",
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+      }
+    },
+    "iffBaseEntities:hasCustomText": {
+      "type": "Property",
+      "value": {
+        "@value": "0",
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+      }
+    },
+    "iffBaseEntities:hasNaNText": {
+      "type": "Property",
+      "value": {
+        "@value": "0",
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+      }
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:hasvalue:string-true",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasTrueValue": {
+      "type": "Property",
+      "value": "true"
+    },
+    "iffBaseEntities:hasFalseValue": {
+      "type": "Property",
+      "value": "true"
+    },
+    "iffBaseEntities:hasOneText": {
+      "type": "Property",
+      "value": "true"
+    },
+    "iffBaseEntities:hasOneDotText": {
+      "type": "Property",
+      "value": "true"
+    },
+    "iffBaseEntities:hasHalfText": {
+      "type": "Property",
+      "value": "true"
+    },
+    "iffBaseEntities:hasLargeText": {
+      "type": "Property",
+      "value": "true"
+    },
+    "iffBaseEntities:hasTrueText": {
+      "type": "Property",
+      "value": "true"
+    },
+    "iffBaseEntities:hasYearValue": {
+      "type": "Property",
+      "value": "true"
+    },
+    "iffBaseEntities:hasTokenText": {
+      "type": "Property",
+      "value": "true"
+    },
+    "iffBaseEntities:hasCustomText": {
+      "type": "Property",
+      "value": "true"
+    },
+    "iffBaseEntities:hasNaNText": {
+      "type": "Property",
+      "value": "true"
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:hasvalue:string-false",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasTrueValue": {
+      "type": "Property",
+      "value": "false"
+    },
+    "iffBaseEntities:hasFalseValue": {
+      "type": "Property",
+      "value": "false"
+    },
+    "iffBaseEntities:hasOneText": {
+      "type": "Property",
+      "value": "false"
+    },
+    "iffBaseEntities:hasOneDotText": {
+      "type": "Property",
+      "value": "false"
+    },
+    "iffBaseEntities:hasHalfText": {
+      "type": "Property",
+      "value": "false"
+    },
+    "iffBaseEntities:hasLargeText": {
+      "type": "Property",
+      "value": "false"
+    },
+    "iffBaseEntities:hasTrueText": {
+      "type": "Property",
+      "value": "false"
+    },
+    "iffBaseEntities:hasYearValue": {
+      "type": "Property",
+      "value": "false"
+    },
+    "iffBaseEntities:hasTokenText": {
+      "type": "Property",
+      "value": "false"
+    },
+    "iffBaseEntities:hasCustomText": {
+      "type": "Property",
+      "value": "false"
+    },
+    "iffBaseEntities:hasNaNText": {
+      "type": "Property",
+      "value": "false"
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:hasvalue:string-true-capital",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasTrueValue": {
+      "type": "Property",
+      "value": "True"
+    },
+    "iffBaseEntities:hasFalseValue": {
+      "type": "Property",
+      "value": "True"
+    },
+    "iffBaseEntities:hasOneText": {
+      "type": "Property",
+      "value": "True"
+    },
+    "iffBaseEntities:hasOneDotText": {
+      "type": "Property",
+      "value": "True"
+    },
+    "iffBaseEntities:hasHalfText": {
+      "type": "Property",
+      "value": "True"
+    },
+    "iffBaseEntities:hasLargeText": {
+      "type": "Property",
+      "value": "True"
+    },
+    "iffBaseEntities:hasTrueText": {
+      "type": "Property",
+      "value": "True"
+    },
+    "iffBaseEntities:hasYearValue": {
+      "type": "Property",
+      "value": "True"
+    },
+    "iffBaseEntities:hasTokenText": {
+      "type": "Property",
+      "value": "True"
+    },
+    "iffBaseEntities:hasCustomText": {
+      "type": "Property",
+      "value": "True"
+    },
+    "iffBaseEntities:hasNaNText": {
+      "type": "Property",
+      "value": "True"
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:hasvalue:string-true-upper",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasTrueValue": {
+      "type": "Property",
+      "value": "TRUE"
+    },
+    "iffBaseEntities:hasFalseValue": {
+      "type": "Property",
+      "value": "TRUE"
+    },
+    "iffBaseEntities:hasOneText": {
+      "type": "Property",
+      "value": "TRUE"
+    },
+    "iffBaseEntities:hasOneDotText": {
+      "type": "Property",
+      "value": "TRUE"
+    },
+    "iffBaseEntities:hasHalfText": {
+      "type": "Property",
+      "value": "TRUE"
+    },
+    "iffBaseEntities:hasLargeText": {
+      "type": "Property",
+      "value": "TRUE"
+    },
+    "iffBaseEntities:hasTrueText": {
+      "type": "Property",
+      "value": "TRUE"
+    },
+    "iffBaseEntities:hasYearValue": {
+      "type": "Property",
+      "value": "TRUE"
+    },
+    "iffBaseEntities:hasTokenText": {
+      "type": "Property",
+      "value": "TRUE"
+    },
+    "iffBaseEntities:hasCustomText": {
+      "type": "Property",
+      "value": "TRUE"
+    },
+    "iffBaseEntities:hasNaNText": {
+      "type": "Property",
+      "value": "TRUE"
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:hasvalue:string-one",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasTrueValue": {
+      "type": "Property",
+      "value": "1"
+    },
+    "iffBaseEntities:hasFalseValue": {
+      "type": "Property",
+      "value": "1"
+    },
+    "iffBaseEntities:hasOneText": {
+      "type": "Property",
+      "value": "1"
+    },
+    "iffBaseEntities:hasOneDotText": {
+      "type": "Property",
+      "value": "1"
+    },
+    "iffBaseEntities:hasHalfText": {
+      "type": "Property",
+      "value": "1"
+    },
+    "iffBaseEntities:hasLargeText": {
+      "type": "Property",
+      "value": "1"
+    },
+    "iffBaseEntities:hasTrueText": {
+      "type": "Property",
+      "value": "1"
+    },
+    "iffBaseEntities:hasYearValue": {
+      "type": "Property",
+      "value": "1"
+    },
+    "iffBaseEntities:hasTokenText": {
+      "type": "Property",
+      "value": "1"
+    },
+    "iffBaseEntities:hasCustomText": {
+      "type": "Property",
+      "value": "1"
+    },
+    "iffBaseEntities:hasNaNText": {
+      "type": "Property",
+      "value": "1"
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:hasvalue:string-zero",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasTrueValue": {
+      "type": "Property",
+      "value": "0"
+    },
+    "iffBaseEntities:hasFalseValue": {
+      "type": "Property",
+      "value": "0"
+    },
+    "iffBaseEntities:hasOneText": {
+      "type": "Property",
+      "value": "0"
+    },
+    "iffBaseEntities:hasOneDotText": {
+      "type": "Property",
+      "value": "0"
+    },
+    "iffBaseEntities:hasHalfText": {
+      "type": "Property",
+      "value": "0"
+    },
+    "iffBaseEntities:hasLargeText": {
+      "type": "Property",
+      "value": "0"
+    },
+    "iffBaseEntities:hasTrueText": {
+      "type": "Property",
+      "value": "0"
+    },
+    "iffBaseEntities:hasYearValue": {
+      "type": "Property",
+      "value": "0"
+    },
+    "iffBaseEntities:hasTokenText": {
+      "type": "Property",
+      "value": "0"
+    },
+    "iffBaseEntities:hasCustomText": {
+      "type": "Property",
+      "value": "0"
+    },
+    "iffBaseEntities:hasNaNText": {
+      "type": "Property",
+      "value": "0"
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:hasvalue:string-one-dot",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasTrueValue": {
+      "type": "Property",
+      "value": "1.0"
+    },
+    "iffBaseEntities:hasFalseValue": {
+      "type": "Property",
+      "value": "1.0"
+    },
+    "iffBaseEntities:hasOneText": {
+      "type": "Property",
+      "value": "1.0"
+    },
+    "iffBaseEntities:hasOneDotText": {
+      "type": "Property",
+      "value": "1.0"
+    },
+    "iffBaseEntities:hasHalfText": {
+      "type": "Property",
+      "value": "1.0"
+    },
+    "iffBaseEntities:hasLargeText": {
+      "type": "Property",
+      "value": "1.0"
+    },
+    "iffBaseEntities:hasTrueText": {
+      "type": "Property",
+      "value": "1.0"
+    },
+    "iffBaseEntities:hasYearValue": {
+      "type": "Property",
+      "value": "1.0"
+    },
+    "iffBaseEntities:hasTokenText": {
+      "type": "Property",
+      "value": "1.0"
+    },
+    "iffBaseEntities:hasCustomText": {
+      "type": "Property",
+      "value": "1.0"
+    },
+    "iffBaseEntities:hasNaNText": {
+      "type": "Property",
+      "value": "1.0"
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:hasvalue:plain-one",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasTrueValue": {
+      "type": "Property",
+      "value": 1
+    },
+    "iffBaseEntities:hasFalseValue": {
+      "type": "Property",
+      "value": 1
+    },
+    "iffBaseEntities:hasOneText": {
+      "type": "Property",
+      "value": 1
+    },
+    "iffBaseEntities:hasOneDotText": {
+      "type": "Property",
+      "value": 1
+    },
+    "iffBaseEntities:hasHalfText": {
+      "type": "Property",
+      "value": 1
+    },
+    "iffBaseEntities:hasLargeText": {
+      "type": "Property",
+      "value": 1
+    },
+    "iffBaseEntities:hasTrueText": {
+      "type": "Property",
+      "value": 1
+    },
+    "iffBaseEntities:hasYearValue": {
+      "type": "Property",
+      "value": 1
+    },
+    "iffBaseEntities:hasTokenText": {
+      "type": "Property",
+      "value": 1
+    },
+    "iffBaseEntities:hasCustomText": {
+      "type": "Property",
+      "value": 1
+    },
+    "iffBaseEntities:hasNaNText": {
+      "type": "Property",
+      "value": 1
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:hasvalue:plain-zero",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasTrueValue": {
+      "type": "Property",
+      "value": 0
+    },
+    "iffBaseEntities:hasFalseValue": {
+      "type": "Property",
+      "value": 0
+    },
+    "iffBaseEntities:hasOneText": {
+      "type": "Property",
+      "value": 0
+    },
+    "iffBaseEntities:hasOneDotText": {
+      "type": "Property",
+      "value": 0
+    },
+    "iffBaseEntities:hasHalfText": {
+      "type": "Property",
+      "value": 0
+    },
+    "iffBaseEntities:hasLargeText": {
+      "type": "Property",
+      "value": 0
+    },
+    "iffBaseEntities:hasTrueText": {
+      "type": "Property",
+      "value": 0
+    },
+    "iffBaseEntities:hasYearValue": {
+      "type": "Property",
+      "value": 0
+    },
+    "iffBaseEntities:hasTokenText": {
+      "type": "Property",
+      "value": 0
+    },
+    "iffBaseEntities:hasCustomText": {
+      "type": "Property",
+      "value": 0
+    },
+    "iffBaseEntities:hasNaNText": {
+      "type": "Property",
+      "value": 0
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:hasvalue:plain-one-dot",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasTrueValue": {
+      "type": "Property",
+      "value": 1.0
+    },
+    "iffBaseEntities:hasFalseValue": {
+      "type": "Property",
+      "value": 1.0
+    },
+    "iffBaseEntities:hasOneText": {
+      "type": "Property",
+      "value": 1.0
+    },
+    "iffBaseEntities:hasOneDotText": {
+      "type": "Property",
+      "value": 1.0
+    },
+    "iffBaseEntities:hasHalfText": {
+      "type": "Property",
+      "value": 1.0
+    },
+    "iffBaseEntities:hasLargeText": {
+      "type": "Property",
+      "value": 1.0
+    },
+    "iffBaseEntities:hasTrueText": {
+      "type": "Property",
+      "value": 1.0
+    },
+    "iffBaseEntities:hasYearValue": {
+      "type": "Property",
+      "value": 1.0
+    },
+    "iffBaseEntities:hasTokenText": {
+      "type": "Property",
+      "value": 1.0
+    },
+    "iffBaseEntities:hasCustomText": {
+      "type": "Property",
+      "value": 1.0
+    },
+    "iffBaseEntities:hasNaNText": {
+      "type": "Property",
+      "value": 1.0
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:hasvalue:declared-double-one",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasTrueValue": {
+      "type": "Property",
+      "value": {
+        "@value": 1,
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    },
+    "iffBaseEntities:hasFalseValue": {
+      "type": "Property",
+      "value": {
+        "@value": 1,
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    },
+    "iffBaseEntities:hasOneText": {
+      "type": "Property",
+      "value": {
+        "@value": 1,
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    },
+    "iffBaseEntities:hasOneDotText": {
+      "type": "Property",
+      "value": {
+        "@value": 1,
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    },
+    "iffBaseEntities:hasHalfText": {
+      "type": "Property",
+      "value": {
+        "@value": 1,
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    },
+    "iffBaseEntities:hasLargeText": {
+      "type": "Property",
+      "value": {
+        "@value": 1,
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    },
+    "iffBaseEntities:hasTrueText": {
+      "type": "Property",
+      "value": {
+        "@value": 1,
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    },
+    "iffBaseEntities:hasYearValue": {
+      "type": "Property",
+      "value": {
+        "@value": 1,
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    },
+    "iffBaseEntities:hasTokenText": {
+      "type": "Property",
+      "value": {
+        "@value": 1,
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    },
+    "iffBaseEntities:hasCustomText": {
+      "type": "Property",
+      "value": {
+        "@value": 1,
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    },
+    "iffBaseEntities:hasNaNText": {
+      "type": "Property",
+      "value": {
+        "@value": 1,
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:hasvalue:declared-integer-one",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasTrueValue": {
+      "type": "Property",
+      "value": {
+        "@value": 1,
+        "@type": "http://www.w3.org/2001/XMLSchema#integer"
+      }
+    },
+    "iffBaseEntities:hasFalseValue": {
+      "type": "Property",
+      "value": {
+        "@value": 1,
+        "@type": "http://www.w3.org/2001/XMLSchema#integer"
+      }
+    },
+    "iffBaseEntities:hasOneText": {
+      "type": "Property",
+      "value": {
+        "@value": 1,
+        "@type": "http://www.w3.org/2001/XMLSchema#integer"
+      }
+    },
+    "iffBaseEntities:hasOneDotText": {
+      "type": "Property",
+      "value": {
+        "@value": 1,
+        "@type": "http://www.w3.org/2001/XMLSchema#integer"
+      }
+    },
+    "iffBaseEntities:hasHalfText": {
+      "type": "Property",
+      "value": {
+        "@value": 1,
+        "@type": "http://www.w3.org/2001/XMLSchema#integer"
+      }
+    },
+    "iffBaseEntities:hasLargeText": {
+      "type": "Property",
+      "value": {
+        "@value": 1,
+        "@type": "http://www.w3.org/2001/XMLSchema#integer"
+      }
+    },
+    "iffBaseEntities:hasTrueText": {
+      "type": "Property",
+      "value": {
+        "@value": 1,
+        "@type": "http://www.w3.org/2001/XMLSchema#integer"
+      }
+    },
+    "iffBaseEntities:hasYearValue": {
+      "type": "Property",
+      "value": {
+        "@value": 1,
+        "@type": "http://www.w3.org/2001/XMLSchema#integer"
+      }
+    },
+    "iffBaseEntities:hasTokenText": {
+      "type": "Property",
+      "value": {
+        "@value": 1,
+        "@type": "http://www.w3.org/2001/XMLSchema#integer"
+      }
+    },
+    "iffBaseEntities:hasCustomText": {
+      "type": "Property",
+      "value": {
+        "@value": 1,
+        "@type": "http://www.w3.org/2001/XMLSchema#integer"
+      }
+    },
+    "iffBaseEntities:hasNaNText": {
+      "type": "Property",
+      "value": {
+        "@value": 1,
+        "@type": "http://www.w3.org/2001/XMLSchema#integer"
+      }
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:hasvalue:plain-half",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasTrueValue": {
+      "type": "Property",
+      "value": 0.5
+    },
+    "iffBaseEntities:hasFalseValue": {
+      "type": "Property",
+      "value": 0.5
+    },
+    "iffBaseEntities:hasOneText": {
+      "type": "Property",
+      "value": 0.5
+    },
+    "iffBaseEntities:hasOneDotText": {
+      "type": "Property",
+      "value": 0.5
+    },
+    "iffBaseEntities:hasHalfText": {
+      "type": "Property",
+      "value": 0.5
+    },
+    "iffBaseEntities:hasLargeText": {
+      "type": "Property",
+      "value": 0.5
+    },
+    "iffBaseEntities:hasTrueText": {
+      "type": "Property",
+      "value": 0.5
+    },
+    "iffBaseEntities:hasYearValue": {
+      "type": "Property",
+      "value": 0.5
+    },
+    "iffBaseEntities:hasTokenText": {
+      "type": "Property",
+      "value": 0.5
+    },
+    "iffBaseEntities:hasCustomText": {
+      "type": "Property",
+      "value": 0.5
+    },
+    "iffBaseEntities:hasNaNText": {
+      "type": "Property",
+      "value": 0.5
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:hasvalue:declared-double-half",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasTrueValue": {
+      "type": "Property",
+      "value": {
+        "@value": 0.5,
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    },
+    "iffBaseEntities:hasFalseValue": {
+      "type": "Property",
+      "value": {
+        "@value": 0.5,
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    },
+    "iffBaseEntities:hasOneText": {
+      "type": "Property",
+      "value": {
+        "@value": 0.5,
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    },
+    "iffBaseEntities:hasOneDotText": {
+      "type": "Property",
+      "value": {
+        "@value": 0.5,
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    },
+    "iffBaseEntities:hasHalfText": {
+      "type": "Property",
+      "value": {
+        "@value": 0.5,
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    },
+    "iffBaseEntities:hasLargeText": {
+      "type": "Property",
+      "value": {
+        "@value": 0.5,
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    },
+    "iffBaseEntities:hasTrueText": {
+      "type": "Property",
+      "value": {
+        "@value": 0.5,
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    },
+    "iffBaseEntities:hasYearValue": {
+      "type": "Property",
+      "value": {
+        "@value": 0.5,
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    },
+    "iffBaseEntities:hasTokenText": {
+      "type": "Property",
+      "value": {
+        "@value": 0.5,
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    },
+    "iffBaseEntities:hasCustomText": {
+      "type": "Property",
+      "value": {
+        "@value": 0.5,
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    },
+    "iffBaseEntities:hasNaNText": {
+      "type": "Property",
+      "value": {
+        "@value": 0.5,
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:hasvalue:string-half",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasTrueValue": {
+      "type": "Property",
+      "value": "0.5"
+    },
+    "iffBaseEntities:hasFalseValue": {
+      "type": "Property",
+      "value": "0.5"
+    },
+    "iffBaseEntities:hasOneText": {
+      "type": "Property",
+      "value": "0.5"
+    },
+    "iffBaseEntities:hasOneDotText": {
+      "type": "Property",
+      "value": "0.5"
+    },
+    "iffBaseEntities:hasHalfText": {
+      "type": "Property",
+      "value": "0.5"
+    },
+    "iffBaseEntities:hasLargeText": {
+      "type": "Property",
+      "value": "0.5"
+    },
+    "iffBaseEntities:hasTrueText": {
+      "type": "Property",
+      "value": "0.5"
+    },
+    "iffBaseEntities:hasYearValue": {
+      "type": "Property",
+      "value": "0.5"
+    },
+    "iffBaseEntities:hasTokenText": {
+      "type": "Property",
+      "value": "0.5"
+    },
+    "iffBaseEntities:hasCustomText": {
+      "type": "Property",
+      "value": "0.5"
+    },
+    "iffBaseEntities:hasNaNText": {
+      "type": "Property",
+      "value": "0.5"
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:hasvalue:string-half-short",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasTrueValue": {
+      "type": "Property",
+      "value": ".5"
+    },
+    "iffBaseEntities:hasFalseValue": {
+      "type": "Property",
+      "value": ".5"
+    },
+    "iffBaseEntities:hasOneText": {
+      "type": "Property",
+      "value": ".5"
+    },
+    "iffBaseEntities:hasOneDotText": {
+      "type": "Property",
+      "value": ".5"
+    },
+    "iffBaseEntities:hasHalfText": {
+      "type": "Property",
+      "value": ".5"
+    },
+    "iffBaseEntities:hasLargeText": {
+      "type": "Property",
+      "value": ".5"
+    },
+    "iffBaseEntities:hasTrueText": {
+      "type": "Property",
+      "value": ".5"
+    },
+    "iffBaseEntities:hasYearValue": {
+      "type": "Property",
+      "value": ".5"
+    },
+    "iffBaseEntities:hasTokenText": {
+      "type": "Property",
+      "value": ".5"
+    },
+    "iffBaseEntities:hasCustomText": {
+      "type": "Property",
+      "value": ".5"
+    },
+    "iffBaseEntities:hasNaNText": {
+      "type": "Property",
+      "value": ".5"
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:hasvalue:plain-large",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasTrueValue": {
+      "type": "Property",
+      "value": 1e21
+    },
+    "iffBaseEntities:hasFalseValue": {
+      "type": "Property",
+      "value": 1e21
+    },
+    "iffBaseEntities:hasOneText": {
+      "type": "Property",
+      "value": 1e21
+    },
+    "iffBaseEntities:hasOneDotText": {
+      "type": "Property",
+      "value": 1e21
+    },
+    "iffBaseEntities:hasHalfText": {
+      "type": "Property",
+      "value": 1e21
+    },
+    "iffBaseEntities:hasLargeText": {
+      "type": "Property",
+      "value": 1e21
+    },
+    "iffBaseEntities:hasTrueText": {
+      "type": "Property",
+      "value": 1e21
+    },
+    "iffBaseEntities:hasYearValue": {
+      "type": "Property",
+      "value": 1e21
+    },
+    "iffBaseEntities:hasTokenText": {
+      "type": "Property",
+      "value": 1e21
+    },
+    "iffBaseEntities:hasCustomText": {
+      "type": "Property",
+      "value": 1e21
+    },
+    "iffBaseEntities:hasNaNText": {
+      "type": "Property",
+      "value": 1e21
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:hasvalue:string-large",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasTrueValue": {
+      "type": "Property",
+      "value": "1e21"
+    },
+    "iffBaseEntities:hasFalseValue": {
+      "type": "Property",
+      "value": "1e21"
+    },
+    "iffBaseEntities:hasOneText": {
+      "type": "Property",
+      "value": "1e21"
+    },
+    "iffBaseEntities:hasOneDotText": {
+      "type": "Property",
+      "value": "1e21"
+    },
+    "iffBaseEntities:hasHalfText": {
+      "type": "Property",
+      "value": "1e21"
+    },
+    "iffBaseEntities:hasLargeText": {
+      "type": "Property",
+      "value": "1e21"
+    },
+    "iffBaseEntities:hasTrueText": {
+      "type": "Property",
+      "value": "1e21"
+    },
+    "iffBaseEntities:hasYearValue": {
+      "type": "Property",
+      "value": "1e21"
+    },
+    "iffBaseEntities:hasTokenText": {
+      "type": "Property",
+      "value": "1e21"
+    },
+    "iffBaseEntities:hasCustomText": {
+      "type": "Property",
+      "value": "1e21"
+    },
+    "iffBaseEntities:hasNaNText": {
+      "type": "Property",
+      "value": "1e21"
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:hasvalue:declared-double-string-one-dot",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasTrueValue": {
+      "type": "Property",
+      "value": {
+        "@value": "1.0",
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    },
+    "iffBaseEntities:hasFalseValue": {
+      "type": "Property",
+      "value": {
+        "@value": "1.0",
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    },
+    "iffBaseEntities:hasOneText": {
+      "type": "Property",
+      "value": {
+        "@value": "1.0",
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    },
+    "iffBaseEntities:hasOneDotText": {
+      "type": "Property",
+      "value": {
+        "@value": "1.0",
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    },
+    "iffBaseEntities:hasHalfText": {
+      "type": "Property",
+      "value": {
+        "@value": "1.0",
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    },
+    "iffBaseEntities:hasLargeText": {
+      "type": "Property",
+      "value": {
+        "@value": "1.0",
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    },
+    "iffBaseEntities:hasTrueText": {
+      "type": "Property",
+      "value": {
+        "@value": "1.0",
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    },
+    "iffBaseEntities:hasYearValue": {
+      "type": "Property",
+      "value": {
+        "@value": "1.0",
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    },
+    "iffBaseEntities:hasTokenText": {
+      "type": "Property",
+      "value": {
+        "@value": "1.0",
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    },
+    "iffBaseEntities:hasCustomText": {
+      "type": "Property",
+      "value": {
+        "@value": "1.0",
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    },
+    "iffBaseEntities:hasNaNText": {
+      "type": "Property",
+      "value": {
+        "@value": "1.0",
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:hasvalue:plain-year",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasTrueValue": {
+      "type": "Property",
+      "value": 2020
+    },
+    "iffBaseEntities:hasFalseValue": {
+      "type": "Property",
+      "value": 2020
+    },
+    "iffBaseEntities:hasOneText": {
+      "type": "Property",
+      "value": 2020
+    },
+    "iffBaseEntities:hasOneDotText": {
+      "type": "Property",
+      "value": 2020
+    },
+    "iffBaseEntities:hasHalfText": {
+      "type": "Property",
+      "value": 2020
+    },
+    "iffBaseEntities:hasLargeText": {
+      "type": "Property",
+      "value": 2020
+    },
+    "iffBaseEntities:hasTrueText": {
+      "type": "Property",
+      "value": 2020
+    },
+    "iffBaseEntities:hasYearValue": {
+      "type": "Property",
+      "value": 2020
+    },
+    "iffBaseEntities:hasTokenText": {
+      "type": "Property",
+      "value": 2020
+    },
+    "iffBaseEntities:hasCustomText": {
+      "type": "Property",
+      "value": 2020
+    },
+    "iffBaseEntities:hasNaNText": {
+      "type": "Property",
+      "value": 2020
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:hasvalue:string-year",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasTrueValue": {
+      "type": "Property",
+      "value": "2020"
+    },
+    "iffBaseEntities:hasFalseValue": {
+      "type": "Property",
+      "value": "2020"
+    },
+    "iffBaseEntities:hasOneText": {
+      "type": "Property",
+      "value": "2020"
+    },
+    "iffBaseEntities:hasOneDotText": {
+      "type": "Property",
+      "value": "2020"
+    },
+    "iffBaseEntities:hasHalfText": {
+      "type": "Property",
+      "value": "2020"
+    },
+    "iffBaseEntities:hasLargeText": {
+      "type": "Property",
+      "value": "2020"
+    },
+    "iffBaseEntities:hasTrueText": {
+      "type": "Property",
+      "value": "2020"
+    },
+    "iffBaseEntities:hasYearValue": {
+      "type": "Property",
+      "value": "2020"
+    },
+    "iffBaseEntities:hasTokenText": {
+      "type": "Property",
+      "value": "2020"
+    },
+    "iffBaseEntities:hasCustomText": {
+      "type": "Property",
+      "value": "2020"
+    },
+    "iffBaseEntities:hasNaNText": {
+      "type": "Property",
+      "value": "2020"
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:hasvalue:declared-year",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasTrueValue": {
+      "type": "Property",
+      "value": {
+        "@value": "2020",
+        "@type": "http://www.w3.org/2001/XMLSchema#gYear"
+      }
+    },
+    "iffBaseEntities:hasFalseValue": {
+      "type": "Property",
+      "value": {
+        "@value": "2020",
+        "@type": "http://www.w3.org/2001/XMLSchema#gYear"
+      }
+    },
+    "iffBaseEntities:hasOneText": {
+      "type": "Property",
+      "value": {
+        "@value": "2020",
+        "@type": "http://www.w3.org/2001/XMLSchema#gYear"
+      }
+    },
+    "iffBaseEntities:hasOneDotText": {
+      "type": "Property",
+      "value": {
+        "@value": "2020",
+        "@type": "http://www.w3.org/2001/XMLSchema#gYear"
+      }
+    },
+    "iffBaseEntities:hasHalfText": {
+      "type": "Property",
+      "value": {
+        "@value": "2020",
+        "@type": "http://www.w3.org/2001/XMLSchema#gYear"
+      }
+    },
+    "iffBaseEntities:hasLargeText": {
+      "type": "Property",
+      "value": {
+        "@value": "2020",
+        "@type": "http://www.w3.org/2001/XMLSchema#gYear"
+      }
+    },
+    "iffBaseEntities:hasTrueText": {
+      "type": "Property",
+      "value": {
+        "@value": "2020",
+        "@type": "http://www.w3.org/2001/XMLSchema#gYear"
+      }
+    },
+    "iffBaseEntities:hasYearValue": {
+      "type": "Property",
+      "value": {
+        "@value": "2020",
+        "@type": "http://www.w3.org/2001/XMLSchema#gYear"
+      }
+    },
+    "iffBaseEntities:hasTokenText": {
+      "type": "Property",
+      "value": {
+        "@value": "2020",
+        "@type": "http://www.w3.org/2001/XMLSchema#gYear"
+      }
+    },
+    "iffBaseEntities:hasCustomText": {
+      "type": "Property",
+      "value": {
+        "@value": "2020",
+        "@type": "http://www.w3.org/2001/XMLSchema#gYear"
+      }
+    },
+    "iffBaseEntities:hasNaNText": {
+      "type": "Property",
+      "value": {
+        "@value": "2020",
+        "@type": "http://www.w3.org/2001/XMLSchema#gYear"
+      }
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:hasvalue:string-nan",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasTrueValue": {
+      "type": "Property",
+      "value": "NaN"
+    },
+    "iffBaseEntities:hasFalseValue": {
+      "type": "Property",
+      "value": "NaN"
+    },
+    "iffBaseEntities:hasOneText": {
+      "type": "Property",
+      "value": "NaN"
+    },
+    "iffBaseEntities:hasOneDotText": {
+      "type": "Property",
+      "value": "NaN"
+    },
+    "iffBaseEntities:hasHalfText": {
+      "type": "Property",
+      "value": "NaN"
+    },
+    "iffBaseEntities:hasLargeText": {
+      "type": "Property",
+      "value": "NaN"
+    },
+    "iffBaseEntities:hasTrueText": {
+      "type": "Property",
+      "value": "NaN"
+    },
+    "iffBaseEntities:hasYearValue": {
+      "type": "Property",
+      "value": "NaN"
+    },
+    "iffBaseEntities:hasTokenText": {
+      "type": "Property",
+      "value": "NaN"
+    },
+    "iffBaseEntities:hasCustomText": {
+      "type": "Property",
+      "value": "NaN"
+    },
+    "iffBaseEntities:hasNaNText": {
+      "type": "Property",
+      "value": "NaN"
+    }
+  }
+]

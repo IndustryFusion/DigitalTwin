@@ -1,6 +1,8 @@
-from rdflib import Graph, RDF, RDFS, BNode, URIRef
+from rdflib import Graph, Literal, RDF, RDFS, BNode, URIRef
 from rdflib.collection import Collection
 from rdflib.namespace import SH
+import decimal
+import math
 import os
 import ruamel.yaml
 from jinja2 import Template
@@ -1002,39 +1004,161 @@ NUMERIC_XSD_TYPES = tuple(f'http://www.w3.org/2001/XMLSchema#{name}' for name in
     'nonNegativeInteger', 'positiveInteger', 'nonPositiveInteger', 'negativeInteger',
     'unsignedLong', 'unsignedInt', 'unsignedShort', 'unsignedByte'))
 
-# sh:hasValue (#965). A constant that is a number (hasValueType, the datatype
-# of the constant in the shape) equals a value whose text is the same number,
-# whatever its notation: 80, 80.0 and a declared xsd:double 80 all equal
-# sh:hasValue 80.0 and sh:hasValue 80. Comparing texts could not work on Flink:
-# the bridge writes a plain 80.0 -- and a declared double 80.0 -- as 80, and
-# passes no type on for a plain number, so a plain 80.0 failed sh:hasValue
-# 80.0 on Flink and passed on SQLite. A string is read by its text, as
-# sh:datatype reads it (#958): "80.0" is the number 80.0. The text is matched
-# with the number pattern of sh:datatype before it is cast, and the CASE makes
-# sure nothing else is: Flink fails on a CAST of a text that is no number.
-# Casting both sides to the declared xsd:integer instead truncated a constant
-# 80.5 to 80 on SQLite. Numbers are compared as DOUBLE, so integers beyond 2^53
-# are compared approximately, as JavaScript writes them anyway.
-# Anything else is compared as before: by the declared boolean, double or
-# integer, or else as text -- a string constant "1.0" is not the value "1".
+# The datatypes a sh:hasValue constant or a value has when it is a string.
+# create_ngsild_models.py turns a value's xsd:string into no type, the bridge
+# keeps a declared one, so both mean "a string" here.
+STRING_XSD_TYPES = ('', 'http://www.w3.org/2001/XMLSchema#string')
+BOOLEAN_XSD_TYPE = 'http://www.w3.org/2001/XMLSchema#boolean'
+# The hasValueType of a string constant whose text is exactly what the
+# platform writes for a number (#1044, see platform_number_text). It is not a
+# datatype: the constant is a string, and the mark only tells the check that a
+# number value can meet it. The constraint table is generated and read only by
+# shacl2flink, so the mark stays internal.
+NUMBER_TEXT_MARK = 'urn:iff:shacl2flink:numberText'
+
+
+def platform_number_text(number):
+    """The text the platform writes for `number`: JavaScript's Number::toString.
+
+    The bridge is JavaScript, and Flink receives a number as the text
+    JSON.stringify writes for it: 1.0 as 1, 1e21 as 1e+21, 1.5e-7 as 1.5e-7,
+    0.000001 as 0.000001. Python's repr gives the same shortest digits that
+    round-trip; only where the decimal point goes and when an exponent is used
+    differ, and those are ECMA-262's Number::toString rules.
+    """
+    number = float(number)
+    if number != number:
+        return 'NaN'
+    if number in (float('inf'), float('-inf')):
+        return 'Infinity' if number > 0 else '-Infinity'
+    if number == 0:
+        return '0'
+    sign = '-' if number < 0 else ''
+    mantissa, _, exponent = repr(abs(number)).partition('e')
+    whole, _, fraction = mantissa.partition('.')
+    digits = (whole + fraction).lstrip('0')
+    point = len(whole) + int(exponent or 0) - (len(whole + fraction) - len(digits))
+    digits = digits.rstrip('0')
+    if len(digits) <= point <= 21:
+        text = digits + '0' * (point - len(digits))
+    elif 0 < point <= 21:
+        text = digits[:point] + '.' + digits[point:]
+    elif -6 < point <= 0:
+        text = '0.' + '0' * -point + digits
+    else:
+        power = point - 1
+        text = digits[0] + ('.' + digits[1:] if len(digits) > 1 else '') \
+            + 'e' + ('+' if power >= 0 else '-') + str(abs(power))
+    return sign + text
+
+
+def is_platform_number_text(text):
+    """Whether `text` is exactly what the platform writes for some finite
+    number. NaN and the infinities are no such text: JSON.stringify writes them
+    as null, and SQLite would cast the text 'NaN' to 0.0."""
+    try:
+        number = float(text)
+    except ValueError:
+        return False
+    return math.isfinite(number) and platform_number_text(number) == text
+
+
+def has_value_constant(constant):
+    """The sh:hasValue `constant` as the constraint table holds it.
+
+    Returns (hasValue, hasValueType, problem). A number keeps its datatype and
+    Python's text of it, a boolean becomes true or false. Any other literal
+    -- a string, a language-tagged string, an xsd:gYear, an xsd:token, a
+    datatype of the model's own -- keeps the text the shape wrote, since it is
+    compared with the text the platform sends, and is marked when that text is
+    the platform's text of a finite number (#1044). `problem` names a constant
+    the check cannot compare the same way on SQLite and Flink: a number that is
+    ill-typed or not finite, or an ill-typed boolean. SQLite casts such a text
+    to 0, Flink's TRY_CAST to NULL, which never alerts.
+    """
+    datatype = getattr(constant, 'datatype', None)
+    datatype = str(datatype) if datatype is not None else None
+    if datatype in NUMERIC_XSD_TYPES:
+        value = constant.toPython()
+        if isinstance(value, bool) or not isinstance(value, (int, float, decimal.Decimal)) \
+                or not math.isfinite(value):
+            return str(constant), datatype, \
+                'sh:hasValue "%s"^^<%s> is not a finite number' % (constant, datatype)
+        return value, datatype, None
+    if datatype == BOOLEAN_XSD_TYPE:
+        if getattr(constant, 'ill_typed', False):
+            # rdflib has already replaced the text, so only the kind can be named.
+            return str(constant), datatype, \
+                'sh:hasValue with an xsd:boolean constant that is none of true, false, 1 and 0'
+        # toPython() gives Python's True; the check compares the text true or
+        # false, as the platform writes a boolean.
+        return ('true' if constant.toPython() is True else 'false'), datatype, None
+    if datatype is None and not isinstance(constant, Literal):
+        return constant.toPython(), None, None  # an IRI
+    # str() of a literal is its lexical form; toPython() would turn an xsd:gYear
+    # "2020" into the date 2020-01-01.
+    text = str(constant)
+    return text, (NUMBER_TEXT_MARK if is_platform_number_text(text) else datatype), None
+
+
+# sh:hasValue (#965, #1044, #1045). The check compares by the constant's
+# datatype (hasValueType), never by casting a value to the datatype it
+# declares: SQLite truncates CAST('80.5' AS INTEGER) to 80 and casts any text
+# to a BOOLEAN with numeric affinity ('True', 'False' and 'true' are all 0),
+# and Flink's TRY_CAST yields NULL, which never alerts.
+#
+# - A number constant (#965) equals a value whose text is the same number,
+#   whatever its notation: 80, 80.0 and a declared xsd:double 80 all equal
+#   sh:hasValue 80.0 and sh:hasValue 80. Comparing texts could not work on
+#   Flink: the bridge writes a plain 80.0 -- and a declared double 80.0 -- as
+#   80, and passes no type on for a plain number. A string is read by its text,
+#   as sh:datatype reads it (#958): "80.0" is the number 80.0. The text is
+#   matched with the number pattern of sh:datatype before it is cast, so
+#   nothing else is cast. Numbers are compared as DOUBLE, so integers beyond
+#   2^53 are compared approximately, as JavaScript writes them anyway.
+# - A boolean constant (#1045), stored as true or false, is met by the same
+#   boolean: a value declared xsd:boolean (SQLite holds True/False, Flink the
+#   text the model gave, true/false or 1/0), or an untyped value whose text is
+#   exactly true or false -- on Flink that is also a plain boolean, which the
+#   bridge sends without a type. "True", "1" and numbers do not meet it.
+# - Any other constant, a string above all (#1044), is compared with the text
+#   the platform sends. An untyped value by its text, as Flink does: Flink gets
+#   a plain number as the text JavaScript writes for it. A number value, which
+#   SQLite holds typed and in Python's notation, meets the constant only when
+#   the compiler marked the constant as the platform's text of a number
+#   (NUMBER_TEXT_MARK) and it is the same number: plain 1, 1.0 and a declared
+#   double 1 meet "1", nothing but the string "1.0" meets "1.0". A boolean
+#   value is written true or false.
 sql_check_literal_hasvalue = """
 {% set any_number %}^[+-]?(?:\\d+\\.?\\d*|\\.\\d+)(?:[eE][+-]?\\d+)?${% endset %}
+{% set is_number -%}
+  {%- if sqlite %} `val` REGEXP '{{ any_number }}' {%- else %} REGEXP(val, '{{ any_number }}') {%- endif %}
+{%- endset %}
+{% set boolean_text -%}
+  (CASE WHEN LOWER(`val`) IN ('true', '1') THEN 'true' WHEN LOWER(`val`) IN ('false', '0') THEN 'false' ELSE '' END)
+{%- endset %}
 {% set constraint_cond %}
   /* only non-deleted entities with a value present */
   NOT edeleted AND NOT IFNULL(adeleted, false)
   AND attr_typ IS NOT NULL
   /* and the actual value <> the required hasValue constant */
-  AND CASE WHEN IFNULL(`hasValueType`, '') IN (NUMERIC_XSD_TYPES)
-        AND IFNULL(`valueType`, '') IN ('', NUMERIC_XSD_TYPES)
-        AND {%- if sqlite %} `val` REGEXP '{{ any_number }}' {%- else %} REGEXP(val, '{{ any_number }}') {%- endif %}
-      THEN SQL_DIALECT_CAST(val AS DOUBLE) <> SQL_DIALECT_CAST(hasValue AS DOUBLE)
-    WHEN `valueType` = 'http://www.w3.org/2001/XMLSchema#double' THEN SQL_DIALECT_CAST(val as DOUBLE) <>
-        SQL_DIALECT_CAST(hasValue as DOUBLE)
-    WHEN `valueType` = 'http://www.w3.org/2001/XMLSchema#integer' THEN SQL_DIALECT_CAST(val as INTEGER) <>
-        SQL_DIALECT_CAST(hasValue as INTEGER)
-    WHEN `valueType` = 'http://www.w3.org/2001/XMLSchema#boolean' THEN SQL_DIALECT_CAST(val as BOOLEAN) <>
-        SQL_DIALECT_CAST(hasValue as BOOLEAN)
-    ELSE `val` <> `hasValue`END
+  AND CASE
+    WHEN IFNULL(`hasValueType`, '') IN (NUMERIC_XSD_TYPES) THEN
+      CASE WHEN IFNULL(`valueType`, '') IN (STRING_XSD_TYPES, NUMERIC_XSD_TYPES) AND {{ is_number }}
+        THEN SQL_DIALECT_CAST(val AS DOUBLE) <> SQL_DIALECT_CAST(hasValue AS DOUBLE)
+        ELSE true END
+    WHEN `hasValueType` = 'BOOLEAN_XSD_TYPE' THEN
+      CASE WHEN `valueType` = 'BOOLEAN_XSD_TYPE' THEN {{ boolean_text }} <> `hasValue`
+        WHEN IFNULL(`valueType`, '') IN (STRING_XSD_TYPES) THEN `val` <> `hasValue`
+        ELSE true END
+    ELSE
+      CASE WHEN IFNULL(`valueType`, '') IN (STRING_XSD_TYPES) THEN `val` <> `hasValue`
+        WHEN `valueType` = 'BOOLEAN_XSD_TYPE' THEN {{ boolean_text }} <> `hasValue`
+        WHEN `valueType` IN (NUMERIC_XSD_TYPES) THEN
+          NOT (IFNULL(`hasValueType`, '') = 'NUMBER_TEXT_MARK' AND {{ is_number }}
+               AND SQL_DIALECT_CAST(val AS DOUBLE) = SQL_DIALECT_CAST(hasValue AS DOUBLE))
+        ELSE `val` <> `hasValue` END
+    END
 {% endset %}
   SELECT this           AS resource,
   'HasValueConstraintComponent('
@@ -1060,7 +1184,9 @@ FROM A1
 WHERE hasValue IS NOT NULL AND `index` IS NOT NULL AND {{ constraint_cond }}
 """
 sql_check_literal_hasvalue = sql_check_literal_hasvalue.replace(
-    'NUMERIC_XSD_TYPES', ', '.join(f"'{name}'" for name in NUMERIC_XSD_TYPES))
+    'NUMERIC_XSD_TYPES', ', '.join(f"'{name}'" for name in NUMERIC_XSD_TYPES)).replace(
+    'STRING_XSD_TYPES', ', '.join(f"'{name}'" for name in STRING_XSD_TYPES)).replace(
+    'BOOLEAN_XSD_TYPE', BOOLEAN_XSD_TYPE).replace('NUMBER_TEXT_MARK', NUMBER_TEXT_MARK)
 
 # A node shape applied to the object of a relationship (openspec
 # gh-985-instance-declaration-shapes): `sh:node` on the `ngsi-ld:hasObject`
@@ -2668,10 +2794,11 @@ def translate(shaclefile, knowledgefile, prefixes):
         if valuepath == NGSILD['hasValue']:
             check['attributeType'] = 'https://uri.etsi.org/ngsi-ld/Property'
             if hasValue is not None:
-                # The check compares a number constant as a number (#965).
-                datatype = getattr(hasValue, 'datatype', None)
-                check['hasValueType'] = str(datatype) if datatype is not None else None
-                hasValue = hasValue.toPython()
+                # The check compares by the constant's datatype (#965, #1044,
+                # #1045); see sql_check_literal_hasvalue.
+                hasValue, check['hasValueType'], problem = has_value_constant(hasValue)
+                if problem:
+                    depth_problems.add(f'{problem} in path {paths}')
         elif valuepath == NGSILD['hasJSON']:
             check['attributeType'] = 'https://uri.etsi.org/ngsi-ld/JsonProperty'
             check['propertyNodetype'] = '@json'

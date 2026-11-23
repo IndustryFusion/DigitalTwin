@@ -22,6 +22,7 @@ import argparse
 import lib.utils as utils
 import lib.configs as configs
 from lib.utils import NGSILD
+from lib.shacl_properties_to_sql import NUMERIC_XSD_TYPES
 
 
 def parse_args(args=sys.argv[1:]):
@@ -110,6 +111,24 @@ where {
     }
     ORDER BY ?id STR(?field)
 """
+
+
+def value_as_sent(value):
+    """A property's value as the text the checks compare.
+
+    Numbers and booleans keep the Python text the checks are written against.
+    A literal of any other declared datatype keeps its lexical form, which is
+    the text the bridge sends to Flink: toPython() would turn an xsd:gYear
+    "2020" into the date 2020-01-01, so sh:hasValue and the other text checks
+    saw a different value on SQLite than on Flink (#1044). (rdflib still
+    normalises some lexical forms when it reads the model, an xsd:dateTime's Z
+    into +00:00; that is not changed here.)
+    """
+    datatype = getattr(value, 'datatype', None)
+    if isinstance(value, Literal) and datatype is not None \
+            and datatype != XSD.boolean and str(datatype) not in NUMERIC_XSD_TYPES:
+        return Literal(str(value))
+    return value
 
 
 def nullify(field):
@@ -210,7 +229,7 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
             if str(type) == 'https://uri.etsi.org/ngsi-ld/Relationship':
                 attributeValue = nullify(hasObject)
             elif str(type) == 'https://uri.etsi.org/ngsi-ld/Property':
-                attributeValue = nullify(hasValue)
+                attributeValue = nullify(value_as_sent(hasValue))
                 if valueType is None and nodeType == '@value':
                     if isinstance(valueType, int):
                         valueType = XSD.integer

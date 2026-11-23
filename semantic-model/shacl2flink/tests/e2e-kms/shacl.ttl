@@ -176,6 +176,34 @@ SELECT $this ?value ?type
             sh:nodeKind sh:BlankNode ;
             sh:property [ sh:path ngsild:hasValue ;
                     sh:hasValue "1.0" ;
+                    sh:nodeKind sh:Literal ] ] ,
+        # A string constant is compared with the text the platform sends
+        # (#1044): the bridge writes a plain 1, 1.0 and a declared double 1 as
+        # 1, so they meet "1" and not "1.0". A boolean constant is met by the
+        # same boolean (#1045): plain true, a declared xsd:boolean 1 and the
+        # string "true", not "True", the string "1" or the number 1.
+        [ sh:path iffBaseEntities:hasE2EOneText ;
+            sh:nodeKind sh:BlankNode ;
+            sh:property [ sh:path ngsild:hasValue ;
+                    sh:hasValue "1" ;
+                    sh:nodeKind sh:Literal ] ] ,
+        [ sh:path iffBaseEntities:hasE2ETrueValue ;
+            sh:nodeKind sh:BlankNode ;
+            sh:property [ sh:path ngsild:hasValue ;
+                    sh:hasValue true ;
+                    sh:nodeKind sh:Literal ] ] ,
+        # A constant of another datatype is compared like a string constant
+        # (#1044): plain 2020, "2020" and a declared xsd:gYear 2020 meet it.
+        # "NaN" is no text the platform sends for a number: 0 violates it.
+        [ sh:path iffBaseEntities:hasE2EYearValue ;
+            sh:nodeKind sh:BlankNode ;
+            sh:property [ sh:path ngsild:hasValue ;
+                    sh:hasValue "2020"^^xsd:gYear ;
+                    sh:nodeKind sh:Literal ] ] ,
+        [ sh:path iffBaseEntities:hasE2ENaNText ;
+            sh:nodeKind sh:BlankNode ;
+            sh:property [ sh:path ngsild:hasValue ;
+                    sh:hasValue "NaN" ;
                     sh:nodeKind sh:Literal ] ] .
 
 # ------------------------------------------- node shape on a relationship's object
