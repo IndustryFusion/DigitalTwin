@@ -19,6 +19,7 @@ import unittest
 from rdflib import Graph, Namespace, URIRef
 from rdflib.namespace import OWL, RDF, RDFS
 
+from lib.entity import Entity
 import owl2instances
 
 DI = Namespace('http://opcfoundation.org/UA/DI/')
@@ -26,7 +27,7 @@ OPCUA = Namespace('http://opcfoundation.org/UA/')
 BASE = Namespace('https://industryfusion.github.io/contexts/ontology/v0/base/')
 TEST = Namespace('http://my.test/')
 UACORE = Namespace('http://opcfoundation.org/rdf/uacore#')
-GLOBALS = ('g', 'context_graph', 'basens', 'opcuans')
+GLOBALS = ('g', 'context_graph', 'basens', 'opcuans', 'e')
 
 
 class TestAttributeKeys(unittest.TestCase):
@@ -45,7 +46,8 @@ class TestAttributeKeys(unittest.TestCase):
         self.context.bind('test', TEST)
         # the module globals exist only once its main code ran; the test provides them
         self.saved = tuple(getattr(owl2instances, name, None) for name in GLOBALS)
-        for name, value in zip(GLOBALS, (self.g, self.context, BASE, OPCUA)):
+        self.e = Entity('http://my.test/', BASE, OPCUA)
+        for name, value in zip(GLOBALS, (self.g, self.context, BASE, OPCUA, self.e)):
             setattr(owl2instances, name, value)
 
     def tearDown(self):
@@ -62,6 +64,14 @@ class TestAttributeKeys(unittest.TestCase):
 
     def test_absolute_iri(self):
         self.assertEqual(owl2instances.attribute_iri('http://my.test/hasLevel'), URIRef('http://my.test/hasLevel'))
+
+    def test_declared_attributes(self):
+        # the declaration of an entity's attributes resolves the keys the same way
+        owl2instances.declare_attributes({'id': 'urn:x', 'type': 'test:AType', 'di:ConnectsTo': [],
+                                          'test:hasLevel': {}},
+                                         TEST.AType)
+        declared = set(self.e.get_graph().subject_objects(RDFS.domain))
+        self.assertEqual(declared, {(DI.ConnectsTo, OPCUA.BaseObjectType), (TEST.hasLevel, TEST.AType)})
 
     def test_reference_attributes(self):
         self.assertTrue(owl2instances.is_reference_attribute(DI.ConnectsTo))

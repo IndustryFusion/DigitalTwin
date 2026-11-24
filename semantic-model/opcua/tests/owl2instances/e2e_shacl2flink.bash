@@ -21,8 +21,8 @@
 # - test_instance_types.NodeSet2 has a child whose instance uses a subtype that adds the mandatory variable "Extra",
 #   an object of ZetaType that only an Organizes reference of the instance reaches and an object of EtaType that only
 #   a variable's non-hierarchical reference reaches; all lack their mandatory variable. The alerts can only be raised
-#   if UnitSubType, ZetaType and EtaType have their own shapes. A second child uses a subtype that adds only a Method
-#   and lacks Count: UnitType's shape raises one alert for it.
+#   if UnitSubType, ZetaType and EtaType have their own shapes. Two more children use subtypes whose members give no
+#   rule and lack a variable of their supertype: its shape raises the alerts for them.
 # Expects core.ttl from test.bash in this directory, sqlite3 with the pcre2 extension, and shacl2flink's
 # requirements installed. shacl2flink pins other rdflib versions than the opcua tools; SHACL2FLINK_PYTHON names the
 # Python that has them (default python3), as the Build workflow sets it.
@@ -42,6 +42,7 @@ ENTITY_2002=urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k
 ENTITY_2003=urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwMw
 ENTITY_2006=urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwNg
 ENTITY_2007=urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwNw
+ENTITY_2009=urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwOQ
 
 if [ ! -f core.ttl ]; then
     python3 ${OPCUADIR}/nodeset2owl.py ${CORE_NODESET} -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p opcua \
@@ -107,4 +108,5 @@ run_case test_instance_types.NodeSet2 \
     "'${ENTITY_2002}','CountConstraintComponent(${TESTURI}hasExtra)'" \
     "'${ENTITY_2003}','CountConstraintComponent(${TESTURI}hasLevel)'" \
     "'${ENTITY_2006}','CountConstraintComponent(${TESTURI}hasRate)'" \
-    "'${ENTITY_2007}','CountConstraintComponent(${TESTURI}hasCount)'"
+    "'${ENTITY_2007}','CountConstraintComponent(${TESTURI}hasCount)'" \
+    "'${ENTITY_2009}','CountConstraintComponent(${TESTURI}hasAmount)'"

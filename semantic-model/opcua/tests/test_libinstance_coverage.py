@@ -105,6 +105,19 @@ class TestInstanceObjectTypes(unittest.TestCase):
         self.assertIn(EX.ZetaType, found)
         self.assertNotIn(OPCUA.BaseDataVariableType, found)
 
+    def test_variables_behind_references_are_not_followed(self):
+        # the entity pass ignores a variable a reference points to, so what is behind it is no entity
+        self.nodes[EX.far] = (VARIABLE, OPCUA.BaseDataVariableType)
+        self.nodes[EX.ghost] = (OBJECT, EX.GhostType)
+        self.references[(EX.state, OPCUA.NonHierarchicalReferences)] = [(EX.Connects, EX.far)]
+        self.references[(EX.far, OPCUA.NonHierarchicalReferences)] = [(EX.Connects, EX.ghost)]
+        found = coverage.instance_object_types(Graph(), self.rdfutils, [EX.root], [], [])
+        self.assertNotIn(EX.GhostType, found)
+        # the same variable is followed where it is a child as well
+        self.references[(EX.blocks, OPCUA.HasChild)].append((OPCUA.HasComponent, EX.far))
+        found = coverage.instance_object_types(Graph(), self.rdfutils, [EX.root], [], [])
+        self.assertIn(EX.GhostType, found)
+
     def test_methods_are_not_followed(self):
         self.nodes[EX.method] = (METHOD, None)
         self.nodes[EX.behind] = (OBJECT, EX.BehindType)
@@ -192,6 +205,44 @@ class TestNeedsOwnShape(unittest.TestCase):
 
     def test_type_without_definition(self):
         self.assertFalse(self.needs(EX.UnknownType, []))
+
+
+class TestShapeAddsNothing(unittest.TestCase):
+    def setUp(self):
+        self.g = type_graph((EX.SubType, EX.MidType), (EX.MidType, EX.BType))
+        self.shapes = Graph()
+        self.add_shape(EX.BType, EX.hasCount)
+
+    def add_shape(self, objtype, *paths):
+        shape = URIRef(f'{objtype}Shape')
+        self.shapes.add((shape, SH.targetClass, objtype))
+        for path in paths:
+            prop, inner = BNode(), BNode()
+            self.shapes.add((shape, SH.property, prop))
+            self.shapes.add((prop, SH.path, path))
+            self.shapes.add((prop, SH.property, inner))
+            self.shapes.add((inner, SH.path, EX.hasValue))
+
+    def test_same_rules_as_the_nearest_shaped_supertype(self):
+        self.add_shape(EX.SubType, EX.hasCount)
+        self.assertTrue(coverage.shape_adds_nothing(self.g, self.shapes, EX.SubType))
+
+    def test_additional_rule(self):
+        self.add_shape(EX.SubType, EX.hasCount, EX.hasExtra)
+        self.assertFalse(coverage.shape_adds_nothing(self.g, self.shapes, EX.SubType))
+
+    def test_without_shaped_supertype(self):
+        self.add_shape(EX.Empty)
+        self.add_shape(EX.Other, EX.hasCount)
+        self.assertTrue(coverage.shape_adds_nothing(self.g, self.shapes, EX.Empty))
+        self.assertFalse(coverage.shape_adds_nothing(self.g, self.shapes, EX.Other))
+
+    def test_restore(self):
+        before = set(self.shapes)
+        self.add_shape(EX.SubType, EX.hasCount)
+        self.shapes.remove((None, SH.targetClass, EX.BType))
+        coverage.restore(self.shapes, before)
+        self.assertEqual(set(self.shapes), before)
 
 
 class TestDefinesMembers(unittest.TestCase):

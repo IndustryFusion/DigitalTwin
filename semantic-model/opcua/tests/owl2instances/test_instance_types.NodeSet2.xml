@@ -28,6 +28,12 @@ Types which only the instance nodes reach, besides a declaration (opcua/instance
   it: one violation, not two.
 - The instance's Unit/Count variable refers with HasEffect to an object "Eta" of EtaType, which only that reference
   reaches; EtaType defines a mandatory variable "Rate", which Eta lacks.
+- A third child "Unit3" of PlainType (mandatory variable "Amount") uses PlainNoRuleType, whose members give no rule either: a placeholder variable
+  without a value constraint, an optional BaseObjectType object and a reference to a variable. It lacks Amount:
+  one violation.
+- ZetaType itself defines an Organizes reference, and the AlphaType instance has one: Organizes keeps one domain.
+- The instance's Zeta refers with HasEffect to a variable "Far", which refers to an object of GhostType. References to
+  variables are ignored, so there is no GhostType entity, and no shape either.
 -->
 
 <UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" LastModified="2026-11-20T00:00:00Z" xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
@@ -54,6 +60,7 @@ Types which only the instance nodes reach, besides a declaration (opcua/instance
       <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
       <Reference ReferenceType="HasComponent">ns=1;i=1101</Reference>
       <Reference ReferenceType="HasComponent">ns=1;i=1102</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1103</Reference>
     </References>
   </UAObjectType>
   <UAObject NodeId="ns=1;i=1101" BrowseName="1:Unit" ParentNodeId="ns=1;i=1001">
@@ -68,6 +75,14 @@ Types which only the instance nodes reach, besides a declaration (opcua/instance
     <DisplayName>Unit2</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition">ns=1;i=1003</Reference>
+      <Reference ReferenceType="HasModellingRule">i=78</Reference>
+    </References>
+  </UAObject>
+
+  <UAObject NodeId="ns=1;i=1103" BrowseName="1:Unit3" ParentNodeId="ns=1;i=1001">
+    <DisplayName>Unit3</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=1010</Reference>
       <Reference ReferenceType="HasModellingRule">i=78</Reference>
     </References>
   </UAObject>
@@ -116,6 +131,60 @@ Types which only the instance nodes reach, besides a declaration (opcua/instance
     </References>
   </UAMethod>
 
+  <UAObjectType NodeId="ns=1;i=1010" BrowseName="1:PlainType">
+    <DisplayName>PlainType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1951</Reference>
+    </References>
+  </UAObjectType>
+  <UAVariable NodeId="ns=1;i=1951" BrowseName="1:Amount" DataType="Double" ParentNodeId="ns=1;i=1010">
+    <DisplayName>Amount</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=78</Reference>
+    </References>
+  </UAVariable>
+
+  <UAObjectType NodeId="ns=1;i=1008" BrowseName="1:PlainNoRuleType">
+    <DisplayName>PlainNoRuleType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">ns=1;i=1010</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1801</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1802</Reference>
+      <Reference ReferenceType="HasEffect">ns=1;i=1951</Reference>
+    </References>
+  </UAObjectType>
+  <UAVariable NodeId="ns=1;i=1801" BrowseName="1:&lt;Param&gt;" ValueRank="-2" ParentNodeId="ns=1;i=1008">
+    <DisplayName>&lt;Param&gt;</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=11508</Reference>
+    </References>
+  </UAVariable>
+  <UAObject NodeId="ns=1;i=1802" BrowseName="1:Basic" ParentNodeId="ns=1;i=1008">
+    <DisplayName>Basic</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=58</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
+    </References>
+  </UAObject>
+
+  <UAObjectType NodeId="ns=1;i=1009" BrowseName="1:GhostType">
+    <DisplayName>GhostType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1901</Reference>
+    </References>
+  </UAObjectType>
+  <UAVariable NodeId="ns=1;i=1901" BrowseName="1:Haunt" DataType="Double" ParentNodeId="ns=1;i=1009">
+    <DisplayName>Haunt</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=78</Reference>
+    </References>
+  </UAVariable>
+
   <UAObjectType NodeId="ns=1;i=1007" BrowseName="1:EtaType">
     <DisplayName>EtaType</DisplayName>
     <References>
@@ -136,8 +205,16 @@ Types which only the instance nodes reach, besides a declaration (opcua/instance
     <References>
       <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
       <Reference ReferenceType="HasComponent">ns=1;i=1501</Reference>
+      <Reference ReferenceType="Organizes">ns=1;i=1502</Reference>
     </References>
   </UAObjectType>
+  <UAObject NodeId="ns=1;i=1502" BrowseName="1:Listed">
+    <DisplayName>Listed</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=1003</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
+    </References>
+  </UAObject>
   <UAVariable NodeId="ns=1;i=1501" BrowseName="1:Level" DataType="Double" ParentNodeId="ns=1;i=1005">
     <DisplayName>Level</DisplayName>
     <References>
@@ -152,6 +229,7 @@ Types which only the instance nodes reach, besides a declaration (opcua/instance
       <Reference ReferenceType="HasTypeDefinition">ns=1;i=1001</Reference>
       <Reference ReferenceType="HasComponent">ns=1;i=2002</Reference>
       <Reference ReferenceType="HasComponent">ns=1;i=2007</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2009</Reference>
       <Reference ReferenceType="Organizes">ns=1;i=2003</Reference>
       <Reference ReferenceType="Organizes">ns=1;i=2005</Reference>
     </References>
@@ -199,8 +277,38 @@ Types which only the instance nodes reach, besides a declaration (opcua/instance
     <DisplayName>Zeta</DisplayName>
     <References>
       <Reference ReferenceType="HasTypeDefinition">ns=1;i=1005</Reference>
+      <Reference ReferenceType="HasEffect">ns=1;i=2011</Reference>
     </References>
   </UAObject>
+  <UAVariable NodeId="ns=1;i=2011" BrowseName="1:Far" DataType="Double">
+    <DisplayName>Far</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+      <Reference ReferenceType="HasEffect">ns=1;i=2012</Reference>
+    </References>
+  </UAVariable>
+  <UAObject NodeId="ns=1;i=2012" BrowseName="1:Ghost">
+    <DisplayName>Ghost</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=1009</Reference>
+    </References>
+  </UAObject>
+  <UAObject NodeId="ns=1;i=2009" BrowseName="1:Unit3" ParentNodeId="ns=1;i=2001">
+    <DisplayName>Unit3</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=1008</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2010</Reference>
+    </References>
+  </UAObject>
+  <UAVariable NodeId="ns=1;i=2010" BrowseName="1:Label" DataType="Double" ParentNodeId="ns=1;i=2009">
+    <DisplayName>Label</DisplayName>
+    <Value>
+      <Double xmlns="http://opcfoundation.org/UA/2008/02/Types.xsd">2.5</Double>
+    </Value>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+    </References>
+  </UAVariable>
   <UAObject NodeId="ns=1;i=2005" BrowseName="1:Misc">
     <DisplayName>Misc</DisplayName>
     <References>

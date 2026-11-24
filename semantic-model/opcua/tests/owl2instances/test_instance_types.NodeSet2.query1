@@ -5,6 +5,8 @@ ask where {
       rdfs:subClassOf opcua:BaseObjectType .
   test:EtaType a owl:Class ;
       rdfs:subClassOf opcua:BaseObjectType .
+  test:PlainNoRuleType a owl:Class ;
+      rdfs:subClassOf test:PlainType .
   test:hasExtra a owl:ObjectProperty ;
       rdfs:domain test:UnitSubType .
   test:hasLevel a owl:ObjectProperty ;

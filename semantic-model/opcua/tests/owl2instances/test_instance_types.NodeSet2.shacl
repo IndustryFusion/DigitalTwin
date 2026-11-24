@@ -12,6 +12,17 @@ shacl:AlphaTypeShape a sh:NodeShape ;
             sh:maxCount 1 ;
             sh:minCount 1 ;
             sh:nodeKind sh:BlankNode ;
+            sh:path test:hasUnit3 ;
+            sh:property [ sh:class test:PlainType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ a base:SubComponentRelationship ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:BlankNode ;
             sh:path test:hasUnit2 ;
             sh:property [ sh:class test:UnitType ;
                     sh:maxCount 1 ;
@@ -49,6 +60,24 @@ shacl:EtaTypeShape a sh:NodeShape ;
             sh:path test:hasRate ;
             base:hasReferenceType opcua:HasComponent ] ;
     sh:targetClass test:EtaType .
+
+shacl:PlainTypeShape a sh:NodeShape ;
+    sh:property [ sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:or ( [ sh:property [ sh:datatype xsd:double ;
+                                sh:maxCount 1 ;
+                                sh:minCount 1 ;
+                                sh:nodeKind sh:Literal ;
+                                sh:path ngsi-ld:hasValue ] ] [ sh:property [ sh:maxCount 1 ;
+                                sh:minCount 1 ;
+                                sh:or ( [ sh:nodeKind sh:BlankNode ;
+                                            sh:property [ sh:datatype xsd:double ;
+                                                    sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
+                                sh:path ngsi-ld:hasValueList ] ] ) ;
+            sh:path test:hasAmount ;
+            base:hasReferenceType opcua:HasComponent ] ;
+    sh:targetClass test:PlainType .
 
 shacl:UnitSubTypeShape a sh:NodeShape ;
     sh:property [ sh:maxCount 1 ;
@@ -116,6 +145,16 @@ shacl:ZetaTypeShape a sh:NodeShape ;
                                                     sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
                                 sh:path ngsi-ld:hasValueList ] ] ) ;
             sh:path test:hasLevel ;
-            base:hasReferenceType opcua:HasComponent ] ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ a base:PeerRelationship ;
+            sh:minCount 0 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path opcua:Organizes ;
+            sh:property [ sh:class test:UnitType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasReferenceType opcua:Organizes ] ;
     sh:targetClass test:ZetaType .
 

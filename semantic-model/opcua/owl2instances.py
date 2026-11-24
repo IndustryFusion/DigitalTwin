@@ -193,6 +193,7 @@ deep_additions = defaultdict(set)
 # refer to the same declaration node)
 declaration_shapes = {}
 empty_declarations = set()       # declarations whose additions give no rule
+covered_types = set()            # instance types whose own shape would add nothing to their supertype's
 
 
 def check_object_consistency(shapenode, attribute_path, classtype, suppress_warnings=False, add_entity=True):
@@ -296,8 +297,9 @@ def scan_instance_types(rootentities):
     """Give every type of the instance nodes its shape, wherever the type occurs in the model.
 
     The type pass only reaches types through the type definitions of children, so a type which only occurs in an
-    instance declaration or behind a non-hierarchical reference would get no shape. Types that add no member to a
-    supertype with a shape stay covered by that shape.
+    instance declaration or behind a non-hierarchical reference would get no shape. Types that add no rule to a
+    supertype with a shape stay covered by that shape: whether a member gives a rule is the type scan's decision, so
+    such a type is scanned and everything the scan added is taken back.
     """
     found = coverage.instance_object_types(g, rdfutils, rootentities, ignored_hierarchical_references,
                                            ignored_references)
@@ -307,7 +309,18 @@ def scan_instance_types(rootentities):
                                     ignored_references):
             logger.debug(f"Scanning type of instance nodes: {objtype}")
             typenode = next(g.subjects(UARDF['definesType'], objtype))
+            before = [(graph, set(graph)) for graph in (shaclg.get_graph(), e.get_graph())]
+            additions = {declaring: set(paths) for declaring, paths in deep_additions.items()}
+            empty = set(empty_declarations)
             scan_type(typenode, objtype)
+            if coverage.shape_adds_nothing(g, shaclg.get_graph(), objtype):
+                for graph, triples in before:
+                    coverage.restore(graph, triples)
+                deep_additions.clear()
+                deep_additions.update(additions)
+                empty_declarations.clear()
+                empty_declarations.update(empty)
+                covered_types.add(URIRef(objtype))
 
 
 def attribute_iri(key):
@@ -330,19 +343,21 @@ def is_reference_attribute(attribute):
         opcuans['References'] in g.transitive_objects(attribute, RDFS.subPropertyOf)
 
 
-def declare_attributes(instance, instancetype):
-    """Declare every attribute of the entity in the ontology for which no domain covers the entity's type.
+def attribute_domain(attribute, instancetype):
+    """The domain an attribute is declared with: reference attributes get BaseObjectType rather than every type that
+    uses them, because several domains are an intersection in OWL."""
+    return opcuans['BaseObjectType'] if is_reference_attribute(attribute) else instancetype
 
-    Reference attributes (is_reference_attribute) are declared once for BaseObjectType rather than for every type
-    that uses them (several domains are an intersection in OWL)."""
+
+def declare_attributes(instance, instancetype):
+    """Declare every attribute of the entity in the ontology for which no domain covers the entity's type."""
     supertypes = coverage.all_supertypes([g, e.get_graph()], instancetype)
     for key in instance:
         if key in coverage.ENTITY_KEYS:
             continue
         attribute = attribute_iri(key)
         if not coverage.has_covering_domain([g, e.get_graph()], attribute, supertypes):
-            domain = opcuans['BaseObjectType'] if is_reference_attribute(attribute) else instancetype
-            e.add_instancetype(domain, attribute)
+            e.add_instancetype(attribute_domain(attribute, instancetype), attribute)
 
 
 def report_uncovered_terms():
@@ -350,7 +365,8 @@ def report_uncovered_terms():
     uncovered = coverage.uncovered_terms(jsonld.instances, attribute_iri,
                                          shaclg.get_graph(), [g, e.get_graph()],
                                          exempt_attributes=[basens['hasNodeRef']],
-                                         lacks_shape=lambda objtype, targets: coverage.lacks_shape(
+                                         lacks_shape=lambda objtype, targets:
+                                         objtype not in covered_types and coverage.lacks_shape(
                                              g, rdfutils, objtype, targets, ignored_hierarchical_references,
                                              ignored_references))
     if uncovered:
@@ -589,7 +605,7 @@ non-owning or non-hierarchical reference {reftype} This will be ignored."
             return True
         shacl_rule['path'] = full_attribute_name
         rdfutils.get_modelling_rule(g, t, shacl_rule, instancetype)
-        e.add_instancetype(instancetype, full_attribute_name)
+        e.add_instancetype(attribute_domain(full_attribute_name, instancetype), full_attribute_name)
         e.add_type(shclass)
         maxcount = None
 
@@ -1019,8 +1035,9 @@ Machinery Folder was found in instance ontology.")
             # Shapes of a type model without instances: nothing more to cover
             rootentities = []
         elif rootentities[0] is None:
+            # the results of the type pass, as before the instance types were scanned
+            report_deep_additions()
             if shaclname is not None:
-                # the shapes of the type pass, as before the instance types were scanned
                 shaclg.serialize(destination=shaclname)
             print(f"Error: no instance of type {rootinstancetype} found. Instances are usually dynamic nodes, "
                   "which are only exported when the nodeset was translated with nodeset2owl.py --serverUri.")

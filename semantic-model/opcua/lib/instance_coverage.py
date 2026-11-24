@@ -20,7 +20,8 @@ declarations add. This module finds the types the instance nodes use and decides
 own; the entity pass declares with it every attribute of the instances which no domain in the ontologies covers; and
 it checks the written outputs for types and attributes of the instances that are still not covered.
 """
-from rdflib import URIRef
+from rdflib import BNode, Graph, URIRef
+from rdflib.compare import isomorphic
 from rdflib.namespace import RDFS, SH
 
 from lib.utils import UARDF
@@ -33,8 +34,9 @@ def instance_object_types(g, rdfutils, roots, ignored_hierarchical_references, i
     """Object types of the instance nodes reachable from the root entities, in the order they are first met.
 
     Follows the references the entity pass follows: hierarchical children (without the ignored hierarchical
-    references), Organizes, and non-hierarchical references (without the ignored references), also through
-    variables, whose children and references the entity pass follows too; only object nodes contribute a type.
+    references), Organizes, and non-hierarchical references (without the ignored references). Variables which are
+    children are followed as well, as in the entity pass; a variable a reference points to is not. Only object nodes
+    contribute a type.
 
     Args:
         g (Graph): instance ontology with its imports
@@ -49,28 +51,28 @@ def instance_object_types(g, rdfutils, roots, ignored_hierarchical_references, i
     opcuans = rdfutils.opcuans
     seen = set()
     found = []
-    stack = [root for root in reversed(roots) if root is not None]
+    stack = [(root, False) for root in reversed(roots) if root is not None]
     while stack:
-        node = stack.pop()
+        node, is_child = stack.pop()
         if node in seen:
             continue
-        seen.add(node)
         nodeclass, nodetype = rdfutils.get_type(g, node)
         is_object = rdfutils.isObjectNodeClass(nodeclass)
-        if not is_object and not rdfutils.isVariableNodeClass(nodeclass):
+        if not is_object and not (is_child and rdfutils.isVariableNodeClass(nodeclass)):
             continue
+        seen.add(node)
         if is_object and nodetype is not None and nodetype not in found:
             found.append(nodetype)
         targets = []
         for reference, target in rdfutils.get_all_subreferences(g, node, opcuans['HasChild']):
             if reference not in ignored_hierarchical_references:
-                targets.append(target)
+                targets.append((target, True))
         if is_object:
             for _, target in rdfutils.get_all_subreferences(g, node, opcuans['Organizes']):
-                targets.append(target)
+                targets.append((target, False))
         for reference, target in rdfutils.get_all_subreferences(g, node, opcuans['NonHierarchicalReferences']):
             if reference not in ignored_references:
-                targets.append(target)
+                targets.append((target, False))
         stack.extend(reversed(targets))
     return found
 
@@ -106,12 +108,14 @@ def defines_members(g, rdfutils, typenode, ignored_hierarchical_references, igno
 
 
 def needs_own_shape(g, rdfutils, objtype, shaped_types, ignored_hierarchical_references, ignored_references):
-    """Decide whether a type of the instances needs a node shape of its own.
+    """Decide whether a type of the instances may need a node shape of its own.
 
-    A type needs its own shape if it, or a type between it and its nearest supertype with a shape, defines a member.
+    A type may need its own shape if it, or a type between it and its nearest supertype with a shape, defines a member.
     Otherwise the supertype's shape covers its entities through rdfs:subClassOf (a second shape would only repeat
     its rules), or, without such a supertype, neither the type nor its supertypes define a rule (a shape would be
     empty). A type without a definition cannot get a shape.
+
+    Whether the members give a rule is only known after the scan: see shape_adds_nothing().
 
     Returns:
         bool: True if the type scan has to run for objtype
@@ -140,6 +144,48 @@ def lacks_shape(g, rdfutils, objtype, shaped_types, ignored_hierarchical_referen
     if next(g.subjects(UARDF['definesType'], URIRef(objtype)), None) is None:
         return True
     return needs_own_shape(g, rdfutils, objtype, shaped_types, ignored_hierarchical_references, ignored_references)
+
+
+def shape_content(shapes, shape):
+    """The rules of a node shape with everything reachable through blank nodes, without its name and target."""
+    content = Graph()
+    subject = URIRef('urn:shape')
+    todo = [(shape, subject)]
+    seen = set()
+    while todo:
+        node, name = todo.pop()
+        if node in seen:
+            continue
+        seen.add(node)
+        for predicate, value in shapes.predicate_objects(node):
+            if node == shape and predicate == SH.targetClass:
+                continue
+            content.add((name, predicate, value))
+            if isinstance(value, BNode):
+                todo.append((value, value))
+    return content
+
+
+def shape_adds_nothing(g, shapes, objtype):
+    """True if the node shape of a type says nothing its nearest supertype with a node shape does not say, or, without
+    such a supertype, has no rule at all: its members give no rule (Methods, variables without a constraint, objects
+    of types without rules, references to variables)."""
+    shape = next(shapes.subjects(SH.targetClass, URIRef(objtype)), None)
+    if shape is None or (shape, SH.property, None) not in shapes:
+        return True
+    for supertype in supertype_chain(g, objtype)[1:]:
+        supershape = next(shapes.subjects(SH.targetClass, supertype), None)
+        if supershape is not None:
+            return isomorphic(shape_content(shapes, shape), shape_content(shapes, supershape))
+    return False
+
+
+def restore(graph, triples):
+    """Give the graph back the content it had."""
+    for triple in set(graph) - triples:
+        graph.remove(triple)
+    for triple in triples - set(graph):
+        graph.add(triple)
 
 
 def shape_order(g, types):
