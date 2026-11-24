@@ -7,7 +7,27 @@
         ],
         "test:hasCount": {
             "type": "Property",
-            "value": 3
+            "value": 3,
+            "opcua:HasEffect": [
+                {
+                    "type": "Relationship",
+                    "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwNg"
+                }
+            ]
+        }
+    },
+    {
+        "type": "test:UnitMethodType",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwNw",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "test:hasLabel": {
+            "type": "Property",
+            "value": {
+                "@value": 1.5,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
         }
     },
     {
@@ -20,6 +40,12 @@
             {
                 "type": "Relationship",
                 "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwMg"
+            }
+        ],
+        "test:hasUnit2": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwNw"
             }
         ],
         "opcua:Organizes": [
@@ -36,6 +62,13 @@
     {
         "type": "opcua:BaseObjectType",
         "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwNQ",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ]
+    },
+    {
+        "type": "test:EtaType",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwNg",
         "@context": [
             "http://localhost:8099/context.jsonld"
         ]

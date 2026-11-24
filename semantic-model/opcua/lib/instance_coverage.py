@@ -33,7 +33,8 @@ def instance_object_types(g, rdfutils, roots, ignored_hierarchical_references, i
     """Object types of the instance nodes reachable from the root entities, in the order they are first met.
 
     Follows the references the entity pass follows: hierarchical children (without the ignored hierarchical
-    references), Organizes, and non-hierarchical references (without the ignored references).
+    references), Organizes, and non-hierarchical references (without the ignored references), also through
+    variables, whose children and references the entity pass follows too; only object nodes contribute a type.
 
     Args:
         g (Graph): instance ontology with its imports
@@ -55,16 +56,18 @@ def instance_object_types(g, rdfutils, roots, ignored_hierarchical_references, i
             continue
         seen.add(node)
         nodeclass, nodetype = rdfutils.get_type(g, node)
-        if not rdfutils.isObjectNodeClass(nodeclass):
+        is_object = rdfutils.isObjectNodeClass(nodeclass)
+        if not is_object and not rdfutils.isVariableNodeClass(nodeclass):
             continue
-        if nodetype is not None and nodetype not in found:
+        if is_object and nodetype is not None and nodetype not in found:
             found.append(nodetype)
         targets = []
         for reference, target in rdfutils.get_all_subreferences(g, node, opcuans['HasChild']):
             if reference not in ignored_hierarchical_references:
                 targets.append(target)
-        for _, target in rdfutils.get_all_subreferences(g, node, opcuans['Organizes']):
-            targets.append(target)
+        if is_object:
+            for _, target in rdfutils.get_all_subreferences(g, node, opcuans['Organizes']):
+                targets.append(target)
         for reference, target in rdfutils.get_all_subreferences(g, node, opcuans['NonHierarchicalReferences']):
             if reference not in ignored_references:
                 targets.append(target)
@@ -83,14 +86,17 @@ def supertype_chain(g, objtype):
 
 
 def defines_members(g, rdfutils, typenode, ignored_hierarchical_references, ignored_references):
-    """True if the type node defines a member of its own: a child, an Organizes or non-hierarchical reference
-    (without the ignored ones), or an interface."""
+    """True if the type node defines a member of its own that gives a rule: a child other than a Method, an
+    Organizes or non-hierarchical reference (without the ignored ones), or an interface."""
     opcuans = rdfutils.opcuans
     if next(g.objects(typenode, opcuans['HasInterface']), None) is not None:
         return True
-    for reference, _ in rdfutils.get_all_subreferences(g, typenode, opcuans['HasChild']):
-        if reference not in ignored_hierarchical_references:
-            return True
+    for reference, child in rdfutils.get_all_subreferences(g, typenode, opcuans['HasChild']):
+        if reference in ignored_hierarchical_references:
+            continue
+        if rdfutils.isMethodNodeClass(rdfutils.get_type(g, child)[0]):
+            continue  # a Method gives no rule
+        return True
     if rdfutils.get_all_subreferences(g, typenode, opcuans['Organizes']):
         return True
     for reference, _ in rdfutils.get_all_subreferences(g, typenode, opcuans['NonHierarchicalReferences']):
@@ -196,7 +202,7 @@ def referred_entities(value):
     return [v['object'] for v in values if isinstance(v, dict) and v.get('type') == 'Relationship' and 'object' in v]
 
 
-def uncovered_terms(instances, expand, shapes, ontologies, exempt_namespaces=(), lacks_shape=None):
+def uncovered_terms(instances, expand, shapes, ontologies, exempt_attributes=(), lacks_shape=None):
     """Types and attributes of the instances that the shapes or the ontologies do not cover.
 
     Args:
@@ -204,8 +210,7 @@ def uncovered_terms(instances, expand, shapes, ontologies, exempt_namespaces=(),
         expand (callable): maps a compact name of the instances to its IRI
         shapes (Graph): the written shapes
         ontologies (list(Graph)): the written ontology and the loaded ontologies
-        exempt_namespaces (iterable(str)): namespaces whose attributes every entity may carry, e.g. the base
-            ontology's node reference
+        exempt_attributes (iterable(URIRef)): attributes that are not reported, e.g. the node reference
         lacks_shape (callable): tells for a type and the set of targeted types whether the type is not covered by
             the shapes (see lacks_shape()). Without it, a type is covered if a node shape targets it or a supertype.
 
@@ -214,9 +219,18 @@ def uncovered_terms(instances, expand, shapes, ontologies, exempt_namespaces=(),
         with a gap
     """
     targets = set(shapes.objects(None, SH.targetClass))
+    per_type = {}       # type -> (supertypes, constrained paths); computed once per type, not per entity
+    covered = {}        # (type, attribute) -> declared with a covering domain
+
+    def type_info(objtype):
+        if objtype not in per_type:
+            supertypes = all_supertypes(ontologies, objtype)
+            per_type[objtype] = (supertypes, constrained_paths(shapes, supertypes))
+        return per_type[objtype]
+
     declared_paths = {}
     for instance in instances:
-        supertypes = all_supertypes(ontologies, URIRef(expand(instance['type'])))
+        supertypes, _ = type_info(URIRef(expand(instance['type'])))
         for key, value in instance.items():
             if key in ENTITY_KEYS:
                 continue
@@ -229,18 +243,21 @@ def uncovered_terms(instances, expand, shapes, ontologies, exempt_namespaces=(),
     result = {}
     for instance in instances:
         objtype = URIRef(expand(instance['type']))
-        supertypes = all_supertypes(ontologies, objtype)
-        gaps = result.setdefault(objtype, {'no_shape': False, 'undeclared': set(), 'unconstrained': set()})
-        if lacks_shape(objtype, targets) if lacks_shape is not None else not supertypes & targets:
-            gaps['no_shape'] = True
-        paths = constrained_paths(shapes, supertypes) | declared_paths.get(instance['id'], set())
+        supertypes, type_paths = type_info(objtype)
+        if objtype not in result:
+            no_shape = lacks_shape(objtype, targets) if lacks_shape is not None else not supertypes & targets
+            result[objtype] = {'no_shape': no_shape, 'undeclared': set(), 'unconstrained': set()}
+        gaps = result[objtype]
+        paths = type_paths | declared_paths.get(instance['id'], set())
         for key in instance:
             if key in ENTITY_KEYS:
                 continue
             attribute = URIRef(expand(key))
-            if any(str(attribute).startswith(str(ns)) for ns in exempt_namespaces):
+            if attribute in exempt_attributes:
                 continue
-            if not has_covering_domain(ontologies, attribute, supertypes):
+            if (objtype, attribute) not in covered:
+                covered[(objtype, attribute)] = has_covering_domain(ontologies, attribute, supertypes)
+            if not covered[(objtype, attribute)]:
                 gaps['undeclared'].add(attribute)
             if attribute not in paths:
                 gaps['unconstrained'].add(attribute)

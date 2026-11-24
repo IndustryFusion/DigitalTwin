@@ -19,8 +19,10 @@
 # - test_declaration_types.NodeSet2 has a child "State" of BetaType which only a folder's declaration adds; its
 #   instance lacks the mandatory variable "Level".
 # - test_instance_types.NodeSet2 has a child whose instance uses a subtype that adds the mandatory variable "Extra",
-#   and an object of ZetaType that only an Organizes reference of the instance reaches; both lack their mandatory
-#   variable. The alerts can only be raised if UnitSubType and ZetaType have their own shapes.
+#   an object of ZetaType that only an Organizes reference of the instance reaches and an object of EtaType that only
+#   a variable's non-hierarchical reference reaches; all lack their mandatory variable. The alerts can only be raised
+#   if UnitSubType, ZetaType and EtaType have their own shapes. A second child uses a subtype that adds only a Method
+#   and lacks Count: UnitType's shape raises one alert for it.
 # Expects core.ttl from test.bash in this directory, sqlite3 with the pcre2 extension, and shacl2flink's
 # requirements installed. shacl2flink pins other rdflib versions than the opcua tools; SHACL2FLINK_PYTHON names the
 # Python that has them (default python3), as the Build workflow sets it.
@@ -38,6 +40,8 @@ PACKAGE=$WORKDIR/package
 # Entities are urn:uaentity:<base64url of svu=urn:test:server;nsu=http://my.test/;i=<n>>
 ENTITY_2002=urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwMg
 ENTITY_2003=urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwMw
+ENTITY_2006=urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwNg
+ENTITY_2007=urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwNw
 
 if [ ! -f core.ttl ]; then
     python3 ${OPCUADIR}/nodeset2owl.py ${CORE_NODESET} -i ${BASE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p opcua \
@@ -99,6 +103,8 @@ run_case() {
 run_case test_declaration_types.NodeSet2 "the missing mandatory variable of the declared child is alerted" \
     "'${ENTITY_2003}','CountConstraintComponent(${TESTURI}hasLevel)'"
 run_case test_instance_types.NodeSet2 \
-    "the missing mandatory variables of the instance's subtype and of the organized object are alerted" \
+    "the missing mandatory variables of the instance's subtypes and of the objects only references reach are alerted" \
     "'${ENTITY_2002}','CountConstraintComponent(${TESTURI}hasExtra)'" \
-    "'${ENTITY_2003}','CountConstraintComponent(${TESTURI}hasLevel)'"
+    "'${ENTITY_2003}','CountConstraintComponent(${TESTURI}hasLevel)'" \
+    "'${ENTITY_2006}','CountConstraintComponent(${TESTURI}hasRate)'" \
+    "'${ENTITY_2007}','CountConstraintComponent(${TESTURI}hasCount)'"

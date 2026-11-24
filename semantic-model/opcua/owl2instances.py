@@ -21,7 +21,7 @@ import lib.jsonld as libjsonld
 from lib.utils import warnings, print_warning
 from collections import defaultdict
 from rdflib import Graph, Namespace, URIRef, BNode
-from rdflib.namespace import OWL, RDF, SH
+from rdflib.namespace import OWL, RDF, RDFS, SH
 import argparse
 import lib.utils as utils
 from lib.utils import RdfUtils, OntologyLoader, UARDF
@@ -310,27 +310,46 @@ def scan_instance_types(rootentities):
             scan_type(typenode, objtype)
 
 
+def attribute_iri(key):
+    """The IRI of an attribute key of the instances.
+
+    Most keys are prefixed with the context's prefixes; the keys of Organizes and non-hierarchical references are
+    prefixed with the instance ontology's (g.qname), which the context may name differently or not at all."""
+    prefix = key.split(':', 1)[0]
+    if ':' in key and prefix not in dict(context_graph.namespace_manager.namespaces()) and \
+            prefix in dict(g.namespace_manager.namespaces()):
+        return URIRef(g.namespace_manager.expand_curie(key))
+    return URIRef(utils.expand_term(context_graph, key))
+
+
+def is_reference_attribute(attribute):
+    """True for attributes any object may carry: the node reference and OPC UA reference types (Organizes,
+    non-hierarchical references), whose sub-property chain reaches References. Semantic bridge attributes are
+    sub-properties of uardf:semanticBridgeReferenceType instead."""
+    return attribute == basens['hasNodeRef'] or \
+        opcuans['References'] in g.transitive_objects(attribute, RDFS.subPropertyOf)
+
+
 def declare_attributes(instance, instancetype):
     """Declare every attribute of the entity in the ontology for which no domain covers the entity's type.
 
-    The node reference, which every entity carries with -nr, is declared once for BaseObjectType rather than for
-    every type (several domains are an intersection in OWL)."""
+    Reference attributes (is_reference_attribute) are declared once for BaseObjectType rather than for every type
+    that uses them (several domains are an intersection in OWL)."""
     supertypes = coverage.all_supertypes([g, e.get_graph()], instancetype)
     for key in instance:
         if key in coverage.ENTITY_KEYS:
             continue
-        attribute = URIRef(utils.expand_term(context_graph, key))
+        attribute = attribute_iri(key)
         if not coverage.has_covering_domain([g, e.get_graph()], attribute, supertypes):
-            domain = opcuans['BaseObjectType'] if attribute == basens['hasNodeRef'] else instancetype
+            domain = opcuans['BaseObjectType'] if is_reference_attribute(attribute) else instancetype
             e.add_instancetype(domain, attribute)
 
 
 def report_uncovered_terms():
     """Warn once about the types and attributes of the instances which the shapes or the ontology do not cover."""
-    uncovered = coverage.uncovered_terms(jsonld.instances,
-                                         lambda name: utils.expand_term(context_graph, name),
+    uncovered = coverage.uncovered_terms(jsonld.instances, attribute_iri,
                                          shaclg.get_graph(), [g, e.get_graph()],
-                                         exempt_namespaces=[basens],
+                                         exempt_attributes=[basens['hasNodeRef']],
                                          lacks_shape=lambda objtype, targets: coverage.lacks_shape(
                                              g, rdfutils, objtype, targets, ignored_hierarchical_references,
                                              ignored_references))
@@ -1000,6 +1019,9 @@ Machinery Folder was found in instance ontology.")
             # Shapes of a type model without instances: nothing more to cover
             rootentities = []
         elif rootentities[0] is None:
+            if shaclname is not None:
+                # the shapes of the type pass, as before the instance types were scanned
+                shaclg.serialize(destination=shaclname)
             print(f"Error: no instance of type {rootinstancetype} found. Instances are usually dynamic nodes, "
                   "which are only exported when the nodeset was translated with nodeset2owl.py --serverUri.")
             sys.exit(1)

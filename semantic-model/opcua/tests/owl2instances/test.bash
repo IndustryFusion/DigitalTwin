@@ -183,7 +183,7 @@ UNCOVERED_ALLOWED=" test_object_types.NodeSet2 test_references_to_typedefinition
 test_variable_enum.NodeSet2 test_object_wrong.NodeSet2 test_reference_types_properties.Nodeset2 \
 test_variable_arrays_vrs.NodeSet2 test_variable_arrays.NodeSet2 test_declaration_additions.NodeSet2 \
 test_declaration_additions_violations.NodeSet2 test_browsename_namespaces.NodeSet2 \
-test_browsename_namespaces_deep.NodeSet2 "
+test_browsename_namespaces_deep.NodeSet2 test_placeholder_membership.NodeSet2 "
 
 # Terms the warning has to name, per case: a member only the instance adds, a declaration addition more than one
 # relationship deep, an Organizes reference only the instance has.
@@ -381,6 +381,27 @@ if grep UNCOVERED_INSTANCE_TERMS output.log | grep -q 'hasNodeRef'; then
     exit 1
 fi
 echo "Success: the node reference is declared once and not reported"
+echo "==> test a type model without instances still gets its shapes"
+echo --------------------------------------------------------------
+# Without --serverUri nodeset2owl exports no (dynamic) instance nodes
+python3 ${NODESET2OWL} test_instance_types.NodeSet2.xml -i ${BASE_ONTOLOGY} ${CORE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p test -o ${NODESET2OWL_RESULT} || exit 1
+startstop_context_server "Starting context server" true
+for mode in "" "-so"; do
+    rm -f ${SHACL}
+    STATUS=0
+    python3 ${OWL2INSTANCES} ${mode:+"$mode"} -t ${TESTURI}AlphaType -n ${TESTURI} ${NODESET2OWL_RESULT} -xc ${LOCAL_CONTEXT} > output.log 2>&1 || STATUS=$?
+    EXPECTED_STATUS=1
+    if [ -n "$mode" ]; then
+        EXPECTED_STATUS=0
+    fi
+    if [ "$STATUS" != "$EXPECTED_STATUS" ] || ! grep -q 'sh:targetClass test:UnitType' ${SHACL}; then
+        echo "Mode '$mode': exit status $STATUS (expected $EXPECTED_STATUS) or no shapes in ${SHACL}. Exiting with error."
+        tail -3 output.log
+        exit 1
+    fi
+done
+startstop_context_server "Stopping context server" false
+echo "Success: the shapes are written without instances"
 echo "==> test the shape of a type does not depend on the path to it"
 echo ----------------------------------------------------------------
 # BetaType is reached through a folder's declaration in test_declaration_types.NodeSet2 (shapes compared above);

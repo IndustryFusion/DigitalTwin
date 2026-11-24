@@ -25,6 +25,7 @@ EX = Namespace('http://example.org/')
 BASE = Namespace('https://industryfusion.github.io/contexts/ontology/v0/base/')
 OBJECT = 'object'
 VARIABLE = 'variable'
+METHOD = 'method'
 
 
 class StubRdfUtils:
@@ -40,6 +41,12 @@ class StubRdfUtils:
 
     def isObjectNodeClass(self, nodeclass):
         return nodeclass == OBJECT
+
+    def isVariableNodeClass(self, nodeclass):
+        return nodeclass == VARIABLE
+
+    def isMethodNodeClass(self, nodeclass):
+        return nodeclass == METHOD
 
     def get_all_subreferences(self, g, node, reference):
         return list(self.references.get((node, reference), []))
@@ -89,6 +96,22 @@ class TestInstanceObjectTypes(unittest.TestCase):
         self.assertNotIn(OPCUA.BaseDataVariableType, found)
         self.assertIn(EX.PropertyChildType, found)
         self.assertIn(EX.IgnoredType, found)
+
+    def test_objects_behind_variables_are_reached(self):
+        # the entity pass follows a variable's children and references: an object only reached that way is an entity
+        self.nodes[EX.target] = (OBJECT, EX.ZetaType)
+        self.references[(EX.level, OPCUA.NonHierarchicalReferences)] = [(EX.Connects, EX.target)]
+        found = coverage.instance_object_types(Graph(), self.rdfutils, [EX.root], [], [])
+        self.assertIn(EX.ZetaType, found)
+        self.assertNotIn(OPCUA.BaseDataVariableType, found)
+
+    def test_methods_are_not_followed(self):
+        self.nodes[EX.method] = (METHOD, None)
+        self.nodes[EX.behind] = (OBJECT, EX.BehindType)
+        self.references[(EX.root, OPCUA.HasChild)].append((OPCUA.HasComponent, EX.method))
+        self.references[(EX.method, OPCUA.HasChild)] = [(OPCUA.HasProperty, EX.behind)]
+        found = coverage.instance_object_types(Graph(), self.rdfutils, [EX.root], [], [])
+        self.assertNotIn(EX.BehindType, found)
 
     def test_no_roots(self):
         self.assertEqual(coverage.instance_object_types(Graph(), self.rdfutils, [None], [], []), [])
@@ -172,6 +195,13 @@ class TestNeedsOwnShape(unittest.TestCase):
 
 
 class TestDefinesMembers(unittest.TestCase):
+    def test_methods_give_no_rule(self):
+        rdfutils = StubRdfUtils(nodes={EX.method: (METHOD, None), EX.count: (VARIABLE, OPCUA.BaseDataVariableType)},
+                                references={(EX.typenode, OPCUA.HasChild): [(OPCUA.HasComponent, EX.method)]})
+        self.assertFalse(coverage.defines_members(Graph(), rdfutils, EX.typenode, [], []))
+        rdfutils.references[(EX.typenode, OPCUA.HasChild)].append((OPCUA.HasComponent, EX.count))
+        self.assertTrue(coverage.defines_members(Graph(), rdfutils, EX.typenode, [], []))
+
     def test_interface_and_organizes_count(self):
         g = Graph()
         g.add((EX.node, OPCUA.HasInterface, EX.interfaceNode))
@@ -197,7 +227,7 @@ class TestUncoveredTerms(unittest.TestCase):
 
     def uncovered(self, instances):
         return coverage.uncovered_terms(instances, self.expand, self.shapes, [self.ontology],
-                                        exempt_namespaces=[BASE])
+                                        exempt_attributes=[BASE.hasNodeRef])
 
     def test_covered_subtype_entity(self):
         instances = [{'id': 'urn:x', 'type': 'ex:BSubType', '@context': [], 'ex:hasLevel': {},

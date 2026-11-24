@@ -25,7 +25,8 @@
   none (design D1). Verified by 5.1 and 5.2: on main, `test_instance_types` has no shape for `UnitSubType` and
   `ZetaType` and pyshacl reports it conformant; with the change both shapes exist and both violations are reported.
 - [x] 2.2 Keep `--shacl-only`, `--type-all`, `-eid` and `--maximalshacl` working with the earlier root entities.
-  Verified: all existing cases in `tests/owl2instances/test.bash` pass unchanged.
+  Verified: all existing cases in `tests/owl2instances/test.bash` pass unchanged, and its no-instances check (shapes
+  written with and without `-so`, exit status 0 and 1).
 
 ## 3. Attributes of the entities are declared
 
@@ -86,16 +87,16 @@
 - [x] 5.7 *Example packages*: run `make kms-packages kms-packages-check` in `semantic-model/opcua` with the change and
   with main; compare `model-instance.jsonld` (identical), `shacl.ttl` (isomorphic) and list what `entities.ttl` gains.
   Verified: shapes, context and instances of all three identical to main; `entities.ttl` of pump and simple too;
-  laser's gains 28 triples (none removed), among them the Machinery building blocks' `hasMachineryItemState` and
+  laser's gains 16 triples (none removed), among them the Machinery building blocks' `hasMachineryItemState` and
   `hasMachineryOperationMode` with domain `FolderType`; `kms-packages-check` passes.
 - [x] 5.8 End-to-end: `tests/owl2instances/e2e_shacl2flink.bash` builds both cases into KMS packages with
   `owl2kms.py`, runs them through shacl2flink's SQLite check and asserts the alerts: `hasLevel` on `State`; `hasExtra`
   on `Unit`, `hasLevel` on `Zeta`, `hasRate` on `Eta` and `hasCount` on `Unit2`. Part of the opcua `test` target; in CI, shacl2flink's Python dependencies live
   in their own venv (`SHACL2FLINK_PYTHON`), because they pin other rdflib versions than the opcua tools.
 - [x] 5.9 shacl2flink compiles the expected shapes: `make test-opcua-shapes` in `semantic-model/shacl2flink`.
-- [x] 5.10 Coverage of the changed code above 80 %, stated in the Pull Request. Measured: 33 of 34 changed statements
-  of `owl2instances.py` (97 %; the miss is `--shacl-only` on a type model without instances),
-  `lib/instance_coverage.py` 99 %, `lib` 87 %.
+- [x] 5.10 Coverage of the changed code above 80 %, stated in the Pull Request. Measured: 40 of 44 changed statements
+  of `owl2instances.py` in the two cases (91 %); the other four run in `tests/test_owl2instances_attributes.py` and in
+  the no-instances check of `test.bash`. `lib/instance_coverage.py` 99 %, `lib` 87 %.
 
 ## 6. Finish
 
