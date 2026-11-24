@@ -361,3 +361,17 @@ def test_completion_and_formatting_as_lsp(corpus_path):
     edits = formatting('select $this where{$this ?p ?o}')
     assert edits[0].new_text == 'SELECT $this\nWHERE {\n    $this ?p ?o\n}\n'
     assert formatting(edits[0].new_text) == []
+
+
+def test_a_list_with_prefixes_is_asked_again_at_the_colon(terms):
+    """Told it was complete, VS Code went on filtering the list it had opened at
+    `n`: after `ns7:` it offered the prefix alone, and none of its terms."""
+    from semforge.editor.sparqldocs import Context, completion
+
+    ctx = Context(None, None, 'constraint', 'current', [], terms)
+    prefix = next(p for p, ns in terms.namespaces.items() if terms.in_namespace(ns) and len(p) > 2)
+    text = 'SELECT $this WHERE { $this '
+    stage = completion(text + prefix[:2], len(text) + 2, ctx)
+    assert stage.is_incomplete and f'{prefix}:' in [i.label for i in stage.items]
+    asked = completion(f'{text}{prefix}:', len(text) + len(prefix) + 1, ctx)
+    assert not asked.is_incomplete and len(asked.items) > 0

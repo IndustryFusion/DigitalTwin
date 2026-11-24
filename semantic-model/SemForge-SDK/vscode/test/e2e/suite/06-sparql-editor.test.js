@@ -191,6 +191,31 @@ describe('the SPARQL editor', () => {
     }
   });
 
+  it('Ctrl+Space after a typed prefix offers its terms, as typed by a person', async () => {
+    const api = await semforge();
+    const doc = await openQuery(api);
+    const text = `PREFIX iffBaseEntities: <${ENT}>\n${HEAD}SELECT $this WHERE {\n    $this \n    FILTER(1 = 0)\n}\n`;
+    await setText(doc, text);
+    try {
+      const editor = vscode.window.visibleTextEditors.find((e) => e.document === doc);
+      await vscode.window.showTextDocument(doc, { viewColumn: editor.viewColumn });
+      const here = vscode.window.activeTextEditor;
+      const spot = doc.positionAt(text.indexOf('$this \n') + 6);
+      here.selection = new vscode.Selection(spot, spot);
+      for (const key of 'iffBaseEntities:') {
+        await vscode.commands.executeCommand('type', { text: key });
+        await new Promise((resolve) => setTimeout(resolve, 120));
+      }
+      await vscode.commands.executeCommand('editor.action.triggerSuggest');
+      await new Promise((resolve) => setTimeout(resolve, 2500));
+      await vscode.commands.executeCommand('acceptSelectedSuggestion');
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      assert.match(doc.getText(), /\$this iffBaseEntities:[A-Za-z]/);
+    } finally {
+      await revert(doc);
+    }
+  });
+
   it('inside an attribute\'s [ ] the payload of its kind comes first', async () => {
     const api = await semforge();
     const doc = await openQuery(api);

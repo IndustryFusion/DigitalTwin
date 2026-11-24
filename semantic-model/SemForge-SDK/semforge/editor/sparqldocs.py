@@ -139,7 +139,10 @@ def completion(text, offset, ctx):
             additional_text_edits=edits or None,
             command=types.Command(title='suggest', command='editor.action.triggerSuggest')
             if item['retrigger'] else None))
-    return types.CompletionList(is_incomplete=False, items=items)
+    # Offered prefixes are only the way to their terms: VS Code must ask again
+    # at the colon. Told the list is complete, it goes on filtering it, and
+    # after `ex:` shows the prefix alone -- Ctrl+Space then only toggles it.
+    return types.CompletionList(is_incomplete=any(i.command for i in items), items=items)
 
 
 def hover(text, offset, ctx):
