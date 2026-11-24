@@ -52,13 +52,15 @@ pyshacl still reports the instances conformant.
 
 Before the shapes are written, walk the instance nodes from the same root entities the entity pass uses, along the
 same references (hierarchical children without ignored references, `Organizes`, non-hierarchical references without
-ignored ones), and collect the type of every object node. Each collected type that needs a shape and has none yet is
+ignored ones), also through variables, whose children and non-hierarchical references the entity pass follows too,
+and collect the type of every object node. Each collected type that needs a shape and has none yet is
 scanned with the existing type scan, which also declares the type as a class with its superclasses and declares its
 attributes. The root entities are therefore determined before the shapes are written instead of after;
 `--shacl-only` stops after the shapes as before, now with the types of the instance nodes included.
 
 A collected type needs a shape of its own only if it, or a type between it and its nearest supertype with a node
-shape, defines a member (a hierarchical child, an `Organizes` or a non-hierarchical reference, or an interface).
+shape, defines a member that gives a rule (a hierarchical child other than a Method, an `Organizes` or a
+non-hierarchical reference, or an interface).
 Otherwise the supertype's shape already validates its entities through `rdfs:subClassOf`, and a second, full shape
 would only report every violation twice. The collected types are processed supertypes first, so the nearest
 supertype's shape exists when a subtype is decided. If no type of the chain defines a member (plain `BaseObjectType`
@@ -76,16 +78,20 @@ Alternatives:
   with types no instance uses. Rejected by the issue.
 
 Consequence: a node that the entity pass later drops (an optional object without content) still contributes its
-type. That is bounded by the nodes of the instances, so "nothing for unused types" holds.
+type. That is bounded by the nodes of the instances, so "nothing for unused types" holds. And once a type has a
+shape, the entity pass reads its members from it as for any shaped type, so the entities of such a type may differ
+from `main` (placeholder `datasetId`s); entities of types that already had a shape do not.
 
 ### D2: Declare every attribute the entity pass writes
 
 When the entity pass writes an entity, every attribute it carries that has no `rdfs:domain` among the entity's type
 and its supertypes, neither in the written ontology nor in the loaded ones, is declared with the entity's type as
 domain, in the same form the type pass uses. Attributes already declared for the type or a supertype are left
-alone, so the existing declarations do not change. The node reference attribute (`-nr`), which no ontology
-declares and every entity carries, is declared once with the domain `BaseObjectType` instead of once per type,
-because several domains are an intersection in OWL. The public laser example shows the gap this closes: it uses the Machinery
+alone, so the existing declarations do not change. Reference attributes, which any object may carry, are declared
+once with the domain `BaseObjectType` instead of once per type that uses them, because several domains are an
+intersection in OWL: the node reference attribute (`-nr`), which no ontology declares, and the keys of `Organizes`
+and non-hierarchical references (reference types, `rdfs:subPropertyOf` another reference). Those keys are prefixed
+with the instance ontology's prefixes, so they are expanded with those where the context does not know the prefix. The public laser example shows the gap this closes: it uses the Machinery
 building blocks pattern, and the relationships from its folders to the state machines are declared nowhere on main.
 
 Alternative: declare every attribute with the entity's own type unconditionally. Adds redundant domains for every

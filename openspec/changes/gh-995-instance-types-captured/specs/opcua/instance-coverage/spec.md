@@ -9,7 +9,7 @@ still not covered.
 ## ADDED Requirements
 
 ### Requirement: Every type of the instances has its shape
-For every object type of which the instances contain an entity, the shapes SHALL contain a node shape targeting that type with the rules its definition and supertypes define, however the type is reached: as a declared child's type, as a type a declaration adds, as an instance's own type, or through an `Organizes` or non-hierarchical reference.
+For every object type of which the instances contain an entity, the shapes SHALL contain a node shape targeting that type with the rules its definition and supertypes define, however the type is reached: as a declared child's type, as a type a declaration adds, as an instance's own type, or through an `Organizes` or non-hierarchical reference of an object or a variable.
 
 #### Scenario: Type added in a folder's declaration
 - **WHEN** a type declares a child of type `FolderType` and its declaration adds, with `HasAddIn`, a child of a type that defines a mandatory variable, and the model holds an instance of the type
@@ -23,16 +23,24 @@ For every object type of which the instances contain an entity, the shapes SHALL
 - **WHEN** the instance organizes an object of `ZetaType`, which defines a mandatory variable and which no type references
 - **THEN** the shapes contain a node shape targeting `ZetaType`, requiring that variable
 
+#### Scenario: Type reached only through a variable's reference
+- **WHEN** a variable of the instance refers with a non-hierarchical reference to an object of `EtaType`, which defines a mandatory variable and which nothing else reaches
+- **THEN** the shapes contain a node shape targeting `EtaType`, requiring that variable
+
 #### Scenario: Missing mandatory members found
-- **WHEN** the entities of the added child, of the subtype's child and of the organized object each lack their mandatory variable, and the instances are validated with the shapes
+- **WHEN** the entities of the added child, of the subtype's child, of the organized object and of the object behind the variable each lack their mandatory variable, and the instances are validated with the shapes
 - **THEN** validation reports one violation per entity, for that variable
 
 ### Requirement: A type without members of its own adds no shape
-A type of the instances whose members all come from a supertype with a node shape SHALL be covered by that shape and SHALL NOT get a node shape of its own, and a type that with its supertypes defines no member SHALL NOT get a node shape for being used by the instances.
+A type of the instances whose members that give a rule all come from a supertype with a node shape SHALL be covered by that shape and SHALL NOT get a node shape of its own, and a type that with its supertypes defines no such member SHALL NOT get a node shape for being used by the instances. Methods give no rule.
 
 #### Scenario: Subtype without own members
 - **WHEN** a child is declared with a type that has a node shape, and the instance uses a subtype of it that defines no member
 - **THEN** the shapes contain no node shape targeting the subtype, and the supertype's shape validates the entity
+
+#### Scenario: Subtype that adds only a Method
+- **WHEN** a child is declared as `UnitType`, which has a node shape, and the instance uses `UnitMethodType`, a subtype that adds only a Method, and lacks a mandatory variable of `UnitType`
+- **THEN** the shapes contain no node shape targeting `UnitMethodType`, and validation reports one violation for the variable
 
 #### Scenario: Type without rules
 - **WHEN** the instance organizes an object of `BaseObjectType`, which defines no member, and no type declares a child of `BaseObjectType`
@@ -53,7 +61,7 @@ For every object type of which the instances contain an entity, the written onto
 - **THEN** the ontology declares `UnitSubType` as a class with `rdfs:subClassOf` `UnitType`, and `ZetaType` as a class with `rdfs:subClassOf` `BaseObjectType`
 
 ### Requirement: Every attribute of the instances is declared
-For every attribute that an entity of the instances carries, the written ontology or an ontology it imports SHALL declare the attribute with a domain that the entity's type or one of its supertypes satisfies, including attributes that an instance declaration or the instance itself adds. An attribute already declared so SHALL NOT be declared again. The node reference attribute, which every entity carries when node references are enabled, SHALL be declared once with the domain `BaseObjectType`.
+For every attribute that an entity of the instances carries, the written ontology or an ontology it imports SHALL declare the attribute with a domain that the entity's type or one of its supertypes satisfies, including attributes that an instance declaration or the instance itself adds. An attribute already declared so SHALL NOT be declared again.
 
 #### Scenario: Attribute of a type reached only through instance nodes
 - **WHEN** the entity of the added child, of the subtype's child or of the organized object carries an attribute defined by its type
@@ -67,9 +75,16 @@ For every attribute that an entity of the instances carries, the written ontolog
 - **WHEN** an entity carries an attribute that a loaded ontology already declares with a domain the entity's type or a supertype satisfies
 - **THEN** the written ontology adds no declaration for it
 
+### Requirement: Reference attributes are declared once
+Reference attributes, which any object may carry (the node reference attribute when node references are enabled, `Organizes` and non-hierarchical references), SHALL be declared once with the domain `BaseObjectType` rather than with each type that carries them.
+
 #### Scenario: Node reference
 - **WHEN** node references are enabled, so that every entity carries the node reference attribute
 - **THEN** the ontology declares the node reference with the domain `BaseObjectType` and no other domain
+
+#### Scenario: Organizes reference
+- **WHEN** an entity carries the `Organizes` relationship to an object only the instance organizes
+- **THEN** the ontology declares `Organizes` with the domain `BaseObjectType` and no other domain
 
 ### Requirement: Nothing is added for unused types
 The shapes SHALL NOT contain a node shape for a type of an imported ontology that neither the walk from the root type nor any node of the instances reaches.
@@ -79,7 +94,7 @@ The shapes SHALL NOT contain a node shape for a type of an imported ontology tha
 - **THEN** the shapes contain no node shape targeting a Machinery state machine type
 
 ### Requirement: The instances are unchanged
-The instances SHALL be the same as without this capability: the same entities with the same ids, types and attributes.
+The entities of types that already had a node shape without this capability SHALL be the same as without it: the same ids, types and attributes. The entities of a type that only this capability gives a node shape MAY differ in what that shape decides for its members (placeholder `datasetId`s, attribute names), as for any type with a shape.
 
 #### Scenario: Example packages
 - **WHEN** the pump, laser and simple examples are generated, compared with the same examples generated by the generator without this capability

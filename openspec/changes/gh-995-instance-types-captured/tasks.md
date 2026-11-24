@@ -11,7 +11,9 @@
 - [x] 1.2 `test_instance_types.NodeSet2.xml`: `AlphaType` declares a mandatory child `Unit` of `UnitType` (mandatory
   `Count`); the instance's `Unit` uses `UnitSubType`, which adds a mandatory `Extra`, and lacks it. The instance
   organizes an object of `ZetaType` (mandatory `Level`, referenced by no type) that lacks `Level`, and an object of
-  plain `BaseObjectType`. Verified: `nodeset2owl.py` translates it without error.
+  plain `BaseObjectType`. The `Count` variable of `Unit` refers with `HasEffect` to an object of `EtaType` (mandatory
+  `Rate`) that lacks `Rate`. A second child `Unit2` of `UnitType` uses `UnitMethodType`, which adds only a Method,
+  and lacks `Count`. Verified: `nodeset2owl.py` translates it without error.
 - [x] 1.3 A type without a definition: `nodeset2owl.py` refuses a nodeset whose instance names an undefined type
   definition, so such a type only reaches `owl2instances.py` through an ontology not written by `nodeset2owl.py`.
   Covered by a unit test of the coverage helpers instead of a nodeset.
@@ -40,13 +42,15 @@
 - [x] 5.1 Shapes. `test.bash` cases with expected `.shacl`, `.instances` and `.pyshacl`, and `.shaclquery` files:
   - *Type added in a folder's declaration*: `test_declaration_types.NodeSet2.shaclquery1` (shape of `BetaType`
     requiring `hasLevel`).
-  - *Instance of a subtype that adds a member*, *Type reached only through Organizes*, *Type without rules*:
-    `test_instance_types.NodeSet2.shaclquery1` (shapes of `UnitSubType` requiring `hasExtra` and of `ZetaType`
-    requiring `hasLevel`; no shape targeting `BaseObjectType`).
+  - *Instance of a subtype that adds a member*, *Type reached only through Organizes*, *Type reached only through a
+    variable's reference*, *Subtype that adds only a Method*, *Type without rules*:
+    `test_instance_types.NodeSet2.shaclquery1` (shapes of `UnitSubType` requiring `hasExtra`, of `ZetaType` requiring
+    `hasLevel` and of `EtaType` requiring `hasRate`; no shape targeting `UnitMethodType` or `BaseObjectType`), and
+    unit tests `test_objects_behind_variables_are_reached`, `test_methods_give_no_rule`.
   - *Subtype without own members*: `test_declaration_types.NodeSet2.shaclquery1` (no shape targeting
     `DeltaSubType`).
   - *Missing mandatory members found*: the `.pyshacl` files of both cases (one violation each for `State`, `Unit`,
-    `Zeta`).
+    `Zeta`, `Eta`, and exactly one for `Unit2`).
 - [x] 5.2 *Same shape on both paths*: in `test.bash`, generate the shapes with `-t BetaType` and compare the node
   shape targeting `BetaType` with the one from `test_declaration_types` for isomorphism.
 - [x] 5.3 Ontology. `.query` files on `entities.ttl`:
@@ -62,6 +66,8 @@
   - *Node reference*: the node reference check at the end of `test.bash` (`-nr`: the entities carry
     `base:hasNodeRef`, `entities_node_reference.query` finds it declared with the domain `BaseObjectType` only, the
     warning does not name it).
+  - *Organizes reference*: `test_instance_types.NodeSet2.query1` (`opcua:Organizes` with the domain `BaseObjectType`
+    only); keys prefixed with the instance ontology's prefixes: `tests/test_owl2instances_attributes.py`.
 - [x] 5.4 Warning, in `test.bash` (`UNCOVERED_EXPECTED`) and `tests/test_libinstance_coverage.py`:
   - *Member added only by the instance*: `test_declaration_types` names `test:hasExtra`.
   - *Member added more than one relationship deep*: `test_declaration_additions` names `test:hasDeep`.
@@ -84,7 +90,7 @@
   `hasMachineryOperationMode` with domain `FolderType`; `kms-packages-check` passes.
 - [x] 5.8 End-to-end: `tests/owl2instances/e2e_shacl2flink.bash` builds both cases into KMS packages with
   `owl2kms.py`, runs them through shacl2flink's SQLite check and asserts the alerts: `hasLevel` on `State`; `hasExtra`
-  on `Unit` and `hasLevel` on `Zeta`. Part of the opcua `test` target; in CI, shacl2flink's Python dependencies live
+  on `Unit`, `hasLevel` on `Zeta`, `hasRate` on `Eta` and `hasCount` on `Unit2`. Part of the opcua `test` target; in CI, shacl2flink's Python dependencies live
   in their own venv (`SHACL2FLINK_PYTHON`), because they pin other rdflib versions than the opcua tools.
 - [x] 5.9 shacl2flink compiles the expected shapes: `make test-opcua-shapes` in `semantic-model/shacl2flink`.
 - [x] 5.10 Coverage of the changed code above 80 %, stated in the Pull Request. Measured: 33 of 34 changed statements
