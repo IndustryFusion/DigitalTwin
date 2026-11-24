@@ -9,7 +9,7 @@ still not covered.
 ## ADDED Requirements
 
 ### Requirement: Every type of the instances has its shape
-For every object type of which the instances contain an entity, the shapes SHALL contain a node shape targeting that type with the rules its definition and supertypes define, however the type is reached: as a declared child's type, as a type a declaration adds, as an instance's own type, or through an `Organizes` or non-hierarchical reference of an object or a variable.
+For every object type of which the instances contain an entity, the shapes SHALL contain a node shape targeting that type with the rules its definition and supertypes define, however the type is reached: as a declared child's type, as a type a declaration adds, as an instance's own type, or through an `Organizes` or non-hierarchical reference of an object, or a non-hierarchical reference of a variable that is a child.
 
 #### Scenario: Type added in a folder's declaration
 - **WHEN** a type declares a child of type `FolderType` and its declaration adds, with `HasAddIn`, a child of a type that defines a mandatory variable, and the model holds an instance of the type
@@ -32,7 +32,7 @@ For every object type of which the instances contain an entity, the shapes SHALL
 - **THEN** validation reports one violation per entity, for that variable
 
 ### Requirement: A type without members of its own adds no shape
-A type of the instances whose members that give a rule all come from a supertype with a node shape SHALL be covered by that shape and SHALL NOT get a node shape of its own, and a type that with its supertypes defines no such member SHALL NOT get a node shape for being used by the instances. Methods give no rule.
+A type of the instances whose members that give a rule all come from a supertype with a node shape SHALL be covered by that shape and SHALL NOT get a node shape of its own, and a type that with its supertypes defines no such member SHALL NOT get a node shape for being used by the instances. Whether a member gives a rule is what the type's shape says of it.
 
 #### Scenario: Subtype without own members
 - **WHEN** a child is declared with a type that has a node shape, and the instance uses a subtype of it that defines no member
@@ -41,6 +41,10 @@ A type of the instances whose members that give a rule all come from a supertype
 #### Scenario: Subtype that adds only a Method
 - **WHEN** a child is declared as `UnitType`, which has a node shape, and the instance uses `UnitMethodType`, a subtype that adds only a Method, and lacks a mandatory variable of `UnitType`
 - **THEN** the shapes contain no node shape targeting `UnitMethodType`, and validation reports one violation for the variable
+
+#### Scenario: Subtype whose members give no rule
+- **WHEN** the instance uses `PlainNoRuleType`, a subtype of `PlainType`, which has a node shape, that adds only a placeholder variable without a value constraint, an optional `BaseObjectType` object and a reference to a variable, and lacks a mandatory variable of `PlainType`
+- **THEN** the shapes contain no node shape targeting `PlainNoRuleType`, and validation reports one violation for the variable
 
 #### Scenario: Type without rules
 - **WHEN** the instance organizes an object of `BaseObjectType`, which defines no member, and no type declares a child of `BaseObjectType`
@@ -83,18 +87,22 @@ Reference attributes, which any object may carry (the node reference attribute w
 - **THEN** the ontology declares the node reference with the domain `BaseObjectType` and no other domain
 
 #### Scenario: Organizes reference
-- **WHEN** an entity carries the `Organizes` relationship to an object only the instance organizes
+- **WHEN** an entity carries the `Organizes` relationship to an object only the instance organizes, and the type of another entity defines an `Organizes` reference
 - **THEN** the ontology declares `Organizes` with the domain `BaseObjectType` and no other domain
 
 ### Requirement: Nothing is added for unused types
 The shapes SHALL NOT contain a node shape for a type of an imported ontology that neither the walk from the root type nor any node of the instances reaches.
+
+#### Scenario: Type behind an ignored variable
+- **WHEN** a non-hierarchical reference of an entity points to a variable, which refers to an object of `GhostType` that nothing else reaches
+- **THEN** the instances contain no `GhostType` entity, and the shapes no node shape targeting `GhostType`
 
 #### Scenario: Unused companion specification types
 - **WHEN** a model imports the Machinery ontology and its instances use none of the Machinery state machine types
 - **THEN** the shapes contain no node shape targeting a Machinery state machine type
 
 ### Requirement: The instances are unchanged
-The entities of types that already had a node shape without this capability SHALL be the same as without it: the same ids, types and attributes. The entities of a type that only this capability gives a node shape MAY differ in what that shape decides for its members (placeholder `datasetId`s, attribute names), as for any type with a shape.
+Where every type the instances use has its node shape without this capability, or is covered by a supertype's, the instances SHALL be the same as without it. Where this capability adds node shapes, the instances follow them as they follow any shape: members of such types, and the optional children holding them, may appear or be named as the new shapes say.
 
 #### Scenario: Example packages
 - **WHEN** the pump, laser and simple examples are generated, compared with the same examples generated by the generator without this capability
