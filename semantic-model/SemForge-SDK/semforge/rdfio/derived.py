@@ -70,7 +70,7 @@ def write_entry(directory, slug, name, payload, what):
                     pass
         temporary = os.path.join(directory, f'{name}.{os.getpid()}.tmp')
         with open(temporary, 'w', encoding='utf-8') as handle:
-            json.dump(payload, handle, separators=(',', ':'))
+            handle.write(json.dumps(payload, separators=(',', ':')))
         os.replace(temporary, os.path.join(directory, name))
     except OSError:
         pass

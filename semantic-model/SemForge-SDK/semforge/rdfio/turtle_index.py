@@ -43,6 +43,7 @@ remains the authority on what they mean.
 
 import bisect
 from collections import OrderedDict
+import functools
 import re
 from dataclasses import dataclass
 
@@ -88,6 +89,7 @@ def _skip_string(text, i):
     return i  # unterminated; caller stops at EOF
 
 
+@functools.lru_cache(maxsize=8)
 def _statement_spans(text):
     """(start, end) for every top-level statement, terminator included."""
     spans = []
@@ -134,7 +136,7 @@ def _statement_spans(text):
         elif not char.isspace() and start is None:
             start = i
         i += 1
-    return spans
+    return tuple(spans)        # kept: one edit asks for the same text several times
 
 
 def _resolve(raw, prefixes, base):

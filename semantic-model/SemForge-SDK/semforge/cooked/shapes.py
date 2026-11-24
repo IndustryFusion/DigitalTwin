@@ -87,13 +87,22 @@ def used_by(package, shape):
     their body."""
     graph = package.shapes
     shape = URIRef(shape)
-    users = []
-    for other in every_node_shape(graph):
-        if other == shape:
+    # Up from each sh:node, through the blank nodes it is written in, to the
+    # shape that holds it. Going down every shape instead walked the whole
+    # graph, 0.4 s on an OPC UA package -- and a type page asks per case.
+    users, seen = set(), set()
+    pending = list(graph.subjects(SH.node, shape))
+    while pending:
+        node = pending.pop()
+        if node in seen:
             continue
-        if any(o == shape for s, p, o in graph.cbd(other) if p == SH.node):
-            users.append(str(other))
-    return users
+        seen.add(node)
+        if isinstance(node, URIRef):
+            users.add(node)
+        else:
+            pending.extend(graph.subjects(None, node))
+    users.discard(shape)
+    return [str(other) for other in every_node_shape(graph) if other in users] if users else []
 
 
 def target_short(package, shape, declared=None, users=None):

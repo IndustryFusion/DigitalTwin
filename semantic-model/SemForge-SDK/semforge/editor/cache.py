@@ -113,8 +113,10 @@ def store(root, key, payload, stamp=None):
                 handle.write('# The SemForge editor cache: derived, never committed.\n*\n')
         temporary = _entry(root, key) + '.tmp'
         with open(temporary, 'w', encoding='utf-8') as handle:
-            json.dump({'fingerprint': stamp or fingerprint(root),
-                       'created': time.time(), 'payload': payload}, handle)
+            # dumps, not dump: only that uses the C encoder -- half a second
+            # of every edit, on a large view.
+            handle.write(json.dumps({'fingerprint': stamp or fingerprint(root),
+                                     'created': time.time(), 'payload': payload}))
         os.replace(temporary, _entry(root, key))
     except OSError:
         pass                    # a read-only package still works, uncached
