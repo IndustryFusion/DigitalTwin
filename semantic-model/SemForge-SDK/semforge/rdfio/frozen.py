@@ -36,6 +36,12 @@ The other caches are of other things and keep their own rule:
   * file -> entry on disk (rdfio/derived.py): the content's sha256;
   * per package version (package/loader.Package.index, editor/cache.py,
     editor/verdicts.py): the package's fingerprint.
+
+Except while a package's tests run (package/offline.py): no entry on disk is
+read or written, and a memo that is kept by less than the content (a file's
+mtime and size) or may hold what an entry on disk said is the run's own. A new
+memo of that kind goes through rdfio/derived.memo; one kept by the text alone
+and filled by parsing it need not.
 """
 
 import weakref

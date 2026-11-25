@@ -33,6 +33,7 @@ rdflib building its indexes, which no format avoids.
 * In `.semforge/cache/graphs/`, which carries its own `.gitignore`; an entry
   replaces the previous one for the same file, so the cache holds one version
   per file.
+* Neither read nor written while a package's tests run (rdfio/derived.py).
 """
 
 import os
@@ -40,7 +41,7 @@ import os
 import rdflib
 from rdflib import BNode, Literal, URIRef
 
-from ..rdfio.derived import entry_name, read_entry, write_entry
+from ..rdfio.derived import entry_name, in_use, read_entry, write_entry
 
 FORMAT = 2
 GRAPHS = os.path.join('.semforge', 'cache', 'graphs')
@@ -106,9 +107,11 @@ def parse_turtle(graph, path, package_path):
 
     with open(path, 'rb') as handle:
         data = handle.read()
-    directory = graphs_dir(package_path)
-    slug, name = entry_name(path, data)
-    stored = read_entry(directory, name)
+    stored, keep = None, in_use()                  # a test run does not even hash
+    if keep:
+        directory = graphs_dir(package_path)
+        slug, name = entry_name(path, data)
+        stored = read_entry(directory, name)
     if stored is not None:
         try:
             if _read(stored, graph):
@@ -122,5 +125,6 @@ def parse_turtle(graph, path, package_path):
     for prefix, namespace in prefixes:
         graph.bind(prefix, namespace)
     graph.addN((s, p, o, graph) for s, p, o in parsed)
-    write_entry(directory, slug, name, _payload(parsed, prefixes), 'Parsed Turtle, kept')
+    if keep:
+        write_entry(directory, slug, name, _payload(parsed, prefixes), 'Parsed Turtle, kept')
     return graph

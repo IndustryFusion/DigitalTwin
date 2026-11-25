@@ -925,8 +925,9 @@ Two consequences:
 - Interactive edit-validate loops stay fast without any per-example
   configuration, and get faster than declared focus could, since the derived set
   is usually narrower than a hand-written list.
-- CI runs cold. `semforge test` in a pipeline populates nothing from cache, so
-  the guarantee CI reports is always the full evaluation.
+- CI runs cold. `semforge verify --tests` in a pipeline uses nothing from a cache,
+  so the guarantee CI reports is always the full evaluation. `semforge test` uses
+  the caches of the machine it runs on.
 
 ### 7.6 Regression
 
@@ -1428,7 +1429,8 @@ divergence differently from a data violation.
 every keystroke. Two mechanisms: incremental scope (an edit to a constraint
 invalidates only examples whose data touches its path) and a result cache keyed
 by `(package content hash, adapter version, constraint ID)`. The cache lives in
-`.semforge/cache/` and is never authoritative — `semforge test` in CI runs cold.
+`.semforge/cache/` and is never authoritative — `semforge verify --tests`, which CI
+runs, uses none of it; `semforge test` uses the machine's.
 
 *As built.* For a long time neither existed: every page validated the whole
 package inside its own request, on the server's one thread, and only the
@@ -1467,7 +1469,12 @@ edit takes 5 s instead of 8, verdicts identical.
 Loading is cached below that (`package/graphcache.py`): each Turtle file is
 parsed once per content (sha256, with the rdflib version) and read back from a
 JSON term table, prefixes included, blank nodes fresh — the pump package loads
-in 3 s instead of 7.4 s. What remains is rdflib building its indexes.
+in 3 s instead of 7.4 s. What remains is rdflib building its indexes. While a
+package's tests run to verify or publish it (`semforge verify --tests`,
+`semforge publish`) no cache is read or written: a package directory from
+elsewhere can bring entries of its own. `semforge test` is an authoring command
+and uses the caches of the machine it runs on, like the editor; a pipeline that
+judges a package from elsewhere runs `semforge verify --tests`.
 
 This is the *only* sanctioned way to evaluate fewer constraints, and the keying
 is load-bearing rather than an optimisation detail: because an entry is keyed by

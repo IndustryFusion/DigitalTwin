@@ -171,18 +171,26 @@ def _blocks(source):
 
     One `semforge check` indexed the same ontologies sixteen times: every
     caller builds its own index from the text it just read. Blocks are frozen
-    and no caller changes the list, so equal texts share one.
+    and no caller changes the list, so equal texts share one. A package's test
+    run has its own (rdfio/derived.memo): these may come from an entry on disk.
     """
-    found = _PARSED.get(source)
+    kept = _parsed()
+    found = kept.get(source)
     if found is None:
         blocks = _parse(source)
         found = (blocks, {block.subject: block for block in blocks})
-        _PARSED[source] = found
-        if len(_PARSED) > _PARSED_LIMIT:
-            _PARSED.popitem(last=False)
+        kept[source] = found
+        if len(kept) > _PARSED_LIMIT:
+            kept.popitem(last=False)
     else:
-        _PARSED.move_to_end(source)
+        kept.move_to_end(source)
     return found
+
+
+def _parsed():
+    from .derived import memo
+
+    return memo(_PARSED)
 
 
 def _parse(source):
@@ -238,14 +246,16 @@ INDEX_FORMAT = 1
 
 def _seed(source, blocks):
     """Put known blocks where TurtleIndex(source) will find them."""
-    _PARSED[source] = (blocks, {block.subject: block for block in blocks})
-    if len(_PARSED) > _PARSED_LIMIT:
-        _PARSED.popitem(last=False)
+    kept = _parsed()
+    kept[source] = (blocks, {block.subject: block for block in blocks})
+    if len(kept) > _PARSED_LIMIT:
+        kept.popitem(last=False)
 
 
 def index_file(path, cache_root=None):
     """The index of a Turtle file. With `cache_root` (the package), built once
-    per content and kept in `.semforge/cache/index/` (rdfio/derived.py).
+    per content and kept in `.semforge/cache/index/` (rdfio/derived.py) --
+    while the package's tests run, built from the text.
 
     The first page of the OPC UA pump package spent 1.8 s indexing 12.8 MB of
     ontology text to say where each attribute is declared; read back, the
@@ -253,9 +263,9 @@ def index_file(path, cache_root=None):
     """
     with open(path, encoding='utf-8') as handle:
         source = handle.read()
-    if cache_root is not None and source not in _PARSED:
-        from .derived import cache_dir, entry_name, read_entry, write_entry
+    from .derived import cache_dir, entry_name, in_use, read_entry, write_entry
 
+    if cache_root is not None and in_use() and source not in _PARSED:
         directory = cache_dir(cache_root, 'index')
         slug, name = entry_name(path, source.encode('utf-8'))
         stored = read_entry(directory, name)

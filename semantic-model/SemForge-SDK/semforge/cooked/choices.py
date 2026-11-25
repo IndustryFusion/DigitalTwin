@@ -82,11 +82,15 @@ def declared_entity_root(package_path):
         stat = os.stat(config)
     except OSError:
         return None
-    # Once per version of kms.yaml: every entity_types call asks.
+    # Once per version of kms.yaml: every entity_types call asks. In a
+    # package's test run, once per run.
+    from ..rdfio.derived import memo
+
+    kept = memo(_ENTITY_ROOTS)
     stamp = (config, stat.st_mtime_ns, stat.st_size)
-    if _ENTITY_ROOTS.get(config, (None,))[0] != stamp:
-        _ENTITY_ROOTS[config] = (stamp, _read_entity_root(config))
-    root = _ENTITY_ROOTS[config][1]
+    if kept.get(config, (None,))[0] != stamp:
+        kept[config] = (stamp, _read_entity_root(config))
+    root = kept[config][1]
     if not root:
         return None
     return URIRef(expand(package_path, str(root)))

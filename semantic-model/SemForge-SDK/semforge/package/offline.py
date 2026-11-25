@@ -40,6 +40,15 @@ a reading of its own that rdflib may not share:
                       connection, name lookup and urllib request of the thread
                       inside an `offline` scope, but `_fetch`'s own.
 
+    caches            what is kept on disk from earlier -- parsed graphs and
+                      statement indexes (rdfio/derived.py), fetched contexts
+                      (context.py) and dependencies (registry.py) -- is
+                      neither read nor written inside a scope: a package
+                      directory can bring entries of its own. What the process
+                      remembers of files by less than their content, or may
+                      have read from such an entry, is the scope's own
+                      (rdfio/derived.memo).
+
 Code on the way may swallow an exception and go on with half an answer, so
 every refusal is also kept on the scope, and `run_tests` fails on it. Audit
 hooks cannot be removed; it and the SERVICE guard are installed once and do
@@ -132,6 +141,7 @@ class _Scope:
     named: set = field(default_factory=set)         # urls the model names itself
     fetch_contexts: bool = False                    # --allow-network
     refusals: list = field(default_factory=list)    # every one, swallowed or not
+    memos: dict = field(default_factory=dict)       # the run's own (rdfio/derived.memo)
 
 
 _state = threading.local()

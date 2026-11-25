@@ -22,12 +22,38 @@ its statement index (rdfio/turtle_index.py) -- is kept in
 content: an edit misses, and writing the new entry removes the old one, so
 there is one version per file. JSON only, never pickle: the directory is in
 the package, and a cloned package must not be able to run code through it.
+
+While a package's tests run (package/offline.py) no entry is read or written:
+nothing ties what an entry holds to the file it names, and a package directory
+from elsewhere -- a pull request -- can bring its own, so the tests would judge
+the entry and not the file (issue #1096).
 """
 
 import hashlib
 import json
 import os
 import re
+
+
+def in_use():
+    """Whether entries are read and written: not while a package's tests run."""
+    from ..package.offline import active
+
+    return active() is None
+
+
+def memo(kept):
+    """`kept` -- a module's dict of what it read before -- or, while a package's
+    tests run, one that lives as long as the run and starts empty.
+
+    For a memo whose key says less than the content (a file's mtime and size)
+    or whose values may come from an entry on disk: the run must not see what
+    the process met earlier, and still reads each file once.
+    """
+    from ..package.offline import active
+
+    scope = active()
+    return kept if scope is None else scope.memos.setdefault(id(kept), type(kept)())
 
 
 def cache_dir(package_path, kind):
@@ -42,6 +68,8 @@ def entry_name(path, data):
 
 def read_entry(directory, name):
     """The stored payload, or None when there is none or it does not read."""
+    if not in_use():
+        return None
     try:
         with open(os.path.join(directory, name), encoding='utf-8') as handle:
             return json.load(handle)
@@ -56,6 +84,8 @@ def write_entry(directory, slug, name, payload, what):
     only uncached. The temporary name carries the process id, since the
     editor's server and its validation worker may write the same entry.
     """
+    if not in_use():
+        return
     try:
         os.makedirs(directory, exist_ok=True)
         ignore = os.path.join(directory, '.gitignore')

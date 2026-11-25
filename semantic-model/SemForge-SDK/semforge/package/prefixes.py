@@ -86,18 +86,22 @@ def _cached(path, read):
 
     The editor asks for the prefix table once per term it names -- 5,600 times
     in one check of a large package, each re-parsing kms.yaml and the
-    context. Keyed on the file's mtime and size, so an edit is seen at once.
+    context. Keyed on the file's mtime and size, so an edit is seen at once;
+    a package's test run reads the file itself, once (rdfio/derived.memo).
     A copy is returned: callers may change what they get.
     """
+    from ..rdfio.derived import memo
+
+    kept = memo(_read)
     try:
         stat = os.stat(path)
     except OSError:
         return {}
     stamp = (stat.st_mtime_ns, stat.st_size)
-    hit = _read.get(path)
+    hit = kept.get(path)
     if hit is None or hit[0] != stamp:
         hit = (stamp, read(path))
-        _read[path] = hit
+        kept[path] = hit
     return dict(hit[1])
 
 

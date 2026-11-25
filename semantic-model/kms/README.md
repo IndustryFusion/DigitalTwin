@@ -56,6 +56,8 @@ network.
   that does not load fails the tests, naming its source. A package that names
   none is tested with the official one; `SEMFORGE_NGSILD` is ignored.
 - Examples and their includes are read only from inside the package.
+- No cache is read or written, neither the package's `.semforge/cache/` nor the
+  user's: the package is judged by its files.
 - `--allow-network` allows those two fetches and nothing else.
 - `SERVICE` is rejected in every SPARQL of a package (constraints, rules and
   targets), with `--allow-network` too, naming the shape: SHACL does not

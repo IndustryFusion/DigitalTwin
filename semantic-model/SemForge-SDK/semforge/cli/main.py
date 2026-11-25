@@ -473,6 +473,7 @@ def verify_command(target, with_tests, record, against, allow_network, fmt):
     package or the official copy the SDK ships; --allow-network lets them
     fetch any other context or vocabulary. SERVICE in any SPARQL of the package (constraint, rule or target)
     fails, named, and opens no connection, with --allow-network too.
+    No cache is read or written: the package is judged by its files.
     Nothing beyond the network is sandboxed.
     """
     import shutil
@@ -568,6 +569,7 @@ def publish_command(path, output, allow_network):
     package's threshold (tests.coverage, default 80 %). Nothing is written or
     recorded otherwise. The version is then immutable. The tests run offline
     as with `verify --tests`, unless --allow-network.
+    No cache is read or written: the package is judged by its files.
     """
     from ..package.releases import PublishRefused, publish
 
