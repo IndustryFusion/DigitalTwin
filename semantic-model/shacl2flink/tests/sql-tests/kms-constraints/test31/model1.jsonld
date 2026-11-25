@@ -1,0 +1,232 @@
+[
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:forms:inf",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDouble": {
+      "type": "Property",
+      "value": {
+        "@value": "INF",
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:forms:minus-inf",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDouble": {
+      "type": "Property",
+      "value": {
+        "@value": "-INF",
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:forms:nan",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDouble": {
+      "type": "Property",
+      "value": {
+        "@value": "NaN",
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:forms:text-inf",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDouble": {
+      "type": "Property",
+      "value": {
+        "@value": "INF",
+        "@type": "http://www.w3.org/2001/XMLSchema#string"
+      }
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:forms:boolean-1",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasBoolean": {
+      "type": "Property",
+      "value": {
+        "@value": "1",
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+      }
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:forms:boolean-0",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasBoolean": {
+      "type": "Property",
+      "value": {
+        "@value": "0",
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+      }
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:forms:number-1",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasBoolean": {
+      "type": "Property",
+      "value": 1
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:forms:json",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasJsonLiteral": {
+      "type": "Property",
+      "value": {
+        "@value": {
+          "a": 1
+        },
+        "@type": "@json"
+      }
+    },
+    "iffBaseEntities:hasJsonOrText": {
+      "type": "Property",
+      "value": {
+        "@value": {
+          "a": 1
+        },
+        "@type": "@json"
+      }
+    },
+    "iffBaseEntities:hasDouble": {
+      "type": "Property",
+      "value": {
+        "@value": {
+          "a": 1
+        },
+        "@type": "@json"
+      }
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:forms:text",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasJsonOrText": {
+      "type": "Property",
+      "value": "abc"
+    },
+    "iffBaseEntities:hasKindAnd": {
+      "type": "Property",
+      "value": "abc"
+    },
+    "iffBaseEntities:hasOff": {
+      "type": "Property",
+      "value": "abc"
+    },
+    "iffBaseEntities:hasValueOff": {
+      "type": "Property",
+      "value": "abc"
+    },
+    "iffBaseEntities:hasBranchOff": {
+      "type": "Property",
+      "value": "abc"
+    },
+    "iffBaseEntities:hasBranchOn": {
+      "type": "Property",
+      "value": "abc"
+    },
+    "iffBaseEntities:hasShapeOff": {
+      "type": "Property",
+      "value": "abc"
+    },
+    "iffBaseEntities:hasSubAnd": {
+      "type": "Property",
+      "value": "abc"
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:forms:year",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasYearMonth": {
+      "type": "Property",
+      "value": {
+        "@value": "2020",
+        "@type": "http://www.w3.org/2001/XMLSchema#gYear"
+      }
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:forms:year-month",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasYearMonth": {
+      "type": "Property",
+      "value": {
+        "@value": "2020-01",
+        "@type": "http://www.w3.org/2001/XMLSchema#gYearMonth"
+      }
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:forms:kind",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasKindOr": {
+      "type": "Property",
+      "value": 80
+    },
+    "iffBaseEntities:hasKindAnd": {
+      "type": "Property",
+      "value": 80.5
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:forms:kind-double",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasKindOr": {
+      "type": "Property",
+      "value": 80.5
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:forms:sub",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasSubOr": {
+      "type": "Property",
+      "value": 80.5,
+      "iffBaseEntities:hasSub": {
+        "type": "Property",
+        "value": 1
+      }
+    },
+    "iffBaseEntities:hasSubAnd": {
+      "type": "Property",
+      "value": 80.5,
+      "iffBaseEntities:hasSub": {
+        "type": "Property",
+        "value": 1
+      }
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:forms:no-sub",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasSubOr": {
+      "type": "Property",
+      "value": "abc"
+    },
+    "iffBaseEntities:hasSubAnd": {
+      "type": "Property",
+      "value": 80.5
+    }
+  }
+]

@@ -115,6 +115,13 @@ NUMBER_LOUD=(
     'double-string-zero|hasE2EDouble|"0"'
     'integer-plain-fraction|hasE2EInteger|80.5'
     "integer-declared-double|hasE2EInteger|{\"@value\":80,\"@type\":\"${XSD}double\"}"
+    # Shapes without sh:nodeKind (#1097).
+    'bare-double-text|hasE2EBareDouble|"abc"'
+    'bare-double-whole|hasE2EBareDouble|80'
+    'bare-double-iri|hasE2EBareDouble|{"@id":"urn:e2e:iri"}'
+    'bare-number-text|hasE2EBareNumber|"abc"'
+    "bare-decimal-double|hasE2EBareDecimal|{\"@value\":80.5,\"@type\":\"${XSD}double\"}"
+    'bare-string-iri|hasE2EBareString|{"@id":"urn:e2e:iri"}'
 )
 NUMBER_SILENT=(
     'double-plain-fraction|hasE2EDouble|80.5'
@@ -125,6 +132,45 @@ NUMBER_SILENT=(
     'double-string-dot|hasE2EDouble|"80.0"'
     'integer-plain-whole-dot|hasE2EInteger|80.0'
     'integer-string-digits|hasE2EInteger|"80"'
+    'bare-double-fraction|hasE2EBareDouble|80.5'
+    'bare-number-whole|hasE2EBareNumber|80'
+    'bare-number-fraction|hasE2EBareNumber|80.5'
+    "bare-decimal|hasE2EBareDecimal|{\"@value\":\"80.5\",\"@type\":\"${XSD}decimal\"}"
+    'bare-string-text|hasE2EBareString|"abc"'
+)
+# A Relationship on an attribute whose shape states only a datatype (#1097):
+# it has no value, so no alert of either component.
+NUMBER_RELATIONSHIP="urn:e2e-number-bare-relationship:${RUN_ID}"
+NODEKIND_CONSTRAINT=NodeKindConstraintComponent
+
+# A datatype without sh:nodeKind beside and inside connectives (#1097). Three
+# entities hold every case, each attribute of one its own:
+# entity|attribute|its NGSI-LD value|component and instance that must alert|the same that must not.
+# A component without an instance is the one of a connective, whose event has none.
+DATATYPE_TYPE=${E2E}/E2EDatatypeMachine
+BARE_DS="urn:iff:datasetId:e2e1"
+BARE_DC=DatatypeConstraintComponent
+BARE_NC=NodeKindConstraintComponent
+BARE_CASES=(
+    "a|hasE2EPlain|[{\"type\":\"Property\",\"value\":80.5},{\"type\":\"Property\",\"value\":\"abc\",\"datasetId\":\"${BARE_DS}\"}]|${BARE_DC}[${BARE_DS}]|${BARE_DC}[0]"
+    "a|hasE2ENotFive|{\"type\":\"Property\",\"value\":\"abc\"}|${BARE_DC}[0]|"
+    "a|hasE2EEither|[{\"type\":\"Property\",\"value\":1},{\"type\":\"Property\",\"value\":80.5,\"datasetId\":\"${BARE_DS}\"}]||${BARE_DC}[0] ${BARE_DC}[${BARE_DS}] OrConstraintComponent"
+    "a|hasE2EBoth|{\"type\":\"Property\",\"value\":1}|${BARE_DC}[0]|"
+    "a|hasE2EOpen|{\"type\":\"Property\",\"value\":{\"@id\":\"urn:e2e:iri\"}}||${BARE_DC}[0]"
+    "a|hasE2EText|{\"type\":\"GeoProperty\",\"value\":{\"type\":\"Point\",\"coordinates\":[1.0,2.0]}}|${BARE_DC}[0]|${BARE_NC}[0]"
+    "a|hasE2EKind|{\"type\":\"Property\",\"value\":{\"@id\":\"urn:e2e:iri\"}}|${BARE_NC}[0]|"
+    "a|hasE2EAnyText|{\"type\":\"Property\",\"value\":{\"@value\":\"hallo\",\"@language\":\"de\"}}||${BARE_DC}[0]"
+    "a|hasE2EFlag|{\"type\":\"Property\",\"value\":{\"@value\":\"1\",\"@type\":\"${XSD}boolean\"}}||${BARE_DC}[0]"
+    "a|hasE2EOff|{\"type\":\"Property\",\"value\":\"abc\"}||${BARE_DC}[0]"
+    "b|hasE2EPlain|{\"type\":\"Property\",\"value\":{\"@value\":\"INF\",\"@type\":\"${XSD}double\"}}||${BARE_DC}[0]"
+    "b|hasE2ENotFive|{\"type\":\"Property\",\"value\":5}|${BARE_DC}[0] NotConstraintComponent|"
+    "b|hasE2EEither|{\"type\":\"Property\",\"value\":\"abc\"}|${BARE_DC}[0]|"
+    "b|hasE2EText|{\"type\":\"ListProperty\",\"valueList\":[\"abc\"]}||${BARE_DC}[0] ${BARE_NC}[0]"
+    "b|hasE2EAnyText|{\"type\":\"Property\",\"value\":{\"@value\":80,\"@type\":\"${XSD}double\"}}|${BARE_DC}[0]|"
+    "b|hasE2EFlag|{\"type\":\"JsonProperty\",\"json\":{\"a\":\"b\"}}||${BARE_DC}[0] ${BARE_NC}[0]"
+    "c|hasE2EPlain|{\"type\":\"Property\",\"value\":{\"@value\":\"NaN\",\"@type\":\"${XSD}double\"}}||${BARE_DC}[0]"
+    "c|hasE2ENotFive|{\"type\":\"Property\",\"value\":6.5}||${BARE_DC}[0] NotConstraintComponent"
+    "c|hasE2EFlag|{\"type\":\"Property\",\"value\":\"abc\"}|${BARE_DC}[0]|"
 )
 
 # sh:hasValue with a number (#965), one entity per value written:
@@ -216,6 +262,10 @@ teardown() {
     local spec
     for spec in "${NUMBER_LOUD[@]}" "${NUMBER_SILENT[@]}"; do
         delete_entity "urn:e2e-number-${spec%%|*}:${RUN_ID}" >/dev/null 2>&1 || true
+    done
+    delete_entity "${NUMBER_RELATIONSHIP}" >/dev/null 2>&1 || true
+    for spec in a b c; do
+        delete_entity "urn:e2e-bare-${spec}:${RUN_ID}" >/dev/null 2>&1 || true
     done
     for spec in "${HASVALUE_CASES[@]}"; do
         delete_entity "urn:e2e-hasvalue-${spec%%|*}:${RUN_ID}" >/dev/null 2>&1 || true
@@ -571,6 +621,9 @@ assert_no_alert() {
     # alerted, so that "no alert" means "checked and found valid" rather than
     # "not processed yet".
     local name attr value code
+    code=$(create_entity "${NUMBER_RELATIONSHIP}" "${NUMBER_TYPE}" \
+        "$(relationship_json "${E2E}/hasE2EBareDouble" urn:e2e:iri)")
+    [ "${code}" = "201" ]
     for spec in "${NUMBER_SILENT[@]}" "${NUMBER_LOUD[@]}"; do
         IFS='|' read -r name attr value <<< "${spec}"
         code=$(create_entity "urn:e2e-number-${name}:${RUN_ID}" "${NUMBER_TYPE}" \
@@ -584,6 +637,46 @@ assert_no_alert() {
     for spec in "${NUMBER_SILENT[@]}"; do
         IFS='|' read -r name attr value <<< "${spec}"
         assert_no_alert "urn:e2e-number-${name}:${RUN_ID}" "${DATATYPE_CONSTRAINT}"
+    done
+    assert_no_alert "${NUMBER_RELATIONSHIP}" "${DATATYPE_CONSTRAINT}"
+    assert_no_alert "${NUMBER_RELATIONSHIP}" "${NODEKIND_CONSTRAINT}"
+}
+
+# The event of a BARE_CASES component on an attribute: Component[index] names one instance,
+# Component alone the alert of a connective.
+bare_event() {
+    local component=$1 attr=$2
+    case "${component}" in
+        *\[*) echo "${component%%\[*}(${E2E}/${attr}[${component#*\[})" ;;
+        *) echo "${component}(${E2E}/${attr})" ;;
+    esac
+}
+
+@test "a datatype without sh:nodeKind is judged per instance, beside and inside connectives" {
+    # Scorpio passes all of these values on unchanged. Each entity carries many attributes, so
+    # several verdicts cost one creation; the silent ones are checked last, as above.
+    local entity members ent attr value loud silent component code
+    for entity in a b c; do
+        members=""
+        for spec in "${BARE_CASES[@]}"; do
+            IFS='|' read -r ent attr value loud silent <<< "${spec}"
+            [ "${ent}" = "${entity}" ] || continue
+            members="${members:+${members},}\"${E2E}/${attr}\":${value}"
+        done
+        code=$(create_entity "urn:e2e-bare-${entity}:${RUN_ID}" "${DATATYPE_TYPE}" "${members}")
+        [ "${code}" = "201" ] || { echo "# create ${entity} -> HTTP ${code}" >&3; return 1; }
+    done
+    for spec in "${BARE_CASES[@]}"; do
+        IFS='|' read -r ent attr value loud silent <<< "${spec}"
+        for component in ${loud}; do
+            assert_alert "urn:e2e-bare-${ent}:${RUN_ID}" "$(bare_event "${component}" "${attr}")"
+        done
+    done
+    for spec in "${BARE_CASES[@]}"; do
+        IFS='|' read -r ent attr value loud silent <<< "${spec}"
+        for component in ${silent}; do
+            assert_no_alert "urn:e2e-bare-${ent}:${RUN_ID}" "$(bare_event "${component}" "${attr}")"
+        done
     done
 }
 

@@ -1,0 +1,509 @@
+[
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:nokind:valid",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDouble": {
+      "type": "Property",
+      "value": 80.5
+    },
+    "iffBaseEntities:hasInteger": {
+      "type": "Property",
+      "value": 80
+    },
+    "iffBaseEntities:hasBoolean": {
+      "type": "Property",
+      "value": true
+    },
+    "iffBaseEntities:hasText": {
+      "type": "Property",
+      "value": "abc"
+    },
+    "iffBaseEntities:hasYear": {
+      "type": "Property",
+      "value": {
+        "@value": "2020",
+        "@type": "http://www.w3.org/2001/XMLSchema#gYear"
+      }
+    },
+    "iffBaseEntities:hasIriOrLiteral": {
+      "type": "Property",
+      "value": 1.5
+    },
+    "iffBaseEntities:hasNumber": {
+      "type": "Property",
+      "value": 80
+    },
+    "iffBaseEntities:hasOuterNumber": {
+      "type": "Property",
+      "value": 80.5
+    },
+    "iffBaseEntities:hasBounded": {
+      "type": "Property",
+      "value": 5
+    },
+    "iffBaseEntities:hasMatch": {
+      "type": "Property",
+      "value": "ok"
+    },
+    "iffBaseEntities:hasKindDouble": {
+      "type": "Property",
+      "value": 1.5
+    },
+    "iffBaseEntities:hasIri": {
+      "type": "Property",
+      "value": {
+        "@id": "urn:some:iri"
+      }
+    },
+    "iffBaseEntities:hasNoKind": {
+      "type": "Property",
+      "value": 1
+    },
+    "iffBaseEntities:hasListOfIntegers": {
+      "type": "ListProperty",
+      "valueList": [
+        1,
+        2
+      ]
+    },
+    "iffBaseEntities:hasJson": {
+      "type": "JsonProperty",
+      "json": {
+        "a": "b"
+      }
+    },
+    "iffBaseEntities:hasPart": {
+      "type": "Property",
+      "value": "p",
+      "iffBaseEntities:hasSize": {
+        "type": "Property",
+        "value": 1.5
+      }
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:nokind:text",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDouble": {
+      "type": "Property",
+      "value": "abc"
+    },
+    "iffBaseEntities:hasInteger": {
+      "type": "Property",
+      "value": "abc"
+    },
+    "iffBaseEntities:hasBoolean": {
+      "type": "Property",
+      "value": "abc"
+    },
+    "iffBaseEntities:hasIriOrLiteral": {
+      "type": "Property",
+      "value": "abc"
+    },
+    "iffBaseEntities:hasNumber": {
+      "type": "Property",
+      "value": "abc"
+    },
+    "iffBaseEntities:hasOuterNumber": {
+      "type": "Property",
+      "value": "abc"
+    },
+    "iffBaseEntities:hasMatch": {
+      "type": "Property",
+      "value": "no"
+    },
+    "iffBaseEntities:hasKindDouble": {
+      "type": "Property",
+      "value": "abc"
+    },
+    "iffBaseEntities:hasIri": {
+      "type": "Property",
+      "value": "abc"
+    },
+    "iffBaseEntities:hasNoKind": {
+      "type": "Property",
+      "value": "abc"
+    },
+    "iffBaseEntities:hasListOfIntegers": {
+      "type": "ListProperty",
+      "valueList": [
+        "abc"
+      ]
+    },
+    "iffBaseEntities:hasPart": {
+      "type": "Property",
+      "value": "p",
+      "iffBaseEntities:hasSize": {
+        "type": "Property",
+        "value": "abc"
+      }
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:nokind:number",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDouble": {
+      "type": "Property",
+      "value": 80
+    },
+    "iffBaseEntities:hasInteger": {
+      "type": "Property",
+      "value": 80.5
+    },
+    "iffBaseEntities:hasBoolean": {
+      "type": "Property",
+      "value": 1
+    },
+    "iffBaseEntities:hasText": {
+      "type": "Property",
+      "value": 1
+    },
+    "iffBaseEntities:hasYear": {
+      "type": "Property",
+      "value": 2020
+    },
+    "iffBaseEntities:hasNumber": {
+      "type": "Property",
+      "value": 80.5
+    },
+    "iffBaseEntities:hasOuterNumber": {
+      "type": "Property",
+      "value": 80
+    },
+    "iffBaseEntities:hasBounded": {
+      "type": "Property",
+      "value": 0
+    },
+    "iffBaseEntities:hasNoKind": {
+      "type": "Property",
+      "value": 1
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:nokind:boolean",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDouble": {
+      "type": "Property",
+      "value": true
+    },
+    "iffBaseEntities:hasInteger": {
+      "type": "Property",
+      "value": true
+    },
+    "iffBaseEntities:hasText": {
+      "type": "Property",
+      "value": true
+    },
+    "iffBaseEntities:hasNumber": {
+      "type": "Property",
+      "value": true
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:nokind:declared",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDouble": {
+      "type": "Property",
+      "value": {
+        "@value": 80,
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    },
+    "iffBaseEntities:hasInteger": {
+      "type": "Property",
+      "value": {
+        "@value": 80,
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    },
+    "iffBaseEntities:hasBoolean": {
+      "type": "Property",
+      "value": {
+        "@value": "true",
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+      }
+    },
+    "iffBaseEntities:hasText": {
+      "type": "Property",
+      "value": {
+        "@value": 1,
+        "@type": "http://www.w3.org/2001/XMLSchema#integer"
+      }
+    },
+    "iffBaseEntities:hasYear": {
+      "type": "Property",
+      "value": {
+        "@value": "2020-01-01",
+        "@type": "http://www.w3.org/2001/XMLSchema#date"
+      }
+    },
+    "iffBaseEntities:hasNumber": {
+      "type": "Property",
+      "value": {
+        "@value": 80,
+        "@type": "http://www.w3.org/2001/XMLSchema#integer"
+      }
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:nokind:iri",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDouble": {
+      "type": "Property",
+      "value": {
+        "@id": "urn:some:iri"
+      }
+    },
+    "iffBaseEntities:hasInteger": {
+      "type": "Property",
+      "value": {
+        "@id": "urn:some:iri"
+      }
+    },
+    "iffBaseEntities:hasBoolean": {
+      "type": "Property",
+      "value": {
+        "@id": "urn:some:iri"
+      }
+    },
+    "iffBaseEntities:hasText": {
+      "type": "Property",
+      "value": {
+        "@id": "urn:some:iri"
+      }
+    },
+    "iffBaseEntities:hasYear": {
+      "type": "Property",
+      "value": {
+        "@id": "urn:some:iri"
+      }
+    },
+    "iffBaseEntities:hasIriOrLiteral": {
+      "type": "Property",
+      "value": {
+        "@id": "urn:some:iri"
+      }
+    },
+    "iffBaseEntities:hasNumber": {
+      "type": "Property",
+      "value": {
+        "@id": "urn:some:iri"
+      }
+    },
+    "iffBaseEntities:hasOuterNumber": {
+      "type": "Property",
+      "value": {
+        "@id": "urn:some:iri"
+      }
+    },
+    "iffBaseEntities:hasNoKind": {
+      "type": "Property",
+      "value": {
+        "@id": "urn:some:iri"
+      }
+    },
+    "iffBaseEntities:hasKindDouble": {
+      "type": "Property",
+      "value": {
+        "@id": "urn:some:iri"
+      }
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:nokind:relationship",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDouble": {
+      "type": "Relationship",
+      "object": "urn:nokind:other"
+    },
+    "iffBaseEntities:hasInteger": {
+      "type": "Relationship",
+      "object": "urn:nokind:other"
+    },
+    "iffBaseEntities:hasBoolean": {
+      "type": "Relationship",
+      "object": "urn:nokind:other"
+    },
+    "iffBaseEntities:hasText": {
+      "type": "Relationship",
+      "object": "urn:nokind:other"
+    },
+    "iffBaseEntities:hasYear": {
+      "type": "Relationship",
+      "object": "urn:nokind:other"
+    },
+    "iffBaseEntities:hasIriOrLiteral": {
+      "type": "Relationship",
+      "object": "urn:nokind:other"
+    },
+    "iffBaseEntities:hasNumber": {
+      "type": "Relationship",
+      "object": "urn:nokind:other"
+    },
+    "iffBaseEntities:hasOuterNumber": {
+      "type": "Relationship",
+      "object": "urn:nokind:other"
+    },
+    "iffBaseEntities:hasNoKind": {
+      "type": "Relationship",
+      "object": "urn:nokind:other"
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:nokind:list",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDouble": {
+      "type": "ListProperty",
+      "valueList": [
+        "abc"
+      ]
+    },
+    "iffBaseEntities:hasInteger": {
+      "type": "ListProperty",
+      "valueList": [
+        "abc"
+      ]
+    },
+    "iffBaseEntities:hasBoolean": {
+      "type": "ListProperty",
+      "valueList": [
+        "abc"
+      ]
+    },
+    "iffBaseEntities:hasText": {
+      "type": "ListProperty",
+      "valueList": [
+        "abc"
+      ]
+    },
+    "iffBaseEntities:hasYear": {
+      "type": "ListProperty",
+      "valueList": [
+        "abc"
+      ]
+    },
+    "iffBaseEntities:hasIriOrLiteral": {
+      "type": "ListProperty",
+      "valueList": [
+        "abc"
+      ]
+    },
+    "iffBaseEntities:hasNumber": {
+      "type": "ListProperty",
+      "valueList": [
+        "abc"
+      ]
+    },
+    "iffBaseEntities:hasOuterNumber": {
+      "type": "ListProperty",
+      "valueList": [
+        "abc"
+      ]
+    },
+    "iffBaseEntities:hasNoKind": {
+      "type": "ListProperty",
+      "valueList": [
+        "abc"
+      ]
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:nokind:json",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDouble": {
+      "type": "JsonProperty",
+      "json": {
+        "a": "b"
+      }
+    },
+    "iffBaseEntities:hasInteger": {
+      "type": "JsonProperty",
+      "json": {
+        "a": "b"
+      }
+    },
+    "iffBaseEntities:hasBoolean": {
+      "type": "JsonProperty",
+      "json": {
+        "a": "b"
+      }
+    },
+    "iffBaseEntities:hasText": {
+      "type": "JsonProperty",
+      "json": {
+        "a": "b"
+      }
+    },
+    "iffBaseEntities:hasYear": {
+      "type": "JsonProperty",
+      "json": {
+        "a": "b"
+      }
+    },
+    "iffBaseEntities:hasIriOrLiteral": {
+      "type": "JsonProperty",
+      "json": {
+        "a": "b"
+      }
+    },
+    "iffBaseEntities:hasNumber": {
+      "type": "JsonProperty",
+      "json": {
+        "a": "b"
+      }
+    },
+    "iffBaseEntities:hasOuterNumber": {
+      "type": "JsonProperty",
+      "json": {
+        "a": "b"
+      }
+    },
+    "iffBaseEntities:hasNoKind": {
+      "type": "JsonProperty",
+      "json": {
+        "a": "b"
+      }
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:nokind:datasets",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasDouble": [
+      {
+        "type": "Property",
+        "value": "abc"
+      },
+      {
+        "type": "Property",
+        "value": 80.5,
+        "datasetId": "urn:iff:datasetId:1"
+      },
+      {
+        "type": "Property",
+        "value": "xyz",
+        "datasetId": "urn:iff:datasetId:2"
+      }
+    ],
+    "iffBaseEntities:hasNumber": [
+      {
+        "type": "Property",
+        "value": 1
+      },
+      {
+        "type": "Property",
+        "value": "abc",
+        "datasetId": "urn:iff:datasetId:1"
+      }
+    ]
+  }
+]

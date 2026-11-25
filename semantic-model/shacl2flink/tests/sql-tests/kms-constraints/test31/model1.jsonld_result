@@ -1,0 +1,7 @@
+'urn:forms:json','DatatypeConstraintComponent(https://industryfusion.github.io/contexts/example/v0/base_entities/hasDouble[0])','warning'
+'urn:forms:number-1','DatatypeConstraintComponent(https://industryfusion.github.io/contexts/example/v0/base_entities/hasBoolean[0])','warning'
+'urn:forms:text','DatatypeConstraintComponent(https://industryfusion.github.io/contexts/example/v0/base_entities/hasBranchOn[0])','warning'
+'urn:forms:text','DatatypeConstraintComponent(https://industryfusion.github.io/contexts/example/v0/base_entities/hasKindAnd[0])','warning'
+'urn:forms:text','DatatypeConstraintComponent(https://industryfusion.github.io/contexts/example/v0/base_entities/hasSubAnd[0])','warning'
+'urn:forms:text-inf','DatatypeConstraintComponent(https://industryfusion.github.io/contexts/example/v0/base_entities/hasDouble[0])','warning'
+'urn:forms:year','DatatypeConstraintComponent(https://industryfusion.github.io/contexts/example/v0/base_entities/hasYearMonth[0])','warning'

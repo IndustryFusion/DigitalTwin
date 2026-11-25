@@ -38,13 +38,14 @@ def parse_args(args=sys.argv[1:]):
 
 
 attributes_query = """
+# A value that is a blank node (a JSON object, the geometry of a GeoProperty) is no literal: '@blank' (#1097).
 # Every sub-attribute (observedAt, datasetId, unitCode) is read from the attribute instance ?attr itself.
 # Correlating them through the value instead merged an instance without a datasetId into an instance with
 # a datasetId and an equal value: both then carried that datasetId and collapsed into one row.
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
-SELECT DISTINCT (?a as ?entityId) (?b as ?name) (?e as ?type) (IF(bound(?g), IF(isIRI(?g), '@id', '@value'), IF(isIRI(?f), '@id', '@value')) as ?nodeType)
+SELECT DISTINCT (?a as ?entityId) (?b as ?name) (?e as ?type) (IF(bound(?g), IF(isIRI(?g), '@id', '@value'), IF(isIRI(?f), '@id', IF(isBlank(?f), '@blank', '@value'))) as ?nodeType)
 (datatype(?f) as ?valueType) (?f as ?hasValue) (?g as ?hasObject) (?h as ?hasValueList) (?i as ?hasJSON) ?observedAt ?index ?unitCode
 where {
     ?a a ?subclass .

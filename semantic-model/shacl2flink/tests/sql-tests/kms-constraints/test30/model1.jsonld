@@ -1,0 +1,309 @@
+[
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:beside:conforming",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasNotFive": {
+      "type": "Property",
+      "value": 6.5
+    },
+    "iffBaseEntities:hasNotBad": {
+      "type": "Property",
+      "value": "good"
+    },
+    "iffBaseEntities:hasOuterOr": [
+      {
+        "type": "Property",
+        "value": 1
+      },
+      {
+        "type": "Property",
+        "value": 80.5,
+        "datasetId": "urn:iff:datasetId:1"
+      }
+    ],
+    "iffBaseEntities:hasBoundedOr": [
+      {
+        "type": "Property",
+        "value": 1
+      },
+      {
+        "type": "Property",
+        "value": 80.5,
+        "datasetId": "urn:iff:datasetId:1"
+      }
+    ],
+    "iffBaseEntities:hasDecimal": {
+      "type": "Property",
+      "value": {
+        "@value": "80.5",
+        "@type": "http://www.w3.org/2001/XMLSchema#decimal"
+      }
+    },
+    "iffBaseEntities:hasAnyText": {
+      "type": "Property",
+      "value": {
+        "@value": "hallo",
+        "@language": "de"
+      }
+    },
+    "iffBaseEntities:hasElement": {
+      "type": "Property",
+      "value": "abc"
+    },
+    "iffBaseEntities:hasTextOrOther": {
+      "type": "Property",
+      "value": {
+        "@id": "urn:some:iri"
+      }
+    },
+    "iffBaseEntities:hasText": {
+      "type": "Property",
+      "value": "abc"
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:beside:one-instance",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasNotFive": {
+      "type": "Property",
+      "value": 6.5
+    },
+    "iffBaseEntities:hasNotBad": {
+      "type": "Property",
+      "value": "good"
+    },
+    "iffBaseEntities:hasOuterOr": [
+      {
+        "type": "Property",
+        "value": 1
+      },
+      {
+        "type": "Property",
+        "value": "abc",
+        "datasetId": "urn:iff:datasetId:1"
+      }
+    ],
+    "iffBaseEntities:hasBoundedOr": [
+      {
+        "type": "Property",
+        "value": "abc"
+      },
+      {
+        "type": "Property",
+        "value": 80.5,
+        "datasetId": "urn:iff:datasetId:1"
+      }
+    ]
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:beside:five",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasNotFive": {
+      "type": "Property",
+      "value": 5
+    },
+    "iffBaseEntities:hasNotBad": {
+      "type": "Property",
+      "value": "bad"
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:beside:iri",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasNotFive": {
+      "type": "Property",
+      "value": {
+        "@id": "urn:some:iri"
+      }
+    },
+    "iffBaseEntities:hasNotBad": {
+      "type": "Property",
+      "value": {
+        "@id": "urn:some:iri"
+      }
+    },
+    "iffBaseEntities:hasOuterOr": {
+      "type": "Property",
+      "value": {
+        "@id": "urn:some:iri"
+      }
+    },
+    "iffBaseEntities:hasDecimal": {
+      "type": "Property",
+      "value": {
+        "@id": "urn:some:iri"
+      }
+    },
+    "iffBaseEntities:hasAnyText": {
+      "type": "Property",
+      "value": {
+        "@id": "urn:some:iri"
+      }
+    },
+    "iffBaseEntities:hasElement": {
+      "type": "Property",
+      "value": {
+        "@id": "urn:some:iri"
+      }
+    },
+    "iffBaseEntities:hasText": {
+      "type": "Property",
+      "value": {
+        "@id": "urn:some:iri"
+      }
+    },
+    "iffBaseEntities:hasBoth": {
+      "type": "Property",
+      "value": {
+        "@id": "urn:some:iri"
+      }
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:beside:text",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasNotFive": {
+      "type": "Property",
+      "value": "abc"
+    },
+    "iffBaseEntities:hasNotBad": {
+      "type": "Property",
+      "value": "good"
+    },
+    "iffBaseEntities:hasDecimal": {
+      "type": "Property",
+      "value": "abc"
+    },
+    "iffBaseEntities:hasTextOrOther": {
+      "type": "Property",
+      "value": "abc"
+    },
+    "iffBaseEntities:hasBoth": {
+      "type": "Property",
+      "value": "abc"
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:beside:number",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasNotFive": {
+      "type": "Property",
+      "value": 6.5
+    },
+    "iffBaseEntities:hasNotBad": {
+      "type": "Property",
+      "value": "good"
+    },
+    "iffBaseEntities:hasAnyText": {
+      "type": "Property",
+      "value": {
+        "@value": 1.5,
+        "@type": "http://www.w3.org/2001/XMLSchema#double"
+      }
+    },
+    "iffBaseEntities:hasDecimal": {
+      "type": "Property",
+      "value": 80.5
+    },
+    "iffBaseEntities:hasBoth": {
+      "type": "Property",
+      "value": 1
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:beside:object",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasNotFive": {
+      "type": "Property",
+      "value": 6.5
+    },
+    "iffBaseEntities:hasNotBad": {
+      "type": "Property",
+      "value": "good"
+    },
+    "iffBaseEntities:hasText": {
+      "type": "Property",
+      "value": {
+        "iffBaseEntities:hasOther": {
+          "type": "Property",
+          "value": "x"
+        }
+      }
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:beside:geo",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasNotFive": {
+      "type": "Property",
+      "value": 6.5
+    },
+    "iffBaseEntities:hasNotBad": {
+      "type": "Property",
+      "value": "good"
+    },
+    "iffBaseEntities:hasText": {
+      "type": "GeoProperty",
+      "value": {
+        "type": "Point",
+        "coordinates": [
+          1.0,
+          2.0
+        ]
+      }
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:beside:relationship",
+    "type": "iffBaseEntities:Filter",
+    "iffBaseEntities:hasNotFive": {
+      "type": "Property",
+      "value": 6.5
+    },
+    "iffBaseEntities:hasNotBad": {
+      "type": "Property",
+      "value": "good"
+    },
+    "iffBaseEntities:hasOuterOr": {
+      "type": "Relationship",
+      "object": "urn:beside:other"
+    },
+    "iffBaseEntities:hasBoundedOr": {
+      "type": "Relationship",
+      "object": "urn:beside:other"
+    },
+    "iffBaseEntities:hasDecimal": {
+      "type": "Relationship",
+      "object": "urn:beside:other"
+    },
+    "iffBaseEntities:hasAnyText": {
+      "type": "Relationship",
+      "object": "urn:beside:other"
+    },
+    "iffBaseEntities:hasElement": {
+      "type": "Relationship",
+      "object": "urn:beside:other"
+    },
+    "iffBaseEntities:hasTextOrOther": {
+      "type": "Relationship",
+      "object": "urn:beside:other"
+    },
+    "iffBaseEntities:hasText": {
+      "type": "Relationship",
+      "object": "urn:beside:other"
+    },
+    "iffBaseEntities:hasBoth": {
+      "type": "Relationship",
+      "object": "urn:beside:other"
+    }
+  }
+]

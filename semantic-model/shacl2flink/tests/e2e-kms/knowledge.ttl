@@ -104,6 +104,81 @@
     rdfs:domain :E2ENumberMachine ;
     rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
 
+# sh:datatype without sh:nodeKind (#1097): see E2ENumberMachineShape.
+:hasE2EBareDouble a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :E2ENumberMachine ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
+:hasE2EBareNumber a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :E2ENumberMachine ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
+:hasE2EBareString a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :E2ENumberMachine ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
+:hasE2EBareDecimal a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :E2ENumberMachine ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
+# A datatype beside and inside connectives (#1097): see E2EDatatypeMachineShape.
+:E2EDatatypeMachine a owl:Class,
+        owl:NamedIndividual .
+
+:hasE2EPlain a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :E2EDatatypeMachine ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
+:hasE2ENotFive a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :E2EDatatypeMachine ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
+:hasE2EEither a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :E2EDatatypeMachine ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
+:hasE2EBoth a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :E2EDatatypeMachine ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
+:hasE2EOpen a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :E2EDatatypeMachine ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
+:hasE2EText a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :E2EDatatypeMachine ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
+:hasE2EKind a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :E2EDatatypeMachine ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
+:hasE2EAnyText a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :E2EDatatypeMachine ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
+:hasE2EFlag a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :E2EDatatypeMachine ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
+:hasE2EOff a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :E2EDatatypeMachine ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
 # sh:hasValue with a number (#965): see E2EHasValueMachineShape.
 :E2EHasValueMachine a owl:Class,
         owl:NamedIndividual .

@@ -87,6 +87,27 @@ sh:datatype
 
 How numbers are typed: see [Datatypes of numbers](#datatypes-of-numbers).
 
+The check does not need `sh:nodeKind`. Without one it judges only the values
+of `ngsi-ld:hasValue`: an IRI and a geometry violate every datatype, and a
+Relationship, ListProperty or JsonProperty has no such value and satisfies the
+shape. With `sh:nodeKind sh:Literal` those are reported by the node kind check.
+A Property whose value is a JSON object is reported like an IRI by the SQLite
+checks only: it does not reach Flink, so nothing is raised for its value there.
+
+Without `sh:nodeKind`, the datatypes of an `sh:and`, and of an `sh:or` whose
+branches all state one, are judged for each instance, and the alert names
+`sh:datatype`. Not judged is a datatype inside `sh:not`, inside `sh:xone`, in an
+`sh:or` with a branch that states none, states `sh:nodeKind` `sh:Literal` or
+`sh:IRI`, has an `sh:path` or is deactivated, or under a connective of a node shape or of an
+enclosing attribute; and not the datatype of a shape with `sh:deactivated true`,
+nor `rdf:JSON`. On Flink a plain number or boolean satisfies a list with
+`rdf:langString`: it arrives without a type, as a language-tagged string does.
+In this check a value declared with any datatype of a list satisfies the list, a
+declared boolean may be written `1` or `0` and a declared double `INF`, `-INF` or
+`NaN`, and a declared type has to be the
+required one exactly; with `sh:nodeKind sh:Literal` only lists of `xsd:double`,
+`xsd:integer`, `xsd:boolean` and `xsd:string` are judged by the declared type.
+
 </td>
 <td style="font-size: 50px;color: green;">&#10003;</td>
 </tr>

@@ -1,0 +1,651 @@
+@prefix : <https://industryfusion.github.io/contexts/example/v0/base_entities/> .
+@prefix default1: <https://industryfusion.github.io/contexts/example/v0/base_knowledge/> .
+@prefix default2: <https://industryfusion.github.io/contexts/example/v0/bindings/base_test/> .
+@prefix default3: <https://industryfusion.github.io/contexts/example/v0/filter_entities/> .
+@prefix default4: <https://industryfusion.github.io/contexts/example/v0/filter_knowledge/> .
+@prefix default5: <https://industryfusion.github.io/contexts/ontology/v0/material/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+: a owl:Ontology ;
+    owl:imports <https://industryfusion.github.io/contexts/staging/ontology/v0.1/ngsild.ttl> ;
+    owl:versionIRI <https://industryfusion.github.io/contexts/staging/example/v0.1/base_entities.ttll> ;
+    owl:versionInfo "v0.1"^^xsd:string .
+
+:Lasercutter a owl:Class,
+        owl:NamedIndividual ;
+    rdfs:subClassOf :Cutter .
+
+:Plasmacutter a owl:Class,
+        owl:NamedIndividual ;
+    rdfs:subClassOf :Cutter .
+
+:hasCartridge a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :Filter ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Relationship> .
+
+:hasFilter a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :Cutter ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Relationship> .
+
+:hasHeight a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :Workpiece ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> ;
+    default1:boundBy default2:heightBinding .
+
+:hasInWorkpiece a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :Cutter ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Relationship> .
+
+:hasLength a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :Workpiece ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> ;
+    default1:boundBy default2:lengthBinding .
+
+:hasMaterial a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :Workpiece ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> ;
+    default1:boundBy default2:materialBinding .
+
+:hasOutWorkpiece a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :Cutter ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Relationship> .
+
+:hasState a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :Machine ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> ;
+    default1:boundBy default2:stateBindingCutter,
+        default2:stateBindingFilter .
+
+:hasStrength a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :Filter ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> ;
+    default1:boundBy default2:strengthBinding .
+
+:hasWidth a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :Workpiece ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
+:isUsedFrom a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :FilterCartridge ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
+:isUsedUntil a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :FilterCartridge ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
+default1: a owl:Ontology ;
+    owl:versionIRI <https://industryfusion.github.io/contexts/staging/example/v0.1/base_knowledge.ttl> ;
+    owl:versionInfo "0.1"^^xsd:string .
+
+default1:FieldType a owl:Class .
+
+default1:OPCUAConnector a owl:Class,
+        owl:NamedIndividual ;
+    rdfs:subClassOf default1:BoundConnector .
+
+default1:bindingVersion a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+
+default1:bindsConnector a owl:ObjectProperty ;
+    rdfs:domain default1:BoundMap ;
+    rdfs:range default1:BoundConnector .
+
+default1:bindsConnectorAttribute a owl:DatatypeProperty .
+
+default1:bindsContext a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+
+default1:bindsEntityType a owl:ObjectProperty ;
+    rdfs:domain default1:Binding .
+
+default1:bindsFirmware a owl:DatatypeProperty ;
+    rdfs:domain default1:Binding ;
+    rdfs:range xsd:string .
+
+default1:bindsLogic a owl:DatatypeProperty ;
+    rdfs:domain default1:BoundMap ;
+    rdfs:range xsd:string .
+
+default1:bindsLogicVar a owl:DatatypeProperty ;
+    rdfs:domain default1:BoundMap ;
+    rdfs:range xsd:string .
+
+default1:bindsMap a owl:ObjectProperty ;
+    rdfs:domain default1:Binding ;
+    rdfs:range default1:BoundMap .
+
+default1:bindsMapDataType a owl:ObjectProperty ;
+    rdfs:domain default1:BoundMap ;
+    rdfs:range rdfs:Datatype .
+
+default1:boundBy a owl:ObjectProperty ;
+    rdfs:domain <https://uri.etsi.org/ngsi-ld/Property>,
+        <https://uri.etsi.org/ngsi-ld/Relationship> ;
+    rdfs:range default1:Binding .
+
+default1:hasEntity a owl:AnnotationProperty .
+
+default1:isValidFor a owl:ObjectProperty ;
+    rdfs:domain default1:MachineState .
+
+default1:severityCritical a owl:NamedIndividual,
+        default1:SeverityClass ;
+    rdfs:label "critical" .
+
+default1:severityWarning a owl:NamedIndividual,
+        default1:SeverityClass ;
+    rdfs:label "warning" .
+
+default1:severityMajor a owl:NamedIndividual,
+        default1:SeverityClass ;
+    rdfs:label "major" .
+
+default1:state_CLEANING a owl:NamedIndividual,
+        default1:MachineState ;
+    rdfs:label "CLEANING" ;
+    default1:isValidFor :Filter .
+
+default1:state_CLEARING a owl:NamedIndividual,
+        default1:MachineState ;
+    rdfs:label "CLEARING" ;
+    default1:isValidFor :Cutter .
+
+default1:state_ERROR a owl:NamedIndividual,
+        default1:MachineState ;
+    rdfs:label "ERROR" ;
+    default1:isValidFor :Machine .
+
+default1:state_OFF a owl:NamedIndividual,
+        default1:MachineState ;
+    rdfs:label "OFF" ;
+    default1:isValidFor :Machine .
+
+default1:state_ON a owl:NamedIndividual,
+        default1:MachineState ;
+    rdfs:label "ON" ;
+    default1:isValidFor :Machine .
+
+default1:state_PREPARING a owl:NamedIndividual,
+        default1:MachineState ;
+    rdfs:label "PREPARING" ;
+    default1:isValidFor :Cutter .
+
+default1:state_PROCESSING a owl:NamedIndividual,
+        default1:MachineState ;
+    rdfs:label "PROCESSING" ;
+    default1:isValidFor :Cutter .
+
+default2: a owl:Ontology ;
+    owl:imports <https://industryfusion.github.io/contexts/staging/example/v0.1/base_entities.ttl>,
+        <https://industryfusion.github.io/contexts/staging/example/v0.1/base_knowledge.ttl> ;
+    owl:versionIRI <https://industryfusion.github.io/contexts/staging/example/v0.1/bindings/base_test.ttl> ;
+    owl:versionInfo "0.1"^^xsd:string .
+
+default2:testBinding a owl:NamedIndividual,
+        default1:Binding ;
+    default1:bindingVersion "0.9"^^xsd:string ;
+    default1:bindsConnector default1:TestConnector ;
+    default1:bindsEntityType :Filter ;
+    default1:bindsFirmware "123"^^xsd:string,
+        "xyz"^^xsd:string ;
+    default1:bindsMap default2:_map1 .
+
+default2:widthBinding a owl:NamedIndividual,
+        default1:Binding ;
+    default1:bindsEntityType :Workpiece ;
+    default1:bindsFirmware "xyz" ;
+    default1:bindsMap default2:_map7 .
+
+default3: a owl:Ontology ;
+    owl:imports <https://industryfusion.github.io/contexts/staging/example/v0.1/base_entities.ttll>,
+        <https://industryfusion.github.io/contexts/staging/example/v0.1/filter_knowledge.ttl>,
+        <https://uri.etsi.org/ngsi-ld/> ;
+    owl:versionIRI <https://industryfusion.github.io/contexts/staging/example/v0.1/filter_entities.ttl> ;
+    owl:versionInfo "v0.1"^^xsd:string .
+
+default3:hasWasteclass a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :FilterCartridge ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
+default4: a owl:Ontology ;
+    owl:imports <https://industryfusion.github.io/contexts/staging/ontology/v0.1/material.ttl> ;
+    owl:versionIRI <https://industryfusion.github.io/contexts/staging/example/v0.1/filter_knowledge.ttl> ;
+    owl:versionInfo "v0.1"^^xsd:string .
+
+default4:hasWasteclass a owl:ObjectProperty ;
+    rdfs:domain default5:Material ;
+    rdfs:range default4:Wasteclass .
+
+default4:higherHazardLevel a owl:ObjectProperty,
+        owl:TransitiveProperty ;
+    rdfs:domain default4:Wasteclass ;
+    rdfs:range default4:Wasteclass .
+
+default5: a owl:Ontology ;
+    owl:versionIRI <https://industryfusion.github.io/contexts/staging/ontology/v0.1/material.ttl> .
+
+default5:EN_1.3401 a owl:NamedIndividual,
+        default5:Material ;
+    default4:hasWasteclass default4:WC1 ;
+    default5:contains default5:_17,
+        default5:_18,
+        default5:_19,
+        default5:_20,
+        default5:_21,
+        default5:_22 .
+
+default5:EN_1.4301 a owl:NamedIndividual,
+        default5:Material ;
+    default4:hasWasteclass default4:WC2 ;
+    default5:contains default5:_10,
+        default5:_11,
+        default5:_12,
+        default5:_13,
+        default5:_14,
+        default5:_15,
+        default5:_16,
+        default5:_9 .
+
+default5:EN_1.5301 a owl:NamedIndividual,
+        default5:Material ;
+    default4:hasWasteclass default4:WC3 ;
+    default5:contains default5:_1,
+        default5:_2,
+        default5:_3,
+        default5:_4,
+        default5:_5,
+        default5:_6,
+        default5:_7,
+        default5:_8 ;
+    default5:hasEvaporationTemperature "1200" .
+
+default5:contains a owl:ObjectProperty ;
+    rdfs:domain default5:Material ;
+    rdfs:range default5:_ElementOccurance .
+
+default5:hasChemicalSymbol a owl:DatatypeProperty ;
+    rdfs:domain default5:ChemicalElement ;
+    rdfs:range xsd:string .
+
+default5:hasEvaporationTemperature a owl:DatatypeProperty ;
+    rdfs:domain default5:Material ;
+    rdfs:range xsd:string .
+
+default5:hasMaxPercent a owl:DatatypeProperty ;
+    rdfs:domain default5:_ElementOccurance ;
+    rdfs:range xsd:string .
+
+default5:hasMinPercent a owl:DatatypeProperty ;
+    rdfs:domain default5:_ElementOccurance ;
+    rdfs:range xsd:string .
+
+default5:isChemicalElement a owl:ObjectProperty ;
+    rdfs:domain default5:_ElementOccurance ;
+    rdfs:range default5:ChemicalElement .
+
+xsd:integer a rdfs:Datatype,
+        owl:NamedIndividual .
+
+default2:_map2 a owl:NamedIndividual,
+        default1:BoundMap ;
+    default1:bindsConnector default1:TestConnector ;
+    default1:bindsConnectorAttribute "stateattr2" ;
+    default1:bindsLogicVar "var2" ;
+    default1:bindsMapDataType xsd:integer .
+
+default2:_map3 a owl:NamedIndividual,
+        default1:BoundMap ;
+    default1:bindsConnector default1:TestConnector ;
+    default1:bindsConnectorAttribute "heightattr" ;
+    default1:bindsLogicVar "var3" ;
+    default1:bindsMapDataType xsd:decimal .
+
+default2:_map4 a owl:NamedIndividual,
+        default1:BoundMap ;
+    default1:bindsConnectorAttribute "lengthattr" ;
+    default1:bindsLogicVar "var4" ;
+    default1:bindsMapDataType xsd:decimal .
+
+default2:_map5 a owl:NamedIndividual,
+        default1:BoundMap ;
+    default1:bindsConnector default1:TestConnector ;
+    default1:bindsConnectorAttribute "materialattr" ;
+    default1:bindsLogicVar "var5" ;
+    default1:bindsMapDataType xsd:string .
+
+default2:_map6 a owl:NamedIndividual,
+        default1:BoundMap ;
+    default1:bindsConnector default1:TestConnector ;
+    default1:bindsConnectorAttribute "strengthattr" ;
+    default1:bindsLogicVar "var6" ;
+    default1:bindsMapDataType xsd:decimal .
+
+default2:_map7 a owl:NamedIndividual,
+        default1:BoundMap ;
+    default1:bindsConnector default1:TestConnector ;
+    default1:bindsConnectorAttribute "widthattr" ;
+    default1:bindsLogicVar "var7" ;
+    default1:bindsMapDataType xsd:decimal .
+
+default2:_map8 a owl:NamedIndividual ;
+    default1:bindsConnector default1:TestConnector ;
+    default1:bindsConnectorAttribute "filterstateattr" ;
+    default1:bindsLogicVar "var8" ;
+    default1:bindsMapDataType xsd:boolean .
+
+default2:heightBinding a owl:NamedIndividual,
+        default1:Binding ;
+    default1:bindingVersion "0.9"^^xsd:string ;
+    default1:bindsEntityType :Workpiece ;
+    default1:bindsFirmware "123"^^xsd:string,
+        "Firmware xyz" ;
+    default1:bindsMap default2:_map3 .
+
+default2:lengthBinding a owl:NamedIndividual,
+        default1:Binding ;
+    default1:bindsEntityType :Workpiece ;
+    default1:bindsFirmware "xyz" ;
+    default1:bindsMap default2:_map4 .
+
+default2:materialBinding a owl:NamedIndividual,
+        default1:Binding ;
+    default1:bindsEntityType :Workpiece ;
+    default1:bindsFirmware "xyz" ;
+    default1:bindsMap default2:_map5 .
+
+default2:stateBindingCutter a owl:NamedIndividual,
+        default1:Binding ;
+    default1:bindingVersion "0.9"^^xsd:string ;
+    default1:bindsEntityType :Cutter ;
+    default1:bindsFirmware "abc",
+        "xyz" ;
+    default1:bindsLogic """WHERE  {
+    BIND(ngsi-ld:Property as ?type)
+    BIND( 
+        IF(?var1 = true, 
+            IF(FLOOR(?var2/500) = 0, iffBaseKnowledge:state_ON, 
+                IF(FLOOR(?var2/500) = 1, iffBaseKnowledge:state_PROCESSING, iffBaseKnowledge:state_ERROR )
+            )
+            , iffBaseKnowledge:state_OFF
+        ) as ?value
+    )
+    BIND(IF(BOUND(?var1) && BOUND(?var2), 1.0, 0.0) as ?trustLevel)
+}""" ;
+    default1:bindsMap default2:_map1,
+        default2:_map2 .
+
+default2:stateBindingFilter a owl:NamedIndividual ;
+    default1:bindingVersion "0.9"^^xsd:string ;
+    default1:bindsEntityType :Filter ;
+    default1:bindsFirmware "xyz" ;
+    default1:bindsLogic """WHERE  {
+    BIND(ngsi-ld:Property as ?type)
+    BIND( 
+        IF(?var8 = true, 
+            iffBaseKnowledge:state_ON,
+            iffBaseKnowledge:state_OFF
+        ) as ?value
+    )
+    BIND(IF(BOUND(?var8), 1.0, 0.0) as ?trustLevel)
+}"""^^xsd:string ;
+    default1:bindsMap default2:_map8 ;
+    default1:hasEntity :Filter .
+
+default2:strengthBinding a owl:NamedIndividual,
+        default1:Binding ;
+    default1:bindingVersion "0.9"^^xsd:string ;
+    default1:bindsEntityType :Filter ;
+    default1:bindsFirmware "xyz" ;
+    default1:bindsLogic """WHERE {
+    BIND(ngsi-ld:Property as ?type)
+    BIND( 
+        ?var6 / "10.0"^^xsd:float
+         as ?value
+    )
+    BIND(IF( BOUND(?var6), 1.0, 0.0) as ?trustLevel)
+}"""^^xsd:string ;
+    default1:bindsMap default2:_map6 .
+
+default4:WC0 a owl:NamedIndividual,
+        default4:Wasteclass .
+
+default4:WC3 a owl:NamedIndividual,
+        default4:Wasteclass ;
+    default4:higherHazardLevel default4:WC2 .
+
+default5:_1 a owl:NamedIndividual,
+        default5:_ElementOccurance ;
+    default5:hasMaxPercent "0.08" ;
+    default5:isChemicalElement default5:carbon .
+
+default5:_10 a owl:NamedIndividual ;
+    default5:hasMaxPercent "2.0" ;
+    default5:isChemicalElement default5:manganese .
+
+default5:_11 a owl:NamedIndividual ;
+    default5:hasMaxPercent "1.0" ;
+    default5:isChemicalElement default5:silicon .
+
+default5:_12 a owl:NamedIndividual ;
+    default5:hasMaxPercent "0.045" ;
+    default5:isChemicalElement default5:phosphorus .
+
+default5:_13 a owl:NamedIndividual ;
+    default5:hasMaxPercent "0.03" ;
+    default5:isChemicalElement default5:sulfur .
+
+default5:_14 a owl:NamedIndividual ;
+    default5:hasMaxPercent "19.5" ;
+    default5:hasMinPercent "17.5" ;
+    default5:isChemicalElement default5:chromium .
+
+default5:_15 a owl:NamedIndividual ;
+    default5:hasMaxPercent "10.5" ;
+    default5:hasMinPercent "8.0" ;
+    default5:isChemicalElement default5:nickel .
+
+default5:_16 a owl:NamedIndividual ;
+    default5:hasMaxPercent "0.1" ;
+    default5:isChemicalElement default5:nitrogen .
+
+default5:_17 a owl:NamedIndividual ;
+    default5:hasMaxPercent "1.3" ;
+    default5:hasMinPercent "1.1" ;
+    default5:isChemicalElement default5:carbon .
+
+default5:_18 a owl:NamedIndividual ;
+    default5:hasMaxPercent "13" ;
+    default5:hasMinPercent "12" ;
+    default5:isChemicalElement default5:manganese .
+
+default5:_19 a owl:NamedIndividual ;
+    default5:hasMaxPercent "0.50" ;
+    default5:hasMinPercent "0.30" ;
+    default5:isChemicalElement default5:silicon .
+
+default5:_2 a owl:NamedIndividual,
+        default5:_ElementOccurance ;
+    default5:hasMaxPercent "2.0" ;
+    default5:isChemicalElement default5:manganese .
+
+default5:_20 a owl:NamedIndividual ;
+    default5:hasMaxPercent "0.1" ;
+    default5:isChemicalElement default5:phosphorus .
+
+default5:_21 a owl:NamedIndividual ;
+    default5:hasMaxPercent "0.04" ;
+    default5:isChemicalElement default5:sulfur .
+
+default5:_22 a owl:NamedIndividual ;
+    default5:hasMaxPercent "1.5" ;
+    default5:isChemicalElement default5:chromium .
+
+default5:_3 a owl:NamedIndividual,
+        default5:_ElementOccurance ;
+    default5:hasChemicalSymbol "Cr" ;
+    default5:hasMaxPercent "1.0" ;
+    default5:isChemicalElement default5:silicon .
+
+default5:_4 a owl:NamedIndividual,
+        default5:_ElementOccurance ;
+    default5:hasMaxPercent "0.045" ;
+    default5:isChemicalElement default5:phosphorus .
+
+default5:_5 a owl:NamedIndividual,
+        default5:_ElementOccurance ;
+    default5:hasMaxPercent "0.03" ;
+    default5:isChemicalElement default5:sulfur .
+
+default5:_6 a owl:NamedIndividual,
+        default5:_ElementOccurance ;
+    default5:hasMaxPercent "19.0" ;
+    default5:hasMinPercent "17.0" ;
+    default5:isChemicalElement default5:chromium .
+
+default5:_7 a owl:NamedIndividual,
+        default5:_ElementOccurance ;
+    default5:hasMaxPercent "12.0" ;
+    default5:hasMinPercent "12.0" ;
+    default5:isChemicalElement default5:nickel .
+
+default5:_8 a owl:NamedIndividual,
+        default5:_ElementOccurance ;
+    default5:hasMaxPercent "0.7" ;
+    default5:hasMinPercent "0.17" ;
+    default5:isChemicalElement default5:titan .
+
+default5:_9 a owl:NamedIndividual,
+        default5:_ElementOccurance ;
+    default5:hasMaxPercent "0.07" ;
+    default5:isChemicalElement default5:carbon .
+
+default5:nitrogen a owl:NamedIndividual,
+        default5:ChemicalElement ;
+    default5:hasChemicalSymbol "N" .
+
+default5:titan a owl:NamedIndividual,
+        default5:ChemicalElement ;
+    default5:hasChemicalSymbol "Ti" .
+
+xsd:boolean a rdfs:Datatype,
+        owl:NamedIndividual .
+
+:Consumable a owl:Class,
+        owl:NamedIndividual ;
+    rdfs:subClassOf :Entity .
+
+:Entity a owl:Class,
+        owl:NamedIndividual .
+
+default1:SeverityClass a owl:Class .
+
+default2:_map1 a owl:NamedIndividual,
+        default1:BoundMap ;
+    default1:bindsConnector default1:TestConnector ;
+    default1:bindsConnectorAttribute "stateattr" ;
+    default1:bindsLogicVar "var1" ;
+    default1:bindsMapDataType xsd:boolean .
+
+default4:WC1 a owl:NamedIndividual,
+        default4:Wasteclass ;
+    default4:higherHazardLevel default4:WC0 .
+
+default4:WC2 a owl:NamedIndividual,
+        default4:Wasteclass ;
+    default4:higherHazardLevel default4:WC1 .
+
+default5:nickel a owl:NamedIndividual,
+        default5:ChemicalElement ;
+    default5:hasChemicalSymbol "Ni" .
+
+:FilterCartridge a owl:Class,
+        owl:NamedIndividual ;
+    rdfs:subClassOf :Consumable .
+
+default1:BoundConnector a owl:Class .
+
+default5:carbon a owl:NamedIndividual,
+        default5:ChemicalElement ;
+    default5:hasChemicalSymbol "C" .
+
+default5:chromium a owl:NamedIndividual,
+        default5:ChemicalElement ;
+    default5:hasChemicalSymbol "Cr" .
+
+default5:manganese a owl:NamedIndividual,
+        default5:ChemicalElement ;
+    default5:hasChemicalSymbol "Mn" .
+
+default5:phosphorus a owl:NamedIndividual,
+        default5:ChemicalElement ;
+    default5:hasChemicalSymbol "P" .
+
+default5:silicon a owl:NamedIndividual,
+        default5:ChemicalElement ;
+    default5:hasChemicalSymbol "Si" .
+
+default5:sulfur a owl:NamedIndividual,
+        default5:ChemicalElement ;
+    default5:hasChemicalSymbol "S" .
+
+xsd:decimal a rdfs:Datatype,
+        owl:NamedIndividual .
+
+rdfs:Datatype a owl:Class .
+
+<https://uri.etsi.org/ngsi-ld/Relationship> a owl:Class .
+
+:Machine a owl:Class,
+        owl:NamedIndividual ;
+    rdfs:subClassOf :Entity .
+
+default5:Material a owl:Class .
+
+:Filter a owl:Class,
+        owl:NamedIndividual ;
+    rdfs:subClassOf :Machine .
+
+default4:Wasteclass a owl:Class .
+
+:Workpiece a owl:Class,
+        owl:NamedIndividual ;
+    rdfs:subClassOf :Consumable .
+
+default1:MachineState a owl:Class .
+
+default1:TestConnector a owl:Class,
+        owl:NamedIndividual ;
+    rdfs:subClassOf default1:BoundConnector .
+
+:Cutter a owl:Class,
+        owl:NamedIndividual ;
+    rdfs:subClassOf :Machine .
+
+xsd:string a rdfs:Datatype,
+        owl:NamedIndividual .
+
+<https://uri.etsi.org/ngsi-ld/Property> a owl:Class .
+
+default1:Binding a owl:Class .
+
+default5:ChemicalElement a owl:Class .
+
+default1:BoundMap a owl:Class .
+
+default5:_ElementOccurance a owl:Class .
+

@@ -146,7 +146,56 @@ SELECT $this ?value ?type
             sh:nodeKind sh:BlankNode ;
             sh:property [ sh:path ngsild:hasValue ;
                     sh:datatype xsd:integer ;
-                    sh:nodeKind sh:Literal ] ] .
+                    sh:nodeKind sh:Literal ] ] ,
+        # Without sh:nodeKind (#1097) the datatype is checked all the same, an
+        # sh:or of datatypes too; a Relationship has no value to check.
+        [ sh:path iffBaseEntities:hasE2EBareDouble ;
+            sh:property [ sh:path ngsild:hasValue ;
+                    sh:datatype xsd:double ] ] ,
+        [ sh:path iffBaseEntities:hasE2EBareNumber ;
+            sh:property [ sh:path ngsild:hasValue ;
+                    sh:or ( [ sh:datatype xsd:double ] [ sh:datatype xsd:integer ] ) ] ] ,
+        [ sh:path iffBaseEntities:hasE2EBareString ;
+            sh:property [ sh:path ngsild:hasValue ;
+                    sh:datatype xsd:string ] ] ,
+        # A datatype the check reads by its text with one it reads by its type.
+        [ sh:path iffBaseEntities:hasE2EBareDecimal ;
+            sh:property [ sh:path ngsild:hasValue ;
+                    sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:decimal ] ) ] ] .
+
+# ------------------------------------------------ sh:datatype beside others
+# Without sh:nodeKind, a datatype beside and inside connectives (#1097): judged
+# for each instance, and the connectives keep their verdicts. Rows of the
+# constraint table only: the statements are the same with and without them.
+:E2EDatatypeMachineShape a sh:NodeShape ;
+    sh:targetClass iffBaseEntities:E2EDatatypeMachine ;
+    sh:property [ sh:path iffBaseEntities:hasE2EPlain ;
+            sh:property [ sh:path ngsild:hasValue ; sh:datatype xsd:double ] ] ,
+        [ sh:path iffBaseEntities:hasE2ENotFive ;
+            sh:property [ sh:path ngsild:hasValue ; sh:datatype xsd:double ;
+                    sh:not [ sh:hasValue 5 ] ] ] ,
+        [ sh:path iffBaseEntities:hasE2EEither ;
+            sh:or ( [ sh:property [ sh:path ngsild:hasValue ; sh:datatype xsd:integer ] ]
+                    [ sh:property [ sh:path ngsild:hasValue ; sh:datatype xsd:double ] ] ) ] ,
+        [ sh:path iffBaseEntities:hasE2EBoth ;
+            sh:property [ sh:path ngsild:hasValue ;
+                    sh:and ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:double ] ) ] ] ,
+        [ sh:path iffBaseEntities:hasE2EOpen ;
+            sh:property [ sh:path ngsild:hasValue ;
+                    sh:or ( [ sh:datatype xsd:string ] [ sh:nodeKind sh:IRI ] ) ] ] ,
+        [ sh:path iffBaseEntities:hasE2EText ;
+            sh:property [ sh:path ngsild:hasValue ; sh:datatype xsd:string ] ] ,
+        [ sh:path iffBaseEntities:hasE2EKind ;
+            sh:property [ sh:path ngsild:hasValue ; sh:datatype xsd:double ;
+                    sh:nodeKind sh:Literal ] ] ,
+        [ sh:path iffBaseEntities:hasE2EAnyText ;
+            sh:property [ sh:path ngsild:hasValue ;
+                    sh:or ( [ sh:datatype xsd:string ] [ sh:datatype rdf:langString ] ) ] ] ,
+        [ sh:path iffBaseEntities:hasE2EFlag ;
+            sh:property [ sh:path ngsild:hasValue ; sh:datatype xsd:boolean ] ] ,
+        [ sh:path iffBaseEntities:hasE2EOff ;
+            sh:deactivated true ;
+            sh:property [ sh:path ngsild:hasValue ; sh:datatype xsd:double ] ] .
 
 # ------------------------------------------------------- sh:hasValue a number
 # A number required by sh:hasValue is compared as a number (#965): 80, 80.0

@@ -1,0 +1,75 @@
+#
+# Copyright (c) 2026 IndustryFusion Foundation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+@prefix iffBaseEntities: <https://industryfusion.github.io/contexts/example/v0/base_entities/> .
+@prefix ngsild: <https://uri.etsi.org/ngsi-ld/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# sh:datatype in a value shape that has no sh:nodeKind (#1097). It used to
+# compile into a check that never ran. It applies to the value nodes of
+# ngsild:hasValue only: an attribute of another type has none and conforms.
+
+<https://industryfusion.github.io/contexts/example/v0/base_shacl/DatatypeWithoutNodeKindShape> a sh:NodeShape ;
+    sh:targetClass iffBaseEntities:Filter ;
+    sh:property [ sh:path iffBaseEntities:hasDouble ;
+        sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasValue ; sh:datatype xsd:double ] ] ,
+    [ sh:path iffBaseEntities:hasInteger ;
+        sh:property [ sh:path ngsild:hasValue ; sh:datatype xsd:integer ] ] ,
+    [ sh:path iffBaseEntities:hasBoolean ;
+        sh:property [ sh:path ngsild:hasValue ; sh:datatype xsd:boolean ] ] ,
+    [ sh:path iffBaseEntities:hasText ;
+        sh:property [ sh:path ngsild:hasValue ; sh:datatype xsd:string ] ] ,
+    # A datatype the check knows no text form of: the declared type decides.
+    [ sh:path iffBaseEntities:hasYear ;
+        sh:property [ sh:path ngsild:hasValue ; sh:datatype xsd:gYear ] ] ,
+    # A node kind that is neither sh:IRI nor sh:Literal does not switch it off.
+    [ sh:path iffBaseEntities:hasIriOrLiteral ;
+        sh:property [ sh:path ngsild:hasValue ; sh:nodeKind sh:IRIOrLiteral ;
+                      sh:datatype xsd:double ] ] ,
+    # sh:or of datatypes, on the value shape and on the property shape.
+    [ sh:path iffBaseEntities:hasNumber ;
+        sh:property [ sh:path ngsild:hasValue ;
+                      sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:double ] ) ] ] ,
+    [ sh:path iffBaseEntities:hasOuterNumber ;
+        sh:or ( [ sh:property [ sh:path ngsild:hasValue ; sh:datatype xsd:integer ] ]
+                [ sh:property [ sh:path ngsild:hasValue ; sh:datatype xsd:double ] ] ) ] ,
+    # The other value parameters never depended on sh:nodeKind.
+    [ sh:path iffBaseEntities:hasBounded ;
+        sh:property [ sh:path ngsild:hasValue ; sh:datatype xsd:integer ;
+                      sh:minInclusive 1 ] ] ,
+    [ sh:path iffBaseEntities:hasMatch ;
+        sh:property [ sh:path ngsild:hasValue ; sh:pattern "^ok" ] ] ,
+    # Shapes whose verdicts do not change.
+    [ sh:path iffBaseEntities:hasKindDouble ;
+        sh:property [ sh:path ngsild:hasValue ; sh:nodeKind sh:Literal ;
+                      sh:datatype xsd:double ] ] ,
+    [ sh:path iffBaseEntities:hasIri ;
+        sh:property [ sh:path ngsild:hasValue ; sh:nodeKind sh:IRI ] ] ,
+    [ sh:path iffBaseEntities:hasNoKind ;
+        sh:property [ sh:path ngsild:hasValue ; sh:maxCount 1 ] ] ,
+    [ sh:path iffBaseEntities:hasListOfIntegers ;
+        sh:property [ sh:path ngsild:hasValueList ;
+            sh:property [ sh:path ( [ sh:zeroOrMorePath <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> ]
+                                    <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> ) ;
+                          sh:datatype xsd:integer ] ] ] ,
+    [ sh:path iffBaseEntities:hasJson ;
+        sh:property [ sh:path ngsild:hasJSON ;
+                      sh:datatype <http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON> ] ] ,
+    # A sub-attribute.
+    [ sh:path iffBaseEntities:hasPart ;
+        sh:property [ sh:path iffBaseEntities:hasSize ;
+            sh:property [ sh:path ngsild:hasValue ; sh:datatype xsd:double ] ] ] .

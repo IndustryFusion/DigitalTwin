@@ -1,0 +1,61 @@
+#
+# Copyright (c) 2026 IndustryFusion Foundation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+@prefix iffBaseEntities: <https://industryfusion.github.io/contexts/example/v0/base_entities/> .
+@prefix ngsild: <https://uri.etsi.org/ngsi-ld/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# sh:datatype without sh:nodeKind (#1097), the values and shapes test29 and
+# test30 do not have: spellings of declared literals, rdf:JSON, branches with a
+# node kind or a path of their own, deactivated shapes.
+
+<https://industryfusion.github.io/contexts/example/v0/base_shacl/DatatypeFormsShape> a sh:NodeShape ;
+    sh:targetClass iffBaseEntities:Filter ;
+    sh:property [ sh:path iffBaseEntities:hasDouble ;
+        sh:property [ sh:path ngsild:hasValue ; sh:datatype xsd:double ] ] ,
+    [ sh:path iffBaseEntities:hasBoolean ;
+        sh:property [ sh:path ngsild:hasValue ; sh:datatype xsd:boolean ] ] ,
+    [ sh:path iffBaseEntities:hasJsonLiteral ;
+        sh:property [ sh:path ngsild:hasValue ; sh:datatype rdf:JSON ] ] ,
+    [ sh:path iffBaseEntities:hasJsonOrText ;
+        sh:property [ sh:path ngsild:hasValue ; sh:or ( [ sh:datatype rdf:JSON ] [ sh:datatype xsd:string ] ) ] ] ,
+    [ sh:path iffBaseEntities:hasYearMonth ;
+        sh:property [ sh:path ngsild:hasValue ; sh:datatype xsd:gYearMonth ] ] ,
+    [ sh:path iffBaseEntities:hasKindOr ;
+        sh:property [ sh:path ngsild:hasValue ; sh:or ( [ sh:nodeKind sh:Literal ; sh:datatype xsd:integer ] [ sh:datatype xsd:double ] ) ] ] ,
+    [ sh:path iffBaseEntities:hasKindAnd ;
+        sh:property [ sh:path ngsild:hasValue ; sh:and ( [ sh:nodeKind sh:Literal ; sh:maxLength 5 ] [ sh:datatype xsd:double ] ) ] ] ,
+    [ sh:path iffBaseEntities:hasSubOr ;
+        sh:or ( [ sh:path iffBaseEntities:hasSub ; sh:property [ sh:path ngsild:hasValue ; sh:datatype xsd:integer ] ]
+                [ sh:property [ sh:path ngsild:hasValue ; sh:datatype xsd:double ] ] ) ] ,
+    [ sh:path iffBaseEntities:hasSubAnd ;
+        sh:and ( [ sh:path iffBaseEntities:hasSub ; sh:property [ sh:path ngsild:hasValue ; sh:datatype xsd:integer ] ]
+                 [ sh:property [ sh:path ngsild:hasValue ; sh:datatype xsd:double ] ] ) ] ,
+    [ sh:path iffBaseEntities:hasOff ;
+        sh:deactivated true ; sh:property [ sh:path ngsild:hasValue ; sh:datatype xsd:double ] ] ,
+    [ sh:path iffBaseEntities:hasValueOff ;
+        sh:property [ sh:path ngsild:hasValue ; sh:deactivated true ; sh:datatype xsd:double ] ] ,
+    [ sh:path iffBaseEntities:hasBranchOff ;
+        sh:property [ sh:path ngsild:hasValue ; sh:or ( [ sh:deactivated true ; sh:datatype xsd:integer ] [ sh:datatype xsd:double ] ) ] ] ,
+    [ sh:path iffBaseEntities:hasBranchOn ;
+        sh:property [ sh:path ngsild:hasValue ; sh:or ( [ sh:deactivated false ; sh:datatype xsd:integer ] [ sh:datatype xsd:double ] ) ] ] .
+
+<https://industryfusion.github.io/contexts/example/v0/base_shacl/DatatypeOffShape> a sh:NodeShape ;
+    sh:targetClass iffBaseEntities:Filter ;
+    sh:deactivated true ;
+    sh:property [ sh:path iffBaseEntities:hasShapeOff ;
+        sh:property [ sh:path ngsild:hasValue ; sh:datatype xsd:double ] ] .

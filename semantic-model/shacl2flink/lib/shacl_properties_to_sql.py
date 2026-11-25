@@ -623,6 +623,8 @@ sql_check_inverse_relationship_count = """
 """  # noqa: E501
 
 sql_check_relationship_nodeType = """
+            {#- '@blank': see sql_check_property_nodeType -#}
+            {% set node_type %}{% if sqlite %}REPLACE(nodeType, '@blank', '@value'){% else %}nodeType{% endif %}{% endset %}
             {% set constraint_cond %}
             NOT edeleted AND NOT IFNULL(`adeleted`, false) AND (nodeType <> '{{ property_nodetype }}'  OR link <> attributeType)
             {% endset %}
@@ -631,13 +633,20 @@ sql_check_relationship_nodeType = """
                 `constraint_id` as constraint_id,
                 true as triggered,
                 `severity` AS severity,
-                'Model validation for relationship ' || `propertyPath` || ' failed for ' || this || '. Either NodeType '|| nodeType || ' is not an IRI or type is not a Relationship.'
+                'Model validation for relationship ' || `propertyPath` || ' failed for ' || this || '. Either NodeType '|| {{ node_type }} || ' is not an IRI or type is not a Relationship.'
                     as `text`
                 {%- if sqlite %}
                 ,CURRENT_TIMESTAMP
                 {%- endif %}
             FROM A1 WHERE `index` IS NOT NULL AND {{ constraint_cond }}
 """  # noqa: E501
+
+# The propertyNodetype of a row that holds only the datatypes of a value shape
+# without sh:nodeKind (#1097). It is not a node kind: only the datatype check
+# reads it, and the node kind check must not.
+DATATYPE_ONLY = '@datatype'
+# What such a row sees as the type of a value that is no literal.
+NOT_A_LITERAL = '@no-literal'
 
 sql_check_property_iri_base = """
 INSERT {% if sqlite %} OR REPlACE{% endif %} INTO {{alerts_bulk_table}}
@@ -649,7 +658,13 @@ WITH {{ focus_ctes }}A1 AS (SELECT {{ property_ttl_hint }} A.id as this,
                    {{ deepest('nodeType') }} as nodeType,
                    {{ deepest('type') }} as attr_typ,
                    {{ deepest('deleted') }} as `adeleted`,
-                   {{ deepest('valueType') }} as `valueType`,
+                   -- A value that is no literal has no datatype: NOT_A_LITERAL for a
+                   -- datatype-only row (#1097). Told here, for every check of a
+                   -- type, and not in the datatype check alone: Flink keeps one
+                   -- deduplication of the attributes, with its joins, per set of
+                   -- columns the checks read, and a set of its own costs another.
+                   CASE WHEN D.propertyNodetype = 'DATATYPE_ONLY' AND {{ deepest('nodeType') }} <> '@value' THEN 'NOT_A_LITERAL'
+                        ELSE {{ deepest('valueType') }} END as `valueType`,
                    C.subject as foundVal,
                    C.object as foundClass,
                    {{ deepest('datasetId') }} as `index`,
@@ -680,7 +695,7 @@ WITH {{ focus_ctes }}A1 AS (SELECT {{ property_ttl_hint }} A.id as this,
                 and C.predicate = '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>' and C.object = '<' || D.propertyClass || '>'
              WHERE {{ level_guard }} and (attributeType IS NULL or attributeType IN ('https://uri.etsi.org/ngsi-ld/Property', 'https://uri.etsi.org/ngsi-ld/ListProperty', 'https://uri.etsi.org/ngsi-ld/JsonProperty'))
             )
-"""  # noqa: E501
+""".replace('DATATYPE_ONLY', DATATYPE_ONLY).replace('NOT_A_LITERAL', NOT_A_LITERAL)  # noqa: E501
 
 # `edeleted` is read as an aggregate here too, and is not a grouping key -- see
 # sql_check_relationship_property_count for what both alternatives cost.
@@ -739,9 +754,12 @@ FROM A1  WHERE propertyNodetype = '@id' and propertyClass IS NOT NULL and `index
 """  # noqa: E501
 
 sql_check_property_nodeType = """
+{#- Only the SQLite model reader writes '@blank' (#1097). This check reads it as
+    the '@value' it was, so it gives the verdict it gave. -#}
+{% set node_type %}{% if sqlite %}REPLACE(`nodeType`, '@blank', '@value'){% else %}`nodeType`{% endif %}{% endset %}
 {% set constraint_cond%}
 NOT edeleted AND NOT IFNULL(adeleted, false)
-  AND (nodeType <> `propertyNodetype` OR attr_typ <> attributeType)
+  AND ({{ node_type }} <> `propertyNodetype` OR attr_typ <> attributeType)
 {% endset %}
 SELECT this AS resource,
     'NodeKindConstraintComponent(' || `parentPath` || `printPath` || ')' AS event,
@@ -749,7 +767,7 @@ SELECT this AS resource,
     true as triggered,
     `severity` AS severity,
     'Model validation for Property ' || `propertyPath` || ' failed for ' || this || '. Node is not ' ||
-            'of nodetype "' || `nodeType` || '" or not of attribute type "' || attributeType || '"'
+            'of nodetype "' || {{ node_type }} || '" or not of attribute type "' || attributeType || '"'
         as `text`
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
@@ -760,7 +778,8 @@ SELECT this AS resource,
 -- sh:or(hasValue, hasValueList) -- carries no nodeKind at all, and comparing a
 -- real nodeType against the sentinel reported every valid value as a NodeKind
 -- violation. Test against the sentinel, not against NULL.
-FROM A1 WHERE `propertyNodetype` <> 'null' and `index` IS NOT NULL AND {{ constraint_cond }}
+-- '@datatype' is no node kind either (DATATYPE_ONLY).
+FROM A1 WHERE `propertyNodetype` <> 'null' and `propertyNodetype` <> '@datatype' and `index` IS NOT NULL AND {{ constraint_cond }}
 """  # noqa: E501
 
 sql_check_property_minmax = """
@@ -917,6 +936,13 @@ sql_check_literal_datatypes = r"""
     The type is compared through IFNULL: NULL = '...' is NULL, not false, and
     one NULL inside NOT ( ... OR ... ) turns the whole check NULL, so a string
     such as "80" was never reported. -#}
+{#- The last two arms are for a list that also names another datatype, such as
+    xsd:decimal or rdf:langString (#1097): a value declared with it satisfies
+    the list as it satisfies that datatype alone, and the bridge passes no type
+    on for a language-tagged string. A declared boolean may be written 1 or 0,
+    and a declared double INF, -INF or NaN. They are for the DATATYPE_ONLY rows:
+    a row of the ordinary extraction may be a member of a connective, which is
+    judged over all instances and keeps its verdict. -#}
 {% set undeclared_double %}^[+-]?(?:\d+\.\d*(?:[eE][+-]?\d+)?|\.\d+(?:[eE][+-]?\d+)?|\d+[eE][+-]?\d+)${% endset %}
 {% set any_number %}^[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?${% endset %}
 {% set check_datatypes %}
@@ -931,12 +957,29 @@ sql_check_literal_datatypes = r"""
     OR (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#boolean%' AND COALESCE(`valueType`, 'http://www.w3.org/2001/XMLSchema#boolean') = 'http://www.w3.org/2001/XMLSchema#boolean'
         AND {%- if sqlite %} `val`  REGEXP '^(?i:true|false)$' {%- else %}
         REGEXP(val, '^(?i:true|false)$'){%- endif %})
+    OR (propertyNodetype = 'DATATYPE_ONLY' AND datatypes LIKE '%http://www.w3.org/2001/XMLSchema#double%'
+        AND IFNULL(`valueType`, '') = 'http://www.w3.org/2001/XMLSchema#double'
+        AND LOWER(`val`) IN ('inf', '+inf', '-inf', 'nan'))
+    OR (propertyNodetype = 'DATATYPE_ONLY' AND datatypes LIKE '%http://www.w3.org/2001/XMLSchema#boolean%' AND IFNULL(`valueType`, '') = 'http://www.w3.org/2001/XMLSchema#boolean'
+        AND `val` IN ('1', '0'))
     OR (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#string%' AND COALESCE(`valueType`, 'http://www.w3.org/2001/XMLSchema#string') = 'http://www.w3.org/2001/XMLSchema#string')
+    OR (propertyNodetype = 'DATATYPE_ONLY' AND IFNULL(`valueType`, '') NOT IN ('', 'http://www.w3.org/2001/XMLSchema#double', 'http://www.w3.org/2001/XMLSchema#boolean',
+                                        'http://www.w3.org/2001/XMLSchema#integer', 'http://www.w3.org/2001/XMLSchema#string')
+        AND INSTR(',' || datatypes || ',', ',' || IFNULL(`valueType`, '') || ',') > 0)
+    OR (propertyNodetype = 'DATATYPE_ONLY' AND `valueType` IS NULL AND datatypes LIKE '%http://www.w3.org/1999/02/22-rdf-syntax-ns#langString%')
 {%endset%}
 
 {% set constraint_cond%}
 NOT edeleted AND NOT IFNULL(adeleted, false) AND attr_typ IS NOT NULL AND
-        CASE WHEN propertyNodetype = '@value' AND datatypes IS NOT NULL THEN
+        CASE
+        -- A datatype-only row (datatype_only_checks). sh:datatype applies to
+        -- the value nodes of hasValue: an attribute of another type has none
+        -- and conforms, and an IRI is not a literal of any datatype. Flink
+        -- tells a GeoProperty apart, whose value is never a literal.
+        WHEN propertyNodetype = 'DATATYPE_ONLY' AND attr_typ NOT IN
+            ('https://uri.etsi.org/ngsi-ld/Property', 'https://uri.etsi.org/ngsi-ld/GeoProperty') THEN false
+        WHEN propertyNodetype = 'DATATYPE_ONLY' AND IFNULL(`valueType`, '') = 'NOT_A_LITERAL' THEN true
+        WHEN propertyNodetype IN ('@value', 'DATATYPE_ONLY') AND datatypes IS NOT NULL THEN
             CASE
                 WHEN `val` IS NULL THEN true -- val cannot be NULL when a datatype is defined
                 -- A datatype we cannot inspect the lexical form of is still a
@@ -950,7 +993,8 @@ NOT edeleted AND NOT IFNULL(adeleted, false) AND attr_typ IS NOT NULL AND
                 -- live store does. Treating "undeclared" as "wrong" would
                 -- alert on every value of every custom-datatype shape.
                 WHEN NOT ({{ common_datatypes }}) THEN
-                    datatypes NOT LIKE '%' || `valueType` || '%'
+                    CASE WHEN propertyNodetype = 'DATATYPE_ONLY' THEN INSTR(',' || datatypes || ',', ',' || `valueType` || ',') = 0
+                        ELSE datatypes NOT LIKE '%' || `valueType` || '%' END
                 ELSE NOT ({{ check_datatypes }}) -- if val is defined and datatypes are known, we check the value
             END
         WHEN propertyNodetype = '@json' THEN
@@ -978,7 +1022,9 @@ SELECT this AS resource,
     `constraint_id` as constraint_id,
     true as triggered,
     `severity` AS severity,
-    'Datatype check failed: ' || CASE WHEN `propertyNodetype` = '@value' THEN
+    'Datatype check failed: ' || CASE WHEN IFNULL(`valueType`, '') = 'NOT_A_LITERAL' THEN
+        'value="' || COALESCE(`val`, 'NULL') || '" is no literal, expected datatypes="' || COALESCE(`datatypes`, 'NULL') || '"!'
+        WHEN `propertyNodetype` IN ('@value', 'DATATYPE_ONLY') THEN
         'value="' || COALESCE(`val`, 'NULL') || '", expected datatypes="' || COALESCE(`datatypes`, 'NULL')
         || '" and found datatype="' || COALESCE(`valueType`, 'NULL') || '" do not match!'  ELSE '" There is a mismatch between value "'
                                             || `val`
@@ -993,8 +1039,8 @@ SELECT this AS resource,
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
-FROM A1 where `index` IS NOT NULL AND `propertyNodetype` IN ('@value', '@list', '@json') AND ({{ constraint_cond }})
-"""  # noqa: E501 W605
+FROM A1 where `index` IS NOT NULL AND `propertyNodetype` IN ('@value', '@list', '@json', 'DATATYPE_ONLY') AND ({{ constraint_cond }})
+""".replace('DATATYPE_ONLY', DATATYPE_ONLY).replace('NOT_A_LITERAL', NOT_A_LITERAL)  # noqa: E501 W605
 
 
 # The XSD datatypes of numbers. A sh:hasValue constant of one of them is a
@@ -2350,6 +2396,7 @@ def extract_relationship_node_checks(g):
     path, synthetic classes and severity -- and the messages for every form that cannot be compiled.
     """
     checks, problems = [], []
+    clones = {}                  # clone -> whether each site it is made for applies it
     for value_shape in sorted(g.subjects(SH.path, NGSILD.hasObject), key=str):
         if (value_shape, SH.property, None) in g:
             referring = next(iter(sorted(g.subjects(SH.property, value_shape), key=str)), value_shape)
@@ -2405,10 +2452,16 @@ def extract_relationship_node_checks(g):
                 g.add((clone, predicate, clone_shape_node(g, obj, mapping)))
             for synthetic in classes:
                 g.add((clone, SH.targetClass, synthetic))
+            clones.setdefault(clone, []).append(
+                not any(is_deactivated(g, node) for node in (owner, prop, value_shape)))
             checks.append({'shape': str(shape), 'property': prop, 'relationship': str(relationship),
                            'classes': [str(synthetic) for synthetic in classes],
                            'severity': severity_code(g, prop)})
 
+    for clone, applied in clones.items():
+        if not any(applied):
+            # Read by datatype_only_checks: the declaration applies nowhere.
+            g.add((clone, SH.deactivated, Literal(True)))
     for shape in sorted({shape for _, shape in references}, key=str):
         if not list(g.subjects(SH.node, shape)) and \
                 not any((shape, predicate, None) in g for predicate in TARGET_PREDICATES):
@@ -2608,6 +2661,141 @@ def unsupported_shapes(g, compiled):
                 f'path) and that its parameters are ones the compiler supports.')
 
     return [p for p in problems if not (p in seen_messages or seen_messages.add(p))]
+
+
+def is_deactivated(g, shape):
+    return any(getattr(value, 'value', None) is True for value in g.objects(shape, SH.deactivated))
+
+
+def states_literal_or_iri(g, shape):
+    return any(kind in (SH.IRI, SH.Literal) for kind in g.objects(shape, SH.nodeKind))
+
+
+class RequiredDatatypes:
+    """
+    The datatypes a shape requires of each value, as a set of tuples: the value
+    has to be of one datatype of each.
+
+    `own(node)` gives those a node of the shape states beside its connectives.
+    Every tuple is a NECESSARY condition of the shape, read from where it can be
+    proven without evaluating a connective: what the shape states itself, what
+    its sh:and branches require, and the union over an sh:or whose branches all
+    require one. What proves nothing contributes nothing, and as a branch makes
+    the whole sh:or require nothing:
+
+    - sh:not and sh:xone;
+    - a deactivated shape, to which everything conforms;
+    - a branch with an sh:path, which is about other values than the shape's;
+    - a branch that leads back to the shape, whose meaning SHACL leaves open.
+
+    Every shape is read once, so a shape shared by many branches costs no more.
+    """
+
+    def __init__(self, g, own):
+        self.g = g
+        self.own = own
+        self.required = {}
+        self.reachable = {}
+
+    def branches(self, shape):
+        """(connective, branches) of the sh:and and sh:or of a shape."""
+        return [(predicate, list(Collection(self.g, collection)))
+                for predicate in (SH['and'], SH['or'])
+                for collection in self.g.objects(shape, predicate)]
+
+    def reach(self, shape):
+        """The shapes reached from a shape through sh:and and sh:or."""
+        if shape not in self.reachable:
+            found = set()
+            todo = [shape]
+            while todo:
+                for _, branches in self.branches(todo.pop()):
+                    todo.extend(branch for branch in branches if branch not in found)
+                    found.update(branches)
+            self.reachable[shape] = found
+        return self.reachable[shape]
+
+    def of_branch(self, shape, branch):
+        if (branch, SH.path, None) in self.g or shape in self.reach(branch) or branch == shape:
+            return frozenset()
+        return self.of(branch)
+
+    def of(self, shape):
+        if shape in self.required:
+            return self.required[shape]
+        required = set()
+        if not is_deactivated(self.g, shape):
+            required.update(self.own(shape))
+            for predicate, branches in self.branches(shape):
+                parts = [self.of_branch(shape, branch) for branch in branches]
+                if predicate == SH['and']:
+                    required.update(*parts)
+                elif parts and all(parts):
+                    # the shortest of each branch: the fewer datatypes, the more it says
+                    shortest = [min(part, key=lambda datatypes: (len(datatypes), datatypes)) for part in parts]
+                    required.add(tuple(sorted({datatype for datatypes in shortest for datatype in datatypes})))
+        self.required[shape] = frozenset(required)
+        return self.required[shape]
+
+
+def datatype_only_checks(g):
+    """
+    The sh:datatype constraints of value shapes without sh:nodeKind (#1097).
+
+    The rows of the ordinary extraction keep such a datatype unchecked, also as
+    a member of a connective: the circuit judges a connective over all instances
+    of an attribute together, so a member that starts to fire could raise an
+    alert although every instance conforms. The datatypes a property shape
+    requires of each instance on its own are added here instead, as rows of
+    their own that no connective reads.
+
+    Only a property shape reached from its targeted node shape through
+    sh:property alone is considered: under a connective it constrains nothing
+    by itself.
+
+    Returns the rows in a stable order: (target class, paths innermost first,
+    datatypes, message, severity). No blank node is part of a row, so two builds
+    of the same shapes give the same rows.
+    """
+    found = set()
+
+    # A shape or branch that states sh:nodeKind sh:Literal or sh:IRI requires
+    # nothing here: its datatype is checked by the row of the ordinary extraction.
+    # Nor does rdf:JSON: the bridge names it @json, the model reader rdf:JSON.
+    of_value_shape = RequiredDatatypes(g, lambda node: [] if states_literal_or_iri(g, node) else [
+        (str(datatype),) for datatype in g.objects(node, SH.datatype) if datatype != RDF.JSON])
+    of_property_shape = RequiredDatatypes(g, lambda node: {
+        datatypes for value_shape in g.objects(node, SH.property)
+        if g.value(value_shape, SH.path) == NGSILD.hasValue and not states_literal_or_iri(g, value_shape)
+        for datatypes in of_value_shape.of(value_shape)})
+    too_deep = set()
+
+    def visit(prop, paths, classes, seen):
+        path = g.value(prop, SH.path)
+        if prop in seen or is_deactivated(g, prop) or not isinstance(path, URIRef) or \
+                str(path) in NGSILD_VALUE_PATHS or path == NGSILD.hasObject:
+            return
+        paths = (str(path),) + paths
+        if len(paths) > MAX_SUBPROPERTY_DEPTH + 1:
+            # Reported by translate(); one path to each shape is enough.
+            if prop in too_deep:
+                return
+            too_deep.add(prop)
+        for datatypes in of_property_shape.of(prop):
+            for target_class in classes:
+                found.add((target_class, paths, ','.join(datatypes),
+                           shape_message(g, prop), severity_code(g, prop)))
+        for inner in g.objects(prop, SH.property):
+            visit(inner, paths, classes, seen | {prop})
+
+    for nodeshape in g.subjects(RDF.type, SH.NodeShape):
+        if is_deactivated(g, nodeshape):
+            continue
+        classes = {str(inherited) for target in g.objects(nodeshape, SH.targetClass)
+                   for inherited, _, _ in g.triples((None, SUBCLASS_STAR, target))}
+        for prop in g.objects(nodeshape, SH.property):
+            visit(prop, (), classes, frozenset())
+    return utils.in_stable_order(found)
 
 
 def translate(shaclefile, knowledgefile, prefixes):
@@ -2979,6 +3167,27 @@ def translate(shaclefile, knowledgefile, prefixes):
     constraint_id_counter, consumed, node_level_roots = apply_node_level_logic(
         g, prefixes, constraint_checks, constraint_combination,
         property_top, constraint_id_counter)
+
+    # Not before the circuits are built: no connective reads these rows.
+    for row in datatype_only_checks(g):
+        target_class, paths, datatypes, message, severity = row
+        if len(paths) > MAX_SUBPROPERTY_DEPTH + 1:
+            depth_problems.add(
+                f'subproperty depth {len(paths)} is not supported (limit '
+                f'{MAX_SUBPROPERTY_DEPTH + 1}) in path {list(paths)}')
+            continue
+        check = utils.init_constraint_check()
+        check['targetClass'] = target_class
+        set_attribute_path(check, paths, paths[0])
+        check['message'] = message
+        check['propertyNodetype'] = DATATYPE_ONLY
+        check['attributeType'] = 'https://uri.etsi.org/ngsi-ld/Property'
+        check['severity'] = severity
+        check['datatypes'] = datatypes
+        check['id'] = constraint_id_counter
+        constraint_checks.append(check)
+        property_top[('#datatype', row)] = constraint_id_counter
+        constraint_id_counter += 1
 
     # The tops of a node shape applied to a relationship's object feed its node
     # row instead of raising alerts on the referenced entity: one node row per
