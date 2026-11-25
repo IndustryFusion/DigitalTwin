@@ -150,7 +150,15 @@ class TestSupertypeChain(unittest.TestCase):
 
     def test_shape_order_puts_supertypes_first(self):
         g = type_graph((EX.Sub, EX.Mid), (EX.Mid, OPCUA.BaseObjectType), (EX.Other, OPCUA.BaseObjectType))
-        self.assertEqual(coverage.shape_order(g, [EX.Sub, EX.Mid, EX.Other]), [EX.Mid, EX.Other, EX.Sub])
+        self.assertEqual(coverage.shape_order(g, StubRdfUtils(), [EX.Sub, EX.Mid, EX.Other], [], []),
+                         [EX.Mid, EX.Other, EX.Sub])
+
+    def test_shape_order_puts_types_with_members_first(self):
+        g = type_graph((EX.Sub, EX.Mid), (EX.Deep, EX.Sub), defined=[EX.Sub, EX.Mid, EX.Deep])
+        rdfutils = StubRdfUtils(nodes={EX.count: (VARIABLE, OPCUA.BaseDataVariableType)},
+                                references={(typenode(EX.Deep), OPCUA.HasChild): [(OPCUA.HasComponent, EX.count)]})
+        self.assertEqual(coverage.shape_order(g, rdfutils, [EX.Sub, EX.Mid, EX.Deep], [], []),
+                         [EX.Deep, EX.Mid, EX.Sub])
 
 
 class TestNeedsOwnShape(unittest.TestCase):
@@ -205,44 +213,6 @@ class TestNeedsOwnShape(unittest.TestCase):
 
     def test_type_without_definition(self):
         self.assertFalse(self.needs(EX.UnknownType, []))
-
-
-class TestShapeAddsNothing(unittest.TestCase):
-    def setUp(self):
-        self.g = type_graph((EX.SubType, EX.MidType), (EX.MidType, EX.BType))
-        self.shapes = Graph()
-        self.add_shape(EX.BType, EX.hasCount)
-
-    def add_shape(self, objtype, *paths):
-        shape = URIRef(f'{objtype}Shape')
-        self.shapes.add((shape, SH.targetClass, objtype))
-        for path in paths:
-            prop, inner = BNode(), BNode()
-            self.shapes.add((shape, SH.property, prop))
-            self.shapes.add((prop, SH.path, path))
-            self.shapes.add((prop, SH.property, inner))
-            self.shapes.add((inner, SH.path, EX.hasValue))
-
-    def test_same_rules_as_the_nearest_shaped_supertype(self):
-        self.add_shape(EX.SubType, EX.hasCount)
-        self.assertTrue(coverage.shape_adds_nothing(self.g, self.shapes, EX.SubType))
-
-    def test_additional_rule(self):
-        self.add_shape(EX.SubType, EX.hasCount, EX.hasExtra)
-        self.assertFalse(coverage.shape_adds_nothing(self.g, self.shapes, EX.SubType))
-
-    def test_without_shaped_supertype(self):
-        self.add_shape(EX.Empty)
-        self.add_shape(EX.Other, EX.hasCount)
-        self.assertTrue(coverage.shape_adds_nothing(self.g, self.shapes, EX.Empty))
-        self.assertFalse(coverage.shape_adds_nothing(self.g, self.shapes, EX.Other))
-
-    def test_restore(self):
-        before = set(self.shapes)
-        self.add_shape(EX.SubType, EX.hasCount)
-        self.shapes.remove((None, SH.targetClass, EX.BType))
-        coverage.restore(self.shapes, before)
-        self.assertEqual(set(self.shapes), before)
 
 
 class TestDefinesMembers(unittest.TestCase):

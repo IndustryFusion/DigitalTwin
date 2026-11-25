@@ -15,6 +15,8 @@
 #
 """How owl2instances.py turns the attribute keys of the instances into IRIs (opcua/instance-coverage)."""
 import unittest
+from types import SimpleNamespace
+from unittest import mock
 
 from rdflib import Graph, Namespace, URIRef
 from rdflib.namespace import OWL, RDF, RDFS
@@ -72,6 +74,21 @@ class TestAttributeKeys(unittest.TestCase):
                                          TEST.AType)
         declared = set(self.e.get_graph().subject_objects(RDFS.domain))
         self.assertEqual(declared, {(DI.ConnectsTo, OPCUA.BaseObjectType), (TEST.hasLevel, TEST.AType)})
+
+    def test_report_resolves_the_keys(self):
+        # ConnectsTo is declared, so the report must not call it undeclared because its prefix is unknown
+        self.e.add_instancetype(OPCUA.BaseObjectType, DI.ConnectsTo)
+        self.g.add((TEST.AType, RDFS.subClassOf, OPCUA.BaseObjectType))
+        instances = [{'id': 'urn:x', 'type': 'test:AType', 'di:ConnectsTo': []}]
+        with mock.patch.multiple(owl2instances, create=True, jsonld=SimpleNamespace(instances=instances),
+                                 shaclg=SimpleNamespace(get_graph=Graph), rdfutils=None,
+                                 ignored_hierarchical_references=[], ignored_references=[]), \
+                mock.patch.object(owl2instances.coverage, 'lacks_shape', return_value=False), \
+                mock.patch.object(owl2instances, 'print_warning') as warning:
+            owl2instances.report_uncovered_terms()
+        message = warning.call_args[0][1]
+        self.assertIn('not constrained: devices:ConnectsTo', message)
+        self.assertNotIn('not declared', message)
 
     def test_reference_attributes(self):
         self.assertTrue(owl2instances.is_reference_attribute(DI.ConnectsTo))

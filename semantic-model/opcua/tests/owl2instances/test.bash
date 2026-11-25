@@ -66,6 +66,7 @@ TESTNODESETS=(
     test_placeholder_membership.NodeSet2,${TESTURI}AlphaType
     test_declaration_types.NodeSet2,${TESTURI}AlphaType,,,,UNCOVERED_INSTANCE_TERMS
     test_instance_types.NodeSet2,${TESTURI}AlphaType,,,,UNCOVERED_INSTANCE_TERMS
+    test_instance_types_order.NodeSet2,${TESTURI}AlphaType,,,,UNCOVERED_INSTANCE_TERMS
     )
 CLEANGRAPH=cleangraph.py
 TYPEURI=http://example.org/MinimalNodeset
@@ -402,6 +403,17 @@ for mode in "" "-so"; do
 done
 startstop_context_server "Stopping context server" false
 echo "Success: the shapes are written without instances"
+# The error exit still reports the deep declaration additions
+python3 ${NODESET2OWL} test_declaration_additions.NodeSet2.xml -i ${BASE_ONTOLOGY} ${CORE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p test -o ${NODESET2OWL_RESULT} || exit 1
+startstop_context_server "Starting context server" true
+STATUS=0
+python3 ${OWL2INSTANCES} -t ${TESTURI}AlphaType -n ${TESTURI} ${NODESET2OWL_RESULT} -xc ${LOCAL_CONTEXT} > output.log 2>&1 || STATUS=$?
+startstop_context_server "Stopping context server" false
+if [ "$STATUS" != "1" ] || ! grep -q DEEP_DECLARATION_ADDITIONS output.log; then
+    echo "Exit status $STATUS (expected 1) or no DEEP_DECLARATION_ADDITIONS without instances. Exiting with error."
+    exit 1
+fi
+echo "Success: the deep declaration additions are reported without instances"
 echo "==> test the shape of a type does not depend on the path to it"
 echo ----------------------------------------------------------------
 # BetaType is reached through a folder's declaration in test_declaration_types.NodeSet2 (shapes compared above);

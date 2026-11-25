@@ -1,0 +1,203 @@
+[
+    {
+        "type": "test:GType",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwNQ",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "test:hasValue": {
+            "type": "Property",
+            "value": {
+                "@value": 0.0,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
+        }
+    },
+    {
+        "type": "test:GType",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwMw",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "test:hasValue": {
+            "type": "Property",
+            "value": {
+                "@value": 0.0,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
+        }
+    },
+    {
+        "type": "test:TType",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwMg",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "test:has%3CItem%3E": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwNQ",
+                "datasetId": "http://my.test/hasItem1"
+            }
+        ],
+        "test:hasG": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwMw"
+            }
+        ]
+    },
+    {
+        "type": "test:GType",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAxMQ",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "test:hasValue": {
+            "type": "Property",
+            "value": {
+                "@value": 0.0,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
+        }
+    },
+    {
+        "type": "test:VType",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAxMA",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "test:hasG": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAxMQ"
+            }
+        ]
+    },
+    {
+        "type": "test:AlphaType",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwMQ",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "test:hasS": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAwMg"
+            }
+        ],
+        "test:hasR": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAxMA"
+            }
+        ],
+        "opcua:Organizes": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjA0MA"
+            },
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAzMA"
+            },
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAyMA"
+            },
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjA1MA"
+            }
+        ]
+    },
+    {
+        "type": "test:GType",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAzMQ",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "test:hasValue": {
+            "type": "Property",
+            "value": {
+                "@value": 0.0,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
+        }
+    },
+    {
+        "type": "test:V2Type",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAzMA",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "test:hasG": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAzMQ"
+            }
+        ],
+        "test:hasExtra": {
+            "type": "Property",
+            "value": {
+                "@value": 0.0,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
+        }
+    },
+    {
+        "type": "test:UType",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAyMA",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "test:hasLabel": {
+            "type": "Property",
+            "value": {
+                "@value": 0.0,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
+        }
+    },
+    {
+        "type": "test:MType",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjA0MA",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "test:hasLabel": {
+            "type": "Property",
+            "value": {
+                "@value": 0.0,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
+        }
+    },
+    {
+        "type": "test:MType",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjA1MQ",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "test:hasNeed": {
+            "type": "Property",
+            "value": {
+                "@value": 0.0,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
+        }
+    },
+    {
+        "type": "test:WType",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjA1MA",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "test:hasNc": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjA1MQ"
+            }
+        ]
+    }
+]

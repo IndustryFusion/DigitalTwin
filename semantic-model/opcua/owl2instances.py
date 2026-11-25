@@ -193,7 +193,6 @@ deep_additions = defaultdict(set)
 # refer to the same declaration node)
 declaration_shapes = {}
 empty_declarations = set()       # declarations whose additions give no rule
-covered_types = set()            # instance types whose own shape would add nothing to their supertype's
 
 
 def check_object_consistency(shapenode, attribute_path, classtype, suppress_warnings=False, add_entity=True):
@@ -297,30 +296,19 @@ def scan_instance_types(rootentities):
     """Give every type of the instance nodes its shape, wherever the type occurs in the model.
 
     The type pass only reaches types through the type definitions of children, so a type which only occurs in an
-    instance declaration or behind a non-hierarchical reference would get no shape. Types that add no rule to a
-    supertype with a shape stay covered by that shape: whether a member gives a rule is the type scan's decision, so
-    such a type is scanned and everything the scan added is taken back.
+    instance declaration or behind a non-hierarchical reference would get no shape. Types that add no
+    member, or only Methods, to a supertype with a shape stay covered by that shape.
     """
     found = coverage.instance_object_types(g, rdfutils, rootentities, ignored_hierarchical_references,
                                            ignored_references)
-    for objtype in coverage.shape_order(g, found):
+    for objtype in coverage.shape_order(g, rdfutils, found, ignored_hierarchical_references,
+                                        ignored_references):
         shaped_types = set(shaclg.get_graph().objects(None, SH.targetClass))
         if coverage.needs_own_shape(g, rdfutils, objtype, shaped_types, ignored_hierarchical_references,
                                     ignored_references):
             logger.debug(f"Scanning type of instance nodes: {objtype}")
             typenode = next(g.subjects(UARDF['definesType'], objtype))
-            before = [(graph, set(graph)) for graph in (shaclg.get_graph(), e.get_graph())]
-            additions = {declaring: set(paths) for declaring, paths in deep_additions.items()}
-            empty = set(empty_declarations)
             scan_type(typenode, objtype)
-            if coverage.shape_adds_nothing(g, shaclg.get_graph(), objtype):
-                for graph, triples in before:
-                    coverage.restore(graph, triples)
-                deep_additions.clear()
-                deep_additions.update(additions)
-                empty_declarations.clear()
-                empty_declarations.update(empty)
-                covered_types.add(URIRef(objtype))
 
 
 def attribute_iri(key):
@@ -365,8 +353,7 @@ def report_uncovered_terms():
     uncovered = coverage.uncovered_terms(jsonld.instances, attribute_iri,
                                          shaclg.get_graph(), [g, e.get_graph()],
                                          exempt_attributes=[basens['hasNodeRef']],
-                                         lacks_shape=lambda objtype, targets:
-                                         objtype not in covered_types and coverage.lacks_shape(
+                                         lacks_shape=lambda objtype, targets: coverage.lacks_shape(
                                              g, rdfutils, objtype, targets, ignored_hierarchical_references,
                                              ignored_references))
     if uncovered:

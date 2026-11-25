@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+Copyright (c) 2026 IndustryFusion Foundation
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<!--
+The shapes of types depend neither on the order in which they are scanned nor on each other's scans
+(opcua/instance-coverage).
+- SType has a mandatory object G and a mandatory placeholder <Item>. TType, its subtype, adds only an optional
+  BaseObjectType object, which gives no rule. It keeps a shape of its own, in which its conforming Item1 is found.
+- UType, which only an Organizes reference reaches, declares a mandatory child Tc of TType and needs its rule: the
+  instance lacks Tc.
+- VType overrides its supertype's child G with a declaration that adds only an object without rules; V2Type, its
+  subtype, adds a mandatory variable. No relationship may refer to a shape that does not exist.
+- MType (no member of its own, subtype of NType) and WType, which declares a mandatory child of NType, are only
+  organized, and no NType object exists. NType's shape comes from WType's scan and covers MType: the missing Need is
+  reported once.
+-->
+
+<UANodeSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" LastModified="2026-11-20T00:00:00Z" xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd">
+  <Models>
+    <Model ModelUri="http://my.test/" XmlSchemaUri="http://opcfoundation.org/UA/2008/02/Types.xsd" Version="1.05.03" PublicationDate="2026-11-20T00:00:00Z" ModelVersion="1.5.3" />
+  </Models>
+  <NamespaceUris>
+    <Uri>http://my.test/</Uri>
+  </NamespaceUris>
+  <Aliases>
+    <Alias Alias="Int32">i=6</Alias>
+    <Alias Alias="Double">i=11</Alias>
+    <Alias Alias="HasComponent">i=47</Alias>
+    <Alias Alias="Organizes">i=35</Alias>
+    <Alias Alias="HasSubtype">i=45</Alias>
+    <Alias Alias="HasTypeDefinition">i=40</Alias>
+    <Alias Alias="HasModellingRule">i=37</Alias>
+    <Alias Alias="HasEffect">i=54</Alias>
+  </Aliases>
+
+  <UAObjectType NodeId="ns=1;i=1001" BrowseName="1:AlphaType">
+    <DisplayName>AlphaType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1101</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1102</Reference>
+    </References>
+  </UAObjectType>
+  <UAObject NodeId="ns=1;i=1101" BrowseName="1:S" ParentNodeId="ns=1;i=1001">
+    <DisplayName>S</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=1003</Reference>
+      <Reference ReferenceType="HasModellingRule">i=78</Reference>
+    </References>
+  </UAObject>
+  <UAObject NodeId="ns=1;i=1102" BrowseName="1:R" ParentNodeId="ns=1;i=1001">
+    <DisplayName>R</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=1006</Reference>
+      <Reference ReferenceType="HasModellingRule">i=78</Reference>
+    </References>
+  </UAObject>
+  <UAObjectType NodeId="ns=1;i=1002" BrowseName="1:GType">
+    <DisplayName>GType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1103</Reference>
+    </References>
+  </UAObjectType>
+  <UAVariable NodeId="ns=1;i=1103" BrowseName="1:Value" DataType="Double" ParentNodeId="ns=1;i=1002">
+    <DisplayName>Value</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=78</Reference>
+    </References>
+  </UAVariable>
+  <UAObjectType NodeId="ns=1;i=1003" BrowseName="1:SType">
+    <DisplayName>SType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1104</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1105</Reference>
+    </References>
+  </UAObjectType>
+  <UAObject NodeId="ns=1;i=1104" BrowseName="1:G" ParentNodeId="ns=1;i=1003">
+    <DisplayName>G</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=1002</Reference>
+      <Reference ReferenceType="HasModellingRule">i=78</Reference>
+    </References>
+  </UAObject>
+  <UAObject NodeId="ns=1;i=1105" BrowseName="1:&lt;Item&gt;" ParentNodeId="ns=1;i=1003">
+    <DisplayName>&lt;Item&gt;</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=1002</Reference>
+      <Reference ReferenceType="HasModellingRule">i=11510</Reference>
+    </References>
+  </UAObject>
+  <UAObjectType NodeId="ns=1;i=1004" BrowseName="1:TType">
+    <DisplayName>TType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">ns=1;i=1003</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1106</Reference>
+    </References>
+  </UAObjectType>
+  <UAObject NodeId="ns=1;i=1106" BrowseName="1:Basic" ParentNodeId="ns=1;i=1004">
+    <DisplayName>Basic</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=58</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
+    </References>
+  </UAObject>
+  <UAObjectType NodeId="ns=1;i=1012" BrowseName="1:XType">
+    <DisplayName>XType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+    </References>
+  </UAObjectType>
+  <UAObjectType NodeId="ns=1;i=1005" BrowseName="1:UType">
+    <DisplayName>UType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">ns=1;i=1012</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1107</Reference>
+    </References>
+  </UAObjectType>
+  <UAObject NodeId="ns=1;i=1107" BrowseName="1:Tc" ParentNodeId="ns=1;i=1005">
+    <DisplayName>Tc</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=1004</Reference>
+      <Reference ReferenceType="HasModellingRule">i=78</Reference>
+    </References>
+  </UAObject>
+  <UAObjectType NodeId="ns=1;i=1006" BrowseName="1:RType">
+    <DisplayName>RType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1108</Reference>
+    </References>
+  </UAObjectType>
+  <UAObject NodeId="ns=1;i=1108" BrowseName="1:G" ParentNodeId="ns=1;i=1006">
+    <DisplayName>G</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=1002</Reference>
+      <Reference ReferenceType="HasModellingRule">i=78</Reference>
+    </References>
+  </UAObject>
+  <UAObjectType NodeId="ns=1;i=1007" BrowseName="1:VType">
+    <DisplayName>VType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">ns=1;i=1006</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1109</Reference>
+    </References>
+  </UAObjectType>
+  <UAObject NodeId="ns=1;i=1109" BrowseName="1:G" ParentNodeId="ns=1;i=1007">
+    <DisplayName>G</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=1002</Reference>
+      <Reference ReferenceType="HasModellingRule">i=78</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1110</Reference>
+    </References>
+  </UAObject>
+  <UAObject NodeId="ns=1;i=1110" BrowseName="1:Aux" ParentNodeId="ns=1;i=1109">
+    <DisplayName>Aux</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=58</Reference>
+      <Reference ReferenceType="HasModellingRule">i=80</Reference>
+    </References>
+  </UAObject>
+  <UAObjectType NodeId="ns=1;i=1008" BrowseName="1:V2Type">
+    <DisplayName>V2Type</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">ns=1;i=1007</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1111</Reference>
+    </References>
+  </UAObjectType>
+  <UAVariable NodeId="ns=1;i=1111" BrowseName="1:Extra" DataType="Double" ParentNodeId="ns=1;i=1008">
+    <DisplayName>Extra</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=78</Reference>
+    </References>
+  </UAVariable>
+  <UAObjectType NodeId="ns=1;i=1009" BrowseName="1:NType">
+    <DisplayName>NType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">i=58</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1112</Reference>
+    </References>
+  </UAObjectType>
+  <UAVariable NodeId="ns=1;i=1112" BrowseName="1:Need" DataType="Double" ParentNodeId="ns=1;i=1009">
+    <DisplayName>Need</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+      <Reference ReferenceType="HasModellingRule">i=78</Reference>
+    </References>
+  </UAVariable>
+  <UAObjectType NodeId="ns=1;i=1010" BrowseName="1:MType">
+    <DisplayName>MType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">ns=1;i=1009</Reference>
+    </References>
+  </UAObjectType>
+  <UAObjectType NodeId="ns=1;i=1011" BrowseName="1:WType">
+    <DisplayName>WType</DisplayName>
+    <References>
+      <Reference ReferenceType="HasSubtype" IsForward="false">ns=1;i=1012</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=1113</Reference>
+    </References>
+  </UAObjectType>
+  <UAObject NodeId="ns=1;i=1113" BrowseName="1:Nc" ParentNodeId="ns=1;i=1011">
+    <DisplayName>Nc</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=1009</Reference>
+      <Reference ReferenceType="HasModellingRule">i=78</Reference>
+    </References>
+  </UAObject>
+  <UAObject NodeId="ns=1;i=2001" BrowseName="1:AlphaInstance">
+    <DisplayName>AlphaInstance</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=1001</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2002</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2010</Reference>
+      <Reference ReferenceType="Organizes">ns=1;i=2020</Reference>
+      <Reference ReferenceType="Organizes">ns=1;i=2030</Reference>
+      <Reference ReferenceType="Organizes">ns=1;i=2040</Reference>
+      <Reference ReferenceType="Organizes">ns=1;i=2050</Reference>
+    </References>
+  </UAObject>
+  <UAObject NodeId="ns=1;i=2002" BrowseName="1:S" ParentNodeId="ns=1;i=2001">
+    <DisplayName>S</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=1004</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2003</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2005</Reference>
+    </References>
+  </UAObject>
+  <UAObject NodeId="ns=1;i=2003" BrowseName="1:G" ParentNodeId="ns=1;i=2002">
+    <DisplayName>G</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=1002</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2004</Reference>
+    </References>
+  </UAObject>
+  <UAVariable NodeId="ns=1;i=2004" BrowseName="1:Value" DataType="Double" ParentNodeId="ns=1;i=2003">
+    <DisplayName>Value</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+    </References>
+  </UAVariable>
+  <UAObject NodeId="ns=1;i=2005" BrowseName="1:Item1" ParentNodeId="ns=1;i=2002">
+    <DisplayName>Item1</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=1002</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2006</Reference>
+    </References>
+  </UAObject>
+  <UAVariable NodeId="ns=1;i=2006" BrowseName="1:Value" DataType="Double" ParentNodeId="ns=1;i=2005">
+    <DisplayName>Value</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+    </References>
+  </UAVariable>
+  <UAObject NodeId="ns=1;i=2010" BrowseName="1:R" ParentNodeId="ns=1;i=2001">
+    <DisplayName>R</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=1007</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2011</Reference>
+    </References>
+  </UAObject>
+  <UAObject NodeId="ns=1;i=2011" BrowseName="1:G" ParentNodeId="ns=1;i=2010">
+    <DisplayName>G</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=1002</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2012</Reference>
+    </References>
+  </UAObject>
+  <UAVariable NodeId="ns=1;i=2012" BrowseName="1:Value" DataType="Double" ParentNodeId="ns=1;i=2011">
+    <DisplayName>Value</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+    </References>
+  </UAVariable>
+  <UAObject NodeId="ns=1;i=2020" BrowseName="1:U">
+    <DisplayName>U</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=1005</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2021</Reference>
+    </References>
+  </UAObject>
+  <UAVariable NodeId="ns=1;i=2021" BrowseName="1:Label" DataType="Double" ParentNodeId="ns=1;i=2020">
+    <DisplayName>Label</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+    </References>
+  </UAVariable>
+  <UAObject NodeId="ns=1;i=2030" BrowseName="1:V2">
+    <DisplayName>V2</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=1008</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2031</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2033</Reference>
+    </References>
+  </UAObject>
+  <UAObject NodeId="ns=1;i=2031" BrowseName="1:G" ParentNodeId="ns=1;i=2030">
+    <DisplayName>G</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=1002</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2032</Reference>
+    </References>
+  </UAObject>
+  <UAVariable NodeId="ns=1;i=2032" BrowseName="1:Value" DataType="Double" ParentNodeId="ns=1;i=2031">
+    <DisplayName>Value</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+    </References>
+  </UAVariable>
+  <UAVariable NodeId="ns=1;i=2033" BrowseName="1:Extra" DataType="Double" ParentNodeId="ns=1;i=2030">
+    <DisplayName>Extra</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+    </References>
+  </UAVariable>
+  <UAObject NodeId="ns=1;i=2040" BrowseName="1:M">
+    <DisplayName>M</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=1010</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2041</Reference>
+    </References>
+  </UAObject>
+  <UAVariable NodeId="ns=1;i=2041" BrowseName="1:Label" DataType="Double" ParentNodeId="ns=1;i=2040">
+    <DisplayName>Label</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+    </References>
+  </UAVariable>
+  <UAObject NodeId="ns=1;i=2050" BrowseName="1:W">
+    <DisplayName>W</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=1011</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2051</Reference>
+    </References>
+  </UAObject>
+  <UAObject NodeId="ns=1;i=2051" BrowseName="1:Nc" ParentNodeId="ns=1;i=2050">
+    <DisplayName>Nc</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">ns=1;i=1010</Reference>
+      <Reference ReferenceType="HasComponent">ns=1;i=2052</Reference>
+    </References>
+  </UAObject>
+  <UAVariable NodeId="ns=1;i=2052" BrowseName="1:Need" DataType="Double" ParentNodeId="ns=1;i=2051">
+    <DisplayName>Need</DisplayName>
+    <References>
+      <Reference ReferenceType="HasTypeDefinition">i=63</Reference>
+    </References>
+  </UAVariable>
+</UANodeSet>

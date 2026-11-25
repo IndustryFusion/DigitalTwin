@@ -3,7 +3,7 @@ PREFIX test: <http://my.test/>
 PREFIX opcua: <http://opcfoundation.org/UA/>
 # The subtype the instance uses, which adds a member, the type only an Organizes reference of the instance reaches and
 # the type only a variable's non-hierarchical reference reaches have their own shapes with the mandatory variables; a
-# subtype whose members give no rule and a plain BaseObjectType object get no shape, nor does a type behind a
+# subtype that adds only a Method and a plain BaseObjectType object get no shape, nor does a type behind a
 # variable that only a reference points to
 ask where {
   ?unitsub sh:targetClass test:UnitSubType ;
@@ -13,7 +13,6 @@ ask where {
   ?eta sh:targetClass test:EtaType ;
       sh:property [ sh:path test:hasRate ; sh:minCount 1 ] .
   FILTER NOT EXISTS { ?method sh:targetClass test:UnitMethodType }
-  FILTER NOT EXISTS { ?norule sh:targetClass test:PlainNoRuleType }
   FILTER NOT EXISTS { ?ghost sh:targetClass test:GhostType }
   FILTER NOT EXISTS { ?base sh:targetClass opcua:BaseObjectType }
 }
