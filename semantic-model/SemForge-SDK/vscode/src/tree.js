@@ -25,6 +25,7 @@
 
 const vscode = require('vscode');
 
+const search = require('./search');
 const { noPackageMessage } = require('./locate');
 const { showLocation, treeDetail, treeClick, icon, rowClicks } = require('./reveal');
 const { constrainAttribute, newAttribute } = require('./attribute');
@@ -97,7 +98,7 @@ class CookedTreeProvider {
       targetClass: type.targetClass,
       // The type's OWN shape -- an override is added there, never to the
       // inherited shape the constraint came from.
-      shape: ((type.children || []).find((c) => c.kind !== 'type' &&
+      shape: (search.all(type).find((c) => c.kind !== 'type' &&
         c.kind !== 'rules' && !c.inheritedFrom && c.shape) || {}).shape
     });
     const walk = (raw, parentRaw, owner) => {
@@ -204,7 +205,7 @@ class CookedTreeProvider {
       // lying about what the shape contains.
       item.tooltip = raw.detail || 'raw only — edit in the .ttl file';
     }
-    return item;
+    return search.decorate(item, raw);
   }
 
   message(text) {
@@ -230,7 +231,7 @@ class CookedTreeProvider {
     let result;
     try {
       result = await client.sendRequest('semforge/tree',
-        { uri: this.uri, detail: treeDetail() });
+        search.params({ uri: this.uri, detail: treeDetail() }));
     } catch (error) {
       this.message(`SemForge: ${error.message || error}`);
       return [];
@@ -240,7 +241,7 @@ class CookedTreeProvider {
       this.message(`SemForge: ${result.error}`);
       return [];
     }
-    this.message(undefined);
+    this.message(search.message('constraints', result));
     this.lastError = undefined;
     this._index(result.roots || []);
     return this.rawRoots.map((raw) => this.wrap(raw));

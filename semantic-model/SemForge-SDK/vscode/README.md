@@ -125,6 +125,23 @@ interpreter path explicitly:
 5. **SemForge: Restart Language Server**, then **SemForge: Doctor**: it must
    name that interpreter (`semforge.pythonPath`) and import `semforge`.
 
+### Search, and the way back from a file
+
+**SemForge: Search…** (`Ctrl+Alt+F` outside a text editor, or the magnifier on a
+view) filters the four views while you type -- Entities & Test Cases,
+Constraints by Type, SHACL Shapes as Written, Knowledge (Ontology) -- to the
+rows that fit and what they are under, with the number found on top. Every word must fit, in any order and case. A row fits by
+what it shows or by what it stands for: `Executing` finds the shape whose
+`sh:in` lists it, `hasCartridge MinCount` the cases that assert it; such a row
+says what was found. A click opens the page, as always. Enter keeps the search,
+Escape puts back what was, and the ✕ magnifier on a view clears it.
+
+VS Code's own search finds lines and opens files. From any `.ttl`, `.jsonld` or
+`expectations.yaml` of a package, **Open in SemForge** (the preview icon at the
+top right of the editor, or the right-click menu) goes to the page of what the
+cursor is on: the shape, type, vocabulary class, entity or test case. A line
+about nothing that has a page searches for the word at the cursor instead.
+
 ### The views: two columns
 
 The **SemForge** column holds what a model is worked on with: the package and

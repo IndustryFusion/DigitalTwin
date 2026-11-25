@@ -48,6 +48,29 @@ def _type_hierarchy(package):
     return out
 
 
+def _searched(payload, params, view, root):
+    from .search import searched
+
+    return searched(payload, field(params, 'search', ''), view,
+                    lambda: session.package_for(root))
+
+
+@server.feature('semforge/pageAt')
+def page_at_feature(ls, params):
+    """The page of what a line of a package's file is about."""
+    from .search import page_at
+
+    path = uri_to_path(field(params, 'uri', ''))
+    root = package_root(path)
+    if root is None:
+        return {'ok': False, 'error': 'this file is in no SemForge package'}
+    try:
+        return dict(page_at(session.package_for(root), path, int(field(params, 'line', 1) or 1),
+                            str(field(params, 'token', '') or ''), field(params, 'text')), ok=True)
+    except Exception as exc:                       # noqa: BLE001
+        return {'ok': False, 'error': str(exc)}
+
+
 @server.feature('semforge/tree')
 def cooked_tree(ls, params):
     """The cooked constraint tree for a package."""
@@ -63,7 +86,8 @@ def cooked_tree(ls, params):
                     'roots': [serialise(node) for node in build_tree(package)],
                     # The hierarchy the summary (Types) tree is drawn as.
                     'types': _type_hierarchy(package)}
-        return session.view(root, 'constraints', compute, params)
+        return _searched(session.view(root, 'constraints', compute, params), params,
+                         'constraints', root)
     except Exception as exc:                       # noqa: BLE001
         return {'roots': [], 'error': str(exc)}
 
@@ -148,7 +172,7 @@ def model(ls, params):
             if field(params, 'detail') == 'summary' and 'model' in SLIM:
                 payload['roots'] = SLIM['model'](payload['roots'], payload)
                 payload['detail'] = 'summary'
-        return dict(payload, verdicts=state.as_dict())
+        return _searched(dict(payload, verdicts=state.as_dict()), params, 'model', root)
     except Exception as exc:                       # noqa: BLE001
         return {'roots': [], 'error': str(exc)}
 
@@ -201,10 +225,11 @@ def knowledge(ls, params):
     if root is None:
         return {'roots': [], 'error': 'not a SemForge package'}
     try:
-        return session.view(root, 'knowledge', lambda: {
+        return _searched(session.view(root, 'knowledge', lambda: {
             'root': root,
             'roots': [_serialise_knowledge(n)
-                      for n in build_knowledge(session.package_for(root))]}, params)
+                      for n in build_knowledge(session.package_for(root))]}, params),
+            params, 'knowledge', root)
     except Exception as exc:                       # noqa: BLE001
         return {'roots': [], 'error': str(exc)}
 
@@ -780,7 +805,7 @@ def shapes_feature(ls, params):
             payload = session.slim('shapes', {
                 'root': root, 'cached': False,
                 'roots': build_shapes(session.package_for(root), report=report)}, params)
-        return dict(payload, verdicts=state.as_dict())
+        return _searched(dict(payload, verdicts=state.as_dict()), params, 'shapes', root)
     except Exception as exc:                       # noqa: BLE001
         return {'roots': [], 'error': str(exc)}
 

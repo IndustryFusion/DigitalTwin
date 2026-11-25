@@ -1442,7 +1442,8 @@ function register(context, clientHolder, session) {
       if (!raw || !packageUri || !clientHolder.client) {
         return false;
       }
-      const shapes = (raw.children || [])
+      // The rows a search hides too: `all` names them.
+      const shapes = (raw.all || raw.children || [])
         .filter((c) => c.kind === 'shape' && !c.inheritedFrom && c.shape)
         .map((c) => ({ shape: c.shape, label: c.label }));
       const changed = await addAttributeToType(packageUri,

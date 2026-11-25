@@ -29,6 +29,7 @@
 
 const vscode = require('vscode');
 
+const search = require('./search');
 const { noPackageMessage } = require('./locate');
 const { showLocation, treeDetail, treeClick, icon, rowClicks } = require('./reveal');
 
@@ -77,7 +78,7 @@ class ShapesTreeProvider {
       raw.severity ? 'error' : '');
     item.tooltip = [raw.term || raw.label, raw.detail, raw.definedAt]
       .filter(Boolean).join('\n');
-    return item;
+    return search.decorate(item, raw);
   }
 
   async getChildren(node) {
@@ -96,7 +97,7 @@ class ShapesTreeProvider {
     let result;
     try {
       result = await client.sendRequest('semforge/shapes',
-        { uri: this.uri, detail: treeDetail() });
+        search.params({ uri: this.uri, detail: treeDetail() }));
     } catch (error) {
       this.message(`SemForge: ${error.message || error}`);
       return [];
@@ -114,7 +115,8 @@ class ShapesTreeProvider {
       evaluating: '⟳ Validating in the background — violation counts follow.',
       failed: '⚠ Validation failed — the violation counts are not current.'
     }[this.verdictState];
-    this.message(roots.length ? counting : 'This package declares no shapes.');
+    this.message(search.message('shapes', result,
+      roots.length || search.current() ? counting : 'This package declares no shapes.'));
     return roots.map((raw) => new ShapeNode(raw, this.uri));
   }
 }

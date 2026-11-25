@@ -344,6 +344,14 @@ function activate(context) {
     refreshAll
   );
 
+  // Search…: the four views, only what fits; Open in SemForge: from a file back.
+  require('./search').register(context, clientHolder, () => {
+    constraints.refresh();
+    shapes.refresh();
+    model.refresh();
+    knowledge.refresh();
+  });
+
   // A folder that is not a package yet needs an answer other than three empty
   // trees. Creating one refreshes all three, because it is the first thing
   // they have to show.

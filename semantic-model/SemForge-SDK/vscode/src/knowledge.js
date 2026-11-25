@@ -26,6 +26,7 @@
 
 const vscode = require('vscode');
 
+const search = require('./search');
 const { noPackageMessage } = require('./locate');
 const { showLocation, treeDetail, treeClick, icon, rowClicks } = require('./reveal');
 
@@ -175,7 +176,7 @@ class KnowledgeTreeProvider {
     if (lines.length) {
       item.tooltip = lines.join('\n');
     }
-    return item;
+    return search.decorate(item, raw);
   }
 
   async getChildren(node) {
@@ -198,10 +199,10 @@ class KnowledgeTreeProvider {
     }
     let result;
     try {
-      result = await client.sendRequest('semforge/knowledge', {
+      result = await client.sendRequest('semforge/knowledge', search.params({
         uri: this.uri,
         detail: treeDetail()
-      });
+      }));
     } catch (error) {
       // An empty tree with no explanation is the failure mode this project
       // keeps meeting. Say what went wrong where it is visible.
@@ -212,7 +213,7 @@ class KnowledgeTreeProvider {
       this.view.message = `SemForge: ${result.error}`;
       return [];
     }
-    this.view.message = undefined;
+    this.view.message = search.message('knowledge', result);
     this.parents = new Map();
     return (result.roots || []).map((raw, position) =>
       this.wrap(raw, keyOf(raw, '', position)));

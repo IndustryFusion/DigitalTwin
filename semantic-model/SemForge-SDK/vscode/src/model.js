@@ -30,6 +30,7 @@ const vscode = require('vscode');
 
 const { askDatasetId } = require('./datasetid');
 
+const search = require('./search');
 const { noPackageMessage } = require('./locate');
 const { showLocation, treeDetail, treeClick, icon, rowClicks } = require('./reveal');
 
@@ -465,7 +466,7 @@ class ModelTreeProvider {
     // surprising thing for a single click to do -- and it replaced the one
     // thing a click should do, which is show you the row in the file. Editing
     // is the inline pencil and the context menu.
-    return item;
+    return search.decorate(item, raw);
   }
 
   async getChildren(node) {
@@ -488,10 +489,10 @@ class ModelTreeProvider {
     }
     let result;
     try {
-      result = await client.sendRequest('semforge/model', {
+      result = await client.sendRequest('semforge/model', search.params({
         uri: this.uri,
         detail: treeDetail()
-      });
+      }));
     } catch (error) {
       // An empty tree with no explanation is the failure mode this project
       // keeps meeting. Say what went wrong where it is visible.
@@ -505,8 +506,8 @@ class ModelTreeProvider {
     // Validated in the background: the tree is here already, and says so
     // until the verdicts are in (they bring it back, see register).
     this.verdictState = result.verdicts ? result.verdicts.state : 'ready';
-    this.message(this.verdictState === 'evaluating'
-      ? '⟳ Validating in the background — results follow.' : undefined);
+    this.message(search.message('model', result, this.verdictState === 'evaluating'
+      ? '⟳ Validating in the background — results follow.' : undefined));
     this.parents = new Map();
     // Kept so a row can be found without the view having expanded to it: the
     // knowledge view asks for an entity by id, and that entity usually sits
@@ -1269,7 +1270,7 @@ function register(context, clientHolder, session, onChanged) {
     // An attribute is (entity, name, datasetId), so one the entity already
     // has is simply another instance. Asked every time; empty is the default
     // instance, and only a datasetId the attribute already has is refused.
-    const here = (raw.children || []).find((child) => child.kind === 'attribute' &&
+    const here = search.all(raw).find((child) => child.kind === 'attribute' &&
       (child.attributePath || []).slice(-1)[0] === attribute.term);
     const taken = here ? (here.datasets && here.datasets.length ? here.datasets
       : [here.datasetId || '@none']) : [];
@@ -1375,7 +1376,7 @@ function register(context, clientHolder, session, onChanged) {
 
     vscode.commands.registerCommand('semforge.addEntity', async (node) => {
       const raw = node && node.raw;
-      const file = raw && (raw.file || (raw.children || []).map((c) => c.file)[0]);
+      const file = raw && (raw.file || search.all(raw).map((c) => c.file)[0]);
       if (!file) {
         return;
       }

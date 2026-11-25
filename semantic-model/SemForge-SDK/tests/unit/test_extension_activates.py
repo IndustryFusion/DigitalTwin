@@ -44,6 +44,7 @@ EXPECTED = {
     'semforge.about.model', 'semforge.about.constraints', 'semforge.about.shapes',
     'semforge.about.knowledge',
     'semforge.restart', 'semforge.revalidate', 'semforge.doctor',
+    'semforge.search', 'semforge.clearSearch', 'semforge.openHere',
     'semforge.editConstraint', 'semforge.removeConstraint',
     'semforge.refreshTree', 'semforge.goToDefinition', 'semforge.overrideHere',
     'semforge.addAttributeConstraint', 'semforge.newAttribute',

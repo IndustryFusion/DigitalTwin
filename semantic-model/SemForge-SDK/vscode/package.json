@@ -597,6 +597,24 @@
         "title": "What the terms mean: entity types, attributes, value lists and units, from the knowledge files. A row opens its type or vocabulary page.",
         "category": "SemForge",
         "icon": "$(info)"
+      },
+      {
+        "command": "semforge.search",
+        "title": "Search…",
+        "icon": "$(search)",
+        "category": "SemForge"
+      },
+      {
+        "command": "semforge.clearSearch",
+        "title": "Clear the search",
+        "icon": "$(search-stop)",
+        "category": "SemForge"
+      },
+      {
+        "command": "semforge.openHere",
+        "title": "Open in SemForge",
+        "icon": "$(preview)",
+        "category": "SemForge"
       }
     ],
     "viewsContainers": {
@@ -763,6 +781,46 @@
           "command": "semforge.hideDetails",
           "when": "view == semforgeKnowledge",
           "group": "9_refresh@9"
+        },
+        {
+          "command": "semforge.search",
+          "when": "view == semforgeModel",
+          "group": "navigation@3"
+        },
+        {
+          "command": "semforge.clearSearch",
+          "when": "view == semforgeModel && semforge.searching",
+          "group": "navigation@4"
+        },
+        {
+          "command": "semforge.search",
+          "when": "view == semforgeConstraints",
+          "group": "navigation@3"
+        },
+        {
+          "command": "semforge.clearSearch",
+          "when": "view == semforgeConstraints && semforge.searching",
+          "group": "navigation@4"
+        },
+        {
+          "command": "semforge.search",
+          "when": "view == semforgeShapes",
+          "group": "navigation@3"
+        },
+        {
+          "command": "semforge.clearSearch",
+          "when": "view == semforgeShapes && semforge.searching",
+          "group": "navigation@4"
+        },
+        {
+          "command": "semforge.search",
+          "when": "view == semforgeKnowledge",
+          "group": "navigation@3"
+        },
+        {
+          "command": "semforge.clearSearch",
+          "when": "view == semforgeKnowledge && semforge.searching",
+          "group": "navigation@4"
         }
       ],
       "view/item/context": [
@@ -1252,6 +1310,11 @@
           "submenu": "semforge.model",
           "when": "resourceExtname == .ttl || resourceExtname == .jsonld",
           "group": "navigation@90"
+        },
+        {
+          "command": "semforge.openHere",
+          "when": "resourceExtname == .ttl || resourceExtname == .jsonld || resourceFilename == expectations.yaml",
+          "group": "navigation@89"
         }
       ],
       "semforge.model": [
@@ -1384,6 +1447,10 @@
         {
           "command": "semforge.about.knowledge",
           "when": "false"
+        },
+        {
+          "command": "semforge.clearSearch",
+          "when": "semforge.searching"
         }
       ],
       "editor/title": [
@@ -1396,6 +1463,11 @@
           "command": "semforge.sparqlInspect",
           "when": "resourceScheme == semforge-sparql",
           "group": "navigation@2"
+        },
+        {
+          "command": "semforge.openHere",
+          "when": "resourceExtname == .ttl || resourceExtname == .jsonld || resourceFilename == expectations.yaml",
+          "group": "navigation@1"
         }
       ]
     },
@@ -1452,6 +1524,12 @@
         "key": "ctrl+shift+enter",
         "mac": "cmd+shift+enter",
         "when": "editorTextFocus && resourceScheme == semforge-sparql"
+      },
+      {
+        "command": "semforge.search",
+        "key": "ctrl+alt+f",
+        "mac": "cmd+alt+f",
+        "when": "!editorTextFocus"
       }
     ]
   },
