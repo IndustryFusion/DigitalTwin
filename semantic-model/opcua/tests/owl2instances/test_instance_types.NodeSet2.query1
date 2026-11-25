@@ -1,0 +1,20 @@
+ask where {
+  test:UnitSubType a owl:Class ;
+      rdfs:subClassOf test:UnitType .
+  test:ZetaType a owl:Class ;
+      rdfs:subClassOf opcua:BaseObjectType .
+  test:EtaType a owl:Class ;
+      rdfs:subClassOf opcua:BaseObjectType .
+  test:hasExtra a owl:ObjectProperty ;
+      rdfs:domain test:UnitSubType .
+  test:hasLevel a owl:ObjectProperty ;
+      rdfs:domain test:ZetaType .
+  test:hasRate a owl:ObjectProperty ;
+      rdfs:domain test:EtaType .
+  # a reference attribute is declared once, for BaseObjectType, not once per type that uses it
+  opcua:Organizes rdfs:domain opcua:BaseObjectType .
+  FILTER NOT EXISTS {
+    opcua:Organizes rdfs:domain ?other .
+    FILTER(?other != opcua:BaseObjectType)
+  }
+}

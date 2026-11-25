@@ -1,0 +1,210 @@
+@prefix base: <https://industryfusion.github.io/contexts/ontology/v0/base/> .
+@prefix ngsi-ld: <https://uri.etsi.org/ngsi-ld/> .
+@prefix opcua: <http://opcfoundation.org/UA/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix shacl: <http://my.test/shacl/> .
+@prefix test: <http://my.test/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+shacl:AlphaTypeShape a sh:NodeShape ;
+    sh:property [ a base:SubComponentRelationship ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasR ;
+            sh:property [ sh:class test:RType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ a base:SubComponentRelationship ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasS ;
+            sh:property [ sh:class test:SType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasReferenceType opcua:HasComponent ] ;
+    sh:targetClass test:AlphaType .
+
+shacl:BaseObjectTypeShape a sh:NodeShape ;
+    sh:targetClass opcua:BaseObjectType .
+
+shacl:GTypeShape a sh:NodeShape ;
+    sh:property [ sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:or ( [ sh:property [ sh:datatype xsd:double ;
+                                sh:maxCount 1 ;
+                                sh:minCount 1 ;
+                                sh:nodeKind sh:Literal ;
+                                sh:path ngsi-ld:hasValue ] ] [ sh:property [ sh:maxCount 1 ;
+                                sh:minCount 1 ;
+                                sh:or ( [ sh:nodeKind sh:BlankNode ;
+                                            sh:property [ sh:datatype xsd:double ;
+                                                    sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
+                                sh:path ngsi-ld:hasValueList ] ] ) ;
+            sh:path test:hasValue ;
+            base:hasReferenceType opcua:HasComponent ] ;
+    sh:targetClass test:GType .
+
+shacl:NTypeShape a sh:NodeShape ;
+    sh:property [ sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:or ( [ sh:property [ sh:datatype xsd:double ;
+                                sh:maxCount 1 ;
+                                sh:minCount 1 ;
+                                sh:nodeKind sh:Literal ;
+                                sh:path ngsi-ld:hasValue ] ] [ sh:property [ sh:maxCount 1 ;
+                                sh:minCount 1 ;
+                                sh:or ( [ sh:nodeKind sh:BlankNode ;
+                                            sh:property [ sh:datatype xsd:double ;
+                                                    sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
+                                sh:path ngsi-ld:hasValueList ] ] ) ;
+            sh:path test:hasNeed ;
+            base:hasReferenceType opcua:HasComponent ] ;
+    sh:targetClass test:NType .
+
+shacl:RTypeShape a sh:NodeShape ;
+    sh:property [ a base:SubComponentRelationship ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasG ;
+            sh:property [ sh:class test:GType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasReferenceType opcua:HasComponent ] ;
+    sh:targetClass test:RType .
+
+shacl:STypeShape a sh:NodeShape ;
+    sh:property [ a base:SubComponentRelationship ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasG ;
+            sh:property [ sh:class test:GType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ a base:SubComponentRelationship ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:has%3CItem%3E ;
+            sh:property [ sh:class test:GType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasPlaceHolderPattern "[a-zA-Z0-9_-]+" ;
+            base:hasReferenceType opcua:HasComponent ;
+            base:isPlaceHolder true ] ;
+    sh:targetClass test:SType .
+
+shacl:TTypeShape a sh:NodeShape ;
+    sh:property [ a base:SubComponentRelationship ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasG ;
+            sh:property [ sh:class test:GType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ a base:SubComponentRelationship ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:has%3CItem%3E ;
+            sh:property [ sh:class test:GType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasPlaceHolderPattern "[a-zA-Z0-9_-]+" ;
+            base:hasReferenceType opcua:HasComponent ;
+            base:isPlaceHolder true ] ;
+    sh:targetClass test:TType .
+
+shacl:UTypeShape a sh:NodeShape ;
+    sh:property [ a base:SubComponentRelationship ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasTc ;
+            sh:property [ sh:class test:TType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasReferenceType opcua:HasComponent ] ;
+    sh:targetClass test:UType .
+
+shacl:V2TypeShape a sh:NodeShape ;
+    sh:property [ sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:or ( [ sh:property [ sh:datatype xsd:double ;
+                                sh:maxCount 1 ;
+                                sh:minCount 1 ;
+                                sh:nodeKind sh:Literal ;
+                                sh:path ngsi-ld:hasValue ] ] [ sh:property [ sh:maxCount 1 ;
+                                sh:minCount 1 ;
+                                sh:or ( [ sh:nodeKind sh:BlankNode ;
+                                            sh:property [ sh:datatype xsd:double ;
+                                                    sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ] ] [ sh:hasValue () ] ) ;
+                                sh:path ngsi-ld:hasValueList ] ] ) ;
+            sh:path test:hasExtra ;
+            base:hasReferenceType opcua:HasComponent ],
+        [ a base:SubComponentRelationship ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasG ;
+            sh:property [ sh:class test:GType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasReferenceType opcua:HasComponent ] ;
+    sh:targetClass test:V2Type .
+
+shacl:VTypeShape a sh:NodeShape ;
+    sh:property [ a base:SubComponentRelationship ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasG ;
+            sh:property [ sh:class test:GType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasReferenceType opcua:HasComponent ] ;
+    sh:targetClass test:VType .
+
+shacl:WTypeShape a sh:NodeShape ;
+    sh:property [ a base:SubComponentRelationship ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:path test:hasNc ;
+            sh:property [ sh:class test:NType ;
+                    sh:maxCount 1 ;
+                    sh:minCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:path ngsi-ld:hasObject ] ;
+            base:hasReferenceType opcua:HasComponent ] ;
+    sh:targetClass test:WType .
+

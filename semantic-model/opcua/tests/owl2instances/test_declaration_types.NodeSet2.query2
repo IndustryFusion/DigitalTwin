@@ -1,0 +1,8 @@
+ask where {
+  test:hasState a owl:ObjectProperty ;
+      rdfs:domain opcua:FolderType .
+  test:hasExtra a owl:ObjectProperty ;
+      rdfs:domain opcua:FolderType .
+  test:hasBlocks a owl:ObjectProperty ;
+      rdfs:domain test:AlphaType .
+}

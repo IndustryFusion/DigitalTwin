@@ -64,6 +64,9 @@ TESTNODESETS=(
     test_browsename_namespaces.NodeSet2,${TESTURI}AlphaType
     test_browsename_namespaces_deep.NodeSet2,${TESTURI}AlphaType
     test_placeholder_membership.NodeSet2,${TESTURI}AlphaType
+    test_declaration_types.NodeSet2,${TESTURI}AlphaType,,,,UNCOVERED_INSTANCE_TERMS
+    test_instance_types.NodeSet2,${TESTURI}AlphaType,,,,UNCOVERED_INSTANCE_TERMS
+    test_instance_types_order.NodeSet2,${TESTURI}AlphaType,,,,UNCOVERED_INSTANCE_TERMS
     )
 CLEANGRAPH=cleangraph.py
 TYPEURI=http://example.org/MinimalNodeset
@@ -148,6 +151,71 @@ function checkqueries() {
     done
     
     echo "Done"
+}
+
+function checkshaclqueries() {
+    echo "$1"
+    queries=()
+    while IFS= read -r -d '' file; do
+        queries+=("$file")
+    done < <(find . -maxdepth 1 -name "$2.shaclquery[0-9]*" -print0)
+    if [ ${#queries[@]} -eq 0 ]; then
+        echo "Skipping: No queries found matching pattern $2.shaclquery[0-9]*"
+        return
+    fi
+    for query in "${queries[@]}"; do
+        echo "Executing query for shapes $SHACL and query $query"
+        result=$(python3 "${SPARQLQUERY}" "${SHACL}" "$query")
+        if [ "$result" != "True" ]; then
+            echo "Wrong result of query: ${result}."
+            exit 1
+        fi
+    done
+    echo "Done"
+}
+
+# Every type and attribute of the instances is covered by the shapes and the ontology (opcua/instance-coverage),
+# so no case may report uncovered terms, except the cases listed here, whose instances carry members that no type
+# and no declaration shape gives a rule (members only the instance adds, a placeholder variable without a value
+# constraint, declaration additions more than one relationship deep, see DEEP_DECLARATION_ADDITIONS, or children
+# whose BrowseName namespace differs from the type's member, see opcua/member-identity), or that expect the warning
+# in their warning column.
+UNCOVERED_ALLOWED=" test_object_types.NodeSet2 test_references_to_typedefinitions.NodeSet2 test_object_subtypes.NodeSet2 \
+test_variable_enum.NodeSet2 test_object_wrong.NodeSet2 test_reference_types_properties.Nodeset2 \
+test_variable_arrays_vrs.NodeSet2 test_variable_arrays.NodeSet2 test_declaration_additions.NodeSet2 \
+test_declaration_additions_violations.NodeSet2 test_browsename_namespaces.NodeSet2 \
+test_browsename_namespaces_deep.NodeSet2 test_placeholder_membership.NodeSet2 "
+
+# Terms the warning has to name, per case: a member only the instance adds, a declaration addition more than one
+# relationship deep, an Organizes reference only the instance has.
+UNCOVERED_EXPECTED=(
+    "test_declaration_types.NodeSet2 test:hasExtra"
+    "test_declaration_additions.NodeSet2 test:hasDeep"
+    "test_instance_types.NodeSet2 opcua:Organizes"
+    )
+
+function check_coverage_warning() {
+    nodeset=$1
+    warning=$2
+    for entry in "${UNCOVERED_EXPECTED[@]}"; do
+        if [ "${entry%% *}" = "$nodeset" ]; then
+            term="${entry#* }"
+            if ! grep UNCOVERED_INSTANCE_TERMS output.log | grep -qF "$term"; then
+                echo "UNCOVERED_INSTANCE_TERMS of $nodeset does not name $term. Exiting with error."
+                exit 1
+            fi
+            echo "UNCOVERED_INSTANCE_TERMS names $term"
+        fi
+    done
+    if [ "$warning" = "UNCOVERED_INSTANCE_TERMS" ] || [[ "$UNCOVERED_ALLOWED" == *" $nodeset "* ]]; then
+        return
+    fi
+    if grep -q UNCOVERED_INSTANCE_TERMS output.log; then
+        echo "Unexpected UNCOVERED_INSTANCE_TERMS for $nodeset:"
+        grep UNCOVERED_INSTANCE_TERMS output.log
+        exit 1
+    fi
+    echo "No uncovered terms"
 }
 
 if [ ! "$DEBUG" = "true" ]; then
@@ -254,6 +322,8 @@ for tuple in "${TESTNODESETS[@]}"; do IFS=","
     fi
     mydiff "Compare instances" "${nodeset}.instances" "${INSTANCES}" "json-ld"
     checkqueries "Check basic entities structure" ${nodeset}
+    checkshaclqueries "Check shapes" ${nodeset}
+    check_coverage_warning "${nodeset}" "${warning}"
     ask "Check that the entities import the uardf ontology" ${ENTITIES_FILE} entities_import_uardf.query
     echo SHACL test
     echo ----------
@@ -289,3 +359,68 @@ if ! echo "${MINIMAL_OUT}" | grep -q "unrecognized arguments: --minimalshacl"; t
     exit 1
 fi
 echo "Success: --minimalshacl is rejected"
+
+echo "==> test the node reference attribute is declared once and not reported"
+echo ----------------------------------------------------------------------
+python3 ${NODESET2OWL} test_instance_types.NodeSet2.xml -i ${BASE_ONTOLOGY} ${CORE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p test --serverUri ${SERVER_URI} -o ${NODESET2OWL_RESULT} || exit 1
+startstop_context_server "Starting context server" true
+python3 ${OWL2INSTANCES} -nr -t ${TESTURI}AlphaType -n ${TESTURI} ${NODESET2OWL_RESULT} -xc ${LOCAL_CONTEXT} 2>&1 | tee output.log
+OWL2INSTANCES_STATUS=${PIPESTATUS[0]}
+startstop_context_server "Stopping context server" false
+# The case has an uncovered reference: one warning, and the exit status is unchanged by it
+if [ "$OWL2INSTANCES_STATUS" != "0" ] || [ "$(grep -c 'UNCOVERED_INSTANCE_TERMS' output.log)" != "1" ]; then
+    echo "Expected exit status 0 and one UNCOVERED_INSTANCE_TERMS warning. Exiting with error."
+    exit 1
+fi
+if ! grep -q 'hasNodeRef' ${INSTANCES}; then
+    echo "The entities carry no node reference. Exiting with error."
+    exit 1
+fi
+ask "Check that the node reference is declared once, for BaseObjectType" ${ENTITIES_FILE} entities_node_reference.query
+if grep UNCOVERED_INSTANCE_TERMS output.log | grep -q 'hasNodeRef'; then
+    echo "UNCOVERED_INSTANCE_TERMS names the node reference. Exiting with error."
+    exit 1
+fi
+echo "Success: the node reference is declared once and not reported"
+echo "==> test a type model without instances still gets its shapes"
+echo --------------------------------------------------------------
+# Without --serverUri nodeset2owl exports no (dynamic) instance nodes
+python3 ${NODESET2OWL} test_instance_types.NodeSet2.xml -i ${BASE_ONTOLOGY} ${CORE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p test -o ${NODESET2OWL_RESULT} || exit 1
+startstop_context_server "Starting context server" true
+for mode in "" "-so"; do
+    rm -f ${SHACL}
+    STATUS=0
+    python3 ${OWL2INSTANCES} ${mode:+"$mode"} -t ${TESTURI}AlphaType -n ${TESTURI} ${NODESET2OWL_RESULT} -xc ${LOCAL_CONTEXT} > output.log 2>&1 || STATUS=$?
+    EXPECTED_STATUS=1
+    if [ -n "$mode" ]; then
+        EXPECTED_STATUS=0
+    fi
+    if [ "$STATUS" != "$EXPECTED_STATUS" ] || ! grep -q 'sh:targetClass test:UnitType' ${SHACL}; then
+        echo "Mode '$mode': exit status $STATUS (expected $EXPECTED_STATUS) or no shapes in ${SHACL}. Exiting with error."
+        tail -3 output.log
+        exit 1
+    fi
+done
+startstop_context_server "Stopping context server" false
+echo "Success: the shapes are written without instances"
+# The error exit still reports the deep declaration additions
+python3 ${NODESET2OWL} test_declaration_additions.NodeSet2.xml -i ${BASE_ONTOLOGY} ${CORE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p test -o ${NODESET2OWL_RESULT} || exit 1
+startstop_context_server "Starting context server" true
+STATUS=0
+python3 ${OWL2INSTANCES} -t ${TESTURI}AlphaType -n ${TESTURI} ${NODESET2OWL_RESULT} -xc ${LOCAL_CONTEXT} > output.log 2>&1 || STATUS=$?
+startstop_context_server "Stopping context server" false
+if [ "$STATUS" != "1" ] || ! grep -q DEEP_DECLARATION_ADDITIONS output.log; then
+    echo "Exit status $STATUS (expected 1) or no DEEP_DECLARATION_ADDITIONS without instances. Exiting with error."
+    exit 1
+fi
+echo "Success: the deep declaration additions are reported without instances"
+echo "==> test the shape of a type does not depend on the path to it"
+echo ----------------------------------------------------------------
+# BetaType is reached through a folder's declaration in test_declaration_types.NodeSet2 (shapes compared above);
+# with BetaType as root type, its node shape must be the same.
+python3 ${NODESET2OWL} test_declaration_types.NodeSet2.xml -i ${BASE_ONTOLOGY} ${CORE_ONTOLOGY} -v http://example.com/v0.1/UA/ -p test --serverUri ${SERVER_URI} -o ${NODESET2OWL_RESULT} || exit 1
+startstop_context_server "Starting context server" true
+python3 ${OWL2INSTANCES} -so -t ${TESTURI}BetaType -n ${TESTURI} ${NODESET2OWL_RESULT} -xc ${LOCAL_CONTEXT} -s beta_root_shacl.ttl || exit 1
+startstop_context_server "Stopping context server" false
+python3 compare_type_shape.py beta_root_shacl.ttl test_declaration_types.NodeSet2.shacl ${TESTURI}BetaType || exit 1
+echo "Test finished successfully"

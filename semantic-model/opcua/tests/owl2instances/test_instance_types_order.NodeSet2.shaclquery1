@@ -1,0 +1,16 @@
+PREFIX sh: <http://www.w3.org/ns/shacl#>
+PREFIX test: <http://my.test/>
+# Every type has its rules whatever was scanned before it; a type without members of its own is covered by the shape
+# its supertype gets later; no rule refers to a node shape that does not exist
+ask where {
+  ?u sh:targetClass test:UType ;
+      sh:property [ sh:path test:hasTc ; sh:minCount 1 ] .
+  ?t sh:targetClass test:TType ;
+      sh:property [ sh:path test:hasG ; sh:minCount 1 ] .
+  ?v2 sh:targetClass test:V2Type ;
+      sh:property [ sh:path test:hasExtra ; sh:minCount 1 ] .
+  ?n sh:targetClass test:NType ;
+      sh:property [ sh:path test:hasNeed ; sh:minCount 1 ] .
+  FILTER NOT EXISTS { ?m sh:targetClass test:MType }
+  FILTER NOT EXISTS { ?rule sh:node ?missing . FILTER NOT EXISTS { ?missing a sh:NodeShape } }
+}

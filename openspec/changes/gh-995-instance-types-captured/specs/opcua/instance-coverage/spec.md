@@ -1,0 +1,158 @@
+# Delta for OPC UA Instance Coverage
+
+## Purpose
+
+Defines what the shapes and the ontology written by `owl2instances.py` must cover of the instances written in the
+same run: every type and every attribute the instances use, no more than that, and a report of anything that is
+still not covered.
+
+## ADDED Requirements
+
+### Requirement: Every type of the instances has its shape
+For every object type of which the instances contain an entity, the shapes SHALL contain a node shape targeting that type with the rules its definition and supertypes define, however the type is reached: as a declared child's type, as a type a declaration adds, as an instance's own type, or through an `Organizes` or non-hierarchical reference of an object, or a non-hierarchical reference of a variable that is a child.
+
+#### Scenario: Type added in a folder's declaration
+- **WHEN** a type declares a child of type `FolderType` and its declaration adds, with `HasAddIn`, a child of a type that defines a mandatory variable, and the model holds an instance of the type
+- **THEN** the shapes contain a node shape targeting the added child's type, requiring that variable
+
+#### Scenario: Instance of a subtype that adds a member
+- **WHEN** a type declares a child of type `UnitType`, and the instance's child uses `UnitSubType`, a subtype of `UnitType` that defines a mandatory variable of its own
+- **THEN** the shapes contain a node shape targeting `UnitSubType`, requiring that variable
+
+#### Scenario: Type reached only through Organizes
+- **WHEN** the instance organizes an object of `ZetaType`, which defines a mandatory variable and which no type references
+- **THEN** the shapes contain a node shape targeting `ZetaType`, requiring that variable
+
+#### Scenario: Type reached only through a variable's reference
+- **WHEN** a variable of the instance refers with a non-hierarchical reference to an object of `EtaType`, which defines a mandatory variable and which nothing else reaches
+- **THEN** the shapes contain a node shape targeting `EtaType`, requiring that variable
+
+#### Scenario: Missing mandatory members found
+- **WHEN** the entities of the added child, of the subtype's child, of the organized object and of the object behind the variable each lack their mandatory variable, and the instances are validated with the shapes
+- **THEN** validation reports one violation per entity, for that variable
+
+### Requirement: A type without members of its own adds no shape
+A type of the instances that adds no member, or only Methods, to its nearest supertype with a node shape SHALL be covered by that shape and SHALL NOT get a node shape of its own, and a type that with its supertypes defines no member other than Methods SHALL NOT get a node shape for being used by the instances. Any other member gives the type its own shape, also where the member gives no rule; inherited rules may then be reported by both shapes.
+
+#### Scenario: Subtype without own members
+- **WHEN** a child is declared with a type that has a node shape, and the instance uses a subtype of it that defines no member
+- **THEN** the shapes contain no node shape targeting the subtype, and the supertype's shape validates the entity
+
+#### Scenario: Subtype that adds only a Method
+- **WHEN** a child is declared as `UnitType`, which has a node shape, and the instance uses `UnitMethodType`, a subtype that adds only a Method, and lacks a mandatory variable of `UnitType`
+- **THEN** the shapes contain no node shape targeting `UnitMethodType`, and validation reports one violation for the variable
+
+#### Scenario: Subtype that adds another member without a rule
+- **WHEN** the instance uses `TType`, a subtype of `SType`, which has a node shape with a mandatory placeholder, that adds only an optional `BaseObjectType` object, and holds a conforming instance of the placeholder
+- **THEN** the shapes contain a node shape targeting `TType`, and validation reports no violation for the placeholder
+
+#### Scenario: Supertype shaped by a later type
+- **WHEN** the instances use `MType`, a subtype of `NType` without members of its own, and `WType`, which declares a child of `NType`, and nothing else reaches `NType`
+- **THEN** the shapes contain a node shape targeting `NType` and none targeting `MType`
+
+#### Scenario: Type without rules
+- **WHEN** the instance organizes an object of `BaseObjectType`, which defines no member, and no type declares a child of `BaseObjectType`
+- **THEN** the shapes contain no node shape targeting `BaseObjectType`
+
+### Requirement: The shape of a type does not depend on the path to it
+The node shape of a type SHALL be the same whether the type is the root type of the run, the type definition of a child, or only reached through an instance declaration or an instance node, and whichever types were scanned before it.
+
+#### Scenario: Same shape on both paths
+- **WHEN** the shapes are written once with the added child's type as root type, and once from a model in which it only occurs in a folder's declaration
+- **THEN** the node shapes targeting that type in both outputs are isomorphic
+
+#### Scenario: Type with a child of a type scanned before
+- **WHEN** an organized `UType` declares a mandatory child of `TType`, which the instances use elsewhere as well, and the `UType` entity lacks the child
+- **THEN** the node shape targeting `UType` requires the child, and validation reports it missing
+
+#### Scenario: No rule without its shape
+- **WHEN** a type overrides a child with a declaration that adds only a member without a rule, and the instances use the type and a subtype of it
+- **THEN** every node shape a rule refers to exists in the shapes
+
+### Requirement: Every type of the instances is a class with its superclasses
+For every object type of which the instances contain an entity, the written ontology or an ontology it imports SHALL declare the type as an `owl:Class` with its supertype as `rdfs:subClassOf`.
+
+#### Scenario: Types reached only through instance nodes
+- **WHEN** the instance uses `UnitSubType` for a child declared as `UnitType`, and organizes an object of `ZetaType`
+- **THEN** the ontology declares `UnitSubType` as a class with `rdfs:subClassOf` `UnitType`, and `ZetaType` as a class with `rdfs:subClassOf` `BaseObjectType`
+
+### Requirement: Every attribute of the instances is declared
+For every attribute that an entity of the instances carries, the written ontology or an ontology it imports SHALL declare the attribute with a domain that the entity's type or one of its supertypes satisfies, including attributes that an instance declaration or the instance itself adds. An attribute already declared so SHALL NOT be declared again.
+
+#### Scenario: Attribute of a type reached only through instance nodes
+- **WHEN** the entity of the added child, of the subtype's child or of the organized object carries an attribute defined by its type
+- **THEN** the ontology declares that attribute with that type, or a supertype defining it, as domain
+
+#### Scenario: Attribute added by a declaration
+- **WHEN** the folder's entity carries the relationship to the added child, which `FolderType` does not define
+- **THEN** the ontology declares that relationship with `FolderType` or a supertype as domain
+
+#### Scenario: Attribute declared in an imported ontology
+- **WHEN** an entity carries an attribute that a loaded ontology already declares with a domain the entity's type or a supertype satisfies
+- **THEN** the written ontology adds no declaration for it
+
+### Requirement: Reference attributes are declared once
+Reference attributes, which any object may carry (the node reference attribute when node references are enabled, `Organizes` and non-hierarchical references), SHALL be declared once with the domain `BaseObjectType` rather than with each type that carries them.
+
+#### Scenario: Node reference
+- **WHEN** node references are enabled, so that every entity carries the node reference attribute
+- **THEN** the ontology declares the node reference with the domain `BaseObjectType` and no other domain
+
+#### Scenario: Organizes reference
+- **WHEN** an entity carries the `Organizes` relationship to an object only the instance organizes, and the type of another entity defines an `Organizes` reference
+- **THEN** the ontology declares `Organizes` with the domain `BaseObjectType` and no other domain
+
+### Requirement: Nothing is added for unused types
+The shapes SHALL NOT contain a node shape for a type of an imported ontology that neither the walk from the root type nor any node of the instances reaches.
+
+#### Scenario: Type behind an ignored variable
+- **WHEN** a non-hierarchical reference of an entity points to a variable, which refers to an object of `GhostType` that nothing else reaches
+- **THEN** the instances contain no `GhostType` entity, and the shapes no node shape targeting `GhostType`
+
+#### Scenario: Unused companion specification types
+- **WHEN** a model imports the Machinery ontology and its instances use none of the Machinery state machine types
+- **THEN** the shapes contain no node shape targeting a Machinery state machine type
+
+### Requirement: The instances are unchanged
+Where every type of the instance nodes has its node shape without this capability, or is covered by a supertype's, the instances SHALL be the same as without it. Where this capability adds node shapes, the instances follow them as they follow any shape: members of such types, and the optional children holding them, may appear or be named as the new shapes say.
+
+#### Scenario: Example packages
+- **WHEN** the pump, laser and simple examples are generated, compared with the same examples generated by the generator without this capability
+- **THEN** their instances are identical, and their shapes are isomorphic, because every type their instances use already has a node shape or is covered by a supertype's
+
+### Requirement: Uncovered types of the instances are reported
+After writing its outputs, the generator SHALL report every type of the instances that is not covered by a node shape: no node shape targets it, and it, or a type between it and its nearest supertype with a node shape, defines a member other than a Method, or its definition is not in the loaded ontologies.
+
+#### Scenario: Type without a definition
+- **WHEN** an instance node has a type whose definition is not in the loaded ontologies
+- **THEN** the warning names that type as having no shape
+
+#### Scenario: Subtype with members of its own without a shape
+- **WHEN** the shapes contain a node shape for `UnitType` but none for `UnitSubType`, which defines a member of its own, and the instances contain a `UnitSubType` entity
+- **THEN** the warning names `UnitSubType` as having no shape
+
+### Requirement: Uncovered attributes of the instances are reported
+After writing its outputs, the generator SHALL report every attribute of the instances without a declaration whose domain the entity's type or a supertype satisfies, and every attribute that neither a node shape targeting the entity's type or a supertype, nor a declaration shape applied to the entity through a relationship (`opcua/instance-declaration-shapes`), constrains. The base ontology's node reference attribute SHALL NOT be reported.
+
+#### Scenario: Member added only by the instance
+- **WHEN** an instance adds a variable that neither its type nor its declaration defines
+- **THEN** the ontology declares the attribute, and the warning names it as not constrained by any shape
+
+#### Scenario: Member added by a declaration
+- **WHEN** a declaration adds a member beyond its child's type, one relationship below the owning type, and the instance carries it
+- **THEN** the warning does not name that member, because the declaration shape applied through the relationship constrains it
+
+#### Scenario: Member added more than one relationship deep
+- **WHEN** a declaration adds a member more than one relationship below the owning type, which the declaration shapes do not validate
+- **THEN** the warning names that member as not constrained
+
+### Requirement: The coverage report is one warning
+The uncovered types and attributes SHALL be reported as one warning with the label `UNCOVERED_INSTANCE_TERMS`, grouped per type, suppressible with `-sw UNCOVERED_INSTANCE_TERMS`; the exit status SHALL be unchanged by it. Members that `opcua/instance-declaration-shapes` reports as not validated SHALL be named in it as well.
+
+#### Scenario: Nothing uncovered
+- **WHEN** every type and attribute of the instances is covered
+- **THEN** no such warning is written
+
+#### Scenario: Gaps reported once
+- **WHEN** the instances have uncovered types and attributes
+- **THEN** one `UNCOVERED_INSTANCE_TERMS` warning names them grouped per type, and the generator exits with the same status as without them

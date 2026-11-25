@@ -21,7 +21,7 @@ import lib.jsonld as libjsonld
 from lib.utils import warnings, print_warning
 from collections import defaultdict
 from rdflib import Graph, Namespace, URIRef, BNode
-from rdflib.namespace import OWL, RDF, SH
+from rdflib.namespace import OWL, RDF, RDFS, SH
 import argparse
 import lib.utils as utils
 from lib.utils import RdfUtils, OntologyLoader, UARDF
@@ -29,6 +29,7 @@ from lib.bindings import Bindings
 from lib.jsonld import JsonLd
 from lib.entity import Entity
 from lib.shacl import Shacl
+import lib.instance_coverage as coverage
 import logging
 
 logging.basicConfig(level=os.getenv('LOG_LEVEL', 'INFO').upper())
@@ -291,6 +292,76 @@ def report_deep_additions():
                       f"relationship deep, which are not validated: {', '.join(paths)}")
 
 
+def scan_instance_types(rootentities):
+    """Give every type of the instance nodes its shape, wherever the type occurs in the model.
+
+    The type pass only reaches types through the type definitions of children, so a type which only occurs in an
+    instance declaration or behind a non-hierarchical reference would get no shape. Types that add no
+    member, or only Methods, to a supertype with a shape stay covered by that shape.
+    """
+    found = coverage.instance_object_types(g, rdfutils, rootentities, ignored_hierarchical_references,
+                                           ignored_references)
+    for objtype in coverage.shape_order(g, rdfutils, found, ignored_hierarchical_references,
+                                        ignored_references):
+        shaped_types = set(shaclg.get_graph().objects(None, SH.targetClass))
+        if coverage.needs_own_shape(g, rdfutils, objtype, shaped_types, ignored_hierarchical_references,
+                                    ignored_references):
+            logger.debug(f"Scanning type of instance nodes: {objtype}")
+            typenode = next(g.subjects(UARDF['definesType'], objtype))
+            scan_type(typenode, objtype)
+
+
+def attribute_iri(key):
+    """The IRI of an attribute key of the instances.
+
+    Most keys are prefixed with the context's prefixes; the keys of Organizes and non-hierarchical references are
+    prefixed with the instance ontology's (g.qname), which the context may name differently or not at all."""
+    prefix = key.split(':', 1)[0]
+    if ':' in key and prefix not in dict(context_graph.namespace_manager.namespaces()) and \
+            prefix in dict(g.namespace_manager.namespaces()):
+        return URIRef(g.namespace_manager.expand_curie(key))
+    return URIRef(utils.expand_term(context_graph, key))
+
+
+def is_reference_attribute(attribute):
+    """True for attributes any object may carry: the node reference and OPC UA reference types (Organizes,
+    non-hierarchical references), whose sub-property chain reaches References. Semantic bridge attributes are
+    sub-properties of uardf:semanticBridgeReferenceType instead."""
+    return attribute == basens['hasNodeRef'] or \
+        opcuans['References'] in g.transitive_objects(attribute, RDFS.subPropertyOf)
+
+
+def attribute_domain(attribute, instancetype):
+    """The domain an attribute is declared with: reference attributes get BaseObjectType rather than every type that
+    uses them, because several domains are an intersection in OWL."""
+    return opcuans['BaseObjectType'] if is_reference_attribute(attribute) else instancetype
+
+
+def declare_attributes(instance, instancetype):
+    """Declare every attribute of the entity in the ontology for which no domain covers the entity's type."""
+    supertypes = coverage.all_supertypes([g, e.get_graph()], instancetype)
+    for key in instance:
+        if key in coverage.ENTITY_KEYS:
+            continue
+        attribute = attribute_iri(key)
+        if not coverage.has_covering_domain([g, e.get_graph()], attribute, supertypes):
+            e.add_instancetype(attribute_domain(attribute, instancetype), attribute)
+
+
+def report_uncovered_terms():
+    """Warn once about the types and attributes of the instances which the shapes or the ontology do not cover."""
+    uncovered = coverage.uncovered_terms(jsonld.instances, attribute_iri,
+                                         shaclg.get_graph(), [g, e.get_graph()],
+                                         exempt_attributes=[basens['hasNodeRef']],
+                                         lacks_shape=lambda objtype, targets: coverage.lacks_shape(
+                                             g, rdfutils, objtype, targets, ignored_hierarchical_references,
+                                             ignored_references))
+    if uncovered:
+        lines = coverage.format_uncovered(uncovered, lambda iri: utils.get_prefixed(context_graph, iri))
+        print_warning('uncovered_instance_terms', f"{len(lines)} type(s) of the instances are not fully covered by "
+                      "the shapes and the ontology: " + ' | '.join(lines))
+
+
 def scan_type(node, instancetype, shape_node=None):
     logger.debug('Scanning type: %s with node %s', instancetype, node)
     # Loop through all supertypes
@@ -521,7 +592,7 @@ non-owning or non-hierarchical reference {reftype} This will be ignored."
             return True
         shacl_rule['path'] = full_attribute_name
         rdfutils.get_modelling_rule(g, t, shacl_rule, instancetype)
-        e.add_instancetype(instancetype, full_attribute_name)
+        e.add_instancetype(attribute_domain(full_attribute_name, instancetype), full_attribute_name)
         e.add_type(shclass)
         maxcount = None
 
@@ -582,6 +653,7 @@ def scan_entity(node, instancetype, id, optional=False, declaration_shape=None):
             has_components = scan_entity_nonrecursive(node, id, instance, node_id, target,
                                                       generic_reference) or has_components
     if has_components or not optional or maximal_shacl:
+        declare_attributes(instance, URIRef(instancetype))
         jsonld.add_instance(instance)
         scanned_entities.add(node_id)
         return node_id
@@ -935,13 +1007,7 @@ Machinery Folder was found in instance ontology.")
         logger.debug(f"Scanning type: {instancetype}")
         root = next(g.subjects(UARDF['definesType'], URIRef(str(instancetype))))
         scan_type(root, instancetype)
-    report_deep_additions()
-    if shaclname is not None:
-        shaclg.serialize(destination=shaclname)
-    if shacl_only:
-        # If only SHACL shapes are to be created, skip the entity scanning
-        sys.exit(0)
-    # Then scan the entity with the real values
+    # The root entities are needed before the shapes are written: the types of the instance nodes get their shapes
     rootentities = None
     if extract_instance_declarations:
         rootentities = utils.get_all_objects_in_namespace(g, mainontology, basens, opcuans)
@@ -952,12 +1018,27 @@ Machinery Folder was found in instance ontology.")
         # created with --enforce-opcua-type-semantic)
         rootentities = [next(g.subjects(UARDF['hasTypeDefinition'], URIRef(rootinstancetype)),
                              next(g.subjects(RDF.type, URIRef(rootinstancetype)), None))]
-        if rootentities[0] is None:
+        if rootentities[0] is None and shacl_only:
+            # Shapes of a type model without instances: nothing more to cover
+            rootentities = []
+        elif rootentities[0] is None:
+            # the results of the type pass, as before the instance types were scanned
+            report_deep_additions()
+            if shaclname is not None:
+                shaclg.serialize(destination=shaclname)
             print(f"Error: no instance of type {rootinstancetype} found. Instances are usually dynamic nodes, "
                   "which are only exported when the nodeset was translated with nodeset2owl.py --serverUri.")
             sys.exit(1)
     else:
         rootentities = [rootentity]
+    scan_instance_types(rootentities)
+    report_deep_additions()
+    if shaclname is not None:
+        shaclg.serialize(destination=shaclname)
+    if shacl_only:
+        # If only SHACL shapes are to be created, skip the entity scanning
+        sys.exit(0)
+    # Then scan the entity with the real values
     entity_id = f'{entity_id}' if entity_id is not None else None
     non_followed_nodes = set()
     followed_nodes = set()
@@ -993,3 +1074,4 @@ added. This will potentially create validation issues."
     jsonld.dump_context(contextname, final_namespaces)
     if bindingsg.len() > 0:
         bindingsg.serialize(destination=bindingsname)
+    report_uncovered_terms()
