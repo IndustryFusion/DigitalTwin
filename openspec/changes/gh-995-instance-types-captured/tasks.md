@@ -13,9 +13,9 @@
   organizes an object of `ZetaType` (mandatory `Level`, referenced by no type) that lacks `Level`, and an object of
   plain `BaseObjectType`. The `Count` variable of `Unit` refers with `HasEffect` to an object of `EtaType` (mandatory
   `Rate`) that lacks `Rate`. A second child `Unit2` of `UnitType` uses `UnitMethodType`, which adds only a Method,
-  and lacks `Count`; a third, `Unit3` of `PlainType` (mandatory `Amount`), uses
-  `PlainNoRuleType`, whose members give no rule, and lacks `Amount`. `ZetaType`
-  defines an `Organizes` reference, and `Zeta` refers to a variable that refers to an object of `GhostType`. Verified: `nodeset2owl.py` translates it without error.
+  and lacks `Count`. `ZetaType` defines an `Organizes` reference, and `Zeta` refers to a variable that refers to an object of `GhostType`.
+  `test_instance_types_order.NodeSet2.xml`: types whose rules depend on other types' scans (see its comment). Verified:
+  `nodeset2owl.py` translates both without error.
 - [x] 1.3 A type without a definition: `nodeset2owl.py` refuses a nodeset whose instance names an undefined type
   definition, so such a type only reaches `owl2instances.py` through an ontology not written by `nodeset2owl.py`.
   Covered by a unit test of the coverage helpers instead of a nodeset.
@@ -28,7 +28,7 @@
   `ZetaType` and pyshacl reports it conformant; with the change both shapes exist and both violations are reported.
 - [x] 2.2 Keep `--shacl-only`, `--type-all`, `-eid` and `--maximalshacl` working with the earlier root entities.
   Verified: all existing cases in `tests/owl2instances/test.bash` pass unchanged, and its no-instances check (shapes
-  written with and without `-so`, exit status 0 and 1).
+  written with and without `-so`, exit status 0 and 1, `DEEP_DECLARATION_ADDITIONS` reported).
 
 ## 3. Attributes of the entities are declared
 
@@ -46,16 +46,20 @@
   - *Type added in a folder's declaration*: `test_declaration_types.NodeSet2.shaclquery1` (shape of `BetaType`
     requiring `hasLevel`).
   - *Instance of a subtype that adds a member*, *Type reached only through Organizes*, *Type reached only through a
-    variable's reference*, *Subtype that adds only a Method*, *Subtype whose members give no rule*, *Type without
+    variable's reference*, *Subtype that adds only a Method*, *Type without
     rules*, *Type behind an ignored variable*:
     `test_instance_types.NodeSet2.shaclquery1` (shapes of `UnitSubType` requiring `hasExtra`, of `ZetaType` requiring
-    `hasLevel` and of `EtaType` requiring `hasRate`; no shape targeting `UnitMethodType`, `PlainNoRuleType`,
+    `hasLevel` and of `EtaType` requiring `hasRate`; no shape targeting `UnitMethodType`,
     `GhostType` or `BaseObjectType`), and unit tests `test_objects_behind_variables_are_reached`,
-    `test_variables_behind_references_are_not_followed`, `test_methods_give_no_rule`, `TestShapeAddsNothing`.
+    `test_variables_behind_references_are_not_followed`, `test_methods_give_no_rule`.
+  - *Subtype that adds another member without a rule*, *Supertype shaped by a later type*, *Type with a child of a type
+    scanned before*, *No rule without its shape*: `test_instance_types_order.NodeSet2` (`.shaclquery1`; `.pyshacl` with
+    exactly two violations, `hasTc` on `U` and `hasNeed` on `M`), unit test
+    `test_shape_order_puts_types_with_members_first`.
   - *Subtype without own members*: `test_declaration_types.NodeSet2.shaclquery1` (no shape targeting
     `DeltaSubType`).
   - *Missing mandatory members found*: the `.pyshacl` files of both cases (one violation each for `State`, `Unit`,
-    `Zeta`, `Eta`, and exactly one each for `Unit2` and `Unit3`).
+    `Zeta`, `Eta`, and exactly one for `Unit2`).
 - [x] 5.2 *Same shape on both paths*: in `test.bash`, generate the shapes with `-t BetaType` and compare the node
   shape targeting `BetaType` with the one from `test_declaration_types` for isomorphism.
 - [x] 5.3 Ontology. `.query` files on `entities.ttl`:
@@ -73,7 +77,7 @@
     warning does not name it).
   - *Organizes reference*: `test_instance_types.NodeSet2.query1` (`opcua:Organizes` with the domain `BaseObjectType`
     only, although `ZetaType` defines one); keys prefixed with the instance ontology's prefixes:
-    `tests/test_owl2instances_attributes.py`, also at the declaration.
+    `tests/test_owl2instances_attributes.py`, also at the declaration and in the report.
 - [x] 5.4 Warning, in `test.bash` (`UNCOVERED_EXPECTED`) and `tests/test_libinstance_coverage.py`:
   - *Member added only by the instance*: `test_declaration_types` names `test:hasExtra`.
   - *Member added more than one relationship deep*: `test_declaration_additions` names `test:hasDeep`.
@@ -94,13 +98,14 @@
   Verified: shapes, context and instances of all three identical to main; `entities.ttl` of pump and simple too;
   laser's gains 16 triples (none removed), among them the Machinery building blocks' `hasMachineryItemState` and
   `hasMachineryOperationMode` with domain `FolderType`; `kms-packages-check` passes.
-- [x] 5.8 End-to-end: `tests/owl2instances/e2e_shacl2flink.bash` builds both cases into KMS packages with
+- [x] 5.8 End-to-end: `tests/owl2instances/e2e_shacl2flink.bash` builds the three cases into KMS packages with
   `owl2kms.py`, runs them through shacl2flink's SQLite check and asserts the alerts: `hasLevel` on `State`; `hasExtra`
-  on `Unit`, `hasLevel` on `Zeta`, `hasRate` on `Eta` `hasCount` on `Unit2` and `hasAmount` on `Unit3`. Part of the opcua `test` target; in CI, shacl2flink's Python dependencies live
+  on `Unit`, `hasLevel` on `Zeta`, `hasRate` on `Eta` and `hasCount` on `Unit2`; `hasTc` on `U` and
+  `hasNeed` on `M`. Part of the opcua `test` target; in CI, shacl2flink's Python dependencies live
   in their own venv (`SHACL2FLINK_PYTHON`), because they pin other rdflib versions than the opcua tools.
 - [x] 5.9 shacl2flink compiles the expected shapes: `make test-opcua-shapes` in `semantic-model/shacl2flink`.
-- [x] 5.10 Coverage of the changed code above 80 %, stated in the Pull Request. Measured: 54 of 59 changed statements
-  of `owl2instances.py` in the two cases (92 %); the other five run in `tests/test_owl2instances_attributes.py` and in
+- [x] 5.10 Coverage of the changed code above 80 %, stated in the Pull Request. Measured: 42 of 47 changed statements
+  of `owl2instances.py` in two of the cases (89 %); the other five run in `tests/test_owl2instances_attributes.py` and in
   the no-instances check of `test.bash`. `lib/instance_coverage.py` 99 %, `lib` 87 %.
 
 ## 6. Finish

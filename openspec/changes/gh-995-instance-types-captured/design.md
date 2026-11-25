@@ -60,16 +60,13 @@ attributes. The root entities are therefore determined before the shapes are wri
 `--shacl-only` stops after the shapes as before, now with the types of the instance nodes included.
 
 A collected type needs a shape of its own only if it, or a type between it and its nearest supertype with a node
-shape, defines a member that gives a rule (a hierarchical child other than a Method, an `Organizes` or a
-non-hierarchical reference, or an interface).
-Whether a member gives a rule is decided by the scan in several places, so it is not decided a second time: a type
-that may need a shape is scanned, and if its shape has the same content as its nearest shaped supertype's (or no rule
-and no such supertype), everything the scan added to the shapes and the ontology is taken back and the type counts as
-covered. Otherwise the supertype's shape already validates its entities through `rdfs:subClassOf`, and a second, full shape
-would only report every violation twice. The collected types are processed supertypes first, so the nearest
-supertype's shape exists when a subtype is decided. If no type of the chain defines a member (plain `BaseObjectType`
-objects), there is no rule to check and the pre-pass writes no shape; the type pass's own shapes are unchanged by
-this.
+shape, defines a member: a hierarchical child other than a Method (which never gives a rule), an `Organizes` or a
+non-hierarchical reference, or an interface. Otherwise the supertype's shape already validates its entities through
+`rdfs:subClassOf`, and a second, full shape would only report every violation twice. Types with members of their own
+are scanned first: they get a shape in any case, and their scans may give further types one. The types without are
+decided after them, supertypes first, so the shape that may cover such a type exists by then. If no type of the chain
+defines a member (plain `BaseObjectType` objects), there is no rule to check and the pre-pass writes no shape; the
+type pass's own shapes are unchanged by this.
 
 Alternatives:
 - *No pre-pass, rely on the type pass since #985.* Covers only the types a declaration adds; the three cases in
@@ -78,6 +75,12 @@ Alternatives:
 - *Scan the types of the written entities after the entity pass, then write the shapes.* Fewer types (only nodes that
   become entities), but the entity pass would have run without the shapes of these types: placeholder children of
   such a type would get the default `datasetId` and no path match, and a second entity pass would be needed. Rejected.
+- *No shape for any type whose members give no rule*, decided by the scan's result or by repeating its conditions.
+  Other members than Methods can give no rule (an object of a type without rules, a placeholder variable without a
+  value constraint, a reference to a variable). Removing a scanned shape again means undoing the state of the scans,
+  and the entity pass looks members up in the shape of the exact type, so a type without its shape would no longer
+  find its supertype's placeholders. Such a type keeps its shape; the cost is that violations of inherited rules may
+  be reported by both shapes. Rejected.
 - *Shapes for all types of all imported namespaces.* Simple, but bloats `shacl.ttl` and every Flink job built from it
   with types no instance uses. Rejected by the issue.
 
@@ -109,7 +112,7 @@ the existing warning mechanism (label `UNCOVERED_INSTANCE_TERMS`, suppressible w
 per type. The exit status does not change.
 
 - A type is *not covered by a shape* if no node shape targets it and it, or a type between it and its nearest
-  supertype with a node shape, defines a member, or its definition is unknown; this is the same rule D1 uses to
+  supertype with a node shape, defines a member other than a Method, or its definition is unknown; this is the same rule D1 uses to
   decide that a type needs a shape, so the warning names exactly what D1 could not provide.
 - An attribute is *undeclared* if no `rdfs:domain` among the entity's type and supertypes covers it.
 - An attribute is *constrained* if a node shape targeting the entity's type or a supertype has a property shape for

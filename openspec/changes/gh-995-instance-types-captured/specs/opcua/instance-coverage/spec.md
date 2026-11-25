@@ -32,7 +32,7 @@ For every object type of which the instances contain an entity, the shapes SHALL
 - **THEN** validation reports one violation per entity, for that variable
 
 ### Requirement: A type without members of its own adds no shape
-A type of the instances whose members that give a rule all come from a supertype with a node shape SHALL be covered by that shape and SHALL NOT get a node shape of its own, and a type that with its supertypes defines no such member SHALL NOT get a node shape for being used by the instances. Whether a member gives a rule is what the type's shape says of it.
+A type of the instances that adds no member, or only Methods, to its nearest supertype with a node shape SHALL be covered by that shape and SHALL NOT get a node shape of its own, and a type that with its supertypes defines no member other than Methods SHALL NOT get a node shape for being used by the instances. Any other member gives the type its own shape, also where the member gives no rule; inherited rules may then be reported by both shapes.
 
 #### Scenario: Subtype without own members
 - **WHEN** a child is declared with a type that has a node shape, and the instance uses a subtype of it that defines no member
@@ -42,20 +42,32 @@ A type of the instances whose members that give a rule all come from a supertype
 - **WHEN** a child is declared as `UnitType`, which has a node shape, and the instance uses `UnitMethodType`, a subtype that adds only a Method, and lacks a mandatory variable of `UnitType`
 - **THEN** the shapes contain no node shape targeting `UnitMethodType`, and validation reports one violation for the variable
 
-#### Scenario: Subtype whose members give no rule
-- **WHEN** the instance uses `PlainNoRuleType`, a subtype of `PlainType`, which has a node shape, that adds only a placeholder variable without a value constraint, an optional `BaseObjectType` object and a reference to a variable, and lacks a mandatory variable of `PlainType`
-- **THEN** the shapes contain no node shape targeting `PlainNoRuleType`, and validation reports one violation for the variable
+#### Scenario: Subtype that adds another member without a rule
+- **WHEN** the instance uses `TType`, a subtype of `SType`, which has a node shape with a mandatory placeholder, that adds only an optional `BaseObjectType` object, and holds a conforming instance of the placeholder
+- **THEN** the shapes contain a node shape targeting `TType`, and validation reports no violation for the placeholder
+
+#### Scenario: Supertype shaped by a later type
+- **WHEN** the instances use `MType`, a subtype of `NType` without members of its own, and `WType`, which declares a child of `NType`, and nothing else reaches `NType`
+- **THEN** the shapes contain a node shape targeting `NType` and none targeting `MType`
 
 #### Scenario: Type without rules
 - **WHEN** the instance organizes an object of `BaseObjectType`, which defines no member, and no type declares a child of `BaseObjectType`
 - **THEN** the shapes contain no node shape targeting `BaseObjectType`
 
 ### Requirement: The shape of a type does not depend on the path to it
-The node shape of a type SHALL be the same whether the type is the root type of the run, the type definition of a child, or only reached through an instance declaration or an instance node.
+The node shape of a type SHALL be the same whether the type is the root type of the run, the type definition of a child, or only reached through an instance declaration or an instance node, and whichever types were scanned before it.
 
 #### Scenario: Same shape on both paths
 - **WHEN** the shapes are written once with the added child's type as root type, and once from a model in which it only occurs in a folder's declaration
 - **THEN** the node shapes targeting that type in both outputs are isomorphic
+
+#### Scenario: Type with a child of a type scanned before
+- **WHEN** an organized `UType` declares a mandatory child of `TType`, which the instances use elsewhere as well, and the `UType` entity lacks the child
+- **THEN** the node shape targeting `UType` requires the child, and validation reports it missing
+
+#### Scenario: No rule without its shape
+- **WHEN** a type overrides a child with a declaration that adds only a member without a rule, and the instances use the type and a subtype of it
+- **THEN** every node shape a rule refers to exists in the shapes
 
 ### Requirement: Every type of the instances is a class with its superclasses
 For every object type of which the instances contain an entity, the written ontology or an ontology it imports SHALL declare the type as an `owl:Class` with its supertype as `rdfs:subClassOf`.
@@ -102,14 +114,14 @@ The shapes SHALL NOT contain a node shape for a type of an imported ontology tha
 - **THEN** the shapes contain no node shape targeting a Machinery state machine type
 
 ### Requirement: The instances are unchanged
-Where every type the instances use has its node shape without this capability, or is covered by a supertype's, the instances SHALL be the same as without it. Where this capability adds node shapes, the instances follow them as they follow any shape: members of such types, and the optional children holding them, may appear or be named as the new shapes say.
+Where every type of the instance nodes has its node shape without this capability, or is covered by a supertype's, the instances SHALL be the same as without it. Where this capability adds node shapes, the instances follow them as they follow any shape: members of such types, and the optional children holding them, may appear or be named as the new shapes say.
 
 #### Scenario: Example packages
 - **WHEN** the pump, laser and simple examples are generated, compared with the same examples generated by the generator without this capability
 - **THEN** their instances are identical, and their shapes are isomorphic, because every type their instances use already has a node shape or is covered by a supertype's
 
 ### Requirement: Uncovered types of the instances are reported
-After writing its outputs, the generator SHALL report every type of the instances that is not covered by a node shape: no node shape targets it, and it, or a type between it and its nearest supertype with a node shape, defines a member, or its definition is not in the loaded ontologies.
+After writing its outputs, the generator SHALL report every type of the instances that is not covered by a node shape: no node shape targets it, and it, or a type between it and its nearest supertype with a node shape, defines a member other than a Method, or its definition is not in the loaded ontologies.
 
 #### Scenario: Type without a definition
 - **WHEN** an instance node has a type whose definition is not in the loaded ontologies
