@@ -31,6 +31,8 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v4
+    - name: Debezium plugin archive from the cache
+      uses: ./.github/actions/debezium-archive
     - name: Build the Docker images
       run: docker compose build
     - name: Setup tmate session
@@ -246,7 +248,7 @@ jobs:
         shellcheck *.sh *.bats test-*/*.bats ../bats-unit/*.bats \
           ../../.github/scripts/*.sh ../prepare-platform-for-github-runner.sh \
           ../platform-images.sh ../wait-for-flink-jobs.sh ../wait-for-kubefwd.sh \
-          ../../DebeziumPostgresConnector/fetch-verified.sh \
+          ../../DebeziumPostgresConnector/fetch-verified.sh ../../DebeziumPostgresConnector/fetch-plugin.sh \
           ../../helm/adopt-kafka-topics.sh ../../helm/check-release-keeps-topics.sh \
           ../../semantic-model/shacl2flink/shacl_resync.sh \
           ../../semantic-model/shacl2flink/tests/bats/test-shacl-flink-resync/*.bats
@@ -261,6 +263,8 @@ jobs:
     timeout-minutes: 20
     steps:
     - uses: actions/checkout@v4
+    - name: Debezium plugin archive from the cache
+      uses: ./.github/actions/debezium-archive
     - name: Build the Kafka Connect image
       run: docker compose build debezium-postgresql-connector
     - name: Snapshot the knowledge table within the chart's heap

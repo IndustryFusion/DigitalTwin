@@ -1,0 +1,47 @@
+#
+# Copyright (c) 2026 IndustryFusion Foundation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+name: Debezium plugin archive
+description: >-
+  Puts the Debezium plugin archive into the build context of the Kafka Connect
+  image, from the Actions cache if it is there, so that most builds don't ask
+  Maven Central for it. Needs a checkout; runs before the image is built.
+
+runs:
+  using: composite
+  steps:
+    # Keyed by the pinned SHA-256: a new pin is a new archive.
+    - name: The pinned checksum
+      id: pin
+      shell: bash
+      run: |
+        sha256=$(sh DebeziumPostgresConnector/fetch-plugin.sh sha256)
+        echo "sha256=$sha256" >> "$GITHUB_OUTPUT"
+    - uses: actions/cache/restore@v4
+      id: cache
+      with:
+        path: DebeziumPostgresConnector/debezium-connector-postgres.tar.gz
+        key: debezium-connector-postgres-${{ steps.pin.outputs.sha256 }}
+    # Checks a restored archive as well, and downloads it again if it differs.
+    - name: The verified archive
+      shell: bash
+      run: sh DebeziumPostgresConnector/fetch-plugin.sh
+    # Saved right away, so that a failing build or test doesn't make the next
+    # run download it again.
+    - uses: actions/cache/save@v4
+      if: steps.cache.outputs.cache-hit != 'true'
+      with:
+        path: DebeziumPostgresConnector/debezium-connector-postgres.tar.gz
+        key: ${{ steps.cache.outputs.cache-primary-key }}

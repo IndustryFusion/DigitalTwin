@@ -49,6 +49,8 @@ jobs:
     - name: Prepare airgap deployment
       run: |
         cd helm/airgap-deployment && REGISTRY=k3d-iff.localhost:12345 bash prepare-airgap.bash
+    - name: Debezium plugin archive from the cache
+      uses: ./.github/actions/debezium-archive
     - name: Build Platform locally
       run: |
         cd test && bash build-local-platform.sh

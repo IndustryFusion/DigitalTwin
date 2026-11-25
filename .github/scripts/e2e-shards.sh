@@ -56,7 +56,7 @@ shards_for() {
         .github/workflows/k8s-e2e.yaml|.github/workflows/e2e-labels.yaml|.github/scripts/e2e-shards.sh)
             echo all ;;
         KafkaBridge/*|helm/charts/kafka-bridges/*) echo device broker flink ;;
-        DebeziumPostgresConnector/*) echo broker flink ;;
+        DebeziumPostgresConnector/*|.github/actions/debezium-archive/*) echo broker flink ;;
         NgsildAgent/*|helm/charts/pgrest/*|\
         test/bats/test-device-connection/*|test/bats/test-timescaledb-bridge/*)
             echo device ;;

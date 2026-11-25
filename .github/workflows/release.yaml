@@ -21,6 +21,8 @@ jobs:
       - name: Prepare K3d cluster
         run: |
           cd ./test && bash ./prepare-platform.sh
+      - name: Debezium plugin archive from the cache
+        uses: ./.github/actions/debezium-archive
       - name: Build Platform locally
         run: |
           cd test && bash build-local-platform.sh

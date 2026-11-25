@@ -63,6 +63,8 @@ select_for() {
 @test "a Debezium connector change runs broker and flink" {
     run select_for DebeziumPostgresConnector/Dockerfile
     [ "${output}" = '["broker","flink"]' ]
+    run select_for .github/actions/debezium-archive/action.yml
+    [ "${output}" = '["broker","flink"]' ]
 }
 
 @test "an EMQX chart change runs device and broker" {
