@@ -499,16 +499,10 @@ def _as_run(graph, node, text):
     """The texts the SHACL engine may make of `text`: the declared prefixes in
     front, as pyshacl writes them, and `$PATH` in a constraint put in as a path."""
     from pyshacl.helper.sparql_query_helper import SPARQLQueryHelper
-    from rdflib.namespace import OWL, RDF, SH
 
-    prologue = []
-    if (node, SH.prefixes, None) in graph:
-        holders = set(graph.objects(node, SH.prefixes)) | \
-            set(graph.subjects(RDF.type, OWL.Ontology))
-        declared = {(str(graph.value(d, SH.prefix)), str(graph.value(d, SH.namespace)))
-                    for holder in holders for d in graph.objects(holder, SH.declare)}
-        prologue = [f'PREFIX {p}: <{n}>\n' for p, n in sorted(declared)]
-    text = ''.join(prologue) + text
+    from ..validate.prefixes import lines
+
+    text = ''.join(f'{line}\n' for line in lines(graph, node)) + text
     with_path = SPARQLQueryHelper.bind_path_regex.sub(rf'\g<1>{_PATH}', text)
     return [text] if with_path == text else [text, with_path]
 

@@ -45,6 +45,7 @@ from rdflib.namespace import SH
 
 from ..errors import Diagnostic
 from ..ngsild.views import DATASET_ID, OBSERVED_AT
+from ..validate import prefixes
 
 DEFAULT_MAX_ITERATIONS = 10
 
@@ -132,6 +133,7 @@ def run_rules(data_graph, shapes_graph, knowledge_graph=None,
     shapes = Graph()
     for triple in shapes_graph:
         shapes.add(triple)
+    prefixes.complete(shapes, shapes_graph)
 
     for iteration in range(1, max_iterations + 1):
         before_size = len(working)

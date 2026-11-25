@@ -48,6 +48,8 @@ from rdflib import BNode, Graph, URIRef, Variable
 from rdflib.collection import Collection
 from rdflib.namespace import RDF, RDFS, SH
 
+from . import prefixes
+
 ALWAYS = frozenset({RDF.type, RDFS.subClassOf})
 
 PREDICATE_PARAMETERS = (SH.equals, SH.disjoint, SH.lessThan, SH.lessThanOrEquals,
@@ -92,12 +94,8 @@ def _namespaces(shapes, node):
     """The prefixes a SPARQL text may use: the shapes graph's, and the
     sh:prefixes declarations of the node that carries it."""
     found = {prefix: namespace for prefix, namespace in shapes.namespaces()}
-    for ontology in shapes.objects(node, SH.prefixes):
-        for declaration in shapes.objects(ontology, SH.declare):
-            prefix = shapes.value(declaration, SH.prefix)
-            namespace = shapes.value(declaration, SH.namespace)
-            if prefix is not None and namespace is not None:
-                found[str(prefix)] = URIRef(str(namespace))
+    found.update((prefix, URIRef(namespace))
+                 for prefix, namespace in prefixes.declared(shapes, node))
     return found
 
 

@@ -172,16 +172,9 @@ def _holder_node(package, shape, kind, query):
 
 def _prefix_lines(package, holder):
     """sh:prefixes declarations, as pyshacl puts them in front of the query."""
-    graph, lines = package.shapes, []
-    if holder is None:
-        return lines
-    for prefixes in graph.objects(holder, SH.prefixes):
-        for declaration in graph.objects(prefixes, SH.declare):
-            prefix = graph.value(declaration, SH.prefix)
-            namespace = graph.value(declaration, SH.namespace)
-            if prefix is not None and namespace is not None:
-                lines.append(f'PREFIX {prefix}: <{namespace}>')
-    return lines
+    from ..validate.prefixes import lines
+
+    return [] if holder is None else lines(package.shapes, holder)
 
 
 # --- which data ------------------------------------------------------------------------

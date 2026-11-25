@@ -32,6 +32,7 @@ from rdflib import URIRef
 from rdflib.namespace import RDF, RDFS, SH
 
 from ..errors import PackageError
+from ..validate import prefixes
 from ..validate.normalise import curie, local
 from ..validate.results import Status
 from .shapes import is_rule_only, target_short, targets, used_by
@@ -108,14 +109,7 @@ def _query(package, holder, predicate):
     body = graph.value(holder, predicate)
     if body is None:
         return ''
-    lines = []
-    for prefixes in graph.objects(holder, SH.prefixes):
-        for declaration in graph.objects(prefixes, SH.declare):
-            prefix = graph.value(declaration, SH.prefix)
-            namespace = graph.value(declaration, SH.namespace)
-            if prefix is not None and namespace is not None:
-                lines.append(f'PREFIX {prefix}: <{namespace}>')
-    return '\n'.join(lines + [str(body).strip()])
+    return '\n'.join(prefixes.lines(graph, holder) + [str(body).strip()])
 
 
 def _severity(value, default='violation'):

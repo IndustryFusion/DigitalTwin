@@ -36,6 +36,7 @@ from rdflib.namespace import SH
 
 from ..errors import Diagnostic
 from ..ngsild import DataView
+from . import prefixes
 
 SEMFORGE = Namespace('https://industryfusion.github.io/semforge/v0/')
 DATA_VIEW = SEMFORGE.dataView
@@ -207,6 +208,7 @@ def subgraph_for(shapes_graph, shapes):
     Built by concise bounded description, which follows the blank node tree a
     shape is written as. Shapes reference each other only through sh:node,
     which CBD does not cross -- so a referenced shape is pulled in explicitly.
+    So are the prefix declarations of the nodes sh:prefixes names.
 
     Kept with a frozen shapes graph (rdfio/frozen.py), per shape set:
     rebuilt for every validation it cost 0.8 s on the OPC UA pump shapes.
@@ -240,4 +242,5 @@ def _subgraph(shapes_graph, shapes):
         for referenced in out.objects(None, SH.node):
             if isinstance(referenced, URIRef) and referenced not in done:
                 pending.append(referenced)
+    prefixes.complete(out, shapes_graph)
     return out

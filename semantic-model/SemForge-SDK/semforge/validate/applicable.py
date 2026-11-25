@@ -39,6 +39,7 @@ example forever, which is what the coverage report exists to surface.
 from rdflib import BNode, URIRef
 from rdflib.namespace import OWL, RDF, RDFS, SH
 
+from . import prefixes
 from .normalise import UNIT_CODE, UNIT_SUFFIX, inverse_predicate, layered, local
 
 from ..ngsild.kinds import PAYLOAD_PATHS  # noqa: E402
@@ -117,15 +118,8 @@ def focus_nodes(shape, shapes_graph, data_graph, knowledge_graph=None):
 
 def _sparql_target(shapes_graph, target, select, data_graph):
     """?this of a SPARQL target's SELECT, with its sh:prefixes declared."""
-    lines = []
-    for holder in shapes_graph.objects(target, SH.prefixes):
-        for declaration in shapes_graph.objects(holder, SH.declare):
-            prefix = shapes_graph.value(declaration, SH.prefix)
-            namespace = shapes_graph.value(declaration, SH.namespace)
-            if prefix is not None and namespace is not None:
-                lines.append(f'PREFIX {prefix}: <{namespace}>')
     try:
-        rows = data_graph.query('\n'.join(lines + [select]))
+        rows = data_graph.query('\n'.join(prefixes.lines(shapes_graph, target) + [select]))
     except Exception:                               # noqa: BLE001
         return set()                                # pyshacl will say why
     return {row.this for row in rows if getattr(row, 'this', None) is not None}
