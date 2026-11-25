@@ -36,6 +36,8 @@ import json
 import os
 import re
 
+from decimal import Decimal
+
 from rdflib import RDF, RDFS, URIRef
 
 from ..errors import PackageError
@@ -57,22 +59,66 @@ def _row(package, entity_type, path):
     from ..cooked.tree import build_tree
     from ..cooked.typepage import _attribute_rows, _type_entry, _value_of
 
-    entry = _type_entry(package, entity_type)
+    try:
+        entry = _type_entry(package, entity_type)
+    except PackageError:
+        # Written otherwise than the package lists it: what the name means.
+        context, written = _prefixes(package)
+        entry = _type_entry(package, _meant(context, entity_type) or
+                            _meant(written, entity_type) or entity_type)
     root = next((r for r in build_tree(package) if r.target_class == entry.iri), None)
     wanted = list(path or [])
-    for shape in (root.children if root is not None else []):
-        for node in shape.children:
-            if node.kind == 'attribute' and list(node.path_chain) == wanted:
-                kind_of = {a.iri: a.kind for a in attribute_terms(package) if a.kind}
-                row = _attribute_rows(package, node, kind_of, 0, {}, {})[0]
-                value_of = _value_of(package, node)
-                return entry, dict(row, formConditions=_form_conditions(value_of),
-                                   formDatatypes=_form_datatypes(value_of))
+    nodes = [node for shape in (root.children if root is not None else [])
+             for node in shape.children if node.kind == 'attribute']
+    node = _same_path(package, nodes, wanted)
+    if node is not None:
+        kind_of = {a.iri: a.kind for a in attribute_terms(package) if a.kind}
+        row = _attribute_rows(package, node, kind_of, 0, {}, {})[0]
+        value_of = _value_of(package, node)
+        return entry, dict(row, formConditions=_form_conditions(value_of),
+                           formDatatypes=_form_datatypes(value_of))
     if len(wanted) > 1:
         raise PackageError('a test for a sub-attribute is not offered yet; write it '
                            'by hand, inside its parent attribute')
     raise PackageError(f'{" / ".join(wanted) or "that attribute"} is not an attribute '
                        f'of {entry.label}')
+
+
+def _meant(prefixes, term):
+    """The IRI a name means where `prefixes` hold, or None."""
+    text = str(term or '').strip('<>')
+    if '://' in text or text.startswith('urn:'):
+        return text
+    prefix, colon, name = text.partition(':')
+    return prefixes[prefix] + name if colon and prefix in prefixes else None
+
+
+def _prefixes(package):
+    """(what prefixes mean in the data, what they mean in the shapes files)."""
+    from ..package.prefixes import canonical_map, file_prefixes
+
+    context = canonical_map(package.path)
+    written = dict(context)
+    for path in package.files('shapes'):
+        written.update(file_prefixes(path)[0])
+    return context, written
+
+
+def _same_path(package, nodes, wanted):
+    """The attribute at `wanted`: as written, else the one its names mean. The
+    data may say a:hasMode where the shape says b:hasMode, two prefixes of one
+    namespace. Each is read where it is written, the data's names in the
+    package's context and the shape's in its files: the graph keeps one prefix
+    per namespace."""
+    found = next((n for n in nodes if list(n.path_chain) == wanted), None)
+    if found is not None or not wanted:
+        return found
+    context, written = _prefixes(package)
+    meant = [_meant(context, step) or _meant(written, step) for step in wanted]
+    if None in meant:
+        return None
+    return next((n for n in nodes
+                 if [_meant(written, step) for step in n.path_chain] == meant), None)
 
 
 def _form_conditions(value):
@@ -137,13 +183,21 @@ def declared_type(row):
     return None
 
 
+def declared_value(number, iri):
+    """A number declared as `iri`. A decimal as text: as a JSON number it would
+    come back as a double's spelling, which is no decimal."""
+    if iri == DECLARED['xsd:decimal']:
+        return {'@value': format(Decimal(repr(number)), 'f'), '@type': iri}
+    return {'@value': float(number), '@type': iri}
+
+
 def typed(row, number):
     """`number` as the attribute's values are written: declared for a double
     (float, decimal); otherwise plain, a whole value as an integer -- which is
     what JSON-LD makes of it anyway, so `80` rather than `80.0`."""
     iri = declared_type(row)
     if iri is not None:
-        return {'@value': float(number), '@type': iri}
+        return declared_value(number, iri)
     if isinstance(number, float) and number.is_integer():
         return int(number)
     return number

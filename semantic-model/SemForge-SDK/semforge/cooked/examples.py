@@ -773,7 +773,7 @@ def _as_written(package, entity, attribute_path, value):
     modeller typed, and anything that is not a plain number, is kept as it is."""
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         return value
-    from ..expect.attributecase import _row, declared_type
+    from ..expect.attributecase import _row, declared_type, declared_value
 
     chain = [step for step in attribute_path
              if isinstance(step, str) and step not in NGSILD_MEMBERS]
@@ -784,7 +784,7 @@ def _as_written(package, entity, attribute_path, value):
         except PackageError:
             continue
         iri = declared_type(row)
-        return {'@value': float(value), '@type': iri} if iri else value
+        return declared_value(value, iri) if iri else value
     return value
 
 
