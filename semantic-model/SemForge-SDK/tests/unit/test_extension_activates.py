@@ -75,6 +75,7 @@ EXPECTED = {
     'semforge.menu', 'semforge.editSetting', 'semforge.refreshProject',
     'semforge.addNamespace', 'semforge.removeNamespace',
     'semforge.deleteProject',
+    'semforge.copyEntity', 'semforge.copySubtree', 'semforge.pasteEntity',
 }
 
 

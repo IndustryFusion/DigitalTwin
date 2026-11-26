@@ -35,6 +35,7 @@ Turtle.
 
 import json
 import math
+import os
 import re
 from collections import OrderedDict
 from dataclasses import dataclass, field
@@ -427,8 +428,6 @@ def _expected_shape(example, report):
 
 
 def _example_root(package, example, report, notes=None, shared=None):
-    import os
-
     status, severity = _expected_shape(example, report)
     detail = ' · '.join(p for p in (
         example.group, example.expect, status,
@@ -471,8 +470,6 @@ def _model_roots(package, notes=None, verdicts=None):
     A directory of documents gets a root each, named by its path relative to the
     package, because that is what tells two of them apart.
     """
-    import os
-
     from ..validate import validate_package
     from ..validate.results import Report
     from .typepage import PENDING
@@ -750,8 +747,6 @@ def _target_file(package, file=None):
     example files too -- editing one of those has to write where it came from,
     not into model-instance.jsonld.
     """
-    import os
-
     if not file:
         return package.sources['model']
     if os.path.isabs(file):
@@ -1533,6 +1528,504 @@ def add_entity(package, identifier, entity_type, file=None, context=None):
     document.append(build_entity(identifier, entity_type, context=context))
     _write(source, document, text)
     return source, len(document)
+
+
+def _case_file(package, case):
+    """(a declared case's file as the package names it, its declaration). Two
+    cases may be one file, by a link: the one that is named, before the other."""
+    from ..expect.store import examples_root, load_expectations
+
+    root = examples_root(package.path)
+    wanted = os.path.abspath(case if os.path.isabs(case) else os.path.join(root, case))
+    declared = [(os.path.abspath(os.path.join(root, e.path)), e) for e in load_expectations(package.path).examples]
+    for same in (lambda path: path == wanted, lambda path: os.path.realpath(path) == os.path.realpath(wanted)):
+        for path, example in declared:
+            if same(path):
+                return path, example
+    raise PackageError(f'{case} is not a declared test case')
+
+
+def _read(path):
+    with open(path, encoding='utf-8') as handle:
+        text = handle.read()
+    try:
+        document = json.loads(text, object_pairs_hook=OrderedDict)
+    except ValueError as exc:
+        raise PackageError(f'{os.path.basename(path)} is not JSON: {exc}')
+    documents = document if isinstance(document, list) else [document]
+    if any(isinstance(d, dict) and '@graph' in d for d in documents):
+        # Not seen, they would be missing from a copy, or pasted a second time.
+        raise PackageError(f'{os.path.basename(path)} has its entities inside "@graph", which copy and paste do not '
+                           'read; write them as a list')
+    for document in documents:
+        inside = _inlined(document)
+        if inside:
+            raise PackageError(f'{os.path.basename(path)}: {_document_id(document)} has {inside} written in a '
+                               "relationship's object, which copy and paste do not read; write it as an entity of "
+                               'its own and point at its id')
+    return documents, text
+
+
+OBJECTS = ('object', 'objectList', 'ngsi-ld:hasObject', 'ngsi-ld:hasObjectList',
+           'https://uri.etsi.org/ngsi-ld/hasObject', 'https://uri.etsi.org/ngsi-ld/hasObjectList')
+# What an attribute has besides its sub-attributes: no entity is written there.
+NOT_ATTRIBUTES = set(VALUE_KEYS) | set(META_KEYS) | {
+    'vocab', 'languageMap', 'lang', 'objectType', 'createdAt', 'modifiedAt', 'deletedAt', 'instanceId'}
+
+
+def _relationship(node):
+    kind = str(node.get('type') or node.get('@type') or '')
+    return kind.rpartition(':')[2].rpartition('/')[2] in ('Relationship', 'ListRelationship') or \
+        not set(node).isdisjoint(OBJECTS)
+
+
+def _inlined(document):
+    """The id (or type) of the first entity written in a relationship's object
+    -- its own or a sub-attribute's -- else ''. A reference ({"@id": …}) is
+    none, and neither is anything in a Property's value."""
+    if not isinstance(document, dict):
+        return ''
+    pending = [v for k, v in document.items() if k not in RESERVED]
+    while pending:
+        node = pending.pop()
+        if isinstance(node, list):
+            pending.extend(node)
+        elif isinstance(node, dict):
+            relationship = _relationship(node)
+            for key, value in node.items():
+                if relationship and key in OBJECTS:
+                    objects = [value]
+                    while objects:
+                        one = objects.pop()
+                        if isinstance(one, list):
+                            objects.extend(one)
+                        elif isinstance(one, dict) and set(one) <= set(OBJECTS) | {'@list'}:
+                            objects.extend(one.values())     # {"@list": …}, objectList's {"object": …}
+                        elif isinstance(one, dict) and set(one) - {'id', '@id'}:
+                            return _document_id(one) or str(one.get('type') or one.get('@type') or 'an entity')
+                elif key not in RESERVED and key not in NOT_ATTRIBUTES:
+                    pending.append(value)              # a sub-attribute
+    return ''
+
+
+def _write_whole(source, document, text):
+    """`_write`, but the file is either what it was or all of the new one. A
+    link stays a link: what it leads to is written."""
+    import shutil
+    import tempfile
+
+    target = os.path.realpath(source)
+    handle, partial = tempfile.mkstemp(dir=os.path.dirname(target), suffix='.partial')
+    os.close(handle)
+    try:
+        _write(partial, document, text)
+        shutil.copymode(target, partial)
+        os.replace(partial, target)
+    finally:
+        if os.path.exists(partial):
+            os.remove(partial)
+
+
+def _document_id(document):
+    return str(document.get('id') or document.get('@id') or '') if isinstance(document, dict) else ''
+
+
+def _included_files(package, example):
+    """The files a case includes, found as `compose` finds them."""
+    from ..expect.store import examples_root
+
+    found = []
+    for relative in example.include:
+        for base in (examples_root(package.path), package.path):
+            path = os.path.abspath(os.path.join(base, relative))
+            if os.path.exists(path):
+                found.append(path)
+                break
+    return found
+
+
+def _same_document(one, other):
+    """Do two documents of one entity say the same? The order of keys and the
+    spelling of the id say nothing, but 1, 1.0 and true are three values, though
+    Python calls them equal."""
+    def said(document):
+        return json.dumps({k: v for k, v in document.items() if k not in ('id', '@id')}, sort_keys=True)
+    return said(one) == said(other)
+
+
+class _Ids:
+    """The IRI an entity's id names, however it is written: whole, with a
+    prefix of its context, relative ("./a" and "a" are one), or with a prefix
+    its context leaves open, which the package's names expand (D6)."""
+
+    def __init__(self, package):
+        from ..package.context import context_config, local_context_value
+
+        config = context_config(package.path)
+        self._inline = local_context_value(package.path, config) if config.declared else None
+        self._published, self._contexts, self._path, self._canonical = config.published, {}, package.path, {}
+
+    def _own_context(self, value):
+        """As resolve_model_document does: the package's own, not the web's."""
+        if self._inline is not None and value == self._published:
+            return self._inline
+        if self._inline is not None and isinstance(value, list):
+            return [self._inline if item == self._published else item for item in value]
+        return value
+
+    def resolved(self, document):
+        if not isinstance(document, dict) or '@context' not in document:
+            return document
+        return dict(document, **{'@context': self._own_context(document['@context'])})
+
+    def _context(self, value, folder):
+        from rdflib.plugins.shared.jsonld.context import Context
+
+        from ..rdfio.relative import BASE, absolute_contexts
+
+        key = (folder, json.dumps(value, sort_keys=True))
+        if key not in self._contexts:
+            value = absolute_contexts({'@context': self._own_context(value)}, os.path.join(folder, 'x'))['@context']
+            try:
+                self._contexts[key] = Context(value, base=BASE)
+            except Exception:                      # noqa: BLE001 -- not to be had: no prefixes then
+                self._contexts[key] = Context(base=BASE)
+        return self._contexts[key]
+
+    def term(self, document, folder):
+        """The id as the graph has it; '' for a document without an id."""
+        name = _document_id(document)
+        if not name or name.startswith('_:'):
+            return name
+        return self._context(document.get('@context'), folder).resolve(name) or name
+
+    def canonical(self, term):
+        """A term of the graph as the package names it: a prefix the context
+        left open, by the package's names -- as the trees read it."""
+        from .choices import expand
+
+        if term not in self._canonical:
+            self._canonical[term] = expand(self._path, term) if term and not term.startswith('_:') else term
+        return self._canonical[term]
+
+    def iri(self, document, folder):
+        """'' for a document without an id."""
+        return self.canonical(self.term(document, folder))
+
+
+def _once(paths):
+    """Each file once, however it is named."""
+    found = OrderedDict()
+    for path in paths:
+        found.setdefault(os.path.realpath(path), path)
+    return list(found.values())
+
+
+class _Scene:
+    """Where a copy takes entities from: the file of the entity, then -- for a
+    test case -- what it includes, then the main model. `file`: none for the
+    main model's. An entity is named by its IRI here."""
+
+    def __init__(self, package, file):
+        from ..expect.store import examples_root, load_expectations
+
+        self.package, self.example = package, None
+        models = _once(os.path.abspath(p) for p in package.files('model') if p.endswith(('.jsonld', '.json')))
+        own = []
+        if file:
+            named = os.path.abspath(_target_file(package, file))
+            wanted = os.path.realpath(named)
+            if any(os.path.realpath(p) == wanted for p in models):
+                # The row's own file first: another may define the id as well.
+                models.sort(key=lambda p: os.path.realpath(p) != wanted)
+            else:
+                own = _once(self._own_files(named, load_expectations(package.path), examples_root(package.path)))
+        self.own, self.ids = own, _Ids(package)
+        self.written, self.repeated = OrderedDict(), set()
+        # Of each group, the definition that counts, the others, and what has no id.
+        self._counts, self._unnamed, self._all = {'own': OrderedDict(), 'model': OrderedDict()}, {}, []
+        outside = [p for p in _included_files(package, self.example) if not self._inside(p)] if self.example else []
+        for group, paths in (('own', own + _once(outside)), ('model', models)):
+            counts, self._unnamed[group] = self._counts[group], []
+            for path in paths:
+                for document in _read(path)[0]:
+                    iri = self.ids.iri(document, os.path.dirname(path))
+                    if not iri:
+                        self._unnamed[group].append((document, path, group))
+                        continue
+                    if iri in counts:
+                        self.repeated.add(iri)       # one entity of two definitions: the first is taken
+                    definition = counts.setdefault(iri, (document, path, group))
+                    if path not in outside:
+                        self._all.append((iri, (document, path, group)))
+                        self.written.setdefault(iri, definition)
+        self._graphs, self._pointers, self._documents = {}, {}, {}
+
+    def _own_files(self, named, expectations, root):
+        """`named` as the package names it -- a file outside it, or one that
+        is not its data, is nothing to copy from -- and what it includes. A
+        case by the path it was named by, before one that is the same file by
+        a link: a relative context is read from that path's folder."""
+        cases = [(os.path.abspath(os.path.join(root, e.path)), e) for e in expectations.examples]
+        included = [p for _, e in cases for p in _included_files(self.package, e)]
+        for same in (lambda path: path == named, lambda path: os.path.realpath(path) == os.path.realpath(named)):
+            for path, example in cases:
+                if same(path):
+                    self.example = example
+                    return [path] + [p for p in _included_files(self.package, example) if self._inside(p)]
+            for path in included:
+                if same(path) and self._inside(path):
+                    return [path]
+        raise PackageError(f'{os.path.basename(named)} is no model file, test case or included file of this package')
+
+    def _inside(self, path):
+        root = os.path.abspath(self.package.path)
+        return os.path.commonpath([root, os.path.abspath(path)]) == root
+
+    def asked(self, entity_id, file):
+        """The IRI of the entity of a row, which has its id as written, in its
+        file; that definition is then the one that is copied."""
+        wanted = os.path.realpath(_target_file(self.package, file)) if file else None
+        for iri, definition in self._all:
+            if _document_id(definition[0]) == entity_id and wanted in (None, os.path.realpath(definition[1])):
+                self.written[iri] = self._counts[definition[2]][iri] = definition
+                return iri
+        raise PackageError(f'no entity {entity_id} to copy any more')
+
+    def said_by(self, iri):
+        """The graph to read an entity's relationships from: what is copied, so
+        of one defined more than once only that definition's."""
+        if iri not in self.repeated:
+            return self.graph(self.written[iri][2])
+        if iri not in self._documents:
+            document, path, _ = self.written[iri]
+            self._documents[iri] = self._parsed([(document, path)])
+        return self._documents[iri]
+
+    def graph(self, group):
+        """The triples an entity is in: those of the case it is in -- which
+        are one graph with what it includes -- or of the main model. Of an id
+        defined more than once, those of the definition that counts."""
+        if group not in self._graphs:
+            if self.repeated.isdisjoint(self._counts[group]):
+                self._graphs[group] = self.package.model if group == 'model' else self._own_graph()
+            else:
+                self._graphs[group] = self._counted(group)
+        return self._graphs[group]
+
+    def _counted(self, group):
+        return self._parsed([(document, path) for document, path, _ in
+                             list(self._counts[group].values()) + self._unnamed[group]])
+
+    def _parsed(self, documents):
+        from rdflib import Graph
+
+        from ..package.loader import hoist_context
+        from ..rdfio.relative import BASE, for_rdflib
+
+        graph, by_path = Graph(), OrderedDict()
+        for document, path in documents:
+            by_path.setdefault(path, []).append(self.ids.resolved(document))
+        for path, of_path in by_path.items():
+            graph.parse(data=json.dumps(hoist_context(for_rdflib(of_path, path))), format='json-ld', base=BASE)
+        return graph
+
+    def term(self, iri):
+        """The id of the definition copied, as its graph has it."""
+        document, path, _ = self.written[iri]
+        return self.ids.term(document, os.path.dirname(path))
+
+    def pointing_at(self, iri, groups):
+        """The entities that point at `iri`; all by the package's names."""
+        from .hierarchy import pointers
+
+        found, canonical = set(), self.ids.canonical
+        for group in groups:
+            if group not in self._pointers:
+                by = {}
+                for target, sources in pointers(self.graph(group)).items():
+                    by.setdefault(canonical(str(target)), set()).update(canonical(str(s)) for s in sources)
+                self._pointers[group] = by
+            found |= self._pointers[group].get(iri, set())
+        return found
+
+    def _own_graph(self):
+        from rdflib import Graph
+
+        from ..expect.store import compose
+        from ..package.context import resolve_model_document
+        from ..package.loader import hoist_context
+        from ..rdfio.relative import BASE, for_rdflib
+
+        if self.example is not None:
+            return compose(self.package, self.example)
+        document, _ = resolve_model_document(self.package.path, self.own[0])
+        return Graph().parse(data=json.dumps(hoist_context(for_rdflib(document, self.own[0]))),
+                             format='json-ld', base=BASE)
+
+    def name(self, iri, spelled=None):
+        """An entity's id as its document has it, else as the data points at it."""
+        from ..rdfio.relative import as_written
+
+        return _document_id(self.written[iri][0]) if iri in self.written else as_written((spelled or {}).get(iri, iri))
+
+
+def copy_entities(package, entity_id, file=None, subtree=False):
+    """What a copy of an entity holds, to be pasted into a test case. `file`:
+    the one it is read from (the main model's, when not given). `subtree`: with
+    its children, theirs, and so on: what a relationship made from a HasChild
+    reference leads to (hierarchy.py), as far as the data of that file --
+    itself, what a case includes, the main model -- has it. Each is taken once,
+    so a circle ends.
+
+    Returns {'content', 'copied', 'missing', 'left', 'assumed', 'repeated'}:
+    `content` is {'package', 'entities': [{'document', 'from'}]}, each document
+    with the folder it is read from (a relative @context is from there), and is
+    what `paste_entities` takes. The others are ids as written: what is copied;
+    children that are written nowhere; what the copied ones point at otherwise;
+    those copied as children by the data only (no shape declares the
+    relationship); and those defined more than once, of which the first is
+    copied.
+    """
+    from rdflib import URIRef
+
+    from .hierarchy import Hierarchy
+
+    scene = _Scene(package, file)
+    top = scene.asked(entity_id, file)
+    hierarchy = Hierarchy(package)
+    order, at, copied, missing, left, assumed, spelled = [top], 0, {top}, OrderedDict(), set(), set(), {}
+    while subtree and at < len(order):
+        iri, at = order[at], at + 1
+        node, group = URIRef(scene.term(iri)), scene.written[iri][2]
+        for target, child in sorted(hierarchy.relationships(scene.said_by(iri), node).items()):
+            end, guessed = scene.ids.canonical(str(target)), False
+            spelled.setdefault(end, str(target))
+            if child is None and hierarchy.has_reference_types and end in scene.written:
+                # What it points at itself is no other's.
+                guessed = scene.pointing_at(end, {group, scene.written[end][2]}) - {end} == {iri}
+            if not (child or guessed):
+                left.add(end)
+            elif end not in scene.written:
+                missing[end] = True
+            elif end not in copied:
+                copied.add(end)
+                order.append(end)
+                assumed |= {end} if guessed else set()
+    root = os.path.abspath(package.path)
+    return {'content': {'package': os.path.realpath(package.path),
+                        'entities': [{'document': scene.written[iri][0],
+                                      'from': os.path.relpath(os.path.dirname(scene.written[iri][1]), root)}
+                                     for iri in order]},
+            'copied': [scene.name(i) for i in order], 'missing': [scene.name(i, spelled) for i in missing],
+            'left': sorted(scene.name(i, spelled) for i in left - copied - set(missing)),
+            'assumed': [scene.name(i) for i in order if i in assumed],
+            'repeated': [scene.name(i) for i in order if i in scene.repeated]}
+
+
+def _checked_content(package, content):
+    """[(document, the folder it was read from)] of what `copy_entities` gave.
+    It went through the editor, so what it is is checked here."""
+    if not isinstance(content, dict) or not isinstance(content.get('entities'), list):
+        raise PackageError('what is pasted is not a copy of entities')
+    if not content['entities']:
+        raise PackageError('nothing to paste')
+    copied_in = str(content.get('package') or '')
+    if copied_in != os.path.realpath(package.path):
+        raise PackageError(f'it was copied in another package ({copied_in}): what it points at, and its names, '
+                           'are of that package')
+    root, found = os.path.abspath(package.path), []
+    for item in content['entities']:
+        if not isinstance(item, dict) or not isinstance(item.get('document'), dict) \
+                or not isinstance(item.get('from'), str):
+            raise PackageError('what is pasted is not a copy of entities')
+        name = _document_id(item['document'])
+        if not name:
+            raise PackageError('an entity without an id cannot be pasted')
+        # As the package names its folders: one may be a link to elsewhere.
+        source = os.path.normpath(os.path.join(root, item['from']))
+        if os.path.isabs(item['from']) or os.path.commonpath([root, source]) != root:
+            raise PackageError(f'{name} was not copied from a folder of this package')
+        found.append((item['document'], source))
+    return found
+
+
+def paste_entities(package, content, case, replace=False, check=False, plan=None):
+    """Write copied entities (`copy_entities`) into a test case's own file.
+
+    An entity the case has -- by its IRI, however the two spell the id -- is
+    replaced with `replace`, by the copied document with the id as that spells
+    it, else left as it is. One in a file the case includes is always left:
+    written twice, its values would add up, and changing it there would change
+    other cases. `check` only asks; its `plan`, handed back, makes the write
+    refuse when what was asked about is not what is there any more.
+
+    Returns {'file', 'real', 'case', 'plan', 'pasted', 'present', 'included',
+    'same', 'shared', 'spelled'}: the ids, as copied, that are (or would be)
+    written, and those the case has otherwise, has in an included file, or has
+    just like that; `shared` are the other cases that include this case's file,
+    and get what is written as well; `spelled` is {id: how the case spells it}
+    of those present; `real` is the file behind links.
+    """
+    import hashlib
+
+    from ..expect.addcase import _moved_context
+    from ..expect.store import examples_root, load_expectations
+
+    target, example = _case_file(package, case)
+    folder, real, ids = os.path.dirname(target), os.path.realpath(target), _Ids(package)
+    if real in {os.path.realpath(p) for p in package.files('model')}:
+        raise PackageError(f'{example.path} is a file of the main model, which a paste does not change')
+    incoming = OrderedDict()
+    for document, source in _checked_content(package, content):
+        iri = ids.iri(document, source)
+        if iri in incoming:
+            raise PackageError(f'{_document_id(document)} is in the copy twice')
+        incoming[iri] = _moved_context(document, source, folder)
+    documents, text = _read(target)
+    single = isinstance(json.loads(text), dict)
+    own = {}
+    for document in documents:
+        own.setdefault(ids.iri(document, folder), []).append(document)
+    # A case that is the same file, by a link, has what this one's file has.
+    declared = [(e, os.path.realpath(os.path.join(examples_root(package.path), e.path)))
+                for e in load_expectations(package.path).examples if e.path != example.path]
+    twins = [e for e, path in declared if path == real]
+    beside = [(d, os.path.dirname(path)) for path in _once(p for e in [example] + twins
+                                                           for p in _included_files(package, e))
+              if os.path.realpath(path) != real for d in _read(path)[0]]
+    elsewhere = {ids.iri(d, source) for d, source in beside}
+    same = [i for i in incoming if len(own.get(i, [])) == 1 and
+            _same_document(_moved_context(own[i][0], folder, folder), incoming[i])]
+    unchanged = set(same)
+    present = [i for i in incoming if i in own and i not in unchanged]
+    replaced = present if replace else []
+    gone = set(replaced)
+    included = [i for i in incoming if i not in own and i in elsewhere]
+    fresh = [i for i in incoming if i not in own and i not in elsewhere]
+    shared = [e.path for e, path in declared if path == real or
+              real in {os.path.realpath(p) for p in _included_files(package, e)}]
+    seen = hashlib.sha256(json.dumps([text, [d for d, _ in beside], shared, content]).encode('utf-8')).hexdigest()
+    if plan is not None and plan != seen:
+        raise PackageError(f'{example.path} was changed meanwhile, or a file it includes; paste again')
+    if (fresh or replaced) and not check:
+        done, kept = set(), []
+        for document in documents:
+            iri = ids.iri(document, folder)
+            if iri not in gone:
+                kept.append(document)
+            elif iri not in done:                    # in its place, and once
+                done.add(iri)
+                kept.append(incoming[iri])
+        kept += [incoming[i] for i in fresh]
+        _write_whole(target, kept[0] if single and len(kept) == 1 else kept, text)
+
+    def names(iris):
+        return [_document_id(incoming[i]) for i in iris]
+    return {'file': target, 'real': real, 'case': example.path, 'plan': seen, 'pasted': names(fresh + replaced),
+            'present': names(present), 'included': names(included), 'same': names(same), 'shared': shared,
+            'spelled': {_document_id(incoming[i]): _document_id(own[i][0]) for i in present
+                        if _document_id(incoming[i]) != _document_id(own[i][0])}}
 
 
 def flatten(nodes, depth=0):

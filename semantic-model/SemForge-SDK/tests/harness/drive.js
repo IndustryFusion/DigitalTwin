@@ -111,6 +111,7 @@ async function openDocument(uri) {
 const editorListeners = [];
 
 const stub = {
+  DataTransferItem: class { constructor(value) { this.value = value; } },
   workspace: {
     getConfiguration: () => ({ get: (key) => (scenario.config || {})[key] || '' }),
     workspaceFolders: [{ uri: { fsPath: process.argv[2] } }],
@@ -128,7 +129,11 @@ const stub = {
       fileSystems[scheme] = provider;
       return { dispose: noop };
     },
-    get textDocuments() { return documents; },
+    // `openDocuments`: {file, dirty} open in the editor.
+    get textDocuments() {
+      return documents.concat((scenario.openDocuments || []).map(
+        (d) => ({ uri: stub.Uri.file(d.file), isDirty: !!d.dirty })));
+    },
     applyEdit: (edit) => {
       for (const change of edit.changes) {
         const doc = documents.find((d) => d.uri.toString() === change.uri.toString());
@@ -172,6 +177,8 @@ const stub = {
     createTreeView: (id, options) => (providers[id] = (options || {}).treeDataProvider,
                                       seen.views[id] = {
       dispose: noop,
+      // The row the keyboard acts on: a command run with no argument reads it.
+      selection: scenario.selection ? [scenario.selection] : [],
       reveal: (node, options) => {
         seen.events.push({ type: 'reveal', view: id, key: node.key });
         return Promise.resolve(seen.revealed.push({
@@ -683,6 +690,26 @@ async function runItems() {
   seen.rows = rows;
 }
 
+/** A row of the Entities view (a path of labels from the top) dragged onto another. */
+async function runDrop() {
+  const extension = require(path.resolve(process.argv[3]));
+  extension.activate({ subscriptions: [] });
+  const provider = providers.semforgeModel;
+  const find = async (labels) => {
+    let at;
+    for (const label of labels || []) {
+      at = ((await provider.getChildren(at)) || []).find((child) => child.raw.label === label);
+      if (!at) {
+        seen.errors.push(`no row ${label}`);
+      }
+    }
+    return at;
+  };
+  const transfer = new Map();
+  await provider.drag.handleDrag([await find(scenario.drag)], transfer);
+  await provider.drag.handleDrop(await find(scenario.onto), transfer);
+}
+
 // A pure renderer, called directly: what HTML a payload becomes.
 async function runRender() {
   const module = require(path.resolve(process.argv[3]));
@@ -690,7 +717,7 @@ async function runRender() {
 }
 
 const modes = { tree: runTree, locate: runLocate, select: runSelect,
-                items: runItems, render: runRender };
+                items: runItems, render: runRender, drop: runDrop };
 ((modes[scenario.mode] || runCommand)())
   .then(() => console.log(JSON.stringify(seen)))
   .catch((error) => {

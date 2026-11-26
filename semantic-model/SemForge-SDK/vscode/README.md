@@ -182,6 +182,32 @@ A title bar holds what creates (**New test case…**, **New shape…**, …) and
 Every page has its file one click away — an **Open …** button or ⋯ entry —
 but a click never lands in the file by itself.
 
+### Copy and paste entities
+
+**Copy entity** takes an entity; **Copy with subtree** takes it, its children,
+their children and so on. Both are on an entity's row in **Entities & Test
+Cases** (right-click, or `Ctrl+C` and `Ctrl+Shift+C` on the selected row) and
+on its card. **Paste** is on a test case: on its row or a row in it
+(right-click, or `Ctrl+V`), and on its page (the button, or `Ctrl+V`). Go to
+the test and paste; it can be pasted again into the next one. An entity's row
+can also be dragged onto a test case, which copies that entity alone.
+
+A child is what a relationship leads to whose shape (for the entity's type or
+one above it) names a reference type that is `HasChild` or below it, such as
+`base:hasReferenceType opcua:HasComponent`. When the type does not declare the
+relationship, the other shapes that do decide. When none does, in a package
+whose shapes name reference types, it leads to a child if nothing else points
+at what it leads to. Other relationships are not followed, and each entity is
+taken once, so a circle ends. The status bar says what was left out.
+
+What is pasted is what the entity was when it was copied; the original stays as
+it is. Pasting asks before it replaces an entity the case has with other values
+(however the two spell its id; replaced, it is as copied, id and all), and before it changes a file that other cases include; it leaves an entity that
+a file the case includes has. What was copied in one package cannot be pasted
+in another, and neither copy nor paste reads a file with entities inside `"@graph"`, or
+with an entity written in a relationship's object: write them as a list, and
+each entity as one of its own.
+
 ### If the trees are empty
 
 Run **`SemForge: Doctor`** from the Command Palette (`Ctrl+Shift+P`). It prints

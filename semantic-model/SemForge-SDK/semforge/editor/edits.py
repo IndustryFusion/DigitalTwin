@@ -322,6 +322,51 @@ def add_attribute_feature(ls, params):
         return {'ok': False, 'error': str(exc)}
 
 
+@server.feature('semforge/copyEntities')
+def copy_entities_feature(ls, params):
+    """What a copy of an entity -- with `subtree`, of its children too -- holds."""
+    import json
+
+    from ..cooked.examples import copy_entities
+
+    root = package_root(uri_to_path(field(params, 'uri', '')))
+    if root is None:
+        return {'ok': False, 'error': 'not a SemForge package'}
+    try:
+        done = copy_entities(session.package_for(root), field(params, 'entity', ''),
+                             file=field(params, 'file') or None, subtree=bool(field(params, 'subtree', False)))
+        # As text: the client hands it back as it is, and a document's keys
+        # ("@context", "id") are nothing for the protocol's objects.
+        return dict(done, ok=True, content=json.dumps(done['content']))
+    except Exception as exc:                       # noqa: BLE001
+        return {'ok': False, 'error': str(exc)}
+
+
+@server.feature('semforge/pasteEntities')
+def paste_entities_feature(ls, params):
+    """Paste copied entities into a test case -- or, with `check`, what that means."""
+    import json
+    from collections import OrderedDict
+
+    from ..cooked.examples import paste_entities
+
+    root = package_root(uri_to_path(field(params, 'uri', '')))
+    if root is None:
+        return {'ok': False, 'error': 'not a SemForge package'}
+    try:
+        check = bool(field(params, 'check', False))
+        content = json.loads(field(params, 'content') or 'null', object_pairs_hook=OrderedDict)
+        done = paste_entities(session.package_for(root), content, field(params, 'case', ''),
+                              replace=bool(field(params, 'replace', False)), check=check,
+                              plan=field(params, 'plan') or None)
+        if done['pasted'] and not check:
+            session.forget(root)
+            validation.publish(ls, path_to_uri(done['file']))
+        return dict(done, ok=True)
+    except Exception as exc:                       # noqa: BLE001
+        return {'ok': False, 'error': str(exc)}
+
+
 @server.feature('semforge/addEntity')
 def add_entity_feature(ls, params):
     """Append a legal NGSI-LD entity to an example file."""

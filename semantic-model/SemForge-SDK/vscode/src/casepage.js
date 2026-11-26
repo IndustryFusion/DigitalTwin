@@ -143,7 +143,11 @@ function card(entity, focused, at) {
   const bad = entity.violations.length || anyViolation(entity.attributes);
   const add = entity.node && at !== undefined
     ? `<button class="mini" data-addattr="${at}" title="Add an attribute to ${escape(entity.id)}">` +
-      '+ Attribute</button>' : '';
+      '+ Attribute</button>' +
+      `<button class="mini" data-copyentity="${at}" title="Copy ${escape(entity.id)}, to be pasted into a test case">` +
+      'Copy</button>' +
+      `<button class="mini" data-copysubtree="${at}" title="Copy ${escape(entity.id)} and its children ` +
+      '(HasChild references), and theirs">Copy subtree</button>' : '';
   const names = (entity.attributes || []).map((row) => row.name).join('|');
   return `<div class="card${bad ? ' bad' : ''}${focused ? ' focus" id="focus' : ''}"` +
     ` data-card="${at === undefined ? '' : at}" data-id="${escape(entity.id || '')}"` +
@@ -458,6 +462,7 @@ ${(page.failures || []).length
       '<button data-pagecmd="clone" title="A copy: its valid ↔ invalid twin, or the same">Clone…</button>' +
       '<button data-pagecmd="rename">Rename…</button>' +
       '<button data-pagecmd="delete" title="Delete this test case: its file and its entry in expectations.yaml">Delete…</button>' +
+      '<button data-pagecmd="paste" title="Paste the copied entities into this case (Ctrl+V)">Paste</button>' +
       '<button data-pagemenu="1" title="Open the case file, its expectations, Clone…, Rename…, Delete…, Refresh">⋯</button>'}
 </div>
 
@@ -940,6 +945,15 @@ ${BUSY_SCRIPT}
     vscode.postMessage({ command: 'editing', open: true });
     input.focus();
   }
+  // A text field keeps the key as its own, and so does a page with no Paste.
+  document.addEventListener('keydown', (event) => {
+    if ((event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey && !event.repeat &&
+        event.key.toLowerCase() === 'v' && document.querySelector('[data-pagecmd="paste"]') &&
+        !(event.target.closest && event.target.closest('input,textarea,select,[contenteditable]'))) {
+      event.preventDefault();
+      vscode.postMessage({ command: 'paste' });
+    }
+  });
   document.addEventListener('click', (event) => {
     const view = event.target.closest('[data-view]');
     if (view) { event.preventDefault(); setView(view.dataset.view); return; }
@@ -982,11 +996,13 @@ ${BUSY_SCRIPT}
     if (event.target.closest('.stampedit')) { return; }
     const target = event.target.closest('[data-open],[data-type],[data-refresh],[data-assert],' +
       '[data-edit],[data-rowmenu],[data-addattr],[data-addentity],[data-pagemenu],' +
-      '[data-retarget],[data-dropassert],[data-valuetype],[data-pagecmd]');
+      '[data-retarget],[data-dropassert],[data-valuetype],[data-pagecmd],[data-copyentity],[data-copysubtree]');
     if (!target) { return; }
     event.preventDefault();
     const d = target.dataset;
     if (d.valuetype) { vscode.postMessage({ command: 'valueType', at: d.valuetype }); }
+    else if (d.copyentity !== undefined) { vscode.postMessage({ command: 'copyEntity', at: d.copyentity }); }
+    else if (d.copysubtree !== undefined) { vscode.postMessage({ command: 'copySubtree', at: d.copysubtree }); }
     else if (d.pagecmd) { vscode.postMessage({ command: d.pagecmd }); }
     else if (d.pagemenu) { vscode.postMessage({ command: 'pageMenu' }); }
     else if (d.retarget !== undefined) { vscode.postMessage({ command: 'retargetAssert', index: Number(d.retarget) }); }
@@ -1246,6 +1262,12 @@ class CasePages {
       // On success this page closes: its case is gone.
       await vscode.commands.executeCommand('semforge.deleteTestCase',
         { raw: { kind: 'example', file: this.page.file }, packageUri: this.current.packageUri });
+    } else if (message.command === 'paste' && this.page) {
+      const done = await vscode.commands.executeCommand('semforge.pasteEntity',
+        { file: this.page.file, packageUri: this.current.packageUri });
+      if (done) {
+        await this.render();
+      }
     } else if (message.command === 'clone' && this.page) {
       // On success the clone's page replaces this one.
       await vscode.commands.executeCommand('semforge.cloneTestCase',
@@ -1255,7 +1277,8 @@ class CasePages {
       // On success the case page reopens on the renamed file.
       await vscode.commands.executeCommand('semforge.renameTestCase',
         { raw: { kind: 'example', file: this.page.file }, packageUri: this.current.packageUri });
-    } else if (['edit', 'rowMenu', 'addAttribute', 'addEntity', 'stamp', 'valueType'].includes(message.command)) {
+    } else if (['edit', 'rowMenu', 'addAttribute', 'addEntity', 'stamp', 'valueType', 'copyEntity', 'copySubtree']
+      .includes(message.command)) {
       await this.edit(message.command, `${message.at}`, message.value);
     }
   }
@@ -1297,6 +1320,9 @@ class CasePages {
       const children = Object.entries(has).map(([term, datasets]) => ({
         kind: 'attribute', attributePath: [term], datasets: [...datasets] }));
       await run('semforge.addAttribute', Object.assign({}, card.node, { children }));
+    } else if ((command === 'copyEntity' || command === 'copySubtree') && card) {
+      await run(`semforge.${command}`, { kind: 'entity', entity: card.id, file: card.file || file.path });
+      return;                          // nothing changed: the page stays as it is
     } else if (command === 'edit' && row && row.node) {
       await run('semforge.editValue', row.node);
     } else if (command === 'valueType' && row && row.node) {

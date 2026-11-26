@@ -28,6 +28,7 @@
 const path = require('path');
 const vscode = require('vscode');
 
+const { Clipboard } = require('./clipboard');
 const { askDatasetId } = require('./datasetid');
 
 const search = require('./search');
@@ -198,6 +199,39 @@ async function goToShape(clientHolder, node, source, onChanged) {
         'which this type inherits from.',
       6000
     );
+  }
+}
+
+const DRAGGED = 'application/vnd.code.tree.semforgemodel';
+
+/** An entity's row dragged onto a test case (or a row in it): copied and
+ *  pasted there, that entity alone, and what is held to paste stays. */
+class EntityDrag {
+  constructor(clipboard, provider) {
+    Object.assign(this, { clipboard, provider,
+      dragMimeTypes: [DRAGGED], dropMimeTypes: [DRAGGED] });
+  }
+
+  handleDrag(source, transfer) {
+    const entity = source.find((node) => node.raw && node.raw.kind === 'entity');
+    if (entity) {
+      transfer.set(DRAGGED, new vscode.DataTransferItem(entity));
+    }
+  }
+
+  async handleDrop(target, transfer) {
+    const item = transfer.get(DRAGGED);
+    const entity = item && item.value;
+    if (!entity || !entity.raw) {
+      return undefined;
+    }
+    const holder = target && caseOf(this.provider, target);
+    if (!holder) {
+      vscode.window.showInformationMessage('SemForge: drop an entity on a test case to copy it there.');
+      return undefined;
+    }
+    const held = await this.clipboard.take(entity, false);
+    return held && this.clipboard.paste(holder.packageUri, holder.raw.file, held);
   }
 }
 
@@ -1057,9 +1091,18 @@ async function declareAttribute(client, packageUri, entityType, given) {
 
 function register(context, clientHolder, session, onChanged) {
   const provider = new ModelTreeProvider(clientHolder);
+  const pasted = () => {
+    provider.refresh();
+    if (onChanged) {
+      onChanged();
+    }
+  };
+  const clipboard = new Clipboard(clientHolder, pasted);
+  const drag = new EntityDrag(clipboard, provider);
   const view = vscode.window.createTreeView('semforgeModel', {
-    treeDataProvider: provider
+    treeDataProvider: provider, dragAndDropController: drag
   });
+  provider.drag = drag;                // driven by the end-to-end tests
   // What the view is: the ⓘ in its title bar (sidebar.js). The message is
   // for what is wrong, and for what is going on.
   provider.view = view;
@@ -1143,6 +1186,17 @@ function register(context, clientHolder, session, onChanged) {
   );
 
   context.subscriptions.push(
+    // From a menu, the row; from a page, its card; from the keyboard, the
+    // selected row.
+    ...[['semforge.copyEntity', false], ['semforge.copySubtree', true]].map(([name, subtree]) =>
+      vscode.commands.registerCommand(name, (node) => clipboard.copy(node || (view.selection || [])[0], subtree))),
+    vscode.commands.registerCommand('semforge.pasteEntity', (at) => {
+      const node = at || (view.selection || [])[0];
+      const holder = node && !node.file ? caseOf(provider, node) : undefined;
+      const file = node && (node.file || (holder && holder.raw.file));
+      return clipboard.paste(node && node.packageUri, file);
+    }),
+
     vscode.commands.registerCommand('semforge.editValue', async (node) => {
       const raw = node && node.raw;
       if (!raw || !raw.editable) {

@@ -645,6 +645,24 @@
         "title": "Unpin this page",
         "icon": "$(star-full)",
         "category": "SemForge"
+      },
+      {
+        "command": "semforge.copyEntity",
+        "title": "Copy entity",
+        "icon": "$(copy)",
+        "category": "SemForge"
+      },
+      {
+        "command": "semforge.copySubtree",
+        "title": "Copy with subtree",
+        "icon": "$(type-hierarchy-sub)",
+        "category": "SemForge"
+      },
+      {
+        "command": "semforge.pasteEntity",
+        "title": "Paste entity",
+        "icon": "$(clippy)",
+        "category": "SemForge"
       }
     ],
     "viewsContainers": {
@@ -1328,6 +1346,21 @@
           "command": "semforge.pin",
           "when": "view == semforgeKnowledge && viewItem =~ /^(class|classWithShape|usage|instance)$/",
           "group": "0_open@6"
+        },
+        {
+          "command": "semforge.copyEntity",
+          "when": "view == semforgeModel && viewItem == entity",
+          "group": "2_edit@1"
+        },
+        {
+          "command": "semforge.copySubtree",
+          "when": "view == semforgeModel && viewItem == entity",
+          "group": "2_edit@2"
+        },
+        {
+          "command": "semforge.pasteEntity",
+          "when": "view == semforgeModel && viewItem =~ /^(example|entity|include|type|exampleEditable|exampleDataset|exampleSeries|attributeReadOnly)$/ && semforge.canPaste",
+          "group": "2_edit@3"
         }
       ],
       "semforge.project": [
@@ -1522,6 +1555,18 @@
         {
           "command": "semforge.pinPage",
           "when": "activeWebviewPanelId =~ /^semforge(TypePage|ShapePage|CasePage|VocabularyPage|SparqlBench)$/"
+        },
+        {
+          "command": "semforge.copyEntity",
+          "when": "false"
+        },
+        {
+          "command": "semforge.copySubtree",
+          "when": "false"
+        },
+        {
+          "command": "semforge.pasteEntity",
+          "when": "false"
         }
       ],
       "editor/title": [
@@ -1628,6 +1673,24 @@
         "key": "ctrl+alt+b",
         "mac": "cmd+alt+b",
         "when": "focusedView =~ /^semforge/ || activeWebviewPanelId =~ /^semforge/"
+        },
+        {
+        "command": "semforge.copyEntity",
+        "key": "ctrl+c",
+        "mac": "cmd+c",
+        "when": "focusedView == semforgeModel && listFocus && !inputFocus"
+      },
+      {
+        "command": "semforge.copySubtree",
+        "key": "ctrl+shift+c",
+        "mac": "cmd+shift+c",
+        "when": "focusedView == semforgeModel && listFocus && !inputFocus"
+      },
+      {
+        "command": "semforge.pasteEntity",
+        "key": "ctrl+v",
+        "mac": "cmd+v",
+        "when": "focusedView == semforgeModel && listFocus && !inputFocus"
       }
     ]
   },
