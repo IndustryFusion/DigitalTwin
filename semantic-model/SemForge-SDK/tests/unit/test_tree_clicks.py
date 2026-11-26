@@ -1592,11 +1592,31 @@ def test_without_a_vocabulary_the_list_is_typed(tmp_path):
     assert asked[0]['parameter'] == 'sh:in' and asked[0]['value'] == '1.5, 2, "off"'
 
 
+def test_a_row_s_exactly_is_listed_in_words(tmp_path):
+    row = dict(EDITABLE_SHAPE['attributes'][0], parameters=[
+        {'parameter': 'sh:hasValue', 'value': '"Executing"', 'words': 'Executing',
+         'path': ['x:hasPressure', 'ngsild:hasValue'], 'layer': 'value'}])
+    _, asked = _state_menu(tmp_path, row, ['sh:hasValue Executing', '$(trash) Remove sh:hasValue'])
+    assert [a.get('remove') for a in asked] == [True]
+
+
+def test_a_prefixless_vocabulary_value_is_ticked_as_its_iri(tmp_path):
+    page = dict(VOCAB_VALUES, values=[dict(VOCAB_VALUES['values'][0], term='state_OFF',
+                                           iri='urn:x#state_OFF')] + VOCAB_VALUES['values'][1:])
+    seen = _shape(tmp_path, picks=['$(add) sh:in', ['state_OFF']],
+                  webviewMessages=[{'command': 'params', 'row': 0}],
+                  replies={'semforge/shapePage': dict(EDITABLE_SHAPE, attributes=[STATE_ROW]),
+                           'semforge/setConstraint': {'ok': True, 'note': ''},
+                           'semforge/vocabularyPage': page, 'semforge/choices': {'choices': []}})
+    asked = [r['params'] for r in seen['requests'] if r['method'] == 'semforge/setConstraint']
+    assert asked[0]['value'] == ['<urn:x#state_OFF>']
+
+
 def test_an_existing_list_is_edited_with_its_values_ticked(tmp_path):
     row = dict(STATE_ROW, inList={'items': ['x:state_ON'], 'path': ['x:hasState',
                                                                     'ngsild:hasValue'],
                                   'value': '( x:state_ON )'})
-    seen, asked = _state_menu(tmp_path, row, ['sh:in ( x:state_ON )', '$(edit) Edit the list…',
+    seen, asked = _state_menu(tmp_path, row, ['one of: x:state_ON', '$(edit) Edit the list…',
                                               ['state_ON', 'state_OFF']])
     ticks = {i['label']: i['picked'] for i in seen['quickPicks'][2]['items']}
     assert ticks == {'state_OFF': False, 'state_ON': True}
@@ -1608,7 +1628,7 @@ def test_an_existing_list_can_be_removed(tmp_path):
     row = dict(STATE_ROW, inList={'items': ['x:state_ON'], 'path': ['x:hasState',
                                                                     'ngsild:hasValue'],
                                   'value': '( x:state_ON )'})
-    _, asked = _state_menu(tmp_path, row, ['sh:in ( x:state_ON )', '$(trash) Remove sh:in'])
+    _, asked = _state_menu(tmp_path, row, ['one of: x:state_ON', '$(trash) Remove sh:in'])
     assert asked == [{'uri': 'file:///pkg/shacl.ttl', 'shape': 'https://x/MachineShape',
                       'path': ['x:hasState', 'ngsild:hasValue'], 'parameter': 'sh:in',
                       'remove': True}]

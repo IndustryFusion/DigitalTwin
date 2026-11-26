@@ -1163,6 +1163,16 @@ def rename_suite_feature(ls, params):
         package, field(params, 'suite', ''), field(params, 'name', '')))
 
 
+def _items(value):
+    """A condition's value: one text, or the rows of the list editor."""
+    if not isinstance(value, list):
+        return value
+    # A JSON true is the boolean true, not the text "True" (bool is an int).
+    return [('true' if item else 'false') if isinstance(item, bool) else
+            item if isinstance(item, (str, int, float)) else
+            {k: field(item, k) for k in ('kind', 'text', 'datatype', 'lang', 'kept')} for item in value]
+
+
 @server.feature('semforge/editValueForms')
 def edit_value_forms_feature(ls, params):
     """One change to a value's forms, or to what one form must be."""
@@ -1176,9 +1186,11 @@ def edit_value_forms_feature(ls, params):
         made = edit_value(session.package_for(root), field(params, 'shape'),
                           list(field(params, 'path') or []),
                           dict({k: field(action, k) for k in (
-                              'op', 'node', 'parameter', 'value', 'connective', 'form', 'kind')},
+                              'op', 'node', 'parameter', 'connective', 'form', 'kind', 'datatype')},
+                              value=_items(field(action, 'value')),
                               conditions=[{'parameter': field(c, 'parameter'),
-                                           'value': field(c, 'value')}
+                                           'value': _items(field(c, 'value')),
+                                           'datatype': field(c, 'datatype')}
                                           for c in (field(action, 'conditions') or [])]))
         session.forget(root)
         validation.publish(ls, path_to_uri(made['file']))

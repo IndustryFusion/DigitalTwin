@@ -36,6 +36,7 @@ if nothing in it is lost by that -- a comment inside one makes it read-only --
 and every write is read back first: it must say what was meant.
 """
 
+import json
 import re
 from dataclasses import dataclass, replace
 
@@ -283,18 +284,35 @@ def words(node, kind='Property', tag=True):
             # Two number types side by side must be told apart.
             said = said.replace('number', f'number ({datatype.split(":")[-1]})', 1)
         if 'sh:hasValue' in params:
-            said = f'exactly {params["sh:hasValue"]}' if said == 'any value' \
-                else f'{said} · exactly {params["sh:hasValue"]}'
+            from .tree import item_words
+
+            exactly = item_words(params['sh:hasValue'])
+            said = f'exactly {exactly}' if said == 'any value' else f'{said} · exactly {exactly}'
         return said
     if isinstance(node, Raw):
         return node.text
     return WORDS[node.op]
 
 
+def _condition_json(parameter, value):
+    """A condition as the editor shows it: values as items in plain words, a
+    pattern without its quotes -- nothing a reader must know Turtle for."""
+    from .tree import item_words, list_item, list_items
+
+    out = {'parameter': parameter, 'value': value}
+    if parameter in ('sh:in', 'sh:hasValue'):
+        tokens = list_items(value) if parameter == 'sh:in' else [value]
+        out['items'] = [list_item(i) for i in tokens]
+        out['value'] = ' \u00b7 '.join(item_words(i) for i in tokens)
+    elif parameter in ('sh:pattern', 'sh:flags'):
+        out['value'] = item_words(value)
+    return out
+
+
 def to_json(node, kind='Property'):
     if isinstance(node, Leaf):
         return {'kind': 'leaf', 'words': words(node, kind),
-                'conditions': [{'parameter': k, 'value': v} for k, v in node.conditions]}
+                'conditions': [_condition_json(k, v) for k, v in node.conditions]}
     if isinstance(node, Raw):
         return {'kind': 'raw', 'words': node.text}
     return {'kind': 'op', 'op': node.op, 'words': WORDS[node.op],
@@ -489,13 +507,26 @@ def _conditions(package, text, action):
         parameter = spec.get('parameter')
         if parameter not in CONDITIONS:
             raise PackageError(f'{parameter} is not a condition on a value')
-        if not str(spec.get('value') or '').strip():
+        given = spec.get('value')
+        if isinstance(given, list):
+            # The list editor's rows: an empty row is no value.
+            given = [i for i in given if str((i.get('text') or '') if isinstance(i, dict) else i).strip()]
+            if not given and parameter == 'sh:in':
+                raise PackageError('a list without a value admits no value at all; '
+                                   'remove "one of" instead')
+        if not given or not str(given).strip():
             raise PackageError(f'{parameter} needs a value')
         if parameter == 'sh:hasValue':
             from .tree import _list_value
-            value = _list_value(package, text, [spec.get('value')])[2:-2]
+            items = given if isinstance(given, list) else [given]
+            if len(items) != 1:
+                raise PackageError('exactly one value; for several, use "one of"')
+            value = _list_value(package, text, items, spec.get('datatype'))[2:-2]
+        elif parameter in ('sh:pattern', 'sh:flags'):
+            # The editor shows them in plain words, so what comes back is the words.
+            value = json.dumps(str(given), ensure_ascii=False)
         else:
-            value = _parameter_value(package, text, parameter, spec.get('value'))
+            value = _parameter_value(package, text, parameter, given, spec.get('datatype'))
         return parameter, value
 
     return condition

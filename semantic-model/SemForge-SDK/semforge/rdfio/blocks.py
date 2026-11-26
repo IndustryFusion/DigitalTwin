@@ -36,6 +36,8 @@ from dataclasses import dataclass, field
 
 from .turtle_index import _skip_string
 
+LITERAL_TAIL = re.compile(r'@[A-Za-z0-9-]+|\^\^(?:<[^>\s]*>|[^\s;,()\[\]]+)')
+
 PARAMETER = re.compile(r'(sh:[A-Za-z]\w*|<[^>]*>)\s*')
 
 
@@ -120,7 +122,14 @@ def _match_bracket(text, start, limit, pair='[]'):
 
 def _read_token(text, i, limit):
     """The next Turtle term after i, as (text, start, end)."""
-    i = _skip_noise(text, i, limit)
+    # Whitespace and comments only: _skip_noise skips a string too, and a
+    # string is a term here -- `sh:pattern "^a"` read as the term after it.
+    while i < limit and (text[i].isspace() or text[i] == '#'):
+        if text[i] == '#':
+            while i < limit and text[i] != '\n':
+                i += 1
+        else:
+            i += 1
     if i >= limit:
         return '', i, i
     start = i
@@ -129,6 +138,9 @@ def _read_token(text, i, limit):
         return text[i:closing + 1], start, closing + 1
     if text[i] in '"\'':
         end = _skip_string(text, i)
+        # A literal's language or datatype is part of it: "rot"@de, "1"^^xsd:int.
+        tail = LITERAL_TAIL.match(text, end, limit)
+        end = tail.end() if tail else end
         return text[i:end], start, end
     if text[i] in '([':
         end = _match_bracket(text, i, limit,
