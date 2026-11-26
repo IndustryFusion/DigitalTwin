@@ -246,7 +246,9 @@
 # SPARQL constraints (#1107): see E2EQueryDeclarationShape. hasE2ENote is
 # declared here and by no shape.
 :E2EQueryMachine a owl:Class,
-        owl:NamedIndividual .
+        owl:NamedIndividual ;
+    # a text of the knowledge in E2EQueryMessageShape (#1111)
+    :e2eNote "a \"machine\" <q>" .
 
 :hasE2EUpper a owl:NamedIndividual,
         owl:ObjectProperty ;

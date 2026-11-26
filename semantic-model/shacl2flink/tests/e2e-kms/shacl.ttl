@@ -357,3 +357,25 @@ SELECT $this WHERE {
     FILTER NOT EXISTS { $this e:hasE2EUpper [ ngsild:hasValue ?w ] . FILTER(?w < 50) }
 }
 """ ] .
+
+# A message built by the query (#1111): CONCAT and STR, nested in IF, over an
+# attribute read in an OPTIONAL and a text of the knowledge; quotes, brackets,
+# braces and an apostrophe in the text are kept.
+:E2EQueryMessageShape a sh:NodeShape ;
+    sh:targetClass iffBaseEntities:E2EQueryMachine ;
+    sh:sparql [ a sh:SPARQLConstraint ;
+            sh:message "{?text}" ;
+            sh:select """
+PREFIX e: <https://industryfusion.github.io/contexts/example/v0/base_entities/>
+PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
+SELECT $this ?text WHERE {
+    $this e:hasE2EUpper [ ngsild:hasValue ?u ] .
+    OPTIONAL { $this e:hasE2ELower [ ngsild:hasValue ?l ] }
+    $this a ?class .
+    ?class e:e2eNote ?note .
+    FILTER(?u > 50)
+    BIND(CONCAT("upper \\"", STR(?u), "\\" > <limit> {50}",
+                IF(BOUND(?l), CONCAT(", lower's ", STR(?l)), ", no lower"),
+                ", ", ?note, " / ", STR(?note)) AS ?text)
+}
+""" ] .

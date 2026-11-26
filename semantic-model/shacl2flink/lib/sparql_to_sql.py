@@ -205,8 +205,12 @@ def translate(ctx, elem):
         return translate_left_join(ctx, elem)
     elif elem.name == 'Extend':
         return translate_extend(ctx, elem)
+    elif elem.name == 'Builtin_IF' and is_text(elem, ctx):
+        return translate_text(ctx, elem)
     elif elem.name == 'Builtin_IF':
         return translate_builtin_if(ctx, elem)
+    elif elem.name in TEXT_FUNCTIONS:
+        return translate_text(ctx, elem)
     elif elem.name == 'Builtin_NOW':
         return translate_builtin_now(ctx, elem)
     elif elem.name == 'Function':
@@ -395,6 +399,191 @@ def translate_udf_argument(ctx, arg):
     return translate(ctx, arg)
 
 
+TEXT_FUNCTIONS = ('Builtin_CONCAT', 'Builtin_STR')
+
+
+def is_text(elem, ctx=None):
+    """Whether an expression is a text whatever it is applied to: what CONCAT
+    and STR give, a variable BIND gave such a text, or IF chooses between two
+    texts, one of them given so. (An IF between two constants is compiled as
+    it was before.)"""
+    if isinstance(elem, Variable):
+        return ctx is not None and is_text_variable(ctx, elem)
+    name = getattr(elem, 'name', None)
+    if name == 'Builtin_IF':
+        return all(is_text(arg, ctx) or is_string(arg) for arg in (elem.arg2, elem.arg3)) and \
+            (is_text(elem.arg2, ctx) or is_text(elem.arg3, ctx))
+    return name in TEXT_FUNCTIONS
+
+
+def is_string(elem):
+    """A constant simple literal, a string or one with a language."""
+    return isinstance(elem, Literal) and (elem.datatype in (None, XSD.string) or elem.language is not None)
+
+
+def is_text_variable(ctx, elem):
+    return isinstance(elem, Variable) and elem in ctx.get('texts', ())
+
+
+BOOLEANS = ('RelationalExpression', 'ConditionalAndExpression', 'ConditionalOrExpression', 'UnaryNot',
+            'Builtin_BOUND', 'Builtin_EXISTS', 'Builtin_NOTEXISTS')
+
+
+def is_boolean(elem):
+    return getattr(elem, 'name', None) in BOOLEANS or (isinstance(elem, Literal) and elem.datatype == XSD.boolean)
+
+
+def is_no_text(ctx, elem):
+    """What is no text whatever it is applied to."""
+    if is_number(elem) or is_boolean(elem) or isinstance(elem, URIRef) or \
+            (isinstance(elem, Literal) and not is_string(elem)):
+        return True
+    return isinstance(elem, Variable) and elem not in ctx.get('texts', ()) and \
+        (elem in ctx['time_variables'] or elem in ctx.get('booleans', ()) or elem in ctx.get('no_texts', ()) or
+         elem in ctx.get('moments', ()) or
+         ctx['property_variables'].get(elem) is True or
+         (elem in ctx['entity_variables'] and elem not in ctx['property_variables']))
+
+
+def argument_of_concat(ctx, elem):
+    """CONCAT takes texts. What is no text for sure is refused: SPARQL gives no
+    result for it, and STR gives its text."""
+    if getattr(elem, 'name', None) == 'Builtin_IF':
+        condition = translate(ctx, elem.arg1)
+        return f'(CASE WHEN {condition} THEN {argument_of_concat(ctx, elem.arg2)} ' \
+               f'WHEN NOT ({condition}) THEN {argument_of_concat(ctx, elem.arg3)} END)'
+    if is_no_text(ctx, elem):
+        name = elem.n3() if isinstance(elem, (Variable, URIRef)) else sparql_constant(elem) \
+            if isinstance(elem, Literal) else None
+        raise utils.WrongSparqlStructure(f'CONCAT takes texts, and {name} is none. Use STR({name}).' if name else
+                                         'CONCAT takes texts, and a number or a truth value is none. Use STR(…).')
+    return text_at_run_time(ctx, elem, numbers=True)
+
+
+def text_at_run_time(ctx, elem, numbers):
+    """The text of what is a text only at run time, NULL when it is none: what
+    the knowledge holds is a text if it is a string, a Property's value if it
+    is no IRI (and, unless numbers, no number), and what BIND computed if its
+    term is a string."""
+    if not isinstance(elem, Variable) or elem in ctx.get('lexicals', {}):
+        return lexical(ctx, elem)
+    term = translate(ctx, elem)
+    column = ctx['bounds'][utils.create_varname(elem)]
+    if elem in ctx['property_variables'] and elem not in ctx.get('computed', ()):
+        conditions = []
+        if ctx['property_variables'][elem] == utils.ANY_VALUE:
+            conditions.append(f"{column.replace('attributeValue', 'nodeType')} <> '@id'")
+        if not numbers:
+            conditions.append(f'SQL_DIALECT_NUMBER{{{column}}} IS NULL')
+        return f"(CASE WHEN {' AND '.join(conditions)} THEN {column} END)" if conditions else column
+    if is_knowledge_variable(ctx, elem) or elem in ctx.get('computed', ()):
+        return f'SQL_DIALECT_STRING_OF_TERM{{{brace_free(term)}}}'
+    return lexical(ctx, elem)
+
+
+def sparql_constant(literal):
+    """A constant as it is written in a query."""
+    if literal.datatype in NUMERIC or literal.datatype == XSD.boolean:
+        return str(literal)
+    xsd = str(XSD)
+    if literal.datatype is not None and str(literal.datatype).startswith(xsd):
+        return f'"{literal}"^^xsd:{str(literal.datatype)[len(xsd):]}'
+    return literal.n3()
+
+
+def is_knowledge_variable(ctx, elem):
+    """A variable whose term the knowledge gives: an IRI, a string, a number or
+    a blank node, each written as its term."""
+    if elem in ctx['property_variables'] or elem in ctx['time_variables'] or elem in ctx.get('computed', ()) \
+            or elem in ctx['entity_variables']:
+        return False
+    bound = ctx['bounds'].get(utils.create_varname(elem), '')
+    return re.search(r"\.`?(object|subject)`?$", bound) is not None
+
+
+def brace_free(sql):
+    """SQL whose string constants hold no brace: what a dialect macro may take
+    as its argument. A brace becomes a character code."""
+    out, quoted, i = [], False, 0
+    while i < len(sql):
+        char = sql[i]
+        if char == "'":
+            if quoted and sql[i + 1:i + 2] == "'":
+                out.append("''")
+                i += 2
+                continue
+            quoted = not quoted
+        if quoted and char in '{}':
+            out.append("' || SQL_DIALECT_CHAR_" + ('OPEN' if char == '{' else 'CLOSE') + " || '")
+        else:
+            out.append(char)
+        i += 1
+    return ''.join(out)
+
+
+def translate_text(ctx, elem):
+    """CONCAT or STR: a simple literal, its text written by lexical()."""
+    return f"('\"' || {brace_free(lexical(ctx, elem))} || '\"')"
+
+
+def lexical(ctx, elem):
+    """The text of an expression, without the quotes or brackets of its term.
+
+    A constant is written as it is, and what an attribute holds is read
+    without its delimiters: stripping them would also take such characters out
+    of the text. Only a term computed or read from the knowledge loses one
+    delimiter at each end. An unbound argument is NULL, and so is the text.
+    """
+    if isinstance(elem, (URIRef, Literal)):
+        return sql_text(str(elem))
+    if isinstance(elem, Variable):
+        return lexical_of_variable(ctx, elem)
+    name = getattr(elem, 'name', None)
+    if name == 'Builtin_STR':
+        return lexical(ctx, elem.arg)
+    if name == 'Builtin_CONCAT':
+        # CONCAT() has rdf:nil for its arguments
+        arguments = elem.arg if isinstance(elem.arg, list) else []
+        return '(' + ' || '.join(argument_of_concat(ctx, arg) for arg in arguments) + ')' if arguments else "''"
+    if name == 'Builtin_IF':
+        # a condition without a value chooses neither: the text is unbound
+        condition = translate(ctx, elem.arg1)
+        return f'(CASE WHEN {condition} THEN {lexical(ctx, elem.arg2)} ' \
+               f'WHEN NOT ({condition}) THEN {lexical(ctx, elem.arg3)} END)'
+    if name == 'Builtin_NOW':
+        return f'SQL_DIALECT_ISO_TIMESTAMP{{{translate(ctx, elem)}}}'
+    if is_boolean(elem):
+        condition = translate(ctx, elem)
+        return f"(CASE WHEN {condition} THEN 'true' WHEN NOT ({condition}) THEN 'false' END)"
+    return f'SQL_DIALECT_STRIP_TERM{{{brace_free(translate(ctx, elem))}}}'
+
+
+def lexical_of_variable(ctx, var):
+    term = translate(ctx, var)           # says it if the variable is unbound
+    if var in ctx.get('lexicals', {}):
+        return ctx['lexicals'][var]      # a text BIND gave: as it was built
+    column = ctx['bounds'][utils.create_varname(var)]
+    if var in ctx.get('booleans', ()):
+        return f"(CASE WHEN {column} THEN 'true' WHEN NOT ({column}) THEN 'false' END)"
+    if var in ctx.get('moments', ()):
+        return f'SQL_DIALECT_ISO_TIMESTAMP{{{column}}}'
+    if var in ctx['property_variables'] and var not in ctx.get('computed', ()):
+        return column
+    if var in ctx['time_variables']:
+        return f'SQL_DIALECT_ISO_TIMESTAMP{{{column}}}'
+    if var in ctx['entity_variables']:
+        return column
+    return f'SQL_DIALECT_STRIP_TERM{{{brace_free(term)}}}'
+
+
+def sql_text(text):
+    """A text as an SQL string. A brace is written as a character code: the
+    dialect macros cannot have one in their argument."""
+    parts = re.split(r'([{}])', text.replace("'", "''"))
+    return '(' + ' || '.join('SQL_DIALECT_CHAR_' + ('OPEN' if part == '{' else 'CLOSE') if part in ('{', '}')
+                             else f"'{part}'" for part in parts if part != '') + ')' if text else "''"
+
+
 def translate_builtin_now(ctx, builtin_now):
     return 'SQL_DIALECT_CURRENT_TIMESTAMP'
 
@@ -421,8 +610,25 @@ def translate_extend(ctx, extend):
             if extend.expr in ctx[kinds]:
                 ctx[kinds] = {**ctx[kinds], extend.var: ctx[kinds][extend.expr]}
                 expression = ctx['bounds'][utils.create_varname(extend.expr)]
-    elif utils.get_group_by_vars(ctx) is None:
-        ctx['computed'] = ctx.get('computed', set()) | {extend.var}
+        for kinds in ('computed', 'texts', 'booleans', 'no_texts', 'moments'):
+            if extend.expr in ctx.get(kinds, ()):
+                ctx[kinds] = ctx[kinds] | {extend.var}
+        if extend.expr in ctx.get('lexicals', {}):
+            ctx['lexicals'] = {**ctx['lexicals'], extend.var: ctx['lexicals'][extend.expr]}
+    else:
+        if utils.get_group_by_vars(ctx) is None:
+            ctx['computed'] = ctx.get('computed', set()) | {extend.var}
+        if is_boolean(extend.expr) and not isinstance(extend.expr, Literal):
+            ctx['booleans'] = ctx.get('booleans', set()) | {extend.var}
+        if isinstance(extend.expr, Literal) and not is_string(extend.expr):
+            ctx['no_texts'] = ctx.get('no_texts', set()) | {extend.var}
+        if getattr(extend.expr, 'name', None) == 'Builtin_NOW':
+            ctx['moments'] = ctx.get('moments', set()) | {extend.var}
+        if is_text(extend.expr, ctx):
+            ctx['texts'] = ctx.get('texts', set()) | {extend.var}
+            # its text, kept to be read again without stripping the term
+            ctx['lexicals'] = {**ctx.get('lexicals', {}), extend.var: brace_free(lexical(ctx, extend.expr))}
+            expression = f"('\"' || {ctx['lexicals'][extend.var]} || '\"')"
 
     ctx['bounds'][utils.create_varname(extend.var)] = expression
     extend['target_sql'] = extend.p['target_sql']
@@ -521,6 +727,9 @@ def expression_or_text(value):
 def get_bound_trim_string(ctx, boundsvar):
     bounds = ctx['bounds']
     boundsvarname = boundsvar.toPython()[1:]
+    if boundsvarname in bounds and boundsvar in ctx.get('lexicals', {}):
+        # its text, a quote in it kept
+        return ctx['lexicals'][boundsvar]
     if boundsvarname in bounds and boundsvar in ctx['property_variables']:
         if ctx['property_variables'][boundsvar] == utils.ANY_VALUE:
             column = bounds[boundsvarname]
@@ -904,13 +1113,14 @@ NUMERIC = (XSD.integer, XSD.decimal, XSD.double, XSD.float, XSD.int, XSD.long, X
 def is_literal_variable(ctx, elem):
     """A variable whose text may be a number: an attribute's value that is no
     IRI, or something read from the knowledge. A time is compared as a time,
-    and what BIND gives has its form already."""
+    what BIND gives has its form already, and a text CONCAT or STR gives is
+    no number."""
     if not isinstance(elem, Variable) or elem in ctx['time_variables'] or elem in ctx['entity_variables']:
         return False
     if elem in ctx['property_variables']:
         return ctx['property_variables'][elem] is not True
     if elem in ctx.get('computed', ()):
-        return True
+        return elem not in ctx.get('texts', ())
     bound = ctx['bounds'].get(utils.create_varname(elem), '')
     return re.search(r"\.`?(object|subject)`?$", bound) is not None
 
@@ -955,8 +1165,15 @@ def comparable(ctx, elem):
 
 
 def equals(ctx, left, right, op='='):
-    """SPARQL's = and != : of numbers by their value, else of the terms."""
+    """SPARQL's = and != : of numbers by their value, else of the terms. A
+    text is no number, so a value that reads like one is not equal to it."""
     for one, other in ((left, right), (right, left)):
+        if is_text(one, ctx) and isinstance(other, Variable) and other in ctx['property_variables'] and \
+                other not in ctx.get('computed', ()) and ctx['property_variables'][other] is not True:
+            column = ctx['bounds'].get(utils.create_varname(other))
+            if column is not None:
+                return f"(CASE WHEN SQL_DIALECT_NUMBER{{{column}}} IS NULL " \
+                       f"THEN {comparable(ctx, left)} {op} {comparable(ctx, right)} ELSE {op == '<>'} END)"
         if is_number(one) and is_literal_variable(ctx, other):
             number = as_number(ctx, one) or comparable(ctx, one)
             return f'{as_number(ctx, other)} {op} {number}'
@@ -976,6 +1193,14 @@ def translate_relational_expression(ctx, elem):
         return '(' + joint.join(equals(ctx, elem.expr, other, one) for other in elem.other) + ')'
     if op in ('=', '<>'):
         return equals(ctx, elem.expr, elem.other, op)
+    for one, other in ((elem.expr, elem.other), (elem.other, elem.expr)):
+        if is_text(one, ctx):
+            # Texts are ordered by their characters. A text and a number are
+            # not ordered, as in SPARQL: no value, also under a negation.
+            if is_no_text(ctx, other):
+                return 'CAST(NULL AS BOOLEAN)'
+            sides = {id(one): lexical(ctx, one), id(other): text_at_run_time(ctx, other, numbers=False)}
+            return f'({sides[id(elem.expr)]} {op} {sides[id(elem.other)]})'
 
     left, right = as_number(ctx, elem.expr), as_number(ctx, elem.other)
     if left is not None and right is not None:

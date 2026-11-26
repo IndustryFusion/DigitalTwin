@@ -176,14 +176,20 @@ BARE_CASES=(
 # Forms of SPARQL constraints (#1107): name|shapes that alert|attributes. Every
 # other query shape stays silent on the entity.
 QUERY_TYPE=${E2E}/E2EQueryMachine
-QUERY_SHAPES="Declared AnyAttribute Numbers OptionalFirst SameAttribute"
+QUERY_SHAPES="Declared AnyAttribute Numbers OptionalFirst SameAttribute Message"
 QUERY_CASES=(
     "declared|Declared|\"${E2E}/hasE2ESpare\":{\"type\":\"Relationship\",\"object\":\"urn:e2e-query-nine:${RUN_ID}\"}"
     "note|AnyAttribute|\"${E2E}/hasE2ENote\":{\"type\":\"Property\",\"value\":\"forbidden\"}"
     "nine||\"${E2E}/hasE2EUpper\":{\"type\":\"Property\",\"value\":10},\"${E2E}/hasE2ELower\":{\"type\":\"Property\",\"value\":9}"
     "ten|Numbers|\"${E2E}/hasE2EUpper\":{\"type\":\"Property\",\"value\":9},\"${E2E}/hasE2ELower\":{\"type\":\"Property\",\"value\":10}"
     "hundred|Numbers OptionalFirst|\"${E2E}/hasE2EUpper\":{\"type\":\"Property\",\"value\":20},\"${E2E}/hasE2ELower\":{\"type\":\"Property\",\"value\":100}"
-    "upper|SameAttribute|\"${E2E}/hasE2EUpper\":{\"type\":\"Property\",\"value\":60}"
+    "upper|SameAttribute Message|\"${E2E}/hasE2EUpper\":{\"type\":\"Property\",\"value\":60}"
+    "message|SameAttribute Message|\"${E2E}/hasE2EUpper\":{\"type\":\"Property\",\"value\":70},\"${E2E}/hasE2ELower\":{\"type\":\"Property\",\"value\":9}"
+)
+# The text E2EQueryMessageShape builds with CONCAT and STR (#1111): name|text.
+QUERY_MESSAGES=(
+    "upper|upper \"60\" > <limit> {50}, no lower, a \"machine\" <q> / a \"machine\" <q>"
+    "message|upper \"70\" > <limit> {50}, lower's 9, a \"machine\" <q> / a \"machine\" <q>"
 )
 
 # sh:hasValue with a number (#965), one entity per value written:
@@ -717,6 +723,17 @@ bare_event() {
             [[ " ${fires} " == *" ${shape} "* ]] || \
                 assert_no_alert "urn:e2e-query-${name}:${RUN_ID}" "${SPARQL_CONSTRAINT}(E2EQuery${shape}Shape)"
         done
+    done
+    # Every character of the text, as SPARQL builds it.
+    local text
+    for spec in "${QUERY_MESSAGES[@]}"; do
+        IFS='|' read -r name text <<< "${spec}"
+        alert_texts_for "urn:e2e-query-${name}:${RUN_ID}" \
+            | grep -F -q "${SPARQL_CONSTRAINT}(E2EQueryMessageShape): \"${text}\"" || {
+            echo "# no alert text \"${text}\" on ${name}; open now:" >&3
+            alert_texts_for "urn:e2e-query-${name}:${RUN_ID}" | sed 's/^/#   /' >&3
+            return 1
+        }
     done
 }
 

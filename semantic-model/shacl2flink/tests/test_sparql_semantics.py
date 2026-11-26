@@ -62,7 +62,9 @@ ex:MachineShape a sh:NodeShape ; sh:targetClass ex:Machine ;
     sh:property [ sh:path ex:speed ; sh:nodeKind sh:BlankNode ; sh:minCount 0 ;
         sh:property [ sh:path ngsild:hasValue ; sh:nodeKind sh:Literal ; sh:minCount 1 ] ] ;
     sh:property [ sh:path ex:state ; sh:nodeKind sh:BlankNode ; sh:minCount 0 ;
-        sh:property [ sh:path ngsild:hasValue ; sh:nodeKind sh:IRI ; sh:minCount 1 ] ] .
+        sh:property [ sh:path ngsild:hasValue ; sh:nodeKind sh:IRI ; sh:minCount 1 ] ] ;
+    sh:property [ sh:path ex:summary ; sh:nodeKind sh:BlankNode ; sh:minCount 0 ;
+        sh:property [ sh:path ngsild:hasValue ; sh:nodeKind sh:Literal ; sh:minCount 1 ] ] .
 ex:PartShape a sh:NodeShape ; sh:targetClass ex:Part ;
     sh:property [ sh:path ex:weight ; sh:nodeKind sh:BlankNode ; sh:minCount 0 ;
         sh:property [ sh:path ngsild:hasValue ; sh:nodeKind sh:Literal ; sh:minCount 1 ] ] .
@@ -81,6 +83,7 @@ ex:off ex:follows ex:third . ex:hasPart ex:unit "pieces" .
 ex:off ex:label "off" .
 ex:speed ex:unit "rpm" . ex:limit ex:unit "rpm" . ex:text ex:unit "words" .
 ex:on ex:maximum 20 ; ex:range [ ex:max 10 ] ; ex:words [ ex:w "abc", "9" ] .
+ex:on ex:sign "a \\"b\\" <c> {{d}} 'e'" .
 '''
 
 
@@ -98,7 +101,7 @@ MODEL = [
     machine(1, speed=prop(9), limit=prop(10), bound=prop(10), state=prop({'@id': 'ex:on'}), text=prop('abc'),
             dangling={'type': 'Relationship', 'object': 'urn:nowhere:1'}),
     machine(2, speed=prop(10), limit=prop(9), bound=prop(10), state=prop({'@id': 'ex:off'}), text=prop('abd')),
-    machine(3, speed=prop(100.5), limit=prop(20), text=prop('9')),
+    machine(3, speed=prop(100.5), limit=prop(20), text=prop('9'), note=prop('say "hi" <b> {x} \'y\'')),
     # (its spare is another part than its part)
     machine(4, speed=prop({'@value': '7.0', '@type': 'xsd:double'}), limit=prop(7), kind='ex:Press',
             spare={'type': 'Relationship', 'object': 'urn:p:2'},
@@ -364,6 +367,24 @@ REFUSED = {
     'a second root': ('?m ex:hasPart [ ngsild:hasObject ?p ] . FILTER(?m = $this)', 'not connected'),
     'loose': ('$this ex:speed [ ngsild:hasValue ?v ] . ?x ex:follows ?y', 'not connected'),
     'syntax': ('$this ex:speed [ ngsild:hasValue ?v ', 'parse'),
+    'concat of a number': ('$this ex:limit [ ngsild:hasValue ?l ] . BIND(CONCAT("x", 5) AS ?t)', 'STR(5)'),
+    'concat of an IRI': ('$this ex:limit [ ngsild:hasValue ?l ] . BIND(CONCAT("x", ex:on) AS ?t)', 'texts'),
+    'concat of an IRI value': ('$this ex:state [ ngsild:hasValue ?s ] . BIND(CONCAT("x", ?s) AS ?t)', 'STR(?s)'),
+    'concat of an entity': ('$this ex:limit [ ngsild:hasValue ?l ] . BIND(CONCAT("x", $this) AS ?t)', 'STR(?this)'),
+    'concat of a chosen number': ('$this ex:limit [ ngsild:hasValue ?l ] . '
+                                  'BIND(CONCAT("x", IF(?l > 5, 5, "a")) AS ?t)', 'STR(5)'),
+    'concat of a computed number': ('$this ex:limit [ ngsild:hasValue ?l ] . BIND(CONCAT("x", ?l + 1) AS ?t)',
+                                    'CONCAT takes texts'),
+    'concat of a cast': ('$this ex:limit [ ngsild:hasValue ?l ] . BIND(CONCAT("x", xsd:integer(?l)) AS ?t)',
+                         'CONCAT takes texts'),
+    'concat of a truth value': ('$this ex:limit [ ngsild:hasValue ?l ] . BIND(?l < 5 AS ?b) '
+                                'BIND(CONCAT("x", ?b) AS ?t)', 'STR(?b)'),
+    'concat of a bound truth value': ('$this ex:limit [ ngsild:hasValue ?l ] . BIND(true AS ?k) '
+                                      'BIND(CONCAT("a", ?k) AS ?t)', 'STR(?k)'),
+    'concat of a typed constant': ('$this ex:limit [ ngsild:hasValue ?l ] . '
+                                   'BIND(CONCAT("x", "2024-01-01"^^xsd:date) AS ?t)', 'STR("2024-01-01"^^xsd:date)'),
+    'concat of a time': ('$this ex:speed [ ngsild:hasValue ?v ; ngsild:observedAt ?o ] . '
+                         'BIND(CONCAT("x", ?o) AS ?t)', 'STR(?o)'),
 }
 
 
@@ -468,3 +489,214 @@ def test_a_target_that_is_read_is_an_entity(platform):
     where = '$this ex:dangling [ ngsild:hasObject ?p ]'
     assert in_sparql(platform[0], where) == ['urn:m:1']
     assert in_sql(platform, where) == []
+
+
+# What CONCAT and STR give, value by value
+TEXTS = {
+    'a message': ('$this ex:speed [ ngsild:hasValue ?v ] ; ex:limit [ ngsild:hasValue ?l ] . '
+                  'BIND(CONCAT("Max violation: ", STR(?v), " > ", STR(?l)) AS ?text)'),
+    'delimiters in a constant': ('$this ex:limit [ ngsild:hasValue ?l ] . '
+                                 'BIND(CONCAT(" < ", STR(?l), " > \\" {?l} \'x\' <>") AS ?text)'),
+    'delimiters in a value': '$this ex:note [ ngsild:hasValue ?n ] . BIND(CONCAT("[", STR(?n), "]") AS ?text)',
+    'delimiters in the knowledge': ('$this ex:state [ ngsild:hasValue ?s ] . ?s ex:sign ?g . '
+                                    'BIND(CONCAT("[", STR(?g), "]") AS ?text)'),
+    'a chosen text': ('$this ex:speed [ ngsild:hasValue ?v ] . OPTIONAL { $this ex:limit [ ngsild:hasValue ?min ] } '
+                      'OPTIONAL { $this ex:bound [ ngsild:hasValue ?max ] } '
+                      'BIND(CONCAT("speed ", STR(?v), IF(BOUND(?min) && ?v < ?min, CONCAT(" < ", STR(?min)), '
+                      'CONCAT(" > ", STR(?max)))) AS ?text)'),
+    'an unbound argument': ('$this ex:limit [ ngsild:hasValue ?l ] . '
+                            'OPTIONAL { $this ex:speed [ ngsild:hasValue ?v ] } '
+                            'BIND(CONCAT("speed ", STR(?v)) AS ?text)'),
+    'an IRI': ('$this ex:state [ ngsild:hasValue ?s ] . '
+               'BIND(CONCAT(STR(?s), " ", STR(ex:on), " ", STR($this)) AS ?text)'),
+    'a target': '$this ex:hasPart [ ngsild:hasObject ?p ] . BIND(STR(?p) AS ?text)',
+    'a time': '$this ex:speed [ ngsild:hasValue ?v ; ngsild:observedAt ?t ] . BIND(CONCAT("at ", STR(?t)) AS ?text)',
+    'a text and a number': ('$this ex:text [ ngsild:hasValue ?t ] ; ex:limit [ ngsild:hasValue ?l ] . '
+                            'BIND(CONCAT(?t, "/", STR(?l), "/", STR(3)) AS ?text)'),
+    'any attribute': ('$this ?a [ ngsild:hasValue ?v ] . FILTER(?a IN (ex:state, ex:text)) '
+                      'BIND(CONCAT(STR(?a), "=", STR(?v)) AS ?text)'),
+    'nested': ('$this ex:limit [ ngsild:hasValue ?l ] . '
+               'BIND(CONCAT(STR(CONCAT("a", STR(STR(?l)))), CONCAT("b")) AS ?text)'),
+    'of a computed text': ('$this ex:limit [ ngsild:hasValue ?l ] . BIND(CONCAT("{", STR(?l), "\\"") AS ?a) '
+                           'BIND(CONCAT(STR(?a), "}") AS ?text)'),
+    'of a computed number': '$this ex:limit [ ngsild:hasValue ?l ] . BIND(xsd:float(?l) AS ?n) BIND(STR(?n) AS ?text)',
+    'of an expression': '$this ex:limit [ ngsild:hasValue ?l ] . BIND(CONCAT(STR(xsd:float(?l)), "!") AS ?text)',
+    'in a filter': ('$this ex:state [ ngsild:hasValue ?s ] . FILTER(STR(?s) = "https://example.org/on") '
+                    'BIND(STR(?s) AS ?text)'),
+    'compared in a filter': ('$this ex:limit [ ngsild:hasValue ?l ] . BIND(CONCAT(STR(?l), "x") AS ?text) '
+                             'FILTER(?text = "10x" || CONCAT("<", ?text) = "<9x")'),
+    'a text is no number': '$this ex:limit [ ngsild:hasValue ?l ] . BIND(STR(?l) AS ?text) FILTER(?text != 10)',
+    'a condition without a value': ('$this ex:speed [ ngsild:hasValue ?v ] . '
+                                    'OPTIONAL { $this ex:limit [ ngsild:hasValue ?min ] } '
+                                    'BIND(CONCAT("s", IF(?v < ?min, "lo", "hi")) AS ?text)'),
+    'a text ordered against a value': ('$this ex:speed [ ngsild:hasValue ?v ] ; ex:text [ ngsild:hasValue ?t ] . '
+                                       'BIND(CONCAT(?t, "") AS ?text) FILTER(?text < ?v || ?text > "abc")'),
+    'a text or a constant': ('$this ex:limit [ ngsild:hasValue ?l ] . BIND(IF(?l > 5, STR(?l), "10") AS ?text) '
+                             'FILTER(?text = 10 || ?text = "9")'),
+    'a brace in a condition': ('$this ex:text [ ngsild:hasValue ?t ] . BIND(IF(?t = "{", "a", STR(?t)) AS ?a) '
+                               'BIND(CONCAT(?a, "!") AS ?text)'),
+    'a brace in a condition of constants': ('$this ex:text [ ngsild:hasValue ?t ] . '
+                                            'BIND(IF(?t = "{", "a", "b") AS ?a) BIND(STR(?a) AS ?text)'),
+    'texts ordered by their characters': ('$this ex:text [ ngsild:hasValue ?t ] . BIND(CONCAT(?t) AS ?text) '
+                                          'FILTER(?text < CONCAT(?t, " ") && "a b" > CONCAT("a") && ?text <= STR(?t))'),
+    'a text as a value of a pattern': ('$this ex:note [ ngsild:hasValue ?n ] . BIND(CONCAT(STR(?n)) AS ?text) '
+                                       '$this ex:note [ ngsild:hasValue ?text ]'),
+    'the knowledge in concat': ('$this ex:state [ ngsild:hasValue ?s ] . ?s ex:follows ?y . ?s ex:label ?b . '
+                                'OPTIONAL { ?s ex:maximum ?m } '
+                                'BIND(CONCAT(?b, "|", IF(BOUND(?m), CONCAT("m", ?m), "-"), "|", '
+                                'CONCAT("y", ?y)) AS ?a) '
+                                'BIND(CONCAT(?b, IF(BOUND(?a), "!", "?")) AS ?text)'),
+    'any value in concat': ('$this ?a [ ngsild:hasValue ?v ] . FILTER(?a IN (ex:state, ex:text)) '
+                            'BIND(CONCAT(STR(?a), "=", ?v) AS ?text)'),
+    'a computed term in concat': ('$this ex:limit [ ngsild:hasValue ?l ] . BIND(xsd:float(?l) AS ?n) '
+                                  'BIND(IF(?l > 5, "big", "small") AS ?k) BIND(CONCAT("x", ?k, ?n) AS ?a) '
+                                  'BIND(CONCAT(?k, IF(BOUND(?a), "!", "?")) AS ?text)'),
+    'a truth value': ('$this ex:limit [ ngsild:hasValue ?l ] . BIND(?l < 5 AS ?b) '
+                      'BIND(CONCAT(STR(?l < 5), STR(BOUND(?l)), STR(true), STR(?b), STR(!?b)) AS ?text)'),
+    'a text unequal to a number': ('$this ex:limit [ ngsild:hasValue ?l ] ; ex:text [ ngsild:hasValue ?t ] . '
+                                   'BIND(STR(?l) AS ?text) FILTER(?text != ?l && ?l != ?text && !(?text = ?l))'),
+    'another name for a text': ('$this ex:note [ ngsild:hasValue ?n ] . BIND(CONCAT("[", STR(?n), "]") AS ?a) '
+                                'BIND(?a AS ?text)'),
+}
+
+
+@pytest.mark.parametrize('name, where, expected', [
+    # SPARQL: a text and a number are not ordered, the comparison is an error
+    # (rdflib orders them by type instead)
+    ('a text ordered against a number', '$this ex:limit [ ngsild:hasValue ?l ] . BIND(STR(?l) AS ?text) '
+     'FILTER(?text < 5 || STR(?l) > 5 || 5 < ?text || ?text >= 9.5 || !(?text > 5) || !(STR(?l) < 10) || '
+     '?text < ex:on || ?text < $this || ?text < true || ?l = 9)',
+     {'urn:m:2': ['9']}),
+    ('a text ordered against an IRI of the knowledge', '$this ex:state [ ngsild:hasValue ?s ] . ?s ex:follows ?y . '
+     'BIND(STR(?y) AS ?text) FILTER(STR(?s) < ?y || ?text = "https://example.org/third")',
+     {'urn:m:2': ['https://example.org/third']}),
+    # (rdflib takes the same characters for the same term)
+    ('a chosen text variable is no number', '$this ex:limit [ ngsild:hasValue ?l ] . '
+     'BIND(CONCAT("<", STR(?l)) AS ?a) BIND(IF(?l > 9, ?a, STR(?l)) AS ?text) FILTER(?text < 5 || ?l = 9)',
+     {'urn:m:2': ['9']}),
+    ('a text in a pattern is no number', '$this ex:limit [ ngsild:hasValue ?l ] . BIND(STR(?l) AS ?text) '
+     '$this ex:bound [ ngsild:hasValue ?text ]', {}),
+    ('a text is no IRI', '$this ex:state [ ngsild:hasValue ?s ] . BIND(STR(?s) AS ?text) '
+     '$this ex:state [ ngsild:hasValue ?text ]', {}),
+    # SPARQL: STR of a blank node is an error (rdflib gives its id)
+    ('a blank node', '$this ex:state [ ngsild:hasValue ?s ] . ?s ex:range ?r . BIND(CONCAT("r", STR(?r)) AS ?text)',
+     {'urn:m:1': ['unbound'], 'urn:m:5': ['unbound']})])
+def test_a_text_is_what_the_standard_gives(platform, name, where, expected):
+    """Where rdflib differs from the SPARQL standard, the standard counts."""
+    assert {entity: texts for entity, texts in texts_in_sql(platform, where).items() if texts} == expected
+
+
+def texts_in_sparql(graph, where):
+    query = f'{PREFIXES}SELECT $this ?text WHERE {{ {where} }}'
+    return {entity: sorted(str(row[1]) if row[1] is not None else 'unbound'
+                           for row in graph.query(query, initBindings={'this': rdflib.URIRef(entity)}))
+            for entity in MACHINES}
+
+
+def texts_in_sql(platform, where):
+    query = f'{PREFIXES}SELECT $this ?text WHERE {{ {where} }}'
+    sql, _ = translate_sparql(None, None, query, rdflib.URIRef(EX + 'Machine'), platform[1])
+    utils.process_sql_dialect(sql, False)
+    found = {entity: [] for entity in MACHINES}
+    for entity, text in platform[2].execute(utils.process_sql_dialect(sql, True)).fetchall():
+        # what BIND gives is the text of its term: a literal, in quotes
+        found[entity].append(text[1:-1] if text is not None else 'unbound')
+    return {entity: sorted(texts) for entity, texts in found.items()}
+
+
+@pytest.mark.parametrize('name', sorted(TEXTS))
+def test_a_text_is_what_sparql_gives(platform, name):
+    expected = texts_in_sparql(platform[0], TEXTS[name])
+    assert any(expected.values()), 'a query nothing answers proves nothing'
+    assert texts_in_sql(platform, TEXTS[name]) == expected
+
+
+RULES = {
+    'a text': '$this ex:note [ ngsild:hasValue ?n ] . BIND(CONCAT("[", STR(?n), "] \\" <x> {y}") AS ?text)',
+    'compared, then chosen': ('$this ex:text [ ngsild:hasValue ?t ] . FILTER(STR(?t) != "abd") '
+                              'BIND(IF(STR(?t) = "9", CONCAT("<", ?t, ">"), STR(?t)) AS ?text)'),
+    'a text or a constant': ('$this ex:note [ ngsild:hasValue ?n ] . '
+                             'BIND(IF(BOUND(?n), CONCAT("[", STR(?n), "]"), "none") AS ?text)'),
+    'another name': ('$this ex:note [ ngsild:hasValue ?n ] . BIND(CONCAT("[", STR(?n), "]") AS ?a) '
+                     'BIND(?a AS ?text)'),
+    'a text variable chosen': ('$this ex:note [ ngsild:hasValue ?n ] . BIND(CONCAT("[", STR(?n), "]") AS ?a) '
+                               'BIND(IF(BOUND(?n), ?a, "none") AS ?text)'),
+}
+
+
+@pytest.mark.parametrize('name', sorted(RULES))
+def test_a_rule_writes_the_text(platform, name):
+    """What a rule constructs is written as the text, a quote in it kept."""
+    where = RULES[name]
+    query = f'{PREFIXES}CONSTRUCT {{ $this ex:summary [ ngsild:hasValue ?text ] }} WHERE {{ {where} }}'
+    expected = sorted((entity, str(row[1])) for entity in MACHINES
+                      for row in platform[0].query(f'{PREFIXES}SELECT $this ?text WHERE {{ {where} }}',
+                                                   initBindings={'this': rdflib.URIRef(entity)}))
+    assert expected
+    sql, _ = translate_sparql(None, None, query, rdflib.URIRef(EX + 'Machine'), platform[1])
+    flink = utils.process_sql_dialect(sql, False)
+    assert 'SQL_DIALECT' not in flink
+    # on Flink the strip of a literal removes every quote in it
+    assert 'REGEXP_REPLACE' not in flink.split('as `attributeValue`')[0].rsplit('\n', 1)[-1]
+    database = platform[2]
+    database.execute('DELETE FROM attributes_insert_filter')
+    database.execute(utils.process_sql_dialect(sql, True))
+    assert sorted(database.execute("SELECT entityId, attributeValue FROM attributes_insert_filter "
+                                   f"WHERE name = '{EX}summary'").fetchall()) == expected
+
+
+@pytest.mark.parametrize('name', sorted(TEXTS))
+def test_flink_keeps_every_character(platform, name):
+    """Flink's strip macros remove every delimiter in a text, so a text never
+    passes them; a brace is a character code, as no macro may hold one."""
+    query = f'{PREFIXES}SELECT $this ?text WHERE {{ {TEXTS[name]} }}'
+    sql, _ = translate_sparql(None, None, query, rdflib.URIRef(EX + 'Machine'), platform[1])
+    flink = utils.process_sql_dialect(sql, False)
+    assert 'SQL_DIALECT' not in flink
+    if 'xsd:' not in TEXTS[name]:       # what a cast reads is stripped as before
+        assert 'REGEXP_REPLACE' not in flink
+
+
+def test_now_is_written_as_a_time(platform):
+    """STR of NOW() and of a variable it is bound to: the ISO form of a time."""
+    where = '$this ex:limit [ ngsild:hasValue ?l ] . BIND(NOW() AS ?n) BIND(CONCAT(STR(NOW()), "|", STR(?n)) AS ?text)'
+    iso = r'\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z'
+    texts = [text for found in texts_in_sql(platform, where).values() for text in found]
+    assert texts and all(re.fullmatch(f'{iso}[|]{iso}', text) for text in texts), texts
+
+
+def test_a_brace_of_a_condition_reaches_no_macro(platform):
+    """A text whose IF compares with a brace, read again in another macro."""
+    where = ('$this ex:text [ ngsild:hasValue ?t ] . BIND(IF(?t = "{", "a", STR(?t)) AS ?a) '
+             'BIND(xsd:integer(?a) AS ?text) FILTER(?text = 9)')
+    assert in_sql(platform, where) == in_sparql(platform[0], where) == ['urn:m:3']
+
+
+def test_a_text_read_again_is_not_stripped_again(platform):
+    """A text BIND gave is read as it was built: a chain of them grows by
+    what each adds, not twice per step."""
+    binds = ' '.join(f'BIND(CONCAT(STR(?a{n}), "x") AS ?a{n + 1})' for n in range(8))
+    query = f'{PREFIXES}SELECT $this ?a8 WHERE {{ $this ex:limit [ ngsild:hasValue ?a0 ] . {binds} }}'
+    sql, _ = translate_sparql(None, None, query, rdflib.URIRef(EX + 'Machine'), platform[1])
+    flink = utils.process_sql_dialect(sql, False)
+    assert flink.count('REGEXP_EXTRACT') == 0 and len(flink) < 3000
+    assert '{' not in flink and '}' not in flink
+
+
+@pytest.mark.parametrize('term, text', [("'<urn:a>'", 'urn:a'), ("'\"a\"'", 'a'), ("'\"say \"hi\"\"'", 'say "hi"'),
+                                        ("'\"<a>\"'", '<a>'), ("'<a\"b>'", 'a"b'), ("'\"\"'", ''), ("'11'", '11'),
+                                        ('11.5', '11.5'), ("'\"'", '"'), ("'<a'", '<a'), ("'\"a>'", '"a>'),
+                                        ('NULL', None)])
+def test_the_text_of_a_term(platform, term, text):
+    """One delimiter at each end, and only a pair of them."""
+    sql = utils.process_sql_dialect(f'SQL_DIALECT_STRIP_TERM{{{term}}}', True)
+    assert platform[2].execute(f'SELECT {sql}').fetchone()[0] == text
+    flink = utils.process_sql_dialect(f'SQL_DIALECT_STRIP_TERM{{{term}}}', False)
+    assert flink.startswith('COALESCE(REGEXP_EXTRACT(') and r'\z' in flink
+
+
+def test_a_brace_is_a_character_code(platform):
+    sql = utils.process_sql_dialect("'a' || SQL_DIALECT_CHAR_OPEN || SQL_DIALECT_CHAR_CLOSE", True)
+    assert platform[2].execute(f'SELECT {sql}').fetchone()[0] == 'a{}'
+    assert utils.process_sql_dialect('SQL_DIALECT_CHAR_OPEN || SQL_DIALECT_CHAR_CLOSE', False) == \
+        'CHR(123) || CHR(125)'

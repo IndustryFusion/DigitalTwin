@@ -797,7 +797,9 @@ def process_sql_dialect(expression, isSqlite):
             or "SQL_DIALECT_ATTRIBUTE_ID" in result_expression \
             or "SQL_DIALECT_TIME_TO_MILLISECONDS" in result_expression \
             or "SQL_DIALECT_ISO_TIMESTAMP" in result_expression \
-            or "SQL_DIALECT_NUMBER" in result_expression:
+            or "SQL_DIALECT_NUMBER" in result_expression \
+            or "SQL_DIALECT_CHAR_" in result_expression \
+            or "SQL_DIALECT_STRING_OF_TERM" in result_expression:
         max_recursion = max_recursion - 1
         if max_recursion == 0:
             raise WrongSparqlStructure("Unexpected problem with SQL_DIALECT macros.")
@@ -806,6 +808,21 @@ def process_sql_dialect(expression, isSqlite):
             result_expression = re.sub(r'SQL_DIALECT_STRIP_IRI{([^{}]*)}',
                                        r"ltrim(rtrim(\1, '>'), '<')",
                                        result_expression)
+            # One delimiter at each end, the text in between as it is.
+            result_expression = re.sub(r'SQL_DIALECT_STRIP_TERM{([^{}]*)}',
+                                       lambda m: "(SELECT CASE WHEN term LIKE '<%>' OR term LIKE '\"%\"' "
+                                       "THEN substr(term, 2, length(term) - 2) "
+                                       "WHEN substr(term, 1, 2) = '_:' THEN NULL ELSE term END "
+                                       f"FROM (SELECT CAST({m.group(1)} AS TEXT) AS term))",
+                                       result_expression)
+            # The text of a string term; NULL for an IRI, a number or a blank node.
+            result_expression = re.sub(r'SQL_DIALECT_STRING_OF_TERM{([^{}]*)}',
+                                       lambda m: "(SELECT CASE WHEN term LIKE '\"%\"' "
+                                       "THEN substr(term, 2, length(term) - 2) END "
+                                       f"FROM (SELECT CAST({m.group(1)} AS TEXT) AS term))",
+                                       result_expression)
+            result_expression = result_expression.replace('SQL_DIALECT_CHAR_OPEN', "char(123)") \
+                .replace('SQL_DIALECT_CHAR_CLOSE', "char(125)")
             result_expression = re.sub(r'SQL_DIALECT_STRIP_LITERAL{([^{}]*)}', r"trim(\1, '\"')",
                                        result_expression)
             # The number a text is, or NULL: what TRY_CAST is in Flink.
@@ -836,6 +853,18 @@ def process_sql_dialect(expression, isSqlite):
             result_expression = re.sub(r'SQL_DIALECT_STRIP_IRI{([^{}]*)}',
                                        r"REGEXP_REPLACE(CAST(\1 as STRING), '>|<', '')",
                                        result_expression)
+            # One delimiter at each end, the text in between as it is.
+            result_expression = re.sub(r'SQL_DIALECT_STRIP_TERM{([^{}]*)}',
+                                       lambda m: f"COALESCE(REGEXP_EXTRACT(CAST({m.group(1)} as STRING), "
+                                       "'(?s)^(?:<(?=.*>\\z)|\"(?=.*\"\\z))(.*).\\z', 1), "
+                                       f"REGEXP_EXTRACT(CAST({m.group(1)} as STRING), '(?s)^(?!_:)(.*)\\z', 1))",
+                                       result_expression)
+            result_expression = re.sub(r'SQL_DIALECT_STRING_OF_TERM{([^{}]*)}',
+                                       lambda m: f"REGEXP_EXTRACT(CAST({m.group(1)} as STRING), "
+                                       "'(?s)^\"(.*)\"\\z', 1)",
+                                       result_expression)
+            result_expression = result_expression.replace('SQL_DIALECT_CHAR_OPEN', "CHR(123)") \
+                .replace('SQL_DIALECT_CHAR_CLOSE', "CHR(125)")
             result_expression = re.sub(r'SQL_DIALECT_STRIP_LITERAL{([^{}]*)}',
                                        r"REGEXP_REPLACE(CAST(\1 as STRING), '\"', '')",
                                        result_expression)

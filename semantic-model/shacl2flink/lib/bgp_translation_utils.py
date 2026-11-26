@@ -628,7 +628,13 @@ Consider to use a variable and FILTER.')
                 f"'<'||{column}||'>'" if kind else f"'\"'||{column}||'\"'"
             other = get_rdf_join_condition(ngsildvar[0], ctx['property_variables'], ctx['entity_variables'],
                                            ctx['time_variables'], local_ctx['bounds'])
-            if ngsildvar[0] in ctx.get('computed', ()):
+            if ngsildvar[0] in ctx.get('lexicals', {}):
+                # a text BIND gave, as it was built; a text is no IRI
+                same = f'{column} = {ctx["lexicals"][ngsildvar[0]]} AND SQL_DIALECT_NUMBER{{{column}}} IS NULL' \
+                    if kind is not True else 'FALSE'
+                if kind == utils.ANY_VALUE:
+                    same += f" AND {column.replace('attributeValue', 'nodeType')} <> '@id'"
+            elif ngsildvar[0] in ctx.get('computed', ()):
                 # what BIND gives is a term already: its text is the value's
                 same = f'{column} = SQL_DIALECT_STRIP_LITERAL{{{bound}}}'
             elif ngsildvar[0] not in ctx['property_variables'] and kind is not True and \

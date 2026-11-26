@@ -914,6 +914,22 @@ Multiplicative Expression
 </td>
 <td style="font-size: 50px;color: green;">&#10003;</td>
 </tr>
+<tr>
+<td>
+
+```
+CONCAT, STR
+```
+</td>
+<td>
+
+```turtle
+CONCAT("Max: ", STR(?value))
+```
+
+</td>
+<td style="font-size: 50px;color: green;">&#10003;</td>
+</tr>
 </table>
 
 A build reports every expression it cannot compile, with its shape, file, line,
@@ -958,6 +974,45 @@ A constant in a pattern compares like `=` in a `FILTER`: `[ ngsild:hasValue 7 ]`
 also finds a declared double `7.0`, and `"10"` also the number 10, because the
 platform keeps no datatype for a plain value.
 
+### Texts
+
+`CONCAT` and `STR` give the text SPARQL gives, also nested in each other and in
+`IF`, in a `BIND`, a `FILTER` and as the value a rule constructs. Every
+character of a text is kept, quotes, `<`, `>` and braces too. `STR` of an IRI is
+the IRI, of a literal its text, and of a time (`ngsild:observedAt`) its ISO form
+with milliseconds, `2024-02-28T13:52:32.000Z`. An unbound argument makes the
+result unbound, as does `STR` of a blank node of the knowledge, and an `IF`
+whose condition has no value. A text is no number, also when it reads like one:
+it is not equal to a number, and not less or more than one.
+
+`STR` of a truth value is `true` or `false`, of `NOW()` the ISO form of a time.
+
+`CONCAT` takes texts. A constant number, truth value or IRI, a number or truth
+value an expression gives, an IRI value, an entity or a time as its argument,
+also as a branch of an `IF`, is refused; write `STR(…)` around it. What the
+knowledge holds or `BIND` computed is a text if it is a string, and no result
+otherwise, as in SPARQL; the knowledge keeps no datatype for a literal other
+than a number, so a truth value or a date of the knowledge counts as a string.
+The value of a Property is taken as the text the platform holds, also when it
+is a number, where a SPARQL engine gives no result for `CONCAT` of a number; an
+IRI value gives no result. The result is always a simple literal: a language
+tag is not kept.
+
+Texts are ordered by their characters. A text and something that is no text (a
+number, an IRI, an entity, a truth value) are not ordered: the comparison has
+no value, so neither it nor its negation holds. `=` and `!=` compare a text with
+a number as two different terms: never equal, always unequal. A Property's value
+that reads like a number is taken as a number here, as the platform keeps no
+datatype for it: it is neither ordered against a text nor equal to one.
+
+A number is written as the platform holds it, e.g. `0` for a value declared
+`xsd:double` and sent as `0`, where a SPARQL engine may write `0.0`.
+
+A message builds its text with `BIND(CONCAT(…) AS ?text)` and
+`sh:message "{?text}"`. A variable that `BIND` gives is shown as its literal,
+in quotes: the alert's text is `"Max: 11"`, not `Max: 11`. An unbound variable
+is shown as `NULL`.
+
 ### The knowledge
 
 `ex:a/ex:b`, `^ex:a` and `rdfs:subClassOf*` are the supported paths;
@@ -971,7 +1026,8 @@ connect the two.
 These are refused by name: an attribute read without its instance (`?e ex:a ?v`,
 `?e ?p ?o`), sub-attributes, `ngsild:unitCode`, `ngsild:datasetId`, list and JSON
 values, `UNION`, `MINUS`, `VALUES`, sub-selects, `ORDER BY`, `LIMIT`, other paths,
-functions other than the casts, `BOUND`, `IF`, `NOW` and the UDFs, variables that
+functions other than the casts, `BOUND`, `IF`, `CONCAT`, `STR`, `NOW` and the
+UDFs (other functions on texts such as `STRLEN`, `SUBSTR`, `REGEX`), variables that
 nothing binds, patterns that are not connected with `$this`, and an `OPTIONAL`
 whose patterns are connected with each other only through something outside of it,
 with a `FILTER` around attributes read before it, and `[ ]` as the subject of
