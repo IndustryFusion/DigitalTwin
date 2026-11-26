@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from rdflib import BNode, XSD, Literal
+from rdflib import BNode, XSD, Literal, RDF, URIRef
 import json
 import os
 import sys
@@ -192,6 +192,23 @@ def get_entity_id_and_parentId(node, name, target_datasetId, g):
     return id, entityId, parentId
 
 
+def add_untargeted_entities(model, tables):
+    """Add an entity row for each entity of the model not in tables yet.
+
+    An entity is a typed IRI node of the model graph; attributes are blank
+    nodes. An entity with several types gets one row, with the type first in
+    IRI order.
+    """
+    known = {id for ids in tables.values() for id in ids}
+    for id, type in sorted(model.subject_objects(RDF.type)):
+        idstr = str(id)
+        if not isinstance(id, URIRef) or idstr in known:
+            continue
+        known.add(idstr)
+        key = utils.camelcase_to_snake_case(utils.strip_class(str(type)))
+        tables.setdefault(key, {})[idstr] = [idstr, str(type), 'CAST(NULL as BOOLEAN)', 'CURRENT_TIMESTAMP']
+
+
 def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
     utils.create_output_folder(output_folder)
     with open(os.path.join(output_folder, "ngsild-models.sqlite"), "w")\
@@ -295,6 +312,11 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
                 tables[key][idstr].append(type.toPython())
                 tables[key][idstr].append('CAST(NULL as BOOLEAN)')
                 tables[key][idstr].append('CURRENT_TIMESTAMP')
+        # Every other entity of the model as well (#1113). The platform loads
+        # every entity, whether or not a shape targets its type, and a
+        # relationship's sh:class check looks the linked entity up here: an
+        # entity left out was reported as not linked offline but not on Flink.
+        add_untargeted_entities(model, tables)
         for type, ids in sorted(tables.items(), key=str):
             for id, table in sorted(ids.items(), key=str):
                 print(f'INSERT INTO `{entity_table_name}` VALUES',

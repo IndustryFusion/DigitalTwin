@@ -1,0 +1,20 @@
+[
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:m:1",
+    "type": "iffBaseEntities:Machine",
+    "iffBaseEntities:hasFolder": {
+      "type": "Relationship",
+      "object": "urn:f:missing"
+    }
+  },
+  {
+    "@context": "https://industryfusion.github.io/contexts/tests/context2.jsonld",
+    "id": "urn:f:1",
+    "type": "iffBaseEntities:Folder",
+    "iffBaseEntities:hasName": {
+      "type": "Property",
+      "value": "folder"
+    }
+  }
+]

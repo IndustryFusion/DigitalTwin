@@ -252,3 +252,75 @@ def test_a_list_of_strings_survives_as_valid_sql():
     conn.execute('CREATE TABLE t (v TEXT)')
     conn.execute(f'INSERT INTO t VALUES ({rendered})')
     assert conn.execute('SELECT v FROM t').fetchone()[0] == '["abc","def"]'
+
+
+# Every entity of the model gets an entity row, whether or not a shape targets
+# its type (#1113). A relationship's sh:class check looks the linked entity up
+# in that table; an entity left out was reported as "not linked" offline while
+# the platform, which loads every entity, reported nothing.
+# tests/sql-tests/kms-constraints/test32 is the end-to-end case.
+UNTARGETED_SHAPES = """
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix ngsild: <https://uri.etsi.org/ngsi-ld/> .
+@prefix ex: <https://example.org/> .
+ex:MachineShape a sh:NodeShape ; sh:targetClass ex:Machine ;
+    sh:property [ sh:path ex:hasFolder ;
+        sh:property [ sh:path ngsild:hasObject ; sh:class ex:Folder ] ] .
+"""
+
+UNTARGETED_MODEL = """
+@prefix ngsild: <https://uri.etsi.org/ngsi-ld/> .
+@prefix ex: <https://example.org/> .
+<urn:m:1> a ex:Machine ;
+    ex:hasFolder [ a ngsild:Relationship ; ngsild:hasObject <urn:f:1> ] .
+<urn:f:1> a ex:Folder ;
+    ex:hasName [ a ngsild:Property ; ngsild:hasValue "folder" ] .
+<urn:e:1> a ex:Empty .
+<urn:t:1> a ex:Beta, ex:Alpha .
+"""
+
+
+def entity_rows(tmp_path):
+    shacl = tmp_path / 'shacl.ttl'
+    shacl.write_text(UNTARGETED_SHAPES)
+    knowledge = tmp_path / 'knowledge.ttl'
+    knowledge.write_text('@prefix ex: <https://example.org/> .\nex:Folder a ex:Class .\n')
+    model = tmp_path / 'model.ttl'
+    model.write_text(UNTARGETED_MODEL)
+    output = tmp_path / 'output'
+    create_ngsild_models.main(str(shacl), str(knowledge), str(model), str(output))
+    text = (output / 'ngsild-models.sqlite').read_text()
+    return [line for line in text.splitlines()
+            if line.endswith(', CAST(NULL as BOOLEAN), CURRENT_TIMESTAMP);')]
+
+
+def test_an_entity_no_shape_targets_is_loaded(tmp_path):
+    rows = entity_rows(tmp_path)
+    assert any(row.startswith("('urn:m:1', 'https://example.org/Machine'") for row in rows)
+    assert any(row.startswith("('urn:f:1', 'https://example.org/Folder'") for row in rows), \
+        'the linked entity whose type no shape targets was left out'
+
+
+def test_an_entity_without_attributes_is_loaded(tmp_path):
+    assert any(row.startswith("('urn:e:1', 'https://example.org/Empty'")
+               for row in entity_rows(tmp_path))
+
+
+def test_an_entity_with_two_types_gets_one_row(tmp_path):
+    rows = [row for row in entity_rows(tmp_path) if row.startswith("('urn:t:1'")]
+    assert rows == ["('urn:t:1', 'https://example.org/Alpha', CAST(NULL as BOOLEAN), CURRENT_TIMESTAMP);"]
+
+
+def test_no_attribute_and_no_knowledge_node_becomes_an_entity(tmp_path):
+    ids = {row.split("'")[1] for row in entity_rows(tmp_path)}
+    assert ids == {'urn:m:1', 'urn:f:1', 'urn:e:1', 'urn:t:1'}
+
+
+def test_a_targeted_entity_keeps_its_row():
+    import rdflib
+    model = rdflib.Graph()
+    model.parse(data=UNTARGETED_MODEL, format='turtle')
+    tables = {'machine': {'urn:m:1': ['urn:m:1', 'https://example.org/Machine', 'x', 'y']}}
+    create_ngsild_models.add_untargeted_entities(model, tables)
+    assert tables['machine'] == {'urn:m:1': ['urn:m:1', 'https://example.org/Machine', 'x', 'y']}
+    assert tables['folder']['urn:f:1'][1] == 'https://example.org/Folder'
