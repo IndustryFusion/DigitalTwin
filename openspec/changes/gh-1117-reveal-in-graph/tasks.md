@@ -1,0 +1,33 @@
+# Tasks
+
+Unit tests are in `semantic-model/SemForge-SDK/tests/unit/test_reveal_in_graph.py`
+(the page scripts in headless Chromium, the extension with the Node harness),
+end-to-end tests in `vscode/test/e2e/suite/05c-reveal-in-graph.test.js`
+("e2e:"), both by the test's name.
+
+## 1. The path in the page
+
+- [x] 1.1 Find the paths backwards from the entity to a root of the graph, shortest first, bounded; verify "Only the path" (`test_only_the_path_is_shown`, e2e: "from an entity of the main model, again on its open page, and after a redraw"), "Inside a sub-attribute" (`test_a_relationship_inside_a_sub_attribute`, `test_deeper_sub_attributes_keep_what_they_are_in`, `test_two_sub_attributes_of_one_name_are_two_paths`, `test_inside_an_earlier_observation`), and `test_an_entity_of_two_files_is_reached_by_either`
+- [x] 1.2 Step through the paths, show the rest of a card, show the whole graph; verify "The next path" (`test_the_next_path_and_around_again`), "The rest and the whole graph" (`test_the_other_attributes_and_the_whole_graph_are_one_click_away`, `test_what_was_open_in_the_graph_comes_back`; the rest button's words in `test_the_other_attributes_and_the_whole_graph_are_one_click_away`); e2e: "in a package of hundreds of entities, every way ends at its entity, in sight" (several paths revealed in turn on the open page)
+- [x] 1.3 End circles and bound the search; verify "A circle" (`test_a_root_is_its_own_path_and_a_circle_ends`, `test_an_entity_that_only_points_at_itself`), "Very many paths" (`test_very_many_paths_are_bounded_and_the_shortest_is_there`), "Exactly twenty paths" (`test_or_more_only_when_there_is_more`), "Hundreds of entities" (`test_every_entity_of_a_package_of_hundreds_has_its_path`, e2e: "in a package of hundreds of entities, every way ends at its entity, in sight")
+- [x] 1.4 Keep the path across a redraw by the number of the request; verify "A validation redraws the page" (`test_the_path_stays_when_the_page_is_drawn_again`, `test_drawn_again_it_takes_neither_the_focus_nor_the_scroll`, `test_drawn_again_before_it_was_seen_it_is_gone_to`, e2e: "from an entity of the main model, again on its open page, and after a redraw"), "The entity is gone" (`test_an_entity_gone_when_the_page_is_drawn_again`), "Opened at an entity, then revealed" (`test_a_path_from_a_page_opened_at_an_entity_stays`), `test_left_it_does_not_come_back_when_the_page_is_drawn_again`, "Its tab is shown again" (`test_a_tab_shown_again_does_not_bring_an_older_path_back`), "A filter set on a path" (`test_a_filter_set_on_a_path_is_remembered_at_once`), "A reveal that failed" (`test_a_failed_reveal_and_a_jump_are_not_repeated_by_a_redraw`), and the matrix of view, filter, open card, path, next path, rest, filter on a path and path left, for the same and an older request (`test_what_the_page_keeps_when_it_is_drawn_again`)
+- [x] 1.5 Leave the path for Graph, All, a filter, a violation; verify "A filter" (`test_the_path_is_left_for_the_cards_a_filter_and_a_violation`, `test_a_filter_does_not_hide_the_path`), and "Revealed in the graph" of editor-layout (`test_a_filter_does_not_hide_the_path`, which opens a page whose last view was All; e2e: "from an entity of a test case: in the page of that case")
+- [x] 1.6 Say an entity that is not on the page; verify "Not on the page" (`test_an_entity_not_on_the_page_is_said`, `test_an_open_page_is_asked_and_one_that_cannot_answer_is_drawn`)
+- [x] 1.7 Match ids as written and escape them; verify "An id with markup" (`test_ids_of_any_spelling`, `test_a_row_says_what_it_points_at_as_written`), "A prefixed id from Knowledge and a type page" (`test_an_id_the_graph_spells_out_finds_its_card`, `test_a_card_says_its_id_spelled_out`, `test_a_use_in_knowledge_names_the_entity_as_written_and_its_file`, e2e: "an id written with a prefix, from Knowledge; a relative one, from the type page"), "A relative id from a type page" (same e2e, `test_an_id_the_graph_spells_out_finds_its_card`); "A relationship to a list" (`test_reveal_only_on_a_relationship_to_one_entity`, `test_a_relationship_to_an_object_says_its_id`), `test_a_use_keeps_the_places_of_every_spelling`, `test_a_prefixed_relationship_keeps_its_type_and_short_id_in_the_graph`; e2e: "in a package of hundreds of entities…" (ids without a scheme)
+
+## 2. The ways in
+
+- [x] 2.1 Put the button and the right-click context on every id of the pages and on the graph's cards; verify "From an id on a page" (`test_every_place_an_id_stands_has_its_button`, `test_from_an_id_on_the_page_and_in_the_graph`, `test_ids_of_any_spelling`), e2e: "from an entity of the main model, again on its open page, and after a redraw" (the page's right-click context)
+- [x] 2.2 Add the two commands and their menus, not in the palette; verify "From a row of the main model" (e2e: "from an entity of the main model…"), "From a row of a test case" (e2e: "from an entity of a test case: in the page of that case", `test_the_page_that_holds_it_opens_on_its_path`), `test_the_menus`, `test_extension_activates.py`, `test_extension_commands.py`
+- [x] 2.3 Wire the type and shape pages, each in its own package; verify "From a type page" (`test_from_the_type_page`, `test_the_button_is_what_these_pages_post`, e2e: "from an instance on a type page, and from a use in Knowledge") and `test_from_the_shape_page`
+- [x] 2.4 Add `semforge/pageOfFile` and open the page that holds the entity; verify "A use in an included file" (`test_which_page_shows_a_file`, `test_a_row_of_knowledge_names_its_file`, e2e: "from an instance on a type page, and from a use in Knowledge"), "A file no page shows" (`test_which_page_shows_a_file`, `test_a_file_no_page_shows_is_said`), "The page is open" (`test_an_open_page_is_asked_and_one_that_cannot_answer_is_drawn`, which also checks that it keeps what it was opened at; e2e: "from an entity of the main model…"), `test_an_include_is_where_a_case_reads_it`, `test_a_row_of_the_view_is_known_by_its_key`, `test_a_page_drawn_for_another_case_is_not_the_one_in_sight`, `test_lsp_sweep.py`
+- [x] 2.5 Describe it in the extension's README; verify by reading the rendered README
+
+## 3. Copy on a page's id (after PR #1110 is merged)
+
+- [x] 3.1 Offer Copy entity and Copy with subtree in the page's right-click menu and copy the entity as the page has it; verify "Copied from a page's id" (`test_copy_from_an_id_on_a_page` in `test_copy_paste.py`, e2e: "copied from an id on a page" in `33-copy-paste.test.js`)
+
+## 4. Checks
+
+- [x] 4.1 Run the end-to-end suite file with `SEMFORGE_E2E_GREP="Reveal in graph view" make test-e2e`, and the whole e2e suite once; verify all pass
+- [x] 4.2 Run the SDK unit suite with coverage (over 80 % of the changed code), flake8 and `openspec validate --all --strict`; verify all pass
