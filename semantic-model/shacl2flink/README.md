@@ -175,6 +175,16 @@ make test-sqlite
 make flink-deploy
 ```
 
+It ends by restarting Kafka Connect, so that Debezium publishes every existing
+entity again and the deployed validation validates it. The job reads entities
+and attributes from the latest offset, so the restart waits until the operator
+has taken over the deployed statementset, its job runs with all its tasks and
+its readers of the entities and attributes hold their partitions
+(`make restart-connect`, `restart_connect.sh`). If that is not reached within
+`VALIDATION_START_TIMEOUT` seconds (1800), it fails, says what is missing and
+leaves Kafka Connect alone: the existing entities are then not validated until
+`make restart-connect` succeeds or the next regular re-snapshot.
+
 A deploy over a running validation starts a new job without state, and that job
 replays the raises of the previous one from `constraint_trigger_table`: alerts
 whose constraint is satisfied now stay open. Follow it with

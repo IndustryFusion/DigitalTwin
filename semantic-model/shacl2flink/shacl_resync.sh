@@ -74,6 +74,7 @@ SNAPSHOT_TIMEOUT=${RESYNC_SNAPSHOT_TIMEOUT:-900}
 QUIET=${RESYNC_QUIET:-30}
 PROCESSED_TIMEOUT=${RESYNC_PROCESSED_TIMEOUT:-1200}
 CONNECT_TIMEOUT=${RESYNC_CONNECT_TIMEOUT:-30}
+# shellcheck disable=SC2034  # read in validation_job.sh
 POLL=${RESYNC_POLL:-5}
 KUBECTL_TIMEOUT=${RESYNC_KUBECTL_TIMEOUT:-120}
 FORCE=${RESYNC_FORCE:-false}
@@ -93,20 +94,13 @@ ALERTS_TOPIC=${ALERTS_TOPIC:-iff.alerts}
 # tables of its SQL (table_definition.sql). Known before its new job has read
 # anything, when its sources report no topic yet.
 CORE_SERVICES_TOPICS=${CORE_SERVICES_TOPICS:-iff.alerts.bulk iff.ngsild.attributes iff.ngsild.attributes_insert}
-# The validation's sources that start at the latest offset (entities in
-# create_ngsild_tables.py, attributes in create_core_tables.py): a new job
-# sees only what is written after its readers are placed, so the re-snapshot
-# must wait for that.
-LATEST_SOURCES=${RESYNC_LATEST_SOURCES:-iff.ngsild.entities iff.ngsild.attributes}
-# The same for Core Services, which reads iff.alerts.bulk from the latest
-# offset (CoreServices.java): its reader must hold its partition before the
-# re-snapshot, or the raises written before that are never forwarded.
+# Core Services reads iff.alerts.bulk from the latest offset
+# (CoreServices.java), as the validation reads its entities and attributes
+# (LATEST_SOURCES, validation_job.sh): its reader must hold its partition
+# before the re-snapshot, or the raises written before that are never
+# forwarded.
 CORE_LATEST_SOURCES=${RESYNC_CORE_LATEST_SOURCES:-iff.alerts.bulk}
 DEBEZIUM_BRIDGE_GROUP=${DEBEZIUM_BRIDGE_GROUP:-debeziumBridgeGroup}
-ALERTA_SERVICE=${ALERTA_SERVICE:-svc/alerta}
-ALERTA_PORT=${ALERTA_PORT:-8080}
-FLINK_SERVICE=${FLINK_SERVICE:-svc/flink-jobmanager-rest}
-FLINK_PORT=${FLINK_PORT:-8081}
 SHACL_FILTER="service=SHACL%20Validator"
 # Every status but closed, as alternatives of one filter: Alerta takes a key
 # given several times as any of its values.
@@ -142,14 +136,13 @@ esac
 WORK=$(mktemp -d)
 RESYNC_BASE="${WORK}/base.core"
 ALERTA_HEADER="${WORK}/alerta.header"
-cleanup() {
-    local pid
-    if [ -f "${WORK}/pids" ]; then
-        while read -r pid; do kill "$pid" 2>/dev/null || true; done < "${WORK}/pids"
-    fi
-    rm -rf "$WORK"
-}
-trap cleanup EXIT
+# The validation's latest-offset sources (LATEST_SOURCES, entities and
+# attributes unless RESYNC_LATEST_SOURCES names others) and the helpers come
+# from validation_job.sh, which restart_connect.sh sources as well.
+LATEST_SOURCES=${RESYNC_LATEST_SOURCES:-}
+# shellcheck disable=SC1091
+. "$(dirname "${BASH_SOURCE[0]}")/validation_job.sh"
+trap cleanup_work EXIT
 
 T0=$(date +%s)
 if [ "$REPLACE" = fresh ]; then
@@ -193,30 +186,6 @@ fmt() {
     date -u -d "@$1" +%Y-%m-%dT%H:%M:%SZ
 }
 
-# wait_until <limit> <what> <check> [arguments]: runs <check> every POLL
-# seconds until it succeeds; <check> prints what is still missing. Fails the
-# step after <limit> seconds.
-wait_until() {
-    local limit=$1 what=$2 check=$3 deadline
-    shift 3
-    deadline=$(( $(date +%s) + limit ))
-    while true; do
-        if "$check" "$@" > "${WORK}/detail"; then
-            return 0
-        fi
-        if [ "$(date +%s)" -ge "$deadline" ]; then
-            fail "${what} not reached within ${limit}s: $(tr '\n' ' ' < "${WORK}/detail" | sed 's/ *$//')"
-        fi
-        sleep "$POLL"
-    done
-}
-
-# Every kubectl call is bounded: an exec or a request that hangs fails the
-# check or the step that made it instead of the whole resync.
-kube() {
-    timeout "$KUBECTL_TIMEOUT" kubectl -n "$NAMESPACE" "$@"
-}
-
 # The Kafka tools run in the broker pod with a small heap, one at a time, as
 # tools/ttl_test.py runs them. Standard input goes to the tool.
 kafka_tool() {  # kafka_tool <tool> <arguments>
@@ -229,70 +198,6 @@ offsets() {
     local out
     out=$(kafka_tool kafka-get-offsets.sh "--topic $1 --time $2" 2>/dev/null) || return 1
     awk -F: -v t="$1" 'NF >= 3 && $(NF-2) == t { print $(NF-1), $NF }' <<<"$out"
-}
-
-free_port() {
-    python3 -c 'import socket; s = socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1])'
-}
-
-# A port-forward per service, as fuseki_kms.sh reaches Fuseki, started again
-# when it ended (it follows one pod).
-forward() {  # forward <name> <service> <remote port> <probe path>
-    local name=$1 svc=$2 rport=$3 probe=$4 port pid n=0 code
-    port=$(free_port)
-    kubectl -n "$NAMESPACE" port-forward "$svc" "${port}:${rport}" >/dev/null 2>&1 &
-    pid=$!
-    echo "$pid" >> "${WORK}/pids"
-    echo "${pid} ${port}" > "${WORK}/forward.${name}"
-    while true; do
-        code=$(curl -s -g -m 5 -o /dev/null -w '%{http_code}' "http://127.0.0.1:${port}${probe}") || code=000
-        [ "$code" != "000" ] && return 0
-        kill -0 "$pid" 2>/dev/null || { echo "the port-forward to ${svc} ended"; return 1; }
-        [ "$n" -lt "$CONNECT_TIMEOUT" ] || { echo "${svc} did not answer through a port-forward within ${CONNECT_TIMEOUT}s"; return 1; }
-        sleep 1
-        n=$(( n + 1 ))
-    done
-}
-
-base_url() {  # base_url <name>: the local URL of a live port-forward, started when needed
-    local pid="" port=""
-    if [ -f "${WORK}/forward.${1}" ]; then read -r pid port < "${WORK}/forward.${1}"; fi
-    if [ -z "$pid" ] || ! kill -0 "$pid" 2>/dev/null; then
-        case "$1" in
-            alerta) forward alerta "$ALERTA_SERVICE" "$ALERTA_PORT" /api/ >&2 || return 1 ;;
-            flink) forward flink "$FLINK_SERVICE" "$FLINK_PORT" /config >&2 || return 1 ;;
-        esac
-        read -r pid port < "${WORK}/forward.${1}"
-    fi
-    echo "http://127.0.0.1:${port}"
-}
-
-# http <alerta|flink> <method> <path> [json body]: prints "<code> <body>",
-# code 000 when the service can't be reached
-http() {
-    local base out code auth=()
-    out="${WORK}/body.$$.${RANDOM}"
-    if ! base=$(base_url "$1"); then
-        echo "000 "
-        return 0
-    fi
-    # The key goes to curl from a file, never in its arguments.
-    [ "$1" = alerta ] && auth=(-H "@${ALERTA_HEADER}")
-    if [ $# -ge 4 ]; then
-        code=$(curl -s -g -m 30 -o "$out" -w '%{http_code}' -X "$2" "${auth[@]}" \
-            -H 'Content-Type: application/json' --data-binary "$4" "${base}$3") || code=000
-    else
-        code=$(curl -s -g -m 30 -o "$out" -w '%{http_code}' -X "$2" "${auth[@]}" "${base}$3") || code=000
-    fi
-    echo "${code} $(tr -d '\n' < "$out" 2>/dev/null)"
-    rm -f "$out"
-}
-
-flink_get() {  # flink_get <path>: the body of a 200 answer, or fails
-    local answer
-    answer=$(http flink GET "$1")
-    [ "${answer%% *}" = "200" ] || return 1
-    echo "${answer#* }"
 }
 
 alerta_total() {  # alerta_total <query>: the total of matching alerts, or fails
@@ -599,24 +504,6 @@ step_reset() {
 
 # ---------------------------------------------------------------- start the validation job
 
-validation_running() {  # validation_running <job before>
-    local status job overview
-    status=$(kube get beamsqlstatementset "$STATEMENTSET" -o jsonpath='{.status.state} {.status.job_id}' 2>/dev/null) \
-        || { echo "the statementset can't be read"; return 1; }
-    job=${status#* }
-    if [ "${status%% *}" != "RUNNING" ] || [ -z "$job" ] || [ "$job" = "$status" ] || [ "$job" = "$1" ]; then
-        echo "the statementset reports ${status:-nothing}"
-        return 1
-    fi
-    overview=$(flink_get /jobs/overview) || { echo "Flink doesn't answer"; return 1; }
-    if ! jq -e --arg jid "$job" '.jobs[] | select(.jid == $jid and .state == "RUNNING" and .tasks.running == .tasks.total)' \
-        <<<"$overview" >/dev/null 2>&1; then
-        echo "the job ${job} doesn't run with all its tasks yet"
-        return 1
-    fi
-    echo "$job" > "${WORK}/ss_job"
-}
-
 step_start() {
     local old
     [ -s "$SAVED" ] || fail "the stopped statementset is not kept in ${SAVED}"
@@ -636,16 +523,6 @@ step_start() {
     # registers the metrics of a partition once it has its split.
     wait_until "$START_TIMEOUT" "the latest-offset sources of the new job placed" sources_placed "$(cat "${WORK}/ss_job")"
     echo "  its readers of ${LATEST_SOURCES// /, } are placed"
-}
-
-sources_placed() {  # sources_placed <job id> [topics, LATEST_SOURCES by default]
-    local t missing=""
-    job_sources "$1" > "${WORK}/sources.start" || { echo "Flink doesn't answer for the job $1"; return 1; }
-    for t in ${2:-$LATEST_SOURCES}; do
-        grep -qF ".KafkaSourceReader.topic.$(metric_name "$t").partition." "${WORK}/sources.start" \
-            || missing="${missing} ${t}"
-    done
-    [ -z "$missing" ] || { echo "no reader of the job $1 has a partition of:${missing}"; return 1; }
 }
 
 # ---------------------------------------------------------------- the re-snapshot
@@ -689,7 +566,7 @@ snapshots_done() {
 
 step_snapshot() {
     local deleted c
-    # As flink-deploy does. The kafka-connect-restart CronJob stays as it is:
+    # As restart_connect.sh does. The kafka-connect-restart CronJob stays as it is:
     # a snapshot it starts after the resync began counts as well.
     kube delete pod -l app.kubernetes.io/instance=kafka-connect --wait=false >/dev/null \
         || fail "the Connect pods can't be deleted"
@@ -701,19 +578,6 @@ step_snapshot() {
 }
 
 # ---------------------------------------------------------------- processed
-
-# The Kafka sources of a Flink job, from the metrics of its vertices:
-# "<vertex> <metric>" per line, every currentOffset per topic and partition
-# and every pendingRecords.
-job_sources() {  # job_sources <job id>
-    local job vid ids
-    job=$(flink_get "/jobs/$1") || return 1
-    for vid in $(jq -r '.vertices[]?.id' <<<"$job"); do
-        ids=$(flink_get "/jobs/$1/vertices/${vid}/metrics") || return 1
-        jq -r --arg v "$vid" '.[]?.id | select(test("\\.KafkaSourceReader\\.topic\\..+\\.partition\\.[0-9]+\\.currentOffset$") or test("\\.pendingRecords$"))
-            | "\($v) \(.)"' <<<"$ids"
-    done
-}
 
 # The metric values of a job's sources: "<metric> <value>" per line.
 source_values() {  # source_values <job id> <sources file>
@@ -732,14 +596,6 @@ bridge_lag() {  # the summed lag of the debezium-bridge's group, or fails
     # without a committed offset ("-") counts as not read.
     awk -v g="$DEBEZIUM_BRIDGE_GROUP" '$1 == g && $3 ~ /^[0-9]+$/ { found = 1; lag += ($6 ~ /^[0-9]+$/ ? $6 : 1) }
         END { if (!found) exit 1; print lag + 0 }' <<<"$out"
-}
-
-# The topic as the sources' metric names carry it: Flink's metric query
-# service replaces '.', ' ', ':' and ',' with '_' in every part of a name, so
-# iff.alerts.bulk appears as iff_alerts_bulk.
-metric_name() {
-    local n=${1//[ .:,]/_}
-    echo "$n"
 }
 
 source_topics() {  # source_topics <sources file>...: the topics as named in the metrics

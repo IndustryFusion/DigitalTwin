@@ -183,9 +183,16 @@ flink-deploy: clean
 	make enable-strimzi
 	# Before the check: a failing check must not leave Fuseki on the old package.
 	make fuseki-deploy-kms
+	make restart-connect
 	make test-flink-is-deployed
-	sleep 2
-	kubectl -n $(NAMESPACE) -l "app.kubernetes.io/instance"="kafka-connect" delete pod
+
+
+# Publish all existing entities again (a Debezium re-snapshot) once the
+# deployed validation reads them, so that it validates them. Fails, and leaves
+# Kafka Connect alone, when the validation doesn't run in time
+# (VALIDATION_START_TIMEOUT, seconds).
+restart-connect:
+	NAMESPACE=$(NAMESPACE) ./restart_connect.sh
 
 
 # Bring the SHACL alerts in Alerta in line with what the deployed validation
@@ -229,16 +236,22 @@ test-full-flink-deployment:
 #
 # A standard platform install deploys NO shacl-validation, so this target owns
 # the whole lifecycle: it compiles and deploys its own throwaway KMS, runs the
-# bats suite against it, and undeploys again. The KMS in $(KMS) is never
+# bats suites against it, and undeploys again. The KMS in $(KMS) is never
 # touched -- SHACL/KNOWLEDGE/MODEL are overridden for the sub-makes, which
 # `make` forwards automatically because they are set on the command line.
 #
-# Both suites run against the one deployment. test-shacl-flink-e2e drives
-# Kafka directly, so a failure there is Flink's or the generated SQL's;
-# test-shacl-flink-scorpio-e2e drives the NGSI-LD API and reads Alerta, so a
-# failure there is somewhere in Postgres, the bridges or the alert path. Run
-# together they say not just "the SQL is right" but "deleting an entity closes
-# its alert", which is the property operators depend on.
+# test-shacl-flink-deploy runs first and makes the deployment: an entity
+# created before it must be validated after it, and so must the entities after
+# a deployment over the running validation (#1114). It deploys twice, first
+# without RocksDB, so that the second deployment replaces the job.
+#
+# The other suites run against the deployment it leaves behind.
+# test-shacl-flink-e2e drives Kafka directly, so a failure there is Flink's or
+# the generated SQL's; test-shacl-flink-scorpio-e2e drives the NGSI-LD API and
+# reads Alerta, so a failure there is somewhere in Postgres, the bridges or
+# the alert path. Run together they say not just "the SQL is right" but
+# "deleting an entity closes its alert", which is the property operators
+# depend on.
 #
 # test-shacl-flink-resync runs last: it runs `make shacl-resync` without and
 # with REPLACE=fresh against the same deployment and checks the alerts after
@@ -249,13 +262,14 @@ test-full-flink-deployment:
 test-flink-e2e: E2E_KMS := $(CURDIR)/tests/e2e-kms
 test-flink-e2e:
 	@echo deploy throwaway e2e KMS
-	$(MAKE) flink-deploy SHACL=$(E2E_KMS)/shacl.ttl KNOWLEDGE=$(E2E_KMS)/knowledge.ttl \
-		MODEL=$(E2E_KMS)/model-instance.jsonld
-	ln -fs ../../../../test/bats/lib tests/bats/lib || echo 'Bats framework not installed'
-	( cd tests/bats && bats test-shacl-flink-e2e test-shacl-flink-scorpio-e2e test-shacl-flink-resync ); rc=$$?; \
-		echo "the platform watchdog with the validation deployed"; \
-		VALIDATION_DEPLOYED=true bats $(CURDIR)/../../test/bats/test-jobs/platform-watchdog.bats || rc=1; \
-		rm -f tests/bats/lib; \
+	( cd tests/bats && bats test-shacl-flink-deploy ); rc=$$?; \
+		if [ $$rc -eq 0 ]; then \
+			ln -fs ../../../../test/bats/lib tests/bats/lib || echo 'Bats framework not installed'; \
+			( cd tests/bats && bats test-shacl-flink-e2e test-shacl-flink-scorpio-e2e test-shacl-flink-resync ) || rc=1; \
+			echo "the platform watchdog with the validation deployed"; \
+			VALIDATION_DEPLOYED=true bats $(CURDIR)/../../test/bats/test-jobs/platform-watchdog.bats || rc=1; \
+			rm -f tests/bats/lib; \
+		fi; \
 		$(MAKE) flink-undeploy SHACL=$(E2E_KMS)/shacl.ttl KNOWLEDGE=$(E2E_KMS)/knowledge.ttl \
 			MODEL=$(E2E_KMS)/model-instance.jsonld; \
 		exit $$rc
@@ -328,4 +342,4 @@ fuseki-undeploy-kms:
 clean:
 	@rm -rf $(OUTPUTDIR) merged-kms
 
-.PHONY: clean shacl-resync fuseki-deploy-kms fuseki-undeploy-kms test-flink-e2e test-opcua-shapes test-pyshacl-compare
+.PHONY: clean restart-connect shacl-resync fuseki-deploy-kms fuseki-undeploy-kms test-flink-e2e test-opcua-shapes test-pyshacl-compare
