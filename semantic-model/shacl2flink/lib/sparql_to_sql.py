@@ -44,6 +44,9 @@ dummyvar = 'dummyvar'
 properties = {}
 relationships = {}
 read_from = None
+# The projected variables of the last query translated that hold a term
+# ('"text"', '<iri>') and not the value of an attribute: what BIND computed.
+terms = set()
 # the column of an attribute's value, and nothing computed from one
 VALUE_COLUMN = re.compile(r'`\w+`\.`attributeValue`')
 g = Graph()
@@ -72,6 +75,9 @@ def translate_sparql(shaclfile, knowledgefile, sparql_query, target_class, lg):
     except Exception as e:
         raise utils.SparqlValidationFailed(f'The query does not parse: {e}')
     ctx = translate_query(parsed_query, target_class, sparql_query)
+    terms.clear()
+    computed = ctx.get('computed') or ()
+    terms.update(utils.create_varname(var) for var in ctx.get('PV') or () if var in computed)
     return ctx['target_sql'], ctx['sql_tables']
 
 

@@ -15,6 +15,7 @@
 #
 
 from unittest.mock import MagicMock, patch
+import importlib
 import lib.shacl_sparql_to_sql
 import lib.utils
 from munch import Munch
@@ -25,7 +26,7 @@ from munch import Munch
 @patch('lib.shacl_sparql_to_sql.utils')
 def test_translate(mock_utils, mock_add_variables_to_message, mock_translate_sparql,
                    monkeypatch):
-    def mock_add_variables_to_message(message):
+    def mock_add_variables_to_message(message, terms=(), sqlite=True):
         return message
     # The graph comes from utils.load_graph (utils is mocked here).
     g = MagicMock()
@@ -71,3 +72,16 @@ def test_translate(mock_utils, mock_add_variables_to_message, mock_translate_spa
     assert len(statementsets) == 1
     lower_sqlite = sqlite.lower()
     assert lower_sqlite.count('select') == 3
+
+
+def test_add_variables_to_message():
+    """An attribute value as it is, a term which BIND computed as its lexical form."""
+    # reloaded: other tests leave the function replaced
+    add_variables_to_message = importlib.reload(lib.shacl_sparql_to_sql).add_variables_to_message
+    sql = add_variables_to_message('v={?v} t={?text}!', {'text'}, True)
+    assert sql.startswith("v=' || IFNULL(`v`, 'NULL') || ' t=' || IFNULL(")
+    assert 'SQL_DIALECT' not in sql and '`text`' in sql
+    flink = add_variables_to_message('t={$text}', {'text'}, False)
+    assert flink.startswith("t=' || IFNULL(COALESCE(REGEXP_EXTRACT(CAST(`text` as STRING)")
+    assert flink.endswith(", 'NULL') || '")
+    assert add_variables_to_message('{?v}') == "' || IFNULL(`v`, 'NULL') || '"

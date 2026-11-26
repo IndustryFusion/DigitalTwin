@@ -6,6 +6,7 @@ from jinja2 import Template
 import lib.configs as configs
 import lib.utils as utils
 from lib.query_check import problem_of
+import lib.sparql_to_sql as sparql_to_sql
 from lib.sparql_to_sql import translate_sparql
 
 yaml = ruamel.yaml.YAML()
@@ -66,17 +67,27 @@ sql_check_sparql_base = """
 """  # noqa E501
 
 
-def add_variables_to_message(message):
+def add_variables_to_message(message, terms=(), sqlite=True):
     """Replace ?vars or $vars with SQL term
 
     For instance: "value is {?value}!" => "value is " || IFNULL(`value`, 'NULL') || '!'
+    A variable that holds a term (what BIND computed: '"text"', '<iri>') is
+    written as its lexical form, as SHACL fills a message.
     Args:
         message (string): string with {?var} or {$var} definition
+        terms: names of the variables which hold a term
+        sqlite: the dialect
 
     Returns:
         string: Adapted string
     """
-    return re.sub(r"\{([\?\$])(\w*)\}", r"' || IFNULL(`\2`, 'NULL') || '", message)
+    def column(match):
+        name = match.group(2)
+        value = f'`{name}`'
+        if name in terms:
+            value = utils.process_sql_dialect(f'SQL_DIALECT_STRIP_TERM{{{value}}}', sqlite)
+        return f"' || IFNULL({value}, 'NULL') || '"
+    return re.sub(r"\{([\?\$])(\w*)\}", column, message)
 
 
 def translate(shaclfile, knowledgefile, prefixes):
@@ -112,6 +123,7 @@ def translate(shaclfile, knowledgefile, prefixes):
         severitylabel = row.severitylabel.toPython() if row.severitylabel is not None else 'warning'
         try:
             sql_expression, tables = translate_sparql(shaclfile, knowledgefile, select, target_class, g)
+            terms = set(sparql_to_sql.terms)
             sql_expression_yaml = utils.process_sql_dialect(sql_expression, False)
             sql_expression_sqlite = utils.process_sql_dialect(sql_expression, True)
         except Exception as error:              # noqa: BLE001
@@ -132,7 +144,7 @@ def translate(shaclfile, knowledgefile, prefixes):
             sql_expression=sql_expression_yaml,
             targetclass=targetclass,
             types_constraints=types_constraints,
-            message=add_variables_to_message(message),
+            message=add_variables_to_message(message, terms, False),
             nodeshape=nodeshape,
             severity=severitylabel,
             sqlite=False
@@ -142,7 +154,7 @@ def translate(shaclfile, knowledgefile, prefixes):
             sql_expression=sql_expression_sqlite,
             targetclass=targetclass,
             types_constraints=types_constraints,
-            message=add_variables_to_message(message),
+            message=add_variables_to_message(message, terms, True),
             nodeshape=nodeshape,
             severity=severitylabel,
             sqlite=True

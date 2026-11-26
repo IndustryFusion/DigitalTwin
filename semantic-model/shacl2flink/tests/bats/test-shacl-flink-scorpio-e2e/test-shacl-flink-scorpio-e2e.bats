@@ -724,12 +724,13 @@ bare_event() {
                 assert_no_alert "urn:e2e-query-${name}:${RUN_ID}" "${SPARQL_CONSTRAINT}(E2EQuery${shape}Shape)"
         done
     done
-    # Every character of the text, as SPARQL builds it.
+    # Every character of the text, as SPARQL builds it, and nothing around it:
+    # the message gets the lexical form of ?text, not the quotes of its term.
     local text
     for spec in "${QUERY_MESSAGES[@]}"; do
         IFS='|' read -r name text <<< "${spec}"
         alert_texts_for "urn:e2e-query-${name}:${RUN_ID}" \
-            | grep -F -q "${SPARQL_CONSTRAINT}(E2EQueryMessageShape): \"${text}\"" || {
+            | grep -F -x -q "${SPARQL_CONSTRAINT}(E2EQueryMessageShape): ${text}" || {
             echo "# no alert text \"${text}\" on ${name}; open now:" >&3
             alert_texts_for "urn:e2e-query-${name}:${RUN_ID}" | sed 's/^/#   /' >&3
             return 1

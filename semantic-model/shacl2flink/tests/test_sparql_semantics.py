@@ -21,12 +21,14 @@ what an author sees while writing it -- and as the SQL it compiles to, in
 SQLite. The same entities must come out of both.
 """
 
+import importlib
 import json
 import os
 import re
 import sqlite3
 import subprocess
 import sys
+import tempfile
 
 import pytest
 import rdflib
@@ -700,3 +702,58 @@ def test_a_brace_is_a_character_code(platform):
     assert platform[2].execute(f'SELECT {sql}').fetchone()[0] == 'a{}'
     assert utils.process_sql_dialect('SQL_DIALECT_CHAR_OPEN || SQL_DIALECT_CHAR_CLOSE', False) == \
         'CHR(123) || CHR(125)'
+
+
+MESSAGES = {
+    'a text': ('$this ex:speed [ ngsild:hasValue ?v ] ; ex:limit [ ngsild:hasValue ?l ] . '
+               'BIND(CONCAT("Max violation: ", STR(?v), " > ", STR(?l)) AS ?text)'),
+    'delimiters in it': '$this ex:note [ ngsild:hasValue ?n ] . BIND(CONCAT("[", STR(?n), "] \\" <x>") AS ?text)',
+    'an IRI': '$this ex:state [ ngsild:hasValue ?s ] . BIND(IF(?s = ex:on, ex:off, ex:on) AS ?text)',
+    'a number': '$this ex:limit [ ngsild:hasValue ?l ] . BIND(?l + 1 AS ?text)',
+    'another name': ('$this ex:note [ ngsild:hasValue ?n ] . BIND(CONCAT("[", STR(?n), "]") AS ?a) '
+                     'BIND(?a AS ?text)'),
+    'an attribute': '$this ex:text [ ngsild:hasValue ?text ]',
+    'an IRI of an attribute': '$this ex:state [ ngsild:hasValue ?text ]',
+}
+
+
+def alert_texts(platform, where):
+    """The texts of the alerts of a constraint with sh:message "got {?text}"."""
+    # reloaded: the unit tests of the module replace functions in it
+    shacl_sparql_to_sql = importlib.reload(importlib.import_module('lib.shacl_sparql_to_sql'))
+    root = tempfile.mkdtemp()
+    shacl = os.path.join(root, 'shacl.ttl')
+    query = select(where).replace('SELECT $this', 'SELECT $this ?text').replace('\\', '\\\\')
+    with open(shacl, 'w') as handle:
+        handle.write(f'{SHAPES}ex:Checked a sh:NodeShape ; sh:targetClass ex:Machine ; sh:sparql [ '
+                     f'sh:message "got {{?text}}" ; sh:select """{query}""" ] .\n')
+    with open(os.path.join(root, 'knowledge.ttl'), 'w') as handle:
+        handle.write(KNOWLEDGE)
+    sqlite, (flink, _, _) = shacl_sparql_to_sql.translate(shacl, os.path.join(root, 'knowledge.ttl'), {})
+    database = sqlite3.connect(':memory:')
+    # a copy waits for nothing: the rule tests leave a transaction open
+    platform[2].commit()
+    platform[2].backup(database)
+    database.create_function('REGEXP', 2, lambda pattern, text: text is not None and
+                             re.search(pattern, str(text)) is not None)
+    database.executescript(sqlite)
+    rows = database.execute("SELECT resource, `text` FROM alerts_bulk WHERE event LIKE '%Checked%' "
+                            "AND severity != 'ok'").fetchall()
+    return {resource: text for resource, text in rows}, flink[0]
+
+
+@pytest.mark.parametrize('name', sorted(MESSAGES))
+def test_a_message_gets_the_text_of_a_value(platform, name):
+    """SHACL fills {?var} of a message with the lexical form of the value."""
+    where = MESSAGES[name]
+    expected = {}
+    for entity in MACHINES:
+        for row in platform[0].query(f'{PREFIXES}SELECT $this ?text WHERE {{ {where} }}',
+                                     initBindings={'this': rdflib.URIRef(entity)}):
+            expected[entity] = f'got {row[1]}'
+    assert expected
+    texts, flink = alert_texts(platform, where)
+    assert texts == expected
+    # on Flink, too, only a term which BIND computed loses its delimiters
+    stripped = 'REGEXP_EXTRACT(CAST(`text` as STRING)' in flink
+    assert stripped == (name not in ('an attribute', 'an IRI of an attribute'))
