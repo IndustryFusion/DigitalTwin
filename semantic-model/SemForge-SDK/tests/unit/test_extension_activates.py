@@ -43,6 +43,7 @@ EXPECTED = {
     'semforge.showDetails', 'semforge.hideDetails', 'semforge.about.project',
     'semforge.about.model', 'semforge.about.constraints', 'semforge.about.shapes',
     'semforge.about.knowledge',
+    'semforge.revealInGraph', 'semforge.revealRowInGraph',
     'semforge.restart', 'semforge.revalidate', 'semforge.doctor',
     'semforge.search', 'semforge.clearSearch', 'semforge.openHere',
     'semforge.setValueType', 'semforge.bookmarks', 'semforge.pin', 'semforge.pinPage', 'semforge.unpinPage',

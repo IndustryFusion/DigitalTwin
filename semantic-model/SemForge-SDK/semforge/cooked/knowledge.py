@@ -291,7 +291,7 @@ def _with_examples(package, files):
     return ReadOnlyGraphAggregate([package.model, freeze(graph)])
 
 
-def _usages(graph, places):
+def _usages(graph, places, package=None):
     """{individual IRI: [(entity, attribute, 'file:line')]} -- where the data
     mentions it.
 
@@ -300,6 +300,16 @@ def _usages(graph, places):
     from the JSON scan rather than the graph, which has no positions -- and it
     is what lets the row open the entity that does the using.
     """
+    from .choices import expand
+
+    # The graph spells a prefixed id out; the row names it as written, so that
+    # it opens where it is written.
+    spellings = {}
+    if package is not None:
+        for identifier, _ in places:
+            known = spellings.setdefault(expand(package.path, identifier), [])
+            if identifier not in known:
+                known.append(identifier)
     out = {}
     for subject, predicate, obj in graph:
         if not isinstance(obj, URIRef):
@@ -308,9 +318,11 @@ def _usages(graph, places):
         if entity is None:
             continue
         name = local(edge) if edge is not None else local(predicate)
-        found = places.get((entity, name)) or places.get((entity, '')) or ['']
-        for at in found:
-            out.setdefault(str(obj), []).append((entity, name, at))
+        # Every spelling of it, each with its own places.
+        found = [(written, at) for written in spellings.get(entity, [entity])
+                 for at in places.get((written, name)) or places.get((written, '')) or []]
+        for written, at in found or [(entity, '')]:
+            out.setdefault(str(obj), []).append((written, name, at))
     return out
 
 
@@ -539,7 +551,7 @@ def build_knowledge(package):
         'declared': classes - {
             c for c in classes
             if not any(package.knowledge.predicate_objects(c))},
-        'usages': _usages(_data_graph(package), places),
+        'usages': _usages(_data_graph(package), places, package),
         'knowledge_index': package.index('knowledge'),
         'shapes_index': package.index('shapes'),
         'is_entity': lambda cls: cls in entity_family,

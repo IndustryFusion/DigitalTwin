@@ -888,6 +888,21 @@ def pins_exist_feature(ls, params):
         return {'ok': False, 'error': str(exc)}
 
 
+@server.feature('semforge/pageOfFile')
+def page_of_file_feature(ls, params):
+    """Where a data file's entities are shown: its case, '' for the Main page."""
+    from ..cooked.casepage import page_of_file
+
+    root = package_root(uri_to_path(field(params, 'uri', '')))
+    if root is None:
+        return {'ok': False, 'error': 'not a SemForge package'}
+    try:
+        return {'ok': True, 'case': page_of_file(session.package_for(root),
+                                                 str(field(params, 'file', '') or ''))}
+    except Exception as exc:                       # noqa: BLE001
+        return {'ok': False, 'error': str(exc)}
+
+
 @server.feature('semforge/assertable')
 def assertable_feature(ls, params):
     """What the case page's "+ Assert…" offers for one case."""

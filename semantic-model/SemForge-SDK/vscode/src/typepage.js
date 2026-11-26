@@ -32,7 +32,7 @@
 const crypto = require('crypto');
 const vscode = require('vscode');
 
-const { showLocation } = require('./reveal');
+const { showLocation, contextAttribute, revealContext, revealButton, REVEAL_CSS } = require('./reveal');
 const { pickValue } = require('./attribute');
 
 const REFRESH_VIEWS = ['semforge.refreshTree', 'semforge.refreshKnowledge',
@@ -271,12 +271,12 @@ function ruleRows(rules) {
 function instanceRows(page) {
   const model = (page.instances || []).map((i) => i.violations === null ? `<div class="inst">` +
     '<span class="dim">…</span>' +
-    `<a tabindex="0" role="link" class="mono" data-model="${escape(i.id)}" title="Open it in the main-model">${escape(i.id)}</a>` +
-    `<span class="dim">main-model${i.type !== page.label ? ` · ${escape(i.type)}` : ''}</span>` +
+    `<a tabindex="0" role="link" class="mono" data-model="${escape(i.id)}" title="Open it in the main-model"${revealContext(i.id)}>${escape(i.id)}</a>` +
+    `<span class="dim">main-model${i.type !== page.label ? ` · ${escape(i.type)}` : ''} ${revealButton(i.id)}</span>` +
     '<span class="dim">evaluating…</span></div>' : `<div class="inst">` +
     `<span class="${i.violations.length ? 'bad-text' : 'ok-text'}">${i.violations.length ? '✗' : '✓'}</span>` +
-    `<a tabindex="0" role="link" class="mono" data-model="${escape(i.id)}" title="Open it in the main-model">${escape(i.id)}</a>` +
-    `<span class="dim">main-model${i.type !== page.label ? ` · ${escape(i.type)}` : ''}</span>` +
+    `<a tabindex="0" role="link" class="mono" data-model="${escape(i.id)}" title="Open it in the main-model"${revealContext(i.id)}>${escape(i.id)}</a>` +
+    `<span class="dim">main-model${i.type !== page.label ? ` · ${escape(i.type)}` : ''} ${revealButton(i.id)}</span>` +
     `<span>${i.violations.length ? `<a tabindex="0" role="link" data-model="${escape(i.id)}">` + i.violations.map((v) =>
       chip(v.split('/').slice(1).join(' · ').replace('ConstraintComponent', ''), 'bad', v)).join(' ') +
       '</a>' : '<span class="dim">valid</span>'}</span></div>`).join('');
@@ -465,7 +465,7 @@ function renderTypePage(page, options) {
   details.fold > summary { cursor: pointer; font-size: 0.78em; font-weight: 600; letter-spacing: .08em;
                            text-transform: uppercase; color: var(--vscode-descriptionForeground); }
   details.fold .rule { grid-template-columns: auto 1fr auto; }
-${BUSY_CSS}</style></head><body>
+${BUSY_CSS}</style></head><body${contextAttribute({ packageUri: (options && options.packageUri) || '' })}>
 <div class="crumbs">${crumbs}<b>${escape(page.label)}</b> · <span class="mono">${escape(page.term)}</span>${
   subtypes.length ? ` <span class="sep">·</span> subtypes: ${subtypes.map((name) =>
     `<a tabindex="0" role="link" data-type="${escape(name)}">${escape(name)}</a>`).join(', ')}` : ''}</div>
@@ -503,10 +503,13 @@ ${BUSY_SCRIPT}
   const focused = document.getElementById('focus');
   if (focused) { focused.scrollIntoView({ block: 'center' }); }
   document.addEventListener('click', (event) => {
-    const target = event.target.closest('[data-open],[data-type],[data-shape],[data-case],[data-delcase],[data-model],[data-refresh],[data-action],[data-bench]');
+    const target = event.target.closest('[data-reveal],[data-open],[data-type],[data-shape],[data-case],[data-delcase],[data-model],[data-refresh],[data-action],[data-bench]');
     if (!target) { return; }
     event.preventDefault();
-    if (target.dataset.action) {
+    if (target.dataset.reveal) {
+      vscode.postMessage({ command: 'revealGraph', entity: target.dataset.reveal, case: target.dataset.revealcase });
+    }
+    else if (target.dataset.action) {
       vscode.postMessage({ command: target.dataset.action,
                            row: target.dataset.row === undefined ? -1 : Number(target.dataset.row),
                            contrib: target.dataset.contrib === undefined ? undefined
@@ -597,7 +600,7 @@ const BUSY_SCRIPT = LINK_SCRIPT + `
   });
 `;
 
-const BUSY_CSS = LINK_CSS + `
+const BUSY_CSS = LINK_CSS + REVEAL_CSS + `
   .busy { opacity: 0.55; transition: opacity 0.15s; }
   .updating { color: var(--vscode-textLink-foreground, #3794ff); font-size: 0.86em; margin-left: 8px;
               white-space: nowrap; opacity: 1; }
@@ -703,7 +706,8 @@ class TypePages {
     this.page = page;
     this.panel.title = `Entity type: ${page.label}`;
     this.panel.webview.html = renderTypePage(page,
-      { nonce: crypto.randomBytes(16).toString('base64'), focus: this.current.focus });
+      { nonce: crypto.randomBytes(16).toString('base64'), focus: this.current.focus,
+        packageUri: this.current.packageUri });
   }
 
   /**
@@ -868,6 +872,11 @@ class TypePages {
         { raw: { kind: 'example', file: message.file }, packageUri: this.current.packageUri })) {
         await this.render();
       }
+      return;
+    }
+    if (message.command === 'revealGraph' && message.entity) {
+      await vscode.commands.executeCommand('semforge.revealInGraph',
+        { entity: message.entity, packageUri: this.current.packageUri, model: true });
       return;
     }
     if (message.command === 'case' && message.file) {

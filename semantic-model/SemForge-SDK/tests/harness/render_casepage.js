@@ -39,12 +39,12 @@ const page = JSON.parse(fs.readFileSync(process.argv[3], 'utf-8'));
 // (focus, the attribute to mark, only what violates); `__state`, what the
 // webview remembered from an earlier visit (its filter, its view).
 let html = renderCasePage(page, Object.assign({}, page.__options || {}, { nonce: 'n' }));
-// What the page posts is kept on <html data-posted="[…]">, for a dumped DOM to show.
+// What the page posts is kept on <html data-posted="[…]">, what it remembers on data-state, for a dumped DOM to show.
 const stub = '<script nonce="n">function acquireVsCodeApi() { return { postMessage(m) { ' +
   'var all = JSON.parse(document.documentElement.dataset.posted || "[]"); all.push(m); ' +
   'document.documentElement.dataset.posted = JSON.stringify(all); }, ' +
   'getState() { return ' + JSON.stringify(page.__state || null).replace(/</g, '\\u003c') +
-  '; }, setState() {} }; }</script>';
+  '; }, setState(s) { document.documentElement.dataset.state = JSON.stringify(s); } }; }</script>';
 html = html.replace('<script nonce="n">', stub + '<script nonce="n">');
 if (process.argv[5]) {
   html = html.replace('</body>', '<script nonce="n">' + fs.readFileSync(process.argv[5], 'utf-8') +

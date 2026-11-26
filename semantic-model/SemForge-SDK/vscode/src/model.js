@@ -1187,10 +1187,11 @@ function register(context, clientHolder, session, onChanged) {
   );
 
   context.subscriptions.push(
-    // From a menu, the row; from a page, its card; from the keyboard, the
-    // selected row.
+    // From a menu, the row; from a page, its card or an id right-clicked on
+    // it; from the keyboard, the selected row.
     ...[['semforge.copyEntity', false], ['semforge.copySubtree', true]].map(([name, subtree]) =>
-      vscode.commands.registerCommand(name, (node) => clipboard.copy(node || (view.selection || [])[0], subtree))),
+      vscode.commands.registerCommand(name, (node) => clipboard.copy(node && node.webview
+        ? require('./casepage').entityOnPage(node) : node || (view.selection || [])[0], subtree))),
     vscode.commands.registerCommand('semforge.pasteEntity', (at) => {
       const node = at || (view.selection || [])[0];
       const holder = node && !node.file ? caseOf(provider, node) : undefined;
@@ -1273,6 +1274,16 @@ function register(context, clientHolder, session, onChanged) {
         onChanged();
       }
       return result;
+    }),
+
+    vscode.commands.registerCommand('semforge.revealRowInGraph', (node) => {
+      const raw = (node && node.raw) || {};
+      // A row of this view is under its case, or Main; one of Knowledge has a file.
+      // By its key: after a refresh the view's row is another object.
+      const own = node && provider.nodes.has(node.key) && ['entity', 'violation'].includes(raw.kind);
+      const holder = own ? caseOf(provider, provider.nodes.get(node.key)) : undefined;
+      return vscode.commands.executeCommand('semforge.revealInGraph', { entity: raw.entity,
+        case: holder && holder.raw.file, file: own ? undefined : raw.file, packageUri: node && node.packageUri });
     }),
 
     vscode.commands.registerCommand('semforge.removeCaseValue', async (node) => {

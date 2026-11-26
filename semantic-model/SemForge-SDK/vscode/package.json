@@ -664,6 +664,18 @@
         "title": "Paste entity",
         "icon": "$(clippy)",
         "category": "SemForge"
+      },
+      {
+        "command": "semforge.revealInGraph",
+        "title": "Reveal in graph view",
+        "icon": "$(type-hierarchy)",
+        "category": "SemForge"
+      },
+      {
+        "command": "semforge.revealRowInGraph",
+        "title": "Reveal in graph view",
+        "icon": "$(type-hierarchy)",
+        "category": "SemForge"
       }
     ],
     "viewsContainers": {
@@ -1194,6 +1206,16 @@
           "group": "navigation@0"
         },
         {
+          "command": "semforge.revealRowInGraph",
+          "when": "view == semforgeModel && viewItem =~ /^(entity|violation)$/",
+          "group": "navigation@1"
+        },
+        {
+          "command": "semforge.revealRowInGraph",
+          "when": "view == semforgeKnowledge && viewItem =~ /^(usage|instance)$/",
+          "group": "navigation@1"
+        },
+        {
           "command": "semforge.openShapePage",
           "when": "view == semforgeShapes && viewItem =~ /^(shape|rule)$/",
           "group": "navigation@1"
@@ -1573,6 +1595,14 @@
         {
           "command": "semforge.pasteEntity",
           "when": "false"
+        },
+        {
+          "command": "semforge.revealInGraph",
+          "when": "false"
+        },
+        {
+          "command": "semforge.revealRowInGraph",
+          "when": "false"
         }
       ],
       "editor/title": [
@@ -1608,6 +1638,21 @@
         }
       ],
       "webview/context": [
+        {
+          "command": "semforge.revealInGraph",
+          "when": "webviewSection == 'semforgeEntity'",
+          "group": "1_reveal@1"
+        },
+        {
+          "command": "semforge.copyEntity",
+          "when": "webviewSection == 'semforgeEntity'",
+          "group": "2_copy@1"
+        },
+        {
+          "command": "semforge.copySubtree",
+          "when": "webviewSection == 'semforgeEntity'",
+          "group": "2_copy@2"
+        },
         {
           "command": "semforge.pin",
           "when": "webviewSection == 'semforgeEntity'"

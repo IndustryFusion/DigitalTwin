@@ -127,4 +127,36 @@ function rowClicks(view, provider, command, handler) {
   return { dispose: () => { registered.dispose(); selected.dispose(); } };
 }
 
-module.exports = { splitLocation, showLocation, treeDetail, treeClick, icon, rowClicks };
+const html = (text) => String(text).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')
+  .replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+/** What VS Code hands a page's right-click commands: an attribute, read from
+ *  where the click was and everything around it. */
+function contextAttribute(said) {
+  return ` data-vscode-context="${html(JSON.stringify(said))}"`;
+}
+
+/**
+ * What an entity's id on a page carries: Reveal in graph view, on a right
+ * click (package.json, webview/context) and on the button beside it. `file`:
+ * the test case that holds the entity, none for the main model.
+ */
+function revealContext(id, file) {
+  return contextAttribute(Object.assign({ webviewSection: 'semforgeEntity', entity: id },
+    file ? { case: file } : {}));
+}
+
+function revealButton(id, file) {
+  return `<button type="button" class="reveal" data-reveal="${html(id)}"${file ? ` data-revealcase="${html(file)}"` : ''}` +
+    ` title="Reveal in graph view" aria-label="Reveal ${html(id)} in graph view">⌖</button>`;
+}
+
+const REVEAL_CSS = `
+  button.reveal { font: inherit; line-height: 1; border: 0; background: none; padding: 0 3px; cursor: pointer;
+                  color: var(--vscode-textLink-foreground); }
+  button.reveal:hover { color: var(--vscode-textLink-activeForeground, var(--vscode-textLink-foreground)); }
+  button.reveal:focus-visible { outline: 1px solid var(--vscode-focusBorder, #0078d4); }
+`;
+
+module.exports = { splitLocation, showLocation, treeDetail, treeClick, icon, rowClicks,
+  contextAttribute, revealContext, revealButton, REVEAL_CSS };

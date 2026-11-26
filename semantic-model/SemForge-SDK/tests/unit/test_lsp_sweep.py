@@ -127,6 +127,7 @@ READS = [
     ('semforge/attributeCases', {'shape': 'iffBaseShacl:FilterShape', 'attribute': 'hasCartridge'},
      'cases'),
     ('semforge/modelPage', {}, 'files'),
+    ('semforge/pageOfFile', {'file': 'model-instance.jsonld'}, 'case'),
     ('semforge/testCaseOptions', {}, 'suites'),
     ('semforge/attributeTestOptions', {'entityType': ENT + 'Filter',
                                        'path': ['iffBaseEntities:hasStrength']}, None),

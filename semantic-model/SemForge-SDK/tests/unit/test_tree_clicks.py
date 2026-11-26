@@ -531,7 +531,7 @@ def test_a_rule_that_fires_says_where_and_offers_no_new_case(tmp_path):
         'node': {'raw': dict(SHAPE_ROW, shape=page['iri']), 'packageUri': 'file:///pkg/shacl.ttl'},
         'replies': {'semforge/shapePage': page}})
     html = seen['webviews'][0]['html'][-1]
-    assert '>fires</span>' in html and 'on urn:filter:1' in html
+    assert '>fires</span>' in html and re.search(r'on <span[^>]*>urn:filter:1<button', html)
     assert '>fires in 1</span>' in html, 'proven one way, no case where it holds'
     assert 'data-newcase="1"' not in html, 'it fires: no new case needed'
 
@@ -993,7 +993,7 @@ def _pump(tmp_path, **scenario):
 
 def test_the_type_page_says_the_essentials_first(tmp_path):
     html = _pump(tmp_path)['webviews'][0]['html'][-1]
-    body = html.split('<body>', 1)[1]
+    body = html.split('<body', 1)[1].split('>', 1)[1]      # it carries the package for a right click
     # One status line, one primary action, the rest behind the ⋯.
     assert '1 in the main-model, all valid' in body and '1 case(s), all pass' in body
     assert 'class="primary" data-action="addAttribute"' in body

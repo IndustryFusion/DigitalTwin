@@ -28,7 +28,7 @@
 const crypto = require('crypto');
 const vscode = require('vscode');
 
-const { showLocation } = require('./reveal');
+const { showLocation, revealContext, revealButton } = require('./reveal');
 const { escape, verdictNote, showLoading, BUSY_SCRIPT, BUSY_CSS } = require('./typepage');
 
 function chip(text, tone, title) {
@@ -48,6 +48,12 @@ function attributeName(text, type, names, term) {
 function problem(violation) {
   return `<div class="problem" title="${escape(violation.detail || '')}">` +
     `${escape(violation.text)} <span class="dim">· ${escape(violation.shape)}</span></div>`;
+}
+
+/** What a relationship's row points at: the id as written -- the value shown
+ *  of a prefixed one is without its prefix. */
+function pointsAt(row) {
+  return row.target !== undefined ? row.target : row.value;
 }
 
 /**
@@ -91,22 +97,25 @@ function attributeRows(rows, file, depth, at, type, chain) {
     const menu = here !== undefined
       ? ` <button class="mini" data-rowmenu="${here}" title="More: sub-attribute, observation, ` +
         'the rule, Open in .jsonld">⋯</button>' : '';
-    const rel = row.kind === 'Relationship' && row.value && !row.superseded
-      ? ` data-rel="${escape(row.value)}" data-relname="${escape(row.name)}"` : '';
+    const names = (chain || []).concat(row.name);
+    const points = row.kind === 'Relationship' && !row.superseded && pointsAt(row);
+    const rel = points ? ` data-rel="${escape(points)}" data-relname="${escape(row.name)}"` +
+      `${row.value !== points ? ` data-relshown="${escape(row.value)}"` : ''}` : '';
+    // Where in the entity it is: the path to an entity is drawn by it.
+    const path = points || (row.children || []).length ? ` data-path="${escape(names.join('.'))}"` : '';
     const address = here !== undefined ? ` data-at="${here}"` : '';
     return `<div class="attr${depth ? ` depth${Math.min(depth, 4)}` : ''}` +
       `${row.superseded ? ' superseded' : ''}${row.violations.length ? ' violates' : ''}"` +
-      `${rel}${address} data-name="${escape(row.name)}">` +
+      `${rel}${path}${address} data-name="${escape(row.name)}">` +
       `<span class="name">${attributeName(row.display || row.name, type,
-        (chain || []).concat(row.name), row.term)}</span>` +
-      `<span class="value">${value}` +
+        names, row.term)}</span>` +
+      `<span class="value"${points ? revealContext(points) : ''}>${value}${points ? revealButton(points) : ''}` +
       `${typeTag(row, here)}` +
       `${row.unitText ? ` <span class="unit" title="unitCode ${escape(row.unitCode)}">${escape(row.unitText)}</span>` : ''}` +
       `${row.instances > 1 && !(row.dataset && row.dataset !== '@none') ? ' <span class="dim">· default</span>' : ''}` +
       `${time}${superseded}${menu}</span>` +
       `${row.violations.map(problem).join('')}</div>` +
-      attributeRows(row.children || [], file, depth + 1, here, type,
-        (chain || []).concat(row.name));
+      attributeRows(row.children || [], file, depth + 1, here, type, names);
   };
   // Each current row, then -- folded -- the earlier observations of its series.
   return rows.map((row, index) => {
@@ -158,7 +167,8 @@ function card(entity, focused, at) {
     // type page for, and the whole card carrying it made a click anywhere on
     // it -- on a relationship to another type, too -- open this card's type.
     ` data-ftype="${escape(entity.type || '')}" data-attrs="${escape(names)}">` +
-    `<div class="title"><span class="mono">${escape(entity.id || '(no id)')}</span>` +
+    `<div class="title"><span class="mono"${entity.id ? revealContext(entity.id) : ''}>${escape(entity.id || '(no id)')}</span>` +
+    `${entity.id ? revealButton(entity.id) : ''}` +
     `${entity.type ? ` <a tabindex="0" role="link" class="dim" data-type="${escape(entity.type)}"` +
       ` title="Open the ${escape(entity.type)} page">· ${escape(entity.type)}</a>` : ''}` +
     `<span class="acts">${add}</span></div>` +
@@ -174,7 +184,8 @@ const ASSERT_TIP = 'Assert it if the case MEANS this: it then fails the day this
 
 function claimRow(claim, unasserted, index, at) {
   const explained = claim.explained || {};
-  const where = claim.resource ? ` on <span class="mono">${escape(claim.resource)}</span>` : '';
+  const where = claim.resource ? ` on <span class="mono"${revealContext(claim.resource)}>` +
+    `${escape(claim.resource)}</span>${revealButton(claim.resource)}` : '';
   const status = unasserted ? chip('also fired', 'warn',
     'Not asserted. Either a second problem this case found, or a sign the data ' +
     'is not what the case means it to be.')
@@ -208,14 +219,14 @@ function entityIndex(files) {
   const relationships = (rows, prefix, into) => (rows || []).forEach((row) => {
     const name = prefix ? `${prefix}.${row.name}` : row.name;
     if (row.kind === 'Relationship' && row.value && !row.superseded) {
-      into.push({ name, target: row.value });
+      into.push({ name, target: pointsAt(row) });
     }
     relationships(row.children, name, into);
   });
   files.forEach((file, f) => file.cards.forEach((card, j) => {
     const rels = [];
     relationships(card.attributes, '', rels);
-    out.push({ id: card.id || '', type: card.type || '', card: `${f}.${j}`, rels,
+    out.push({ id: card.id || '', iri: card.iri || card.id || '', type: card.type || '', card: `${f}.${j}`, rels,
       bad: !!(card.violations.length || anyViolation(card.attributes)) });
   }));
   return out;
@@ -251,9 +262,10 @@ ${model ? '<p class="dim"><span class="info" tabindex="0" title="Click one to go
     'listed in VS Code\u2019s Problems panel (Ctrl+Shift+M, or the warning count in the status bar), ' +
     'on its line in the .jsonld: F8 steps from one to the next.">\u24d8</span> ' +
     '<a tabindex="0" role="link" data-problems="1">Open the Problems panel</a></p>' : ''}
-<ul class="vlist">${found.map((v) => `<li data-jump="${v.at}" title="Click: go to it">` +
+<ul class="vlist">${found.map((v) => `<li data-jump="${v.at}" title="Click: go to it"${v.entity ? revealContext(v.entity) : ''}>` +
     `<a tabindex="0" role="link">${escape(v.entity || '(no id)')}${v.attribute ? ` · ${escape(v.attribute)}` : ''}</a> ` +
-    `${escape(v.text)} <span class="dim">· ${escape(v.shape)}</span></li>`).join('')}</ul>`;
+    `${escape(v.text)} <span class="dim">· ${escape(v.shape)}</span>` +
+    `${v.entity ? revealButton(v.entity) : ''}</li>`).join('')}</ul>`;
 }
 
 /** Graph | All, and the filter -- closed until asked for. The graph comes
@@ -401,7 +413,9 @@ function renderCasePage(page, options) {
        padding: 1px 4px; max-width: 22em; }
   .card[hidden], #cardview[hidden], .graph[hidden] { display: none; }
   .info { cursor: help; color: var(--vscode-descriptionForeground); }
-  .graph .roots { margin-bottom: 6px; }
+  .graph .roots { margin-bottom: 6px; overflow-wrap: anywhere; }
+  .tcard > .card.wayonly > :not(.onway) { display: none; }
+  .tcard.wayend { box-shadow: 0 0 0 2px var(--vscode-focusBorder, #0078d4); }
   .gid { font-family: var(--vscode-editor-font-family); font-size: 0.88em;
          color: var(--vscode-descriptionForeground); margin-left: 6px; }
   .gtype { font-weight: 600; }
@@ -434,6 +448,8 @@ function renderCasePage(page, options) {
   .attr.violates > .name::before { content: '✗ '; }
 ${BUSY_CSS}</style></head><body data-page="${escape(page.file || page.case || '')}"` +
     `${options && options.only ? ' data-only="1"' : ''}` +
+    `${options && options.reveal ? ` data-openreveal="${escape(options.reveal)}"` : ''}` +
+    `${options && options.asked ? ` data-asked="${options.asked}"` : ''}` +
     `${options && options.attribute ? ` data-focusattr="${escape(options.attribute)}"` : ''}>
 <div class="crumbs">${crumbs}</div>
 <h1>${page.kind === 'model' ? 'Entities' : 'Test case'}: ${escape(page.name)}</h1>
@@ -504,15 +520,25 @@ ${BUSY_SCRIPT}
   // --- Graph | All, and the filter. Kept per page across refreshes. ---------
   const ENTITIES = JSON.parse((document.getElementById('entities') || {}).textContent || '[]');
   const byId = new Map(ENTITIES.map(function (e) { return [e.id, e]; }));
+  // An id as the graph spells it (a type or shape page, Knowledge): a
+  // prefixed one in full.
+  const byIri = new Map(ENTITIES.map(function (e) { return [e.iri, e]; }));
   const pageKey = (document.body && document.body.dataset.page) || '';
   const saved = (vscode.getState() || {})[pageKey] || {};
   const ui = { view: saved.view || 'graph', type: saved.type || '', attr: saved.attr || '',
                id: saved.id || '', open: !!saved.open,
                bad: !!saved.bad,
-               tree: saved.tree || { roots: {}, rels: {} }, scroll: saved.scroll || 0 };
+               tree: saved.tree || { roots: {}, rels: {} }, scroll: saved.scroll || 0,
+               cardScroll: saved.cardScroll || 0 };
   // Opened from a violation count: only what violates.
   const opened = (document.body && document.body.dataset) || {};
   if (opened.only) { ui.bad = true; ui.open = true; }
+  // Each time the extension opens the page somewhere has its number; drawn
+  // again for the same one or an older one -- a validation, an edit, its tab
+  // shown again with what it was first drawn with -- the page stays where it
+  // was since.
+  let followed = Math.max(Number(saved.asked) || 0, Number(opened.asked) || 0);
+  const fresh = !opened.asked || Number(opened.asked) > (Number(saved.asked) || 0);
   const ftype = document.getElementById('ftype');
   const fattr = document.getElementById('fattr');
   const fid = document.getElementById('fid');
@@ -522,7 +548,10 @@ ${BUSY_SCRIPT}
   const cardview = document.getElementById('cardview');
   function remember() {
     const all = vscode.getState() || {};
-    all[pageKey] = ui;
+    ui.asked = String(followed);
+    // The path shown is kept beside what the graph is without it.
+    all[pageKey] = way.entity ? Object.assign({}, ui, way.kept, { way: { entity: way.entity, index: way.index,
+      rest: way.rest, rels: ui.tree.rels, scroll: ui.scroll, land: way.land } }) : ui;
     vscode.setState(all);
   }
   function filtering() { return !!(ui.type || ui.attr || ui.id || ui.bad); }
@@ -533,7 +562,11 @@ ${BUSY_SCRIPT}
     if (ui.id && e.id.toLowerCase().indexOf(ui.id.toLowerCase()) < 0) { return false; }
     return true;
   }
-  function applyFilter() {
+  function clearFilter() {
+    ui.type = ''; ui.attr = ''; ui.id = ''; ui.bad = false;
+    ftype.value = ''; fattr.value = ''; fid.value = ''; fbad.checked = false;
+  }
+  function filterCards() {
     let shown = 0;
     // The cards of All only: the graph's copies carry the same attributes.
     cardview.querySelectorAll('.card[data-card]').forEach(function (card) {
@@ -545,6 +578,10 @@ ${BUSY_SCRIPT}
     });
     document.getElementById('fcount').textContent = filtering()
       ? shown + ' of ' + ENTITIES.length + ' shown' : '';
+  }
+  function applyFilter() {
+    filterCards();
+    if (filtering()) { leaveWay(); }   // another question than the path's
     if (ui.view === 'graph') { drawGraph(); }
   }
   function el(tag, cls, text) {
@@ -607,12 +644,23 @@ ${BUSY_SCRIPT}
     summary.title = e.id;
     if (via) { summary.append(el('span', 'via', via + ' →')); }
     summary.append(typeLink(e.type, 'gtype'));
-    summary.append(el('span', 'gid', shortId(e.id)));
+    const gid = el('span', 'gid', shortId(e.id));
+    summary.append(gid);
+    if (e.id) {
+      gid.dataset.vscodeContext = JSON.stringify({ webviewSection: 'semforgeEntity', entity: e.id });
+      const button = el('button', 'reveal', '⌖');
+      button.type = 'button';
+      button.title = 'Reveal in graph view: only the path to it';
+      button.setAttribute('aria-label', 'Reveal ' + e.id + ' in graph view');
+      button.dataset.reveal = e.id;
+      summary.append(button);
+    }
     if (e.bad) { summary.append(el('span', 'badmark', '✗')); }
     return summary;
   }
   function treeCard(e, via, key) {
     const d = el('details', 'tcard' + (e.bad ? ' bad' : ''));
+    d.entity = e;
     d.dataset.id = e.id;
     d.dataset.via = via || '';
     d.dataset.key = key;
@@ -627,7 +675,7 @@ ${BUSY_SCRIPT}
   function fill(d) {
     if (d.filled) { return; }
     d.filled = true;
-    const e = byId.get(d.dataset.id);
+    const e = d.entity;
     const source = cardview.querySelector('.card[data-card="' + e.card + '"]');
     const body = source ? source.cloneNode(true) : el('div', 'dim', '(no card)');
     body.removeAttribute('id');
@@ -652,7 +700,7 @@ ${BUSY_SCRIPT}
       // enough on the row (the whole id stays on hover).
       const value = row.querySelector('.value');
       const idNode = value && Array.from(value.querySelectorAll('a')).concat(Array.from(value.childNodes))
-        .find(function (n) { return n.textContent.trim() === row.dataset.rel; });
+        .find(function (n) { return n.textContent.trim() === (row.dataset.relshown || row.dataset.rel); });
       if (idNode) {
         // The target's type opens the TARGET's type page; the id stays what
         // it was (a link to where the entity is written, or text).
@@ -679,7 +727,7 @@ ${BUSY_SCRIPT}
       if (shown.get(c.dataset.id) === c) { shown.delete(c.dataset.id); }
     });
   }
-  function openRel(row, record) {
+  function openRel(row, record, wanted) {
     const card = row.closest('.tcard');
     const toggle = row.querySelector('.reltoggle');
     const next = row.nextElementSibling;
@@ -692,7 +740,7 @@ ${BUSY_SCRIPT}
       remember();
       return;
     }
-    const target = byId.get(row.dataset.rel);
+    const target = wanted || byId.get(row.dataset.rel);
     const holder = el('div', 'nested');
     row.after(holder);
     toggle.textContent = '▾';
@@ -721,7 +769,198 @@ ${BUSY_SCRIPT}
     while (up) { up.open = true; up = up.parentElement ? up.parentElement.closest('.tcard') : null; }
     flash(card.querySelector('summary'));
   }
+  // --- Reveal: only the path from a root down to one entity. ---------------
+  // On a path: its entity, which of the ways to it, what the graph was like
+  // before (kept), the cards shown with all their attributes (rest), and what
+  // else was open in it when the page was drawn again (rels).
+  let way = { entity: '', index: 0 };
+  const MANY_WAYS = 20;
+  const MANY_STEPS = 20000;
+  // Every way into it, the shortest first, walked backwards from the entity
+  // over what points at it. A model may have very many, or a great many dead
+  // ends before the first: so many steps, so many ways, and no more.
+  function waysTo(id) {
+    const into = new Map();
+    ENTITIES.forEach(function (e) {
+      const seen = new Set();
+      e.rels.forEach(function (r) {
+        const key = JSON.stringify([r.name, r.target]);
+        if (!byId.has(r.target) || seen.has(key)) { return; }
+        seen.add(key);
+        if (!into.has(r.target)) { into.set(r.target, []); }
+        into.get(r.target).push({ from: e, rel: r.name });
+      });
+    });
+    const found = roots();
+    const starts = new Set(found.free.concat(found.cyclic).map(function (e) { return e.id; }));
+    const ends = ENTITIES.filter(function (e) { return e.id === id; })
+      .map(function (e) { return { e: e, rel: '', next: null }; });
+    function list(step) {
+      const out = [];
+      for (let at = step; at; at = at.next) { out.push(at); }
+      return out;                       // root first; a step's rel leads to the next
+    }
+    function onWay(step, other) {
+      for (let at = step; at; at = at.next) { if (at.e.id === other) { return true; } }
+      return false;
+    }
+    const ways = [];
+    const queue = ends.slice();
+    let at = 0;
+    let steps = 0;
+    // One more than are shown: whether there are more is known, not guessed.
+    for (; at < queue.length && ways.length <= MANY_WAYS && steps < MANY_STEPS; at += 1) {
+      const step = queue[at];
+      if (starts.has(step.e.id)) {
+        ways.push(list(step));
+        if (step.next) { continue; }
+      }
+      for (const edge of into.get(step.e.id) || []) {
+        steps += 1;
+        if (steps > MANY_STEPS) { break; }
+        if (!onWay(step, edge.from.id)) { queue.push({ e: edge.from, rel: edge.rel, next: step }); }
+      }
+    }
+    if (ways.length) {
+      // Stopped by the bound with ways left to look at, there may be more.
+      return { ways: ways.slice(0, MANY_WAYS), more: ways.length > MANY_WAYS || at < queue.length ||
+        steps > MANY_STEPS };
+    }
+    // None within so many steps: the shortest, each entity seen once.
+    const seen = new Set([id]);
+    const short = ends.slice();
+    for (let next = 0; next < short.length; next += 1) {
+      const step = short[next];
+      if (starts.has(step.e.id)) { return { ways: [list(step)], more: true }; }
+      (into.get(step.e.id) || []).forEach(function (edge) {
+        if (seen.has(edge.from.id)) { return; }
+        seen.add(edge.from.id);
+        short.push({ e: edge.from, rel: edge.rel, next: step });
+      });
+    }
+    return { ways: [list(ends[0])], more: false };
+  }
+  function reveal(asked) {
+    const id = byId.has(asked) ? asked : (byIri.get(asked) || {}).id;
+    if (!asked || id === undefined) {
+      vscode.postMessage({ command: 'noReveal', entity: asked });
+      return false;
+    }
+    showWay({ entity: id, index: 0, kept: way.kept, rest: {}, rels: {}, land: true });
+    return true;
+  }
+  // What was open in the graph, and where it was scrolled to, is put back
+  // when the path is left.
+  function showWay(next) {
+    next.kept = next.kept || { tree: ui.tree, scroll: ui.scroll };
+    way = next;
+    clearFilter();
+    filterCards();
+    setView('graph');
+  }
+  function leaveWay() {
+    if (!way.entity) { return; }
+    ui.tree = way.kept.tree;
+    ui.scroll = way.kept.scroll;
+    way = { entity: '', index: 0 };
+    remember();
+  }
+  function isOpen(row) {
+    const next = row.nextElementSibling;
+    return !!next && next.classList.contains('nested');
+  }
+  // Of a card on the way only the row the way takes, and what it is in.
+  function onlyWay(card, row) {
+    const body = card.querySelector(':scope > .card');
+    const rest = !!way.rest[card.dataset.id];
+    row.classList.add('onway');
+    row.nextElementSibling.classList.add('onway');
+    let path = row.dataset.path;
+    const older = row.closest('.older');
+    if (older) { older.classList.add('open', 'onway'); }
+    for (let up = row.previousElementSibling || (older && older.previousElementSibling); up;
+      up = up.previousElementSibling) {
+      if (up.dataset.path && path.indexOf(up.dataset.path + '.') === 0) {
+        path = up.dataset.path;
+        up.classList.add('onway');
+      }
+    }
+    const others = body.querySelectorAll(':scope > .attr:not(.onway)').length;
+    if (!others || rest) { return; }
+    body.classList.add('wayonly');
+    const more = el('button', 'mini onway', '… show the rest of this card');
+    more.title = others + ' row' + (others === 1 ? '' : 's') + ' not on the way';
+    more.type = 'button';
+    more.dataset.waymore = card.dataset.id;
+    body.prepend(more);
+  }
+  function drawWay() {
+    graph.textContent = '';
+    shown.clear();
+    ui.tree = { roots: {}, rels: {} };
+    const found = waysTo(way.entity);
+    way.index = (way.index + found.ways.length) % found.ways.length;
+    const path = found.ways[way.index];
+    const bar = el('div', 'roots way');
+    bar.append(el('span', '', 'Path to ' + way.entity + ' '));
+    function button(text, name, value, title) {
+      const made = el('button', 'mini', text);
+      made.type = 'button';
+      made.dataset[name] = value;
+      if (title) { made.title = title; made.setAttribute('aria-label', title); }
+      bar.append(made);
+    }
+    if (found.ways.length > 1) {
+      button('‹', 'way', '-1', 'The path before');
+      button('›', 'way', '1', 'The next path');
+    }
+    if (found.ways.length > 1 || found.more) {
+      bar.append(el('span', 'dim', ' ' + (way.index + 1) + ' of ' + found.ways.length +
+        (found.more ? ' or more' : '') + ' '));
+    }
+    button('Show the whole graph', 'wholegraph', '1');
+    graph.append(bar);
+    let card = treeCard(path[0].e, '', 'root|' + path[0].e.id);
+    graph.append(card);
+    card.open = true;
+    fill(card);
+    for (let i = 1; i < path.length; i += 1) {
+      const row = Array.from(card.querySelectorAll('.attr[data-rel]')).find(function (r) {
+        return r.dataset.rel === path[i].e.id && r.dataset.path === path[i - 1].rel;
+      });
+      if (!row) { break; }
+      openRel(row, false, path[i].e);
+      onlyWay(card, row);
+      card = shown.get(path[i].e.id);
+    }
+    card.classList.add('wayend');
+    // What else was open in it, when the page is drawn again.
+    const rels = way.rels;
+    way.rels = {};
+    for (let again = true; again;) {
+      again = false;
+      graph.querySelectorAll('.attr[data-rel]').forEach(function (row) {
+        if (rels[relKey(row.closest('.tcard'), row)] && byId.has(row.dataset.rel) && !isOpen(row)) {
+          openRel(row, false);
+          again = true;
+        }
+      });
+    }
+    const top = card.querySelector('summary');
+    const here = way;
+    if (here.land) {
+      flash(top);
+      top.focus({ preventScroll: true });
+      // Drawn again before one could see it, the page goes there again.
+      setTimeout(function () { here.land = false; remember(); }, 1100);
+    } else if (ui.scroll) {
+      window.scrollTo(0, ui.scroll);
+    }
+    report(top, card.dataset.id, '', here.land ? 'reveal' : 'kept', path.map(function (s) { return s.e.id; }));
+    remember();
+  }
   function drawGraph() {
+    if (way.entity) { drawWay(); return; }
     graph.textContent = '';
     shown.clear();
     const trail = el('div', 'trail');
@@ -779,10 +1018,15 @@ ${BUSY_SCRIPT}
   }
   let pending = false;
   window.addEventListener('scroll', function () {
-    if (pending || ui.view !== 'graph') { return; }
+    if (pending) { return; }
     pending = true;
     requestAnimationFrame(function () {
       pending = false;
+      if (ui.view !== 'graph') {
+        ui.cardScroll = window.scrollY;
+        remember();
+        return;
+      }
       follow();
       ui.scroll = window.scrollY;
       remember();
@@ -812,21 +1056,20 @@ ${BUSY_SCRIPT}
     if (!node) { return; }
     const card = node.closest('.card');
     if (card && card.hidden) {
-      ui.type = ''; ui.attr = ''; ui.id = ''; ui.bad = false;
-      ftype.value = ''; fattr.value = ''; fid.value = ''; fbad.checked = false;
+      clearFilter();
       remember();
       applyFilter();
     }
-    if (ui.view !== 'cards') { setView('cards'); }
+    if (ui.view !== 'cards') { leaveWay(); setView('cards'); }
     flash(node);
     report(node, card ? card.dataset.id : '', node.dataset.name || '', 'list');
   }
   // Where a jump ended, said to the extension: the SemForge output shows it,
   // and the e2e tests read it.
-  function report(node, entity, attribute, from) {
+  function report(node, entity, attribute, from, path) {
     setTimeout(function () {
       const box = node.getBoundingClientRect();
-      vscode.postMessage({ command: 'landed', from: from, entity: entity, attribute: attribute,
+      vscode.postMessage({ command: 'landed', from: from, entity: entity, attribute: attribute, path: path,
         inView: box.height > 0 && box.top >= 0 && box.bottom <= window.innerHeight,
         top: Math.round(box.top), height: window.innerHeight, scrollY: Math.round(window.scrollY),
         page: document.documentElement.scrollHeight });
@@ -858,12 +1101,31 @@ ${BUSY_SCRIPT}
       }
       follow();
     }, true);
-    setView(ui.view);
-    applyFilter();
-    land();
+    if (!(fresh && opened.openreveal && reveal(opened.openreveal))) {
+      const before = fresh && (focused || opened.only) ? undefined : saved.way;
+      if (before && byId.has(before.entity)) {
+        const kept = { tree: ui.tree, scroll: ui.scroll };
+        ui.scroll = before.scroll;
+        showWay({ entity: before.entity, index: before.index, kept: kept, rest: before.rest || {},
+          rels: before.rels || {}, land: before.land });
+      } else {
+        setView(ui.view);
+        applyFilter();
+        if (fresh) {
+          land();
+        } else if (ui.view === 'cards' && ui.cardScroll) {
+          window.scrollTo(0, ui.cardScroll);       // drawn again: where it was, no jump
+        }
+      }
+    }
     // Clicked again from the tree, the page already open: the same jump.
     window.addEventListener('message', function (event) {
-      if (event.data && event.data.command === 'land') { land(); }
+      const said = event.data || {};
+      if (said.command !== 'land' && said.command !== 'reveal') { return; }
+      opened.asked = said.asked || '';
+      followed = Math.max(followed, Number(said.asked) || 0);
+      remember();                       // followed: a redraw for it does not do it again
+      if (said.command === 'land') { land(); } else { reveal(said.entity); }
     });
   }
   // Opened at an entity -- or at its attribute, from a violation: there,
@@ -876,12 +1138,11 @@ ${BUSY_SCRIPT}
     const row = wanted && Array.from(focused.querySelectorAll('.attr[data-name]'))
       .find(function (r) { return r.dataset.name === wanted; });
     if (focused.hidden) {
-      ui.type = ''; ui.attr = ''; ui.id = ''; ui.bad = false;
-      ftype.value = ''; fattr.value = ''; fid.value = ''; fbad.checked = false;
+      clearFilter();
       remember();
       applyFilter();
     }
-    if (ui.view !== 'cards') { setView('cards'); }
+    if (ui.view !== 'cards') { leaveWay(); setView('cards'); }
     const node = row || focused;
     flash(node);
     report(node, focused.dataset.id, wanted || '', 'open');
@@ -958,8 +1219,35 @@ ${BUSY_SCRIPT}
     }
   });
   document.addEventListener('click', (event) => {
-    const view = event.target.closest('[data-view]');
-    if (view) { event.preventDefault(); setView(view.dataset.view); return; }
+    const asked = event.target.closest('[data-reveal]');
+    if (asked) { event.preventDefault(); reveal(asked.dataset.reveal); return; }
+    const turn = event.target.closest('[data-way]');
+    if (turn) {
+      event.preventDefault();
+      showWay(Object.assign({}, way, { index: way.index + Number(turn.dataset.way), rest: {}, land: true }));
+      graph.querySelector('[data-way="' + turn.dataset.way + '"]').focus({ preventScroll: true });
+      return;
+    }
+    const more = event.target.closest('[data-waymore]');
+    if (more) {
+      event.preventDefault();
+      const body = more.parentElement;
+      way.rest[more.dataset.waymore] = true;
+      body.classList.remove('wayonly');
+      more.remove();
+      body.parentElement.querySelector('summary').focus({ preventScroll: true });
+      remember();
+      return;
+    }
+    const whole = event.target.closest('[data-wholegraph]');
+    const view = whole ? document.querySelector('[data-view="graph"]') : event.target.closest('[data-view]');
+    if (view) {
+      event.preventDefault();
+      leaveWay();
+      setView(view.dataset.view);
+      if (whole) { view.focus(); }
+      return;
+    }
     const reltoggle = event.target.closest('[data-reltoggle]');
     if (reltoggle) { event.preventDefault(); event.stopPropagation(); openRel(reltoggle.closest('.attr')); return; }
     if (event.target.closest('[data-jumplist]')) {
@@ -979,8 +1267,7 @@ ${BUSY_SCRIPT}
     if (goto) { event.preventDefault(); goTo(goto.dataset.goto); return; }
     if (event.target.closest('[data-clearfilter]')) {
       event.preventDefault();
-      ui.type = ''; ui.attr = ''; ui.id = ''; ui.bad = false;
-      ftype.value = ''; fattr.value = ''; fid.value = ''; fbad.checked = false;
+      clearFilter();
       remember();
       applyFilter();
       return;
@@ -1041,6 +1328,7 @@ class CasePages {
     this.clientHolder = clientHolder;
     this.panel = undefined;
     this.current = undefined;
+    this.asked = 0;                    // how often the page was opened somewhere
   }
 
   /** `focus` is an entity id to mark; `preserveFocus` keeps the keyboard in
@@ -1052,15 +1340,22 @@ class CasePages {
         'SemForge: no package is open, or the language server is not running.');
       return;
     }
+    // Asked to reveal an entity, the page in sight does: nothing to fetch.
     const same = this.panel && this.current && this.current.packageUri === packageUri &&
-      this.current.caseFile === caseFile && this.current.focus === focus &&
-      this.current.attribute === more.attribute && this.current.only === more.only;
+      this.current.caseFile === caseFile && (more.reveal ? this.drawn && this.panel.visible
+      : this.current.focus === focus && this.current.attribute === more.attribute &&
+        this.current.only === more.only);
     if (focus || more.only) {
       this.trace(`open ${caseFile === MODEL ? 'Main' : caseFile} at ${focus || '-'}` +
         `${more.attribute ? ` · ${more.attribute}` : ''}${more.only ? ' (only what violates)' : ''}` +
         `${same ? ' -- already shown, jump again' : ''}`);
     }
-    this.current = { packageUri, caseFile, focus, attribute: more.attribute, only: more.only };
+    this.asked += 1;
+    // Revealed on the page in sight, it keeps what it was opened at.
+    this.current = same && more.reveal
+      ? Object.assign({}, this.current, { reveal: more.reveal, asked: String(this.asked) })
+      : { packageUri, caseFile, focus, attribute: more.attribute, only: more.only,
+        reveal: more.reveal, asked: String(this.asked) };
     if (!this.panel) {
       this.panel = vscode.window.createWebviewPanel(
         'semforgeCasePage', 'Test case',
@@ -1079,7 +1374,8 @@ class CasePages {
       this.panel.reveal(undefined, !!preserveFocus);
       if (same) {
         // Clicked again: already showing it, but maybe scrolled away.
-        this.panel.webview.postMessage({ command: 'land' });
+        this.panel.webview.postMessage(Object.assign({ asked: this.current.asked },
+          more.reveal ? { command: 'reveal', entity: more.reveal } : { command: 'land' }));
         return;
       }
     }
@@ -1092,6 +1388,9 @@ class CasePages {
       return;
     }
     const target = `${this.current.packageUri}#${this.current.caseFile}`;
+    if (this.shown !== target) {
+      this.drawn = false;              // another page is under way: not this one in sight
+    }
     const loaded = showLoading(this.panel, this.current.caseFile === MODEL ? 'the main-model'
       : String(this.current.caseFile).split('/').pop(), this.shown !== target);
     let page;
@@ -1106,6 +1405,7 @@ class CasePages {
     }
     loaded();
     this.shown = target;
+    this.drawn = page.ok;
     if (!this.panel) {
       return;
     }
@@ -1122,7 +1422,8 @@ class CasePages {
       ? 'Entities: Main' : `Test case: ${page.name.replace(/\.jsonld$/, '')}`;
     this.panel.webview.html = renderCasePage(page,
       { nonce: crypto.randomBytes(16).toString('base64'), focus: this.current.focus,
-        attribute: this.current.attribute, only: this.current.only });
+        attribute: this.current.attribute, only: this.current.only,
+        reveal: this.current.reveal, asked: this.current.asked });
     if (this.current.focus && !this.panel.webview.html.includes('id="focus"')) {
       this.trace(`no card on the page is ${this.current.focus}`);
     }
@@ -1151,7 +1452,7 @@ class CasePages {
     }
     if (message && message.command === 'landed') {
       this.landed = message;           // where a jump ended: read by the e2e tests
-      this.trace(`${message.from === 'list' ? 'list click' : 'opened'} -> ${message.entity}` +
+      this.trace(`${{ list: 'list click', reveal: 'path', kept: 'path kept' }[message.from] || 'opened'} -> ${message.entity}` +
         `${message.attribute ? ` · ${message.attribute}` : ''}: ` +
         `${message.inView ? 'in view' : 'NOT in view'} (top ${message.top} of ${message.height}, ` +
         `scrolled ${message.scrollY} of ${message.page})`);
@@ -1213,6 +1514,9 @@ class CasePages {
       await this.assert(message.index);
     } else if (message.command === 'open' && message.at) {
       await showLocation(message.at, true);
+    } else if (message.command === 'noReveal') {
+      vscode.window.showInformationMessage(`SemForge: ${message.entity} is not on this page, so its graph has ` +
+        'no path to it.');
     } else if (message.command === 'problems') {
       await vscode.commands.executeCommand('workbench.actions.view.problems');
     } else if (message.command === 'type' && message.name) {
@@ -1523,8 +1827,30 @@ async function pickCase(client, packageUri) {
   return picked ? picked.file : undefined;
 }
 
+let open;
+
+/**
+ * An entity's id right-clicked on a page, as a row of Entities & Test Cases
+ * would say it: on the Main or a case page from the file of its card (or, not
+ * on the page, the page's own file, which a copy looks through first); on a
+ * shape page from the case it names; else from the main model.
+ */
+function entityOnPage(at) {
+  const here = at.webview === 'semforgeCasePage' && open && open.current;
+  if (!here) {
+    return { raw: { kind: 'entity', entity: at.entity, file: at.case || undefined },
+      packageUri: at.packageUri };
+  }
+  const page = open.page || { files: [] };
+  const card = page.files.flatMap((file) => file.cards.map((c) => ({ file: c.file || file.path, id: c.id })))
+    .find((c) => c.id === at.entity);
+  return { raw: { kind: 'entity', entity: at.entity, file: card ? card.file : page.file || undefined },
+    packageUri: here.packageUri };
+}
+
 function register(context, clientHolder, session) {
   const pages = new CasePages(clientHolder);
+  open = pages;
   context.subscriptions.push(
     vscode.commands.registerCommand('semforge.openCasePage', async (node, options) => {
       const client = clientHolder.client;
@@ -1555,6 +1881,29 @@ function register(context, clientHolder, session) {
       await pages.show(packageUri, MODEL, given.focus, !!given.preserveFocus,
         { attribute: given.attribute || undefined, only: !!given.only });
     }),
+    // An entity's id, on a page (what its data-vscode-context says, with the
+    // page's kind as webview) or, with the case or file it is in, from a view.
+    vscode.commands.registerCommand('semforge.revealInGraph', async (at) => {
+      const said = at || {};
+      const here = said.webview === 'semforgeCasePage' ? pages.current : undefined;
+      const packageUri = here ? here.packageUri : said.packageUri || session.uri;
+      if (!said.entity || typeof said.entity !== 'string' || !packageUri) {
+        vscode.window.showWarningMessage('SemForge: Reveal in graph view works on an entity\u2019s id.');
+        return;
+      }
+      let target = here ? here.caseFile : said.case || (said.file ? undefined : MODEL);
+      if (!target && clientHolder.client) {
+        // A file may be a case, one a case includes, or one of the model's.
+        const found = await clientHolder.client.sendRequest('semforge/pageOfFile',
+          { uri: packageUri, file: said.file });
+        if (!found.ok) {
+          vscode.window.showWarningMessage(`SemForge: ${found.error}`);
+          return;
+        }
+        target = found.case || MODEL;
+      }
+      await pages.show(packageUri, target, undefined, false, { reveal: said.entity });
+    }),
     vscode.workspace.onDidSaveTextDocument(() => pages.refresh())
   );
   if (clientHolder.onVerdicts) {
@@ -1563,4 +1912,4 @@ function register(context, clientHolder, session) {
   return pages;
 }
 
-module.exports = { register, renderCasePage, CasePages };
+module.exports = { register, renderCasePage, CasePages, entityOnPage };

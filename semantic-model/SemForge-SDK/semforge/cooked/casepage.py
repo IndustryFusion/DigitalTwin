@@ -86,6 +86,43 @@ def _find_case(package, case):
                        f'in an expectations.yaml under examples/.')
 
 
+def page_of_file(package, path):
+    """Where the entities of a data file are shown: the case it is, '' for the
+    Main page when it is the model's, else the first case that includes it.
+    A relative path is the package's."""
+    from ..expect.store import examples_root, load_expectations
+
+    root = examples_root(package.path)
+    wanted = os.path.realpath(os.path.join(package.path, path))
+    examples = load_expectations(package.path).examples
+
+    def case(example):
+        return os.path.abspath(os.path.join(root, example.path))
+
+    for example in examples:
+        if os.path.realpath(case(example)) == wanted:
+            return case(example)
+    if wanted in [os.path.realpath(p) for p in package.files('model')]:
+        return ''
+    for example in examples:
+        for included in example.include:
+            # Where the case reads it (store.compose): under examples/ first.
+            read = os.path.join(root, included)
+            if not os.path.exists(read):
+                read = os.path.join(package.path, included)
+            if os.path.realpath(read) == wanted:
+                return case(example)
+    raise PackageError(f'{os.path.basename(path)} is neither a file of the main model nor a test '
+                       'case or one a case includes, so no page has its graph.')
+
+
+def _target(payload):
+    """The one id a relationship points at, as written; '' for a list."""
+    if isinstance(payload, dict) and isinstance(payload.get('@id'), str):
+        return payload['@id']
+    return payload if isinstance(payload, str) else ''
+
+
 def _render(value):
     """A payload as a reader wants it: the IRI's local name, the number."""
     if isinstance(value, dict):
@@ -129,6 +166,7 @@ def _attributes(node, address, index, violations, entity):
                 'name': name, 'term': key, 'kind': str(member.get('type', '')),
                 'value': _render(payload) if payload is not None else '',
                 'valueType': value_type(member['value']) if 'value' in member else '',
+                'target': _target(payload),
                 'dataset': str(member.get('datasetId', '')),
                 'unitCode': str(member.get('unitCode', '')),
                 # When it was observed, where to change that, and whether
@@ -274,11 +312,15 @@ def attach_editing(package, files, verdicts=None):
     from .examples import dataset_names
     from .units import units
 
+    from .choices import expand
+
     names = dataset_names(package)
     symbols = {u['code']: u['symbol'] or u['code'] for u in units(package)}
     entities = _tree_entities(package, verdicts)
     for file in files:
         for card in file['cards']:
+            # The id as the graph has it: a type or shape page names it so.
+            card['iri'] = expand(package.path, card['id']) if card['id'] else ''
             _display(card.get('attributes') or [], names, symbols)
             node = entities.get((card['id'], os.path.abspath(card['file'])))
             if node is None:

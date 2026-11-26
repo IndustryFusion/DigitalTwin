@@ -115,6 +115,18 @@ describe('Copy and paste', () => {
     assert.strictEqual(model.drag.clipboard.held.packageUri, PACKAGE_URI);
   });
 
+  it('copied from an id on a page', async () => {
+    const { api, onto } = await rowsOf();
+    await run('semforge.openModelPage', { packageUri: PACKAGE_URI });
+    await until(() => api.pages.case.page && api.pages.case.page.kind === 'model', 'the Main page');
+    // What VS Code hands the command on a right click of an id on the page.
+    const copied = await run('semforge.copyEntity', { webview: 'semforgeCasePage', webviewSection: 'semforgeEntity',
+      entity: 'urn:filter:1' });
+    assert.deepStrictEqual(copied.copied, ['urn:filter:1']);
+    await run('semforge.pasteEntity', onto);
+    assert.ok(ids(CASE).includes('urn:filter:1'));
+  });
+
   it('in an OPC UA package a subtree is the hierarchy, and stays in its package', async () => {
     const { api, onto } = await rowsOf();
     const own = JSON.parse(fs.readFileSync(path.join(OPCUA, 'model-instance.jsonld'), 'utf-8'));

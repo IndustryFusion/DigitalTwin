@@ -1450,3 +1450,28 @@ def test_a_case_page_pastes_and_the_main_page_does_not(kms, tmp_path):
     assert 'data-pagecmd="paste"' in case and 'data-pagecmd="paste"' not in main.split('<script')[0]
     for page in (case, main):
         assert 'data-copyentity=' in page and 'data-copysubtree=' in page
+
+
+@pytest.mark.parametrize('at, file', [
+    ({'webview': 'semforgeCasePage', 'entity': 'urn:filter:1'}, 'its card'),
+    ({'webview': 'semforgeCasePage', 'entity': 'urn:elsewhere:1'}, 'the case'),
+    ({'webview': 'semforgeShapePage', 'entity': 'urn:filter:1', 'case': '/p/examples/c.jsonld',
+      'packageUri': 'file:///q/shacl.ttl'}, '/p/examples/c.jsonld'),
+    ({'webview': 'semforgeTypePage', 'entity': 'urn:filter:1', 'packageUri': 'file:///q/shacl.ttl'}, None)])
+def test_copy_from_an_id_on_a_page(kms, tmp_path, at, file):
+    """Right-clicked on a page, the id is copied as the page has it."""
+    page = build_case_page(load(kms), os.path.join(kms, 'examples', CASE))
+    page['files'][-1]['cards'].append(dict(page['files'][0]['cards'][0], id='urn:filter:1',
+                                           file='/p/examples/included.jsonld'))
+    seen = _drive(tmp_path, {'command': 'semforge.openCasePage',
+                             'node': {'raw': {'kind': 'example', 'file': page['file']},
+                                      'packageUri': 'file:///p/shacl.ttl'},
+                             'replies': {'semforge/casePage': dict(page, ok=True),
+                                         'semforge/copyEntities': dict(TAKEN, ok=True)},
+                             'then': [{'command': 'semforge.copyEntity', 'node': at}]})
+    asked = [r['params'] for r in seen['requests'] if r['method'] == 'semforge/copyEntities']
+    expected = {'its card': next(c['file'] for f in page['files'] for c in f['cards'] if c['id'] == 'urn:filter:1'),
+                'the case': page['file']}.get(file, file)
+    assert asked == [{'uri': at.get('packageUri', 'file:///p/shacl.ttl'), 'entity': at['entity'],
+                      'file': expected, 'subtree': False}] if expected else \
+        [{'uri': at['packageUri'], 'entity': at['entity'], 'subtree': False}]

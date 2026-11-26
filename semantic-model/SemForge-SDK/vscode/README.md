@@ -161,6 +161,18 @@ shape, an entity in its case -- not a line of a file, and follows a rename done
 in SemForge. One whose target is gone says so, and can be searched for or taken
 out. Pins are yours, in this workspace: nothing is written into the package.
 
+### Reveal in graph view
+
+On an entity's id -- a row of Entities & Test Cases or Knowledge, an id on the
+Main page, a test case, type or shape page -- **Reveal in graph view** (right
+click, or the ⌖ beside an id on a page) opens the graph of what holds the
+entity and shows only the path from a root down to it: of each card on the way,
+the relationship it goes on by; the entity itself whole and marked. `‹ ›` step
+through the other paths, shortest first (the first 20 of very many), *… show the rest of this
+card* shows its other attributes, and **Show the whole graph** (or Graph /
+All) leaves it. The path stays when a validation or an edit redraws the page.
+The same right click on an id offers **Copy entity** and **Copy with subtree**.
+
 ### The views: two columns
 
 The **SemForge** column holds what a model is worked on with: the package and

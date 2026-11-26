@@ -111,7 +111,7 @@ def test_an_attribute_on_the_main_page_opens_its_type_page(tmp_path, pages):
     # A sub-attribute names its parent too: the type page marks the deeper row.
     assert re.search(r'data-names="\[&quot;hasState&quot;,&quot;hasXXXWorkpiece&quot;\]"', html)
     # The entity's id and the file are text now; the file has its Open button.
-    assert f'<span class="mono">{card["id"]}</span>' in html
+    assert f'>{card["id"]}</span>' in html
     assert '>Open .jsonld</button>' in html
 
 

@@ -35,7 +35,7 @@
 const crypto = require('crypto');
 const vscode = require('vscode');
 
-const { showLocation } = require('./reveal');
+const { showLocation, contextAttribute, revealContext, revealButton } = require('./reveal');
 const { escape, attributeRows: typeRows, EDITS, verdictNote, showLoading, BUSY_SCRIPT,
   BUSY_CSS } = require('./typepage');
 const { pickTarget } = require('./shapes');
@@ -125,11 +125,12 @@ function appliesTo(page) {
       shapeLink(u.name, u.iri)).join(', ')} reach through <span class="mono">sh:node</span>`
       : '<span class="warn-text">nothing: no target, and no shape uses it</span>';
   const nodes = reach.nodes.map((n) => n.violations === null
-    ? `<span class="node" title="evaluating…"><span class="mono">${escape(n.id)}</span> …</span>` :
+    ? `<span class="node" title="evaluating…"><span class="mono"${revealContext(n.id)}>${escape(n.id)}</span> …` +
+      `${revealButton(n.id)}</span>` :
     `<span class="node${n.violations.length ? ' bad' : ''}" ` +
     `title="${escape(n.violations.length ? n.violations.join('\n') : 'valid')}">` +
-    `<span class="mono">${escape(n.id)}</span> ${n.violations.length
-      ? `✗ ${n.violations.length}` : '✓'}</span>`).join('') +
+    `<span class="mono"${revealContext(n.id)}>${escape(n.id)}</span> ${n.violations.length
+      ? `✗ ${n.violations.length}` : '✓'}${revealButton(n.id)}</span>`).join('') +
     (reach.more ? `<span class="dim">… and ${reach.more} more</span>` : '');
   const editable = targets.map((t, index) => `<div class="target">` +
     `<span class="mono">${escape({ class: 'sh:targetClass', node: 'sh:targetNode',
@@ -164,7 +165,8 @@ function testedBy(page, cases) {
       `<a tabindex="0" role="link" data-case="${escape(c.file)}" title="${escape(c.description || '')}">` +
       `${escape(c.case.split('/').slice(-3).join(' / '))}</a>` +
       `<span class="dim">${c.firedOn && c.firedOn.length
-        ? `on ${escape(c.firedOn.join(', '))}` : ''}</span>` +
+        ? `on ${c.firedOn.map((id) => `<span${revealContext(id, c.file)}>${escape(id)}` +
+          `${revealButton(id, c.file)}</span>`).join(', ')}` : ''}</span>` +
       `<span>${c.passed === null ? '' : c.passed ? '<span class="dim">passes</span>' : chip('FAILS', 'bad')} ` +
       `<button class="delcase" data-delcase="${escape(c.file)}" title="Delete this test case">Delete…</button></span></div>`).join('');
   return rows || '<p class="empty">No test case reaches it: nothing proves it can fire.</p>';
@@ -297,7 +299,7 @@ function renderShapePage(page, options) {
   td.acts button { padding: 0 8px; }
   td.depth1 { padding-left: 30px; } td.depth2 { padding-left: 48px; }
   td.depth3 { padding-left: 66px; } td.depth4 { padding-left: 84px; }
-${BUSY_CSS}</style></head><body>
+${BUSY_CSS}</style></head><body${contextAttribute({ packageUri: (options && options.packageUri) || '' })}>
 <div class="crumbs">Shapes › <span class="mono">${escape(page.name)}</span></div>
 <div class="head"><h1>SHACL shape: ${escape(page.label)}</h1>
   <div class="acts">${primary}<button data-action="pageMenu" title="Open in .ttl, the type page, + Target, Rename…, Merge into…, Delete…, Refresh">⋯</button></div></div>
@@ -323,10 +325,13 @@ ${testedBy(page, cases)}
   const vscode = acquireVsCodeApi();
 ${BUSY_SCRIPT}
   document.addEventListener('click', (event) => {
-    const target = event.target.closest('[data-open],[data-type],[data-shape],[data-case],[data-delcase],[data-model],[data-newcase],[data-action],[data-refresh]');
+    const target = event.target.closest('[data-reveal],[data-open],[data-type],[data-shape],[data-case],[data-delcase],[data-model],[data-newcase],[data-action],[data-refresh]');
     if (!target) { return; }
     event.preventDefault();
-    if (target.dataset.action) {
+    if (target.dataset.reveal) {
+      vscode.postMessage({ command: 'revealGraph', entity: target.dataset.reveal, case: target.dataset.revealcase });
+    }
+    else if (target.dataset.action) {
       vscode.postMessage({ command: target.dataset.action,
                            row: target.dataset.row === undefined ? -1 : Number(target.dataset.row) });
     }
@@ -417,7 +422,7 @@ class ShapePages {
     this.page = page;
     this.panel.title = `SHACL shape: ${page.label}`;
     this.panel.webview.html = renderShapePage(page,
-      { nonce: crypto.randomBytes(16).toString('base64') });
+      { nonce: crypto.randomBytes(16).toString('base64'), packageUri: this.current.packageUri });
   }
 
   /**
@@ -601,6 +606,9 @@ class ShapePages {
         { raw: { kind: 'example', file: message.file }, packageUri })) {
         await this.render();
       }
+    } else if (message.command === 'revealGraph' && message.entity) {
+      await vscode.commands.executeCommand('semforge.revealInGraph',
+        { entity: message.entity, case: message.case, packageUri });
     } else if (message.command === 'case' && message.file) {
       await vscode.commands.executeCommand('semforge.openCasePage',
         { raw: { kind: 'example', file: message.file }, packageUri });
