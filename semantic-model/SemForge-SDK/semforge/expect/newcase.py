@@ -50,6 +50,12 @@ def _slug(name):
 
 def _model_document(package, node):
     """The model's own document for one entity id, or None."""
+    found = _model_source(package, node)
+    return found[1] if found else None
+
+
+def _model_source(package, node):
+    """(the folder of its file, the model's own document for one entity id), or None."""
     for path in package.files('model'):
         if not path.endswith(('.jsonld', '.json')):
             continue
@@ -58,18 +64,99 @@ def _model_document(package, node):
         for document in data if isinstance(data, list) else [data]:
             if isinstance(document, dict) and \
                     node in (document.get('id'), document.get('@id')):
-                return document
+                return os.path.dirname(path), document
     return None
 
 
-def new_case(package, shape, name):
-    """Write examples/test_<Shape>/bad/<name>.jsonld and declare it.
+def _types_under(package, entity_type):
+    from .attributecase import _family
 
-    Returns {'file', 'case', 'expectations', 'source', 'resource', 'constraint'}.
+    return _family(package, entity_type)
+
+
+def _of(graph, nodes, family):
+    """The nodes of one of these types; all of them when none is asked for."""
+    from rdflib import RDF, URIRef
+
+    if family is None:
+        return set(nodes)
+    typed = {str(s) for s, o in graph.subject_objects(RDF.type)
+             if str(o) in family and isinstance(s, URIRef)}
+    return {n for n in nodes if str(n) in typed}
+
+
+def _fresh_scene(package, shape_name, entity_type):
+    """A new entity of the type, when nothing of it reaches the shape yet."""
+    from ..cooked.choices import entity_types
+    from .attributecase import _fresh
+
+    entry = next((t for t in entity_types(package)[0] if t.iri == entity_type), None)
+    if entry is None:
+        raise PackageError(f'nothing reaches {shape_name}, in a case or in the '
+                           f'model: there is no scene to start a case from')
+    return _fresh(package, entry)
+
+
+def _context_home(package):
+    """The folder the context of a new entity is relative to: that of the
+    model file `_fresh` takes its "@context" from, else the package's own
+    (kms.yaml names it)."""
+    from .attributecase import _documents
+
+    for path in package.files('model'):
+        if not path.endswith(('.jsonld', '.json')):
+            continue
+        try:
+            found = _documents(path)
+        except (OSError, ValueError):
+            continue
+        # As `_fresh` reads it: the first document naming one, unless null.
+        context = next((d['@context'] for d in found
+                        if isinstance(d, dict) and '@context' in d), None)
+        if context is not None:
+            return os.path.dirname(path)
+    return package.path
+
+
+def _silent_first(package, shape, nodes):
+    """The nodes, those the query does not fire on in the model first, and of
+    those, the ones that break nothing else of the shape first: a property
+    constraint of the same shape is reported under it too, and would make
+    the case fail although the query holds. A model that cannot be
+    validated -- pyshacl may refuse a package's shapes in many ways --
+    keeps the plain order; the run of the case still says what fails."""
+    from ..validate.orchestrator import validate_graphs
+
+    if len(nodes) < 2:
+        return nodes
+    try:
+        report = validate_graphs(package.model, package.shapes, package.knowledge,
+                                 strict=False, only={str(shape)})
+    except Exception:                               # noqa: BLE001
+        return nodes
+    mine = [v for v in report.violations if str(v.shape) == str(shape)]
+    fired = {str(v.resource) for v in mine if v.component == COMPONENT}
+    broken = {str(v.resource) for v in mine}
+    return sorted(nodes, key=lambda n: (n in fired, n in broken, n))
+
+
+def new_case(package, shape, name, purpose='invalid', entity_type=''):
+    """Write examples/test_<Shape>/bad/<name>.jsonld and declare it -- or, for
+    the purpose 'valid', good/<name>.jsonld: the query runs on it and is silent.
+
+    `entity_type` (its IRI): the type the test is about, when it is asked for
+    on a type's page. The scene then has an entity of it; one the package has
+    none of is written fresh, its required attributes given valid values.
+
+    Returns {'file', 'case', 'expectations', 'source', 'resource', 'constraint',
+    'expect'}, and for a test asked for on a type's page, which is run once,
+    also {'passes', 'failures', 'violations'}.
     Refused: a shape with no SPARQL constraint (an attribute's constraints
     are asserted from the case page), a name already taken, and a shape
     nothing reaches -- there is no scene to start from.
     """
+    from .addcase import _moved_context
+    from .attributecase import _targets
     from ..cooked.shapepage import _reach, _resolve
     from ..sanity import known_constraints
 
@@ -83,9 +170,14 @@ def new_case(package, shape, name):
         raise PackageError(f'{shape_name} has no target, so it never runs on '
                            f'its own; start the case from the shape that uses it')
 
+    if purpose not in ('valid', 'invalid'):
+        raise PackageError(f'{purpose} is no test to write: one is valid or invalid')
+    good = purpose == 'valid'
+    # Asked on a type's page, it is a query's test: about that type, run once.
+    family = _types_under(package, entity_type) if entity_type else None
     root = examples_root(package.path)
     local = shape_name.split(':')[-1]
-    directory = os.path.join(root, f'test_{local}', 'bad')
+    directory = os.path.join(root, f'test_{local}', 'good' if good else 'bad')
     slug = _slug(name)
     target = os.path.join(directory, f'{slug}.jsonld')
     if os.path.exists(target):
@@ -100,10 +192,13 @@ def new_case(package, shape, name):
     examples = sorted(load_expectations(package.path).examples,
                       key=lambda e: (e.expect != 'valid', e.path))
     for example in examples:
+        if good and example.expect != 'valid':
+            continue                   # what it violates would come along
         try:
-            nodes = _reach(package, shape, compose(package, example))
+            graph = compose(package, example)
         except PackageError:
             continue
+        nodes = _of(graph, _reach(package, shape, graph), family)
         if not nodes:
             continue
         document = []
@@ -113,33 +208,112 @@ def new_case(package, shape, name):
                 path = os.path.join(package.path, relative)
             with open(path, encoding='utf-8') as handle:
                 data = json.load(handle)
-            document += data if isinstance(data, list) else [data]
+            document += [(os.path.dirname(path), d) for d in (data if isinstance(data, list) else [data])]
         source, resource = example.path, sorted(nodes)[0]
         break
+    fresh = False
     if document is None:
-        nodes = sorted(_reach(package, shape, package.model))
-        found = [(n, _model_document(package, n)) for n in nodes]
+        nodes = sorted(_of(package.model, _reach(package, shape, package.model), family))
+        if good and family is not None:
+            nodes = _silent_first(package, shape, nodes)
+        found = [(n, _model_source(package, n)) for n in nodes]
         found = [(n, d) for n, d in found if d is not None]
-        if not found:
-            raise PackageError(f'nothing reaches {shape_name}, in a case or in the '
-                               f'model: there is no scene to start a case from')
-        resource, first = found[0]
-        document, source = [first], 'the model'
+        if found:
+            resource, first = found[0]
+            document, source = [first], 'the model'
+            # Asked for one type, what its entity points at comes along: the
+            # query may read it there too.
+            for pointed in (_targets(first[1]) if family is not None else []):
+                other = _model_source(package, pointed)
+                if other is not None and other not in document:
+                    document.append(other)
+        else:
+            made, resource, source = _fresh_scene(package, shape_name, entity_type)
+            document, fresh = [(_context_home(package), d) for d in made], True
+    # A relative "@context" still names the same file from the case's folder.
+    document = [_moved_context(d, folder, directory) for folder, d in document]
 
-    os.makedirs(directory, exist_ok=True)
-    with open(target, 'w', encoding='utf-8') as handle:
-        json.dump(document, handle, indent=2, ensure_ascii=False)
-        handle.write('\n')
+    # The folders this makes, examples/ itself included, innermost first.
+    created, folder = [], directory
+    while not os.path.isdir(folder) and os.path.dirname(folder) != folder:
+        created.append(folder)
+        folder = os.path.dirname(folder)
+    expectations = os.path.join(directory, EXPECTATIONS)
+    declared_before = None
+    if os.path.exists(expectations):
+        with open(expectations, encoding='utf-8') as handle:
+            declared_before = handle.read()
+    partial = f'{target}.partial'
+    try:
+        os.makedirs(directory, exist_ok=True)
+        # Written beside and renamed: a case file is either whole or absent.
+        try:
+            with open(partial, 'w', encoding='utf-8') as handle:
+                json.dump(document, handle, indent=2, ensure_ascii=False)
+                handle.write('\n')
+            os.replace(partial, target)
+        finally:
+            if os.path.exists(partial):
+                os.remove(partial)
+        _declare(expectations, slug, local, source, resource, constraint, purpose)
+        case = os.path.relpath(target, root)
+        made = {'file': target, 'case': case, 'expectations': expectations,
+                'source': source, 'resource': resource, 'constraint': constraint,
+                'expect': purpose}
+        if family is None:
+            return made                # New case… of a shape page, as before
+        if fresh or source == 'the model':
+            _reached(package, shape, shape_name, case, resource, fresh)
+        from .addcase import _outcome
 
+        return dict(made, **_outcome(package, case))
+    except BaseException:
+        # Nothing half-made stays behind: the case, and its declaration.
+        if os.path.exists(target):
+            os.remove(target)
+        if declared_before is None:
+            if os.path.exists(expectations):
+                os.remove(expectations)
+        else:
+            with open(expectations, 'w', encoding='utf-8') as handle:
+                handle.write(declared_before)
+        for folder in created:
+            if os.path.isdir(folder) and not os.listdir(folder):
+                os.rmdir(folder)
+        raise
+
+
+def _reached(package, shape, shape_name, case, resource, fresh):
+    """Refuse an entity the query is not evaluated on in the case: neither an
+    assert nor silence on it would prove anything. A new one, or one copied
+    from the model without what makes the query reach it there."""
+    from ..cooked.shapepage import _reach
+    from ..package.loader import reload_keeping_shapes
+
+    reloaded = reload_keeping_shapes(package)
+    example = next((e for e in load_expectations(reloaded.path).examples if e.path == case), None)
+    if example is None:
+        raise PackageError(f'{case} is not declared where it was written')
+    if resource in _reach(reloaded, shape, compose(reloaded, example)):
+        return
+    if not fresh:
+        raise PackageError(f'{shape_name} is not evaluated on {resource} without the rest of the '
+                           f'model: write a case it runs on by hand')
+    raise PackageError(f'{shape_name} is not evaluated on a new entity of this type '
+                       f'either: write a case it runs on by hand')
+
+
+def _declare(expectations, slug, local, source, resource, constraint, purpose):
     from ruamel.yaml.comments import CommentedMap, CommentedSeq
 
-    expectations = os.path.join(directory, EXPECTATIONS)
+    good = purpose == 'valid'
     if os.path.exists(expectations):
         with open(expectations, encoding='utf-8') as handle:
             raw = _yaml().load(handle) or CommentedMap()
     else:
         raw = CommentedMap()
         raw.yaml_set_start_comment(
+            'Cases in this directory are expected to CONFORM.' if good else
             'Cases in this directory are expected to VIOLATE, and to say which '
             'constraint.')
     if not raw.get('examples'):
@@ -147,17 +321,15 @@ def new_case(package, shape, name):
     entry = CommentedMap()
     entry['path'] = f'{slug}.jsonld'
     entry['description'] = (
+        f'{local} runs on {resource} and does not fire. Started from {source}.' if good else
         f'Makes {local} fire. Started from {source}, where it holds: edit the '
         f'data until it fires on {resource}. Until then this case fails.')
-    entry['expect'] = 'invalid'
-    item = CommentedMap()
-    item['constraint'] = constraint
-    item['resource'] = resource
-    entry['asserts'] = CommentedSeq([item])
+    entry['expect'] = purpose
+    if not good:
+        item = CommentedMap()
+        item['constraint'] = constraint
+        item['resource'] = resource
+        entry['asserts'] = CommentedSeq([item])
     raw['examples'].append(entry)
     with open(expectations, 'w', encoding='utf-8') as handle:
         _yaml().dump(raw, handle)
-
-    return {'file': target, 'case': os.path.relpath(target, root),
-            'expectations': expectations, 'source': source,
-            'resource': resource, 'constraint': constraint}

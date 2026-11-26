@@ -332,4 +332,4 @@ function register(context, clientHolder, session) {
       (node) => cloneTestCase(clientHolder, session, node)));
 }
 
-module.exports = { register, newTestCase, suiteName, cloneTestCase, expectOf };
+module.exports = { register, newTestCase, freeName, suiteName, cloneTestCase, expectOf };

@@ -1587,6 +1587,11 @@ the rule is broken — it cannot pass by accident. With no case to start from it
 copies the model's document for an entity the shape reaches. A `sh:rule`
 derives data rather than firing, so it gets the query and no + New case.
 
+On a type's page, the `⋯` of a query's row offers **New test…**, as an
+attribute's does: *Should conform* (the query runs on it and is silent) or
+*Should fail* (asserts that the query fires, and fails until its data makes
+it). Its scene has an entity of that type -- a new one when there is none.
+
 Validation runs every shape that has a target, of any kind. Until this release
 it ran only `sh:targetClass` shapes — a shape written with `sh:targetNode` was
 never checked, and nothing said so. `tests/corpus/targets` has one shape per

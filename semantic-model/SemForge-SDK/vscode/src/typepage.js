@@ -825,12 +825,24 @@ class TypePages {
           label: rule.text || rule.shapeName.split(':').pop() } });
       return;
     }
+    if (message.command === 'ruleTest') {
+      const rule = (this.page.rules || [])[message.row];
+      if (rule && await require('./attributetest').newRuleTest(this.clientHolder, this.current.packageUri,
+        rule, this.page.iri)) {
+        await this.render();
+      }
+      return;
+    }
     if (message.command === 'ruleMenu') {
       const rule = (this.page.rules || [])[message.row];
       if (!rule) {
         return;
       }
       const picked = await vscode.window.showQuickPick([
+        // A rule derives data and never fires: nothing to prove of it here.
+        ...(rule.kind === 'rule' ? [] : [{ label: '$(beaker) New test…',
+          description: 'one that should conform, or one that should fail',
+          message: { command: 'ruleTest', row: message.row } }]),
         { label: '$(beaker) Open in SPARQL workbench', message: { command: 'bench', shape: rule.shape, kind: rule.kind } },
         { label: '$(symbol-interface) Open its shape page', message: { command: 'shape', name: rule.shape } },
         { label: '$(star-empty) Pin or unpin', message: { command: 'pinRule', row: message.row } },

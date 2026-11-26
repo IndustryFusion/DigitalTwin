@@ -101,10 +101,60 @@ async function newAttributeTest(clientHolder, session, node) {
   return true;
 }
 
+/**
+ * New test… for a SPARQL query of an entity type: one its query is silent on,
+ * or one it fires on. What a failing one must prove is known -- this query
+ * fires -- so it is asserted from the start.
+ */
+async function newRuleTest(clientHolder, packageUri, rule, entityType) {
+  const client = clientHolder.client;
+  if (!client) {
+    return false;
+  }
+  const shape = rule.shapeName.split(':').pop();
+  const picked = await vscode.window.showQuickPick([
+    { label: WORDS.valid, purpose: 'valid', description: 'the query runs on it and does not fire' },
+    { label: WORDS.invalid, purpose: 'invalid',
+      description: 'asserts that the query fires; it fails until its data makes it' }],
+  { title: `New test for ${rule.text || shape}: what should it show?`, matchOnDescription: true });
+  if (!picked) {
+    return false;
+  }
+  const valid = picked.purpose === 'valid';
+  const options = await client.sendRequest('semforge/testCaseOptions', { uri: packageUri });
+  const name = await vscode.window.showInputBox({
+    title: `New test: ${shape} · ${picked.label.replace(/^\$\([a-z]+\) /, '')}`,
+    prompt: 'A name for the case file (letters, digits, dashes)',
+    value: require('./testcases').freeName(options || {}, `test_${shape}/${valid ? 'good' : 'bad'}`,
+      valid ? 'silent' : 'fires'),
+    validateInput: (text) => (/[A-Za-z0-9]/.test(text) ? undefined : 'a name is required')
+  });
+  if (!name) {
+    return false;
+  }
+  const made = await client.sendRequest('semforge/newCase',
+    { uri: packageUri, shape: rule.shape, name, purpose: picked.purpose, entityType });
+  if (!made.ok) {
+    vscode.window.showErrorMessage(`SemForge: ${made.error}`);
+    return false;
+  }
+  for (const command of REFRESH_VIEWS) {
+    vscode.commands.executeCommand(command);
+  }
+  await vscode.commands.executeCommand('semforge.openCasePage',
+    { raw: { kind: 'example', file: made.file }, packageUri });
+  vscode.window[made.passes ? 'showInformationMessage' : 'showWarningMessage'](made.passes
+    ? `SemForge: ${made.case} written, and it passes.`
+    : valid ? `SemForge: ${made.case} written; it does not pass yet: ${made.failures.join('; ')}`
+      : `SemForge: ${made.case} started from ${made.source}. It fails until its data makes ` +
+        `${shape} fire on ${made.resource}.`);
+  return true;
+}
+
 function register(context, clientHolder, session) {
   context.subscriptions.push(
     vscode.commands.registerCommand('semforge.newAttributeTest',
       (node) => newAttributeTest(clientHolder, session, node)));
 }
 
-module.exports = { register, newAttributeTest };
+module.exports = { register, newAttributeTest, newRuleTest };
