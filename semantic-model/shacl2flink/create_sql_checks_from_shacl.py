@@ -80,8 +80,13 @@ accessible: {e}")
     # Parsed once for the two translations that read it with rdflib.
     knowledge = rdflib.Graph()
     knowledge.parse(knowledgefile)
-    sqlite3, (statementsets3, tables3, views3) = \
-        translate_construct(shaclfile, knowledge)
+    errors = []
+    problems = []
+    try:
+        sqlite3, (statementsets3, tables3, views3) = \
+            translate_construct(shaclfile, knowledge)
+    except utils.UnsupportedQueries as unsupported:
+        problems += unsupported.problems
 
     try:
         sqlite, (statementsets, tables, views, constraints, postgres_constraints) = \
@@ -90,11 +95,24 @@ accessible: {e}")
         # A build error, not a crash: print it plainly and stop. Compiling the
         # rest would produce a deployable pipeline that quietly validates less
         # than the shapes say it does.
-        print(f'ERROR: {unsupported}', file=sys.stderr)
-        sys.exit(1)
+        errors.append(str(unsupported))
 
-    sqlite2, (statementsets2, tables2, views2) = \
-        translate_sparql(shaclfile, knowledgefile, prefixes)
+    try:
+        sqlite2, (statementsets2, tables2, views2) = \
+            translate_sparql(shaclfile, knowledgefile, prefixes)
+    except utils.UnsupportedQueries as unsupported:
+        problems += unsupported.problems
+
+    # Everything that stands in the way, at once: fixing one error to be shown
+    # the next takes a build each.
+    if errors or problems:
+        for error in errors:
+            print(f'ERROR: {error}', file=sys.stderr)
+        if problems:
+            print(f'ERROR: {len(problems)} SPARQL expression(s) cannot be compiled to Flink SQL.', file=sys.stderr)
+            for number, problem in enumerate(problems, 1):
+                print(f'\n{number}) {problem}', file=sys.stderr)
+        sys.exit(1)
 
     # sorted, not just deduplicated: set iteration order varies per process, so
     # an unsorted list here reshuffles the tables/views of every generated

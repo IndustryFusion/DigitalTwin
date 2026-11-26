@@ -280,3 +280,80 @@ SELECT $this ?value ?type
             sh:property [ sh:path ngsild:hasValue ;
                     sh:nodeKind sh:Literal ;
                     sh:datatype xsd:double ] ] .
+
+# --------------------------------------------- what a SPARQL query may look like
+# Forms of shacl2flink/sparql-expressions (#1107) on a real Flink: an attribute
+# only a shape without a target declares, a variable predicate, numbers without
+# a cast, an OPTIONAL first, and an attribute read outside and inside a
+# NOT EXISTS. Each constraint has a shape of its own, so that its alert names it.
+:E2EQueryDeclarationShape a sh:NodeShape ;
+    sh:property [ sh:path iffBaseEntities:hasE2ESpare ;
+            sh:nodeKind sh:BlankNode ;
+            sh:property [ sh:path ngsild:hasObject ;
+                    sh:nodeKind sh:IRI ] ] .
+
+:E2EQueryDeclaredShape a sh:NodeShape ;
+    sh:targetClass iffBaseEntities:E2EQueryMachine ;
+    sh:sparql [ a sh:SPARQLConstraint ;
+            sh:message "Declared" ;
+            sh:select """
+PREFIX e: <https://industryfusion.github.io/contexts/example/v0/base_entities/>
+PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
+SELECT $this WHERE {
+    $this e:hasE2ESpare [ ngsild:hasObject ?o ] .
+}
+""" ] .
+
+:E2EQueryAnyAttributeShape a sh:NodeShape ;
+    sh:targetClass iffBaseEntities:E2EQueryMachine ;
+    sh:sparql [ a sh:SPARQLConstraint ;
+            sh:message "AnyAttribute" ;
+            sh:select """
+PREFIX e: <https://industryfusion.github.io/contexts/example/v0/base_entities/>
+PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
+SELECT $this WHERE {
+    $this ?attribute [ ngsild:hasValue ?v ] .
+    FILTER(?attribute NOT IN (e:hasE2EUpper, e:hasE2ELower) && ?v = "forbidden")
+}
+""" ] .
+
+:E2EQueryNumbersShape a sh:NodeShape ;
+    sh:targetClass iffBaseEntities:E2EQueryMachine ;
+    sh:sparql [ a sh:SPARQLConstraint ;
+            sh:message "Numbers" ;
+            sh:select """
+PREFIX e: <https://industryfusion.github.io/contexts/example/v0/base_entities/>
+PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
+SELECT $this WHERE {
+    $this e:hasE2EUpper [ ngsild:hasValue ?u ] .
+    $this e:hasE2ELower [ ngsild:hasValue ?l ] .
+    FILTER(?l > ?u)
+}
+""" ] .
+
+:E2EQueryOptionalFirstShape a sh:NodeShape ;
+    sh:targetClass iffBaseEntities:E2EQueryMachine ;
+    sh:sparql [ a sh:SPARQLConstraint ;
+            sh:message "OptionalFirst" ;
+            sh:select """
+PREFIX e: <https://industryfusion.github.io/contexts/example/v0/base_entities/>
+PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
+SELECT $this WHERE {
+    OPTIONAL { $this e:hasE2ELower [ ngsild:hasValue ?l ] }
+    $this e:hasE2EUpper [ ngsild:hasValue ?u ] .
+    FILTER(bound(?l) && ?l >= 100)
+}
+""" ] .
+
+:E2EQuerySameAttributeShape a sh:NodeShape ;
+    sh:targetClass iffBaseEntities:E2EQueryMachine ;
+    sh:sparql [ a sh:SPARQLConstraint ;
+            sh:message "SameAttribute" ;
+            sh:select """
+PREFIX e: <https://industryfusion.github.io/contexts/example/v0/base_entities/>
+PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
+SELECT $this WHERE {
+    $this e:hasE2EUpper [ ngsild:hasValue ?u ] .
+    FILTER NOT EXISTS { $this e:hasE2EUpper [ ngsild:hasValue ?w ] . FILTER(?w < 50) }
+}
+""" ] .

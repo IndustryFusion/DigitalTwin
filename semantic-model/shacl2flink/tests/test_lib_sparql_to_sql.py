@@ -114,6 +114,8 @@ def test_translate_BGP(mock_create_ngsild_mappings, mock_sort_triples, mock_proc
         'add_triples': [],
         'bounds': {},
         'tables': {'tables': 'tables'},
+        'properties': {},
+        'relationships': {},
         'entity_variables': {},
         'property_variables': {},
         'time_variables': {}
@@ -215,7 +217,8 @@ def test_translate_join(mock_translate):
     }
     join.p2 = hash2
     lib.sparql_to_sql.translate_join(ctx, join)
-    assert join['target_sql'] == ''
+    # the right side only adds conditions: the left side's tables stay
+    assert join['target_sql'] == 'target_sql1'
     assert join['where'] == '(where1 and where2)'
     assert mock_translate.call_count == 4
 

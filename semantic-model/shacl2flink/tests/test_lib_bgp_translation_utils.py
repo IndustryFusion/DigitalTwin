@@ -479,7 +479,7 @@ def test_process_rdf_spo_blank_node(mock_isentity, mock_create_table_name,
     lib.bgp_translation_utils.process_rdf_spo(ctx, local_ctx, s, p, o)
     assert local_ctx['bgp_sql_expression'][0] == {'statement': 'rdf AS testtable',
                                                   'join_condition': "testtable.subject = condition and \
-testtable.predicate = '<predicate>' and testtable.object LIKE '_:%'"}
+testtable.predicate = '<predicate>'"}
     assert local_ctx['bgp_sql_expression'][1] == {'statement': 'rdf AS testtable2',
                                                   'join_condition': "testtable.subject = condition and \
 testtable2.predicate = '<predicate2>' and testtable.object = testtable2.subject and testtable2.object = condition"}

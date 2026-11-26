@@ -75,6 +75,10 @@ build: $(SHACL) $(KNOWLEDGE) $(MODEL)
 	$(PYTHON) create_ngsild_models.py $(SHACL) $(KNOWLEDGE) $(MODEL)
 	$(PYTHON) create_sql_checks_from_shacl.py $(CHECKPOINTSWITCH) $(NOROCKSDBSWITCH) $(SHACL) $(KNOWLEDGE)
 
+# Which SPARQL expressions of the package cannot be compiled, and why, without a build.
+check-queries: $(SHACL)
+	$(PYTHON) check_queries.py $(SHACL)
+
 helm: export IFF_HELM=true
 helm: build submit-postgres-tables
 	mkdir -p ${HELM_DIR}

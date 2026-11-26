@@ -5,6 +5,7 @@ from jinja2 import Template
 
 import lib.configs as configs
 import lib.utils as utils
+from lib.query_check import problem_of
 from lib.sparql_to_sql import translate_sparql
 
 yaml = ruamel.yaml.YAML()
@@ -101,6 +102,7 @@ def translate(shaclfile, knowledgefile, prefixes):
     # order, which depends on how the graph was loaded, and the generated SQL
     # would follow it.
     qres = utils.in_stable_order(g.query(sparql_get_all_sparql_nodes, initNs=prefixes))
+    problems = []
     for row in qres:
         target_class = row.targetclass
         message = row.message.toPython() if row.message else None
@@ -108,9 +110,16 @@ def translate(shaclfile, knowledgefile, prefixes):
         nodeshape = utils.strip_class(row.nodeshape.toPython()) if row.nodeshape else None
         targetclass = f'{configs.kafka_topic_ngsi_prefix_name}'
         severitylabel = row.severitylabel.toPython() if row.severitylabel is not None else 'warning'
-        sql_expression, tables = translate_sparql(shaclfile, knowledgefile, select, target_class, g)
-        sql_expression_yaml = utils.process_sql_dialect(sql_expression, False)
-        sql_expression_sqlite = utils.process_sql_dialect(sql_expression, True)
+        try:
+            sql_expression, tables = translate_sparql(shaclfile, knowledgefile, select, target_class, g)
+            sql_expression_yaml = utils.process_sql_dialect(sql_expression, False)
+            sql_expression_sqlite = utils.process_sql_dialect(sql_expression, True)
+        except Exception as error:              # noqa: BLE001
+            # All of them are said, each by its shape: one at a time, without
+            # a name, nobody can find the expression to fix.
+            problems.append(problem_of(error, row.nodeshape, target_class, 'sh:select', message,
+                                       select, [shaclfile]))
+            continue
         # Get all superclasses and create the proper "where command"
         initBindings = {"targetclass": target_class}
         qres_subclasses = g.query(sparql_get_all_subclasses, initNs=prefixes, initBindings=initBindings)
@@ -145,6 +154,8 @@ def translate(shaclfile, knowledgefile, prefixes):
         statementsets.append(sql_command_yaml)
         tables_all += map(utils.snake_case_to_kebab_case, tables)
 
+    if problems:
+        raise utils.UnsupportedQueries(problems)
     views = []
     tables = list(set(tables_all))
     for table in tables:

@@ -654,7 +654,6 @@ Basic Graph Pattern (BGP)
 ```
 
 OPTIONAL {}
-(only single triple supported)
 ```
 </td>
 <td>
@@ -854,7 +853,7 @@ NOW()
 
 ```
 CAST
-(xsd:integer, xsd:float, xsd:dateTime, xsd:string)
+(xsd:integer, xsd:float, xsd:double, xsd:decimal, xsd:dateTime, xsd:string)
 ```
 </td>
 <td>
@@ -916,6 +915,75 @@ Multiplicative Expression
 <td style="font-size: 50px;color: green;">&#10003;</td>
 </tr>
 </table>
+
+A build reports every expression it cannot compile, with its shape, file, line,
+pattern and query, and stops. `make check-queries KMS=<package>` reports the
+same without a build.
+
+### Reading attributes
+
+| written | reads |
+|---|---|
+| `?e ex:a [ ngsild:hasValue ?v ]` | the value of a Property |
+| `?e ex:a [ ngsild:hasObject ?o ]` | the target of a Relationship |
+| `?e ex:a [ ngsild:hasValue ?v ; ngsild:observedAt ?t ]` | the value and its time |
+| `?e ex:a ?i . ?i ngsild:hasValue ?v` | the same as the first, the instance named |
+| `?e ex:a/ngsild:hasValue ?v` | the same as the first, as a path |
+| `?e ex:a [ ngsild:hasValue "x" ]`, `[ ngsild:hasObject <urn:x> ]` | the entities with that value or target |
+| `?e ?a [ ngsild:hasValue ?v ]`, `?e ?a [ ngsild:hasObject ?o ]` | every Property or Relationship; `?a` is its name |
+
+No shape has to declare the attribute. `?a` is an IRI like any other:
+`FILTER(?a IN (ex:a, ex:b))`, or a pattern of the knowledge about it.
+
+A variable target is an entity that exists: a deleted target is no solution. A
+constant target is compared as an IRI, whether or not it exists.
+
+Two patterns on one attribute of one entity are about one instance, so a second
+value or target of it is refused. Read it in a `FILTER EXISTS` or `NOT EXISTS`,
+where a pattern looks for an instance of its own.
+
+### Comparing values
+
+**Numbers are compared as numbers,** in `<`, `<=`, `>`, `>=`, and in `=`, `!=`,
+`IN` and `NOT IN` with a numeric constant or a cast to a number; no cast is
+needed. A text that is no number is neither equal nor unequal to a number,
+neither less nor more; two such texts are compared as texts. A number is an
+optional sign, digits with an optional decimal point, and an optional exponent.
+
+This differs from a comparison of texts, in which `"9"` is more than `"10"`, and
+from a SPARQL engine in one thing: a *string* whose text is a number is compared
+as that number, because the platform sends both alike.
+
+A constant in a pattern compares like `=` in a `FILTER`: `[ ngsild:hasValue 7 ]`
+also finds a declared double `7.0`, and `"10"` also the number 10, because the
+platform keeps no datatype for a plain value.
+
+### The knowledge
+
+`ex:a/ex:b`, `^ex:a` and `rdfs:subClassOf*` are the supported paths;
+`rdfs:subClassOf*` knows the classes that the knowledge names. `[ ]` as the
+object of a pattern of the knowledge is any node. An entity is
+never part of the knowledge; only its type, its attributes' names and IRI values
+connect the two.
+
+### Not supported
+
+These are refused by name: an attribute read without its instance (`?e ex:a ?v`,
+`?e ?p ?o`), sub-attributes, `ngsild:unitCode`, `ngsild:datasetId`, list and JSON
+values, `UNION`, `MINUS`, `VALUES`, sub-selects, `ORDER BY`, `LIMIT`, other paths,
+functions other than the casts, `BOUND`, `IF`, `NOW` and the UDFs, variables that
+nothing binds, patterns that are not connected with `$this`, and an `OPTIONAL`
+whose patterns are connected with each other only through something outside of it,
+with a `FILTER` around attributes read before it, and `[ ]` as the subject of
+a pattern that nothing points at. These are refused as well, because their
+answers would differ from SPARQL's: another name (`BIND`) for an entity, one
+variable for an attribute's value and a literal of the knowledge (the knowledge
+writes numbers otherwise than the platform; meet on an IRI, or compare in a
+`FILTER`; inside a blank node of the knowledge a value is compared with the
+knowledge's text, which finds texts but not numbers), an attribute read again after an `OPTIONAL` that reads it, an
+entity named by its IRI in an `OPTIONAL` or a group, and a constant inside a
+blank node of the knowledge (`?s ex:a [ ex:b "x" ]`; write
+`?s ex:a [ ex:b ?x ] . FILTER(?x = "x")`).
 
 ## NGSI-LD value paths
 

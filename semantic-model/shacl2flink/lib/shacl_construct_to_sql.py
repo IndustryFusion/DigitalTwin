@@ -9,6 +9,7 @@ import ruamel.yaml
 
 import lib.configs as configs
 import lib.utils as utils
+from lib.query_check import problem_of
 from lib.sparql_to_sql import translate_sparql
 
 yaml = ruamel.yaml.YAML()
@@ -118,14 +119,20 @@ def translate(shaclfile, knowledgefile):
     sqlite = ''
     # Get all NGSI-LD Relationship
     qres = g.query(sparql_get_all_rule_nodes)
+    problems = []
 
     for row in qres:
         target_class = row.targetclass
         construct = row.construct.toPython() if row.construct else None
-        sql_expression, tables = translate_sparql(shaclfile, knowledgefile, construct, target_class, g)
+        try:
+            sql_expression, tables = translate_sparql(shaclfile, knowledgefile, construct, target_class, g)
 
-        sql_command_yaml = utils.process_sql_dialect(sql_expression, False)
-        sql_command_sqlite = utils.process_sql_dialect(sql_expression, True)
+            sql_command_yaml = utils.process_sql_dialect(sql_expression, False)
+            sql_command_sqlite = utils.process_sql_dialect(sql_expression, True)
+        except Exception as error:              # noqa: BLE001
+            problems.append(problem_of(error, row.nodeshape, target_class, 'sh:construct', '', construct,
+                                       [shaclfile]))
+            continue
 
         sql_command_sqlite += ";"
         sql_command_yaml += ";"
@@ -134,6 +141,8 @@ def translate(shaclfile, knowledgefile):
         statementsets.append(sql_command_yaml)
         tables_all += map(utils.snake_case_to_kebab_case, tables)
 
+    if problems:
+        raise utils.UnsupportedQueries(problems)
     views = []
     tables = list(set(tables_all))
     for table in tables:

@@ -173,6 +173,19 @@ BARE_CASES=(
     "c|hasE2EFlag|{\"type\":\"Property\",\"value\":\"abc\"}|${BARE_DC}[0]|"
 )
 
+# Forms of SPARQL constraints (#1107): name|shapes that alert|attributes. Every
+# other query shape stays silent on the entity.
+QUERY_TYPE=${E2E}/E2EQueryMachine
+QUERY_SHAPES="Declared AnyAttribute Numbers OptionalFirst SameAttribute"
+QUERY_CASES=(
+    "declared|Declared|\"${E2E}/hasE2ESpare\":{\"type\":\"Relationship\",\"object\":\"urn:e2e-query-nine:${RUN_ID}\"}"
+    "note|AnyAttribute|\"${E2E}/hasE2ENote\":{\"type\":\"Property\",\"value\":\"forbidden\"}"
+    "nine||\"${E2E}/hasE2EUpper\":{\"type\":\"Property\",\"value\":10},\"${E2E}/hasE2ELower\":{\"type\":\"Property\",\"value\":9}"
+    "ten|Numbers|\"${E2E}/hasE2EUpper\":{\"type\":\"Property\",\"value\":9},\"${E2E}/hasE2ELower\":{\"type\":\"Property\",\"value\":10}"
+    "hundred|Numbers OptionalFirst|\"${E2E}/hasE2EUpper\":{\"type\":\"Property\",\"value\":20},\"${E2E}/hasE2ELower\":{\"type\":\"Property\",\"value\":100}"
+    "upper|SameAttribute|\"${E2E}/hasE2EUpper\":{\"type\":\"Property\",\"value\":60}"
+)
+
 # sh:hasValue with a number (#965), one entity per value written:
 # name|value as written|attributes that must alert|attributes that must not.
 # The entity holds the value on every attribute it lists. The attributes
@@ -266,6 +279,9 @@ teardown() {
     delete_entity "${NUMBER_RELATIONSHIP}" >/dev/null 2>&1 || true
     for spec in a b c; do
         delete_entity "urn:e2e-bare-${spec}:${RUN_ID}" >/dev/null 2>&1 || true
+    done
+    for spec in "${QUERY_CASES[@]}"; do
+        delete_entity "urn:e2e-query-${spec%%|*}:${RUN_ID}" >/dev/null 2>&1 || true
     done
     for spec in "${HASVALUE_CASES[@]}"; do
         delete_entity "urn:e2e-hasvalue-${spec%%|*}:${RUN_ID}" >/dev/null 2>&1 || true
@@ -676,6 +692,30 @@ bare_event() {
         IFS='|' read -r ent attr value loud silent <<< "${spec}"
         for component in ${silent}; do
             assert_no_alert "urn:e2e-bare-${ent}:${RUN_ID}" "$(bare_event "${component}" "${attr}")"
+        done
+    done
+}
+
+@test "sparql constraints of every supported kind answer as SPARQL does, through scorpio and the bridge" {
+    # shacl2flink/sparql-expressions (#1107). All entities first, then the
+    # alerts, then the silence: by then each shape has been seen to fire.
+    local name fires attributes shape code
+    for spec in "${QUERY_CASES[@]}"; do
+        IFS='|' read -r name fires attributes <<< "${spec}"
+        code=$(create_entity "urn:e2e-query-${name}:${RUN_ID}" "${QUERY_TYPE}" "${attributes}")
+        [ "${code}" = "201" ] || { echo "# create ${name} -> HTTP ${code}" >&3; return 1; }
+    done
+    for spec in "${QUERY_CASES[@]}"; do
+        IFS='|' read -r name fires attributes <<< "${spec}"
+        for shape in ${fires}; do
+            assert_alert "urn:e2e-query-${name}:${RUN_ID}" "${SPARQL_CONSTRAINT}(E2EQuery${shape}Shape)"
+        done
+    done
+    for spec in "${QUERY_CASES[@]}"; do
+        IFS='|' read -r name fires attributes <<< "${spec}"
+        for shape in ${QUERY_SHAPES}; do
+            [[ " ${fires} " == *" ${shape} "* ]] || \
+                assert_no_alert "urn:e2e-query-${name}:${RUN_ID}" "${SPARQL_CONSTRAINT}(E2EQuery${shape}Shape)"
         done
     done
 }

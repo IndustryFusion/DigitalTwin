@@ -242,3 +242,28 @@
         owl:ObjectProperty ;
     rdfs:domain :E2EPart ;
     rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
+# SPARQL constraints (#1107): see E2EQueryDeclarationShape. hasE2ENote is
+# declared here and by no shape.
+:E2EQueryMachine a owl:Class,
+        owl:NamedIndividual .
+
+:hasE2EUpper a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :E2EQueryMachine ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
+:hasE2ELower a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :E2EQueryMachine ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
+:hasE2ENote a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :E2EQueryMachine ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
+:hasE2ESpare a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :E2EQueryMachine ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Relationship> .

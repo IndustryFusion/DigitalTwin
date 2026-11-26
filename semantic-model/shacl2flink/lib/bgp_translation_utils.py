@@ -16,7 +16,8 @@
 import re
 import itertools
 from rdflib import Namespace, URIRef, Variable, BNode, Literal
-from rdflib.namespace import RDF
+from rdflib.namespace import RDF, RDFS
+from rdflib.paths import InvPath, MulPath, Path, SequencePath
 import copy
 import lib.utils as utils
 import lib.configs as configs
@@ -57,11 +58,155 @@ AS {attribute_tablename}'
     return expression
 
 
-def merge_vartypes(ctx, property_variables, entity_variables, time_variables):
+PAYLOADS = (ngsild['hasValue'], ngsild['hasObject'], ngsild['observedAt'])
+
+
+def steps(s, p, o):
+    """A pattern with a property path as patterns without one: `<a>/<b>` and
+    `^<a>`, in any combination, and rdfs:subClassOf*, which the knowledge
+    holds as its closure."""
+    if isinstance(p, SequencePath):
+        found = []
+        for number, step in enumerate(p.args):
+            last = number == len(p.args) - 1
+            following = p.args[number + 1] if not last else None
+            end = o if last else BNode() if following in PAYLOADS else Variable('path' + get_unique_suffix(8))
+            found += steps(s, step, end)
+            s = end
+        return found
+    if isinstance(p, InvPath):
+        return steps(o, p.arg, s)
+    if isinstance(p, MulPath) and p.path == RDFS.subClassOf and p.zero and p.more:
+        return [(s, p.path, o)]
+    if isinstance(p, Path):
+        raise utils.SparqlValidationFailed(f'The property path {p.n3()} is not supported. Only <a>/<b>, ^<a> and \
+rdfs:subClassOf* are.')
+    return [(s, p, o)]
+
+
+def normalise_attributes(triples):
+    """Every way to read an attribute, in the one form that is translated:
+    `?entity predicate [ ngsild:hasValue|hasObject|observedAt ?variable ]`.
+
+      * `?s p ?a . ?a ngsild:hasValue ?v` -- a named instance
+      * `?s p [ ngsild:hasValue ?v ; ngsild:observedAt ?t ]` -- several at once
+      * `?s p [ ngsild:hasValue "x" ]` -- a constant: a variable, and a condition
+      * `?s p/ngsild:hasValue ?v` -- a path
+
+    Returns (triples, {variable: constant}, the variables of targets, the
+    variables of entities named by their IRI). What NGSI-LD says and the tables
+    do not hold is refused here, by name, rather than becoming a join on the
+    knowledge that never matches.
+    """
+    plain = []
+    constants = {}
+    for s, p, o in triples:
+        plain += steps(s, p, o)
+
+    nodes = {s for s, p, o in plain if p in PAYLOADS and not isinstance(s, URIRef)}
+    holders = {}
+    for s, p, o in plain:
+        if o in nodes and p not in PAYLOADS:
+            holders.setdefault(o, []).append((s, p))
+    result = []
+    targets = set()
+    entities = {}                                     # an entity named by its IRI: its variable
+    for s, p, o in plain:
+        if o in holders and p not in PAYLOADS:
+            continue                                  # written with each of its payloads, below
+        if s in nodes and p not in PAYLOADS:
+            name = p.n3() if isinstance(p, URIRef) else f'?{p}'
+            if isinstance(p, URIRef) and p in ngsild:
+                raise utils.SparqlValidationFailed(f'ngsild:{p[len(ngsild):]} of an attribute cannot be read. \
+Only ngsild:hasValue, ngsild:hasObject and ngsild:observedAt can.')
+            raise utils.SparqlValidationFailed(f'{name} is read from an attribute, not from an entity: \
+sub-attributes cannot be queried.')
+        if s in nodes and p in PAYLOADS:
+            if s not in holders:
+                raise utils.SparqlValidationFailed(f'ngsild:{p[len(ngsild):]} is read from something that is no \
+attribute in the same group of patterns. Write it as ?entity <attribute> [ ngsild:{p[len(ngsild):]} ?variable ].')
+            if len({holder for holder, _ in holders[s]}) > 1 or len({predicate for _, predicate in holders[s]}) > 1:
+                raise utils.SparqlValidationFailed(f'{s.n3()} is the instance of two attributes; an instance belongs \
+to one.')
+            if isinstance(o, (URIRef, Literal)):
+                variable = Variable('const' + get_unique_suffix(8))
+                constants[variable] = o
+                if p == ngsild['hasObject']:
+                    targets.add(variable)
+                o = variable
+            for holder, predicate in holders[s]:
+                if isinstance(holder, URIRef):
+                    # a certain entity: a variable, and a condition
+                    if holder not in entities:
+                        entities[holder] = Variable('const' + get_unique_suffix(8))
+                        constants[entities[holder]] = holder
+                    holder = entities[holder]
+                if isinstance(holder, BNode):
+                    raise utils.SparqlValidationFailed(f'{predicate.n3()} is read from an attribute, not from an \
+entity: sub-attributes cannot be queried.')
+                instance = BNode()
+                result += [(holder, predicate, instance), (instance, p, o)]
+            continue
+        result.append((s, p, o))
+    return result, constants, targets, set(entities.values())
+
+
+def register_attributes(ctx, triples):
+    """What a pattern reads as an attribute is one, whether or not a shape with
+    a target says so: `[ ngsild:hasObject ?x ]` cannot be anything else. Shapes
+    only add what a value is, an IRI or a literal (sh:nodeKind)."""
+    payload = {}
+    for s, p, o in triples:
+        if p in PAYLOADS:
+            payload.setdefault(s, set()).add(p)
+    relationships, properties = {}, {}
+    for s, p, o in triples:
+        if o in payload and p not in PAYLOADS:
+            if ngsild['hasObject'] in payload[o]:
+                relationships[p.toPython()] = True
+            elif p.toPython() not in ctx['relationships']:
+                properties[p.toPython()] = utils.ANY_VALUE
+    for s, p, o in triples:
+        if isinstance(s, Variable) and not isinstance(o, BNode) and not isinstance(p, Variable):
+            kind = 'hasObject' if p.toPython() in {**ctx['relationships'], **relationships} else 'hasValue'
+            if kind == 'hasObject' or p.toPython() in {**ctx['properties'], **properties}:
+                error = utils.SparqlValidationFailed(f'{p.n3()} is an attribute, and an attribute is read in two \
+steps: ?{s} <attribute> [ ngsild:{kind} {o.n3()} ].')
+                error.pattern = describe_triple(ctx, [], (s, p, o))
+                raise error
+    if relationships or properties:
+        ctx['relationships'] = {**ctx['relationships'], **relationships}
+        ctx['properties'] = {**properties, **ctx['properties']}
+
+
+def describe_triple(ctx, graph, triple):
+    """A pattern as one would write it, for a message."""
+    manager = ctx.get('namespace_manager')
+
+    def said(term):
+        if isinstance(term, BNode):
+            inner = [f'{said(p)} {said(o)}' for _, p, o in graph.triples((term, None, None))]
+            return f'[ {" ; ".join(inner)} ]' if inner else '[ ]'
+        try:
+            return term.n3(manager)
+        except Exception:
+            return str(term)
+    return ' '.join(said(term) for term in triple)
+
+
+def merge_vartypes(ctx, property_variables, entity_variables, time_variables, written=False):
+    # What the knowledge has bound stays the knowledge's, in its own form --
+    # except that a rule's template says as what a value is `written`.
+    known = {**ctx.get('property_variables', {}), **ctx.get('time_variables', {})} if 'bounds' in ctx else {}
+    property_variables = {var: kind for var, kind in property_variables.items()
+                          if written or 'bounds' not in ctx or var in known or
+                          utils.create_varname(var) not in ctx['bounds']}
     if 'property_variables' not in ctx:
         ctx['property_variables'] = property_variables
     else:
-        ctx['property_variables'] = {**(ctx['property_variables']), **property_variables}
+        known = ctx['property_variables']
+        ctx['property_variables'] = {**known, **{var: kind for var, kind in property_variables.items()
+                                                 if kind != utils.ANY_VALUE or var not in known}}
     if 'entity_variables' not in ctx:
         ctx['entity_variables'] = entity_variables
     else:
@@ -133,6 +278,8 @@ def get_rdf_join_condition(r, property_variables, entity_variables, time_variabl
         if r in property_variables or r in time_variables:
             variables = property_variables if r in property_variables else time_variables
             if var in selectvars:
+                if variables[r] == utils.ANY_VALUE:
+                    return f'({utils.wrap_any_value(selectvars[var])})'
                 if variables[r]:
                     return "'<'||" + selectvars[var] + "||'>'"
                 else:
@@ -142,8 +289,8 @@ def get_rdf_join_condition(r, property_variables, entity_variables, time_variabl
 ?{var} at this point. You might want to rearrange the query to hint to \
 translator.')
         elif r in entity_variables:
-            raise utils.SparqlValidationFailed(f'Cannot bind enttiy variable {r} to \
-plain RDF context')
+            raise utils.SparqlValidationFailed(f'?{r} is an entity, and the knowledge holds no entities. \
+Read an attribute of it as ?{r} <attribute> [ ngsild:hasValue|hasObject ?variable ].')
         elif var in selectvars:  # plain RDF variable
             return selectvars[var]
     elif isinstance(r, URIRef) or isinstance(r, Literal):
@@ -185,6 +332,12 @@ def sort_triples(ctx, bounds, triples, graph):
                 key += p.toPython()
         return key
 
+    def from_attribute(term):
+        # What an attribute gives is read from the attribute before anything
+        # is asked about it in the knowledge.
+        return isinstance(term, Variable) and utils.create_varname(term) not in bounds and \
+            any((None, payload, term) in graph for payload in PAYLOADS)
+
     def select_candidates(bounds, triples, graph):
         for s, p, o in triples:
             count = 0
@@ -199,10 +352,15 @@ def sort_triples(ctx, bounds, triples, graph):
                             count += 1
                             if isinstance(bo, Variable):
                                 bounds[utils.create_varname(bo)] = ''
+                            if isinstance(p, Variable):
+                                bounds[utils.create_varname(p)] = ''
                         elif isinstance(bo, Variable) and utils.create_varname(bo)\
-                                in bounds:
+                                in bounds and bp != ngsild['observedAt']:
+                            # (a time is read with its attribute, not to find it)
                             count += 1
                             bounds[utils.create_varname(s)] = ''
+                            if isinstance(p, Variable):
+                                bounds[utils.create_varname(p)] = ''
                         elif isinstance(bo, URIRef) or isinstance(bo, Literal):
                             raise utils.SparqlValidationFailed(f'Tried to bind {s}\
 to Literal or IRI instead of Variable. Not implemented. Workaround to bind {s}\
@@ -225,7 +383,9 @@ to Variable and use FILTER.')
             elif not isinstance(s, BNode) or (p != ngsild['hasValue'] and p !=
                                               ngsild['hasObject'] and p != ngsild['observedAt'] and
                                               p != RDF['type']):  # (2)
-                if isinstance(s, Variable) and utils.create_varname(s) in bounds and not isinstance(o, BNode):
+                if from_attribute(s) or from_attribute(o):
+                    count = 0
+                elif isinstance(s, Variable) and utils.create_varname(s) in bounds and not isinstance(o, BNode):
                     count += 1
                     if isinstance(o, Variable):
                         bounds[utils.create_varname(o)] = ''
@@ -233,7 +393,7 @@ to Variable and use FILTER.')
                     count += 1
                     if isinstance(s, Variable):
                         bounds[utils.create_varname(s)] = ''
-                elif isinstance(s, Variable) and isinstance(o, URIRef):
+                elif isinstance(s, Variable) and isinstance(o, (URIRef, Literal)):
                     count += 1
                     bounds[utils.create_varname(s)] = ''
                 elif isinstance(o, BNode):  # rdf with blank nodes
@@ -260,8 +420,19 @@ to Variable and use FILTER.')
     while len(sorted_triples) > 0:
         candidate = select_candidates(bounds, sorted_triples, graph)
         if candidate is None:
-            raise utils.SparqlValidationFailed(f"Could not determine the right order \
-of triples {str(triples)}")
+            inside = [t for t in sorted_triples if isinstance(t[0], BNode) and isinstance(t[2], (URIRef, Literal)) and
+                      any(True for _ in graph.triples((None, None, t[0]))) and
+                      not any(parent in sorted_triples for parent in graph.triples((None, None, t[0])))]
+            if inside and len(inside) == len(sorted_triples):
+                said = ' .  '.join(describe_triple(ctx, graph, parent) for parent in
+                                   dict.fromkeys(p for t in inside for p in graph.triples((None, None, t[0]))))
+                raise utils.SparqlValidationFailed(f'A constant inside a blank node of the knowledge is not \
+supported: {said}. Use a variable and compare it in a FILTER.')
+            rest = ' .  '.join(describe_triple(ctx, graph, t) for t in sorted_triples
+                               if not isinstance(t[0], BNode) or
+                               not any(True for _ in graph.triples((None, None, t[0]))))
+            raise utils.SparqlValidationFailed(f"These patterns are not connected with ?this or with \
+anything read before them: {rest}")
         result.append(candidate)
         sorted_triples.remove(candidate)
     return result
@@ -332,7 +503,7 @@ def create_ngsild_mappings(ctx, sorted_graph):
                         isIri = ctx['properties'][prop_plain]
                     else:
                         raise utils.WrongSparqlStructure(f"Unexpected property structure found for property \
-{prop_p}. Check if the prefix + property exists in the shacl definion.\n Check expression {ctx['query']}.")
+{prop_p}. Check if the prefix + property exists in the shacl definion.")
                 property_variables[o] = isIri
         if p == ngsild['hasObject']:
             if isinstance(o, Variable):
@@ -358,6 +529,32 @@ def create_ngsild_mappings(ctx, sorted_graph):
                 time_variables[o] = isRel
 
     return property_variables, entity_variables, time_variables
+
+
+def knowledge_literal(variable):
+    return utils.SparqlValidationFailed(f'?{variable} is a value of an attribute and a literal of the knowledge, which \
+writes numbers otherwise than the platform. Compare them in a FILTER, or let them meet on an IRI.')
+
+
+def second_value(s, p, what):
+    return utils.SparqlValidationFailed(f'Two {what} of {p.n3()} of {s.n3()} are read, which are two instances of one \
+attribute. Read the second one in a FILTER EXISTS or NOT EXISTS.')
+
+
+def attribute_name_condition(ctx, local_ctx, p, attribute_tablename):
+    """How the attribute of a variable predicate is found: by the name the
+    variable has already, else any, and the variable is bound to its name."""
+    bound = None
+    if utils.create_varname(p) in local_ctx['bounds']:
+        if f'`{attribute_tablename}`.`name`' == local_ctx['bounds'][utils.create_varname(p)]:
+            return f"{attribute_tablename}.name = {attribute_tablename}.name"
+        bound = get_rdf_join_condition(p, ctx['property_variables'], ctx['entity_variables'],
+                                       ctx['time_variables'], local_ctx['bounds'])
+    if bound is not None:
+        return f"'<'||{attribute_tablename}.name||'>' = {bound}"
+    local_ctx['bounds'][utils.create_varname(p)] = f'`{attribute_tablename}`.`name`'
+    ctx['property_variables'][p] = True
+    return f"{attribute_tablename}.name IS NOT NULL"
 
 
 def process_ngsild_spo(ctx, local_ctx, s, p, o):
@@ -396,27 +593,67 @@ def process_ngsild_spo(ctx, local_ctx, s, p, o):
     ngsildtype = list(local_ctx['h'].predicates(subject=o))
     ngsildvar = list(local_ctx['h'].objects(subject=o))
     if len(ngsildtype) != 1 or len(ngsildvar) != 1:
-        raise utils.SparqlValidationFailed(f'No matching ngsiltype or ngsildvar found for variable \
-{s.toPython()} while parsing {ctx["query"]}')
+        raise utils.SparqlValidationFailed('An attribute is read as ?entity <attribute> \
+[ ngsild:hasValue|hasObject ?variable ].')
     if not isinstance(ngsildvar[0], Variable):
         raise utils.SparqlValidationFailed(f'Binding of {s} to concrete iri|literal not (yet) supported. \
-Consider to use a variable and FILTER. Target query is {ctx["query"]}')
+Consider to use a variable and FILTER.')
     # Now we have 3 parts:
     # ?subject_var p [ hasValue|hasObject ?object_var]
     # subject_table, attribute_table, object_table
     subject_tablename = f'{s.toPython().upper()}TABLE'[1:]
     subject_varname = f'{s.toPython()}'[1:]
     subject_sqltable = f'{configs.kafka_topic_ngsi_prefix_name}'
-    attribute_sqltable = utils.camelcase_to_snake_case(utils.strip_class(p))
-    attribute_tablename = f'{subject_varname.upper()}{attribute_sqltable.upper()}TABLE'
+    subquery = ctx.get('subquery', '')
+    if isinstance(p, Variable):
+        # `?this ?attribute [ ngsild:hasValue ?v ]`: any attribute, its name is
+        # what the variable is.
+        attribute_tablename = f'{subject_varname.upper()}ANY{utils.create_varname(p).upper()}ATTRIBUTETABLE{subquery}'
+        name_condition = attribute_name_condition(ctx, local_ctx, p, attribute_tablename)
+    else:
+        attribute_sqltable = utils.camelcase_to_snake_case(utils.strip_class(p))
+        attribute_tablename = f'{subject_varname.upper()}{attribute_sqltable.upper()}TABLE{subquery}'
+        name_condition = f"{attribute_tablename}.name = '{p}'"
     if ngsildtype[0] == ngsild['hasValue']:
-        if utils.create_varname(ngsildvar[0]) not in local_ctx['bounds']:
-            local_ctx['bounds'][ngsildvar[0].toPython()[1:]] = f'`{attribute_tablename}`.`attributeValue`'
+        column = f'`{attribute_tablename}`.`attributeValue`'
+        bound = local_ctx['bounds'].get(utils.create_varname(ngsildvar[0]))
+        if bound is None:
+            if column in local_ctx['bounds'].values():
+                raise second_value(s, p, 'values')
+            local_ctx['bounds'][ngsildvar[0].toPython()[1:]] = column
+        elif bound != column:
+            # One variable in two places: what is in both has to be the same.
+            kind = ctx['properties'].get(p.toPython(), utils.ANY_VALUE)
+            term = utils.wrap_any_value(column) if kind == utils.ANY_VALUE else \
+                f"'<'||{column}||'>'" if kind else f"'\"'||{column}||'\"'"
+            other = get_rdf_join_condition(ngsildvar[0], ctx['property_variables'], ctx['entity_variables'],
+                                           ctx['time_variables'], local_ctx['bounds'])
+            if ngsildvar[0] in ctx.get('computed', ()):
+                # what BIND gives is a term already: its text is the value's
+                same = f'{column} = SQL_DIALECT_STRIP_LITERAL{{{bound}}}'
+            elif ngsildvar[0] not in ctx['property_variables'] and kind is not True and \
+                    re.search(r'\.`?object`?$', bound):
+                raise knowledge_literal(ngsildvar[0])
+            else:
+                same = f'({term}) = {other}'
+            local_ctx['where'] = merge_where_expression(local_ctx['where'], same)
         if attribute_tablename not in local_ctx['bgp_tables'] and attribute_tablename not in ctx['tables']:
             sql_expression = create_attribute_table_expression(ctx, attribute_tablename, ngsildvar[0])
-            join_condition = f"{attribute_tablename}.name = '{p}' and {subject_tablename}.id = \
+            join_condition = f"{name_condition} and {subject_tablename}.id = \
 {attribute_tablename}.entityId and {attribute_tablename}.type = '{str(ngsild['Property'])}' and \
 IFNULL({attribute_tablename}.`deleted`, FALSE) IS FALSE and {attribute_tablename}.parentId IS NULL"
+            if bound is not None and subject_varname not in local_ctx['bounds']:
+                # the value is known and the entity is not
+                join_condition = join_condition.replace(
+                    f'{subject_tablename}.id = {attribute_tablename}.entityId and ', '')
+                local_ctx['bgp_sql_expression'].append({'statement': f'{sql_expression}',
+                                                        'join_condition': f'{join_condition}'})
+                sql_expression = f'{subject_sqltable}_view AS {subject_tablename}'
+                join_condition = f'{subject_tablename}.id = {attribute_tablename}.entityId and \
+IFNULL({subject_tablename}.`deleted`, FALSE) IS FALSE'
+                ctx['sql_tables'].append(subject_sqltable)
+                local_ctx['bounds'][subject_varname] = f'`{subject_tablename}`.`id`'
+                local_ctx['bgp_tables'][subject_tablename] = []
             local_ctx['bgp_sql_expression'].append({'statement': f'{sql_expression}',
                                                     'join_condition': f'{join_condition}'})
         local_ctx['bgp_tables'][attribute_tablename] = []
@@ -431,9 +668,23 @@ Consider using a variable and FILTER instead.')
         object_varname = f'{ngsildvar[0].toPython()}'[1:]
         object_sqltable = f'{configs.kafka_topic_ngsi_prefix_name}'
         object_tablename = f'{object_varname.upper()}TABLE'
-        if object_varname not in local_ctx['bounds']:
+        read = attribute_tablename in local_ctx['bgp_tables'] or attribute_tablename in ctx['tables']
+        target = ctx.get('targets', {}).get(ngsildvar[0])
+        if target is not None:
+            # A certain target: its IRI is compared, whether or not it exists.
+            if read:
+                raise second_value(s, p, 'targets')
+            local_ctx['bgp_sql_expression'].append({
+                'statement': create_attribute_table_expression(ctx, attribute_tablename, ngsildvar[0]),
+                'join_condition': f"{name_condition} and {attribute_tablename}.entityId = {subject_tablename}.id and \
+{attribute_tablename}.`attributeValue` = '{target}' and {attribute_tablename}.type = '{str(ngsild['Relationship'])}' \
+and IFNULL({attribute_tablename}.`deleted`, FALSE) IS FALSE and {attribute_tablename}.parentId IS NULL"})
+            local_ctx['bgp_tables'][attribute_tablename] = []
+        elif object_varname not in local_ctx['bounds']:
             # case (1)
-            join_condition = f"{attribute_tablename}.name = '{p}' and {attribute_tablename}.entityId = \
+            if read:
+                raise second_value(s, p, 'targets')
+            join_condition = f"{name_condition} and {attribute_tablename}.entityId = \
 {subject_tablename}.id and IFNULL({attribute_tablename}.`deleted`, FALSE) IS FALSE and \
 {attribute_tablename}.parentId IS NULL"
             sql_expression = create_attribute_table_expression(ctx, attribute_tablename, ngsildvar[0])
@@ -448,6 +699,20 @@ Consider using a variable and FILTER instead.')
 and IFNULL({object_tablename}.`deleted`, FALSE) IS FALSE'})
             ctx['sql_tables'].append(object_sqltable)
             local_ctx['bounds'][object_varname] = f'{object_tablename}.`id`'
+        elif read:
+            # read before: it has to be this target
+            local_ctx['where'] = merge_where_expression(
+                local_ctx['where'], f"{attribute_tablename}.`attributeValue` = {local_ctx['bounds'][object_varname]}")
+        elif subject_varname in local_ctx['bounds'] and \
+                (subject_tablename in ctx['tables'] or subject_tablename in local_ctx['bgp_tables']):
+            # both are known: only the relationship between them is read
+            local_ctx['bgp_sql_expression'].append({
+                'statement': create_attribute_table_expression(ctx, attribute_tablename, ngsildvar[0]),
+                'join_condition': f"{name_condition} and {attribute_tablename}.entityId = \
+{local_ctx['bounds'][subject_varname]} and {attribute_tablename}.`attributeValue` = \
+{local_ctx['bounds'][object_varname]} and {attribute_tablename}.type = '{str(ngsild['Relationship'])}' and \
+IFNULL({attribute_tablename}.`deleted`, FALSE) IS FALSE and {attribute_tablename}.parentId IS NULL"})
+            local_ctx['bgp_tables'][attribute_tablename] = []
         else:
             # case (2)
             join_condition = f'{attribute_tablename}.`attributeValue` = \
@@ -456,7 +721,7 @@ and IFNULL({object_tablename}.`deleted`, FALSE) IS FALSE'})
             sql_expression = create_attribute_table_expression(ctx, attribute_tablename, ngsildvar[0])
             local_ctx['bgp_sql_expression'].append({'statement': f'{sql_expression}',
                                                     'join_condition': f'{join_condition}'})
-            join_condition = f"{attribute_tablename}.name = '{p}' and {attribute_tablename}.entityId = \
+            join_condition = f"{name_condition} and {attribute_tablename}.entityId = \
 {subject_tablename}.id  AND IFNULL({subject_tablename}.`deleted`, FALSE) IS FALSE and \
 {attribute_tablename}.parentId IS NULL"
             sql_expression = f'{subject_sqltable}_view AS {subject_tablename}'
@@ -471,7 +736,7 @@ and IFNULL({object_tablename}.`deleted`, FALSE) IS FALSE'})
         # it must be a time value
         if ngsildtype[0] != ngsild['observedAt']:
             raise utils.SparqlValidationFailed(f"Internal implementation error. Found unexpected NGSI-LD \
-property {ngsildtype[0]} in {ctx['query']}")
+property {ngsildtype[0]}")
         if utils.create_varname(ngsildvar[0]) not in local_ctx['bounds']:
             # observedAt is a column of its own now. It used to be read from `ts`,
             # the Kafka record timestamp, because the bridge wrote it there --
@@ -479,11 +744,19 @@ property {ngsildtype[0]} in {ctx['query']}")
             # time. `ts` is the write time now and would silently make every
             # rule that filters on observedAt compare against the wrong clock.
             local_ctx['bounds'][ngsildvar[0].toPython()[1:]] = f'`{attribute_tablename}`.`observedAt`'
+        elif local_ctx['bounds'][utils.create_varname(ngsildvar[0])] != f'`{attribute_tablename}`.`observedAt`':
+            # one time in two places
+            local_ctx['where'] = merge_where_expression(
+                local_ctx['where'],
+                f"`{attribute_tablename}`.`observedAt` = {local_ctx['bounds'][utils.create_varname(ngsildvar[0])]}")
         if attribute_tablename not in local_ctx['bgp_tables'] and attribute_tablename not in ctx['tables']:
-            raise utils.SparqlValidationFailed(f"observedAt attributes can currently only be retrieved in \
+            raise utils.SparqlValidationFailed("observedAt attributes can currently only be retrieved in \
 conjunction with the respective hasValue/hasObject attribues/relationships. \
-E.g. ?entity <p> [ngsild:hasValue ?var] . ?entity <p> [ngsild:observedAt ?varTs]. Found in query {ctx['query']}")
+E.g. ?entity <p> [ngsild:hasValue ?var] . ?entity <p> [ngsild:observedAt ?varTs].")
         local_ctx['bgp_tables'][attribute_tablename] = []
+        # No time, no solution: the column is there for every instance.
+        local_ctx['where'] = merge_where_expression(local_ctx['where'],
+                                                    f'`{attribute_tablename}`.`observedAt` IS NOT NULL')
 
 
 def process_rdf_spo(ctx, local_ctx, s, p, o):
@@ -509,8 +782,12 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
     """ # noqa E501
     # must be  RDF query
     if not isinstance(p, URIRef):
-        raise utils.SparqlValidationFailed("NON IRI RDF-predicate not (yet) supported.")
+        raise utils.SparqlValidationFailed('A variable as predicate is only supported for an attribute: \
+?entity ?attribute [ ngsild:hasValue|hasObject ?variable ].')
     if isinstance(s, BNode):  # Blank node subject, e.g. ([], p, o) is handled by respective (s, p2, []) nodes
+        if not any(True for _ in local_ctx['h'].triples((None, None, s))):
+            raise utils.SparqlValidationFailed('A blank node as the subject of a pattern of the knowledge, with \
+nothing pointing at it, is not supported. Use a variable.')
         return
     # predicate must be static for now
     # NGSI-LD entity variables cannot be referenced in plain RDF with one exception:
@@ -591,7 +868,8 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
 = {utils.format_node_type(o)}")
                     return
         else:
-            raise utils.SparqlValidationFailed("Cannot query generic RDF term with NGSI-LD entity subject.")
+            raise utils.SparqlValidationFailed(f'?{s} is an entity, and the knowledge holds no entities. \
+An attribute of it is read as ?{s} <attribute> [ ngsild:hasValue|hasObject ?variable ].')
     else:
         # No special case.
         # Check if subject is non bound and if non bound whether it can be bound
@@ -610,7 +888,8 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
     # Process object join condition
     # object variables which are referencing ngsild-entities are forbidden
     if isinstance(o, Variable) and o in ctx['entity_variables']:
-        raise utils.SparqlValidationFailed('Cannot bind NGSI-LD Entities to RDF objects.')
+        raise utils.SparqlValidationFailed(f'?{o} is an entity, and the knowledge holds no entities. A \
+relationship to it is read as ?entity <relationship> [ ngsild:hasObject ?{o} ].')
     # two cases: (1) object is either variable or Literal/IRI (2) object is Blank Node
     if not isinstance(o, BNode):  # (1)
         object_join_bound = get_rdf_join_condition(o, ctx['property_variables'],
@@ -621,6 +900,9 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
             # Variable not found, needs to be added
             local_ctx['bounds'][utils.create_varname(o)] = f'{rdftable_name}.object'
             object_join_bound = None
+        if object_join_bound is not None and isinstance(o, Variable) and \
+                ctx['property_variables'].get(o, True) is not True:
+            raise knowledge_literal(o)
         object_join_condition = f'{rdftable_name}.object = {object_join_bound}' \
             if object_join_bound is not None else None
         join_condition = f'{predicate_join_condition}'
@@ -638,9 +920,9 @@ def process_rdf_spo(ctx, local_ctx, s, p, o):
         # rdf as table1 on table1.predicate = p1 (and table1.subject = cond1) and table1.object = BN join
         # rdf as table2 on table2.predicate = p2 (and table2.object = cond2) and table2.subject = table1.object
         # (no need to check table2.subject = BN)
+        # [ ] in a query stands for any node, an IRI as well as a blank node
         sql_expression = f'{configs.rdf_table_name} AS {rdftable_name}'
-        blankjoincondition = f'{rdftable_name}.object LIKE \'_:%\''
-        join_condition = f'{predicate_join_condition} and {blankjoincondition}'
+        join_condition = f'{predicate_join_condition}'
         if subject_join_condition is not None:
             join_condition = f'{subject_join_condition} and {join_condition}'
         local_ctx['bgp_tables'][rdftable_name] = []

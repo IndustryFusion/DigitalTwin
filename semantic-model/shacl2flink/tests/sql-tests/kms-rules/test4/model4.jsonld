@@ -16,6 +16,7 @@
     },
     "https://industry-fusion.com/types/v0.9/hasOutWorkpiece": {
       "type": "Relationship",
+      "observedAt": "2023-03-24T13:42:33.000Z",
       "object": "urn:workpiece:1"
     },
     "https://industry-fusion.com/types/v0.9/hasFilter": {

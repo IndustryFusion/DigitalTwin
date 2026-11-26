@@ -17,8 +17,8 @@
 import sys
 import re
 from rdflib import Graph, Namespace, URIRef, Variable, BNode, Literal
-from rdflib.namespace import RDF, XSD, RDFS
-from rdflib.paths import MulPath
+from rdflib.collection import Collection
+from rdflib.namespace import RDF, SH, XSD, RDFS
 from rdflib.plugins.sparql.parser import parseQuery
 from rdflib.plugins.sparql.algebra import translateQuery
 from functools import reduce
@@ -27,6 +27,7 @@ import copy
 
 import lib.utils as utils
 import lib.bgp_translation_utils as bgp_translation_utils
+import lib.configs as configs
 
 
 sh = Namespace("http://www.w3.org/ns/shacl#")
@@ -40,55 +41,12 @@ debugoutput = sys.stdout
 dummyvar = 'dummyvar'
 
 
-sparql_get_properties = """
-PREFIX iff: <https://industry-fusion.com/types/v0.9/>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
-PREFIX sh: <http://www.w3.org/ns/shacl#>
-PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-
-    SELECT
-    ?targetclass ?property ((?nodekind = sh:IRI) as ?kind) ?nodeKind
-where {
-    ?nodeshape a sh:NodeShape .
-    ?nodeshape sh:targetClass ?targetclass .
-    ?nodeshape sh:property ?propertynode .
-    ?propertynode sh:path ?property .
-    ## Shapes are read as written. The '?' makes the connective step optional,
-    ## so the clause is either a branch of a connective or -- when there is none
-    ## -- the property node itself. Likewise sh:nodeKind is taken from the value
-    ## shape or from a branch beneath it, whichever carries it.
-    ?propertynode (((sh:or|sh:and|sh:xone)/rdf:rest*/rdf:first)|sh:not)? ?clause .
-    ?clause     sh:property    ?innerProp .
-    ?innerProp  sh:path ngsild:hasValue .
-    ?innerProp  (sh:or/rdf:rest*/rdf:first)?/sh:nodeKind ?nodekind .
-}
-"""
-
-sparql_get_relationships = """
-PREFIX iff: <https://industry-fusion.com/types/v0.9/>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>
-PREFIX sh: <http://www.w3.org/ns/shacl#>
-PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-
-    SELECT
-    ?targetclass ?relationship
-where {
-    ?nodeshape a sh:NodeShape .
-    ?nodeshape sh:targetClass ?targetclass .
-    ?nodeshape sh:property ?propertynode .
-    ?propertynode sh:path ?relationship .
-    ?propertynode (((sh:or|sh:and|sh:xone)/rdf:rest*/rdf:first)|sh:not)? ?clause .
-    ?clause     sh:property    ?innerProp .
-    ?innerProp  sh:path ngsild:hasObject .
-}
-"""
-
-
 properties = {}
 relationships = {}
-g = Graph(store="Oxigraph")
+read_from = None
+# the column of an attribute's value, and nothing computed from one
+VALUE_COLUMN = re.compile(r'`\w+`\.`attributeValue`')
+g = Graph()
 
 
 def translate_sparql(shaclfile, knowledgefile, sparql_query, target_class, lg):
@@ -106,25 +64,62 @@ def translate_sparql(shaclfile, knowledgefile, sparql_query, target_class, lg):
         used sql-tables (dict[string])
     """
     global g
-    global properties
-    global relationships
     g = lg
-    qres = g.query(sparql_get_properties)
-    for row in qres:
-        if row.property is not None:
-            properties[row.property.toPython()] = row.kind.toPython() if row.kind is not None else False
-
-    qres = g.query(sparql_get_relationships)
-    for row in qres:
-        if row.relationship is not None:
-            relationships[row.relationship.toPython()] = True
+    read_attributes(g)
     parsed_query = None
     try:
         parsed_query = translateQuery(parseQuery(sparql_query))
-    except Exception:
-        raise utils.SparqlValidationFailed('Failed to parse: ' + sparql_query)
+    except Exception as e:
+        raise utils.SparqlValidationFailed(f'The query does not parse: {e}')
     ctx = translate_query(parsed_query, target_class, sparql_query)
     return ctx['target_sql'], ctx['sql_tables']
+
+
+def value_shapes(graph, shape):
+    """The property shapes of an attribute's payload: directly under its
+    property shape, or under one branch of a connective."""
+    clauses = [shape]
+    for connective in (SH['or'], SH['and'], SH.xone):
+        for branches in graph.objects(shape, connective):
+            clauses += Collection(graph, branches)
+    clauses += graph.objects(shape, SH['not'])
+    for clause in clauses:
+        for inner in graph.objects(clause, SH.property):
+            yield inner, graph.value(inner, SH.path)
+
+
+def node_kinds(graph, inner):
+    """sh:nodeKind of a value shape, its own or of a branch of its sh:or."""
+    yield from graph.objects(inner, SH.nodeKind)
+    for branches in graph.objects(inner, SH['or']):
+        for branch in Collection(graph, branches):
+            yield from graph.objects(branch, SH.nodeKind)
+
+
+def read_attributes(graph):
+    """What the shapes say about attributes, once per graph: every query of a
+    package asks for the same. With or without a target, since a shape may be
+    reached through sh:node alone. A walk and not a query: rdflib takes half a
+    minute for the property paths on a large package."""
+    global read_from
+    if read_from is not None and read_from[0] is graph and read_from[1] == len(graph):
+        return
+    properties.clear()
+    relationships.clear()
+    for shape in graph.subjects(RDF.type, SH.NodeShape):
+        for prop in graph.objects(shape, SH.property):
+            attributes = [path.toPython() for path in graph.objects(prop, SH.path) if isinstance(path, URIRef)]
+            for inner, payload in value_shapes(graph, prop):
+                for attribute in attributes:
+                    if payload == bgp_translation_utils.ngsild['hasObject']:
+                        relationships[attribute] = True
+                    elif payload == bgp_translation_utils.ngsild['hasValue']:
+                        for kind in node_kinds(graph, inner):
+                            # One attribute, an IRI in one shape and a literal
+                            # in another: the instance decides.
+                            if properties.setdefault(attribute, kind == SH.IRI) != (kind == SH.IRI):
+                                properties[attribute] = utils.ANY_VALUE
+    read_from = (graph, len(graph))
 
 
 def translate_query(query, target_class, orig_query):
@@ -143,6 +138,10 @@ def translate_query(query, target_class, orig_query):
         'classes': {'this': target_class},
         'sql_tables': ['attributes'],
         'bounds': {},
+        # $this is an entity, even where the first patterns read nothing of it.
+        'entity_variables': {Variable('this'): True},
+        'property_variables': {},
+        'time_variables': {},
         'tables': {},
         'target_sql': '',
         'target_where': '',
@@ -173,8 +172,7 @@ def translate(ctx, elem):
         try:
             return utils.wrap_ngsild_variable(ctx, elem)
         except Exception as e:
-            raise utils.SparqlValidationFailed(f"Error while unwrapping variables: {str(e)} \
-while processing {ctx['query']}")
+            raise utils.SparqlValidationFailed(str(e))
     if elem.name == 'SelectQuery':
         return translate_select_query(ctx, elem)
     elif elem.name == 'ConstructQuery':
@@ -199,6 +197,8 @@ while processing {ctx['query']}")
         return translate_join(ctx, elem)
     elif elem.name == 'Builtin_NOTEXISTS':
         return translate_notexists(ctx, elem)
+    elif elem.name == 'Builtin_EXISTS':
+        return translate_notexists(ctx, elem, 'EXISTS')
     elif elem.name == 'Distinct':
         return translate_distinct(ctx, elem)
     elif elem.name == 'LeftJoin':
@@ -228,8 +228,13 @@ while processing {ctx['query']}")
     elif elem.name == 'MultiplicativeExpression':
         return translate_multiplicative_expression(ctx, elem)
     else:
-        raise utils.WrongSparqlStructure(f'SparQL structure {elem.name} not \
-supported!')
+        name = SPARQL_NAMES.get(elem.name, re.sub(r'^(Builtin|Aggregate)_', '', elem.name))
+        raise utils.WrongSparqlStructure(f'{name} is not supported.')
+
+
+SPARQL_NAMES = {'Union': 'UNION', 'Minus': 'MINUS', 'ToMultiSet': 'VALUES or a sub-select',
+                'OrderBy': 'ORDER BY', 'Slice': 'LIMIT/OFFSET', 'UnaryMinus': 'a minus sign before an expression',
+                'Graph': 'GRAPH', 'ServiceGraphPattern': 'SERVICE'}
 
 
 def translate_distinct(ctx, elem):
@@ -286,6 +291,9 @@ def translate_aggregate_join(ctx, elem):
 def translate_builtin_bound(ctx, elem):
     bounds = ctx['bounds']
     varname = utils.create_varname(elem.arg)
+    if varname not in bounds:
+        raise utils.SparqlValidationFailed(f'?{varname} is not bound here: no pattern the compiler could \
+translate gives it a value.')
     return f"{bounds[varname]} IS NOT NULL "
 
 
@@ -336,11 +344,13 @@ def translate_function(ctx, function):
                 cast = 'INTEGER'
             elif iri == XSD['float']:
                 cast = 'FLOAT'
+            elif iri in (XSD['double'], XSD['decimal']):
+                cast = 'DOUBLE'
             elif iri == XSD['string']:
                 cast = 'STRING'
                 stringcast = True
             if cast == 'notfound':
-                raise utils.WrongSparqlStructure('XSD type cast not supported')
+                raise utils.WrongSparqlStructure(f'The cast xsd:{iri[len(XSD):]}() is not supported.')
             if not stringcast:
                 result = f'SQL_DIALECT_CAST(SQL_DIALECT_STRIP_LITERAL{{{expression}}} as {cast})'
             else:
@@ -371,7 +381,7 @@ def translate_function(ctx, function):
         utils.set_is_aggregate_var(ctx, False)
         result += ')'
     else:
-        raise utils.WrongSparqlStructure(f'Function {iri.toPython()} not supported!')
+        raise utils.WrongSparqlStructure(f'The function {iri.toPython()} is not supported.')
     return result
 
 
@@ -402,6 +412,17 @@ def translate_extend(ctx, extend):
     translate(ctx, extend.p)
 
     expression = translate(ctx, extend.expr)
+    if isinstance(extend.expr, Variable):
+        if extend.expr in ctx['entity_variables']:
+            raise utils.SparqlValidationFailed(f'?{extend.expr} is an entity, and another name for an entity \
+(BIND) is not supported. Use ?{extend.expr} itself.')
+        # another name for the same value: what it is, it is under this name, too
+        for kinds in ('property_variables', 'time_variables'):
+            if extend.expr in ctx[kinds]:
+                ctx[kinds] = {**ctx[kinds], extend.var: ctx[kinds][extend.expr]}
+                expression = ctx['bounds'][utils.create_varname(extend.expr)]
+    elif utils.get_group_by_vars(ctx) is None:
+        ctx['computed'] = ctx.get('computed', set()) | {extend.var}
 
     ctx['bounds'][utils.create_varname(extend.var)] = expression
     extend['target_sql'] = extend.p['target_sql']
@@ -429,7 +450,7 @@ def translate_construct_query(ctx, query):
     translate(ctx, query.p)
     query['target_sql'] = query.p['target_sql']
     query['where'] = query.p['where']
-    bgp_translation_utils.merge_vartypes(ctx, property_variables, entity_variables, time_variables)
+    bgp_translation_utils.merge_vartypes(ctx, property_variables, entity_variables, time_variables, True)
     wrap_sql_construct(ctx, query)
     return
 
@@ -473,7 +494,7 @@ def wrap_sql_construct(ctx, node):
         construct_query += 'CAST(NULL as STRING) as parentId,\n'
         construct_query += f'{bounds[entityId_varname]} as entityId,\n'  # entityId
         construct_query += f'\'{name}\' as name,\n'  # name
-        construct_query += f'\'{node_type}\' as nodeType,\n'  # nodeType
+        construct_query += f'{expression_or_text(node_type)} as nodeType,\n'  # nodeType
         construct_query += 'CAST(NULL as STRING) as valueType,\n'  # valueType
         construct_query += f'\'{attribute_type}\' as `type`,\n'
         construct_query += f"{get_bound_trim_string(ctx, value_var)} as `attributeValue`,\n"  # value
@@ -493,10 +514,20 @@ def wrap_sql_construct(ctx, node):
     node['target_sql'] = construct_query
 
 
+def expression_or_text(value):
+    return value if '`' in value or value.startswith('CASE ') else f"'{value}'"
+
+
 def get_bound_trim_string(ctx, boundsvar):
     bounds = ctx['bounds']
     boundsvarname = boundsvar.toPython()[1:]
     if boundsvarname in bounds and boundsvar in ctx['property_variables']:
+        if ctx['property_variables'][boundsvar] == utils.ANY_VALUE:
+            column = bounds[boundsvarname]
+            if VALUE_COLUMN.fullmatch(column):
+                return column
+            return f"CASE WHEN {column} LIKE '<%' THEN SQL_DIALECT_STRIP_IRI{{{column}}} \
+ELSE SQL_DIALECT_STRIP_LITERAL{{{column}}} END"
         if ctx['property_variables'][boundsvar]:
             return f"SQL_DIALECT_STRIP_IRI{{{bounds[boundsvarname]}}}"
         else:
@@ -504,8 +535,7 @@ def get_bound_trim_string(ctx, boundsvar):
     elif boundsvarname in bounds and boundsvar in ctx['time_variables']:
         return f"SQL_DIALIFAECT_STRIP_LITERAL{{{bounds[boundsvarname]}}}"
     else:
-        raise utils.WrongSparqlStructure(f"Trying to trim non-bound variable ?{boundsvarname} in expression \
-{ctx['query']}")
+        raise utils.WrongSparqlStructure(f"Trying to trim non-bound variable ?{boundsvarname}.")
 
 
 def get_attribute_columns(ctx, node):
@@ -513,7 +543,6 @@ def get_attribute_columns(ctx, node):
     name = None
     properties = ctx['properties']
     value_var = None
-    nodetype = '@value'
     predicates = {}
     result = []
     for (s, p, o) in node['template']:
@@ -528,8 +557,13 @@ def get_attribute_columns(ctx, node):
         entityId_var, name = predicates[s.toPython()]
         attribute_type = bgp_translation_utils.ngsild['Property'] if value_var in ctx['property_variables'] else \
             bgp_translation_utils.ngsild['Relationship']
-        if value_var in ctx['property_variables'] and ctx['property_variables'][value_var]:
-            nodetype = '@id'
+        kind = ctx['property_variables'].get(value_var)
+        nodetype = '@id' if kind else '@value'
+        if kind == utils.ANY_VALUE:
+            # what the value itself is
+            column = ctx['bounds'].get(utils.create_varname(value_var), '')
+            nodetype = column.replace('attributeValue', 'nodeType') if VALUE_COLUMN.fullmatch(column) else \
+                f"CASE WHEN {column} LIKE '<%' THEN '@id' ELSE '@value' END"
         result.append((entityId_var, name.toPython(), attribute_type.toPython(), value_var, nodetype))
     return result
 
@@ -597,7 +631,7 @@ def wrap_sql_projection(ctx, node):
             expression += f'{column} AS `{utils.create_varname(var)}` '
         except Exception:
             # variable could not be bound, bind it with NULL
-            expression += f'NULL AS `{utils.create_varname(var)}`'
+            expression += f'CAST(NULL AS STRING) AS `{utils.create_varname(var)}` '
 
     target_sql = node['target_sql']
     target_where = node['where']
@@ -636,11 +670,14 @@ def translate_filter(ctx, filter):
     filter['where'] = where1
 
 
-def translate_notexists(ctx, notexists):
+def translate_notexists(ctx, notexists, kind='NOT EXISTS'):
     """
-    Translates a FILTER NOT EXISTS expression
+    Translates a FILTER NOT EXISTS or FILTER EXISTS expression
     """
     ctx_copy = copy_context(ctx)
+    # The tables it reads are its own: under an outer alias it would see the
+    # outer row instead of looking for another one.
+    ctx_copy['subquery'] = bgp_translation_utils.get_unique_suffix(6)
     translate(ctx_copy, notexists.graph)
     notexists['target_sql'] = notexists.graph['target_sql']
     notexists['where'] = notexists.graph['where']
@@ -650,7 +687,7 @@ def translate_notexists(ctx, notexists):
     ctx_copy['PV'] = sorted(notexists['_vars'], key=str)
     remap_join_constraint_to_where(notexists)
     wrap_sql_projection(ctx_copy, notexists)
-    return f'NOT EXISTS ({notexists["target_sql"]})'
+    return f'{kind} ({notexists["target_sql"]})'
 
 
 def remap_join_constraint_to_where(node):
@@ -689,11 +726,31 @@ def copy_context(ctx):
     del ctx['g']
     ctx_copy = copy.deepcopy(ctx)
     # copy graph manually into the new structure
-    ctx_copy['g'] = graph
+    ctx['g'] = ctx_copy['g'] = graph
     ctx_copy['target_sql'] = ''
     ctx_copy['target_modifiers'] = []
     ctx_copy['sql_tables'] = ctx['sql_tables']
     return ctx_copy
+
+
+def grouped(expression, condition):
+    """A join as the right side of another one: in parentheses, where nothing
+    of the left side can be seen. What an inner condition says about the left
+    side's entity it says about the first table's, which is the same one
+    (`condition`, the outer ON)."""
+    if ' JOIN ' not in expression:
+        return expression
+    own = set(re.findall(r'\b(?:rdf|\w+_view|REPLACE_ATTRIBUTES\w+) AS (\w+)', expression))
+    for entity, attribute in re.findall(r'(\w+)\.`?id`? = (\w+)\.entityId', condition) + \
+            [(e, a) for a, e in re.findall(r'(\w+)\.entityId = (\w+)\.`?id`?', condition)]:
+        if attribute in own and entity not in own:
+            expression = re.sub(rf'`?\b{entity}\b`?\.`?id\b`?', f'{attribute}.entityId', expression)
+    without_text = re.sub(r"'[^']*'", '', expression)
+    if set(re.findall(r'`?\b([A-Za-z_]\w*)\b`?\.`?(?:\w+)', without_text)) - own:
+        raise utils.WrongSparqlStructure('An OPTIONAL or a group whose patterns are connected with each other only \
+through something outside of it, or that names an entity by its IRI, is not supported. Write an OPTIONAL for each, \
+or connect them.')
+    return f'({expression})'
 
 
 def translate_join(ctx, join):
@@ -709,9 +766,17 @@ def translate_join(ctx, join):
         raise utils.WrongSparqlStructure('Could not join. Emtpy join condition not allowed \
 for left joins.')
     if expr2 != '' and expr1 != '':
-        join['target_sql'] = f' {expr1} JOIN {expr2}'
+        join['target_sql'] = f' {expr1} JOIN {grouped(expr2, where2)}'
         where = where1
         join['target_sql'] = join['target_sql'] + f' ON {where2}'
+    elif expr2 == '':
+        # the right side adds conditions on what the left side reads -- not
+        # on what an OPTIONAL there may not have found
+        optional = [table for table in ctx.get('optional_tables', ()) if re.search(rf'\b{table}\b', where2)]
+        if optional:
+            raise utils.WrongSparqlStructure('An attribute read in an OPTIONAL is read again after it. Read it before \
+the OPTIONAL, or only in it.')
+        join['target_sql'] = expr1
     else:
         join['target_sql'] = expr2
 
@@ -731,6 +796,14 @@ def translate_left_join(ctx, join):
     expr2 = join.p2['target_sql']
     where1 = join.p1['where']
     where2 = join.p2['where']
+    # The FILTER of an OPTIONAL decides whether there is something optional, so
+    # it belongs to the join, not to what is joined.
+    if getattr(join.get('expr'), 'name', 'TrueFilter') != 'TrueFilter':
+        if expr2 == '':
+            raise utils.WrongSparqlStructure('An OPTIONAL with a FILTER, around patterns on attributes that are read \
+before it, is not supported. Put the condition where it is used, or read another attribute in the OPTIONAL.')
+        condition = translate(ctx, join['expr'])
+        where2 = f'{where2} and {condition}' if where2 else condition
     if expr1 == '' and expr2 == '':
         raise utils.WrongSparqlStructure('Could not left join. Empty join.p1 and join.p2 expression is not \
 allowed. Consider rearranging BGPs.')
@@ -751,7 +824,9 @@ for left joins.')
     # case 2: without expr2 but where2
     # case 3: with expr2 but without expr1
     if expr2 != '' and expr1 != '':  # case 1
-        join['target_sql'] = f' {expr1} LEFT JOIN {expr2}'
+        ctx['optional_tables'] = ctx.get('optional_tables', set()) | set(
+            re.findall(r'\bAS (\w+)', expr2))
+        join['target_sql'] = f' {expr1} LEFT JOIN {grouped(expr2, where2)}'
         join['where'] = where1
         join['target_sql'] = join['target_sql'] + f' ON {where2}'
     elif expr2 == '' and expr1 != '':  # case 2
@@ -771,11 +846,14 @@ for left joins.')
     return
 
 
-def merge_bgp_context(bgp_context, select=False):
+def merge_bgp_context(bgp_context, select=False, subquery=False):
     """
     Iterate through bgp_context and create statement out of it
     Normally, it is created for a join but if select is True, it is creating
     a Select merge
+
+    In a subquery every condition goes to the WHERE: Flink cannot plan an ON
+    that names something of the outer query, and takes the same from a WHERE.
     """
     expression = ''
     where = ''
@@ -788,6 +866,9 @@ def merge_bgp_context(bgp_context, select=False):
             else:
                 where = expr["join_condition"]
                 expression = f'{expr["statement"]}'
+        elif subquery:
+            expression += f' JOIN {expr["statement"]} ON 1 = 1'
+            where += f' and {expr["join_condition"]}'
         else:
             expression += f' JOIN {expr["statement"]} ON {expr["join_condition"]}'
     return expression, where
@@ -815,38 +896,101 @@ def translate_or_expression(ctx, expr):
     return result + ')'
 
 
+NUMERIC = (XSD.integer, XSD.decimal, XSD.double, XSD.float, XSD.int, XSD.long, XSD.short, XSD.byte,
+           XSD.nonNegativeInteger, XSD.positiveInteger, XSD.nonPositiveInteger, XSD.negativeInteger,
+           XSD.unsignedInt, XSD.unsignedLong, XSD.unsignedShort)
+
+
+def is_literal_variable(ctx, elem):
+    """A variable whose text may be a number: an attribute's value that is no
+    IRI, or something read from the knowledge. A time is compared as a time,
+    and what BIND gives has its form already."""
+    if not isinstance(elem, Variable) or elem in ctx['time_variables'] or elem in ctx['entity_variables']:
+        return False
+    if elem in ctx['property_variables']:
+        return ctx['property_variables'][elem] is not True
+    if elem in ctx.get('computed', ()):
+        return True
+    bound = ctx['bounds'].get(utils.create_varname(elem), '')
+    return re.search(r"\.`?(object|subject)`?$", bound) is not None
+
+
+def as_number(ctx, elem):
+    """The number a side of a comparison is, as SQL, or None when it is none
+    for sure: what is no number at run time is NULL."""
+    if isinstance(elem, Literal):
+        return str(elem.toPython()) if elem.datatype in NUMERIC else None
+    if is_literal_variable(ctx, elem):
+        utils.add_aggregate_var_to_context(ctx, utils.create_varname(elem))
+        column = ctx['bounds'].get(utils.create_varname(elem))
+        if column is None:
+            return None
+        if elem in ctx.get('computed', ()):
+            column = f'SQL_DIALECT_STRIP_LITERAL{{{column}}}'
+        return f'SQL_DIALECT_NUMBER{{{column}}}'
+    return None
+
+
+def is_number(elem):
+    """Whether an expression is a number whatever it is applied to."""
+    if isinstance(elem, Literal):
+        return elem.datatype in NUMERIC
+    name = getattr(elem, 'name', '')
+    if name == 'Function':
+        return elem.iri in (XSD['integer'], XSD['float'], XSD['double'], XSD['decimal'])
+    return name in ('AdditiveExpression', 'MultiplicativeExpression')
+
+
+def comparable(ctx, elem):
+    """A side of a comparison, as the text of its RDF term."""
+    if isinstance(elem, Variable):
+        if elem in ctx['entity_variables'] and elem not in ctx['property_variables'] and \
+                utils.create_varname(elem) in ctx['bounds']:
+            return f"'<' || {ctx['bounds'][utils.create_varname(elem)]} || '>'"
+        return utils.wrap_ngsild_variable(ctx, elem)
+    if isinstance(elem, (Literal, URIRef)):
+        return utils.format_node_type(elem)
+    # Neither Variable, nor Literal, nor IRI - hope it is further translatable
+    return translate(ctx, elem)
+
+
+def equals(ctx, left, right, op='='):
+    """SPARQL's = and != : of numbers by their value, else of the terms."""
+    for one, other in ((left, right), (right, left)):
+        if is_number(one) and is_literal_variable(ctx, other):
+            number = as_number(ctx, one) or comparable(ctx, one)
+            return f'{as_number(ctx, other)} {op} {number}'
+    return f'{comparable(ctx, left)} {op} {comparable(ctx, right)}'
+
+
 def translate_relational_expression(ctx, elem):
     """
     Translates RelationalExpression to SQL
+
+    The tables hold every value as text. Two numbers are compared as numbers,
+    though, as SPARQL does: as texts, "9" is more than "10".
     """
+    op = '<>' if elem.op == '!=' else elem.op
+    if op in ('IN', 'NOT IN'):
+        joint, one = (' or ', '=') if op == 'IN' else (' and ', '<>')
+        return '(' + joint.join(equals(ctx, elem.expr, other, one) for other in elem.other) + ')'
+    if op in ('=', '<>'):
+        return equals(ctx, elem.expr, elem.other, op)
 
-    if isinstance(elem.expr, Variable):
-        expr = utils.wrap_ngsild_variable(ctx, elem.expr)
-    elif isinstance(elem.expr, Literal) or isinstance(elem.expr, URIRef):
-        expr = utils.format_node_type(elem.expr)
-    else:  # Neither Variable, nor Literal, nor IRI - hope it is further translatable
-        expr = translate(ctx, elem.expr)
-
-    if isinstance(elem.other, Variable):
-        other = utils.wrap_ngsild_variable(ctx, elem.other)
-    elif isinstance(elem.other, Literal) or isinstance(elem.other, URIRef):
-        other = utils.format_node_type(elem.other)
-    else:
-        other = translate(ctx, elem.other)
-
-    op = elem.op
-    if elem.op == '!=':
-        op = '<>'
-    elif elem.op == '>':
-        op = '>'
-    elif elem.op == '<':
-        op = '<'
-    elif elem.op == '>=':
-        op = '>='
-    elif elem.op == '<=':
-        op = '<='
-
-    return f'{expr} {op} {other}'
+    left, right = as_number(ctx, elem.expr), as_number(ctx, elem.other)
+    if left is not None and right is not None:
+        if is_number(elem.expr) or is_number(elem.other):
+            return f'{left} {op} {right}'
+        # Both only known at run time: numbers as numbers, texts as texts, and
+        # a number with a text not at all.
+        return f'(CASE WHEN {left} IS NOT NULL AND {right} IS NOT NULL THEN {left} {op} {right} ' \
+               f'WHEN {left} IS NULL AND {right} IS NULL ' \
+               f'THEN {comparable(ctx, elem.expr)} {op} {comparable(ctx, elem.other)} END)'
+    if left is not None and not isinstance(elem.expr, Literal) and is_number(elem.other):
+        return f'{left} {op} {comparable(ctx, elem.other)}'
+    if right is not None and not isinstance(elem.other, Literal) and is_number(elem.expr):
+        return f'{comparable(ctx, elem.expr)} {op} {right}'
+    return f'{comparable(ctx, elem.expr)} {op} {comparable(ctx, elem.other)}'
 
 
 def translate_BGP(ctx, bgp):
@@ -876,9 +1020,22 @@ def translate_BGP(ctx, bgp):
         return
     h = Graph()
     filtered_triples = []
+    triples = []
     for s, p, o in bgp.triples:
-        if isinstance(p, MulPath):
-            p = p.path
+        triples.append((s, p, o))
+    triples, constants, targets, entities = bgp_translation_utils.normalise_attributes(triples)
+    bgp_translation_utils.register_attributes(ctx, triples)
+    ctx['targets'] = {**ctx.get('targets', {}), **{variable: constants.pop(variable) for variable in targets}}
+    named = []
+    for variable in sorted(entities, key=str):
+        # an entity named by its IRI is read from the entities by its id
+        table = f'{utils.create_varname(variable).upper()}TABLE'
+        named.append({'statement': f'{configs.kafka_topic_ngsi_prefix_name}_view AS {table}',
+                      'join_condition': f"{table}.id = '{constants.pop(variable)}' and \
+IFNULL({table}.`deleted`, FALSE) IS FALSE"})
+        ctx['bounds'][utils.create_varname(variable)] = f'{table}.`id`'
+        ctx['sql_tables'].append(configs.kafka_topic_ngsi_prefix_name)
+    for s, p, o in triples:
         h.add((s, p, o))
         filtered_triples.append((s, p, o))
 
@@ -891,24 +1048,33 @@ def translate_BGP(ctx, bgp):
     local_ctx = {}
     local_ctx['bounds'] = ctx["bounds"]
     local_ctx['where'] = ''
-    local_ctx['bgp_sql_expression'] = []
+    local_ctx['bgp_sql_expression'] = named
     local_ctx['bgp_tables'] = {}
+    for statement in named:
+        local_ctx['bgp_tables'][statement['statement'].rsplit(' ', 1)[-1]] = []
     local_ctx['h'] = h
 
     for s, p, o in bgp.triples:
-        # If there are properties or relationships, assume it is a NGSI-LD matter
-        if (p.toPython() in properties or p.toPython() in relationships) and isinstance(o, BNode):
-            if isinstance(s, Variable):
-                bgp_translation_utils.process_ngsild_spo(ctx, local_ctx, s, p, o)
-        elif p != bgp_translation_utils.ngsild['hasValue'] and p != \
-                bgp_translation_utils.ngsild['hasObject'] and p != \
-                bgp_translation_utils.ngsild['observedAt']:
-            # must be  RDF query
-            bgp_translation_utils.process_rdf_spo(ctx, local_ctx, s, p, o)
+        try:
+            # If there are properties or relationships, assume it is a NGSI-LD matter
+            if (p.toPython() in ctx['properties'] or p.toPython() in ctx['relationships']) and isinstance(o, BNode):
+                if isinstance(s, Variable):
+                    bgp_translation_utils.process_ngsild_spo(ctx, local_ctx, s, p, o)
+            elif p != bgp_translation_utils.ngsild['hasValue'] and p != \
+                    bgp_translation_utils.ngsild['hasObject'] and p != \
+                    bgp_translation_utils.ngsild['observedAt']:
+                # must be  RDF query
+                bgp_translation_utils.process_rdf_spo(ctx, local_ctx, s, p, o)
 
-        else:
-            if debug > 1:
-                print(f'DEBUG: Ignoring: {s, p, o}', file=debugoutput)
+            else:
+                if debug > 1:
+                    print(f'DEBUG: Ignoring: {s, p, o}', file=debugoutput)
+        except (utils.SparqlValidationFailed, utils.WrongSparqlStructure) as e:
+            e.pattern = bgp_translation_utils.describe_triple(ctx, h, (s, p, o))
+            raise
+    for variable, constant in constants.items():
+        local_ctx['where'] = bgp_translation_utils.merge_where_expression(
+            local_ctx['where'], equals(ctx, variable, constant))
 
     bgp_join_conditions = []
     if len(local_ctx['bgp_sql_expression']) != 0:
@@ -916,7 +1082,12 @@ def translate_BGP(ctx, bgp):
         if local_ctx['where'] != '':
             bgp_join_conditions.append(local_ctx['where'])
     if local_ctx['bgp_sql_expression']:
-        bgp['target_sql'], bgp['where'] = merge_bgp_context(local_ctx['bgp_sql_expression'], True)
+        bgp['target_sql'], bgp['where'] = merge_bgp_context(local_ctx['bgp_sql_expression'], True,
+                                                            'subquery' in ctx)
+        for condition in bgp_join_conditions:
+            # A condition between things bound already: lost here, it would
+            # let everything through.
+            bgp['where'] = bgp_translation_utils.merge_where_expression(bgp['where'], condition)
     else:
         bgp['target_sql'] = ''
         bgp['where'] = local_ctx['where']

@@ -278,3 +278,10 @@ make flink-undeploy
 [JSONLD] JSON-LD
 [XSD] XSD
 [SPARQL]
+
+## SPARQL expressions
+
+`make check-queries KMS=<package>` says, without a build, which `sh:select` and `sh:construct` of a package cannot be
+compiled, and why: the shape, the file and line, the pattern and the query. A build says the same for all of them at
+once before it stops. `check_queries.py --draft` checks one expression given as JSON, `--json` answers as JSON.
+Which forms compile is in [docs/supported-features.md](docs/supported-features.md#sparql-based-constraints).

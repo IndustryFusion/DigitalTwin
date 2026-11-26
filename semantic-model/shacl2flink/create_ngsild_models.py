@@ -274,7 +274,8 @@ def main(shaclfile, knowledgefile, modelfile, output_folder='output'):
             # observedAt is the EVENT time and now has a column of its own,
             # mirroring the payload field debeziumBridge writes. `ts` is the
             # write time on both sides, and nothing orders by it.
-            observed_at = "CURRENT_TIMESTAMP"
+            # An instance without one has none, as on the platform.
+            observed_at = "CAST(NULL AS STRING)"
             if observedAt is not None:
                 observed_at = f"'{str(observedAt)}'"
             attribute_rows.append(

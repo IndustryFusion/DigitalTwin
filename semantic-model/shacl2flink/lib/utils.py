@@ -24,8 +24,6 @@ from enum import Enum
 from rdflib import Graph, RDFS, RDF, OWL, XSD, Literal, SH, Namespace, BNode
 from rdflib.collection import Collection
 from collections import deque
-import pyoxigraph
-from oxrdflib._converter import to_ox
 from lib.configs import constraint_table_name, constraint_trigger_table_name, constraint_combination_table_name
 from lib.configs import attribute_hash_length
 from lib.jsonld_numbers import read_jsonld
@@ -40,6 +38,28 @@ class WrongSparqlStructure(Exception):
 
 class SparqlValidationFailed(Exception):
     pass
+
+
+class UnsupportedQueries(Exception):
+    """
+    SPARQL expressions that cannot be compiled, all of them, each with the
+    shape it belongs to (lib/query_check.py says what a problem holds).
+    """
+
+    def __init__(self, problems):
+        self.problems = problems
+        super().__init__(f'{len(problems)} SPARQL expression(s) cannot be compiled')
+
+
+# What an attribute's value is when no shape says sh:nodeKind, or the predicate
+# is a variable: only the instance itself knows (attributes.nodeType).
+ANY_VALUE = 'any'
+
+
+def wrap_any_value(column):
+    """The RDF term of an attribute value of unknown kind, decided per row."""
+    nodetype = column.replace('attributeValue', 'nodeType')
+    return f"CASE WHEN {nodetype} = '@id' THEN '<' || {column} || '>' ELSE '\"' || {column} || '\"' END"
 
 
 class UnsupportedShape(Exception):
@@ -766,13 +786,18 @@ def format_node_type(node):
         raise ValueError('Node is not IRI, Literal, BNode')
 
 
+NUMBER_TEXT = r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)([eE][+-]?[0-9]+)?$'
+
+
 def process_sql_dialect(expression, isSqlite):
     result_expression = expression
-    max_recursion = 10
+    # One round per level of nesting, and an expression nests as deep as it is written.
+    max_recursion = 100
     while "SQL_DIALECT_STRIP" in result_expression or "SQL_DIALECT_CAST" in result_expression \
             or "SQL_DIALECT_ATTRIBUTE_ID" in result_expression \
             or "SQL_DIALECT_TIME_TO_MILLISECONDS" in result_expression \
-            or "SQL_DIALECT_ISO_TIMESTAMP" in result_expression:
+            or "SQL_DIALECT_ISO_TIMESTAMP" in result_expression \
+            or "SQL_DIALECT_NUMBER" in result_expression:
         max_recursion = max_recursion - 1
         if max_recursion == 0:
             raise WrongSparqlStructure("Unexpected problem with SQL_DIALECT macros.")
@@ -782,6 +807,11 @@ def process_sql_dialect(expression, isSqlite):
                                        r"ltrim(rtrim(\1, '>'), '<')",
                                        result_expression)
             result_expression = re.sub(r'SQL_DIALECT_STRIP_LITERAL{([^{}]*)}', r"trim(\1, '\"')",
+                                       result_expression)
+            # The number a text is, or NULL: what TRY_CAST is in Flink.
+            result_expression = re.sub(r'SQL_DIALECT_NUMBER{([^{}]*)}',
+                                       r"(CASE WHEN CAST(\1 AS TEXT) REGEXP '" + NUMBER_TEXT +
+                                       r"' THEN CAST(\1 AS REAL) END)",
                                        result_expression)
             result_expression = re.sub(r'SQL_DIALECT_TIME_TO_MILLISECONDS{([^{}]*)}',
                                        r"CAST(julianday(\1) * 86400000 as INTEGER)",
@@ -808,6 +838,11 @@ def process_sql_dialect(expression, isSqlite):
                                        result_expression)
             result_expression = re.sub(r'SQL_DIALECT_STRIP_LITERAL{([^{}]*)}',
                                        r"REGEXP_REPLACE(CAST(\1 as STRING), '\"', '')",
+                                       result_expression)
+            # By the same pattern as in SQLite: Java's parser also takes "5d" and " 5 ".
+            result_expression = re.sub(r'SQL_DIALECT_NUMBER{([^{}]*)}',
+                                       r"(CASE WHEN REGEXP(CAST(\1 AS STRING), '" + NUMBER_TEXT +
+                                       r"') THEN TRY_CAST(\1 AS DOUBLE) END)",
                                        result_expression)
             # The REPLACE pair normalizes ISO 8601 input ('T' separator,
             # trailing 'Z') to the SQL form Flink's UNIX_TIMESTAMP and
@@ -858,6 +893,9 @@ def unwrap_variables(ctx, var):
     time_variables = ctx['time_variables']
     varname = create_varname(var)
     add_aggregate_var_to_context(ctx, varname)
+    if varname not in bounds:
+        raise SparqlValidationFailed(f'?{varname} is not bound here: no pattern the compiler could \
+translate gives it a value.')
 
     if var in time_variables:
         return f"SQL_DIALECT_TIME_TO_MILLISECONDS{{{bounds[varname]}}}"
@@ -881,9 +919,11 @@ def wrap_ngsild_variable(ctx, var):
     varname = create_varname(var)
     add_aggregate_var_to_context(ctx, varname)
     if varname not in bounds:
-        raise SparqlValidationFailed(f'Could not resolve variable \
-?{varname} in expression {ctx["query"]}.')
+        raise SparqlValidationFailed(f'?{varname} is not bound here: no pattern the compiler could \
+translate gives it a value.')
     if var in property_variables:
+        if property_variables[var] == ANY_VALUE:
+            return wrap_any_value(bounds[varname])
         if property_variables[var]:
             return "'<' || " + bounds[varname] + " || '>'"
         else:
@@ -1152,6 +1192,10 @@ def with_canonical_blank_nodes(graph):
     """
     # oxrdflib keeps an rdflib graph's triples in a named graph of its store,
     # named after the graph (to_ox(graph)); read and write exactly those.
+    # Here and not at the top: checking a query (lib/query_check.py) needs neither.
+    import pyoxigraph
+    from oxrdflib._converter import to_ox
+
     triples = graph.store._inner.quads_for_pattern(None, None, None, to_ox(graph))
     dataset = pyoxigraph.Dataset(pyoxigraph.Quad(q.subject, q.predicate, q.object) for q in triples)
     dataset.canonicalize(pyoxigraph.CanonicalizationAlgorithm.UNSTABLE)
@@ -1175,6 +1219,10 @@ def transitive_closure(g):
     # Add reflexive subClassOf relationships for all classes
     for s in closure_graph.subjects(predicate=RDFS.subClassOf):
         if (s, RDFS.subClassOf, s) not in closure_graph:
+            closure_graph.add((s, RDFS.subClassOf, s))
+    # and the classes it names only as a superclass
+    for s in set(closure_graph.objects(predicate=RDFS.subClassOf)):
+        if isinstance(s, rdflib.URIRef) and (s, RDFS.subClassOf, s) not in closure_graph:
             closure_graph.add((s, RDFS.subClassOf, s))
 
     # Add reflexive subClassOf relationships for every element of type rdfs:Class and owl:Class
