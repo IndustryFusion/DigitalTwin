@@ -868,6 +868,40 @@ def pins_exist_feature(ls, params):
         return {'ok': False, 'error': str(exc)}
 
 
+@server.feature('semforge/assertable')
+def assertable_feature(ls, params):
+    """What the case page's "+ Assert…" offers for one case."""
+    from ..cooked.casepage import assertable
+
+    root = package_root(uri_to_path(field(params, 'uri', '')))
+    if root is None:
+        return {'ok': False, 'error': 'not a SemForge package'}
+    try:
+        verdicts, state = validation.verdicts_for(root)
+        return {'ok': True, 'choices': assertable(
+            session.package_for(root), str(field(params, 'case', '') or ''),
+            verdicts if state.state == 'ready' else None)}
+    except Exception as exc:                       # noqa: BLE001
+        return {'ok': False, 'error': str(exc)}
+
+
+@server.feature('semforge/attributeCases')
+def attribute_cases_feature(ls, params):
+    """The test cases about one attribute, for the attribute editor."""
+    from ..cooked.casepage import attribute_cases
+
+    root = package_root(uri_to_path(field(params, 'uri', '')))
+    if root is None:
+        return {'ok': False, 'error': 'not a SemForge package'}
+    try:
+        verdicts, _ = validation.verdicts_for(root)
+        return {'ok': True, 'cases': attribute_cases(
+            session.package_for(root), str(field(params, 'shape', '') or ''),
+            str(field(params, 'attribute', '') or ''), verdicts)}
+    except Exception as exc:                       # noqa: BLE001
+        return {'ok': False, 'error': str(exc)}
+
+
 @server.feature('semforge/health')
 def health_feature(ls, params):
     """The package health page: figures, and what needs attention first."""

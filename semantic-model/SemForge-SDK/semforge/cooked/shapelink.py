@@ -225,19 +225,28 @@ def value_choices(package, entity_type, attribute, limit=None, search=None):
     shape = URIRef(found['shape'])
     wanted = attribute.rsplit('/', 1)[-1].split(':')[-1]
 
-    declared = None
+    declared = written = None
+    listed = ''
     slot = ''
     path, block = index.block_for(shape)
     text = index.source_of(path) if path else ''
     for group in property_blocks(text, block or []):
         if group.path.split(':')[-1] != wanted:
             continue
+        written = group.path
         for child in group.children:
             if child.path in VALUE_PATHS:
                 slot = child.path
+                members = child.parameters.get('sh:in')
+                if members:
+                    listed = members[2].strip()
                 parameter = child.parameters.get('sh:class')
                 if parameter:
                     declared = parameter[2].strip()
+    if not listed and declared is None and written:
+        listed, slot = _nested_list(package, entity_type, written, slot)
+    if listed:
+        return _listed(package, listed, slot, search)
     if declared is None:
         return [], f'{found["shapeName"]} declares no sh:class for {wanted}'
 
@@ -261,6 +270,59 @@ def value_choices(package, entity_type, attribute, limit=None, search=None):
         options = options[:limit]
         note = f'showing {limit} of {total}; keep typing to narrow'
     return options, note
+
+
+def _nested_list(package, entity_type, written, slot):
+    """(the sh:in inside a connective of the value, as New test… reads it, or
+    '', its slot). `written`: the attribute as its shape spells it."""
+    from ..errors import PackageError
+    from ..expect.attributecase import _row, _value_conditions
+
+    for said in (entity_type, local(entity_type).split(':')[-1]):
+        try:
+            _, row = _row(package, said, [written])
+        except PackageError:
+            continue
+        return (_value_conditions(row).get('sh:in', ''),
+                'ngsild:hasObject' if row['kind'] == 'Relationship' else slot)
+    return '', slot
+
+
+def _listed(package, text, slot, search=None):
+    """Every item of a value's sh:in, as the data writes it."""
+    import json
+
+    from ..expect.attributecase import json_value
+    from .listcheck import item_term
+    from .tree import list_items
+
+    options = []
+    for item in list_items(text):
+        term = item_term(package, item)
+        if slot.endswith('hasObject'):
+            value = str(term)
+        else:
+            value = json_value(package, term)
+            # What is picked is parsed as JSON; a text that would read as
+            # something else ("1", "true") keeps its quotes.
+            if not isinstance(value, str) or _reads_as_json(value):
+                value = json.dumps(value, ensure_ascii=False)
+        options.append({'value': value, 'label': local(term) if isinstance(term, URIRef)
+                        else str(term), 'detail': 'in the list (sh:in)'})
+    if search:
+        needle = search.strip().lower()
+        options = [o for o in options if needle in o['label'].lower()]
+    return options, 'a value outside the list breaks it'
+
+
+def _reads_as_json(text):
+    import json
+
+    try:
+        json.loads(text)
+    except ValueError:
+        return False
+    return True
 
 
 def _expand(package, term):

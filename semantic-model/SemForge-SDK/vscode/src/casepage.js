@@ -180,13 +180,11 @@ function claimRow(claim, unasserted, index, at) {
     ? `<span class="acts"><button data-assert="${index}" title="${escape(ASSERT_TIP)}">` +
       'Assert it</button>' +
       (at ? `<button data-open="${escape(at)}">Open in .jsonld</button>` : '') + '</span>'
-    : claim.stale
-    ? '<span class="acts">' + (claim.suggest
+    : '<span class="acts">' + (claim.stale && claim.suggest
       ? `<button class="primary" data-retarget="${index}" title="Renamed? ${escape(claim.suggest)} ` +
         `declares the same constraint and fires here">Rename to ` +
         `${escape(claim.suggest.split('/')[0].split(':').pop())}</button>` : '') +
-      `<button data-dropassert="${index}" title="Remove this assert from the case">Remove</button></span>`
-    : '';
+      `<button data-dropassert="${index}" title="Remove this assert from the case">Remove</button></span>`;
   return `<div class="claim${unasserted ? ' extra' : ''}">${status}<span class="what">` +
     `${escape(explained.text || parts.slice(1).join(' · ').replace('ConstraintComponent', ''))}` +
     `${where} <span class="dim">· ${escape(parts[0].split(':').pop())}</span></span>` +
@@ -349,11 +347,12 @@ function renderCasePage(page, options) {
            border: 1px solid var(--vscode-panel-border, rgba(128,128,128,.35));
            padding: 3px 10px; border-radius: 2px; cursor: pointer; }
   .claims { display: grid; gap: 6px; }
-  .claim.extra { grid-template-columns: auto 1fr auto; }
   .acts { display: flex; gap: 6px; }
-  .claim { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: baseline;
+  .claim { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: baseline;
            padding: 6px 10px; border: 1px solid var(--vscode-panel-border, rgba(128,128,128,.35)); }
   .failures { margin: 8px 0 0; padding-left: 1.2em; color: var(--vscode-errorForeground, #f14c4c); }
+  .todo { margin: 0 0 8px; padding: 6px 10px; max-width: 80ch;
+          border-left: 3px solid var(--vscode-editorWarning-foreground, #cca700); }
   .file { margin-top: 18px; }
   .file .head { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; margin-bottom: 8px; }
   .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
@@ -454,15 +453,23 @@ ${(page.failures || []).length
 <div class="bar">
   ${model ? `<button data-open="${escape(page.file)}:1">Open the model file</button>
   <button data-refresh="1">Refresh</button>`
-    : '<button data-pagemenu="1" title="Open the case file, its expectations, Clone…, Rename…, Delete…, Refresh">⋯</button>'}
+    : (page.expect === 'invalid'
+      ? '<button data-pagecmd="addAssert" title="Name a reason this case must fail: any constraint that judges its entities">+ Assert…</button>' : '') +
+      '<button data-pagecmd="clone" title="A copy: its valid ↔ invalid twin, or the same">Clone…</button>' +
+      '<button data-pagecmd="rename">Rename…</button>' +
+      '<button data-pagecmd="delete" title="Delete this test case: its file and its entry in expectations.yaml">Delete…</button>' +
+      '<button data-pagemenu="1" title="Open the case file, its expectations, Clone…, Rename…, Delete…, Refresh">⋯</button>'}
 </div>
 
 ${model ? '' : `<h2>Claims</h2>
+${page.expect === 'invalid' && !claims.length
+    ? '<p class="todo">No reason yet, so this test fails. Change the data below until it violates, ' +
+      'then press <b>Assert it</b> on what fired — or name the reason first with <b>+ Assert…</b></p>' : ''}
 ${claims.length || unasserted.length
     ? `<div class="claims">${claims.map((c, i) => claimRow(c, false, i)).join('')}` +
       `${unasserted.map((c, i) => claimRow(c, true, i, located[c.resource])).join('')}</div>`
-    : `<p class="dim">This case asserts nothing${page.expect === 'valid'
-      ? ' beyond being valid.' : '. A bad case that asserts nothing is an unfinished test.'}</p>`}`}
+    : page.expect === 'valid' ? '<p class="dim">This case asserts nothing beyond being valid.</p>'
+      : '<p class="dim">Nothing fires yet.</p>'}`}
 
 ${violationList(violationsOf(files), model)}
 <h2>${model ? 'Entities' : 'Data'}</h2>
@@ -975,11 +982,12 @@ ${BUSY_SCRIPT}
     if (event.target.closest('.stampedit')) { return; }
     const target = event.target.closest('[data-open],[data-type],[data-refresh],[data-assert],' +
       '[data-edit],[data-rowmenu],[data-addattr],[data-addentity],[data-pagemenu],' +
-      '[data-retarget],[data-dropassert],[data-valuetype]');
+      '[data-retarget],[data-dropassert],[data-valuetype],[data-pagecmd]');
     if (!target) { return; }
     event.preventDefault();
     const d = target.dataset;
     if (d.valuetype) { vscode.postMessage({ command: 'valueType', at: d.valuetype }); }
+    else if (d.pagecmd) { vscode.postMessage({ command: d.pagecmd }); }
     else if (d.pagemenu) { vscode.postMessage({ command: 'pageMenu' }); }
     else if (d.retarget !== undefined) { vscode.postMessage({ command: 'retargetAssert', index: Number(d.retarget) }); }
     else if (d.dropassert !== undefined) { vscode.postMessage({ command: 'removeAssert', index: Number(d.dropassert) }); }
@@ -1191,26 +1199,33 @@ class CasePages {
     } else if (message.command === 'refresh') {
       await this.render();
     } else if (['retargetAssert', 'removeAssert'].includes(message.command) && this.page) {
-      // An assert naming a shape that is gone: point it at the one it meant,
-      // or take it out.
+      // Taken out, whichever it is; or, naming a shape that is gone, pointed
+      // at the one it meant.
       const claim = (this.page.claims || [])[message.index];
-      if (!claim || !claim.stale) {
-        return;
-      }
       const retarget = message.command === 'retargetAssert';
-      const result = await this.clientHolder.client.sendRequest('semforge/removeUse', {
-        uri: this.current.packageUri, kind: retarget ? 'retarget' : 'assert',
-        file: this.page.expectations, case: claim.entry, index: claim.index,
-        constraint: claim.suggest });
-      if (!result.ok) {
-        vscode.window.showErrorMessage(`SemForge: ${result.error}`);
+      // One at a time: until the page is drawn again, its positions are old.
+      if (!claim || (retarget && !claim.stale) || this.removing) {
         return;
       }
-      if (result.note) {
-        vscode.window.showWarningMessage(`SemForge: ${result.note}`);
+      this.removing = true;
+      try {
+        const result = await this.clientHolder.client.sendRequest('semforge/removeUse', {
+          uri: this.current.packageUri, kind: retarget ? 'retarget' : 'assert',
+          file: this.page.expectations, case: claim.entry, index: claim.index,
+          expected: { constraint: claim.constraint, resource: claim.resource },
+          constraint: claim.suggest });
+        if (!result.ok) {
+          vscode.window.showErrorMessage(`SemForge: ${result.error}`);
+        } else if (result.note) {
+          vscode.window.showWarningMessage(`SemForge: ${result.note}`);
+        }
+        await this.render();
+      } finally {
+        this.removing = false;
       }
-      await this.render();
       vscode.commands.executeCommand('semforge.refreshModel');
+    } else if (message.command === 'addAssert' && this.page) {
+      await this.chooseAssert();
     } else if (message.command === 'pageMenu' && this.page) {
       const page = this.page;
       const items = [{ label: '$(go-to-file) Open the case file', message: { command: 'open', at: `${page.file}:1` } }];
@@ -1367,18 +1382,61 @@ class CasePages {
    *  expectations.yaml, and the page re-renders with it under holds. */
   async assert(index) {
     const firing = this.page && (this.page.unasserted || [])[index];
-    if (!firing) {
+    if (firing) {
+      await this.claim(firing, this.page, this.current.packageUri);
+    }
+  }
+
+  /** "+ Assert…": a reason named before -- or without -- it fires: any
+   *  constraint the validator judged one of the case's entities by. */
+  async chooseAssert() {
+    // Of the case asked about, whatever page is open once one is picked.
+    const page = this.page;
+    const packageUri = this.current.packageUri;
+    const answer = await this.clientHolder.client.sendRequest('semforge/assertable',
+      { uri: packageUri, case: page.case });
+    if (!answer.ok) {
+      vscode.window.showErrorMessage(`SemForge: ${answer.error}`);
       return;
     }
+    if (!answer.choices.length) {
+      vscode.window.showInformationMessage(
+        `SemForge: no constraint judges an entity of ${page.name} that it does not assert already.`);
+      return;
+    }
+    const heading = { true: 'fires now', false: 'holds now — the case fails until it fires' };
+    const items = [];
+    let fires;
+    for (const choice of answer.choices) {
+      if (choice.fires !== fires) {
+        fires = choice.fires;
+        items.push({ label: heading[fires], kind: vscode.QuickPickItemKind
+          ? vscode.QuickPickItemKind.Separator : -1 });
+      }
+      const parts = choice.constraint.split('/');
+      items.push({
+        label: `$(${fires ? 'error' : 'circle-outline'}) ` +
+          parts.slice(1).join(' · ').replace('ConstraintComponent', ''),
+        description: `${parts[0].split(':').pop()} on ${choice.resource}`,
+        detail: choice.text || undefined, choice });
+    }
+    const picked = await vscode.window.showQuickPick(items, {
+      title: `Why must ${page.name} fail?`, matchOnDescription: true, matchOnDetail: true });
+    if (picked && picked.choice) {
+      await this.claim(picked.choice, page, packageUri);
+    }
+  }
+
+  async claim(firing, page, packageUri) {
     const result = await this.clientHolder.client.sendRequest('semforge/addAssert', {
-      uri: this.current.packageUri, case: this.page.case,
+      uri: packageUri, case: page.case,
       constraint: firing.constraint, resource: firing.resource });
     if (!result.ok) {
       vscode.window.showErrorMessage(`SemForge: ${result.error}`);
       return;
     }
     vscode.window.setStatusBarMessage(
-      `SemForge: ${this.page.name} now asserts ` +
+      `SemForge: ${page.name} now asserts ` +
         `${firing.constraint.split('/').slice(1, 2).join('')} on ${firing.resource}`, 5000);
     if (result.note) {
       vscode.window.showWarningMessage(`SemForge: ${result.note}`);

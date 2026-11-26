@@ -751,9 +751,7 @@ OPTIONS = {'ok': True, 'type': 'Machine', 'attribute': 'hasPressure',
            'shape': 'myModelShacl:MachineShape', 'options': [
                {'purpose': 'valid', 'label': 'valid', 'detail': 'present', 'automatic': True,
                 'name': 'pressure-valid'},
-               {'purpose': 'myModelShacl:MachineShape/hasPressure/DatatypeConstraintComponent',
-                'label': 'fires: Datatype', 'detail': 'a text where xsd:double is expected',
-                'automatic': True, 'name': 'pressure-wrong-datatype'}]}
+               {'purpose': 'invalid', 'detail': 'fails', 'name': 'pressure-invalid'}]}
 
 
 def test_new_test_is_on_an_attribute_row_of_the_types_view():
@@ -765,25 +763,24 @@ def test_new_test_is_on_an_attribute_row_of_the_types_view():
     assert not entry['group'].startswith('inline'), 'a right-click entry, not a hover icon'
 
 
-def test_new_test_asks_what_to_prove_and_writes_it(tmp_path):
-    made = {'ok': True, 'file': '/pkg/examples/test_MachineShape/bad/p.jsonld',
-            'case': 'test_MachineShape/bad/p.jsonld', 'expect': 'invalid',
-            'constraint': OPTIONS['options'][1]['purpose'], 'resource': 'urn:m:1',
+def test_new_test_asks_what_to_show_and_writes_it(tmp_path):
+    made = {'ok': True, 'file': '/pkg/examples/test_MachineShape/good/p.jsonld',
+            'case': 'test_MachineShape/good/p.jsonld', 'expect': 'valid', 'purpose': 'valid',
+            'constraint': None, 'resource': 'urn:m:1',
             'source': 'test_MachineShape/good/running.jsonld', 'automatic': True,
             'passes': True, 'failures': []}
     seen = _drive(tmp_path, {
         'command': 'semforge.newAttributeTest',
         'node': {'raw': PRESSURE, 'packageUri': 'file:///pkg/shacl.ttl'},
-        'picks': [1], 'inputs': ['pressure-wrong-datatype'],
+        'picks': [0], 'inputs': ['pressure-valid'],
         'replies': {'semforge/attributeTestOptions': OPTIONS,
                     'semforge/newAttributeTest': made}})
     assert seen['errors'] == [], seen['errors']
     asked = [r['params'] for r in seen['requests'] if r['method'] == 'semforge/newAttributeTest']
     assert asked == [{'uri': 'file:///pkg/shacl.ttl', 'entityType': 'https://x/Machine',
-                      'path': ['myModelEntities:hasPressure'],
-                      'purpose': OPTIONS['options'][1]['purpose'],
-                      'name': 'pressure-wrong-datatype'}]
-    assert seen['inputs'][0]['value'] == 'pressure-wrong-datatype', 'the name is suggested'
+                      'path': ['myModelEntities:hasPressure'], 'purpose': 'valid',
+                      'name': 'pressure-valid'}]
+    assert seen['inputs'][0]['value'] == 'pressure-valid', 'the name is suggested'
     assert _opened(seen, 'semforge.openCasePage')[0][0]['raw']['file'] == made['file']
     assert any('it passes' in text for text in seen['info'])
 

@@ -98,8 +98,8 @@ const NEW_SUITE = Symbol('new suite');
 async function pickExpect() {
   const picked = await vscode.window.showQuickPick([
     { label: '$(pass) Should conform', description: 'good/ · expect: valid', expect: 'valid' },
-    { label: '$(error) Should violate', description: 'bad/ · expect: invalid — assert what ' +
-      'fires on its case page', expect: 'invalid' }
+    { label: '$(error) Should violate', description: 'bad/ · expect: invalid — fails until you assert ' +
+      'why, on its case page', expect: 'invalid' }
   ], { title: 'New test case: what should it show?' });
   return picked && picked.expect;
 }

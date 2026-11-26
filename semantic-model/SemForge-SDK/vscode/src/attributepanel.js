@@ -158,7 +158,7 @@ function cmd(name, label, title) {
  * unit, tests, where it is declared -- each with the way to change it. An
  * inherited one is the supertype's: shown, and tightened with Override.
  */
-function summaryBox(row) {
+function summaryBox(row, tests) {
   if (!row) {
     return '';
   }
@@ -183,12 +183,33 @@ function summaryBox(row) {
     line('Severity', severity, own && 'severity', 'Change…',
       'How serious its results are when it fires') +
     units +
-    line('Tests', tested, 'test', 'New test…', 'A valid case, or one of its constraints firing') +
+    line('Tests', tested, 'test', 'New test…', 'One that should conform, or one that should fail') +
+    `<div id="tests">${testList(tests)}</div>` +
     line('Declared in', where, 'open', 'Open in .ttl', 'Show it in the shapes file') +
     (own ? `<div class="line">${cmd('params', 'Other parameters…', 'Every parameter, as written: add, change, remove')}</div>`
       : `<div class="note">Declared on ${escape(row.inheritedFrom || 'a supertype')}: changed ` +
         `there, or tightened here. ${cmd('override', 'Override…', 'Declare a stricter constraint on this type\'s own shape')}</div>`) +
     several + '</div>';
+}
+
+/** The test cases about this attribute: what each expects, whether it passes,
+ *  what it asserts or what fires in it -- opened, or deleted. */
+function testList(tests) {
+  if (!tests) {
+    return '<div class="dim">The test cases could not be read — see the Problems panel.</div>';
+  }
+  return (tests || []).map((test) => {
+    const said = test.asserts.length ? `asserts ${test.asserts.join(', ')}`
+      : test.expect === 'invalid' ? 'asserts nothing on it'
+      : test.fires.length ? '' : 'holds';
+    const fired = test.fires.filter((f) => !test.asserts.includes(f));
+    const mark = test.passed === null ? '…' : test.passed ? '✓' : '✗';
+    return `<div class="test"><span class="${test.passed === false ? 'bad' : 'dim'}">${mark}</span> ` +
+      `<a tabindex="0" role="link" data-testopen="${escape(test.file)}" title="${escape(test.description || 'Open its page')}">` +
+      `${escape(test.case.split('/').slice(-2).join(' / '))}</a> ` +
+      `<span class="dim">${escape([said, fired.length ? `fires ${fired.join(', ')}` : ''].filter(Boolean).join(' · '))}</span>` +
+      `<button class="tool" data-testdelete="${escape(test.file)}" title="Delete this test case">Delete…</button></div>`;
+  }).join('');
 }
 
 /** The panel. `state`: the page's row, what semforge/valueForms said, the choices. */
@@ -241,6 +262,10 @@ function renderAttributePanel(state, options) {
   h2 { font-size: 1.05em; margin: 16px 0 4px; }
   h3 { font-size: 0.95em; margin: 12px 0 4px; color: var(--vscode-descriptionForeground); }
   .summary .line { display: flex; gap: 8px; align-items: baseline; margin: 3px 0; flex-wrap: wrap; }
+  #tests { margin-left: 8em; max-height: 14em; overflow-y: auto; }
+  .test { display: flex; gap: 8px; align-items: baseline; margin: 2px 0; }
+  .test .tool { margin-left: auto; }
+  .test .bad { color: var(--vscode-errorForeground, #f14c4c); }
   .summary .name { min-width: 7.5em; color: var(--vscode-descriptionForeground); }
   .summary .said { margin: 0; }
   .box.form { border-width: 2px; padding: 8px 10px; margin: 10px 0; }
@@ -264,7 +289,7 @@ ${LINK_CSS}</style></head><body>
 <h1>Attribute: ${escape(state.label)}</h1>
 ${state.row ? `<div class="dim">${escape(state.row.term || '')}</div>` : ''}
 ${state.error ? `<div class="error">${escape(state.error)}</div>` : ''}
-${summaryBox(state.row)}
+${summaryBox(state.row, state.tests)}
 <h2>Its value</h2>
 <div class="said">${escape(state.said || 'any value')}</div>
 ${state.editable || !state.reason ? '' : `<div class="error">Edited in the .ttl: ${escape(state.reason)}</div>`}
@@ -312,6 +337,12 @@ ${LINK_SCRIPT}
     row.append(pick, input);
     return row;
   }
+  // The tests, again, when a validation run is in: nothing else is redrawn
+  // under someone's hands.
+  window.addEventListener('message', function (event) {
+    const list = document.getElementById('tests');
+    if (event.data && event.data.command === 'tests' && list) { list.innerHTML = event.data.html; }
+  });
   function closeForms() { document.querySelectorAll('form').forEach(function (f) { f.remove(); }); }
   // An inline form under a box: spec.rows condition rows (more may be added
   // when spec.more), a connective choice when spec.connective, then
@@ -358,6 +389,14 @@ ${LINK_SCRIPT}
     if (first) { first.focus(); }
   }
   document.addEventListener('click', function (event) {
+    const test = event.target.closest('[data-testopen],[data-testdelete]');
+    if (test) {
+      event.preventDefault();
+      vscode.postMessage(test.dataset.testopen
+        ? { command: 'openTest', file: test.dataset.testopen }
+        : { command: 'deleteTest', file: test.dataset.testdelete });
+      return;
+    }
     const asked = event.target.closest('[data-cmd]');
     if (asked) {
       event.preventDefault();
@@ -461,7 +500,24 @@ class AttributePanel {
       this.panel = vscode.window.createWebviewPanel('semforgeAttribute', 'Attribute',
         { viewColumn: vscode.ViewColumn.Beside, preserveFocus: false },
         { enableScripts: true, localResourceRoots: [] });
-      this.panel.onDidDispose(() => { this.panel = undefined; });
+      const holder = this.pages.clientHolder;
+      // Hidden, the panel gets no message and forgets what it was sent: drawn
+      // again whenever it comes back -- and only then, not under someone's hands.
+      const verdicts = holder.onVerdicts ? holder.onVerdicts(() => this.refreshTests()) : undefined;
+      let shown = true;
+      this.panel.onDidChangeViewState(() => {
+        const back = this.panel && this.panel.visible && !shown;
+        shown = Boolean(this.panel && this.panel.visible);
+        if (back) {
+          this.render();
+        }
+      });
+      this.panel.onDidDispose(() => {
+        this.panel = undefined;
+        if (verdicts) {
+          verdicts.dispose();
+        }
+      });
       this.panel.webview.onDidReceiveMessage((message) => this.receive(message));
     } else {
       this.panel.reveal(vscode.ViewColumn.Beside);
@@ -507,14 +563,37 @@ class AttributePanel {
     return this.contrib !== undefined && row.contributions ? row.contributions[this.contrib] || row : row;
   }
 
+  /** The test cases about the attribute, as the last validation saw them. */
+  async tests() {
+    const answer = await this.request('semforge/attributeCases',
+      { shape: this.row.shapeName, attribute: this.row.label });
+    return answer && answer.ok ? answer.cases : undefined;
+  }
+
+  async refreshTests() {
+    if (!this.panel || !this.row) {
+      return;
+    }
+    const row = this.row;
+    const tests = await this.tests();
+    // Not answered: what is shown stays.
+    if (tests && this.panel && this.row === row) {
+      this.panel.webview.postMessage({ command: 'tests', html: testList(tests) });
+    }
+  }
+
   async render() {
     if (!this.panel) {
       return;
     }
     this.row = this.fresh();
+    const tests = await this.tests();
     const read = await this.request('semforge/valueForms', { shape: this.row.shape, path: this.row.path });
+    if (!this.panel) {
+      return;                          // closed meanwhile
+    }
     this.panel.title = `Attribute: ${this.row.label}`;
-    const state = Object.assign({ label: this.row.label, row: this.row }, this.choices,
+    const state = Object.assign({ label: this.row.label, row: this.row, tests }, this.choices,
       read.ok ? read : { editable: false, reason: read.error }, { error: this.error });
     this.panel.webview.html = renderAttributePanel(state,
       { nonce: crypto.randomBytes(16).toString('base64') });
@@ -522,6 +601,17 @@ class AttributePanel {
 
   async receive(message) {
     if (!message || !this.row) {
+      return;
+    }
+    if (message.command === 'openTest' || message.command === 'deleteTest') {
+      const opening = message.command === 'openTest';
+      const done = await vscode.commands.executeCommand(
+        opening ? 'semforge.openCasePage' : 'semforge.deleteTestCase',
+        { raw: { kind: 'example', file: message.file }, packageUri: this.packageUri });
+      if (done && !opening) {
+        await this.pages.render();
+        await this.render();
+      }
       return;
     }
     if (message.command === 'row') {
@@ -564,4 +654,4 @@ function current() {
   return panel;
 }
 
-module.exports = { openAttribute, renderAttributePanel, summaryBox, CONDITIONS, current };
+module.exports = { openAttribute, renderAttributePanel, summaryBox, testList, CONDITIONS, current };

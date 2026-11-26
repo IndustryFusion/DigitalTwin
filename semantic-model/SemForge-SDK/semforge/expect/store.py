@@ -282,6 +282,16 @@ def discover(package_path, folder=None):
     return sorted(found)
 
 
+def _judging(package, example):
+    """Every constraint the validation judged this case by, whatever it is."""
+    from ..validate.orchestrator import validate_graphs
+    from .runner import constraint_ref
+
+    report = validate_graphs(compose(package, example), package.shapes, package.knowledge,
+                             strict=False)
+    return {constraint_ref(result) for result in report.evaluated}
+
+
 def add_assert(package, case, constraint, resource=''):
     """Assert that `constraint` fires on `resource` in one case.
 
@@ -303,7 +313,8 @@ def add_assert(package, case, constraint, resource=''):
                     == os.path.abspath(case)), None)
     if example is None:
         raise PackageError(f'{case} is not a declared test case')
-    if constraint not in known_constraints(package):
+    if constraint not in known_constraints(package) and \
+            constraint not in _judging(package, example):
         raise PackageError(f'{constraint} is a constraint no shape declares; '
                            f'an assert on it could never hold')
     if (resource, constraint) in example.asserted_keys():

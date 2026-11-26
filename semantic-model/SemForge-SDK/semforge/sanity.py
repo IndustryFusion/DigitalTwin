@@ -247,19 +247,60 @@ def _shape_checks(package, declared):
 
 # --- the expectations -----------------------------------------------------------
 
+class Known(set):
+    """The constraints enumerated from the shapes -- what coverage counts --
+    which also recognises, `in`, the ones that cannot be listed beforehand
+    because they are named by what they fire on: sh:closed by the attribute
+    that should not be there, a query by its property shape. They are judged,
+    fire and are asserted like any other."""
+
+    # sh: parameter -> the component it makes fire.
+    UNLISTED = {'closed': 'Closed', 'languageIn': 'LanguageIn', 'uniqueLang': 'UniqueLang',
+                'equals': 'Equals', 'disjoint': 'Disjoint', 'lessThan': 'LessThan',
+                'lessThanOrEquals': 'LessThanOrEquals', 'qualifiedMinCount': 'QualifiedMinCount',
+                'qualifiedMaxCount': 'QualifiedMaxCount', 'sparql': 'SPARQL',
+                'expression': 'Expression'}
+
+    def __init__(self, listed, shapes, names):
+        from .validate.normalise import local
+
+        super().__init__(listed)
+        # A property shape with a target of its own is also named by its path.
+        self._by_path = {f'{name}/{local(path)}/{reference.rsplit("/", 1)[-1]}'
+                         for name, shape in names.items()
+                         for path in shapes.objects(shape, SH.path) if isinstance(path, URIRef)
+                         for reference in listed if reference.startswith(f'{name}/')}
+        self._shapes, self._names, self._declared = shapes, names, {}
+
+    def __contains__(self, reference):
+        if super().__contains__(reference) or reference in self._by_path:
+            return True
+        name, _, rest = str(reference).partition('/')
+        shape = self._names.get(name)
+        if shape is None or not rest:
+            return False
+        if name not in self._declared:
+            found = {str(p).rsplit('#', 1)[-1] for _, p, _ in self._shapes.cbd(shape)
+                     if str(p).startswith(str(SH))}
+            self._declared[name] = {component + 'ConstraintComponent' for parameter, component
+                                    in self.UNLISTED.items() if parameter in found}
+        return rest.rsplit('/', 1)[-1] in self._declared[name]
+
+
 def known_constraints(package):
     """Every constraint reference an expectation may name."""
     from .validate.applicable import constraints_of_shape
     from .validate.normalise import curie
     from .validate.shapes import targeted_shapes
 
-    out = set()
+    out, names = set(), {}
     for shape in targeted_shapes(package.shapes):
         name = curie(package.shapes, shape)
+        names[name] = shape
         for attribute, component in constraints_of_shape(shape, package.shapes):
             out.add(f'{name}/{attribute}/{component}' if attribute
                     else f'{name}/{component}')
-    return out
+    return Known(out, package.shapes, names)
 
 
 def _assert_lines(source):

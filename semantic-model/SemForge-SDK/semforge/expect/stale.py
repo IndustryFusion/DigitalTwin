@@ -30,6 +30,8 @@ that fires on the asserted resource. Anything less certain is left to the
 author, with Remove as the other fix.
 """
 
+import os
+
 from ..errors import PackageError
 
 
@@ -57,18 +59,23 @@ def suggestion(constraint, known, firing=None):
     return ''
 
 
-def retarget_assert(source, case, index, constraint):
-    """Point one assert of one case at `constraint`, in place."""
+def retarget_assert(source, case, index, constraint, expected=None):
+    """Point one assert of one case at `constraint`, in place. `expected`, when
+    given, is the (constraint, resource) it has now, as in remove_assert."""
     from .store import _yaml
 
     with open(source, encoding='utf-8') as handle:
         raw = _yaml().load(handle) or {}
-    entry = next((e for e in raw.get('examples') or [] if e.get('path') == case), None)
+    entry = next((e for e in raw.get('examples') or []
+                  if os.path.normpath(e.get('path', '')) == os.path.normpath(case)), None)
     asserts = (entry or {}).get('asserts') or []
     if entry is None or not 0 <= index < len(asserts):
         raise PackageError(f'{case} has no assert {index} any more; the file has changed '
                            'since it was checked')
     old = asserts[index].get('constraint')
+    if expected is not None and expected != (str(old or ''), str(asserts[index].get('resource', ''))):
+        raise PackageError(f'{case} no longer asserts {expected[0]} there; the file has changed '
+                           'since it was read')
     if any(a.get('constraint') == constraint and a.get('resource') == asserts[index].get('resource')
            for a in asserts):
         # The case already says it: the stale one is a duplicate, and goes.

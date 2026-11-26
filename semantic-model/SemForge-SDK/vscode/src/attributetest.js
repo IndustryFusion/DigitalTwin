@@ -20,10 +20,11 @@
  * Asked where the question arises -- an attribute row in the Entity Types & Constraints view, a
  * row on the type page -- because that is where "hasPressure is new, what
  * proves its constraints work?" comes up. It offers what a test can prove:
- * the attribute valid, or one of its constraints firing. The SDK writes the
- * case from a scene with an entity of the type, breaking the attribute the
- * way the constraint forbids where that can be done mechanically, and runs it
- * once -- so the answer says whether the test already proves what it claims.
+ * that the attribute conforms, or that it fails. Why it fails is not chosen
+ * here -- a list of everything SHACL can refuse never ends. The SDK writes the
+ * case from a scene with an entity of the type; one that should fail asserts
+ * nothing and fails, until its data is broken and what fires is asserted on
+ * its case page.
  */
 
 const vscode = require('vscode');
@@ -33,6 +34,8 @@ const { typeOf } = require('./typepage');
 
 const REFRESH_VIEWS = ['semforge.refreshModel', 'semforge.refreshTree',
   'semforge.refreshShapes'];
+
+const WORDS = { valid: '$(pass) Should conform', invalid: '$(error) Should fail' };
 
 async function newAttributeTest(clientHolder, session, node) {
   const client = clientHolder.client;
@@ -53,19 +56,17 @@ async function newAttributeTest(clientHolder, session, node) {
   }
   const picked = await vscode.window.showQuickPick(
     offered.options.map((option) => ({
-      label: option.purpose === 'valid' ? '$(pass) valid' : `$(error) ${option.label}`,
+      label: WORDS[option.purpose],
       description: option.detail,
-      detail: option.automatic ? undefined
-        : 'Written from a valid scene; it fails until you edit the data.',
       option
     })),
-    { title: `New test for ${offered.attribute} on ${offered.type}: what should it prove?`,
+    { title: `New test for ${offered.attribute} on ${offered.type}: what should it show?`,
       matchOnDescription: true });
   if (!picked) {
     return false;
   }
   const name = await vscode.window.showInputBox({
-    title: `New test: ${offered.attribute} · ${picked.option.label}`,
+    title: `New test: ${offered.attribute} · ${picked.label.replace(/^\$\([a-z]+\) /, '')}`,
     prompt: 'A name for the case file (letters, digits, dashes)',
     value: picked.option.name,
     validateInput: (text) => (/[A-Za-z0-9]/.test(text) ? undefined : 'a name is required')
@@ -84,12 +85,14 @@ async function newAttributeTest(clientHolder, session, node) {
   }
   await vscode.commands.executeCommand('semforge.openCasePage',
     { raw: { kind: 'example', file: made.file }, packageUri });
-  const said = made.passes
-    ? `SemForge: ${made.case} written, and it passes` +
-      (made.constraint ? ` — ${made.constraint.split('/').slice(1).join(' ')} fires on ` +
-        `${made.resource}.` : ' — the entity conforms.')
-    : `SemForge: ${made.case} written; it fails until its data is edited: ` +
-      made.failures.join('; ');
+  if (made.purpose === 'invalid') {
+    vscode.window.showInformationMessage(
+      `SemForge: ${made.case} written. It fails until you change its data so it violates, ` +
+        'and assert what fires.');
+    return true;
+  }
+  const said = made.passes ? `SemForge: ${made.case} written, and it passes — the entity conforms.`
+    : `SemForge: ${made.case} written; it fails until its data is edited: ${made.failures.join('; ')}`;
   const open = await (made.passes ? vscode.window.showInformationMessage(said, 'Open .jsonld')
     : vscode.window.showWarningMessage(said, 'Open .jsonld'));
   if (open) {

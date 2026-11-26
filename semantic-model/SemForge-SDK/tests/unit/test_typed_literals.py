@@ -92,13 +92,6 @@ def _generated(package, label, purpose, name):
     return (attribute[0] if isinstance(attribute, list) else attribute)['value'], made
 
 
-def _purpose(package, label, component):
-    from semforge.expect.attributecase import attribute_test_options
-    return next(o['purpose'] for o in attribute_test_options(
-        package, E + 'Machine', _row(package, label)['path'])['options']
-        if o['purpose'].endswith(component))
-
-
 # --- generated cases --------------------------------------------------------------------
 
 def test_a_valid_case_declares_its_double(root):
@@ -112,15 +105,21 @@ def test_a_valid_case_declares_its_double(root):
     assert made['passes'], made['failures']
 
 
-def test_a_range_break_declares_its_double_and_breaks_only_the_range(root):
+def test_a_range_broken_by_hand_keeps_its_declared_double_and_breaks_only_the_range(root):
+    from semforge.cooked.casepage import build_case_page
+    from semforge.cooked.examples import set_value
     from semforge.package import load
 
-    package = load(str(root))
-    value, made = _generated(package, 'hasTemperature',
-                             _purpose(package, 'hasTemperature', 'MaxInclusiveConstraintComponent'),
-                             'too-hot-generated')
-    assert value == declared(121)
-    assert made['passes'], made['failures']
+    value, made = _generated(load(str(root)), 'hasTemperature', 'invalid', 'too-hot-generated')
+    assert isinstance(value, dict) and value['@type'] == DOUBLE
+    path = _row(load(str(root)), 'hasTemperature')['path'][-1]
+    set_value(load(str(root)), made['resource'], [path, 'value'], '121', made['file'])
+    entity = next(e for e in json.load(open(made['file'], encoding='utf-8'))
+                  if e.get('id') == made['resource'])
+    assert entity[path]['value'] == declared(121)
+    fired = [u['constraint'].rsplit('/', 1)[-1]
+             for u in build_case_page(load(str(root)), made['case'])['unasserted']]
+    assert fired == ['MaxInclusiveConstraintComponent']
 
 
 def test_an_integer_attribute_is_a_plain_integer(root):

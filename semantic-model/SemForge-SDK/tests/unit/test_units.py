@@ -39,7 +39,7 @@ from semforge.cooked.typepage import build_type_page
 from semforge.cooked.units import (add_unit, attribute_units, find_unit, search_units,
                                    set_unit_code, set_units, units)
 from semforge.errors import PackageError
-from semforge.expect.attributecase import attribute_test_options, new_attribute_test
+from semforge.expect.attributecase import new_attribute_test
 from semforge.ngsild.units import CATALOGUE, QUDT
 from semforge.package import load
 from semforge.package.scaffold import create_package
@@ -211,23 +211,17 @@ def test_the_quick_fixes_of_an_unknown_unit():
 
 # --- New test… -------------------------------------------------------------------------
 
-def test_new_test_writes_a_unit_and_breaks_it(pkg):
+def test_new_test_writes_an_allowed_unit(pkg):
     root, machine, shape = pkg
     set_units(load(root), shape, [TEMPERATURE], ['CEL'], required=True)
     node = next(a for r in build_tree(load(root)) if r.target_class == machine
                 for s in r.children for a in s.children
                 if a.kind == 'attribute' and a.label.endswith('hasTemperature'))
-    options = attribute_test_options(load(root), machine, list(node.path_chain))['options']
-    unit = {o['label']: o for o in options if 'unit' in o['label']}
-    assert set(unit) == {'fires: unit In', 'fires: unit MinCount'}
-    for option in [o for o in options if o['purpose'] == 'valid'] + list(unit.values()):
-        made = new_attribute_test(load(root), machine, list(node.path_chain),
-                                  option['purpose'], option['name'])
-        assert made['passes'], (option['name'], made['failures'])
+    for purpose in ('valid', 'invalid'):
+        made = new_attribute_test(load(root), machine, list(node.path_chain), purpose, purpose)
+        assert made['passes'] == (purpose == 'valid'), made['failures']
         entity = next(e for e in json.load(open(made['file'])) if e.get('id') == made['resource'])
-        said = entity[TEMPERATURE].get('unitCode')
-        assert said == {'temperature-valid': 'CEL', 'temperature-wrong-unit': 'FAH',
-                        'temperature-no-unit': None}[option['name']], option['name']
+        assert entity[TEMPERATURE]['unitCode'] == 'CEL', 'valid data, in either'
 
 
 # --- the Vocabulary view ----------------------------------------------------------------

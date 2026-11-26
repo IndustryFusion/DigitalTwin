@@ -29,7 +29,7 @@ is wrong in words. `item_term` is the reading, shared with the writer.
 
 import re
 
-from rdflib import Literal, URIRef
+from rdflib import Graph, Literal, URIRef
 from rdflib.namespace import RDF, RDFS, XSD
 
 NUMBER = re.compile(r'[-+]?(\d+\.?\d*|\.\d+)([eE][-+]?\d+)?')
@@ -52,15 +52,33 @@ def _expand(package, token):
     return URIRef(token)
 
 
+TAIL = re.compile(r'(.*["\'])(?:@([A-Za-z0-9-]+)|\^\^(\S+))?', re.DOTALL)
+
+
+def _literal(package, token):
+    """A quoted item, whichever quotes and escapes it is written with."""
+    found = TAIL.fullmatch(token)
+    if not found:
+        return None
+    body, lang, datatype = found.groups()
+    try:
+        graph = Graph().parse(data=f'<urn:s> <urn:p> {body} .', format='turtle')
+    except Exception:                              # noqa: BLE001
+        return None
+    # An escaped pair (\\ud83d\\ude00) reads as its two halves: one character again.
+    text = str(next(graph.objects())).encode('utf-16', 'surrogatepass').decode('utf-16', 'replace')
+    if datatype:
+        return Literal(text, datatype=_expand(package, datatype))
+    return Literal(text, lang=lang) if lang else Literal(text)
+
+
 def item_term(package, token):
     """A list item as written -> the RDF term it is."""
     token = token.strip()
-    quoted = QUOTED.fullmatch(token)
-    if quoted:
-        text, lang, datatype = quoted.groups()
-        if datatype:
-            return Literal(text, datatype=_expand(package, datatype))
-        return Literal(text, lang=lang) if lang else Literal(text)
+    if token[:1] in ('"', "'"):
+        literal = _literal(package, token)
+        if literal is not None:
+            return literal
     if token in ('true', 'false'):
         return Literal(token, datatype=XSD.boolean)
     if NUMBER.fullmatch(token):

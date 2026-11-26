@@ -163,8 +163,8 @@ function testedBy(page, cases) {
       `${escape(c.case.split('/').slice(-3).join(' / '))}</a>` +
       `<span class="dim">${c.firedOn && c.firedOn.length
         ? `on ${escape(c.firedOn.join(', '))}` : ''}</span>` +
-      (c.passed === null ? '' : c.passed ? '<span class="dim">passes</span>' : chip('FAILS', 'bad')) +
-      '</div>').join('');
+      `<span>${c.passed === null ? '' : c.passed ? '<span class="dim">passes</span>' : chip('FAILS', 'bad')} ` +
+      `<button class="delcase" data-delcase="${escape(c.file)}" title="Delete this test case">Delete…</button></span></div>`).join('');
   return rows || '<p class="empty">No test case reaches it: nothing proves it can fire.</p>';
 }
 
@@ -321,7 +321,7 @@ ${testedBy(page, cases)}
   const vscode = acquireVsCodeApi();
 ${BUSY_SCRIPT}
   document.addEventListener('click', (event) => {
-    const target = event.target.closest('[data-open],[data-type],[data-shape],[data-case],[data-model],[data-newcase],[data-action],[data-refresh]');
+    const target = event.target.closest('[data-open],[data-type],[data-shape],[data-case],[data-delcase],[data-model],[data-newcase],[data-action],[data-refresh]');
     if (!target) { return; }
     event.preventDefault();
     if (target.dataset.action) {
@@ -331,6 +331,7 @@ ${BUSY_SCRIPT}
     else if (target.dataset.open) { vscode.postMessage({ command: 'open', at: target.dataset.open }); }
     else if (target.dataset.type) { vscode.postMessage({ command: 'type', name: target.dataset.type }); }
     else if (target.dataset.shape) { vscode.postMessage({ command: 'shape', name: target.dataset.shape }); }
+    else if (target.dataset.delcase) { vscode.postMessage({ command: 'deleteCase', file: target.dataset.delcase }); }
     else if (target.dataset.case) { vscode.postMessage({ command: 'case', file: target.dataset.case }); }
     else if (target.dataset.model !== undefined) { vscode.postMessage({ command: 'model', entity: target.dataset.model }); }
     else if (target.dataset.newcase) { vscode.postMessage({ command: 'newCase' }); }
@@ -587,6 +588,11 @@ class ShapePages {
         { raw: { targetClass: message.name }, packageUri });
     } else if (message.command === 'shape' && message.name) {
       await this.show(packageUri, message.name);
+    } else if (message.command === 'deleteCase' && message.file) {
+      if (await vscode.commands.executeCommand('semforge.deleteTestCase',
+        { raw: { kind: 'example', file: message.file }, packageUri })) {
+        await this.render();
+      }
     } else if (message.command === 'case' && message.file) {
       await vscode.commands.executeCommand('semforge.openCasePage',
         { raw: { kind: 'example', file: message.file }, packageUri });

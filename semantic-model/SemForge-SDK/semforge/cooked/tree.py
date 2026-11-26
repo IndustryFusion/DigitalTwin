@@ -624,7 +624,10 @@ def _term(package, text, value):
     return _turtle_name(text, URIRef(iri))
 
 
-LIST_ITEM = re.compile(r'"(?:[^"\\]|\\.)*"(?:@[A-Za-z-]+|\^\^\S+)?|<[^>]*>|[^\s(),]+')
+LIST_ITEM = re.compile(
+    r'#[^\n]*|(?:"""(?:[^"\\]|\\.|"(?!""))*"""|\'\'\'(?:[^\'\\]|\\.|\'(?!\'\'))*\'\'\''
+    r'|"(?:[^"\\]|\\.)*"|\'(?:[^\'\\]|\\.)*\')(?:@[A-Za-z0-9-]+|\^\^(?:<[^>]*>|(?:\\.|[^\s(),#\\])+))?'
+    r'|<[^>]*>|(?:\\.|[^\s(),#\\])+')
 NUMBER = re.compile(r'[-+]?\d+(\.\d+)?([eE][-+]?\d+)?')
 
 
@@ -633,7 +636,8 @@ def list_items(text):
     inner = str(text or '').strip()
     if inner.startswith('(') and inner.endswith(')'):
         inner = inner[1:-1]
-    return LIST_ITEM.findall(inner)
+    # A comment is none of it, up to the end of its line.
+    return [item for item in LIST_ITEM.findall(inner) if not item.startswith('#')]
 
 
 def _list_value(package, text, value, datatype=None):
@@ -665,7 +669,7 @@ def _list_value(package, text, value, datatype=None):
         elif item.startswith('<') or re.fullmatch(r'[A-Za-z][\w.-]*:[^\s"]+', item):
             term = _term(package, text, item)
         else:
-            term = json.dumps(item)
+            term = json.dumps(item, ensure_ascii=False)
         if term not in rendered:
             rendered.append(term)
     if not rendered:

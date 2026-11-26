@@ -92,6 +92,10 @@ class CoverageEntry:
         return 'two-sided'
 
 
+NO_REASON = ('asserts nothing: an invalid case fails until it says which '
+             'constraint it violates')
+
+
 def evaluate(example, report, known=None):
     """Check one example's report against its declared expectations.
 
@@ -107,6 +111,10 @@ def evaluate(example, report, known=None):
         outcome.fail(f'expected valid, got {len(violations)} violation(s)')
     if example.expect == 'invalid' and not violations:
         outcome.fail('expected invalid, but everything conformed')
+    if example.expect == 'invalid' and not example.asserts:
+        # Whatever happens to fire is not yet what the case is about: until it
+        # names its reason it is unfinished, and unfinished is not passing.
+        outcome.fail(NO_REASON)
 
     fired = {(r.resource, constraint_ref(r)) for r in violations}
     for assertion in example.asserts:

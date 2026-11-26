@@ -42,7 +42,7 @@ from semforge.cooked.examples import (add_instance, build_suite, dataset_id_prob
                                       set_dataset_id)
 from semforge.cooked.knowledge import add_attribute_term
 from semforge.errors import PackageError
-from semforge.expect.attributecase import attribute_test_options, new_attribute_test
+from semforge.expect.attributecase import new_attribute_test
 from semforge.package import load
 from semforge.package.scaffold import create_package
 from semforge.sanity import _dataset_checks
@@ -91,15 +91,6 @@ def _written(made):
 
 # --- generated cases sit at the boundary ------------------------------------------------
 
-def test_the_options_say_how_many_instances(counted):
-    root, machine = counted
-    offered = attribute_test_options(load(root), machine, _path(root, machine))
-    detail = {o['purpose'].rsplit('/', 1)[-1]: o['detail'] for o in offered['options']}
-    assert detail['MinCountConstraintComponent'].startswith(
-        'too few: 1 instance(s) where 2 are required')
-    assert detail['MaxCountConstraintComponent'].startswith('more than 3: 4 instances')
-
-
 def test_a_valid_case_has_as_many_instances_as_required(counted):
     root, machine = counted
     made = new_attribute_test(load(root), machine, _path(root, machine), 'valid',
@@ -108,36 +99,6 @@ def test_a_valid_case_has_as_many_instances_as_required(counted):
     assert len(instances) == 2
     assert 'datasetId' not in instances[0], 'the default instance carries none'
     assert instances[1]['datasetId'] == 'urn:my-model:dataset:2'
-    assert made['passes'], made['failures']
-
-
-@pytest.mark.parametrize('component, count', [('MinCountConstraintComponent', 1),
-                                              ('MaxCountConstraintComponent', 4)])
-def test_a_count_breaks_at_the_boundary_and_fires(counted, component, count):
-    root, machine = counted
-    package = load(root)
-    purpose = next(o['purpose'] for o in attribute_test_options(
-        package, machine, _path(root, machine))['options'] if o['purpose'].endswith(component))
-    made = new_attribute_test(package, machine, _path(root, machine), purpose, 'pressure-count')
-    instances = _written(made)
-    assert len(instances) == count
-    assert len({i.get('datasetId', '@none') for i in instances}) == count
-    assert made['passes'], made['failures']
-
-
-def test_another_constraint_breaks_one_instance_and_keeps_the_count(counted):
-    root, machine = counted
-    package = load(root)
-    purpose = next(o['purpose'] for o in attribute_test_options(
-        package, machine, _path(root, machine))['options']
-        if o['purpose'].endswith('DatatypeConstraintComponent'))
-    made = new_attribute_test(package, machine, _path(root, machine), purpose, 'pressure-text')
-    instances = _written(made)
-    assert len(instances) == 2
-    # The broken one is a text; the other keeps its valid value, a declared
-    # double (#961, contracts/typed-literals).
-    assert isinstance(instances[0]['value'], str)
-    assert instances[1]['value'] == {'@value': 1.0, '@type': 'http://www.w3.org/2001/XMLSchema#double'}
     assert made['passes'], made['failures']
 
 

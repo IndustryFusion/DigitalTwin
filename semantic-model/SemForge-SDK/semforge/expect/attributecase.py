@@ -14,31 +14,33 @@
 # limitations under the License.
 #
 
-"""A test for one attribute: valid, or making one of its constraints fire.
+"""A test for one attribute: one that should conform, or one that should fail.
 
 Asked from the attribute itself -- a row in the Entity Types & Constraints view, a row on the
 type page -- because that is where the question arises: "hasPressure is new,
-what proves its constraints work?". The answer is one case per constraint
-that can fire, and one where everything holds.
+what proves its constraints work?".
+
+A test that should fail ('invalid') does not choose its reason here: it starts
+from a valid scene, asserts nothing and so fails, until its data is edited and
+the constraint that then fires is asserted ("Assert it" on the case page).
+That works the same for every constraint SHACL has -- sh:in, sh:or, SPARQL --
+where a list of things that can go wrong never ends.
 
 The case is a scene with an entity of the type: copied from a valid case
 that has one (its includes written into the file), else from the model, else
 written fresh with every required attribute given a valid value. The
-attribute is then set to a valid value -- and, for a test that should fire,
-broken the way the constraint forbids: left out, a text where a number is
-expected, one past a bound, an IRI that is not one of the class's values.
-Most constraints can be broken mechanically, so the test is finished when it
-is written; where one cannot, the case says what to edit and fails until
-then. Either way it is run once, and the result says which it is.
+attribute is then set to a valid value, as many instances as it requires. The
+case is run once, and the result says whether it passes.
 """
 
 import json
+import math
 import os
 import re
 
 from decimal import Decimal
 
-from rdflib import RDF, RDFS, URIRef
+from rdflib import RDF, RDFS, XSD, URIRef
 
 from ..errors import PackageError
 from ..validate.normalise import local
@@ -217,9 +219,7 @@ def _params(row):
 
 def _value_conditions(row):
     """What a valid value must meet: the row's own value parameters, and
-    what its forms say. Only for making a valid value -- a condition inside
-    an sh:or never fires as itself (the sh:or does), so the breakers keep to
-    `_params`."""
+    what its forms say."""
     _, value = _params(row)
     for key, said in (row.get('formConditions') or {}).items():
         value.setdefault(key, said)
@@ -233,19 +233,16 @@ def _number(text):
         return None
 
 
-def _counts(row):
-    """(sh:minCount, sh:maxCount or None) of the attribute itself.
+def _required(row):
+    """How many instances of the attribute its sh:minCount asks for.
 
-    What they count is INSTANCES: an NGSI-LD attribute is identified by
+    What it counts is INSTANCES: an NGSI-LD attribute is identified by
     (entity, name, datasetId), so n instances are n datasetIds -- the
     platform counts distinct live datasetIds, and observations of one
     datasetId are one instance.
     """
     attribute, _ = _params(row)
-    low = int(_number(attribute.get('sh:minCount', 0)) or 0)
-    high = _number(attribute.get('sh:maxCount')) \
-        if attribute.get('sh:maxCount') is not None else None
-    return low, (int(high) if high is not None else None)
+    return int(_number(attribute.get('sh:minCount', 0)) or 0)
 
 
 def _dataset_space(package):
@@ -287,139 +284,36 @@ def _instances(package, attribute, count):
     return out[0] if count == 1 else out
 
 
-# What each breakable constraint is, in words, and how to break it.
-def _breakers(row):
-    """{component: (words, how)} for the constraints this attribute can fire,
-    `how` None when it cannot be broken mechanically.
-
-    Counts are broken AT the boundary: one instance fewer than sh:minCount,
-    one more than sh:maxCount, each its own datasetId -- two instances say
-    nothing about a maximum of 3."""
-    attribute, value = _params(row)
-    low, high = _counts(row)
-    out = {}
-    if low >= 2:
-        out['MinCountConstraintComponent'] = (
-            f'too few: {low - 1} instance(s) where {low} are required, each its own '
-            f'datasetId', 'fewer')
-    elif low >= 1:
-        out['MinCountConstraintComponent'] = ('missing: the attribute is left out', 'omit')
-    elif int(_number(value.get('sh:minCount', 0)) or 0) >= 1:
-        out[_slot(row) + 'MinCountConstraintComponent'] = (
-            'no value: the attribute carries none', 'novalue')
-    if high is not None:
-        out['MaxCountConstraintComponent'] = (
-            f'more than {high}: {high + 1} instances, each its own datasetId', 'more')
-    datatype = value.get('sh:datatype')
-    if datatype:
-        out['DatatypeConstraintComponent'] = (
-            f'a number where {datatype} is expected' if datatype == 'xsd:string'
-            else f'a text where {datatype} is expected', 'datatype')
-    for name, words in (('sh:minInclusive', 'below the minimum {}'),
-                        ('sh:maxInclusive', 'above the maximum {}'),
-                        ('sh:minExclusive', 'at or below {}'),
-                        ('sh:maxExclusive', 'at or above {}')):
-        if name in value and _number(value[name]) is not None:
-            component = name[3].upper() + name[4:] + 'ConstraintComponent'
-            out[component] = (words.format(value[name]), name)
-    if value.get('sh:class'):
-        out['ClassConstraintComponent'] = (
-            f'not a {value["sh:class"].split(":")[-1]}: an IRI that is not one', 'class')
-    kind = value.get('sh:nodeKind')
-    if kind == 'sh:IRI' and row['kind'] == 'Relationship':
-        # A Relationship's `object` is read as an IRI whatever it says.
-        out[_slot(row) + 'NodeKindConstraintComponent'] = (
-            'not an IRI: a Relationship always points at one, so break it by hand',
-            None)
-    elif kind in ('sh:IRI', 'sh:Literal'):
-        out[_slot(row) + 'NodeKindConstraintComponent'] = (
-            'a text where an IRI is expected' if kind == 'sh:IRI'
-            else 'an IRI where a literal is expected', 'nodekind')
-    elif attribute.get('sh:nodeKind'):
-        out['NodeKindConstraintComponent'] = (
-            'not an attribute node (edit the data by hand)', None)
-    if 'sh:in' in value or any(name == 'sh:in' for name in row.get('verbatim', [])):
-        out['InConstraintComponent'] = ('a value not in the list', 'in')
-    # The unit: its constraints are named after the attribute's unitCode
-    # (hasTemperature.unitCode), so their keys say so -- see _ref.
-    if row.get('units'):
-        out[UNIT_KEY + 'InConstraintComponent'] = (
-            f'a unit not allowed: one where {", ".join(row["units"])} is expected', 'unit')
-        if row.get('unitRequired'):
-            out[UNIT_KEY + 'MinCountConstraintComponent'] = (
-                'no unit: its unitCode left out', 'nounit')
-    return out
+def _directory(package, row, purpose):
+    """Where a test of the attribute goes: its shape's suite, good/ or bad/."""
+    return os.path.join(examples_root(package.path), f'test_{row["shapeName"].split(":")[-1]}',
+                        'good' if purpose == 'valid' else 'bad')
 
 
-UNIT_KEY = '.unitCode/'
+def _suggested(package, row, purpose):
+    """hasPressure, invalid -> 'pressure-invalid', or -2, -3… while that is taken."""
+    from .newcase import _slug
 
-
-def _slot(row):
-    """The key prefix of a constraint on the attribute's VALUE that its node
-    could carry too (MinCount, MaxCount, NodeKind): such a constraint is named
-    hasX.hasValue -- hasX.hasObject for a Relationship -- so an attribute's
-    sh:minCount and its value's are two references (validate.normalise.LAYERED)."""
-    return '.hasObject/' if row.get('kind') == 'Relationship' else '.hasValue/'
-
-
-def _ref(row, key):
-    """The constraint a breaker makes fire: Shape/attribute/Component, or --
-    for a key starting with "." -- Shape/attribute.unitCode/Component (its unit)
-    or Shape/attribute.hasValue/Component (its value)."""
-    if key.startswith('.'):
-        return f'{row["shapeName"]}/{row["label"]}{key}'
-    return f'{row["shapeName"]}/{row["label"]}/{key}'
-
-
-def _wrong_unit(package, allowed):
-    """A unit outside `allowed`, of the same quantity when there is one --
-    FAH where CEL is expected -- so the case breaks the unit and nothing else."""
-    from ..cooked.units import units
-
-    known = units(package)
-    quantity = {u['quantity'] for u in known if u['code'] in allowed}
-    same = [u['code'] for u in known if u['quantity'] in quantity and u['code'] not in allowed]
-    other = [u['code'] for u in known if u['code'] not in allowed]
-    return (same or other or ['XXX'])[0]
-
-
-SUFFIX = {'omit': 'missing', 'novalue': 'no-value', 'more': 'too-many', 'fewer': 'too-few',
-          'unit': 'wrong-unit', 'nounit': 'no-unit',
-          'datatype': 'wrong-datatype', 'sh:minInclusive': 'too-low',
-          'sh:maxInclusive': 'too-high', 'sh:minExclusive': 'too-low',
-          'sh:maxExclusive': 'too-high', 'class': 'wrong-class',
-          'nodekind': 'wrong-kind', 'in': 'not-in-list'}
-
-
-def _suggested(attribute, how, valid=False):
-    """hasPressure + too-high -> 'pressure-too-high'."""
+    attribute = row['label']
     base = re.sub(r'^has(?=[A-Z])', '', attribute)
     base = re.sub(r'(?<!^)(?=[A-Z])', '-', base).lower()
-    return f'{base}-{"valid" if valid else SUFFIX.get(how, "fires")}'
+    first = name = _slug(f'{base}-{purpose}')
+    number = 2
+    while os.path.exists(os.path.join(_directory(package, row, purpose), f'{name}.jsonld')):
+        name, number = f'{first}-{number}', number + 1
+    return name
 
 
 def attribute_test_options(package, entity_type, path):
-    """What a test for this attribute can prove: valid, or one constraint firing."""
-    from ..sanity import known_constraints
-
+    """What a test for this attribute can show: that it conforms, or that it fails."""
     entry, row = _row(package, entity_type, path)
-    known = known_constraints(package)
-    options = [{'purpose': 'valid', 'label': 'valid',
-                'detail': f'{row["label"]} present, with a valid value: the case conforms',
-                'automatic': True, 'name': _suggested(row['label'], None, valid=True)}]
-    for key, (words, how) in sorted(_breakers(row).items()):
-        constraint = _ref(row, key)
-        component = key.rsplit('/', 1)[-1]
-        if constraint not in known:
-            continue
-        options.append({'purpose': constraint,
-                        'label': 'fires: ' + ('unit ' if key.startswith(UNIT_KEY) else
-                                              'value ' if key.startswith('.') else '')
-                        + component.replace('ConstraintComponent', ''),
-                        'detail': words + ('' if how else ' — you edit the data'),
-                        'automatic': bool(how), 'name': _suggested(row['label'], how)})
+    said = {'valid': f'{row["label"]} present, with a valid value: the case conforms',
+            'invalid': 'starts from valid data and fails until you break the data and '
+                       'assert what fires'}
     return {'type': entry.label, 'attribute': row['label'], 'shape': row['shapeName'],
-            'options': options}
+            'options': [{'purpose': purpose, 'detail': detail,
+                         'name': _suggested(package, row, purpose)}
+                        for purpose, detail in said.items()]}
 
 
 # --- values ------------------------------------------------------------------------------
@@ -435,9 +329,53 @@ def _vocabulary_value(package, cls_curie):
     return model_term(package, members[0]) if members else None
 
 
+def _listed(package, row, value):
+    """('value'|'object', the first item of the value's sh:in), or None: what a
+    list admits is written in it, a value of the right datatype need not be."""
+    from ..cooked.listcheck import item_term
+    from ..cooked.tree import list_items
+
+    items = (row.get('inList') or {}).get('items') or list_items(value.get('sh:in', ''))
+    if not items:
+        return None
+    term = item_term(package, items[0])
+    if row['kind'] == 'Relationship':
+        return 'object', str(term)
+    return 'value', json_value(package, term)
+
+
+def json_value(package, term):
+    """An RDF term as the JSON-LD value that reads back as exactly that term
+    (sh:in compares terms). What JSON itself can say is written plain."""
+    from ..cooked.choices import model_term
+
+    if isinstance(term, URIRef):
+        return {'@id': model_term(package, term)}
+    if term.language:
+        return {'@value': str(term), '@language': term.language}
+    if term.datatype is None:
+        return str(term)
+    if term.datatype == XSD.boolean and str(term) in ('true', 'false', '1', '0'):
+        return str(term) in ('true', '1')
+    # A decimal is no JSON number: it would come back as another term (2.50).
+    # Neither is a text that is not what its datatype says ("abc"^^xsd:integer).
+    written = str(term)
+    try:
+        if term.datatype == XSD.integer:
+            return int(written)
+        if term.datatype in (XSD.double, XSD.float) and math.isfinite(float(written)):
+            written = float(written)           # INF and NaN are no JSON
+    except ValueError:
+        pass
+    return {'@value': written, '@type': str(term.datatype)}
+
+
 def _valid(package, row, scene):
     """('value'|'object', a value every constraint on it accepts)."""
     value = _value_conditions(row)
+    listed = _listed(package, row, value)
+    if listed:
+        return listed
     if row['kind'] == 'Relationship':
         target = value.get('sh:class', '')
         name = target.split(':')[-1]
@@ -471,43 +409,6 @@ def _valid(package, row, scene):
     if datatype in ('xsd:dateTime', 'xsd:date'):
         return 'value', {'@type': 'xsd:dateTime', '@value': STAMP}
     return 'value', 'text'
-
-
-def _break(how, row, attribute, package=None):
-    """Change a valid attribute so its constraint fires; None to leave it out.
-    The count breakers return the instances, at the boundary."""
-    _, value = _params(row)
-    key = 'object' if 'object' in attribute else 'value'
-    low, high = _counts(row)
-    if how == 'omit':
-        return None
-    if how == 'fewer':
-        return _instances(package, attribute, low - 1)
-    if how == 'more':
-        return _instances(package, attribute, high + 1)
-    if how == 'novalue':
-        return {k: v for k, v in attribute.items() if k not in ('value', 'object')}
-    if how == 'unit':
-        return dict(attribute, unitCode=_wrong_unit(package, row['units']))
-    if how == 'nounit':
-        return {k: v for k, v in attribute.items() if k != 'unitCode'}
-    if how == 'datatype':
-        broken = 1 if value.get('sh:datatype') == 'xsd:string' else 'not a number'
-        return dict(attribute, **{key: broken})
-    if how in ('sh:minInclusive', 'sh:minExclusive'):
-        return dict(attribute, **{key: typed(row, _number(value[how]) - (1 if how.endswith('Inclusive') else 0))})
-    if how in ('sh:maxInclusive', 'sh:maxExclusive'):
-        return dict(attribute, **{key: typed(row, _number(value[how]) + (1 if how.endswith('Inclusive') else 0))})
-    if how == 'class':
-        target = 'urn:example:not-a-' + value['sh:class'].split(':')[-1].lower()
-        return dict(attribute, **({'object': target} if key == 'object'
-                                  else {'value': {'@id': target}}))
-    if how == 'nodekind':
-        return dict(attribute, **{key: 'text' if value.get('sh:nodeKind') == 'sh:IRI'
-                                  else {'@id': 'urn:example:iri'}})
-    if how == 'in':
-        return dict(attribute, **{key: 'not-in-the-list'})
-    raise PackageError(f'no way to break {how}')
 
 
 # --- the scene ---------------------------------------------------------------------------
@@ -631,8 +532,7 @@ def _fresh(package, entry):
             if node.kind != 'attribute' or len(node.path_chain) != 1:
                 continue
             _, row = _row(package, entry.iri, node.path_chain)
-            attribute, _ = _params(row)
-            low, _ = _counts(row)
+            low = _required(row)
             if low >= 1:
                 field, value = _valid(package, row, [document])
                 document[model_term(package, URIRef(row['attribute']))] = _instances(
@@ -645,10 +545,10 @@ def _fresh(package, entry):
 
 def new_attribute_test(package, entity_type, path, purpose, name):
     """Write a test for one attribute and declare it. `purpose` is 'valid'
-    or a constraint reference from `attribute_test_options`.
+    or 'invalid' (valid data and no reason yet: it fails until one is asserted).
 
-    Returns {'file', 'case', 'expect', 'constraint', 'resource', 'source',
-    'automatic', 'passes', 'failures'}."""
+    Returns {'file', 'case', 'expect', 'resource', 'source', 'purpose',
+    'passes', 'failures'}."""
     from ..cooked.choices import model_term
     from ..sanity import known_constraints
     from ..validate.orchestrator import validate_graphs
@@ -656,16 +556,8 @@ def new_attribute_test(package, entity_type, path, purpose, name):
     from .runner import run_tests
 
     entry, row = _row(package, entity_type, path)
-    breakers = _breakers(row)
-    if purpose == 'valid':
-        component, how, words = None, None, 'present and valid'
-    else:
-        component = str(purpose).rsplit('/', 1)[-1]
-        key = next((k for k in breakers if _ref(row, k) == purpose), None)
-        if key is None:
-            raise PackageError(f'{purpose} is not a constraint of {row["label"]} '
-                               f'that a test can make fire')
-        words, how = breakers[key]
+    if purpose not in ('valid', 'invalid'):
+        raise PackageError(f'{purpose} is no test to write: one is valid or invalid')
 
     documents, entity, source = _scene(package, entry)
     if documents is None:
@@ -692,28 +584,18 @@ def new_attribute_test(package, entity_type, path, purpose, name):
     if row.get('units') and attribute.get('unitCode') not in row['units']:
         # A valid instance says one of the units its shape allows.
         attribute['unitCode'] = row['units'][0]
-    # As many instances as the attribute requires, each its own datasetId; a
-    # broken value is broken in the first, the others stay valid.
-    required = max(_counts(row)[0], 1)
-    if how in ('omit', 'fewer', 'more'):
-        attribute = _break(how, row, attribute, package)
-    elif how:
-        broken = _break(how, row, attribute, package)
-        rest = _instances(package, attribute, required) if required > 1 else None
-        attribute = [broken] + rest[1:] if rest else broken
-    else:
-        attribute = _instances(package, attribute, required)
-    if attribute is not None:
-        position = list(target).index('@context') if '@context' in target else len(target)
-        items = list(target.items())
-        items.insert(position, (term, attribute))
-        target.clear()
-        target.update(items)
+    # As many instances as the attribute requires, each its own datasetId.
+    required = max(_required(row), 1)
+    attribute = _instances(package, attribute, required)
+    position = list(target).index('@context') if '@context' in target else len(target)
+    items = list(target.items())
+    items.insert(position, (term, attribute))
+    target.clear()
+    target.update(items)
 
     good = purpose == 'valid'
     root = examples_root(package.path)
-    local_shape = row['shapeName'].split(':')[-1]
-    directory = os.path.join(root, f'test_{local_shape}', 'good' if good else 'bad')
+    directory = _directory(package, row, purpose)
     slug = _slug(name)
     path_out = os.path.join(directory, f'{slug}.jsonld')
     if os.path.exists(path_out):
@@ -742,17 +624,10 @@ def new_attribute_test(package, entity_type, path, purpose, name):
     started = f'Started from {source}.' if source != 'a new entity' else \
         'A new entity, its required attributes given valid values.'
     entry_yaml['description'] = (
-        f'{entry.label} with {row["label"]} {words}. {started}' if good else
-        f'{row["label"]} {words}. {started}' +
-        ('' if how else f' Edit the data until {component} fires on {entity}.'))
+        f'{entry.label} with {row["label"]} present and valid. {started}' if good else
+        f'{entry.label} with {row["label"]} invalid. {started} It fails until its data is '
+        'edited to break what it should show, and that is asserted.')
     entry_yaml['expect'] = 'valid' if good else 'invalid'
-    constraint = None
-    if not good:
-        constraint = purpose
-        item = CommentedMap()
-        item['constraint'] = constraint
-        item['resource'] = entity
-        entry_yaml['asserts'] = CommentedSeq([item])
     raw['examples'].append(entry_yaml)
     with open(expectations, 'w', encoding='utf-8') as handle:
         _yaml().dump(raw, handle)
@@ -767,6 +642,5 @@ def new_attribute_test(package, entity_type, path, purpose, name):
                              strict=False)
     outcome = run_tests([(example, report)], known_constraints(fresh))[0]
     return {'file': path_out, 'case': case, 'expect': entry_yaml['expect'],
-            'constraint': constraint, 'resource': entity, 'source': source,
-            'automatic': good or bool(how), 'passes': outcome.passed,
-            'failures': list(outcome.failures)}
+            'resource': entity, 'source': source, 'purpose': purpose,
+            'passes': outcome.passed, 'failures': list(outcome.failures)}

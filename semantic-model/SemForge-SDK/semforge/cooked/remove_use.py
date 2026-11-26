@@ -65,18 +65,24 @@ def remove_property_at(path, offset):
     return text.count('\n', 0, group.start) + 1
 
 
-def remove_assert(source, case, index):
-    """Remove one assert from one case in an expectations file."""
+def remove_assert(source, case, index, expected=None):
+    """Remove one assert from one case in an expectations file. `expected`,
+    when given, is the (constraint, resource) meant: a position alone names
+    another assert once the file has changed."""
     from ..expect.store import _yaml
 
     with open(source, encoding='utf-8') as handle:
         raw = _yaml().load(handle) or {}
     entry = next((e for e in raw.get('examples') or []
-                  if e.get('path') == case), None)
+                  if os.path.normpath(e.get('path', '')) == os.path.normpath(case)), None)
     asserts = (entry or {}).get('asserts') or []
     if entry is None or not 0 <= index < len(asserts):
         raise PackageError(f'{case} has no assert {index} any more; the file '
                            f'has changed since it was checked')
+    found = (str(asserts[index].get('constraint', '')), str(asserts[index].get('resource', '')))
+    if expected is not None and found != expected:
+        raise PackageError(f'{case} no longer asserts {expected[0]} there; the file has '
+                           f'changed since it was read')
     del asserts[index]
     note = ''
     if not asserts:

@@ -340,18 +340,20 @@ def remove_use_feature(ls, params):
         kind = field(params, 'kind')
         target = field(params, 'file')
         note = ''
+        meant = field(params, 'expected')       # the assert as the page showed it
+        if meant is not None:
+            meant = (str(field(meant, 'constraint', '') or ''), str(field(meant, 'resource', '') or ''))
         if kind == 'property':
             remove_property_at(target, int(field(params, 'offset')))
         elif kind == 'key':
             remove_key_at(session.package_for(root), target, int(field(params, 'line')),
                           field(params, 'iri'))
         elif kind == 'assert':
-            note = remove_assert(target, field(params, 'case'),
-                                 int(field(params, 'index')))
+            note = remove_assert(target, field(params, 'case'), int(field(params, 'index')), meant)
         elif kind == 'retarget':
             from ..expect.stale import retarget_assert
-            note = retarget_assert(target, field(params, 'case'),
-                                   int(field(params, 'index')), field(params, 'constraint'))
+            note = retarget_assert(target, field(params, 'case'), int(field(params, 'index')),
+                                   field(params, 'constraint'), meant)
         else:
             return {'ok': False, 'error': f'nothing knows how to remove a {kind}'}
         session.forget(root)

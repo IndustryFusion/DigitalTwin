@@ -132,23 +132,6 @@ def test_a_valid_case_is_valid(tmp_path, cls):
         assert made['passes'], (row['label'], made['failures'])
 
 
-def test_every_automatic_case_proves_what_it_says(tmp_path):
-    """Each constraint New test… offers to make fire, on a Variable: the case
-    it writes violates that constraint and passes."""
-    from semforge.expect.attributecase import attribute_test_options, new_attribute_test
-
-    package = _copy(tmp_path)
-    cls = PUMP + 'DriveMeasurementsType'
-    row = next(r for r in _rows(package, cls) if r['label'] == 'hasVoltage')
-    options = attribute_test_options(package, cls, row['path'])['options']
-    automatic = [o for o in options if o['automatic'] and o['purpose'] != 'valid']
-    assert automatic, options
-    for number, option in enumerate(automatic):
-        made = new_attribute_test(package, cls, row['path'], option['purpose'],
-                                  f'fires {number}')
-        assert made['passes'], (option['label'], made['failures'])
-
-
 # --- how long it takes ----------------------------------------------------------------
 
 def _timed(package, cls, label):

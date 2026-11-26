@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-"""New test… for one attribute: valid, or one of its constraints firing.
+"""New test… for one attribute: one that should conform, or one that should fail.
 
 The case the feature was asked for: a freshly scaffolded package, a new
 optional attribute (hasPressure, xsd:double), and no way to start a test for
@@ -65,45 +65,21 @@ def _path(root, machine, name):
     return list(node.path_chain)
 
 
-def test_a_new_optional_attribute_offers_what_can_fire(fresh):
-    root, machine = fresh
-    offered = attribute_test_options(load(root), machine, _path(root, machine, 'hasPressure'))
-    components = {o['purpose'].rsplit('/', 1)[-1] for o in offered['options']}
-    assert 'valid' in components
-    assert {'DatatypeConstraintComponent', 'MaxCountConstraintComponent'} <= components
-    # Optional: "left out" cannot fire, so it is not offered as a test.
-    detail = {o['purpose'].rsplit('/', 1)[-1]: o['detail'] for o in offered['options']}
-    assert 'left out' not in detail.get('MinCountConstraintComponent', '')
-    names = {o['name'] for o in offered['options']}
-    assert {'pressure-valid', 'pressure-wrong-datatype'} <= names
-
-
-def test_every_offered_test_for_it_proves_what_it_says(fresh):
+def test_a_new_attribute_offers_two_tests_and_they_say_what_they_do(fresh):
     root, machine = fresh
     path = _path(root, machine, 'hasPressure')
-    for option in attribute_test_options(load(root), machine, path)['options']:
-        made = new_attribute_test(load(root), machine, path, option['purpose'],
-                                  option['name'])
-        assert made['passes'], (option['purpose'], made['failures'])
-        assert made['expect'] == ('valid' if option['purpose'] == 'valid' else 'invalid')
-    cases = {e.path for e in load_expectations(root).examples}
+    options = attribute_test_options(load(root), machine, path)['options']
+    assert [(o['purpose'], o['name']) for o in options] == [
+        ('valid', 'pressure-valid'), ('invalid', 'pressure-invalid')]
+    for option in options:
+        made = new_attribute_test(load(root), machine, path, option['purpose'], option['name'])
+        # One that should fail has no reason yet (test_fail_cases.py).
+        assert made['passes'] == (option['purpose'] == 'valid'), made['failures']
+        assert made['expect'] == option['purpose']
+    cases = {e.path: e for e in load_expectations(root).examples}
     assert any(c.endswith('good/pressure-valid.jsonld') for c in cases)
-    assert any(c.endswith('bad/pressure-wrong-datatype.jsonld') for c in cases)
-
-
-def test_a_broken_value_is_the_one_the_constraint_forbids(fresh):
-    root, machine = fresh
-    path = _path(root, machine, 'hasPressure')
-    purpose = next(o['purpose'] for o in attribute_test_options(load(root), machine, path)[
-        'options'] if o['purpose'].endswith('DatatypeConstraintComponent'))
-    made = new_attribute_test(load(root), machine, path, purpose, 'p')
-    with open(made['file']) as handle:
-        scene = json.load(handle)
-    entity = next(d for d in scene if d['id'] == made['resource'])
-    pressure = next(v for k, v in entity.items() if k.endswith('hasPressure'))
-    assert pressure['value'] == 'not a number'
-    entry = next(e for e in load_expectations(root).examples if e.path == made['case'])
-    assert entry.asserts == [{'constraint': purpose, 'resource': made['resource']}]
+    bad = next(e for c, e in cases.items() if c.endswith('bad/pressure-invalid.jsonld'))
+    assert not bad.asserts and 'It fails until its data is edited' in bad.description
 
 
 @pytest.fixture
@@ -119,11 +95,11 @@ def kms(tmp_path, corpus_path):
     ('Filter', 'iffBaseEntities:hasCartridge'),    # a Relationship
     ('Cutter', 'iffBaseEntities:hasState'),        # inherited from MachineShape
 ])
-def test_the_kms_attributes_get_tests_that_hold(kms, entity_type, attribute):
+def test_the_kms_attributes_get_tests(kms, entity_type, attribute):
     for option in attribute_test_options(load(kms), BASE + entity_type, [attribute])['options']:
         made = new_attribute_test(load(kms), BASE + entity_type, [attribute],
                                   option['purpose'], option['name'])
-        assert made['passes'] == option['automatic'], (option['purpose'], made['failures'])
+        assert made['passes'] == (option['purpose'] == 'valid'), made['failures']
 
 
 def test_an_existing_attribute_is_changed_not_replaced(kms):
@@ -137,8 +113,8 @@ def test_an_existing_attribute_is_changed_not_replaced(kms):
 
 
 @pytest.mark.parametrize('purpose, said', [
-    ('iffBaseShacl:FilterShape/hasStrength/DatatypeConstraintComponent', 'not a constraint'),
-    ('nonsense', 'not a constraint'),
+    ('iffBaseShacl:FilterShape/hasStrength/DatatypeConstraintComponent', 'valid or invalid'),
+    ('nonsense', 'valid or invalid'),
 ])
 def test_a_test_it_cannot_write_is_refused(kms, purpose, said):
     with pytest.raises(PackageError, match=said):

@@ -367,7 +367,7 @@ function activate(context) {
   const typeViews = typePages.register(context, clientHolder, session);
   // One page per vocabulary class: its values, their uses, and their care.
   const vocabularyViews = vocabularyPages.register(context, clientHolder, session);
-  // New test… for one attribute: valid, or one of its constraints firing.
+  // New test… for one attribute: one that should conform, or one that should fail.
   attributeTests.register(context, clientHolder, session);
   // New test case…: add a test file to a suite, from wherever it should start.
   testCases.register(context, clientHolder, session);

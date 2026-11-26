@@ -443,13 +443,14 @@ def build_case_page(package, case, verdicts=None):
             (r for (resource, ref), r in fired.items() if ref == key[1]), None)
         claim = {'constraint': key[1], 'resource': key[0],
                  'holds': None if pending else hit is not None,
-                 'explained': _explain(hit) if hit else None}
-        if key[1] not in known:
+                 'explained': _explain(hit) if hit else None,
+                 # Where it is written: what Remove and Rename act on.
+                 'entry': entry_path, 'index': position}
+        if hit is None and key[1] not in known:
             # Named a shape that is gone -- most often a rename typed into
             # the .ttl. What fires on the same resource narrows the guess.
             firing = [ref for (resource, ref) in fired if not key[0] or resource == key[0]]
-            claim.update(stale=True, suggest=suggestion(key[1], known, firing),
-                         entry=entry_path, index=position)
+            claim.update(stale=True, suggest=suggestion(key[1], known, firing))
         claims.append(claim)
     unasserted = [{'constraint': ref, 'resource': resource,
                    'explained': _explain(result)}
@@ -516,3 +517,75 @@ def build_case_page(package, case, verdicts=None):
                     'violations': None if pending else len(report.violations),
                     'includes': len(example.include)},
     }
+
+
+def assertable(package, case, verdicts=None):
+    """What a case could assert: every constraint that judges one of its
+    entities and is not asserted yet, whether it fires or holds now -- read
+    from the case's own results, so it is whatever SHACL the shapes use.
+
+    [{'constraint', 'resource', 'fires', 'text'}], what fires first."""
+    from ..expect.runner import constraint_ref
+    from ..validate.results import Status
+
+    example = _find_case(package, case)
+    if verdicts is not None and example.path not in verdicts.cases:
+        verdicts = None                # asked for now: the run is not awaited
+    report = _case_report(package, example, verdicts)
+    asserted = example.asserted_keys()
+    out = {}
+    for result in report.evaluated:
+        resource, ref = str(result.resource), constraint_ref(result)
+        if (resource, ref) in asserted or ('', ref) in asserted:
+            continue
+        fires = result.status is Status.VIOLATED
+        if (resource, ref) not in out or fires:
+            out[(resource, ref)] = {'constraint': ref, 'resource': resource, 'fires': fires,
+                                    'text': _explain(result)['text'] if fires else ''}
+    return sorted(out.values(), key=lambda o: (not o['fires'], o['resource'], o['constraint']))
+
+
+def attribute_cases(package, shape, attribute, verdicts=None):
+    """The test cases that have something to say about one attribute: those
+    in which one of its constraints fires, is asserted, or holds of a value
+    the case really has.
+
+    `shape` is the shape's CURIE, `attribute` the row's label. [{'case',
+    'file', 'expect', 'description', 'passed' (None: evaluating), 'fires',
+    'asserts' (component names)}]; what fires or is asserted first."""
+    from ..expect.runner import constraint_ref, evaluate
+    from ..expect.store import examples_root, load_expectations
+    from ..sanity import known_constraints
+    from ..validate.results import Status
+
+    def about(ref):
+        parts = ref.split('/')
+        # hasX.hasValue and hasX.unitCode are hasX's own.
+        return len(parts) == 3 and parts[0] == shape and \
+            (parts[1] == attribute or parts[1].split('.')[0] == attribute)
+
+    def component(ref):
+        return ref.rsplit('/', 1)[-1].replace('ConstraintComponent', '')
+
+    root = examples_root(package.path)
+    known = known_constraints(package)
+    out = []
+    for example in load_expectations(package.path).examples:
+        asserts = sorted({component(str(a.get('constraint', ''))) for a in example.asserts
+                          if about(str(a.get('constraint', '')))})
+        report = None if verdicts is None else verdicts.cases.get(example.path)
+        fires, present = set(), False
+        for result in report.evaluated if report is not None else ():
+            if not about(constraint_ref(result)):
+                continue
+            if result.status is Status.VIOLATED:
+                fires.add(component(constraint_ref(result)))
+            elif not result.vacuous:
+                present = True
+        if not (asserts or fires or present):
+            continue
+        out.append({'case': example.path, 'file': os.path.abspath(os.path.join(root, example.path)),
+                    'expect': example.expect, 'description': example.description,
+                    'passed': None if report is None else evaluate(example, report, known).passed,
+                    'fires': sorted(fires), 'asserts': asserts})
+    return sorted(out, key=lambda c: (not (c['asserts'] or c['fires']), c['case']))

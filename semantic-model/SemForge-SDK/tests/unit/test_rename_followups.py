@@ -201,7 +201,8 @@ def test_the_case_page_fixes_a_stale_assert(tmp_path, command, kind):
     assert 'names no shape' in html and 'data-retarget="0"' in html and 'Rename to New' in html
     assert _asked(seen, 'semforge/removeUse') == [{
         'uri': 'file:///pkg/shacl.ttl', 'kind': kind, 'file': STALE_PAGE['expectations'],
-        'case': 'filter-off.jsonld', 'index': 0, 'constraint': 'ns:New/SPARQLConstraintComponent'}]
+        'case': 'filter-off.jsonld', 'index': 0, 'constraint': 'ns:New/SPARQLConstraintComponent',
+        'expected': {'constraint': 'ns:Old/SPARQLConstraintComponent', 'resource': 'urn:c:1'}}]
     assert len(seen['webviews'][0]['html']) == 2, 'the page shows the result'
 
 

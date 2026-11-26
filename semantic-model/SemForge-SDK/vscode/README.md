@@ -1157,24 +1157,25 @@ this attribute…**), or use its row on the type page — the **Tested** cell
 ("New test…" while untested) or the row's `⋯` menu. It asks what the test
 should prove:
 
-- **valid** — the attribute present with a valid value; the case conforms;
-- **fires: …** — one per constraint that can actually fire: *missing* (a
-  required attribute left out), *no value*, *twice* (two instances, a
-  `maxCount` exceeded), *wrong datatype* (a text where `xsd:double` is
-  expected), *too high / too low* (one past `sh:maxInclusive` /
-  `sh:minInclusive`), *wrong class* (an IRI that is not a MachineState),
-  *wrong kind*, *not in the list*. An optional attribute is not offered
-  *missing*: leaving it out cannot fire.
+- **Should conform** — the attribute present with a valid value (the first
+  item, where `sh:in` lists them); the case conforms;
+- **Should fail** — the same valid data, and no reason yet. The case **fails
+  until it has one**: change its data on the case page until it violates, then
+  press **Assert it** on what fired. Nothing has to be picked from a list of
+  what could go wrong, so it works alike for `sh:in`, `sh:or` or a SPARQL rule.
 
-Then a name (suggested: `pressure-wrong-datatype`). The case lands in
-`examples/test_<Shape>/good|bad/`, declared `expect: valid`, or `expect:
-invalid` with an assert that this constraint fires on that entity. Its scene
+Then a name (suggested: `pressure-invalid`). The case lands in
+`examples/test_<Shape>/good|bad/`, declared `expect: valid` or `expect:
+invalid`. Its scene
 is a valid case with an entity of the type (includes written into the file),
 else the model's entity, else a new entity with every required attribute
 given a valid value. If the entity already has the attribute it is changed,
 not replaced — a sub-attribute nested in it stays. The case is run once, and
-the message says whether it already passes; the few breaks that cannot be made
-mechanically (a Relationship that is not an IRI) say what to edit instead.
+the message says whether it already passes.
+
+The attribute editor lists the tests about its attribute, each with what it
+asserts and what fires in it: a click opens one, **Delete…** removes it. The
+type and shape pages list theirs with the same button.
 
 **The test case page.** A case answers three questions — what it claims,
 whether the claims hold, what data it uses — and the Model tree spread them
@@ -1185,11 +1186,14 @@ that order:
 - **the claim**: *expects invalid · passes*, with `semforge test`'s own failure
   messages when it does not — the page runs the case exactly as the test
   runner does, so the two cannot disagree;
+- **a reason**: a case that expects a violation and asserts nothing fails,
+  whatever fires in it, and says so. **+ Assert…** names a reason before it
+  fires, from every constraint that judges one of the case's entities;
 - **claims**: each assert, *holds* or *does not hold*, in plain words
   ("hasCartridge is required but missing on urn:filter:9"); then everything
   that fired without being asserted, marked *also fired* — either a second
   problem the case found, or a sign the data is not what the case means it
-  to be;
+  to be. **Remove** takes an assert out again;
 - **data**: the case's own file and each include as sections (an include
   says how many other cases share it, because an edit there changes them
   too), one card per entity with its attributes and sub-attributes. A

@@ -286,7 +286,8 @@ function instanceRows(page) {
     `<a tabindex="0" role="link" data-case="${escape(c.file)}" title="${escape(c.description || '')}">` +
     `${escape(c.case.split('/').slice(-3).join(' / '))}</a>` +
     `<span class="dim">${escape(c.expect)}</span>` +
-    `<span>${c.passed ? '<span class="dim">passes</span>' : chip('FAILS', 'bad')}</span></div>`).join('');
+    `<span>${c.passed === null ? '' : c.passed ? '<span class="dim">passes</span>' : chip('FAILS', 'bad')} ` +
+    `<button class="delcase" data-delcase="${escape(c.file)}" title="Delete this test case">Delete…</button></span></div>`).join('');
   return (model || '<p class="empty">No entity of this type in the main-model.</p>') +
     (cases || '<p class="empty">No test case has an entity of this type: nothing proves ' +
       'its constraints can fire.</p>');
@@ -502,7 +503,7 @@ ${BUSY_SCRIPT}
   const focused = document.getElementById('focus');
   if (focused) { focused.scrollIntoView({ block: 'center' }); }
   document.addEventListener('click', (event) => {
-    const target = event.target.closest('[data-open],[data-type],[data-shape],[data-case],[data-model],[data-refresh],[data-action],[data-bench]');
+    const target = event.target.closest('[data-open],[data-type],[data-shape],[data-case],[data-delcase],[data-model],[data-refresh],[data-action],[data-bench]');
     if (!target) { return; }
     event.preventDefault();
     if (target.dataset.action) {
@@ -517,6 +518,7 @@ ${BUSY_SCRIPT}
     else if (target.dataset.open) { vscode.postMessage({ command: 'open', at: target.dataset.open }); }
     else if (target.dataset.type) { vscode.postMessage({ command: 'type', name: target.dataset.type }); }
     else if (target.dataset.shape) { vscode.postMessage({ command: 'shape', name: target.dataset.shape }); }
+    else if (target.dataset.delcase) { vscode.postMessage({ command: 'deleteCase', file: target.dataset.delcase }); }
     else if (target.dataset.case) { vscode.postMessage({ command: 'case', file: target.dataset.case }); }
     else if (target.dataset.model !== undefined) { vscode.postMessage({ command: 'model', entity: target.dataset.model }); }
     else { vscode.postMessage({ command: 'refresh' }); }
@@ -842,6 +844,13 @@ class TypePages {
     if (message.command === 'addSparql' && this.page.ownShape) {
       await vscode.commands.executeCommand('semforge.addSparqlConstraint',
         { raw: { shape: this.page.ownShape }, packageUri: this.current.packageUri });
+      return;
+    }
+    if (message.command === 'deleteCase' && message.file) {
+      if (await vscode.commands.executeCommand('semforge.deleteTestCase',
+        { raw: { kind: 'example', file: message.file }, packageUri: this.current.packageUri })) {
+        await this.render();
+      }
       return;
     }
     if (message.command === 'case' && message.file) {
@@ -1182,7 +1191,7 @@ async function rowMenu(pages, row) {
   }
   const shapeName = row.shapeName.split(':').pop();
   const choices = [
-    { label: '$(beaker) New test…', description: 'valid, or one of its constraints firing',
+    { label: '$(beaker) New test…', description: 'one that should conform, or one that should fail',
       run: newTest },
     { label: '$(star-empty) Pin or unpin', description: 'to come back to it: Ctrl+Alt+B',
       run: async () => {
