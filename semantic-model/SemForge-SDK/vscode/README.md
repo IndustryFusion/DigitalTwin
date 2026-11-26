@@ -696,7 +696,7 @@ Three layers, each catching what the one before cannot:
 | **unit** (`tests/unit/test_*.py`) | `make test` | the SDK: validation, the cooked trees and pages, every edit written as text and checked by parsing |
 | **harness** (`tests/harness/drive.js`, driven from pytest) | `make test` | the extension's logic against a stubbed VS Code: what each command asks, sends and opens. `test_contracts.py` feeds it payloads from the **real server handlers**, in both tree modes, so the two sides cannot drift apart unnoticed |
 | **protocol** (`test_lsp_protocol.py`, `test_lsp_sweep.py`) | `make test` | the **real language server over stdio**, on a copy of the corpus: every `semforge/…` request as the extension sends it (parameters it leaves out left out), every write checked on the files it changes, and a SPARQL query document through open, change, squiggles, completion, hover, formatting, quick fixes and close |
-| **end-to-end** (`vscode/test/e2e`) | `make test-e2e` | the extension in a **real VS Code** with its real language server, on a throwaway copy of the kms corpus: the Entities & Test Cases view, every page opening, editing from the Main page, + Entity, New subtype…, + Attribute, the SPARQL workbench (Apply, Inspect, Save, Revert, snapshots, Remove…) and its editor (completion, squiggles and their fixes, hover, formatting, the NGSI-LD checks, Ctrl+Enter / Ctrl+S), Rename… of a shape (menu, F2, and a rename typed and saved, with the stale assert's quick fix), a case and a suite, Clone… of a case into its twin, Delete… of a case and a suite, Remove… of an attribute from a case, Severity… with a new level, Delete… of a shape with its asserts and cases, an attribute shared with an unrelated type (its domain becoming a union), Restart Language Server, Revalidate |
+| **end-to-end** (`vscode/test/e2e`) | `make test-e2e` | the extension in a **real VS Code** with its real language server, on a throwaway copy of the kms corpus: the Entities & Test Cases view, every page opening, editing from the Main page, + Entity, New subtype…, + Attribute, the SPARQL workbench (Apply, Inspect, Save, Revert, snapshots, its message, Remove…) and its editor (completion, squiggles and their fixes, hover, formatting, the NGSI-LD checks, Ctrl+Enter / Ctrl+S), Rename… of a shape (menu, F2, and a rename typed and saved, with the stale assert's quick fix), a case and a suite, Clone… of a case into its twin, Delete… of a case and a suite, Remove… of an attribute from a case, Severity… with a new level, Delete… of a shape with its asserts and cases, an attribute shared with an unrelated type (its domain becoming a union), Restart Language Server, Revalidate |
 
 The end-to-end run downloads VS Code once into `vscode/.vscode-test` and needs
 a display (a desktop, WSLg, or `xvfb-run make test-e2e`); a VS Code window
@@ -1374,6 +1374,34 @@ and every row is a violation — the workbench's verdict is the one `semforge
 test` reaches (a test checks this for every constraint and case). A **rule**
 runs earlier, before any view, on every observation; it is shown over the
 rules' fixpoint.
+
+**The message.** Under the query's name the workbench shows the constraint's
+`sh:message`, with **Edit message** — **+ Message** when it has none. The same
+field opens from **Edit message…** in a check's ⋯ on the shape page, in a SPARQL
+row's ⋯ on the type page, and in the workbench's ⋯; a check without a message
+has **+ Message** on its row. A rule derives data and has no message.
+
+- **Variables** — the field lists what the query, as the editor holds it,
+  SELECTs (`$this` first; `SELECT *` and `(… AS ?x)` as the parser reads them).
+  A click inserts `{?name}` at the cursor; after `{?` the ones that fit stay
+  lit and **Tab** inserts the first. `{?x}` and `{$x}` are the same.
+- **Preview** — filled from a violating row of the last run. A variable the row
+  has no value for stays as text, marked. The row's IRIs are shortened as in the
+  result; `semforge test` shows them in full. The platform fills the stored
+  values, and keeps one text per entity when several rows violate.
+- **Warnings**, while typing, in the Problems panel and in `semforge check`: a
+  variable the query does not select (`message-variable`; case counts) — it
+  stays as text in SemForge, and the platform's SQL would read a column the
+  query does not give; an apostrophe (`message-apostrophe`), which ends the text
+  in that SQL; no message at all (`message-missing`), because shacl2flink
+  compiles only a constraint that has one. A query edited so that its message no
+  longer fits says so on its SELECT.
+- **Saving** (Enter, or **Save message**; Shift+Enter is a new line, Esc
+  cancels) writes that one value into `shacl.ttl` and nothing else, its language
+  tag kept — checked by parsing, and refused if the message or the query changed
+  in the file meanwhile. Unsaved changes of the query stay in its editor. Emptied, the
+  message is removed, after asking. A constraint with several `sh:message` values
+  is edited in the `.ttl`. A draft outlives the page being drawn anew.
 
 **+ Add check ▾ → SPARQL constraint** (shape page, or right-click a shape) asks for its
 `sh:message` and writes a constraint that fires on nothing (`FILTER(1 = 0)`,

@@ -138,7 +138,9 @@ def _checks(package, shape):
             graph.value(shape, SH.severity) is not None
         from .severity import describe
         value = graph.value(holder, SH.severity) or graph.value(shape, SH.severity)
+        from ..sparql.message import locked_in
         out.append({'kind': 'constraint', 'message': str(message or ''),
+                    'messageLocked': locked_in(graph, holder),
                     'severity': describe(package, value)['label'] if value is not None
                     else severity,
                     'severityDeclared': declared,

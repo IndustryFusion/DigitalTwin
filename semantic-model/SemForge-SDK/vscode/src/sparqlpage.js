@@ -39,6 +39,7 @@ const crypto = require('crypto');
 const vscode = require('vscode');
 
 const { showLocation } = require('./reveal');
+const { MESSAGE_CSS, fillPieces, messageClient, renderMessageBox } = require('./sparqlmessage');
 const { escape, LINK_CSS, LINK_SCRIPT } = require('./typepage');
 
 const REFRESH_VIEWS = ['semforge.refreshTree', 'semforge.refreshShapes',
@@ -80,7 +81,8 @@ function renderSparqlBench(page, options) {
   const sources = page.sources.map((s) => `<option value="${escape(s.id)}"` +
     `${s.id === page.source ? ' selected' : ''}>${escape(s.label)}` +
     `${s.expect ? ` (${escape(s.expect)})` : ''}</option>`).join('');
-  const state = { kind: holder.kind, message: holder.message,
+  const state = { kind: holder.kind, message: holder.message, shape: page.shape, index: holder.index,
+    messageCheck: page.message || null, editMessage: !!(options && options.editMessage),
     dirty: !!(options && options.dirty),
     snapshots: (options && options.snapshots) || [] };
   const file = (options && options.file) || `${page.label}.rq`;
@@ -104,7 +106,6 @@ function renderSparqlBench(page, options) {
   .head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
   h1 { font-size: 1.4em; font-weight: 600; margin: 2px 0; }
   .head .right { margin-left: auto; }
-  .message { margin: 0 0 6px; }
   h2 { font-size: 0.78em; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
        color: var(--vscode-descriptionForeground); margin: 0; flex: 1 1 auto; }
   .sechead { display: flex; align-items: baseline; gap: 10px; margin: 18px 0 6px; padding-bottom: 4px;
@@ -156,7 +157,7 @@ function renderSparqlBench(page, options) {
   kbd { font-family: var(--vscode-editor-font-family); font-size: 0.9em; padding: 0 4px;
         border: 1px solid var(--vscode-panel-border, rgba(128,128,128,.35)); border-radius: 3px; }
   .keys div { margin: 2px 0; }
-${LINK_CSS}</style></head><body>
+${MESSAGE_CSS}${LINK_CSS}</style></head><body>
 <div class="dim crumbs">SPARQL workbench · <a tabindex="0" role="link" data-shape="1">${escape(page.shapeName)}</a></div>
 <div class="head">
   <h1>SPARQL: ${escape(page.label)}</h1>
@@ -165,8 +166,7 @@ ${LINK_CSS}</style></head><body>
   <span class="right"><span class="chip warn" id="dirty"${state.dirty ? '' : ' hidden'}
     title="The editor holds changes not in shacl.ttl">● unsaved</span></span>
 </div>
-${holder.message ? `<p class="message" title="sh:message — {?var} is filled from each row">` +
-  `“${escape(holder.message)}”</p>` : ''}
+${renderMessageBox(page)}
 ${tabs}
 
 <div class="bar toolbar">
@@ -235,6 +235,8 @@ ${LINK_SCRIPT}
   }
   inspect.checked = !!kept.inspect;
 
+  const messageBox = (${messageClient})(state, vscode, kept, esc, ${fillPieces});
+
   // The query lives in its editor; the page asks the extension to act on it.
   function dirty(on) {
     state.dirty = on;
@@ -293,6 +295,7 @@ ${LINK_SCRIPT}
   }
   function show(result) {
     const out = document.getElementById('result');
+    messageBox.ran(result);
     document.getElementById('warnings').innerHTML = (result.warnings || []).map((w) =>
       '<div class="warning">' + esc(w) + '</div>').join('');
     out.classList.remove('dim');
@@ -393,6 +396,7 @@ ${LINK_SCRIPT}
       status.textContent = 'saved to ' + message.where;
     } else if (message.type === 'dirty') { dirty(message.dirty); }
     else if (message.type === 'error') { status.textContent = message.text; }
+    else { messageBox.received(message); }
   });
   dirty(state.dirty);
   snapshots();
@@ -536,7 +540,7 @@ class SparqlBench {
     return !!(doc && doc.isDirty);
   }
 
-  /** `options`: {index, query, kind, source, preserveFocus}. */
+  /** `options`: {index, query, kind, source, preserveFocus, editMessage}. */
   async show(packageUri, shape, options) {
     if (!this.clientHolder.client || !packageUri || !shape) {
       vscode.window.showWarningMessage(
@@ -555,7 +559,7 @@ class SparqlBench {
     this.uri = queryUri(packageUri, shape, page.holder, page.label);
     const doc = await vscode.workspace.openTextDocument(this.uri);
     await vscode.window.showTextDocument(doc, { viewColumn: vscode.ViewColumn.One,
-      preview: false, preserveFocus: !!wanted.preserveFocus });
+      preview: false, preserveFocus: !!(wanted.preserveFocus || wanted.editMessage) });
     if (!this.panel) {
       this.panel = vscode.window.createWebviewPanel('semforgeSparqlBench', 'SPARQL',
         { viewColumn: vscode.ViewColumn.Beside, preserveFocus: true },
@@ -565,7 +569,10 @@ class SparqlBench {
     } else {
       this.panel.reveal(undefined, true);
     }
-    this.draw();
+    this.draw(wanted.editMessage && page.holder.kind === 'constraint');
+    if (wanted.editMessage) {
+      this.panel.reveal(undefined, false);       // the field gets the keyboard
+    }
   }
 
   async request(method, params) {
@@ -597,14 +604,14 @@ class SparqlBench {
     return page;
   }
 
-  draw() {
+  draw(editMessage) {
     if (!this.panel || !this.page) {
       return;
     }
     this.panel.title = `SPARQL: ${this.page.label}`;
     this.panel.webview.html = renderSparqlBench(this.page, {
       nonce: crypto.randomBytes(16).toString('base64'), snapshots: this.snapshotList(),
-      dirty: this.dirty, file: this.uri ? this.uri.path.slice(1) : undefined });
+      dirty: this.dirty, editMessage: !!editMessage, file: this.uri ? this.uri.path.slice(1) : undefined });
   }
 
   async render() {
@@ -682,6 +689,20 @@ class SparqlBench {
       return this.save(message.query);
     } else if (message.command === 'cancel') {
       return this.cancel();
+    } else if (message.command === 'checkMessage') {
+      const checked = await this.request('semforge/sparqlMessage', {
+        index: this.page.holder.index, query: this.text(), message: message.message });
+      if (checked.ok) {
+        this.post(Object.assign({ type: 'messageCheck', message: message.message }, checked));
+      }
+      return checked;
+    } else if (message.command === 'saveMessage') {
+      return this.saveMessage(message.message, message.expected);
+    } else if (message.command === 'editMessage') {
+      this.draw(true);
+      if (this.panel) {
+        this.panel.reveal(undefined, false);
+      }
     } else if (message.command === 'remove') {
       return this.remove();
     } else if (message.command === 'source') {
@@ -705,6 +726,10 @@ class SparqlBench {
         { label: '$(discard) Revert to the saved query', message: { command: 'cancel' } });
       }
       if (holder.kind === 'constraint') {
+        if (!holder.messageLocked) {
+          items.push({ label: holder.message ? '$(comment) Edit message…' : '$(comment) + Message…',
+            message: { command: 'editMessage' } });
+        }
         items.push({ label: '$(warning) Severity…',
           description: `${holder.severityLabel || 'violation'}${holder.severity ? '' : ' (default)'}`,
           message: { command: 'severity' } });
@@ -733,6 +758,40 @@ class SparqlBench {
         { raw: { shape: this.current.shape }, packageUri: this.current.packageUri });
     }
     return undefined;
+  }
+
+  /**
+   * Write the constraint's sh:message -- emptied, it is removed, after asking:
+   * the platform compiles only a constraint that has one. The query's editor
+   * is left as it is, unsaved changes included.
+   */
+  async saveMessage(text, expected) {
+    const holder = this.page.holder;
+    const empty = !String(text || '').trim();
+    if (empty && expected) {
+      const answer = await vscode.window.showWarningMessage(
+        `Remove the message of ${this.page.label}?`, { modal: true, detail:
+          `“${expected}” is taken out of shacl.ttl.\nThe platform then does not check this ` +
+          'constraint: it compiles only a SPARQL constraint that has an sh:message. SemForge ' +
+          'keeps validating it.' }, 'Remove message');
+      if (answer !== 'Remove message') {
+        this.post({ type: 'messageError', text: '' });
+        return undefined;
+      }
+    }
+    const result = await this.request('semforge/sparqlSaveMessage', { index: holder.index,
+      message: text, expected, query: holder.query });
+    if (!result.ok) {
+      this.post({ type: 'messageError', text: `Not saved: ${result.error}` });
+      return result;
+    }
+    for (const command of REFRESH_VIEWS) {
+      vscode.commands.executeCommand(command);
+    }
+    vscode.window.setStatusBarMessage(`SemForge: the message of ${this.page.label} ` +
+      `${empty ? 'removed' : 'saved'} — validation re-runs`, 5000);
+    await this.render();
+    return result;
   }
 
   /** The editor's Save; with `query`, that text is put in first. */

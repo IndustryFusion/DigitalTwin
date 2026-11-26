@@ -707,6 +707,24 @@ def sparql_run_feature(ls, params):
         return {'ok': False, 'error': str(exc)}
 
 
+@server.feature('semforge/sparqlMessage')
+def sparql_message_feature(ls, params):
+    """A draft sh:message over the query as it is edited: the variables it may
+    name, and what is wrong in it. Writes nothing."""
+    from ..cooked.sparqlbench import check_message
+
+    root = package_root(uri_to_path(field(params, 'uri', '')))
+    if root is None:
+        return {'ok': False, 'error': 'not a SemForge package'}
+    try:
+        return dict(check_message(
+            session.package_for(root), str(field(params, 'shape', '') or ''),
+            field(params, 'index') or 0, str(field(params, 'query', '') or ''),
+            str(field(params, 'message', '') or '')), ok=True)
+    except Exception as exc:                       # noqa: BLE001
+        return {'ok': False, 'error': str(exc)}
+
+
 @server.feature('semforge/sparqlInspect')
 def sparql_inspect_feature(ls, params):
     """The query taken apart, text untouched: every variable of every row its

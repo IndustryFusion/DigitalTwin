@@ -182,8 +182,10 @@ def test_what_validation_would_read_differently_is_warned(corpus, query, warned)
 
 
 def test_the_message_is_filled_from_each_row(corpus):
-    found = [{'v': 'hot', 'this': 'urn:a'}]
-    assert sb._message('{?v} on {$this}, {?missing}', found[0], 'urn:a') == \
+    from semforge.sparql.message import fill
+
+    row = {'v': 'hot', 'this': 'urn:a'}
+    assert fill('{?v} on {$this}, {?missing}', row) == \
         'hot on urn:a, {?missing}'
 
 

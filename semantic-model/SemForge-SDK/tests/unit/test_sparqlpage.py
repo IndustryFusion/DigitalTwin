@@ -99,7 +99,8 @@ def test_it_shows_its_editor_the_data_and_the_buttons(tmp_path, page):
     assert '<span class="severity"' in html and 'chip bad">critical' not in html, \
         'a label, not a verdict'
     assert 'id="remove"' not in html, 'Remove waits behind the ⋯'
-    assert '<textarea' not in html, 'the query is edited in its own editor'
+    assert html.count('<textarea') == 1 and '<textarea id="messagetext"' in html, \
+        'the query is edited in its own editor'
     state = json.loads(html.split('const state = ', 1)[1].split(';\n', 1)[0])
     assert state['dirty'] is False
     assert 'id="dirty" hidden' in html
@@ -380,7 +381,8 @@ def test_the_shape_page_s_remove_names_the_query_by_its_text(tmp_path, corpus):
         'replies': {'semforge/shapePage': shape_page}})
     assert 'data-action="checkMenu" data-row="0"' in seen['webviews'][0]['html'][0]
     assert [i['label'] for i in seen['quickPicks'][0]['items']] == [
-        '$(beaker) Open in SPARQL workbench', '$(warning) Severity…', '$(trash) Remove…']
+        '$(beaker) Open in SPARQL workbench', '$(comment) Edit message…', '$(warning) Severity…',
+        '$(trash) Remove…']
     asked = [e['args'] for e in seen['executed'] if e['command'] == 'semforge.removeSparqlQuery']
     check = shape_page['checks'][0]
     assert asked[0][1] == {'query': check['query'], 'kind': 'constraint',

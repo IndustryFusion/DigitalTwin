@@ -138,6 +138,8 @@ READS = [
     ('semforge/sparqlQuery', {'shape': CUTTER, 'holder': 0}, 'query'),
     ('semforge/sparqlRun', {'shape': CUTTER, 'source': '@main',
                             'query': 'SELECT $this WHERE { $this ?p ?o }'}, 'violating'),
+    ('semforge/sparqlMessage', {'shape': CUTTER, 'query': 'SELECT $this WHERE { $this ?p ?o }',
+                                'message': '{?o}'}, 'warnings'),
     ('semforge/sparqlInspect', {'shape': CUTTER, 'source': '@main',
                                 'query': 'SELECT $this WHERE { $this ?p ?o }'}, 'columns'),
 ]

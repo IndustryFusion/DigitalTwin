@@ -383,16 +383,31 @@ def _resolve_token(package, token):
 # --- rules -----------------------------------------------------------------------
 
 def _rule_text(package, shape):
-    """What a SPARQL shape is for: its sh:message, its comment, or nothing."""
+    """What a SPARQL shape is for: its sh:message (one without variables reads
+    best), its comment, or nothing."""
     graph = package.shapes
-    for sparql in graph.objects(URIRef(shape), SH.sparql):
-        for message in graph.objects(sparql, SH.message):
-            if isinstance(message, Literal) and '{' not in str(message):
-                return str(message)
+    messages = sorted((str(message) for sparql in graph.objects(URIRef(shape), SH.sparql)
+                       for message in graph.objects(sparql, SH.message)
+                       if isinstance(message, Literal)), key=lambda m: ('{' in m, m))
+    if messages:
+        return messages[0]
     for holder in [URIRef(shape)] + list(graph.objects(URIRef(shape), SH.rule)):
         for comment in graph.objects(holder, RDFS.comment):
             return str(comment)
     return ''
+
+
+def _rule_message(package, shape):
+    """{hasMessage, messageLocked} of a shape's SPARQL constraints: whether one
+    has a message, and why none can be edited from a page ('' when one can)."""
+    from ..sparql.message import locked_in
+
+    graph = package.shapes
+    holders = list(graph.objects(URIRef(shape), SH.sparql))
+    why = [locked_in(graph, holder) for holder in holders]
+    return {'hasMessage': any(isinstance(m, Literal) and str(m)
+                              for holder in holders for m in graph.objects(holder, SH.message)),
+            'messageLocked': why[0] if why and all(why) else ''}
 
 
 def _rules(package, shape_nodes, coverage):
@@ -407,6 +422,7 @@ def _rules(package, shape_nodes, coverage):
                 'shape': shape_node.shape, 'shapeName': name,
                 'kind': 'rule' if is_rule else 'constraint',
                 'text': _rule_text(package, shape_node.shape),
+                **({} if is_rule else _rule_message(package, shape_node.shape)),
                 'inherited': bool(shape_node.inherited_from),
                 'inheritedFrom': _short(shape_node.inherited_class)
                 if shape_node.inherited_class else '',

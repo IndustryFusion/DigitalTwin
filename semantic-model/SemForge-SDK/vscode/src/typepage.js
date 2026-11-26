@@ -845,6 +845,10 @@ class TypePages {
           description: 'one that should conform, or one that should fail',
           message: { command: 'ruleTest', row: message.row } }]),
         { label: '$(beaker) Open in SPARQL workbench', message: { command: 'bench', shape: rule.shape, kind: rule.kind } },
+        ...(rule.kind === 'rule' || rule.messageLocked ? [] : [{
+          label: rule.hasMessage ? '$(comment) Edit message…' : '$(comment) + Message…',
+          description: 'in the SPARQL workbench',
+          message: { command: 'bench', shape: rule.shape, kind: rule.kind, editMessage: true } }]),
         { label: '$(symbol-interface) Open its shape page', message: { command: 'shape', name: rule.shape } },
         { label: '$(star-empty) Pin or unpin', message: { command: 'pinRule', row: message.row } },
         { label: '$(go-to-file) Open in .ttl', message: { command: 'open', at: rule.definedAt } }
@@ -880,7 +884,7 @@ class TypePages {
     if (message.command === 'bench' && message.shape) {
       await vscode.commands.executeCommand('semforge.openSparqlBench',
         { raw: { shape: message.shape }, packageUri: this.current.packageUri },
-        { kind: message.kind });
+        Object.assign({ kind: message.kind }, message.editMessage ? { editMessage: true } : {}));
     } else if (message.command === 'open' && message.at) {
       await showLocation(message.at, true);
     } else if (message.command === 'shape' && message.name) {

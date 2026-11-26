@@ -131,6 +131,53 @@ def _bodies(package, shape):
             if holder.parameter(KINDS[kind][1])], text, path
 
 
+def _messages(text, holder):
+    """[(start, end, token)] of the values of every sh:message a holder writes:
+    `token` is the value, `end` is after its language tag or datatype, `start`
+    where the value starts."""
+    from ..rdfio.turtle_index import _skip_string
+
+    blank = re.compile(r'(\s|#[^\n]*)*')
+    iri = re.compile(r'<[^<>"{}|^`\\\s]*>')
+    suffix = re.compile(r'@[A-Za-z0-9-]+|\^\^(<[^>]*>|[^\s;,\]]+)|[^\s;,\]"\']*')
+    found, i = [], holder.start + 1
+    while i < holder.end - 1:
+        char = text[i]
+        if char in '"\'':
+            i = _skip_string(text, i)
+        elif char == '#':
+            newline = text.find('\n', i, holder.end)
+            i = holder.end if newline < 0 else newline
+        elif char == '<':
+            close = iri.match(text, i)
+            i = close.end() if close else i + 1
+        elif text.startswith('sh:message', i) and not (text[i - 1].isalnum() or text[i - 1] in ':_') \
+                and not (text[i + 10].isalnum() or text[i + 10] in '_-'):
+            i += len('sh:message')
+            while True:                            # an object list: "a"@en , "b"@de
+                i = blank.match(text, i).end()
+                start = i
+                if text[i] in '"\'':
+                    i = _skip_string(text, i)
+                token = text[start:i]
+                i = suffix.match(text, i).end()
+                found.append((start, i, token))
+                after = blank.match(text, i).end()
+                if text[after] != ',':
+                    break
+                i = after + 1
+        else:
+            i += 1
+    return found
+
+
+def _locked(written):
+    """Why these sh:message values are not edited from a page; '' when they are."""
+    from ..sparql.message import locked
+
+    return locked(len(written), bool(written) and bool(written[0][2]))
+
+
 def _severity_label(package, text, token):
     """A severity as written (`base:severityCritical`), as a reader says it --
     the prefix resolved the way the file declares it."""
@@ -149,10 +196,13 @@ def holders(package, shape):
     for position, (kind, group) in enumerate(bodies):
         start, _, raw = group.parameter(KINDS[kind][1])
         message = group.parameter('sh:message')
+        written = _messages(text, group)
         severity = group.parameter('sh:severity')
         out.append({
             'index': position, 'kind': kind, 'query': _literal(raw),
-            'message': _literal(message[2]) if message else '',
+            'message': _literal(message[2]) if message and message[2][:1] in '"\'' else '',
+            # Why the message cannot be edited here; '' when it can.
+            'messageLocked': _locked(written) if kind == 'constraint' else '',
             'severity': severity[2].strip() if severity else '',
             'severityLabel': _severity_label(package, text, severity[2].strip())
             if severity else '',
@@ -309,7 +359,11 @@ def bench_page(package, shape, index=0, source=MAIN, query=None, kind=None):
         'sources': sources(package, shape), 'source': source or MAIN,
         'focus': [_term(data, node) for node in focus],
         'selector': selector(package, shape, focus, holder['query']),
-        'data': shown, 'stats': stats}
+        'data': shown, 'stats': stats,
+        'message': _message_check(
+            package, shape, holder, holder['message'], holder['query'],
+            _prefix_lines(package, _holder_node(package, shape, 'constraint', holder['query'])))
+        if holder['kind'] == 'constraint' else None}
 
 
 def _term(graph, node):
@@ -343,15 +397,6 @@ def _instance(graph, node):
     return '[' + ' · '.join(shown) + ']'
 
 
-def _message(template, row, focus):
-    def fill(match):
-        name = match.group(2)
-        if name == 'this':
-            return focus
-        return row.get(name, match.group(0))
-    return re.sub(r'\{([?$])(\w+)\}', fill, template or '')
-
-
 def warnings(query, kind, view):
     from ..validate.shapes import _AGGREGATE
 
@@ -365,8 +410,35 @@ def warnings(query, kind, view):
     return found
 
 
+def _message_check(package, shape, holder, message, query, prefixes):
+    """{'variables', 'warnings'} of a message over a query: what it may name
+    (None when the query does not parse) and what is wrong in it -- as the
+    Problems panel says it: nothing of a message edited in the .ttl, and no
+    missing message where the platform compiles nothing anyway (no target
+    class)."""
+    from ..sparql.message import check, variables
+
+    known = variables(query, prefixes)
+    if holder.get('messageLocked'):
+        return {'variables': known, 'warnings': []}
+    compiled = (URIRef(shape), SH.targetClass, None) in package.shapes
+    return {'variables': known, 'warnings': [p.message for p in check(message, known)
+                                             if compiled or p.code != 'message-missing']}
+
+
+def check_message(package, shape, index, query, message):
+    """What a draft message names that the (edited) query does not select, and
+    what else is wrong in it. Writes nothing."""
+    found = holders(package, shape)
+    holder = found[min(max(int(index or 0), 0), len(found) - 1)]
+    prefixes = _prefix_lines(package, _holder_node(package, shape, holder['kind'], holder['query']))
+    return _message_check(package, shape, holder, message, query, prefixes)
+
+
 def run_query(package, shape, index, source, query):
     """Run an (edited) query the way validation would. Never writes."""
+    from ..sparql.message import fill
+
     from rdflib.plugins.sparql import prepareQuery
 
     found = holders(package, shape)
@@ -402,7 +474,7 @@ def run_query(package, shape, index, source, query):
             columns = [str(v) for v in answer.vars or []] or columns
             rows = [{str(k): _term(data, v) for k, v in row.asdict().items()} for row in answer]
             per_focus.append({'node': label, 'rows': rows,
-                              'messages': [_message(holder['message'], r, label) for r in rows]})
+                              'messages': [fill(holder['message'], r) for r in rows]})
         else:
             triples = list(answer)
             for triple in triples:
@@ -412,6 +484,7 @@ def run_query(package, shape, index, source, query):
 
     result.update(columns=columns, focus=per_focus, ms=elapsed)
     if kind == 'constraint':
+        result['message'] = _message_check(package, shape, holder, holder['message'], query, prefixes)
         result['violating'] = [f['node'] for f in per_focus if f['rows']]
         if query.strip() != holder['query'].strip():
             saved = run_query(package, shape, index, source, holder['query'])
@@ -463,6 +536,114 @@ def save_query(package, shape, index, query, expected):
     return {'file': path, 'line': text.count('\n', 0, group.parameter(key)[0]) + 1}
 
 
+def _turtle_string(value):
+    """A text as a one-line Turtle string."""
+    named = {'\\': '\\\\', '"': '\\"', '\n': '\\n', '\r': '\\r', '\t': '\\t'}
+    return '"' + ''.join(named.get(c) or (f'\\u{ord(c):04X}' if ord(c) < 32 or ord(c) == 127 else c)
+                         for c in value) + '"'
+
+
+class _Value:
+    """One parameter's place in a holder, its whole value, for rdfio.blocks."""
+
+    def __init__(self, holder, name, start, end, token):
+        self.start, self.end, self.parameters = holder.start, holder.end, {name: (start, end, token)}
+
+    def parameter(self, name):
+        return self.parameters.get(name)
+
+
+def _around(graph, node):
+    """Every triple but this holder's messages, blank nodes by no name: what
+    an edit of the message must leave as it is."""
+    from collections import Counter
+
+    plain = lambda term: '_:' if isinstance(term, BNode) else term  # noqa: E731
+    return Counter(tuple(map(plain, triple)) for triple in graph
+                   if triple[:2] != (node, SH.message))
+
+
+def save_message(package, shape, index, message, expected, query=None):
+    """Write the sh:message of the constraint at `index`: changed, added, or --
+    empty -- removed. `expected` is the message the page started from, `query`
+    the constraint's query as it showed it: if the file says something else
+    now, nothing is written. A language tag or datatype stays.
+    Returns {'file', 'line', 'message'}."""
+    from ..rdfio.blocks import set_parameter
+    from .constrain import _remove_line
+    from .tree import _write_verified
+
+    bodies, text, path = _bodies(package, shape)
+    index = int(index)
+    if not 0 <= index < len(bodies):
+        raise PackageError('no such SPARQL query on this shape')
+    kind, group = bodies[index]
+    if kind != 'constraint':
+        raise PackageError('a SPARQL rule derives data and violates nothing: it has no message')
+    stale = ('in the file since the workbench opened it; reopen the workbench to see the '
+             'file\'s version')
+    written_query = _literal(group.parameter('sh:select')[2])
+    if query is not None and written_query.strip() != str(query).strip():
+        raise PackageError(f'the query changed {stale}')
+    written = _messages(text, group)
+    locked = _locked(written)
+    if locked:
+        raise PackageError(f'the message is not changed: {locked}')
+    current = _literal(written[0][2]) if written else ''
+    if current != (expected or ''):
+        raise PackageError(f'the message changed {stale}')
+    message = message if (message or '').strip() else ''
+    try:
+        message.encode('utf-8')
+    except UnicodeEncodeError:
+        raise PackageError('the message holds half a character (a lone surrogate)') from None
+
+    if written:
+        start, end, token = written[0]
+        if message:
+            value = _Value(group, 'sh:message', start, start + len(token), token)
+            updated = set_parameter(text, value, 'sh:message', _turtle_string(message))
+        else:
+            updated = _remove_line(text, _Value(group, 'sh:message', start, end, token), 'sh:message')
+    elif message:
+        # In front of the query: nothing that precedes it can be a comment
+        # that would swallow the new line, as at the holder's end.
+        at = text.rfind('sh:select', group.start, group.parameter('sh:select')[0])
+        lead = text[text.rfind('\n', 0, at) + 1:at]
+        gap = '\n' + lead if not lead.strip() else ' '
+        start = at + len('sh:message ')
+        updated = text[:at] + f'sh:message {_turtle_string(message)} ;{gap}' + text[at:]
+    else:
+        start, updated = group.start, text
+
+    before = Graph().parse(data=text, format='turtle')
+    kept = 'the message did not survive being written; the file is unchanged'
+    try:
+        after = Graph().parse(data=updated, format='turtle')
+    except Exception as exc:                         # noqa: BLE001
+        raise PackageError(f'{kept} ({exc})') from exc
+    wanted = {message} - {''}
+
+    def holder_with(graph, messages):
+        return next((h for h in graph.objects(URIRef(shape), SH.sparql)
+                     if str(graph.value(h, SH.select) or '') == written_query
+                     and {str(m) for m in graph.objects(h, SH.message)} == messages), None)
+
+    old = holder_with(before, {_literal(token) for _, _, token in written})
+    new = holder_with(after, wanted)
+    if old is None:
+        raise PackageError('the message is written in a way that cannot be edited here; '
+                           'edit it in the .ttl')
+    tags = [{(m.language, m.datatype) for m in g.objects(n, SH.message)} if n is not None else None
+            for g, n in ((before, old), (after, new))]
+    if new is None or (current and message and tags[0] != tags[1]) or \
+            _around(before, old) != _around(after, new):
+        raise PackageError(kept)
+    if updated != text:
+        _write_verified(path, updated)
+    return {'file': path, 'line': updated.count('\n', 0, min(start, len(updated))) + 1, 'message': message}
+
+
 SKELETON = """
 {prefixes}
 
@@ -505,9 +686,8 @@ def add_constraint(package, shape, message):
                                                         'sosa', 'ssn', 'time', 'vann', 'void',
                                                         'wgs', 'xml'))
     body = SKELETON.format(prefixes='\n'.join(lines))
-    escaped = message.replace('\\', '\\\\').replace('"', '\\"')
     addition = (f' ;\n    sh:sparql [ a sh:SPARQLConstraint ;\n'
-                f'            sh:message "{escaped}" ;\n'
+                f'            sh:message {_turtle_string(message)} ;\n'
                 f'            sh:select {_turtle_long_string(body)} ]')
     updated = text[:cut] + addition + text[cut:]
     _write_verified(path, updated)

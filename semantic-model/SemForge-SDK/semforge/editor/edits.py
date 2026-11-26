@@ -973,6 +973,19 @@ def sparql_save_feature(ls, params):
         str(field(params, 'query', '') or ''), str(field(params, 'expected', '') or '')))
 
 
+@server.feature('semforge/sparqlSaveMessage')
+def sparql_save_message_feature(ls, params):
+    """Write a constraint's sh:message over the one the workbench showed;
+    an empty one is removed."""
+    from ..cooked.sparqlbench import save_message
+
+    query = field(params, 'query', None)
+    return _target_write(ls, params, lambda package: save_message(
+        package, str(field(params, 'shape', '') or ''), field(params, 'index') or 0,
+        str(field(params, 'message', '') or ''), str(field(params, 'expected', '') or ''),
+        None if query is None else str(query)))
+
+
 @server.feature('semforge/sparqlRemove')
 def sparql_remove_feature(ls, params):
     """Remove one SPARQL constraint or rule -- and, when asked, the asserts

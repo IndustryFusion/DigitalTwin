@@ -33,6 +33,13 @@ line that holds it:
   sparql-undeclared  a SPARQL body names an undeclared term of the package's
                      own namespaces (a warning: a query is checked by token,
                      not by meaning)
+  message-variable   a SPARQL constraint's sh:message names a variable its
+                     query does not select (a warning): it stays as text, and
+                     the platform's SQL reads a column that is not there
+  message-apostrophe an apostrophe in it (a warning): it ends the text in
+                     the SQL the platform compiles
+  message-missing    a SPARQL constraint without sh:message (a warning): the
+                     platform compiles only one that has a message
   stale-assert       an expectation names a constraint no shape declares
   severity-unknown   an sh:severity that is no severity level: not SHACL's
                      violation/warning/info, nor an individual of sh:Severity
@@ -429,6 +436,55 @@ def _severity_checks(package):
             message=f'{cls["term"]} holds the severity levels this package uses, but is not '
                     f'declared a kind of sh:Severity -- the class SHACL gives severities.',
             fix={'link': cls['iri']}))
+    return out
+
+
+# --- the messages of SPARQL constraints -----------------------------------------
+
+def _message_checks(package):
+    """message-variable, message-apostrophe, message-missing: what is wrong in
+    the sh:message of a SPARQL constraint, on the line that holds it."""
+    from .cooked.sparqlbench import _bodies, _literal, _messages, _prefix_lines
+    from .sparql.message import check, variables
+    from .validate.normalise import curie
+
+    graph, out = package.shapes, []
+    for shape in sorted({s for s in graph.subjects(SH.sparql, None) if isinstance(s, URIRef)}):
+        wrong = []                                 # [(query, message or None, problem)]
+        for node in graph.objects(shape, SH.sparql):
+            query = graph.value(node, SH.select)
+            if query is None:
+                continue
+            messages = [str(m) for m in graph.objects(node, SH.message)]
+            # Only a shape with a target class is compiled at all.
+            if not messages and (shape, SH.targetClass, None) in graph:
+                messages = ['']
+            for message in messages:
+                known = variables(str(query), _prefix_lines(package, node)) \
+                    if '{' in message else None
+                wrong += [(str(query), message, problem) for problem in check(message, known)]
+        if not wrong:
+            continue
+        try:
+            bodies, text, path = _bodies(package, shape)
+        except Exception:                          # noqa: BLE001 -- not written in this package
+            continue
+        for query, message, problem in wrong:
+            at = None
+            for kind, body in bodies:
+                if kind == 'constraint' and _literal(body.parameter('sh:select')[2]) == query:
+                    at = next((start for start, _, token in _messages(text, body)
+                               if token and _literal(token) == message),
+                              body.parameter('sh:select')[0] if not message else None)
+                    if at is not None:
+                        break
+            line = text.count('\n', 0, at) + 1 if at is not None else \
+                int(package.index('shapes').locator(str(shape)).rpartition(':')[2] or 1)
+            out.append(SanityFinding(
+                file=os.path.abspath(path), line=line, severity='warning', code=problem.code,
+                subject=str(shape), message=(
+                    f'{curie(graph, shape)}: ' + (f'in the message "{message}", ' if message else
+                                                  'a SPARQL constraint: ') + problem.message)))
     return out
 
 
@@ -851,6 +907,7 @@ def sanity(package):
     for check in (lambda: _shape_checks(package, declared),
                   lambda: _expectation_checks(package),
                   lambda: _severity_checks(package),
+                  lambda: _message_checks(package),
                   lambda: _dataset_checks(package),
                   lambda: _id_checks(package),
                   lambda: _count_checks(package),

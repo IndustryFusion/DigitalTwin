@@ -101,7 +101,9 @@ function checkRows(checks, cases) {
       : 'A SPARQL constraint: every row it returns is a violation'}">${c.kind === 'rule'
       ? 'rule' : 'SPARQL'}</span>` +
     `<span class="what">${escape(c.message || (c.kind === 'rule'
-      ? 'Derives data' : '(no sh:message)'))}</span>` +
+      ? 'Derives data' : '(no sh:message)'))}${c.message || c.kind === 'rule' || !c.query || c.messageLocked ? ''
+      : ` <button data-action="checkMessage" data-row="${i}" title="Say what a violation means ` +
+        '(sh:message), in the SPARQL workbench">+ Message</button>'}</span>` +
     `<span class="tags">${c.kind === 'constraint'
       ? severityLabel(c.severity, c.severityDeclared !== false) : ''}` +
     `${c.kind === 'constraint' ? provenChip(cases) : ''}</span>` +
@@ -545,6 +547,11 @@ class ShapePages {
       }
       const items = [
         { label: '$(beaker) Open in SPARQL workbench', message: { command: 'bench', row: message.row } }];
+      if (check.kind === 'constraint' && !check.messageLocked) {
+        items.push({ label: check.message ? '$(comment) Edit message…' : '$(comment) + Message…',
+          description: 'in the SPARQL workbench',
+          message: { command: 'bench', row: message.row, editMessage: true } });
+      }
       if (check.kind === 'constraint') {
         items.push({ label: '$(warning) Severity…',
           description: `${check.severity}${check.severityDeclared === false ? ' (default)' : ''}`,
@@ -562,12 +569,13 @@ class ShapePages {
           current: `${check.severity}${check.severityDeclared === false ? ' (default)' : ''}` })) {
         await this.render();
       }
-    } else if (message.command === 'bench') {
+    } else if (message.command === 'bench' || message.command === 'checkMessage') {
       const check = (this.page.checks || [])[message.row];
       if (check) {
         await vscode.commands.executeCommand('semforge.openSparqlBench',
           { raw: { shape: this.page.iri }, packageUri },
-          { query: check.query, kind: check.kind });
+          Object.assign({ query: check.query, kind: check.kind },
+            message.editMessage || message.command === 'checkMessage' ? { editMessage: true } : {}));
       }
     } else if (message.command === 'removeSparql') {
       const check = (this.page.checks || [])[message.row];

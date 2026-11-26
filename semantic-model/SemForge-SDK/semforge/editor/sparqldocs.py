@@ -71,9 +71,10 @@ def reference(uri):
 class Context:
     """What a query document is about: its package, shape, kind and view."""
 
-    def __init__(self, package, shape, kind, view, prefix_lines, terms):
+    def __init__(self, package, shape, kind, view, prefix_lines, terms, message=None):
         self.package, self.shape, self.kind = package, shape, kind
         self.view, self.prefix_lines, self.terms = view, prefix_lines, terms
+        self.message = message           # the constraint's saved sh:message, None when unknown
 
 
 def context(uri, package_for, package_root, uri_to_path):
@@ -94,7 +95,8 @@ def context(uri, package_for, package_root, uri_to_path):
     prefix_lines = _prefix_lines(package, _holder_node(package, ref['shape'], kind,
                                                        holder['query'])) if holder else []
     view = shape_views.view_of(package.shapes, URIRef(ref['shape'])).value
-    return Context(package, ref['shape'], kind, view, prefix_lines, terms_for(package))
+    return Context(package, ref['shape'], kind, view, prefix_lines, terms_for(package),
+                   holder['message'] if holder and kind == 'constraint' else None)
 
 
 def _range(text, start, end):
@@ -113,6 +115,7 @@ def diagnostics(text, ctx):
             range=_range(text, finding.start, finding.end), message=finding.message,
             severity=SEVERITY[finding.severity], source=SOURCE, code=finding.code,
             data=dict(finding.data, code=finding.code)))
+    out.extend(_message_fits(text, ctx))
     if not any(d.severity == types.DiagnosticSeverity.Error for d in out):
         # A query the checks above refuse needs no second opinion.
         out.extend(_not_deployable(text, ctx))
@@ -167,6 +170,29 @@ def _not_deployable(text, ctx):
         range=_range(text, start, end), severity=types.DiagnosticSeverity.Error, source=SOURCE,
         code='not-deployable', data={'code': 'not-deployable'},
         message=f'Validation runs this query, but it cannot be deployed: {problem.reason}{said}')]
+
+
+def _message_fits(text, ctx):
+    """What the saved sh:message names that the query, as it is being edited,
+    does not select -- on the SELECT, where it is repaired."""
+    from ..sparql.lexer import code_tokens
+    from ..sparql.message import PLACEHOLDER, check, variables
+
+    if not ctx.message or '{' not in ctx.message:
+        return []
+    head = next((t for t in code_tokens(text) if t.kind == 'name' and t.upper == 'SELECT'), None)
+    known = variables(text, ctx.prefix_lines)
+    if head is None or known is None:
+        return []
+    # Only what the query no longer selects: the rest of a message is not
+    # repaired on the SELECT.
+    gone = {m.group(0) for m in PLACEHOLDER.finditer(ctx.message) if m.group(2) not in known}
+    return [types.Diagnostic(
+        range=_range(text, head.start, head.end), severity=types.DiagnosticSeverity.Warning,
+        source=SOURCE, code=problem.code, data={'code': problem.code},
+        message=f'The message "{ctx.message}" does not fit this query: {problem.message}')
+        for problem in check(ctx.message, known)
+        if problem.code == 'message-variable' and problem.part in gone]
 
 
 def completion(text, offset, ctx):
