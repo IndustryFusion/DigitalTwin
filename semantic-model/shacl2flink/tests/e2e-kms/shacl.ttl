@@ -379,3 +379,21 @@ SELECT $this ?text WHERE {
                 ", ", ?note, " / ", STR(?note)) AS ?text)
 }
 """ ] .
+
+# ------------------------------------------- sh:class through subclasses
+# A Property whose value is a node of the knowledge, as the OPC UA generator
+# writes a NodeId. The node is an E2EObject, a subclass of E2EInstance and so
+# of E2ENode, which is what sh:class asks for. The check reads the class
+# membership from the `rdf` table, in Flink a join against the knowledge.
+:E2EClassMachineShape a sh:NodeShape ;
+    sh:targetClass iffBaseEntities:E2EClassMachine ;
+    sh:property [ sh:path iffBaseEntities:hasE2EStateId ;
+            sh:minCount 1 ;
+            sh:maxCount 1 ;
+            sh:nodeKind sh:BlankNode ;
+            sh:order 1 ;
+            sh:property [ sh:path ngsild:hasValue ;
+                    sh:minCount 1 ;
+                    sh:maxCount 1 ;
+                    sh:nodeKind sh:IRI ;
+                    sh:class iffBaseEntities:E2ENode ] ] .

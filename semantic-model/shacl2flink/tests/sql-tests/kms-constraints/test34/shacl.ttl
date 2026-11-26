@@ -1,0 +1,48 @@
+#
+# Copyright (c) 2026 IndustryFusion Foundation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+@prefix ex: <https://example.org/subclass/> .
+@prefix ngsild: <https://uri.etsi.org/ngsi-ld/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# sh:class on a value that is a node reference, met by a subclass of the
+# class, as the OPC UA generator writes a NodeId-valued Property: hasId is
+# a sub-property of hasCurrentState, a scalar or a list.
+ex:MachineShape a sh:NodeShape ;
+    sh:targetClass ex:Machine ;
+    sh:property [ sh:path ex:hasCurrentState ; sh:minCount 0 ; sh:maxCount 1 ; sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasValue ; sh:minCount 1 ; sh:maxCount 1 ;
+                      sh:nodeKind sh:Literal ; sh:datatype xsd:string ] ;
+        sh:property [ sh:path ex:hasId ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:BlankNode ;
+            sh:or ( [ sh:property [ sh:path ngsild:hasValue ; sh:minCount 1 ; sh:maxCount 1 ;
+                                    sh:nodeKind sh:IRI ; sh:class ex:Node ] ]
+                    [ sh:property [ sh:path ngsild:hasValueList ; sh:minCount 1 ; sh:maxCount 1 ;
+                        sh:or ( [ sh:nodeKind sh:BlankNode ;
+                                  sh:property [ sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+                                                sh:class ex:Node ] ]
+                                [ sh:hasValue () ] ) ] ] ) ] ] ;
+    # The same constraint on an attribute of the entity, without sh:or.
+    sh:property [ sh:path ex:hasKind ; sh:minCount 0 ; sh:maxCount 1 ; sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasValue ; sh:minCount 1 ; sh:maxCount 1 ;
+                      sh:nodeKind sh:IRI ; sh:class ex:Node ] ] ;
+    # A list-only attribute: its value is a list of enumeration members.
+    sh:property [ sh:path ex:hasEvents ; sh:minCount 0 ; sh:maxCount 1 ; sh:nodeKind sh:BlankNode ;
+        sh:property [ sh:path ngsild:hasValueList ; sh:minCount 1 ; sh:maxCount 1 ;
+            sh:or ( [ sh:nodeKind sh:BlankNode ;
+                      sh:property [ sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ;
+                                    sh:class ex:EventEnumeration ] ]
+                    [ sh:hasValue () ] ) ] ] .

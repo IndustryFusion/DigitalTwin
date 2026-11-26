@@ -269,3 +269,30 @@
         owl:ObjectProperty ;
     rdfs:domain :E2EQueryMachine ;
     rdfs:range <https://uri.etsi.org/ngsi-ld/Relationship> .
+
+# sh:class on the value of a Property, met by a subclass: see
+# E2EClassMachineShape. The chain is the one the OPC UA knowledge writes -- a
+# node is typed with its most specific class, the shape asks for the root.
+:E2EClassMachine a owl:Class,
+        owl:NamedIndividual .
+
+:hasE2EStateId a owl:NamedIndividual,
+        owl:ObjectProperty ;
+    rdfs:domain :E2EClassMachine ;
+    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .
+
+:E2ENode a owl:Class .
+
+:E2EInstance a owl:Class ;
+    rdfs:subClassOf :E2ENode .
+
+:E2EObject a owl:Class ;
+    rdfs:subClassOf :E2EInstance .
+
+:E2EOther a owl:Class .
+
+:e2e_node_EXECUTING a owl:NamedIndividual,
+        :E2EObject .
+
+:e2e_node_UNRELATED a owl:NamedIndividual,
+        :E2EOther .

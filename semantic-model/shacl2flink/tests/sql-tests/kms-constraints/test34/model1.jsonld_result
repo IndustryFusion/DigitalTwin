@@ -1,0 +1,4 @@
+'urn:subclass:unknown','ClassConstraintComponent(https://example.org/subclass/hasKind[0])','warning'
+'urn:subclass:unknown','OrConstraintComponent(https://example.org/subclass/hasId)','warning'
+'urn:subclass:unrelated','ClassConstraintComponent(https://example.org/subclass/hasKind[0])','warning'
+'urn:subclass:unrelated','OrConstraintComponent(https://example.org/subclass/hasId)','warning'

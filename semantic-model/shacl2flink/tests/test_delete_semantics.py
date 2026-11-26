@@ -148,7 +148,9 @@ def test_count_checks_do_not_group_by_edeleted():
     accumulator was rebuilt from fewer rows is what produced "-1".
     """
     for name, sql in _generated_checks().items():
-        clauses = re.findall(r'GROUP\s+BY\s(.*?)\sHAVING', sql,
+        # The grouping right before each HAVING: a GROUP BY without one, as
+        # in the class member lookup of the property base, is not a count.
+        clauses = re.findall(r'GROUP\s+BY\s((?:(?!GROUP\s+BY).)*?)\sHAVING', sql,
                              re.IGNORECASE | re.DOTALL)
         assert clauses, f'{name}: no GROUP BY ... HAVING found to check'
         for group_by in clauses:

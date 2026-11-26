@@ -57,6 +57,11 @@ PART_TYPE=${E2E}/E2EPart
 PART_REL=${E2E}/hasE2EPart
 LEVEL_PROP=${E2E}/hasE2ELevel
 NODE_EVENT="NodeConstraintComponent(${PART_REL}"
+# sh:class on a Property value met by a subclass (E2EClassMachineShape).
+CLASS_TYPE=${E2E}/E2EClassMachine
+STATE_ID_PROP=${E2E}/hasE2EStateId
+NODE_EXECUTING=${E2E}/e2e_node_EXECUTING
+NODE_UNRELATED=${E2E}/e2e_node_UNRELATED
 
 ALERTS_OUT=/tmp/SHACL_FLINK_ALERTS
 TRIGGER_ERR=/tmp/SHACL_FLINK_TRIGGER_ERR
@@ -86,6 +91,8 @@ TEST_NODE_DEL_OWNER="urn:e2e-flink-node-del-owner:${RUN_ID}"
 TEST_NODE_DEL_PART="urn:e2e-flink-node-del-part:${RUN_ID}"
 TEST_NODE_PH_OWNER="urn:e2e-flink-node-ph-owner:${RUN_ID}"
 TEST_NODE_PH_PART="urn:e2e-flink-node-ph-part:${RUN_ID}"
+TEST_CLASS_SUB="urn:e2e-flink-class-sub:${RUN_ID}"
+TEST_CLASS_BAD="urn:e2e-flink-class-bad:${RUN_ID}"
 # A fixed instant in the past, standing in for an ngsi-ld:observedAt. Records
 # carrying it are older than everything else on the topic, which is the whole
 # point: it cannot win on time and must win on arrival order.
@@ -124,6 +131,15 @@ property_json() {
 
 publish_property() {
     printf '%s\n' "$(property_json "$@")" \
+        | kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP}
+}
+
+# A Property whose value is an IRI, as create_ngsild_models.py emits it: node
+# type '@id' and no valueType.
+publish_iri_property() {
+    local entity=$1 name=$2 value=$3
+    printf '{"id":"%s\\\\%s\\\\@none","entityId":"%s","name":"%s","nodeType":"@id","type":"https://uri.etsi.org/ngsi-ld/Property","attributeValue":"%s","datasetId":"@none","deleted":false,"synced":true}\n' \
+        "${entity}" "${name}" "${entity}" "${name}" "${value}" \
         | kafkacat -P -t ${ATTRIBUTES_TOPIC} -b ${KAFKA_BOOTSTRAP}
 }
 
@@ -985,6 +1001,52 @@ else:
         echo "${bad}" | sed 's/^/#   /' >&3
     fi
     [ -z "${bad}" ]
+}
+
+## ------------------------------------------ sh:class through subclasses
+
+@test "a Property value of a subclass of the sh:class converges to cleared" {
+    start_alert_capture
+    # Without hasE2EStateId the entity violates minCount, so it alerts: the
+    # transient proves the entity reached the job before the value did.
+    run publish_entity_until_alert "${TEST_CLASS_SUB}" "${CLASS_TYPE}" \
+        "CountConstraintComponent" 180
+    if [ "$status" -ne 0 ]; then
+        echo "# no transient alert to converge from; captured:" >&3
+        grep "${TEST_CLASS_SUB}" ${ALERTS_OUT} >&3 || echo "# (none)" >&3
+        dump_entity_records "${TEST_CLASS_SUB}"
+    fi
+    [ "$status" -eq 0 ]
+
+    # The value is an E2EObject, a subclass of the E2ENode the shape asks for.
+    # Matching the rdf:type triple alone reported it as not of the class.
+    publish_iri_property "${TEST_CLASS_SUB}" "${STATE_ID_PROP}" "${NODE_EXECUTING}"
+    wait_for_converged "${TEST_CLASS_SUB}" CLEAR 90
+    stop_alert_capture
+    result=$(final_alert_state "${TEST_CLASS_SUB}")
+    echo "# converged state for a subclass value: ${result}" >&3
+    if [ "${result}" != "CLEAR" ]; then
+        grep "${TEST_CLASS_SUB}" ${ALERTS_OUT} >&3 || true
+        dump_trigger_rows "${TEST_CLASS_SUB}" "ClassConstraintComponent"
+    fi
+    [ "${result}" = "CLEAR" ]
+}
+
+@test "a Property value of an unrelated class raises a class alert" {
+    start_alert_capture
+    publish_entity "${TEST_CLASS_BAD}" "${CLASS_TYPE}"
+    publish_iri_property "${TEST_CLASS_BAD}" "${STATE_ID_PROP}" "${NODE_UNRELATED}"
+    run wait_for_alert "${TEST_CLASS_BAD}" "ClassConstraintComponent(${STATE_ID_PROP}" 120
+    if [ "$status" -ne 0 ]; then
+        echo "# no class alert; captured:" >&3
+        grep "${TEST_CLASS_BAD}" ${ALERTS_OUT} >&3 || echo "# (none)" >&3
+        dump_entity_records "${TEST_CLASS_BAD}"
+        dump_trigger_rows "${TEST_CLASS_BAD}" "ClassConstraintComponent"
+    fi
+    [ "$status" -eq 0 ]
+    wait_for_event_converged "${TEST_CLASS_BAD}" "ClassConstraintComponent" ALERT 60
+    stop_alert_capture
+    [ "$(final_event_state "${TEST_CLASS_BAD}" "ClassConstraintComponent")" = "ALERT" ]
 }
 
 @test "an entity of an unconstrained type raises no shacl alerts" {

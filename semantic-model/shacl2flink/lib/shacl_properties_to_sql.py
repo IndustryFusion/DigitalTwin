@@ -681,9 +681,40 @@ DATATYPE_ONLY = '@datatype'
 # What such a row sees as the type of a value that is no literal.
 NOT_A_LITERAL = '@no-literal'
 
+# The classes every node of the knowledge is an instance of: the classes it is
+# typed with and each of their superclasses. sh:class asks for a value that is
+# an instance of the class or of a subclass of it (SHACL 4.1.1), and the
+# knowledge types a node with its most specific class only -- an OPC UA node
+# is a uacore:Object, and the shape asks for a uacore:Node. Looking up the
+# rdf:type triple alone reported every such value as not of the class.
+#
+# The knowledge closure materialises rdfs:subClassOf, so one join reaches every
+# superclass; the direct type is listed as well, for a class the knowledge
+# never declares. A node typed with several classes reaches a superclass on
+# several paths, and a join against them all would give one row per path, so
+# they are grouped to one row per (node, class): the base keeps one
+# row per attribute, and the lookup stays a key lookup as the rdf:type triple
+# was. The knowledge is static, and every input is pinned like the base's.
+sql_class_member_ctes = """rdf_type_closure AS (
+                SELECT /*+ STATE_TTL('T' = '0d', 'S' = '0d') */ T.subject AS subject, S.object AS object
+                FROM {{rdf_table_name}} AS T
+                JOIN {{rdf_table_name}} AS S ON S.subject = T.object
+                    AND S.predicate = '<http://www.w3.org/2000/01/rdf-schema#subClassOf>'
+                WHERE T.predicate = '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>'
+                UNION ALL
+                SELECT subject, object FROM {{rdf_table_name}}
+                WHERE predicate = '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>'
+            ),
+            rdf_class_members AS (
+                SELECT /*+ STATE_TTL('rdf_type_closure' = '0d') */ subject, object
+                FROM rdf_type_closure
+                GROUP BY subject, object
+            ),
+            """  # noqa: E501
+
 sql_check_property_iri_base = """
 INSERT {% if sqlite %} OR REPlACE{% endif %} INTO {{alerts_bulk_table}}
-WITH {{ focus_ctes }}A1 AS (SELECT {{ property_ttl_hint }} A.id as this,
+WITH {{ focus_ctes }}{{ class_member_ctes }}A1 AS (SELECT {{ property_ttl_hint }} A.id as this,
                    A.`type` as typ,
                    -- Carried, not filtered; see sql_check_relationship_base.
                    IFNULL(A.`deleted`, false) as edeleted,
@@ -726,8 +757,9 @@ WITH {{ focus_ctes }}A1 AS (SELECT {{ property_ttl_hint }} A.id as this,
                    D.id as constraint_id
                    FROM {% if focus_view %}{{ focus_view }}{% else %}`{{target_class}}_view`{% endif %} AS A JOIN {{constraint_table}} as D ON A.`type` = D.targetClass
             {{ attribute_joins }}
-            LEFT JOIN {{rdf_table_name}} as C ON C.subject = '<' || {{ deepest('attributeValue') }} || '>'
-                and C.predicate = '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>' and C.object = '<' || D.propertyClass || '>'
+            -- An instance of the class or of a subclass; see sql_class_member_ctes.
+            LEFT JOIN rdf_class_members as C ON C.subject = '<' || {{ deepest('attributeValue') }} || '>'
+                and C.object = '<' || D.propertyClass || '>'
              WHERE {{ level_guard }} and (attributeType IS NULL or attributeType IN ('https://uri.etsi.org/ngsi-ld/Property', 'https://uri.etsi.org/ngsi-ld/ListProperty', 'https://uri.etsi.org/ngsi-ld/JsonProperty'))
             )
 """.replace('DATATYPE_ONLY', DATATYPE_ONLY).replace('NOT_A_LITERAL', NOT_A_LITERAL)  # noqa: E501
@@ -1767,6 +1799,8 @@ def create_property_sql(focus=False):
 
     levels = attribute_level_context()
     levels.update(node_focus(focus))
+    levels['class_member_ctes'] = Template(sql_class_member_ctes).render(
+        rdf_table_name=configs.rdf_table_name)
     sql_command_yaml = Template(
         sql_check_property_iri_base).render(
         alerts_bulk_table=constraint_trigger_table_name,

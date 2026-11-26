@@ -1,0 +1,120 @@
+[
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld",
+    "id": "urn:subclass:subclass",
+    "type": "https://example.org/subclass/Machine",
+    "https://example.org/subclass/hasCurrentState": {
+      "type": "Property",
+      "value": "Executing",
+      "https://example.org/subclass/hasId": {
+        "type": "Property",
+        "value": {
+          "@id": "https://example.org/subclass/executing"
+        }
+      }
+    },
+    "https://example.org/subclass/hasKind": {
+      "type": "Property",
+      "value": {
+        "@id": "https://example.org/subclass/executing"
+      }
+    }
+  },
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld",
+    "id": "urn:subclass:direct",
+    "type": "https://example.org/subclass/Machine",
+    "https://example.org/subclass/hasCurrentState": {
+      "type": "Property",
+      "value": "Executing",
+      "https://example.org/subclass/hasId": {
+        "type": "Property",
+        "value": {
+          "@id": "https://example.org/subclass/stopped"
+        }
+      }
+    },
+    "https://example.org/subclass/hasKind": {
+      "type": "Property",
+      "value": {
+        "@id": "https://example.org/subclass/stopped"
+      }
+    }
+  },
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld",
+    "id": "urn:subclass:two-types",
+    "type": "https://example.org/subclass/Machine",
+    "https://example.org/subclass/hasCurrentState": {
+      "type": "Property",
+      "value": "Executing",
+      "https://example.org/subclass/hasId": {
+        "type": "Property",
+        "value": {
+          "@id": "https://example.org/subclass/both"
+        }
+      }
+    },
+    "https://example.org/subclass/hasKind": {
+      "type": "Property",
+      "value": {
+        "@id": "https://example.org/subclass/both"
+      }
+    }
+  },
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld",
+    "id": "urn:subclass:unrelated",
+    "type": "https://example.org/subclass/Machine",
+    "https://example.org/subclass/hasCurrentState": {
+      "type": "Property",
+      "value": "Executing",
+      "https://example.org/subclass/hasId": {
+        "type": "Property",
+        "value": {
+          "@id": "https://example.org/subclass/unrelated"
+        }
+      }
+    },
+    "https://example.org/subclass/hasKind": {
+      "type": "Property",
+      "value": {
+        "@id": "https://example.org/subclass/unrelated"
+      }
+    }
+  },
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld",
+    "id": "urn:subclass:unknown",
+    "type": "https://example.org/subclass/Machine",
+    "https://example.org/subclass/hasCurrentState": {
+      "type": "Property",
+      "value": "Executing",
+      "https://example.org/subclass/hasId": {
+        "type": "Property",
+        "value": {
+          "@id": "urn:unknown:1"
+        }
+      }
+    },
+    "https://example.org/subclass/hasKind": {
+      "type": "Property",
+      "value": {
+        "@id": "urn:unknown:1"
+      }
+    }
+  },
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.8.jsonld",
+    "id": "urn:subclass:list",
+    "type": "https://example.org/subclass/Machine",
+    "https://example.org/subclass/hasEvents": {
+      "type": "ListProperty",
+      "valueList": [
+        {
+          "@id": "https://example.org/subclass/PARAMETER_CHANGE"
+        }
+      ]
+    }
+  }
+]
