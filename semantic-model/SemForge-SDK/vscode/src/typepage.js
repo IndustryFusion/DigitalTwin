@@ -573,7 +573,8 @@ const LINK_SCRIPT = `
 
 const BUSY_SCRIPT = LINK_SCRIPT + `
   const BUSY_TARGETS = '[data-action],[data-edit],[data-assert],[data-dropassert],' +
-    '[data-retarget],[data-rowmenu],[data-addattr],[data-addentity],[data-pagemenu],[data-newcase]';
+    '[data-retarget],[data-rowmenu],[data-addattr],[data-addentity],[data-pagemenu],[data-newcase],' +
+    '[data-removeentity]';
   function markBusy(node) {
     const holder = node.closest('tr, .attr, .claim, .card, .rule, .case, .file, h1') || node;
     if (holder.classList.contains('busy')) { return; }

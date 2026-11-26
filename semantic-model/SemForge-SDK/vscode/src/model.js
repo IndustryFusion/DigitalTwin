@@ -33,6 +33,7 @@ const { askDatasetId } = require('./datasetid');
 
 const search = require('./search');
 const { noPackageMessage } = require('./locate');
+const { removeEntity } = require('./removeentity');
 const { showLocation, treeDetail, treeClick, icon, rowClicks } = require('./reveal');
 
 // The contextValue vocabulary, spelled out. `when: viewItem == x` matches a
@@ -1308,6 +1309,13 @@ function register(context, clientHolder, session, onChanged) {
       }
       return result;
     }),
+
+    vscode.commands.registerCommand('semforge.removeEntity', (node) => removeEntity(clientHolder, node, () => {
+      provider.refresh();
+      if (onChanged) {
+        onChanged();
+      }
+    })),
 
     // Its rule on the type page; or, asked for by name, in the .ttl.
     vscode.commands.registerCommand('semforge.goToShape',

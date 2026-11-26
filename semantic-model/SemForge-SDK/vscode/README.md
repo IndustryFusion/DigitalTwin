@@ -216,6 +216,16 @@ in another, and neither copy nor paste reads a file with entities inside `"@grap
 with an entity written in a relationship's object: write them as a list, and
 each entity as one of its own.
 
+### Remove an entity
+
+**Remove entity…** is on an entity's row in **Entities & Test Cases** and
+**Remove…** on its card: in a test case, in a file that cases include, and in
+the main model. It asks first and says what still points at the entity in its
+file, which cases assert something on it and which cases use the file. Only the
+entity goes; what refers to it stays as it is. When an id is written twice, the
+one the row or card shows goes; a file that has changed since, or has unsaved
+edits, is refused. There is no undo but version control.
+
 ### If the trees are empty
 
 Run **`SemForge: Doctor`** from the Command Palette (`Ctrl+Shift+P`). It prints

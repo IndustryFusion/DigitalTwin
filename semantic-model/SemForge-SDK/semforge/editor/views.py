@@ -141,6 +141,8 @@ def _serialise_example(node):
         # Without this the client has no location and selection reveals
         # nothing -- which is how the examples tree looked inert.
         'definedAt': node.defined_at,
+        # Which of a file's entities this row is, and of what the file said then.
+        **({'position': node.position, 'digest': node.digest} if node.kind == 'entity' else {}),
         'children': [_serialise_example(child) for child in node.children],
     }
 

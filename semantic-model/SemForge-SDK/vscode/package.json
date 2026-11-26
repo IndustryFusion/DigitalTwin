@@ -529,6 +529,12 @@
         "category": "SemForge"
       },
       {
+        "command": "semforge.removeEntity",
+        "title": "Remove entity…",
+        "icon": "$(trash)",
+        "category": "SemForge"
+      },
+      {
         "command": "semforge.removeCaseValue",
         "title": "Remove…",
         "icon": "$(trash)",
@@ -1318,6 +1324,11 @@
           "group": "2_edit@9"
         },
         {
+          "command": "semforge.removeEntity",
+          "when": "view == semforgeModel && viewItem == entity",
+          "group": "2_edit@9"
+        },
+        {
           "command": "semforge.removeCaseValue",
           "when": "view == semforgeModel && viewItem =~ /^(exampleEditable|exampleDataset|exampleSeries|attributeReadOnly)$/",
           "group": "2_edit@9"
@@ -1489,6 +1500,10 @@
         },
         {
           "command": "semforge.setValueType",
+          "when": "false"
+        },
+        {
+          "command": "semforge.removeEntity",
           "when": "false"
         },
         {

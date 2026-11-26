@@ -147,7 +147,10 @@ function card(entity, focused, at) {
       `<button class="mini" data-copyentity="${at}" title="Copy ${escape(entity.id)}, to be pasted into a test case">` +
       'Copy</button>' +
       `<button class="mini" data-copysubtree="${at}" title="Copy ${escape(entity.id)} and its children ` +
-      '(HasChild references), and theirs">Copy subtree</button>' : '';
+      '(HasChild references), and theirs">Copy subtree</button>'  +
+      `<button class="mini" data-removeentity="${at}" data-digest="${escape(entity.digest || '')}" ` +
+      `data-file="${escape(entity.file || '')}" data-position="${entity.position}" data-id="${escape(entity.id)}" ` +
+      `title="Remove ${escape(entity.id)} from this file">Remove…</button>` : '';
   const names = (entity.attributes || []).map((row) => row.name).join('|');
   return `<div class="card${bad ? ' bad' : ''}${focused ? ' focus" id="focus' : ''}"` +
     ` data-card="${at === undefined ? '' : at}" data-id="${escape(entity.id || '')}"` +
@@ -996,7 +999,8 @@ ${BUSY_SCRIPT}
     if (event.target.closest('.stampedit')) { return; }
     const target = event.target.closest('[data-open],[data-type],[data-refresh],[data-assert],' +
       '[data-edit],[data-rowmenu],[data-addattr],[data-addentity],[data-pagemenu],' +
-      '[data-retarget],[data-dropassert],[data-valuetype],[data-pagecmd],[data-copyentity],[data-copysubtree]');
+      '[data-retarget],[data-dropassert],[data-valuetype],[data-pagecmd],[data-copyentity],[data-copysubtree],' +
+      '[data-removeentity]');
     if (!target) { return; }
     event.preventDefault();
     const d = target.dataset;
@@ -1004,6 +1008,10 @@ ${BUSY_SCRIPT}
     else if (d.copyentity !== undefined) { vscode.postMessage({ command: 'copyEntity', at: d.copyentity }); }
     else if (d.copysubtree !== undefined) { vscode.postMessage({ command: 'copySubtree', at: d.copysubtree }); }
     else if (d.pagecmd) { vscode.postMessage({ command: d.pagecmd }); }
+    else if (d.removeentity !== undefined) {
+      vscode.postMessage({ command: 'removeEntity', at: d.removeentity,
+        value: { digest: d.digest, file: d.file, position: Number(d.position), id: d.id } });
+    }
     else if (d.pagemenu) { vscode.postMessage({ command: 'pageMenu' }); }
     else if (d.retarget !== undefined) { vscode.postMessage({ command: 'retargetAssert', index: Number(d.retarget) }); }
     else if (d.dropassert !== undefined) { vscode.postMessage({ command: 'removeAssert', index: Number(d.dropassert) }); }
@@ -1277,7 +1285,8 @@ class CasePages {
       // On success the case page reopens on the renamed file.
       await vscode.commands.executeCommand('semforge.renameTestCase',
         { raw: { kind: 'example', file: this.page.file }, packageUri: this.current.packageUri });
-    } else if (['edit', 'rowMenu', 'addAttribute', 'addEntity', 'stamp', 'valueType', 'copyEntity', 'copySubtree']
+    } else if (['edit', 'rowMenu', 'addAttribute', 'addEntity', 'stamp', 'valueType', 'copyEntity', 'copySubtree',
+      'removeEntity']
       .includes(message.command)) {
       await this.edit(message.command, `${message.at}`, message.value);
     }
@@ -1323,6 +1332,19 @@ class CasePages {
     } else if ((command === 'copyEntity' || command === 'copySubtree') && card) {
       await run(`semforge.${command}`, { kind: 'entity', entity: card.id, file: card.file || file.path });
       return;                          // nothing changed: the page stays as it is
+    } else if (command === 'removeEntity' && card) {
+      // `value` is what the clicked card showed, on a page that may be an
+      // older one: another card there is refused, an older content by the server.
+      const shown = value || {};
+      const where = card.file || file.path;
+      if (shown.file !== where || shown.position !== card.position || shown.id !== card.id) {
+        vscode.window.showErrorMessage('SemForge: the page has changed since it was shown; nothing is removed.');
+        // As after any refusal: the view as well as the page, as the file is now.
+        await vscode.commands.executeCommand('semforge.refreshModel');
+      } else {
+        await run('semforge.removeEntity', { kind: 'entity', entity: card.id, file: where,
+          position: card.position, digest: shown.digest });
+      }
     } else if (command === 'edit' && row && row.node) {
       await run('semforge.editValue', row.node);
     } else if (command === 'valueType' && row && row.node) {

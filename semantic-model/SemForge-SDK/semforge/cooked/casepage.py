@@ -169,6 +169,7 @@ def _latest(members):
 def _cards(path, role, shared_by, violations):
     """One card per entity in a file."""
     from .jsonloc import locate
+    from .removeentity import digest_of
 
     with open(path, encoding='utf-8') as handle:
         text = handle.read()
@@ -179,7 +180,7 @@ def _cards(path, role, shared_by, violations):
         return [{'id': '', 'type': '', 'error': f'not valid JSON: {exc}',
                  'file': path, 'line': 1, 'attributes': [], 'violations': []}]
     entities = document if isinstance(document, list) else [document]
-    cards = []
+    digest, cards = digest_of(text), []
     for position, entity in enumerate(entities):
         if not isinstance(entity, dict):
             continue
@@ -188,6 +189,7 @@ def _cards(path, role, shared_by, violations):
         cards.append({
             'id': identifier, 'type': _short(entity.get('type') or entity.get('@type') or ''),
             'file': path, 'line': index.get((position,)) or 1,
+            'position': position, 'digest': digest,
             'attributes': attributes,
             # Violations about the entity as a whole, or about an attribute
             # it does not carry -- a missing attribute is exactly that.

@@ -80,6 +80,8 @@ class ExampleNode:
     observations: int = 0      # how many, when it is a series
     attribute_path: list = field(default_factory=list)  # where to append one
     datasets: list = field(default_factory=list)  # every datasetId of the attribute
+    position: int = -1         # an entity's place in its file
+    digest: str = ''           # of the file's content an entity was read from
 
     @property
     def is_series(self):
@@ -88,7 +90,11 @@ class ExampleNode:
 
 def _entities(path):
     with open(path, encoding='utf-8') as handle:
-        document = json.load(handle, object_pairs_hook=OrderedDict)
+        return _documents(handle.read())
+
+
+def _documents(text):
+    document = json.loads(text, object_pairs_hook=OrderedDict)
     return document if isinstance(document, list) else [document]
 
 
@@ -567,6 +573,7 @@ def _note_identity(node, notes):
 def _entity_nodes(path, report=None, editable=True, notes=None,
                   shared_by=()):
     from .jsonloc import locate
+    from .removeentity import digest_of
 
     with open(path, encoding='utf-8') as handle:
         raw = handle.read()
@@ -575,6 +582,7 @@ def _entity_nodes(path, report=None, editable=True, notes=None,
     except Exception:                              # noqa: BLE001
         index = {}
 
+    digest = digest_of(raw)
     findings = {}
     counts = {}
     for result in (report.violations if report is not None else []):
@@ -584,13 +592,14 @@ def _entity_nodes(path, report=None, editable=True, notes=None,
         counts[result.resource] = counts.get(result.resource, 0) + 1
 
     out = []
-    for position, entity in enumerate(_entities(path)):
+    for position, entity in enumerate(_documents(raw)):
         if not isinstance(entity, dict):
             continue
         identifier = str(entity.get('id') or entity.get('@id') or '(no id)')
         node = ExampleNode(
             kind='entity', label=identifier, entity=identifier,
-            detail=str(entity.get('type') or entity.get('@type') or ''))
+            detail=str(entity.get('type') or entity.get('@type') or ''),
+            position=position, digest=digest)
         if counts.get(identifier):
             node.severity = 'violation'
             node.detail += f' · {counts[identifier]} violation(s)'
