@@ -621,6 +621,30 @@
         "title": "Open in SemForge",
         "icon": "$(preview)",
         "category": "SemForge"
+      },
+      {
+        "command": "semforge.bookmarks",
+        "title": "Pinned and recent…",
+        "icon": "$(bookmark)",
+        "category": "SemForge"
+      },
+      {
+        "command": "semforge.pin",
+        "title": "Pin or unpin",
+        "icon": "$(star-empty)",
+        "category": "SemForge"
+      },
+      {
+        "command": "semforge.pinPage",
+        "title": "Pin this page",
+        "icon": "$(star-empty)",
+        "category": "SemForge"
+      },
+      {
+        "command": "semforge.unpinPage",
+        "title": "Unpin this page",
+        "icon": "$(star-full)",
+        "category": "SemForge"
       }
     ],
     "viewsContainers": {
@@ -827,6 +851,11 @@
           "command": "semforge.clearSearch",
           "when": "view == semforgeKnowledge && semforge.searching",
           "group": "navigation@4"
+        },
+        {
+          "command": "semforge.bookmarks",
+          "when": "view == semforgeModel",
+          "group": "1_pages@1"
         }
       ],
       "view/item/context": [
@@ -1279,6 +1308,26 @@
           "command": "semforge.removeCaseValue",
           "when": "view == semforgeModel && viewItem =~ /^(exampleEditable|exampleDataset|exampleSeries|attributeReadOnly)$/",
           "group": "2_edit@9"
+        },
+        {
+          "command": "semforge.pin",
+          "when": "view == semforgeModel && viewItem =~ /^(entity|example|violation)$/",
+          "group": "0_open@6"
+        },
+        {
+          "command": "semforge.pin",
+          "when": "view == semforgeConstraints && viewItem =~ /^(type|attribute|rule|shape|inherited|editable)$/",
+          "group": "0_open@6"
+        },
+        {
+          "command": "semforge.pin",
+          "when": "view == semforgeShapes && viewItem =~ /^(shape|rule)$/",
+          "group": "0_open@6"
+        },
+        {
+          "command": "semforge.pin",
+          "when": "view == semforgeKnowledge && viewItem =~ /^(class|classWithShape|usage|instance)$/",
+          "group": "0_open@6"
         }
       ],
       "semforge.project": [
@@ -1461,6 +1510,18 @@
         {
           "command": "semforge.clearSearch",
           "when": "semforge.searching"
+        },
+        {
+          "command": "semforge.pin",
+          "when": "false"
+        },
+        {
+          "command": "semforge.unpinPage",
+          "when": "false"
+        },
+        {
+          "command": "semforge.pinPage",
+          "when": "activeWebviewPanelId =~ /^semforge(TypePage|ShapePage|CasePage|VocabularyPage|SparqlBench)$/"
         }
       ],
       "editor/title": [
@@ -1478,6 +1539,27 @@
           "command": "semforge.openHere",
           "when": "resourceExtname == .ttl || resourceExtname == .jsonld || resourceFilename == expectations.yaml",
           "group": "navigation@1"
+        },
+        {
+          "command": "semforge.pinPage",
+          "when": "activeWebviewPanelId =~ /^semforge(TypePage|ShapePage|CasePage|VocabularyPage|SparqlBench)$/ && !semforge.pagePinned",
+          "group": "navigation@1"
+        },
+        {
+          "command": "semforge.unpinPage",
+          "when": "activeWebviewPanelId =~ /^semforge(TypePage|ShapePage|CasePage|VocabularyPage|SparqlBench)$/ && semforge.pagePinned",
+          "group": "navigation@1"
+        },
+        {
+          "command": "semforge.bookmarks",
+          "when": "activeWebviewPanelId =~ /^semforge(TypePage|ShapePage|CasePage|VocabularyPage|SparqlBench)$/",
+          "group": "navigation@2"
+        }
+      ],
+      "webview/context": [
+        {
+          "command": "semforge.pin",
+          "when": "webviewSection == 'semforgeEntity'"
         }
       ]
     },
@@ -1540,6 +1622,12 @@
         "key": "ctrl+alt+f",
         "mac": "cmd+alt+f",
         "when": "!editorTextFocus"
+      },
+      {
+        "command": "semforge.bookmarks",
+        "key": "ctrl+alt+b",
+        "mac": "cmd+alt+b",
+        "when": "focusedView =~ /^semforge/ || activeWebviewPanelId =~ /^semforge/"
       }
     ]
   },

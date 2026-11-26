@@ -816,6 +816,13 @@ class TypePages {
       }
       return;
     }
+    if (message.command === 'pinRule') {
+      const rule = (this.page.rules || [])[message.row];
+      await vscode.commands.executeCommand('semforge.pin', { packageUri: this.current.packageUri,
+        raw: { kind: 'rule', shape: rule.shape, queryKind: rule.kind,
+          label: rule.text || rule.shapeName.split(':').pop() } });
+      return;
+    }
     if (message.command === 'ruleMenu') {
       const rule = (this.page.rules || [])[message.row];
       if (!rule) {
@@ -824,6 +831,7 @@ class TypePages {
       const picked = await vscode.window.showQuickPick([
         { label: '$(beaker) Open in SPARQL workbench', message: { command: 'bench', shape: rule.shape, kind: rule.kind } },
         { label: '$(symbol-interface) Open its shape page', message: { command: 'shape', name: rule.shape } },
+        { label: '$(star-empty) Pin or unpin', message: { command: 'pinRule', row: message.row } },
         { label: '$(go-to-file) Open in .ttl', message: { command: 'open', at: rule.definedAt } }
       ].filter((item) => item.message.at !== ''), { title: rule.text || rule.shapeName });
       if (picked) {
@@ -1176,6 +1184,13 @@ async function rowMenu(pages, row) {
   const choices = [
     { label: '$(beaker) New test…', description: 'valid, or one of its constraints firing',
       run: newTest },
+    { label: '$(star-empty) Pin or unpin', description: 'to come back to it: Ctrl+Alt+B',
+      run: async () => {
+        await vscode.commands.executeCommand('semforge.pin', { packageUri: pages.current.packageUri,
+          raw: { kind: 'attribute', label: row.label, path: row.path,
+            typeClass: 'testType' in pages.page ? pages.page.testType : pages.page.iri } });
+        return false;
+      } },
     // Everything about the constraint -- presence, value, severity, unit --
     // is changed in the attribute editor beside the page.
     { label: '$(edit) Edit…', description: 'presence, value, severity, unit — in the attribute editor',

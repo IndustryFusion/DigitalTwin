@@ -1938,7 +1938,8 @@ def test_remove_this_use_is_not_in_the_palette():
     # Open source likewise: it opens the row it was invoked on. Removing a
     # SPARQL query needs the shape and the query it was offered on; a rename,
     # the shape, case or suite it was offered on.
-    assert hidden == {'semforge.removeUse', 'semforge.setValueType', 'semforge.openSource', 'semforge.newAttributeTest',
+    assert hidden == {'semforge.removeUse', 'semforge.setValueType', 'semforge.pin', 'semforge.unpinPage',
+                      'semforge.openSource', 'semforge.newAttributeTest',
                       'semforge.mergeShape', 'semforge.removeSparqlQuery',
                       'semforge.nestForFlink', 'semforge.renameShape',
                       'semforge.renameTestCase', 'semforge.renameSuite',

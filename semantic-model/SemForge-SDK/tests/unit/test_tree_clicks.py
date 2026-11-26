@@ -1045,7 +1045,7 @@ def test_a_rule_s_menu_opens_it_where_it_is_edited(tmp_path):
                  picks=['$(beaker) Open in SPARQL workbench'])
     assert [i['label'] for i in seen['quickPicks'][0]['items']] == [
         '$(beaker) Open in SPARQL workbench', '$(symbol-interface) Open its shape page',
-        '$(go-to-file) Open in .ttl']
+        '$(star-empty) Pin or unpin', '$(go-to-file) Open in .ttl']
     opened = _opened(seen, 'semforge.openSparqlBench')
     assert opened[0][0]['raw']['shape'] == 'https://x/MachineRule' and \
         opened[0][1] == {'kind': 'rule'}

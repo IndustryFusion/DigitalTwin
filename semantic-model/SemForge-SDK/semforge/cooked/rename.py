@@ -234,9 +234,10 @@ def rename_shape(package, shape, new_name, suite=False):
     renamed, _ = _rename_asserts(package, done['name'], done['newCurie'])
 
     moved = ''
+    folders = []
     if suite and done['suite'] and done['suite']['free']:
-        os.rename(_suite_folder(package, done['oldName']),
-                  _suite_folder(package, new_name))
+        folders = [_suite_folder(package, done['oldName']), _suite_folder(package, new_name)]
+        os.rename(*folders)
         moved = done['suite']['to']
 
     def now(path):
@@ -257,8 +258,9 @@ def rename_shape(package, shape, new_name, suite=False):
                 repinned.append(example.path)
         if repinned:
             save_expectations(expectations)
+    # The folders, for what names them by path (the editor's pins).
     return dict(done, asserts=renamed, repinned=sorted(repinned), suiteMoved=moved,
-                files=[item['file'] for item in done['files']])
+                suiteFolders=folders, files=[item['file'] for item in done['files']])
 
 
 # --- cases and suites --------------------------------------------------------------

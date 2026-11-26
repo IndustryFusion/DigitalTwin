@@ -142,6 +142,17 @@ top right of the editor, or the right-click menu) goes to the page of what the
 cursor is on: the shape, type, vocabulary class, entity or test case. A line
 about nothing that has a page searches for the word at the cursor instead.
 
+### Pinned and recent
+
+**SemForge: Pinned and recent…** (`Ctrl+Alt+B` in a SemForge view or page,
+where it takes the place of VS Code's secondary side bar toggle) lists what you
+pinned and, after it, the last 15 places you were; type a few letters and press
+Enter. Pin a page with the ☆ at its top right; a row of a view with a right
+click; an attribute or a query with its `⋯`. A pin names the thing itself -- a
+shape, an entity in its case -- not a line of a file, and follows a rename done
+in SemForge. One whose target is gone says so, and can be searched for or taken
+out. Pins are yours, in this workspace: nothing is written into the package.
+
 ### The views: two columns
 
 The **SemForge** column holds what a model is worked on with: the package and

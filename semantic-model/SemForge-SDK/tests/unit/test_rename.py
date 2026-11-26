@@ -77,6 +77,8 @@ def test_a_renamed_shape_tests_exactly_as_before(kms):
     text = _read(kms / 'shacl.ttl')
     done = rename_shape(load(str(kms)), CUTTER, 'CutterRunningShape-c0ffee12', suite=True)
     assert done['asserts'] == 1 and done['suiteMoved'] == 'test_CutterRunningShape-c0ffee12'
+    assert done['suiteFolders'] == [str(kms / 'examples' / name) for name in (
+        'test_StateOnCutterShape', 'test_CutterRunningShape-c0ffee12')]
     after = _semforge('test', str(kms))
     assert after.returncode == 0, after.stdout[-600:]
     # Byte-exact: the one name changed, nothing else in the file.

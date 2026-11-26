@@ -153,6 +153,11 @@ async function renameShape(clientHolder, session, node, bench, preset) {
     return undefined;
   }
   refreshViews();
+  const pins = require('./bookmarks');
+  await pins.renamed(packageUri, shape, done.newIri, done.newName.split(':').pop());
+  if ((done.suiteFolders || []).length === 2) {
+    await pins.renamed(packageUri, done.suiteFolders[0], done.suiteFolders[1]);
+  }
   await vscode.commands.executeCommand('semforge.openShapePage',
     { raw: { shape: done.newIri }, packageUri });
   vscode.window.showInformationMessage(`SemForge: ${done.oldName} is now ${done.newName}` +
@@ -189,6 +194,7 @@ async function renameCase(clientHolder, session, node) {
   }
   await reopen(open, file, done.file);
   refreshViews();
+  await require('./bookmarks').renamed(packageUri, file, done.file, path.basename(done.file, '.jsonld'));
   await vscode.commands.executeCommand('semforge.openCasePage',
     { raw: { kind: 'example', file: done.file }, packageUri });
   return done;
@@ -219,6 +225,7 @@ async function renameSuite(clientHolder, session, node) {
   }
   // Editors of files in the folder now show a path that is gone.
   await reopen(await closeTabs(done.source), done.source, done.folder);
+  await require('./bookmarks').renamed(packageUri, done.source, done.folder);
   refreshViews();
   return done;
 }

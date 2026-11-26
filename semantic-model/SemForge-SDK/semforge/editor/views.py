@@ -852,6 +852,22 @@ def case_page_feature(ls, params):
         return {'ok': False, 'error': str(exc)}
 
 
+@server.feature('semforge/pinsExist')
+def pins_exist_feature(ls, params):
+    """Whether what each pin names is still in the package."""
+    from .search import pins_exist
+
+    root = package_root(uri_to_path(field(params, 'uri', '')))
+    if root is None:
+        return {'ok': False, 'gone': True, 'error': 'not a SemForge package'}
+    try:
+        return {'ok': True, 'exist': pins_exist(session.package_for(root), [
+            {key: field(pin, key) for key in ('kind', 'id', 'names', 'file')}
+            for pin in field(params, 'pins', []) or []])}
+    except Exception as exc:                       # noqa: BLE001
+        return {'ok': False, 'error': str(exc)}
+
+
 @server.feature('semforge/health')
 def health_feature(ls, params):
     """The package health page: figures, and what needs attention first."""

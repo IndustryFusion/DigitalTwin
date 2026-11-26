@@ -387,6 +387,9 @@ function activate(context) {
   const packageView = packagePage.register(context, clientHolder, session);
   // One page per shape: its target in words, what it checks, what it reaches.
   const shapeViews = shapePages.register(context, clientHolder, session);
+  // Pins and the places visited last: what one comes back to.
+  require('./bookmarks').register(context, clientHolder, session, { type: typeViews, shape: shapeViews,
+    case: caseViews, vocabulary: vocabularyViews, sparql: sparqlBench });
   shapeDelete.register(context, clientHolder, session,
     { bench: sparqlBench, shape: shapeViews });
 

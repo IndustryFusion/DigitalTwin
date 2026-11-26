@@ -298,3 +298,55 @@ def _expectations_page(path, text, line):
             continue
     return {'page': 'case', 'file': os.path.normpath(os.path.join(os.path.dirname(path), found)),
             'focus': None} if found else None
+
+
+# --- pins --------------------------------------------------------------------------------
+
+def pins_exist(package, pins):
+    """[bool] -- per pin ({'kind', 'id', 'names', 'file'}), is it still there?"""
+    from rdflib import RDF
+    from rdflib.namespace import SH
+
+    from ..cooked.choices import attribute_terms, entity_types
+    from ..expect.store import examples_root, load_expectations
+    from ..rdfio.relative import as_written
+    from ..validate.shapes import every_node_shape
+
+    root = examples_root(package.path)
+    types = {t.iri for t in entity_types(package)[0]}
+    shapes = {str(s) for s in every_node_shape(package.shapes)}
+    attributes = {a.label for a in attribute_terms(package)}
+    cases = {os.path.abspath(os.path.join(root, e.path)) for e in load_expectations(package.path).examples}
+    entities = {as_written(s) for s in package.model.subjects(RDF.type, None)}
+
+    def there(pin):
+        kind, name = pin['kind'], str(pin['id'] or '')
+        if kind == 'type':
+            return name in types
+        if kind == 'attribute':
+            return name in types and all(n in attributes for n in pin.get('names') or [])
+        if kind in ('shape', 'query'):
+            return name in shapes
+        if kind == 'case':
+            return os.path.abspath(name) in cases
+        if kind == 'entity':
+            # In its case's file when it names one; only otherwise in the model.
+            return _written_in(pin['file'], name) if pin.get('file') else name in entities
+        if kind == 'vocabulary':
+            # sh:Severity's page is SHACL's own levels, whatever the knowledge says.
+            return name in (str(SH.Severity), 'sh:Severity') or (_iri(name), None, None) in package.knowledge
+        return True
+    return [there(pin) for pin in pins]
+
+
+def _written_in(path, entity):
+    """Is the id written in this file -- a case's, or one it includes?"""
+    import json
+
+    try:
+        with open(path or '', encoding='utf-8') as handle:
+            data = json.load(handle)
+    except (OSError, ValueError):
+        return False
+    return any(isinstance(d, dict) and entity in (d.get('id'), d.get('@id'))
+               for d in (data if isinstance(data, list) else [data]))
