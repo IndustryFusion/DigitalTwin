@@ -25,6 +25,8 @@ package, its verdicts and a digest of every file, and compares:
   IRI in its tree -- are evaluated again, on the main model and every case;
   their old results are replaced, everyone else's kept. A shape with sh:rule
   in the change means everything: rules rewrite the data every shape reads;
+  so does a changed constraint component, SHACL function or target type,
+  which applies wherever it is used without being named;
 * **a case or an include** changed: the cases built from it are validated
   again, whole;
 * **the main model** changed: it is validated again, whole;
@@ -51,6 +53,7 @@ from dataclasses import dataclass, field
 from rdflib import BNode, Graph, URIRef
 from rdflib.namespace import SH
 
+from ..validate.shapes import globals_of
 from .verdicts import Verdicts, compute
 
 IGNORED_SUFFIXES = ('.md', '.txt', '.gitignore')
@@ -165,6 +168,10 @@ def changed_shapes(old, new, before=None, after=None):
                 todo.append(who)
     for graph in (old, new):
         if any(str(s) in affected for s in graph.subjects(SH.rule, None)):
+            return None
+        # A constraint component, a SHACL function or a target type applies
+        # wherever it is used, which nothing has to name (#1105).
+        if any(str(g) in affected for g in globals_of(graph)):
             return None
     return affected
 

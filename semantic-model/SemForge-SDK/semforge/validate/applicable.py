@@ -113,22 +113,90 @@ def focus_nodes(shape, shapes_graph, data_graph, knowledge_graph=None):
     for target in shapes_graph.objects(shape, SH.target):
         for select in shapes_graph.objects(target, SH.select):
             nodes.update(_sparql_target(shapes_graph, target, str(select), typing))
+        # An instance of a SPARQL target type: the type's SELECT, with the
+        # instance's parameter values pre-bound by the local names of their paths.
+        for kind in shapes_graph.objects(target, RDF.type):
+            for select in shapes_graph.objects(kind, SH.select):
+                bindings = {}
+                for parameter in shapes_graph.objects(kind, SH.parameter):
+                    path = shapes_graph.value(parameter, SH.path)
+                    value = shapes_graph.value(target, path) if isinstance(path, URIRef) else None
+                    if value is not None:
+                        bindings[local(path)] = value
+                nodes.update(_sparql_target(shapes_graph, kind, str(select), typing, bindings))
     return nodes
 
 
-def _sparql_target(shapes_graph, target, select, data_graph):
+def _sparql_target(shapes_graph, target, select, data_graph, bindings=None):
     """?this of a SPARQL target's SELECT, with its sh:prefixes declared."""
+    from rdflib import Variable
+
     try:
-        rows = data_graph.query('\n'.join(prefixes.lines(shapes_graph, target) + [select]))
+        rows = data_graph.query('\n'.join(prefixes.lines(shapes_graph, target) + [select]),
+                                initBindings={Variable(k): v for k, v in (bindings or {}).items()})
     except Exception:                               # noqa: BLE001
         return set()                                # pyshacl will say why
     return {row.this for row in rows if getattr(row, 'this', None) is not None}
 
 
 def _constraints_of(node, shapes_graph):
-    """The constraint components a single shape node declares."""
-    return sorted({name for parameter, name in PARAMETERS.items()
-                   if (node, parameter, None) in shapes_graph})
+    """The constraint components a single shape node declares: SHACL's own,
+    and those the shapes graph defines (custom_components)."""
+    found = {name for parameter, name in PARAMETERS.items()
+             if (node, parameter, None) in shapes_graph}
+    if not _components(shapes_graph):
+        return sorted(found)
+    kind = 'property' if (node, SH.path, None) in shapes_graph else 'node'
+    for name, required, optional, kinds in _components(shapes_graph):
+        used = [p for p in required | optional if (node, p, None) in shapes_graph]
+        if kind in kinds and used and all((node, p, None) in shapes_graph for p in required):
+            found.add(name)
+    return sorted(found)
+
+
+def custom_components(shapes_graph):
+    """[(name, mandatory parameters, optional parameters, shape kinds)] of every
+    constraint component the shapes graph defines (SHACL 6): a shape uses one
+    by carrying a value for each of its mandatory parameters. Its validators
+    say for which shapes: sh:validator for both kinds, sh:nodeValidator for
+    node shapes, sh:propertyValidator for property shapes. Named as pyshacl
+    names it in a result."""
+    from ..rdfio.frozen import derived
+
+    return derived(shapes_graph, 'custom_components', lambda: _custom_components(shapes_graph))
+
+
+_components = custom_components
+
+
+def _custom_components(shapes_graph):
+    from rdflib import Literal
+
+    from .shapes import component_classes, globals_of
+
+    classes = component_classes(shapes_graph)
+    found = []
+    for component in sorted(globals_of(shapes_graph), key=str):
+        if not any((component, RDF.type, cls) in shapes_graph for cls in classes):
+            continue
+        required, optional = set(), set()
+        for parameter in shapes_graph.objects(component, SH.parameter):
+            path = shapes_graph.value(parameter, SH.path)
+            if not isinstance(path, URIRef):
+                continue
+            flag = shapes_graph.value(parameter, SH.optional)
+            (optional if isinstance(flag, Literal) and flag.toPython() is True else required).add(path)
+        kinds = set()
+        if (component, SH.validator, None) in shapes_graph:
+            kinds |= {'node', 'property'}
+        if (component, SH.nodeValidator, None) in shapes_graph:
+            kinds.add('node')
+        if (component, SH.propertyValidator, None) in shapes_graph:
+            kinds.add('property')
+        if required | optional and kinds:
+            found.append((local(component), frozenset(required), frozenset(optional),
+                          frozenset(kinds)))
+    return found
 
 
 def _walk(node, shapes_graph, attribute, seen, value_path=None):

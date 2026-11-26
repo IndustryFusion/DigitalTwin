@@ -173,9 +173,13 @@ def _shape_checks(package, declared):
     exact term in the file that writes it."""
     from .rdfio import terms
 
+    # The paths of the data. A parameter's sh:path (of a constraint component,
+    # a function, a target type) names the parameter, not an attribute.
+    parameters = set(package.shapes.objects(None, SH.parameter))
     path_iris = set()
-    for _, path in package.shapes.subject_objects(SH.path):
-        path_iris |= _path_iris(package.shapes, path)
+    for holder, path in package.shapes.subject_objects(SH.path):
+        if holder not in parameters:
+            path_iris |= _path_iris(package.shapes, path)
     class_iris = {str(o) for p in (SH['class'], SH.targetClass)
                   for o in package.shapes.objects(None, p) if isinstance(o, URIRef)}
     own = _own_namespaces(package)

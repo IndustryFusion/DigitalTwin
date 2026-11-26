@@ -222,7 +222,9 @@ def knowledge_for(shapes, knowledge):
 
 # Targets that pick focus nodes by something other than their type: what they
 # select cannot be told from the data alone, so near() does not apply.
-UNANCHORED = (SH.targetSubjectsOf, SH.targetObjectsOf, SH.target, SH.rule, SH.sparql)
+# The validators of a constraint component run a query, as sh:sparql does.
+UNANCHORED = (SH.targetSubjectsOf, SH.targetObjectsOf, SH.target, SH.rule, SH.sparql,
+              SH.validator, SH.nodeValidator, SH.propertyValidator)
 
 
 def anchored(shapes):

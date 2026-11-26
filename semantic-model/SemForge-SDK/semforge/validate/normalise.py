@@ -193,3 +193,49 @@ def owning_shape(shape, *graphs):
                     return str(subject)
                 pending.append(subject)
     return None
+
+
+_TARGETS = (SH.targetClass, SH.targetNode, SH.targetSubjectsOf, SH.targetObjectsOf, SH.target)
+
+
+def _part(shapes, node):
+    """A property shape named by an IRI that is only a part of the shapes that
+    name it with sh:property: it targets nothing itself."""
+    return isinstance(node, URIRef) and (node, SH.path, None) in shapes and \
+        (None, SH.property, node) in shapes and \
+        not any((node, target, None) in shapes for target in _TARGETS)
+
+
+def owners(shape, shapes, report=None, resource=None, focus_of=None):
+    """The shapes a result is attributed to: `owning_shape`, and for a property
+    shape named by an IRI that targets nothing (`sh:property ex:P`), the named
+    shapes it is a part of -- those validate the entity, and the enumerator
+    attributes its constraints to them (#1105).
+
+    Shared by several, the part belongs to each whose focus nodes
+    (`focus_of(shape)`) hold `resource`: pyshacl validates it once through
+    each. Else to the first by IRI. A list of one for anything else."""
+    graphs = (shapes,) if report is None else (shapes, report)
+    found = [owning_shape(shape, *graphs)]
+    seen = set()
+    while True:
+        parts = [f for f in found if f is not None and _part(shapes, URIRef(f)) and f not in seen]
+        if not parts:
+            return found
+        next_found = []
+        for current in found:
+            if current not in parts:
+                next_found.append(current)
+                continue
+            seen.add(current)
+            holders = sorted({owning_shape(holder, shapes)
+                              for holder in shapes.subjects(SH.property, URIRef(current))} - {None})
+            if not holders:
+                next_found.append(current)
+                continue
+            if len(holders) > 1 and focus_of is not None and resource is not None:
+                holders = [h for h in holders if URIRef(resource) in focus_of(URIRef(h))] or holders[:1]
+            else:
+                holders = holders[:1]
+            next_found.extend(h for h in holders if h not in next_found)
+        found = next_found

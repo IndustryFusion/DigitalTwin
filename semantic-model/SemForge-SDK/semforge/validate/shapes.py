@@ -203,12 +203,8 @@ def partition(shapes_graph):
 
 
 def subgraph_for(shapes_graph, shapes):
-    """A shapes graph containing only the given shapes.
-
-    Built by concise bounded description, which follows the blank node tree a
-    shape is written as. Shapes reference each other only through sh:node,
-    which CBD does not cross -- so a referenced shape is pulled in explicitly.
-    So are the prefix declarations of the nodes sh:prefixes names.
+    """A shapes graph containing only the given shapes, and everything they
+    name by an IRI that pyshacl reads (`reach`).
 
     Kept with a frozen shapes graph (rdfio/frozen.py), per shape set:
     rebuilt for every validation it cost 0.8 s on the OPC UA pump shapes.
@@ -223,24 +219,155 @@ def subgraph_for(shapes_graph, shapes):
                    key=(frozenset(shapes),), keep=32)
 
 
-def _subgraph(shapes_graph, shapes):
-    from rdflib import Graph
+def _sh(name):
+    """A term of the SHACL namespace, also one rdflib's SH does not define."""
+    return URIRef(str(SH) + name)
 
+
+# The SHACL parameters whose IRI values are terms of the data -- a class, a
+# predicate, a datatype, a value -- and not a part of the shapes. Every other
+# IRI a shape names with a SHACL predicate is followed: a shape (sh:node,
+# sh:property, sh:not, sh:qualifiedValueShape, a member of sh:and, sh:or,
+# sh:xone), a SPARQL constraint (sh:sparql), a target (sh:target), a rule, a
+# validator, a parameter, a list.
+_TERMS = frozenset({
+    _sh('targetClass'), _sh('targetNode'), _sh('targetSubjectsOf'), _sh('targetObjectsOf'),
+    _sh('path'), _sh('inversePath'), _sh('alternativePath'), _sh('zeroOrMorePath'),
+    _sh('oneOrMorePath'), _sh('zeroOrOnePath'),
+    _sh('class'), _sh('datatype'), _sh('nodeKind'), _sh('hasValue'), _sh('equals'), _sh('disjoint'),
+    _sh('lessThan'), _sh('lessThanOrEquals'), _sh('severity'), _sh('group'), _sh('defaultValue'),
+    _sh('subject'), _sh('predicate'), _sh('object'), _sh('this'), _sh('returnType'), _sh('nodes'),
+    # read by prefixes.complete, which also says how pyshacl is to read them
+    _sh('prefixes'),
+})
+# Of those, the ones whose value is a list: its cells belong to the shapes,
+# its members don't.
+_TERM_LISTS = frozenset({_sh('in'), _sh('languageIn'), _sh('ignoredProperties')})
+
+
+def globals_of(shapes_graph):
+    """What pyshacl applies wherever it is, not where a shape names it: the
+    constraint components (a shape uses one by carrying its parameters), the
+    SHACL functions a query calls, the target types, and the subclasses that
+    make something one of them. Each is part of every shapes graph handed to
+    pyshacl.
+
+    Kept with a frozen graph, as everything derived from one is."""
+    from ..rdfio.frozen import derived
+
+    return derived(shapes_graph, 'shape_globals', lambda: _globals_of(shapes_graph))
+
+
+def _globals_of(shapes_graph):
+    from rdflib.namespace import RDF, RDFS
+
+    found = set()
+    # A component is an instance of sh:ConstraintComponent or of a class
+    # directly below it, and so are the classes that make it one: no deeper,
+    # as pyshacl finds them (ShapesGraph._find_custom_constraints).
+    for kind in component_classes(shapes_graph):
+        found |= set(shapes_graph.subjects(RDF.type, kind))
+        found.add(kind)
+    # A function is an instance of its kind itself (pyshacl's gather_functions).
+    for kind in (_sh('SPARQLFunction'), _sh('SHACLFunction'), _sh('JSFunction')):
+        found |= set(shapes_graph.subjects(RDF.type, kind))
+    found |= set(shapes_graph.subjects(RDFS.subClassOf, _sh('Target')))
+    # Those of SHACL itself are built into pyshacl.
+    return frozenset(node for node in found if not str(node).startswith(str(SH)))
+
+
+def component_classes(shapes_graph):
+    """sh:ConstraintComponent and the classes directly below it."""
+    from rdflib.namespace import RDFS
+
+    return {_sh('ConstraintComponent')} | set(
+        shapes_graph.subjects(RDFS.subClassOf, _sh('ConstraintComponent')))
+
+
+_FOLLOWS = {}
+
+
+def _follows(predicate):
+    """Whether an IRI that `predicate` names may be a part of the shapes."""
+    found = _FOLLOWS.get(predicate)
+    if found is None:
+        found = _FOLLOWS[predicate] = str(predicate).startswith(str(SH)) and predicate not in _TERMS
+    return found
+
+
+def _named(shapes_graph, predicate, value):
+    """The IRIs `value`, an object of `predicate`, brings into the shapes: none
+    for a term; the cells of a list of terms; the members of any other list
+    too."""
+    from rdflib import BNode
+    from rdflib.namespace import RDF
+
+    if not isinstance(value, (URIRef, BNode)):
+        return []
+    if value != RDF.nil and (value, RDF.first, None) not in shapes_graph:
+        return [value] if isinstance(value, URIRef) and predicate not in _TERM_LISTS else []
+    found, cell, seen = [], value, set()
+    while isinstance(cell, (URIRef, BNode)) and cell != RDF.nil and cell not in seen:
+        seen.add(cell)
+        if isinstance(cell, URIRef):
+            found.append(cell)
+        member = shapes_graph.value(cell, RDF.first)
+        if predicate not in _TERM_LISTS and isinstance(member, URIRef):
+            found.append(member)
+        cell = shapes_graph.value(cell, RDF.rest)
+    return found
+
+
+def reach(shapes_graph, start):
+    """`start` and every node they name by an IRI that pyshacl reads, through
+    each other: what a shapes graph needs for pyshacl to validate them as it
+    validates them in the whole shapes graph (#1105).
+
+    A node goes in by its concise bounded description, which follows the blank
+    node tree it is written as. An IRI does not: a named shape (sh:node,
+    sh:property, sh:or, ...), a SPARQL constraint or target, a rule, a
+    validator is pulled in by name. So are the constraint components, SHACL
+    functions and target types (globals_of), which nothing names.
+    """
+    pending = list(start) + sorted(globals_of(shapes_graph), key=str)
+    done = set()
+    triples = []
+    while pending:
+        node = pending.pop()
+        if node in done:
+            continue
+        done.add(node)
+        for triple in shapes_graph.cbd(node):
+            triples.append(triple)
+            if _follows(triple[1]):
+                pending.extend(n for n in _named(shapes_graph, triple[1], triple[2])
+                               if n not in done)
+    return triples
+
+
+# What makes a shape evaluated on its own: its targets, and being a class.
+_TARGETING = frozenset({_sh('targetClass'), _sh('targetNode'), _sh('targetSubjectsOf'),
+                        _sh('targetObjectsOf'), _sh('target')})
+
+
+def _subgraph(shapes_graph, shapes):
+    """The part of `shapes_graph` for `shapes`: what they reach. A shape that is
+    only reached, by name, comes as a body: without its targets, and not as a
+    class, or pyshacl would evaluate it on its own here too, in this view and
+    whether asked for or not."""
+    from rdflib import Graph
+    from rdflib.namespace import OWL, RDF, RDFS
+
+    asked = set(shapes)
     out = Graph()
     for prefix, namespace in shapes_graph.namespaces():
         out.bind(prefix, namespace)
-
-    pending = list(shapes)
-    done = set()
-    while pending:
-        shape = pending.pop()
-        if shape in done:
+    for triple in reach(shapes_graph, shapes):
+        subject, predicate, obj = triple
+        if subject not in asked and isinstance(subject, URIRef) and (
+                predicate in _TARGETING or
+                (predicate == RDF.type and obj in (RDFS.Class, OWL.Class))):
             continue
-        done.add(shape)
-        for triple in shapes_graph.cbd(shape):
-            out.add(triple)
-        for referenced in out.objects(None, SH.node):
-            if isinstance(referenced, URIRef) and referenced not in done:
-                pending.append(referenced)
+        out.add(triple)
     prefixes.complete(out, shapes_graph)
     return out
