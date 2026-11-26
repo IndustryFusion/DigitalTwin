@@ -16,10 +16,10 @@ The SemForge side bar SHALL contain exactly two views, in this order: **Package*
 - **THEN** it shows the views Package and Entities & Test Cases and no other view
 
 ### Requirement: The details are a second container, shown on request
-The views **Constraints by Type**, **SHACL Shapes as Written** and **Knowledge (Ontology)** SHALL be in a second container named **SemForge Details**. The container SHALL be hidden, its icon included, until the user runs **Show details**, which is offered in the Package view's title bar and in the command palette. **Hide details**, offered in the overflow menu of each of its views, SHALL hide it again. The last choice SHALL be kept per workspace across window reloads.
+The views **Constraints by Type**, **SHACL Shapes as Written** and **Knowledge (Ontology)** SHALL be in a second container named **SemForge Details**. The container SHALL be hidden, its icon included, until the user runs **Show details**, offered in the Package view's title bar and the command palette, or Search… (semforge-sdk/view-search). **Hide details**, offered in the overflow menu of each of its views, SHALL hide it again. The last choice SHALL be kept per workspace across window reloads.
 
 #### Scenario: Details hidden by default
-- **WHEN** a workspace in which Show details was never run is opened
+- **WHEN** a workspace in which neither Show details nor a search was ever run is opened
 - **THEN** SemForge Details and its icon are not shown, and the Package view's title bar offers Show details
 
 #### Scenario: Showing and hiding the details
@@ -30,16 +30,24 @@ The views **Constraints by Type**, **SHACL Shapes as Written** and **Knowledge (
 - **WHEN** the user runs Show details and reloads the window
 - **THEN** SemForge Details is still available, and Show details is no longer offered in the Package view's title bar
 
+#### Scenario: A search shows the details
+- **WHEN** SemForge Details is hidden and the user runs Search…
+- **THEN** SemForge Details is shown, as after Show details
+
 ### Requirement: A view says what it is in a hover
-Each of the five views SHALL offer an ⓘ action in its title bar whose tooltip says what the view shows and what a click on a row opens; running it SHALL show the same text as a notification. A view SHALL NOT show this text as a message above its rows. The space above the rows SHALL be used only when the language server is not running, when there is no package, when a request failed, or while a validation runs.
+Each of the five views SHALL offer an ⓘ action in its title bar whose tooltip says what the view shows and what a click on a row opens; running it SHALL show the same text as a notification. A view SHALL NOT show this text as a message above its rows. The space above the rows SHALL be used only when the language server is not running, when there is no package, when a request failed, while a validation runs, or while a search is kept.
 
 #### Scenario: A healthy package
-- **WHEN** a package loads without error and no validation is running
+- **WHEN** a package loads without error, no validation is running and no search is kept
 - **THEN** no view shows a message above its rows, and hovering the ⓘ of the Package view shows a text that starts with "This package:"
 
 #### Scenario: The language server is not running
 - **WHEN** the language server is not running
 - **THEN** the Package view shows a message that says so and how to diagnose it
+
+#### Scenario: A search is kept
+- **WHEN** a search for `hasStrength` is kept, a view has rows that fit and no validation is running
+- **THEN** the message above that view's rows says the text searched for and how many rows fit, and is gone when the search is cleared
 
 ### Requirement: The Main model page explains its violations in a hover
 On the Main model page the explanation of the violation list (that each violation is also in VS Code's Problems panel, and how to step through them) SHALL be the tooltip of an ⓘ beside the link that opens the Problems panel, not a paragraph.
@@ -86,7 +94,7 @@ Every command of the extension SHALL belong to the category SemForge, so that th
 - **THEN** the menu offers "Add attribute…", not "+ Attribute"
 
 ### Requirement: Title bars hold what creates
-A view's title bar SHALL show as buttons only its actions that create, the package selection, Show details and the ⓘ. Refreshing a view, and opening the package health and package settings pages, SHALL be in the view's overflow menu. "New attribute…" SHALL be offered in the title bar of Knowledge (Ontology) only.
+A view's title bar SHALL show as buttons only its actions that create, the package selection, Show details, the ⓘ and, on the four views that show the model, Search… and, while a search is kept, Clear the search. Refreshing a view, and opening the package health and package settings pages, SHALL be in the view's overflow menu. "New attribute…" SHALL be offered in the title bar of Knowledge (Ontology) only.
 
 #### Scenario: The Package view's title bar
 - **WHEN** the Package view is shown with SemForge Details hidden
@@ -95,6 +103,10 @@ A view's title bar SHALL show as buttons only its actions that create, the packa
 #### Scenario: New attribute offered once
 - **WHEN** SemForge Details is shown
 - **THEN** New attribute… is a button in the title bar of Knowledge (Ontology) and not in that of Constraints by Type
+
+#### Scenario: Clear the search offered while searching
+- **WHEN** no search is kept, and then one is
+- **THEN** Entities & Test Cases, Constraints by Type, SHACL Shapes as Written and Knowledge (Ontology) show Search… in both cases and Clear the search only in the second, and the Package view shows neither
 
 ### Requirement: The Package view stays short
 When no package is found, only the Package view SHALL show the full explanation of what a package is; every other view SHALL show one line and the actions to create a package and to run the doctor. The Package view's Settings group SHALL start folded.

@@ -3,7 +3,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: The details are a second container, shown on request
-The views **Constraints by Type**, **SHACL Shapes as Written** and **Knowledge (Ontology)** SHALL be in a second container named **SemForge Details**. The container SHALL be hidden, its icon included, until the user runs **Show details**, which is offered in the Package view's title bar and in the command palette, or a search (semforge-sdk/view-search), which shows it in the same way because what fits may be in one of its views only. **Hide details**, offered in the overflow menu of each of its views, SHALL hide it again. The last choice SHALL be kept per workspace across window reloads.
+The views **Constraints by Type**, **SHACL Shapes as Written** and **Knowledge (Ontology)** SHALL be in a second container named **SemForge Details**. The container SHALL be hidden, its icon included, until the user runs **Show details**, offered in the Package view's title bar and the command palette, or Search… (semforge-sdk/view-search). **Hide details**, offered in the overflow menu of each of its views, SHALL hide it again. The last choice SHALL be kept per workspace across window reloads.
 
 #### Scenario: Details hidden by default
 - **WHEN** a workspace in which neither Show details nor a search was ever run is opened
