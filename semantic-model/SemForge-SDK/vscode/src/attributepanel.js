@@ -44,8 +44,8 @@ const { LINK_CSS, LINK_SCRIPT } = require('./typepage');
 const CONDITIONS = [
   { parameter: 'sh:datatype', label: 'datatype', hint: 'xsd:double, xsd:string, …', list: 'datatypes' },
   { parameter: 'sh:class', label: 'class', hint: 'a vocabulary term or an entity type', list: 'classes' },
-  { parameter: 'sh:hasValue', label: 'exactly', hint: 'a number, "text", or a prefixed name' },
-  { parameter: 'sh:in', label: 'one of', hint: 'values separated by commas' },
+  { parameter: 'sh:hasValue', label: 'exactly', hint: 'a value', items: 'one' },
+  { parameter: 'sh:in', label: 'one of', hint: 'a value', items: 'many' },
   { parameter: 'sh:minInclusive', label: '≥', hint: 'a number' },
   { parameter: 'sh:minExclusive', label: '>', hint: 'a number' },
   { parameter: 'sh:maxInclusive', label: '≤', hint: 'a number' },
@@ -83,7 +83,8 @@ function box(node, address, own, editable) {
   }
   if (node.kind === 'leaf') {
     const chips = node.conditions.map((c) =>
-      `<span class="chip" data-param="${escape(c.parameter)}" data-value="${escape(c.value)}">` +
+      `<span class="chip" data-param="${escape(c.parameter)}" data-value="${escape(c.value)}"` +
+      `${c.items ? ` data-items="${escape(JSON.stringify(c.items))}"` : ''}>` +
       `<span class="p">${escape(conditionLabel(c.parameter))}</span> ${escape(c.value)}` +
       (editable ? `<a tabindex="0" role="link" class="x" data-act="change" title="Change it">✎</a>` +
         `<a tabindex="0" role="link" class="x" data-act="unset" title="Remove this condition">×</a>` : '') +
@@ -227,7 +228,7 @@ function renderAttributePanel(state, options) {
       'One value, or a list of them (possibly empty): the same conditions for each item')
       : state.lists === 'allowed' ? button('lists-off', 'One value only', 'No list: one value again')
         : '') + '</div>' : '';
-  const lists = ['datatypes', 'classes'].map((name) => `<datalist id="${name}">` +
+  const lists = ['datatypes', 'classes', 'terms'].map((name) => `<datalist id="${name}">` +
     (state[name] || []).map((c) => `<option value="${escape(c.value)}">${escape(c.label || '')}</option>`).join('') +
     '</datalist>').join('');
   return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
@@ -283,6 +284,8 @@ function renderAttributePanel(state, options) {
   form input, form select { background: var(--vscode-input-background); color: var(--vscode-input-foreground);
          border: 1px solid var(--vscode-input-border, transparent); padding: 2px 4px; }
   form input { min-width: 16em; }
+  .items { display: grid; gap: 4px; }
+  .item { display: flex; gap: 6px; align-items: center; }
   .primary { background: var(--vscode-button-background); color: var(--vscode-button-foreground);
              border: none; padding: 3px 10px; border-radius: 3px; cursor: pointer; }
 ${LINK_CSS}</style></head><body>
@@ -316,7 +319,7 @@ ${LINK_SCRIPT}
     return node;
   }
   // One row of a form: which condition, and its value.
-  function conditionRow(fixed, value) {
+  function conditionRow(fixed, value, items, datatype) {
     const row = el('div', { class: 'row' });
     const pick = el('select', { 'data-field': 'parameter' });
     CONDITIONS.forEach(function (c) {
@@ -327,15 +330,147 @@ ${LINK_SCRIPT}
     if (fixed) { pick.disabled = true; }
     const input = el('input', { 'data-field': 'value' });
     if (value !== undefined) { input.value = value; }
+    let list;
     function hint() {
       const c = CONDITIONS.find(function (x) { return x.parameter === pick.value; });
       input.placeholder = c.hint;
       if (c.list) { input.setAttribute('list', c.list); } else { input.removeAttribute('list'); }
+      if (list) { list.remove(); list = undefined; }
+      input.hidden = !!c.items;
+      if (c.items) {
+        list = itemList(c.items === 'many', items || [], datatype);
+        row.append(list);
+      }
     }
+    row.read = function () {
+      if (!list) {
+        // A pattern is its words, spaces at its ends included: trimmed only to see it is empty.
+        const words = pick.value === 'sh:pattern' || pick.value === 'sh:flags';
+        return { parameter: pick.value, value: words && input.value.trim() ? input.value : input.value.trim() };
+      }
+      // No value at all is sent too: the server says to remove the condition instead.
+      return { parameter: pick.value, value: list.read(), datatype: datatype };
+    };
+    row.start = function () { return list ? list.querySelector('input') : input; };
     pick.addEventListener('change', hint);
-    hint();
     row.append(pick, input);
+    hint();
     return row;
+  }
+  // The kinds of a list item. A text is what was typed, nothing around it.
+  const KINDS = { text: 'Text', number: 'Number', boolean: 'True / false', term: 'Vocabulary term' };
+  // The number datatypes, as the server has them (tree.NUMERIC_TYPES).
+  const NUMBER_TYPES = ['double', 'float', 'decimal', 'integer', 'int', 'long', 'short', 'byte',
+    'nonNegativeInteger', 'positiveInteger', 'nonPositiveInteger', 'negativeInteger',
+    'unsignedLong', 'unsignedInt', 'unsignedShort', 'unsignedByte'];
+  // A term's local name, written as a prefixed name or as an IRI.
+  function localName(term) {
+    return String(term).replace(/^<|>$/g, '').split(/[#/:]/).pop();
+  }
+  function offered() {
+    return Array.from(document.querySelectorAll('#terms option')).map(function (o) { return o.value; });
+  }
+  // A term typed by its local name is the term offered under it; one typed in
+  // part, or none offered, is a text after all -- unless the kind was chosen.
+  function asTerm(text) {
+    const t = text.trim();
+    const terms = offered();
+    if (terms.indexOf(t) >= 0) { return t; }
+    const named = terms.filter(function (term) { return localName(term) === t; });
+    // Two terms of that name: which one is the user's to say (the server asks).
+    return named.length === 1 ? named[0] : named.length ? null : undefined;
+  }
+  function kindFor(datatype) {
+    // Its local name, written as a prefixed name or as an IRI.
+    const name = String(datatype || '').replace(/^<|>$/g, '').split(/[#/:]/).pop();
+    if (!name) { return undefined; }
+    if (name === 'boolean') { return 'boolean'; }
+    return NUMBER_TYPES.indexOf(name) >= 0 ? 'number' : 'text';
+  }
+  // What was typed is taken as, until someone says otherwise.
+  function guess(text, forced) {
+    if (forced) { return forced; }
+    const t = text.trim();
+    const terms = offered();
+    // A term offered, or the start of one while it is typed: its suggestions stay.
+    if (t && terms.some(function (term) { return term.indexOf(t) === 0 || localName(term).indexOf(t) === 0; })) {
+      return 'term';
+    }
+    if (/^[-+]?[0-9]+([.][0-9]+)?([eE][-+]?[0-9]+)?$/.test(t)) { return 'number'; }
+    if (t === 'true' || t === 'false') { return 'boolean'; }
+    return t === '' && terms.length ? 'term' : 'text';
+  }
+  // Values in plain words, one per row: Enter adds the next one, the x takes
+  // one out. How they are written in the shapes file is not asked here.
+  function itemList(many, items, datatype) {
+    const holder = el('div', { class: 'items' });
+    const rows = el('div', { class: 'items' });
+    holder.append(rows);
+    const forced = kindFor(datatype);
+    function add(item) {
+      const row = el('div', { class: 'item' });
+      const input = el('input', { 'data-field': 'item', placeholder: 'a value' });
+      input.value = item ? item.text : '';
+      const kind = el('select', { 'data-field': 'itemkind', title: 'What kind of value it is' });
+      Object.keys(KINDS).forEach(function (k) { kind.append(el('option', { value: k }, KINDS[k])); });
+      if (item && item.kind === 'typed') {
+        kind.append(el('option', { value: 'typed' }, 'Text (' + (item.lang || item.datatype) + ')'));
+      }
+      kind.value = item ? item.kind : guess('', forced);
+      let chosen = !!item;
+      function terms() {
+        if (kind.value === 'term') { input.setAttribute('list', 'terms'); } else { input.removeAttribute('list'); }
+      }
+      kind.addEventListener('change', function () { chosen = true; terms(); });
+      input.addEventListener('input', function () {
+        if (!chosen) { kind.value = guess(input.value, forced); terms(); }
+      });
+      input.addEventListener('keydown', function (event) {
+        if (event.key !== 'Enter' || !many || !input.value.trim()) { return; }
+        event.preventDefault();
+        const next = row.nextElementSibling;
+        (next ? next.querySelector('input') : add()).focus();
+      });
+      terms();
+      row.append(input, kind);
+      if (many) {
+        const gone = el('button', { type: 'button', class: 'tool', 'data-item': 'remove', title: 'Remove this value' }, '×');
+        gone.addEventListener('click', function () { row.remove(); if (!rows.children.length) { add(); } });
+        row.append(gone);
+      }
+      row.read = function () {
+        const out = { kind: kind.value, text: input.value };
+        const said = input.value.trim();
+        if (out.kind === 'term' && said && !/[:<]/.test(said)) {
+          // A unique local name is its term; the kind, if chosen, is not taken back.
+          const term = asTerm(said);
+          if (term) { out.text = term; } else if (term === undefined && !chosen) { out.kind = 'text'; }
+        }
+        // Its datatype or language goes along while it is that value: a number
+        // changed is a new number, a text with a language keeps its language.
+        const kept = item && item.kind === out.kind && said === String(item.text).trim();
+        if (item && item.kind === out.kind && (item.kind !== 'number' || kept)) {
+          if (item.datatype) { out.datatype = item.datatype; }
+          if (item.lang) { out.lang = item.lang; }
+        }
+        // Not changed: written back as the term it was, not checked again.
+        if (kept) { out.kept = true; }
+        return out;
+      };
+      rows.append(row);
+      return input;
+    }
+    (items.length ? items : [undefined]).forEach(function (item) { add(item); });
+    if (many) {
+      const more = el('button', { type: 'button', class: 'tool', 'data-item': 'add' }, '+ Value');
+      more.addEventListener('click', function () { add().focus(); });
+      holder.append(more);
+    }
+    holder.read = function () {
+      return Array.from(rows.children).map(function (r) { return r.read(); })
+        .filter(function (i) { return i.text.trim(); });
+    };
+    return holder;
   }
   // The tests, again, when a validation run is in: nothing else is redrawn
   // under someone's hands.
@@ -349,6 +484,12 @@ ${LINK_SCRIPT}
   // spec.done(values, connective).
   function openForm(holder, spec) {
     closeForms();
+    // The datatype its values have: said in this box, else by the form itself.
+    const boxed = holder.closest('.box');
+    const card = holder.closest('[data-form]');
+    const said = (boxed && boxed.querySelector(':scope > .chips > [data-param="sh:datatype"]')) ||
+      (card && card.querySelector(':scope > .box.own > .chips > [data-param="sh:datatype"]'));
+    const datatype = said ? said.dataset.value : undefined;
     const form = el('form');
     if (spec.title) { form.append(el('div', { class: 'what' }, spec.title)); }
     let connective;
@@ -362,12 +503,12 @@ ${LINK_SCRIPT}
       form.append(row);
     }
     const rows = el('div');
-    for (let i = 0; i < (spec.rows || 1); i += 1) { rows.append(conditionRow(spec.fixed, spec.value)); }
+    for (let i = 0; i < (spec.rows || 1); i += 1) { rows.append(conditionRow(spec.fixed, spec.value, spec.items, datatype)); }
     form.append(rows);
     const actions = el('div', { class: 'row' });
     if (spec.more) {
       const more = el('button', { type: 'button', class: 'tool' }, '+ Another condition');
-      more.addEventListener('click', function () { rows.append(conditionRow()); });
+      more.addEventListener('click', function () { rows.append(conditionRow(undefined, undefined, undefined, datatype)); });
       actions.append(more);
     }
     const ok = el('button', { type: 'submit', class: 'primary' }, 'Apply');
@@ -377,15 +518,12 @@ ${LINK_SCRIPT}
     form.append(actions);
     form.addEventListener('submit', function (event) {
       event.preventDefault();
-      const values = Array.from(rows.querySelectorAll('.row')).map(function (row) {
-        return { parameter: row.querySelector('[data-field=parameter]').value,
-          value: row.querySelector('[data-field=value]').value.trim() };
-      }).filter(function (c) { return c.value; });
+      const values = Array.from(rows.children).map(function (row) { return row.read(); }).filter(function (c) { return c.value; });
       if (!values.length) { return; }
       spec.done(values, connective ? connective.value : undefined);
     });
     holder.after(form);
-    const first = form.querySelector('input');
+    const first = rows.children[0] && rows.children[0].start();
     if (first) { first.focus(); }
   }
   document.addEventListener('click', function (event) {
@@ -429,20 +567,21 @@ ${LINK_SCRIPT}
     if (act === 'unset') { send_({ op: 'unset', node: addr, parameter: chip.dataset.param }); return; }
     if (act === 'change') {
       openForm(chip, { title: 'Change it', fixed: chip.dataset.param, value: chip.dataset.value,
-        done: function (v) { send_({ op: 'set', node: addr, parameter: v[0].parameter, value: v[0].value }); } });
+        items: chip.dataset.items ? JSON.parse(chip.dataset.items) : undefined,
+        done: function (v) { send_({ op: 'set', node: addr, parameter: v[0].parameter, value: v[0].value, datatype: v[0].datatype }); } });
       return;
     }
     if (act === 'set' || act === 'add') {
       openForm(head, { title: act === 'set' ? 'Another condition — all of them must hold'
         : 'Another branch',
-        done: function (v) { send_({ op: act, node: addr, parameter: v[0].parameter, value: v[0].value }); } });
+        done: function (v) { send_({ op: act, node: addr, parameter: v[0].parameter, value: v[0].value, datatype: v[0].datatype }); } });
       return;
     }
     if (act === 'wrapor' || act === 'wrapxone') {
       openForm(head, { title: act === 'wrapor' ? 'Or else' : 'Exactly one of this and',
         done: function (v) {
           send_({ op: 'wrap', node: addr, connective: act === 'wrapor' ? 'or' : 'xone',
-            parameter: v[0].parameter, value: v[0].value });
+            parameter: v[0].parameter, value: v[0].value, datatype: v[0].datatype });
         } });
       return;
     }
@@ -459,7 +598,7 @@ ${LINK_SCRIPT}
       openForm(target.parentElement, { title: { or: 'Or else', xone: 'Exactly one of: what it is now, or',
         not: 'But not' }[connective],
         done: function (v) {
-          send_({ op: 'combine', connective: connective, parameter: v[0].parameter, value: v[0].value });
+          send_({ op: 'combine', connective: connective, parameter: v[0].parameter, value: v[0].value, datatype: v[0].datatype });
         } });
     }
   });
@@ -570,6 +709,20 @@ class AttributePanel {
     return answer && answer.ok ? answer.cases : undefined;
   }
 
+  /** The values of the vocabulary classes the value is drawn from. */
+  async terms(read) {
+    const classes = new Set();
+    const walk = (node) => {
+      (node.conditions || []).filter((c) => c.parameter === 'sh:class').forEach((c) => classes.add(c.value));
+      (node.children || []).forEach(walk);
+    };
+    ((read && read.forms) || []).forEach((form) => form.expression && walk(form.expression));
+    const pages = await Promise.all([...classes].map((cls) => this.request('semforge/vocabularyPage', { cls })));
+    return pages.flatMap((page) => ((page && page.ok && page.values) || [])
+      // A value whose namespace has no prefix is offered by its IRI, which the server reads.
+      .map((v) => ({ value: /:/.test(v.term) || !v.iri ? v.term : `<${v.iri}>`, label: v.label || v.name })));
+  }
+
   async refreshTests() {
     if (!this.panel || !this.row) {
       return;
@@ -582,19 +735,24 @@ class AttributePanel {
     }
   }
 
+  /** Draw the panel. Only the drawing begun last is written: one begun
+   *  earlier, still reading the value or its vocabularies, never draws over it. */
   async render() {
     if (!this.panel) {
       return;
     }
+    const generation = this.generation = (this.generation || 0) + 1;
     this.row = this.fresh();
+    const row = this.row;
     const tests = await this.tests();
-    const read = await this.request('semforge/valueForms', { shape: this.row.shape, path: this.row.path });
-    if (!this.panel) {
-      return;                          // closed meanwhile
+    const read = await this.request('semforge/valueForms', { shape: row.shape, path: row.path });
+    const terms = await this.terms(read);
+    if (!this.panel || generation !== this.generation) {
+      return;                          // closed meanwhile, or drawn anew
     }
-    this.panel.title = `Attribute: ${this.row.label}`;
-    const state = Object.assign({ label: this.row.label, row: this.row, tests }, this.choices,
-      read.ok ? read : { editable: false, reason: read.error }, { error: this.error });
+    this.panel.title = `Attribute: ${row.label}`;
+    const state = Object.assign({ label: row.label, row, tests, terms },
+      this.choices, read.ok ? read : { editable: false, reason: read.error }, { error: this.error });
     this.panel.webview.html = renderAttributePanel(state,
       { nonce: crypto.randomBytes(16).toString('base64') });
   }

@@ -996,7 +996,7 @@ async function editPresence(pages, row) {
 }
 
 function describeParameter(parameter) {
-  return { label: `${parameter.parameter} ${parameter.value}`,
+  return { label: `${parameter.parameter} ${parameter.words || parameter.value}`,
     description: parameter.layer === 'value' ? 'on the value' : 'on the attribute',
     parameter };
 }
@@ -1050,7 +1050,9 @@ async function askList(pages, row, current) {
       const short = (term) => String(term).split(':').pop();
       const ticked = new Set((current || []).map(short));
       const picked = await vscode.window.showQuickPick(page.values.map((v) => ({
-        label: v.name, description: v.label, value: v.term, picked: ticked.has(v.name) })),
+        // A value whose namespace has no prefix by its IRI, which the server reads.
+        label: v.name, description: v.label, value: /:/.test(v.term) || !v.iri ? v.term : `<${v.iri}>`,
+        picked: ticked.has(v.name) })),
       { title: `${row.label} · sh:in: which ${page.label} values are allowed?`,
         canPickMany: true });
       if (!picked) {
@@ -1110,13 +1112,13 @@ async function askValue(pages, row, spec, current) {
 
 async function editParameter(pages, row) {
   const have = row.parameters.map((p) => ({
-    label: `${p.parameter} ${p.value}`,
+    label: `${p.parameter} ${p.words || p.value}`,
     description: p.layer === 'value' ? 'on the value' : 'on the attribute',
     detail: 'change it, or remove it', existing: p }));
   const present = new Set(row.parameters.map((p) => `${p.layer}:${p.parameter}`));
   if (row.inList) {
     // A list is structure, not a plain parameter: listed here item by item.
-    have.push({ label: `sh:in ${row.inList.value}`, description: 'on the value',
+    have.push({ label: `one of: ${(row.inList.words || row.inList.items).join(' · ')}`, description: 'on the value',
       detail: 'edit the list, or remove it',
       existing: { parameter: 'sh:in', value: row.inList.value, path: row.inList.path,
         layer: 'value', items: row.inList.items } });
@@ -1150,7 +1152,7 @@ async function editParameter(pages, row) {
       { label: parameter.items ? '$(edit) Edit the list…' : '$(edit) Change the value…',
         action: 'change' },
       { label: `$(trash) Remove ${parameter.parameter}`, action: 'remove' }
-    ], { title: `${row.label} · ${parameter.parameter} ${parameter.value}` });
+    ], { title: `${row.label} · ${picked.label}` });
     if (!how) {
       return false;
     }

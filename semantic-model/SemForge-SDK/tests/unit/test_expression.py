@@ -233,7 +233,7 @@ def test_a_group_is_added_with_its_branches(root):
                  'conditions': [{'parameter': 'sh:maxLength', 'value': '5'},
                                 {'parameter': 'sh:hasValue', 'value': '"n/a"'}]}, EXPR, chain)
     assert describe(_layer(root, EXPR, chain)) == \
-        'text · any of: at most 5 characters | exactly "n/a"'
+        'text · any of: at most 5 characters | exactly n/a'
     with pytest.raises(PackageError, match='two or more'):
         _edit(root, {'op': 'addgroup', 'node': [], 'connective': 'or',
                      'conditions': [{'parameter': 'sh:maxLength', 'value': '5'}]}, EXPR, chain)
@@ -255,7 +255,7 @@ def test_a_scalar_or_list_value_takes_an_expression_on_every_form(tmp_path, corp
     scalar, listed = value.forms
     assert normalize_root(scalar.root) == normalize_root(listed.root)
     assert say(value) == \
-        'any of: number (integer) | exactly "n/a", or a list of them (possibly empty)'
+        'any of: number (integer) | exactly n/a, or a list of them (possibly empty)'
 
 
 # --- a value that may be one or a list: its forms, shown -------------------------------------

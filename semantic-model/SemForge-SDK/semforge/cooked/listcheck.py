@@ -174,7 +174,11 @@ def list_conflicts(package, value_params, items):
              if isinstance(term, Literal) and term.datatype in (None, XSD.string)]
     shortest, longest = (_number(value_params.get('sh:minLength', '')),
                          _number(value_params.get('sh:maxLength', '')))
-    pattern = str(value_params.get('sh:pattern', '')).strip('"') or None
+    written = value_params.get('sh:pattern')
+    if written:
+        from .tree import item_words
+        written = item_words(written)       # the regex itself: no quotes, tail or escapes
+    pattern = written or None
     for term in texts:
         if shortest is not None and len(str(term)) < shortest:
             notes.append(f'"{term}" is shorter than {shortest:g} characters')

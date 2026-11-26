@@ -1217,6 +1217,14 @@ given a valid value. If the entity already has the attribute it is changed,
 not replaced — a sub-attribute nested in it stays. The case is run once, and
 the message says whether it already passes.
 
+**One of (`sh:in`) and exactly (`sh:hasValue`)** are edited in plain words, one
+value per row: Enter or **+ Value** adds one, **×** takes one out. A text is
+what you type, without quotes; what kind a value is (text, number, true/false,
+vocabulary term) follows from the datatype or from what was typed, and can be
+chosen. The attribute editor shows and asks for no Turtle. A value that is in
+the list already is not written twice; that is the same value as the shapes are
+read (`1` and `01` are one).
+
 The attribute editor lists the tests about its attribute, each with what it
 asserts and what fires in it: a click opens one, **Delete…** removes it. The
 type and shape pages list theirs with the same button.

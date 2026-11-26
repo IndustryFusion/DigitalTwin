@@ -640,37 +640,245 @@ def list_items(text):
     return [item for item in LIST_ITEM.findall(inner) if not item.startswith('#')]
 
 
+INTEGER_TYPES = ('integer', 'int', 'long', 'short', 'byte', 'nonNegativeInteger',
+                 'positiveInteger', 'nonPositiveInteger', 'negativeInteger', 'unsignedLong',
+                 'unsignedInt', 'unsignedShort', 'unsignedByte')
+NUMERIC_TYPES = ('double', 'float', 'decimal') + INTEGER_TYPES
+# How Turtle writes a number without its datatype: a whole number is an
+# xsd:integer, one with a fraction an xsd:decimal, one with an exponent an xsd:double.
+SHORTHAND = {'integer': re.compile(r'[-+]?\d+'), 'decimal': re.compile(r'[-+]?\d*\.\d+'),
+             'double': re.compile(r'[-+]?(\d+\.\d*|\.?\d+)[eE][-+]?\d+')}
+
+
+def _datatype_name(datatype):
+    """`xsd:double`, `<http://www.w3.org/2001/XMLSchema#double>` -> `double`."""
+    return str(datatype or '').strip('<>').rsplit('#', 1)[-1].rsplit('/', 1)[-1].split(':')[-1]
+
+
+def list_item(token):
+    """A list item as an editor shows it (see _list_item); a new dict each time."""
+    return dict(_list_item(str(token).strip()))
+
+
+@functools.lru_cache(maxsize=4096)
+def _list_item(token):
+    """A list item as an editor shows it: {'kind': text | number | boolean |
+    term | typed, 'text'} -- the words, without Turtle's quotes and escapes --
+    and, where the words do not tell it, the 'datatype' or 'lang' the item has,
+    so that it is written back as the same term. Read as listcheck reads it."""
+    from .listcheck import NUMBER as WRITTEN_NUMBER
+    from .listcheck import TAIL, _literal
+
+    token = str(token).strip()
+    found = TAIL.fullmatch(token) if token[:1] in ('"', "'") else None
+    literal = _literal(None, found.group(1)) if found else None
+    if literal is None:
+        if token in ('true', 'false'):
+            return {'kind': 'boolean', 'text': token}
+        if WRITTEN_NUMBER.fullmatch(token):
+            # Turtle's shorthand says the datatype; it goes along, so that the
+            # number is written back as the same term whatever the value's is.
+            return {'kind': 'number', 'text': token, 'datatype': 'xsd:integer' if SHORTHAND[
+                'integer'].fullmatch(token) else 'xsd:double' if 'e' in token.lower() else 'xsd:decimal'}
+        return {'kind': 'term', 'text': token}
+    said, lang, datatype = str(literal), found.group(2), found.group(3)
+    if lang:
+        return {'kind': 'typed', 'text': said, 'lang': lang}
+    name = _datatype_name(datatype)
+    if not datatype:
+        return {'kind': 'text', 'text': said}
+    if name == 'string':
+        return {'kind': 'text', 'text': said, 'datatype': datatype}
+    if name == 'boolean' and said in ('true', 'false'):
+        return {'kind': 'boolean', 'text': said}
+    if name in NUMERIC_TYPES and WRITTEN_NUMBER.fullmatch(said):
+        return {'kind': 'number', 'text': said, 'datatype': datatype}
+    return {'kind': 'typed', 'text': said, 'datatype': datatype}
+
+
+def item_words(token):
+    """A list item as a reader says it: `"say \\"hi\\""` -> say "hi", a term by
+    its local name."""
+    item = list_item(token)
+    if item['kind'] != 'term':
+        return item['text']
+    return str(item['text']).strip('<>').rsplit('/', 1)[-1].rsplit('#', 1)[-1].split(':')[-1]
+
+
+def _number_token(package, text, said, own, datatype, kept=False):
+    """A number as Turtle: typed with its own datatype, else as the value's
+    datatype compares it (a JSON 20.5 is an xsd:double, never Turtle's 20.5),
+    written without the datatype where Turtle's shorthand says the same."""
+    from .listcheck import NUMBER as WRITTEN_NUMBER
+
+    if not WRITTEN_NUMBER.fullmatch(said):
+        raise PackageError(f'{said} is not a number')
+    shape = datatype if datatype and _datatype_name(datatype) in NUMERIC_TYPES else None
+    if own:
+        typed = own
+    elif shape and _datatype_name(shape) not in ('integer', 'int'):
+        typed = shape
+    elif shape:
+        typed = None                       # a JSON whole number is an xsd:integer
+    else:
+        typed = None if SHORTHAND['integer'].fullmatch(said) else 'xsd:double'
+    # What a datatype cannot say is refused, not written ill-typed: a new number
+    # against the datatype it gets and the value's, a changed one against its own.
+    for checked in (() if kept else (own,) if own else (typed, shape)):
+        if checked and not _fits(said, checked):
+            raise PackageError(f'{said} is not an xsd:{_datatype_name(checked)}' + (
+                '; write it as one, or take the value out and add it anew' if checked == own
+                else ', as the value must be'))
+    if typed is None:
+        return said
+    shorthand = SHORTHAND.get(_datatype_name(typed))
+    if shorthand is not None and shorthand.fullmatch(said) and \
+            str(typed).strip('<>').startswith(('xsd:', 'http://www.w3.org/2001/XMLSchema#')):
+        return said
+    return f'"{said}"^^{_term(package, text, typed)}'
+
+
+def _fits(said, datatype):
+    """Can an XML Schema datatype say `said` (a number's sign and range included)?"""
+    import logging
+
+    from rdflib import Literal
+    from rdflib.namespace import XSD
+
+    written = str(datatype).strip('<>')
+    if not written.startswith(('xsd:', str(XSD))):
+        return True                        # not ours to judge
+    name = _datatype_name(datatype)
+    if name == 'decimal' and 'e' in said.lower():
+        return False
+    quiet = logging.getLogger('rdflib.term')
+    level = quiet.level
+    quiet.setLevel(logging.CRITICAL)       # setLevel, so that the logger's cache is cleared
+    try:
+        return not Literal(said, datatype=XSD[name]).ill_typed
+    finally:
+        quiet.setLevel(level)
+
+
+def _item_token(package, text, item, datatype=None):
+    """An item from the list editor as Turtle, or None for an empty row. What
+    was typed is the value itself: a text is quoted here, whatever is in it."""
+    kind, said = item.get('kind') or 'text', str(item.get('text') or '')
+    if kind not in ('text', 'typed'):
+        said = said.strip()
+    if not said.strip():
+        return None
+    own = item.get('datatype')
+    # A row not changed is the term it was: checked when it was written, or by hand.
+    kept = bool(item.get('kept'))
+    if kind == 'number':
+        return _number_token(package, text, said, own, datatype, kept)
+    if kind == 'boolean':
+        if said not in ('true', 'false'):
+            raise PackageError(f'{said} is neither true nor false')
+        return said
+    if kind == 'term':
+        if ':' not in said and not said.startswith('<'):
+            raise PackageError(f'{said} is not a term of a vocabulary, or the name of more than '
+                               'one: pick one that is offered, or choose Text if it is a text')
+        return _term(package, text, said)
+    if kind not in ('text', 'typed'):
+        raise PackageError(f'{kind} is no kind of value: text, number, true/false or term')
+    quoted = json.dumps(said, ensure_ascii=False)
+    if item.get('lang'):
+        return f'{quoted}@{item["lang"]}'
+    if own:
+        if not kept and not _fits(said.strip(), own):
+            raise PackageError(f'{said.strip()} is not an xsd:{_datatype_name(own)}; write it as one, '
+                               'or take the value out and add it anew')
+        return f'{quoted}^^{_term(package, text, own)}'
+    # A new text has the datatype the value's shape names (sh:in compares terms):
+    # a plain text is an xsd:string already, and a language-tagged one is no datatype.
+    if datatype and _datatype_name(datatype) == 'langString':
+        raise PackageError('the value must be a text with a language, which a row cannot say yet; '
+                           'write it in the .ttl')
+    if datatype and _datatype_name(datatype) not in ('string', 'boolean') + NUMERIC_TYPES:
+        if not _fits(said.strip(), datatype):
+            raise PackageError(f'{said.strip()} is not an xsd:{_datatype_name(datatype)}, as the value must be')
+        return f'{quoted}^^{_term(package, text, datatype)}'
+    return quoted
+
+
+def _one_literal(token):
+    """Is `token` one quoted literal, as Turtle writes it (`'tis` is not)?"""
+    from .listcheck import TAIL, _literal
+
+    found = TAIL.fullmatch(token) if token[:1] in ('"', "'") else None
+    return found is not None and LIST_ITEM.fullmatch(token) is not None and \
+        _literal(None, found.group(1)) is not None
+
+
+def _turtle_list(value):
+    """Is a text typed into a field a list as Turtle writes it? `(none)` is a text."""
+    inner = value.strip()
+    if not (inner.startswith('(') and inner.endswith(')')):
+        return False
+    items = list_items(inner)
+    return bool(items) and all(
+        _one_literal(i) or i in ('true', 'false') or NUMBER.fullmatch(i) or
+        i.startswith('<') or re.fullmatch(r'[A-Za-z][\w.-]*:[^\s"]*', i) for i in items)
+
+
+def _same_term(package, token):
+    """What decides whether two items are one value: the RDF term they are."""
+    from .listcheck import item_term
+
+    try:
+        return item_term(package, token) if package is not None else token
+    except Exception:                              # noqa: BLE001
+        return token
+
+
 def _list_value(package, text, value, datatype=None):
-    """An sh:in list as Turtle. Items come as a list, or one text separated by
-    commas; each is a number, true/false, a "quoted" text, or a prefixed name
-    or IRI -- anything else is taken as text and quoted.
+    """An sh:in list as Turtle. Items come as the list editor's rows
+    ({'kind', 'text', ...}, see _item_token), as a list of tokens, as a list
+    written as Turtle, or as one text separated by commas; a token is a number,
+    true/false, a "quoted" text, or a prefixed name or IRI -- anything else is
+    taken as text and quoted.
 
     sh:in compares terms exactly, and a JSON 20.5 in an NGSI-LD document is an
     xsd:double -- never equal to Turtle's 20.5, an xsd:decimal. So a number
     with a fraction is written typed: with the value's sh:datatype when it
     has one, else as xsd:double. A whole number stays as written, as a JSON
-    whole number arrives (xsd:integer), unless the datatype says otherwise."""
-    if isinstance(value, str):
-        items = [i.strip() for i in re.findall(r'"(?:[^"\\]|\\.)*"|[^,]+', value)]
+    whole number arrives (xsd:integer), unless the datatype says otherwise.
+    A value that is in the list already (the same RDF term) is not written twice."""
+    if isinstance(value, str) and _turtle_list(value):
+        items = list_items(value)          # a list as Turtle writes it, not one text
+    elif isinstance(value, str):
+        from ..rdfio.blocks import LITERAL_TAIL
+
+        quoted = r'(?:"(?:[^"\\]|\\.)*"|\'(?:[^\'\\]|\\.)*\')(?:' + LITERAL_TAIL.pattern + ')?'
+        # A quoted item is one only where it ends the item: `'tis, 'twas` is two words.
+        items = [i.strip() for i in re.findall(r'\s*' + quoted + r'\s*(?=,|$)|[^,]+', value)]
     else:
-        items = [str(i).strip() for i in value or []]
-    rendered = []
+        items = [i if isinstance(i, dict) else str(i).strip() for i in value or []]
+    rendered, seen = [], []
     for item in items:
-        if not item:
+        if isinstance(item, dict):
+            term = _item_token(package, text, item, datatype)
+            if term is None:
+                continue
+        elif not item:
             continue
-        if NUMBER.fullmatch(item):
+        elif NUMBER.fullmatch(item):
             whole = re.fullmatch(r'[-+]?\d+', item) is not None
             typed = datatype if datatype and datatype not in ('xsd:integer', 'xsd:int') \
                 else (None if whole else 'xsd:double')
             term = f'"{item}"^^{_term(package, text, typed)}' if typed else item
-        elif item in ('true', 'false') or \
-                (item.startswith('"') and item.endswith('"') and len(item) > 1):
+        elif item in ('true', 'false') or _one_literal(item):
             term = item
         elif item.startswith('<') or re.fullmatch(r'[A-Za-z][\w.-]*:[^\s"]+', item):
             term = _term(package, text, item)
         else:
             term = json.dumps(item, ensure_ascii=False)
-        if term not in rendered:
+        same = _same_term(package, term)
+        if same not in seen:
+            seen.append(same)
             rendered.append(term)
     if not rendered:
         raise PackageError('an empty sh:in admits no value at all; remove it instead')

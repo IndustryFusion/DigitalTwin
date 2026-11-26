@@ -138,18 +138,15 @@ def value_text(kind, parameters, raw):
     elif longest is not None:
         parts.append(f'at most {_number(longest)} characters')
     if parameters.get('sh:pattern'):
-        parts.append(f'matching {str(parameters["sh:pattern"]).strip(chr(34))}')
+        from .tree import item_words
+
+        parts.append(f'matching {item_words(parameters["sh:pattern"])}')
     # sh:in is structure (a list), so it may arrive with the raw parameters.
     listed = parameters.get('sh:in') or dict(raw or []).get('sh:in')
     if listed:
-        from .tree import list_items
+        from .tree import item_words, list_items
 
-        from .listcheck import QUOTED
-
-        def said(item):
-            quoted = QUOTED.fullmatch(item)
-            return quoted.group(1) if quoted else _short(item)
-        parts.append('one of: ' + ' · '.join(said(v) for v in list_items(listed)))
+        parts.append('one of: ' + ' · '.join(item_words(v) for v in list_items(listed)))
     if not parts:
         parts.append('an entity' if kind == 'Relationship' else 'any value')
     return ' · '.join(parts)
@@ -305,8 +302,9 @@ def _attribute_rows(package, node, kind_of, depth, coverage, violated):
     # Every parameter with the address an edit needs: its sh:path chain (the
     # value layer's includes the slot) and its name. "Edit a parameter" and
     # "Override" act on exactly these.
-    parameters = [{'parameter': c.parameter, 'value': c.value,
-                   'path': list(c.path_chain), 'layer': layer}
+    parameters = [dict({'parameter': c.parameter, 'value': c.value,
+                        'path': list(c.path_chain), 'layer': layer},
+                       **_parameter_words(c.parameter, c.value))
                   for layer, holder in (('attribute', node), ('value', slot))
                   if holder is not None
                   for c in holder.children
@@ -357,14 +355,25 @@ def _attribute_rows(package, node, kind_of, depth, coverage, violated):
     return rows
 
 
+def _parameter_words(parameter, value):
+    """{'words'} of a parameter whose value a reader should not need Turtle for."""
+    from .tree import item_words
+
+    if parameter in ('sh:hasValue', 'sh:pattern', 'sh:flags'):
+        return {'words': item_words(value)}
+    return {}
+
+
 def _in_list(raw, value_params, slot):
-    """{'items', 'path', 'value'} of the value layer's sh:in, or None."""
-    from .tree import list_items
+    """{'items', 'words', 'path', 'value'} of the value layer's sh:in, or None."""
+    from .tree import item_words, list_items
 
     text = dict(raw).get('sh:in') or value_params.get('sh:in')
     if not text or slot is None:
         return None
-    return {'items': list_items(text), 'path': list(slot.path_chain), 'value': text}
+    items = list_items(text)
+    return {'items': items, 'words': [item_words(i) for i in items],
+            'path': list(slot.path_chain), 'value': text}
 
 
 def _list_notes(package, raw, value_params, slot):
