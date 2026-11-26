@@ -62,14 +62,14 @@ The OPC UA instance tool SHALL write the value of a variable whose data type is 
 - **THEN** the instance holds the plain number `0`
 
 ### Requirement: The SemForge SDK declares its doubles
-The SemForge SDK SHALL write every value it generates or edits for an attribute whose shape says `sh:datatype xsd:double` as a declared `xsd:double`: the values of generated valid test cases, the values of generated cases that break a range or a count, the example of a new package, and an example value a modeller sets.
+The SemForge SDK SHALL write every value it generates or edits for an attribute whose shape says `sh:datatype xsd:double` as a declared `xsd:double`: the values of generated test cases, the example of a new package, and an example value a modeller sets.
 
 #### Scenario: Generated valid case
 - **WHEN** a valid test case is generated for an `xsd:double` attribute with `sh:minInclusive 0` and `sh:maxInclusive 160`
 - **THEN** the case holds a declared `xsd:double` with the value 80, and validating it raises no violation
 
 #### Scenario: Generated case that breaks a range
-- **WHEN** a test case that breaks `sh:maxInclusive 160` is generated for that attribute
+- **WHEN** a modeller sets the value of that attribute in a generated test case to `161`, so that it breaks `sh:maxInclusive 160`
 - **THEN** the case holds a declared `xsd:double` with the value 161, and validating it raises the `sh:maxInclusive` violation and no datatype violation
 
 #### Scenario: A modeller sets a value
