@@ -57,7 +57,7 @@ On the Main model page the explanation of the violation list (that each violatio
 - **THEN** the violation list is preceded by an ⓘ and an "Open the Problems panel" link, and the explanation appears when hovering the ⓘ
 
 ### Requirement: Pages open their entities as a graph
-The entity bar of the Main model page and of a test case page SHALL offer the views **Graph** and **All**, in this order. A page SHALL open on Graph unless All was the view last shown on that page. All SHALL show every entity of the page as a card, file by file. When a page is opened at one entity or attribute, or a violation in its list is clicked, the page SHALL show All and bring that entity's card or attribute row into view.
+The entity bar of the Main model page and of a test case page SHALL offer the views **Graph** and **All**, in this order. A page SHALL open on Graph unless All was the view last shown on it. All SHALL show every entity of the page as a card, file by file. When a page is opened at an entity or attribute, or a violation in its list is clicked, it SHALL show All with that card or row in view; revealing an entity SHALL show Graph.
 
 #### Scenario: First opening of the Main model page
 - **WHEN** the Main model page is opened for the first time
@@ -70,6 +70,10 @@ The entity bar of the Main model page and of a test case page SHALL offer the vi
 #### Scenario: A violation in the list
 - **WHEN** a violation of attribute `hasWidth` of an entity is clicked in the violation list while Graph is shown
 - **THEN** All is shown and the row `hasWidth` of that entity's card is in view and marked
+
+#### Scenario: Revealed in the graph
+- **WHEN** Reveal in graph view is chosen on the row of `urn:workpiece:1` while All was the page's last view
+- **THEN** Graph is shown with the path to `urn:workpiece:1`
 
 ### Requirement: Every entity counts once
 The filter's count ("N of M shown") and the jumps to an entity or attribute SHALL consider each entity of the page once, whether Graph or All is shown.
