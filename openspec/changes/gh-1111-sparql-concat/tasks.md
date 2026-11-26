@@ -6,7 +6,7 @@
 
 ## 2. Flink
 
-- [ ] 2.1 A constraint of `tests/e2e-kms` whose message is a `CONCAT` with `STR`, `IF` and an `OPTIONAL` bound; verified by `test-shacl-flink-scorpio-e2e.bats` reading the alert's text, which fails without the change because the package does not compile
+- [x] 2.1 A constraint of `tests/e2e-kms` whose message is a `CONCAT` with `STR`, `IF` and an `OPTIONAL` bound; verified by `test-shacl-flink-scorpio-e2e.bats` reading the alert's text, which fails without the change because the package does not compile
 
 ## 3. Documentation and coverage
 
