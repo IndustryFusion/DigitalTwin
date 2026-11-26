@@ -41,8 +41,7 @@ HEAD = (f'PREFIX iffBaseEntities: <{ENT}>\n'
         'PREFIX ngsild: <https://uri.etsi.org/ngsi-ld/>\n'
         'PREFIX iffFilterKnowledge: '
         '<https://industryfusion.github.io/contexts/example/v0/filter_knowledge/>\n')
-NGSI = {'skipped-layer', 'constant-object', 'explicit-node', 'variable-node', 'path',
-        'plain-bracket', 'not-compiled', 'wrong-layer'}
+NGSI = {'skipped-layer', 'constant-object', 'variable-node', 'plain-bracket', 'wrong-layer'}
 
 
 @pytest.fixture(scope='module')
@@ -107,15 +106,10 @@ CASES = [
      'base:state_ON', '[ ngsild:hasValue base:state_ON ]'),
     ('constant-object', 'SELECT $this WHERE { $this iffBaseEntities:hasFilter <urn:filter:1> }',
      '<urn:filter:1>', '[ ngsild:hasObject <urn:filter:1> ]'),
-    ('explicit-node', 'SELECT $this WHERE { $this iffBaseEntities:hasStrength ?a .\n'
-     '  ?a ngsild:hasValue ?s .\n  FILTER(?s > 1) }', '?a', '[ ngsild:hasValue ?s ]'),
     ('variable-node', 'SELECT $this WHERE { $this iffBaseEntities:hasStrength ?a }', '?a',
      '[ ngsild:hasValue ?a ]'),
     ('variable-node', 'SELECT $this WHERE { $this iffBaseEntities:hasFilter ?filter . }',
      '?filter', '[ ngsild:hasObject ?filter ]'),
-    ('path', 'SELECT $this WHERE { $this iffBaseEntities:hasStrength/ngsild:hasValue ?s . '
-     'FILTER(?s > 1) }', 'iffBaseEntities:hasStrength/ngsild:hasValue ?s',
-     'iffBaseEntities:hasStrength [ ngsild:hasValue ?s ]'),
     ('plain-bracket', 'SELECT $this WHERE { ?m iffFilterKnowledge:hasWasteclass '
      '[ ngsild:hasValue ?w ] }', '[ ngsild:hasValue ?w ]', '?w'),
     ('wrong-layer', 'SELECT $this WHERE { $this iffBaseEntities:hasFilter '
@@ -137,6 +131,9 @@ def test_each_misreading_is_flagged_where_it_is(terms, code, body, at, replace):
     'SELECT $this WHERE { $this iffBaseEntities:hasStrength [ ] }',
     'SELECT $this WHERE { $this iffBaseEntities:hasState [ ngsild:hasValue ?s ; '
     'ngsild:observedAt ?t ] }',
+    'SELECT $this WHERE { $this iffBaseEntities:hasStrength ?a . ?a ngsild:hasValue ?s }',
+    'SELECT $this WHERE { $this iffBaseEntities:hasStrength/ngsild:hasValue ?s }',
+    'SELECT $this WHERE { $this ?attribute [ ngsild:hasValue ?s ] }',
     'SELECT $this WHERE { ?m iffFilterKnowledge:hasWasteclass ?w . FILTER(?w != base:x) }',
     'SELECT $this WHERE { OPTIONAL { $this iffBaseEntities:hasState [ ngsild:hasValue ?s ] } }',
 ])
@@ -149,13 +146,12 @@ def test_a_rule_s_template_is_read_too(terms):
     assert [f.code for f in _ngsi(HEAD + body, terms, 'rule')] == ['variable-node']
 
 
-def test_an_attribute_flink_does_not_know_is_said_once(terms):
-    text = HEAD + ('SELECT $this WHERE { $this iffBaseEntities:hasJSON [ ngsild:hasJSON ?a ] .\n'
-                   '  ?x iffBaseEntities:hasJSON [ ngsild:hasJSON ?b ] }')
+def test_the_attribute_instance_is_said_without_a_word_on_flink(terms):
+    text = HEAD + 'SELECT $this WHERE { $this iffBaseEntities:hasStrength ?a }'
     (found,) = _ngsi(text, terms)
-    assert found.code == 'not-compiled' and text[found.start:found.end] == 'iffBaseEntities:hasJSON'
-    assert found.data == {'attribute': ENT + 'hasJSON', 'kind': 'JsonProperty',
-                          'domain': ENT + 'Cutter'}
+    assert found.code == 'variable-node'
+    assert 'names the attribute instance' in found.message and '[ ngsild:hasValue ?a ]' in found.message
+    assert 'shacl2flink' not in found.message and 'plain triple' not in found.message
 
 
 # --- the quick fixes, applied ---------------------------------------------------------------------
@@ -197,45 +193,8 @@ def test_each_fix_takes_its_warning_away(corpus_path, terms, code, body, at, rep
     assert not [d for d in diagnostics(fixed, ctx) if d.code == 'syntax'], fixed
 
 
-def test_the_explicit_form_s_fix_folds_the_instance_in(corpus_path, terms):
-    from semforge.editor import analysis, protocol, session
-    from semforge.editor.sparqldocs import code_actions, context, diagnostics
-
-    uri = _uri(corpus_path)
-    ctx = context(uri, session.package_for, analysis.package_root, protocol.uri_to_path)
-    text = HEAD + ('SELECT $this WHERE {\n    $this iffBaseEntities:hasStrength ?a .\n'
-                   '    ?a ngsild:hasValue ?s .\n    FILTER(?s > 1)\n}\n')
-    found = [d for d in diagnostics(text, ctx) if d.code == 'explicit-node']
-    params = types.CodeActionParams(
-        text_document=types.TextDocumentIdentifier(uri=uri), range=found[0].range,
-        context=types.CodeActionContext(diagnostics=found))
-    (fix,) = [a for a in code_actions(uri, text, ctx, params) if a.diagnostics]
-    assert fix.title == 'Write the instance as [ ngsild:hasValue ?s ]'
-    assert _apply(text, fix.edit.changes[uri]).split('{\n', 1)[1] == (
-        '    $this iffBaseEntities:hasStrength [ ngsild:hasValue ?s ] .\n'
-        '    FILTER(?s > 1)\n}\n')
-
-
-def test_not_compiled_offers_the_shape_as_a_command(corpus_path):
-    from semforge.editor import analysis, protocol, session
-    from semforge.editor.sparqldocs import code_actions, context, diagnostics
-
-    uri = _uri(corpus_path)
-    ctx = context(uri, session.package_for, analysis.package_root, protocol.uri_to_path)
-    text = HEAD + 'SELECT $this WHERE { $this iffBaseEntities:hasJSON [ ngsild:hasJSON ?j ] }'
-    found = [d for d in diagnostics(text, ctx) if d.code == 'not-compiled']
-    params = types.CodeActionParams(
-        text_document=types.TextDocumentIdentifier(uri=uri), range=found[0].range,
-        context=types.CodeActionContext(diagnostics=found))
-    (fix,) = [a for a in code_actions(uri, text, ctx, params) if a.diagnostics]
-    assert fix.command.command == 'semforge.nestForFlink'
-    assert fix.command.arguments == [{'packageUri': f'file://{corpus_path}/shacl.ttl',
-                                      'attribute': ENT + 'hasJSON', 'kind': 'JsonProperty',
-                                      'entityType': ENT + 'Cutter'}]
-
-
 def test_the_forms_find_the_same_on_real_data(corpus):
-    """The explicit form validation accepts, and the [ … ] form the fix writes,
+    """A named instance and the [ … ] form
     agree on what violates -- in the case where the constraint fires."""
     from semforge.cooked import sparqlbench as sb
 
@@ -245,7 +204,7 @@ def test_the_forms_find_the_same_on_real_data(corpus):
     explicit = saved.replace('$this iffBaseEntities:hasState [ ngsild:hasValue ?v1 ]',
                              '$this iffBaseEntities:hasState ?s1 . ?s1 ngsild:hasValue ?v1')
     assert explicit != saved
-    assert [f.code for f in _ngsi(explicit, terms_for(corpus))] == ['explicit-node']
+    assert [f.code for f in _ngsi(explicit, terms_for(corpus))] == []
     assert sb.run_query(corpus, cutter, 0, case, explicit)['violating'] == \
         sb.run_query(corpus, cutter, 0, case, saved)['violating'] == ['urn:plasmacutter:1']
 
@@ -311,8 +270,7 @@ def test_hover_says_the_form_and_what_flink_knows(terms):
     assert 'hasState [ ngsild:hasValue ?state ]' in state
     assert 'Sub-attributes: `hasXXXWorkpiece`' in state and 'shacl2flink' not in state
     assert 'A plain property' in hover(text, text.index('hasWasteclass') + 2, terms)
-    assert 'shacl2flink would read it as a plain triple' in \
-        hover(text, text.index('hasJSON') + 2, terms)
+    assert 'shacl2flink' not in hover(text, text.index('hasJSON') + 2, terms)
 
 
 def test_inspect_shows_an_instance_by_what_it_holds(corpus):

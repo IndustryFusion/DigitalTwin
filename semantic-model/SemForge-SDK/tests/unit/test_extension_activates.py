@@ -55,7 +55,7 @@ EXPECTED = {
     'semforge.newEntityType', 'semforge.newSubtype', 'semforge.addTypeAttribute',
     'semforge.newSuite', 'semforge.openSparqlBench', 'semforge.addSparqlConstraint',
     'semforge.removeSparqlQuery',
-    'semforge.sparqlApply', 'semforge.sparqlInspect', 'semforge.nestForFlink',
+    'semforge.sparqlApply', 'semforge.sparqlInspect',
     'semforge.openHealthPage', 'semforge.openPackagePage',
     'semforge.clickPackageRow', 'semforge.clickTypesRow', 'semforge.clickShapesRow',
     'semforge.clickEntitiesRow', 'semforge.clickKnowledgeRow',

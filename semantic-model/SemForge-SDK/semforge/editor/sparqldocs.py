@@ -50,9 +50,7 @@ KINDS = {'class': types.CompletionItemKind.Class,
 TITLES = {
     'skipped-layer': 'Read the value: {replace}',
     'constant-object': 'Put it inside the instance: {replace}',
-    'explicit-node': 'Write the instance as {replace}',
     'variable-node': 'Read the instance: {replace}',
-    'path': 'Write it as {replace}',
     'plain-bracket': 'Read it directly: {replace}',
 }
 
@@ -115,7 +113,60 @@ def diagnostics(text, ctx):
             range=_range(text, finding.start, finding.end), message=finding.message,
             severity=SEVERITY[finding.severity], source=SOURCE, code=finding.code,
             data=dict(finding.data, code=finding.code)))
+    if not any(d.severity == types.DiagnosticSeverity.Error for d in out):
+        # A query the checks above refuse needs no second opinion.
+        out.extend(_not_deployable(text, ctx))
     return out
+
+
+def _not_deployable(text, ctx):
+    """What keeps the query from being compiled to Flink SQL, at the line that
+    has most of the pattern the compiler names."""
+    import re
+
+    from ..sparql.lexer import code_tokens
+    from ..target.deploy import query_problem
+
+    try:
+        problem = query_problem(ctx.package, ctx.shape, ctx.kind, text)
+    except Exception:                                # noqa: BLE001 -- never cost the squiggles
+        return []
+    if problem is None:
+        return []
+    # Names of the pattern (or of the reason): an IRI by what it expands to,
+    # however the query or the compiler writes it; keywords and functions in
+    # any case, as the query may spell them.
+    prefixes = dict(re.findall(r'(?i)PREFIX\s+([\w-]*):\s*<([^>]*)>', text))
+
+    def name(word):
+        word = word.lstrip('?$')
+        prefix, colon, rest = word.partition(':')
+        if colon and prefix in prefixes and not rest.startswith('//'):
+            word = f'<{prefixes[prefix]}{rest}>'
+        return word.lower()
+
+    named = problem.pattern or problem.reason
+    words = {name(word) for word in re.findall(r'<[^>\s]*>|[?$\w:-]+', named)}
+    code = list(code_tokens(text))
+    head = next((i for i, t in enumerate(code) if t.kind == 'name' and t.upper in ('SELECT', 'CONSTRUCT')), -1)
+    # Only the WHERE group: a projection or a CONSTRUCT template repeats the
+    # names of the patterns but is never what the compiler refused.
+    where = next((i for i in range(head + 1, len(code)) if code[i].kind == 'name' and code[i].upper == 'WHERE'), None)
+    if where is None and head >= 0 and code[head].upper == 'SELECT':
+        where = next((i for i in range(head + 1, len(code)) if code[i].text == '{'), None)
+    first = (where if where is not None else head) + 1
+    tokens = [t for t in code[first:] if t.kind in ('var', 'pname', 'name', 'iri')]
+    lines = {}
+    for token in tokens:
+        lines.setdefault(text.count('\n', 0, token.start), []).append(token)
+    best = max(lines.values(), default=tokens[:1],
+               key=lambda found: sum(1 for t in found if name(t.text) in words))
+    start, end = (best[0].start, best[-1].end) if best else (0, len(text))
+    said = f' ({problem.pattern})' if problem.pattern else ''
+    return [types.Diagnostic(
+        range=_range(text, start, end), severity=types.DiagnosticSeverity.Error, source=SOURCE,
+        code='not-deployable', data={'code': 'not-deployable'},
+        message=f'Validation runs this query, but it cannot be deployed: {problem.reason}{said}')]
 
 
 def completion(text, offset, ctx):
@@ -189,26 +240,9 @@ def code_actions(uri, text, ctx, params):
                  [types.TextEdit(range=_range(text, spot, spot),
                                  new_text=f'PREFIX {data["prefix"]}: <{data["namespace"]}>\n')],
                  diagnostic=diagnostic, preferred=True)
-        elif data.get('code') == 'not-compiled' and data.get('domain'):
-            title = 'Add a shape so shacl2flink reads it as NGSI-LD'
-            actions.append(types.CodeAction(
-                title=title, kind=types.CodeActionKind.QuickFix, diagnostics=[diagnostic],
-                command=types.Command(title=title, command='semforge.nestForFlink', arguments=[{
-                    'packageUri': reference(uri)['package'], 'attribute': data['attribute'],
-                    'kind': data.get('kind', ''), 'entityType': data['domain']}])))
         elif data.get('replace'):
-            span = data.get('span')
-            target = _range(text, span[0], span[1]) if span else diagnostic.range
+            target = diagnostic.range
             edits = [types.TextEdit(range=target, new_text=data['replace'])]
-            for start, end in data.get('remove') or []:
-                # The statement and the line it leaves empty.
-                while end < len(text) and text[end] in ' \t':
-                    end += 1
-                if end < len(text) and text[end] == '\n':
-                    end += 1
-                    while start > 0 and text[start - 1] in ' \t':
-                        start -= 1
-                edits.append(types.TextEdit(range=_range(text, start, end), new_text=''))
             edit(TITLES.get(data.get('code'), 'Change to {replace}').format(**data), edits,
                  diagnostic=diagnostic, preferred=True)
             if data.get('alternative'):

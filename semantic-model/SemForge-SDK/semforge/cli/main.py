@@ -376,11 +376,14 @@ def check_command(path, strict):
     for a terminal or CI: a sh:path or a query naming an attribute the
     knowledge no longer declares, a data key no knowledge file declares, an
     expectation on a constraint no shape has, a class nothing declares, a
-    declared attribute nothing uses. Exits 1 when anything is an error (with
+    declared attribute nothing uses, a SPARQL expression that shacl2flink
+    cannot compile (where a shacl2flink checkout is found). Exits 1 when anything is an error (with
     --strict, a warning), so a broken link cannot be merged unnoticed.
     """
     from ..expect.vocabulary import undeclared_attributes
     from ..sanity import sanity
+    from ..target.deploy import describe, problems as not_deployable
+    from ..validate.normalise import local as local_name
 
     try:
         package = load(path)
@@ -390,6 +393,11 @@ def check_command(path, strict):
 
     rows = [(f.file, f.line, f.severity, f.code, f.message)
             for f in sanity(package)]
+    for problem in not_deployable(package):
+        pattern = f' -- {problem.pattern}' if problem.pattern else ''
+        rows.append((problem.file or package.sources['shapes'], problem.line or 1, 'error', 'not-deployable',
+                     f'{local_name(problem.shape)}: {describe(problem)} cannot be compiled to Flink SQL: '
+                     f'{problem.reason}{pattern}'))
     for entry in undeclared_attributes(package):
         for where, line in entry.places:
             rows.append((os.path.abspath(where), line, entry.severity,

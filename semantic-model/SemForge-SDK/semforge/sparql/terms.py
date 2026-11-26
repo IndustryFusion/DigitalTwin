@@ -77,9 +77,6 @@ class Terms:
         return any(str(iri).startswith(ns) for ns in self.owned)
 
     owned: set = field(default_factory=set)
-    # Attributes a shape nests a payload for: the ones shacl2flink can read as
-    # NGSI-LD. Anything else it compiles as a plain triple.
-    compiled: set = field(default_factory=set)
 
 
 _cache = {}
@@ -101,14 +98,13 @@ def _local(iri):
     return text
 
 
-def _nesting(package):
-    """(attributes whose shapes nest a payload, {attribute: sub-attributes})
-    -- read from the shapes, which is where shacl2flink reads them too."""
+def _sub_attributes(package):
+    """{attribute: sub-attributes}, read from the shapes that nest them."""
     from rdflib.namespace import SH
 
     from ..ngsild.kinds import PAYLOAD_PATHS
 
-    compiled, subs = set(), {}
+    subs = {}
     shapes = package.shapes
     for prop in set(shapes.subjects(SH.path, None)):
         outer = shapes.value(prop, SH.path)
@@ -118,11 +114,9 @@ def _nesting(package):
             path = shapes.value(inner, SH.path)
             if not isinstance(path, URIRef):
                 continue
-            if str(path) in PAYLOAD_PATHS:
-                compiled.add(str(outer))
-            elif not str(path).startswith(NGSILD):
+            if str(path) not in PAYLOAD_PATHS and not str(path).startswith(NGSILD):
                 subs.setdefault(str(outer), set()).add(str(path))
-    return compiled, subs
+    return subs
 
 
 def _inner_shapes(shapes, prop):
@@ -175,8 +169,7 @@ def _build(package):
         found.terms[str(cls)] = Term(str(cls), _local(cls), 'class', detail,
                                      str(knowledge.value(cls, RDFS.comment) or
                                          knowledge.value(cls, RDFS.label) or ''))
-    compiled, subs = _nesting(package)
-    found.compiled = compiled
+    subs = _sub_attributes(package)
     for attribute in attribute_terms(package):
         detail = ' · '.join(p for p in (attribute.kind or 'plain property',
                                         f'on {" or ".join(attribute.domains)}'

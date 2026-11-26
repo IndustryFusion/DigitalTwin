@@ -271,9 +271,6 @@ def hover(text, offset, terms):
         if term.subs:
             lines.append('Sub-attributes: ' + ', '.join(
                 f'`{s.rsplit("/", 1)[-1].rsplit("#", 1)[-1]}`' for s in term.subs))
-        if iri not in terms.compiled:
-            lines.append('⚠ No shape nests its payload: shacl2flink would read it as a plain '
-                         'triple')
     elif term.kind in ('attribute', 'property'):
         lines.append(f'A plain property, not an NGSI-LD attribute: its value is the object '
                      f'itself — `?x {term.local} ?value`')

@@ -157,6 +157,16 @@ def check_package(package, profile, index=None):
                              f'compile to nothing and never be evaluated')))
 
         found.extend(_check_mixed_view(shape, shapes_graph, locator))
+
+    # What the compiler itself says about each SPARQL expression.
+    from .deploy import describe, problems
+
+    for problem in problems(package):
+        pattern = f' -- {problem.pattern}' if problem.pattern else ''
+        found.append(Diagnostic(
+            code='SF-CAP-006', category='capability', severity='error',
+            subject=problem.shape, locator=index.locator(URIRef(problem.shape)),
+            message=f'{local(problem.shape)}: {describe(problem)} cannot be deployed: {problem.reason}{pattern}'))
     return found
 
 

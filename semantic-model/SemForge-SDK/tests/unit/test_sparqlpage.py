@@ -502,35 +502,6 @@ def test_nothing_of_the_workbench_is_stored_anywhere():
     assert "{ open: {}, inspect: false }" in source
 
 
-# --- the Flink quick fix's command -------------------------------------------------------------
-
-FLINK_ARGS = {'packageUri': PACKAGE, 'attribute': 'https://x/hasJSON', 'kind': 'JsonProperty',
-              'entityType': 'https://x/Cutter'}
-
-
-def test_nest_for_flink_adds_an_optional_property_shape(tmp_path):
-    seen = _drive(tmp_path, {
-        'command': 'semforge.nestForFlink', 'node': FLINK_ARGS,
-        'replies': {'semforge/addAttributeConstraint': {'ok': True, 'file': '/pkg/shacl.ttl'}}})
-    assert _asked(seen, 'semforge/addAttributeConstraint') == [{
-        'uri': PACKAGE, 'shape': None, 'entityType': 'https://x/Cutter',
-        'attribute': 'https://x/hasJSON', 'required': False}]
-    assert any(e['command'] == 'semforge.refreshTree' for e in seen['executed'])
-
-
-def test_a_type_without_a_shape_gets_one_first(tmp_path):
-    seen = _drive(tmp_path, {
-        'command': 'semforge.nestForFlink', 'node': FLINK_ARGS,
-        'commandResults': {'semforge.newShape': {'ok': True, 'iri': 'https://x/CutterShape'}},
-        'replies': {'semforge/addAttributeConstraint': [
-            {'ok': False, 'error': 'no shape targets https://x/Cutter itself'},
-            {'ok': True, 'file': '/pkg/shacl.ttl'}]}})
-    asked = _asked(seen, 'semforge/addAttributeConstraint')
-    assert [a['shape'] for a in asked] == [None, 'https://x/CutterShape']
-    made = [e['args'] for e in seen['executed'] if e['command'] == 'semforge.newShape']
-    assert made[0][0]['raw']['targetClass'] == 'https://x/Cutter'
-
-
 # --- the editor's keys: Ctrl+Enter applies, Ctrl+Shift+Enter inspects -----------------------------
 
 def test_the_keys_act_on_the_query_in_the_active_editor(tmp_path, page, run, corpus):

@@ -21,31 +21,25 @@ INSTANCE (a blank node), and the instance holds the payload:
 
     $this iffBaseEntities:hasPressure [ ngsild:hasValue ?pressure ] .
 
-shacl2flink, which compiles every SPARQL constraint to Flink SQL, reads an
-attribute only in exactly that form -- the object written as `[ … ]`, the
-attribute known from a shape that nests its payload. Validation (pyshacl)
-reads any form. So nothing here refuses a query; each finding says what is
-wrong or what Flink cannot compile, and offers the rewrite:
+or with the instance named (`?a ngsild:hasValue ?pressure`), or as a path. A
+query that takes one step where the data has two matches nothing, silently.
+Each finding says where, and offers the rewrite. Whether a query can be
+compiled to Flink SQL is said by the compiler itself (target/deploy.py):
 
   * skipped-layer      `$this ex:hasPressure ?p . FILTER(?p > 5)` -- ?p is the
                        instance, not the value: [ ngsild:hasValue ?p ]
   * constant-object    `$this ex:hasState base:state_ON` never matches: the
                        object is always an instance
-  * explicit-node      `$this ex:hasPressure ?a . ?a ngsild:hasValue ?p` --
-                       valid, but Flink compiles only the [ … ] form
-  * variable-node      `$this ex:hasPressure ?a` used for nothing else -- Flink
-                       reads it as a plain triple: [ ] tests presence
-  * path               `ex:hasPressure/ngsild:hasValue ?p` -- Flink has no paths
+  * variable-node      `$this ex:hasPressure ?a` used for nothing else -- ?a is
+                       the instance: [ ngsild:hasValue ?a ], or [ ] for presence
   * plain-bracket      a plain property (no NGSI-LD kind) read through
                        [ ngsild:hasValue … ]: its value is the object itself
-  * not-compiled       an attribute no shape nests a payload for: Flink would
-                       read it as a plain triple
 """
 
 from dataclasses import dataclass, field
 
 from rdflib import BNode, Literal, URIRef, Variable
-from rdflib.paths import Path, SequencePath
+from rdflib.paths import Path
 
 from ..ngsild.kinds import NGSILD, PAYLOAD_NAME, PAYLOAD_PATHS
 from .lexer import code_tokens
@@ -54,7 +48,6 @@ STRUCTURAL = {'Builtin_isBLANK', 'Builtin_BOUND', 'Builtin_sameTerm', 'Aggregate
               'Builtin_isIRI', 'Builtin_isURI', 'Builtin_isLITERAL'}
 NGSILD_PREDICATES = set(PAYLOAD_PATHS) | {NGSILD + m for m in
                                           ('observedAt', 'datasetId', 'unitCode')}
-FLINK = 'shacl2flink compiles an attribute only as `{p} [ … ]`'
 
 
 @dataclass
@@ -175,19 +168,12 @@ def check(text, terms, prepared, declared):
         prefix = next((p for p, n in declared.items() if str(iri).startswith(n)), None)
         return f'{prefix}:{str(iri)[len(declared[prefix]):]}' if prefix else f'<{iri}>'
 
-    reported = set()
     for s, p, o in triples:
-        if isinstance(p, SequencePath) and p.args and attribute(p.args[0]):
-            found.extend(_path(words, p, o, attribute(p.args[0]), short))
-            continue
         if isinstance(p, Path):
             continue
         term = attribute(p)
         if term is not None:
             payload = PAYLOAD_NAME[term.attribute_kind]
-            if str(p) not in terms.compiled and str(p) not in reported:
-                reported.add(str(p))
-                found.extend(_not_compiled(words, p, term, payload, short))
             if isinstance(o, (Literal, URIRef)):
                 found.extend(_constant(words, p, o, term, payload, short))
             elif isinstance(o, Variable):
@@ -195,8 +181,8 @@ def check(text, terms, prepared, declared):
                 elsewhere = [t for t in triples if (t[0] == o and str(t[1]) not in NGSILD_PREDICATES)
                              or (t[2] == o and (t[0], t[1]) != (s, p))]
                 if inside:
-                    found.extend(_explicit(words, p, o, term, payload, short, inside, triples))
-                elif o in used_as_value or elsewhere:
+                    continue                         # a named instance: read as `[ … ]` is
+                if o in used_as_value or elsewhere:
                     found.extend(_skipped(words, p, o, term, payload, short))
                 else:
                     found.extend(_variable(words, p, o, term, short, text))
@@ -263,84 +249,9 @@ def _variable(words, p, o, term, short, text):
             data['alternative'] = '[ ]'
         out.append(Structure(
             obj.start, obj.end, 'warning',
-            f'{obj.text} names the attribute instance of {short(p)}, which shacl2flink reads '
-            f'as a plain triple — to read its {said}: {short(p)} [ ngsild:{payload} {obj.text} ]',
+            f'{obj.text} names the attribute instance of {short(p)}, not its {said} — '
+            f'to read its {said}: {short(p)} [ ngsild:{payload} {obj.text} ]',
             'variable-node', data))
-    return out
-
-
-def _explicit(words, p, o, term, payload, short, inside, triples):
-    """`X p ?a . ?a ngsild:hasValue ?v .` -- offered as `X p [ ngsild:hasValue ?v ]`
-    when ?a is used nowhere else and each `?a …` triple is a statement of its own."""
-    out = []
-    var = f'?{o}'
-    for i, j in _spots(words, p, lambda t: t.kind == 'var' and t.text[1:] == str(o)):
-        obj = words.code[j]
-        data = {}
-        statements = _statements_of(words, str(o))
-        uses = [t for t in words.code if t.kind == 'var' and t.text[1:] == str(o)]
-        if statements is not None and len(uses) == 1 + len(statements):
-            parts = []
-            for start, end in statements:
-                body = words.text[words.code[start + 1].start:words.code[end - 1].end] \
-                    if end - 1 > start else ''
-                parts.append(body.strip())
-            data = {'replace': f'[ {" ; ".join(parts)} ]',
-                    'remove': [[words.code[start].start, words.code[end].end]
-                               for start, end in statements]}
-        out.append(Structure(
-            obj.start, obj.end, 'warning',
-            f'{FLINK.format(p=short(p))}, not through a named instance '
-            f'{var}; validation reads it either way', 'explicit-node', data))
-    return out
-
-
-def _statements_of(words, name):
-    """[(first token, closing `.` token)] of each `?name pred obj .` statement,
-    or None when one is not that simple (more than one predicate, or not
-    ending in `.`)."""
-    found = []
-    code = words.code
-    for i, token in enumerate(code):
-        if token.kind != 'var' or token.text[1:] != name:
-            continue
-        before = code[i - 1].text if i else ''
-        if before not in ('.', '{', '}'):
-            continue                             # an object, not a subject
-        depth, j = 0, i + 1
-        while j < len(code):
-            t = code[j].text
-            if t in ('[', '('):
-                depth += 1
-            elif t in (']', ')'):
-                depth -= 1
-            elif depth == 0 and t in ('.', '}', ';'):
-                break
-            j += 1
-        if j >= len(code) or code[j].text != '.':
-            return None
-        found.append((i, j))
-    return found or None
-
-
-def _path(words, path, o, term, short):
-    out = []
-    first = path.args[0]
-    for i in words.predicate_spots(first):
-        slash = words.object_after(i)
-        if slash is None or slash.text != '/':
-            continue
-        second = words.code[i + 2] if i + 2 < len(words.code) else None
-        obj = words.code[i + 3] if i + 3 < len(words.code) else None
-        data = {}
-        if second is not None and obj is not None and obj.kind in ('var', 'pname', 'iri',
-                                                                   'string', 'number'):
-            data = {'replace': f'{words.code[i].text} [ {second.text} {obj.text} ]',
-                    'span': [words.code[i].start, obj.end]}
-        out.append(Structure(
-            words.code[i].start, (obj or second or slash).end, 'warning',
-            f'{FLINK.format(p=short(first))}: shacl2flink has no property paths',
-            'path', data))
     return out
 
 
@@ -362,16 +273,3 @@ def _plain_bracket(words, p, inner, short):
             'object itself, with no instance in between — so this matches nothing',
             'plain-bracket', data))
     return out
-
-
-def _not_compiled(words, p, term, payload, short):
-    spots = words.predicate_spots(p)
-    if not spots:
-        return []
-    token = words.code[spots[0]]
-    return [Structure(
-        token.start, token.end, 'warning',
-        f'shacl2flink knows {short(p)} as an NGSI-LD attribute only from a shape that nests '
-        f'ngsild:{payload} on it, and none does: Flink would compile it as a plain triple',
-        'not-compiled', {'attribute': str(p), 'kind': term.attribute_kind,
-                         'domain': term.domain_iri})]

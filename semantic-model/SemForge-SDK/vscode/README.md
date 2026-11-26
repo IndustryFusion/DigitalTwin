@@ -142,6 +142,14 @@ top right of the editor, or the right-click menu) goes to the page of what the
 cursor is on: the shape, type, vocabulary class, entity or test case. A line
 about nothing that has a page searches for the word at the cursor instead.
 
+### A query that cannot be deployed
+
+Validation evaluates any SPARQL; the platform runs what shacl2flink compiles to Flink SQL. While a query is written,
+SemForge asks that compiler, and marks the pattern it cannot compile, with the reason. `semforge check` and the
+Problems panel name every such query of a package. Without a shacl2flink checkout beside the package or SemForge
+(or at `SEMFORGE_SHACL2FLINK`), nothing is said. The check is loaded once: after the checkout changed, **SemForge:
+Restart Language Server** asks the new one.
+
 ### Pinned and recent
 
 **SemForge: Pinned and recent…** (`Ctrl+Alt+B` in a SemForge view or page,
@@ -1410,27 +1418,25 @@ predicate follows the attribute's kind, declared once, in the knowledge, as
 A property without an NGSI-LD range is a plain property of the knowledge, read
 directly: `?material iffFilterKnowledge:hasWasteclass ?class`.
 
-Every SPARQL constraint must also compile with shacl2flink, and shacl2flink
-reads an attribute only as `attr [ … ]`, and only an attribute a shape nests a
-payload for. Validation reads any form. So the editor refuses nothing; it
-says what a form means and what Flink can compile, each with its rewrite:
+An attribute may also be read through a named instance
+(`$this ex:hasPressure ?a . ?a ngsild:hasValue ?p`) or as a path
+(`ex:hasPressure/ngsild:hasValue ?p`). What reads the data otherwise than
+meant is marked, each with its rewrite; whether shacl2flink can compile the
+query is said by shacl2flink itself (see *A query that cannot be deployed*):
 
 | Written | What is wrong | Quick fix |
 |---|---|---|
 | `$this ex:hasPressure ?p . FILTER(?p > 5)` | `?p` is the instance, not the value | `[ ngsild:hasValue ?p ]` |
 | `$this ex:hasState base:state_ON` | the object is always an instance: never matches | `[ ngsild:hasValue base:state_ON ]` |
-| `$this ex:hasPressure ?a . ?a ngsild:hasValue ?p .` | valid, but Flink compiles only `[ … ]` | folded into `[ ngsild:hasValue ?p ]` |
-| `$this ex:hasFilter ?filter .` | `?filter` names the instance, which Flink reads as a plain triple | `[ ngsild:hasObject ?filter ]` (the payload of its kind, the variable kept); or, when the variable is used nowhere else, `[ ]` — only "it is there" |
-| `ex:hasPressure/ngsild:hasValue ?p` | Flink has no property paths | `ex:hasPressure [ ngsild:hasValue ?p ]` |
+| `$this ex:hasFilter ?filter .` | `?filter` names the instance, not its target | `[ ngsild:hasObject ?filter ]` (the payload of its kind, the variable kept); or, when the variable is used nowhere else, `[ ]` — only "it is there" |
 | `ex:hasState [ ngsild:hasObject ?s ]` | the wrong payload for the kind | `ngsild:hasValue` |
 | `?m plainProperty [ ngsild:hasValue ?v ]` | a plain property has no instance | `?v` |
-| an attribute no shape nests a payload for | Flink would compile it as a plain triple | **Add a shape so shacl2flink reads it as NGSI-LD** — an optional property shape on the type that carries it (the type's shape is written first when it has none) |
 
 A rule's CONSTRUCT template is checked the same way. Inside an attribute's
 `[ … ]`, completion offers its payload first (`ngsild:hasObject ?filter` for a
 Relationship), then `observedAt`, `datasetId`, `unitCode` (a Property's), and
 the sub-attributes its shape nests, each as its own step. Hover says the form
-an attribute needs, its sub-attributes, and whether Flink knows it. Inspect
+an attribute needs and its sub-attributes. Inspect
 and Apply show an attribute instance by what it holds — `[hasValue 21.5 ·
 observedAt 2024-…]` — instead of a blank node id.
 

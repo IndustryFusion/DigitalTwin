@@ -558,11 +558,6 @@
         "category": "SemForge"
       },
       {
-        "command": "semforge.nestForFlink",
-        "title": "Add a shape so shacl2flink reads the attribute as NGSI-LD",
-        "category": "SemForge"
-      },
-      {
         "command": "semforge.showDetails",
         "title": "Show details",
         "category": "SemForge",
@@ -1515,10 +1510,6 @@
         {
           "command": "semforge.sparqlInspect",
           "when": "resourceScheme == semforge-sparql"
-        },
-        {
-          "command": "semforge.nestForFlink",
-          "when": "false"
         },
         {
           "command": "semforge.about.project",

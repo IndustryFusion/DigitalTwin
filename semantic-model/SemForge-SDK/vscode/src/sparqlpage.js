@@ -953,40 +953,6 @@ function register(context, clientHolder, session) {
     vscode.commands.registerCommand('semforge.sparqlInspect', async () =>
       (await forActiveQuery(bench)) && bench.receive({ command: 'inspect' })),
     vscode.workspace.onDidChangeTextDocument((event) => bench.changed(event.document)),
-    // The quick fix for "shacl2flink would read this attribute as a plain
-    // triple": an optional property shape nesting its payload, on the shape
-    // of the type that carries it -- created first when the type has none.
-    vscode.commands.registerCommand('semforge.nestForFlink', async (args) => {
-      const client = clientHolder.client;
-      if (!client || !args) {
-        return undefined;
-      }
-      const request = (shape) => client.sendRequest('semforge/addAttributeConstraint', {
-        uri: args.packageUri, shape: shape || null, entityType: shape ? null : args.entityType,
-        attribute: args.attribute, required: false });
-      let made = await request();
-      if (!made.ok && /no shape targets/.test(made.error || '')) {
-        const label = args.entityType.split(/[/#]/).pop();
-        const shape = await vscode.commands.executeCommand('semforge.newShape', {
-          raw: { kind: 'type', targetClass: args.entityType, label },
-          packageUri: args.packageUri }, { stay: true, quiet: true });
-        if (!shape) {
-          return undefined;
-        }
-        made = await request(shape.iri);
-      }
-      if (!made.ok) {
-        vscode.window.showErrorMessage(`SemForge: ${made.error}`);
-        return undefined;
-      }
-      for (const command of REFRESH_VIEWS) {
-        vscode.commands.executeCommand(command);
-      }
-      vscode.window.setStatusBarMessage(
-        `SemForge: ${args.attribute.split(/[/#]/).pop()} is now an NGSI-LD attribute to ` +
-          'shacl2flink too (an optional property shape)', 6000);
-      return made;
-    }),
     vscode.commands.registerCommand('semforge.openSparqlBench', async (node, options) => {
       const { packageUri, shape } = target(node);
       if (!shape) {

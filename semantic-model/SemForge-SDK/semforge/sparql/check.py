@@ -185,7 +185,7 @@ def check(text, terms=None, kind='constraint', view='current', prefix_lines=()):
 
     if prepared is not None and terms is not None:
         # How the query reads NGSI-LD attributes: what the data's two steps
-        # need, and what Flink can compile (semforge.sparql.ngsild).
+        # need (semforge.sparql.ngsild).
         from .ngsild import check as structure
 
         try:

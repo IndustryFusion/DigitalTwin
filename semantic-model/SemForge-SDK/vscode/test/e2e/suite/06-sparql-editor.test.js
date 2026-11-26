@@ -259,30 +259,18 @@ describe('the SPARQL editor', () => {
     }
   });
 
-  it('a new attribute Flink cannot read yet gets its shape, and the warning goes', async () => {
+  it('what cannot be deployed is said while it is written, and goes when it can', async () => {
     const api = await semforge();
-    // Declared in the knowledge, as a Property of Cutter -- with no shape yet.
-    fs.appendFileSync(path.join(WORKSPACE, 'knowledge.ttl'),
-      '\niffBaseEntities:hasHumidity a owl:DatatypeProperty ;\n' +
-      '    rdfs:domain iffBaseEntities:Cutter ;\n' +
-      '    rdfs:range <https://uri.etsi.org/ngsi-ld/Property> .\n');
     const doc = await openQuery(api);
-    const text = `${HEAD}PREFIX iffBaseEntities: <${ENT}>\n` +
-      'SELECT $this WHERE { $this iffBaseEntities:hasHumidity [ ngsild:hasValue ?h ] }';
-    await setText(doc, text);
+    const start = `${HEAD}PREFIX iffBaseEntities: <${ENT}>\n`;
+    const deployable = () => vscode.languages.getDiagnostics(doc.uri).find((d) => d.code === 'not-deployable');
+    await setText(doc, `${start}SELECT $this WHERE {\n  $this a ?type .\n  $this ?attribute ?value .\n}`);
     try {
-      const found = await until(() => vscode.languages.getDiagnostics(doc.uri)
-        .find((d) => d.code === 'not-compiled'), 'the not-compiled warning');
-      const actions = await vscode.commands.executeCommand('vscode.executeCodeActionProvider',
-        doc.uri, found.range);
-      const fix = actions.find((a) => a.command && a.command.command === 'semforge.nestForFlink');
-      assert.ok(fix, actions.map((a) => a.title).join(', '));
-      const made = await vscode.commands.executeCommand(fix.command.command,
-        ...fix.command.arguments);
-      assert.ok(made && made.ok, JSON.stringify(made));
-      assert.match(read('shacl.ttl'), /sh:path iffBaseEntities:hasHumidity[^\]]*ngsild:hasValue/s);
-      await until(() => !vscode.languages.getDiagnostics(doc.uri)
-        .some((d) => d.code === 'not-compiled'), 'the warning to go once the shape is there');
+      const found = await until(deployable, 'the query not to be deployable');
+      assert.match(found.message, /variable as predicate/);
+      assert.strictEqual(doc.lineAt(found.range.start.line).text.trim(), '$this ?attribute ?value .');
+      await setText(doc, `${start}SELECT $this WHERE {\n  $this ?attribute [ ngsild:hasValue ?value ] .\n}`);
+      await until(() => !deployable(), 'it to go: any attribute can be read by its value');
     } finally {
       await revert(doc);
     }
