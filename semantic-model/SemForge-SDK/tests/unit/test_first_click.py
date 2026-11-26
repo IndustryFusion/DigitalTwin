@@ -105,7 +105,13 @@ def test_the_package_is_warmed_when_anything_asks(tmp_path, corpus_path):
     else:
         pytest.fail('the package was not warmed')
     assert os.listdir(cache_dir(root, 'index'))
-    validation.service().wait(root, timeout=120)
+    # The warm-up indexes first and starts the validation after: a wait that
+    # comes in between finds no run yet. Until the run that warm started, or
+    # one started here, is ready.
+    deadline = time.time() + 120
+    while validation.service().get(root)[1].state != 'ready' and time.time() < deadline:
+        validation.service().wait(root, timeout=max(0.0, deadline - time.time()))
+        time.sleep(0.1)
     assert validation.service().get(root)[1].state == 'ready'
 
     before = session._packages[root]
