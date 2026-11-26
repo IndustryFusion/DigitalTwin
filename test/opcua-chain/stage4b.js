@@ -68,7 +68,7 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
   const loaded = await fetch(`${A}/entityOperations/upsert`, {
     method: 'POST', headers: { ...headers, 'Content-Type': 'application/ld+json' }, body: instances
   });
-  check(loaded.status === 201, `the 21 entities of stage 1 load: ${loaded.status}`);
+  check(loaded.status === 201, `the 22 entities of stage 1 load: ${loaded.status}`);
   await sleep(2000);
 
   const bridge = new NgsildUpdates(config);

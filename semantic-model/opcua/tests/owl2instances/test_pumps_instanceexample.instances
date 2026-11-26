@@ -7,15 +7,39 @@
         ],
         "pumps:hasRotorBlocked": {
             "type": "Property",
-            "value": false
+            "value": false,
+            "opcua:hasFalseState": {
+                "type": "Property",
+                "value": "A FalseState means that there is no blocked rotor. "
+            },
+            "opcua:hasTrueState": {
+                "type": "Property",
+                "value": "A TrueState means that there a no blocked rotor. "
+            }
         },
         "pumps:hasExcessVibration": {
             "type": "Property",
-            "value": false
+            "value": false,
+            "opcua:hasFalseState": {
+                "type": "Property",
+                "value": "A FalseState means that there is no excess vibration at the pump. "
+            },
+            "opcua:hasTrueState": {
+                "type": "Property",
+                "value": "A TrueState means that there is an excess vibration at the pump. "
+            }
         },
         "pumps:hasUnbalance": {
             "type": "Property",
-            "value": false
+            "value": false,
+            "opcua:hasFalseState": {
+                "type": "Property",
+                "value": "A FalseState means that there is no unbalance at the pump. "
+            },
+            "opcua:hasTrueState": {
+                "type": "Property",
+                "value": "A TrueState means that there is unbalance at the pump. "
+            }
         }
     },
     {
@@ -26,11 +50,27 @@
         ],
         "pumps:hasTemperature": {
             "type": "Property",
-            "value": false
+            "value": false,
+            "opcua:hasFalseState": {
+                "type": "Property",
+                "value": "A FalseState means that there is no abnormal temperature at the fluid. "
+            },
+            "opcua:hasTrueState": {
+                "type": "Property",
+                "value": "A TrueState means that there is an abnormal temperature at the fluid. "
+            }
         },
         "pumps:hasBlockage": {
             "type": "Property",
-            "value": false
+            "value": false,
+            "opcua:hasFalseState": {
+                "type": "Property",
+                "value": "A FalseState means that there is no blockage at the pump. "
+            },
+            "opcua:hasTrueState": {
+                "type": "Property",
+                "value": "A TrueState means that there is a blockage at the pump. "
+            }
         }
     },
     {
@@ -41,11 +81,27 @@
         ],
         "pumps:hasMaximumNumberStarts": {
             "type": "Property",
-            "value": false
+            "value": false,
+            "opcua:hasTrueState": {
+                "type": "Property",
+                "value": "A TrueState means that the maximum number of pump start cycles is exceeded."
+            },
+            "opcua:hasFalseState": {
+                "type": "Property",
+                "value": "A FalseState means that the maximum number of pump start cycles is not exceeded."
+            }
         },
         "pumps:hasMaximumOperationTime": {
             "type": "Property",
-            "value": false
+            "value": false,
+            "opcua:hasFalseState": {
+                "type": "Property",
+                "value": "A FalseState means that the maximum time of pump operation is not exceeded."
+            },
+            "opcua:hasTrueState": {
+                "type": "Property",
+                "value": "A TrueState means that the maximum time of pump operation is exceeded."
+            }
         }
     },
     {
@@ -78,7 +134,133 @@
         "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDAx",
         "@context": [
             "http://localhost:8099/context.jsonld"
-        ]
+        ],
+        "pumps:hasCountryOfOrigin": {
+            "type": "Property",
+            "value": "Germany"
+        },
+        "pumps:hasDayOfConstruction": {
+            "type": "Property",
+            "value": 1
+        },
+        "devices:hasComponentName": {
+            "type": "Property",
+            "value": "ExampleComponentName"
+        },
+        "machinery:hasLocation": {
+            "type": "Property",
+            "value": "ExampleLocation"
+        },
+        "machinery:hasInitialOperationDate": {
+            "type": "Property",
+            "value": {
+                "@value": "2021-05-01T09:00:00Z",
+                "@type": "xsd:dateTime"
+            }
+        },
+        "devices:hasSerialNumber": {
+            "type": "Property",
+            "value": "1234567890"
+        },
+        "pumps:hasPhysicalAddress": {
+            "type": "JsonProperty",
+            "json": {
+                "xsd:TypeId": {
+                    "xsd:Identifier": "ns=2;i=5017"
+                },
+                "xsd:Body": {
+                    "{http://opcfoundation.org/UA/Pumps/Types.xsd}PhysicalAddressDataType": {
+                        "{http://opcfoundation.org/UA/Pumps/Types.xsd}EncodingMask": [
+                            "63"
+                        ],
+                        "{http://opcfoundation.org/UA/Pumps/Types.xsd}Street": [
+                            {
+                                "xsd:Locale": [
+                                    "GE"
+                                ],
+                                "xsd:Text": [
+                                    "Lyoner Str."
+                                ]
+                            }
+                        ],
+                        "{http://opcfoundation.org/UA/Pumps/Types.xsd}Number": [
+                            {
+                                "xsd:Locale": [
+                                    "GE"
+                                ],
+                                "xsd:Text": [
+                                    "18"
+                                ]
+                            }
+                        ],
+                        "{http://opcfoundation.org/UA/Pumps/Types.xsd}City": [
+                            {
+                                "xsd:Locale": [
+                                    "GE"
+                                ],
+                                "xsd:Text": [
+                                    "Frankfurt"
+                                ]
+                            }
+                        ],
+                        "{http://opcfoundation.org/UA/Pumps/Types.xsd}PostalCode": [
+                            {
+                                "xsd:Locale": [
+                                    "GE"
+                                ],
+                                "xsd:Text": [
+                                    "60528"
+                                ]
+                            }
+                        ],
+                        "{http://opcfoundation.org/UA/Pumps/Types.xsd}State": [
+                            {
+                                "xsd:Locale": [
+                                    "GE"
+                                ],
+                                "xsd:Text": [
+                                    "Hessen"
+                                ]
+                            }
+                        ],
+                        "{http://opcfoundation.org/UA/Pumps/Types.xsd}Country": [
+                            {
+                                "xsd:Locale": [
+                                    "GE"
+                                ],
+                                "xsd:Text": [
+                                    "Deutschland"
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        "pumps:hasArticleNumber": {
+            "type": "Property",
+            "value": "1234567890"
+        },
+        "devices:hasProductInstanceUri": {
+            "type": "Property",
+            "value": "www.exampleManufacturer.com/Pump123xyz"
+        },
+        "machinery:hasMonthOfConstruction": {
+            "type": "Property",
+            "value": 1
+        },
+        "machinery:hasYearOfConstruction": {
+            "type": "Property",
+            "value": 2021
+        },
+        "devices:hasManufacturer": {
+            "type": "Property",
+            "value": "ExampleManufacturer"
+        },
+        "devices:hasManufacturerUri": {
+            "type": "Property",
+            "value": "www.exampleManufacturer.com"
+        }
     },
     {
         "type": "pumps:DriveMeasurementsType",
@@ -91,6 +273,38 @@
             "value": {
                 "@value": 0.0,
                 "@type": "http://www.w3.org/2001/XMLSchema#double"
+            },
+            "opcua:hasEURange": {
+                "type": "JsonProperty",
+                "json": {}
+            },
+            "pumps:hasKindOfQuantity": {
+                "type": "Property",
+                "value": "temperature"
+            },
+            "opcua:hasEngineeringUnits": {
+                "type": "JsonProperty",
+                "json": {
+                    "xsd:TypeId": {
+                        "xsd:Identifier": "i=888"
+                    },
+                    "xsd:Body": {
+                        "xsd:EUInformation": {
+                            "xsd:NamespaceUri": "http://www.opcfoundation.org/UA/units/un/cefact",
+                            "xsd:UnitId": 4932940,
+                            "xsd:DisplayName": {
+                                "xsd:Text": "K"
+                            },
+                            "xsd:Description": {
+                                "xsd:Text": "kelvin"
+                            }
+                        }
+                    }
+                }
+            },
+            "opcua:hasDefinition": {
+                "type": "Property",
+                "value": ""
             }
         },
         "pumps:hasMotorVoltage": {
@@ -98,6 +312,38 @@
             "value": {
                 "@value": 0.0,
                 "@type": "http://www.w3.org/2001/XMLSchema#double"
+            },
+            "opcua:hasEURange": {
+                "type": "JsonProperty",
+                "json": {}
+            },
+            "opcua:hasDefinition": {
+                "type": "Property",
+                "value": ""
+            },
+            "opcua:hasEngineeringUnits": {
+                "type": "JsonProperty",
+                "json": {
+                    "xsd:TypeId": {
+                        "xsd:Identifier": "i=888"
+                    },
+                    "xsd:Body": {
+                        "xsd:EUInformation": {
+                            "xsd:NamespaceUri": "http://www.opcfoundation.org/UA/units/un/cefact",
+                            "xsd:UnitId": 5655636,
+                            "xsd:DisplayName": {
+                                "xsd:Text": "V"
+                            },
+                            "xsd:Description": {
+                                "xsd:Text": "volt"
+                            }
+                        }
+                    }
+                }
+            },
+            "pumps:hasKindOfQuantity": {
+                "type": "Property",
+                "value": "voltage"
             }
         },
         "pumps:hasEnergyConsumption": {
@@ -105,6 +351,38 @@
             "value": {
                 "@value": 0.0,
                 "@type": "http://www.w3.org/2001/XMLSchema#double"
+            },
+            "opcua:hasEURange": {
+                "type": "JsonProperty",
+                "json": {}
+            },
+            "opcua:hasEngineeringUnits": {
+                "type": "JsonProperty",
+                "json": {
+                    "xsd:TypeId": {
+                        "xsd:Identifier": "i=888"
+                    },
+                    "xsd:Body": {
+                        "xsd:EUInformation": {
+                            "xsd:NamespaceUri": "http://www.opcfoundation.org/UA/units/un/cefact",
+                            "xsd:UnitId": 4869973,
+                            "xsd:DisplayName": {
+                                "xsd:Text": "J"
+                            },
+                            "xsd:Description": {
+                                "xsd:Text": "joule"
+                            }
+                        }
+                    }
+                }
+            },
+            "opcua:hasDefinition": {
+                "type": "Property",
+                "value": ""
+            },
+            "pumps:hasKindOfQuantity": {
+                "type": "Property",
+                "value": "energy"
             }
         },
         "pumps:hasFrequency": {
@@ -112,6 +390,38 @@
             "value": {
                 "@value": 0.0,
                 "@type": "http://www.w3.org/2001/XMLSchema#double"
+            },
+            "pumps:hasKindOfQuantity": {
+                "type": "Property",
+                "value": "frequency"
+            },
+            "opcua:hasEURange": {
+                "type": "JsonProperty",
+                "json": {}
+            },
+            "opcua:hasEngineeringUnits": {
+                "type": "JsonProperty",
+                "json": {
+                    "xsd:TypeId": {
+                        "xsd:Identifier": "i=888"
+                    },
+                    "xsd:Body": {
+                        "xsd:EUInformation": {
+                            "xsd:NamespaceUri": "http://www.opcfoundation.org/UA/units/un/cefact",
+                            "xsd:UnitId": 4740186,
+                            "xsd:DisplayName": {
+                                "xsd:Text": "Hz"
+                            },
+                            "xsd:Description": {
+                                "xsd:Text": "hertz"
+                            }
+                        }
+                    }
+                }
+            },
+            "opcua:hasDefinition": {
+                "type": "Property",
+                "value": ""
             }
         },
         "pumps:hasDriverPowerInput": {
@@ -119,6 +429,38 @@
             "value": {
                 "@value": 0.0,
                 "@type": "http://www.w3.org/2001/XMLSchema#double"
+            },
+            "opcua:hasEngineeringUnits": {
+                "type": "JsonProperty",
+                "json": {
+                    "xsd:TypeId": {
+                        "xsd:Identifier": "i=888"
+                    },
+                    "xsd:Body": {
+                        "xsd:EUInformation": {
+                            "xsd:NamespaceUri": "http://www.opcfoundation.org/UA/units/un/cefact",
+                            "xsd:UnitId": 5723220,
+                            "xsd:DisplayName": {
+                                "xsd:Text": "W"
+                            },
+                            "xsd:Description": {
+                                "xsd:Text": "watt"
+                            }
+                        }
+                    }
+                }
+            },
+            "opcua:hasDefinition": {
+                "type": "Property",
+                "value": ""
+            },
+            "opcua:hasEURange": {
+                "type": "JsonProperty",
+                "json": {}
+            },
+            "pumps:hasKindOfQuantity": {
+                "type": "Property",
+                "value": "power"
             }
         },
         "pumps:hasMotorCurrent": {
@@ -126,6 +468,38 @@
             "value": {
                 "@value": 0.0,
                 "@type": "http://www.w3.org/2001/XMLSchema#double"
+            },
+            "pumps:hasKindOfQuantity": {
+                "type": "Property",
+                "value": "electric current"
+            },
+            "opcua:hasEngineeringUnits": {
+                "type": "JsonProperty",
+                "json": {
+                    "xsd:TypeId": {
+                        "xsd:Identifier": "i=888"
+                    },
+                    "xsd:Body": {
+                        "xsd:EUInformation": {
+                            "xsd:NamespaceUri": "http://www.opcfoundation.org/UA/units/un/cefact",
+                            "xsd:UnitId": 4279632,
+                            "xsd:DisplayName": {
+                                "xsd:Text": "A"
+                            },
+                            "xsd:Description": {
+                                "xsd:Text": "ampere"
+                            }
+                        }
+                    }
+                }
+            },
+            "opcua:hasDefinition": {
+                "type": "Property",
+                "value": ""
+            },
+            "opcua:hasEURange": {
+                "type": "JsonProperty",
+                "json": {}
             }
         }
     },
@@ -164,13 +538,41 @@
         ],
         "pumps:hasClockwiseRotation": {
             "type": "Property",
-            "value": true
+            "value": true,
+            "opcua:hasTrueState": {
+                "type": "Property",
+                "value": "A TrueState means that the rotation of pump is clockwise. "
+            },
+            "opcua:hasFalseState": {
+                "type": "Property",
+                "value": "A FalseState means that the rotation of the pump is anticlockwise."
+            }
         },
         "pumps:hasMaximumAllowableContinuousSpeed": {
             "type": "Property",
             "value": {
                 "@value": 56.67,
                 "@type": "http://www.w3.org/2001/XMLSchema#double"
+            },
+            "opcua:hasEngineeringUnits": {
+                "type": "JsonProperty",
+                "json": {
+                    "xsd:TypeId": {
+                        "xsd:Identifier": "i=888"
+                    },
+                    "xsd:Body": {
+                        "xsd:EUInformation": {
+                            "xsd:NamespaceUri": "http://www.opcfoundation.org/UA/units/un/cefact",
+                            "xsd:UnitId": 4405559,
+                            "xsd:DisplayName": {
+                                "xsd:Text": "s⁻¹"
+                            },
+                            "xsd:Description": {
+                                "xsd:Text": "reciprocal second"
+                            }
+                        }
+                    }
+                }
             }
         },
         "pumps:hasPumpClass": {
@@ -184,6 +586,26 @@
             "value": {
                 "@value": 278.15,
                 "@type": "http://www.w3.org/2001/XMLSchema#double"
+            },
+            "opcua:hasEngineeringUnits": {
+                "type": "JsonProperty",
+                "json": {
+                    "xsd:TypeId": {
+                        "xsd:Identifier": "i=888"
+                    },
+                    "xsd:Body": {
+                        "xsd:EUInformation": {
+                            "xsd:NamespaceUri": "http://www.opcfoundation.org/UA/units/un/cefact",
+                            "xsd:UnitId": 4932940,
+                            "xsd:DisplayName": {
+                                "xsd:Text": "K"
+                            },
+                            "xsd:Description": {
+                                "xsd:Text": "kelvin"
+                            }
+                        }
+                    }
+                }
             }
         },
         "pumps:hasMaximumPumpPowerInput": {
@@ -191,6 +613,26 @@
             "value": {
                 "@value": 85.0,
                 "@type": "http://www.w3.org/2001/XMLSchema#double"
+            },
+            "opcua:hasEngineeringUnits": {
+                "type": "JsonProperty",
+                "json": {
+                    "xsd:TypeId": {
+                        "xsd:Identifier": "i=888"
+                    },
+                    "xsd:Body": {
+                        "xsd:EUInformation": {
+                            "xsd:NamespaceUri": "http://www.opcfoundation.org/UA/units/un/cefact",
+                            "xsd:UnitId": 5723220,
+                            "xsd:DisplayName": {
+                                "xsd:Text": "W"
+                            },
+                            "xsd:Description": {
+                                "xsd:Text": "watt"
+                            }
+                        }
+                    }
+                }
             }
         },
         "pumps:hasMaximumAllowableAmbientTemperature": {
@@ -198,6 +640,26 @@
             "value": {
                 "@value": 343.15,
                 "@type": "http://www.w3.org/2001/XMLSchema#double"
+            },
+            "opcua:hasEngineeringUnits": {
+                "type": "JsonProperty",
+                "json": {
+                    "xsd:TypeId": {
+                        "xsd:Identifier": "i=888"
+                    },
+                    "xsd:Body": {
+                        "xsd:EUInformation": {
+                            "xsd:NamespaceUri": "http://www.opcfoundation.org/UA/units/un/cefact",
+                            "xsd:UnitId": 4932940,
+                            "xsd:DisplayName": {
+                                "xsd:Text": "K"
+                            },
+                            "xsd:Description": {
+                                "xsd:Text": "kelvin"
+                            }
+                        }
+                    }
+                }
             }
         },
         "pumps:hasOfferedControlModes": {
@@ -219,6 +681,26 @@
             "value": {
                 "@value": 80.0,
                 "@type": "http://www.w3.org/2001/XMLSchema#double"
+            },
+            "opcua:hasEngineeringUnits": {
+                "type": "JsonProperty",
+                "json": {
+                    "xsd:TypeId": {
+                        "xsd:Identifier": "i=888"
+                    },
+                    "xsd:Body": {
+                        "xsd:EUInformation": {
+                            "xsd:NamespaceUri": "http://www.opcfoundation.org/UA/units/un/cefact",
+                            "xsd:UnitId": 20529,
+                            "xsd:DisplayName": {
+                                "xsd:Text": "%"
+                            },
+                            "xsd:Description": {
+                                "xsd:Text": "percent"
+                            }
+                        }
+                    }
+                }
             }
         },
         "pumps:hasMaximumAllowableHead": {
@@ -226,6 +708,26 @@
             "value": {
                 "@value": 6.3,
                 "@type": "http://www.w3.org/2001/XMLSchema#double"
+            },
+            "opcua:hasEngineeringUnits": {
+                "type": "JsonProperty",
+                "json": {
+                    "xsd:TypeId": {
+                        "xsd:Identifier": "i=888"
+                    },
+                    "xsd:Body": {
+                        "xsd:EUInformation": {
+                            "xsd:NamespaceUri": "http://www.opcfoundation.org/UA/units/un/cefact",
+                            "xsd:UnitId": 5067858,
+                            "xsd:DisplayName": {
+                                "xsd:Text": "m"
+                            },
+                            "xsd:Description": {
+                                "xsd:Text": "metre"
+                            }
+                        }
+                    }
+                }
             }
         },
         "pumps:hasMinimumAllowableContinuousSpeed": {
@@ -233,11 +735,39 @@
             "value": {
                 "@value": 23.33,
                 "@type": "http://www.w3.org/2001/XMLSchema#double"
+            },
+            "opcua:hasEngineeringUnits": {
+                "type": "JsonProperty",
+                "json": {
+                    "xsd:TypeId": {
+                        "xsd:Identifier": "i=888"
+                    },
+                    "xsd:Body": {
+                        "xsd:EUInformation": {
+                            "xsd:NamespaceUri": "http://www.opcfoundation.org/UA/units/un/cefact",
+                            "xsd:UnitId": 4405559,
+                            "xsd:DisplayName": {
+                                "xsd:Text": "s⁻¹"
+                            },
+                            "xsd:Description": {
+                                "xsd:Text": "reciprocal second"
+                            }
+                        }
+                    }
+                }
             }
         },
         "pumps:hasControllable": {
             "type": "Property",
-            "value": false
+            "value": false,
+            "opcua:hasTrueState": {
+                "type": "Property",
+                "value": "A TrueState means that the pump is controllable."
+            },
+            "opcua:hasFalseState": {
+                "type": "Property",
+                "value": "A FalseState means that the pump is not controllable."
+            }
         },
         "pumps:hasOfferedFieldbuses": {
             "type": "JsonProperty",
@@ -287,10 +817,43 @@
         ]
     },
     {
+        "type": "opcua:FileType",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA3",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "opcua:hasMimeType": {
+            "type": "Property",
+            "value": ""
+        },
+        "opcua:hasOpenCount": {
+            "type": "Property",
+            "value": 0
+        },
+        "opcua:hasWritable": {
+            "type": "Property",
+            "value": false
+        },
+        "opcua:hasSize": {
+            "type": "Property",
+            "value": 0
+        },
+        "opcua:hasUserWritable": {
+            "type": "Property",
+            "value": false
+        }
+    },
+    {
         "type": "pumps:DocumentationType",
         "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA1",
         "@context": [
             "http://localhost:8099/context.jsonld"
+        ],
+        "pumps:hasTechnicalData": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL3lvdXJvcmdhbmlzYXRpb24ub3JnL0luc3RhbmNlRXhhbXBsZS87aT01MDA3"
+            }
         ],
         "pumps:hasTechnicalDataLink": {
             "type": "Property",
@@ -308,6 +871,10 @@
             "value": {
                 "@value": "2022-05-01T10:00:00Z",
                 "@type": "xsd:dateTime"
+            },
+            "opcua:hasDefinition": {
+                "type": "Property",
+                "value": ""
             }
         },
         "pumps:hasLastServicingDate": {
@@ -315,6 +882,10 @@
             "value": {
                 "@value": "2021-05-01T10:00:00Z",
                 "@type": "xsd:dateTime"
+            },
+            "opcua:hasDefinition": {
+                "type": "Property",
+                "value": ""
             }
         },
         "pumps:hasNextServicingDate": {
@@ -322,6 +893,10 @@
             "value": {
                 "@value": "2022-05-01T10:00:00Z",
                 "@type": "xsd:dateTime"
+            },
+            "opcua:hasDefinition": {
+                "type": "Property",
+                "value": ""
             }
         },
         "pumps:hasInstallationDate": {
@@ -329,6 +904,10 @@
             "value": {
                 "@value": "2021-05-01T10:00:00Z",
                 "@type": "xsd:dateTime"
+            },
+            "opcua:hasDefinition": {
+                "type": "Property",
+                "value": ""
             }
         },
         "pumps:hasLastInspectionDate": {
@@ -336,6 +915,10 @@
             "value": {
                 "@value": "2021-05-01T10:00:00Z",
                 "@type": "xsd:dateTime"
+            },
+            "opcua:hasDefinition": {
+                "type": "Property",
+                "value": ""
             }
         }
     },
@@ -347,11 +930,31 @@
         ],
         "pumps:hasFailure": {
             "type": "Property",
-            "value": false
+            "value": false,
+            "opcua:hasDefinition": {
+                "type": "Property",
+                "value": ""
+            },
+            "opcua:hasTrueState": {
+                "type": "Property",
+                "value": ""
+            },
+            "opcua:hasFalseState": {
+                "type": "Property",
+                "value": ""
+            }
         },
         "pumps:hasNumberOfFailures": {
             "type": "Property",
-            "value": 0
+            "value": 0,
+            "opcua:hasDefinition": {
+                "type": "Property",
+                "value": ""
+            },
+            "opcua:hasEURange": {
+                "type": "JsonProperty",
+                "json": {}
+            }
         }
     },
     {
@@ -365,6 +968,34 @@
             "value": {
                 "@value": 0.0,
                 "@type": "http://www.w3.org/2001/XMLSchema#double"
+            },
+            "opcua:hasDefinition": {
+                "type": "Property",
+                "value": ""
+            },
+            "opcua:hasEURange": {
+                "type": "JsonProperty",
+                "json": {}
+            },
+            "opcua:hasEngineeringUnits": {
+                "type": "JsonProperty",
+                "json": {
+                    "xsd:TypeId": {
+                        "xsd:Identifier": "i=888"
+                    },
+                    "xsd:Body": {
+                        "xsd:EUInformation": {
+                            "xsd:NamespaceUri": "http://www.opcfoundation.org/UA/units/un/cefact",
+                            "xsd:UnitId": 4740434,
+                            "xsd:DisplayName": {
+                                "xsd:Text": "h"
+                            },
+                            "xsd:Description": {
+                                "xsd:Text": "hour"
+                            }
+                        }
+                    }
+                }
             }
         },
         "pumps:hasActiveMaintenanceTime": {
@@ -372,6 +1003,34 @@
             "value": {
                 "@value": 0.0,
                 "@type": "http://www.w3.org/2001/XMLSchema#double"
+            },
+            "opcua:hasDefinition": {
+                "type": "Property",
+                "value": ""
+            },
+            "opcua:hasEURange": {
+                "type": "JsonProperty",
+                "json": {}
+            },
+            "opcua:hasEngineeringUnits": {
+                "type": "JsonProperty",
+                "json": {
+                    "xsd:TypeId": {
+                        "xsd:Identifier": "i=888"
+                    },
+                    "xsd:Body": {
+                        "xsd:EUInformation": {
+                            "xsd:NamespaceUri": "http://www.opcfoundation.org/UA/units/un/cefact",
+                            "xsd:UnitId": 4740434,
+                            "xsd:DisplayName": {
+                                "xsd:Text": "h"
+                            },
+                            "xsd:Description": {
+                                "xsd:Text": "hour"
+                            }
+                        }
+                    }
+                }
             }
         }
     },
@@ -411,6 +1070,30 @@
             "value": {
                 "@value": 0.0,
                 "@type": "http://www.w3.org/2001/XMLSchema#double"
+            },
+            "opcua:hasEngineeringUnits": {
+                "type": "JsonProperty",
+                "json": {
+                    "xsd:TypeId": {
+                        "xsd:Identifier": "i=888"
+                    },
+                    "xsd:Body": {
+                        "xsd:EUInformation": {
+                            "xsd:NamespaceUri": "http://www.opcfoundation.org/UA/units/un/cefact",
+                            "xsd:UnitId": 5067595,
+                            "xsd:DisplayName": {
+                                "xsd:Text": "m/s²"
+                            },
+                            "xsd:Description": {
+                                "xsd:Text": "metre per second squared"
+                            }
+                        }
+                    }
+                }
+            },
+            "opcua:hasEURange": {
+                "type": "JsonProperty",
+                "json": {}
             }
         },
         "pumps:hasOverallVibrationAccelerationPerG0_P": {
@@ -418,6 +1101,14 @@
             "value": {
                 "@value": 0.0,
                 "@type": "http://www.w3.org/2001/XMLSchema#double"
+            },
+            "opcua:hasEngineeringUnits": {
+                "type": "JsonProperty",
+                "json": {}
+            },
+            "opcua:hasEURange": {
+                "type": "JsonProperty",
+                "json": {}
             }
         },
         "pumps:hasOverallVibrationAcceleration0_P": {
@@ -425,6 +1116,30 @@
             "value": {
                 "@value": 0.0,
                 "@type": "http://www.w3.org/2001/XMLSchema#double"
+            },
+            "opcua:hasEURange": {
+                "type": "JsonProperty",
+                "json": {}
+            },
+            "opcua:hasEngineeringUnits": {
+                "type": "JsonProperty",
+                "json": {
+                    "xsd:TypeId": {
+                        "xsd:Identifier": "i=888"
+                    },
+                    "xsd:Body": {
+                        "xsd:EUInformation": {
+                            "xsd:NamespaceUri": "http://www.opcfoundation.org/UA/units/un/cefact",
+                            "xsd:UnitId": 5067595,
+                            "xsd:DisplayName": {
+                                "xsd:Text": "m/s²"
+                            },
+                            "xsd:Description": {
+                                "xsd:Text": "metre per second squared"
+                            }
+                        }
+                    }
+                }
             }
         }
     },
@@ -439,17 +1154,73 @@
             "value": {
                 "@value": 0.0,
                 "@type": "http://www.w3.org/2001/XMLSchema#double"
+            },
+            "opcua:hasEngineeringUnits": {
+                "type": "JsonProperty",
+                "json": {
+                    "xsd:TypeId": {
+                        "xsd:Identifier": "i=888"
+                    },
+                    "xsd:Body": {
+                        "xsd:EUInformation": {
+                            "xsd:NamespaceUri": "http://www.opcfoundation.org/UA/units/un/cefact",
+                            "xsd:UnitId": 5723220,
+                            "xsd:DisplayName": {
+                                "xsd:Text": "W"
+                            },
+                            "xsd:Description": {
+                                "xsd:Text": "watt"
+                            }
+                        }
+                    }
+                }
+            },
+            "pumps:hasKindOfQuantity": {
+                "type": "Property",
+                "value": "mechanical power"
             }
         },
         "pumps:hasNumberOfStarts": {
             "type": "Property",
-            "value": 0
+            "value": 0,
+            "pumps:hasKindOfQuantity": {
+                "type": "Property",
+                "value": "rational number"
+            },
+            "opcua:hasEngineeringUnits": {
+                "type": "JsonProperty",
+                "json": {}
+            }
         },
         "pumps:hasFluidTemperature": {
             "type": "Property",
             "value": {
                 "@value": 0.0,
                 "@type": "http://www.w3.org/2001/XMLSchema#double"
+            },
+            "pumps:hasKindOfQuantity": {
+                "type": "Property",
+                "value": "temperature"
+            },
+            "opcua:hasEngineeringUnits": {
+                "type": "JsonProperty",
+                "json": {
+                    "xsd:TypeId": {
+                        "xsd:Identifier": "i=888"
+                    },
+                    "xsd:Body": {
+                        "xsd:EUInformation": {
+                            "xsd:NamespaceUri": "http://www.opcfoundation.org/UA/units/un/cefact",
+                            "xsd:UnitId": 4932940,
+                            "xsd:DisplayName": {
+                                "xsd:Text": "K"
+                            },
+                            "xsd:Description": {
+                                "xsd:Text": "kelvin"
+                            }
+                        }
+                    }
+                }
             }
         },
         "pumps:hasDifferentialPressure": {
@@ -457,6 +1228,30 @@
             "value": {
                 "@value": 0.0,
                 "@type": "http://www.w3.org/2001/XMLSchema#double"
+            },
+            "pumps:hasKindOfQuantity": {
+                "type": "Property",
+                "value": "pressure"
+            },
+            "opcua:hasEngineeringUnits": {
+                "type": "JsonProperty",
+                "json": {
+                    "xsd:TypeId": {
+                        "xsd:Identifier": "i=888"
+                    },
+                    "xsd:Body": {
+                        "xsd:EUInformation": {
+                            "xsd:NamespaceUri": "http://www.opcfoundation.org/UA/units/un/cefact",
+                            "xsd:UnitId": 5259596,
+                            "xsd:DisplayName": {
+                                "xsd:Text": "Pa"
+                            },
+                            "xsd:Description": {
+                                "xsd:Text": "pascal"
+                            }
+                        }
+                    }
+                }
             }
         },
         "pumps:hasSpeed": {
@@ -464,6 +1259,30 @@
             "value": {
                 "@value": 0.0,
                 "@type": "http://www.w3.org/2001/XMLSchema#double"
+            },
+            "opcua:hasEngineeringUnits": {
+                "type": "JsonProperty",
+                "json": {
+                    "xsd:TypeId": {
+                        "xsd:Identifier": "i=888"
+                    },
+                    "xsd:Body": {
+                        "xsd:EUInformation": {
+                            "xsd:NamespaceUri": "http://www.opcfoundation.org/UA/units/un/cefact",
+                            "xsd:UnitId": 4405559,
+                            "xsd:DisplayName": {
+                                "xsd:Text": "s⁻¹"
+                            },
+                            "xsd:Description": {
+                                "xsd:Text": "reciprocal second"
+                            }
+                        }
+                    }
+                }
+            },
+            "pumps:hasKindOfQuantity": {
+                "type": "Property",
+                "value": "frequency"
             }
         },
         "pumps:has%3CVibration%3E": [
@@ -482,7 +1301,15 @@
         ],
         "pumps:hasOnOff": {
             "type": "Property",
-            "value": false
+            "value": false,
+            "opcua:hasFalseState": {
+                "type": "Property",
+                "value": "A FalseState means that it is not possible to actuate the pump."
+            },
+            "opcua:hasTrueState": {
+                "type": "Property",
+                "value": "A TrueState means that it is possible to actuate the pump."
+            }
         },
         "pumps:hasActualControlMode": {
             "type": "Property",

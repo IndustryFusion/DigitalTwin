@@ -162,8 +162,13 @@ parse nodeset instance and create ngsi-ld model')
                         action='store_true')
     parser.add_argument('-sw', '--suppress-warnings', type=str, nargs='*',
                         help='List of Warnings which are to be suppressed.')
-    parser.add_argument('-p', '--properties', help='Consider OPC UA Properties.', required=False, default=False,
-                        action='store_true')
+    parser.add_argument('--no-properties', dest='properties', help='Do not follow OPC UA Properties (HasProperty). '
+                        'By default they are followed: they become attributes of the entities, or sub-attributes of '
+                        'the variable they belong to, e.g. EngineeringUnits.',
+                        required=False, default=True, action='store_false')
+    parser.add_argument('-p', '--properties', dest='properties_compat',
+                        help='No effect, kept for compatibility: OPC UA Properties are followed by default.',
+                        required=False, default=False, action='store_true')
     parser.add_argument('-vrs', '--value-rank-subshapes', help='Add ValueRank subshapes (instead of nest '
                         'the whole expression).',
                         required=False, default=False,
@@ -179,6 +184,14 @@ parse nodeset instance and create ngsi-ld model')
 
     parsed_args = parser.parse_args(args)
     return parsed_args
+
+
+def get_ignored_hierarchical_references(follow_properties, opcua_namespace):
+    """The hierarchical references the scan does not follow: HasProperty unless OPC UA Properties are followed
+       (the default; --no-properties turns it off)."""
+    if follow_properties:
+        return []
+    return [opcua_namespace['HasProperty']]
 
 
 basens = None  # Will be defined by the imported ontologies
@@ -899,9 +912,7 @@ if __name__ == '__main__':
     for uri, prefix, _ in result:
         e.bind(prefix, Namespace(uri))
     ignored_references = rdfutils.get_ignored_references(g)
-    ignored_hierarchical_references = []
-    if not parse_properties:
-        ignored_hierarchical_references.append(opcuans['HasProperty'])
+    ignored_hierarchical_references = get_ignored_hierarchical_references(parse_properties, opcuans)
 
     # First scan the templates to create the rules
     # If there is a rootinstancetype defined, use it. Otherwise,

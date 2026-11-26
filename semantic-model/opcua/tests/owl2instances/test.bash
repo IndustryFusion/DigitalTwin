@@ -52,9 +52,10 @@ TESTNODESETS=(
     test_object_subtypes_inheritance.Nodeset2,${TESTURI}AlphaType
     test_object_subtypes_inheritance_wrong.Nodeset2,${TESTURI}AlphaSubType,,,,SUBCLASS_INCONSISTENCY
     test_reference_types_properties.Nodeset2,${TESTURI}AlphaType,,,-p
+    test_reference_types_no_properties.Nodeset2,${TESTURI}AlphaType,,,--no-properties
     test_variable_arrays_vrs.NodeSet2,${TESTURI}AlphaType,,,-vrs
     test_semantic_bridge.Nodeset2,${EXURI}AlphaType,,,-sb,,${EXURI}
-    test_interfaces.NodeSet2,${TESTURI}AlphaType,,machinery,-p,INTERFACE_NOT_SUBTYPE_OF_INTERFACETYPE
+    test_interfaces.NodeSet2,${TESTURI}AlphaType,,machinery,,INTERFACE_NOT_SUBTYPE_OF_INTERFACETYPE
     test_object_example.NodeSet2,${EXURI}AlphaType,,,,,${EXURI}
     test_pumps_instanceexample,http://opcfoundation.org/UA/Pumps/PumpType,http://yourorganisation.org/InstanceExample/,pumps
     test_variable_arrays.NodeSet2,${TESTURI}AlphaType

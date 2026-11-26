@@ -52,6 +52,10 @@ kms-packages:
 # members (Activity, UtilityName of the prognoses), which the shapes rightly report.
 KMS_VALIDATED := opcua-pumps opcua-simple
 
+# OPC UA Properties are followed (openspec gh-1136-properties-by-default): an analog variable of the pump package
+# carries its EngineeringUnits in its shape, and entities.ttl declares no sub-attribute.
+PROPERTIES_CHECK := tests/kms-packages/pumps-engineering-units.query
+
 kms-packages-check:
 	for entry in $(KMS_EXAMPLES); do \
 		$(SEMFORGE) verify "$(KMS_OUT)/$${entry##*:}" || exit 1; \
@@ -59,6 +63,12 @@ kms-packages-check:
 	for package in $(KMS_VALIDATED); do \
 		$(SEMFORGE) validate "$(KMS_OUT)/$$package" || exit 1; \
 	done
+	$(PYTHON) tests/owl2instances/query.py "$(KMS_OUT)/opcua-pumps/shacl.ttl" $(PROPERTIES_CHECK) | grep -qx True || \
+		{ echo "opcua-pumps: no opcua:hasEngineeringUnits on pumps:hasMotorTemperature, see $(PROPERTIES_CHECK)" >&2; \
+		exit 1; }
+	! grep -q 'hasEngineeringUnits' "$(KMS_OUT)/opcua-pumps/knowledge/entities.ttl" || \
+		{ echo "opcua-pumps: entities.ttl declares the sub-attribute opcua:hasEngineeringUnits, only the shapes do" >&2; \
+		exit 1; }
 
 test:
 	${PYTEST} tests --cov=lib . --cov-fail-under=80

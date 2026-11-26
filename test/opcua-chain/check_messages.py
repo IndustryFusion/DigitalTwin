@@ -29,7 +29,7 @@ def check(ok, text):
         sys.exit(1)
 
 
-check(len(last) == 40, f'distinct attributes sent: {len(last)}, the 6 unset nodes send nothing')
+check(len(last) == 53, f'distinct attributes sent: {len(last)}, the 11 unset nodes send nothing')
 check(not any(m['v'] == 'None' for m in messages), 'no value is the string None')
 check(all(m['t'] in ('Property', 'IriProperty', 'JsonProperty', 'Relationship') for m in messages), 'only known labels')
 check(all('/' not in m['i'] for m in messages), 'no / in an entity id')
@@ -44,3 +44,6 @@ modes = last['hasOfferedControlModes']
 check(modes['t'] == 'JsonProperty' and json.loads(modes['v'])['xsd:Body']['xsd:OptionSet']['xsd:Value'] == 'AQA=',
       'structure is JSON, with ByteStrings in base64')
 check('hasOnOff' not in last, 'an unset node sends nothing')
+check(last['hasManufacturer']['n'] == 'http://opcfoundation.org/UA/DI/hasManufacturer'
+      and last['hasManufacturer']['v'] == 'ExampleManufacturer', 'a Property of an object is sent like a variable')
+check('hasSize' not in last, 'an unset Property sends nothing')

@@ -324,8 +324,8 @@ Create SHACL, entities.ttl, json-ld and bindings.ttl from an OPCUA instance mode
 
 ```console
 usage: owl2instances.py [-h] [-t TYPE] [-so] [-ta] [-eid] [-j JSONLD] [-e ENTITIES] [-s SHACL] [-b BINDINGS]
-                        [-c CONTEXT] [-d] [-mi] [-ma] -n NAMESPACE [-i ID] [-xe ENTITY_NAMESPACE] [-xc CONTEXT_URL]
-                        [-r] [-sw [SUPPRESS_WARNINGS ...]] [-p] [-vrs] [-sb] [-nr]
+                        [-c CONTEXT] [-d] [-ma] -n NAMESPACE [-i ID] [-xe ENTITY_NAMESPACE] [-xc CONTEXT_URL] [-r]
+                        [-sw [SUPPRESS_WARNINGS ...]] [--no-properties] [-p] [-vrs] [-sb] [-nr]
                         instance
 
 parse nodeset instance and create ngsi-ld model
@@ -367,7 +367,10 @@ options:
                         Import dependencies of dependencies
   -sw [SUPPRESS_WARNINGS ...], --suppress-warnings [SUPPRESS_WARNINGS ...]
                         List of Warnings which are to be suppressed.
-  -p, --properties      Consider OPC UA Properties.
+  --no-properties       Do not follow OPC UA Properties (HasProperty). By default they are followed: they become
+                        attributes of the entities, or sub-attributes of the variable they belong to, e.g.
+                        EngineeringUnits.
+  -p, --properties      No effect, kept for compatibility: OPC UA Properties are followed by default.
   -vrs, --value-rank-subshapes
                         Add ValueRank subshapes (instead of nest the whole expression).
   -sb, --semantic-bridge
@@ -375,6 +378,34 @@ options:
                         references)
   -nr, --node-references
                         Add a reference (base:hasNodeRef) from every entity to the OPC UA node it is created from
+```
+
+### OPC UA Properties
+
+OPC UA Properties (`HasProperty`) are followed by default:
+
+- A Property of an object becomes an attribute of its entity, constrained in `shacl.ttl`,
+  filled in the instances and bound in `bindings.ttl` like a variable. In the pump example
+  these are the nameplate of the pump's identification, e.g. `devices:hasManufacturer`,
+  `devices:hasSerialNumber`, `machinery:hasYearOfConstruction`.
+- A Property of a variable becomes a sub-attribute of the variable's attribute, e.g.
+  `opcua:hasEngineeringUnits` and `opcua:hasEURange` under `pumps:hasMotorTemperature`.
+  It is constrained in `shacl.ttl` and filled in the instances with the value of the
+  nodeset; it gets no binding of its own.
+
+`--no-properties` leaves them all out. `-p/--properties` is still accepted for existing
+scripts and changes nothing.
+
+The shapes are the contract for sub-attributes. `entities.ttl` declares the attributes
+of the entity types (`rdfs:domain`), but never a sub-attribute such as
+`opcua:hasEngineeringUnits`. Which sub-attributes a variable may carry is the nested
+`sh:property` of the variable's property shape in `shacl.ttl`:
+
+```turtle
+shacl:DriveMeasurementsTypeShape sh:property [
+    sh:path pumps:hasMotorTemperature ;
+    sh:property [ sh:path opcua:hasEngineeringUnits ; ... ] ;
+    ... ] .
 ```
 
 Every entity id is `urn:uaentity:` (or the `-i` prefix) followed by the base64url encoded

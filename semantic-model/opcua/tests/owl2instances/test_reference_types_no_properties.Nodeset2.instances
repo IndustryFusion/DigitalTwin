@@ -1,0 +1,216 @@
+[
+    {
+        "type": "test:BType",
+        "id": "urn:uaentity:bnN1PWh0dHA6Ly9teS50ZXN0LztpPTIwMTI",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "test:hasMyVariable": {
+            "type": "Property",
+            "value": {
+                "@value": 0.0,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
+        }
+    },
+    {
+        "type": "test:BSubType",
+        "id": "urn:uaentity:bnN1PWh0dHA6Ly9teS50ZXN0LztpPTI0MTM",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "test:hasMyVariable": {
+            "type": "Property",
+            "value": {
+                "@value": 0.0,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
+        }
+    },
+    {
+        "type": "test:AlphaSubType2",
+        "id": "urn:uaentity:bnN1PWh0dHA6Ly9teS50ZXN0LztpPTI0MTE",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "test:hasB2": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:bnN1PWh0dHA6Ly9teS50ZXN0LztpPTIwMTI"
+            }
+        ],
+        "test:hasSubB3": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:bnN1PWh0dHA6Ly9teS50ZXN0LztpPTI0MTM"
+            }
+        ],
+        "opcua:Organizes": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:bnN1PWh0dHA6Ly9teS50ZXN0LztpPTIwMTM"
+            }
+        ],
+        "test:X": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:bnN1PWh0dHA6Ly9teS50ZXN0LztpPTI0MTM"
+            },
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:bnN1PWh0dHA6Ly9teS50ZXN0LztpPTI0MTI"
+            }
+        ]
+    },
+    {
+        "type": "test:BType",
+        "id": "urn:uaentity:bnN1PWh0dHA6Ly9teS50ZXN0LztpPTIwMTM",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "test:hasMyVariable": {
+            "type": "Property",
+            "value": {
+                "@value": 0.0,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
+        }
+    },
+    {
+        "type": "test:BType",
+        "id": "urn:uaentity:bnN1PWh0dHA6Ly9teS50ZXN0LztpPTIwMjI",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "test:hasMyVariable": {
+            "type": "Property",
+            "value": {
+                "@value": 0.0,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            },
+            "test:hasMySubvariable": {
+                "type": "Property",
+                "value": {
+                    "@value": 0.0,
+                    "@type": "http://www.w3.org/2001/XMLSchema#double"
+                }
+            }
+        }
+    },
+    {
+        "type": "test:BType",
+        "id": "urn:uaentity:bnN1PWh0dHA6Ly9teS50ZXN0LztpPTIwMTE",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "test:hasMyVariable": {
+            "type": "Property",
+            "value": {
+                "@value": 0.0,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
+        }
+    },
+    {
+        "type": "test:BSubType",
+        "id": "urn:uaentity:bnN1PWh0dHA6Ly9teS50ZXN0LztpPTI0MTI",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "test:hasMyVariable": {
+            "type": "Property",
+            "value": {
+                "@value": 0.0,
+                "@type": "http://www.w3.org/2001/XMLSchema#double"
+            }
+        }
+    },
+    {
+        "type": "test:AlphaSubType",
+        "id": "urn:uaentity:bnN1PWh0dHA6Ly9teS50ZXN0LztpPTI0MTA",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "test:hasB1": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:bnN1PWh0dHA6Ly9teS50ZXN0LztpPTIwMTE"
+            }
+        ],
+        "test:hasSubB2": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:bnN1PWh0dHA6Ly9teS50ZXN0LztpPTI0MTI"
+            }
+        ],
+        "opcua:Organizes": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:bnN1PWh0dHA6Ly9teS50ZXN0LztpPTIwMTM"
+            }
+        ],
+        "test:X": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:bnN1PWh0dHA6Ly9teS50ZXN0LztpPTIwMTE"
+            },
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:bnN1PWh0dHA6Ly9teS50ZXN0LztpPTI0MTI"
+            }
+        ]
+    },
+    {
+        "type": "test:AlphaType",
+        "id": "urn:uaentity:c3Z1PXVybjp0ZXN0OnNlcnZlcjtuc3U9aHR0cDovL215LnRlc3QvO2k9MjAxMA",
+        "@context": [
+            "http://localhost:8099/context.jsonld"
+        ],
+        "test:hasB2": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:bnN1PWh0dHA6Ly9teS50ZXN0LztpPTIwMTI"
+            }
+        ],
+        "test:hasSubAlphaInstance2": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:bnN1PWh0dHA6Ly9teS50ZXN0LztpPTI0MTE"
+            }
+        ],
+        "test:hasB3": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:bnN1PWh0dHA6Ly9teS50ZXN0LztpPTIwMTM"
+            }
+        ],
+        "test:hasB4": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:bnN1PWh0dHA6Ly9teS50ZXN0LztpPTIwMjI"
+            }
+        ],
+        "test:hasSubAlphaInstance": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:bnN1PWh0dHA6Ly9teS50ZXN0LztpPTI0MTA"
+            }
+        ],
+        "opcua:Organizes": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:bnN1PWh0dHA6Ly9teS50ZXN0LztpPTIwMTE"
+            }
+        ],
+        "test:X": [
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:bnN1PWh0dHA6Ly9teS50ZXN0LztpPTIwMTI"
+            },
+            {
+                "type": "Relationship",
+                "object": "urn:uaentity:bnN1PWh0dHA6Ly9teS50ZXN0LztpPTIwMTE"
+            }
+        ]
+    }
+]

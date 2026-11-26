@@ -82,7 +82,7 @@ shacl.ttl instances.jsonld entities.ttl context.jsonld $(INSTANCE_ONTOLOGY): $(I
 	@echo "Creating $@"
 	python3 nodeset2owl.py  $(INSTANCE_URL) -i $(INSTANCE_DEPENDENCIES) $(INSTANCE_OPTS) -burl $(BASE_ONTOLOGY) -o $(INSTANCE_ONTOLOGY)
 	echo "Creating shacl.ttl, instances.jsonld, context.jsonld and entities.ttl"
-	python3 owl2instances.py -p -ma -i "urn:laser:sn1234:" -sb -n $(INSTANCE_NS_PREFIX) $(INSTANCE_ONTOLOGY)
+	python3 owl2instances.py -ma -i "urn:laser:sn1234:" -sb -n $(INSTANCE_NS_PREFIX) $(INSTANCE_ONTOLOGY)
 
 
 $(INSTANCE_DEPENDENCIES):
