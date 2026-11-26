@@ -523,6 +523,12 @@
         "category": "SemForge"
       },
       {
+        "command": "semforge.setValueType",
+        "title": "Type of the value…",
+        "icon": "$(symbol-numeric)",
+        "category": "SemForge"
+      },
+      {
         "command": "semforge.removeCaseValue",
         "title": "Remove…",
         "icon": "$(trash)",
@@ -1402,6 +1408,10 @@
         },
         {
           "command": "semforge.deleteSuite",
+          "when": "false"
+        },
+        {
+          "command": "semforge.setValueType",
           "when": "false"
         },
         {

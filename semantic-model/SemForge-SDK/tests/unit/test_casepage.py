@@ -403,17 +403,18 @@ def test_add_attribute_and_add_entity_use_the_tree_commands(tmp_path, without):
     (1, 'semforge.addSubAttribute', 'attributeNode'),
     (2, 'semforge.addObservation', 'attributeNode'),
     (3, 'semforge.addInstance', 'attributeNode'),
-    (4, 'semforge.setUnitCode', 'attributeNode'),
-    (5, 'semforge.setDatasetId', 'attributeNode'),
-    (6, 'semforge.goToShape', 'node'),
-    (7, 'semforge.goToShapeSource', 'node'),
-    (9, 'semforge.removeCaseValue', 'attributeNode')])
+    (5, 'semforge.setUnitCode', 'attributeNode'),
+    (6, 'semforge.setDatasetId', 'attributeNode'),
+    (7, 'semforge.goToShape', 'node'),
+    (8, 'semforge.goToShapeSource', 'node'),
+    (10, 'semforge.removeCaseValue', 'attributeNode')])
 def test_the_row_menu(tmp_path, without, pick, command, which):
     at, _, row = _first_editable(without)
     seen = _edit(tmp_path, without, [{'command': 'rowMenu', 'at': at}], pick=pick)
     labels = [item['label'] for item in seen['quickPicks'][0]['items']]
     assert labels == ['$(edit) Edit value', '$(add) Add sub-attribute',
                       '$(history) Add observation', '$(layers) Add instance…',
+                      '$(symbol-numeric) Type of the value…',
                       '$(symbol-ruler) Unit…', '$(symbol-key) Change datasetId…',
                       '$(symbol-ruler) Show its rule', '$(go-to-file) Open its rule in .ttl',
                       '$(go-to-file) Open in .jsonld', f'$(trash) Remove {row["name"]}…']

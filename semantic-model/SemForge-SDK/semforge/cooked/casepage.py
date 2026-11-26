@@ -107,6 +107,8 @@ def _render(value):
 def _attributes(node, address, index, violations, entity):
     """Rows for an entity's (or an attribute's) attributes, sub-attributes
     nested, each with the violations about it."""
+    from .examples import value_type
+
     rows = []
     for key, instances in node.items():
         if key in RESERVED or key in VALUE_KEYS or key in META_KEYS:
@@ -126,6 +128,7 @@ def _attributes(node, address, index, violations, entity):
             rows.append({
                 'name': name, 'term': key, 'kind': str(member.get('type', '')),
                 'value': _render(payload) if payload is not None else '',
+                'valueType': value_type(member['value']) if 'value' in member else '',
                 'dataset': str(member.get('datasetId', '')),
                 'unitCode': str(member.get('unitCode', '')),
                 # When it was observed, where to change that, and whether

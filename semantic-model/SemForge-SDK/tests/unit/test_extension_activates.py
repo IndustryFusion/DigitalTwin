@@ -45,7 +45,7 @@ EXPECTED = {
     'semforge.about.knowledge',
     'semforge.restart', 'semforge.revalidate', 'semforge.doctor',
     'semforge.search', 'semforge.clearSearch', 'semforge.openHere',
-    'semforge.editConstraint', 'semforge.removeConstraint',
+    'semforge.setValueType', 'semforge.editConstraint', 'semforge.removeConstraint',
     'semforge.refreshTree', 'semforge.goToDefinition', 'semforge.overrideHere',
     'semforge.addAttributeConstraint', 'semforge.newAttribute',
     'semforge.deleteAttribute', 'semforge.removeUse', 'semforge.addSubAttribute',

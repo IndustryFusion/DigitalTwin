@@ -211,7 +211,7 @@ const stub = {
         detail: item.detail, value: item.value, picked: !!item.picked
       }));
       seen.quickPicks.push({ items: offered,
-                             placeHolder: (options || {}).placeHolder });
+                             placeHolder: (options || {}).placeHolder, title: (options || {}).title });
       // A flow can ask more than once -- pick a type, then pick its parent --
       // and answering both with one value cannot drive it. `picks` is consumed
       // in order; `pick` still answers every prompt, which most scenarios want.

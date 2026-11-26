@@ -274,6 +274,26 @@ def set_dataset_id_feature(ls, params):
         index=field(params, 'index', None)))
 
 
+@server.feature('semforge/setValueType')
+def set_value_type_feature(ls, params):
+    """Make one value of an example a double, an integer, a text, …"""
+    from ..cooked.examples import set_value_type
+
+    root = package_root(uri_to_path(field(params, 'uri', '')))
+    if root is None:
+        return {'ok': False, 'error': 'not a SemForge package'}
+    try:
+        package = session.package_for(root)
+        path, old, new = set_value_type(
+            package, field(params, 'entity'), list(field(params, 'path') or []),
+            str(field(params, 'valueType', '') or ''), file=field(params, 'file'))
+        session.forget(root)
+        validation.publish(ls, path_to_uri(path))
+        return {'ok': True, 'file': path, 'old': old, 'new': new}
+    except Exception as exc:                       # noqa: BLE001
+        return {'ok': False, 'error': str(exc)}
+
+
 @server.feature('semforge/addAttribute')
 def add_attribute_feature(ls, params):
     """Add an attribute, with the kind the shapes say it should be."""

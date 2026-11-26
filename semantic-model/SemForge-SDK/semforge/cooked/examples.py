@@ -34,9 +34,11 @@ Turtle.
 """
 
 import json
+import math
 import re
 from collections import OrderedDict
 from dataclasses import dataclass, field
+from decimal import Decimal, InvalidOperation
 
 from ..errors import PackageError
 
@@ -773,24 +775,57 @@ def _as_written(package, entity, attribute_path, value):
     modeller typed, and anything that is not a plain number, is kept as it is."""
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         return value
-    from ..expect.attributecase import _row, declared_type, declared_value
+    from ..expect.attributecase import declared_type, declared_value
+
+    row = next(_rows(package, entity, attribute_path), None)
+    iri = declared_type(row) if row is not None else None
+    return declared_value(value, iri) if iri else value
+
+
+def _rows(package, entity, attribute_path):
+    """The attribute's row in each of the entity's types that has it."""
+    from ..expect.attributecase import _row
 
     chain = [step for step in attribute_path
              if isinstance(step, str) and step not in NGSILD_MEMBERS]
     types = entity.get('type')
     for entity_type in (types if isinstance(types, list) else [types]):
         try:
-            _, row = _row(package, entity_type, chain)
+            yield _row(package, entity_type, chain)[1]
         except PackageError:
             continue
-        iri = declared_type(row)
-        return declared_value(value, iri) if iri else value
-    return value
 
 
 def _entity(document, entity_id):
     return next((e for e in document if isinstance(e, dict)
                  and str(e.get('id') or e.get('@id')) == entity_id), None)
+
+
+def _replace(package, entity_id, path, file, change):
+    """Replace one value in an example by `change(old, entity, key)`. Returns
+    (path, old, new). Nothing is written when `change` raises."""
+    source = _target_file(package, file)
+    with open(source, encoding='utf-8') as handle:
+        text = handle.read()
+    document = json.loads(text, object_pairs_hook=OrderedDict)
+    if not isinstance(document, list):
+        document = [document]
+
+    container, key = _locate(document, entity_id, list(path))
+    try:
+        old = container[key]
+    except (KeyError, IndexError, TypeError):
+        raise PackageError(f'{entity_id}: no value at {"/".join(map(str, path))}')
+    made = change(old, _entity(document, entity_id), key)
+    container[key] = made
+
+    rendered = json.dumps(document, indent=2, ensure_ascii=False)
+    if text.endswith('\n'):
+        rendered += '\n'
+    json.loads(rendered)                       # never write what will not parse
+    with open(source, 'w', encoding='utf-8') as handle:
+        handle.write(rendered)
+    return source, _render(old), _render(made)
 
 
 def set_value(package, entity_id, path, value, file=None):
@@ -801,34 +836,170 @@ def set_value(package, entity_id, path, value, file=None):
     Property that expects one should not quietly produce the string form,
     which is the difference between a constraint passing and failing.
     """
-    source = _target_file(package, file)
-    with open(source, encoding='utf-8') as handle:
-        text = handle.read()
-    document = json.loads(text, object_pairs_hook=OrderedDict)
-    if not isinstance(document, list):
-        document = [document]
+    def change(old, entity, key):
+        try:
+            parsed = json.loads(value) if isinstance(value, str) else value
+        except (TypeError, ValueError):
+            parsed = value
+        return _as_written(package, entity, path, parsed) if key == 'value' else parsed
 
-    container, key = _locate(document, entity_id, list(path))
+    return _replace(package, entity_id, path, file, change)
+
+
+XSD = 'http://www.w3.org/2001/XMLSchema#'
+VALUE_TYPES = ('shape', 'double', 'integer', 'decimal', 'text', 'boolean', 'term')
+_NUMBER = re.compile(r'[-+]?([0-9]+(\.[0-9]*)?|\.[0-9]+)([eE][-+]?[0-9]+)?')
+RDF_LANG_STRING = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#langString'
+_DIGITS = 1000      # what a number may be written out with
+# The XSD datatypes of whole numbers: a value is an integer of that datatype.
+INTEGERS = ('integer', 'int', 'long', 'short', 'byte', 'nonNegativeInteger', 'positiveInteger',
+            'negativeInteger', 'nonPositiveInteger', 'unsignedLong', 'unsignedInt',
+            'unsignedShort', 'unsignedByte')
+_TERM = re.compile(r'[A-Za-z][\w+.-]*:[^\s"<>{}|^`\\]+|<[^\s"<>{}|^`\\]+:[^\s"<>{}|^`\\]+>')
+
+
+def value_type(value):
+    """What an attribute's value is, as JSON-LD reads it: text, integer,
+    double, … -- two values may look the same and not be. '' for what has no
+    type of its own: a list, an object, null."""
+    if isinstance(value, dict):
+        if '@id' in value:
+            return 'term'
+        if '@value' in value:
+            if '@type' in value:
+                said = re.split(r'[#/:]', str(value['@type']))[-1]
+                return {'string': 'text'}.get(said, said)
+            return value_type(value['@value'])
+        return ''
+    if isinstance(value, bool):
+        return 'boolean'
+    if isinstance(value, (int, float)):
+        from ..rdfio.numbers import LIMIT, as_jsonld_numbers
+
+        read = as_jsonld_numbers(value)
+        # JSON-LD 1.1: a plain number of 10^21 and more is a double, however written.
+        return 'integer' if isinstance(read, int) and abs(read) < LIMIT else 'double'
+    return 'text' if isinstance(value, str) else ''
+
+
+def _value_says(value):
+    """What a value says, as text."""
+    if isinstance(value, dict):
+        value = value.get('@value', value.get('@id'))
+    if isinstance(value, bool):
+        return 'true' if value else 'false'
+    if isinstance(value, (int, float, str)):
+        return str(value)
+    raise PackageError('a list, an object or null has no type to choose')
+
+
+def _as_type(wanted, text):
+    """`text` as a value of the type `wanted`, in the forms of
+    contracts/typed-literals; refused when it cannot be one."""
+    if wanted == 'text':
+        return text
+    text = text.strip()
+    if wanted == 'boolean':
+        if text not in ('true', 'false'):
+            raise PackageError(f'{text} is neither true nor false')
+        return text == 'true'
+    if wanted == 'term':
+        if not _TERM.fullmatch(text):
+            raise PackageError(f'{text} is no term: one has a prefix, or is a whole IRI')
+        return {'@id': text.strip('<>')}
+    if not _NUMBER.fullmatch(text):
+        raise PackageError(f'{text} is not a number')
     try:
-        parsed = json.loads(value) if isinstance(value, str) else value
-    except (TypeError, ValueError):
-        parsed = value
+        exact = Decimal(text)
+    except InvalidOperation:           # an exponent beyond what Decimal holds
+        raise PackageError(f'{text} is not a number that can be written out') from None
+    if exact == 0 and abs(exact.as_tuple().exponent) > _DIGITS:
+        exact = Decimal(0).copy_sign(exact)    # 0e-2000 is a zero, not 2000 places of one
+    if wanted == 'double':
+        held = float(text)
+        if not math.isfinite(held) or (held == 0 and exact != 0):
+            raise PackageError(f'{text} is not a number a double can hold')
+        return {'@value': held, '@type': XSD + 'double'}
+    integral = exact == exact.to_integral_value()
+    if wanted != 'decimal' and not integral:
+        raise PackageError(f'{text} is not a whole number: change the value first')
+    # The digits it is written out with: before the point, and after it.
+    after = 0 if integral and wanted != 'decimal' else max(-exact.as_tuple().exponent, 0)
+    digits = max(exact.adjusted() + 1, 1) + after
+    if digits > _DIGITS:
+        raise PackageError(f'{text} has more than {_DIGITS} digits to write out')
+    if wanted == 'decimal':
+        # As text: a JSON number would come back as a double's spelling.
+        return {'@value': format(exact, 'f'), '@type': XSD + 'decimal'}
+    whole = int(exact)
+    from ..rdfio.numbers import LIMIT
 
+    # From 10^21 on a JSON number is a double to JSON-LD: its digits, as text.
+    said = whole if abs(whole) < LIMIT else str(whole)
+    if wanted == 'integer' and said is whole:
+        return whole
+    return {'@value': said, '@type': XSD + wanted}     # xsd:int, xsd:long, … declared
+
+
+def _datatype_iri(package, datatype):
+    """The IRI a datatype the shapes name means, read with the shapes' prefixes."""
+    from ..expect.attributecase import _meant, _prefixes
+
+    said = str(datatype).strip()
+    if said.startswith('<') and said.endswith('>'):
+        return said[1:-1]
+    return _meant(_prefixes(package)[1], said) or \
+        (XSD + said[4:] if said.startswith('xsd:') else said)
+
+
+def _as_shape_says(package, entity, path, old, text):
+    """What `text` is in the one datatype the attribute's shape names, else as
+    an edit of the value would write it. The shape is the one an edit follows."""
+    from ..expect.attributecase import value_datatype
+
+    row = next(_rows(package, entity, path), None)
+    datatype = value_datatype(row) if row is not None else None
+    if datatype:
+        iri = _datatype_iri(package, datatype)
+        local = iri[len(XSD):] if iri.startswith(XSD) else None
+        if local in ('double', 'decimal', 'boolean') or local in INTEGERS:
+            return _as_type(local, text)
+        if local == 'float':
+            return dict(_as_type('double', text), **{'@type': XSD + 'float'})
+        if local == 'string':
+            return text
+        if iri == RDF_LANG_STRING:
+            # A text with a language keeps it; one without has none to give.
+            if isinstance(old, dict) and '@language' in old:
+                return dict(old, **{'@value': text})
+            raise PackageError(f'{text} has no language, which its shape asks for')
+        return {'@value': text, '@type': iri}
+    if isinstance(old, dict) and '@id' in old:
+        return old
     try:
-        old = container[key]
-    except (KeyError, IndexError, TypeError):
-        raise PackageError(f'{entity_id}: no value at {"/".join(map(str, path))}')
-    if key == 'value':
-        parsed = _as_written(package, _entity(document, entity_id), path, parsed)
-    container[key] = parsed
+        made = json.loads(text)
+    except ValueError:
+        return text
+    if isinstance(made, (int, float)) and not isinstance(made, bool) and math.isfinite(made):
+        return _as_written(package, entity, path, made)
+    return made if isinstance(made, bool) else text
 
-    rendered = json.dumps(document, indent=2, ensure_ascii=False)
-    if text.endswith('\n'):
-        rendered += '\n'
-    json.loads(rendered)                       # never write what will not parse
-    with open(source, 'w', encoding='utf-8') as handle:
-        handle.write(rendered)
-    return source, _render(old), _render(parsed)
+
+def set_value_type(package, entity_id, path, wanted, file=None):
+    """Make one value of an example another type, what it says unchanged: 50.0
+    as a double, an integer, a text. 'shape': as the attribute's shape asks.
+    Returns (path, old, new)."""
+    if wanted not in VALUE_TYPES:
+        raise PackageError(f'{wanted} is no type of value: {", ".join(VALUE_TYPES)}')
+    if not path or path[-1] != 'value':
+        raise PackageError('only the value of a Property has a type to choose')
+
+    def change(old, entity, key):
+        text = _value_says(old)
+        return _as_shape_says(package, entity, path, old, text) if wanted == 'shape' \
+            else _as_type(wanted, text)
+
+    return _replace(package, entity_id, path, file, change)
 
 
 def add_observation(package, entity_id, attribute_path, dataset_id=None,

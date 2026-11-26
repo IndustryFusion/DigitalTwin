@@ -1218,6 +1218,11 @@ values the shape allows):
 - **⋯** on an attribute row: *Edit value*, *Add sub-attribute*, *Add
   observation*, *Go to the SHACL rule*, *Open in .jsonld*, **Remove …** (and
   *Remove this instance* on a row that is one of several datasetIds);
+- the **type** beside a number or `true`/`false` — `50.0` may be a double, an
+  integer, a decimal or a text — says which it is; click it (or *Type of the
+  value…* in ⋯) to make it another on purpose, e.g. for a test that a shape
+  rejects it. What it says stays the same; *As the shape says* takes the
+  datatype the shape names. Editing the value later writes it as the shape says;
 - **+ Attribute** on each entity card, **+ Entity** on each file.
 
 **Remove…** takes out what the row stands for, after asking: the whole

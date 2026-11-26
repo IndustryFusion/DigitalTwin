@@ -1180,6 +1180,46 @@ function register(context, clientHolder, session, onChanged) {
       }
     }),
 
+    vscode.commands.registerCommand('semforge.setValueType', async (node) => {
+      const raw = node && node.raw;
+      if (!clientHolder.client) {
+        vscode.window.showWarningMessage('SemForge: the language server is not running.');
+        return undefined;
+      }
+      if (!raw || !raw.editable || [].concat(raw.path || []).pop() !== 'value') {
+        vscode.window.showInformationMessage('SemForge: the value of a Property has a type to choose.');
+        return undefined;
+      }
+      const now = raw.valueType || '';
+      const choices = [
+        { label: 'As the shape says', type: 'shape', description: 'in the datatype its shape names' },
+        { label: 'Double', type: 'double' }, { label: 'Integer', type: 'integer', description: 'a whole number, xsd:integer' },
+        { label: 'Decimal', type: 'decimal' }, { label: 'Text', type: 'text' },
+        { label: 'True / false', type: 'boolean' },
+        { label: 'Vocabulary term', type: 'term', description: 'a prefixed name or an IRI' }
+      ];
+      const named = now && !choices.some((item) => item.type === now);
+      const picked = await vscode.window.showQuickPick(
+        choices.map((item) => Object.assign(item, item.type === now ? { detail: 'what it is now' } : {})),
+      // A type none of these is (xsd:int, a date, …) is said in the title:
+      // Integer would write an xsd:integer, which is another type.
+      { title: `${raw.label} on ${raw.entity}: which type of value?${named ? ` It is ${now} now.` : ''}` });
+      if (!picked || !(await confirmShared(raw, 'Editing'))) {
+        return undefined;
+      }
+      const result = await clientHolder.client.sendRequest('semforge/setValueType', {
+        uri: node.packageUri, entity: raw.entity, path: raw.path, file: raw.file, valueType: picked.type });
+      if (!result.ok) {
+        vscode.window.showErrorMessage(`SemForge: ${result.error}`);
+        return undefined;
+      }
+      provider.refresh();
+      if (onChanged) {
+        onChanged();
+      }
+      return result;
+    }),
+
     vscode.commands.registerCommand('semforge.removeCaseValue', async (node) => {
       const raw = node && node.raw;
       const target = raw && removalOf(raw);

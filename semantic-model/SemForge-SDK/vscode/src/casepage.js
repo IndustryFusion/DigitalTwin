@@ -100,6 +100,7 @@ function attributeRows(rows, file, depth, at, type, chain) {
       `<span class="name">${attributeName(row.display || row.name, type,
         (chain || []).concat(row.name), row.term)}</span>` +
       `<span class="value">${value}` +
+      `${typeTag(row, here)}` +
       `${row.unitText ? ` <span class="unit" title="unitCode ${escape(row.unitCode)}">${escape(row.unitText)}</span>` : ''}` +
       `${row.instances > 1 && !(row.dataset && row.dataset !== '@none') ? ' <span class="dim">· default</span>' : ''}` +
       `${time}${superseded}${menu}</span>` +
@@ -118,6 +119,20 @@ function attributeRows(rows, file, depth, at, type, chain) {
         before.map((position) => one(rows[position], position)).join('') + '</div>'
       : '');
   }).join('');
+}
+
+/** What a number is -- 50.0 may be a double, an integer or a text -- and the
+ *  way to make it another. Said where it cannot be seen. */
+function typeTag(row, here) {
+  const looks = /^([-+]?([0-9]+([.][0-9]*)?|[.][0-9]+)([eE][-+]?[0-9]+)?|true|false)$/.test(String(row.value));
+  if (!row.valueType || !looks) {
+    return '';
+  }
+  // A superseded observation says its type; a change would land on the current one.
+  const editable = here !== undefined && row.node && row.node.editable && !row.superseded;
+  return editable ? ` <a tabindex="0" role="link" class="vtype" data-valuetype="${here}" ` +
+    `title="It is ${/^[aeiou]/.test(row.valueType) ? 'an' : 'a'} ${escape(row.valueType)}. Click to make it another type">${escape(row.valueType)}</a>`
+    : ` <span class="vtype">${escape(row.valueType)}</span>`;
 }
 
 function anyViolation(rows) {
@@ -293,6 +308,7 @@ function renderCasePage(page, options) {
   a { color: var(--vscode-textLink-foreground); text-decoration: none; }
   a:hover, a:focus-visible { text-decoration: underline; }
   .dim, .crumbs { color: var(--vscode-descriptionForeground); }
+  .vtype { color: var(--vscode-descriptionForeground); font-size: 0.82em; margin-left: 0.3em; }
   .unit { color: var(--vscode-descriptionForeground); margin-left: 0.15em; }
   .stamp { color: var(--vscode-descriptionForeground); font-size: 0.88em; margin-left: 0.4em; }
   .attr.superseded > .name, .attr.superseded > .value > .act,
@@ -959,11 +975,12 @@ ${BUSY_SCRIPT}
     if (event.target.closest('.stampedit')) { return; }
     const target = event.target.closest('[data-open],[data-type],[data-refresh],[data-assert],' +
       '[data-edit],[data-rowmenu],[data-addattr],[data-addentity],[data-pagemenu],' +
-      '[data-retarget],[data-dropassert]');
+      '[data-retarget],[data-dropassert],[data-valuetype]');
     if (!target) { return; }
     event.preventDefault();
     const d = target.dataset;
-    if (d.pagemenu) { vscode.postMessage({ command: 'pageMenu' }); }
+    if (d.valuetype) { vscode.postMessage({ command: 'valueType', at: d.valuetype }); }
+    else if (d.pagemenu) { vscode.postMessage({ command: 'pageMenu' }); }
     else if (d.retarget !== undefined) { vscode.postMessage({ command: 'retargetAssert', index: Number(d.retarget) }); }
     else if (d.dropassert !== undefined) { vscode.postMessage({ command: 'removeAssert', index: Number(d.dropassert) }); }
     else if (d.edit) { vscode.postMessage({ command: 'edit', at: d.edit }); }
@@ -1223,7 +1240,7 @@ class CasePages {
       // On success the case page reopens on the renamed file.
       await vscode.commands.executeCommand('semforge.renameTestCase',
         { raw: { kind: 'example', file: this.page.file }, packageUri: this.current.packageUri });
-    } else if (['edit', 'rowMenu', 'addAttribute', 'addEntity', 'stamp'].includes(message.command)) {
+    } else if (['edit', 'rowMenu', 'addAttribute', 'addEntity', 'stamp', 'valueType'].includes(message.command)) {
       await this.edit(message.command, `${message.at}`, message.value);
     }
   }
@@ -1267,6 +1284,8 @@ class CasePages {
       await run('semforge.addAttribute', Object.assign({}, card.node, { children }));
     } else if (command === 'edit' && row && row.node) {
       await run('semforge.editValue', row.node);
+    } else if (command === 'valueType' && row && row.node) {
+      await run('semforge.setValueType', Object.assign({}, row.node, { valueType: row.valueType }));
     } else if (command === 'stamp' && row && row.stamp && card) {
       // From the page's picker: its value, or '' to remove it.
       await vscode.commands.executeCommand('semforge.setObservedAt', {
@@ -1288,6 +1307,10 @@ class CasePages {
           { label: '$(layers) Add instance…', description: 'another datasetId',
             run: () => run('semforge.addInstance', row.node && row.node.kind === 'dataset'
               ? row.node : row.attributeNode) });
+      }
+      if (row.node && row.node.editable && row.valueType && !row.superseded) {
+        items.push({ label: '$(symbol-numeric) Type of the value…', description: row.valueType,
+          run: () => run('semforge.setValueType', Object.assign({}, row.node, { valueType: row.valueType })) });
       }
       const instance = row.node && row.node.kind === 'dataset' ? row.node
         : row.attributeNode && row.attributeNode.datasetId ? row.attributeNode : null;

@@ -176,11 +176,15 @@ def declared_type(row):
     A number is declared when the one value may be a double, a float or a
     decimal and nothing else: said as the value's own sh:datatype, or by all
     branches of its form. An sh:or that admits integers too is written plain."""
+    return DECLARED.get(value_datatype(row))
+
+
+def value_datatype(row):
+    """The one sh:datatype the attribute's value has, or None: none, or a
+    choice of several."""
     _, value = _params(row)
     datatypes = [value['sh:datatype']] if value.get('sh:datatype') else row.get('formDatatypes') or []
-    if len(set(datatypes)) == 1 and datatypes[0] in DECLARED:
-        return DECLARED[datatypes[0]]
-    return None
+    return datatypes[0] if len(set(datatypes)) == 1 else None
 
 
 def declared_value(number, iri):
