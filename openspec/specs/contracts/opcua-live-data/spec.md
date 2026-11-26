@@ -39,7 +39,7 @@ Bindings SHALL use one vocabulary, which the generated bindings, the dataservice
 
 #### Scenario: Generated bindings
 - **WHEN** the pump example's bindings are generated
-- **THEN** they conform to the binding validation, and the dataservice finds all 46 of them
+- **THEN** they conform to the binding validation, and the dataservice finds all 64 of them
 
 ### Requirement: Enum values are looked up in the knowledge
 The numeric value of an enumeration SHALL be translated to the IRI of its enum value, using the knowledge the model tools generate. A number which isn't part of the enumeration SHALL deliver no value. Produced by: model tools. Relied on by: dataservice, consumers of the attribute.
