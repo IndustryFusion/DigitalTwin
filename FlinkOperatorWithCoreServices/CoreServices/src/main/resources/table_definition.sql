@@ -29,7 +29,12 @@ CREATE TABLE attributes (
     `offset` BIGINT METADATA VIRTUAL,
     -- The WATERMARK stays. Unlike the shacl tables, this one IS windowed:
     -- sql_statements.sql tumbles over it, and a window needs a rowtime.
-    WATERMARK FOR ts AS ts
+    -- One millisecond behind the highest ts (Flink's "ascending" strategy):
+    -- the records of one batch share a millisecond on purpose, and with
+    -- `ts AS ts` a row with the highest ts seen is late, so a watermark
+    -- between two of them fired their 1 ms window with the first and dropped
+    -- the second (#1060). Windows still close once a later ms arrives.
+    WATERMARK FOR ts AS ts - INTERVAL '0.001' SECOND
 ) WITH (
   'connector' = 'kafka',
   'topic' = 'iff.ngsild.attributes',
@@ -56,7 +61,8 @@ CREATE TABLE attributes_insert (
     `deleted` BOOLEAN,
     `synced` BOOLEAN,
     `ts` TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
-    WATERMARK FOR ts AS ts,
+    -- As for attributes: the writeback tumbles 1 ms windows over ts (#1060).
+    WATERMARK FOR ts AS ts - INTERVAL '0.001' SECOND,
     PRIMARY KEY (`id`, `datasetId`) NOT ENFORCED
 ) WITH (
   'topic' = 'iff.ngsild.attributes_insert',
