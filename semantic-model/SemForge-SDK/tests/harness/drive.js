@@ -115,7 +115,8 @@ const stub = {
   workspace: {
     getConfiguration: () => ({ get: (key) => (scenario.config || {})[key] || '' }),
     workspaceFolders: [{ uri: { fsPath: process.argv[2] } }],
-    createFileSystemWatcher: () => ({ dispose: noop }),
+    createFileSystemWatcher: () => ({ dispose: noop, onDidChange: () => ({ dispose: noop }),
+      onDidCreate: () => ({ dispose: noop }), onDidDelete: () => ({ dispose: noop }) }),
     onDidChangeConfiguration: noop,
     onDidSaveTextDocument: (listener) => {
       saveListeners.push(listener);

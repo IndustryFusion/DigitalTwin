@@ -440,6 +440,42 @@ class QueryFiles {
     this.listeners = [];
     this.emitter = new vscode.EventEmitter();
     this.onDidChangeFile = this.emitter.event;
+    // shacl.ttl changed by something else -- a text editor, a checkout, Undo:
+    // the open queries are read again, so an editor shows what the file holds
+    // and a save is held against that, not against what it held when opened.
+    this.watcher = vscode.workspace.createFileSystemWatcher('**/*.ttl');
+    const again = () => this.readAgainSoon();
+    this.watcher.onDidChange(again);
+    this.watcher.onDidCreate(again);
+    this.watcher.onDidDelete(again);
+  }
+
+  readAgainSoon() {
+    clearTimeout(this.soon);
+    this.soon = setTimeout(() => this.readAgain().catch(() => {}), 300);
+  }
+
+  /** Every open query read again; one the file now holds otherwise is announced changed. */
+  async readAgain() {
+    const client = this.clientHolder.client;
+    if (!client) {
+      return;
+    }
+    for (const [key, before] of [...this.saved]) {
+      const uri = vscode.Uri.parse(key);
+      const ref = reference(uri);
+      const got = await client.sendRequest('semforge/sparqlQuery', { uri: ref.p, shape: ref.s, holder: ref.h });
+      if (got && got.ok && got.query !== before) {
+        this.saved.set(key, got.query);
+        this.mtime.set(key, Date.now());
+        this.emitter.fire([{ type: vscode.FileChangeType.Changed, uri }]);
+      }
+    }
+  }
+
+  dispose() {
+    clearTimeout(this.soon);
+    this.watcher.dispose();
   }
 
   async client() {
@@ -1006,6 +1042,7 @@ function register(context, clientHolder, session) {
     shape: node && node.raw && (node.raw.shape || node.raw.iri)
   });
   context.subscriptions.push(
+    files,
     vscode.workspace.registerFileSystemProvider(SCHEME, files, { isCaseSensitive: true }),
     vscode.commands.registerCommand('semforge.sparqlApply', async () =>
       (await forActiveQuery(bench)) && bench.receive({ command: 'run' })),
