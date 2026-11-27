@@ -20,13 +20,16 @@ __version__ = '0.1.0'
 
 # Every SPARQL query in a SemForge process -- workbench, Inspect, pyshacl in
 # `semforge test`, the spawned verdict worker -- picks its join order as it
-# goes; rdflib's fixed order turns NGSI-LD chains into cross products.
+# goes (rdflib's fixed order turns NGSI-LD chains into cross products), and
+# parses each query text once (pyshacl sends the same text per focus node).
 # `import semforge` stays free of dependencies: the extension asks an
 # interpreter whether it has SemForge by importing it, and one without rdflib
-# runs no query to order.
+# runs no query.
 try:
     from .sparql import order as _order  # noqa: E402
+    from .sparql import parsed as _parsed  # noqa: E402
 except ImportError:                          # pragma: no cover -- no rdflib
-    _order = None
+    _order = _parsed = None
 else:
     _order.install()
+    _parsed.install()
