@@ -152,6 +152,30 @@ def test_clear_removes_views_and_optionally_the_contexts(root, tmp_path, monkeyp
     assert not os.path.exists(user_context_cache())
 
 
+def test_clear_survives_a_file_that_is_gone_before_its_size_is_read(root, monkeypatch):
+    """The server writes the cache while it is cleared: store() renames verdicts.json.tmp
+    between the listing and the size. Listed here as files that no longer exist."""
+    cache.store(root, 'view', {'x': 1})
+    walk = os.walk
+
+    def walk_with_vanished(directory):
+        for current, dirs, names in walk(directory):
+            yield current, dirs, names + ['verdicts.json.tmp', 'gone.json']
+
+    monkeypatch.setattr(cache.os, 'walk', walk_with_vanished)
+    assert cache.clear(root) > 0
+    assert not os.path.exists(cache.views_dir(root))
+
+
+def test_status_survives_a_file_that_is_gone_before_its_size_is_read(root, monkeypatch):
+    cache.store(root, 'view', {'x': 1})
+    listdir = os.listdir
+    monkeypatch.setattr(cache.os, 'listdir', lambda directory: listdir(directory) + ['gone.json'])
+    status = cache.status(root)
+    assert status['bytes'] > 0
+    assert {'view': 'gone', 'current': False} in status['entries']
+
+
 # --- remote JSON-LD contexts --------------------------------------------------------
 
 def test_a_remote_context_is_downloaded_once(tmp_path):

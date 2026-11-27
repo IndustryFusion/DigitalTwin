@@ -134,6 +134,19 @@ def cached(root, key, compute, force=False):
     return payload, False
 
 
+def _size(path):
+    """A file's size, 0 once it is gone.
+
+    A cache is cleared or listed while the server goes on writing it: store()
+    renames its .tmp into place between the listing and the size, and a size
+    read then raised FileNotFoundError out of clearCache.
+    """
+    try:
+        return os.path.getsize(path)
+    except OSError:
+        return 0
+
+
 def status(root):
     """What the cache holds: entries, bytes, and how many are still current."""
     directory = views_dir(root)
@@ -144,7 +157,7 @@ def status(root):
             if not name.endswith('.json'):
                 continue
             path = os.path.join(directory, name)
-            size += os.path.getsize(path)
+            size += _size(path)
             try:
                 with open(path, encoding='utf-8') as handle:
                     fresh = json.load(handle).get('fingerprint') == stamp
@@ -175,7 +188,8 @@ def clear(root, contexts=False):
         if not os.path.isdir(directory):
             continue
         for current, _, names in os.walk(directory):
-            freed += sum(os.path.getsize(os.path.join(current, n)) for n in names)
+            # A .tmp is a store() in flight, renamed or gone a moment later.
+            freed += sum(_size(os.path.join(current, n)) for n in names if not n.endswith('.tmp'))
         shutil.rmtree(directory, ignore_errors=True)
     if contexts:
         _fetched.clear()
