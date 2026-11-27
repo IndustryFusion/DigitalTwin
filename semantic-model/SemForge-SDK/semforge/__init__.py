@@ -17,3 +17,16 @@
 """SemForge SDK: offline authoring and validation of semantic packages."""
 
 __version__ = '0.1.0'
+
+# Every SPARQL query in a SemForge process -- workbench, Inspect, pyshacl in
+# `semforge test`, the spawned verdict worker -- picks its join order as it
+# goes; rdflib's fixed order turns NGSI-LD chains into cross products.
+# `import semforge` stays free of dependencies: the extension asks an
+# interpreter whether it has SemForge by importing it, and one without rdflib
+# runs no query to order.
+try:
+    from .sparql import order as _order  # noqa: E402
+except ImportError:                          # pragma: no cover -- no rdflib
+    _order = None
+else:
+    _order.install()
