@@ -369,18 +369,25 @@ def paste_entities_feature(ls, params):
 
 @server.feature('semforge/removeEntity')
 def remove_entity_feature(ls, params):
-    """Remove an entity from its file -- or, with `check`, say what that touches."""
-    from ..cooked.removeentity import remove_entity
+    """Remove an entity from its file -- with `subtree`, its subtree too, as
+    Copy with subtree takes it -- or, with `check`, say what that touches."""
+    from ..cooked.removeentity import remove_entity, remove_subtree
 
     root = package_root(uri_to_path(field(params, 'uri', '')))
     if root is None:
         return {'ok': False, 'error': 'not a SemForge package'}
     try:
         check = bool(field(params, 'check', False))
-        done = remove_entity(session.package_for(root), field(params, 'entity', ''),
-                             file=field(params, 'file') or None, position=field(params, 'position'),
-                             digest=field(params, 'digest') or None, check=check,
-                             plan=field(params, 'plan') or None)
+        if field(params, 'subtree', False):
+            done = remove_subtree(session.package_for(root), field(params, 'entity', ''),
+                                  file=field(params, 'file') or None,
+                                  digest=field(params, 'digest') or None, check=check,
+                                  plan=field(params, 'plan') or None)
+        else:
+            done = remove_entity(session.package_for(root), field(params, 'entity', ''),
+                                 file=field(params, 'file') or None, position=field(params, 'position'),
+                                 digest=field(params, 'digest') or None, check=check,
+                                 plan=field(params, 'plan') or None)
         if not check:
             session.forget(root)
             validation.publish(ls, path_to_uri(done['file']))

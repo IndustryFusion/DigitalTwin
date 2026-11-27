@@ -21,8 +21,13 @@ file. An id does not say which: a file may define it twice. So both carry the
 document's place and the digest of the file they were read from, and a removal
 only acts on that file as it was: anything else is refused, not guessed.
 
-What refers to the entity is reported, never changed. A relationship that points
-at nothing, or an assert whose entity is gone, is evidence, and the author's.
+Remove entity: what refers to the entity is reported, never changed. A
+relationship that points at nothing, or an assert whose entity is gone, is
+evidence, and the author's.
+
+Remove with subtree (`remove_subtree`) is the one exception: what it cuts out is
+meant to leave no trace in the file, so the relationship objects that name a
+removed entity go with it -- after the author was told which.
 """
 
 import hashlib
@@ -127,6 +132,11 @@ class _Names:
 
     def iri(self, document):
         """'' for a document without an id."""
+        return self.resolve(document, str(document.get('id') or document.get('@id') or ''))
+
+    def resolve(self, document, name):
+        """The IRI `name` -- an id, or a relationship's object -- is, read
+        with `document`'s context; '' for no name."""
         from rdflib.plugins.shared.jsonld.context import Context
 
         from ..rdfio.relative import BASE, absolute_contexts
@@ -136,7 +146,6 @@ class _Names:
         if key not in self.contexts:
             value = absolute_contexts({'@context': value}, self.path)['@context']
             self.contexts[key] = Context(value, base=BASE)
-        name = str(document.get('id') or document.get('@id') or '')
         return (self.contexts[key].resolve(name) or name) if name else ''
 
 
@@ -270,3 +279,234 @@ def remove_entity(package, entity_id, file=None, position=None, digest=None, che
             'empty': not any(isinstance(d, dict) for n, d in enumerate(documents) if n != at),
             'remains': remains, 'pointing': pointing, 'asserts': asserts, 'cases': cases,
             'plan': seen, 'unread': unread}
+
+
+def remove_subtree(package, entity_id, file=None, digest=None, check=False, plan=None):
+    """Remove an entity with its subtree from the file it is written in: the
+    entities Copy with subtree copies (`copy_entities`), its children, theirs,
+    and so on.
+
+    Unlike Remove entity, what is cut out takes its references with it: every
+    relationship object left in the file that is a removed entity -- the
+    parent's reference to the root above all -- goes, only that object, an
+    instance left with none goes, and an attribute left with no instance too.
+    An object counts by its IRI, however it is written (whole, with a prefix
+    of the context, relative, the relationship's type and keys compacted or
+    expanded), in sub-attributes, among several objects and in object lists.
+    An IRI a document left in the file still defines is no removed entity.
+
+    Only that file is written. A member of the subtree written in another file
+    (one the case includes, the main model) stays there: `elsewhere`. A child
+    that an entity outside the subtree points at stays, with what is reached
+    only through it: `shared`. A member written more than once in the file is
+    refused: which of them is meant cannot be told. `digest`, `check` and
+    `plan` are as for `remove_entity`.
+
+    Returns {'file', 'real', 'removed', 'elsewhere', 'shared', 'assumed',
+    'missing', 'dropped', 'pointing', 'model', 'empty', 'asserts', 'cases',
+    'plan', 'unread'}: `dropped` the references taken out ({'entity', 'path',
+    'datasetId', 'object'}, `path` the attribute and sub-attribute keys),
+    `pointing` the entities they are taken from; `unread`, when a context
+    could not be had, why -- ids under it are compared as written.
+    """
+    from .examples import _target_file, copy_entities
+
+    source = os.path.abspath(_target_file(package, file))
+    uses, model = _allowed(package, source)
+    documents, text = _read(source)
+    name = os.path.basename(source)
+    if digest and digest != digest_of(text):
+        raise PackageError(f'{name} has changed since it was read; nothing is removed')
+    entities = [d for d in documents if isinstance(d, dict)]
+    written = {}
+    for document in entities:
+        written[_name(document)] = written.get(_name(document), 0) + 1
+    if entity_id not in written:
+        raise PackageError(f'no entity {entity_id} in {name} any more')
+    tree = copy_entities(package, entity_id, file=source, subtree=True)
+    members = [n for n in tree['copied'] if n in written]
+    elsewhere = [n for n in tree['copied'] if n not in written]
+    twice = [n for n in members if written[n] > 1]
+    if twice:
+        raise PackageError(f'{twice[0]} is written {written[twice[0]]} times in {name}: remove it with '
+                           'Remove entity… from its row')
+    iri_of = _Resolver(package, source)
+    by_iri = {}                                    # IRI -> the names its documents have here
+    for document in entities:
+        by_iri.setdefault(iri_of(document, _name(document)), set()).add(_name(document))
+    members, shared = _held_back(entities, entity_id, members, iri_of, by_iri)
+    gone = set(members)
+    kept = [d for d in documents if not (isinstance(d, dict) and _name(d) in gone)]
+    still = {iri_of(d, _name(d)) for d in kept if isinstance(d, dict)}
+    gone_iris = {iri for iri, spelled in by_iri.items() if spelled & gone} - still
+    dropped = []
+    for document in kept:
+        if isinstance(document, dict):
+            found = _drop_references(document, lambda value, d=document: iri_of(d, value) in gone_iris)
+            dropped += [dict(entity=_name(document), **d) for d in found]
+    asserts = [e.path for e in uses
+               if any(a.get('resource') and (a['resource'] in gone or a['resource'] in gone_iris)
+                      for a in e.asserts)]
+    cases = [e.path for e in uses]
+    claims = [[e.path, str(a.get('resource', '')), str(a.get('constraint', ''))] for e in uses for a in e.asserts]
+    seen = digest_of(json.dumps([text, members, cases, claims]))
+    if plan and plan != seen:
+        raise PackageError(f'{name} was changed meanwhile, or a case that uses it; nothing is removed')
+    if not check:
+        _write_whole(source, kept, text)
+    return {'file': source, 'real': os.path.realpath(source), 'removed': members, 'elsewhere': elsewhere,
+            'shared': shared, 'assumed': [n for n in tree['assumed'] if n in gone],
+            'missing': tree['missing'], 'dropped': dropped,
+            'pointing': sorted({d['entity'] for d in dropped}), 'model': model,
+            'empty': not any(isinstance(d, dict) for d in kept), 'asserts': asserts, 'cases': cases,
+            'plan': seen, 'unread': iri_of.unread}
+
+
+class _Resolver:
+    """iri_of(document, value): `value` -- an id, or a relationship's object --
+    as an IRI, read with the document's context as validation reads it. Built
+    once per distinct context; a context that cannot be had is remembered, its
+    ids are compared as written, and `unread` says why."""
+
+    def __init__(self, package, source):
+        self.package, self.names, self.known, self.unread = package, _Names(source), {}, ''
+
+    def __call__(self, document, value):
+        if not value:
+            return value
+        key = json.dumps(document.get('@context'), sort_keys=True)
+        if key not in self.known:
+            holder = {'@context': document['@context']} if '@context' in document else {}
+            try:
+                holder = _own_contexts(self.package, [holder])[0]
+                self.names.resolve(holder, 'x')        # builds the context now, or fails now
+                self.known[key] = holder
+            except Exception as exc:                   # noqa: BLE001 -- compared as written then
+                self.known[key] = None
+                self.unread = self.unread or str(exc) or type(exc).__name__
+        holder = self.known[key]
+        return value if holder is None else self.names.resolve(holder, value)
+
+
+NGSILD_CORE = 'https://uri.etsi.org/ngsi-ld/'
+RELATIONSHIP = {'Relationship', 'ngsi-ld:Relationship', NGSILD_CORE + 'Relationship'}
+OBJECT_KEYS = ('object', 'ngsi-ld:hasObject', NGSILD_CORE + 'hasObject')
+LIST_KEYS = ('objectList', 'ngsi-ld:hasObjectList', NGSILD_CORE + 'hasObjectList')
+SKIP = ('@context', 'id', '@id', 'type', '@type')
+
+
+def _is_relationship(item):
+    kind = item.get('type', item.get('@type'))
+    return any(k in RELATIONSHIP for k in (kind if isinstance(kind, list) else [kind]) if isinstance(k, str))
+
+
+def _entry(entry):
+    """The id one entry of an object or object list names, or None."""
+    while isinstance(entry, dict):
+        entry = next((entry[k] for k in ('@id',) + OBJECT_KEYS if k in entry), None)
+        if isinstance(entry, list):
+            entry = entry[0] if len(entry) == 1 else None
+    return entry if isinstance(entry, str) else None
+
+
+def _objects(item):
+    """The objects a Relationship instance names: its object (one or several,
+    compacted or expanded) and the entries of its object list."""
+    found = []
+    for key in OBJECT_KEYS + LIST_KEYS:
+        value = item.get(key)
+        for entry in value if isinstance(value, list) else [value]:
+            named = _entry(entry)
+            if named:
+                found.append(named)
+    return found
+
+
+def _pointers_of(node):
+    """Every object a document's relationships name, sub-attributes included."""
+    found = []
+    for key, value in (node.items() if isinstance(node, dict) else []):
+        if key in SKIP:
+            continue
+        for item in value if isinstance(value, list) else [value]:
+            if isinstance(item, dict):
+                if _is_relationship(item):
+                    found += _objects(item)
+                found += _pointers_of(item)
+    return found
+
+
+def _held_back(entities, root, members, iri_of, by_iri):
+    """(members to remove, members kept): a member other than the root that an
+    entity outside the subtree points at stays, and so does what is reached
+    from the root only through one that stays."""
+    pointed, children = {}, {}
+    for document in entities:
+        for value in _pointers_of(document):
+            for target in by_iri.get(iri_of(document, value), ()):
+                pointed.setdefault(target, set()).add(_name(document))
+                children.setdefault(_name(document), set()).add(target)
+    held_back = []
+    while True:
+        inside = set(members)
+        held = [n for n in members if n != root and pointed.get(n, set()) - inside]
+        if not held:
+            return members, held_back
+        reach, todo = {root}, [root]
+        while todo:
+            for target in children.get(todo.pop(), ()):
+                if target in inside and target not in held and target not in reach:
+                    reach.add(target)
+                    todo.append(target)
+        held_back += held + [n for n in members if n not in reach and n not in held]
+        members = [n for n in members if n in reach]
+
+
+def _drop_references(node, removed, trail=()):
+    """Take every object `removed(value)` says is a removed entity out of the
+    relationship instances of `node` (sub-attributes too); an instance left
+    with no object goes, and an attribute left with no instance. Returns what
+    was taken: [{'path', 'datasetId', 'object'}], `path` the keys down to it."""
+    taken = []
+    for key in list(node.keys()) if isinstance(node, dict) else []:
+        if key in SKIP:
+            continue
+        value = node[key]
+        items = value if isinstance(value, list) else [value]
+        keep = []
+        for item in items:
+            if isinstance(item, dict) and _is_relationship(item):
+                gone = [o for o in _objects(item) if removed(o)]
+                if gone:
+                    taken += [{'path': list(trail + (key,)), 'datasetId': item.get('datasetId') or '',
+                               'object': o} for o in gone]
+                    if not _thin(item, removed):
+                        continue                   # no object left: the instance goes
+            if isinstance(item, dict):
+                taken += _drop_references(item, removed, trail + (key,))
+            keep.append(item)
+        if keep == items:
+            continue
+        if not keep:
+            del node[key]
+        else:
+            node[key] = keep if isinstance(value, list) else keep[0]
+    return taken
+
+
+def _thin(item, removed):
+    """Take the removed objects out of one relationship instance; does an
+    object remain?"""
+    left = False
+    for key in OBJECT_KEYS + LIST_KEYS:
+        if key not in item:
+            continue
+        value = item[key]
+        rest = [e for e in (value if isinstance(value, list) else [value])
+                if not (_entry(e) and removed(_entry(e)))]
+        if not rest:
+            del item[key]
+        else:
+            item[key] = rest if isinstance(value, list) else rest[0]
+            left = True
+    return left

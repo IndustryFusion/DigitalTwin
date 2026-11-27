@@ -535,6 +535,12 @@
         "category": "SemForge"
       },
       {
+        "command": "semforge.removeSubtree",
+        "title": "Remove with subtree…",
+        "icon": "$(trash)",
+        "category": "SemForge"
+      },
+      {
         "command": "semforge.removeCaseValue",
         "title": "Remove…",
         "icon": "$(trash)",
@@ -1351,6 +1357,11 @@
           "group": "2_edit@9"
         },
         {
+          "command": "semforge.removeSubtree",
+          "when": "view == semforgeModel && viewItem == entity",
+          "group": "2_edit@10"
+        },
+        {
           "command": "semforge.removeCaseValue",
           "when": "view == semforgeModel && viewItem =~ /^(exampleEditable|exampleDataset|exampleSeries|attributeReadOnly)$/",
           "group": "2_edit@9"
@@ -1526,6 +1537,10 @@
         },
         {
           "command": "semforge.removeEntity",
+          "when": "false"
+        },
+        {
+          "command": "semforge.removeSubtree",
           "when": "false"
         },
         {

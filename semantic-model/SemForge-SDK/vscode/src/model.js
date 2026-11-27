@@ -33,7 +33,7 @@ const { askDatasetId } = require('./datasetid');
 
 const search = require('./search');
 const { noPackageMessage } = require('./locate');
-const { removeEntity } = require('./removeentity');
+const { removeEntity, removeSubtree } = require('./removeentity');
 const { showLocation, treeDetail, treeClick, icon, rowClicks } = require('./reveal');
 
 // The contextValue vocabulary, spelled out. `when: viewItem == x` matches a
@@ -1322,6 +1322,13 @@ function register(context, clientHolder, session, onChanged) {
     }),
 
     vscode.commands.registerCommand('semforge.removeEntity', (node) => removeEntity(clientHolder, node, () => {
+      provider.refresh();
+      if (onChanged) {
+        onChanged();
+      }
+    })),
+    // The subtree Copy with subtree copies: its children, theirs, and so on.
+    vscode.commands.registerCommand('semforge.removeSubtree', (node) => removeSubtree(clientHolder, node, () => {
       provider.refresh();
       if (onChanged) {
         onChanged();

@@ -107,4 +107,76 @@ async function removeEntity(clientHolder, node, onDone) {
   return done;
 }
 
-module.exports = { removeEntity };
+/** A reference a subtree takes with it, as a line: whose, which attribute, which instance. */
+function reference(d) {
+  const short = (key) => String(key).split(/[/#:]/).filter(Boolean).pop() || String(key);
+  const attribute = (d.path || []).map(short).join(' › ');
+  return `${d.entity} · ${attribute}${d.datasetId ? ` (${String(d.datasetId).split(/[/#]/).pop()})` : ''}`;
+}
+
+/** What the question of Remove with subtree… says below itself. */
+function subtreeConsequences(plan, entity) {
+  const file = path.basename(plan.file);
+  const others = plan.removed.filter((id) => id !== entity);
+  const shared = plan.cases.length > (plan.model ? 0 : 1);
+  return [
+    `They go from ${file}, with all their attributes${plan.model ? '. That is the main model' : ''}.`,
+    others.length ? `In its subtree:\n${listed(others)}` : 'It has no children in this file.',
+    plan.assumed.length ? `Children by the data only (no shape declares the reference):\n${listed(plan.assumed)}` : '',
+    plan.dropped.length ? `References to them that go too:\n${listed(plan.dropped.map(reference))}` : '',
+    plan.elsewhere.length ? `In its subtree, written in another file, and kept:\n${listed(plan.elsewhere)}` : '',
+    plan.shared.length ? `Children another entity still points at, and kept:\n${listed(plan.shared)}` : '',
+    plan.missing.length ? `Children written in no file, so not removed:\n${listed(plan.missing)}` : '',
+    plan.unread ? `Some ids could not be read with their context and are compared as written: ${plan.unread}` : '',
+    plan.empty ? 'No entity is left in the file.' : '',
+    shared ? `${plan.cases.length === 1 ? 'A case uses' : `${plan.cases.length} cases use`} this file and ` +
+      `${plan.cases.length === 1 ? 'changes' : 'change'}:\n${listed(plan.cases)}` : '',
+    plan.asserts.length ? `Asserting something on them, which stays as it is:\n${listed(plan.asserts)}` : ''
+  ].filter(Boolean).join('\n\n');
+}
+
+/** Remove a row's entity with the subtree Copy with subtree copies. */
+async function removeSubtree(clientHolder, node, onDone) {
+  const raw = (node && node.raw) || {};
+  const client = clientHolder.client;
+  if (raw.kind !== 'entity' || !raw.entity || !client) {
+    vscode.window.showInformationMessage('SemForge: Remove with subtree works on an entity of a file.');
+    return undefined;
+  }
+  const params = { uri: node.packageUri, entity: raw.entity, file: raw.file || undefined,
+    digest: raw.digest, subtree: true };
+  const ask = async (more) => {
+    let answer;
+    try {
+      answer = await client.sendRequest('semforge/removeEntity', Object.assign({}, params, more));
+    } catch (error) {
+      answer = { ok: false, error: error.message || String(error) };
+    }
+    if (!answer || !answer.ok) {
+      vscode.window.showErrorMessage(`SemForge: ${(answer && answer.error) || 'no answer from the server'}`);
+      onDone();
+      return undefined;
+    }
+    return answer;
+  };
+  const plan = await ask({ check: true });
+  if (!plan || unsaved(plan)) {
+    return undefined;
+  }
+  const count = plan.removed.length;
+  const answer = await vscode.window.showWarningMessage(
+    `Remove ${raw.entity} with its subtree (${count} entit${count === 1 ? 'y' : 'ies'})?`,
+    { modal: true, detail: subtreeConsequences(plan, raw.entity) }, 'Remove');
+  if (answer !== 'Remove' || unsaved(plan)) {
+    return undefined;
+  }
+  const done = await ask({ plan: plan.plan });
+  if (done) {
+    onDone();
+    vscode.window.setStatusBarMessage(`SemForge: ${raw.entity} removed with its subtree (${done.removed.length}) ` +
+      `from ${path.basename(done.file)}`, 5000);
+  }
+  return done;
+}
+
+module.exports = { removeEntity, removeSubtree };

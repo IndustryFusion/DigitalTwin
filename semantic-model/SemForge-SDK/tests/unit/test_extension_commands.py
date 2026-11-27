@@ -1946,7 +1946,8 @@ def test_remove_this_use_is_not_in_the_palette():
                       'semforge.renameTestCase', 'semforge.renameSuite',
                       'semforge.deleteShape', 'semforge.cloneTestCase',
                       'semforge.deleteTestCase', 'semforge.deleteSuite',
-                      'semforge.removeCaseValue', 'semforge.removeEntity', 'semforge.linkSeverityClass',
+                      'semforge.removeCaseValue', 'semforge.removeEntity', 'semforge.removeSubtree',
+                      'semforge.linkSeverityClass',
                       # A row or a card, and the keyboard in the view.
                       'semforge.copyEntity', 'semforge.copySubtree', 'semforge.pasteEntity',
                       # A click on a row of a view: the row it was clicked on.
