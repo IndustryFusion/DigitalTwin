@@ -41,7 +41,8 @@ const stub = {
   workspace: {
     getConfiguration: () => ({ get: () => '' }),
     workspaceFolders: [{ uri: { fsPath: process.argv[2] } }],
-    createFileSystemWatcher: () => ({ dispose: noop }),
+    createFileSystemWatcher: () => ({ dispose: noop, onDidChange: () => ({ dispose: noop }),
+      onDidCreate: () => ({ dispose: noop }), onDidDelete: () => ({ dispose: noop }) }),
     onDidChangeConfiguration: noop,
     onDidSaveTextDocument: noop,
     onDidChangeTextDocument: noop,
