@@ -231,3 +231,11 @@ MISSED | test22/model3.jsonld | urn:dt:1 | NodeKindConstraintComponent | nums
 # defect -- and dropping it would mean not noticing a relationship that points
 # at a string.
 EXTRA | test1/model13.jsonld | urn:filter:1 | NodeKindConstraintComponent | hasCartridge
+
+# An sh:or of datatypes beside sh:nodeKind sh:Literal is judged by the datatype
+# check, as in test9 above, and now per instance (#1106): the value that meets
+# no listed datatype raises the alert, named sh:datatype.
+MISSED | test33/model2.jsonld | urn:langTest:2 | OrConstraintComponent | label
+EXTRA  | test33/model2.jsonld | urn:langTest:2 | DatatypeConstraintComponent | label
+MISSED | test33/model2.jsonld | urn:listTest:2 | OrConstraintComponent | level
+EXTRA  | test33/model2.jsonld | urn:listTest:2 | DatatypeConstraintComponent | level

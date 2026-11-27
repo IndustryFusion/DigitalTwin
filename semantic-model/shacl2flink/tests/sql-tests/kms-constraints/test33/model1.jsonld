@@ -1,0 +1,156 @@
+[
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "id": "urn:orTest:1",
+    "type": "https://industry-fusion.com/types/v0.9/orTest",
+    "https://industry-fusion.com/types/v0.9/level": [
+      {
+        "type": "Property",
+        "value": 1,
+        "datasetId": "urn:ds:0"
+      },
+      {
+        "type": "Property",
+        "value": 80.5,
+        "datasetId": "urn:ds:1"
+      }
+    ]
+  },
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "id": "urn:andTest:1",
+    "type": "https://industry-fusion.com/types/v0.9/andTest",
+    "https://industry-fusion.com/types/v0.9/level": [
+      {
+        "type": "Property",
+        "value": 3,
+        "datasetId": "urn:ds:0"
+      },
+      {
+        "type": "Property",
+        "value": 7,
+        "datasetId": "urn:ds:1"
+      }
+    ]
+  },
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "id": "urn:notTest:1",
+    "type": "https://industry-fusion.com/types/v0.9/notTest",
+    "https://industry-fusion.com/types/v0.9/level": [
+      {
+        "type": "Property",
+        "value": 20,
+        "datasetId": "urn:ds:0"
+      },
+      {
+        "type": "Property",
+        "value": 30,
+        "datasetId": "urn:ds:1"
+      }
+    ]
+  },
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "id": "urn:siblingTest:1",
+    "type": "https://industry-fusion.com/types/v0.9/siblingTest",
+    "https://industry-fusion.com/types/v0.9/level": [
+      {
+        "type": "Property",
+        "value": 5,
+        "datasetId": "urn:ds:0"
+      },
+      {
+        "type": "Property",
+        "value": 7,
+        "datasetId": "urn:ds:1"
+      }
+    ]
+  },
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "id": "urn:listTest:1",
+    "type": "https://industry-fusion.com/types/v0.9/listTest",
+    "https://industry-fusion.com/types/v0.9/level": [
+      {
+        "type": "Property",
+        "value": 3,
+        "datasetId": "urn:ds:0"
+      },
+      {
+        "type": "Property",
+        "value": {
+          "@value": "1.5",
+          "@type": "http://www.w3.org/2001/XMLSchema#decimal"
+        },
+        "datasetId": "urn:ds:1"
+      }
+    ]
+  },
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "id": "urn:langTest:1",
+    "type": "https://industry-fusion.com/types/v0.9/langTest",
+    "https://industry-fusion.com/types/v0.9/label": [
+      {
+        "type": "Property",
+        "value": "x",
+        "datasetId": "urn:ds:0"
+      },
+      {
+        "type": "Property",
+        "value": {
+          "@value": "hallo",
+          "@language": "de"
+        },
+        "datasetId": "urn:ds:1"
+      }
+    ]
+  },
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "id": "urn:yearTest:1",
+    "type": "https://industry-fusion.com/types/v0.9/yearTest",
+    "https://industry-fusion.com/types/v0.9/year": [
+      {
+        "type": "Property",
+        "value": {
+          "@value": "2020",
+          "@type": "http://www.w3.org/2001/XMLSchema#gYear"
+        },
+        "datasetId": "urn:ds:0"
+      },
+      {
+        "type": "Property",
+        "value": {
+          "@value": "2021",
+          "@type": "http://www.w3.org/2001/XMLSchema#gYear"
+        },
+        "datasetId": "urn:ds:1"
+      }
+    ]
+  },
+  {
+    "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    "id": "urn:yearMonthTest:1",
+    "type": "https://industry-fusion.com/types/v0.9/yearMonthTest",
+    "https://industry-fusion.com/types/v0.9/month": [
+      {
+        "type": "Property",
+        "value": {
+          "@value": "2020-05",
+          "@type": "http://www.w3.org/2001/XMLSchema#gYearMonth"
+        },
+        "datasetId": "urn:ds:0"
+      },
+      {
+        "type": "Property",
+        "value": {
+          "@value": "2021-01",
+          "@type": "http://www.w3.org/2001/XMLSchema#gYearMonth"
+        },
+        "datasetId": "urn:ds:1"
+      }
+    ]
+  }
+]

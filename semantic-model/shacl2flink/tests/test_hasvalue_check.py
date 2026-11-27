@@ -174,8 +174,8 @@ def _fires(text, value_type, required):
     conn = sqlite3.connect(':memory:')
     # SQLite's `X REGEXP Y` is regexp(Y, X): pattern first.
     conn.create_function('regexp', 2, lambda p, v: v is not None and re.search(p, v) is not None)
-    conn.execute(f"CREATE TABLE A1 ({', '.join(COLUMNS)})")
-    conn.execute(f"INSERT INTO A1 VALUES ({', '.join('?' * len(COLUMNS))})",
+    conn.execute(f"CREATE TABLE A1 ({', '.join(COLUMNS)}, `instance` DEFAULT '[0]')")
+    conn.execute(f"INSERT INTO A1 ({', '.join(COLUMNS)}) VALUES ({', '.join('?' * len(COLUMNS))})",
                  ('urn:x:1', 1, 'warning', '', 'p', text, value_type, has_value, has_value_type,
                   0, False, False, 'https://uri.etsi.org/ngsi-ld/Property'))
     return len(conn.execute(_check_sql()).fetchall()) > 0

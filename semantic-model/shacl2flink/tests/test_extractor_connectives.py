@@ -145,7 +145,8 @@ def test_connective_operation_mapping():
     assert props.connective_operation(sh['and']) == 'AND'
     assert props.connective_operation(sh.xone) == 'XONE'
     assert props.connective_operation(sh['not']) == 'NOT'
-    assert props.connective_operation(None) == 'OR'
+    # Shapes beside each other on a node are conjoined (#1106).
+    assert props.connective_operation(None) == 'AND'
 
 
 # The dominant OPC UA shape: a variable is a Property when scalar and a

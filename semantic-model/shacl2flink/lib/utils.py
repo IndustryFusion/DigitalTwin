@@ -130,6 +130,9 @@ constraint_table = [
     {"id": "INTEGER"},
     {"operation": "STRING"},
     {"circuit_level": "INTEGER"},
+    # 1 for a circuit node over the values of one attribute: it is judged per
+    # attribute instance (#1106). 0 for leaves and for nodes over the entity.
+    {"instanceScoped": "INTEGER"},
     {"targetClass": "STRING"},
 ] + [
     {column: "STRING"} for column in path_columns()
@@ -158,7 +161,10 @@ constraint_table = [
     {"message": "STRING"}
 ]
 
-constraint_trigger_table_primary_key = ["resource", "constraint_id", "event"]
+# `instance` is the attribute instance a verdict is about (see
+# instance_chain in shacl_properties_to_sql), '' for the entity as a whole. A
+# node judged per instance writes one verdict per instance under one event.
+constraint_trigger_table_primary_key = ["resource", "constraint_id", "event", "instance"]
 constraint_trigger_table = [
     {"resource": "STRING"},
     {"event": "STRING"},
@@ -166,7 +172,8 @@ constraint_trigger_table = [
     {"triggered": "BOOLEAN"},
     {"severity": "STRING"},
     {"text": "STRING"},
-    {'ts': "TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL"}
+    {'ts': "TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL"},
+    {"instance": "STRING"}
 ]
 
 constraint_combination_table_primary_key = ["member_constraint_id", "target_constraint_id"]
@@ -1140,6 +1147,7 @@ def init_constraint_check():
     # nodes, so the evaluator can be unrolled one statement per level.
     check["operation"] = None
     check["circuit_level"] = 0
+    check["instanceScoped"] = 0
     check["targetClass"] = None
     for column in path_columns():
         check[column] = None

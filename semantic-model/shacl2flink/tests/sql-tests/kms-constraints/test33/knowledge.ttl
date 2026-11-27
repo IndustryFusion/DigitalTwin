@@ -1,0 +1,13 @@
+PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs:  <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX iff:   <https://industry-fusion.com/types/v0.9/>
+
+# One class per point of #1106, flat, so each shape is about its own entities.
+iff:orTest a iff:class ; a rdfs:Class .
+iff:andTest a iff:class ; a rdfs:Class .
+iff:notTest a iff:class ; a rdfs:Class .
+iff:siblingTest a iff:class ; a rdfs:Class .
+iff:listTest a iff:class ; a rdfs:Class .
+iff:langTest a iff:class ; a rdfs:Class .
+iff:yearTest a iff:class ; a rdfs:Class .
+iff:yearMonthTest a iff:class ; a rdfs:Class .

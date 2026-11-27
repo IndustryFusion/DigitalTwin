@@ -102,6 +102,12 @@ branches all state one, are judged for each instance, and the alert names
 enclosing attribute; and not the datatype of a shape with `sh:deactivated true`,
 nor `rdf:JSON`. On Flink a plain number or boolean satisfies a list with
 `rdf:langString`: it arrives without a type, as a language-tagged string does.
+
+With `sh:nodeKind sh:Literal` a value is judged as without it: a value declared
+with one of the listed datatypes satisfies the list (`xsd:decimal` beside
+`xsd:integer`), a language-tagged string satisfies `rdf:langString`, a declared
+`xsd:boolean` may be written `1` or `0`, and a declared datatype is compared
+whole, so `xsd:gYearMonth` does not satisfy `xsd:gYear`.
 In this check a value declared with any datatype of a list satisfies the list, a
 declared boolean may be written `1` or `0` and a declared double `INF`, `-INF` or
 `NaN`, and a declared type has to be the
@@ -1264,6 +1270,20 @@ sh:property [ sh:path :hasRange ;
 Levels are folded separately, so an inner connective never inherits the
 operator of the one above it. That matters because only `sh:or` flattens:
 `XONE(a, OR(b, c))` is not `XONE(a, b, c)`.
+
+**A connective on a property shape is judged per attribute instance.** The
+values of an attribute with several `datasetId`s are its instances, and each
+one has to satisfy the connective on its own: two instances that each satisfy
+another branch of an `sh:or` satisfy it, and one that satisfies no branch
+violates it. A count of the attribute is about all of its instances, so it
+counts for each of them. The alert is one per entity and connective, as for a
+single instance. A connective on a node shape is judged for the entity.
+
+Not judged per instance are `sh:not` and `sh:xone`: they are judged over all
+instances of the attribute together, so an `sh:not` over two instances of
+which one violates it raises no alert, and an `sh:xone` may raise one that no
+instance violates or miss one. An entity that lacks the attribute has no
+values to judge, and both raise an alert for it nevertheless.
 
 > Value-level connectives other than `sh:or` used to produce no constraint at
 > all — the extractor descended only into `sh:or`, so the branches were never

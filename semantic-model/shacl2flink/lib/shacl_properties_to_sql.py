@@ -114,6 +114,25 @@ def attribute_level_context(filter_deleted=False):
         f"{dataset_index(f'{aliases[level]}.`datasetId`')} || '] ==> ' END"
         for level in range(len(columns) - 1))
 
+    # The attribute instance a row is about, as the chain of its datasetIds
+    # from the top attribute down to the constraint's declared depth:
+    # `[a]` for an instance of a top-level attribute, `[a][b]` for an
+    # instance of its sub-attribute. A circuit node over the values of an
+    # attribute is judged per instance (#1106), and a member row applies to
+    # every instance its chain is a prefix of. A count is about the instances
+    # of its parent, so it carries the parent's chain: '' at the top level,
+    # which applies to every instance of the entity.
+    def instance_term(level, declared_column):
+        return (f"CASE WHEN D.`{declared_column}` IS NULL THEN '' ELSE '[' || "
+                f"COALESCE({dataset_index(f'{aliases[level]}.`datasetId`')}, '') "
+                f"|| ']' END")
+
+    instance_chain = ' || '.join(
+        instance_term(level, columns[level]) for level in range(len(columns)))
+    parent_instance_chain = ' || '.join(
+        instance_term(level, columns[level + 1])
+        for level in range(len(columns) - 1)) or "''"
+
     def ttl_pin(alias_names):
         pins = ', '.join(f"'{a}' = '0d'" for a in alias_names)
         return f"/*+ STATE_TTL({pins}) */"
@@ -138,6 +157,8 @@ def attribute_level_context(filter_deleted=False):
         'deepest': deepest,
         'effective_path': effective_path,
         'parent_path': parent_path,
+        'instance_chain': instance_chain,
+        'parent_instance_chain': parent_instance_chain,
         'print_path': f"{effective_path} || '[' || "
                       f"{dataset_index(deepest('datasetId'))} || ']'",
         # An absent sub-ATTRIBUTE must still yield a row when its PARENT is
@@ -207,9 +228,15 @@ CONNECTIVE_OPERATION = {
 
 
 def connective_operation(connective):
-    """Map a SHACL connective predicate onto a circuit operation."""
+    """Map a SHACL connective predicate onto a circuit operation.
+
+    No connective is a conjunction: every shape beside another on a node must
+    hold. Folded as OR, two value shapes of one property alerted only when an
+    instance violated both, and per instance (#1106) not even when two
+    instances violated one each.
+    """
     if connective is None:
-        return 'OR'
+        return 'AND'
     return CONNECTIVE_OPERATION.get(str(connective), 'OR')
 
 
@@ -437,6 +464,8 @@ sql_check_relationship_base = """
                         {{ deepest('nodeType') }} as nodeType,
                         {{ deepest('deleted') }} as `adeleted`,
                         {{ deepest('datasetId') }} as `index`,
+                        {{ instance_chain }} as `instance`,
+                        {{ parent_instance_chain }} as `parentInstance`,
                         D.targetClass as targetClass,
                         {{ effective_path }} as propertyPath,
                         {{ parent_path }} as parentPath,
@@ -481,6 +510,7 @@ sql_check_relationship_property_class = """
                 {%- if sqlite %}
                 ,CURRENT_TIMESTAMP
                 {%- endif %}
+    , `instance` AS `instance`
             FROM A1 WHERE A1.propertyClass IS NOT NULL and `index` IS NOT NULL and {{ constraint_cond }}
 """  # noqa: E501
 
@@ -553,8 +583,9 @@ sql_check_relationship_property_count = """
                 {%- if sqlite %}
                 ,CURRENT_TIMESTAMP
                 {%- endif %}
+    , `parentInstance` AS `instance`
             FROM A1 WHERE `minCount` is NOT NULL or `maxCount` is NOT NULL
-            GROUP BY this, propertyPath, maxCount, minCount, severity, constraint_id, parentPath
+            GROUP BY this, propertyPath, maxCount, minCount, severity, constraint_id, parentPath, parentInstance
             HAVING {{ constraint_cond }}
 """  # noqa: E501
 
@@ -615,6 +646,7 @@ sql_check_inverse_relationship_count = """
                 {%- if sqlite %}
                 ,CURRENT_TIMESTAMP
                 {%- endif %}
+    , '' AS `instance`
             FROM A1 WHERE `minCount` is NOT NULL or `maxCount` is NOT NULL
             GROUP BY this, propertyPath, maxCount, minCount, severity, constraint_id
             HAVING MAX(CASE WHEN edeleted THEN 1 ELSE 0 END) = 0 AND
@@ -638,6 +670,7 @@ sql_check_relationship_nodeType = """
                 {%- if sqlite %}
                 ,CURRENT_TIMESTAMP
                 {%- endif %}
+    , `instance` AS `instance`
             FROM A1 WHERE `index` IS NOT NULL AND {{ constraint_cond }}
 """  # noqa: E501
 
@@ -668,6 +701,8 @@ WITH {{ focus_ctes }}A1 AS (SELECT {{ property_ttl_hint }} A.id as this,
                    C.subject as foundVal,
                    C.object as foundClass,
                    {{ deepest('datasetId') }} as `index`,
+                   {{ instance_chain }} as `instance`,
+                   {{ parent_instance_chain }} as `parentInstance`,
                    {{ effective_path }} as propertyPath,
                    {{ parent_path }} as parentPath,
                    {{ print_path }} as printPath,
@@ -730,8 +765,9 @@ SELECT /*+ STATE_TTL('A1' = '0d') */ this AS resource,
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
+    , `parentInstance` AS `instance`
 FROM A1  WHERE `minCount` is NOT NULL or `maxCount` is NOT NULL
-GROUP BY this, typ, propertyPath, minCount, maxCount, severity, constraint_id, parentPath
+GROUP BY this, typ, propertyPath, minCount, maxCount, severity, constraint_id, parentPath, parentInstance
 HAVING {{ constraint_cond }}
 """  # noqa: E501
 
@@ -750,6 +786,7 @@ SELECT this AS resource,
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
+    , `instance` AS `instance`
 FROM A1  WHERE propertyNodetype = '@id' and propertyClass IS NOT NULL and `index` IS NOT NULL AND {{ constraint_cond }}
 """  # noqa: E501
 
@@ -772,6 +809,7 @@ SELECT this AS resource,
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
+    , `instance` AS `instance`
 -- A1 coerces a NULL propertyNodetype to the STRING 'null' (see the IFNULL in
 -- sql_check_property_iri_base), so `IS NOT NULL` never excludes anything here.
 -- A constraint that spans attribute types -- e.g. a count beneath an
@@ -810,6 +848,7 @@ SELECT this AS resource,
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
+    , `instance` AS `instance`
 FROM A1 where `{{ comparison_value}}` IS NOT NULL and `index` IS NOT NULL AND ({{ constraint_cond }} OR {{ constraint_cond2 }})
 """  # noqa: E501
 
@@ -827,6 +866,7 @@ SELECT this AS resource,
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
+    , `instance` AS `instance`
 FROM A1 WHERE `{{ comparison_value }}` IS NOT NULL and `index` IS NOT NULL AND {{ constraint_cond }}
 """  # noqa: E501
 
@@ -844,6 +884,7 @@ SELECT this AS resource,
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
+    , `instance` AS `instance`
 FROM A1 WHERE `pattern` IS NOT NULL and `index` IS NOT NULL AND {{ constraint_cond }}
 """  # noqa: E501
 
@@ -875,6 +916,7 @@ SELECT this AS resource,
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
+    , `instance` AS `instance`
 FROM A1 where `ins` IS NOT NULL and `index` IS NOT NULL AND {{ constraint_cond }}
 """  # noqa: E501
 
@@ -940,9 +982,9 @@ sql_check_literal_datatypes = r"""
     xsd:decimal or rdf:langString (#1097): a value declared with it satisfies
     the list as it satisfies that datatype alone, and the bridge passes no type
     on for a language-tagged string. A declared boolean may be written 1 or 0,
-    and a declared double INF, -INF or NaN. They are for the DATATYPE_ONLY rows:
-    a row of the ordinary extraction may be a member of a connective, which is
-    judged over all instances and keeps its verdict. -#}
+    and a declared double INF, -INF or NaN. They hold for every row, with or
+    without sh:nodeKind, now that a connective over the values is judged per
+    instance (#1106). -#}
 {% set undeclared_double %}^[+-]?(?:\d+\.\d*(?:[eE][+-]?\d+)?|\.\d+(?:[eE][+-]?\d+)?|\d+[eE][+-]?\d+)${% endset %}
 {% set any_number %}^[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?${% endset %}
 {% set check_datatypes %}
@@ -957,16 +999,16 @@ sql_check_literal_datatypes = r"""
     OR (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#boolean%' AND COALESCE(`valueType`, 'http://www.w3.org/2001/XMLSchema#boolean') = 'http://www.w3.org/2001/XMLSchema#boolean'
         AND {%- if sqlite %} `val`  REGEXP '^(?i:true|false)$' {%- else %}
         REGEXP(val, '^(?i:true|false)$'){%- endif %})
-    OR (propertyNodetype = 'DATATYPE_ONLY' AND datatypes LIKE '%http://www.w3.org/2001/XMLSchema#double%'
+    OR (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#double%'
         AND IFNULL(`valueType`, '') = 'http://www.w3.org/2001/XMLSchema#double'
         AND LOWER(`val`) IN ('inf', '+inf', '-inf', 'nan'))
-    OR (propertyNodetype = 'DATATYPE_ONLY' AND datatypes LIKE '%http://www.w3.org/2001/XMLSchema#boolean%' AND IFNULL(`valueType`, '') = 'http://www.w3.org/2001/XMLSchema#boolean'
+    OR (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#boolean%' AND IFNULL(`valueType`, '') = 'http://www.w3.org/2001/XMLSchema#boolean'
         AND `val` IN ('1', '0'))
     OR (datatypes LIKE '%http://www.w3.org/2001/XMLSchema#string%' AND COALESCE(`valueType`, 'http://www.w3.org/2001/XMLSchema#string') = 'http://www.w3.org/2001/XMLSchema#string')
-    OR (propertyNodetype = 'DATATYPE_ONLY' AND IFNULL(`valueType`, '') NOT IN ('', 'http://www.w3.org/2001/XMLSchema#double', 'http://www.w3.org/2001/XMLSchema#boolean',
+    OR (IFNULL(`valueType`, '') NOT IN ('', 'http://www.w3.org/2001/XMLSchema#double', 'http://www.w3.org/2001/XMLSchema#boolean',
                                         'http://www.w3.org/2001/XMLSchema#integer', 'http://www.w3.org/2001/XMLSchema#string')
         AND INSTR(',' || datatypes || ',', ',' || IFNULL(`valueType`, '') || ',') > 0)
-    OR (propertyNodetype = 'DATATYPE_ONLY' AND `valueType` IS NULL AND datatypes LIKE '%http://www.w3.org/1999/02/22-rdf-syntax-ns#langString%')
+    OR (`valueType` IS NULL AND datatypes LIKE '%http://www.w3.org/1999/02/22-rdf-syntax-ns#langString%')
 {%endset%}
 
 {% set constraint_cond%}
@@ -992,9 +1034,9 @@ NOT edeleted AND NOT IFNULL(adeleted, false) AND attr_typ IS NOT NULL AND
                 -- expanded attribute carries an @type, and nothing in the
                 -- live store does. Treating "undeclared" as "wrong" would
                 -- alert on every value of every custom-datatype shape.
-                WHEN NOT ({{ common_datatypes }}) THEN
-                    CASE WHEN propertyNodetype = 'DATATYPE_ONLY' THEN INSTR(',' || datatypes || ',', ',' || `valueType` || ',') = 0
-                        ELSE datatypes NOT LIKE '%' || `valueType` || '%' END
+                -- One of the listed datatypes, compared whole: as a substring
+                -- xsd:gYear passed xsd:gYearMonth (#1106).
+                WHEN NOT ({{ common_datatypes }}) THEN INSTR(',' || datatypes || ',', ',' || `valueType` || ',') = 0
                 ELSE NOT ({{ check_datatypes }}) -- if val is defined and datatypes are known, we check the value
             END
         WHEN propertyNodetype = '@json' THEN
@@ -1039,6 +1081,7 @@ SELECT this AS resource,
         {% if sqlite %}
         ,CURRENT_TIMESTAMP
         {% endif %}
+    , `instance` AS `instance`
 FROM A1 where `index` IS NOT NULL AND `propertyNodetype` IN ('@value', '@list', '@json', 'DATATYPE_ONLY') AND ({{ constraint_cond }})
 """.replace('DATATYPE_ONLY', DATATYPE_ONLY).replace('NOT_A_LITERAL', NOT_A_LITERAL)  # noqa: E501 W605
 
@@ -1225,6 +1268,7 @@ sql_check_literal_hasvalue = """
       || '".'
     AS text
   {% if sqlite %}, CURRENT_TIMESTAMP{% endif %}
+    , `instance` AS `instance`
 FROM A1
 
 WHERE hasValue IS NOT NULL AND `index` IS NOT NULL AND {{ constraint_cond }}
@@ -1354,6 +1398,7 @@ SELECT /*+ STATE_TTL('node_violations' = '0d') */ owner AS resource,
 {%- endfor %}
         AS `text`
     {% if sqlite %},CURRENT_TIMESTAMP{% endif %}
+    , '' AS `instance`
 FROM node_violations
 GROUP BY owner, relPath, relIndex, nodeId
 HAVING MAX(CASE WHEN odeleted THEN 1 ELSE 0 END) = 0;
@@ -1371,13 +1416,15 @@ SELECT /*+ STATE_TTL('comb' = '0d', 'ct' = '0d') */
     ARRAY ['SHACL Validator'] AS service,
     {% endif %}
 
-  MAX(t.severity) AS severity,
+  -- A node judged per instance (#1106) leaves one row per instance under the
+  -- event, 'ok' ones among them: severity and text come from the violated.
+  MAX(CASE WHEN t.triggered THEN t.severity ELSE NULL END) AS severity,
   'customer'                        AS customer,
 -- sh:message replaces the generated explanation. Every alert -- leaf
 -- constraint and circuit node alike -- is published by this one statement, so
 -- honouring it here covers all of them. NULL means the shape gave no message
 -- and the generated text stands.
- MAX(COALESCE(ct.`message`, t.text)) AS text
+ MAX(CASE WHEN t.triggered THEN COALESCE(ct.`message`, t.text) ELSE NULL END) AS text
     {% if sqlite %}
     ,CURRENT_TIMESTAMP
     {% endif %}
@@ -1436,6 +1483,51 @@ WITH
       target_constraint_id
   ),
 
+{%- if not needs_universe %}
+  -- 2a) The member verdicts of the circuit nodes on this level.
+  member_rows AS (
+    SELECT /*+ STATE_TTL('comb' = '0d', 'ct' = '0d') */
+      t.resource AS resource,
+      t.instance AS instance,
+      t.constraint_id AS constraint_id,
+      t.triggered AS triggered,
+      t.text AS text,
+      ct.id AS target_constraint_id,
+      ct.operation AS operation,
+      ct.severity AS severity,
+      ct.`eventName` AS `eventName`,
+      ct.instanceScoped AS instanceScoped
+    FROM (
+      -- Pre-sort the data for Calcite
+      SELECT *
+      FROM constraint_trigger_table
+      ORDER BY event, text
+    ) AS t
+    JOIN
+      constraint_combination_table AS comb
+      ON comb.member_constraint_id = t.constraint_id
+     AND comb.operation <> 'PUBLISH'
+    JOIN
+      constraint_table AS ct
+      ON ct.id = comb.target_constraint_id
+     AND ct.circuit_level = {{ level }}{% if split_by_operation %}
+     AND ct.operation NOT IN ('NOT', 'XONE'){% endif %}
+  ),
+
+  -- 2b) What each node is judged for (#1106). A node over the values of an
+  --     attribute is judged per instance: once for every instance chain its
+  --     members report, so that two instances each meeting a different
+  --     branch of an sh:or are not taken as one value meeting neither. Any
+  --     other node is judged once for the entity ('').
+  node_groups AS (
+    SELECT /*+ STATE_TTL('m' = '0d') */ DISTINCT
+      m.resource AS resource,
+      m.target_constraint_id AS target_constraint_id,
+      CASE WHEN m.instanceScoped = 1 THEN m.instance ELSE '' END AS instance
+    FROM member_rows AS m
+  ),
+{%- endif %}
+
   -- 2) For each focus node and each circuit node on this level, how many
   --    distinct members actually triggered, plus their collected texts.
   fired AS (
@@ -1447,9 +1539,13 @@ WITH
     -- pin constraint_table as 'D', carried on. Connectives are exactly the
     -- constraints that cannot be expressed any other way, so losing them is
     -- invisible in the alert stream: fewer alerts looks like a healthier model.
-    SELECT /*+ STATE_TTL('comb' = '0d', 'ct' = '0d', 'nm' = '0d') */
+    {%- set pins = "'comb' = '0d', 'ct' = '0d'" if needs_universe else "'g' = '0d', 'm' = '0d'" %}
+    SELECT /*+ STATE_TTL({{ pins }}, 'nm' = '0d') */
 {%- if needs_universe %}
       A.id AS resource,
+      -- NOT and XONE are judged for the entity as a whole: their universe is
+      -- the entities, not the attribute instances (a limit, see #1106).
+      '' AS instance,
       ct.id AS target_constraint_id,
       ct.operation AS operation,
       ct.severity AS severity,
@@ -1469,6 +1565,7 @@ WITH
       constraint_table AS ct
       ON A.`type` = ct.targetClass
      AND ct.circuit_level = {{ level }}
+     AND ct.operation IN ('NOT', 'XONE')
     JOIN
       needed AS nm
       ON nm.target_constraint_id = ct.id
@@ -1493,45 +1590,43 @@ WITH
       ct.severity,
       nm.needed_count
 {%- else %}
-      t.resource,
-      ct.id AS target_constraint_id,
-      ct.operation AS operation,
-      ct.severity AS severity,
+      g.resource AS resource,
+      g.instance AS instance,
+      m.target_constraint_id AS target_constraint_id,
+      m.operation AS operation,
+      m.severity AS severity,
       nm.needed_count as needed_count,
-      COUNT(DISTINCT CASE WHEN t.triggered THEN t.constraint_id ELSE NULL END) AS fired_count,
+      COUNT(DISTINCT CASE WHEN m.triggered THEN m.constraint_id ELSE NULL END) AS fired_count,
       {% if sqlite %}
       -- SQLite: GROUP_CONCAT only takes one argument when DISTINCT
-      ct.`eventName` AS events,
-      'AND(' || GROUP_CONCAT(DISTINCT t.text) || ')' AS texts
+      m.`eventName` AS events,
+      -- Sorted: GROUP_CONCAT follows the order its rows arrive in, which
+      -- the join decides and differs between SQLite versions.
+      'AND(' || GROUP_CONCAT(DISTINCT m.text ORDER BY m.text) || ')' AS texts
       {% else %}
       -- Calcite: LISTAGG without DISTINCT
-      ct.`eventName` AS events,
-      LISTAGG(DISTINCT CASE WHEN t.triggered THEN t.text ELSE NULL END, ' AND ') AS texts
+      m.`eventName` AS events,
+      LISTAGG(DISTINCT CASE WHEN m.triggered THEN m.text ELSE NULL END, ' AND ') AS texts
       {% endif %}
- FROM (
-      -- Pre-sort the data for Calcite
-      SELECT *
-      FROM constraint_trigger_table
-      ORDER BY event, text
-    ) AS t
-    JOIN
-      constraint_combination_table AS comb
-      ON comb.member_constraint_id = t.constraint_id
-     AND comb.operation <> 'PUBLISH'
-    JOIN
-      constraint_table AS ct
-      ON ct.id = comb.target_constraint_id
-     AND ct.circuit_level = {{ level }}{% if node_checks_only %}
-     AND ct.targetClass LIKE '{{ class_prefix }}%'{% endif %}
+    -- A member row counts for every instance its chain is a prefix of: a
+    -- count of the attribute ('') for all its instances, a value check of
+    -- instance [a] for [a] alone. A node over the entity takes them all.
+    FROM node_groups AS g
+    JOIN member_rows AS m
+      ON m.resource = g.resource
+     AND m.target_constraint_id = g.target_constraint_id
+     AND (m.instanceScoped = 0
+          OR SUBSTR(g.instance, 1, {% if sqlite %}LENGTH{% else %}CHAR_LENGTH{% endif %}(m.instance)) = m.instance)
     JOIN
       needed AS nm
-      ON nm.target_constraint_id   = comb.target_constraint_id
+      ON nm.target_constraint_id = m.target_constraint_id
     GROUP BY
-      t.resource,
-      ct.id,
-      ct.operation,
-      ct.`eventName`,
-      ct.severity,
+      g.resource,
+      g.instance,
+      m.target_constraint_id,
+      m.operation,
+      m.`eventName`,
+      m.severity,
       nm.needed_count
 {%- endif %}
   )
@@ -1559,6 +1654,7 @@ CASE WHEN {{ triggered_expr }} THEN COALESCE(f.texts, f.events) ELSE 'All ok' EN
   {% if sqlite %}
     ,CURRENT_TIMESTAMP AS ts
     {% endif %}
+  ,f.instance AS instance
 FROM  fired AS f;
 ;
 """
@@ -2850,6 +2946,18 @@ def translate(shaclefile, knowledgefile, prefixes):
     # The two big shape queries are answered by walking the shape tree
     # (lib/shape_rows.py): rdflib's SPARQL engine needs most of a build for
     # them on a large package. Their SPARQL texts above remain the definition.
+    implicit = set()        # keys whose shapes stand beside each other, no connective
+
+    def set_connective(connectives, key, connective):
+        """An explicit connective wins over shapes that merely stand beside it."""
+        if connective is None:
+            if key not in connectives:
+                connectives[key] = connective_operation(None)
+                implicit.add(key)
+            return
+        connectives[key] = connective_operation(connective)
+        implicit.discard(key)
+
     qres = utils.in_stable_order(shape_rows.relationship_rows(g, sparql_get_all_relationships))
     for row in qres:
         paths = get_full_path_of_shacl_property(g, row.property)
@@ -2878,14 +2986,12 @@ def translate(shaclefile, knowledgefile, prefixes):
         # with the outer one's operator -- fine while both were OR, since OR
         # flattens, but XONE(a, OR(b, c)) is not XONE(a, b, c).
         clause_key = (node_key, str(getattr(row, 'clause', property)))
-        clause_connectives[clause_key] = \
-            connective_operation(getattr(row, 'innerconnective', None))
+        set_connective(clause_connectives, clause_key, getattr(row, 'innerconnective', None))
         if node_key not in property_nodes.keys():
             property_nodes[node_key] = []
         if clause_key not in property_nodes[node_key]:
             property_nodes[node_key].append(clause_key)
-        property_connectives[node_key] = \
-            connective_operation(getattr(row, 'connective', None))
+        set_connective(property_connectives, node_key, getattr(row, 'connective', None))
         focus_paths[node_key] = property_path
         severitycode = row.severitycode.toPython() if row.severitycode \
             else 'warning'
@@ -2930,14 +3036,12 @@ def translate(shaclefile, knowledgefile, prefixes):
         # with the outer one's operator -- fine while both were OR, since OR
         # flattens, but XONE(a, OR(b, c)) is not XONE(a, b, c).
         clause_key = (node_key, str(getattr(row, 'clause', property)))
-        clause_connectives[clause_key] = \
-            connective_operation(getattr(row, 'innerconnective', None))
+        set_connective(clause_connectives, clause_key, getattr(row, 'innerconnective', None))
         if node_key not in property_nodes.keys():
             property_nodes[node_key] = []
         if clause_key not in property_nodes[node_key]:
             property_nodes[node_key].append(clause_key)
-        property_connectives[node_key] = \
-            connective_operation(getattr(row, 'connective', None))
+        set_connective(property_connectives, node_key, getattr(row, 'connective', None))
         focus_paths[node_key] = property_path
         severitycode = row.severitycode.toPython() if row.severitycode \
             else 'warning'
@@ -3128,6 +3232,9 @@ def translate(shaclefile, knowledgefile, prefixes):
         # so that connectives which fire on the ABSENCE of a violation
         # (NOT, XONE) can be scoped to the right set of focus nodes.
         check['operation'] = operation
+        # A node of this pass is over the values of one attribute, so it is
+        # judged per instance of it (#1106); node-level ones are not.
+        check['instanceScoped'] = 1
         check['targetClass'] = target_class
         check['eventName'] = circuit_event_name(operation, focus)
         check['message'] = agreed_message(constraint_checks, members)
@@ -3142,12 +3249,18 @@ def translate(shaclefile, knowledgefile, prefixes):
     # A value shape's connective folds first, then the property's folds over
     # the results. Two levels, so a connective inside a value shape keeps its
     # own operator instead of inheriting the one above it.
+    # The AND of shapes beside each other, by node id, with its members. It
+    # raises no alert of its own -- the shape names no sh:and -- but lets its
+    # members raise theirs, unless a node-level connective reads it.
+    implicit_ids = {}
     clause_top = {}
     for clause_key, members in clause_nodes.items():
         clause_top[clause_key] = fold(members,
                                       clause_connectives.get(clause_key, 'OR'),
                                       clause_key[0][1],
                                       focus_paths.get(clause_key[0]))
+        if clause_key in implicit and clause_top[clause_key] not in members:
+            implicit_ids[clause_top[clause_key]] = members
 
     # Build the circuit node for each property shape but do NOT publish yet: a
     # property that turns out to sit under a node-level connective has to feed
@@ -3160,6 +3273,8 @@ def translate(shaclefile, knowledgefile, prefixes):
         property_top[property_node] = fold(
             members, property_connectives.get(property_node, 'OR'), property_node[1],
             focus_paths.get(property_node))
+        if property_node in implicit and property_top[property_node] not in members:
+            implicit_ids[property_top[property_node]] = members
 
     # Connectives attached directly to a NodeShape group whole shapes, so their
     # branches can each constrain a different property. Only a graph walk can
@@ -3220,10 +3335,23 @@ def translate(shaclefile, knowledgefile, prefixes):
                                        'member_constraint_id': top_id,
                                        'target_constraint_id': -1})
 
+    def publish_shapes(top_id):
+        if top_id not in implicit_ids:
+            publish(top_id)
+            return
+        for member in implicit_ids[top_id]:
+            publish_shapes(member)
+        unused.add(top_id)
+
+    unused = set()
     for property_node, top_id in property_top.items():
         if property_node in consumed:
             continue
-        publish(top_id)
+        publish_shapes(top_id)
+    # An implicit AND nothing reads is not evaluated at all.
+    constraint_checks[:] = [c for c in constraint_checks if c.get('id') not in unused]
+    constraint_combination[:] = [e for e in constraint_combination
+                                 if e['target_constraint_id'] not in unused]
     for root_id in node_level_roots:
         publish(root_id)
     for synthetic, node_id in node_rows.items():
@@ -3314,18 +3442,14 @@ def translate(shaclefile, knowledgefile, prefixes):
         needs_universe = any(check['circuit_level'] == level and
                              check['operation'] in ABSENCE_FIRING_OPERATIONS
                              for check in constraint_checks)
-        # A level that needs the universe joins the circuit nodes to the
-        # entities by type, and no entity has the synthetic type of a node
-        # check: the node checks' circuit nodes on such a level (the sh:or of
-        # an OPC UA ValueRank, NOT and XONE being rejected in node shapes) get
-        # a statement of their own that reads the members' verdicts. Only
-        # then -- every other package compiles as before.
-        variants = [(needs_universe, False)]
-        if needs_universe and any(check['circuit_level'] == level and
-                                  is_node_check_class(check['targetClass'])
-                                  for check in constraint_checks):
-            variants.append((False, True))
-        for universe, node_checks_only in variants:
+        # Only NOT and XONE need the universe: the entities they range over,
+        # joined by type. A level with them gets two statements, the universe
+        # one for NOT and XONE alone and the other for OR and AND, which are
+        # judged per attribute instance (#1106) and, read from the members'
+        # verdicts, also reach the circuit nodes of node checks, whose
+        # synthetic type no entity has (NOT and XONE are rejected there).
+        variants = [(True, True), (False, True)] if needs_universe else [(False, False)]
+        for universe, split_by_operation in variants:
             for dialect in (False, True):
                 sql_command = Template(sql_combine_logic).render(
                     alerts_bulk_table=alerts_bulk_table,
@@ -3334,8 +3458,7 @@ def translate(shaclefile, knowledgefile, prefixes):
                     target_class="entities",
                     level=level,
                     needs_universe=universe,
-                    node_checks_only=node_checks_only,
-                    class_prefix=NODE_CHECK_CLASS_PREFIX,
+                    split_by_operation=split_by_operation,
                     sqlite=dialect)
                 if dialect:
                     sqlite += sql_command

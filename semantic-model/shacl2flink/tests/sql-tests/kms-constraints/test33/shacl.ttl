@@ -1,0 +1,80 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix iff:  <https://industry-fusion.com/types/v0.9/> .
+@prefix ngsild: <https://uri.etsi.org/ngsi-ld/> .
+
+# #1106: a connective over the values of an attribute is judged per instance
+# (datasetId). Every model gives the attribute several instances.
+
+# Point 1: an sh:or whose branches differ in datatype and bounds. Two instances
+# that each satisfy another branch satisfy it.
+iff:OrShape a sh:NodeShape ;
+    sh:targetClass iff:orTest ;
+    sh:property [
+        sh:path iff:level ;
+        sh:property [ sh:path ngsild:hasValue ;
+                      sh:or ( [ sh:datatype xsd:integer ; sh:maxInclusive 10 ]
+                              [ sh:datatype xsd:double ; sh:minInclusive 50.0 ] ) ] ] .
+
+# Point 2: an sh:and in a value shape, every instance has to satisfy both.
+iff:AndShape a sh:NodeShape ;
+    sh:targetClass iff:andTest ;
+    sh:property [
+        sh:path iff:level ;
+        sh:property [ sh:path ngsild:hasValue ;
+                      sh:and ( [ sh:datatype xsd:integer ] [ sh:maxInclusive 10 ] ) ] ] .
+
+# Point 3: sh:datatype beside sh:not in one value shape. The datatype is a
+# constraint of its own and not part of the negated branch.
+iff:NotShape a sh:NodeShape ;
+    sh:targetClass iff:notTest ;
+    sh:property [
+        sh:path iff:level ;
+        sh:property [ sh:path ngsild:hasValue ;
+                      sh:datatype xsd:integer ;
+                      sh:not [ sh:maxInclusive 10 ] ] ] .
+
+# Two value shapes beside each other: both have to hold for every instance.
+# Folded as an sh:or, one violated alone raised nothing.
+iff:SiblingShape a sh:NodeShape ;
+    sh:targetClass iff:siblingTest ;
+    sh:property [
+        sh:path iff:level ;
+        sh:property [ sh:path ngsild:hasValue ; sh:maxInclusive 10 ] ;
+        sh:property [ sh:path ngsild:hasValue ; sh:minInclusive 0 ] ] .
+
+# Point 4: the datatypes of a shape with sh:nodeKind sh:Literal.
+iff:ListShape a sh:NodeShape ;
+    sh:targetClass iff:listTest ;
+    sh:property [
+        sh:path iff:level ;
+        sh:property [ sh:path ngsild:hasValue ;
+                      sh:nodeKind sh:Literal ;
+                      sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:decimal ] ) ] ] .
+
+iff:LangShape a sh:NodeShape ;
+    sh:targetClass iff:langTest ;
+    sh:property [
+        sh:path iff:label ;
+        sh:property [ sh:path ngsild:hasValue ;
+                      sh:nodeKind sh:Literal ;
+                      sh:or ( [ sh:datatype xsd:string ] [ sh:datatype rdf:langString ] ) ] ] .
+
+# Point 5: a declared datatype is compared whole.
+iff:YearShape a sh:NodeShape ;
+    sh:targetClass iff:yearTest ;
+    sh:property [
+        sh:path iff:year ;
+        sh:property [ sh:path ngsild:hasValue ;
+                      sh:nodeKind sh:Literal ;
+                      sh:datatype xsd:gYear ] ] .
+
+# As a substring, xsd:gYear was found in xsd:gYearMonth and passed it.
+iff:YearMonthShape a sh:NodeShape ;
+    sh:targetClass iff:yearMonthTest ;
+    sh:property [
+        sh:path iff:month ;
+        sh:property [ sh:path ngsild:hasValue ;
+                      sh:nodeKind sh:Literal ;
+                      sh:datatype xsd:gYearMonth ] ] .

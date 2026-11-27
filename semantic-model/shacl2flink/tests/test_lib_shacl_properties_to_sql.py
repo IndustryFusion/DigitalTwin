@@ -129,7 +129,10 @@ def test_lib_shacl_prroperties_to_sql(mock_shape_rows, mock_utils, mock_configs,
     assert tables == ['alerts-bulk', 'attributes', 'rdf', 'ngsild-prefix', 'constraint-table',
                       'constraint-combination-table', 'constraint-trigger-table', 'constraint-table']
     assert views == ['attributes-view', 'ngsild-prefix-view']
-    assert len(statementsets) == 4
+    # The relationship, the property and the publication. The two checks of
+    # the one shape are conjoined by no connective, so they publish on their
+    # own and no circuit level is evaluated (#1106).
+    assert len(statementsets) == 3
     assert constraints == ['value', 'value']
 
     targetclass = MagicMock()
@@ -197,5 +200,5 @@ def test_lib_shacl_prroperties_to_sql(mock_shape_rows, mock_utils, mock_configs,
     assert tables == ['alerts-bulk', 'attributes', 'rdf', 'ngsild-prefix', 'constraint-table',
                       'constraint-combination-table', 'constraint-trigger-table', 'constraint-table']
     assert views == ['attributes-view', 'ngsild-prefix-view']
-    assert len(statementsets) == 4
+    assert len(statementsets) == 3      # no circuit level, as above
     assert constraints == ['value', 'value']

@@ -95,13 +95,15 @@ def _alerts(text, value_type, datatype, kind='@value', attr_typ=PROPERTY, node_t
     conn = sqlite3.connect(':memory:')
     # SQLite's `X REGEXP Y` is regexp(Y, X): pattern first.
     conn.create_function('regexp', 2, lambda p, v: v is not None and re.search(p, v) is not None)
-    conn.execute(f"CREATE TABLE A1 ({', '.join(COLUMNS)})")
+    conn.execute(f"CREATE TABLE A1 ({', '.join(COLUMNS)}, `instance` DEFAULT '[0]')")
     value_type = conn.execute(f'SELECT {_base_value_type()} FROM (SELECT ? AS propertyNodetype, ? AS nodeType, '
                               '? AS valueType)', (kind, node_type, value_type)).fetchone()[0]
-    conn.execute(f"INSERT INTO A1 VALUES ({', '.join('?' * len(COLUMNS))})",
+    conn.execute(f"INSERT INTO A1 ({', '.join(COLUMNS)}) VALUES ({', '.join('?' * len(COLUMNS))})",
                  ('urn:x:1', 1, 'warning', '', '', 'p', text, value_type, datatype, kind, 0,
                   deleted, False, attr_typ, node_type, attribute_type))
-    return conn.execute(_check_sql()).fetchall()
+    # Without the CURRENT_TIMESTAMP column: two calls compared whole would
+    # differ whenever a second boundary falls between them.
+    return [row[:6] + row[7:] for row in conn.execute(_check_sql()).fetchall()]
 
 
 def _fires(text, value_type, datatype, **row):
@@ -229,12 +231,17 @@ def test_a_declared_boolean_may_be_one_or_zero():
     assert _fires('2', boolean, boolean, kind=kind)
 
 
-def test_a_row_with_a_node_kind_keeps_its_verdict_on_lists_and_declared_types():
-    """It may be a member of a connective; what it misses or adds is not changed here."""
-    assert _fires('80.5', DECIMAL, f'{DECIMAL},{INTEGER}')
-    assert _fires('hallo', LANG, f'{LANG},{STRING}')
-    assert _fires('1', XSD + 'boolean', XSD + 'boolean')
-    assert not _fires('2020', XSD + 'gYear', XSD + 'gYearMonth')
+def test_a_row_with_a_node_kind_judges_lists_and_declared_types_as_one_without():
+    """A connective over the values is judged per instance (#1106), so a row with sh:nodeKind
+    gets the verdict of a datatype-only row: a listed datatype declared, a language-tagged
+    string the bridge passes on untyped, a declared boolean written 1, a datatype compared
+    whole."""
+    for kind in ('@value', NO_KIND):
+        assert not _fires('80.5', DECIMAL, f'{DECIMAL},{INTEGER}', kind=kind)
+        assert not _fires('hallo', None, f'{LANG},{STRING}', kind=kind)
+        assert not _fires('1', XSD + 'boolean', XSD + 'boolean', kind=kind)
+        assert _fires('2020', XSD + 'gYear', XSD + 'gYearMonth', kind=kind)
+        assert _fires('2020-05', XSD + 'gYearMonth', XSD + 'gYear', kind=kind)
 
 
 def test_the_node_kind_check_reads_a_blank_node_as_before():
