@@ -37,6 +37,6 @@ describe('activation', () => {
     const registered = new Set(await vscode.commands.getCommands(true));
     const missing = manifest.contributes.commands.map((c) => c.command)
       .filter((command) => !registered.has(command));
-    assert.deepStrictEqual(missing, []);
+    assert.deepStrictEqual(missing, ["deliberately broken: proof that semforge-e2e fails"]);
   });
 });
