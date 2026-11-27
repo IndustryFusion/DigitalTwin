@@ -53,7 +53,10 @@ async function main() {
     fs.cpSync(path.join(sdk, 'tests', 'corpus', part), path.join(root, part), {
       recursive: true,
       dereference: true,
-      filter: (source) => !source.split(path.sep).includes('.semforge')
+      // Without .semforge-no-history: the corpus is the checkout's, but its
+      // copy here is a package of its own, with the history Undo works on.
+      filter: (source) => !source.split(path.sep).includes('.semforge') &&
+        path.basename(source) !== '.semforge-no-history'
     });
   }
   const ngsild = path.join(root, 'ontology', 'ngsild.ttl');

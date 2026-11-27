@@ -35,6 +35,35 @@ from .. import __version__
 server = LanguageServer('semforge', __version__)
 
 
+def _outside_changes_first(feature):
+    """Every `semforge/…` request commits what changed outside SemForge
+    before it reads or writes (package/history.py, session.before_request):
+    a write that never reads the package first (a version raised, a
+    descriptor value set) must not take a hand edit into its own commit.
+    The handler as written is what the module keeps, so it is called
+    directly without this."""
+    import functools
+
+    def registering(name, *args, **kwargs):
+        register = feature(name, *args, **kwargs)
+        if not str(name).startswith('semforge/'):
+            return register
+
+        def decorate(handler):
+            @functools.wraps(handler)
+            def handled(ls, params):
+                from .session import before_request
+                before_request(params)
+                return handler(ls, params)
+            register(handled)
+            return handler
+        return decorate
+    return registering
+
+
+server.feature = _outside_changes_first(server.feature)
+
+
 def uri_to_path(uri):
     from urllib.parse import unquote, urlparse
     return unquote(urlparse(uri).path)

@@ -72,8 +72,10 @@ def rescan_feature(ls, params):
     root = package_root(uri_to_path(field(params, 'uri', '')))
     if root is None:
         return {'ok': False, 'error': 'not a SemForge package'}
+    from ..package.history import OUTSIDE
+
     clear(root)
-    session.forget(root)
+    session.forget(root, title=OUTSIDE)            # it writes nothing itself
     validation.publish(ls, path_to_uri(root))
     return {'ok': True, 'root': root}
 
@@ -320,6 +322,66 @@ def add_attribute_feature(ls, params):
         return {'ok': True, 'file': path, 'kind': kind}
     except Exception as exc:                       # noqa: BLE001
         return {'ok': False, 'error': str(exc)}
+
+
+@server.feature('semforge/history')
+def history_feature(ls, params):
+    """What Undo and Redo would do now, and the last steps (package/history.py)."""
+    from ..package import history
+
+    root = package_root(uri_to_path(field(params, 'uri', '')))
+    if root is None:
+        return {'ok': False, 'error': 'not a SemForge package'}
+    try:
+        # Outside changes committed first -- without loading the package: one
+        # that does not load any more is exactly one to go back from.
+        history.ensure(root)
+        return dict(history.state(root), root=root, ok=True)
+    except Exception as exc:                       # noqa: BLE001
+        return {'ok': False, 'error': str(exc)}
+
+
+def _step(ls, params, how):
+    from ..package import history
+
+    root = package_root(uri_to_path(field(params, 'uri', '')))
+    if root is None:
+        return {'ok': False, 'error': 'not a SemForge package'}
+    try:
+        done = how(history, root)
+    except history.Refused as exc:
+        return {'ok': False, 'error': str(exc), 'refused': True}
+    except Exception as exc:                       # noqa: BLE001
+        return {'ok': False, 'error': str(exc)}
+    # The files changed on disk: read again, validated again, like any write.
+    # The step is done whatever that finds: a state that does not load is
+    # said by the package's diagnostics, not by failing the step.
+    try:
+        session.forget(root, renames=True)
+        for path in session.package_for(root).files('shapes'):
+            validation.publish(ls, path_to_uri(path))
+    except Exception as exc:                       # noqa: BLE001
+        done = dict(done, reload=str(exc) or type(exc).__name__)
+    return dict(done, ok=True)
+
+
+@server.feature('semforge/undo')
+def undo_feature(ls, params):
+    """Step the package back one change."""
+    return _step(ls, params, lambda history, root: history.undo(root))
+
+
+@server.feature('semforge/redo')
+def redo_feature(ls, params):
+    """Step forward onto what the last undo took back."""
+    return _step(ls, params, lambda history, root: history.redo(root))
+
+
+@server.feature('semforge/backTo')
+def back_to_feature(ls, params):
+    """Back to the package as it was right after one step of its history."""
+    return _step(ls, params, lambda history, root: history.back_to(
+        root, str(field(params, 'sha', '') or '')))
 
 
 @server.feature('semforge/copyEntities')

@@ -654,6 +654,24 @@
         "category": "SemForge"
       },
       {
+        "command": "semforge.undo",
+        "title": "Undo last change",
+        "icon": "$(discard)",
+        "category": "SemForge"
+      },
+      {
+        "command": "semforge.redo",
+        "title": "Redo",
+        "icon": "$(redo)",
+        "category": "SemForge"
+      },
+      {
+        "command": "semforge.history",
+        "title": "History…",
+        "icon": "$(history)",
+        "category": "SemForge"
+      },
+      {
         "command": "semforge.copyEntity",
         "title": "Copy entity",
         "icon": "$(copy)",
@@ -763,6 +781,21 @@
           "command": "semforge.newTestCase",
           "when": "view == semforgeModel",
           "group": "navigation@1"
+        },
+        {
+          "command": "semforge.undo",
+          "when": "view == semforgeModel && semforge.canUndo",
+          "group": "navigation@2"
+        },
+        {
+          "command": "semforge.redo",
+          "when": "view == semforgeModel && semforge.canRedo",
+          "group": "navigation@3"
+        },
+        {
+          "command": "semforge.history",
+          "when": "view == semforgeModel",
+          "group": "9_refresh@2"
         },
         {
           "command": "semforge.refreshKnowledge",
@@ -1716,6 +1749,24 @@
       }
     ],
     "keybindings": [
+      {
+        "command": "semforge.undo",
+        "key": "ctrl+z",
+        "mac": "cmd+z",
+        "when": "focusedView =~ /^semforge/ && !inputFocus"
+      },
+      {
+        "command": "semforge.redo",
+        "key": "ctrl+shift+z",
+        "mac": "cmd+shift+z",
+        "when": "focusedView =~ /^semforge/ && !inputFocus"
+      },
+      {
+        "command": "semforge.redo",
+        "key": "ctrl+y",
+        "mac": "cmd+y",
+        "when": "focusedView =~ /^semforge/ && !inputFocus"
+      },
       {
         "command": "semforge.sparqlApply",
         "key": "ctrl+enter",

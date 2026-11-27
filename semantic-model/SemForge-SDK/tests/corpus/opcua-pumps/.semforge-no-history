@@ -1,0 +1,4 @@
+# SemForge keeps no history of its own for this package: the DigitalTwin
+# checkout around it has one. A dot-file is no package member, so it is not
+# exported: a package extracted from here gets its own history again
+# (SemForge-SDK/semforge/package/history.py).

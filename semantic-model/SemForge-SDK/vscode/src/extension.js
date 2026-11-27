@@ -54,6 +54,7 @@ const shapePages = require('./shapepage');
 const rename = require('./rename');
 const shapeDelete = require('./shapedelete');
 const caseDelete = require('./casedelete');
+const undoHistory = require('./undo');
 const severity = require('./severity');
 const units = require('./units');
 const timestamps = require('./timestamps');
@@ -374,6 +375,7 @@ function activate(context) {
   // One page per test case: its claims, whether they hold, its data.
   const caseViews = casePages.register(context, clientHolder, session);
   caseDelete.register(context, clientHolder, session, { case: caseViews });
+  const undo = undoHistory.register(context, clientHolder, session);
   severity.register(context, clientHolder, session);
   units.register(context, clientHolder, session);
   timestamps.register(context, clientHolder);
@@ -509,6 +511,7 @@ function activate(context) {
     session,
     trees: { project, constraints, shapes, model, knowledge },
     details,
+    undo,
     pages: { type: typeViews, case: caseViews, sparql: sparqlBench, shape: shapeViews,
       vocabulary: vocabularyViews, health: healthView, package: packageView,
       // The attribute editor beside a page, while it is open.

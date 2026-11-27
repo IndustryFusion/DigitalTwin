@@ -691,6 +691,10 @@ def publish(root, output=None, today=None, compress=True, allow_network=False):
         'threshold': run.threshold,
     })
     _write_record(root, releases)
+    # The version, findable again: its files and record committed, tagged
+    # v<version> in the package's own repository (package/history.py).
+    from . import history
+    history.tag(root, report.version)
     return Published(path=packed.path, name=report.name, version=report.version,
                      digest=packed.digest, run=run)
 

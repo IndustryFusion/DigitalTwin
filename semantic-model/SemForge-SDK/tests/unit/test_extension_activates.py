@@ -46,6 +46,7 @@ EXPECTED = {
     'semforge.revealInGraph', 'semforge.revealRowInGraph',
     'semforge.restart', 'semforge.revalidate', 'semforge.doctor',
     'semforge.search', 'semforge.clearSearch', 'semforge.openHere',
+    'semforge.undo', 'semforge.redo', 'semforge.history',
     'semforge.setValueType', 'semforge.bookmarks', 'semforge.pin', 'semforge.pinPage', 'semforge.unpinPage',
     'semforge.editConstraint', 'semforge.removeConstraint',
     'semforge.refreshTree', 'semforge.goToDefinition', 'semforge.overrideHere',

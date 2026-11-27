@@ -61,6 +61,72 @@ def slim(key, payload, params):
 
 
 _load_lock = threading.Lock()
+_opened = set()            # roots whose history was checked in this process
+_recorded = {}             # root -> fingerprint of the files at their last commit
+
+
+def _record(root, title):
+    from ..package import history
+
+    done = history.ensure(root, title or history.OUTSIDE)
+    if done.get('error'):
+        import logging
+        logging.getLogger(__name__).warning('history of %s: %s', root, done['error'])
+    return done
+
+
+def _requests_thread():
+    """Requests are handled one after another on the server's main thread;
+    an edit's writes and its forget() happen there too. Only that thread
+    commits outside changes: the warm-up and the verdict worker, looking in
+    the middle of an edit, would commit half of it as an outside change."""
+    return threading.current_thread() is threading.main_thread()
+
+
+def _history_stamp(root):
+    """The files as the history sees them: the package's fingerprint, and
+    its dot-files and dot-folders (`.kms/releases.yaml`, `.gitignore`), which
+    the fingerprint leaves out but `git add -A` takes in."""
+    from .cache import fingerprint
+
+    extra = []
+    try:
+        names = sorted(os.listdir(root))
+    except OSError:
+        names = []
+    for name in names:
+        if not name.startswith('.') or name in ('.git', '.semforge'):
+            continue
+        top = os.path.join(root, name)
+        paths = [top] if not os.path.isdir(top) else [
+            os.path.join(here, f) for here, _, files in os.walk(top) for f in sorted(files)]
+        extra += [_stamp(path) for path in paths]
+    return (fingerprint(root), tuple(extra))
+
+
+def _record_outside(root):
+    """Outside changes committed when the files are not what they were at
+    the last commit (also right after one of SemForge's writes)."""
+    stamp = _history_stamp(root)
+    if root in _opened and _recorded.get(root) == stamp:
+        return
+    _opened.add(root)
+    _record(root, None)
+    _recorded[root] = _history_stamp(root)
+
+
+def before_request(params):
+    """Before a request reads or writes a package: what changed outside
+    SemForge is committed first (protocol.py registers this)."""
+    try:
+        uri = field(params, 'uri', '') or ''
+        root = package_root(uri_to_path(uri)) if uri else None
+        if root is not None and _requests_thread():
+            with _load_lock:
+                _record_outside(root)
+    except Exception:                              # noqa: BLE001 -- never fails a request
+        import logging
+        logging.getLogger(__name__).warning('history before a request failed', exc_info=True)
 
 
 def package_for(root):
@@ -77,6 +143,12 @@ def package_for(root):
 
     with _load_lock:
         stamp = fingerprint(root)
+        # Opened for the first time, or changed by someone else while loaded:
+        # whatever is on disk is committed before SemForge reads it
+        # (package/history.py). SemForge's own writes go through forget().
+        if _requests_thread():
+            _record_outside(root)
+            stamp = fingerprint(root)
         if _stamps.get(root) != stamp or root not in _packages:
             _packages[root] = load(root, reuse=_reusable(root))
             _stamps[root] = stamp
@@ -269,11 +341,14 @@ def _watch_renames(root, package):
                 _pending_renames[root].append(pair)
 
 
-def forget(root, renames=False):
+def forget(root, renames=False, title='SemForge edit'):
     """The package's files changed: read it again on the next request. With
     `renames`, also what its shapes were -- a write that moves shapes is not
-    a rename typed into the file."""
+    a rename typed into the file. `title`: what the commit of the change says
+    (package/history.py); a caller that wrote nothing says so."""
     _packages.pop(root, None)
+    _record(root, title)
+    _recorded[root] = _history_stamp(root)
     if renames:
         _shape_prints.pop(root, None)
         _pending_renames.pop(root, None)
