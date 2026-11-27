@@ -33,7 +33,7 @@ from semforge.cooked.shapepage import build_shape_page
 from semforge.errors import PackageError
 from semforge.expect.newcase import new_case
 from semforge.expect.runner import run_tests
-from semforge.expect.store import compose, load_expectations
+from semforge.expect.store import add_assert, compose, load_expectations
 from semforge.package import load
 from semforge.sanity import known_constraints
 from semforge.validate.orchestrator import validate_graphs
@@ -102,7 +102,7 @@ def _outcome(root, case):
 
 
 def test_new_case_starts_from_a_valid_scene_and_fails_until_edited(kms):
-    made = new_case(load(kms), ON_FILTER, 'Filter on, cutter idle')
+    made = new_case(load(kms), ON_FILTER, 'Filter on, cutter idle', scene='copy')
     assert made['case'] == 'test_StateOnFilterShape/bad/filter-on-cutter-idle.jsonld'
     assert made['source'].split('/')[1] == 'good', 'a valid scene, not another bad case'
     assert made['resource'] == 'urn:filter:1'
@@ -129,6 +129,44 @@ def test_new_case_starts_from_a_valid_scene_and_fails_until_edited(kms):
     with open(made['file'], 'w') as handle:
         json.dump(scene, handle)
     assert _outcome(kms, made['case']).passed
+
+
+def test_new_case_starts_empty_and_fails_until_its_scene_is_pasted(kms):
+    """The default: no entities chosen for the author -- they are pasted from Main."""
+    made = new_case(load(kms), ON_FILTER, 'pasted')
+    with open(made['file']) as handle:
+        assert json.load(handle) == []
+    assert made['resource'] == '' and made['source'] == 'an empty file'
+    entry = next(e for e in load_expectations(kms).examples if e.path == made['case'])
+    assert entry.expect == 'invalid' and 'Starts empty' in entry.description
+    assert entry.asserts == []
+    assert not _outcome(kms, made['case']).passed, 'nothing in it, nothing fires'
+
+    # Pasted from a scene, broken, then asserted as the case page does: it passes.
+    copied = new_case(load(kms), ON_FILTER, 'scene', scene='copy')
+    with open(copied['file']) as handle:
+        scene = json.load(handle)
+    for document in scene:
+        if document['id'] == 'urn:plasmacutter:1':
+            document['iffBaseEntities:hasState']['value'] = {'@id': 'base:state_OFF'}
+    with open(made['file'], 'w') as handle:
+        json.dump(scene, handle)
+    assert not _outcome(kms, made['case']).passed, 'fires, but says not yet why'
+    add_assert(load(kms), made['case'], f'{ON_FILTER}/SPARQLConstraintComponent',
+               'urn:filter:1')
+    assert _outcome(kms, made['case']).passed
+
+
+def test_an_empty_valid_case_has_no_asserts(kms):
+    made = new_case(load(kms), ON_FILTER, 'quiet', 'valid')
+    entry = next(e for e in load_expectations(kms).examples if e.path == made['case'])
+    assert entry.expect == 'valid' and not entry.asserts and made['scene'] == 'empty'
+    assert made['case'] == 'test_StateOnFilterShape/good/quiet.jsonld'
+
+
+def test_a_scene_is_empty_or_copied(kms):
+    with pytest.raises(PackageError, match='empty or copy'):
+        new_case(load(kms), ON_FILTER, 'x', scene='whole')
 
 
 def test_new_case_keeps_the_other_cases_and_the_comments(kms):
@@ -173,7 +211,7 @@ ON_CUTTER = 'iffBaseShacl:StateOnCutterShape'
 
 
 def test_a_query_gets_a_test_it_is_silent_on(kms):
-    made = new_case(load(kms), ON_FILTER, 'silent', 'valid', BASE + 'Filter')
+    made = new_case(load(kms), ON_FILTER, 'silent', 'valid', BASE + 'Filter', scene='copy')
     assert made['case'] == 'test_StateOnFilterShape/good/silent.jsonld' and made['passes']
     entry = next(e for e in load_expectations(kms).examples if e.path == made['case'])
     assert entry.expect == 'valid' and not entry.asserts
@@ -181,6 +219,40 @@ def test_a_query_gets_a_test_it_is_silent_on(kms):
     case = next(c for c in build_shape_page(load(kms), ON_FILTER)['exercisedBy']
                 if c['case'] == made['case'])
     assert case['firedOn'] == [] and case['held'] is not False
+
+
+def test_an_empty_test_that_should_conform_is_silent_once_pasted(kms):
+    """"Silent": what the query holds on, pasted from Main, makes it pass and be listed."""
+    from semforge.cooked.examples import copy_entities, paste_entities
+
+    made = new_case(load(kms), ON_FILTER, 'pasted', 'valid', BASE + 'Filter')
+    assert made['scene'] == 'empty'
+    # A whole scene the package holds on: the one a scene-started test copies.
+    scene = new_case(load(kms), ON_FILTER, 'scene', 'valid', BASE + 'Filter', scene='copy')
+    assert scene['passes']
+    with open(scene['file']) as handle:
+        ids = [d['id'] for d in json.load(handle)]
+    content = None
+    for entity in ids:
+        taken = copy_entities(load(kms), entity, file=scene['file'])['content']
+        content = taken if content is None else dict(content, entities=content['entities'] + taken['entities'])
+    assert paste_entities(load(kms), content, made['case'])['pasted']
+    assert _outcome(kms, made['case']).passed
+    case = next(c for c in build_shape_page(load(kms), ON_FILTER)['exercisedBy']
+                if c['case'] == made['case'])
+    assert case['firedOn'] == [] and case['held'] is not False
+
+
+def test_the_request_takes_and_answers_the_scene(kms, monkeypatch):
+    from semforge.editor import edits
+
+    uri = {'uri': f'file://{kms}/shacl.ttl', 'shape': ON_FILTER}
+    empty = edits.new_case_feature(None, dict(uri, name='by-default'))
+    assert empty['ok'] and empty['scene'] == 'empty' and empty['resource'] == ''
+    copied = edits.new_case_feature(None, dict(uri, name='from-a-scene', scene='copy'))
+    assert copied['ok'] and copied['scene'] == 'copy' and copied['resource']
+    refused = edits.new_case_feature(None, dict(uri, name='odd', scene='whole'))
+    assert not refused['ok'] and 'empty or copy' in refused['error']
 
 
 def test_a_failing_one_says_that_it_fails_still(kms):
@@ -192,7 +264,8 @@ def test_the_scene_has_an_entity_of_the_type_asked_for(kms):
     """The query reaches Cutters and Plasmacutters; asked on one's page, the
     test is about that one -- a new one, when the package has none."""
     for label in ('Plasmacutter', 'Lasercutter'):
-        made = new_case(load(kms), ON_CUTTER, label, 'invalid', BASE + label)
+        made = new_case(load(kms), ON_CUTTER, label, 'invalid', BASE + label,
+                        scene='copy')
         with open(made['file']) as handle:
             scene = json.load(handle)
         entity = next(d for d in scene if d['id'] == made['resource'])
@@ -205,7 +278,7 @@ def test_a_test_is_valid_or_invalid(kms):
 
 
 def test_a_failing_one_passes_once_its_data_makes_the_query_fire(kms):
-    made = new_case(load(kms), ON_FILTER, 'fires', 'invalid', BASE + 'Filter')
+    made = new_case(load(kms), ON_FILTER, 'fires', 'invalid', BASE + 'Filter', scene='copy')
     assert made['resource'] == 'urn:filter:1' and made['source'].split('/')[1] == 'good'
     entry = next(e for e in load_expectations(kms).examples if e.path == made['case'])
     assert entry.asserts == [{'constraint': f'{ON_FILTER}/SPARQLConstraintComponent',
@@ -228,12 +301,12 @@ def _without_cases(kms):
 def test_from_the_model_what_its_entity_points_at_comes_along(kms):
     _without_cases(kms)
     # New case… of the shape page takes the entity alone, as before.
-    alone = new_case(load(kms), ON_FILTER, 'alone')
+    alone = new_case(load(kms), ON_FILTER, 'alone', scene='copy')
     assert alone['source'] == 'the model'
     with open(alone['file']) as handle:
         assert len(json.load(handle)) == 1
     _without_cases(kms)
-    made = new_case(load(kms), ON_FILTER, 'from-model', 'valid', BASE + 'Filter')
+    made = new_case(load(kms), ON_FILTER, 'from-model', 'valid', BASE + 'Filter', scene='copy')
     assert made['source'] == 'the model'
     with open(made['file']) as handle:
         ids = [d['id'] for d in json.load(handle)]
@@ -249,7 +322,7 @@ def test_a_relative_context_still_names_the_same_file(kms):
         document['@context'] = 'context.jsonld'
     with open(model, 'w') as handle:
         json.dump(documents, handle)
-    made = new_case(load(kms), ON_FILTER, 'local', 'valid', BASE + 'Filter')
+    made = new_case(load(kms), ON_FILTER, 'local', 'valid', BASE + 'Filter', scene='copy')
     with open(made['file']) as handle:
         assert {d['@context'] for d in json.load(handle)} == {'../../../context.jsonld'}
     # It loads: the query is evaluated on its filter, read through that context.
@@ -278,7 +351,7 @@ def _tree(kms):
 def test_a_new_entity_the_query_does_not_see_is_refused(kms):
     before = _tree(kms)
     with pytest.raises(PackageError, match='not evaluated on a new entity'):
-        new_case(load(kms), ON_FILTER, 'unseen', 'invalid', BASE + 'Workpiece')
+        new_case(load(kms), ON_FILTER, 'unseen', 'invalid', BASE + 'Workpiece', scene='copy')
     assert _tree(kms) == before
 
 
@@ -322,9 +395,9 @@ def test_should_conform_prefers_an_entity_the_query_holds_on(kms):
             document['iffBaseEntities:hasState'][0]['value'] = {'@id': 'base:state_OFF'}
     _model_edit(kms, filter_off)
     # Asked to fail, the first is as good a start as any.
-    made = new_case(load(kms), ON_CUTTER, 'fires', 'invalid', BASE + 'Cutter')
+    made = new_case(load(kms), ON_CUTTER, 'fires', 'invalid', BASE + 'Cutter', scene='copy')
     assert made['resource'] == 'urn:plasmacutter:1'
-    made = new_case(load(kms), ON_CUTTER, 'silent', 'valid', BASE + 'Cutter')
+    made = new_case(load(kms), ON_CUTTER, 'silent', 'valid', BASE + 'Cutter', scene='copy')
     assert made['resource'] == 'urn:plasmacutter:2' and made['source'] == 'the model', made
     case = next(c for c in build_shape_page(load(kms), ON_CUTTER)['exercisedBy']
                 if c['case'] == made['case'])
@@ -351,7 +424,7 @@ def test_an_entity_from_the_model_the_query_does_not_reach_alone_is_refused(kms)
         handle.write(REACHED_THROUGH_A_CUTTER)
     for purpose in ('valid', 'invalid'):
         with pytest.raises(PackageError, match='not evaluated on urn:filter:1 without the rest'):
-            new_case(load(kms), FILTERED, 'unreached', purpose, BASE + 'Filter')
+            new_case(load(kms), FILTERED, 'unreached', purpose, BASE + 'Filter', scene='copy')
         assert _tree(kms) == set(), 'no file and no folder'
 
 
@@ -365,7 +438,7 @@ def test_a_new_entity_takes_its_context_from_the_file_it_was_read_from(kms):
     elsewhere = os.path.join(kms, 'more', 'model.ttl')
     files = package.files
     package.files = lambda role: ([elsewhere] if role == 'model' else []) + files(role)
-    made = new_case(package, ON_CUTTER, 'new', 'invalid', BASE + 'Lasercutter')
+    made = new_case(package, ON_CUTTER, 'new', 'invalid', BASE + 'Lasercutter', scene='copy')
     with open(made['file']) as handle:
         assert {d['@context'] for d in json.load(handle)} == {'../../../context.jsonld'}
 
@@ -405,7 +478,7 @@ def test_should_conform_counts_only_the_query(kms):
     with open(os.path.join(kms, 'shacl.ttl'), 'a') as handle:
         handle.write('\niffBaseShacl:StateOnCutterShape sh:property '
                      '[ sh:path iffBaseEntities:hasJSON ; sh:maxCount 0 ] .\n')
-    made = new_case(load(kms), ON_CUTTER, 'silent', 'valid', BASE + 'Cutter')
+    made = new_case(load(kms), ON_CUTTER, 'silent', 'valid', BASE + 'Cutter', scene='copy')
     assert made['resource'] == 'urn:plasmacutter:2', made
 
 
@@ -421,7 +494,7 @@ def test_should_conform_prefers_what_breaks_nothing_of_the_shape(kms):
     with open(os.path.join(kms, 'shacl.ttl'), 'a') as handle:
         handle.write('\niffBaseShacl:StateOnCutterShape sh:property '
                      '[ sh:path iffBaseEntities:hasJSON ; sh:maxCount 0 ] .\n')
-    made = new_case(load(kms), ON_CUTTER, 'silent', 'valid', BASE + 'Cutter')
+    made = new_case(load(kms), ON_CUTTER, 'silent', 'valid', BASE + 'Cutter', scene='copy')
     assert made['resource'] == 'urn:plasmacutter:2', made
     case = next(c for c in build_shape_page(load(kms), ON_CUTTER)['exercisedBy']
                 if c['case'] == made['case'])
@@ -460,7 +533,7 @@ def test_a_null_context_is_passed_over_as_the_new_entity_does(tmp_path):
 def test_a_refused_test_takes_back_the_examples_folder_it_made(kms):
     shutil.rmtree(os.path.join(kms, 'examples'))
     with pytest.raises(PackageError, match='not evaluated on a new entity'):
-        new_case(load(kms), ON_FILTER, 'unseen', 'invalid', BASE + 'Workpiece')
+        new_case(load(kms), ON_FILTER, 'unseen', 'invalid', BASE + 'Workpiece', scene='copy')
     assert not os.path.exists(os.path.join(kms, 'examples'))
 
 
@@ -491,7 +564,7 @@ def test_a_shape_page_still_writes_no_new_entity(kms):
     with open(os.path.join(kms, 'model-instance.jsonld'), 'w') as handle:
         json.dump([], handle)
     with pytest.raises(PackageError, match='no scene'):
-        new_case(load(kms), ON_FILTER, 'none')
+        new_case(load(kms), ON_FILTER, 'none', scene='copy')
 
 
 def test_the_server_takes_the_kind_and_the_type(kms, monkeypatch):
@@ -537,6 +610,18 @@ def test_the_menu_of_a_query_writes_a_test(tmp_path):
                       'purpose': 'invalid', 'entityType': BASE + 'Filter'}]
     assert seen['inputs'][0]['value'] == 'fires-2', 'the first free name'
     assert any('fails until its data makes S fire on urn:f' in w for w in seen['warnings'])
+
+
+def test_an_empty_test_says_to_paste_its_entities(tmp_path):
+    """The message follows the answer's `scene`: an empty test says what to paste."""
+    base = {'semforge/typePage': RULE_PAGE, 'semforge/testCaseOptions': {'ok': True, 'undeclared': [], 'cases': []}}
+    for purpose, said in (('$(pass) Should conform', 'must stay silent on them'),
+                          ('$(error) Should fail', 'until then it fails')):
+        made = {'ok': True, 'file': '/pkg/x.jsonld', 'case': 'x', 'scene': 'empty', 'resource': '',
+                'source': 'an empty file', 'passes': purpose.endswith('conform')}
+        seen = _menu(tmp_path, 0, picks=['$(beaker) New test…', purpose], inputs=['s'],
+                     replies=dict(base, **{'semforge/newCase': made}))
+        assert any('starts empty' in i and said in i for i in seen['info']), (purpose, seen['info'])
 
 
 def test_a_rule_derives_and_gets_no_test(tmp_path):

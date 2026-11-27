@@ -19,13 +19,19 @@
 A rule no case makes fire looks exactly like a rule that holds. The shape page
 says so ("never fired") and offers New case…; this writes it.
 
-What it writes is a STARTING POINT, not a finished case, and says so. A scene
-is copied from a case that already reaches the shape -- its includes written
-into the one new file -- or, when none does, from the model's document for an entity the
-shape reaches. The case is declared `expect: invalid` with an assert that the
-shape fires on that entity. Copied from a scene where the shape holds, it does
-not fire yet, so `semforge test` fails the new case until its data is edited
-to break the rule. That failure is the point: the case cannot pass by accident.
+What it writes is a STARTING POINT, not a finished case, and says so. By
+default the file is EMPTY: the entities a case needs are pasted in from the
+main model (Copy entity / Copy subtree, then Paste), which picks exactly the
+scene the author has in mind -- a scene chosen for them had to be cut down
+first. The case is declared `expect: invalid` without asserts: it fails as unfinished
+until its data breaks the rule and "Assert it" on its case page names the
+firing it is about. That failure is the point: the case cannot pass by
+accident.
+
+With `scene='copy'` a scene is copied instead, from a case that already
+reaches the shape -- its includes written into the one new file -- or, when
+none does, from the model's document for an entity the shape reaches, and
+declared with an assert that the shape fires on that entity.
 """
 
 import json
@@ -140,20 +146,23 @@ def _silent_first(package, shape, nodes):
     return sorted(nodes, key=lambda n: (n in fired, n in broken, n))
 
 
-def new_case(package, shape, name, purpose='invalid', entity_type=''):
+def new_case(package, shape, name, purpose='invalid', entity_type='', scene='empty'):
     """Write examples/test_<Shape>/bad/<name>.jsonld and declare it -- or, for
     the purpose 'valid', good/<name>.jsonld: the query runs on it and is silent.
 
+    `scene`: 'empty' (the default) writes no document and declares the case
+    without an assert; 'copy' starts it from a scene, as below.
+
     `entity_type` (its IRI): the type the test is about, when it is asked for
-    on a type's page. The scene then has an entity of it; one the package has
+    on a type's page. A scene then has an entity of it; one the package has
     none of is written fresh, its required attributes given valid values.
 
     Returns {'file', 'case', 'expectations', 'source', 'resource', 'constraint',
-    'expect'}, and for a test asked for on a type's page, which is run once,
-    also {'passes', 'failures', 'violations'}.
+    'expect', 'scene'}, and for a test asked for on a type's page, which is run
+    once, also {'passes', 'failures', 'violations'}.
     Refused: a shape with no SPARQL constraint (an attribute's constraints
-    are asserted from the case page), a name already taken, and a shape
-    nothing reaches -- there is no scene to start from.
+    are asserted from the case page), a name already taken, another `scene`,
+    and -- starting from a scene -- a shape nothing reaches.
     """
     from .addcase import _moved_context
     from .attributecase import _targets
@@ -170,6 +179,8 @@ def new_case(package, shape, name, purpose='invalid', entity_type=''):
         raise PackageError(f'{shape_name} has no target, so it never runs on '
                            f'its own; start the case from the shape that uses it')
 
+    if scene not in ('empty', 'copy'):
+        raise PackageError(f'{scene} is no way to start a case: empty or copy')
     if purpose not in ('valid', 'invalid'):
         raise PackageError(f'{purpose} is no test to write: one is valid or invalid')
     good = purpose == 'valid'
@@ -189,8 +200,10 @@ def new_case(package, shape, name, purpose='invalid', entity_type=''):
     # lives in a shared subobject, and editing it there would change every
     # case that includes it.
     source, resource, document = '', '', None
-    examples = sorted(load_expectations(package.path).examples,
-                      key=lambda e: (e.expect != 'valid', e.path))
+    if scene == 'empty':
+        document, source = [], 'an empty file'
+    examples = [] if scene == 'empty' else sorted(
+        load_expectations(package.path).examples, key=lambda e: (e.expect != 'valid', e.path))
     for example in examples:
         if good and example.expect != 'valid':
             continue                   # what it violates would come along
@@ -255,13 +268,13 @@ def new_case(package, shape, name, purpose='invalid', entity_type=''):
         finally:
             if os.path.exists(partial):
                 os.remove(partial)
-        _declare(expectations, slug, local, source, resource, constraint, purpose)
+        _declare(expectations, slug, local, source, resource, constraint, purpose, scene)
         case = os.path.relpath(target, root)
         made = {'file': target, 'case': case, 'expectations': expectations,
                 'source': source, 'resource': resource, 'constraint': constraint,
-                'expect': purpose}
+                'expect': purpose, 'scene': scene}
         if family is None:
-            return made                # New case… of a shape page, as before
+            return made                # New case… of a shape page: not run here
         if fresh or source == 'the model':
             _reached(package, shape, shape_name, case, resource, fresh)
         from .addcase import _outcome
@@ -303,7 +316,7 @@ def _reached(package, shape, shape_name, case, resource, fresh):
                        f'either: write a case it runs on by hand')
 
 
-def _declare(expectations, slug, local, source, resource, constraint, purpose):
+def _declare(expectations, slug, local, source, resource, constraint, purpose, scene):
     from ruamel.yaml.comments import CommentedMap, CommentedSeq
 
     good = purpose == 'valid'
@@ -320,12 +333,22 @@ def _declare(expectations, slug, local, source, resource, constraint, purpose):
         raw['examples'] = CommentedSeq()
     entry = CommentedMap()
     entry['path'] = f'{slug}.jsonld'
-    entry['description'] = (
-        f'{local} runs on {resource} and does not fire. Started from {source}.' if good else
-        f'Makes {local} fire. Started from {source}, where it holds: edit the '
-        f'data until it fires on {resource}. Until then this case fails.')
+    if scene == 'empty':
+        entry['description'] = (
+            f'{local} runs on what is pasted here and does not fire. Starts empty: paste '
+            f'the entities it needs from Main.' if good else
+            f'Makes {local} fire. Starts empty: paste the entities it needs from Main, '
+            f'then edit them until it fires. Until then this case fails.')
+    else:
+        entry['description'] = (
+            f'{local} runs on {resource} and does not fire. Started from {source}.' if good
+            else f'Makes {local} fire. Started from {source}, where it holds: edit the '
+            f'data until it fires on {resource}. Until then this case fails.')
     entry['expect'] = purpose
-    if not good:
+    if not good and resource:
+        # Empty, there is no entity to name yet: declared without asserts, it
+        # fails as unfinished until "Assert it" on its case page names the
+        # firing it is about -- as New test case… declares a bad case.
         item = CommentedMap()
         item['constraint'] = constraint
         item['resource'] = resource

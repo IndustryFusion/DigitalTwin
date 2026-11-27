@@ -55,9 +55,15 @@ function attributeRows(attributes) {
   return typeRows(attributes, -1, { shapeColumn: false });
 }
 
-const NEW_CASE_TIP = 'Writes a bad case asserting this shape fires, copied from a ' +
-  'scene where it holds. It fails until you edit its data so the rule is broken: ' +
-  'it cannot pass by accident.';
+const NEW_CASE_TIP = 'A new test of this shape: one it should fire on, or one it should ' +
+  'be silent on. It starts empty -- paste the entities it needs from Main.';
+
+// As New test… on a type's page says it (attributetest.js).
+const PURPOSES = [
+  { label: '$(pass) Should conform', purpose: 'valid', stem: 'silent',
+    description: 'the shape runs on it and does not fire' },
+  { label: '$(error) Should fail', purpose: 'invalid', stem: 'fires',
+    description: 'the shape fires on it; it fails until its data makes it' }];
 
 /** sh:severity as a reader says it: base:severityCritical -> critical. */
 function severityText(severity) {
@@ -685,21 +691,30 @@ class ShapePages {
     return true;
   }
 
-  /** Write a bad case asserting this shape fires, then open it to edit. */
+  /** A case of this shape, good or bad as asked, written empty; then open it. */
   async newCase() {
     const page = this.page;
+    // Good or bad, asked first -- as everywhere else a test is made.
+    const picked = await vscode.window.showQuickPick(PURPOSES,
+      { title: `New case for ${page.label}: what should it show?`, matchOnDescription: true });
+    if (!picked) {
+      return;
+    }
+    const { packageUri } = this.current;
+    const options = await this.clientHolder.client.sendRequest('semforge/testCaseOptions',
+      { uri: packageUri });
     const name = await vscode.window.showInputBox({
-      title: `New case: make ${page.label} fire`,
+      title: `New case for ${page.label} · ${picked.label.replace(/^\$\([a-z]+\) /, '')}`,
       prompt: 'A name for the case file (letters, digits, dashes)',
-      value: 'fires',
+      value: require('./testcases').freeName(options || {},
+        `test_${String(page.label)}/${picked.purpose === 'valid' ? 'good' : 'bad'}`, picked.stem),
       validateInput: (text) => (/[A-Za-z0-9]/.test(text) ? undefined : 'a name is required')
     });
     if (!name) {
       return;
     }
-    const { packageUri } = this.current;
     const made = await this.clientHolder.client.sendRequest('semforge/newCase',
-      { uri: packageUri, shape: page.iri, name });
+      { uri: packageUri, shape: page.iri, name, purpose: picked.purpose });
     if (!made.ok) {
       vscode.window.showErrorMessage(`SemForge: ${made.error}`);
       return;
@@ -708,9 +723,15 @@ class ShapePages {
     vscode.commands.executeCommand('semforge.refreshModel');
     await vscode.commands.executeCommand('semforge.openCasePage',
       { raw: { kind: 'example', file: made.file }, packageUri });
-    const open = await vscode.window.showInformationMessage(
-      `SemForge: ${made.case} started from ${made.source}. It fails until its ` +
-        `data makes ${page.label} fire on ${made.resource}.`, 'Open .jsonld');
+    const open = await vscode.window.showInformationMessage(made.scene !== 'empty'
+      ? `SemForge: ${made.case} started from ${made.source}. It fails until its ` +
+        `data makes ${page.label} fire on ${made.resource}.`
+      : picked.purpose === 'valid'
+        ? `SemForge: ${made.case} starts empty. Paste the entities it needs from Main ` +
+          `(Copy entity / Copy subtree, then Paste); ${page.label} must stay silent on them.`
+        : `SemForge: ${made.case} starts empty. Paste the entities it needs from Main ` +
+          `(Copy entity / Copy subtree, then Paste), then edit them until ${page.label} ` +
+          'fires; until then it fails.', 'Open .jsonld');
     if (open) {
       await showLocation(`${made.file}:1`, true);
     }

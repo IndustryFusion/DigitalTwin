@@ -925,7 +925,8 @@ def new_case_feature(ls, params):
         made = new_case(session.package_for(root), str(field(params, 'shape', '') or ''),
                         str(field(params, 'name', '') or ''),
                         str(field(params, 'purpose', '') or 'invalid'),
-                        str(field(params, 'entityType', '') or ''))
+                        str(field(params, 'entityType', '') or ''),
+                        str(field(params, 'scene', '') or 'empty'))
     except Exception as exc:                       # noqa: BLE001
         return {'ok': False, 'error': str(exc)}
     return dict(made, ok=True)

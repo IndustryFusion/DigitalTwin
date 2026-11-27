@@ -545,16 +545,36 @@ def test_new_case_writes_the_case_and_opens_it(tmp_path):
         'command': 'semforge.openShapePage',
         'node': {'raw': dict(SHAPE_ROW, shape=RULE_PAGE['iri']),
                  'packageUri': 'file:///pkg/shacl.ttl'},
-        'inputs': ['idle'],
+        'picks': ['$(error) Should fail'], 'inputs': ['idle'],
         'webviewMessages': [{'command': 'newCase'}],
-        'replies': {'semforge/shapePage': RULE_PAGE, 'semforge/newCase': made}})
+        'replies': {'semforge/shapePage': RULE_PAGE, 'semforge/newCase': made,
+                    'semforge/testCaseOptions': {'ok': True, 'cases': [], 'undeclared': []}}})
     assert seen['errors'] == [], seen['errors']
     asked = [r['params'] for r in seen['requests'] if r['method'] == 'semforge/newCase']
     assert asked == [{'uri': 'file:///pkg/shacl.ttl', 'shape': RULE_PAGE['iri'],
-                      'name': 'idle'}]
+                      'name': 'idle', 'purpose': 'invalid'}]
     opened = _opened(seen, 'semforge.openCasePage')
     assert opened and opened[0][0]['raw']['file'] == made['file']
     assert any('fails until' in text for text in seen['info'])
+
+
+def test_new_case_asks_good_or_bad_first(tmp_path):
+    """As every other place a test is made: Should conform writes a good case."""
+    made = {'ok': True, 'file': '/pkg/examples/test_S/good/silent.jsonld',
+            'case': 'test_S/good/silent.jsonld', 'source': 'an empty file', 'resource': '', 'scene': 'empty',
+            'constraint': 'ex:StateOnFilterShape/SPARQLConstraintComponent'}
+    seen = _drive(tmp_path, {
+        'command': 'semforge.openShapePage',
+        'node': {'raw': dict(SHAPE_ROW, shape=RULE_PAGE['iri']),
+                 'packageUri': 'file:///pkg/shacl.ttl'},
+        'picks': ['$(pass) Should conform'], 'inputs': ['silent'],
+        'webviewMessages': [{'command': 'newCase'}],
+        'replies': {'semforge/shapePage': RULE_PAGE, 'semforge/newCase': made,
+                    'semforge/testCaseOptions': {'ok': True, 'cases': [], 'undeclared': []}}})
+    assert seen['errors'] == [], seen['errors']
+    asked = [r['params'] for r in seen['requests'] if r['method'] == 'semforge/newCase']
+    assert asked and asked[0]['purpose'] == 'valid'
+    assert any('must stay silent' in text for text in seen['info'])
 
 
 # --- step E: Package, Tests, Vocabulary ----------------------------------------------
@@ -1619,3 +1639,41 @@ def test_the_click_setting_defaults_to_the_page():
         props = json.load(handle)['contributes']['configuration']['properties']
     assert props['semforge.trees.click']['default'] == 'page'
     assert props['semforge.trees.click']['enum'] == ['page', 'source']
+
+
+def test_new_case_not_answered_writes_nothing(tmp_path):
+    """Left without an answer to Should conform / Should fail: no case is asked for."""
+    seen = _drive(tmp_path, {
+        'command': 'semforge.openShapePage',
+        'node': {'raw': dict(SHAPE_ROW, shape=RULE_PAGE['iri']),
+                 'packageUri': 'file:///pkg/shacl.ttl'},
+        'picks': [None],
+        'webviewMessages': [{'command': 'newCase'}],
+        'replies': {'semforge/shapePage': RULE_PAGE}})
+    assert seen['errors'] == [], seen['errors']
+    assert seen['quickPicks'] and not [r for r in seen['requests'] if r['method'] == 'semforge/newCase']
+
+
+def test_an_empty_file_is_the_first_start(tmp_path):
+    seen = _drive(tmp_path, {
+        'command': 'semforge.newTestCase',
+        'node': {'raw': {'kind': 'suite', 'label': 'MachineShape', 'term': 'test_MachineShape',
+                         'children': []}, 'packageUri': 'file:///pkg/shacl.ttl'},
+        'picks': ['$(error) Should violate', '$(file) An empty file'], 'inputs': ['first'],
+        'replies': {'semforge/testCaseOptions': CASE_OPTIONS,
+                    'semforge/addTestCase': dict(MADE_CASE, expect='invalid', passes=False,
+                                                 failures=['nothing fired'])}})
+    starts = [i['label'] for i in seen['quickPicks'][-1]['items']]
+    assert starts[0] == '$(file) An empty file' and len(starts) > 1, starts
+
+
+def test_an_empty_file_suggests_a_free_name(tmp_path):
+    taken = dict(CASE_OPTIONS, cases=CASE_OPTIONS['cases'] + [
+        {'path': 'test_MachineShape/bad/new-case.jsonld', 'expect': 'invalid', 'description': ''}])
+    seen = _drive(tmp_path, {
+        'command': 'semforge.newTestCase',
+        'node': {'raw': {'kind': 'suite', 'label': 'MachineShape', 'term': 'test_MachineShape',
+                         'children': []}, 'packageUri': 'file:///pkg/shacl.ttl'},
+        'picks': ['$(error) Should violate', '$(file) An empty file'], 'inputs': [None],
+        'replies': {'semforge/testCaseOptions': taken}})
+    assert seen['inputs'][0]['value'] == 'new-case-2', seen['inputs']

@@ -56,18 +56,46 @@ describe('New test of a query', () => {
         api.pages.case.page.verdicts.state === 'ready' && api.pages.case.page, 'its case page');
       file = page.file;
       assert.strictEqual(fs.realpathSync(file), fs.realpathSync(written));
-      assert.strictEqual(page.passed, false, 'the query does not fire yet');
-      assert.ok(page.claims.length === 1 && page.claims[0].constraint.endsWith('SPARQLConstraintComponent'));
+      assert.deepStrictEqual(JSON.parse(fs.readFileSync(file, 'utf-8')), [], 'it starts empty');
+      assert.strictEqual(page.passed, false, 'nothing in it, nothing fires');
+      assert.strictEqual(page.claims.length, 0, 'no entity to name an assert for yet');
 
-      // The filter is on, the cutter it belongs to stops: the query fires.
-      const set = await api.clientHolder.client.sendRequest('semforge/setValue', {
-        uri: PACKAGE_URI, entity: 'urn:plasmacutter:1', path: ['iffBaseEntities:hasState', 'value'],
+      // Its scene, pasted from Main: the filter and the cutter it belongs to.
+      const client = api.clientHolder.client;
+      let taken;
+      for (const entity of ['urn:filter:1', 'urn:plasmacutter:1']) {
+        const copied = await client.sendRequest('semforge/copyEntities', { uri: PACKAGE_URI, entity });
+        assert.ok(copied.ok, copied.error);
+        const content = JSON.parse(copied.content);
+        if (taken) {
+          taken.entities.push(...content.entities);
+        } else {
+          taken = content;
+        }
+      }
+      const pasted = await client.sendRequest('semforge/pasteEntities',
+        { uri: PACKAGE_URI, case: file, content: JSON.stringify(taken) });
+      assert.ok(pasted.ok, pasted.error);
+
+      // The filter is on, the cutter it belongs to stops: the query fires,
+      // and the case fails until it says why.
+      const set = await client.sendRequest('semforge/setValue', {
+        // Main writes the cutter's state as a list of one instance.
+        uri: PACKAGE_URI, entity: 'urn:plasmacutter:1', path: ['iffBaseEntities:hasState', 0, 'value'],
         file, value: JSON.stringify({ '@id': 'base:state_OFF' }) });
       assert.ok(set.ok, set.error);
+      const ready = () => api.pages.case.page && api.pages.case.page.file === file &&
+        api.pages.case.page.verdicts.state === 'ready' && api.pages.case.page;
       await vscode.commands.executeCommand('semforge.openCasePage',
         { raw: { kind: 'example', file }, packageUri: PACKAGE_URI });
-      await until(() => api.pages.case.page && api.pages.case.page.file === file &&
-        api.pages.case.page.verdicts.state === 'ready' && api.pages.case.page.passed === true, 'the case to pass once the query fires');
+      await until(() => ready() && ready().passed === false, 'the case to fire unasserted');
+      const added = await client.sendRequest('semforge/addAssert', { uri: PACKAGE_URI,
+        case: 'test_StateOnFilterShape/bad/query-e2e.jsonld',
+        constraint: 'iffBaseShacl:StateOnFilterShape/SPARQLConstraintComponent', resource: 'urn:filter:1' });
+      assert.ok(added.ok, added.error);
+      await vscode.commands.executeCommand('semforge.openCasePage',
+        { raw: { kind: 'example', file }, packageUri: PACKAGE_URI });
+      await until(() => ready() && ready().passed === true, 'the case to pass once asserted');
     } finally {
       fs.rmSync(written, { force: true });
       if (file) {

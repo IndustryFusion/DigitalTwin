@@ -1659,20 +1659,23 @@ or rule the page says **what it checks** (its `sh:message`, and *severity:
 warning* — the kms's own `base:severityWarning` read as a word), how well the cases prove
 it (*tested both ways*, *fires in 1*, *never fired*), the cases under
 **Tested by**, and **the query**, folded, with its prefixes. A shape that
-fires in no case gets **+ New case**: it writes
-`examples/test_<Shape>/bad/<name>.jsonld`, copied from a case where the shape
-is evaluated and holds (a valid one first, so no other shape's violation comes
-along; its includes written into the file, so editing an entity does not
-change a shared subobject), and declares it `expect: invalid` with an assert
-that the shape fires on that entity. The case fails until you edit its data so
-the rule is broken — it cannot pass by accident. With no case to start from it
-copies the model's document for an entity the shape reaches. A `sh:rule`
-derives data rather than firing, so it gets the query and no + New case.
+fires in no case gets **+ New case**: it asks *Should conform* or *Should
+fail*, then a name, and writes `examples/test_<Shape>/good/` or
+`bad/<name>.jsonld` **empty**. Its entities are yours to paste from Main
+(**Copy entity** / **Copy with subtree**, then **Paste**): exactly the scene
+the case is about. A case that should fail is declared `expect: invalid`
+without an assert, so it fails as unfinished until its data makes the rule
+fire and **Assert it** on its case page names that firing — it cannot pass by
+accident. A `sh:rule` derives data rather than firing, so it gets the query
+and no + New case.
 
 On a type's page, the `⋯` of a query's row offers **New test…**, as an
-attribute's does: *Should conform* (the query runs on it and is silent) or
-*Should fail* (asserts that the query fires, and fails until its data makes
-it). Its scene has an entity of that type -- a new one when there is none.
+attribute's does: *Should conform* (the query runs on what you paste and is
+silent) or *Should fail* (it fails until its data makes the query fire and
+that firing is asserted). It starts empty too. A request can still ask for
+the former start from a scene (`scene: copy` in `semforge/newCase`): an entity
+of that type from a case or the model, or a new one, and for a failing test an
+assert that the query fires on it.
 
 Validation runs every shape that has a target, of any kind. Until this release
 it ran only `sh:targetClass` shapes — a shape written with `sh:targetNode` was

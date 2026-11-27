@@ -119,7 +119,10 @@ function freeName(options, folder, stem) {
 }
 
 async function pickStart(options, folder) {
-  const items = [];
+  // Empty first: a case's entities are best pasted in from Main (Copy
+  // entity / Copy subtree, then Paste) -- exactly the scene the author means.
+  const items = [{ label: '$(file) An empty file', start: 'empty',
+    description: 'paste the entities it needs from Main' }];
   if (options.cases.length) {
     items.push({ label: '$(copy) A copy of a case', start: 'copy',
       description: 'its includes written into the new file' });
@@ -138,7 +141,6 @@ async function pickStart(options, folder) {
     items.push({ label: '$(symbol-class) A new entity of a type', start: 'type',
       description: 'its required attributes given valid values' });
   }
-  items.push({ label: '$(file) An empty file', start: 'empty' });
   const picked = await vscode.window.showQuickPick(items,
     { title: 'New test case: start from?' });
   if (!picked) {
@@ -167,7 +169,7 @@ async function pickStart(options, folder) {
   if (picked.start === 'whole-model') {
     return { start: 'whole-model', source: '', name: freeName(options, folder, 'whole-model') };
   }
-  return { start: 'empty', source: '', name: 'new-case' };
+  return { start: 'empty', source: '', name: freeName(options, folder, 'new-case') };
 }
 
 async function newTestCase(clientHolder, session, node, newSuite) {

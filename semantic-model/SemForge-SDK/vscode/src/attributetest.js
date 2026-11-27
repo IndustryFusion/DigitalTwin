@@ -103,8 +103,8 @@ async function newAttributeTest(clientHolder, session, node) {
 
 /**
  * New test… for a SPARQL query of an entity type: one its query is silent on,
- * or one it fires on. What a failing one must prove is known -- this query
- * fires -- so it is asserted from the start.
+ * or one it fires on. It starts empty -- its entities are pasted from Main --
+ * so a failing one names its reason once the query fires (Assert it).
  */
 async function newRuleTest(clientHolder, packageUri, rule, entityType) {
   const client = clientHolder.client;
@@ -115,7 +115,7 @@ async function newRuleTest(clientHolder, packageUri, rule, entityType) {
   const picked = await vscode.window.showQuickPick([
     { label: WORDS.valid, purpose: 'valid', description: 'the query runs on it and does not fire' },
     { label: WORDS.invalid, purpose: 'invalid',
-      description: 'asserts that the query fires; it fails until its data makes it' }],
+      description: 'the query fires on it; it fails until its data makes it, and that firing is asserted' }],
   { title: `New test for ${rule.text || shape}: what should it show?`, matchOnDescription: true });
   if (!picked) {
     return false;
@@ -143,6 +143,15 @@ async function newRuleTest(clientHolder, packageUri, rule, entityType) {
   }
   await vscode.commands.executeCommand('semforge.openCasePage',
     { raw: { kind: 'example', file: made.file }, packageUri });
+  if (made.scene === 'empty') {
+    // Started empty: the scene is the author's to paste from Main.
+    vscode.window.showInformationMessage(valid
+      ? `SemForge: ${made.case} starts empty. Paste the entities it needs from Main ` +
+        `(Copy entity / Copy subtree, then Paste); ${shape} must stay silent on them.`
+      : `SemForge: ${made.case} starts empty. Paste the entities it needs from Main, ` +
+        `then edit them until ${shape} fires; until then it fails.`);
+    return true;
+  }
   vscode.window[made.passes ? 'showInformationMessage' : 'showWarningMessage'](made.passes
     ? `SemForge: ${made.case} written, and it passes.`
     : valid ? `SemForge: ${made.case} written; it does not pass yet: ${made.failures.join('; ')}`
