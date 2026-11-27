@@ -45,6 +45,7 @@
 : "${AGGREGATION_TIMEOUT:=60}"                          # seconds, per wait
 : "${AGGREGATION_ATTEMPTS:=3}"                          # sends of a split batch
 : "${AGGREGATION_POLL:=0.2}"                            # seconds between polls
+: "${AGGREGATION_ALONE_TIMEOUT:=10}"                    # seconds, aggregate_alone
 
 # wait_until <seconds> <command...>: true as soon as the command is, false when
 # it is still false after <seconds>.
@@ -166,4 +167,32 @@ aggregate() {
     show_capture
     echo "# kafkacat did not send the batch within one millisecond in ${AGGREGATION_ATTEMPTS} attempts" >&3
     return 1
+}
+
+# aggregate_alone <entity id> <file>: sends the lines of the file as one batch
+# and sends nothing after it: no marker closes its window. Core Services'
+# watermark catches up with the last record after a quiet period of one second
+# (IdleCatchUpWatermarks), so the update of the entity must come back within
+# AGGREGATION_ALONE_TIMEOUT seconds anyway (#1060). The update is in
+# KAFKACAT_ATTRIBUTES. Fails as well when another record reached the attributes
+# topic before the update came back: that record, not the quiet period, may
+# have closed the window, so the run proves nothing.
+aggregate_alone() {
+    local id=$1 file=$2
+    mkdir -p "${AGGREGATION_WORK}"
+    grep -h . "${file}" > "${AGGREGATION_WORK}/batch"
+    start_consumers ||
+        { aggregation_failed "a consumer did not reach the end of its topic within ${AGGREGATION_TIMEOUT}s"; return 1; }
+    kafkacat -P -t "${ATTRIBUTES_TOPIC}" -b "${KAFKA_BOOTSTRAP}" < "${AGGREGATION_WORK}/batch"
+    # the id with its closing quote, escaped as it is inside "entities"
+    wait_until "${AGGREGATION_ALONE_TIMEOUT}" grep -qF "${id}\\\"" "${KAFKACAT_ATTRIBUTES}" ||
+        { aggregation_failed "no update of ${id} came back within ${AGGREGATION_ALONE_TIMEOUT}s without a later record"; return 1; }
+    # A record that closed the window was on the topic before the update came
+    # back, so the last record of the topic decides, not the read-back
+    # consumer, which may lag behind.
+    kafkacat -C -t "${ATTRIBUTES_TOPIC}" -b "${KAFKA_BOOTSTRAP}" -o -1 -e -q -f '%s\n' \
+        > "${AGGREGATION_WORK}/last" 2>/dev/null
+    stop_consumers
+    [ "$(tail -n1 "${AGGREGATION_WORK}/batch")" = "$(cat "${AGGREGATION_WORK}/last")" ] ||
+        { aggregation_failed "another record reached ${ATTRIBUTES_TOPIC} before the update came back: $(cat "${AGGREGATION_WORK}/last")"; return 1; }
 }

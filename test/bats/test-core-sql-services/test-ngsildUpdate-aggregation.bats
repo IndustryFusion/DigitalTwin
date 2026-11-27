@@ -343,3 +343,13 @@ check_capture() {
     run compare_attributes1 ${KAFKACAT_ATTRIBUTES_FILTERED}
     check_capture
 }
+@test "verify an isolated attribute is forwarded without a later record" {
+    $SKIP
+    # Nothing follows the attribute, so no later record closes its window:
+    # the watermark must catch up after the quiet period (#1060).
+    aggregate_alone "${CUTTER_ID}" ${ATTRIBUTE1}
+    # the last marker of the previous test closes after its quiet period too
+    grep -v flush < ${KAFKACAT_ATTRIBUTES} | jq '.entities |= (fromjson | map(del(.. | .observedAt?)) | tojson)' > ${KAFKACAT_ATTRIBUTES_FILTERED}
+    run compare_attributes1 ${KAFKACAT_ATTRIBUTES_FILTERED}
+    check_capture
+}

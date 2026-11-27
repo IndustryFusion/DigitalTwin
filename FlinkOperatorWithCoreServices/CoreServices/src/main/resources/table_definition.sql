@@ -1,4 +1,4 @@
-CREATE TABLE attributes (
+CREATE TABLE attributes_source (
     `id` STRING,
     `parentId` STRING,
     `entityId` STRING,
@@ -26,15 +26,11 @@ CREATE TABLE attributes (
     -- strictly monotonic per partition, so it settles exactly those ties and
     -- nothing else: the event time stays the primary ordering, this is only
     -- the tiebreaker beneath it.
-    `offset` BIGINT METADATA VIRTUAL,
-    -- The WATERMARK stays. Unlike the shacl tables, this one IS windowed:
-    -- sql_statements.sql tumbles over it, and a window needs a rowtime.
-    -- One millisecond behind the highest ts (Flink's "ascending" strategy):
-    -- the records of one batch share a millisecond on purpose, and with
-    -- `ts AS ts` a row with the highest ts seen is late, so a watermark
-    -- between two of them fired their 1 ms window with the first and dropped
-    -- the second (#1060). Windows still close once a later ms arrives.
-    WATERMARK FOR ts AS ts - INTERVAL '0.001' SECOND
+    `offset` BIGINT METADATA VIRTUAL
+    -- No WATERMARK here: sql_statements.sql tumbles 1 ms windows over ts, and
+    -- the watermark those windows need is one Flink SQL cannot declare.
+    -- CoreServices registers the table `attributes` as a view over this one
+    -- with it (IdleCatchUpWatermarks, #1060).
 ) WITH (
   'connector' = 'kafka',
   'topic' = 'iff.ngsild.attributes',
@@ -46,7 +42,7 @@ CREATE TABLE attributes (
 );
 
 
-CREATE TABLE attributes_insert (
+CREATE TABLE attributes_insert_source (
     `id` STRING,
     `parentId` STRING,
     `entityId` STRING,
@@ -61,8 +57,8 @@ CREATE TABLE attributes_insert (
     `deleted` BOOLEAN,
     `synced` BOOLEAN,
     `ts` TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
-    -- As for attributes: the writeback tumbles 1 ms windows over ts (#1060).
-    WATERMARK FOR ts AS ts - INTERVAL '0.001' SECOND,
+    -- No WATERMARK, as for attributes_source: CoreServices registers the
+    -- table `attributes_insert` over this one with it (#1060).
     PRIMARY KEY (`id`, `datasetId`) NOT ENFORCED
 ) WITH (
   'topic' = 'iff.ngsild.attributes_insert',

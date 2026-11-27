@@ -32,18 +32,25 @@ setup() {
     echo 1000 > "${MOCK_KAFKA}/clock"
     cat > "${WORK}/bin/kafkacat" <<'EOF'
 #!/usr/bin/env bash
-mode='' topic='' fmt=''
+mode='' topic='' fmt='' offset='' exit_at_end=''
 while [ $# -gt 0 ]; do
     case "$1" in
         -C|-P) mode=$1 ;;
         -t) topic=$2; shift ;;
         -f) fmt=$2; shift ;;
-        -b|-o) shift ;;
+        -o) offset=$2; shift ;;
+        -e) exit_at_end=1 ;;
+        -b) shift ;;
     esac
     shift
 done
 log="${MOCK_KAFKA}/${topic}"
 touch "${log}"
+if [ "${mode}" = "-C" ] && [ -n "${exit_at_end}" ] && [ "${offset}" = "-1" ]; then
+    # the last record, then exit
+    tail -n1 "${log}" | cut -f2-
+    exit 0
+fi
 if [ "${mode}" = "-C" ]; then
     trap 'pkill -P $$; exit 0' TERM
     if [ -n "${fmt}" ]; then
@@ -158,9 +165,48 @@ updates() {
     updates | head -n1 | grep -q 'urn:test:2'
 }
 
+# close_after_quiet <entity>: what Core Services' watermark does after a quiet
+# period (#1060): once the record of the entity is on the attributes topic, it
+# forwards its pending window without a later record.
+close_after_quiet() {
+    (
+        until grep -q "$1" "${MOCK_KAFKA}/iff.ngsild.attributes" 2>/dev/null; do sleep 0.05; done
+        sleep 0.5
+        printf '{"op":"update","entities":"[{\\"id\\":\\"%s\\",\\"n\\":1}]"}\n' "$1" >> "${MOCK_KAFKA}/iff.ngsild-updates"
+    ) 3>&- &
+}
+
+@test "an isolated batch is captured once its window closes after the quiet period" {
+    close_after_quiet urn:test:1
+    aggregate_alone urn:test:1 "${WORK}/a" 3>"${WORK}/messages"
+    [ "$(grep -c 'urn:test:1' "${KAFKACAT_ATTRIBUTES}")" -eq 1 ]
+    # no marker was sent
+    [ "$(wc -l < "${MOCK_KAFKA}/iff.ngsild.attributes")" -eq 1 ]
+}
+
+@test "an isolated batch whose window never closes fails within the bound" {
+    status=0
+    start=${SECONDS}
+    AGGREGATION_ALONE_TIMEOUT=2 aggregate_alone urn:test:1 "${WORK}/a" 3>"${WORK}/messages" || status=$?
+    [ "${status}" -eq 1 ]
+    [ $((SECONDS - start)) -lt 10 ]
+    grep -q 'no update of urn:test:1 came back within 2s without a later record' "${WORK}/messages"
+}
+
+@test "a later record on the topic makes an isolated run fail: it may have closed the window" {
+    (
+        until grep -q urn:test:1 "${MOCK_KAFKA}/iff.ngsild.attributes" 2>/dev/null; do sleep 0.05; done
+        kafkacat -P -t iff.ngsild.attributes < "${WORK}/c"
+    ) 3>&- &
+    status=0
+    aggregate_alone urn:test:1 "${WORK}/a" 3>"${WORK}/messages" || status=$?
+    [ "${status}" -eq 1 ]
+    grep -q 'another record reached iff.ngsild.attributes before the update came back' "${WORK}/messages"
+}
+
 @test "the e2e suite sends every batch through aggregate, with no fixed waits left" {
     suite="${BATS_TEST_DIRNAME}/../bats/test-core-sql-services/test-ngsildUpdate-aggregation.bats"
-    run grep -cE '^\s*aggregate ' "${suite}"
+    run grep -cE '^\s*aggregate(_alone)? ' "${suite}"
     [ "${output}" -eq "$(grep -c '^@test' "${suite}")" ]
     run grep -nE '^\s*(sleep|killall kafkacat)' "${suite}"
     [ "${status}" -eq 1 ]
