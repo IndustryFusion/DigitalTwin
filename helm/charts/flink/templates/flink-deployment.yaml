@@ -24,6 +24,13 @@ spec:
     queryable-state.proxy.ports: 6125
     jobmanager.memory.process.size: 1000m
     taskmanager.memory.process.size: 2500m
+    # Deploying the validation job (some 250 tasks on one TaskManager) takes
+    # longer than the default RPC timeout of 10 s: the job failed over with
+    # "TaskManager ... not responding after a rpcTimeout of 10000 ms" and, on
+    # a busy runner, stayed RESTARTING. The heartbeat is answered by the same
+    # busy TaskManager, so its timeout stays above the RPC one.
+    pekko.ask.timeout: 60 s
+    heartbeat.timeout: 120 s
 
     s3.endpoint: {{ printf "%s://%s" .Values.s3.protocol .Values.s3.endpoint }}
     {{- if .Values.s3.pathStyle }}
