@@ -40,7 +40,7 @@ A test of a query that should fail SHALL be written to the `bad/` folder of the 
 - **THEN** the case passes
 
 ### Requirement: A test started from a scene is about an entity of the page's type
-A request that asks for a test of a query started from a scene (`scene: copy` in `semforge/newCase`) SHALL start it as before: the entity the test is about SHALL be one of the page's type, or of a type below it, that the query is evaluated on. It SHALL come from a case, else from the main model together with the model's entities it points at, else be a new entity of the type with a valid value for each required attribute. When the query is not evaluated on the new entity either, the test SHALL be refused with a message that says so, and nothing SHALL be written. A test that should conform started this way SHALL NOT start from a case that is expected to violate; a test that should fail started this way SHALL assert that the query fires on that entity, and SHALL fail until it does. Without `scene`, a request starts the test empty.
+A test of a query started from a scene (`scene: copy` in `semforge/newCase`) SHALL be about an entity of the page's type, or of a type below it, that the query is evaluated on: from a case, else from the main model with the model's entities it points at, else a new entity of the type with a valid value for each required attribute. When the query is not evaluated on the new one either, it SHALL be refused with a message that says so, and nothing SHALL be written.
 
 #### Scenario: A query of several types
 - **WHEN** a test is started from a scene for a query that reaches entities of the types Cutter and Plasmacutter, on the page of Plasmacutter
@@ -57,14 +57,6 @@ A request that asks for a test of a query started from a scene (`scene: copy` in
 #### Scenario: Out of the query's reach
 - **WHEN** a test is started from a scene and the query is evaluated on no entity of the type, a new one included
 - **THEN** the test is refused, and no file is written or changed
-
-#### Scenario: Asserted from the start
-- **WHEN** a test that should fail is started from a scene the query holds on
-- **THEN** the case fails, its page shows the one assert naming that entity, and once its data makes the query fire on it the case passes
-
-#### Scenario: No scene asked for
-- **WHEN** a request for a test of a query names no `scene`
-- **THEN** the test is written empty
 
 ### Requirement: New case of a shape page asks what the case should show
 New case… of a shape page SHALL first ask whether the case should conform or fail, offering exactly Should conform and Should fail in the words New test… of a type page uses, then only the case's name, suggesting one no case in the folder the answer picks (`good/` or `bad/`) has. It SHALL write the case as a query's test that should conform, or should fail, is written: empty, and declared without an assert. A shape without a SPARQL constraint, or one without a target, SHALL be refused as before.
@@ -97,3 +89,14 @@ New test case… SHALL list An empty file first among its starts, saying that it
 #### Scenario: The first start
 - **WHEN** the user runs New test case… and has chosen a suite and whether the case should conform or violate
 - **THEN** An empty file is the first start offered
+
+### Requirement: A test started from a scene is declared as before
+A test that should conform started from a scene SHALL NOT start from a case that is expected to violate; a test that should fail started from a scene SHALL assert that the query fires on that entity, and SHALL fail until it does. Without `scene`, a request SHALL start the test empty.
+
+#### Scenario: Asserted from the start
+- **WHEN** a test that should fail is started from a scene the query holds on
+- **THEN** the case fails, its page shows the one assert naming that entity, and once its data makes the query fire on it the case passes
+
+#### Scenario: No scene asked for
+- **WHEN** a request for a test of a query names no `scene`
+- **THEN** the test is written empty
