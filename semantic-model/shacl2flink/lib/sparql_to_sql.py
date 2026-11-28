@@ -748,7 +748,7 @@ ELSE SQL_DIALECT_STRIP_LITERAL{{{column}}} END"
         else:
             return f"SQL_DIALECT_STRIP_LITERAL{{{bounds[boundsvarname]}}}"
     elif boundsvarname in bounds and boundsvar in ctx['time_variables']:
-        return f"SQL_DIALIFAECT_STRIP_LITERAL{{{bounds[boundsvarname]}}}"
+        return f"SQL_DIALECT_STRIP_LITERAL{{{bounds[boundsvarname]}}}"
     else:
         raise utils.WrongSparqlStructure(f"Trying to trim non-bound variable ?{boundsvarname}.")
 
