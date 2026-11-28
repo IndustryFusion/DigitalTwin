@@ -79,8 +79,11 @@ build: $(SHACL) $(KNOWLEDGE) $(MODEL)
 check-queries: $(SHACL)
 	$(PYTHON) check_queries.py $(SHACL)
 
+# Builds the chart. The tables are written by the deploy, and only when it
+# replaces the validation (deploy_validation.sh, #1165): written under a
+# running job, change data capture would hand it every row once more.
 helm: export IFF_HELM=true
-helm: build submit-postgres-tables
+helm: build
 	mkdir -p ${HELM_DIR}
 	rm -rf ${HELM_DIR}/templates 
 	cp -rf ${OUTPUTDIR} ${HELM_DIR}/templates
@@ -175,20 +178,29 @@ enable-strimzi:
 	kubectl -n $(NAMESPACE) scale deployment -l "strimzi.io/name=my-cluster-entity-operator" --replicas=1
 
 
+# Deploys the package, fresh or over a running validation (#1165,
+# specification shacl2flink/validation-deployment): the same package over the
+# running job writes nothing and keeps the job; anything else replaces the
+# validation through `make shacl-resync REPLACE=package`, with deploy-install
+# as its install. See deploy_validation.sh.
 flink-deploy: clean
-
 	@echo deploy helm package
 	make helm
-	make disable-strimzi || echo "Can fail"
-	# make build || make enable-strimzi
-	kubectl -n $(NAMESPACE) delete -f output/ngsild-kafka.yaml --ignore-not-found || make enable-strimzi
-	kubectl -n $(NAMESPACE) delete -f output/rdf-kafka.yaml --ignore-not-found || make enable-strimzi
-	cd ../../helm && ./helmfile -f helmfile-shacl.yaml apply || make enable-strimzi
-	make enable-strimzi
-	# Before the check: a failing check must not leave Fuseki on the old package.
-	make fuseki-deploy-kms
-	make restart-connect
+	NAMESPACE=$(NAMESPACE) ./deploy_validation.sh
 	make test-flink-is-deployed
+
+# The install of a new package, run by the resync while no validation job
+# reads the tables: the tables, then the release. The KafkaTopic resources are
+# deleted while Strimzi's entity operator is held back, so that the topics
+# themselves stay; `sync` recreates the statementset the resync's stop
+# deleted, also when the chart is unchanged.
+deploy-install:
+	make submit-postgres-tables
+	make disable-strimzi || echo "Can fail"
+	kubectl -n $(NAMESPACE) delete -f output/ngsild-kafka.yaml --ignore-not-found || { make enable-strimzi; exit 1; }
+	kubectl -n $(NAMESPACE) delete -f output/rdf-kafka.yaml --ignore-not-found || { make enable-strimzi; exit 1; }
+	cd ../../helm && ./helmfile -f helmfile-shacl.yaml sync || { make enable-strimzi; exit 1; }
+	make enable-strimzi
 
 
 # Publish all existing entities again (a Debezium re-snapshot) once the
@@ -205,7 +217,9 @@ restart-connect:
 # reset Core Services, start the job again, re-snapshot, wait until that is
 # processed and end the degraded state. REPLACE=checkpoint RESTORE_FROM=<path>
 # is refused until the statementset can start from a checkpoint (#1042). Needs
-# no KMS: it works on the deployed statementset.
+# no KMS: it works on the deployed statementset. REPLACE=package, the
+# replacement by a new package, is run by `make flink-deploy`, which passes
+# the install of the package (#1165).
 REPLACE ?= none
 RESTORE_FROM ?=
 # The resync works on the deployed package. A KMS= on its command line would
@@ -226,6 +240,8 @@ flink-undeploy:
 	cd ../../helm && ./helmfile -f helmfile-shacl.yaml destroy
 	make test-flink-is-undeployed
 	cd ../../helm && ./helmfile -f helmfile-shacl.yaml destroy # undeploy a scnd time to make sure that there are no kafkatopics left
+	# No fingerprint is left for an undeployed validation (#1165).
+	kubectl -n $(NAMESPACE) delete configmap shacl-validation-fingerprint --ignore-not-found
 	make fuseki-undeploy-kms
 
 
@@ -352,4 +368,4 @@ fuseki-undeploy-kms:
 clean:
 	@rm -rf $(OUTPUTDIR) merged-kms
 
-.PHONY: clean restart-connect shacl-resync fuseki-deploy-kms fuseki-undeploy-kms test-flink-e2e test-opcua-shapes test-pyshacl-compare
+.PHONY: clean restart-connect deploy-install shacl-resync fuseki-deploy-kms fuseki-undeploy-kms test-flink-e2e test-opcua-shapes test-pyshacl-compare

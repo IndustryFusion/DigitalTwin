@@ -175,20 +175,42 @@ make test-sqlite
 make flink-deploy
 ```
 
-It ends by restarting Kafka Connect, so that Debezium publishes every existing
-entity again and the deployed validation validates it. The job reads entities
-and attributes from the latest offset, so the restart waits until the operator
-has taken over the deployed statementset, its job runs with all its tasks and
-its readers of the entities and attributes hold their partitions
-(`make restart-connect`, `restart_connect.sh`). If that is not reached within
-`VALIDATION_START_TIMEOUT` seconds (1800), it fails, says what is missing and
-leaves Kafka Connect alone: the existing entities are then not validated until
-`make restart-connect` succeeds or the next regular re-snapshot.
+`make flink-deploy` deploys a package fresh or over a running validation, and
+decides how by a fingerprint of what it would deploy: the shacl release as
+helmfile renders it with the deploy's values, and the constraint and knowledge
+tables (`deploy_validation.sh`, specification
+`shacl2flink/validation-deployment`). The fingerprint of a completed deploy is
+kept in the ConfigMap `shacl-validation-fingerprint`, with the ID of its job.
 
-A deploy over a running validation starts a new job without state, and that job
-replays the raises of the previous one from `constraint_trigger_table`: alerts
-whose constraint is satisfied now stay open. Follow it with
-`make shacl-resync REPLACE=fresh` (below).
+- **The same package over the running validation** writes no table and keeps
+  the job: written under a running job, the tables would reach it a second
+  time through change data capture, and every count would double. The deploy
+  only restarts Kafka Connect, so that Debezium publishes every existing entity
+  again, once the job reads (below).
+- **Anything else** -- another package, a change of the compiler or of a
+  rendered value, no kept fingerprint, or no job running with all its tasks --
+  replaces the validation through `make shacl-resync REPLACE=package` (below):
+  the job is stopped and its topics are emptied, the SHACL alerts are closed
+  and Core Services is reset, then `make deploy-install` writes the tables and
+  installs the release (`helmfile sync`), the new job starts and a re-snapshot
+  raises what is violated now. The fingerprint is kept only after all of that
+  has completed, so an interrupted or failed deploy is replaced again by the
+  next one. `make flink-undeploy`, `make flink-deploy` and `make shacl-resync`
+  by hand are no longer needed after a package change.
+
+A deploy therefore needs what the resync needs: Alerta, Core Services and the
+platform watchdog (its ConfigMap `platform-watchdog-state`), also for the
+first deployment. Without them it fails before it stops anything.
+
+Kafka Connect is restarted only once the deployed job reads entities and
+attributes, which the job reads from the latest offset: after the operator has
+taken over the statementset, its job runs with all its tasks and its readers of
+the entities and attributes hold their partitions (`make restart-connect`,
+`restart_connect.sh`; in a replacement, the resync's re-snapshot). If that is
+not reached within `VALIDATION_START_TIMEOUT` seconds (1800), the restart fails,
+says what is missing and leaves Kafka Connect alone: the existing entities are
+then not validated until `make restart-connect` succeeds or the next regular
+re-snapshot.
 
 ## Resync the SHACL alerts
 
@@ -196,6 +218,12 @@ whose constraint is satisfied now stay open. Follow it with
 make shacl-resync                  # keep the running validation job
 make shacl-resync REPLACE=fresh    # replace it with a fresh job
 ```
+
+`REPLACE=package` replaces the validation by a new package: the steps of a
+fresh job, with the install of the package (`RESYNC_INSTALL`) between the reset
+of Core Services and the start. `make flink-deploy` runs it; after a failure,
+run that deploy again, not a resync with a fresh job, which would start the
+old statements on the new tables.
 
 The leaf checks write only violations, so nothing closes an alert that was
 raised and not retracted although its constraint is satisfied now: after a

@@ -23,10 +23,12 @@
 # Steps, in this order, each after the previous one completed:
 #
 #   mark the validation degraded     the watchdog's ValidationConsistency warns
-#   stop the job, empty its topics   REPLACE=fresh only: nothing is replayed
+#   stop the job, empty its topics   REPLACE=fresh or package: nothing is replayed
 #   close the SHACL alerts           service "SHACL Validator", nothing else
 #   reset Core Services              its alerts filter forwards unchanged raises
-#   start the validation job         REPLACE=fresh only
+#   install the new package          REPLACE=package only: its tables and chart
+#   start the validation job         REPLACE=fresh: the stopped statementset;
+#                                    package: the one the install created
 #   trigger a complete re-snapshot   the Connect pods are deleted
 #   wait until it is processed       quiet consumers, then a marker in Alerta
 #   end the degraded state           the watchdog judges again
@@ -37,8 +39,12 @@
 #
 # Environment (time limits in seconds; exceeding one fails the step):
 #   NAMESPACE                  iff
-#   REPLACE                    none (default), fresh or checkpoint
+#   REPLACE                    none (default), fresh, package or checkpoint
 #   RESTORE_FROM               the checkpoint or savepoint for REPLACE=checkpoint
+#   RESYNC_INSTALL             REPLACE=package: the command that installs the new
+#                              package (writes its tables, creates its statementset);
+#                              `make flink-deploy` passes it (#1165)
+#   RESYNC_INSTALL_TIMEOUT     900  the install command
 #   RESYNC_STOP_TIMEOUT        300  the statementset and its job gone
 #   RESYNC_SETTLE              30   no SHACL alert received after a stop
 #   RESYNC_SETTLE_TIMEOUT      600  limit of the wait for the settle time
@@ -78,6 +84,8 @@ CONNECT_TIMEOUT=${RESYNC_CONNECT_TIMEOUT:-30}
 POLL=${RESYNC_POLL:-5}
 KUBECTL_TIMEOUT=${RESYNC_KUBECTL_TIMEOUT:-120}
 FORCE=${RESYNC_FORCE:-false}
+INSTALL=${RESYNC_INSTALL:-}
+INSTALL_TIMEOUT=${RESYNC_INSTALL_TIMEOUT:-900}
 
 STATEMENTSET=${STATEMENTSET:-shacl-validation}
 STATE_CONFIGMAP=${STATE_CONFIGMAP:-platform-watchdog-state}
@@ -101,6 +109,12 @@ CORE_SERVICES_TOPICS=${CORE_SERVICES_TOPICS:-iff.alerts.bulk iff.ngsild.attribut
 # forwarded.
 CORE_LATEST_SOURCES=${RESYNC_CORE_LATEST_SOURCES:-iff.alerts.bulk}
 DEBEZIUM_BRIDGE_GROUP=${DEBEZIUM_BRIDGE_GROUP:-debeziumBridgeGroup}
+# The knowledge: Debezium copies the Postgres table rdf to RDF_TOPIC, which the
+# validation reads as an upsert table keyed by subject, predicate and index.
+RDF_TOPIC=${RDF_TOPIC:-iff.rdf}
+RDF_DB_SERVICE=${RDF_DB_SERVICE:-acid-cluster}
+RDF_DB_USER=${RDF_DB_USER:-flink_writer_user}
+RDF_DB_NAME=${RDF_DB_NAME:-flink}
 SHACL_FILTER="service=SHACL%20Validator"
 # Every status but closed, as alternatives of one filter: Alerta takes a key
 # given several times as any of its values.
@@ -108,11 +122,22 @@ NOT_CLOSED="status=open&status=assign&status=ack&status=shelved&status=blackout&
 STATE_DIR=${RESYNC_STATE_DIR:-${XDG_STATE_HOME:-${HOME}/.local/state}/shacl-resync}
 SAVED="${STATE_DIR}/${NAMESPACE}.${STATEMENTSET}.json"
 COMMAND="make shacl-resync REPLACE=${REPLACE}"
+# A replacement by a new package is run by the deploy of that package, and
+# only that deploy can run it again: a fresh restart would start the old
+# statements on the new tables.
+if [ "$REPLACE" = package ]; then
+    COMMAND="make flink-deploy"
+fi
 
 # ---------------------------------------------------------------- the options
 
 case "$REPLACE" in
     none|fresh) ;;
+    package)
+        if [ -z "$INSTALL" ]; then
+            echo "resync refused before step 1: REPLACE=package needs RESYNC_INSTALL, the command that installs the new package; make flink-deploy passes it. Nothing has been changed." >&2
+            exit 2
+        fi ;;
     checkpoint)
         # Refused before anything is read or changed (#1042).
         cat >&2 <<EOF
@@ -129,12 +154,14 @@ Nothing has been changed.
 EOF
         exit 2 ;;
     *)
-        echo "resync refused before step 1: REPLACE must be none, fresh or checkpoint, not '${REPLACE}'. Nothing has been changed." >&2
+        echo "resync refused before step 1: REPLACE must be none, fresh, package or checkpoint, not '${REPLACE}'. Nothing has been changed." >&2
         exit 2 ;;
 esac
 
 WORK=$(mktemp -d)
 RESYNC_BASE="${WORK}/base.core"
+# The same for a new validation job's latest-offset readers (step_start).
+VALIDATION_BASE="${WORK}/base.validation"
 ALERTA_HEADER="${WORK}/alerta.header"
 # The validation's latest-offset sources (LATEST_SOURCES, entities and
 # attributes unless RESYNC_LATEST_SOURCES names others) and the helpers come
@@ -148,6 +175,12 @@ T0=$(date +%s)
 if [ "$REPLACE" = fresh ]; then
     STEPS=("mark the validation degraded" "stop the validation job and empty its topics"
         "close the SHACL alerts" "reset Core Services" "start the validation job"
+        "trigger a complete re-snapshot" "wait until the re-snapshot is processed"
+        "end the degraded state")
+elif [ "$REPLACE" = package ]; then
+    STEPS=("mark the validation degraded" "stop the validation job and empty its topics"
+        "close the SHACL alerts" "reset Core Services" "install the new package"
+        "start the new package's validation job"
         "trigger a complete re-snapshot" "wait until the re-snapshot is processed"
         "end the degraded state")
 else
@@ -169,9 +202,13 @@ DEADLINE=$(( T0 + TOTAL * CALL + 2 * CONNECT_TIMEOUT \
     + SNAPSHOT_TIMEOUT + KUBECTL_TIMEOUT \
     + PROCESSED_TIMEOUT + 2 * KUBECTL_TIMEOUT \
     + KUBECTL_TIMEOUT + 300 ))
-if [ "$REPLACE" = fresh ]; then
+if [ "$REPLACE" = fresh ] || [ "$REPLACE" = package ]; then
     DEADLINE=$(( DEADLINE + 2 * STOP_TIMEOUT + 3 * (60 + 3 * KUBECTL_TIMEOUT) + SETTLE_TIMEOUT \
         + 2 * START_TIMEOUT + 2 * KUBECTL_TIMEOUT ))
+fi
+if [ "$REPLACE" = package ]; then
+    # the install and the wait for the statementset it creates
+    DEADLINE=$(( DEADLINE + INSTALL_TIMEOUT + START_TIMEOUT ))
 fi
 
 # ---------------------------------------------------------------- helpers
@@ -254,7 +291,18 @@ step_check() {
     local ss marks since failed deadline parts
     ss=$(kube get beamsqlstatementset "$STATEMENTSET" --ignore-not-found -o json) \
         || fail "the statementset ${STATEMENTSET} can't be read"
-    if [ -z "$ss" ]; then
+    if [ "$REPLACE" = package ]; then
+        # The new package replaces whatever is deployed or kept: a statementset
+        # kept by an earlier failed resync is not started again.
+        if [ -s "$SAVED" ]; then
+            echo "a statementset kept by an earlier resync in ${SAVED} is discarded: the new package replaces it"
+            rm -f "$SAVED"
+        fi
+        if [ -z "$ss" ]; then
+            echo "no validation statementset ${STATEMENTSET} is deployed: nothing to stop, the new package is installed"
+            touch "${WORK}/nothing_deployed"
+        fi
+    elif [ -z "$ss" ]; then
         if [ "$REPLACE" = fresh ] && [ -s "$SAVED" ]; then
             # A failed resync stopped the job and did not start it again.
             echo "the statementset ${STATEMENTSET} is not deployed: it was stopped by a resync and is started again from ${SAVED}"
@@ -343,6 +391,11 @@ topic_emptied() {  # topic_emptied <topic> <file of "<partition> <end>">
     [ -z "$left" ] || { echo "records left:${left}"; return 1; }
 }
 
+topic_exists() {  # topic_exists <topic>: it is in Kafka
+    local list
+    list=$(kafka_tool kafka-topics.sh "--list" 2>/dev/null) || fail "the topics can't be listed from ${KAFKA_POD}"
+    grep -qxF "$1" <<<"$list"
+}
 empty_topic() {  # empty_topic <topic>
     local ends json
     ends=$(offsets "$1" -1) || fail "the end offsets of $1 can't be read"
@@ -366,7 +419,24 @@ empty_topic() {  # empty_topic <topic>
 
 step_stop() {
     local ss job topic
-    if [ ! -e "${WORK}/stopped" ]; then
+    if [ "$REPLACE" = package ] && [ -e "${WORK}/nothing_deployed" ]; then
+        echo "  no validation job to stop: no statementset ${STATEMENTSET} is deployed"
+        touch "${WORK}/stopped"
+    elif [ "$REPLACE" = package ] && [ ! -e "${WORK}/stopped" ]; then
+        ss=$(kube get beamsqlstatementset "$STATEMENTSET" -o json) || fail "the statementset ${STATEMENTSET} can't be read"
+        job=$(jq -r '.status.job_id // empty' <<<"$ss")
+        echo "${job}" > "${WORK}/stopped_job"
+        # The new package's statementset replaces it: no copy is kept.
+        kube delete beamsqlstatementset "$STATEMENTSET" --wait=false >/dev/null \
+            || fail "the statementset ${STATEMENTSET} can't be deleted"
+        touch "${WORK}/stopped"
+        date +%s > "${WORK}/stopped_at"
+        wait_until "$STOP_TIMEOUT" "the statementset gone" statementset_gone
+        if [ -n "$job" ]; then
+            wait_until "$STOP_TIMEOUT" "the job ${job} stopped" job_stopped "$job"
+        fi
+        echo "  the job ${job:-none} of ${STATEMENTSET} is stopped; the new package replaces it"
+    elif [ ! -e "${WORK}/stopped" ]; then
         ss=$(kube get beamsqlstatementset "$STATEMENTSET" -o json) || fail "the statementset ${STATEMENTSET} can't be read"
         job=$(jq -r '.status.job_id // empty' <<<"$ss")
         # 0700, an existing one included; the copy is 0600
@@ -393,6 +463,12 @@ step_stop() {
         echo "  the job ${job:-none} of ${STATEMENTSET} is stopped; the statementset is kept in ${SAVED}"
     fi
     for topic in $JOB_TOPICS; do
+        # A first deploy installs the validation's topics only in the install
+        # step: one that doesn't exist yet holds nothing to replay.
+        if [ "$REPLACE" = package ] && ! topic_exists "$topic"; then
+            echo "  ${topic}: not created yet, nothing to empty"
+            continue
+        fi
         empty_topic "$topic"
     done
 }
@@ -511,13 +587,128 @@ step_reset() {
 
 # ---------------------------------------------------------------- start the validation job
 
+# ---------------------------------------------------------------- install the new package
+
+# REPLACE=package: the deploy's command writes the package's tables and
+# creates its statementset, while no job reads the tables and Core Services
+# has been reset. Its output is shown; a failure or an exceeded limit ends
+# the step.
+step_install() {
+    local rc
+    set +e
+    timeout --kill-after=30 "$INSTALL_TIMEOUT" bash -c "$INSTALL"
+    rc=$?
+    set -e
+    [ "$rc" -ne 124 ] || fail "the install of the new package did not end within ${INSTALL_TIMEOUT}s"
+    [ "$rc" -eq 0 ] || fail "the install of the new package failed (exit ${rc})"
+    echo "  the new package is installed"
+    drop_removed_knowledge
+}
+
+# The keys of the rdf table as JSON, one per line, sorted: what the new
+# package's knowledge is.
+rdf_table_keys() {
+    local secrets secret password pod
+    # Read the whole list first: `kube get … | grep -m1` let kubectl die of
+    # SIGPIPE when grep stopped early, and pipefail took that as a failure.
+    secrets=$(kube get secrets -o name) || { echo "the secrets can't be listed"; return 1; }
+    secret=$(grep -m1 -- "${RDF_DB_USER//_/-}" <<<"$secrets") \
+        || { echo "no secret of ${RDF_DB_USER}"; return 1; }
+    password=$(kube get "$secret" -o go-template='{{index .data "password" | base64decode}}') || return 1
+    pod=$(kube get ep "$RDF_DB_SERVICE" -o jsonpath='{.subsets[0].addresses[0].targetRef.name}' 2>/dev/null) \
+        || { echo "no endpoint of ${RDF_DB_SERVICE}"; return 1; }
+    kube exec "$pod" -c postgres -- bash -c "PGPASSWORD='${password}' PGSSLMODE=require psql -h localhost -U ${RDF_DB_USER} -d ${RDF_DB_NAME} -Atc \"SELECT json_build_object('subject', subject, 'predicate', predicate, 'index', index) FROM rdf\"" </dev/null
+}
+
+# removed_keys <table keys> <topic records>: the keys live in the topic (the
+# last record of the key not a tombstone, "null" as the consumer prints it)
+# and not in the table, each as written in the topic. Both sides compared as
+# parsed JSON, so the formatting of Postgres and of Debezium doesn't matter.
+removed_keys() {
+    python3 -c '
+import json, sys
+def norm(text):
+    d = json.loads(text)
+    return (d["subject"], d["predicate"], int(d["index"]))
+table = set()
+with open(sys.argv[1], encoding="utf-8") as f:
+    for line in f:
+        if line.strip():
+            table.add(norm(line))
+last = {}
+with open(sys.argv[2], encoding="utf-8") as f:
+    for line in f:
+        key, _, value = line.rstrip("\n").partition("\t")
+        if key:
+            last[key] = value
+live = 0
+for key, value in last.items():
+    if value == "null":
+        continue
+    try:
+        k = norm(key)
+    except (ValueError, KeyError, TypeError):
+        continue
+    live += 1
+    if k not in table:
+        print(key)
+print(live, file=sys.stderr)
+' "$1" "$2"
+}
+
+# A dropped table emits no deletes, so RDF_TOPIC keeps every key any earlier
+# package had, and a new job, which reads it from the beginning, sees them all
+# (#1165 D6). Each key that is live in RDF_TOPIC (its last record is not a
+# tombstone) and not in the new table gets a tombstone: the upsert table drops
+# it, in a running job as in a new one.
+drop_removed_knowledge() {
+    local tab
+    tab=$(printf '\t')
+    rdf_table_keys > "${WORK}/rdf.table" || fail "the keys of the rdf table can't be read"
+    # An empty table would turn every key into a tombstone: refuse instead.
+    [ -s "${WORK}/rdf.table" ] || fail "the rdf table is empty or can't be read: no knowledge is removed"
+    # From the earliest offset to the end taken now: exactly those records, so
+    # the read ends on a topic that is written to meanwhile. The timeout only
+    # guards a consumer that gets stuck.
+    local start end
+    start=$(offsets "$RDF_TOPIC" -2 | awk 'NR == 1 { print $2 }') || fail "the start offset of ${RDF_TOPIC} can't be read"
+    end=$(offsets "$RDF_TOPIC" -1 | awk 'NR == 1 { print $2 }') || fail "the end offset of ${RDF_TOPIC} can't be read"
+    [ "$(offsets "$RDF_TOPIC" -1 | wc -l)" -eq 1 ] || fail "${RDF_TOPIC} has more than one partition"
+    : > "${WORK}/rdf.topic"
+    if [ "$(( end - start ))" -gt 0 ]; then
+        kafka_tool kafka-console-consumer.sh "--topic ${RDF_TOPIC} --from-beginning --max-messages $(( end - start )) --timeout-ms 60000 --property print.key=true --property key.separator='${tab}'" \
+            > "${WORK}/rdf.topic" 2>/dev/null || true
+        [ "$(grep -c . "${WORK}/rdf.topic")" -ge "$(( end - start ))" ] \
+            || fail "only $(grep -c . "${WORK}/rdf.topic") of the $(( end - start )) records of ${RDF_TOPIC} could be read"
+    fi
+    # The key is kept as written, so its tombstone has exactly its bytes.
+    removed_keys "${WORK}/rdf.table" "${WORK}/rdf.topic" > "${WORK}/rdf.drop" 2> "${WORK}/rdf.live" \
+        || fail "the keys of ${RDF_TOPIC} can't be compared with the rdf table"
+    if [ -s "${WORK}/rdf.drop" ]; then
+        sed "s/\$/${tab}__shacl_resync_tombstone__/" "${WORK}/rdf.drop" \
+            | kafka_feed kafka-console-producer.sh "--topic ${RDF_TOPIC} --property parse.key=true --property key.separator='${tab}' --property null.marker=__shacl_resync_tombstone__" >/dev/null \
+            || fail "the tombstones of the removed knowledge can't be written to ${RDF_TOPIC}"
+    fi
+    echo "  the knowledge: $(grep -c . "${WORK}/rdf.table") triples in the new package; $(cat "${WORK}/rdf.live") live keys in ${RDF_TOPIC}, $(grep -c . "${WORK}/rdf.drop" || true) of them removed by a tombstone"
+}
+
+statementset_exists() {
+    [ -n "$(kube get beamsqlstatementset "$STATEMENTSET" --ignore-not-found -o name 2>/dev/null)" ] \
+        || { echo "no statementset ${STATEMENTSET} yet"; return 1; }
+}
+
 step_start() {
     local old
-    [ -s "$SAVED" ] || fail "the stopped statementset is not kept in ${SAVED}"
-    old=$(jq -r '.metadata.annotations["shacl-resync/stopped-job"] // empty' "$SAVED")
-    if [ -z "$(kube get beamsqlstatementset "$STATEMENTSET" --ignore-not-found -o name)" ]; then
-        jq 'del(.metadata.annotations["shacl-resync/stopped-job"])' "$SAVED" | kube create -f - >/dev/null \
-            || fail "the statementset ${STATEMENTSET} can't be created from ${SAVED}"
+    if [ "$REPLACE" = package ]; then
+        old=$(cat "${WORK}/stopped_job" 2>/dev/null || true)
+        wait_until "$START_TIMEOUT" "the new package's statementset created" statementset_exists
+    else
+        [ -s "$SAVED" ] || fail "the stopped statementset is not kept in ${SAVED}"
+        old=$(jq -r '.metadata.annotations["shacl-resync/stopped-job"] // empty' "$SAVED")
+        if [ -z "$(kube get beamsqlstatementset "$STATEMENTSET" --ignore-not-found -o name)" ]; then
+            jq 'del(.metadata.annotations["shacl-resync/stopped-job"])' "$SAVED" | kube create -f - >/dev/null \
+                || fail "the statementset ${STATEMENTSET} can't be created from ${SAVED}"
+        fi
     fi
     touch "${WORK}/started"
     wait_until "$START_TIMEOUT" "the ${STATEMENTSET} job running with all its tasks" validation_running "$old"
@@ -530,6 +721,17 @@ step_start() {
     # registers the metrics of a partition once it has its split.
     wait_until "$START_TIMEOUT" "the latest-offset sources of the new job placed" sources_placed "$(cat "${WORK}/ss_job")"
     echo "  its readers of ${LATEST_SOURCES// /, } are placed"
+    # What was in those topics before the readers were placed is not left for
+    # them to read, as for Core Services (RESYNC_BASE): a reader reports no
+    # offset until it reads a record, and without a base the processed step
+    # waited for it to read records that came before it (the CI deploy suite,
+    # attributes written by an earlier suite for entities the snapshot has no
+    # attributes of).
+    : > "$VALIDATION_BASE"
+    for t in $LATEST_SOURCES; do
+        offsets "$t" -1 | awk -v t="$t" '{ print t, $1, $2 }' >> "$VALIDATION_BASE" \
+            || fail "the end offsets of ${t}, a latest-offset source of the validation, can't be read from ${KAFKA_POD}"
+    done
 }
 
 # ---------------------------------------------------------------- the re-snapshot
@@ -668,6 +870,10 @@ quiet_now() {
                 b=$(awk -v t="$t" -v p="$p" '$1 == t && $2 == p { print $3 }' "$RESYNC_BASE")
                 if [ -n "$b" ] && [ "$b" -gt "${s:-0}" ]; then s=$b; fi
             fi
+            if [ "$name" = validation ] && [ -s "$VALIDATION_BASE" ]; then
+                b=$(awk -v t="$t" -v p="$p" '$1 == t && $2 == p { print $3 }' "$VALIDATION_BASE")
+                if [ -n "$b" ] && [ "$b" -gt "${s:-0}" ]; then s=$b; fi
+            fi
             # a partition without records needs nothing
             [ "$e" -gt "${s:-0}" ] || continue
             # currentOffset is the offset of the last record read
@@ -799,7 +1005,11 @@ step_failed() {
     local step=$1 reason=$2 detail note="" command="$COMMAND" now
     trap '' INT TERM
     echo "resync failed in step ${step}: ${reason}" >&2
-    if [ -e "${WORK}/stopped" ] && [ ! -e "${WORK}/started" ]; then
+    if [ -e "${WORK}/stopped" ] && [ ! -e "${WORK}/started" ] && [ "$REPLACE" = package ]; then
+        # A fresh restart would run the old statements on the new tables.
+        note=" The SHACL validation doesn't run: its job was stopped for a new package, and ${command} of that package installs and starts it."
+        echo "The SHACL validation doesn't run: its job was stopped for a new package. After removing the cause, run in semantic-model/shacl2flink: ${command}, with the same package" >&2
+    elif [ -e "${WORK}/stopped" ] && [ ! -e "${WORK}/started" ]; then
         command="make shacl-resync REPLACE=fresh"
         note=" The SHACL validation doesn't run: its job was stopped and not started again, and ${command} starts it."
         echo "The SHACL validation doesn't run: its job was stopped and not started again. After removing the cause, run in semantic-model/shacl2flink: ${command} (the statementset is kept in ${SAVED})" >&2
@@ -873,9 +1083,10 @@ run_step() {
 run_step 0 step_check
 ENVIRONMENT=$(cat "${WORK}/environment")
 STEP_FNS=(step_mark)
-[ "$REPLACE" = fresh ] && STEP_FNS+=(step_stop)
+[ "$REPLACE" = fresh ] || [ "$REPLACE" = package ] && STEP_FNS+=(step_stop)
 STEP_FNS+=(step_close step_reset)
-[ "$REPLACE" = fresh ] && STEP_FNS+=(step_start)
+[ "$REPLACE" = package ] && STEP_FNS+=(step_install)
+[ "$REPLACE" = fresh ] || [ "$REPLACE" = package ] && STEP_FNS+=(step_start)
 STEP_FNS+=(step_snapshot step_processed step_end)
 # a stop by an earlier run counts, so the settle time and the note apply
 for i in "${!STEP_FNS[@]}"; do

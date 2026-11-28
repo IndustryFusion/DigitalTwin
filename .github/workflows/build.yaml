@@ -334,6 +334,7 @@ jobs:
           ../../DebeziumPostgresConnector/fetch-verified.sh ../../DebeziumPostgresConnector/fetch-plugin.sh \
           ../../helm/adopt-kafka-topics.sh ../../helm/check-release-keeps-topics.sh \
           ../../semantic-model/shacl2flink/shacl_resync.sh \
+          ../../semantic-model/shacl2flink/deploy_validation.sh \
           ../../semantic-model/shacl2flink/restart_connect.sh \
           ../../semantic-model/shacl2flink/validation_job.sh \
           ../../semantic-model/shacl2flink/tests/bats/test-shacl-flink-resync/*.bats \
