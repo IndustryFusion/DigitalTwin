@@ -3,7 +3,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: One command for the resync
-The resync SHALL run from one command in shacl2flink, on the deployed validation, in these steps, each after the previous completed: mark the validation degraded, stop the job if a replacement is asked for, close the SHACL alerts, reset Core Services, install the new package if the replacement is by a new package, start the stopped job or the new package's job, trigger a complete re-snapshot, wait until it is processed, end the degraded state. It SHALL report each step's start and end, and refuse to start while another resync runs or `iff.alerts` has more than one partition.
+The resync SHALL run from one command in shacl2flink, on the deployed validation, in these steps, each after the previous completed: mark the validation degraded, stop the job if a replacement is asked for, close the SHACL alerts, reset Core Services, install the new package if the replacement is by a new package, start the stopped job or the new package's job, trigger a complete re-snapshot, wait until it is processed, end the degraded state. It SHALL report each step's start and end.
 
 #### Scenario: Without replacing the job
 - **WHEN** the resync runs without a replacement while the validation runs
@@ -16,14 +16,6 @@ The resync SHALL run from one command in shacl2flink, on the deployed validation
 #### Scenario: No validation deployed
 - **WHEN** the resync runs without a replacement by a new package while no validation statementset is deployed
 - **THEN** it exits with a non-zero status before the first step, its message says to deploy the validation first, and no alert has been changed
-
-#### Scenario: Another resync running
-- **WHEN** the resync runs while another resync is marked as running and its time limit has not passed
-- **THEN** it exits with a non-zero status before the first step, its message names the running resync and its step, and no alert, job or mark has been changed
-
-#### Scenario: More than one partition of iff.alerts
-- **WHEN** the resync runs while `iff.alerts` has more than one partition
-- **THEN** it exits with a non-zero status before the first step, its message names the number of partitions, and no alert, job or mark has been changed
 
 ### Requirement: A fresh job replays nothing
 With a fresh replacement or a replacement by a new package, the resync SHALL stop the validation job and, before a new job starts, remove every record from the topics the job writes and reads back: those of `constraint_table`, `constraint_combination_table` and `constraint_trigger_table`. It SHALL delete no topic and remove no record from any other topic. With a fresh replacement the new job SHALL run the deployed statementset unchanged, with a new package the package's statementset.
@@ -38,7 +30,7 @@ With a fresh replacement or a replacement by a new package, the resync SHALL sto
 - **THEN** every KafkaTopic resource exists throughout with the same topic ID in Kafka, and a record written to `iff.ngsild.entities` before the resync can still be read afterwards
 
 ### Requirement: A failed resync stops
-When a step fails or does not complete within its time limit, the resync SHALL stop without starting a later step, exit with a non-zero status, name the step, and leave `ValidationConsistency` critical, naming that step, until a later resync completes. If the job was stopped and not started again, the message SHALL say that the validation doesn't run and name the command: for a replacement by a new package the deploy of that package, for the others the resync. Running that command again SHALL complete it.
+When a step fails or does not complete within its time limit, the resync SHALL stop without starting a later step, exit with a non-zero status, name the step, and leave `ValidationConsistency` critical, naming that step, until a later resync completes.
 
 #### Scenario: Alerta unreachable
 - **WHEN** Alerta can't be reached during the close step
@@ -47,6 +39,22 @@ When a step fails or does not complete within its time limit, the resync SHALL s
 #### Scenario: Not processed in time
 - **WHEN** a consumer still has records left to read, or the marker has not reached Alerta, when the wait step's time limit has passed
 - **THEN** the resync exits with a non-zero status, names the wait step and the consumer or the marker, and `ValidationConsistency` is critical, naming the wait step
+
+## ADDED Requirements
+
+### Requirement: A resync refuses to start
+The resync SHALL refuse to start while another resync runs or `iff.alerts` has more than one partition.
+
+#### Scenario: Another resync running
+- **WHEN** the resync runs while another resync is marked as running and its time limit has not passed
+- **THEN** it exits with a non-zero status before the first step, its message names the running resync and its step, and no alert, job or mark has been changed
+
+#### Scenario: More than one partition of iff.alerts
+- **WHEN** the resync runs while `iff.alerts` has more than one partition
+- **THEN** it exits with a non-zero status before the first step, its message names the number of partitions, and no alert, job or mark has been changed
+
+### Requirement: A stopped validation names the command that completes it
+If the job was stopped and not started again, the message SHALL say that the validation doesn't run and name the command: for a replacement by a new package the deploy of that package, for the others the resync. Running that command again SHALL complete it.
 
 #### Scenario: Failed while the job is stopped
 - **WHEN** a resync with a fresh job fails after the job was stopped and before it was started
@@ -59,8 +67,6 @@ When a step fails or does not complete within its time limit, the resync SHALL s
 #### Scenario: Run again
 - **WHEN** the resync is run again after a failed step, with the cause removed
 - **THEN** it completes every step, exits with status 0, and `ValidationConsistency` is normal afterwards unless the watchdog keeps an inconsistency
-
-## ADDED Requirements
 
 ### Requirement: Replace the validation by a new package
 The resync SHALL accept, as a third kind of replacement, the replacement of the validation by a new package. It SHALL run as with a fresh job, with the install step between resetting Core Services and starting the job: install the new package, which writes its constraint and knowledge tables and creates its statementset, also when the package's chart equals the one installed before. Its time limit SHALL include the install step.
