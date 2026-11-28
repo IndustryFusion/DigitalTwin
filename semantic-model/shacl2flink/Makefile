@@ -208,7 +208,13 @@ restart-connect:
 # no KMS: it works on the deployed statementset.
 REPLACE ?= none
 RESTORE_FROM ?=
+# The resync works on the deployed package. A KMS= on its command line would
+# suggest it switches to that package, which it doesn't: it refuses (#1195).
 shacl-resync:
+	@if [ "$(origin KMS)" = "command line" ]; then \
+		echo "shacl-resync works on the deployed package and takes no KMS. To deploy another package: make flink-deploy KMS=$(KMS)" >&2; \
+		exit 2; \
+	fi
 	NAMESPACE=$(NAMESPACE) REPLACE=$(REPLACE) RESTORE_FROM=$(RESTORE_FROM) ./shacl_resync.sh
 
 

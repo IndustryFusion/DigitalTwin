@@ -188,7 +188,14 @@ fmt() {
 
 # The Kafka tools run in the broker pod with a small heap, one at a time, as
 # tools/ttl_test.py runs them. Standard input goes to the tool.
-kafka_tool() {  # kafka_tool <tool> <arguments>
+kafka_tool() {  # kafka_tool <tool> <arguments>: a tool that reads no input
+    # No -i, and no stdin at all. With -i, kubectl got the resync's own stdin,
+    # a terminal when run by hand; timeout runs it in a background process
+    # group, so the kernel stopped it with SIGTTIN and the resync hung (#1195).
+    kube exec "$KAFKA_POD" -- sh -c "KAFKA_HEAP_OPTS='-Xmx192M' bin/$1 --bootstrap-server localhost:9092 $2" </dev/null
+}
+
+kafka_feed() {  # <input> | kafka_feed <tool> <arguments>: a tool that reads the piped input
     kube exec -i "$KAFKA_POD" -- sh -c "KAFKA_HEAP_OPTS='-Xmx192M' bin/$1 --bootstrap-server localhost:9092 $2"
 }
 
@@ -735,7 +742,7 @@ step_processed() {
         '{resource: $res, event: "ResyncMarker", environment: $env, severity: "normal", service: ["System"],
           origin: "shacl-resync", value: $v, text: $text}')
     printf '%s\t%s\n' "$(jq -nc --arg res "$STATEMENTSET" '{resource: $res, event: "ResyncMarker"}')" "$record" \
-        | kafka_tool kafka-console-producer.sh "--topic ${ALERTS_TOPIC} --property parse.key=true --property key.separator='${tab}'" >/dev/null \
+        | kafka_feed kafka-console-producer.sh "--topic ${ALERTS_TOPIC} --property parse.key=true --property key.separator='${tab}'" >/dev/null \
         || fail "the marker can't be written to ${ALERTS_TOPIC}"
     written=$(date +%s)
     echo "  the marker ${MARKER} is written to ${ALERTS_TOPIC}"
@@ -814,6 +821,8 @@ run_step() {
     local n=$1 fn=$2 rc reason step started
     : > "${WORK}/reason"
     if [ "$n" = 0 ]; then
+        # Said before the first cluster call, so a slow check is visible (#1195).
+        echo "checking the preconditions: the statementset, its job, Core Services, the alerts topic and the watchdog's marks"
         set +e
         ( set -e; "$fn" )
         rc=$?

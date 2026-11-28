@@ -131,7 +131,8 @@ case "${args}" in
         fi ;;
     "create job --from=cronjob/platform-watchdog "*)
         echo "${args##* }" > "${STATE}/watchdog_job" ;;
-    "exec -i my-cluster-nodes-0 -- sh -c "*)
+    # The Kafka tools: kafka_tool without -i (#1195), kafka_feed with it.
+    "exec my-cluster-nodes-0 -- sh -c "*|"exec -i my-cluster-nodes-0 -- sh -c "*)
         cmd=${*: -1}
         topic=$(sed -n 's/.*--topic \([^ ]*\).*/\1/p' <<<"${cmd}")
         case "${cmd}" in

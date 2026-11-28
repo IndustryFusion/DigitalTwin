@@ -60,9 +60,11 @@ wait_until() {
 }
 
 # Every kubectl call is bounded: an exec or a request that hangs fails the
-# check or the step that made it instead of the whole resync.
+# check or the step that made it instead of the whole resync. A kubectl that
+# doesn't end on timeout's SIGTERM (a stopped one, #1195) is killed
+# KUBECTL_KILL_AFTER seconds later.
 kube() {
-    timeout "$KUBECTL_TIMEOUT" kubectl -n "$NAMESPACE" "$@"
+    timeout -k "${KUBECTL_KILL_AFTER:-10}" "$KUBECTL_TIMEOUT" kubectl -n "$NAMESPACE" "$@"
 }
 
 free_port() {
