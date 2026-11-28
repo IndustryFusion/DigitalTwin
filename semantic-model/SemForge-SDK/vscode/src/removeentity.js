@@ -137,10 +137,17 @@ function subtreeConsequences(plan, entity) {
 
 /** Remove a row's entity with the subtree Copy with subtree copies. */
 async function removeSubtree(clientHolder, node, onDone) {
-  const raw = (node && node.raw) || {};
+  let raw = (node && node.raw) || {};
   const client = clientHolder.client;
+  // A Relationship's row names the entity it points at: that entity goes
+  // with its subtree, and with them every reference to them in the file --
+  // this one above all; the attribute's other instances stay.
+  if (raw.kind !== 'entity' && raw.object) {
+    raw = { kind: 'entity', entity: raw.object, file: raw.file, digest: raw.digest };
+  }
   if (raw.kind !== 'entity' || !raw.entity || !client) {
-    vscode.window.showInformationMessage('SemForge: Remove with subtree works on an entity of a file.');
+    vscode.window.showInformationMessage(
+      'SemForge: Remove with subtree works on an entity of a file, or on a reference to one.');
     return undefined;
   }
   const params = { uri: node.packageUri, entity: raw.entity, file: raw.file || undefined,

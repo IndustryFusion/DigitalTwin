@@ -459,7 +459,7 @@ def test_remove_on_a_case_row_takes_just_that_instance(tmp_path, observed):
         'replies': {'semforge/casePage': dict(page, ok=True)}})
     items = {i['label']: i.get('description') for i in seen['quickPicks'][0]['items']}
     assert items['$(trash) Remove hasPressure[myModelDataset:2]'] == 'this instance only'
-    assert items['$(trash) Remove hasPressure…'] == 'all 2 instances, from this entity'
+    assert items['$(trash) Remove hasPressure…'] == 'ALL 2 instances, from this entity'
     ran = [e['args'][0]['raw'] for e in seen['executed']
            if e['command'] == 'semforge.removeCaseValue']
     assert ran and ran[0]['kind'] == 'dataset' and ran[0]['datasetId'] == 'urn:my-model:dataset:2'

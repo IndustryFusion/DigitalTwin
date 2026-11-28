@@ -1707,14 +1707,25 @@ class CasePages {
       // is one of several, and the whole attribute only when asked for by
       // name. A removal that took every instance of hasHeight when one was
       // meant is the mistake this guards against.
+      // A Relationship's row: the entity it points at can go with its
+      // subtree -- what "remove this child" means -- and with them every
+      // reference to them in this file, this one above all. The attribute's
+      // other instances and their entities stay.
+      if (row.kind === 'Relationship' && row.target) {
+        items.push({ label: `$(trash) Remove what ${row.display || row.name} points at, with its subtree…`,
+          description: 'that entity, its children and the references to them here',
+          run: () => run('semforge.removeSubtree', { kind: 'entity', entity: row.target,
+            file: (card && card.file) || file.path, digest: card ? card.digest : undefined }) });
+      }
       if (row.node && row.node.kind === 'dataset') {
         items.push({ label: `$(trash) Remove ${row.display || row.name}`,
-          description: 'this instance only',
+          description: row.kind === 'Relationship' ? 'only this reference; the entity stays'
+            : 'this instance only',
           run: () => run('semforge.removeCaseValue', row.node) });
       }
       if (row.attributeNode) {
         items.push({ label: `$(trash) Remove ${row.name}…`,
-          description: row.instances > 1 ? `all ${row.instances} instances, from this entity`
+          description: row.instances > 1 ? `ALL ${row.instances} instances, from this entity`
             : 'from this entity',
           run: () => run('semforge.removeCaseValue', row.attributeNode) });
       }

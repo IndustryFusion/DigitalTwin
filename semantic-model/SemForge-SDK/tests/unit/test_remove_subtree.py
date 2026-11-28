@@ -357,14 +357,20 @@ def test_unsaved_edits_are_refused():
 
 
 def test_the_menu_is_on_entities_below_remove_entity_and_not_in_the_palette():
-    """"Not an entity"."""
+    """"Not an entity": on entity rows and reference rows (`…Ref`, a Relationship's
+    row naming the entity it points at), on no other row, not in the palette."""
+    import re
     from test_tree_clicks import PACKAGE_JSON
 
     with open(PACKAGE_JSON) as handle:
         menus = json.load(handle)['contributes']['menus']
     rows = {e['command']: e for e in menus['view/item/context']
             if e['command'] in ('semforge.removeEntity', 'semforge.removeSubtree')}
-    assert rows['semforge.removeSubtree']['when'] == 'view == semforgeModel && viewItem == entity'
+    when = rows['semforge.removeSubtree']['when']
+    shown = re.fullmatch(r'view == semforgeModel && viewItem =~ /\^\(([A-Za-z|]+)\)\$/', when)
+    assert shown, when
+    assert set(shown.group(1).split('|')) == {'entity', 'exampleEditableRef', 'exampleDatasetRef',
+                                              'exampleSeriesRef', 'attributeReadOnlyRef'}
     group, order = rows['semforge.removeSubtree']['group'].split('@')
     assert group == rows['semforge.removeEntity']['group'].split('@')[0]
     assert int(order) == int(rows['semforge.removeEntity']['group'].split('@')[1]) + 1, 'right below it'

@@ -1011,17 +1011,17 @@
         },
         {
           "command": "semforge.goToShape",
-          "when": "view == semforgeModel && viewItem =~ /^(exampleEditable|exampleDataset|exampleSeries|attributeReadOnly)$/",
+          "when": "view == semforgeModel && viewItem =~ /^(exampleEditable|exampleEditableRef|exampleDataset|exampleDatasetRef|exampleSeries|exampleSeriesRef|attributeReadOnly|attributeReadOnlyRef)$/",
           "group": "2_row@8"
         },
         {
           "command": "semforge.goToShapeSource",
-          "when": "view == semforgeModel && viewItem =~ /^(exampleEditable|exampleDataset|exampleSeries|attributeReadOnly)$/",
+          "when": "view == semforgeModel && viewItem =~ /^(exampleEditable|exampleEditableRef|exampleDataset|exampleDatasetRef|exampleSeries|exampleSeriesRef|attributeReadOnly|attributeReadOnlyRef)$/",
           "group": "2_row@9"
         },
         {
           "command": "semforge.goToShape",
-          "when": "view == semforgeModel && viewItem =~ /^(exampleEditable|exampleDataset|exampleSeries|attributeReadOnly)$/ && config.semforge.trees.detail == full",
+          "when": "view == semforgeModel && viewItem =~ /^(exampleEditable|exampleEditableRef|exampleDataset|exampleDatasetRef|exampleSeries|exampleSeriesRef|attributeReadOnly|attributeReadOnlyRef)$/ && config.semforge.trees.detail == full",
           "group": "inline@0"
         },
         {
@@ -1036,92 +1036,92 @@
         },
         {
           "command": "semforge.editValue",
-          "when": "view == semforgeModel && viewItem == exampleEditable",
+          "when": "view == semforgeModel && viewItem =~ /^(exampleEditable|exampleEditableRef)$/",
           "group": "2_row@10"
         },
         {
           "command": "semforge.editValue",
-          "when": "view == semforgeModel && viewItem == exampleEditable && config.semforge.trees.detail == full",
+          "when": "view == semforgeModel && viewItem =~ /^(exampleEditable|exampleEditableRef)$/ && config.semforge.trees.detail == full",
           "group": "inline@1"
         },
         {
           "command": "semforge.editValue",
-          "when": "view == semforgeModel && viewItem == exampleDataset",
+          "when": "view == semforgeModel && viewItem =~ /^(exampleDataset|exampleDatasetRef)$/",
           "group": "2_row@11"
         },
         {
           "command": "semforge.editValue",
-          "when": "view == semforgeModel && viewItem == exampleDataset && config.semforge.trees.detail == full",
+          "when": "view == semforgeModel && viewItem =~ /^(exampleDataset|exampleDatasetRef)$/ && config.semforge.trees.detail == full",
           "group": "inline@1"
         },
         {
           "command": "semforge.editValue",
-          "when": "view == semforgeModel && viewItem == exampleSeries",
+          "when": "view == semforgeModel && viewItem =~ /^(exampleSeries|exampleSeriesRef)$/",
           "group": "2_row@12"
         },
         {
           "command": "semforge.editValue",
-          "when": "view == semforgeModel && viewItem == exampleSeries && config.semforge.trees.detail == full",
+          "when": "view == semforgeModel && viewItem =~ /^(exampleSeries|exampleSeriesRef)$/ && config.semforge.trees.detail == full",
           "group": "inline@1"
         },
         {
           "command": "semforge.addObservation",
-          "when": "view == semforgeModel && viewItem == exampleDataset",
+          "when": "view == semforgeModel && viewItem =~ /^(exampleDataset|exampleDatasetRef)$/",
           "group": "2_row@13"
         },
         {
           "command": "semforge.addObservation",
-          "when": "view == semforgeModel && viewItem == exampleDataset && config.semforge.trees.detail == full",
+          "when": "view == semforgeModel && viewItem =~ /^(exampleDataset|exampleDatasetRef)$/ && config.semforge.trees.detail == full",
           "group": "inline@2"
         },
         {
           "command": "semforge.addObservation",
-          "when": "view == semforgeModel && viewItem == exampleSeries",
+          "when": "view == semforgeModel && viewItem =~ /^(exampleSeries|exampleSeriesRef)$/",
           "group": "2_row@14"
         },
         {
           "command": "semforge.addInstance",
-          "when": "view == semforgeModel && viewItem == exampleDataset",
+          "when": "view == semforgeModel && viewItem =~ /^(exampleDataset|exampleDatasetRef)$/",
           "group": "2_row@15"
         },
         {
           "command": "semforge.setUnitCode",
-          "when": "view == semforgeModel && viewItem == exampleDataset",
+          "when": "view == semforgeModel && viewItem =~ /^(exampleDataset|exampleDatasetRef)$/",
           "group": "2_row@17"
         },
         {
           "command": "semforge.setObservedAt",
-          "when": "view == semforgeModel && viewItem == exampleDataset",
+          "when": "view == semforgeModel && viewItem =~ /^(exampleDataset|exampleDatasetRef)$/",
           "group": "2_row@18"
         },
         {
           "command": "semforge.setObservedAt",
-          "when": "view == semforgeModel && viewItem == exampleEditable",
+          "when": "view == semforgeModel && viewItem =~ /^(exampleEditable|exampleEditableRef)$/",
           "group": "2_row@18"
         },
         {
           "command": "semforge.setUnitCode",
-          "when": "view == semforgeModel && viewItem == exampleSeries",
+          "when": "view == semforgeModel && viewItem =~ /^(exampleSeries|exampleSeriesRef)$/",
           "group": "2_row@17"
         },
         {
           "command": "semforge.addInstance",
-          "when": "view == semforgeModel && viewItem == exampleSeries",
+          "when": "view == semforgeModel && viewItem =~ /^(exampleSeries|exampleSeriesRef)$/",
           "group": "2_row@15"
         },
         {
           "command": "semforge.setDatasetId",
-          "when": "view == semforgeModel && viewItem == exampleDataset",
+          "when": "view == semforgeModel && viewItem =~ /^(exampleDataset|exampleDatasetRef)$/",
           "group": "2_row@16"
         },
         {
           "command": "semforge.setDatasetId",
-          "when": "view == semforgeModel && viewItem == exampleSeries",
+          "when": "view == semforgeModel && viewItem =~ /^(exampleSeries|exampleSeriesRef)$/",
           "group": "2_row@16"
         },
         {
           "command": "semforge.addObservation",
-          "when": "view == semforgeModel && viewItem == exampleSeries && config.semforge.trees.detail == full",
+          "when": "view == semforgeModel && viewItem =~ /^(exampleSeries|exampleSeriesRef)$/ && config.semforge.trees.detail == full",
           "group": "inline@2"
         },
         {
@@ -1176,7 +1176,7 @@
         },
         {
           "command": "semforge.addSubAttribute",
-          "when": "view == semforgeModel && viewItem =~ /^(exampleEditable|exampleDataset|exampleSeries)$/",
+          "when": "view == semforgeModel && viewItem =~ /^(exampleEditable|exampleEditableRef|exampleDataset|exampleDatasetRef|exampleSeries|exampleSeriesRef)$/",
           "group": "1_add@1"
         },
         {
@@ -1391,12 +1391,12 @@
         },
         {
           "command": "semforge.removeSubtree",
-          "when": "view == semforgeModel && viewItem == entity",
+          "when": "view == semforgeModel && viewItem =~ /^(entity|exampleEditableRef|exampleDatasetRef|exampleSeriesRef|attributeReadOnlyRef)$/",
           "group": "2_edit@10"
         },
         {
           "command": "semforge.removeCaseValue",
-          "when": "view == semforgeModel && viewItem =~ /^(exampleEditable|exampleDataset|exampleSeries|attributeReadOnly)$/",
+          "when": "view == semforgeModel && viewItem =~ /^(exampleEditable|exampleEditableRef|exampleDataset|exampleDatasetRef|exampleSeries|exampleSeriesRef|attributeReadOnly|attributeReadOnlyRef)$/",
           "group": "2_edit@9"
         },
         {
@@ -1431,7 +1431,7 @@
         },
         {
           "command": "semforge.pasteEntity",
-          "when": "view == semforgeModel && viewItem =~ /^(example|entity|include|type|exampleEditable|exampleDataset|exampleSeries|attributeReadOnly)$/ && semforge.canPaste",
+          "when": "view == semforgeModel && viewItem =~ /^(example|entity|include|type|exampleEditable|exampleEditableRef|exampleDataset|exampleDatasetRef|exampleSeries|exampleSeriesRef|attributeReadOnly|attributeReadOnlyRef)$/ && semforge.canPaste",
           "group": "2_edit@3"
         }
       ],
