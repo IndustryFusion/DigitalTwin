@@ -143,6 +143,89 @@ jobs:
       with:
         limit-access-to-actor: true
 
+  # Whether the SemForge SDK changed: its end-to-end suites run only then --
+  # and always in the nightly and a manual run, which have nothing to compare.
+  semforge-changes:
+    runs-on: ubuntu-24.04
+    outputs:
+      sdk: ${{ steps.paths.outputs.sdk }}
+    steps:
+    - uses: actions/checkout@v4
+    - id: paths
+      env:
+        EVENT: ${{ github.event_name }}
+        BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+      run: |
+        if [ "$EVENT" != pull_request ] && [ "$EVENT" != push ] || [ -z "$BASE" ] || [ "$BASE" = 0000000000000000000000000000000000000000 ]; then
+          echo "sdk=true" >> "$GITHUB_OUTPUT"; exit 0
+        fi
+        git fetch --no-tags --depth=1 origin "$BASE"
+        if git diff --name-only "$BASE" HEAD | grep -q '^semantic-model/SemForge-SDK/'; then
+          echo "sdk=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "sdk=false" >> "$GITHUB_OUTPUT"
+        fi
+
+  # The extension in a real VS Code against its real language server: every
+  # suite of vscode/test/e2e/suite, under xvfb, in the VS Code version
+  # vscode/test/e2e/run.js pins. run.js fails the run unless every suite file
+  # was loaded and every test ran and passed, and prints the line checked here.
+  semforge-e2e:
+    needs: semforge-changes
+    if: needs.semforge-changes.outputs.sdk == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: semantic-model/SemForge-SDK
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup Miniconda with Python 3.10
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        python-version: "3.10"
+        auto-activate-base: false
+        use-mamba: true
+    - name: Create a new Conda environment
+      run: conda create --name py310 python=3.10 -y
+    - name: Set up the SDK
+      run: |
+        source $CONDA/bin/activate
+        conda activate py310
+        make setup
+    # npm 11 (Node 24), which wrote the lock file: npm 10 ignores its
+    # version-ranged overrides (glob, minimatch) and npm ci refuses the tree.
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 24
+        cache: npm
+        cache-dependency-path: semantic-model/SemForge-SDK/vscode/package-lock.json
+    - name: Install the extension's dependencies and xvfb
+      run: |
+        cd vscode && npm ci --no-audit --no-fund
+        sudo apt-get update -q && sudo apt-get install -y -q xvfb
+    - name: The pinned VS Code version
+      id: vscode
+      run: echo "version=$(grep -oP "VSCODE_VERSION = '\K[^']+" vscode/test/e2e/run.js)" >> "$GITHUB_OUTPUT"
+    - name: VS Code from the cache
+      uses: actions/cache@v4
+      with:
+        path: semantic-model/SemForge-SDK/vscode/.vscode-test/vscode-linux-x64-${{ steps.vscode.outputs.version }}
+        key: semforge-vscode-linux-x64-${{ steps.vscode.outputs.version }}
+    - name: Run every end-to-end suite
+      run: |
+        cd vscode
+        set -o pipefail
+        xvfb-run -a npm run test:e2e 2>&1 | tee e2e.log
+        grep -E "^SemForge e2e: ([0-9]+) of \1 suite files, [0-9]+ tests, [0-9]+ passed, " e2e.log \
+          || { echo "::error::the end-to-end suites did not all run"; exit 1; }
+    - name: Setup tmate session
+      if: ${{ failure() && (contains(github.event.pull_request.labels.*.name, 'ci-debug') || inputs.debug) }}
+      uses: mxschmitt/action-tmate@v3
+      timeout-minutes: 30
+      with:
+        limit-access-to-actor: true
+
   datamodel-tools:
     runs-on: ubuntu-24.04
     steps:

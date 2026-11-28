@@ -32,6 +32,11 @@ const os = require('os');
 const path = require('path');
 const { runTests } = require('@vscode/test-electron');
 
+// The VS Code the suites run in: pinned, so CI and every machine test the same
+// editor, and a new release is taken on on purpose -- with 1.146.0 the edit
+// flows timed out. SEMFORGE_VSCODE_VERSION tries another one.
+const VSCODE_VERSION = '1.148.0';
+
 async function main() {
   const extensionDevelopmentPath = path.resolve(__dirname, '..', '..');
   const sdk = path.resolve(extensionDevelopmentPath, '..');
@@ -59,6 +64,12 @@ async function main() {
         path.basename(source) !== '.semforge-no-history'
     });
   }
+  // Every suite file starts from these: a suite's edits never reach the next
+  // one (suite/index.js puts the workspace back before each file).
+  const pristine = path.join(root, 'pristine');
+  for (const part of ['kms', 'opcua-pumps']) {
+    fs.cpSync(path.join(root, part), path.join(pristine, part), { recursive: true });
+  }
   const ngsild = path.join(root, 'ontology', 'ngsild.ttl');
   const linked = [];
   const walk = (directory) => fs.readdirSync(directory, { withFileTypes: true })
@@ -85,19 +96,23 @@ async function main() {
   // byte-for-byte what it was before the run.
   const source = path.join(sdk, 'tests', 'corpus', 'kms');
   const before = fingerprint(source);
+  const report = path.join(root, 'e2e-report.json');
 
   try {
     await runTests({
+      version: process.env.SEMFORGE_VSCODE_VERSION || VSCODE_VERSION,
       extensionDevelopmentPath,
       extensionTestsPath: path.join(__dirname, 'suite', 'index.js'),
       cachePath: path.join(extensionDevelopmentPath, '.vscode-test'),
       // Packages a test creates declare the default vocabulary: the shared
       // copy, never the network.
       extensionTestsEnv: { SEMFORGE_E2E_WORKSPACE: workspace, SEMFORGE_NGSILD: ngsild,
-        SEMFORGE_E2E_OPCUA: path.join(root, 'opcua-pumps') },
+        SEMFORGE_E2E_OPCUA: path.join(root, 'opcua-pumps'), SEMFORGE_E2E_REPORT: report,
+        SEMFORGE_E2E_PRISTINE: pristine },
       launchArgs: [workspace, '--disable-extensions', '--disable-workspace-trust',
         '--skip-welcome', '--skip-release-notes', '--disable-gpu']
     });
+    console.log(ran(report));
   } finally {
     if (!process.env.SEMFORGE_E2E_KEEP) {
       fs.rmSync(root, { recursive: true, force: true });
@@ -108,6 +123,34 @@ async function main() {
       throw new Error(`the run CHANGED the source corpus: ${changed.join(', ')}`);
     }
   }
+}
+
+/**
+ * What the run did, held against what it should have done: every suite file
+ * (of the shard) loaded, tests run, none skipped. A run that ran nothing --
+ * the suites never started, a filter matched nothing -- fails instead of
+ * passing as green. Returns the line saying so.
+ */
+function ran(report) {
+  if (!fs.existsSync(report)) {
+    throw new Error('the suites wrote no report: they did not run');
+  }
+  const done = JSON.parse(fs.readFileSync(report, 'utf-8'));
+  const { suiteFiles } = require('./suite/index');
+  const expected = suiteFiles(path.join(__dirname, 'suite'));
+  const filtered = !!process.env.SEMFORGE_E2E_GREP;
+  const missing = expected.filter((f) => !done.files.includes(f));
+  if (missing.length) {
+    throw new Error(`suite files not loaded: ${missing.join(', ')}`);
+  }
+  if (!done.tests || done.passes !== done.tests - done.pending) {
+    throw new Error(`${done.tests} test(s) ran, ${done.passes} passed`);
+  }
+  if (done.pending && !filtered) {
+    throw new Error(`${done.pending} test(s) skipped`);
+  }
+  return `SemForge e2e: ${done.files.length} of ${expected.length} suite files, ${done.tests} tests, ` +
+    `${done.passes} passed${filtered ? ' (filtered)' : ''}, ${Math.round(done.ms / 1000)} s`;
 }
 
 /** {file: sha256} for every file under `directory`, links followed. */

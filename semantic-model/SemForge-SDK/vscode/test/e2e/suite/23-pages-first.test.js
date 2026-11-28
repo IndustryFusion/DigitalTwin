@@ -155,12 +155,12 @@ describe('Views and pages say what they are', () => {
     // Asked, as a shown view would: the rows are there, and no heading above them.
     assert.ok((await api.trees.project.getChildren()).length > 0, 'the package view');
     const said = (tree) => tree && tree.view && tree.view.message;
+    // A view may say what is going on (a validation running, "⟳ …"), never
+    // what it is -- whether one runs just now depends on when this is asked.
     for (const tree of [api.trees.project, api.trees.constraints, api.trees.shapes,
-      api.trees.knowledge]) {
-      assert.ok(!said(tree), `no heading: ${said(tree)}`);
+      api.trees.knowledge, api.trees.model]) {
+      assert.ok(!said(tree) || /^⟳/.test(said(tree)), `no heading: ${said(tree)}`);
     }
-    // The model view may say what is going on (a validation running): not what it is.
-    assert.ok(!said(api.trees.model) || /^⟳/.test(said(api.trees.model)), said(api.trees.model));
     const manifest = vscode.extensions.getExtension('industryfusion.semforge').packageJSON;
     const about = manifest.contributes.commands.find((c) => c.command === 'semforge.about.project');
     assert.match(about.title, /^This package:/);

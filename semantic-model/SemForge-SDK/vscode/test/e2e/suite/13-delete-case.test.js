@@ -16,8 +16,8 @@
 
 // Delete… a case and a suite in a real VS Code, from their rows: the file and
 // its entry go, the folders left empty go, what is left still tests -- and
-// the question named the evidence the deletion costs. Runs after 12-clone,
-// whose failing twin is the case deleted here.
+// the question named the evidence the deletion costs. The case deleted is
+// a failing twin it clones first, as 12-clone does.
 
 const assert = require('assert');
 const fs = require('fs');
@@ -32,13 +32,32 @@ async function suiteRow(api, folder) {
     folder);
 }
 
+/** The good case's failing twin, cloned as 12-clone does: the case deleted here. */
+async function twinOf(api) {
+  const original = (await api.trees.model.getChildren(await suiteRow(api, 'test_WorkpieceShape')))
+    .find((n) => n.raw.kind === 'example' && n.raw.file.includes(`${path.sep}good${path.sep}`));
+  const session = answering([
+    { kind: 'pick', label: '$(arrow-swap) Expect the opposite' },
+    { kind: 'input', value: `${path.basename(original.raw.file, '.jsonld')}-violates` },
+    { kind: 'warning' }]);
+  try {
+    const made = await vscode.commands.executeCommand('semforge.cloneTestCase', original);
+    assert.ok(made && made.ok, JSON.stringify(made));
+  } finally {
+    session.restore();
+  }
+  await vscode.commands.executeCommand('workbench.action.closeAllEditors');
+}
+
 describe('Delete… a test case and a suite', () => {
   it('a case, from its row', async () => {
     const api = await semforge();
-    const suite = await suiteRow(api, 'test_WorkpieceShape');
-    const children = await api.trees.model.getChildren(suite);
+    await twinOf(api);
+    const children = await until(async () => {
+      const now = await api.trees.model.getChildren(await suiteRow(api, 'test_WorkpieceShape'));
+      return now.some((n) => n.raw.kind === 'example' && n.raw.file.endsWith('-violates.jsonld')) && now;
+    }, 'the clone in the suite');
     const twin = children.find((n) => n.raw.kind === 'example' && n.raw.file.endsWith('-violates.jsonld'));
-    assert.ok(twin, 'the clone 12-clone made');
     const others = children.filter((n) => n !== twin && n.raw.kind === 'example').map((n) => n.raw.file);
     const session = answering([{ kind: 'warning', button: 'Delete' }]);
     let done;

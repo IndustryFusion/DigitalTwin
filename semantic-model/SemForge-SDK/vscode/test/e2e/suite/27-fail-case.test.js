@@ -46,7 +46,11 @@ describe('a test that should fail', () => {
     // The attribute editor, open and then covered by the case page: hidden while
     // the runs end that its list follows.
     await api.pages.type.receive({ command: 'attribute', row });
-    const editor = require('../../../src/attributepanel').current();
+    const editor = api.pages.attribute;
+    // The case page opens where the focus is: on the editor, so it covers it.
+    // When the editor gets the focus after opening is a matter of timing.
+    editor.panel.reveal(editor.panel.viewColumn, false);
+    await until(() => editor.panel.active, 'the attribute editor focused');
     await answered([{ kind: 'pick', label: '$(error) Should fail' }, { kind: 'input', value: NAME }],
       () => api.pages.type.receive({ command: 'test', row }));
 

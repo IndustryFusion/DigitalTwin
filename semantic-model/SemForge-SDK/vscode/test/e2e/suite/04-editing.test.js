@@ -22,7 +22,7 @@ const assert = require('assert');
 const vscode = require('vscode');
 const fs = require('fs');
 const path = require('path');
-const { WORKSPACE, semforge, row, until, answering, read } = require('./helpers');
+const { WORKSPACE, semforge, row, until, answering, read, pageSettled } = require('./helpers');
 
 const MODEL = 'model-instance.jsonld';
 
@@ -37,10 +37,18 @@ function entity(id) {
 }
 
 async function mainPage(api) {
-  await vscode.commands.executeCommand('semforge.openModelPage');
-  return until(() => api.pages.case.panel && api.pages.case.panel.title === 'Entities: Main' &&
-    api.pages.case.page && api.pages.case.page.kind === 'model' && api.pages.case.page,
-  'the Main page');
+  const pages = api.pages.case;
+  const inFront = () => pages.panel && pages.panel.active && pages.panel.title === 'Entities: Main' &&
+    pages.page && pages.page.kind === 'model' && pages.page;
+  // Already in front: not revealed again. A reveal takes the focus to the page
+  // a moment later -- after the edit's picker had opened, and the workbench
+  // closed it, so the choice was never written.
+  if (!inFront()) {
+    await vscode.commands.executeCommand('semforge.openModelPage');
+    // Opened: drawn and in front, before a picker opens.
+    await until(() => inFront() && pages.drawn, 'the Main page');
+  }
+  return pageSettled(pages, 'the Main page');
 }
 
 /** The page address ("file.card.row") of an attribute on an entity's card. */
@@ -96,10 +104,15 @@ describe('editing from the Main page', () => {
     const api = await semforge();
     const page = await mainPage(api);
     const { at, row: before } = address(page, 'urn:filter:1', 'hasCartridge');
-    await withAnswers([{ kind: 'quickPick', type: 'urn:pump:42', labelStarts: '$(edit) Use' }],
+    const session = await withAnswers([{ kind: 'quickPick', type: 'urn:pump:42', labelStarts: '$(edit) Use' }],
       () => api.pages.case.receive({ command: 'edit', at }));
+    // Said when it fails: what was asked, what was left unanswered, what the file holds.
     await until(() => stored('urn:filter:1', before.node.path) === 'urn:pump:42',
-      'urn:pump:42 written');
+      'urn:pump:42 written').catch((error) => {
+      throw new Error(`${error.message}; asked ${JSON.stringify(session.asked).slice(0, 600)}, ` +
+        `left ${session.left()}, ${before.node.path.join('.')} = ` +
+        `${JSON.stringify(stored('urn:filter:1', before.node.path))}`);
+    });
   });
 
   it('a relationship to another entity, which the shape then reports', async () => {

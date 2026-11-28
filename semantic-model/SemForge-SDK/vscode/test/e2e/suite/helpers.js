@@ -59,6 +59,19 @@ async function semforge() {
   await until(() => api.session.uri, 'the package to be found');
   // The suites drive every tree, so the details column is open for them.
   await vscode.commands.executeCommand('semforge.showDetails');
+  // Every click a suite makes on a page waits until the page has settled
+  // after what came before (#1197): a picker opened while it settled could
+  // close by itself on a slow machine.
+  for (const [name, page] of Object.entries(api.pages)) {
+    if (name !== 'attribute') {
+      settledFirst(page, name);
+    }
+  }
+  const current = Object.getOwnPropertyDescriptor(api.pages, 'attribute');
+  if (current && current.get) {
+    Object.defineProperty(api.pages, 'attribute', { configurable: true,
+      get: () => settledFirst(current.get.call(api.pages), 'attribute') });
+  }
   cached = api;
   return api;
 }
@@ -158,13 +171,23 @@ function answering(answers) {
       accepted.push(thisArg ? handler.bind(thisArg) : handler);
       return subscribe(handler, thisArg, disposables);
     };
+    // When the picker was closed, and by whom: said in `asked` if it was
+    // before the answer was given (the workbench closes one that loses focus).
+    let closed;
+    let closing = false;
+    real.onDidHide(() => {
+      closed = closed || (closing ? 'by the answer' : `by the workbench at ${Date.now() - opened} ms`);
+    });
+    let opened = Date.now();
     let selection = [];
     Object.defineProperty(real, 'selectedItems', {
       configurable: true, get: () => selection, set: (items) => { selection = items; } });
     const shown = real.show.bind(real);
     real.show = () => {
       shown();
+      opened = Date.now();
       const answer = next('quickPick', real.items.map((i) => i.label), ['pick']);
+      const record = asked[asked.length - 1];
       // `enter: true` is a person pressing Enter on what the picker itself
       // highlights -- its default, which need not be the first row.
       const highlighted = (real.activeItems || [])[0];
@@ -176,17 +199,31 @@ function answering(answers) {
         if (answer.type !== undefined) {
           real.value = answer.type;     // fires onDidChangeValue
         }
-        setTimeout(() => {
+        // What was typed may bring the row to pick only when the picker has
+        // answered it (a server request): waited for, as a person waits for
+        // the list to show it -- a fixed pause missed it on a slow machine.
+        const pick = (tries) => {
           const chosen = answer.enter ? highlighted : by(real.items, answer);
+          if (!chosen && tries > 0) {
+            setTimeout(() => pick(tries - 1), 100);
+            return;
+          }
+          if (closed) {
+            record.closed = closed;        // before the answer: said, for the test's message
+          }
           if (!chosen) {
+            record.found = false;
+            closing = true;
             real.hide();
             return;
           }
           real.activeItems = [chosen];
           selection = [chosen];
+          closing = true;
           accepted.forEach((handler) => handler());
-        }, 200);
-      }, 200);
+        };
+        setTimeout(() => pick(answer.type !== undefined ? 150 : 0), 200);
+      }, (answer && answer.after) || 200);    // `after`: answered only then (ms)
     };
     return real;
   });
@@ -228,5 +265,55 @@ async function restoreShapeName(api, from, to, suite) {
   return done;
 }
 
+/**
+ * A page done with what came before: its verdicts in, no click of its own
+ * being handled, no refresh waiting. What a person acts on -- a picker opened
+ * while the page was still settling after an edit could close by itself
+ * (measured 4 of 20 without this wait, 0 of 20 with it).
+ */
+async function pageSettled(pages, what = 'the page') {
+  const verdicts = () => pages.page && pages.page.verdicts;
+  const settled = () => !pages.busy && !pages.refreshPending &&
+    (!verdicts() || ['ready', 'failed'].includes(verdicts().state));
+  await until(settled, `${what} settled`).catch(() => {
+    throw new Error(`${what} did not settle: verdicts ${verdicts() && verdicts().state}, ` +
+      `busy ${pages.busy}, refresh pending ${pages.refreshPending}`);
+  });
+  return pages.page;
+}
+
+// What a page tells the extension about itself, not something a person does.
+const NOTICES = new Set(['editing', 'landed', 'idle']);
+
+/** A page's clicks wait until it has settled, as a person acts on a finished page. */
+function settledFirst(page, name) {
+  if (!page || typeof page.receive !== 'function' || page.semforgeSettledFirst) {
+    return page;
+  }
+  // The page's own code calls receive() too, also from inside a message it is
+  // handling: such a call goes straight through -- waiting for the page to be
+  // idle there would wait on itself.
+  if (typeof page.handle === 'function') {
+    const handle = page.handle.bind(page);
+    page.handle = async (message) => {
+      page.semforgeHandling = (page.semforgeHandling || 0) + 1;
+      try {
+        return await handle(message);
+      } finally {
+        page.semforgeHandling -= 1;
+      }
+    };
+  }
+  const receive = page.receive.bind(page);
+  page.receive = async (message) => {
+    if (!page.semforgeHandling && !(message && NOTICES.has(message.command))) {
+      await pageSettled(page, `the ${name} page`);
+    }
+    return receive(message);
+  };
+  page.semforgeSettledFirst = true;
+  return page;
+}
+
 module.exports = { WORKSPACE, PACKAGE_URI, OPCUA, OPCUA_URI, until, semforge, request, rows, row,
-  answering, read, restoreShapeName };
+  answering, read, restoreShapeName, pageSettled };

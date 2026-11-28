@@ -71,9 +71,15 @@ describe('search in the views', () => {
       vscode.window.createInputBox = real;
     }
     for (const [name, provider] of trees) {
-      const found = await rows(provider);
-      assert.ok(found.length && found.length < before[name].length,
-        `${name}: ${found.length} of ${before[name].length}`);
+      // The server answers a view's search when it is asked: waited for, not
+      // taken as it is at once (the model view had 0 rows for a moment).
+      let found = [];
+      await until(async () => {
+        found = await rows(provider);
+        return found.length && found.length < before[name].length;
+      }, `${name}: the rows of the search`).catch(() => {
+        assert.fail(`${name}: ${found.length} of ${before[name].length}`);
+      });
       const hits = found.filter((node) => node.raw.hit);
       assert.ok(hits.length, name);
       const open = found.find((node) => node.raw.expand);
