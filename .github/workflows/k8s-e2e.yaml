@@ -83,8 +83,23 @@ jobs:
       run: bash test/prepare-platform-for-github-runner.sh images
     - name: Debezium plugin archive from the cache
       uses: ./.github/actions/debezium-archive
+    - name: Maven repository from the cache
+      uses: ./.github/actions/maven-cache
+      with:
+        mode: restore
+        name: platform
+        # build-local-platform.sh pins the Scorpio commit, whose poms decide
+        # Scorpio's dependencies
+        hash: ${{ hashFiles('FlinkOperatorWithCoreServices/CoreServices/pom.xml', 'FlinkSqlGateway/Dockerfile', 'test/build-local-platform.sh') }}
     - name: Build Platform locally
       run: cd test && bash build-local-platform.sh
+    - name: Maven repository into the cache
+      if: success()
+      uses: ./.github/actions/maven-cache
+      with:
+        mode: save
+        name: platform
+        hash: ${{ hashFiles('FlinkOperatorWithCoreServices/CoreServices/pom.xml', 'FlinkSqlGateway/Dockerfile', 'test/build-local-platform.sh') }}
     - name: Save the images
       run: bash test/platform-images.sh save "$RUNNER_TEMP/platform-images.tar.zst"
     - uses: actions/upload-artifact@v4
