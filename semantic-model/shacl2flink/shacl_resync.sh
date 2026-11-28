@@ -799,12 +799,30 @@ source_values() {  # source_values <job id> <sources file>
 }
 
 bridge_lag() {  # the summed lag of the debezium-bridge's group, or fails
-    local out
+    local out rows lag=0 first topic partition end start
     out=$(kafka_tool kafka-consumer-groups.sh "--describe --group ${DEBEZIUM_BRIDGE_GROUP}" 2>/dev/null) || return 1
-    # GROUP TOPIC PARTITION CURRENT-OFFSET LOG-END-OFFSET LAG ...; a partition
-    # without a committed offset ("-") counts as not read.
-    awk -v g="$DEBEZIUM_BRIDGE_GROUP" '$1 == g && $3 ~ /^[0-9]+$/ { found = 1; lag += ($6 ~ /^[0-9]+$/ ? $6 : 1) }
-        END { if (!found) exit 1; print lag + 0 }' <<<"$out"
+    # GROUP TOPIC PARTITION CURRENT-OFFSET LOG-END-OFFSET LAG ...: "<lag>" per
+    # partition the group has an offset for, "- <topic> <partition> <end>"
+    # per partition it has none for ("-").
+    rows=$(awk -v g="$DEBEZIUM_BRIDGE_GROUP" '$1 == g && $3 ~ /^[0-9]+$/ {
+            print ($6 ~ /^[0-9]+$/ ? $6 : "- " $2 " " $3 " " $5) }' <<<"$out")
+    [ -n "$rows" ] || return 1
+    # A partition without an offset counts as one record not read, unless it
+    # holds none (start == end, empty or emptied by retention): the bridge
+    # subscribes from the end and commits nothing before its first record, so
+    # on a platform where Scorpio never held an entity its topic stays
+    # uncommitted (#1204).
+    while read -r first topic partition end; do
+        if [ "$first" != "-" ]; then
+            lag=$(( lag + first ))
+            continue
+        fi
+        [[ "$end" =~ ^[0-9]+$ ]] || { lag=$(( lag + 1 )); continue; }
+        start=$(offsets "$topic" -2 | awk -v p="$partition" '$1 == p { print $2 }') || return 1
+        [[ "$start" =~ ^[0-9]+$ ]] || return 1
+        [ "$end" -le "$start" ] || lag=$(( lag + 1 ))
+    done <<<"$rows"
+    echo "$lag"
 }
 
 source_topics() {  # source_topics <sources file>...: the topics as named in the metrics

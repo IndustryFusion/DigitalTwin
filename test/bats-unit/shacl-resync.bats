@@ -176,7 +176,13 @@ case "${args}" in
                 [ "$n" -gt "${STUB_BRIDGE_LAG_POLLS:-0}" ] || lag=7
                 end=$(awk '{ print $2 }' "${STATE}/topics/iff.ngsild.public.entity.end")
                 echo "GROUP TOPIC PARTITION CURRENT-OFFSET LOG-END-OFFSET LAG CONSUMER-ID HOST CLIENT-ID"
-                echo "debeziumBridgeGroup iff.ngsild.public.entity 0 $(( end - lag )) ${end} ${lag} c1 /10.0.0.1 c1" ;;
+                if [ -n "${STUB_BRIDGE_UNCOMMITTED:-}" ]; then
+                    # a partition the group has no offset for, ending at the
+                    # given offset; it starts where the .start file says
+                    echo "debeziumBridgeGroup iff.ngsild.public.entity 0 - ${STUB_BRIDGE_UNCOMMITTED} - c1 /10.0.0.1 c1"
+                else
+                    echo "debeziumBridgeGroup iff.ngsild.public.entity 0 $(( end - lag )) ${end} ${lag} c1 /10.0.0.1 c1"
+                fi ;;
             *kafka-console-producer.sh*"--topic iff.rdf "*)
                 # the tombstones of removed knowledge (#1165 D6), as written
                 cat >> "${STATE}/rdf.tombstones"
@@ -723,6 +729,33 @@ step 8/8 end the degraded state: done'
     run bash "${SCRIPT}"
     [ "$status" -eq 0 ]
     [ "$(calls "kafka-consumer-groups.sh")" -gt 4 ]
+}
+
+@test "processed: an empty topic the debezium-bridge has no offset for is no lag (#1204)" {
+    # No entity was ever in Scorpio: iff.ngsild.public.entity is empty, and
+    # the bridge, which subscribes from the end, has committed nothing.
+    export STUB_BRIDGE_UNCOMMITTED=0
+    echo "0 0" > "${STATE}/topics/iff.ngsild.public.entity.start"
+    run bash "${SCRIPT}"
+    echo "${output}"
+    [ "$status" -eq 0 ]
+}
+
+@test "processed: a topic emptied by retention that the debezium-bridge has no offset for is no lag (#1204)" {
+    # every record deleted by retention: it ends at 7 and starts at 7
+    export STUB_BRIDGE_UNCOMMITTED=7
+    echo "0 7" > "${STATE}/topics/iff.ngsild.public.entity.start"
+    run bash "${SCRIPT}"
+    echo "${output}"
+    [ "$status" -eq 0 ]
+}
+
+@test "processed: records the debezium-bridge has no offset for keep it waiting" {
+    export STUB_BRIDGE_UNCOMMITTED=7
+    echo "0 2" > "${STATE}/topics/iff.ngsild.public.entity.start"
+    run --separate-stderr bash "${SCRIPT}"
+    [ "$status" -ne 0 ]
+    [[ "${stderr}" == *"the debezium-bridge has 1 records left"* ]]
 }
 
 @test "processed: pendingRecords of the validation job keep it waiting" {
