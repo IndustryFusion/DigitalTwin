@@ -161,6 +161,49 @@ As a result, there must be a new directory `output` with the following files inc
 - **udf.yaml** - User Defined Functions (UDF) for Flink SQL
 
 
+## Compile SPARQL: classic or ladder (alpha)
+
+There are two methods to compile the SPARQL constraints (`sh:sparql`) and rules (`sh:rule`) of a KMS:
+
+| `SPARQL_ENGINE` | |
+|---|---|
+| `classic` (default) | One SQL statement per query. The Flink job grows with the number of queries; up to about 16 this is the cheaper method. |
+| `ladder` (**alpha**) | All queries are rows in the `rdf` table, evaluated by one fixed set of joins. The Flink job does not grow with the number of queries. |
+
+```bash
+make build SPARQL_ENGINE=ladder
+make flink-deploy SPARQL_ENGINE=ladder
+```
+
+Pass it to every `make` which builds. Without it the build is `classic`, whatever was deployed before.
+`ladder` needs a Flink SQL gateway image with the functions in `FlinkSqlGateway/sparql-udf`.
+
+Both methods report the same, with these differences:
+
+- `ladder` does not support user-defined functions (`statetime`, `hash`), `UNION`, a variable as predicate, property
+  paths other than `rdfs:subClassOf*`, `EXISTS`, a `FILTER` inside `OPTIONAL`, a `FILTER (NOT) EXISTS` without a
+  pattern before it, a `FILTER` on outer variables inside `NOT EXISTS`, and casts to `xsd:double` or `xsd:decimal`.
+  Such a query stops the build and is named; there is no fallback.
+- Values are compared, computed and written as `classic` compiles them: two numbers by their value, two texts by their
+  characters, a text and a number not at all, and an error in a condition makes the result unbound, as in SPARQL.
+  `tests/test_sparql_ladder_semantics.py` runs every query of `tests/test_sparql_semantics.py` through both methods.
+- Several SPARQL constraints of one shape share one alert. With `ladder` it is raised if any of them is violated;
+  with `classic` they overwrite each other.
+
+The end-to-end test runs in a shard of its own, `flink-ladder`, when a pull request changes the files of the ladder,
+and in every nightly run:
+`SPARQL_ENGINE=ladder make test-flink-e2e` deploys `tests/e2e-kms` without the shapes the ladder refuses
+(`LADDER_REFUSED_E2E` in the Makefile), and the suites expect nothing of those shapes.
+
+How it works is described in `lib/sparql_ladder.py` and `lib/sparql_ladder_sql.py`. For SQLite its functions are
+registered with `sparql_ladder.register_sqlite`, so `make test-sqlite` cannot run it; `tests/test_sparql_ladder_parity.py`
+compares both methods. The build writes the number of the ladder's joins into `output/sparql-ladder-joins.txt`;
+`tests/bats/test-shacl-flink-ladder`, which `make test-flink-e2e` runs right after its deploy, compares it with the
+running job's plan (`sparql_ladder_joins.py <plan.json>` counts them there) and checks that the deployed SQL is the
+one of `SPARQL_ENGINE`. More means the planner copies levels (see `Functions.Barrier`), which doubles the joins with every
+level: the check runs on every Flink the `flink-ladder` shard and the nightly run on.
+
+
 ## Test locally with SQLite
 
 ```bash

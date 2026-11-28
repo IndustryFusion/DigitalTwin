@@ -21,6 +21,8 @@ import lib.configs as configs
 from lib.shacl_properties_to_sql import translate as translate_properties
 from lib.shacl_sparql_to_sql import translate as translate_sparql
 from lib.shacl_construct_to_sql import translate as translate_construct
+import lib.sparql_ladder_sql as ladder_sql
+from lib.sparql_ladder_sql import translate as translate_ladder
 from lib.configs import shacl_state_ttl
 import ruamel.yaml
 import rdflib
@@ -42,13 +44,16 @@ from the common helmfile configs.')
                         help="Enable checkpointing by putting checkpointing options into the flink sql yaml.")
     parser.add_argument('-d', '--disable-rocksdb', action="store_true", default=False,
                         help="Disable RocksDB state backend.")
+    parser.add_argument('--sparql-engine', choices=['classic', 'ladder'], default='classic',
+                        help="How SPARQL constraints and rules are compiled. classic (default): one SQL statement per \
+query. ladder (ALPHA): all queries as data for one fixed set of joins.")
 
     parsed_args = parser.parse_args(args)
     return parsed_args
 
 
 def main(shaclfile, knowledgefile, context, maps_namespace, output_folder='output', enable_checkpointing=False,
-         disable_rocksdb=False):
+         disable_rocksdb=False, sparql_engine='classic'):
     # If no context is defined, try to derive it from common.yaml
     prefixes = {}
     if context is None:
@@ -82,11 +87,25 @@ accessible: {e}")
     knowledge.parse(knowledgefile)
     errors = []
     problems = []
-    try:
-        sqlite3, (statementsets3, tables3, views3) = \
-            translate_construct(shaclfile, knowledge)
-    except utils.UnsupportedQueries as unsupported:
-        problems += unsupported.problems
+    ladder_rows = ''
+    if sparql_engine == 'ladder':
+        # ALPHA. A query it cannot compile stops the build: there is no silent
+        # fallback to the classic method.
+        sqlite2, (statementsets2, tables2, views2) = '', ([], [], [])
+        sqlite3, (statementsets3, tables3, views3) = '', ([], [], [])
+        try:
+            sqlite3, (statementsets3, tables3, views3), ladder_rows = \
+                translate_ladder(shaclfile, knowledgefile, knowledge, prefixes)
+        except utils.UnsupportedShape as unsupported:
+            errors.append(str(unsupported))
+        except utils.UnsupportedQueries as unsupported:
+            problems += unsupported.problems
+    else:
+        try:
+            sqlite3, (statementsets3, tables3, views3) = \
+                translate_construct(shaclfile, knowledge)
+        except utils.UnsupportedQueries as unsupported:
+            problems += unsupported.problems
 
     try:
         sqlite, (statementsets, tables, views, constraints, postgres_constraints) = \
@@ -97,11 +116,12 @@ accessible: {e}")
         # than the shapes say it does.
         errors.append(str(unsupported))
 
-    try:
-        sqlite2, (statementsets2, tables2, views2) = \
-            translate_sparql(shaclfile, knowledgefile, prefixes)
-    except utils.UnsupportedQueries as unsupported:
-        problems += unsupported.problems
+    if sparql_engine != 'ladder':
+        try:
+            sqlite2, (statementsets2, tables2, views2) = \
+                translate_sparql(shaclfile, knowledgefile, prefixes)
+        except utils.UnsupportedQueries as unsupported:
+            problems += unsupported.problems
 
     # Everything that stands in the way, at once: fixing one error to be shown
     # the next takes a build each.
@@ -146,6 +166,12 @@ accessible: {e}")
             open(os.path.join(output_folder, "shacl-constraints.postgres"), "w") as postgresf:
         print(sqlite + sqlite2 + sqlite3, file=sqlitef)
         print(postgres_constraints, file=postgresf)
+        if ladder_rows:
+            print(ladder_rows, file=postgresf)
+    if ladder_rows:
+        # the deploy test compares it with the running job's plan
+        with open(os.path.join(output_folder, "sparql-ladder-joins.txt"), "w") as joinsf:
+            print(ladder_sql.joins, file=joinsf)
 
     with open(os.path.join(output_folder, "shacl-constraints.yaml"), "w") as f, \
             open(os.path.join(output_folder, "shacl-constraints-maps.yaml"), "w") as fm:
@@ -169,4 +195,4 @@ if __name__ == '__main__':
     context = args.context
     maps_namespace = args.namespace
     main(shaclfile, knowledgefile, context, maps_namespace, enable_checkpointing=args.enable_checkpointing,
-         disable_rocksdb=args.disable_rocksdb)
+         disable_rocksdb=args.disable_rocksdb, sparql_engine=args.sparql_engine)

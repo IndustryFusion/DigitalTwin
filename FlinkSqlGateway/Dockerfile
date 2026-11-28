@@ -11,7 +11,18 @@ ADD .eslintrc.json .eslintrc.json
 WORKDIR /
 RUN npm install && npm run lint && npm run test
 
-FROM flink:1.20.4
+FROM flink:1.20.4 as flink
+
+# The functions of shacl2flink's SPARQL_ENGINE=ladder. No Maven: they need the
+# jars of Flink only.
+FROM eclipse-temurin:11-jdk as sparqludf
+COPY --from=flink /opt/flink/lib /flink-lib
+ADD sparql-udf/ /sparql-udf
+WORKDIR /sparql-udf
+RUN ./build.sh /flink-lib sparql-udf.jar
+
+FROM flink
+COPY --from=sparqludf /sparql-udf/sparql-udf.jar /opt/flink/lib/
 
 RUN curl -fsSL --retry 5 --retry-delay 10 --retry-all-errors -o /tmp/nvm-install.sh https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh && \
     bash /tmp/nvm-install.sh && rm -f /tmp/nvm-install.sh

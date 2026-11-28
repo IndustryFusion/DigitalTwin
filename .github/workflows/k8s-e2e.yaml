@@ -133,7 +133,8 @@ jobs:
     - name: Wait until the Flink jobs run every task
       run: bash test/wait-for-flink-jobs.sh 600
     - name: Run the suites of the shard
-      if: matrix.shard != 'flink-deploy'   # it has none: test-flink-deploy-e2e only
+      # flink-deploy and flink-ladder have no suites of their own: shacl2flink's targets only
+      if: matrix.shard != 'flink-deploy' && matrix.shard != 'flink-ladder'
       run: |
         echo sleep 60s to let the system settle
         sleep 60
@@ -146,11 +147,13 @@ jobs:
         DEBUG=true bats $(bash ../../.github/scripts/e2e-shards.sh suites "${{ matrix.shard }}")
         sudo killall kubefwd || true
     - name: Test shacl2flink against the platform
-      if: matrix.shard == 'flink' || matrix.shard == 'flink-deploy'
+      if: matrix.shard == 'flink' || matrix.shard == 'flink-deploy' || matrix.shard == 'flink-ladder'
       env:
         # flink: deploys a throwaway KMS, asserts real alerts on Kafka, tears it
         # down. flink-deploy: deploys it over a running validation, seven times.
+        # flink-ladder: test-flink-e2e with SPARQL_ENGINE=ladder (alpha).
         E2E_TARGET: ${{ matrix.shard == 'flink-deploy' && 'test-flink-deploy-e2e' || 'test-flink-e2e' }}
+        SPARQL_ENGINE: ${{ matrix.shard == 'flink-ladder' && 'ladder' || 'classic' }}
       run: |
         cd semantic-model/shacl2flink && make setup && make "$E2E_TARGET"
     - name: Resources used

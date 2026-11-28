@@ -30,6 +30,12 @@ HELM_DIR := ../../helm/charts/shacl
 NAMESPACE := iff
 ONTDIR := ../kms/ontology
 CHECKPOINT ?= false
+# How SPARQL constraints and rules are compiled: classic, one statement per query,
+# or ladder (ALPHA), all queries as data for one fixed set of joins. See README.
+SPARQL_ENGINE ?= classic
+# The shapes of tests/e2e-kms that SPARQL_ENGINE=ladder refuses: its end-to-end
+# run deploys the KMS without them (tests/e2e-kms/without_shapes.py).
+LADDER_REFUSED_E2E := E2EQueryAnyAttributeShape
 COMMON_CONFIG_FILE = ../../helm/common.yaml
 ENVIRONMENT_CONFIG_FILE = ../../helm/environment/default.yaml
 FUSEKI_HOSTNAME = $$(cat $(ENVIRONMENT_CONFIG_FILE) | yq '.fuseki.externalHostname')
@@ -73,7 +79,7 @@ build: $(SHACL) $(KNOWLEDGE) $(MODEL)
 	${PYTHON} create_udfs.py
 	$(PYTHON) create_ngsild_tables.py $(KAFKA_TOPICS)
 	$(PYTHON) create_ngsild_models.py $(SHACL) $(KNOWLEDGE) $(MODEL)
-	$(PYTHON) create_sql_checks_from_shacl.py $(CHECKPOINTSWITCH) $(NOROCKSDBSWITCH) $(SHACL) $(KNOWLEDGE)
+	$(PYTHON) create_sql_checks_from_shacl.py $(CHECKPOINTSWITCH) $(NOROCKSDBSWITCH) --sparql-engine $(SPARQL_ENGINE) $(SHACL) $(KNOWLEDGE)
 
 # Which SPARQL expressions of the package cannot be compiled, and why, without a build.
 check-queries: $(SHACL)
@@ -87,7 +93,7 @@ helm: build
 	mkdir -p ${HELM_DIR}
 	rm -rf ${HELM_DIR}/templates 
 	cp -rf ${OUTPUTDIR} ${HELM_DIR}/templates
-	rm -f ${HELM_DIR}/templates/*.sqlite ${HELM_DIR}/templates/*.postgres ${HELM_DIR}/templates/core.yaml ${HELM_DIR}/templates/knowledge.yaml ${HELM_DIR}/templates/rdf-maps.yaml
+	rm -f ${HELM_DIR}/templates/*.sqlite ${HELM_DIR}/templates/*.postgres ${HELM_DIR}/templates/*.txt ${HELM_DIR}/templates/core.yaml ${HELM_DIR}/templates/knowledge.yaml ${HELM_DIR}/templates/rdf-maps.yaml
 	rm -f ${HELM_DIR}/templates/shacl-constraints*.yaml
 	cp Chart.yaml ${HELM_DIR}
 
@@ -286,15 +292,25 @@ test-full-flink-deployment:
 #
 # The teardown of both must run even when the tests fail, otherwise a red
 # build leaves a statementset behind and the next run inherits it.
-E2E_KMS_VARS = SHACL=$(CURDIR)/tests/e2e-kms/shacl.ttl KNOWLEDGE=$(CURDIR)/tests/e2e-kms/knowledge.ttl \
-	MODEL=$(CURDIR)/tests/e2e-kms/model-instance.jsonld
+#
+# With SPARQL_ENGINE=ladder (alpha) test-flink-e2e deploys the same KMS
+# without the shapes the ladder refuses; the suites skip what those raise, and
+# test-shacl-flink-ladder checks that the job runs the ladder, joined as often
+# as the build says.
+E2E_KMS = $(if $(filter ladder,$(SPARQL_ENGINE)),$(CURDIR)/e2e-kms-ladder,$(CURDIR)/tests/e2e-kms)
+E2E_KMS_VARS = SHACL=$(E2E_KMS)/shacl.ttl KNOWLEDGE=$(E2E_KMS)/knowledge.ttl MODEL=$(E2E_KMS)/model-instance.jsonld
 
+test-flink-e2e: export SPARQL_ENGINE := $(SPARQL_ENGINE)
 test-flink-e2e:
-	@echo deploy throwaway e2e KMS
+	@echo deploy throwaway e2e KMS, SPARQL_ENGINE=$(SPARQL_ENGINE)
+ifeq ($(SPARQL_ENGINE),ladder)
+	$(PYTHON) tests/e2e-kms/without_shapes.py tests/e2e-kms $(E2E_KMS) $(LADDER_REFUSED_E2E)
+endif
 	$(MAKE) flink-deploy $(E2E_KMS_VARS); rc=$$?; \
 		if [ $$rc -eq 0 ]; then \
 			ln -fs ../../../../test/bats/lib tests/bats/lib || echo 'Bats framework not installed'; \
-			( cd tests/bats && bats test-shacl-flink-e2e test-shacl-flink-scorpio-e2e test-shacl-flink-resync ) || rc=1; \
+			( cd tests/bats && bats test-shacl-flink-ladder test-shacl-flink-e2e test-shacl-flink-scorpio-e2e \
+				test-shacl-flink-resync ) || rc=1; \
 			echo "the platform watchdog with the validation deployed"; \
 			VALIDATION_DEPLOYED=true bats $(CURDIR)/../../test/bats/test-jobs/platform-watchdog.bats || rc=1; \
 			rm -f tests/bats/lib; \

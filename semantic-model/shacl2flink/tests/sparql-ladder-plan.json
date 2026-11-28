@@ -1,0 +1,74 @@
+{
+ "plan": {
+  "nodes": [
+   {
+    "id": "386ba937a6d9a74ba0125a5b6b166e88",
+    "description": "[770]:Join(joinType=[LeftOuterJoin], where=[((node = rule) AND (k = $f6))], select=[id, deleted, rule, event, severity, msg, $f6, node, k, b], leftInputSpec=[NoUniqueKey], rightInputSpec=[NoUniqueKey])"
+   },
+   {
+    "id": "66e57b58ad60f54dfdb68a88c30c0977",
+    "description": "[728]:Join(joinType=[InnerJoin], where=[(type = cls)], select=[type, id, deleted, rule, cls, event, severity, msg], leftInputSpec=[HasUniqueKey], rightInputSpec=[NoUniqueKey])"
+   },
+   {
+    "id": "1bd7cee1167c49df537fe09bc7a6f4f3",
+    "description": "[764]:Join(joinType=[LeftOuterJoin], where=[((node = node0) AND (k = k0))], select=[node, k, b, path, node0, k0, b0], leftInputSpec=[NoUniqueKey], rightInputSpec=[NoUniqueKey])"
+   },
+   {
+    "id": "b4e5b08a50ea29e6b0294c9cbfe7561b",
+    "description": "[755]:Join(joinType=[LeftOuterJoin], where=[((node = node0) AND (k = k0))], select=[node, k, b, path, node0, k0, b0], leftInputSpec=[NoUniqueKey], rightInputSpec=[NoUniqueKey])"
+   },
+   {
+    "id": "285bead92a5d201e9619f7f6a7681a93",
+    "description": "[748]:Join(joinType=[InnerJoin], where=[((p = p0) AND (src0 = src) AND ((cs = '') OR (cs = s)) AND ((co = '') OR (co = o)))], select=[p, s, o, ts, src0, p0, src, cs, co, flt, node, side, path, keyspec, lvl], leftInputSpec=[NoUniqueKey], rightInputSpec=[NoUniqueKey])"
+   },
+   {
+    "id": "080ab640089d0cdb9f6327d527766ad6",
+    "description": "[41]:Join(joinType=[LeftOuterJoin], where=[((subject = $f80) AND (object = $f81))], select=[id, id0, propertyPath, subpropertyPath, subpropertyPath2, propertyClass, severity, datasetId, datasetId0, datasetId1, type3, $f80, $f81, subject, object], leftInputSpec=[NoUniqueKey], rightInputSpec=[NoUniqueKey])"
+   },
+   {
+    "id": "d46894b737207d300be920f79a785299",
+    "description": "[32]:Join(joinType=[LeftOuterJoin], where=[($f76 = id1)], select=[id, id0, propertyPath, subpropertyPath, subpropertyPath2, propertyClass, severity, datasetId, datasetId0, datasetId1, $f76, type, id1], leftInputSpec=[NoUniqueKey], rightInputSpec=[JoinKeyContainsUniqueKey])"
+   },
+   {
+    "id": "48a83c69e61c33cef3a3529f8365fdd5",
+    "description": "[27]:Join(joinType=[LeftOuterJoin], where=[((subpropertyPath2 = name) AND (entityId = id) AND (parentId = id2))], select=[id, id0, propertyPath, subpropertyPath, subpropertyPath2, propertyClass, severity, type0, attributeValue, datasetId, deleted0, id2, type1, attributeValue0, datasetId0, deleted1, id1, parentId, entityId, name, type, attributeValue1, datasetId1, deleted], leftInputSpec=[NoUniqueKey], rightInputSpec=[HasUniqueKey])"
+   },
+   {
+    "id": "1b42647014415d7cddfc8945d24ea631",
+    "description": "[24]:Join(joinType=[LeftOuterJoin], where=[((subpropertyPath = name) AND (entityId = id) AND (parentId = id1))], select=[id, id0, propertyPath, subpropertyPath, subpropertyPath2, propertyClass, severity, id1, type0, attributeValue, datasetId, deleted0, id2, parentId, entityId, name, type, attributeValue0, datasetId0, deleted], leftInputSpec=[NoUniqueKey], rightInputSpec=[HasUniqueKey])"
+   },
+   {
+    "id": "014029f281e0494fd89ebfc0b93cc369",
+    "description": "[19]:Join(joinType=[LeftOuterJoin], where=[((propertyPath = name) AND (entityId = id))], select=[id, id0, propertyPath, subpropertyPath, subpropertyPath2, propertyClass, severity, id1, entityId, name, type, attributeValue, datasetId, deleted], leftInputSpec=[NoUniqueKey], rightInputSpec=[HasUniqueKey])"
+   },
+   {
+    "id": "fb3c271169d645a7f4e5635444d49142",
+    "description": "[10]:Join(joinType=[InnerJoin], where=[(type = targetClass)], select=[type, id, id0, targetClass, propertyPath, subpropertyPath, subpropertyPath2, propertyClass, severity], leftInputSpec=[HasUniqueKey], rightInputSpec=[HasUniqueKey])"
+   },
+   {
+    "id": "d8cea8eee60a3ac6cccf8f550445c8e3",
+    "description": "[94]:Join(joinType=[LeftOuterJoin], where=[((subject = $f80) AND (object = $f81))], select=[id, id0, propertyPath, subpropertyPath, subpropertyPath2, severity, nodeType, datasetId, nodeType0, datasetId0, nodeType1, datasetId1, $f80, $f81, subject, object], leftInputSpec=[NoUniqueKey], rightInputSpec=[NoUniqueKey])"
+   },
+   {
+    "id": "393cb3f1c1d138e91c779a95bd8284f5",
+    "description": "[91]:Join(joinType=[LeftOuterJoin], where=[($f76 = id1)], select=[id, id0, propertyPath, subpropertyPath, subpropertyPath2, propertyClass, severity, nodeType, datasetId, nodeType0, datasetId0, nodeType1, datasetId1, $f76, type, id1], leftInputSpec=[NoUniqueKey], rightInputSpec=[JoinKeyContainsUniqueKey])"
+   },
+   {
+    "id": "bcd2ec98dc9511781ac77d2a7a3117e4",
+    "description": "[88]:Join(joinType=[LeftOuterJoin], where=[((subpropertyPath2 = name) AND (entityId = id) AND (parentId = id2))], select=[id, id0, propertyPath, subpropertyPath, subpropertyPath2, propertyClass, severity, nodeType, type0, attributeValue, datasetId, deleted0, id2, nodeType0, type1, attributeValue0, datasetId0, deleted1, id1, parentId, entityId, name, nodeType1, type, attributeValue1, datasetId1, deleted], leftInputSpec=[NoUniqueKey], rightInputSpec=[HasUniqueKey])"
+   },
+   {
+    "id": "20aa088902edc16c2eb68582b4d4803f",
+    "description": "[85]:Join(joinType=[LeftOuterJoin], where=[((subpropertyPath = name) AND (entityId = id) AND (parentId = id1))], select=[id, id0, propertyPath, subpropertyPath, subpropertyPath2, propertyClass, severity, id1, nodeType, type0, attributeValue, datasetId, deleted0, id2, parentId, entityId, name, nodeType0, type, attributeValue0, datasetId0, deleted], leftInputSpec=[NoUniqueKey], rightInputSpec=[HasUniqueKey])"
+   },
+   {
+    "id": "4bffc93e728ad2f81ab6180df967cd43",
+    "description": "[80]:Join(joinType=[LeftOuterJoin], where=[((propertyPath = name) AND (entityId = id))], select=[id, id0, propertyPath, subpropertyPath, subpropertyPath2, propertyClass, severity, id1, entityId, name, nodeType, type, attributeValue, datasetId, deleted], leftInputSpec=[NoUniqueKey], rightInputSpec=[HasUniqueKey])"
+   },
+   {
+    "id": "df36612d485565d7ff0af954ab4a391f",
+    "description": "[72]:Join(joinType=[InnerJoin], where=[(type = targetClass)], select=[type, id, id0, targetClass, propertyPath, subpropertyPath, subpropertyPath2, propertyClass, severity], leftInputSpec=[HasUniqueKey], rightInputSpec=[HasUniqueKey])"
+   }
+  ]
+ }
+}

@@ -186,6 +186,12 @@ QUERY_CASES=(
     "upper|SameAttribute Message|\"${E2E}/hasE2EUpper\":{\"type\":\"Property\",\"value\":60}"
     "message|SameAttribute Message|\"${E2E}/hasE2EUpper\":{\"type\":\"Property\",\"value\":70},\"${E2E}/hasE2ELower\":{\"type\":\"Property\",\"value\":9}"
 )
+# SPARQL_ENGINE=ladder (alpha) deploys the KMS without the shapes it refuses
+# (LADDER_REFUSED_E2E in the Makefile): nothing of them is expected.
+if [ "${SPARQL_ENGINE:-classic}" = ladder ]; then
+    QUERY_SHAPES=${QUERY_SHAPES/AnyAttribute /}
+    QUERY_CASES=("${QUERY_CASES[@]/note|AnyAttribute|/note||}")
+fi
 # The text E2EQueryMessageShape builds with CONCAT and STR (#1111): name|text.
 QUERY_MESSAGES=(
     "upper|upper \"60\" > <limit> {50}, no lower, a \"machine\" <q> / a \"machine\" <q>"

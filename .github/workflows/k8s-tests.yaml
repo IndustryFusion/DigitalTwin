@@ -87,10 +87,13 @@ jobs:
         # extra coverage. The production ../kms/default is still compiled on every
         # build by the Build workflow (make build), just not deployed here.
         # The deployments over a running validation first: they start from no
-        # validation deployed and leave none (#1202). Both run, even when the
-        # first fails.
+        # validation deployed and leave none (#1202). Then the e2e with each
+        # SPARQL method: SPARQL_ENGINE=ladder (alpha) every night, while pull
+        # requests run its shard only for its own files (e2e-shards.sh). All
+        # run, even when one fails.
         rc=0
         ( cd semantic-model/shacl2flink && make test-flink-deploy-e2e ) || rc=1
         ( cd semantic-model/shacl2flink && make test-flink-e2e ) || rc=1
+        ( cd semantic-model/shacl2flink && SPARQL_ENGINE=ladder make test-flink-e2e ) || rc=1
         exit $rc
 

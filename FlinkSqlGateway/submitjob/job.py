@@ -19,6 +19,13 @@ with open('data/SQL-structures.json') as f:
 
     table_env.get_config().set("pipeline.classpaths", jars)
 
+    # Register the functions of shacl2flink's SPARQL_ENGINE=ladder. Their
+    # jar is in /opt/flink/lib, for the Task Managers as well.
+    for name in ('Route', 'Step', 'Value', 'Text', 'Group'):
+        table_env.create_java_temporary_system_function(
+            f'sparql_{name.lower()}',
+            f'org.industryfusion.sparql.Functions${name}')
+
     # Register udf models
     for file in os.scandir('udf'):
         if file.name.endswith('.py') and file.name != '__init__.py':

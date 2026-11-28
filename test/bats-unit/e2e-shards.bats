@@ -95,6 +95,31 @@ select_for() {
     [ -n "${output}" ]
 }
 
+@test "a change to the ladder's own files runs the ladder shard too" {
+    local path
+    for path in semantic-model/shacl2flink/lib/sparql_ladder.py semantic-model/shacl2flink/lib/sparql_ladder_sql.py \
+                semantic-model/shacl2flink/tests/test_sparql_ladder_semantics.py \
+                semantic-model/shacl2flink/tests/sparql-ladder-vectors.json \
+                semantic-model/shacl2flink/tests/sparql-ladder-plan.json semantic-model/shacl2flink/sparql_ladder_joins.py \
+                semantic-model/shacl2flink/tests/bats/test-shacl-flink-ladder/test-shacl-flink-ladder.bats \
+                semantic-model/shacl2flink/tests/e2e-kms/without_shapes.py \
+                FlinkSqlGateway/sparql-udf/src/org/industryfusion/sparql/Expression.java; do
+        run select_for "${path}"
+        [ "${output}" = '["flink","flink-ladder"]' ] || { echo "${path}: ${output}"; false; }
+    done
+}
+
+@test "other shacl2flink and gateway changes do not run the ladder shard" {
+    local path
+    for path in semantic-model/shacl2flink/lib/sparql_to_sql.py semantic-model/shacl2flink/Makefile \
+                FlinkSqlGateway/submitjob/job.py; do
+        run select_for "${path}"
+        [ "${output}" = '["flink","flink-deploy"]' ] || { echo "${path}: ${output}"; false; }
+    done
+    run bash "${SCRIPT}" suites flink-ladder
+    [ "${status}" -eq 0 ] && [ -z "${output}" ]
+}
+
 @test "a bridge change runs every shard the bridges are part of" {
     run select_for KafkaBridge/lib/mqttBridge.js
     [ "${output}" = '["device","broker","flink","flink-deploy"]' ]
@@ -197,7 +222,7 @@ select_for() {
 
 @test "--all selects every shard regardless of the paths" {
     run bash -c "printf 'README.md\n' | bash '${SCRIPT}' select --all"
-    [ "${output}" = '["device","broker","flink","flink-deploy"]' ]
+    [ "${output}" = '["device","broker","flink","flink-deploy","flink-ladder"]' ]
 }
 
 @test "no changed paths select nothing" {

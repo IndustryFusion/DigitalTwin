@@ -31,7 +31,10 @@
 # flink runs.
 set -euo pipefail
 
-SHARDS=(device broker flink flink-deploy)
+# flink-ladder: shacl2flink's test-flink-e2e with SPARQL_ENGINE=ladder (alpha),
+# for changes to the ladder's own files; it has no suites of its own. The
+# nightly (k8s-tests.yaml) runs it on every change.
+SHARDS=(device broker flink flink-deploy flink-ladder)
 
 suites() {
     case "$1" in
@@ -40,6 +43,7 @@ suites() {
                      test-keycloak test-operators test-scorpio ;;
         flink)  echo test-core-sql-services ;;  # plus shacl2flink's test-flink-e2e
         flink-deploy) ;;                         # shacl2flink's test-flink-deploy-e2e only
+        flink-ladder) ;;                          # shacl2flink's test-flink-e2e only
         *) echo "unknown shard: $1" >&2; return 1 ;;
     esac
 }
@@ -84,6 +88,13 @@ shards_for() {
             echo broker ;;
         # a suite only the flink shard runs
         test/bats/test-core-sql-services/*) echo flink ;;
+        # SPARQL_ENGINE=ladder (alpha): its compiler, its functions and their
+        # tests, before the rules of shacl2flink and the gateway
+        semantic-model/shacl2flink/lib/sparql_ladder*|semantic-model/shacl2flink/tests/test_sparql_ladder*|\
+        semantic-model/shacl2flink/sparql_ladder_joins.py|semantic-model/shacl2flink/tests/sparql-ladder-*.json|\
+        semantic-model/shacl2flink/tests/e2e-kms/without_shapes.py|semantic-model/shacl2flink/tests/bats/test-shacl-flink-ladder/*|\
+        semantic-model/shacl2flink/tests/test_e2e_without_shapes.py|FlinkSqlGateway/sparql-udf/*)
+            echo flink flink-ladder ;;
         FlinkSqlGateway/*|FlinkOperatorWithCoreServices/*|FlinkSqlServicesOperator/*|\
         semantic-model/shacl2flink/*|helm/charts/flink/*|helm/charts/sql-core/*|\
         helm/helmfile-shacl.yaml)
@@ -102,7 +113,8 @@ select_shards() {
             [ -n "$path" ] || continue
             for shard in $(shards_for "$path"); do
                 if [ "$shard" = all ]; then
-                    for s in "${SHARDS[@]}"; do picked[$s]=1; done
+                    # every shard but the ladder's: that one runs for its own files
+                    for s in "${SHARDS[@]}"; do [ "$s" = flink-ladder ] || picked[$s]=1; done
                 else
                     picked[$shard]=1
                 fi
