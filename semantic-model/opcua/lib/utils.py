@@ -379,6 +379,45 @@ def used_prefixes(data, namespaces):
     return {prefix: namespaces[prefix] for prefix in sorted(used)}
 
 
+# A prefix rdflib generates for a namespace without one (ns1, ns2, ...).
+GENERATED_PREFIX = re.compile(r'ns[0-9]+')
+
+
+def merge_namespaces(*namespace_maps):
+    """The namespaces of several graphs as one context, {prefix: {'@id': iri, '@prefix': True}}, later maps winning
+    for a proper prefix as in a dictionary merge (#1226):
+    - a generated prefix (ns<N>) goes when a proper prefix names its namespace: one prefix per namespace (gh-1001);
+      two proper prefixes of one namespace (di and devices) both stay;
+    - a namespace under several generated prefixes keeps the lowest;
+    - each graph numbers its generated prefixes from 1, so one may name two namespaces: the lower IRI keeps it, the
+      others get the lowest unused numbers, in the order of their IRIs, whatever order the maps come in."""
+    proper = {}
+    generated = {}  # iri -> the numbers of its generated prefixes
+    for namespaces in namespace_maps:
+        for prefix, entry in namespaces.items():
+            if GENERATED_PREFIX.fullmatch(prefix):
+                generated.setdefault(entry['@id'], set()).add(int(prefix[2:]))
+            else:
+                proper[prefix] = entry
+    named = {entry['@id'] for entry in proper.values()}
+    claims = {}  # number -> the iris whose lowest generated prefix it is
+    for iri in sorted(generated):
+        if iri not in named:
+            claims.setdefault(min(generated[iri]), []).append(iri)
+    result = dict(proper)
+    renamed = []
+    for number in sorted(claims):
+        first, *others = sorted(claims[number])
+        result[f'ns{number}'] = {'@id': first, '@prefix': True}
+        renamed.extend(others)
+    number = 1
+    for iri in sorted(renamed):
+        while f'ns{number}' in result:
+            number += 1
+        result[f'ns{number}'] = {'@id': iri, '@prefix': True}
+    return result
+
+
 def get_datatype(graph, node, typenode, templatenode, basens):
     datatype = next(graph.objects(node, basens['hasDatatype']), None)
     if datatype is None:

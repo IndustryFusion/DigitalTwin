@@ -290,3 +290,44 @@ if ! echo "${MINIMAL_OUT}" | grep -q "unrecognized arguments: --minimalshacl"; t
     exit 1
 fi
 echo "Success: --minimalshacl is rejected"
+
+echo "==> an import naming a namespace with a generated prefix (#1226)"
+echo ------------------------------------------------------------------
+# The Machinery ontology under rdflib's generated prefix ns11 instead of machinery (same triples, as a file
+# serialized without that binding would carry it). The package still names the namespace once, machinery as the
+# namespace declares (base:hasPrefix), in the context as in shacl.ttl.
+IFS=$' \t\n'
+sed 's/\bmachinery:/ns11:/g' ${MACHINERY_ONTOLOGY} > machinery-ns11.ttl
+if ! grep -q '^@prefix ns11: <http://opcfoundation.org/UA/Machinery/>' machinery-ns11.ttl; then
+    echo "machinery-ns11.ttl has no ns11 prefix. Exiting with error."
+    exit 1
+fi
+python3 ${NODESET2OWL} test_interfaces.NodeSet2.xml -i ${BASE_ONTOLOGY} ${CORE_ONTOLOGY} ${DEVICES_ONTOLOGY} machinery-ns11.ttl \
+    -v http://example.com/v0.1/UA/ -p test --serverUri ${SERVER_URI} -o ${NODESET2OWL_RESULT} || exit 1
+startstop_context_server "Starting context server" true
+if ! python3 ${OWL2INSTANCES} -t ${TESTURI}AlphaType -n ${TESTURI} ${NODESET2OWL_RESULT} -xc ${LOCAL_CONTEXT} > output.log 2>&1; then
+    tail -5 output.log
+    exit 1
+fi
+startstop_context_server "Stopping context server" false
+MACHINERY_PREFIXES=$(python3 - ${CONTEXT_FILE} <<'PYTHON'
+import json
+import sys
+entries = {}
+for part in json.load(open(sys.argv[1]))['@context']:
+    if isinstance(part, dict):
+        entries.update(part)
+print(' '.join(sorted(prefix for prefix, entry in entries.items()
+                      if isinstance(entry, dict) and entry.get('@id') == 'http://opcfoundation.org/UA/Machinery/')))
+PYTHON
+)
+if [ "${MACHINERY_PREFIXES}" != "machinery" ]; then
+    echo "The context names the Machinery namespace '${MACHINERY_PREFIXES}', not once as machinery. Exiting with error."
+    exit 1
+fi
+if grep -n 'ns11' ${CONTEXT_FILE} ${SHACL}; then
+    echo "The generated prefix ns11 is in the package. Exiting with error."
+    exit 1
+fi
+rm -f machinery-ns11.ttl
+echo "Success: one prefix for Machinery (machinery) in the context, no ns11 in the context or shacl.ttl"

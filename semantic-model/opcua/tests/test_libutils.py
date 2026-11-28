@@ -7,14 +7,15 @@ from urllib.parse import quote
 import unittest
 from unittest.mock import MagicMock, patch
 from rdflib import Graph, Namespace, URIRef, Literal, BNode
-from rdflib.namespace import RDFS, XSD, OWL, RDF
+from rdflib.namespace import RDFS, XSD, OWL, RDF, SH
 from rdflib.collection import Collection
 from lib.utils import RdfUtils, downcase_string, isNodeId, convert_to_json_type, idtype2String, extract_namespaces, \
                                 get_datatype, attributename_from_type, normalize_angle_bracket_name, normalize_namespaceuri, \
                                 contains_both_angle_brackets, get_typename, get_common_supertype, rdfStringToPythonBool, \
                                 get_rank_dimensions, get_type_and_template, OntologyLoader, file_path_to_uri, create_list, \
                                 extract_subgraph, dump_without_prefixes, get_contentclass, quote_url, merge_attributes, dump_graph, \
-                                is_subclass, expand_term, rank_value_to_string, nodeId_to_iri, UARDF, used_prefixes
+                                is_subclass, expand_term, rank_value_to_string, nodeId_to_iri, UARDF, used_prefixes, \
+                                merge_namespaces
 
 
 class TestNormalizeNamespaceUri(unittest.TestCase):
@@ -1044,6 +1045,61 @@ class TestUsedPrefixes(unittest.TestCase):
 
     def test_nothing_used(self):
         self.assertEqual(used_prefixes([], {'a': {}}), {})
+
+
+def prefix_entry(iri):
+    return {'@id': iri, '@prefix': True}
+
+
+class TestMergeNamespaces(unittest.TestCase):
+    """The context of a package: one prefix per namespace (gh-1001), generated ns<N> prefixes of rdflib only
+    where no other prefix names the namespace, and never two namespaces under one prefix (#1226)."""
+    M = 'http://opcfoundation.org/UA/Machinery/'
+    A = 'http://example.org/a/'
+    B = 'http://example.org/b/'
+    C = 'http://example.org/c/'
+
+    def test_a_generated_prefix_goes_when_another_prefix_names_the_namespace(self):
+        result = merge_namespaces({'machinery': prefix_entry(self.M)},
+                                  {'ns11': prefix_entry(self.M), 'sh': prefix_entry(str(SH))})
+        self.assertEqual(result, {'machinery': prefix_entry(self.M), 'sh': prefix_entry(str(SH))})
+
+    def test_two_proper_prefixes_of_one_namespace_both_stay(self):
+        # di and devices for DI: intended since gh-1001
+        di = 'http://opcfoundation.org/UA/DI/'
+        result = merge_namespaces({'di': prefix_entry(di)}, {}, {'devices': prefix_entry(di)})
+        self.assertEqual(result, {'di': prefix_entry(di), 'devices': prefix_entry(di)})
+
+    def test_a_generated_prefix_stays_when_it_is_the_only_name(self):
+        self.assertEqual(merge_namespaces({}, {'ns3': prefix_entry(self.A)}), {'ns3': prefix_entry(self.A)})
+
+    def test_one_namespace_under_two_generated_prefixes_keeps_the_lowest(self):
+        result = merge_namespaces({'ns4': prefix_entry(self.A)}, {'ns2': prefix_entry(self.A)})
+        self.assertEqual(result, {'ns2': prefix_entry(self.A)})
+
+    def test_a_generated_prefix_of_two_namespaces_gives_the_second_a_fresh_name(self):
+        # Each graph numbers its generated prefixes from 1. The lower IRI keeps the name, the other one gets
+        # the lowest unused number, whatever order the graphs come in.
+        forward = merge_namespaces({'ns1': prefix_entry(self.B)}, {'ns1': prefix_entry(self.A)})
+        backward = merge_namespaces({'ns1': prefix_entry(self.A)}, {'ns1': prefix_entry(self.B)})
+        self.assertEqual(forward, {'ns1': prefix_entry(self.A), 'ns2': prefix_entry(self.B)})
+        self.assertEqual(backward, forward)
+
+    def test_the_fresh_name_skips_the_prefixes_in_use(self):
+        result = merge_namespaces({'ns1': prefix_entry(self.A), 'ns2': prefix_entry(self.C)},
+                                  {'ns1': prefix_entry(self.B)})
+        self.assertEqual(result, {'ns1': prefix_entry(self.A), 'ns2': prefix_entry(self.C),
+                                  'ns3': prefix_entry(self.B)})
+
+    def test_only_ns_and_digits_is_a_generated_prefix(self):
+        result = merge_namespaces({'nsx': prefix_entry(self.A), 'ns': prefix_entry(self.A)},
+                                  {'ns1': prefix_entry(self.A)})
+        self.assertEqual(result, {'nsx': prefix_entry(self.A), 'ns': prefix_entry(self.A)})
+
+    def test_a_later_map_wins_for_a_proper_prefix(self):
+        # as the dictionary merge did before
+        result = merge_namespaces({'test': prefix_entry(self.A)}, {'test': prefix_entry(self.B)})
+        self.assertEqual(result, {'test': prefix_entry(self.B)})
 
 
 if __name__ == "__main__":
