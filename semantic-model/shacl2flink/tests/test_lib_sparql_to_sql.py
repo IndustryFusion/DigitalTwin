@@ -545,8 +545,7 @@ def test_get_bound_trim_string_time_variable():
         'query': 'SELECT ?foo WHERE { ... }'
     }
     result = lib.sparql_to_sql.get_bound_trim_string(ctx, Variable('foo'))
-    # Note: There's a typo in the original function - "DIALIFAECT" should be "DIALECT"
-    assert result == "SQL_DIALIFAECT_STRIP_LITERAL{bar}"
+    assert result == "SQL_DIALECT_STRIP_LITERAL{bar}"
 
 
 def test_get_bound_trim_string_complex_variable_name():
@@ -582,8 +581,7 @@ def test_get_bound_trim_string_time_variable_with_timestamp():
         'query': 'SELECT ?timestamp WHERE { ... }'
     }
     result = lib.sparql_to_sql.get_bound_trim_string(ctx, Variable('timestamp'))
-    # Note: There's a typo in the original function - "DIALIFAECT" should be "DIALECT"
-    assert result == "SQL_DIALIFAECT_STRIP_LITERAL{2023-07-25T10:30:00Z}"
+    assert result == "SQL_DIALECT_STRIP_LITERAL{2023-07-25T10:30:00Z}"
 
 
 def test_get_bound_trim_string_variable_in_both_collections():
