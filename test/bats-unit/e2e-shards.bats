@@ -50,21 +50,61 @@ select_for() {
     [ "${output}" = '["device"]' ]
 }
 
-@test "a shacl2flink change runs only the flink shard" {
+@test "a shacl2flink change runs the flink and flink-deploy shards" {
     run select_for semantic-model/shacl2flink/create_sql_checks_from_shacl.py
-    [ "${output}" = '["flink"]' ]
+    [ "${output}" = '["flink","flink-deploy"]' ]
+    run select_for semantic-model/shacl2flink/tests/bats/test-shacl-flink-deploy/test-shacl-flink-deploy.bats
+    [ "${output}" = '["flink","flink-deploy"]' ]
+}
+
+@test "every path that selects flink selects flink-deploy, except the suites only flink runs" {
+    for path in KafkaBridge/lib/mqttBridge.js DebeziumPostgresConnector/Dockerfile \
+                .github/actions/debezium-archive/action.yml Fuseki/Dockerfile helm/charts/fuseki/values.yaml \
+                helm/charts/scorpio/values.yaml helm/charts/alerta/values.yaml \
+                semantic-model/shacl2flink/docs/files/shacl.ttl semantic-model/shacl2flink/Makefile \
+                FlinkSqlGateway/Dockerfile FlinkOperatorWithCoreServices/pom.xml \
+                FlinkSqlServicesOperator/beamsqlstatementsetoperator.py helm/charts/flink/values.yaml \
+                helm/charts/sql-core/values.yaml helm/helmfile-shacl.yaml .env test/install-platform.sh; do
+        run select_for "${path}"
+        [[ "${output}" == *'"flink","flink-deploy"'* ]] || { echo "${path}: ${output}"; false; }
+    done
+    for path in test/bats/test-core-sql-services/test-alerta-bulk-filter.bats test/bats/test-jobs/platform-watchdog.bats; do
+        run select_for "${path}"
+        [[ "${output}" == *'"flink"'* && "${output}" != *flink-deploy* ]] || { echo "${path}: ${output}"; false; }
+    done
+}
+
+@test "the flink-deploy shard has no suites below test/bats" {
+    run bash "${SCRIPT}" suites flink-deploy
+    [ "${status}" -eq 0 ]
+    [ -z "${output}" ]
+}
+
+@test "the workflows run the deploy suite alone in flink-deploy, and both e2e targets in the nightly" {
+    e2e="${BATS_TEST_DIRNAME}/../../.github/workflows/k8s-e2e.yaml"
+    nightly="${BATS_TEST_DIRNAME}/../../.github/workflows/k8s-tests.yaml"
+    makefile="${BATS_TEST_DIRNAME}/../../semantic-model/shacl2flink/Makefile"
+    grep -q "if: matrix.shard != 'flink-deploy'" "${e2e}"
+    grep -q "matrix.shard == 'flink-deploy' && 'test-flink-deploy-e2e' || 'test-flink-e2e'" "${e2e}"
+    grep -q "make test-flink-deploy-e2e" "${nightly}"
+    grep -q "make test-flink-e2e" "${nightly}"
+    # the deploy suite runs in test-flink-deploy-e2e only
+    run awk '/^test-flink-e2e:/{t=1; next} /^[a-z0-9-]+:/{t=0} t && /test-shacl-flink-deploy/' "${makefile}"
+    [ -z "${output}" ]
+    run awk '/^test-flink-deploy-e2e:/{t=1; next} /^[a-z0-9-]+:/{t=0} t && /bats test-shacl-flink-deploy/' "${makefile}"
+    [ -n "${output}" ]
 }
 
 @test "a bridge change runs every shard the bridges are part of" {
     run select_for KafkaBridge/lib/mqttBridge.js
-    [ "${output}" = '["device","broker","flink"]' ]
+    [ "${output}" = '["device","broker","flink","flink-deploy"]' ]
 }
 
 @test "a Debezium connector change runs broker and flink" {
     run select_for DebeziumPostgresConnector/Dockerfile
-    [ "${output}" = '["broker","flink"]' ]
+    [ "${output}" = '["broker","flink","flink-deploy"]' ]
     run select_for .github/actions/debezium-archive/action.yml
-    [ "${output}" = '["broker","flink"]' ]
+    [ "${output}" = '["broker","flink","flink-deploy"]' ]
 }
 
 @test "an EMQX chart change runs device and broker" {
@@ -74,15 +114,15 @@ select_for() {
 
 @test "a Fuseki change runs broker and flink" {
     run select_for Fuseki/Dockerfile helm/charts/fuseki/values.yaml
-    [ "${output}" = '["broker","flink"]' ]
+    [ "${output}" = '["broker","flink","flink-deploy"]' ]
 }
 
-@test "a Flink component or chart change runs only the flink shard" {
+@test "a Flink component or chart change runs only the flink and flink-deploy shards" {
     for path in FlinkSqlGateway/Dockerfile FlinkOperatorWithCoreServices/pom.xml \
                 FlinkSqlServicesOperator/beamsqlstatementsetoperator.py helm/charts/sql-core/values.yaml \
                 helm/helmfile-shacl.yaml; do
         run select_for "${path}"
-        [ "${output}" = '["flink"]' ] || { echo "${path}: ${output}"; false; }
+        [ "${output}" = '["flink","flink-deploy"]' ] || { echo "${path}: ${output}"; false; }
     done
 }
 
@@ -103,7 +143,7 @@ select_for() {
 
 @test "a change to the files the Fuseki suite uploads runs broker and flink" {
     run select_for semantic-model/shacl2flink/docs/files/shacl.ttl
-    [ "${output}" = '["broker","flink"]' ]
+    [ "${output}" = '["broker","flink","flink-deploy"]' ]
 }
 
 @test "other datamodel paths select no shard" {
@@ -113,7 +153,7 @@ select_for() {
 
 @test "a scorpio chart change runs broker and flink" {
     run select_for helm/charts/scorpio/values.yaml
-    [ "${output}" = '["broker","flink"]' ]
+    [ "${output}" = '["broker","flink","flink-deploy"]' ]
 }
 
 @test "a change to the watchdog's end-to-end test runs broker and flink" {
@@ -135,7 +175,7 @@ select_for() {
                 helm/install_operators.sh helm/flink-operator-values.yaml helm/charts/keycloak/values.yaml \
                 test/install-platform.sh test/bats/lib/utils.bash Keycloak/Dockerfile; do
         run select_for "${path}"
-        [ "${output}" = '["device","broker","flink"]' ] || { echo "${path}: ${output}"; false; }
+        [ "${output}" = '["device","broker","flink","flink-deploy"]' ] || { echo "${path}: ${output}"; false; }
     done
 }
 
@@ -152,12 +192,12 @@ select_for() {
 
 @test "shards are merged across paths and listed once, in a fixed order" {
     run select_for semantic-model/shacl2flink/Makefile NgsildAgent/x.js FlinkSqlGateway/y NgsildAgent/z.js
-    [ "${output}" = '["device","flink"]' ]
+    [ "${output}" = '["device","flink","flink-deploy"]' ]
 }
 
 @test "--all selects every shard regardless of the paths" {
     run bash -c "printf 'README.md\n' | bash '${SCRIPT}' select --all"
-    [ "${output}" = '["device","broker","flink"]' ]
+    [ "${output}" = '["device","broker","flink","flink-deploy"]' ]
 }
 
 @test "no changed paths select nothing" {

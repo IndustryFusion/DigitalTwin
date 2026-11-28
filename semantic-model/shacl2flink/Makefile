@@ -266,12 +266,13 @@ test-full-flink-deployment:
 # touched -- SHACL/KNOWLEDGE/MODEL are overridden for the sub-makes, which
 # `make` forwards automatically because they are set on the command line.
 #
-# test-shacl-flink-deploy runs first and makes the deployment: an entity
-# created before it must be validated after it, and so must the entities after
-# a deployment over the running validation (#1114). It deploys twice, first
-# without RocksDB, so that the second deployment replaces the job.
+# test-flink-deploy-e2e runs test-shacl-flink-deploy alone, on a platform
+# with no validation deployed: an entity created before the first deployment
+# must be validated after it, and so must the entities after a deployment over
+# the running validation (#1114, #1165). It deploys seven times, about an hour,
+# so it is a CI shard of its own (flink-deploy, #1202).
 #
-# The other suites run against the deployment it leaves behind.
+# test-flink-e2e deploys the KMS once and runs the other suites against it.
 # test-shacl-flink-e2e drives Kafka directly, so a failure there is Flink's or
 # the generated SQL's; test-shacl-flink-scorpio-e2e drives the NGSI-LD API and
 # reads Alerta, so a failure there is somewhere in Postgres, the bridges or
@@ -283,12 +284,14 @@ test-full-flink-deployment:
 # with REPLACE=fresh against the same deployment and checks the alerts after
 # each, and leaves the deployment for the teardown.
 #
-# The teardown must run even when the tests fail, otherwise a red build leaves
-# a statementset behind and the next run inherits it.
-test-flink-e2e: E2E_KMS := $(CURDIR)/tests/e2e-kms
+# The teardown of both must run even when the tests fail, otherwise a red
+# build leaves a statementset behind and the next run inherits it.
+E2E_KMS_VARS = SHACL=$(CURDIR)/tests/e2e-kms/shacl.ttl KNOWLEDGE=$(CURDIR)/tests/e2e-kms/knowledge.ttl \
+	MODEL=$(CURDIR)/tests/e2e-kms/model-instance.jsonld
+
 test-flink-e2e:
 	@echo deploy throwaway e2e KMS
-	( cd tests/bats && bats test-shacl-flink-deploy ); rc=$$?; \
+	$(MAKE) flink-deploy $(E2E_KMS_VARS); rc=$$?; \
 		if [ $$rc -eq 0 ]; then \
 			ln -fs ../../../../test/bats/lib tests/bats/lib || echo 'Bats framework not installed'; \
 			( cd tests/bats && bats test-shacl-flink-e2e test-shacl-flink-scorpio-e2e test-shacl-flink-resync ) || rc=1; \
@@ -296,8 +299,12 @@ test-flink-e2e:
 			VALIDATION_DEPLOYED=true bats $(CURDIR)/../../test/bats/test-jobs/platform-watchdog.bats || rc=1; \
 			rm -f tests/bats/lib; \
 		fi; \
-		$(MAKE) flink-undeploy SHACL=$(E2E_KMS)/shacl.ttl KNOWLEDGE=$(E2E_KMS)/knowledge.ttl \
-			MODEL=$(E2E_KMS)/model-instance.jsonld; \
+		$(MAKE) flink-undeploy $(E2E_KMS_VARS); \
+		exit $$rc
+
+test-flink-deploy-e2e:
+	( cd tests/bats && bats test-shacl-flink-deploy ); rc=$$?; \
+		$(MAKE) flink-undeploy $(E2E_KMS_VARS); \
 		exit $$rc
 
 
@@ -368,4 +375,4 @@ fuseki-undeploy-kms:
 clean:
 	@rm -rf $(OUTPUTDIR) merged-kms
 
-.PHONY: clean restart-connect deploy-install shacl-resync fuseki-deploy-kms fuseki-undeploy-kms test-flink-e2e test-opcua-shapes test-pyshacl-compare
+.PHONY: clean restart-connect deploy-install shacl-resync fuseki-deploy-kms fuseki-undeploy-kms test-flink-e2e test-flink-deploy-e2e test-opcua-shapes test-pyshacl-compare

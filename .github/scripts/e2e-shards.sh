@@ -23,9 +23,15 @@
 #   e2e-shards.sh list            every shard
 #
 # A path that matches no rule selects nothing: it is covered by Build.
+#
+# flink-deploy runs shacl2flink's test-shacl-flink-deploy alone (make
+# test-flink-deploy-e2e): seven full deployments, about an hour, that made the
+# flink shard reach its time limit (#1202). It has no suites below test/bats,
+# and every path that selects flink selects it too, except the suites only
+# flink runs.
 set -euo pipefail
 
-SHARDS=(device broker flink)
+SHARDS=(device broker flink flink-deploy)
 
 suites() {
     case "$1" in
@@ -33,6 +39,7 @@ suites() {
         broker) echo test-bridges test-fuseki test-horizontal-platform test-jobs \
                      test-keycloak test-operators test-scorpio ;;
         flink)  echo test-core-sql-services ;;  # plus shacl2flink's test-flink-e2e
+        flink-deploy) ;;                         # shacl2flink's test-flink-deploy-e2e only
         *) echo "unknown shard: $1" >&2; return 1 ;;
     esac
 }
@@ -55,8 +62,8 @@ shards_for() {
         test/bats/lib/*|test/bats/prepare-test.sh|\
         .github/workflows/k8s-e2e.yaml|.github/workflows/e2e-labels.yaml|.github/scripts/e2e-shards.sh)
             echo all ;;
-        KafkaBridge/*|helm/charts/kafka-bridges/*) echo device broker flink ;;
-        DebeziumPostgresConnector/*|.github/actions/debezium-archive/*) echo broker flink ;;
+        KafkaBridge/*|helm/charts/kafka-bridges/*) echo device broker flink flink-deploy ;;
+        DebeziumPostgresConnector/*|.github/actions/debezium-archive/*) echo broker flink flink-deploy ;;
         NgsildAgent/*|helm/charts/pgrest/*|\
         test/bats/test-device-connection/*|test/bats/test-timescaledb-bridge/*)
             echo device ;;
@@ -64,21 +71,23 @@ shards_for() {
         # the subcomponent suite runs the datamodel tools
         semantic-model/datamodel/tools/*) echo device ;;
         # the Fuseki suite uploads these files; before the shacl2flink rule
-        semantic-model/shacl2flink/docs/files/*) echo broker flink ;;
-        helm/charts/scorpio/*|helm/charts/alerta/*) echo broker flink ;;
+        semantic-model/shacl2flink/docs/files/*) echo broker flink flink-deploy ;;
+        helm/charts/scorpio/*|helm/charts/alerta/*) echo broker flink flink-deploy ;;
         # the watchdog's end-to-end test also runs in the flink shard, where the
         # validation is deployed (shacl2flink's test-flink-e2e)
         test/bats/test-jobs/platform-watchdog.bats) echo broker flink ;;
-        Fuseki/*|helm/charts/fuseki/*) echo broker flink ;;
+        Fuseki/*|helm/charts/fuseki/*) echo broker flink flink-deploy ;;
         helm/charts/redis/*|helm/charts/velero/*|\
         test/bats/test-bridges/*|test/bats/test-fuseki/*|test/bats/test-horizontal-platform/*|\
         test/bats/test-jobs/*|test/bats/test-keycloak/*|test/bats/test-operators/*|\
         test/bats/test-scorpio/*)
             echo broker ;;
+        # a suite only the flink shard runs
+        test/bats/test-core-sql-services/*) echo flink ;;
         FlinkSqlGateway/*|FlinkOperatorWithCoreServices/*|FlinkSqlServicesOperator/*|\
         semantic-model/shacl2flink/*|helm/charts/flink/*|helm/charts/sql-core/*|\
-        helm/helmfile-shacl.yaml|test/bats/test-core-sql-services/*)
-            echo flink ;;
+        helm/helmfile-shacl.yaml)
+            echo flink flink-deploy ;;
         *) ;;
     esac
 }

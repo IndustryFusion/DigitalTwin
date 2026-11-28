@@ -86,5 +86,11 @@ jobs:
         # target does, so running both cost a second full deploy cycle for no
         # extra coverage. The production ../kms/default is still compiled on every
         # build by the Build workflow (make build), just not deployed here.
-        ( cd semantic-model/shacl2flink && make test-flink-e2e )
+        # The deployments over a running validation first: they start from no
+        # validation deployed and leave none (#1202). Both run, even when the
+        # first fails.
+        rc=0
+        ( cd semantic-model/shacl2flink && make test-flink-deploy-e2e ) || rc=1
+        ( cd semantic-model/shacl2flink && make test-flink-e2e ) || rc=1
+        exit $rc
 
