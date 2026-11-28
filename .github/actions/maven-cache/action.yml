@@ -1,0 +1,81 @@
+#
+# Copyright (c) 2026 IndustryFusion Foundation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+# The Maven repository of the image builds, kept from run to run (#1181).
+# Without it every build downloads every dependency from Maven Central, and
+# Central answers the shared addresses of GitHub-hosted runners with HTTP 429.
+#
+# mode restore, before the build: ~/.m2/repository from the cache (the
+# Scorpio build in build-local-platform.sh uses it directly), injected into
+# the BuildKit cache mount maven-repo that the Dockerfiles resolve into.
+# mode save, after a successful build only (if: success()): the cache mount
+# back into ~/.m2/repository and saved, unless the key was an exact hit.
+# A cache key cannot be overwritten, so what is saved under it must be
+# complete: a failed or cancelled build would save a partial repository
+# that every later run restores as an exact hit and never completes. An
+# empty extract is not saved either.
+#
+# The key is <name>-<hash of what decides the dependencies>; a changed hash
+# starts from the newest cache of the same name (restore-keys), so a changed
+# pom.xml resolves only what is new. Pull requests read the caches of main
+# (.github/workflows/maven-cache.yaml keeps those), their own in addition.
+name: Maven repository cache
+description: Restore or save the Maven repository of the image builds
+inputs:
+  mode:
+    description: restore or save
+    required: true
+  name:
+    description: the cache's name, one per job that builds a different set of images
+    required: true
+  hash:
+    description: hash of the files that decide the dependencies
+    required: true
+runs:
+  using: composite
+  steps:
+  - name: Restore the Maven repository
+    if: inputs.mode == 'restore'
+    id: restore
+    uses: actions/cache/restore@v4
+    with:
+      path: ~/.m2/repository
+      key: maven-${{ inputs.name }}-${{ inputs.hash }}
+      restore-keys: maven-${{ inputs.name }}-
+  - name: Inject it into the BuildKit cache mount
+    if: inputs.mode == 'restore'
+    shell: bash
+    run: |
+      echo "MAVEN_CACHE_HIT=${{ steps.restore.outputs.cache-hit }}" >> "$GITHUB_ENV"
+      echo "maven-cache: restored key ${{ steps.restore.outputs.cache-matched-key || 'none' }}"
+      bash "${{ github.action_path }}/../../scripts/maven-cache.sh" inject ~/.m2/repository
+  - name: Extract the BuildKit cache mount
+    if: inputs.mode == 'save' && env.MAVEN_CACHE_HIT != 'true'
+    id: extract
+    shell: bash
+    run: |
+      bash "${{ github.action_path }}/../../scripts/maven-cache.sh" extract ~/.m2/repository
+      if [ -n "$(find ~/.m2/repository -name '*.jar' -print -quit)" ]; then
+        echo "save=true" >> "$GITHUB_OUTPUT"
+      else
+        echo "maven-cache: no jar in ~/.m2/repository, nothing saved"
+      fi
+  - name: Save the Maven repository
+    if: inputs.mode == 'save' && env.MAVEN_CACHE_HIT != 'true' && steps.extract.outputs.save == 'true'
+    uses: actions/cache/save@v4
+    with:
+      path: ~/.m2/repository
+      key: maven-${{ inputs.name }}-${{ inputs.hash }}

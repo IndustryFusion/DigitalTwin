@@ -1,0 +1,90 @@
+#
+# Copyright (c) 2026 IndustryFusion Foundation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+# The Maven repository of the platform images, cached on main (#1181). A pull
+# request reads the caches of main, not those of other pull requests, and
+# the images job of K8s e2e runs on pull requests only. So this workflow
+# builds the platform images on main whenever what decides their Maven
+# dependencies changes, and weekly, before GitHub drops a cache unused for 7
+# days. The compose images are cached on main by Build, which runs there.
+name: Maven cache
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'FlinkOperatorWithCoreServices/CoreServices/pom.xml'
+      - 'FlinkSqlGateway/Dockerfile'
+      - 'test/build-local-platform.sh'
+      - '.github/actions/maven-cache/**'
+      - '.github/scripts/maven-cache.sh'
+      - '.github/workflows/maven-cache.yaml'
+  schedule:
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  COMPOSE_KEY: maven-compose-${{ hashFiles('FlinkOperatorWithCoreServices/CoreServices/pom.xml', 'FlinkSqlGateway/Dockerfile') }}
+  PLATFORM_KEY: maven-platform-${{ hashFiles('FlinkOperatorWithCoreServices/CoreServices/pom.xml', 'FlinkSqlGateway/Dockerfile', 'test/build-local-platform.sh') }}
+
+jobs:
+  platform:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+    - uses: actions/checkout@v4
+    - name: Prepare the runner for the build
+      run: bash test/prepare-platform-for-github-runner.sh images
+    - name: Debezium plugin archive from the cache
+      uses: ./.github/actions/debezium-archive
+    - name: Maven repository from the cache
+      uses: ./.github/actions/maven-cache
+      with:
+        mode: restore
+        name: platform
+        hash: ${{ hashFiles('FlinkOperatorWithCoreServices/CoreServices/pom.xml', 'FlinkSqlGateway/Dockerfile', 'test/build-local-platform.sh') }}
+    - name: Build Platform locally
+      run: cd test && bash build-local-platform.sh
+    - name: Maven repository into the cache
+      if: success()
+      uses: ./.github/actions/maven-cache
+      with:
+        mode: save
+        name: platform
+        hash: ${{ hashFiles('FlinkOperatorWithCoreServices/CoreServices/pom.xml', 'FlinkSqlGateway/Dockerfile', 'test/build-local-platform.sh') }}
+
+  # The repository's caches share 10 GB, evicted least recently used first:
+  # what main no longer restores, and what closed pull requests left, goes,
+  # so that the Maven caches keep one entry per name on main (compose 311 MB,
+  # platform with Scorpio's dependencies on top).
+  prune:
+    needs: platform
+    if: always()
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: write
+      contents: read
+      pull-requests: read
+    steps:
+    - uses: actions/checkout@v4
+    - name: Delete the Maven caches no longer used
+      env:
+        GH_TOKEN: ${{ github.token }}
+        GH_REPO: ${{ github.repository }}
+      run: bash .github/scripts/maven-cache.sh prune "$COMPOSE_KEY" "$PLATFORM_KEY"

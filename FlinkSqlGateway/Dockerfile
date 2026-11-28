@@ -40,7 +40,11 @@ COPY --from=nodelint gateway.js gateway.js
 ADD package.json package.json
 ADD lib/ lib
 COPY --from=plint submitjob submitjob
-RUN mkdir jars && cd jars && wget --tries=5 --waitretry=10 --retry-connrefused --retry-on-http-error=429,500,502,503,504 https://repo1.maven.org/maven2/org/apache/flink/flink-sql-connector-kafka/3.3.0-1.20/flink-sql-connector-kafka-3.3.0-1.20.jar
+# The jars from Maven Central go through the cache mount maven-repo (#1181),
+# fetched by maven-jar.sh, which is bind-mounted and not part of the image.
+RUN --mount=type=cache,id=maven-repo,target=/root/.m2/repository,sharing=locked \
+    --mount=type=bind,source=maven-jar.sh,target=/usr/local/bin/maven-jar.sh \
+    sh /usr/local/bin/maven-jar.sh org/apache/flink flink-sql-connector-kafka 3.3.0-1.20 jars
 #RUN mkdir -p jars && cd jars && wget https://repo1.maven.org/maven2/org/apache/flink/flink-sql-connector-kafka/1.16.1/flink-sql-connector-kafka-1.16.1.jar
 RUN . $HOME/.nvm/nvm.sh && npm install --production
 ADD sql-client-defaults.yaml /opt/flink/conf/
@@ -63,7 +67,9 @@ rm -rf /var/lib/apt/lists/*
 # install PyFlink
 RUN pip3 install --no-cache-dir apache-flink==1.20.4
 RUN mkdir -p /opt/flink/plugins/s3 && cp /opt/flink/opt/flink-s3-fs-hadoop-*.jar /opt/flink/plugins/s3
-RUN wget --tries=5 --waitretry=10 --retry-connrefused --retry-on-http-error=429,500,502,503,504 https://repo1.maven.org/maven2/org/apache/flink/flink-sql-connector-postgres-cdc/3.4.0/flink-sql-connector-postgres-cdc-3.4.0.jar -P /opt/flink/lib
+RUN --mount=type=cache,id=maven-repo,target=/root/.m2/repository,sharing=locked \
+    --mount=type=bind,source=maven-jar.sh,target=/usr/local/bin/maven-jar.sh \
+    sh /usr/local/bin/maven-jar.sh org/apache/flink flink-sql-connector-postgres-cdc 3.4.0 /opt/flink/lib
 
 USER 9999
 ENTRYPOINT [ "node ./gateway.js" ]

@@ -24,10 +24,15 @@ CONF
 fi
 SCRIPT
 COPY CoreServices/pom.xml ./
-RUN mvn dependency:go-offline test -B -Pcluster
+# The local repository is a cache mount, kept from build to build and on CI
+# by .github/actions/maven-cache (#1181): a build-time mount, not part of the
+# image, so Maven Central is asked only for what is not in it yet.
+RUN --mount=type=cache,id=maven-repo,target=/root/.m2/repository,sharing=locked \
+    mvn dependency:go-offline test -B -Pcluster
 COPY CoreServices/src ./src
 COPY CoreServices/config ./config
-RUN mvn package verify test -B -Pcluster
+RUN --mount=type=cache,id=maven-repo,target=/root/.m2/repository,sharing=locked \
+    mvn package verify test -B -Pcluster
 FROM apache/flink-kubernetes-operator:1.11.0
 WORKDIR /app
 COPY --from=build /app/target/CoreServices*.jar ./CoreServices.jar

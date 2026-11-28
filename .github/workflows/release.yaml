@@ -23,9 +23,22 @@ jobs:
           cd ./test && bash ./prepare-platform.sh
       - name: Debezium plugin archive from the cache
         uses: ./.github/actions/debezium-archive
+      - name: Maven repository from the cache
+        uses: ./.github/actions/maven-cache
+        with:
+          mode: restore
+          name: platform
+          hash: ${{ hashFiles('FlinkOperatorWithCoreServices/CoreServices/pom.xml', 'FlinkSqlGateway/Dockerfile', 'test/build-local-platform.sh') }}
       - name: Build Platform locally
         run: |
           cd test && bash build-local-platform.sh
+      - name: Maven repository into the cache
+        if: success()
+        uses: ./.github/actions/maven-cache
+        with:
+          mode: save
+          name: platform
+          hash: ${{ hashFiles('FlinkOperatorWithCoreServices/CoreServices/pom.xml', 'FlinkSqlGateway/Dockerfile', 'test/build-local-platform.sh') }}
       - name: Push release images
         shell: bash
         run: |
