@@ -123,7 +123,8 @@ case "${args}" in
         snapshot $(( $(date +%s) - ${STUB_SNAPSHOT_AGE:-0} )) ${STUB_SNAPSHOT_INCOMPLETE:+incomplete}
         grow iff.ngsild.public.entity 10
         grow iff.ngsild.entities 10
-        grow iff.ngsild.attributes 20
+        # no attribute in the re-snapshot: the entities have none
+        [ -n "${STUB_ATTR_NO_SNAPSHOT:-}" ] || grow iff.ngsild.attributes 20
         grow iff.ngsild.flink.constraint_trigger_table 5
         if [ -n "${STUB_BULK_GROWS:-}" ]; then
             grow iff.alerts.bulk "${STUB_BULK_GROWS}"
@@ -131,6 +132,16 @@ case "${args}" in
         fi ;;
     "create job --from=cronjob/platform-watchdog "*)
         echo "${args##* }" > "${STATE}/watchdog_job" ;;
+    # The rdf table's keys, read from Postgres after the install (#1165 D6).
+    "get secrets -o name")
+        echo "secret/flink-writer-user.acid-cluster.credentials" ;;
+    "get secret/flink-writer-user.acid-cluster.credentials -o go-template="*)
+        echo "pw" ;;
+    "get ep acid-cluster -o jsonpath="*)
+        echo "acid-cluster-0" ;;
+    "exec acid-cluster-0 -c postgres -- bash -c "*)
+        [ -z "${STUB_RDF_DB_DOWN:-}" ] || exit 1
+        cat "${STATE}/rdf.table" 2>/dev/null || true ;;
     # The Kafka tools: kafka_tool without -i (#1195), kafka_feed with it.
     "exec my-cluster-nodes-0 -- sh -c "*|"exec -i my-cluster-nodes-0 -- sh -c "*)
         cmd=${*: -1}
@@ -166,9 +177,15 @@ case "${args}" in
                 end=$(awk '{ print $2 }' "${STATE}/topics/iff.ngsild.public.entity.end")
                 echo "GROUP TOPIC PARTITION CURRENT-OFFSET LOG-END-OFFSET LAG CONSUMER-ID HOST CLIENT-ID"
                 echo "debeziumBridgeGroup iff.ngsild.public.entity 0 $(( end - lag )) ${end} ${lag} c1 /10.0.0.1 c1" ;;
+            *kafka-console-producer.sh*"--topic iff.rdf "*)
+                # the tombstones of removed knowledge (#1165 D6), as written
+                cat >> "${STATE}/rdf.tombstones"
+                echo "stub: tombstones written to iff.rdf" >> "${CALLS}" ;;
             *kafka-console-producer.sh*)
                 cut -f2 > "${STATE}/marker.json"
                 date +%s > "${STATE}/marker_written" ;;
+            *kafka-console-consumer.sh*"--topic iff.rdf "*)
+                cat "${STATE}/rdf.topic" 2>/dev/null || true ;;
             *) echo "unexpected tool ${cmd}" >&2; exit 1 ;;
         esac ;;
     *)
@@ -274,6 +291,16 @@ case "${method} ${path}" in
                     [ "${job%%-*}" != ss ] || [ "$n" -gt "${STUB_PENDING_POLLS:-0}" ] || v=12 ;;
                 *topic.iff_alerts_bulk.partition.0.currentOffset)
                     v=$(cat "${STATE}/core_bulk_read" 2>/dev/null || echo -1) ;;
+                *topic.iff_ngsild_attributes.partition.0.currentOffset)
+                    # a new validation job's latest-offset attribute reader:
+                    # nothing read since it was placed, or behind the records
+                    # written after that
+                    if [ "${job%%-*}" = ss ] && [ "${job}" != ss-0 ] && [ -n "${STUB_SS_ATTR_NOTHING:-}" ]; then
+                        v=-1
+                    else
+                        v=$(( $(end_of iff.ngsild.attributes) - 1 ))
+                        if [ "${job%%-*}" = ss ] && [ "$n" -le "${STUB_BEHIND_POLLS:-0}" ]; then v=$(( v - 5 )); fi
+                    fi ;;
                 *currentOffset)
                     m=${id#*KafkaSourceReader.topic.}; m=${m%.partition.*}
                     t=""
@@ -559,7 +586,7 @@ step 8/8 end the degraded state: done'
     export REPLACE=redeploy
     run bash "${SCRIPT}"
     [ "$status" -ne 0 ]
-    [[ "${output}" == *"REPLACE must be none, fresh or checkpoint"* ]]
+    [[ "${output}" == *"REPLACE must be none, fresh, package or checkpoint"* ]]
     [ ! -s "${CALLS}" ]
 }
 
@@ -757,6 +784,24 @@ step 8/8 end the degraded state: done'
     # started at the latest offset), and nothing came after it started
     run bash "${SCRIPT}"
     [ "$status" -eq 0 ]
+}
+
+@test "processed: what was in iff.ngsild.attributes before a new validation job's readers were placed is not left for them" {
+    # The CI deploy suite: an earlier suite wrote attributes, the snapshot has
+    # no attribute of its entities, and the new job's latest-offset reader of
+    # iff.ngsild.attributes has read nothing since it was placed.
+    export REPLACE=fresh STUB_SS_ATTR_NOTHING=1 STUB_ATTR_NO_SNAPSHOT=1
+    run bash "${SCRIPT}"
+    echo "${output}"
+    [ "$status" -eq 0 ]
+}
+
+@test "processed: records of iff.ngsild.attributes after a new validation job's readers were placed must be read" {
+    export REPLACE=fresh STUB_SS_ATTR_NOTHING=1
+    run --separate-stderr bash "${SCRIPT}"
+    echo "${stderr}"
+    [ "$status" -ne 0 ]
+    [[ "${stderr}" == *"wait until the re-snapshot is processed"*"the validation job ss-1 read iff.ngsild.attributes partition 0 to nothing of "* ]]
 }
 
 @test "processed: records of iff.alerts.bulk after Core Services started must be read" {
@@ -1101,4 +1146,248 @@ step 8/8 end the degraded state: done'
     failed=$(jq -r '.resync_failed' "${STATE}/marks.json")
     [[ "${failed}" == *"the bulk close answered 500"* ]]
     run ! grep -qP '[\x00-\x1f\x7f"\\]' <<<"${failed}"
+}
+
+
+# ---------------------------------------------------------------- a new package (#1165)
+
+STEPS_PACKAGE='step 1/9 mark the validation degraded: started
+step 1/9 mark the validation degraded: done
+step 2/9 stop the validation job and empty its topics: started
+step 2/9 stop the validation job and empty its topics: done
+step 3/9 close the SHACL alerts: started
+step 3/9 close the SHACL alerts: done
+step 4/9 reset Core Services: started
+step 4/9 reset Core Services: done
+step 5/9 install the new package: started
+step 5/9 install the new package: done
+step 6/9 start the new package'"'"'s validation job: started
+step 6/9 start the new package'"'"'s validation job: done
+step 7/9 trigger a complete re-snapshot: started
+step 7/9 trigger a complete re-snapshot: done
+step 8/9 wait until the re-snapshot is processed: started
+step 8/9 wait until the re-snapshot is processed: done
+step 9/9 end the degraded state: started
+step 9/9 end the degraded state: done'
+
+# package_install [fail]: the install command of a new package, as the deploy
+# passes it: it writes the tables and creates the package's statementset.
+# iff.rdf's start and end offsets for the records in rdf.topic: the read of
+# the knowledge takes exactly that many records.
+rdf_offsets() {
+    echo "0 ${RDF_START:-0}" > "${STATE}/topics/iff.rdf.start"
+    echo "0 $(( ${RDF_START:-0} + $(grep -c . "${STATE}/rdf.topic") ))" > "${STATE}/topics/iff.rdf.end"
+}
+
+package_install() {
+    # The new package's knowledge, as the install leaves the rdf table, and
+    # iff.rdf holding the same keys: nothing to remove.
+    printf '%s\n' '{"subject" : "s1", "predicate" : "p", "index" : 0}' '{"subject" : "s2", "predicate" : "p", "index" : 0}' > "${STATE}/rdf.table"
+    printf '%s\t%s\n' '{"subject":"s1","predicate":"p","index":0}' '{"object":"o1"}' \
+        '{"subject":"s2","predicate":"p","index":0}' '{"object":"o2"}' > "${STATE}/rdf.topic"
+    rdf_offsets
+    cat > "${WORK}/bin/install-package" <<'EOF'
+#!/bin/bash
+echo "install: write the tables" >> "${CALLS}"
+[ -z "${STUB_INSTALL_FAIL:-}" ] || exit 3
+jq -n '{apiVersion: "industry-fusion.com/v1alpha4", kind: "BeamSqlStatementSet",
+    metadata: {name: "shacl-validation", namespace: "iff",
+        labels: {"app.kubernetes.io/managed-by": "Helm"},
+        annotations: {"meta.helm.sh/release-name": "shacl", "meta.helm.sh/release-namespace": "iff"}},
+    spec: {tables: ["t2"], updateStrategy: "none"}}' | kubectl -n iff create -f -
+echo "install: the statementset created" >> "${CALLS}"
+EOF
+    chmod +x "${WORK}/bin/install-package"
+    export REPLACE=package RESYNC_INSTALL=install-package
+}
+
+@test "a new package: every step in its order, the tables only after the stop, the new statementset's job" {
+    package_install
+    run bash "${SCRIPT}"
+    echo "${output}"
+    [ "$status" -eq 0 ]
+    [ "$(grep '^step ' <<<"${output}")" = "${STEPS_PACKAGE}" ]
+    delete=$(line "kubectl delete beamsqlstatementset shacl-validation --wait=false")
+    gone=$(line "stub: the statementset is gone")
+    cancelled=$(line "stub: the job ss-0 is cancelled")
+    emptied=$(last_line "kafka-delete-records.sh")
+    reset=$(line "kubectl patch flinksessionjob")
+    tables=$(line "install: write the tables")
+    snapshot=$(line "kubectl delete pod -l app.kubernetes.io/instance=kafka-connect")
+    [ "${delete}" -lt "${gone}" ]
+    [ "${gone}" -lt "${tables}" ]
+    [ "${cancelled}" -lt "${tables}" ]
+    [ "${emptied}" -lt "${tables}" ]
+    [ "${reset}" -lt "${tables}" ]
+    [ "${tables}" -lt "${snapshot}" ]
+    # the package's statementset runs with another job, the stopped one is not created again
+    [ "$(jq -r .status.job_id "${STATE}/ss.json")" = "ss-1" ]
+    [ "$(jq -c .spec.tables "${STATE}/ss.json")" = '["t2"]' ]
+    [ "$(calls "kubectl create -f -")" -eq 1 ]
+    [ -z "$(ls -A "${RESYNC_STATE_DIR}" 2>/dev/null)" ]
+    [[ "${output}" == *"job ss-0 replaced by ss-1"* ]]
+}
+
+@test "a new package: the three topics are emptied, no topic is deleted" {
+    package_install
+    run bash "${SCRIPT}"
+    [ "$status" -eq 0 ]
+    [ "$(jq -c '.partitions[]' "${STATE}/deleted.log")" = '{"topic":"iff.ngsild.flink.constraint_table","partition":0,"offset":50}
+{"topic":"iff.ngsild.flink.constraint_trigger_table","partition":0,"offset":50}' ]
+    [ "$(grep -cE 'kafka-topics.sh.*--(delete|create|alter)' "${CALLS}" || true)" -eq 0 ]
+    [ "$(calls "delete kafkatopic")" -eq 0 ]
+}
+
+@test "a new package with no validation deployed: nothing to stop, installed and started" {
+    package_install
+    rm -f "${STATE}/ss.json"
+    run bash "${SCRIPT}"
+    echo "${output}"
+    [ "$status" -eq 0 ]
+    [[ "${output}" == *"no validation statementset shacl-validation is deployed: nothing to stop"* ]]
+    [ "$(calls "kubectl delete beamsqlstatementset")" -eq 0 ]
+    [ "$(line "install: write the tables")" -gt 0 ]
+    [ "$(jq -r .status.job_id "${STATE}/ss.json")" = "ss-1" ]
+}
+
+@test "a first package: the job's topics don't exist yet, nothing to empty, installed and started" {
+    package_install
+    rm -f "${STATE}/ss.json" "${STATE}"/topics/iff.ngsild.flink.*
+    run bash "${SCRIPT}"
+    echo "${output}"
+    [ "$status" -eq 0 ]
+    [[ "${output}" == *"iff.ngsild.flink.constraint_table: not created yet, nothing to empty"* ]]
+    [[ "${output}" == *"iff.ngsild.flink.constraint_trigger_table: not created yet, nothing to empty"* ]]
+    [ "$(calls "kafka-delete-records.sh")" -eq 0 ]
+    [ "$(jq -r .status.job_id "${STATE}/ss.json")" = "ss-1" ]
+}
+
+@test "a fresh job still needs its topics: a missing one fails the stop step" {
+    export REPLACE=fresh
+    rm -f "${STATE}"/topics/iff.ngsild.flink.constraint_table.*
+    run --separate-stderr bash "${SCRIPT}"
+    [ "$status" -ne 0 ]
+    [[ "${stderr}" == *"the end offsets of iff.ngsild.flink.constraint_table can't be read"* ]]
+}
+
+@test "a new package after a failed resync with a fresh job: the kept statementset is discarded, not refused" {
+    package_install
+    mkdir -p "${RESYNC_STATE_DIR}"
+    jq '. + {metadata: (.metadata + {annotations: {"shacl-resync/stopped-job": "ss-0"}})}' "${STATE}/ss.json" \
+        > "${RESYNC_STATE_DIR}/iff.shacl-validation.json"
+    rm -f "${STATE}/ss.json"
+    run bash "${SCRIPT}"
+    echo "${output}"
+    [ "$status" -eq 0 ]
+    [[ "${output}" == *"is discarded: the new package replaces it"* ]]
+    [ ! -e "${RESYNC_STATE_DIR}/iff.shacl-validation.json" ]
+    [ "$(jq -c .spec.tables "${STATE}/ss.json")" = '["t2"]' ]
+}
+
+@test "a new package: each live key of iff.rdf its knowledge lacks gets a tombstone, after the install (#1165 D6)" {
+    package_install
+    # s3 is in iff.rdf but not in the new table: removed by the package.
+    # s4 is a tombstone already; s5 was one and is live again, and in the table.
+    printf '%s\n' '{"subject" : "s1", "predicate" : "p", "index" : 0}' '{"subject" : "s5", "predicate" : "p", "index" : 0}' > "${STATE}/rdf.table"
+    printf '%s\t%s\n' '{"subject":"s1","predicate":"p","index":0}' '{"object":"o1"}' \
+        '{"subject":"s3","predicate":"p","index":0}' '{"object":"o3"}' \
+        '{"subject":"s4","predicate":"p","index":0}' '{"object":"o4"}' \
+        '{"subject":"s4","predicate":"p","index":0}' 'null' \
+        '{"subject":"s5","predicate":"p","index":0}' 'null' \
+        '{"subject":"s5","predicate":"p","index":0}' '{"object":"o5"}' > "${STATE}/rdf.topic"
+    # The topic's earliest offset is no longer 0 (retention): it is read from
+    # there, all of it.
+    RDF_START=1200 rdf_offsets
+    run bash "${SCRIPT}"
+    echo "${output}"
+    [ "$status" -eq 0 ]
+    # exactly s3, with its key's own bytes and the null marker
+    [ "$(cat "${STATE}/rdf.tombstones")" = "$(printf '%s\t%s' '{"subject":"s3","predicate":"p","index":0}' '__shacl_resync_tombstone__')" ]
+    [[ "${output}" == *"2 triples in the new package; 3 live keys in iff.rdf, 1 of them removed by a tombstone"* ]]
+    # after the tables are written, before the new job is started
+    [ "$(line "install: write the tables")" -lt "$(line "stub: tombstones written to iff.rdf")" ]
+}
+
+@test "a read of iff.rdf that ends before its end offset writes no tombstone: the install step fails" {
+    package_install
+    # The end offset promises more records than the consumer returns.
+    echo "0 9" > "${STATE}/topics/iff.rdf.end"
+    run bash "${SCRIPT}"
+    echo "${output}"
+    [ "$status" -ne 0 ]
+    [ ! -e "${STATE}/rdf.tombstones" ]
+    [[ "${output}" == *"only 2 of the 9 records of iff.rdf could be read"* ]]
+}
+
+@test "the same knowledge again: no tombstone is written" {
+    package_install
+    run bash "${SCRIPT}"
+    echo "${output}"
+    [ "$status" -eq 0 ]
+    [ ! -e "${STATE}/rdf.tombstones" ]
+    [[ "${output}" == *"2 live keys in iff.rdf, 0 of them removed by a tombstone"* ]]
+}
+
+@test "an empty or unreadable rdf table removes no knowledge: the install step fails" {
+    package_install
+    : > "${STATE}/rdf.table"
+    run bash "${SCRIPT}"
+    echo "${output}"
+    [ "$status" -ne 0 ]
+    [ ! -e "${STATE}/rdf.tombstones" ]
+    [[ "${output}" == *"the rdf table is empty or can't be read: no knowledge is removed"* ]]
+    package_install
+    export STUB_RDF_DB_DOWN=1
+    run bash "${SCRIPT}"
+    echo "${output}"
+    [ "$status" -ne 0 ]
+    [ ! -e "${STATE}/rdf.tombstones" ]
+    [[ "${output}" == *"the keys of the rdf table can't be read"* ]]
+}
+
+@test "a new package whose install fails: the install step named, the deploy named, the failure marked" {
+    package_install
+    export STUB_INSTALL_FAIL=1
+    run --separate-stderr bash "${SCRIPT}"
+    [ "$status" -ne 0 ]
+    [[ "${stderr}" == *"resync failed in step 5/9 install the new package: the install of the new package failed (exit 3)"* ]]
+    [[ "${stderr}" == *"its job was stopped for a new package"*"make flink-deploy"* ]]
+    [[ "${stderr}" != *"REPLACE=fresh"* ]]
+    jq -e '.resync_failed | contains("make flink-deploy") and (contains("REPLACE=fresh") | not)' "${STATE}/marks.json"
+    [ "$(calls "delete pod")" -eq 0 ]
+    jq -e 'select(.event == "ValidationConsistency" and .severity == "critical")' "${STATE}/posts.log" >/dev/null
+}
+
+@test "a new package without an install command is refused and calls nothing" {
+    export REPLACE=package
+    unset RESYNC_INSTALL
+    run --separate-stderr bash "${SCRIPT}"
+    [ "$status" -eq 2 ]
+    [[ "${stderr}" == *"REPLACE=package needs RESYNC_INSTALL"* ]]
+    [ ! -s "${CALLS}" ]
+}
+
+@test "a new package while another resync runs: refused before the first step, nothing installed" {
+    package_install
+    echo "{\"observing_since\":\"1795100000\",\"resync_since\":\"$(date +%s)\",\"resync_step\":\"3/8 close\",\"resync_deadline\":\"$(( $(date +%s) + 600 ))\"}" \
+        > "${STATE}/marks.json"
+    run --separate-stderr bash "${SCRIPT}"
+    [ "$status" -ne 0 ]
+    [[ "${stderr}" == *"another resync is marked as running"* ]]
+    [ "$(calls "install: write the tables")" -eq 0 ]
+    [ "$(calls "kubectl delete beamsqlstatementset")" -eq 0 ]
+}
+
+@test "a new package: the deadline includes the install" {
+    package_install
+    export RESYNC_INSTALL_TIMEOUT=5000
+    run bash "${SCRIPT}"
+    [ "$status" -eq 0 ]
+    deadline=$(grep -o '"resync_deadline":"[0-9]*"' "${STATE}/marks.log" | head -1 | grep -o '[0-9]*')
+    export RESYNC_INSTALL_TIMEOUT=0
+    rm -f "${STATE}/marks.log"; : > "${STATE}/marks.log"
+    echo '{"observing_since":"1795100000"}' > "${STATE}/marks.json"
+    run bash "${SCRIPT}"
+    short=$(grep -o '"resync_deadline":"[0-9]*"' "${STATE}/marks.log" | head -1 | grep -o '[0-9]*')
+    [ $(( deadline - short )) -ge 4990 ]
 }

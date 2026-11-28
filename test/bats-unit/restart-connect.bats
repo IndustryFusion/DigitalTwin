@@ -261,12 +261,21 @@ line() {  # the number of the first line of the calls log matching it, 0 if none
 }
 
 @test "flink-deploy restarts Kafka Connect through restart-connect only, after the deployment" {
+    # Since #1165 flink-deploy decides in deploy_validation.sh: over an
+    # unchanged validation it restarts Connect through restart-connect, after
+    # the chart and the Fuseki graphs; a replacement restarts it in the
+    # resync's re-snapshot (deploy-validation.bats).
     recipe=$(awk '/^flink-deploy:/ { on = 1; next } on && /^[^\t]/ { exit } on' "${MAKEFILE}")
     echo "${recipe}"
     [ "$(grep -c "delete pod" <<<"${recipe}")" -eq 0 ]
-    restart=$(grep -n "make restart-connect" <<<"${recipe}" | cut -d: -f1)
+    grep -q "./deploy_validation.sh" <<<"${recipe}"
+    deploy="$(dirname "${MAKEFILE}")/deploy_validation.sh"
+    [ "$(grep -c "delete pod" "${deploy}")" -eq 0 ]
+    # shellcheck disable=SC2016  # the script's text, with the variable as written
+    restart=$(grep -n '"$MAKE" restart-connect' "${deploy}" | cut -d: -f1)
     [ -n "${restart}" ]
-    [ "${restart}" -gt "$(grep -n "helmfile-shacl.yaml apply" <<<"${recipe}" | cut -d: -f1)" ]
-    [ "${restart}" -gt "$(grep -n "make fuseki-deploy-kms" <<<"${recipe}" | cut -d: -f1)" ]
+    [ "${restart}" -gt "$(grep -n "helmfile-shacl.yaml apply" "${deploy}" | cut -d: -f1)" ]
+    # shellcheck disable=SC2016
+    [ "${restart}" -gt "$(grep -n '"$MAKE" fuseki-deploy-kms' "${deploy}" | head -1 | cut -d: -f1)" ]
     awk '/^restart-connect:/ { on = 1; next } on && /^[^\t]/ { exit } on' "${MAKEFILE}" | grep -q "restart_connect.sh"
 }

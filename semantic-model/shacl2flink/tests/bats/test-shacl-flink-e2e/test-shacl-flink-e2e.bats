@@ -989,8 +989,14 @@ else:
     # judging were written by the tests above, so a consumer starting at the
     # end would see an empty stream and pass without having looked at anything.
     local rows rc
+    # From the beginning, not the last 5000: the topic keeps 5 minutes and
+    # rolls hourly, so after an hour of the run its start can lie fewer than
+    # 5000 records before its end. An offset before the start is reset to the
+    # end, and the read came back empty with status 0. Limit: the check sees
+    # only what the topic still holds, not every alert produced during the
+    # run; a capture alongside the suite would see them all.
     rows=$(timeout 60 kafkacat -C -t ${BULK_ALERTS_TOPIC} -b ${KAFKA_BOOTSTRAP} \
-        -o -5000 -e -f '%s\n' 2>/dev/null); rc=$?
+        -o beginning -e -f '%s\n' 2>/dev/null); rc=$?
     # A consumer that failed must not read as "nothing negative found".
     [ "${rc}" -eq 0 ]
     [ -n "${rows}" ]

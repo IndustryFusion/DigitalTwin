@@ -102,6 +102,20 @@ EOF
     done <<< "${output}"
 }
 
+@test "no command of the resync pipes into a reader that stops early" {
+    # Under pipefail, `cmd | grep -m1`, `| grep -q` or `| head` fails whenever
+    # the reader stops before cmd ends: cmd dies of SIGPIPE, and pipefail
+    # takes that as the pipeline's failure. It depends on timing: the read of
+    # the rdf table's secret failed once in an e2e run and passed six times
+    # before. Read the output first, then search it.
+    run grep -nE '\|[[:space:]]*(grep[[:space:]]+(-[a-zA-Z]*[mq]|--max-count|--quiet)|head\b)' \
+        "${SHACL2FLINK}/shacl_resync.sh" "${SHACL2FLINK}/validation_job.sh" "${SHACL2FLINK}/deploy_validation.sh" "${SHACL2FLINK}/restart_connect.sh"
+    echo "${output}"
+    # comments may mention it
+    stray=$(grep -vE '^[^:]+:[0-9]+:[[:space:]]*#|^$' <<<"${output}" || true)
+    [ -z "${stray}" ] || { echo "piped into an early reader: ${stray}"; false; }
+}
+
 @test "make shacl-resync refuses a KMS: the resync works on the deployed package" {
     # A kubectl that fails, should the refusal be missing: nothing reaches a
     # cluster either way.
