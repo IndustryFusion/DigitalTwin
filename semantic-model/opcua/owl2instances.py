@@ -909,8 +909,11 @@ if __name__ == '__main__':
 
     jsonld = JsonLd(basens, opcuans)
     result = g.query(query_namespaces, initNs={'base': basens, 'opcua': opcuans})
+    # The prefixes the namespaces declare (base:hasPrefix), for shacl.ttl as for entities.ttl: an import that
+    # names a namespace with a generated ns<N> prefix would otherwise leave it in shacl.ttl (#1226).
     for uri, prefix, _ in result:
         e.bind(prefix, Namespace(uri))
+        shaclg.bind(prefix, Namespace(uri))
     ignored_references = rdfutils.get_ignored_references(g)
     ignored_hierarchical_references = get_ignored_hierarchical_references(parse_properties, opcuans)
 
@@ -1000,7 +1003,8 @@ added. This will potentially create validation issues."
     # ones of the ontologies (e.g. DI as 'devices' there, 'di' here). The prefixes the instances use are written
     # into context.jsonld too, so the instances resolve through the generated context as through the published one.
     instances_ns = utils.used_prefixes(jsonld.instances, utils.extract_namespaces(context_graph))
-    final_namespaces = {**entities_ns, **shacl_ns, **instances_ns}
+    # One prefix per namespace: a generated ns<N> goes where a proper prefix names the namespace (#1226).
+    final_namespaces = utils.merge_namespaces(entities_ns, shacl_ns, instances_ns)
     jsonld.dump_context(contextname, final_namespaces)
     if bindingsg.len() > 0:
         bindingsg.serialize(destination=bindingsname)
