@@ -410,6 +410,11 @@ class ModelTreeProvider {
       // row that stands for a datasetId, so no observation can be added to it.
       item.contextValue = 'exampleEditable';
     }
+    // A Relationship's row names the entity it points at (`object`): every
+    // menu of its kind, and Remove with subtree… of that entity (package.json).
+    if (holdsValue && raw.object) {
+      item.contextValue = REFERENCE_CONTEXT[item.contextValue] || item.contextValue;
+    }
 
     // One icon per kind: beaker for the tests, an object for an entity, a
     // field for an attribute. Pass, fail and warning are the icon's colour
@@ -479,7 +484,7 @@ class ModelTreeProvider {
     if (raw.kind === 'entity' && raw.file) {
       lines.push(`read from ${raw.file}`);
     }
-    if (item.contextValue === 'attributeReadOnly') {
+    if (/^attributeReadOnly(Ref)?$/.test(item.contextValue)) {
       // An absent pencil with no explanation reads as a broken tree. The only
       // rows left without one are rows with no value OF THEIR OWN -- the value
       // is on the rows beneath them.
@@ -561,6 +566,15 @@ class ModelTreeProvider {
  * reach: "a cutter running with its filter off" and "with it on" share the same
  * workpiece, so changing the workpiece changes both verdicts.
  */
+// The context value of a reference row: its kind's, marked as pointing at an
+// entity, so the kind's menus apply and Remove with subtree… too.
+const REFERENCE_CONTEXT = {
+  exampleEditable: 'exampleEditableRef',
+  exampleDataset: 'exampleDatasetRef',
+  exampleSeries: 'exampleSeriesRef',
+  attributeReadOnly: 'attributeReadOnlyRef'
+};
+
 /**
  * What Remove… on a row takes out, as the server's address: the whole
  * attribute (an attribute row), the instances of one datasetId (a dataset
@@ -571,7 +585,12 @@ function removalOf(raw) {
     .split(/[/#:]/).pop();
   const attributePath = raw.attributePath || [];
   if (raw.kind === 'attribute' && attributePath.length) {
-    return { path: attributePath, what: name(attributePath) };
+    // Every instance goes: said, so one meant is not taken for all of them.
+    // The case page's row has no children: its datasets name the instances.
+    const count = Math.max((raw.children || []).filter((c) => c.kind === 'dataset').length,
+      (raw.datasets || []).length);
+    return { path: attributePath,
+      what: count > 1 ? `all ${count} instances of ${name(attributePath)}` : name(attributePath) };
   }
   if (raw.kind === 'dataset' && attributePath.length) {
     return { path: attributePath, dataset: raw.datasetId,

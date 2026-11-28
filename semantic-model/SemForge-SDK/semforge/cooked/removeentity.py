@@ -321,8 +321,20 @@ def remove_subtree(package, entity_id, file=None, digest=None, check=False, plan
     written = {}
     for document in entities:
         written[_name(document)] = written.get(_name(document), 0) + 1
+    iri_of = _Resolver(package, source)
+    by_iri = {}                                    # IRI -> the names its documents have here
+    for document in entities:
+        by_iri.setdefault(iri_of(document, _name(document)), set()).add(_name(document))
     if entity_id not in written:
-        raise PackageError(f'no entity {entity_id} in {name} any more')
+        # A reference row names the entity as its relationship writes it, with
+        # a prefix or relative: the document it means is the one of that IRI.
+        named = set()
+        for document in entities:
+            named |= by_iri.get(iri_of(document, entity_id), set())
+        if len(named) != 1:
+            raise PackageError(f'no entity {entity_id} is written in {name} (any more); one written in '
+                               'another file -- a file the case includes, the main model -- is removed there')
+        entity_id = next(iter(named))
     tree = copy_entities(package, entity_id, file=source, subtree=True)
     members = [n for n in tree['copied'] if n in written]
     elsewhere = [n for n in tree['copied'] if n not in written]
@@ -330,10 +342,6 @@ def remove_subtree(package, entity_id, file=None, digest=None, check=False, plan
     if twice:
         raise PackageError(f'{twice[0]} is written {written[twice[0]]} times in {name}: remove it with '
                            'Remove entity… from its row')
-    iri_of = _Resolver(package, source)
-    by_iri = {}                                    # IRI -> the names its documents have here
-    for document in entities:
-        by_iri.setdefault(iri_of(document, _name(document)), set()).add(_name(document))
     members, shared = _held_back(entities, entity_id, members, iri_of, by_iri)
     gone = set(members)
     kept = [d for d in documents if not (isinstance(d, dict) and _name(d) in gone)]

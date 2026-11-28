@@ -21,6 +21,7 @@ package is unchanged (session.view); pages that show verdicts never wait for
 them (validation.verdict_page).
 """
 
+import json
 import os
 import re
 
@@ -125,7 +126,26 @@ def constraint_choices(ls, params):
         return {'choices': [], 'note': str(exc), 'total': 0}
 
 
-def _serialise_example(node):
+def _reference(node):
+    """The entity a Relationship's row points at: a row of an instance, of a
+    datasetId or of a single-instance attribute, whose address ends in
+    `object` and whose value is one IRI. None for anything else -- an object
+    list points at several."""
+    if node.kind not in ('attribute', 'dataset', 'instance') or not node.path \
+            or node.path[-1] != 'object':
+        return None
+    try:
+        value = json.loads(node.value)
+    except (TypeError, ValueError):
+        return None
+    return value if isinstance(value, str) and value else None
+
+
+def _serialise_example(node, digest=''):
+    # A reference row carries the entity it points at and the digest of its
+    # file, as an entity row does: Remove with subtree… starts from it.
+    digest = node.digest if node.kind == 'entity' else digest
+    target = _reference(node)
     return {
         'kind': node.kind, 'label': node.label, 'detail': node.detail,
         'entity': node.entity, 'path': list(node.path), 'value': node.value,
@@ -143,7 +163,8 @@ def _serialise_example(node):
         'definedAt': node.defined_at,
         # Which of a file's entities this row is, and of what the file said then.
         **({'position': node.position, 'digest': node.digest} if node.kind == 'entity' else {}),
-        'children': [_serialise_example(child) for child in node.children],
+        **({'object': target, 'digest': digest} if target else {}),
+        'children': [_serialise_example(child, digest) for child in node.children],
     }
 
 
