@@ -33,6 +33,8 @@ fi
 DEBUG=${DEBUG:-false}          # set true to skip kubefwd (assumes forwarding is already up)
 NAMESPACE=${NAMESPACE:-iff}
 KAFKA_BOOTSTRAP=my-cluster-kafka-bootstrap:9092
+# kafka_tail: the last records of a topic, also after retention (#1200)
+load "../lib/kafka"
 ENTITY_TOPIC=iff.ngsild.entities
 ATTRIBUTES_TOPIC=iff.ngsild.attributes
 BULK_ALERTS_TOPIC=iff.alerts.bulk
@@ -304,8 +306,7 @@ rearm_alert_capture() {
 # record means the publish was clean and any missing verdict is the product's.
 dump_entity_records() {
     local resource=$1 rows rc
-    rows=$(timeout 30 kafkacat -C -t ${ENTITY_TOPIC} -b ${KAFKA_BOOTSTRAP} \
-        -o -2000 -e -f '%s\n' 2>${TRIGGER_ERR}); rc=$?
+    rows=$(kafka_tail "${ENTITY_TOPIC}" 2000 -f '%s\n' 2>${TRIGGER_ERR}); rc=$?
     if [ "${rc}" -ne 0 ]; then
         echo "# could not read ${ENTITY_TOPIC} (rc=${rc}) -- delivery unknown" >&3
         return
@@ -322,8 +323,7 @@ dump_entity_records() {
 
 dump_trigger_rows() {
     local resource=$1 fragment=$2 rows rc matched present
-    rows=$(timeout 30 kafkacat -C -t ${TRIGGER_TOPIC} -b ${KAFKA_BOOTSTRAP} \
-        -o -2000 -e -f '%k;%s\n' 2>${TRIGGER_ERR}); rc=$?
+    rows=$(kafka_tail "${TRIGGER_TOPIC}" 2000 -f '%k;%s\n' 2>${TRIGGER_ERR}); rc=$?
     # A diagnostic that cannot fail loudly is worth nothing: a broken consumer
     # and an empty result must not look the same.
     if [ "${rc}" -ne 0 ]; then
@@ -352,8 +352,7 @@ dump_trigger_rows() {
     local waited=0
     while [ "${waited}" -lt 120 ]; do
         sleep 15; waited=$((waited + 15))
-        rows=$(timeout 30 kafkacat -C -t ${TRIGGER_TOPIC} -b ${KAFKA_BOOTSTRAP} \
-            -o -2000 -e -f '%k;%s\n' 2>/dev/null)
+        rows=$(kafka_tail "${TRIGGER_TOPIC}" 2000 -f '%k;%s\n' 2>/dev/null)
         if echo "${rows}" | awk -v r="${resource}" -v f="${fragment}" \
                 'index($0,r) && index($0,f) {found=1} END {exit !found}'; then
             echo "#   LATE: verdict appeared ${waited}s after the wait expired" >&3

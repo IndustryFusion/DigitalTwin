@@ -47,6 +47,10 @@
 : "${AGGREGATION_POLL:=0.2}"                            # seconds between polls
 : "${AGGREGATION_ALONE_TIMEOUT:=10}"                    # seconds, aggregate_alone
 
+# kafka_tail: the last records of a topic, also after retention (#1200)
+# shellcheck source=/dev/null  # checked on its own
+. "$(dirname "${BASH_SOURCE[0]}")/kafka.bash"
+
 # wait_until <seconds> <command...>: true as soon as the command is, false when
 # it is still false after <seconds>.
 wait_until() {
@@ -190,8 +194,7 @@ aggregate_alone() {
     # A record that closed the window was on the topic before the update came
     # back, so the last record of the topic decides, not the read-back
     # consumer, which may lag behind.
-    kafkacat -C -t "${ATTRIBUTES_TOPIC}" -b "${KAFKA_BOOTSTRAP}" -o -1 -e -q -f '%s\n' \
-        > "${AGGREGATION_WORK}/last" 2>/dev/null
+    kafka_tail "${ATTRIBUTES_TOPIC}" 1 -q -f '%s\n' > "${AGGREGATION_WORK}/last" 2>/dev/null
     stop_consumers
     [ "$(tail -n1 "${AGGREGATION_WORK}/batch")" = "$(cat "${AGGREGATION_WORK}/last")" ] ||
         { aggregation_failed "another record reached ${ATTRIBUTES_TOPIC} before the update came back: $(cat "${AGGREGATION_WORK}/last")"; return 1; }
